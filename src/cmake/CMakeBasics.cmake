@@ -39,7 +39,7 @@
 ################################
 # Setup build options and their default values
 ################################
-#include(cmake/ATKOptions.cmake)
+include(cmake/geosxOptions.cmake)
 
 ################################
 # Setup toolkit generate targets
