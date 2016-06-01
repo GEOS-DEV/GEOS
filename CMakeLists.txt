@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.1)
 ################################
 # ASCTK ToolKit
 ################################
-project(asctk LANGUAGES C CXX)
+project(geosx LANGUAGES C CXX)
 
 ################################
 # Include blt
@@ -14,11 +14,6 @@ include(../asctoolkit/src/blt/SetupBLT.cmake)
 # Include standard build system logic and options
 ################################
 include(src/cmake/CMakeBasics.cmake)
-
-################################
-# Add Thirdparty Builtin Libs
-################################
-#add_subdirectory(thirdparty)
 
 ################################
 # Add components
