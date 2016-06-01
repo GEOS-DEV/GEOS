@@ -8,12 +8,12 @@ project(asctk LANGUAGES C CXX)
 ################################
 # Include blt
 ################################
-include(../../asctoolkit/src/blt/SetupBLT.cmake)
+include(../asctoolkit/src/blt/SetupBLT.cmake)
 
 ################################
 # Include standard build system logic and options
 ################################
-include(cmake/CMakeBasics.cmake)
+include(src/cmake/CMakeBasics.cmake)
 
 ################################
 # Add Thirdparty Builtin Libs
@@ -23,7 +23,9 @@ include(cmake/CMakeBasics.cmake)
 ################################
 # Add components
 ################################
-add_subdirectory(main)
+add_subdirectory(src)
+add_subdirectory(tests)
+
 
 ################################
 # Add docs
