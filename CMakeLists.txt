@@ -13,13 +13,13 @@ include(../asctoolkit/src/blt/SetupBLT.cmake)
 ################################
 # Include standard build system logic and options
 ################################
-include(src/cmake/CMakeBasics.cmake)
+include(core/src/cmake/CMakeBasics.cmake)
 
 ################################
 # Add components
 ################################
-add_subdirectory(src)
-add_subdirectory(tests)
+add_subdirectory(core)
+#add_subdirectory(tests)
 
 
 ################################

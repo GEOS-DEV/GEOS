@@ -2,6 +2,12 @@
 #add_subdirectory(main)
 #add_subdirectory(codingUtilities)
 
+#subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
+#foreach(subdir ${SUBDIRS})
+#  if (EXISTS subdir/"CMakeLists.txt")
+#    add_subdirectory(${subdir})
+#  endif()
+#endforeach()
 
 
 #
@@ -25,17 +31,24 @@ set(geosx_sources
     )
 
 
-
+message( "${CMAKE_CURRENT_LIST_DIR}")
 blt_add_executable(NAME main
                    SOURCES ${geosx_sources}
                    DEPENDS_ON slic )
-                   
+
+foreach(header ${geosx_headers})
+  message( "${CMAKE_CURRENT_LIST_DIR}/${header}")
+  set( geosx_headers2 
+       ${CMAKE_CURRENT_LIST_DIR}/${header}
+     )
+endforeach()                   
+
 blt_add_library( NAME
                      geosx_core
                  SOURCES
                      "${geosx_core_sources}"
                  HEADERS
-                     "${geosx_headers}"
+                     "${geosx_headers2}"
                  DEPENDS_ON
                      slic
                  )

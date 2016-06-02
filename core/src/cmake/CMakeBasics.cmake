@@ -39,7 +39,7 @@
 ################################
 # Setup build options and their default values
 ################################
-include(src/cmake/geosxOptions.cmake)
+include(core/src/cmake/geosxOptions.cmake)
 
 ################################
 # Setup toolkit generate targets
@@ -49,7 +49,7 @@ include(src/cmake/geosxOptions.cmake)
 ################################
 # ATK's Third party library setup
 ################################
-include(src/cmake/thirdparty/SetupGeosxThirdParty.cmake)
+include(core/src/cmake/thirdparty/SetupGeosxThirdParty.cmake)
 
 #
 # We don't try to use this approach for CMake generators that support
@@ -159,3 +159,16 @@ list(APPEND custom_compiler_flags_list ATK_PREPROCESS_FORTRAN)
 # foreach(flag ${custom_compiler_flags_list})
 #    message(STATUS "\tvalue of ${flag} is '${${flag}}'")
 # endforeach()
+
+
+
+macro(subdirlist result curdir)
+  FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
+  SET(dirlist "")
+  FOREACH(child ${children})
+    IF(IS_DIRECTORY ${curdir}/${child})
+        LIST(APPEND dirlist ${child})
+    ENDIF()
+  ENDFOREACH()
+  SET(${result} ${dirlist})
+ENDMACRO()

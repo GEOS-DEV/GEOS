@@ -26,7 +26,7 @@
 #endif()
 
 if (ATK_DIR)
-  include(src/cmake/thirdparty/FindATK.cmake)
+  include(core/src/cmake/thirdparty/FindATK.cmake)
   blt_register_library( NAME sidre
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  sidre)
