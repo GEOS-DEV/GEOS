@@ -28,6 +28,10 @@ add_subdirectory(components)
 #  add_subdirectory(docs)
 #endif()
 
+
+add_code_check_targets(uncrustify.cfg)
+
+
 ################################
 # install targets from build
 ################################s

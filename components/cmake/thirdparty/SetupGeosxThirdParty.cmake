@@ -37,3 +37,8 @@ if (ATK_DIR)
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  slic)
 endif()
+
+
+#if (UNCRUSTIFY_EXECUTABLE)
+  include(blt/cmake/thirdparty/FindUncrustify.cmake)
+#endif()
