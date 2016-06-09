@@ -23,6 +23,6 @@ TEST(testStackTrace,stackTrace)
 {
 //	signal(SIGSEGV, stacktrace::handler);   // install our handler
 //	stacktrace::foo(); // this will call foo, bar, and baz.  baz segfaults.
-  stacktrace::handler( SIGSEGV, 0 );
+  geosx::stacktrace::handler( SIGSEGV, 0 );
 }
 

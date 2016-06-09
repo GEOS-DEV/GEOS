@@ -5,15 +5,17 @@
 ################################
 # Conduit
 ################################
-#if (CONDUIT_DIR)
-#  include(cmake/thirdparty/FindConduit.cmake)
-#  blt_register_library( NAME conduit
-#                        INCLUDES ${CONDUIT_INCLUDE_DIRS} 
-#                        LIBRARIES  conduit)
-#  blt_register_library( NAME conduit_io
-#                        INCLUDES ${CONDUIT_INCLUDE_DIRS}
-#                        LIBRARIES  conduit_io)
-#endif()
+message( "CONDUIT_DIR=${CONDUIT_DIR}")
+if (CONDUIT_DIR)
+
+  include(core/src/cmake/thirdparty/FindConduit.cmake)
+  blt_register_library( NAME conduit
+                        INCLUDES ${CONDUIT_INCLUDE_DIRS} 
+                        LIBRARIES  conduit)
+  blt_register_library( NAME conduit_io
+                        INCLUDES ${CONDUIT_INCLUDE_DIRS}
+                        LIBRARIES  conduit_io)
+endif()
 
 ################################
 # ATK

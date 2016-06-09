@@ -8,11 +8,13 @@
 #ifndef SRC_CODINGUTILITIES_STACKTRACE_HPP_
 #define SRC_CODINGUTILITIES_STACKTRACE_HPP_
 
+namespace geosx
+{
 namespace stacktrace
 {
 void handler(int sig, int exitFlag=1);
 }
-
+}
 
 
 

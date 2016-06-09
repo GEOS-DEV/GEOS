@@ -6,8 +6,11 @@
 #include <iostream>
 #include <cxxabi.h>
 
+namespace geosx
+{
 namespace stacktrace
 {
+
 void handler(int sig, int exitFlag)
 {
   void *array[20];
@@ -22,11 +25,11 @@ void handler(int sig, int exitFlag)
 
   fprintf(stderr,"attempting unmangled trace: \n");
 
-  char** mangled_name = backtrace_symbols(array, size);
+//  char** mangled_name = backtrace_symbols(array, size);
   char ** messages    = backtrace_symbols(array, size);
 
   // skip first stack frame (points here)
-  for (int i = 1; i < size && messages != NULL; ++i)
+  for (unsigned int i = 1; i < size && messages != NULL; ++i)
   {
       char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
 
@@ -90,5 +93,7 @@ void handler(int sig, int exitFlag)
   {
     exit(1);
   }
+}
+
 }
 }

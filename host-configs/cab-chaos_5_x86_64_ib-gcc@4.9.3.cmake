@@ -19,8 +19,11 @@ set(CMAKE_CXX_COMPILER "/usr/apps/gnu/4.9.3/bin/g++" CACHE PATH "")
 # fortran compiler used by spack
 set(ENABLE_FORTRAN OFF CACHE PATH "")
 
-# ATK from uberenv
 set(ATK_DIR "/usr/workspace/wsb/settgast/Codes/asctoolkit/install-chaos-gcc-4.9.3-debug" CACHE PATH "")
+
+# conduit from uberenv
+set(CONDUIT_DIR "/usr/workspace/wsa/toolkit/thirdparty_libs/builds/2016_05_25_15_39_29/spack/opt/spack/chaos_5_x86_64_ib/gcc-4.9.3/conduit-github-2016-05-18-xqbkgfstnxnbt43ptpb6d26iv5pvytyk" CACHE PATH "")
+
 
 #######
 # MPI - manually added these for now.
