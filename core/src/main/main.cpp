@@ -1,5 +1,6 @@
 #include "slic/slic.hpp"
 #include "slic/GenericOutputStream.hpp"
+#include "DataObject.hpp"
 #include <iostream>
 using namespace asctoolkit;
 

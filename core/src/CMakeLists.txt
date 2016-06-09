@@ -1,49 +1,19 @@
 
-#add_subdirectory(main)
-#add_subdirectory(codingUtilities)
-
-#subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
-#foreach(subdir ${SUBDIRS})
-#  if (EXISTS subdir/"CMakeLists.txt")
-#    add_subdirectory(${subdir})
-#  endif()
-#endforeach()
-
-
 #
 # Specify all headers
 #
-set(geosx_headers
-    codingUtilities/stackTrace.hpp
-    DataStructures/DataObject.hpp
-    )
+set(geosx_headers "" )
 
 #
 # Specify all sources
 #
 
-set(geosx_core_sources
-    codingUtilities/stackTrace.cpp
-    DataStructures/DataObject.cpp
-    )
+set(geosx_core_sources "" )
     
-set(geosx_sources
-	${geosx_core_sources}
-	main/main.cpp
-    )
+add_subdirectory(DataStructures)
+add_subdirectory(codingUtilities)
 
-
-message( "${CMAKE_CURRENT_LIST_DIR}")
-blt_add_executable(NAME main
-                   SOURCES ${geosx_sources}
-                   DEPENDS_ON slic sidre conduit )
-
-#foreach(header ${geosx_headers})
-#  message( "${CMAKE_CURRENT_LIST_DIR}/${header}")
-#  set( geosx_headers2 
-#       ${CMAKE_CURRENT_LIST_DIR}/${header}
-#     )
-#endforeach()                   
+message("geosx_core_sources = ${geosx_core_sources}")
 
 blt_add_library( NAME
                      geosx_core
@@ -54,3 +24,6 @@ blt_add_library( NAME
                  DEPENDS_ON
                      slic sidre conduit
                  )
+                 
+add_subdirectory(main)
+                 

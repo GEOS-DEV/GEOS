@@ -172,3 +172,11 @@ macro(subdirlist result curdir)
   ENDFOREACH()
   SET(${result} ${dirlist})
 ENDMACRO()
+
+
+#subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
+#foreach(subdir ${SUBDIRS})
+#  if (EXISTS subdir/"CMakeLists.txt")
+#    add_subdirectory(${subdir})
+#  endif()
+#endforeach()
