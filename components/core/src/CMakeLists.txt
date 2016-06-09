@@ -13,8 +13,6 @@ set(geosx_core_sources "" )
 add_subdirectory(dataRepository)
 add_subdirectory(codingUtilities)
 
-message("geosx_core_sources = ${geosx_core_sources}")
-
 blt_add_library( NAME
                      geosx_core
                  SOURCES

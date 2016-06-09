@@ -8,7 +8,7 @@
 message( "CONDUIT_DIR=${CONDUIT_DIR}")
 if (CONDUIT_DIR)
 
-  include(core/src/cmake/thirdparty/FindConduit.cmake)
+  include(components/cmake/thirdparty/FindConduit.cmake)
   blt_register_library( NAME conduit
                         INCLUDES ${CONDUIT_INCLUDE_DIRS} 
                         LIBRARIES  conduit)
@@ -28,7 +28,7 @@ endif()
 #endif()
 
 if (ATK_DIR)
-  include(core/src/cmake/thirdparty/FindATK.cmake)
+  include(components/cmake/thirdparty/FindATK.cmake)
   blt_register_library( NAME sidre
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  sidre)

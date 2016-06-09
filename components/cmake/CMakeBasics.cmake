@@ -39,7 +39,8 @@
 ################################
 # Setup build options and their default values
 ################################
-include(core/src/cmake/geosxOptions.cmake)
+include("${CMAKE_CURRENT_LIST_DIR}/geosxOptions.cmake")
+#include(components/cmake/geosxOptions.cmake)
 
 ################################
 # Setup toolkit generate targets
@@ -49,7 +50,8 @@ include(core/src/cmake/geosxOptions.cmake)
 ################################
 # ATK's Third party library setup
 ################################
-include(core/src/cmake/thirdparty/SetupGeosxThirdParty.cmake)
+include("${CMAKE_CURRENT_LIST_DIR}/thirdparty/SetupGeosxThirdParty.cmake")
+#include(components/cmake/thirdparty/SetupGeosxThirdParty.cmake)
 
 #
 # We don't try to use this approach for CMake generators that support

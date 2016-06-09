@@ -13,12 +13,11 @@ include(../blt/SetupBLT.cmake)
 ################################
 # Include standard build system logic and options
 ################################
-include(core/src/cmake/CMakeBasics.cmake)
+include(components/cmake/CMakeBasics.cmake)
 
 ################################
 # Add components
 ################################
-add_subdirectory(core)
 add_subdirectory(components)
 
 
