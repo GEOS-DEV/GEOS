@@ -8,7 +8,7 @@ project(geosx LANGUAGES C CXX)
 ################################
 # Include blt
 ################################
-include(../asctoolkit/src/blt/SetupBLT.cmake)
+include(../blt/SetupBLT.cmake)
 
 ################################
 # Include standard build system logic and options
@@ -19,7 +19,7 @@ include(core/src/cmake/CMakeBasics.cmake)
 # Add components
 ################################
 add_subdirectory(core)
-#add_subdirectory(tests)
+add_subdirectory(components)
 
 
 ################################

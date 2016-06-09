@@ -10,7 +10,7 @@ set(geosx_headers "" )
 
 set(geosx_core_sources "" )
     
-add_subdirectory(DataStructures)
+add_subdirectory(dataRepository)
 add_subdirectory(codingUtilities)
 
 message("geosx_core_sources = ${geosx_core_sources}")

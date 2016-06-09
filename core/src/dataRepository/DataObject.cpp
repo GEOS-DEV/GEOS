@@ -5,7 +5,7 @@
  *      Author: settgast
  */
 
-#include "DataObject.hpp"
+#include "../dataRepository/DataObject.hpp"
 
 namespace geosx
 {

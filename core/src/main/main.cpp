@@ -1,7 +1,8 @@
 #include "slic/slic.hpp"
 #include "slic/GenericOutputStream.hpp"
-#include "DataObject.hpp"
 #include <iostream>
+
+#include "../dataRepository/DataObject.hpp"
 using namespace asctoolkit;
 
 

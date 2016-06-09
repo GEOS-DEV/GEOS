@@ -5,8 +5,8 @@
  *      Author: settgast
  */
 
-#ifndef CORE_SRC_DATASTRUCTURES_DATAOBJECT_HPP_
-#define CORE_SRC_DATASTRUCTURES_DATAOBJECT_HPP_
+#ifndef CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_
+#define CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_
 
 #include "sidre/sidre.hpp"
 
@@ -22,4 +22,4 @@ namespace geosx
 
 } /* namespace geosx */
 
-#endif /* CORE_SRC_DATASTRUCTURES_DATAOBJECT_HPP_ */
+#endif /* CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_ */
