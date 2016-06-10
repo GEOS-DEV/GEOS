@@ -13,6 +13,15 @@ namespace geosx
 namespace stacktrace
 {
 void handler(int sig, int exitFlag=1);
+inline void handler0(int sig)
+{
+  handler(sig,0);
+}
+inline void handler1(int sig)
+{
+  handler(sig,1);
+}
+
 }
 }
 

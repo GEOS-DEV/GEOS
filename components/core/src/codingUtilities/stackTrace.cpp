@@ -88,11 +88,8 @@ void handler(int sig, int exitFlag)
   std::cerr << std::endl;
 
   free(messages);
+  exit(exitFlag);
 
-  if( exitFlag==1 )
-  {
-    exit(1);
-  }
 }
 
 }
