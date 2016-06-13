@@ -20,7 +20,7 @@ blt_add_library( NAME
                  HEADERS
                      "${geosx_headers}"
                  DEPENDS_ON
-                     slic sidre conduit
+                     slic sidre conduit hdf5
                  )
                  
 add_subdirectory(main)

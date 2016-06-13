@@ -13,6 +13,7 @@
 #include "slic/slic.hpp"
 #include "../src/codingUtilities/stackTrace.hpp"
 #include <fenv.h>
+#include <xmmintrin.h>
 // API coverage tests
 // Each test should be documented with the interface functions being tested
 
@@ -47,16 +48,17 @@ TEST(testStackTrace,stackTrace)
   signal(SIGCONT, geosx::stacktrace::handler0);
   signal(SIGCHLD, geosx::stacktrace::handler0);
 
-//#ifdef __APPLE__// && __MACH__
+#ifdef __APPLE__// && __MACH__
 //  _MM_SET_EXCEPTION_MASK(  _MM_EXCEPT_OVERFLOW);
-//  _MM_SET_EXCEPTION_MASK(_MM_EXCEPT_INVALID | _MM_EXCEPT_DIV_ZERO | _MM_EXCEPT_OVERFLOW);
+  _MM_SET_EXCEPTION_MASK(_MM_EXCEPT_INVALID | _MM_EXCEPT_DIV_ZERO | _MM_EXCEPT_OVERFLOW);
   //  _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
   //fesetenv(FE_ALL_EXCEPT);
 //#endif
 
 //#ifdef __INTEL_COMPILER
+#else
   feenableexcept(FE_DIVBYZERO | FE_OVERFLOW | FE_INVALID);
-//#endif
+#endif
 //	signal(SIGSEGV, stacktrace::handler);   // install our handler
 //	stacktrace::foo(); // this will call foo, bar, and baz.  baz segfaults.
 

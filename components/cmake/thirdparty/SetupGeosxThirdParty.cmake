@@ -17,6 +17,18 @@ if (CONDUIT_DIR)
                         LIBRARIES  conduit_io)
 endif()
 
+
+################################
+# HDF5
+################################
+if (HDF5_DIR)
+  include(components/cmake/thirdparty/FindHDF5.cmake)
+  blt_register_library(NAME hdf5
+                       INCLUDES ${HDF5_INCLUDE_DIRS}
+                       LIBRARIES ${HDF5_LIBRARY} )
+endif()
+
+
 ################################
 # ATK
 ################################
