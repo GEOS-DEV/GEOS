@@ -8,18 +8,17 @@ project(geosx LANGUAGES C CXX)
 ################################
 # Include blt
 ################################
-include(../asctoolkit/src/blt/SetupBLT.cmake)
+include(../blt/SetupBLT.cmake)
 
 ################################
 # Include standard build system logic and options
 ################################
-include(core/src/cmake/CMakeBasics.cmake)
+include(components/cmake/CMakeBasics.cmake)
 
 ################################
 # Add components
 ################################
-add_subdirectory(core)
-#add_subdirectory(tests)
+add_subdirectory(components)
 
 
 ################################
@@ -28,6 +27,10 @@ add_subdirectory(core)
 #if (ENABLE_DOCS)
 #  add_subdirectory(docs)
 #endif()
+
+
+add_code_check_targets(uncrustify.cfg)
+
 
 ################################
 # install targets from build

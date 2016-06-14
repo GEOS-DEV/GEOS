@@ -60,11 +60,12 @@ if(NOT EXISTS ${ATK_DIR}/lib/cmake/common-targets.cmake)
 endif()
 include(${ATK_DIR}/lib/cmake/common-targets.cmake)
 
-if(NOT EXISTS ${ATK_DIR}/lib/cmake/lumberjack-targets.cmake)
-    MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_DIR}/lib/cmake/lumberjack-targets.cmake)")
-endif()
+if(ENABLE_MPI)
+  if(NOT EXISTS ${ATK_DIR}/lib/cmake/lumberjack-targets.cmake)
+      MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_DIR}/lib/cmake/lumberjack-targets.cmake)")
+  endif()
 include(${ATK_DIR}/lib/cmake/lumberjack-targets.cmake)
-
+endif(ENABLE_MPI)
 
 if(NOT EXISTS ${ATK_DIR}/lib/cmake/slic-targets.cmake)
     MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_DIR}/lib/cmake/slic-targets.cmake)")

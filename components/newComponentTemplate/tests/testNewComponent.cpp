@@ -9,9 +9,9 @@
  */
 
 #include "gtest/gtest.h"
-#include <cstring>
-#include "slic/slic.hpp"
-#include "../src/codingUtilities/stackTrace.hpp"
+//#include <cstring>
+//#include "slic/slic.hpp"
+//#include "../src/codingUtilities/stackTrace.hpp"
 
 // API coverage tests
 // Each test should be documented with the interface functions being tested
@@ -19,10 +19,10 @@
 //------------------------------------------------------------------------------
 // getName()
 //------------------------------------------------------------------------------
-TEST(testStackTrace,stackTrace)
+TEST(testNewComponent,feature)
 {
 //	signal(SIGSEGV, stacktrace::handler);   // install our handler
 //	stacktrace::foo(); // this will call foo, bar, and baz.  baz segfaults.
-  geosx::stacktrace::handler( SIGSEGV, 0 );
+//  geosx::stacktrace::handler( SIGSEGV, 0 );
 }
 
