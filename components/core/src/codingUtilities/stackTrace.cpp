@@ -11,7 +11,7 @@ namespace geosx
 namespace stacktrace
 {
 
-void handler(int sig, int exitFlag)
+void handler(int sig, int exitFlag, int exitCode )
 {
   void *array[20];
   size_t size;
@@ -88,9 +88,11 @@ void handler(int sig, int exitFlag)
   std::cerr << std::endl;
 
   free(messages);
-  exit(exitFlag);
+  if( exitFlag == 1)
+    exit(exitCode);
 
 }
 
 }
+
 }

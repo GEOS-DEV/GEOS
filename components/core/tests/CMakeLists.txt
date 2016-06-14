@@ -4,6 +4,7 @@
 
 set(gtest_geosx_tests
    testStackTrace.cpp
+   testFloatingPointExceptions.cpp
    )
 
 #

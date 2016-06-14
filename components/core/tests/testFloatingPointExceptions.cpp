@@ -9,10 +9,8 @@
  */
 
 #include "gtest/gtest.h"
-#include <cstring>
-#include "slic/slic.hpp"
-#include "../src/codingUtilities/stackTrace.hpp"
 #include "../src/codingUtilities/SetSignalHandling.hpp"
+#include "../src/codingUtilities/stackTrace.hpp"
 #include <fenv.h>
 #include <xmmintrin.h>
 // API coverage tests
@@ -23,8 +21,14 @@
 //------------------------------------------------------------------------------
 TEST(testStackTrace,stackTrace)
 {
-  std::cout<<"calling handler0"<<std::endl;
-  geosx::stacktrace::handler0(0);
+
+  geosx::setSignalHandling(geosx::stacktrace::handler1);
+
+  std::cout<<"Perform 1.0/0.0"<<std::endl;
+  double a = 1.0/0.0;
+  std::cout<<"1.0/0.0 didn't kill program, result is "<<a<<std::endl<<std::endl;
+
+//  exit(0);
 }
 
 

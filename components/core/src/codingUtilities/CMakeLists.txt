@@ -5,6 +5,7 @@
 set(geosx_headers
   ${geosx_headers}
     codingUtilities/stackTrace.hpp
+    codingUtilities/SetSignalHandling.hpp
     PARENT_SCOPE )
 
 #
@@ -13,4 +14,5 @@ set(geosx_headers
 set(geosx_core_sources
   ${geosx_core_sources}
     codingUtilities/stackTrace.cpp
+    codingUtilities/SetSignalHandling.cpp
     PARENT_SCOPE )
