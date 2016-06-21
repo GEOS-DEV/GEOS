@@ -5,20 +5,9 @@
  *      Author: settgast
  */
 
-#include "../dataRepository/DataObject.hpp"
+#include "DataObject.hpp"
 
 namespace geosx
 {
-
-  DataObject::DataObject()
-  {
-    // TODO Auto-generated constructor stub
-
-  }
-
-  DataObject::~DataObject()
-  {
-    // TODO Auto-generated destructor stub
-  }
 
 } /* namespace geosx */

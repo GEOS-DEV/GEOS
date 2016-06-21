@@ -4,8 +4,10 @@
 #
 set(geosx_headers
   ${geosx_headers}
+  	codingUtilities/macros.hpp
     codingUtilities/stackTrace.hpp
     codingUtilities/SetSignalHandling.hpp
+    codingUtilities/sfinae.hpp
     PARENT_SCOPE )
 
 #
