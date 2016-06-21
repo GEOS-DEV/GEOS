@@ -5,7 +5,7 @@
 ################################
 # Conduit
 ################################
-message( "CONDUIT_DIR=${CONDUIT_DIR}")
+#message( "CONDUIT_DIR=${CONDUIT_DIR}")
 if (CONDUIT_DIR)
 
   include(components/cmake/thirdparty/FindConduit.cmake)
