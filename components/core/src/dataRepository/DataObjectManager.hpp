@@ -78,16 +78,11 @@ public:
 
   std::size_t RegisterDataObject( const std::string& name, const rtTypes::TypeIDs& type )
   {
-//    return rtTypes::ApplyTypeLambda( type, [this]( std::string const & name ) -> size_t
-//                                           { return this->RegisterDataObject<double>(name);
-//                                           }, name );
     return rtTypes::ApplyTypeLambda( type,
-                                     [this, name]( auto a ) -> size_t
+                                     [this, &name]( auto a ) -> size_t
                                      {
                                        return this->RegisterDataObject<decltype(a)>(name);
-                                     }
-    );
-
+                                     } );
   }
 
 

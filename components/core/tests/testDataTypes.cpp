@@ -10,32 +10,31 @@
 
 #include "gtest/gtest.h"
 #include "DataTypes.hpp"
-#include <unordered_map>
 #include <string>
 #include <typeindex>
-// API coverage tests
-// Each test should be documented with the interface functions being tested
+
 
   template< typename T >
-  void Func1()
+  std::string Func1()
   {
-
-    std::cout << "called " << rtTypes::typeNames(std::type_index(typeid(T)))<<" version of Func1" << std::endl;
-//    std::cout<<"called "<<typeid(T).name()<<std::endl;
+    return rtTypes::typeNames(std::type_index(typeid(T)));
   }
 
-//------------------------------------------------------------------------------
-// getName()
-//------------------------------------------------------------------------------
 TEST(testDataTypes,applyTypeLambda)
 {
+  std::string funcReturn_int32  = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::int32_id, []( auto a ) -> std::string { return Func1<decltype(a)>(); });
+  std::string funcReturn_int64  = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::int64_id, []( auto a ) -> std::string { return Func1<decltype(a)>(); });
+  std::string funcReturn_uint32 = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::uint32_id, []( auto a ) -> std::string { return Func1<decltype(a)>(); });
+  std::string funcReturn_uint64 = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::uint64_id, []( auto a ) -> std::string { return Func1<decltype(a)>(); });
+  std::string funcReturn_real32 = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::real32_id, []( auto a ) -> std::string { return Func1<decltype(a)>(); });
+  std::string funcReturn_real64 = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::real64_id, []( auto a ) -> std::string { return Func1<decltype(a)>(); });
 
-  rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::int32_id, []( auto a ) -> void { return Func1<decltype(a)>(); });
-  rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::int64_id, []( auto a ) -> void { return Func1<decltype(a)>(); });
-  rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::uint32_id, []( auto a ) -> void { return Func1<decltype(a)>(); });
-  rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::uint64_id, []( auto a ) -> void { return Func1<decltype(a)>(); });
-  rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::real32_id, []( auto a ) -> void { return Func1<decltype(a)>(); });
-  rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::real64_id, []( auto a ) -> void { return Func1<decltype(a)>(); });
+  EXPECT_TRUE( funcReturn_int32.compare(rtTypes::typeNames( std::type_index( typeid(int32) ) ) ) == 0);
+  EXPECT_TRUE( funcReturn_int64.compare(rtTypes::typeNames( std::type_index( typeid(int64) ) ) ) == 0);
+  EXPECT_TRUE( funcReturn_uint32.compare(rtTypes::typeNames( std::type_index( typeid(uint32) ) ) ) == 0);
+  EXPECT_TRUE( funcReturn_uint64.compare(rtTypes::typeNames( std::type_index( typeid(uint64) ) ) ) == 0);
+  EXPECT_TRUE( funcReturn_real32.compare(rtTypes::typeNames( std::type_index( typeid(real32) ) ) ) == 0);
+  EXPECT_TRUE( funcReturn_real64.compare(rtTypes::typeNames( std::type_index( typeid(real64) ) ) ) == 0);
 
 }
 

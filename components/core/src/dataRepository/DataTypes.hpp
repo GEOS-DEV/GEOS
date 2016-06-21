@@ -64,55 +64,6 @@ public:
     real64_id
   };
 
-/*
-  template< typename WRAPPER, typename...ArgsF >
-  static auto ApplyFunctionWrapperGet( const TypeIDs type,
-                                       WRAPPER& wrapper,
-                                       ArgsF&&... args ) -> decltype( wrapper.template get<double>(args...) )
-  {
-    decltype(wrapper.template get<double>(args...)) rval;
-    switch( type )
-    {
-      case( TypeIDs::int32_id ):
-      {
-        rval = wrapper.template get<int32>(args... );
-        break;
-      }
-      case( TypeIDs::uint32_id ):
-      {
-        rval = wrapper.template get<uint32>(args... );
-        break;
-      }
-      case( TypeIDs::int64_id ):
-      {
-        rval = wrapper.template get<int64>(args... );
-        break;
-      }
-      case( TypeIDs::uint64_id ):
-      {
-        rval = wrapper.template get<uint64>(args... );
-        break;
-      }
-      case( TypeIDs::real32_id ):
-      {
-        rval =  wrapper.template get<real32>(args...);
-        break;
-      }
-      case( TypeIDs::real64_id ):
-      {
-        rval =  wrapper.template get<real64>(args...);
-        break;
-      }
-      default:
-      {
-        std::cout<<LOCATION<<std::endl;
-        throw std::exception();
-      }
-    }
-
-    return rval;
-  }
-*/
 
   template< typename LAMBDA >
   static auto ApplyTypeLambda( const TypeIDs type,
