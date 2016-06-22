@@ -8,7 +8,9 @@
 #ifndef OBJECTCATALOGUE_HPP_
 #define OBJECTCATALOGUE_HPP_
 #include<unordered_map>
-
+#include<string>
+#include<map>
+#include<iostream>
 
   template< typename BASETYPE, typename ...ARGS >
   class ObjectCatalogueEntryBase
@@ -28,6 +30,7 @@
 
     static std::unique_ptr<BASETYPE> Factory( const std::string& objectTypeName, ARGS&...args )
     {
+      std::cout<<"Creating solver of type: "<<objectTypeName<<std::endl;
       ObjectCatalogueEntryBase<BASETYPE,ARGS...>* const  entry = GetCatalogue().at(objectTypeName);
       return entry->Allocate(args...);
     }

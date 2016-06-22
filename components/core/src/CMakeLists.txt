@@ -12,6 +12,7 @@ set(geosx_core_sources "" )
     
 add_subdirectory(dataRepository)
 add_subdirectory(codingUtilities)
+add_subdirectory(PhysicsSolvers)
 
 blt_add_library( NAME
                      geosx_core
@@ -24,4 +25,7 @@ blt_add_library( NAME
                  )
                  
 add_subdirectory(main)
-                 
+
+blt_add_executable(NAME geosx_corex
+                   SOURCES "${geosx_core_sources}"
+                   DEPENDS_ON slic sidre conduit hdf5)

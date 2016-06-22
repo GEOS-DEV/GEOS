@@ -3,11 +3,16 @@
 #include <iostream>
 
 #include "../dataRepository/DataObject.hpp"
+#include "NewtonianMechanics.hpp"
+
 using namespace asctoolkit;
 
 
 int main()
 {
+
+  std::string newName("new solver");
+  auto solver = geosx::SolverBase::SolverFactory::Factory(geosx::NewtonianMechanics::CatalogueName(),newName);
   slic::initialize();
 
   std::string format =  std::string( "***********************************\n" )+

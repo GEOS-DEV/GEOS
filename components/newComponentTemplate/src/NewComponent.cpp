@@ -10,15 +10,27 @@
 namespace geosx
 {
 
-  NewComponent::NewComponent()
-  {
-    // TODO Auto-generated constructor stub
+NewComponent::NewComponent( std::string const & name ):
+    SolverBase(name)
+{
 
-  }
+}
 
-  NewComponent::~NewComponent()
-  {
-    // TODO Auto-generated destructor stub
-  }
+NewComponent::~NewComponent()
+{
+  // TODO Auto-generated destructor stub
+}
+
+void RegisterDataObjects( DataObjectManager& domain )
+{}
+
+
+void TimeStep( real64 const& time_n,
+                       real64 const& dt,
+                       int32 const cycleNumber,
+                       DataObjectManager& domain )
+{}
+
+REGISTER_FACTORY( NewComponent, SolverBase, std::string )
 
 } /* namespace geosx */

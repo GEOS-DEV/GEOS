@@ -1,4 +1,11 @@
-blt_add_executable(NAME main
-                   SOURCES main.cpp
-                   DEPENDS_ON slic sidre conduit hdf5)
-                   
+#
+# Specify all headers
+#
+
+#
+# Specify all sources
+#
+set(geosx_core_sources
+  ${geosx_core_sources}
+    main/main.cpp
+    PARENT_SCOPE )
