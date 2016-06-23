@@ -7,7 +7,7 @@
 
 #ifndef COMPONENTS_NEWCOMPONENTTEMPLATE_SRC_NEWCOMPONENT_HPP_
 #define COMPONENTS_NEWCOMPONENTTEMPLATE_SRC_NEWCOMPONENT_HPP_
-#include "SolverBase.hpp"
+#include "PhysicsSolvers/SolverBase.hpp"
 
 
 namespace geosx

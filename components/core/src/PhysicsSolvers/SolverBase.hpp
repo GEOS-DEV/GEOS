@@ -8,8 +8,8 @@
 #ifndef SOLVERBASE_HPP_
 #define SOLVERBASE_HPP_
 
-#include "DataTypes.hpp"
-#include "ObjectCatalogue.hpp"
+#include "dataRepository/DataTypes.hpp"
+#include "codingUtilities/ObjectCatalogue.hpp"
 #include <string>
 
 namespace geosx

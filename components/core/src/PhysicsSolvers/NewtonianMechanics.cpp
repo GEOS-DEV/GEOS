@@ -6,7 +6,7 @@
  */
 
 #include "NewtonianMechanics.hpp"
-#include "DataObjectManager.hpp"
+#include "dataRepository/DataObjectManager.hpp"
 //#include "DomainPartition.hpp"
 //#include <StringUtilities.hpp>
 

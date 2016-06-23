@@ -8,7 +8,7 @@ project(geosx LANGUAGES C CXX)
 ################################
 # Include blt
 ################################
-include(../blt/SetupBLT.cmake)
+include(blt/SetupBLT.cmake)
 
 ################################
 # Include standard build system logic and options
@@ -35,5 +35,5 @@ add_code_check_targets(uncrustify.cfg)
 ################################
 # install targets from build
 ################################s
-#install(DIRECTORY ${PROJECT_BINARY_DIR}/bin DESTINATION . OPTIONAL)
-#install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
+install(DIRECTORY ${PROJECT_BINARY_DIR}/bin DESTINATION . OPTIONAL)
+install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)

@@ -2,8 +2,8 @@
 #include "slic/GenericOutputStream.hpp"
 #include <iostream>
 
-#include "../dataRepository/DataObject.hpp"
-#include "NewtonianMechanics.hpp"
+//#include "dataRepository/DataObject.hpp"
+#include "PhysicsSolvers/NewtonianMechanics.hpp"
 
 using namespace asctoolkit;
 

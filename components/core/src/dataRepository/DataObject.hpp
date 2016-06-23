@@ -11,7 +11,7 @@
 #include "sidre/sidre.hpp"
 #include "DataTypes.hpp"
 #include "DataObjectBase.hpp"
-#include "sfinae.hpp"
+#include "codingUtilities/sfinae.hpp"
 namespace geosx
 {
 

@@ -9,7 +9,7 @@
  */
 
 #include "gtest/gtest.h"
-#include "DataTypes.hpp"
+#include "dataRepository/DataTypes.hpp"
 #include <string>
 #include <typeindex>
 
