@@ -103,25 +103,10 @@ public:
   template< typename T >
   const DataObject<T>& GetDataObject( const std::string& name ) const
   {
-#if 1
     auto index = m_keyLookup.at(name);
     return m_dataObjects[index]->getObject<T>();
-#else
-    auto iter = m_keyLookup.find(name);
-    const T* rval = nullptr;
-    if( iter==m_keyLookup.end() )
-    {
-//      throw ANSTexception( LOCATION );
-      throw std::exception();
-    }
-    else
-    {
-      std::size_t index = iter->second;
-      rval = &(m_dataObjects[index]->getObjectData<T>());
-    }
-    return *rval;
-#endif
   }
+
   template< typename T >
   DataObject<T>& GetDataObject( const std::string& name )
   { return const_cast<DataObject<T>&>( const_cast<const DataObjectManager*>(this)->GetDataObject<T>( name ) ); }

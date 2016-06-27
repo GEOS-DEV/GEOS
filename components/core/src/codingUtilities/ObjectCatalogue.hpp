@@ -11,6 +11,7 @@
 #include<string>
 #include<map>
 #include<iostream>
+#include<memory>
 
   template< typename BASETYPE, typename ...ARGS >
   class ObjectCatalogueEntryBase

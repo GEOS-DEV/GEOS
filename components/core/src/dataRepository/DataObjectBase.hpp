@@ -9,6 +9,7 @@
 #define COMPONENTS_CORE_SRC_DATAREPOSITORY_DATAOBJECTBASE_HPP_
 
 #include <string>
+#include <memory>
 
 namespace geosx {
 
@@ -56,7 +57,6 @@ public:
 
 
 
-//#ifndef OBJECTDATA_PTR_RETURN
 
   template< typename T >
   typename DataObject<T>::const_rtype getObjectData() const
@@ -65,24 +65,7 @@ public:
   template< typename T >
   typename DataObject<T>::rtype getObjectData()
   { return const_cast<typename DataObject<T>::rtype>( const_cast<const DataObjectBase*>(this)->getObjectData<T>() ); }
-/*
-#else
 
-  template< typename T >
-  typename std::enable_if<!(std::is_fundamental<T>::value), T >::type::type* getObjectData()
-  {
-    return (dynamic_cast<DataObject<T>&>(*this).getObjectData()).data();
-  }
-
-  template< typename T >
-  const typename std::enable_if<std::is_fundamental<T>::value, T >::type& getObjectData() const
-  {
-    return &((dynamic_cast<DataObject<T>&>(*this)).getObjectData());
-  }
-
-
-#endif
-*/
 
 private:
   std::string m_fieldName;

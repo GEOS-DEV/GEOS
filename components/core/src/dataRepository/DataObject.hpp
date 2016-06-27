@@ -18,7 +18,7 @@ namespace geosx
 
 
 #define DEFINE_WRAPPING_FUNCTION0(NAME,RTYPE)\
-template<typename U=T, bool has = has_##NAME<U>::value >\
+template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
 struct wrapper##NAME\
 {\
   RTYPE f( void * ) {return 0;}\
@@ -38,7 +38,7 @@ virtual RTYPE NAME() override final\
 }
 
 #define DEFINE_WRAPPING_FUNCTION1(NAME,ARG1)\
-template<typename U=T, bool has = has_##NAME<U>::value >\
+template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
 struct wrapper##NAME\
 {\
   void f( void *, ARG1 ) {}\
@@ -68,10 +68,10 @@ public:
     DataObjectBase(name)
   {}
 
-  virtual ~DataObject() override final{}
+  virtual ~DataObject() noexcept override final{}
 
 
-  virtual const std::type_info& get_typeid() const override final
+  virtual const std::type_info& get_typeid() const noexcept override final
   {
     return typeid(T);
   }
@@ -84,7 +84,7 @@ public:
   DEFINE_WRAPPING_FUNCTION0(size,std::size_t)
   DEFINE_WRAPPING_FUNCTION1( resize , std::size_t )
 #else
-  template<typename U=T, bool has = has_size<U>::value >
+  template<typename U=T, bool has = has_memberfunction_size<U>::value >
   struct size_wrapper
   {
     int f( void * ) {return 0;}
@@ -97,13 +97,13 @@ public:
       return (*obj).m_data.size();
     }
   };
-  virtual int size() override final
+  virtual std::size_t size() override final
   {
     size_wrapper<T> temp;
     return temp.f(this);
   }
 
-  template<typename U=T, bool has = has_resize<U>::value >
+  template<typename U=T, bool has = has_memberfunction_resize<U>::value >
   struct resize_wrapper
   {
     void f( void *, std::size_t ) {}
@@ -127,8 +127,8 @@ public:
 
 
 #ifndef OBJECTDATA_PTR_RETURN
-  using rtype = T&;
-  using const_rtype = const T&;
+  using rtype = T &;
+  using const_rtype = T const &;
 
   const_rtype getObjectData() const
   { return m_data; }
@@ -149,7 +149,7 @@ public:
   };
 */
 
-  template<class U=T, bool has = SFINAE::has_pointer_type<U>::value >
+  template<class U=T, bool has = sfinae::has_pointer_type<U>::value >
   struct Get_Type
   {
     typedef U&       type;

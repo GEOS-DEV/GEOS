@@ -1,3 +1,3 @@
-option(ENABLE_CXX11    "Enables C++11 language support" OFF)
-option(ENABLE_CXX14    "Enables C++14 language support" ON)
+set(ENABLE_FORTRAN OFF CACHE BOOL  "Enables C++11 language support")
 
+set(CXX_STD "c++14" CACHE STRING "Version of C++ standard")
