@@ -10,13 +10,9 @@
 namespace geosx {
 
 DataObjectBase::DataObjectBase( const std::string& name ):
-  m_fieldName(name)
+  m_name(name)
 {}
 
-DataObjectBase::DataObjectBase() {
-	// TODO Auto-generated constructor stub
-
-}
 
 DataObjectBase::~DataObjectBase() {
 	// TODO Auto-generated destructor stub

@@ -15,7 +15,27 @@
 namespace geosx
 {
 
+#define VA_LIST(...) __VA_ARGS__
 
+#define DEFINE_WRAPPING_FUNCTION(NAME,RTYPE,PARAMS,ARGS)\
+template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
+struct wrapper##NAME\
+{\
+  RTYPE f( void * ,PARAMS ) {return RTYPE();}\
+};\
+template<typename U>\
+struct wrapper##NAME<U,true>\
+{\
+  RTYPE f( DataObject<U> * const obj ,PARAMS )\
+  {\
+    return (*obj).m_data.NAME(ARGS);\
+  }\
+};\
+virtual RTYPE NAME(PARAMS) override final\
+{\
+  wrapper##NAME<T> temp;\
+  return temp.f(this ,ARGS);\
+}
 
 #define DEFINE_WRAPPING_FUNCTION0(NAME,RTYPE)\
 template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
@@ -37,28 +57,6 @@ virtual RTYPE NAME() override final\
   return temp.f(this);\
 }
 
-#define DEFINE_WRAPPING_FUNCTION1(NAME,ARG1)\
-template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
-struct wrapper##NAME\
-{\
-  void f( void *, ARG1 ) {}\
-};\
-template<typename U>\
-struct wrapper##NAME<U,true>\
-{\
-  void f( DataObject<U> * const obj, ARG1 arg1 )\
-  {\
-    (*obj).m_data.NAME( arg1 );\
-  }\
-};\
-virtual void NAME( ARG1 arg1 ) override final\
-{\
-  wrapper##NAME<T> temp;\
-  temp.f(this,arg1);\
-}
-
-
-
 template< typename T >
 class DataObject : public DataObjectBase
 {
@@ -79,49 +77,10 @@ public:
 
 
   HAS_MEMBER_FUNCTION(size,)
-  HAS_MEMBER_FUNCTION(resize, std::size_t(1) )
-#if 1
   DEFINE_WRAPPING_FUNCTION0(size,std::size_t)
-  DEFINE_WRAPPING_FUNCTION1( resize , std::size_t )
-#else
-  template<typename U=T, bool has = has_memberfunction_size<U>::value >
-  struct size_wrapper
-  {
-    int f( void * ) {return 0;}
-  };
-  template<typename U>
-  struct size_wrapper<U,true>
-  {
-    int f( DataObject<U> * const obj )
-    {
-      return (*obj).m_data.size();
-    }
-  };
-  virtual std::size_t size() override final
-  {
-    size_wrapper<T> temp;
-    return temp.f(this);
-  }
 
-  template<typename U=T, bool has = has_memberfunction_resize<U>::value >
-  struct resize_wrapper
-  {
-    void f( void *, std::size_t ) {}
-  };
-  template<typename U>
-  struct resize_wrapper<U,true>
-  {
-    void f( DataObject<U> * const obj, std::size_t arg1 )
-    {
-      (*obj).m_data.resize( arg1 );
-    }
-  };
-  virtual void resize( std::size_t arg1 ) override final
-  {
-    resize_wrapper<T> temp;
-    temp.f(this,arg1);
-  }
-#endif
+  HAS_MEMBER_FUNCTION(resize, std::size_t(1) )
+  DEFINE_WRAPPING_FUNCTION( resize , void, (std::size_t a), (a) )
 
 
 

@@ -19,12 +19,6 @@ template< typename T > class DataObject;
 class DataObjectBase
 {
 public:
-  /*!
-   *
-   * @param name name of the object
-   * \brief constructor
-   */
-  DataObjectBase( const std::string& name );
 
   /*!
    * \brief default destuctor
@@ -33,20 +27,54 @@ public:
 
   /*!
    *
+   * @param name name of the object
+   * \brief constructor
+   */
+  DataObjectBase( const std::string& name );
+
+
+  DataObjectBase( DataObjectBase&& source );
+  DataObjectBase& operator=( DataObjectBase&& source );
+
+
+  /*!
+   *
    * @return type_info of the DataObject
    */
   virtual const std::type_info& get_typeid() const = 0 ;
 
-  virtual void resize( const std::size_t newsize ) = 0;
+
+//  virtual bool empty() const = 0;
+
 
   virtual std::size_t size( ) = 0;
+  /*
+  size_type max_size() const;
+
+
+  virtual void clear() = 0 ;
+  virtual void insert() = 0;
+  iterator erase( iterator pos );
+  iterator erase( const_iterator pos );
+  iterator erase( const_iterator first, const_iterator last );
+  size_type erase( const key_type& key );
+
+  iterator erase( const_iterator pos );
+  iterator erase( iterator first, iterator last );
+  iterator erase( const_iterator first, const_iterator last );
+
+  void swap( unordered_map& other );
+  void swap( vector& other );
+*/
+
+  virtual void resize( std::size_t newsize ) = 0;
+
 
 
   template< typename T >
   static std::unique_ptr<DataObjectBase> Factory( const std::string& name )
   {
-    return std::move(std::unique_ptr< DataObject<T> >( new DataObject<T>( name ) ) );
-//    return std::move(std::make_unique<DataObject<T> >( name ) );
+    return std::move(std::make_unique<DataObject<T> >( name ) );
   }
 
   template< typename T >
@@ -55,6 +83,11 @@ public:
     return dynamic_cast<DataObject<T>&>(*this);
   }
 
+  template< typename T >
+  DataObject<T> const & getObject() const
+  {
+    return dynamic_cast<DataObject<T> const &>(*this);
+  }
 
 
 
@@ -68,11 +101,11 @@ public:
 
 
 private:
-  std::string m_fieldName;
-//  attributeMap m_attributes;
+  std::string m_name;
 
-  DataObjectBase();
-  DataObjectBase(const DataObjectBase&);
+
+  DataObjectBase() = delete;
+  DataObjectBase(const DataObjectBase&) = delete;
 
 };
 
