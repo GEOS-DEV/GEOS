@@ -15,48 +15,6 @@
 namespace geosx
 {
 
-#define VA_LIST(...) __VA_ARGS__
-
-#define DEFINE_WRAPPING_FUNCTION(NAME,RTYPE,PARAMS,ARGS)\
-template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
-struct wrapper##NAME\
-{\
-  RTYPE f( void * ,PARAMS ) {return RTYPE();}\
-};\
-template<typename U>\
-struct wrapper##NAME<U,true>\
-{\
-  RTYPE f( DataObject<U> * const obj ,PARAMS )\
-  {\
-    return (*obj).m_data.NAME(ARGS);\
-  }\
-};\
-virtual RTYPE NAME(PARAMS) override final\
-{\
-  wrapper##NAME<T> temp;\
-  return temp.f(this ,ARGS);\
-}
-
-#define DEFINE_WRAPPING_FUNCTION0(NAME,RTYPE)\
-template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
-struct wrapper##NAME\
-{\
-  RTYPE f( void * ) {return 0;}\
-};\
-template<typename U>\
-struct wrapper##NAME<U,true>\
-{\
-  RTYPE f( DataObject<U> * const obj )\
-  {\
-    return (*obj).m_data.NAME();\
-  }\
-};\
-virtual RTYPE NAME() override final\
-{\
-  wrapper##NAME<T> temp;\
-  return temp.f(this);\
-}
-
 template< typename T >
 class DataObject : public DataObjectBase
 {
@@ -77,10 +35,11 @@ public:
 
 
   HAS_MEMBER_FUNCTION(size,)
-  DEFINE_WRAPPING_FUNCTION0(size,std::size_t)
+  CONDITIONAL_VIRTUAL_FUNCTION0(size,std::size_t)
+
 
   HAS_MEMBER_FUNCTION(resize, std::size_t(1) )
-  DEFINE_WRAPPING_FUNCTION( resize , void, (std::size_t a), (a) )
+  CONDITIONAL_VIRTUAL_FUNCTION( resize , void, VA_LIST(std::size_t a), VA_LIST(a) )
 
 
 

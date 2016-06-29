@@ -8,6 +8,9 @@
 #ifndef SRC_CODINGUTILITIES_SFINAE_HPP_
 #define SRC_CODINGUTILITIES_SFINAE_HPP_
 
+namespace geosx
+{
+
 
 #define HAS_MEMBER_DATA(NAME)\
 template<typename TT>\
@@ -103,8 +106,50 @@ public:\
 };
 
 
-namespace sfinae
-{
+
+#define VA_LIST(...) __VA_ARGS__
+
+#define CONDITIONAL_VIRTUAL_FUNCTION(NAME,RTYPE,PARAMS,ARGS)\
+template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
+struct wrapper##NAME\
+{\
+  RTYPE f(...) {return RTYPE();}\
+};\
+template<typename U>\
+struct wrapper##NAME<U,true>\
+{\
+  RTYPE f( DataObject<U> * const obj ,PARAMS )\
+  {\
+    return (*obj).m_data.NAME(ARGS);\
+  }\
+};\
+virtual RTYPE NAME(PARAMS) override final\
+{\
+  wrapper##NAME<T> temp;\
+  return temp.f(this ,ARGS);\
+}
+
+#define CONDITIONAL_VIRTUAL_FUNCTION0(NAME,RTYPE)\
+template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
+struct wrapper##NAME\
+{\
+  RTYPE f(...) {return 0;}\
+};\
+template<typename U>\
+struct wrapper##NAME<U,true>\
+{\
+  RTYPE f( DataObject<U> * const obj )\
+  {\
+    return (*obj).m_data.NAME();\
+  }\
+};\
+virtual RTYPE NAME() override final\
+{\
+  wrapper##NAME<T> temp;\
+  return temp.f(this);\
+}
+
+
 template<class TT>
 struct has_pointer_type
 {
