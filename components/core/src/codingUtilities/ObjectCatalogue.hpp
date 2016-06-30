@@ -65,6 +65,6 @@
 
 
 /// Compiler directive to simplify autoregistration
-#define REGISTER_FACTORY( ClassName, BaseType, ARGS...) namespace{ ObjectCatalogueEntry<ClassName,BaseType,ARGS> reg_; }
+#define REGISTER_FACTORY( ClassName, BaseType, ...) namespace{ ObjectCatalogueEntry<ClassName,BaseType,__VA_ARGS__> reg_; }
 
 #endif /* OBJECTCATALOGUE_HPP_ */

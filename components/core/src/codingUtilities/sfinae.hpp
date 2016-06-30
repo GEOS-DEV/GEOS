@@ -48,12 +48,12 @@ public:\
 
 
 
-#define HAS_MEMBER_FUNCTION(NAME,args...)\
+#define HAS_MEMBER_FUNCTION(NAME, ...)\
 template<typename TT >\
 struct has_memberfunction_##NAME\
 {\
 private:\
-  template<typename U> static constexpr auto test(int) -> decltype( std::declval<U>().NAME(args), bool() )\
+  template<typename U> static constexpr auto test(int) -> decltype( std::declval<U>().NAME(__VA_ARGS__), bool() )\
   {\
     return std::is_member_function_pointer< decltype( &U::NAME ) >::value;\
   }\
@@ -65,12 +65,12 @@ public:\
   static constexpr bool value = test<TT>(0);\
 };
 
-#define HAS_STATIC_MEMBER_FUNCTION(NAME,args...)\
+#define HAS_STATIC_MEMBER_FUNCTION(NAME, ...)\
 template<typename TT>\
 struct has_staticmemberfunction_##NAME\
 {\
 private:\
-  template<typename U> static constexpr auto test(int) -> decltype( U::NAME(args) , bool() )\
+  template<typename U> static constexpr auto test(int) -> decltype( U::NAME(__VA_ARGS__) , bool() )\
   {\
     return true;\
   }\
