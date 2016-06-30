@@ -2,18 +2,21 @@
 #include "slic/GenericOutputStream.hpp"
 #include <iostream>
 
-//#include "dataRepository/DataObject.hpp"
+#include "dataRepository/DataObjectManager.hpp"
 #include "PhysicsSolvers/NewtonianMechanics.hpp"
+#include "codingUtilities/SetSignalHandling.hpp"
+#include "codingUtilities/stackTrace.hpp"
 
 using namespace asctoolkit;
 
 
 int main()
 {
+  geosx::setSignalHandling(geosx::stacktrace::handler1);
 
-  std::string newName("new solver");
-  auto solver = geosx::SolverBase::SolverFactory::Factory(geosx::NewtonianMechanics::CatalogueName(),newName);
+
   slic::initialize();
+
 
   std::string format =  std::string( "***********************************\n" )+
                         std::string( "* <TIMESTAMP>\n\n" ) +
@@ -22,13 +25,31 @@ int main()
                         std::string( "* FILE=<FILE>\n" ) +
                         std::string( "* LINE=<LINE>\n" ) +
                         std::string( "***********************************\n" );
-
   slic::setLoggingMsgLevel( slic::message::Debug );
   slic::addStreamToAllMsgLevels( new slic::GenericOutputStream( &std::cout, format ) );
 
-  SLIC_INFO("you are awesomo\n");
-  // STEP 2: shutdown logging environment
+
+
+  geosx::DataObjectManager domain("domain") ;
+
+  std::string newName("new solver");
+  auto solver = geosx::SolverBase::SolverFactory::Factory(geosx::NewtonianMechanics::CatalogueName(),newName);
+  solver->RegisterDataObjects( domain );
+
+  std::cout<<"breakpoint 1"<<std::endl;
+
+  geosx::DataObjectManager& nodes = domain.GetDataObjectManager<geosx::DataObjectManager>("FEM_Nodes");
+
+  std::cout<<"breakpoint 2"<<std::endl;
+
+  solver->TimeStep( 0.0, 0.1, 0, domain );
+
+
+
+
   slic::finalize();
+
+
 
   return 0;
 }

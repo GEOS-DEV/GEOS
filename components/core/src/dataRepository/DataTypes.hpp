@@ -36,6 +36,9 @@ using real32_const_ptr = ptr<real32 const>;
 using real64_ptr       = ptr<real64>;
 using real64_const_ptr = ptr<real64 const>;
 
+using real64_array        = ptr<real64>;
+using real64_const_array  = ptr<real64 const>;
+
 class rtTypes
 {
 public:

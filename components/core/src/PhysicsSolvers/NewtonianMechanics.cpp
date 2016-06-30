@@ -10,6 +10,7 @@
 //#include "DomainPartition.hpp"
 //#include <StringUtilities.hpp>
 
+#include <vector>
 namespace geosx
 {
 
@@ -29,9 +30,8 @@ NewtonianMechanics::~NewtonianMechanics()
 
 void NewtonianMechanics::RegisterDataObjects( DataObjectManager& domain )
 {
-  /*
   DataObjectManager& nodes = domain.RegisterChildDataObjectManager<DataObjectManager >("FEM_Nodes");
-
+/*
   nodes.RegisterDataObject<rArray1d>("ReferencePosition");
   nodes.RegisterDataObject<rArray1d>("TotalDisplacement");
   nodes.RegisterDataObject<rArray1d>("IncrementalDisplacement");
