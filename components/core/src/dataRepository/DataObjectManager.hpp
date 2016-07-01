@@ -38,7 +38,7 @@ public:
    * @author Randolph R. Settgast
    * @param name the name of this object manager
    */
-  explicit DataObjectManager( const std::string& name );
+  explicit DataObjectManager( std::string const & name );
 
   /**
    *
@@ -64,19 +64,19 @@ public:
 
 
   template< typename T >
-  T& RegisterChildDataObjectManager( const std::string& name );
+  T& RegisterChildDataObjectManager( std::string const & name );
 
   template< typename T >
-  T& GetChildDataObjectManager( const std::string& name )
+  T& GetChildDataObjectManager( std::string const & name )
   {
     return *(m_subObjectManagers.at(name));
   }
 
   template< typename T >
-  std::size_t RegisterDataObject( const std::string& name );
+  std::size_t RegisterDataObject( std::string const & name );
 
 
-  std::size_t RegisterDataObject( const std::string& name, const rtTypes::TypeIDs& type )
+  std::size_t RegisterDataObject( std::string const & name, const rtTypes::TypeIDs& type )
   {
     return rtTypes::ApplyTypeLambda( type,
                                      [this, &name]( auto a ) -> size_t
@@ -89,26 +89,26 @@ public:
   //***********************************************************************************************
 
   template< typename T >
-  const T& GetDataObject( const std::size_t index ) const
+  const T& GetDataObject( std::size_t const index ) const
   {
     return m_dataObjects[index]->getObject<T>();
   }
   template< typename T >
-  T& GetDataObject( const std::size_t index )
+  T& GetDataObject( std::size_t const index )
   {
     return const_cast<T&>( const_cast<const DataObjectManager*>(this)->GetDataObject<T>( index ) );
   }
 
 
   template< typename T >
-  const DataObject<T>& GetDataObject( const std::string& name ) const
+  const DataObject<T>& GetDataObject( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
     return m_dataObjects[index]->getObject<T>();
   }
 
   template< typename T >
-  DataObject<T>& GetDataObject( const std::string& name )
+  DataObject<T>& GetDataObject( std::string const & name )
   { return const_cast<DataObject<T>&>( const_cast<const DataObjectManager*>(this)->GetDataObject<T>( name ) ); }
 
 
@@ -119,33 +119,33 @@ public:
 
 
   template< typename T >
-  const typename DataObject<T>::rtype GetDataObjectData( const std::size_t index ) const
+  const typename DataObject<T>::rtype GetDataObjectData( std::size_t const index ) const
   { return m_dataObjects[index]->getObjectData<T>(); }
 
   template< typename T >
-  typename DataObject<T>::rtype GetDataObjectData( const std::size_t index )
+  typename DataObject<T>::rtype GetDataObjectData( std::size_t const index )
   { return const_cast<T&>( const_cast<const DataObjectManager*>(this)->GetDataObjectData<T>( index ) ); }
 
 
 
   template< typename T >
-  typename DataObject<T>::const_rtype GetDataObjectData( const std::string& name ) const
+  typename DataObject<T>::const_rtype GetDataObjectData( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
     return m_dataObjects[index]->getObjectData<T>();
   }
   template< typename T >
-  typename DataObject<T>::rtype GetDataObjectData( const std::string& name )
+  typename DataObject<T>::rtype GetDataObjectData( std::string const & name )
   { return const_cast<typename DataObject<T>::rtype>( const_cast<const DataObjectManager*>(this)->GetDataObjectData<T>( name ) ); }
 
 
   template< typename T >
-  T& GetDataObjectManager( const std::string& name )
+  T& GetDataObjectManager( std::string const & name )
   {
     return *(m_subObjectManagers.at(name));
   }
 
-  void resize( const std::size_t newsize );
+  void resize( std::size_t const newsize );
 
   std::size_t size() const { return m_size; }
 
@@ -166,7 +166,7 @@ private:
 
 
 template< typename T >
-std::size_t DataObjectManager::RegisterDataObject( const std::string& name )
+std::size_t DataObjectManager::RegisterDataObject( std::string const & name )
 {
   std::size_t key = -1;
   auto iterKeyLookup = m_keyLookup.find(name);
@@ -193,7 +193,7 @@ std::size_t DataObjectManager::RegisterDataObject( const std::string& name )
 }
 
 template< typename T >
-T& DataObjectManager::RegisterChildDataObjectManager( const std::string& name )
+T& DataObjectManager::RegisterChildDataObjectManager( std::string const & name )
 {
   auto iterKeyLookup = m_subObjectManagers.find(name);
 

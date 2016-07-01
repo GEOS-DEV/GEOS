@@ -10,7 +10,7 @@
 namespace geosx
 {
 
-DataObjectManager::DataObjectManager( const std::string& name ):
+DataObjectManager::DataObjectManager( std::string const & name ):
 m_size(0),
 m_name(name),
 m_path(),

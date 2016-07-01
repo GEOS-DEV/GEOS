@@ -30,7 +30,7 @@ public:
    * @param name name of the object
    * \brief constructor
    */
-  DataObjectBase( const std::string& name );
+  DataObjectBase( std::string const & name );
 
 
   DataObjectBase( DataObjectBase&& source );
@@ -72,7 +72,7 @@ public:
 
 
   template< typename T >
-  static std::unique_ptr<DataObjectBase> Factory( const std::string& name )
+  static std::unique_ptr<DataObjectBase> Factory( std::string const & name )
   {
     return std::move(std::make_unique<DataObject<T> >( name ) );
   }
@@ -105,7 +105,7 @@ private:
 
 
   DataObjectBase() = delete;
-  DataObjectBase(const DataObjectBase&) = delete;
+  DataObjectBase( DataObjectBase const & ) = delete;
 
 };
 
