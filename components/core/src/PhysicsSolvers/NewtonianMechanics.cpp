@@ -31,13 +31,11 @@ NewtonianMechanics::~NewtonianMechanics()
 void NewtonianMechanics::RegisterDataObjects( DataObjectManager& domain )
 {
   DataObjectManager& nodes = domain.RegisterChildDataObjectManager<DataObjectManager >("FEM_Nodes");
-/*
-  nodes.RegisterDataObject<rArray1d>("ReferencePosition");
-  nodes.RegisterDataObject<rArray1d>("TotalDisplacement");
-  nodes.RegisterDataObject<rArray1d>("IncrementalDisplacement");
-  nodes.RegisterDataObject<rArray1d>("Velocity");
-  nodes.RegisterDataObject<rArray1d>("Acceleration");
-*/
+  nodes.RegisterDataObject<real64_array>("ReferencePosition");
+  nodes.RegisterDataObject<real64_array>("TotalDisplacement");
+  nodes.RegisterDataObject<real64_array>("IncrementalDisplacement");
+  nodes.RegisterDataObject<real64_array>("Velocity");
+  nodes.RegisterDataObject<real64_array>("Acceleration");
 }
 
 void NewtonianMechanics::TimeStep( real64 const& time_n,
@@ -53,23 +51,23 @@ void NewtonianMechanics::TimeStepExplicit( real64 const& time_n,
                                            const int cycleNumber,
                                            DataObjectManager& domain )
 {
-/*
   DataObjectManager& nodes = domain.GetDataObjectManager<DataObjectManager>("FEM_Nodes");
 
   std::size_t numNodes = nodes.size();
-  rArray1d const &    X = nodes.GetDataObjectData<rArray1d>("ReferencePosition");
-  rArray1d &    u = nodes.GetDataObjectData<rArray1d>("TotalDisplacement");
-  rArray1d & uhat = nodes.GetDataObjectData<rArray1d>("IncrementalDisplacement");
-  rArray1d & vel  = nodes.GetDataObjectData<rArray1d>("Velocity");
-  rArray1d const & acc  = nodes.GetDataObjectData<rArray1d>("Acceleration");
+  DataObject<real64_array>::rtype    X = nodes.GetDataObjectData<real64_array>("ReferencePosition");
+  DataObject<real64_array>::rtype    u = nodes.GetDataObjectData<real64_array>("TotalDisplacement");
+  DataObject<real64_array>::rtype uhat = nodes.GetDataObjectData<real64_array>("IncrementalDisplacement");
+  DataObject<real64_array>::rtype vel  = nodes.GetDataObjectData<real64_array>("Velocity");
+  DataObject<real64_array>::rtype acc  = nodes.GetDataObjectData<real64_array>("Acceleration");
 
-  Integration::OnePoint( acc.data(), vel.data(), dt, numNodes );
-  Integration::OnePoint( vel.data(), uhat.data(), u.data(), dt, numNodes );
+  DataObject<real64_array>::rtype junk  = nodes.GetDataObjectData<real64_array>("junk");
+
+  Integration::OnePoint( acc, vel, dt, numNodes );
+  Integration::OnePoint( vel, uhat, u, dt, numNodes );
 
 
   (void) time_n;
   (void) cycleNumber;
-  */
 }
 
 

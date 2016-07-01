@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <iostream>
 #include <cxxabi.h>
+#include <sys/ucontext.h>
+
+#include "stackTrace.hpp"
 
 namespace geosx
 {
@@ -14,7 +17,7 @@ namespace stacktrace
 void handler(int sig, int exitFlag, int exitCode )
 {
   void *array[20];
-  size_t size;
+  int size;
 
   // get void*'s for all entries on the stack
   size = backtrace(array, 20);
@@ -29,7 +32,7 @@ void handler(int sig, int exitFlag, int exitCode )
   char ** messages    = backtrace_symbols(array, size);
 
   // skip first stack frame (points here)
-  for (unsigned int i = 1; i < size && messages != NULL; ++i)
+  for ( int i = 1; i < size && messages != NULL; ++i)
   {
       char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
 
@@ -93,6 +96,10 @@ void handler(int sig, int exitFlag, int exitCode )
 
 }
 
-}
+
 
 }
+
+
+}
+

@@ -21,14 +21,14 @@ NewComponent::~NewComponent()
   // TODO Auto-generated destructor stub
 }
 
-void RegisterDataObjects( DataObjectManager& domain )
+void RegisterDataObjects( DataObjectManager& /*domain*/ )
 {}
 
 
-void TimeStep( real64 const& time_n,
-                       real64 const& dt,
-                       int32 const cycleNumber,
-                       DataObjectManager& domain )
+void TimeStep( real64 const& /*time_n*/,
+               real64 const& /*dt*/,
+               int32 const /*cycleNumber*/,
+               DataObjectManager& /*domain*/ )
 {}
 
 REGISTER_FACTORY( NewComponent, SolverBase, std::string )

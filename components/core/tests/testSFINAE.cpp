@@ -19,7 +19,7 @@ struct Bar_StaticMemberData : Foo_StaticMemberData {};
 
 struct Foo_MemberFunction_1Arg
 {
-  int memberName(int a) { return 1;}
+  int memberName(int a) { a=a; return 1;}
 };
 struct Bar_MemberFunction_1Arg : Foo_MemberFunction_1Arg {};
 

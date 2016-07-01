@@ -13,18 +13,108 @@
 #include "slic/slic.hpp"
 #include "../src/codingUtilities/stackTrace.hpp"
 #include "../src/codingUtilities/SetSignalHandling.hpp"
-#include <fenv.h>
-#include <xmmintrin.h>
 // API coverage tests
 // Each test should be documented with the interface functions being tested
 
 //------------------------------------------------------------------------------
 // getName()
 //------------------------------------------------------------------------------
-TEST(testStackTrace,stackTrace)
+//TEST(testStackTrace,stackTrace)
+//{
+//  std::cout<<"calling handler0"<<std::endl;
+//  geosx::stacktrace::handler0(0);
+//}
+#include <execinfo.h>
+
+void my_terminate(void);
+namespace {
+    // invoke set_terminate as part of global constant initialization
+    static const bool SET_TERMINATE = std::set_terminate(my_terminate);
+}
+void my_terminate()
 {
-  std::cout<<"calling handler0"<<std::endl;
-  geosx::stacktrace::handler0(0);
+  static bool tried_throw = false;
+
+  try
+  {
+    // try once to re-throw currently active exception
+    if( !tried_throw++ )
+      throw;
+  }
+  catch( const std::exception &e )
+  {
+    std::cerr << __FUNCTION__ << " caught unhandled exception. what(): "
+              << e.what()
+              << std::endl;
+  }
+  catch( ... )
+  {
+    std::cerr << __FUNCTION__ << " caught unknown/unhandled exception."
+              << std::endl;
+  }
+
+  void * array[50];
+  int size = backtrace( array, 50 );
+
+  std::cerr << __FUNCTION__ << " backtrace returned "
+            << size
+            << " frames\n\n";
+
+  char ** messages = backtrace_symbols( array, size );
+
+  for( int i = 0 ; i < size && messages != NULL ; ++i )
+  {
+    std::cerr << "[bt]: (" << i << ") " << messages[i] << std::endl;
+  }
+  std::cerr << std::endl;
+
+  free( messages );
+
+//  abort();
+}
+
+int throw_exception() {
+    // throw an unhandled runtime error
+    throw std::runtime_error("RUNTIME ERROR!");
+    return 0;
+}
+
+int foo2() {
+    throw_exception();
+    return 0;
+}
+
+int foo1() {
+    foo2();
+    return 0;
+}
+TEST(testStackTrace,uncaughtException)
+{
+  try
+  {
+    foo1();
+  }
+  catch(...)
+  {
+    std::cerr << __FUNCTION__ << " caught unknown/unhandled exception."
+              << std::endl;
+    void * array[50];
+    int size = backtrace( array, 50 );
+
+    std::cerr << __FUNCTION__ << " backtrace returned "
+              << size
+              << " frames\n\n";
+
+    char ** messages = backtrace_symbols( array, size );
+
+    for( int i = 0 ; i < size && messages != NULL ; ++i )
+    {
+      std::cerr << "[bt]: (" << i << ") " << messages[i] << std::endl;
+    }
+    std::cerr << std::endl;
+
+    free( messages );
+  }
 }
 
 
