@@ -41,7 +41,7 @@ public:
    *
    * @return type_info of the DataObject
    */
-  virtual const std::type_info& get_typeid() const = 0 ;
+  virtual std::type_info const & get_typeid() const = 0 ;
 
 
 //  virtual bool empty() const = 0;
@@ -93,11 +93,12 @@ public:
 
   template< typename T >
   typename DataObject<T>::const_rtype getObjectData() const
-  { return (dynamic_cast<const DataObject<T>&>(*this)).getObjectData(); }
+  { return (dynamic_cast<DataObject<T> const &>(*this)).getObjectData(); }
 
   template< typename T >
   typename DataObject<T>::rtype getObjectData()
-  { return const_cast<typename DataObject<T>::rtype>( const_cast<const DataObjectBase*>(this)->getObjectData<T>() ); }
+  { return (dynamic_cast<DataObject<T> &>(*this)).getObjectData(); }
+//  { return const_cast<typename DataObject<T>::rtype>( const_cast<DataObjectBase const *>(this)->getObjectData<T>() ); }
 
 
 private:

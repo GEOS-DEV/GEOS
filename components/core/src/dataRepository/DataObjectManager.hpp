@@ -49,8 +49,8 @@ public:
 
 
   DataObjectManager() = delete;
-  DataObjectManager( const DataObjectManager& ) = delete;
-  DataObjectManager& operator=(const DataObjectManager&) = delete;
+  DataObjectManager( DataObjectManager const & ) = delete;
+  DataObjectManager& operator=( DataObjectManager const & ) = delete;
   DataObjectManager& operator=(DataObjectManager&&) = delete;
 
   ///@}
@@ -73,13 +73,13 @@ public:
   }
 
   template< typename T >
-  std::size_t RegisterDataObject( std::string const & name );
+  DataObjectBase * RegisterDataObject( std::string const & name, std::size_t * const rkey = nullptr );
 
 
-  std::size_t RegisterDataObject( std::string const & name, const rtTypes::TypeIDs& type )
+  DataObjectBase * RegisterDataObject( std::string const & name, rtTypes::TypeIDs const & type )
   {
     return rtTypes::ApplyTypeLambda( type,
-                                     [this, &name]( auto a ) -> size_t
+                                     [this, &name]( auto a ) -> DataObjectBase *
                                      {
                                        return this->RegisterDataObject<decltype(a)>(name);
                                      } );
@@ -89,7 +89,7 @@ public:
   //***********************************************************************************************
 
   template< typename T >
-  const T& GetDataObject( std::size_t const index ) const
+  T const & GetDataObject( std::size_t const index ) const
   {
     return m_dataObjects[index]->getObject<T>();
   }
@@ -119,7 +119,7 @@ public:
 
 
   template< typename T >
-  const typename DataObject<T>::rtype GetDataObjectData( std::size_t const index ) const
+  typename DataObject<T>::rtype_const GetDataObjectData( std::size_t const index ) const
   { return m_dataObjects[index]->getObjectData<T>(); }
 
   template< typename T >
@@ -129,14 +129,19 @@ public:
 
 
   template< typename T >
-  typename DataObject<T>::const_rtype GetDataObjectData( std::string const & name ) const
+  typename DataObject<T>::rtype_const GetDataObjectData( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
     return m_dataObjects[index]->getObjectData<T>();
   }
   template< typename T >
   typename DataObject<T>::rtype GetDataObjectData( std::string const & name )
-  { return const_cast<typename DataObject<T>::rtype>( const_cast<const DataObjectManager*>(this)->GetDataObjectData<T>( name ) ); }
+  {
+    auto index = m_keyLookup.at(name);
+    return m_dataObjects[index]->getObjectData<T>();
+  }
+
+//  { return static_cast<typename DataObject<T>::rtype>( static_cast<const DataObjectManager *>(this)->GetDataObjectData<T>( name ) ); }
 
 
   template< typename T >
@@ -166,9 +171,10 @@ private:
 
 
 template< typename T >
-std::size_t DataObjectManager::RegisterDataObject( std::string const & name )
+DataObjectBase * DataObjectManager::RegisterDataObject( std::string const & name, std::size_t * const rkey )
 {
-  std::size_t key = -1;
+  std::size_t key = static_cast<std::size_t>(-1);
+
   auto iterKeyLookup = m_keyLookup.find(name);
 
   // if the key was not found, make DataObject<T> and insert
@@ -189,7 +195,12 @@ std::size_t DataObjectManager::RegisterDataObject( std::string const & name )
       throw std::exception();
     }
   }
-  return key;
+
+  if( rkey != nullptr )
+  {
+    *rkey = key;
+  }
+  return m_dataObjects[key].get();
 }
 
 template< typename T >

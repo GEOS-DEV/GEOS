@@ -44,11 +44,11 @@ public:
 
 
 
-#ifndef OBJECTDATA_PTR_RETURN
+#if 0
   using rtype = T &;
-  using const_rtype = T const &;
+  using rtype_const = T const &;
 
-  const_rtype getObjectData() const
+  rtype_const getObjectData() const
   { return m_data; }
 
   rtype getObjectData()
@@ -57,17 +57,8 @@ public:
 
 #else
 
-  /*
-  template<class TYPE>
-  struct has_pointer_type
-  {
-    template<class U> static char (&test(typename U::pointer const*))[1];
-    template<class U> static char (&test(...))[2];
-    static const bool value = (sizeof(test<TYPE>(0)) == 1);
-  };
-*/
 
-  template<class U=T, bool has = sfinae::has_pointer_type<U>::value >
+  template<class U=T, bool has = has_pointer_type<U>::value >
   struct Get_Type
   {
     typedef U&       type;
@@ -84,12 +75,12 @@ public:
 
 
   using rtype       = typename Get_Type<T>::type;
-  using const_rtype = typename Get_Type<T>::const_type;
+  using rtype_const = typename Get_Type<T>::const_type;
 
   rtype getObjectData()
   { return m_data.data(); }
 
-  const_rtype getObjectData() const
+  rtype_const getObjectData() const
   { return m_data.data(); }
 #endif
 
@@ -99,8 +90,6 @@ public:
 
   DataObject() = delete;
   DataObject( DataObject const & ) = delete;
-
-
 };
 
 
