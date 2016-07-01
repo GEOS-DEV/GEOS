@@ -9,7 +9,7 @@
 
 namespace geosx {
 
-DataObjectBase::DataObjectBase( const std::string& name ):
+DataObjectBase::DataObjectBase( std::string const & name ):
   m_name(name)
 {}
 

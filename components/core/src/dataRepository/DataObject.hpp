@@ -20,7 +20,7 @@ class DataObject : public DataObjectBase
 {
 
 public:
-  DataObject( const std::string& name ):
+  DataObject( std::string const & name ):
     DataObjectBase(name)
   {}
 
@@ -97,8 +97,9 @@ private:
 public:
   T m_data;
 
-  DataObject();
-  DataObject( const DataObject&);
+  DataObject() = delete;
+  DataObject( DataObject const & ) = delete;
+
 
 };
 
