@@ -8,6 +8,8 @@
 #ifndef SRC_CODINGUTILITIES_SFINAE_HPP_
 #define SRC_CODINGUTILITIES_SFINAE_HPP_
 
+#include "macros.hpp"
+
 namespace geosx
 {
 
@@ -107,7 +109,6 @@ public:\
 
 
 
-#define VA_LIST(...) __VA_ARGS__
 
 #define CONDITIONAL_VIRTUAL_FUNCTION(NAME,RTYPE,PARAMS,ARGS)\
 template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\

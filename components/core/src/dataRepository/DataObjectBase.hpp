@@ -34,7 +34,6 @@ public:
 
 
   DataObjectBase( DataObjectBase&& source );
-  DataObjectBase& operator=( DataObjectBase&& source );
 
 
   /*!
@@ -107,6 +106,8 @@ private:
 
   DataObjectBase() = delete;
   DataObjectBase( DataObjectBase const & ) = delete;
+  DataObjectBase& operator=( DataObjectBase const & ) = delete;
+  DataObjectBase& operator=( DataObjectBase&& ) = delete;
 
 };
 

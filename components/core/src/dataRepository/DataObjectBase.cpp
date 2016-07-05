@@ -18,4 +18,9 @@ DataObjectBase::~DataObjectBase() {
 	// TODO Auto-generated destructor stub
 }
 
+
+DataObjectBase::DataObjectBase( DataObjectBase&& source ):
+    m_name( std::move(source.m_name) )
+{}
+
 } /* namespace geosx */

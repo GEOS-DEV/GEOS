@@ -13,5 +13,7 @@
 
 #define LOCATION __FILE__ ":" STRINGIZE(__LINE__)
 
+#define VA_LIST(...) __VA_ARGS__
+
 
 #endif /* MACROS_HPP_ */

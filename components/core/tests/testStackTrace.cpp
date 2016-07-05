@@ -38,8 +38,11 @@ void my_terminate()
   try
   {
     // try once to re-throw currently active exception
-    if( !tried_throw++ )
+    if( !tried_throw )
+    {
+      tried_throw = true;
       throw;
+    }
   }
   catch( const std::exception &e )
   {

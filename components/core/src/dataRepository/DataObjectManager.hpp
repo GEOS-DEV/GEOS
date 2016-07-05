@@ -45,11 +45,12 @@ public:
    */
   virtual ~DataObjectManager();
 
-  DataObjectManager( DataObjectManager&& other );
+  DataObjectManager( DataObjectManager const & source ) = delete;
+
+  DataObjectManager( DataObjectManager&& source );
 
 
   DataObjectManager() = delete;
-  DataObjectManager( DataObjectManager const & ) = delete;
   DataObjectManager& operator=( DataObjectManager const & ) = delete;
   DataObjectManager& operator=(DataObjectManager&&) = delete;
 
@@ -211,7 +212,7 @@ T& DataObjectManager::RegisterChildDataObjectManager( std::string const & name )
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_subObjectManagers.end() )
   {
-    auto insertResult = m_subObjectManagers.insert( std::make_pair(name,std::move( std::unique_ptr< T >( new T( name ) ) ) ) );
+    auto insertResult = m_subObjectManagers.insert( std::move(std::make_pair( name, std::move( std::make_unique< T >( name ) ) ) ) );
 
     if( !insertResult.second )
     {

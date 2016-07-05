@@ -19,7 +19,7 @@ class DataObjectManager;
 class SolverBase
 {
 public:
-  typedef ObjectCatalogueEntryBase< geosx::SolverBase, std::string > SolverFactory;
+//  typedef ObjectCatalogueEntryBase< geosx::SolverBase, std::string > SolverFactory;
 
   SolverBase( std::string const & name );
 
@@ -34,27 +34,67 @@ public:
                          DataObjectManager& domain ) = 0;
 
 
-/*
-  static std::map< std::string, SolverBase* >& GetCatalogue()
-  {
-    static std::map< std::string, SolverBase* > m_catalogue;
-    return m_catalogue;
-  }
 
-  template< typename DERIVED >
-  void addCatalogueEntry()
-  {
-    std::string name = DERIVED::CatalogueName();
-    SolverBase::GetCatalogue()[name] = this;
-  }
 
-  template< typename DERIVED, typename ...ARGS >
-  static std::unique_ptr<SolverBase> Factory( const std::string& name, const ARGS&... args )
-  {
-    return std::unique_ptr<SolverBase>( new DERIVED(args...) );
-  }
 
-*/
+
+//  class CatalogueEntryBase
+//  {
+//  public:
+//    typedef std::unordered_map<std::string, CatalogueEntryBase*> CatalogueType;
+//
+//    CatalogueEntryBase()
+//    {
+//    }
+//    virtual std::unique_ptr<SolverBase> Allocate( std::string const & name ) = 0;
+//    virtual ~CatalogueEntryBase()
+//    {
+//    }
+//
+//    static CatalogueType& GetCatalogue()
+//    {
+//      static CatalogueType * const catalogue = new CatalogueType();
+//      return *catalogue;
+//    }
+//
+//    static std::unique_ptr<SolverBase> Factory( const std::string& objectTypeName, std::string const & name )
+//    {
+//      std::cout << "Creating solver of type: " << objectTypeName << std::endl;
+//      CatalogueEntryBase* const entry = GetCatalogue().at( objectTypeName );
+//      return entry->Allocate( name );
+//    }
+//
+//  };
+//
+//  template<typename TYPE>
+//  class CatalogueEntry : public CatalogueEntryBase
+//  {
+//  public:
+//    CatalogueEntry() :
+//        CatalogueEntryBase()
+//    {
+//      std::string name = TYPE::CatalogueName();
+//      ( CatalogueEntryBase::GetCatalogue() )[name] = this;
+//      std::cout << "Registered Solver: " << name << std::endl;
+//    }
+//
+//    ~CatalogueEntry() final
+//    {
+//    }
+//
+//    virtual std::unique_ptr<SolverBase> Allocate( std::string const & name ) final
+//    {
+//      return std::unique_ptr<SolverBase>( new TYPE( name ) );
+//    }
+//    /// Compiler directive to simplify autoregistration
+//
+//  };
+//
+//  typedef CatalogueEntryBase SolverFactory;
+//  #define REGISTER_SOLVER( SOLVER ) namespace{ SolverBase::CatalogueEntry<SOLVER> reg_; }
+
+
+  CATALOGUE( SolverBase, VA_LIST( std::string const & name ), VA_LIST( name ) )
 
 private:
   std::string m_name;
@@ -69,6 +109,11 @@ private:
   SolverBase& operator=(const SolverBase&&) = delete;
 };
 
+
+
+
+
 } /* namespace ANST */
+
 
 #endif /* SOLVERBASE_HPP_ */

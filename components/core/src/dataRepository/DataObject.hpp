@@ -26,6 +26,23 @@ public:
 
   virtual ~DataObject() noexcept override final{}
 
+  DataObject( DataObject const & source ):
+    m_data(source.m_data)
+  {}
+
+  DataObject( DataObject&& source ):
+    m_data( std::move(source.m_data) )
+  {}
+
+  DataObject& operator=( DataObject const & source )
+  {
+    m_data = source.m_data;
+  }
+
+  DataObject& operator=( DataObject && source )
+  {
+    m_data = std::move(source.m_data);
+  }
 
   virtual const std::type_info& get_typeid() const noexcept override final
   {
@@ -77,11 +94,20 @@ public:
   using rtype       = typename Get_Type<T>::type;
   using rtype_const = typename Get_Type<T>::const_type;
 
-  rtype getObjectData()
-  { return m_data.data(); }
 
-  rtype_const getObjectData() const
-  { return m_data.data(); }
+  HAS_MEMBER_FUNCTION(data,)
+  template<class U = T>
+  typename std::enable_if<has_memberfunction_data<U>::value, rtype>::type getObjectData()
+  {
+    return m_data.data();
+  }
+  template<class U = T>
+  typename std::enable_if<!has_memberfunction_data<U>::value, rtype>::type getObjectData()
+  {
+      return m_data;
+  }
+
+
 #endif
 
 private:
@@ -89,7 +115,6 @@ public:
   T m_data;
 
   DataObject() = delete;
-  DataObject( DataObject const & ) = delete;
 };
 
 

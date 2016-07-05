@@ -30,6 +30,7 @@ NewtonianMechanics::~NewtonianMechanics()
 
 void NewtonianMechanics::RegisterDataObjects( DataObjectManager& domain )
 {
+
   DataObjectManager& nodes = domain.RegisterChildDataObjectManager<DataObjectManager >("FEM_Nodes");
   nodes.RegisterDataObject<real64_array>("ReferencePosition");
   nodes.RegisterDataObject<real64_array>("TotalDisplacement");
@@ -51,6 +52,7 @@ void NewtonianMechanics::TimeStepExplicit( real64 const& time_n,
                                            const int cycleNumber,
                                            DataObjectManager& domain )
 {
+  std::cout<<"breakpoint 2: "<<LOCATION<<std::endl;
   DataObjectManager& nodes = domain.GetDataObjectManager<DataObjectManager>("FEM_Nodes");
 
   std::size_t numNodes = nodes.size();
@@ -60,7 +62,6 @@ void NewtonianMechanics::TimeStepExplicit( real64 const& time_n,
   DataObject<real64_array>::rtype vel  = nodes.GetDataObjectData<real64_array>("Velocity");
   DataObject<real64_array>::rtype acc  = nodes.GetDataObjectData<real64_array>("Acceleration");
 
-  DataObject<real64_array>::rtype junk  = nodes.GetDataObjectData<real64_array>("junk");
 
   Integration::OnePoint( acc, vel, dt, numNodes );
   Integration::OnePoint( vel, uhat, u, dt, numNodes );
@@ -71,5 +72,8 @@ void NewtonianMechanics::TimeStepExplicit( real64 const& time_n,
 }
 
 
-REGISTER_FACTORY( NewtonianMechanics, SolverBase, std::string )
+//REGISTER_FACTORY( NewtonianMechanics, SolverBase, std::string )
+//REGISTER_SOLVER(NewtonianMechanics)
+
+REGISTER_CATALOGUE_ENTRY( SolverBase, NewtonianMechanics )
 } /* namespace ANST */
