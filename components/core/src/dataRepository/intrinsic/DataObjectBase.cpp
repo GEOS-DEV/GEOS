@@ -5,7 +5,7 @@
  *      Author: rrsettgast
  */
 
-#include "DataObjectBase.hpp"
+#include "../intrinsic/DataObjectBase.hpp"
 
 namespace geosx {
 
@@ -14,9 +14,8 @@ DataObjectBase::DataObjectBase( std::string const & name ):
 {}
 
 
-DataObjectBase::~DataObjectBase() {
-	// TODO Auto-generated destructor stub
-}
+DataObjectBase::~DataObjectBase()
+{}
 
 
 DataObjectBase::DataObjectBase( DataObjectBase&& source ):

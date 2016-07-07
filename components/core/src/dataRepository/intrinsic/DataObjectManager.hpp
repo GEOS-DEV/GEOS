@@ -8,9 +8,9 @@
 #ifndef DATAOBJECTMANAGER_H_
 #define DATAOBJECTMANAGER_H_
 
-#include "DataObject.hpp"
-//#include "include/common.h"
 #include <iostream>
+
+#include "../intrinsic/DataObject.hpp"
 //#include "CodingUtilities/ANSTexception.hpp"
 
 /**

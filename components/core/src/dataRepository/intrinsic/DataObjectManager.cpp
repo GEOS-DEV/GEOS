@@ -5,7 +5,7 @@
  *      Author: rrsettgast
  */
 
-#include "DataObjectManager.hpp"
+#include "../intrinsic/DataObjectManager.hpp"
 
 namespace geosx
 {

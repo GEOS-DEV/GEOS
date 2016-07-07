@@ -4,10 +4,10 @@
 #
 set(geosx_headers
   ${geosx_headers}
-    dataRepository/DataObject.hpp
-    dataRepository/DataObjectBase.hpp
-    dataRepository/DataObjectManager.hpp
     dataRepository/DataTypes.hpp
+    dataRepository/intrinsic/DataObject.hpp
+    dataRepository/intrinsic/DataObjectBase.hpp
+    dataRepository/intrinsic/DataObjectManager.hpp
     PARENT_SCOPE )
 
 #
@@ -15,7 +15,7 @@ set(geosx_headers
 #
 set(geosx_core_sources
   ${geosx_core_sources}
-    dataRepository/DataObject.cpp
-    dataRepository/DataObjectBase.cpp
-    dataRepository/DataObjectManager.cpp
+    dataRepository/intrinsic/DataObject.cpp
+    dataRepository/intrinsic/DataObjectBase.cpp
+    dataRepository/intrinsic/DataObjectManager.cpp
     PARENT_SCOPE )

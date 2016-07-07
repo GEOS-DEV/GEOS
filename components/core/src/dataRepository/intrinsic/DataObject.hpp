@@ -9,8 +9,8 @@
 #define CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_
 
 #include "sidre/sidre.hpp"
-#include "DataTypes.hpp"
-#include "DataObjectBase.hpp"
+#include "../DataTypes.hpp"
+#include "../intrinsic/DataObjectBase.hpp"
 #include "codingUtilities/sfinae.hpp"
 namespace geosx
 {

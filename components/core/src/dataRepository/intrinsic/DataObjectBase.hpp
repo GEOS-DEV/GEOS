@@ -11,6 +11,14 @@
 #include <string>
 #include <memory>
 
+namespace asctoolkit
+{
+namespace sidre
+{
+class DataView;
+}
+}
+
 namespace geosx {
 
 
@@ -103,6 +111,7 @@ public:
 private:
   std::string m_name;
 
+  asctoolkit::sidre::DataView* m_sidreView;
 
   DataObjectBase() = delete;
   DataObjectBase( DataObjectBase const & ) = delete;

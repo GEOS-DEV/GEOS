@@ -2,7 +2,7 @@
 #include "slic/GenericOutputStream.hpp"
 #include <iostream>
 
-#include "dataRepository/DataObjectManager.hpp"
+#include "../dataRepository/intrinsic/DataObjectManager.hpp"
 #include "PhysicsSolvers/NewtonianMechanics.hpp"
 #include "codingUtilities/SetSignalHandling.hpp"
 #include "codingUtilities/stackTrace.hpp"

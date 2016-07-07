@@ -6,11 +6,9 @@
  */
 
 #include "NewtonianMechanics.hpp"
-#include "dataRepository/DataObjectManager.hpp"
-//#include "DomainPartition.hpp"
-//#include <StringUtilities.hpp>
-
 #include <vector>
+
+#include "../dataRepository/intrinsic/DataObjectManager.hpp"
 namespace geosx
 {
 

@@ -11,6 +11,10 @@ if(NOT CXX_STD STREQUAL c++14)
     MESSAGE(FATAL_ERROR "c++14 is NOT enabled. GEOSX requires c++14")
 endif(NOT CXX_STD STREQUAL c++14)
 
+if( NOT ( CMAKE_CXX_STANDARD LESS 11) )
+	add_definitions("-DUSE_CXX11")
+endif()
+
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -pedantic-errors)
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wabi)
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wextra)
