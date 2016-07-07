@@ -110,7 +110,7 @@ public:\
 
 
 
-#define CONDITIONAL_VIRTUAL_FUNCTION(NAME,RTYPE,PARAMS,ARGS)\
+#define CONDITIONAL_VIRTUAL_FUNCTION(NAME,RTYPE,CONST,PARAMS,ARGS)\
 template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
 struct wrapper##NAME\
 {\
@@ -124,17 +124,17 @@ struct wrapper##NAME<U,true>\
     return (*obj).m_data.NAME(ARGS);\
   }\
 };\
-virtual RTYPE NAME(PARAMS) override final\
+virtual RTYPE NAME(PARAMS) CONST override final\
 {\
   wrapper##NAME<T> temp;\
   return temp.f(this ,ARGS);\
 }
 
-#define CONDITIONAL_VIRTUAL_FUNCTION0(NAME,RTYPE)\
+#define CONDITIONAL_VIRTUAL_FUNCTION0(NAME,RTYPE,CONST)\
 template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
 struct wrapper##NAME\
 {\
-  RTYPE f(...) {return 0;}\
+  RTYPE f(...) {return RTYPE();}\
 };\
 template<typename U>\
 struct wrapper##NAME<U,true>\
@@ -144,7 +144,7 @@ struct wrapper##NAME<U,true>\
     return (*obj).m_data.NAME();\
   }\
 };\
-virtual RTYPE NAME() override final\
+virtual RTYPE NAME() CONST override final\
 {\
   wrapper##NAME<T> temp;\
   return temp.f(this);\

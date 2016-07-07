@@ -51,16 +51,14 @@ public:
   virtual std::type_info const & get_typeid() const = 0 ;
 
 
-//  virtual bool empty() const = 0;
-
-
-  virtual std::size_t size( ) = 0;
-  /*
-  size_type max_size() const;
-
-
+  virtual bool empty() const = 0;
+  virtual std::size_t size( ) const = 0;
+  virtual void reserve( std::size_t new_cap ) = 0;
+  virtual std::size_t capacity() const = 0;
+  virtual std::size_t max_size() const = 0;
   virtual void clear() = 0 ;
   virtual void insert() = 0;
+  /*
   iterator erase( iterator pos );
   iterator erase( const_iterator pos );
   iterator erase( const_iterator first, const_iterator last );

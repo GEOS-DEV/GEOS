@@ -51,14 +51,29 @@ public:
 
 
 
-  HAS_MEMBER_FUNCTION(size,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(size,std::size_t)
+  HAS_MEMBER_FUNCTION(empty,)
+  CONDITIONAL_VIRTUAL_FUNCTION0(empty,bool,const)
 
+  HAS_MEMBER_FUNCTION(size,)
+  CONDITIONAL_VIRTUAL_FUNCTION0(size,std::size_t,const)
+
+  HAS_MEMBER_FUNCTION(reserve, std::size_t(1) )
+  CONDITIONAL_VIRTUAL_FUNCTION( reserve , void,, VA_LIST(std::size_t a), VA_LIST(a) )
+
+  HAS_MEMBER_FUNCTION(capacity,)
+  CONDITIONAL_VIRTUAL_FUNCTION0(capacity,std::size_t,const)
+
+  HAS_MEMBER_FUNCTION(max_size,)
+  CONDITIONAL_VIRTUAL_FUNCTION0(max_size,std::size_t,const)
+
+  HAS_MEMBER_FUNCTION(clear,)
+  CONDITIONAL_VIRTUAL_FUNCTION0(clear,void,)
+
+  HAS_MEMBER_FUNCTION(insert,)
+  CONDITIONAL_VIRTUAL_FUNCTION0(insert,void,)
 
   HAS_MEMBER_FUNCTION(resize, std::size_t(1) )
-  CONDITIONAL_VIRTUAL_FUNCTION( resize , void, VA_LIST(std::size_t a), VA_LIST(a) )
-
-
+  CONDITIONAL_VIRTUAL_FUNCTION( resize , void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
 
 #if 0
