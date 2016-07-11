@@ -13,7 +13,10 @@
 
 namespace geosx
 {
-class DataObjectManager;
+namespace dataRepository
+{
+class WrapperCollection;
+}
 
 class NewtonianMechanics : public SolverBase
 {
@@ -25,18 +28,18 @@ public:
 
   static std::string CatalogueName() { return "NewtonianMechanics"; }
 
-  virtual void RegisterDataObjects( DataObjectManager& domain ) override;
+  virtual void RegisterDataObjects( dataRepository::WrapperCollection& domain ) override;
 
 
   virtual void TimeStep( real64 const& time_n,
                          real64 const& dt,
                          int32 const cycleNumber,
-                         DataObjectManager& domain ) override;
+                         dataRepository::WrapperCollection& domain ) override;
 
   void TimeStepExplicit( real64 const& time_n,
                          real64 const& dt,
                          int32 const cycleNumber,
-                         DataObjectManager& domain );
+                         dataRepository::WrapperCollection& domain );
 
 
 

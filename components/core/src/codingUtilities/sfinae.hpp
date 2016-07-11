@@ -110,43 +110,43 @@ public:\
 
 
 
-#define CONDITIONAL_VIRTUAL_FUNCTION(NAME,RTYPE,CONST,PARAMS,ARGS)\
-template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
-struct wrapper##NAME\
+#define CONDITIONAL_VIRTUAL_FUNCTION(CLASSNAME,FUNCNAME,RTYPE,CONST,PARAMS,ARGS)\
+template<typename U=T, bool has = has_memberfunction_##FUNCNAME<U>::value >\
+struct wrapper##FUNCNAME\
 {\
   RTYPE f(...) {return RTYPE();}\
 };\
 template<typename U>\
-struct wrapper##NAME<U,true>\
+struct wrapper##FUNCNAME<U,true>\
 {\
-  RTYPE f( DataObject<U> * const obj ,PARAMS )\
+  RTYPE f( CLASSNAME * const obj ,PARAMS )\
   {\
-    return (*obj).m_data.NAME(ARGS);\
+    return (*obj).m_data.FUNCNAME(ARGS);\
   }\
 };\
-virtual RTYPE NAME(PARAMS) CONST override final\
+virtual RTYPE FUNCNAME(PARAMS) CONST override final\
 {\
-  wrapper##NAME<T> temp;\
+  wrapper##FUNCNAME<T> temp;\
   return temp.f(this ,ARGS);\
 }
 
-#define CONDITIONAL_VIRTUAL_FUNCTION0(NAME,RTYPE,CONST)\
-template<typename U=T, bool has = has_memberfunction_##NAME<U>::value >\
-struct wrapper##NAME\
+#define CONDITIONAL_VIRTUAL_FUNCTION0(CLASSNAME,FUNCNAME,RTYPE,CONST)\
+template<typename U=T, bool has = has_memberfunction_##FUNCNAME<U>::value >\
+struct wrapper##FUNCNAME\
 {\
   RTYPE f(...) {return RTYPE();}\
 };\
 template<typename U>\
-struct wrapper##NAME<U,true>\
+struct wrapper##FUNCNAME<U,true>\
 {\
-  RTYPE f( DataObject<U> * const obj )\
+  RTYPE f( CLASSNAME * const obj )\
   {\
-    return (*obj).m_data.NAME();\
+    return (*obj).m_data.FUNCNAME();\
   }\
 };\
-virtual RTYPE NAME() CONST override final\
+virtual RTYPE FUNCNAME() CONST override final\
 {\
-  wrapper##NAME<T> temp;\
+  wrapper##FUNCNAME<T> temp;\
   return temp.f(this);\
 }
 

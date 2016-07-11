@@ -2,7 +2,7 @@
 #include "slic/GenericOutputStream.hpp"
 #include <iostream>
 
-#include "../dataRepository/intrinsic/DataObjectManager.hpp"
+#include "../dataRepository/intrinsic/WrapperCollection.hpp"
 #include "PhysicsSolvers/NewtonianMechanics.hpp"
 #include "codingUtilities/SetSignalHandling.hpp"
 #include "codingUtilities/stackTrace.hpp"
@@ -30,7 +30,7 @@ int main()
 
 
 
-  geosx::DataObjectManager domain("domain") ;
+  geosx::dataRepository::WrapperCollection domain("domain") ;
 
   std::string newName("new solver");
 //  auto solver = geosx::SolverBase::SolverFactory::Factory(geosx::NewtonianMechanics::CatalogueName(),newName);

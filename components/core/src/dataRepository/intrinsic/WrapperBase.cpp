@@ -5,21 +5,24 @@
  *      Author: rrsettgast
  */
 
-#include "../intrinsic/DataObjectBase.hpp"
+#include "WrapperBase.hpp"
 
 namespace geosx {
+namespace dataRepository
+{
 
-DataObjectBase::DataObjectBase( std::string const & name ):
+WrapperBase::WrapperBase( std::string const & name ):
   m_name(name)
 {}
 
 
-DataObjectBase::~DataObjectBase()
+WrapperBase::~WrapperBase()
 {}
 
 
-DataObjectBase::DataObjectBase( DataObjectBase&& source ):
+WrapperBase::WrapperBase( WrapperBase&& source ):
     m_name( std::move(source.m_name) )
 {}
 
+}
 } /* namespace geosx */

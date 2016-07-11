@@ -11,7 +11,7 @@ import platform
 import shutil
 
 def extract_cmake_location(file_path):
-    # print "Extracting cmake entry from host config file ", file_path
+    print "Extracting cmake entry from host config file ", file_path
     if os.path.exists(file_path):
         cmake_line_prefix = "# cmake executable path: "
         file_handle = open(file_path, "r")
@@ -129,6 +129,7 @@ os.makedirs(installpath)
 ############################
 
 cmakeline = extract_cmake_location(cachefile)
+cmakeline = "cmake"
 assert cmakeline, "Host config file doesn't contain valid cmake location, value was %s" % cmakeline
 
 # Add cache file option

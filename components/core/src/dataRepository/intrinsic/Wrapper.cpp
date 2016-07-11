@@ -5,7 +5,7 @@
  *      Author: settgast
  */
 
-#include "../intrinsic/DataObject.hpp"
+#include "Wrapper.hpp"
 
 namespace geosx
 {

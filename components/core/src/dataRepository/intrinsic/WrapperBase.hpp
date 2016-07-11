@@ -20,28 +20,30 @@ class DataView;
 }
 
 namespace geosx {
+namespace dataRepository
+{
 
 
-template< typename T > class DataObject;
+template< typename T > class Wrapper;
 
-class DataObjectBase
+class WrapperBase
 {
 public:
 
   /*!
    * \brief default destuctor
    */
-  virtual ~DataObjectBase();
+  virtual ~WrapperBase();
 
   /*!
    *
    * @param name name of the object
    * \brief constructor
    */
-  DataObjectBase( std::string const & name );
+  WrapperBase( std::string const & name );
 
 
-  DataObjectBase( DataObjectBase&& source );
+  WrapperBase( WrapperBase&& source );
 
 
   /*!
@@ -77,32 +79,32 @@ public:
 
 
   template< typename T >
-  static std::unique_ptr<DataObjectBase> Factory( std::string const & name )
+  static std::unique_ptr<WrapperBase> Factory( std::string const & name )
   {
-    return std::move(std::make_unique<DataObject<T> >( name ) );
+    return std::move(std::make_unique<Wrapper<T> >( name ) );
   }
 
   template< typename T >
-  DataObject<T>& getObject()
+  Wrapper<T>& getObject()
   {
-    return dynamic_cast<DataObject<T>&>(*this);
+    return dynamic_cast<Wrapper<T>&>(*this);
   }
 
   template< typename T >
-  DataObject<T> const & getObject() const
+  Wrapper<T> const & getObject() const
   {
-    return dynamic_cast<DataObject<T> const &>(*this);
+    return dynamic_cast<Wrapper<T> const &>(*this);
   }
 
 
 
   template< typename T >
-  typename DataObject<T>::const_rtype getObjectData() const
-  { return (dynamic_cast<DataObject<T> const &>(*this)).getObjectData(); }
+  typename Wrapper<T>::const_rtype getObjectData() const
+  { return (dynamic_cast<Wrapper<T> const &>(*this)).getObjectData(); }
 
   template< typename T >
-  typename DataObject<T>::rtype getObjectData()
-  { return (dynamic_cast<DataObject<T> &>(*this)).getObjectData(); }
+  typename Wrapper<T>::rtype getObjectData()
+  { return (dynamic_cast<Wrapper<T> &>(*this)).getObjectData(); }
 //  { return const_cast<typename DataObject<T>::rtype>( const_cast<DataObjectBase const *>(this)->getObjectData<T>() ); }
 
 
@@ -111,13 +113,14 @@ private:
 
   asctoolkit::sidre::DataView* m_sidreView;
 
-  DataObjectBase() = delete;
-  DataObjectBase( DataObjectBase const & ) = delete;
-  DataObjectBase& operator=( DataObjectBase const & ) = delete;
-  DataObjectBase& operator=( DataObjectBase&& ) = delete;
+  WrapperBase() = delete;
+  WrapperBase( WrapperBase const & ) = delete;
+  WrapperBase& operator=( WrapperBase const & ) = delete;
+  WrapperBase& operator=( WrapperBase&& ) = delete;
 
 };
 
+}
 } /* namespace geosx */
 
 #endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_DATAOBJECTBASE_HPP_ */

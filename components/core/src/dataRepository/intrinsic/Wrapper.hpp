@@ -10,36 +10,38 @@
 
 #include "sidre/sidre.hpp"
 #include "../DataTypes.hpp"
-#include "../intrinsic/DataObjectBase.hpp"
 #include "codingUtilities/sfinae.hpp"
+#include "WrapperBase.hpp"
 namespace geosx
+{
+namespace dataRepository
 {
 
 template< typename T >
-class DataObject : public DataObjectBase
+class Wrapper : public WrapperBase
 {
 
 public:
-  DataObject( std::string const & name ):
-    DataObjectBase(name)
+  Wrapper( std::string const & name ):
+    WrapperBase(name)
   {}
 
-  virtual ~DataObject() noexcept override final{}
+  virtual ~Wrapper() noexcept override final{}
 
-  DataObject( DataObject const & source ):
+  Wrapper( Wrapper const & source ):
     m_data(source.m_data)
   {}
 
-  DataObject( DataObject&& source ):
+  Wrapper( Wrapper&& source ):
     m_data( std::move(source.m_data) )
   {}
 
-  DataObject& operator=( DataObject const & source )
+  Wrapper& operator=( Wrapper const & source )
   {
     m_data = source.m_data;
   }
 
-  DataObject& operator=( DataObject && source )
+  Wrapper& operator=( Wrapper && source )
   {
     m_data = std::move(source.m_data);
   }
@@ -52,28 +54,28 @@ public:
 
 
   HAS_MEMBER_FUNCTION(empty,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(empty,bool,const)
+  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,empty,bool,const)
 
   HAS_MEMBER_FUNCTION(size,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(size,std::size_t,const)
+  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,size,std::size_t,const)
 
   HAS_MEMBER_FUNCTION(reserve, std::size_t(1) )
-  CONDITIONAL_VIRTUAL_FUNCTION( reserve , void,, VA_LIST(std::size_t a), VA_LIST(a) )
+  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,reserve , void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
   HAS_MEMBER_FUNCTION(capacity,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(capacity,std::size_t,const)
+  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,capacity,std::size_t,const)
 
   HAS_MEMBER_FUNCTION(max_size,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(max_size,std::size_t,const)
+  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,max_size,std::size_t,const)
 
   HAS_MEMBER_FUNCTION(clear,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(clear,void,)
+  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,clear,void,)
 
   HAS_MEMBER_FUNCTION(insert,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(insert,void,)
+  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,insert,void,)
 
   HAS_MEMBER_FUNCTION(resize, std::size_t(1) )
-  CONDITIONAL_VIRTUAL_FUNCTION( resize , void,, VA_LIST(std::size_t a), VA_LIST(a) )
+  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,resize , void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
 
 #if 0
@@ -129,11 +131,11 @@ private:
 public:
   T m_data;
 
-  DataObject() = delete;
+  Wrapper() = delete;
 };
 
 
-
+}
 } /* namespace geosx */
 
 #endif /* CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_ */

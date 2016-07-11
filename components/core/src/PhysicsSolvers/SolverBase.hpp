@@ -14,7 +14,10 @@
 
 namespace geosx
 {
-class DataObjectManager;
+namespace dataRepository
+{
+class WrapperCollection;
+}
 
 class SolverBase
 {
@@ -26,12 +29,12 @@ public:
   virtual ~SolverBase();
 
 
-  virtual void RegisterDataObjects( DataObjectManager& domain ) = 0;
+  virtual void RegisterDataObjects( dataRepository::WrapperCollection& domain ) = 0;
 
   virtual void TimeStep( const real64& time_n,
                          const real64& dt,
                          const int cycleNumber,
-                         DataObjectManager& domain ) = 0;
+                         dataRepository::WrapperCollection& domain ) = 0;
 
 
 

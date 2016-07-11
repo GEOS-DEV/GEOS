@@ -10,13 +10,15 @@
 
 #include <iostream>
 
-#include "../intrinsic/DataObject.hpp"
+#include "Wrapper.hpp"
 //#include "CodingUtilities/ANSTexception.hpp"
 
 /**
  * namespace to encapsulate functions in simulation tools
  */
 namespace geosx
+{
+namespace dataRepository
 {
 
 /**
@@ -26,7 +28,7 @@ namespace geosx
  * hierarchy of managers that represent physical groupings of data.
  *
  */
-class DataObjectManager
+class WrapperCollection
 {
 public:
   /**
@@ -38,21 +40,21 @@ public:
    * @author Randolph R. Settgast
    * @param name the name of this object manager
    */
-  explicit DataObjectManager( std::string const & name );
+  explicit WrapperCollection( std::string const & name );
 
   /**
    *
    */
-  virtual ~DataObjectManager();
+  virtual ~WrapperCollection();
 
-  DataObjectManager( DataObjectManager const & source ) = delete;
+  WrapperCollection( WrapperCollection const & source ) = delete;
 
-  DataObjectManager( DataObjectManager&& source );
+  WrapperCollection( WrapperCollection&& source );
 
 
-  DataObjectManager() = delete;
-  DataObjectManager& operator=( DataObjectManager const & ) = delete;
-  DataObjectManager& operator=(DataObjectManager&&) = delete;
+  WrapperCollection() = delete;
+  WrapperCollection& operator=( WrapperCollection const & ) = delete;
+  WrapperCollection& operator=(WrapperCollection&&) = delete;
 
   ///@}
 
@@ -74,13 +76,13 @@ public:
   }
 
   template< typename T >
-  DataObjectBase * RegisterDataObject( std::string const & name, std::size_t * const rkey = nullptr );
+  WrapperBase * RegisterDataObject( std::string const & name, std::size_t * const rkey = nullptr );
 
 
-  DataObjectBase * RegisterDataObject( std::string const & name, rtTypes::TypeIDs const & type )
+  WrapperBase * RegisterDataObject( std::string const & name, rtTypes::TypeIDs const & type )
   {
     return rtTypes::ApplyTypeLambda( type,
-                                     [this, &name]( auto a ) -> DataObjectBase *
+                                     [this, &name]( auto a ) -> WrapperBase *
                                      {
                                        return this->RegisterDataObject<decltype(a)>(name);
                                      } );
@@ -97,20 +99,20 @@ public:
   template< typename T >
   T& GetDataObject( std::size_t const index )
   {
-    return const_cast<T&>( const_cast<const DataObjectManager*>(this)->GetDataObject<T>( index ) );
+    return const_cast<T&>( const_cast<const WrapperCollection*>(this)->GetDataObject<T>( index ) );
   }
 
 
   template< typename T >
-  const DataObject<T>& GetDataObject( std::string const & name ) const
+  const Wrapper<T>& GetDataObject( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
     return m_dataObjects[index]->getObject<T>();
   }
 
   template< typename T >
-  DataObject<T>& GetDataObject( std::string const & name )
-  { return const_cast<DataObject<T>&>( const_cast<const DataObjectManager*>(this)->GetDataObject<T>( name ) ); }
+  Wrapper<T>& GetDataObject( std::string const & name )
+  { return const_cast<Wrapper<T>&>( const_cast<const WrapperCollection*>(this)->GetDataObject<T>( name ) ); }
 
 
 
@@ -120,23 +122,23 @@ public:
 
 
   template< typename T >
-  typename DataObject<T>::rtype_const GetDataObjectData( std::size_t const index ) const
+  typename Wrapper<T>::rtype_const GetDataObjectData( std::size_t const index ) const
   { return m_dataObjects[index]->getObjectData<T>(); }
 
   template< typename T >
-  typename DataObject<T>::rtype GetDataObjectData( std::size_t const index )
-  { return const_cast<T&>( const_cast<const DataObjectManager*>(this)->GetDataObjectData<T>( index ) ); }
+  typename Wrapper<T>::rtype GetDataObjectData( std::size_t const index )
+  { return const_cast<T&>( const_cast<const WrapperCollection*>(this)->GetDataObjectData<T>( index ) ); }
 
 
 
   template< typename T >
-  typename DataObject<T>::rtype_const GetDataObjectData( std::string const & name ) const
+  typename Wrapper<T>::rtype_const GetDataObjectData( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
     return m_dataObjects[index]->getObjectData<T>();
   }
   template< typename T >
-  typename DataObject<T>::rtype GetDataObjectData( std::string const & name )
+  typename Wrapper<T>::rtype GetDataObjectData( std::string const & name )
   {
     auto index = m_keyLookup.at(name);
     return m_dataObjects[index]->getObjectData<T>();
@@ -160,10 +162,10 @@ private:
   std::string m_name{"name not set"};
   std::string m_path{"path not set"};
   std::unordered_map<std::string,std::size_t> m_keyLookup;
-  std::vector< std::unique_ptr<DataObjectBase> > m_dataObjects;
+  std::vector< std::unique_ptr<WrapperBase> > m_dataObjects;
 
-  DataObjectManager* m_parent = nullptr;
-  std::unordered_map< std::string, std::unique_ptr<DataObjectManager> > m_subObjectManagers;
+  WrapperCollection* m_parent = nullptr;
+  std::unordered_map< std::string, std::unique_ptr<WrapperCollection> > m_subObjectManagers;
 
 
 };
@@ -172,7 +174,7 @@ private:
 
 
 template< typename T >
-DataObjectBase * DataObjectManager::RegisterDataObject( std::string const & name, std::size_t * const rkey )
+WrapperBase * WrapperCollection::RegisterDataObject( std::string const & name, std::size_t * const rkey )
 {
   std::size_t key = static_cast<std::size_t>(-1);
 
@@ -181,7 +183,7 @@ DataObjectBase * DataObjectManager::RegisterDataObject( std::string const & name
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
-    m_dataObjects.push_back( std::move( DataObjectBase::Factory<T>(name) ) );
+    m_dataObjects.push_back( std::move( WrapperBase::Factory<T>(name) ) );
     key = m_dataObjects.size() - 1;
     m_keyLookup.insert( std::make_pair(name,key) );
   }
@@ -205,7 +207,7 @@ DataObjectBase * DataObjectManager::RegisterDataObject( std::string const & name
 }
 
 template< typename T >
-T& DataObjectManager::RegisterChildDataObjectManager( std::string const & name )
+T& WrapperCollection::RegisterChildDataObjectManager( std::string const & name )
 {
   auto iterKeyLookup = m_subObjectManagers.find(name);
 
@@ -234,6 +236,7 @@ T& DataObjectManager::RegisterChildDataObjectManager( std::string const & name )
   return *(iterKeyLookup->second);
 }
 
-} /* namespace ODS */
+} // namespace dataRepository
+} /* namespace geosx */
 
 #endif /* DATAOBJECTMANAGER_H_ */

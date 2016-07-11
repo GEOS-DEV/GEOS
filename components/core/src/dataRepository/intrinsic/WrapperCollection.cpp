@@ -5,12 +5,14 @@
  *      Author: rrsettgast
  */
 
-#include "../intrinsic/DataObjectManager.hpp"
+#include "WrapperCollection.hpp"
 
 namespace geosx
 {
+namespace dataRepository
+{
 
-DataObjectManager::DataObjectManager( std::string const & name ):
+WrapperCollection::WrapperCollection( std::string const & name ):
 m_size(0),
 m_name(name),
 m_path(),
@@ -20,7 +22,7 @@ m_parent(nullptr),
 m_subObjectManagers()
 {}
 
-DataObjectManager::~DataObjectManager()
+WrapperCollection::~WrapperCollection()
 {
   // TODO Auto-generated destructor stub
 }
@@ -34,7 +36,7 @@ DataObjectManager::~DataObjectManager()
 //    m_parent( source.m_parent )
 //{}
 
-DataObjectManager::DataObjectManager( DataObjectManager&& source ):
+WrapperCollection::WrapperCollection( WrapperCollection&& source ):
     m_size( std::move(source.m_size) ),
     m_name( std::move(source.m_name) ),
     m_path( std::move(source.m_path) ),
@@ -44,12 +46,12 @@ DataObjectManager::DataObjectManager( DataObjectManager&& source ):
 {}
 
 
-void DataObjectManager::resize( const std::size_t newsize )
+void WrapperCollection::resize( const std::size_t newsize )
 {
 
   m_size = newsize;
 }
 
 
-
+}
 } /* namespace ODS */

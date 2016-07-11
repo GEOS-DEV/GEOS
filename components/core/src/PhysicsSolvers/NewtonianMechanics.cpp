@@ -8,7 +8,7 @@
 #include "NewtonianMechanics.hpp"
 #include <vector>
 
-#include "../dataRepository/intrinsic/DataObjectManager.hpp"
+#include "../dataRepository/intrinsic/WrapperCollection.hpp"
 namespace geosx
 {
 
@@ -26,10 +26,10 @@ NewtonianMechanics::~NewtonianMechanics()
   // TODO Auto-generated destructor stub
 }
 
-void NewtonianMechanics::RegisterDataObjects( DataObjectManager& domain )
+void NewtonianMechanics::RegisterDataObjects( dataRepository::WrapperCollection& domain )
 {
 
-  DataObjectManager& nodes = domain.RegisterChildDataObjectManager<DataObjectManager >("FEM_Nodes");
+  dataRepository::WrapperCollection& nodes = domain.RegisterChildDataObjectManager<dataRepository::WrapperCollection >("FEM_Nodes");
   nodes.RegisterDataObject<real64_array>("ReferencePosition");
   nodes.RegisterDataObject<real64_array>("TotalDisplacement");
   nodes.RegisterDataObject<real64_array>("IncrementalDisplacement");
@@ -40,7 +40,7 @@ void NewtonianMechanics::RegisterDataObjects( DataObjectManager& domain )
 void NewtonianMechanics::TimeStep( real64 const& time_n,
                                    real64 const& dt,
                                    const int cycleNumber,
-                                   DataObjectManager& domain )
+                                   dataRepository::WrapperCollection& domain )
 {
   TimeStepExplicit( time_n, dt, cycleNumber, domain );
 }
@@ -48,17 +48,17 @@ void NewtonianMechanics::TimeStep( real64 const& time_n,
 void NewtonianMechanics::TimeStepExplicit( real64 const& time_n,
                                            real64 const& dt,
                                            const int cycleNumber,
-                                           DataObjectManager& domain )
+                                           dataRepository::WrapperCollection& domain )
 {
   std::cout<<"breakpoint 2: "<<LOCATION<<std::endl;
-  DataObjectManager& nodes = domain.GetDataObjectManager<DataObjectManager>("FEM_Nodes");
+  dataRepository::WrapperCollection& nodes = domain.GetDataObjectManager<dataRepository::WrapperCollection>("FEM_Nodes");
 
   std::size_t numNodes = nodes.size();
-  DataObject<real64_array>::rtype    X = nodes.GetDataObjectData<real64_array>("ReferencePosition");
-  DataObject<real64_array>::rtype    u = nodes.GetDataObjectData<real64_array>("TotalDisplacement");
-  DataObject<real64_array>::rtype uhat = nodes.GetDataObjectData<real64_array>("IncrementalDisplacement");
-  DataObject<real64_array>::rtype vel  = nodes.GetDataObjectData<real64_array>("Velocity");
-  DataObject<real64_array>::rtype acc  = nodes.GetDataObjectData<real64_array>("Acceleration");
+  dataRepository::Wrapper<real64_array>::rtype    X = nodes.GetDataObjectData<real64_array>("ReferencePosition");
+  dataRepository::Wrapper<real64_array>::rtype    u = nodes.GetDataObjectData<real64_array>("TotalDisplacement");
+  dataRepository::Wrapper<real64_array>::rtype uhat = nodes.GetDataObjectData<real64_array>("IncrementalDisplacement");
+  dataRepository::Wrapper<real64_array>::rtype vel  = nodes.GetDataObjectData<real64_array>("Velocity");
+  dataRepository::Wrapper<real64_array>::rtype acc  = nodes.GetDataObjectData<real64_array>("Acceleration");
 
 
   Integration::OnePoint( acc, vel, dt, numNodes );
