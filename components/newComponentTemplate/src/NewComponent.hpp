@@ -12,9 +12,10 @@
 
 namespace geosx
 {
-
+namespace dataRepository
+{
 class WrapperCollection;
-
+}
 
 class NewComponent : public SolverBase
 {
@@ -24,13 +25,13 @@ public:
 
   static std::string CatalogueName() { return "NewComponent"; }
 
-  virtual void RegisterDataObjects( WrapperCollection& domain ) ;
+  virtual void RegisterDataObjects( dataRepository::WrapperCollection& domain ) ;
 
 
   virtual void TimeStep( real64 const& time_n,
                          real64 const& dt,
                          int32 const cycleNumber,
-                         WrapperCollection& domain ) ;
+                         dataRepository::WrapperCollection& domain ) ;
 
 private:
   NewComponent() = delete;

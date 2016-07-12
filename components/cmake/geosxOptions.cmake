@@ -3,15 +3,15 @@
 #set(ENABLE_CXX11 OFF CACHE BOOL "Enables C++11 language support" FORCE)
 #set(ENABLE_CXX14 ON CACHE BOOL "Enables C++14 language support" FORCE)
 
-if(CXX_STD STREQUAL c++11)
+if( BLT_CXX_STD STREQUAL c++11)
     MESSAGE(FATAL_ERROR "c++11 is enabled. GEOSX requires c++14")
-endif(CXX_STD STREQUAL c++11)
+endif(BLT_CXX_STD STREQUAL c++11)
 
-if(NOT CXX_STD STREQUAL c++14)
+if(NOT BLT_CXX_STD STREQUAL c++14)
     MESSAGE(FATAL_ERROR "c++14 is NOT enabled. GEOSX requires c++14")
-endif(NOT CXX_STD STREQUAL c++14)
+endif(NOT BLT_CXX_STD STREQUAL c++14)
 
-if( NOT ( CMAKE_CXX_STANDARD LESS 11) )
+if( (CMAKE_CXX_STANDARD EQUAL 11) OR (CMAKE_CXX_STANDARD EQUAL 14) )
 	add_definitions("-DUSE_CXX11")
 endif()
 
