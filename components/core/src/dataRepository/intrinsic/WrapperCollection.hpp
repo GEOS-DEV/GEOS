@@ -82,14 +82,14 @@ public:
   WrapperBase * RegisterDataObject( std::string const & name, std::size_t * const rkey = nullptr );
 
 
-  WrapperBase * RegisterDataObject( std::string const & name, rtTypes::TypeIDs const & type )
-  {
-    return rtTypes::ApplyTypeLambda( type,
-                                     [this, &name]( auto a ) -> WrapperBase *
-                                     {
-                                       return this->RegisterDataObject<decltype(a)>(name);
-                                     } );
-  }
+  WrapperBase * RegisterDataObject( std::string const & name, rtTypes::TypeIDs const & type );
+//  {
+//    return rtTypes::ApplyTypeLambda( type,
+//                                     [this, &name]( auto a ) -> WrapperBase *
+//                                     {
+//                                       return this->RegisterDataObject<decltype(a)>(name);
+//                                     } );
+//  }
 
 
   //***********************************************************************************************
@@ -156,7 +156,7 @@ public:
     return *(m_subObjectManagers.at(name));
   }
 
-  void resize( std::size_t const newsize );
+  void resize( std::size_t newsize );
 
   std::size_t size() const { return m_size; }
 

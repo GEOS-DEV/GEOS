@@ -133,8 +133,6 @@ public:
     typedef U&       type;
     typedef const U& const_type;
   };
-
-
   template<class U>
   struct Get_Type<U, true>
   {

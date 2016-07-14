@@ -38,6 +38,5 @@ blt_add_executable(NAME geosx_corex
                    
                    
 #set_target_properties(core  PROPERTIES COMPILE_FLAGS )
-
 #install(TARGETS core DESTINATION lib EXPORT ${PROJECT_NAME}-targets)
                    

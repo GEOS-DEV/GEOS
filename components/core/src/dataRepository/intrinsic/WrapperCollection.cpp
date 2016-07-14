@@ -45,10 +45,21 @@ WrapperCollection::WrapperCollection( WrapperCollection&& source ):
     m_parent( std::move(source.m_parent) )
 {}
 
-
-void WrapperCollection::resize( const std::size_t newsize )
+WrapperBase * WrapperCollection::RegisterDataObject( std::string const & name, rtTypes::TypeIDs const & type )
 {
+  return rtTypes::ApplyTypeLambda( type,
+                                   [this, &name]( auto a ) -> WrapperBase *
+                                   {
+                                     return this->RegisterDataObject<decltype(a)>(name);
+                                   } );
+}
 
+void WrapperCollection::resize( std::size_t const newsize )
+{
+  for( auto&& i : this->m_dataObjects )
+  {
+    i->resize(newsize);
+  }
   m_size = newsize;
 }
 
