@@ -1,3 +1,4 @@
+message("Processing geosxOptions.cmake")
 
 #set(ENABLE_FORTRAN OFF CACHE BOOL "Enables Fortran" FORCE)
 #set(ENABLE_CXX11 OFF CACHE BOOL "Enables C++11 language support" FORCE)
@@ -15,7 +16,7 @@ if( (CMAKE_CXX_STANDARD EQUAL 11) OR (CMAKE_CXX_STANDARD EQUAL 14) )
 	add_definitions("-DUSE_CXX11")
 endif()
 
-blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -fopenmp)
+blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}")
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -pedantic-errors)
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wabi)
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wextra)
