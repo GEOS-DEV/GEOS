@@ -22,7 +22,7 @@ class Wrapper : public WrapperBase
 {
 
 public:
-  Wrapper( std::string const & name ):
+  explicit Wrapper( std::string const & name ):
     WrapperBase(name)
   {}
 
@@ -51,46 +51,81 @@ public:
     return typeid(T);
   }
 
+  struct empty_wrapper
+  {
+    HAS_MEMBER_FUNCTION(empty,bool,const,,)
+    template<class U = T>
+    static typename std::enable_if<has_memberfunction_empty<U>::value, bool>::type empty(Wrapper const * parent)
+    {
+      return parent->m_data.empty();
+    }
+    template<class U = T>
+    static typename std::enable_if<!has_memberfunction_empty<U>::value, bool>::type empty(Wrapper const * parent)
+    {
+      return parent;
+    }
+  };
+  virtual bool empty() const override final
+  {
+    return empty_wrapper::empty(this);
+  }
+
+  struct size_wrapper
+  {
+    HAS_MEMBER_FUNCTION(size,std::size_t,const,,)
+    template<class U = T>
+    static typename std::enable_if<has_memberfunction_size<U>::value, std::size_t>::type size(Wrapper const * parent)
+    {
+      return parent->m_data.size();
+    }
+    template<class U = T>
+    static typename std::enable_if<!has_memberfunction_size<U>::value, std::size_t>::type size(Wrapper const * )
+    {
+      return 0;//parent->m_data;
+    }
+  };
+  virtual std::size_t size() const override final
+  {
+    return size_wrapper::size(this);
+  }
 
 
-  HAS_MEMBER_FUNCTION(empty,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,empty,bool,const)
+  struct reserve_wrapper
+  {
+    HAS_MEMBER_FUNCTION(reserve, void, ,VA_LIST(std::size_t),VA_LIST(std::size_t(1)) )
+    template<class U = T>
+    static typename std::enable_if<has_memberfunction_reserve<U>::value, void>::type reserve(Wrapper * const parent, std::size_t new_cap)
+    {
+      return parent->m_data.reserve(new_cap);
+    }
+    template<class U = T>
+    static typename std::enable_if<!has_memberfunction_reserve<U>::value, void>::type reserve(Wrapper * const, std::size_t )
+    {
+      return ;//parent->m_data;
+    }
+  };
+  virtual void reserve( std::size_t new_cap ) override final
+  {
+    return reserve_wrapper::reserve(this, new_cap);
+  }
+//  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,reserve , void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
-  HAS_MEMBER_FUNCTION(size,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,size,std::size_t,const)
 
-  HAS_MEMBER_FUNCTION(reserve, std::size_t(1) )
-  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,reserve , void,, VA_LIST(std::size_t a), VA_LIST(a) )
-
-  HAS_MEMBER_FUNCTION(capacity,)
+  HAS_MEMBER_FUNCTION(capacity,std::size_t,const,,)
   CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,capacity,std::size_t,const)
 
-  HAS_MEMBER_FUNCTION(max_size,)
+  HAS_MEMBER_FUNCTION(max_size,std::size_t,const,,)
   CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,max_size,std::size_t,const)
 
-  HAS_MEMBER_FUNCTION(clear,)
+  HAS_MEMBER_FUNCTION(clear,void,,,)
   CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,clear,void,)
 
-  HAS_MEMBER_FUNCTION(insert,)
+  HAS_MEMBER_FUNCTION(insert,void,,,)
   CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,insert,void,)
 
-  HAS_MEMBER_FUNCTION(resize, std::size_t(1) )
+//  HAS_MEMBER_FUNCTION(resize, void, std::size_t(1) )
+  HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(std::size_t), VA_LIST(std::size_t(1)) )
   CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,resize , void,, VA_LIST(std::size_t a), VA_LIST(a) )
-
-
-#if 0
-  using rtype = T &;
-  using rtype_const = T const &;
-
-  rtype_const getObjectData() const
-  { return m_data; }
-
-  rtype getObjectData()
-  { return m_data; }
-
-
-#else
-
 
   template<class U=T, bool has = has_pointer_type<U>::value >
   struct Get_Type
@@ -112,7 +147,7 @@ public:
   using rtype_const = typename Get_Type<T>::const_type;
 
 
-  HAS_MEMBER_FUNCTION(data,)
+  HAS_MEMBER_FUNCTION(data,rtype,,,)
   template<class U = T>
   typename std::enable_if<has_memberfunction_data<U>::value, rtype>::type getObjectData()
   {
@@ -123,9 +158,6 @@ public:
   {
       return m_data;
   }
-
-
-#endif
 
 private:
 public:

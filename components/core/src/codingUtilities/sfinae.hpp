@@ -48,16 +48,14 @@ public:\
   static constexpr bool value = test<TT>(0);\
 };
 
-
-
-#define HAS_MEMBER_FUNCTION(NAME, ...)\
+#define HAS_MEMBER_FUNCTION(NAME, RTYPE, CONST, PARAMS, ARGS )\
 template<typename TT >\
 struct has_memberfunction_##NAME\
 {\
 private:\
-  template<typename U> static constexpr auto test(int) -> decltype( std::declval<U>().NAME(__VA_ARGS__), bool() )\
+  template<typename U> static constexpr auto test(int) -> decltype( static_cast<RTYPE (U::*)(PARAMS) CONST>(&U::NAME), bool() )\
   {\
-    return std::is_member_function_pointer< decltype( &U::NAME ) >::value;\
+    return std::is_same< decltype( std::declval<U>().NAME(ARGS) ), RTYPE>::value ;\
   }\
   template<typename U> static constexpr auto test(...) -> bool \
   {\
@@ -67,14 +65,15 @@ public:\
   static constexpr bool value = test<TT>(0);\
 };
 
-#define HAS_STATIC_MEMBER_FUNCTION(NAME, ...)\
+
+#define HAS_STATIC_MEMBER_FUNCTION(NAME, RTYPE, ...)\
 template<typename TT>\
 struct has_staticmemberfunction_##NAME\
 {\
 private:\
   template<typename U> static constexpr auto test(int) -> decltype( U::NAME(__VA_ARGS__) , bool() )\
   {\
-    return true;\
+    return std::is_same< decltype( U::NAME(__VA_ARGS__) ), RTYPE>::value; \
   }\
   template<typename U> static constexpr auto test(...) -> bool\
   {\
@@ -139,7 +138,7 @@ struct wrapper##FUNCNAME\
 template<typename U>\
 struct wrapper##FUNCNAME<U,true>\
 {\
-  RTYPE f( CLASSNAME * const obj )\
+  RTYPE f( CLASSNAME CONST * const obj )\
   {\
     return (*obj).m_data.FUNCNAME();\
   }\

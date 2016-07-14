@@ -40,7 +40,7 @@ public:
    * @param name name of the object
    * \brief constructor
    */
-  WrapperBase( std::string const & name );
+  explicit WrapperBase( std::string const & name );
 
 
   WrapperBase( WrapperBase&& source );

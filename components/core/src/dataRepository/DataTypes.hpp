@@ -12,6 +12,7 @@
 #include <typeinfo>
 #include "codingUtilities/macros.hpp"
 #include <unordered_map>
+#include <vector>
 #include <string>
 #include <typeindex>
 #include<iostream>
@@ -36,8 +37,8 @@ using real32_const_ptr = ptr<real32 const>;
 using real64_ptr       = ptr<real64>;
 using real64_const_ptr = ptr<real64 const>;
 
-using real64_array        = ptr<real64>;
-using real64_const_array  = ptr<real64 const>;
+using real64_array        = std::vector<real64>;
+using real64_const_array  = std::vector<real64 const>;
 
 class rtTypes
 {

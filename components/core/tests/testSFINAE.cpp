@@ -23,6 +23,12 @@ struct Foo_MemberFunction_1Arg
 };
 struct Bar_MemberFunction_1Arg : Foo_MemberFunction_1Arg {};
 
+struct Foo_MemberFunction_2Arg
+{
+  double memberName2(int a,double b) { return a+b;}
+};
+struct Bar_MemberFunction_2Arg : Foo_MemberFunction_2Arg {};
+
 struct Foo_StaticMemberFunction_1Arg
 {
   static int memberName( int a) { return a;}
@@ -55,11 +61,11 @@ struct Bar_EnumClass : Foo_EnumClass {};
 
 HAS_MEMBER_DATA(memberName)
 HAS_STATIC_MEMBER_DATA(memberName)
-HAS_MEMBER_FUNCTION(memberName,int(1))
-HAS_STATIC_MEMBER_FUNCTION(memberName,int(1))
+HAS_MEMBER_FUNCTION( memberName, int, , VA_LIST(int), VA_LIST(int(1)) )
+HAS_MEMBER_FUNCTION( memberName2, double, , VA_LIST(int,double), VA_LIST(int(1),double(1)) )
+HAS_STATIC_MEMBER_FUNCTION(memberName,int,int(1))
 HAS_ENUM(memberName)
 HAS_ALIAS(memberName)
-
 
 TEST(test_sfinae,test_has_datamember)
 {
@@ -92,6 +98,9 @@ TEST(test_sfinae,test_has_memberfunction)
   EXPECT_FALSE( has_memberfunction_memberName<Foo_Using>::value );
   EXPECT_FALSE( has_memberfunction_memberName<Foo_Typedef>::value );
   EXPECT_FALSE( has_memberfunction_memberName<Foo_EnumClass>::value );
+
+  EXPECT_TRUE(  has_memberfunction_memberName2<Foo_MemberFunction_2Arg>::value );
+
 }
 
 TEST(test_sfinae,test_has_staticmemberfunction)

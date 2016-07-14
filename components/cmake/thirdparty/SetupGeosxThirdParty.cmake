@@ -51,6 +51,16 @@ if (ATK_DIR)
 endif()
 
 
+
+
+if (RAJA_DIR)
+  include(components/cmake/thirdparty/FindRAJA.cmake)
+	  blt_register_library( NAME RAJA
+                       	  INCLUDES ${RAJA_INCLUDE_DIRS} 
+                          LIBRARIES  RAJA)
+	
+endif()
+
 #if (UNCRUSTIFY_EXECUTABLE)
   include(blt/cmake/thirdparty/FindUncrustify.cmake)
 #endif()
