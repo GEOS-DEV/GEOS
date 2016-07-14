@@ -47,12 +47,15 @@ public:
    */
   virtual ~WrapperCollection();
 
-  WrapperCollection( WrapperCollection const & source ) = delete;
-
+  /**
+   *
+   * @param source
+   */
   WrapperCollection( WrapperCollection&& source );
 
 
   WrapperCollection() = delete;
+  WrapperCollection( WrapperCollection const & source ) = delete;
   WrapperCollection& operator=( WrapperCollection const & ) = delete;
   WrapperCollection& operator=(WrapperCollection&&) = delete;
 

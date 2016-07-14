@@ -55,9 +55,9 @@ endif()
 
 if (RAJA_DIR)
   include(components/cmake/thirdparty/FindRAJA.cmake)
-	  blt_register_library( NAME RAJA
-                       	  INCLUDES ${RAJA_INCLUDE_DIRS} 
-                          LIBRARIES  RAJA)
+	 blt_register_library( NAME raja
+                         INCLUDES ${RAJA_INCLUDE_DIRS} 
+                         LIBRARIES  RAJA)
 	
 endif()
 

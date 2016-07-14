@@ -26,14 +26,15 @@ blt_add_library( NAME
                  HEADERS_OUTPUT_SUBDIR
                      geosx_core
                  DEPENDS_ON
-                     slic sidre conduit hdf5
+                     slic sidre conduit hdf5 raja
                  )
                  
 add_subdirectory(main)
 
 blt_add_executable(NAME geosx_corex
                    SOURCES "${geosx_core_sources}"
-                   DEPENDS_ON slic sidre conduit hdf5)
+                   DEPENDS_ON slic sidre conduit hdf5 raja
+                   )
                    
                    
 #set_target_properties(core  PROPERTIES COMPILE_FLAGS )

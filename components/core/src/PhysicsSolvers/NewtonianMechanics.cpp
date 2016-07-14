@@ -9,6 +9,8 @@
 #include <vector>
 
 #include "../dataRepository/intrinsic/WrapperCollection.hpp"
+#include "RAJA/RAJA.hxx"
+
 namespace geosx
 {
 

@@ -22,6 +22,6 @@ blt_add_library( NAME
                  HEADERS
                      "${componentHeaders}"
                  DEPENDS_ON
-                     geosx_core
+                     geosx_core raja
                  )
                  
