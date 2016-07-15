@@ -28,7 +28,7 @@ public:
 
   static std::string CatalogueName() { return "NewtonianMechanics"; }
 
-  virtual void RegisterDataObjects( dataRepository::WrapperCollection& domain ) override;
+  virtual void Registration( dataRepository::WrapperCollection& domain ) override;
 
 
   virtual void TimeStep( real64 const& time_n,

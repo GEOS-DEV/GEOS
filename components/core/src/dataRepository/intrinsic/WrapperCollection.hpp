@@ -70,7 +70,7 @@ public:
 
 
   template< typename T >
-  T& RegisterChildDataObjectManager( std::string const & name );
+  T& RegisterChildWrapperCollection( std::string const & name );
 
   template< typename T >
   T& GetChildDataObjectManager( std::string const & name )
@@ -79,10 +79,10 @@ public:
   }
 
   template< typename T >
-  WrapperBase * RegisterDataObject( std::string const & name, std::size_t * const rkey = nullptr );
+  WrapperBase * RegisterWrapper( std::string const & name, std::size_t * const rkey = nullptr );
 
 
-  WrapperBase * RegisterDataObject( std::string const & name, rtTypes::TypeIDs const & type );
+  WrapperBase * RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type );
 //  {
 //    return rtTypes::ApplyTypeLambda( type,
 //                                     [this, &name]( auto a ) -> WrapperBase *
@@ -95,27 +95,27 @@ public:
   //***********************************************************************************************
 
   template< typename T >
-  T const & GetDataObject( std::size_t const index ) const
+  T const & getWrapper( std::size_t const index ) const
   {
-    return m_dataObjects[index]->getObject<T>();
+    return m_dataObjects[index]->cast<T>();
   }
   template< typename T >
-  T& GetDataObject( std::size_t const index )
+  T& getWrapper( std::size_t const index )
   {
-    return const_cast<T&>( const_cast<const WrapperCollection*>(this)->GetDataObject<T>( index ) );
+    return const_cast<T&>( const_cast<const WrapperCollection*>(this)->getWrapper<T>( index ) );
   }
 
 
   template< typename T >
-  const Wrapper<T>& GetDataObject( std::string const & name ) const
+  const Wrapper<T>& getWrapper( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
-    return m_dataObjects[index]->getObject<T>();
+    return m_dataObjects[index]->cast<T>();
   }
 
   template< typename T >
-  Wrapper<T>& GetDataObject( std::string const & name )
-  { return const_cast<Wrapper<T>&>( const_cast<const WrapperCollection*>(this)->GetDataObject<T>( name ) ); }
+  Wrapper<T>& getWrapper( std::string const & name )
+  { return const_cast<Wrapper<T>&>( const_cast<const WrapperCollection*>(this)->getWrapper<T>( name ) ); }
 
 
 
@@ -125,26 +125,26 @@ public:
 
 
   template< typename T >
-  typename Wrapper<T>::rtype_const GetDataObjectData( std::size_t const index ) const
-  { return m_dataObjects[index]->getObjectData<T>(); }
+  typename Wrapper<T>::rtype_const getWrappedObjectData( std::size_t const index ) const
+  { return m_dataObjects[index]->data<T>(); }
 
   template< typename T >
   typename Wrapper<T>::rtype GetDataObjectData( std::size_t const index )
-  { return const_cast<T&>( const_cast<const WrapperCollection*>(this)->GetDataObjectData<T>( index ) ); }
+  { return const_cast<T&>( const_cast<const WrapperCollection*>(this)->getWrappedObjectData<T>( index ) ); }
 
 
 
   template< typename T >
-  typename Wrapper<T>::rtype_const GetDataObjectData( std::string const & name ) const
+  typename Wrapper<T>::rtype_const getWrappedObjectData( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
-    return m_dataObjects[index]->getObjectData<T>();
+    return m_dataObjects[index]->data<T>();
   }
   template< typename T >
-  typename Wrapper<T>::rtype GetDataObjectData( std::string const & name )
+  typename Wrapper<T>::rtype getWrappedObjectData( std::string const & name )
   {
     auto index = m_keyLookup.at(name);
-    return m_dataObjects[index]->getObjectData<T>();
+    return m_dataObjects[index]->data<T>();
   }
 
 //  { return static_cast<typename DataObject<T>::rtype>( static_cast<const DataObjectManager *>(this)->GetDataObjectData<T>( name ) ); }
@@ -177,7 +177,7 @@ private:
 
 
 template< typename T >
-WrapperBase * WrapperCollection::RegisterDataObject( std::string const & name, std::size_t * const rkey )
+WrapperBase * WrapperCollection::RegisterWrapper( std::string const & name, std::size_t * const rkey )
 {
   std::size_t key = static_cast<std::size_t>(-1);
 
@@ -210,7 +210,7 @@ WrapperBase * WrapperCollection::RegisterDataObject( std::string const & name, s
 }
 
 template< typename T >
-T& WrapperCollection::RegisterChildDataObjectManager( std::string const & name )
+T& WrapperCollection::RegisterChildWrapperCollection( std::string const & name )
 {
   auto iterKeyLookup = m_subObjectManagers.find(name);
 

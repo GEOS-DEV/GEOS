@@ -147,12 +147,12 @@ public:
 
   HAS_MEMBER_FUNCTION(data,rtype,,,)
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value, rtype>::type getObjectData()
+  typename std::enable_if<has_memberfunction_data<U>::value, rtype>::type data()
   {
     return m_data.data();
   }
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value, rtype>::type getObjectData()
+  typename std::enable_if<!has_memberfunction_data<U>::value, rtype>::type data()
   {
       return m_data;
   }

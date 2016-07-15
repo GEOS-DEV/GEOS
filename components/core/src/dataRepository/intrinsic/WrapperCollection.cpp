@@ -45,12 +45,12 @@ WrapperCollection::WrapperCollection( WrapperCollection&& source ):
     m_parent( std::move(source.m_parent) )
 {}
 
-WrapperBase * WrapperCollection::RegisterDataObject( std::string const & name, rtTypes::TypeIDs const & type )
+WrapperBase * WrapperCollection::RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return rtTypes::ApplyTypeLambda( type,
                                    [this, &name]( auto a ) -> WrapperBase *
                                    {
-                                     return this->RegisterDataObject<decltype(a)>(name);
+                                     return this->RegisterWrapper<decltype(a)>(name);
                                    } );
 }
 

@@ -14,6 +14,7 @@
 
 namespace geosx
 {
+using namespace dataRepository;
 
 NewtonianMechanics::NewtonianMechanics( const std::string& name ):
     SolverBase(name)
@@ -29,30 +30,29 @@ NewtonianMechanics::~NewtonianMechanics()
   // TODO Auto-generated destructor stub
 }
 
-void NewtonianMechanics::RegisterDataObjects( dataRepository::WrapperCollection& domain )
+void NewtonianMechanics::Registration( WrapperCollection& domain )
 {
 
-  dataRepository::WrapperCollection& nodes = domain.RegisterChildDataObjectManager<dataRepository::WrapperCollection >("FEM_Nodes");
-  dataRepository::WrapperCollection& elems = domain.RegisterChildDataObjectManager<dataRepository::WrapperCollection >("FEM_Elements");
+  WrapperCollection& nodes = domain.RegisterChildWrapperCollection<WrapperCollection >("FEM_Nodes");
+  WrapperCollection& elems = domain.RegisterChildWrapperCollection<WrapperCollection >("FEM_Elements");
 
-  nodes.RegisterDataObject<real64_array>("TotalDisplacement");
-  nodes.RegisterDataObject<real64_array>("IncrementalDisplacement");
-  nodes.RegisterDataObject<real64_array>("Velocity");
-  nodes.RegisterDataObject<real64_array>("Acceleration");
+  nodes.RegisterWrapper<real64_array>("TotalDisplacement");
+  nodes.RegisterWrapper<real64_array>("IncrementalDisplacement");
+  nodes.RegisterWrapper<real64_array>("Velocity");
+  nodes.RegisterWrapper<real64_array>("Acceleration");
 
-  dataRepository::Wrapper<real64_array>::rtype    X = nodes.RegisterDataObject<real64_array>("ReferencePosition")->getObjectData<real64_array>();
-  dataRepository::Wrapper<real64_array>::rtype mass = nodes.RegisterDataObject<real64_array>("Mass")->getObjectData<real64_array>();;
-  std::cout<<"breakpoint 2"<<std::endl;
+  Wrapper<real64_array>::rtype    X = nodes.RegisterWrapper<real64_array>("ReferencePosition")->data<real64_array>();
+  Wrapper<real64_array>::rtype mass = nodes.RegisterWrapper<real64_array>("Mass")->data<real64_array>();;
 
-  elems.RegisterDataObject<real64_array>("Strain");
-  elems.RegisterDataObject("Force",  rtTypes::TypeIDs::real64_array_id );
-  std::cout<<"breakpoint 3"<<std::endl;
+  elems.RegisterWrapper<real64_array>("Strain");
+  elems.RegisterWrapper("Force",  rtTypes::TypeIDs::real64_array_id );
 
   // HACK
   nodes.resize(101);
   elems.resize(100);
   std::cout<<"breakpoint 4"<<std::endl;
-
+  std::cout<<nodes.size()<<std::endl;
+//  std::cout<<mass.size()<<std::cout;
   for( uint64 a=0 ; a<nodes.size() ; ++a )
   {
     mass[a] = 1;
@@ -66,7 +66,7 @@ void NewtonianMechanics::RegisterDataObjects( dataRepository::WrapperCollection&
 void NewtonianMechanics::TimeStep( real64 const& time_n,
                                    real64 const& dt,
                                    const int cycleNumber,
-                                   dataRepository::WrapperCollection& domain )
+                                   WrapperCollection& domain )
 {
   TimeStepExplicit( time_n, dt, cycleNumber, domain );
 }
@@ -74,23 +74,29 @@ void NewtonianMechanics::TimeStep( real64 const& time_n,
 void NewtonianMechanics::TimeStepExplicit( real64 const& time_n,
                                            real64 const& dt,
                                            const int cycleNumber,
-                                           dataRepository::WrapperCollection& domain )
+                                           WrapperCollection& domain )
 {
-  dataRepository::WrapperCollection& nodes = domain.GetDataObjectManager<dataRepository::WrapperCollection>("FEM_Nodes");
-  dataRepository::WrapperCollection& elems = domain.GetDataObjectManager<dataRepository::WrapperCollection>("FEM_Elements");
+  WrapperCollection& nodes = domain.GetDataObjectManager<WrapperCollection>("FEM_Nodes");
+  WrapperCollection& elems = domain.GetDataObjectManager<WrapperCollection>("FEM_Elements");
 
   std::size_t const numNodes = nodes.size();
   std::size_t const numElems = elems.size();
 
-  dataRepository::Wrapper<real64_array>::rtype    X = nodes.GetDataObjectData<real64_array>("ReferencePosition");
-  dataRepository::Wrapper<real64_array>::rtype    u = nodes.GetDataObjectData<real64_array>("TotalDisplacement");
-  dataRepository::Wrapper<real64_array>::rtype uhat = nodes.GetDataObjectData<real64_array>("IncrementalDisplacement");
-  dataRepository::Wrapper<real64_array>::rtype vel  = nodes.GetDataObjectData<real64_array>("Velocity");
-  dataRepository::Wrapper<real64_array>::rtype acc  = nodes.GetDataObjectData<real64_array>("Acceleration");
-  dataRepository::Wrapper<real64_array>::rtype mass = nodes.GetDataObjectData<real64_array>("Mass");
+  Wrapper<real64_array>::rtype    X = nodes.getWrappedObjectData<real64_array>("ReferencePosition");
+  Wrapper<real64_array>::rtype    u = nodes.getWrappedObjectData<real64_array>("TotalDisplacement");
+  Wrapper<real64_array>::rtype uhat = nodes.getWrappedObjectData<real64_array>("IncrementalDisplacement");
+  Wrapper<real64_array>::rtype vel  = nodes.getWrappedObjectData<real64_array>("Velocity");
+//  Wrapper<real64_array>::rtype acc  = nodes.getWrappedObjectData<real64_array>("Acceleration");
+//  Wrapper<real64_array>::rtype mass = nodes.getWrappedObjectData<real64_array>("Mass");
 
-  dataRepository::Wrapper<real64_array>::rtype    Felem = elems.GetDataObjectData<real64_array>("Force");
-  dataRepository::Wrapper<real64_array>::rtype   Strain = elems.GetDataObjectData<real64_array>("Strain");
+
+  Wrapper<real64_array>::rtype acc  = nodes.getWrappedObjectData<real64_array>("Acceleration");
+
+
+  Wrapper<real64_array>::rtype mass = nodes.getWrapper<real64_array>("Mass").data();
+
+  Wrapper<real64_array>::rtype    Felem = elems.getWrappedObjectData<real64_array>("Force");
+  Wrapper<real64_array>::rtype   Strain = elems.getWrappedObjectData<real64_array>("Strain");
 
   Integration::OnePoint( acc, vel, dt/2, numNodes );
   Integration::OnePoint( vel, uhat, u, dt, numNodes );

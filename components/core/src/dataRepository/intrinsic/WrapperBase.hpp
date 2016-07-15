@@ -85,13 +85,13 @@ public:
   }
 
   template< typename T >
-  Wrapper<T>& getObject()
+  Wrapper<T>& cast()
   {
     return dynamic_cast<Wrapper<T>&>(*this);
   }
 
   template< typename T >
-  Wrapper<T> const & getObject() const
+  Wrapper<T> const & cast() const
   {
     return dynamic_cast<Wrapper<T> const &>(*this);
   }
@@ -99,12 +99,12 @@ public:
 
 
   template< typename T >
-  typename Wrapper<T>::const_rtype getObjectData() const
-  { return (dynamic_cast<Wrapper<T> const &>(*this)).getObjectData(); }
+  typename Wrapper<T>::const_rtype data() const
+  { return (dynamic_cast<Wrapper<T> const &>(*this)).data(); }
 
   template< typename T >
-  typename Wrapper<T>::rtype getObjectData()
-  { return (dynamic_cast<Wrapper<T> &>(*this)).getObjectData(); }
+  typename Wrapper<T>::rtype data()
+  { return (dynamic_cast<Wrapper<T> &>(*this)).data(); }
 //  { return const_cast<typename DataObject<T>::rtype>( const_cast<DataObjectBase const *>(this)->getObjectData<T>() ); }
 
 

@@ -38,7 +38,7 @@ int main()
 
   std::cout<<"breakpoint 1: "<<LOCATION<<std::endl;
 
-  solver->RegisterDataObjects( domain );
+  solver->Registration( domain );
 
 
 

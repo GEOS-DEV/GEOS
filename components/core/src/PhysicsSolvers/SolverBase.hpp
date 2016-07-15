@@ -29,7 +29,7 @@ public:
   virtual ~SolverBase();
 
 
-  virtual void RegisterDataObjects( dataRepository::WrapperCollection& domain ) = 0;
+  virtual void Registration( dataRepository::WrapperCollection& domain ) = 0;
 
   virtual void TimeStep( const real64& time_n,
                          const real64& dt,
