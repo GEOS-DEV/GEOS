@@ -33,7 +33,6 @@ int main()
   geosx::dataRepository::WrapperCollection domain("domain") ;
 
   std::string newName("new solver");
-//  auto solver = geosx::SolverBase::SolverFactory::Factory(geosx::NewtonianMechanics::CatalogueName(),newName);
   auto solver = geosx::SolverBase::CatalogueEntryBase::Factory(geosx::NewtonianMechanics::CatalogueName(),newName);
 
   std::cout<<"breakpoint 1: "<<LOCATION<<std::endl;
@@ -41,11 +40,14 @@ int main()
   solver->Registration( domain );
 
 
-
-//  geosx::DataObjectManager& nodes = domain.GetDataObjectManager<geosx::DataObjectManager>("FEM_Nodes");
-
-
-  solver->TimeStep( 0.0, 0.1, 0, domain );
+  double time = 0.0;
+  double dt = 5.0e-5;
+  for( int i=0 ; i<10 ; ++i )
+  {
+    solver->TimeStep( time, dt, i, domain );
+    time += dt;
+    std::cout<<std::endl;
+  }
 
 
 

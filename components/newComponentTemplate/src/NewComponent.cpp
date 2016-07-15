@@ -21,7 +21,7 @@ NewComponent::~NewComponent()
   // TODO Auto-generated destructor stub
 }
 
-void RegisterDataObjects( dataRepository::WrapperCollection& /*domain*/ )
+void Registration( dataRepository::WrapperCollection& /*domain*/ )
 {}
 
 

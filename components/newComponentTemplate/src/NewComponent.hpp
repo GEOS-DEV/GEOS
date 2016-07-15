@@ -25,7 +25,7 @@ public:
 
   static std::string CatalogueName() { return "NewComponent"; }
 
-  virtual void RegisterDataObjects( dataRepository::WrapperCollection& domain ) ;
+  virtual void Registration( dataRepository::WrapperCollection& domain ) ;
 
 
   virtual void TimeStep( real64 const& time_n,

@@ -79,10 +79,10 @@ public:
   }
 
   template< typename T >
-  WrapperBase * RegisterWrapper( std::string const & name, std::size_t * const rkey = nullptr );
+  Wrapper<T>& RegisterWrapper( std::string const & name, std::size_t * const rkey = nullptr );
 
 
-  WrapperBase * RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type );
+  WrapperBase& RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type );
 //  {
 //    return rtTypes::ApplyTypeLambda( type,
 //                                     [this, &name]( auto a ) -> WrapperBase *
@@ -177,7 +177,7 @@ private:
 
 
 template< typename T >
-WrapperBase * WrapperCollection::RegisterWrapper( std::string const & name, std::size_t * const rkey )
+Wrapper<T>& WrapperCollection::RegisterWrapper( std::string const & name, std::size_t * const rkey )
 {
   std::size_t key = static_cast<std::size_t>(-1);
 
@@ -187,6 +187,7 @@ WrapperBase * WrapperCollection::RegisterWrapper( std::string const & name, std:
   if( iterKeyLookup == m_keyLookup.end() )
   {
     m_dataObjects.push_back( std::move( WrapperBase::Factory<T>(name) ) );
+    m_dataObjects.back()->resize(this->m_size);
     key = m_dataObjects.size() - 1;
     m_keyLookup.insert( std::make_pair(name,key) );
   }
@@ -206,7 +207,7 @@ WrapperBase * WrapperCollection::RegisterWrapper( std::string const & name, std:
   {
     *rkey = key;
   }
-  return m_dataObjects[key].get();
+  return m_dataObjects[key]->cast<T>();
 }
 
 template< typename T >
