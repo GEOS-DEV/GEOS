@@ -5,7 +5,7 @@
 set(geosx_headers
   ${geosx_headers}
   	PhysicsSolvers/SolverBase.hpp
-  	PhysicsSolvers/NewtonianMechanics.hpp
+  	PhysicsSolvers/SolidMechanicsLagrangianFEM.hpp
     PARENT_SCOPE )
 
 #
@@ -14,5 +14,5 @@ set(geosx_headers
 set(geosx_core_sources
   ${geosx_core_sources}
     PhysicsSolvers/SolverBase.cpp
-    PhysicsSolvers/NewtonianMechanics.cpp
+    PhysicsSolvers/SolidMechanicsLagrangianFEM.cpp
     PARENT_SCOPE )

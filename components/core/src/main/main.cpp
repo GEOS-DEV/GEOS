@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "../dataRepository/intrinsic/WrapperCollection.hpp"
-#include "PhysicsSolvers/NewtonianMechanics.hpp"
+#include "../PhysicsSolvers/SolidMechanicsLagrangianFEM.hpp"
 #include "codingUtilities/SetSignalHandling.hpp"
 #include "codingUtilities/stackTrace.hpp"
 
@@ -33,7 +33,7 @@ int main()
   geosx::dataRepository::WrapperCollection domain("domain") ;
 
   std::string newName("new solver");
-  auto solver = geosx::SolverBase::CatalogueEntryBase::Factory(geosx::NewtonianMechanics::CatalogueName(),newName);
+  auto solver = geosx::SolverBase::CatalogueEntryBase::Factory(geosx::SolidMechanics_LagrangianFEM::CatalogueName(),newName);
 
   std::cout<<"breakpoint 1: "<<LOCATION<<std::endl;
 

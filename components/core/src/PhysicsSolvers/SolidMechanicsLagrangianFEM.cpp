@@ -5,7 +5,8 @@
  *      Author: rrsettgast
  */
 
-#include "NewtonianMechanics.hpp"
+#include "SolidMechanicsLagrangianFEM.hpp"
+
 #include <vector>
 
 #include "../dataRepository/intrinsic/WrapperCollection.hpp"
@@ -16,7 +17,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-NewtonianMechanics::NewtonianMechanics( const std::string& name ):
+SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name ):
     SolverBase(name)
 {
 
@@ -25,12 +26,12 @@ NewtonianMechanics::NewtonianMechanics( const std::string& name ):
 
 
 
-NewtonianMechanics::~NewtonianMechanics()
+SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 {
   // TODO Auto-generated destructor stub
 }
 
-void NewtonianMechanics::Registration( WrapperCollection& domain )
+void SolidMechanics_LagrangianFEM::Registration( WrapperCollection& domain )
 {
 
   WrapperCollection& nodes = domain.RegisterChildWrapperCollection<WrapperCollection >("FEM_Nodes");
@@ -77,7 +78,7 @@ void NewtonianMechanics::Registration( WrapperCollection& domain )
 
 }
 
-void NewtonianMechanics::TimeStep( real64 const& time_n,
+void SolidMechanics_LagrangianFEM::TimeStep( real64 const& time_n,
                                    real64 const& dt,
                                    const int cycleNumber,
                                    WrapperCollection& domain )
@@ -85,7 +86,7 @@ void NewtonianMechanics::TimeStep( real64 const& time_n,
   TimeStepExplicit( time_n, dt, cycleNumber, domain );
 }
 
-void NewtonianMechanics::TimeStepExplicit( real64 const& time_n,
+void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
                                            real64 const& dt,
                                            const int cycleNumber,
                                            WrapperCollection& domain )
@@ -145,5 +146,5 @@ void NewtonianMechanics::TimeStepExplicit( real64 const& time_n,
 //REGISTER_FACTORY( NewtonianMechanics, SolverBase, std::string )
 //REGISTER_SOLVER(NewtonianMechanics)
 
-REGISTER_CATALOGUE_ENTRY( SolverBase, NewtonianMechanics )
+REGISTER_CATALOGUE_ENTRY( SolverBase, SolidMechanics_LagrangianFEM )
 } /* namespace ANST */

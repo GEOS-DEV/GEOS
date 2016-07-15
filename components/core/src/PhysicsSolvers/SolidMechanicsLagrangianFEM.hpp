@@ -5,8 +5,8 @@
  *      Author: rrsettgast
  */
 
-#ifndef NEWTONIANMECHANICS_HPP_
-#define NEWTONIANMECHANICS_HPP_
+#ifndef SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
+#define SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 
 #include "SolverBase.hpp"
 
@@ -18,15 +18,15 @@ namespace dataRepository
 class WrapperCollection;
 }
 
-class NewtonianMechanics : public SolverBase
+class SolidMechanics_LagrangianFEM : public SolverBase
 {
 public:
-  NewtonianMechanics( const std::string& name );
+  SolidMechanics_LagrangianFEM( const std::string& name );
 
 
-  virtual ~NewtonianMechanics();
+  virtual ~SolidMechanics_LagrangianFEM();
 
-  static std::string CatalogueName() { return "NewtonianMechanics"; }
+  static std::string CatalogueName() { return "SolidMechanics_LagrangianFEM"; }
 
   virtual void Registration( dataRepository::WrapperCollection& domain ) override;
 
@@ -46,7 +46,7 @@ public:
 
 
 private:
-  NewtonianMechanics();
+  SolidMechanics_LagrangianFEM();
 
 };
 
@@ -79,8 +79,8 @@ void OnePoint( T const * const __restrict__ dydx,
   }
 }
 
-}
+} // namespace integration
 
-} /* namespace ANST */
+} /* namespace geosx */
 
-#endif /* NEWTONIANMECHANICS_HPP_ */
+#endif /* SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_ */
