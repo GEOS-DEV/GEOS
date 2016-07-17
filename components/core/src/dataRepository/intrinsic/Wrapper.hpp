@@ -139,8 +139,6 @@ public:
     typedef typename U::pointer       type;
     typedef typename U::const_pointer const_type;
   };
-
-
   using rtype       = typename Get_Type<T>::type;
   using rtype_const = typename Get_Type<T>::const_type;
 
@@ -156,6 +154,12 @@ public:
   {
       return m_data;
   }
+
+  T& dataRef()
+  { return m_data; }
+
+  T const & dataRef() const
+  { return m_data; }
 
 private:
 public:

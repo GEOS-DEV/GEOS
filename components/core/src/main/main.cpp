@@ -30,7 +30,7 @@ int main()
 
 
 
-  geosx::dataRepository::WrapperCollection domain("domain") ;
+  geosx::dataRepository::WrapperCollection domain("domain",nullptr) ;
 
   std::string newName("new solver");
   auto solver = geosx::SolverBase::CatalogueEntryBase::Factory(geosx::SolidMechanics_LagrangianFEM::CatalogueName(),newName);

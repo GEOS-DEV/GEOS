@@ -12,15 +12,19 @@ namespace geosx
 namespace dataRepository
 {
 
-WrapperCollection::WrapperCollection( std::string const & name ):
-m_size(0),
-m_name(name),
-m_path(),
+WrapperCollection::WrapperCollection( std::string const & name, WrapperCollection * const parent ):
 m_keyLookup(),
-m_dataObjects(),
-m_parent(nullptr),
+m_wrappers(),
+m_parent(parent),
 m_subObjectManagers()
-{}
+{
+  RegisterWrapper<std_size_t>( "size" ).data() = 0;
+  std::string& temp = RegisterWrapper<std::string>( "name" ).dataRef();
+  temp = name;
+  RegisterWrapper<std::string>( "path" );
+
+
+}
 
 WrapperCollection::~WrapperCollection()
 {
@@ -37,11 +41,8 @@ WrapperCollection::~WrapperCollection()
 //{}
 
 WrapperCollection::WrapperCollection( WrapperCollection&& source ):
-    m_size( std::move(source.m_size) ),
-    m_name( std::move(source.m_name) ),
-    m_path( std::move(source.m_path) ),
     m_keyLookup( std::move(source.m_keyLookup) ),
-    m_dataObjects( std::move(source.m_dataObjects) ),
+    m_wrappers( std::move(source.m_wrappers) ),
     m_parent( std::move(source.m_parent) )
 {}
 
@@ -56,11 +57,11 @@ WrapperBase& WrapperCollection::RegisterWrapper( std::string const & name, rtTyp
 
 void WrapperCollection::resize( std::size_t const newsize )
 {
-  for( auto&& i : this->m_dataObjects )
+  for( auto&& i : this->m_wrappers )
   {
     i->resize(newsize);
   }
-  m_size = newsize;
+  this->getWrapper<std_size_t>("size").data()=newsize;
 }
 
 

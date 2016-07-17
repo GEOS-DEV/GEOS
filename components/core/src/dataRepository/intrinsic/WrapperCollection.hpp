@@ -40,7 +40,7 @@ public:
    * @author Randolph R. Settgast
    * @param name the name of this object manager
    */
-  explicit WrapperCollection( std::string const & name );
+  explicit WrapperCollection( std::string const & name, WrapperCollection * const parent );
 
   /**
    *
@@ -97,7 +97,7 @@ public:
   template< typename T >
   T const & getWrapper( std::size_t const index ) const
   {
-    return m_dataObjects[index]->cast<T>();
+    return m_wrappers[index]->cast<T>();
   }
   template< typename T >
   T& getWrapper( std::size_t const index )
@@ -110,7 +110,7 @@ public:
   const Wrapper<T>& getWrapper( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
-    return m_dataObjects[index]->cast<T>();
+    return m_wrappers[index]->cast<T>();
   }
 
   template< typename T >
@@ -126,10 +126,10 @@ public:
 
   template< typename T >
   typename Wrapper<T>::rtype_const getWrappedObjectData( std::size_t const index ) const
-  { return m_dataObjects[index]->data<T>(); }
+  { return m_wrappers[index]->data<T>(); }
 
   template< typename T >
-  typename Wrapper<T>::rtype GetDataObjectData( std::size_t const index )
+  typename Wrapper<T>::rtype getWrappedObjectData( std::size_t const index )
   { return const_cast<T&>( const_cast<const WrapperCollection*>(this)->getWrappedObjectData<T>( index ) ); }
 
 
@@ -138,13 +138,13 @@ public:
   typename Wrapper<T>::rtype_const getWrappedObjectData( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
-    return m_dataObjects[index]->data<T>();
+    return m_wrappers[index]->data<T>();
   }
   template< typename T >
   typename Wrapper<T>::rtype getWrappedObjectData( std::string const & name )
   {
     auto index = m_keyLookup.at(name);
-    return m_dataObjects[index]->data<T>();
+    return m_wrappers[index]->data<T>();
   }
 
 //  { return static_cast<typename DataObject<T>::rtype>( static_cast<const DataObjectManager *>(this)->GetDataObjectData<T>( name ) ); }
@@ -158,14 +158,14 @@ public:
 
   void resize( std::size_t newsize );
 
-  std::size_t size() const { return m_size; }
+  inline std::size_t size() const
+  {
+    return getWrappedObjectData<std_size_t>("size");
+  }
 
 private:
-  std::size_t m_size;
-  std::string m_name{"name not set"};
-  std::string m_path{"path not set"};
   std::unordered_map<std::string,std::size_t> m_keyLookup;
-  std::vector< std::unique_ptr<WrapperBase> > m_dataObjects;
+  std::vector< std::unique_ptr<WrapperBase> > m_wrappers;
 
   WrapperCollection* m_parent = nullptr;
   std::unordered_map< std::string, std::unique_ptr<WrapperCollection> > m_subObjectManagers;
@@ -186,16 +186,16 @@ Wrapper<T>& WrapperCollection::RegisterWrapper( std::string const & name, std::s
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
-    m_dataObjects.push_back( std::move( WrapperBase::Factory<T>(name) ) );
-    m_dataObjects.back()->resize(this->m_size);
-    key = m_dataObjects.size() - 1;
+    m_wrappers.push_back( std::move( WrapperBase::Factory<T>(name) ) );
+    key = m_wrappers.size() - 1;
     m_keyLookup.insert( std::make_pair(name,key) );
+    m_wrappers.back()->resize(this->size());
   }
   // if key was found, make sure that they are the same type
   else
   {
     key = m_keyLookup.at(name);
-    auto& basePtr = m_dataObjects[key];
+    auto& basePtr = m_wrappers[key];
     if( typeid(T) != basePtr->get_typeid() )
     {
       std::cout<<LOCATION<<std::endl;
@@ -207,7 +207,7 @@ Wrapper<T>& WrapperCollection::RegisterWrapper( std::string const & name, std::s
   {
     *rkey = key;
   }
-  return m_dataObjects[key]->cast<T>();
+  return m_wrappers[key]->cast<T>();
 }
 
 template< typename T >
@@ -218,7 +218,7 @@ T& WrapperCollection::RegisterChildWrapperCollection( std::string const & name )
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_subObjectManagers.end() )
   {
-    auto insertResult = m_subObjectManagers.insert( std::move(std::make_pair( name, std::move( std::make_unique< T >( name ) ) ) ) );
+    auto insertResult = m_subObjectManagers.insert( std::move(std::make_pair( name, std::move( std::make_unique< T >( name, this ) ) ) ) );
 
     if( !insertResult.second )
     {
