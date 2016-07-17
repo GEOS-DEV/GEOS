@@ -17,10 +17,12 @@
 #include <typeindex>
 #include<iostream>
 
-using  int32 = std::int32_t;
-using uint32 = std::uint32_t;
-using  int64 = std::int64_t;
-using uint64 = std::uint64_t;
+using  int32     = std::int32_t;
+using uint32     = std::uint32_t;
+using  int64     = std::int64_t;
+using uint64     = std::uint64_t;
+using std_size_t = std::size_t;
+using string     = std::string;
 
 using real32 = float;
 using real64 = double;
@@ -91,7 +93,9 @@ public:
      {std::type_index(typeid(int64_array)), "int64_array"},
      {std::type_index(typeid(uint64_array)), "uint64_array"},
      {std::type_index(typeid(real32_array)), "real32_array"},
-     {std::type_index(typeid(real64_array)), "real64_array"}
+     {std::type_index(typeid(real64_array)), "real64_array"},
+     {std::type_index(typeid(std_size_t)), "std_size_t"},
+     {std::type_index(typeid(string)), "string"}
     };
     return type_names[key];
   }
@@ -109,7 +113,9 @@ public:
     int64_array_id,
     uint64_array_id,
     real32_array_id,
-    real64_array_id
+    real64_array_id,
+    std_size_t,
+    string
   };
 
 
@@ -177,6 +183,16 @@ public:
       case( TypeIDs::real64_array_id ):
       {
         return lambda( real64_array(1) );
+        break;
+      }
+      case( TypeIDs::std_size_t ):
+      {
+        return lambda( std_size_t(1) );
+        break;
+      }
+      case( TypeIDs::string ):
+      {
+        return lambda( string("") );
         break;
       }
       default:
