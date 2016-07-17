@@ -8,3 +8,11 @@ set(RAJA_DIR "/path/to/RAJA/install-clang-3.7.0-release" CACHE PATH "")
 message("ATK_DIR=${ATK_DIR}")
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 include("${ATK_ROOT}/uberenv_libs/${CONFIG_NAME}.cmake")
+
+
+
+set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE PATH "" FORCE)
+set(GEOSX_LINK_POSTPEND_FLAG "" CACHE PATH "" FORCE)
+
+#set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
+#set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
