@@ -21,16 +21,17 @@ NewComponent::~NewComponent()
   // TODO Auto-generated destructor stub
 }
 
-void Registration( dataRepository::WrapperCollection& /*domain*/ )
+void NewComponent::Registration( dataRepository::WrapperCollection& /*domain*/ )
 {}
 
 
-void TimeStep( real64 const& /*time_n*/,
+void NewComponent::TimeStep( real64 const& /*time_n*/,
                real64 const& /*dt*/,
                int32 const /*cycleNumber*/,
                dataRepository::WrapperCollection& /*domain*/ )
 {}
 
-REGISTER_FACTORY( NewComponent, SolverBase, std::string )
+//REGISTER_FACTORY( NewComponent, SolverBase, std::string )
+REGISTER_CATALOGUE_ENTRY( SolverBase, NewComponent )
 
 } /* namespace geosx */

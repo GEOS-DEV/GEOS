@@ -9,4 +9,4 @@ blt_add_component(COMPONENT_NAME newComponentTemplate DEFAULT_STATE ON)
 
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
-                   DEPENDS_ON slic sidre conduit hdf5 geosx_core raja componentName)
+                   DEPENDS_ON ${GEOSX_LINK_PREPEND_FLAG} geosx_core ${GEOSX_LINK_POSTPEND_FLAG} raja componentName)
