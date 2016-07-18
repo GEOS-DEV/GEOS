@@ -12,49 +12,68 @@
 #include<map>
 #include<iostream>
 #include<memory>
+#include <cxxabi.h>
 #include "macros.hpp"
+#include "StringUtilities.hpp"
+
+namespace objectcatalogue
+{
+
 template<typename BASETYPE, typename ...ARGS>
-class ObjectCatalogueEntryBase
+class CatalogueEntryBase
 {
 public:
-  typedef std::unordered_map<std::string, ObjectCatalogueEntryBase<BASETYPE, ARGS...>*> CatalogueType;
+  typedef std::unordered_map<std::string, CatalogueEntryBase<BASETYPE, ARGS...>*> CatalogueType;
 
-  ObjectCatalogueEntryBase()
+  CatalogueEntryBase()
   {
   }
+
   virtual std::unique_ptr<BASETYPE> Allocate( ARGS&... args ) = 0;
-  virtual ~ObjectCatalogueEntryBase()
+  virtual ~CatalogueEntryBase()
   {
   }
 
+//  static CatalogueType& GetCatalogue()
+//  {
+//    static CatalogueType * const catalogue = new CatalogueType();
+//    return *catalogue;
+//  }
   static CatalogueType& GetCatalogue()
   {
-    static CatalogueType catalogue;
-    return catalogue;
+    return BASETYPE::GetCatalogue();
   }
+
 
   static std::unique_ptr<BASETYPE> Factory( const std::string& objectTypeName, ARGS&...args )
   {
-    std::cout << "Creating solver of type: " << objectTypeName << std::endl;
-    ObjectCatalogueEntryBase<BASETYPE, ARGS...>* const entry = GetCatalogue().at( objectTypeName );
+//    std::cout << "Creating solver of type: " << objectTypeName << std::endl;
+    std::cout << "Creating "<< geosx::stringutilities::demangle(typeid(BASETYPE).name()) <<" of type: " << objectTypeName << std::endl;
+
+    CatalogueEntryBase<BASETYPE, ARGS...>* const entry = GetCatalogue().at( objectTypeName );
     return entry->Allocate( args... );
   }
 
 };
 
 template<typename TYPE, typename BASETYPE, typename ...ARGS>
-class ObjectCatalogueEntry : public ObjectCatalogueEntryBase<BASETYPE, ARGS...>
+class CatalogueEntry : public CatalogueEntryBase<BASETYPE, ARGS...>
 {
 public:
-  ObjectCatalogueEntry() :
-      ObjectCatalogueEntryBase<BASETYPE, ARGS...>()
+  CatalogueEntry() :
+    CatalogueEntryBase<BASETYPE, ARGS...>()
   {
     std::string name = TYPE::CatalogueName();
-    ( ObjectCatalogueEntryBase<BASETYPE, ARGS...>::GetCatalogue() )[name] = this;
-    std::cout << "Registered Solver: " << name << std::endl;
+    ( CatalogueEntryBase<BASETYPE, ARGS...>::GetCatalogue() )[name] = this;
+    std::cout <<"Registered  "
+              <<geosx::stringutilities::demangle(typeid(BASETYPE).name())
+              <<" catalogue component of derived type "
+              <<geosx::stringutilities::demangle(typeid(TYPE).name())
+              <<" named "<< name << std::endl;
+
   }
 
-  ~ObjectCatalogueEntry() final
+  ~CatalogueEntry() final
   {
   }
 
@@ -65,9 +84,9 @@ public:
 
 };
 
-/// Compiler directive to simplify autoregistration
-#define REGISTER_FACTORY( ClassName, BaseType, ...) namespace{ ObjectCatalogueEntry<ClassName,BaseType,__VA_ARGS__> reg_; }
-
+/// Compiler directive to simplify registration
+#define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) namespace{ objectcatalogue::CatalogueEntry<ClassName,BaseType,__VA_ARGS__> reg_; }
+}
 
 
 #define CATALOGUE( BASETYPE, PARAMS, ARGS )\
@@ -114,7 +133,7 @@ public:\
 };\
 \
 
-#define REGISTER_CATALOGUE_ENTRY( BASETYPE, TYPE ) namespace{ BASETYPE::CatalogueEntry< TYPE > reg_##TYPE; }
+//#define REGISTER_CATALOGUE_ENTRY( BASETYPE, TYPE ) namespace{ BASETYPE::CatalogueEntry< TYPE > reg_##TYPE; }
 
 
 

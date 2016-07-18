@@ -19,5 +19,6 @@ blt_add_library( NAME
                  HEADERS
                      "${componentHeaders}"
                  DEPENDS_ON
+                 	slic sidre conduit hdf5 raja geosx_core
                  )
                  

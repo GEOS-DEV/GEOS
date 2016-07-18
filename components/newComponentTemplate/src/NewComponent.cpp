@@ -10,8 +10,9 @@
 namespace geosx
 {
 
-NewComponent::NewComponent( std::string const & name ):
-    SolverBase(name)
+NewComponent::NewComponent( std::string const & name,
+                            WrapperCollection * const parent ):
+    SolverBase(name,parent)
 {
 
 }
@@ -32,6 +33,6 @@ void NewComponent::TimeStep( real64 const& /*time_n*/,
 {}
 
 //REGISTER_FACTORY( NewComponent, SolverBase, std::string )
-REGISTER_CATALOGUE_ENTRY( SolverBase, NewComponent )
+REGISTER_CATALOGUE_ENTRY( SolverBase, NewComponent, std::string, WrapperCollection * const )
 
 } /* namespace geosx */

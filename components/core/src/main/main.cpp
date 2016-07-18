@@ -33,7 +33,11 @@ int main()
   geosx::dataRepository::WrapperCollection domain("domain",nullptr) ;
 
   std::string newName("new solver");
+  std::string newName2("new solver2");
   auto solver = geosx::SolverBase::CatalogueEntryBase::Factory(geosx::SolidMechanics_LagrangianFEM::CatalogueName(),newName);
+  auto solver2 = geosx::SolverBase::CatalogueEntryBase::Factory("NewComponent",newName2);
+
+
 
   std::cout<<"breakpoint 1: "<<LOCATION<<std::endl;
 
@@ -42,7 +46,7 @@ int main()
 
   double time = 0.0;
   double dt = 5.0e-5;
-  for( int i=0 ; i<10 ; ++i )
+  for( int i=0 ; i<0 ; ++i )
   {
     solver->TimeStep( time, dt, i, domain );
     time += dt;

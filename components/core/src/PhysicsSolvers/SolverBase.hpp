@@ -10,21 +10,18 @@
 
 #include "dataRepository/DataTypes.hpp"
 #include "codingUtilities/ObjectCatalogue.hpp"
+#include "dataRepository/intrinsic/WrapperCollection.hpp"
 #include <string>
 
 namespace geosx
 {
-namespace dataRepository
-{
-class WrapperCollection;
-}
 
-class SolverBase
+class SolverBase : public dataRepository::WrapperCollection
 {
 public:
-//  typedef ObjectCatalogueEntryBase< geosx::SolverBase, std::string > SolverFactory;
 
-  SolverBase( std::string const & name );
+  SolverBase( std::string const & name,
+              WrapperCollection * const parent );
 
   virtual ~SolverBase();
 
@@ -35,10 +32,16 @@ public:
                          const int cycleNumber,
                          dataRepository::WrapperCollection& domain ) = 0;
 
-  CATALOGUE( SolverBase, VA_LIST( std::string const & name ), VA_LIST( name ) )
+//  CATALOGUE( SolverBase, VA_LIST( std::string const & name ), VA_LIST( name ) )
+
+  using CatalogueEntryBase = objectcatalogue::CatalogueEntryBase< SolverBase, std::string, WrapperCollection * const >;
+  static CatalogueEntryBase::CatalogueType& GetCatalogue()
+  {
+    static CatalogueEntryBase::CatalogueType catalogue;
+    return catalogue;
+  }
 
 private:
-  std::string m_name;
 
   SolverBase() = delete;
   SolverBase(const SolverBase&) = delete;

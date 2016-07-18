@@ -20,7 +20,8 @@ class WrapperCollection;
 class NewComponent : public SolverBase
 {
 public:
-  NewComponent( std::string const & name);
+  NewComponent( std::string const & name,
+                WrapperCollection * const parent);
   virtual ~NewComponent();
 
   static std::string CatalogueName() { return "NewComponent"; }

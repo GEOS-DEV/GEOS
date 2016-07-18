@@ -17,8 +17,9 @@ namespace geosx
 {
 using namespace dataRepository;
 
-SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name ):
-    SolverBase(name)
+SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
+                                                            WrapperCollection * const parent ):
+    SolverBase( name, parent )
 {
 
 }
@@ -97,12 +98,12 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
   std::size_t const numNodes = nodes.size();
   std::size_t const numElems = elems.size();
 
-  Wrapper<real64_array>::rtype    X = nodes.getWrappedObjectData<real64_array>("ReferencePosition");
-  Wrapper<real64_array>::rtype    u = nodes.getWrappedObjectData<real64_array>("TotalDisplacement");
-  Wrapper<real64_array>::rtype uhat = nodes.getWrappedObjectData<real64_array>("IncrementalDisplacement");
-  Wrapper<real64_array>::rtype vel  = nodes.getWrappedObjectData<real64_array>("Velocity");
-  Wrapper<real64_array>::rtype acc  = nodes.getWrappedObjectData<real64_array>("Acceleration");
-  Wrapper<real64_array>::rtype mass = nodes.getWrapper<real64_array>("Mass").data();
+  Wrapper<real64_array>::rtype          X = nodes.getWrappedObjectData<real64_array>("ReferencePosition");
+  Wrapper<real64_array>::rtype          u = nodes.getWrappedObjectData<real64_array>("TotalDisplacement");
+  Wrapper<real64_array>::rtype       uhat = nodes.getWrappedObjectData<real64_array>("IncrementalDisplacement");
+  Wrapper<real64_array>::rtype       vel  = nodes.getWrappedObjectData<real64_array>("Velocity");
+  Wrapper<real64_array>::rtype       acc  = nodes.getWrappedObjectData<real64_array>("Acceleration");
+  Wrapper<real64_array>::rtype_const mass = nodes.getWrapper<real64_array>("Mass").data();
 
   Wrapper<real64_array>::rtype    Felem = elems.getWrappedObjectData<real64_array>("Force");
   Wrapper<real64_array>::rtype   Strain = elems.getWrappedObjectData<real64_array>("Strain");
@@ -143,8 +144,6 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 }
 
 
-//REGISTER_FACTORY( NewtonianMechanics, SolverBase, std::string )
-//REGISTER_SOLVER(NewtonianMechanics)
-
-REGISTER_CATALOGUE_ENTRY( SolverBase, SolidMechanics_LagrangianFEM )
+REGISTER_CATALOGUE_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string, WrapperCollection * const )
+//REGISTER_CATALOGUE_ENTRY( SolverBase, SolidMechanics_LagrangianFEM )
 } /* namespace ANST */

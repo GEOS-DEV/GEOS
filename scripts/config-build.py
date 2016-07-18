@@ -96,9 +96,9 @@ else:
 buildpath = os.path.abspath(buildpath)
 
 if os.path.exists(buildpath):
-    sys.exit("Build directory '%s' already exists, exiting...")
-#     print "Build directory '%s' already exists.  Deleting..." % buildpath
-#     shutil.rmtree(buildpath)
+#    sys.exit("Build directory '%s' already exists, exiting...")
+     print "Build directory '%s' already exists.  Deleting..." % buildpath
+     shutil.rmtree(buildpath)
 
 print "Creating build directory '%s'..." % buildpath
 os.makedirs(buildpath)
@@ -116,10 +116,9 @@ else:
 installpath = os.path.abspath(installpath)
 
 if os.path.exists(installpath):
-    sys.exit("Install directory '%s' already exists, exiting...")
-#     print "Install directory '%s' already exists, deleting..." % installpath
-#     import shutil
-#     shutil.rmtree(installpath)
+#    sys.exit("Install directory '%s' already exists, exiting...")
+     print "Install directory '%s' already exists, deleting..." % installpath
+     shutil.rmtree(installpath)
 
 print "Creating install path '%s'..." % installpath
 os.makedirs(installpath)

@@ -21,7 +21,8 @@ class WrapperCollection;
 class SolidMechanics_LagrangianFEM : public SolverBase
 {
 public:
-  SolidMechanics_LagrangianFEM( const std::string& name );
+  SolidMechanics_LagrangianFEM( const std::string& name,
+                                WrapperCollection * const parent );
 
 
   virtual ~SolidMechanics_LagrangianFEM();

@@ -11,7 +11,9 @@
 #include <cxxabi.h>
 #include <string>
 
-namespace std
+namespace geosx
+{
+namespace stringutilities
 {
 inline std::string demangle( const std::string& name )
 {
@@ -21,13 +23,14 @@ inline std::string demangle( const std::string& name )
   // enable c++11 by passing the flag -std=c++11 to g++
   std::unique_ptr<char, void (*)( void* )> res
   {
-    abi::__cxa_demangle( name.c_str(), NULL, NULL, &status ),
+    abi::__cxa_demangle( name.c_str(), nullptr, nullptr, &status ),
     std::free
   };
 
   return ( status == 0 ) ? res.get() : name;
 }
 
+}
 }
 
 #endif /* STRINGUTILITIES_HPP_ */
