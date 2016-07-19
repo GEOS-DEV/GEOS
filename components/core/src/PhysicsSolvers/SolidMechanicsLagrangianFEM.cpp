@@ -8,6 +8,7 @@
 #include "SolidMechanicsLagrangianFEM.hpp"
 
 #include <vector>
+#include <math.h>
 
 #include "../dataRepository/intrinsic/WrapperCollection.hpp"
 //#include "RAJA/RAJA.hxx"

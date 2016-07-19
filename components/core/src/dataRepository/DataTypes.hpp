@@ -114,8 +114,8 @@ public:
     uint64_array_id,
     real32_array_id,
     real64_array_id,
-    std_size_t,
-    string
+    std_size_t_id,
+    string_id
   };
 
 
@@ -185,12 +185,12 @@ public:
         return lambda( real64_array(1) );
         break;
       }
-      case( TypeIDs::std_size_t ):
+      case( TypeIDs::std_size_t_id ):
       {
         return lambda( std_size_t(1) );
         break;
       }
-      case( TypeIDs::string ):
+      case( TypeIDs::string_id ):
       {
         return lambda( string("") );
         break;
