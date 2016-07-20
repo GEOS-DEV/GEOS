@@ -49,7 +49,7 @@ public:
 
   /**
    *
-   * @param source
+   * @param source source WrapperCollection
    */
   WrapperCollection( WrapperCollection&& source );
 

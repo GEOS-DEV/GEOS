@@ -8,6 +8,7 @@
 #ifndef COMPONENTS_CORE_SRC_DATAREPOSITORY_DATATYPES_HPP_
 #define COMPONENTS_CORE_SRC_DATAREPOSITORY_DATATYPES_HPP_
 
+#include <cassert>
 #include <cstdint>
 #include <typeinfo>
 #include "codingUtilities/macros.hpp"
@@ -80,7 +81,7 @@ public:
 
   static std::string typeNames( std::type_index const key )
   {
-    static std::unordered_map<std::type_index, std::string> type_names =
+    const std::unordered_map<std::type_index, std::string> type_names =
     {
      {std::type_index(typeid(int32)), "int32"},
      {std::type_index(typeid(uint32)), "uint32"},
@@ -97,7 +98,7 @@ public:
      {std::type_index(typeid(std_size_t)), "std_size_t"},
      {std::type_index(typeid(string)), "string"}
     };
-    return type_names[key];
+    return type_names.at(key);
   }
 
   enum class TypeIDs
@@ -115,7 +116,8 @@ public:
     real32_array_id,
     real64_array_id,
     std_size_t_id,
-    string_id
+    string_id,
+    number_of_ids
   };
 
 
@@ -123,6 +125,7 @@ public:
   static auto ApplyTypeLambda( const TypeIDs type,
                                LAMBDA lambda )
   {
+    assert( type>=TypeIDs::int32_id && type<TypeIDs::number_of_ids );
     switch( type )
     {
       case( TypeIDs::int32_id ):

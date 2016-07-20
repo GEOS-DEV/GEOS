@@ -23,36 +23,39 @@ template<typename BASETYPE, typename ...ARGS>
 class CatalogueEntryBase
 {
 public:
-  typedef std::unordered_map<std::string, CatalogueEntryBase<BASETYPE, ARGS...>*> CatalogueType;
+  CatalogueEntryBase() = default;
+  virtual ~CatalogueEntryBase() = default;
+  CatalogueEntryBase(CatalogueEntryBase const &) = default;
+  CatalogueEntryBase(CatalogueEntryBase &&) = default;
+  CatalogueEntryBase& operator=(CatalogueEntryBase const &) = default;
+  CatalogueEntryBase& operator=(CatalogueEntryBase &&) = default;
 
-  CatalogueEntryBase()
-  {
-  }
+  virtual std::unique_ptr<BASETYPE> Allocate( std::string const & name, ARGS&... args ) const = 0;
+};
 
-  virtual std::unique_ptr<BASETYPE> Allocate( ARGS&... args ) = 0;
-  virtual ~CatalogueEntryBase()
-  {
-  }
+template<typename BASETYPE, typename ...ARGS>
+class CatalogInterface
+{
+public:
+  typedef std::unordered_map<std::string, std::unique_ptr< CatalogueEntryBase<BASETYPE, ARGS...> > > CatalogueType;
 
-//  static CatalogueType& GetCatalogue()
-//  {
-//    static CatalogueType * const catalogue = new CatalogueType();
-//    return *catalogue;
-//  }
   static CatalogueType& GetCatalogue()
   {
     return BASETYPE::GetCatalogue();
   }
 
-
   static std::unique_ptr<BASETYPE> Factory( const std::string& objectTypeName, ARGS&...args )
   {
-//    std::cout << "Creating solver of type: " << objectTypeName << std::endl;
-    std::cout << "Creating "<< geosx::stringutilities::demangle(typeid(BASETYPE).name()) <<" of type: " << objectTypeName << std::endl;
-
-    CatalogueEntryBase<BASETYPE, ARGS...>* const entry = GetCatalogue().at( objectTypeName );
-    return entry->Allocate( args... );
+    CatalogueEntryBase<BASETYPE, ARGS...> const * const entry = GetCatalogue().at( objectTypeName ).get();
+    return entry->Allocate( objectTypeName, args... );
   }
+
+  CatalogInterface() = delete;
+  ~CatalogInterface() = delete;
+  CatalogInterface(CatalogInterface const &) = delete;
+  CatalogInterface(CatalogInterface &&) = delete;
+  CatalogInterface& operator=(CatalogInterface const &) = delete;
+  CatalogInterface& operator=(CatalogInterface &&) = delete;
 
 };
 
@@ -62,31 +65,73 @@ class CatalogueEntry : public CatalogueEntryBase<BASETYPE, ARGS...>
 public:
   CatalogueEntry() :
     CatalogueEntryBase<BASETYPE, ARGS...>()
+  {}
+
+  ~CatalogueEntry() override final = default;
+
+  CatalogueEntry(CatalogueEntry const & source ) :
+    CatalogueEntryBase<BASETYPE, ARGS...>(source)
+  {}
+
+  CatalogueEntry(CatalogueEntry && source ):
+    CatalogueEntryBase<BASETYPE, ARGS...>(std::move(source))
+  {}
+
+  CatalogueEntry& operator=(CatalogueEntry const & source )
+  {
+    CatalogueEntryBase<BASETYPE, ARGS...>::operator=(source);
+  }
+
+  CatalogueEntry& operator=(CatalogueEntry && source )
+  {
+    CatalogueEntryBase<BASETYPE, ARGS...>::operator=(std::move(source));
+  }
+
+  virtual std::unique_ptr<BASETYPE> Allocate(  std::string const & name, ARGS&... args ) const override final
+  {
+    std::cout << "Creating "<< name <<" of type "<< geosx::stringutilities::demangle(typeid(TYPE).name())
+              <<" from catalog of "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())<<std::endl;
+
+    return std::unique_ptr<BASETYPE>( new TYPE( args... ) );
+  }
+};
+
+template<typename TYPE, typename BASETYPE, typename ...ARGS>
+class CatalogueEntryConstructor
+{
+public:
+  CatalogueEntryConstructor()
   {
     std::string name = TYPE::CatalogueName();
-    ( CatalogueEntryBase<BASETYPE, ARGS...>::GetCatalogue() )[name] = this;
+    ( CatalogInterface<BASETYPE, ARGS...>::GetCatalogue() ).insert( std::make_pair( name, std::make_unique< CatalogueEntry<TYPE,BASETYPE, ARGS...> >() ) );
+
     std::cout <<"Registered  "
               <<geosx::stringutilities::demangle(typeid(BASETYPE).name())
               <<" catalogue component of derived type "
               <<geosx::stringutilities::demangle(typeid(TYPE).name())
-              <<" named "<< name << std::endl;
-
+              <<" where "<<geosx::stringutilities::demangle(typeid(TYPE).name())<<"::CatalogueName() = "<<TYPE::CatalogueName() << std::endl;
   }
 
-  ~CatalogueEntry() final
-  {
-  }
-
-  virtual std::unique_ptr<BASETYPE> Allocate( ARGS&... args ) final
-  {
-    return std::unique_ptr<BASETYPE>( new TYPE( args... ) );
-  }
+  ~CatalogueEntryConstructor() = default;
+  CatalogueEntryConstructor(CatalogueEntryConstructor const &) = delete;
+  CatalogueEntryConstructor(CatalogueEntryConstructor &&) = delete;
+  CatalogueEntryConstructor& operator=(CatalogueEntryConstructor const &) = delete;
+  CatalogueEntryConstructor& operator=(CatalogueEntryConstructor &&) = delete;
 
 };
 
 /// Compiler directive to simplify registration
-#define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) namespace{ objectcatalogue::CatalogueEntry<ClassName,BaseType,__VA_ARGS__> reg_; }
+#define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) \
+namespace \
+{ \
+objectcatalogue::CatalogueEntryConstructor<ClassName,BaseType,__VA_ARGS__> catEntry; \
 }
+//objectcatalogue::CatalogueEntry<ClassName,BaseType,__VA_ARGS__> catEntry; \
+//objectcatalogue::CatalogueEntry<ClassName,BaseType,__VA_ARGS__> * catEntry = new objectcatalogue::CatalogueEntry<ClassName,BaseType,__VA_ARGS__>(); }
+}
+
+
+
 
 
 #define CATALOGUE( BASETYPE, PARAMS, ARGS )\

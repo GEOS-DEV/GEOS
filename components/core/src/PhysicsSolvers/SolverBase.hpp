@@ -34,11 +34,12 @@ public:
 
 //  CATALOGUE( SolverBase, VA_LIST( std::string const & name ), VA_LIST( name ) )
 
-  using CatalogueEntryBase = objectcatalogue::CatalogueEntryBase< SolverBase, std::string, WrapperCollection * const >;
-  static CatalogueEntryBase::CatalogueType& GetCatalogue()
+  using CatalogInterface = objectcatalogue::CatalogInterface< SolverBase, std::string, WrapperCollection * const >;
+  static CatalogInterface::CatalogueType& GetCatalogue()
   {
-    static CatalogueEntryBase::CatalogueType catalogue;
-    return catalogue;
+    static CatalogInterface::CatalogueType * const catalogue = new CatalogInterface::CatalogueType();
+//    static CatalogueEntryBase::CatalogueType catalogue;
+    return *catalogue;
   }
 
 private:
