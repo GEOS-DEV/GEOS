@@ -1,5 +1,5 @@
-#include "slic/slic.hpp"
-#include "slic/GenericOutputStream.hpp"
+#include <slic/slic.hpp>
+#include <slic/GenericOutputStream.hpp>
 #include <iostream>
 
 #include "../dataRepository/intrinsic/WrapperCollection.hpp"
@@ -12,6 +12,7 @@ using namespace asctoolkit;
 
 int main()
 {
+  std::cout<<"starting main"<<std::endl;
   geosx::setSignalHandling(geosx::stacktrace::handler1);
 
 
@@ -59,6 +60,7 @@ int main()
   slic::finalize();
 
 
+  std::cout<<"exiting main"<<std::endl;
 
   return 0;
 }

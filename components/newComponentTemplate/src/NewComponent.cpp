@@ -32,7 +32,6 @@ void NewComponent::TimeStep( real64 const& /*time_n*/,
                dataRepository::WrapperCollection& /*domain*/ )
 {}
 
-//REGISTER_FACTORY( NewComponent, SolverBase, std::string )
 REGISTER_CATALOGUE_ENTRY( SolverBase, NewComponent, std::string, dataRepository::WrapperCollection * const )
 
 } /* namespace geosx */

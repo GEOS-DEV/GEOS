@@ -8,7 +8,7 @@
  * further review from Lawrence Livermore National Laboratory.
  */
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "dataRepository/DataTypes.hpp"
 #include <string>
 #include <typeindex>

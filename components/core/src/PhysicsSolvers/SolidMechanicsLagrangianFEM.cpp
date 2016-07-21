@@ -44,10 +44,8 @@ void SolidMechanics_LagrangianFEM::Registration( WrapperCollection& domain )
   nodes.RegisterWrapper<real64_array>("Velocity");
   nodes.RegisterWrapper<real64_array>("Acceleration");
 
-
   elems.RegisterWrapper<real64_array>("Strain");
   elems.RegisterWrapper("Force",  rtTypes::TypeIDs::real64_array_id );
-
 
   // HACK
   nodes.resize(11);
@@ -146,5 +144,4 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 
 
 REGISTER_CATALOGUE_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string, WrapperCollection * const )
-//REGISTER_CATALOGUE_ENTRY( SolverBase, SolidMechanics_LagrangianFEM )
 } /* namespace ANST */

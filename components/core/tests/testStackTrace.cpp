@@ -76,20 +76,18 @@ void my_terminate()
 //  abort();
 }
 
-int throw_exception() {
+[[ noreturn ]] void throw_exception()
+{
     // throw an unhandled runtime error
     throw std::runtime_error("RUNTIME ERROR!");
-    return 0;
 }
 
-int foo2() {
+[[ noreturn ]] void foo2() {
     throw_exception();
-    return 0;
 }
 
-int foo1() {
+[[ noreturn ]] void foo1() {
     foo2();
-    return 0;
 }
 TEST(testStackTrace,uncaughtException)
 {

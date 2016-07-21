@@ -116,8 +116,7 @@ public:
     real32_array_id,
     real64_array_id,
     std_size_t_id,
-    string_id,
-    number_of_ids
+    string_id
   };
 
 
@@ -125,7 +124,7 @@ public:
   static auto ApplyTypeLambda( const TypeIDs type,
                                LAMBDA lambda )
   {
-    assert( type>=TypeIDs::int32_id && type<TypeIDs::number_of_ids );
+    assert( type>=TypeIDs::int32_id && type<=TypeIDs::string_id );
     switch( type )
     {
       case( TypeIDs::int32_id ):
@@ -198,11 +197,11 @@ public:
         return lambda( string("") );
         break;
       }
-      default:
-      {
-        std::cout<<LOCATION<<std::endl;
-        throw std::exception();
-      }
+//      default:
+//      {
+//        std::cout<<LOCATION<<std::endl;
+//        throw std::exception();
+//      }
     }
   }
 

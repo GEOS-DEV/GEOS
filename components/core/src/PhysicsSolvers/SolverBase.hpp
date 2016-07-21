@@ -8,8 +8,11 @@
 #ifndef SOLVERBASE_HPP_
 #define SOLVERBASE_HPP_
 
-#include "dataRepository/DataTypes.hpp"
+
 #include "codingUtilities/ObjectCatalogue.hpp"
+
+#include "dataRepository/DataTypes.hpp"
+
 #include "dataRepository/intrinsic/WrapperCollection.hpp"
 #include <string>
 
@@ -35,11 +38,12 @@ public:
 //  CATALOGUE( SolverBase, VA_LIST( std::string const & name ), VA_LIST( name ) )
 
   using CatalogInterface = objectcatalogue::CatalogInterface< SolverBase, std::string, WrapperCollection * const >;
-  static CatalogInterface::CatalogueType& GetCatalogue()
+  static CatalogInterface::CatalogType& GetCatalogue()
   {
-    static CatalogInterface::CatalogueType * const catalogue = new CatalogInterface::CatalogueType();
-//    static CatalogueEntryBase::CatalogueType catalogue;
-    return *catalogue;
+    static CatalogInterface::CatalogType * const catalog = new CatalogInterface::CatalogType();
+    return *catalog;
+//    static CatalogInterface::CatalogueType catalogue;
+//    return catalogue;
   }
 
 private:

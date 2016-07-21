@@ -29,16 +29,6 @@ if (HDF5_DIR)
 endif()
 
 
-################################
-# ATK
-################################
-#if (ATK_DIR)
-#  include(cmake/thirdparty/FindATK.cmake)
-#  blt_register_library( NAME atk
-#                        INCLUDES ${ATK_INCLUDE_DIRS} 
-#                        LIBRARIES  sidre)
-#endif()
-
 if (ATK_DIR)
   include(components/cmake/thirdparty/FindATK.cmake)
   blt_register_library( NAME sidre
