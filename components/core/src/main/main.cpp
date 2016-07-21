@@ -35,7 +35,7 @@ int main()
 
   std::string newName("new solver");
   std::string newName2("new solver2");
-  auto solver = geosx::SolverBase::CatalogInterface::Factory(geosx::SolidMechanics_LagrangianFEM::CatalogueName(), newName, &domain );
+  auto solver = geosx::SolverBase::CatalogInterface::Factory(geosx::SolidMechanics_LagrangianFEM::CatalogName(), newName, &domain );
   auto solver2 = geosx::SolverBase::CatalogInterface::Factory( "NewComponent", newName2, &domain );
 
 

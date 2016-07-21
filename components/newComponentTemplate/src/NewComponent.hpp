@@ -24,7 +24,7 @@ public:
                 WrapperCollection * const parent);
   virtual ~NewComponent();
 
-  static std::string CatalogueName() { return "NewComponent"; }
+  static std::string CatalogName() { return "NewComponent"; }
 
   virtual void Registration( dataRepository::WrapperCollection& domain ) ;
 

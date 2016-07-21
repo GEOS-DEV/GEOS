@@ -124,7 +124,6 @@ public:
   static auto ApplyTypeLambda( const TypeIDs type,
                                LAMBDA lambda )
   {
-    assert( type>=TypeIDs::int32_id && type<=TypeIDs::string_id );
     switch( type )
     {
       case( TypeIDs::int32_id ):
@@ -197,11 +196,11 @@ public:
         return lambda( string("") );
         break;
       }
-//      default:
-//      {
-//        std::cout<<LOCATION<<std::endl;
-//        throw std::exception();
-//      }
+      default:
+      {
+        std::cout<<LOCATION<<std::endl;
+        assert( false );
+      }
     }
   }
 

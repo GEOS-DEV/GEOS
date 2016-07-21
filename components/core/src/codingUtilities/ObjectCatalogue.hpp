@@ -148,7 +148,7 @@ public:
                                                                       <<" , ... >"<<std::endl;
 #endif
 
-    std::string name = TYPE::CatalogueName();
+    std::string name = TYPE::CatalogName();
     ( CatalogInterface<BASETYPE, ARGS...>::GetCatalogue() ).insert( std::make_pair( name, std::make_unique< CatalogueEntry<TYPE,BASETYPE, ARGS...> >() ) );
 
 #if OBJECTCATALOGVERBOSE > 0
@@ -156,7 +156,7 @@ public:
               <<geosx::stringutilities::demangle(typeid(BASETYPE).name())
               <<" catalogue component of derived type "
               <<geosx::stringutilities::demangle(typeid(TYPE).name())
-              <<" where "<<geosx::stringutilities::demangle(typeid(TYPE).name())<<"::CatalogueName() = "<<TYPE::CatalogueName() << std::endl;
+              <<" where "<<geosx::stringutilities::demangle(typeid(TYPE).name())<<"::CatalogueName() = "<<TYPE::CatalogName() << std::endl;
 #endif
   }
 
@@ -182,21 +182,39 @@ public:
 
 /// Compiler directive to simplify registration
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#endif
+
 #if OBJECTCATALOGCONSTRUCTOR == 1
 #define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) \
-_Pragma("clang diagnostic push")\
-namespace \
-{ \
-objectcatalogue::CatalogueEntryConstructor<ClassName,BaseType,__VA_ARGS__> catEntry; }
+namespace { objectcatalogue::CatalogueEntryConstructor<ClassName,BaseType,__VA_ARGS__> catEntry; }
 #else
 #define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) \
-namespace \
-{ \
-objectcatalogue::CatalogueEntry<ClassName,BaseType,__VA_ARGS__> catEntry; }
+namespace { objectcatalogue::CatalogueEntry<ClassName,BaseType,__VA_ARGS__> catEntry; }
 #endif
-//_Pragma("clang diagnostic ignored \"-Wglobal-constructors\"")\
-//_Pragma("clang diagnostic ignored \"-Wexit-time-destructors\"")\
-//_Pragma("clang diagnostic pop")
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#endif
+
+/*
+#ifdef __clang__
+#define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) \
+_Pragma("clang diagnostic push")\
+_Pragma("clang diagnostic ignored \"-Wglobal-constructors\"")\
+_Pragma("clang diagnostic ignored \"-Wexit-time-destructors\"")\
+REGISTER_CATALOGUE_ENTRY0(BaseType, ClassName,__VA_ARGS__)\
+_Pragma("clang diagnostic pop")
+#else
+#define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) \
+REGISTER_CATALOGUE_ENTRY0(BaseType, ClassName,__VA_ARGS__)
+#ifdef __GNUC__
+#endif
+#endif
+*/
 
 
 
