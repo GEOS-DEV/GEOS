@@ -1,40 +1,24 @@
-/*
- * SingletonFactory.hpp
- *
- *  Created on: Nov 30, 2014
- *      Author: rrsettgast
- */
 
-#ifndef OBJECTCATALOGUE_HPP_
-#define OBJECTCATALOGUE_HPP_
+
+#ifndef OBJECTCATALOG_HPP_
+#define OBJECTCATALOG_HPP_
 #include<unordered_map>
 #include<string>
-#include<map>
 #include<iostream>
-#include<memory>
-#include <cxxabi.h>
-#include "macros.hpp"
 #include "StringUtilities.hpp"
 
 #ifndef OBJECTCATALOGVERBOSE
 #define OBJECTCATALOGVERBOSE 2
 #endif
-#ifndef OBJECTCATALOGCONSTRUCTOR
-#define OBJECTCATALOGCONSTRUCTOR 1
-#endif
 
-namespace objectcatalogue
+namespace objectcatalog
 {
 
 template<typename BASETYPE, typename ...ARGS>
 class CatalogInterface
 {
 public:
-#if OBJECTCATALOGCONSTRUCTOR == 1
   typedef std::unordered_map<std::string, std::unique_ptr< CatalogInterface<BASETYPE, ARGS...> > > CatalogType;
-#else
-  typedef std::unordered_map<std::string, CatalogInterface<BASETYPE, ARGS...> * const  > CatalogType;
-#endif
 
   CatalogInterface()
   {
@@ -66,11 +50,7 @@ public:
 
   static std::unique_ptr<BASETYPE> Factory( const std::string& objectTypeName, ARGS&...args )
   {
-#if OBJECTCATALOGCONSTRUCTOR == 1
     CatalogInterface<BASETYPE, ARGS...> const * const entry = GetCatalogue().at( objectTypeName ).get();
-#else
-    CatalogInterface<BASETYPE, ARGS...> const * const entry = GetCatalogue().at( objectTypeName );
-#endif
     return entry->Allocate( objectTypeName, args... );
   }
 
@@ -87,11 +67,6 @@ public:
     std::cout << "Calling constructor for CatalogueEntry< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
                                                           <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
                                                           <<" , ... >"<<std::endl;
-#endif
-
-#if OBJECTCATALOGCONSTRUCTOR == 0
-    std::string name = TYPE::CatalogueName();
-    ( CatalogInterface<BASETYPE, ARGS...>::GetCatalogue() ).insert( std::make_pair( name, this ) );
 #endif
   }
 
@@ -135,12 +110,11 @@ public:
 
 
 
-#if OBJECTCATALOGCONSTRUCTOR == 1
 template<typename TYPE, typename BASETYPE, typename ...ARGS>
-class CatalogueEntryConstructor
+class CatalogEntryConstructor
 {
 public:
-  CatalogueEntryConstructor()
+  CatalogEntryConstructor()
   {
 #if OBJECTCATALOGVERBOSE > 1
     std::cout << "Calling constructor for CatalogueEntryConstructor< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
@@ -160,7 +134,7 @@ public:
 #endif
   }
 
-  ~CatalogueEntryConstructor()
+  ~CatalogEntryConstructor()
   {
 #if OBJECTCATALOGVERBOSE > 1
     std::cout << "Calling destructor for CatalogueEntryConstructor< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
@@ -169,13 +143,12 @@ public:
 #endif
   }
 
-  CatalogueEntryConstructor(CatalogueEntryConstructor const &) = delete;
-  CatalogueEntryConstructor(CatalogueEntryConstructor &&) = delete;
-  CatalogueEntryConstructor& operator=(CatalogueEntryConstructor const &) = delete;
-  CatalogueEntryConstructor& operator=(CatalogueEntryConstructor &&) = delete;
+  CatalogEntryConstructor(CatalogEntryConstructor const &) = delete;
+  CatalogEntryConstructor(CatalogEntryConstructor &&) = delete;
+  CatalogEntryConstructor& operator=(CatalogEntryConstructor const &) = delete;
+  CatalogEntryConstructor& operator=(CatalogEntryConstructor &&) = delete;
 
 };
-#endif
 
 }
 
@@ -188,34 +161,12 @@ public:
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
 #endif
 
-#if OBJECTCATALOGCONSTRUCTOR == 1
-#define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) \
-namespace { objectcatalogue::CatalogueEntryConstructor<ClassName,BaseType,__VA_ARGS__> catEntry; }
-#else
-#define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) \
-namespace { objectcatalogue::CatalogueEntry<ClassName,BaseType,__VA_ARGS__> catEntry; }
-#endif
+#define REGISTER_CATALOG_ENTRY( BaseType, ClassName, ...) \
+namespace { objectcatalog::CatalogEntryConstructor<ClassName,BaseType,__VA_ARGS__> catEntry; }
 
 #ifdef __clang__
 #pragma clang diagnostic push
 #endif
 
-/*
-#ifdef __clang__
-#define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) \
-_Pragma("clang diagnostic push")\
-_Pragma("clang diagnostic ignored \"-Wglobal-constructors\"")\
-_Pragma("clang diagnostic ignored \"-Wexit-time-destructors\"")\
-REGISTER_CATALOGUE_ENTRY0(BaseType, ClassName,__VA_ARGS__)\
-_Pragma("clang diagnostic pop")
-#else
-#define REGISTER_CATALOGUE_ENTRY( BaseType, ClassName, ...) \
-REGISTER_CATALOGUE_ENTRY0(BaseType, ClassName,__VA_ARGS__)
-#ifdef __GNUC__
-#endif
-#endif
-*/
 
-
-
-#endif /* OBJECTCATALOGUE_HPP_ */
+#endif /* OBJECTCATALOG_HPP_ */
