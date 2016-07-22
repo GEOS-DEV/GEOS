@@ -11,10 +11,9 @@
 
 #include "codingUtilities/ObjectCatalogue.hpp"
 
-#include "dataRepository/DataTypes.hpp"
-
 #include "dataRepository/intrinsic/WrapperCollection.hpp"
 #include <string>
+#include "../types/DataTypes.hpp"
 
 namespace geosx
 {

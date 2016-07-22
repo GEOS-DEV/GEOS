@@ -10,7 +10,7 @@
 using namespace asctoolkit;
 
 
-int main()
+int main(int argc, char *argv[])
 {
   std::cout<<"starting main"<<std::endl;
   geosx::setSignalHandling(geosx::stacktrace::handler1);

@@ -13,6 +13,9 @@ set(geosx_core_sources "" )
 add_subdirectory(dataRepository)
 add_subdirectory(codingUtilities)
 add_subdirectory(PhysicsSolvers)
+add_subdirectory(fileIO)
+add_subdirectory(common)
+add_subdirectory(math)
 
 
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_CURRENT_SOURCE_DIR})

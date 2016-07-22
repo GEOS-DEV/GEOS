@@ -12,7 +12,7 @@
 
 #include "../dataRepository/intrinsic/WrapperCollection.hpp"
 //#include "RAJA/RAJA.hxx"
-#include "../dataRepository/DataTypes.hpp"
+#include "../types/DataTypes.hpp"
 
 namespace geosx
 {

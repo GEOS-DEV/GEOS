@@ -9,6 +9,7 @@ set(geosx_headers
     codingUtilities/stackTrace.hpp
     codingUtilities/SetSignalHandling.hpp
     codingUtilities/sfinae.hpp
+    codingUtilities/StringUtilities.hpp
     PARENT_SCOPE )
 
 #
@@ -18,4 +19,5 @@ set(geosx_core_sources
   ${geosx_core_sources}
     codingUtilities/stackTrace.cpp
     codingUtilities/SetSignalHandling.cpp
+    codingUtilities/StringUtilities.cpp
     PARENT_SCOPE )

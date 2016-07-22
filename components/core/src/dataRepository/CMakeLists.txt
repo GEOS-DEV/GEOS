@@ -4,7 +4,6 @@
 #
 set(geosx_headers
   ${geosx_headers}
-    dataRepository/DataTypes.hpp
     dataRepository/intrinsic/Wrapper.hpp
     dataRepository/intrinsic/WrapperBase.hpp
     dataRepository/intrinsic/WrapperCollection.hpp
