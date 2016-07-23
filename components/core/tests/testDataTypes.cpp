@@ -21,7 +21,7 @@
 #pragma clang diagnostic push
 #endif
 
-#include "dataRepository/DataTypes.hpp"
+#include "common/DataTypes.hpp"
 #include <string>
 #include <typeindex>
 

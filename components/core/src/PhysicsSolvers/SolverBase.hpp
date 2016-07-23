@@ -13,7 +13,7 @@
 
 #include "dataRepository/intrinsic/WrapperCollection.hpp"
 #include <string>
-#include "../types/DataTypes.hpp"
+#include "common/DataTypes.hpp"
 
 namespace geosx
 {
