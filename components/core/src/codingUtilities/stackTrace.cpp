@@ -77,7 +77,9 @@ void handler(int sig, int exitFlag, int exitCode )
           mangled_name < offset_begin)
       {
           *mangled_name++ = '\0';
+#if __APPLE__ && __MACH__
           *(offset_begin-1) = '\0';
+#endif
           *offset_begin++ = '\0';
           *offset_end++ = '\0';
 //          std::cout<<mangled_name<<std::endl;
