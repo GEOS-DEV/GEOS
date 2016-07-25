@@ -69,45 +69,38 @@ class R1TensorT : public TensorBaseT< T_dim >
 //**** Overloaded arithmetic operators  ******************************************
 
 // Scalar product
-friend R1TensorT<T_dim> operator*(realT k, const R1TensorT<T_dim> &V){ return V*k; };
-friend R1TensorT<T_dim> operator*(R1TensorT<T_dim> V, realT k){return V*=k;};
+friend R1TensorT<T_dim> operator*(realT k, const R1TensorT<T_dim> &V){ return V*k; }
+friend R1TensorT<T_dim> operator*(R1TensorT<T_dim> V, realT k){return V*=k;}
 // Dot product *
-friend realT operator*(const R1TensorT<T_dim> &Va, const R1TensorT<T_dim> &Vb){return Dot(Va,Vb);};
+friend realT operator*(const R1TensorT<T_dim> &Va, const R1TensorT<T_dim> &Vb){return Dot(Va,Vb);}
 
 // Division by scalar
-friend R1TensorT<T_dim> operator/(R1TensorT<T_dim> V, realT k){return V/=k;};
+friend R1TensorT<T_dim> operator/(R1TensorT<T_dim> V, realT k){return V/=k;}
 
-// Addition/subtraction
-friend R1TensorT<T_dim> operator+(R1TensorT<T_dim> Va, const R1TensorT<T_dim> &Vb){return Va += Vb;};
-friend R1TensorT<T_dim> operator-(R1TensorT<T_dim> Va, const R1TensorT<T_dim> &Vb){return Va -= Vb;};
 
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS ******************************************
 
   /**
    * @author Randolph Settgast
-   * @return none
    */
   R1TensorT( void ):TensorBaseT< T_dim > () {}
 
   /**
    * @author Randolph Settgast
    * @param[in] data use for initialization of t_data
-   * @return none
    */
   explicit R1TensorT( const realT data ):TensorBaseT< T_dim >(data) {}
 
   /**
    * @author Randolph Settgast
    * @param[in] data naked array used for initialization of t_data
-   * @return none
    */
   explicit R1TensorT( realT* const data ):TensorBaseT< T_dim >(data) {}
 
   /**
    * @author walsh24
    * @param[in] data use for initialization of t_data
-   * @return none
    */
   explicit R1TensorT( const int data ):TensorBaseT< T_dim >( realT(data) ) {};
   
@@ -116,17 +109,15 @@ public:
   /**
    * @author Randolph Settgast
    * @param[in] rhs reference to R1TensorT object to use in initialization
-   * @return none
    */
   R1TensorT( const R1TensorT< T_dim >& rhs ):TensorBaseT< T_dim > ()
-  { TensorBaseT< T_dim >::operator=( rhs ); };
+  { TensorBaseT< T_dim >::operator=( rhs ); }
   
   R1TensorT( const TensorBaseT< T_dim >& rhs ):TensorBaseT< T_dim > ()
-  { TensorBaseT< T_dim >::operator=( rhs ); };
+  { TensorBaseT< T_dim >::operator=( rhs ); }
   
   /**
    * @author Stuart Walsh
-   * @return none
    * 
    * Explicit constructors - will throw compile-time errors if not called with the correct dimension
    */
@@ -200,11 +191,11 @@ public:
   
   /// get the unit vector
   R1TensorT< T_dim > UnitVector( void ) const
-  { realT n = this->L2_Norm(); return (n>0.0)? (*this/n): *this;};
+  { realT n = this->L2_Norm(); return (n>0.0)? (*this/n): *this;}
   
   /// Normalize the vector
   realT Normalize( void )
-  { realT n = this->L2_Norm(); if(n>0.0) *this /= n; return n;};
+  { realT n = this->L2_Norm(); if(n>0.0) *this /= n; return n;}
 
   /// sum the components of the tensor
   inline realT Sum( void ) const;

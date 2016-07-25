@@ -10,7 +10,7 @@
 
 
 
-#include "codingUtilities/ObjectCatalogue.hpp"
+#include "codingUtilities/ObjectCatalog.hpp"
 
 #include "dataRepository/intrinsic/WrapperCollection.hpp"
 #include <string>

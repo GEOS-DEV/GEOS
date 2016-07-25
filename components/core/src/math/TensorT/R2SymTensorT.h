@@ -362,8 +362,8 @@ inline realT& R2SymTensorT< T_dim >::operator()(const int i, const int j)
 template<int T_dim>
 inline realT R2SymTensorT< T_dim >::Trace(void) const
 {
-  register realT trace = 0;
-  register int c = 0;
+  realT trace = 0;
+  int c = 0;
 
   if (T_dim == 2)
     trace = this->t_data[0] + this->t_data[2];
@@ -911,7 +911,6 @@ inline realT R2SymTensorT< T_dim >::AijBij(const R2SymTensorT< T_dim >& A, const
  * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  * @param[in] B symmetric rank-2 tensor
- * @return none
  *
  * This function performs matrix multiplication \f$\mathbf {AB}\f$ -or- \f$A_{ij} B_{jk}\f$
  */
@@ -948,7 +947,6 @@ inline void R2SymTensorT< T_dim >::AijBjk(const R2SymTensorT< T_dim >& A, const 
 /**
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
- * @return none
  *
  * This function performs matrix multiplication \f$\mathbf {AA^T}\f$ -or- \f$A_{ij} A_{kj}\f$
  */
@@ -982,7 +980,6 @@ inline void R2SymTensorT< T_dim >::AijAkj(const R2TensorT< T_dim >& A)
 /**
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
- * @return none
  *
  * This function performs matrix multiplication \f$\mathbf {A^TA}\f$ -or- \f$A_{ji} A_{jk}\f$
  */
@@ -1016,7 +1013,6 @@ inline void R2SymTensorT< T_dim >::AjiAjk(const R2TensorT< T_dim >& A)
 /**
  * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
- * @return none
  *
  * This function performs matrix multiplication \f$\mathbf {AA}\f$ -or- \f$A_{ij} A_{jk}\f$
  */
@@ -1063,7 +1059,6 @@ inline void R2SymTensorT< T_dim >::AijAjk(const R2SymTensorT< T_dim >& A)
 /**
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
- * @return none
  *
  * This function performs compound matrix operation \f$\mathbf {AA^T+A+A^T}\f$ -or- \f$A_{ij} A_{kj} +  A_{ik} +  A_{ki}\f$
  */
@@ -1098,7 +1093,6 @@ inline void R2SymTensorT< T_dim >::AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_d
 /**
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
- * @return none
  *
  * This function performs compound matrix operation \f$\mathbf {A^TA+A+A^T}\f$ -or- \f$A_{ji} A_{jk} +  A_{ik} +  A_{ki}\f$
  */
@@ -1134,7 +1128,6 @@ inline void R2SymTensorT< T_dim >::AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_d
 /**
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
- * @return none
  *
  * This function performs compound matrix operation \f$\mathbf {AA^T-A-A^T}\f$ -or- \f$A_{ij} A_{kj} -  A_{ik} -  A_{ki}\f$
  */
@@ -1171,7 +1164,6 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& 
  * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  * @param[in] Q rank-2 tensor
- * @return none
  *
  * This function performs compound matrix operation \f$\mathbf {QAQ^T}\f$ -or- \f$Q_{ij} A_{jk} Q_{lk}\f$. This is
  * inteded to be a rotationAxis of a R2SymTensor with Q being an orthonormal matrix.
@@ -1234,7 +1226,6 @@ inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, con
 /**
  * @author Randolph Settgast
  * @param[in] a rank-1 tensor
- * @return none
  *
  * This function performs a dyadic product of a rank-1 tensor with itself
  *  \f$\mathbf {a \otimes a}\f$ -or- \f$a_i a_j\f$
@@ -1289,7 +1280,6 @@ R2SymTensorT< T_dim > DyadicProduct(const R1TensorT< T_dim >& a){
  * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  * @param[in] b rank-1 tensor
- * @return none
  *
  * This function adds the dyadic product of two rank-1 tensors to this
  * tensor.

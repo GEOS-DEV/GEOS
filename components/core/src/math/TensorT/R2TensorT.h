@@ -73,7 +73,6 @@ public:
   /**
    * @author Randolph Settgast
    * @param[in] data use for initialization of t_data
-   * @return none
    */
   explicit R2TensorT( const realT data ):TensorBaseT< T_dim*T_dim >(data) {}
 
@@ -81,7 +80,7 @@ public:
   R2TensorT(const R2TensorT<T_dim>& rhs);
   
   /// constructor initialized by raw data
-  explicit R2TensorT( const realT data[T_dim*T_dim] ):TensorBaseT< T_dim*T_dim >(data){};
+  explicit R2TensorT( const realT data[T_dim*T_dim] ):TensorBaseT< T_dim*T_dim >(data){}
   
   /// explicit constructors
   R2TensorT(realT Txx,realT Txy,realT Tyx,realT Tyy);  //2D only - throws error otherwise
@@ -960,7 +959,7 @@ inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a , const 
 template< int T_dim >
 inline realT R2TensorT<T_dim>::Trace(void) const
 {
-  register realT trace=0 ;
+  realT trace=0 ;
   
   if( T_dim==2 )
   {
@@ -972,7 +971,7 @@ inline realT R2TensorT<T_dim>::Trace(void) const
   }
   else
   {
-    register int c=0;
+    int c=0;
 
     for( int ii=1 ; ii<=T_dim ; ++ii )
     {
@@ -1415,7 +1414,7 @@ inline void R2TensorT<T_dim>::RowSwap( const int i1 , const int i2 )
 }
 
 
-#if SIG_FIG_TRUNC
+#ifdef SIG_FIG_TRUNC
 
 template< int T_dim >
 void R2TensorT<T_dim>::SetMaxVal( const R2TensorT<T_dim>& A )
