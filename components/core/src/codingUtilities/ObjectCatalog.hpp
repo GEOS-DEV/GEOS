@@ -23,7 +23,7 @@ public:
   CatalogInterface()
   {
 #if OBJECTCATALOGVERBOSE > 1
-    std::cout << "Calling constructor for CatalogueEntryBase< "<< geosx::stringutilities::demangle(typeid(BASETYPE).name())
+    std::cout << "Calling constructor for CatalogInterface< "<< geosx::stringutilities::demangle(typeid(BASETYPE).name())
                                                               <<" , ... >"<<std::endl;
 #endif
   }
@@ -31,7 +31,7 @@ public:
   virtual ~CatalogInterface()
   {
 #if OBJECTCATALOGVERBOSE > 1
-    std::cout << "Calling destructor for CatalogueEntryBase< "<< geosx::stringutilities::demangle(typeid(BASETYPE).name())
+    std::cout << "Calling destructor for CatalogInterface< "<< geosx::stringutilities::demangle(typeid(BASETYPE).name())
                                                               <<" , ... >"<<std::endl;
 #endif
   }
@@ -57,43 +57,43 @@ public:
 };
 
 template<typename TYPE, typename BASETYPE, typename ...ARGS>
-class CatalogueEntry : public CatalogInterface<BASETYPE, ARGS...>
+class CatalogEntry : public CatalogInterface<BASETYPE, ARGS...>
 {
 public:
-  CatalogueEntry() :
+  CatalogEntry() :
     CatalogInterface<BASETYPE, ARGS...>()
   {
 #if OBJECTCATALOGVERBOSE > 1
-    std::cout << "Calling constructor for CatalogueEntry< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
+    std::cout << "Calling constructor for CatalogEntry< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
                                                           <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
                                                           <<" , ... >"<<std::endl;
 #endif
   }
 
-  ~CatalogueEntry() override final
+  ~CatalogEntry() override final
   {
 #if OBJECTCATALOGVERBOSE > 1
-    std::cout << "Calling destructor for CatalogueEntry< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
+    std::cout << "Calling destructor for CatalogEntry< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
                                                           <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
                                                           <<" , ... >"<<std::endl;
 #endif
 
   }
 
-  CatalogueEntry(CatalogueEntry const & source ) :
+  CatalogEntry(CatalogEntry const & source ) :
     CatalogInterface<BASETYPE, ARGS...>(source)
   {}
 
-  CatalogueEntry(CatalogueEntry && source ):
+  CatalogEntry(CatalogEntry && source ):
     CatalogInterface<BASETYPE, ARGS...>(std::move(source))
   {}
 
-  CatalogueEntry& operator=(CatalogueEntry const & source )
+  CatalogEntry& operator=(CatalogEntry const & source )
   {
     CatalogInterface<BASETYPE, ARGS...>::operator=(source);
   }
 
-  CatalogueEntry& operator=(CatalogueEntry && source )
+  CatalogEntry& operator=(CatalogEntry && source )
   {
     CatalogInterface<BASETYPE, ARGS...>::operator=(std::move(source));
   }
@@ -123,7 +123,7 @@ public:
 #endif
 
     std::string name = TYPE::CatalogName();
-    ( CatalogInterface<BASETYPE, ARGS...>::GetCatalogue() ).insert( std::make_pair( name, std::make_unique< CatalogueEntry<TYPE,BASETYPE, ARGS...> >() ) );
+    ( CatalogInterface<BASETYPE, ARGS...>::GetCatalogue() ).insert( std::make_pair( name, std::make_unique< CatalogEntry<TYPE,BASETYPE, ARGS...> >() ) );
 
 #if OBJECTCATALOGVERBOSE > 0
     std::cout <<"Registered  "

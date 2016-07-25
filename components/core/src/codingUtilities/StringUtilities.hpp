@@ -156,7 +156,7 @@ inline void RemoveSpaces(std::string& aString){
 
 /// Expand string vector based on multiple tokens eg [a, b**3, c] => [a,b,b,b,c]
 inline void ExpandMultipleTokens(string_array& sVector , const std::string& multipleToken="**"){
-  int n= sVector.size();
+  unsigned int n= sVector.size();
   string_array newVec;
   for(unsigned int i =0; i < n; ++i){
     string_array keyMult = TokenizeSeq(sVector[i], multipleToken);
