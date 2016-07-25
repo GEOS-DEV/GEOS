@@ -29,7 +29,7 @@ add_subdirectory(components)
 #endif()
 
 
-add_code_check_targets(uncrustify.cfg)
+#add_code_check_targets(uncrustify.cfg)
 
 
 ################################
