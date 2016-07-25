@@ -9,11 +9,13 @@
 #define SOLVERBASE_HPP_
 
 
-#include "dataRepository/DataTypes.hpp"
+
+#include "codingUtilities/ObjectCatalogue.hpp"
 
 #include "dataRepository/intrinsic/WrapperCollection.hpp"
 #include <string>
-#include "../codingUtilities/ObjectCatalog.hpp"
+#include "common/DataTypes.hpp"
+
 
 namespace geosx
 {

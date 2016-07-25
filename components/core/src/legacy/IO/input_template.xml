@@ -1,0 +1,47 @@
+<Problem> 
+  <Solvers>
+    <LagrangeExplicitDynamicsSolver name="solver1" courant="0.5"">
+    <LagrangeExplicitDynamicsSolver name = "solver2" courant="0.25"">
+    <ParallelPlateFlowSolver name="solver3" shapefactor="2.23"">
+  </Solvers>
+
+  <SolverApplications>
+    <Application name="1" begintime="0.0" endtime="1.0">
+      <Apply solver="solver1" toregion="Name1"">
+      <Apply solver="solver1" toregion="Name2"">
+      <Apply solver="solver2" toregion="Name3"">
+      <Apply solver="solver3" toregion="Name4"">
+    </Application>  
+  </SolverApplications>
+
+  <ElementRegions>
+    <Region name = "Name1" elementtype="Type1" materialtype="MType1">
+      <StateVariable name="p0" value="0.0">
+      <StateVariable name="t0" value="300.0">
+    </Region>
+
+    <Region name = "Name2" elementtype="Type2" materialtype="MType2">
+      <StateVariable name="p0" value="0.0">
+      <StateVariable name="t0" value="300.0">
+    </Region>
+
+    <Region name = "Name3" elementtype="Type3" materialtype="MType3">
+      <StateVariable name="p0" value="0.0">
+      <StateVariable name="t0" value="300.0">
+    </Region>
+
+    <Region name = "Name4" elementtype="Type4" materialtype="MType4">
+      <StateVariable name="p0" value="0.0">
+      <StateVariable name="t0" value="300.0">
+    </Region>
+  </ElementRegions>
+
+  <Include path="/path/to/file"">
+  
+  <Output plotfreq="10" restartfreq="20">
+    <TimeHistory fieldname="density" location="0 0.1 0.3"">
+  </Output>
+</Problem>
+
+
+

@@ -1,0 +1,485 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright (c) 2015, Lawrence Livermore National Security, LLC.
+//  Produced at the Lawrence Livermore National Laboratory
+//
+//  GEOS Computational Framework - Core Package, Version 3.0.0
+//
+//  Written by:
+//  Randolph Settgast (settgast1@llnl.gov)
+//  Stuart Walsh(walsh24@llnl.gov)
+//  Pengcheng Fu (fu4@llnl.gov)
+//  Joshua White (white230@llnl.gov)
+//  Chandrasekhar Annavarapu Srinivas
+//  Eric Herbold
+//  Michael Homel
+//
+//
+//  All rights reserved.
+//
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
+//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
+//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
+//     process disclosed, or represents that its use would not infringe privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
+//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
+//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
+//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef LINEARELASTICINTERMEDIATE_H_
+#define LINEARELASTICINTERMEDIATE_H_
+
+#include "Utilities/GeometryUtilities.h"
+#include "MaterialBase.h"
+
+/*
+ * LinearElasticIntermediate.h
+ *
+ *  Created on: Tue Jan  7 22:46:45 PST 2014
+ *      Author: johnson346, settgast
+ */
+ 
+
+
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+
+
+class LinearElasticIntermediateParameterData : public MaterialBaseParameterData
+{
+
+public:
+
+  typedef MaterialBaseParameterData base;
+  realT init_bulkModulus;
+
+
+  LinearElasticIntermediateParameterData():
+    base(),
+    init_bulkModulus(0)
+  {}
+
+  LinearElasticIntermediateParameterData( const LinearElasticIntermediateParameterData& source):
+    base( source ),
+    init_bulkModulus(source.init_bulkModulus)
+  {}
+
+  ~LinearElasticIntermediateParameterData() {}
+  friend class ConstitutiveBase;
+  friend class LinearElasticIntermediate;
+
+  static void GetVariableCounts( localIndex& intVarCounts,
+                                 localIndex& realVarCounts,
+                                 localIndex& R1TensorVarCounts,
+                                 localIndex& R2TensorVarCounts,
+                                 localIndex& R2SymTensorVarCounts )
+  {
+    base::GetVariableCounts( intVarCounts,
+                             realVarCounts,
+                             R1TensorVarCounts,
+                             R2TensorVarCounts,
+                             R2SymTensorVarCounts );
+    realVarCounts += 1;
+
+  }
+
+  static void GetVariableNames( sArray1d& intNames,
+                                sArray1d& realNames,
+                                sArray1d& R1TensorNames,
+                                sArray1d& R2TensorNames,
+                                sArray1d& R2SymTensorNames )
+  {
+    base::GetVariableNames( intNames, realNames, R1TensorNames, R2TensorNames, R2SymTensorNames);
+    realNames.push_back("BulkModulus");
+  }
+
+  virtual void GetVariableOffsets( std::map<std::string, size_t>& intOffsets,
+                                std::map<std::string, size_t>& realOffsets,
+                                std::map<std::string, size_t>& R1TensorOffsets,
+                                std::map<std::string, size_t>& R2TensorOffsets,
+                                std::map<std::string, size_t>& R2SymTensorOffsets ) const
+  {
+    base::GetVariableOffsets( intOffsets, realOffsets, R1TensorOffsets, R2TensorOffsets, R2SymTensorOffsets);
+    realOffsets["BulkModulus"] = (char*)(&init_bulkModulus) - (char*)this;
+  }
+
+  virtual void GetVariableValues( std::map<std::string, int>& intValues,
+                                std::map<std::string, realT>& realValues,
+                                std::map<std::string, R1Tensor>& R1TensorValues,
+                                std::map<std::string, R2Tensor>& R2TensorValues,
+                                std::map<std::string, R2SymTensor>& R2SymTensorValues )
+  {
+    base::GetVariableValues( intValues, realValues, R1TensorValues, R2TensorValues, R2SymTensorValues);
+    realValues["BulkModulus"] = init_bulkModulus;
+  }
+
+  void Serialize(const localIndex index,
+                  Array1dT<iArray1d*>& intVars,
+                  Array1dT<rArray1d*>& realVars,
+                  Array1dT<Array1dT<R1Tensor>*>& R1Vars,
+                  Array1dT<Array1dT<R2Tensor>*>& R2Vars,
+                  Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                  localIndex& intVarCounts,
+                  localIndex& realVarCounts,
+                  localIndex& R1TensorVarCounts,
+                  localIndex& R2TensorVarCounts,
+                  localIndex& R2SymTensorVarCounts  ) const
+  {
+    base::Serialize(index, intVars, realVars, R1Vars, R2Vars, R2SymVars,
+                    intVarCounts, realVarCounts, R1TensorVarCounts, R2TensorVarCounts, R2SymTensorVarCounts );
+    (*(realVars[realVarCounts]))[index] = init_bulkModulus; realVarCounts++;
+  }
+
+
+  void  Deserialize( const localIndex index,
+                     const Array1dT<iArray1d*>& intVars,
+                     const Array1dT<rArray1d*>& realVars,
+                     const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
+                     const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
+                     const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                  localIndex& intVarCounts,
+                  localIndex& realVarCounts,
+                  localIndex& R1TensorVarCounts,
+                  localIndex& R2TensorVarCounts,
+                  localIndex& R2SymTensorVarCounts )
+  {
+    base::Deserialize(index, intVars, realVars, R1Vars, R2Vars, R2SymVars,
+                    intVarCounts, realVarCounts, R1TensorVarCounts, R2TensorVarCounts, R2SymTensorVarCounts );
+    init_bulkModulus = (*(realVars[realVarCounts]))[index]; realVarCounts++;
+  }
+  inline LinearElasticIntermediateParameterData&
+  operator*=(const realT factor)
+  {
+    base::operator*=(factor);
+    init_bulkModulus *= factor;
+    return *this;
+  }
+
+  inline LinearElasticIntermediateParameterData&
+  operator=(const LinearElasticIntermediateParameterData& datum)
+  {
+    base::operator=(datum);
+    init_bulkModulus = datum.init_bulkModulus;
+    return *this;
+  }
+
+  inline LinearElasticIntermediateParameterData&
+  operator+=(const LinearElasticIntermediateParameterData& datum)
+  {
+    base::operator+=(datum);
+    init_bulkModulus += datum.init_bulkModulus;
+    return *this;
+  }
+  void MapToRegion(const realT fctNormal, const realT fct0,
+                   const realT fct1, LinearElasticIntermediateParameterData& p0, LinearElasticIntermediateParameterData& p1)
+  {
+    base::MapToRegion(fctNormal, fct0, fct1, p0, p1);
+    GeometryUtilities::MapToRegion(fctNormal, fct0, fct1, init_bulkModulus, p0.init_bulkModulus, p1.init_bulkModulus);
+
+  }
+
+  void MapFromRegion(const LinearElasticIntermediateParameterData& p0, const LinearElasticIntermediateParameterData& p1, const realT fct0,
+                     const realT fct1)
+  {
+    base::MapFromRegion(p0, p1, fct0, fct1);
+    GeometryUtilities::MapFromRegion(p0.init_bulkModulus, p1.init_bulkModulus, fct0, fct1, init_bulkModulus);
+
+  }
+  virtual void ReadXML( TICPP::HierarchicalDataNode& node )
+  {
+    MaterialBaseParameterData::ReadXML( node );
+    init_bulkModulus = node.GetAttributeOrDefault("BulkModulus", 0.0);
+
+  }
+
+
+
+};
+
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+
+
+class LinearElasticIntermediateStateData : public MaterialBaseStateData
+{
+
+public:
+
+  typedef MaterialBaseStateData base;
+  realT density;
+  realT ElasticBulkModulus;
+  realT ElasticShearModulus;
+
+
+  LinearElasticIntermediateStateData():
+    base(),
+    density(0),
+    ElasticBulkModulus(0),
+    ElasticShearModulus(0)
+  {}
+
+  LinearElasticIntermediateStateData( const LinearElasticIntermediateStateData& source):
+    base( source ),
+    density(source.density),
+    ElasticBulkModulus(source.ElasticBulkModulus),
+    ElasticShearModulus(source.ElasticShearModulus)
+  {}
+
+  ~LinearElasticIntermediateStateData() {}
+  friend class ConstitutiveBase;
+  friend class LinearElasticIntermediate;
+
+  static void GetVariableCounts( localIndex& intVarCounts,
+                                 localIndex& realVarCounts,
+                                 localIndex& R1TensorVarCounts,
+                                 localIndex& R2TensorVarCounts,
+                                 localIndex& R2SymTensorVarCounts )
+  {
+    base::GetVariableCounts( intVarCounts,
+                             realVarCounts,
+                             R1TensorVarCounts,
+                             R2TensorVarCounts,
+                             R2SymTensorVarCounts );
+    realVarCounts += 3;
+
+  }
+
+  static void GetVariableNames( sArray1d& intNames,
+                                sArray1d& realNames,
+                                sArray1d& R1TensorNames,
+                                sArray1d& R2TensorNames,
+                                sArray1d& R2SymTensorNames )
+  {
+    base::GetVariableNames( intNames, realNames, R1TensorNames, R2TensorNames, R2SymTensorNames);
+    realNames.push_back("density");
+    realNames.push_back("ElasticBulkModulus");
+    realNames.push_back("ElasticShearModulus");
+  }
+
+  virtual void GetVariableOffsets( std::map<std::string, size_t>& intOffsets,
+                                std::map<std::string, size_t>& realOffsets,
+                                std::map<std::string, size_t>& R1TensorOffsets,
+                                std::map<std::string, size_t>& R2TensorOffsets,
+                                std::map<std::string, size_t>& R2SymTensorOffsets ) const
+  {
+    base::GetVariableOffsets( intOffsets, realOffsets, R1TensorOffsets, R2TensorOffsets, R2SymTensorOffsets);
+    realOffsets["density"] = (char*)(&density) - (char*)this;
+    realOffsets["ElasticBulkModulus"] = (char*)(&ElasticBulkModulus) - (char*)this;
+    realOffsets["ElasticShearModulus"] = (char*)(&ElasticShearModulus) - (char*)this;
+  }
+
+  virtual void GetVariableValues( std::map<std::string, int>& intValues,
+                                std::map<std::string, realT>& realValues,
+                                std::map<std::string, R1Tensor>& R1TensorValues,
+                                std::map<std::string, R2Tensor>& R2TensorValues,
+                                std::map<std::string, R2SymTensor>& R2SymTensorValues )
+  {
+    base::GetVariableValues( intValues, realValues, R1TensorValues, R2TensorValues, R2SymTensorValues);
+    realValues["density"] = density;
+    realValues["ElasticBulkModulus"] = ElasticBulkModulus;
+    realValues["ElasticShearModulus"] = ElasticShearModulus;
+  }
+
+  void Serialize(const localIndex index,
+                  const unsigned int stride,
+                  const localIndex elemNum,
+                  Array1dT<iArray1d*>& intVars,
+                  Array1dT<rArray1d*>& realVars,
+                  Array1dT<Array1dT<R1Tensor>*>& R1Vars,
+                  Array1dT<Array1dT<R2Tensor>*>& R2Vars,
+                  Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                  localIndex& intVarCounts,
+                  localIndex& realVarCounts,
+                  localIndex& R1TensorVarCounts,
+                  localIndex& R2TensorVarCounts,
+                  localIndex& R2SymTensorVarCounts  ) const
+  {
+    base::Serialize(index, stride, elemNum, intVars, realVars, R1Vars, R2Vars, R2SymVars,
+                    intVarCounts, realVarCounts, R1TensorVarCounts, R2TensorVarCounts, R2SymTensorVarCounts );
+    (*(realVars[realVarCounts]))[elemNum] = density; realVarCounts += stride;
+    (*(realVars[realVarCounts]))[elemNum] = ElasticBulkModulus; realVarCounts += stride;
+    (*(realVars[realVarCounts]))[elemNum] = ElasticShearModulus; realVarCounts += stride;
+  }
+
+
+  void  Deserialize( const localIndex index,
+                  const unsigned int stride,
+                  const localIndex elemNum,
+                     const Array1dT<iArray1d*>& intVars,
+                     const Array1dT<rArray1d*>& realVars,
+                     const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
+                     const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
+                     const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                  localIndex& intVarCounts,
+                  localIndex& realVarCounts,
+                  localIndex& R1TensorVarCounts,
+                  localIndex& R2TensorVarCounts,
+                  localIndex& R2SymTensorVarCounts )
+  {
+    base::Deserialize(index, stride, elemNum, intVars, realVars, R1Vars, R2Vars, R2SymVars,
+                    intVarCounts, realVarCounts, R1TensorVarCounts, R2TensorVarCounts, R2SymTensorVarCounts );
+    density = (*(realVars[realVarCounts]))[elemNum]; realVarCounts += stride;
+    ElasticBulkModulus = (*(realVars[realVarCounts]))[elemNum]; realVarCounts += stride;
+    ElasticShearModulus = (*(realVars[realVarCounts]))[elemNum]; realVarCounts += stride;
+  }
+  inline LinearElasticIntermediateStateData&
+  operator*=(const realT factor)
+  {
+    base::operator*=(factor);
+    density *= factor;
+    ElasticBulkModulus *= factor;
+    ElasticShearModulus *= factor;
+    return *this;
+  }
+
+  inline LinearElasticIntermediateStateData&
+  operator=(const LinearElasticIntermediateStateData& datum)
+  {
+    base::operator=(datum);
+    density = datum.density;
+    ElasticBulkModulus = datum.ElasticBulkModulus;
+    ElasticShearModulus = datum.ElasticShearModulus;
+    return *this;
+  }
+
+  inline LinearElasticIntermediateStateData&
+  operator+=(const LinearElasticIntermediateStateData& datum)
+  {
+    base::operator+=(datum);
+    density += datum.density;
+    ElasticBulkModulus += datum.ElasticBulkModulus;
+    ElasticShearModulus += datum.ElasticShearModulus;
+    return *this;
+  }
+  void MapToRegion(const realT fctNormal, const realT fct0,
+                   const realT fct1, LinearElasticIntermediateStateData& p0, LinearElasticIntermediateStateData& p1)
+  {
+    base::MapToRegion(fctNormal, fct0, fct1, p0, p1);
+    GeometryUtilities::MapToRegion(fctNormal, fct0, fct1, density, p0.density, p1.density);
+    GeometryUtilities::MapToRegion(fctNormal, fct0, fct1, ElasticBulkModulus, p0.ElasticBulkModulus, p1.ElasticBulkModulus);
+    GeometryUtilities::MapToRegion(fctNormal, fct0, fct1, ElasticShearModulus, p0.ElasticShearModulus, p1.ElasticShearModulus);
+
+  }
+
+  void MapFromRegion(const LinearElasticIntermediateStateData& p0, const LinearElasticIntermediateStateData& p1, const realT fct0,
+                     const realT fct1)
+  {
+    base::MapFromRegion(p0, p1, fct0, fct1);
+    GeometryUtilities::MapFromRegion(p0.density, p1.density, fct0, fct1, density);
+    GeometryUtilities::MapFromRegion(p0.ElasticBulkModulus, p1.ElasticBulkModulus, fct0, fct1, ElasticBulkModulus);
+    GeometryUtilities::MapFromRegion(p0.ElasticShearModulus, p1.ElasticShearModulus, fct0, fct1, ElasticShearModulus);
+
+  }
+
+
+
+};
+
+
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+
+
+class LinearElasticIntermediate: public MaterialBase
+{
+public:
+  
+  typedef LinearElasticIntermediateParameterData ParameterClass;
+  typedef LinearElasticIntermediateStateData     StateClass;
+  
+
+  LinearElasticIntermediate( const int paramSize, const int stateSize );
+
+  virtual ~LinearElasticIntermediate();
+  
+  virtual void ReadXML( TICPP::HierarchicalDataNode& node ) = 0;
+
+  virtual void resize( const localIndex num ) = 0;
+  
+  virtual void resize( const localIndex num0,
+                       const localIndex num1 ) = 0;
+  
+  virtual void insert( const localIndex num ) = 0;
+
+  virtual void erase( const localIndex num ) = 0;
+  
+  virtual const LinearElasticIntermediateStateData* StateData( const localIndex index0,
+                                                  const localIndex index1 ) const = 0;
+  virtual       LinearElasticIntermediateStateData* StateData( const localIndex index0,
+                                                  const localIndex index1 )  = 0;
+
+  virtual const LinearElasticIntermediateParameterData* ParameterData( const localIndex index ) const = 0;
+  virtual       LinearElasticIntermediateParameterData* ParameterData( const localIndex index ) = 0;
+  
+  inline void IncrementPtr( const LinearElasticIntermediateStateData* ptr ) const
+  {
+    ptr = reinterpret_cast<const LinearElasticIntermediateStateData*>( reinterpret_cast<const char*>(ptr) + m_stateSize );
+  }
+
+  inline void IncrementPtr( const LinearElasticIntermediateParameterData* ptr ) const
+  {
+    ptr = reinterpret_cast<const LinearElasticIntermediateParameterData*>( reinterpret_cast<const char*>(ptr) + m_paramSize );
+  }
+  
+  inline void MapToRegion(const realT fctNormal, const realT fct0, const realT fct1, 
+                          const localIndex from0, const localIndex from1,
+                          StateClass& s0, StateClass& s1)
+  {
+    StateData(from0, from1)->MapToRegion(fctNormal, fct0, fct1, s0, s1);
+    //ParameterData(from)->MapToRegion(fctNormal, fct0, fct1, p0, p1);
+  }
+
+  inline void MapFromRegion(const realT fct0, const realT fct1, 
+                          const StateClass& s0, const StateClass& s1, 
+                          const localIndex to0, const localIndex to1)
+  {
+    StateData(to0, to1)->MapFromRegion(s0, s1, fct0, fct1);
+    //ParameterData(to)->MapFromRegion(p0, p1, fct0, fct1);
+  }
+  
+  inline void MapToRegion(const realT fctNormal, const realT fct0, const realT fct1, 
+                          const localIndex from,
+                          ParameterClass& p0, ParameterClass& p1)
+  {
+    //StateData(from0, from1)->MapToRegion(fctNormal, fct0, fct1, s0, s1);
+    ParameterData(from)->MapToRegion(fctNormal, fct0, fct1, p0, p1);
+  }
+
+  inline void MapFromRegion(const realT fct0, const realT fct1, 
+                          const ParameterClass& p0, const ParameterClass& p1, 
+                          const localIndex to)
+  {
+    //StateData(to0, to1)->MapFromRegion(s0, s1, fct0, fct1);
+    ParameterData(to)->MapFromRegion(p0, p1, fct0, fct1);
+  }
+  
+  virtual void ZeroStates() = 0;
+    
+  virtual localIndex NumStateIndex0() const = 0;
+  virtual localIndex NumStateIndex1() const = 0;
+
+  virtual localIndex NumParameterIndex0() const = 0;
+  virtual localIndex NumParameterIndex1() const = 0;
+
+
+  
+private:
+  LinearElasticIntermediate();
+  LinearElasticIntermediate( const LinearElasticIntermediate& );
+  LinearElasticIntermediate& operator=( const LinearElasticIntermediate& );
+  
+  
+};
+#endif /* LINEARELASTICINTERMEDIATE_H_ */

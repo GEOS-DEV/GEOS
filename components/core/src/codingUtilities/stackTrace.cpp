@@ -40,7 +40,19 @@ void handler(int sig, int exitFlag, int exitCode )
       char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
 //      std::cout<<messages[i]<<std::endl;
 
-#if 0
+#if __APPLE__ && __MACH__
+      mangled_name = &(messages[i][58]);
+//      std::cout<<mangled_name<<std::endl;
+      for (char *p = messages[i]; *p; ++p)
+      {
+          if (*p == '+')
+          {
+              offset_begin = p;
+          }
+          offset_end = p;
+      }
+
+#else
       // find parentheses and +address offset surrounding mangled name
       for (char *p = messages[i]; *p; ++p)
       {
@@ -57,17 +69,6 @@ void handler(int sig, int exitFlag, int exitCode )
               offset_end = p;
               break;
           }
-      }
-#else
-      mangled_name = &(messages[i][58]);
-//      std::cout<<mangled_name<<std::endl;
-      for (char *p = messages[i]; *p; ++p)
-      {
-          if (*p == '+')
-          {
-              offset_begin = p;
-          }
-          offset_end = p;
       }
 #endif
 

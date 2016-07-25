@@ -6,19 +6,38 @@
  */
 
 #include "WrapperCollection.hpp"
+#include "dataRepository/SidreWrapper.hpp"
 
 namespace geosx
 {
 namespace dataRepository
 {
 
-WrapperCollection::WrapperCollection( std::string const & name, WrapperCollection * const parent ):
+WrapperCollection::WrapperCollection( std::string const & name,
+                                      WrapperCollection * const parent ):
 m_keyLookup(),
 m_wrappers(),
 m_parent(parent),
-m_subObjectManagers()
+m_subObjectManagers(),
+m_sidreGroup(nullptr)
 {
-  RegisterWrapper<std_size_t>( "size" ).data() = 0;
+  if( parent==nullptr )
+  {
+    m_sidreGroup = SidreWrapper::dataStore().getRoot();
+  }
+  else
+  {
+    if( parent->m_sidreGroup->hasGroup(name) )
+    {
+      m_sidreGroup = parent->m_sidreGroup->getGroup(name);
+    }
+    else
+    {
+      m_sidreGroup = parent->m_sidreGroup->createGroup(name);
+    }
+  }
+
+  *(RegisterWrapper<std_size_t>( "size" ).data()) = 0;
   std::string& temp = RegisterWrapper<std::string>( "name" ).dataRef();
   temp = name;
   RegisterWrapper<std::string>( "path" );
@@ -61,7 +80,7 @@ void WrapperCollection::resize( std::size_t const newsize )
   {
     i->resize(newsize);
   }
-  this->getWrapper<std_size_t>("size").data()=newsize;
+  *(this->getWrapper<std_size_t>("size").data())=newsize;
 }
 
 

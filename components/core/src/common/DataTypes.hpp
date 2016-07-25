@@ -75,6 +75,9 @@ using real32_const_array  = array<real32 const>;
 using real64_array        = array<real64>;
 using real64_const_array  = array<real64 const>;
 
+using string_array        = array<string>;
+using string_const_array  = array<string const>;
+
 class rtTypes
 {
 public:
@@ -203,31 +206,6 @@ public:
       }
     }
   }
-
-  /*
-  template< typename LAMBDA, typename...ArgsF >
-  static auto ApplyTypeLambda( const TypeIDs type,
-                               LAMBDA lambda,
-                               ArgsF&&... args ) -> decltype( lambda(args...) )
-  {
-    decltype(lambda(args...)) rval;
-    switch( type )
-    {
-      case( TypeIDs::int32_id ):
-      {
-        rval = lambda(args...);
-        break;
-      }
-      default:
-      {
-        std::cout<<LOCATION<<std::endl;
-        throw std::exception();
-      }
-    }
-
-    return rval;
-  }
-*/
 
 };
 

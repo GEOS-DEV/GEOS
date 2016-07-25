@@ -47,12 +47,12 @@ void setSignalHandling( void (*handler)( int ) )
 #if __clang__
 
 #elif __GNUC__
-  _MM_SET_EXCEPTION_MASK( ( _MM_EXCEPT_INVALID |
-          _MM_EXCEPT_DENORM |
-          _MM_EXCEPT_DIV_ZERO |
-          _MM_EXCEPT_OVERFLOW |
-          _MM_EXCEPT_UNDERFLOW |
-          _MM_EXCEPT_INEXACT ) );
+//  _MM_SET_EXCEPTION_MASK( ( _MM_EXCEPT_INVALID |
+//          _MM_EXCEPT_DENORM |
+//          _MM_EXCEPT_DIV_ZERO |
+//          _MM_EXCEPT_OVERFLOW |
+//          _MM_EXCEPT_UNDERFLOW |
+//          _MM_EXCEPT_INEXACT ) );
 //  _MM_SET_EXCEPTION_MASK( _MM_GET_EXCEPTION_MASK()
 //           & ~( _MM_EXCEPT_INVALID |
 //                _MM_EXCEPT_DENORM |
@@ -60,7 +60,7 @@ void setSignalHandling( void (*handler)( int ) )
 //                _MM_EXCEPT_OVERFLOW |
 //                _MM_EXCEPT_UNDERFLOW |
 //                _MM_EXCEPT_INEXACT ) );
-  _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_EXCEPT_DIV_ZERO);
+//  _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_EXCEPT_DIV_ZERO);
 #endif
 #else
   feenableexcept(FE_DIVBYZERO | FE_OVERFLOW | FE_INVALID);

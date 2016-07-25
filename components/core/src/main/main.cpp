@@ -10,7 +10,7 @@
 using namespace asctoolkit;
 
 
-int main()
+int main( int argc, char *argv[] )
 {
   std::cout<<"starting main"<<std::endl;
   geosx::setSignalHandling(geosx::stacktrace::handler1);
@@ -47,7 +47,7 @@ int main()
 
   double time = 0.0;
   double dt = 5.0e-5;
-  for( int i=0 ; i<0 ; ++i )
+  for( int i=0 ; i<10 ; ++i )
   {
     solver->TimeStep( time, dt, i, domain );
     time += dt;
