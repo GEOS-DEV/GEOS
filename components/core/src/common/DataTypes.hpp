@@ -207,31 +207,6 @@ public:
     }
   }
 
-  /*
-  template< typename LAMBDA, typename...ArgsF >
-  static auto ApplyTypeLambda( const TypeIDs type,
-                               LAMBDA lambda,
-                               ArgsF&&... args ) -> decltype( lambda(args...) )
-  {
-    decltype(lambda(args...)) rval;
-    switch( type )
-    {
-      case( TypeIDs::int32_id ):
-      {
-        rval = lambda(args...);
-        break;
-      }
-      default:
-      {
-        std::cout<<LOCATION<<std::endl;
-        throw std::exception();
-      }
-    }
-
-    return rval;
-  }
-*/
-
 };
 
 #endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_DATATYPES_HPP_ */

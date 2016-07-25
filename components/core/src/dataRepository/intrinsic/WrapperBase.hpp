@@ -25,6 +25,7 @@ namespace dataRepository
 
 
 template< typename T > class Wrapper;
+class WrapperCollection;
 
 class WrapperBase
 {
@@ -40,7 +41,8 @@ public:
    * @param name name of the object
    * \brief constructor
    */
-  explicit WrapperBase( std::string const & name );
+  explicit WrapperBase( std::string const & name,
+                        WrapperCollection * const parent );
 
 
   WrapperBase( WrapperBase&& source );
@@ -79,9 +81,10 @@ public:
 
 
   template< typename T >
-  static std::unique_ptr<WrapperBase> Factory( std::string const & name )
+  static std::unique_ptr<WrapperBase> Factory( std::string const & name,
+                                               WrapperCollection * const parent )
   {
-    return std::move(std::make_unique<Wrapper<T> >( name ) );
+    return std::move(std::make_unique<Wrapper<T> >( name, parent ) );
   }
 
   template< typename T >
@@ -108,9 +111,29 @@ public:
 //  { return const_cast<typename DataObject<T>::rtype>( const_cast<DataObjectBase const *>(this)->getObjectData<T>() ); }
 
 
+  int sizedFromParent() const
+  {
+    return m_sizedFromParent;
+  }
+
+  void setSizedFromParent( int val )
+  {
+    m_sizedFromParent = val;
+  }
+
+  asctoolkit::sidre::DataView const * getSidreView() const
+  {
+    return m_sidreView;
+  }
+  asctoolkit::sidre::DataView * getSidreView()
+  {
+    return m_sidreView;
+  }
+
 private:
   std::string m_name;
-
+  WrapperCollection* m_parent;
+  int m_sizedFromParent;
   asctoolkit::sidre::DataView* m_sidreView;
 
   WrapperBase() = delete;

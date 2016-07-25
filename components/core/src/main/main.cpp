@@ -47,7 +47,7 @@ int main( int argc, char *argv[] )
 
   double time = 0.0;
   double dt = 5.0e-5;
-  for( int i=0 ; i<0 ; ++i )
+  for( int i=0 ; i<10 ; ++i )
   {
     solver->TimeStep( time, dt, i, domain );
     time += dt;

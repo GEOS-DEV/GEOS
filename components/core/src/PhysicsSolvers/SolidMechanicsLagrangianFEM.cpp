@@ -53,7 +53,7 @@ void SolidMechanics_LagrangianFEM::Registration( WrapperCollection& domain )
 
   Wrapper<real64_array>::rtype    X = nodes.RegisterWrapper<real64_array>("ReferencePosition").data();
   Wrapper<real64_array>::rtype mass = nodes.RegisterWrapper<real64_array>("Mass").data();
-  Wrapper<real64>::rtype Ey = elems.RegisterWrapper<real64>("Ey").data();
+  real64& Ey = *(elems.RegisterWrapper<real64>("Ey").data());
   Wrapper<real64_array>::rtype K = elems.RegisterWrapper<real64_array>("K").data();
 
   Ey = 10e9;

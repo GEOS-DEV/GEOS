@@ -40,7 +40,8 @@ public:
    * @author Randolph R. Settgast
    * @param name the name of this object manager
    */
-  explicit WrapperCollection( std::string const & name, WrapperCollection * const parent );
+  explicit WrapperCollection( std::string const & name,
+                              WrapperCollection * const parent );
 
   /**
    *
@@ -160,8 +161,12 @@ public:
 
   inline std::size_t size() const
   {
-    return getWrappedObjectData<std_size_t>("size");
+    return *(getWrappedObjectData<std_size_t>("size"));
   }
+
+
+  asctoolkit::sidre::DataGroup * getSidreGroup()              { return m_sidreGroup; }
+  asctoolkit::sidre::DataGroup const * getSidreGroup() const  { return m_sidreGroup; }
 
 private:
   std::unordered_map<std::string,std::size_t> m_keyLookup;
@@ -169,6 +174,8 @@ private:
 
   WrapperCollection* m_parent = nullptr;
   std::unordered_map< std::string, std::unique_ptr<WrapperCollection> > m_subObjectManagers;
+
+  asctoolkit::sidre::DataGroup* m_sidreGroup;
 
 
 };
@@ -186,7 +193,7 @@ Wrapper<T>& WrapperCollection::RegisterWrapper( std::string const & name, std::s
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
-    m_wrappers.push_back( std::move( WrapperBase::Factory<T>(name) ) );
+    m_wrappers.push_back( std::move( WrapperBase::Factory<T>(name,this) ) );
     key = m_wrappers.size() - 1;
     m_keyLookup.insert( std::make_pair(name,key) );
     m_wrappers.back()->resize(this->size());

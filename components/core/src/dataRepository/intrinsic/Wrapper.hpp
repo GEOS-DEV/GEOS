@@ -13,6 +13,8 @@
 #include "../../common/DataTypes.hpp"
 #include "codingUtilities/sfinae.hpp"
 #include "WrapperBase.hpp"
+#include <type_traits>
+
 namespace geosx
 {
 namespace dataRepository
@@ -23,9 +25,20 @@ class Wrapper : public WrapperBase
 {
 
 public:
-  explicit Wrapper( std::string const & name ):
-    WrapperBase(name)
-  {}
+  explicit Wrapper( std::string const & name,
+                    WrapperCollection * const parent ):
+    WrapperBase(name,parent)
+  {
+    // set up properties of sidre::DataView
+    if( std::is_array<T>::value )
+    {
+
+    }
+    else
+    {
+    getSidreView()->setExternalDataPtr( nullptr );
+    }
+  }
 
   virtual ~Wrapper() noexcept override final{}
 
@@ -131,8 +144,8 @@ public:
   template<class U=T, bool has = has_pointer_type<U>::value >
   struct Get_Type
   {
-    typedef U&       type;
-    typedef const U& const_type;
+    typedef U*       type;
+    typedef const U* const_type;
   };
   template<class U>
   struct Get_Type<U, true>
@@ -151,9 +164,9 @@ public:
     return m_data.data();
   }
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value, rtype>::type data()
+  typename std::enable_if<!has_memberfunction_data<U>::value, U*>::type data()
   {
-      return m_data;
+      return &m_data;
   }
 
   T& dataRef()
