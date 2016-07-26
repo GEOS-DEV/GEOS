@@ -10,8 +10,8 @@
 namespace geosx
 {
 
-SolverBase::SolverBase(const std::string& name,
-                       WrapperCollection * const parent ):
+SolverBase::SolverBase( std::string const & name,
+                        WrapperCollection * const parent ):
     WrapperCollection( name, parent )
 {
   // TODO Auto-generated constructor stub

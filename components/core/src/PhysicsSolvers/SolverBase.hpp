@@ -31,9 +31,9 @@ public:
 
   virtual void Registration( dataRepository::WrapperCollection& domain ) = 0;
 
-  virtual void TimeStep( const real64& time_n,
-                         const real64& dt,
-                         const int cycleNumber,
+  virtual void TimeStep( real64 const & time_n,
+                         real64 const & dt,
+                         int const cycleNumber,
                          dataRepository::WrapperCollection& domain ) = 0;
 
 
@@ -47,10 +47,10 @@ public:
 private:
 
   SolverBase() = delete;
-  SolverBase(const SolverBase&) = delete;
-  SolverBase(const SolverBase&&) = delete;
-  SolverBase& operator=(const SolverBase&) = delete;
-  SolverBase& operator=(const SolverBase&&) = delete;
+  SolverBase( SolverBase const & ) = delete;
+  SolverBase( SolverBase &&) = delete;
+  SolverBase& operator=( SolverBase const & ) = delete;
+  SolverBase& operator=( SolverBase&& ) = delete;
 };
 
 
