@@ -1216,17 +1216,10 @@ inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, con
     o23 = A.t_data[5] * Q.t_data[8];
     o24 = o21 + o22 + o23;
 
-    this->t_data[0] = Q.t_data[0] * (A.t_data[0] * Q.t_data[0] + A.t_data[1] * Q.t_data[1] + A.t_data[3] * Q.t_data[2]) + Q.t_data[1] * (A.t_data[1]
-                                                                                                                                         * Q.t_data[0] +
-                                                                                                                                         A.t_data[2] *
-                                                                                                                                         Q.t_data[1] +
-                                                                                                                                         A.t_data[4] *
-    Q.t_data[2]) + Q.t_data[2] * (A.t_data[3] * Q.t_data[0] + A.t_data[4] * Q.t_data[1]
-                                                                                                                                                                                     +
-                                                                                                                                                                                     A
-                                                                                                                                                                                     .
-                                                                                                                                                                                     t_data
-    [5] * Q.t_data[2]);
+    this->t_data[0] = Q.t_data[0] * (A.t_data[0] * Q.t_data[0] + A.t_data[1] * Q.t_data[1] + A.t_data[3] * Q.t_data[2])
+                    + Q.t_data[1] * (A.t_data[1] * Q.t_data[0] + A.t_data[2] * Q.t_data[1] + A.t_data[4] * Q.t_data[2])
+                    + Q.t_data[2] * (A.t_data[3] * Q.t_data[0] + A.t_data[4] * Q.t_data[1] + A.t_data[5] * Q.t_data[2]);
+
     this->t_data[1] = o4 * Q.t_data[0] + o8 * Q.t_data[1] + o12 * Q.t_data[2];
     this->t_data[2] = o4 * Q.t_data[3] + o8 * Q.t_data[4] + o12 * Q.t_data[5];
     this->t_data[3] = o16 * Q.t_data[0] + o20 * Q.t_data[1] + o24 * Q.t_data[2];
