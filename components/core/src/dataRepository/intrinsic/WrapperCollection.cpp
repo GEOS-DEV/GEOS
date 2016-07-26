@@ -21,20 +21,23 @@ WrapperCollection::WrapperCollection( std::string const & name,
   m_subObjectManagers(),
   m_sidreGroup(nullptr)
 {
-  if( parent==nullptr )
+  asctoolkit::sidre::DataGroup * sidreParent = nullptr;
+  if( m_parent==nullptr )
   {
-    m_sidreGroup = SidreWrapper::dataStore().getRoot();
+    sidreParent = SidreWrapper::dataStore().getRoot();
   }
   else
   {
-    if( parent->m_sidreGroup->hasGroup(name) )
-    {
-      m_sidreGroup = parent->m_sidreGroup->getGroup(name);
-    }
-    else
-    {
-      m_sidreGroup = parent->m_sidreGroup->createGroup(name);
-    }
+    sidreParent = parent->m_sidreGroup;
+  }
+
+  if( sidreParent->hasGroup(name) )
+  {
+    m_sidreGroup = sidreParent->getGroup(name);
+  }
+  else
+  {
+    m_sidreGroup = sidreParent->createGroup(name);
   }
 
   *(RegisterWrapper<std_size_t>( "size" ).data()) = 0;

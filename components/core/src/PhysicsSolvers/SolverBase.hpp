@@ -24,8 +24,8 @@ class SolverBase : public dataRepository::WrapperCollection
 {
 public:
 
-  SolverBase( std::string const & name,
-              WrapperCollection * const parent );
+  explicit SolverBase( std::string const & name,
+                       WrapperCollection * const parent );
 
   virtual ~SolverBase();
 
@@ -38,11 +38,7 @@ public:
 
 
   using CatalogInterface = objectcatalog::CatalogInterface< SolverBase, std::string, WrapperCollection * const >;
-  static CatalogInterface::CatalogType& GetCatalogue()
-  {
-    static CatalogInterface::CatalogType catalog;
-    return catalog;
-  }
+  static CatalogInterface::CatalogType& GetCatalogue();
 
 private:
 

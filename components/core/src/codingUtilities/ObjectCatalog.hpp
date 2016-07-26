@@ -36,9 +36,9 @@ public:
 #endif
   }
 
-  CatalogInterface(CatalogInterface const &) = default;
+  explicit CatalogInterface(CatalogInterface const &) = default;
   CatalogInterface(CatalogInterface &&) = default;
-  CatalogInterface& operator=(CatalogInterface const &) = default;
+  explicit CatalogInterface& operator=(CatalogInterface const &) = default;
   CatalogInterface& operator=(CatalogInterface &&) = default;
 
   static CatalogType& GetCatalogue()

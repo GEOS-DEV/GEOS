@@ -13,14 +13,15 @@ namespace geosx
 SolverBase::SolverBase( std::string const & name,
                         WrapperCollection * const parent ) :
   WrapperCollection( name, parent )
-{
-  // TODO Auto-generated constructor stub
-
-}
+{}
 
 SolverBase::~SolverBase()
+{}
+
+SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalogue()
 {
-  // TODO Auto-generated destructor stub
+  static SolverBase::CatalogInterface::CatalogType catalog;
+  return catalog;
 }
 
 } /* namespace ANST */

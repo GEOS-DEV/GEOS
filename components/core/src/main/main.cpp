@@ -6,7 +6,9 @@
 #include "../PhysicsSolvers/SolidMechanicsLagrangianFEM.hpp"
 #include "codingUtilities/SetSignalHandling.hpp"
 #include "codingUtilities/stackTrace.hpp"
+#include "managers/ProblemManager.hpp"
 
+using namespace geosx;
 using namespace asctoolkit;
 
 
@@ -29,7 +31,9 @@ int main( int argc, char *argv[] )
   slic::setLoggingMsgLevel( slic::message::Debug );
   slic::addStreamToAllMsgLevels( new slic::GenericOutputStream( &std::cout, format ) );
 
+  ProblemManager problemManager;
 
+  problemManager.ParseCommandLineInput( argc, argv );
 
   geosx::dataRepository::WrapperCollection domain("domain",nullptr);
 

@@ -20,11 +20,7 @@ public:
   SidreWrapper();
   ~SidreWrapper();
 
-  static asctoolkit::sidre::DataStore& dataStore()
-  {
-    static asctoolkit::sidre::DataStore datastore;
-    return datastore;
-  }
+  static asctoolkit::sidre::DataStore& dataStore();
 
 private:
 

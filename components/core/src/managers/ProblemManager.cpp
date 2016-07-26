@@ -10,15 +10,17 @@
 namespace geosx
 {
 
-ProblemManager::ProblemManager()
-{
-  // TODO Auto-generated constructor stub
-
-}
+ProblemManager::ProblemManager():
+    WrapperCollection("ProblemManager",nullptr)
+{}
 
 ProblemManager::~ProblemManager()
+{}
+
+void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 {
-  // TODO Auto-generated destructor stub
+
 }
+
 
 } /* namespace geosx */

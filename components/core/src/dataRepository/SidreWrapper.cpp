@@ -11,15 +11,17 @@ namespace geosx
 {
 namespace dataRepository
 {
-SidreWrapper::SidreWrapper()
-{
-  // TODO Auto-generated constructor stub
 
-}
+SidreWrapper::SidreWrapper()
+{}
 
 SidreWrapper::~SidreWrapper()
+{}
+
+asctoolkit::sidre::DataStore& SidreWrapper::dataStore()
 {
-  // TODO Auto-generated destructor stub
+  static asctoolkit::sidre::DataStore datastore;
+  return datastore;
 }
 
 }
