@@ -20,18 +20,18 @@ int main( int argc, char *argv[] )
 
 
   std::string format =  std::string( "***********************************\n" )+
-                        std::string( "* <TIMESTAMP>\n\n" ) +
-                        std::string( "* LEVEL=<LEVEL>\n" ) +
-                        std::string( "* MESSAGE=<MESSAGE>\n" ) +
-                        std::string( "* FILE=<FILE>\n" ) +
-                        std::string( "* LINE=<LINE>\n" ) +
-                        std::string( "***********************************\n" );
+                       std::string( "* <TIMESTAMP>\n\n" ) +
+                       std::string( "* LEVEL=<LEVEL>\n" ) +
+                       std::string( "* MESSAGE=<MESSAGE>\n" ) +
+                       std::string( "* FILE=<FILE>\n" ) +
+                       std::string( "* LINE=<LINE>\n" ) +
+                       std::string( "***********************************\n" );
   slic::setLoggingMsgLevel( slic::message::Debug );
   slic::addStreamToAllMsgLevels( new slic::GenericOutputStream( &std::cout, format ) );
 
 
 
-  geosx::dataRepository::WrapperCollection domain("domain",nullptr) ;
+  geosx::dataRepository::WrapperCollection domain("domain",nullptr);
 
   std::string newName("new solver");
   std::string newName2("new solver2");
@@ -53,7 +53,6 @@ int main( int argc, char *argv[] )
     time += dt;
     std::cout<<std::endl;
   }
-
 
 
 

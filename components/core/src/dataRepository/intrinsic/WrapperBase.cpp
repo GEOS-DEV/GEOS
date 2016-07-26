@@ -9,12 +9,13 @@
 #include "slic/slic.hpp"
 #include "WrapperCollection.hpp"
 
-namespace geosx {
+namespace geosx
+{
 namespace dataRepository
 {
 
 WrapperBase::WrapperBase( std::string const & name,
-                          WrapperCollection * const parent ):
+                          WrapperCollection * const parent ) :
   m_name(name),
   m_parent(parent),
   m_sizedFromParent(0),
@@ -37,11 +38,11 @@ WrapperBase::~WrapperBase()
 {}
 
 
-WrapperBase::WrapperBase( WrapperBase&& source ):
-    m_name( std::move(source.m_name) ),
-    m_parent( source.m_parent),
-    m_sizedFromParent( source.m_sizedFromParent),
-    m_sidreView( source.m_sidreView )
+WrapperBase::WrapperBase( WrapperBase&& source ) :
+  m_name( std::move(source.m_name) ),
+  m_parent( source.m_parent),
+  m_sizedFromParent( source.m_sizedFromParent),
+  m_sidreView( source.m_sidreView )
 {}
 
 }

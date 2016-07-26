@@ -2,9 +2,9 @@
 
 #ifndef OBJECTCATALOG_HPP_
 #define OBJECTCATALOG_HPP_
-#include<unordered_map>
-#include<string>
-#include<iostream>
+#include <unordered_map>
+#include <string>
+#include <iostream>
 #include "StringUtilities.hpp"
 
 #ifndef OBJECTCATALOGVERBOSE
@@ -14,17 +14,17 @@
 namespace objectcatalog
 {
 
-template<typename BASETYPE, typename ...ARGS>
+template<typename BASETYPE, typename ... ARGS>
 class CatalogInterface
 {
 public:
-  typedef std::unordered_map<std::string, std::unique_ptr< CatalogInterface<BASETYPE, ARGS...> > > CatalogType;
+  typedef std::unordered_map<std::string, std::unique_ptr< CatalogInterface<BASETYPE, ARGS ...> > > CatalogType;
 
   CatalogInterface()
   {
 #if OBJECTCATALOGVERBOSE > 1
     std::cout << "Calling constructor for CatalogInterface< "<< geosx::stringutilities::demangle(typeid(BASETYPE).name())
-                                                              <<" , ... >"<<std::endl;
+              <<" , ... >"<<std::endl;
 #endif
   }
 
@@ -32,7 +32,7 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     std::cout << "Calling destructor for CatalogInterface< "<< geosx::stringutilities::demangle(typeid(BASETYPE).name())
-                                                              <<" , ... >"<<std::endl;
+              <<" , ... >"<<std::endl;
 #endif
   }
 
@@ -46,27 +46,27 @@ public:
     return BASETYPE::GetCatalogue();
   }
 
-  virtual std::unique_ptr<BASETYPE> Allocate( std::string const & name, ARGS&... args ) const = 0;
+  virtual std::unique_ptr<BASETYPE> Allocate( std::string const & name, ARGS& ... args ) const = 0;
 
-  static std::unique_ptr<BASETYPE> Factory( const std::string& objectTypeName, ARGS&...args )
+  static std::unique_ptr<BASETYPE> Factory( const std::string& objectTypeName, ARGS& ... args )
   {
-    CatalogInterface<BASETYPE, ARGS...> const * const entry = GetCatalogue().at( objectTypeName ).get();
-    return entry->Allocate( objectTypeName, args... );
+    CatalogInterface<BASETYPE, ARGS ...> const * const entry = GetCatalogue().at( objectTypeName ).get();
+    return entry->Allocate( objectTypeName, args ... );
   }
 
 };
 
-template<typename TYPE, typename BASETYPE, typename ...ARGS>
-class CatalogEntry : public CatalogInterface<BASETYPE, ARGS...>
+template<typename TYPE, typename BASETYPE, typename ... ARGS>
+class CatalogEntry : public CatalogInterface<BASETYPE, ARGS ...>
 {
 public:
   CatalogEntry() :
-    CatalogInterface<BASETYPE, ARGS...>()
+    CatalogInterface<BASETYPE, ARGS ...>()
   {
 #if OBJECTCATALOGVERBOSE > 1
     std::cout << "Calling constructor for CatalogEntry< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
-                                                          <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
-                                                          <<" , ... >"<<std::endl;
+              <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
+              <<" , ... >"<<std::endl;
 #endif
   }
 
@@ -74,43 +74,43 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     std::cout << "Calling destructor for CatalogEntry< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
-                                                          <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
-                                                          <<" , ... >"<<std::endl;
+              <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
+              <<" , ... >"<<std::endl;
 #endif
 
   }
 
   CatalogEntry(CatalogEntry const & source ) :
-    CatalogInterface<BASETYPE, ARGS...>(source)
+    CatalogInterface<BASETYPE, ARGS ...>(source)
   {}
 
-  CatalogEntry(CatalogEntry && source ):
-    CatalogInterface<BASETYPE, ARGS...>(std::move(source))
+  CatalogEntry(CatalogEntry && source ) :
+    CatalogInterface<BASETYPE, ARGS ...>(std::move(source))
   {}
 
   CatalogEntry& operator=(CatalogEntry const & source )
   {
-    CatalogInterface<BASETYPE, ARGS...>::operator=(source);
+    CatalogInterface<BASETYPE, ARGS ...>::operator=(source);
   }
 
   CatalogEntry& operator=(CatalogEntry && source )
   {
-    CatalogInterface<BASETYPE, ARGS...>::operator=(std::move(source));
+    CatalogInterface<BASETYPE, ARGS ...>::operator=(std::move(source));
   }
 
-  virtual std::unique_ptr<BASETYPE> Allocate(  std::string const & name, ARGS&... args ) const override final
+  virtual std::unique_ptr<BASETYPE> Allocate(  std::string const & name, ARGS& ... args ) const override final
   {
 #if OBJECTCATALOGVERBOSE > 0
     std::cout << "Creating "<< name <<" of type "<< geosx::stringutilities::demangle(typeid(TYPE).name())
               <<" from catalog of "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())<<std::endl;
 #endif
-    return std::unique_ptr<BASETYPE>( new TYPE( args... ) );
+    return std::unique_ptr<BASETYPE>( new TYPE( args ... ) );
   }
 };
 
 
 
-template<typename TYPE, typename BASETYPE, typename ...ARGS>
+template<typename TYPE, typename BASETYPE, typename ... ARGS>
 class CatalogEntryConstructor
 {
 public:
@@ -118,12 +118,12 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     std::cout << "Calling constructor for CatalogueEntryConstructor< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
-                                                                      <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
-                                                                      <<" , ... >"<<std::endl;
+              <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
+              <<" , ... >"<<std::endl;
 #endif
 
     std::string name = TYPE::CatalogName();
-    ( CatalogInterface<BASETYPE, ARGS...>::GetCatalogue() ).insert( std::make_pair( name, std::make_unique< CatalogEntry<TYPE,BASETYPE, ARGS...> >() ) );
+    ( CatalogInterface<BASETYPE, ARGS ...>::GetCatalogue() ).insert( std::make_pair( name, std::make_unique< CatalogEntry<TYPE,BASETYPE, ARGS ...> >() ) );
 
 #if OBJECTCATALOGVERBOSE > 0
     std::cout <<"Registered  "
@@ -138,8 +138,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     std::cout << "Calling destructor for CatalogueEntryConstructor< "<< geosx::stringutilities::demangle(typeid(TYPE).name())
-                                                                      <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
-                                                                      <<" , ... >"<<std::endl;
+              <<" , "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())
+              <<" , ... >"<<std::endl;
 #endif
   }
 
@@ -162,7 +162,7 @@ public:
 #endif
 
 #define REGISTER_CATALOG_ENTRY( BaseType, ClassName, ...) \
-namespace { objectcatalog::CatalogEntryConstructor<ClassName,BaseType,__VA_ARGS__> catEntry; }
+  namespace { objectcatalog::CatalogEntryConstructor<ClassName,BaseType,__VA_ARGS__> catEntry; }
 
 #ifdef __clang__
 #pragma clang diagnostic push

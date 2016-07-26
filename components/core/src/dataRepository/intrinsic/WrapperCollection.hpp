@@ -120,11 +120,6 @@ public:
 
 
 
-
-
-
-
-
   template< typename T >
   typename Wrapper<T>::rtype_const getWrappedObjectData( std::size_t const index ) const
   { return m_wrappers[index]->data<T>(); }
@@ -179,7 +174,6 @@ private:
 
 
 };
-
 
 
 

@@ -35,78 +35,78 @@ void handler(int sig, int exitFlag, int exitCode )
 //  fprintf(stderr,"0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789: \n");
 
   // skip first stack frame (points here)
-  for ( int i = 1; i < size && messages != NULL; ++i)
+  for ( int i = 1 ; i < size && messages != NULL ; ++i)
   {
-      char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
+    char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
 //      std::cout<<messages[i]<<std::endl;
 
 #if __APPLE__ && __MACH__
-      mangled_name = &(messages[i][58]);
+    mangled_name = &(messages[i][58]);
 //      std::cout<<mangled_name<<std::endl;
-      for (char *p = messages[i]; *p; ++p)
+    for (char *p = messages[i] ; *p ; ++p)
+    {
+      if (*p == '+')
       {
-          if (*p == '+')
-          {
-              offset_begin = p;
-          }
-          offset_end = p;
+        offset_begin = p;
       }
+      offset_end = p;
+    }
 
 #else
-      // find parentheses and +address offset surrounding mangled name
-      for (char *p = messages[i]; *p; ++p)
+    // find parentheses and +address offset surrounding mangled name
+    for (char *p = messages[i] ; *p ; ++p)
+    {
+      if (*p == '(')
       {
-          if (*p == '(')
-          {
-              mangled_name = p;
-          }
-          else if (*p == '+')
-          {
-              offset_begin = p;
-          }
-          else if (*p == ')')
-          {
-              offset_end = p;
-              break;
-          }
+        mangled_name = p;
       }
+      else if (*p == '+')
+      {
+        offset_begin = p;
+      }
+      else if (*p == ')')
+      {
+        offset_end = p;
+        break;
+      }
+    }
 #endif
 
-      // if the line could be processed, attempt to demangle the symbol
-      if (mangled_name && offset_begin && offset_end &&
-          mangled_name < offset_begin)
-      {
-          *mangled_name++ = '\0';
-          *(offset_begin-1) = '\0';
-          *offset_begin++ = '\0';
-          *offset_end++ = '\0';
+    // if the line could be processed, attempt to demangle the symbol
+    if (mangled_name && offset_begin && offset_end &&
+        mangled_name < offset_begin)
+    {
+      *mangled_name++ = '\0';
+      *(offset_begin-1) = '\0';
+      *offset_begin++ = '\0';
+      *offset_end++ = '\0';
 //          std::cout<<mangled_name<<std::endl;
 
-          int status;
-          char * real_name = abi::__cxa_demangle(mangled_name, nullptr, nullptr, &status);
+      int status;
+      char * real_name = abi::__cxa_demangle(mangled_name, nullptr, nullptr, &status);
 //          std::cout<<status<<std::endl;
-          // if demangling is successful, output the demangled function name
-          if (status == 0)
-          {
-              std::cerr << messages[i] << " : "
-                        << real_name << "+" << offset_begin << offset_end
-                        << std::endl;
+      // if demangling is successful, output the demangled function name
+      if (status == 0)
+      {
+        std::cerr << messages[i] << " : "
+                  << real_name << "+" << offset_begin << offset_end
+                  << std::endl;
 
-          }
-          // otherwise, output the mangled function name
-          else
-          {
-              std::cerr << messages[i] << " : "
-                        << mangled_name << "+" << offset_begin << offset_end
-                        << std::endl;
-          }
-          free(real_name);
       }
-      // otherwise, print the whole line
+      // otherwise, output the mangled function name
       else
       {
-          std::cerr << messages[i] << std::endl;
+        std::cerr << messages[i] << " : "
+                  << mangled_name << "+" << offset_begin << offset_end
+                  << std::endl;
       }
+      free(real_name);
+    }
+    // otherwise, print the whole line
+    else
+    {
+      std::cerr << messages[i] << std::endl;
+    }
   }
   std::cerr << std::endl;
 
@@ -117,4 +117,3 @@ void handler(int sig, int exitFlag, int exitCode )
 }
 }
 }
-

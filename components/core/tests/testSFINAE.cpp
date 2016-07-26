@@ -30,19 +30,19 @@ struct Bar_StaticMemberData : Foo_StaticMemberData {};
 
 struct Foo_MemberFunction_1Arg
 {
-  int memberName(int a) { return a;}
+  int memberName(int a) { return a; }
 };
 struct Bar_MemberFunction_1Arg : Foo_MemberFunction_1Arg {};
 
 struct Foo_MemberFunction_2Arg
 {
-  double memberName2(int a,double b) { return a+b;}
+  double memberName2(int a,double b) { return a+b; }
 };
 struct Bar_MemberFunction_2Arg : Foo_MemberFunction_2Arg {};
 
 struct Foo_StaticMemberFunction_1Arg
 {
-  static int memberName( int a) { return a;}
+  static int memberName( int a) { return a; }
 };
 struct Bar_StaticMemberFunction_1Arg : Foo_StaticMemberFunction_1Arg {};
 

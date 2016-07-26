@@ -14,12 +14,12 @@ namespace dataRepository
 {
 
 WrapperCollection::WrapperCollection( std::string const & name,
-                                      WrapperCollection * const parent ):
-m_keyLookup(),
-m_wrappers(),
-m_parent(parent),
-m_subObjectManagers(),
-m_sidreGroup(nullptr)
+                                      WrapperCollection * const parent ) :
+  m_keyLookup(),
+  m_wrappers(),
+  m_parent(parent),
+  m_subObjectManagers(),
+  m_sidreGroup(nullptr)
 {
   if( parent==nullptr )
   {
@@ -59,19 +59,19 @@ WrapperCollection::~WrapperCollection()
 //    m_parent( source.m_parent )
 //{}
 
-WrapperCollection::WrapperCollection( WrapperCollection&& source ):
-    m_keyLookup( std::move(source.m_keyLookup) ),
-    m_wrappers( std::move(source.m_wrappers) ),
-    m_parent( std::move(source.m_parent) )
+WrapperCollection::WrapperCollection( WrapperCollection&& source ) :
+  m_keyLookup( std::move(source.m_keyLookup) ),
+  m_wrappers( std::move(source.m_wrappers) ),
+  m_parent( std::move(source.m_parent) )
 {}
 
 WrapperBase& WrapperCollection::RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return *( rtTypes::ApplyTypeLambda( type,
-                                   [this, &name]( auto a ) -> WrapperBase*
-                                   {
-                                     return &( this->RegisterWrapper<decltype(a)>(name) );
-                                   } ) );
+                                      [this, &name]( auto a ) -> WrapperBase*
+      {
+        return &( this->RegisterWrapper<decltype(a)>(name) );
+      } ) );
 }
 
 void WrapperCollection::resize( std::size_t const newsize )

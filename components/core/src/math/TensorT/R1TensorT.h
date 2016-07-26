@@ -19,19 +19,19 @@
 //
 //  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 //  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
 //  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
+//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or
 //     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
+//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security,
+//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence
 //     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
 //
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
@@ -65,17 +65,17 @@ template<int T_dim> class R2TensorT;
 template<int T_dim>
 class R1TensorT : public TensorBaseT< T_dim >
 {
-	
+
 //**** Overloaded arithmetic operators  ******************************************
 
 // Scalar product
-friend R1TensorT<T_dim> operator*(realT k, const R1TensorT<T_dim> &V){ return V*k; }
-friend R1TensorT<T_dim> operator*(R1TensorT<T_dim> V, realT k){return V*=k;}
+  friend R1TensorT<T_dim> operator*(realT k, const R1TensorT<T_dim> &V){ return V*k; }
+  friend R1TensorT<T_dim> operator*(R1TensorT<T_dim> V, realT k){return V*=k; }
 // Dot product *
-friend realT operator*(const R1TensorT<T_dim> &Va, const R1TensorT<T_dim> &Vb){return Dot(Va,Vb);}
+  friend realT operator*(const R1TensorT<T_dim> &Va, const R1TensorT<T_dim> &Vb){return Dot(Va,Vb); }
 
 // Division by scalar
-friend R1TensorT<T_dim> operator/(R1TensorT<T_dim> V, realT k){return V/=k;}
+  friend R1TensorT<T_dim> operator/(R1TensorT<T_dim> V, realT k){return V/=k; }
 
 
 public:
@@ -84,45 +84,45 @@ public:
   /**
    * @author Randolph Settgast
    */
-  R1TensorT( void ):TensorBaseT< T_dim > () {}
+  R1TensorT( void ) : TensorBaseT< T_dim > () {}
 
   /**
    * @author Randolph Settgast
    * @param[in] data use for initialization of t_data
    */
-  explicit R1TensorT( const realT data ):TensorBaseT< T_dim >(data) {}
+  explicit R1TensorT( const realT data ) : TensorBaseT< T_dim >(data) {}
 
   /**
    * @author Randolph Settgast
    * @param[in] data naked array used for initialization of t_data
    */
-  explicit R1TensorT( realT* const data ):TensorBaseT< T_dim >(data) {}
+  explicit R1TensorT( realT* const data ) : TensorBaseT< T_dim >(data) {}
 
   /**
    * @author walsh24
    * @param[in] data use for initialization of t_data
    */
-  explicit R1TensorT( const int data ):TensorBaseT< T_dim >( realT(data) ) {};
-  
+  explicit R1TensorT( const int data ) : TensorBaseT< T_dim >( realT(data) ) {};
+
   //**** CONSTRUCTORS AND DESTRUCTORS *******************************************
 
   /**
    * @author Randolph Settgast
    * @param[in] rhs reference to R1TensorT object to use in initialization
    */
-  R1TensorT( const R1TensorT< T_dim >& rhs ):TensorBaseT< T_dim > ()
+  R1TensorT( const R1TensorT< T_dim >& rhs ) : TensorBaseT< T_dim > ()
   { TensorBaseT< T_dim >::operator=( rhs ); }
-  
-  R1TensorT( const TensorBaseT< T_dim >& rhs ):TensorBaseT< T_dim > ()
+
+  R1TensorT( const TensorBaseT< T_dim >& rhs ) : TensorBaseT< T_dim > ()
   { TensorBaseT< T_dim >::operator=( rhs ); }
-  
+
   /**
    * @author Stuart Walsh
-   * 
+   *
    * Explicit constructors - will throw compile-time errors if not called with the correct dimension
    */
-  R1TensorT(realT x,realT y);  //2D only 
-  R1TensorT(realT x,realT y, realT z); //3D only 
+  R1TensorT(realT x,realT y);  //2D only
+  R1TensorT(realT x,realT y, realT z); //3D only
 
   /// non-virtual destructor
   ~R1TensorT( void ) {}
@@ -188,14 +188,14 @@ public:
   //****** TENSOR OPERATIONS **************************************************
   /// take the L2 norm of the tensor
   realT L2_Norm( void ) const;
-  
+
   /// get the unit vector
   R1TensorT< T_dim > UnitVector( void ) const
-  { realT n = this->L2_Norm(); return (n>0.0)? (*this/n): *this;}
-  
+  { realT n = this->L2_Norm(); return (n>0.0) ? (*this/n) : *this; }
+
   /// Normalize the vector
   realT Normalize( void )
-  { realT n = this->L2_Norm(); if(n>0.0) *this /= n; return n;}
+  { realT n = this->L2_Norm(); if(n>0.0) *this /= n; return n; }
 
   /// sum the components of the tensor
   inline realT Sum( void ) const;
@@ -206,13 +206,13 @@ public:
 
   //***** FRIEND DECLARATIONS *************************************************
   /// declare R2SymTensorT a friend so that it can access t_data directly
-  friend class R2SymTensorT< T_dim > ;
+  friend class R2SymTensorT< T_dim >;
 
   /// declare R2TensorT a friend so that it can access t_data directly
-  friend class R2TensorT< T_dim > ;
-  
-  // define cross product 
-  friend inline  
+  friend class R2TensorT< T_dim >;
+
+  // define cross product
+  friend inline
   R1TensorT< T_dim > Cross( const R1TensorT< T_dim >& a, const R1TensorT< T_dim >& b )
   {
     R1TensorT< T_dim > c;
@@ -230,10 +230,10 @@ private:
 
 /// Explicit 2D constructor
 ///
-/// Template specialisation - if templated on another dimension constructor will throw a compile time error. 
+/// Template specialisation - if templated on another dimension constructor will throw a compile time error.
 template<>
-inline R1TensorT<2>::R1TensorT(realT x,realT y):
-TensorBaseT< 2 >()
+inline R1TensorT<2>::R1TensorT(realT x,realT y) :
+  TensorBaseT< 2 >()
 {
   this->t_data[0] = x;
   this->t_data[1] = y;
@@ -242,14 +242,14 @@ TensorBaseT< 2 >()
 
 /// Explicit 3D constructor
 ///
-/// Template specialisation - if templated on another dimension constructor will throw a compile time error. 
+/// Template specialisation - if templated on another dimension constructor will throw a compile time error.
 template<>
-inline R1TensorT<3>::R1TensorT(realT x,realT y,realT z):
-TensorBaseT< 3 >()
+inline R1TensorT<3>::R1TensorT(realT x,realT y,realT z) :
+  TensorBaseT< 3 >()
 {
-    this->t_data[0] = x;
-    this->t_data[1] = y;
-    this->t_data[2] = z;
+  this->t_data[0] = x;
+  this->t_data[1] = y;
+  this->t_data[2] = z;
 }
 
 
@@ -257,7 +257,7 @@ TensorBaseT< 3 >()
 template<int T_dim>
 void R1TensorT< T_dim >::print( std::ostream& os ) const
 {
-  for (int i = 0; i < T_dim; ++i)
+  for (int i = 0 ; i < T_dim ; ++i)
     os << (*this)( i ) << '\t';
 }
 
@@ -267,7 +267,6 @@ void R1TensorT< T_dim >::print( std::ostream& os ) const
 //*****************************************************************************
 //***** R1TensorT Member Function Definition **********************************
 //*****************************************************************************
-
 
 
 
@@ -320,7 +319,7 @@ inline realT R1TensorT< T_dim >::L2_Norm( void ) const
 {
   realT norm = 0.0;
 
-  for (int i = 1; i <= T_dim; ++i)
+  for (int i = 1 ; i <= T_dim ; ++i)
     norm += this->t_data[i - 1] * this->t_data[i - 1];
   norm = sqrt( norm );
 
@@ -337,7 +336,7 @@ inline realT R1TensorT< T_dim >::Sum( void ) const
 {
   realT sum = 0.0;
 
-  for (int i = 1; i <= T_dim; ++i)
+  for (int i = 1 ; i <= T_dim ; ++i)
     sum += this->t_data[i - 1];
 
   return sum;
@@ -386,7 +385,7 @@ inline void R1TensorT< T_dim >::AijBj( const R2TensorT< T_dim >& A, const R1Tens
 template<int T_dim>
 inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim >& A, const R1TensorT< T_dim >& B )
 {
-  for(int i = 0; i < T_dim; i++)
+  for(int i = 0 ; i < T_dim ; i++)
     this->t_data[i] = A.t_data[i] * B.t_data[i];
 }
 
@@ -404,20 +403,20 @@ inline realT R1TensorT< T_dim >::ProductOfSquares() const
   if (T_dim == 2)
   {
     return (this->t_data[0]*this->t_data[0]) *
-        (this->t_data[1]*this->t_data[1]);
+           (this->t_data[1]*this->t_data[1]);
   }
   else if (T_dim == 3)
   {
     return (this->t_data[0]*this->t_data[0]) *
-        (this->t_data[1]*this->t_data[1]) *
-        (this->t_data[2]*this->t_data[2]);
+           (this->t_data[1]*this->t_data[1]) *
+           (this->t_data[2]*this->t_data[2]);
   }
   else
   {
     std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
     exit(1);
   }
-    
+
   return 0.0; // never get here
 }
 
@@ -448,8 +447,9 @@ inline void R1TensorT< T_dim >::minusAijBj( const R2TensorT< T_dim >& A, const R
     this->t_data[1] -= A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
     this->t_data[2] -= A.t_data[6] * B.t_data[0] + A.t_data[7] * B.t_data[1] + A.t_data[8] * B.t_data[2];
   }
-  else std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
-    
+  else
+    std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
+
 }
 
 
@@ -471,7 +471,8 @@ inline void R1TensorT< T_dim >::minusAijBj( const R2SymTensorT< T_dim >& A, cons
     this->t_data[1] -= A.t_data[1] * B.t_data[0] + A.t_data[2] * B.t_data[1] + A.t_data[4] * B.t_data[2];
     this->t_data[2] -= A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
   }
-  else std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
+  else
+    std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
 
 }
 /**
@@ -655,4 +656,3 @@ inline void R1TensorT< T_dim >::GetCol( const R2SymTensorT< T_dim >& A, const in
 }
 
 #endif
-

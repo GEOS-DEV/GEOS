@@ -16,7 +16,7 @@
 #include <vector>
 #include <string>
 #include <typeindex>
-#include<iostream>
+#include <iostream>
 
 using  int32     = std::int32_t;
 using uint32     = std::uint32_t;
@@ -86,20 +86,20 @@ public:
   {
     const std::unordered_map<std::type_index, std::string> type_names =
     {
-     {std::type_index(typeid(int32)), "int32"},
-     {std::type_index(typeid(uint32)), "uint32"},
-     {std::type_index(typeid(int64)), "int64"},
-     {std::type_index(typeid(uint64)), "uint64"},
-     {std::type_index(typeid(real32)), "real32"},
-     {std::type_index(typeid(real64)), "real64"},
-     {std::type_index(typeid(int32_array)), "int32_array"},
-     {std::type_index(typeid(uint32_array)), "uint32_array"},
-     {std::type_index(typeid(int64_array)), "int64_array"},
-     {std::type_index(typeid(uint64_array)), "uint64_array"},
-     {std::type_index(typeid(real32_array)), "real32_array"},
-     {std::type_index(typeid(real64_array)), "real64_array"},
-     {std::type_index(typeid(std_size_t)), "std_size_t"},
-     {std::type_index(typeid(string)), "string"}
+      {std::type_index(typeid(int32)), "int32"},
+      {std::type_index(typeid(uint32)), "uint32"},
+      {std::type_index(typeid(int64)), "int64"},
+      {std::type_index(typeid(uint64)), "uint64"},
+      {std::type_index(typeid(real32)), "real32"},
+      {std::type_index(typeid(real64)), "real64"},
+      {std::type_index(typeid(int32_array)), "int32_array"},
+      {std::type_index(typeid(uint32_array)), "uint32_array"},
+      {std::type_index(typeid(int64_array)), "int64_array"},
+      {std::type_index(typeid(uint64_array)), "uint64_array"},
+      {std::type_index(typeid(real32_array)), "real32_array"},
+      {std::type_index(typeid(real64_array)), "real64_array"},
+      {std::type_index(typeid(std_size_t)), "std_size_t"},
+      {std::type_index(typeid(string)), "string"}
     };
     return type_names.at(key);
   }
@@ -129,81 +129,81 @@ public:
   {
     switch( type )
     {
-      case( TypeIDs::int32_id ):
-      {
-        return lambda( int32(1) );
-        break;
-      }
-      case( TypeIDs::uint32_id ):
-      {
-        return lambda( uint32(1) );
-        break;
-      }
-      case( TypeIDs::int64_id ):
-      {
-        return lambda( int64(1) );
-        break;
-      }
-      case( TypeIDs::uint64_id ):
-      {
-        return lambda( uint64(1) );
-        break;
-      }
-      case( TypeIDs::real32_id ):
-      {
-        return lambda( real32(1) );
-        break;
-      }
-      case( TypeIDs::real64_id ):
-      {
-        return lambda( real64(1) );
-        break;
-      }
-      case( TypeIDs::int32_array_id ):
-      {
-        return lambda( int32_array(1) );
-        break;
-      }
-      case( TypeIDs::uint32_array_id ):
-      {
-        return lambda( uint32_array(1) );
-        break;
-      }
-      case( TypeIDs::int64_array_id ):
-      {
-        return lambda( int64_array(1) );
-        break;
-      }
-      case( TypeIDs::uint64_array_id ):
-      {
-        return lambda( uint64_array(1) );
-        break;
-      }
-      case( TypeIDs::real32_array_id ):
-      {
-        return lambda( real32_array(1) );
-        break;
-      }
-      case( TypeIDs::real64_array_id ):
-      {
-        return lambda( real64_array(1) );
-        break;
-      }
-      case( TypeIDs::std_size_t_id ):
-      {
-        return lambda( std_size_t(1) );
-        break;
-      }
-      case( TypeIDs::string_id ):
-      {
-        return lambda( string("") );
-        break;
-      }
-      default:
-      {
-        std::cout<<LOCATION<<std::endl;
-        assert( false );
-      }
+    case ( TypeIDs::int32_id ):
+    {
+      return lambda( int32(1) );
+      break;
+    }
+    case ( TypeIDs::uint32_id ):
+    {
+      return lambda( uint32(1) );
+      break;
+    }
+    case ( TypeIDs::int64_id ):
+    {
+      return lambda( int64(1) );
+      break;
+    }
+    case ( TypeIDs::uint64_id ):
+    {
+      return lambda( uint64(1) );
+      break;
+    }
+    case ( TypeIDs::real32_id ):
+    {
+      return lambda( real32(1) );
+      break;
+    }
+    case ( TypeIDs::real64_id ):
+    {
+      return lambda( real64(1) );
+      break;
+    }
+    case ( TypeIDs::int32_array_id ):
+    {
+      return lambda( int32_array(1) );
+      break;
+    }
+    case ( TypeIDs::uint32_array_id ):
+    {
+      return lambda( uint32_array(1) );
+      break;
+    }
+    case ( TypeIDs::int64_array_id ):
+    {
+      return lambda( int64_array(1) );
+      break;
+    }
+    case ( TypeIDs::uint64_array_id ):
+    {
+      return lambda( uint64_array(1) );
+      break;
+    }
+    case ( TypeIDs::real32_array_id ):
+    {
+      return lambda( real32_array(1) );
+      break;
+    }
+    case ( TypeIDs::real64_array_id ):
+    {
+      return lambda( real64_array(1) );
+      break;
+    }
+    case ( TypeIDs::std_size_t_id ):
+    {
+      return lambda( std_size_t(1) );
+      break;
+    }
+    case ( TypeIDs::string_id ):
+    {
+      return lambda( string("") );
+      break;
+    }
+    default:
+    {
+      std::cout<<LOCATION<<std::endl;
+      assert( false );
+    }
     }
   }
 

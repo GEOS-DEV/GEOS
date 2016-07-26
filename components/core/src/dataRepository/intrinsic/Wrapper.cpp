@@ -8,8 +8,4 @@
 #include "Wrapper.hpp"
 
 namespace geosx
-{
-
-
-
-} /* namespace geosx */
+{} /* namespace geosx */

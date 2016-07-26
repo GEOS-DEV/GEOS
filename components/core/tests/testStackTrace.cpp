@@ -38,9 +38,10 @@
 #include <execinfo.h>
 
 void my_terminate(void);
-namespace {
-    // invoke set_terminate as part of global constant initialization
-    static const bool SET_TERMINATE = std::set_terminate(my_terminate);
+namespace
+{
+// invoke set_terminate as part of global constant initialization
+static const bool SET_TERMINATE = std::set_terminate(my_terminate);
 }
 void my_terminate()
 {
@@ -89,16 +90,16 @@ void my_terminate()
 
 [[ noreturn ]] void throw_exception()
 {
-    // throw an unhandled runtime error
-    throw std::runtime_error("RUNTIME ERROR!");
+  // throw an unhandled runtime error
+  throw std::runtime_error("RUNTIME ERROR!");
 }
 
 [[ noreturn ]] void foo2() {
-    throw_exception();
+  throw_exception();
 }
 
 [[ noreturn ]] void foo1() {
-    foo2();
+  foo2();
 }
 TEST(testStackTrace,uncaughtException)
 {
@@ -128,6 +129,3 @@ TEST(testStackTrace,uncaughtException)
     free( messages );
   }
 }
-
-
-

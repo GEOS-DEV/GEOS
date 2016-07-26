@@ -19,7 +19,8 @@ class DataView;
 }
 }
 
-namespace geosx {
+namespace geosx
+{
 namespace dataRepository
 {
 
@@ -52,7 +53,7 @@ public:
    *
    * @return type_info of the DataObject
    */
-  virtual std::type_info const & get_typeid() const = 0 ;
+  virtual std::type_info const & get_typeid() const = 0;
 
 
   virtual bool empty() const = 0;
@@ -60,21 +61,21 @@ public:
   virtual void reserve( std::size_t new_cap ) = 0;
   virtual std::size_t capacity() const = 0;
   virtual std::size_t max_size() const = 0;
-  virtual void clear() = 0 ;
+  virtual void clear() = 0;
   virtual void insert() = 0;
   /*
-  iterator erase( iterator pos );
-  iterator erase( const_iterator pos );
-  iterator erase( const_iterator first, const_iterator last );
-  size_type erase( const key_type& key );
+     iterator erase( iterator pos );
+     iterator erase( const_iterator pos );
+     iterator erase( const_iterator first, const_iterator last );
+     size_type erase( const key_type& key );
 
-  iterator erase( const_iterator pos );
-  iterator erase( iterator first, iterator last );
-  iterator erase( const_iterator first, const_iterator last );
+     iterator erase( const_iterator pos );
+     iterator erase( iterator first, iterator last );
+     iterator erase( const_iterator first, const_iterator last );
 
-  void swap( unordered_map& other );
-  void swap( vector& other );
-*/
+     void swap( unordered_map& other );
+     void swap( vector& other );
+   */
 
   virtual void resize( std::size_t newsize ) = 0;
 
