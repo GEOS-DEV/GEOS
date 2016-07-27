@@ -71,7 +71,14 @@ public:
 
 
   template< typename T >
-  T& RegisterChildWrapperCollection( std::string const & name );
+  T& RegisterChildWrapperCollection( std::string const & name, std::unique_ptr<T> newObject );
+
+  template< typename T >
+  T& RegisterChildWrapperCollection( std::string const & name )
+  {
+    return RegisterChildWrapperCollection<T>( name, std::move(std::make_unique< T >( name, this )) );
+  }
+
 
   template< typename T >
   T& GetChildDataObjectManager( std::string const & name )
@@ -84,34 +91,32 @@ public:
 
 
   WrapperBase& RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type );
-//  {
-//    return rtTypes::ApplyTypeLambda( type,
-//                                     [this, &name]( auto a ) -> WrapperBase *
-//                                     {
-//                                       return this->RegisterDataObject<decltype(a)>(name);
-//                                     } );
-//  }
 
 
   //***********************************************************************************************
 
   template< typename T >
-  T const & getWrapper( std::size_t const index ) const
+  Wrapper<T> const & getWrapper( std::size_t const index ) const
   {
-    return m_wrappers[index]->cast<T>();
+#ifdef USE_DYNAMIC_CASTING
+    return dyanmic_cast< Wrapper<T>* >(m_wrappers[index].get());
+#else
+    return static_cast< Wrapper<T> const & >( *(m_wrappers[index]) );
+#endif
   }
+
   template< typename T >
-  T& getWrapper( std::size_t const index )
+  Wrapper<T> & getWrapper( std::size_t const index )
   {
-    return const_cast<T&>( const_cast<const WrapperCollection*>(this)->getWrapper<T>( index ) );
+    return const_cast<Wrapper<T>&>( const_cast< WrapperCollection const *>(this)->getWrapper<T>( index ) );
   }
 
 
   template< typename T >
-  const Wrapper<T>& getWrapper( std::string const & name ) const
+  Wrapper<T> const & getWrapper( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
-    return m_wrappers[index]->cast<T>();
+    return getWrapper<T>(index);
   }
 
   template< typename T >
@@ -122,11 +127,19 @@ public:
 
   template< typename T >
   typename Wrapper<T>::rtype_const getWrappedObjectData( std::size_t const index ) const
-  { return m_wrappers[index]->data<T>(); }
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T*>(m_wrappers[index].get())->data();
+#else
+    return static_cast<Wrapper<T>*>(m_wrappers[index].get())->data();
+#endif
+  }
 
   template< typename T >
   typename Wrapper<T>::rtype getWrappedObjectData( std::size_t const index )
-  { return const_cast<T&>( const_cast<const WrapperCollection*>(this)->getWrappedObjectData<T>( index ) ); }
+  {
+    return const_cast<typename Wrapper<T>::rtype>( const_cast<const WrapperCollection*>(this)->getWrappedObjectData<T>( index ) );
+  }
 
 
 
@@ -134,13 +147,13 @@ public:
   typename Wrapper<T>::rtype_const getWrappedObjectData( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
-    return m_wrappers[index]->data<T>();
+    return getWrappedObjectData<T>( index );
   }
   template< typename T >
   typename Wrapper<T>::rtype getWrappedObjectData( std::string const & name )
   {
     auto index = m_keyLookup.at(name);
-    return m_wrappers[index]->data<T>();
+    return getWrappedObjectData<T>( index );
   }
 
 //  { return static_cast<typename DataObject<T>::rtype>( static_cast<const DataObjectManager *>(this)->GetDataObjectData<T>( name ) ); }
@@ -187,7 +200,7 @@ Wrapper<T>& WrapperCollection::RegisterWrapper( std::string const & name, std::s
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
-    m_wrappers.push_back( std::move( WrapperBase::Factory<T>(name,this) ) );
+    m_wrappers.push_back( std::move( Wrapper<T>::Factory(name,this) ) );
     key = m_wrappers.size() - 1;
     m_keyLookup.insert( std::make_pair(name,key) );
     m_wrappers.back()->resize(this->size());
@@ -208,18 +221,19 @@ Wrapper<T>& WrapperCollection::RegisterWrapper( std::string const & name, std::s
   {
     *rkey = key;
   }
-  return m_wrappers[key]->cast<T>();
+  return getWrapper<T>(key);
 }
 
 template< typename T >
-T& WrapperCollection::RegisterChildWrapperCollection( std::string const & name )
+T& WrapperCollection::RegisterChildWrapperCollection( std::string const & name,
+                                                      std::unique_ptr<T> newObject )
 {
   auto iterKeyLookup = m_subObjectManagers.find(name);
 
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_subObjectManagers.end() )
   {
-    auto insertResult = m_subObjectManagers.insert( std::move(std::make_pair( name, std::move( std::make_unique< T >( name, this ) ) ) ) );
+    auto insertResult = m_subObjectManagers.insert( std::make_pair( name, std::move(newObject) ) );
 
     if( !insertResult.second )
     {
@@ -238,7 +252,11 @@ T& WrapperCollection::RegisterChildWrapperCollection( std::string const & name )
       throw std::exception();
     }
   }
-  return *(iterKeyLookup->second);
+#ifdef USE_DYNAMIC_CASTING
+  return *(dynamic_cast<T*>( (iterKeyLookup->second).get() ) );
+#else
+  return *(static_cast<T*>( (iterKeyLookup->second).get() ) );
+#endif
 }
 
 } // namespace dataRepository

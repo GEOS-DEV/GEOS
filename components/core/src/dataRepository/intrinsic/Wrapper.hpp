@@ -58,6 +58,14 @@ public:
     m_data = std::move(source.m_data);
   }
 
+
+  static std::unique_ptr<WrapperBase> Factory( std::string const & name,
+                                               WrapperCollection * const parent )
+  {
+    return std::move(std::make_unique<Wrapper<T> >( name, parent ) );
+  }
+
+
   virtual const std::type_info& get_typeid() const noexcept override final
   {
     return typeid(T);

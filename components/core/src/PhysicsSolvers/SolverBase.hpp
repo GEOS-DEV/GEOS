@@ -29,6 +29,13 @@ public:
 
   virtual ~SolverBase();
 
+  SolverBase() = default;
+  SolverBase( SolverBase const & ) = default;
+  SolverBase( SolverBase &&) = default;
+  SolverBase& operator=( SolverBase const & ) = default;
+  SolverBase& operator=( SolverBase&& ) = default;
+
+
   virtual void Registration( dataRepository::WrapperCollection& domain ) = 0;
 
   virtual void TimeStep( real64 const & time_n,
@@ -37,16 +44,11 @@ public:
                          dataRepository::WrapperCollection& domain ) = 0;
 
 
-  using CatalogInterface = objectcatalog::CatalogInterface< SolverBase, std::string, WrapperCollection * const >;
+  using CatalogInterface = objectcatalog::CatalogInterface< SolverBase, std::string const &, WrapperCollection * const >;
   static CatalogInterface::CatalogType& GetCatalogue();
 
 private:
 
-  SolverBase() = delete;
-  SolverBase( SolverBase const & ) = delete;
-  SolverBase( SolverBase &&) = delete;
-  SolverBase& operator=( SolverBase const & ) = delete;
-  SolverBase& operator=( SolverBase&& ) = delete;
 };
 
 

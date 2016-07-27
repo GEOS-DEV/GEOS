@@ -24,8 +24,6 @@ namespace geosx
 namespace dataRepository
 {
 
-
-template< typename T > class Wrapper;
 class WrapperCollection;
 
 class WrapperBase
@@ -78,38 +76,6 @@ public:
    */
 
   virtual void resize( std::size_t newsize ) = 0;
-
-
-
-  template< typename T >
-  static std::unique_ptr<WrapperBase> Factory( std::string const & name,
-                                               WrapperCollection * const parent )
-  {
-    return std::move(std::make_unique<Wrapper<T> >( name, parent ) );
-  }
-
-  template< typename T >
-  Wrapper<T>& cast()
-  {
-    return dynamic_cast<Wrapper<T>&>(*this);
-  }
-
-  template< typename T >
-  Wrapper<T> const & cast() const
-  {
-    return dynamic_cast<Wrapper<T> const &>(*this);
-  }
-
-
-
-  template< typename T >
-  typename Wrapper<T>::const_rtype data() const
-  { return (dynamic_cast<Wrapper<T> const &>(*this)).data(); }
-
-  template< typename T >
-  typename Wrapper<T>::rtype data()
-  { return (dynamic_cast<Wrapper<T> &>(*this)).data(); }
-//  { return const_cast<typename DataObject<T>::rtype>( const_cast<DataObjectBase const *>(this)->getObjectData<T>() ); }
 
 
   int sizedFromParent() const

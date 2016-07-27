@@ -38,7 +38,7 @@ public:
 
   explicit CatalogInterface(CatalogInterface const &) = default;
   CatalogInterface(CatalogInterface &&) = default;
-  explicit CatalogInterface& operator=(CatalogInterface const &) = default;
+  CatalogInterface& operator=(CatalogInterface const &) = default;
   CatalogInterface& operator=(CatalogInterface &&) = default;
 
   static CatalogType& GetCatalogue()
@@ -48,7 +48,7 @@ public:
 
   virtual std::unique_ptr<BASETYPE> Allocate( std::string const & name, ARGS& ... args ) const = 0;
 
-  static std::unique_ptr<BASETYPE> Factory( const std::string& objectTypeName, ARGS& ... args )
+  static std::unique_ptr<BASETYPE> Factory( std::string const & objectTypeName, ARGS& ... args )
   {
     CatalogInterface<BASETYPE, ARGS ...> const * const entry = GetCatalogue().at( objectTypeName ).get();
     return entry->Allocate( objectTypeName, args ... );

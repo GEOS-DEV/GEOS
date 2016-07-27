@@ -35,28 +35,17 @@ int main( int argc, char *argv[] )
 
   problemManager.ParseCommandLineInput( argc, argv );
 
-  geosx::dataRepository::WrapperCollection domain("domain",nullptr);
 
-  std::string newName("new solver");
-  std::string newName2("new solver2");
-  auto solver = geosx::SolverBase::CatalogInterface::Factory(geosx::SolidMechanics_LagrangianFEM::CatalogName(), newName, &domain );
-  auto solver2 = geosx::SolverBase::CatalogInterface::Factory( "NewComponent", newName2, &domain );
-
-
-
-  std::cout<<"breakpoint 1: "<<LOCATION<<std::endl;
-
-  solver->Registration( domain );
+#ifdef NDEBUG
+  std::cout<<"NDEBUG is defined"<<std::endl;
+#else
+  std::cout<<"NDEBUG is NOT defined"<<std::endl;
+#endif
 
 
-  double time = 0.0;
-  double dt = 5.0e-5;
-  for( int i=0 ; i<10 ; ++i )
-  {
-    solver->TimeStep( time, dt, i, domain );
-    time += dt;
-    std::cout<<std::endl;
-  }
+  problemManager.ParseInputFile();
+
+
 
 
 

@@ -23,6 +23,8 @@ public:
 
   void ParseInputFile();
 
+  void ApplySchedulerEvent();
+
 };
 
 } /* namespace geosx */
