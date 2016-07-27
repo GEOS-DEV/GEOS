@@ -18,4 +18,6 @@ blt_add_library( NAME             componentName
                  DEPENDS_ON        geosx_core
                  SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja
                  )
-                 
+
+target_include_directories( componentName PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
+target_include_directories( componentName PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src )

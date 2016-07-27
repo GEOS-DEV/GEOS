@@ -19,7 +19,7 @@ add_subdirectory(managers)
 add_subdirectory(PhysicsSolvers)
 
 
-blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_CURRENT_SOURCE_DIR})
+#blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_CURRENT_SOURCE_DIR})
 
 blt_add_library( NAME
                      geosx_core
@@ -32,12 +32,15 @@ blt_add_library( NAME
                  SYSTEM_DEPENDS_ON
                      slic sidre conduit hdf5 raja
                  )
+                 
+target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
 blt_add_executable(NAME geosx_corex
                    SOURCES main/main.cpp
                    DEPENDS_ON ${GEOSX_LINK_PREPEND_FLAG} geosx_core ${GEOSX_LINK_POSTPEND_FLAG}
                    SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja 
                    )
+#target_include_directories( geosx_corex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} )
                    
 #set_target_properties(core  PROPERTIES COMPILE_FLAGS )
 #install(TARGETS core DESTINATION lib EXPORT ${PROJECT_NAME}-targets)
