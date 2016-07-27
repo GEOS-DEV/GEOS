@@ -6,19 +6,41 @@
  */
 
 #include "WrapperCollection.hpp"
+#include "dataRepository/SidreWrapper.hpp"
 
 namespace geosx
 {
 namespace dataRepository
 {
 
-WrapperCollection::WrapperCollection( std::string const & name, WrapperCollection * const parent ):
-m_keyLookup(),
-m_wrappers(),
-m_parent(parent),
-m_subObjectManagers()
+WrapperCollection::WrapperCollection( std::string const & name,
+                                      WrapperCollection * const parent ) :
+  m_keyLookup(),
+  m_wrappers(),
+  m_parent(parent),
+  m_subObjectManagers(),
+  m_sidreGroup(nullptr)
 {
-  RegisterWrapper<std_size_t>( "size" ).data() = 0;
+  asctoolkit::sidre::DataGroup * sidreParent = nullptr;
+  if( m_parent==nullptr )
+  {
+    sidreParent = SidreWrapper::dataStore().getRoot();
+  }
+  else
+  {
+    sidreParent = parent->m_sidreGroup;
+  }
+
+  if( sidreParent->hasGroup(name) )
+  {
+    m_sidreGroup = sidreParent->getGroup(name);
+  }
+  else
+  {
+    m_sidreGroup = sidreParent->createGroup(name);
+  }
+
+  *(RegisterWrapper<std_size_t>( "size" ).data()) = 0;
   std::string& temp = RegisterWrapper<std::string>( "name" ).dataRef();
   temp = name;
   RegisterWrapper<std::string>( "path" );
@@ -40,19 +62,19 @@ WrapperCollection::~WrapperCollection()
 //    m_parent( source.m_parent )
 //{}
 
-WrapperCollection::WrapperCollection( WrapperCollection&& source ):
-    m_keyLookup( std::move(source.m_keyLookup) ),
-    m_wrappers( std::move(source.m_wrappers) ),
-    m_parent( std::move(source.m_parent) )
+WrapperCollection::WrapperCollection( WrapperCollection&& source ) :
+  m_keyLookup( std::move(source.m_keyLookup) ),
+  m_wrappers( std::move(source.m_wrappers) ),
+  m_parent( std::move(source.m_parent) )
 {}
 
 WrapperBase& WrapperCollection::RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return *( rtTypes::ApplyTypeLambda( type,
-                                   [this, &name]( auto a ) -> WrapperBase*
-                                   {
-                                     return &( this->RegisterWrapper<decltype(a)>(name) );
-                                   } ) );
+                                      [this, &name]( auto a ) -> WrapperBase*
+      {
+        return &( this->RegisterWrapper<decltype(a)>(name) );
+      } ) );
 }
 
 void WrapperCollection::resize( std::size_t const newsize )
@@ -61,7 +83,7 @@ void WrapperCollection::resize( std::size_t const newsize )
   {
     i->resize(newsize);
   }
-  this->getWrapper<std_size_t>("size").data()=newsize;
+  *(this->getWrapper<std_size_t>("size").data())=newsize;
 }
 
 

@@ -13,11 +13,8 @@ namespace TICPP
 {
 
 HierarchicalDataNode::DefaultReportLevel HierarchicalDataNode::m_defaultReportLevel
-                                       = HierarchicalDataNode::silent;
+  = HierarchicalDataNode::silent;
 
 
 }
 }
-
-
-

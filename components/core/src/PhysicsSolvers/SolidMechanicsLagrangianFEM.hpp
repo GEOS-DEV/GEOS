@@ -44,8 +44,6 @@ public:
 
 
 
-
-
 private:
   SolidMechanics_LagrangianFEM();
 

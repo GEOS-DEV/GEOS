@@ -13,6 +13,8 @@
 #include "../../common/DataTypes.hpp"
 #include "codingUtilities/sfinae.hpp"
 #include "WrapperBase.hpp"
+#include <type_traits>
+
 namespace geosx
 {
 namespace dataRepository
@@ -23,17 +25,26 @@ class Wrapper : public WrapperBase
 {
 
 public:
-  explicit Wrapper( std::string const & name ):
-    WrapperBase(name)
-  {}
+  explicit Wrapper( std::string const & name,
+                    WrapperCollection * const parent ) :
+    WrapperBase(name,parent)
+  {
+    // set up properties of sidre::DataView
+    if( std::is_array<T>::value )
+    {}
+    else
+    {
+      getSidreView()->setExternalDataPtr( nullptr );
+    }
+  }
 
-  virtual ~Wrapper() noexcept override final{}
+  virtual ~Wrapper() noexcept override final {}
 
-  Wrapper( Wrapper const & source ):
+  Wrapper( Wrapper const & source ) :
     m_data(source.m_data)
   {}
 
-  Wrapper( Wrapper&& source ):
+  Wrapper( Wrapper&& source ) :
     m_data( std::move(source.m_data) )
   {}
 
@@ -46,6 +57,14 @@ public:
   {
     m_data = std::move(source.m_data);
   }
+
+
+  static std::unique_ptr<WrapperBase> Factory( std::string const & name,
+                                               WrapperCollection * const parent )
+  {
+    return std::move(std::make_unique<Wrapper<T> >( name, parent ) );
+  }
+
 
   virtual const std::type_info& get_typeid() const noexcept override final
   {
@@ -102,7 +121,7 @@ public:
     template<class U = T>
     static typename std::enable_if<!has_memberfunction_reserve<U>::value, void>::type reserve(Wrapper * const, std::size_t )
     {
-      return ;//parent->m_data;
+      return; //parent->m_data;
     }
   };
   virtual void reserve( std::size_t new_cap ) override final
@@ -126,13 +145,13 @@ public:
 
 //  HAS_MEMBER_FUNCTION(resize, void, std::size_t(1) )
   HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(std::size_t), VA_LIST(std::size_t(1)) )
-  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,resize , void,, VA_LIST(std::size_t a), VA_LIST(a) )
+  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,resize, void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
   template<class U=T, bool has = has_pointer_type<U>::value >
   struct Get_Type
   {
-    typedef U&       type;
-    typedef const U& const_type;
+    typedef U*       type;
+    typedef const U* const_type;
   };
   template<class U>
   struct Get_Type<U, true>
@@ -151,9 +170,9 @@ public:
     return m_data.data();
   }
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value, rtype>::type data()
+  typename std::enable_if<!has_memberfunction_data<U>::value, U*>::type data()
   {
-      return m_data;
+    return &m_data;
   }
 
   T& dataRef()

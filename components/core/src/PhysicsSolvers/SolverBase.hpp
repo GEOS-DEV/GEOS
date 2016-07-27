@@ -9,11 +9,13 @@
 #define SOLVERBASE_HPP_
 
 
-#include "codingUtilities/ObjectCatalogue.hpp"
+
+#include "codingUtilities/ObjectCatalog.hpp"
 
 #include "dataRepository/intrinsic/WrapperCollection.hpp"
 #include <string>
 #include "common/DataTypes.hpp"
+
 
 namespace geosx
 {
@@ -22,39 +24,32 @@ class SolverBase : public dataRepository::WrapperCollection
 {
 public:
 
-  SolverBase( std::string const & name,
-              WrapperCollection * const parent );
+  explicit SolverBase( std::string const & name,
+                       WrapperCollection * const parent );
 
   virtual ~SolverBase();
 
+  SolverBase() = default;
+  SolverBase( SolverBase const & ) = default;
+  SolverBase( SolverBase &&) = default;
+  SolverBase& operator=( SolverBase const & ) = default;
+  SolverBase& operator=( SolverBase&& ) = default;
+
+
   virtual void Registration( dataRepository::WrapperCollection& domain ) = 0;
 
-  virtual void TimeStep( const real64& time_n,
-                         const real64& dt,
-                         const int cycleNumber,
+  virtual void TimeStep( real64 const & time_n,
+                         real64 const & dt,
+                         int const cycleNumber,
                          dataRepository::WrapperCollection& domain ) = 0;
 
-//  CATALOGUE( SolverBase, VA_LIST( std::string const & name ), VA_LIST( name ) )
 
-  using CatalogInterface = objectcatalogue::CatalogInterface< SolverBase, std::string, WrapperCollection * const >;
-  static CatalogInterface::CatalogType& GetCatalogue()
-  {
-    static CatalogInterface::CatalogType * const catalog = new CatalogInterface::CatalogType();
-    return *catalog;
-//    static CatalogInterface::CatalogueType catalogue;
-//    return catalogue;
-  }
+  using CatalogInterface = objectcatalog::CatalogInterface< SolverBase, std::string const &, WrapperCollection * const >;
+  static CatalogInterface::CatalogType& GetCatalogue();
 
 private:
 
-  SolverBase() = delete;
-  SolverBase(const SolverBase&) = delete;
-  SolverBase(const SolverBase&&) = delete;
-  SolverBase& operator=(const SolverBase&) = delete;
-  SolverBase& operator=(const SolverBase&&) = delete;
 };
-
-
 
 
 

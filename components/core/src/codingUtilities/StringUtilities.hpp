@@ -58,14 +58,16 @@ inline std::string demangle( const std::string& name )
 /// convert a variable to a string
 template <class Type>
 std::string toString(Type theVar){
-   std::ostringstream oss;
-   oss << theVar;
-   return oss.str();
+  std::ostringstream oss;
+  oss << theVar;
+  return oss.str();
 }
 // override the template for string->string
 template <>
 inline std::string toString<std::string>(std::string theVar)
-{ return theVar; }
+{
+  return theVar;
+}
 
 //
 // fromString
@@ -73,15 +75,17 @@ inline std::string toString<std::string>(std::string theVar)
 /// returns a variable from a string
 template <class Type>
 Type fromString(std::string theString){
-   std::istringstream iss(theString);
-   Type theVar;
-   iss >> theVar;
-   return theVar;
+  std::istringstream iss(theString);
+  Type theVar;
+  iss >> theVar;
+  return theVar;
 }
 // override the template for string->string
 template <>
 inline std::string fromString<std::string>(std::string theVar)
-{ return theVar; }
+{
+  return theVar;
+}
 
 // override the template for string->real64
 // Allows unit manager to convert units
@@ -124,17 +128,25 @@ bool ieq(std::string strA,std::string strB);
 
 /// Overloaded function to check equality between strings and char arrays
 /// Mainly used to avoid char*==char* mistakes
-inline bool streq(const std::string& strA, const std::string& strB){ return strA == strB;}
-inline bool streq(const std::string& strA, const char * strB){ return strA == strB;}
-inline bool streq(const char * strA, const std::string& strB){ return strA == strB;}
-inline bool streq(const char * strA, const char * strB){ return !strcmp(strA, strB);}
+inline bool streq(const std::string& strA, const std::string& strB){
+  return strA == strB;
+}
+inline bool streq(const std::string& strA, const char * strB){
+  return strA == strB;
+}
+inline bool streq(const char * strA, const std::string& strB){
+  return strA == strB;
+}
+inline bool streq(const char * strA, const char * strB){
+  return !strcmp(strA, strB);
+}
 
 /// string is integer
 inline bool strIsInt(std::string theString){
-   std::istringstream iss(theString);
-   int dummy;
-   iss >> dummy;
-   return !iss.fail();
+  std::istringstream iss(theString);
+  int dummy;
+  iss >> dummy;
+  return !iss.fail();
 }
 
 /// Subdivide string by delimiters
@@ -155,18 +167,23 @@ inline void RemoveSpaces(std::string& aString){
 }
 
 /// Expand string vector based on multiple tokens eg [a, b**3, c] => [a,b,b,b,c]
-inline void ExpandMultipleTokens(string_array& sVector , const std::string& multipleToken="**"){
-  int n= sVector.size();
+inline void ExpandMultipleTokens(string_array& sVector, const std::string& multipleToken="**"){
+  unsigned int n= sVector.size();
   string_array newVec;
-  for(int i =0; i < n; ++i){
+  for(unsigned int i =0 ; i < n ; ++i)
+  {
     string_array keyMult = TokenizeSeq(sVector[i], multipleToken);
-    if( (keyMult.size() == 2) && strIsInt(keyMult[1]) ){
+    if( (keyMult.size() == 2) && strIsInt(keyMult[1]) )
+    {
       int numMult = fromString<int>(keyMult[1]);
-      for(int j=0; j < numMult; ++j ){
-          newVec.push_back(keyMult[0]);
+      for(int j=0 ; j < numMult ; ++j )
+      {
+        newVec.push_back(keyMult[0]);
       }
-      } else {
-        newVec.push_back(sVector[i]);
+    }
+    else
+    {
+      newVec.push_back(sVector[i]);
     }
 
   }
@@ -179,7 +196,8 @@ void TrimRight(std::string& str, const std::string& d=" \t\n\r");
 void Trim(std::string& str, const std::string& d=" \t\n\r");
 
 inline void Trim(string_array& strVect, const std::string& d=" \t\n\r"){
-  for(unsigned i =0; i < strVect.size(); ++i) Trim(strVect[i],d);
+  for(unsigned i =0 ; i < strVect.size() ; ++i)
+    Trim(strVect[i],d);
 }
 
 /// Replace parameters of form "$:NAME" in a string, returns true if a parameter is detected

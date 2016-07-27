@@ -19,19 +19,19 @@
 //
 //  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 //  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
 //  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 //  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
+//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or
 //     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
+//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security,
+//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence
 //     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
 //
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
@@ -92,7 +92,7 @@ template< int T_dim > class R6minSymTensorT;
  * symmetric rank-2 tensor.
  */
 template<int T_dim>
-class R2SymTensorT: public TensorBaseT< SymSize< T_dim >::value >
+class R2SymTensorT : public TensorBaseT< SymSize< T_dim >::value >
 {
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
@@ -104,7 +104,7 @@ public:
    * @param[in] data use for initialization of t_data
    * @return none
    */
-  explicit R2SymTensorT( const realT data ):TensorBaseT< SymSize< T_dim >::value >(data) {}
+  explicit R2SymTensorT( const realT data ) : TensorBaseT< SymSize< T_dim >::value >(data) {}
 
 
   /// default destructor
@@ -113,7 +113,7 @@ public:
   /// copy constructor
   R2SymTensorT(const R2SymTensorT< T_dim >& rhs);
 
-  explicit R2SymTensorT( const TensorBaseT< SymSize< T_dim >::value  >& rhs ):TensorBaseT< SymSize< T_dim >::value  > ()
+  explicit R2SymTensorT( const TensorBaseT< SymSize< T_dim >::value  >& rhs ) : TensorBaseT< SymSize< T_dim >::value  > ()
   { TensorBaseT< SymSize< T_dim >::value  >::operator=( rhs ); };
 
   //***** ASSIGNMENT OPERATORS **************************************************
@@ -158,7 +158,7 @@ public:
 
   // Scalar product
   friend R2SymTensorT<T_dim> operator*(realT k, const R2SymTensorT<T_dim> &V){ return R2SymTensorT<T_dim>(V*k); }
-  friend R2SymTensorT<T_dim> operator*(R2SymTensorT<T_dim> V, realT k){return static_cast< R2SymTensorT<T_dim> >(V*=k);}
+  friend R2SymTensorT<T_dim> operator*(R2SymTensorT<T_dim> V, realT k){return static_cast< R2SymTensorT<T_dim> >(V*=k); }
 
   //****** TENSOR OPERATIONS **************************************************
   realT Inner(void) const;
@@ -166,7 +166,7 @@ public:
   realT Det(void) const;
   realT AijAij(void) const;
   void EigenVals(realT eigenvals[T_dim], const realT limArg) const;
-  void EigenVals(realT eigenvals[T_dim]) const{ EigenVals(eigenvals,0.0); }; // limArg is not used - causes issues with cray compiler - SW
+  void EigenVals(realT eigenvals[T_dim]) const { EigenVals(eigenvals,0.0); }; // limArg is not used - causes issues with cray compiler - SW
   //  void EigenSystem( realT eigenvals[T_dim] , R1TensorT<T_dim> v[T_dim] ) const;
   void EigenVecs(const realT eigenvals[T_dim], R1TensorT< T_dim > v[T_dim]) const;
   void EigenVector(const realT eigenval, R1TensorT< T_dim > & v) const;
@@ -188,15 +188,15 @@ public:
   void PlusIdentity(const realT rhs)
   {
     int c = 0;
-    for (int ii = 0; ii < T_dim; c+=(++ii)+1)
+    for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
       this->t_data[c] += rhs;
   }
 
   void
   print(std::ostream& os) const;
 
-  friend class R2TensorT< T_dim > ;
-  friend class R1TensorT< T_dim > ;
+  friend class R2TensorT< T_dim >;
+  friend class R1TensorT< T_dim >;
   friend class R4minSymTensorT<T_dim>;
   friend class R6minSymTensorT<T_dim>;
 
@@ -224,12 +224,12 @@ void R2SymTensorT< T_dim >::print(std::ostream& os) const
   //                   R2SymTensorT<T_dim> >::print(os);
   //  else if( ouput_format_flag == 1 )
   //  {
-  for (int i = 1; i <= T_dim; ++i)
+  for (int i = 1 ; i <= T_dim ; ++i)
     os << (*this)( i, i ) << '\t';
 
-  for (int i = 1; i <= T_dim; ++i)
+  for (int i = 1 ; i <= T_dim ; ++i)
   {
-    for (int j = i; j <= T_dim; ++j)
+    for (int j = i ; j <= T_dim ; ++j)
       if (!d_ij( i, j ))
         os << (*this)( i, j ) << '\t';
   }
@@ -238,7 +238,7 @@ void R2SymTensorT< T_dim >::print(std::ostream& os) const
 
 template<int T_dim>
 R2SymTensorT< T_dim >::R2SymTensorT(void) :
-TensorBaseT< SymSize< T_dim >::value > ()
+  TensorBaseT< SymSize< T_dim >::value > ()
 {}
 
 template<int T_dim>
@@ -302,7 +302,7 @@ inline const realT& R2SymTensorT< T_dim >::operator()(const int i, const int j) 
   }
 
   int index = 0;
-  for(int ii = 1; ii <= i_sym; ++ii)
+  for(int ii = 1 ; ii <= i_sym ; ++ii)
     index += ii;
 
   index += j_sym;
@@ -312,8 +312,10 @@ inline const realT& R2SymTensorT< T_dim >::operator()(const int i, const int j) 
 template<>
 inline const realT& R2SymTensorT<2>::operator()(const int i, const int j) const
 {
-  static constexpr int map[2][2] = {{0,1},
-                                    {1,2}};
+  static constexpr int map[2][2] = {
+    {0,1},
+    {1,2}
+  };
 
   return this->t_data[map[i][j]];
 }
@@ -321,9 +323,11 @@ inline const realT& R2SymTensorT<2>::operator()(const int i, const int j) const
 template<>
 inline const realT& R2SymTensorT<3>::operator()(const int i, const int j) const
 {
-  static constexpr int map[3][3] = {{0,1,3},
-                                    {1,2,4},
-                                    {3,4,5}};
+  static constexpr int map[3][3] = {
+    {0,1,3},
+    {1,2,4},
+    {3,4,5}
+  };
 
   return this->t_data[map[i][j]];
 }
@@ -345,7 +349,7 @@ inline realT& R2SymTensorT< T_dim >::operator()(const int i, const int j)
   if(T_dim==3)
     index = i_sym == 2 ? 3 : i_sym;
   else
-    for(int ii = 1; ii <= i_sym; ++ii)
+    for(int ii = 1 ; ii <= i_sym ; ++ii)
       index += ii;
   index += j_sym;
 
@@ -362,15 +366,15 @@ inline realT& R2SymTensorT< T_dim >::operator()(const int i, const int j)
 template<int T_dim>
 inline realT R2SymTensorT< T_dim >::Trace(void) const
 {
-  register realT trace = 0;
-  register int c = 0;
+  realT trace = 0;
+  int c = 0;
 
   if (T_dim == 2)
     trace = this->t_data[0] + this->t_data[2];
   else if (T_dim == 3)
     trace = this->t_data[0] + this->t_data[2] + this->t_data[5];
   else
-    for (int ii = 0; ii < T_dim; c+=(++ii)+1)
+    for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
       trace += this->t_data[c];
   return trace;
 }
@@ -389,8 +393,14 @@ inline realT R2SymTensorT< T_dim >::Det(void) const
     det = this->t_data[0] * (this->t_data[2]) - this->t_data[1] * (this->t_data[1]);
   else if (T_dim == 3)
     det = this->t_data[0] * (this->t_data[2] * (this->t_data[5]) - this->t_data[4] * (this->t_data[4])) - this->t_data[1] * (this->t_data[1]
-        * (this->t_data[5]) - this->t_data[3] * (this->t_data[4])) + this->t_data[3] * (this->t_data[1] * (this->t_data[4]) - this->t_data[2]
-        * (this->t_data[3]));
+                                                                                                                             * (this->t_data[5]) -
+                                                                                                                             this->t_data[3] *
+                                                                                                                             (this->t_data[4])) +
+          this->t_data[3] * (this->t_data[1] * (this->t_data[4]) - this->t_data[2]
+                             * (
+                               this
+                               ->
+                               t_data[3]));
   else
   {
     std::cout << "R2TensorT::Det() not implemented for dimension > 3";
@@ -404,7 +414,7 @@ inline realT R2SymTensorT< T_dim >::AijAij(void) const
 {
   int n_dim =  SymSize<T_dim>::value;
   realT results = 0;
-  for (int i=0; i<n_dim; i++)
+  for (int i=0 ; i<n_dim ; i++)
   {
     results += this->t_data[i]*this->t_data[i];
   }
@@ -426,7 +436,7 @@ inline realT R2SymTensorT< T_dim >::Inner(void) const
     rval = this->t_data[0] * (this->t_data[0]) + 2 * (this->t_data[1]) * (this->t_data[1]) + this->t_data[2] * (this->t_data[2]);
   else if (T_dim == 3)
     rval = this->t_data[0] * (this->t_data[0]) + 2 * (this->t_data[1]) * (this->t_data[1]) + this->t_data[2] * (this->t_data[2]) + 2 * (this->t_data[3])
-        * (this->t_data[3]) + 2 * (this->t_data[4]) * (this->t_data[4]) + this->t_data[5] * (this->t_data[5]);
+           * (this->t_data[3]) + 2 * (this->t_data[4]) * (this->t_data[4]) + this->t_data[5] * (this->t_data[5]);
   else
   {
     std::cout << "R2TensorT::Inner() not implemented for dimension > 3";
@@ -448,17 +458,17 @@ realT R2SymTensorT<T_dim>::Inverse( R2SymTensorT<T_dim>& tensor )
   if (T_dim == 2)
   {
     // temps - incase matrix is *this
-     const realT A0 = tensor.t_data[0];
-     const realT& A1 = tensor.t_data[1];
-     const realT& A2 = tensor.t_data[2];
+    const realT A0 = tensor.t_data[0];
+    const realT& A1 = tensor.t_data[1];
+    const realT& A2 = tensor.t_data[2];
 
-     det = A0*A2-A1*A1;
+    det = A0*A2-A1*A1;
 
-     realT idet = 1/det;  // 1 / (A0*A2 - A1*A1);
+    realT idet = 1/det;   // 1 / (A0*A2 - A1*A1);
 
-     this->t_data[0] =  A2*idet;
-     this->t_data[1] = -A1*idet;
-     this->t_data[2] =  A0*idet;
+    this->t_data[0] =  A2*idet;
+    this->t_data[1] = -A1*idet;
+    this->t_data[2] =  A0*idet;
   }
   else if (T_dim == 3)
   {
@@ -471,22 +481,22 @@ realT R2SymTensorT<T_dim>::Inverse( R2SymTensorT<T_dim>& tensor )
 #endif
 
 
-     const realT o1 = tensor.t_data[2]*tensor.t_data[5] - tensor.t_data[4]*tensor.t_data[4] ;
-     const realT o2 = tensor.t_data[3]*tensor.t_data[4] - tensor.t_data[1]*tensor.t_data[5] ;
-     const realT o3 = tensor.t_data[0]*tensor.t_data[5] - tensor.t_data[3]*tensor.t_data[3] ;
-     const realT o4 = tensor.t_data[1]*tensor.t_data[4] - tensor.t_data[2]*tensor.t_data[3] ;
-     const realT o5 = tensor.t_data[1]*tensor.t_data[3] - tensor.t_data[0]*tensor.t_data[4] ;
-     const realT o6 = tensor.t_data[0]*tensor.t_data[2] - tensor.t_data[1]*tensor.t_data[1] ;
+    const realT o1 = tensor.t_data[2]*tensor.t_data[5] - tensor.t_data[4]*tensor.t_data[4];
+    const realT o2 = tensor.t_data[3]*tensor.t_data[4] - tensor.t_data[1]*tensor.t_data[5];
+    const realT o3 = tensor.t_data[0]*tensor.t_data[5] - tensor.t_data[3]*tensor.t_data[3];
+    const realT o4 = tensor.t_data[1]*tensor.t_data[4] - tensor.t_data[2]*tensor.t_data[3];
+    const realT o5 = tensor.t_data[1]*tensor.t_data[3] - tensor.t_data[0]*tensor.t_data[4];
+    const realT o6 = tensor.t_data[0]*tensor.t_data[2] - tensor.t_data[1]*tensor.t_data[1];
 
-     det = tensor.Det(); 
-     const realT o11 = 1.0/det;
+    det = tensor.Det();
+    const realT o11 = 1.0/det;
 
-     this->t_data[0] = o1*o11; 
-     this->t_data[1] = o2*o11;
-     this->t_data[2] = o3*o11;
-     this->t_data[3] = o4*o11;
-     this->t_data[4] = o5*o11;
-     this->t_data[5] = o6*o11;
+    this->t_data[0] = o1*o11;
+    this->t_data[1] = o2*o11;
+    this->t_data[2] = o3*o11;
+    this->t_data[3] = o4*o11;
+    this->t_data[4] = o5*o11;
+    this->t_data[5] = o6*o11;
 #ifdef __INTEL_COMPILER
 #pragma warning pop
 #endif
@@ -532,7 +542,7 @@ inline void R2SymTensorT< T_dim >::EigenVals( realT eigenvals[T_dim],
   const realT scale = this->MaxVal();
   if( !(scale > 0.0 ) )
   {
-    for (int i =0; i< T_dim; i++)
+    for (int i =0 ; i< T_dim ; i++)
       eigenvals[i]=0;
     return;
   }
@@ -573,15 +583,15 @@ inline void R2SymTensorT< T_dim >::EigenVals( realT eigenvals[T_dim],
     theta[2] = theta[0] - temp;
 
     temp = 2.0 / sqrt_3divII * scale;
-    for (int i = 0; i < T_dim; ++i)
+    for (int i = 0 ; i < T_dim ; ++i)
       eigenvals[i] = temp * cos( theta[i] ) + sigma;
   }
   else
-    for (int i = 0; i < T_dim; ++i)
+    for (int i = 0 ; i < T_dim ; ++i)
       eigenvals[i] = sigma;
 
-  for (int i = 0; i < T_dim - 1; ++i)
-    for (int j = 0; j < T_dim - 1; ++j)
+  for (int i = 0 ; i < T_dim - 1 ; ++i)
+    for (int j = 0 ; j < T_dim - 1 ; ++j)
       if (eigenvals[j] < eigenvals[j + 1])
       {
         realT temp = eigenvals[j];
@@ -656,7 +666,7 @@ inline void R2SymTensorT< T_dim >::EigenVecs(const realT lambda[T_dim], R1Tensor
 
       maxmag = 0.0;
       int imax = -1;
-      for (int i = 0; i < SymSize< T_dim >::value; ++i)
+      for (int i = 0 ; i < SymSize< T_dim >::value ; ++i)
         if (maxmag < fabs( M.t_data[i] ))
         {
           maxmag = fabs( M.t_data[i] );
@@ -736,7 +746,7 @@ inline void R2SymTensorT< T_dim >::EigenVecs(const realT lambda[T_dim], R1Tensor
     }
     else
     {
-      for (int i = 0; i < T_dim; ++i)
+      for (int i = 0 ; i < T_dim ; ++i)
       {
         maxmag = 0.0;
         M = (*this);
@@ -754,7 +764,7 @@ inline void R2SymTensorT< T_dim >::EigenVecs(const realT lambda[T_dim], R1Tensor
         vtemp[2].t_data[1] = vtemp[1].t_data[2];
         vtemp[2].t_data[2] = M.t_data[0] * M.t_data[2] - M.t_data[1] * M.t_data[1];
 
-        for (int j = 0; j < T_dim; ++j)
+        for (int j = 0 ; j < T_dim ; ++j)
         {
           v_mag[j] = vtemp[j].L2_Norm();
           if (maxmag < v_mag[j])
@@ -854,7 +864,7 @@ void R2SymTensorT< T_dim >::Sqrt()
   (*this).EigenVecs( lambda, v );
 
   (*this) = 0.0;
-  for (int j = 0; j < 3; ++j)
+  for (int j = 0 ; j < 3 ; ++j)
   {
     lambda[j] = sqrt( lambda[j] );
 
@@ -882,7 +892,7 @@ inline void R2SymTensorT< T_dim >::Pow(const realT& r)
   (*this).EigenVecs( lambda, v );
 
   (*this) = 0.0;
-  for (int j = 0; j < 3; ++j)
+  for (int j = 0 ; j < 3 ; ++j)
   {
     lambda[j] = pow( lambda[j], r );
 
@@ -899,7 +909,7 @@ inline realT R2SymTensorT< T_dim >::AijBij(const R2SymTensorT< T_dim >& A, const
 {
   int n_dim =  SymSize<T_dim>::value;
   realT results = 0;
-  for (int i=0; i<n_dim; i++)
+  for (int i=0 ; i<n_dim ; i++)
   {
     results += A.t_data[i]*B.t_data[i];
   }
@@ -911,7 +921,6 @@ inline realT R2SymTensorT< T_dim >::AijBij(const R2SymTensorT< T_dim >& A, const
  * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  * @param[in] B symmetric rank-2 tensor
- * @return none
  *
  * This function performs matrix multiplication \f$\mathbf {AB}\f$ -or- \f$A_{ij} B_{jk}\f$
  */
@@ -948,7 +957,6 @@ inline void R2SymTensorT< T_dim >::AijBjk(const R2SymTensorT< T_dim >& A, const 
 /**
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
- * @return none
  *
  * This function performs matrix multiplication \f$\mathbf {AA^T}\f$ -or- \f$A_{ij} A_{kj}\f$
  */
@@ -982,7 +990,6 @@ inline void R2SymTensorT< T_dim >::AijAkj(const R2TensorT< T_dim >& A)
 /**
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
- * @return none
  *
  * This function performs matrix multiplication \f$\mathbf {A^TA}\f$ -or- \f$A_{ji} A_{jk}\f$
  */
@@ -1016,7 +1023,6 @@ inline void R2SymTensorT< T_dim >::AjiAjk(const R2TensorT< T_dim >& A)
 /**
  * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
- * @return none
  *
  * This function performs matrix multiplication \f$\mathbf {AA}\f$ -or- \f$A_{ij} A_{jk}\f$
  */
@@ -1034,12 +1040,12 @@ inline void R2SymTensorT< T_dim >::AijAjk(const R2SymTensorT< T_dim >& A)
   {
     /*    this->t_data[0] = A.t_data[0]*A.t_data[0] + A.t_data[3]*A.t_data[3] + A.t_data[6]*A.t_data[6];
 
-     this->t_data[1] = A.t_data[0]*A.t_data[1] + A.t_data[3]*A.t_data[4] + A.t_data[6]*A.t_data[7];
-     this->t_data[2] = A.t_data[1]*A.t_data[1] + A.t_data[4]*A.t_data[4] + A.t_data[7]*A.t_data[7];
+       this->t_data[1] = A.t_data[0]*A.t_data[1] + A.t_data[3]*A.t_data[4] + A.t_data[6]*A.t_data[7];
+       this->t_data[2] = A.t_data[1]*A.t_data[1] + A.t_data[4]*A.t_data[4] + A.t_data[7]*A.t_data[7];
 
-     this->t_data[3] = A.t_data[0]*A.t_data[2] + A.t_data[3]*A.t_data[5] + A.t_data[6]*A.t_data[8];
-     this->t_data[4] = A.t_data[1]*A.t_data[2] + A.t_data[4]*A.t_data[5] + A.t_data[7]*A.t_data[8];
-     this->t_data[5] = A.t_data[2]*A.t_data[2] + A.t_data[5]*A.t_data[5] + A.t_data[8]*A.t_data[8];*/
+       this->t_data[3] = A.t_data[0]*A.t_data[2] + A.t_data[3]*A.t_data[5] + A.t_data[6]*A.t_data[8];
+       this->t_data[4] = A.t_data[1]*A.t_data[2] + A.t_data[4]*A.t_data[5] + A.t_data[7]*A.t_data[8];
+       this->t_data[5] = A.t_data[2]*A.t_data[2] + A.t_data[5]*A.t_data[5] + A.t_data[8]*A.t_data[8];*/
 
     const realT o1 = A.t_data[1] * A.t_data[1];
     const realT o2 = A.t_data[3] * A.t_data[3];
@@ -1063,7 +1069,6 @@ inline void R2SymTensorT< T_dim >::AijAjk(const R2SymTensorT< T_dim >& A)
 /**
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
- * @return none
  *
  * This function performs compound matrix operation \f$\mathbf {AA^T+A+A^T}\f$ -or- \f$A_{ij} A_{kj} +  A_{ik} +  A_{ki}\f$
  */
@@ -1098,7 +1103,6 @@ inline void R2SymTensorT< T_dim >::AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_d
 /**
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
- * @return none
  *
  * This function performs compound matrix operation \f$\mathbf {A^TA+A+A^T}\f$ -or- \f$A_{ji} A_{jk} +  A_{ik} +  A_{ki}\f$
  */
@@ -1134,7 +1138,6 @@ inline void R2SymTensorT< T_dim >::AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_d
 /**
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
- * @return none
  *
  * This function performs compound matrix operation \f$\mathbf {AA^T-A-A^T}\f$ -or- \f$A_{ij} A_{kj} -  A_{ik} -  A_{ki}\f$
  */
@@ -1171,7 +1174,6 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& 
  * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  * @param[in] Q rank-2 tensor
- * @return none
  *
  * This function performs compound matrix operation \f$\mathbf {QAQ^T}\f$ -or- \f$Q_{ij} A_{jk} Q_{lk}\f$. This is
  * inteded to be a rotationAxis of a R2SymTensor with Q being an orthonormal matrix.
@@ -1183,7 +1185,7 @@ inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, con
   {
     this->t_data[0] = Q.t_data[0] * Q.t_data[0] * A.t_data[0] + 2 * Q.t_data[0] * Q.t_data[1] * A.t_data[1] + Q.t_data[1] * Q.t_data[1] * A.t_data[2];
     this->t_data[1] = Q.t_data[0] * Q.t_data[3] * A.t_data[0] + Q.t_data[0] * Q.t_data[4] * A.t_data[1] + Q.t_data[1] * Q.t_data[3] * A.t_data[1] + Q.t_data[1]
-        * Q.t_data[4] * A.t_data[2];
+                      * Q.t_data[4] * A.t_data[2];
     this->t_data[2] = Q.t_data[3] * Q.t_data[3] * A.t_data[0] + 2 * Q.t_data[3] * Q.t_data[4] * A.t_data[1] + Q.t_data[4] * Q.t_data[4] * A.t_data[2];
   }
   else if (T_dim == 3)
@@ -1214,9 +1216,10 @@ inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, con
     o23 = A.t_data[5] * Q.t_data[8];
     o24 = o21 + o22 + o23;
 
-    this->t_data[0] = Q.t_data[0] * (A.t_data[0] * Q.t_data[0] + A.t_data[1] * Q.t_data[1] + A.t_data[3] * Q.t_data[2]) + Q.t_data[1] * (A.t_data[1]
-        * Q.t_data[0] + A.t_data[2] * Q.t_data[1] + A.t_data[4] * Q.t_data[2]) + Q.t_data[2] * (A.t_data[3] * Q.t_data[0] + A.t_data[4] * Q.t_data[1]
-        + A.t_data[5] * Q.t_data[2]);
+    this->t_data[0] = Q.t_data[0] * (A.t_data[0] * Q.t_data[0] + A.t_data[1] * Q.t_data[1] + A.t_data[3] * Q.t_data[2])
+                    + Q.t_data[1] * (A.t_data[1] * Q.t_data[0] + A.t_data[2] * Q.t_data[1] + A.t_data[4] * Q.t_data[2])
+                    + Q.t_data[2] * (A.t_data[3] * Q.t_data[0] + A.t_data[4] * Q.t_data[1] + A.t_data[5] * Q.t_data[2]);
+
     this->t_data[1] = o4 * Q.t_data[0] + o8 * Q.t_data[1] + o12 * Q.t_data[2];
     this->t_data[2] = o4 * Q.t_data[3] + o8 * Q.t_data[4] + o12 * Q.t_data[5];
     this->t_data[3] = o16 * Q.t_data[0] + o20 * Q.t_data[1] + o24 * Q.t_data[2];
@@ -1234,7 +1237,6 @@ inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, con
 /**
  * @author Randolph Settgast
  * @param[in] a rank-1 tensor
- * @return none
  *
  * This function performs a dyadic product of a rank-1 tensor with itself
  *  \f$\mathbf {a \otimes a}\f$ -or- \f$a_i a_j\f$
@@ -1259,12 +1261,12 @@ inline void R2SymTensorT< T_dim >::dyadic_aa(const R1TensorT< T_dim >& a)
   }
   else
   {
-    for(int i = 0; i < T_dim; ++i)
+    for(int i = 0 ; i < T_dim ; ++i)
     {
       int index = 0;
-      for(int ii = 1; ii <= i; ++ii)
+      for(int ii = 1 ; ii <= i ; ++ii)
         index += ii;
-      for(int j = 0; j <= i; ++j, ++index)
+      for(int j = 0 ; j <= i ; ++j, ++index)
         this->t_data[index] = a.t_data[i] * a.t_data[j];
     }
   }
@@ -1280,16 +1282,15 @@ inline void R2SymTensorT< T_dim >::dyadic_aa(const R1TensorT< T_dim >& a)
  */
 template<int T_dim>
 R2SymTensorT< T_dim > DyadicProduct(const R1TensorT< T_dim >& a){
-	R2SymTensorT< T_dim > c;
-	c.dyadic_aa(a);
-	return c;
+  R2SymTensorT< T_dim > c;
+  c.dyadic_aa(a);
+  return c;
 }
 
 /**
  * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  * @param[in] b rank-1 tensor
- * @return none
  *
  * This function adds the dyadic product of two rank-1 tensors to this
  * tensor.
@@ -1323,10 +1324,10 @@ inline void R2SymTensorT< T_dim >::AijklBkl(const R4minSymTensorT< T_dim >&A, co
 {
   int n_dim =  SymSize<T_dim>::value;
 
-  for (int i=0; i<n_dim; ++i)
+  for (int i=0 ; i<n_dim ; ++i)
   {
     this->t_data[i] = 0.;
-    for(int j=0; j<n_dim; ++j)
+    for(int j=0 ; j<n_dim ; ++j)
     {
       this->t_data[i] += A.t_data[i+j*n_dim]*B.t_data[j];
     }
@@ -1338,10 +1339,10 @@ inline void R2SymTensorT< T_dim >::AijklBij(const R4minSymTensorT< T_dim >&A, co
 {
   int n_dim =  SymSize<T_dim>::value;
 
-  for (int i=0; i<n_dim; ++i)
+  for (int i=0 ; i<n_dim ; ++i)
   {
     this->t_data[i] = 0.;
-    for(int j=0; j<n_dim; ++j)
+    for(int j=0 ; j<n_dim ; ++j)
     {
       this->t_data[i] += A.t_data[i*n_dim+j]*B.t_data[j];
     }
@@ -1357,4 +1358,3 @@ inline void R2SymTensorT< T_dim >::AijklBij(const R4minSymTensorT< T_dim >&A, co
 #endif
 
 #endif
-

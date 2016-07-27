@@ -18,9 +18,7 @@ NewComponent::NewComponent( std::string const & name,
 }
 
 NewComponent::~NewComponent()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 void NewComponent::Registration( dataRepository::WrapperCollection& /*domain*/ )
 {}
@@ -32,6 +30,6 @@ void NewComponent::TimeStep( real64 const& /*time_n*/,
                dataRepository::WrapperCollection& /*domain*/ )
 {}
 
-REGISTER_CATALOGUE_ENTRY( SolverBase, NewComponent, std::string, dataRepository::WrapperCollection * const )
+REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string, dataRepository::WrapperCollection * const )
 
 } /* namespace geosx */

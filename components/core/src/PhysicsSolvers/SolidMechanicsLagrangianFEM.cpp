@@ -19,12 +19,9 @@ namespace geosx
 using namespace dataRepository;
 
 SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
-                                                            WrapperCollection * const parent ):
-    SolverBase( name, parent )
-{
-
-}
-
+                                                            WrapperCollection * const parent ) :
+  SolverBase( name, parent )
+{}
 
 
 
@@ -53,7 +50,7 @@ void SolidMechanics_LagrangianFEM::Registration( WrapperCollection& domain )
 
   Wrapper<real64_array>::rtype    X = nodes.RegisterWrapper<real64_array>("ReferencePosition").data();
   Wrapper<real64_array>::rtype mass = nodes.RegisterWrapper<real64_array>("Mass").data();
-  Wrapper<real64>::rtype Ey = elems.RegisterWrapper<real64>("Ey").data();
+  real64& Ey = *(elems.RegisterWrapper<real64>("Ey").data());
   Wrapper<real64_array>::rtype K = elems.RegisterWrapper<real64_array>("K").data();
 
   Ey = 10e9;
@@ -72,7 +69,7 @@ void SolidMechanics_LagrangianFEM::Registration( WrapperCollection& domain )
   for( uint64 k=0 ; k<elems.size() ; ++k )
   {
     double dx = L / elems.size();
-    mass[k] += rho * A * dx / 2 ;
+    mass[k] += rho * A * dx / 2;
     mass[k+1] += rho * A * dx / 2;
     K[k] = Ey*A*dx;
   }
@@ -80,17 +77,17 @@ void SolidMechanics_LagrangianFEM::Registration( WrapperCollection& domain )
 }
 
 void SolidMechanics_LagrangianFEM::TimeStep( real64 const& time_n,
-                                   real64 const& dt,
-                                   const int cycleNumber,
-                                   WrapperCollection& domain )
+                                             real64 const& dt,
+                                             const int cycleNumber,
+                                             WrapperCollection& domain )
 {
   TimeStepExplicit( time_n, dt, cycleNumber, domain );
 }
 
 void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
-                                           real64 const& dt,
-                                           const int cycleNumber,
-                                           WrapperCollection& domain )
+                                                     real64 const& dt,
+                                                     const int cycleNumber,
+                                                     WrapperCollection& domain )
 {
   WrapperCollection& nodes = domain.GetDataObjectManager<WrapperCollection>("FEM_Nodes");
   WrapperCollection& elems = domain.GetDataObjectManager<WrapperCollection>("FEM_Elements");
@@ -120,7 +117,7 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 
   for( uint64 k=0 ; k<numElems ; ++k )
   {
-    Strain[k] = ( u[k+1] - u[k] ) / ( X[k+1] - X[k] ) ;
+    Strain[k] = ( u[k+1] - u[k] ) / ( X[k+1] - X[k] );
     Felem[k] = K[k] * Strain[k];
     acc[k]   += Felem[k];
     acc[k+1] -= Felem[k];
@@ -144,5 +141,5 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 }
 
 
-REGISTER_CATALOGUE_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string, WrapperCollection * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, WrapperCollection * const )
 } /* namespace ANST */
