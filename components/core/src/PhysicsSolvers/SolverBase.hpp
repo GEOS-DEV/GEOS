@@ -8,67 +8,52 @@
 #ifndef SOLVERBASE_HPP_
 #define SOLVERBASE_HPP_
 
-#include "dataRepository/DataTypes.hpp"
-#include "codingUtilities/ObjectCatalogue.hpp"
+
+
+#include "codingUtilities/ObjectCatalog.hpp"
+
+#include "dataRepository/intrinsic/WrapperCollection.hpp"
 #include <string>
+#include "common/DataTypes.hpp"
+
 
 namespace geosx
 {
-class DataObjectManager;
 
-class SolverBase
+class SolverBase : public dataRepository::WrapperCollection
 {
 public:
-  typedef ObjectCatalogueEntryBase< geosx::SolverBase, std::string > SolverFactory;
 
-  SolverBase( std::string const & name );
+  explicit SolverBase( std::string const & name,
+                       WrapperCollection * const parent );
 
   virtual ~SolverBase();
 
-
-  virtual void RegisterDataObjects( DataObjectManager& domain ) = 0;
-
-  virtual void TimeStep( const real64& time_n,
-                         const real64& dt,
-                         const int cycleNumber,
-                         DataObjectManager& domain ) = 0;
+  SolverBase() = default;
+  SolverBase( SolverBase const & ) = default;
+  SolverBase( SolverBase &&) = default;
+  SolverBase& operator=( SolverBase const & ) = default;
+  SolverBase& operator=( SolverBase&& ) = default;
 
 
-/*
-  static std::map< std::string, SolverBase* >& GetCatalogue()
-  {
-    static std::map< std::string, SolverBase* > m_catalogue;
-    return m_catalogue;
-  }
+  virtual void Registration( dataRepository::WrapperCollection& domain ) = 0;
 
-  template< typename DERIVED >
-  void addCatalogueEntry()
-  {
-    std::string name = DERIVED::CatalogueName();
-    SolverBase::GetCatalogue()[name] = this;
-  }
+  virtual void TimeStep( real64 const & time_n,
+                         real64 const & dt,
+                         int const cycleNumber,
+                         dataRepository::WrapperCollection& domain ) = 0;
 
-  template< typename DERIVED, typename ...ARGS >
-  static std::unique_ptr<SolverBase> Factory( const std::string& name, const ARGS&... args )
-  {
-    return std::unique_ptr<SolverBase>( new DERIVED(args...) );
-  }
 
-*/
+  using CatalogInterface = objectcatalog::CatalogInterface< SolverBase, std::string const &, WrapperCollection * const >;
+  static CatalogInterface::CatalogType& GetCatalogue();
 
 private:
-  std::string m_name;
 
-
-
-
-  SolverBase() = delete;
-  SolverBase(const SolverBase&) = delete;
-  SolverBase(const SolverBase&&) = delete;
-  SolverBase& operator=(const SolverBase&) = delete;
-  SolverBase& operator=(const SolverBase&&) = delete;
 };
 
+
+
 } /* namespace ANST */
+
 
 #endif /* SOLVERBASE_HPP_ */

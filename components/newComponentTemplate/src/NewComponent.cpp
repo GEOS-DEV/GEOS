@@ -10,27 +10,26 @@
 namespace geosx
 {
 
-NewComponent::NewComponent( std::string const & name ):
-    SolverBase(name)
+NewComponent::NewComponent( std::string const & name,
+                            WrapperCollection * const parent ):
+    SolverBase(name,parent)
 {
 
 }
 
 NewComponent::~NewComponent()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
-void RegisterDataObjects( DataObjectManager& domain )
+void NewComponent::Registration( dataRepository::WrapperCollection& /*domain*/ )
 {}
 
 
-void TimeStep( real64 const& time_n,
-                       real64 const& dt,
-                       int32 const cycleNumber,
-                       DataObjectManager& domain )
+void NewComponent::TimeStep( real64 const& /*time_n*/,
+               real64 const& /*dt*/,
+               int32 const /*cycleNumber*/,
+               dataRepository::WrapperCollection& /*domain*/ )
 {}
 
-REGISTER_FACTORY( NewComponent, SolverBase, std::string )
+REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string, dataRepository::WrapperCollection * const )
 
 } /* namespace geosx */

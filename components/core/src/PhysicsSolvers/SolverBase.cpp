@@ -10,16 +10,18 @@
 namespace geosx
 {
 
-SolverBase::SolverBase(const std::string& name ):
-    m_name(name)
-{
-  // TODO Auto-generated constructor stub
-
-}
+SolverBase::SolverBase( std::string const & name,
+                        WrapperCollection * const parent ) :
+  WrapperCollection( name, parent )
+{}
 
 SolverBase::~SolverBase()
+{}
+
+SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalogue()
 {
-  // TODO Auto-generated destructor stub
+  static SolverBase::CatalogInterface::CatalogType catalog;
+  return catalog;
 }
 
 } /* namespace ANST */

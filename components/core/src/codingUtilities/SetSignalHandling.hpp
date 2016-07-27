@@ -8,10 +8,14 @@
 #ifndef COMPONENTS_CORE_SRC_CODINGUTILITIES_SETSIGNALHANDLING_HPP_
 #define COMPONENTS_CORE_SRC_CODINGUTILITIES_SETSIGNALHANDLING_HPP_
 
+#include <exception>
+
 namespace geosx
 {
 
 void setSignalHandling(  void (*handler)( int ) );
+
+
 } /* namespace geosx */
 
 #endif /* COMPONENTS_CORE_SRC_CODINGUTILITIES_SETSIGNALHANDLING_HPP_ */

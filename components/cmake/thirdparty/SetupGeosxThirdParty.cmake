@@ -29,16 +29,6 @@ if (HDF5_DIR)
 endif()
 
 
-################################
-# ATK
-################################
-#if (ATK_DIR)
-#  include(cmake/thirdparty/FindATK.cmake)
-#  blt_register_library( NAME atk
-#                        INCLUDES ${ATK_INCLUDE_DIRS} 
-#                        LIBRARIES  sidre)
-#endif()
-
 if (ATK_DIR)
   include(components/cmake/thirdparty/FindATK.cmake)
   blt_register_library( NAME sidre
@@ -50,6 +40,16 @@ if (ATK_DIR)
                         LIBRARIES  slic)
 endif()
 
+
+
+
+if (RAJA_DIR)
+  include(components/cmake/thirdparty/FindRAJA.cmake)
+	 blt_register_library( NAME raja
+                         INCLUDES ${RAJA_INCLUDE_DIRS} 
+                         LIBRARIES  RAJA)
+	
+endif()
 
 #if (UNCRUSTIFY_EXECUTABLE)
   include(blt/cmake/thirdparty/FindUncrustify.cmake)
