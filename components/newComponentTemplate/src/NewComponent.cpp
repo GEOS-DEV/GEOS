@@ -30,6 +30,6 @@ void NewComponent::TimeStep( real64 const& /*time_n*/,
                dataRepository::WrapperCollection& /*domain*/ )
 {}
 
-REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string, dataRepository::WrapperCollection * const )
+REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string const &, dataRepository::WrapperCollection * const )
 
 } /* namespace geosx */

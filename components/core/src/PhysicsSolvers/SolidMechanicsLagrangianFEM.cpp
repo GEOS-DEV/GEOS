@@ -10,7 +10,7 @@
 #include <vector>
 #include <math.h>
 
-#include "../dataRepository/intrinsic/WrapperCollection.hpp"
+#include "../dataRepository/WrapperCollection.hpp"
 //#include "RAJA/RAJA.hxx"
 #include "common/DataTypes.hpp"
 

@@ -41,16 +41,16 @@ public:
   CatalogInterface& operator=(CatalogInterface const &) = default;
   CatalogInterface& operator=(CatalogInterface &&) = default;
 
-  static CatalogType& GetCatalogue()
+  static CatalogType& GetCatalog()
   {
-    return BASETYPE::GetCatalogue();
+    return BASETYPE::GetCatalog();
   }
 
   virtual std::unique_ptr<BASETYPE> Allocate( std::string const & name, ARGS& ... args ) const = 0;
 
   static std::unique_ptr<BASETYPE> Factory( std::string const & objectTypeName, ARGS& ... args )
   {
-    CatalogInterface<BASETYPE, ARGS ...> const * const entry = GetCatalogue().at( objectTypeName ).get();
+    CatalogInterface<BASETYPE, ARGS ...> const * const entry = GetCatalog().at( objectTypeName ).get();
     return entry->Allocate( objectTypeName, args ... );
   }
 
@@ -123,7 +123,7 @@ public:
 #endif
 
     std::string name = TYPE::CatalogName();
-    ( CatalogInterface<BASETYPE, ARGS ...>::GetCatalogue() ).insert( std::make_pair( name, std::make_unique< CatalogEntry<TYPE,BASETYPE, ARGS ...> >() ) );
+    ( CatalogInterface<BASETYPE, ARGS ...>::GetCatalog() ).insert( std::make_pair( name, std::make_unique< CatalogEntry<TYPE,BASETYPE, ARGS ...> >() ) );
 
 #if OBJECTCATALOGVERBOSE > 0
     std::cout <<"Registered  "

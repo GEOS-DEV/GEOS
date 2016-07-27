@@ -8,7 +8,7 @@
 #ifndef COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
 #define COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
 
-#include "dataRepository/intrinsic/WrapperCollection.hpp"
+#include "dataRepository/WrapperCollection.hpp"
 
 namespace geosx
 {

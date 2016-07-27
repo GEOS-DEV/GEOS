@@ -2,8 +2,8 @@
 #include <slic/GenericOutputStream.hpp>
 #include <iostream>
 
-#include "../dataRepository/intrinsic/WrapperCollection.hpp"
-#include "../PhysicsSolvers/SolidMechanicsLagrangianFEM.hpp"
+#include "dataRepository/WrapperCollection.hpp"
+#include "PhysicsSolvers/SolidMechanicsLagrangianFEM.hpp"
 #include "codingUtilities/SetSignalHandling.hpp"
 #include "codingUtilities/stackTrace.hpp"
 #include "managers/ProblemManager.hpp"

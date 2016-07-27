@@ -18,7 +18,7 @@ SolverBase::SolverBase( std::string const & name,
 SolverBase::~SolverBase()
 {}
 
-SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalogue()
+SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
 {
   static SolverBase::CatalogInterface::CatalogType catalog;
   return catalog;

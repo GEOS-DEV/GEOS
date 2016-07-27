@@ -10,7 +10,7 @@
 
 #include "sidre/sidre.hpp"
 
-#include "../../common/DataTypes.hpp"
+#include "common/DataTypes.hpp"
 #include "codingUtilities/sfinae.hpp"
 #include "WrapperBase.hpp"
 #include <type_traits>

@@ -12,7 +12,7 @@
 
 #include "codingUtilities/ObjectCatalog.hpp"
 
-#include "dataRepository/intrinsic/WrapperCollection.hpp"
+#include "dataRepository/WrapperCollection.hpp"
 #include <string>
 #include "common/DataTypes.hpp"
 
@@ -45,7 +45,7 @@ public:
 
 
   using CatalogInterface = objectcatalog::CatalogInterface< SolverBase, std::string const &, WrapperCollection * const >;
-  static CatalogInterface::CatalogType& GetCatalogue();
+  static CatalogInterface::CatalogType& GetCatalog();
 
 private:
 
