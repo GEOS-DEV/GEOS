@@ -8,7 +8,7 @@ project(geosx LANGUAGES C CXX)
 ################################
 # Include blt
 ################################
-include(blt/SetupBLT.cmake)
+include(components/cmake/blt/SetupBLT.cmake)
 
 ################################
 # Include standard build system logic and options

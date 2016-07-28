@@ -52,5 +52,5 @@ if (RAJA_DIR)
 endif()
 
 #if (UNCRUSTIFY_EXECUTABLE)
-  include(blt/cmake/thirdparty/FindUncrustify.cmake)
+  include(components/cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
 #endif()
