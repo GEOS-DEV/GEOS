@@ -13,6 +13,7 @@
 #include "Wrapper.hpp"
 //#include "CodingUtilities/ANSTexception.hpp"
 
+#define USE_DYNAMIC_CASTING 1;
 /**
  * namespace to encapsulate functions in simulation tools
  */
@@ -62,7 +63,8 @@ public:
 
   ///@}
 
-
+  virtual void Registration( dataRepository::WrapperCollection * const )
+  {}
 
   virtual const std::type_info& get_typeid() const
   {
@@ -81,7 +83,7 @@ public:
 
 
   template< typename T >
-  T& GetChildDataObjectManager( std::string const & name )
+  T& GetChildWrapperCollection( std::string const & name )
   {
     return *(m_subObjectManagers.at(name));
   }
@@ -99,7 +101,7 @@ public:
   Wrapper<T> const & getWrapper( std::size_t const index ) const
   {
 #ifdef USE_DYNAMIC_CASTING
-    return dyanmic_cast< Wrapper<T>* >(m_wrappers[index].get());
+    return dynamic_cast< Wrapper<T> const & >( *(m_wrappers[index]) );
 #else
     return static_cast< Wrapper<T> const & >( *(m_wrappers[index]) );
 #endif
@@ -110,7 +112,6 @@ public:
   {
     return const_cast<Wrapper<T>&>( const_cast< WrapperCollection const *>(this)->getWrapper<T>( index ) );
   }
-
 
   template< typename T >
   Wrapper<T> const & getWrapper( std::string const & name ) const
@@ -126,50 +127,67 @@ public:
 
 
   template< typename T >
-  typename Wrapper<T>::rtype_const getWrappedObjectData( std::size_t const index ) const
+  typename Wrapper<T>::rtype_const getData( std::size_t const index ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T*>(m_wrappers[index].get())->data();
-#else
-    return static_cast<Wrapper<T>*>(m_wrappers[index].get())->data();
-#endif
+    return getWrapper<T>(index).data();
   }
 
   template< typename T >
-  typename Wrapper<T>::rtype getWrappedObjectData( std::size_t const index )
+  typename Wrapper<T>::rtype getData( std::size_t const index )
   {
-    return const_cast<typename Wrapper<T>::rtype>( const_cast<const WrapperCollection*>(this)->getWrappedObjectData<T>( index ) );
+    return const_cast<typename Wrapper<T>::rtype>( const_cast<const WrapperCollection*>(this)->getData<T>( index ) );
   }
 
-
-
   template< typename T >
-  typename Wrapper<T>::rtype_const getWrappedObjectData( std::string const & name ) const
+  typename Wrapper<T>::rtype_const getData( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
-    return getWrappedObjectData<T>( index );
+    return getData<T>( index );
   }
+
   template< typename T >
-  typename Wrapper<T>::rtype getWrappedObjectData( std::string const & name )
+  typename Wrapper<T>::rtype getData( std::string const & name )
   {
     auto index = m_keyLookup.at(name);
-    return getWrappedObjectData<T>( index );
+    return getData<T>( index );
   }
+
+  template< typename T >
+  T const & getReference( std::size_t const index ) const
+  {
+    return getWrapper<T>(index).reference();
+  }
+
+  template< typename T >
+  T& getReference( std::size_t const index )
+  {
+    return const_cast<T&>( const_cast<const WrapperCollection*>(this)->getReference<T>( index ) );
+  }
+
+  template< typename T >
+  T const & getReference( std::string const & name ) const
+  {
+    auto index = m_keyLookup.at(name);
+    return getReference<T>( index );
+  }
+
+  template< typename T >
+  T & getReference( std::string const & name )
+  {
+    auto index = m_keyLookup.at(name);
+    return getReference<T>( index );
+  }
+
+
+
 
 //  { return static_cast<typename DataObject<T>::rtype>( static_cast<const DataObjectManager *>(this)->GetDataObjectData<T>( name ) ); }
-
-
-  template< typename T >
-  T& GetDataObjectManager( std::string const & name )
-  {
-    return *(m_subObjectManagers.at(name));
-  }
 
   void resize( std::size_t newsize );
 
   inline std::size_t size() const
   {
-    return *(getWrappedObjectData<std_size_t>("size"));
+    return *(getData<std_size_t>("size"));
   }
 
 

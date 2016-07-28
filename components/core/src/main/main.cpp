@@ -33,6 +33,7 @@ int main( int argc, char *argv[] )
 
   ProblemManager problemManager;
 
+  problemManager.Registration(nullptr);
   problemManager.ParseCommandLineInput( argc, argv );
 
 
@@ -44,8 +45,6 @@ int main( int argc, char *argv[] )
 
 
   problemManager.ParseInputFile();
-
-
 
 
 

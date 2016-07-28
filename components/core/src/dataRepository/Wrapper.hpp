@@ -165,9 +165,14 @@ public:
 
   HAS_MEMBER_FUNCTION(data,rtype,,,)
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value, rtype>::type data()
+  typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,string>::value, rtype>::type data()
   {
     return m_data.data();
+  }
+  template<class U = T>
+  typename std::enable_if<has_memberfunction_data<U>::value && std::is_same<U,string>::value, U&>::type data()
+  {
+    return m_data;
   }
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value, U*>::type data()
@@ -175,10 +180,26 @@ public:
     return &m_data;
   }
 
-  T& dataRef()
+  template<class U = T>
+  typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,string>::value, rtype_const>::type data() const
+  {
+    return m_data.data();
+  }
+  template<class U = T>
+  typename std::enable_if<has_memberfunction_data<U>::value && std::is_same<U,string>::value, U const &>::type data() const
+  {
+    return m_data;
+  }
+  template<class U = T>
+  typename std::enable_if<!has_memberfunction_data<U>::value, U const *>::type data() const
+  {
+    return &m_data;
+  }
+
+  T& reference()
   { return m_data; }
 
-  T const & dataRef() const
+  T const & reference() const
   { return m_data; }
 
 private:

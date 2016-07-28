@@ -20,7 +20,7 @@ NewComponent::NewComponent( std::string const & name,
 NewComponent::~NewComponent()
 {}
 
-void NewComponent::Registration( dataRepository::WrapperCollection& /*domain*/ )
+void NewComponent::Registration( dataRepository::WrapperCollection * const /*domain*/ )
 {}
 
 

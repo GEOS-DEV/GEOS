@@ -19,7 +19,9 @@ public:
   explicit ProblemManager();
   ~ProblemManager();
 
-  void ParseCommandLineInput( int const& argc, char* const argv[]) ;
+  virtual void Registration( dataRepository::WrapperCollection * const );
+
+  void ParseCommandLineInput( int const& argc, char* const argv[]);
 
   void ParseInputFile();
 

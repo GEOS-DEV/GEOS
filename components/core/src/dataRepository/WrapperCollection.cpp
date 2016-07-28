@@ -41,8 +41,7 @@ WrapperCollection::WrapperCollection( std::string const & name,
   }
 
   *(RegisterWrapper<std_size_t>( "size" ).data()) = 0;
-  std::string& temp = RegisterWrapper<std::string>( "name" ).dataRef();
-  temp = name;
+  RegisterWrapper<std::string>( "name" ).reference() = name;
   RegisterWrapper<std::string>( "path" );
 
 

@@ -36,7 +36,7 @@ public:
   SolverBase& operator=( SolverBase&& ) = default;
 
 
-  virtual void Registration( dataRepository::WrapperCollection& domain ) = 0;
+//  virtual void Registration( dataRepository::WrapperCollection& domain );
 
   virtual void TimeStep( real64 const & time_n,
                          real64 const & dt,

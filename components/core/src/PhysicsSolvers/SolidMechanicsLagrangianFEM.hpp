@@ -29,7 +29,7 @@ public:
 
   static std::string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void Registration( dataRepository::WrapperCollection& domain ) override;
+  virtual void Registration( dataRepository::WrapperCollection * const domain ) override;
 
 
   virtual void TimeStep( real64 const& time_n,
