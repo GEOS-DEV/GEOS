@@ -1,0 +1,34 @@
+digraph {
+    START
+    empty
+    described
+    allocated  [peripheries=2]
+    buffer_attached0
+    buffer_attached   [peripheries=2]
+    opaque  [peripheries=2]
+    external   [peripheries=2]
+    scalar  [peripheries=2]
+    string  [peripheries=2]
+ 
+    START -> empty [label="createView(name)"]
+    described -> allocated [label="allocate()"]
+    empty -> buffer_attached0 [label="attachBuffer(buffer)"]
+
+    empty -> allocated [label="allocate(args)"]
+
+    START -> buffer_attached0 [label="createView(name,buffer)"]
+    buffer_attached0 -> buffer_attached [label="apply(args)"]
+
+    described -> external [label="setExternalDataPtr(void)"]
+    described -> buffer_attached [label="attachBuffer(buffer)"]
+
+    START -> described [label="createView(name,args)"]
+
+    START -> opaque [label="createView(name,ptr)"]
+    empty -> opaque [label="setExternalDataPtr(ptr)"]
+    opaque -> external [label="apply(args)"]
+
+    empty -> scalar [label="setScalar"]
+    empty -> string [label="setString"]
+
+}
