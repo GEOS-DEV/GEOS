@@ -521,7 +521,7 @@ realT R2SymTensorT<T_dim>::Inverse( R2SymTensorT<T_dim>& tensor )
  */
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::EigenVals( realT eigenvals[T_dim],
-                                              const realT limArg  ) const
+                                              const realT /*limArg*/  ) const
 {
   if(T_dim != 3)
   {

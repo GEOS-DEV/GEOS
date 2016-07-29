@@ -50,7 +50,7 @@ typedef double realT;
 
 inline int e_ijk( const int i , const int j , const int k )
 {
-	int r_value;
+	int r_value = -10000;
 	
 	// check to see if any of the indices are the same
 	if( ( i==j ) || ( i==k ) || ( j==k ) )
