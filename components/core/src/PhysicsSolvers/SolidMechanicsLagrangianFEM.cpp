@@ -11,7 +11,7 @@
 #include <math.h>
 
 #include "../dataRepository/WrapperCollection.hpp"
-//#include "RAJA/RAJA.hxx"
+#include "RAJA/RAJA.hxx"
 #include "common/DataTypes.hpp"
 
 namespace geosx
@@ -143,3 +143,4 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, WrapperCollection * const )
 } /* namespace ANST */
+

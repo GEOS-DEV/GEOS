@@ -10,8 +10,6 @@
 
 
 
-#include "codingUtilities/ObjectCatalog.hpp"
-
 #include "dataRepository/WrapperCollection.hpp"
 #include <string>
 #include "common/DataTypes.hpp"

@@ -15,8 +15,11 @@ namespace geosx
 {
 
 using namespace TICPP;
-ProblemManager::ProblemManager() :
-  WrapperCollection("ProblemManager",nullptr)
+using namespace dataRepository;
+
+ProblemManager::ProblemManager( const std::string& name,
+                                WrapperCollection * const parent ) :
+  WrapperCollection( name, parent )
 {
 }
 
@@ -319,5 +322,7 @@ void ProblemManager::ParseInputFile()
 void ProblemManager::ApplySchedulerEvent()
 {}
 
+REGISTER_CATALOG_ENTRY( WrapperCollection, ProblemManager, std::string const &, WrapperCollection * const )
 
 } /* namespace geosx */
+

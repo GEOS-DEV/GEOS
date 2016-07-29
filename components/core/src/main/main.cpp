@@ -31,7 +31,7 @@ int main( int argc, char *argv[] )
   slic::setLoggingMsgLevel( slic::message::Debug );
   slic::addStreamToAllMsgLevels( new slic::GenericOutputStream( &std::cout, format ) );
 
-  ProblemManager problemManager;
+  ProblemManager problemManager("ProblemManager",nullptr);
 
   problemManager.Registration(nullptr);
   problemManager.ParseCommandLineInput( argc, argv );

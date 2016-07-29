@@ -11,7 +11,7 @@
 #include "StringUtilities.hpp"
 
 #ifndef OBJECTCATALOGVERBOSE
-#define OBJECTCATALOGVERBOSE 2
+#define OBJECTCATALOGVERBOSE 0
 #endif
 
 /**
@@ -70,7 +70,7 @@ public:
    * @param args these are the arguments to the constructor of the target type
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
    */
-  virtual std::unique_ptr<BASETYPE> Allocate( std::string const & name, ARGS& ... args ) const = 0;
+  virtual std::unique_ptr<BASETYPE> Allocate( ARGS& ... args ) const = 0;
 
   /**
    * static method to create a new object that derives from BASETYPE
@@ -81,7 +81,7 @@ public:
   static std::unique_ptr<BASETYPE> Factory( std::string const & objectTypeName, ARGS& ... args )
   {
     CatalogInterface<BASETYPE, ARGS ...> const * const entry = GetCatalog().at( objectTypeName ).get();
-    return entry->Allocate( objectTypeName, args ... );
+    return entry->Allocate( args ... );
   }
 
 };
@@ -92,7 +92,7 @@ public:
  * @tparam BASETYPE this is the base class that TYPE derives from
  * @tparam ARGS constructor arguemtns
  */
-template<typename TYPE, typename BASETYPE, typename ... ARGS>
+template<typename BASETYPE, typename TYPE, typename ... ARGS>
 class CatalogEntry : public CatalogInterface<BASETYPE, ARGS ...>
 {
 public:
@@ -142,10 +142,10 @@ public:
    * @param args these are the arguments to the constructor of the target type
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
    */
-  virtual std::unique_ptr<BASETYPE> Allocate(  std::string const & name, ARGS& ... args ) const override final
+  virtual std::unique_ptr<BASETYPE> Allocate( ARGS& ... args ) const override final
   {
 #if OBJECTCATALOGVERBOSE > 0
-    std::cout << "Creating "<< name <<" of type "<< geosx::stringutilities::demangle(typeid(TYPE).name())
+    std::cout << "Creating type "<< geosx::stringutilities::demangle(typeid(TYPE).name())
               <<" from catalog of "<<geosx::stringutilities::demangle(typeid(BASETYPE).name())<<std::endl;
 #endif
     return std::unique_ptr<BASETYPE>( new TYPE( args ... ) );
@@ -156,7 +156,7 @@ public:
 /**
  * a class to generate the catalog entry
  */
-template<typename TYPE, typename BASETYPE, typename ... ARGS>
+template<typename BASETYPE, typename TYPE, typename ... ARGS>
 class CatalogEntryConstructor
 {
 public:
@@ -173,7 +173,7 @@ public:
 #endif
 
     std::string name = TYPE::CatalogName();
-    ( CatalogInterface<BASETYPE, ARGS ...>::GetCatalog() ).insert( std::make_pair( name, std::make_unique< CatalogEntry<TYPE,BASETYPE, ARGS ...> >() ) );
+    ( CatalogInterface<BASETYPE, ARGS ...>::GetCatalog() ).insert( std::make_pair( name, std::make_unique< CatalogEntry<BASETYPE, TYPE, ARGS ...> >() ) );
 
 #if OBJECTCATALOGVERBOSE > 0
     std::cout <<"Registered  "
@@ -218,8 +218,8 @@ public:
  * an anonymous namespace. This should be called from the source file for the derived class, which will result in the
  * generation of a CatalogEntry<BaseType,ClassName,...> prior to main().
  */
-#define REGISTER_CATALOG_ENTRY( BaseType, ClassName, ...) \
-  namespace { objectcatalog::CatalogEntryConstructor<ClassName,BaseType,__VA_ARGS__> catEntry; }
+#define REGISTER_CATALOG_ENTRY( BaseType, DerivedType, ...) \
+  namespace { objectcatalog::CatalogEntryConstructor<BaseType,DerivedType,__VA_ARGS__> catEntry; }
 
 #ifdef __clang__
 #pragma clang diagnostic push

@@ -67,6 +67,12 @@ WrapperCollection::WrapperCollection( WrapperCollection&& source ) :
   m_parent( std::move(source.m_parent) )
 {}
 
+WrapperCollection::CatalogInterface::CatalogType& WrapperCollection::GetCatalog()
+{
+  static WrapperCollection::CatalogInterface::CatalogType catalog;
+  return catalog;
+}
+
 WrapperBase& WrapperCollection::RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return *( rtTypes::ApplyTypeLambda( type,

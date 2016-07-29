@@ -11,6 +11,8 @@
 #include <iostream>
 
 #include "Wrapper.hpp"
+#include "codingUtilities/ObjectCatalog.hpp"
+
 //#include "CodingUtilities/ANSTexception.hpp"
 
 #define USE_DYNAMIC_CASTING 1;
@@ -62,6 +64,11 @@ public:
   WrapperCollection& operator=(WrapperCollection&&) = delete;
 
   ///@}
+
+
+  using CatalogInterface = objectcatalog::CatalogInterface< WrapperCollection, std::string const &, WrapperCollection * const >;
+  static CatalogInterface::CatalogType& GetCatalog();
+
 
   virtual void Registration( dataRepository::WrapperCollection * const )
   {}

@@ -16,8 +16,12 @@ namespace geosx
 class ProblemManager : public dataRepository::WrapperCollection
 {
 public:
-  explicit ProblemManager();
+  explicit ProblemManager( const std::string& name,
+                           WrapperCollection * const parent );
   ~ProblemManager();
+
+  static std::string CatalogName() { return "ProblemManager"; }
+
 
   virtual void Registration( dataRepository::WrapperCollection * const );
 
