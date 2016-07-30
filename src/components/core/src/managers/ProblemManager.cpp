@@ -5,8 +5,10 @@
  *      Author: rrsettgast
  */
 
-#include <getopt.h>
 #include "ProblemManager.hpp"
+
+#include <getopt.h>
+#include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "fileIO/ticpp/HierarchicalDataNode.hpp"
@@ -28,7 +30,7 @@ ProblemManager::~ProblemManager()
 
 void ProblemManager::Registration( dataRepository::WrapperCollection * const )
 {
-  RegisterChildWrapperCollection<WrapperCollection>("domain");
+  RegisterChildWrapperCollection<DomainPartition>("domain");
   RegisterChildWrapperCollection<WrapperCollection>("solvers");
 
 
@@ -295,7 +297,7 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 void ProblemManager::ParseInputFile()
 {
   geosx::dataRepository::WrapperCollection& solvers = GetChildWrapperCollection<geosx::dataRepository::WrapperCollection>("solvers");
-  geosx::dataRepository::WrapperCollection& domain  = GetChildWrapperCollection<geosx::dataRepository::WrapperCollection>("domain");
+  geosx::DomainPartition& domain  = getDomainPartition();
 
   std::string newName("new solver");
   std::string newName2("new solver2");
@@ -321,6 +323,17 @@ void ProblemManager::ParseInputFile()
 
 void ProblemManager::ApplySchedulerEvent()
 {}
+
+
+DomainPartition & ProblemManager::getDomainPartition()
+{
+  return GetChildWrapperCollection<DomainPartition>("domain");
+}
+
+DomainPartition const & ProblemManager::getDomainPartition() const
+{
+  return GetChildWrapperCollection<DomainPartition>("domain");
+}
 
 REGISTER_CATALOG_ENTRY( WrapperCollection, ProblemManager, std::string const &, WrapperCollection * const )
 

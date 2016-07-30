@@ -92,7 +92,21 @@ public:
   template< typename T >
   T& GetChildWrapperCollection( std::string const & name )
   {
-    return *(m_subObjectManagers.at(name));
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T&>( *(m_subObjectManagers.at(name)) );
+#else
+    return static_cast<T&>( *(m_subObjectManagers.at(name)) );
+#endif
+  }
+
+template< typename T >
+T const & GetChildWrapperCollection( std::string const & name ) const
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T const &>( *(m_subObjectManagers.at(name)) );
+#else
+    return static_cast<T const &>( *(m_subObjectManagers.at(name)) );
+#endif
   }
 
   template< typename T >

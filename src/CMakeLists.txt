@@ -37,3 +37,8 @@ add_subdirectory(components)
 ################################s
 install(DIRECTORY ${PROJECT_BINARY_DIR}/bin DESTINATION . OPTIONAL)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
+
+################################
+# Add Thirdparty Builtin Libs
+################################
+add_subdirectory(thirdparty)

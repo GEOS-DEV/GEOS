@@ -13,6 +13,8 @@
 namespace geosx
 {
 
+class DomainPartition;
+
 class ProblemManager : public dataRepository::WrapperCollection
 {
 public:
@@ -30,6 +32,9 @@ public:
   void ParseInputFile();
 
   void ApplySchedulerEvent();
+
+  DomainPartition & getDomainPartition();
+  DomainPartition const & getDomainPartition() const;
 
 };
 
