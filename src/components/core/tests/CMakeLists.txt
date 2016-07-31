@@ -3,6 +3,7 @@
 #
 
 set(gtest_geosx_tests
+   testArrayWrapper.cpp
    testDataTypes.cpp
    testStackTrace.cpp
    testFloatingPointExceptions.cpp

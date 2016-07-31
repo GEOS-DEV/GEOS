@@ -13,6 +13,7 @@ blt_copy_headers_target(NAME        optionparser
 
 set(optionparserTests
     tests/testOptionParser.cpp
+    tests/testparse.cpp
    )
 
 #

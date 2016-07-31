@@ -4,8 +4,9 @@
 #
 set(geosx_headers
   ${geosx_headers}
-  	managers/ProblemManager.hpp
+    managers/CommandLineParser.hpp
   	managers/DomainPartition.hpp
+  	managers/ProblemManager.hpp
     PARENT_SCOPE )
 
 #
@@ -13,6 +14,7 @@ set(geosx_headers
 #
 set(geosx_core_sources
   ${geosx_core_sources}
-    managers/ProblemManager.cpp
+    managers/CommandLineParser.cpp
   	managers/DomainPartition.cpp
+    managers/ProblemManager.cpp
     PARENT_SCOPE )

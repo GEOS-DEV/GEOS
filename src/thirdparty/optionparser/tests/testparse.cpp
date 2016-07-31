@@ -19,6 +19,18 @@
  * @copydetails optionparser.h
  */
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#endif
+
+#include "gtest/gtest.h"
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 
@@ -124,15 +136,15 @@ bool eq(const char* s1, const char* s2)
   return *s1 == *s2;
 }
 
-int main()
+TEST(testparse,testparse)
 {
   {
     Stats stats(empty_usage, -1, empty_args);
     stats.add(empty_usage, 0, empty_args);
     assert(stats.buffer_max == 1);
     assert(stats.options_max == 1);
-    Option buffer[stats.buffer_max];
-    Option options[stats.options_max];
+    Option buffer[1];
+    Option options[1];
     Parser parse(empty_usage, 99, empty_args, options, buffer);
     parse.parse(empty_usage, -1, empty_args, options, buffer);
     assert(parse.optionsCount() == 0);
@@ -170,8 +182,8 @@ int main()
     assert(stats.options_max == 2);
     assert(stats2.buffer_max == 2);
     assert(stats2.options_max == 2);
-    Option buffer[stats.buffer_max];
-    Option options[stats.options_max];
+    Option buffer[2];
+    Option options[2];
     Parser parse;
     parse.parse(gettext_usage, -1, lone_minus, options, buffer);
     assert(parse.optionsCount() == 1);
@@ -200,8 +212,8 @@ int main()
     assert(stats.options_max == 2);
     assert(stats2.buffer_max == 2);
     assert(stats2.options_max == 2);
-    Option buffer[stats.buffer_max];
-    Option options[stats.options_max];
+    Option buffer[2];
+    Option options[2];
     Parser parse;
     parse.parse(optional_usage, -1, lone_minus, options, buffer);
     assert(parse.optionsCount() == 1);
@@ -227,8 +239,8 @@ int main()
     stats.add(minimal_usage, -1, lone_doubleminus);
     assert(stats.buffer_max == 1);
     assert(stats.options_max == 2);
-    Option buffer[stats.buffer_max];
-    Option options[stats.options_max];
+    Option buffer[1];
+    Option options[2];
     Parser parse(minimal_usage, -1, lone_doubleminus, options, buffer);
     assert(parse.optionsCount() == 0);
     assert(parse.nonOptionsCount() == 0);
@@ -247,8 +259,8 @@ int main()
     stats.add(multi_usage, count(multi3), multi3, 4, true);
     assert(stats.buffer_max == 22);
     assert(stats.options_max == 7);
-    Option buffer[stats.buffer_max];
-    Option options[stats.options_max];
+    Option buffer[22];
+    Option options[7];
     assert(options[FOO].last()->type() == UNUSED);
     assert(options[ABBREVIATE].count()==0);
     Parser parse;
@@ -329,7 +341,7 @@ int main()
     Stats stats(multi_usage, count(multi3), multi3, 0, true);
     const int bufmax = 3;
     Option buffer[bufmax];
-    Option options[stats.options_max];
+    Option options[100];
     assert(!options[ABBREVIATE]);
     Parser parse(multi_usage, count(multi3), multi3, options, buffer, 4, true, bufmax);
     assert(!parse.error());
@@ -345,8 +357,8 @@ int main()
   }
   {
     Stats stats(true, multi_usage, -1, reorder);
-    Option buffer[stats.buffer_max];
-    Option options[stats.options_max];
+    Option buffer[100];
+    Option options[100];
     Parser parse(true, multi_usage, -1, reorder, options, buffer);
     assert(!parse.error());
     assert(parse.optionsCount() == 3);
@@ -363,6 +375,5 @@ int main()
   }
 
   fprintf(stdout, "All tests passed.\n");
-  return 0;
 }
 

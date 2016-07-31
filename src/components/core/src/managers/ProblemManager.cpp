@@ -227,18 +227,6 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
     }
   }
 
-#ifdef SRC_INTERNAL
-  if (p_initbamr && argc!=optind)
-  {
-    doBackgroundAMR=geodyn_pure ? -1 : 1;
-    int argcg=argc-(optind-1); // passing wrong exe name (the last option)
-    char** argvg=const_cast<char**>(argv+(optind-1));
-    int ret=p_initbamr( argcg, argvg );
-    if (ret)
-      throw GPException("Errors during BackgroundAMR init");
-  }
-#endif
-
   if (displaySolvers_flag)
   {
 //    DisplaySolvers();
