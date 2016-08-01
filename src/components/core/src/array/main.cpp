@@ -42,16 +42,22 @@ int main( int argc, char* argv[] )
   const int num_k = std::stoi( argv[2] );
   const int num_j = std::stoi( argv[3] );
   const int ITERATIONS = std::stoi( argv[4] );
+  const int seedmod = std::stoi( argv[5] );
 
-
-
+  //***************************************************************************
+  //***** Setup Arrays ********************************************************
+  //***************************************************************************
   double A[num_i][num_k];
   double B[num_k][num_j];
   double C1[num_i][num_j];
-  double C2a[num_i][num_j];
-  double C2b[num_i][num_j];
+  double C2[num_i][num_j];
+  double C3[num_i][num_j];
 
-  srand( seed );
+//  std::vector<double> badvector(100);
+//  std::vector<int64> lengthJunk = {1,2};
+//  ArrayAccessor<double,2> badArray( badvector, lengthJunk );
+
+  srand( seed * seedmod );
 
   for( int i = 0 ; i < num_i ; ++i )
     for( int k = 0 ; k < num_k ; ++k )
@@ -64,16 +70,21 @@ int main( int argc, char* argv[] )
     }
 
   for( int i = 0 ; i < num_i ; ++i )
+  {
     for( int j = 0 ; j < num_j ; ++j )
     {
       C1[i][j] = 0.0;
-      C2a[i][j] = 0.0;
-      C2b[i][j] = 0.0;
+      C2[i][j] = 0.0;
+      C3[i][j] = 0.0;
     }
+  }
 
-  double __restrict * const A1d = &(A[0][0]);
-  double __restrict * const B1d = &(B[0][0]);
-  double __restrict * const C1d = &(C1[0][0]);
+  //***************************************************************************
+  //***** native 1D array *****************************************************
+  //***************************************************************************
+  double const * const __restrict__  A1d = &(A[0][0]);
+  double const * const __restrict__  B1d = &(B[0][0]);
+  double * const __restrict__  C1d = &(C1[0][0]);
 
   uint64_t startTime = GetTimeMs64();
   for( int iter = 0 ; iter < ITERATIONS ; ++iter )
@@ -91,8 +102,11 @@ int main( int argc, char* argv[] )
   }
   uint64_t endTime = GetTimeMs64();
   double runTime1 = ( endTime - startTime ) / 1000.0;
-//  printf( "[Native 1D Array]   Elapsed time: %6.3f seconds\n", ( endTime - startTime ) / 1000.0 );
 
+
+  //***************************************************************************
+  //***** native 2D array *****************************************************
+  //***************************************************************************
 
   startTime = GetTimeMs64();
   for( int iter = 0 ; iter < ITERATIONS ; ++iter )
@@ -103,7 +117,7 @@ int main( int argc, char* argv[] )
       {
         for( int k = 0 ; k < num_k ; ++k )
         {
-          C2a[i][j] += A[i][k] * B[k][j];
+          C2[i][j] += A[i][k] * B[k][j];
         }
       }
     }
@@ -111,15 +125,16 @@ int main( int argc, char* argv[] )
   endTime = GetTimeMs64();
   double runTime2a = ( endTime - startTime ) / 1000.0;
 
-//  printf( "[Native 2D Array]   Elapsed time: %6.3f seconds\n", ( endTime - startTime ) / 1000.0 );
-
+  //***************************************************************************
+  //***** ArrayAccessor 2D array **********************************************
+  //***************************************************************************
 
   int64 lengthsA[] = { num_i , num_k };
   int64 lengthsB[] = { num_k , num_j };
   int64 lengthsC[] = { num_i , num_j };
-  ArrayAccessor<double,2> arrayA( &(A[0][0]), lengthsA );
-  ArrayAccessor<double,2> arrayB( &(B[0][0]), lengthsB );
-  ArrayAccessor<double,2> arrayC( &(C2b[0][0]), lengthsC );
+  ArrayAccessor<double,2> accessorA( &(A[0][0]), lengthsA );
+  ArrayAccessor<double,2> accessorB( &(B[0][0]), lengthsB );
+  ArrayAccessor<double,2> accessorC( &(C3[0][0]), lengthsC );
 
   startTime = GetTimeMs64();
   for( int iter = 0 ; iter < ITERATIONS ; ++iter )
@@ -130,7 +145,7 @@ int main( int argc, char* argv[] )
       {
         for( int k = 0 ; k < num_k ; ++k )
         {
-          arrayC[i][j] += arrayA[i][k] * arrayB[k][j];
+          accessorC[i][j] += accessorA[i][k] * accessorB[k][j];
         }
       }
     }
@@ -138,8 +153,33 @@ int main( int argc, char* argv[] )
   endTime = GetTimeMs64();
   double runTime2b = ( endTime - startTime ) / 1000.0;
 
-//  printf( "[Randy's 2D Array]   Elapsed time: %6.3f seconds\n", ( endTime - startTime ) / 1000.0 );
 
+  //***************************************************************************
+  //***** ArrayAccessor 2D array with subAccessors ****************************
+  //***************************************************************************
+
+  Array<double,2> arrayCopyC( lengthsC );
+  ArrayAccessor<double const,2> accessorBconst( &(B[0][0]), lengthsB );
+
+
+  startTime = GetTimeMs64();
+  for( int iter = 0 ; iter < ITERATIONS ; ++iter )
+  {
+    for( int i = 0 ; i < num_i ; ++i )
+    {
+      ArrayAccessor<double,1> arrayAi = accessorA[i];
+      ArrayAccessor<double,1> arrayCi = arrayCopyC[i];
+      for( int j = 0 ; j < num_j ; ++j )
+      {
+        for( int k = 0 ; k < num_k ; ++k )
+        {
+          arrayCi[j] += arrayAi[k] * accessorBconst[k][j];
+        }
+      }
+    }
+  }
+  endTime = GetTimeMs64();
+  double runTime2c = ( endTime - startTime ) / 1000.0;
 
   double error12a = 0.0;
   double error12b = 0.0;
@@ -150,12 +190,13 @@ int main( int argc, char* argv[] )
   {
     for( int j = 0 ; j < num_j ; ++j )
     {
-      error12a  += pow( C1[i][j] - C2a[i][j] , 2 ) ;
-      error12b  += pow( C1[i][j] - C2b[i][j] , 2 ) ;
-      error2a2b += pow( C2a[i][j] - C2b[i][j] , 2 ) ;
+      error12a  += pow( C1[i][j] - C2[i][j] , 2 ) ;
+      error12b  += pow( C1[i][j] - C3[i][j] , 2 ) ;
+      error2a2b += pow( C2[i][j] - C3[i][j] , 2 ) ;
+      error2a2c += pow( arrayCopyC[i][j] - C3[i][j] , 2 ) ;
     }
   }
-  printf( "1d, 2d_native, 2db: %6.3f %6.3f %6.3f\n", runTime1, runTime2a, runTime2b );
+  printf( "1d, 2d_native, 2db: %6.3f %6.3f %6.3f %6.3f\n", runTime1, runTime2a, runTime2b, runTime2c );
   std::cout<<"error12a = "<<error12a<<std::endl;
   std::cout<<"error12b = "<<error12b<<std::endl;
   std::cout<<"error2a2b = "<<error2a2b<<std::endl;
