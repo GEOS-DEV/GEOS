@@ -11,9 +11,9 @@
 #include <string>
 #include <math.h>
 
-#include "ArrayWrapper.hpp"
+#include "MultidimensionalArray.hpp"
 
-using namespace arraywrapper;
+using namespace multidimensionalArray;
 uint64_t GetTimeMs64()
 {
   struct timeval tv;
@@ -47,7 +47,6 @@ int main( int argc, char* argv[] )
 
   double A[num_i][num_k];
   double B[num_k][num_j];
-  double BT[num_j][num_k];
   double C1[num_i][num_j];
   double C2a[num_i][num_j];
   double C2b[num_i][num_j];
@@ -62,7 +61,6 @@ int main( int argc, char* argv[] )
     for( int j = 0 ; j < num_j ; ++j )
     {
       B[k][j] = rand();
-      BT[j][k] = B[k][j];
     }
 
   for( int i = 0 ; i < num_i ; ++i )
@@ -119,11 +117,9 @@ int main( int argc, char* argv[] )
   int64 lengthsA[] = { num_i , num_k };
   int64 lengthsB[] = { num_k , num_j };
   int64 lengthsC[] = { num_i , num_j };
-  ArrayInterface<double,2> arrayA( &(A[0][0]), lengthsA );
-  ArrayInterface<double,2> arrayB( &(B[0][0]), lengthsB );
-  ArrayInterface<double,2> arrayC( &(C2b[0][0]), lengthsC );
-
-  ArrayInterface<double,1> subArray = arrayA[1];
+  ArrayAccessor<double,2> arrayA( &(A[0][0]), lengthsA );
+  ArrayAccessor<double,2> arrayB( &(B[0][0]), lengthsB );
+  ArrayAccessor<double,2> arrayC( &(C2b[0][0]), lengthsC );
 
   startTime = GetTimeMs64();
   for( int iter = 0 ; iter < ITERATIONS ; ++iter )
@@ -145,33 +141,6 @@ int main( int argc, char* argv[] )
 //  printf( "[Randy's 2D Array]   Elapsed time: %6.3f seconds\n", ( endTime - startTime ) / 1000.0 );
 
 
-
-
-
-
-  marray<double,2> marrayC( lengthsC );
-
-  startTime = GetTimeMs64();
-  for( int iter = 0 ; iter < ITERATIONS ; ++iter )
-  {
-    for( int i = 0 ; i < num_i ; ++i )
-    {
-      for( int j = 0 ; j < num_j ; ++j )
-      {
-        for( int k = 0 ; k < num_k ; ++k )
-        {
-          marrayC[i][j] += arrayA[i][k] * arrayB[k][j];
-        }
-      }
-    }
-  }
-  endTime = GetTimeMs64();
-  double runTime2c = ( endTime - startTime ) / 1000.0;
-
-
-
-
-
   double error12a = 0.0;
   double error12b = 0.0;
   double error2a2b = 0.0;
@@ -184,10 +153,9 @@ int main( int argc, char* argv[] )
       error12a  += pow( C1[i][j] - C2a[i][j] , 2 ) ;
       error12b  += pow( C1[i][j] - C2b[i][j] , 2 ) ;
       error2a2b += pow( C2a[i][j] - C2b[i][j] , 2 ) ;
-      error2a2c += pow( marrayC[i][j] - C2b[i][j] , 2 ) ;
     }
   }
-  printf( "1d, 2d_native, 2db: %6.3f %6.3f %6.3f %6.3f\n", runTime1, runTime2a, runTime2b, runTime2c );
+  printf( "1d, 2d_native, 2db: %6.3f %6.3f %6.3f\n", runTime1, runTime2a, runTime2b );
   std::cout<<"error12a = "<<error12a<<std::endl;
   std::cout<<"error12b = "<<error12b<<std::endl;
   std::cout<<"error2a2b = "<<error2a2b<<std::endl;

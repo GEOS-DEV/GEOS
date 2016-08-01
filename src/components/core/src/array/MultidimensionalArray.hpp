@@ -5,45 +5,54 @@
  *      Author: rrsettgast
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_ARRAY_ARRAYWRAPPER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_ARRAY_ARRAYWRAPPER_HPP_
-
+#ifndef SRC_COMPONENTS_CORE_SRC_ARRAY_MULTIDIMENSIONALARRAY_HPP_
+#define SRC_COMPONENTS_CORE_SRC_ARRAY_MULTIDIMENSIONALARRAY_HPP_
+#include<vector>
+#include<iostream>
+#if 0
 #include "common/DataTypes.hpp"
-
-namespace arraywrapper
+#else
+using  int32     = std::int32_t;
+using uint32     = std::uint32_t;
+using  int64     = std::int64_t;
+using uint64     = std::uint64_t;
+using std_size_t = std::size_t;
+using string     = std::string;
+#endif
+namespace multidimensionalArray
 {
 
 template< typename T, int NDIM >
-class ArrayInterface
+class ArrayAccessor
 {
 public:
 
-  using rtype = ArrayInterface<T,NDIM-1> &;
+  using rtype = ArrayAccessor<T,NDIM-1> &;
 
-  ArrayInterface() = delete;
+  ArrayAccessor() = delete;
 
-  ArrayInterface( ArrayInterface const & source ):
+  ArrayAccessor( ArrayAccessor const & source ):
     m_data(source.m_data),
     m_lengths(source.m_lengths),
     m_stride(source.m_stride),
     m_childInterface(source.m_childInterface)
   {}
 
-  ArrayInterface( ArrayInterface && source ):
+  ArrayAccessor( ArrayAccessor && source ):
   m_data(source.m_data),
   m_lengths(source.m_lengths),
   m_stride(source.m_stride),
   m_childInterface(source.m_childInterface)
   {}
   
-  ArrayInterface & operator=( ArrayInterface const & ) = delete;
-  ArrayInterface & operator=( ArrayInterface && ) = delete;
+  ArrayAccessor & operator=( ArrayAccessor const & ) = delete;
+  ArrayAccessor & operator=( ArrayAccessor && ) = delete;
 
-  ArrayInterface( T * const data, int64 const * const length ):
+  ArrayAccessor( T * const data, int64 const * const length ):
     m_data(data),
     m_lengths(length),
     m_stride(1),
-    m_childInterface(ArrayInterface<T,NDIM-1>( m_data, &(length[1]) ) )
+    m_childInterface(ArrayAccessor<T,NDIM-1>( m_data, &(length[1]) ) )
   {
     for( int a=1 ; a<NDIM ; ++a )
     {
@@ -60,31 +69,31 @@ public:
   T * m_data;
   int64 const * m_lengths;
   int64 m_stride = 1;
-  ArrayInterface<T,NDIM-1> m_childInterface;
+  ArrayAccessor<T,NDIM-1> m_childInterface;
 };
 
 template< typename T >
-class ArrayInterface<T,1>
+class ArrayAccessor<T,1>
 {
 public:
   using rtype = T &;
 
-  ArrayInterface() = delete;
+  ArrayAccessor() = delete;
 
-  ArrayInterface( ArrayInterface const & source ):
+  ArrayAccessor( ArrayAccessor const & source ):
   m_data(source.m_data),
   m_lengths(source.m_lengths)
   {}
 
-  ArrayInterface( ArrayInterface && source ):
+  ArrayAccessor( ArrayAccessor && source ):
   m_data(source.m_data),
   m_lengths(source.m_lengths)
   {}
 
-  ArrayInterface & operator=( ArrayInterface const & ) = delete;
-  ArrayInterface & operator=( ArrayInterface && ) = delete;
+  ArrayAccessor & operator=( ArrayAccessor const & ) = delete;
+  ArrayAccessor & operator=( ArrayAccessor && ) = delete;
 
-  ArrayInterface( T * const data, int64 const * const length ):
+  ArrayAccessor( T * const data, int64 const * const length ):
     m_data(data),
     m_lengths(length)
   {}
@@ -113,20 +122,20 @@ public:
 
 
 template< typename T, int NDIM, typename memBlock = std::vector<T> >
-class marray
+class Array
 {
 public:
 
-  using rtype = ArrayInterface<T,NDIM-1> &;
+  using rtype = ArrayAccessor<T,NDIM-1> &;
 
-  marray() = delete;
+  Array() = delete;
 
 
   template< class U=T>
-  marray( int64 const lengths[NDIM] ):
+  Array( int64 const lengths[NDIM] ):
   m_memory(),
   m_lengths(),
-  m_interface( ArrayInterface<T,NDIM>(nullptr,lengths) )
+  m_interface( ArrayAccessor<T,NDIM>(nullptr,lengths) )
   {
     int64 size = 1;
     for( int a=0 ; a<NDIM ; ++a )
@@ -140,13 +149,13 @@ public:
     m_interface.m_lengths = m_lengths;
   }
 
-  ~marray() {}
+  ~Array() = default;
 
-  marray( marray const & ) = delete;
-  marray( marray && source );
+  Array( Array const & ) = delete;
+  Array( Array && source ) = delete;
 
-  marray& operator=( marray const & rhs );
-  marray& operator=( marray && rhs );
+  Array& operator=( Array const & rhs ) = delete;
+  Array& operator=( Array && rhs ) = delete;
 
   //***** Accessors **********************************************************
 
@@ -159,10 +168,10 @@ public:
 private:
   memBlock m_memory;
   int64 m_lengths[NDIM] = {0};
-  ArrayInterface<T,NDIM> m_interface;
+  ArrayAccessor<T,NDIM> m_interface;
 
 };
 
 } /* namespace arraywrapper */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_ARRAY_ARRAYWRAPPER_HPP_ */
+#endif /* SRC_COMPONENTS_CORE_SRC_ARRAY_MULTIDIMENSIONALARRAY_HPP_ */

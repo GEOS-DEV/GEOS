@@ -4,7 +4,7 @@
 #
 set(geosx_headers
   ${geosx_headers}
-  	array/ArrayWrapper.hpp
+  	array/MultidimensionalArray.hpp
     PARENT_SCOPE )
 
 #
