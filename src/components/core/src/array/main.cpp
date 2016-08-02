@@ -197,9 +197,9 @@ int main( int argc, char* argv[] )
     }
   }
   printf( "1d, 2d_native, 2db: %6.3f %6.3f %6.3f %6.3f\n", runTime1, runTime2a, runTime2b, runTime2c );
-  std::cout<<"error12a = "<<error12a<<std::endl;
-  std::cout<<"error12b = "<<error12b<<std::endl;
-  std::cout<<"error2a2b = "<<error2a2b<<std::endl;
-  std::cout<<"error2a2c = "<<error2a2c<<std::endl;
+  //std::cout<<"error12a = "<<error12a<<std::endl;
+  //std::cout<<"error12b = "<<error12b<<std::endl;
+  //std::cout<<"error2a2b = "<<error2a2b<<std::endl;
+  //std::cout<<"error2a2c = "<<error2a2c<<std::endl;
   return 0;
 }
