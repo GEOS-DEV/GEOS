@@ -10,7 +10,6 @@ set(geosx_headers "" )
 
 set(geosx_core_sources "" )
     
-add_subdirectory(array)
 add_subdirectory(codingUtilities)
 add_subdirectory(common)
 add_subdirectory(dataRepository)
