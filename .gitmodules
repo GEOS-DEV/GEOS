@@ -1,3 +1,3 @@
 [submodule "src/components/cxx-utilities"]
 	path = src/components/cxx-utilities
-	url = https://settgast@lc.llnl.gov/bitbucket/scm/geosx/cxx-utilities.git
+	url = ../cxx-utilities.git
