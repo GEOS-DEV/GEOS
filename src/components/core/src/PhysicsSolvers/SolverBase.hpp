@@ -42,7 +42,7 @@ public:
                          dataRepository::WrapperCollection& domain ) = 0;
 
 
-  using CatalogInterface = objectcatalog::CatalogInterface< SolverBase, std::string const &, WrapperCollection * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, WrapperCollection * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 private:

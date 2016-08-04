@@ -17,7 +17,7 @@ foreach(test ${gtest_geosx_tests})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON geosx_core  
+                        DEPENDS_ON geosx_core  cxx-utilities
                         SYSTEM_DEPENDS_ON gtest slic
                         )
                         

@@ -5,8 +5,6 @@
 set(geosx_headers
   ${geosx_headers}
   	codingUtilities/macros.hpp
-    codingUtilities/stackTrace.hpp
-    codingUtilities/SetSignalHandling.hpp
     codingUtilities/sfinae.hpp
     codingUtilities/StringUtilities.hpp
     codingUtilities/UnitManager.h
@@ -17,8 +15,6 @@ set(geosx_headers
 #
 set(geosx_core_sources
   ${geosx_core_sources}
-    codingUtilities/stackTrace.cpp
-    codingUtilities/SetSignalHandling.cpp
     codingUtilities/StringUtilities.cpp
     codingUtilities/UnitManager.cpp
     PARENT_SCOPE )

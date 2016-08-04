@@ -11,7 +11,7 @@
 #include <iostream>
 
 #include "Wrapper.hpp"
-#include "codingUtilities/ObjectCatalog.hpp"
+#include "ObjectCatalog.hpp"
 
 //#include "CodingUtilities/ANSTexception.hpp"
 
@@ -66,7 +66,7 @@ public:
   ///@}
 
 
-  using CatalogInterface = objectcatalog::CatalogInterface< WrapperCollection, std::string const &, WrapperCollection * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< WrapperCollection, std::string const &, WrapperCollection * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 

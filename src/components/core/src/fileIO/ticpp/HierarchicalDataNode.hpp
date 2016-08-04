@@ -350,7 +350,7 @@ public:
       {
         std::string exceptionStr = std::string("Error: Attempt to set a default value when default values have been disabled.\n") +
                                    std::string("Parameter: ") + key + "\n" +
-                                   std::string("Default Value: ") + stringutilities::toString<T>(def) + "\n";
+                                   std::string("Default Value: ") + geosx::stringutilities::toString<T>(def) + "\n";
         SLIC_ERROR(exceptionStr);
         break;
       }

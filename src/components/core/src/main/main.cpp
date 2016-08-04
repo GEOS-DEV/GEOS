@@ -4,8 +4,8 @@
 
 #include "dataRepository/WrapperCollection.hpp"
 #include "PhysicsSolvers/SolidMechanicsLagrangianFEM.hpp"
-#include "codingUtilities/SetSignalHandling.hpp"
-#include "codingUtilities/stackTrace.hpp"
+#include "SetSignalHandling.hpp"
+#include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
 
 using namespace geosx;
@@ -15,7 +15,7 @@ using namespace asctoolkit;
 int main( int argc, char *argv[] )
 {
   std::cout<<"starting main"<<std::endl;
-  geosx::setSignalHandling(geosx::stacktrace::handler1);
+  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
 
   slic::initialize();

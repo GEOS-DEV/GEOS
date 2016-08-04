@@ -20,8 +20,8 @@
 #pragma clang diagnostic push
 #endif
 
-#include "../src/codingUtilities/SetSignalHandling.hpp"
-#include "../src/codingUtilities/stackTrace.hpp"
+#include "SetSignalHandling.hpp"
+#include "stackTrace.hpp"
 #include <fenv.h>
 #include <xmmintrin.h>
 // API coverage tests
@@ -55,7 +55,7 @@ void func0()
 TEST(testStackTrace,stackTrace)
 {
 
-  geosx::setSignalHandling(geosx::stacktrace::handler1);
+  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
   func0();
 
 //  exit(0);
