@@ -11,7 +11,7 @@
 #include "sidre/sidre.hpp"
 
 #include "common/DataTypes.hpp"
-#include "codingUtilities/sfinae.hpp"
+#include "SFINAE_Macros.hpp"
 #include "WrapperBase.hpp"
 #include <type_traits>
 
@@ -147,7 +147,7 @@ public:
   HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(std::size_t), VA_LIST(std::size_t(1)) )
   CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,resize, void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
-  template<class U=T, bool has = has_pointer_type<U>::value >
+  template<class U=T, bool has = cxx_utilities::has_pointer_type<U>::value >
   struct Get_Type
   {
     typedef U*       type;

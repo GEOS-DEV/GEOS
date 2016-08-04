@@ -4,8 +4,6 @@
 #
 set(geosx_headers
   ${geosx_headers}
-  	codingUtilities/macros.hpp
-    codingUtilities/sfinae.hpp
     codingUtilities/StringUtilities.hpp
     codingUtilities/UnitManager.h
     PARENT_SCOPE )
