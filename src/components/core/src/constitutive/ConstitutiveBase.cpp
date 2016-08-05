@@ -14,13 +14,10 @@ namespace constitutive
 
 ConstitutiveBase::ConstitutiveBase()
 {
-  // TODO Auto-generated constructor stub
-
 }
 
 ConstitutiveBase::~ConstitutiveBase()
 {
-  // TODO Auto-generated destructor stub
 }
 
 }

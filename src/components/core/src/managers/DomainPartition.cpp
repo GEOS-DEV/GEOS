@@ -6,32 +6,26 @@
  */
 
 #include "DomainPartition.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 
 namespace geosx
 {
+using namespace dataRepository;
 
 DomainPartition::DomainPartition(  std::string const & name,
                                    WrapperCollection * const parent ):
     WrapperCollection( name, parent )
 {
-  // TODO Auto-generated constructor stub
-
 }
 
 DomainPartition::~DomainPartition()
 {
-  // TODO Auto-generated destructor stub
 }
 
 
 void DomainPartition::Registration( dataRepository::WrapperCollection * const )
 {
-  RegisterChildWrapperCollection<DomainPartition>("domain");
-  RegisterChildWrapperCollection<WrapperCollection>("solvers");
-
-
-  RegisterWrapper< std::unordered_map<string,string> >("simulationParameterMap");
-
+  this->RegisterChildWrapperCollection<ConstitutiveManager>(keys::ConstitutiveManager);
 }
 
 } /* namespace geosx */

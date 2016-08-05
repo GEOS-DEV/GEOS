@@ -10,6 +10,7 @@
 
 #include <string>
 #include <memory>
+#include "KeyNames.hpp"
 
 namespace asctoolkit
 {

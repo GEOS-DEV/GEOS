@@ -15,7 +15,14 @@
 
 //#include "CodingUtilities/ANSTexception.hpp"
 
+#ifndef USE_DYNAMIC_CASTING
 #define USE_DYNAMIC_CASTING 1;
+#endif
+
+#ifndef NOCHARTOSTRING_KEYLOOKUP
+#define NOCHARTOSTRING_KEYLOOKUP 1
+#endif
+
 /**
  * namespace to encapsulate functions in simulation tools
  */
@@ -79,17 +86,17 @@ public:
   }
 
 
-  template< typename T >
+  template< typename T = WrapperCollection >
   T& RegisterChildWrapperCollection( std::string const & name, std::unique_ptr<T> newObject );
 
-  template< typename T >
+  template< typename T = WrapperCollection >
   T& RegisterChildWrapperCollection( std::string const & name )
   {
     return RegisterChildWrapperCollection<T>( name, std::move(std::make_unique< T >( name, this )) );
   }
 
 
-  template< typename T >
+  template< typename T = WrapperCollection >
   T& GetChildWrapperCollection( std::string const & name )
   {
 #ifdef USE_DYNAMIC_CASTING
@@ -99,7 +106,9 @@ public:
 #endif
   }
 
-template< typename T >
+
+
+template< typename T = WrapperCollection >
 T const & GetChildWrapperCollection( std::string const & name ) const
   {
 #ifdef USE_DYNAMIC_CASTING
@@ -108,6 +117,7 @@ T const & GetChildWrapperCollection( std::string const & name ) const
     return static_cast<T const &>( *(m_subObjectManagers.at(name)) );
 #endif
   }
+
 
   template< typename T >
   Wrapper<T>& RegisterWrapper( std::string const & name, std::size_t * const rkey = nullptr );
@@ -199,16 +209,11 @@ T const & GetChildWrapperCollection( std::string const & name ) const
     return getReference<T>( index );
   }
 
-
-
-
-//  { return static_cast<typename DataObject<T>::rtype>( static_cast<const DataObjectManager *>(this)->GetDataObjectData<T>( name ) ); }
-
   void resize( std::size_t newsize );
 
   inline std::size_t size() const
   {
-    return *(getData<std_size_t>("size"));
+    return *(getData<std_size_t>(keys::size));
   }
 
 
@@ -224,7 +229,36 @@ private:
 
   asctoolkit::sidre::DataGroup* m_sidreGroup;
 
+#if NOCHARTOSTRING_KEYLOOKUP == 1
 
+  template< typename T = WrapperCollection >
+  T const & GetChildWrapperCollection( char const * ) const;
+
+  template< typename T = WrapperCollection >
+  T& GetChildWrapperCollection( char const * name );
+
+
+  template< typename T >
+  typename Wrapper<T>::rtype_const getData( char const * ) const;
+
+  template< typename T >
+  typename Wrapper<T>::rtype getData( char const * );
+
+  template< typename T >
+  T const & getReference( char const * ) const;
+
+  template< typename T >
+  T & getReference( char const * );
+
+
+  template< typename T >
+  Wrapper<T> const & getWrapper( char const * ) const;
+  template< typename T >
+
+  Wrapper<T>& getWrapper( char const * );
+
+
+#endif
 };
 
 

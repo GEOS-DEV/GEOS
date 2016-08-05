@@ -37,13 +37,6 @@ int main( int argc, char *argv[] )
   problemManager.ParseCommandLineInput( argc, argv );
 
 
-#ifdef NDEBUG
-  std::cout<<"NDEBUG is defined"<<std::endl;
-#else
-  std::cout<<"NDEBUG is NOT defined"<<std::endl;
-#endif
-
-
   problemManager.ParseInputFile();
 
 

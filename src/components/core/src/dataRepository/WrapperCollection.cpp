@@ -88,7 +88,7 @@ void WrapperCollection::resize( std::size_t const newsize )
   {
     i->resize(newsize);
   }
-  *(this->getWrapper<std_size_t>("size").data())=newsize;
+  *(this->getWrapper<std_size_t>( keys::size ).data())=newsize;
 }
 
 

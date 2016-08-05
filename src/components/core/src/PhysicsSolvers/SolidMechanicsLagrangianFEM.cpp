@@ -14,8 +14,19 @@
 #include "RAJA/RAJA.hxx"
 #include "common/DataTypes.hpp"
 
+
 namespace geosx
 {
+
+namespace dataRepository
+{
+namespace keys
+{
+std::string const K = "K";
+std::string const Ey = "Ey";
+}
+}
+
 using namespace dataRepository;
 
 SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
@@ -33,25 +44,25 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 void SolidMechanics_LagrangianFEM::Registration( WrapperCollection * const domain )
 {
 
-  WrapperCollection& nodes = domain->RegisterChildWrapperCollection<WrapperCollection >("FEM_Nodes");
-  WrapperCollection& elems = domain->RegisterChildWrapperCollection<WrapperCollection >("FEM_Elements");
+  WrapperCollection& nodes = domain->RegisterChildWrapperCollection<WrapperCollection >(keys::FEM_Nodes);
+  WrapperCollection& elems = domain->RegisterChildWrapperCollection<WrapperCollection >(keys::FEM_Elements);
 
-  nodes.RegisterWrapper<real64_array>("TotalDisplacement");
-  nodes.RegisterWrapper<real64_array>("IncrementalDisplacement");
-  nodes.RegisterWrapper<real64_array>("Velocity");
-  nodes.RegisterWrapper<real64_array>("Acceleration");
+  nodes.RegisterWrapper<real64_array>(keys::TotalDisplacement);
+  nodes.RegisterWrapper<real64_array>(keys::IncrementalDisplacement);
+  nodes.RegisterWrapper<real64_array>(keys::Velocity);
+  nodes.RegisterWrapper<real64_array>(keys::Acceleration);
 
-  elems.RegisterWrapper<real64_array>("Strain");
-  elems.RegisterWrapper("Force",  rtTypes::TypeIDs::real64_array_id );
+  elems.RegisterWrapper<real64_array>(keys::Strain);
+  elems.RegisterWrapper(keys::Force,  rtTypes::TypeIDs::real64_array_id );
 
   // HACK
   nodes.resize(11);
   elems.resize(10);
 
-  Wrapper<real64_array>::rtype    X = nodes.RegisterWrapper<real64_array>("ReferencePosition").data();
-  Wrapper<real64_array>::rtype mass = nodes.RegisterWrapper<real64_array>("Mass").data();
-  real64& Ey = *(elems.RegisterWrapper<real64>("Ey").data());
-  Wrapper<real64_array>::rtype K = elems.RegisterWrapper<real64_array>("K").data();
+  Wrapper<real64_array>::rtype    X = nodes.RegisterWrapper<real64_array>(keys::ReferencePosition).data();
+  Wrapper<real64_array>::rtype mass = nodes.RegisterWrapper<real64_array>(keys::Mass).data();
+  real64& Ey = *(elems.RegisterWrapper<real64>(keys::Ey).data());
+  Wrapper<real64_array>::rtype K = elems.RegisterWrapper<real64_array>(keys::K).data();
 
   Ey = 10e9;
 
@@ -89,22 +100,22 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
                                                      const int cycleNumber,
                                                      WrapperCollection& domain )
 {
-  WrapperCollection& nodes = domain.GetChildWrapperCollection<WrapperCollection>("FEM_Nodes");
-  WrapperCollection& elems = domain.GetChildWrapperCollection<WrapperCollection>("FEM_Elements");
+  WrapperCollection& nodes = domain.GetChildWrapperCollection<WrapperCollection>(keys::FEM_Nodes);
+  WrapperCollection& elems = domain.GetChildWrapperCollection<WrapperCollection>(keys::FEM_Elements);
 
   std::size_t const numNodes = nodes.size();
   std::size_t const numElems = elems.size();
 
-  Wrapper<real64_array>::rtype          X = nodes.getData<real64_array>("ReferencePosition");
-  Wrapper<real64_array>::rtype          u = nodes.getData<real64_array>("TotalDisplacement");
-  Wrapper<real64_array>::rtype       uhat = nodes.getData<real64_array>("IncrementalDisplacement");
-  Wrapper<real64_array>::rtype       vel  = nodes.getData<real64_array>("Velocity");
-  Wrapper<real64_array>::rtype       acc  = nodes.getData<real64_array>("Acceleration");
-  Wrapper<real64_array>::rtype_const mass = nodes.getWrapper<real64_array>("Mass").data();
+  Wrapper<real64_array>::rtype          X = nodes.getData<real64_array>(keys::ReferencePosition);
+  Wrapper<real64_array>::rtype          u = nodes.getData<real64_array>(keys::TotalDisplacement);
+  Wrapper<real64_array>::rtype       uhat = nodes.getData<real64_array>(keys::IncrementalDisplacement);
+  Wrapper<real64_array>::rtype       vel  = nodes.getData<real64_array>(keys::Velocity);
+  Wrapper<real64_array>::rtype       acc  = nodes.getData<real64_array>(keys::Acceleration);
+  Wrapper<real64_array>::rtype_const mass = nodes.getWrapper<real64_array>(keys::Mass).data();
 
-  Wrapper<real64_array>::rtype    Felem = elems.getData<real64_array>("Force");
-  Wrapper<real64_array>::rtype   Strain = elems.getData<real64_array>("Strain");
-  Wrapper<real64_array>::rtype_const  K = elems.getData<real64_array>("K");
+  Wrapper<real64_array>::rtype    Felem = elems.getData<real64_array>(keys::Force);
+  Wrapper<real64_array>::rtype   Strain = elems.getData<real64_array>(keys::Strain);
+  Wrapper<real64_array>::rtype_const  K = elems.getData<real64_array>(keys::K);
 
   Integration::OnePoint( acc, vel, dt/2, numNodes );
   vel[0] = 1.0;

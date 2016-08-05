@@ -12,6 +12,7 @@
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "fileIO/ticpp/HierarchicalDataNode.hpp"
+#include "finiteElement/FiniteElementSpace.hpp"
 
 namespace geosx
 {
@@ -30,17 +31,15 @@ ProblemManager::~ProblemManager()
 
 void ProblemManager::Registration( dataRepository::WrapperCollection * const )
 {
-  RegisterChildWrapperCollection<DomainPartition>("domain");
+  RegisterChildWrapperCollection<DomainPartition>(keys::domain);
   RegisterChildWrapperCollection<WrapperCollection>("solvers");
 
-
   RegisterWrapper< std::unordered_map<string,string> >("simulationParameterMap");
-
 }
 
 void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 {
-  std::unordered_map<string,string>& simulationParameterMap = getReference< std::unordered_map<string,string> >("simulationParameterMap");
+  std::unordered_map<string,string>& simulationParameterMap = getReference< std::unordered_map<string,string> >(keys::simulationParameterMap);
 
   // Default values
   std::string fileRootString = "";
@@ -284,8 +283,11 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 
 void ProblemManager::ParseInputFile()
 {
-  geosx::dataRepository::WrapperCollection& solvers = GetChildWrapperCollection<geosx::dataRepository::WrapperCollection>("solvers");
-  geosx::DomainPartition& domain  = getDomainPartition();
+
+  FiniteElementSpace feSpace( keys::FE_Space , this);
+
+  dataRepository::WrapperCollection& solvers = GetChildWrapperCollection<dataRepository::WrapperCollection>(keys::solvers);
+  DomainPartition& domain  = getDomainPartition();
 
   std::string newName("new solver");
   std::string newName2("new solver2");
@@ -315,12 +317,12 @@ void ProblemManager::ApplySchedulerEvent()
 
 DomainPartition & ProblemManager::getDomainPartition()
 {
-  return GetChildWrapperCollection<DomainPartition>("domain");
+  return GetChildWrapperCollection<DomainPartition>(keys::domain);
 }
 
 DomainPartition const & ProblemManager::getDomainPartition() const
 {
-  return GetChildWrapperCollection<DomainPartition>("domain");
+  return GetChildWrapperCollection<DomainPartition>(keys::domain);
 }
 
 REGISTER_CATALOG_ENTRY( WrapperCollection, ProblemManager, std::string const &, WrapperCollection * const )

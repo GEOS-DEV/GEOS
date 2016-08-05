@@ -9,7 +9,7 @@
 #define CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_
 
 #include "sidre/sidre.hpp"
-
+#include "KeyNames.hpp"
 #include "common/DataTypes.hpp"
 #include "SFINAE_Macros.hpp"
 #include "WrapperBase.hpp"
