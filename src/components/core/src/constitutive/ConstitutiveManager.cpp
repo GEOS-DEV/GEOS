@@ -10,6 +10,12 @@
 namespace geosx
 {
 
+using namespace dataRepository;
+
+namespace constitutive
+{
+
+
 ConstitutiveManager::ConstitutiveManager( std::string const & name,
                                           WrapperCollection * const parent ):
   WrapperCollection(name,parent)
@@ -17,8 +23,18 @@ ConstitutiveManager::ConstitutiveManager( std::string const & name,
 }
 
 ConstitutiveManager::~ConstitutiveManager()
+{}
+
+void ConstitutiveManager::ReadXMLInput()
 {
-  // TODO Auto-generated destructor stub
+//  this->RegisterChildWrapperCollection<ConstitutiveBase>(keys::ConstitutiveBase);
+  std::string newName = "matmodel";
+
+  std::unique_ptr<ConstitutiveBase> temp = ConstitutiveBase::CatalogInterface::Factory("HypoElasticLinear", newName, this );
+  auto& matmodel = this->RegisterChildWrapperCollection( newName, std::move(temp) );
+
+}
+
 }
 
 } /* namespace geosx */

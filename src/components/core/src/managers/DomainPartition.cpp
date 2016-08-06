@@ -25,7 +25,7 @@ DomainPartition::~DomainPartition()
 
 void DomainPartition::Registration( dataRepository::WrapperCollection * const )
 {
-  this->RegisterChildWrapperCollection<ConstitutiveManager>(keys::ConstitutiveManager);
+  this->RegisterChildWrapperCollection<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
 }
 
 } /* namespace geosx */

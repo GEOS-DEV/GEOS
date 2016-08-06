@@ -293,9 +293,9 @@ void ProblemManager::ParseInputFile()
   std::string newName2("new solver2");
 
   std::unique_ptr<SolverBase> solver = SolverBase::CatalogInterface::Factory("SolidMechanics_LagrangianFEM", newName, &domain );
-  auto& solver1 = solvers.RegisterChildWrapperCollection<SolverBase>( newName, std::move(solver) );
+  auto& solver1 = solvers.RegisterChildWrapperCollection( newName, std::move(solver) );
   solver = SolverBase::CatalogInterface::Factory( "NewComponent", newName2, &domain );
-  auto& solver2 = solvers.RegisterChildWrapperCollection<SolverBase>( newName2, std::move(solver) );
+  auto& solver2 = solvers.RegisterChildWrapperCollection( newName2, std::move(solver) );
 
   solver1.Registration( &domain );
   solver2.Registration( &domain );

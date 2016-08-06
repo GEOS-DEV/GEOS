@@ -29,6 +29,8 @@ std::string const size = "size";
 
 std::string const ProblemManager = "ProblemManager";
 std::string const ConstitutiveManager = "ConstitutiveManager";
+std::string const ConstitutiveBase = "ConstitutiveBase";
+
 std::string const domain  = "domain";
 std::string const solvers = "solvers";
 std::string const simulationParameterMap = "simulationParameterMap";
