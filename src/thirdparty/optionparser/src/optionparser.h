@@ -965,7 +965,7 @@ struct Stats
         bool single_minus_longopt = false) :
       buffer_max(1), options_max(1) // 1 more than necessary as sentinel
   {
-    add(gnu, usage, argc, (const char**) argv, min_abbr_len, single_minus_longopt);
+    add(gnu, usage, argc, const_cast<const char**>(argv), min_abbr_len, single_minus_longopt);
   }
 
   //! @brief POSIX Stats(...) (gnu==false).
@@ -981,7 +981,7 @@ struct Stats
         bool single_minus_longopt = false) :
       buffer_max(1), options_max(1) // 1 more than necessary as sentinel
   {
-    add(false, usage, argc, (const char**) argv, min_abbr_len, single_minus_longopt);
+    add(false, usage, argc, const_cast<const char**>(argv), min_abbr_len, single_minus_longopt);
   }
 
   /**
@@ -1000,7 +1000,7 @@ struct Stats
   void add(bool gnu, const Descriptor usage[], int argc, char** argv, int min_abbr_len = 0, //
            bool single_minus_longopt = false)
   {
-    add(gnu, usage, argc, (const char**) argv, min_abbr_len, single_minus_longopt);
+    add(gnu, usage, argc, const_cast<const char**>(argv), min_abbr_len, single_minus_longopt);
   }
 
   //! @brief POSIX add() (gnu==false).
@@ -1014,7 +1014,7 @@ struct Stats
   void add(const Descriptor usage[], int argc, char** argv, int min_abbr_len = 0, //
            bool single_minus_longopt = false)
   {
-    add(false, usage, argc, (const char**) argv, min_abbr_len, single_minus_longopt);
+    add(false, usage, argc, const_cast<const char**>(argv), min_abbr_len, single_minus_longopt);
   }
 private:
   class CountOptionsAction;
@@ -1072,7 +1072,7 @@ public:
          int min_abbr_len = 0, bool single_minus_longopt = false, int bufmax = -1) :
       op_count(0), nonop_count(0), nonop_args(0), err(false)
   {
-    parse(gnu, usage, argc, (const char**) argv, options, buffer, min_abbr_len, single_minus_longopt, bufmax);
+    parse(gnu, usage, argc, const_cast<const char**>(argv), options, buffer, min_abbr_len, single_minus_longopt, bufmax);
   }
 
   //! @brief POSIX Parser(...) (gnu==false).
@@ -1088,7 +1088,7 @@ public:
          bool single_minus_longopt = false, int bufmax = -1) :
       op_count(0), nonop_count(0), nonop_args(0), err(false)
   {
-    parse(false, usage, argc, (const char**) argv, options, buffer, min_abbr_len, single_minus_longopt, bufmax);
+    parse(false, usage, argc, const_cast<const char**>(argv), options, buffer, min_abbr_len, single_minus_longopt, bufmax);
   }
 
   /**
@@ -1154,7 +1154,7 @@ public:
   void parse(bool gnu, const Descriptor usage[], int argc, char** argv, Option options[], Option buffer[],
              int min_abbr_len = 0, bool single_minus_longopt = false, int bufmax = -1)
   {
-    parse(gnu, usage, argc, (const char**) argv, options, buffer, min_abbr_len, single_minus_longopt, bufmax);
+    parse(gnu, usage, argc, const_cast<const char**>(argv), options, buffer, min_abbr_len, single_minus_longopt, bufmax);
   }
 
   //! @brief POSIX parse() (gnu==false).
@@ -1168,7 +1168,7 @@ public:
   void parse(const Descriptor usage[], int argc, char** argv, Option options[], Option buffer[], int min_abbr_len = 0,
              bool single_minus_longopt = false, int bufmax = -1)
   {
-    parse(false, usage, argc, (const char**) argv, options, buffer, min_abbr_len, single_minus_longopt, bufmax);
+    parse(false, usage, argc, const_cast<const char**>(argv), options, buffer, min_abbr_len, single_minus_longopt, bufmax);
   }
 
   /**

@@ -21,6 +21,7 @@ set(ENABLE_FORTRAN OFF CACHE PATH "")
 
 set(ATK_DIR "/usr/gapps/GEOS/asctoolkit/install-cab-chaos_5_x86_64_ib-gcc@4.9.3-debug" CACHE PATH "")
 
+set(RAJA_DIR "/usr/gapps/GEOS/RAJA/install-gcc-4.9.3-release" CACHE PATH "")
 #set(RAJA_DIR "/g/g15/settgast/workspace/Codes/RAJA/install-gcc-4.9.3-release" CACHE PATH "")
 
 # conduit from uberenv

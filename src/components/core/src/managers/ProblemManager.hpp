@@ -33,13 +33,6 @@ public:
 
   void ApplySchedulerEvent();
 
-  std::unordered_map<string,string>& simulationParameterMap()
-  {
-    return getReference< std::unordered_map<string,string> >(keys::simulationParameterMap);
-  }
-
-  std::unordered_map<string,string> m_simulationParameterMap;
-
   DomainPartition & getDomainPartition();
   DomainPartition const & getDomainPartition() const;
 
