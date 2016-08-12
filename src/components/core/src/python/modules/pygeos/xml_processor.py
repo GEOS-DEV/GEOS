@@ -74,15 +74,15 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/core/src/schema/gpa
   unitManager = UnitManager()
   with open(tmp_fname_a, 'r') as ifile, open(tmp_fname_b, 'w') as ofile:
     for line in ifile:
-      # Fill in any paramters (format:  $:Parameter)
+      # Fill in any paramters (format:  $Parameter or $:Parameter)
       if ('$' in line):
-        line = re.sub(r"\$:([a-zA-Z_]*)", parameterHandler, line)
+        line = re.sub(r"\$:?([a-zA-Z_]*)", parameterHandler, line)
 
-      # Parse any units (format: 1.234e10@m**2/s)
+      # Parse any units (format: 9.81@m**2/s or 1.0@:bbl/day)
       if ('@' in line):
-        line = re.sub(r"([0-9]*\.?[0-9]+[eE][-+]?[0-9]+?)\@([-+.*/()a-zA-Z0-9]*)", unitManager.regexHandler, line)
+        line = re.sub(r"([0-9]*\.?[0-9]+[eE][-+]?[0-9]+?)\@:?([-+.*/()a-zA-Z0-9]*)", unitManager.regexHandler, line)
 
-      # Evaluate symbolic math (format: `1+2.34e5*2`)
+      # Evaluate symbolic math (format: `1 + 2.34e5*2 * ...`)
       if ('`' in line):
         line = re.sub(r"`([-+.*/() 0-9eE]*)`", symbolicMathRegexHandler, line)
       
