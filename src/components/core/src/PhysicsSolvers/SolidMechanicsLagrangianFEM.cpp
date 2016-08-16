@@ -71,7 +71,8 @@ void SolidMechanics_LagrangianFEM::Registration( WrapperCollection * const domai
   double L = 1.0;
 
 
-  std::cout<<"sound speed = "<<sqrt(Ey/rho)<<1.0/0.0<<std::endl;
+  std::cout<<"sound speed = "<<sqrt(Ey/rho)<<std::endl;
+//  std::cout<<1.0/0.0<<std::endl;
   for( uint64 a=0 ; a<nodes.size() ; ++a )
   {
     X[a] = a * ( L/nodes.size() );
