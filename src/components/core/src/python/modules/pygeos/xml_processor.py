@@ -39,6 +39,7 @@ def generateRandomName(suffix=''):
 
 def symbolicMathRegexHandler(match):
   k = match.group(1)
+  print 'symbolic math: %s' % k
   if k:
     # Sanitize the input
     sanitized = re.sub(r"[a-zA-Z]", '', k).strip()
@@ -76,11 +77,11 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/core/src/schema/gpa
     for line in ifile:
       # Fill in any paramters (format:  $Parameter or $:Parameter)
       if ('$' in line):
-        line = re.sub(r"\$:?([a-zA-Z_]*)", parameterHandler, line)
+        line = re.sub(r"\$:?([a-zA-Z_]*\$?)", parameterHandler, line)
 
-      # Parse any units (format: 9.81@m**2/s or 1.0@:bbl/day)
-      if ('@' in line):
-        line = re.sub(r"([0-9]*\.?[0-9]+[eE][-+]?[0-9]+?)\@:?([-+.*/()a-zA-Z0-9]*)", unitManager.regexHandler, line)
+      # Parse any units (format: 9.81[m**2/s] or 1.0 [bbl/day])
+      if ('[' in line):
+        line = re.sub(r"([0-9]*\.?[0-9]*?[eE]?[-+]?[0-9]*?)\ *?\[([-+.*/()a-zA-Z0-9]*)\]", unitManager.regexHandler, line)
 
       # Evaluate symbolic math (format: `1 + 2.34e5*2 * ...`)
       if ('`' in line):

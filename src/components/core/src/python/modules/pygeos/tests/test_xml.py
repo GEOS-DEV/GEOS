@@ -11,7 +11,10 @@ targets = glob.glob('*.xml')
 
 # Parse the xml files
 for target in targets:
+  # try:
   target_parsed = pygeos.PreprocessGEOSXML(target)
+  # except:
+  #   print('Error parsing file: %s' % target)
 
 # Move the results to a tmp directory 
 os.system('mkdir -p results')

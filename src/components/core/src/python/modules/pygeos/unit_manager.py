@@ -32,9 +32,10 @@ class UnitManager():
     # Strip out any stray alpha characters and evaluate
     symbolicUnits_sanitized = re.sub(r"[a-zA-Z]", '', symbolicUnits).strip()
     value = float(unitString[0])*eval(symbolicUnits_sanitized, {'__builtins__':None})
-    return value
+    return str(value)
 
   def regexHandler(self, match):
+    print 'Units: %s' % match.group()
     return self.__call__([match.group(1), match.group(2)])
 
   def buildUnits(self):
@@ -53,40 +54,40 @@ class UnitManager():
                 'nano':  {'value': 1e-9, 'alt': 'n'}}
 
     # Base units
-    unit_defs = {'gram':   {'value': 1e-3,               'alt': 'g',   'usePrefix': True},
-                 'meter':  {'value': 1.0,                'alt': 'm',   'usePrefix': True},
-                 'second': {'value': 1.0,                'alt': 's',   'usePrefix': True},
-                 'minute': {'value': 60.0,               'alt': 'min', 'usePrefix': True},
-                 'hour':   {'value': 3600.0,             'alt': 'hr',  'usePrefix': True},
-                 'day':    {'value': 3600.0*24.0,        'alt': 'd',   'usePrefix': True},
-                 'year':   {'value': 3600.0*24.0*365.25, 'alt': 'yr',  'usePrefix': True},
-                 'pascal': {'value': 1.0,                'alt': 'Pa',  'usePrefix': True},
-                 'newton': {'value': 1.0,                'alt': 'N',   'usePrefix': True},
-                 'joule':  {'value': 1.0,                'alt': 'J',   'usePrefix': True},
-                 'watt':   {'value': 1.0,                'alt': 'W',   'usePrefix': True}} 
+    unit_defs = {'gram':   {'value': 1e-3,               'alt': ['g', 'grams'],         'usePrefix': True},
+                 'meter':  {'value': 1.0,                'alt': ['m', 'meters'],        'usePrefix': True},
+                 'second': {'value': 1.0,                'alt': ['s', 'seconds'],       'usePrefix': True},
+                 'minute': {'value': 60.0,               'alt': ['min', 'minutes'],     'usePrefix': True},
+                 'hour':   {'value': 3600.0,             'alt': ['hr', 'hours', 'hrs'], 'usePrefix': True},
+                 'day':    {'value': 3600.0*24.0,        'alt': ['d', 'dy'],            'usePrefix': True},
+                 'year':   {'value': 3600.0*24.0*365.25, 'alt': ['yr', 'years'],        'usePrefix': True},
+                 'pascal': {'value': 1.0,                'alt': ['Pa'],                 'usePrefix': True},
+                 'newton': {'value': 1.0,                'alt': ['N'],                  'usePrefix': True},
+                 'joule':  {'value': 1.0,                'alt': ['J'],                  'usePrefix': True},
+                 'watt':   {'value': 1.0,                'alt': ['W'],                  'usePrefix': True}} 
 
     # Imperial units:   
-    imp_defs = {'pound':      {'value': 0.453592,       'alt': 'lb',  'usePrefix': True},
-                'poundforce': {'value': 0.453592*9.81,  'alt': 'lbf', 'usePrefix': True},
-                'stone':      {'value': 6.35029,        'alt': 'st',  'usePrefix': True},
-                'ton':        {'value': 907.185,        'alt': '',    'usePrefix': True},
-                'inch':       {'value': 1.0/(3.281*12), 'alt': 'in',  'usePrefix': False},
-                'foot':       {'value': 1.0/3.281,      'alt': 'ft',  'usePrefix': True},
-                'yard':       {'value': 3.0/3.281,      'alt': 'yd',  'usePrefix': True},
-                'rod':        {'value': 16.5/3.281,     'alt': 'rd',  'usePrefix': True},
-                'mile':       {'value': 5280.0/3.281,   'alt': 'mi',  'usePrefix': True},
-                'acre':       {'value': 4046.86,        'alt': '',    'usePrefix': True},
-                'gallon':     {'value': 0.00378541,     'alt': 'gal', 'usePrefix': True},
-                'psi':        {'value': 6894.76,        'alt': '',    'usePrefix': True},
-                'psf':        {'value': 1853.184,       'alt': '',    'usePrefix': True},}
+    imp_defs = {'pound':      {'value': 0.453592,       'alt': ['lb', 'pounds', 'lbs'], 'usePrefix': True},
+                'poundforce': {'value': 0.453592*9.81,  'alt': ['lbf'],                 'usePrefix': True},
+                'stone':      {'value': 6.35029,        'alt': ['st'],                  'usePrefix': True},
+                'ton':        {'value': 907.185,        'alt': ['tons'],                'usePrefix': True},
+                'inch':       {'value': 1.0/(3.281*12), 'alt': ['in', 'inches'],        'usePrefix': False},
+                'foot':       {'value': 1.0/3.281,      'alt': ['ft', 'feet'],          'usePrefix': True},
+                'yard':       {'value': 3.0/3.281,      'alt': ['yd', 'yards'],         'usePrefix': True},
+                'rod':        {'value': 16.5/3.281,     'alt': ['rd', 'rods'],          'usePrefix': True},
+                'mile':       {'value': 5280.0/3.281,   'alt': ['mi', 'miles'],         'usePrefix': True},
+                'acre':       {'value': 4046.86,        'alt': ['acres'],               'usePrefix': True},
+                'gallon':     {'value': 0.00378541,     'alt': ['gal', 'gallons'],      'usePrefix': True},
+                'psi':        {'value': 6894.76,        'alt': [],                      'usePrefix': True},
+                'psf':        {'value': 1853.184,       'alt': [],                      'usePrefix': True}}
 
     # Other units: 
-    other_defs = {'dyne':       {'value': 1.0e-5,    'alt': '',    'usePrefix': True},
-                  'bar':        {'value': 1.0e5,     'alt': '',    'usePrefix': True},
-                  'atmosphere': {'value': 101325.0,  'alt': 'atm', 'usePrefix': True},
-                  'poise':      {'value': 0.1,       'alt': 'P',   'usePrefix': True},
-                  'barrel':     {'value': 0.1589873, 'alt': 'bbl', 'usePrefix': True},
-                  'horsepower': {'value': 745.7,     'alt': 'hp',  'usePrefix': True},}
+    other_defs = {'dyne':       {'value': 1.0e-5,    'alt': ['dynes'],              'usePrefix': True},
+                  'bar':        {'value': 1.0e5,     'alt': ['bars'],               'usePrefix': True},
+                  'atmosphere': {'value': 101325.0,  'alt': ['atm', 'atmospheres'], 'usePrefix': True},
+                  'poise':      {'value': 0.1,       'alt': ['P'],                  'usePrefix': True},
+                  'barrel':     {'value': 0.1589873, 'alt': ['bbl', 'barrels'],     'usePrefix': True},
+                  'horsepower': {'value': 745.7,     'alt': ['hp', 'horsepowers'],  'usePrefix': True}}
 
     unit_defs.update(imp_defs)
     unit_defs.update(other_defs)
@@ -96,11 +97,11 @@ class UnitManager():
       if prefixes[p]['alt']:
         prefixes[prefixes[p]['alt']] = {'value': prefixes[p]['value']}
     for u in unit_defs.keys():
-      if unit_defs[u]['alt']:
-        unit_defs[unit_defs[u]['alt']] = {'value': unit_defs[u]['value'], 'alt': '', 'usePrefix': unit_defs[u]['usePrefix']}
+      for alt in unit_defs[u]['alt']:
+        unit_defs[alt] = {'value': unit_defs[u]['value'], 'usePrefix': unit_defs[u]['usePrefix']}
 
     # Combine the results into the final dictionary
-    # As a special case, ignore milli-inches, since this overlaps with minutes
+    # Add entries that have a tailing 's'
     tmp = []
     for u in unit_defs.keys():
       if (unit_defs[u]['usePrefix']):
