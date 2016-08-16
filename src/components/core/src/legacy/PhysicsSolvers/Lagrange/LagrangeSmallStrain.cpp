@@ -81,8 +81,10 @@
 LagrangeSmallStrain::LagrangeSmallStrain(  const std::string& name,
                                                 ProblemManagerT* const pm ):
 LagrangeSolverBase(name,pm),
+m_staticKMatrix(false),
 m_nonContactModulus(0.0),
-m_recordIncrementalDisplacement(false)
+m_recordIncrementalDisplacement(false),
+m_hasReferenceStress(false)
 {}
 
 
@@ -100,6 +102,7 @@ void LagrangeSmallStrain::ReadXML( TICPP::HierarchicalDataNode* const hdn )
   m_recordIncrementalDisplacement = hdn->GetAttributeOrDefault("RecordIncrementalDisplacement",false); 
   m_doApertureUpdate = hdn->GetAttributeOrDefault("UpdateAperture",false); 
   m_hasReferenceStress = hdn->GetAttributeOrDefault("hasReferenceStress",false);
+  m_staticKMatrix =  hdn->GetAttributeOrDefault("staticKMatrix",false);
   // If a model has reference stress defined, this is the stress state in its reference configuration.
   // In the end, the stress in VisIt is the total stress and the displacement is the displacement relative to the reference configuration.
   

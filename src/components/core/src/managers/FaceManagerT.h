@@ -46,9 +46,14 @@
 #ifndef FACEMANAGERT_H_
 #define FACEMANAGERT_H_
 
-#include "ExternalFaceStructs.h"
-#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+#include "ObjectManagers/ExternalFaceStructs.h"
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+#include "dataRepository/WrapperCollection.hpp"
+#include "ArrayT/bufvector.h"
+#include "IO/silo/SiloFile.h"
 
+
+typedef geosx::dataRepository::WrapperCollection ObjectDataStructureBaseT;
 #include <memory>
 //#include "NestedRelation.h"
 
@@ -62,12 +67,17 @@ class EdgeManagerT;
 class ExternalFaceManagerT;
 class CohesiveZoneBase;
 
-class FaceManagerT: public ObjectDataStructureBaseT
+class FaceManagerT: public geosx::dataRepository::WrapperCollection
 {
 public:
 
   FaceManagerT();
   virtual ~FaceManagerT();
+
+  static std::string CatalogName()
+  {
+    return "FaceManagerT";
+  }
 
   void Initialize(  ){}
 

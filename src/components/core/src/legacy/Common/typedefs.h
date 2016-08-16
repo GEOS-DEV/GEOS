@@ -47,10 +47,10 @@
 #define _TYPEDEFS_H_
 
 #include "intrinsic_typedefs.h"
-#include "TensorT/TensorT.h"
 #include "ArrayT/Array1dT.h"
 #include "ArrayT/Array2dT.h"
 #include <set>
+#include "../TensorT.old/TensorT.h"
 
 /// set number of degrees of freedom
 const unsigned int nsdof = 3;

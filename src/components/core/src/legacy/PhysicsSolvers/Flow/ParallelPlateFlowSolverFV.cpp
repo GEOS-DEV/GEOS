@@ -174,8 +174,6 @@ void ParallelPlateFlowSolverFV::RegisterFields( PhysicalDomainT& domain )
 //  domain.m_feFaceManager.AddKeylessDataField<realT>("BoundedAperture",true,true);
   domain.m_feFaceManager.AddKeylessDataField<realT>("massIncrement",true,true);
 
-  domain.m_feFaceManager.AddKeylessDataField<R1Tensor>("faceNormal0",true,true);
-
   domain.m_feFaceManager.AddKeylessDataField<realT>("Area",true,true);
 
   domain.m_feFaceManager.AddKeylessDataField<int>(m_trilinosIndexStr,true,true);
@@ -2924,7 +2922,6 @@ void ParallelPlateFlowSolverFV::CalculateApertureDerivatives( const FaceManagerT
     const OrderedVariableOneToManyRelation& childFaceIndex = faceManager.GetVariableOneToManyMap( "childIndices" );
 
 
-//    const Array1dT<R1Tensor>& faceNormal = faceManager.GetFieldData<R1Tensor>("faceNormal0");
 
     // set aperture derivatives
     for( localIndex r=0 ; r<faceManager.DataLengths() ; ++r )

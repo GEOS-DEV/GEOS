@@ -39,6 +39,8 @@ blt_add_library( NAME
                  )
                  
 target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
+target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR}/legacy )
+target_include_directories( geosx_core PUBLIC /Users/rrsettgast/Codes/geos/gpaclib/include )
 
 blt_add_executable(NAME geosx_corex
                    SOURCES main/main.cpp

@@ -46,7 +46,7 @@
 #ifndef DISCRETELEMENTMANAGERT_H_
 #define DISCRETELEMENTMANAGERT_H_
 
-#include "Common.h"
+#include "Common/Common.h"
 #include "DiscreteElementManagerBaseT.h"
 #include "DataStructures/VectorFields/NodeManagerT.h"
 #include "FaceManagerT.h"

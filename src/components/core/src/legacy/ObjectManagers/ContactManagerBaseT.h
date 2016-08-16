@@ -45,7 +45,7 @@
 #ifndef CONTACTMANAGERBASET_H_
 #define CONTACTMANAGERBASET_H_
 
-#include "Common.h"
+#include "Common/Common.h"
 #include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 
 #include "Constitutive/Interface/InterfaceFactory.h"

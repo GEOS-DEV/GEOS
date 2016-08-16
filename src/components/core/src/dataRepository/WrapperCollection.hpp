@@ -216,6 +216,30 @@ T const & GetChildWrapperCollection( std::string const & name ) const
     return *(getData<std_size_t>(keys::size));
   }
 
+  // compatibility functions
+  inline std::size_t DataLengths() {return size();}
+  template< typename T >
+  int AddKeylessDataField( const std::string& name, const bool restart, const bool plot )
+  {
+    RegisterWrapper<T>(name);
+    return 0;
+  }
+
+  template< typename TYPE >
+  typename Wrapper< array<TYPE> >::rtype GetFieldData( const std::string& fieldName )
+  {
+    return ( this->getData< array<TYPE> >(fieldName) );
+  }
+
+//#include "Common/Common.h"
+//  template< FieldKey FIELDKEY>
+//  typename Wrapper<TYPE>::rtype GetFieldData( )
+//  {
+//    return GetFieldData< array<typename Field<FIELDKEY>::Type> >(Field<FIELDKEY>::Name());
+//  }
+
+
+
 
   asctoolkit::sidre::DataGroup * getSidreGroup()              { return m_sidreGroup; }
   asctoolkit::sidre::DataGroup const * getSidreGroup() const  { return m_sidreGroup; }
