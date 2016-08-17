@@ -19,6 +19,7 @@ add_subdirectory(finiteElement)
 add_subdirectory(math)
 add_subdirectory(managers)
 add_subdirectory(PhysicsSolvers)
+# add_subdirectory(python)
 
 
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_CURRENT_SOURCE_DIR})
@@ -33,12 +34,12 @@ blt_add_library( NAME
                  HEADERS_OUTPUT_SUBDIR
                      geosx_core
                  DEPENDS_ON
-                     cxx-utilities
+                     cxx-utilities pugixml
                  SYSTEM_DEPENDS_ON
                      slic sidre conduit hdf5 raja
                  )
                  
-target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
+target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR} pugixml)
 
 blt_add_executable(NAME geosx_corex
                    SOURCES main/main.cpp

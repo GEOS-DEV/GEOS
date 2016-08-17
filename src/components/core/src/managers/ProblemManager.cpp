@@ -281,9 +281,30 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
   //////////////////////////////////////////////////////////////////////////////
 }
 
+
+void ProblemManager::InitializePythonInterpreter()
+{
+  /*
+  // Initialize python and numpy
+  std::cout << "Initializing python...";
+  Py_Initialize() ;
+  import_array();
+  std::cout << "  done!" << std::endl;
+  */
+
+  // Add a test here to make sure a supported version of python is available
+}
+
+void ProblemManager::ClosePythonInterpreter()
+{
+  // Add any other cleanup here
+  // Py_Finalize();
+}
+
+
 void ProblemManager::ParseInputFile()
 {
-
+  // Hard-wired parse:
   FiniteElementSpace feSpace( keys::FE_Space , this);
 
   dataRepository::WrapperCollection& solvers = GetChildWrapperCollection<dataRepository::WrapperCollection>(keys::solvers);
@@ -308,6 +329,34 @@ void ProblemManager::ParseInputFile()
     time += dt;
     std::cout<<std::endl;
   }
+
+  /*
+  // Preprocess the xml file using python
+  InitializePythonInterpreter();
+  PyObject *pModule = PyImport_ImportModule((char*)"pygeos");
+  if (pModule == NULL)
+  {
+    PyErr_Print();
+    throw GPException("Could not find the pygeos module in PYTHONPATH!");
+  }
+  PyObject *pPreprocessorFunction = PyObject_GetAttrString(pModule, (char*)"PreprocessGEOSXML");
+  PyObject *pPreprocessorInputStr = Py_BuildValue("(s)", (char*)"input.xml");
+  PyObject *pPreprocessorResult = PyObject_CallObject(pPreprocessorFunction, pPreprocessorInputStr);
+  std::string processedInputFile = PyString_AsString(pPreprocessorResult);
+  std::cout << "Preprocessed input file: " << processedInputFile << std::endl;
+
+  // Load preprocessed xml file and check for errors
+  xmlResult = xmlDocument.load_file(processedInputFile);
+  */
+
+  xmlResult = xmlDocument.load_file("test.xml");
+  if (!xmlResult)
+  {
+    std::cout << "XML parsed with errors!" << std::endl;
+    std::cout << "Error description: " << xmlResult.description() << std::endl;
+    std::cout << "Error offset: " << xmlResult.offset << std::endl;
+  }
+  xmlProblemNode = xmlDocument.child("Problem");
 
 }
 
