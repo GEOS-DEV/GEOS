@@ -27,6 +27,9 @@ set(RAJA_DIR "/usr/gapps/GEOS/RAJA/install-gcc-4.9.3-release" CACHE PATH "")
 # conduit from uberenv
 set(CONDUIT_DIR "/usr/gapps/GEOS/asctoolkit/uberenv_libs/spack/opt/spack/chaos_5_x86_64_ib/gcc-4.9.3/conduit-github-2016-05-18-xqbkgfstnxnbt43ptpb6d26iv5pvytyk" CACHE PATH "")
 
+# Python path
+set(PYTHON_DIR "/usr/gapps/GEOS/python/anaconda2" CACHE PATH "")
+
 set(UNCRUSTIFY_EXECUTABLE "/usr/gapps/GEOS/asctoolkit/uberenv_libs/spack/opt/spack/chaos_5_x86_64_ib/gcc-4.9.3/uncrustify-0.61-px2meiscmkbwcnmmom3qnlzdzmf2yx7x/bin/uncrustify" CACHE PATH "")
 
 

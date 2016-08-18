@@ -1,4 +1,5 @@
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_SOURCE_DIR}/components/core/src)
+blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -L${PYTHON_DIR}/lib)
 
 blt_add_component(COMPONENT_NAME core DEFAULT_STATE ON)
 blt_add_component(COMPONENT_NAME cxx-utilities DEFAULT_STATE ON)
@@ -31,7 +32,7 @@ message("componentlistlink = ${componentlistlink}")
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
                    DEPENDS_ON ${componentlistlink}
-                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja )
+                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja python_interp)
 
 #blt_add_executable(NAME geosx
 #                   SOURCES core/src/main/main.cpp

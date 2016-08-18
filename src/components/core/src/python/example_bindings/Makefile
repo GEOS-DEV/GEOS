@@ -1,4 +1,4 @@
-ANACONDA = /g/g17/sherman/anaconda2
+ANACONDA = /usr/gapps/GEOS/python/anaconda2
 CC = g++
 CFLAGS = -Wall -Wextra -g
 LFLAGS = 

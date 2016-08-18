@@ -1,19 +1,13 @@
-set(anaconda
-     /g/g17/sherman/anaconda2)
+set(ENV{LD_LIBRARY_PATH}, ENV{LD_LIBRARY_PATH}:${PYTHON_DIR}/lib/ )
 
-set(python_interp_headers
-    ${anaconda}/include/python2.7/Python.h
-    ${anaconda}/lib/python2.7/site-packages/numpy/core/include/numpy/arrayobject.h )
+set(PYTHON_INTERP_INCLUDE_DIRS
+    ${PYTHON_DIR}/include/python2.7/
+    ${PYTHON_DIR}/lib/python2.7/site-packages/numpy/core/include/
+    )
 
-
-message("Linking the python interpreter")
-blt_add_library( NAME             python_interp
-                 HEADERS          ${python_interp_headers}
-                 HEADERS_OUTPUT_SUBDIR python_interp
-                 DEPENDS_ON        
-                 SYSTEM_DEPENDS_ON
-                 )
-
-set_target_properties(python_interp PROPERTIES LINKER_LANGUAGE C)
-# LINK_FLAGS "-lpython2.7"
-# INCLUDES         ${anaconda}/lib/libpython2.7.so
+blt_register_library( NAME python_interp
+                      INCLUDES    ${PYTHON_INTERP_INCLUDE_DIRS}
+                      HEADERS     ${PYTHON_INTERP_INCLUDE_DIRS}
+                      HEADERS_OUTPUT_SUBDIR python_interp
+                      LIBRARIES python2.7 
+                      )

@@ -39,7 +39,6 @@ def generateRandomName(suffix=''):
 
 def symbolicMathRegexHandler(match):
   k = match.group(1)
-  print 'symbolic math: %s' % k
   if k:
     # Sanitize the input
     sanitized = re.sub(r"[a-zA-Z]", '', k).strip()
@@ -83,18 +82,27 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/core/src/schema/gpa
       if ('[' in line):
         line = re.sub(r"([0-9]*\.?[0-9]*?[eE]?[-+]?[0-9]*?)\ *?\[([-+.*/()a-zA-Z0-9]*)\]", unitManager.regexHandler, line)
 
-      # Evaluate symbolic math (format: `1 + 2.34e5*2 * ...`)
-      if ('`' in line):
-        line = re.sub(r"`([-+.*/() 0-9eE]*)`", symbolicMathRegexHandler, line)
+      # Evaluate symbolic math (format: {1 + 2.34e5*2 * ...})
+      if ('{' in line):
+        line = re.sub(r"\{([-+.*/() 0-9eE]*)\}", symbolicMathRegexHandler, line)
       
       ofile.write(line)
 
-  # Validate against the schema
-  print('Validating the xml against the schema..')
-  err = os.system('xmllint --noout --schema %s %s' % (schema, tmp_fname_b))
+  # Check for un-matched special characters
+  with open(tmp_fname_b, 'r') as ofile:
+    for line in ofile:
+      if any([sc in line for sc in ['$', '[', ']', '{', '}']]):
+        raise Exception('Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!' % (line))
+
+  # Validate against the schema 
+  print('Validating the xml against the schema...')
+  # Calling os.system seems to trigger the stack trace on return...
+  # err = os.system('xmllint --noout --schema %s %s' % (schema, tmp_fname_b))
+  err = 0
   if err:
     print('\nWarning: XML includes invalid elements!\n')
 
+  os.remove(tmp_fname_a)
   print('Preprocessed xml file stored in %s' % (tmp_fname_b))
   return tmp_fname_b
 

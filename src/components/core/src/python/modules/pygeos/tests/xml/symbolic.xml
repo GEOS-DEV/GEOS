@@ -83,12 +83,12 @@
 
   <!-- The joints are oriented at a strike/dip of 0/50 and 180/50.  To generate the appropriate mesh, use dx=1.1918dy.  Note: X=up, Z=N, Y=E -->
   <Mesh elementType="C3D6" 
-        xcoords="`$:initDepth - 2.0*$:coreSize` `$:initDepth - 1.5*$:coreSize` `$:initDepth - $:coreSize*$:dxdy` `$:initDepth + $:coreSize*$:dxdy` `$:initDepth + 1.5*$:coreSize` `$:initDepth + 2.0*$:coreSize`"
-        ycoords="`-2.0*$:coreSize` `-1.5*$:coreSize` `-$:coreSize` `$:coreSize` `1.5*$:coreSize` `2.0*$:coreSize`" 
-        zcoords="`-2.0*$:coreSize` `-1.5*$:coreSize` `-$:coreSize` `$:coreSize` `1.5*$:coreSize` `2.0*$:coreSize`"
-        nx="$:baseRes `$:baseRes*2` `$:baseRes*20` `$:baseRes*2` $:baseRes " 
-        ny="$:baseRes `$:baseRes*2` `$:baseRes*20` `$:baseRes*2` $:baseRes" 
-        nz="$:baseRes `$:baseRes*2` `$:baseRes*20` `$:baseRes*2` $:baseRes" 
+        xcoords="{$:initDepth - 2.0*$:coreSize} {$:initDepth - 1.5*$:coreSize} {$:initDepth - $:coreSize*$:dxdy} {$:initDepth + $:coreSize*$:dxdy} {$:initDepth + 1.5*$:coreSize} {$:initDepth + 2.0*$:coreSize}"
+        ycoords="{-2.0*$:coreSize} {-1.5*$:coreSize} {-$:coreSize} {$:coreSize} {1.5*$:coreSize} {2.0*$:coreSize}" 
+        zcoords="{-2.0*$:coreSize} {-1.5*$:coreSize} {-$:coreSize} {$:coreSize} {1.5*$:coreSize} {2.0*$:coreSize}"
+        nx="$:baseRes {$:baseRes*2} {$:baseRes*20} {$:baseRes*2} $:baseRes " 
+        ny="$:baseRes {$:baseRes*2} {$:baseRes*20} {$:baseRes*2} $:baseRes" 
+        nz="$:baseRes {$:baseRes*2} {$:baseRes*20} {$:baseRes*2} $:baseRes" 
         regionNames="Region" 
         trianglePattern="0" />
 
@@ -175,7 +175,7 @@
     <JointSet name="JS1"
               toRegions="Region"
               type="random"
-              jointDensity="`$:microseismicDensity * $:percentRandom`"
+              jointDensity="{$:microseismicDensity * $:percentRandom}"
               mu="$:friction"
               mu_stdev="0.05"
               cohesion="$:cohesion"
@@ -189,7 +189,7 @@
     <JointSet name="JS2"
               toRegions="Region"
               type="random"
-              jointDensity="`$:microseismicDensity * $:percentSetA`"
+              jointDensity="{$:microseismicDensity * $:percentSetA}"
               mu="$:friction"
               mu_stdev="0.05"
               cohesion="$:cohesion"
@@ -207,7 +207,7 @@
     <JointSet name="JS3"
               toRegions="Region"
               type="random"
-              jointDensity="`$:microseismicDensity * $:percentSetB`"
+              jointDensity="{$:microseismicDensity * $:percentSetB}"
               mu="$:friction"
               mu_stdev="0.05"
               cohesion="$:cohesion"
@@ -228,13 +228,13 @@
     <!-- <SpatialPartition xpar="4" ypar="2" zpar="2"/> -->
   </Partition>
 
-  <!-- <Output parallel_silo="32" plot_interval="5.0" plotfile_root="plot" restart_interval="1e6" slave_directory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="1" maxWallTime="`60*60*15.925`" fieldsToPlot="Pressure Aperture Mass massRate FaceArea ghostRank flowFaceType isExternal birthTime DFN_Index sigma_x sigma_y sigma_z sigma_xy sigma_xz sigma_yz Microseismic_Magnitude Microseismic_Mxx Microseismic_Myy Microseismic_Mzz Microseismic_Mxy Microseismic_Mxz Microseismic_Myz"/> -->
+  <!-- <Output parallel_silo="32" plot_interval="5.0" plotfile_root="plot" restart_interval="1e6" slave_directory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="1" maxWallTime="{60*60*15.925}" fieldsToPlot="Pressure Aperture Mass massRate FaceArea ghostRank flowFaceType isExternal birthTime DFN_Index sigma_x sigma_y sigma_z sigma_xy sigma_xz sigma_yz Microseismic_Magnitude Microseismic_Mxx Microseismic_Myy Microseismic_Mzz Microseismic_Mxy Microseismic_Mxz Microseismic_Myz"/> -->
 
-  <Output parallel_silo="32" plot_interval="20.0" plotfile_root="plot" restart_interval="1e6" slave_directory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="1" maxWallTime="`60*60*15.925`" fieldsToPlot="Pressure Aperture Mass massRate FaceArea ghostRank flowFaceType isExternal birthTime DFN_Index sigma_x sigma_y sigma_z sigma_xy sigma_xz sigma_yz Microseismic_Magnitude Microseismic_Mxx Microseismic_Myy Microseismic_Mzz Microseismic_Mxy Microseismic_Mxz Microseismic_Myz"/>
+  <Output parallel_silo="32" plot_interval="20.0" plotfile_root="plot" restart_interval="1e6" slave_directory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="1" maxWallTime="{60*60*15.925}" fieldsToPlot="Pressure Aperture Mass massRate FaceArea ghostRank flowFaceType isExternal birthTime DFN_Index sigma_x sigma_y sigma_z sigma_xy sigma_xz sigma_yz Microseismic_Magnitude Microseismic_Mxx Microseismic_Myy Microseismic_Mzz Microseismic_Mxy Microseismic_Mxz Microseismic_Myz"/>
   
   <Nodesets>
-    <Nodeset name="perf" type="0" xmin="`$:initDepth - 0.21*$:coreSize*$:dxdy/$:baseRes` -0.1 `-0.21*$:coreSize/$:baseRes`" xmax="`$:initDepth + 0.21*$:coreSize*$:dxdy/$:baseRes` 0.1 `0.21*$:coreSize/$:baseRes`"/>
-    <Nodeset name="source" type="0" xmin="`$:initDepth - 0.11*$:coreSize*$:dxdy/$:baseRes` -0.1 `-0.11*$:coreSize/$:baseRes`" xmax="`$:initDepth + 0.11*$:coreSize*$:dxdy/$:baseRes` 0.1 `0.11*$:coreSize/$:baseRes`"/>
+    <Nodeset name="perf" type="0" xmin="{$:initDepth - 0.21*$:coreSize*$:dxdy/$:baseRes} -0.1 {-0.21*$:coreSize/$:baseRes}" xmax="{$:initDepth + 0.21*$:coreSize*$:dxdy/$:baseRes} 0.1 {0.21*$:coreSize/$:baseRes}"/>
+    <Nodeset name="source" type="0" xmin="{$:initDepth - 0.11*$:coreSize*$:dxdy/$:baseRes} -0.1 {-0.11*$:coreSize/$:baseRes}" xmax="{$:initDepth + 0.11*$:coreSize*$:dxdy/$:baseRes} 0.1 {0.11*$:coreSize/$:baseRes}"/>
     <Nodeset name="all" type="0" xmin="-1e6 -1e6 -1e6" xmax="1e6 1e6 1e6"/>
 
     <Nodeset name="frac00001" type="0" xmin="  0.34042E+04 -0.50000E+01 -0.19017E+03" xmax="  0.36684E+04  0.50000E+01 -0.43550E+02" strikeAngle=" -0.50000E+02" /> 

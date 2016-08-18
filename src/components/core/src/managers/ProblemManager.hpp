@@ -8,10 +8,12 @@
 #ifndef COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
 #define COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
 
+// Note: the python header must be included first to avoid conflicting definitions of _posix_c_source
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <Python.h>
+#include <numpy/arrayobject.h>
 #include "dataRepository/WrapperCollection.hpp"
 #include <pugixml.hpp>
-// #include <Python.h>
-// #include <numpy/arrayobject.h>
 
 namespace geosx
 {

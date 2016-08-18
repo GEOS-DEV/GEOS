@@ -13,6 +13,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "fileIO/ticpp/HierarchicalDataNode.hpp"
 #include "finiteElement/FiniteElementSpace.hpp"
+#include <stdexcept>
 
 namespace geosx
 {
@@ -284,13 +285,11 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 
 void ProblemManager::InitializePythonInterpreter()
 {
-  /*
   // Initialize python and numpy
   std::cout << "Initializing python...";
   Py_Initialize() ;
   import_array();
   std::cout << "  done!" << std::endl;
-  */
 
   // Add a test here to make sure a supported version of python is available
 }
@@ -298,7 +297,7 @@ void ProblemManager::InitializePythonInterpreter()
 void ProblemManager::ClosePythonInterpreter()
 {
   // Add any other cleanup here
-  // Py_Finalize();
+  Py_Finalize();
 }
 
 
@@ -330,14 +329,14 @@ void ProblemManager::ParseInputFile()
     std::cout<<std::endl;
   }
 
-  /*
+
   // Preprocess the xml file using python
   InitializePythonInterpreter();
   PyObject *pModule = PyImport_ImportModule((char*)"pygeos");
   if (pModule == NULL)
   {
     PyErr_Print();
-    throw GPException("Could not find the pygeos module in PYTHONPATH!");
+    throw std::invalid_argument("Could not find the pygeos module in PYTHONPATH!");
   }
   PyObject *pPreprocessorFunction = PyObject_GetAttrString(pModule, (char*)"PreprocessGEOSXML");
   PyObject *pPreprocessorInputStr = Py_BuildValue("(s)", (char*)"input.xml");
@@ -345,11 +344,10 @@ void ProblemManager::ParseInputFile()
   std::string processedInputFile = PyString_AsString(pPreprocessorResult);
   std::cout << "Preprocessed input file: " << processedInputFile << std::endl;
 
-  // Load preprocessed xml file and check for errors
-  xmlResult = xmlDocument.load_file(processedInputFile);
-  */
+  // Validate against the schema
 
-  xmlResult = xmlDocument.load_file("test.xml");
+  // Load preprocessed xml file and check for errors
+  xmlResult = xmlDocument.load_file(processedInputFile.c_str());
   if (!xmlResult)
   {
     std::cout << "XML parsed with errors!" << std::endl;
@@ -357,7 +355,6 @@ void ProblemManager::ParseInputFile()
     std::cout << "Error offset: " << xmlResult.offset << std::endl;
   }
   xmlProblemNode = xmlDocument.child("Problem");
-
 }
 
 void ProblemManager::ApplySchedulerEvent()
