@@ -1,4 +1,4 @@
-from xml.etree import ElementTree
+from lxml import etree as ElementTree
 import re
 import sys
 import os
@@ -12,7 +12,8 @@ def MergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
     raise Exception('Reached maximum recursive includes...  Is there an include loop?')
 
   # Load target xml
-  includeTree = ElementTree.parse(fname)
+  parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
+  includeTree = ElementTree.parse(fname, parser)
   includeRoot = includeTree.getroot()
 
   # Recursively add the includes:
@@ -51,8 +52,9 @@ def symbolicMathRegexHandler(match):
 def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/core/src/schema/gpac.xsd'):
   print('\nReading input xml parameters and parsing symbolic math...')
 
-  # Load the xml files and merge includes.
-  tree = ElementTree.parse(inputFile)
+  # Load the xml files and merge includes
+  parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
+  tree = ElementTree.parse(inputFile, parser=parser)
   root = tree.getroot()
   includeCount = 0
   for includeNode in root.findall('Included'):
@@ -65,7 +67,7 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/core/src/schema/gpa
     for p in parameters.findall('Parameter'):
       Pmap[p.get('name')] = p.get('value')
   tmp_fname_a = generateRandomName(suffix='int.xml')
-  tree.write(tmp_fname_a)
+  tree.write(tmp_fname_a, pretty_print=True)
   parameterHandler = DictRegexHandler()
   parameterHandler.target = Pmap
 
@@ -96,12 +98,17 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/core/src/schema/gpa
 
   # Validate against the schema 
   print('Validating the xml against the schema...')
-  # Calling os.system seems to trigger the stack trace on return...
-  # err = os.system('xmllint --noout --schema %s %s' % (schema, tmp_fname_b))
-  err = 0
-  if err:
-    print('\nWarning: XML includes invalid elements!\n')
-
+  try:
+    ofile = ElementTree.parse(tmp_fname_b) 
+    sfile = ElementTree.XMLSchema(ElementTree.parse(schema))
+    sfile.assertValid(ofile)
+  except ElementTree.DocumentInvalid as err:
+    print('\nWarning: input XML contains potentially invalid input parameters:')
+    print('-'*20+'\n')
+    print sfile.error_log
+    print('\n'+'-'*20)
+    print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
+  
   os.remove(tmp_fname_a)
   print('Preprocessed xml file stored in %s' % (tmp_fname_b))
   return tmp_fname_b
