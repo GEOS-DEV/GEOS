@@ -48,7 +48,7 @@
 #ifndef SPATIALSORTER_H_
 #define SPATIALSORTER_H_
 
-#include "../TensorT.old/R1TensorT.h"
+#include "math/TensorT/R1TensorT.h"
 #include "Common/Common.h"
 #include "Common/intrinsic_typedefs.h"
 #include "Common/typedefs.h"

@@ -5,7 +5,7 @@
  *      Author: settgast
  */
 
-#include "Wrapper.hpp"
+#include "WrapperView.hpp"
 
 namespace geosx
 {

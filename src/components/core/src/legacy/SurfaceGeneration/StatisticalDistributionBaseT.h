@@ -13,7 +13,7 @@
 #include "ArrayT/ArrayT.h"
 #include "Utilities/Utilities.h"
 #include <cmath>
-#include "../TensorT.old/R1TensorT.h"
+#include "math/TensorT/R1TensorT.h"
 
 class StatisticalDistributionBaseT
 {

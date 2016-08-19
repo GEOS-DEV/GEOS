@@ -50,7 +50,7 @@
 #include "ArrayT/Array1dT.h"
 #include "ArrayT/Array2dT.h"
 #include <set>
-#include "../TensorT.old/TensorT.h"
+#include "math/TensorT/TensorT.h"
 
 /// set number of degrees of freedom
 const unsigned int nsdof = 3;

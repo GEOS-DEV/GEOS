@@ -46,14 +46,14 @@
 #ifndef FACEMANAGERT_H_
 #define FACEMANAGERT_H_
 
+#include "../dataRepository/SynchronizedGroup.hpp"
 #include "ObjectManagers/ExternalFaceStructs.h"
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
-#include "dataRepository/WrapperCollection.hpp"
 #include "ArrayT/bufvector.h"
 #include "IO/silo/SiloFile.h"
 
 
-typedef geosx::dataRepository::WrapperCollection ObjectDataStructureBaseT;
+typedef geosx::dataRepository::SynchronizedGroup ObjectDataStructureBaseT;
 #include <memory>
 //#include "NestedRelation.h"
 
@@ -67,7 +67,7 @@ class EdgeManagerT;
 class ExternalFaceManagerT;
 class CohesiveZoneBase;
 
-class FaceManagerT: public geosx::dataRepository::WrapperCollection
+class FaceManagerT: public geosx::dataRepository::SynchronizedGroup
 {
 public:
 

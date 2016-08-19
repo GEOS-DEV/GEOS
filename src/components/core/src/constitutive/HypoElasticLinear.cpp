@@ -25,12 +25,12 @@ HypoElasticLinear::~HypoElasticLinear()
 }
 
 
-void HypoElasticLinear::Update( dataRepository::WrapperCollection * const parameters,
-                                dataRepository::WrapperCollection * const stateVariables )
+void HypoElasticLinear::Update( dataRepository::SynchronizedGroup * const parameters,
+                                dataRepository::SynchronizedGroup * const stateVariables )
 {
 
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, HypoElasticLinear, std::string const &, WrapperCollection * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, HypoElasticLinear, std::string const &, SynchronizedGroup * const )
 }
 } /* namespace geosx */

@@ -44,7 +44,7 @@
 
 #include "math/TensorT/TensorT.h"
 #include "codingUtilities/StringUtilities.hpp"
-#include "codingUtilities/UnitManager.h"
+//#include "codingUtilities/UnitManager.h"
 
 #include <stdarg.h>
 
@@ -73,33 +73,7 @@ bool ieq(std::string strA,std::string strB){
   toLower(strA); toLower(strB); return strA == strB;
 }
 
-// override the template for string->real64
-// Allows for unit conversion
-template<>
-real64 fromString<real64>(std::string theVar)
-{
-  Trim(theVar);
-  UnitManager& um = UnitManager::Instance();
-  //std::cout  << theVar << " " << um.Convert(theVar) <<std::endl;
-  return um.Convert(theVar);
-}
 
-template<>
-R2SymTensor fromString<R2SymTensor>(std::string theVar)
-{
-  Trim(theVar);
-  UnitManager& um = UnitManager::Instance();
-  R2SymTensor var;
-  //std::cout  << theVar << " " << um.Convert(theVar) <<std::endl;
-
-  string_array svalues = Tokenize(theVar,",");
-
-  for( int i=0 ; i<R2SymTensor::Length() ; ++i )
-  {
-    var.Data()[i] = um.Convert(svalues[i]);
-  }
-  return var;
-}
 
 /**
  * String tokenizing function

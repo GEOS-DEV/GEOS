@@ -5,7 +5,8 @@
  *      Author: rrsettgast
  */
 
-#include "WrapperCollection.hpp"
+#include "SynchronizedGroup.hpp"
+
 #include "dataRepository/SidreWrapper.hpp"
 
 namespace geosx
@@ -13,8 +14,8 @@ namespace geosx
 namespace dataRepository
 {
 
-WrapperCollection::WrapperCollection( std::string const & name,
-                                      WrapperCollection * const parent ) :
+SynchronizedGroup::SynchronizedGroup( std::string const & name,
+                                      SynchronizedGroup * const parent ) :
   m_keyLookup(),
   m_wrappers(),
   m_parent(parent),
@@ -47,7 +48,7 @@ WrapperCollection::WrapperCollection( std::string const & name,
 
 }
 
-WrapperCollection::~WrapperCollection()
+SynchronizedGroup::~SynchronizedGroup()
 {
   // TODO Auto-generated destructor stub
 }
@@ -61,28 +62,28 @@ WrapperCollection::~WrapperCollection()
 //    m_parent( source.m_parent )
 //{}
 
-WrapperCollection::WrapperCollection( WrapperCollection&& source ) :
+SynchronizedGroup::SynchronizedGroup( SynchronizedGroup&& source ) :
   m_keyLookup( std::move(source.m_keyLookup) ),
   m_wrappers( std::move(source.m_wrappers) ),
   m_parent( std::move(source.m_parent) )
 {}
 
-WrapperCollection::CatalogInterface::CatalogType& WrapperCollection::GetCatalog()
+SynchronizedGroup::CatalogInterface::CatalogType& SynchronizedGroup::GetCatalog()
 {
-  static WrapperCollection::CatalogInterface::CatalogType catalog;
+  static SynchronizedGroup::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
-WrapperBase& WrapperCollection::RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type )
+WrapperViewBase& SynchronizedGroup::RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return *( rtTypes::ApplyTypeLambda( type,
-                                      [this, &name]( auto a ) -> WrapperBase*
+                                      [this, &name]( auto a ) -> WrapperViewBase*
       {
         return &( this->RegisterWrapper<decltype(a)>(name) );
       } ) );
 }
 
-void WrapperCollection::resize( std::size_t const newsize )
+void SynchronizedGroup::resize( std::size_t const newsize )
 {
   for( auto&& i : this->m_wrappers )
   {

@@ -11,28 +11,26 @@
 #include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-#include "fileIO/ticpp/HierarchicalDataNode.hpp"
 #include "finiteElement/FiniteElementSpace.hpp"
 
 namespace geosx
 {
 
-using namespace TICPP;
 using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
-                                WrapperCollection * const parent ) :
-  WrapperCollection( name, parent )
+                                SynchronizedGroup * const parent ) :
+  SynchronizedGroup( name, parent )
 {
 }
 
 ProblemManager::~ProblemManager()
 {}
 
-void ProblemManager::Registration( dataRepository::WrapperCollection * const )
+void ProblemManager::Registration( dataRepository::SynchronizedGroup * const )
 {
-  RegisterChildWrapperCollection<DomainPartition>(keys::domain);
-  RegisterChildWrapperCollection<WrapperCollection>("solvers");
+  RegisterGroup<DomainPartition>(keys::domain);
+  RegisterGroup<SynchronizedGroup>("solvers");
 
   RegisterWrapper< std::unordered_map<string,string> >("simulationParameterMap");
 }
@@ -253,21 +251,21 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 //  }
 
   // this option concerns flags for the default values of variables
-  switch(defaultVariableReportLevel)
-  {
-  case 0:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::silent);
-    break;
-  case 1:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::recordDefaults);
-    break;
-  case 2:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::reportDefaults);
-    break;
-  case 3:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::disableDefaults);
-    break;
-  }
+//  switch(defaultVariableReportLevel)
+//  {
+//  case 0:
+//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::silent);
+//    break;
+//  case 1:
+//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::recordDefaults);
+//    break;
+//  case 2:
+//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::reportDefaults);
+//    break;
+//  case 3:
+//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::disableDefaults);
+//    break;
+//  }
 
   // this option sets the flag to report the current value of parameters
 //  if(reportParameter_flag)
@@ -286,16 +284,16 @@ void ProblemManager::ParseInputFile()
 
   FiniteElementSpace feSpace( keys::FE_Space , this);
 
-  dataRepository::WrapperCollection& solvers = GetChildWrapperCollection<dataRepository::WrapperCollection>(keys::solvers);
+  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
   DomainPartition& domain  = getDomainPartition();
 
   std::string newName("new solver");
   std::string newName2("new solver2");
 
   std::unique_ptr<SolverBase> solver = SolverBase::CatalogInterface::Factory("SolidMechanics_LagrangianFEM", newName, &domain );
-  auto& solver1 = solvers.RegisterChildWrapperCollection( newName, std::move(solver) );
+  auto& solver1 = solvers.RegisterGroup( newName, std::move(solver) );
   solver = SolverBase::CatalogInterface::Factory( "NewComponent", newName2, &domain );
-  auto& solver2 = solvers.RegisterChildWrapperCollection( newName2, std::move(solver) );
+  auto& solver2 = solvers.RegisterGroup( newName2, std::move(solver) );
 
   solver1.Registration( &domain );
   solver2.Registration( &domain );
@@ -317,15 +315,15 @@ void ProblemManager::ApplySchedulerEvent()
 
 DomainPartition & ProblemManager::getDomainPartition()
 {
-  return GetChildWrapperCollection<DomainPartition>(keys::domain);
+  return GetGroup<DomainPartition>(keys::domain);
 }
 
 DomainPartition const & ProblemManager::getDomainPartition() const
 {
-  return GetChildWrapperCollection<DomainPartition>(keys::domain);
+  return GetGroup<DomainPartition>(keys::domain);
 }
 
-REGISTER_CATALOG_ENTRY( WrapperCollection, ProblemManager, std::string const &, WrapperCollection * const )
+REGISTER_CATALOG_ENTRY( SynchronizedGroup, ProblemManager, std::string const &, SynchronizedGroup * const )
 
 } /* namespace geosx */
 

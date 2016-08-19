@@ -917,9 +917,12 @@ void NonPenetratingBoundaryCondition::UpdateNearestNeighborMaps(PhysicalDomainT&
       for( lSet::const_iterator ndA=setA.begin() ; ndA!=setA.end() ; ++ndA ) {
         realT minSqrdDist = std::numeric_limits<realT>::max();
         localIndex nbr = 0;
-        R1Tensor posA =  u[*ndA] + X[*ndA];
+        R1Tensor posA =  u[*ndA] ;
+        posA += X[*ndA];
         for( lSet::const_iterator ndB=setB.begin(); ndB!=setB.end() ; ++ndB ) {
-          R1Tensor l =  u[*ndB] + X[*ndB] - posA;
+          R1Tensor l =  u[*ndB];
+          l += X[*ndB];
+          l -= posA;
 
           realT ll = Dot(l,l);
           if(ll < minSqrdDist){
@@ -933,7 +936,10 @@ void NonPenetratingBoundaryCondition::UpdateNearestNeighborMaps(PhysicalDomainT&
 
           if(isMember(nbr,m_nearestNodeNeighborMap) ){
             localIndex oldNdA = m_nearestNodeNeighborMap[nbr];
-            R1Tensor lb =  u[nbr] + X[nbr] - u[oldNdA]-X[oldNdA];
+            R1Tensor lb =  u[nbr] ;
+            lb += X[nbr];
+            lb -= u[oldNdA];
+            lb -= X[oldNdA];
             if(minSqrdDist < Dot(lb,lb) ){
               m_nearestNodeNeighborMap[nbr] = *ndA;
             }
@@ -972,7 +978,8 @@ void NonPenetratingBoundaryCondition::UpdateNearestNeighborMaps(PhysicalDomainT&
         localIndex nbr = 0;
         R1Tensor posA =  faceCenter(*fcA);
         for( lSet::const_iterator fcB=setB.begin(); fcB!=setB.end() ; ++fcB ) {
-          R1Tensor l =  faceCenter(*fcB) - posA;
+          R1Tensor l =  faceCenter(*fcB);
+          l -= posA;
 
           realT ll = Dot(l,l);
           if(ll < minSqrdDist){

@@ -10,7 +10,7 @@
 #include <vector>
 #include <math.h>
 
-#include "../dataRepository/WrapperCollection.hpp"
+#include "dataRepository/SynchronizedGroup.hpp"
 #include "RAJA/RAJA.hxx"
 #include "common/DataTypes.hpp"
 
@@ -30,7 +30,7 @@ std::string const Ey = "Ey";
 using namespace dataRepository;
 
 SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
-                                                            WrapperCollection * const parent ) :
+                                                            SynchronizedGroup * const parent ) :
   SolverBase( name, parent )
 {}
 
@@ -41,11 +41,11 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
   // TODO Auto-generated destructor stub
 }
 
-void SolidMechanics_LagrangianFEM::Registration( WrapperCollection * const domain )
+void SolidMechanics_LagrangianFEM::Registration( SynchronizedGroup * const domain )
 {
 
-  WrapperCollection& nodes = domain->RegisterChildWrapperCollection<WrapperCollection >(keys::FEM_Nodes);
-  WrapperCollection& elems = domain->RegisterChildWrapperCollection<WrapperCollection >(keys::FEM_Elements);
+  SynchronizedGroup& nodes = domain->RegisterGroup<SynchronizedGroup >(keys::FEM_Nodes);
+  SynchronizedGroup& elems = domain->RegisterGroup<SynchronizedGroup >(keys::FEM_Elements);
 
   nodes.RegisterWrapper<real64_array>(keys::TotalDisplacement);
   nodes.RegisterWrapper<real64_array>(keys::IncrementalDisplacement);
@@ -59,10 +59,10 @@ void SolidMechanics_LagrangianFEM::Registration( WrapperCollection * const domai
   nodes.resize(11);
   elems.resize(10);
 
-  Wrapper<real64_array>::rtype    X = nodes.RegisterWrapper<real64_array>(keys::ReferencePosition).data();
-  Wrapper<real64_array>::rtype mass = nodes.RegisterWrapper<real64_array>(keys::Mass).data();
+  WrapperView<real64_array>::rtype    X = nodes.RegisterWrapper<real64_array>(keys::ReferencePosition).data();
+  WrapperView<real64_array>::rtype mass = nodes.RegisterWrapper<real64_array>(keys::Mass).data();
   real64& Ey = *(elems.RegisterWrapper<real64>(keys::Ey).data());
-  Wrapper<real64_array>::rtype K = elems.RegisterWrapper<real64_array>(keys::K).data();
+  WrapperView<real64_array>::rtype K = elems.RegisterWrapper<real64_array>(keys::K).data();
 
   Ey = 10e9;
 
@@ -91,7 +91,7 @@ void SolidMechanics_LagrangianFEM::Registration( WrapperCollection * const domai
 void SolidMechanics_LagrangianFEM::TimeStep( real64 const& time_n,
                                              real64 const& dt,
                                              const int cycleNumber,
-                                             WrapperCollection& domain )
+                                             SynchronizedGroup& domain )
 {
   TimeStepExplicit( time_n, dt, cycleNumber, domain );
 }
@@ -99,24 +99,24 @@ void SolidMechanics_LagrangianFEM::TimeStep( real64 const& time_n,
 void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
                                                      real64 const& dt,
                                                      const int cycleNumber,
-                                                     WrapperCollection& domain )
+                                                     SynchronizedGroup& domain )
 {
-  WrapperCollection& nodes = domain.GetChildWrapperCollection<WrapperCollection>(keys::FEM_Nodes);
-  WrapperCollection& elems = domain.GetChildWrapperCollection<WrapperCollection>(keys::FEM_Elements);
+  SynchronizedGroup& nodes = domain.GetGroup<SynchronizedGroup>(keys::FEM_Nodes);
+  SynchronizedGroup& elems = domain.GetGroup<SynchronizedGroup>(keys::FEM_Elements);
 
   std::size_t const numNodes = nodes.size();
   std::size_t const numElems = elems.size();
 
-  Wrapper<real64_array>::rtype          X = nodes.getData<real64_array>(keys::ReferencePosition);
-  Wrapper<real64_array>::rtype          u = nodes.getData<real64_array>(keys::TotalDisplacement);
-  Wrapper<real64_array>::rtype       uhat = nodes.getData<real64_array>(keys::IncrementalDisplacement);
-  Wrapper<real64_array>::rtype       vel  = nodes.getData<real64_array>(keys::Velocity);
-  Wrapper<real64_array>::rtype       acc  = nodes.getData<real64_array>(keys::Acceleration);
-  Wrapper<real64_array>::rtype_const mass = nodes.getWrapper<real64_array>(keys::Mass).data();
+  WrapperView<real64_array>::rtype          X = nodes.getData<real64_array>(keys::ReferencePosition);
+  WrapperView<real64_array>::rtype          u = nodes.getData<real64_array>(keys::TotalDisplacement);
+  WrapperView<real64_array>::rtype       uhat = nodes.getData<real64_array>(keys::IncrementalDisplacement);
+  WrapperView<real64_array>::rtype       vel  = nodes.getData<real64_array>(keys::Velocity);
+  WrapperView<real64_array>::rtype       acc  = nodes.getData<real64_array>(keys::Acceleration);
+  WrapperView<real64_array>::rtype_const mass = nodes.getWrapper<real64_array>(keys::Mass).data();
 
-  Wrapper<real64_array>::rtype    Felem = elems.getData<real64_array>(keys::Force);
-  Wrapper<real64_array>::rtype   Strain = elems.getData<real64_array>(keys::Strain);
-  Wrapper<real64_array>::rtype_const  K = elems.getData<real64_array>(keys::K);
+  WrapperView<real64_array>::rtype    Felem = elems.getData<real64_array>(keys::Force);
+  WrapperView<real64_array>::rtype   Strain = elems.getData<real64_array>(keys::Strain);
+  WrapperView<real64_array>::rtype_const  K = elems.getData<real64_array>(keys::K);
 
   Integration::OnePoint( acc, vel, dt/2, numNodes );
   vel[0] = 1.0;
@@ -153,6 +153,6 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, WrapperCollection * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, SynchronizedGroup * const )
 } /* namespace ANST */
 

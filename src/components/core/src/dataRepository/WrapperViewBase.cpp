@@ -5,17 +5,18 @@
  *      Author: rrsettgast
  */
 
-#include "WrapperBase.hpp"
+#include "WrapperViewBase.hpp"
+
 #include "slic/slic.hpp"
-#include "WrapperCollection.hpp"
+#include "SynchronizedGroup.hpp"
 
 namespace geosx
 {
 namespace dataRepository
 {
 
-WrapperBase::WrapperBase( std::string const & name,
-                          WrapperCollection * const parent ) :
+WrapperViewBase::WrapperViewBase( std::string const & name,
+                          SynchronizedGroup * const parent ) :
   m_name(name),
   m_parent(parent),
   m_sizedFromParent(0),
@@ -34,11 +35,11 @@ WrapperBase::WrapperBase( std::string const & name,
 }
 
 
-WrapperBase::~WrapperBase()
+WrapperViewBase::~WrapperViewBase()
 {}
 
 
-WrapperBase::WrapperBase( WrapperBase&& source ) :
+WrapperViewBase::WrapperViewBase( WrapperViewBase&& source ) :
   m_name( std::move(source.m_name) ),
   m_parent( source.m_parent),
   m_sizedFromParent( source.m_sizedFromParent),

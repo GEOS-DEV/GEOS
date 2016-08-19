@@ -14,8 +14,8 @@ namespace constitutive
 {
 
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
-                                    WrapperCollection * const parent ):
-  WrapperCollection(name,parent)
+                                    SynchronizedGroup * const parent ):
+  SynchronizedGroup(name,parent)
 {
 }
 
@@ -24,7 +24,7 @@ ConstitutiveBase::~ConstitutiveBase()
 }
 
 
-void ConstitutiveBase::Registration( dataRepository::WrapperCollection * const )
+void ConstitutiveBase::Registration( dataRepository::SynchronizedGroup * const )
 {
 
 }
