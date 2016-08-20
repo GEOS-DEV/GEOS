@@ -49,7 +49,7 @@ def symbolicMathRegexHandler(match):
     return
 
 
-def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/core/src/schema/gpac.xsd'):
+def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/components/core/src/schema/gpac_new.xsd'):
   print('\nReading input xml parameters and parsing symbolic math...')
 
   # Load the xml files and merge includes
@@ -108,7 +108,7 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/core/src/schema/gpa
     print sfile.error_log
     print('\n'+'-'*20)
     print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
-  
+
   os.remove(tmp_fname_a)
   print('Preprocessed xml file stored in %s' % (tmp_fname_b))
   return tmp_fname_b

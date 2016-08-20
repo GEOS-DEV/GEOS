@@ -18,6 +18,21 @@
 namespace geosx
 {
 
+namespace dataRepository
+{
+  namespace keys
+  {
+    std::string const commandLine = "commandLine";
+    std::string const inputFileName = "inputFileName";
+    std::string const restartFileName = "restartFileName";
+    std::string const beginFromRestart = "beginFromRestart";
+    std::string const xPartitionsOverride = "xPartitionsOverride";
+    std::string const yPartitionsOverride = "yPartitionsOverride";
+    std::string const zPartitionsOverride = "zPartitionsOverride";
+    std::string const overridePartitionNumbers = "overridePartitionNumbers";
+  }
+}
+
 using namespace TICPP;
 using namespace dataRepository;
 
@@ -35,32 +50,28 @@ void ProblemManager::Registration( dataRepository::WrapperCollection * const )
   RegisterChildWrapperCollection<DomainPartition>(keys::domain);
   RegisterChildWrapperCollection<WrapperCollection>("solvers");
 
-  RegisterWrapper< std::unordered_map<string,string> >("simulationParameterMap");
+  WrapperCollection& commandLine = RegisterChildWrapperCollection<WrapperCollection >(keys::commandLine);
+  commandLine.RegisterWrapper<std::string>(keys::inputFileName);
+  // commandLine.RegisterWrapper<std::string>(keys::restartFileName);
+  commandLine.RegisterWrapper<bool>(keys::beginFromRestart);
+  commandLine.RegisterWrapper<int32>(keys::xPartitionsOverride);
+  commandLine.RegisterWrapper<int32>(keys::yPartitionsOverride);
+  commandLine.RegisterWrapper<int32>(keys::zPartitionsOverride);
+  commandLine.RegisterWrapper<bool>(keys::overridePartitionNumbers);  
 }
 
 void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 {
-  std::unordered_map<string,string>& simulationParameterMap = getReference< std::unordered_map<string,string> >(keys::simulationParameterMap);
+  dataRepository::WrapperCollection& commandLine = GetChildWrapperCollection<dataRepository::WrapperCollection>(keys::commandLine);
+  
+  // Wrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
+  // Wrapper<std::string>::rtype  restartFileName = commandLine.getData<std::string>(keys::restartFileName);
+  Wrapper<bool>::rtype         beginFromRestart = commandLine.getData<bool>(keys::beginFromRestart);
+  Wrapper<int32>::rtype        xPartitionsOverride = commandLine.getData<int32>(keys::xPartitionsOverride);
+  Wrapper<int32>::rtype        yPartitionsOverride = commandLine.getData<int32>(keys::yPartitionsOverride);
+  Wrapper<int32>::rtype        zPartitionsOverride = commandLine.getData<int32>(keys::zPartitionsOverride);
+  Wrapper<bool>::rtype         overridePartitionNumbers = commandLine.getData<bool>(keys::overridePartitionNumbers);
 
-  // Default values
-  std::string fileRootString = "";
-//  std::string meshFileString, demeshFileString, edemeshFileString, inputFileString, fpmeshFileString;
-  int displaySolvers_flag = 0;
-  int displayFields_flag = 0;
-  int displayUnits_flag = 0;
-  int displayHistory_flag = 0;
-  int reportParameter_flag = 0;
-
-  int defaultVariableReportLevel = 0;
-
-  bool setPartitions_flag = false;
-  unsigned int xPartitions = 1;
-  unsigned int yPartitions = 1;
-  unsigned int zPartitions = 1;
-
-  bool m_doWriteXML = false;
-
-  string_array commandLineIncludedFileList;
 
   // Get command line input
   while (true)
@@ -69,24 +80,14 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
     {
       { "help", no_argument, 0, 'h' },
       { "version", no_argument, 0, 'v' },
-      { "solvers", no_argument, &displaySolvers_flag, 1 },
-      { "fields", no_argument, &displayFields_flag, 1 },
-      { "units", no_argument, &displayUnits_flag, 1 },
-      { "history", no_argument, &displayHistory_flag, 1 },
-      { "record_defaults", no_argument, &defaultVariableReportLevel, 1 },
-      { "report_defaults", no_argument, &defaultVariableReportLevel, 2 },
-      { "disable_defaults", no_argument, &defaultVariableReportLevel, 3 },
-      { "report_parameters",no_argument,&reportParameter_flag,1},
       { "xpar", required_argument, 0, 0 },
       { "ypar", required_argument, 0, 0 },
       { "zpar", required_argument, 0, 0 },
       { "include", required_argument, 0, 0 },
-      { "write_XML", required_argument, 0, 0 },
       { 0, 0, 0, 0 } };
     /* getopt_long stores the option index here. */
     int option_index = 0;
-
-    int c = getopt_long_only(argc, argv, "ahvf:p:m:d:i:e:r:", long_options, &option_index);
+    int c = getopt_long_only(argc, argv, "ahvi:r:", long_options, &option_index);
 
     /* Detect the end of the options. */
     if (c == -1)
@@ -103,110 +104,38 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
       /* long options without a short arg */
       if( stringutilities::streq( std::string("xpar"), long_options[option_index].name ) )
       {
-        xPartitions = std::stoi(optarg);
-        setPartitions_flag = true;
+        *(xPartitionsOverride) = std::stoi(optarg);
+        *(overridePartitionNumbers) = true;
       }
       else if( stringutilities::streq( std::string("ypar"), long_options[option_index].name ) )
       {
-        yPartitions = std::stoi(optarg);
-        setPartitions_flag = true;
+        *(yPartitionsOverride) = std::stoi(optarg);
+        *(overridePartitionNumbers) = true;
       }
       else if( stringutilities::streq( std::string("zpar"), long_options[option_index].name ) )
       {
-        zPartitions = std::stoi(optarg);
-        setPartitions_flag = true;
+        *(zPartitionsOverride) = std::stoi(optarg);
+        *(overridePartitionNumbers) = true;
       }
-      else if( stringutilities::streq( std::string("include"), long_options[option_index].name ) )
-      {
-        commandLineIncludedFileList.push_back(optarg);
-      }
-      else if( stringutilities::streq( std::string("write_XML"), long_options[option_index].name ) )
-      {
-        m_doWriteXML = true;
-        RegisterWrapper<string>("xmlOutputFileName").reference() = optarg;
-      }
-
     }
     break;
     case 'a':   // Leave Empty: Included for totalview - does nothing
       break;
 
 
-
-      //  if (!fileRootString.empty())
-      //    m_FileManager.SetRoot(fileRootString.c_str());
-      //  if (!inputFileString.empty())
-      //    m_FileManager.SetInputFilename(inputFileString.c_str());
-      //  if (!meshFileString.empty())
-      //    m_FileManager.SetGeometryFilename(meshFileString.c_str());
-      //  if (!demeshFileString.empty())
-      //    m_FileManager.SetDiscreteElementGeometryFilename(demeshFileString.c_str());
-      //  if (!edemeshFileString.empty())
-      //    m_FileManager.SetEllipsoidalDiscreteElementGeometryFilename(edemeshFileString.c_str());
-      //#ifdef SRC_EXTERNAL
-      //  if (!fpmeshFileString.empty())
-      //    m_FileManager.SetFaultPatchElementGeometryFilename(fpmeshFileString.c_str());
-      //#endif
-
-    case 'f':   // Record file root
-    {
-      RegisterWrapper<string>("fileRootString").reference() = optarg;
-    }
-    break;
-
     case 'i':   // Record input file
     {
-      RegisterWrapper<string>("inputFileString").reference() = optarg;
-    }
-    break;
-
-    case 'm':   // Record mesh file
-    {
-      RegisterWrapper<string>("meshFileString").reference() = optarg;
-    }
-    break;
-    case 'd':   // Record discrete element mesh file
-    {
-      RegisterWrapper<string>("demeshFileString").reference() = optarg;
-    }
-    break;
-    case 'e':   // Record ellipsoidal discrete element mesh file
-    {
-      RegisterWrapper<string>("edemeshFileString").reference() = optarg;
-    }
-    break;
-
-    case 's':   // Record seismicity fault patch mesh file
-    {
-      RegisterWrapper<string>("fpmeshFileString").reference() = optarg;
+      // inputFileName = optarg;
     }
     break;
 
     case 'r':   // From restart
     {
-//      m_beginFromRestart = true;
-      RegisterWrapper<int32>("beginFromRestart").reference() = true;
-//      m_beginFromRestartFileName = optarg;
-      RegisterWrapper<string>("beginFromRestartFileName").reference() = optarg;
-
+      *(beginFromRestart) = true;
+      // restartFileName = optarg;
     }
     break;
-
-    case 'p':   // Record model parameter key=value
-    {
-      std::string keyValStr = optarg;
-      string_array keyVal = stringutilities::Tokenize(keyValStr, "=");
-      if (keyVal.size() == 2)
-      {
-        simulationParameterMap[keyVal[0]] = keyVal[1];
-      }
-      else
-      {
-        SLIC_ERROR("Error reading command line input: Parameter " + keyValStr);
-      }
-    }
-    break;
-
+    
     case 'h':   // help
 //      DisplayUsage();   // print help
       exit(0);
@@ -227,59 +156,6 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
     }
   }
 
-  if (displaySolvers_flag)
-  {
-//    DisplaySolvers();
-    exit(0);
-  }
-
-
-  if (displayUnits_flag)
-  {
-//    DisplayUnits();
-    exit(0);
-  }
-
-
-  if (displayHistory_flag)
-  {
-//    DisplayVersionHistory(m_rank);
-    exit(0);
-  }
-
-//  if (displayFields_flag)
-//  {
-//    m_displayFields = true; // nb we want to initialize solvers, BC's initial conditions etc before reporting fields.
-//    m_displaySplash = false;
-//  }
-
-  // this option concerns flags for the default values of variables
-  switch(defaultVariableReportLevel)
-  {
-  case 0:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::silent);
-    break;
-  case 1:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::recordDefaults);
-    break;
-  case 2:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::reportDefaults);
-    break;
-  case 3:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::disableDefaults);
-    break;
-  }
-
-  // this option sets the flag to report the current value of parameters
-//  if(reportParameter_flag)
-//  {
-//    m_echoParameters = true;
-//  }
-
-//  if(setPartitions_flag)
-//    m_partition.setPartitions(xPartitions,yPartitions,zPartitions );
-//
-  //////////////////////////////////////////////////////////////////////////////
 }
 
 
@@ -303,6 +179,10 @@ void ProblemManager::ClosePythonInterpreter()
 
 void ProblemManager::ParseInputFile()
 {
+  dataRepository::WrapperCollection& commandLine = GetChildWrapperCollection<dataRepository::WrapperCollection>(keys::commandLine);
+  
+  // Wrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
+
   // Hard-wired parse:
   FiniteElementSpace feSpace( keys::FE_Space , this);
 
@@ -332,19 +212,17 @@ void ProblemManager::ParseInputFile()
 
   // Preprocess the xml file using python
   InitializePythonInterpreter();
-  PyObject *pModule = PyImport_ImportModule((char*)"pygeos");
+  PyObject *pModule = PyImport_ImportModule("pygeos");
   if (pModule == NULL)
   {
     PyErr_Print();
     throw std::invalid_argument("Could not find the pygeos module in PYTHONPATH!");
   }
-  PyObject *pPreprocessorFunction = PyObject_GetAttrString(pModule, (char*)"PreprocessGEOSXML");
-  PyObject *pPreprocessorInputStr = Py_BuildValue("(s)", (char*)"input.xml");
+  PyObject *pPreprocessorFunction = PyObject_GetAttrString(pModule, "PreprocessGEOSXML");
+  PyObject *pPreprocessorInputStr = Py_BuildValue("(s)", "input.xml");
   PyObject *pPreprocessorResult = PyObject_CallObject(pPreprocessorFunction, pPreprocessorInputStr);
   std::string processedInputFile = PyString_AsString(pPreprocessorResult);
-  std::cout << "Preprocessed input file: " << processedInputFile << std::endl;
 
-  // Validate against the schema
 
   // Load preprocessed xml file and check for errors
   xmlResult = xmlDocument.load_file(processedInputFile.c_str());

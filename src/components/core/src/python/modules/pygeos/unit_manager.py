@@ -35,7 +35,6 @@ class UnitManager():
     return str(value)
 
   def regexHandler(self, match):
-    print 'Units: %s' % match.group()
     return self.__call__([match.group(1), match.group(2)])
 
   def buildUnits(self):
