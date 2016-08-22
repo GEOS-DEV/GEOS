@@ -17,7 +17,6 @@
 namespace geosx
 {
 
-<<<<<<< HEAD
 namespace dataRepository
 {
   namespace keys
@@ -33,9 +32,6 @@ namespace dataRepository
   }
 }
 
-using namespace TICPP;
-=======
->>>>>>> feature/settgast/addLegacyCode
 using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
@@ -51,31 +47,27 @@ void ProblemManager::Registration( dataRepository::SynchronizedGroup * const )
   RegisterGroup<DomainPartition>(keys::domain);
   RegisterGroup<SynchronizedGroup>("solvers");
 
-<<<<<<< HEAD
-  WrapperCollection& commandLine = RegisterChildWrapperCollection<WrapperCollection >(keys::commandLine);
-  commandLine.RegisterWrapper<std::string>(keys::inputFileName);
-  // commandLine.RegisterWrapper<std::string>(keys::restartFileName);
-  commandLine.RegisterWrapper<bool>(keys::beginFromRestart);
-  commandLine.RegisterWrapper<int32>(keys::xPartitionsOverride);
-  commandLine.RegisterWrapper<int32>(keys::yPartitionsOverride);
-  commandLine.RegisterWrapper<int32>(keys::zPartitionsOverride);
-  commandLine.RegisterWrapper<bool>(keys::overridePartitionNumbers);  
-=======
-  RegisterViewWrapper< std::unordered_map<string,string> >("simulationParameterMap");
->>>>>>> feature/settgast/addLegacyCode
+  SynchronizedGroup& commandLine = RegisterGroup<SynchronizedGroup >(keys::commandLine);
+  commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
+  // commandLine.RegisterViewWrapper<std::string>(keys::restartFileName);
+  commandLine.RegisterViewWrapper<bool>(keys::beginFromRestart);
+  commandLine.RegisterViewWrapper<int32>(keys::xPartitionsOverride);
+  commandLine.RegisterViewWrapper<int32>(keys::yPartitionsOverride);
+  commandLine.RegisterViewWrapper<int32>(keys::zPartitionsOverride);
+  commandLine.RegisterViewWrapper<bool>(keys::overridePartitionNumbers);
 }
 
 void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 {
-  dataRepository::WrapperCollection& commandLine = GetChildWrapperCollection<dataRepository::WrapperCollection>(keys::commandLine);
+  dataRepository::SynchronizedGroup& commandLine = GetGroup<SynchronizedGroup>(keys::commandLine);
   
-  // Wrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
-  // Wrapper<std::string>::rtype  restartFileName = commandLine.getData<std::string>(keys::restartFileName);
-  Wrapper<bool>::rtype         beginFromRestart = commandLine.getData<bool>(keys::beginFromRestart);
-  Wrapper<int32>::rtype        xPartitionsOverride = commandLine.getData<int32>(keys::xPartitionsOverride);
-  Wrapper<int32>::rtype        yPartitionsOverride = commandLine.getData<int32>(keys::yPartitionsOverride);
-  Wrapper<int32>::rtype        zPartitionsOverride = commandLine.getData<int32>(keys::zPartitionsOverride);
-  Wrapper<bool>::rtype         overridePartitionNumbers = commandLine.getData<bool>(keys::overridePartitionNumbers);
+  // ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
+  // ViewWrapper<std::string>::rtype  restartFileName = commandLine.getData<std::string>(keys::restartFileName);
+  ViewWrapper<bool>::rtype         beginFromRestart = commandLine.getData<bool>(keys::beginFromRestart);
+  ViewWrapper<int32>::rtype        xPartitionsOverride = commandLine.getData<int32>(keys::xPartitionsOverride);
+  ViewWrapper<int32>::rtype        yPartitionsOverride = commandLine.getData<int32>(keys::yPartitionsOverride);
+  ViewWrapper<int32>::rtype        zPartitionsOverride = commandLine.getData<int32>(keys::zPartitionsOverride);
+  ViewWrapper<bool>::rtype         overridePartitionNumbers = commandLine.getData<bool>(keys::overridePartitionNumbers);
 
 
   // Get command line input
@@ -122,93 +114,21 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
         *(zPartitionsOverride) = std::stoi(optarg);
         *(overridePartitionNumbers) = true;
       }
-<<<<<<< HEAD
-=======
-      else if( stringutilities::streq( std::string("include"), long_options[option_index].name ) )
-      {
-        commandLineIncludedFileList.push_back(optarg);
-      }
-      else if( stringutilities::streq( std::string("write_XML"), long_options[option_index].name ) )
-      {
-        m_doWriteXML = true;
-        RegisterViewWrapper<string>("xmlOutputFileName").reference() = optarg;
-      }
-
->>>>>>> feature/settgast/addLegacyCode
     }
     break;
     case 'a':   // Leave Empty: Included for totalview - does nothing
       break;
 
-
-<<<<<<< HEAD
     case 'i':   // Record input file
     {
       // inputFileName = optarg;
-=======
-
-    //  if (!fileRootString.empty())
-    //    m_FileManager.SetRoot(fileRootString.c_str());
-    //  if (!inputFileString.empty())
-    //    m_FileManager.SetInputFilename(inputFileString.c_str());
-    //  if (!meshFileString.empty())
-    //    m_FileManager.SetGeometryFilename(meshFileString.c_str());
-    //  if (!demeshFileString.empty())
-    //    m_FileManager.SetDiscreteElementGeometryFilename(demeshFileString.c_str());
-    //  if (!edemeshFileString.empty())
-    //    m_FileManager.SetEllipsoidalDiscreteElementGeometryFilename(edemeshFileString.c_str());
-    //#ifdef SRC_EXTERNAL
-    //  if (!fpmeshFileString.empty())
-    //    m_FileManager.SetFaultPatchElementGeometryFilename(fpmeshFileString.c_str());
-    //#endif
-
-    case 'f':   // Record file root
-    {
-      RegisterViewWrapper<string>("fileRootString").reference() = optarg;
-    }
-    break;
-
-    case 'i':   // Record input file
-    {
-      RegisterViewWrapper<string>("inputFileString").reference() = optarg;
-    }
-    break;
-
-    case 'm':   // Record mesh file
-    {
-      RegisterViewWrapper<string>("meshFileString").reference() = optarg;
-    }
-    break;
-    case 'd':   // Record discrete element mesh file
-    {
-      RegisterViewWrapper<string>("demeshFileString").reference() = optarg;
-    }
-    break;
-    case 'e':   // Record ellipsoidal discrete element mesh file
-    {
-      RegisterViewWrapper<string>("edemeshFileString").reference() = optarg;
-    }
-    break;
-
-    case 's':   // Record seismicity fault patch mesh file
-    {
-      RegisterViewWrapper<string>("fpmeshFileString").reference() = optarg;
->>>>>>> feature/settgast/addLegacyCode
     }
     break;
 
     case 'r':   // From restart
     {
-<<<<<<< HEAD
       *(beginFromRestart) = true;
       // restartFileName = optarg;
-=======
-//      m_beginFromRestart = true;
-      RegisterViewWrapper<int32>("beginFromRestart").reference() = true;
-//      m_beginFromRestartFileName = optarg;
-      RegisterViewWrapper<string>("beginFromRestartFileName").reference() = optarg;
-
->>>>>>> feature/settgast/addLegacyCode
     }
     break;
     
@@ -235,7 +155,6 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 }
 
 
-<<<<<<< HEAD
 void ProblemManager::InitializePythonInterpreter()
 {
   // Initialize python and numpy
@@ -243,54 +162,24 @@ void ProblemManager::InitializePythonInterpreter()
   Py_Initialize() ;
   import_array();
   std::cout << "  done!" << std::endl;
-=======
-  // this option concerns flags for the default values of variables
-//  switch(defaultVariableReportLevel)
-//  {
-//  case 0:
-//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::silent);
-//    break;
-//  case 1:
-//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::recordDefaults);
-//    break;
-//  case 2:
-//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::reportDefaults);
-//    break;
-//  case 3:
-//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::disableDefaults);
-//    break;
-//  }
->>>>>>> feature/settgast/addLegacyCode
-
   // Add a test here to make sure a supported version of python is available
 }
 
-<<<<<<< HEAD
+
 void ProblemManager::ClosePythonInterpreter()
 {
   // Add any other cleanup here
   Py_Finalize();
-=======
-//  if(setPartitions_flag)
-//    m_partition.setPartitions(xPartitions,yPartitions,zPartitions );
-//
-//////////////////////////////////////////////////////////////////////////////
->>>>>>> feature/settgast/addLegacyCode
 }
 
 
 void ProblemManager::ParseInputFile()
 {
-  dataRepository::WrapperCollection& commandLine = GetChildWrapperCollection<dataRepository::WrapperCollection>(keys::commandLine);
+  dataRepository::SynchronizedGroup& commandLine = GetGroup<SynchronizedGroup>(keys::commandLine);
   
-  // Wrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
+  // ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
 
-<<<<<<< HEAD
-  // Hard-wired parse:
-  FiniteElementSpace feSpace( keys::FE_Space , this);
-=======
   FiniteElementSpace feSpace( keys::FE_Space, this);
->>>>>>> feature/settgast/addLegacyCode
 
   dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
   DomainPartition& domain  = getDomainPartition();

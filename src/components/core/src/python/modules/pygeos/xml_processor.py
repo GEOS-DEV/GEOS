@@ -31,11 +31,11 @@ def MergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
       root.insert(-1, topLevelNode)
 
 
-def generateRandomName(suffix=''):
+def generateRandomName(prefix='', suffix='.xml'):
   from hashlib import md5
   from time import time
 
-  return '%s_%s' % (md5(str(time())).hexdigest(), suffix)
+  return '%s%s%s' % (prefix, md5(str(time())).hexdigest(), suffix)
 
 
 def symbolicMathRegexHandler(match):
@@ -66,13 +66,13 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/component
   for parameters in root.findall('Parameters'):
     for p in parameters.findall('Parameter'):
       Pmap[p.get('name')] = p.get('value')
-  tmp_fname_a = generateRandomName(suffix='int.xml')
+  tmp_fname_a = generateRandomName(prefix='int_')
   tree.write(tmp_fname_a, pretty_print=True)
   parameterHandler = DictRegexHandler()
   parameterHandler.target = Pmap
 
   # Parse the raw xml file:  
-  tmp_fname_b = generateRandomName(suffix='prep.xml')
+  tmp_fname_b = generateRandomName(prefix='prep_')
   unitManager = UnitManager()
   with open(tmp_fname_a, 'r') as ifile, open(tmp_fname_b, 'w') as ofile:
     for line in ifile:

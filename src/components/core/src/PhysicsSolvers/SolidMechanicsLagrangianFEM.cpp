@@ -11,7 +11,7 @@
 #include <math.h>
 
 #include "dataRepository/SynchronizedGroup.hpp"
-#include "RAJA/RAJA.hxx"
+// #include "RAJA/RAJA.hxx"
 #include "common/DataTypes.hpp"
 
 
