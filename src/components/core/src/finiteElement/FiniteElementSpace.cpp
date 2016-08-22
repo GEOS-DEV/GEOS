@@ -14,8 +14,8 @@ using namespace dataRepository;
 
 
 
-FiniteElementSpace::FiniteElementSpace( std::string const & name, SynchronizedGroup * const parent ):
-    SynchronizedGroup(name,parent)
+FiniteElementSpace::FiniteElementSpace( std::string const & name, SynchronizedGroup * const parent ) :
+  SynchronizedGroup(name,parent)
 {}
 
 FiniteElementSpace::~FiniteElementSpace()

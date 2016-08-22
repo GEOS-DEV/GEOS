@@ -27,7 +27,7 @@ class ViewWrapper : public ViewWrapperBase
 
 public:
   explicit ViewWrapper( std::string const & name,
-                    SynchronizedGroup * const parent ) :
+                        SynchronizedGroup * const parent ) :
     ViewWrapperBase(name,parent)
   {
     // set up properties of sidre::DataView
@@ -61,7 +61,7 @@ public:
 
 
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
-                                               SynchronizedGroup * const parent )
+                                                   SynchronizedGroup * const parent )
   {
     return std::move(std::make_unique<ViewWrapper<T> >( name, parent ) );
   }

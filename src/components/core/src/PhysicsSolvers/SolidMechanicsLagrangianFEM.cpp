@@ -155,4 +155,3 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, SynchronizedGroup * const )
 } /* namespace ANST */
-

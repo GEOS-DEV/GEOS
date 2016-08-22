@@ -14,20 +14,16 @@ namespace constitutive
 {
 
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
-                                    SynchronizedGroup * const parent ):
+                                    SynchronizedGroup * const parent ) :
   SynchronizedGroup(name,parent)
-{
-}
+{}
 
 ConstitutiveBase::~ConstitutiveBase()
-{
-}
+{}
 
 
 void ConstitutiveBase::Registration( dataRepository::SynchronizedGroup * const )
-{
-
-}
+{}
 
 
 ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()

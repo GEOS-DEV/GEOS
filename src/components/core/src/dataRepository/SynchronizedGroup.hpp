@@ -116,8 +116,8 @@ public:
 
 
 
-template< typename T = SynchronizedGroup >
-T const & GetGroup( std::string const & name ) const
+  template< typename T = SynchronizedGroup >
+  T const & GetGroup( std::string const & name ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const &>( *(m_subObjectManagers.at(name)) );
@@ -232,7 +232,6 @@ T const & GetGroup( std::string const & name ) const
 //  {
 //    return GetFieldData< array<typename Field<FIELDKEY>::Type> >(Field<FIELDKEY>::Name());
 //  }
-
 
 
 

@@ -21,8 +21,7 @@ using namespace dataRepository;
 ProblemManager::ProblemManager( const std::string& name,
                                 SynchronizedGroup * const parent ) :
   SynchronizedGroup( name, parent )
-{
-}
+{}
 
 ProblemManager::~ProblemManager()
 {}
@@ -130,20 +129,20 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 
 
 
-      //  if (!fileRootString.empty())
-      //    m_FileManager.SetRoot(fileRootString.c_str());
-      //  if (!inputFileString.empty())
-      //    m_FileManager.SetInputFilename(inputFileString.c_str());
-      //  if (!meshFileString.empty())
-      //    m_FileManager.SetGeometryFilename(meshFileString.c_str());
-      //  if (!demeshFileString.empty())
-      //    m_FileManager.SetDiscreteElementGeometryFilename(demeshFileString.c_str());
-      //  if (!edemeshFileString.empty())
-      //    m_FileManager.SetEllipsoidalDiscreteElementGeometryFilename(edemeshFileString.c_str());
-      //#ifdef SRC_EXTERNAL
-      //  if (!fpmeshFileString.empty())
-      //    m_FileManager.SetFaultPatchElementGeometryFilename(fpmeshFileString.c_str());
-      //#endif
+    //  if (!fileRootString.empty())
+    //    m_FileManager.SetRoot(fileRootString.c_str());
+    //  if (!inputFileString.empty())
+    //    m_FileManager.SetInputFilename(inputFileString.c_str());
+    //  if (!meshFileString.empty())
+    //    m_FileManager.SetGeometryFilename(meshFileString.c_str());
+    //  if (!demeshFileString.empty())
+    //    m_FileManager.SetDiscreteElementGeometryFilename(demeshFileString.c_str());
+    //  if (!edemeshFileString.empty())
+    //    m_FileManager.SetEllipsoidalDiscreteElementGeometryFilename(edemeshFileString.c_str());
+    //#ifdef SRC_EXTERNAL
+    //  if (!fpmeshFileString.empty())
+    //    m_FileManager.SetFaultPatchElementGeometryFilename(fpmeshFileString.c_str());
+    //#endif
 
     case 'f':   // Record file root
     {
@@ -276,13 +275,13 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 //  if(setPartitions_flag)
 //    m_partition.setPartitions(xPartitions,yPartitions,zPartitions );
 //
-  //////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 }
 
 void ProblemManager::ParseInputFile()
 {
 
-  FiniteElementSpace feSpace( keys::FE_Space , this);
+  FiniteElementSpace feSpace( keys::FE_Space, this);
 
   dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
   DomainPartition& domain  = getDomainPartition();
@@ -328,4 +327,3 @@ DomainPartition const & ProblemManager::getDomainPartition() const
 REGISTER_CATALOG_ENTRY( SynchronizedGroup, ProblemManager, std::string const &, SynchronizedGroup * const )
 
 } /* namespace geosx */
-

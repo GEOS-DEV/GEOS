@@ -94,6 +94,5 @@ void SynchronizedGroup::resize( std::size_t const newsize )
 
 
 
-
 }
 } /* namespace ODS */

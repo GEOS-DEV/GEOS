@@ -16,7 +16,7 @@ namespace dataRepository
 {
 
 ViewWrapperBase::ViewWrapperBase( std::string const & name,
-                          SynchronizedGroup * const parent ) :
+                                  SynchronizedGroup * const parent ) :
   m_name(name),
   m_parent(parent),
   m_sizedFromParent(0),

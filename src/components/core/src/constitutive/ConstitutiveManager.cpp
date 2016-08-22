@@ -17,10 +17,9 @@ namespace constitutive
 
 
 ConstitutiveManager::ConstitutiveManager( std::string const & name,
-                                          SynchronizedGroup * const parent ):
+                                          SynchronizedGroup * const parent ) :
   SynchronizedGroup(name,parent)
-{
-}
+{}
 
 ConstitutiveManager::~ConstitutiveManager()
 {}
@@ -31,7 +30,7 @@ void ConstitutiveManager::ReadXMLInput()
   std::string newName = "matmodel";
 
 //  RegisterGroup( newName,
-  //               ConstitutiveBase::CatalogInterface::Factory("HypoElasticLinear", newName, this ) );
+//               ConstitutiveBase::CatalogInterface::Factory("HypoElasticLinear", newName, this ) );
 
   RegisterGroup<ConstitutiveBase>(newName,"HypoElasticLinear");
 }

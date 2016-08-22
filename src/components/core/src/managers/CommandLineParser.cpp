@@ -13,7 +13,7 @@ namespace geosx
 {
 
 
-struct Arg: public option::Arg
+struct Arg : public option::Arg
 {
   static void printError(const char* msg1, const option::Option& opt, const char* msg2)
   {
@@ -49,7 +49,7 @@ struct Arg: public option::Arg
   static option::ArgStatus Numeric(const option::Option& option, bool msg)
   {
     char* endptr = 0;
-    if (option.arg != 0 && strtol(option.arg, &endptr, 10)){};
+    if (option.arg != 0 && strtol(option.arg, &endptr, 10)) {};
     if (endptr != option.arg && *endptr == 0)
       return option::ARG_OK;
 
