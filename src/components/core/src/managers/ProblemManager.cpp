@@ -49,7 +49,7 @@ void ProblemManager::Registration( dataRepository::SynchronizedGroup * const )
 
   SynchronizedGroup& commandLine = RegisterGroup<SynchronizedGroup >(keys::commandLine);
   commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
-  // commandLine.RegisterViewWrapper<std::string>(keys::restartFileName);
+  commandLine.RegisterViewWrapper<std::string>(keys::restartFileName);
   commandLine.RegisterViewWrapper<bool>(keys::beginFromRestart);
   commandLine.RegisterViewWrapper<int32>(keys::xPartitionsOverride);
   commandLine.RegisterViewWrapper<int32>(keys::yPartitionsOverride);
@@ -61,8 +61,8 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 {
   dataRepository::SynchronizedGroup& commandLine = GetGroup<SynchronizedGroup>(keys::commandLine);
   
-  // ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
-  // ViewWrapper<std::string>::rtype  restartFileName = commandLine.getData<std::string>(keys::restartFileName);
+  ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
+  ViewWrapper<std::string>::rtype  restartFileName = commandLine.getData<std::string>(keys::restartFileName);
   ViewWrapper<bool>::rtype         beginFromRestart = commandLine.getData<bool>(keys::beginFromRestart);
   ViewWrapper<int32>::rtype        xPartitionsOverride = commandLine.getData<int32>(keys::xPartitionsOverride);
   ViewWrapper<int32>::rtype        yPartitionsOverride = commandLine.getData<int32>(keys::yPartitionsOverride);
@@ -121,14 +121,14 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 
     case 'i':   // Record input file
     {
-      // inputFileName = optarg;
+      inputFileName = optarg;
     }
     break;
 
     case 'r':   // From restart
     {
       *(beginFromRestart) = true;
-      // restartFileName = optarg;
+      restartFileName = optarg;
     }
     break;
     
@@ -177,7 +177,7 @@ void ProblemManager::ParseInputFile()
 {
   dataRepository::SynchronizedGroup& commandLine = GetGroup<SynchronizedGroup>(keys::commandLine);
   
-  // ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
+  ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
 
   FiniteElementSpace feSpace( keys::FE_Space, this);
 
@@ -216,7 +216,7 @@ void ProblemManager::ParseInputFile()
     throw std::invalid_argument("Could not find the pygeos module in PYTHONPATH!");
   }
   PyObject *pPreprocessorFunction = PyObject_GetAttrString(pModule, "PreprocessGEOSXML");
-  PyObject *pPreprocessorInputStr = Py_BuildValue("(s)", "input.xml");
+  PyObject *pPreprocessorInputStr = Py_BuildValue("(s)", inputFileName.c_str());
   PyObject *pPreprocessorResult = PyObject_CallObject(pPreprocessorFunction, pPreprocessorInputStr);
   std::string processedInputFile = PyString_AsString(pPreprocessorResult);
 
