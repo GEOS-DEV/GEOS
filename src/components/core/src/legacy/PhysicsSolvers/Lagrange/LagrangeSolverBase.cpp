@@ -2013,7 +2013,6 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
 
       R1Tensor cohesiveTraction;
       iArray1d& ruptureState = domain.m_feFaceManager.GetFieldData<int>("ruptureState");
-      const Array1dT<R1Tensor>& faceNormal = domain.m_feFaceManager.GetFieldData<R1Tensor>("faceNormal0");
 
       cohesiveForce = 0.0;
 
@@ -2030,8 +2029,8 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
 
             const localIndex faceIndex[2] = { kf, childFaceIndex[kf][0] };
 
-            const R1Tensor N[2] = { faceNormal( faceIndex[0] ),
-                                    faceNormal( faceIndex[1] )};
+            const R1Tensor N[2] = { domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, faceIndex[0] ),
+                                    domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, faceIndex[1] )};
 
             R1Tensor Nbar = N[0];
             Nbar -= N[1];

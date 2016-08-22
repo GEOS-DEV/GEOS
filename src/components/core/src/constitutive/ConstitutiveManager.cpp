@@ -17,10 +17,9 @@ namespace constitutive
 
 
 ConstitutiveManager::ConstitutiveManager( std::string const & name,
-                                          WrapperCollection * const parent ):
-  WrapperCollection(name,parent)
-{
-}
+                                          SynchronizedGroup * const parent ) :
+  SynchronizedGroup(name,parent)
+{}
 
 ConstitutiveManager::~ConstitutiveManager()
 {}
@@ -30,9 +29,10 @@ void ConstitutiveManager::ReadXMLInput()
 //  this->RegisterChildWrapperCollection<ConstitutiveBase>(keys::ConstitutiveBase);
   std::string newName = "matmodel";
 
-  std::unique_ptr<ConstitutiveBase> temp = ConstitutiveBase::CatalogInterface::Factory("HypoElasticLinear", newName, this );
-  auto& matmodel = this->RegisterChildWrapperCollection( newName, std::move(temp) );
+//  RegisterGroup( newName,
+//               ConstitutiveBase::CatalogInterface::Factory("HypoElasticLinear", newName, this ) );
 
+  RegisterGroup<ConstitutiveBase>(newName,"HypoElasticLinear");
 }
 
 }

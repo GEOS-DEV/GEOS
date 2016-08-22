@@ -48,11 +48,11 @@
 #ifndef SPATIALSORTER_H_
 #define SPATIALSORTER_H_
 
+#include "math/TensorT/R1TensorT.h"
 #include "Common/Common.h"
 #include "Common/intrinsic_typedefs.h"
 #include "Common/typedefs.h"
 #include "ArrayT/ArrayT.h"
-#include "TensorT/R1TensorT.h"
 
 namespace SpatialSorting
 {

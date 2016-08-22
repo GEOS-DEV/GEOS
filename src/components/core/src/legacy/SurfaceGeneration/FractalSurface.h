@@ -8,10 +8,10 @@
 #ifndef FRACTALSURFACE_H_
 #define FRACTALSURFACE_H_
 
+#include "../TensorT.old/R1TensorT.h"
 #include "Common/Common.h"
 #include "Common/intrinsic_typedefs.h"
 #include "ArrayT/ArrayT.h"
-#include "TensorT/R1TensorT.h"
 #include "StatisticalDistributionBaseT.h"
 #include "Interpolation/SurfaceKernel.h"
 #include "FractalBaseT.h"

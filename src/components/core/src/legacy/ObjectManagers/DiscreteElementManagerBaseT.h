@@ -46,7 +46,7 @@
 #ifndef DISCRETELEMENTMANAGERBASET_H_
 #define DISCRETELEMENTMANAGERBASET_H_
 
-#include "Common.h"
+#include "Common/Common.h"
 #include "ContactManagerBaseT.h"
 #include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 #include "IO/ticpp/HierarchicalDataNode.h"

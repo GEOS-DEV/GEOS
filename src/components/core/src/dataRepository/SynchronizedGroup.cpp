@@ -5,7 +5,8 @@
  *      Author: rrsettgast
  */
 
-#include "WrapperCollection.hpp"
+#include "SynchronizedGroup.hpp"
+
 #include "dataRepository/SidreWrapper.hpp"
 
 namespace geosx
@@ -13,8 +14,8 @@ namespace geosx
 namespace dataRepository
 {
 
-WrapperCollection::WrapperCollection( std::string const & name,
-                                      WrapperCollection * const parent ) :
+SynchronizedGroup::SynchronizedGroup( std::string const & name,
+                                      SynchronizedGroup * const parent ) :
   m_keyLookup(),
   m_wrappers(),
   m_parent(parent),
@@ -40,14 +41,14 @@ WrapperCollection::WrapperCollection( std::string const & name,
     m_sidreGroup = sidreParent->createGroup(name);
   }
 
-  *(RegisterWrapper<std_size_t>( "size" ).data()) = 0;
-  RegisterWrapper<std::string>( "name" ).reference() = name;
-  RegisterWrapper<std::string>( "path" );
+  *(RegisterViewWrapper<std_size_t>( "size" ).data()) = 0;
+  RegisterViewWrapper<std::string>( "name" ).reference() = name;
+  RegisterViewWrapper<std::string>( "path" );
 
 
 }
 
-WrapperCollection::~WrapperCollection()
+SynchronizedGroup::~SynchronizedGroup()
 {
   // TODO Auto-generated destructor stub
 }
@@ -61,28 +62,28 @@ WrapperCollection::~WrapperCollection()
 //    m_parent( source.m_parent )
 //{}
 
-WrapperCollection::WrapperCollection( WrapperCollection&& source ) :
+SynchronizedGroup::SynchronizedGroup( SynchronizedGroup&& source ) :
   m_keyLookup( std::move(source.m_keyLookup) ),
   m_wrappers( std::move(source.m_wrappers) ),
   m_parent( std::move(source.m_parent) )
 {}
 
-WrapperCollection::CatalogInterface::CatalogType& WrapperCollection::GetCatalog()
+SynchronizedGroup::CatalogInterface::CatalogType& SynchronizedGroup::GetCatalog()
 {
-  static WrapperCollection::CatalogInterface::CatalogType catalog;
+  static SynchronizedGroup::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
-WrapperBase& WrapperCollection::RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type )
+ViewWrapperBase& SynchronizedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return *( rtTypes::ApplyTypeLambda( type,
-                                      [this, &name]( auto a ) -> WrapperBase*
+                                      [this, &name]( auto a ) -> ViewWrapperBase*
       {
-        return &( this->RegisterWrapper<decltype(a)>(name) );
+        return &( this->RegisterViewWrapper<decltype(a)>(name) );
       } ) );
 }
 
-void WrapperCollection::resize( std::size_t const newsize )
+void SynchronizedGroup::resize( std::size_t const newsize )
 {
   for( auto&& i : this->m_wrappers )
   {
@@ -90,7 +91,6 @@ void WrapperCollection::resize( std::size_t const newsize )
   }
   *(this->getWrapper<std_size_t>( keys::size ).data())=newsize;
 }
-
 
 
 

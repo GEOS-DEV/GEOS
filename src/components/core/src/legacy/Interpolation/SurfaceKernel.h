@@ -8,8 +8,8 @@
 #ifndef SURFACEKERNEL_H_
 #define SURFACEKERNEL_H_
 
+#include "../TensorT.old/R1TensorT.h"
 #include "Interpolation/InterpolantBaseT.h"
-#include "TensorT/R1TensorT.h"
 
 /**
  * @author Scott Johnson

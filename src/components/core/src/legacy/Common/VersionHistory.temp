@@ -1,327 +1,14 @@
- 173e4ff3a1c20ac6c1a4c91c09a4a4eb4819d6fe removed extra calcualtions of face normals, and replaced with field value
-0cd439642da216c58ad62f01d32a06b4491f6c75 GRAPE: merge from master after conflict resolution.
-04c8d26854eac50c34bb8358c18a59dd7811485d GRAPE publish: updated log file UPDATE_LOG
-13a1f7d086cca80fcd81d7babf3914ee659a5912 GRAPE: ticked version to v3.0.36
-ddba205d671deb873e8425f9b324989cc0b1f4f0 Not reading in restart or plot intervals from restart file
-aea58ee0c0f21e53d19a8a9e152c2efca7c5bce3 Adding message about timed restart trigger
-0e8f3f9c6a74fda88b9128955b6d1b3a43cb18c3 Fixing bug where restartInterval becomes out of sync, permitting plot/restart intervals to change during restarts
-29e1bc10592a00725a6dad705976978f84773ddf GRAPE publish: updated log file UPDATE_LOG
-f7dfa228ec023752b82594545e8200d036fb1fc2 GRAPE: ticked version to v3.0.35
-4c53b7607787aa6b5e49888af89e168421d6b0fb Fixing microseismic manager initialization of empty partitions
-a79d4fe9aa535699060166d31154062826619ea4 Making CommonFields work with microseismic solver
-fd252139f8752ee3d05e77e4ac3b4cfdc1d93545 Enabling fieldsToPlot option for microseismic element manager
-2ed5853b81ef2cfbed5dddae5de806523881bcc6 Adding additional info to fracture package test, limiting number of parallel procs in xmdv sorting
-e2e893711790cc25ec57a966623da148505b6b46 Improving the way the fracture package handles appending databases
-5de562dbfa63d0aea9a3df5f31806d785a1fc2e4 Upgrading fracture package test, fixing bug in GEOS foreRestart method
-dfe2581d37909f50ec4193d0c97d8870923d6400 Merge branch 'master' into feature/sherman/fracturePackageUpgrade
-2a3fd6f03c7af71d5a42789b9ed536347d213c3b Increasing speed of microseismic joint file option
-e589e557cf3d77d2656aa0095957d8f1f2a96636 Speeding up the microseismic loading path calculation
-b73c71c1485e69e94a1851fea64ddb4bcf10ae46 Embedding fracture package version number in slv database
-352ce94e72daae846b92c7fd8fd11d9435541651 Reorgainizing the serialization method in the fracture package, adding a loading path plot for point microseismicity
-1ba7b2b5b69e25b16bef1f66c83a9fd16356116b Adding method to serialize fracture database
-df68d5b8fd4eff333c15b2e9c3a28faa54135f3f GRAPE publish: updated log file UPDATE_LOG
-855be5784e306f2bb501f8e1142e22f6119ccbe7 GRAPE: ticked version to v3.0.34
-3ff3cea4c5c5b2c831011cb6a13e57fdb2e503d2 Allowing the ref pore pressure for pressure dependent leakoff to be a face field
-e3d64a361d0b04ecf7fdd295a5a6f2e5994136ff Adding a method to check for valid keys in target silo files
-6d67758874aae61506de8b06993be4348acd121e Merge pull request #83 in GPAC/core from feature/fu4/mergeunopenface to master
-d9fd8a2d9db4f04a5d55de693938bdced3216bc6 Fixed a bug in the calculation of stressNOnFace
-4ed956501b1e0d2e377b0475faf68b02f9c1ad28 Manually move changes regarding unopened flow face so than we can merge to master
-ae3c9c5eb97d35714c91d22f7066723557a66f54 GRAPE publish: updated log file UPDATE_LOG
-d5f915ca4c9df07a52bcf6d46135d2e7e4de4af9 GRAPE: ticked version to v3.0.33
-cd9f45f71d85375829d3b7a15456423d02c154bc Adding revision numbers to the python fracture and input packages
-2ab8046b29af1cc3ec2ed4e97e1b77d94a66f038 Fixing a bug in the fracture wellbore report involving duplicate key values
-aa60370cd883d5d979e1f38972f1de37aa737e1a Adding a method to safely look for keys in the slv database and trhow errors if necessary
-214a6f9891e932b8e4f3ae8df92a165aa115e701 Fixing out of date plots to use proper metadata in slv database
-c5b3431258c9199abac1d4d3c318d9cb002728cd Merge branch 'master' into feature/sherman/fracturePackageUpgrade
-41c08494469c029e93a1f368d2f320edfbcd9c85 Fixing fractureDifferencePlot key grabbing
-b8454585424ad57d318b2abadd631a4b3d425f59 Corrected syntax error in wellbore_report.py
-7fe2b910493da5848c6fad98c28b84f390139901 GRAPE publish: updated log file UPDATE_LOG
-2bd8bd77a8db0f055ebf4a83c368dbc5f89a762c GRAPE: ticked version to v3.0.32
-c71ff429b1b9df91f0d105afafa7643e47c8a839 Fixing the restart capability for the DFN index map
-a232fdb4b7f5ea4cd92335fe156da1d963d9d3b7 GRAPE publish: updated log file UPDATE_LOG
-90b29425da2171fdd024bd9ea5d985c047feb10f GRAPE: ticked version to v3.0.31
-301a5138c7524e051fc8e8e2b9af1b584463842f Updating the wellbore report
-aa35f6c12f76b5bd3c1cb099b78a907f3ac76b59 Moving the package towards 3.5 compliance
-9654d2a2240da4e8867e29dc629d795d682962eb Added a field to track the extend of the slip on individual patches in the DFN
-1ffb7dc7f000ce212d2cb32b74ab9d909a070db6 GRAPE: merge from master after conflict resolution.
-a24511409674aed7e032b1501955358b9f36451a Adding fields to track distribution of slip on faces in the DFN
-0b8227a5b880c3673e77760b25ca89535dd9d533 GRAPE publish: updated log file UPDATE_LOG
-1a9962997a4f64bbc3b3c1ecb9428cfa4eccbd37 GRAPE: ticked version to v3.0.30
-b0301c6815b668f87f1d81917c5566854b8aeb94 Adding an input for the number of dims for the getDomainExtents method in nodemanager
-cc4969c4f151a87c2dd9a5335cc4cc1f1fc1b7d9 Removing old method for strain initialization from fractunator
-8fd9d9d99f3054bd81c4998a0ce21dbb4a6a4d96 Adding an example for the microseismic point cloud to the wellbore report
-9925da5084e80bb969b4c3e71abca821dc11ed00 Added method to determine revision number of GEOS exec from plot files, added method to generate microseismic density cloud to python package
-f23ae0e2b69e45e6e2ef75c6497f053a0ffbc33f Moving microseismic DFN map generation to solver initialization
-bd056a42dcc4b605866501f0c326be7651f67198 Fixing bad merge in wellbore manager
-06f0880d10cb5d8768d03990f695cd2031a6212f Merging with master
-9896e1cbb3be5696d28decc21b0219f14d4267c4 GRAPE publish: updated log file UPDATE_LOG
-0e88707aea7f4f2ae97ae4259f72d4f0b0c11d63 GRAPE: ticked version to v3.0.29
-0d0a68c5af577cc6a9b7cefd8cfe1636223f0ac5 Adding in more flexibility to contact stiffness initialization
-0a4ed331894f405a8e5cac0c98ca22e446bd412f Undoing a bad commit
-bb8fd11fb1f1740f8db3418ea5b96e3d045cd88d Fixing issues with implicit contact initialization handoff in HF solver
-58a969677097862ee656ff569627de5ea65a9f00 Fixing issues with implicit contact initialization handoff in HF solver
-e101053d780308167ad1729c1c7cf9d6a6b7d3cc Using the verbose solver flag in the HF solver to limit implicit output
-9b30fa66b85f22148616aaf5847ee2debcef9a25 Updating the schema for the PPFVP test
-91ea657003814bc951e1084f3dcaa6322a8150ab Cleaning up compiler warnings
-a2d363954f7d260c9ef3050a822850b9bf904108 modififed wellbore test problem
-0bd960eda033c74e4cc951356900b49cf5425053 modified PPFVP test problem to disable extra mass leak
-21e51e769269e329fb658322efe0ebed28e3749c Fixing bug in HF rates/state evolution
-fefb51276cfc235415c089ae226ac64a5387453f Merge remote-tracking branch 'origin/feature/sherman/wellboreFVP' into feature/sherman/wellboreFVP
-912570e5ea33da52248d85d24839deaa76955c5e modified table manager to read 3d tables
-789462f2528f34af4036ead5b115a6277bbc3819 GRAPE: merge from origin/feature/sherman/wellboreFVP after conflict resolution.
-2933b2163a5e1fbc2aab63d8b3714b9534727550 Turning off density initialization step in the PPFS that is now triggered due to changes in the fractunator
-293d94624b90e69c6bfa1d43203e0cd0d5c65184 GRAPE: merge from origin/feature/sherman/wellboreFVP after conflict resolution.
-c88da27a612fe6f71518e6e4db9e03733f0a1376 fixed bug in wellbore manager related to flowFaceType change
-83dd8051663e73a62582bcfb38cddaf6679522cb Resolving diffs in the test repo for explicit HF problems
-5c2e63bcc18a74211f741eee49e6471eccaabe2b modified HydrofactureSolutions.py
-29015eff5fb14d0884ac9d0ee9d87eb86a149e32 Fixing mass initialization in LagsolveBase
-242eb9fdfdf5e1f9ff78161e3f474f43548ebcf4 Removing item from gitignore
-e0613194c1d128006e7322d57f25a6554c67862b Fixing an initialization issue in the virtual face mesh in Fractunator3
-a69248fb93b040256b8c238414ebeebfc7cbe600 Removing debug information from Microsismic solver
-88b93ef1c6dcd9091848da1d00e9f720da4c6d01 Testing for out of range calls to stateData in Microseismic solver
-229f98423ebbe3d3faab019995e914b33bff08d8 Debugging the microseismic solver
-302dd2164c241e1179b18ec7353ca655e71ba1d9 Separating cases where delta0N field are actually contact stiffness into a different field
-97d3b063c55515153b42bfe668e55b29055e945d Fixing initialization bug for 2D HF simulations
-13c289074b105970d1185a1e8dec36a8b21890db Removing error message from HF Solver
-696b6e35af93cceb619ca6164c201f348d8583a9 Temporarily disabling restart capability for DFN Microseismicity
-ddd4491f067d002c245d91f505d97a20105d549a Merging with master
-52e732a536486c7dc5cfc89b57c4b5ed4db5bd56 Debugging the DFN map in the microseismic element manager
-3e6e78f5d95f99df907713706f972de772e3234e Fixing underflow error in statisticalDistributionBase
-8578debec79bb4085ded3c882d351b5da71eb524 GRAPE: merge from master after conflict resolution.
-273223250d8eea50be6de7bc4ba3cd3b9bf0e4bb GRAPE publish: updated log file UPDATE_LOG
-39b1bc881f9acff1662a399fc6618d0ca9d45df5 GRAPE: ticked version to v3.0.28
-cbe9c2bcdca88f01a9fa124434f0fcb46b8dca5c Removing debug information from microseismic mesh generator
-b5443e1207c0b03fec8b1df7c997148397c9608c Fixing log(0) error in StatisticalDistributionBase::BoxMuller
-23fbdfb8368bfd84336321d3e623a7f074f43d60 add subscale angle and modification to permeability
-158ac8e9fad90500e4bc7a37408204379875c858 Fixing a unit conversion issue for strike/dip/rake in microseismic element manager
-d9a55c6e1cd0cb38985f5fd95e3e5ac19e36f170 Fixing restart capability for the new microseismic element manager
-de1dcf5f159302aec5aa97007485c7b9fe098c4e GRAPE: merge from origin/feature/sherman/wellboreFVP after conflict resolution.
-a11b85682a5f7173fe27bb896e3cd2c106021bbe removed incorrect setting of pipe condutivity limiter
-ca1fd8906d937bbf3d70d944ca869613f432ccdf Fixing initialization of microseismic element manager objects
-a72a03deba75619f99a9390100d9bed946fef282 Resolving compile issues for updated microseismic element manager
-c815f0a5753dba7f2aa391e01693b36f0bd8c36b Changing the MS element manager to inherit the objectmanager base class, reworking its flow
-50ce6d10d0ea27ebe72c8db226268d2d3cad1706 Adding flowFaceType reference back to old solver
-9dbb578bbfc055e24261d4f54571bcdfcb09629a Switching flowFaceType to be 0 for non-flow faces and 1 for flow faces
-70c732b95ed6042946f36f5cd7df3aad78613abd GRAPE: merge from master after conflict resolution.
-03f16f41572590bd2565fcfa231eba2dae3a4fbe Adding in temporary debug information to MS solver
-79924f937699110c5705f5879c081f4ad1713cbb Merge remote-tracking branch 'origin/feature/sherman/wellboreFVP' into feature/sherman/wellboreFVP
-3890b4667e85d2209ef62bb2cab22d74d6406c18 fixed really really bad merge
-542355ad3ddce99ec7041c9d28782710a1508a9c Merge remote-tracking branch 'origin/feature/sherman/wellboreFVP' into feature/sherman/wellboreFVP
-0805e1457b120bdff1218b8dd3bfeb7ef6e81cb9 modified pipe conductivity limiter
-022b86e798394946d3d73a8431c8ebccfd65b861 added a conductivity limiter to the wellbore solver such that the pipe conductivity is altered if the conductivity is large relative to the conductivity in the fracture network, and the perforation/nwb terms
-f14cee0f090035eb051a2087b50ac8c7e6e6c832 Merge remote-tracking branch 'origin/feature/sherman/wellboreFVP' into feature/sherman/wellboreFVP
-0efa4fe54b6c3414c99b06e5241ece58d107959f modfied BB relation to be more consistent
-fa6910bfb92852c0c9e53322d16b6dcd454e666f GRAPE publish: updated log file UPDATE_LOG
-56b8a4f2af9becb86e231420025c9acb6462aede GRAPE: ticked version to v3.0.27
-d2017dbf68002b7b94e3d8afd10f5d1c90bc0965 Removed a special solver from commregistry to pass tests
-c9c4a485c31777927d90243bdcb833be2fb4a5a9 Merge branch 'master' into feature/guo6/TracerTransportFV
-9ce8b3612ced545f7fe181ac349664d4b270b177 Merge remote-tracking branch 'origin/master'
-4ea7c36cd12db24401248ad7ce3fcd2eab2ad2d7 commit changes that dont exist
-afa634c934a37dd73910432af53f4bef6fb179d4 Small changes needed to pass the tests
-894aa68f3e1d8cd2d272fc7ee4cbfe78e0d4e83f Merge remote-tracking branch 'origin/master'
-3c55c77ef0b7840832df5d5e5b912dbba9e3c334 Allowing virtual face manager to write arbitrary polygons and changed the default relaxation coefficient
-8c867a2a10c83f7f174353987a2de1bed830f103 GRAPE publish: updated log file UPDATE_LOG
-fac37b34fd4652053b5314485f2aa87d3098aec3 GRAPE: ticked version to v3.0.26
-8c18b160992e859d194319f7921f90a2e331cd7e added a pressure dependant near wellbore pressure loss term. also fixed a bug in the wellbore mesh generation routines
-6eea6350971968a1c9e4ed4ecd04ae2745e4090d Fixing memory leak in PPFS with Trilinos objects
-afddaa2c90d362be41a50e7bc1a576d548566707 Merge remote-tracking branch 'origin/feature/sherman/wellboreFVP' into feature/sherman/wellboreFVP
-d588eac70b4de4e3aba03c83722c6753c5dd959d applied initial density of new finite volumes
-ac8d28a87e96977549d066087488f56bfa8bed29 Merge remote-tracking branch 'origin/feature/sherman/wellboreFVP' into feature/sherman/wellboreFVP
-74b8f8873062b259cab802b84ecfdb2b2ec01f2c added input for initial density of new finite volumes
-c864186a25062f2b36aa00a61b6c8ee63cdc0bd9 Merge remote-tracking branch 'origin/feature/sherman/wellboreFVP' into feature/sherman/wellboreFVP
-cf0a52f56eba0632a7d7d6211d0c00d7de8c08c4 changed default density for new FV elements
-8090c9f0c141502f2f5a932f6a0ef5c568c069cf added allreduce for proper calculation of solution scaling factor in parallel
-ca4cc9b3d34442fc7eaa8837a95db51877c12303 add safegaurds in case negative density is ever achieved
-d100a90c2a2118d62044e407cd339fda27ba49c0 Modifying geos_inputs python package
-c5520343ffc3837330704117c6ddae62ed8403b0 added BiNonlinear EOS to PPFS
-ba9c05cd48678e355be6ce6241e3a2414e1323aa re-enabled scaling of solution vector prior to application to dof in ppfsfvp such that if the p=0 threshold is crossed, the solution is scaled to prevent large overshoot
-9b0bf86d1ce2bdc8773804f96b9ddd7c1fdacfb5 added initialization flag. moved density/mass updates to updateEOS
-9a7dfc89735156aaf65d86a0ee3da1c35ec93872 Removed the convective heat bc from BC manager as it is obsolete.
-00f272f4aebbe1acb9afe5146c0e09d594452198 Minor change to the solver
-657873095c79bcd2e2a6bd87343092221919ed74 Major cleanup of the heat flow solver and added a couple of boundary conditions
-2e2d2fbae707f6c7a584078228b627bf9ac9c2be Merge remote-tracking branch 'origin/feature/sherman/wellboreFVP' into feature/sherman/wellboreFVP
-d0b584cf142ab1f6bb333b111a7926032ea50577 enabled gravity initialization in the wellbore. enabled reading in of a 3d table from xml file rather than data files
-550105838f456ce4736ad588f4f9abcc17089a74 reenable sink of extra mass
-a1ecde2e78d7af86e9fc865d5e2fac2d38e35299 added modified script for pkn comparison plots
-ba4ba6669880d1b79dafad28897c2e8927b2e95f added modified script for penny comparison plots
-b9ac642f9455a58c665e0759acf2878631a7695a Merge remote-tracking branch 'origin/feature/sherman/wellboreFVP' into feature/sherman/wellboreFVP
-e8523209befd5a8c20a903581caae4da0c88d4e4 Added plots to python repo to compare results to PKN/Penny solutions
-1eefdc0e2f5e7ddec8509af435399eecaf2fa954 syncing submodules
-13986ef604898bc051ce5e0eac306a14b72daa2e implemented proper coupling of perf friction and nwb friction losses without adding a DOF
-856cddc2c515cb53c1c9656d212565b25592f208 Applying the (non-FVP) wellbore pressure BC for rank 0 only
-3e5f1d81704ef92f7dabccebf7d930f3736ba5e0 fixed incorrect assignement of head nodeset in wellboremanager. also fixed incorrect application of wellbore bcs from every rank. Since the wellbore is only on rank 0, only rank 0 may apply the bc.
-05df452deb08c4cc357cd7b8bcf4ce9a1b0f4d69 added near wellbore drop. added linearization option to perforation friction
-04179dfe73e09540414889add361f356950bfbbf Merge branch 'master' into feature/guo6/TracerTransportFV
-79d3b5a4c95375b9b28ec7f602e329da8468a7b2 Merge remote-tracking branch 'origin/master'
-cde43447d8b0480bc4f6c7d86f4ff43704059b91 Fixed conflict after merging master
-7019c2dbde89ba1cfe346621d9059c8f75b1cabe finished changing bc implementation in single phase heat and flow solver
-64143d47174295424ab7dcc11698cc0dd44f3ab7 modification to wellbore test problem
-281aecdc844eaaab8234f161fecc749366cc50e6 added test problem for coupled wellbore solve
-df58986f2aae36b69f23eddbaa91e2ba7f899dca modifications/corrections to the wellbore solver for use with implicit solvers
-b6dd6bb03fdc3be4769f80be872045bad4bcd0b4 Merge branch 'feature/sherman/wellboreFVP' of ssh://cz-stash.llnl.gov:7999/gpac/core into feature/sherman/wellboreFVP
-6f004ed14cdcb6d55295fbef9dab92c112d939c2 bad merge
-4dfa1a2bb09545ad2cf519390c9ca6205de27acd GRAPE: merge from master after conflict resolution.
-28e9560c804a9ef2571d931254c54e817b6a6fb8 Integrating wellbore solver with typical GEOS BC handling
-777dbbcb24e72edf1a769607ad30352509a2c023 GRAPE publish: updated log file UPDATE_LOG
-0a3e934003f954ad6b0206eb8ecdc53de409c16b GRAPE: ticked version to v3.0.25
-1061f1f63d3702326c1655122f68d8454fb1c629 some modifications to fix a bug with restart implicit contact
-b8e9da9936b0f358cfc952d7da927e0df280b144 some fixes to implicit contact
-cd70de16ec6779ec0a3e3e84f8b4d01acdb6573d some commits to undo changes to pass tests
-7ea855408f98693e569f9f368e5e3c72abfa2bed modified wellbore silo routines
-c4483b8a50d3837c0288b285c5a6ca3c04fa5b08 fixed some overloaded virtual functions
-f90b7d065bf402917c06fd04666511a545cfa9db Merge branch 'master' into feature/settgast/coupledMatrixFractureFlow
-5f6d333c0a62e6514a7b5a0da5825b9ab24cbc00 post merge commit
-0910116c8a3586fafdd24492511073b007c2baf0 GRAPE: merge from master after conflict resolution.
-1a5ed439f813313e86a568e4626fc63377bf7ae9 GRAPE publish: updated log file UPDATE_LOG
-6213e57dc8d22cb0ad7c3fb4378d730884843a7d GRAPE: ticked version to v3.0.24
-1ec38614459219e506082e3276deba128a601b48 Fixing reference to test repo, removing hydrostatic test
-091673a801bd14b2943a977ee54dbf45054beb6e Modifying debug information for wellboreFVP testing
-b20900f2829963d34ac5a130cafc6de720b21980 Fixing bugs in the wellboreFVP solver
-6887ea84e1f4ae595ea4ff4838755a301a98681c Moved flowFaceType initialization to the fractunator, fixed bugs in wellbore AssembleFVP function
-09e3c98674ca751553e46cf8fad52e57c8196e6c Fixing bug in wellboreFVP assembly
-576427f3171e03a84f2de65c8e5df6ca70bd4a0a Wiring the wellbore solver into the FVP solver
-e14b1e6f782e72b6c38c084ab91cd8e24b0caaa5 removing conflict from the fracture plot file
-fef1e7e0017e93894ae7fbf38ea2f8bc99fbac55 Moving wellbore meshing algorithms to object manager, moving solver initialization to be after fractunator separation occurs
-94f66e317fb7d52df9a110f5e557045fc834eefc GRAPE: merge from origin/feature/settgast/coupledMatrixFractureFlow after conflict resolution.
-4d7a9bd0b19fc044a9f08c2ebca20b750524b4ef Added Carters leakoff to FVP solver
-e68f9b5b973e668fb59ecb035c7f4b1eac880871 Adding FVP assemble function to wellbore solver
-0875b18251813a22e42e3e879c582dcb4849eee0 Merge remote-tracking branch 'origin/master'
-e57e3d82e1eec08bc40b5554da60a47d63e6051f Merging from wellbore remeshing branch
-f21f8f38723b36a5618dd17102b8365f8443c1e8 Merging with master
-7f1161f274336f33b5e6017ae8b562841456bc4e GRAPE publish: updated log file UPDATE_LOG
-6838195e65ae4eaecc8849d5d4900b426ec5a725 GRAPE: ticked version to v3.0.23
-8e13c2d354132fe8e2f31d418e4db7e4cdc93f25 Restoring silodiffdriver flags
-658c5e9e0607e3f1427988de75ecb202f5f1c5d6 Updating multiphase test file
-4576ce946abd48a9c1e73482c1af3834082b8289 Updating default parameters for PPFS
-79c214420e2965153152c1055558fc8b663b28bd Updating default values for relaxation, solver flags in hydrofracture simulations
-1c747f4c276c55350fc23dc51376f94caac21ff2 post merge commit
-ac5423f9c157ab0f354dcdde4b4e91cc7d1f603c GRAPE: merge from master after conflict resolution.
-b9b74d19c3eabd74d96bd7acbfc383f380d61daa fixed bug in pressure boundary application
-5900c877fe2fa5351729faf17c8c39d870fb2b9a Updating schema for multiphase flow, updating ats file for 2D hydrofract test
-8dc0b40b3be7bffd62dcbf539e4fb2228530b78e removing merge conflict from silodiffdriver
-87a152d36c212e7820e49098ccc9cb5bd51a3aa6 Removing debug information from mesh bias calculation
-954f339d4628a73f041ff0049d36e560dafa9c5d Merging with master
-e4b18cc209851d606b99f64fe7cf8f29a2674491 Merging with master
-42e365c590dafa9b825f9d92d144c3f9697aab8a Changing PPFS to use solver base class features
-fb9d7fb1d2281dd77ce55d42f9eb1791ddaeccfc GRAPE publish: updated log file UPDATE_LOG
-d25964e0ba5f794169aac679a55335fe89c199ad GRAPE: ticked version to v3.0.22
-75d4fdadee1937d7eb99bdb998999c2f963e2a62 Merge remote-tracking branch 'origin/feature/settgast/hydrofracture' into feature/settgast/hydrofracture
-ee75f9788d9e48586a764fd12119df109d150925 correct estimate of reference mass in massLoss calc
-331274fd08a6be10fd7aa0cd2274e5f8aa82a342 Merge remote-tracking branch 'origin/feature/settgast/hydrofracture' into feature/settgast/hydrofracture
-5aebf2366690958c45afce401b2a07836aeaab60 Added a method to apply a mesh bias using internal generator
-2bd2dbeacb46382f5269d94e7d07df0fecc23028 removed some warnings
-4b895231a4ad0ba8b1e76d80ca5d3a51deca20a0 changed default solver option to no scaling
-63cbcc4520d5e2899c1f0f3ff841192931f1c637 GRAPE: merge from master after conflict resolution.
-b8cae7db1bd783b85194360c3b698c966b7ec19f added displacement penalty as a scalar field for debugging
-7326931c64fa0703e8020641c2713a52b309b7e6 disabled mass loss
-cbe7baba26370b79b39e58c0f34a3a36235f7575 Fixing hydrofracture test
-ea9967425c488e047e9abf086f50e037a89424ba enabled leak off of the initialzation mass
-1ed55764d82995adf4f1cede8710da0f5fbe72e1 enabled leak off of the initialzation mass
-bcb4ddad29449c4ef82f1f35c823ac5eecdfd75c Adding an option to specify a gravity vector in the proppant solver
-cf617bf5fe41013b875f0b0b5fd3730c4a718ba9 Updating fluid gravity in the PPFS and associated tests
-aea61648616c762061663ac659cdefdf186b398a Fixing compile warnings
-22292ca5537288080d67165fcb7d855483274802 GRAPE: merge from feature/sherman/wellboreBugFix after conflict resolution.
-d4411740930fea7f7a1e555611a16f0753df660e GRAPE: merge from master after conflict resolution.
-d7c47a7bb9b9325eedfc9f44262f8727f65126f0 Setting microseismic processing to use new shelve wrapper in python package
-c82ce84a806911ae8cb9150d447c5ab26036dcf7 modified nonDimensionalSystemOptions
-1db679f56fa08449122617436a8ca26171c89c29 Updating shelve wrapper for python package
-ca7bee289ac29517c7d0e1b2f0ee25803a041c03 Adding a wrapper for the shelve file to prevent database corruption
-d1e91bcbc75fadff53ab16bfe403844e589cc88b Fixing scoping error in plot script
-67ae17b74465f245c877188dbc50fe7714e96f51 Fixing bug in python weighted average plot
-e49538f5093a42cf786885d413c50468bff95c64 Added a method to do symbolic math in python fracture package
-d1773070df58953a09d54f4c9af5a7ed2066a9d8 Fixing a filter value used in the python fracture package
-94641abda2402fbe36ba0f603fba35faa4015783 Added a weighted average plot to the fracture package
-ce46cadeab864a5d7ea3ddb0833985665d1a356b Adding test xml for python fracture package
-e532f91fd494202327932ec8078f0007848078fc Modifying the the fractureSumPlot to use a composite key
-fc124095f1104f9b9049e62d1a740c3360976736 Extending fracture python test function to include parallel GEOS runs
-19997078c142c6b449daf08810ef2b51d3500290 Adding a test for the python package
-f4bbad75a8b166cde3ed4fe7eb429093e3e0b554 Enabling wellbore mesh entries in python fracture package
-3db245d1f009bfcabe7287ea3680cee87607d7a6 implimented proper barton law for PPFVP
-20df698f3b07a0b06232385f60bd1056faf5226d Uncommenting lines in the python fracture package to re-enable problem cleanup
-8b7a5b03f356ce29a04ba7130bfb6c8c5799d701 Testing new wellbore meshing technique
-52f8aef1ae7ff083223bccd5d9adc5fa1f45fb2d moved method from internal repo to OK. Also mucked with use of ml in the 11 block
-140a23dd02254efe848737aec4de40234af46146 Testing a second method for wellbore meshing
-f2410c4f3b17c0ac67c5e60f5d70a7c5cfe1eb28 GRAPE publish: updated log file UPDATE_LOG
-01180766920a3f41e65389ea0c350b0b54453e06 GRAPE: ticked version to v3.0.21
-50b500ce1852f36078db1104a920284aca4b9589 Merge branch 'master' into bugfix/settgast/implicitContact
-60afcfcd8ddbb64306c1ba1b3da36c5016950a96 Postprocessing routine called only if implicit contact is active
-f7936fde788c84e68aa10c0c4a5613f52cbfeb5c contactlib: modififed face pair exclusion to address case where one face is local, and one is ghost
-289b7a9c8a9720663a78a351607b8ba52ab38ea4 fixed bug with exclusion of contact faces that are both ghosts.Also fixed a bug in calculation of contactStress ouput field
-befa29c9eaea47c64401806b9da3e2a96591619e undo unintended commit
-80bfe5455d2ee00ae84fc09b9feef4005ddc010d fixed bug with exclusion of contact faces that are both ghosts. Also fixed a bug in calculation of contactStress ouput field
-648246b96fc83f353475fbb5c837a78610fbe929 a couple of tweeks
-6e2a6510f3c11a29ec90f6e965a9e684ddf1280e post merge cleanup
-8dd8eda20b269cbdec50c6360611a477a637e3d3 GRAPE: merge from master after conflict resolution.
-d7f1f0559e824cf60690642736eb856ef6ec0dda proprietary_internal
-c1f8bbd62337c57034d3d0f34eafedd2fc2cfa25 removed some of the scaling values from input parameter list
-6cf681537f9c335780a06ec37ce79ddf9e7cd3aa Adding flags to set the version of Visit used in the python scripts
-667519f09c9b77896c7ff79c33e540120eadd9c0 added smooth barton bandis relation, and modified block solver for better performance...I think that the block solver modifictions are already in another branch.
-37ab2ecca5862f17f544fd68ff9058418ad65af0 GRAPE: merge from master after conflict resolution.
-6b08d4c48397a9709f033c7657082b92d1fe0835 fixed bug in parallel implicit contact
-6a5550982e0e1806537ff3d111e3843bd42c2e43 Added function calls to postprocess contact tractions and reset plastic slip fields
-bee90042c29c7212678684b3bc3f074ba449d108 Mesh skew angle can be negative
-d9d6b1c56472c8f62a5a5898d98cd2b9e938b64b Adding a flag to control the read/write behavior of shelve files in they python package
-699a1c975b8631f143272873a63170f01227475c modified defaults to turn on row scaling by default
-850dc518f86716e962240c01f4b05d655a207476 fixed incorrect global assembly of sparsity for ldbase
-8518ec3f1829871b68c4d717e12789abfe2c7448 Testing method to generate GEOS tables from Silo files
-6e5e04c999501c5f50abd744927d31b556c2c281 some edits for bad merge
-9f753b525ba355801875470b8bb78459dcf6f8d7 some edits for bad merge
-66d0519f7ac06b0f2642a907c78d1e99676a7136 Merge branch 'master' into feature/settgast/coupledMatrixFractureFlow
-f1dbb241a8cb866e853e5ed606e60176979609a0 Merge remote-tracking branch 'origin/feature/csrini/chris_dfn_contact' into feature/csrini/chris_dfn_contact
-f5bac734497ef12d4ad021938e1eeb916a297df6 Enabling python fracture package to append data to existing slv files
-422578861f5f72b5c608cfe9ba83edf562552927 GRAPE publish: updated log file UPDATE_LOG
-96ccfe8087ff95b2864879004e2f5ec34bb0391e GRAPE: ticked version to v3.0.20
-605fd256d30cc7e0d65aaf6f13c95cc676bb8b46 zero out damping and hg forces as part of update
-bb6f67209b6d8157581a43826745c630e3327c96 re-enabled stiffness damping, and added damping test problems
-78b3c91dceb2c1c918fe82a4e7020261b3ba4dce addition of stiffness based damping for explicit time integration
-b285559b0a3f9c886b624a90a0a6d62f63ee868d Sanitizing the git history in the Makefile
-32d3546f6fe080aa2838b07adf814f5bdb908b40 Fixed bug where ./xmdv/exported_data.slv was opened in current directory.
-b310fe6a57e8d6cabd3f4f6b25d635fe357739a5 Merge remote-tracking branch 'origin/feature/csrini/chris_dfn_contact' into feature/csrini/chris_dfn_contact
-1e6bc9c89cfbaf4bda25023e387f312eb043c866 Decoupling the heat and flow BCs in the heat flow solver
-2043f60194d6ad319edd52beef4ddd25618605c0 Increased the speed of microseismic post-processing significantly
-9e16851af57734ccffe62d93a5b8641c46498796 Fixed bug in wellbore_report.py: Call to plot.boundPlot() referred to a non-existant argument "pointType"
-8bc537f8950bc408eee176ae04182afcd477cd8b Fixed buggy glob approach to detecting xmdv directory that gave following error: Traceback (most recent call last):   File "wellbore_report.py", line 19, in <module>     if (not any(test) | appendExportedData):   File "/usr/apps/python/lib/python2.7/site-packages/numpy/core/fromnumeric.py", line 1850, in any     return arr.any(axis=axis, out=out)   File "/usr/apps/python/lib/python2.7/site-packages/numpy/core/_methods.py", line 38, in _any     return umr_any(a, axis, dtype, out, keepdims) TypeError: cannot perform reduce with flexible type
-e6d9fb21293704467faf928b2cdce98190690977 Allowing gravity to be specified as a vector in the main PPFS
-6f1f17b98b3d2a99d9a0b11606d0e03f36640d63 Added an option to read in GEOS tables into python package
-e636f87476cd7c352f6637ecb718dcdfc037fa5b Re-enabling cleanup in python fracture package
-76eb9fea98939064a058d5780bd22fd05bb672bd Fixing bug in fracture package metadata
-7f455d506d1f1dafaaebd2c6ab5832d54fe088f3 Fixing a flag in the python wellbore report
-08e6614da0b1c26338386273541d70474c360b52 Cleaned the thermal flow some related solvers up
-25cc20756e2139554b2a1e88cc1a7f52420b98f6 Enabled appending existing exported data in fracture package
-07e2f4edbce4ead65d5efc5d2378b7ceb27fa443 Added proppant extent plot to fracture package
-4b5054d568952a143f50b34ac8ad89ca6d6ddcd9 added option to nondimensionalize the system for implicit timestepping scheme
-2413260d213499d07862d23131a72cb9a074dddb Fixing merge conflicts
-a88599589f22b02cff7774f64d6017012415e6c3 Fixing merge conflicts...
-c90be044d328492e6d64530138a890683fdf0ffd Fixing merge conflicts...
-d110aad21d9c677b45ccbd4d5141cc30b3323c51 Merging with master
-287f4a7f2b6b3fc542149a09da8dd4e537db7eb4 Modifying the multiphase BC to match the rest of the base class
-423d6bda5945a821b4451d0dbc900498b0268ef2 Updating wellbore report script
-f368758488e3b70b16f229a285fff7bc8cbf0ef6 Applying formatting changes to python fracture, input packages
-96f4db939b27d2d359f30d6982b8f2c524cac792 Updating python plotting tools to make use of new data structure
-427db6c50005ad0927b74595dac79dc5f152009c changed rowScaling option to include option for row/col scaling
-e7dd699e172a50642d5ce82b9d669c3cc71acb2d Converting additional parts of python tools to use shelves instead of pickle
-a28df535309816c937a01ace9a876b21154665ed Adding microseismic processing tool, testing out python shelves for data storage
-8dd05b3a819956f6d0eb4b0bd8cef8049215421a Fixing row/column scaling in parallel
-1de1c424a04ac8bce4290aa4c5a61cc70cec84c8 Improving parallel xmdv file reading in fracture package
-2b88dce2af29acd26d0185d87ed3da6025b6e551 Testing methods for reading xmdv files in parallel, appending previous exports
-4f88a39deb6ba200ed5756ed14beb0d83941513c Including row/column scaling in SolverBase
-7786b86839d2156e79cf0ebf823f11dcb6e8421c Including row/column scaling in SolverBase
-f6e7d44523950d8cda1e9ef30bcbbbbda22eee14 Merge branch 'master' into feature/settgast/hydrofracture
-a32b0350a7c0409415493c2fe1497fa0bb081a5a Merge remote-tracking branch 'origin/feature/settgast/hydrofracture' into feature/settgast/hydrofracture
-a4744c264c2de8e54414425bed25afdb6c119b36 GRAPE publish: updated log file UPDATE_LOG
+ a4744c264c2de8e54414425bed25afdb6c119b36 GRAPE publish: updated log file UPDATE_LOG
 83aa25c2dff626f0fc3b5fe859acaa945451ac35 GRAPE: ticked version to v3.0.19
 0d5f1b07e7398c5ae7c782a2ca18dc7cdb155503 removed warnings
-9014f48373fe178d787b85c28912a1f40c4a8da3 added template instantiation for compilation on mac gcc
 b4b490493c853b5adc88acf784e1c88f29336eb4 Merge pull request #60 in GPAC/core from feature/csrini/contact_clean_up_and_speed_up_v2 to master
 35ac64ac225de9b2c37b07de3a9fce6001649efb Merge branch 'master' into feature/csrini/contact_clean_up_and_speed_up_v2
 1430e66528a1523b5d31664c232de3f2dc137618 Added a comment
 d358630274934d383ddb2935eacf947255832421 Fixed a bug in parallel
-0afec739ccd24f38b1b109957b8515e073f873d8 Improving elastic deformation correction in MS solver
 c5a7848135a2f8a63ed2b3e4b274afcdad1d1389 GRAPE publish: updated log file UPDATE_LOG
 f9cb40653d11a36533fbe4f6e3a367eeb17d5292 GRAPE: ticked version to v3.0.18
 9ad1e4f409cc81c3fc4559152405562a45b26bf4 modified .gitignore
 25a7f83249a4aaa40ef4fc3baf4614bffb6e683d restore some defaults, and modified grape config file to stop auto push/pull
-ccb5f2a05ff7d67152e8748dd4bd390ad4f48389 Improving noise level for dfn microseismic solver
 8848a340f13a5c76d74abc6039457ded07755843 some changes to pass tests
 9b1129c21f25e33a9c1e958d240ad9845ff9378d GRAPE: merge from master after conflict resolution.
 94f009c2ba04774003c3be9d0814bb77d7e6f6ba Merge pull request #58 in GPAC/core from feature/csrini/contact_clean_up_and_speed_up_v2 to master
@@ -333,203 +20,58 @@ bc6713e326099c32c4aabdef5e72b8bc85005380 changed some output text, and disabled 
 ca953aa72e91571e46ee42fdea103ac5340eb62d remove old code
 0e77631779b477ef04feed3a46a9e5ac95da4bfe made the assembly of conservation equation a little cleaner for mass/pressure option
 3c1d296d9751e1f6c41a8c33ebaa232639b6169a added mass DOF option to PPFSFVP
-6f872daff58c2bcd0fbc22f5ce1531689aedf885 Fixing bugs to enable switching between the implicit and explicit contact schemes in the hf solver
 d46ba4ed0d65dc808d3b7bbb2a4ed5ae99d75757 added input flags for some solver options, and added mass loss function to PPFVP
 ce934dabd666e58ad25c6f6130985aaad34085c9 Adding the contactTractions field only if implicit contact block is active
 1334156246e07539524caec3aaa363bdb91ce0bd Added a field to visualize contact tractions
-55b0e3aa2480dd81a914bf33480f1c726aa56d6d Merging with wellbore/ms changes
-45dcf7e4dc971bf5f49cf2417ae91fcdf7785dcd Modified microseismic plotting scripts
-700386cdd2a9a935090c6c2157438bb8a76e39fa Added initial pore pressure to the contact traction contribution
 3593b8085835bd397f85103fcd907817b5d1da63 Merge pull request #57 in GPAC/core from feature/csrini/contact_clean_up_and_speed_up_v2 to master
 65568acd23fce0be345d5a3bee16baa2f8f812fd The trial traction return mapping as well as consistent tangent calculations are now performed at Gauss Points and stored for speed. MultiplyArray function is also modified for speed.
-78683dbdecc0f6e8e01b0a0e39119a2b5a1ab9c7 Removing testing features for shell project
-417bc8be5a28beb997b1411497dce95122b31c97 Testing features for Shell project
-9606a56b5ddbf399c9ded62738fd0bc27dffeefe Making modifications to python plotting tools
-cfbb5e367d31338ef55a2afe9da1fe90f4113cdc Continued to clean up the heat transfer solver
-261072df0b3f7f531d343dc431d78cf52fdbcfda Added an error flag to the solver base class
-2c363b8cb781fd7e32005f927970d92a877e5e54 Updated the microseismic path in the wellbore report
-b9cbb71d8bd4ed33f3aec77c688426e0fd5b3607 Updating wellbore report plots
-57933347c61bca1757cbfdef0a01ee3b71c96b38 Updating wellbore report plots
 53fb89dfe40d5394e9ef81481a3fec3da96466b7 fix submodule version
-0b4245c100cdf69deb306a1c8b1894d30383ec0f Improving wellbore remeshing method
-5e9e8110f42648f471f0aeb9ae9e0bc8baddfa00 GRAPE: merge from feature/sherman/wellboreBugFix after conflict resolution.
-37a0197aa343c0265526b0cacd4fa7dd24d5126a Added method to calcluate microseismic extents for wellbore report
-a432611915ee74e035da3aa2b39740894ff44761 Modified aperture/pressure relaxation methods to make them time-scale independent
 adb3f41bf026abea726a1225607d53bee2cfb7c7 GRAPE: merge from origin/feature/settgast/hydrofracture after conflict resolution.
 1ea981117c485a774989c193b6247e4f4370a00a proper initialization of mass and density
 0c48617b2651eaa11108ef545dfaa46f55d11747 fixed sign error in hack contact table
-c0b94f842278438308874418749dff412969e6b6 Modifying default values for external microseismic processing
-eaecfee0c4307c116479c5c2a0bbc3cba6c49ffd Changing some default values for processing external microseismic data
-5f7c4e910043cef488950a2a9967656b46fba4cc Merge branch 'master' into feature/guo6/TracerTransportFV
-0a5f8d3e1ddd5d734e57844df22c3a94c9ffa50d Merge remote-tracking branch 'origin/master'
-787e4f468394d6d984b51feebf321c7b04fe7cf7 Reformatted the heat flow solver after merging master.  Milestone
-98c0db11f8557de2841b63aa40b1206d9dd4d768 Added option to limit the frequency of dfn microseismicity calculations
-e9ddf39ecce268cb90c17ff465c6dd0a6bc88e47 GRAPE: merge from master after conflict resolution.
-18bdf296cba0e13722aaefc3482fba434646daf6 Merged Pratanus thermal contact branch
-451d4b91d5f98c3e5014a225c2032965ed3977d1 Changing wellbore output to line mesh
-c10594dea9841bb2791ce73bd1bc7eb474a98d7b Testing method to add wellbore mesh entries
-c225555624020272457030c041c7b97830dd1467 Fixed a small bug
-f091a45949c04e014d78b7d327bd7dfca01f543c Some minor changes. need to commit before pull
-700fa79596f43e8974efc7e195359a0f83dfcb54 Merge branch 'feature/sherman/multiphaseTesting' into feature/sherman/wellbore_remeshing
-8bd1c854287ff8102e1379b5899180574a8c4c3c GRAPE: merge from feature/sherman/wellboreBugFix after conflict resolution.
 39188e9178c96ef591724d068f3522b992ad23fe Some adjustments to tests
 76a41280806284f6ff5af044bc0b416d82c7f8c2 Force time step size to align with solver application end time and output time
-5a0d6034b27b6879f7fd2d2c96585479d1f05919 Cleaned up Pratanus branch, need more testing
-451c3d31fc9f5a9a69d19dccba63ca5045fd5865 Modified thermal conductivity calculation for face
 af846c2dac8ac643ee38a5483c5de2bb448fda50 added back the nodal volume scaling to the displacement
-ceb91282a0beb24cad3de8a5f96a36c5acd883bd Added the option to make Carter leakoff dependent on viscosity
-16107dc8f7a470d923ef8188d836d269e63a440b Fixing bug in pumping schedule parser
-d2677241f3872a38e565bed162317192900747a3 Added method to parse pumping schedules to geos_inputs package
-20c392be17957cdf4c13f375c3bc87bfd3ef1b36 Fixing a bug in the python plotting tools
-2a9114a2f17ba28d5f824edf973d74b0f076cae9 Alowing the heat flow solver to have its own dt
-8d848ba01d7bbf6c76ac1e3afb83ed615c01dbdb modified .grapeconfig to disable sync when calling checkout
-a87b66877f15a5217c4427bc91c64a03679cb843 implemented use of stored element stiffness for explicit small strain linear elastic. 30% speedup
-ebf4ce515f33325bf24b2069a1ac738b191b4636 initialization for making things superfly
-ce890c1e8e025997e98dbf4b4c16c78dc4351fef use correct density for input of wellbore model
-7418c83ee4cb6cfb1c34fe78ef2b9ef9b144affd Modified SinglePhasePMFloThermalSolverFV to incorporate thermal contact after fracturing
 bc7772e3a770c82b9a2a216216c8d7ab1daf874e added method to leak off extra mass that is created when new faces are created
-bd80380d3666b80a098c477b93ac21caecc98b07 Modifying the way the python plotting scripts opens a visit engine
-393d807c939390a58b72fb617eccf64339b07c82 Re-enabling serial flow in multiphase solver
-59a64559584a5dd62dfdcc3d6de6cd620bc1e48e GRAPE: merge from feature/sherman/wellboreBugFix after conflict resolution.
-d87e4e7b216316582e034ad903e0dd36e2a85487 Modifying way python plotting tools exports data
 7398799b594f6c5d339d1330fe89efada891ffe3 GRAPE: merge from origin/feature/settgast/hydrofracture after conflict resolution.
 c99fc87281621140a781f6f3fc7c7141dd4e1b58 1) Added linearization option to PPFVP, 2) added Bilinear EOS and use in PPFVP
-d37677d2655dc050bb6d1c388d4b42c9b1ca75e1 Modifying the way the python plotting tools stores history
-27ab904f0c85514bc34f20419712e39a0ed3e75d Fixed a small inconsistency following again Randys advice
-fca04e750aa848add58fe8626c1503f62d047d32 Finished correcting the multiphase advection logic.  Needs more testing
-258504800bad8537a29a8dc046bd456e5d16df98 Adding multivariable BC to manage contact values in HF solver
 dc0223d8c48f8c20ccd710bda38bf90910f46a6e GRAPE: merge from origin/feature/settgast/hydrofracture after conflict resolution.
-38920264486f5802e394026f860b1e0dc671206a Corrected the treatment of gravity in postprocessing flow vector which has to be consistent with how its done in Assemble
-b7475449b86571799fb08b562d978750e5a733e7 Added option to offset Table1D in time
-ddadf2813e42be4525710fe72c369b0c090d6ba2 Adding settling time option to HF solver
-44e0b22381bd2b56572f21d6dbdba1b83d7a9ed0 Modifying rate/state friction model in HF solver
 1d9a108f0bb86c198852977f2a67f3721ec6b0c6 fixed bug in implicit hack-contact for hf. Also added a good portion of the overshoot protection for implicit contact
 7aaeb0179dd1383beedc34a572fbb74715bf11dc modified submodule commit
 89c2b0f5e4790edc45332910b2b84f49ae4d73de Merge remote-tracking branch 'origin/feature/settgast/hydrofracture' into feature/settgast/hydrofracture
 242da1b1617eb7e17b4f243f636b1d2985966916 changed the displacement penalty to the incremental displacement. added some output information.
-944fefda7a0a80cee77b65c6d200c6581f826555 Switched to pressure buffer from aperture butter, also diabled serial advection temporarily.
 e317c4615c4fd9310e2fe5e92000de2c0c2a1f46 changed verbose flag to an integer to allow for different levels of verbosity
-4a81142fa40bceed6a52e7cb467a1bcb8559d9ee Fixed a critical bug that has been fixed in a branch
-668256fbe9a000cb69eb88e3d36cb052b4c032f1 Improving simple rate-state friction model in HF solver
-77fec1a013dbcf9478208a4c2220b219ba5965e9 GRAPE: merge from feature/sherman/RateState_Hydrofracture after conflict resolution.
-2f0c46a5689363acddc89dce8a2003f42dfa71f0 Merging with master
-cb10811c865bcc129bd77c7e43f2462d5b474b43 GRAPE: merge from master after conflict resolution.
-cd48d8ab3baae2e96ea99dc460f6f2072886a18c Adding communication for DFN microseismic calculation
 c7105647c4f029a6fb042b0d5394b6e517e9b73e GRAPE: merge from origin/feature/settgast/hydrofracture after conflict resolution.
 1ee5add63a82f1494dc36615249571da2556f6b5 added mass calculation to PPFVP, and modified low permeability aperture hack
 d5bc5a4cfabec548194584b6b9776e718545b878 modify volume rate bc to use beginning of step density
 341fb394bccf0d97850b404f99696f17ab2f4bf2 fixed problem with PPFVP aperture table
 a3590ecfa419b8d584f3b3333d244e3f7b2114e3 register temporary fields in PPFVP::TimeStepSetup for use with explicitish solver
-70365cee718598f7b5e9377e31d205d0a5f1b5ab Testing the timing of terms in the multiphas solver
-5729da0c333487ace8f7ae6fa5969c51833e00c3 Improving python plotting tools, continuing to test multiphase solver
-d07b661e7197d36fb273fd5ea4cbe4e095a10f04 Implemented multipoint-flux-approximation(MPFA)-based two-phase flow solver
-9cee59dadb0abd6fd39de74f4435b2523ed6a69a Testing modifications to the multiphase solver to improve conservation
-b00222cfffa1a3ee8d705087e02616cef535b52c GRAPE: merge from feature/sherman/wellboreBugFix after conflict resolution.
-014868f604e735bb54f63195bdc262ce3e5967ae Fixing compiler warning in the PPFS base class
-bec98e05bbdf645cc79e06ed341a28f68449b828 Updating multiphase solver startup to use pointer pointer arrays similar to later in the function
-20e0265de970ea1667a96b57b7dc128ca44e317b Fixed bug in multiphase advection calculation, added plots to track multiphase fields in fracture package
 ca6b32ece75bc496a61f1930ea08881cd0ad7f5b modifications to permeablity difference method
-8a93b1078d8048a79ea55131e9c6c195381848f9 Fixing bug in proppant restart
-887f263be5c4e0cf0a7c00c9c56beff51bb46177 Modifying the python fracture sum plot
-8dc0660ae58744fd39c0df7e63e25536f137c6a7 Fixed bugs in dfn microseismicity calculation, upgraded python plotting tools
 ae00be3b33bd6c52e0a176c731d11c5c6ac0f409 add minimum permeability ratio in place of base aperture
-04878835d9c1734fadcc6811b07cd5e79393c314 Fixed a typo in the PPFS for viscosity calculation, working on dfn microseismicity
 152a2d5ceef1f9da465299f325a01afd763c2b96 synced nodal masses and volumes. added velocity to quasi-static lagrange mechanics solve
 f40727b06c533b1762f5ded0eb9891477156a771 Merge branch 'master' into feature/settgast/hydrofracture
 779c224fb66930b542598c6072a3bd20a88d78ee removed debug output for new contact
 e8aae7c19d25dfb170d60a59ec373b5bed4a0d4d contact stress table for HF solver
 9d7316d0cae94b8cdf4516cc8683939170821c7f fixed sign error in displacement penalty
 c449487923e3c82232efd2374f400151d8c68ccb modifications to the multilevel subsolver
-b6d57197c6921e2c065ab2431e167e3f364e6fbf added test problem to PPFVP
-099e54ff6d88663a403ffd5f18cb303456a4ed13 Working on DFN microseismicity solver
 f0790533649b805b4e06790c730dc0a6205cb971 sub region solve
 5baa93c116053dd377517272fc16d43a481de7e1 Merge branch 'master' into feature/settgast/hydrofracture
 62c106e3e75ecc175c7027cc7801e736b55c6b64 implementaion of subsystem solve based on distance from crack
-33c619bf83912d589cc91e3a2b2a8895458490a1 GRAPE: merge from master after conflict resolution.
 e069b510ba66581c3a6c0e3ab8375939a666b875 reenabled initializtion of aperture_n and volume_n in PPFVP...for some reason I disabled it??? I don't know why.
-f3e5d1be9adc11acdc8a4d7791ff01100a096f07 fixed bug in boundary condition for PPFVP when coupled with matrix flow solver
-136969f708835648006fcf11f4740665ed506163 modifying BC for proppant solver
-a8d0209e7db18d2c890a0486d85a530c7c50451b Adding BC option to the proppant solver
-6b1a7f00f6c32562f1c341db40d602bce61b63de Enabling verbose outputs, row scaling on proppant solver
-2d292638412c9badc81b05689793f7c1c7a9be44 Fixed typo in the PPFS base readxml function
 8b33917678dab5f429e088bbeaa83799d3ae71fd GRAPE: merge from master after conflict resolution.
-f575347269d8e2691f257aee4672da2d18e8f774 fix contact sparsity
-f9bbae426a0006b8487eacbb7493089a5d1b24f8 Adding viscosity cap for proppant solutions, working on DFN microseismicity
-97bfab60f5e843a02fe2834b0376d8e77a419fdf Merge branch 'master' into feature/settgast/coupledMatrixFractureFlow
 b89a832af62ed997ef822ed0361a76187a2e490e GRAPE publish: updated log file UPDATE_LOG
 ab70d54f25fb12973316b83965ddced9ada4d53d GRAPE: ticked version to v3.0.17
-7ab58f73ac8cafcfac229d1f76e6ae800cfb1f3a GRAPE: merge from feature/settgast/MechanicsSignChange after conflict resolution.
-264198d020d1fed40b99123459bd40a5d8411162 some sign changes for new rhs
 83e58b95fce6ac2184a8a46aa84f730a096cc31c changed signs on rhs for LagrangeSover, and PPFVP
-156bb95a3aa51607a274de8437a28a618887f0d1 Formatting updates for the PPFS base, microseismic solver
-a033980b822992ecd5b8c1d74105f47c338f269c Formatting updates for the wellbore solver
-44f9eec7586857abe6f2907247eb044685eac1fb Formatting updates for the PPFS
-ad79283633276316a73fb65f24ed4377585deae0 Adding in functions to process DFN microseismicity
-819234fbf2a8298299ab9fa374fa14e7fea57783 Merge branch 'master' into feature/settgast/coupledMatrixFractureFlow
-99ae3d1b5f2887c841df82be9d55571193633835 Merge remote-tracking branch 'origin/feature/sherman/wellboreBugFix' into feature/sherman/wellboreBugFix
-427dde26698aba6e7d6d36f681dd3459f614a5c3 Fixed the restart problem with metis - need Randy review
-b6e3f74c6900dc37fc3fa34c24f1b3992ec0ef67 Fixing issue with opening parallel visit engine in processing script
-8c3c216a7eb505e6bd87e521f346d17f2089b16f GRAPE: merge from origin/feature/sherman/wellboreBugFix after conflict resolution.
-89884cc72c49fac163c3f1581bf7ba6487191fd5 Fixing restart problem with wellbore solver
-087c0f48333caacf35082901d0f9436d2dcf199d disabled writing nodal stress fields by default
-4a7af695b1483118d0c440c59e5a06a6881ff0f2 added return of indicies from SetNumRowsAndTrilinosIndices() function so that non-default indexing can be used when generating the row map
-44ecda46d12fcf45a8eb43b31cbcd961d63696c7 Call an exception when the wellbore solver does not find any perforations
-8c5a66eec1cee33761aadbd8f4152505a10edb1f Merge remote-tracking branch 'origin/feature/sherman/wellboreBugFix' into feature/sherman/wellboreBugFix
-67d0e53f6ff05c746025b1dd67f94d3a69f03414 Reorganized PPFS proppant/multiphase update step
-e40834a848bb1d122d724b036ee91c7e7d778fe9 Merge remote-tracking branch 'origin/feature/sherman/wellboreBugFix' into feature/sherman/wellboreBugFix
-b85bada2269651f4f99addd3b9e3b2521a4b21d9 Stopped writing facenodal fields by default
-bf4533031299b1d3f61570e90ac63e8e3274657e Added option to change the maxFluxCoefficient in the proppant solver
-7913226435415caf43827060f0dc3ed9f65e260c GRAPE: merge from origin/feature/sherman/wellboreBugFix after conflict resolution.
-08911167465eb4f27338f8017f0e5799182bd765 Adding row-scaling to wellbore enabled problems
-cbc0a7ac72388a3cb2567debf6dc6b9628165b25 DFN ID propagation works in 3D
-b685a5e7dda0f33b51c12ebaa43f30ba6fd5ebeb intermediate fix for error in ordering of global dof
-2f39542341ecd528d457fd2574b25faa89d93f5e Added option to decimate ppfs debug data in script
-ef9890ba37ce515ec6e0159a0cdec544f49caea7 Fixed bug in PPFS debug script
-fb57dcd8fdab15c1ceb543c5e95ecffbb6375dea Writing out errors in fractunator, adding script to parse PPFS outputs
 733fdf6abbf5737061184ebb3b14043261b18733 GRAPE: merge from origin/feature/settgast/hydrofracture after conflict resolution.
-f8da67eaa258ed7127f75308178f0824e74a58fa unified filling of m_syncfield in master solvers, and fixed a bug with parallel in fracturematrix solver
-160b469c2ef94e29697557322fec3a58a246175a changed sign on residual, and changed sign on incremental update. Coupled fracture/matrix flow works in serial
-2b2e3e3a48f152a791adcf34aa893a0c461bd2d7 re-enabled matrixflow driving simualtions
-3dadbdd620cee4aa083b6228edb39412bbb8437a messed up something...debugging
-232f1b9548347a180634fbcac4e3f45aef2d71df removed use of m_dt from fracmatsolver
-c705467191819cf65030649d3ba719b55c30bb21 removed time argument from SystemSetup() solver functions
-535e189203e553425da4d1d77ce4e332ceca161e added matrix solver subsolve to pp solve
 63053f898eb5e591080db1af70cce50836c85014 Modified ini comm in lag small strain to take care the new explicit dynamic integration
-18adcd7569f1cb173b5767c9168fbf6a62cbee6a FractureMatrixFlowSolverFV coupled with PPFVP with FMFSFV in the driver seat
-f11feb3a1caf7cf1360dabe41baa82c349f02e64 GRAPE: merge from master after conflict resolution.
-5cde47bd1e6f22e8566aeb2317a9d5695d6c7f47 Added method to mark pre-existing DFN faces in the fractunator
-d473dd30edd7df611540593a993d5afb49a0a9ce Fixing segfault in mesh remapping function
-1f88d92da7827c5b183ea771666170c643b6f5c2 Fixed segfault with mesh mapping function call
-5d891bba8bbc2423efa047af66cbbc65c3ac48ed added test files for fracturematrix flow
-e285f62d48728499797b81b8f6278cf60ef5b752 GRAPE: merge from master after conflict resolution.
-1665bba81b417373cbf96ee9d29b1afff4e15961 added new fields fluidPressure and fluidDensity. Added offset to ppvfp functions to allow for coupling
 38444b6e11d474c037f7bd224f721cc83b58ff40 GRAPE publish: updated log file UPDATE_LOG
 2dd91f606dcf3b474d3bc1cc01ffca9fc9cd4ee1 GRAPE: ticked version to v3.0.16
 5e8fc2aa0b15bb62ed0ca9d34db0451709b15ef6 added flowsolver.ats file
 146b5583a09129677faa1c3118172a5a65e953df modfications to PPFVP for restart
-c1797a19821664eeca11015024895f206c518932 GRAPE: merge from origin/feature/sherman/wellboreBugFix after conflict resolution.
-6ce28e38144641bf5a6271a51e2c5fa335628bf1 Move multiphase functions to PPFS base class
-594463758f9b289749fe92404b3bde35c2f9137d GRAPE: merge from origin/feature/sherman/wellboreBugFix after conflict resolution.
-0aaabc58220d453a943b0c244f3767da0cb42d2e Some minor changes on standard output information from pp flow
 27b31560df09f7967e1fcd74a0965a4237c32dfd removed use of previous step information on quasistatic mechanics update
-a099e9e9fcbcab4c7219cfb126df6a10133b06f6 Fixed cosmetic issue with multiphase advection volume fraction field
-2bbbed517746939123b7a46a9aad778b40b6096c Changed direction of values in SW4 topogrophy read script
-495ee1dfcd5f6a0e24c3755690d035d7a26a8f8d GRAPE: merge from master after conflict resolution.
-e6dcd467e61a943901f4a02b0ab528e4ab4da7b1 moved some of the sytem setup around to be more modular
-bfc9ad7009acdea93be201c0cda50c1747883e3b Updating SW4 Pfile example script
-5cd5741bd5bdfc683266314df8fccbe23ca41261 Fixed coordinate transform in SW4 Pfile read script
-b1de08ba5357a5d7b776f1f253ab63ae98bbce01 Fixed ghostRank check error in PPFS
 0e373da48fb44d2f1d11be73a794cee0a81005e0 GRAPE: merge from master after conflict resolution.
-8643f553deaad183bc3ec650e87bdda6d919a780 Testing for partitioning bugs in ppfs gravity logic
-f1d25432940072e094692a8ecb5d23091c04d201 Fixed sign error in multiphase gravity calculation
 f453c7525fc9a818e991bcfd67a79c8842c80ef8 added gravity to PPFVP
-5303cdce2a894651f4e2b305395dcb1287403d4a Adding gravity to interface reconstruction logic
-2cf60e71f9b5487fa90e6ceb80a3eb60809381e0 Adding gravity to interface reconstruction logic
-636d66a25a9060d2da3082bab101f84dfcaad9c9 Added gravity logic to multiphase solver
-56ea8705964c1ebc4ec7f25a4279a9b3119043f1 Fixed error in wellbore report script
 933dbf77d7b11761c94ce6b00d3934fd4b77ab08 implemented more accurate incremental update to PPFVP
-121d333625604518f2d8f8938114a9a2f44fb0f2 Removing unused variable from wellbore solver
-9021099c858d058ba33c034c89ff5909bee1eac5 Fixing bug in wellbore flow solver BC
 949a45d13f39a7e6f1b5054a2800251ed00b0f80 Improved the treatment of gravity in flow vector visualization
 63dd5489dafe7a04069d285ca94926ab66c91ca8 Added leak off to the 3D HF test but still have problem with the restart results
 f3c0131a8e325324a146d7393a30b7dc2aa11a98 added incompressible flow and steady state flow option to PPFVP
@@ -611,7 +153,6 @@ a1397ff90e10477e81b40bc79fbfc5d9fc6fb13a GRAPE: ticked version to v3.0.12
 65339a095c0cfd84b35075a17f0c8d843ae3a637 modified test problems for new timestep
 ad0d648408fdbefb12b2cb61cec8aeea99af189d Merge remote-tracking branch 'origin/master'
 69bac5760601605e1264a99676375efdbf0b3479 Modified a few entries in the PPFS base class
-5e0a4460fe7ccb45f572827fde9926b831f32cca GRAPE: merge from master after conflict resolution.
 a8e9e5fc3766d176003b165487dd1fa392123de3 Added some comments
 d4c37936eb0e6a56ccd21d6d30b63a6fe9d5cc70 fixed bug in large strain timestep calculation
 3df6fb42ec560f0ee85177f986c7aac5f3be9fdc GRAPE: merge from master after conflict resolution.
@@ -631,7 +172,6 @@ c554835e1dbe0562d5d26092d30c5b874b5d948d GRAPE: ticked version to v3.0.11
 e462c6f43b23ca41896c5394275cc0a26241ef03 removed bug in nodal mass calc. went back to previous calculation, but zeroed mass prior to calc.
 2f63fa581740befa6907b129df8640c32c414b73 GRAPE: merge from master after conflict resolution.
 77a3bccf08b73a392d8757eb51e45541899fdbaf added table option for effective aperture
-5cf8a4fc82760a1c0d6c76616257270fea3a38fb Nothing
 6ef007339f7ad1bf4bceac796de7a90075c55711 Removing some redundant calls from new PPFS
 05e5662b7b8380274d669a0f175aab99de9f94f6 Fixing name of a new field in PPFS
 5356abd125629a0d7c5ffbe53e4374b25201a392 GRAPE: merge from master after conflict resolution.
@@ -641,12 +181,8 @@ e462c6f43b23ca41896c5394275cc0a26241ef03 removed bug in nodal mass calc. went ba
 2b505c6f21144abeddf57470f869a147656f6629 Reoragnizing ppfs to better accomodate multiphase and proppant fields
 a113dcf29a2caf4983d9c77c9ff95bd4932e386c Stopped autofilling empty cells. Fixed a logic bug in leaking off calculationg
 dadadec52f2b3c98d52269597a269002ecbbcf5e added hack to counteract low permeability tip elements
-f0e3b782154aac4b72e9cdca0e62f9133b7872d3 GRAPE: merge from master after conflict resolution.
 5bbdb16fb8f082ca243c4ff4298df29fbe0d003f Invokes elem temperature BC in HF solver for Pratanus project
-8b2d88a299a63df04d522d65c7e34bb75660c12c Minor correction of the reference water viscosity
-4e9e7197e00082631f7ef7e5755aa4e2c8db7759 Added updateWaterViscosity in SinglePhasePMFlowThermalSolver
 018de7f10b9e05f58ffc17e18cce2325404c0dbd Fixing compile warnings in wellbore solver
-1fc49ba1b226730a84a39fa554769131f2766176 GRAPE: merge from master after conflict resolution.
 9d07d915567c1e5ff0c5cb119fd1739699230055 GRAPE: merge from master after conflict resolution.
 a4dd38c9d3a5cb86a6293a399a454247ad186308 Merge remote-tracking branch 'origin/master'
 487ff7bf9947fea117c45b5d2ebb104b4ec4fd55 Incorporating proppant and multiphase capabilities
@@ -657,12 +193,8 @@ edade66331e1575b2cc31467e16f0aeb575c4e26 GRAPE: ticked version to v3.0.10
 1dee6a55503dd79c57cc4ec884783d195738f408 Accidentally ruined the link to test baseline. Correcting
 2723b11ef26b8657474fc453e0eefa12eb795728 More changes to the tests
 82b24ccd91dc0549a18c897162117d0cbb7c3806 A few small changes to make the HFPM test work again
-bfb2e1b21632a12441f2ff9911b5c13f2fe6a721 Modified geometric parameters based on fractured or unfractured conditions
 41512234d8afc0f986ff77a3a800e51ae3d6afda Added option to change multiphase mixing criteria
 73a1f3cd79e3f2276da24e2a7642e552f2f02b29 Added bulk modulus field for multiphase solver
-286114487494c62369374a66c85b9cb34a151772 Wrote some hints for Pratanu to enable heat transfer across fractures
-911739a63a486cefa453009c7908acf073be8155 Merge branch 'feature/roy23/thermal_contact' of ssh://cz-stash.llnl.gov:7999/gpac/core into feature/roy23/thermal_contact
-ba6c13e9f3b80d420964ccca4e7ac46657474f50 Added convective heat flux boundary conditions
 074eecee06d95bec2d6530eb999e26094a484ac5 Cleaned up the logic of flipping signs for SIF.  This time it should be right.
 501ebda2d04e9af8ffe9b7dc3e1d057b91e321ec Adding communication to multiphase advection solver
 8330f6de49d7b63dbe97b4a290f48290b39d42c9 GRAPE: merge from master after conflict resolution.
@@ -673,7 +205,6 @@ b2ed0cee4550c4c9d132bb0cdd900713a168d553 Merge remote-tracking branch 'origin/ma
 a72c6ca57b9a8d03bfdf9f61e7a30b09a951c8c4 removing unused variable from multiphase reference density calculation
 3761a14f7d6ac640b6e9b2a9ae1e10a2073da6f7 Wired in a simple advection scheme for tracer fields
 70778d28dbb04319d64463c1554f77340c7c6680 Changed a logic in PPFlowSolver so it can handle a single face
-eda3a8c151f2b23b18da082e25f3655926f7a1be A quick fix on SinglePhasePMFlowThermalSolverFV to allow restart
 da6340f16635f97df618eea75650fa0a4edd0f41 GRAPE publish: updated log file UPDATE_LOG
 6574b38a8de979a816b0647ab6d2e20ef228f6a1 GRAPE: ticked version to v3.0.9
 4de7c914454b54058d30ebcbd5293c34834f5fa1 removed some of the 'unused parameter' warnings. re-enabled the flag to ignore these...there are too many
@@ -689,7 +220,6 @@ a8d8d912aa275643bff74768958b33bf2bf96f93 re-sync proprietary_OK4Export submodule
 6d887eea5ecc52821988e4169b66b58ccf608cef Merge pull request #40 in GPAC/core from feature/GEOS-17-HighLeak to master
 68295e191e17096ec7678fbe18f361132a2c15b1 Merge remote-tracking branch 'origin/master'
 15ab556f791c0bc5b7561a6ec371295d8b17d61a Added a min hydro aperture parameter to deal with specific problems in benchmarking against high leak solutions which demands a small zero stress aperture
-89571f4cfd63bf2a73d7b11a78a1327ac6259ff8 clean up FractureMatrixFlowSolverFV, make it work for matrix flow simulation and also add a test case (test-matrix-flow.xml)
 9fe316f639d328943b67b7fafafe26a4b0569e0b GRAPE: merge from master after conflict resolution.
 9adf8c7e1d23dc7c54fffc78495d3b3853f51a02 Fixed a bug that could give SIF_I the wrong sign. Also had to fix somethng seems to be overlooked by Randy to get it compile.
 8811b039b8328902cf8dfbf7ab51882db63b65f9 A few changes to make large leak off case work.  mainly by allowing temporary negative mass in cell
@@ -701,8 +231,6 @@ a8d8d912aa275643bff74768958b33bf2bf96f93 re-sync proprietary_OK4Export submodule
 46eabac8c6c2644dbb4218397e9def85a0d5cc21 removed some redundant code
 0250792567290f031adfa43e04e77658c80967be GRAPE publish: updated log file UPDATE_LOG
 399752e9401d5528f6ff1b25460043749101d3ce GRAPE: ticked version to v3.0.8
-2dfa6909ecbfa1f9f2ce79504409c5ae45993775 some cleanup and formatting changes to FractureMatrixFlowSolverFV
-b11947f501bfa338f448efc247b60bab2546cab2 initial commit of new FractureMatrixFlowSolverFV, which extends the MatrixFlowSolverFV to include flow in the fracture.
 ddfd43faccad9e99b685df1ca40ebb49feab7d77 Changing length scale in perf loss to be the perf diameter
 a215697ab0e78d4d6ba4c8fc28fb1000bcfc8255 removed defunct test from the ats
 19cc88e9846f50792df2cfff2c59ff46bd2c8dee GRAPE: merge from master after conflict resolution.
@@ -728,7 +256,6 @@ cd3489abce2299d1b19bc81c7fbcd9d22b6fb249 First revision of scripts for extractin
 400e204383e2fbc4686a106bf4afa94b1b3d0c29 Added method to transform GEOS generated meshes using tables
 7beedebf715162359b1cd29990a1c464b5243e2f added inertial contributions
 e7aa85f5de96784127b439b5b8ef55f9c6b8710d Fixes to AMG to better handle distorted grid
-3c792cb587a9489aedc928d85691bf13a7092132 Added gravity to SinglePhasePMFlowThermalFV and PorousTracerTransportFV
 2034690bb7831311ba5f372d9597130e2410e2fe modififed preconditioner setup
 7bc374656d7ab4b58a8dc1ce23e65cac4d60b243 Modifying initialization of microseismic elements
 90416391dd1abc082d5920e685863cd26319fda5 Merge pull request #35 in GPAC/core from feature/fu4/fixSIFagain to master
@@ -738,7 +265,6 @@ e36f8f64f2be1258d0d387ae4c26d554b59cd52b Merge branch 'master' into feature/fu4/
 1bb8428504fc969fe1cc3e5fe17732be5840f20f added new fields for approximation to end of step data
 42b07e906e1b67de27fa390ded63a4cf64f2421b update submodule proprietaryOK from last push
 78c74cf01f70fccd89f3bfa4e8aabc0f67604feb removed aperture transition point from contact offset
-10bcedfba8b5116583cd4de8d1e45ec343b01aa1 Merged with origin master
 5e21b7e44c6b803331df2ebca1133f693ff689c3 Changed a variable name to make more readable
 b9eb51dcb9474e58989aeae5527b5b0495d930b4 Use opening based SIF calculation if topology of trailing edge might be incomplete
 480f8df1b3e91133e2d68540582a682e6974001f Merge remote-tracking branch 'origin/feature/settgast_hydrofracture' into feature/settgast_hydrofracture
@@ -762,14 +288,11 @@ f73373c10d10b090894d09e71716c7db5307568f submodule change
 2d5557a1ae580267b8e066a65c614457faa1ff08 Merge the inital stress branch into this branch. Had to resolve conflict with submodulethat does not really exist
 2c2ad5b206defa3cd48a2f8f1d7257913401b196 Fixing some formatting errors in the parallelplateflowsolver
 b2e936a882e02bff9c50943134efe80e99113310 fixed error in test file
-6e5b3e2b8f565569bbb8b6fc76370e6eb35d60f0 Added randmom factor in facestrength to introduce non-homogeneity in the material strength
 45704f0e99e9bb151a2253ba3513817d9ad46ae9 added parallel consideration for reduction factor....duh
 fd3ff0d0172b4e43dffba6c537bdafb59dc3c33d added limiter to application of incremental displacement solution of linear systerm due to contact initiation/separation. Also unified the m_trilinosIndexStr between SolverBase and Lagrange solvers.
 149199901d1f55994c4b909621dc56cb353384da Nothing
 6b96b52e3dbb3925d531216d4c60adea733f2128 Fixed method for removing excess stress on microseismic elements
-95da28a807c566f3c986ee644e54785ddf7cd68a Minor change of a defaul value
 b791d851bed3c27484fecb45f6b7ad78083ed9aa updating submodules to correct version after manual merge
-56b1ac689c5f36b898f5df0f24adeb51472be3fb Mering with master
 4af0128a670e2d2974c3942221b30e9ec6c80d08 GRAPE: merge from master after conflict resolution.
 27803ecc3b324576099891350830531008a5a7ae Merge pull request #21 in GPAC/core from feature/wang85/elemgravity to master
 3856927507cb7f3f9491b1af960fa59bd02ad9a0 GRAPE: merge from master after conflict resolution.
@@ -824,23 +347,18 @@ d5bbf6c54d14356b86564215b4b98d2113aa8013 Wired wellbore BC into ParallelPlateFlo
 f763dd34d67303f61dc3cf0871968c98dbcde161 Merge branch 'master' into feature/rrsettgast/initialStress
 db6052919c0f2d8a627049901c67f5381b4e6348 added reference stress to linear elastic small strain formulation
 d4bc4a7fd0e1ae5fec459a5986893548b97e6b0a starting to work on implicit version of BC
-438d6c100aba16745888b7306e777df5755d8111 Adding simple rate/state contact to HF solver
 f42e1122dbcc241bb60ac382054bea138e66175c Merge pull request #28 in GPAC/core from feature/brigingFactorMerge to master
 204c7b7ead20b3c7106675b1be32956627370285 GRAPE: merge from master after conflict resolution.
 f9f65125e2fa2f58bfb1ff16399692a6b6506c41 converted volumerateBC to a combined volume rate bc
 78326d589cc997f215d15e5df4f21a4aa7e63281 fixed bug with initializtion of aperture and volume for new faces. Also added reduction in fluid pressure for negative pressures when applied to faces
 3318f2444e6e4365b4afcc3b8c9780d8ff60e59e various attempts at applying pressure cutoff via a pressure boundary condition type application. Problems with validity of previous solution cause invalid solutions.
-0446c9144d2ea83a6d4e3ac608a6df83eab7adc1 Changed porosity into aperture/fractureLayerThickness to correct the flow and tracer transport in fracture elements.
 06c5f42f226c1f515757c2f613bb3cde7756afbe fixed some inconsistent communications calls. added contact offset to PPFVP and HF solvers
 e61b8e562e85babe17f6f26ec0ad04659d9a42cd Merge pull request #27 in GPAC/core from feature/fu4/skewedmesh to master
 cce1e722c137389cd3dece0262654b089e3949de Reverted a data type change to avoid rebaselining tests
-8dcb19d03e87db12971756d10f5c1684b4036f0a Minor clean up. Bin will clean more
 323b0b90ecc2195375ce56aae7324566f6547070 Allowing internal mesh to be skewed by a given angle to accommodate arbitrary joint angles
-dbf0e0d3d05bcf95d464bb58a9970deba018e853 Cleaned up PorousTracerTransportFV
 e225230f99ac02e305853ae4711baf6ba1184cbc removing reference to c++ type in joint set generator
 2382a6fa3906ede6e9d90fae73851c61ba06b2b4 Merge pull request #25 in GPAC/core from feature/fu4/hfcleanupv2 to master
 9e4bc4dd3e38424645453266a74ccd0a982ddd40 added start and end time for BC application. re-enabled node-node contact in HF. fixed bug in BC application for coupled solver
-4702aad5bfc948548c57f78f2925e7f075a65502 Developed a new solver PorousTracerTransportFV
 b334fd0a4e1caa45dacf07107447e7d6c111401c added output message for fracture
 bb84a07484cebf113940bb24d2886c6f1cb9599e Making the pressure cap a simple cutoff
 b6a6139d0e67838ffedcc1e33add28f6ebc42e5a A few fixes and changes to pass the tests and updated two tests to use the FV matrix flow soalver

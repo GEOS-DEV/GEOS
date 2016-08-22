@@ -110,6 +110,8 @@ public:
                                   const realT scalingFactor,
                                   PhysicalDomainT& domain,
                                   const localIndex dofOffset  );
+  bool m_staticKMatrix;
+
 
 private:
   

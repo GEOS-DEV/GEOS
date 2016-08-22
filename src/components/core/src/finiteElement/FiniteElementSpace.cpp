@@ -14,40 +14,40 @@ using namespace dataRepository;
 
 
 
-FiniteElementSpace::FiniteElementSpace( std::string const & name, WrapperCollection * const parent ):
-    WrapperCollection(name,parent)
+FiniteElementSpace::FiniteElementSpace( std::string const & name, SynchronizedGroup * const parent ) :
+  SynchronizedGroup(name,parent)
 {}
 
 FiniteElementSpace::~FiniteElementSpace()
 {}
 
 
-void FiniteElementSpace::Registration( dataRepository::WrapperCollection * const parent )
+void FiniteElementSpace::Registration( dataRepository::SynchronizedGroup * const parent )
 {
-  parent->RegisterChildWrapperCollection<WrapperCollection>(keys::FEM_Nodes);
-  parent->RegisterChildWrapperCollection<WrapperCollection>(keys::FEM_Elements);
+  parent->RegisterGroup<SynchronizedGroup>(keys::FEM_Nodes);
+  parent->RegisterGroup<SynchronizedGroup>(keys::FEM_Elements);
 }
 
 
 
-WrapperCollection & FiniteElementSpace::getNodeManager()
+SynchronizedGroup & FiniteElementSpace::getNodeManager()
 {
-  return GetChildWrapperCollection<DomainPartition>(keys::FEM_Nodes);
+  return GetGroup<DomainPartition>(keys::FEM_Nodes);
 }
 
-WrapperCollection & FiniteElementSpace::getEdgeManager()
+SynchronizedGroup & FiniteElementSpace::getEdgeManager()
 {
-  return GetChildWrapperCollection<WrapperCollection>(keys::FEM_Nodes);
+  return GetGroup<SynchronizedGroup>(keys::FEM_Nodes);
 }
 
-WrapperCollection & FiniteElementSpace::getFaceManager()
+SynchronizedGroup & FiniteElementSpace::getFaceManager()
 {
-  return GetChildWrapperCollection<WrapperCollection>(keys::FEM_Faces);
+  return GetGroup<SynchronizedGroup>(keys::FEM_Faces);
 }
 
-WrapperCollection & FiniteElementSpace::getElementManager()
+SynchronizedGroup & FiniteElementSpace::getElementManager()
 {
-  return GetChildWrapperCollection<WrapperCollection>(keys::FEM_Elements);
+  return GetGroup<SynchronizedGroup>(keys::FEM_Elements);
 }
 
 

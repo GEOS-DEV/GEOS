@@ -8,8 +8,8 @@
 #ifndef VOLUMEKERNEL_H_
 #define VOLUMEKERNEL_H_
 
+#include "../TensorT.old/R1TensorT.h"
 #include "Interpolation/InterpolantBaseT.h"
-#include "TensorT/R1TensorT.h"
 
 /**
  * @author Scott Johnson

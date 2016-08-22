@@ -5,15 +5,16 @@
  *      Author: settgast
  */
 
-#ifndef CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_
-#define CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_
+#ifndef GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
+#define GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
 
 #include "sidre/sidre.hpp"
 #include "KeyNames.hpp"
 #include "common/DataTypes.hpp"
 #include "SFINAE_Macros.hpp"
-#include "WrapperBase.hpp"
 #include <type_traits>
+
+#include "ViewWrapperBase.hpp"
 
 namespace geosx
 {
@@ -21,13 +22,13 @@ namespace dataRepository
 {
 
 template< typename T >
-class Wrapper : public WrapperBase
+class ViewWrapper : public ViewWrapperBase
 {
 
 public:
-  explicit Wrapper( std::string const & name,
-                    WrapperCollection * const parent ) :
-    WrapperBase(name,parent)
+  explicit ViewWrapper( std::string const & name,
+                        SynchronizedGroup * const parent ) :
+    ViewWrapperBase(name,parent)
   {
     // set up properties of sidre::DataView
     if( std::is_array<T>::value )
@@ -38,31 +39,31 @@ public:
     }
   }
 
-  virtual ~Wrapper() noexcept override final {}
+  virtual ~ViewWrapper() noexcept override final {}
 
-  Wrapper( Wrapper const & source ) :
+  ViewWrapper( ViewWrapper const & source ) :
     m_data(source.m_data)
   {}
 
-  Wrapper( Wrapper&& source ) :
+  ViewWrapper( ViewWrapper&& source ) :
     m_data( std::move(source.m_data) )
   {}
 
-  Wrapper& operator=( Wrapper const & source )
+  ViewWrapper& operator=( ViewWrapper const & source )
   {
     m_data = source.m_data;
   }
 
-  Wrapper& operator=( Wrapper && source )
+  ViewWrapper& operator=( ViewWrapper && source )
   {
     m_data = std::move(source.m_data);
   }
 
 
-  static std::unique_ptr<WrapperBase> Factory( std::string const & name,
-                                               WrapperCollection * const parent )
+  static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
+                                                   SynchronizedGroup * const parent )
   {
-    return std::move(std::make_unique<Wrapper<T> >( name, parent ) );
+    return std::move(std::make_unique<ViewWrapper<T> >( name, parent ) );
   }
 
 
@@ -75,12 +76,12 @@ public:
   {
     HAS_MEMBER_FUNCTION(empty,bool,const,,)
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_empty<U>::value, bool>::type empty(Wrapper const * parent)
+    static typename std::enable_if<has_memberfunction_empty<U>::value, bool>::type empty(ViewWrapper const * parent)
     {
       return parent->m_data.empty();
     }
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_empty<U>::value, bool>::type empty(Wrapper const * parent)
+    static typename std::enable_if<!has_memberfunction_empty<U>::value, bool>::type empty(ViewWrapper const * parent)
     {
       return parent;
     }
@@ -94,12 +95,12 @@ public:
   {
     HAS_MEMBER_FUNCTION(size,std::size_t,const,,)
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_size<U>::value, std::size_t>::type size(Wrapper const * parent)
+    static typename std::enable_if<has_memberfunction_size<U>::value, std::size_t>::type size(ViewWrapper const * parent)
     {
       return parent->m_data.size();
     }
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_size<U>::value, std::size_t>::type size(Wrapper const * )
+    static typename std::enable_if<!has_memberfunction_size<U>::value, std::size_t>::type size(ViewWrapper const * )
     {
       return 0;//parent->m_data;
     }
@@ -114,12 +115,12 @@ public:
   {
     HAS_MEMBER_FUNCTION(reserve, void, ,VA_LIST(std::size_t),VA_LIST(std::size_t(1)) )
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_reserve<U>::value, void>::type reserve(Wrapper * const parent, std::size_t new_cap)
+    static typename std::enable_if<has_memberfunction_reserve<U>::value, void>::type reserve(ViewWrapper * const parent, std::size_t new_cap)
     {
       return parent->m_data.reserve(new_cap);
     }
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_reserve<U>::value, void>::type reserve(Wrapper * const, std::size_t )
+    static typename std::enable_if<!has_memberfunction_reserve<U>::value, void>::type reserve(ViewWrapper * const, std::size_t )
     {
       return; //parent->m_data;
     }
@@ -132,66 +133,83 @@ public:
 
 
   HAS_MEMBER_FUNCTION(capacity,std::size_t,const,,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,capacity,std::size_t,const)
+  CONDITIONAL_VIRTUAL_FUNCTION0(ViewWrapper<T>,capacity,std::size_t,const)
 
   HAS_MEMBER_FUNCTION(max_size,std::size_t,const,,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,max_size,std::size_t,const)
+  CONDITIONAL_VIRTUAL_FUNCTION0(ViewWrapper<T>,max_size,std::size_t,const)
 
   HAS_MEMBER_FUNCTION(clear,void,,,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,clear,void,)
+  CONDITIONAL_VIRTUAL_FUNCTION0(ViewWrapper<T>,clear,void,)
 
   HAS_MEMBER_FUNCTION(insert,void,,,)
-  CONDITIONAL_VIRTUAL_FUNCTION0(Wrapper<T>,insert,void,)
+  CONDITIONAL_VIRTUAL_FUNCTION0(ViewWrapper<T>,insert,void,)
 
 //  HAS_MEMBER_FUNCTION(resize, void, std::size_t(1) )
   HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(std::size_t), VA_LIST(std::size_t(1)) )
-  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,resize, void,, VA_LIST(std::size_t a), VA_LIST(a) )
+  CONDITIONAL_VIRTUAL_FUNCTION( ViewWrapper<T>,resize, void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
-  template<class U=T, bool has = cxx_utilities::has_pointer_type<U>::value >
+  template< class U=T,
+            bool HASPOINTERTYPE = cxx_utilities::has_pointer_type<U>::value,
+            bool ISSTRING = std::is_same<U,std::string>::value >
   struct Get_Type
   {
     typedef U*       type;
     typedef const U* const_type;
   };
   template<class U>
-  struct Get_Type<U, true>
+  struct Get_Type<U, true, false>
   {
     typedef typename U::pointer       type;
     typedef typename U::const_pointer const_type;
   };
+  template<class U>
+  struct Get_Type<U, true, true>
+  {
+    typedef U &       type;
+    typedef U const & const_type;
+  };
+
+
   using rtype       = typename Get_Type<T>::type;
   using rtype_const = typename Get_Type<T>::const_type;
 
 
   HAS_MEMBER_FUNCTION(data,rtype,,,)
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,string>::value, rtype>::type data()
+  typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
+  data()
   {
     return m_data.data();
   }
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value && std::is_same<U,string>::value, U&>::type data()
+  typename std::enable_if<std::is_same<U,std::string>::value, rtype>::type
+  data()
   {
     return m_data;
   }
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value, U*>::type data()
+  typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
+  data()
   {
     return &m_data;
   }
 
+
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,string>::value, rtype_const>::type data() const
+  typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,string>::value, rtype_const>::type
+  data() const
   {
     return m_data.data();
   }
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value && std::is_same<U,string>::value, U const &>::type data() const
+  typename std::enable_if<std::is_same<U,std::string>::value, rtype>::type
+  data() const
   {
     return m_data;
   }
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value, U const *>::type data() const
+  typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
+  data() const
   {
     return &m_data;
   }
@@ -206,7 +224,7 @@ private:
 public:
   T m_data;
 
-  Wrapper() = delete;
+  ViewWrapper() = delete;
 };
 
 

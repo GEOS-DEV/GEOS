@@ -46,7 +46,7 @@
 #ifndef EXTERNALFACESTRUCTS_H_
 #define EXTERNALFACESTRUCTS_H_
 
-#include "Common.h"
+#include "Common/Common.h"
 
 struct ExternalFaceStruct
 {

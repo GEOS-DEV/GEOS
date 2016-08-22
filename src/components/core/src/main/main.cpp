@@ -2,7 +2,7 @@
 #include <slic/GenericOutputStream.hpp>
 #include <iostream>
 
-#include "dataRepository/WrapperCollection.hpp"
+#include "../dataRepository/SynchronizedGroup.hpp"
 #include "PhysicsSolvers/SolidMechanicsLagrangianFEM.hpp"
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
