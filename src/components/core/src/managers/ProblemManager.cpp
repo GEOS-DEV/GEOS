@@ -32,7 +32,7 @@ void ProblemManager::Registration( dataRepository::SynchronizedGroup * const )
   RegisterGroup<DomainPartition>(keys::domain);
   RegisterGroup<SynchronizedGroup>("solvers");
 
-  RegisterWrapper< std::unordered_map<string,string> >("simulationParameterMap");
+  RegisterViewWrapper< std::unordered_map<string,string> >("simulationParameterMap");
 }
 
 void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
@@ -120,7 +120,7 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
       else if( stringutilities::streq( std::string("write_XML"), long_options[option_index].name ) )
       {
         m_doWriteXML = true;
-        RegisterWrapper<string>("xmlOutputFileName").reference() = optarg;
+        RegisterViewWrapper<string>("xmlOutputFileName").reference() = optarg;
       }
 
     }
@@ -147,44 +147,44 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 
     case 'f':   // Record file root
     {
-      RegisterWrapper<string>("fileRootString").reference() = optarg;
+      RegisterViewWrapper<string>("fileRootString").reference() = optarg;
     }
     break;
 
     case 'i':   // Record input file
     {
-      RegisterWrapper<string>("inputFileString").reference() = optarg;
+      RegisterViewWrapper<string>("inputFileString").reference() = optarg;
     }
     break;
 
     case 'm':   // Record mesh file
     {
-      RegisterWrapper<string>("meshFileString").reference() = optarg;
+      RegisterViewWrapper<string>("meshFileString").reference() = optarg;
     }
     break;
     case 'd':   // Record discrete element mesh file
     {
-      RegisterWrapper<string>("demeshFileString").reference() = optarg;
+      RegisterViewWrapper<string>("demeshFileString").reference() = optarg;
     }
     break;
     case 'e':   // Record ellipsoidal discrete element mesh file
     {
-      RegisterWrapper<string>("edemeshFileString").reference() = optarg;
+      RegisterViewWrapper<string>("edemeshFileString").reference() = optarg;
     }
     break;
 
     case 's':   // Record seismicity fault patch mesh file
     {
-      RegisterWrapper<string>("fpmeshFileString").reference() = optarg;
+      RegisterViewWrapper<string>("fpmeshFileString").reference() = optarg;
     }
     break;
 
     case 'r':   // From restart
     {
 //      m_beginFromRestart = true;
-      RegisterWrapper<int32>("beginFromRestart").reference() = true;
+      RegisterViewWrapper<int32>("beginFromRestart").reference() = true;
 //      m_beginFromRestartFileName = optarg;
-      RegisterWrapper<string>("beginFromRestartFileName").reference() = optarg;
+      RegisterViewWrapper<string>("beginFromRestartFileName").reference() = optarg;
 
     }
     break;
@@ -294,6 +294,8 @@ void ProblemManager::ParseInputFile()
   auto& solver1 = solvers.RegisterGroup( newName, std::move(solver) );
   solver = SolverBase::CatalogInterface::Factory( "NewComponent", newName2, &domain );
   auto& solver2 = solvers.RegisterGroup( newName2, std::move(solver) );
+
+  solver1.getData<string>(std::string("name"));
 
   solver1.Registration( &domain );
   solver2.Registration( &domain );

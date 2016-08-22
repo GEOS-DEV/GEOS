@@ -5,7 +5,7 @@
  *      Author: rrsettgast
  */
 
-#include "WrapperViewBase.hpp"
+#include "ViewWrapperBase.hpp"
 
 #include "slic/slic.hpp"
 #include "SynchronizedGroup.hpp"
@@ -15,7 +15,7 @@ namespace geosx
 namespace dataRepository
 {
 
-WrapperViewBase::WrapperViewBase( std::string const & name,
+ViewWrapperBase::ViewWrapperBase( std::string const & name,
                           SynchronizedGroup * const parent ) :
   m_name(name),
   m_parent(parent),
@@ -35,11 +35,11 @@ WrapperViewBase::WrapperViewBase( std::string const & name,
 }
 
 
-WrapperViewBase::~WrapperViewBase()
+ViewWrapperBase::~ViewWrapperBase()
 {}
 
 
-WrapperViewBase::WrapperViewBase( WrapperViewBase&& source ) :
+ViewWrapperBase::ViewWrapperBase( ViewWrapperBase&& source ) :
   m_name( std::move(source.m_name) ),
   m_parent( source.m_parent),
   m_sizedFromParent( source.m_sizedFromParent),

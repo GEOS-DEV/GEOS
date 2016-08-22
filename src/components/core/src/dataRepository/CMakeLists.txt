@@ -6,8 +6,8 @@ set(geosx_headers
   ${geosx_headers}
     dataRepository/SidreWrapper.hpp
     dataRepository/SynchronizedGroup.hpp
-    dataRepository/WrapperView.hpp
-    dataRepository/WrapperViewBase.hpp
+    dataRepository/ViewWrapper.hpp
+    dataRepository/ViewWrapperBase.hpp
     PARENT_SCOPE )
 
 #
@@ -17,6 +17,6 @@ set(geosx_core_sources
   ${geosx_core_sources}
     dataRepository/SidreWrapper.cpp
     dataRepository/SynchronizedGroup.cpp
-    dataRepository/WrapperView.cpp
-    dataRepository/WrapperViewBase.cpp
+    dataRepository/ViewWrapper.cpp
+    dataRepository/ViewWrapperBase.cpp
     PARENT_SCOPE )

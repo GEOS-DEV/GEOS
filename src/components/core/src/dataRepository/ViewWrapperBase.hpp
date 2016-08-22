@@ -27,25 +27,25 @@ namespace dataRepository
 
 class SynchronizedGroup;
 
-class WrapperViewBase
+class ViewWrapperBase
 {
 public:
 
   /*!
    * \brief default destuctor
    */
-  virtual ~WrapperViewBase();
+  virtual ~ViewWrapperBase();
 
   /*!
    *
    * @param name name of the object
    * \brief constructor
    */
-  explicit WrapperViewBase( std::string const & name,
+  explicit ViewWrapperBase( std::string const & name,
                             SynchronizedGroup * const parent );
 
 
-  WrapperViewBase( WrapperViewBase&& source );
+  ViewWrapperBase( ViewWrapperBase&& source );
 
 
   /*!
@@ -104,10 +104,10 @@ private:
   int m_sizedFromParent;
   asctoolkit::sidre::DataView* m_sidreView;
 
-  WrapperViewBase() = delete;
-  WrapperViewBase( WrapperViewBase const & ) = delete;
-  WrapperViewBase& operator=( WrapperViewBase const & ) = delete;
-  WrapperViewBase& operator=( WrapperViewBase&& ) = delete;
+  ViewWrapperBase() = delete;
+  ViewWrapperBase( ViewWrapperBase const & ) = delete;
+  ViewWrapperBase& operator=( ViewWrapperBase const & ) = delete;
+  ViewWrapperBase& operator=( ViewWrapperBase&& ) = delete;
 
 };
 

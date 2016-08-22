@@ -41,9 +41,9 @@ SynchronizedGroup::SynchronizedGroup( std::string const & name,
     m_sidreGroup = sidreParent->createGroup(name);
   }
 
-  *(RegisterWrapper<std_size_t>( "size" ).data()) = 0;
-  RegisterWrapper<std::string>( "name" ).reference() = name;
-  RegisterWrapper<std::string>( "path" );
+  *(RegisterViewWrapper<std_size_t>( "size" ).data()) = 0;
+  RegisterViewWrapper<std::string>( "name" ).reference() = name;
+  RegisterViewWrapper<std::string>( "path" );
 
 
 }
@@ -74,12 +74,12 @@ SynchronizedGroup::CatalogInterface::CatalogType& SynchronizedGroup::GetCatalog(
   return catalog;
 }
 
-WrapperViewBase& SynchronizedGroup::RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type )
+ViewWrapperBase& SynchronizedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return *( rtTypes::ApplyTypeLambda( type,
-                                      [this, &name]( auto a ) -> WrapperViewBase*
+                                      [this, &name]( auto a ) -> ViewWrapperBase*
       {
-        return &( this->RegisterWrapper<decltype(a)>(name) );
+        return &( this->RegisterViewWrapper<decltype(a)>(name) );
       } ) );
 }
 
