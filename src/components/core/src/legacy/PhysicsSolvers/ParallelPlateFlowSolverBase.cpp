@@ -342,6 +342,7 @@ void ParallelPlateFlowSolverBase::RegisterFields( FaceManagerT& faceManager, Edg
   edgeManager.AddKeylessDataField<realT>(ViscosityStr,true,true);
   edgeManager.AddKeylessDataField<realT>("edgeDensity",true,true);
 
+
 #ifdef SRC_EXTERNAL
   if (m_leakoffModel.GetLeakoffCoefficient() > 0)
   {

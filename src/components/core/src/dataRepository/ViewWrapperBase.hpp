@@ -5,8 +5,8 @@
  *      Author: rrsettgast
  */
 
-#ifndef COMPONENTS_CORE_SRC_DATAREPOSITORY_DATAOBJECTBASE_HPP_
-#define COMPONENTS_CORE_SRC_DATAREPOSITORY_DATAOBJECTBASE_HPP_
+#ifndef GEOSX_DATAREPOSITORY_VIEWWRAPPERBASE_HPP_
+#define GEOSX_DATAREPOSITORY_VIEWWRAPPERBASE_HPP_
 
 #include <string>
 #include <memory>
@@ -25,27 +25,27 @@ namespace geosx
 namespace dataRepository
 {
 
-class WrapperCollection;
+class SynchronizedGroup;
 
-class WrapperBase
+class ViewWrapperBase
 {
 public:
 
   /*!
    * \brief default destuctor
    */
-  virtual ~WrapperBase();
+  virtual ~ViewWrapperBase();
 
   /*!
    *
    * @param name name of the object
    * \brief constructor
    */
-  explicit WrapperBase( std::string const & name,
-                        WrapperCollection * const parent );
+  explicit ViewWrapperBase( std::string const & name,
+                            SynchronizedGroup * const parent );
 
 
-  WrapperBase( WrapperBase&& source );
+  ViewWrapperBase( ViewWrapperBase&& source );
 
 
   /*!
@@ -100,18 +100,18 @@ public:
 
 private:
   std::string m_name;
-  WrapperCollection* m_parent;
+  SynchronizedGroup* m_parent;
   int m_sizedFromParent;
   asctoolkit::sidre::DataView* m_sidreView;
 
-  WrapperBase() = delete;
-  WrapperBase( WrapperBase const & ) = delete;
-  WrapperBase& operator=( WrapperBase const & ) = delete;
-  WrapperBase& operator=( WrapperBase&& ) = delete;
+  ViewWrapperBase() = delete;
+  ViewWrapperBase( ViewWrapperBase const & ) = delete;
+  ViewWrapperBase& operator=( ViewWrapperBase const & ) = delete;
+  ViewWrapperBase& operator=( ViewWrapperBase&& ) = delete;
 
 };
 
 }
 } /* namespace geosx */
 
-#endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_DATAOBJECTBASE_HPP_ */
+#endif

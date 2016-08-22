@@ -10,20 +10,21 @@
 
 
 
-#include "dataRepository/WrapperCollection.hpp"
 #include <string>
+
+#include "../dataRepository/SynchronizedGroup.hpp"
 #include "common/DataTypes.hpp"
 
 
 namespace geosx
 {
 
-class SolverBase : public dataRepository::WrapperCollection
+class SolverBase : public dataRepository::SynchronizedGroup
 {
 public:
 
   explicit SolverBase( std::string const & name,
-                       WrapperCollection * const parent );
+                       SynchronizedGroup * const parent );
 
   virtual ~SolverBase();
 
@@ -39,10 +40,10 @@ public:
   virtual void TimeStep( real64 const & time_n,
                          real64 const & dt,
                          int const cycleNumber,
-                         dataRepository::WrapperCollection& domain ) = 0;
+                         dataRepository::SynchronizedGroup& domain ) = 0;
 
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, WrapperCollection * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, SynchronizedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 private:

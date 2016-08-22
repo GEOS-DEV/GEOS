@@ -5,12 +5,10 @@
  *      Author: settgast
  */
 
-#include "Wrapper.hpp"
+#include "ViewWrapper.hpp"
 
 namespace geosx
 {
 namespace dataRepository
-{
-
-}
+{}
 } /* namespace geosx */

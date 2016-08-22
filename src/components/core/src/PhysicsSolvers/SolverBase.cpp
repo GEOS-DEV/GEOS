@@ -11,8 +11,8 @@ namespace geosx
 {
 
 SolverBase::SolverBase( std::string const & name,
-                        WrapperCollection * const parent ) :
-  WrapperCollection( name, parent )
+                        SynchronizedGroup * const parent ) :
+  SynchronizedGroup( name, parent )
 {}
 
 SolverBase::~SolverBase()

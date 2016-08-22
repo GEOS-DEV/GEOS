@@ -11,30 +11,27 @@
 #include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-#include "fileIO/ticpp/HierarchicalDataNode.hpp"
 #include "finiteElement/FiniteElementSpace.hpp"
 
 namespace geosx
 {
 
-using namespace TICPP;
 using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
-                                WrapperCollection * const parent ) :
-  WrapperCollection( name, parent )
-{
-}
+                                SynchronizedGroup * const parent ) :
+  SynchronizedGroup( name, parent )
+{}
 
 ProblemManager::~ProblemManager()
 {}
 
-void ProblemManager::Registration( dataRepository::WrapperCollection * const )
+void ProblemManager::Registration( dataRepository::SynchronizedGroup * const )
 {
-  RegisterChildWrapperCollection<DomainPartition>(keys::domain);
-  RegisterChildWrapperCollection<WrapperCollection>("solvers");
+  RegisterGroup<DomainPartition>(keys::domain);
+  RegisterGroup<SynchronizedGroup>("solvers");
 
-  RegisterWrapper< std::unordered_map<string,string> >("simulationParameterMap");
+  RegisterViewWrapper< std::unordered_map<string,string> >("simulationParameterMap");
 }
 
 void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
@@ -122,7 +119,7 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
       else if( stringutilities::streq( std::string("write_XML"), long_options[option_index].name ) )
       {
         m_doWriteXML = true;
-        RegisterWrapper<string>("xmlOutputFileName").reference() = optarg;
+        RegisterViewWrapper<string>("xmlOutputFileName").reference() = optarg;
       }
 
     }
@@ -132,61 +129,61 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 
 
 
-      //  if (!fileRootString.empty())
-      //    m_FileManager.SetRoot(fileRootString.c_str());
-      //  if (!inputFileString.empty())
-      //    m_FileManager.SetInputFilename(inputFileString.c_str());
-      //  if (!meshFileString.empty())
-      //    m_FileManager.SetGeometryFilename(meshFileString.c_str());
-      //  if (!demeshFileString.empty())
-      //    m_FileManager.SetDiscreteElementGeometryFilename(demeshFileString.c_str());
-      //  if (!edemeshFileString.empty())
-      //    m_FileManager.SetEllipsoidalDiscreteElementGeometryFilename(edemeshFileString.c_str());
-      //#ifdef SRC_EXTERNAL
-      //  if (!fpmeshFileString.empty())
-      //    m_FileManager.SetFaultPatchElementGeometryFilename(fpmeshFileString.c_str());
-      //#endif
+    //  if (!fileRootString.empty())
+    //    m_FileManager.SetRoot(fileRootString.c_str());
+    //  if (!inputFileString.empty())
+    //    m_FileManager.SetInputFilename(inputFileString.c_str());
+    //  if (!meshFileString.empty())
+    //    m_FileManager.SetGeometryFilename(meshFileString.c_str());
+    //  if (!demeshFileString.empty())
+    //    m_FileManager.SetDiscreteElementGeometryFilename(demeshFileString.c_str());
+    //  if (!edemeshFileString.empty())
+    //    m_FileManager.SetEllipsoidalDiscreteElementGeometryFilename(edemeshFileString.c_str());
+    //#ifdef SRC_EXTERNAL
+    //  if (!fpmeshFileString.empty())
+    //    m_FileManager.SetFaultPatchElementGeometryFilename(fpmeshFileString.c_str());
+    //#endif
 
     case 'f':   // Record file root
     {
-      RegisterWrapper<string>("fileRootString").reference() = optarg;
+      RegisterViewWrapper<string>("fileRootString").reference() = optarg;
     }
     break;
 
     case 'i':   // Record input file
     {
-      RegisterWrapper<string>("inputFileString").reference() = optarg;
+      RegisterViewWrapper<string>("inputFileString").reference() = optarg;
     }
     break;
 
     case 'm':   // Record mesh file
     {
-      RegisterWrapper<string>("meshFileString").reference() = optarg;
+      RegisterViewWrapper<string>("meshFileString").reference() = optarg;
     }
     break;
     case 'd':   // Record discrete element mesh file
     {
-      RegisterWrapper<string>("demeshFileString").reference() = optarg;
+      RegisterViewWrapper<string>("demeshFileString").reference() = optarg;
     }
     break;
     case 'e':   // Record ellipsoidal discrete element mesh file
     {
-      RegisterWrapper<string>("edemeshFileString").reference() = optarg;
+      RegisterViewWrapper<string>("edemeshFileString").reference() = optarg;
     }
     break;
 
     case 's':   // Record seismicity fault patch mesh file
     {
-      RegisterWrapper<string>("fpmeshFileString").reference() = optarg;
+      RegisterViewWrapper<string>("fpmeshFileString").reference() = optarg;
     }
     break;
 
     case 'r':   // From restart
     {
 //      m_beginFromRestart = true;
-      RegisterWrapper<int32>("beginFromRestart").reference() = true;
+      RegisterViewWrapper<int32>("beginFromRestart").reference() = true;
 //      m_beginFromRestartFileName = optarg;
-      RegisterWrapper<string>("beginFromRestartFileName").reference() = optarg;
+      RegisterViewWrapper<string>("beginFromRestartFileName").reference() = optarg;
 
     }
     break;
@@ -253,21 +250,21 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 //  }
 
   // this option concerns flags for the default values of variables
-  switch(defaultVariableReportLevel)
-  {
-  case 0:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::silent);
-    break;
-  case 1:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::recordDefaults);
-    break;
-  case 2:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::reportDefaults);
-    break;
-  case 3:
-    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::disableDefaults);
-    break;
-  }
+//  switch(defaultVariableReportLevel)
+//  {
+//  case 0:
+//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::silent);
+//    break;
+//  case 1:
+//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::recordDefaults);
+//    break;
+//  case 2:
+//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::reportDefaults);
+//    break;
+//  case 3:
+//    HierarchicalDataNode::SetDefaultReportLevel(HierarchicalDataNode::disableDefaults);
+//    break;
+//  }
 
   // this option sets the flag to report the current value of parameters
 //  if(reportParameter_flag)
@@ -278,24 +275,26 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 //  if(setPartitions_flag)
 //    m_partition.setPartitions(xPartitions,yPartitions,zPartitions );
 //
-  //////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 }
 
 void ProblemManager::ParseInputFile()
 {
 
-  FiniteElementSpace feSpace( keys::FE_Space , this);
+  FiniteElementSpace feSpace( keys::FE_Space, this);
 
-  dataRepository::WrapperCollection& solvers = GetChildWrapperCollection<dataRepository::WrapperCollection>(keys::solvers);
+  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
   DomainPartition& domain  = getDomainPartition();
 
   std::string newName("new solver");
   std::string newName2("new solver2");
 
   std::unique_ptr<SolverBase> solver = SolverBase::CatalogInterface::Factory("SolidMechanics_LagrangianFEM", newName, &domain );
-  auto& solver1 = solvers.RegisterChildWrapperCollection( newName, std::move(solver) );
+  auto& solver1 = solvers.RegisterGroup( newName, std::move(solver) );
   solver = SolverBase::CatalogInterface::Factory( "NewComponent", newName2, &domain );
-  auto& solver2 = solvers.RegisterChildWrapperCollection( newName2, std::move(solver) );
+  auto& solver2 = solvers.RegisterGroup( newName2, std::move(solver) );
+
+  solver1.getData<string>(std::string("name"));
 
   solver1.Registration( &domain );
   solver2.Registration( &domain );
@@ -317,15 +316,14 @@ void ProblemManager::ApplySchedulerEvent()
 
 DomainPartition & ProblemManager::getDomainPartition()
 {
-  return GetChildWrapperCollection<DomainPartition>(keys::domain);
+  return GetGroup<DomainPartition>(keys::domain);
 }
 
 DomainPartition const & ProblemManager::getDomainPartition() const
 {
-  return GetChildWrapperCollection<DomainPartition>(keys::domain);
+  return GetGroup<DomainPartition>(keys::domain);
 }
 
-REGISTER_CATALOG_ENTRY( WrapperCollection, ProblemManager, std::string const &, WrapperCollection * const )
+REGISTER_CATALOG_ENTRY( SynchronizedGroup, ProblemManager, std::string const &, SynchronizedGroup * const )
 
 } /* namespace geosx */
-

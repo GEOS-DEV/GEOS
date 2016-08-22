@@ -303,10 +303,7 @@ public:
   rArray2d m_detJ_np1;
   Array2dT< R2Tensor >  m_dUdX;
   Array2dT< R2Tensor > m_Finv;
-
-
-
-
+  rArray1d m_Kregion;
 
   Array1dT< Array1dT<R2SymTensor> > m_Dadt;
   Array1dT< Array1dT<R2Tensor> >  m_Rot;

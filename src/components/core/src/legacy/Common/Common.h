@@ -59,7 +59,7 @@
   #include <cmath>
 #else
   #include <cmath>
-  #include <omp.h>
+//  #include <omp.h>
 #endif
 
 

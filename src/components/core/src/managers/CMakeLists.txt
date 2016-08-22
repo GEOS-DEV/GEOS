@@ -5,7 +5,7 @@
 set(geosx_headers
   ${geosx_headers}
     managers/CommandLineParser.hpp
-  	managers/DomainPartition.hpp
+    managers/DomainPartition.hpp
   	managers/ProblemManager.hpp
     PARENT_SCOPE )
 

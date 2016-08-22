@@ -2081,7 +2081,6 @@ void ParallelPlateFlowSolverFVP::GenerateParallelPlateGeometricQuantities( Physi
   Array1dT<R1Tensor> const & incDisp = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
 
   const rArray1d& faceArea = domain.m_feFaceManager.GetFieldData<realT>("faceArea");
-  const Array1dT<R1Tensor>& faceNormal = domain.m_feFaceManager.GetFieldData<R1Tensor>("faceNormal0");
 
   rArray1d& apertureIncrement = domain.m_feFaceManager.GetFieldData<realT>("apertureIncrement");
   // rArray1d& pressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
@@ -2104,8 +2103,8 @@ void ParallelPlateFlowSolverFVP::GenerateParallelPlateGeometricQuantities( Physi
       if( childFaceIndex[*kf].size() > 0 )
       {
         const localIndex faceIndex[2] = { *kf, childFaceIndex[*kf][0] };
-        const R1Tensor N[2] = { faceNormal( faceIndex[0] ),
-                                faceNormal( faceIndex[1] )};
+        const R1Tensor N[2] = { domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, faceIndex[0] ),
+                                domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, faceIndex[1] )};
 
         Nbar = N[0];
         Nbar -= N[1];
@@ -2139,7 +2138,7 @@ void ParallelPlateFlowSolverFVP::GenerateParallelPlateGeometricQuantities( Physi
       else
       {
         R1Tensor gap;
-        Nbar = faceNormal( *kf );
+        Nbar = domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, *kf );
         gap = domain.m_feFaceManager.CalculateGapVector( domain.m_feNodeManager, *kf );
         aperture[*kf] = Dot(gap,Nbar) + m_zeroApertureOffset;
       }
@@ -2421,9 +2420,6 @@ void ParallelPlateFlowSolverFVP::CalculateApertureDerivatives( const FaceManager
 //    const rArray1d& apertures_np1 = faceManager.GetFieldData<realT>( ApertureStr );
     const OrderedVariableOneToManyRelation& childFaceIndex = faceManager.GetVariableOneToManyMap( "childIndices" );
 
-
-    const Array1dT<R1Tensor>& faceNormal = faceManager.GetFieldData<R1Tensor>("faceNormal0");
-
     // set aperture derivatives
     for( localIndex r=0 ; r<faceManager.DataLengths() ; ++r )
     {
@@ -2437,8 +2433,8 @@ void ParallelPlateFlowSolverFVP::CalculateApertureDerivatives( const FaceManager
         {
           const localIndex faceIndex[2] = { r, childFaceIndex[r][0] };
 
-          const R1Tensor N[2] = { faceNormal[faceIndex[0]],
-                                  faceNormal[faceIndex[1]] };
+          const R1Tensor N[2] = { faceManager.FaceNormal( nodeManager, faceIndex[0] ),
+                                  faceManager.FaceNormal( nodeManager, faceIndex[1] )};
 
           R1Tensor Nbar = N[0];
           Nbar -= N[1];

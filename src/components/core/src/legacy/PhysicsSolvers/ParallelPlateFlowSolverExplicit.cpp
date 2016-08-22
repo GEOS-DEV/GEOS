@@ -485,7 +485,6 @@ void ParallelPlateFlowSolverExplicit::GenerateParallelPlateGeometricQuantities( 
   //  const iArray1d& flowEdgeType = domain.m_edgeManager.GetFieldData<int>("flowEdgeType");
   rArray1d& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
   rArray1d& faceArea = domain.m_feFaceManager.GetFieldData<realT>("faceArea");
-  const Array1dT<R1Tensor>& faceNormal = domain.m_feFaceManager.GetFieldData<R1Tensor>("faceNormal0");
   rArray1d& effectiveStressN = domain.m_feFaceManager.GetFieldData<realT>("effectiveStressN");
   rArray1d& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
   rArray1d* stressNOnFace = domain.m_feFaceManager.GetFieldDataPointer<realT>("stressNOnFace");
@@ -522,11 +521,11 @@ void ParallelPlateFlowSolverExplicit::GenerateParallelPlateGeometricQuantities( 
 
         if (numChildren <= 1)
         {
-          N = faceNormal( kf );
+          N = domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, kf );
         }
         else
         {
-          N = faceNormal( domain.m_feFaceManager.m_childIndices[kf][0] );
+          N = domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, domain.m_feFaceManager.m_childIndices[kf][0] );
         }
         gap = domain.m_feFaceManager.CalculateGapVector( domain.m_feNodeManager, kf );
         aperture[kf] = Dot(gap,N) ;

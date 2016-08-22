@@ -360,7 +360,6 @@ void LagrangeSmallStrainLinearElastic::PostSyncConsistency( PhysicalDomainT& dom
       Array1dT<R1Tensor>& cohesiveForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
 
       const iArray1d& ruptureState = domain.m_feFaceManager.GetFieldData<int>("ruptureState");
-      const Array1dT<R1Tensor>& faceNormal = domain.m_feFaceManager.GetFieldData<R1Tensor>("faceNormal0");
 
       cohesiveForce = 0.0;
 
@@ -375,8 +374,8 @@ void LagrangeSmallStrainLinearElastic::PostSyncConsistency( PhysicalDomainT& dom
 
           const localIndex faceIndex[2] = { kf, childFaceIndex[kf][0] };
 
-          const R1Tensor N[2] = { faceNormal( faceIndex[0] ),
-                                  faceNormal( faceIndex[1] )};
+          const R1Tensor N[2] = { domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, faceIndex[0] ),
+                                  domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, faceIndex[1] )};
 
           R1Tensor Nbar = N[0];
           Nbar -= N[1];
@@ -3163,8 +3162,6 @@ void LagrangeSmallStrainLinearElastic::StoreHistoryVariablesForCurrentLoadStepAn
 }
 
 
-#define superfly 1
-
 
 void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManagerT& nodeManager,
                                                              ElementRegionT& elemRegion,
@@ -3194,19 +3191,11 @@ void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManagerT& nodeM
 
   const unsigned int numNodesPerElem = elemRegion.m_numNodesPerElem;
 
-#if superfly==1
-
-
-  static std::map< std::string, rArray1d > K_allRegions;
-  rArray1d& K_region = K_allRegions[elemRegion.m_regionName] ;
-
-  const FiniteElementBase& fe = *(elemRegion.m_finiteElement);
-  const int kdim = 24;//fe.dofs_per_element() * dim ;
-
-  if( K_region.empty() )
+  if (m_staticKMatrix && elemRegion.m_Kregion.empty())  // This should take care of restart.  The elemRegion members used here are all written into restart files so we can easily reconstruct the k matrices.
   {
-    K_region.resize( elemRegion.m_numElems * kdim * kdim );
-
+    const int kdim = elemRegion.m_numNodesPerElem * dim;
+    elemRegion.m_Kregion.resize( elemRegion.m_numElems * kdim * kdim );
+    const FiniteElementBase& fe = *(elemRegion.m_finiteElement);
 
     for(localIndex element = 0; element < elemRegion.m_numElems; ++element)
     {
@@ -3214,7 +3203,7 @@ void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManagerT& nodeM
       const realT G = (elemRegion.m_mat->ParameterData(paramIndex))->init_shearModulus;
       realT lambda = (elemRegion.m_mat->ParameterData(paramIndex))->Lame;
 
-      realT * const K = &(K_region[element * kdim * kdim ]);
+      realT * const K = &(elemRegion.m_Kregion[element * kdim * kdim ]);
 
       R1Tensor dNdXa;
       R1Tensor dNdXb;
@@ -3250,7 +3239,6 @@ void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManagerT& nodeM
       }
     }
   }
-#endif
 
 
   if( u_local.size() != numNodesPerElem )
@@ -3337,118 +3325,123 @@ void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManagerT& nodeM
 
     f_local = 0.0;
     fdamp_local = 0.0;
-    volume[k] = 0.0;
 
 //    Array1dT<R1Tensor> tempforce;
 //    tempforce = f_local;
 
-#if superfly==1
-    //    realT * const pf_local = tempforce[0].Data() ;
-    realT * const pf_local = f_local[0].Data() ;
-    realT const * const pDisp = u_local[0].Data();
-    realT const * const K = &(K_region[k * kdim * kdim ]);
-
-    for( unsigned int ai=0 ; ai<kdim/*numNodesPerElem*dim*/ ; ++ai )
+    if (m_staticKMatrix)
     {
-      for( unsigned int bj=0 ; bj<kdim/*numNodesPerElem*dim*/ ; ++bj )
+      const unsigned int kdim = elemRegion.m_numNodesPerElem * dim;
+      //    realT * const pf_local = tempforce[0].Data() ;
+      realT * const pf_local = f_local[0].Data() ;
+      realT const * const pDisp = u_local[0].Data();
+      realT const * const K = &(elemRegion.m_Kregion[k * kdim * kdim ]);
+
+      for( unsigned int ai=0 ; ai<kdim/*numNodesPerElem*dim*/ ; ++ai )
       {
-        pf_local[ai] += K[ ai*kdim + bj] * pDisp[bj];
-      }
-    }
-#else
-
-
-
-    unsigned int nq = finiteElement->n_quadrature_points();
-    for( unsigned int q=0 ; q<nq ; ++q )
-    {
-      MaterialBaseStateData& state = *(elemRegion.m_mat->StateData(k,q));
-
-      R2SymTensor stress(state.devStress);
-      stress.PlusIdentity(state.pressure);
-
-      realT * const p_stress = stress.Data();
-
-      R1Tensor const * const dNdX = elemRegion.m_dNdX[k][q];
-      realT detJ = elemRegion.m_detJ(k,q);
-      volume[k] += detJ;
-
-      R2SymTensor Cdamp;
-      Cdamp = 0.0;
-      realT * const p_Cdamp = Cdamp.Data();
-
-      for( unsigned int a=0 ; a<numNodesPerElem ; ++a )
-      {
-        R1Tensor const & u = uhat_local[a];
-        R1Tensor const & v = v_local[a];
-
-        const R1Tensor& dNdXb = dNdX[a];
-        const realT u0_x_dNdXb0 = u[0]*dNdXb[0];
-        const realT u1_x_dNdXb1 = u[1]*dNdXb[1];
-
-        const realT v0_x_dNdXb0 = v[0]*dNdXb[0];
-        const realT v1_x_dNdXb1 = v[1]*dNdXb[1];
-
-        if( dim==3 )
+        for( unsigned int bj=0 ; bj<kdim/*numNodesPerElem*dim*/ ; ++bj )
         {
-          const realT u2_x_dNdXb2 = u[2]*dNdXb[2];
-          const realT v2_x_dNdXb2 = v[2]*dNdXb[2];
-
-          p_stress[0] += ( u1_x_dNdXb1 + u2_x_dNdXb2 )*lambda + u0_x_dNdXb0*( TwoG + lambda );
-          p_stress[2] += ( u0_x_dNdXb0 + u2_x_dNdXb2 )*lambda + u1_x_dNdXb1*( TwoG + lambda );
-          p_stress[5] += ( u0_x_dNdXb0 + u1_x_dNdXb1 )*lambda + u2_x_dNdXb2*( TwoG + lambda );
-          p_stress[4] += ( u[2]*dNdXb[1] + u[1]*dNdXb[2] )*G;
-          p_stress[3] += ( u[2]*dNdXb[0] + u[0]*dNdXb[2] )*G;
-          p_stress[1] += ( u[1]*dNdXb[0] + u[0]*dNdXb[1] )*G;
-
-          p_Cdamp[0] += ( v1_x_dNdXb1 + v2_x_dNdXb2 )*lambda + v0_x_dNdXb0*( TwoG + lambda );
-          p_Cdamp[2] += ( v0_x_dNdXb0 + v2_x_dNdXb2 )*lambda + v1_x_dNdXb1*( TwoG + lambda );
-          p_Cdamp[5] += ( v0_x_dNdXb0 + v1_x_dNdXb1 )*lambda + v2_x_dNdXb2*( TwoG + lambda );
-          p_Cdamp[4] += ( v[2]*dNdXb[1] + v[1]*dNdXb[2] )*G;
-          p_Cdamp[3] += ( v[2]*dNdXb[0] + v[0]*dNdXb[2] )*G;
-          p_Cdamp[1] += ( v[1]*dNdXb[0] + v[0]*dNdXb[1] )*G;
-
+          pf_local[ai] += K[ ai*kdim + bj] * pDisp[bj];
         }
-        else if( dim==2 )
+      }
+
+    }
+    else
+    {
+      volume[k] = 0.0;
+
+      unsigned int nq = finiteElement->n_quadrature_points();
+      for( unsigned int q=0 ; q<nq ; ++q )
+      {
+        MaterialBaseStateData& state = *(elemRegion.m_mat->StateData(k,q));
+
+        R2SymTensor stress(state.devStress);
+        stress.PlusIdentity(state.pressure);
+
+        realT * const p_stress = stress.Data();
+
+        R1Tensor const * const dNdX = elemRegion.m_dNdX[k][q];
+        realT detJ = elemRegion.m_detJ(k,q);
+        volume[k] += detJ;
+
+        R2SymTensor Cdamp;
+        Cdamp = 0.0;
+        realT * const p_Cdamp = Cdamp.Data();
+
+        for( unsigned int a=0 ; a<numNodesPerElem ; ++a )
         {
-          p_stress[0] += u1_x_dNdXb1*lambda + u0_x_dNdXb0*( TwoG + lambda );
-          p_stress[2] += u0_x_dNdXb0*lambda + u1_x_dNdXb1*( TwoG + lambda );
-          p_stress[1] += ( u[1]*dNdXb[0] + u[0]*dNdXb[1] )*G;
+          R1Tensor const & u = uhat_local[a];
+          R1Tensor const & v = v_local[a];
 
-          p_Cdamp[0] += v1_x_dNdXb1*lambda + v0_x_dNdXb0*( TwoG + lambda );
-          p_Cdamp[2] += v0_x_dNdXb0*lambda + v1_x_dNdXb1*( TwoG + lambda );
-          p_Cdamp[1] += ( v[1]*dNdXb[0] + v[0]*dNdXb[1] )*G;
+          const R1Tensor& dNdXb = dNdX[a];
+          const realT u0_x_dNdXb0 = u[0]*dNdXb[0];
+          const realT u1_x_dNdXb1 = u[1]*dNdXb[1];
 
-          if( LagrangeSolverBase::m_2dOption==LagrangeSolverBase::PlaneStrain )
+          const realT v0_x_dNdXb0 = v[0]*dNdXb[0];
+          const realT v1_x_dNdXb1 = v[1]*dNdXb[1];
+
+          if( dim==3 )
           {
-            p_stress[5] = ( u0_x_dNdXb0 + u1_x_dNdXb1 )*lambda;
+            const realT u2_x_dNdXb2 = u[2]*dNdXb[2];
+            const realT v2_x_dNdXb2 = v[2]*dNdXb[2];
+
+            p_stress[0] += ( u1_x_dNdXb1 + u2_x_dNdXb2 )*lambda + u0_x_dNdXb0*( TwoG + lambda );
+            p_stress[2] += ( u0_x_dNdXb0 + u2_x_dNdXb2 )*lambda + u1_x_dNdXb1*( TwoG + lambda );
+            p_stress[5] += ( u0_x_dNdXb0 + u1_x_dNdXb1 )*lambda + u2_x_dNdXb2*( TwoG + lambda );
+            p_stress[4] += ( u[2]*dNdXb[1] + u[1]*dNdXb[2] )*G;
+            p_stress[3] += ( u[2]*dNdXb[0] + u[0]*dNdXb[2] )*G;
+            p_stress[1] += ( u[1]*dNdXb[0] + u[0]*dNdXb[1] )*G;
+
+            p_Cdamp[0] += ( v1_x_dNdXb1 + v2_x_dNdXb2 )*lambda + v0_x_dNdXb0*( TwoG + lambda );
+            p_Cdamp[2] += ( v0_x_dNdXb0 + v2_x_dNdXb2 )*lambda + v1_x_dNdXb1*( TwoG + lambda );
+            p_Cdamp[5] += ( v0_x_dNdXb0 + v1_x_dNdXb1 )*lambda + v2_x_dNdXb2*( TwoG + lambda );
+            p_Cdamp[4] += ( v[2]*dNdXb[1] + v[1]*dNdXb[2] )*G;
+            p_Cdamp[3] += ( v[2]*dNdXb[0] + v[0]*dNdXb[2] )*G;
+            p_Cdamp[1] += ( v[1]*dNdXb[0] + v[0]*dNdXb[1] )*G;
+
+          }
+          else if( dim==2 )
+          {
+            p_stress[0] += u1_x_dNdXb1*lambda + u0_x_dNdXb0*( TwoG + lambda );
+            p_stress[2] += u0_x_dNdXb0*lambda + u1_x_dNdXb1*( TwoG + lambda );
+            p_stress[1] += ( u[1]*dNdXb[0] + u[0]*dNdXb[1] )*G;
+
+            p_Cdamp[0] += v1_x_dNdXb1*lambda + v0_x_dNdXb0*( TwoG + lambda );
+            p_Cdamp[2] += v0_x_dNdXb0*lambda + v1_x_dNdXb1*( TwoG + lambda );
+            p_Cdamp[1] += ( v[1]*dNdXb[0] + v[0]*dNdXb[1] )*G;
+
+            if( LagrangeSolverBase::m_2dOption==LagrangeSolverBase::PlaneStrain )
+            {
+              p_stress[5] = ( u0_x_dNdXb0 + u1_x_dNdXb1 )*lambda;
+            }
           }
         }
+
+        Cdamp *= m_dampingK;
+
+        for( unsigned int a=0 ; a<numNodesPerElem ; ++a )
+        {
+          R1Tensor temp;
+          s_dNdx[a] = dNdX[a];
+          temp.AijBj(stress,dNdX[a]);
+          temp *= detJ;
+          f_local[a] -= temp;
+
+          temp.AijBj(Cdamp,dNdX[a]);
+          temp *= detJ;
+          fdamp_local[a] -= temp;
+
+        }
+
+        const realT pressure = stress.Trace() / 3.0;
+        stress.PlusIdentity( -pressure );
+        state.devStress = stress;
+        state.pressure = pressure;
+
       }
-
-      Cdamp *= m_dampingK;
-
-      for( unsigned int a=0 ; a<numNodesPerElem ; ++a )
-      {
-        R1Tensor temp;
-        s_dNdx[a] = dNdX[a];
-        temp.AijBj(stress,dNdX[a]);
-        temp *= detJ;
-        f_local[a] -= temp;
-
-        temp.AijBj(Cdamp,dNdX[a]);
-        temp *= detJ;
-        fdamp_local[a] -= temp;
-
-      }
-
-      const realT pressure = stress.Trace() / 3.0;
-      stress.PlusIdentity( -pressure );
-      state.devStress = stress;
-      state.pressure = pressure;
-
     }
-#endif
+
+
 
     if( finiteElement->zero_energy_modes() )
     {

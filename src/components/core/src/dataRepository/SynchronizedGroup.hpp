@@ -10,8 +10,8 @@
 
 #include <iostream>
 
-#include "Wrapper.hpp"
 #include "ObjectCatalog.hpp"
+#include "ViewWrapper.hpp"
 
 //#include "CodingUtilities/ANSTexception.hpp"
 
@@ -38,7 +38,7 @@ namespace dataRepository
  * hierarchy of managers that represent physical groupings of data.
  *
  */
-class WrapperCollection
+class SynchronizedGroup
 {
 public:
   /**
@@ -50,34 +50,34 @@ public:
    * @author Randolph R. Settgast
    * @param name the name of this object manager
    */
-  explicit WrapperCollection( std::string const & name,
-                              WrapperCollection * const parent );
+  explicit SynchronizedGroup( std::string const & name,
+                              SynchronizedGroup * const parent );
 
   /**
    *
    */
-  virtual ~WrapperCollection();
+  virtual ~SynchronizedGroup();
 
   /**
    *
    * @param source source WrapperCollection
    */
-  WrapperCollection( WrapperCollection&& source );
+  SynchronizedGroup( SynchronizedGroup&& source );
 
 
-  WrapperCollection() = delete;
-  WrapperCollection( WrapperCollection const & source ) = delete;
-  WrapperCollection& operator=( WrapperCollection const & ) = delete;
-  WrapperCollection& operator=(WrapperCollection&&) = delete;
+  SynchronizedGroup() = delete;
+  SynchronizedGroup( SynchronizedGroup const & source ) = delete;
+  SynchronizedGroup& operator=( SynchronizedGroup const & ) = delete;
+  SynchronizedGroup& operator=(SynchronizedGroup&&) = delete;
 
   ///@}
 
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< WrapperCollection, std::string const &, WrapperCollection * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< SynchronizedGroup, std::string const &, SynchronizedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 
-  virtual void Registration( dataRepository::WrapperCollection * const )
+  virtual void Registration( dataRepository::SynchronizedGroup * const )
   {}
 
   virtual const std::type_info& get_typeid() const
@@ -86,18 +86,26 @@ public:
   }
 
 
-  template< typename T = WrapperCollection >
-  T& RegisterChildWrapperCollection( std::string const & name, std::unique_ptr<T> newObject );
+  template< typename T = SynchronizedGroup >
+  T& RegisterGroup( std::string const & name, std::unique_ptr<T> newObject );
 
-  template< typename T = WrapperCollection >
-  T& RegisterChildWrapperCollection( std::string const & name )
+  template< typename T = SynchronizedGroup >
+  T& RegisterGroup( std::string const & name )
   {
-    return RegisterChildWrapperCollection<T>( name, std::move(std::make_unique< T >( name, this )) );
+    return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
+  }
+
+  template< typename T = SynchronizedGroup >
+  T& RegisterGroup( std::string const & name, std::string const & catalogName )
+  {
+    std::unique_ptr<T> newGroup = T::CatalogInterface::Factory(catalogName, name, this );
+    return RegisterGroup<T>( name, std::move(newGroup) );
   }
 
 
-  template< typename T = WrapperCollection >
-  T& GetChildWrapperCollection( std::string const & name )
+
+  template< typename T = SynchronizedGroup >
+  T& GetGroup( std::string const & name )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T&>( *(m_subObjectManagers.at(name)) );
@@ -108,8 +116,8 @@ public:
 
 
 
-template< typename T = WrapperCollection >
-T const & GetChildWrapperCollection( std::string const & name ) const
+  template< typename T = SynchronizedGroup >
+  T const & GetGroup( std::string const & name ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const &>( *(m_subObjectManagers.at(name)) );
@@ -120,64 +128,65 @@ T const & GetChildWrapperCollection( std::string const & name ) const
 
 
   template< typename T >
-  Wrapper<T>& RegisterWrapper( std::string const & name, std::size_t * const rkey = nullptr );
+  ViewWrapper<T>& RegisterViewWrapper( std::string const & name, std::size_t * const rkey = nullptr );
 
 
-  WrapperBase& RegisterWrapper( std::string const & name, rtTypes::TypeIDs const & type );
+  ViewWrapperBase& RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type );
 
 
   //***********************************************************************************************
 
   template< typename T >
-  Wrapper<T> const & getWrapper( std::size_t const index ) const
+  ViewWrapper<T> const & getWrapper( std::size_t const index ) const
   {
 #ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< Wrapper<T> const & >( *(m_wrappers[index]) );
+    return dynamic_cast< ViewWrapper<T> const & >( *(m_wrappers[index]) );
 #else
-    return static_cast< Wrapper<T> const & >( *(m_wrappers[index]) );
+    return static_cast< ViewWrapper<T> const & >( *(m_wrappers[index]) );
 #endif
   }
 
   template< typename T >
-  Wrapper<T> & getWrapper( std::size_t const index )
+  ViewWrapper<T> & getWrapper( std::size_t const index )
   {
-    return const_cast<Wrapper<T>&>( const_cast< WrapperCollection const *>(this)->getWrapper<T>( index ) );
+    return const_cast<ViewWrapper<T>&>( const_cast< SynchronizedGroup const *>(this)->getWrapper<T>( index ) );
   }
 
   template< typename T >
-  Wrapper<T> const & getWrapper( std::string const & name ) const
+  ViewWrapper<T> const & getWrapper( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
     return getWrapper<T>(index);
   }
 
   template< typename T >
-  Wrapper<T>& getWrapper( std::string const & name )
-  { return const_cast<Wrapper<T>&>( const_cast<const WrapperCollection*>(this)->getWrapper<T>( name ) ); }
+  ViewWrapper<T>& getWrapper( std::string const & name )
+  { return const_cast<ViewWrapper<T>&>( const_cast<const SynchronizedGroup*>(this)->getWrapper<T>( name ) ); }
 
 
 
   template< typename T >
-  typename Wrapper<T>::rtype_const getData( std::size_t const index ) const
+  typename ViewWrapper<T>::rtype_const getData( std::size_t const index ) const
   {
     return getWrapper<T>(index).data();
   }
 
   template< typename T >
-  typename Wrapper<T>::rtype getData( std::size_t const index )
+  typename ViewWrapper<T>::rtype getData( std::size_t const index )
   {
-    return const_cast<typename Wrapper<T>::rtype>( const_cast<const WrapperCollection*>(this)->getData<T>( index ) );
+    return getWrapper<T>(index).data();
+//    return const_cast<typename WrapperView<T>::rtype>( const_cast<const SynchronizedGroup*>(this)->getData<T>( index ) );
   }
 
   template< typename T >
-  typename Wrapper<T>::rtype_const getData( std::string const & name ) const
+  typename ViewWrapper<T>::rtype_const getData( std::string const & name ) const
   {
     auto index = m_keyLookup.at(name);
     return getData<T>( index );
   }
 
   template< typename T >
-  typename Wrapper<T>::rtype getData( std::string const & name )
+  typename ViewWrapper<T>::rtype getData( std::string const & name )
   {
     auto index = m_keyLookup.at(name);
     return getData<T>( index );
@@ -192,7 +201,7 @@ T const & GetChildWrapperCollection( std::string const & name ) const
   template< typename T >
   T& getReference( std::size_t const index )
   {
-    return const_cast<T&>( const_cast<const WrapperCollection*>(this)->getReference<T>( index ) );
+    return const_cast<T&>( const_cast<const SynchronizedGroup*>(this)->getReference<T>( index ) );
   }
 
   template< typename T >
@@ -217,32 +226,57 @@ T const & GetChildWrapperCollection( std::string const & name ) const
   }
 
 
+//#include "Common/Common.h"
+//  template< FieldKey FIELDKEY>
+//  typename Wrapper<TYPE>::rtype GetFieldData( )
+//  {
+//    return GetFieldData< array<typename Field<FIELDKEY>::Type> >(Field<FIELDKEY>::Name());
+//  }
+
+
+
   asctoolkit::sidre::DataGroup * getSidreGroup()              { return m_sidreGroup; }
   asctoolkit::sidre::DataGroup const * getSidreGroup() const  { return m_sidreGroup; }
 
+  asctoolkit::sidre::DataGroup * setSidreGroup()
+  {
+    return m_sidreGroup;
+  }
+
+  SynchronizedGroup * getParent()             { return m_parent; }
+  SynchronizedGroup const * getParent() const { return m_parent; }
+
+  SynchronizedGroup * setParent( SynchronizedGroup * const parent )
+  {
+    m_parent = parent;
+    m_sidreGroup = m_parent->getSidreGroup();
+
+    return m_parent;
+  }
+
 private:
   std::unordered_map<std::string,std::size_t> m_keyLookup;
-  std::vector< std::unique_ptr<WrapperBase> > m_wrappers;
+  std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
 
-  WrapperCollection* m_parent = nullptr;
-  std::unordered_map< std::string, std::unique_ptr<WrapperCollection> > m_subObjectManagers;
+  SynchronizedGroup* m_parent = nullptr;
+  std::unordered_map< std::string, std::unique_ptr<SynchronizedGroup> > m_subObjectManagers;
 
   asctoolkit::sidre::DataGroup* m_sidreGroup;
 
 #if NOCHARTOSTRING_KEYLOOKUP == 1
 
-  template< typename T = WrapperCollection >
-  T const & GetChildWrapperCollection( char const * ) const;
+  template< typename T = SynchronizedGroup >
+  T const & GetGroup( char const * ) const;
 
-  template< typename T = WrapperCollection >
-  T& GetChildWrapperCollection( char const * name );
+  template< typename T = SynchronizedGroup >
+  T& GetGroup( char const * name );
 
-
-  template< typename T >
-  typename Wrapper<T>::rtype_const getData( char const * ) const;
 
   template< typename T >
-  typename Wrapper<T>::rtype getData( char const * );
+  typename ViewWrapper<T>::rtype_const getData( char const * ) const;
+
+  template< typename T >
+  typename ViewWrapper<T>::rtype getData( char const * );
 
   template< typename T >
   T const & getReference( char const * ) const;
@@ -252,10 +286,10 @@ private:
 
 
   template< typename T >
-  Wrapper<T> const & getWrapper( char const * ) const;
+  ViewWrapper<T> const & getWrapper( char const * ) const;
   template< typename T >
 
-  Wrapper<T>& getWrapper( char const * );
+  ViewWrapper<T>& getWrapper( char const * );
 
 
 #endif
@@ -264,7 +298,7 @@ private:
 
 
 template< typename T >
-Wrapper<T>& WrapperCollection::RegisterWrapper( std::string const & name, std::size_t * const rkey )
+ViewWrapper<T>& SynchronizedGroup::RegisterViewWrapper( std::string const & name, std::size_t * const rkey )
 {
   std::size_t key = static_cast<std::size_t>(-1);
 
@@ -273,7 +307,7 @@ Wrapper<T>& WrapperCollection::RegisterWrapper( std::string const & name, std::s
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
-    m_wrappers.push_back( std::move( Wrapper<T>::Factory(name,this) ) );
+    m_wrappers.push_back( std::move( ViewWrapper<T>::Factory(name,this) ) );
     key = m_wrappers.size() - 1;
     m_keyLookup.insert( std::make_pair(name,key) );
     m_wrappers.back()->resize(this->size());
@@ -298,8 +332,8 @@ Wrapper<T>& WrapperCollection::RegisterWrapper( std::string const & name, std::s
 }
 
 template< typename T >
-T& WrapperCollection::RegisterChildWrapperCollection( std::string const & name,
-                                                      std::unique_ptr<T> newObject )
+T& SynchronizedGroup::RegisterGroup( std::string const & name,
+                                     std::unique_ptr<T> newObject )
 {
   auto iterKeyLookup = m_subObjectManagers.find(name);
 
@@ -314,6 +348,7 @@ T& WrapperCollection::RegisterChildWrapperCollection( std::string const & name,
       throw std::exception();
     }
     iterKeyLookup = insertResult.first;
+//    iterKeyLookup->second.get()->
   }
   // if key was found, make sure that they are the same type
   else

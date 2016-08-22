@@ -45,9 +45,9 @@
 
 
 #include "FaceManagerT.h"
-#include "ExternalFaceManagerT.h"
-#include "ElementManagerT.h"
-#include "PhysicalDomainT.h"
+#include "ObjectManagers/ExternalFaceManagerT.h"
+#include "ObjectManagers/ElementManagerT.h"
+#include "ObjectManagers/PhysicalDomainT.h"
 #include "DataStructures/VectorFields/NodeManagerT.h"
 #include "IO/BinStream.h"
 #include "Utilities/Utilities.h"
@@ -55,7 +55,7 @@
 
 #include "BoundaryConditions/BoundaryConditions.h"
 
-#include "ExternalFaceStructs.h"
+#include "ObjectManagers/ExternalFaceStructs.h"
 
 #include "DataStructures/VectorFields/TempODS.h"
 
@@ -2273,3 +2273,5 @@ void FaceManagerT::ReadNonManagedDataMembersFromSilo( const SiloFile& siloFile,
     temp.DeallocateDummyFields<R2SymTensor>(R2SymTensorVarNames);
   }
 }
+
+REGISTER_CATALOG_ENTRY( WrapperCollection, FaceManagerT, std::string const &, WrapperCollection * const )
