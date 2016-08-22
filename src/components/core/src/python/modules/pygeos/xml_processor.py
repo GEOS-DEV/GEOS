@@ -42,7 +42,7 @@ def symbolicMathRegexHandler(match):
   k = match.group(1)
   if k:
     # Sanitize the input
-    sanitized = re.sub(r"[a-zA-Z]", '', k).strip()
+    sanitized = re.sub(r"[a-z-[e]A-Z-[E]]", '', k).strip()
     value = eval(sanitized, {'__builtins__':None})
     return str(value)
   else:

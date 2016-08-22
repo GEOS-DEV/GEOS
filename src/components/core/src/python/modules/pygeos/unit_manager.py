@@ -22,16 +22,16 @@ class UnitManager():
     self.units = {}
     self.unitMatcher = DictRegexHandler()
 
-  def __call__(self, unitString):
+  def __call__(self, unitStruct):
     if (not bool(self.units)):
       self.buildUnits()
     
     # Replace all instances of units in the string with their dict equivalents
-    symbolicUnits = re.sub(r"([a-zA-Z]*)", self.unitMatcher, unitString[1])
+    symbolicUnits = re.sub(r"([a-zA-Z]*)", self.unitMatcher, unitStruct[1])
     
     # Strip out any stray alpha characters and evaluate
-    symbolicUnits_sanitized = re.sub(r"[a-zA-Z]", '', symbolicUnits).strip()
-    value = float(unitString[0])*eval(symbolicUnits_sanitized, {'__builtins__':None})
+    symbolicUnits_sanitized = re.sub(r"[a-z-[e]A-Z-[E]]", '', symbolicUnits).strip()
+    value = float(unitStruct[0])*eval(symbolicUnits_sanitized, {'__builtins__':None})
     return str(value)
 
   def regexHandler(self, match):
