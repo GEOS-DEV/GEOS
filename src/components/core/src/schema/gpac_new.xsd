@@ -15,29 +15,29 @@
 <!-- Boundary Condition Definitions -->
 <xsd:complexType name="BoundaryConditionType">
   <xsd:attribute name="component" type="xsd:integer"/>
-  <xsd:attribute name="fieldname" type="xsd:string"/>
-  <xsd:attribute name="fieldtype" type="xsd:string"/>
-  <xsd:attribute name="setnames" type="xsd:string"/>
+  <xsd:attribute name="fieldName" type="xsd:string"/>
+  <xsd:attribute name="fieldType" type="xsd:string"/>
+  <xsd:attribute name="setNames" type="xsd:string"/>
   <xsd:attribute name="object" type="xsd:string"/>
   <xsd:attribute name="direction" type="xsd:string"/>
   <xsd:attribute name="scale" type="xsd:double"/>
-  <xsd:attribute name="timetable" type="xsd:string"/>
-  <xsd:attribute name="toregion" type="xsd:string"/>
+  <xsd:attribute name="timeTable" type="xsd:string"/>
+  <xsd:attribute name="toRegion" type="xsd:string"/>
   <xsd:attribute name="startTime" type="xsd:double"/>
   <xsd:attribute name="endTime" type="xsd:double"/>
 </xsd:complexType>
 
 <xsd:complexType name="BoundaryConditionFunctionType">
   <xsd:attribute name="component" type="xsd:integer"/>
-  <xsd:attribute name="fieldname" type="xsd:string"/>
-  <xsd:attribute name="fieldtype" type="xsd:string"/>
+  <xsd:attribute name="fieldName" type="xsd:string"/>
+  <xsd:attribute name="fieldType" type="xsd:string"/>
   <xsd:attribute name="variables" type="xsd:string"/>
   <xsd:attribute name="variableTypes" type="xsd:string"/>
-  <xsd:attribute name="setnames" type="xsd:string"/>
+  <xsd:attribute name="setNames" type="xsd:string"/>
   <xsd:attribute name="object" type="xsd:string"/>
   <xsd:attribute name="direction" type="xsd:string"/>
   <xsd:attribute name="function" type="xsd:string"/>
-  <xsd:attribute name="toregion" type="xsd:string"/>
+  <xsd:attribute name="toRegion" type="xsd:string"/>
   <xsd:attribute name="startTime" type="xsd:double"/>
   <xsd:attribute name="endTime" type="xsd:double"/>
 </xsd:complexType>
@@ -68,30 +68,30 @@
   
   <!--options-->
   <xsd:attribute name="active" type="xsd:integer"/>
-  <xsd:attribute name="ImplicitActive" type="xsd:integer"/>
-  <xsd:attribute name="ThreeDTrue" type="xsd:integer"/>
+  <xsd:attribute name="implicitActive" type="xsd:integer"/>
+  <xsd:attribute name="threeDTrue" type="xsd:integer"/>
   
   <!--ChoiceOfMethod-->
   <xsd:attribute name="NitscheFlag" type="xsd:integer"/>
   
   <!--MethodParameters-->
-  <xsd:attribute name="PenaltyNormal" type="xsd:double"/>
-  <xsd:attribute name="PenaltyTau1" type="xsd:double"/>
-  <xsd:attribute name="PenaltyTau2" type="xsd:double"/>
-  <xsd:attribute name="TractionCutoff" type="xsd:double"/>
+  <xsd:attribute name="penaltyNormal" type="xsd:double"/>
+  <xsd:attribute name="penaltyTau1" type="xsd:double"/>
+  <xsd:attribute name="penaltyTau2" type="xsd:double"/>
+  <xsd:attribute name="tractionCutoff" type="xsd:double"/>
   
   <!--Stick/SlipBehavior-->
   <xsd:attribute name="slidingLaw" type="xsd:integer"/>
-  <xsd:attribute name="FrictionCoefficient" type="xsd:double"/>
+  <xsd:attribute name="frictionCoefficient" type="xsd:double"/>
 </xsd:complexType>
 
 
 
 <!-- Element Regions Definitions -->
 <xsd:complexType name="LinearElasticMaterialType">
-  <xsd:attribute name="BulkModulus" type="xsd:double"/>
-  <xsd:attribute name="Density" type="xsd:double"/>
-  <xsd:attribute name="ShearModulus" type="xsd:double"/>
+  <xsd:attribute name="bulkModulus" type="xsd:double"/>
+  <xsd:attribute name="density" type="xsd:double"/>
+  <xsd:attribute name="shearModulus" type="xsd:double"/>
 </xsd:complexType>
 
 <xsd:complexType name="ElementRegionType">
@@ -99,7 +99,7 @@
     <xsd:element name="LinearElasticMaterial" type="LinearElasticMaterialType"/>
   </xsd:choice>
   <xsd:attribute name="name" type="xsd:string"/>
-  <xsd:attribute name="elementtype" type="xsd:string"/>
+  <xsd:attribute name="elementType" type="xsd:string"/>
   <xsd:attribute name="hgDamp" type="xsd:double"/>
   <xsd:attribute name="hgStiff" type="xsd:double"/>
 </xsd:complexType>   
@@ -117,11 +117,11 @@
   <xsd:attribute name="fractureFlag" type="xsd:integer"/>
   <xsd:attribute name="preFractureSetName" type="xsd:string"/>
   <xsd:attribute name="failCriterion" type="xsd:integer"/>
-  <xsd:attribute name="failstress" type="xsd:double"/>
+  <xsd:attribute name="failStress" type="xsd:double"/>
   <xsd:attribute name="rockToughness" type="xsd:double"/>
   <xsd:attribute name="maxKinkAngle" type="xsd:double"/>
   <xsd:attribute name="maxTurnAngle" type="xsd:double"/>
-  <xsd:attribute name="failgap" type="xsd:double"/>
+  <xsd:attribute name="failGap" type="xsd:double"/>
   <xsd:attribute name="separableSet" type="xsd:string"/>
   <xsd:attribute name="allowVacuumFrac" type="xsd:integer"/>
   <xsd:attribute name="dfnPrefix" type="xsd:string"/>
@@ -131,20 +131,20 @@
 
 <!-- Initial Conditions Definitions -->
 <xsd:complexType name="ConstantInitialConditionType">
-  <xsd:attribute name="toregions" type="xsd:string"/>
-  <xsd:attribute name="fieldname" type="xsd:string"/>
-  <xsd:attribute name="fieldtype" type="xsd:string"/>
-  <xsd:attribute name="setnames" type="xsd:string"/>
+  <xsd:attribute name="toRegions" type="xsd:string"/>
+  <xsd:attribute name="fieldName" type="xsd:string"/>
+  <xsd:attribute name="fieldType" type="xsd:string"/>
+  <xsd:attribute name="setNames" type="xsd:string"/>
   <xsd:attribute name="object" type="xsd:string"/>
   <xsd:attribute name="value" type="xsd:string"/>
   <xsd:attribute name="additive" type="xsd:string"/>
 </xsd:complexType>
 
 <xsd:complexType name="InitialConditionFunctionType">
-  <xsd:attribute name="toregions" type="xsd:string"/>
-  <xsd:attribute name="fieldname" type="xsd:string"/>
-  <xsd:attribute name="fieldtype" type="xsd:string"/>
-  <xsd:attribute name="setnames" type="xsd:string"/>
+  <xsd:attribute name="toRegions" type="xsd:string"/>
+  <xsd:attribute name="fieldName" type="xsd:string"/>
+  <xsd:attribute name="fieldType" type="xsd:string"/>
+  <xsd:attribute name="setNames" type="xsd:string"/>
   <xsd:attribute name="object" type="xsd:string"/>
   <xsd:attribute name="function" type="xsd:string"/>
   <xsd:attribute name="variables" type="xsd:string"/>
@@ -153,10 +153,10 @@
 </xsd:complexType>
 
 <xsd:complexType name="InitialConditionTableType">
-  <xsd:attribute name="toregions" type="xsd:string"/>
-  <xsd:attribute name="fieldname" type="xsd:string"/>
-  <xsd:attribute name="fieldtype" type="xsd:string"/>
-  <xsd:attribute name="setnames" type="xsd:string"/>
+  <xsd:attribute name="toRegions" type="xsd:string"/>
+  <xsd:attribute name="fieldName" type="xsd:string"/>
+  <xsd:attribute name="fieldType" type="xsd:string"/>
+  <xsd:attribute name="setNames" type="xsd:string"/>
   <xsd:attribute name="object" type="xsd:string"/>
   <xsd:attribute name="table" type="xsd:string"/>
   <xsd:attribute name="additive" type="xsd:string"/>
@@ -177,10 +177,10 @@
 <!-- Initial Constitutive Definitions -->
 <xsd:complexType name="ConstitutiveType">
   <xsd:attribute name="object" type="xsd:string" use="required"/>
-  <xsd:attribute name="propertytype" type="xsd:string" use="required"/>
-  <xsd:attribute name="tablename" type="xsd:string"/>
+  <xsd:attribute name="propertyType" type="xsd:string" use="required"/>
+  <xsd:attribute name="tableName" type="xsd:string"/>
   <xsd:attribute name="value" type="xsd:double"/>
-  <xsd:attribute name="toregion" type="xsd:string"/>
+  <xsd:attribute name="toRegion" type="xsd:string"/>
 </xsd:complexType>
 
 <xsd:complexType name="InitialConstitutiveValuesType">
@@ -232,12 +232,12 @@
   <xsd:attribute name="nx" type="xsd:string"/>
   <xsd:attribute name="ny" type="xsd:string"/>
   <xsd:attribute name="nz" type="xsd:string"/>
-  <xsd:attribute name="xcoords" type="xsd:string"/>
-  <xsd:attribute name="ycoords" type="xsd:string"/>
-  <xsd:attribute name="zcoords" type="xsd:string"/>
-  <xsd:attribute name="xbias" type="xsd:string"/>
-  <xsd:attribute name="ybias" type="xsd:string"/>
-  <xsd:attribute name="zbias" type="xsd:string"/>
+  <xsd:attribute name="xCoords" type="xsd:string"/>
+  <xsd:attribute name="yCoords" type="xsd:string"/>
+  <xsd:attribute name="zCoords" type="xsd:string"/>
+  <xsd:attribute name="xBias" type="xsd:string"/>
+  <xsd:attribute name="yBias" type="xsd:string"/>
+  <xsd:attribute name="zBias" type="xsd:string"/>
   
   <xsd:attribute name="elementType" type="xsd:string"/>
   <xsd:attribute name="regionNames" type="xsd:string"/>
@@ -265,8 +265,8 @@
 <xsd:complexType name="NodesetType">
   <xsd:attribute name="name" type="xsd:string"/>
   <xsd:attribute name="type" type="xsd:int"/>
-  <xsd:attribute name="xmin" type="xsd:string"/>
-  <xsd:attribute name="xmax" type="xsd:string"/>
+  <xsd:attribute name="xMin" type="xsd:string"/>
+  <xsd:attribute name="xMax" type="xsd:string"/>
   <xsd:attribute name="point1" type="xsd:string"/>
   <xsd:attribute name="point2" type="xsd:string"/>
   <xsd:attribute name="radius" type="xsd:double"/>
@@ -285,11 +285,11 @@
 <xsd:complexType name="OutputType">
   <xsd:attribute name="writePlot" type="xsd:int"/>
   <xsd:attribute name="writeRestart" type="xsd:int"/>
-  <xsd:attribute name="restart_interval" type="xsd:double"/>
-  <xsd:attribute name="plot_interval" type="xsd:double"/>
-  <xsd:attribute name="plotfile_root" type="xsd:string"/>
-  <xsd:attribute name="slave_directory" type="xsd:string"/>
-  <xsd:attribute name="parallel_silo" type="xsd:integer"/>
+  <xsd:attribute name="restartInterval" type="xsd:double"/>
+  <xsd:attribute name="plotInterval" type="xsd:double"/>
+  <xsd:attribute name="plotFileRoot" type="xsd:string"/>
+  <xsd:attribute name="slaveDirectory" type="xsd:string"/>
+  <xsd:attribute name="parallelThreads" type="xsd:integer"/>
   <xsd:attribute name="writeFEMEdges" type="xsd:integer"/>
   <xsd:attribute name="writeFEMFaces" type="xsd:integer"/>
   <xsd:attribute name="writeXFEM" type="xsd:integer"/>
@@ -316,9 +316,9 @@
 
 <!-- Partition Definitions -->
 <xsd:complexType name="SpatialPartitionType">
-  <xsd:attribute name="xpar" type="xsd:integer"/>
-  <xsd:attribute name="ypar" type="xsd:integer"/>
-  <xsd:attribute name="zpar" type="xsd:integer"/>
+  <xsd:attribute name="xPar" type="xsd:integer"/>
+  <xsd:attribute name="yPar" type="xsd:integer"/>
+  <xsd:attribute name="zPar" type="xsd:integer"/>
 </xsd:complexType>
 
 <xsd:complexType name="PartitionType">
@@ -333,7 +333,7 @@
 <!-- Solver Application Definitions -->
 <xsd:complexType name="ApplyType">
   <xsd:attribute name="solver" type="xsd:string"/>
-  <xsd:attribute name="toregions" type="xsd:string"/>
+  <xsd:attribute name="toRegions" type="xsd:string"/>
 </xsd:complexType>
 
 <xsd:complexType name="ApplicationType">
@@ -341,8 +341,8 @@
     <xsd:element name="Apply" type="ApplyType" />
   </xsd:choice>
   <xsd:attribute name="name" type="xsd:string"/>
-  <xsd:attribute name="begintime" type="xsd:double"/>
-  <xsd:attribute name="endtime" type="xsd:double"/>
+  <xsd:attribute name="beginTime" type="xsd:double"/>
+  <xsd:attribute name="endTime" type="xsd:double"/>
   <xsd:attribute name="dt" type="xsd:double"/>
 </xsd:complexType>
 
@@ -359,18 +359,15 @@
   <xsd:attribute name="name" type="xsd:string"/>
   <xsd:attribute name="coord" type="xsd:string"/>
   <xsd:attribute name="value" type="xsd:string"/>
-  <xsd:attribute name="offset_time" type="xsd:double"/>
+  <xsd:attribute name="offsetTime" type="xsd:double"/>
 </xsd:complexType>
  
 <xsd:complexType name="Table3DType">
   <xsd:attribute name="name" type="xsd:string" use="required"/>
-  <xsd:attribute name="x_file" type="xsd:string" use="required"/>
-  <xsd:attribute name="y_file" type="xsd:string" use="required"/>
-  <xsd:attribute name="z_file" type="xsd:string" use="required"/>
-  <xsd:attribute name="voxel_file" type="xsd:string" use="required"/>
-  <xsd:attribute name="x_units" type="xsd:double"/>
-  <xsd:attribute name="y_units" type="xsd:double"/>
-  <xsd:attribute name="z_units" type="xsd:double"/>
+  <xsd:attribute name="xFile" type="xsd:string" use="required"/>
+  <xsd:attribute name="yFile" type="xsd:string" use="required"/>
+  <xsd:attribute name="zFile" type="xsd:string" use="required"/>
+  <xsd:attribute name="voxelFile" type="xsd:string" use="required"/>
 </xsd:complexType> 
 
 <xsd:complexType name="TablesType">
@@ -444,9 +441,9 @@
       <xsd:attribute name="BartonJointParameters" type="xsd:string"/>
       <xsd:attribute name="progressiveShear" type="xsd:int"/>
       <xsd:attribute name="apertureWithCohesion" type="xsd:int"/>
-      <xsd:attribute name="MaximumAperture" type="xsd:double"/>
+      <xsd:attribute name="maximumAperture" type="xsd:double"/>
 
-      <xsd:attribute name="BulkModulus" type="xsd:double"/>
+      <xsd:attribute name="bulkModulus" type="xsd:double"/>
       <xsd:attribute name="pressurecap" type="xsd:double"/>
       <xsd:attribute name="maxViscosity" type="xsd:double"/>
       
