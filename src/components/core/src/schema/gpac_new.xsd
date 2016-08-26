@@ -492,6 +492,10 @@
 
 <!-- Proppant Solvers -->
 <xsd:complexType name="Proppant">
+  <xsd:all>
+    <xsd:element name="SlurryModel" type="SlurryModel" minOccurs="0" maxOccurs="1"/>
+  </xsd:all> 
+
   <xsd:attribute name="bridgingFactor" type="xsd:double"/>
   <xsd:attribute name="density" type="xsd:double"/>
   <xsd:attribute name="diameter" type="xsd:double"/>
@@ -512,7 +516,6 @@
     <xsd:extension base="SolverBase">
       <xsd:all>
         <xsd:element name="Proppant" type="Proppant" minOccurs="0" maxOccurs="1"/>
-        <xsd:element name="SlurryModel" type="SlurryModel" minOccurs="0" maxOccurs="1"/>
       </xsd:all> 
 
       <xsd:attribute name="gravityVector" type="xsd:string"/>

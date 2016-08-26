@@ -1,4 +1,5 @@
 from lxml import etree as ElementTree
+from lxml.etree import XMLSyntaxError 
 import re
 import sys
 import os
@@ -11,10 +12,20 @@ def MergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
   if (includeCount > maxInclude):
     raise Exception('Reached maximum recursive includes...  Is there an include loop?')
 
+  # Check to make sure the file exists
+  if (not os.path.isfile(fname)):
+    print('Included file does not exist: %s' % (fname))
+    raise Exception('Check included file path!')
+
   # Load target xml
-  parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
-  includeTree = ElementTree.parse(fname, parser)
-  includeRoot = includeTree.getroot()
+  try:
+    parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
+    includeTree = ElementTree.parse(fname, parser)
+    includeRoot = includeTree.getroot()
+  except XMLSyntaxError as err:
+    print('\nCould not load included file: %s' % (fname))
+    print err.msg
+    raise Exception('\nCheck included file!')
 
   # Recursively add the includes:
   for includeNode in includeRoot.findall('Included'):
@@ -34,8 +45,9 @@ def MergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
 def generateRandomName(prefix='', suffix='.xml'):
   from hashlib import md5
   from time import time
+  from os import getpid
 
-  return '%s%s%s' % (prefix, md5(str(time())).hexdigest(), suffix)
+  return '%s%s%s' % (prefix, md5(str(time())+str(getpid())).hexdigest(), suffix)
 
 
 def symbolicMathRegexHandler(match):
@@ -53,9 +65,15 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/component
   print('\nReading input xml parameters and parsing symbolic math...')
 
   # Load the xml files and merge includes
-  parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
-  tree = ElementTree.parse(inputFile, parser=parser)
-  root = tree.getroot()
+  try:
+    parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
+    tree = ElementTree.parse(inputFile, parser=parser)
+    root = tree.getroot()
+  except XMLSyntaxError as err:
+    print('\nCould not load input file: %s' % (inputFile))
+    print err.msg
+    raise Exception('\nCheck input file!')
+
   includeCount = 0
   for includeNode in root.findall('Included'):
     for f in includeNode.findall('File'):
