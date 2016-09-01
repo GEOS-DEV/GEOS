@@ -34,12 +34,12 @@ int main( int argc, char *argv[] )
   ProblemManager problemManager("ProblemManager",nullptr);
 
   problemManager.Registration(nullptr);
+
+  problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
-
-
   problemManager.ParseInputFile();
-
-
+  problemManager.RunSimulation();
+  problemManager.ClosePythonInterpreter();
 
   slic::finalize();
 

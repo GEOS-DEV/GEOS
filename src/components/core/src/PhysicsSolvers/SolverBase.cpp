@@ -24,4 +24,9 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
   return catalog;
 }
 
+void SolverBase::ReadXML( pugi::xml_node solverNode )
+{
+  double courant = solverNode.attribute("courant").as_double(0.5);
+}
+
 } /* namespace ANST */

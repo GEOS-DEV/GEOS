@@ -14,6 +14,7 @@
 
 #include "../dataRepository/SynchronizedGroup.hpp"
 #include "common/DataTypes.hpp"
+#include <pugixml.hpp>
 
 
 namespace geosx
@@ -42,6 +43,7 @@ public:
                          int const cycleNumber,
                          dataRepository::SynchronizedGroup& domain ) = 0;
 
+  virtual void ReadXML( pugi::xml_node solverNode );
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, SynchronizedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();

@@ -38,6 +38,8 @@
 #	include <istream>
 #	include <ostream>
 #	include <string>
+# include <sstream>
+# include <vector>
 #endif
 
 // For placement new
@@ -5155,6 +5157,70 @@ namespace pugi
 	{
 		return (_attr && _attr->value) ? impl::get_value_double(_attr->value) : def;
 	}
+
+
+	// Modifications to parse lists in GEOS
+	PUGI__FN void xml_attribute::load_string_array(std::vector<std::string>& target)
+	{
+		if (_attr && _attr->value)
+		{
+			std::istringstream ss( _attr->value );
+
+		  while (ss)
+		  {
+		    std::string s;
+		    if (!getline( ss, s, ',' )) break;
+		    target.push_back(s);
+		  }
+		} 
+	}
+
+	PUGI__FN void xml_attribute::load_int_array(std::vector<int>& target)
+	{
+		if (_attr && _attr->value)
+		{
+			std::istringstream ss( _attr->value );
+
+		  while (ss)
+		  {
+		    std::string s;
+		    if (!getline( ss, s, ',' )) break;
+		    target.push_back(std::atoi(s.c_str()));
+		  }
+		} 
+	}
+
+	PUGI__FN void xml_attribute::load_double_array(std::vector<double>& target)
+	{
+		if (_attr && _attr->value)
+		{
+			std::istringstream ss( _attr->value );
+
+		  while (ss)
+		  {
+		    std::string s;
+		    if (!getline( ss, s, ',' )) break;
+		    target.push_back(std::atof(s.c_str()));
+		  }
+		} 
+	}
+
+	PUGI__FN void xml_attribute::load_float_array(std::vector<float>& target)
+	{
+		if (_attr && _attr->value)
+		{
+			std::istringstream ss( _attr->value );
+
+		  while (ss)
+		  {
+		    std::string s;
+		    if (!getline( ss, s, ',' )) break;
+		    target.push_back(std::atof(s.c_str()));
+		  }
+		} 
+	}
+	// End modifications
+
 
 	PUGI__FN float xml_attribute::as_float(float def) const
 	{

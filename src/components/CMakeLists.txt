@@ -1,5 +1,6 @@
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_SOURCE_DIR}/components/core/src)
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -L${PYTHON_DIR}/lib)
+blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON)
 
 blt_add_component(COMPONENT_NAME core DEFAULT_STATE ON)
 blt_add_component(COMPONENT_NAME cxx-utilities DEFAULT_STATE ON)

@@ -29,6 +29,13 @@ namespace dataRepository
     std::string const yPartitionsOverride = "yPartitionsOverride";
     std::string const zPartitionsOverride = "zPartitionsOverride";
     std::string const overridePartitionNumbers = "overridePartitionNumbers";
+
+    std::string const solverApplications = "solverApplications";
+    std::string const solverApplicationNames = "solverApplicationNames";
+    std::string const beginTime = "beginTime";
+    std::string const endTime = "endTime";
+    std::string const dt = "dt";
+    std::string const solverList = "solverList";
   }
 }
 
@@ -36,7 +43,9 @@ using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
                                 SynchronizedGroup * const parent ) :
-  SynchronizedGroup( name, parent )
+  SynchronizedGroup( name, parent ),
+  m_applicationNames(),
+  m_applicationSolvers()
 {}
 
 ProblemManager::~ProblemManager()
@@ -45,7 +54,10 @@ ProblemManager::~ProblemManager()
 void ProblemManager::Registration( dataRepository::SynchronizedGroup * const )
 {
   RegisterGroup<DomainPartition>(keys::domain);
-  RegisterGroup<SynchronizedGroup>("solvers");
+
+  SynchronizedGroup& solvers = RegisterGroup<SynchronizedGroup>(keys::solvers);
+  solvers.RegisterGroup<SynchronizedGroup>(keys::solverApplications);
+  solvers.RegisterViewWrapper<string_array>(keys::solverApplicationNames);
 
   SynchronizedGroup& commandLine = RegisterGroup<SynchronizedGroup >(keys::commandLine);
   commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
@@ -157,72 +169,84 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 
 void ProblemManager::InitializePythonInterpreter()
 {
+#ifdef USE_PYTHON
   // Initialize python and numpy
-  std::cout << "Initializing python...";
-  Py_Initialize() ;
+  std::cout << "Loading python interpreter" << std::endl;
+
+  // Check to make sure the appropriate environment variables are set
+  if (getenv("GPAC_SCHEMA") == NULL)
+  {
+    throw std::invalid_argument("GPAC_SCHEMA must be defined to use the new preprocessor!");
+  }
+  if (getenv("GEOS_PYTHONPATH") == NULL)
+  {
+    throw std::invalid_argument("GEOS_PYTHONPATH must be defined to use the new preprocessor!");
+  }
+  if (getenv("GEOS_PYTHONHOME") == NULL)
+  {
+    throw std::invalid_argument("GEOS_PYTHONHOME must be defined to use the new preprocessor!");
+  }
+
+  setenv("PYTHONPATH", getenv("GEOS_PYTHONPATH"), 1);
+  Py_SetPythonHome(getenv("GEOS_PYTHONHOME"));
+  Py_Initialize();
   import_array();
-  std::cout << "  done!" << std::endl;
-  // Add a test here to make sure a supported version of python is available
+#endif
 }
 
 
 void ProblemManager::ClosePythonInterpreter()
 {
+#ifdef USE_PYTHON
   // Add any other cleanup here
+  std::cout << "Closing python interpreter" << std::endl;
   Py_Finalize();
+#endif
 }
 
 
 void ProblemManager::ParseInputFile()
 {
-  dataRepository::SynchronizedGroup& commandLine = GetGroup<SynchronizedGroup>(keys::commandLine);
-  
-  ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
-
-  FiniteElementSpace feSpace( keys::FE_Space, this);
-
-  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
   DomainPartition& domain  = getDomainPartition();
 
-  std::string newName("new solver");
-  std::string newName2("new solver2");
+  dataRepository::SynchronizedGroup& commandLine = GetGroup<SynchronizedGroup>(keys::commandLine);
+  ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
 
-  std::unique_ptr<SolverBase> solver = SolverBase::CatalogInterface::Factory("SolidMechanics_LagrangianFEM", newName, &domain );
-  auto& solver1 = solvers.RegisterGroup( newName, std::move(solver) );
-  solver = SolverBase::CatalogInterface::Factory( "NewComponent", newName2, &domain );
-  auto& solver2 = solvers.RegisterGroup( newName2, std::move(solver) );
-
-  solver1.getData<string>(std::string("name"));
-
-  solver1.Registration( &domain );
-  solver2.Registration( &domain );
-
-  double time = 0.0;
-  double dt = 5.0e-5;
-  for( int i=0 ; i<10 ; ++i )
-  {
-    solver1.TimeStep( time, dt, i, domain );
-    time += dt;
-    std::cout<<std::endl;
-  }
+  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
+  dataRepository::SynchronizedGroup& solverApplications = solvers.GetGroup<dataRepository::SynchronizedGroup>(keys::solverApplications);
+  ViewWrapper<string_array>::rtype  solverApplicationNames = solvers.getData<string_array>(keys::solverApplicationNames);
 
 
-  // Preprocess the xml file using python
-  InitializePythonInterpreter();
+#ifdef USE_PYTHON
+  // Load the pygeos module
   PyObject *pModule = PyImport_ImportModule("pygeos");
   if (pModule == NULL)
   {
     PyErr_Print();
-    throw std::invalid_argument("Could not find the pygeos module in PYTHONPATH!");
+    throw std::invalid_argument("Could not find the pygeos module in GEOS_PYTHONPATH!");
   }
+
+  // Call the xml preprocessor
   PyObject *pPreprocessorFunction = PyObject_GetAttrString(pModule, "PreprocessGEOSXML");
   PyObject *pPreprocessorInputStr = Py_BuildValue("(s)", inputFileName.c_str());
-  PyObject *pPreprocessorResult = PyObject_CallObject(pPreprocessorFunction, pPreprocessorInputStr);
-  std::string processedInputFile = PyString_AsString(pPreprocessorResult);
+  PyObject *pKeywordDict = Py_BuildValue("{s:s}", "schema", getenv("GPAC_SCHEMA"));
+  PyObject *pPreprocessorResult = PyObject_Call(pPreprocessorFunction, pPreprocessorInputStr, pKeywordDict);
+  inputFileName = PyString_AsString(pPreprocessorResult);
+  
+  // Cleanup
+  Py_DECREF(pPreprocessorResult);
+  Py_DECREF(pKeywordDict);
+  Py_DECREF(pPreprocessorInputStr);
+  Py_DECREF(pPreprocessorFunction);
+  Py_DECREF(pModule);
+
+#else
+  std::cout << "Warning: GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files" << std::endl;
+#endif
 
 
   // Load preprocessed xml file and check for errors
-  xmlResult = xmlDocument.load_file(processedInputFile.c_str());
+  xmlResult = xmlDocument.load_file(inputFileName.c_str());
   if (!xmlResult)
   {
     std::cout << "XML parsed with errors!" << std::endl;
@@ -230,7 +254,103 @@ void ProblemManager::ParseInputFile()
     std::cout << "Error offset: " << xmlResult.offset << std::endl;
   }
   xmlProblemNode = xmlDocument.child("Problem");
+  pugi::xml_node topLevelNode;
+
+
+  // Solvers
+  topLevelNode = xmlProblemNode.child("Solvers");
+  std::cout << "Solvers:" << std::endl;
+  if (topLevelNode == NULL)
+  {
+    throw std::invalid_argument("Solver block not present in input xml file!");
+  }
+  else
+  {
+    for (pugi::xml_node solverNode=topLevelNode.first_child(); solverNode; solverNode=solverNode.next_sibling())
+    {
+      std::cout << "   " << solverNode.name() << std::endl;
+
+      // Register the new solver
+      std::string solverID = solverNode.attribute("name").value();
+      std::unique_ptr<SolverBase> solverPtr = SolverBase::CatalogInterface::Factory(solverNode.name(), solverID, &domain );
+      SolverBase& newSolver = solvers.RegisterGroup( solverID, std::move(solverPtr) );
+      
+      // Register fields in the solver and parse options
+      newSolver.Registration( &domain );
+      newSolver.ReadXML(solverNode);
+    }
+  }
+
+
+  // Applications
+  topLevelNode = xmlProblemNode.child("SolverApplications");
+  if (topLevelNode == NULL)
+  {
+    throw std::invalid_argument("SolverApplications block not present in input xml file!");
+  }
+  else
+  {
+    for (pugi::xml_node applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
+    {
+      // Register a new solver application (Note: these must be identified by a unique name)
+      std::string applicationName = applicationNode.attribute("name").value();
+      dataRepository::SynchronizedGroup& newApplication = solverApplications.RegisterGroup<SynchronizedGroup>(applicationName);
+      newApplication.RegisterViewWrapper<real64>(keys::beginTime);
+      newApplication.RegisterViewWrapper<real64>(keys::endTime);
+      newApplication.RegisterViewWrapper<real64>(keys::dt);
+      newApplication.RegisterViewWrapper<string_array>(keys::solverList);
+
+      // Read application values from the xml
+      *(newApplication.getData<real64>(keys::beginTime)) = applicationNode.attribute("beginTime").as_double(0.0);
+      *(newApplication.getData<real64>(keys::endTime)) = applicationNode.attribute("endTime").as_double(0.0);
+      *(newApplication.getData<real64>(keys::dt)) = applicationNode.attribute("dt").as_double(0.0);
+      // ViewWrapper<string_array>::rtype solverList = newApplication.getData<string_array>(keys::solverList);
+      // applicationNode.attribute("solvers").load_string_array(solverList);
+      
+      // Having difficulty storing a string_array, so do this for now:
+      m_applicationNames.push_back(applicationName);
+      std::vector<std::string> newApplicationSolvers;
+      applicationNode.attribute("solvers").load_string_array(newApplicationSolvers);
+      m_applicationSolvers.insert(applicationSet(applicationName, newApplicationSolvers));
+      
+    }
+  }
 }
+
+
+
+void ProblemManager::RunSimulation()
+{
+  DomainPartition& domain  = getDomainPartition();
+  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
+  dataRepository::SynchronizedGroup& solverApplications = solvers.GetGroup<dataRepository::SynchronizedGroup>(keys::solverApplications);
+
+  double time = 0.0;
+  int cycle = 0;
+    for( std::vector<string>::iterator app=m_applicationNames.begin(); app!=m_applicationNames.end(); ++app)
+  {
+    dataRepository::SynchronizedGroup& currentApplication = solverApplications.GetGroup(*app);
+    ViewWrapper<real64>::rtype dt = currentApplication.getData<real64>(keys::dt);
+    ViewWrapper<real64>::rtype endTime = currentApplication.getData<real64>(keys::endTime);
+
+    while( time < *(endTime) )
+    {
+      std::cout << "Time: " << time << "s, Cycle: " << cycle << std::endl;
+
+      for (std::vector<string>::iterator ss=m_applicationSolvers[*app].begin(); ss!=m_applicationSolvers[*app].end(); ++ss)
+      {
+        SolverBase& currentSolver = solvers.GetGroup<SolverBase>( *ss );
+        currentSolver.TimeStep( time, *(dt), cycle, domain );
+      }
+
+      time += *(dt);
+      cycle ++;
+    } 
+  }
+}
+
+
+
 
 void ProblemManager::ApplySchedulerEvent()
 {}

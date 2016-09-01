@@ -128,7 +128,7 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/component
     print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
 
   os.remove(tmp_fname_a)
-  print('Preprocessed xml file stored in %s' % (tmp_fname_b))
+  print('Preprocessed xml file stored in %s\n' % (tmp_fname_b))
   return tmp_fname_b
 
 if (__name__ == "__main__"):

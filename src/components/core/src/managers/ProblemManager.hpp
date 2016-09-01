@@ -40,6 +40,8 @@ public:
 
   void ParseInputFile();
 
+  void RunSimulation();
+
   void ApplySchedulerEvent();
 
   DomainPartition & getDomainPartition();
@@ -49,6 +51,10 @@ public:
   pugi::xml_parse_result xmlResult;
   pugi::xml_node xmlProblemNode;
 
+  // Temporary fields (string_array may have problems)
+  typedef std::pair< std::string, std::vector<string> > applicationSet;
+  std::map< std::string, std::vector<std::string> > m_applicationSolvers;
+  std::vector<std::string> m_applicationNames;
 };
 
 } /* namespace geosx */

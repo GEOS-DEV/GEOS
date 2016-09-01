@@ -35,6 +35,7 @@
 #	include <iterator>
 #	include <iosfwd>
 #	include <string>
+# include <vector>
 #endif
 
 // Macro for deprecated features
@@ -343,6 +344,12 @@ namespace pugi
 		unsigned int as_uint(unsigned int def = 0) const;
 		double as_double(double def = 0) const;
 		float as_float(float def = 0) const;
+
+		void load_string_array(std::vector<std::string>& target);
+		void load_int_array(std::vector<int>& target);
+		void load_double_array(std::vector<double>& target);
+		void load_float_array(std::vector<float>& target);
+
 
 	#ifdef PUGIXML_HAS_LONG_LONG
 		long long as_llong(long long def = 0) const;
