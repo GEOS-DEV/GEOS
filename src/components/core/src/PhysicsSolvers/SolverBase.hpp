@@ -11,6 +11,7 @@
 
 
 #include <string>
+#include <limits>
 
 #include "../dataRepository/SynchronizedGroup.hpp"
 #include "common/DataTypes.hpp"
@@ -38,12 +39,18 @@ public:
 
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
+  virtual void ReadXML( pugi::xml_node solverNode );
+
+  virtual void Registration( dataRepository::SynchronizedGroup * const domain ) override;
+
+  virtual void Initialize( dataRepository::SynchronizedGroup& domain );
+
   virtual void TimeStep( real64 const & time_n,
                          real64 const & dt,
                          int const cycleNumber,
                          dataRepository::SynchronizedGroup& domain ) = 0;
 
-  virtual void ReadXML( pugi::xml_node solverNode );
+
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, SynchronizedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();

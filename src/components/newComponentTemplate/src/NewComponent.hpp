@@ -26,6 +26,10 @@ public:
 
   static std::string CatalogName() { return "NewComponent"; }
 
+  virtual void ReadXML( pugi::xml_node solverNode );
+
+  virtual void Initialize( dataRepository::SynchronizedGroup& domain );
+
   virtual void Registration( dataRepository::SynchronizedGroup * const domain ) ;
 
 

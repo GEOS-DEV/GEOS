@@ -24,6 +24,10 @@ namespace keys
 {
 std::string const K = "K";
 std::string const Ey = "Ey";
+std::string const rho = "rho";
+std::string const area = "area";
+std::string const barLength = "barLength";
+std::string const nElements = "nElements";
 }
 }
 
@@ -41,8 +45,22 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
   // TODO Auto-generated destructor stub
 }
 
-void SolidMechanics_LagrangianFEM::Registration( SynchronizedGroup * const domain )
+
+void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node solverNode )
 {
+  SolverBase::ReadXML(solverNode);
+
+  *(this->getData<int>(keys::nElements)) = solverNode.attribute("nElements").as_int(10);
+  *(this->getData<real64>(keys::Ey)) = solverNode.attribute("Ey").as_double(10.0e9);
+  *(this->getData<real64>(keys::rho)) = solverNode.attribute("rho").as_double(2650.0);
+  *(this->getData<real64>(keys::area)) = solverNode.attribute("area").as_double(1.0);
+  *(this->getData<real64>(keys::barLength)) = solverNode.attribute("barLength").as_double(1.0);
+}
+
+
+void SolidMechanics_LagrangianFEM::Registration( dataRepository::SynchronizedGroup * const domain )
+{
+  SolverBase::Registration( domain );
 
   SynchronizedGroup& nodes = domain->RegisterGroup<SynchronizedGroup >(keys::FEM_Nodes);
   SynchronizedGroup& elems = domain->RegisterGroup<SynchronizedGroup >(keys::FEM_Elements);
@@ -54,36 +72,53 @@ void SolidMechanics_LagrangianFEM::Registration( SynchronizedGroup * const domai
 
   elems.RegisterViewWrapper<real64_array>(keys::Strain);
   elems.RegisterViewWrapper(keys::Force,  rtTypes::TypeIDs::real64_array_id );
+  elems.RegisterViewWrapper<real64>(keys::Ey);
+  elems.RegisterViewWrapper<real64_array>(keys::K);
+
+  nodes.RegisterViewWrapper<real64_array>(keys::ReferencePosition);
+  nodes.RegisterViewWrapper<real64_array>(keys::Mass);
+
+  // Lagrange solver parameters
+  this->RegisterViewWrapper<int>(keys::nElements);
+  this->RegisterViewWrapper<real64>(keys::Ey);
+  this->RegisterViewWrapper<real64>(keys::rho);
+  this->RegisterViewWrapper<real64>(keys::area);
+  this->RegisterViewWrapper<real64>(keys::barLength);
+}
+
+
+void SolidMechanics_LagrangianFEM::Initialize( dataRepository::SynchronizedGroup& domain )
+{
+  SynchronizedGroup& nodes = domain.GetGroup<SynchronizedGroup >(keys::FEM_Nodes);
+  SynchronizedGroup& elems = domain.GetGroup<SynchronizedGroup >(keys::FEM_Elements);
+
+  int& nElements = *(this->getData<int>(keys::nElements));
+  real64& Ey = *(this->getData<real64>(keys::Ey));
+  real64& rho = *(this->getData<real64>(keys::rho));
+  real64& area = *(this->getData<real64>(keys::area));
+  real64& barLength = *(this->getData<real64>(keys::barLength));
 
   // HACK
-  nodes.resize(11);
-  elems.resize(10);
+  nodes.resize(nElements+1);
+  elems.resize(nElements);
 
-  ViewWrapper<real64_array>::rtype    X = nodes.RegisterViewWrapper<real64_array>(keys::ReferencePosition).data();
-  ViewWrapper<real64_array>::rtype mass = nodes.RegisterViewWrapper<real64_array>(keys::Mass).data();
-  real64& Ey = *(elems.RegisterViewWrapper<real64>(keys::Ey).data());
-  ViewWrapper<real64_array>::rtype K = elems.RegisterViewWrapper<real64_array>(keys::K).data();
-
-  Ey = 10e9;
-
-  double rho = 2700;
-  double A = 1;
-  double L = 1.0;
+  ViewWrapper<real64_array>::rtype    X = nodes.getData<real64_array>(keys::ReferencePosition);
+  ViewWrapper<real64_array>::rtype mass = nodes.getData<real64_array>(keys::Mass);
+  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
 
 
   std::cout<<"sound speed = "<<sqrt(Ey/rho)<<std::endl;
-//  std::cout<<1.0/0.0<<std::endl;
   for( uint64 a=0 ; a<nodes.size() ; ++a )
   {
-    X[a] = a * ( L/nodes.size() );
+    X[a] = a * ( barLength/(nElements+1));
   }
 
   for( uint64 k=0 ; k<elems.size() ; ++k )
   {
-    double dx = L / elems.size();
-    mass[k] += rho * A * dx / 2;
-    mass[k+1] += rho * A * dx / 2;
-    K[k] = Ey*A*dx;
+    double dx = barLength / nElements;
+    mass[k] += rho * area * dx / 2;
+    mass[k+1] += rho * area * dx / 2;
+    K[k] = Ey*area*dx;
   }
 
 }

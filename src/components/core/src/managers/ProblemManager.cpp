@@ -45,6 +45,7 @@ ProblemManager::ProblemManager( const std::string& name,
                                 SynchronizedGroup * const parent ) :
   SynchronizedGroup( name, parent ),
   m_applicationNames(),
+  m_activeSolvers(),
   m_applicationSolvers()
 {}
 
@@ -75,11 +76,11 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
   
   ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
   ViewWrapper<std::string>::rtype  restartFileName = commandLine.getData<std::string>(keys::restartFileName);
-  ViewWrapper<bool>::rtype         beginFromRestart = commandLine.getData<bool>(keys::beginFromRestart);
-  ViewWrapper<int32>::rtype        xPartitionsOverride = commandLine.getData<int32>(keys::xPartitionsOverride);
-  ViewWrapper<int32>::rtype        yPartitionsOverride = commandLine.getData<int32>(keys::yPartitionsOverride);
-  ViewWrapper<int32>::rtype        zPartitionsOverride = commandLine.getData<int32>(keys::zPartitionsOverride);
-  ViewWrapper<bool>::rtype         overridePartitionNumbers = commandLine.getData<bool>(keys::overridePartitionNumbers);
+  bool&         beginFromRestart = *(commandLine.getData<bool>(keys::beginFromRestart));
+  int32&        xPartitionsOverride = *(commandLine.getData<int32>(keys::xPartitionsOverride));
+  int32&        yPartitionsOverride = *(commandLine.getData<int32>(keys::yPartitionsOverride));
+  int32&        zPartitionsOverride = *(commandLine.getData<int32>(keys::zPartitionsOverride));
+  bool&         overridePartitionNumbers = *(commandLine.getData<bool>(keys::overridePartitionNumbers));
 
 
   // Get command line input
@@ -113,18 +114,18 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
       /* long options without a short arg */
       if( stringutilities::streq( std::string("xpar"), long_options[option_index].name ) )
       {
-        *(xPartitionsOverride) = std::stoi(optarg);
-        *(overridePartitionNumbers) = true;
+        xPartitionsOverride = std::stoi(optarg);
+        overridePartitionNumbers = true;
       }
       else if( stringutilities::streq( std::string("ypar"), long_options[option_index].name ) )
       {
-        *(yPartitionsOverride) = std::stoi(optarg);
-        *(overridePartitionNumbers) = true;
+        yPartitionsOverride = std::stoi(optarg);
+        overridePartitionNumbers = true;
       }
       else if( stringutilities::streq( std::string("zpar"), long_options[option_index].name ) )
       {
-        *(zPartitionsOverride) = std::stoi(optarg);
-        *(overridePartitionNumbers) = true;
+        zPartitionsOverride = std::stoi(optarg);
+        overridePartitionNumbers = true;
       }
     }
     break;
@@ -139,7 +140,7 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 
     case 'r':   // From restart
     {
-      *(beginFromRestart) = true;
+      beginFromRestart = true;
       restartFileName = optarg;
     }
     break;
@@ -278,6 +279,7 @@ void ProblemManager::ParseInputFile()
       // Register fields in the solver and parse options
       newSolver.Registration( &domain );
       newSolver.ReadXML(solverNode);
+      m_activeSolvers.push_back(solverID);
     }
   }
 
@@ -303,7 +305,7 @@ void ProblemManager::ParseInputFile()
       // Read application values from the xml
       *(newApplication.getData<real64>(keys::beginTime)) = applicationNode.attribute("beginTime").as_double(0.0);
       *(newApplication.getData<real64>(keys::endTime)) = applicationNode.attribute("endTime").as_double(0.0);
-      *(newApplication.getData<real64>(keys::dt)) = applicationNode.attribute("dt").as_double(0.0);
+      *(newApplication.getData<real64>(keys::dt)) = applicationNode.attribute("dt").as_double(-1.0);
       // ViewWrapper<string_array>::rtype solverList = newApplication.getData<string_array>(keys::solverList);
       // applicationNode.attribute("solvers").load_string_array(solverList);
       
@@ -312,11 +314,38 @@ void ProblemManager::ParseInputFile()
       std::vector<std::string> newApplicationSolvers;
       applicationNode.attribute("solvers").load_string_array(newApplicationSolvers);
       m_applicationSolvers.insert(applicationSet(applicationName, newApplicationSolvers));
-      
+    }
+
+    // Test to make sure the applications are valid
+    for (uint ii=0; ii<m_applicationNames.size()-1; ++ii)
+    {
+      dataRepository::SynchronizedGroup& applicationA = solverApplications.GetGroup(m_applicationNames[ii]);
+      dataRepository::SynchronizedGroup& applicationB = solverApplications.GetGroup(m_applicationNames[ii+1]);
+
+      ViewWrapper<real64>::rtype endTime = applicationA.getData<real64>(keys::endTime);
+      ViewWrapper<real64>::rtype beginTime = applicationB.getData<real64>(keys::beginTime);
+      if (fabs(*(beginTime) - *(endTime)) > 1e-6)
+      {
+        std::cout << "Error in solver application times: " << m_applicationNames[ii] << std::endl;
+        throw std::invalid_argument("Solver application times must be contiguous!");
+      }
     }
   }
 }
 
+
+void ProblemManager::InitializeObjects()
+{
+  DomainPartition& domain  = getDomainPartition();
+
+  // Initialize solvers
+  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
+  for (std::vector<string>::iterator ss=m_activeSolvers.begin(); ss!=m_activeSolvers.end(); ++ss)
+  {
+    SolverBase& currentSolver = solvers.GetGroup<SolverBase>( *ss );
+    currentSolver.Initialize( domain );
+  }
+}
 
 
 void ProblemManager::RunSimulation()
@@ -327,24 +356,37 @@ void ProblemManager::RunSimulation()
 
   double time = 0.0;
   int cycle = 0;
-    for( std::vector<string>::iterator app=m_applicationNames.begin(); app!=m_applicationNames.end(); ++app)
+  real64 dt = 0.0;
+
+  for( std::vector<string>::iterator app=m_applicationNames.begin(); app!=m_applicationNames.end(); ++app)
   {
     dataRepository::SynchronizedGroup& currentApplication = solverApplications.GetGroup(*app);
-    ViewWrapper<real64>::rtype dt = currentApplication.getData<real64>(keys::dt);
-    ViewWrapper<real64>::rtype endTime = currentApplication.getData<real64>(keys::endTime);
+    real64& appDt = *(currentApplication.getData<real64>(keys::dt));
+    real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
 
-    while( time < *(endTime) )
+    bool lockDt = (appDt > 0.0);
+    if (lockDt)
     {
-      std::cout << "Time: " << time << "s, Cycle: " << cycle << std::endl;
+      dt = appDt;
+    }
+
+    while( time < endTime )
+    {
+      std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+      real64 nextDt = std::numeric_limits<real64>::max();
 
       for (std::vector<string>::iterator ss=m_applicationSolvers[*app].begin(); ss!=m_applicationSolvers[*app].end(); ++ss)
       {
         SolverBase& currentSolver = solvers.GetGroup<SolverBase>( *ss );
-        currentSolver.TimeStep( time, *(dt), cycle, domain );
+        currentSolver.TimeStep( time, dt, cycle, domain );
+        nextDt = std::min(nextDt, *(currentSolver.getData<real64>(keys::maxDt)));
       }
 
-      time += *(dt);
+      // Update time, cycle, timestep
+      time += dt;
       cycle ++;
+      dt = (lockDt)?(dt):(nextDt);
+      dt = (endTime - time < dt)?(endTime-time):(dt);
     } 
   }
 }

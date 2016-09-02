@@ -29,19 +29,21 @@ public:
 
   static std::string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void Registration( dataRepository::SynchronizedGroup * const domain ) override;
-
-
-  virtual void TimeStep( real64 const& time_n,
-                         real64 const& dt,
-                         int32 const cycleNumber,
-                         dataRepository::SynchronizedGroup& domain ) override;
-
   void TimeStepExplicit( real64 const& time_n,
                          real64 const& dt,
                          int32 const cycleNumber,
                          dataRepository::SynchronizedGroup& domain );
 
+  virtual void ReadXML( pugi::xml_node solverNode );
+
+  virtual void Registration( dataRepository::SynchronizedGroup * const domain );
+
+  virtual void Initialize( dataRepository::SynchronizedGroup& domain );
+
+  virtual void TimeStep( real64 const& time_n,
+                         real64 const& dt,
+                         int32 const cycleNumber,
+                         dataRepository::SynchronizedGroup& domain ) override;
 
 
 private:

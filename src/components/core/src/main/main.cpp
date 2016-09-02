@@ -38,7 +38,11 @@ int main( int argc, char *argv[] )
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
   problemManager.ParseInputFile();
+
+  problemManager.InitializeObjects();
   problemManager.RunSimulation();
+  
+
   problemManager.ClosePythonInterpreter();
 
   slic::finalize();

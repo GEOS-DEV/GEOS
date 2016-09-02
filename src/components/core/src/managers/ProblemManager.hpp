@@ -40,6 +40,8 @@ public:
 
   void ParseInputFile();
 
+  void InitializeObjects();
+
   void RunSimulation();
 
   void ApplySchedulerEvent();
@@ -54,6 +56,7 @@ public:
   // Temporary fields (string_array may have problems)
   typedef std::pair< std::string, std::vector<string> > applicationSet;
   std::map< std::string, std::vector<std::string> > m_applicationSolvers;
+  std::vector<std::string> m_activeSolvers;
   std::vector<std::string> m_applicationNames;
 };
 

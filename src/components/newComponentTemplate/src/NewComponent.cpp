@@ -20,6 +20,15 @@ NewComponent::NewComponent( std::string const & name,
 NewComponent::~NewComponent()
 {}
 
+
+void NewComponent::Initialize( dataRepository::SynchronizedGroup& /*domain*/ )
+{}
+
+
+void NewComponent::ReadXML( pugi::xml_node /*solverNode*/ )
+{}
+
+
 void NewComponent::Registration( dataRepository::SynchronizedGroup * const /*domain*/ )
 {}
 
