@@ -30,6 +30,7 @@ namespace dataRepository
     std::string const zPartitionsOverride = "zPartitionsOverride";
     std::string const overridePartitionNumbers = "overridePartitionNumbers";
 
+    std::string const solverNames = "solverNames";
     std::string const solverApplications = "solverApplications";
     std::string const solverApplicationNames = "solverApplicationNames";
     std::string const beginTime = "beginTime";
@@ -43,10 +44,7 @@ using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
                                 SynchronizedGroup * const parent ) :
-  SynchronizedGroup( name, parent ),
-  m_applicationNames(),
-  m_activeSolvers(),
-  m_applicationSolvers()
+  SynchronizedGroup( name, parent )
 {}
 
 ProblemManager::~ProblemManager()
@@ -57,8 +55,10 @@ void ProblemManager::Registration( dataRepository::SynchronizedGroup * const )
   RegisterGroup<DomainPartition>(keys::domain);
 
   SynchronizedGroup& solvers = RegisterGroup<SynchronizedGroup>(keys::solvers);
-  solvers.RegisterGroup<SynchronizedGroup>(keys::solverApplications);
-  solvers.RegisterViewWrapper<string_array>(keys::solverApplicationNames);
+  solvers.RegisterViewWrapper<string_array>(keys::solverNames);
+
+  SynchronizedGroup& solverApplications = RegisterGroup<SynchronizedGroup>(keys::solverApplications);
+  solverApplications.RegisterViewWrapper<string_array>(keys::solverApplicationNames);
 
   SynchronizedGroup& commandLine = RegisterGroup<SynchronizedGroup >(keys::commandLine);
   commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
@@ -214,8 +214,7 @@ void ProblemManager::ParseInputFile()
   ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
 
   dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
-  dataRepository::SynchronizedGroup& solverApplications = solvers.GetGroup<dataRepository::SynchronizedGroup>(keys::solverApplications);
-  ViewWrapper<string_array>::rtype  solverApplicationNames = solvers.getData<string_array>(keys::solverApplicationNames);
+  dataRepository::SynchronizedGroup& solverApplications = GetGroup<dataRepository::SynchronizedGroup>(keys::solverApplications);
 
 
 #ifdef USE_PYTHON
@@ -267,6 +266,12 @@ void ProblemManager::ParseInputFile()
   }
   else
   {
+    // Determine the number of active solvers, resize the solver collection 
+    std_size_t nSolvers = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
+    solvers.resize(nSolvers);
+    ViewWrapper<string_array>::rtype  solverNames = solvers.getData<string_array>(keys::solverNames);
+    int ii = 0;
+
     for (pugi::xml_node solverNode=topLevelNode.first_child(); solverNode; solverNode=solverNode.next_sibling())
     {
       std::cout << "   " << solverNode.name() << std::endl;
@@ -279,7 +284,8 @@ void ProblemManager::ParseInputFile()
       // Register fields in the solver and parse options
       newSolver.Registration( &domain );
       newSolver.ReadXML(solverNode);
-      m_activeSolvers.push_back(solverID);
+      solverNames[ii] = solverID;
+      ii++;
     }
   }
 
@@ -292,6 +298,12 @@ void ProblemManager::ParseInputFile()
   }
   else
   {
+    // Determine the number of solver applications, resize the application collection 
+    std_size_t nApp = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
+    solverApplications.resize(nApp);
+    ViewWrapper<string_array>::rtype  solverApplicationNames = solverApplications.getData<string_array>(keys::solverApplicationNames);
+    int ii = 0;
+
     for (pugi::xml_node applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
     {
       // Register a new solver application (Note: these must be identified by a unique name)
@@ -306,27 +318,33 @@ void ProblemManager::ParseInputFile()
       *(newApplication.getData<real64>(keys::beginTime)) = applicationNode.attribute("beginTime").as_double(0.0);
       *(newApplication.getData<real64>(keys::endTime)) = applicationNode.attribute("endTime").as_double(0.0);
       *(newApplication.getData<real64>(keys::dt)) = applicationNode.attribute("dt").as_double(-1.0);
-      // ViewWrapper<string_array>::rtype solverList = newApplication.getData<string_array>(keys::solverList);
-      // applicationNode.attribute("solvers").load_string_array(solverList);
       
-      // Having difficulty storing a string_array, so do this for now:
-      m_applicationNames.push_back(applicationName);
+      // Store the application name
+      solverApplicationNames[ii] = applicationName;
+      ii++;
+
+      // Store the solver list in this application
       std::vector<std::string> newApplicationSolvers;
       applicationNode.attribute("solvers").load_string_array(newApplicationSolvers);
-      m_applicationSolvers.insert(applicationSet(applicationName, newApplicationSolvers));
+      newApplication.resize(newApplicationSolvers.size());
+      ViewWrapper<string_array>::rtype solverList = newApplication.getData<string_array>(keys::solverList);
+      for (uint ii=0; ii<newApplicationSolvers.size(); ++ii)
+      {
+        solverList[ii] = newApplicationSolvers[ii];
+      }
     }
 
     // Test to make sure the applications are valid
-    for (uint ii=0; ii<m_applicationNames.size()-1; ++ii)
+    for (uint jj=0; jj<solverApplications.size()-1; ++jj)
     {
-      dataRepository::SynchronizedGroup& applicationA = solverApplications.GetGroup(m_applicationNames[ii]);
-      dataRepository::SynchronizedGroup& applicationB = solverApplications.GetGroup(m_applicationNames[ii+1]);
+      dataRepository::SynchronizedGroup& applicationA = solverApplications.GetGroup(solverApplicationNames[jj]);
+      dataRepository::SynchronizedGroup& applicationB = solverApplications.GetGroup(solverApplicationNames[jj+1]);
 
       ViewWrapper<real64>::rtype endTime = applicationA.getData<real64>(keys::endTime);
       ViewWrapper<real64>::rtype beginTime = applicationB.getData<real64>(keys::beginTime);
       if (fabs(*(beginTime) - *(endTime)) > 1e-6)
       {
-        std::cout << "Error in solver application times: " << m_applicationNames[ii] << std::endl;
+        std::cout << "Error in solver application times: " << solverApplicationNames[jj] << std::endl;
         throw std::invalid_argument("Solver application times must be contiguous!");
       }
     }
@@ -340,9 +358,10 @@ void ProblemManager::InitializeObjects()
 
   // Initialize solvers
   dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
-  for (std::vector<string>::iterator ss=m_activeSolvers.begin(); ss!=m_activeSolvers.end(); ++ss)
+  ViewWrapper<string_array>::rtype  solverNames = solvers.getData<string_array>(keys::solverNames);
+  for (uint ii=0; ii<solvers.size(); ++ii)
   {
-    SolverBase& currentSolver = solvers.GetGroup<SolverBase>( *ss );
+    SolverBase& currentSolver = solvers.GetGroup<SolverBase>( solverNames[ii] );
     currentSolver.Initialize( domain );
   }
 }
@@ -352,15 +371,17 @@ void ProblemManager::RunSimulation()
 {
   DomainPartition& domain  = getDomainPartition();
   dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
-  dataRepository::SynchronizedGroup& solverApplications = solvers.GetGroup<dataRepository::SynchronizedGroup>(keys::solverApplications);
+  dataRepository::SynchronizedGroup& solverApplications = GetGroup<dataRepository::SynchronizedGroup>(keys::solverApplications);
+  ViewWrapper<string_array>::rtype  solverApplicationNames = solverApplications.getData<string_array>(keys::solverApplicationNames);
 
   double time = 0.0;
   int cycle = 0;
   real64 dt = 0.0;
 
-  for( std::vector<string>::iterator app=m_applicationNames.begin(); app!=m_applicationNames.end(); ++app)
+  for( uint ii=0; ii<solverApplications.size(); ++ii)
   {
-    dataRepository::SynchronizedGroup& currentApplication = solverApplications.GetGroup(*app);
+    dataRepository::SynchronizedGroup& currentApplication = solverApplications.GetGroup( solverApplicationNames[ii] );
+    ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solverList);
     real64& appDt = *(currentApplication.getData<real64>(keys::dt));
     real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
 
@@ -375,9 +396,9 @@ void ProblemManager::RunSimulation()
       std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
       real64 nextDt = std::numeric_limits<real64>::max();
 
-      for (std::vector<string>::iterator ss=m_applicationSolvers[*app].begin(); ss!=m_applicationSolvers[*app].end(); ++ss)
+      for (uint jj=0; jj<currentApplication.size(); ++jj)
       {
-        SolverBase& currentSolver = solvers.GetGroup<SolverBase>( *ss );
+        SolverBase& currentSolver = solvers.GetGroup<SolverBase>( solverList[jj] );
         currentSolver.TimeStep( time, dt, cycle, domain );
         nextDt = std::min(nextDt, *(currentSolver.getData<real64>(keys::maxDt)));
       }
