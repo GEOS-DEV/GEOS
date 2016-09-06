@@ -1,8 +1,8 @@
 [repo]
 name = core
-url = ssh://git@cz-stash.llnl.gov:7999/gpac/geosx.git
-httpsbase = https://user@lc.llnl.gov/stash/scm/geosx
-sshbase = ssh://git@cz-stash.llnl.gov:7999/geosx
+url = ssh://git@cz-bitbucket.llnl.gov:7999/gpac/geosx.git
+httpsbase = https://user@lc.llnl.gov/bitbucket/scm/geosx
+sshbase = ssh://git@cz-bitbucket.llnl.gov:7999/geosx
 
 [subtrees]
 mergepolicy = squash
@@ -30,7 +30,7 @@ branchmappings = master:master
 publishpolicy = ?:merge
 publicbranches = master
 topicprefixmappings = feature:master bugfix:master release:master ?:master
-topicdestinationmappings = none
+topicdestinationmappings = ?:master
 
 [publish]
 buildcmds = echo PASSED
@@ -56,7 +56,7 @@ emailmaxfiles = 100
 tagversion = true
 
 [project]
-stashurl = https://lc.llnl.gov/stash
+stashurl = https://lc.llnl.gov/bitbucket
 verifyssl = True
 name = gpac
 
