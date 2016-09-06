@@ -1,5 +1,5 @@
 [repo]
-name = core
+name = geosx 
 url = ssh://git@cz-bitbucket.llnl.gov:7999/gpac/geosx.git
 httpsbase = https://user@lc.llnl.gov/bitbucket/scm/geosx
 sshbase = ssh://git@cz-bitbucket.llnl.gov:7999/geosx
