@@ -1,0 +1,84 @@
+[repo]
+name = core
+url = ssh://git@cz-stash.llnl.gov:7999/gpac/geosx.git
+httpsbase = https://user@lc.llnl.gov/stash/scm/geosx
+sshbase = ssh://git@cz-stash.llnl.gov:7999/geosx
+
+[subtrees]
+mergepolicy = squash
+names = 
+pushonpublish = False
+
+[workspace]
+subprojecttype = submodule
+managesubmodules = True
+submoduletopicprefixmappings = ?:master
+submodulepublishpolicy = ?:merge
+submodulepublicmappings = master:master
+
+[nestedProjects]
+names = 
+
+[patch]
+tagprefix = patched
+describepattern = v*
+branches = master
+branchtotagpatternmapping = ?:v*
+branchmappings = master:master
+
+[flow]
+publishpolicy = ?:merge
+publicbranches = master
+topicprefixmappings = feature:master bugfix:master release:master ?:master
+topicdestinationmappings = none
+
+[publish]
+buildcmds = echo PASSED
+builddir = .
+testcmds = echo PASSED
+testdir = .
+prepublishcmds = 
+prepublishdir = .
+postpublishcmds = 
+postpublishdir = .
+tickversion = true
+usestash = True
+deletetopic = False
+updatelog = UPDATE_LOG
+logskipfirstlines = 0
+logentryheader = <date> <user>\n<version>\n
+emailnotification = true
+emailheader = <public> updated to <version>
+emailserver = nospam.llnl.gov
+emailsendto = settgast1@llnl.gov
+emailsubject = GEOSX <public> updated to <version>
+emailmaxfiles = 100
+tagversion = true
+
+[project]
+stashurl = https://lc.llnl.gov/stash
+verifyssl = True
+name = gpac
+
+[post-commit]
+autopush = false
+cascade = None
+
+[post-rebase]
+submoduleupdate = true
+
+[post-merge]
+submoduleupdate = true
+
+[post-checkout]
+submoduleupdate = true
+syncWithOrigin = false
+
+[versioning]
+file = VERSION
+updatetag = True
+branchslotmappings = master:3 ?:3
+branchsuffixmappings = ?:
+branchtagsuffixmappings = ?:
+prefix = v
+
