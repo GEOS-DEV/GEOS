@@ -5,7 +5,8 @@
  *      Author: annavarapusr1, rrsettgast
  */
 
-#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+#include "dataRepository/SynchronizedGroup.hpp"
 
 #ifndef CRACKOBJECT_H_
 #define CRACKOBJECT_H_

@@ -425,7 +425,7 @@ public:
   }
 
 
-  void  Deserialize( const localIndex index,
+  void  Deserialize( const localIndex /*index*/,
                   const unsigned int stride,
                   const localIndex elemNum,
                      const Array1dT<iArray1d*>& ,
@@ -571,7 +571,7 @@ public:
 
   virtual void erase( const localIndex num ) = 0;
   
-  virtual void InitializeStates( const localIndex index ){}
+  virtual void InitializeStates( const localIndex ){}
 
   virtual const InterfaceBaseStateData* StateData( const localIndex index0,
                                                   const localIndex index1 ) const = 0;

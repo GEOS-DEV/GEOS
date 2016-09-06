@@ -48,7 +48,8 @@
 
 #include "Common/Common.h"
 #include "EnergyT.h"
-#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+#include "dataRepository/SynchronizedGroup.hpp"
 #include "FaceManagerT.h"
 #include "DataStructures/VectorFields/StableTimeStep.h"
 #include "DataStructures/VectorFields/NodeManagerT.h"
@@ -128,7 +129,7 @@ protected:
   virtual globalIndex insert( const localIndex i, const bool assignGlobals = false );
 
 private:
-  inline size_t DiscreteElementFaceIndexOffset() const { return this->m_faceManager->DataLengths(); }
+  inline size_t DiscreteElementFaceIndexOffset() const { return this->m_faceManager->size(); }
 
   inline void IncrementSearchRadius ( const realT rvel, realT& radius) const
   {
@@ -173,7 +174,7 @@ public:
                                           PhysicalDomainT& domain)
   {
     Array1dT<Array1dT<R1Tensor> > xs;
-    xs.resize(this->DataLengths());
+    xs.resize(this->size());
     UpdateGeometricContactProperties(dt, domain, xs);
   }
 

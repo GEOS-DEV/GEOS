@@ -49,6 +49,7 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include "common/DataTypes.hpp"
 
 /// set the default iteration type
 typedef unsigned int INDEX;
@@ -57,14 +58,14 @@ typedef unsigned int INDEX;
 typedef double realT;
 
 /// this is the typedef to define what type is used for local indexing and local ID's
-typedef std::vector<int>::size_type localIndex;
+//typedef std::vector<int>::size_type localIndex;
 
 #define LOCALINDEX_MIN 0
 #define LOCALINDEX_MAX ULLONG_MAX
 
 
 /// this is the typedef to define what type is used for global indexing and global ID's
-typedef unsigned long long globalIndex;
+//typedef unsigned long long globalIndex;
 #define GLOBALINDEX_MIN 0
 #define GLOBALINDEX_MAX ULLONG_MAX
 

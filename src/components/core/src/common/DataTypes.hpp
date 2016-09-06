@@ -10,20 +10,31 @@
 
 #include <cassert>
 #include <cstdint>
-#include <typeinfo>
-#include "Macros.hpp"
-#include <unordered_map>
-#include <vector>
+#include <iostream>
+#include <set>
 #include <string>
 #include <typeindex>
-#include <iostream>
+#include <typeinfo>
+#include <unordered_map>
+#include <vector>
 
-using  int32     = std::int32_t;
-using uint32     = std::uint32_t;
-using  int64     = std::int64_t;
-using uint64     = std::uint64_t;
-using std_size_t = std::size_t;
-using string     = std::string;
+#include "Macros.hpp"
+
+#ifndef CONTAINERARRAY_RETURN_PTR
+#define CONTAINERARRAY_RETURN_PTR 0
+#endif
+
+
+
+using integer     = int;
+using uinteger    = unsigned int;
+using  int32      = std::int32_t;
+using uint32      = std::uint32_t;
+using  int64      = std::int64_t;
+using uint64      = std::uint64_t;
+using std_size_t  = std::size_t;
+using string      = std::string;
+
 
 using real32 = float;
 using real64 = double;
@@ -34,8 +45,6 @@ using ptr = T*;
 template< typename T >
 using c_ptr = T const *;
 
-template< typename T >
-using array = std::vector<T>;
 
 using int32_ptr        = ptr<int32>;
 using int32_const_ptr  = c_ptr<int32>;
@@ -54,6 +63,19 @@ using real32_const_ptr  = c_ptr<real32>;
 
 using real64_ptr        = ptr<real64>;
 using real64_const_ptr  = c_ptr<real64>;
+
+//***** LEGACY TYPEDEFS *****
+using globalIndex = int64;
+using localIndex  = int32;
+
+using realT    = double;
+
+#include "legacy/ArrayT/ArrayT.h"
+
+template< typename T >
+//using array = std::vector<T>;
+using array = Array1dT<T>;
+//***** LEGACY TYPEDEFS *****
 
 
 
@@ -77,6 +99,21 @@ using real64_const_array  = array<real64 const>;
 
 using string_array        = array<string>;
 using string_const_array  = array<string const>;
+
+
+//***** LEGACY TYPEDEFS *****
+using iArray1d = Array1dT<int32>;
+using lArray1d = Array1dT<localIndex>;
+using gArray1d = Array1dT<globalIndex>;
+
+typedef std::set<localIndex> lSet;
+typedef std::set<globalIndex> gSet;
+
+typedef int FieldKey;
+
+//***** LEGACY TYPEDEFS *****
+
+
 
 class rtTypes
 {

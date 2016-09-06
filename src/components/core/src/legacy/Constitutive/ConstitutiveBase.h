@@ -195,8 +195,8 @@ protected:
   template< typename LeafClass >
   size_t GetStateOffsetFromDerived( const std::string& name, const int type ) const;
 
-  virtual void PreSetValues(const sArray1d& names){}
-  virtual void PostSetValues(const sArray1d& names){}
+  virtual void PreSetValues(const sArray1d& ){}
+  virtual void PostSetValues(const sArray1d& ){}
 
 public:
   void SetValues( const std::string& name, const rArray1d& values )

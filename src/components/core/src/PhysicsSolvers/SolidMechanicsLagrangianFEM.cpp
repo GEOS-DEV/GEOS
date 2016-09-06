@@ -118,6 +118,10 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
   ViewWrapper<real64_array>::rtype   Strain = elems.getData<real64_array>(keys::Strain);
   ViewWrapper<real64_array>::rtype_const  K = elems.getData<real64_array>(keys::K);
 
+
+//  ViewWrapper<real64_array>::rtype          X2 = nodes.GetData(keys::ReferencePosition);
+
+
   Integration::OnePoint( acc, vel, dt/2, numNodes );
   vel[0] = 1.0;
   Integration::OnePoint( vel, uhat, u, dt, numNodes );

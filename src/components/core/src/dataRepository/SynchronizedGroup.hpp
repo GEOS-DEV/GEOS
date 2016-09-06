@@ -13,6 +13,9 @@
 #include "ObjectCatalog.hpp"
 #include "ViewWrapper.hpp"
 
+#include "depricated/Common.h"
+
+
 //#include "CodingUtilities/ANSTexception.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
@@ -136,6 +139,31 @@ public:
 
   //***********************************************************************************************
 
+  // user defined conversion doesn't work. can't infer template argument
+  class GetDataClass
+  {
+  public:
+    GetDataClass( SynchronizedGroup & parent ): m_parent( parent ) {}
+
+    inline GetDataClass& operator() ( std::string const & name )
+    {
+      m_name = name;
+      return *this;
+    }
+
+    template< typename T>
+    operator typename ViewWrapper<T>::rtype ()
+    {
+      return m_parent.getData<T>( m_name );
+    }
+  private:
+    SynchronizedGroup & m_parent;
+    std::string m_name;
+  };
+  GetDataClass GetData = {*this};
+
+
+
   template< typename T >
   ViewWrapper<T> const & getWrapper( std::size_t const index ) const
   {
@@ -166,13 +194,13 @@ public:
 
 
   template< typename T >
-  typename ViewWrapper<T>::rtype_const getData( std::size_t const index ) const
+  typename ViewWrapper<T>::rtype_const getData( int32 const index ) const
   {
     return getWrapper<T>(index).data();
   }
 
   template< typename T >
-  typename ViewWrapper<T>::rtype getData( std::size_t const index )
+  typename ViewWrapper<T>::rtype getData( int32 const index )
   {
     return getWrapper<T>(index).data();
 //    return const_cast<typename WrapperView<T>::rtype>( const_cast<const SynchronizedGroup*>(this)->getData<T>( index ) );
@@ -226,14 +254,6 @@ public:
   }
 
 
-//#include "Common/Common.h"
-//  template< FieldKey FIELDKEY>
-//  typename Wrapper<TYPE>::rtype GetFieldData( )
-//  {
-//    return GetFieldData< array<typename Field<FIELDKEY>::Type> >(Field<FIELDKEY>::Name());
-//  }
-
-
 
   asctoolkit::sidre::DataGroup * getSidreGroup()              { return m_sidreGroup; }
   asctoolkit::sidre::DataGroup const * getSidreGroup() const  { return m_sidreGroup; }
@@ -263,6 +283,117 @@ private:
 
   asctoolkit::sidre::DataGroup* m_sidreGroup;
 
+
+//****************************************************
+// functions for compatibility with old data structure
+// TODO Deprecate or modernize all these suckers
+
+public:
+
+  using ObjectType = string;
+  class SiloFile;
+  localIndex resize( localIndex const newSize,
+                     const bool assignGlobals );
+
+  localIndex m_DataLengths;
+
+
+  localIndex DataLengths() const { return size(); }
+
+  void WriteSilo( SiloFile& siloFile,
+                  const std::string& meshname,
+                  const int centering,
+                  const int cycleNum,
+                  const realT problemTime,
+                  const bool isRestart,
+                  const std::string& multiRoot,
+                  const std::string& regionName = "none",
+                  const lArray1d& mask = lArray1d() ) const;
+
+
+  void ReadSilo( const SiloFile& siloFile,
+                 const std::string& meshname,
+                 const int centering,
+                 const int cycleNum,
+                 const realT problemTime,
+                 const bool isRestart,
+                 const std::string& regionName = "none",
+                 const lArray1d& mask = lArray1d() );
+
+
+
+  /// returns reference to specified field
+  template< FieldKey FIELDKEY>
+  typename ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype GetFieldData( )
+  {
+    return const_cast<typename ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype>( static_cast<const SynchronizedGroup&>(*this).GetFieldData<FIELDKEY>());
+  }
+
+
+  /// returns const reference to specified field
+  template< FieldKey FIELDKEY>
+  typename ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype_const GetFieldData( ) const
+  {
+    return this->getData< Array1dT< typename Field<FIELDKEY>::Type >::rtype_const >( Field<FIELDKEY>::Name() );
+  }
+
+
+  /// returns reference to specified field
+  template< typename TYPE >
+  typename ViewWrapper< TYPE >::rtype GetFieldData( const std::string& fieldName )
+  {
+    return const_cast<typename ViewWrapper<TYPE>::rtype>( static_cast<const SynchronizedGroup&>(*this).GetFieldData<TYPE>(fieldName));
+  }
+
+  /// returns const reference to specified field
+  template< typename TYPE >
+  const Array1dT<TYPE>& GetFieldData( const std::string& name ) const
+  {
+    return this->getData< TYPE >( name );
+  }
+
+
+
+
+
+
+
+
+  /// returns reference to specified field
+  template< FieldKey FIELDKEY>
+  typename ViewWrapper< typename Field<FIELDKEY>::Type >::rtype* GetFieldDataPointer( )
+  {
+    return const_cast<typename ViewWrapper<typename Field<FIELDKEY>::Type>::rtype*>( static_cast<const SynchronizedGroup&>(*this).GetFieldDataPointer<FIELDKEY>());
+  }
+
+
+  /// returns const reference to specified field
+  template< FieldKey FIELDKEY>
+  typename ViewWrapper< typename Field<FIELDKEY>::Type >::rtype_const* GetFieldDataPointer( ) const
+  {
+    return this->getData< typename Field<FIELDKEY>::Type >( Field<FIELDKEY>::Name() );
+  }
+
+  /// returns reference to specified field
+  template< typename TYPE >
+  typename ViewWrapper< TYPE >::rtype* GetFieldDataPointer( const std::string& fieldName )
+  {
+    return this->getData< TYPE >( fieldName );
+  }
+
+  /// returns const reference to specified field
+  template< typename TYPE >
+  typename ViewWrapper< TYPE >::rtype_const* GetFieldDataPointer( const std::string& name ) const;
+
+
+
+//**********************************************************************************************************************
+
+
+  /**
+   * @name functions to disallow construction of strings from char const *
+   */
+  ///@{
 #if NOCHARTOSTRING_KEYLOOKUP == 1
 
   template< typename T = SynchronizedGroup >
@@ -290,6 +421,8 @@ private:
   template< typename T >
 
   ViewWrapper<T>& getWrapper( char const * );
+
+  ///@}
 
 
 #endif
@@ -369,5 +502,8 @@ T& SynchronizedGroup::RegisterGroup( std::string const & name,
 
 } // namespace dataRepository
 } /* namespace geosx */
+
+
+typedef geosx::dataRepository::SynchronizedGroup ObjectDataStructureBaseT;
 
 #endif /* DATAOBJECTMANAGER_H_ */

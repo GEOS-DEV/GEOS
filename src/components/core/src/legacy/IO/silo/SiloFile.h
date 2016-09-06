@@ -492,15 +492,15 @@ namespace SiloFileUtilities
   }
 
 
-  template<> inline int CastField<int, localIndex> (const localIndex& field, const int )
-  {
-    return static_cast<int>(field);
-  }
+//  template<> inline int CastField<int, localIndex> (const localIndex& field, const int )
+//  {
+//    return static_cast<int>(field);
+//  }
 
-  template<> inline localIndex CastField<localIndex, localIndex> (const localIndex& field, const int )
-  {
-    return field;
-  }
+//  template<> inline localIndex CastField<localIndex, localIndex> (const localIndex& field, const int )
+//  {
+//    return field;
+//  }
 
 
   template<> inline globalIndex CastField<globalIndex, globalIndex> (const globalIndex& field, const int )

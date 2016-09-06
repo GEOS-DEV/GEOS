@@ -46,7 +46,8 @@
 #ifndef EDGEMANAGERT_H_
 #define EDGEMANAGERT_H_
 
-#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+#include "dataRepository/SynchronizedGroup.hpp"
 
 
 class FaceManagerT;
