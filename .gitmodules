@@ -3,5 +3,5 @@
 	url = ../cxx-utilities.git
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt
-	url = ../../atk/blt.git
+	url = ../blt.git
 	branch = feature/settgast/ATK-779
