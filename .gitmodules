@@ -1,3 +1,7 @@
 [submodule "src/components/cxx-utilities"]
 	path = src/components/cxx-utilities
 	url = ../cxx-utilities.git
+[submodule "blt"]
+	path = src/cmake/blt
+	url = ../../atk/blt.git
+	branch = feature/settgast/ATK-779
