@@ -7,7 +7,7 @@
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
-#include "../dataRepository/SynchronizedGroup.hpp"
+#include "../dataRepository/ManagedGroup.hpp"
 #include "ConstitutiveBase.hpp"
 
 namespace geosx
@@ -16,13 +16,13 @@ namespace constitutive
 {
 
 
-class ConstitutiveManager : public dataRepository::SynchronizedGroup
+class ConstitutiveManager : public dataRepository::ManagedGroup
 {
 public:
   ConstitutiveManager() = delete;
 
   ConstitutiveManager( std::string const & name,
-                       SynchronizedGroup * const parent );
+                       ManagedGroup * const parent );
 
   void ReadXMLInput();
 

@@ -47,8 +47,7 @@
 #define CartesianGridManager_H_
 
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
-#include "dataRepository/SynchronizedGroup.hpp"
-
+#include "../../dataRepository/Group.hpp"
 #include "IO/ticpp/HierarchicalDataNode.h"
 
 class FaceManagerT;

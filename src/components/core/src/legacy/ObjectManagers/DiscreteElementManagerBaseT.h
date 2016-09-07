@@ -46,10 +46,10 @@
 #ifndef DISCRETELEMENTMANAGERBASET_H_
 #define DISCRETELEMENTMANAGERBASET_H_
 
+#include "../../dataRepository/Group.hpp"
 #include "Common/Common.h"
 #include "ContactManagerBaseT.h"
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
-#include "dataRepository/SynchronizedGroup.hpp"
 #include "IO/ticpp/HierarchicalDataNode.h"
 #include "Constitutive/Material/MaterialFactory.h"
 

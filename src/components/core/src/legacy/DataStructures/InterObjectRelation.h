@@ -12,7 +12,7 @@
 #include "Common/typedefs.h"
 #include <map>
 
-#include "dataRepository/SynchronizedGroup.hpp"
+#include "../../dataRepository/Group.hpp"
 
 template < typename BASETYPE >
 class InterObjectRelation : public BASETYPE

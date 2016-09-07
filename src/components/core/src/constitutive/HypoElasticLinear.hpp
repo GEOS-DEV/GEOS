@@ -23,8 +23,8 @@ public:
   static std::string CatalogName() { return "HypoElasticLinear"; }
 
 
-  virtual void Update( dataRepository::SynchronizedGroup * const parameters,
-                       dataRepository::SynchronizedGroup * const stateVariables ) override;
+  virtual void Update( dataRepository::ManagedGroup * const parameters,
+                       dataRepository::ManagedGroup * const stateVariables ) override;
 };
 }
 

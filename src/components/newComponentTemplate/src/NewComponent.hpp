@@ -14,25 +14,25 @@ namespace geosx
 {
 namespace dataRepository
 {
-class SynchronizedGroup;
+class ManagedGroup;
 }
 
 class NewComponent : public SolverBase
 {
 public:
   NewComponent( std::string const & name,
-                SynchronizedGroup * const parent);
+                ManagedGroup * const parent);
   virtual ~NewComponent();
 
   static std::string CatalogName() { return "NewComponent"; }
 
-  virtual void Registration( dataRepository::SynchronizedGroup * const domain ) ;
+  virtual void Registration( dataRepository::ManagedGroup * const domain ) ;
 
 
   virtual void TimeStep( real64 const& time_n,
                          real64 const& dt,
                          int32 const cycleNumber,
-                         dataRepository::SynchronizedGroup& domain ) ;
+                         dataRepository::ManagedGroup& domain ) ;
 
 private:
   NewComponent() = delete;

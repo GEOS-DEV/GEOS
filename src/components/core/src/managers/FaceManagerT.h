@@ -46,6 +46,7 @@
 #ifndef FACEMANAGERT_H_
 #define FACEMANAGERT_H_
 
+#include "../dataRepository/Group.hpp"
 #include "math/TensorT/TensorT.h"
 //#include "ObjectManagers/ExternalFaceStructs.h"
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
@@ -53,7 +54,6 @@
 //#include "IO/silo/SiloFile.h"
 
 
-#include "dataRepository/SynchronizedGroup.hpp"
 
 
 struct ExternalFaceStruct;
@@ -72,7 +72,7 @@ class EdgeManagerT;
 class ExternalFaceManagerT;
 class CohesiveZoneBase;
 
-class FaceManagerT: public geosx::dataRepository::SynchronizedGroup
+class FaceManagerT: public geosx::dataRepository::ManagedGroup
 {
 public:
 

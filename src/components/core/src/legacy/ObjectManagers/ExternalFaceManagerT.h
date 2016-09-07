@@ -46,10 +46,10 @@
 #ifndef EXTERNALFACEMANAGERT_H_
 #define EXTERNALFACEMANAGERT_H_
 
+#include "../../dataRepository/Group.hpp"
 #include "Common/Common.h"
 #include "EnergyT.h"
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
-#include "dataRepository/SynchronizedGroup.hpp"
 #include "FaceManagerT.h"
 #include "DataStructures/VectorFields/StableTimeStep.h"
 #include "DataStructures/VectorFields/NodeManagerT.h"

@@ -5,7 +5,7 @@
  *      Author: rrsettgast
  */
 
-#include "SynchronizedGroup.hpp"
+#include "ManagedGroup.hpp"
 
 #include "dataRepository/SidreWrapper.hpp"
 
@@ -14,8 +14,8 @@ namespace geosx
 namespace dataRepository
 {
 
-SynchronizedGroup::SynchronizedGroup( std::string const & name,
-                                      SynchronizedGroup * const parent ) :
+ManagedGroup::ManagedGroup( std::string const & name,
+                                      ManagedGroup * const parent ) :
   m_keyLookup(),
   m_wrappers(),
   m_parent(parent),
@@ -41,14 +41,14 @@ SynchronizedGroup::SynchronizedGroup( std::string const & name,
     m_sidreGroup = sidreParent->createGroup(name);
   }
 
-  *(RegisterViewWrapper<std_size_t>( "size" ).data()) = 0;
+  *(RegisterViewWrapper<localIndex>( "size" ).data()) = 0;
   RegisterViewWrapper<std::string>( "name" ).reference() = name;
   RegisterViewWrapper<std::string>( "path" );
 
 
 }
 
-SynchronizedGroup::~SynchronizedGroup()
+ManagedGroup::~ManagedGroup()
 {
   // TODO Auto-generated destructor stub
 }
@@ -62,19 +62,19 @@ SynchronizedGroup::~SynchronizedGroup()
 //    m_parent( source.m_parent )
 //{}
 
-SynchronizedGroup::SynchronizedGroup( SynchronizedGroup&& source ) :
+ManagedGroup::ManagedGroup( ManagedGroup&& source ) :
   m_keyLookup( std::move(source.m_keyLookup) ),
   m_wrappers( std::move(source.m_wrappers) ),
   m_parent( std::move(source.m_parent) )
 {}
 
-SynchronizedGroup::CatalogInterface::CatalogType& SynchronizedGroup::GetCatalog()
+ManagedGroup::CatalogInterface::CatalogType& ManagedGroup::GetCatalog()
 {
-  static SynchronizedGroup::CatalogInterface::CatalogType catalog;
+  static ManagedGroup::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
-ViewWrapperBase& SynchronizedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
+ViewWrapperBase& ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return *( rtTypes::ApplyTypeLambda( type,
                                       [this, &name]( auto a ) -> ViewWrapperBase*
@@ -83,13 +83,13 @@ ViewWrapperBase& SynchronizedGroup::RegisterViewWrapper( std::string const & nam
       } ) );
 }
 
-void SynchronizedGroup::resize( std::size_t const newsize )
+void ManagedGroup::resize( std::size_t const newsize )
 {
   for( auto&& i : this->m_wrappers )
   {
     i->resize(newsize);
   }
-  *(this->getWrapper<std_size_t>( keys::size ).data())=newsize;
+  *(this->getWrapper<std_size_t>( keys::Size ).data())=newsize;
 }
 
 

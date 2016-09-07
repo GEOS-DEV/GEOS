@@ -46,9 +46,9 @@
 #ifndef ELEMENTOBJECTT_H_
 #define ELEMENTOBJECTT_H_
 
+#include "../../../dataRepository/Group.hpp"
 #include "Common/Common.h"
 //#include "ObjectDataStructureBaseT.h"
-#include "dataRepository/SynchronizedGroup.hpp"
 #include "StableTimeStep.h"
 #include "IO/ticpp/HierarchicalDataNode.h"
 #include "ObjectManagers/EnergyT.h"

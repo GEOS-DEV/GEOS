@@ -2,7 +2,7 @@
 #include <slic/GenericOutputStream.hpp>
 #include <iostream>
 
-#include "../dataRepository/SynchronizedGroup.hpp"
+#include "../dataRepository/ManagedGroup.hpp"
 #include "PhysicsSolvers/SolidMechanicsLagrangianFEM.hpp"
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
@@ -15,7 +15,6 @@ using namespace asctoolkit;
 int main( int argc, char *argv[] )
 {
   std::cout<<"starting main"<<std::endl;
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
 
   slic::initialize();
@@ -30,6 +29,8 @@ int main( int argc, char *argv[] )
                        std::string( "***********************************\n" );
   slic::setLoggingMsgLevel( slic::message::Debug );
   slic::addStreamToAllMsgLevels( new slic::GenericOutputStream( &std::cout, format ) );
+
+  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
   ProblemManager problemManager("ProblemManager",nullptr);
 

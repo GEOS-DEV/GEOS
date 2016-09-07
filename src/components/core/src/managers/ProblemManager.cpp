@@ -19,17 +19,17 @@ namespace geosx
 using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
-                                SynchronizedGroup * const parent ) :
-  SynchronizedGroup( name, parent )
+                                ManagedGroup * const parent ) :
+  ManagedGroup( name, parent )
 {}
 
 ProblemManager::~ProblemManager()
 {}
 
-void ProblemManager::Registration( dataRepository::SynchronizedGroup * const )
+void ProblemManager::Registration( dataRepository::ManagedGroup * const )
 {
   RegisterGroup<DomainPartition>(keys::domain);
-  RegisterGroup<SynchronizedGroup>("solvers");
+  RegisterGroup<ManagedGroup>("solvers");
 
   RegisterViewWrapper< std::unordered_map<string,string> >("simulationParameterMap");
 }
@@ -283,7 +283,7 @@ void ProblemManager::ParseInputFile()
 
   FiniteElementSpace feSpace( keys::FE_Space, this);
 
-  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
+  dataRepository::ManagedGroup& solvers = GetGroup<dataRepository::ManagedGroup>(keys::solvers);
   DomainPartition& domain  = getDomainPartition();
 
   std::string newName("new solver");
@@ -324,6 +324,6 @@ DomainPartition const & ProblemManager::getDomainPartition() const
   return GetGroup<DomainPartition>(keys::domain);
 }
 
-REGISTER_CATALOG_ENTRY( SynchronizedGroup, ProblemManager, std::string const &, SynchronizedGroup * const )
+REGISTER_CATALOG_ENTRY( ManagedGroup, ProblemManager, std::string const &, ManagedGroup * const )
 
 } /* namespace geosx */

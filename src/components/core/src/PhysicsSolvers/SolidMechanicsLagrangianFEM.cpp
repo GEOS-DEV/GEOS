@@ -10,8 +10,7 @@
 #include <vector>
 #include <math.h>
 
-#include "dataRepository/SynchronizedGroup.hpp"
-//#include "RAJA/RAJA.hxx"
+#include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 
 
@@ -30,7 +29,7 @@ std::string const Ey = "Ey";
 using namespace dataRepository;
 
 SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
-                                                            SynchronizedGroup * const parent ) :
+                                                            ManagedGroup * const parent ) :
   SolverBase( name, parent )
 {}
 
@@ -41,13 +40,16 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
   // TODO Auto-generated destructor stub
 }
 
-void SolidMechanics_LagrangianFEM::Registration( SynchronizedGroup * const domain )
+void SolidMechanics_LagrangianFEM::Registration( ManagedGroup * const domain )
 {
 
-  SynchronizedGroup& nodes = domain->RegisterGroup<SynchronizedGroup >(keys::FEM_Nodes);
-  SynchronizedGroup& elems = domain->RegisterGroup<SynchronizedGroup >(keys::FEM_Elements);
+  ManagedGroup& nodes = domain->RegisterGroup<ManagedGroup>(keys::FEM_Nodes);
+  ManagedGroup& elems = domain->RegisterGroup<ManagedGroup>(keys::FEM_Elements);
 
   nodes.RegisterViewWrapper<real64_array>(keys::TotalDisplacement);
+
+  nodes.RegisterViewWrapper<real32_array>(keys::TotalDisplacement);
+
   nodes.RegisterViewWrapper<real64_array>(keys::IncrementalDisplacement);
   nodes.RegisterViewWrapper<real64_array>(keys::Velocity);
   nodes.RegisterViewWrapper<real64_array>(keys::Acceleration);
@@ -73,12 +75,12 @@ void SolidMechanics_LagrangianFEM::Registration( SynchronizedGroup * const domai
 
   std::cout<<"sound speed = "<<sqrt(Ey/rho)<<std::endl;
 //  std::cout<<1.0/0.0<<std::endl;
-  for( uint64 a=0 ; a<nodes.size() ; ++a )
+  for( localIndex a=0 ; a<nodes.size() ; ++a )
   {
     X[a] = a * ( L/nodes.size() );
   }
 
-  for( uint64 k=0 ; k<elems.size() ; ++k )
+  for( localIndex k=0 ; k<elems.size() ; ++k )
   {
     double dx = L / elems.size();
     mass[k] += rho * A * dx / 2;
@@ -91,7 +93,7 @@ void SolidMechanics_LagrangianFEM::Registration( SynchronizedGroup * const domai
 void SolidMechanics_LagrangianFEM::TimeStep( real64 const& time_n,
                                              real64 const& dt,
                                              const int cycleNumber,
-                                             SynchronizedGroup& domain )
+                                             ManagedGroup& domain )
 {
   TimeStepExplicit( time_n, dt, cycleNumber, domain );
 }
@@ -99,10 +101,10 @@ void SolidMechanics_LagrangianFEM::TimeStep( real64 const& time_n,
 void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
                                                      real64 const& dt,
                                                      const int cycleNumber,
-                                                     SynchronizedGroup& domain )
+                                                     ManagedGroup& domain )
 {
-  SynchronizedGroup& nodes = domain.GetGroup<SynchronizedGroup>(keys::FEM_Nodes);
-  SynchronizedGroup& elems = domain.GetGroup<SynchronizedGroup>(keys::FEM_Elements);
+  ManagedGroup& nodes = domain.GetGroup<ManagedGroup>(keys::FEM_Nodes);
+  ManagedGroup& elems = domain.GetGroup<ManagedGroup>(keys::FEM_Elements);
 
   std::size_t const numNodes = nodes.size();
   std::size_t const numElems = elems.size();
@@ -157,5 +159,5 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, SynchronizedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, ManagedGroup * const )
 } /* namespace ANST */

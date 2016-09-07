@@ -29,7 +29,7 @@ class ViewWrapper : public ViewWrapperBase
 
 public:
   explicit ViewWrapper( std::string const & name,
-                        SynchronizedGroup * const parent ) :
+                        ManagedGroup * const parent ) :
     ViewWrapperBase(name,parent)
   {
     // set up properties of sidre::DataView
@@ -63,7 +63,7 @@ public:
 
 
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
-                                                   SynchronizedGroup * const parent )
+                                                   ManagedGroup * const parent )
   {
     return std::move(std::make_unique<ViewWrapper<T> >( name, parent ) );
   }
@@ -212,12 +212,14 @@ public:
     return m_data;
 #endif
   }
+
   template<class U = T>
   typename std::enable_if<std::is_same<U,std::string>::value, rtype>::type
   data()
   {
     return m_data;
   }
+
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
   data()
@@ -230,20 +232,27 @@ public:
   typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,string>::value, rtype_const>::type
   data() const
   {
+#if CONTAINERARRAY_RETURN_PTR == 1
     return m_data.data();
+#else
+    return m_data;
+#endif
   }
+
   template<class U = T>
-  typename std::enable_if<std::is_same<U,std::string>::value, rtype>::type
+  typename std::enable_if<std::is_same<U,std::string>::value, rtype_const>::type
   data() const
   {
     return m_data;
   }
+
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
   data() const
   {
     return &m_data;
   }
+
 
   T& reference()
   { return m_data; }

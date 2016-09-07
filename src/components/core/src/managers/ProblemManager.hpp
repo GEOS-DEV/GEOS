@@ -8,24 +8,24 @@
 #ifndef COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
 #define COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
 
-#include "../dataRepository/SynchronizedGroup.hpp"
+#include "../dataRepository/ManagedGroup.hpp"
 
 namespace geosx
 {
 
 class DomainPartition;
 
-class ProblemManager : public dataRepository::SynchronizedGroup
+class ProblemManager : public dataRepository::ManagedGroup
 {
 public:
   explicit ProblemManager( const std::string& name,
-                           SynchronizedGroup * const parent );
+                           ManagedGroup * const parent );
   ~ProblemManager();
 
   static std::string CatalogName() { return "ProblemManager"; }
 
 
-  virtual void Registration( dataRepository::SynchronizedGroup * const );
+  virtual void Registration( dataRepository::ManagedGroup * const );
 
   void ParseCommandLineInput( int const& argc, char* const argv[]);
 

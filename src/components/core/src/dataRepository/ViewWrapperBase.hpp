@@ -25,7 +25,7 @@ namespace geosx
 namespace dataRepository
 {
 
-class SynchronizedGroup;
+class ManagedGroup;
 
 class ViewWrapperBase
 {
@@ -42,7 +42,7 @@ public:
    * \brief constructor
    */
   explicit ViewWrapperBase( std::string const & name,
-                            SynchronizedGroup * const parent );
+                            ManagedGroup * const parent );
 
 
   ViewWrapperBase( ViewWrapperBase&& source );
@@ -100,7 +100,7 @@ public:
 
 private:
   std::string m_name;
-  SynchronizedGroup* m_parent;
+  ManagedGroup* m_parent;
   int m_sizedFromParent;
   asctoolkit::sidre::DataView* m_sidreView;
 

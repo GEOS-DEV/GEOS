@@ -15,32 +15,32 @@ namespace geosx
 {
 namespace dataRepository
 {
-class SynchronizedGroup;
+class ManagedGroup;
 }
 
 class SolidMechanics_LagrangianFEM : public SolverBase
 {
 public:
   SolidMechanics_LagrangianFEM( const std::string& name,
-                                SynchronizedGroup * const parent );
+                                ManagedGroup * const parent );
 
 
   virtual ~SolidMechanics_LagrangianFEM();
 
   static std::string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void Registration( dataRepository::SynchronizedGroup * const domain ) override;
+  virtual void Registration( dataRepository::ManagedGroup * const domain ) override;
 
 
   virtual void TimeStep( real64 const& time_n,
                          real64 const& dt,
                          int32 const cycleNumber,
-                         dataRepository::SynchronizedGroup& domain ) override;
+                         dataRepository::ManagedGroup& domain ) override;
 
   void TimeStepExplicit( real64 const& time_n,
                          real64 const& dt,
                          int32 const cycleNumber,
-                         dataRepository::SynchronizedGroup& domain );
+                         dataRepository::ManagedGroup& domain );
 
 
 

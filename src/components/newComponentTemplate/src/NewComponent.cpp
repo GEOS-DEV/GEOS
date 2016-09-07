@@ -11,7 +11,7 @@ namespace geosx
 {
 
 NewComponent::NewComponent( std::string const & name,
-                            SynchronizedGroup * const parent ):
+                            ManagedGroup * const parent ):
     SolverBase(name,parent)
 {
 
@@ -20,16 +20,16 @@ NewComponent::NewComponent( std::string const & name,
 NewComponent::~NewComponent()
 {}
 
-void NewComponent::Registration( dataRepository::SynchronizedGroup * const /*domain*/ )
+void NewComponent::Registration( dataRepository::ManagedGroup * const /*domain*/ )
 {}
 
 
 void NewComponent::TimeStep( real64 const& /*time_n*/,
                real64 const& /*dt*/,
                int32 const /*cycleNumber*/,
-               dataRepository::SynchronizedGroup& /*domain*/ )
+               dataRepository::ManagedGroup& /*domain*/ )
 {}
 
-REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string const &, dataRepository::SynchronizedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string const &, dataRepository::ManagedGroup * const )
 
 } /* namespace geosx */

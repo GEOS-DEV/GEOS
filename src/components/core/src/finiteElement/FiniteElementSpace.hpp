@@ -7,27 +7,27 @@
 
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
-#include "../dataRepository/SynchronizedGroup.hpp"
+#include "../dataRepository/ManagedGroup.hpp"
 
 namespace geosx
 {
 
 
-class FiniteElementSpace : public dataRepository::SynchronizedGroup
+class FiniteElementSpace : public dataRepository::ManagedGroup
 {
 public:
   FiniteElementSpace() = delete;
 
-  explicit FiniteElementSpace( std::string const & name, SynchronizedGroup * const parent );
+  explicit FiniteElementSpace( std::string const & name, ManagedGroup * const parent );
 
   ~FiniteElementSpace();
 
-  virtual void Registration( dataRepository::SynchronizedGroup * const parent );
+  virtual void Registration( dataRepository::ManagedGroup * const parent );
 
-  virtual dataRepository::SynchronizedGroup & getNodeManager();
-  virtual dataRepository::SynchronizedGroup & getEdgeManager();
-  virtual dataRepository::SynchronizedGroup & getFaceManager();
-  virtual dataRepository::SynchronizedGroup & getElementManager();
+  virtual dataRepository::ManagedGroup & getNodeManager();
+  virtual dataRepository::ManagedGroup & getEdgeManager();
+  virtual dataRepository::ManagedGroup & getFaceManager();
+  virtual dataRepository::ManagedGroup & getElementManager();
 
 
 

@@ -8,7 +8,7 @@
 #include "ViewWrapperBase.hpp"
 
 #include "slic/slic.hpp"
-#include "SynchronizedGroup.hpp"
+#include "ManagedGroup.hpp"
 
 namespace geosx
 {
@@ -16,7 +16,7 @@ namespace dataRepository
 {
 
 ViewWrapperBase::ViewWrapperBase( std::string const & name,
-                                  SynchronizedGroup * const parent ) :
+                                  ManagedGroup * const parent ) :
   m_name(name),
   m_parent(parent),
   m_sizedFromParent(0),

@@ -12,19 +12,19 @@
 
 #include <string>
 
-#include "../dataRepository/SynchronizedGroup.hpp"
+#include "../dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 
 
 namespace geosx
 {
 
-class SolverBase : public dataRepository::SynchronizedGroup
+class SolverBase : public dataRepository::ManagedGroup
 {
 public:
 
   explicit SolverBase( std::string const & name,
-                       SynchronizedGroup * const parent );
+                       ManagedGroup * const parent );
 
   virtual ~SolverBase();
 
@@ -40,10 +40,10 @@ public:
   virtual void TimeStep( real64 const & time_n,
                          real64 const & dt,
                          int const cycleNumber,
-                         dataRepository::SynchronizedGroup& domain ) = 0;
+                         dataRepository::ManagedGroup& domain ) = 0;
 
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, SynchronizedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 private:
