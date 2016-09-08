@@ -7,6 +7,14 @@
 #set(MPI_CXX_COMPILER "mpicxx-mpich-clang" CACHE PATH "")
 #set(MPI_Fortran_COMPILER "mpifort-mpich-clang" CACHE PATH "")
 
+# Use apple-clang for ATK, but specify different clang for GEOS
+set(CMAKE_C_COMPILER "clang-mp-3.7" CACHE PATH "")
+set(CMAKE_CXX_COMPILER "clang++-mp-3.7" CACHE PATH "")
+set(CMAKE_Fortran_COMPILER  "/opt/local/bin/gfortran-mp-5" CACHE PATH "")
+
+set(MPI_C_COMPILER "mpicc-openmpi-clang37" CACHE PATH "")
+set(MPI_CXX_COMPILER "mpicxx-openmpi-clang37" CACHE PATH "")
+set(MPI_Fortran_COMPILER "mpifort-openmpi-clang37" CACHE PATH "")
 
 site_name(HOST_NAME)
 message($ENV{HOME})

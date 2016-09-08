@@ -108,7 +108,6 @@ public:
   template< typename T = ManagedGroup >
   T& RegisterGroup( std::string const & name, std::string const & catalogName )
   {
-
     std::unique_ptr<T> newGroup = T::CatalogInterface::Factory(catalogName, name, this );
     return RegisterGroup<T>( name, std::move(newGroup) );
   }
@@ -289,11 +288,11 @@ public:
   }
 
 private:
-  std::unordered_map<std::string,std::size_t> m_keyLookup;
+  std::unordered_map<string,size_t> m_keyLookup;
   std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
 
   ManagedGroup* m_parent = nullptr;
-  std::unordered_map< std::string, std::unique_ptr<ManagedGroup> > m_subObjectManagers;
+  std::unordered_map< string, std::unique_ptr<ManagedGroup> > m_subObjectManagers;
 
   asctoolkit::sidre::DataGroup* m_sidreGroup;
 
