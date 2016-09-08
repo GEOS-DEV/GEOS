@@ -56,13 +56,13 @@ void ProblemManager::Registration( dataRepository::ManagedGroup * const )
 {
   RegisterGroup<DomainPartition>(keys::domain);
 
-  SynchronizedGroup& solvers = RegisterGroup<SynchronizedGroup>(keys::solvers);
+  ManagedGroup& solvers = RegisterGroup<ManagedGroup>(keys::solvers);
   solvers.RegisterViewWrapper<string_array>(keys::solverNames);
 
-  SynchronizedGroup& solverApplications = RegisterGroup<SynchronizedGroup>(keys::solverApplications);
+  ManagedGroup& solverApplications = RegisterGroup<ManagedGroup>(keys::solverApplications);
   solverApplications.RegisterViewWrapper<string_array>(keys::solverApplicationNames);
 
-  SynchronizedGroup& commandLine = RegisterGroup<SynchronizedGroup >(keys::commandLine);
+  ManagedGroup& commandLine = RegisterGroup<ManagedGroup >(keys::commandLine);
   commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
   commandLine.RegisterViewWrapper<std::string>(keys::restartFileName);
   commandLine.RegisterViewWrapper<bool>(keys::beginFromRestart);
@@ -74,7 +74,7 @@ void ProblemManager::Registration( dataRepository::ManagedGroup * const )
 
 void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 {
-  dataRepository::SynchronizedGroup& commandLine = GetGroup<SynchronizedGroup>(keys::commandLine);
+  dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
   
   ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
   ViewWrapper<std::string>::rtype  restartFileName = commandLine.getData<std::string>(keys::restartFileName);
@@ -172,7 +172,7 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 
 void ProblemManager::InitializePythonInterpreter()
 {
-#ifdef USE_PYTHON
+#if USE_PYTHON==1
   // Initialize python and numpy
   std::cout << "Loading python interpreter" << std::endl;
 
@@ -200,7 +200,7 @@ void ProblemManager::InitializePythonInterpreter()
 
 void ProblemManager::ClosePythonInterpreter()
 {
-#ifdef USE_PYTHON
+#if USE_PYTHON==1
   // Add any other cleanup here
   std::cout << "Closing python interpreter" << std::endl;
   Py_Finalize();
@@ -212,14 +212,14 @@ void ProblemManager::ParseInputFile()
 {
   DomainPartition& domain  = getDomainPartition();
 
-  dataRepository::SynchronizedGroup& commandLine = GetGroup<SynchronizedGroup>(keys::commandLine);
+  dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
   ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
 
-  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
-  dataRepository::SynchronizedGroup& solverApplications = GetGroup<dataRepository::SynchronizedGroup>(keys::solverApplications);
+//  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::ManagedGroup>(keys::solvers);
+  dataRepository::ManagedGroup& solverApplications = GetGroup<dataRepository::ManagedGroup>(keys::solverApplications);
 
 
-#ifdef USE_PYTHON
+#if USE_PYTHON==1
   // Load the pygeos module
   PyObject *pModule = PyImport_ImportModule("pygeos");
   if (pModule == NULL)
@@ -259,37 +259,7 @@ void ProblemManager::ParseInputFile()
   pugi::xml_node topLevelNode;
 
 
-  // Solvers
-  topLevelNode = xmlProblemNode.child("Solvers");
-  std::cout << "Solvers:" << std::endl;
-  if (topLevelNode == NULL)
-  {
-    throw std::invalid_argument("Solver block not present in input xml file!");
-  }
-  else
-  {
-    // Determine the number of active solvers, resize the solver collection 
-    std_size_t nSolvers = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
-    solvers.resize(nSolvers);
-    ViewWrapper<string_array>::rtype  solverNames = solvers.getData<string_array>(keys::solverNames);
-    int ii = 0;
-
-    for (pugi::xml_node solverNode=topLevelNode.first_child(); solverNode; solverNode=solverNode.next_sibling())
-    {
-      std::cout << "   " << solverNode.name() << std::endl;
-
-      // Register the new solver
-      std::string solverID = solverNode.attribute("name").value();
-      std::unique_ptr<SolverBase> solverPtr = SolverBase::CatalogInterface::Factory(solverNode.name(), solverID, &domain );
-      SolverBase& newSolver = solvers.RegisterGroup( solverID, std::move(solverPtr) );
-      
-      // Register fields in the solver and parse options
-      newSolver.Registration( &domain );
-      newSolver.ReadXML(solverNode);
-      solverNames[ii] = solverID;
-      ii++;
-    }
-  }
+  this->m_physicsSolverManager.ReadXML(xmlProblemNode);
 
 
   // Applications
@@ -310,7 +280,7 @@ void ProblemManager::ParseInputFile()
     {
       // Register a new solver application (Note: these must be identified by a unique name)
       std::string applicationName = applicationNode.attribute("name").value();
-      dataRepository::SynchronizedGroup& newApplication = solverApplications.RegisterGroup<SynchronizedGroup>(applicationName);
+      dataRepository::ManagedGroup& newApplication = solverApplications.RegisterGroup<ManagedGroup>(applicationName);
       newApplication.RegisterViewWrapper<real64>(keys::beginTime);
       newApplication.RegisterViewWrapper<real64>(keys::endTime);
       newApplication.RegisterViewWrapper<real64>(keys::dt);
@@ -339,8 +309,8 @@ void ProblemManager::ParseInputFile()
     // Test to make sure the applications are valid
     for (uint jj=0; jj<solverApplications.size()-1; ++jj)
     {
-      dataRepository::SynchronizedGroup& applicationA = solverApplications.GetGroup(solverApplicationNames[jj]);
-      dataRepository::SynchronizedGroup& applicationB = solverApplications.GetGroup(solverApplicationNames[jj+1]);
+      dataRepository::ManagedGroup& applicationA = solverApplications.GetGroup(solverApplicationNames[jj]);
+      dataRepository::ManagedGroup& applicationB = solverApplications.GetGroup(solverApplicationNames[jj+1]);
 
       ViewWrapper<real64>::rtype endTime = applicationA.getData<real64>(keys::endTime);
       ViewWrapper<real64>::rtype beginTime = applicationB.getData<real64>(keys::beginTime);
@@ -358,9 +328,8 @@ void ProblemManager::InitializeObjects()
 {
   DomainPartition& domain  = getDomainPartition();
 
-<<<<<<< HEAD
   // Initialize solvers
-  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
+  dataRepository::ManagedGroup& solvers = GetGroup<dataRepository::ManagedGroup>(keys::solvers);
   ViewWrapper<string_array>::rtype  solverNames = solvers.getData<string_array>(keys::solverNames);
   for (uint ii=0; ii<solvers.size(); ++ii)
   {
@@ -373,7 +342,7 @@ void ProblemManager::InitializeObjects()
 void ProblemManager::RunSimulation()
 {
   DomainPartition& domain  = getDomainPartition();
-  dataRepository::SynchronizedGroup& solverApplications = GetGroup<dataRepository::SynchronizedGroup>(keys::solverApplications);
+  dataRepository::ManagedGroup& solverApplications = GetGroup<dataRepository::ManagedGroup>(keys::solverApplications);
   ViewWrapper<string_array>::rtype  solverApplicationNames = solverApplications.getData<string_array>(keys::solverApplicationNames);
 
   double time = 0.0;
@@ -382,16 +351,11 @@ void ProblemManager::RunSimulation()
 
   for( uint ii=0; ii<solverApplications.size(); ++ii)
   {
-    dataRepository::SynchronizedGroup& currentApplication = solverApplications.GetGroup( solverApplicationNames[ii] );
+    dataRepository::ManagedGroup& currentApplication = solverApplications.GetGroup( solverApplicationNames[ii] );
     ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solverList);
     real64& appDt = *(currentApplication.getData<real64>(keys::dt));
     real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
 
-  std::string newName("new solver");
-  std::string newName2("new solver2");
-
-  SolverBase & solver1 = m_physicsSolverManager.CreateSolver( "SolidMechanics_LagrangianFEM", newName );
-  SolverBase & solver2 = m_physicsSolverManager.CreateSolver( "NewComponent", newName2 );
 
     bool lockDt = (appDt > 0.0);
     if (lockDt)
@@ -406,18 +370,10 @@ void ProblemManager::RunSimulation()
 
       for (uint jj=0; jj<currentApplication.size(); ++jj)
       {
-        SolverBase& currentSolver = solvers.GetGroup<SolverBase>( solverList[jj] );
+        SolverBase& currentSolver = this->m_physicsSolverManager.GetGroup<SolverBase>( solverList[jj] );
         currentSolver.TimeStep( time, dt, cycle, domain );
         nextDt = std::min(nextDt, *(currentSolver.getData<real64>(keys::maxDt)));
       }
-
-  double time = 0.0;
-  double dt = 5.0e-5;
-  for( int i=0 ; i<10 ; ++i )
-  {
-    solver1.TimeStep( time, dt, i, domain );
-    time += dt;
-  }
 
       // Update time, cycle, timestep
       time += dt;

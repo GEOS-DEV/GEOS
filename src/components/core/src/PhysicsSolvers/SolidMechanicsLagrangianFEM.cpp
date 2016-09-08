@@ -87,10 +87,10 @@ void SolidMechanics_LagrangianFEM::Registration( ManagedGroup * const domain )
 }
 
 
-void SolidMechanics_LagrangianFEM::Initialize( dataRepository::SynchronizedGroup& domain )
+void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& domain )
 {
-  SynchronizedGroup& nodes = domain.GetGroup<SynchronizedGroup >(keys::FEM_Nodes);
-  SynchronizedGroup& elems = domain.GetGroup<SynchronizedGroup >(keys::FEM_Elements);
+  ManagedGroup& nodes = domain.GetGroup<ManagedGroup >(keys::FEM_Nodes);
+  ManagedGroup& elems = domain.GetGroup<ManagedGroup >(keys::FEM_Elements);
 
   int& nElements = *(this->getData<int>(keys::nElements));
   real64& Ey = *(this->getData<real64>(keys::Ey));

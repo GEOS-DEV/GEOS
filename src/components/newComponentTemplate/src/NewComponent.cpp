@@ -21,7 +21,7 @@ NewComponent::~NewComponent()
 {}
 
 
-void NewComponent::Initialize( dataRepository::SynchronizedGroup& /*domain*/ )
+void NewComponent::Initialize( dataRepository::ManagedGroup& /*domain*/ )
 {}
 
 

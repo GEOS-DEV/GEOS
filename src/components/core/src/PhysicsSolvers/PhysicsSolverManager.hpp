@@ -10,6 +10,11 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 
+namespace pugi
+{
+class xml_node;
+}
+
 namespace geosx
 {
 class SolverBase;
@@ -23,6 +28,9 @@ public:
   virtual ~PhysicsSolverManager();
 
   SolverBase & CreateSolver( string const & solverCatalogKey, string const & solverName );
+
+
+  void ReadXML( pugi::xml_node const & problemNode );
 
 };
 

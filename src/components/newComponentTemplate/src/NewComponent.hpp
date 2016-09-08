@@ -28,7 +28,7 @@ public:
 
   virtual void ReadXML( pugi::xml_node solverNode );
 
-  virtual void Initialize( dataRepository::SynchronizedGroup& domain );
+  virtual void Initialize( dataRepository::ManagedGroup& domain );
 
   virtual void Registration( dataRepository::ManagedGroup * const domain ) ;
 
