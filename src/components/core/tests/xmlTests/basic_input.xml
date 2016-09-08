@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+<!--# # -->
+
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+
+  
+  <Solvers>
+    <SolidMechanics_LagrangianFEM name="lagsolve" 
+                    nElements="5"
+                    area="1.0"
+                    barLength="5.0"
+                    courant="0.25"/>
+  </Solvers>
+
+  
+  <Mesh>
+    <InternalMesh elementType="C3D6" 
+                  xCoords="0, 1"
+                  yCoords="0, 1" 
+                  zCoords="0, 1"
+                  nx="10" 
+                  ny="10" 
+                  nz="10" 
+                  regionNames="Region"/>
+  </Mesh>
+
+
+  <SolverApplications>
+    <Application name="1"
+                 beginTime="0.0" 
+                 endTime="1.0" 
+                 dt="0.256"
+                 solvers="lagsolve" />
+  </SolverApplications>
+
+
+  <ElementRegions>
+    <ElementRegion elementType="poly" name="Region">
+      <LinearElasticMaterial bulkModulus="5.5556e9" density="200000" shearModulus="4.16667e9"/>
+    </ElementRegion>
+  </ElementRegions>
+
+
+  <BoundaryConditions>
+    <BoundaryCondition component="0" fieldName="Displacement" fieldType="Vector" object="Node" scale="0.0" setNames="xneg xpos"/>
+    <BoundaryCondition component="1" fieldName="Displacement" fieldType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
+    <BoundaryCondition component="2" fieldName="Displacement" fieldType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
+  </BoundaryConditions>
+
+
+  <Tables>
+    <Table1D coord="0.0, 1.0, 2.0" value="0.0, 1.0, 1.0" name="ttable1"/>
+  </Tables>
+  
+
+  <Partition>
+    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
+  </Partition>
+
+ 
+  <Output parallelThreads="32" plotInterval="20.0" plotFileRoot="plot" restartInterval="1e6" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="1" maxWallTime="{60*60*15.925}"/>
+  
+
+  <Nodesets>
+    <Nodeset name="perf" type="0" xMin="0, 0, 0" xMax="1, 1, 1"/>
+  </Nodesets>
+
+
+  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
+
+</Problem>
