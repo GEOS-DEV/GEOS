@@ -1,9 +1,12 @@
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_SOURCE_DIR}/components/core/src)
 
+# Python config
 set(ENABLE_PYTHON OFF CACHE BOOL  "Disables Python Plugin")
+set( extraComponentsListLink "")
 if( ENABLE_PYTHON )
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=1)
-	if( PYTHON_DIR )
+  if( PYTHON_DIR )
+    set( extraComponentsListLink ${extraComponentsListLink} python_interp )
+  	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=1)
 		blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -L${PYTHON_DIR}/lib)
 	else()
 		MESSAGE(FATAL_ERROR "ENABLE_PYTHON is true, but PYTHON_DIR is not defined.")
@@ -43,7 +46,7 @@ message("componentlistlink = ${componentlistlink}")
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
                    DEPENDS_ON ${componentlistlink}
-                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja python_interp)
+                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja ${extraComponentsListLink})
 
 #blt_add_executable(NAME geosx
 #                   SOURCES core/src/main/main.cpp

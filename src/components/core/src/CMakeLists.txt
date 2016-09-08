@@ -23,7 +23,12 @@ add_subdirectory(PhysicsSolvers)
 add_subdirectory(python)
 
 
-#blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_CURRENT_SOURCE_DIR})
+# Python config
+set( extraComponentsListLink "")
+if( ENABLE_PYTHON )
+  set( extraComponentsListLink ${extraComponentsListLink} python_interp )
+endif()
+
 
 message("adding geosx_core library")
 blt_add_library( NAME
@@ -37,7 +42,7 @@ blt_add_library( NAME
                  DEPENDS_ON
                      cxx-utilities pugixml
                  SYSTEM_DEPENDS_ON
-                     slic sidre conduit hdf5 raja  python_interp
+                     slic sidre conduit hdf5 raja ${extraComponentsListLink}
                  )
                  
 target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
@@ -47,7 +52,7 @@ target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR}/legacy )
 blt_add_executable(NAME geosx_corex
                    SOURCES main/main.cpp
                    DEPENDS_ON ${GEOSX_LINK_PREPEND_FLAG} geosx_core ${GEOSX_LINK_POSTPEND_FLAG}
-                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja cxx-utilities python_interp
+                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja cxx-utilities ${extraComponentsListLink}
                    )
 #target_include_directories( geosx_corex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} )
                    
