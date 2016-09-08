@@ -12,6 +12,7 @@
 
 namespace geosx
 {
+class SolverBase;
 
 class PhysicsSolverManager : public dataRepository::ManagedGroup
 {
@@ -21,7 +22,7 @@ public:
 
   virtual ~PhysicsSolverManager();
 
-  void CreateSolver( string const & solverCatalogKey, string const & solverName );
+  SolverBase & CreateSolver( string const & solverCatalogKey, string const & solverName );
 
 };
 

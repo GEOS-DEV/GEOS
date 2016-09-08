@@ -31,7 +31,6 @@ ProblemManager::~ProblemManager()
 void ProblemManager::Registration( dataRepository::ManagedGroup * const )
 {
   RegisterGroup<DomainPartition>(keys::domain);
-  RegisterGroup<ManagedGroup>("solvers");
 
   RegisterViewWrapper< std::unordered_map<string,string> >("simulationParameterMap");
 }
@@ -285,16 +284,14 @@ void ProblemManager::ParseInputFile()
 
   FiniteElementSpace feSpace( keys::FE_Space, this);
 
-  dataRepository::ManagedGroup& solvers = GetGroup<dataRepository::ManagedGroup>(keys::solvers);
   DomainPartition& domain  = getDomainPartition();
+
 
   std::string newName("new solver");
   std::string newName2("new solver2");
 
-  std::unique_ptr<SolverBase> solver = SolverBase::CatalogInterface::Factory("SolidMechanics_LagrangianFEM", newName, &domain );
-  auto& solver1 = solvers.RegisterGroup( newName, std::move(solver) );
-  solver = SolverBase::CatalogInterface::Factory( "NewComponent", newName2, &domain );
-  auto& solver2 = solvers.RegisterGroup( newName2, std::move(solver) );
+  SolverBase & solver1 = m_physicsSolverManager.CreateSolver( "SolidMechanics_LagrangianFEM", newName );
+  SolverBase & solver2 = m_physicsSolverManager.CreateSolver( "NewComponent", newName2 );
 
   solver1.getData<string>(std::string("name"));
 
