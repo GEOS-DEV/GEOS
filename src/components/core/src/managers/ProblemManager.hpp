@@ -13,24 +13,25 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <pugixml.hpp>
-#include "../dataRepository/SynchronizedGroup.hpp"
+#include "dataRepository/ManagedGroup.hpp"
+#include "PhysicsSolvers/PhysicsSolverManager.hpp"
 
 namespace geosx
 {
 
 class DomainPartition;
 
-class ProblemManager : public dataRepository::SynchronizedGroup
+class ProblemManager : public dataRepository::ManagedGroup
 {
 public:
   explicit ProblemManager( const std::string& name,
-                           SynchronizedGroup * const parent );
+                           ManagedGroup * const parent );
   ~ProblemManager();
 
   static std::string CatalogName() { return "ProblemManager"; }
 
 
-  virtual void Registration( dataRepository::SynchronizedGroup * const );
+  virtual void Registration( dataRepository::ManagedGroup * const );
 
   void ParseCommandLineInput( int const& argc, char* const argv[]);
 
@@ -53,6 +54,8 @@ public:
   pugi::xml_parse_result xmlResult;
   pugi::xml_node xmlProblemNode;
 
+private:
+  PhysicsSolverManager m_physicsSolverManager;
 };
 
 } /* namespace geosx */

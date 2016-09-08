@@ -13,6 +13,8 @@
 #include "common/DataTypes.hpp"
 #include "SFINAE_Macros.hpp"
 #include <type_traits>
+#include "StringUtilities.hpp"
+#include "Macros.hpp"
 
 #include "ViewWrapperBase.hpp"
 
@@ -27,12 +29,14 @@ class ViewWrapper : public ViewWrapperBase
 
 public:
   explicit ViewWrapper( std::string const & name,
-                        SynchronizedGroup * const parent ) :
+                        ManagedGroup * const parent ) :
     ViewWrapperBase(name,parent)
   {
     // set up properties of sidre::DataView
     if( std::is_array<T>::value )
-    {}
+    {
+
+    }
     else
     {
       getSidreView()->setExternalDataPtr( nullptr );
@@ -61,7 +65,7 @@ public:
 
 
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
-                                                   SynchronizedGroup * const parent )
+                                                   ManagedGroup * const parent )
   {
     return std::move(std::make_unique<ViewWrapper<T> >( name, parent ) );
   }
@@ -148,45 +152,76 @@ public:
   HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(std::size_t), VA_LIST(std::size_t(1)) )
   CONDITIONAL_VIRTUAL_FUNCTION( ViewWrapper<T>,resize, void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
+
+
+  HAS_ALIAS(pointer)
   template< class U=T,
-            bool HASPOINTERTYPE = cxx_utilities::has_pointer_type<U>::value,
+            bool HASPOINTERTYPE = has_alias_pointer<U>::value,
             bool ISSTRING = std::is_same<U,std::string>::value >
   struct Get_Type
   {
+#if CONTAINERARRAY_RETURN_PTR == 1
     typedef U*       type;
     typedef const U* const_type;
+#else
+    typedef U*       type;
+    typedef const U* const_type;
+#endif
+
+    typedef U *       pointer;
+    typedef U const * const_pointer;
   };
+
   template<class U>
   struct Get_Type<U, true, false>
   {
+
+#if CONTAINERARRAY_RETURN_PTR == 1
     typedef typename U::pointer       type;
     typedef typename U::const_pointer const_type;
+#else
+    typedef U &       type;
+    typedef U const & const_type;
+#endif
+    typedef typename U::pointer       pointer;
+    typedef typename U::const_pointer const_pointer;
   };
   template<class U>
   struct Get_Type<U, true, true>
   {
     typedef U &       type;
     typedef U const & const_type;
-  };
 
+    typedef U *       pointer;
+    typedef U const * const_pointer;
+  };
 
   using rtype       = typename Get_Type<T>::type;
   using rtype_const = typename Get_Type<T>::const_type;
 
+  using pointer       = typename Get_Type<T>::pointer;
+  using const_pointer = typename Get_Type<T>::const_pointer;
 
-  HAS_MEMBER_FUNCTION(data,rtype,,,)
+
+  HAS_MEMBER_FUNCTION(data,pointer,,,)
   template<class U = T>
   typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
   data()
   {
+#if CONTAINERARRAY_RETURN_PTR == 1
     return m_data.data();
+#else
+    return m_data;
+#endif
   }
+
   template<class U = T>
   typename std::enable_if<std::is_same<U,std::string>::value, rtype>::type
   data()
   {
     return m_data;
   }
+
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
   data()
@@ -199,20 +234,27 @@ public:
   typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,string>::value, rtype_const>::type
   data() const
   {
+#if CONTAINERARRAY_RETURN_PTR == 1
     return m_data.data();
+#else
+    return m_data;
+#endif
   }
+
   template<class U = T>
-  typename std::enable_if<std::is_same<U,std::string>::value, rtype>::type
+  typename std::enable_if<std::is_same<U,std::string>::value, rtype_const>::type
   data() const
   {
     return m_data;
   }
+
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
   data() const
   {
     return &m_data;
   }
+
 
   T& reference()
   { return m_data; }

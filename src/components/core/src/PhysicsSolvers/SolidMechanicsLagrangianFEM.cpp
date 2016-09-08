@@ -10,8 +10,8 @@
 #include <vector>
 #include <math.h>
 
-#include "dataRepository/SynchronizedGroup.hpp"
 // #include "RAJA/RAJA.hxx"
+#include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 
 
@@ -34,7 +34,7 @@ std::string const nElements = "nElements";
 using namespace dataRepository;
 
 SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
-                                                            SynchronizedGroup * const parent ) :
+                                                            ManagedGroup * const parent ) :
   SolverBase( name, parent )
 {}
 
@@ -58,12 +58,12 @@ void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node solverNode )
 }
 
 
-void SolidMechanics_LagrangianFEM::Registration( dataRepository::SynchronizedGroup * const domain )
+void SolidMechanics_LagrangianFEM::Registration( ManagedGroup * const domain )
 {
   SolverBase::Registration( domain );
 
-  SynchronizedGroup& nodes = domain->RegisterGroup<SynchronizedGroup >(keys::FEM_Nodes);
-  SynchronizedGroup& elems = domain->RegisterGroup<SynchronizedGroup >(keys::FEM_Elements);
+  ManagedGroup& nodes = domain->RegisterGroup<ManagedGroup>(keys::FEM_Nodes);
+  ManagedGroup& elems = domain->RegisterGroup<ManagedGroup>(keys::FEM_Elements);
 
   nodes.RegisterViewWrapper<real64_array>(keys::TotalDisplacement);
   nodes.RegisterViewWrapper<real64_array>(keys::IncrementalDisplacement);
@@ -108,12 +108,13 @@ void SolidMechanics_LagrangianFEM::Initialize( dataRepository::SynchronizedGroup
 
 
   std::cout<<"sound speed = "<<sqrt(Ey/rho)<<std::endl;
-  for( uint64 a=0 ; a<nodes.size() ; ++a )
+//  std::cout<<1.0/0.0<<std::endl;
+  for( localIndex a=0 ; a<nodes.size() ; ++a )
   {
     X[a] = a * ( barLength/(nElements+1));
   }
 
-  for( uint64 k=0 ; k<elems.size() ; ++k )
+  for( localIndex k=0 ; k<elems.size() ; ++k )
   {
     double dx = barLength / nElements;
     mass[k] += rho * area * dx / 2;
@@ -126,7 +127,7 @@ void SolidMechanics_LagrangianFEM::Initialize( dataRepository::SynchronizedGroup
 void SolidMechanics_LagrangianFEM::TimeStep( real64 const& time_n,
                                              real64 const& dt,
                                              const int cycleNumber,
-                                             SynchronizedGroup& domain )
+                                             ManagedGroup& domain )
 {
   TimeStepExplicit( time_n, dt, cycleNumber, domain );
 }
@@ -134,13 +135,13 @@ void SolidMechanics_LagrangianFEM::TimeStep( real64 const& time_n,
 void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
                                                      real64 const& dt,
                                                      const int cycleNumber,
-                                                     SynchronizedGroup& domain )
+                                                     ManagedGroup& domain )
 {
-  SynchronizedGroup& nodes = domain.GetGroup<SynchronizedGroup>(keys::FEM_Nodes);
-  SynchronizedGroup& elems = domain.GetGroup<SynchronizedGroup>(keys::FEM_Elements);
+  ManagedGroup& nodes = domain.GetGroup<ManagedGroup>(keys::FEM_Nodes);
+  ManagedGroup& elems = domain.GetGroup<ManagedGroup>(keys::FEM_Elements);
 
-  std::size_t const numNodes = nodes.size();
-  std::size_t const numElems = elems.size();
+  localIndex const numNodes = nodes.size();
+  localIndex const numElems = elems.size();
 
   ViewWrapper<real64_array>::rtype          X = nodes.getData<real64_array>(keys::ReferencePosition);
   ViewWrapper<real64_array>::rtype          u = nodes.getData<real64_array>(keys::TotalDisplacement);
@@ -153,16 +154,20 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
   ViewWrapper<real64_array>::rtype   Strain = elems.getData<real64_array>(keys::Strain);
   ViewWrapper<real64_array>::rtype_const  K = elems.getData<real64_array>(keys::K);
 
+
+//  ViewWrapper<real64_array>::rtype          X2 = nodes.GetData(keys::ReferencePosition);
+
+
   Integration::OnePoint( acc, vel, dt/2, numNodes );
   vel[0] = 1.0;
   Integration::OnePoint( vel, uhat, u, dt, numNodes );
 
-  for( uint64 a=0 ; a<numElems ; ++a )
+  for( localIndex a=0 ; a<numElems ; ++a )
   {
     acc[a] = 0.0;
   }
 
-  for( uint64 k=0 ; k<numElems ; ++k )
+  for( localIndex k=0 ; k<numElems ; ++k )
   {
     Strain[k] = ( u[k+1] - u[k] ) / ( X[k+1] - X[k] );
     Felem[k] = K[k] * Strain[k];
@@ -170,7 +175,7 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
     acc[k+1] -= Felem[k];
   }
 
-  for( uint64 a=0 ; a<numNodes ; ++a )
+  for( localIndex a=0 ; a<numNodes ; ++a )
   {
     acc[a] /= mass[a];
   }
@@ -178,15 +183,18 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
   vel[0] = 1.0;
 
 
-  for( uint64 a=0 ; a<numNodes ; ++a )
+  printf(" %6.5f : ", time_n + dt );
+  for( localIndex a=0 ; a<numNodes ; ++a )
   {
-    std::cout<<vel[a]<<std::endl;
+    printf(" %4.2f ",vel[a] );
+//    std::cout<<vel[a]<<std::endl;
   }
+  printf("\n" );
 
   (void) time_n;
   (void) cycleNumber;
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, SynchronizedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanics_LagrangianFEM, std::string const &, ManagedGroup * const )
 } /* namespace ANST */

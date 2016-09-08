@@ -45,9 +45,9 @@
 #ifndef CONTACTMANAGERBASET_H_
 #define CONTACTMANAGERBASET_H_
 
+#include "../../dataRepository/Group.hpp"
 #include "Common/Common.h"
-#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
-
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 #include "Constitutive/Interface/InterfaceFactory.h"
 
 /**
@@ -96,9 +96,11 @@ public:
 
 	void ReadXML(TICPP::HierarchicalDataNode* hdn);
 
-  void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject  = NULL ) {}
+  void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject  = NULL )
+  { (void)referenceObject; }
 
-  void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  = NULL ) {}
+  void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  = NULL )
+  { (void)referenceObject; }
 
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager  ,
                                                          Array1dT<gArray1d>& objectToCompositionObject  )

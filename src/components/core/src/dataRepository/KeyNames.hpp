@@ -25,10 +25,10 @@ std::string const Acceleration = "Acceleration";
 std::string const Mass = "Mass";
 std::string const Force = "Force";
 std::string const Strain = "Strain";
-std::string const size = "size";
 std::string const maxDt = "maxDt";
 std::string const courant = "courant";
-
+std::string const Name = "name";
+std::string const Size = "size";
 std::string const ProblemManager = "ProblemManager";
 std::string const ConstitutiveManager = "ConstitutiveManager";
 std::string const ConstitutiveBase = "ConstitutiveBase";

@@ -46,8 +46,9 @@
 #ifndef ELEMENTOBJECTT_H_
 #define ELEMENTOBJECTT_H_
 
+#include "../../../dataRepository/Group.hpp"
 #include "Common/Common.h"
-#include "ObjectDataStructureBaseT.h"
+//#include "ObjectDataStructureBaseT.h"
 #include "StableTimeStep.h"
 #include "IO/ticpp/HierarchicalDataNode.h"
 #include "ObjectManagers/EnergyT.h"
@@ -117,7 +118,7 @@ public:
   void Initialize();
 
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL);
-  void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  = NULL) {}
+  void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  = NULL) { (void)referenceObject; }
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager ,
                                                          Array1dT<gArray1d>& objectToCompositionObject  )
   {

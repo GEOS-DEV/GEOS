@@ -14,6 +14,7 @@
 #include "finiteElement/FiniteElementSpace.hpp"
 #include <stdexcept>
 
+
 namespace geosx
 {
 
@@ -43,14 +44,15 @@ namespace dataRepository
 using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
-                                SynchronizedGroup * const parent ) :
-  SynchronizedGroup( name, parent )
+                                ManagedGroup * const parent ) :
+  ManagedGroup( name, parent ),
+  m_physicsSolverManager("PhysicsSolverManager",this)
 {}
 
 ProblemManager::~ProblemManager()
 {}
 
-void ProblemManager::Registration( dataRepository::SynchronizedGroup * const )
+void ProblemManager::Registration( dataRepository::ManagedGroup * const )
 {
   RegisterGroup<DomainPartition>(keys::domain);
 
@@ -356,6 +358,7 @@ void ProblemManager::InitializeObjects()
 {
   DomainPartition& domain  = getDomainPartition();
 
+<<<<<<< HEAD
   // Initialize solvers
   dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
   ViewWrapper<string_array>::rtype  solverNames = solvers.getData<string_array>(keys::solverNames);
@@ -370,7 +373,6 @@ void ProblemManager::InitializeObjects()
 void ProblemManager::RunSimulation()
 {
   DomainPartition& domain  = getDomainPartition();
-  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::SynchronizedGroup>(keys::solvers);
   dataRepository::SynchronizedGroup& solverApplications = GetGroup<dataRepository::SynchronizedGroup>(keys::solverApplications);
   ViewWrapper<string_array>::rtype  solverApplicationNames = solverApplications.getData<string_array>(keys::solverApplicationNames);
 
@@ -384,6 +386,12 @@ void ProblemManager::RunSimulation()
     ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solverList);
     real64& appDt = *(currentApplication.getData<real64>(keys::dt));
     real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
+
+  std::string newName("new solver");
+  std::string newName2("new solver2");
+
+  SolverBase & solver1 = m_physicsSolverManager.CreateSolver( "SolidMechanics_LagrangianFEM", newName );
+  SolverBase & solver2 = m_physicsSolverManager.CreateSolver( "NewComponent", newName2 );
 
     bool lockDt = (appDt > 0.0);
     if (lockDt)
@@ -402,6 +410,14 @@ void ProblemManager::RunSimulation()
         currentSolver.TimeStep( time, dt, cycle, domain );
         nextDt = std::min(nextDt, *(currentSolver.getData<real64>(keys::maxDt)));
       }
+
+  double time = 0.0;
+  double dt = 5.0e-5;
+  for( int i=0 ; i<10 ; ++i )
+  {
+    solver1.TimeStep( time, dt, i, domain );
+    time += dt;
+  }
 
       // Update time, cycle, timestep
       time += dt;
@@ -429,6 +445,6 @@ DomainPartition const & ProblemManager::getDomainPartition() const
   return GetGroup<DomainPartition>(keys::domain);
 }
 
-REGISTER_CATALOG_ENTRY( SynchronizedGroup, ProblemManager, std::string const &, SynchronizedGroup * const )
+REGISTER_CATALOG_ENTRY( ManagedGroup, ProblemManager, std::string const &, ManagedGroup * const )
 
 } /* namespace geosx */

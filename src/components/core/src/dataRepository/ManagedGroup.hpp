@@ -5,13 +5,17 @@
  */
 
 
-#ifndef DATAOBJECTMANAGER_H_
-#define DATAOBJECTMANAGER_H_
+#ifndef MANAGEDGROUP_H_
+#define MANAGEDGROUP_H_
 
 #include <iostream>
+#include <slic/slic.hpp>
 
 #include "ObjectCatalog.hpp"
 #include "ViewWrapper.hpp"
+
+#include "depricated/Common.h"
+
 
 //#include "CodingUtilities/ANSTexception.hpp"
 
@@ -38,7 +42,7 @@ namespace dataRepository
  * hierarchy of managers that represent physical groupings of data.
  *
  */
-class SynchronizedGroup
+class ManagedGroup
 {
 public:
   /**
@@ -50,34 +54,40 @@ public:
    * @author Randolph R. Settgast
    * @param name the name of this object manager
    */
-  explicit SynchronizedGroup( std::string const & name,
-                              SynchronizedGroup * const parent );
+  explicit ManagedGroup( std::string const & name,
+                         ManagedGroup * const parent );
 
   /**
    *
    */
-  virtual ~SynchronizedGroup();
+  virtual ~ManagedGroup();
 
   /**
    *
    * @param source source WrapperCollection
    */
-  SynchronizedGroup( SynchronizedGroup&& source );
+  ManagedGroup( ManagedGroup&& source );
 
 
-  SynchronizedGroup() = delete;
-  SynchronizedGroup( SynchronizedGroup const & source ) = delete;
-  SynchronizedGroup& operator=( SynchronizedGroup const & ) = delete;
-  SynchronizedGroup& operator=(SynchronizedGroup&&) = delete;
+  ManagedGroup() = delete;
+  ManagedGroup( ManagedGroup const & source ) = delete;
+  ManagedGroup& operator=( ManagedGroup const & ) = delete;
+  ManagedGroup& operator=(ManagedGroup&&) = delete;
 
   ///@}
 
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SynchronizedGroup, std::string const &, SynchronizedGroup * const >;
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
+  using CatalogInterface = cxx_utilities::CatalogInterface< ManagedGroup, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
+  ///@}
 
 
-  virtual void Registration( dataRepository::SynchronizedGroup * const )
+  virtual void Registration( dataRepository::ManagedGroup * const )
   {}
 
   virtual const std::type_info& get_typeid() const
@@ -86,25 +96,26 @@ public:
   }
 
 
-  template< typename T = SynchronizedGroup >
+  template< typename T = ManagedGroup >
   T& RegisterGroup( std::string const & name, std::unique_ptr<T> newObject );
 
-  template< typename T = SynchronizedGroup >
+  template< typename T = ManagedGroup >
   T& RegisterGroup( std::string const & name )
   {
     return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
   }
 
-  template< typename T = SynchronizedGroup >
+  template< typename T = ManagedGroup >
   T& RegisterGroup( std::string const & name, std::string const & catalogName )
   {
+
     std::unique_ptr<T> newGroup = T::CatalogInterface::Factory(catalogName, name, this );
     return RegisterGroup<T>( name, std::move(newGroup) );
   }
 
 
 
-  template< typename T = SynchronizedGroup >
+  template< typename T = ManagedGroup >
   T& GetGroup( std::string const & name )
   {
 #ifdef USE_DYNAMIC_CASTING
@@ -116,7 +127,7 @@ public:
 
 
 
-  template< typename T = SynchronizedGroup >
+  template< typename T = ManagedGroup >
   T const & GetGroup( std::string const & name ) const
   {
 #ifdef USE_DYNAMIC_CASTING
@@ -136,6 +147,31 @@ public:
 
   //***********************************************************************************************
 
+  // user defined conversion doesn't work. can't infer template argument
+  class GetDataClass
+  {
+  public:
+    GetDataClass( ManagedGroup & parent ): m_parent( parent ) {}
+
+    inline GetDataClass& operator() ( std::string const & name )
+    {
+      m_name = name;
+      return *this;
+    }
+
+    template< typename T>
+    operator typename ViewWrapper<T>::rtype ()
+    {
+      return m_parent.getData<T>( m_name );
+    }
+  private:
+    ManagedGroup & m_parent;
+    std::string m_name;
+  };
+  GetDataClass GetData = {*this};
+
+
+
   template< typename T >
   ViewWrapper<T> const & getWrapper( std::size_t const index ) const
   {
@@ -149,7 +185,7 @@ public:
   template< typename T >
   ViewWrapper<T> & getWrapper( std::size_t const index )
   {
-    return const_cast<ViewWrapper<T>&>( const_cast< SynchronizedGroup const *>(this)->getWrapper<T>( index ) );
+    return const_cast<ViewWrapper<T>&>( const_cast< ManagedGroup const *>(this)->getWrapper<T>( index ) );
   }
 
   template< typename T >
@@ -161,18 +197,18 @@ public:
 
   template< typename T >
   ViewWrapper<T>& getWrapper( std::string const & name )
-  { return const_cast<ViewWrapper<T>&>( const_cast<const SynchronizedGroup*>(this)->getWrapper<T>( name ) ); }
+  { return const_cast<ViewWrapper<T>&>( const_cast<const ManagedGroup*>(this)->getWrapper<T>( name ) ); }
 
 
 
   template< typename T >
-  typename ViewWrapper<T>::rtype_const getData( std::size_t const index ) const
+  typename ViewWrapper<T>::rtype_const getData( int32 const index ) const
   {
     return getWrapper<T>(index).data();
   }
 
   template< typename T >
-  typename ViewWrapper<T>::rtype getData( std::size_t const index )
+  typename ViewWrapper<T>::rtype getData( int32 const index )
   {
     return getWrapper<T>(index).data();
 //    return const_cast<typename WrapperView<T>::rtype>( const_cast<const SynchronizedGroup*>(this)->getData<T>( index ) );
@@ -201,7 +237,7 @@ public:
   template< typename T >
   T& getReference( std::size_t const index )
   {
-    return const_cast<T&>( const_cast<const SynchronizedGroup*>(this)->getReference<T>( index ) );
+    return const_cast<T&>( const_cast<const ManagedGroup*>(this)->getReference<T>( index ) );
   }
 
   template< typename T >
@@ -218,20 +254,18 @@ public:
     return getReference<T>( index );
   }
 
-  void resize( std::size_t newsize );
 
-  inline std::size_t size() const
+  inline string name() const
   {
-    return *(getData<std_size_t>(keys::size));
+    return getData<string>(keys::Name);
   }
 
+  void resize( localIndex newsize );
 
-//#include "Common/Common.h"
-//  template< FieldKey FIELDKEY>
-//  typename Wrapper<TYPE>::rtype GetFieldData( )
-//  {
-//    return GetFieldData< array<typename Field<FIELDKEY>::Type> >(Field<FIELDKEY>::Name());
-//  }
+  inline localIndex size() const
+  {
+    return *(getData<localIndex>(keys::Size));
+  }
 
 
 
@@ -243,10 +277,10 @@ public:
     return m_sidreGroup;
   }
 
-  SynchronizedGroup * getParent()             { return m_parent; }
-  SynchronizedGroup const * getParent() const { return m_parent; }
+  ManagedGroup * getParent()             { return m_parent; }
+  ManagedGroup const * getParent() const { return m_parent; }
 
-  SynchronizedGroup * setParent( SynchronizedGroup * const parent )
+  ManagedGroup * setParent( ManagedGroup * const parent )
   {
     m_parent = parent;
     m_sidreGroup = m_parent->getSidreGroup();
@@ -258,17 +292,128 @@ private:
   std::unordered_map<std::string,std::size_t> m_keyLookup;
   std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
 
-  SynchronizedGroup* m_parent = nullptr;
-  std::unordered_map< std::string, std::unique_ptr<SynchronizedGroup> > m_subObjectManagers;
+  ManagedGroup* m_parent = nullptr;
+  std::unordered_map< std::string, std::unique_ptr<ManagedGroup> > m_subObjectManagers;
 
   asctoolkit::sidre::DataGroup* m_sidreGroup;
 
+
+//****************************************************
+// functions for compatibility with old data structure
+// TODO Deprecate or modernize all these suckers
+
+public:
+
+  using ObjectType = string;
+  class SiloFile;
+  localIndex resize( localIndex const newSize,
+                     const bool assignGlobals );
+
+  localIndex m_DataLengths;
+
+
+  localIndex DataLengths() const { return size(); }
+
+  void WriteSilo( SiloFile& siloFile,
+                  const std::string& meshname,
+                  const int centering,
+                  const int cycleNum,
+                  const realT problemTime,
+                  const bool isRestart,
+                  const std::string& multiRoot,
+                  const std::string& regionName = "none",
+                  const lArray1d& mask = lArray1d() ) const;
+
+
+  void ReadSilo( const SiloFile& siloFile,
+                 const std::string& meshname,
+                 const int centering,
+                 const int cycleNum,
+                 const realT problemTime,
+                 const bool isRestart,
+                 const std::string& regionName = "none",
+                 const lArray1d& mask = lArray1d() );
+
+
+
+  /// returns reference to specified field
+  template< FieldKey FIELDKEY>
+  typename ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype GetFieldData( )
+  {
+    return const_cast<typename ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype>( static_cast<const ManagedGroup&>(*this).GetFieldData<FIELDKEY>());
+  }
+
+
+  /// returns const reference to specified field
+  template< FieldKey FIELDKEY>
+  typename ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype_const GetFieldData( ) const
+  {
+    return this->getData< Array1dT< typename Field<FIELDKEY>::Type >::rtype_const >( Field<FIELDKEY>::Name() );
+  }
+
+
+  /// returns reference to specified field
+  template< typename TYPE >
+  typename ViewWrapper< TYPE >::rtype GetFieldData( const std::string& fieldName )
+  {
+    return const_cast<typename ViewWrapper<TYPE>::rtype>( static_cast<const ManagedGroup&>(*this).GetFieldData<TYPE>(fieldName));
+  }
+
+  /// returns const reference to specified field
+  template< typename TYPE >
+  const Array1dT<TYPE>& GetFieldData( const std::string& name ) const
+  {
+    return this->getData< TYPE >( name );
+  }
+
+
+
+
+
+
+
+
+  /// returns reference to specified field
+  template< FieldKey FIELDKEY>
+  typename ViewWrapper< typename Field<FIELDKEY>::Type >::rtype* GetFieldDataPointer( )
+  {
+    return const_cast<typename ViewWrapper<typename Field<FIELDKEY>::Type>::rtype*>( static_cast<const ManagedGroup&>(*this).GetFieldDataPointer<FIELDKEY>());
+  }
+
+
+  /// returns const reference to specified field
+  template< FieldKey FIELDKEY>
+  typename ViewWrapper< typename Field<FIELDKEY>::Type >::rtype_const* GetFieldDataPointer( ) const
+  {
+    return this->getData< typename Field<FIELDKEY>::Type >( Field<FIELDKEY>::Name() );
+  }
+
+  /// returns reference to specified field
+  template< typename TYPE >
+  typename ViewWrapper< TYPE >::rtype* GetFieldDataPointer( const std::string& fieldName )
+  {
+    return this->getData< TYPE >( fieldName );
+  }
+
+  /// returns const reference to specified field
+  template< typename TYPE >
+  typename ViewWrapper< TYPE >::rtype_const* GetFieldDataPointer( const std::string& name ) const;
+
+
+
+//**********************************************************************************************************************
+
+
+  /**
+   * @name functions to disallow construction of strings from char const *
+   */
+  ///@{
 #if NOCHARTOSTRING_KEYLOOKUP == 1
 
-  template< typename T = SynchronizedGroup >
+  template< typename T = ManagedGroup >
   T const & GetGroup( char const * ) const;
 
-  template< typename T = SynchronizedGroup >
+  template< typename T = ManagedGroup >
   T& GetGroup( char const * name );
 
 
@@ -291,6 +436,8 @@ private:
 
   ViewWrapper<T>& getWrapper( char const * );
 
+  ///@}
+
 
 #endif
 };
@@ -298,7 +445,7 @@ private:
 
 
 template< typename T >
-ViewWrapper<T>& SynchronizedGroup::RegisterViewWrapper( std::string const & name, std::size_t * const rkey )
+ViewWrapper<T>& ManagedGroup::RegisterViewWrapper( std::string const & name, std::size_t * const rkey )
 {
   std::size_t key = static_cast<std::size_t>(-1);
 
@@ -319,7 +466,9 @@ ViewWrapper<T>& SynchronizedGroup::RegisterViewWrapper( std::string const & name
     auto& basePtr = m_wrappers[key];
     if( typeid(T) != basePtr->get_typeid() )
     {
-      std::cout<<LOCATION<<std::endl;
+      std::string error = string("Call to Group::RegisterViewWrapper( ")
+                          +name+string(", std::size_t * const ) attempts to re-register ViewWrapper, but with different type") ;
+//      SLIC_ERROR(error);
       throw std::exception();
     }
   }
@@ -332,7 +481,7 @@ ViewWrapper<T>& SynchronizedGroup::RegisterViewWrapper( std::string const & name
 }
 
 template< typename T >
-T& SynchronizedGroup::RegisterGroup( std::string const & name,
+T& ManagedGroup::RegisterGroup( std::string const & name,
                                      std::unique_ptr<T> newObject )
 {
   auto iterKeyLookup = m_subObjectManagers.find(name);
@@ -353,7 +502,6 @@ T& SynchronizedGroup::RegisterGroup( std::string const & name,
   // if key was found, make sure that they are the same type
   else
   {
-
     if( typeid(T) != iterKeyLookup->second->get_typeid() )
     {
       std::cout<<LOCATION<<std::endl;
@@ -370,4 +518,7 @@ T& SynchronizedGroup::RegisterGroup( std::string const & name,
 } // namespace dataRepository
 } /* namespace geosx */
 
-#endif /* DATAOBJECTMANAGER_H_ */
+
+typedef geosx::dataRepository::ManagedGroup ObjectDataStructureBaseT;
+
+#endif /* MANAGEDGROUP_H_ */

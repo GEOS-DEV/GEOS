@@ -13,17 +13,18 @@ namespace geosx
 using namespace dataRepository;
 
 DomainPartition::DomainPartition(  std::string const & name,
-                                   SynchronizedGroup * const parent ) :
-  SynchronizedGroup( name, parent )
+                                   ManagedGroup * const parent ) :
+  ManagedGroup( name, parent )
 {}
 
 DomainPartition::~DomainPartition()
 {}
 
 
-void DomainPartition::Registration( SynchronizedGroup * const )
+void DomainPartition::Registration( ManagedGroup * const )
 {
   this->RegisterGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
+
 }
 
 } /* namespace geosx */

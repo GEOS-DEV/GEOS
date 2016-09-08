@@ -45,8 +45,9 @@
 #ifndef CONTACTMANAGERT_H_
 #define CONTACTMANAGERT_H_
 
+#include "../../dataRepository/Group.hpp"
 #include "ContactManagerBaseT.h"
-#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 
 /**
  * @author Scott Johnson

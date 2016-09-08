@@ -14,41 +14,42 @@ using namespace dataRepository;
 
 
 
-FiniteElementSpace::FiniteElementSpace( std::string const & name, SynchronizedGroup * const parent ) :
-  SynchronizedGroup(name,parent)
+FiniteElementSpace::FiniteElementSpace( std::string const & name, ManagedGroup * const parent ) :
+  ManagedGroup(name,parent)
 {}
 
 FiniteElementSpace::~FiniteElementSpace()
 {}
 
 
-void FiniteElementSpace::Registration( dataRepository::SynchronizedGroup * const parent )
+void FiniteElementSpace::Registration( dataRepository::ManagedGroup * const parent )
 {
-  parent->RegisterGroup<SynchronizedGroup>(keys::FEM_Nodes);
-  parent->RegisterGroup<SynchronizedGroup>(keys::FEM_Elements);
+  parent->RegisterGroup<ManagedGroup>(keys::FEM_Nodes);
+  parent->RegisterGroup<ManagedGroup>(keys::FEM_Elements);
 }
 
 
 
-SynchronizedGroup & FiniteElementSpace::getNodeManager()
+ManagedGroup & FiniteElementSpace::getNodeManager()
 {
   return GetGroup<DomainPartition>(keys::FEM_Nodes);
 }
 
-SynchronizedGroup & FiniteElementSpace::getEdgeManager()
+ManagedGroup & FiniteElementSpace::getEdgeManager()
 {
-  return GetGroup<SynchronizedGroup>(keys::FEM_Nodes);
+  return GetGroup<ManagedGroup>(keys::FEM_Nodes);
 }
 
-SynchronizedGroup & FiniteElementSpace::getFaceManager()
+ManagedGroup & FiniteElementSpace::getFaceManager()
 {
-  return GetGroup<SynchronizedGroup>(keys::FEM_Faces);
+  return GetGroup<ManagedGroup>(keys::FEM_Faces);
 }
 
-SynchronizedGroup & FiniteElementSpace::getElementManager()
+ManagedGroup & FiniteElementSpace::getElementManager()
 {
-  return GetGroup<SynchronizedGroup>(keys::FEM_Elements);
+  return GetGroup<ManagedGroup>(keys::FEM_Elements);
 }
 
+REGISTER_CATALOG_ENTRY( ManagedGroup, FiniteElementSpace, std::string const &, ManagedGroup * const )
 
 } /* namespace geosx */

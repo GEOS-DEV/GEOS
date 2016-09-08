@@ -8,7 +8,7 @@
 #ifndef COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
 #define COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
 
-#include "../dataRepository/SynchronizedGroup.hpp"
+#include "../dataRepository/ManagedGroup.hpp"
 #include "ObjectCatalog.hpp"
 
 namespace geosx
@@ -17,19 +17,19 @@ namespace geosx
 namespace constitutive
 {
 
-class ConstitutiveBase : public dataRepository::SynchronizedGroup
+class ConstitutiveBase : public dataRepository::ManagedGroup
 {
 public:
   ConstitutiveBase( std::string const & name,
-                    SynchronizedGroup * const parent );
+                    ManagedGroup * const parent );
   virtual ~ConstitutiveBase();
 
-  virtual void Registration( dataRepository::SynchronizedGroup * const );
+  virtual void Registration( dataRepository::ManagedGroup * const );
 
-  virtual void Update( dataRepository::SynchronizedGroup * const parameters,
-                       dataRepository::SynchronizedGroup * const stateVariables ) = 0;
+  virtual void Update( dataRepository::ManagedGroup * const parameters,
+                       dataRepository::ManagedGroup * const stateVariables ) = 0;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, SynchronizedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 };

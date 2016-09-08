@@ -17,8 +17,8 @@ namespace constitutive
 
 
 ConstitutiveManager::ConstitutiveManager( std::string const & name,
-                                          SynchronizedGroup * const parent ) :
-  SynchronizedGroup(name,parent)
+                                          ManagedGroup * const parent ) :
+  ManagedGroup(name,parent)
 {}
 
 ConstitutiveManager::~ConstitutiveManager()

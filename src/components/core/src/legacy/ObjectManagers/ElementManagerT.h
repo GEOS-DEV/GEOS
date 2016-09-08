@@ -46,8 +46,9 @@
 #ifndef ELEMENTMANAGERT_H_
 #define ELEMENTMANAGERT_H_
 
+#include "../../dataRepository/ManagedGroup.hpp"
 #include "Common/Common.h"
-#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 #include "DataStructures/VectorFields/ElementRegionT.h"
 
 

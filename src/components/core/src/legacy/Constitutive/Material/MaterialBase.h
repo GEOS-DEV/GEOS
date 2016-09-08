@@ -238,7 +238,7 @@ public:
   virtual void PostReadXML( const TICPP::HierarchicalDataNode& ) {}
 
 
-  inline virtual void IncreaseDamageParameter(realT tmp)
+  inline virtual void IncreaseDamageParameter(realT)
   {}
 
 
@@ -293,10 +293,10 @@ public:
   RotateState( const R2Tensor& Rot );
 
 
-  virtual void SetDensity(realT rho){};
+  virtual void SetDensity(realT){};
 
   virtual realT GetDensity() const{return 0.0; };
-  virtual void SetSpecificInternalEnergy(realT rho){};
+  virtual void SetSpecificInternalEnergy(realT){};
   virtual realT GetSpecificInternalEnergy() const{return 0;};
 
   static void GetVariableCounts( localIndex&,
@@ -358,7 +358,7 @@ public:
     R2SymTensorValues["devStress"] = devStress;
   }
 
-  void Serialize(const localIndex index,
+  void Serialize(const localIndex /*index*/,
                   const unsigned int stride,
                   const localIndex elemNum,
                   Array1dT<iArray1d*>& ,
@@ -383,7 +383,7 @@ public:
   }
 
 
-  void  Deserialize( const localIndex index,
+  void  Deserialize( const localIndex /*index*/,
                   const unsigned int stride,
                   const localIndex elemNum,
                      const Array1dT<iArray1d*>& ,
@@ -511,7 +511,7 @@ public:
 
   virtual void erase( const localIndex num ) = 0;
   
-  virtual void InitializeStates( const localIndex index ){}
+  virtual void InitializeStates( const localIndex ){}
 
   virtual const MaterialBaseStateData* StateData( const localIndex index0,
                                                   const localIndex index1 ) const = 0;

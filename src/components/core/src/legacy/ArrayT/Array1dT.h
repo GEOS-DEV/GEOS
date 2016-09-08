@@ -65,6 +65,7 @@ class Array1dT : public VectorT<TYPE>
 {
   public:
 
+  typedef TYPE* pointer;
   typedef typename VectorT<TYPE>::size_type size_type;
 
 	//***** Constructors & Destructors ******************************************

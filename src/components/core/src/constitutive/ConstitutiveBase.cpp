@@ -14,15 +14,15 @@ namespace constitutive
 {
 
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
-                                    SynchronizedGroup * const parent ) :
-  SynchronizedGroup(name,parent)
+                                    ManagedGroup * const parent ) :
+  ManagedGroup(name,parent)
 {}
 
 ConstitutiveBase::~ConstitutiveBase()
 {}
 
 
-void ConstitutiveBase::Registration( dataRepository::SynchronizedGroup * const )
+void ConstitutiveBase::Registration( dataRepository::ManagedGroup * const )
 {}
 
 

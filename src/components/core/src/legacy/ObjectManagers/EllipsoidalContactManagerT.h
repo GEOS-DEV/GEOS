@@ -45,8 +45,9 @@
 #ifndef ELLIPSOIDALCONTACTMANAGERT_H_
 #define ELLIPSOIDALCONTACTMANAGERT_H_
 
+#include "../../dataRepository/Group.hpp"
 #include "Common/Common.h"
-#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 #include "ContactManagerT.h"
 
 /**

@@ -46,8 +46,8 @@
 #ifndef CartesianGridManager_H_
 #define CartesianGridManager_H_
 
-#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
-
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+#include "../../dataRepository/Group.hpp"
 #include "IO/ticpp/HierarchicalDataNode.h"
 
 class FaceManagerT;
@@ -116,6 +116,9 @@ public:
     }
   };
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  = NULL){
+
+    geosx::dataRepository::ViewWrapper<int32_array>::rtype m_isExternal = getData<int32_array>("IsExternal");
+
     // get the "isExternal" field from for *this, and set it to zero
     m_isExternal = 0;
 

@@ -8,17 +8,17 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
 
-#include "../dataRepository/SynchronizedGroup.hpp"
+#include "dataRepository/ManagedGroup.hpp"
 
 namespace geosx
 {
 
 
-class DomainPartition : public dataRepository::SynchronizedGroup
+class DomainPartition : public dataRepository::ManagedGroup
 {
 public:
   DomainPartition( std::string const & name,
-                   SynchronizedGroup * const parent );
+                   ManagedGroup * const parent );
 
   ~DomainPartition();
 
@@ -28,7 +28,7 @@ public:
   DomainPartition& operator=( DomainPartition const & ) = delete;
   DomainPartition& operator=( DomainPartition && ) = delete;
 
-  virtual void Registration( dataRepository::SynchronizedGroup * const );
+  virtual void Registration( dataRepository::ManagedGroup * const );
 
 };
 

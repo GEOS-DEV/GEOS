@@ -12,7 +12,7 @@
 #include "Common/typedefs.h"
 #include <map>
 
-class ObjectDataStructureBaseT;
+#include "../../dataRepository/Group.hpp"
 
 template < typename BASETYPE >
 class InterObjectRelation : public BASETYPE

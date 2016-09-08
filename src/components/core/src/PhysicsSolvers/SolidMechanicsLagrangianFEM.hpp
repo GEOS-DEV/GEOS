@@ -15,35 +15,36 @@ namespace geosx
 {
 namespace dataRepository
 {
-class SynchronizedGroup;
+class ManagedGroup;
 }
 
 class SolidMechanics_LagrangianFEM : public SolverBase
 {
 public:
   SolidMechanics_LagrangianFEM( const std::string& name,
-                                SynchronizedGroup * const parent );
+                                ManagedGroup * const parent );
 
 
   virtual ~SolidMechanics_LagrangianFEM();
 
-  static std::string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
-
-  void TimeStepExplicit( real64 const& time_n,
-                         real64 const& dt,
-                         int32 const cycleNumber,
-                         dataRepository::SynchronizedGroup& domain );
+  static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
   virtual void ReadXML( pugi::xml_node solverNode );
 
-  virtual void Registration( dataRepository::SynchronizedGroup * const domain );
+  virtual void Registration( dataRepository::ManagedGroup * const domain ) override;
 
   virtual void Initialize( dataRepository::SynchronizedGroup& domain );
 
   virtual void TimeStep( real64 const& time_n,
                          real64 const& dt,
                          int32 const cycleNumber,
-                         dataRepository::SynchronizedGroup& domain ) override;
+                         dataRepository::ManagedGroup& domain ) override;
+
+  void TimeStepExplicit( real64 const& time_n,
+                         real64 const& dt,
+                         int32 const cycleNumber,
+                         dataRepository::ManagedGroup& domain );
+
 
 
 private:
@@ -55,11 +56,19 @@ namespace Integration
 {
 
 template<typename T>
+#if CONTAINERARRAY_RETURN_PTR == 1
 void OnePoint( T const * const __restrict__ dydx,
                T * const __restrict__ dy,
                T * const __restrict__ y,
                real64 const dx,
                uint64 const length )
+#else
+void OnePoint( T dydx,
+               T dy,
+               T y,
+               real64 const dx,
+               uint64 const length )
+#endif
 {
   for( uint64 a=0 ; a<length ; ++a )
   {
@@ -69,10 +78,17 @@ void OnePoint( T const * const __restrict__ dydx,
 }
 
 template<typename T>
+#if CONTAINERARRAY_RETURN_PTR == 1
 void OnePoint( T const * const __restrict__ dydx,
                T * const __restrict__ y,
                real64 const dx,
                uint64 const length )
+#else
+void OnePoint( T const &  dydx,
+               T & y,
+               real64 const dx,
+               uint64 const length )
+#endif
 {
   for( uint64 a=0 ; a<length ; ++a )
   {
