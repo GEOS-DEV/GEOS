@@ -46,7 +46,8 @@ using namespace dataRepository;
 ProblemManager::ProblemManager( const std::string& name,
                                 ManagedGroup * const parent ) :
   ManagedGroup( name, parent ),
-  m_physicsSolverManager("PhysicsSolverManager",this)
+  m_physicsSolverManager(this->RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) )
+  // Array's aren't guaranteed to keep references valid. Redo this.
 {}
 
 ProblemManager::~ProblemManager()

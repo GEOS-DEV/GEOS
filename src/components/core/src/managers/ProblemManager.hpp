@@ -62,7 +62,7 @@ public:
   pugi::xml_node xmlProblemNode;
 
 private:
-  PhysicsSolverManager m_physicsSolverManager;
+  PhysicsSolverManager & m_physicsSolverManager;
 };
 
 } /* namespace geosx */
