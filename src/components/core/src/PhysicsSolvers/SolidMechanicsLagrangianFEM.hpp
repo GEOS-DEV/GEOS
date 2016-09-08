@@ -27,7 +27,7 @@ public:
 
   virtual ~SolidMechanics_LagrangianFEM();
 
-  static std::string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
+  static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
   virtual void Registration( dataRepository::ManagedGroup * const domain ) override;
 

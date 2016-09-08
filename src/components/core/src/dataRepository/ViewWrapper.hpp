@@ -34,7 +34,9 @@ public:
   {
     // set up properties of sidre::DataView
     if( std::is_array<T>::value )
-    {}
+    {
+
+    }
     else
     {
       getSidreView()->setExternalDataPtr( nullptr );

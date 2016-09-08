@@ -24,6 +24,7 @@ DomainPartition::~DomainPartition()
 void DomainPartition::Registration( ManagedGroup * const )
 {
   this->RegisterGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
+
 }
 
 } /* namespace geosx */

@@ -50,5 +50,6 @@ ManagedGroup & FiniteElementSpace::getElementManager()
   return GetGroup<ManagedGroup>(keys::FEM_Elements);
 }
 
+REGISTER_CATALOG_ENTRY( ManagedGroup, FiniteElementSpace, std::string const &, ManagedGroup * const )
 
 } /* namespace geosx */

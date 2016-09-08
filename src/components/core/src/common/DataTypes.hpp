@@ -21,7 +21,7 @@
 #include "Macros.hpp"
 
 #ifndef CONTAINERARRAY_RETURN_PTR
-#define CONTAINERARRAY_RETURN_PTR 0
+#define CONTAINERARRAY_RETURN_PTR 1
 #endif
 
 

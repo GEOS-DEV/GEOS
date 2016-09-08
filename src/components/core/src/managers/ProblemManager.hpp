@@ -9,6 +9,7 @@
 #define COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
 
 #include "../dataRepository/ManagedGroup.hpp"
+#include "PhysicsSolvers/PhysicsSolverManager.hpp"
 
 namespace geosx
 {
@@ -36,6 +37,8 @@ public:
   DomainPartition & getDomainPartition();
   DomainPartition const & getDomainPartition() const;
 
+private:
+  PhysicsSolverManager m_physicsSolverManager;
 };
 
 } /* namespace geosx */

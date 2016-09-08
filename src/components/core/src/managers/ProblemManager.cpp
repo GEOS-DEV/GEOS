@@ -13,6 +13,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "finiteElement/FiniteElementSpace.hpp"
 
+
 namespace geosx
 {
 
@@ -20,7 +21,8 @@ using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
                                 ManagedGroup * const parent ) :
-  ManagedGroup( name, parent )
+  ManagedGroup( name, parent ),
+  m_physicsSolverManager("PhysicsSolverManager",this)
 {}
 
 ProblemManager::~ProblemManager()
@@ -305,7 +307,6 @@ void ProblemManager::ParseInputFile()
   {
     solver1.TimeStep( time, dt, i, domain );
     time += dt;
-    std::cout<<std::endl;
   }
 
 }

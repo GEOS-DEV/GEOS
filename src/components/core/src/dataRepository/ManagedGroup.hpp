@@ -55,7 +55,7 @@ public:
    * @param name the name of this object manager
    */
   explicit ManagedGroup( std::string const & name,
-                              ManagedGroup * const parent );
+                         ManagedGroup * const parent );
 
   /**
    *
@@ -77,8 +77,14 @@ public:
   ///@}
 
 
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
   using CatalogInterface = cxx_utilities::CatalogInterface< ManagedGroup, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
+  ///@}
 
 
   virtual void Registration( dataRepository::ManagedGroup * const )
@@ -254,7 +260,7 @@ public:
     return getData<string>(keys::Name);
   }
 
-  void resize( std::size_t newsize );
+  void resize( localIndex newsize );
 
   inline localIndex size() const
   {

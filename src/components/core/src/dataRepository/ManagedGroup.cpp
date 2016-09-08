@@ -83,13 +83,13 @@ ViewWrapperBase& ManagedGroup::RegisterViewWrapper( std::string const & name, rt
       } ) );
 }
 
-void ManagedGroup::resize( std::size_t const newsize )
+void ManagedGroup::resize( localIndex const newsize )
 {
   for( auto&& i : this->m_wrappers )
   {
     i->resize(newsize);
   }
-  *(this->getWrapper<std_size_t>( keys::Size ).data())=newsize;
+  *(this->getWrapper<localIndex>( keys::Size ).data())=newsize;
 }
 
 

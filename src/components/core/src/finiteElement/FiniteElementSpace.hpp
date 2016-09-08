@@ -16,11 +16,20 @@ namespace geosx
 class FiniteElementSpace : public dataRepository::ManagedGroup
 {
 public:
+
   FiniteElementSpace() = delete;
 
   explicit FiniteElementSpace( std::string const & name, ManagedGroup * const parent );
 
   ~FiniteElementSpace();
+
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+  static string CatalogName() { return "FiniteElementSpace"; }
+
+  ///@}
 
   virtual void Registration( dataRepository::ManagedGroup * const parent );
 
