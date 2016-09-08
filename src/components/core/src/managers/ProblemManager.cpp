@@ -307,7 +307,7 @@ void ProblemManager::ParseInputFile()
     }
 
     // Test to make sure the applications are valid
-    for (uint jj=0; jj<solverApplications.size()-1; ++jj)
+    for (auto jj=0; jj<solverApplications.size()-1; ++jj)
     {
       dataRepository::ManagedGroup& applicationA = solverApplications.GetGroup(solverApplicationNames[jj]);
       dataRepository::ManagedGroup& applicationB = solverApplications.GetGroup(solverApplicationNames[jj+1]);
@@ -331,7 +331,7 @@ void ProblemManager::InitializeObjects()
   // Initialize solvers
   dataRepository::ManagedGroup& solvers = GetGroup<dataRepository::ManagedGroup>(keys::solvers);
   ViewWrapper<string_array>::rtype  solverNames = solvers.getData<string_array>(keys::solverNames);
-  for (uint ii=0; ii<solvers.size(); ++ii)
+  for (auto ii=0; ii<solvers.size(); ++ii)
   {
     SolverBase& currentSolver = solvers.GetGroup<SolverBase>( solverNames[ii] );
     currentSolver.Initialize( domain );
@@ -349,7 +349,7 @@ void ProblemManager::RunSimulation()
   int cycle = 0;
   real64 dt = 0.0;
 
-  for( uint ii=0; ii<solverApplications.size(); ++ii)
+  for( auto ii=0; ii<solverApplications.size(); ++ii)
   {
     dataRepository::ManagedGroup& currentApplication = solverApplications.GetGroup( solverApplicationNames[ii] );
     ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solverList);
@@ -368,7 +368,7 @@ void ProblemManager::RunSimulation()
       std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
       real64 nextDt = std::numeric_limits<real64>::max();
 
-      for (uint jj=0; jj<currentApplication.size(); ++jj)
+      for ( auto jj=0; jj<currentApplication.size(); ++jj)
       {
         SolverBase& currentSolver = this->m_physicsSolverManager.GetGroup<SolverBase>( solverList[jj] );
         currentSolver.TimeStep( time, dt, cycle, domain );

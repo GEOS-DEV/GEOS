@@ -1,10 +1,20 @@
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_SOURCE_DIR}/components/core/src)
-blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -L${PYTHON_DIR}/lib)
-blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=0)
+
+set(ENABLE_PYTHON OFF CACHE BOOL  "Disables Python Plugin")
+if( ENABLE_PYTHON )
+	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=1)
+	if( PYTHON_DIR )
+		blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -L${PYTHON_DIR}/lib)
+	else()
+		MESSAGE(FATAL_ERROR "ENABLE_PYTHON is true, but PYTHON_DIR is not defined.")
+	endif()
+else()
+	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=0)
+endif()
+
 
 blt_add_component(COMPONENT_NAME core DEFAULT_STATE ON)
 blt_add_component(COMPONENT_NAME cxx-utilities DEFAULT_STATE ON)
-#blt_add_component(COMPONENT_NAME newComponentTemplate DEFAULT_STATE ON)
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
 message("children = ${children}")

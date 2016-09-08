@@ -45,11 +45,6 @@ void PhysicsSolverManager::ReadXML( pugi::xml_node const & problemNode )
   }
   else
   {
-    // Determine the number of active solvers, resize the solver collection
-    std_size_t nSolvers = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
-
-    int ii = 0;
-
     for (pugi::xml_node solverNode=topLevelNode.first_child(); solverNode; solverNode=solverNode.next_sibling())
     {
       std::cout << "   " << solverNode.name() << std::endl;
@@ -58,11 +53,9 @@ void PhysicsSolverManager::ReadXML( pugi::xml_node const & problemNode )
       std::string solverID = solverNode.attribute("name").value();
       SolverBase & newSolver = CreateSolver( solverNode.name(), solverID );
 
-
       // Register fields in the solver and parse options
-//      newSolver.Registration( &domain );
+      newSolver.Registration( nullptr );
       newSolver.ReadXML(solverNode);
-      ii++;
     }
   }
 
