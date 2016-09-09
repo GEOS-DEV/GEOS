@@ -31,7 +31,6 @@ namespace dataRepository
     std::string const zPartitionsOverride = "zPartitionsOverride";
     std::string const overridePartitionNumbers = "overridePartitionNumbers";
 
-    std::string const solverNames = "solverNames";
     std::string const solverApplications = "solverApplications";
     std::string const solverApplicationNames = "solverApplicationNames";
     std::string const beginTime = "beginTime";
@@ -55,9 +54,6 @@ ProblemManager::~ProblemManager()
 void ProblemManager::Registration( dataRepository::ManagedGroup * const )
 {
   RegisterGroup<DomainPartition>(keys::domain);
-
-  ManagedGroup& solvers = RegisterGroup<ManagedGroup>(keys::solvers);
-  solvers.RegisterViewWrapper<string_array>(keys::solverNames);
 
   ManagedGroup& solverApplications = RegisterGroup<ManagedGroup>(keys::solverApplications);
   solverApplications.RegisterViewWrapper<string_array>(keys::solverApplicationNames);
@@ -259,7 +255,7 @@ void ProblemManager::ParseInputFile()
   pugi::xml_node topLevelNode;
 
 
-  this->m_physicsSolverManager.ReadXML(xmlProblemNode);
+  this->m_physicsSolverManager.ReadXML(domain, xmlProblemNode);
 
 
   // Applications
@@ -329,11 +325,10 @@ void ProblemManager::InitializeObjects()
   DomainPartition& domain  = getDomainPartition();
 
   // Initialize solvers
-  dataRepository::ManagedGroup& solvers = GetGroup<dataRepository::ManagedGroup>(keys::solvers);
-  ViewWrapper<string_array>::rtype  solverNames = solvers.getData<string_array>(keys::solverNames);
-  for (auto ii=0; ii<solvers.size(); ++ii)
+  ViewWrapper<string_array>::rtype  solverNames = this->m_physicsSolverManager.getData<string_array>(keys::solverNames);
+  for (auto ii=0; ii<this->m_physicsSolverManager.size(); ++ii)
   {
-    SolverBase& currentSolver = solvers.GetGroup<SolverBase>( solverNames[ii] );
+    SolverBase& currentSolver = this->m_physicsSolverManager.GetGroup<SolverBase>( solverNames[ii] );
     currentSolver.Initialize( domain );
   }
 }

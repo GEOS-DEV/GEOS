@@ -32,6 +32,7 @@ std::string const Size = "size";
 std::string const ProblemManager = "ProblemManager";
 std::string const ConstitutiveManager = "ConstitutiveManager";
 std::string const ConstitutiveBase = "ConstitutiveBase";
+std::string const solverNames = "solverNames";
 
 std::string const domain  = "domain";
 std::string const solvers = "solvers";

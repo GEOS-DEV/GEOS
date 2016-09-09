@@ -30,7 +30,7 @@ public:
   SolverBase & CreateSolver( string const & solverCatalogKey, string const & solverName );
 
 
-  void ReadXML( pugi::xml_node const & problemNode );
+  void ReadXML( dataRepository::ManagedGroup& domain, pugi::xml_node const & problemNode );
 
 };
 
