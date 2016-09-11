@@ -43,8 +43,8 @@
  * @author Randolph Settgast
  */
 
-#ifndef _R1_TENSOR_T_H_
-#define _R1_TENSOR_T_H_
+#ifndef R1_TENSOR_T_H_
+#define R1_TENSOR_T_H_
 
 #include "TensorBaseT.h"
 
@@ -102,7 +102,7 @@ public:
    * @author walsh24
    * @param[in] data use for initialization of t_data
    */
-  explicit R1TensorT( const int data ) : TensorBaseT< T_dim >( realT(data) ) {};
+  explicit R1TensorT( const int data ) : TensorBaseT< T_dim >( realT(data) ) {}
 
   //**** CONSTRUCTORS AND DESTRUCTORS *******************************************
 

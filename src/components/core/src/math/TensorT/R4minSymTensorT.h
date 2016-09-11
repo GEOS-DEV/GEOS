@@ -5,8 +5,8 @@
  *      Author: xu11
  */
 
-#ifndef _R4MINSYMTENSORT_H_
-#define _R4MINSYMTENSORT_H_
+#ifndef R4MINSYMTENSORT_H_
+#define R4MINSYMTENSORT_H_
 
 #include "TensorBaseT.h"
 //#include "R6minSymTensorT.h"

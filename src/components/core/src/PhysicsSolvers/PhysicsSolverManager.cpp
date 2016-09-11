@@ -7,7 +7,7 @@
 
 #include "PhysicsSolverManager.hpp"
 #include "SolverBase.hpp"
-#include <pugixml.hpp>
+#include "pugixml/pugixml.hpp"
 
 namespace geosx
 {
@@ -49,7 +49,7 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain, pugi::
   else
   {
     // The push_back and insert methods don't seem to work, so manually resize the manager to hold the solver list
-    std_size_t nSolvers = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
+    long nSolvers = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
     this->resize(nSolvers);
     ViewWrapper<string_array>::rtype  solverNames = getData<string_array>(keys::solverNames);
     int solverNumber = 0;

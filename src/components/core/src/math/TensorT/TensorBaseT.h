@@ -43,8 +43,8 @@
  * @author Randolph Settgast
  */
 
-#ifndef _TENSOR_BASE_T_H_
-#define _TENSOR_BASE_T_H_
+#ifndef TENSOR_BASE_T_H_
+#define TENSOR_BASE_T_H_
 #include <iostream>
 #include <cstring>
 #include <string>
@@ -74,7 +74,7 @@ class TensorBaseT
       std::cout<<tp[ii]<<std::endl;
     }
     return in;
-  };
+  }
 
   friend std::ostream& operator<<(std::ostream& out, const TensorBaseT<T_length>& t){
     const realT *tp = t.Data();

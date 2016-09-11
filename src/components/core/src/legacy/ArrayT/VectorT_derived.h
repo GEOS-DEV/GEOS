@@ -44,10 +44,15 @@
  */
 
 
-#ifndef _VECTOR_T_H_
-#define _VECTOR_T_H_
+#ifndef VECTOR_T_H_
+#define VECTOR_T_H_
 
 #include <vector>
+
+
+#ifndef RANGE_CHECKING
+#define RANGE_CHECKING 0
+#endif
 
 /**
  * @brief VectorT is a wrapper for std::vector.

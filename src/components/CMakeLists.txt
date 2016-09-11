@@ -1,4 +1,6 @@
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_SOURCE_DIR}/components/core/src)
+blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -isystem${CMAKE_SOURCE_DIR}/thirdparty)
+
 
 # Python config
 set(ENABLE_PYTHON OFF CACHE BOOL  "Disables Python Plugin")

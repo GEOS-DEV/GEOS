@@ -10,7 +10,8 @@
 
 #include <string>
 #include <memory>
-#include "KeyNames.hpp"
+#include "common/DataTypes.hpp"
+//#include "KeyNames.hpp"
 
 namespace asctoolkit
 {
@@ -56,7 +57,7 @@ public:
 
 
   virtual bool empty() const = 0;
-  virtual std::size_t size( ) const = 0;
+  virtual localIndex size( ) const = 0;
   virtual void reserve( std::size_t new_cap ) = 0;
   virtual std::size_t capacity() const = 0;
   virtual std::size_t max_size() const = 0;
@@ -76,7 +77,7 @@ public:
      void swap( vector& other );
    */
 
-  virtual void resize( std::size_t newsize ) = 0;
+  virtual void resize( localIndex newsize ) = 0;
 
 
   int sizedFromParent() const

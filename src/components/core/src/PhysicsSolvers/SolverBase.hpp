@@ -15,7 +15,7 @@
 
 #include "../dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
-#include <pugixml.hpp>
+#include "pugixml/src/pugixml.hpp"
 
 
 namespace geosx
@@ -39,7 +39,7 @@ public:
 
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
-  virtual void ReadXML( pugi::xml_node solverNode );
+  virtual void ReadXML( pugi::xml_node const & solverNode );
 
   virtual void Registration( dataRepository::ManagedGroup * const domain ) override;
 

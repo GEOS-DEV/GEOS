@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef _R6MINTENSORT_H_
-#define _R6MINTENSORT_H_
+#ifndef R6MINTENSORT_H_
+#define R6MINTENSORT_H_
 
 #include "TensorBaseT.h"
 //#include "R4minSymTensorT.h"

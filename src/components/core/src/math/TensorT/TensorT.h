@@ -44,8 +44,8 @@
  */
 
 
-#ifndef _TENSOR_T_H_
-#define _TENSOR_T_H_
+#ifndef TENSOR_T_H_
+#define TENSOR_T_H_
 #include "R1TensorT.h"
 #include "R2TensorT.h"
 #include "R2SymTensorT.h"

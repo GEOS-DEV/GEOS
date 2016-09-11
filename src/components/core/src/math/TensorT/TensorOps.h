@@ -40,8 +40,8 @@
 
 
 
-#ifndef _TENSOR_OPS_H_
-#define _TENSOR_OPS_H_
+#ifndef TENSOR_OPS_H_
+#define TENSOR_OPS_H_
 
 #include <cmath>
 

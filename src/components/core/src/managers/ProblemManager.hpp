@@ -18,7 +18,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #endif
-#include <pugixml.hpp>
+#include "pugixml/src/pugixml.hpp"
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "PhysicsSolvers/PhysicsSolverManager.hpp"

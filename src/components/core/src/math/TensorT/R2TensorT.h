@@ -43,8 +43,8 @@
  * @author Randolph Settgast
  */
 
-#ifndef _R2_TENSOR_T_H_
-#define _R2_TENSOR_T_H_
+#ifndef R2_TENSOR_T_H_
+#define R2_TENSOR_T_H_
 
 #include "TensorBaseT.h"
 //#include "TensorT.h"

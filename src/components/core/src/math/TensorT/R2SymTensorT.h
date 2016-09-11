@@ -43,8 +43,8 @@
  * @author Randolph Settgast
  */
 
-#ifndef _R2_SYM_TENSOR_T_H_
-#define _R2_SYM_TENSOR_T_H_
+#ifndef R2_SYM_TENSOR_T_H_
+#define R2_SYM_TENSOR_T_H_
 
 #include "TensorBaseT.h"
 //#include "TensorT.h"
@@ -102,7 +102,6 @@ public:
   /**
    * @author Randolph Settgast
    * @param[in] data use for initialization of t_data
-   * @return none
    */
   explicit R2SymTensorT( const realT data ) : TensorBaseT< SymSize< T_dim >::value >(data) {}
 
@@ -114,7 +113,7 @@ public:
   R2SymTensorT(const R2SymTensorT< T_dim >& rhs);
 
   explicit R2SymTensorT( const TensorBaseT< SymSize< T_dim >::value  >& rhs ) : TensorBaseT< SymSize< T_dim >::value  > ()
-  { TensorBaseT< SymSize< T_dim >::value  >::operator=( rhs ); };
+  { TensorBaseT< SymSize< T_dim >::value  >::operator=( rhs ); }
 
   //***** ASSIGNMENT OPERATORS **************************************************
 
@@ -166,7 +165,7 @@ public:
   realT Det(void) const;
   realT AijAij(void) const;
   void EigenVals(realT eigenvals[T_dim], const realT limArg) const;
-  void EigenVals(realT eigenvals[T_dim]) const { EigenVals(eigenvals,0.0); }; // limArg is not used - causes issues with cray compiler - SW
+  void EigenVals(realT eigenvals[T_dim]) const { EigenVals(eigenvals,0.0); } // limArg is not used - causes issues with cray compiler - SW
   //  void EigenSystem( realT eigenvals[T_dim] , R1TensorT<T_dim> v[T_dim] ) const;
   void EigenVecs(const realT eigenvals[T_dim], R1TensorT< T_dim > v[T_dim]) const;
   void EigenVector(const realT eigenval, R1TensorT< T_dim > & v) const;
@@ -515,7 +514,6 @@ realT R2SymTensorT<T_dim>::Inverse( R2SymTensorT<T_dim>& tensor )
 /**
  * @author Randolph Settgast
  * @param[out] eigenvals naked array that holds the Eigenvalues
- * @param[in] limArg not used
  *
  * This function calculates the eigenvalues of *this.
  */

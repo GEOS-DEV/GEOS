@@ -146,12 +146,10 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
     case 'h':   // help
 //      DisplayUsage();   // print help
       exit(0);
-      break;
 
     case 'v':   // version
 //      DisplayVersion();
       exit(0);
-      break;
 
     case '?':
       /* getopt_long has already printed an error message. */
@@ -159,7 +157,6 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
 
     default:
       abort();
-      break;
     }
   }
 
@@ -267,7 +264,7 @@ void ProblemManager::ParseInputFile()
   else
   {
     // Determine the number of solver applications, resize the application collection 
-    std_size_t nApp = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
+    long nApp = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
     solverApplications.resize(nApp);
     ViewWrapper<string_array>::rtype  solverApplicationNames = solverApplications.getData<string_array>(keys::solverApplicationNames);
     int ii = 0;
@@ -296,9 +293,9 @@ void ProblemManager::ParseInputFile()
       applicationNode.attribute("solvers").load_string_array(newApplicationSolvers);
       newApplication.resize(newApplicationSolvers.size());
       ViewWrapper<string_array>::rtype solverList = newApplication.getData<string_array>(keys::solverList);
-      for (uint ii=0; ii<newApplicationSolvers.size(); ++ii)
+      for (uint jj=0; jj<newApplicationSolvers.size(); ++jj)
       {
-        solverList[ii] = newApplicationSolvers[ii];
+        solverList[jj] = newApplicationSolvers[jj];
       }
     }
 

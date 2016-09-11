@@ -104,7 +104,7 @@ public:
   :m_key(key), m_name(name), m_WriteToRestart(WriteToRestart), m_WriteToPlot(WriteToPlot)
   {}
 
-  virtual ~FieldBase(){}
+  ~FieldBase(){}
 
 public:
   /// the field key

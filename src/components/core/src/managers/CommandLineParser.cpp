@@ -18,7 +18,7 @@ struct Arg : public option::Arg
   static void printError(const char* msg1, const option::Option& opt, const char* msg2)
   {
     fprintf(stderr, "%s", msg1);
-    fwrite(opt.name, opt.namelen, 1, stderr);
+    fwrite(opt.name, static_cast<size_t>(opt.namelen), 1, stderr);
     fprintf(stderr, "%s", msg2);
   }
 

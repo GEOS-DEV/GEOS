@@ -99,17 +99,17 @@ public:
   {
     HAS_MEMBER_FUNCTION(size,std::size_t,const,,)
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_size<U>::value, std::size_t>::type size(ViewWrapper const * parent)
+    static typename std::enable_if<has_memberfunction_size<U>::value, localIndex>::type size(ViewWrapper const * parent)
     {
-      return parent->m_data.size();
+      return static_cast<localIndex>(parent->m_data.size());
     }
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_size<U>::value, std::size_t>::type size(ViewWrapper const * )
+    static typename std::enable_if<!has_memberfunction_size<U>::value, localIndex>::type size(ViewWrapper const * )
     {
       return 0;//parent->m_data;
     }
   };
-  virtual std::size_t size() const override final
+  virtual localIndex size() const override final
   {
     return size_wrapper::size(this);
   }
@@ -150,7 +150,7 @@ public:
 
 //  HAS_MEMBER_FUNCTION(resize, void, std::size_t(1) )
   HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(std::size_t), VA_LIST(std::size_t(1)) )
-  CONDITIONAL_VIRTUAL_FUNCTION( ViewWrapper<T>,resize, void,, VA_LIST(std::size_t a), VA_LIST(a) )
+  CONDITIONAL_VIRTUAL_FUNCTION( ViewWrapper<T>,resize, void,, VA_LIST(localIndex a), VA_LIST(static_cast<size_t>(a)) )
 
 
 

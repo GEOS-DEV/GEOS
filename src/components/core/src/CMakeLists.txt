@@ -40,9 +40,9 @@ blt_add_library( NAME
                  HEADERS_OUTPUT_SUBDIR
                      geosx_core
                  DEPENDS_ON
-                     cxx-utilities pugixml
+                     cxx-utilities 
                  SYSTEM_DEPENDS_ON
-                     slic sidre conduit hdf5 raja ${extraComponentsListLink}
+                     slic sidre conduit hdf5 raja pugixml ${extraComponentsListLink}
                  )
                  
 target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR} )

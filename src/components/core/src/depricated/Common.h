@@ -43,8 +43,8 @@
  * @date created on Sep 13, 2010
  */
 
-#ifndef _COMMON_H_
-#define _COMMON_H_
+#ifndef COMMON_H_
+#define COMMON_H_
 
 
 
@@ -56,12 +56,7 @@
 
 #include <memory>
 
-#if __ICC
-  #include <cmath>
-#else
-  #include <cmath>
-//  #include <omp.h>
-#endif
+#include <cmath>
 
 
 #include "common/DataTypes.hpp"
@@ -102,7 +97,7 @@ public:
   :m_key(key), m_name(name), m_WriteToRestart(WriteToRestart), m_WriteToPlot(WriteToPlot)
   {}
 
-  virtual ~FieldBase(){}
+  ~FieldBase(){}
 
 public:
   /// the field key

@@ -61,16 +61,16 @@ void OnePoint( T const * const __restrict__ dydx,
                T * const __restrict__ dy,
                T * const __restrict__ y,
                real64 const dx,
-               uint64 const length )
+               localIndex const length )
 #else
 void OnePoint( T dydx,
                T dy,
                T y,
                real64 const dx,
-               uint64 const length )
+               localIndex const length )
 #endif
 {
-  for( uint64 a=0 ; a<length ; ++a )
+  for( auto a=0 ; a<length ; ++a )
   {
     dy[a] = dydx[a] * dx;
     y[a] += dy[a];
@@ -82,15 +82,15 @@ template<typename T>
 void OnePoint( T const * const __restrict__ dydx,
                T * const __restrict__ y,
                real64 const dx,
-               uint64 const length )
+               localIndex const length )
 #else
 void OnePoint( T const &  dydx,
                T & y,
                real64 const dx,
-               uint64 const length )
+               localIndex const length )
 #endif
 {
-  for( uint64 a=0 ; a<length ; ++a )
+  for( auto a=0 ; a<length ; ++a )
   {
     y[a] += dydx[a] * dx;
   }

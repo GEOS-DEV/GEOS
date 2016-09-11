@@ -43,8 +43,8 @@
  * @author Randolph Settgast
  */
 
-#ifndef _ARRAY_1D_T_H_
-#define _ARRAY_1D_T_H_
+#ifndef ARRAY_1D_T_H_
+#define ARRAY_1D_T_H_
 
 //#include "VectorT.h"
 #include "VectorT_derived.h"

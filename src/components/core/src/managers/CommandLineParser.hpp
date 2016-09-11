@@ -8,7 +8,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_COMMANDLINEPARSER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_COMMANDLINEPARSER_HPP_
 
-#include "../../../../thirdparty/optionparser/src/optionparser.h"
+#include "optionparser/src/optionparser.h"
 namespace geosx
 {
 

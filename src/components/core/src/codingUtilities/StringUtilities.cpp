@@ -90,7 +90,7 @@ string_array Tokenize(const std::string& str, const std::string& delimiters)
   {
 
     bool usesNonWhitespaceDelimiters = false;
-    int i =0;
+    std::string::size_type i =0;
     while(delimiters[i] && !usesNonWhitespaceDelimiters)
     {
       usesNonWhitespaceDelimiters |= !isspace( int(delimiters[i]) );

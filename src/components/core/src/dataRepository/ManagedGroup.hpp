@@ -201,13 +201,13 @@ public:
 
 
   template< typename T >
-  typename ViewWrapper<T>::rtype_const getData( int32 const index ) const
+  typename ViewWrapper<T>::rtype_const getData( size_t const index ) const
   {
     return getWrapper<T>(index).data();
   }
 
   template< typename T >
-  typename ViewWrapper<T>::rtype getData( int32 const index )
+  typename ViewWrapper<T>::rtype getData( size_t const index )
   {
     return getWrapper<T>(index).data();
 //    return const_cast<typename WrapperView<T>::rtype>( const_cast<const SynchronizedGroup*>(this)->getData<T>( index ) );
