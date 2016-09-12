@@ -46,13 +46,34 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 }
 
 
-void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode )
+void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode, cxx_utilities::InputDocumentation & docNode )
 {
-  SolverBase::ReadXML(solverNode);
+  SolverBase::ReadXML(solverNode, docNode);
+
+  docNode.m_varType = "";
+  docNode.m_varDescription = "Physics solver to perform enforcement of equations of motion, or static equilibrium on a Lagrangian FEM mesh";
+
+  cxx_utilities::InputDocumentation docVar;
 
   *(this->getData<int>(keys::nElements)) = solverNode.attribute("nElements").as_int(10);
+
+
+
   *(this->getData<real64>(keys::Ey)) = solverNode.attribute("Ey").as_double(10.0e9);
+  docVar.m_level = docNode.m_level +1;
+  docVar.m_varName = "Ey";
+  docVar.m_varType = "double";
+  docVar.m_varDescription = "Elastic Young's Modulus";
+  docNode.m_child.insert( { docVar.m_varName, docVar } );
+
   *(this->getData<real64>(keys::rho)) = solverNode.attribute("rho").as_double(2650.0);
+  docVar.m_level = docNode.m_level +1;
+  docVar.m_varName = "rho";
+  docVar.m_varType = "double";
+  docVar.m_varDescription = "Initial Density";
+  docNode.m_child.insert( { docVar.m_varName, docVar } );
+
+
   *(this->getData<real64>(keys::area)) = solverNode.attribute("area").as_double(1.0);
   *(this->getData<real64>(keys::barLength)) = solverNode.attribute("barLength").as_double(1.0);
 }

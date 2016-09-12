@@ -43,7 +43,8 @@
  * @date Sep 12, 2012
  */
 
-#include "TableManager.h"
+#include "TableManager.hpp"
+
 #include "mpi.h"
 
 void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)

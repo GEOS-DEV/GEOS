@@ -26,7 +26,7 @@ public:
 
   static std::string CatalogName() { return "NewComponent"; }
 
-  virtual void ReadXML( pugi::xml_node const & solverNode );
+  virtual void ReadXML( pugi::xml_node const & solverNode, cxx_utilities::InputDocumentation & docNode  );
 
   virtual void Initialize( dataRepository::ManagedGroup& domain );
 
