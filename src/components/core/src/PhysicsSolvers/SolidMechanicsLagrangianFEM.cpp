@@ -46,7 +46,7 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 }
 
 
-void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node solverNode )
+void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode )
 {
   SolverBase::ReadXML(solverNode);
 

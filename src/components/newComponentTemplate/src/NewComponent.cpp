@@ -25,7 +25,7 @@ void NewComponent::Initialize( dataRepository::ManagedGroup& /*domain*/ )
 {}
 
 
-void NewComponent::ReadXML( pugi::xml_node /*solverNode*/ )
+void NewComponent::ReadXML( pugi::xml_node const & /*solverNode*/ )
 {}
 
 

@@ -26,7 +26,7 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
   return catalog;
 }
 
-void SolverBase::ReadXML( pugi::xml_node solverNode )
+void SolverBase::ReadXML( pugi::xml_node const & solverNode )
 {
   *(this->getData<real64>(keys::courant)) = solverNode.attribute("courant").as_double(0.5);
 }

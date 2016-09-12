@@ -29,7 +29,7 @@ public:
 
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void ReadXML( pugi::xml_node solverNode ) override;
+  virtual void ReadXML( pugi::xml_node const & solverNode ) override;
 
   virtual void Registration( dataRepository::ManagedGroup * const domain ) override;
 
