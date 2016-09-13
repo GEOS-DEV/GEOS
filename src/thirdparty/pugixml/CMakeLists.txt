@@ -17,7 +17,9 @@ blt_add_library( NAME             pugixml
 
 
 if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
-set_target_properties(pugixml PROPERTIES COMPILE_FLAGS "-Wno-everything -Wno-switch-enum -Wno-float-equal -Wno-deprecated -Wno-reserved-id-macro -Wno-non-virtual-dtor")
+  set_target_properties(pugixml PROPERTIES COMPILE_FLAGS "-Wno-everything -Wno-switch-enum -Wno-float-equal -Wno-deprecated -Wno-reserved-id-macro -Wno-non-virtual-dtor")
+elseif( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+  set_target_properties(pugixml PROPERTIES COMPILE_FLAGS "-Wno-float-equal")
 endif()
 
 #target_include_directories( pugixml PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src )
