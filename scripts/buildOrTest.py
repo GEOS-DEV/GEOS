@@ -70,7 +70,7 @@ def main(platform, build ,dryRun=False):
       if build:
      	 execute("scripts/config-build.py -hc host-configs/%s-%s.cmake" % (platform,host),dryRun)
       cmd = "make" if build else "make test"
-      execute("cd build-%s-%s* && make" % (platform,host,cmd),dryRun)
+      execute("cd build-%s-%s* && %s" % (platform,host,cmd),dryRun)
 
     
   
