@@ -3,9 +3,7 @@
 #
 
 set(gtest_geosx_tests
-   testDataTypes.cpp
-   testStackTrace.cpp
-   testFloatingPointExceptions.cpp
+   testXML.cpp
    )
 
 #
@@ -19,10 +17,9 @@ foreach(test ${gtest_geosx_tests})
                         DEPENDS_ON geosx_core  cxx-utilities
                         SYSTEM_DEPENDS_ON gtest slic
                         )
-                        
-    blt_add_test( NAME ${test_name} 
-                  COMMAND ${test_name}
-                  )
-endforeach()
 
-add_subdirectory(xmlTests)
+    blt_add_test( NAME ${test_name} 
+                  COMMAND "${test_name} -i ${CMAKE_CURRENT_LIST_DIR}/basic_input.xml"
+                  )
+    message( "${test_name} -i ${CMAKE_CURRENT_LIST_DIR}/basic_input.xml" )
+endforeach()
