@@ -51,9 +51,9 @@ submodulepublicmappings = master:master
 names = 
 
 [publish]
-buildcmds = echo PASSED
-builddir = .
-testcmds = echo PASSED
+buildcmds = ./scripts/buildOrTest.py build
+builddir = . 
+testcmds = ./scripts/buildOrTest.py test
 testdir = .
 prepublishcmds = 
 prepublishdir = .
