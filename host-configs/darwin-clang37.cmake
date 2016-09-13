@@ -6,6 +6,7 @@
 #set(MPI_C_COMPILER "mpicc-mpich-clang" CACHE PATH "")
 #set(MPI_CXX_COMPILER "mpicxx-mpich-clang" CACHE PATH "")
 #set(MPI_Fortran_COMPILER "mpifort-mpich-clang" CACHE PATH "")
+#set(MPIEXEC "mpirun-mpich-clang37" CACHE PATH "")
 
 # Use apple-clang for ATK, but specify different clang for GEOS
 set(CMAKE_C_COMPILER "clang-mp-3.7" CACHE PATH "")

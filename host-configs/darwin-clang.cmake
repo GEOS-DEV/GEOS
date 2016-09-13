@@ -6,7 +6,7 @@
 #set(MPI_C_COMPILER "mpicc-mpich-clang" CACHE PATH "")
 #set(MPI_CXX_COMPILER "mpicxx-mpich-clang" CACHE PATH "")
 #set(MPI_Fortran_COMPILER "mpifort-mpich-clang" CACHE PATH "")
-
+#set(MPIEXEC "mpirun-mpich-clang" CACHE PATH "")
 
 site_name(HOST_NAME)
 message($ENV{HOME})

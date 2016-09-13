@@ -20,23 +20,36 @@
 #pragma clang diagnostic push
 #endif
 
+#include "managers/ProblemManager.hpp"
 
-std::string filename;
+using namespace geosx;
+
+int global_argc;
+char** global_argv;
 
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
 
+  global_argc = argc;
+  global_argv = new char*[argc];
   for( int i=0 ; i<argc ; ++i )
   {
+    global_argv[i] = argv[i];
     std::cout<<argv[i]<<std::endl;
   }
-  filename = argv[1];
+
   return RUN_ALL_TESTS();
 }
 
 TEST(testXML,testXML)
 {
-  std::cout<<filename<<std::endl;
+  ProblemManager problemManager("ProblemManager",nullptr);
+
+  problemManager.Registration(nullptr);
+
+  problemManager.InitializePythonInterpreter();
+  problemManager.ParseCommandLineInput( global_argc, global_argv );
+  problemManager.ParseInputFile();
 
 }

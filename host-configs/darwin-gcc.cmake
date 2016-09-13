@@ -6,6 +6,7 @@
 #set(MPI_C_COMPILER "mpicc-mpich-gcc5" CACHE PATH "")
 #set(MPI_CXX_COMPILER "mpicxx-mpich-gcc5" CACHE PATH "")
 #set(MPI_Fortran_COMPILER "mpifort-mpich-gcc5" CACHE PATH "")
+#set(MPIEXEC "mpirun-mpich-gcc5" CACHE PATH "")
 
 
 site_name(HOST_NAME)
