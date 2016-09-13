@@ -254,7 +254,14 @@ void ProblemManager::ParseInputFile()
   m_inputDocumentationHead.m_varName = "Problem";
   m_inputDocumentationHead.m_varType = "Node";
   m_inputDocumentationHead.m_varDescription = "This is the top level node in the input structure.";
-  m_inputDocumentationHead.m_child.insert( { "SolverNode", { "SolverNode","","",1,{} } } );
+
+  cxx_utilities::InputDocumentation temp;
+  temp.m_level   = 1;
+  temp.m_varName = "SolverNode";
+  temp.m_varType = "";
+  temp.m_varDescription = "";
+
+  m_inputDocumentationHead.m_child.insert( { "SolverNode", temp } );
 
   this->m_physicsSolverManager.ReadXML(domain, xmlProblemNode, m_inputDocumentationHead.m_child["SolverNode"] );
 
