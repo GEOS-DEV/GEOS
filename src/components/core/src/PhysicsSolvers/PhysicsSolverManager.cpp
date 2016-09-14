@@ -39,7 +39,7 @@ SolverBase & PhysicsSolverManager::CreateSolver( string const & solverCatalogKey
 void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain, pugi::xml_node const & problemNode, cxx_utilities::InputDocumentation & docNode )
 {
 
-  docNode.m_varType = "";
+  docNode.m_varType = "Node";
   docNode.m_varDescription = "Node that contains all the physics solvers";
 
   // Store a list of available solvers

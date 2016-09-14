@@ -326,7 +326,7 @@ void ProblemManager::ParseInputFile()
     }
   }
 
-  m_inputDocumentationHead.Print();
+  m_inputDocumentationHead.Write("test_output.xml");
 }
 
 

@@ -50,7 +50,7 @@ void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode, c
 {
   SolverBase::ReadXML(solverNode, docNode);
 
-  docNode.m_varType = "";
+  docNode.m_varType = "Node";
   docNode.m_varDescription = "Physics solver to perform enforcement of equations of motion, or static equilibrium on a Lagrangian FEM mesh";
 
   cxx_utilities::InputDocumentation docVar;
