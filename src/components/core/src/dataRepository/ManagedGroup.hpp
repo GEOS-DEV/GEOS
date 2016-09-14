@@ -120,7 +120,7 @@ public:
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T&>( *(m_subObjectManagers.at(name)) );
 #else
-    return static_cast<T&>( *(m_subObjectManagers.at(name)) );
+    return static_cast<T&>( *(m_subObjectManagers.at(getName)) );
 #endif
   }
 
@@ -132,7 +132,7 @@ public:
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const &>( *(m_subObjectManagers.at(name)) );
 #else
-    return static_cast<T const &>( *(m_subObjectManagers.at(name)) );
+    return static_cast<T const &>( *(m_subObjectManagers.at(getName)) );
 #endif
   }
 
@@ -254,7 +254,7 @@ public:
   }
 
 
-  inline string name() const
+  inline string getName() const
   {
     return getData<string>(keys::Name);
   }

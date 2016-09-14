@@ -71,7 +71,11 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain, pugi::
       // Register fields in the solver and parse options
       newSolver.Registration( &domain );
 
-      cxx_utilities::InputDocumentation solverDoc = { solverNode.name(),"type","description",docNode.m_level+1,{} };
+      cxx_utilities::InputDocumentation solverDoc;
+      solverDoc.m_varName = solverNode.name();
+      solverDoc.m_varType = "type";
+      solverDoc.m_varDescription = "description";
+      solverDoc.m_level = docNode.m_level+1;
       docNode.m_child.insert( { solverNode.name(), solverDoc } );
 
       newSolver.ReadXML(solverNode, docNode.m_child[solverNode.name()] );
