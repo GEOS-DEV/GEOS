@@ -20,7 +20,6 @@ message("ATK_DIR=${ATK_DIR}")
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 include("${ATK_ROOT}/uberenv_libs/${CONFIG_NAME}.cmake")
 
-
 set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE PATH "" FORCE)
 set(GEOSX_LINK_POSTPEND_FLAG "" CACHE PATH "" FORCE)
 

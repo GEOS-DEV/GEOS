@@ -24,15 +24,18 @@
 
 using namespace geosx;
 
+namespace
+{
 int global_argc;
 char** global_argv;
+}
 
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
 
   global_argc = argc;
-  global_argv = new char*[argc];
+  global_argv = new char*[static_cast<unsigned int>(global_argc)];
   for( int i=0 ; i<argc ; ++i )
   {
     global_argv[i] = argv[i];
