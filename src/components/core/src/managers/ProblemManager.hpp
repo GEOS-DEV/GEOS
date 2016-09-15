@@ -23,6 +23,7 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "PhysicsSolvers/PhysicsSolverManager.hpp"
 #include "InputDocumentation.hpp"
+#include "schema/SchemaUtilities.hpp"
 
 namespace geosx
 {

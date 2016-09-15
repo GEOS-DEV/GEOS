@@ -252,7 +252,7 @@ void ProblemManager::ParseInputFile()
   pugi::xml_node topLevelNode;
 
   m_inputDocumentationHead.m_varName = "Problem";
-  m_inputDocumentationHead.m_varType = "Node";
+  m_inputDocumentationHead.m_varType = "UniqueNode";
   m_inputDocumentationHead.m_varDescription = "This is the top level node in the input structure.";
 
   cxx_utilities::InputDocumentation temp;
@@ -326,7 +326,8 @@ void ProblemManager::ParseInputFile()
     }
   }
 
-  m_inputDocumentationHead.Write("test_output.xml");
+  // m_inputDocumentationHead.Write("test_output.xml");
+  ConvertDocumentationToSchema("test_output.xsd", m_inputDocumentationHead);
 }
 
 
