@@ -97,12 +97,12 @@ public:
   EllipsoidalContactManagerT m_ellipsoidalContactManager;
 
   FaceManagerT m_discreteElementSurfaceFaces;
-  NodeManagerT m_discreteElementSurfaceNodes;
+  NodeManager m_discreteElementSurfaceNodes;
   DiscreteElementManagerT m_discreteElementManager;
 
   ContactManagerT m_contactManager;
 
-  NodeManagerT m_feNodeManager;
+  NodeManager m_feNodeManager;
   ElementManagerT m_feElementManager;
   FaceManagerT m_feFaceManager;
   EdgeManagerT m_feEdgeManager;
@@ -113,7 +113,7 @@ public:
   bool m_splitElemThisIter = false;
   bool m_WriteXFEM = false;
 
-  NodeManagerT m_flowNodes;
+  NodeManager m_flowNodes;
   EdgeManagerT m_flowEdges;
   FaceManagerT m_flowFaces;
 
@@ -123,7 +123,7 @@ public:
 
 #ifdef SRC_EXTERNAL
   FaceManagerT m_faultPatchFaces;
-  NodeManagerT m_faultPatchNodes;
+  NodeManager m_faultPatchNodes;
   CartesianGridManagerT m_faultPorePressure;
   FaultElementManagerT m_faultElementManager;
   WellboreManagerT m_wellboreManager;

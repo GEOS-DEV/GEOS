@@ -38,42 +38,48 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @file FaceManagerT.cpp
+ * @file FaceManager.cpp
  * @author settgast1
  * @date Feb 4, 2011
  */
 
+#include "dataRepository/ManagedGroup.hpp"
+//#include "ExternalFaceManager.h"
+#include "ElementManagerT.hpp"
 
-#include "FaceManagerT.h"
-#include "ExternalFaceManagerT.h"
-#include "ElementManagerT.h"
-#include "PhysicalDomainT.h"
-#include "DataStructures/VectorFields/NodeManagerT.h"
-#include "IO/BinStream.h"
-#include "Utilities/Utilities.h"
-#include "ArrayT/Array3dT.h"
+//#include "PhysicalDomainT.h"
+#include "NodeManager.hpp"
+#include "EdgeManagerT.h"
+//#include "IO/BinStream.h"
+//#include "Utilities/Utilities.h"
+//#include "ArrayT/Array3dT.h"
 
-#include "BoundaryConditions/BoundaryConditions.h"
+//#include "BoundaryConditions/BoundaryConditions.h"
 
-#include "ExternalFaceStructs.h"
+//#include "ExternalFaceStructs.h"
 
-#include "DataStructures/VectorFields/TempODS.h"
+//#include "DataStructures/VectorFields/TempODS.h"
 
-#include "Constitutive/CohesiveZone/CohesiveZoneFactory.h"
-#include "Constitutive/Material/MaterialFactory.h"
+//#include "Constitutive/CohesiveZone/CohesiveZoneFactory.h"
+//#include "Constitutive/Material/MaterialFactory.h"
+#include "legacy/Utilities/GeometryUtilities.h"
 
 #include <limits.h>
+
+#include "FaceManager.hpp"
+
+namespace geosx
+{
 
 /**
  *
  * @return
  */
-FaceManagerT::FaceManagerT()
-:ObjectDataStructureBaseT( ObjectDataStructureBaseT::FaceManager ),
-m_numFaces(this->m_DataLengths),
-m_toNodesRelation(m_VariableOneToManyMaps["FaceToNodeMap"]),
-m_toEdgesRelation(m_VariableOneToManyMaps["FaceToEdgeMap"]),
-m_externalFaces(m_Sets["ExternalFaces"]),
+FaceManager::FaceManager( ObjectManagerBase * const parent ):
+ObjectManagerBase("FaceManager",parent),
+m_toNodesRelation(RegisterViewWrapper<OrderedVariableOneToManyRelation>("FaceToNodeMap").reference() ),
+m_toEdgesRelation(RegisterViewWrapper<OrderedVariableOneToManyRelation>("FaceToEdgeMap").reference() ),
+m_externalFaces(RegisterViewWrapper<lSet>("ExternalFaces").reference() ),
 #if USECPP11==1
 m_cohesiveZone(),
 #else
@@ -93,7 +99,7 @@ m_writeArbitraryPolygon(0)
  *
  * @return
  */
-FaceManagerT::~FaceManagerT()
+FaceManager::~FaceManager()
 {
 #if USECPP11!=1
   if( m_cohesiveZone )
@@ -102,7 +108,7 @@ FaceManagerT::~FaceManagerT()
 
 }
 
-void FaceManagerT::BuildFaces( const NodeManagerT& nodeManager, const ElementManagerT& elementManager )
+void FaceManager::BuildFaces( const NodeManager& nodeManager, const ElementManagerT& elementManager )
 {
 
   lArray1d tempNodeList;
@@ -213,13 +219,13 @@ void FaceManagerT::BuildFaces( const NodeManagerT& nodeManager, const ElementMan
   // set m_FaceToNodeMap
   this->m_toNodesRelation = tempFaceToNodeMap;
 
+  auto const & nodeSets = nodeManager.GetGroup(string("Sets")).wrappers();
 
   // make sets from nodesets
-  for( std::map< std::string, lSet >::const_iterator i = nodeManager.m_Sets.begin() ;
-       i != nodeManager.m_Sets.end() ; ++i )
+  for( auto const & setWrapper : nodeSets )
   {
-    const std::string& setname = i->first;
-    const lSet& set = i->second;
+    const std::string& setname = setWrapper->name();
+    const lSet& set = ( dataRepository::ViewWrapper<lSet>::cast( *setWrapper ) ).reference() ;
     this->ConstructSetFromSetAndMap( set, this->m_toNodesRelation, setname );
   }
 
@@ -229,7 +235,7 @@ void FaceManagerT::BuildFaces( const NodeManagerT& nodeManager, const ElementMan
 
 
   Array1dT<R1Tensor>& faceCenter = this->GetFieldData<R1Tensor>( "FaceCenter" );
-  for( localIndex k=0 ; k<m_numFaces ; ++k )
+  for( localIndex k=0 ; k<DataLengths() ; ++k )
   {
     FaceCenter( nodeManager, k , faceCenter[k] );
 
@@ -251,7 +257,7 @@ void FaceManagerT::BuildFaces( const NodeManagerT& nodeManager, const ElementMan
 
 
 
-void FaceManagerT::AddNewFace( const localIndex& k,
+void FaceManager::AddNewFace( const localIndex& k,
                                const localIndex& kelf,
                                localIndex& numFaces,
                                Array1dT<lArray1d>& facesByLowestNode,
@@ -279,14 +285,14 @@ void FaceManagerT::AddNewFace( const localIndex& k,
   ++numFaces;
 }
 
-void FaceManagerT::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* const referenceObject  )
+void FaceManager::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* const referenceObject  )
 {
   // assume that all faces will be on a domain boundary. Set it to zero if it is found to have two elements that it
   // is connected to.
   iArray1d& isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
   isDomainBoundary = 1;
 
-  for( localIndex kf=0 ; kf<m_numFaces ; ++kf )
+  for( localIndex kf=0 ; kf<DataLengths() ; ++kf )
   {
     if( m_toElementsRelation(kf).size() == 2 )
     {
@@ -297,15 +303,16 @@ void FaceManagerT::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* cons
 }
 
 
-void FaceManagerT::SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  )
+void FaceManager::SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  )
 {
   const iArray1d& isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
-  m_isExternal = 0;
-  for( localIndex k=0 ; k<m_numFaces ; ++k )
+  iArray1d& isExternal = this->GetFieldData<FieldInfo::isExternal>();
+  isExternal = 0;
+  for( localIndex k=0 ; k<DataLengths() ; ++k )
   {
     if( isDomainBoundary[k]==1 && ( m_matchedBoundaryFaces.find(k)==m_matchedBoundaryFaces.end() ) )
     {
-      m_isExternal[k] = 1;
+      isExternal[k] = 1;
       m_externalFaces.insert(k);
     }
   }
@@ -334,13 +341,16 @@ void FaceManagerT::SetIsExternal( const ObjectDataStructureBaseT* const referenc
  * @param[in] faceIndex Local index of the face to query
  * @param[out] center Center of the face
  */
-realT FaceManagerT::FaceCenter( const NodeManagerT& nodeManager, const localIndex faceIndex, R1Tensor& center ) const
+realT FaceManager::FaceCenter( const NodeManager& nodeManager, const localIndex faceIndex, R1Tensor& center ) const
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
   center = 0.0;
   const lArray1d& nodeList = m_toNodesRelation[faceIndex];
   return GeometryUtilities::Centroid_3DPolygon(nodeList,
-                                        *(nodeManager.m_refposition),
-                                        *(nodeManager.m_displacement),
+                                        refPosition,
+                                        displacement,
                                         center);
 }
 
@@ -352,26 +362,29 @@ realT FaceManagerT::FaceCenter( const NodeManagerT& nodeManager, const localInde
  * @param[out] center Center of the face
  * @param[out] normal Normal to the face
  */
-realT FaceManagerT::FaceCenterAndNormal( const NodeManagerT& nodeManager,
+realT FaceManager::FaceCenterAndNormal( const NodeManager& nodeManager,
                                          const localIndex faceIndex,
                                          R1Tensor& center,
                                          R1Tensor& normal,
                                          const bool referenceState ) const
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
   center = 0.0;
   normal = 0.0;
   if(referenceState)
   {
     return GeometryUtilities::Centroid_3DPolygon(m_toNodesRelation[faceIndex],
-                                                 *(nodeManager.m_refposition),
+                                                 refPosition,
                                                  center,
                                                  normal );
   }
   else
   {
     return GeometryUtilities::Centroid_3DPolygon(m_toNodesRelation[faceIndex],
-                                                 *(nodeManager.m_refposition),
-                                                 *(nodeManager.m_displacement),
+                                                 refPosition,
+                                                 displacement,
                                                  center, normal);
   }
 }
@@ -383,22 +396,25 @@ realT FaceManagerT::FaceCenterAndNormal( const NodeManagerT& nodeManager,
  * @param[in] faceIndex Local index of the face to query
  * @return Normal to the face
  */
-R1Tensor FaceManagerT::FaceNormal( const NodeManagerT& nodeManager, const localIndex faceIndex, const bool referenceFlag) const
+R1Tensor FaceManager::FaceNormal( const NodeManager& nodeManager, const localIndex faceIndex, const bool referenceFlag) const
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
   R1Tensor center(0.0);
   R1Tensor normal(0.0);
 
   if( referenceFlag )
   {
     GeometryUtilities::FaceNormal3DPolygonReferenceConfig( m_toNodesRelation[faceIndex] ,
-                                                          *(nodeManager.m_refposition),
+                                                          refPosition,
                                                           normal );
   }
   else
   {
     GeometryUtilities::Centroid_3DPolygon( m_toNodesRelation[faceIndex],
-                                          *(nodeManager.m_refposition),
-                                          *(nodeManager.m_displacement),
+                                          refPosition,
+                                          displacement,
                                           center,
                                           normal );
   }
@@ -413,13 +429,16 @@ R1Tensor FaceManagerT::FaceNormal( const NodeManagerT& nodeManager, const localI
  * @param[in] faceIndex Local index of the face to query
  * @param[out] normal Normal to the face
  */
-realT FaceManagerT::FaceNormal( const NodeManagerT& nodeManager, const localIndex faceIndex, R1Tensor& normal) const
+realT FaceManager::FaceNormal( const NodeManager& nodeManager, const localIndex faceIndex, R1Tensor& normal) const
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
   R1Tensor center(0.0);
   normal = 0.0;
   return GeometryUtilities::Centroid_3DPolygon(m_toNodesRelation[faceIndex],
-                                               *(nodeManager.m_refposition),
-                                               *(nodeManager.m_displacement),
+                                               refPosition,
+                                               displacement,
                                                center, normal);
 }
 
@@ -430,12 +449,15 @@ realT FaceManagerT::FaceNormal( const NodeManagerT& nodeManager, const localInde
  * @param[in] faceIndex Local index of the face to query
  * @param[out] vectors (perpendicular to each other) along the face; non unique.
  */
-void FaceManagerT::FaceTangential( const NodeManagerT& nodeManager, const localIndex faceIndex, R1Tensor& tanA, R1Tensor& tanB) const
+void FaceManager::FaceTangential( const NodeManager& nodeManager, const localIndex faceIndex, R1Tensor& tanA, R1Tensor& tanB) const
 {
-  tanA = (*nodeManager.m_refposition)[m_toNodesRelation[faceIndex][1]];
-  tanA += (*nodeManager.m_displacement)[m_toNodesRelation[faceIndex][1]];
-  tanA -= (*nodeManager.m_refposition)[m_toNodesRelation[faceIndex][0]];
-  tanA -= (*nodeManager.m_displacement)[m_toNodesRelation[faceIndex][0]];
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
+  tanA = refPosition[m_toNodesRelation[faceIndex][1]];
+  tanA += displacement[m_toNodesRelation[faceIndex][1]];
+  tanA -= refPosition[m_toNodesRelation[faceIndex][0]];
+  tanA -= displacement[m_toNodesRelation[faceIndex][0]];
   tanA.Normalize();
 
   if (m_toNodesRelation[faceIndex].size() <= 2)  //2D
@@ -460,10 +482,13 @@ void FaceManagerT::FaceTangential( const NodeManagerT& nodeManager, const localI
  *
  *
  */
-realT FaceManagerT::SurfaceArea( const NodeManagerT& nodeManager,
+realT FaceManager::SurfaceArea( const NodeManager& nodeManager,
                                  const localIndex faceIndex,
                                  const bool referenceFlag ) const
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
   const lArray1d& nodeList = m_toNodesRelation[faceIndex];
 
   R1Tensor junk1, junk2;
@@ -471,15 +496,15 @@ realT FaceManagerT::SurfaceArea( const NodeManagerT& nodeManager,
   if( referenceFlag )
   {
     return GeometryUtilities::Centroid_3DPolygon( nodeList ,
-                                                  *(nodeManager.m_refposition),
+                                                  refPosition,
                                                   junk1,
                                                   junk2 );
   }
   else
   {
     return GeometryUtilities::Centroid_3DPolygon(nodeList,
-                                                 *(nodeManager.m_refposition),
-                                                 *(nodeManager.m_displacement),
+                                                 refPosition,
+                                                 displacement,
                                                  junk1,
                                                  junk2 );
   }
@@ -491,8 +516,11 @@ realT FaceManagerT::SurfaceArea( const NodeManagerT& nodeManager,
  * Returns the area of a face projected onto a surface with the given normal
  *
  */
-realT FaceManagerT::ProjectedArea( const NodeManagerT& nodeManager, const localIndex faceIndex, const R1Tensor& norm) const
+realT FaceManager::ProjectedArea( const NodeManager& nodeManager, const localIndex faceIndex, const R1Tensor& norm) const
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
   const lArray1d& nodeList = m_toNodesRelation[faceIndex];
   Array1dT<R1TensorT<2> > positionsProjected;
   R1TensorT<2> min, max;
@@ -500,8 +528,8 @@ realT FaceManagerT::ProjectedArea( const NodeManagerT& nodeManager, const localI
   if(!GeometryUtilities::VectorsInPlane(norm, e1, e2))
     throw GPException("Normal is pathologically 0");
   GeometryUtilities::CartesianPointsProjectedToPlanarPoints(nodeList,
-                                                            *(nodeManager.m_refposition),
-                                                            *(nodeManager.m_displacement),
+                                                            refPosition,
+                                                            displacement,
                                                             e1, e2,
                                                             positionsProjected,
                                                             min, max);
@@ -516,8 +544,11 @@ realT FaceManagerT::ProjectedArea( const NodeManagerT& nodeManager, const localI
  * @param[out] center Center of the face in global frame
  * @param[out] radius Radius of the bounding sphere about the face center
  */
-void FaceManagerT::FaceBoundingSphere( const NodeManagerT& nodeManager, const localIndex faceIndex, R1Tensor& center, realT& radius) const
+void FaceManager::FaceBoundingSphere( const NodeManager& nodeManager, const localIndex faceIndex, R1Tensor& center, realT& radius) const
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
   FaceCenter(nodeManager, faceIndex, center);
   radius = 0.;
   R1Tensor rr(0.);
@@ -525,8 +556,8 @@ void FaceManagerT::FaceBoundingSphere( const NodeManagerT& nodeManager, const lo
   {
     const localIndex nodeIndex = m_toNodesRelation[faceIndex][a];
     rr = center;
-    rr -= (*nodeManager.m_refposition)[nodeIndex];
-    rr -= (*nodeManager.m_displacement)[nodeIndex];
+    rr -= refPosition[nodeIndex];
+    rr -= displacement[nodeIndex];
     const realT tmp = rr.L2_Norm();
     radius = tmp > radius ? tmp : radius;
   }
@@ -542,8 +573,8 @@ void FaceManagerT::FaceBoundingSphere( const NodeManagerT& nodeManager, const lo
  * @param[out] dxfc Velocity of the face at the mid-step
  * @param[out] radius Radius of the bounding sphere including displacement over the step
 */
-void FaceManagerT::FaceBoundingSphere(
-    const NodeManagerT& nodeManager,
+void FaceManager::FaceBoundingSphere(
+    const NodeManager& nodeManager,
     const localIndex faceIndex,
     const realT dt,
     R1Tensor& center,
@@ -552,6 +583,10 @@ void FaceManagerT::FaceBoundingSphere(
     R1Tensor& normal,
     const bool referenceState) const
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const Array1dT< R1Tensor >& nodeVelocity = nodeManager.GetFieldData<FieldInfo::velocity>();
+
   FaceCenterAndNormal(nodeManager, faceIndex, center, normal);
 
   radius = 0.0;
@@ -562,11 +597,11 @@ void FaceManagerT::FaceBoundingSphere(
   for( localIndex a=0 ; a<nodeList.size() ; ++a )
   {
     const localIndex nodeIndex = nodeList[a];
-    velocity += (*nodeManager.m_velocity)[nodeIndex];
+    velocity += nodeVelocity[nodeIndex];
     rr = center;
-    rr -= (*nodeManager.m_refposition)[nodeIndex];
+    rr -= refPosition[nodeIndex];
     if(!referenceState)
-      rr -= (*nodeManager.m_displacement)[nodeIndex];
+      rr -= displacement[nodeIndex];
     const realT rtmp = Dot(rr,rr);
     radius = rtmp > radius ? rtmp : radius;
   }
@@ -582,18 +617,21 @@ void FaceManagerT::FaceBoundingSphere(
  * @param[in] faceIndex Index of the face
  * @param[out] xs List of face node global coordinates
 */
-void FaceManagerT::NodalPositions(  const NodeManagerT& nodeManager,
+void FaceManager::NodalPositions(  const NodeManager& nodeManager,
                                     const localIndex faceIndex,
                                     Array1dT<R1Tensor>& xs) const
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
   xs.clear();
 
   const lArray1d& nodeList = m_toNodesRelation[faceIndex];
   for( localIndex a=0 ; a<nodeList.size() ; ++a )
   {
     const localIndex nodeIndex = nodeList[a];
-    R1Tensor tmp = (*nodeManager.m_refposition)[nodeIndex];
-    tmp += (*nodeManager.m_displacement)[nodeIndex];
+    R1Tensor tmp = refPosition[nodeIndex];
+    tmp += displacement[nodeIndex];
     //add the position to the nodal position list
     xs.push_back(tmp);
   }
@@ -613,45 +651,50 @@ void FaceManagerT::NodalPositions(  const NodeManagerT& nodeManager,
  * @param[out] length Length of the face
  * @param[out] dxs List of face node velocities at the mid-step
 */
-void FaceManagerT::FaceProperties( const NodeManagerT& nodeManager,
+void FaceManager::FaceProperties( const NodeManager& nodeManager,
                                    const localIndex faceIndex,
                                    const realT dt,
                                    R1Tensor & xfc,
                                    R1Tensor & dxfc,
                                    ExternalFaceStruct& efs) const
 {
-  efs.xs.clear();
-  efs.dxs.clear();
-
-  FaceCenter(nodeManager, faceIndex, xfc);
-  efs.area = SurfaceArea(nodeManager, faceIndex);
-
-  efs.xmin = std::numeric_limits<realT>::max();
-  efs.xmax = efs.xmin;
-  efs.xmax *= -1.0;
-  dxfc = 0.;
-
-  const lArray1d& nodeList = m_toNodesRelation[faceIndex];
-  efs.xs.reserve(nodeList.size());
-  efs.dxs.reserve(nodeList.size());
-  for( localIndex a=0 ; a<nodeList.size() ; ++a )
-  {
-    const localIndex nodeIndex = nodeList[a];
-    R1Tensor tmp = (*nodeManager.m_refposition)[nodeIndex];
-    tmp += (*nodeManager.m_displacement)[nodeIndex];
-    efs.xmin.SetMin(tmp);
-    efs.xmax.SetMax(tmp);
-    //add the position to the nodal position list
-    efs.xs.push_back(tmp);
-    //add the velocity pushed forward by 1/2 step to the nodal velocity list
-    tmp = (*nodeManager.m_acceleration)[nodeIndex];
-    tmp *= 0.5 * dt;
-    tmp += (*nodeManager.m_velocity)[nodeIndex];
-    efs.dxs.push_back(tmp);
-    //add the velocity contribution to the face
-    dxfc += tmp;
-  }
-  dxfc *= 1.0/nodeList.size();
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const Array1dT< R1Tensor >& acceleration = nodeManager.GetFieldData<FieldInfo::acceleration>();
+  const Array1dT< R1Tensor >& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
+//
+//  efs.xs.clear();
+//  efs.dxs.clear();
+//
+//  FaceCenter(nodeManager, faceIndex, xfc);
+//  efs.area = SurfaceArea(nodeManager, faceIndex);
+//
+//  efs.xmin = std::numeric_limits<realT>::max();
+//  efs.xmax = efs.xmin;
+//  efs.xmax *= -1.0;
+//  dxfc = 0.;
+//
+//  const lArray1d& nodeList = m_toNodesRelation[faceIndex];
+//  efs.xs.reserve(nodeList.size());
+//  efs.dxs.reserve(nodeList.size());
+//  for( localIndex a=0 ; a<nodeList.size() ; ++a )
+//  {
+//    const localIndex nodeIndex = nodeList[a];
+//    R1Tensor tmp = refPosition[nodeIndex];
+//    tmp += displacement[nodeIndex];
+//    efs.xmin.SetMin(tmp);
+//    efs.xmax.SetMax(tmp);
+//    //add the position to the nodal position list
+//    efs.xs.push_back(tmp);
+//    //add the velocity pushed forward by 1/2 step to the nodal velocity list
+//    tmp = acceleration[nodeIndex];
+//    tmp *= 0.5 * dt;
+//    tmp += velocity[nodeIndex];
+//    efs.dxs.push_back(tmp);
+//    //add the velocity contribution to the face
+//    dxfc += tmp;
+//  }
+//  dxfc *= 1.0/nodeList.size();
 }
 
 /**
@@ -667,37 +710,42 @@ void FaceManagerT::FaceProperties( const NodeManagerT& nodeManager,
  * @param[out] xs List of face node global coordinates
  * @param[out] dxs List of face node velocities at the mid-step
 */
-void FaceManagerT::FaceProperties( const NodeManagerT& nodeManager,
+void FaceManager::FaceProperties( const NodeManager& nodeManager,
                                    const localIndex faceIndex,
                                    const realT dt,
                                    ExternalFaceStruct& efs) const
 {
-  efs.dxs.clear();
-  efs.xs.clear();
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const Array1dT< R1Tensor >& acceleration = nodeManager.GetFieldData<FieldInfo::acceleration>();
+  const Array1dT< R1Tensor >& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
 
-  efs.area = SurfaceArea(nodeManager, faceIndex);
-
-  efs.xmin = std::numeric_limits<realT>::max();
-  efs.xmax = efs.xmin;
-  efs.xmax *= -1.0;
-
-  const lArray1d& nodeList = m_toNodesRelation[faceIndex];
-  efs.dxs.reserve(nodeList.size());
-  efs.xs.reserve(nodeList.size());
-  for( localIndex a=0 ; a<nodeList.size() ; ++a )
-  {
-    const localIndex nodeIndex = nodeList[a];
-    R1Tensor tmp = (*nodeManager.m_refposition)[nodeIndex];
-    tmp += (*nodeManager.m_displacement)[nodeIndex];
-    efs.xmin.SetMin(tmp);
-    efs.xmax.SetMax(tmp);
-    efs.xs.push_back(tmp);
-    //add the velocity pushed forward by 1/2 step to the nodal velocity list
-    tmp = (*nodeManager.m_acceleration)[nodeIndex];
-    tmp *= 0.5 * dt;
-    tmp += (*nodeManager.m_velocity)[nodeIndex];
-    efs.dxs.push_back(tmp);
-  }
+//  efs.dxs.clear();
+//  efs.xs.clear();
+//
+//  efs.area = SurfaceArea(nodeManager, faceIndex);
+//
+//  efs.xmin = std::numeric_limits<realT>::max();
+//  efs.xmax = efs.xmin;
+//  efs.xmax *= -1.0;
+//
+//  const lArray1d& nodeList = m_toNodesRelation[faceIndex];
+//  efs.dxs.reserve(nodeList.size());
+//  efs.xs.reserve(nodeList.size());
+//  for( localIndex a=0 ; a<nodeList.size() ; ++a )
+//  {
+//    const localIndex nodeIndex = nodeList[a];
+//    R1Tensor tmp = refPosition[nodeIndex];
+//    tmp += displacement[nodeIndex];
+//    efs.xmin.SetMin(tmp);
+//    efs.xmax.SetMax(tmp);
+//    efs.xs.push_back(tmp);
+//    //add the velocity pushed forward by 1/2 step to the nodal velocity list
+//    tmp = acceleration[nodeIndex];
+//    tmp *= 0.5 * dt;
+//    tmp += velocity[nodeIndex];
+//    efs.dxs.push_back(tmp);
+//  }
 }
 
 
@@ -719,8 +767,8 @@ void FaceManagerT::FaceProperties( const NodeManagerT& nodeManager,
  *
  * Arrange the nodes in counter-clockwise order for all of the faces in the face manager
  */
-void FaceManagerT::SortAllFaceNodes(const NodeManagerT& nodeManager){
-  for(localIndex f =0; f < m_numFaces; ++f)
+void FaceManager::SortAllFaceNodes(const geosx::NodeManager& nodeManager){
+  for(localIndex f =0; f < DataLengths(); ++f)
   {
     SortFaceNodes(nodeManager, f );
   }
@@ -733,8 +781,10 @@ void FaceManagerT::SortAllFaceNodes(const NodeManagerT& nodeManager){
  * Sets approximate face normal = element[0].center - face center
  * Then sorts the node order counter-clockwise around the element center
 */
-void FaceManagerT::SortFaceNodes(const NodeManagerT& nodeManager, const localIndex faceIndex )
+void FaceManager::SortFaceNodes(const NodeManager& nodeManager, const localIndex faceIndex )
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
 
   Array1dT<localIndex>& faceNodes = m_toNodesRelation[faceIndex];
   const localIndex firstNodeIndex = faceNodes[0];
@@ -745,7 +795,8 @@ void FaceManagerT::SortFaceNodes(const NodeManagerT& nodeManager, const localInd
   R1Tensor fc;
   for( unsigned int n =0; n < numFaceNodes; ++n){
   	localIndex nd = faceNodes[n];
-  	faceCoords[n] = (*nodeManager.m_refposition)[nd] + (*nodeManager.m_displacement)[nd];
+  	faceCoords[n] = refPosition[nd] ;
+  	faceCoords[n] += displacement[nd];
     fc += faceCoords[n];
   }
   fc /= realT(numFaceNodes);
@@ -760,8 +811,10 @@ void FaceManagerT::SortFaceNodes(const NodeManagerT& nodeManager, const localInd
   // Approximate face normal direction (unscaled)
   if (numFaceNodes == 2)  //2D only.
   {
-    ex = (*nodeManager.m_refposition)[faceNodes[1]] + (*nodeManager.m_displacement)[faceNodes[1]];
-    ex -= (*nodeManager.m_refposition)[faceNodes[0]] + (*nodeManager.m_displacement)[faceNodes[0]];
+    ex  = refPosition[faceNodes[1]] ;
+    ex += displacement[faceNodes[1]];
+    ex -= refPosition[faceNodes[0]] ;
+    ex -= displacement[faceNodes[0]];
     ey = ec;
     ey -= fc;
 
@@ -782,7 +835,8 @@ void FaceManagerT::SortFaceNodes(const NodeManagerT& nodeManager, const localInd
       ez.Cross(ex, ey);
       if (ez.L2_Norm() < 0.01)  // Node 0, 1, and face center are roughly along one straight line.  We use another node to construct the vectors.
       {
-        ey = faceCoords[2]-fc;
+        ey  = faceCoords[2];
+        ey -= fc;
         ey /= ey.L2_Norm();
       }
 
@@ -795,7 +849,9 @@ void FaceManagerT::SortFaceNodes(const NodeManagerT& nodeManager, const localInd
      ez -=ec;
 
     /// Approximate in-plane axis
-     ex = faceCoords[0]-fc; ex /= ex.L2_Norm();
+     ex  = faceCoords[0];
+     ex -= fc;
+     ex /= ex.L2_Norm();
      ey.Cross(ez,ex); ey /= ey.L2_Norm();
   }
 
@@ -805,7 +861,8 @@ void FaceManagerT::SortFaceNodes(const NodeManagerT& nodeManager, const localInd
     /// Sort nodes counterclockwise around face center
     Array1dT< std::pair<realT,int> > thetaOrder(numFaceNodes);
     for( unsigned int n =0; n < numFaceNodes; ++n){
-    R1Tensor v = faceCoords[n]-fc;
+    R1Tensor v = faceCoords[n];
+    v -= fc;
     thetaOrder[n] = std::pair<realT,int>(atan2(v*ey,v*ex),faceNodes[n]);
     }
 
@@ -850,33 +907,38 @@ void FaceManagerT::SortFaceNodes(const NodeManagerT& nodeManager, const localInd
 
 }
 
-void FaceManagerT::EdgeVectors( const NodeManagerT& nodeManager, const localIndex faceIndex, Array1dT<R1Tensor>& edgeVectors )
+void FaceManager::EdgeVectors( const NodeManager& nodeManager, const localIndex faceIndex, Array1dT<R1Tensor>& edgeVectors )
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
   edgeVectors.resize(4);
   for( localIndex a=1 ; a<m_toNodesRelation[faceIndex].size() ; ++a )
   {
     const localIndex nodeIndex0 = m_toNodesRelation[faceIndex][a-1];
     const localIndex nodeIndex1 = m_toNodesRelation[faceIndex][a];
 
-    edgeVectors[a-1]  = (*nodeManager.m_refposition)[nodeIndex1];
-    edgeVectors[a-1] += (*nodeManager.m_displacement)[nodeIndex1];
+    edgeVectors[a-1]  = refPosition[nodeIndex1];
+    edgeVectors[a-1] += displacement[nodeIndex1];
 
-    edgeVectors[a-1] -= (*nodeManager.m_refposition)[nodeIndex0];
-    edgeVectors[a-1] -= (*nodeManager.m_displacement)[nodeIndex0];
+    edgeVectors[a-1] -= refPosition[nodeIndex0];
+    edgeVectors[a-1] -= displacement[nodeIndex0];
   }
 }
 
 // Calculate a unit vector in the face and normal to the edge given
-void FaceManagerT::InFaceVectorNormalToEdge(const NodeManagerT& nodeManager,
+void FaceManager::InFaceVectorNormalToEdge(const NodeManager& nodeManager,
                                             const EdgeManagerT& edgeManager,
                                             localIndex iFace,
                                             localIndex iEdge,
                                             R1Tensor& v)
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+
   R1Tensor faceCenter, xEdge[2], prj;
   FaceCenter(nodeManager, iFace, faceCenter);
-  xEdge[0] = (*nodeManager.m_refposition)[edgeManager.m_toNodesRelation(iEdge,0)];
-  xEdge[1] = (*nodeManager.m_refposition)[edgeManager.m_toNodesRelation(iEdge,1)];
+  xEdge[0] = refPosition[edgeManager.m_toNodesRelation(iEdge,0)];
+  xEdge[1] = refPosition[edgeManager.m_toNodesRelation(iEdge,1)];
 
   realT ndist, udist, segmentLength;
   GeometryUtilities::ProjectPointToLineSegment( xEdge[0], xEdge[1], faceCenter, ndist, udist, segmentLength, prj);
@@ -887,26 +949,28 @@ void FaceManagerT::InFaceVectorNormalToEdge(const NodeManagerT& nodeManager,
 
 
 /// Calculates the vector from node 0 to node 1
-void FaceManagerT::FaceVector2D(const NodeManagerT& nodeManager, localIndex iFace, localIndex iNd, R1Tensor& v)
+void FaceManager::FaceVector2D(const NodeManager& nodeManager, localIndex iFace, localIndex iNd, R1Tensor& v)
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+
   const localIndex& node1 = m_toNodesRelation[iFace][1];
   const localIndex& node0 = m_toNodesRelation[iFace][0];
   if (iNd == node0)
   {
-  v =  (*nodeManager.m_refposition)[node1];
+  v =  refPosition[node1];
   //v += (*nodeManager.m_displacement)[node1];
-  v -= (*nodeManager.m_refposition)[node0];
+  v -= refPosition[node0];
   //v -= (*nodeManager.m_displacement)[node0];
   }
   else
   {
-    v =  (*nodeManager.m_refposition)[node0];
-    v -= (*nodeManager.m_refposition)[node1];
+    v =  refPosition[node0];
+    v -= refPosition[node1];
   }
 
 }
 
-int FaceManagerT::ParentNormalDirection( const int lfn )
+int FaceManager::ParentNormalDirection( const int lfn )
 {
   int dir;
 
@@ -944,7 +1008,7 @@ int FaceManagerT::ParentNormalDirection( const int lfn )
 }
 
 #if 0
-void FaceManagerT::ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
+void FaceManager::ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
                                                                      Array1dT<gArray1d>& objectToCompositionObject )
 {
 
@@ -953,7 +1017,7 @@ void FaceManagerT::ExtractMapFromObjectForAssignGlobalObjectNumbers( const Objec
   iArray1d& isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
 
   int kf_ext = 0;
-  for( localIndex kf=0 ; kf<m_numFaces ; ++kf )
+  for( localIndex kf=0 ; kf<DataLengths() ; ++kf )
   {
 
     if( isDomainBoundary(kf) != 0 )
@@ -970,17 +1034,17 @@ void FaceManagerT::ExtractMapFromObjectForAssignGlobalObjectNumbers( const Objec
   }
 }
 #else
-void FaceManagerT::ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
+void FaceManager::ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
                                                                      Array1dT<gArray1d>& objectToCompositionObject )
 {
 
-  compositionObjectManager.CheckObjectType( ObjectDataStructureBaseT::NodeManager );
+//  compositionObjectManager.CheckObjectType( ObjectDataStructureBaseT::NodeManager );
 
   iArray1d& isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
 
 
   objectToCompositionObject.clear();
-  for( localIndex kf=0 ; kf<m_numFaces ; ++kf )
+  for( localIndex kf=0 ; kf<DataLengths() ; ++kf )
   {
 
     if( isDomainBoundary(kf) != 0 )
@@ -1000,198 +1064,198 @@ void FaceManagerT::ExtractMapFromObjectForAssignGlobalObjectNumbers( const Objec
 }
 #endif
 
+//
+//template< typename T_indices >
+//unsigned int FaceManager::PackFaces( const T_indices& sendfaces,
+//                                      const NodeManager& nodeManager,
+//                                      const EdgeManagerT* const edgeManager,
+//                                      bufvector& buffer,
+//                                      const bool packConnectivityToGlobal,
+//                                      const bool packFields,
+//                                      const bool packMaps,
+//                                      const bool packSets ) const
+//{
+//
+//  unsigned int sizeOfPacked = 0;
+//
+//  const std::string label = "FaceData";
+//  sizeOfPacked += buffer.Pack(label);
+//
+//  // pack data in the base
+//  sizeOfPacked += ObjectDataStructureBaseT::PackBaseObjectData( buffer, sendfaces, packFields, packMaps, packSets, packConnectivityToGlobal );
+//
+//
+//
+//
+//
+//  // pack the face specific data
+//  for( typename T_indices::const_iterator faceIndex=sendfaces.begin() ; faceIndex!=sendfaces.end() ; ++faceIndex )
+//  {
+//    const localIndex* const nodelist = m_toNodesRelation[*faceIndex].data();
+//
+//    lArray1d::size_type numnodes = m_toNodesRelation[*faceIndex].size();
+//    sizeOfPacked += buffer.Pack(numnodes);
+//
+//    for( lArray1d::size_type a=0 ; a<numnodes ; ++a )
+//    {
+//      globalIndex gnode = GLOBALINDEX_MAX;
+//      if( packConnectivityToGlobal )
+//      {
+//        gnode = nodeManager.m_localToGlobalMap(nodelist[a]) ;
+//      }
+//      else
+//      {
+//        gnode = nodelist[a] ;
+//      }
+//      sizeOfPacked += buffer.Pack(gnode);
+//    }
+//
+//
+//    if( edgeManager != NULL )
+//    {
+//      lArray1d::size_type numedges = m_toEdgesRelation[*faceIndex].size();
+//      sizeOfPacked += buffer.Pack(numedges);
+//      for( lArray1d::const_iterator ke=m_toEdgesRelation[*faceIndex].begin() ;
+//           ke!=m_toEdgesRelation[*faceIndex].end() ; ++ke )
+//      {
+//        globalIndex gedge = GLOBALINDEX_MAX;
+//        if( packConnectivityToGlobal )
+//        {
+//          gedge = edgeManager->m_localToGlobalMap( *ke );
+//        }
+//        else
+//        {
+//          gedge = *ke;
+//        }
+//
+//        sizeOfPacked += buffer.Pack(gedge);
+//      }
+//    }
+//  }
+//
+//
+//  return sizeOfPacked;
+//}
+//template unsigned int FaceManager::PackFaces( const lSet& sendfaces,const NodeManager& nodeManager,const EdgeManagerT* const edgeManager,bufvector& buffer, const bool, const bool, const bool, const bool ) const;
+//template unsigned int FaceManager::PackFaces( const lArray1d& sendfaces,const NodeManager& nodeManager,const EdgeManagerT* const edgeManager,bufvector& buffer, const bool, const bool, const bool, const bool ) const;
+//
+//
+//
+//
+//unsigned int FaceManager::UnpackFaces( const char*& buffer,
+//                                        const NodeManager& nodeManager,
+//                                        const EdgeManagerT* const edgeManager,
+//                                        ExternalFaceManager* const externalFaceManager,
+//                                        lArray1d& faceReceiveLocalIndices,
+//                                        const bool unpackConnectivityToLocal,
+//                                        const bool unpackFields,
+//                                        const bool unpackMaps,
+//                                        const bool unpackSets  )
+//{
+//  unsigned int sizeOfUnpacked = 0;
+//
+//  lArray1d& externalFaceIndex = this->GetFieldData<localIndex>("externalFaceIndex");
+//
+//
+//
+//  const std::string label = "FaceData";
+//  std::string temp;
+//
+//  sizeOfUnpacked += bufvector::Unpack( buffer, temp );
+//  if( label.compare(temp)!=0 )
+//  {
+//    throw GPException("FaceManager::UnpackFaces: buffer location incorrect\n");
+//  }
+//
+//  lArray1d newLocalFaceIndices;
+//  // unpack data from base object
+//  {
+//    // this is horrible
+//    lArray1d junk = externalFaceIndex;
+//    sizeOfUnpacked += ObjectDataStructureBaseT::UnpackBaseObjectData( buffer, faceReceiveLocalIndices, newLocalFaceIndices, unpackFields, unpackMaps, unpackSets, unpackConnectivityToLocal );
+//    std::copy(junk.begin(), junk.end(), externalFaceIndex.begin() );
+//  }
+//  const lArray1d::size_type numReceivedFaces = faceReceiveLocalIndices.size();
+//
+//
+//  // unpack face specific data
+//  for( lArray1d::size_type kf=0 ; kf<numReceivedFaces ; ++kf )
+//  {
+//    // unpack nodes that make up faces
+//    lArray1d::size_type numnodes;
+//    sizeOfUnpacked += bufvector::Unpack( buffer, numnodes );
+//
+//    lArray1d& faceToNodeMap = m_toNodesRelation(faceReceiveLocalIndices(kf));
+//    faceToNodeMap.resize(numnodes);
+//    for( lArray1d::size_type a=0 ; a<numnodes ; ++a )
+//    {
+//      globalIndex gnode;
+//      sizeOfUnpacked += bufvector::Unpack( buffer, gnode );
+//
+//      if( unpackConnectivityToLocal )
+//      {
+//        const localIndex lnode = stlMapLookup( nodeManager.m_globalToLocalMap, gnode );
+//        faceToNodeMap[a] = lnode;
+//      }
+//      else
+//      {
+//        faceToNodeMap[a] = gnode;
+//      }
+//
+//    }
+//
+//    // unpack edges that make up faces
+//    if( edgeManager != NULL )
+//    {
+//      lArray1d::size_type numedges;
+//      sizeOfUnpacked += bufvector::Unpack( buffer, numedges );
+//
+//      lArray1d& faceToEdgeMap = m_toEdgesRelation(faceReceiveLocalIndices(kf));
+//      faceToEdgeMap.resize( numedges );
+//      for( lArray1d::size_type a=0 ; a<numedges ; ++a )
+//      {
+//        globalIndex gedge;
+//        sizeOfUnpacked += bufvector::Unpack( buffer, gedge );
+//        if( unpackConnectivityToLocal )
+//        {
+//          const localIndex ledge = stlMapLookup( edgeManager->m_globalToLocalMap, gedge );
+//          faceToEdgeMap[a] = ledge;
+//        }
+//        else
+//        {
+//          faceToEdgeMap[a] = gedge;
+//        }
+//      }
+//    }
+//  }
+//
+//
+//  // fix up external faces
+//  if( externalFaceManager != NULL )
+//  {
+//
+//    for( auto a : newLocalFaceIndices )
+//    {
+//      if( this->m_isExternal[a] )
+//      {
+//        if( !(this->IsParent(a)) )
+//        {
+//          //TODO there needs to be a check to see if the face was already externalized
+//          localIndex const parentIndex = this->GetParentIndex(a);
+//          externalFaceIndex[a] = std::numeric_limits<localIndex>::max();
+//          externalFaceIndex[parentIndex] = std::numeric_limits<localIndex>::max();
+//
+////          externalFaceManager->SplitFace( parentIndex, a, nodeManager );
+//        }
+//      }
+//    }
+//  }
+//
+//  return sizeOfUnpacked;
+//
+//}
 
-template< typename T_indices >
-unsigned int FaceManagerT::PackFaces( const T_indices& sendfaces,
-                                      const NodeManagerT& nodeManager,
-                                      const EdgeManagerT* const edgeManager,
-                                      bufvector& buffer,
-                                      const bool packConnectivityToGlobal,
-                                      const bool packFields,
-                                      const bool packMaps,
-                                      const bool packSets ) const
-{
-
-  unsigned int sizeOfPacked = 0;
-
-  const std::string label = "FaceData";
-  sizeOfPacked += buffer.Pack(label);
-
-  // pack data in the base
-  sizeOfPacked += ObjectDataStructureBaseT::PackBaseObjectData( buffer, sendfaces, packFields, packMaps, packSets, packConnectivityToGlobal );
-
-
-
-
-
-  // pack the face specific data
-  for( typename T_indices::const_iterator faceIndex=sendfaces.begin() ; faceIndex!=sendfaces.end() ; ++faceIndex )
-  {
-    const localIndex* const nodelist = m_toNodesRelation[*faceIndex].data();
-
-    lArray1d::size_type numnodes = m_toNodesRelation[*faceIndex].size();
-    sizeOfPacked += buffer.Pack(numnodes);
-
-    for( lArray1d::size_type a=0 ; a<numnodes ; ++a )
-    {
-      globalIndex gnode = GLOBALINDEX_MAX;
-      if( packConnectivityToGlobal )
-      {
-        gnode = nodeManager.m_localToGlobalMap(nodelist[a]) ;
-      }
-      else
-      {
-        gnode = nodelist[a] ;
-      }
-      sizeOfPacked += buffer.Pack(gnode);
-    }
-
-
-    if( edgeManager != NULL )
-    {
-      lArray1d::size_type numedges = m_toEdgesRelation[*faceIndex].size();
-      sizeOfPacked += buffer.Pack(numedges);
-      for( lArray1d::const_iterator ke=m_toEdgesRelation[*faceIndex].begin() ;
-           ke!=m_toEdgesRelation[*faceIndex].end() ; ++ke )
-      {
-        globalIndex gedge = GLOBALINDEX_MAX;
-        if( packConnectivityToGlobal )
-        {
-          gedge = edgeManager->m_localToGlobalMap( *ke );
-        }
-        else
-        {
-          gedge = *ke;
-        }
-
-        sizeOfPacked += buffer.Pack(gedge);
-      }
-    }
-  }
-
-
-  return sizeOfPacked;
-}
-template unsigned int FaceManagerT::PackFaces( const lSet& sendfaces,const NodeManagerT& nodeManager,const EdgeManagerT* const edgeManager,bufvector& buffer, const bool, const bool, const bool, const bool ) const;
-template unsigned int FaceManagerT::PackFaces( const lArray1d& sendfaces,const NodeManagerT& nodeManager,const EdgeManagerT* const edgeManager,bufvector& buffer, const bool, const bool, const bool, const bool ) const;
-
-
-
-
-unsigned int FaceManagerT::UnpackFaces( const char*& buffer,
-                                        const NodeManagerT& nodeManager,
-                                        const EdgeManagerT* const edgeManager,
-                                        ExternalFaceManagerT* const externalFaceManager,
-                                        lArray1d& faceReceiveLocalIndices,
-                                        const bool unpackConnectivityToLocal,
-                                        const bool unpackFields,
-                                        const bool unpackMaps,
-                                        const bool unpackSets  )
-{
-  unsigned int sizeOfUnpacked = 0;
-
-  lArray1d& externalFaceIndex = this->GetFieldData<localIndex>("externalFaceIndex");
-
-
-
-  const std::string label = "FaceData";
-  std::string temp;
-
-  sizeOfUnpacked += bufvector::Unpack( buffer, temp );
-  if( label.compare(temp)!=0 )
-  {
-    throw GPException("FaceManagerT::UnpackFaces: buffer location incorrect\n");
-  }
-
-  lArray1d newLocalFaceIndices;
-  // unpack data from base object
-  {
-    // this is horrible
-    lArray1d junk = externalFaceIndex;
-    sizeOfUnpacked += ObjectDataStructureBaseT::UnpackBaseObjectData( buffer, faceReceiveLocalIndices, newLocalFaceIndices, unpackFields, unpackMaps, unpackSets, unpackConnectivityToLocal );
-    std::copy(junk.begin(), junk.end(), externalFaceIndex.begin() );
-  }
-  const lArray1d::size_type numReceivedFaces = faceReceiveLocalIndices.size();
-
-
-  // unpack face specific data
-  for( lArray1d::size_type kf=0 ; kf<numReceivedFaces ; ++kf )
-  {
-    // unpack nodes that make up faces
-    lArray1d::size_type numnodes;
-    sizeOfUnpacked += bufvector::Unpack( buffer, numnodes );
-
-    lArray1d& faceToNodeMap = m_toNodesRelation(faceReceiveLocalIndices(kf));
-    faceToNodeMap.resize(numnodes);
-    for( lArray1d::size_type a=0 ; a<numnodes ; ++a )
-    {
-      globalIndex gnode;
-      sizeOfUnpacked += bufvector::Unpack( buffer, gnode );
-
-      if( unpackConnectivityToLocal )
-      {
-        const localIndex lnode = stlMapLookup( nodeManager.m_globalToLocalMap, gnode );
-        faceToNodeMap[a] = lnode;
-      }
-      else
-      {
-        faceToNodeMap[a] = gnode;
-      }
-
-    }
-
-    // unpack edges that make up faces
-    if( edgeManager != NULL )
-    {
-      lArray1d::size_type numedges;
-      sizeOfUnpacked += bufvector::Unpack( buffer, numedges );
-
-      lArray1d& faceToEdgeMap = m_toEdgesRelation(faceReceiveLocalIndices(kf));
-      faceToEdgeMap.resize( numedges );
-      for( lArray1d::size_type a=0 ; a<numedges ; ++a )
-      {
-        globalIndex gedge;
-        sizeOfUnpacked += bufvector::Unpack( buffer, gedge );
-        if( unpackConnectivityToLocal )
-        {
-          const localIndex ledge = stlMapLookup( edgeManager->m_globalToLocalMap, gedge );
-          faceToEdgeMap[a] = ledge;
-        }
-        else
-        {
-          faceToEdgeMap[a] = gedge;
-        }
-      }
-    }
-  }
-
-
-  // fix up external faces
-  if( externalFaceManager != NULL )
-  {
-
-    for( auto a : newLocalFaceIndices )
-    {
-      if( this->m_isExternal[a] )
-      {
-        if( !(this->IsParent(a)) )
-        {
-          //TODO there needs to be a check to see if the face was already externalized
-          localIndex const parentIndex = this->GetParentIndex(a);
-          externalFaceIndex[a] = std::numeric_limits<localIndex>::max();
-          externalFaceIndex[parentIndex] = std::numeric_limits<localIndex>::max();
-
-//          externalFaceManager->SplitFace( parentIndex, a, nodeManager );
-        }
-      }
-    }
-  }
-
-  return sizeOfUnpacked;
-
-}
-
-void FaceManagerT::ConnectivityFromGlobalToLocal( const lSet& indices,
+void FaceManager::ConnectivityFromGlobalToLocal( const lSet& indices,
                                                   const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
                                                   const std::map<globalIndex,localIndex>& edgeGlobalToLocal )
 {
@@ -1218,12 +1282,12 @@ void FaceManagerT::ConnectivityFromGlobalToLocal( const lSet& indices,
 
 
 
-void FaceManagerT::AddToFaceToElementMap( const ElementManagerT& elementManager,
+void FaceManager::AddToFaceToElementMap( const ElementManagerT& elementManager,
                                           const std::map<std::string,lArray1d>& newElementIndices )
 {
   // because the faceToElementMap is an odd creature, it is not managed by ObjectDataStructureBaseT...so we must
   // resize.
-  m_toElementsRelation.resize(m_numFaces);
+  m_toElementsRelation.resize(DataLengths());
 
   // iterate over all element regions
   for( std::map<ElementManagerT::RegKeyType, ElementRegionT>::const_iterator ielemRegion=elementManager.m_ElementRegions.begin() ;
@@ -1264,316 +1328,316 @@ void FaceManagerT::AddToFaceToElementMap( const ElementManagerT& elementManager,
 
 
 
-
-
-void FaceManagerT::PreSeparateFaces( const std::string& setname, const int setState )
-{
-
-  // preset separation states for specific facesets
-  const lSet& sepset=this->GetSet(setname);
-  iArray1d& ruptureState = this->GetFieldData<int>("ruptureState");
-  rArray1d& separationCoeff = this->GetFieldData<realT>("separationCoeff");
-
-
-  for( lSet::const_iterator faceIndex=sepset.begin() ; faceIndex!=sepset.end() ; ++faceIndex )
-  {
-    if( m_toElementsRelation[*faceIndex].size() > 1 )
-    {
-      ruptureState[*faceIndex] = setState;
-      separationCoeff[*faceIndex] = 0.5;
-    }
-  }
-
-}
-
-// PFu note: Looks like elementManager is passed in but not used.
-void FaceManagerT::UpdateRuptureStates( const ElementManagerT& elementManager ,
-                                        const NodeManagerT& nodeManager,
-                                        const std::string& separableSet,
-                                        const realT failval  )
-{
-
-//  Array1dT<R1Tensor>& maxTraction = this->GetFieldData<R1Tensor>("maxTraction");
-  rArray1d* failStressPointer = this->GetFieldDataPointer<realT>("faceFailStress");
-
-  std::map< std::string, lSet >::const_iterator setMap = this->m_Sets.find( separableSet );
-
-  if( setMap==this->m_Sets.end() )
-  {
-    for( localIndex kf=0 ; kf<m_numFaces ; ++kf )
-    {
-      if (failStressPointer == NULL)
-      {
-        UpdateRuptureState( elementManager,nodeManager, kf, failval );
-      }
-      else
-      {
-        UpdateRuptureState( elementManager,nodeManager, kf, (*failStressPointer)[kf] );
-      }
-    }
-  }
-  else
-  {
-    for( lSet::const_iterator kf=setMap->second.begin() ; kf!=setMap->second.end() ; ++kf )
-    {
-      if (failStressPointer == NULL)
-      {
-        UpdateRuptureState( elementManager,nodeManager, *kf, failval );
-      }
-      else
-      {
-        UpdateRuptureState( elementManager,nodeManager, *kf, (*failStressPointer)[*kf] );
-      }
-    }
-
-  }
-
-}
-
-void FaceManagerT::UpdateRuptureState( const ElementManagerT& elementManager,
-                                       const NodeManagerT& nodeManager,
-                                       const localIndex kf,
-                                       const realT failval )
-{
-  R1Tensor fc;
-  R1Tensor fn, ft0, ft1;
-
-
-
-  R2SymTensor stress0;
-  R2SymTensor stress1;
-
-  R1Tensor t0, t1;
-  R1Tensor temp;
-
-  iArray1d& ruptureState = this->GetFieldData<int>("ruptureState");
-  rArray1d* stressNOnFace = this->GetFieldDataPointer<realT>("stressNOnFace");
-  Array1dT<R1Tensor>* stressTOnFace = this->GetFieldDataPointer<R1Tensor>("stressTOnFace");
-  rArray1d* faceStrengthRandomFactor =  this->GetFieldDataPointer<realT>("faceStrengthRandomFactor");
-
-  if( m_toElementsRelation[kf].size() > 1 )
-    //Warning (fu): With the introduction of flow face regions, this is not safe anymore.  I need to modify then when I get a chance.
-
-  {
-//      unsigned long long Size = m_FaceToElementMap[kf].size();
-
-    ElementRegionT& er0 = *(m_toElementsRelation[kf][0].first);
-    ElementRegionT& er1 = *(m_toElementsRelation[kf][1].first);
-    const localIndex elemIndex0 = m_toElementsRelation[kf][0].second;
-    const localIndex elemIndex1 = m_toElementsRelation[kf][1].second;
-    rArray1d* antiThermalStress0 = er0.GetFieldDataPointer<realT>("antiThermalStress");
-    rArray1d* antiThermalStress1 = er1.GetFieldDataPointer<realT>("antiThermalStress");
-
-
-    stress0 = 0;
-    realT pressure0;
-    {
-      er0.m_mat->MeanPressureDevStress(elemIndex0,pressure0, stress0);
-      stress0.PlusIdentity(pressure0);
-      if (antiThermalStress0 != NULL)  stress0.PlusIdentity(-(*antiThermalStress0)[elemIndex0]);
-    }
-
-    stress1 = 0;
-    realT pressure1;
-    {
-      er1.m_mat->MeanPressureDevStress(elemIndex1,pressure1, stress1);
-      stress1.PlusIdentity(pressure1);
-      if (antiThermalStress1 != NULL)  stress1.PlusIdentity(-(*antiThermalStress1)[elemIndex1]);
-    }
-
-    // normal from away from element 0, into element 1
-    FaceCenterAndNormal( nodeManager, kf, fc, fn );
-    FaceTangential(nodeManager, kf, ft0, ft1);
-
-
-    t0.AijBj(stress0,fn);
-    t1.AijBj(stress1,fn);
-
-
-    realT t0n = Dot(t0,fn);
-    realT t1n = Dot(t1,fn);
-    R1Tensor t0t = Dot(t0,ft0) * ft0 + Dot(t0, ft1) * ft1;
-    R1Tensor t1t = Dot(t1,ft0) * ft0 + Dot(t1, ft1) * ft1;
-    if (stressNOnFace != NULL)
-    {
-      (*stressNOnFace)[kf] = 0.5*(t0n+t1n);
-    }
-    if (stressTOnFace != NULL)
-    {
-      (*stressTOnFace)[kf] = 0.5*(t0t+t1t);
-    }
-
-
-    if (faceStrengthRandomFactor != NULL)
-    {
-      if( 0.5*(t0n+t1n) > failval * (*faceStrengthRandomFactor)[kf] && ruptureState[kf] == 0) // && fabs(fn[2]) > 0.9)  //HACK
-      {
-        ruptureState[kf] = 1;
-      }
-      else if (0.5*(t0n+t1n) <= failval * (*faceStrengthRandomFactor)[kf] && ruptureState[kf]==1 )
-      {
-        ruptureState[kf] = 0;
-      }
-
-    }
-    else
-    {
-      if( 0.5*(t0n+t1n) > failval && ruptureState[kf] == 0) // && fabs(fn[2]) > 0.9)  //HACK
-      {
-        ruptureState[kf] = 1;
-      }
-      else if (0.5*(t0n+t1n) <= failval && ruptureState[kf]==1 )
-      {
-        ruptureState[kf] = 0;
-      }
-    }
-  }
-  else if( m_toElementsRelation[kf].size() == 1 && stressNOnFace != NULL)
-  {
-    //We calculate stress for external faces only for visualization purpose.
-    ElementRegionT& er0 = *(m_toElementsRelation[kf][0].first);
-    const localIndex elemIndex0 = m_toElementsRelation[kf][0].second;
-    rArray1d* antiThermalStress0 = er0.GetFieldDataPointer<realT>("antiThermalStress");
-
-    stress0 = 0;
-    realT pressure0;
-    {
-      er0.m_mat->MeanPressureDevStress(elemIndex0,pressure0, stress0);
-      stress0.PlusIdentity(pressure0);
-      if (antiThermalStress0 != NULL)  stress0.PlusIdentity(-(*antiThermalStress0)[elemIndex0]);
-
-    }
-
-    // normal from away from element 0, into element 1
-    FaceCenterAndNormal( nodeManager, kf, fc, fn );
-    FaceTangential(nodeManager, kf, ft0, ft1);
-
-
-    t0.AijBj(stress0,fn);
-
-    realT t0n = Dot(t0,fn);
-    R1Tensor t0t = Dot(t0,ft0) * ft0 + Dot(t0, ft1) * ft1;
-
-
-    if (stressNOnFace != NULL) (*stressNOnFace)[kf] = t0n;
-    if (stressTOnFace != NULL) (*stressTOnFace)[kf] = t0t;
-
-  }
-}
-
-
-void FaceManagerT::CalculateStressOnFace( const ElementManagerT& elementManager,
-                                          const NodeManagerT& nodeManager,
-                                          const localIndex kf,
-                                          realT& stressNOnFace,
-                                          R1Tensor& stressTOnFace)
-{
-
-  R1Tensor fc;
-  R1Tensor fn, ft0, ft1;
-
-  R2SymTensor stress0;
-  R2SymTensor stress1;
-
-  R1Tensor t0, t1;
-  R1Tensor temp;
-
-
-  if(m_toElementsRelation[kf].size() > 1 )
-  {
-//      unsigned long long Size = m_FaceToElementMap[kf].size();
-
-    ElementRegionT& er0 = *(m_toElementsRelation[kf][0].first);
-    ElementRegionT& er1 = *(m_toElementsRelation[kf][1].first);
-    const localIndex elemIndex0 = m_toElementsRelation[kf][0].second;
-    const localIndex elemIndex1 = m_toElementsRelation[kf][1].second;
-
-    stress0 = 0;
-    realT pressure0;
-    {
-      er0.m_mat->MeanPressureDevStress(elemIndex0,pressure0, stress0);
-      stress0.PlusIdentity(pressure0);
-    }
-
-    stress1 = 0;
-    realT pressure1;
-    {
-      er1.m_mat->MeanPressureDevStress(elemIndex1,pressure1, stress1);
-      stress1.PlusIdentity(pressure1);
-    }
-
-    // normal from away from element 0, into element 1
-    FaceCenterAndNormal( nodeManager, kf, fc, fn );
-    FaceTangential(nodeManager, kf, ft0, ft1);
-
-
-    t0.AijBj(stress0,fn);
-    t1.AijBj(stress1,fn);
-
-
-    realT t0n = Dot(t0,fn);
-    realT t1n = Dot(t1,fn);
-    R1Tensor t0t = Dot(t0,ft0) * ft0 + Dot(t0, ft1) * ft1;
-    R1Tensor t1t = Dot(t1,ft0) * ft0 + Dot(t1, ft1) * ft1;
-    stressNOnFace = 0.5*(t0n+t1n);
-    stressTOnFace = 0.5*(t0t+t1t);
-  }
-
-  else if( this->m_toElementsRelation[kf].size() == 1)
-  {
-    //We calculate stress for external faces only for visualization purpose.
-    ElementRegionT& er0 = *(m_toElementsRelation[kf][0].first);
-    const localIndex elemIndex0 = m_toElementsRelation[kf][0].second;
-
-    stress0 = 0;
-    realT pressure0;
-    {
-      er0.m_mat->MeanPressureDevStress(elemIndex0,pressure0, stress0);
-      stress0.PlusIdentity(pressure0);
-    }
-
-    // normal from away from element 0, into element 1
-    FaceCenterAndNormal( nodeManager, kf, fc, fn );
-    FaceTangential(nodeManager, kf, ft0, ft1);
-
-
-    t0.AijBj(stress0,fn);
-
-    realT t0n = Dot(t0,fn);
-    R1Tensor t0t = Dot(t0,ft0) * ft0 + Dot(t0, ft1) * ft1;
-    stressNOnFace = t0n;
-    stressTOnFace = t0t;
-  }
-}
-
-void FaceManagerT::CalculateStressOnFace( const ElementManagerT& elementManager,
-                                          const NodeManagerT& nodeManager,
-                                          const localIndex kf )
-{
-
-  realT stressN;
-  R1Tensor stressT;
-
-  rArray1d* stressNOnFace = this->GetFieldDataPointer<realT>("stressNOnFace");
-  Array1dT<R1Tensor>* stressTOnFace = this->GetFieldDataPointer<R1Tensor>("stressTOnFace");
-
-  CalculateStressOnFace( elementManager, nodeManager, kf, stressN, stressT);
-
-  if (stressNOnFace != NULL)
-  {
-    (*stressNOnFace)[kf] = stressN;
-  }
-  if (stressTOnFace != NULL)
-  {
-    (*stressTOnFace)[kf] = stressT;
-  }
-
-}
-
-
+//
+//
+//void FaceManager::PreSeparateFaces( const std::string& setname, const int setState )
+//{
+//
+//  // preset separation states for specific facesets
+//  const lSet& sepset=this->GetSet(setname);
+//  iArray1d& ruptureState = this->GetFieldData<int>("ruptureState");
+//  rArray1d& separationCoeff = this->GetFieldData<realT>("separationCoeff");
+//
+//
+//  for( lSet::const_iterator faceIndex=sepset.begin() ; faceIndex!=sepset.end() ; ++faceIndex )
+//  {
+//    if( m_toElementsRelation[*faceIndex].size() > 1 )
+//    {
+//      ruptureState[*faceIndex] = setState;
+//      separationCoeff[*faceIndex] = 0.5;
+//    }
+//  }
+//
+//}
+//
+//// PFu note: Looks like elementManager is passed in but not used.
+//void FaceManager::UpdateRuptureStates( const ElementManagerT& elementManager ,
+//                                        const NodeManager& nodeManager,
+//                                        const std::string& separableSet,
+//                                        const realT failval  )
+//{
+//
+////  Array1dT<R1Tensor>& maxTraction = this->GetFieldData<R1Tensor>("maxTraction");
+//  rArray1d* failStressPointer = this->GetFieldDataPointer<realT>("faceFailStress");
+//
+//  std::map< std::string, lSet >::const_iterator setMap = this->m_Sets.find( separableSet );
+//
+//  if( setMap==this->m_Sets.end() )
+//  {
+//    for( localIndex kf=0 ; kf<DataLengths() ; ++kf )
+//    {
+//      if (failStressPointer == NULL)
+//      {
+//        UpdateRuptureState( elementManager,nodeManager, kf, failval );
+//      }
+//      else
+//      {
+//        UpdateRuptureState( elementManager,nodeManager, kf, (*failStressPointer)[kf] );
+//      }
+//    }
+//  }
+//  else
+//  {
+//    for( lSet::const_iterator kf=setMap->second.begin() ; kf!=setMap->second.end() ; ++kf )
+//    {
+//      if (failStressPointer == NULL)
+//      {
+//        UpdateRuptureState( elementManager,nodeManager, *kf, failval );
+//      }
+//      else
+//      {
+//        UpdateRuptureState( elementManager,nodeManager, *kf, (*failStressPointer)[*kf] );
+//      }
+//    }
+//
+//  }
+//
+//}
+//
+//void FaceManager::UpdateRuptureState( const ElementManagerT& elementManager,
+//                                       const NodeManager& nodeManager,
+//                                       const localIndex kf,
+//                                       const realT failval )
+//{
+//  R1Tensor fc;
+//  R1Tensor fn, ft0, ft1;
+//
+//
+//
+//  R2SymTensor stress0;
+//  R2SymTensor stress1;
+//
+//  R1Tensor t0, t1;
+//  R1Tensor temp;
+//
+//  iArray1d& ruptureState = this->GetFieldData<int>("ruptureState");
+//  rArray1d* stressNOnFace = this->GetFieldDataPointer<realT>("stressNOnFace");
+//  Array1dT<R1Tensor>* stressTOnFace = this->GetFieldDataPointer<R1Tensor>("stressTOnFace");
+//  rArray1d* faceStrengthRandomFactor =  this->GetFieldDataPointer<realT>("faceStrengthRandomFactor");
+//
+//  if( m_toElementsRelation[kf].size() > 1 )
+//    //Warning (fu): With the introduction of flow face regions, this is not safe anymore.  I need to modify then when I get a chance.
+//
+//  {
+////      unsigned long long Size = m_FaceToElementMap[kf].size();
+//
+//    ElementRegionT& er0 = *(m_toElementsRelation[kf][0].first);
+//    ElementRegionT& er1 = *(m_toElementsRelation[kf][1].first);
+//    const localIndex elemIndex0 = m_toElementsRelation[kf][0].second;
+//    const localIndex elemIndex1 = m_toElementsRelation[kf][1].second;
+//    rArray1d* antiThermalStress0 = er0.GetFieldDataPointer<realT>("antiThermalStress");
+//    rArray1d* antiThermalStress1 = er1.GetFieldDataPointer<realT>("antiThermalStress");
+//
+//
+//    stress0 = 0;
+//    realT pressure0;
+//    {
+//      er0.m_mat->MeanPressureDevStress(elemIndex0,pressure0, stress0);
+//      stress0.PlusIdentity(pressure0);
+//      if (antiThermalStress0 != NULL)  stress0.PlusIdentity(-(*antiThermalStress0)[elemIndex0]);
+//    }
+//
+//    stress1 = 0;
+//    realT pressure1;
+//    {
+//      er1.m_mat->MeanPressureDevStress(elemIndex1,pressure1, stress1);
+//      stress1.PlusIdentity(pressure1);
+//      if (antiThermalStress1 != NULL)  stress1.PlusIdentity(-(*antiThermalStress1)[elemIndex1]);
+//    }
+//
+//    // normal from away from element 0, into element 1
+//    FaceCenterAndNormal( nodeManager, kf, fc, fn );
+//    FaceTangential(nodeManager, kf, ft0, ft1);
+//
+//
+//    t0.AijBj(stress0,fn);
+//    t1.AijBj(stress1,fn);
+//
+//
+//    realT t0n = Dot(t0,fn);
+//    realT t1n = Dot(t1,fn);
+//    R1Tensor t0t = Dot(t0,ft0) * ft0 + Dot(t0, ft1) * ft1;
+//    R1Tensor t1t = Dot(t1,ft0) * ft0 + Dot(t1, ft1) * ft1;
+//    if (stressNOnFace != NULL)
+//    {
+//      (*stressNOnFace)[kf] = 0.5*(t0n+t1n);
+//    }
+//    if (stressTOnFace != NULL)
+//    {
+//      (*stressTOnFace)[kf] = 0.5*(t0t+t1t);
+//    }
+//
+//
+//    if (faceStrengthRandomFactor != NULL)
+//    {
+//      if( 0.5*(t0n+t1n) > failval * (*faceStrengthRandomFactor)[kf] && ruptureState[kf] == 0) // && fabs(fn[2]) > 0.9)  //HACK
+//      {
+//        ruptureState[kf] = 1;
+//      }
+//      else if (0.5*(t0n+t1n) <= failval * (*faceStrengthRandomFactor)[kf] && ruptureState[kf]==1 )
+//      {
+//        ruptureState[kf] = 0;
+//      }
+//
+//    }
+//    else
+//    {
+//      if( 0.5*(t0n+t1n) > failval && ruptureState[kf] == 0) // && fabs(fn[2]) > 0.9)  //HACK
+//      {
+//        ruptureState[kf] = 1;
+//      }
+//      else if (0.5*(t0n+t1n) <= failval && ruptureState[kf]==1 )
+//      {
+//        ruptureState[kf] = 0;
+//      }
+//    }
+//  }
+//  else if( m_toElementsRelation[kf].size() == 1 && stressNOnFace != NULL)
+//  {
+//    //We calculate stress for external faces only for visualization purpose.
+//    ElementRegionT& er0 = *(m_toElementsRelation[kf][0].first);
+//    const localIndex elemIndex0 = m_toElementsRelation[kf][0].second;
+//    rArray1d* antiThermalStress0 = er0.GetFieldDataPointer<realT>("antiThermalStress");
+//
+//    stress0 = 0;
+//    realT pressure0;
+//    {
+//      er0.m_mat->MeanPressureDevStress(elemIndex0,pressure0, stress0);
+//      stress0.PlusIdentity(pressure0);
+//      if (antiThermalStress0 != NULL)  stress0.PlusIdentity(-(*antiThermalStress0)[elemIndex0]);
+//
+//    }
+//
+//    // normal from away from element 0, into element 1
+//    FaceCenterAndNormal( nodeManager, kf, fc, fn );
+//    FaceTangential(nodeManager, kf, ft0, ft1);
+//
+//
+//    t0.AijBj(stress0,fn);
+//
+//    realT t0n = Dot(t0,fn);
+//    R1Tensor t0t = Dot(t0,ft0) * ft0 + Dot(t0, ft1) * ft1;
+//
+//
+//    if (stressNOnFace != NULL) (*stressNOnFace)[kf] = t0n;
+//    if (stressTOnFace != NULL) (*stressTOnFace)[kf] = t0t;
+//
+//  }
+//}
+//
+//
+//void FaceManager::CalculateStressOnFace( const ElementManagerT& elementManager,
+//                                          const NodeManager& nodeManager,
+//                                          const localIndex kf,
+//                                          realT& stressNOnFace,
+//                                          R1Tensor& stressTOnFace)
+//{
+//
+//  R1Tensor fc;
+//  R1Tensor fn, ft0, ft1;
+//
+//  R2SymTensor stress0;
+//  R2SymTensor stress1;
+//
+//  R1Tensor t0, t1;
+//  R1Tensor temp;
+//
+//
+//  if(m_toElementsRelation[kf].size() > 1 )
+//  {
+////      unsigned long long Size = m_FaceToElementMap[kf].size();
+//
+//    ElementRegionT& er0 = *(m_toElementsRelation[kf][0].first);
+//    ElementRegionT& er1 = *(m_toElementsRelation[kf][1].first);
+//    const localIndex elemIndex0 = m_toElementsRelation[kf][0].second;
+//    const localIndex elemIndex1 = m_toElementsRelation[kf][1].second;
+//
+//    stress0 = 0;
+//    realT pressure0;
+//    {
+//      er0.m_mat->MeanPressureDevStress(elemIndex0,pressure0, stress0);
+//      stress0.PlusIdentity(pressure0);
+//    }
+//
+//    stress1 = 0;
+//    realT pressure1;
+//    {
+//      er1.m_mat->MeanPressureDevStress(elemIndex1,pressure1, stress1);
+//      stress1.PlusIdentity(pressure1);
+//    }
+//
+//    // normal from away from element 0, into element 1
+//    FaceCenterAndNormal( nodeManager, kf, fc, fn );
+//    FaceTangential(nodeManager, kf, ft0, ft1);
+//
+//
+//    t0.AijBj(stress0,fn);
+//    t1.AijBj(stress1,fn);
+//
+//
+//    realT t0n = Dot(t0,fn);
+//    realT t1n = Dot(t1,fn);
+//    R1Tensor t0t = Dot(t0,ft0) * ft0 + Dot(t0, ft1) * ft1;
+//    R1Tensor t1t = Dot(t1,ft0) * ft0 + Dot(t1, ft1) * ft1;
+//    stressNOnFace = 0.5*(t0n+t1n);
+//    stressTOnFace = 0.5*(t0t+t1t);
+//  }
+//
+//  else if( this->m_toElementsRelation[kf].size() == 1)
+//  {
+//    //We calculate stress for external faces only for visualization purpose.
+//    ElementRegionT& er0 = *(m_toElementsRelation[kf][0].first);
+//    const localIndex elemIndex0 = m_toElementsRelation[kf][0].second;
+//
+//    stress0 = 0;
+//    realT pressure0;
+//    {
+//      er0.m_mat->MeanPressureDevStress(elemIndex0,pressure0, stress0);
+//      stress0.PlusIdentity(pressure0);
+//    }
+//
+//    // normal from away from element 0, into element 1
+//    FaceCenterAndNormal( nodeManager, kf, fc, fn );
+//    FaceTangential(nodeManager, kf, ft0, ft1);
+//
+//
+//    t0.AijBj(stress0,fn);
+//
+//    realT t0n = Dot(t0,fn);
+//    R1Tensor t0t = Dot(t0,ft0) * ft0 + Dot(t0, ft1) * ft1;
+//    stressNOnFace = t0n;
+//    stressTOnFace = t0t;
+//  }
+//}
+//
+//void FaceManager::CalculateStressOnFace( const ElementManagerT& elementManager,
+//                                          const NodeManager& nodeManager,
+//                                          const localIndex kf )
+//{
+//
+//  realT stressN;
+//  R1Tensor stressT;
+//
+//  rArray1d* stressNOnFace = this->GetFieldDataPointer<realT>("stressNOnFace");
+//  Array1dT<R1Tensor>* stressTOnFace = this->GetFieldDataPointer<R1Tensor>("stressTOnFace");
+//
+//  CalculateStressOnFace( elementManager, nodeManager, kf, stressN, stressT);
+//
+//  if (stressNOnFace != NULL)
+//  {
+//    (*stressNOnFace)[kf] = stressN;
+//  }
+//  if (stressTOnFace != NULL)
+//  {
+//    (*stressTOnFace)[kf] = stressT;
+//  }
+//
+//}
+//
+//
 
 #if 0
-void FaceManagerT::SplitFace( const localIndex indexToSplit,
+void FaceManager::SplitFace( const localIndex indexToSplit,
                               const localIndex parentNodeIndex,
                               const localIndex childNodeIndex[2],
                               const lSet& splitEdges,
@@ -1589,7 +1653,7 @@ void FaceManagerT::SplitFace( const localIndex indexToSplit,
   if( didSplit )
   {
     // have to do this manually!!!
-    m_toElementsRelation.resize( this->m_numFaces );
+    m_toElementsRelation.resize( this->DataLengths() );
 
     // resize the faceToEdge map for each new face to be the same size as the parent face
     m_toEdgesRelation[newFaceIndex[0]] = m_toEdgesRelation[indexToSplit];
@@ -1683,14 +1747,13 @@ void FaceManagerT::SplitFace( const localIndex indexToSplit,
 
   }
 }
-#endif
 
 
-void FaceManagerT::ModifyToFaceMapsFromSplit( const lSet& newFaces,
+void FaceManager::ModifyToFaceMapsFromSplit( const lSet& newFaces,
                                               const lSet& modifiedFaces,
-                                              NodeManagerT& nodeManager,
+                                              NodeManager& nodeManager,
                                               EdgeManagerT& edgeManager,
-                                              ExternalFaceManagerT& externalFaceManager )
+                                              ExternalFaceManager& externalFaceManager )
 {
 
   lSet allFaces;
@@ -1796,7 +1859,7 @@ void FaceManagerT::ModifyToFaceMapsFromSplit( const lSet& newFaces,
 }
 
 
-R1Tensor FaceManagerT::CalculateGapVector( const NodeManagerT& nodeManager, const localIndex faceIndex ) const
+R1Tensor FaceManager::CalculateGapVector( const NodeManager& nodeManager, const localIndex faceIndex ) const
 {
   R1Tensor fc0, fc1;
   R1Tensor v;
@@ -1825,8 +1888,9 @@ R1Tensor FaceManagerT::CalculateGapVector( const NodeManagerT& nodeManager, cons
   return v;
 }
 
-R1Tensor FaceManagerT::CalculateGapRateVector( const NodeManagerT& nodeManager, const localIndex faceIndex ) const
+R1Tensor FaceManager::CalculateGapRateVector( const NodeManager& nodeManager, const localIndex faceIndex ) const
 {
+  const Array1dT< R1Tensor >& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
 
   localIndex faceID[2];
   if (m_childIndices[faceIndex].size() == 2)
@@ -1847,7 +1911,7 @@ R1Tensor FaceManagerT::CalculateGapRateVector( const NodeManagerT& nodeManager, 
     fv[i] = 0;
     for (localIndex j=0; j<m_toNodesRelation[faceID[i]].size(); ++j)
     {
-      fv[i] += (*nodeManager.m_velocity)[m_toNodesRelation[faceID[i]][j]];
+      fv[i] += velocity[m_toNodesRelation[faceID[i]][j]];
     }
     fv[i] /= m_toNodesRelation[faceID[i]].size();
   }
@@ -1861,7 +1925,7 @@ R1Tensor FaceManagerT::CalculateGapRateVector( const NodeManagerT& nodeManager, 
 
 
 //FIXME: This function does not seem to be complete.
-void FaceManagerT::CalculateGapVectorDerivative( const NodeManagerT& nodeManager,
+void FaceManager::CalculateGapVectorDerivative( const NodeManager& nodeManager,
                                                  const localIndex faceIndex,
                                                  Array1dT< Array1dT<R1Tensor> >& gapDerivative,
                                                  Array1dT<iArray1d>& gapDerivativeIndices ) const
@@ -1904,7 +1968,7 @@ void FaceManagerT::CalculateGapVectorDerivative( const NodeManagerT& nodeManager
 }
 
 
-void FaceManagerT::SetApertureFromRigidWall( const NodeManagerT& nodeManager )
+void FaceManager::SetApertureFromRigidWall( const NodeManager& nodeManager )
 {
 
   // iterate over all boundary conditions.
@@ -1942,23 +2006,25 @@ void FaceManagerT::SetApertureFromRigidWall( const NodeManagerT& nodeManager )
   }
 }
 
-void FaceManagerT::WriteSiloMesh( SiloFile& siloFile,
+void FaceManager::WriteSiloMesh( SiloFile& siloFile,
                                   const std::string& meshname,
-                                  const NodeManagerT& nodeManager,
+                                  const NodeManager& nodeManager,
                                   const int cycleNum,
                                   const realT problemTime,
                                   const bool isRestart )
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
 
   realT* coords[3];
-  rArray1d xcoords(nodeManager.m_numNodes);
-  rArray1d ycoords(nodeManager.m_numNodes);
-  rArray1d zcoords(nodeManager.m_numNodes);
-  for (localIndex a = 0; a < nodeManager.m_numNodes; ++a)
+  rArray1d xcoords(nodeManager.DataLengths());
+  rArray1d ycoords(nodeManager.DataLengths());
+  rArray1d zcoords(nodeManager.DataLengths());
+  for (localIndex a = 0; a < nodeManager.DataLengths(); ++a)
   {
     R1Tensor nodePosition;
-    nodePosition = (*nodeManager.m_refposition)[a];
-    nodePosition += (*nodeManager.m_displacement)[a];
+    nodePosition = refPosition[a];
+    nodePosition +=displacement[a];
 
     xcoords[a] = nodePosition(0);
     ycoords[a] = nodePosition(1);
@@ -1994,9 +2060,9 @@ void FaceManagerT::WriteSiloMesh( SiloFile& siloFile,
 
     for (int faceType = 0; faceType < numFaceTypes; ++faceType)
     {
-      faceToNodeMap[faceType].resize2(m_numFaces, numNodesPerFace);
+      faceToNodeMap[faceType].resize2(DataLengths(), numNodesPerFace);
 
-      for (localIndex k = 0; k < m_numFaces; ++k)
+      for (localIndex k = 0; k < DataLengths(); ++k)
       {
         for (int a = 0; a < numNodesPerFace; ++a)
         {
@@ -2007,12 +2073,12 @@ void FaceManagerT::WriteSiloMesh( SiloFile& siloFile,
       faceConnectivity[faceType] = faceToNodeMap[faceType].data();
 
       globalFaceNumbers[faceType] = m_localToGlobalMap.data();
-      fshapecnt[faceType] = m_numFaces;
+      fshapecnt[faceType] = DataLengths();
       fshapetype[faceType] = dbZoneType;
       fshapesize[faceType] = numNodesPerFace;
     }
 
-    siloFile.WriteMeshObject(meshname, nodeManager.m_numNodes, coords,
+    siloFile.WriteMeshObject(meshname, nodeManager.DataLengths(), coords,
                              m_localToGlobalMap.data(), numFaceTypes,
                              fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
                              NULL, fshapetype.data(), fshapesize.data(), cycleNum, problemTime);
@@ -2033,7 +2099,7 @@ void FaceManagerT::WriteSiloMesh( SiloFile& siloFile,
 
     Array1dT<lArray1d> faceToNodeMap(numFaceTypes);
     {
-      for (localIndex k = 0; k < m_numFaces; ++k)
+      for (localIndex k = 0; k < DataLengths(); ++k)
       {
         faceToNodeMap[0].push_back(m_toNodesRelation[k].size());
         for (localIndex a = 0; a < m_toNodesRelation[k].size(); ++a)
@@ -2045,13 +2111,13 @@ void FaceManagerT::WriteSiloMesh( SiloFile& siloFile,
       faceConnectivity[0] = faceToNodeMap[0].data();
 
       globalFaceNumbers[0] = m_localToGlobalMap.data();
-      fshapecnt[0] = m_numFaces;
+      fshapecnt[0] = DataLengths();
       fshapetype[0] = dbZoneType;
       fshapesize[0] = 0;
     }
     int lnodelist = faceToNodeMap[0].size();
 
-    siloFile.WritePolygonMeshObject(meshname, nodeManager.m_numNodes, coords,
+    siloFile.WritePolygonMeshObject(meshname, nodeManager.DataLengths(), coords,
                                     m_localToGlobalMap.data(), numFaceTypes,
                                     fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
                                     NULL, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist);
@@ -2063,7 +2129,7 @@ void FaceManagerT::WriteSiloMesh( SiloFile& siloFile,
 }
 
 
-bool FaceManagerT::IsNodeOnFace(const localIndex faceIndex,
+bool FaceManager::IsNodeOnFace(const localIndex faceIndex,
                                 const localIndex nodeIndex )
 {
   for( lArray1d::iterator i = m_toNodesRelation[faceIndex].begin() ;
@@ -2075,7 +2141,7 @@ bool FaceManagerT::IsNodeOnFace(const localIndex faceIndex,
   return (false);
 }
 
-void FaceManagerT::WriteNonManagedDataMembersToSilo( SiloFile& siloFile,
+void FaceManager::WriteNonManagedDataMembersToSilo( SiloFile& siloFile,
                                                      const std::string& siloDirName,
                                                      const std::string& meshname,
                                                      const int centering,
@@ -2108,11 +2174,11 @@ void FaceManagerT::WriteNonManagedDataMembersToSilo( SiloFile& siloFile,
     }
 
 
-    Array1dT< iArray1d > toElementsRegion(m_numFaces);
-    Array1dT< lArray1d > toElementsIndex(m_numFaces);
+    Array1dT< iArray1d > toElementsRegion(DataLengths());
+    Array1dT< lArray1d > toElementsIndex(DataLengths());
 
 
-    for( localIndex k=0 ; k<m_numFaces ; ++k )
+    for( localIndex k=0 ; k<DataLengths() ; ++k )
     {
       toElementsRegion[k].resize( m_toElementsRelation[k].size() );
       toElementsIndex[k].resize( m_toElementsRelation[k].size() );
@@ -2170,7 +2236,7 @@ void FaceManagerT::WriteNonManagedDataMembersToSilo( SiloFile& siloFile,
 
 }
 
-void FaceManagerT::ReadNonManagedDataMembersFromSilo( const SiloFile& siloFile,
+void FaceManager::ReadNonManagedDataMembersFromSilo( const SiloFile& siloFile,
                                                       const std::string& siloDirName,
                                                       const std::string& meshname,
                                                       const int centering,
@@ -2202,15 +2268,15 @@ void FaceManagerT::ReadNonManagedDataMembersFromSilo( const SiloFile& siloFile,
     }
 
 
-    Array1dT< iArray1d > toElementsRegion(m_numFaces);
-    Array1dT< lArray1d > toElementsIndex(m_numFaces);
+    Array1dT< iArray1d > toElementsRegion(DataLengths());
+    Array1dT< lArray1d > toElementsIndex(DataLengths());
 
 
     siloFile.DBReadWrapper("toElementsRegion",toElementsRegion);
     siloFile.DBReadWrapper("toElementsIndex",toElementsIndex);
 
-    m_toElementsRelation.resize( m_numFaces );
-    for( localIndex k=0 ; k<m_numFaces ; ++k )
+    m_toElementsRelation.resize( DataLengths() );
+    for( localIndex k=0 ; k<DataLengths() ; ++k )
     {
       m_toElementsRelation[k].resize( toElementsRegion[k].size() );
       for( localIndex a=0 ; a<m_toElementsRelation[k].size() ; ++a )
@@ -2273,6 +2339,6 @@ void FaceManagerT::ReadNonManagedDataMembersFromSilo( const SiloFile& siloFile,
     temp.DeallocateDummyFields<R2SymTensor>(R2SymTensorVarNames);
   }
 }
+#endif
 
-REGISTER_CATALOG_ENTRY( WrapperCollection, FaceManagerT, std::string const &, WrapperCollection * const )
-
+}

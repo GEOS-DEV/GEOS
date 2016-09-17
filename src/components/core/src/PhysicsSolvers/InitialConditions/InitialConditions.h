@@ -145,7 +145,7 @@ public:
 
 protected:
   template <class TABLE, class ARRAY, class ARRAY2>
-  inline static bool SetField(const TABLE* ptable, int component, const ARRAY* pos, const NodeManagerT& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield)
+  inline static bool SetField(const TABLE* ptable, int component, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield)
   {
     if((!pfield) || (!ptable))
       return false;
@@ -197,7 +197,7 @@ protected:
   }
 
   template <class TABLE, class ARRAY, class ARRAY2>
-  inline static bool SetField(const TABLE* ptable, const ARRAY* pos, const NodeManagerT& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield)
+  inline static bool SetField(const TABLE* ptable, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield)
   {
     if((!pfield) || (!ptable))
       return false;
@@ -249,7 +249,7 @@ protected:
   }
 
   template <class TABLE, class ARRAY, class ARRAY2>
-  inline static bool AddToField(const TABLE* ptable, int component, const ARRAY* pos, const NodeManagerT& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield, realT& scale)
+  inline static bool AddToField(const TABLE* ptable, int component, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield, realT& scale)
   {
     if((!pfield) || (!ptable))
       return false;
@@ -301,7 +301,7 @@ protected:
   }
 
   template <class TABLE, class ARRAY, class ARRAY2>
-  inline static bool AddToField(const TABLE* ptable, const ARRAY* pos, const NodeManagerT& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield, realT& scale)
+  inline static bool AddToField(const TABLE* ptable, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield, realT& scale)
   {
     if((!pfield) || (!ptable))
       return false;

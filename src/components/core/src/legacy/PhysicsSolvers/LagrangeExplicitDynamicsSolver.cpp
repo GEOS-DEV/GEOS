@@ -530,7 +530,7 @@ void LagrangeExplicitDynamicsSolver::PostProcess (PhysicalDomainT& domain,
 
 }
 
-void LagrangeExplicitDynamicsSolver::ApplyGapDamping( NodeManagerT& nodeManager,
+void LagrangeExplicitDynamicsSolver::ApplyGapDamping( NodeManager& nodeManager,
                                                       const FaceManagerT& faceManager,
                                                       const realT dt )
 {

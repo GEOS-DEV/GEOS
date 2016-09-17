@@ -47,8 +47,8 @@
 #define _TYPEDEFS_H_
 
 #include "intrinsic_typedefs.h"
-#include "ArrayT/Array1dT.h"
-#include "ArrayT/Array2dT.h"
+#include "legacy/ArrayT/Array1dT.h"
+#include "legacy/ArrayT/Array2dT.h"
 #include <set>
 #include "math/TensorT/TensorT.h"
 
@@ -101,8 +101,8 @@ template<> struct type_name<float>              { static const char* name() {ret
 template<> struct type_name<double>             { static const char* name() {return "double";} };
 
 /// stores pointer to elemenRegion and localIndex of element
-class ElementRegionT;
-typedef std::pair< ElementRegionT*, localIndex > ElementIdPair;
+//class ElementRegionT;
+//typedef std::pair< ElementRegionT*, localIndex > ElementIdPair;
 
 template <class Type>
 struct locallyIndexedType

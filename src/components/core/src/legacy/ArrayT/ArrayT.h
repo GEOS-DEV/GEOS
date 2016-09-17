@@ -41,7 +41,7 @@
 #ifndef ARRAY_T_H_
 #define ARRAY_T_H_
 
-#include "Common/intrinsic_typedefs.h"
+#include "legacy/Common/intrinsic_typedefs.h"
 #include "Array1dT.h"
 #include "Array2dT.h"
 #include "Array3dT.h"

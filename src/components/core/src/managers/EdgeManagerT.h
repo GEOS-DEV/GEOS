@@ -46,11 +46,13 @@
 #ifndef EDGEMANAGERT_H_
 #define EDGEMANAGERT_H_
 
-#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+#include "ObjectManagerBase.hpp"
 
 
-class FaceManagerT;
-class NodeManagerT;
+namespace geosx
+{
+class FaceManager;
+class NodeManager;
 
 class EdgeManagerT: public ObjectDataStructureBaseT
 {
@@ -66,13 +68,13 @@ public:
                                                          Array1dT<gArray1d>& objectToCompositionObject );
 
 
-  void BuildEdges( const FaceManagerT& faceManager, const NodeManagerT& nodeManager );
-  void BuildEdges( const ElementManagerT& elementManager, const NodeManagerT& nodeManager );
+  void BuildEdges( const FaceManager& faceManager, const NodeManager& nodeManager );
+  void BuildEdges( const ElementManagerT& elementManager, const NodeManager& nodeManager );
   
   template< typename T_indices >
   unsigned int PackEdges( const T_indices& sendedges,
-                          const NodeManagerT& nodeManager,
-                          const FaceManagerT& faceManager,
+                          const NodeManager& nodeManager,
+                          const FaceManager& faceManager,
                           bufvector& buffer,
                           const bool packConnectivityToGlobal,
                           const bool packFields,
@@ -80,8 +82,8 @@ public:
                           const bool packSets  ) const;
 
   unsigned int UnpackEdges( const char*& buffer,
-                            const NodeManagerT& nodeManager,
-                            const FaceManagerT& faceManager,
+                            const NodeManager& nodeManager,
+                            const FaceManager& faceManager,
                             lArray1d& edgeReceiveLocalIndices,
                             const bool unpackConnectivityToLocal,
                             const bool unpackFields,
@@ -92,15 +94,15 @@ public:
                                       const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
                                       const std::map<globalIndex,localIndex>& faceGlobalToLocal );
 
-//  void UpdateEdgeExternalityFromSplit( const FaceManagerT& faceManager,
+//  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
 //                                     const lSet& newEdgeIndices,
 //                                     const lSet& modifiedEdgeIndices );
 
-  void EdgeCenter(const NodeManagerT& nodeManager, localIndex edge, R1Tensor& center)const;
-  void EdgeVector(const NodeManagerT& nodeManager, localIndex edge, R1Tensor& vector)const;
-  realT EdgeLength(const NodeManagerT& nodeManager, localIndex edge) const;
+  void EdgeCenter(const NodeManager& nodeManager, localIndex edge, R1Tensor& center)const;
+  void EdgeVector(const NodeManager& nodeManager, localIndex edge, R1Tensor& vector)const;
+  realT EdgeLength(const NodeManager& nodeManager, localIndex edge) const;
 
-  void AddToEdgeToFaceMap( const FaceManagerT& faceManager,
+  void AddToEdgeToFaceMap( const FaceManager& faceManager,
                            const lArray1d& newFaceIndices );
 
   void SplitEdge( const localIndex indexToSplit,
@@ -110,14 +112,14 @@ public:
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
 
-  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex nodeB, const NodeManagerT& nodeManager);
+  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex nodeB, const NodeManager& nodeManager);
 
-  void SetLayersFromDomainBoundary(const NodeManagerT& nodeManager);
+  void SetLayersFromDomainBoundary(const NodeManager& nodeManager);
 
 
   FixedOneToManyRelation& m_toNodesRelation;
   UnorderedVariableOneToManyRelation& m_toFacesRelation;
 
 };
-
+}
 #endif /* EDGEMANAGERT_H_ */

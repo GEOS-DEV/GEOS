@@ -43,8 +43,8 @@
  * @date created on Sep 13, 2010
  */
 
-#ifndef _COMMON_H_
-#define _COMMON_H_
+#ifndef COMMON_H_
+#define COMMON_H_
 
 
 

@@ -46,10 +46,10 @@
 
 #include "ElementRegionT.h"
 #include <stdlib.h>
+
+#include "../../../managers/NodeManager.hpp"
 #include "Utilities/Kinematics.h"
 #include "Utilities/Utilities.h"
-#include "NodeManagerT.h"
-
 #include "IO/BinStream.h"
 
 #include "ElementLibrary/LagrangeBasis.h"
@@ -652,7 +652,7 @@ void ElementRegionT::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* co
 
 }
 
-int ElementRegionT::CalculateShapeFunctionDerivatives(const NodeManagerT& nodeManager)
+int ElementRegionT::CalculateShapeFunctionDerivatives(const NodeManager& nodeManager)
 {
 
   Array1dT<R1Tensor> X(this->m_numNodesPerElem);
@@ -735,7 +735,7 @@ int ElementRegionT::CalculateShapeFunctionDerivatives(const NodeManagerT& nodeMa
 //  return 0;
 //}
 
-int ElementRegionT::CalculateVelocityGradients(const NodeManagerT& nodeManager, const int calcGroup)
+int ElementRegionT::CalculateVelocityGradients(const NodeManager& nodeManager, const int calcGroup)
 {
   R2SymTensor tempStress;
 
@@ -831,7 +831,7 @@ int ElementRegionT::MaterialUpdate(const realT dt)
   return 0;
 }
 
-int ElementRegionT::CalculateNodalForces(NodeManagerT& nodeManager, StableTimeStep& timeStep,
+int ElementRegionT::CalculateNodalForces(NodeManager& nodeManager, StableTimeStep& timeStep,
                                          const realT dt)
 {
   if (nodeManager.DataLengths() == 0)
@@ -965,7 +965,7 @@ int ElementRegionT::CalculateNodalForces(NodeManagerT& nodeManager, StableTimeSt
 
 int ElementRegionT::CalculateNodalForcesFromOneElement(const localIndex nodeID,
                                                        const localIndex elemID,
-                                                       NodeManagerT& nodeManager, R1Tensor& fNode)
+                                                       NodeManager& nodeManager, R1Tensor& fNode)
 {
   // The force is weighted by the Young's modulus.  This was merely for the convenience of calculating SIF.
 
@@ -1031,7 +1031,7 @@ realT ElementRegionT::ElementGDivBeta(const localIndex elemID)
 }
 
 void ElementRegionT::CalculateNodalForceFromStress(const localIndex elemID,
-                                   const NodeManagerT& nodeManager,
+                                   const NodeManager& nodeManager,
                                    R2SymTensor& stress,
                                    Array1dT<R1Tensor>& fNode)
 {
@@ -1064,7 +1064,7 @@ void ElementRegionT::CalculateNodalForceFromStress(const localIndex elemID,
 
 }
 
-int ElementRegionT::CalculateSmallDeformationNodalForces(NodeManagerT& nodeManager, StableTimeStep&,
+int ElementRegionT::CalculateSmallDeformationNodalForces(NodeManager& nodeManager, StableTimeStep&,
                                                          const realT)
 {
   Array1dT<R1Tensor> f_local(m_numNodesPerElem);
@@ -1124,7 +1124,7 @@ int ElementRegionT::CalculateSmallDeformationNodalForces(NodeManagerT& nodeManag
   return 0;
 }
 
-int ElementRegionT::CalculateNodalMasses(NodeManagerT& nodeManager)
+int ElementRegionT::CalculateNodalMasses(NodeManager& nodeManager)
 {
 
   rArray1d& mass = nodeManager.GetFieldData<FieldInfo::mass>();
@@ -1171,10 +1171,10 @@ int ElementRegionT::CalculateNodalMasses(NodeManagerT& nodeManager)
   return 0;
 }
 
-void ElementRegionT::SetIsAttachedToSendingGhostNode(const NodeManagerT& nodeManager)
+void ElementRegionT::SetIsAttachedToSendingGhostNode(const NodeManager& nodeManager)
 {
   const iArray1d& nodeGhostRank = nodeManager.GetFieldData<FieldInfo::ghostRank>();
-  Array1dT<NodeManagerT::nodeToElemType> nodeToElements = nodeManager.m_toElementsRelation;
+  Array1dT<NodeManager::nodeToElemType> nodeToElements = nodeManager.m_toElementsRelation;
 
   iArray1d& attachedToSendingGhostNode = GetFieldData<int>("attachedToSendingGhostNode");
   attachedToSendingGhostNode = 0;
@@ -1482,7 +1482,7 @@ void ElementRegionT::GetFaceNodes(const localIndex elementIndex, const localInde
 
 }
 
-R1Tensor ElementRegionT::GetElementCenter(localIndex k, const NodeManagerT& nodeManager, const bool useReferencePos) const
+R1Tensor ElementRegionT::GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos) const
 {
 
   const localIndex* const nodelist = m_toNodesRelation[k];
@@ -1516,7 +1516,7 @@ unsigned int ElementRegionT::PackElements( bufvector& buffer,
                                            lSet& sendnodes,
                                            lSet& sendfaces,
                                            const T_indices& elementList,
-                                           const NodeManagerT& nodeManager,
+                                           const NodeManager& nodeManager,
                                            const FaceManagerT& faceManager,
                                            const bool packConnectivityToGlobal,
                                            const bool packFields,
@@ -1581,7 +1581,7 @@ template unsigned int ElementRegionT::PackElements( bufvector& buffer,
                                                     lSet& sendnodes,
                                                     lSet& sendfaces,
                                                     const lArray1d& elementList,
-                                                    const NodeManagerT& nodeManager,
+                                                    const NodeManager& nodeManager,
                                                     const FaceManagerT& faceManager,
                                                     const bool packConnectivityToGlobal,
                                                     const bool packFields,
@@ -1592,7 +1592,7 @@ template unsigned int ElementRegionT::PackElements( bufvector& buffer,
                                                     lSet& sendnodes,
                                                     lSet& sendfaces,
                                                     const lSet& elementList,
-                                                    const NodeManagerT& nodeManager,
+                                                    const NodeManager& nodeManager,
                                                     const FaceManagerT& faceManager,
                                                     const bool packConnectivityToGlobal,
                                                     const bool packFields,
@@ -1608,7 +1608,7 @@ template unsigned int ElementRegionT::PackElements( bufvector& buffer,
  * ASSUMES that ALL nodes are present on current domain!
  */
 unsigned int ElementRegionT::UnpackElements( const char*& buffer,
-                                             const NodeManagerT& nodeManager,
+                                             const NodeManager& nodeManager,
                                              const FaceManagerT& faceManager,
                                              lArray1d& elementRegionReceiveLocalIndices,
                                              const bool unpackConnectivityToLocal,
@@ -2096,7 +2096,7 @@ void ElementRegionT::ReadSiloRegionMesh( const SiloFile& siloFile,
 
 
 void ElementRegionT::ModifyToElementMapsFromSplit( const lSet& modifiedElements ,
-                                                   NodeManagerT& nodeManager,
+                                                   NodeManager& nodeManager,
                                                    FaceManagerT& faceManager )
 {
 
@@ -2297,7 +2297,7 @@ void ElementRegionT::ModifyToElementMapsFromSplit( const lSet& modifiedElements 
 
 
 void ElementRegionT::UpdateExternalityFromSplit( const lSet& modifiedElements ,
-                                                 NodeManagerT& nodeManager,
+                                                 NodeManager& nodeManager,
                                                  EdgeManagerT& edgeManager,
                                                  FaceManagerT& faceManager )
 {

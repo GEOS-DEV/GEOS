@@ -267,7 +267,7 @@ realT LagrangeSmallStrainLinearElastic::CalculateElementResidualAndDerivative( c
 
 
 void LagrangeSmallStrainLinearElastic::ApplyThermalStress( ElementRegionT& elemRegion,
-                         NodeManagerT& nodeManager,
+                         NodeManager& nodeManager,
                          const localIndex& elementID,
                          Epetra_SerialDenseVector * rhs)
 {
@@ -420,7 +420,7 @@ void LagrangeSmallStrainLinearElastic::PostSyncConsistency( PhysicalDomainT& dom
 
 
 
-void LagrangeSmallStrainLinearElastic::CalculateElementStresses( const NodeManagerT& nodeManager,
+void LagrangeSmallStrainLinearElastic::CalculateElementStresses( const NodeManager& nodeManager,
                                                                       ElementManagerT& elementManager )
 {
   const Array1dT<R1Tensor>& disp = nodeManager.GetFieldData<FieldInfo::displacement>();
@@ -3163,7 +3163,7 @@ void LagrangeSmallStrainLinearElastic::StoreHistoryVariablesForCurrentLoadStepAn
 
 
 
-void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManagerT& nodeManager,
+void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManager& nodeManager,
                                                              ElementRegionT& elemRegion,
                                                              const realT dt )
 {

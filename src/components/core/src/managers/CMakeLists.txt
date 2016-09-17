@@ -7,6 +7,9 @@ set(geosx_headers
     managers/CommandLineParser.hpp
     managers/DomainPartition.hpp
     managers/ProblemManager.hpp
+    managers/ElementManagerT.hpp
+    managers/FaceManager.hpp
+    managers/ObjectManagerBase.hpp
     PARENT_SCOPE )
 
 #
@@ -17,4 +20,7 @@ set(geosx_core_sources
     managers/CommandLineParser.cpp
   	managers/DomainPartition.cpp
     managers/ProblemManager.cpp
+    managers/ElementManagerT.cpp
+    managers/FaceManager.cpp
+    managers/ObjectManagerBase.cpp
     PARENT_SCOPE )

@@ -44,14 +44,15 @@
  *      Author: settgast1
  */
 
+#include "NodeManager.hpp"
+
 #include "IO/BinStream.h"
-#include "NodeManagerT.h"
 #include "ObjectManagers/FaceManagerT.h"
 #include "ObjectManagers/EdgeManagerT.h"
 #include "ObjectManagers/ElementManagerT.h"
-#include "ElementRegionT.h"
 #include "Utilities/Utilities.h"
 #include <fstream>
+#include "ElementRegionT.hpp"
 
 
 // *********************************************************************************************************************
@@ -59,16 +60,8 @@
  * @author R.R. Settgast
  * @return
  */
-NodeManagerT::NodeManagerT():
+NodeManager::NodeManager():
 ObjectDataStructureBaseT( ObjectDataStructureBaseT::NodeManager ),
-m_numNodes(this->m_DataLengths),
-m_refposition(NULL),
-m_displacement(NULL),
-m_incrementalDisplacement(NULL),
-m_velocity(NULL),
-m_acceleration(NULL),
-m_force(NULL),
-m_mass(NULL),
 m_toElementsRelation(),
 m_nodeToFaceMap(m_UnorderedVariableOneToManyMaps["nodeToFaceMap"]),
 m_nodeToEdgeMap(m_UnorderedVariableOneToManyMaps["nodeToEdgeMap"])
@@ -94,7 +87,7 @@ m_nodeToEdgeMap(m_UnorderedVariableOneToManyMaps["nodeToEdgeMap"])
 /*
 NodeManagerT::NodeManagerT( const NodeManagerT& init ):
 ObjectDataStructureBaseT(init),
-m_numNodes(this->m_DataLengths),
+DataLengths()(this->m_DataLengths),
 m_refposition(NULL),
 m_displacement(NULL),
 m_incrementalDisplacement(NULL),
@@ -113,33 +106,26 @@ m_nodeToEdgeMap(m_UnorderedVariableOneToManyMaps["nodeToEdgeMap"])
  * @author R.R. Settgast
  * @return
  */
-NodeManagerT::~NodeManagerT()
+NodeManager::~NodeManager()
 {
 }
 
 
-void NodeManagerT::Initialize()
+void NodeManager::Initialize()
 {
   this->AddKeyedDataField<FieldInfo::referencePosition>();
-  SetConstPointer<FieldInfo::referencePosition>( m_refposition );
 
   this->AddKeyedDataField<FieldInfo::displacement>();
-  SetConstPointer<FieldInfo::displacement>( m_displacement );
 
   this->AddKeyedDataField<FieldInfo::incrementalDisplacement>();
-  SetConstPointer<FieldInfo::incrementalDisplacement>( m_incrementalDisplacement );
 
   this->AddKeyedDataField<FieldInfo::velocity>();
-  SetConstPointer<FieldInfo::velocity>( m_velocity );
 
   this->AddKeyedDataField<FieldInfo::acceleration>();
-  SetConstPointer<FieldInfo::acceleration>( m_acceleration );
 
   this->AddKeyedDataField<FieldInfo::force>();
-  SetConstPointer<FieldInfo::force>( m_force );
 
   this->AddKeyedDataField<FieldInfo::mass>();
-  SetConstPointer<FieldInfo::mass>( m_mass );
 }
 
 /**
@@ -147,7 +133,7 @@ void NodeManagerT::Initialize()
  * @param referenceObject optional object that will be used by the function to determine boundary status.
  *
  */
-void NodeManagerT::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* const referenceObject )
+void NodeManager::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* const referenceObject )
 {
   // make sure that the reference object is a faceManger object
   referenceObject->CheckObjectType( ObjectDataStructureBaseT::FaceManager );
@@ -163,7 +149,7 @@ void NodeManagerT::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* cons
   isNodeOnDomainBoundary = 0;
 
   // loop through all faces
-  for( localIndex kf=0 ; kf<faceManager.m_numFaces ; ++kf )
+  for( localIndex kf=0 ; kf<faceManager.DataLengths() ; ++kf )
   {
     // check to see if the face is on a domain boundary
     if( isFaceOnDomainBoundary[kf] == 1 )
@@ -179,7 +165,7 @@ void NodeManagerT::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* cons
   }
 }
 
-void NodeManagerT::SetLayersFromDomainBoundary( const int layer )
+void NodeManager::SetLayersFromDomainBoundary( const int layer )
 {
   const iArray1d& isNodeOnDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
   iArray1d& layersFromDomainBoundary = this->GetFieldData<int>("LayersFromDomainBoundary");
@@ -236,7 +222,7 @@ void NodeManagerT::SetLayersFromDomainBoundary( const int layer )
 
 
 
-void NodeManagerT::SetIsExternal( const ObjectDataStructureBaseT* const referenceObject )
+void NodeManager::SetIsExternal( const ObjectDataStructureBaseT* const referenceObject )
 {
   // make sure that the reference object is a faceManger object
   referenceObject->CheckObjectType( ObjectDataStructureBaseT::FaceManager );
@@ -248,7 +234,7 @@ void NodeManagerT::SetIsExternal( const ObjectDataStructureBaseT* const referenc
   const iArray1d& isExternalFace = faceManager.m_isExternal;
 
   // loop through all faces
-  for( localIndex kf=0 ; kf<faceManager.m_numFaces ; ++kf )
+  for( localIndex kf=0 ; kf<faceManager.DataLengths() ; ++kf )
   {
     // check to see if the face is on a domain boundary
     if( isExternalFace(kf) == 1 )
@@ -271,15 +257,23 @@ void NodeManagerT::SetIsExternal( const ObjectDataStructureBaseT* const referenc
  * @param destination local node number of destination node
  * @param source local node number of source node
  */
-void NodeManagerT::CopyNode( const int destination, const int source )
+void NodeManager::CopyNode( const int destination, const int source )
 {
-  m_refposition[destination] = m_refposition[source];
-  m_displacement[destination] = m_displacement[source];
-  m_incrementalDisplacement[destination] = m_incrementalDisplacement[source];
-  m_velocity[destination] = m_velocity[source];
-  m_acceleration[destination] = m_acceleration[source];
-  m_force[destination] = m_force[source];
-  m_mass[destination] = m_mass[source];
+  Array1dT< R1Tensor >& refPosition = GetFieldData<FieldInfo::referencePosition>();
+  Array1dT< R1Tensor >& displacement = GetFieldData<FieldInfo::displacement>();
+  Array1dT< R1Tensor >& incDisplacement = GetFieldData<FieldInfo::incrementalDisplacement>();
+  Array1dT< R1Tensor >& velocity = GetFieldData<FieldInfo::velocity>();
+  Array1dT< R1Tensor >& acceleration = GetFieldData<FieldInfo::acceleration>();
+  Array1dT< R1Tensor >& force = GetFieldData<FieldInfo::force>();
+  rArray1d& mass = GetFieldData<FieldInfo::mass>();
+
+  refPosition[destination] = refPosition[source];
+  displacement[destination] = displacement[source];
+  incDisplacement[destination] = incDisplacement[source];
+  velocity[destination] = velocity[source];
+  acceleration[destination] = acceleration[source];
+  force[destination] = force[source];
+  mass[destination] = mass[source];
 
 }
 
@@ -289,11 +283,11 @@ void NodeManagerT::CopyNode( const int destination, const int source )
  * This function constructs the nodeToElementMap by using the data in each element regions elementToNode map to
  * invert the relation.
  */
-void NodeManagerT::ConstructNodeToElementMap( const ElementManagerT& elementManager )
+void NodeManager::ConstructNodeToElementMap( const ElementManagerT& elementManager )
 {
   // because the nodeToElementMap is an odd creature, it is not managed by ObjectDataStructureBaseT...so we must
   // resize.
-  m_toElementsRelation.resize(m_numNodes);
+  m_toElementsRelation.resize(DataLengths());
 
   // iterate over all element regions
   for( std::map<ElementManagerT::RegKeyType, ElementRegionT>::const_iterator ielemRegion=elementManager.m_ElementRegions.begin() ;
@@ -324,12 +318,12 @@ void NodeManagerT::ConstructNodeToElementMap( const ElementManagerT& elementMana
 }
 
 
-void NodeManagerT::AddToNodeToElementMap( const ElementManagerT& elementManager,
+void NodeManager::AddToNodeToElementMap( const ElementManagerT& elementManager,
                                           const std::map<std::string,lArray1d>& newElementIndices )
 {
   // because the nodeToElementMap is an odd creature, it is not managed by ObjectDataStructureBaseT...so we must
   // resize.
-  m_toElementsRelation.resize(m_numNodes);
+  m_toElementsRelation.resize(DataLengths());
 
   // iterate over all element regions
   for( std::map<ElementManagerT::RegKeyType, ElementRegionT>::const_iterator ielemRegion=elementManager.m_ElementRegions.begin() ;
@@ -374,10 +368,10 @@ void NodeManagerT::AddToNodeToElementMap( const ElementManagerT& elementManager,
  * @param faceManager the face manager
  * this function constucts the nodeToFace map using the data in the face manager's facetonode map.
  */
-void NodeManagerT::ConstructNodeToFaceMap( const FaceManagerT& faceManager )
+void NodeManager::ConstructNodeToFaceMap( const FaceManagerT& faceManager )
 {
   // loop over all faces
-  for( localIndex lfi=0 ; lfi<faceManager.m_numFaces ; ++lfi )
+  for( localIndex lfi=0 ; lfi<faceManager.DataLengths() ; ++lfi )
   {
     // now iterate over the faceToNodeMap (i.e. all nodes in the faceToNodeMap)
     for( lArray1d::const_iterator a=faceManager.m_toNodesRelation[lfi].begin() ;
@@ -393,7 +387,7 @@ void NodeManagerT::ConstructNodeToFaceMap( const FaceManagerT& faceManager )
 
 
 
-void NodeManagerT::ModifyNodeToEdgeMapFromSplit( const EdgeManagerT& edgeManager,
+void NodeManager::ModifyNodeToEdgeMapFromSplit( const EdgeManagerT& edgeManager,
                                                  const lSet& newEdgeIndices,
                                                  const lSet& modifiedEdgeIndices )
 {
@@ -458,7 +452,7 @@ void NodeManagerT::ModifyNodeToEdgeMapFromSplit( const EdgeManagerT& edgeManager
 //  }
 //}
 
-void NodeManagerT::AddToNodeToFaceMap( const FaceManagerT& faceManager,
+void NodeManager::AddToNodeToFaceMap( const FaceManagerT& faceManager,
                                        const lArray1d& newFaceIndices )
 {
   // loop over all faces in list
@@ -476,7 +470,7 @@ void NodeManagerT::AddToNodeToFaceMap( const FaceManagerT& faceManager,
 }
 
 
-void NodeManagerT::AddToNodeToEdgeMap( const EdgeManagerT& edgeManager,
+void NodeManager::AddToNodeToEdgeMap( const EdgeManagerT& edgeManager,
                                        const lArray1d& newEdgeIndices )
 {
   // loop over all edges in list
@@ -500,10 +494,13 @@ void NodeManagerT::AddToNodeToEdgeMap( const EdgeManagerT& edgeManager,
  * @brief Sort nodes on a plane.  We need this to sort node on a 2D element, which cannot be handled by the face manager.
  * @author Pengcheng Fu
  */
-void NodeManagerT::SortNodeOnPlane (lArray1d& nodeList) const
+void NodeManager::SortNodeOnPlane (lArray1d& nodeList) const
 {
   //GeometryUtilities::OrderPoints_2DPolygon();
   localIndex numNodes = nodeList.size();
+  const Array1dT< R1Tensor >& refPosition = GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = GetFieldData<FieldInfo::displacement>();
+
   if (numNodes<=2)
     throw GPException("You are trying to sort nodes on a plane but there are only two nodes.");
 
@@ -512,7 +509,7 @@ void NodeManagerT::SortNodeOnPlane (lArray1d& nodeList) const
   for( localIndex i =0; i < numNodes; ++i)
   {
     localIndex nd = nodeList[i];
-    nodeCoords[i] = (*m_refposition)[nd] + (*m_displacement)[nd];
+    nodeCoords[i] = refPosition[nd] + displacement[nd];
     fc += nodeCoords[i];
   }
   fc /= realT(numNodes);
@@ -577,7 +574,7 @@ void NodeManagerT::SortNodeOnPlane (lArray1d& nodeList) const
 
 }
 
-void NodeManagerT::ZeroDetachedNodeVelocity()
+void NodeManager::ZeroDetachedNodeVelocity()
 {
   if (HasField<int>("isDetachedFromSolidMesh"))
   {
@@ -592,7 +589,7 @@ void NodeManagerT::ZeroDetachedNodeVelocity()
   }
 
 }
-void NodeManagerT::UpdateDetachedNodeLocationAndVelocity()
+void NodeManager::UpdateDetachedNodeLocationAndVelocity()
 {
   iArray1d& isDetachedFromSolidMesh = GetFieldData<int> ("isDetachedFromSolidMesh");
   Array1dT<R1Tensor>& velocity = GetFieldData<FieldInfo::velocity> ();
@@ -632,7 +629,7 @@ void NodeManagerT::UpdateDetachedNodeLocationAndVelocity()
 }
 
 //Pre-order depth-first binary tree traversal
-void NodeManagerT::FindAllEffectiveChildren(localIndex& nodeID,
+void NodeManager::FindAllEffectiveChildren(localIndex& nodeID,
                                             lArray1d& list,
                                             rArray1d& weight)
 {
@@ -700,7 +697,7 @@ void NodeManagerT::FindAllEffectiveChildren(localIndex& nodeID,
  * must be constructed on the receiving domain.
  */
 template< typename T_indices >
-unsigned int NodeManagerT::PackNodes( const T_indices& sendnodes,
+unsigned int NodeManager::PackNodes( const T_indices& sendnodes,
                                       const FaceManagerT& faceManager,
                                       bufvector& buffer,
                                       const bool packConnectivityToGlobal,
@@ -738,8 +735,8 @@ unsigned int NodeManagerT::PackNodes( const T_indices& sendnodes,
 
   return sizeOfPacked;
 }
-template unsigned int NodeManagerT::PackNodes<lSet>(  const lSet&, const FaceManagerT&, bufvector&, const bool, const bool, const bool, const bool  ) const;
-template unsigned int NodeManagerT::PackNodes<lArray1d>( const lArray1d&, const FaceManagerT&, bufvector&, const bool, const bool, const bool, const bool  ) const;
+template unsigned int NodeManager::PackNodes<lSet>(  const lSet&, const FaceManagerT&, bufvector&, const bool, const bool, const bool, const bool  ) const;
+template unsigned int NodeManager::PackNodes<lArray1d>( const lArray1d&, const FaceManagerT&, bufvector&, const bool, const bool, const bool, const bool  ) const;
 
 
 /**
@@ -748,7 +745,7 @@ template unsigned int NodeManagerT::PackNodes<lArray1d>( const lArray1d&, const 
  * @param[in,out] nodeReceiveLocalIndices the local indices of the nodes
  * @return
  */
-unsigned int NodeManagerT::UnpackNodes( const char*& buffer,
+unsigned int NodeManager::UnpackNodes( const char*& buffer,
                                         const FaceManagerT& faceManager,
                                         lArray1d& nodeReceiveLocalIndices,
                                         const bool unpackConnectivityToLocal,
@@ -800,7 +797,7 @@ unsigned int NodeManagerT::UnpackNodes( const char*& buffer,
 }
 
 
-void NodeManagerT::ConnectivityFromGlobalToLocal( const lSet& indices,
+void NodeManager::ConnectivityFromGlobalToLocal( const lSet& indices,
                                                   const lSet& clearIndices,
                                                   const std::map<globalIndex,localIndex>& faceGlobalToLocal )
 {
@@ -832,7 +829,7 @@ void NodeManagerT::ConnectivityFromGlobalToLocal( const lSet& indices,
   }
 }
 
-void NodeManagerT::WriteNonManagedDataMembersToSilo( SiloFile& siloFile,
+void NodeManager::WriteNonManagedDataMembersToSilo( SiloFile& siloFile,
                                                      const std::string&,
                                                      const std::string&,
                                                      const int,
@@ -852,7 +849,7 @@ void NodeManagerT::WriteNonManagedDataMembersToSilo( SiloFile& siloFile,
 
 }
 
-void NodeManagerT::ReadNonManagedDataMembersFromSilo( const SiloFile& siloFile,
+void NodeManager::ReadNonManagedDataMembersFromSilo( const SiloFile& siloFile,
                                                       const std::string&,
                                                       const std::string&,
                                                       const int,
@@ -872,7 +869,7 @@ void NodeManagerT::ReadNonManagedDataMembersFromSilo( const SiloFile& siloFile,
 
 }
 
-void NodeManagerT::CalculateEffectiveNormal( const localIndex index,
+void NodeManager::CalculateEffectiveNormal( const localIndex index,
                                              const FaceManagerT& faceManager,
                                              R1Tensor& normal ) const
 {
@@ -894,7 +891,7 @@ void NodeManagerT::CalculateEffectiveNormal( const localIndex index,
 }
 
 
-void NodeManagerT::GetDomainExtents(R1Tensor& pmin, R1Tensor& pmax, localIndex Ndims)
+void NodeManager::GetDomainExtents(R1Tensor& pmin, R1Tensor& pmax, localIndex Ndims)
 {
   const Array1dT<R1Tensor>& referencePosition = this->GetFieldData<FieldInfo::referencePosition>();
 

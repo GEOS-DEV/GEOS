@@ -566,14 +566,14 @@ namespace BoundaryConditionFunctions
 
 
 
-  void BuildKinematicConstraintBoundaryCondition( NodeManagerT& nodeManager,
+  void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
                                                   FaceManagerT& faceManager,
                                                   Array1dT<lSet>& KinematicConstraintNodes,
                                                   const realT tiedNodeTolerance );
 
 
   void ApplyKinematicConstraintBoundaryCondition( FaceManagerT& faceManager,
-                                                  NodeManagerT& nodeManager,
+                                                  NodeManager& nodeManager,
                                                   Array1dT<lSet>& KinematicConstraintNodes,
                                                   const realT tiedNodeNormalRuptureStress,
                                                   const realT tiedNodeShearRuptureStress  );

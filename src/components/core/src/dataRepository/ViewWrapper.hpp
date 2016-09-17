@@ -76,6 +76,16 @@ public:
     return typeid(T);
   }
 
+  static ViewWrapper<T>& cast( ViewWrapperBase& base )
+  {
+    if( base.get_typeid() != typeid(T) )
+    {
+      SLIC_ERROR("invalid cast attempt");
+    }
+    return static_cast< ViewWrapper<T>& >(base);
+  }
+
+
   struct empty_wrapper
   {
     HAS_MEMBER_FUNCTION(empty,bool,const,,)

@@ -879,7 +879,7 @@ NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object
 
 
 
-void LagrangeSmallStrain::FixNodesBC( NodeManagerT const& nodeManager, const lSet& set )
+void LagrangeSmallStrain::FixNodesBC( NodeManager const& nodeManager, const lSet& set )
 {
   iArray1d const & trilinos_index = nodeManager.GetFieldData<int>(m_trilinosIndexStr);
   iArray1d const & ghostRank  = nodeManager.GetFieldData<FieldInfo::ghostRank>();

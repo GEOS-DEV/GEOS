@@ -21,7 +21,7 @@ Fractunator::~Fractunator()
 }
 
 
-void Fractunator::RegisterFieldsAndMaps( NodeManagerT& nodeManager,
+void Fractunator::RegisterFieldsAndMaps( NodeManager& nodeManager,
                                          EdgeManagerT& edgeManager,
                                          FaceManagerT& faceManager )
 {
@@ -71,7 +71,7 @@ void Fractunator::ReadXML( TICPP::HierarchicalDataNode& hdn )
 }
 
 
-void Fractunator::SeparationDriver( NodeManagerT& nodeManager,
+void Fractunator::SeparationDriver( NodeManager& nodeManager,
                                     EdgeManagerT& edgeManager,
                                     FaceManagerT& faceManager,
                                     ExternalFaceManagerT& externalFaceManager,
@@ -137,7 +137,7 @@ void Fractunator::SeparationDriver( NodeManagerT& nodeManager,
 }
 
 
-void Fractunator::UpdateRuptureStates( NodeManagerT& nodeManager,
+void Fractunator::UpdateRuptureStates( NodeManager& nodeManager,
                                        EdgeManagerT& edgeManager,
                                        FaceManagerT& faceManager,
                                        ElementManagerT& elementManager )
@@ -189,7 +189,7 @@ void Fractunator::UpdateRuptureStates( NodeManagerT& nodeManager,
 
 
 bool Fractunator::FindFracturePlanes( const localIndex nodeID,
-                                      const NodeManagerT& nodeManager,
+                                      const NodeManager& nodeManager,
                                       const EdgeManagerT& edgeManager,
                                       const FaceManagerT& faceManager,
                                       lSet& separationPathFaces,
@@ -761,7 +761,7 @@ return rval;
 }
 
 void Fractunator::PerformFracture( const localIndex nodeID,
-                                   NodeManagerT& nodeManager,
+                                   NodeManager& nodeManager,
                                    EdgeManagerT& edgeManager,
                                    FaceManagerT& faceManager,
                                    ElementManagerT& elementManager,

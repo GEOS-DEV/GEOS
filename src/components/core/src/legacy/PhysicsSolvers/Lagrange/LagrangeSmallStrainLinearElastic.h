@@ -398,13 +398,13 @@ protected:
   virtual void StoreHistoryVariablesForCurrentLoadStepAndResetTheField( PhysicalDomainT& domain);
 
   void ApplyThermalStress( ElementRegionT& elemRegion,
-                           NodeManagerT& nodeManager,
+                           NodeManager& nodeManager,
                            const localIndex& elementID,
                            Epetra_SerialDenseVector * rhs);
 
 private:
 
-  virtual void ProcessElementRegion( NodeManagerT& nodeManager,
+  virtual void ProcessElementRegion( NodeManager& nodeManager,
                                      ElementRegionT& elemRegion,
                                      const realT dt );
 
@@ -422,7 +422,7 @@ private:
                                                        Epetra_SerialDenseMatrix& dRdU,
                                                        Epetra_SerialDenseVector& R );
 
-  void CalculateElementStresses( const NodeManagerT& nodeManager,
+  void CalculateElementStresses( const NodeManager& nodeManager,
                                  ElementManagerT& elementManager );
 
 };

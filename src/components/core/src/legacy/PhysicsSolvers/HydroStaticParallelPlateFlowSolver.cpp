@@ -207,7 +207,7 @@ void HydroStaticParallelPlateFlowSolver::UpdateEOS( const realT time,
 void HydroStaticParallelPlateFlowSolver::ApplyBoreholePressure( const realT time, const realT dt, realT pressure, PhysicalDomainT& domain )
 {
   FaceManagerT& faceManager = domain.m_feFaceManager;
-  NodeManagerT& nodeManager = domain.m_feNodeManager;
+  NodeManager& nodeManager = domain.m_feNodeManager;
   Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force> ();
   for(sArray1d::size_type i =0; i < m_boreholeSetNames.size(); ++i)
   {

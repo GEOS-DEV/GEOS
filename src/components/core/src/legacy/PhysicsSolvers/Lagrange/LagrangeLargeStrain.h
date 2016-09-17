@@ -24,7 +24,7 @@ public:
   };
 
   void ApplyThermalStress( ElementRegionT& elemRegion,
-                           NodeManagerT& nodeManager,
+                           NodeManager& nodeManager,
                            const localIndex& elementID,
                            Epetra_SerialDenseVector * rhs);
 
@@ -32,12 +32,12 @@ private:
   LagrangeLargeStrain();
 
 
-  void ProcessElementRegion( NodeManagerT& nodeManager,
+  void ProcessElementRegion( NodeManager& nodeManager,
                              ElementRegionT& elemRegion,
                              const realT dt );
 
 
-  void CalculateNodalForceFromStress(NodeManagerT& nodeManager,
+  void CalculateNodalForceFromStress(NodeManager& nodeManager,
                                      ElementRegionT& elemRegion,
                                      const localIndex& elementID,
                                      R2SymTensor& stress );

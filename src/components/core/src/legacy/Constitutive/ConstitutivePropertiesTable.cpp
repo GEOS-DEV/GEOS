@@ -24,7 +24,7 @@ void
 ConstitutivePropertiesTable::Add(const std::string& fieldName,
                                  const std::string& tableName,
                                  ObjectDataStructureBaseT& ods,
-                                 NodeManagerT* nm)
+                                 NodeManager* nm)
 {
   const localIndex last = m_fieldNames.size();
   if(nm)
@@ -42,7 +42,7 @@ void
 ConstitutivePropertiesTable::Add(const std::string& fieldName,
                                  const realT scalar,
                                  ObjectDataStructureBaseT& ods,
-                                 NodeManagerT* nm)
+                                 NodeManager* nm)
 {
   const localIndex last = m_fieldNames.size();
   if(nm)

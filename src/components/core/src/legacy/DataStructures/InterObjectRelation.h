@@ -9,10 +9,10 @@
 #define INTEROBJECTRELATION_H_
 
 
-#include "Common/typedefs.h"
+//#include "Common/typedefs.h"
 #include <map>
 
-#include "../../dataRepository/Group.hpp"
+#include "dataRepository/ManagedGroup.hpp"
 
 template < typename BASETYPE >
 class InterObjectRelation : public BASETYPE

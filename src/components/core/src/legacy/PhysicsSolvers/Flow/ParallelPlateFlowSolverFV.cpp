@@ -2904,7 +2904,7 @@ void ParallelPlateFlowSolverFV::FaceFluxBoundaryCondition( PhysicalDomainT& doma
 
 
 void ParallelPlateFlowSolverFV::CalculateApertureDerivatives( const FaceManagerT& faceManager,
-                                                              const NodeManagerT& nodeManager )
+                                                              const NodeManager& nodeManager )
 {
   const iArray1d* const trilinosIndexNode = nodeManager.GetFieldDataPointer<int>("IMS_0_GlobalDof");
 

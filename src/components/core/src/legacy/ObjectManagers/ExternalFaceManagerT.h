@@ -99,12 +99,12 @@ public:
 
   void SplitFace(const localIndex parentIndex,
                  const localIndex newFaceIndex,
-                 const NodeManagerT& nodeManager);
+                 const NodeManager& nodeManager);
 
   void SplitFace( const localIndex parentIndex,
                   const localIndex newFaceIndex1,
                   const localIndex newFaceIndex2,
-                  const NodeManagerT& nodeManager);
+                  const NodeManager& nodeManager);
 
   void WriteSiloExternalFaces( SiloFile& siloFile,
                                const std::string& siloDirName,
@@ -141,15 +141,15 @@ private:
   inline int GeodynPartition(const R1Tensor& ) { return -1; }
 
 public:
-  bool RecalculateNeighborList(    const NodeManagerT& m_nodeManager,
-                                   const NodeManagerT& m_discreteElementNodeManager,
+  bool RecalculateNeighborList(    const NodeManager& m_nodeManager,
+                                   const NodeManager& m_discreteElementNodeManager,
                                    const DiscreteElementManagerT& m_discreteElementManager,
                                    const realT dt = 0., const bool forceRecalculate = false,
                                    const bool useReferencePosition = false);
 
 #ifdef SRC_INTERNAL
-  void GeodynCoupling( NodeManagerT& nodeManager );
-  void GeodynCouplingParallel( NodeManagerT& nodeManager );
+  void GeodynCoupling( NodeManager& nodeManager );
+  void GeodynCouplingParallel( NodeManager& nodeManager );
 #endif
 
   inline bool IsFiniteElement(const localIndex kf) const
@@ -183,7 +183,7 @@ public:
                                         Array1dT<Array1dT<R1Tensor> >& xs,
                                         const bool updateFESoln = true);
 
-  void SetExcludeFromContact( const NodeManagerT& nodeManager, bool reset );
+  void SetExcludeFromContact( const NodeManager& nodeManager, bool reset );
 
   void UpdateAndApplyContactStresses( StableTimeStep& maxdt,
                                       const realT dt,
@@ -237,20 +237,20 @@ private:
                                        PhysicalDomainT& domain,
                                        const Array1dT<Array1dT<R1Tensor> >& xs);
 
-  void SetGhostRank(    const NodeManagerT& m_nodeManager,
-                        const NodeManagerT& m_discreteElementNodeManager,
+  void SetGhostRank(    const NodeManager& m_nodeManager,
+                        const NodeManager& m_discreteElementNodeManager,
                         const iArray1d& excludeFromContact,
                         iArray1d& faceAttachedToALocalNode);
 
-  void SetGhostRank(    const NodeManagerT& m_nodeManager,
+  void SetGhostRank(    const NodeManager& m_nodeManager,
                         const iArray1d& excludeFromContact,
                         iArray1d& faceAttachedToALocalNode);
 
-  void PostSortUpdate( const NodeManagerT& nodeManager,
-                       const NodeManagerT& discreteElementNodeManager,
+  void PostSortUpdate( const NodeManager& nodeManager,
+                       const NodeManager& discreteElementNodeManager,
                        const lSet& toResort);
 
-  void PostSortUpdate( const NodeManagerT& nodeManager);
+  void PostSortUpdate( const NodeManager& nodeManager);
 
   inline int  MechanicalToOpen() { return opencontact;}
 

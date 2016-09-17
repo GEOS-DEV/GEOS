@@ -213,7 +213,7 @@ public:
                      const rArray1d& B,
                      rArray1d& C);
 
-  void CalculateNodalForces ( NodeManagerT& nodeManager,
+  void CalculateNodalForces ( NodeManager& nodeManager,
                               ElementRegionT& elemRegion,
                               const localIndex elementID,
                               R2SymTensor& stress);
@@ -353,7 +353,7 @@ public:  // Fu note: We need to access this from the new hydrofrac solver, which
 
 
   virtual void ApplyThermalStress( ElementRegionT& elemRegion,
-                                   NodeManagerT& nodeManager,
+                                   NodeManager& nodeManager,
                                    const localIndex& elementID,
                                    Epetra_SerialDenseVector * rhs)
   {
@@ -364,30 +364,30 @@ public:  // Fu note: We need to access this from the new hydrofrac solver, which
   };
 
 
-  virtual void ProcessElementRegions( NodeManagerT& nodeManager,
+  virtual void ProcessElementRegions( NodeManager& nodeManager,
                                       ElementManagerT& elemManager,
                                       const sArray1d& namesOfSolverRegions,
                                       const realT dt  ) ;
 
-  void SnapshotNodalDisplacement( NodeManagerT& nodeManager) ;
+  void SnapshotNodalDisplacement( NodeManager& nodeManager) ;
 
-  void ApplyDisplacementPenalty( NodeManagerT& nodeManager );
+  void ApplyDisplacementPenalty( NodeManager& nodeManager );
 
-  virtual void FixNodesBC( NodeManagerT const& nodeManager, const lSet& set )
+  virtual void FixNodesBC( NodeManager const& nodeManager, const lSet& set )
   {
     (void)(nodeManager);
     (void)(set);
   }
 
 private:
-  virtual void ProcessElementRegion( NodeManagerT& nodeManager,
+  virtual void ProcessElementRegion( NodeManager& nodeManager,
                                      ElementRegionT& elemRegion,
                                      const realT dt ) = 0;
-  virtual void ApplyGravity( NodeManagerT& nodeManager,
+  virtual void ApplyGravity( NodeManager& nodeManager,
                                      ElementRegionT& elemRegion,
                                      const realT dt ) ;
 
-  virtual void ProcessCohesiveZones( NodeManagerT& nodeManager,
+  virtual void ProcessCohesiveZones( NodeManager& nodeManager,
                                      FaceManagerT& faceManager,
                                      const realT dt );
 

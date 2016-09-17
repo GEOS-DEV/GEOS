@@ -114,7 +114,7 @@ namespace BoundaryConditionFunctions
   {
 
     FaceManagerT& faceManager = domain.m_feFaceManager;
-    NodeManagerT& nodeManager = domain.m_feNodeManager;
+    NodeManager& nodeManager = domain.m_feNodeManager;
 
     // iterate over all boundary conditions.
     for( Array1dT<BoundaryConditionBase*>::const_iterator bcItr=faceManager.m_bcData.begin() ; bcItr!=faceManager.m_bcData.end() ; ++ bcItr )
@@ -205,7 +205,7 @@ namespace BoundaryConditionFunctions
    * function to fill the KinematicConstrainNodes array with groups of nodes that are to be tied together by
    * a kinematic boundary condition.
    */
-  void BuildKinematicConstraintBoundaryCondition( NodeManagerT& nodeManager,
+  void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
                                                   FaceManagerT& faceManager,
                                                   Array1dT<lSet>& KinematicConstraintNodes,
                                                   const realT tiedNodeTolerance )
@@ -375,7 +375,7 @@ namespace BoundaryConditionFunctions
    * @param tiedNodeRuptureStress
    */
   void ApplyKinematicConstraintBoundaryCondition( FaceManagerT& faceManager,
-                                                  NodeManagerT& nodeManager,
+                                                  NodeManager& nodeManager,
                                                   Array1dT<lSet>& KinematicConstraintNodes,
                                                   const realT tiedNodeNormalRuptureStress,
                                                   const realT tiedNodeShearRuptureStress )

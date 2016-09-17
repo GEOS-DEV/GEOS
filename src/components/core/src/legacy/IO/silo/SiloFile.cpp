@@ -54,7 +54,7 @@
 #include "ObjectManagers/ElementManagerT.h"
 
 /// forward declaration of NodeManagerT for use as a template argument
-class NodeManagerT;
+class NodeManager;
 
 // *********************************************************************************************************************
 /// Default Constructor
@@ -2667,7 +2667,7 @@ namespace SiloFileUtilities
     varnames[5] = (char*) varnamestring[5].c_str();
   }
 
-  template<> int FieldCentering<NodeManagerT> ()
+  template<> int FieldCentering<NodeManager> ()
   {
     return DB_NODECENT;
   }

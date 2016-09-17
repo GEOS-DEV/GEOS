@@ -38,7 +38,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @file FaceManagerT.h
+ * @file FaceManager.h
  * @author settgast1
  * @date Feb 4, 2011
  */
@@ -46,43 +46,35 @@
 #ifndef FACEMANAGERT_H_
 #define FACEMANAGERT_H_
 
-#include "../dataRepository/Group.hpp"
-#include "math/TensorT/TensorT.h"
-//#include "ObjectManagers/ExternalFaceStructs.h"
+//#include "ExternalFaceStructs.h"
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
-#include "ArrayT/bufvector.h"
-//#include "IO/silo/SiloFile.h"
 
-
-
-
-struct ExternalFaceStruct;
-class SiloFile;
-
+#include "dataRepository/ManagedGroup.hpp"
 #include <memory>
 //#include "NestedRelation.h"
+#include "legacy/DataStructures/InterObjectRelation.h"
 
 
-
-class ElementRegionT;
-class NodeManagerT;
-class ElementManagerT;
 class PhysicalDomainT;
-class EdgeManagerT;
-class ExternalFaceManagerT;
+class ExternalFaceManager;
 class CohesiveZoneBase;
+class bufvector;
+class ExternalFaceStruct;
 
-class FaceManagerT: public geosx::dataRepository::ManagedGroup
+namespace geosx
+{
+class ElementRegionT;
+class NodeManager;
+class ElementManagerT;
+class EdgeManagerT;
+
+
+class FaceManager: public ObjectDataStructureBaseT
 {
 public:
 
-  FaceManagerT();
-  virtual ~FaceManagerT();
-
-  static std::string CatalogName()
-  {
-    return "FaceManagerT";
-  }
+  FaceManager( ObjectManagerBase * const parent );
+  virtual ~FaceManager();
 
   void Initialize(  ){}
 
@@ -95,7 +87,7 @@ public:
     return firstNewGlobalIndex;
   }
 
-  void BuildFaces( const NodeManagerT& nodeManager, const ElementManagerT& elemManager );
+  void BuildFaces( const NodeManager& nodeManager, const ElementManagerT& elemManager );
 
   void AddToFaceToElementMap( const ElementManagerT& elementManager,
                               const std::map<std::string,lArray1d>& newElementIndices );
@@ -109,40 +101,40 @@ public:
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL);
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = NULL);
 
-  realT FaceCenter( const NodeManagerT& nodeManager, const localIndex faceIndex, R1Tensor& center ) const;
-  R1Tensor FaceNormal( const NodeManagerT& nodeManager, const localIndex faceIndex, const bool referenceFlag = false ) const;
-  realT FaceNormal( const NodeManagerT& nodeManager, const localIndex faceIndex, R1Tensor& normal) const;
+  realT FaceCenter( const NodeManager& nodeManager, const localIndex faceIndex, R1Tensor& center ) const;
+  R1Tensor FaceNormal( const NodeManager& nodeManager, const localIndex faceIndex, const bool referenceFlag = false ) const;
+  realT FaceNormal( const NodeManager& nodeManager, const localIndex faceIndex, R1Tensor& normal) const;
 
-  void FaceTangential ( const NodeManagerT& nodeManager, const localIndex faceIndex, R1Tensor& tanA, R1Tensor& tanB) const;
+  void FaceTangential ( const NodeManager& nodeManager, const localIndex faceIndex, R1Tensor& tanA, R1Tensor& tanB) const;
 
-  realT FaceCenterAndNormal( const NodeManagerT& nodeManager,
+  realT FaceCenterAndNormal( const NodeManager& nodeManager,
                              const localIndex faceIndex,
                              R1Tensor& center,
                              R1Tensor& normal,
                              const bool referenceState = false) const;
 
   /// surface area - sum areas of triangular facets on the face.
-  realT SurfaceArea( const NodeManagerT& nodeManager,
+  realT SurfaceArea( const NodeManager& nodeManager,
                      const localIndex faceIndex,
                      const bool referenceFlag = false ) const;
   
   /// Area of the face projected onto a surface with the given normal
-  realT ProjectedArea( const NodeManagerT& nodeManager, const localIndex faceIndex, const R1Tensor& norm) const;
+  realT ProjectedArea( const NodeManager& nodeManager, const localIndex faceIndex, const R1Tensor& norm) const;
   
-  R1Tensor CalculateGapVector( const NodeManagerT& nodeManager, const localIndex faceIndex ) const;
+  R1Tensor CalculateGapVector( const NodeManager& nodeManager, const localIndex faceIndex ) const;
 
-  R1Tensor CalculateGapRateVector( const NodeManagerT& nodeManager, const localIndex faceIndex ) const;
+  R1Tensor CalculateGapRateVector( const NodeManager& nodeManager, const localIndex faceIndex ) const;
 
-  void CalculateGapVectorDerivative( const NodeManagerT& nodeManager, const localIndex faceIndex,
+  void CalculateGapVectorDerivative( const NodeManager& nodeManager, const localIndex faceIndex,
                                      Array1dT< Array1dT<R1Tensor> >& gapDerivative,
                                      Array1dT<iArray1d>& gapDerivativeIndices ) const;
 
-  void EdgeVectors( const NodeManagerT& nodeManager, const localIndex faceIndex, Array1dT<R1Tensor>& edgeVectors );
+  void EdgeVectors( const NodeManager& nodeManager, const localIndex faceIndex, Array1dT<R1Tensor>& edgeVectors );
 
   /// Calculates the vector from node 0 to node 1 in 2D.  Note that 2D face is actually an edge.
-  void FaceVector2D(const NodeManagerT& nodeManager, localIndex iFace, localIndex iNd, R1Tensor& v) ;
+  void FaceVector2D(const NodeManager& nodeManager, localIndex iFace, localIndex iNd, R1Tensor& v) ;
 
-  void InFaceVectorNormalToEdge(const NodeManagerT& nodeManager,
+  void InFaceVectorNormalToEdge(const NodeManager& nodeManager,
                                 const EdgeManagerT& edgeManager,
                                 localIndex iFace,
                                 localIndex iEdge,
@@ -150,7 +142,7 @@ public:
 
   template< typename T_indices >
   unsigned int PackFaces( const T_indices& sendfaces,
-                          const NodeManagerT& nodeManager,
+                          const NodeManager& nodeManager,
                           const EdgeManagerT* const edgeManager,
                           bufvector& buffer,
                           const bool packConnectivityToGlobal,
@@ -159,9 +151,9 @@ public:
                           const bool packSets  ) const;
 
   unsigned int UnpackFaces( const char*& buffer,
-                            const NodeManagerT& nodeManager,
+                            const NodeManager& nodeManager,
                             const EdgeManagerT* const edgeManager,
-                            ExternalFaceManagerT* const externalFaceManager,
+                            ExternalFaceManager* const externalFaceManager,
                             lArray1d& faceReceiveLocalIndices,
                             const bool unpackConnectivityToLocal,
                             const bool unpackFields,
@@ -182,13 +174,13 @@ public:
                    const ElementRegionT& elementRegion );
 
   /// Calculate the bounding sphere for a face
-  void FaceBoundingSphere( const NodeManagerT& nodeManager,
+  void FaceBoundingSphere( const NodeManager& nodeManager,
                            const localIndex faceIndex,
                            R1Tensor& center,
                            realT& radius) const;
 
   void FaceBoundingSphere(
-                  const NodeManagerT& nodeManager,
+                  const NodeManager& nodeManager,
                   const localIndex faceIndex,
                   const realT dt,
                   R1Tensor& center,
@@ -197,24 +189,24 @@ public:
                   R1Tensor& normal,
                   const bool referenceState = false) const;
 
-  void NodalPositions(  const NodeManagerT& nodeManager,
+  void NodalPositions(  const NodeManager& nodeManager,
                         const localIndex faceIndex,
                         Array1dT<R1Tensor>& xs) const;
 
-  void FaceProperties( const NodeManagerT& nodeManager,
+  void FaceProperties( const NodeManager& nodeManager,
                        const localIndex faceIndex,
                        const realT dt,
                        R1Tensor & xfc,
                        R1Tensor & dxfc,
                        ExternalFaceStruct& efs) const;
 
-  void FaceProperties( const NodeManagerT& nodeManager,
+  void FaceProperties( const NodeManager& nodeManager,
                        const localIndex faceIndex,
                        const realT dt,
                        ExternalFaceStruct& efs) const;
 
 #ifdef STATES_ON_CONTACTS
-  void FaceProperties( const NodeManagerT& nodeManager,
+  void FaceProperties( const NodeManager& nodeManager,
                        const localIndex faceIndex,
                        const realT dt,
                        R1Tensor & nx,
@@ -232,22 +224,22 @@ public:
   void PreSeparateFaces( const std::string& setname, const int setState );
 
   void UpdateRuptureStates( const ElementManagerT& elementManager,
-                            const NodeManagerT& nodeManager,
+                            const NodeManager& nodeManager,
                             const std::string& separableSet,
                             const realT failval );
 
   void UpdateRuptureState( const ElementManagerT& elementManager,
-                            const NodeManagerT& nodeManager,
+                            const NodeManager& nodeManager,
                             const localIndex kf,
                             const realT failval );
 
 
   void CalculateStressOnFace( const ElementManagerT& elementManager,
-                            const NodeManagerT& nodeManager,
+                            const NodeManager& nodeManager,
                             const localIndex kf);
 
   void CalculateStressOnFace( const ElementManagerT& elementManager,
-                            const NodeManagerT& nodeManager,
+                            const NodeManager& nodeManager,
                             const localIndex kf,
                             realT& stressNOnFace,
                             R1Tensor& stressTOnFace);
@@ -261,25 +253,25 @@ public:
   int  GetMatchingElementIndex(localIndex face, BinaryElementComparisonFunction criteria);
   
   /// Rearrange face node order counter-clockwise around face
-  void SortFaceNodes(const NodeManagerT& nodeManager, const localIndex faceIndex );
+  void SortFaceNodes(const NodeManager& nodeManager, const localIndex faceIndex );
   
   /// Rearrange all face node orders counter-clockwise around face
-  void SortAllFaceNodes(const NodeManagerT& nodeManager);
+  void SortAllFaceNodes(const NodeManager& nodeManager);
   
   /// Copy face field values to their respective nodes using a weighted average. 
   template<typename T, typename WeightFuncPtr>
-  void CopyFieldToNodes(const std::string& faceField, NodeManagerT& nodeManager,const std::string& nodeField, WeightFuncPtr weightFunc) const;
+  void CopyFieldToNodes(const std::string& faceField, NodeManager& nodeManager,const std::string& nodeField, WeightFuncPtr weightFunc) const;
   /// Copy values from a subset of faces to their nodes using a weighted average. 
   template<typename T, typename WeightFuncPtr>
-  void CopyFieldToNodes(const std::string& faceField, const lArray1d& set, NodeManagerT& nodeManager, const std::string& nodeField,
+  void CopyFieldToNodes(const std::string& faceField, const lArray1d& set, NodeManager& nodeManager, const std::string& nodeField,
                         WeightFuncPtr weightFunctionPtr) const;
                                     
   /// Copy face field to nodes - overloaded functions when field name is the same for node and face fields.
   template<typename T, typename WeightFuncPtr>
-  void CopyFieldToNodes(const std::string& fieldName, NodeManagerT& nodeManager, WeightFuncPtr weightFunc) const
+  void CopyFieldToNodes(const std::string& fieldName, NodeManager& nodeManager, WeightFuncPtr weightFunc) const
      { CopyFieldToNodes<T>(fieldName, nodeManager,fieldName, weightFunc); }
   template<typename T, typename WeightFuncPtr>
-  void CopyFieldToNodes(const std::string& fieldName, const lArray1d& set, NodeManagerT& nodeManager, WeightFuncPtr weightFunc) const
+  void CopyFieldToNodes(const std::string& fieldName, const lArray1d& set, NodeManager& nodeManager, WeightFuncPtr weightFunc) const
      { CopyFieldToNodes<T>(fieldName, set, nodeManager,fieldName, weightFunc); }
 
   void SplitFace( const localIndex indexToSplit,
@@ -292,17 +284,17 @@ public:
 
   void ModifyToFaceMapsFromSplit( const lSet& newFaces,
                                   const lSet& modifiedFaces,
-                                  NodeManagerT& nodeManager,
+                                  NodeManager& nodeManager,
                                   EdgeManagerT& edgeManager,
-                                  ExternalFaceManagerT& externalFaceManager );
+                                  ExternalFaceManager& externalFaceManager );
 
 
-  void SetApertureFromRigidWall( const NodeManagerT& nodeManager );
+  void SetApertureFromRigidWall( const NodeManager& nodeManager );
 
 
   void WriteSiloMesh( SiloFile& siloFile,
                       const std::string& meshname,
-                      const NodeManagerT& nodeManager,
+                      const NodeManager& nodeManager,
                       const int cycleNum,
                       const realT problemTime,
                       const bool isRestart );
@@ -336,7 +328,6 @@ protected:
 public:
 
 
-  const localIndex& m_numFaces;
   OrderedVariableOneToManyRelation& m_toNodesRelation;
   OrderedVariableOneToManyRelation& m_toEdgesRelation;
   Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > > m_toElementsRelation;
@@ -367,7 +358,7 @@ private:
 /// The UnaryElementBooleanFunction is a function of the form:
 /// bool f(const ElementIdPair& )
 template<typename UnaryElementBooleanFunction>
-bool FaceManagerT::GetFirstMatchingElement(localIndex face, UnaryElementBooleanFunction criteria, ElementIdPair& match ){
+bool FaceManager::GetFirstMatchingElement(localIndex face, UnaryElementBooleanFunction criteria, ElementIdPair& match ){
   bool rv = false; 
   if( m_toElementsRelation[face].size() == 1 ) {
      match = m_toElementsRelation[face][0];
@@ -397,7 +388,7 @@ bool FaceManagerT::GetFirstMatchingElement(localIndex face, UnaryElementBooleanF
 /// Use GetFirstMatchingElement if you need to check if none of the elements meet a given criteria
 
 template<typename BinaryElementComparisonFunction>
-int FaceManagerT::GetMatchingElementIndex(localIndex face, BinaryElementComparisonFunction criteria){
+int FaceManager::GetMatchingElementIndex(localIndex face, BinaryElementComparisonFunction criteria){
   int i = -1; 
   if( m_toElementsRelation[face].size() == 1 ) {
      i = 0;
@@ -420,7 +411,7 @@ int FaceManagerT::GetMatchingElementIndex(localIndex face, BinaryElementComparis
  * 
  * 
  * @param weightFunctionPtr Pointer to a function of type 
- *         realT (const FaceManagerT&, localIndex faceId, NodeManagerT& , localIndex nodeId) 
+ *         realT (const FaceManager&, localIndex faceId, NodeManagerT& , localIndex nodeId)
  *  The function determines how to weigh each faces's contribution to the 
  *  nodal values.
  * 
@@ -429,16 +420,16 @@ int FaceManagerT::GetMatchingElementIndex(localIndex face, BinaryElementComparis
  *   nodeValue = \sum_{i=faces} w_{i} faceField_{i} / \sum_{j=faces} w_{j}  
 
 template<typename T, typename WeightFuncPtr>
-void FaceManagerT::CopyFieldToNodes(const std::string& faceFieldStr, 
+void FaceManager::CopyFieldToNodes(const std::string& faceFieldStr,
                                     NodeManagerT& nodeManager, const std::string& nodeFieldStr,
                                     WeightFuncPtr weightFunctionPtr) const{
 
   const Array1dT<T>& faceField = this->GetFieldData<T>(faceFieldStr);
   Array1dT<T>& nodeField = nodeManager.GetFieldData<T>(nodeFieldStr);
   nodeField = 0;
-  std::vector<realT> weights(nodeManager.m_numNodes,0.0);
+  std::vector<realT> weights(nodeManager.DataLengths(),0.0);
   
-  for(int f =0; f < m_numFaces; ++f){
+  for(int f =0; f < DataLengths(); ++f){
   	const lArray1d& faceNodeMap = m_FaceToNodeMap[f];
     for( localIndex a=0 ; a<faceNodeMap.size() ; ++a )
     {
@@ -449,14 +440,14 @@ void FaceManagerT::CopyFieldToNodes(const std::string& faceFieldStr,
     }
   }
   
-  for(int nd =0; nd < nodeManager.m_numNodes; ++nd){
+  for(int nd =0; nd < nodeManager.DataLengths(); ++nd){
   	if(weights[nd] != 0) nodeField[nd] /= weights[nd];
   }
 }
 
 
 template<typename T, typename WeightFuncPtr>
-void FaceManagerT::CopyFieldToNodes(const std::string& faceFieldStr, const lArray1d& set,
+void FaceManager::CopyFieldToNodes(const std::string& faceFieldStr, const lArray1d& set,
                                     NodeManagerT& nodeManager, const std::string& nodeFieldStr,
                                     WeightFuncPtr weightFunctionPtr) const{
 
@@ -493,4 +484,6 @@ void FaceManagerT::CopyFieldToNodes(const std::string& faceFieldStr, const lArra
   }
 }
  */
+
+}
 #endif /* FACEMANAGERT_H_ */

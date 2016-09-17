@@ -46,18 +46,18 @@
 #ifndef ELEMENTOBJECTT_H_
 #define ELEMENTOBJECTT_H_
 
-#include "../../../dataRepository/Group.hpp"
+#include "managers/ObjectManagerBase.hpp"
 #include "Common/Common.h"
 //#include "ObjectDataStructureBaseT.h"
 #include "StableTimeStep.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
+//#include "IO/ticpp/HierarchicalDataNode.h"
 #include "ObjectManagers/EnergyT.h"
 
 class IntegrationRuleT;
 class MaterialBaseParameterDataT;
 class MaterialBaseStateDataT;
 class MaterialBaseT;
-class NodeManagerT;
+class NodeManager;
 class FaceManagerT;
 class EdgeManagerT;
 class ElementRegionT;
@@ -129,60 +129,60 @@ public:
 
 
   void ModifyToElementMapsFromSplit( const lSet& modifiedElements ,
-                                     NodeManagerT& nodeManager,
+                                     NodeManager& nodeManager,
                                      FaceManagerT& faceManager );
 
   void UpdateExternalityFromSplit( const lSet& modifiedElements ,
-                                   NodeManagerT& nodeManager,
+                                   NodeManager& nodeManager,
                                    EdgeManagerT& edgeManager,
                                    FaceManagerT& faceManager );
 
 
 
-  int CalculateShapeFunctionDerivatives( const NodeManagerT& nodeManager );
+  int CalculateShapeFunctionDerivatives( const NodeManager& nodeManager );
 
 //  int CalculateShapeFunctionDerivativesCutElements(const NodeManagerT& nodeManager);
 
 
-  int CalculateVelocityGradients( const NodeManagerT& nodeManager, const int calcGroup = 0 );
+  int CalculateVelocityGradients( const NodeManager& nodeManager, const int calcGroup = 0 );
 
   int MaterialUpdate(const realT dt);
 
-  int CalculateSmallDeformationNodalForces( NodeManagerT& nodeManager ,
+  int CalculateSmallDeformationNodalForces( NodeManager& nodeManager ,
                                                             StableTimeStep& timeStep,
                                                             const realT dt );
-  int CalculateNodalForces( NodeManagerT& nodeManager ,
+  int CalculateNodalForces( NodeManager& nodeManager ,
                             StableTimeStep& timeStep,
                             const realT dt );
 
   int CalculateNodalForcesFromOneElement(const localIndex nodeID,
                                          const localIndex elemID,
-                                         NodeManagerT& nodeManager,
+                                         NodeManager& nodeManager,
                                          R1Tensor& fNode );
 
   realT ElementGDivBeta(const localIndex elemID);
 
   void CalculateNodalForceFromStress(const localIndex elemID,
-                                     const NodeManagerT& nodeManager,
+                                     const NodeManager& nodeManager,
                                      R2SymTensor& stress,
                                      Array1dT<R1Tensor>& fNode);
 
-  int ProcessElements(  NodeManagerT& nodeManager,
+  int ProcessElements(  NodeManager& nodeManager,
                         StableTimeStep& timeStep,
                         const realT dt  );
 
 
-  int CalculateNodalMasses( NodeManagerT& nodeManager );
+  int CalculateNodalMasses( NodeManager& nodeManager );
 
 
-  void SetIsAttachedToSendingGhostNode( const NodeManagerT& nodeManager );
+  void SetIsAttachedToSendingGhostNode( const NodeManager& nodeManager );
 
   template< typename T_indices >
   unsigned int PackElements( bufvector& buffer,
                              lSet& sendnodes,
                              lSet& sendfaces,
                              const T_indices& elementList,
-                             const NodeManagerT& nodeManager,
+                             const NodeManager& nodeManager,
                              const FaceManagerT& faceManager,
                              const bool packConnectivityToGlobal,
                              const bool packFields,
@@ -190,7 +190,7 @@ public:
                              const bool packSets  ) const;
 
   unsigned int UnpackElements( const char*& buffer,
-                               const NodeManagerT& nodeManager,
+                               const NodeManager& nodeManager,
                                const FaceManagerT& faceManager,
                                lArray1d& elementRegionReceiveLocalIndices,
                                const bool unpackConnectivityToLocal,
@@ -241,7 +241,7 @@ public:
                            const FaceManagerT& faceManager, 
                            std::set<localIndex>& neighbors) const;
                      
-  R1Tensor GetElementCenter(localIndex k, const NodeManagerT& nodeManager, const bool useReferencePos = false) const;
+  R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = false) const;
 
 
   void WriteSiloRegionMesh( SiloFile& siloFile,

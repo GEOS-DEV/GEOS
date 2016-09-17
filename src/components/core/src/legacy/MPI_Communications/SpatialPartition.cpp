@@ -1164,7 +1164,7 @@ void SpatialPartition::getPartitionGeometricalBoundary(R1Tensor& min, R1Tensor& 
   max = m_max;
 }
 
-void SpatialPartition::UpdatePartitionBoundingBox(NodeManagerT& nodeManager)
+void SpatialPartition::UpdatePartitionBoundingBox(NodeManager& nodeManager)
 {
   const iArray1d& isGhost = nodeManager.GetFieldData<FieldInfo::ghostRank>();
   m_xBoundingBoxMin = (*nodeManager.m_refposition)[0];

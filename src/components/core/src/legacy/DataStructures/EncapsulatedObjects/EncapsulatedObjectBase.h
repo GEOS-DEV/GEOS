@@ -8,7 +8,7 @@
 #ifndef ENCAPSULATEDOBJECTBASE_H_
 #define ENCAPSULATEDOBJECTBASE_H_
 
-#include "Common/Common.h"
+#include "legacy/Common/Common.h"
 
 #define EOB_Arrays 2
 

@@ -22,12 +22,12 @@ public:
   void Add(const std::string& fieldName,
            const std::string& tableName,
            ObjectDataStructureBaseT& ods,
-           NodeManagerT* nm);
+           NodeManager* nm);
 
   void Add(const std::string& fieldName,
            const realT scalar,
            ObjectDataStructureBaseT& ods,
-           NodeManagerT* nm);
+           NodeManager* nm);
 
   void Apply(const realT time = 0.0);
 
@@ -37,7 +37,7 @@ public:
   std::map<ObjectDataStructureBaseT*, lArray1d> m_managerFields;
 
   //Have to do something special for the finite element manager
-  NodeManagerT* m_feNodeManager;
+  NodeManager* m_feNodeManager;
   lSet m_feElementManagerIndices;
 };
 

@@ -51,7 +51,7 @@
 #include "IO/ticpp/HierarchicalDataNode.h"
 
 class FaceManagerT;
-class NodeManagerT;
+class NodeManager;
 class EdgeManagerT;
 
 class CartesianGridManagerT: public ObjectDataStructureBaseT

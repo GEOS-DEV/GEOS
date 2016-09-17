@@ -31,7 +31,7 @@ public:
                      PhysicalDomainT& domain );
 
   void GenerateNodesets( TICPP::HierarchicalDataNode& hdn,
-                         NodeManagerT& nodeManager );
+                         NodeManager& nodeManager );
 
   void GetElemToNodesRelationInBox ( const std::string& elementType,
                                      const int index[],

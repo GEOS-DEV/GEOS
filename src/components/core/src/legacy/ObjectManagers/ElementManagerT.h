@@ -63,7 +63,7 @@ public:
 
   void Initialize(  ){}
 
-  void SetIsAttachedToSendingGhostNode( const NodeManagerT& nodeManager )
+  void SetIsAttachedToSendingGhostNode( const NodeManager& nodeManager )
   {
     for( std::map< RegKeyType, ElementRegionT >::iterator i=m_ElementRegions.begin() ; i!=m_ElementRegions.end(); ++i )
     {
@@ -106,16 +106,16 @@ public:
                                       const int depth );
 
   void ModifyToElementMapsFromSplit( const std::map< std::string, lSet>& modifiedElements ,
-                                     NodeManagerT& nodeManager,
-                                     FaceManagerT& faceManager );
+                                     NodeManager& nodeManager,
+                                     FaceManager& faceManager );
 
   void UpdateExternalityFromSplit( const std::map< std::string, lSet>& modifiedElements ,
-                                     NodeManagerT& nodeManager,
+                                     NodeManager& nodeManager,
                                      EdgeManagerT& edgeManager,
-                                     FaceManagerT& faceManager );
+                                     FaceManager& faceManager );
 
   void InitializeFlowFaceRegion();
-  void GenerateFlowFaceRegion(FaceManagerT& faceManager);
+  void GenerateFlowFaceRegion(FaceManager& faceManager);
 
   using ObjectDataStructureBaseT::WriteSilo;
   using ObjectDataStructureBaseT::ReadSilo;
@@ -142,16 +142,16 @@ public:
                              lSet& sendnodes,
                              lSet& sendfaces,
                              const std::map<std::string,T_indices>& elementList,
-                             const NodeManagerT& nodeManager,
-                             const FaceManagerT& faceManager,
+                             const NodeManager& nodeManager,
+                             const FaceManager& faceManager,
                              const bool packConnectivityToGlobal,
                              const bool packFields,
                              const bool packMaps,
                              const bool packSets ) const;
 
   unsigned int UnpackElements( const bufvector& buffer,
-                               const NodeManagerT& nodeManager,
-                               const FaceManagerT& faceManager,
+                               const NodeManager& nodeManager,
+                               const FaceManager& faceManager,
                                std::map< std::string, lArray1d>& elementRegionReceiveLocalIndices,
                                const bool unpackConnectivityToLocal,
                                const bool unpackFields,
@@ -159,8 +159,8 @@ public:
                                const bool unpackSets );
 
   unsigned int UnpackElements( const char*& pbuffer,
-                               const NodeManagerT& nodeManager,
-                               const FaceManagerT& faceManager,
+                               const NodeManager& nodeManager,
+                               const FaceManager& faceManager,
                                std::map< std::string, lArray1d>& elementRegionReceiveLocalIndices,
                                const bool unpackConnectivityToLocal,
                                const bool unpackFields,

@@ -53,7 +53,7 @@
 class PhysicalDomainT;
 class ObjectDataStructureBaseT;
 class FaceManagerT;
-class NodeManagerT;
+class NodeManager;
 class DiscreteElementManagerT;
 class EllipsoidalDiscreteElementManagerT;
 class oBinStream;

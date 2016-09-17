@@ -41,8 +41,8 @@
 #ifndef MATERIALBASE_H_
 #define MATERIALBASE_H_
 
-#include "Utilities/GeometryUtilities.h"
-#include "Constitutive/ConstitutiveBase.h"
+#include "legacy/Utilities/GeometryUtilities.h"
+#include "legacy/Constitutive/ConstitutiveBase.h"
 
 /*
  * MaterialBase.h
