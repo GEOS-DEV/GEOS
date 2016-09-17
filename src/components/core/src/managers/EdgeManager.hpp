@@ -46,6 +46,7 @@
 #ifndef EDGEMANAGERT_H_
 #define EDGEMANAGERT_H_
 
+#include "legacy/ArrayT/bufvector.h"
 #include "ObjectManagerBase.hpp"
 
 
@@ -53,12 +54,13 @@ namespace geosx
 {
 class FaceManager;
 class NodeManager;
+class ElementManagerT;
 
-class EdgeManagerT: public ObjectDataStructureBaseT
+class EdgeManager: public ObjectManagerBase
 {
 public:
-  EdgeManagerT();
-  ~EdgeManagerT();
+  EdgeManager( ObjectManagerBase * const parent );
+  ~EdgeManager();
 
   void Initialize() {}
 
@@ -117,8 +119,8 @@ public:
   void SetLayersFromDomainBoundary(const NodeManager& nodeManager);
 
 
-  FixedOneToManyRelation& m_toNodesRelation;
-  UnorderedVariableOneToManyRelation& m_toFacesRelation;
+//  FixedOneToManyRelation& m_toNodesRelation;
+//  UnorderedVariableOneToManyRelation& m_toFacesRelation;
 
 };
 }

@@ -60,7 +60,7 @@ namespace geosx
 
 class ElementRegionT;
 class FaceManager;
-class EdgeManagerT;
+class EdgeManager;
 
 /**
  * @author Randolph Settgast
@@ -145,7 +145,7 @@ public:
                                       const std::map<globalIndex,localIndex>& faceGlobalToLocal );
 
 
-  void ModifyNodeToEdgeMapFromSplit( const EdgeManagerT& edgeManager,
+  void ModifyNodeToEdgeMapFromSplit( const EdgeManager& edgeManager,
                                      const lSet& newEdgeIndices,
                                      const lSet& modifiedEdgeIndices );
 
@@ -159,7 +159,7 @@ public:
   void AddToNodeToFaceMap( const FaceManager& faceManager,
                            const lArray1d& newFaceIndices );
 
-  void AddToNodeToEdgeMap( const EdgeManagerT& edgeManager,
+  void AddToNodeToEdgeMap( const EdgeManager& edgeManager,
                            const lArray1d& newEdgeIndices );
 
   /// get the current position of the node

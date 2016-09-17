@@ -66,7 +66,7 @@ namespace geosx
 class ElementRegionT;
 class NodeManager;
 class ElementManagerT;
-class EdgeManagerT;
+class EdgeManager;
 
 
 class FaceManager: public ObjectDataStructureBaseT
@@ -135,7 +135,7 @@ public:
   void FaceVector2D(const NodeManager& nodeManager, localIndex iFace, localIndex iNd, R1Tensor& v) ;
 
   void InFaceVectorNormalToEdge(const NodeManager& nodeManager,
-                                const EdgeManagerT& edgeManager,
+                                const EdgeManager& edgeManager,
                                 localIndex iFace,
                                 localIndex iEdge,
                                 R1Tensor& v) ;
@@ -143,7 +143,7 @@ public:
   template< typename T_indices >
   unsigned int PackFaces( const T_indices& sendfaces,
                           const NodeManager& nodeManager,
-                          const EdgeManagerT* const edgeManager,
+                          const EdgeManager* const edgeManager,
                           bufvector& buffer,
                           const bool packConnectivityToGlobal,
                           const bool packFields,
@@ -152,7 +152,7 @@ public:
 
   unsigned int UnpackFaces( const char*& buffer,
                             const NodeManager& nodeManager,
-                            const EdgeManagerT* const edgeManager,
+                            const EdgeManager* const edgeManager,
                             ExternalFaceManager* const externalFaceManager,
                             lArray1d& faceReceiveLocalIndices,
                             const bool unpackConnectivityToLocal,
@@ -285,7 +285,7 @@ public:
   void ModifyToFaceMapsFromSplit( const lSet& newFaces,
                                   const lSet& modifiedFaces,
                                   NodeManager& nodeManager,
-                                  EdgeManagerT& edgeManager,
+                                  EdgeManager& edgeManager,
                                   ExternalFaceManager& externalFaceManager );
 
 

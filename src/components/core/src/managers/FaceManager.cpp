@@ -49,24 +49,13 @@
 
 //#include "PhysicalDomainT.h"
 #include "NodeManager.hpp"
-#include "EdgeManagerT.h"
-//#include "IO/BinStream.h"
-//#include "Utilities/Utilities.h"
-//#include "ArrayT/Array3dT.h"
-
-//#include "BoundaryConditions/BoundaryConditions.h"
-
-//#include "ExternalFaceStructs.h"
-
-//#include "DataStructures/VectorFields/TempODS.h"
-
-//#include "Constitutive/CohesiveZone/CohesiveZoneFactory.h"
-//#include "Constitutive/Material/MaterialFactory.h"
 #include "legacy/Utilities/GeometryUtilities.h"
 
 #include <limits.h>
 
 #include "FaceManager.hpp"
+
+#include "EdgeManager.hpp"
 
 namespace geosx
 {
@@ -926,26 +915,26 @@ void FaceManager::EdgeVectors( const NodeManager& nodeManager, const localIndex 
   }
 }
 
-// Calculate a unit vector in the face and normal to the edge given
-void FaceManager::InFaceVectorNormalToEdge(const NodeManager& nodeManager,
-                                            const EdgeManagerT& edgeManager,
-                                            localIndex iFace,
-                                            localIndex iEdge,
-                                            R1Tensor& v)
-{
-  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
-
-  R1Tensor faceCenter, xEdge[2], prj;
-  FaceCenter(nodeManager, iFace, faceCenter);
-  xEdge[0] = refPosition[edgeManager.m_toNodesRelation(iEdge,0)];
-  xEdge[1] = refPosition[edgeManager.m_toNodesRelation(iEdge,1)];
-
-  realT ndist, udist, segmentLength;
-  GeometryUtilities::ProjectPointToLineSegment( xEdge[0], xEdge[1], faceCenter, ndist, udist, segmentLength, prj);
-  v = faceCenter;
-  v -=prj;
-  v.Normalize();
-}
+//// Calculate a unit vector in the face and normal to the edge given
+//void FaceManager::InFaceVectorNormalToEdge(const NodeManager& nodeManager,
+//                                            const EdgeManager& edgeManager,
+//                                            localIndex iFace,
+//                                            localIndex iEdge,
+//                                            R1Tensor& v)
+//{
+//  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+//
+//  R1Tensor faceCenter, xEdge[2], prj;
+//  FaceCenter(nodeManager, iFace, faceCenter);
+//  xEdge[0] = refPosition[edgeManager.m_toNodesRelation(iEdge,0)];
+//  xEdge[1] = refPosition[edgeManager.m_toNodesRelation(iEdge,1)];
+//
+//  realT ndist, udist, segmentLength;
+//  GeometryUtilities::ProjectPointToLineSegment( xEdge[0], xEdge[1], faceCenter, ndist, udist, segmentLength, prj);
+//  v = faceCenter;
+//  v -=prj;
+//  v.Normalize();
+//}
 
 
 /// Calculates the vector from node 0 to node 1
@@ -1752,7 +1741,7 @@ void FaceManager::SplitFace( const localIndex indexToSplit,
 void FaceManager::ModifyToFaceMapsFromSplit( const lSet& newFaces,
                                               const lSet& modifiedFaces,
                                               NodeManager& nodeManager,
-                                              EdgeManagerT& edgeManager,
+                                              EdgeManager& edgeManager,
                                               ExternalFaceManager& externalFaceManager )
 {
 
