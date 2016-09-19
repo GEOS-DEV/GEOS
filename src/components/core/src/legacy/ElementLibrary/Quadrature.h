@@ -45,7 +45,7 @@
  * @author white230
  */
 
-#include "Common/Common.h"
+#include "legacy/Common/Common.h"
 #include <cassert>
 
 /*

@@ -153,6 +153,13 @@ public:
     }
 
 
+    /// add a data field to a member
+    template< FieldKey FIELDKEY >
+    int AddKeyedDataField()
+    {
+      this->RegisterViewWrapper<typename Field<FIELDKEY>::Type>( Field<FIELDKEY>::Name() );
+      return 0;
+    }
 
 
     gArray1d& m_localToGlobalMap;
@@ -167,6 +174,9 @@ public:
     void ConstructSetFromSetAndMap( const lSet& inputSet,
                                     const Array1dT<lArray1d>& map,
                                     const std::string& newSetName );
+
+
+
 
 
   //**********************************************************************************************************************

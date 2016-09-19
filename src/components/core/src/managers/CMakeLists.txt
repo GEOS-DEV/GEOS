@@ -7,7 +7,8 @@ set(geosx_headers
     managers/CommandLineParser.hpp
     managers/DomainPartition.hpp
     managers/EdgeManager.hpp
-    managers/ElementManagerT.hpp
+    managers/ElementManager.hpp
+    managers/ElementRegionT.hpp
     managers/FaceManager.hpp
     managers/ObjectManagerBase.hpp
     managers/ProblemManager.hpp
@@ -21,7 +22,8 @@ set(geosx_core_sources
     managers/CommandLineParser.cpp
   	managers/DomainPartition.cpp
     managers/EdgeManager.cpp
-    managers/ElementManagerT.cpp
+    managers/ElementManager.cpp
+    managers/ElementRegionT.cpp
     managers/FaceManager.cpp
     managers/ObjectManagerBase.cpp
     managers/ProblemManager.cpp

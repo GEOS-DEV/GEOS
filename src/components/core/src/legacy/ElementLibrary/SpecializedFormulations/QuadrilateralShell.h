@@ -47,7 +47,7 @@
  */
 
 
-#include "ElementLibrary/FiniteElement.h"
+#include "legacy/ElementLibrary/FiniteElement.h"
 
 
 #ifndef QUADRILATERALSHELL_H_

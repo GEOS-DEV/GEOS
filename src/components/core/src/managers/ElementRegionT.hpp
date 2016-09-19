@@ -46,21 +46,20 @@
 #ifndef ELEMENTOBJECTT_H_
 #define ELEMENTOBJECTT_H_
 
-#include "managers/ObjectManagerBase.hpp"
-#include "Common/Common.h"
-//#include "ObjectDataStructureBaseT.h"
-#include "StableTimeStep.h"
-//#include "IO/ticpp/HierarchicalDataNode.h"
-#include "ObjectManagers/EnergyT.h"
+//#include "Common/Common.h"
+#include "ObjectManagerBase.hpp"
+//#include "StableTimeStep.h"
+#include "legacy/IO/ticpp/HierarchicalDataNode.h"
+#include "legacy/ObjectManagers/EnergyT.h"
+#include "legacy/DataStructures/InterObjectRelation.h"
+#include "legacy/ArrayT/bufvector.h"
+#include "FaceManager.hpp"
 
 class IntegrationRuleT;
 class MaterialBaseParameterDataT;
 class MaterialBaseStateDataT;
 class MaterialBaseT;
-class NodeManager;
-class FaceManagerT;
-class EdgeManagerT;
-class ElementRegionT;
+class EdgeManager;
 class PhysicalDomainT;
 
 class FiniteElementBase;
@@ -68,6 +67,8 @@ class Quadrature ;
 class Basis;
 
 class MaterialBase;
+
+class StableTimeStep;
 
 namespace geosx
 {
@@ -78,7 +79,23 @@ class ElementRegionT : public ObjectDataStructureBaseT
 {
 public:
 
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
 
+  static string CatalogName()
+  {
+    return "Region";
+  }
+
+  string getName() const override final
+  {
+    return ElementRegionT::CatalogName();
+  }
+
+
+  ///@}
 
   static const char ElementObjectToElementManager[];
   static const char ElementToNode[];
@@ -92,8 +109,9 @@ public:
 //  static const char ElementToCrackToVertexNodes[];
 //  static const char ElementToCracks[];
 
+  ElementRegionT() = delete;
 
-  ElementRegionT( ObjectManangerBase * const parent );
+  ElementRegionT( ObjectManagerBase * const parent );
 
 
   ElementRegionT(const ElementRegionT& init);
@@ -131,12 +149,12 @@ public:
 
   void ModifyToElementMapsFromSplit( const lSet& modifiedElements ,
                                      NodeManager& nodeManager,
-                                     FaceManagerT& faceManager );
+                                     FaceManager& faceManager );
 
   void UpdateExternalityFromSplit( const lSet& modifiedElements ,
                                    NodeManager& nodeManager,
-                                   EdgeManagerT& edgeManager,
-                                   FaceManagerT& faceManager );
+                                   EdgeManager& edgeManager,
+                                   FaceManager& faceManager );
 
 
 
@@ -184,7 +202,7 @@ public:
                              lSet& sendfaces,
                              const T_indices& elementList,
                              const NodeManager& nodeManager,
-                             const FaceManagerT& faceManager,
+                             const FaceManager& faceManager,
                              const bool packConnectivityToGlobal,
                              const bool packFields,
                              const bool packMaps,
@@ -192,7 +210,7 @@ public:
 
   unsigned int UnpackElements( const char*& buffer,
                                const NodeManager& nodeManager,
-                               const FaceManagerT& faceManager,
+                               const FaceManager& faceManager,
                                lArray1d& elementRegionReceiveLocalIndices,
                                const bool unpackConnectivityToLocal,
                                const bool unpackFields,
@@ -239,7 +257,7 @@ public:
                      lArray1d& nodeIndicies ) const;
 
   void GetElementNeighbors(localIndex el, 
-                           const FaceManagerT& faceManager, 
+                           const FaceManager& faceManager,
                            std::set<localIndex>& neighbors) const;
                      
   R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = false) const;
@@ -269,6 +287,7 @@ public:
                     localIndex newIndices[2],
                     const bool forceSplit );
 
+  void UpdateElementsVolume( PhysicalDomainT& domain );
 
   std::string m_regionName;
   int m_regionNumber;

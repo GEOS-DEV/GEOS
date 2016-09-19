@@ -40,9 +40,9 @@
 #ifndef GAUSS_QUADRATURE_H
 #define GAUSS_QUADRATURE_H
 
-#include "Common/Common.h"
-#include "ElementLibrary/Quadrature.h"
-#include "Utilities/StructuredGridUtilities.h"
+#include "legacy/Common/Common.h"
+#include "legacy/ElementLibrary/Quadrature.h"
+#include "legacy/Utilities/StructuredGridUtilities.h"
 
 #include <cassert>
 

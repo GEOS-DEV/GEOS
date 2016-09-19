@@ -47,6 +47,7 @@
 #ifndef NODEMANAGERT_H_
 #define NODEMANAGERT_H_
 
+#include "ElementManager.hpp"
 #include "ObjectManagerBase.hpp"
 #include <string.h>
 
@@ -58,7 +59,7 @@ class SiloFile;
 namespace geosx
 {
 
-class ElementRegionT;
+class ElementRegion;
 class FaceManager;
 class EdgeManager;
 
@@ -131,10 +132,10 @@ public:
   void CopyNode( const int destination, const int source );
 
   /// construct the nodeToElementMap using data in elementManager
-  void ConstructNodeToElementMap( const ElementManagerT& elementManager );
+  void ConstructNodeToElementMap( const ElementManager& elementManager );
 
   /// construct the nodeToElementMap using data in elementManager
-  void AddToNodeToElementMap( const ElementManagerT& elementManager,
+  void AddToNodeToElementMap( const ElementManager& elementManager,
                                   const std::map<std::string,lArray1d>& newElementIndices );
 
   /// construct nodeToFaceMap using data in the faceManager

@@ -45,10 +45,10 @@
  * @author white230
  */
 
-#include "Common/Common.h"
-#include "ElementLibrary/Basis.h"
-#include "ElementLibrary/Quadrature.h"
-#include "ElementLibrary/FiniteElementBase.h"
+#include "legacy/Common/Common.h"
+#include "legacy/ElementLibrary/Basis.h"
+#include "legacy/ElementLibrary/Quadrature.h"
+#include "legacy/ElementLibrary/FiniteElementBase.h"
 
 /**
  * Class representing a generic finite element.  Its constructor

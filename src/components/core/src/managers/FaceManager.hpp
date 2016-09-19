@@ -65,7 +65,7 @@ namespace geosx
 {
 class ElementRegionT;
 class NodeManager;
-class ElementManagerT;
+class ElementManager;
 class EdgeManager;
 
 
@@ -87,9 +87,9 @@ public:
     return firstNewGlobalIndex;
   }
 
-  void BuildFaces( const NodeManager& nodeManager, const ElementManagerT& elemManager );
+  void BuildFaces( const NodeManager& nodeManager, const ElementManager& elemManager );
 
-  void AddToFaceToElementMap( const ElementManagerT& elementManager,
+  void AddToFaceToElementMap( const ElementManager& elementManager,
                               const std::map<std::string,lArray1d>& newElementIndices );
 
 //  void DetermineGlobalFaceNumbers( const NodeManagerT& nodeManager );
@@ -223,22 +223,22 @@ public:
 
   void PreSeparateFaces( const std::string& setname, const int setState );
 
-  void UpdateRuptureStates( const ElementManagerT& elementManager,
+  void UpdateRuptureStates( const ElementManager& elementManager,
                             const NodeManager& nodeManager,
                             const std::string& separableSet,
                             const realT failval );
 
-  void UpdateRuptureState( const ElementManagerT& elementManager,
+  void UpdateRuptureState( const ElementManager& elementManager,
                             const NodeManager& nodeManager,
                             const localIndex kf,
                             const realT failval );
 
 
-  void CalculateStressOnFace( const ElementManagerT& elementManager,
+  void CalculateStressOnFace( const ElementManager& elementManager,
                             const NodeManager& nodeManager,
                             const localIndex kf);
 
-  void CalculateStressOnFace( const ElementManagerT& elementManager,
+  void CalculateStressOnFace( const ElementManager& elementManager,
                             const NodeManager& nodeManager,
                             const localIndex kf,
                             realT& stressNOnFace,
@@ -344,7 +344,7 @@ public:
 #endif
 
 
-  ElementManagerT* m_elemManagerHACK;
+  ElementManager* m_elemManagerHACK;
 
   int m_writeArbitraryPolygon;
 

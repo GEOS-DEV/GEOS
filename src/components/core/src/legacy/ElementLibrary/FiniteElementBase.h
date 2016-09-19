@@ -8,7 +8,7 @@
 #ifndef FINITEELEMENTBASE_H_
 #define FINITEELEMENTBASE_H_
 
-#include "Common/Common.h"
+#include "legacy/Common/Common.h"
 #include <assert.h>
 
 class FiniteElementBase

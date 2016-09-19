@@ -45,9 +45,6 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 //#include "ExternalFaceManager.h"
-#include "ElementManagerT.hpp"
-
-//#include "PhysicalDomainT.h"
 #include "NodeManager.hpp"
 #include "legacy/Utilities/GeometryUtilities.h"
 
@@ -56,6 +53,7 @@
 #include "FaceManager.hpp"
 
 #include "EdgeManager.hpp"
+#include "ElementManager.hpp"
 
 namespace geosx
 {
@@ -97,7 +95,7 @@ FaceManager::~FaceManager()
 
 }
 
-void FaceManager::BuildFaces( const NodeManager& nodeManager, const ElementManagerT& elementManager )
+void FaceManager::BuildFaces( const NodeManager& nodeManager, const ElementManager& elementManager )
 {
 
   lArray1d tempNodeList;
@@ -108,7 +106,7 @@ void FaceManager::BuildFaces( const NodeManager& nodeManager, const ElementManag
 
 
 
-  for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::const_iterator elementRegionIter = elementManager.m_ElementRegions.begin() ;
+  for( std::map< ElementManager::RegKeyType, ElementRegionT >::const_iterator elementRegionIter = elementManager.m_ElementRegions.begin() ;
        elementRegionIter != elementManager.m_ElementRegions.end() ;
        ++elementRegionIter )
   {
@@ -1271,7 +1269,7 @@ void FaceManager::ConnectivityFromGlobalToLocal( const lSet& indices,
 
 
 
-void FaceManager::AddToFaceToElementMap( const ElementManagerT& elementManager,
+void FaceManager::AddToFaceToElementMap( const ElementManager& elementManager,
                                           const std::map<std::string,lArray1d>& newElementIndices )
 {
   // because the faceToElementMap is an odd creature, it is not managed by ObjectDataStructureBaseT...so we must
@@ -1279,7 +1277,7 @@ void FaceManager::AddToFaceToElementMap( const ElementManagerT& elementManager,
   m_toElementsRelation.resize(DataLengths());
 
   // iterate over all element regions
-  for( std::map<ElementManagerT::RegKeyType, ElementRegionT>::const_iterator ielemRegion=elementManager.m_ElementRegions.begin() ;
+  for( std::map<ElementManager::RegKeyType, ElementRegionT>::const_iterator ielemRegion=elementManager.m_ElementRegions.begin() ;
        ielemRegion!=elementManager.m_ElementRegions.end() ; ++ielemRegion )
   {
     // the element region is the mapped value of the iterator

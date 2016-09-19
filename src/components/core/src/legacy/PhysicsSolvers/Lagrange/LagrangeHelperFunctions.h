@@ -9,8 +9,8 @@
 #define LAGRANGEHELPERFUNCTIONS_H_
 
 
-#include "Common/Common.h"
-#include "ObjectManagers/DiscreteElementManagerT.h"
+#include "legacy/Common/Common.h"
+//#include "legacy/ObjectManagers/DiscreteElementManagerT.h"
 
 namespace LagrangeHelperFunctions
 {
@@ -27,10 +27,10 @@ namespace LagrangeHelperFunctions
                                const realT& damping = 0.0,
                                const realT& stiffDamping = 0.0 );
 
-  void RotationalPointUpdatePart1(DiscreteElementManagerBaseT& discreteElementManager,
-                                  const realT& time, const realT& dt);
-
-  void RotationalPointUpdatePart1b(DiscreteElementManagerT& discreteElementManager);
+//  void RotationalPointUpdatePart1(DiscreteElementManagerBaseT& discreteElementManager,
+//                                  const realT& time, const realT& dt);
+//
+//  void RotationalPointUpdatePart1b(DiscreteElementManagerT& discreteElementManager);
 
 
   void RotationalPointUpdatePart2(ObjectDataStructureBaseT& objectManager,

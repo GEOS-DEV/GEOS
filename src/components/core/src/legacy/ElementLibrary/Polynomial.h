@@ -45,7 +45,7 @@
 #ifndef POLYNOMIAL_H
 #define POLYNOMIAL_H
 
-#include "Common/Common.h"
+#include "legacy/Common/Common.h"
 
 /*! A class to represent polynomial objects of arbitrary order. */
 
