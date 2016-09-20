@@ -6,7 +6,8 @@
  */
 
 #include "MeshUtilities.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
+
+#include "../IO/ticpp/HierarchicalDataNode.h"
 #include "ObjectManagers/PhysicalDomainT.h"
 #include "SimpleGeometricObjects.h"
 

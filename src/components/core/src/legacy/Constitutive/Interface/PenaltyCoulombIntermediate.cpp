@@ -50,11 +50,10 @@
 #include "Utilities/GeometryUtilities.h"
 #include "Utilities/FindRoots.h"
 #include "Utilities/MaterialUtilities.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
-
 #include "PenaltyCoulombIntermediate.h"
 #include <typeinfo>
 #include <assert.h>
+#include "../../IO/ticpp/HierarchicalDataNode.h.old"
 
 PenaltyCoulombIntermediate::PenaltyCoulombIntermediate( const int paramSize, const int stateSize ):
 InterfaceBase( paramSize, stateSize )

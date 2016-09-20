@@ -49,7 +49,7 @@
 //#include "Common/Common.h"
 #include "ObjectManagerBase.hpp"
 //#include "StableTimeStep.h"
-#include "legacy/IO/ticpp/HierarchicalDataNode.h"
+//#include "legacy/IO/ticpp/HierarchicalDataNode.h"
 #include "legacy/ObjectManagers/EnergyT.h"
 #include "legacy/DataStructures/InterObjectRelation.h"
 #include "legacy/ArrayT/bufvector.h"
@@ -124,8 +124,8 @@ public:
   virtual void DeserializeObjectField(const std::string& ifield, const rArray1d& field);
   virtual void DeserializeObjectFields(const sArray1d& names, const Array1dT<rArray1d>& fields);
   
-  void ReadXML( TICPP::HierarchicalDataNode* const hdn,
-                const bool isRestart );
+//  void ReadXML( TICPP::HierarchicalDataNode* const hdn,
+//                const bool isRestart );
 
   globalIndex resize( const localIndex size, const bool assignGlobals=false );
 

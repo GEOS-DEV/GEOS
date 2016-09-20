@@ -9,10 +9,10 @@
 #define MESHGENERATOR_H_
 
 #include "IO/ticpp/TinyXMLParser.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
 #include "MPI_Communications/SpatialPartition.h"
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
+#include "../legacy/IO/ticpp/HierarchicalDataNode.h.old"
 
 
 

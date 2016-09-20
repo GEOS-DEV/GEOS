@@ -50,9 +50,8 @@
 #include "Utilities/GeometryUtilities.h"
 #include "Utilities/FindRoots.h"
 #include "Utilities/MaterialUtilities.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
-
 #include "CohesiveZoneBase.h"
+#include "../../IO/ticpp/HierarchicalDataNode.h.old"
 
 CohesiveZoneBase::CohesiveZoneBase( const int paramSize, const int stateSize ):
 ConstitutiveBase(),

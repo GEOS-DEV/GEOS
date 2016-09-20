@@ -50,13 +50,12 @@
 #include "Utilities/GeometryUtilities.h"
 #include "Utilities/FindRoots.h"
 #include "Utilities/MaterialUtilities.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
-
 #include "Hertzian.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
 #include "Constitutive/Interface/InterfaceFactory.h"
 #include <typeinfo>
 #include <assert.h>
+#include "../../IO/ticpp/HierarchicalDataNode.h.old"
+#include "../../IO/ticpp/HierarchicalDataNode.h.old"
 
 Hertzian::Hertzian( ):
 HertzianIntermediate( sizeof(ParameterClass), sizeof(StateClass) )

@@ -212,6 +212,8 @@ public:
 //      *it = iptr[a];
 //  }
 
+  typedef string RegKeyType ;
+  std::map<RegKeyType, ElementRegionT> m_ElementRegions;
 
 private:
   ElementManager( const ElementManager& );

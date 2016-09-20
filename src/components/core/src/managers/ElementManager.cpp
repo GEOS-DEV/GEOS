@@ -50,8 +50,8 @@
 //#include "legacy/IO/BinStream.h"
 #include <map>
 #include <vector>
-#include "legacy/Constitutive/Material/MaterialFactory.h"
-#include "legacy/ArrayT/ArrayT.h"
+//#include "legacy/Constitutive/Material/MaterialFactory.h"
+//#include "legacy/ArrayT/ArrayT.h"
 
 namespace geosx
 {
@@ -67,79 +67,24 @@ ElementManager::~ElementManager()
 }
 
 
-globalIndex ElementManager::resize( const lvector& numElements,
-                                     const sArray1d& elementRegionNames,
-                                     const sArray1d& elementTypes )
-{
-  m_numElems = 0;
-
-  if( numElements.size() != elementRegionNames.size() || numElements.size() != elementTypes.size() )
-  {
-    throw GPException( "ElementManagerT::resize(): size mismatch");
-  }
-
-  std::map< std::string, std::pair< std::string,localIndex> > regionData;
-  const lvector::size_type size=numElements.size();
-  for( lvector::size_type k=0 ; k<size ; ++k )
-  {
-    localIndex nelem = 0;
-    if( regionData.find( elementRegionNames[k] ) != regionData.end() )
-      nelem = regionData[ elementRegionNames[k] ].second;
-    regionData[ elementRegionNames[k] ] = std::make_pair( elementTypes[k], nelem + numElements[k] );
-  }
-
-
-  for( std::map< std::string, std::pair< std::string,localIndex> >::iterator iterRegion=regionData.begin() ; iterRegion!=regionData.end() ; ++iterRegion )
-  {
-    const std::string regionName = iterRegion->first;
-    const std::string elemType = iterRegion->second.first;
-    const localIndex numElems = iterRegion->second.second;
-    ElementRegionT* const elemRegion = stlMapLookupPointer(m_ElementRegions,regionName);
-
-    if( elemRegion==NULL )
-    {
-      m_regionIndexToKey.push_back(regionName);
-      const size_t regionNumber = m_ElementRegions.size();
-      m_ElementRegions.insert( std::pair<std::string,ElementRegionT>(regionName,ElementRegionT()) );
-      m_ElementRegions[regionName].m_regionName = regionName;
-      m_ElementRegions[regionName].m_regionNumber = regionNumber;
-    }
-    m_ElementRegions[regionName].m_elementGeometryID = elemType;
-    m_ElementRegions[regionName].SetGeometryBasedVariables();
-    m_ElementRegions[regionName].resize(numElems);
-
-
-  }
-
-  // Fu: Calculate the total number of element separately will allow only resizing one region without passing the other regions in.
-  for( std::map< RegKeyType, ElementRegionT >::iterator iter=m_ElementRegions.begin() ; iter!=m_ElementRegions.end() ; ++iter)
-  {
-    m_numElems += iter->second.m_numElems;
-  }
-
-
-  const globalIndex firstNewGlobalIndex = ObjectDataStructureBaseT::resize(m_numElems, false);
-
-  return firstNewGlobalIndex;
-}
 
 void ElementManager::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* const referenceObject )
 {
-  for( std::map< RegKeyType, ElementRegionT >::iterator elementRegion=m_ElementRegions.begin() ;
-      elementRegion!=m_ElementRegions.end(); ++elementRegion )
-  {
-    elementRegion->second.SetDomainBoundaryObjects(referenceObject);
-  }
+//  for( std::map< RegKeyType, ElementRegionT >::iterator elementRegion=m_ElementRegions.begin() ;
+//      elementRegion!=m_ElementRegions.end(); ++elementRegion )
+//  {
+//    elementRegion->second.SetDomainBoundaryObjects(referenceObject);
+//  }
 }
 
 void ElementManager::ResetGlobalToLocalMap( )
 {
-  for( std::map< RegKeyType, ElementRegionT >::iterator elementRegion=m_ElementRegions.begin() ;
-      elementRegion!=m_ElementRegions.end(); ++elementRegion )
-  {
-    SLIC_ERROR("uninplemented");
-//    elementRegion->second.ResetGlobalToLocalMap();
-  }
+//  for( std::map< RegKeyType, ElementRegionT >::iterator elementRegion=m_ElementRegions.begin() ;
+//      elementRegion!=m_ElementRegions.end(); ++elementRegion )
+//  {
+//    SLIC_ERROR("uninplemented");
+////    elementRegion->second.ResetGlobalToLocalMap();
+//  }
 }
 
 /*
@@ -263,42 +208,42 @@ void ElementManager::ConstructListOfIndexesFromMap( const Array1dT< std::set< st
 
 
 
-
-  for( std::map< RegKeyType, ElementRegionT >::const_iterator i=m_ElementRegions.begin() ; i!=m_ElementRegions.end() ; ++i )
-  {
-    localIndexes[i->first];
-  }
-
-  // loop over all nodes in list
-  for( lSet::const_iterator nodeIndex=nodesInDepth.begin() ; nodeIndex!=nodesInDepth.end() ; ++nodeIndex )
-  {
-
-    // now that we have the node, we look for every element attached to it
-    for( std::set< std::pair<ElementRegionT*,localIndex> >::const_iterator elementPair=toElementMap[*nodeIndex].begin() ;
-        elementPair!=toElementMap[*nodeIndex].end() ;
-        ++elementPair )
-    {
-      const ElementRegionT& elemRegion = *(elementPair->first);
-      const localIndex elemIndex = elementPair->second;
-      // add the element to the map
-      localIndexes[elemRegion.m_regionName].push_back( elemIndex );
-    }
-  }
-
-
-  // remove duplicate entries
-  for( std::map< std::string, lArray1d>::iterator localPair=localIndexes.begin() ; localPair!=localIndexes.end() ; ++localPair )
-  {
-    lArray1d& objectList = localPair->second;
-
-    // sort the entries
-    std::sort(objectList.begin(),objectList.end());
-    // now remove the duplicates
-    lArray1d::iterator iend = std::unique(objectList.begin(),objectList.end());
-    objectList.resize( iend - objectList.begin() );
-
-
-  }
+//
+//  for( std::map< RegKeyType, ElementRegionT >::const_iterator i=m_ElementRegions.begin() ; i!=m_ElementRegions.end() ; ++i )
+//  {
+//    localIndexes[i->first];
+//  }
+//
+//  // loop over all nodes in list
+//  for( lSet::const_iterator nodeIndex=nodesInDepth.begin() ; nodeIndex!=nodesInDepth.end() ; ++nodeIndex )
+//  {
+//
+//    // now that we have the node, we look for every element attached to it
+//    for( std::set< std::pair<ElementRegionT*,localIndex> >::const_iterator elementPair=toElementMap[*nodeIndex].begin() ;
+//        elementPair!=toElementMap[*nodeIndex].end() ;
+//        ++elementPair )
+//    {
+//      const ElementRegionT& elemRegion = *(elementPair->first);
+//      const localIndex elemIndex = elementPair->second;
+//      // add the element to the map
+//      localIndexes[elemRegion.m_regionName].push_back( elemIndex );
+//    }
+//  }
+//
+//
+//  // remove duplicate entries
+//  for( std::map< std::string, lArray1d>::iterator localPair=localIndexes.begin() ; localPair!=localIndexes.end() ; ++localPair )
+//  {
+//    lArray1d& objectList = localPair->second;
+//
+//    // sort the entries
+//    std::sort(objectList.begin(),objectList.end());
+//    // now remove the duplicates
+//    lArray1d::iterator iend = std::unique(objectList.begin(),objectList.end());
+//    objectList.resize( iend - objectList.begin() );
+//
+//
+//  }
 }
 
 template< typename T_indices >
@@ -314,26 +259,26 @@ unsigned int ElementManager::PackElements( bufvector& buffer,
                                             const bool packSets ) const
 {
   unsigned int sizeOfPacked = 0;
-
-
-  int numRegions = elementList.size();
-
-  sizeOfPacked += buffer.Pack( numRegions );
-
-  for( typename std::map<std::string,T_indices>::const_iterator ilist=elementList.begin() ; ilist!=elementList.end() ; ++ilist )
-  {
-    const std::string& regionName = ilist->first;
-    const T_indices& list = ilist->second;
-
-    const ElementRegionT& elemRegion = stlMapLookup( m_ElementRegions, regionName, "ElementManagerT::PackElements()" );
-
-
-    sizeOfPacked += buffer.Pack(regionName);
-
-
-
-    sizeOfPacked += elemRegion.PackElements( buffer, sendnodes, sendfaces, list, nodeManager, faceManager, packConnectivityToGlobal, packFields, packMaps, packSets );
-  }
+//
+//
+//  int numRegions = elementList.size();
+//
+//  sizeOfPacked += buffer.Pack( numRegions );
+//
+//  for( typename std::map<std::string,T_indices>::const_iterator ilist=elementList.begin() ; ilist!=elementList.end() ; ++ilist )
+//  {
+//    const std::string& regionName = ilist->first;
+//    const T_indices& list = ilist->second;
+//
+//    const ElementRegionT& elemRegion = stlMapLookup( m_ElementRegions, regionName, "ElementManagerT::PackElements()" );
+//
+//
+//    sizeOfPacked += buffer.Pack(regionName);
+//
+//
+//
+//    sizeOfPacked += elemRegion.PackElements( buffer, sendnodes, sendfaces, list, nodeManager, faceManager, packConnectivityToGlobal, packFields, packMaps, packSets );
+//  }
 
   return sizeOfPacked ;
 
@@ -373,26 +318,26 @@ unsigned int ElementManager::UnpackElements( const char*& pbuffer,
 
   sizeOfUnpacked += bufvector::Unpack( pbuffer, numRegions );
 
-  for( int r=0 ; r<numRegions ; ++r )
-  {
-    std::string regionName;
-    sizeOfUnpacked += bufvector::Unpack( pbuffer, regionName );
-
-    ElementRegionT& elementRegion = this->m_ElementRegions[regionName];
-
-    elementRegion.UnpackElements( pbuffer, nodeManager, faceManager,
-                                  elementRegionReceiveLocalIndices[regionName],
-                                  unpackConnectivityToLocal, unpackFields, unpackMaps, unpackSets );
-  }
-
-  m_numElems = 0;
-  for( std::map< RegKeyType, ElementRegionT >::const_iterator i=m_ElementRegions.begin() ;
-       i!=m_ElementRegions.end() ; ++i )
-  {
-    const ElementRegionT& elementRegion = i->second;
-    m_numElems += elementRegion.m_numElems;
-
-  }
+//  for( int r=0 ; r<numRegions ; ++r )
+//  {
+//    std::string regionName;
+//    sizeOfUnpacked += bufvector::Unpack( pbuffer, regionName );
+//
+//    ElementRegionT& elementRegion = this->m_ElementRegions[regionName];
+//
+//    elementRegion.UnpackElements( pbuffer, nodeManager, faceManager,
+//                                  elementRegionReceiveLocalIndices[regionName],
+//                                  unpackConnectivityToLocal, unpackFields, unpackMaps, unpackSets );
+//  }
+//
+//  m_numElems = 0;
+//  for( std::map< RegKeyType, ElementRegionT >::const_iterator i=m_ElementRegions.begin() ;
+//       i!=m_ElementRegions.end() ; ++i )
+//  {
+//    const ElementRegionT& elementRegion = i->second;
+//    m_numElems += elementRegion.m_numElems;
+//
+//  }
 
   return sizeOfUnpacked ;
 
@@ -410,9 +355,9 @@ void ElementManager::ConnectivityFromGlobalToLocal( const std::map< std::string,
     const std::string& regionName = iter->first;
     const lSet& list = iter->second;
 
-    ElementRegionT& elemRegion = stlMapLookup( m_ElementRegions, regionName );
-
-    elemRegion.ConnectivityFromGlobalToLocal( list, nodeGlobalToLocal, faceGlobalToLocal );
+//    ElementRegionT& elemRegion = stlMapLookup( m_ElementRegions, regionName );
+//
+//    elemRegion.ConnectivityFromGlobalToLocal( list, nodeGlobalToLocal, faceGlobalToLocal );
   }
 
 }
@@ -422,19 +367,19 @@ void ElementManager::ModifyToElementMapsFromSplit( const std::map< std::string, 
                                                    NodeManager& nodeManager,
                                                    FaceManager& faceManager )
 {
-  for( std::map< RegKeyType, ElementRegionT >::iterator i=m_ElementRegions.begin() ; i!=m_ElementRegions.end() ; ++i )
-  {
-    const std::string& regionName = i->first;
-    ElementRegionT& elementRegion = i->second;
-
-    const std::map< std::string, lSet>::const_iterator iter = modifiedElements.find( regionName );
-
-    if( iter!=modifiedElements.end() )
-    {
-      const lSet& modifiedElementSet = iter->second;
-      elementRegion.ModifyToElementMapsFromSplit( modifiedElementSet , nodeManager, faceManager );
-    }
-  }
+//  for( std::map< RegKeyType, ElementRegionT >::iterator i=m_ElementRegions.begin() ; i!=m_ElementRegions.end() ; ++i )
+//  {
+//    const std::string& regionName = i->first;
+//    ElementRegionT& elementRegion = i->second;
+//
+//    const std::map< std::string, lSet>::const_iterator iter = modifiedElements.find( regionName );
+//
+//    if( iter!=modifiedElements.end() )
+//    {
+//      const lSet& modifiedElementSet = iter->second;
+//      elementRegion.ModifyToElementMapsFromSplit( modifiedElementSet , nodeManager, faceManager );
+//    }
+//  }
 }
 
 void ElementManager::UpdateExternalityFromSplit( const std::map< std::string, lSet>& modifiedElements ,
@@ -442,19 +387,19 @@ void ElementManager::UpdateExternalityFromSplit( const std::map< std::string, lS
                                                   EdgeManager& edgeManager,
                                                   FaceManager& faceManager )
 {
-  for( std::map< RegKeyType, ElementRegionT >::iterator i=m_ElementRegions.begin() ; i!=m_ElementRegions.end() ; ++i )
-  {
-    const std::string& regionName = i->first;
-    ElementRegionT& elementRegion = i->second;
-
-    const std::map< std::string, lSet>::const_iterator iter = modifiedElements.find( regionName );
-
-    if( iter!=modifiedElements.end() )
-    {
-      const lSet& modifiedElementSet = iter->second;
-      elementRegion.UpdateExternalityFromSplit( modifiedElementSet , nodeManager, edgeManager, faceManager );
-    }
-  }
+//  for( std::map< RegKeyType, ElementRegionT >::iterator i=m_ElementRegions.begin() ; i!=m_ElementRegions.end() ; ++i )
+//  {
+//    const std::string& regionName = i->first;
+//    ElementRegionT& elementRegion = i->second;
+//
+//    const std::map< std::string, lSet>::const_iterator iter = modifiedElements.find( regionName );
+//
+//    if( iter!=modifiedElements.end() )
+//    {
+//      const lSet& modifiedElementSet = iter->second;
+//      elementRegion.UpdateExternalityFromSplit( modifiedElementSet , nodeManager, edgeManager, faceManager );
+//    }
+//  }
 }
 
 
@@ -466,33 +411,33 @@ void ElementManager::InitializeFlowFaceRegion()
   sArray1d elementTypes;
   std::string type0=" ";
   localIndex nRegion = 0;
-  for( std::map< RegKeyType, ElementRegionT >::iterator iter=m_ElementRegions.begin() ; iter!=m_ElementRegions.end() ; ++iter)
-  {
-    nRegion++;
-//    numElements.push_back(0);
-//    elementRegionNames.push_back(iter->first);
-//    elementTypes.push_back( iter->second.m_elementGeometryID);
-
-    if ( nRegion > 1 && iter->second.m_elementGeometryID != type0 && (type0 == "C3D4" || type0 == "C3D8"))
-      throw GPException( "Element types in multiple 3D solid regions are inconsistent.  This is not allowed");
-      // For 3D problem, the element regions must have the same type; we can mix 2D regions
-    type0 = iter->second.m_elementGeometryID;
-  }
-  numElements.push_back(0);
-  elementRegionNames.push_back("FlowFaceRegion");
-
-  if (type0 == "C3D4")
-  {
-    elementTypes.push_back("TRSH");
-  }
-  else if (type0 == "C3D8")
-  {
-    elementTypes.push_back("S4R");
-  }
-  else
-  {
-    throw GPException( "Flow faces other than triangles and quads are currently not implemented. Flow face regions are current not supported for prisms.");
-  }
+//  for( std::map< RegKeyType, ElementRegionT >::iterator iter=m_ElementRegions.begin() ; iter!=m_ElementRegions.end() ; ++iter)
+//  {
+//    nRegion++;
+////    numElements.push_back(0);
+////    elementRegionNames.push_back(iter->first);
+////    elementTypes.push_back( iter->second.m_elementGeometryID);
+//
+//    if ( nRegion > 1 && iter->second.m_elementGeometryID != type0 && (type0 == "C3D4" || type0 == "C3D8"))
+//      throw GPException( "Element types in multiple 3D solid regions are inconsistent.  This is not allowed");
+//      // For 3D problem, the element regions must have the same type; we can mix 2D regions
+//    type0 = iter->second.m_elementGeometryID;
+//  }
+//  numElements.push_back(0);
+//  elementRegionNames.push_back("FlowFaceRegion");
+//
+//  if (type0 == "C3D4")
+//  {
+//    elementTypes.push_back("TRSH");
+//  }
+//  else if (type0 == "C3D8")
+//  {
+//    elementTypes.push_back("S4R");
+//  }
+//  else
+//  {
+//    throw GPException( "Flow faces other than triangles and quads are currently not implemented. Flow face regions are current not supported for prisms.");
+//  }
 
   resize( numElements, elementRegionNames, elementTypes );
 }
@@ -502,50 +447,50 @@ void ElementManager::GenerateFlowFaceRegion(FaceManager& faceManager)
   lvector numElements;
   sArray1d elementRegionNames;
   sArray1d elementTypes;
-
-  ElementRegionT& elemRegion = m_ElementRegions["FlowFaceRegion"];
-  lSet facesToInclude;
-
-  if( elemRegion.m_parentFaceSetNames.empty() )
-  {
-    for (localIndex i = 0; i < faceManager.DataLengths(); ++i) facesToInclude.insert(i);
-  }
-  else
-  {
-    for( sArray1d::size_type i =0; i < elemRegion.m_parentFaceSetNames.size(); ++i)
-    {
-      lSet& set = faceManager.getWrapper<lSet>(elemRegion.m_parentFaceSetNames[i]).reference();
-      facesToInclude.insert(set.begin(), set.end());
-    }
-  }
-
-
-
-  numElements.push_back(facesToInclude.size());
-  elementRegionNames.push_back("FlowFaceRegion");
-  elementTypes.push_back(elemRegion.m_elementGeometryID);
-  resize( numElements, elementRegionNames, elementTypes );
-
-
-  localIndex count = 0;
-
-  for (lSet::const_iterator it = facesToInclude.begin(); it != facesToInclude.end(); ++it)
-  {
-    if (faceManager.m_toNodesRelation[*it].size() != elemRegion.m_numNodesPerElem)
-      throw GPException( "The number of nodes on face is inconsistent with the number of nodes per FlowFace element");
-    for ( auto i = 0u; i < elemRegion.m_numNodesPerElem; ++i)
-    {
-      elemRegion.m_toNodesRelation[count][i] = faceManager.m_toNodesRelation[*it][i];
-    }
-    elemRegion.m_localToGlobalMap[count] = faceManager.m_localToGlobalMap[*it];
-    elemRegion.m_toFacesRelation[count][0] = *it;
-
-    // Add the new element to the face to element map of the face itself
-    std::pair< ElementRegionT*, localIndex > tempFaceToElemEntry;
-    tempFaceToElemEntry = std::make_pair(  &elemRegion, count);
-    faceManager.m_toElementsRelation[*it].push_back(tempFaceToElemEntry);
-    ++count;
-  }
+//
+//  ElementRegionT& elemRegion = m_ElementRegions["FlowFaceRegion"];
+//  lSet facesToInclude;
+//
+//  if( elemRegion.m_parentFaceSetNames.empty() )
+//  {
+//    for (localIndex i = 0; i < faceManager.DataLengths(); ++i) facesToInclude.insert(i);
+//  }
+//  else
+//  {
+//    for( sArray1d::size_type i =0; i < elemRegion.m_parentFaceSetNames.size(); ++i)
+//    {
+//      lSet& set = faceManager.getWrapper<lSet>(elemRegion.m_parentFaceSetNames[i]).reference();
+//      facesToInclude.insert(set.begin(), set.end());
+//    }
+//  }
+//
+//
+//
+//  numElements.push_back(facesToInclude.size());
+//  elementRegionNames.push_back("FlowFaceRegion");
+//  elementTypes.push_back(elemRegion.m_elementGeometryID);
+//  resize( numElements, elementRegionNames, elementTypes );
+//
+//
+//  localIndex count = 0;
+//
+//  for (lSet::const_iterator it = facesToInclude.begin(); it != facesToInclude.end(); ++it)
+//  {
+//    if (faceManager.m_toNodesRelation[*it].size() != elemRegion.m_numNodesPerElem)
+//      throw GPException( "The number of nodes on face is inconsistent with the number of nodes per FlowFace element");
+//    for ( auto i = 0u; i < elemRegion.m_numNodesPerElem; ++i)
+//    {
+//      elemRegion.m_toNodesRelation[count][i] = faceManager.m_toNodesRelation[*it][i];
+//    }
+//    elemRegion.m_localToGlobalMap[count] = faceManager.m_localToGlobalMap[*it];
+//    elemRegion.m_toFacesRelation[count][0] = *it;
+//
+//    // Add the new element to the face to element map of the face itself
+//    std::pair< ElementRegionT*, localIndex > tempFaceToElemEntry;
+//    tempFaceToElemEntry = std::make_pair(  &elemRegion, count);
+//    faceManager.m_toElementsRelation[*it].push_back(tempFaceToElemEntry);
+//    ++count;
+//  }
 }
 
 /*
@@ -616,12 +561,12 @@ void ElementManagerT::ReadSilo( const SiloFile& siloFile,
 }
 */
 
-void ElementManager::ResizeNumberOfElementsAfterSplit ()
-{
-  this->m_numElems = 0;
-  for (auto& i:m_ElementRegions)
-  {
-    this->m_numElems = this->m_numElems + i.second.m_numElems;
-  }
-}
+//void ElementManager::ResizeNumberOfElementsAfterSplit ()
+//{
+//  this->m_numElems = 0;
+//  for (auto& i:m_ElementRegions)
+//  {
+//    this->m_numElems = this->m_numElems + i.second.m_numElems;
+//  }
+//}
 }

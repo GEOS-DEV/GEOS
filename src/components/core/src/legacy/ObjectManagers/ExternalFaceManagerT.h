@@ -47,6 +47,7 @@
 #define EXTERNALFACEMANAGERT_H_
 
 #include "../../dataRepository/Group.hpp"
+#include "../IO/ticpp/HierarchicalDataNode.h.old"
 #include "Common/Common.h"
 #include "EnergyT.h"
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
@@ -61,7 +62,6 @@
 #include "Contact/SpatialSorterFactory.h"
 #include "Constitutive/Interface/InterfaceFactory.h"
 
-#include "IO/ticpp/HierarchicalDataNode.h"
 
 /**
  * @author Scott Johnson

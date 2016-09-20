@@ -50,13 +50,12 @@
 #include "Utilities/GeometryUtilities.h"
 #include "Utilities/FindRoots.h"
 #include "Utilities/MaterialUtilities.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
-
 #include "LinearElasticDEM.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
 #include "Constitutive/Material/MaterialFactory.h"
 #include <typeinfo>
 #include <assert.h>
+#include "../../IO/ticpp/HierarchicalDataNode.h.old"
+#include "../../IO/ticpp/HierarchicalDataNode.h.old"
 
 LinearElasticDEM::LinearElasticDEM( ):
 MaterialBase( sizeof(ParameterClass), sizeof(StateClass) )

@@ -50,11 +50,10 @@
 #include "Utilities/GeometryUtilities.h"
 #include "Utilities/FindRoots.h"
 #include "Utilities/MaterialUtilities.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
-
 #include "LinearElasticIntermediate.h"
 #include <typeinfo>
 #include <assert.h>
+#include "../../IO/ticpp/HierarchicalDataNode.h.old"
 
 LinearElasticIntermediate::LinearElasticIntermediate( const int paramSize, const int stateSize ):
 MaterialBase( paramSize, stateSize )

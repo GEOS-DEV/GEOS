@@ -85,7 +85,7 @@ public:
     template< FieldKey FIELDKEY>
     typename dataRepository::ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype_const GetFieldData( ) const
     {
-      return this->getData< Array1dT< typename Field<FIELDKEY>::Type > >( Field<FIELDKEY>::Name() );
+      return this->getData< Array1dT< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
     }
 
 

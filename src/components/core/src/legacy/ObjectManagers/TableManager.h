@@ -48,7 +48,6 @@
 
 #include "Common/typedefs.h"
 #include "DataStructures/Tables/Table.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
 #include "Utilities/StringUtilities.h"
 #include "Utilities/IOUtilities.h"
 #include "Utilities/Utilities.h"
@@ -58,6 +57,7 @@
 #include "DataStructures/Tables/TableTypes.h"
 
 #include <map>
+#include "../IO/ticpp/HierarchicalDataNode.h.old"
 
 class TableManager
 {

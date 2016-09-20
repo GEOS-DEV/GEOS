@@ -8,8 +8,8 @@
 #ifndef JOINTSET_H_
 #define JOINTSET_H_
 
+#include "../IO/ticpp/HierarchicalDataNode.h"
 #include "Common/Common.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
 #include "FractalVolume.h"
 #include "StatisticalDistributionBaseT.h"
 
