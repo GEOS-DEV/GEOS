@@ -7,7 +7,6 @@
 
 #include "ProblemManager.hpp"
 
-#include <getopt.h>
 #include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
@@ -68,7 +67,7 @@ void ProblemManager::Registration( dataRepository::ManagedGroup * const )
   commandLine.RegisterViewWrapper<bool>(keys::overridePartitionNumbers);
 }
 
-void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
+void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
 {
   dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
   
@@ -80,86 +79,75 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
   int32&        zPartitionsOverride = *(commandLine.getData<int32>(keys::zPartitionsOverride));
   bool&         overridePartitionNumbers = *(commandLine.getData<bool>(keys::overridePartitionNumbers));
 
-
-  // Get command line input
-  while (true)
+  // Set the options structs and parse
+  enum optionIndex {UNKNOWN, HELP, INPUT, XPAR, YPAR, ZPAR};
+  const option::Descriptor usage[] = 
   {
-    static struct option long_options[] =
-    {
-      { "help", no_argument, 0, 'h' },
-      { "version", no_argument, 0, 'v' },
-      { "xpar", required_argument, 0, 0 },
-      { "ypar", required_argument, 0, 0 },
-      { "zpar", required_argument, 0, 0 },
-      { "include", required_argument, 0, 0 },
-      { 0, 0, 0, 0 } };
-    /* getopt_long stores the option index here. */
-    int option_index = 0;
-    int c = getopt_long_only(argc, argv, "ahvi:r:", long_options, &option_index);
+    {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
+    {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
+    {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t input xml file name (required)"},
+    {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-nx, --x-partitions, \t Number of partitions in the x-direction"},
+    {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-ny, --y-partitions, \t Number of partitions in the y-direction"},
+    {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-nz, --z-partitions, \t Number of partitions in the z-direction"},
+    { 0, 0, 0, 0, 0, 0}
+  };
 
-    /* Detect the end of the options. */
-    if (c == -1)
-      break;
+  argc-=(argc>0); 
+  argv+=(argc>0);
+  option::Stats stats(usage, argc, argv);
+  option::Option options[stats.options_max], buffer[stats.buffer_max];
+  option::Parser parse(usage, argc, argv, options, buffer);
 
-    switch (c)
-    {
-    case 0:
-    {
-      /* If option sets a flag, do nothing else now. */
-      if (long_options[option_index].flag != 0)
-        break;
-
-      /* long options without a short arg */
-      if( stringutilities::streq( std::string("xpar"), long_options[option_index].name ) )
-      {
-        xPartitionsOverride = std::stoi(optarg);
-        overridePartitionNumbers = true;
-      }
-      else if( stringutilities::streq( std::string("ypar"), long_options[option_index].name ) )
-      {
-        yPartitionsOverride = std::stoi(optarg);
-        overridePartitionNumbers = true;
-      }
-      else if( stringutilities::streq( std::string("zpar"), long_options[option_index].name ) )
-      {
-        zPartitionsOverride = std::stoi(optarg);
-        overridePartitionNumbers = true;
-      }
-    }
-    break;
-    case 'a':   // Leave Empty: Included for totalview - does nothing
-      break;
-
-    case 'i':   // Record input file
-    {
-      inputFileName = optarg;
-    }
-    break;
-
-    case 'r':   // From restart
-    {
-      beginFromRestart = true;
-      restartFileName = optarg;
-    }
-    break;
-    
-    case 'h':   // help
-//      DisplayUsage();   // print help
-      exit(0);
-
-    case 'v':   // version
-//      DisplayVersion();
-      exit(0);
-
-    case '?':
-      /* getopt_long has already printed an error message. */
-      break;
-
-    default:
-      abort();
-    }
+  
+  // Handle special cases
+  if (parse.error())
+  {
+    throw std::invalid_argument("Bad input arguments");
   }
 
+  if (options[HELP] || (argc == 0))
+  {
+    int columns = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
+    option::printUsage(fwrite, stdout, usage, columns);
+    exit(0);
+  }
+
+  if (options[INPUT] == 0)
+  {
+    std::cout << "An input xml must be specified!  Exiting..." << std::endl;
+    exit(1);
+  }
+
+
+  // Iterate over the remaining inputs
+  for (int ii=0; ii<parse.optionsCount(); ++ii)
+  {
+    option::Option& opt = buffer[ii];
+    switch (opt.index())
+    {
+      case UNKNOWN:
+        // This should have thrown an error
+        break;
+      case HELP:
+        // This is already handled above
+        break;
+      case INPUT:
+        inputFileName = opt.arg;
+        break;
+      case XPAR:
+        xPartitionsOverride = std::stoi(opt.arg);
+        overridePartitionNumbers = true;
+        break;
+      case YPAR:
+        yPartitionsOverride = std::stoi(opt.arg);
+        overridePartitionNumbers = true;
+        break;
+      case ZPAR:
+        zPartitionsOverride = std::stoi(opt.arg);
+        overridePartitionNumbers = true;
+        break;
+    }
+  }
 }
 
 

@@ -19,6 +19,7 @@
 #include <numpy/arrayobject.h>
 #endif
 #include "pugixml/src/pugixml.hpp"
+#include "optionparser/src/optionparser.h"
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "PhysicsSolvers/PhysicsSolverManager.hpp"
@@ -27,6 +28,43 @@
 
 namespace geosx
 {
+
+struct Arg : public option::Arg
+{
+  static option::ArgStatus Unknown(const option::Option& option, bool /*error*/)
+  {
+    std::cout << "Unknown option: " << option.name << std::endl;
+    return option::ARG_ILLEGAL;
+  }
+
+
+  static option::ArgStatus NonEmpty(const option::Option& option, bool /*error*/)
+  {
+    if ((option.arg != 0) && (option.arg[0] != 0))
+    {
+      return option::ARG_OK;
+    }
+
+    std::cout << "Error: " << option.name << " requires a non-empty argument!" << std::endl;
+    return option::ARG_ILLEGAL;
+  }
+
+
+  static option::ArgStatus Numeric(const option::Option& option, bool /*error*/)
+  {
+    char* endptr = 0;
+    if ((option.arg != 0) && strtol(option.arg, &endptr, 10)){};
+    if ((endptr != option.arg) && (*endptr == 0))
+    {
+      return option::ARG_OK;
+    }
+
+    std::cout << "Error: " << option.name << " requires a long-int argument!" << std::endl;
+    return option::ARG_ILLEGAL;
+  }
+  
+};
+
 
 class DomainPartition;
 
@@ -42,7 +80,7 @@ public:
 
   virtual void Registration( dataRepository::ManagedGroup * const );
 
-  void ParseCommandLineInput( int const& argc, char* const argv[]);
+  void ParseCommandLineInput( int & argc, char* argv[]);
 
   void InitializePythonInterpreter();
 
