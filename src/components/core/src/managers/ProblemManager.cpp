@@ -80,12 +80,13 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
   bool&         overridePartitionNumbers = *(commandLine.getData<bool>(keys::overridePartitionNumbers));
 
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, XPAR, YPAR, ZPAR};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR};
   const option::Descriptor usage[] = 
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
     {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
     {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t input xml file name (required)"},
+    {RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t target restart file name"},
     {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-nx, --x-partitions, \t Number of partitions in the x-direction"},
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-ny, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-nz, --z-partitions, \t Number of partitions in the z-direction"},
@@ -133,6 +134,10 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
         break;
       case INPUT:
         inputFileName = opt.arg;
+        break;
+      case RESTART:
+        restartFileName = opt.arg;
+        beginFromRestart = true;
         break;
       case XPAR:
         xPartitionsOverride = std::stoi(opt.arg);
