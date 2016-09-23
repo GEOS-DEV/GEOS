@@ -251,15 +251,15 @@ void ProblemManager::ParseInputFile()
   xmlProblemNode = xmlDocument.child("Problem");
   pugi::xml_node topLevelNode;
 
-  m_inputDocumentationHead.m_varName = "Problem";
-  m_inputDocumentationHead.m_varType = "Node";
-  m_inputDocumentationHead.m_varDescription = "This is the top level node in the input structure.";
+  m_inputDocumentationHead.m_name = "Problem";
+  m_inputDocumentationHead.m_type = "Node";
+  m_inputDocumentationHead.m_shortDescription = "This is the top level node in the input structure.";
 
-  cxx_utilities::InputDocumentation temp;
+  cxx_utilities::DocumentationNode temp;
   temp.m_level   = 1;
-  temp.m_varName = "SolverNode";
-  temp.m_varType = "";
-  temp.m_varDescription = "";
+  temp.m_name = "SolverNode";
+  temp.m_type = "";
+  temp.m_shortDescription = "";
 
   m_inputDocumentationHead.m_child.insert( { "SolverNode", temp } );
 

@@ -87,6 +87,63 @@ void ElementManager::ResetGlobalToLocalMap( )
 //  }
 }
 
+
+globalIndex ElementManager::resize( const lvector& numElements,
+                                     const sArray1d& elementRegionNames,
+                                     const sArray1d& elementTypes )
+{
+//  m_numElems = 0;
+//
+//  if( numElements.size() != elementRegionNames.size() || numElements.size() != elementTypes.size() )
+//  {
+//    throw GPException( "ElementManagerT::resize(): size mismatch");
+//  }
+//
+//  std::map< std::string, std::pair< std::string,localIndex> > regionData;
+//  const lvector::size_type size=numElements.size();
+//  for( lvector::size_type k=0 ; k<size ; ++k )
+//  {
+//    localIndex nelem = 0;
+//    if( regionData.find( elementRegionNames[k] ) != regionData.end() )
+//      nelem = regionData[ elementRegionNames[k] ].second;
+//    regionData[ elementRegionNames[k] ] = std::make_pair( elementTypes[k], nelem + numElements[k] );
+//  }
+//
+//
+//  for( std::map< std::string, std::pair< std::string,localIndex> >::iterator iterRegion=regionData.begin() ; iterRegion!=regionData.end() ; ++iterRegion )
+//  {
+//    const std::string regionName = iterRegion->first;
+//    const std::string elemType = iterRegion->second.first;
+//    const localIndex numElems = iterRegion->second.second;
+//    ElementRegionT* const elemRegion = stlMapLookupPointer(m_ElementRegions,regionName);
+//
+//    if( elemRegion==NULL )
+//    {
+//      m_regionIndexToKey.push_back(regionName);
+//      const size_t regionNumber = m_ElementRegions.size();
+//      m_ElementRegions.insert( std::pair<std::string,ElementRegionT>(regionName,ElementRegionT()) );
+//      m_ElementRegions[regionName].m_regionName = regionName;
+//      m_ElementRegions[regionName].m_regionNumber = regionNumber;
+//    }
+//    m_ElementRegions[regionName].m_elementGeometryID = elemType;
+//    m_ElementRegions[regionName].SetGeometryBasedVariables();
+//    m_ElementRegions[regionName].resize(numElems);
+//
+//
+//  }
+//
+//  // Fu: Calculate the total number of element separately will allow only resizing one region without passing the other regions in.
+//  for( std::map< RegKeyType, ElementRegionT >::iterator iter=m_ElementRegions.begin() ; iter!=m_ElementRegions.end() ; ++iter)
+//  {
+//    m_numElems += iter->second.m_numElems;
+//  }
+//
+//
+//  const globalIndex firstNewGlobalIndex = ObjectDataStructureBaseT::resize(m_numElems, false);
+//
+//  return firstNewGlobalIndex;
+}
+
 /*
 void ElementManagerT::ConstructListOfBoundaryObjects( gArray1d& objectList ) const
 {

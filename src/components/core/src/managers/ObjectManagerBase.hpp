@@ -16,6 +16,8 @@ namespace geosx
 class ObjectManagerBase : public dataRepository::ManagedGroup
 {
 public:
+  ObjectManagerBase() = delete;
+
   explicit ObjectManagerBase( std::string const & name,
                               ObjectManagerBase * const parent );
 
@@ -42,7 +44,10 @@ public:
     using ObjectType = string;
     class SiloFile;
     localIndex resize( localIndex const newSize,
-                       const bool assignGlobals );
+                       const bool assignGlobals )
+    {
+      dataRepository::ManagedGroup::resize(newSize);
+    }
 
     using dataRepository::ManagedGroup::resize;
 
@@ -150,6 +155,7 @@ public:
       this->RegisterViewWrapper<T>(name);
       (void)restart;
       (void)plot;
+      return 0;
     }
 
 

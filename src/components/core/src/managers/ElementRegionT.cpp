@@ -70,7 +70,7 @@
 //#include "ElementLibrary/IntegrationRuleT.h"
 #include "legacy/DataStructures/Tables/Table.h"
 
-#include "legacy/Constitutive/Material/MaterialFactory.h"
+//#include "legacy/Constitutive/Material/MaterialFactory.h"
 #include "NodeManager.hpp"
 
 namespace geosx
@@ -111,7 +111,7 @@ void AddElementResidual( const R2SymTensor& cauchyStress,
 
 
 ElementRegionT::ElementRegionT( ObjectManagerBase * const parent ):
-    ObjectManagerBase( ElementRegion, parent ),
+    ObjectManagerBase( "ElementRegion", parent ),
 m_regionName(),
 m_regionNumber(0),
 m_numElems(this->m_DataLengths),
@@ -120,16 +120,6 @@ m_numIntegrationPointsPerElem(0),
 m_elementType(),
 m_elementGeometryID(),
 m_ElementDimension(0),
-//m_ElementObjectToElementManagerMap(m_OneToOneMaps[ElementObjectToElementManager]),
-m_toNodesRelation(m_FixedOneToManyMaps[ElementToNode]),
-m_toFacesRelation(m_FixedOneToManyMaps[ElementToFace]),
-//m_toCrackSurfacesRelation(m_UnorderedVariableOneToManyMaps[ElementToCrackSurface]),
-//m_toCrackSurfaceVerticesRelation(m_UnorderedVariableOneToManyMaps[ElementToCrackSurfaceVertex]),
-//m_toLocalVolumeRelation(m_UnorderedVariableOneToManyMaps[ElementToLocalVolume]),
-//m_toPhysicalNodes(m_VariableOneToManyMaps[ElementToPhysicalNodes]),
-//m_toCrackToVertexNodes(m_VariableOneToManyToManyMaps[ElementToCrackToVertexNodes]),
-//m_toCracks(m_VariableOneToManyMaps[ElementToCracks]),
-//m_toEdgesRelation(m_FixedOneToManyMaps[ElementToEdge]),
 m_dNdX(),
 m_detJ(),
 m_detJ_n(),
@@ -153,9 +143,6 @@ m_energy(),
 m_hgDamp(0.0),
 m_hgStiff(0.0),
 m_failStress(std::numeric_limits<realT>::max())
-#if USECPP11!=1
-,m_mat(NULL)
-#endif
 {
   this->AddKeyedDataField<FieldInfo::volume>();
   this->AddKeyedDataField<FieldInfo::mass>();
@@ -174,7 +161,7 @@ m_failStress(std::numeric_limits<realT>::max())
 }
 
 ElementRegionT::ElementRegionT(const ElementRegionT& init):
-ObjectDataStructureBaseT(init),
+    ObjectManagerBase(init),
 m_regionName(init.m_regionName),
 m_regionNumber(init.m_regionNumber),
 m_numElems(this->m_DataLengths),
@@ -184,8 +171,8 @@ m_elementType(init.m_elementType),
 m_elementGeometryID(init.m_elementGeometryID),
 m_ElementDimension(init.m_ElementDimension),
 //m_ElementObjectToElementManagerMap(m_OneToOneMaps[ElementObjectToElementManager]),
-m_toNodesRelation(m_FixedOneToManyMaps[ElementToNode]),
-m_toFacesRelation(m_FixedOneToManyMaps[ElementToFace]),
+//m_toNodesRelation(m_FixedOneToManyMaps[ElementToNode]),
+//m_toFacesRelation(m_FixedOneToManyMaps[ElementToFace]),
 //m_toCrackSurfacesRelation(m_UnorderedVariableOneToManyMaps[ElementToCrackSurface]),
 //m_toCrackSurfaceVerticesRelation(m_UnorderedVariableOneToManyMaps[ElementToCrackSurfaceVertex]),
 //m_toLocalVolumeRelation(m_UnorderedVariableOneToManyMaps[ElementToLocalVolume]),
@@ -213,9 +200,6 @@ m_numNodesPerFace(init.m_numNodesPerFace),
 m_energy(init.m_energy),
 m_hgDamp(init.m_hgDamp),
 m_hgStiff(init.m_hgStiff)
-#if USECPP11!=1
-,m_mat(init.m_mat)
-#endif
 {
   if (init.m_finiteElement != NULL)
   {
@@ -582,51 +566,51 @@ void ElementRegionT::Initialize()
   for (localIndex k = 0; k < m_numElems; ++k)
   {
     mass[k] = density[k] * volume[k];
-    if (m_mat)
-    {
-      m_mat->InitializeStates(k);
-    }
+//    if (m_mat)
+//    {
+//      m_mat->InitializeStates(k);
+//    }
   }
 }
 
 void ElementRegionT::ReadXML(TICPP::HierarchicalDataNode* const erNode, const bool isRestart)
 {
-
-  //const std::string erName = erNode->GetAttributeString("name");
-  const std::string erType = erNode->GetAttributeString("elementtype");
-
-  m_basis = erNode->GetAttributeOrDefault<int>("basis", 1);
-  m_quadrature = erNode->GetAttributeOrDefault("quadrature", 2);
-
-    if (!m_elementGeometryID.compare(0, 4, "C3D4") || !m_elementGeometryID.compare(0, 4, "STRI") || !m_elementGeometryID.compare(0, 4, "CPE2") ) 
-      m_quadrature = 1;
-
-  m_elementType = erType;
-
-  m_parentFaceSetNames = erNode->GetStringVector("parentFaceSetNames");
-
-  {
-    TICPP::HierarchicalDataNode* matNode = erNode->Next(true);
-    if(!matNode)
-      throw GPException("Need to have one (and only one) material defined for the element region");
-    const std::string matName(matNode->Heading());
-#if USECPP11!=1
-    if (m_mat)
-      delete m_mat;
-#endif
-    m_mat = MaterialFactory::NewMaterial(matName,matNode);
-    m_mat->resize(m_DataLengths, 1);
-    m_mat->ReadXML(*matNode);
-
-    m_plotMat = matNode->GetAttributeOrDefault("write2Plot", false);
-  }
-
-  if (!isRestart)
-  {
-    AllocateElementLibrary(m_basis, m_quadrature);
-  }
-  m_hgDamp = erNode->GetAttributeOrDefault<realT>("hgDamp", 0.0);
-  m_hgStiff = erNode->GetAttributeOrDefault<realT>("hgStiff", 0.01);
+//
+//  //const std::string erName = erNode->GetAttributeString("name");
+//  const std::string erType = erNode->GetAttributeString("elementtype");
+//
+//  m_basis = erNode->GetAttributeOrDefault<int>("basis", 1);
+//  m_quadrature = erNode->GetAttributeOrDefault("quadrature", 2);
+//
+//    if (!m_elementGeometryID.compare(0, 4, "C3D4") || !m_elementGeometryID.compare(0, 4, "STRI") || !m_elementGeometryID.compare(0, 4, "CPE2") )
+//      m_quadrature = 1;
+//
+//  m_elementType = erType;
+//
+//  m_parentFaceSetNames = erNode->GetStringVector("parentFaceSetNames");
+//
+//  {
+//    TICPP::HierarchicalDataNode* matNode = erNode->Next(true);
+//    if(!matNode)
+//      throw GPException("Need to have one (and only one) material defined for the element region");
+//    const std::string matName(matNode->Heading());
+//#if USECPP11!=1
+//    if (m_mat)
+//      delete m_mat;
+//#endif
+//    m_mat = MaterialFactory::NewMaterial(matName,matNode);
+//    m_mat->resize(m_DataLengths, 1);
+//    m_mat->ReadXML(*matNode);
+//
+//    m_plotMat = matNode->GetAttributeOrDefault("write2Plot", false);
+//  }
+//
+//  if (!isRestart)
+//  {
+//    AllocateElementLibrary(m_basis, m_quadrature);
+//  }
+//  m_hgDamp = erNode->GetAttributeOrDefault<realT>("hgDamp", 0.0);
+//  m_hgStiff = erNode->GetAttributeOrDefault<realT>("hgStiff", 0.01);
 
 }
 
@@ -805,31 +789,31 @@ int ElementRegionT::CalculateVelocityGradients(const NodeManager& nodeManager, c
 
 int ElementRegionT::MaterialUpdate(const realT dt)
 {
-  const iArray1d& ghostRankAll = this->GetFieldData<FieldInfo::ghostRank>();
-  m_energy.Zero();
-
-  for (localIndex k = 0; k < m_numElems; ++k)
-  {
-//    MaterialBaseParameterDataT& parameter = m_material.MaterialParameter(k);
-
-    const int ghostRank = ghostRankAll[k];
-    //if( ghostRank < 0 )
-    {
-      for (unsigned int a = 0; a < m_numIntegrationPointsPerElem; ++a)
-      {
-        MaterialBaseStateData& state = *(m_mat->StateData(k, a));
-        R2Tensor L; //just stub in since this whole function is being removed
-        m_mat->StrainDrivenUpdateMember(k, a, m_Dadt[k][a], L, m_Rot[k][a], m_detJ_n[k][a],
-                                        m_detJ_np1[k][a], dt);
-        if (ghostRank < 0)
-        {
-          m_energy.IncrementStressPower(state.StressPower);
-          m_energy.IncrementStrainEnergy(state.ElasticStrainEnergy);
-          m_energy.IncrementDissipatedEnergy(state.DissipatedEnergy);
-        }
-      }
-    }
-  }
+//  const iArray1d& ghostRankAll = this->GetFieldData<FieldInfo::ghostRank>();
+//  m_energy.Zero();
+//
+//  for (localIndex k = 0; k < m_numElems; ++k)
+//  {
+////    MaterialBaseParameterDataT& parameter = m_material.MaterialParameter(k);
+//
+//    const int ghostRank = ghostRankAll[k];
+//    //if( ghostRank < 0 )
+//    {
+//      for (unsigned int a = 0; a < m_numIntegrationPointsPerElem; ++a)
+//      {
+//        MaterialBaseStateData& state = *(m_mat->StateData(k, a));
+//        R2Tensor L; //just stub in since this whole function is being removed
+//        m_mat->StrainDrivenUpdateMember(k, a, m_Dadt[k][a], L, m_Rot[k][a], m_detJ_n[k][a],
+//                                        m_detJ_np1[k][a], dt);
+//        if (ghostRank < 0)
+//        {
+//          m_energy.IncrementStressPower(state.StressPower);
+//          m_energy.IncrementStrainEnergy(state.ElasticStrainEnergy);
+//          m_energy.IncrementDissipatedEnergy(state.DissipatedEnergy);
+//        }
+//      }
+//    }
+//  }
 
   return 0;
 }

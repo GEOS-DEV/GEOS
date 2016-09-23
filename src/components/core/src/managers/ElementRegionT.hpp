@@ -66,7 +66,7 @@ class FiniteElementBase;
 class Quadrature ;
 class Basis;
 
-class MaterialBase;
+//class MaterialBase;
 
 class StableTimeStep;
 
@@ -303,8 +303,8 @@ public:
 
 
 //  lArray1d& m_ElementObjectToElementManagerMap;
-  FixedOneToManyRelation& m_toNodesRelation;
-  FixedOneToManyRelation& m_toFacesRelation;
+//  FixedOneToManyRelation& m_toNodesRelation;
+//  FixedOneToManyRelation& m_toFacesRelation;
 
   //FixedOneToManyRelation& m_toEdgesRelation;  //This is neither filled nor used.
 //  OrderedVariableOneToManyRelation& m_toPhysicalNodes;
@@ -361,11 +361,7 @@ public:
 
   bool m_plotMat;
 
-#if USECPP11==1
-  std::unique_ptr<MaterialBase> m_mat;
-#else
-  MaterialBase* m_mat;
-#endif
+//  MaterialBase* m_mat;
 
 
 private:
@@ -376,26 +372,26 @@ private:
 };
 
 
-inline lArray2d& ElementRegionT::ElementToNodeMap()
-{
-  return m_toNodesRelation;
-}
-
-
-inline localIndex* ElementRegionT::ElementToNodeMap( const int elemNum )
-{
-  return &(m_toNodesRelation(elemNum,0));
-}
-
-inline const localIndex* ElementRegionT::ElementToNodeMap( const int elemNum ) const
-{
-  return &(m_toNodesRelation(elemNum,0));
-}
-
-inline localIndex ElementRegionT::ElementToNodeMap( const int elemNum, const int nodeNum ) const
-{
-  return m_toNodesRelation(elemNum,nodeNum);
-}
+//inline lArray2d& ElementRegionT::ElementToNodeMap()
+//{
+//  return m_toNodesRelation;
+//}
+//
+//
+//inline localIndex* ElementRegionT::ElementToNodeMap( const int elemNum )
+//{
+//  return &(m_toNodesRelation(elemNum,0));
+//}
+//
+//inline const localIndex* ElementRegionT::ElementToNodeMap( const int elemNum ) const
+//{
+//  return &(m_toNodesRelation(elemNum,0));
+//}
+//
+//inline localIndex ElementRegionT::ElementToNodeMap( const int elemNum, const int nodeNum ) const
+//{
+//  return m_toNodesRelation(elemNum,nodeNum);
+//}
 
 ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////

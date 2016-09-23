@@ -13,10 +13,10 @@
 #include <string>
 #include <limits>
 
+#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "pugixml/src/pugixml.hpp"
-#include "InputDocumentation.hpp"
 
 
 namespace geosx
@@ -40,7 +40,7 @@ public:
 
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
-  virtual void ReadXML( pugi::xml_node const & solverNode, cxx_utilities::InputDocumentation & docNode );
+  virtual void ReadXML( pugi::xml_node const & solverNode, cxx_utilities::DocumentationNode & docNode );
 
   virtual void Registration( dataRepository::ManagedGroup * const domain ) override;
 

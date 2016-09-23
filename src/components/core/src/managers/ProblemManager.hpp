@@ -22,7 +22,7 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "PhysicsSolvers/PhysicsSolverManager.hpp"
-#include "InputDocumentation.hpp"
+#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 
 namespace geosx
 {
@@ -64,7 +64,7 @@ public:
 
 private:
   PhysicsSolverManager & m_physicsSolverManager;
-  cxx_utilities::InputDocumentation m_inputDocumentationHead;
+  cxx_utilities::DocumentationNode m_inputDocumentationHead;
 };
 
 } /* namespace geosx */

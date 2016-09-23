@@ -6,9 +6,10 @@
  */
 
 #include "PhysicsSolverManager.hpp"
+
+#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "SolverBase.hpp"
 #include "pugixml/src/pugixml.hpp"
-#include "InputDocumentation.hpp"
 
 namespace geosx
 {
@@ -36,11 +37,11 @@ SolverBase & PhysicsSolverManager::CreateSolver( string const & solverCatalogKey
   return rval;
 }
 
-void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain, pugi::xml_node const & problemNode, cxx_utilities::InputDocumentation & docNode )
+void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain, pugi::xml_node const & problemNode, cxx_utilities::DocumentationNode & docNode )
 {
 
-  docNode.m_varType = "";
-  docNode.m_varDescription = "Node that contains all the physics solvers";
+  docNode.m_type = "";
+  docNode.m_shortDescription = "Node that contains all the physics solvers";
 
   // Store a list of available solvers
   RegisterViewWrapper<string_array>(keys::solverNames);
@@ -71,10 +72,10 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain, pugi::
       // Register fields in the solver and parse options
       newSolver.Registration( &domain );
 
-      cxx_utilities::InputDocumentation solverDoc;
-      solverDoc.m_varName = solverNode.name();
-      solverDoc.m_varType = "type";
-      solverDoc.m_varDescription = "description";
+      cxx_utilities::DocumentationNode solverDoc;
+      solverDoc.m_name = solverNode.name();
+      solverDoc.m_type = "type";
+      solverDoc.m_shortDescription = "description";
       solverDoc.m_level = docNode.m_level+1;
       docNode.m_child.insert( { solverNode.name(), solverDoc } );
 
