@@ -9,6 +9,7 @@
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
+#include "DocumentationNode.hpp"
 
 namespace geosx
 {
@@ -52,7 +53,7 @@ public:
     using dataRepository::ManagedGroup::resize;
 
     localIndex m_DataLengths;
-
+    cxx_utilities::DocumentationNode * const m_docNode;
 
     localIndex DataLengths() const { return size(); }
 

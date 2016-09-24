@@ -43,8 +43,8 @@ namespace dataRepository
 using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
-                                ManagedGroup * const parent ) :
-  ManagedGroup( name, parent ),
+                                ObjectManagerBase * const parent ) :
+  ObjectManagerBase( name, parent ),
   m_physicsSolverManager(this->RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) )
 {}
 

@@ -20,20 +20,20 @@
 #endif
 #include "pugixml/src/pugixml.hpp"
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "ObjectManagerBase.hpp"
 #include "PhysicsSolvers/PhysicsSolverManager.hpp"
-#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
+#include "DocumentationNode.hpp"
 
 namespace geosx
 {
 
 class DomainPartition;
 
-class ProblemManager : public dataRepository::ManagedGroup
+class ProblemManager : public ObjectManagerBase
 {
 public:
   explicit ProblemManager( const std::string& name,
-                           ManagedGroup * const parent );
+                           ObjectManagerBase * const parent );
   ~ProblemManager();
 
   static std::string CatalogName() { return "ProblemManager"; }

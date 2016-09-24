@@ -13,7 +13,8 @@ namespace geosx
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ObjectManagerBase * const parent ):
     ManagedGroup(name,parent),
-    m_localToGlobalMap(RegisterViewWrapper< gArray1d >("localToGlobal").reference() )
+    m_docNode( &(parent->m_docNode->m_child[name]) ),
+    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() )
 {
 
   this->RegisterGroup<ManagedGroup>("Sets");
