@@ -72,7 +72,7 @@ public:
 
   static string CatalogName()
   {
-    return "RegionManager";
+    return "ElementManager";
   }
 
   string getName() const override final
@@ -80,6 +80,7 @@ public:
     return ElementManager::CatalogName();
   }
 
+  ///@}
 
   ElementManager( ObjectManagerBase * const parent );
   virtual ~ElementManager();

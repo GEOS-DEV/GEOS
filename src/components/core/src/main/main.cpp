@@ -32,7 +32,7 @@ int main( int argc, char *argv[] )
 
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
-  ProblemManager problemManager("ProblemManager",nullptr);
+  ProblemManager problemManager( "ProblemManager", nullptr );
 
   problemManager.Registration(nullptr);
 

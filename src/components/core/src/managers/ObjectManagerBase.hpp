@@ -36,6 +36,34 @@ public:
   ///@}
 
 
+  cxx_utilities::DocumentationNode * getDocumentationNode()
+  {
+    return m_docNode;
+  }
+
+  void allocateDocumentationNode()
+  {
+    m_docNode = new cxx_utilities::DocumentationNode;
+  }
+
+  void deleteDocumentationNode()
+  {
+    delete m_docNode;
+  }
+
+private:
+  cxx_utilities::DocumentationNode * m_docNode;
+
+
+
+
+
+
+
+
+
+
+
   //**********************************************************************************************************************
   // functions for compatibility with old data structure
   // TODO Deprecate or modernize all these suckers
@@ -45,15 +73,15 @@ public:
     using ObjectType = string;
     class SiloFile;
     localIndex resize( localIndex const newSize,
-                       const bool assignGlobals )
+                       const bool /*assignGlobals*/ )
     {
       dataRepository::ManagedGroup::resize(newSize);
+      return 0;
     }
 
     using dataRepository::ManagedGroup::resize;
 
     localIndex m_DataLengths;
-    cxx_utilities::DocumentationNode * const m_docNode;
 
     localIndex DataLengths() const { return size(); }
 
