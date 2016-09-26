@@ -75,8 +75,16 @@ public:
                            ObjectManagerBase * const parent );
   ~ProblemManager();
 
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
   static std::string CatalogName() { return "ProblemManager"; }
-
+  string getName() const override final
+  {
+    return ProblemManager::CatalogName();
+  }
+  ///@}
 
   virtual void Registration( dataRepository::ManagedGroup * const );
 
@@ -103,7 +111,6 @@ public:
 
 private:
   PhysicsSolverManager & m_physicsSolverManager;
-  cxx_utilities::DocumentationNode m_inputDocumentationHead;
 };
 
 } /* namespace geosx */

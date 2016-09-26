@@ -45,13 +45,27 @@ ProblemManager::ProblemManager( const std::string& name,
                                 ObjectManagerBase * const parent ) :
   ObjectManagerBase( name, parent ),
   m_physicsSolverManager(this->RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) )
-{}
+{
+  allocateDocumentationNode();
+  getDocumentationNode()->m_name = "ProblemManager";
+  getDocumentationNode()->m_type = "Node";
+  getDocumentationNode()->m_shortDescription = "This is the top level node in the input structure.";
+}
 
 ProblemManager::~ProblemManager()
-{}
+{
+  deleteDocumentationNode();
+}
 
 void ProblemManager::Registration( dataRepository::ManagedGroup * const )
 {
+
+  cxx_utilities::DocumentationNode newNode;
+
+  newNode.m_name = keys::inputFileName;
+
+//  getDocumentationNode()->
+
   RegisterGroup<DomainPartition>(keys::domain);
 
   ManagedGroup& solverApplications = RegisterGroup<ManagedGroup>(keys::solverApplications);
@@ -244,9 +258,12 @@ void ProblemManager::ParseInputFile()
   xmlProblemNode = xmlDocument.child("Problem");
   pugi::xml_node topLevelNode;
 
+<<<<<<< HEAD
   m_inputDocumentationHead.m_name = "Problem";
   m_inputDocumentationHead.m_type = "UniqueNode";
   m_inputDocumentationHead.m_shortDescription = "This is the top level node in the input structure.";
+=======
+>>>>>>> feature/settgast/addLegacyCode
 
   cxx_utilities::DocumentationNode temp;
   temp.m_level   = 1;
@@ -254,9 +271,9 @@ void ProblemManager::ParseInputFile()
   temp.m_type = "";
   temp.m_shortDescription = "";
 
-  m_inputDocumentationHead.m_child.insert( { "SolverNode", temp } );
+  getDocumentationNode()->m_child.insert( { "SolverNode", temp } );
 
-  this->m_physicsSolverManager.ReadXML(domain, xmlProblemNode, m_inputDocumentationHead.m_child["SolverNode"] );
+  this->m_physicsSolverManager.ReadXML(domain, xmlProblemNode, getDocumentationNode()->m_child["SolverNode"] );
 
 
   // Applications
@@ -320,7 +337,8 @@ void ProblemManager::ParseInputFile()
   }
 
   // m_inputDocumentationHead.Write("test_output.xml");
-  ConvertDocumentationToSchema("test_output.xsd", m_inputDocumentationHead);
+  ConvertDocumentationToSchema("test_output.xsd", getDocumentationNode());
+  getDocumentationNode()->Print();
 }
 
 
@@ -400,6 +418,6 @@ DomainPartition const & ProblemManager::getDomainPartition() const
   return GetGroup<DomainPartition>(keys::domain);
 }
 
-REGISTER_CATALOG_ENTRY( ManagedGroup, ProblemManager, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, ObjectManagerBase * const )
 
 } /* namespace geosx */

@@ -626,4 +626,7 @@ void ElementManagerT::ReadSilo( const SiloFile& siloFile,
 //    this->m_numElems = this->m_numElems + i.second.m_numElems;
 //  }
 //}
+
+
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementManager, string const &, ObjectManagerBase * const )
 }
