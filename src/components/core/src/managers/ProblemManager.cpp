@@ -48,7 +48,7 @@ ProblemManager::ProblemManager( const std::string& name,
 {
   allocateDocumentationNode();
   getDocumentationNode()->m_name = "ProblemManager";
-  getDocumentationNode()->m_type = "Node";
+  getDocumentationNode()->m_type = "UniqueNode";
   getDocumentationNode()->m_shortDescription = "This is the top level node in the input structure.";
 }
 
@@ -258,18 +258,12 @@ void ProblemManager::ParseInputFile()
   xmlProblemNode = xmlDocument.child("Problem");
   pugi::xml_node topLevelNode;
 
-<<<<<<< HEAD
-  m_inputDocumentationHead.m_name = "Problem";
-  m_inputDocumentationHead.m_type = "UniqueNode";
-  m_inputDocumentationHead.m_shortDescription = "This is the top level node in the input structure.";
-=======
->>>>>>> feature/settgast/addLegacyCode
 
   cxx_utilities::DocumentationNode temp;
   temp.m_level   = 1;
   temp.m_name = "SolverNode";
-  temp.m_type = "";
-  temp.m_shortDescription = "";
+  temp.m_type = "Node";
+  temp.m_shortDescription = "Node that contains all the physics solvers";
 
   getDocumentationNode()->m_child.insert( { "SolverNode", temp } );
 
@@ -337,7 +331,7 @@ void ProblemManager::ParseInputFile()
   }
 
   // m_inputDocumentationHead.Write("test_output.xml");
-  ConvertDocumentationToSchema("test_output.xsd", getDocumentationNode());
+  ConvertDocumentationToSchema("test_output.xsd", *(getDocumentationNode())) ;
   getDocumentationNode()->Print();
 }
 
