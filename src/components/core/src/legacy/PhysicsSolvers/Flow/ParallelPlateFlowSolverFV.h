@@ -214,7 +214,7 @@ public:
 
 
   virtual void CalculateApertureDerivatives( const FaceManagerT& faceManager,
-                                             const NodeManagerT& nodeManager );
+                                             const NodeManager& nodeManager );
 private:
 
 

@@ -44,34 +44,37 @@
  *      Author: settgast1
  */
 
-#include "ElementRegionT.h"
+#include "ElementRegionT.hpp"
+
 #include <stdlib.h>
+//#include "Utilities/Kinematics.h"
+#include "legacy/Utilities/Utilities.h"
+#include "legacy/IO/BinStream.h"
 
-#include "../../../managers/NodeManager.hpp"
-#include "Utilities/Kinematics.h"
-#include "Utilities/Utilities.h"
-#include "IO/BinStream.h"
+#include "legacy/ElementLibrary/LagrangeBasis.h"
+#include "legacy/ElementLibrary/GaussQuadrature.h"
+#include "legacy/ElementLibrary/FiniteElement.h"
+#include "legacy/ElementLibrary/SpecializedFormulations/UniformStrainHexahedron.h"
+#include "legacy/ElementLibrary/SpecializedFormulations/SimpleTetrahedron.h"
+#include "legacy/ElementLibrary/SpecializedFormulations/UniformStrainQuadrilateral.h"
+#include "legacy/ElementLibrary/SpecializedFormulations/LinearTriangle.h"
+#include "legacy/ElementLibrary/SpecializedFormulations/Line.h"
+#include "legacy/ElementLibrary/SpecializedFormulations/QuadrilateralShell.h"
+#include "legacy/ElementLibrary/SpecializedFormulations/TriangleShell.h"
 
-#include "ElementLibrary/LagrangeBasis.h"
-#include "ElementLibrary/GaussQuadrature.h"
-#include "ElementLibrary/FiniteElement.h"
-#include "ElementLibrary/SpecializedFormulations/UniformStrainHexahedron.h"
-#include "ElementLibrary/SpecializedFormulations/SimpleTetrahedron.h"
-#include "ElementLibrary/SpecializedFormulations/UniformStrainQuadrilateral.h"
-#include "ElementLibrary/SpecializedFormulations/LinearTriangle.h"
-#include "ElementLibrary/SpecializedFormulations/Line.h"
-#include "ElementLibrary/SpecializedFormulations/QuadrilateralShell.h"
-#include "ElementLibrary/SpecializedFormulations/TriangleShell.h"
+#include "legacy/PhysicsSolvers/Lagrange/LagrangeHelperFunctions.h"
 
-#include "PhysicsSolvers/Lagrange/LagrangeHelperFunctions.h"
-
-#include "ObjectManagers/FaceManagerT.h"
-#include "ObjectManagers/PhysicalDomainT.h"
+#include "FaceManager.hpp"
+//#include "legacy/ObjectManagers/PhysicalDomainT.h"
 
 //#include "ElementLibrary/IntegrationRuleT.h"
-#include "DataStructures/Tables/Table.h"
+#include "legacy/DataStructures/Tables/Table.h"
 
-#include "Constitutive/Material/MaterialFactory.h"
+//#include "legacy/Constitutive/Material/MaterialFactory.h"
+#include "NodeManager.hpp"
+
+namespace geosx
+{
 
 void AddElementResidual( const R2SymTensor& cauchyStress,
                          const Array1dT<R1Tensor>& dNdX,
@@ -107,8 +110,8 @@ void AddElementResidual( const R2SymTensor& cauchyStress,
 
 
 
-ElementRegionT::ElementRegionT( ):
-ObjectDataStructureBaseT( ObjectDataStructureBaseT::ElementRegion),
+ElementRegionT::ElementRegionT( ObjectManagerBase * const parent ):
+    ObjectManagerBase( "ElementRegion", parent ),
 m_regionName(),
 m_regionNumber(0),
 m_numElems(this->m_DataLengths),
@@ -117,16 +120,6 @@ m_numIntegrationPointsPerElem(0),
 m_elementType(),
 m_elementGeometryID(),
 m_ElementDimension(0),
-//m_ElementObjectToElementManagerMap(m_OneToOneMaps[ElementObjectToElementManager]),
-m_toNodesRelation(m_FixedOneToManyMaps[ElementToNode]),
-m_toFacesRelation(m_FixedOneToManyMaps[ElementToFace]),
-//m_toCrackSurfacesRelation(m_UnorderedVariableOneToManyMaps[ElementToCrackSurface]),
-//m_toCrackSurfaceVerticesRelation(m_UnorderedVariableOneToManyMaps[ElementToCrackSurfaceVertex]),
-//m_toLocalVolumeRelation(m_UnorderedVariableOneToManyMaps[ElementToLocalVolume]),
-//m_toPhysicalNodes(m_VariableOneToManyMaps[ElementToPhysicalNodes]),
-//m_toCrackToVertexNodes(m_VariableOneToManyToManyMaps[ElementToCrackToVertexNodes]),
-//m_toCracks(m_VariableOneToManyMaps[ElementToCracks]),
-//m_toEdgesRelation(m_FixedOneToManyMaps[ElementToEdge]),
 m_dNdX(),
 m_detJ(),
 m_detJ_n(),
@@ -150,9 +143,6 @@ m_energy(),
 m_hgDamp(0.0),
 m_hgStiff(0.0),
 m_failStress(std::numeric_limits<realT>::max())
-#if USECPP11!=1
-,m_mat(NULL)
-#endif
 {
   this->AddKeyedDataField<FieldInfo::volume>();
   this->AddKeyedDataField<FieldInfo::mass>();
@@ -171,7 +161,7 @@ m_failStress(std::numeric_limits<realT>::max())
 }
 
 ElementRegionT::ElementRegionT(const ElementRegionT& init):
-ObjectDataStructureBaseT(init),
+    ObjectManagerBase(init),
 m_regionName(init.m_regionName),
 m_regionNumber(init.m_regionNumber),
 m_numElems(this->m_DataLengths),
@@ -181,8 +171,8 @@ m_elementType(init.m_elementType),
 m_elementGeometryID(init.m_elementGeometryID),
 m_ElementDimension(init.m_ElementDimension),
 //m_ElementObjectToElementManagerMap(m_OneToOneMaps[ElementObjectToElementManager]),
-m_toNodesRelation(m_FixedOneToManyMaps[ElementToNode]),
-m_toFacesRelation(m_FixedOneToManyMaps[ElementToFace]),
+//m_toNodesRelation(m_FixedOneToManyMaps[ElementToNode]),
+//m_toFacesRelation(m_FixedOneToManyMaps[ElementToFace]),
 //m_toCrackSurfacesRelation(m_UnorderedVariableOneToManyMaps[ElementToCrackSurface]),
 //m_toCrackSurfaceVerticesRelation(m_UnorderedVariableOneToManyMaps[ElementToCrackSurfaceVertex]),
 //m_toLocalVolumeRelation(m_UnorderedVariableOneToManyMaps[ElementToLocalVolume]),
@@ -210,9 +200,6 @@ m_numNodesPerFace(init.m_numNodesPerFace),
 m_energy(init.m_energy),
 m_hgDamp(init.m_hgDamp),
 m_hgStiff(init.m_hgStiff)
-#if USECPP11!=1
-,m_mat(init.m_mat)
-#endif
 {
   if (init.m_finiteElement != NULL)
   {
@@ -579,51 +566,51 @@ void ElementRegionT::Initialize()
   for (localIndex k = 0; k < m_numElems; ++k)
   {
     mass[k] = density[k] * volume[k];
-    if (m_mat)
-    {
-      m_mat->InitializeStates(k);
-    }
+//    if (m_mat)
+//    {
+//      m_mat->InitializeStates(k);
+//    }
   }
 }
 
 void ElementRegionT::ReadXML(TICPP::HierarchicalDataNode* const erNode, const bool isRestart)
 {
-
-  //const std::string erName = erNode->GetAttributeString("name");
-  const std::string erType = erNode->GetAttributeString("elementtype");
-
-  m_basis = erNode->GetAttributeOrDefault<int>("basis", 1);
-  m_quadrature = erNode->GetAttributeOrDefault("quadrature", 2);
-
-    if (!m_elementGeometryID.compare(0, 4, "C3D4") || !m_elementGeometryID.compare(0, 4, "STRI") || !m_elementGeometryID.compare(0, 4, "CPE2") ) 
-      m_quadrature = 1;
-
-  m_elementType = erType;
-
-  m_parentFaceSetNames = erNode->GetStringVector("parentFaceSetNames");
-
-  {
-    TICPP::HierarchicalDataNode* matNode = erNode->Next(true);
-    if(!matNode)
-      throw GPException("Need to have one (and only one) material defined for the element region");
-    const std::string matName(matNode->Heading());
-#if USECPP11!=1
-    if (m_mat)
-      delete m_mat;
-#endif
-    m_mat = MaterialFactory::NewMaterial(matName,matNode);
-    m_mat->resize(m_DataLengths, 1);
-    m_mat->ReadXML(*matNode);
-
-    m_plotMat = matNode->GetAttributeOrDefault("write2Plot", false);
-  }
-
-  if (!isRestart)
-  {
-    AllocateElementLibrary(m_basis, m_quadrature);
-  }
-  m_hgDamp = erNode->GetAttributeOrDefault<realT>("hgDamp", 0.0);
-  m_hgStiff = erNode->GetAttributeOrDefault<realT>("hgStiff", 0.01);
+//
+//  //const std::string erName = erNode->GetAttributeString("name");
+//  const std::string erType = erNode->GetAttributeString("elementtype");
+//
+//  m_basis = erNode->GetAttributeOrDefault<int>("basis", 1);
+//  m_quadrature = erNode->GetAttributeOrDefault("quadrature", 2);
+//
+//    if (!m_elementGeometryID.compare(0, 4, "C3D4") || !m_elementGeometryID.compare(0, 4, "STRI") || !m_elementGeometryID.compare(0, 4, "CPE2") )
+//      m_quadrature = 1;
+//
+//  m_elementType = erType;
+//
+//  m_parentFaceSetNames = erNode->GetStringVector("parentFaceSetNames");
+//
+//  {
+//    TICPP::HierarchicalDataNode* matNode = erNode->Next(true);
+//    if(!matNode)
+//      throw GPException("Need to have one (and only one) material defined for the element region");
+//    const std::string matName(matNode->Heading());
+//#if USECPP11!=1
+//    if (m_mat)
+//      delete m_mat;
+//#endif
+//    m_mat = MaterialFactory::NewMaterial(matName,matNode);
+//    m_mat->resize(m_DataLengths, 1);
+//    m_mat->ReadXML(*matNode);
+//
+//    m_plotMat = matNode->GetAttributeOrDefault("write2Plot", false);
+//  }
+//
+//  if (!isRestart)
+//  {
+//    AllocateElementLibrary(m_basis, m_quadrature);
+//  }
+//  m_hgDamp = erNode->GetAttributeOrDefault<realT>("hgDamp", 0.0);
+//  m_hgStiff = erNode->GetAttributeOrDefault<realT>("hgStiff", 0.01);
 
 }
 
@@ -802,31 +789,31 @@ int ElementRegionT::CalculateVelocityGradients(const NodeManager& nodeManager, c
 
 int ElementRegionT::MaterialUpdate(const realT dt)
 {
-  const iArray1d& ghostRankAll = this->GetFieldData<FieldInfo::ghostRank>();
-  m_energy.Zero();
-
-  for (localIndex k = 0; k < m_numElems; ++k)
-  {
-//    MaterialBaseParameterDataT& parameter = m_material.MaterialParameter(k);
-
-    const int ghostRank = ghostRankAll[k];
-    //if( ghostRank < 0 )
-    {
-      for (unsigned int a = 0; a < m_numIntegrationPointsPerElem; ++a)
-      {
-        MaterialBaseStateData& state = *(m_mat->StateData(k, a));
-        R2Tensor L; //just stub in since this whole function is being removed
-        m_mat->StrainDrivenUpdateMember(k, a, m_Dadt[k][a], L, m_Rot[k][a], m_detJ_n[k][a],
-                                        m_detJ_np1[k][a], dt);
-        if (ghostRank < 0)
-        {
-          m_energy.IncrementStressPower(state.StressPower);
-          m_energy.IncrementStrainEnergy(state.ElasticStrainEnergy);
-          m_energy.IncrementDissipatedEnergy(state.DissipatedEnergy);
-        }
-      }
-    }
-  }
+//  const iArray1d& ghostRankAll = this->GetFieldData<FieldInfo::ghostRank>();
+//  m_energy.Zero();
+//
+//  for (localIndex k = 0; k < m_numElems; ++k)
+//  {
+////    MaterialBaseParameterDataT& parameter = m_material.MaterialParameter(k);
+//
+//    const int ghostRank = ghostRankAll[k];
+//    //if( ghostRank < 0 )
+//    {
+//      for (unsigned int a = 0; a < m_numIntegrationPointsPerElem; ++a)
+//      {
+//        MaterialBaseStateData& state = *(m_mat->StateData(k, a));
+//        R2Tensor L; //just stub in since this whole function is being removed
+//        m_mat->StrainDrivenUpdateMember(k, a, m_Dadt[k][a], L, m_Rot[k][a], m_detJ_n[k][a],
+//                                        m_detJ_np1[k][a], dt);
+//        if (ghostRank < 0)
+//        {
+//          m_energy.IncrementStressPower(state.StressPower);
+//          m_energy.IncrementStrainEnergy(state.ElasticStrainEnergy);
+//          m_energy.IncrementDissipatedEnergy(state.DissipatedEnergy);
+//        }
+//      }
+//    }
+//  }
 
   return 0;
 }
@@ -1183,7 +1170,7 @@ void ElementRegionT::SetIsAttachedToSendingGhostNode(const NodeManager& nodeMana
   {
     const localIndex* const elemToNodeMap = m_toNodesRelation[k];
 
-    for (localIndex a = 0; a < nodeManager.m_numNodes; ++a)
+    for (localIndex a = 0; a < nodeManager.DataLengths(); ++a)
     {
 
       if (nodeGhostRank[elemToNodeMap[a]] == -1)
@@ -1484,15 +1471,17 @@ void ElementRegionT::GetFaceNodes(const localIndex elementIndex, const localInde
 
 R1Tensor ElementRegionT::GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos) const
 {
+  const Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
 
   const localIndex* const nodelist = m_toNodesRelation[k];
   R1Tensor elementCenter(0.0);
   for (unsigned int a = 0; a < m_numNodesPerElem; ++a)
   {
     const localIndex b = nodelist[a];
-    elementCenter += (*nodeManager.m_refposition)[b];
+    elementCenter += refPosition[b];
     if(!useReferencePos)
-      elementCenter += (*nodeManager.m_displacement)[b];
+      elementCenter += displacement[b];
   }
   elementCenter /= realT(m_numNodesPerElem);
 
@@ -2426,4 +2415,45 @@ bool ElementRegionT::SplitObject( const localIndex indexToSplit,
   }
 
   return didSplit;
+}
+
+void ElementRegionT::UpdateElementsVolume( PhysicalDomainT& domain )
+{
+  FaceManagerT& faceManager = domain.m_feFaceManager;
+  NodeManager& nodeManager = domain.m_feNodeManager;
+  rArray1d& volume = this->GetFieldData<FieldInfo::volume>();
+  Array1dT< R1Tensor >& refPosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  Array1dT< R1Tensor >& displacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+
+  R1Tensor dummy;
+
+  // Solid solvers that use element volume calculate it themselves.  This function is mainly called by some flow solvers that need element element volume.
+  for (localIndex j = 0; j < DataLengths(); j++)
+  {
+
+    R1Tensor elemCenter = GetElementCenter(j, nodeManager);
+    volume[j] = 0.0;
+
+    for (localIndex k = 0; k < this->m_toFacesRelation.Dimension(1); k++)
+    {
+      localIndex faceIndex = m_toFacesRelation(j, k);
+      localIndex nnodes = faceManager.m_toNodesRelation[faceIndex].size();
+
+      R1Tensor x0(refPosition[faceManager.m_toNodesRelation[faceIndex][0]]);
+      x0 += displacement[faceManager.m_toNodesRelation[faceIndex][0]];
+
+      for (localIndex l = 2; l < nnodes; l++)
+      {
+        R1Tensor x1(refPosition[faceManager.m_toNodesRelation[faceIndex][l - 1]]);
+        R1Tensor x2(refPosition[faceManager.m_toNodesRelation[faceIndex][l]]);
+        x1 += displacement[faceManager.m_toNodesRelation[faceIndex][l-1]];
+        x2 += displacement[faceManager.m_toNodesRelation[faceIndex][l]];
+
+        volume[j] += GeometryUtilities::CentroidAndVolume_3DTetrahedron(
+            elemCenter, x0, x1, x2, dummy);
+      }
+    }
+  }
+}
+
 }

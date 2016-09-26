@@ -2405,7 +2405,7 @@ void ParallelPlateFlowSolverFVP::UpdateFlux( const realT time,
 
 
 void ParallelPlateFlowSolverFVP::CalculateApertureDerivatives( const FaceManagerT& faceManager,
-                                                              const NodeManagerT& nodeManager )
+                                                              const NodeManager& nodeManager )
 {
   const iArray1d* const trilinosIndexNode = nodeManager.GetFieldDataPointer<int>("IMS_0_GlobalDof");
 

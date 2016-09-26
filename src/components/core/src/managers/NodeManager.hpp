@@ -47,34 +47,40 @@
 #ifndef NODEMANAGERT_H_
 #define NODEMANAGERT_H_
 
-#include "ObjectDataStructureBaseT.h"
+#include "ElementManager.hpp"
+#include "ObjectManagerBase.hpp"
 #include <string.h>
 
-class ElementRegionT;
-class FaceManagerT;
-class EdgeManagerT;
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 class SiloFile;
+
+namespace geosx
+{
+
+class ElementRegion;
+class FaceManager;
+class EdgeManager;
+
 /**
  * @author Randolph Settgast
  *
  * The NodeManagerT class manages the node data using the ObjectDataStructureBaseT as a data manager.
  * This means that each field is stored in an array where each array entry corresponds to a node.
  */
-class NodeManagerT : public ObjectDataStructureBaseT
+class NodeManager : public ObjectDataStructureBaseT
 {
 public:
 
 
   /// default constructor
-  NodeManagerT();
+  NodeManager();
 
 
 
   /// default destructor
-  ~NodeManagerT();
+  ~NodeManager();
 
 
   globalIndex resize( const localIndex size, const bool assignGlobals = false )
@@ -101,7 +107,7 @@ public:
   /// pack nodes into a buffer
   template< typename T_indices >
   unsigned int PackNodes( const T_indices& sendnodes,
-                          const FaceManagerT& faceManager,
+                          const FaceManager& faceManager,
                           bufvector& buffer,
                           const bool packConnectivityToGlobal,
                           const bool packFields,
@@ -110,7 +116,7 @@ public:
 
   /// unpack nodes from a buffer
   unsigned int UnpackNodes( const char*& buffer,
-                            const FaceManagerT& faceManager,
+                            const FaceManager& faceManager,
                             lArray1d& nodeReceiveLocalIndices,
                             const bool unpackConnectivityToLocal,
                             const bool unpackFields,
@@ -118,7 +124,7 @@ public:
                             const bool unpackSets  );
 
   void CalculateEffectiveNormal( const localIndex index,
-                                 const FaceManagerT& faceManager,
+                                 const FaceManager& faceManager,
                                  R1Tensor& normal ) const;
 
 
@@ -126,41 +132,44 @@ public:
   void CopyNode( const int destination, const int source );
 
   /// construct the nodeToElementMap using data in elementManager
-  void ConstructNodeToElementMap( const ElementManagerT& elementManager );
+  void ConstructNodeToElementMap( const ElementManager& elementManager );
 
   /// construct the nodeToElementMap using data in elementManager
-  void AddToNodeToElementMap( const ElementManagerT& elementManager,
+  void AddToNodeToElementMap( const ElementManager& elementManager,
                                   const std::map<std::string,lArray1d>& newElementIndices );
 
   /// construct nodeToFaceMap using data in the faceManager
-  void ConstructNodeToFaceMap( const FaceManagerT& faceManager );
+  void ConstructNodeToFaceMap( const FaceManager& faceManager );
 
   void ConnectivityFromGlobalToLocal( const lSet& indices,
                                       const lSet& clearIndices,
                                       const std::map<globalIndex,localIndex>& faceGlobalToLocal );
 
 
-  void ModifyNodeToEdgeMapFromSplit( const EdgeManagerT& edgeManager,
+  void ModifyNodeToEdgeMapFromSplit( const EdgeManager& edgeManager,
                                      const lSet& newEdgeIndices,
                                      const lSet& modifiedEdgeIndices );
 
 // Fu note on 20130416: Looks like this was temporary.  This function is now taken care of by element region. 
 // We will keep it here for a while and delete it later.
-//  void UpdateNodeExternalityFromSplit( const FaceManagerT& faceManager,
+//  void UpdateNodeExternalityFromSplit( const FaceManager& faceManager,
 //                                     const lSet& newNodeIndices,
 //                                     const lSet& modifiedNodeIndices );
 
   /// construct nodeToFaceMap using data in the faceManager
-  void AddToNodeToFaceMap( const FaceManagerT& faceManager,
+  void AddToNodeToFaceMap( const FaceManager& faceManager,
                            const lArray1d& newFaceIndices );
 
-  void AddToNodeToEdgeMap( const EdgeManagerT& edgeManager,
+  void AddToNodeToEdgeMap( const EdgeManager& edgeManager,
                            const lArray1d& newEdgeIndices );
 
   /// get the current position of the node
   void GetPosition(localIndex nd, R1Tensor& position){
-    position = (*m_refposition)[nd];
-    position += (*m_displacement)[nd];
+    Array1dT< R1Tensor >& refPosition = this->GetFieldData<FieldInfo::referencePosition>();
+    Array1dT< R1Tensor >& displacement = this->GetFieldData<FieldInfo::displacement>();
+
+    position = refPosition[nd];
+    position += displacement[nd];
   }
 
 
@@ -198,40 +207,6 @@ protected:
 
 public:
 
-  /** @name Data Members
-   * These are references to the data members of the class. They are initialized in the constructor,
-   * and should never be changed...hence they are references (const pointers). This is for speed purposes,
-   * as doing a lookup of in ObjectDataStrucutreT::std::map<> that the data is held in will be slow. So
-   * there should be a reference for every field in the field key list. And yeah...I know...these
-   * break the protection of the underlying data structure. I could make these private, then make accessors,
-   * but isn't that just an extra step? Maybe later if we want to be all rigid and stuff.
-   */
-  ///@{
-
-  const localIndex& m_numNodes;
-
-  /// Reference position
-  Array1dT< R1Tensor >* const m_refposition;
-
-  /// displacement
-  Array1dT< R1Tensor >* const m_displacement;
-
-  /// incremental displacement
-  Array1dT< R1Tensor >* const m_incrementalDisplacement;
-
-  /// velocity
-  Array1dT< R1Tensor >* const m_velocity;
-
-  /// acceleration
-  Array1dT< R1Tensor >* const m_acceleration;
-
-  /// force
-  Array1dT< R1Tensor >* const m_force;
-
-  /// mass
-  Array1dT< realT >* const m_mass;
-
-  ///@}
 
 
   /** @name Maps
@@ -256,8 +231,8 @@ protected:
 
 private:
   /// copy constructor
-  NodeManagerT( const NodeManagerT& init );
-  NodeManagerT& operator=( const NodeManagerT&);
+  NodeManager( const NodeManager& init );
+  NodeManager& operator=( const NodeManager&);
 
 
 };
@@ -268,7 +243,7 @@ private:
 // *********************************************************************************************************************
 
 
-
+}
 
 
 #endif /* NODEMANAGERT_H_ */

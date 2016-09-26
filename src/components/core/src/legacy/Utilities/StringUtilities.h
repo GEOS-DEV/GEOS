@@ -50,7 +50,7 @@
 #include <sstream>
 #include <algorithm>
 
-#include "Common/Common.h"
+#include "legacy/Common/Common.h"
 
 
 /////////////////////////////////////////////////

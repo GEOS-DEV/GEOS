@@ -52,13 +52,12 @@
 #include "Constitutive/Material/MaterialBase.h"
 #include "Utilities/FindRoots.h"
 #include "Utilities/MaterialUtilities.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
-
 #include "InitiallyRigidCohesiveZone.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
 #include "Constitutive/CohesiveZone/CohesiveZoneFactory.h"
 #include <typeinfo>
 #include <assert.h>
+#include "../../IO/ticpp/HierarchicalDataNode.h.old"
+#include "../../IO/ticpp/HierarchicalDataNode.h.old"
 
 InitiallyRigidCohesiveZone::InitiallyRigidCohesiveZone( ):
 CohesiveZoneBase( sizeof(ParameterClass), sizeof(StateClass) )

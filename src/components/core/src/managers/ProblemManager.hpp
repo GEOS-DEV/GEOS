@@ -21,10 +21,10 @@
 #include "pugixml/src/pugixml.hpp"
 #include "optionparser/src/optionparser.h"
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "ObjectManagerBase.hpp"
 #include "PhysicsSolvers/PhysicsSolverManager.hpp"
-#include "InputDocumentation.hpp"
 #include "schema/SchemaUtilities.hpp"
+#include "DocumentationNode.hpp"
 
 namespace geosx
 {
@@ -68,11 +68,11 @@ struct Arg : public option::Arg
 
 class DomainPartition;
 
-class ProblemManager : public dataRepository::ManagedGroup
+class ProblemManager : public ObjectManagerBase
 {
 public:
   explicit ProblemManager( const std::string& name,
-                           ManagedGroup * const parent );
+                           ObjectManagerBase * const parent );
   ~ProblemManager();
 
   static std::string CatalogName() { return "ProblemManager"; }
@@ -103,7 +103,7 @@ public:
 
 private:
   PhysicsSolverManager & m_physicsSolverManager;
-  cxx_utilities::InputDocumentation m_inputDocumentationHead;
+  cxx_utilities::DocumentationNode m_inputDocumentationHead;
 };
 
 } /* namespace geosx */

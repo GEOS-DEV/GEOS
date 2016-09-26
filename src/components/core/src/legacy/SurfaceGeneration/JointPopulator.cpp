@@ -171,7 +171,7 @@ JointPopulator::Populate(const std::map< std::string, ElementRegionT >& elementR
                          const R1Tensor& min,
                          const R1Tensor& max,
                          FaceManagerT& faceManager,
-                         NodeManagerT& nodeManager)
+                         NodeManager& nodeManager)
 {
   if(!m_isActive || m_nodeSetName.length() == 0)
     return false;
@@ -249,7 +249,7 @@ bool JointPopulator::Populate(Array1dT<R1Tensor>& positions,
 
 bool JointPopulator::Populate(const std::map<std::string, ElementRegionT>& elementRegions,
                               FaceManagerT& faceManager,
-                              NodeManagerT& nodeManager)
+                              NodeManager& nodeManager)
 {
   if(!m_isActive || m_nodeSetName.length() == 0 || m_fileName.empty())
     return false;
@@ -294,7 +294,7 @@ JointPopulator::Populate(const std::map< std::string, ElementRegionT >& elementR
                          Array1dT<R1Tensor>& strikes,
                          Array1dT<R1Tensor>& dips,
                          FaceManagerT& faceManager,
-                         NodeManagerT& nodeManager)
+                         NodeManager& nodeManager)
 {
   //get position references
   const Array1dT<R1Tensor>& ref = nodeManager.GetFieldData<FieldInfo::referencePosition>();

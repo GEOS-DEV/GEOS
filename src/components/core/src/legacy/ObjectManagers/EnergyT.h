@@ -8,7 +8,7 @@
 #ifndef ENERGYT_H_
 #define ENERGYT_H_
 
-#include "Common/intrinsic_typedefs.h"
+#include "legacy/Common/intrinsic_typedefs.h"
 
 class EnergyT
 {

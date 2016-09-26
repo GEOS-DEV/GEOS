@@ -40,12 +40,12 @@
 #ifndef LAGRANGE_BASIS_H
 #define LAGRANGE_BASIS_H
 
-#include "Common/Common.h"
+#include "legacy/Common/Common.h"
 #include <cassert>
 
-#include "ElementLibrary/Basis.h"
-#include "ElementLibrary/Polynomial.h"
-#include "Utilities/StructuredGridUtilities.h"
+#include "legacy/ElementLibrary/Basis.h"
+#include "legacy/ElementLibrary/Polynomial.h"
+#include "legacy/Utilities/StructuredGridUtilities.h"
 
 /** A class to define a parent finite element space consisting
  *  of Lagrangian polynomial basis function. The class is

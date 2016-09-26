@@ -8,10 +8,10 @@
 #ifndef CONSTITUTIVEBASE_H_
 #define CONSTITUTIVEBASE_H_
 
-#include "Common/Common.h"
-#include "ArrayT/bufvector.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
+#include "legacy/Common/Common.h"
+#include "legacy/ArrayT/bufvector.h"
 #include <sstream>
+//#include "../IO/ticpp/HierarchicalDataNode.h.old"
 
 namespace TICPP
 {
@@ -98,7 +98,7 @@ public:
   {
     for( sArray1d::const_iterator inames=names.begin() ; inames!=names.end() ; ++inames )
     {
-      for( unsigned int i=0 ; i<num ; ++i )
+      for( auto i=0 ; i<num ; ++i )
       {
         char lbl[256] = {0};
         sprintf(lbl, "%s_ip%02u", inames->c_str(), i);
@@ -217,7 +217,7 @@ public:
     if(names.size() != values.size())
       throw GPException("Attempt to SetValues with arrays of different lengths");
     PreSetValues(names);
-    for(localIndex i = 0; i < names.size(); i++)
+    for( auto i = 0u; i < names.size(); i++)
       SetValues(names[i], values[i]);
     PostSetValues(names);
   }

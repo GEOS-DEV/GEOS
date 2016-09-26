@@ -6,7 +6,8 @@
  */
 
 #include "MeshUtilities.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
+
+#include "../legacy/IO/ticpp/HierarchicalDataNode.h"
 #include "ObjectManagers/PhysicalDomainT.h"
 #include "SimpleGeometricObjects.h"
 
@@ -24,7 +25,7 @@ MeshUtilities::~MeshUtilities()
 
 
 void MeshUtilities::GenerateNodesets( TICPP::HierarchicalDataNode& hdn,
-                                      NodeManagerT& nodeManager )
+                                      NodeManager& nodeManager )
 {
 
   std::map< std::string, lSet >& sets = nodeManager.m_Sets;
@@ -87,7 +88,7 @@ void MeshUtilities::GenerateNodesets( TICPP::HierarchicalDataNode& hdn,
 
 void MeshUtilities::GenerateFasesetsAndAssociatedNodesets( TICPP::HierarchicalDataNode& hdn,
                                                            FaceManagerT& faceManager,
-                                                           NodeManagerT& nodeManager )
+                                                           NodeManager& nodeManager )
 {
 
 //  std::map< std::string, lSet >& nodeSets = nodeManager.m_Sets;
@@ -174,7 +175,7 @@ void MeshUtilities::GenerateFasesetsAndAssociatedNodesets( TICPP::HierarchicalDa
 
 
 void MeshUtilities::GenerateElementsets( TICPP::HierarchicalDataNode& hdn,
-                                         const NodeManagerT& nodeManager,
+                                         const NodeManager& nodeManager,
                                       ElementManagerT& elementManager )
 {
   for(TICPP::HierarchicalDataNode* hdnNode = hdn.Next(true); hdnNode; hdnNode = hdn.Next() )

@@ -162,7 +162,7 @@ public:
 
 
   virtual void CalculateApertureDerivatives( const FaceManagerT& faceManager,
-                                             const NodeManagerT& nodeManager );
+                                             const NodeManager& nodeManager );
 
   virtual void TimeStepSetup( const realT& time,
                               const realT& dt,

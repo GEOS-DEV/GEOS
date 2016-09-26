@@ -311,7 +311,7 @@ unsigned int ElementManagerT::PackElements( bufvector& buffer,
                                             lSet& sendnodes,
                                             lSet& sendfaces,
                                             const std::map<std::string,T_indices>& elementList,
-                                            const NodeManagerT& nodeManager,
+                                            const NodeManager& nodeManager,
                                             const FaceManagerT& faceManager,
                                             const bool packConnectivityToGlobal,
                                             const bool packFields,
@@ -343,12 +343,12 @@ unsigned int ElementManagerT::PackElements( bufvector& buffer,
   return sizeOfPacked ;
 
 }
-template unsigned int ElementManagerT::PackElements( bufvector& buffer, lSet& sendnodes, lSet& sendfaces, const std::map<std::string,lSet>& elementList, const NodeManagerT& nodeManager, const FaceManagerT& faceManager, const bool, const bool, const bool, const bool ) const;
-template unsigned int ElementManagerT::PackElements( bufvector& buffer, lSet& sendnodes, lSet& sendfaces, const std::map<std::string,lArray1d>& elementList, const NodeManagerT& nodeManager, const FaceManagerT& faceManager, const bool, const bool, const bool, const bool ) const;
+template unsigned int ElementManagerT::PackElements( bufvector& buffer, lSet& sendnodes, lSet& sendfaces, const std::map<std::string,lSet>& elementList, const NodeManager& nodeManager, const FaceManagerT& faceManager, const bool, const bool, const bool, const bool ) const;
+template unsigned int ElementManagerT::PackElements( bufvector& buffer, lSet& sendnodes, lSet& sendfaces, const std::map<std::string,lArray1d>& elementList, const NodeManager& nodeManager, const FaceManagerT& faceManager, const bool, const bool, const bool, const bool ) const;
 
 
 unsigned int ElementManagerT::UnpackElements( const bufvector& buffer,
-                                              const NodeManagerT& nodeManager,
+                                              const NodeManager& nodeManager,
                                               const FaceManagerT& faceManager,
                                               std::map< std::string, lArray1d>& elementRegionReceiveLocalIndices,
                                               const bool unpackConnectivityToLocal,
@@ -364,7 +364,7 @@ unsigned int ElementManagerT::UnpackElements( const bufvector& buffer,
 }
 
 unsigned int ElementManagerT::UnpackElements( const char*& pbuffer,
-                                              const NodeManagerT& nodeManager,
+                                              const NodeManager& nodeManager,
                                               const FaceManagerT& faceManager,
                                               std::map< std::string, lArray1d>& elementRegionReceiveLocalIndices,
                                               const bool unpackConnectivityToLocal,
@@ -424,7 +424,7 @@ void ElementManagerT::ConnectivityFromGlobalToLocal( const std::map< std::string
 
 
 void ElementManagerT::ModifyToElementMapsFromSplit( const std::map< std::string, lSet>& modifiedElements ,
-                                                   NodeManagerT& nodeManager,
+                                                   NodeManager& nodeManager,
                                                    FaceManagerT& faceManager )
 {
   for( std::map< RegKeyType, ElementRegionT >::iterator i=m_ElementRegions.begin() ; i!=m_ElementRegions.end() ; ++i )
@@ -443,7 +443,7 @@ void ElementManagerT::ModifyToElementMapsFromSplit( const std::map< std::string,
 }
 
 void ElementManagerT::UpdateExternalityFromSplit( const std::map< std::string, lSet>& modifiedElements ,
-                                                  NodeManagerT& nodeManager,
+                                                  NodeManager& nodeManager,
                                                   EdgeManagerT& edgeManager,
                                                   FaceManagerT& faceManager )
 {

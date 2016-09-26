@@ -99,6 +99,11 @@ public:
     return m_sidreView;
   }
 
+  string const & name() const
+  {
+    return m_name;
+  }
+
 private:
   std::string m_name;
   ManagedGroup* m_parent;

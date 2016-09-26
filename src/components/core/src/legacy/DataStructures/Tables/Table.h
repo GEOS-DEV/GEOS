@@ -47,8 +47,8 @@
 #ifndef __TABLE__
 #define __TABLE__
 
-#include "Common/Common.h"
-#include "Utilities/StringUtilities.h"
+#include "legacy/Common/Common.h"
+#include "legacy/Utilities/StringUtilities.h"
 
 #include <vector>
 

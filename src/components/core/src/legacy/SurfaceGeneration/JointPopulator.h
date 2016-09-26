@@ -36,11 +36,11 @@ public:
                 const R1Tensor& min,
                 const R1Tensor& max,
                 FaceManagerT& faceManager,
-                NodeManagerT& nodeManager);
+                NodeManager& nodeManager);
 
   bool Populate(const std::map< std::string, ElementRegionT >& elementRegions,
                 FaceManagerT& faceManager,
-                NodeManagerT& nodeManager);
+                NodeManager& nodeManager);
 
   bool Populate(Array1dT<R1Tensor>& positions,
                 Array1dT<R1Tensor>& normals,
@@ -55,7 +55,7 @@ public:
                        Array1dT<R1Tensor>& strikes,
                        Array1dT<R1Tensor>& dips,
                        FaceManagerT& faceManager,
-                       NodeManagerT& nodeManager);
+                       NodeManager& nodeManager);
 
   bool Next(R1Tensor& strikeVector,
             R1Tensor& dipVector,

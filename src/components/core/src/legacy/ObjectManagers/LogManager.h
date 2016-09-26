@@ -51,14 +51,10 @@
 #include "Utilities/Utilities.h"
 #include "DataStructures/Tables/Table.h"
 
-#include "IO/ticpp/HierarchicalDataNode.h"
-
-
-//#include "ChemistryData.h"
-
-
 #include <map>
 #include <utility>
+
+#include "../IO/ticpp/HierarchicalDataNode.h"
 
 #if GPAC_MPI
 #include <mpi.h>

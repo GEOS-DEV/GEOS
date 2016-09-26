@@ -54,7 +54,7 @@
  * @param nm External node manager pointer
  * @param fm External face manager pointer
  */
-DiscreteElementManagerT::DiscreteElementManagerT(NodeManagerT* nm = 0, FaceManagerT* fm = 0) :
+DiscreteElementManagerT::DiscreteElementManagerT(NodeManager* nm = 0, FaceManagerT* fm = 0) :
       DiscreteElementManagerBaseT(ObjectDataStructureBaseT::DiscreteElementManager),
       m_discreteElementToExternalFacesMap(m_VariableOneToManyMaps["discreteElementToExternalFaces"]),
       m_discreteElementToExternalNodesMap(m_VariableOneToManyMaps["discreteElementToExternalNodes"]),

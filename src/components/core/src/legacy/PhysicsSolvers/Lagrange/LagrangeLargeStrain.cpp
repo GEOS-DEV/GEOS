@@ -33,7 +33,7 @@ LagrangeLargeStrain::~LagrangeLargeStrain()
 
 
 
-void LagrangeLargeStrain::ProcessElementRegion( NodeManagerT& nodeManager,
+void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
                                                      ElementRegionT& elemRegion,
                                                      const realT dt )
 {
@@ -335,7 +335,7 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManagerT& nodeManager,
 
 
 void LagrangeLargeStrain::ApplyThermalStress( ElementRegionT& elemRegion,
-                                              NodeManagerT& nodeManager,
+                                              NodeManager& nodeManager,
                                               const localIndex& elementID,
                                               Epetra_SerialDenseVector * rhs)
 {
@@ -383,7 +383,7 @@ void LagrangeLargeStrain::ApplyThermalStress( ElementRegionT& elemRegion,
 
 }
 
-void LagrangeLargeStrain::CalculateNodalForceFromStress( NodeManagerT& nodeManager,
+void LagrangeLargeStrain::CalculateNodalForceFromStress( NodeManager& nodeManager,
                                                          ElementRegionT& elemRegion,
                                                          const localIndex& elementID,
                                                          R2SymTensor& stress )

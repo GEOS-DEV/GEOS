@@ -186,7 +186,7 @@ class DiscreteElementManagerT : public DiscreteElementManagerBaseT
 {
 public:
   DiscreteElementManagerT();
-  DiscreteElementManagerT(NodeManagerT* nm, FaceManagerT* fm);
+  DiscreteElementManagerT(NodeManager* nm, FaceManagerT* fm);
   virtual ~DiscreteElementManagerT();
 
   unsigned int Unpack( const char*& buffer, lArray1d& elementReceiveLocalIndices );
@@ -229,7 +229,7 @@ protected:
                                           const std::string& regionName = "none",
                                           const lArray1d& mask = lArray1d());
 public:
-  NodeManagerT* m_nodeManager;
+  NodeManager* m_nodeManager;
   FaceManagerT* m_faceManager;
 
   ///maps the discrete element to the indices in the _external_ face manager

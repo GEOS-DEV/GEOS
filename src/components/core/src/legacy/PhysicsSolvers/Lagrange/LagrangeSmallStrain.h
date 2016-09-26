@@ -85,7 +85,7 @@ public:
   virtual void DisplacementBC(PhysicalDomainT& domain, ObjectDataStructureBaseT& object,
                               BoundaryConditionBase* bc, const lSet& set, realT time);
                               
-  virtual void FixNodesBC( NodeManagerT const& nodeManager, const lSet& set );
+  virtual void FixNodesBC( NodeManager const& nodeManager, const lSet& set );
 
   
   virtual void NonpenetratingBC_NeighborUpdate(PhysicalDomainT& domain, ObjectDataStructureBaseT& object,
@@ -116,7 +116,7 @@ public:
 private:
   
 
-  virtual void ProcessElementRegion( NodeManagerT& nodeManager,
+  virtual void ProcessElementRegion( NodeManager& nodeManager,
                              ElementRegionT& elemRegion,
                              const realT dt )
   {

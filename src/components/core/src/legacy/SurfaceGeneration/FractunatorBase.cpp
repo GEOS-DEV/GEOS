@@ -34,7 +34,7 @@ FractunatorBase::~FractunatorBase()
 }
 
 
-void FractunatorBase::RegisterFieldsAndMaps( NodeManagerT& nodeManager,
+void FractunatorBase::RegisterFieldsAndMaps( NodeManager& nodeManager,
                                          EdgeManagerT& edgeManager,
                                          FaceManagerT& faceManager )
 {
@@ -113,7 +113,7 @@ void FractunatorBase::RegisterFieldsAndMaps( NodeManagerT& nodeManager,
 }
 
 
-void FractunatorBase::Initialize( NodeManagerT& nodeManager,
+void FractunatorBase::Initialize( NodeManager& nodeManager,
                                   EdgeManagerT& edgeManager ,
                                   FaceManagerT& faceManager,
                                   ElementManagerT& elementManager)
@@ -345,7 +345,7 @@ void FractunatorBase::ReadXML( TICPP::HierarchicalDataNode& hdn )
 
 
 bool FractunatorBase::ProcessNode( const localIndex nodeID,
-                                   NodeManagerT& nodeManager,
+                                   NodeManager& nodeManager,
                                    EdgeManagerT& edgeManager,
                                    FaceManagerT& faceManager,
                                    ExternalFaceManagerT& externalFaceManager,
@@ -402,7 +402,7 @@ bool FractunatorBase::ProcessNode( const localIndex nodeID,
 //TODO: Need to clean this function.  Already moved its funcationality to another function in Fractunator3.
 // But I am not sure about why we needed one of the loops.
 // Will keep it here for now to be safe.
-void FractunatorBase::UpdateRuptureStates( NodeManagerT& nodeManager,
+void FractunatorBase::UpdateRuptureStates( NodeManager& nodeManager,
                                        EdgeManagerT& edgeManager,
                                        FaceManagerT& faceManager,
                                        ElementManagerT& elementManager,
@@ -564,7 +564,7 @@ void FractunatorBase::MarkBirthTime( FaceManagerT& faceManager,
 }
 
 //Fu: This is a rough correction, but better than no-correction.
-void FractunatorBase::CorrectSplitNodalMass (NodeManagerT& nodeManager,
+void FractunatorBase::CorrectSplitNodalMass (NodeManager& nodeManager,
                               localIndex node0,
                               localIndex node1)
 {
@@ -593,7 +593,7 @@ realT FractunatorBase::MinimumToughnessOnEdge( const localIndex edgeID,
 }
 
 realT FractunatorBase::MinimumToughnessOnNode( const localIndex nodeID,
-                                               NodeManagerT& nodeManager,
+                                               NodeManager& nodeManager,
                                                FaceManagerT& faceManager)
 {
   realT val = std::numeric_limits<realT>::max();

@@ -46,30 +46,53 @@
 #ifndef ELEMENTMANAGERT_H_
 #define ELEMENTMANAGERT_H_
 
-#include "../../dataRepository/ManagedGroup.hpp"
-#include "Common/Common.h"
+//#include "Common.h"
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
-#include "DataStructures/VectorFields/ElementRegionT.h"
+#include "ObjectManagerBase.hpp"
+
+#include "ElementRegionT.hpp"
+#include "legacy/ArrayT/bufvector.h"
+
+namespace geosx
+{
+
+
 
 
 /**
  * Class to manage the data stored at the element level.
  */
-class ElementManagerT : public ObjectDataStructureBaseT
+class ElementManager : public ObjectManagerBase
 {
 public:
-  ElementManagerT();
-  virtual ~ElementManagerT();
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
+  static string CatalogName()
+  {
+    return "RegionManager";
+  }
+
+  string getName() const override final
+  {
+    return ElementManager::CatalogName();
+  }
+
+
+  ElementManager( ObjectManagerBase * const parent );
+  virtual ~ElementManager();
 
   void Initialize(  ){}
 
   void SetIsAttachedToSendingGhostNode( const NodeManager& nodeManager )
   {
-    for( std::map< RegKeyType, ElementRegionT >::iterator i=m_ElementRegions.begin() ; i!=m_ElementRegions.end(); ++i )
-    {
-      ElementRegionT& elementRegion = i->second;
-      elementRegion.SetIsAttachedToSendingGhostNode(nodeManager);
-    }
+//    for( std::map< RegKeyType, ElementRegionT >::iterator i=m_ElementRegions.begin() ; i!=m_ElementRegions.end(); ++i )
+//    {
+//      ElementRegionT& elementRegion = i->second;
+//      elementRegion.SetIsAttachedToSendingGhostNode(nodeManager);
+//    }
   }
 
 
@@ -92,7 +115,8 @@ public:
   {
     (void)compositionObjectManager;
     (void)objectToCompositionObject;
-    throw GPException("ElementManagerT::ExtractMapFromObjectForAssignGlobalObjectNumbers() shouldn't be called\n");
+
+//    throw GPException("ElementManagerT::ExtractMapFromObjectForAssignGlobalObjectNumbers() shouldn't be called\n");
   }
 
   //void ConstructListOfBoundaryObjects( gArray1d& objectList ) const ;
@@ -110,8 +134,8 @@ public:
                                      FaceManager& faceManager );
 
   void UpdateExternalityFromSplit( const std::map< std::string, lSet>& modifiedElements ,
-                                     NodeManager& nodeManager,
-                                     EdgeManagerT& edgeManager,
+                                   NodeManager& nodeManager,
+                                     EdgeManager& edgeManager,
                                      FaceManager& faceManager );
 
   void InitializeFlowFaceRegion();
@@ -171,45 +195,31 @@ public:
                                       const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
                                       const std::map<globalIndex,localIndex>& faceGlobalToLocal );
 
-  localIndex* ElementToNodeMap( const localIndex elemIndex )
-  {
-    const RegKeyType regionKey = m_regionIndexToKey[m_ElementIndexToRegionIndex[elemIndex]];
-    return m_ElementRegions[regionKey].m_toNodesRelation[m_ElementIndexToRegionLocalIndex[elemIndex]];
-  }
+//  localIndex* ElementToNodeMap( const localIndex elemIndex )
+//  {
+//    const RegKeyType regionKey = m_regionIndexToKey[m_ElementIndexToRegionIndex[elemIndex]];
+//    return m_ElementRegions[regionKey].m_toNodesRelation[m_ElementIndexToRegionLocalIndex[elemIndex]];
+//  }
+//
+//  void ElementToNodeMap( const localIndex elemIndex, lArray1d& indices )
+//  {
+//    indices.clear();
+//    const RegKeyType regionKey = m_regionIndexToKey[m_ElementIndexToRegionIndex[elemIndex]];
+//    const localIndex* iptr = m_ElementRegions[regionKey].m_toNodesRelation[m_ElementIndexToRegionLocalIndex[elemIndex]];
+//    indices.resize(m_ElementRegions[regionKey].m_numNodesPerElem);
+//    localIndex a = 0;
+//    for(lArray1d::iterator it = indices.begin(); it != indices.end(); ++it, ++a)
+//      *it = iptr[a];
+//  }
 
-  void ElementToNodeMap( const localIndex elemIndex, lArray1d& indices )
-  {
-    indices.clear();
-    const RegKeyType regionKey = m_regionIndexToKey[m_ElementIndexToRegionIndex[elemIndex]];
-    const localIndex* iptr = m_ElementRegions[regionKey].m_toNodesRelation[m_ElementIndexToRegionLocalIndex[elemIndex]];
-    indices.resize(m_ElementRegions[regionKey].m_numNodesPerElem);
-    localIndex a = 0;
-    for(lArray1d::iterator it = indices.begin(); it != indices.end(); ++it, ++a)
-      *it = iptr[a];
-  }
-
-  int m_numElems;
-
-  void ResizeNumberOfElementsAfterSplit();
-
-  Array1dT<lArray1d>& m_ElementToNodeMap;
-  Array1dT<lArray1d>& m_ElementToFaceMap;
-  Array1dT<lArray1d>& m_ElementToElementMap;
-
-  iArray1d& m_ElementIndexToRegionIndex;
-  lArray1d& m_ElementIndexToRegionLocalIndex;
-
-  sArray1d m_regionIndexToKey;
-
-
-  typedef std::string RegKeyType;
-  std::map< RegKeyType, ElementRegionT > m_ElementRegions;
+  typedef string RegKeyType ;
+  std::map<RegKeyType, ElementRegionT> m_ElementRegions;
 
 private:
-  ElementManagerT( const ElementManagerT& );
-  ElementManagerT& operator=( const ElementManagerT&);
+  ElementManager( const ElementManager& );
+  ElementManager& operator=( const ElementManager&);
 
 
 };
-
+}
 #endif /* ELEMENTMANAGERT_H_ */

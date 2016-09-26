@@ -63,7 +63,7 @@ class PartitionBase;
 
 // ***** Forward Declarations **************************************************
 class PhysicalDomainT;
-class NodeManagerT;
+class NodeManager;
 class ElementManagerT;
 class DiscreteElementManagerT;
 

@@ -48,11 +48,11 @@
 
 #include <string>
 #include <string.h>
-#include "Common/typedefs.h"
+#include "legacy/Common/typedefs.h"
 #include <map>
-#include "Utilities/Utilities.h"
-#include "DataStructures/InterObjectRelation.h"
-#include "DataStructures/EncapsulatedObjects/EncapsulatedObjectBase.h"
+#include "legacy/Utilities/Utilities.h"
+#include "legacy/DataStructures/InterObjectRelation.h"
+#include "legacy/DataStructures/EncapsulatedObjects/EncapsulatedObjectBase.h"
 
 class bufvector: public VectorT<char>
 {
@@ -68,6 +68,7 @@ public:
   unsigned int Pack( const R1Tensor& var )      { return PrivatePack(var); }
   unsigned int Pack( const R2Tensor& var )      { return PrivatePack(var); }
   unsigned int Pack( const R2SymTensor& var )   { return PrivatePack(var); }
+  unsigned int Pack( const size_t& var )   { return PrivatePack(var); }
 
 
   unsigned int Pack( const std::string& var );
@@ -134,6 +135,7 @@ public:
   static unsigned int Unpack( const char*& buffer, R1Tensor& var ) { return PrivateUnpack(buffer,var); }
   static unsigned int Unpack( const char*& buffer, R2Tensor& var ) { return PrivateUnpack(buffer,var); }
   static unsigned int Unpack( const char*& buffer, R2SymTensor& var ) { return PrivateUnpack(buffer,var); }
+  static unsigned int Unpack( const char*& buffer, size_t& var ) { return PrivateUnpack(buffer,var); }
   static unsigned int Unpack( const char*& buffer, std::string& var );
 
   template< typename T >
@@ -513,7 +515,7 @@ inline unsigned int bufvector::Unpack( const char*& buffer, sArray1d& array )
   sizeOfUnpackedChars += Unpack( buffer, arrayLength );
   array.resize(arrayLength);
 
-  for( gArray1d::size_type i=0 ; i<arrayLength ; ++i )
+  for( auto i=0 ; i<arrayLength ; ++i )
   {
     sizeOfUnpackedChars += Unpack( buffer, array[i] );
   }
@@ -559,7 +561,7 @@ inline unsigned int bufvector::UnpackGlobal( const char*& buffer, const std::map
   sizeOfUnpackedChars += length;
 
 
-  for( gArray1d::size_type i=0 ; i<array_length ; ++i )
+  for( localIndex i=0 ; i<array_length ; ++i )
   {
     const localIndex li = stlMapLookup( globalToLocal, temp[i] );
     array[i] = li;
@@ -588,7 +590,7 @@ inline unsigned int bufvector::UnpackGlobal( const char*& buffer, const std::map
   sizeOfUnpackedChars += length;
 
 
-  for( gArray1d::size_type i=0 ; i<array_length ; ++i )
+  for( auto i=0 ; i<array_length ; ++i )
   {
     const localIndex li = stlMapLookup( globalToLocal, temp[i] );
     array.insert( li );
@@ -659,7 +661,7 @@ inline unsigned int bufvector::PrivatePackRelationT<FixedOneToManyRelation,T_ind
     const gArray1d& localToGlobal = relation.RelatedObjectLocalToGlobal();
     for( typename T_indices::const_iterator i = indices.begin() ; i != indices.end() ; ++i )
     {
-      for( localIndex j=0 ; j<relation.Dimension(1) ; ++j )
+      for( auto j=0u ; j<relation.Dimension(1) ; ++j )
       {
         sizeOfPackedChars += buffer.Pack( localToGlobal[relation[*i][j]] );
       }
@@ -669,7 +671,7 @@ inline unsigned int bufvector::PrivatePackRelationT<FixedOneToManyRelation,T_ind
   {
     for( typename T_indices::const_iterator i = indices.begin() ; i != indices.end() ; ++i )
     {
-      for( localIndex j=0 ; j<relation.Dimension(1) ; ++j )
+      for( auto j=0u ; j<relation.Dimension(1) ; ++j )
       {
         sizeOfPackedChars += buffer.Pack( relation[*i][j] );
       }
@@ -737,7 +739,7 @@ inline unsigned int bufvector::PrivateUnpackRelation( const char*& buffer, Fixed
   localIndex dimension;
   sizeOfUnpackedChars += bufvector::Unpack( buffer, dimension );
 
-  if( dimension != relation.Dimension(1) )
+  if( dimension != static_cast<int>(relation.Dimension(1)) )
     throw GPException("bufvector::PrivateUnpackRelation(): mismatched dimension");
 
   if( unpackGlobal )

@@ -136,7 +136,7 @@ public:
   void getSizes(R1Tensor& min, R1Tensor& max) const;
   void getPartitionSizes(R1Tensor& min, R1Tensor& max) const;
   void getPartitionGeometricalBoundary(R1Tensor& min, R1Tensor& max) const;
-  void UpdatePartitionBoundingBox(NodeManagerT& nodeManager);
+  void UpdatePartitionBoundingBox(NodeManager& nodeManager);
   void GetPartitionBoundingBox(R1Tensor& xmin, R1Tensor& xmax);
   void SetPartitionGeometricalBoundary(R1Tensor& min, R1Tensor& max);
 

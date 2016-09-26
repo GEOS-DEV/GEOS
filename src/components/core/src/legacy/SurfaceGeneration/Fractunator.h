@@ -18,17 +18,17 @@ public:
   Fractunator();
   virtual ~Fractunator();
 
-  void Initialize( const NodeManagerT& nodeManager ,
+  void Initialize( const NodeManager& nodeManager ,
                    const EdgeManagerT& edgeManager ,
                    const FaceManagerT& faceManager ,
                    const ElementManagerT& elementManager );
 
 
-  void RegisterFieldsAndMaps( NodeManagerT& nodeManager,
+  void RegisterFieldsAndMaps( NodeManager& nodeManager,
                               EdgeManagerT& edgeManager,
                               FaceManagerT& faceManager );
 
-  void SeparationDriver( NodeManagerT& nodeManager,
+  void SeparationDriver( NodeManager& nodeManager,
                          EdgeManagerT& edgeManager,
                          FaceManagerT& faceManager,
                          ExternalFaceManagerT& externalFaceManager,
@@ -40,7 +40,7 @@ public:
   realT m_failstress;
 
 private:
-  void UpdateRuptureStates( NodeManagerT& nodeManager,
+  void UpdateRuptureStates( NodeManager& nodeManager,
                             EdgeManagerT& edgeManager,
                             FaceManagerT& faceManager,
                             ElementManagerT& elementManager );
@@ -48,7 +48,7 @@ private:
   void UpdatePathCheckingArrays();
 
   bool FindFracturePlanes( const localIndex nodeID,
-                           const NodeManagerT& nodeManager,
+                           const NodeManager& nodeManager,
                            const EdgeManagerT& edgeManager,
                            const FaceManagerT& faceManager,
                            lSet& separationPathFaces,
@@ -59,7 +59,7 @@ private:
 
 
   void PerformFracture( const localIndex nodeID,
-                        NodeManagerT& nodeManager,
+                        NodeManager& nodeManager,
                         EdgeManagerT& edgeManager,
                         FaceManagerT& faceManager,
                         ElementManagerT& elementManager,
@@ -77,7 +77,7 @@ bool SetLocations( const int side,
                    std::map<localIndex,int>& faceLocations,
                    std::map< std::pair< ElementRegionT*, localIndex >, int>& elemLocations );
 
-  void ApplyGapDamping( NodeManagerT& nodeManager,
+  void ApplyGapDamping( NodeManager& nodeManager,
                         const FaceManagerT& faceManager,
                         const realT dt  );
 };

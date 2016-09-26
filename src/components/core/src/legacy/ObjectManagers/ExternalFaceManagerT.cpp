@@ -143,7 +143,7 @@ ExternalFaceManagerT::~ExternalFaceManagerT()
 
 void ExternalFaceManagerT::SplitFace(const localIndex parentIndex,
                                      const localIndex newFaceIndex,
-                                     const NodeManagerT& nodeManager)
+                                     const NodeManager& nodeManager)
 {
   //THIS IS ONLY FOR INTERNAL FE FACES BEING SPLIT IN TWAIN
   const localIndex nfe1 = nfe + 1;
@@ -180,7 +180,7 @@ void ExternalFaceManagerT::SplitFace(const localIndex parentIndex,
 void ExternalFaceManagerT::SplitFace(const localIndex parentIndex,
                                      const localIndex newFaceIndex1,
                                      const localIndex newFaceIndex2,
-                                     const NodeManagerT& nodeManager)
+                                     const NodeManager& nodeManager)
 {
   //THIS IS ONLY FOR INTERNAL FE FACES BEING SPLIT IN TWAIN
   const localIndex nfe1 = nfe + 1;
@@ -380,8 +380,8 @@ void ExternalFaceManagerT::BuildExternalFacesDiscreteElements()
  * @param[in] dt Timestep
  */
 bool ExternalFaceManagerT::RecalculateNeighborList(
-    const NodeManagerT& nodeManager,
-    const NodeManagerT& discreteElementNodeManager,
+    const NodeManager& nodeManager,
+    const NodeManager& discreteElementNodeManager,
     const DiscreteElementManagerT& m_discreteElementManager,
     const realT dt, const bool forceRecalculate, const bool useReferencePosition)
 {
@@ -582,8 +582,8 @@ bool ExternalFaceManagerT::RecalculateNeighborList(
   return true;
 }
 
-void ExternalFaceManagerT::PostSortUpdate( const NodeManagerT& nodeManager,
-                                           const NodeManagerT& discreteElementNodeManager,
+void ExternalFaceManagerT::PostSortUpdate( const NodeManager& nodeManager,
+                                           const NodeManager& discreteElementNodeManager,
                                            const lSet& toResort)
 {
   //-----------------------------------------------------------------------
@@ -596,7 +596,7 @@ void ExternalFaceManagerT::PostSortUpdate( const NodeManagerT& nodeManager,
   RemoveInvalidPairsFromNeighborList(faceAttachedToALocalNode, toResort);
 }
 
-void ExternalFaceManagerT::PostSortUpdate( const NodeManagerT& nodeManager)
+void ExternalFaceManagerT::PostSortUpdate( const NodeManager& nodeManager)
 {
   //-----------------------------------------------------------------------
   // DEAL WITH GHOSTS AND SELF-CONTACT
@@ -609,8 +609,8 @@ void ExternalFaceManagerT::PostSortUpdate( const NodeManagerT& nodeManager)
   RemoveInvalidPairsFromNeighborList(faceAttachedToALocalNode, toResort);
 }
 
-void ExternalFaceManagerT::SetGhostRank(    const NodeManagerT& nodeManager,
-                                            const NodeManagerT& discreteElementNodeManager,
+void ExternalFaceManagerT::SetGhostRank(    const NodeManager& nodeManager,
+                                            const NodeManager& discreteElementNodeManager,
                                             const iArray1d& excludeFromContact,
                                             iArray1d& faceAttachedToALocalNode)
 {
@@ -652,7 +652,7 @@ void ExternalFaceManagerT::SetGhostRank(    const NodeManagerT& nodeManager,
 }
 
 
-void ExternalFaceManagerT::SetGhostRank(    const NodeManagerT& nodeManager,
+void ExternalFaceManagerT::SetGhostRank(    const NodeManager& nodeManager,
                                             const iArray1d& excludeFromContact,
                                             iArray1d& faceAttachedToALocalNode)
 {
@@ -2265,7 +2265,7 @@ int ExternalFaceManagerT::CommonEdgeInterferenceGeometry(  const R1Tensor& xfc1,
  *
  * function to set "excludeFromContact" field based on the "NodeManagerT::nodeKCBC" field.
  */
-void ExternalFaceManagerT::SetExcludeFromContact( const NodeManagerT& nodeManager, bool reset )
+void ExternalFaceManagerT::SetExcludeFromContact( const NodeManager& nodeManager, bool reset )
 {
 
   if( nodeManager.HasField<int>("KCBC") )
@@ -2437,7 +2437,7 @@ void ExternalFaceManagerT::ReadNonManagedDataMembersFromSilo( const SiloFile& si
 }
 
 #ifdef SRC_INTERNAL
-void ExternalFaceManagerT::GeodynCoupling( NodeManagerT& nodeManager )
+void ExternalFaceManagerT::GeodynCoupling( NodeManager& nodeManager )
 {
   if (!doBackgroundAMR) return;
   if (!p_stepbamr) throw GPException("stepbamr pointer is not set...");
@@ -2531,7 +2531,7 @@ void ExternalFaceManagerT::GeodynCoupling( NodeManagerT& nodeManager )
   }
 }
 
-void ExternalFaceManagerT::GeodynCouplingParallel( NodeManagerT& nodeManager )
+void ExternalFaceManagerT::GeodynCouplingParallel( NodeManager& nodeManager )
 {
   if (!doBackgroundAMR)
     return;

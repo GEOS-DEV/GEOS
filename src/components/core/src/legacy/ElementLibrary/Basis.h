@@ -45,7 +45,7 @@
 #ifndef BASIS_H
 #define BASIS_H
 
-#include "Common/Common.h"
+#include "legacy/Common/Common.h"
 
 /**
  * Pure virtual base class representing a space

@@ -10,7 +10,7 @@
 
 #include "Common/Common.h"
 
-class NodeManagerT;
+class NodeManager;
 class FaceManagerT;
 class ElementManagerT;
 namespace TICPP
@@ -28,14 +28,14 @@ public:
 
 
   static void GenerateNodesets( TICPP::HierarchicalDataNode& hdn,
-                                NodeManagerT& nodeManager );
+                                NodeManager& nodeManager );
 
   static void GenerateFasesetsAndAssociatedNodesets( TICPP::HierarchicalDataNode& hdn,
                                                      FaceManagerT& faceManager,
-                                                     NodeManagerT& nodeManager);
+                                                     NodeManager& nodeManager);
 
   static void GenerateElementsets ( TICPP::HierarchicalDataNode& hdn,
-                                    const NodeManagerT& nodeManager,
+                                    const NodeManager& nodeManager,
                                     ElementManagerT& elementManager);
 
 };

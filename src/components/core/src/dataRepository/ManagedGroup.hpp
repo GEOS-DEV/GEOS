@@ -287,6 +287,16 @@ public:
     return m_parent;
   }
 
+  std::vector< std::unique_ptr<ViewWrapperBase> > const & wrappers() const
+  {
+    return m_wrappers;
+  }
+
+  std::vector< std::unique_ptr<ViewWrapperBase> > & wrappers()
+  {
+    return m_wrappers;
+  }
+
 private:
   std::unordered_map<string,size_t> m_keyLookup;
   std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
@@ -297,110 +307,6 @@ private:
   asctoolkit::sidre::DataGroup* m_sidreGroup;
 
 
-//****************************************************
-// functions for compatibility with old data structure
-// TODO Deprecate or modernize all these suckers
-
-public:
-
-  using ObjectType = string;
-  class SiloFile;
-  localIndex resize( localIndex const newSize,
-                     const bool assignGlobals );
-
-  localIndex m_DataLengths;
-
-
-  localIndex DataLengths() const { return size(); }
-
-  void WriteSilo( SiloFile& siloFile,
-                  const std::string& meshname,
-                  const int centering,
-                  const int cycleNum,
-                  const realT problemTime,
-                  const bool isRestart,
-                  const std::string& multiRoot,
-                  const std::string& regionName = "none",
-                  const lArray1d& mask = lArray1d() ) const;
-
-
-  void ReadSilo( const SiloFile& siloFile,
-                 const std::string& meshname,
-                 const int centering,
-                 const int cycleNum,
-                 const realT problemTime,
-                 const bool isRestart,
-                 const std::string& regionName = "none",
-                 const lArray1d& mask = lArray1d() );
-
-
-
-  /// returns reference to specified field
-  template< FieldKey FIELDKEY>
-  typename ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype GetFieldData( )
-  {
-    return const_cast<typename ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype>( static_cast<const ManagedGroup&>(*this).GetFieldData<FIELDKEY>());
-  }
-
-
-  /// returns const reference to specified field
-  template< FieldKey FIELDKEY>
-  typename ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype_const GetFieldData( ) const
-  {
-    return this->getData< Array1dT< typename Field<FIELDKEY>::Type >::rtype_const >( Field<FIELDKEY>::Name() );
-  }
-
-
-  /// returns reference to specified field
-  template< typename TYPE >
-  typename ViewWrapper< TYPE >::rtype GetFieldData( const std::string& fieldName )
-  {
-    return const_cast<typename ViewWrapper<TYPE>::rtype>( static_cast<const ManagedGroup&>(*this).GetFieldData<TYPE>(fieldName));
-  }
-
-  /// returns const reference to specified field
-  template< typename TYPE >
-  const Array1dT<TYPE>& GetFieldData( const std::string& name ) const
-  {
-    return this->getData< TYPE >( name );
-  }
-
-
-
-
-
-
-
-
-  /// returns reference to specified field
-  template< FieldKey FIELDKEY>
-  typename ViewWrapper< typename Field<FIELDKEY>::Type >::rtype* GetFieldDataPointer( )
-  {
-    return const_cast<typename ViewWrapper<typename Field<FIELDKEY>::Type>::rtype*>( static_cast<const ManagedGroup&>(*this).GetFieldDataPointer<FIELDKEY>());
-  }
-
-
-  /// returns const reference to specified field
-  template< FieldKey FIELDKEY>
-  typename ViewWrapper< typename Field<FIELDKEY>::Type >::rtype_const* GetFieldDataPointer( ) const
-  {
-    return this->getData< typename Field<FIELDKEY>::Type >( Field<FIELDKEY>::Name() );
-  }
-
-  /// returns reference to specified field
-  template< typename TYPE >
-  typename ViewWrapper< TYPE >::rtype* GetFieldDataPointer( const std::string& fieldName )
-  {
-    return this->getData< TYPE >( fieldName );
-  }
-
-  /// returns const reference to specified field
-  template< typename TYPE >
-  typename ViewWrapper< TYPE >::rtype_const* GetFieldDataPointer( const std::string& name ) const;
-
-
-
-//**********************************************************************************************************************
 
 
   /**
@@ -467,8 +373,8 @@ ViewWrapper<T>& ManagedGroup::RegisterViewWrapper( std::string const & name, std
     {
       std::string error = string("Call to Group::RegisterViewWrapper( ")
                           +name+string(", std::size_t * const ) attempts to re-register ViewWrapper, but with different type") ;
-//      SLIC_ERROR(error);
-      throw std::exception();
+      SLIC_ERROR(error);
+//      throw std::exception();
     }
   }
 
@@ -518,6 +424,6 @@ T& ManagedGroup::RegisterGroup( std::string const & name,
 } /* namespace geosx */
 
 
-typedef geosx::dataRepository::ManagedGroup ObjectDataStructureBaseT;
+//typedef geosx::dataRepository::ManagedGroup ObjectDataStructureBaseT;
 
 #endif /* MANAGEDGROUP_H_ */

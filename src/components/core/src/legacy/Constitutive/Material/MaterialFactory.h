@@ -47,7 +47,7 @@
 #define MATERIALFACTORY_H_
 
 #include "MaterialBase.h"
-#include "Utilities/StringUtilities.h"
+#include "legacy/Utilities/StringUtilities.h"
 
 #include <map>
 #include <string>

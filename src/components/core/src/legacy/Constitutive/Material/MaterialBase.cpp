@@ -50,9 +50,8 @@
 #include "Utilities/GeometryUtilities.h"
 #include "Utilities/FindRoots.h"
 #include "Utilities/MaterialUtilities.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
-
 #include "MaterialBase.h"
+#include "../../IO/ticpp/HierarchicalDataNode.h.old"
 
 MaterialBase::MaterialBase( const int paramSize, const int stateSize ):
 ConstitutiveBase(),

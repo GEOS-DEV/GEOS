@@ -8,8 +8,8 @@
 #ifndef SIMPLEGEOMETRICOBJECTS_H_
 #define SIMPLEGEOMETRICOBJECTS_H_
 
+#include "../legacy/IO/ticpp/HierarchicalDataNode.h.old"
 #include "Common/Common.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
 #include "Utilities/StringUtilities.h"
 
 class Function;

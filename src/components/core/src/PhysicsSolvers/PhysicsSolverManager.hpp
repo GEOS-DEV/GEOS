@@ -17,7 +17,7 @@ class xml_node;
 
 namespace cxx_utilities
 {
-struct InputDocumentation;
+struct DocumentationNode;
 }
 
 namespace geosx
@@ -35,7 +35,7 @@ public:
   SolverBase & CreateSolver( string const & solverCatalogKey, string const & solverName );
 
 
-  void ReadXML( dataRepository::ManagedGroup& domain, pugi::xml_node const & problemNode, cxx_utilities::InputDocumentation & docNode  );
+  void ReadXML( dataRepository::ManagedGroup& domain, pugi::xml_node const & problemNode, cxx_utilities::DocumentationNode & docNode  );
 
 };
 

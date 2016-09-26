@@ -47,7 +47,7 @@
 namespace geosx
 {
 
-void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::InputDocumentation const & inputDocumentationHead)
+void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead)
 {
   // Build the base of the schema
   std::string schemaBase="<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?><xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><xsd:annotation><xsd:documentation xml:lang=\"en\">New schema for GEOS</xsd:documentation></xsd:annotation></xsd:schema>";
@@ -62,7 +62,7 @@ void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::Inpu
   schemaTree.save_file(fname.c_str());
 }
 
-void SchemaConstruction(cxx_utilities::InputDocumentation const & docNode, pugi::xml_node schemaNode, pugi::xml_node schemaRoot)
+void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::xml_node schemaNode, pugi::xml_node schemaRoot)
 {
   if (docNode.m_varType.find("Node") != std::string::npos)
   {

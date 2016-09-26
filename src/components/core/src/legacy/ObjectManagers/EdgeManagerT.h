@@ -51,7 +51,7 @@
 
 
 class FaceManagerT;
-class NodeManagerT;
+class NodeManager;
 
 class EdgeManagerT: public ObjectDataStructureBaseT
 {
@@ -67,12 +67,12 @@ public:
                                                          Array1dT<gArray1d>& objectToCompositionObject );
 
 
-  void BuildEdges( const FaceManagerT& faceManager, const NodeManagerT& nodeManager );
-  void BuildEdges( const ElementManagerT& elementManager, const NodeManagerT& nodeManager );
+  void BuildEdges( const FaceManagerT& faceManager, const NodeManager& nodeManager );
+  void BuildEdges( const ElementManagerT& elementManager, const NodeManager& nodeManager );
   
   template< typename T_indices >
   unsigned int PackEdges( const T_indices& sendedges,
-                          const NodeManagerT& nodeManager,
+                          const NodeManager& nodeManager,
                           const FaceManagerT& faceManager,
                           bufvector& buffer,
                           const bool packConnectivityToGlobal,
@@ -81,7 +81,7 @@ public:
                           const bool packSets  ) const;
 
   unsigned int UnpackEdges( const char*& buffer,
-                            const NodeManagerT& nodeManager,
+                            const NodeManager& nodeManager,
                             const FaceManagerT& faceManager,
                             lArray1d& edgeReceiveLocalIndices,
                             const bool unpackConnectivityToLocal,
@@ -97,9 +97,9 @@ public:
 //                                     const lSet& newEdgeIndices,
 //                                     const lSet& modifiedEdgeIndices );
 
-  void EdgeCenter(const NodeManagerT& nodeManager, localIndex edge, R1Tensor& center)const;
-  void EdgeVector(const NodeManagerT& nodeManager, localIndex edge, R1Tensor& vector)const;
-  realT EdgeLength(const NodeManagerT& nodeManager, localIndex edge) const;
+  void EdgeCenter(const NodeManager& nodeManager, localIndex edge, R1Tensor& center)const;
+  void EdgeVector(const NodeManager& nodeManager, localIndex edge, R1Tensor& vector)const;
+  realT EdgeLength(const NodeManager& nodeManager, localIndex edge) const;
 
   void AddToEdgeToFaceMap( const FaceManagerT& faceManager,
                            const lArray1d& newFaceIndices );
@@ -111,9 +111,9 @@ public:
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
 
-  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex nodeB, const NodeManagerT& nodeManager);
+  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex nodeB, const NodeManager& nodeManager);
 
-  void SetLayersFromDomainBoundary(const NodeManagerT& nodeManager);
+  void SetLayersFromDomainBoundary(const NodeManager& nodeManager);
 
 
   FixedOneToManyRelation& m_toNodesRelation;

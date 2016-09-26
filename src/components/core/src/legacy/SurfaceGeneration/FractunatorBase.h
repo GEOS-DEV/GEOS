@@ -21,16 +21,16 @@ public:
   FractunatorBase();
   virtual ~FractunatorBase();
 
-  virtual void Initialize( NodeManagerT& nodeManager,
+  virtual void Initialize( NodeManager& nodeManager,
                            EdgeManagerT& edgeManager,
                            FaceManagerT& faceManager,
                            ElementManagerT& elementManager);
 
-  virtual void RegisterFieldsAndMaps( NodeManagerT& nodeManager,
+  virtual void RegisterFieldsAndMaps( NodeManager& nodeManager,
                               EdgeManagerT& edgeManager,
                               FaceManagerT& faceManager );
 
-  virtual int SeparationDriver( NodeManagerT& nodeManager,
+  virtual int SeparationDriver( NodeManager& nodeManager,
                                 EdgeManagerT& edgeManager,
                                 FaceManagerT& faceManager,
                                 ExternalFaceManagerT& externalFaceManager,
@@ -51,7 +51,7 @@ public:
                          const realT problemTime,
                          const bool isRestart );
 
-  virtual void PreexistingFracture2D( NodeManagerT& nodeManager,
+  virtual void PreexistingFracture2D( NodeManager& nodeManager,
                                       EdgeManagerT& edgeManager,
                                       FaceManagerT& faceManager,
                                       ExternalFaceManagerT& externalFaceManager,
@@ -78,13 +78,13 @@ public:
   realT m_kJn;
 
 
-  virtual void UpdateCohesiveZones( NodeManagerT& nodeManager,
+  virtual void UpdateCohesiveZones( NodeManager& nodeManager,
                                    EdgeManagerT& edgeManager,
                                    FaceManagerT& faceManager ){}
 
 
 protected:
-  virtual void UpdateRuptureStates( NodeManagerT& nodeManager,
+  virtual void UpdateRuptureStates( NodeManager& nodeManager,
                             EdgeManagerT& edgeManager,
                             FaceManagerT& faceManager,
                             ElementManagerT& elementManager,
@@ -93,7 +93,7 @@ protected:
                             const bool prefrac = false );
 
   virtual bool ProcessNode( const localIndex nodeID,
-                            NodeManagerT& nodeManager,
+                            NodeManager& nodeManager,
                             EdgeManagerT& edgeManager,
                             FaceManagerT& faceManager,
                             ExternalFaceManagerT& externalFaceManager,
@@ -110,7 +110,7 @@ protected:
                       ModifiedObjectLists& modifiedObjects,
                       const realT time);
 
-  void CorrectSplitNodalMass (NodeManagerT& nodeManager,
+  void CorrectSplitNodalMass (NodeManager& nodeManager,
                               localIndex node0,
                               localIndex node1);
 
@@ -119,7 +119,7 @@ protected:
                             EdgeManagerT& edgeManager,
                             FaceManagerT& faceManager);
   realT MinimumToughnessOnNode( const localIndex nodeID,
-                                NodeManagerT& nodeManager,
+                                NodeManager& nodeManager,
                                 FaceManagerT& faceManager);
   void MarkDiscreteFractureNetworkFaces(FaceManagerT& faceManager,
                                         SpatialPartition& partition);
@@ -136,20 +136,20 @@ private:
 
 
   virtual int CheckNodeSplitability( const localIndex nodeID,
-                              NodeManagerT& nodeManager,
+                              NodeManager& nodeManager,
                               FaceManagerT& faceManager,
                               EdgeManagerT& edgeManager,
                               const bool prefrac) = 0;
 
   virtual int CheckEdgeSplitability( const localIndex edgeID,
-                                 NodeManagerT& nodeManager,
+                                 NodeManager& nodeManager,
                                  FaceManagerT& faceManager,
                                  EdgeManagerT& edgeManager,
                                  const bool prefrac) = 0;
 
 
   virtual bool FindFracturePlanes( const localIndex nodeID,
-                                   const NodeManagerT& nodeManager,
+                                   const NodeManager& nodeManager,
                                    const EdgeManagerT& edgeManager,
                                    const FaceManagerT& faceManager,
                                    const Array1dT<lSet>& nodesToRupturedFaces,
@@ -162,7 +162,7 @@ private:
 
 
   virtual void PerformFracture( const localIndex nodeID,
-                                NodeManagerT& nodeManager,
+                                NodeManager& nodeManager,
                                 EdgeManagerT& edgeManager,
                                 FaceManagerT& faceManager,
                                 ExternalFaceManagerT& externalFaceManager,

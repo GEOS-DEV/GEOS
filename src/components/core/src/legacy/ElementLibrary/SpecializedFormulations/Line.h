@@ -44,7 +44,7 @@
  */
 
 
-#include "ElementLibrary/FiniteElement.h"
+#include "legacy/ElementLibrary/FiniteElement.h"
 
 
 #ifndef LINE_H_

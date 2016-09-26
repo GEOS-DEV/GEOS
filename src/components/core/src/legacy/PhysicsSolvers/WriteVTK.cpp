@@ -140,7 +140,7 @@ double WriteVTK::TimeStep( const realT& time,
     		<< "DATASET UNSTRUCTURED_GRID\n";
 
 
-    NodeManagerT& nodeManager = domain.m_feNodeManager;
+    NodeManager& nodeManager = domain.m_feNodeManager;
 	FaceManagerT& faceManager = domain.m_feFaceManager;
     // output node locations
 

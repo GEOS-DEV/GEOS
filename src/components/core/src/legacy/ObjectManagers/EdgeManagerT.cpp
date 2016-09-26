@@ -65,7 +65,7 @@ EdgeManagerT::~EdgeManagerT()
 
 
 
-void EdgeManagerT::BuildEdges( const FaceManagerT& faceManager, const NodeManagerT& nodeManager )
+void EdgeManagerT::BuildEdges( const FaceManagerT& faceManager, const NodeManager& nodeManager )
 {
   if (faceManager.DataLengths() == 0 || nodeManager.DataLengths() == 0)
     return;
@@ -396,7 +396,7 @@ void EdgeManagerT::BuildEdges( const ElementManagerT& elementManager, const Node
 
 
 /// Calculates the midpoint of the edge
-void EdgeManagerT::EdgeCenter(const NodeManagerT& nodeManager, localIndex edge, R1Tensor& center)const{
+void EdgeManagerT::EdgeCenter(const NodeManager& nodeManager, localIndex edge, R1Tensor& center)const{
 
   if (m_toNodesRelation.Dimension(1) >= 2)
   {
@@ -417,7 +417,7 @@ void EdgeManagerT::EdgeCenter(const NodeManagerT& nodeManager, localIndex edge, 
 
 
 /// Calculates the vector from node 0 to node 1
-void EdgeManagerT::EdgeVector(const NodeManagerT& nodeManager, localIndex edge, R1Tensor& v) const{
+void EdgeManagerT::EdgeVector(const NodeManager& nodeManager, localIndex edge, R1Tensor& v) const{
   const localIndex& node1 = m_toNodesRelation(edge,1);
   v =  (*nodeManager.m_refposition)[node1];
   v += (*nodeManager.m_displacement)[node1];
@@ -427,7 +427,7 @@ void EdgeManagerT::EdgeVector(const NodeManagerT& nodeManager, localIndex edge, 
 }
 
 /// Returns the length of the edge
-realT EdgeManagerT::EdgeLength(const NodeManagerT& nodeManager, localIndex edge) const{
+realT EdgeManagerT::EdgeLength(const NodeManager& nodeManager, localIndex edge) const{
   if (m_toNodesRelation.Dimension(1) >= 2)
   {
   const localIndex& node0 = m_toNodesRelation(edge,0);
@@ -487,7 +487,7 @@ bool EdgeManagerT::hasNode( const localIndex edgeID, const localIndex nodeID ) c
     return false;
 }
 
-localIndex EdgeManagerT::FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex nodeB, const NodeManagerT& nodeManager)
+localIndex EdgeManagerT::FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex nodeB, const NodeManager& nodeManager)
 {
   localIndex val = std::numeric_limits<localIndex>::max();
 
@@ -592,7 +592,7 @@ void EdgeManagerT::SplitEdge( const localIndex indexToSplit,
 
 template< typename T_indices >
 unsigned int EdgeManagerT::PackEdges( const T_indices& sendedges,
-                                      const NodeManagerT& nodeManager,
+                                      const NodeManager& nodeManager,
                                       const FaceManagerT& faceManager,
                                       bufvector& buffer,
                                       const bool packConnectivityToGlobal,
@@ -658,13 +658,13 @@ unsigned int EdgeManagerT::PackEdges( const T_indices& sendedges,
 
   return sizeOfPacked;
 }
-template unsigned int EdgeManagerT::PackEdges( const lSet&, const NodeManagerT&, const FaceManagerT&, bufvector&, const bool, const bool, const bool, const bool ) const;
-template unsigned int EdgeManagerT::PackEdges( const lArray1d&, const NodeManagerT&, const FaceManagerT&, bufvector&, const bool, const bool, const bool, const bool ) const;
+template unsigned int EdgeManagerT::PackEdges( const lSet&, const NodeManager&, const FaceManagerT&, bufvector&, const bool, const bool, const bool, const bool ) const;
+template unsigned int EdgeManagerT::PackEdges( const lArray1d&, const NodeManager&, const FaceManagerT&, bufvector&, const bool, const bool, const bool, const bool ) const;
 
 
 
 unsigned int EdgeManagerT::UnpackEdges( const char*& buffer,
-                                        const NodeManagerT& nodeManager,
+                                        const NodeManager& nodeManager,
                                         const FaceManagerT& faceManager,
                                         lArray1d& edgeReceiveLocalIndices,
                                         const bool unpackConnectivityToLocal,
@@ -863,7 +863,7 @@ void EdgeManagerT::AddToEdgeToFaceMap( const FaceManagerT& faceManager,
   }
 }
 
-void EdgeManagerT::SetLayersFromDomainBoundary(const NodeManagerT& nodeManager)
+void EdgeManagerT::SetLayersFromDomainBoundary(const NodeManager& nodeManager)
 {
   iArray1d& layersEdge = this->GetFieldData<int>("LayersFromDomainBoundary");
   const iArray1d& layersNode = nodeManager.GetFieldData<int>("LayersFromDomainBoundary");

@@ -47,9 +47,9 @@
 #ifndef UTILITIES_H_
 #define UTILITIES_H_
 
-#include "Common/typedefs.h"
+#include "legacy/Common/typedefs.h"
 #include <sys/resource.h>
-#include "Common/GPException.h"
+#include "legacy/Common/GPException.h"
 
 #include <map>
 #include <set>

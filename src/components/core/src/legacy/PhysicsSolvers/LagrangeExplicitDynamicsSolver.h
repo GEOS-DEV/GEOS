@@ -99,7 +99,7 @@ public:
   ;
 
 
-  void ApplyGapDamping( NodeManagerT& nodeManager,
+  void ApplyGapDamping( NodeManager& nodeManager,
                         const FaceManagerT& faceManager,
                         const realT dt );
 

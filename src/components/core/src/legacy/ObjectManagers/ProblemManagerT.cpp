@@ -1142,7 +1142,7 @@ void ProblemManagerT::ReadXML(HierarchicalDataNode& hdn)
       if(fieldName.empty())
         throw GPException("Must specify a field name in the InitialConstitutiveValues node");
 
-      NodeManagerT* nm = 0;
+      NodeManager* nm = 0;
       if(key == PhysicalDomainT::FiniteElementElementRegion)
         nm = &m_Domains.m_feNodeManager;
       if(!tableName.empty())

@@ -42,8 +42,8 @@ namespace dataRepository
 using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
-                                ManagedGroup * const parent ) :
-  ManagedGroup( name, parent ),
+                                ObjectManagerBase * const parent ) :
+  ObjectManagerBase( name, parent ),
   m_physicsSolverManager(this->RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) )
 {}
 
@@ -248,11 +248,11 @@ void ProblemManager::ParseInputFile()
   m_inputDocumentationHead.m_varType = "UniqueNode";
   m_inputDocumentationHead.m_varDescription = "This is the top level node in the input structure.";
 
-  cxx_utilities::InputDocumentation temp;
+  cxx_utilities::DocumentationNode temp;
   temp.m_level   = 1;
-  temp.m_varName = "SolverNode";
-  temp.m_varType = "";
-  temp.m_varDescription = "";
+  temp.m_name = "SolverNode";
+  temp.m_type = "";
+  temp.m_shortDescription = "";
 
   m_inputDocumentationHead.m_child.insert( { "SolverNode", temp } );
 

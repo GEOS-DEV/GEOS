@@ -44,7 +44,7 @@
  */
 
 
-#include "ElementLibrary/FiniteElement.h"
+#include "legacy/ElementLibrary/FiniteElement.h"
 
 
 #ifndef SIMPLETETRAHEDRON_H_

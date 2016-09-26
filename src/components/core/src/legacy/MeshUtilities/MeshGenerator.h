@@ -9,10 +9,10 @@
 #define MESHGENERATOR_H_
 
 #include "IO/ticpp/TinyXMLParser.h"
-#include "IO/ticpp/HierarchicalDataNode.h"
 #include "MPI_Communications/SpatialPartition.h"
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
+#include "../IO/ticpp/HierarchicalDataNode.h.old"
 
 
 
@@ -31,7 +31,7 @@ public:
                      PhysicalDomainT& domain );
 
   void GenerateNodesets( TICPP::HierarchicalDataNode& hdn,
-                         NodeManagerT& nodeManager );
+                         NodeManager& nodeManager );
 
   void GetElemToNodesRelationInBox ( const std::string& elementType,
                                      const int index[],

@@ -1192,7 +1192,7 @@ void LagrangeSolverBase::TimeStepExplicitDynamic( const realT& time,
 
 }
 
-void LagrangeSolverBase::ProcessElementRegions( NodeManagerT& nodeManager,
+void LagrangeSolverBase::ProcessElementRegions( NodeManager& nodeManager,
                                                 ElementManagerT& elementManager,
                                                 const sArray1d& namesOfSolverRegions,
                                                 const realT dt )
@@ -1241,7 +1241,7 @@ void LagrangeSolverBase::ProcessElementRegions( NodeManagerT& nodeManager,
 
 
 
-void LagrangeSolverBase::ProcessCohesiveZones( NodeManagerT& nodeManager,
+void LagrangeSolverBase::ProcessCohesiveZones( NodeManager& nodeManager,
                                                FaceManagerT& faceManager,
                                                const realT dt )
 {
@@ -2670,7 +2670,7 @@ void LagrangeSolverBase::PostProcess (PhysicalDomainT& domain,
   }
 }
 
-void LagrangeSolverBase::SnapshotNodalDisplacement( NodeManagerT& nodeManager)
+void LagrangeSolverBase::SnapshotNodalDisplacement( NodeManager& nodeManager)
 {
   Array1dT<R1Tensor>& refDisplacement = nodeManager.GetFieldData<R1Tensor>("refDisplacement");
   Array1dT<R1Tensor>& u = nodeManager.GetFieldData<FieldInfo::displacement>();
@@ -2860,7 +2860,7 @@ void LagrangeSolverBase::GetNodalForces( PhysicalDomainT&  domain,
   }
 }
 
-void LagrangeSolverBase::CalculateNodalForces ( NodeManagerT& nodeManager,
+void LagrangeSolverBase::CalculateNodalForces ( NodeManager& nodeManager,
                                                 ElementRegionT& elemRegion,
                                                 const localIndex elementID,
                                                 R2SymTensor& stress)
@@ -2936,7 +2936,7 @@ void LagrangeSolverBase::CalculateNodalForces ( NodeManagerT& nodeManager,
 }
 
 // Rui Wang, apply gravity on elements
-void LagrangeSolverBase::ApplyGravity( NodeManagerT& nodeManager,
+void LagrangeSolverBase::ApplyGravity( NodeManager& nodeManager,
                                        ElementRegionT& elemRegion,
                                        const realT dt )
 {
@@ -2959,7 +2959,7 @@ void LagrangeSolverBase::ApplyGravity( NodeManagerT& nodeManager,
   }
 }
 
-void LagrangeSolverBase::ApplyDisplacementPenalty( NodeManagerT& nodeManager )
+void LagrangeSolverBase::ApplyDisplacementPenalty( NodeManager& nodeManager )
 {
   if( m_displacementPenalty > 0.0 )
   {

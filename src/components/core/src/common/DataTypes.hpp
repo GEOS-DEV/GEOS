@@ -21,7 +21,7 @@
 #include "Macros.hpp"
 
 #ifndef CONTAINERARRAY_RETURN_PTR
-#define CONTAINERARRAY_RETURN_PTR 1
+#define CONTAINERARRAY_RETURN_PTR 0
 #endif
 
 
@@ -75,6 +75,12 @@ using realT    = double;
 template< typename T >
 //using array = std::vector<T>;
 using array = Array1dT<T>;
+
+namespace geosx
+{
+class ElementRegionT;
+typedef std::pair< ElementRegionT*, localIndex > ElementIdPair;
+}
 //***** LEGACY TYPEDEFS *****
 
 
@@ -102,14 +108,22 @@ using string_const_array  = array<string const>;
 
 
 //***** LEGACY TYPEDEFS *****
+using rArray1d = Array1dT<real64>;
 using iArray1d = Array1dT<int32>;
 using lArray1d = Array1dT<localIndex>;
 using gArray1d = Array1dT<globalIndex>;
+
+typedef Array1dT<std::string> sArray1d;
 
 typedef std::set<localIndex> lSet;
 typedef std::set<globalIndex> gSet;
 
 typedef int FieldKey;
+
+typedef Array2dT<localIndex> lArray2d;
+typedef Array1dT<std::pair<int,localIndex> > pArray1d;
+typedef std::set<std::pair<int,localIndex> > pSet;
+
 
 //***** LEGACY TYPEDEFS *****
 

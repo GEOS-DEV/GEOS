@@ -47,8 +47,8 @@
 #define _BIN_STREAM_H_
 
 // ***** Included Headers *****************************************************
-#include "Common/Common.h"
-#include "Common/GPException.h"
+#include "legacy/Common/Common.h"
+#include "legacy/Common/GPException.h"
 #include <map>
 #include <set>
 #include <fstream>

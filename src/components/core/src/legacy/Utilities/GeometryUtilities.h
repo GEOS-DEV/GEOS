@@ -8,7 +8,7 @@
 #ifndef GEOMETRYUTILITIES_H_
 #define GEOMETRYUTILITIES_H_
 
-#include "Common/Common.h"
+//#include "legacy/Common/Common.h"
 #include "Utilities.h"
 
 namespace GeometryUtilities
