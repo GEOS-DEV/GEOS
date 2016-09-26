@@ -64,11 +64,11 @@ void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::Docu
 
 void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::xml_node schemaNode, pugi::xml_node schemaRoot)
 {
-  if (docNode.m_varType.find("Node") != std::string::npos)
+  if (docNode.m_type.find("Node") != std::string::npos)
   {
     // Set the type of target
     pugi::xml_node targetNode = schemaNode;
-    if (docNode.m_varType.find("Unique") == std::string::npos)
+    if (docNode.m_type.find("Unique") == std::string::npos)
     {
       targetNode = targetNode.child("xsd:choice");
       if (targetNode == NULL)
@@ -80,10 +80,10 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::
 
     // Add the entries to the current and root nodes
     pugi::xml_node newNode = targetNode.append_child("xsd:element");
-    newNode.append_attribute("name") = docNode.m_varName.c_str();
-    newNode.append_attribute("type") = (docNode.m_varName+"Type").c_str();
+    newNode.append_attribute("name") = docNode.m_name.c_str();
+    newNode.append_attribute("type") = (docNode.m_name+"Type").c_str();
     newNode = schemaRoot.append_child("xsd:complexType");
-    newNode.append_attribute("name") = (docNode.m_varName+"Type").c_str();
+    newNode.append_attribute("name") = (docNode.m_name+"Type").c_str();
 
     for( auto const & subDocNode : docNode.m_child )
     {
@@ -93,8 +93,8 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::
   else
   {
     pugi::xml_node newNode = schemaNode.append_child("xsd:attribute");
-    newNode.append_attribute("name") = docNode.m_varName.c_str();
-    newNode.append_attribute("type") = ("xsd:"+docNode.m_varType).c_str();
+    newNode.append_attribute("name") = docNode.m_name.c_str();
+    newNode.append_attribute("type") = ("xsd:"+docNode.m_type).c_str();
   }
 }
 

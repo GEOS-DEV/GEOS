@@ -244,9 +244,9 @@ void ProblemManager::ParseInputFile()
   xmlProblemNode = xmlDocument.child("Problem");
   pugi::xml_node topLevelNode;
 
-  m_inputDocumentationHead.m_varName = "Problem";
-  m_inputDocumentationHead.m_varType = "UniqueNode";
-  m_inputDocumentationHead.m_varDescription = "This is the top level node in the input structure.";
+  m_inputDocumentationHead.m_name = "Problem";
+  m_inputDocumentationHead.m_type = "UniqueNode";
+  m_inputDocumentationHead.m_shortDescription = "This is the top level node in the input structure.";
 
   cxx_utilities::DocumentationNode temp;
   temp.m_level   = 1;
