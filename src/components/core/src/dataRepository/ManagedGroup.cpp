@@ -16,6 +16,7 @@ namespace dataRepository
 
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ) :
+  m_docNode(nullptr),
   m_keyLookup(),
   m_wrappers(),
   m_parent(parent),
@@ -124,10 +125,10 @@ void ManagedGroup::RegisterDocumentationNodes()
 {
   for( auto&& subNode : m_docNode->getChildNodes() )
   {
-    if( subNode.second.dataType() != "DocumentationNode" )
+    if( subNode.second.getDataType() != "DocumentationNode" )
     {
-      RegisterViewWrapper( subNode.second.stringKey(),
-                           rtTypes::typeID(subNode.second.dataType() ) );
+      RegisterViewWrapper( subNode.second.getStringKey(),
+                           rtTypes::typeID(subNode.second.getDataType() ) );
     }
   }
 }
