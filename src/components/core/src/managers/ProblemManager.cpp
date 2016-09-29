@@ -30,7 +30,7 @@ namespace dataRepository
     std::string const zPartitionsOverride = "zPartitionsOverride";
     std::string const overridePartitionNumbers = "overridePartitionNumbers";
 
-    std::string const solverApplications = "solverApplications";
+    std::string const solverApplications = "SolverApplications";
     std::string const solverApplicationNames = "solverApplicationNames";
     std::string const beginTime = "beginTime";
     std::string const endTime = "endTime";
@@ -52,7 +52,7 @@ ProblemManager::ProblemManager( const std::string& name,
                              "ProblemManager",
                              0,
                              "DocumentationNode",
-                             "",
+                             "UniqueNode",
                              "This is the top level node in the input structure.",
                              "This is the top level node in the input structure.",
                              "",
@@ -80,8 +80,11 @@ void ProblemManager::Registration( dataRepository::ManagedGroup * const )
 
   RegisterGroup<DomainPartition>(keys::domain);
 
+  // Register the sovler application group
   ManagedGroup& solverApplications = RegisterGroup<ManagedGroup>(keys::solverApplications);
   solverApplications.RegisterViewWrapper<string_array>(keys::solverApplicationNames);
+  cxx_utilities::DocumentationNode * const docNode = solverApplications.getDocumentationNode();
+  docNode->setSchemaType("UniqueNode");
 
   ManagedGroup& commandLine = RegisterGroup<ManagedGroup >(keys::commandLine);
   commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
@@ -277,6 +280,7 @@ void ProblemManager::ParseInputFile()
 
 
   // Applications
+  // TODO: This should be moved to its own file
   topLevelNode = xmlProblemNode.child("SolverApplications");
   if (topLevelNode == NULL)
   {
@@ -318,6 +322,74 @@ void ProblemManager::ParseInputFile()
       {
         solverList[jj] = newApplicationSolvers[jj];
       }
+
+      // Set the application schema documentation
+      cxx_utilities::DocumentationNode * const docNode = newApplication.getDocumentationNode();
+      
+      docNode->setSchemaType("Node");
+      docNode->setName("Application");
+
+      docNode->AllocateChildNode( "name",
+                                  "name",
+                                  -1,
+                                  "string",
+                                  "string",
+                                  "application name",
+                                  "application name",
+                                  "name",
+                                  "",
+                                  1,
+                                  0 );
+
+      docNode->AllocateChildNode( "beginTime",
+                                  "beginTime",
+                                  -1,
+                                  "real64",
+                                  "double",
+                                  "application start time",
+                                  "application start time",
+                                  "0.0",
+                                  "",
+                                  1,
+                                  0 );
+
+      docNode->AllocateChildNode( "endTime",
+                                  "endTime",
+                                  -1,
+                                  "real64",
+                                  "double",
+                                  "application endTime",
+                                  "application endTime",
+                                  "1.0e9",
+                                  "",
+                                  1,
+                                  0 );
+
+      docNode->AllocateChildNode( "dt",
+                                  "dt",
+                                  -1,
+                                  "real64",
+                                  "double",
+                                  "application dt",
+                                  "application dt",
+                                  "-1.0",
+                                  "",
+                                  1,
+                                  0 );
+
+      docNode->AllocateChildNode( "solvers",
+                                  "solvers",
+                                  -1,
+                                  "string",
+                                  "string",
+                                  "application solvers",
+                                  "application solvers",
+                                  "",
+                                  "",
+                                  1,
+                                  0 );
+
+
     }
 
     // Test to make sure the applications are valid

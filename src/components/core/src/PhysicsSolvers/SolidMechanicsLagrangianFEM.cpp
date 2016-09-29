@@ -50,13 +50,14 @@ void SolidMechanics_LagrangianFEM::SetDocumentationNodes()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  // docNode.m_shortDescription = "Physics solver to perform enforcement of equations of motion, or static equilibrium on a Lagrangian FEM mesh";
-
+  docNode->setName(this->CatalogName());    // If this method lived in Managed groups, this could be done automatically
+  docNode->setSchemaType("Node");
+  
   docNode->AllocateChildNode( "nElements",
                               keys::nElements,
                               -1,
                               "int32",
-                              "int32",
+                              "int",
                               "number of elements",
                               "number of elements",
                               "10",
@@ -68,7 +69,7 @@ void SolidMechanics_LagrangianFEM::SetDocumentationNodes()
                               keys::Ey,
                               -1,
                               "real64",
-                              "real64",
+                              "double",
                               "Elastic Young's Modulus",
                               "Elastic Young's Modulus",
                               "1.0e9",
@@ -80,7 +81,7 @@ void SolidMechanics_LagrangianFEM::SetDocumentationNodes()
                               keys::rho,
                               -1,
                               "real64",
-                              "real64",
+                              "double",
                               "Initial Density",
                               "Initial Density",
                               "2600.0",
@@ -92,7 +93,7 @@ void SolidMechanics_LagrangianFEM::SetDocumentationNodes()
                               keys::area,
                               -1,
                               "real64",
-                              "real64",
+                              "double",
                               "cross section area",
                               "cross section area",
                               "1.0",
@@ -104,7 +105,7 @@ void SolidMechanics_LagrangianFEM::SetDocumentationNodes()
                               "barLength",
                               -1,
                               "real64",
-                              "real64",
+                              "double",
                               "reference length",
                               "reference length",
                               "1.0",

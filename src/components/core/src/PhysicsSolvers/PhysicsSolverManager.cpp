@@ -40,6 +40,9 @@ SolverBase & PhysicsSolverManager::CreateSolver( string const & solverCatalogKey
 void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
                                     pugi::xml_node const & problemNode )
 {
+  // Set the appropriate schema type
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  docNode->setSchemaType("UniqueNode");
 
   // Store a list of available solvers
   RegisterViewWrapper<string_array>(keys::solverNames);
@@ -67,31 +70,11 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
       std::string solverID = solverNode.attribute("name").value();
       SolverBase & newSolver = CreateSolver( solverNode.name(), solverID );
 
+      // Set the documentation node
+      newSolver.SetDocumentationNodes();
+
       // Register fields in the solver and parse options
       newSolver.Registration( &domain );
-
-//      cxx_utilities::DocumentationNode solverDoc;
-//      solverDoc.m_name = solverNode.name();
-//      solverDoc.m_dataType = "type";
-//      solverDoc.m_shortDescription = "description";
-//      solverDoc.m_level = docNode.m_level+1;
-//      docNode.m_child.insert( { solverNode.name(), solverDoc } );
-//
-//      docNode->AllocateChildNode( solverNode.name(),
-//                                  solverNode.name(),
-//                                  0,
-//                                  "DocumentationNode",
-//                                  "",
-//                                  "Node that contains all the physics solvers",
-//                                                 "",
-//                                                 "",
-//                                                 "",
-//                                                 1,
-//                                                 0,
-//                                                 0 );
-
-
-
       newSolver.ReadXML(solverNode );
       solverNames[solverNumber] = solverID;
       solverNumber++;
