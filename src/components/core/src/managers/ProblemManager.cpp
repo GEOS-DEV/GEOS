@@ -99,8 +99,8 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
     {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
-    {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t input xml file name (required)"},
-    {RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t target restart file name"},
+    {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t Input xml filename (required)"},
+    {RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t Target restart filename"},
     {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-nx, --x-partitions, \t Number of partitions in the x-direction"},
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-ny, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-nz, --z-partitions, \t Number of partitions in the z-direction"},

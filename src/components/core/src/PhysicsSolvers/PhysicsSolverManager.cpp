@@ -71,7 +71,7 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain, pugi::
 
       cxx_utilities::DocumentationNode solverDoc;
       solverDoc.m_name = solverNode.name();
-      solverDoc.m_type = "type";
+      solverDoc.m_type = "Node";
       solverDoc.m_shortDescription = "description";
       solverDoc.m_level = docNode.m_level+1;
       docNode.m_child.insert( { solverNode.name(), solverDoc } );
