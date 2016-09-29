@@ -37,6 +37,8 @@ namespace dataRepository
     std::string const endTime = "endTime";
     std::string const dt = "dt";
     std::string const solverList = "solverList";
+    std::string const K = "K";
+
   }
 }
 
@@ -45,12 +47,22 @@ using namespace dataRepository;
 ProblemManager::ProblemManager( const std::string& name,
                                 ObjectManagerBase * const parent ) :
   ObjectManagerBase( name, parent ),
-  m_physicsSolverManager(this->RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) )
+  m_physicsSolverManager(nullptr)
 {
-  allocateDocumentationNode();
-  getDocumentationNode()->m_name = "ProblemManager";
-  getDocumentationNode()->m_type = "Node";
-  getDocumentationNode()->m_shortDescription = "This is the top level node in the input structure.";
+  allocateDocumentationNode( "ProblemManager",
+                             "ProblemManager",
+                             0,
+                             "DocumentationNode",
+                             "",
+                             "This is the top level node in the input structure.",
+                             "This is the top level node in the input structure.",
+                             "",
+                             "ProblemManager",
+                             0,
+                             0,
+                             0,
+                             nullptr );
+  m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
 }
 
 ProblemManager::~ProblemManager()
@@ -61,9 +73,9 @@ ProblemManager::~ProblemManager()
 void ProblemManager::Registration( dataRepository::ManagedGroup * const )
 {
 
-  cxx_utilities::DocumentationNode newNode;
+//  cxx_utilities::DocumentationNode newNode;
 
-  newNode.m_name = keys::inputFileName;
+//  newNode.m_name = keys::inputFileName;
 
 //  getDocumentationNode()->
 
@@ -80,6 +92,9 @@ void ProblemManager::Registration( dataRepository::ManagedGroup * const )
   commandLine.RegisterViewWrapper<int32>(keys::yPartitionsOverride);
   commandLine.RegisterViewWrapper<int32>(keys::zPartitionsOverride);
   commandLine.RegisterViewWrapper<bool>(keys::overridePartitionNumbers);
+
+  commandLine.RegisterViewWrapper<int32>(keys::K);
+
 }
 
 void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
@@ -267,14 +282,11 @@ void ProblemManager::ParseInputFile()
 
 
   cxx_utilities::DocumentationNode temp;
-  temp.m_level   = 1;
-  temp.m_name = "SolverNode";
-  temp.m_type = "";
-  temp.m_shortDescription = "";
 
-  getDocumentationNode()->m_child.insert( { "SolverNode", temp } );
 
-  this->m_physicsSolverManager.ReadXML(domain, xmlProblemNode, getDocumentationNode()->m_child["SolverNode"] );
+
+
+  this->m_physicsSolverManager->ReadXML(domain, xmlProblemNode );
 
 
   // Applications
@@ -346,10 +358,10 @@ void ProblemManager::InitializeObjects()
   DomainPartition& domain  = getDomainPartition();
 
   // Initialize solvers
-  ViewWrapper<string_array>::rtype  solverNames = this->m_physicsSolverManager.getData<string_array>(keys::solverNames);
-  for (auto ii=0; ii<this->m_physicsSolverManager.size(); ++ii)
+  ViewWrapper<string_array>::rtype  solverNames = this->m_physicsSolverManager->getData<string_array>(keys::solverNames);
+  for (auto ii=0; ii<this->m_physicsSolverManager->size(); ++ii)
   {
-    SolverBase& currentSolver = this->m_physicsSolverManager.GetGroup<SolverBase>( solverNames[ii] );
+    SolverBase& currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverNames[ii] );
     currentSolver.Initialize( domain );
   }
 }
@@ -386,7 +398,7 @@ void ProblemManager::RunSimulation()
 
       for ( auto jj=0; jj<currentApplication.size(); ++jj)
       {
-        SolverBase& currentSolver = this->m_physicsSolverManager.GetGroup<SolverBase>( solverList[jj] );
+        SolverBase& currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
         currentSolver.TimeStep( time, dt, cycle, domain );
         nextDt = std::min(nextDt, *(currentSolver.getData<real64>(keys::maxDt)));
       }

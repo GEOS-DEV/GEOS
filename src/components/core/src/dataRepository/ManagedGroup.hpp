@@ -15,6 +15,7 @@
 #include "ViewWrapper.hpp"
 
 #include "depricated/Common.h"
+#include "DocumentationNode.hpp"
 
 
 //#include "CodingUtilities/ANSTexception.hpp"
@@ -87,8 +88,6 @@ public:
   ///@}
 
 
-  virtual void Registration( dataRepository::ManagedGroup * const )
-  {}
 
   virtual const std::type_info& get_typeid() const
   {
@@ -142,6 +141,71 @@ public:
 
 
   ViewWrapperBase& RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type );
+
+  virtual void SetDocumentationNodes() {}
+
+
+  ///@}
+
+
+  /**
+   * @name Self Documentation Functions
+   */
+  ///@{
+
+  cxx_utilities::DocumentationNode * getDocumentationNode()
+  {
+    return m_docNode;
+  }
+
+  void allocateDocumentationNode( std::string const & name,
+                                  std::string const & stringKey,
+                                  int const & intKey,
+                                  std::string const & dataType,
+                                  std::string const & schemaType,
+                                  std::string const & shortDescription,
+                                  std::string const & longDescription,
+                                  std::string const & default0,
+                                  std::string const & groups,
+                                  unsigned int const & level,
+                                  unsigned int const & isInput,
+                                  unsigned int const & verbosity )
+  {
+
+    cxx_utilities::DocumentationNode * parentDocNode = nullptr;
+    if( m_parent != nullptr )
+    {
+      parentDocNode = m_parent->m_docNode;
+    }
+    m_docNode = new cxx_utilities::DocumentationNode( name,
+                                                      stringKey,
+                                                      intKey,
+                                                      dataType,
+                                                      schemaType,
+                                                      shortDescription,
+                                                      longDescription,
+                                                      default0,
+                                                      groups,
+                                                      level,
+                                                      isInput,
+                                                      verbosity,
+                                                      parentDocNode );
+  }
+
+  void deleteDocumentationNode()
+  {
+    delete m_docNode;
+  }
+
+  void RegisterDocumentationNodes();
+
+
+  ///@}
+
+
+
+  virtual void Registration( dataRepository::ManagedGroup * const )
+  {}
 
 
   //***********************************************************************************************
@@ -297,6 +361,12 @@ public:
     return m_wrappers;
   }
 
+
+
+
+protected:
+  cxx_utilities::DocumentationNode * m_docNode;
+
 private:
   std::unordered_map<string,size_t> m_keyLookup;
   std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
@@ -305,7 +375,6 @@ private:
   std::unordered_map< string, std::unique_ptr<ManagedGroup> > m_subObjectManagers;
 
   asctoolkit::sidre::DataGroup* m_sidreGroup;
-
 
 
 

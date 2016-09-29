@@ -47,7 +47,7 @@ public:
   }
   ///@}
 
-  virtual void Registration( dataRepository::ManagedGroup * const );
+  virtual void Registration( dataRepository::ManagedGroup * const ) override;
 
   void ParseCommandLineInput( int const& argc, char* const argv[]);
 
@@ -71,7 +71,7 @@ public:
   pugi::xml_node xmlProblemNode;
 
 private:
-  PhysicsSolverManager & m_physicsSolverManager;
+  PhysicsSolverManager * m_physicsSolverManager;
 };
 
 } /* namespace geosx */

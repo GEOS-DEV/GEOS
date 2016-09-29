@@ -37,11 +37,11 @@ SolverBase & PhysicsSolverManager::CreateSolver( string const & solverCatalogKey
   return rval;
 }
 
-void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain, pugi::xml_node const & problemNode, cxx_utilities::DocumentationNode & docNode )
+void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
+                                    pugi::xml_node const & problemNode )
 {
 
-  docNode.m_type = "";
-  docNode.m_shortDescription = "Node that contains all the physics solvers";
+//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   // Store a list of available solvers
   RegisterViewWrapper<string_array>(keys::solverNames);
@@ -72,14 +72,31 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain, pugi::
       // Register fields in the solver and parse options
       newSolver.Registration( &domain );
 
-      cxx_utilities::DocumentationNode solverDoc;
-      solverDoc.m_name = solverNode.name();
-      solverDoc.m_type = "type";
-      solverDoc.m_shortDescription = "description";
-      solverDoc.m_level = docNode.m_level+1;
-      docNode.m_child.insert( { solverNode.name(), solverDoc } );
 
-      newSolver.ReadXML(solverNode, docNode.m_child[solverNode.name()] );
+
+//      cxx_utilities::DocumentationNode solverDoc;
+//      solverDoc.m_name = solverNode.name();
+//      solverDoc.m_dataType = "type";
+//      solverDoc.m_shortDescription = "description";
+//      solverDoc.m_level = docNode.m_level+1;
+//      docNode.m_child.insert( { solverNode.name(), solverDoc } );
+//
+//      docNode->AllocateChildNode( solverNode.name(),
+//                                  solverNode.name(),
+//                                  0,
+//                                  "DocumentationNode",
+//                                  "",
+//                                  "Node that contains all the physics solvers",
+//                                                 "",
+//                                                 "",
+//                                                 "",
+//                                                 1,
+//                                                 0,
+//                                                 0 );
+
+
+
+      newSolver.ReadXML(solverNode );
       solverNames[solverNumber] = solverID;
       solverNumber++;
     }
