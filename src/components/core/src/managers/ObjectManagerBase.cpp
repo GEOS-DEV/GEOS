@@ -42,19 +42,19 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   lSet& newset = sets.RegisterViewWrapper<lSet>(newSetName).reference();
   newset.clear();
 
-  int size = map.Dimension(1);
+  int mapSize = map.Dimension(1);
   for( localIndex ka=0 ; ka<m_DataLengths ; ++ka )
   {
     const localIndex* const sublist = map[ka];
     int addToSet = 0;
-    for( int a=0 ; a<size ; ++a )
+    for( int a=0 ; a<mapSize ; ++a )
     {
       if( inputSet.count( sublist[a] ) == 1 )
       {
         ++addToSet;
       }
     }
-    if( addToSet == size )
+    if( addToSet == mapSize )
     {
       newset.insert( ka );
     }
@@ -73,15 +73,15 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   for( localIndex ka=0 ; ka<m_DataLengths ; ++ka )
   {
     int addToSet = 0;
-    int size = map[ka].size();
-    for( int a=0 ; a<size ; ++a )
+    int mapSize = map[ka].size();
+    for( int a=0 ; a<mapSize ; ++a )
     {
       if( inputSet.count( map[ka][a] ) == 1 )
       {
         ++addToSet;
       }
     }
-    if( addToSet == size )
+    if( addToSet == mapSize )
     {
       newset.insert( ka );
     }

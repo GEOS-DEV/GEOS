@@ -99,7 +99,7 @@ public:
     return m_sidreView;
   }
 
-  string const & name() const
+  string const & getName() const
   {
     return m_name;
   }

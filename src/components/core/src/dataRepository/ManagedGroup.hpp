@@ -365,7 +365,7 @@ public:
 
 
 protected:
-  cxx_utilities::DocumentationNode * m_docNode;
+  cxx_utilities::DocumentationNode * m_docNode = nullptr;
 
 private:
   std::unordered_map<string,size_t> m_keyLookup;
