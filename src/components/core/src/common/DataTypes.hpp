@@ -5,8 +5,8 @@
  *      Author: rrsettgast
  */
 
-#ifndef COMPONENTS_CORE_SRC_DATAREPOSITORY_DATATYPES_HPP_
-#define COMPONENTS_CORE_SRC_DATAREPOSITORY_DATATYPES_HPP_
+#ifndef DATATYPES_HPP
+#define DATATYPES_HPP
 
 #include <cassert>
 #include <cstdint>
@@ -155,6 +155,8 @@ public:
     return type_names.at(key);
   }
 
+
+
   enum class TypeIDs
   {
     int32_id,
@@ -172,6 +174,28 @@ public:
     std_size_t_id,
     string_id
   };
+
+  static TypeIDs typeID( string const & name )
+  {
+    const std::unordered_map<string,TypeIDs> type_names =
+    {
+      { "int32",        TypeIDs::int32_id },
+      { "uint32",       TypeIDs::uint32_id },
+      { "int64",        TypeIDs::int64_id },
+      { "uint64",       TypeIDs::uint64_id },
+      { "real32",       TypeIDs::real32_id },
+      { "real64",       TypeIDs::real64_id },
+      { "int32_array",  TypeIDs::int32_array_id },
+      { "uint32_array", TypeIDs::uint32_array_id },
+      { "int64_array",  TypeIDs::int64_array_id },
+      { "uint64_array", TypeIDs::uint64_array_id },
+      { "real32_array", TypeIDs::real32_array_id },
+      { "real64_array", TypeIDs::real64_array_id },
+      { "std_size_t",   TypeIDs::std_size_t_id },
+      { "string",       TypeIDs::string_id }
+    };
+    return type_names.at(name);
+  }
 
 
   template< typename LAMBDA >

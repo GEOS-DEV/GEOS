@@ -15,13 +15,15 @@ namespace dataRepository
 {
 
 ManagedGroup::ManagedGroup( std::string const & name,
-                                      ManagedGroup * const parent ) :
+                            ManagedGroup * const parent ) :
   m_keyLookup(),
   m_wrappers(),
   m_parent(parent),
   m_subObjectManagers(),
   m_sidreGroup(nullptr)
 {
+
+  // SIDRE interaction
   asctoolkit::sidre::DataGroup * sidreParent = nullptr;
   if( m_parent==nullptr )
   {
@@ -40,6 +42,30 @@ ManagedGroup::ManagedGroup( std::string const & name,
   {
     m_sidreGroup = sidreParent->createGroup(name);
   }
+
+
+
+  // Setup DocumentationNode
+  if( parent != nullptr )
+  {
+    if( parent->m_docNode != nullptr )
+    {
+      m_docNode = parent->m_docNode->AllocateChildNode( name,
+                                                        name,
+                                                        0,
+                                                        "ManagedGroup",
+                                                        "ManagedGroup",
+                                                        "ManagedGroup",
+                                                        "ManagedGroup",
+                                                        "",
+                                                        parent->getName(),
+                                                        0,
+                                                        0 ) ;
+
+    }
+  }
+
+
 
   *(RegisterViewWrapper<localIndex>( "size" ).data()) = 0;
   RegisterViewWrapper<std::string>( "name" ).reference() = name;
@@ -90,6 +116,20 @@ void ManagedGroup::resize( localIndex const newsize )
     i->resize(newsize);
   }
   *(this->getWrapper<localIndex>( keys::Size ).data())=newsize;
+}
+
+
+
+void ManagedGroup::RegisterDocumentationNodes()
+{
+  for( auto&& subNode : m_docNode->getChildNodes() )
+  {
+    if( subNode.second.dataType() != "DocumentationNode" )
+    {
+      RegisterViewWrapper( subNode.second.stringKey(),
+                           rtTypes::typeID(subNode.second.dataType() ) );
+    }
+  }
 }
 
 

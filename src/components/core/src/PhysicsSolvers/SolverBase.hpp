@@ -40,7 +40,7 @@ public:
 
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
-  virtual void ReadXML( pugi::xml_node const & solverNode, cxx_utilities::DocumentationNode & docNode );
+  virtual void ReadXML( pugi::xml_node const & solverNode );
 
   virtual void Registration( dataRepository::ManagedGroup * const domain ) override;
 
@@ -50,6 +50,8 @@ public:
                          real64 const & dt,
                          int const cycleNumber,
                          dataRepository::ManagedGroup& domain ) = 0;
+
+  virtual void SetDocumentationNodes() override;
 
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
