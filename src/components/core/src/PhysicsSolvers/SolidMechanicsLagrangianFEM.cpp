@@ -50,7 +50,7 @@ void SolidMechanics_LagrangianFEM::SetDocumentationNodes()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode.m_shortDescription = "Physics solver to perform enforcement of equations of motion, or static equilibrium on a Lagrangian FEM mesh";
+  // docNode.m_shortDescription = "Physics solver to perform enforcement of equations of motion, or static equilibrium on a Lagrangian FEM mesh";
 
   docNode->AllocateChildNode( "nElements",
                               keys::nElements,

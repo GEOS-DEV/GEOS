@@ -41,11 +41,6 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
                                     pugi::xml_node const & problemNode )
 {
 
-<<<<<<< HEAD
-=======
-//  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
->>>>>>> feature/settgast/addLegacyCode
   // Store a list of available solvers
   RegisterViewWrapper<string_array>(keys::solverNames);
 

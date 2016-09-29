@@ -64,11 +64,11 @@ void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::Docu
 
 void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::xml_node schemaNode, pugi::xml_node schemaRoot)
 {
-  if (docNode.m_type.find("Node") != std::string::npos)
+  if (docNode.dataType().find("Node") != std::string::npos)
   {
     // Set the type of target
     pugi::xml_node targetNode = schemaNode;
-    if (docNode.m_type.find("Unique") == std::string::npos)
+    if (docNode.dataType().find("Unique") == std::string::npos)
     {
       targetNode = targetNode.child("xsd:choice");
       if (targetNode == NULL)
@@ -94,7 +94,7 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::
   {
     pugi::xml_node newNode = schemaNode.append_child("xsd:attribute");
     newNode.append_attribute("name") = docNode.m_name.c_str();
-    newNode.append_attribute("type") = ("xsd:"+docNode.m_type).c_str();
+    newNode.append_attribute("type") = ("xsd:"+docNode.dataType()).c_str();
   }
 }
 
