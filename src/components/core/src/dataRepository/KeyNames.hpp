@@ -34,6 +34,7 @@ std::string const ConstitutiveManager = "ConstitutiveManager";
 std::string const ConstitutiveBase = "ConstitutiveBase";
 std::string const solverNames = "solverNames";
 
+std::string const schema = "schema";
 std::string const beginTime = "beginTime";
 std::string const endTime = "endTime";
 std::string const dt = "dt";

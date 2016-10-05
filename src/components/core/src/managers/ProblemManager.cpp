@@ -84,6 +84,7 @@ void ProblemManager::Registration( dataRepository::ManagedGroup * const )
   commandLine.RegisterViewWrapper<int32>(keys::yPartitionsOverride);
   commandLine.RegisterViewWrapper<int32>(keys::zPartitionsOverride);
   commandLine.RegisterViewWrapper<bool>(keys::overridePartitionNumbers);
+  commandLine.RegisterViewWrapper<std::string>(keys::schema);
 
   commandLine.RegisterViewWrapper<int32>(keys::K);
 
@@ -100,18 +101,20 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
   int32&        yPartitionsOverride = *(commandLine.getData<int32>(keys::yPartitionsOverride));
   int32&        zPartitionsOverride = *(commandLine.getData<int32>(keys::zPartitionsOverride));
   bool&         overridePartitionNumbers = *(commandLine.getData<bool>(keys::overridePartitionNumbers));
+  ViewWrapper<std::string>::rtype  schemaName = commandLine.getData<std::string>(keys::schema);
 
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA};
   const option::Descriptor usage[] = 
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
     {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
     {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t Input xml filename (required)"},
     {RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t Target restart filename"},
-    {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-nx, --x-partitions, \t Number of partitions in the x-direction"},
-    {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-ny, --y-partitions, \t Number of partitions in the y-direction"},
-    {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-nz, --z-partitions, \t Number of partitions in the z-direction"},
+    {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-x, --x-partitions, \t Number of partitions in the x-direction"},
+    {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
+    {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
+    {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
     { 0, 0, 0, 0, 0, 0}
   };
 
@@ -172,6 +175,9 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
       case ZPAR:
         zPartitionsOverride = std::stoi(opt.arg);
         overridePartitionNumbers = true;
+        break;
+      case SCHEMA:
+        schemaName = opt.arg;
         break;
     }
   }
@@ -268,9 +274,17 @@ void ProblemManager::ParseInputFile()
   this->m_eventManager->ReadXML( xmlProblemNode );
   
 
-  // m_inputDocumentationHead.Write("test_output.xml");
-  ConvertDocumentationToSchema("test_output.xsd", *(getDocumentationNode())) ;
-  getDocumentationNode()->Print();
+  // Documentation output
+  ViewWrapper<std::string>::rtype  schemaName = commandLine.getData<std::string>(keys::schema);
+
+  std::cout << schemaName << ", " << schemaName.empty() << ", " << schemaName.size() << std::endl;
+
+  if (schemaName.empty() == 0)
+  {
+    // m_inputDocumentationHead.Write("test_output.xml");
+    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode())) ;
+    getDocumentationNode()->Print();
+  }
 }
 
 
