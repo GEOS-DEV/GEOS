@@ -70,7 +70,7 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
       SolverBase & newSolver = CreateSolver( solverNode.name(), solverID );
 
       // Register fields in the solver and parse options
-      newSolver.Registration( &domain );
+      newSolver.BuildDataStructure( &domain );
 
 
 

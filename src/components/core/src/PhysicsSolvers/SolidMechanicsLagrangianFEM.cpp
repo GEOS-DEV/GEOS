@@ -46,10 +46,11 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 }
 
 
-void SolidMechanics_LagrangianFEM::SetDocumentationNodes()
+void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::ManagedGroup * const group )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
+  SolverBase::FillDocumentationNode( group );
 
   docNode->AllocateChildNode( "nElements",
                               keys::nElements,
@@ -133,9 +134,9 @@ void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode )
 }
 
 
-void SolidMechanics_LagrangianFEM::Registration( ManagedGroup * const domain )
+void SolidMechanics_LagrangianFEM::BuildDataStructure( ManagedGroup * const domain )
 {
-  SolverBase::Registration( domain );
+  SolverBase::BuildDataStructure( domain );
 
   ManagedGroup& nodes = domain->RegisterGroup<ManagedGroup>(keys::FEM_Nodes);
   ManagedGroup& elems = domain->RegisterGroup<ManagedGroup>(keys::FEM_Elements);

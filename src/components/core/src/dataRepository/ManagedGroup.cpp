@@ -16,11 +16,18 @@ namespace dataRepository
 
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ) :
-  m_docNode(nullptr),
+  ManagedGroup( name, parent, nullptr )
+{}
+
+
+ManagedGroup::ManagedGroup( std::string const & name,
+                            ManagedGroup * const parent,
+                            cxx_utilities::DocumentationNode * docNode ) :
+  m_docNode(docNode),
   m_keyLookup(),
   m_wrappers(),
   m_parent(parent),
-  m_subObjectManagers(),
+  m_subGroups(),
   m_sidreGroup(nullptr)
 {
 
@@ -67,11 +74,33 @@ ManagedGroup::ManagedGroup( std::string const & name,
   }
 
 
+  m_docNode->AllocateChildNode( "size",
+                                "size",
+                                -1,
+                                "localIndex",
+                                "localIndex",
+                                "size of group",
+                                "Number of entries in this group.",
+                                "0",
+                                "",
+                                0,
+                                0 );
+
+  m_docNode->AllocateChildNode( "name",
+                                "name",
+                                -1,
+                                "string",
+                                "string",
+                                "name of group",
+                                "name of group.",
+                                name,
+                                "",
+                                0,
+                                0 );
 
   *(RegisterViewWrapper<localIndex>( "size" ).data()) = 0;
   RegisterViewWrapper<std::string>( "name" ).reference() = name;
   RegisterViewWrapper<std::string>( "path" );
-
 
 }
 
@@ -133,6 +162,28 @@ void ManagedGroup::RegisterDocumentationNodes()
   }
 }
 
+void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const rootGroup )
+{
+  for( auto&& subGroup : m_subGroups )
+  {
+    subGroup.second->BuildDataStructure( rootGroup );
+  }
+}
+
+void ManagedGroup::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+{
+
+}
+
+
+void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const group )
+{
+  FillDocumentationNode(group);
+  for( auto&& subGroup : m_subGroups )
+  {
+    subGroup.second->SetDocumentationNodes(group);
+  }
+}
 
 
 }

@@ -31,7 +31,7 @@ public:
 
   ///@}
 
-  virtual void Registration( dataRepository::ManagedGroup * const parent );
+  virtual void BuildDataStructure( dataRepository::ManagedGroup * const parent );
 
   virtual dataRepository::ManagedGroup & getNodeManager();
   virtual dataRepository::ManagedGroup & getEdgeManager();

@@ -30,7 +30,7 @@ public:
 
   virtual void Initialize( dataRepository::ManagedGroup& domain );
 
-  virtual void Registration( dataRepository::ManagedGroup * const domain ) ;
+  virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) ;
 
 
   virtual void TimeStep( real64 const& time_n,

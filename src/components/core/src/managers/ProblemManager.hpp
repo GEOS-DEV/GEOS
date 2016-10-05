@@ -34,6 +34,10 @@ class ProblemManager : public ObjectManagerBase
 public:
   explicit ProblemManager( const std::string& name,
                            ObjectManagerBase * const parent );
+
+  explicit ProblemManager( const std::string& name,
+                           ObjectManagerBase * const parent,
+                           cxx_utilities::DocumentationNode * docNode );
   ~ProblemManager();
 
   /**
@@ -47,7 +51,11 @@ public:
   }
   ///@}
 
-  virtual void Registration( dataRepository::ManagedGroup * const ) override;
+
+
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+
+  virtual void BuildDataStructure( dataRepository::ManagedGroup * const ) override;
 
   void ParseCommandLineInput( int const& argc, char* const argv[]);
 

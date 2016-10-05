@@ -22,7 +22,7 @@ ConstitutiveBase::~ConstitutiveBase()
 {}
 
 
-void ConstitutiveBase::Registration( dataRepository::ManagedGroup * const )
+void ConstitutiveBase::BuildDataStructure( dataRepository::ManagedGroup * const )
 {}
 
 

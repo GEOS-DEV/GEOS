@@ -24,7 +24,7 @@ public:
                     ManagedGroup * const parent );
   virtual ~ConstitutiveBase();
 
-  virtual void Registration( dataRepository::ManagedGroup * const );
+  virtual void BuildDataStructure( dataRepository::ManagedGroup * const );
 
   virtual void Update( dataRepository::ManagedGroup * const parameters,
                        dataRepository::ManagedGroup * const stateVariables ) = 0;

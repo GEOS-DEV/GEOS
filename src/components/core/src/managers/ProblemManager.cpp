@@ -49,28 +49,25 @@ ProblemManager::ProblemManager( const std::string& name,
   ObjectManagerBase( name, parent ),
   m_physicsSolverManager(nullptr)
 {
-  allocateDocumentationNode( "ProblemManager",
-                             "ProblemManager",
-                             0,
-                             "DocumentationNode",
-                             "",
-                             "This is the top level node in the input structure.",
-                             "This is the top level node in the input structure.",
-                             "",
-                             "ProblemManager",
-                             0,
-                             0,
-                             0,
-                             nullptr );
+  m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
+}
+
+ProblemManager::ProblemManager( const std::string& name,
+                                ObjectManagerBase * const parent,
+                                cxx_utilities::DocumentationNode * docNode ) :
+  ObjectManagerBase( name, parent, docNode ),
+  m_physicsSolverManager(nullptr)
+{
   m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
 }
 
 ProblemManager::~ProblemManager()
 {
-  deleteDocumentationNode();
 }
 
-void ProblemManager::Registration( dataRepository::ManagedGroup * const )
+
+
+void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 {
 
 //  cxx_utilities::DocumentationNode newNode;
@@ -82,18 +79,41 @@ void ProblemManager::Registration( dataRepository::ManagedGroup * const )
   RegisterGroup<DomainPartition>(keys::domain);
 
   ManagedGroup& solverApplications = RegisterGroup<ManagedGroup>(keys::solverApplications);
+
+
   solverApplications.RegisterViewWrapper<string_array>(keys::solverApplicationNames);
 
   ManagedGroup& commandLine = RegisterGroup<ManagedGroup >(keys::commandLine);
-  commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
-  commandLine.RegisterViewWrapper<std::string>(keys::restartFileName);
-  commandLine.RegisterViewWrapper<bool>(keys::beginFromRestart);
-  commandLine.RegisterViewWrapper<int32>(keys::xPartitionsOverride);
-  commandLine.RegisterViewWrapper<int32>(keys::yPartitionsOverride);
-  commandLine.RegisterViewWrapper<int32>(keys::zPartitionsOverride);
-  commandLine.RegisterViewWrapper<bool>(keys::overridePartitionNumbers);
+//  commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
+//  commandLine.RegisterViewWrapper<std::string>(keys::restartFileName);
+//  commandLine.RegisterViewWrapper<bool>(keys::beginFromRestart);
+//  commandLine.RegisterViewWrapper<int32>(keys::xPartitionsOverride);
+//  commandLine.RegisterViewWrapper<int32>(keys::yPartitionsOverride);
+//  commandLine.RegisterViewWrapper<int32>(keys::zPartitionsOverride);
+//  commandLine.RegisterViewWrapper<bool>(keys::overridePartitionNumbers);
+//
+//  commandLine.RegisterViewWrapper<int32>(keys::K);
 
-  commandLine.RegisterViewWrapper<int32>(keys::K);
+}
+
+
+void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+
+  ObjectManagerBase::FillDocumentationNode( group );
+
+  docNode->AllocateChildNode( keys::inputFileName,
+                              keys::inputFileName,
+                              -1,
+                              "string",
+                              "string",
+                              "Name of the input xml file.",
+                              "Name of the input xml file.",
+                              "input.xml",
+                              "ProblemManager",
+                              0,
+                              0 );
 
 }
 

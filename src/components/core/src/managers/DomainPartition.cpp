@@ -21,7 +21,7 @@ DomainPartition::~DomainPartition()
 {}
 
 
-void DomainPartition::Registration( ManagedGroup * const )
+void DomainPartition::BuildDataStructure( ManagedGroup * const )
 {
   this->RegisterGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
 

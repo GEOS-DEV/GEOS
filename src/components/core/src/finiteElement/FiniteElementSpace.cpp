@@ -22,7 +22,7 @@ FiniteElementSpace::~FiniteElementSpace()
 {}
 
 
-void FiniteElementSpace::Registration( dataRepository::ManagedGroup * const parent )
+void FiniteElementSpace::BuildDataStructure( dataRepository::ManagedGroup * const parent )
 {
   parent->RegisterGroup<ManagedGroup>(keys::FEM_Nodes);
   parent->RegisterGroup<ManagedGroup>(keys::FEM_Elements);

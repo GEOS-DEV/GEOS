@@ -22,6 +22,10 @@ public:
   explicit ObjectManagerBase( std::string const & name,
                               ObjectManagerBase * const parent );
 
+  explicit ObjectManagerBase( std::string const & name,
+                              ObjectManagerBase * const parent,
+                              cxx_utilities::DocumentationNode * docNode );
+
   ~ObjectManagerBase();
 
   /**
@@ -35,44 +39,7 @@ public:
   virtual string getName() const = 0;
   ///@}
 
-  cxx_utilities::DocumentationNode * getDocumentationNode()
-  {
-    return m_docNode;
-  }
 
-  void allocateDocumentationNode( std::string const & name,
-                                  std::string const & stringKey,
-                                  int const & intKey,
-                                  std::string const & dataType,
-                                  std::string const & schemaType,
-                                  std::string const & shortDescription,
-                                  std::string const & longDescription,
-                                  std::string const & default0,
-                                  std::string const & groups,
-                                  unsigned int const & level,
-                                  unsigned int const & isInput,
-                                  unsigned int const & verbosity,
-                                  cxx_utilities::DocumentationNode * parentNode )
-  {
-    m_docNode = new cxx_utilities::DocumentationNode( name,
-                                                      stringKey,
-                                                      intKey,
-                                                      dataType,
-                                                      schemaType,
-                                                      shortDescription,
-                                                      longDescription,
-                                                      default0,
-                                                      groups,
-                                                      level,
-                                                      isInput,
-                                                      verbosity,
-                                                      parentNode );
-  }
-
-  void deleteDocumentationNode()
-  {
-    delete m_docNode;
-  }
 
 private:
 //  cxx_utilities::DocumentationNode * m_docNode;

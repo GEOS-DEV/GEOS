@@ -31,13 +31,13 @@ void SolverBase::ReadXML( pugi::xml_node const & solverNode )
   *(this->getData<real64>(keys::courant)) = solverNode.attribute("courant").as_double(0.5);
 }
 
-void SolverBase::Registration( dataRepository::ManagedGroup * const /*domain*/ )
+void SolverBase::BuildDataStructure( dataRepository::ManagedGroup * const /*domain*/ )
 {
   this->RegisterViewWrapper<real64>(keys::maxDt);
   this->RegisterViewWrapper<real64>(keys::courant);
 }
 
-void SolverBase::SetDocumentationNodes()
+void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const group )
 {
   cxx_utilities::DocumentationNode docVar;
 

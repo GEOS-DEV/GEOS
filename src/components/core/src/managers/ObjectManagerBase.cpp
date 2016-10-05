@@ -20,6 +20,18 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   this->RegisterGroup<ManagedGroup>("Sets");
   this->RegisterViewWrapper< iArray1d >("isExternal");
 }
+ObjectManagerBase::ObjectManagerBase( std::string const & name,
+                                      ObjectManagerBase * const parent,
+                                      cxx_utilities::DocumentationNode * docNode ):
+    ManagedGroup(name,parent,docNode),
+    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() )
+{
+
+
+  this->RegisterGroup<ManagedGroup>("Sets");
+  this->RegisterViewWrapper< iArray1d >("isExternal");
+}
+
 
 ObjectManagerBase::~ObjectManagerBase()
 {}

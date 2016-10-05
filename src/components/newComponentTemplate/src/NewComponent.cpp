@@ -29,7 +29,7 @@ void NewComponent::ReadXML( pugi::xml_node const & /*solverNode*/  )
 {}
 
 
-void NewComponent::Registration( dataRepository::ManagedGroup * const /*domain*/ )
+void NewComponent::BuildDataStructure( dataRepository::ManagedGroup * const /*domain*/ )
 {}
 
 

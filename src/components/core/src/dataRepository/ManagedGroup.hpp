@@ -58,6 +58,10 @@ public:
   explicit ManagedGroup( std::string const & name,
                          ManagedGroup * const parent );
 
+  explicit ManagedGroup( std::string const & name,
+                         ManagedGroup * const parent,
+                         cxx_utilities::DocumentationNode * docNode );
+
   /**
    *
    */
@@ -117,9 +121,9 @@ public:
   T& GetGroup( std::string const & name )
   {
 #ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T&>( *(m_subObjectManagers.at(name)) );
+    return dynamic_cast<T&>( *(m_subGroups.at(name)) );
 #else
-    return static_cast<T&>( *(m_subObjectManagers.at(getName)) );
+    return static_cast<T&>( *(m_subGroups.at(getName)) );
 #endif
   }
 
@@ -129,9 +133,9 @@ public:
   T const & GetGroup( std::string const & name ) const
   {
 #ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const &>( *(m_subObjectManagers.at(name)) );
+    return dynamic_cast<T const &>( *(m_subGroups.at(name)) );
 #else
-    return static_cast<T const &>( *(m_subObjectManagers.at(getName)) );
+    return static_cast<T const &>( *(m_subGroups.at(getName)) );
 #endif
   }
 
@@ -142,7 +146,6 @@ public:
 
   ViewWrapperBase& RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type );
 
-  virtual void SetDocumentationNodes() {}
 
 
   ///@}
@@ -158,45 +161,6 @@ public:
     return m_docNode;
   }
 
-  void allocateDocumentationNode( std::string const & name,
-                                  std::string const & stringKey,
-                                  int const & intKey,
-                                  std::string const & dataType,
-                                  std::string const & schemaType,
-                                  std::string const & shortDescription,
-                                  std::string const & longDescription,
-                                  std::string const & default0,
-                                  std::string const & groups,
-                                  unsigned int const & level,
-                                  unsigned int const & isInput,
-                                  unsigned int const & verbosity )
-  {
-
-    cxx_utilities::DocumentationNode * parentDocNode = nullptr;
-    if( m_parent != nullptr )
-    {
-      parentDocNode = m_parent->m_docNode;
-    }
-    m_docNode = new cxx_utilities::DocumentationNode( name,
-                                                      stringKey,
-                                                      intKey,
-                                                      dataType,
-                                                      schemaType,
-                                                      shortDescription,
-                                                      longDescription,
-                                                      default0,
-                                                      groups,
-                                                      level,
-                                                      isInput,
-                                                      verbosity,
-                                                      parentDocNode );
-  }
-
-  void deleteDocumentationNode()
-  {
-    delete m_docNode;
-  }
-
   void RegisterDocumentationNodes();
 
 
@@ -204,8 +168,12 @@ public:
 
 
 
-  virtual void Registration( dataRepository::ManagedGroup * const )
-  {}
+  virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
+
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+
+  void SetDocumentationNodes( dataRepository::ManagedGroup * const group );
+
 
 
   //***********************************************************************************************
@@ -372,7 +340,7 @@ private:
   std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
 
   ManagedGroup* m_parent = nullptr;
-  std::unordered_map< string, std::unique_ptr<ManagedGroup> > m_subObjectManagers;
+  std::unordered_map< string, std::unique_ptr<ManagedGroup> > m_subGroups;
 
   asctoolkit::sidre::DataGroup* m_sidreGroup;
 
@@ -458,12 +426,12 @@ template< typename T >
 T& ManagedGroup::RegisterGroup( std::string const & name,
                                      std::unique_ptr<T> newObject )
 {
-  auto iterKeyLookup = m_subObjectManagers.find(name);
+  auto iterKeyLookup = m_subGroups.find(name);
 
   // if the key was not found, make DataObject<T> and insert
-  if( iterKeyLookup == m_subObjectManagers.end() )
+  if( iterKeyLookup == m_subGroups.end() )
   {
-    auto insertResult = m_subObjectManagers.insert( std::make_pair( name, std::move(newObject) ) );
+    auto insertResult = m_subGroups.insert( std::make_pair( name, std::move(newObject) ) );
 
     if( !insertResult.second )
     {

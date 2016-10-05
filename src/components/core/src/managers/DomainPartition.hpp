@@ -28,7 +28,7 @@ public:
   DomainPartition& operator=( DomainPartition const & ) = delete;
   DomainPartition& operator=( DomainPartition && ) = delete;
 
-  virtual void Registration( dataRepository::ManagedGroup * const );
+  virtual void BuildDataStructure( dataRepository::ManagedGroup * const );
 
 };
 

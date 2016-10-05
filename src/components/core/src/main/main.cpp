@@ -21,25 +21,46 @@ int main( int argc, char *argv[] )
 
 
   std::string format =  std::string( "***********************************\n" )+
-                       std::string( "* <TIMESTAMP>\n\n" ) +
-                       std::string( "* LEVEL=<LEVEL>\n" ) +
-                       std::string( "* MESSAGE=<MESSAGE>\n" ) +
-                       std::string( "* FILE=<FILE>\n" ) +
-                       std::string( "* LINE=<LINE>\n" ) +
-                       std::string( "***********************************\n" );
+                        std::string( "* <TIMESTAMP>\n\n" ) +
+                        std::string( "* LEVEL=<LEVEL>\n" ) +
+                        std::string( "* MESSAGE=<MESSAGE>\n" ) +
+                        std::string( "* FILE=<FILE>\n" ) +
+                        std::string( "* LINE=<LINE>\n" ) +
+                        std::string( "***********************************\n" );
   slic::setLoggingMsgLevel( slic::message::Debug );
   slic::addStreamToAllMsgLevels( new slic::GenericOutputStream( &std::cout, format ) );
 
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
-  ProblemManager problemManager( "ProblemManager", nullptr );
 
-  problemManager.Registration(nullptr);
+
+  cxx_utilities::DocumentationNode docNode( "RootDocumentationNode",
+                                            "",
+                                            -1,
+                                            "DocumentationNode",
+                                            "",
+                                            "The Root DocumentationNode",
+                                            "",
+                                            "",
+                                            "",
+                                            0,
+                                            0,
+                                            0,
+                                            nullptr );
+
+  ProblemManager problemManager( "ProblemManager", nullptr, &docNode );
+
+  problemManager.BuildDataStructure(nullptr);
+
+  problemManager.SetDocumentationNodes( &problemManager );
+
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
   problemManager.ParseInputFile();
 
+
+  
   problemManager.InitializeObjects();
   problemManager.RunSimulation();
   
