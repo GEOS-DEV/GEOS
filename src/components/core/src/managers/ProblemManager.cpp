@@ -30,12 +30,6 @@ namespace dataRepository
     std::string const zPartitionsOverride = "zPartitionsOverride";
     std::string const overridePartitionNumbers = "overridePartitionNumbers";
 
-    std::string const solverApplications = "SolverApplications";
-    std::string const solverApplicationNames = "solverApplicationNames";
-    std::string const beginTime = "beginTime";
-    std::string const endTime = "endTime";
-    std::string const dt = "dt";
-    std::string const solverList = "solverList";
     std::string const K = "K";
 
   }
@@ -62,6 +56,8 @@ ProblemManager::ProblemManager( const std::string& name,
                              0,
                              nullptr );
   m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
+
+  m_eventManager = &(RegisterGroup<EventManager>("EventManager" ) ) ;
 }
 
 ProblemManager::~ProblemManager()
@@ -79,12 +75,6 @@ void ProblemManager::Registration( dataRepository::ManagedGroup * const )
 //  getDocumentationNode()->
 
   RegisterGroup<DomainPartition>(keys::domain);
-
-  // Register the sovler application group
-  ManagedGroup& solverApplications = RegisterGroup<ManagedGroup>(keys::solverApplications);
-  solverApplications.RegisterViewWrapper<string_array>(keys::solverApplicationNames);
-  cxx_utilities::DocumentationNode * const docNode = solverApplications.getDocumentationNode();
-  docNode->setSchemaType("UniqueNode");
 
   ManagedGroup& commandLine = RegisterGroup<ManagedGroup >(keys::commandLine);
   commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
@@ -233,9 +223,6 @@ void ProblemManager::ParseInputFile()
   dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
   ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
 
-//  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::ManagedGroup>(keys::solvers);
-  dataRepository::ManagedGroup& solverApplications = GetGroup<dataRepository::ManagedGroup>(keys::solverApplications);
-
 
 #if USE_PYTHON==1
   // Load the pygeos module
@@ -276,137 +263,10 @@ void ProblemManager::ParseInputFile()
   xmlProblemNode = xmlDocument.child("Problem");
   pugi::xml_node topLevelNode;
 
+  // Call manager readXML methods:
   this->m_physicsSolverManager->ReadXML(domain, xmlProblemNode );
-
-
-  // Applications
-  // TODO: This should be moved to its own file
-  topLevelNode = xmlProblemNode.child("SolverApplications");
-  if (topLevelNode == NULL)
-  {
-    throw std::invalid_argument("SolverApplications block not present in input xml file!");
-  }
-  else
-  {
-    // Determine the number of solver applications, resize the application collection 
-    long nApp = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
-    solverApplications.resize(nApp);
-    ViewWrapper<string_array>::rtype  solverApplicationNames = solverApplications.getData<string_array>(keys::solverApplicationNames);
-    int ii = 0;
-
-    for (pugi::xml_node applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
-    {
-      // Register a new solver application (Note: these must be identified by a unique name)
-      std::string applicationName = applicationNode.attribute("name").value();
-      dataRepository::ManagedGroup& newApplication = solverApplications.RegisterGroup<ManagedGroup>(applicationName);
-      newApplication.RegisterViewWrapper<real64>(keys::beginTime);
-      newApplication.RegisterViewWrapper<real64>(keys::endTime);
-      newApplication.RegisterViewWrapper<real64>(keys::dt);
-      newApplication.RegisterViewWrapper<string_array>(keys::solverList);
-
-      // Read application values from the xml
-      *(newApplication.getData<real64>(keys::beginTime)) = applicationNode.attribute("beginTime").as_double(0.0);
-      *(newApplication.getData<real64>(keys::endTime)) = applicationNode.attribute("endTime").as_double(0.0);
-      *(newApplication.getData<real64>(keys::dt)) = applicationNode.attribute("dt").as_double(-1.0);
-      
-      // Store the application name
-      solverApplicationNames[ii] = applicationName;
-      ii++;
-
-      // Store the solver list in this application
-      std::vector<std::string> newApplicationSolvers;
-      applicationNode.attribute("solvers").load_string_array(newApplicationSolvers);
-      newApplication.resize(newApplicationSolvers.size());
-      ViewWrapper<string_array>::rtype solverList = newApplication.getData<string_array>(keys::solverList);
-      for (uint jj=0; jj<newApplicationSolvers.size(); ++jj)
-      {
-        solverList[jj] = newApplicationSolvers[jj];
-      }
-
-      // Set the application schema documentation
-      cxx_utilities::DocumentationNode * const docNode = newApplication.getDocumentationNode();
-      
-      docNode->setSchemaType("Node");
-      docNode->setName("Application");
-
-      docNode->AllocateChildNode( "name",
-                                  "name",
-                                  -1,
-                                  "string",
-                                  "string",
-                                  "application name",
-                                  "application name",
-                                  "name",
-                                  "",
-                                  1,
-                                  0 );
-
-      docNode->AllocateChildNode( "beginTime",
-                                  "beginTime",
-                                  -1,
-                                  "real64",
-                                  "double",
-                                  "application start time",
-                                  "application start time",
-                                  "0.0",
-                                  "",
-                                  1,
-                                  0 );
-
-      docNode->AllocateChildNode( "endTime",
-                                  "endTime",
-                                  -1,
-                                  "real64",
-                                  "double",
-                                  "application endTime",
-                                  "application endTime",
-                                  "1.0e9",
-                                  "",
-                                  1,
-                                  0 );
-
-      docNode->AllocateChildNode( "dt",
-                                  "dt",
-                                  -1,
-                                  "real64",
-                                  "double",
-                                  "application dt",
-                                  "application dt",
-                                  "-1.0",
-                                  "",
-                                  1,
-                                  0 );
-
-      docNode->AllocateChildNode( "solvers",
-                                  "solvers",
-                                  -1,
-                                  "string",
-                                  "string",
-                                  "application solvers",
-                                  "application solvers",
-                                  "",
-                                  "",
-                                  1,
-                                  0 );
-
-
-    }
-
-    // Test to make sure the applications are valid
-    for (auto jj=0; jj<solverApplications.size()-1; ++jj)
-    {
-      dataRepository::ManagedGroup& applicationA = solverApplications.GetGroup(solverApplicationNames[jj]);
-      dataRepository::ManagedGroup& applicationB = solverApplications.GetGroup(solverApplicationNames[jj+1]);
-
-      ViewWrapper<real64>::rtype endTime = applicationA.getData<real64>(keys::endTime);
-      ViewWrapper<real64>::rtype beginTime = applicationB.getData<real64>(keys::beginTime);
-      if (fabs(*(beginTime) - *(endTime)) > 1e-6)
-      {
-        std::cout << "Error in solver application times: " << solverApplicationNames[jj] << std::endl;
-        throw std::invalid_argument("Solver application times must be contiguous!");
-      }
-    }
-  }
+  this->m_eventManager->ReadXML( xmlProblemNode );
+  
 
   // m_inputDocumentationHead.Write("test_output.xml");
   ConvertDocumentationToSchema("test_output.xsd", *(getDocumentationNode())) ;
@@ -431,17 +291,17 @@ void ProblemManager::InitializeObjects()
 void ProblemManager::RunSimulation()
 {
   DomainPartition& domain  = getDomainPartition();
-  dataRepository::ManagedGroup& solverApplications = GetGroup<dataRepository::ManagedGroup>(keys::solverApplications);
-  ViewWrapper<string_array>::rtype  solverApplicationNames = solverApplications.getData<string_array>(keys::solverApplicationNames);
 
   double time = 0.0;
   int cycle = 0;
   real64 dt = 0.0;
 
-  for( auto ii=0; ii<solverApplications.size(); ++ii)
+  cxx_utilities::DocumentationNode * const eventDocNode = m_eventManager->getDocumentationNode();
+  for( auto const & subEventDocNode : eventDocNode->m_child )
   {
-    dataRepository::ManagedGroup& currentApplication = solverApplications.GetGroup( solverApplicationNames[ii] );
-    ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solverList);
+    dataRepository::ManagedGroup& currentApplication = m_eventManager->GetGroup( subEventDocNode.first );
+
+    ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solvers);
     real64& appDt = *(currentApplication.getData<real64>(keys::dt));
     real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
 

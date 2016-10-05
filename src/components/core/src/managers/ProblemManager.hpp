@@ -23,8 +23,9 @@
 
 #include "ObjectManagerBase.hpp"
 #include "PhysicsSolvers/PhysicsSolverManager.hpp"
+#include "EventManager.hpp"
 #include "schema/SchemaUtilities.hpp"
-#include "DocumentationNode.hpp"
+#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 
 namespace geosx
 {
@@ -111,6 +112,7 @@ public:
 
 private:
   PhysicsSolverManager * m_physicsSolverManager;
+  EventManager * m_eventManager;
 };
 
 } /* namespace geosx */
