@@ -31,6 +31,8 @@ public:
 
   virtual ~SolverBase();
 
+  static string CatalogName() { return "SolverBase"; }
+
   SolverBase() = default;
   SolverBase( SolverBase const & ) = default;
   SolverBase( SolverBase &&) = default;

@@ -39,14 +39,18 @@ void SolverBase::BuildDataStructure( dataRepository::ManagedGroup * const /*doma
 
 void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const group )
 {
-  cxx_utilities::DocumentationNode docVar;
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  docNode->setName(this->CatalogName());    // If this method lived in Managed groups, this could be done automatically
+  docNode->setSchemaType("Node");
 
+  cxx_utilities::DocumentationNode docVar;
+  
   // Document cfl number
   docVar.m_name               = "cfl";
   docVar.m_stringKey          = "cfl";
   docVar.m_intKey             = -1;
   docVar.m_dataType           = "real64";
-  docVar.m_schemaType         = "";
+  docVar.m_schemaType         = "double";
   docVar.m_shortDescription   = "Courant–Friedrichs–Lewy (CFL) factor";
   docVar.m_longDescription    = "Courant–Friedrichs–Lewy (CFL) factor is multiplied with CFL condition to reduce/increase "
                                 "allowable timestep.";
@@ -55,7 +59,7 @@ void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const gro
   docVar.m_level              = m_docNode->m_level + 1;
   docVar.m_isInput            = 1;
 
-  m_docNode->m_child.insert( { docVar.m_name, docVar } );
+  docNode->m_child.insert( { docVar.m_name, docVar } );
 
 
 

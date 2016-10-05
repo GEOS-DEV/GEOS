@@ -1,20 +1,7 @@
 
 import re
 from numpy import *
-
-class DictRegexHandler():
-  def __init__(self):
-    self.target = {}
-
-  def __call__(self, match):
-    k = match.group(1)
-    if k:
-      if (k not in self.target.keys()):
-          raise Exception('Error: Unit (%s) is not defined in UnitManager' % k)
-      value = self.target[k]
-      return str(value)
-    else:
-      return
+from . import DictRegexHandler, regexConfig
 
 
 class UnitManager():
@@ -27,10 +14,10 @@ class UnitManager():
       self.buildUnits()
     
     # Replace all instances of units in the string with their dict equivalents
-    symbolicUnits = re.sub(r"([a-zA-Z]*)", self.unitMatcher, unitStruct[1])
+    symbolicUnits = re.sub(regexConfig.units_b, self.unitMatcher, unitStruct[1])
     
     # Strip out any stray alpha characters and evaluate
-    symbolicUnits_sanitized = re.sub(r"[a-z-[e]A-Z-[E]]", '', symbolicUnits).strip()
+    symbolicUnits_sanitized = re.sub(regexConfig.sanitize, '', symbolicUnits).strip()
     value = float(unitStruct[0])*eval(symbolicUnits_sanitized, {'__builtins__':None})
     return str(value)
 
@@ -38,7 +25,7 @@ class UnitManager():
     return self.__call__([match.group(1), match.group(2)])
 
   def buildUnits(self):
-    print('Building UnitManager dictionary...')
+    # print('Building UnitManager dictionary...')
 
     prefixes = {'giga':  {'value': 1e9,  'alt': 'G'},
                 'mega':  {'value': 1e6,  'alt': 'M'},
@@ -119,4 +106,4 @@ class UnitManager():
       raise Exception('Error: There are overlapping unit definitions in the UnitManager')
 
     self.unitMatcher.target = self.units
-    print('Done!')
+    # print('Done!')

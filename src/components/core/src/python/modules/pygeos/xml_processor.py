@@ -4,9 +4,15 @@ import re
 import sys
 import os
 from numpy import *
-from . import DictRegexHandler, UnitManager
+from . import UnitManager, DictRegexHandler, symbolicMathRegexHandler, regexConfig
+
 
 def MergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
+  # Expand the input path
+  pwd = os.getcwd()
+  includePath, fname = os.path.split(os.path.abspath(os.path.expanduser(fname)))
+  os.chdir(includePath)
+
   # Check to see if the code has fallen into a loop
   includeCount += 1
   if (includeCount > maxInclude):
@@ -40,6 +46,7 @@ def MergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
         rootMatchingNodes[0].insert(-1, secondLevelNode)
     else:
       root.insert(-1, topLevelNode)
+  os.chdir(pwd)
 
 
 def generateRandomName(prefix='', suffix='.xml'):
@@ -50,19 +57,15 @@ def generateRandomName(prefix='', suffix='.xml'):
   return '%s%s%s' % (prefix, md5(str(time())+str(getpid())).hexdigest(), suffix)
 
 
-def symbolicMathRegexHandler(match):
-  k = match.group(1)
-  if k:
-    # Sanitize the input
-    sanitized = re.sub(r"[a-z-[e]A-Z-[E]]", '', k).strip()
-    value = eval(sanitized, {'__builtins__':None})
-    return str(value)
-  else:
-    return
+def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/components/core/src/schema/gpac_new.xsd', verbose=1):
+  
+  if (verbose > 0):
+    print('\nReading input xml parameters and parsing symbolic math...')
 
-
-def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/components/core/src/schema/gpac_new.xsd'):
-  print('\nReading input xml parameters and parsing symbolic math...')
+  # Expand the input path
+  pwd = os.getcwd()
+  rootPath, inputFile = os.path.split(os.path.abspath(os.path.expanduser(inputFile)))
+  os.chdir(rootPath)
 
   # Load the xml files and merge includes
   try:
@@ -78,6 +81,7 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/component
   for includeNode in root.findall('Included'):
     for f in includeNode.findall('File'):
       MergeIncludedXMLFiles(root, f.get('name'), includeCount)
+  os.chdir(pwd)
 
   # Build the parameter map, convert function
   Pmap = {}
@@ -96,39 +100,41 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/component
     for line in ifile:
       # Fill in any paramters (format:  $Parameter or $:Parameter)
       if ('$' in line):
-        line = re.sub(r"\$:?([a-zA-Z_]*\$?)", parameterHandler, line)
+        line = re.sub(regexConfig.parameters, parameterHandler, line)
 
       # Parse any units (format: 9.81[m**2/s] or 1.0 [bbl/day])
       if ('[' in line):
-        line = re.sub(r"([0-9]*\.?[0-9]*?[eE]?[-+]?[0-9]*?)\ *?\[([-+.*/()a-zA-Z0-9]*)\]", unitManager.regexHandler, line)
+        line = re.sub(regexConfig.units, unitManager.regexHandler, line)
 
       # Evaluate symbolic math (format: {1 + 2.34e5*2 * ...})
       if ('{' in line):
-        line = re.sub(r"\{([-+.*/() 0-9eE]*)\}", symbolicMathRegexHandler, line)
+        line = re.sub(regexConfig.symbolic, symbolicMathRegexHandler, line)
       
       ofile.write(line)
 
   # Check for un-matched special characters
+  os.remove(tmp_fname_a)
   with open(tmp_fname_b, 'r') as ofile:
     for line in ofile:
       if any([sc in line for sc in ['$', '[', ']', '{', '}']]):
         raise Exception('Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!' % (line))
 
-  # Validate against the schema 
-  print('Validating the xml against the schema...')
-  try:
-    ofile = ElementTree.parse(tmp_fname_b) 
-    sfile = ElementTree.XMLSchema(ElementTree.parse(schema))
-    sfile.assertValid(ofile)
-  except ElementTree.DocumentInvalid as err:
-    print('\nWarning: input XML contains potentially invalid input parameters:')
-    print('-'*20+'\n')
-    print sfile.error_log
-    print('\n'+'-'*20)
-    print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
+  if (verbose > 0):
+    print('Preprocessed xml file stored in %s\n' % (tmp_fname_b))
 
-  os.remove(tmp_fname_a)
-  print('Preprocessed xml file stored in %s\n' % (tmp_fname_b))
+    # Validate against the schema 
+    print('Validating the xml against the schema...')
+    try:
+      ofile = ElementTree.parse(tmp_fname_b) 
+      sfile = ElementTree.XMLSchema(ElementTree.parse(schema))
+      sfile.assertValid(ofile)
+    except ElementTree.DocumentInvalid as err:
+      print('\nWarning: input XML contains potentially invalid input parameters:')
+      print('-'*20+'\n')
+      print sfile.error_log
+      print('\n'+'-'*20)
+      print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
+
   return tmp_fname_b
 
 if (__name__ == "__main__"):

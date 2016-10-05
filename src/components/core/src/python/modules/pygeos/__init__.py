@@ -1,7 +1,9 @@
 
-__version__ = '0.0.0'
+__version__ = '0.1.0'
 
 
-from .unit_manager import DictRegexHandler, UnitManager
+from .regex_config import regexConfig, symbolicMathRegexHandler, DictRegexHandler
+from .unit_manager import UnitManager
 from .xml_processor import PreprocessGEOSXML
 from .table_generator import writeGEOSTable, readGEOSTable
+from .test_manager import runUnitTests

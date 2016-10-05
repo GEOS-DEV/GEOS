@@ -4,7 +4,7 @@
 	xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
 
 <Included>  
-  <File name="./included/included_2.xml"/>
+  <File name="./included_2.xml"/>
 </Included>
 
 <Parameters>  

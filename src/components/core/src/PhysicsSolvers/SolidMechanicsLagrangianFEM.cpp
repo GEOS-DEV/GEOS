@@ -52,11 +52,14 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
 
   SolverBase::FillDocumentationNode( group );
 
+  docNode->setName(this->CatalogName());    // If this method lived in Managed groups, this could be done automatically
+  docNode->setSchemaType("Node");
+  
   docNode->AllocateChildNode( "nElements",
                               keys::nElements,
                               -1,
                               "int32",
-                              "int32",
+                              "int",
                               "number of elements",
                               "number of elements",
                               "10",
@@ -68,7 +71,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               keys::Ey,
                               -1,
                               "real64",
-                              "real64",
+                              "double",
                               "Elastic Young's Modulus",
                               "Elastic Young's Modulus",
                               "1.0e9",
@@ -80,7 +83,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               keys::rho,
                               -1,
                               "real64",
-                              "real64",
+                              "double",
                               "Initial Density",
                               "Initial Density",
                               "2600.0",
@@ -92,7 +95,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               keys::area,
                               -1,
                               "real64",
-                              "real64",
+                              "double",
                               "cross section area",
                               "cross section area",
                               "1.0",
@@ -104,7 +107,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               "barLength",
                               -1,
                               "real64",
-                              "real64",
+                              "double",
                               "reference length",
                               "reference length",
                               "1.0",
@@ -116,7 +119,6 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
 void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode )
 {
   SolverBase::ReadXML(solverNode);
-
 
   cxx_utilities::DocumentationNode docVar;
 

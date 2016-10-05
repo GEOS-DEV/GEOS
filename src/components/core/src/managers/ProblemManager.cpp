@@ -7,7 +7,6 @@
 
 #include "ProblemManager.hpp"
 
-#include <getopt.h>
 #include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
@@ -31,12 +30,6 @@ namespace dataRepository
     std::string const zPartitionsOverride = "zPartitionsOverride";
     std::string const overridePartitionNumbers = "overridePartitionNumbers";
 
-    std::string const solverApplications = "solverApplications";
-    std::string const solverApplicationNames = "solverApplicationNames";
-    std::string const beginTime = "beginTime";
-    std::string const endTime = "endTime";
-    std::string const dt = "dt";
-    std::string const solverList = "solverList";
     std::string const K = "K";
 
   }
@@ -58,7 +51,22 @@ ProblemManager::ProblemManager( const std::string& name,
   ObjectManagerBase( name, parent, docNode ),
   m_physicsSolverManager(nullptr)
 {
+  allocateDocumentationNode( "ProblemManager",
+                             "ProblemManager",
+                             0,
+                             "DocumentationNode",
+                             "UniqueNode",
+                             "This is the top level node in the input structure.",
+                             "This is the top level node in the input structure.",
+                             "",
+                             "ProblemManager",
+                             0,
+                             0,
+                             0,
+                             nullptr );
   m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
+
+  m_eventManager = &(RegisterGroup<EventManager>("EventManager" ) ) ;
 }
 
 ProblemManager::~ProblemManager()
@@ -115,9 +123,21 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                               0,
                               0 );
 
+  ManagedGroup& commandLine = RegisterGroup<ManagedGroup >(keys::commandLine);
+  commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
+  commandLine.RegisterViewWrapper<std::string>(keys::restartFileName);
+  commandLine.RegisterViewWrapper<bool>(keys::beginFromRestart);
+  commandLine.RegisterViewWrapper<int32>(keys::xPartitionsOverride);
+  commandLine.RegisterViewWrapper<int32>(keys::yPartitionsOverride);
+  commandLine.RegisterViewWrapper<int32>(keys::zPartitionsOverride);
+  commandLine.RegisterViewWrapper<bool>(keys::overridePartitionNumbers);
+  commandLine.RegisterViewWrapper<std::string>(keys::schema);
+
+  commandLine.RegisterViewWrapper<int32>(keys::K);
+
 }
 
-void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
+void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
 {
   dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
   
@@ -128,87 +148,86 @@ void ProblemManager::ParseCommandLineInput( int const& argc, char* const argv[])
   int32&        yPartitionsOverride = *(commandLine.getData<int32>(keys::yPartitionsOverride));
   int32&        zPartitionsOverride = *(commandLine.getData<int32>(keys::zPartitionsOverride));
   bool&         overridePartitionNumbers = *(commandLine.getData<bool>(keys::overridePartitionNumbers));
+  ViewWrapper<std::string>::rtype  schemaName = commandLine.getData<std::string>(keys::schema);
 
-
-  // Get command line input
-  while (true)
+  // Set the options structs and parse
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA};
+  const option::Descriptor usage[] = 
   {
-    static struct option long_options[] =
-    {
-      { "help", no_argument, 0, 'h' },
-      { "version", no_argument, 0, 'v' },
-      { "xpar", required_argument, 0, 0 },
-      { "ypar", required_argument, 0, 0 },
-      { "zpar", required_argument, 0, 0 },
-      { "include", required_argument, 0, 0 },
-      { 0, 0, 0, 0 } };
-    /* getopt_long stores the option index here. */
-    int option_index = 0;
-    int c = getopt_long_only(argc, argv, "ahvi:r:", long_options, &option_index);
+    {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
+    {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
+    {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t Input xml filename (required)"},
+    {RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t Target restart filename"},
+    {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-x, --x-partitions, \t Number of partitions in the x-direction"},
+    {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
+    {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
+    {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
+    { 0, 0, 0, 0, 0, 0}
+  };
 
-    /* Detect the end of the options. */
-    if (c == -1)
-      break;
+  argc-=(argc>0); 
+  argv+=(argc>0);
+  option::Stats stats(usage, argc, argv);
+  option::Option options[stats.options_max], buffer[stats.buffer_max];
+  option::Parser parse(usage, argc, argv, options, buffer);
 
-    switch (c)
-    {
-    case 0:
-    {
-      /* If option sets a flag, do nothing else now. */
-      if (long_options[option_index].flag != 0)
-        break;
-
-      /* long options without a short arg */
-      if( stringutilities::streq( std::string("xpar"), long_options[option_index].name ) )
-      {
-        xPartitionsOverride = std::stoi(optarg);
-        overridePartitionNumbers = true;
-      }
-      else if( stringutilities::streq( std::string("ypar"), long_options[option_index].name ) )
-      {
-        yPartitionsOverride = std::stoi(optarg);
-        overridePartitionNumbers = true;
-      }
-      else if( stringutilities::streq( std::string("zpar"), long_options[option_index].name ) )
-      {
-        zPartitionsOverride = std::stoi(optarg);
-        overridePartitionNumbers = true;
-      }
-    }
-    break;
-    case 'a':   // Leave Empty: Included for totalview - does nothing
-      break;
-
-    case 'i':   // Record input file
-    {
-      inputFileName = optarg;
-    }
-    break;
-
-    case 'r':   // From restart
-    {
-      beginFromRestart = true;
-      restartFileName = optarg;
-    }
-    break;
-    
-    case 'h':   // help
-//      DisplayUsage();   // print help
-      exit(0);
-
-    case 'v':   // version
-//      DisplayVersion();
-      exit(0);
-
-    case '?':
-      /* getopt_long has already printed an error message. */
-      break;
-
-    default:
-      abort();
-    }
+  
+  // Handle special cases
+  if (parse.error())
+  {
+    throw std::invalid_argument("Bad input arguments");
   }
 
+  if (options[HELP] || (argc == 0))
+  {
+    int columns = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
+    option::printUsage(fwrite, stdout, usage, columns);
+    exit(0);
+  }
+
+  if (options[INPUT] == 0)
+  {
+    std::cout << "An input xml must be specified!  Exiting..." << std::endl;
+    exit(1);
+  }
+
+
+  // Iterate over the remaining inputs
+  for (int ii=0; ii<parse.optionsCount(); ++ii)
+  {
+    option::Option& opt = buffer[ii];
+    switch (opt.index())
+    {
+      case UNKNOWN:
+        // This should have thrown an error
+        break;
+      case HELP:
+        // This is already handled above
+        break;
+      case INPUT:
+        inputFileName = opt.arg;
+        break;
+      case RESTART:
+        restartFileName = opt.arg;
+        beginFromRestart = true;
+        break;
+      case XPAR:
+        xPartitionsOverride = std::stoi(opt.arg);
+        overridePartitionNumbers = true;
+        break;
+      case YPAR:
+        yPartitionsOverride = std::stoi(opt.arg);
+        overridePartitionNumbers = true;
+        break;
+      case ZPAR:
+        zPartitionsOverride = std::stoi(opt.arg);
+        overridePartitionNumbers = true;
+        break;
+      case SCHEMA:
+        schemaName = opt.arg;
+        break;
+    }
+  }
 }
 
 
@@ -257,9 +276,6 @@ void ProblemManager::ParseInputFile()
   dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
   ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
 
-//  dataRepository::SynchronizedGroup& solvers = GetGroup<dataRepository::ManagedGroup>(keys::solvers);
-  dataRepository::ManagedGroup& solverApplications = GetGroup<dataRepository::ManagedGroup>(keys::solverApplications);
-
 
 #if USE_PYTHON==1
   // Load the pygeos module
@@ -300,76 +316,22 @@ void ProblemManager::ParseInputFile()
   xmlProblemNode = xmlDocument.child("Problem");
   pugi::xml_node topLevelNode;
 
-
-  cxx_utilities::DocumentationNode temp;
-
-
-
-
+  // Call manager readXML methods:
   this->m_physicsSolverManager->ReadXML(domain, xmlProblemNode );
+  this->m_eventManager->ReadXML( xmlProblemNode );
+  
 
+  // Documentation output
+  ViewWrapper<std::string>::rtype  schemaName = commandLine.getData<std::string>(keys::schema);
 
-  // Applications
-  topLevelNode = xmlProblemNode.child("SolverApplications");
-  if (topLevelNode == NULL)
+  std::cout << schemaName << ", " << schemaName.empty() << ", " << schemaName.size() << std::endl;
+
+  if (schemaName.empty() == 0)
   {
-    throw std::invalid_argument("SolverApplications block not present in input xml file!");
+    // m_inputDocumentationHead.Write("test_output.xml");
+    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode())) ;
+    getDocumentationNode()->Print();
   }
-  else
-  {
-    // Determine the number of solver applications, resize the application collection 
-    long nApp = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
-    solverApplications.resize(nApp);
-    ViewWrapper<string_array>::rtype  solverApplicationNames = solverApplications.getData<string_array>(keys::solverApplicationNames);
-    int ii = 0;
-
-    for (pugi::xml_node applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
-    {
-      // Register a new solver application (Note: these must be identified by a unique name)
-      std::string applicationName = applicationNode.attribute("name").value();
-      dataRepository::ManagedGroup& newApplication = solverApplications.RegisterGroup<ManagedGroup>(applicationName);
-      newApplication.RegisterViewWrapper<real64>(keys::beginTime);
-      newApplication.RegisterViewWrapper<real64>(keys::endTime);
-      newApplication.RegisterViewWrapper<real64>(keys::dt);
-      newApplication.RegisterViewWrapper<string_array>(keys::solverList);
-
-      // Read application values from the xml
-      *(newApplication.getData<real64>(keys::beginTime)) = applicationNode.attribute("beginTime").as_double(0.0);
-      *(newApplication.getData<real64>(keys::endTime)) = applicationNode.attribute("endTime").as_double(0.0);
-      *(newApplication.getData<real64>(keys::dt)) = applicationNode.attribute("dt").as_double(-1.0);
-      
-      // Store the application name
-      solverApplicationNames[ii] = applicationName;
-      ii++;
-
-      // Store the solver list in this application
-      std::vector<std::string> newApplicationSolvers;
-      applicationNode.attribute("solvers").load_string_array(newApplicationSolvers);
-      newApplication.resize(newApplicationSolvers.size());
-      ViewWrapper<string_array>::rtype solverList = newApplication.getData<string_array>(keys::solverList);
-      for (uint jj=0; jj<newApplicationSolvers.size(); ++jj)
-      {
-        solverList[jj] = newApplicationSolvers[jj];
-      }
-    }
-
-    // Test to make sure the applications are valid
-    for (auto jj=0; jj<solverApplications.size()-1; ++jj)
-    {
-      dataRepository::ManagedGroup& applicationA = solverApplications.GetGroup(solverApplicationNames[jj]);
-      dataRepository::ManagedGroup& applicationB = solverApplications.GetGroup(solverApplicationNames[jj+1]);
-
-      ViewWrapper<real64>::rtype endTime = applicationA.getData<real64>(keys::endTime);
-      ViewWrapper<real64>::rtype beginTime = applicationB.getData<real64>(keys::beginTime);
-      if (fabs(*(beginTime) - *(endTime)) > 1e-6)
-      {
-        std::cout << "Error in solver application times: " << solverApplicationNames[jj] << std::endl;
-        throw std::invalid_argument("Solver application times must be contiguous!");
-      }
-    }
-  }
-
-  getDocumentationNode()->Print();
 }
 
 
@@ -390,17 +352,17 @@ void ProblemManager::InitializeObjects()
 void ProblemManager::RunSimulation()
 {
   DomainPartition& domain  = getDomainPartition();
-  dataRepository::ManagedGroup& solverApplications = GetGroup<dataRepository::ManagedGroup>(keys::solverApplications);
-  ViewWrapper<string_array>::rtype  solverApplicationNames = solverApplications.getData<string_array>(keys::solverApplicationNames);
 
   double time = 0.0;
   int cycle = 0;
   real64 dt = 0.0;
 
-  for( auto ii=0; ii<solverApplications.size(); ++ii)
+  cxx_utilities::DocumentationNode * const eventDocNode = m_eventManager->getDocumentationNode();
+  for( auto const & subEventDocNode : eventDocNode->m_child )
   {
-    dataRepository::ManagedGroup& currentApplication = solverApplications.GetGroup( solverApplicationNames[ii] );
-    ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solverList);
+    dataRepository::ManagedGroup& currentApplication = m_eventManager->GetGroup( subEventDocNode.first );
+
+    ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solvers);
     real64& appDt = *(currentApplication.getData<real64>(keys::dt));
     real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
 
