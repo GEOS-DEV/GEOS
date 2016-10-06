@@ -37,7 +37,7 @@ void SolverBase::BuildDataStructure( dataRepository::ManagedGroup * const /*doma
   this->RegisterViewWrapper<real64>(keys::courant);
 }
 
-void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setName(this->CatalogName());    // If this method lived in Managed groups, this could be done automatically

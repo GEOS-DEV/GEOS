@@ -29,6 +29,8 @@ namespace dataRepository
     std::string const yPartitionsOverride = "yPartitionsOverride";
     std::string const zPartitionsOverride = "zPartitionsOverride";
     std::string const overridePartitionNumbers = "overridePartitionNumbers";
+    std::string const solverApplications = "solverApplications";
+    std::string const solverApplicationNames = "solverApplicationNames";
 
     std::string const K = "K";
 
@@ -51,19 +53,19 @@ ProblemManager::ProblemManager( const std::string& name,
   ObjectManagerBase( name, parent, docNode ),
   m_physicsSolverManager(nullptr)
 {
-  allocateDocumentationNode( "ProblemManager",
-                             "ProblemManager",
-                             0,
-                             "DocumentationNode",
-                             "UniqueNode",
-                             "This is the top level node in the input structure.",
-                             "This is the top level node in the input structure.",
-                             "",
-                             "ProblemManager",
-                             0,
-                             0,
-                             0,
-                             nullptr );
+//  allocateDocumentationNode( "ProblemManager",
+//                             "ProblemManager",
+//                             0,
+//                             "DocumentationNode",
+//                             "UniqueNode",
+//                             "This is the top level node in the input structure.",
+//                             "This is the top level node in the input structure.",
+//                             "",
+//                             "ProblemManager",
+//                             0,
+//                             0,
+//                             0,
+//                             nullptr );
   m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
 
   m_eventManager = &(RegisterGroup<EventManager>("EventManager" ) ) ;
@@ -168,7 +170,8 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
   argc-=(argc>0); 
   argv+=(argc>0);
   option::Stats stats(usage, argc, argv);
-  option::Option options[stats.options_max], buffer[stats.buffer_max];
+  option::Option options[100];//stats.options_max];
+  option::Option buffer[100];//stats.buffer_max];
   option::Parser parse(usage, argc, argv, options, buffer);
 
   
