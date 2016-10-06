@@ -63,10 +63,12 @@ def execute(cmd,dryRun):
 	if (process.returncode):
            exit(process.returncode)
 
-def main(platform, build ,dryRun=False): 
+def main(platform, build ,local, dryRun=False): 
    hosts = platforms[trueNames[platform.lower()]]
    platform = trueNames[platform]
    for host in hosts:
+      if local:
+	 execute("cd src/thirdparty && chairajabuild",dryRun)
       if build:
      	 execute("scripts/config-build.py -hc host-configs/%s-%s.cmake" % (platform,host),dryRun)
       cmd = "make" if build else "make test"
@@ -74,8 +76,9 @@ def main(platform, build ,dryRun=False):
 
     
   
-usage = "scripts/buildOrTest [build|test] [<platform>] "
+usage = "scripts/buildOrTest [build|test] [<platform> [--local]] "
 if __name__ == "__main__":
+    local = False
     if ( "scripts" not in sys.argv[0]):
        print "USAGE:" + usage
        exit(1)
@@ -91,8 +94,12 @@ if __name__ == "__main__":
 	exit(1)
     try:
        platform = sys.argv[2].lower()
+       try:
+          local = sys.argv[3]
+       except IndexError:
+          pass
     except IndexError:
        platform = sys.platform
     build = build or not test
-    main(platform,build) 
+    main(platform,build, local) 
 
