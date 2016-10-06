@@ -1,0 +1,23 @@
+
+
+# GPU-opt configuration
+#export CHAI_BUILD_TYPE=gpu-opt 
+#export CPLUSPLUS=nvcc
+#export CC=gcc
+#export CHAI_ARGS= 
+
+
+#CLANG opt configuration
+export CHAI_BUILD_TYPE=cpu-no-rm
+export CPLUSPLUS=clang
+export CC=clang 
+export CHAI_ARGS=
+
+
+#export CALIPER_INSTALL=
+#export BOOST_INSTALL=
+
+
+cd chai/src   &&  make $CHAI_BUILD_TYPE CPP=$CPLUSPLUS $CHAI_ARGS CALIPER_DIR=$CALIPER_INSTALL C_COMPILER=$CC  && mkdir ../lib && cp *.a ../lib ;
+
+

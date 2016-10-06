@@ -1,7 +1,7 @@
 #include <slic/slic.hpp>
 #include <slic/GenericOutputStream.hpp>
 #include <iostream>
-
+#include "ManagedArray.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
 #include "PhysicsSolvers/SolidMechanicsLagrangianFEM.hpp"
 #include "SetSignalHandling.hpp"

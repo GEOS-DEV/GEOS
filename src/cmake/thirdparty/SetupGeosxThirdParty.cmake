@@ -41,8 +41,6 @@ if (ATK_DIR)
 endif()
 
 
-
-
 if (RAJA_DIR)
   include(cmake/thirdparty/FindRAJA.cmake)
 	 blt_register_library( NAME raja
@@ -54,3 +52,14 @@ endif()
 #if (UNCRUSTIFY_EXECUTABLE)
   include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
 #endif()
+
+if (CHAI_DIR)
+   MESSAGE("REGISTERING CHAI WITH BLT "  ${CHAI_DIR}/src)
+#   set(CHAI_HEADERS ${CHAI_DIR}/src/ManagedArray.hpp ${CHAI_DIR}/src/ManagedClass.hpp ${CHAI_DIR}/src/resource_manager.hpp ${CHAI_DIR}/src/YALLPolicies.h
+#                    ${CHAI_DIR}/src/execution_policies.hpp )
+   set(CHAI_HEADERS ${PROJECT_SOURCE_DIR}/${CHAI_DIR}/src/)
+   blt_register_library(NAME chai 
+                     INCLUDES ${CHAI_HEADERS}
+                     LIBRARIES ${PROJECT_SOURCE_DIR}/${CHAI_DIR}/src/libchai.a
+		     DEFINES -DCHAI_DISABLE_RM=1)
+endif()
