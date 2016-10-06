@@ -363,37 +363,41 @@ void ProblemManager::RunSimulation()
   cxx_utilities::DocumentationNode * const eventDocNode = m_eventManager->getDocumentationNode();
   for( auto const & subEventDocNode : eventDocNode->m_child )
   {
-    dataRepository::ManagedGroup& currentApplication = m_eventManager->GetGroup( subEventDocNode.first );
-
-    ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solvers);
-    real64& appDt = *(currentApplication.getData<real64>(keys::dt));
-    real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
-
-
-    bool lockDt = (appDt > 0.0);
-    if (lockDt)
+    if (strcmp(subEventDocNode.second.getDataType().c_str(), "ManagedGroup") == 0)
     {
-      dt = appDt;
-    }
 
-    while( time < endTime )
-    {
-      std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-      real64 nextDt = std::numeric_limits<real64>::max();
+      dataRepository::ManagedGroup& currentApplication = m_eventManager->GetGroup( subEventDocNode.first );
 
-      for ( auto jj=0; jj<currentApplication.size(); ++jj)
+      ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solvers);
+      real64& appDt = *(currentApplication.getData<real64>(keys::dt));
+      real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
+
+
+      bool lockDt = (appDt > 0.0);
+      if (lockDt)
       {
-        SolverBase& currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
-        currentSolver.TimeStep( time, dt, cycle, domain );
-        nextDt = std::min(nextDt, *(currentSolver.getData<real64>(keys::maxDt)));
+        dt = appDt;
       }
 
-      // Update time, cycle, timestep
-      time += dt;
-      cycle ++;
-      dt = (lockDt)?(dt):(nextDt);
-      dt = (endTime - time < dt)?(endTime-time):(dt);
-    } 
+      while( time < endTime )
+      {
+        std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+        real64 nextDt = std::numeric_limits<real64>::max();
+
+        for ( auto jj=0; jj<currentApplication.size(); ++jj)
+        {
+          SolverBase& currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
+          currentSolver.TimeStep( time, dt, cycle, domain );
+          nextDt = std::min(nextDt, *(currentSolver.getData<real64>(keys::maxDt)));
+        }
+
+        // Update time, cycle, timestep
+        time += dt;
+        cycle ++;
+        dt = (lockDt)?(dt):(nextDt);
+        dt = (endTime - time < dt)?(endTime-time):(dt);
+      } 
+    }
   }
 }
 

@@ -39,17 +39,6 @@ void EventManager::CreateSolverApplication(pugi::xml_node const & applicationNod
   docNode->setName("Application");
 
   cxx_utilities::DocumentationNode * const appDocNode = newApplication.getDocumentationNode();
-  appDocNode->AllocateChildNode( keys::Name,
-                                 keys::Name,
-                                 -1,
-                                 "string",
-                                 "string",
-                                 "application name",
-                                 "application name",
-                                 "name",
-                                 "",
-                                 1,
-                                 0 );
 
   appDocNode->AllocateChildNode( keys::beginTime,
                                  keys::beginTime,
