@@ -43,11 +43,25 @@ endif()
 
 if (RAJA_DIR)
   include(cmake/thirdparty/FindRAJA.cmake)
-	 blt_register_library( NAME raja
-                         INCLUDES ${RAJA_INCLUDE_DIRS} 
-                         LIBRARIES  RAJA)
-	
-endif()
+ 
+   if (NOT RAJA_FOUND)
+	MESSAGE(FATAL_ERROR "RAJA not found. Do not define RAJA_DIR to attempt internal build of RAJA.")
+   endif()
+elseif(EXISTS ${PROJECT_SOURCE_DIR}/thirdparty/raja/CMakeLists.txt)
+  #set(RAJA_DIR ${PROJECT_SOURCE_DIR}/thirdparty/raja-install/share/raja/cmake)
+  set(RAJA_DIR ${PROJECT_SOURCE_DIR}/thirdparty/raja-install)
+  #find_package(RAJA)
+ include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake) 
+  if (NOT RAJA_FOUND)
+     MESSAGE(FATAL_ERROR "RAJA not found locally in ${RAJA_DIR}. Maybe you need to run chairajabuild in src/thirdparty?")
+  endif()
+else()
+   MESSAGE(FATAL_ERROR "RAJA_DIR not defined and no local raja found in ${CMAKE_CURRENT_LIST_DIR}/raja/CMakeLists.txt.")
+endif(RAJA_DIR)
+
+ blt_register_library( NAME RAJA
+                       INCLUDES ${RAJA_INCLUDE_DIRS} 
+                       LIBRARIES  RAJA)
 
 #if (UNCRUSTIFY_EXECUTABLE)
   include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
