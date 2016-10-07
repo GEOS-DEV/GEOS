@@ -90,7 +90,7 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::
       SchemaConstruction(subDocNode.second, newNode, schemaRoot);
     }
   }
-  else if (docNode.getSchemaType().find("ManagedGroup") == std::string::npos)
+  else if (docNode.getSchemaType().empty() == 0)
   {
     pugi::xml_node newNode = schemaNode.append_child("xsd:attribute");
     newNode.append_attribute("name") = docNode.m_name.c_str();

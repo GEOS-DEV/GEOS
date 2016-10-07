@@ -113,11 +113,13 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
 
   ObjectManagerBase::FillDocumentationNode( group );
 
+  docNode->setName("Problem");
+  docNode->setSchemaType("UniqueNode");
   docNode->AllocateChildNode( keys::inputFileName,
                               keys::inputFileName,
                               -1,
                               "string",
-                              "string",
+                              "",
                               "Name of the input xml file.",
                               "Name of the input xml file.",
                               "input.xml",

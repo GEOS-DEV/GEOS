@@ -29,6 +29,7 @@ public:
 
   SolverBase & CreateSolver( string const & solverCatalogKey, string const & solverName );
 
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
   void ReadXML( dataRepository::ManagedGroup& domain, pugi::xml_node const & problemNode );
 

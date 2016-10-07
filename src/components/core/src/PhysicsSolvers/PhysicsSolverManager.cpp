@@ -37,13 +37,16 @@ SolverBase & PhysicsSolverManager::CreateSolver( string const & solverCatalogKey
   return rval;
 }
 
+void PhysicsSolverManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  docNode->setSchemaType("UniqueNode");
+}
+
+
 void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
                                     pugi::xml_node const & problemNode )
 {
-  // Set the appropriate schema type
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setSchemaType("UniqueNode");
-
   // Store a list of available solvers
   RegisterViewWrapper<string_array>(keys::solverNames);
 
