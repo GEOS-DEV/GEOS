@@ -41,39 +41,76 @@ if (ATK_DIR)
 endif()
 
 
-if (RAJA_DIR)
-  include(cmake/thirdparty/FindRAJA.cmake)
- 
-   if (NOT RAJA_FOUND)
-	MESSAGE(FATAL_ERROR "RAJA not found. Do not define RAJA_DIR to attempt internal build of RAJA.")
-   endif()
-elseif(EXISTS ${PROJECT_SOURCE_DIR}/thirdparty/raja/CMakeLists.txt)
-  #set(RAJA_DIR ${PROJECT_SOURCE_DIR}/thirdparty/raja-install/share/raja/cmake)
-  set(RAJA_DIR ${PROJECT_SOURCE_DIR}/thirdparty/raja-install)
-  #find_package(RAJA)
- include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake) 
-  if (NOT RAJA_FOUND)
-     MESSAGE(FATAL_ERROR "RAJA not found locally in ${RAJA_DIR}. Maybe you need to run chairajabuild in src/thirdparty?")
-  endif()
-else()
-   MESSAGE(FATAL_ERROR "RAJA_DIR not defined and no local raja found in ${CMAKE_CURRENT_LIST_DIR}/raja/CMakeLists.txt.")
-endif(RAJA_DIR)
 
- blt_register_library( NAME RAJA
-                       INCLUDES ${RAJA_INCLUDE_DIRS} 
-                       LIBRARIES  RAJA)
+
+
+
+
+################################
+# RAJA
+################################
+set(RAJA_LOCAL_DIR ${PROJECT_SOURCE_DIR}/thirdparty/raja-install)
+if( NOT EXISTS ${RAJA_LOCAL_DIR} AND NOT EXISTS ${RAJA_DIR})
+    MESSAGE(FATAL_ERROR "RAJA_DIR not defined and no locally built raja found in ${PROJECT_SOURCE_DIR}/thirdparty/raja-install. Maybe you need to run chairajabuild in src/thirdparty?")
+else()
+    if(EXISTS ${RAJA_LOCAL_DIR})
+        MESSAGE( "Using local RAJA found at ${RAJA_LOCAL_DIR}")
+        set(RAJA_DIR ${RAJA_LOCAL_DIR})
+        include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake) 
+        if (NOT RAJA_FOUND)
+            MESSAGE(FATAL_ERROR "RAJA not found locally in ${RAJA_DIR}. Maybe you need to run chairajabuild in src/thirdparty?")
+        endif()
+    elseif(EXISTS ${RAJA_DIR})
+        MESSAGE( "Using system RAJA found at ${RAJA_DIR}")
+        include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake)
+        if (NOT RAJA_FOUND)
+            MESSAGE(FATAL_ERROR "RAJA not found in ${RAJA_DIR}. Maybe you need to build it")
+        endif()
+    endif()
+endif()
+
+blt_register_library( NAME RAJA
+                      INCLUDES ${RAJA_INCLUDE_DIRS} 
+                      LIBRARIES  RAJA)
+
+
+
+
+
+################################
+# CHAI
+################################
+set(CHAI_LOCAL_DIR ${PROJECT_SOURCE_DIR}/thirdparty/chai)
+if( NOT EXISTS ${CHAI_LOCAL_DIR} AND NOT EXISTS ${CHAI_DIR})
+    MESSAGE(FATAL_ERROR "CHAI_DIR not defined and no locally built chai found in ${PROJECT_SOURCE_DIR}/thirdparty/chai. Maybe you need to run chairajabuild in src/thirdparty?")
+else()
+    if(EXISTS ${CHAI_LOCAL_DIR})
+        MESSAGE( "Using local CHAI found at ${CHAI_LOCAL_DIR}")
+        set(CHAI_DIR ${CHAI_LOCAL_DIR})
+        include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake) 
+        if (NOT CHAI_FOUND)
+            MESSAGE(FATAL_ERROR "CHAI not found locally in ${CHAI_DIR}. Maybe you need to run chairajabuild in src/thirdparty?")
+        endif()
+    elseif(EXISTS ${CHAI_DIR})
+        MESSAGE( "Using system CHAI found at ${CHAI_DIR}")
+        include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
+        if (NOT CHAI_FOUND)
+            MESSAGE(FATAL_ERROR "CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
+        endif()
+    endif()
+endif()
+
+blt_register_library(NAME chai 
+                     INCLUDES ${CHAI_INCLUDE_DIRS}
+                     LIBRARIES ${CHAI_DIR}/src/libchai.a
+                     DEFINES -DCHAI_DISABLE_RM=1 )
+                     
+
+
 
 #if (UNCRUSTIFY_EXECUTABLE)
   include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
 #endif()
 
-if (CHAI_DIR)
-   MESSAGE("REGISTERING CHAI WITH BLT "  ${CHAI_DIR}/src)
-#   set(CHAI_HEADERS ${CHAI_DIR}/src/ManagedArray.hpp ${CHAI_DIR}/src/ManagedClass.hpp ${CHAI_DIR}/src/resource_manager.hpp ${CHAI_DIR}/src/YALLPolicies.h
-#                    ${CHAI_DIR}/src/execution_policies.hpp )
-   set(CHAI_HEADERS ${PROJECT_SOURCE_DIR}/${CHAI_DIR}/src/)
-   blt_register_library(NAME chai 
-                     INCLUDES ${CHAI_HEADERS}
-                     LIBRARIES ${PROJECT_SOURCE_DIR}/${CHAI_DIR}/src/libchai.a
-		     DEFINES -DCHAI_DISABLE_RM=1)
-endif()
+
+

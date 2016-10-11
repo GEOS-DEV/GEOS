@@ -59,47 +59,47 @@ def execute(cmd,dryRun):
     if dryRun:
         print cmd
     else:
-	process = executeSubProcess(cmd)
-	if (process.returncode):
-           exit(process.returncode)
+        process = executeSubProcess(cmd)
+        if (process.returncode):
+            exit(process.returncode)
 
 def main(platform, build ,local, dryRun=False): 
-   hosts = platforms[trueNames[platform.lower()]]
-   platform = trueNames[platform]
-   for host in hosts:
-      if local:
-	 execute("cd src/thirdparty && chairajabuild",dryRun)
-      if build:
-     	 execute("scripts/config-build.py -hc host-configs/%s-%s.cmake" % (platform,host),dryRun)
-      cmd = "make" if build else "make test"
-      execute("cd build-%s-%s* && %s" % (platform,host,cmd),dryRun)
+    hosts = platforms[trueNames[platform.lower()]]
+    platform = trueNames[platform]
+    for host in hosts:
+        if local:
+            execute("cd src/thirdparty && chairajabuild",dryRun)
+        if build:
+            execute("scripts/config-build.py -hc host-configs/%s-%s.cmake" % (platform,host),dryRun)
+        cmd = "make -j4" if build else "make -j4 test"
+        execute("cd build-%s-%s* && %s" % (platform,host,cmd),dryRun)
 
-    
-  
+
+
 usage = "scripts/buildOrTest [build|test] [<platform> [--local]] "
 if __name__ == "__main__":
     local = False
     if ( "scripts" not in sys.argv[0]):
-       print "USAGE:" + usage
-       exit(1)
+        print "USAGE:" + usage
+        exit(1)
     try: 
-       build = sys.argv[1].lower() == "build"
-       test = sys.argv[1].lower() == "test"
+        build = sys.argv[1].lower() == "build"
+        test = sys.argv[1].lower() == "test"
 
-       if (not (build or test)):
-          print "USAGE:" + usage
-          exit(1)
+        if (not (build or test)):
+            print "USAGE:" + usage
+            exit(1)
     except IndexError:
-	print "USAGE:" + usage
-	exit(1)
+        print "USAGE:" + usage
+        exit(1)
     try:
-       platform = sys.argv[2].lower()
-       try:
-          local = sys.argv[3]
-       except IndexError:
-          pass
+        platform = sys.argv[2].lower()
+        try:
+            local = sys.argv[3]
+        except IndexError:
+            pass
     except IndexError:
-       platform = sys.platform
+        platform = sys.platform
     build = build or not test
     main(platform,build, local) 
 

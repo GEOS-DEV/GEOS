@@ -1,0 +1,15 @@
+# first Check for CHAI_DIR
+
+if(NOT CHAI_DIR)
+    MESSAGE(FATAL_ERROR "Could not find CHAI. CHAI requires explicit CHAI_DIR.")
+endif()
+MESSAGE("Finding CHAI in ${CHAI_DIR}")
+
+set(CHAI_INCLUDE_PATH ${CHAI_DIR}/src/)
+
+set(CHAI_FOUND FALSE)
+if (CHAI_INCLUDE_PATH)
+   set(CHAI_FOUND TRUE)
+   set(CHAI_INCLUDE_DIRS ${CHAI_INCLUDE_PATH})
+   MESSAGE("CHAI_INCLUDE_DIRS=${CHAI_INCLUDE_DIRS}")
+endif()

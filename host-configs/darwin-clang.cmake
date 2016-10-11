@@ -14,7 +14,7 @@ message($ENV{HOME})
 set(ATK_ROOT "$ENV{HOME}/Codes/asctoolkit" CACHE PATH "")
 set(CONFIG_NAME "${HOST_NAME}-darwin-x86_64-clang@apple-mp" CACHE PATH "") 
 set(ATK_DIR "${ATK_ROOT}/install-${CONFIG_NAME}-debug" CACHE PATH "")
-set(RAJA_DIR "$ENV{HOME}/Codes/RAJA/install-clang-3.7.0-release" CACHE PATH "")
+#set(RAJA_DIR "$ENV{HOME}/Codes/RAJA/install-clang-3.7.0-release" CACHE PATH "")
 
 message("ATK_DIR=${ATK_DIR}")
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
