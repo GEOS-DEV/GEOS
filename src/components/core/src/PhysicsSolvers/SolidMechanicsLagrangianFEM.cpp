@@ -59,7 +59,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               keys::nElements,
                               -1,
                               "int32",
-                              "int",
+                              "int32",
                               "number of elements",
                               "number of elements",
                               "10",
@@ -71,7 +71,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               keys::Ey,
                               -1,
                               "real64",
-                              "double",
+                              "real64",
                               "Elastic Young's Modulus",
                               "Elastic Young's Modulus",
                               "1.0e9",
@@ -83,7 +83,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               keys::rho,
                               -1,
                               "real64",
-                              "double",
+                              "real64",
                               "Initial Density",
                               "Initial Density",
                               "2600.0",
@@ -95,7 +95,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               keys::area,
                               -1,
                               "real64",
-                              "double",
+                              "real64",
                               "cross section area",
                               "cross section area",
                               "1.0",
@@ -107,7 +107,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               "barLength",
                               -1,
                               "real64",
-                              "double",
+                              "real64",
                               "reference length",
                               "reference length",
                               "1.0",
@@ -140,23 +140,23 @@ void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode )
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   for( auto const & subDocNode : docNode.m_child )
   {
-    std::string childType = subDocNode.getDataType();
+    std::string childType = subDocNode.getSchemaType();
     if (strcmp(childType, "real64") == 0)
     {
       real64 defVal = atof(subDocNode.getDefault());
       real64 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_double(defVal);
       *(this->getData<real64>(subDocNode.getStringKey())) = xmlVal;
     }
-    else if (strcmp(childType, "int64") == 0)
+    else if (strcmp(childType, "int32") == 0)
     {
-      int64 defVal = atoi(subDocNode.getDefault());
-      int64 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_int(defVal);
+      int32 defVal = atoi(subDocNode.getDefault());
+      int32 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_int(defVal);
       *(this->getData<int64>(subDocNode.getStringKey())) = xmlVal;
     }
     else if (strcmp(childType, "uint64") == 0)
     {
-      uint64 defVal = atol(subDocNode.getDefault());
-      uint64 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_uint(defVal);
+      uint32 defVal = atol(subDocNode.getDefault());
+      uint32 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_uint(defVal);
       *(this->getData<uint64>(subDocNode.getStringKey())) = xmlVal;
     }
     else if (strcmp(childType, "string") == 0)
@@ -165,28 +165,28 @@ void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode )
       string xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_double(defVal);
       *(this->getData<string>(subDocNode.getStringKey())) = xmlVal.empty() ? defVal : xmlVal;
     }
-    else if (strcmp(childType, "rArray1d") == 0)
+    else if (strcmp(childType, "real64_array") == 0)
     {
       string defVal = subDocNode.getDefault();
       std::vector<real64> xmlVal;
       solverNode.attribute(subDocNode.getStringKey()).load_double_array(xmlVal, defVal);
       // TODO: Figure out how to store these values (they may have different lengths)
     }
-    else if (strcmp(childType, "iArray1d") == 0)
+    else if (strcmp(childType, "int32_array") == 0)
     {
       string defVal = subDocNode.getDefault();
-      std::vector<int64> xmlVal;
+      std::vector<int32> xmlVal;
       solverNode.attribute(subDocNode.getStringKey()).load_int_array(xmlVal, defVal);
       // TODO: Figure out how to store these values (they may have different lengths)
     }
-    else if (strcmp(childType, "lArray1d") == 0)
+    else if (strcmp(childType, "uint32_array") == 0)
     {
       string defVal = subDocNode.getDefault();
-      std::vector<uint64> xmlVal;
+      std::vector<uint32> xmlVal;
       solverNode.attribute(subDocNode.getStringKey()).load_uint_array(xmlVal, defVal);
       // TODO: Figure out how to store these values (they may have different lengths)
     }
-    else if (strcmp(childType, "sArray1d") == 0)
+    else if (strcmp(childType, "string_array") == 0)
     {
       string defVal = subDocNode.getDefault();
       std::vector<string> xmlVal;
