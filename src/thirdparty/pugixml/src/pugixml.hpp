@@ -345,11 +345,11 @@ namespace pugi
 		double as_double(double def = 0) const;
 		float as_float(float def = 0) const;
 
-		void load_string_array(std::vector<std::string>& target);
-		void load_int_array(std::vector<int>& target);
-		void load_uint_array(std::vector<unsigned int>& target);
-		void load_double_array(std::vector<double>& target);
-		void load_float_array(std::vector<float>& target);
+		void load_string_array(std::vector<std::string>& target, std::string defValue);
+		void load_int_array(std::vector<int>& target, std::string defValue);
+		void load_uint_array(std::vector<unsigned int>& target, std::string defValue);
+		void load_double_array(std::vector<double>& target, std::string defValue);
+		void load_float_array(std::vector<float>& target, std::string defValue);
 
 
 	#ifdef PUGIXML_HAS_LONG_LONG

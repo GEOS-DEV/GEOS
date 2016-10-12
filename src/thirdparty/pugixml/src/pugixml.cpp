@@ -5160,79 +5160,69 @@ namespace pugi
 
 
 	// Modifications to parse lists in GEOS
-	PUGI__FN void xml_attribute::load_string_array(std::vector<std::string>& target)
+	PUGI__FN void xml_attribute::load_string_array(std::vector<std::string>& target, std::string defValue)
 	{
-		if (_attr && _attr->value)
-		{
-			std::istringstream ss( _attr->value );
+		std::string csvstr = (_attr->value) ? _attr->value : defValue;
+		std::istringstream ss( csvstr );
 
-		  while (ss)
-		  {
-		    std::string s;
-		    if (!getline( ss, s, ',' )) break;
-		    target.push_back(s);
-		  }
-		} 
+	  while (ss)
+	  {
+	    std::string s;
+	    if (!getline( ss, s, ',' )) break;
+	    target.push_back(s);
+	  }
 	}
 
-	PUGI__FN void xml_attribute::load_int_array(std::vector<int>& target)
+	PUGI__FN void xml_attribute::load_int_array(std::vector<int>& target, std::string defValue)
 	{
-		if (_attr && _attr->value)
-		{
-			std::istringstream ss( _attr->value );
+		std::string csvstr = (_attr->value) ? _attr->value : defValue;
+		std::istringstream ss( csvstr );
 
-		  while (ss)
-		  {
-		    std::string s;
-		    if (!getline( ss, s, ',' )) break;
-		    target.push_back(std::atoi(s.c_str()));
-		  }
-		} 
+	  while (ss)
+	  {
+	    std::string s;
+	    if (!getline( ss, s, ',' )) break;
+	    target.push_back(std::atoi(s.c_str()));
+	  }
 	}
 
-	PUGI__FN void xml_attribute::load_uint_array(std::vector<unsigned int>& target)
+	PUGI__FN void xml_attribute::load_uint_array(std::vector<unsigned int>& target, std::string defValue)
 	{
-		if (_attr && _attr->value)
-		{
-			std::istringstream ss( _attr->value );
+		std::string csvstr = (_attr->value) ? _attr->value : defValue;
+		std::istringstream ss( csvstr );
 
-		  while (ss)
-		  {
-		    std::string s;
-		    if (!getline( ss, s, ',' )) break;
-		    target.push_back(std::atol(s.c_str()));
-		  }
-		} 
+	  while (ss)
+	  {
+	    std::string s;
+	    if (!getline( ss, s, ',' )) break;
+	    target.push_back(std::atol(s.c_str()));
+	  }
 	}
 
-	PUGI__FN void xml_attribute::load_double_array(std::vector<double>& target)
+	PUGI__FN void xml_attribute::load_double_array(std::vector<double>& target, std::string defValue)
 	{
-		if (_attr && _attr->value)
-		{
-			std::istringstream ss( _attr->value );
+		std::string csvstr = (_attr->value) ? _attr->value : defValue;
+		std::istringstream ss( csvstr );
 
-		  while (ss)
-		  {
-		    std::string s;
-		    if (!getline( ss, s, ',' )) break;
-		    target.push_back(std::atof(s.c_str()));
-		  }
-		} 
+	  while (ss)
+	  {
+	    std::string s;
+	    if (!getline( ss, s, ',' )) break;
+	    target.push_back(std::atof(s.c_str()));
+	  }
 	}
 
-	PUGI__FN void xml_attribute::load_float_array(std::vector<float>& target)
+	PUGI__FN void xml_attribute::load_float_array(std::vector<float>& target, std::string defValue)
 	{
-		if (_attr && _attr->value)
-		{
-			std::istringstream ss( _attr->value );
+		std::string csvstr = (_attr->value) ? _attr->value : defValue;
+		std::istringstream ss( csvstr );
 
-		  while (ss)
-		  {
-		    std::string s;
-		    if (!getline( ss, s, ',' )) break;
-		    target.push_back(std::atof(s.c_str()));
-		  }
-		} 
+	  while (ss)
+	  {
+	    std::string s;
+	    if (!getline( ss, s, ',' )) break;
+	    target.push_back(std::atof(s.c_str()));
+	  }
 	}
 	// End modifications
 

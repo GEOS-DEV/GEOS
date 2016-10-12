@@ -103,7 +103,7 @@ void EventManager::CreateSolverApplication(pugi::xml_node const & applicationNod
 
   // Store the solver list in this application
   std::vector<std::string> newApplicationSolvers;
-  applicationNode.attribute("solvers").load_string_array(newApplicationSolvers);
+  applicationNode.attribute("solvers").load_string_array(newApplicationSolvers, "");
   newApplication.resize(newApplicationSolvers.size());
   ViewWrapper<string_array>::rtype solvers = newApplication.getData<string_array>(keys::solvers);
   for (uint jj=0; jj<newApplicationSolvers.size(); ++jj)
