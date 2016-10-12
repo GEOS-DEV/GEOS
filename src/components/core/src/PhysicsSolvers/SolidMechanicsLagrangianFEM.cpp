@@ -120,7 +120,7 @@ void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode )
 {
   SolverBase::ReadXML(solverNode);
 
-  cxx_utilities::DocumentationNode docVar;
+  // cxx_utilities::DocumentationNode docVar;
 
   *(this->getData<int>(keys::nElements)) = solverNode.attribute("nElements").as_int(10);
 
@@ -156,12 +156,22 @@ void SolidMechanics_LagrangianFEM::BuildDataStructure( ManagedGroup * const doma
   nodes.RegisterViewWrapper<real64_array>(keys::ReferencePosition);
   nodes.RegisterViewWrapper<real64_array>(keys::Mass);
 
+  /*
   // Lagrange solver parameters
   this->RegisterViewWrapper<int>(keys::nElements);
   this->RegisterViewWrapper<real64>(keys::Ey);
   this->RegisterViewWrapper<real64>(keys::rho);
   this->RegisterViewWrapper<real64>(keys::area);
   this->RegisterViewWrapper<real64>(keys::barLength);
+  */
+
+  // Test auto-registration:
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  for( auto const & subDocNode : docNode.m_child )
+  {
+    this->RegisterViewWrapper<subDocNode.getDataType()>(subDocNode.getStringKey());
+  }
+
 }
 
 

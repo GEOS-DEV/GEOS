@@ -347,6 +347,7 @@ namespace pugi
 
 		void load_string_array(std::vector<std::string>& target);
 		void load_int_array(std::vector<int>& target);
+		void load_uint_array(std::vector<unsigned int>& target);
 		void load_double_array(std::vector<double>& target);
 		void load_float_array(std::vector<float>& target);
 

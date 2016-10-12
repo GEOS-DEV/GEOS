@@ -5190,6 +5190,21 @@ namespace pugi
 		} 
 	}
 
+	PUGI__FN void xml_attribute::load_uint_array(std::vector<unsigned int>& target)
+	{
+		if (_attr && _attr->value)
+		{
+			std::istringstream ss( _attr->value );
+
+		  while (ss)
+		  {
+		    std::string s;
+		    if (!getline( ss, s, ',' )) break;
+		    target.push_back(std::atol(s.c_str()));
+		  }
+		} 
+	}
+
 	PUGI__FN void xml_attribute::load_double_array(std::vector<double>& target)
 	{
 		if (_attr && _attr->value)
