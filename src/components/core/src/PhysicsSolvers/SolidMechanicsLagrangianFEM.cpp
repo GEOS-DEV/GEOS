@@ -142,6 +142,7 @@ void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode )
   {
     std::string childType = subDocNode.getSchemaType();
     
+    // TODO: Define for missing cases?
     switch (rtTypes::TypeID(childType))
     {
       case rtTypes::TypeIDs::real64_id:
@@ -168,32 +169,35 @@ void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode )
         *(this->getData<string>(subDocNode.getStringKey())) = xmlVal.empty() ? defVal : xmlVal;
         break;
 
+      // TODO: Define the assignment operator for std::vector<type> in viewWrapper
+      //       Alternatively, pass the array reference into the load_type_array methods directly
+      //       (This would require the push_back method to work on the viewWrappers)
       case rtTypes::TypeIDs::real64_array_id:
         string defVal = subDocNode.getDefault();
         std::vector<real64> xmlVal;
         solverNode.attribute(subDocNode.getStringKey()).load_double_array(xmlVal, defVal);
-        // TODO: Figure out how to store these values (they may have different lengths)
+        *(this->getData<real64_array>(subDocNode.getStringKey())) = xmlVal;
         break;
 
       case rtTypes::TypeIDs::int32_array_id:
         string defVal = subDocNode.getDefault();
         std::vector<int32> xmlVal;
         solverNode.attribute(subDocNode.getStringKey()).load_int_array(xmlVal, defVal);
-        // TODO: Figure out how to store these values (they may have different lengths)
+        *(this->getData<int32_array>(subDocNode.getStringKey())) = xmlVal;
         break;
 
       case rtTypes::TypeIDs::uint32_array_id:
         string defVal = subDocNode.getDefault();
         std::vector<uint32> xmlVal;
         solverNode.attribute(subDocNode.getStringKey()).load_uint_array(xmlVal, defVal);
-        // TODO: Figure out how to store these values (they may have different lengths)
+        *(this->getData<uint32_array>(subDocNode.getStringKey())) = xmlVal;
         break;
 
-      case rtTypes::TypeIDs::string_id:
+      case rtTypes::TypeIDs::string_array_id:
         string defVal = subDocNode.getDefault();
         std::vector<string> xmlVal;
         solverNode.attribute(subDocNode.getStringKey()).load_string_array(xmlVal, defVal);
-        // TODO: Figure out how to store these values (they may have different lengths)
+        *(this->getData<string_array>(subDocNode.getStringKey())) = xmlVal;
         break;
     }
 
