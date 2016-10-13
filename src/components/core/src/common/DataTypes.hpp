@@ -172,7 +172,9 @@ public:
     real32_array_id,
     real64_array_id,
     std_size_t_id,
-    string_id
+    string_id,
+    string_array_id,
+    none_id
   };
 
   static TypeIDs typeID( string const & name )
@@ -192,7 +194,9 @@ public:
       { "real32_array", TypeIDs::real32_array_id },
       { "real64_array", TypeIDs::real64_array_id },
       { "std_size_t",   TypeIDs::std_size_t_id },
-      { "string",       TypeIDs::string_id }
+      { "string",       TypeIDs::string_id },
+      { "string_array", TypeIDs::string_array_id },
+      { "",             TypeIDs::none_id }
     };
     return type_names.at(name);
   }

@@ -141,61 +141,62 @@ void SolidMechanics_LagrangianFEM::ReadXML( pugi::xml_node const & solverNode )
   for( auto const & subDocNode : docNode.m_child )
   {
     std::string childType = subDocNode.getSchemaType();
-    if (strcmp(childType, "real64") == 0)
+    
+    switch (rtTypes::TypeID(childType))
     {
-      real64 defVal = atof(subDocNode.getDefault());
-      real64 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_double(defVal);
-      *(this->getData<real64>(subDocNode.getStringKey())) = xmlVal;
-    }
-    else if (strcmp(childType, "int32") == 0)
-    {
-      int32 defVal = atoi(subDocNode.getDefault());
-      int32 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_int(defVal);
-      *(this->getData<int64>(subDocNode.getStringKey())) = xmlVal;
-    }
-    else if (strcmp(childType, "uint64") == 0)
-    {
-      uint32 defVal = atol(subDocNode.getDefault());
-      uint32 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_uint(defVal);
-      *(this->getData<uint64>(subDocNode.getStringKey())) = xmlVal;
-    }
-    else if (strcmp(childType, "string") == 0)
-    {
-      string defVal = subDocNode.getDefault();
-      string xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_double(defVal);
-      *(this->getData<string>(subDocNode.getStringKey())) = xmlVal.empty() ? defVal : xmlVal;
-    }
-    else if (strcmp(childType, "real64_array") == 0)
-    {
-      string defVal = subDocNode.getDefault();
-      std::vector<real64> xmlVal;
-      solverNode.attribute(subDocNode.getStringKey()).load_double_array(xmlVal, defVal);
-      // TODO: Figure out how to store these values (they may have different lengths)
-    }
-    else if (strcmp(childType, "int32_array") == 0)
-    {
-      string defVal = subDocNode.getDefault();
-      std::vector<int32> xmlVal;
-      solverNode.attribute(subDocNode.getStringKey()).load_int_array(xmlVal, defVal);
-      // TODO: Figure out how to store these values (they may have different lengths)
-    }
-    else if (strcmp(childType, "uint32_array") == 0)
-    {
-      string defVal = subDocNode.getDefault();
-      std::vector<uint32> xmlVal;
-      solverNode.attribute(subDocNode.getStringKey()).load_uint_array(xmlVal, defVal);
-      // TODO: Figure out how to store these values (they may have different lengths)
-    }
-    else if (strcmp(childType, "string_array") == 0)
-    {
-      string defVal = subDocNode.getDefault();
-      std::vector<string> xmlVal;
-      solverNode.attribute(subDocNode.getStringKey()).load_string_array(xmlVal, defVal);
-      // TODO: Figure out how to store these values (they may have different lengths)
+      case rtTypes::TypeIDs::real64_id:
+        real64 defVal = atof(subDocNode.getDefault());
+        real64 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_double(defVal);
+        *(this->getData<real64>(subDocNode.getStringKey())) = xmlVal;
+        break;
+
+      case rtTypes::TypeIDs::int32_id:
+        int32 defVal = atoi(subDocNode.getDefault());
+        int32 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_int(defVal);
+        *(this->getData<int64>(subDocNode.getStringKey())) = xmlVal;
+        break;
+
+      case rtTypes::TypeIDs::uint32_id:
+        uint32 defVal = atol(subDocNode.getDefault());
+        uint32 xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_uint(defVal);
+        *(this->getData<uint64>(subDocNode.getStringKey())) = xmlVal;
+        break;
+
+      case rtTypes::TypeIDs::string_id:
+        string defVal = subDocNode.getDefault();
+        string xmlVal = solverNode.attribute(subDocNode.getStringKey()).as_double(defVal);
+        *(this->getData<string>(subDocNode.getStringKey())) = xmlVal.empty() ? defVal : xmlVal;
+        break;
+
+      case rtTypes::TypeIDs::real64_array_id:
+        string defVal = subDocNode.getDefault();
+        std::vector<real64> xmlVal;
+        solverNode.attribute(subDocNode.getStringKey()).load_double_array(xmlVal, defVal);
+        // TODO: Figure out how to store these values (they may have different lengths)
+        break;
+
+      case rtTypes::TypeIDs::int32_array_id:
+        string defVal = subDocNode.getDefault();
+        std::vector<int32> xmlVal;
+        solverNode.attribute(subDocNode.getStringKey()).load_int_array(xmlVal, defVal);
+        // TODO: Figure out how to store these values (they may have different lengths)
+        break;
+
+      case rtTypes::TypeIDs::uint32_array_id:
+        string defVal = subDocNode.getDefault();
+        std::vector<uint32> xmlVal;
+        solverNode.attribute(subDocNode.getStringKey()).load_uint_array(xmlVal, defVal);
+        // TODO: Figure out how to store these values (they may have different lengths)
+        break;
+
+      case rtTypes::TypeIDs::string_id:
+        string defVal = subDocNode.getDefault();
+        std::vector<string> xmlVal;
+        solverNode.attribute(subDocNode.getStringKey()).load_string_array(xmlVal, defVal);
+        // TODO: Figure out how to store these values (they may have different lengths)
+        break;
     }
 
-
-    this->RegisterViewWrapper<subDocNode.getDataType()>(subDocNode.getStringKey());
   }
 
 
