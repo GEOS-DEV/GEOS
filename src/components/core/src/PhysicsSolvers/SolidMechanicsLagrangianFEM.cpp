@@ -232,11 +232,7 @@ void SolidMechanics_LagrangianFEM::BuildDataStructure( ManagedGroup * const doma
   */
 
   // Test auto-registration:
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  for( auto const & subDocNode : docNode.m_child )
-  {
-    this->RegisterViewWrapper<subDocNode.getDataType()>(subDocNode.getStringKey());
-  }
+  RegisterDocumentationNodes();
 
 }
 
