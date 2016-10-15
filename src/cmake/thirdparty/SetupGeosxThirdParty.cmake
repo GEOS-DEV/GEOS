@@ -42,14 +42,15 @@ endif()
 
 
 
-
-
-
+message( "PROJECT_BINARY_DIR = ${PROJECT_BINARY_DIR}" )
+message( "bash buildthirdparty.sh ${PROJECT_BINARY_DIR}/thirdparty ${CMAKE_INSTALL_PREFIX}/thirdparty ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER}" )
+execute_process( COMMAND bash buildthirdparty.sh ${PROJECT_BINARY_DIR}/thirdparty ${CMAKE_INSTALL_PREFIX}/thirdparty ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER}
+                 WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/thirdparty )
 
 ################################
 # RAJA
 ################################
-set(RAJA_LOCAL_DIR ${PROJECT_SOURCE_DIR}/thirdparty/raja-install)
+set(RAJA_LOCAL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/raja)
 if( NOT EXISTS ${RAJA_LOCAL_DIR} AND NOT EXISTS ${RAJA_DIR})
     MESSAGE(FATAL_ERROR "RAJA_DIR not defined and no locally built raja found in ${PROJECT_SOURCE_DIR}/thirdparty/raja-install. Maybe you need to run chairajabuild in src/thirdparty?")
 else()
@@ -81,7 +82,7 @@ blt_register_library( NAME RAJA
 # CHAI
 ################################
 include(ExternalProject)
-set(CHAI_LOCAL_DIR ${PROJECT_SOURCE_DIR}/thirdparty/chai)
+set(CHAI_LOCAL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/chai)
 if( NOT EXISTS ${CHAI_LOCAL_DIR} AND NOT EXISTS ${CHAI_DIR})
     MESSAGE(FATAL_ERROR "CHAI_DIR not defined and no locally built chai found in ${PROJECT_SOURCE_DIR}/thirdparty/chai. Maybe you need to run chairajabuild in src/thirdparty?")
 else()
@@ -89,13 +90,14 @@ else()
         MESSAGE( "Using local CHAI found at ${CHAI_LOCAL_DIR}")
         MESSAGE("CMAKE_CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         set(CHAI_DIR ${CHAI_LOCAL_DIR})
-        ExternalProject_Add( chai 
-                             PREFIX ${CMAKE_CURRENT_BINARY_DIR}/chai
-                             DOWNLOAD_COMMAND ""
-                             CONFIGURE_COMMAND ""
-                             SOURCE_DIR ${CHAI_DIR}/src
-                             BUILD_COMMAND make
-                             INSTALL_COMMAND make install )
+        include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake) 
+#        ExternalProject_Add( chai 
+#                             PREFIX ${CMAKE_CURRENT_BINARY_DIR}/chai
+#                             DOWNLOAD_COMMAND ""
+#                             CONFIGURE_COMMAND ""
+#                             SOURCE_DIR ${CHAI_DIR}/src
+#                             BUILD_COMMAND make
+#                             INSTALL_COMMAND make install )
     elseif(EXISTS ${CHAI_DIR})
         MESSAGE( "Using system CHAI found at ${CHAI_DIR}")
         include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
@@ -107,7 +109,7 @@ endif()
 
 blt_register_library(NAME chai 
                      INCLUDES ${CHAI_INCLUDE_DIRS}
-                     LIBRARIES ${CHAI_DIR}/src/libchai.a
+                     LIBRARIES ${CHAI_DIR}/lib/libchai.a
                      DEFINES -DCHAI_DISABLE_RM=1 )
                      
 

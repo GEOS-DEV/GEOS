@@ -1,15 +1,10 @@
 #!/bin/bash
 
-COMPILER_TYPE=$1
-C_COMPILER=$2
-CXX_COMPILER=$3
+BUILD_DIR=$1
+INSTALL_DIR=$2
+C_COMPILER=$3
+CXX_COMPILER=$4
 
-REPO_DIR=`pwd`/../..
-TPL_CONFIG_BASE_DIR=$REPO_DIR/thirdparty/$COMPILER_TYPE
-BUILD_DIR=$TPL_CONFIG_BASE_DIR/build
-INSTALL_DIR=$TPL_CONFIG_BASE_DIR/install
-
-mkdir -p $BUILD_DIR
 
 ###############################################################
 #
@@ -20,12 +15,11 @@ echo "************** Starting CHAI **************"
 CHAI_BUILD_DIR=$BUILD_DIR/chai
 CHAI_INSTALL_DIR=$INSTALL_DIR/chai
 
+echo $CHAI_INSTALL_DIR
+
 CHAI_BUILD_TYPE=cpu-no-rm
 
 # Setup build and install directories
-rm -rf $CHAI_BUILD_DIR
-rm -rf $CHAI_INSTALL_DIR
-cp -R chai $CHAI_BUILD_DIR
 
 pushd $CHAI_BUILD_DIR/src
     echo "**** Building CHAI ****"
@@ -43,6 +37,7 @@ pushd $CHAI_BUILD_DIR/src
     fi
 
     mkdir -p $CHAI_INSTALL_DIR/include && cp *.h* $CHAI_INSTALL_DIR/include
+    mkdir -p $CHAI_INSTALL_DIR/include/yallutil && cp yallutil/optional_locking_mechanism.cpp $CHAI_INSTALL_DIR/include/yallutil
     if [ $? -ne 0 ]; then
         echo Error: CHAI install headers failed
         exit 1
@@ -58,7 +53,11 @@ echo "************** Finished CHAI **************"
 echo "************** Starting RAJA **************"
 RAJA_BUILD_DIR=$BUILD_DIR/raja
 RAJA_INSTALL_DIR=$INSTALL_DIR/raja
-RAJA_SOURCE_DIR=$REPO_DIR/src/thirdparty/raja
+RAJA_SOURCE_DIR=$BUILD_DIR/../../src/thirdparty/raja
+
+echo RAJA_BUILD_DIR = $RAJA_BUILD_DIR
+echo RAJA_INSTALL_DIR = $RAJA_INSTALL_DIR
+echo RAJA_SOURCE_DIR = $RAJA_SOURCE_DIR
 
 CUDA_ENABLED=OFF
 
