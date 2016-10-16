@@ -140,15 +140,12 @@ os.makedirs(thirdPartyInstallPath)
 
 
 
-os.system("cp src/thirdparty/buildthirdparty.sh "+ thirdPartyBuildPath)
+#os.system("cp src/thirdparty/buildthirdparty.sh "+ thirdPartyBuildPath)
 os.system("perl scripts/lns.pl -r src/thirdparty/chai " + thirdPartyBuildPath + "/chai")
-#os.system("perl scripts/lns.pl -r src/thirdparty/raja " + thirdPartyBuildPath + "/raja")
 
 os.makedirs( thirdPartyInstallPath + "/chai" )
-os.makedirs( thirdPartyInstallPath + "/raja" )
 
 os.system("rm " + thirdPartyBuildPath + "/chai/.g*")
-os.system("rm " + thirdPartyBuildPath + "/raja/.g*")
 
 
 
