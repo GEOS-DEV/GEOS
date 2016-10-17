@@ -84,7 +84,7 @@ endif()
 
 blt_register_library( NAME raja
                       INCLUDES ${RAJA_INCLUDE_DIRS} 
-                      LIBRARIES ${CMAKE_INSTALL_PREFIX}/thirdparty/raja/lib/libraja.a )
+                      LIBRARIES ${CMAKE_INSTALL_PREFIX}/thirdparty/raja/lib/libRAJA.a )
 
 
 
