@@ -22,7 +22,7 @@ blt_add_component(COMPONENT_NAME core DEFAULT_STATE ON)
 blt_add_component(COMPONENT_NAME cxx-utilities DEFAULT_STATE ON)
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
-message("children = ${children}")
+#message("children = ${children}")
 
 
 set(componentlist geosx_core cxx-utilities)
@@ -36,13 +36,13 @@ foreach(child ${children})
   endif()
 endforeach()
 
-message("componentlist = ${componentlist}")
+#message("componentlist = ${componentlist}")
 set(componentlistlink "")
 
 foreach(component ${componentlist})
   set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
 endforeach()
-message("componentlistlink = ${componentlistlink}")
+#message("componentlistlink = ${componentlistlink}")
 
 
 blt_add_executable(NAME geosx

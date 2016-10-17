@@ -45,3 +45,13 @@ set(GCOV_PATH "/usr/apps/gnu/4.9.3/bin/gcov" CACHE PATH "")
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
 set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
+
+
+#######################################
+# RAJA/CHAI SETUP
+#######################################
+set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
+set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
+set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
+set(CALIPER_INSTALL   ""          CACHE PATH "" FORCE)
+set(RAJA_ENABLE_TESTS "OFF"       CACHE PATH "" FORCE)
