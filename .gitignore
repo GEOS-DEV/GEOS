@@ -1,6 +1,5 @@
 build-*
 install-*
-thirdparty
 .cproject
 .project
 .settings

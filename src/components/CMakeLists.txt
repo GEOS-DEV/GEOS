@@ -19,7 +19,7 @@ endif()
 
 
 blt_add_component(COMPONENT_NAME core DEFAULT_STATE ON)
-blt_add_component(COMPONENT_NAME cxx-utilities DEFAULT_STATE ON)
+add_subdirectory(cxx-utilities/src)
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
 #message("children = ${children}")
