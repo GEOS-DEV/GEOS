@@ -46,10 +46,10 @@ endif()
 ################################
 set(RAJA_LOCAL_DIR ${CMAKE_SOURCE_DIR}/thirdparty/raja)
 if( NOT EXISTS ${RAJA_LOCAL_DIR}/src AND NOT EXISTS ${RAJA_DIR})
-    MESSAGE(FATAL_ERROR "RAJA_DIR not defined and no locally built raja found in ${PROJECT_SOURCE_DIR}/thirdparty/raja-install. Maybe you need to run chairajabuild in src/thirdparty?")
+    message(FATAL_ERROR "RAJA_DIR not defined and no locally built raja found in ${PROJECT_SOURCE_DIR}/thirdparty/raja-install. Maybe you need to run chairajabuild in src/thirdparty?")
 else()
     if(EXISTS ${RAJA_LOCAL_DIR}/src)
-        MESSAGE( "Using local RAJA found at ${RAJA_LOCAL_DIR}")
+        message(INFO "Using local RAJA found at ${RAJA_LOCAL_DIR}")
         set(RAJA_DIR ${RAJA_LOCAL_DIR})
 
         set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/raja)
@@ -71,10 +71,10 @@ else()
                               LIBRARIES ${raja_install_dir}/lib/libRAJA.a )
 
     elseif(EXISTS ${RAJA_DIR})
-        MESSAGE( "Using system RAJA found at ${RAJA_DIR}")
+        message(INFO "Using system RAJA found at ${RAJA_DIR}")
         include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake)
         if (NOT RAJA_FOUND)
-            MESSAGE(FATAL_ERROR "RAJA not found in ${RAJA_DIR}. Maybe you need to build it")
+            message(FATAL_ERROR "RAJA not found in ${RAJA_DIR}. Maybe you need to build it")
         endif()
 
         blt_register_library( NAME raja
