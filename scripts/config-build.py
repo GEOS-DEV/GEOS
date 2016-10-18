@@ -123,6 +123,33 @@ if os.path.exists(installpath):
 print "Creating install path '%s'..." % installpath
 os.makedirs(installpath)
 
+
+##########################################
+# Setup ThirdParty Build 
+##########################################
+#thirdPartyBuildPath = buildpath + "/thirdparty"
+#thirdPartyInstallPath = installpath + "/thirdparty"
+
+#if os.path.exists(thirdPartyBuildPath):
+#    shutil.rmtree(thirdPartyBuildPath)
+#os.makedirs(thirdPartyBuildPath)
+    
+#if os.path.exists(thirdPartyInstallPath):
+#    shutil.rmtree(thirdPartyInstallPath)
+#os.makedirs(thirdPartyInstallPath)
+
+
+
+#os.system("cp src/thirdparty/buildthirdparty.sh "+ thirdPartyBuildPath)
+#os.system("perl scripts/lns.pl -r src/thirdparty/chai " + thirdPartyBuildPath + "/chai")
+
+#os.makedirs( thirdPartyInstallPath + "/chai" )
+
+#os.system("rm " + thirdPartyBuildPath + "/chai/.g*")
+
+
+
+
 ############################
 # Build CMake command line
 ############################

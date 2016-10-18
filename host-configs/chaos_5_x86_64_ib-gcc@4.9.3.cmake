@@ -1,11 +1,7 @@
 ##################################
-# uberenv host-config
-##################################
 # chaos_5_x86_64_ib-gcc@4.9.3
 ##################################
 
-# cmake from uberenv
-# cmake executable path: /usr/gapps/asctoolkit/thirdparty_libs/stable/spack/opt/spack/chaos_5_x86_64_ib/gcc-4.9.3/cmake-3.3.1-3gc4unffj5rqcq35gecg4wv3roecpldt/bin/cmake
 #######
 # using gcc@4.9.3 compiler spec
 #######
@@ -22,7 +18,6 @@ set(ENABLE_FORTRAN OFF CACHE PATH "")
 set(ATK_DIR "/usr/gapps/GEOS/asctoolkit/install-cab-chaos_5_x86_64_ib-gcc@4.9.3-debug" CACHE PATH "")
 
 set(RAJA_DIR "/usr/gapps/GEOS/RAJA/install-gcc-4.9.3-release" CACHE PATH "")
-#set(RAJA_DIR "/g/g15/settgast/workspace/Codes/RAJA/install-gcc-4.9.3-release" CACHE PATH "")
 
 # conduit from uberenv
 set(CONDUIT_DIR "/usr/gapps/GEOS/asctoolkit/uberenv_libs/spack/opt/spack/chaos_5_x86_64_ib/gcc-4.9.3/conduit-github-2016-05-18-xqbkgfstnxnbt43ptpb6d26iv5pvytyk" CACHE PATH "")
@@ -50,3 +45,13 @@ set(GCOV_PATH "/usr/apps/gnu/4.9.3/bin/gcov" CACHE PATH "")
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
 set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
+
+
+#######################################
+# RAJA/CHAI SETUP
+#######################################
+set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
+set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
+set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
+set(CALIPER_INSTALL   ""          CACHE PATH "" FORCE)
+set(RAJA_ENABLE_TESTS "OFF"       CACHE PATH "" FORCE)
