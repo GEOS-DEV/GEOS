@@ -164,11 +164,11 @@ public:
 
 //***** Range Checking ********************************************************
 #if RANGE_CHECKING==1
-  inline       TYPE& operator[](const size_type index)       { return std::vector<TYPE>::at(index);}
-  inline const TYPE& operator[](const size_type index) const { return std::vector<TYPE>::at(index);}
+  inline       TYPE& operator[](const int index)       { return std::vector<TYPE>::at(index);}
+  inline const TYPE& operator[](const int index) const { return std::vector<TYPE>::at(index);}
 #else
-  inline       TYPE& operator[](const size_type index)       { return std::vector<TYPE>::operator[](index);}
-  inline const TYPE& operator[](const size_type index) const { return std::vector<TYPE>::operator[](index);}
+  inline       TYPE& operator[](const int index)       { return std::vector<TYPE>::operator[]( static_cast<unsigned int>(index) );}
+  inline const TYPE& operator[](const int index) const { return std::vector<TYPE>::operator[]( static_cast<unsigned int>(index) );}
 #endif
 
 

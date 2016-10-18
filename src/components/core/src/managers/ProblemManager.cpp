@@ -93,7 +93,7 @@ void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 
   solverApplications.RegisterViewWrapper<string_array>(keys::solverApplicationNames);
 
-  ManagedGroup& commandLine = RegisterGroup<ManagedGroup >(keys::commandLine);
+//  ManagedGroup& commandLine = RegisterGroup<ManagedGroup >(keys::commandLine);
 //  commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
 //  commandLine.RegisterViewWrapper<std::string>(keys::restartFileName);
 //  commandLine.RegisterViewWrapper<bool>(keys::beginFromRestart);

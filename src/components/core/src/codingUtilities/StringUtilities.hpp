@@ -149,9 +149,9 @@ inline void RemoveSpaces(std::string& aString){
 
 /// Expand string vector based on multiple tokens eg [a, b**3, c] => [a,b,b,b,c]
 inline void ExpandMultipleTokens(string_array& sVector, const std::string& multipleToken="**"){
-  unsigned int n= sVector.size();
+  int n= sVector.size();
   string_array newVec;
-  for(unsigned int i =0 ; i < n ; ++i)
+  for( int i =0 ; i < n ; ++i)
   {
     string_array keyMult = TokenizeSeq(sVector[i], multipleToken);
     if( (keyMult.size() == 2) && strIsInt(keyMult[1]) )
@@ -177,7 +177,7 @@ void TrimRight(std::string& str, const std::string& d=" \t\n\r");
 void Trim(std::string& str, const std::string& d=" \t\n\r");
 
 inline void Trim(string_array& strVect, const std::string& d=" \t\n\r"){
-  for(unsigned i =0 ; i < strVect.size() ; ++i)
+  for(int i =0 ; i < int(strVect.size()) ; ++i)
     Trim(strVect[i],d);
 }
 
