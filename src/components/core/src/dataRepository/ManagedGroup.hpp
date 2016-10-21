@@ -179,27 +179,27 @@ public:
   //***********************************************************************************************
 
   // user defined conversion doesn't work. can't infer template argument
-  class GetDataClass
-  {
-  public:
-    GetDataClass( ManagedGroup & parent ): m_parent( parent ) {}
-
-    inline GetDataClass& operator() ( std::string const & name )
-    {
-      m_name = name;
-      return *this;
-    }
-
-    template< typename T>
-    operator typename ViewWrapper<T>::rtype ()
-    {
-      return m_parent.getData<T>( m_name );
-    }
-  private:
-    ManagedGroup & m_parent;
-    std::string m_name;
-  };
-  GetDataClass GetData = {*this};
+//  class GetDataClass
+//  {
+//  public:
+//    GetDataClass( ManagedGroup & parent ): m_parent( parent ) {}
+//
+//    inline GetDataClass& operator() ( std::string const & name )
+//    {
+//      m_name = name;
+//      return *this;
+//    }
+//
+//    template< typename T>
+//    operator typename ViewWrapper<T>::rtype ()
+//    {
+//      return m_parent.getData<T>( m_name );
+//    }
+//  private:
+//    ManagedGroup & m_parent;
+//    std::string m_name;
+//  };
+//  GetDataClass GetData = {*this};
 
 
 

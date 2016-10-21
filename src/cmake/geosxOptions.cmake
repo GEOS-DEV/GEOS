@@ -13,6 +13,11 @@ if( (CMAKE_CXX_STANDARD EQUAL 11) OR (CMAKE_CXX_STANDARD EQUAL 14) )
 	add_definitions("-DUSE_CXX11")
 endif()
 
+
+if( (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")  AND (CMAKE_CXX_STANDARD EQUAL 14) )
+    blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -std=c++14)
+endif()
+
 if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
 	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}")
 	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -pedantic-errors)
@@ -83,5 +88,6 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
 
 endif()
 
+message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 
 message("Leaving geosxOptions.cmake")
