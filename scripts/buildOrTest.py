@@ -6,7 +6,7 @@
 #python scripts/config-build.py -bp build-xcode -hc host-configs/darwin-clang.cmake -x
 
 darwinHosts = ["clang","clang37","gcc"]
-chaosHosts = ["gcc@4.9.3","intel@15","intel@16"]
+chaosHosts = ["gcc@4.9.3","intel@16"]
 
 platforms = {"darwin":darwinHosts,"chaos_5_x86_64_ib":chaosHosts}
 trueNames = {"darwin":"darwin", "osx":"darwin","lc":"chaos_5_x86_64_ib","chaos_5_x86_64_ib":"chaos_5_x86_64_ib",
