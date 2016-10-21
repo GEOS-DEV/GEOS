@@ -47,7 +47,22 @@ int main(int argc, char** argv)
 
 TEST(testXML,testXML)
 {
-  ProblemManager problemManager("ProblemManager",nullptr);
+
+  cxx_utilities::DocumentationNode docNode( "RootDocumentationNode",
+                                            "",
+                                            -1,
+                                            "DocumentationNode",
+                                            "",
+                                            "The Root DocumentationNode",
+                                            "",
+                                            "",
+                                            "",
+                                            0,
+                                            0,
+                                            0,
+                                            nullptr );
+
+  ProblemManager problemManager("ProblemManager",nullptr, &docNode);
 
   problemManager.BuildDataStructure(nullptr);
 
