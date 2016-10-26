@@ -53,7 +53,7 @@ names =
 [publish]
 buildcmds = ./scripts/buildOrTest.py build
 builddir = . 
-testcmds = ./scripts/buildOrTest.py test
+testcmds = 
 testdir = .
 prepublishcmds = 
 prepublishdir = .

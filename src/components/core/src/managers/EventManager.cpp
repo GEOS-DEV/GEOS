@@ -108,7 +108,7 @@ void EventManager::CreateSolverApplication(pugi::xml_node const & applicationNod
   ViewWrapper<string_array>::rtype solvers = newApplication.getData<string_array>(keys::solvers);
   for (uint jj=0; jj<newApplicationSolvers.size(); ++jj)
   {
-    solvers[jj] = newApplicationSolvers[jj];
+    solvers[static_cast<int>(jj)] = newApplicationSolvers[jj];
   }
 }
 

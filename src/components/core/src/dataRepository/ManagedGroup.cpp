@@ -170,7 +170,7 @@ void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const root
   }
 }
 
-void ManagedGroup::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void ManagedGroup::FillDocumentationNode( dataRepository::ManagedGroup * const  )
 {
 
 }

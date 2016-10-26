@@ -9,9 +9,9 @@
 
 
 set(ATK_ROOT "/usr/gapps/GEOS/asctoolkit" CACHE PATH "")
-set(CONFIG_NAME "cab-chaos_5_x86_64_ib-gcc@4.9.3" CACHE PATH "") 
+set(CONFIG_NAME "cab-chaos_5_x86_64_ib-intel@16.0.109" CACHE PATH "") 
 
-set(TPL_DIR "${ATK_ROOT}/thirdparty_libs/builds/2016_10_25_15_45_35" CACHE PATH "" )
+set(TPL_DIR "${ATK_ROOT}/thirdparty_libs/2016_10_15_02_06_35" CACHE PATH "" )
 set(ATK_DIR "${ATK_ROOT}/install-${CONFIG_NAME}-debug" CACHE PATH "")
 
 message("ATK_DIR=${ATK_DIR}")

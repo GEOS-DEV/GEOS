@@ -5,3 +5,11 @@
 	path = src/cmake/blt
 	url = ../blt.git
 	branch = feature/settgast/ATK-779
+[submodule "src/thirdparty/raja"]
+	path = src/thirdparty/raja
+	url = ../raja.git
+	branch = master
+[submodule "src/thirdparty/chai"]
+	path = src/thirdparty/chai
+	url = ../chai.git
+	branch = master

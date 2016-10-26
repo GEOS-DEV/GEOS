@@ -3,3 +3,6 @@ install-*
 .cproject
 .project
 .settings
+*.swp
+*.swo
+*.swn

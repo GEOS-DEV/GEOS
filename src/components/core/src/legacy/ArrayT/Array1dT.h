@@ -120,14 +120,14 @@ class Array1dT : public VectorT<TYPE>
   
 	//***** Accessors **********************************************************
   /// const square bracket accessor
-  const TYPE& operator[](const size_type dim1) const ;
+  const TYPE& operator[](const int dim1) const ;
   /// square bracket accessor
-  TYPE& operator[](const size_type dim1) ;
+  TYPE& operator[](const int dim1) ;
 
   /// const parentheses accessor
-  const TYPE& operator()(const size_type dim1) const ;
+  const TYPE& operator()(const int dim1) const ;
   /// parentheses accessor
-  TYPE& operator()(const size_type dim1) ;
+  TYPE& operator()(const int dim1) ;
 
   const Array1dT& Slice( Array2dT<TYPE>& array2d, const size_type index ) const;
 
@@ -285,25 +285,25 @@ return (*this);
 //*****************************************************************************
 
 template <class TYPE>
-inline const TYPE& Array1dT<TYPE>::operator[](const size_type index) const
+inline const TYPE& Array1dT<TYPE>::operator[](const int index) const
 {
 	return VectorT<TYPE>::operator[](index );
 }
 
 template <class TYPE>
-inline TYPE& Array1dT<TYPE>::operator[](const size_type index)
+inline TYPE& Array1dT<TYPE>::operator[](const int index)
 {
 	return VectorT<TYPE>::operator[](index );
 }
 
 template <class TYPE>
-inline const TYPE& Array1dT<TYPE>::operator()(const size_type index) const
+inline const TYPE& Array1dT<TYPE>::operator()(const int index) const
 {
 	return VectorT<TYPE>::operator[](index );
 }
 
 template <class TYPE>
-inline TYPE& Array1dT<TYPE>::operator()(const size_type index)
+inline TYPE& Array1dT<TYPE>::operator()(const int index)
 {
 	return VectorT<TYPE>::operator[](index );
 }
