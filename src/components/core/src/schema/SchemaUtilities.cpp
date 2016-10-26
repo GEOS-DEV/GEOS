@@ -61,11 +61,14 @@ void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::Docu
   <xsd:simpleType name=\"real64\">\
     <xsd:restriction base=\"xsd:double\"/>\
   </xsd:simpleType>\
+  <xsd:simpleType name=\"int32\">\
+    <xsd:restriction base=\"xsd:int\"/>\
+  </xsd:simpleType>\
   <xsd:simpleType name=\"int64\">\
     <xsd:restriction base=\"xsd:int\"/>\
   </xsd:simpleType>\
   <xsd:simpleType name=\"uint64\">\
-    <xsd:restriction base=\"xsd:uint\"/>\
+    <xsd:restriction base=\"xsd:unsignedInt\"/>\
   </xsd:simpleType>\
   <xsd:simpleType name=\"string_array\">\
     <xsd:restriction base=\"xsd:string\">\
@@ -74,7 +77,7 @@ void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::Docu
   </xsd:simpleType>\
   <xsd:simpleType name=\"real64_array\">\
     <xsd:restriction base=\"xsd:string\">\
-      <xsd:pattern value=\"((([0-9]*\\.?[0-9]*?[eE]?[-+]?[0-9]*?)\\ *?\\[([-+.*/()a-zA-Z0-9]*)\\], )*)?([0-9]*\\.?[0-9]*?[eE]?[-+]?[0-9]*?)\\ *?\\[([-+.*/()a-zA-Z0-9]*)\\]\"/>\
+      <xsd:pattern value=\"((([0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?)\\s*\\[([-+.*/()a-zA-Z0-9]*)\\], )*)?([0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?)\\s*\\[([-+.*/()a-zA-Z0-9]*)\\]\"/>\
     </xsd:restriction>\
   </xsd:simpleType>\
   <xsd:simpleType name=\"int32_array\">\
