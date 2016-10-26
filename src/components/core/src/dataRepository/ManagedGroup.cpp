@@ -77,7 +77,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_docNode->AllocateChildNode( "size",
                                 "size",
                                 -1,
-                                "localIndex",
+                                "int32",
                                 "",
                                 "size of group",
                                 "Number of entries in this group.",
@@ -98,7 +98,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
                                 0,
                                 0 );
 
-  *(RegisterViewWrapper<localIndex>( "size" ).data()) = 0;
+  *(RegisterViewWrapper<int32>( "size" ).data()) = 0;
   RegisterViewWrapper<std::string>( "name" ).reference() = name;
   RegisterViewWrapper<std::string>( "path" );
 
@@ -139,13 +139,13 @@ ViewWrapperBase& ManagedGroup::RegisterViewWrapper( std::string const & name, rt
       } ) );
 }
 
-void ManagedGroup::resize( localIndex const newsize )
+void ManagedGroup::resize( int32 const newsize )
 {
   for( auto&& i : this->m_wrappers )
   {
     i->resize(newsize);
   }
-  *(this->getWrapper<localIndex>( keys::Size ).data())=newsize;
+  *(this->getWrapper<int32>( keys::Size ).data())=newsize;
 }
 
 
@@ -184,6 +184,95 @@ void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const g
     subGroup.second->SetDocumentationNodes(group);
   }
 }
+
+
+void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  
+  for( auto const & subDocEntry : docNode->m_child )
+  {
+    cxx_utilities::DocumentationNode subDocNode = subDocEntry.second;
+    
+    if (subDocNode.getIsInput() == 1)
+    {
+      std::string childType = subDocNode.getSchemaType();    
+
+      switch (rtTypes::typeID(childType))
+      {
+        case rtTypes::TypeIDs::real64_id:
+        {
+          real64 defVal = atof(subDocNode.getDefault().c_str());
+          real64 xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).as_double(defVal);
+          *(this->getData<real64>(subDocNode.getStringKey())) = xmlVal;
+          break;
+        }
+        case rtTypes::TypeIDs::int32_id:
+        {
+          int32 defVal = atoi(subDocNode.getDefault().c_str());
+          int32 xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).as_int(defVal);
+          *(this->getData<int32>(subDocNode.getStringKey())) = xmlVal;
+          break;
+        }
+        case rtTypes::TypeIDs::uint32_id:
+        {
+          uint32 defVal = atol(subDocNode.getDefault().c_str());
+          uint32 xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).as_uint(defVal);
+          *(this->getData<uint64>(subDocNode.getStringKey())) = xmlVal;
+          break;
+        }
+        case rtTypes::TypeIDs::string_id:
+        {
+          string defVal = subDocNode.getDefault();
+          string xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).value();
+          this->getData<string>(subDocNode.getStringKey()) = xmlVal.empty() ? defVal : xmlVal;
+          break;
+        }
+        // TODO: Define the assignment operator for std::vector<type> in viewWrapper
+        //       Alternatively, pass the array reference into the load_type_array methods directly
+        //       (This would require the push_back method to work on the viewWrappers)
+        case rtTypes::TypeIDs::real64_array_id:
+        {
+          string defVal = subDocNode.getDefault();
+          std::vector<real64> xmlVal;
+          targetNode.attribute(subDocNode.getStringKey().c_str()).load_double_array(xmlVal, defVal);
+          // *(this->getData<real64_array>(subDocNode.getStringKey())) = xmlVal;
+          break;
+        }
+        case rtTypes::TypeIDs::int32_array_id:
+        {
+          string defVal = subDocNode.getDefault();
+          std::vector<int32> xmlVal;
+          targetNode.attribute(subDocNode.getStringKey().c_str()).load_int_array(xmlVal, defVal);
+          // *(this->getData<int32_array>(subDocNode.getStringKey())) = xmlVal;
+          break;
+        }
+        case rtTypes::TypeIDs::uint32_array_id:
+        {
+          string defVal = subDocNode.getDefault();
+          std::vector<uint32> xmlVal;
+          targetNode.attribute(subDocNode.getStringKey().c_str()).load_uint_array(xmlVal, defVal);
+          // *(this->getData<uint32_array>(subDocNode.getStringKey())) = xmlVal;
+          break;
+        }
+        case rtTypes::TypeIDs::string_array_id:
+        {
+          string defVal = subDocNode.getDefault();
+          std::vector<string> xmlVal;
+          targetNode.attribute(subDocNode.getStringKey().c_str()).load_string_array(xmlVal, defVal);
+          // *(this->getData<string_array>(subDocNode.getStringKey())) = xmlVal;
+          break;
+        }
+        default:
+        {
+          // TODO: Define missing cases
+          throw std::invalid_argument("XML auto read method not defined");
+        }
+      }
+    }
+  }
+}
+
 
 
 }

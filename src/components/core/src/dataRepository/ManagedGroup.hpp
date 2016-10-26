@@ -17,6 +17,8 @@
 #include "depricated/Common.h"
 #include "DocumentationNode.hpp"
 
+#include "pugixml/src/pugixml.hpp"
+
 
 //#include "CodingUtilities/ANSTexception.hpp"
 
@@ -166,7 +168,7 @@ public:
 
   ///@}
 
-
+  virtual void ReadXML( pugi::xml_node const & targetNode );
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
 

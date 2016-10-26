@@ -26,11 +26,6 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
   return catalog;
 }
 
-void SolverBase::ReadXML( pugi::xml_node const & solverNode )
-{
-  *(this->getData<real64>(keys::courant)) = solverNode.attribute("courant").as_double(0.5);
-}
-
 void SolverBase::BuildDataStructure( dataRepository::ManagedGroup * const /*domain*/ )
 {
   this->RegisterViewWrapper<real64>(keys::maxDt);
@@ -50,7 +45,7 @@ void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const /*g
   docVar.m_stringKey          = "cfl";
   docVar.m_intKey             = -1;
   docVar.m_dataType           = "real64";
-  docVar.m_schemaType         = "double";
+  docVar.m_schemaType         = "real64";
   docVar.m_shortDescription   = "Courant–Friedrichs–Lewy (CFL) factor";
   docVar.m_longDescription    = "Courant–Friedrichs–Lewy (CFL) factor is multiplied with CFL condition to reduce/increase "
                                 "allowable timestep.";

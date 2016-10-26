@@ -50,52 +50,43 @@ namespace geosx
 void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead)
 {
   // Build the base of the schema
-  std::string schemaBase="<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>
-  <xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">
-  <xsd:annotation>
-  <xsd:documentation xml:lang=\"en\">New schema for GEOS</xsd:documentation>
-  </xsd:annotation>
-
-  <xsd:simpleType name=\"string\">
-    <xsd:restriction base=\"xsd:string\"/>
-  </xsd:simpleType>
-
-  <xsd:simpleType name=\"real64\">
-    <xsd:restriction base=\"xsd:double\"/>
-  </xsd:simpleType>
-
-  <xsd:simpleType name=\"int64\">
-    <xsd:restriction base=\"xsd:int\"/>
-  </xsd:simpleType>
-
-  <xsd:simpleType name=\"uint64\">
-    <xsd:restriction base=\"xsd:uint\"/>
-  </xsd:simpleType>
-
-  <xsd:simpleType name=\"string_array\">
-    <xsd:restriction base=\"xsd:string\">
-      <xsd:pattern value=\"(([a-zA-Z0-9]*, )*)?[a-zA-Z0-9]*\"/>
-    </xsd:restriction>
-  </xsd:simpleType>
-
-  <xsd:simpleType name=\"real64_array\">
-    <xsd:restriction base=\"xsd:string\">
-      <xsd:pattern value=\"((([0-9]*\\.?[0-9]*?[eE]?[-+]?[0-9]*?)\\ *?\\[([-+.*/()a-zA-Z0-9]*)\\], )*)?([0-9]*\\.?[0-9]*?[eE]?[-+]?[0-9]*?)\\ *?\\[([-+.*/()a-zA-Z0-9]*)\\]\"/>
-    </xsd:restriction>
-  </xsd:simpleType>
-
-  <xsd:simpleType name=\"int32_array\">
-    <xsd:restriction base=\"xsd:string\">
-      <xsd:pattern value=\"(([-+]?[0-9]*, )*)?[-+]?[0-9]*\"/>
-    </xsd:restriction>
-  </xsd:simpleType>
-
-  <xsd:simpleType name=\"uint32_array\">
-    <xsd:restriction base=\"xsd:string\">
-      <xsd:pattern value=\"(([0-9]*, )*)?[0-9]*\"/>
-    </xsd:restriction>
-  </xsd:simpleType>
-
+  std::string schemaBase="<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
+  <xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\
+  <xsd:annotation>\
+  <xsd:documentation xml:lang=\"en\">New schema for GEOS</xsd:documentation>\
+  </xsd:annotation>\
+  <xsd:simpleType name=\"string\">\
+    <xsd:restriction base=\"xsd:string\"/>\
+  </xsd:simpleType>\
+  <xsd:simpleType name=\"real64\">\
+    <xsd:restriction base=\"xsd:double\"/>\
+  </xsd:simpleType>\
+  <xsd:simpleType name=\"int64\">\
+    <xsd:restriction base=\"xsd:int\"/>\
+  </xsd:simpleType>\
+  <xsd:simpleType name=\"uint64\">\
+    <xsd:restriction base=\"xsd:uint\"/>\
+  </xsd:simpleType>\
+  <xsd:simpleType name=\"string_array\">\
+    <xsd:restriction base=\"xsd:string\">\
+      <xsd:pattern value=\"(([a-zA-Z0-9]*, )*)?[a-zA-Z0-9]*\"/>\
+    </xsd:restriction>\
+  </xsd:simpleType>\
+  <xsd:simpleType name=\"real64_array\">\
+    <xsd:restriction base=\"xsd:string\">\
+      <xsd:pattern value=\"((([0-9]*\\.?[0-9]*?[eE]?[-+]?[0-9]*?)\\ *?\\[([-+.*/()a-zA-Z0-9]*)\\], )*)?([0-9]*\\.?[0-9]*?[eE]?[-+]?[0-9]*?)\\ *?\\[([-+.*/()a-zA-Z0-9]*)\\]\"/>\
+    </xsd:restriction>\
+  </xsd:simpleType>\
+  <xsd:simpleType name=\"int32_array\">\
+    <xsd:restriction base=\"xsd:string\">\
+      <xsd:pattern value=\"(([-+]?[0-9]*, )*)?[-+]?[0-9]*\"/>\
+    </xsd:restriction>\
+  </xsd:simpleType>\
+  <xsd:simpleType name=\"uint32_array\">\
+    <xsd:restriction base=\"xsd:string\">\
+      <xsd:pattern value=\"(([0-9]*, )*)?[0-9]*\"/>\
+    </xsd:restriction>\
+  </xsd:simpleType>\
   </xsd:schema>";
   pugi::xml_document schemaTree;
   schemaTree.load_string(schemaBase.c_str());
