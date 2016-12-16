@@ -29,11 +29,6 @@ namespace dataRepository
     std::string const yPartitionsOverride = "yPartitionsOverride";
     std::string const zPartitionsOverride = "zPartitionsOverride";
     std::string const overridePartitionNumbers = "overridePartitionNumbers";
-    std::string const solverApplications = "solverApplications";
-    std::string const solverApplicationNames = "solverApplicationNames";
-
-    std::string const K = "K";
-
   }
 }
 
@@ -53,21 +48,7 @@ ProblemManager::ProblemManager( const std::string& name,
   ObjectManagerBase( name, parent, docNode ),
   m_physicsSolverManager(nullptr)
 {
-//  allocateDocumentationNode( "ProblemManager",
-//                             "ProblemManager",
-//                             0,
-//                             "DocumentationNode",
-//                             "UniqueNode",
-//                             "This is the top level node in the input structure.",
-//                             "This is the top level node in the input structure.",
-//                             "",
-//                             "ProblemManager",
-//                             0,
-//                             0,
-//                             0,
-//                             nullptr );
   m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
-
   m_eventManager = &(RegisterGroup<EventManager>("EventManager" ) ) ;
 }
 
@@ -79,31 +60,8 @@ ProblemManager::~ProblemManager()
 
 void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 {
-
-//  cxx_utilities::DocumentationNode newNode;
-
-//  newNode.m_name = keys::inputFileName;
-
-//  getDocumentationNode()->
-
   RegisterGroup<DomainPartition>(keys::domain);
-
-  ManagedGroup& solverApplications = RegisterGroup<ManagedGroup>(keys::solverApplications);
-
-
-  solverApplications.RegisterViewWrapper<string_array>(keys::solverApplicationNames);
-
-//  ManagedGroup& commandLine = RegisterGroup<ManagedGroup >(keys::commandLine);
-//  commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
-//  commandLine.RegisterViewWrapper<std::string>(keys::restartFileName);
-//  commandLine.RegisterViewWrapper<bool>(keys::beginFromRestart);
-//  commandLine.RegisterViewWrapper<int32>(keys::xPartitionsOverride);
-//  commandLine.RegisterViewWrapper<int32>(keys::yPartitionsOverride);
-//  commandLine.RegisterViewWrapper<int32>(keys::zPartitionsOverride);
-//  commandLine.RegisterViewWrapper<bool>(keys::overridePartitionNumbers);
-//
-//  commandLine.RegisterViewWrapper<int32>(keys::K);
-
+  RegisterGroup<ManagedGroup>(keys::commandLine);
 }
 
 
@@ -115,43 +73,122 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
 
   docNode->setName("Problem");
   docNode->setSchemaType("UniqueNode");
-  docNode->AllocateChildNode( keys::inputFileName,
-                              keys::inputFileName,
-                              -1,
-                              "string",
-                              "",
-                              "Name of the input xml file.",
-                              "Name of the input xml file.",
-                              "input.xml",
-                              "ProblemManager",
-                              0,
-                              0 );
 
-  ManagedGroup& commandLine = RegisterGroup<ManagedGroup >(keys::commandLine);
-  commandLine.RegisterViewWrapper<std::string>(keys::inputFileName);
-  commandLine.RegisterViewWrapper<std::string>(keys::restartFileName);
-  commandLine.RegisterViewWrapper<bool>(keys::beginFromRestart);
-  commandLine.RegisterViewWrapper<int32>(keys::xPartitionsOverride);
-  commandLine.RegisterViewWrapper<int32>(keys::yPartitionsOverride);
-  commandLine.RegisterViewWrapper<int32>(keys::zPartitionsOverride);
-  commandLine.RegisterViewWrapper<bool>(keys::overridePartitionNumbers);
-  commandLine.RegisterViewWrapper<std::string>(keys::schema);
+  // Fill command line documentation
+  dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  cxx_utilities::DocumentationNode * const commandDocNode = commandLine.getDocumentationNode();
+  commandDocNode->setShortDescription("Command line input parameters");
 
-  commandLine.RegisterViewWrapper<int32>(keys::K);
+  commandDocNode->AllocateChildNode( keys::inputFileName,
+                                    keys::inputFileName,
+                                    -1,
+                                    "string",
+                                    "",
+                                    "Name of the input xml file.",
+                                    "Name of the input xml file.",
+                                    "input.xml",
+                                    "CommandLine",
+                                    0,
+                                    0 );
+
+  commandDocNode->AllocateChildNode( keys::restartFileName,
+                                     keys::restartFileName,
+                                     -1,
+                                     "string",
+                                     "",
+                                     "Name of the restart file.",
+                                     "Name of the restart file.",
+                                     "",
+                                     "CommandLine",
+                                     0,
+                                     0 );
+
+  commandDocNode->AllocateChildNode( keys::beginFromRestart,
+                                     keys::beginFromRestart,
+                                     -1,
+                                     "int32",
+                                     "",
+                                     "Flag to indicate restart run",
+                                     "Flag to indicate restart run",
+                                     "0",
+                                     "CommandLine",
+                                     0,
+                                     0 );
+
+  commandDocNode->AllocateChildNode( keys::xPartitionsOverride,
+                                     keys::xPartitionsOverride,
+                                     -1,
+                                     "int32",
+                                     "",
+                                     "Number of partitions in the x-direction",
+                                     "Number of partitions in the x-direction",
+                                     "1",
+                                     "CommandLine",
+                                     0,
+                                     0 );
+
+  commandDocNode->AllocateChildNode( keys::yPartitionsOverride,
+                                     keys::yPartitionsOverride,
+                                     -1,
+                                     "int32",
+                                     "",
+                                     "Number of partitions in the y-direction",
+                                     "Number of partitions in the y-direction",
+                                     "1",
+                                     "CommandLine",
+                                     0,
+                                     0 );
+
+  commandDocNode->AllocateChildNode( keys::zPartitionsOverride,
+                                     keys::zPartitionsOverride,
+                                     -1,
+                                     "int32",
+                                     "",
+                                     "Number of partitions in the z-direction",
+                                     "Number of partitions in the z-direction",
+                                     "1",
+                                     "CommandLine",
+                                     0,
+                                     0 );
+
+  commandDocNode->AllocateChildNode( keys::overridePartitionNumbers,
+                                     keys::overridePartitionNumbers,
+                                     -1,
+                                     "int32",
+                                     "",
+                                     "Flag to indicate partition number override",
+                                     "Flag to indicate partition number override",
+                                     "0",
+                                     "CommandLine",
+                                     0,
+                                     0 );
+
+  commandDocNode->AllocateChildNode( keys::schema,
+                                     keys::schema,
+                                     -1,
+                                     "string",
+                                     "",
+                                     "Name of the output schema",
+                                     "Name of the output schema",
+                                     "gpac.xsd",
+                                     "CommandLine",
+                                     0,
+                                     0 );
 
 }
 
 void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
 {
   dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  commandLine.RegisterDocumentationNodes();
   
   ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
   ViewWrapper<std::string>::rtype  restartFileName = commandLine.getData<std::string>(keys::restartFileName);
-  bool&         beginFromRestart = *(commandLine.getData<bool>(keys::beginFromRestart));
+  int32&        beginFromRestart = *(commandLine.getData<int32>(keys::beginFromRestart));
   int32&        xPartitionsOverride = *(commandLine.getData<int32>(keys::xPartitionsOverride));
   int32&        yPartitionsOverride = *(commandLine.getData<int32>(keys::yPartitionsOverride));
   int32&        zPartitionsOverride = *(commandLine.getData<int32>(keys::zPartitionsOverride));
-  bool&         overridePartitionNumbers = *(commandLine.getData<bool>(keys::overridePartitionNumbers));
+  int32&        overridePartitionNumbers = *(commandLine.getData<int32>(keys::overridePartitionNumbers));
   ViewWrapper<std::string>::rtype  schemaName = commandLine.getData<std::string>(keys::schema);
 
   // Set the options structs and parse
@@ -214,19 +251,19 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
         break;
       case RESTART:
         restartFileName = opt.arg;
-        beginFromRestart = true;
+        beginFromRestart = 1;
         break;
       case XPAR:
         xPartitionsOverride = std::stoi(opt.arg);
-        overridePartitionNumbers = true;
+        overridePartitionNumbers = 1;
         break;
       case YPAR:
         yPartitionsOverride = std::stoi(opt.arg);
-        overridePartitionNumbers = true;
+        overridePartitionNumbers = 1;
         break;
       case ZPAR:
         zPartitionsOverride = std::stoi(opt.arg);
-        overridePartitionNumbers = true;
+        overridePartitionNumbers = 1;
         break;
       case SCHEMA:
         schemaName = opt.arg;
@@ -375,7 +412,7 @@ void ProblemManager::RunSimulation()
       real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
 
 
-      bool lockDt = (appDt > 0.0);
+      int32 lockDt = (appDt > 0.0);
       if (lockDt)
       {
         dt = appDt;

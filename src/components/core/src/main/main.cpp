@@ -51,9 +51,7 @@ int main( int argc, char *argv[] )
   ProblemManager problemManager( "ProblemManager", nullptr, &docNode );
 
   problemManager.BuildDataStructure(nullptr);
-
   problemManager.SetDocumentationNodes( &problemManager );
-
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
