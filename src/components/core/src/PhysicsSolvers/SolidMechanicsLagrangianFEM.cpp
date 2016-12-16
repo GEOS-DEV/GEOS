@@ -49,11 +49,11 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::ManagedGroup * const group )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
   SolverBase::FillDocumentationNode( group );
 
-  docNode->setName(this->CatalogName());    // If this method lived in Managed groups, this could be done automatically
+  docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
+  docNode->setShortDescription("An example solid mechanics solver");
   
   docNode->AllocateChildNode( "nElements",
                               keys::nElements,
