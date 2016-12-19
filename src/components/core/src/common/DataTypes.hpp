@@ -278,6 +278,11 @@ public:
       return lambda( string("") );
       break;
     }
+    case ( TypeIDs::string_array_id ):
+    {
+      return lambda( string_array(1) );
+      break;
+    }
     default:
     {
       std::cout<<LOCATION<<std::endl;

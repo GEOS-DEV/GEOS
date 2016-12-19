@@ -261,6 +261,15 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
           std::vector<string> xmlVal;
           targetNode.attribute(subDocNode.getStringKey().c_str()).load_string_array(xmlVal, defVal);
           // *(this->getData<string_array>(subDocNode.getStringKey())) = xmlVal;
+          
+          std::cout << "Resizing string_array " << subDocNode.getStringKey().c_str() << ".  Warning: this currently requires that the entire managed group to be resized." << std::endl;
+          this->resize(xmlVal.size());
+          ViewWrapper<string_array>::rtype saVal = this->getData<string_array>(subDocNode.getStringKey());
+          for (uint jj=0; jj<xmlVal.size(); ++jj)
+          {
+            saVal[static_cast<int>(jj)] = xmlVal[jj];
+          }
+
           break;
         }
         default:

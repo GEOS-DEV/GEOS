@@ -26,92 +26,13 @@ EventManager::~EventManager()
 {
 }
 
-
-
-void EventManager::CreateSolverApplication(pugi::xml_node const & applicationNode)
+void EventManager::FillDocumentationNode( dataRepository::ManagedGroup * const )
 {
-  // Register a new solver application (Note: these must be identified by a unique name)
-  std::string applicationName = applicationNode.attribute("name").value();
-  dataRepository::ManagedGroup& newApplication = RegisterGroup<ManagedGroup>(applicationName);
-
-  cxx_utilities::DocumentationNode * const docNode = getDocumentationNode();
-  docNode->setSchemaType("Node");
-  docNode->setName("Application");
-
-  cxx_utilities::DocumentationNode * const appDocNode = newApplication.getDocumentationNode();
-
-  appDocNode->AllocateChildNode( keys::beginTime,
-                                 keys::beginTime,
-                                 -1,
-                                 "real64",
-                                 "real64",
-                                 "application start time",
-                                 "application start time",
-                                 "0.0",
-                                 "",
-                                 1,
-                                 0 );
-
-  appDocNode->AllocateChildNode( keys::endTime,
-                                 keys::endTime,
-                                 -1,
-                                 "real64",
-                                 "real64",
-                                 "application endTime",
-                                 "application endTime",
-                                 "1.0e9",
-                                 "",
-                                 1,
-                                 0 );
-
-  appDocNode->AllocateChildNode( keys::dt,
-                                 keys::dt,
-                                 -1,
-                                 "real64",
-                                 "real64",
-                                 "application dt",
-                                 "application dt",
-                                 "-1.0",
-                                 "",
-                                 1,
-                                 0 );
-
-  appDocNode->AllocateChildNode( keys::solvers,
-                                 keys::solvers,
-                                 -1,
-                                 "string",
-                                 "string",
-                                 "application solvers",
-                                 "application solvers",
-                                 "",
-                                 "",
-                                 1,
-                                 0 );
-
-
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
-  // This should be done automatically...
-  newApplication.RegisterViewWrapper<real64>(keys::beginTime);
-  newApplication.RegisterViewWrapper<real64>(keys::endTime);
-  newApplication.RegisterViewWrapper<real64>(keys::dt);
-  newApplication.RegisterViewWrapper<string_array>(keys::solvers);
-
-  // Read application values from the xml
-  *(newApplication.getData<real64>(keys::beginTime)) = applicationNode.attribute("beginTime").as_double(0.0);
-  *(newApplication.getData<real64>(keys::endTime)) = applicationNode.attribute("endTime").as_double(0.0);
-  *(newApplication.getData<real64>(keys::dt)) = applicationNode.attribute("dt").as_double(-1.0);
-
-  // Store the solver list in this application
-  std::vector<std::string> newApplicationSolvers;
-  applicationNode.attribute("solvers").load_string_array(newApplicationSolvers, "");
-  newApplication.resize(newApplicationSolvers.size());
-  ViewWrapper<string_array>::rtype solvers = newApplication.getData<string_array>(keys::solvers);
-  for (uint jj=0; jj<newApplicationSolvers.size(); ++jj)
-  {
-    solvers[static_cast<int>(jj)] = newApplicationSolvers[jj];
-  }
+  docNode->setSchemaType("Node");
+  docNode->setShortDescription("Contains the set of solver applications");
 }
-
 
 
 void EventManager::ReadXML( pugi::xml_node const & problemNode )
@@ -126,7 +47,11 @@ void EventManager::ReadXML( pugi::xml_node const & problemNode )
     // Allow other event types here?
     for (pugi::xml_node applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
     {
-      CreateSolverApplication(applicationNode);
+      std::string applicationName = applicationNode.attribute("name").value();
+      SolverApplication& newApplication = RegisterGroup<SolverApplication>(applicationName);
+      newApplication.SetDocumentationNodes(this);
+      newApplication.RegisterDocumentationNodes();
+      newApplication.ReadXML(applicationNode);
     }
   }
 }
@@ -157,6 +82,76 @@ void EventManager::CheckEventTiming()
   }
 }
 
+
+
+
+SolverApplication::SolverApplication( std::string const & name,
+                            ManagedGroup * const parent ):
+  ManagedGroup( name, parent)
+{
+}
+
+SolverApplication::~SolverApplication()
+{
+}
+
+void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * const )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  
+  docNode->setName(this->CatalogName());
+  docNode->setSchemaType("Node");
+  docNode->setShortDescription("Describes the timing of the solver application");
+
+  docNode->AllocateChildNode( keys::beginTime,
+                              keys::beginTime,
+                              -1,
+                              "real64",
+                              "real64",
+                              "application start time",
+                              "application start time",
+                              "0.0",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( keys::endTime,
+                              keys::endTime,
+                              -1,
+                              "real64",
+                              "real64",
+                              "application endTime",
+                              "application endTime",
+                              "1.0e9",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( keys::dt,
+                              keys::dt,
+                              -1,
+                              "real64",
+                              "real64",
+                              "application dt",
+                              "application dt",
+                              "-1.0",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( keys::solvers,
+                              keys::solvers,
+                              -1,
+                              "string_array",
+                              "string_array",
+                              "application solvers",
+                              "application solvers",
+                              "",
+                              "",
+                              1,
+                              0 );
+
+}
 
 
 } /* namespace geosx */

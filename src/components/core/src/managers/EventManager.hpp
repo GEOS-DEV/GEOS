@@ -26,12 +26,25 @@ public:
 
   virtual ~EventManager();
 
-  void CreateSolverApplication(pugi::xml_node const & applicationNode);
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
   void ReadXML( pugi::xml_node const & problemNode );
 
   void CheckEventTiming();
 
+};
+
+class SolverApplication : public dataRepository::ManagedGroup
+{
+public:
+  SolverApplication( std::string const & name,
+                     ManagedGroup * const parent );
+
+  virtual ~SolverApplication();
+
+  static string CatalogName() { return "SolverApplication"; }
+
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 };
 
 } /* namespace geosx */
