@@ -13,7 +13,3 @@
 	path = src/thirdparty/chai
 	url = ../chai.git
 	branch = master
-[submodule "PhysicsSolverPackage1"]
-	path = src/components/PhysicsSolverPackage1
-	url = https://settgast@lc.llnl.gov/bitbucket/scm/geosx/physicssolverpackage1.git
-	branch = master
