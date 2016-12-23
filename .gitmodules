@@ -13,7 +13,23 @@
 	path = src/thirdparty/chai
 	url = ../chai.git
 	branch = master
-[submodule "PhysicsSolverPackage1"]
+[submodule "src/components/PhysicsSolverPackage1"]
 	path = src/components/PhysicsSolverPackage1
 	url = https://settgast@lc.llnl.gov/bitbucket/scm/geosx/physicssolverpackage1.git
+	branch = master
+[submodule "src/components/PhysicsSolverPackage2"]
+	path = src/components/PhysicsSolverPackage2
+	url = https://settgast@lc.llnl.gov/bitbucket/scm/geosx/physicssolverpackage2.git
+	branch = master
+[submodule "src/components/MeshRefinementPackage"]
+	path = src/components/MeshRefinementPackage
+	url = https://settgast@lc.llnl.gov/bitbucket/scm/geosx/meshrefinementpackage.git
+	branch = master
+[submodule "src/components/ConstitutivePackage"]
+	path = src/components/ConstitutivePackage
+	url = https://settgast@lc.llnl.gov/bitbucket/scm/geosx/constitutivepackage1.git
+	branch = master
+[submodule "src/components/ReservoirSimulationPackage"]
+	path = src/components/ReservoirSimulationPackage
+	url = https://settgast@lc.llnl.gov/bitbucket/scm/geosx/reservoirsimulationpackage.git
 	branch = master
