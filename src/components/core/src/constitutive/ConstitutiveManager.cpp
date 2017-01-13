@@ -32,7 +32,7 @@ void ConstitutiveManager::ReadXMLInput()
 //  RegisterGroup( newName,
 //               ConstitutiveBase::CatalogInterface::Factory("HypoElasticLinear", newName, this ) );
 
-  RegisterGroup<ConstitutiveBase>(newName,"HypoElasticLinear");
+  //RegisterGroup<ConstitutiveBase>(newName,"HypoElasticLinear");
 }
 
 }

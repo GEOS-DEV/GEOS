@@ -13,17 +13,13 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ConstitutiveBase::ConstitutiveBase( std::string const & name,
-                                    ManagedGroup * const parent ) :
-  ManagedGroup(name,parent)
+ConstitutiveBase::ConstitutiveBase( std::string const & name )
 {}
 
 ConstitutiveBase::~ConstitutiveBase()
 {}
 
 
-void ConstitutiveBase::BuildDataStructure( dataRepository::ManagedGroup * const )
-{}
 
 
 ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()

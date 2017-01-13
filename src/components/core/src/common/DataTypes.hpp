@@ -26,18 +26,20 @@
 
 
 
-using integer     = int;
-using uinteger    = unsigned int;
 using  int32      = std::int32_t;
 using uint32      = std::uint32_t;
 using  int64      = std::int64_t;
 using uint64      = std::uint64_t;
 using std_size_t  = std::size_t;
 using string      = std::string;
+using integer     = int;
+using uinteger    = unsigned int;
+using index_t     = int;
 
 
 using real32 = float;
 using real64 = double;
+using real   = double;
 
 template< typename T >
 using ptr = T*;

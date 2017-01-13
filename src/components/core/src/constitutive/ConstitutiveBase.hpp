@@ -5,37 +5,47 @@
  *      Author: rrsettgast
  */
 
-#ifndef COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
-#define COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
+#ifndef CONSTITUTIVEBASE_HPP_
+#define CONSTITUTIVEBASE_HPP_
 
-#include "../dataRepository/ManagedGroup.hpp"
+#include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
+#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
+#include "../dataRepository/ManagedGroup.hpp"
 
 namespace geosx
 {
-
 namespace constitutive
 {
 
-class ConstitutiveBase : public dataRepository::ManagedGroup
+class ConstitutiveBase
 {
 public:
-  ConstitutiveBase( std::string const & name,
-                    ManagedGroup * const parent );
+  ConstitutiveBase( std::string const & name );
   virtual ~ConstitutiveBase();
 
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const );
+//  template< typename LEAFCLASS >
+  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
+                            dataRepository::ManagedGroup const * const parameters,
+                            dataRepository::ManagedGroup * const stateVariables,
+                            integer const systemAssembleFlag ) const = 0;
 
-  virtual void Update( dataRepository::ManagedGroup * const parameters,
-                       dataRepository::ManagedGroup * const stateVariables ) = 0;
+//  inline void AddToGlobalSystem(  );
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+
+//  template< typename LEAFCLASS >
+
+//  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+
+
+  using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const & >;
+  static typename CatalogInterface::CatalogType& GetCatalog();
 
 };
 
 
-}
-} /* namespace geosx */
 
-#endif /* COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_ */
+
+}
+}
+#endif

@@ -28,7 +28,14 @@ file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/
 set(componentlist geosx_core cxx-utilities)
 foreach(child ${children})
   if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${child})
-    if( NOT ( ${child} STREQUAL "core" OR ${child} STREQUAL "docs"  OR ${child} STREQUAL "cxx-utilities" ) )
+    if( NOT ( ${child} STREQUAL "core" OR 
+              ${child} STREQUAL "docs" OR 
+              ${child} STREQUAL "cxx-utilities" OR 
+              ${child} STREQUAL "ConstitutivePackage" OR 
+              ${child} STREQUAL "MeshRefinementPackage" OR 
+              ${child} STREQUAL "PhysicsSolverPackage1" OR 
+              ${child} STREQUAL "PhysicsSolverPackage2" OR 
+              ${child} STREQUAL "ReservoirSimulationPackage" ) )
 #      list(APPEND dirlist ${child})
       blt_add_component(COMPONENT_NAME ${child} DEFAULT_STATE ON)    
       set(componentlist ${componentlist} ${child} )  
