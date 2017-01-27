@@ -37,37 +37,82 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
- * ElementManagerT.cpp
- *
- *  Created on: Sep 14, 2010
- *      Author: settgast1
+/**
+ * @file ElementManagerT.h
+ * @author Randolph Settgast
+ * @date created on Sep 14, 2010
  */
 
-#include "ElementManager.hpp"
+#ifndef ELEMENTOBJECTT_H_
+#define ELEMENTOBJECTT_H_
 
+#include "ObjectManagerBase.hpp"
+#include "legacy/ObjectManagers/EnergyT.h"
+#include "legacy/DataStructures/InterObjectRelation.h"
+#include "legacy/ArrayT/bufvector.h"
 #include "FaceManager.hpp"
-//#include "legacy/IO/BinStream.h"
-#include <map>
-#include <vector>
-//#include "legacy/Constitutive/Material/MaterialFactory.h"
-//#include "legacy/ArrayT/ArrayT.h"
+
+
+class StableTimeStep;
 
 namespace geosx
 {
-ElementManager::ElementManager(  string const &, ObjectManagerBase * const parent ):
-ObjectManagerBase("ElementManager",parent)
+/**
+ * Class to manage the data stored at the element level.
+ */
+class ElementRegion : public ObjectManagerBase
 {
-  this->RegisterGroup("ElementRegions");
+public:
+
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
+  static string CatalogName()
+  {
+    return "ElementRegion";
+  }
+
+  string getName() const override final
+  {
+    return ElementRegion::CatalogName();
+  }
+
+
+  ///@}
+
+
+  ElementRegion() = delete;
+
+  ElementRegion( string const & name, ObjectManagerBase * const parent );
+
+
+  ElementRegion(const ElementRegion& init);
+//  ElementRegion( ElementRegion&& init);
+  
+
+  virtual ~ElementRegion();
+
+private:
+  ElementRegion& operator=(const ElementRegion& rhs);
+
+
+
+};
+
+
+
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+
+
+
+
+
 }
 
-ElementManager::~ElementManager()
-{
-  // TODO Auto-generated destructor stub
-}
 
 
 
-
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementManager, string const &, ObjectManagerBase * const )
-}
+#endif /* ELEMENTOBJECTT_H_ */

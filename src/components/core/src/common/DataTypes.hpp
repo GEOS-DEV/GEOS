@@ -80,8 +80,6 @@ using array = Array1dT<T>;
 
 namespace geosx
 {
-class ElementRegionT;
-typedef std::pair< ElementRegionT*, localIndex > ElementIdPair;
 }
 //***** LEGACY TYPEDEFS *****
 

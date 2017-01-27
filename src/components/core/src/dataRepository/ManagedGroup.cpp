@@ -143,7 +143,10 @@ void ManagedGroup::resize( int32 const newsize )
 {
   for( auto&& i : this->m_wrappers )
   {
-    i->resize(newsize);
+    if( i->sizedFromParent() == 1 )
+    {
+      i->resize(newsize);
+    }
   }
   *(this->getWrapper<int32>( keys::Size ).data())=newsize;
 }

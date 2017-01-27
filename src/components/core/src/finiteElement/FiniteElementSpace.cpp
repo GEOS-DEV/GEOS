@@ -7,6 +7,8 @@
 
 #include "FiniteElementSpace.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/ObjectManagerBase.hpp"
+#include "managers/NodeManager.hpp"
 
 namespace geosx
 {
@@ -24,8 +26,11 @@ FiniteElementSpace::~FiniteElementSpace()
 
 void FiniteElementSpace::BuildDataStructure( dataRepository::ManagedGroup * const parent )
 {
-  parent->RegisterGroup<ManagedGroup>(keys::FEM_Nodes);
-  parent->RegisterGroup<ManagedGroup>(keys::FEM_Elements);
+  m_nodeManager    = dynamic_cast<NodeManager*>(&(parent->RegisterGroup<ObjectManagerBase>( keys::FEM_Nodes, NodeManager::CatalogName() ) ) );
+  m_elementManager = dynamic_cast<ElementManager*>(&(parent->RegisterGroup<ObjectManagerBase>(keys::FEM_Elements, ElementManager::CatalogName())));
+
+
+
 }
 
 

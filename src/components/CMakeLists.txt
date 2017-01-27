@@ -33,7 +33,6 @@ foreach(child ${children})
               ${child} STREQUAL "cxx-utilities" OR 
               ${child} STREQUAL "ConstitutivePackage" OR 
               ${child} STREQUAL "MeshRefinementPackage" OR 
-              ${child} STREQUAL "PhysicsSolverPackage1" OR 
               ${child} STREQUAL "PhysicsSolverPackage2" OR 
               ${child} STREQUAL "ReservoirSimulationPackage" ) )
 #      list(APPEND dirlist ${child})

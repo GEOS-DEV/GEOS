@@ -8,7 +8,7 @@
 #ifndef SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 #define SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 
-#include "SolverBase.hpp"
+#include "PhysicsSolvers/SolverBase.hpp"
 
 
 namespace geosx

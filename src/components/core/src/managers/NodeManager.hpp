@@ -69,141 +69,26 @@ class EdgeManager;
  * The NodeManagerT class manages the node data using the ObjectDataStructureBaseT as a data manager.
  * This means that each field is stored in an array where each array entry corresponds to a node.
  */
-class NodeManager : public ObjectDataStructureBaseT
+class NodeManager : public ObjectManagerBase
 {
 public:
 
 
   /// default constructor
-  NodeManager();
+  NodeManager( std::string const & name,
+               ObjectManagerBase * const parent );
 
 
 
   /// default destructor
   ~NodeManager();
 
+  static string CatalogName() { return "NodeManager"; }
+  string getName() const      { return NodeManager::CatalogName(); }
 
-  globalIndex resize( const localIndex size, const bool assignGlobals = false )
-  {
-    m_toElementsRelation.resize(size);
-    return ObjectDataStructureBaseT::resize(size, assignGlobals );
-  }
 
   void Initialize();
 
-  /// pure virtual function that sets what objects are on the boundary of the domain
-  void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL );
-  void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = NULL) ;
-  void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager ,
-                                                         Array1dT<gArray1d>& objectToCompositionObject  )
-  {
-    (void)compositionObjectManager;
-    (void)objectToCompositionObject;
-    throw GPException("NodeManagerT::ExtractMapFromObjectForAssignGlobalObjectNumbers() shouldn't be called\n");
-  }
-
-  void SetLayersFromDomainBoundary( const int layer );
-
-  /// pack nodes into a buffer
-  template< typename T_indices >
-  unsigned int PackNodes( const T_indices& sendnodes,
-                          const FaceManager& faceManager,
-                          bufvector& buffer,
-                          const bool packConnectivityToGlobal,
-                          const bool packFields,
-                          const bool packMaps,
-                          const bool packSets  ) const;
-
-  /// unpack nodes from a buffer
-  unsigned int UnpackNodes( const char*& buffer,
-                            const FaceManager& faceManager,
-                            lArray1d& nodeReceiveLocalIndices,
-                            const bool unpackConnectivityToLocal,
-                            const bool unpackFields,
-                            const bool unpackMaps,
-                            const bool unpackSets  );
-
-  void CalculateEffectiveNormal( const localIndex index,
-                                 const FaceManager& faceManager,
-                                 R1Tensor& normal ) const;
-
-
-  /// copy fields from one node to another
-  void CopyNode( const int destination, const int source );
-
-  /// construct the nodeToElementMap using data in elementManager
-  void ConstructNodeToElementMap( const ElementManager& elementManager );
-
-  /// construct the nodeToElementMap using data in elementManager
-  void AddToNodeToElementMap( const ElementManager& elementManager,
-                                  const std::map<std::string,lArray1d>& newElementIndices );
-
-  /// construct nodeToFaceMap using data in the faceManager
-  void ConstructNodeToFaceMap( const FaceManager& faceManager );
-
-  void ConnectivityFromGlobalToLocal( const lSet& indices,
-                                      const lSet& clearIndices,
-                                      const std::map<globalIndex,localIndex>& faceGlobalToLocal );
-
-
-  void ModifyNodeToEdgeMapFromSplit( const EdgeManager& edgeManager,
-                                     const lSet& newEdgeIndices,
-                                     const lSet& modifiedEdgeIndices );
-
-// Fu note on 20130416: Looks like this was temporary.  This function is now taken care of by element region. 
-// We will keep it here for a while and delete it later.
-//  void UpdateNodeExternalityFromSplit( const FaceManager& faceManager,
-//                                     const lSet& newNodeIndices,
-//                                     const lSet& modifiedNodeIndices );
-
-  /// construct nodeToFaceMap using data in the faceManager
-  void AddToNodeToFaceMap( const FaceManager& faceManager,
-                           const lArray1d& newFaceIndices );
-
-  void AddToNodeToEdgeMap( const EdgeManager& edgeManager,
-                           const lArray1d& newEdgeIndices );
-
-  /// get the current position of the node
-  void GetPosition(localIndex nd, R1Tensor& position){
-    Array1dT< R1Tensor >& refPosition = this->GetFieldData<FieldInfo::referencePosition>();
-    Array1dT< R1Tensor >& displacement = this->GetFieldData<FieldInfo::displacement>();
-
-    position = refPosition[nd];
-    position += displacement[nd];
-  }
-
-
-  void SortNodeOnPlane (lArray1d& nostList) const;
-
-  void UpdateDetachedNodeLocationAndVelocity();
-  void ZeroDetachedNodeVelocity();
-  void FindAllEffectiveChildren(localIndex& nodeID,
-                                lArray1d& list,
-                                rArray1d& weight);
-
-  void GetDomainExtents(R1Tensor& pmin, R1Tensor& pmax, localIndex Ndims);
-
-protected:
-  void WriteNonManagedDataMembersToSilo( SiloFile& siloFile,
-                                         const std::string& siloDirName,
-                                         const std::string& meshname,
-                                         const int centering,
-                                         const int cycleNum,
-                                         const realT problemTime,
-                                         const bool isRestart,
-                                         const std::string& multiRoot,
-                                         const std::string& regionName = "none",
-                                         const lArray1d& mask = lArray1d());
-
-  void ReadNonManagedDataMembersFromSilo( const SiloFile& siloFile,
-                                          const std::string& siloDirName,
-                                          const std::string& meshname,
-                                          const int centering,
-                                          const int cycleNum,
-                                          const realT problemTime,
-                                          const bool isRestart,
-                                          const std::string& regionName = "none",
-                                          const lArray1d& mask = lArray1d());
 
 public:
 
@@ -214,25 +99,23 @@ public:
    */
   ///@{
 
-  typedef std::set< std::pair<ElementRegionT*,localIndex> > nodeToElemType;
-  Array1dT< nodeToElemType >  m_toElementsRelation;
 
-  UnorderedVariableOneToManyRelation&  m_nodeToFaceMap;
-  UnorderedVariableOneToManyRelation&  m_nodeToEdgeMap;
+//  UnorderedVariableOneToManyRelation&  m_nodeToFaceMap;
+//  UnorderedVariableOneToManyRelation&  m_nodeToEdgeMap;
 
 //  UnorderedVariableOneToManyRelation& m_toCrackSurfacesRelation;
 
   ///@}
 
-  std::set< localIndex > m_matchedBoundaryNodes;
 
 
 protected:
 
 private:
   /// copy constructor
-  NodeManager( const NodeManager& init );
-  NodeManager& operator=( const NodeManager&);
+  NodeManager() = delete;
+  NodeManager( const NodeManager& init ) = delete;
+  NodeManager& operator=( const NodeManager&) = delete;
 
 
 };

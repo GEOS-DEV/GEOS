@@ -104,16 +104,20 @@ public:
   template< typename T = ManagedGroup >
   T& RegisterGroup( std::string const & name, std::unique_ptr<T> newObject );
 
-  template< typename T = ManagedGroup >
+  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
   T& RegisterGroup( std::string const & name )
   {
-    return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
+//    T* temp = dynamic_cast<T*>(this);
+    return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, dynamic_cast<TBASE*>(this) )) );
+//    return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
   }
 
   template< typename T = ManagedGroup >
   T& RegisterGroup( std::string const & name, std::string const & catalogName )
   {
-    std::unique_ptr<T> newGroup = T::CatalogInterface::Factory(catalogName, name, this );
+//    T* temp = dynamic_cast<T*>(this);
+    std::unique_ptr<T> newGroup = T::CatalogInterface::Factory(catalogName, name, dynamic_cast<T*>(this) );
+//    std::unique_ptr<T> newGroup = T::CatalogInterface::Factory(catalogName, name, (this) );
     return RegisterGroup<T>( name, std::move(newGroup) );
   }
 

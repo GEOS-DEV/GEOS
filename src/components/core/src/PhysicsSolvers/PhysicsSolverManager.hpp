@@ -33,6 +33,9 @@ public:
 
   void ReadXML( dataRepository::ManagedGroup& domain, pugi::xml_node const & problemNode );
 
+private:
+  PhysicsSolverManager() = delete;
+
 };
 
 } /* namespace geosx */

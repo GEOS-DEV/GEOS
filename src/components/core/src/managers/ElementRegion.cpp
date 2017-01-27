@@ -44,30 +44,26 @@
  *      Author: settgast1
  */
 
-#include "ElementManager.hpp"
+#include "ElementRegion.hpp"
 
-#include "FaceManager.hpp"
-//#include "legacy/IO/BinStream.h"
-#include <map>
-#include <vector>
-//#include "legacy/Constitutive/Material/MaterialFactory.h"
-//#include "legacy/ArrayT/ArrayT.h"
 
 namespace geosx
 {
-ElementManager::ElementManager(  string const &, ObjectManagerBase * const parent ):
-ObjectManagerBase("ElementManager",parent)
+
+
+
+ElementRegion::ElementRegion( string const & name, ObjectManagerBase * const parent ):
+    ObjectManagerBase( "ElementRegion", parent )
 {
-  this->RegisterGroup("ElementRegions");
+
 }
 
-ElementManager::~ElementManager()
+
+ElementRegion::~ElementRegion()
 {
-  // TODO Auto-generated destructor stub
 }
 
 
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ObjectManagerBase * const )
 
-
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementManager, string const &, ObjectManagerBase * const )
 }

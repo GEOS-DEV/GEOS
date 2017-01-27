@@ -12,6 +12,9 @@
 namespace geosx
 {
 
+class NodeManager;
+class ElementManager;
+
 
 class FiniteElementSpace : public dataRepository::ManagedGroup
 {
@@ -38,7 +41,10 @@ public:
   virtual dataRepository::ManagedGroup & getFaceManager();
   virtual dataRepository::ManagedGroup & getElementManager();
 
+private:
 
+  NodeManager *    m_nodeManager    = nullptr;
+  ElementManager * m_elementManager = nullptr;
 
 
 };

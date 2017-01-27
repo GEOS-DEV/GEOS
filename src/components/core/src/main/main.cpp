@@ -3,7 +3,6 @@
 #include <iostream>
 //#include "ManagedArray.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
-#include "PhysicsSolvers/SolidMechanicsLagrangianFEM.hpp"
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
