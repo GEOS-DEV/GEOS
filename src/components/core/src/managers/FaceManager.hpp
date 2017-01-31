@@ -35,7 +35,9 @@ public:
   ///@}
   ///
   ///
-  FaceManager( string const & , ObjectManagerBase * const parent );
+  ///
+  ///
+  FaceManager( string const & , ManagedGroup * const parent );
   virtual ~FaceManager();
 
   void Initialize(  ){}
@@ -50,6 +52,9 @@ public:
 
 private:
 
+  FaceManager() = delete;
+  FaceManager( FaceManager const &) = delete;
+  FaceManager( FaceManager && ) = delete;
 };
 
 }

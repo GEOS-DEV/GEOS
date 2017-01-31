@@ -101,24 +101,24 @@ public:
   }
 
 
-  template< typename T = ManagedGroup >
-  T& RegisterGroup( std::string const & name, std::unique_ptr<T> newObject );
+  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
+  T& RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject );
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
   T& RegisterGroup( std::string const & name )
   {
 //    T* temp = dynamic_cast<T*>(this);
-    return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, dynamic_cast<TBASE*>(this) )) );
+    return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
 //    return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
   }
 
-  template< typename T = ManagedGroup >
+  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
   T& RegisterGroup( std::string const & name, std::string const & catalogName )
   {
 //    T* temp = dynamic_cast<T*>(this);
-    std::unique_ptr<T> newGroup = T::CatalogInterface::Factory(catalogName, name, dynamic_cast<T*>(this) );
+    std::unique_ptr<TBASE> newGroup = TBASE::CatalogInterface::Factory(catalogName, name, this );
 //    std::unique_ptr<T> newGroup = T::CatalogInterface::Factory(catalogName, name, (this) );
-    return RegisterGroup<T>( name, std::move(newGroup) );
+    return RegisterGroup<T,TBASE>( name, std::move(newGroup) );
   }
 
 
@@ -428,9 +428,8 @@ ViewWrapper<T>& ManagedGroup::RegisterViewWrapper( std::string const & name, std
   return getWrapper<T>(key);
 }
 
-template< typename T >
-T& ManagedGroup::RegisterGroup( std::string const & name,
-                                     std::unique_ptr<T> newObject )
+template < typename T, typename TBASE >
+T& ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
 {
   auto iterKeyLookup = m_subGroups.find(name);
 

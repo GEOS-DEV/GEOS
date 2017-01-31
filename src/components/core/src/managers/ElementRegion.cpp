@@ -49,10 +49,11 @@
 
 namespace geosx
 {
+using namespace dataRepository;
 
 
 
-ElementRegion::ElementRegion( string const & name, ObjectManagerBase * const parent ):
+ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent ):
     ObjectManagerBase( "ElementRegion", parent )
 {
 
@@ -64,6 +65,6 @@ ElementRegion::~ElementRegion()
 }
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ObjectManagerBase * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ManagedGroup * const )
 
 }

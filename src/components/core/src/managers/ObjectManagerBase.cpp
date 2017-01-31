@@ -9,9 +9,10 @@
 
 namespace geosx
 {
+using namespace dataRepository;
 
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
-                                      ObjectManagerBase * const parent ):
+                                      ManagedGroup * const parent ):
     ManagedGroup(name,parent),
     m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() )
 {
@@ -21,7 +22,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   this->RegisterViewWrapper< iArray1d >("isExternal");
 }
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
-                                      ObjectManagerBase * const parent,
+                                      ManagedGroup * const parent,
                                       cxx_utilities::DocumentationNode * docNode ):
     ManagedGroup(name,parent,docNode),
     m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() )

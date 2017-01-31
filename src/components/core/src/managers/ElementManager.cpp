@@ -55,7 +55,9 @@
 
 namespace geosx
 {
-ElementManager::ElementManager(  string const &, ObjectManagerBase * const parent ):
+using namespace dataRepository;
+
+ElementManager::ElementManager(  string const &, ManagedGroup * const parent ):
 ObjectManagerBase("ElementManager",parent)
 {
   this->RegisterGroup("ElementRegions");
@@ -69,5 +71,5 @@ ElementManager::~ElementManager()
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementManager, string const &, ObjectManagerBase * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementManager, string const &, ManagedGroup * const )
 }

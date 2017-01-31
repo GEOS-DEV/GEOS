@@ -32,7 +32,7 @@ PhysicsSolverManager::~PhysicsSolverManager()
 SolverBase & PhysicsSolverManager::CreateSolver( string const & solverCatalogKey, string const & solverName )
 {
   std::unique_ptr<SolverBase> solver = SolverBase::CatalogInterface::Factory( solverCatalogKey, solverName, this );
-  SolverBase & rval = this->RegisterGroup( solverName, std::move(solver) );
+  SolverBase & rval = this->RegisterGroup<SolverBase>( solverName, std::move(solver) );
 
   return rval;
 }

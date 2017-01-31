@@ -28,7 +28,7 @@ public:
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
-  void ReadXML( pugi::xml_node const & problemNode );
+  void ReadXML( pugi::xml_node const & problemNode ) override;
 
   void CheckEventTiming();
 

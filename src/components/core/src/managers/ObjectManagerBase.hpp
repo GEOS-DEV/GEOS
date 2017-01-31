@@ -20,10 +20,10 @@ public:
   ObjectManagerBase() = delete;
 
   explicit ObjectManagerBase( std::string const & name,
-                              ObjectManagerBase * const parent );
+                              dataRepository::ManagedGroup * const parent );
 
   explicit ObjectManagerBase( std::string const & name,
-                              ObjectManagerBase * const parent,
+                              dataRepository::ManagedGroup * const parent,
                               cxx_utilities::DocumentationNode * docNode );
 
   ~ObjectManagerBase();
@@ -33,7 +33,7 @@ public:
    */
   ///@{
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ObjectManagerBase, std::string const &, ObjectManagerBase * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   virtual string getName() const = 0;

@@ -73,10 +73,10 @@ class ProblemManager : public ObjectManagerBase
 {
 public:
   explicit ProblemManager( const std::string& name,
-                           ObjectManagerBase * const parent );
+                           ManagedGroup * const parent );
 
   explicit ProblemManager( const std::string& name,
-                           ObjectManagerBase * const parent,
+                           ManagedGroup * const parent,
                            cxx_utilities::DocumentationNode * docNode );
   ~ProblemManager();
 

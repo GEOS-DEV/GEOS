@@ -54,6 +54,7 @@
 //#include "ElementRegionT.hpp"
 namespace geosx
 {
+using namespace dataRepository;
 
 // *********************************************************************************************************************
 /**
@@ -61,7 +62,7 @@ namespace geosx
  * @return
  */
 NodeManager::NodeManager( std::string const & name,
-                          ObjectManagerBase * const parent ):
+                          ManagedGroup * const parent ):
 ObjectManagerBase( name, parent )
 {
 }
@@ -109,7 +110,7 @@ void NodeManager::Initialize()
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ObjectManagerBase * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ManagedGroup * const )
 
 }
 

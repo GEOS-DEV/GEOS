@@ -35,7 +35,7 @@ namespace dataRepository
 using namespace dataRepository;
 
 ProblemManager::ProblemManager( const std::string& name,
-                                ObjectManagerBase * const parent ) :
+                                ManagedGroup * const parent ) :
   ObjectManagerBase( name, parent ),
   m_physicsSolverManager(nullptr)
 {
@@ -43,7 +43,7 @@ ProblemManager::ProblemManager( const std::string& name,
 }
 
 ProblemManager::ProblemManager( const std::string& name,
-                                ObjectManagerBase * const parent,
+                                ManagedGroup * const parent,
                                 cxx_utilities::DocumentationNode * docNode ) :
   ObjectManagerBase( name, parent, docNode ),
   m_physicsSolverManager(nullptr)
@@ -60,7 +60,7 @@ ProblemManager::~ProblemManager()
 
 void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 {
-  RegisterGroup<DomainPartition>(keys::domain);
+  RegisterGroup<DomainPartition>(keys::domain).BuildDataStructure(nullptr);
   RegisterGroup<ManagedGroup>(keys::commandLine);
 }
 
@@ -457,6 +457,6 @@ DomainPartition const & ProblemManager::getDomainPartition() const
   return GetGroup<DomainPartition>(keys::domain);
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, ObjectManagerBase * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, ManagedGroup * const )
 
 } /* namespace geosx */

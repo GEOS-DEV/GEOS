@@ -14,6 +14,7 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 
+#include "managers/NodeManager.hpp"
 
 namespace geosx
 {
@@ -121,8 +122,8 @@ void SolidMechanics_LagrangianFEM::BuildDataStructure( ManagedGroup * const doma
 {
   SolverBase::BuildDataStructure( domain );
 
-  ManagedGroup& nodes = domain->RegisterGroup<ManagedGroup>(keys::FEM_Nodes);
-  ManagedGroup& elems = domain->RegisterGroup<ManagedGroup>(keys::FEM_Elements);
+  NodeManager& nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
+  ElementManager& elems = domain->GetGroup<ElementManager>(keys::FEM_Elements);
 
   nodes.RegisterViewWrapper<real64_array>(keys::TotalDisplacement);
   nodes.RegisterViewWrapper<real64_array>(keys::IncrementalDisplacement);

@@ -7,19 +7,20 @@
 
 namespace geosx
 {
+using namespace dataRepository;
 
 /**
  *
  * @return
  */
-FaceManager::FaceManager( string const & , ObjectManagerBase * const parent ):
-ObjectManagerBase("FaceManager",parent),
+FaceManager::FaceManager( string const & , ManagedGroup * const parent ):
+ObjectManagerBase("FaceManager",parent)
 {
   //0-based; note that the following field is ALSO 0
   //for faces that are not external faces, so check isExternal before using
-  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
-
-  this->AddKeylessDataField<R1Tensor>("FaceCenter",true,true);
+//  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
+//
+//  this->AddKeylessDataField<R1Tensor>("FaceCenter",true,true);
 }
 
 /**
@@ -28,11 +29,6 @@ ObjectManagerBase("FaceManager",parent),
  */
 FaceManager::~FaceManager()
 {
-#if USECPP11!=1
-  if( m_cohesiveZone )
-    delete m_cohesiveZone;
-#endif
-
 }
 //
 //void FaceManager::BuildFaces( const NodeManager& nodeManager, const ElementManager& elementManager )
@@ -212,7 +208,7 @@ FaceManager::~FaceManager()
 //  ++numFaces;
 //}
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ObjectManagerBase * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ManagedGroup * const )
 
 }
 

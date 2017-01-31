@@ -7,13 +7,14 @@
 
 #include "DomainPartition.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "NodeManager.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-DomainPartition::DomainPartition(  std::string const & name,
-                                   ManagedGroup * const parent ) :
+DomainPartition::DomainPartition( std::string const & name,
+                                  ManagedGroup * const parent ) :
   ManagedGroup( name, parent )
 {}
 
@@ -25,6 +26,9 @@ void DomainPartition::BuildDataStructure( ManagedGroup * const )
 {
   this->RegisterGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
 
+  this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
+  this->RegisterGroup<ElementManager,ObjectManagerBase>(keys::FEM_Elements);
+//  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
 }
 
 } /* namespace geosx */

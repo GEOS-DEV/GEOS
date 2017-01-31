@@ -30,6 +30,9 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const );
 
+private:
+
+
 };
 
 } /* namespace geosx */

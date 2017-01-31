@@ -82,7 +82,7 @@ public:
 
   ///@}
 
-  ElementManager( string const &, ObjectManagerBase * const parent );
+  ElementManager( string const &, ManagedGroup * const parent );
   virtual ~ElementManager();
 
   void Initialize(  ){}

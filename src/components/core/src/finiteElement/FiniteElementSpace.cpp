@@ -26,10 +26,8 @@ FiniteElementSpace::~FiniteElementSpace()
 
 void FiniteElementSpace::BuildDataStructure( dataRepository::ManagedGroup * const parent )
 {
-  m_nodeManager    = dynamic_cast<NodeManager*>(&(parent->RegisterGroup<ObjectManagerBase>( keys::FEM_Nodes, NodeManager::CatalogName() ) ) );
-  m_elementManager = dynamic_cast<ElementManager*>(&(parent->RegisterGroup<ObjectManagerBase>(keys::FEM_Elements, ElementManager::CatalogName())));
-
-
+  m_nodeManager    = &(parent->RegisterGroup<NodeManager,ObjectManagerBase>( keys::FEM_Nodes, NodeManager::CatalogName() ) );
+  m_elementManager = &(parent->RegisterGroup<ElementManager,ObjectManagerBase>( keys::FEM_Elements, ElementManager::CatalogName() ) );
 
 }
 

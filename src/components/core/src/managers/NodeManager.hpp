@@ -76,7 +76,7 @@ public:
 
   /// default constructor
   NodeManager( std::string const & name,
-               ObjectManagerBase * const parent );
+               ManagedGroup * const parent );
 
 
 

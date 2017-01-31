@@ -9,6 +9,7 @@ set(geosx_headers
     managers/ElementManager.hpp
     managers/ElementRegion.hpp
     managers/EventManager.hpp
+    managers/FaceManager.hpp
     managers/NodeManager.hpp
     managers/ObjectManagerBase.hpp
     managers/ProblemManager.hpp
@@ -25,6 +26,7 @@ set(geosx_core_sources
     managers/ElementManager.cpp
     managers/ElementRegion.cpp
     managers/EventManager.cpp
+    managers/FaceManager.cpp
     managers/NodeManager.cpp
     managers/ObjectManagerBase.cpp
     managers/ProblemManager.cpp

@@ -31,6 +31,7 @@ public:
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
+  using dataRepository::ManagedGroup::ReadXML;
   void ReadXML( dataRepository::ManagedGroup& domain, pugi::xml_node const & problemNode );
 
 private:

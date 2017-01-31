@@ -85,7 +85,7 @@ public:
 
   ElementRegion() = delete;
 
-  ElementRegion( string const & name, ObjectManagerBase * const parent );
+  ElementRegion( string const & name, ManagedGroup * const parent );
 
 
   ElementRegion(const ElementRegion& init);
