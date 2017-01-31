@@ -382,12 +382,10 @@ void ProblemManager::InitializeObjects()
   DomainPartition& domain  = getDomainPartition();
 
   // Initialize solvers
-  ViewWrapper<string_array>::rtype  solverNames = this->m_physicsSolverManager->getData<string_array>(keys::solverNames);
-  for (auto ii=0; ii<this->m_physicsSolverManager->size(); ++ii)
+  m_physicsSolverManager->forSubGroups<SolverBase>( [this,&domain]( SolverBase & solver ) -> void
   {
-    SolverBase& currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverNames[ii] );
-    currentSolver.Initialize( domain );
-  }
+    solver.Initialize( domain );
+  });
 }
 
 

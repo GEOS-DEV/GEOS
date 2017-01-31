@@ -145,6 +145,30 @@ public:
 #endif
   }
 
+  std::unordered_map< string, std::unique_ptr<ManagedGroup> > & GetSubGroups()
+  {
+    return m_subGroups;
+  }
+
+  std::unordered_map< string, std::unique_ptr<ManagedGroup> > const & GetSubGroups() const
+  {
+    return m_subGroups;
+  }
+
+  template< typename T = ManagedGroup, typename LAMBDA >
+  void forSubGroups( LAMBDA lambda )
+  {
+    for( auto& subGroupIter : m_subGroups )
+    {
+#ifdef USE_DYNAMIC_CASTING
+       T & subGroup = dynamic_cast<T &>( *(subGroupIter.second) );
+#else
+       T & subGroup = static_cast<T &>( *(subGroupIter.second) );
+#endif
+       lambda( subGroup );
+    }
+  }
+
 
   template< typename T >
   ViewWrapper<T>& RegisterViewWrapper( std::string const & name, std::size_t * const rkey = nullptr );

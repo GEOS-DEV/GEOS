@@ -159,6 +159,7 @@ void ManagedGroup::RegisterDocumentationNodes()
   {
     if( subNode.second.getDataType() != "DocumentationNode" )
     {
+      std::cout<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
       RegisterViewWrapper( subNode.second.getStringKey(),
                            rtTypes::typeID(subNode.second.getDataType() ) );
     }
