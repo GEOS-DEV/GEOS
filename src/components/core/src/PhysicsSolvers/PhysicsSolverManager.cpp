@@ -41,14 +41,17 @@ void PhysicsSolverManager::FillDocumentationNode( dataRepository::ManagedGroup *
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setSchemaType("UniqueNode");
+
+  docNode->m_name = this->getName();
+  docNode->m_dataType = "type";
+  docNode->m_shortDescription = "description";
+
 }
 
 
 void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
                                     pugi::xml_node const & problemNode )
 {
-  // Store a list of available solvers
-  RegisterViewWrapper<string_array>(keys::solverNames);
 
   // Solvers
   pugi::xml_node topLevelNode = problemNode.child("Solvers");
@@ -59,12 +62,6 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
   }
   else
   {
-    // The push_back and insert methods don't seem to work, so manually resize the manager to hold the solver list
-    long nSolvers = std::distance(topLevelNode.children().begin(), topLevelNode.children().end());
-    this->resize(nSolvers);
-    ViewWrapper<string_array>::rtype  solverNames = getData<string_array>(keys::solverNames);
-    int solverNumber = 0;
-
     for (pugi::xml_node solverNode=topLevelNode.first_child(); solverNode; solverNode=solverNode.next_sibling())
     {
       std::cout << "   " << solverNode.name() << std::endl;
@@ -81,31 +78,10 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
 
 
 
-//      cxx_utilities::DocumentationNode solverDoc;
-//      solverDoc.m_name = solverNode.name();
-//      solverDoc.m_dataType = "type";
-//      solverDoc.m_shortDescription = "description";
-//      solverDoc.m_level = docNode.m_level+1;
-//      docNode.m_child.insert( { solverNode.name(), solverDoc } );
-//
-//      docNode->AllocateChildNode( solverNode.name(),
-//                                  solverNode.name(),
-//                                  0,
-//                                  "DocumentationNode",
-//                                  "",
-//                                  "Node that contains all the physics solvers",
-//                                                 "",
-//                                                 "",
-//                                                 "",
-//                                                 1,
-//                                                 0,
-//                                                 0 );
 
 
 
       newSolver.ReadXML(solverNode );
-      solverNames[solverNumber] = solverID;
-      solverNumber++;
     }
   }
 

@@ -27,7 +27,7 @@ void DomainPartition::BuildDataStructure( ManagedGroup * const )
   this->RegisterGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
 
   this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
-  this->RegisterGroup<ElementManager,ObjectManagerBase>(keys::FEM_Elements);
+  this->RegisterGroup<ElementManager>(keys::FEM_Elements);
 //  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
 }
 
