@@ -37,19 +37,12 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**
- * @file Table.h
- * @author Scott Johnson
- * @date Dec 6, 2013
- * This holds the definitions for a generic table structure
-*/
 
 #ifndef __TABLE__
 #define __TABLE__
 
-#include "legacy/Common/Common.h"
-#include "legacy/Utilities/StringUtilities.h"
-
+#include "codingUtilities/StringUtilities.hpp"
+#include "slic/slic.hpp"
 #include <vector>
 
 // If we wanted to be super fancy we could move this inside the class and then specialize on the dimension of the table class.
@@ -61,10 +54,6 @@ namespace TableInterpolation{
   };
 }
 
-/**
- * @author Scott Johnson
- * @brief Generic templated table class
- */
 template<unsigned int T_dim, class T>
 class Table
 {
@@ -99,7 +88,7 @@ public:
         for(unsigned int j = 0; j < x[i].size(); j++)
         {
           if(x[i][j] <= xlast)
-            throw GPException("Table:SetGrid - ticks for axis " + toString(i) +" must be a monotonic increasing vector of values");
+            SLIC_ERROR("Table:SetGrid - ticks for axis " + std::to_string(i) +" must be a monotonic increasing vector of values");
           xlast = x[i][j];
         }
       }
@@ -131,7 +120,7 @@ public:
   {
     m_p = p;
     if(m_size == 0 || m_p.size() != m_size)
-      throw GPException("Table:SetValues - Must set axes before attempting to set data");
+      SLIC_ERROR("Table:SetValues - Must set axes before attempting to set data");
     m_set = true;
   }
 
@@ -153,21 +142,21 @@ public:
   unsigned int Dimension(const unsigned dim) const
   {
     if(dim >= T_dim)
-      throw GPException("Table dimension out of range");
+      SLIC_ERROR("Table dimension out of range");
     return this->m_x[dim].size();
   }
 
   const std::vector<realT>& AxisValues(const unsigned int dim) const
   {
     if(dim >= T_dim)
-      throw GPException("Table dimension out of range");
+      SLIC_ERROR("Table dimension out of range");
     return m_x[dim];
   }
 
   unsigned int ValuesPerBlock(const unsigned int dim) const
   {
     if(dim >= T_dim)
-      throw GPException("Table dimension out of range");
+      SLIC_ERROR("Table dimension out of range");
     return m_mult[dim];
   }
 
@@ -324,7 +313,7 @@ private:
     if(m_zeroGradient || !m_set || T_dim < 1)
       return ret;
     if(gradientDimension >= T_dim)
-      throw GPException("Table:Gradient - cannot have gradient dimension >= dimension");
+      SLIC_ERROR("Table:Gradient - cannot have gradient dimension >= dimension");
 
     unsigned int i = 0, dim = T_dim - 1;
     return Gradient(xx, dim, gradientDimension, i);

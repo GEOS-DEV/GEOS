@@ -5,9 +5,13 @@
  *      Author: settgast1
  */
 
-#include "SimpleGeometricObjects.h"
+#include "SimpleGeometricObjects.hpp"
+
 #include "ObjectManagers/FunctionManager.h"
 #include "Utilities/Functions.h"
+
+namespace geosx
+{
 
 
 // type strings
@@ -305,4 +309,6 @@ bool GeometryFunction::IsCoordInObject( const R1Tensor& coord )
 {
   realT value =  (*m_function)(coord.Data()[0]);
   return value > 0;
+}
+
 }

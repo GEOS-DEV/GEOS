@@ -46,8 +46,8 @@
 #ifndef FUNCTIONMANAGER_H_
 #define FUNCTIONMANAGER_H_
 
-#include "Common/typedefs.h"
-#include "Utilities/Functions.h"
+//#include "Common/typedefs.h"
+#include "codingUtilities/Functions.h"
 #include <map>
 
 class FunctionManager

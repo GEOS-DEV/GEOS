@@ -8,12 +8,13 @@
 #ifndef SIMPLEGEOMETRICOBJECTS_H_
 #define SIMPLEGEOMETRICOBJECTS_H_
 
-#include "../legacy/IO/ticpp/HierarchicalDataNode.h.old"
-#include "Common/Common.h"
-#include "Utilities/StringUtilities.h"
+//#include "common/Common.h"
+#include "codingUtilities/StringUtilities.hpp"
 
 class Function;
 
+namespace geosx
+{
 class SimpleGeometricObjectBase
 {
 
@@ -55,13 +56,13 @@ public:
   {
   }
 
-  virtual void ReadXML( TICPP::HierarchicalDataNode& hdn ) = 0;
+  virtual void ReadXML( pugi::xml_node& hdn ) = 0;
 
   virtual bool IsCoordInObject( const R1Tensor& coord ) = 0;
 
   static SimpleGeometricObjectBase* Allocate( const Types type );
 
-  static SimpleGeometricObjectBase* Allocate( TICPP::HierarchicalDataNode* hdn );
+  static SimpleGeometricObjectBase* Allocate( pugi::xml_node * hdn );
 
   static void Deallocate( SimpleGeometricObjectBase* object );
 
@@ -142,7 +143,7 @@ inline SimpleGeometricObjectBase::Types fromString<SimpleGeometricObjectBase::Ty
 class Box : public SimpleGeometricObjectBase
 {
 public:
-  void ReadXML( TICPP::HierarchicalDataNode& hdn );
+  void ReadXML( pugi::xml_node& hdn );
 
   bool IsCoordInObject( const R1Tensor& coord );
   private:
@@ -158,7 +159,7 @@ class Cylinder : public SimpleGeometricObjectBase
 {
 
 public:
-  void ReadXML( TICPP::HierarchicalDataNode& hdn );
+  void ReadXML( pugi::xml_node& hdn );
 
   bool IsCoordInObject( const R1Tensor& coord );
   private:
@@ -172,7 +173,7 @@ public:
 class CylinderBy2Ends : public SimpleGeometricObjectBase
 {
 public:
-  void ReadXML( TICPP::HierarchicalDataNode& hdn );
+  void ReadXML( pugi::xml_node& hdn );
 
   bool IsCoordInObject( const R1Tensor& coord );
   private:
@@ -187,7 +188,7 @@ class Sphere : public SimpleGeometricObjectBase
 {
 
 public:
-  void ReadXML( TICPP::HierarchicalDataNode& hdn );
+  void ReadXML( pugi::xml_node& hdn );
 
   bool IsCoordInObject( const R1Tensor& coord );
   private:
@@ -201,7 +202,7 @@ class Ellipsoid : public SimpleGeometricObjectBase
 {
 
 public:
-  void ReadXML( TICPP::HierarchicalDataNode& hdn );
+  void ReadXML( pugi::xml_node& hdn );
 
   bool IsCoordInObject( const R1Tensor& coord );
   private:
@@ -222,10 +223,10 @@ public:
       delete objectPointers[i];
     }
   }
-  virtual void ReadXML( TICPP::HierarchicalDataNode& hdn )
+  virtual void ReadXML( pugi::xml_node& hdn )
   {
     objectPointers.clear();
-    for( TICPP::HierarchicalDataNode* childNode = hdn.Next( true ) ; childNode ;
+    for( pugi::xml_node * childNode = hdn.Next( true ) ; childNode ;
         childNode = hdn.Next() )
     {
       SimpleGeometricObjectBase* objectPtr = Allocate( childNode );
@@ -282,7 +283,7 @@ class NotBooleanGeometry : public BooleanGeometry
 {
 
 public:
-  void ReadXML( TICPP::HierarchicalDataNode& hdn )
+  void ReadXML( pugi::xml_node& hdn )
   {
     BooleanGeometry::ReadXML( hdn );
     if( objectPointers.size() != 1 )
@@ -310,7 +311,7 @@ class TransformGeometry : public UnionGeometry
 {
 
 public:
-  virtual void ReadXML( TICPP::HierarchicalDataNode& hdn );
+  virtual void ReadXML( pugi::xml_node& hdn );
   virtual bool IsCoordInObject( const R1Tensor& coord );
   protected:
   R2Tensor m_U;
@@ -328,7 +329,7 @@ class GeometryFunction : public SimpleGeometricObjectBase
 {
 
 public:
-  virtual void ReadXML( TICPP::HierarchicalDataNode& hdn );
+  virtual void ReadXML( pugi::xml_node& hdn );
   virtual bool IsCoordInObject( const R1Tensor& coord );
   protected:
 
@@ -336,4 +337,5 @@ public:
   std::string m_functionName;
 };
 
+}
 #endif /* SIMPLEGEOMETRICOBJECTS_H_ */

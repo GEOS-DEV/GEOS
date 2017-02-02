@@ -8,29 +8,31 @@
 #ifndef MESHGENERATOR_H_
 #define MESHGENERATOR_H_
 
-#include "IO/ticpp/TinyXMLParser.h"
-#include "MPI_Communications/SpatialPartition.h"
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
-#include "../legacy/IO/ticpp/HierarchicalDataNode.h.old"
 
+#include "dataRepository/ManagedGroup.hpp"
+#include "pugixml/src/pugixml.hpp"
 
-
-
-class MeshGenerator
+namespace geosx
+{
+class MeshGenerator : public dataRepository::ManagedGroup
 {
 public:
-  MeshGenerator();
+  MeshGenerator() = delete;
+
+  MeshGenerator( string const & name, ManagedGroup * const parent );
+
   virtual ~MeshGenerator();
 
-  void ReadXML( TICPP::HierarchicalDataNode& hdn );
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group );
 
   void GenerateElementRegions( PhysicalDomainT& domain );
 
   void GenerateMesh( SpatialPartition& partition,
                      PhysicalDomainT& domain );
 
-  void GenerateNodesets( TICPP::HierarchicalDataNode& hdn,
+  void GenerateNodesets( pugi::xml_node const & targetNode,
                          NodeManager& nodeManager );
 
   void GetElemToNodesRelationInBox ( const std::string& elementType,
@@ -157,7 +159,7 @@ private:
       {
         if (fabs(m_nElemBias[i][block]) >= 1)
         {
-          throw GPException("Mesh bias must between -1 and 1!");
+          SLIC_ERROR("Mesh bias must between -1 and 1!");
         }
 
         realT len = max -  min;
@@ -197,5 +199,6 @@ public:
   }
 
 };
+}
 
 #endif /* MESHGENERATOR_H_ */

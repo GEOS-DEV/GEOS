@@ -45,11 +45,11 @@
  * @author walsh24
  */
 
-#include "Common/Common.h"
-#include "Common/GPException.h"
-#include "Common/typedefs.h"
-#include "DataStructures/Tables/Table.h"
-#include "DataStructures/Tables/TableTypes.h"
+//#include "Common/Common.h"
+//#include "Common/GPException.h"
+#include "Common/DataTypes.hpp"
+#include "managers/Tables/Table.hpp"
+#include "managers/Tables/TableTypes.hpp"
 
 #include "fparser.hh"
 

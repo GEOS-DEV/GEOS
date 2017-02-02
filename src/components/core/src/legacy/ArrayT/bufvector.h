@@ -50,7 +50,7 @@
 #include <string.h>
 #include "legacy/Common/typedefs.h"
 #include <map>
-#include "legacy/Utilities/Utilities.h"
+#include "codingUtilities/Utilities.hpp"
 #include "legacy/DataStructures/InterObjectRelation.h"
 #include "legacy/DataStructures/EncapsulatedObjects/EncapsulatedObjectBase.h"
 

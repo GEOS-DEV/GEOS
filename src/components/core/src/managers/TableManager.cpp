@@ -37,17 +37,12 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**
- * @file TableManager.cpp
- * @author walsh24
- * @date Sep 12, 2012
- */
 
 #include "TableManager.hpp"
 
 #include "mpi.h"
 
-void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
+void TableManager::ReadXML(pugi::xml_node* TablesNode)
 {
   int initialized;
   int numtasks, rank;
@@ -58,7 +53,7 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
   MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  for (TICPP::HierarchicalDataNode* TableNode = TablesNode->Next(true); TableNode;
+  for (pugi::xml_node* TableNode = TablesNode->Next(true); TableNode;
       TableNode = TablesNode->Next())
   {
     const std::string label(TableNode->Heading());

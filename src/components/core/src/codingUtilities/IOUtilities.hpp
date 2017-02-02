@@ -54,8 +54,8 @@
 #include <map>
 #include <set>
 
-#include "StringUtilities.h"
-#include "Common/GPException.h"
+#include "codingUtilities/StringUtilities.hpp"
+//#include "Common/GPException.h"
 
 
 /// Read from a character deliminated file into a vector
@@ -79,7 +79,7 @@ void dlmreadVector(const std::string& filename, ARRAY& values, char delim = ' ',
       // read every element from the line separated by the delimiter
       while (std::getline(lineStream, cellString, delim))
       {
-        values.push_back(fromString<typename ARRAY::value_type>(cellString));
+        values.push_back(geosx::stringutilities::fromString<typename ARRAY::value_type>(cellString));
       }
     }
     inputStream.close();
@@ -115,7 +115,7 @@ void dlmreadArray(const std::string& filename, ARRAY& values, char delim = ' ', 
       // read every element from the line separated by the delimiter
       while (std::getline(lineStream, cellString, delim))
       {
-        row.push_back(fromString<typename ARRAY::value_type>(cellString));
+        row.push_back(geosx::stringutilities::fromString<typename ARRAY::value_type>(cellString));
       }
       values.push_back(row);
     }
@@ -152,7 +152,7 @@ void dlmreadArrayTranspose(const std::string& filename, ARRAY& values, char deli
       // read every element from the line separated by the delimiter
       while (std::getline(lineStream, cellString, delim))
       {
-        row.push_back(fromString<typename ARRAY::value_type>(cellString));
+        row.push_back(geosx::stringutilities::fromString<typename ARRAY::value_type>(cellString));
       }
       valuesT.push_back(row);
     }

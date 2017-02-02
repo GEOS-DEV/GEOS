@@ -132,6 +132,42 @@ else()
     endif()
 endif()
 
+
+
+################################
+# FPARSER
+################################
+message( INFO ": setting up fparser" )
+set(FPARSER_LOCAL_DIR ${CMAKE_SOURCE_DIR}/thirdparty/fparser)
+set(FPARSER_DIR ${FPARSER_LOCAL_DIR})
+set(FPARSER_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/fparser)
+set(FPARSER_INCLUDE_DIR ${fparser_install_dir}/include)
+
+message( INFO ": FPARSER_DIR = ${FPARSER_DIR}" )
+message( INFO ": FPARSER_LOCAL_DIR = ${FPARSER_LOCAL_DIR}" )
+message( INFO ": FPARSER_INSTALL_DIR = ${FPARSER_INSTALL_DIR}" )
+
+ExternalProject_Add( fparser 
+                     URL http://warp.povusers.org/FunctionParser/fparser4.5.2.zip
+                     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/fparser
+                     INSTALL_DIR ${FPARSER_INSTALL_DIR}
+                     CONFIGURE_COMMAND ""
+                     BUILD_COMMAND ${CMAKE_CXX_COMPILER} -c -DFP_NO_SUPPORT_OPTIMIZER -I../fparser ../fparser/fparser.cc ../fparser/fpoptimizer.cc &&
+                                   ar rcs libfparser.a fparser.o fpoptimizer.o
+                     INSTALL_COMMAND mkdir -p ${FPARSER_INSTALL_DIR}/lib &&
+                                     cp libfparser.a ${FPARSER_INSTALL_DIR}/lib &&
+                                     cd ../fparser &&
+                                     mkdir -p ${FPARSER_INSTALL_DIR}/include && 
+                                     ls  &&
+                                     cp fparser.hh fparser_gmpint.hh fparser_mpfr.hh fpconfig.hh ${FPARSER_INSTALL_DIR}/include;
+                     )
+
+blt_register_library( NAME chai
+                      INCLUDES ${FPARSER_INSTALL_DIR}/include 
+                      LIBRARIES ${FPARSER_INSTALL_DIR}/lib/libfparser.a
+                      DEFINES CHAI_DISABLE_RM=1 )
+
+
 if (UNCRUSTIFY_EXECUTABLE)
   include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
 endif()

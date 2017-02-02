@@ -9,7 +9,7 @@
 
 #include "../legacy/IO/ticpp/HierarchicalDataNode.h"
 #include "ObjectManagers/PhysicalDomainT.h"
-#include "SimpleGeometricObjects.h"
+#include "SimpleGeometricObjects.hpp"
 
 MeshUtilities::MeshUtilities()
 {

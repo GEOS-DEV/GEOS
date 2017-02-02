@@ -46,17 +46,19 @@
 #ifndef TABLEMANAGER_H_
 #define TABLEMANAGER_H_
 
-#include "Common/typedefs.h"
-#include "DataStructures/Tables/Table.h"
-#include "Utilities/StringUtilities.h"
-#include "Utilities/IOUtilities.h"
-#include "Utilities/Utilities.h"
-#include "ObjectManagers/FunctionManager.h"
-#include "Utilities/Functions.h"
+#include "common/DataTypes.hpp"
+#include "managers/Tables/Table.hpp"
+#include "codingUtilities/StringUtilities.hpp"
+#include "codingUtilities/Utilities.hpp"
+#include "managers/FunctionManager.h"
+//#include "Utilities/Functions.h"
 
-#include "DataStructures/Tables/TableTypes.h"
+//#include "DataStructures/Tables/TableTypes.h"
 
 #include <map>
+#include "../codingUtilities/IOUtilities.hpp"
+#include "pugixml/src/pugixml.hpp"
+
 
 class TableManager
 {
@@ -133,9 +135,6 @@ public:
       throw GPException("VectorField name " + tableName + " not found.\n");
     return table->second.Lookup(key, interpolate);
   }
-
-
-  void ReadXML(TICPP::HierarchicalDataNode* hdn);
 
 private:
   std::map<std::string, Table1D > m_tables1;

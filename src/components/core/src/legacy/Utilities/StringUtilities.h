@@ -51,6 +51,7 @@
 #include <algorithm>
 
 #include "legacy/Common/Common.h"
+#include <slic/slic.hpp>
 
 
 /////////////////////////////////////////////////
@@ -120,7 +121,7 @@ inline FieldType fromString<FieldType>(std::string theString){
   } else if(theString==FieldInfo::R2SymTensorStr){
   	return R2SymTensorField;
   }else {
-    throw GPException("Error fromString: unrecognized field type: " + theString +".");
+    SLIC_ERROR("Error fromString: unrecognized field type: " + theString +".");
   }
 }
 

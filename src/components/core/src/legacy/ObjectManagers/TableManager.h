@@ -136,7 +136,7 @@ public:
   }
 
 
-  void ReadXML(TICPP::HierarchicalDataNode* hdn);
+  void ReadXML(pugi::xml_node* hdn);
 
 private:
   std::map<std::string, Table1D > m_tables1;
