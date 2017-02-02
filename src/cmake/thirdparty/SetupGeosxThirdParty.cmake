@@ -162,10 +162,46 @@ ExternalProject_Add( fparser
                                      cp fparser.hh fparser_gmpint.hh fparser_mpfr.hh fpconfig.hh ${FPARSER_INSTALL_DIR}/include;
                      )
 
-blt_register_library( NAME chai
+blt_register_library( NAME fparser
                       INCLUDES ${FPARSER_INSTALL_DIR}/include 
                       LIBRARIES ${FPARSER_INSTALL_DIR}/lib/libfparser.a
                       DEFINES CHAI_DISABLE_RM=1 )
+
+
+
+
+
+
+
+
+################################
+# CALIPER
+################################
+message( INFO ": setting up caliper" )
+set(CALIPER_LOCAL_DIR ${PROJECT_BINARY_DIR}/thirdparty/caliper)
+set(CALIPER_DIR ${CALIPER_LOCAL_DIR})
+set(CALIPER_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/caliper)
+set(CALIPER_INCLUDE_DIR ${CALIPER_INSTALL_DIR}/include)
+
+message( INFO ": CALIPER_DIR = ${CALIPER_DIR}" )
+message( INFO ": CALIPER_LOCAL_DIR = ${CALIPER_LOCAL_DIR}" )
+message( INFO ": CALIPER_INSTALL_DIR = ${CALIPER_INSTALL_DIR}" )
+
+ExternalProject_Add( caliper
+                     PREFIX ${PROJECT_BINARY_DIR}/thirdparty/caliper
+                     GIT_REPOSITORY git@github.com:LLNL/Caliper.git
+                     GIT_TAG master
+                     INSTALL_DIR ${caliper_install_dir}
+                     CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+
+blt_register_library( NAME caliper
+                      INCLUDES ${CALIPER_INSTALL_DIR}/include 
+                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper.a
+                      DEFINES CHAI_DISABLE_RM=1 )
+
 
 
 if (UNCRUSTIFY_EXECUTABLE)
