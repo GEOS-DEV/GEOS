@@ -42,7 +42,8 @@
  * @author walsh24
  */
 
-#include "Functions.h"
+#include "Functions.hpp"
+
 #include "IO/ticpp/TinyXMLParser.h"
 //#include "ObjectManagers/ProblemManagerT.h"
 #include "ObjectManagers/TableManager.h"

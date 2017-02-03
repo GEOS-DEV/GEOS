@@ -11,6 +11,7 @@
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "finiteElement/FiniteElementSpace.hpp"
+#include "MeshUtilities/MeshGenerator.hpp"
 #include <stdexcept>
 
 
@@ -60,6 +61,8 @@ ProblemManager::~ProblemManager()
 
 void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 {
+  RegisterGroup<MeshGenerator>("MeshGenerator").BuildDataStructure(nullptr);
+
   RegisterGroup<DomainPartition>(keys::domain).BuildDataStructure(nullptr);
   RegisterGroup<ManagedGroup>(keys::commandLine);
 }

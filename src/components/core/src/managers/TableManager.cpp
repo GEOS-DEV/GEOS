@@ -41,7 +41,7 @@
 #include "TableManager.hpp"
 
 #include "mpi.h"
-
+/*
 void TableManager::ReadXML(pugi::xml_node* TablesNode)
 {
   int initialized;
@@ -358,3 +358,4 @@ void TableManager::ReadXML(pugi::xml_node* TablesNode)
     }
   } //end for
 }
+*/

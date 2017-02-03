@@ -13,7 +13,7 @@ set(geosx_headers
     managers/NodeManager.hpp
     managers/ObjectManagerBase.hpp
     managers/ProblemManager.hpp
-#    managers/TableManager.hpp
+    managers/TableManager.hpp
     PARENT_SCOPE )
 
 
@@ -31,7 +31,7 @@ set(geosx_core_sources
     managers/NodeManager.cpp
     managers/ObjectManagerBase.cpp
     managers/ProblemManager.cpp
-#    managers/TableManager.cpp
+    managers/TableManager.cpp
     PARENT_SCOPE )
 
 if( 0 )

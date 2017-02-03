@@ -14,7 +14,9 @@
 
   
   <Mesh>
-    <InternalMesh elementType="C3D6" 
+    <InternalMesh 
+                  name="mesh1"
+                  elementType="C3D8" 
                   xCoords="0, 1"
                   yCoords="0, 1" 
                   zCoords="0, 1"

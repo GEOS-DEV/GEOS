@@ -49,9 +49,9 @@
 
 #include "Common/typedefs.h"
 #include "Utilities/Utilities.h"
-#include "Utilities/Functions.h"
 #include <string>
 #include <cmath>
+#include "../../codingUtilities/Functions.hpp"
 
 namespace TICPP { class HierarchicalDataNode; }
 

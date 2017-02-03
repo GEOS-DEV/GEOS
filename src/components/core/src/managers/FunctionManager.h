@@ -47,8 +47,9 @@
 #define FUNCTIONMANAGER_H_
 
 //#include "Common/typedefs.h"
-#include "codingUtilities/Functions.h"
+
 #include <map>
+#include "codingUtilities/Functions.hpp"
 
 class FunctionManager
 {
@@ -61,14 +62,16 @@ public:
     return theFunctionManager;
   }
   
-  inline std::map<std::string,Function* >& Functions()
+  inline std::map< std::string, Function* >& Functions()
   { return m_functions; }
   
   inline Function& GetFunction( const std::string& functionName ) const
   {
     std::map<std::string,Function* >::const_iterator function = m_functions.find( functionName );
     if( function == m_functions.end() )
-      throw GPException("Error FunctionManager: Function name `" + functionName + "' not found\n");
+    {
+      SLIC_ERROR("Error FunctionManager: Function name `" + functionName + "' not found\n");
+    }
 
     return *(function->second);
   }

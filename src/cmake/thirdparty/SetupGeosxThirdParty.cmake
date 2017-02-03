@@ -137,6 +137,7 @@ endif()
 ################################
 # FPARSER
 ################################
+if( USE_FPARSER )
 message( INFO ": setting up fparser" )
 set(FPARSER_LOCAL_DIR ${CMAKE_SOURCE_DIR}/thirdparty/fparser)
 set(FPARSER_DIR ${FPARSER_LOCAL_DIR})
@@ -167,7 +168,7 @@ blt_register_library( NAME fparser
                       LIBRARIES ${FPARSER_INSTALL_DIR}/lib/libfparser.a
                       DEFINES CHAI_DISABLE_RM=1 )
 
-
+endif()
 
 
 
@@ -177,6 +178,7 @@ blt_register_library( NAME fparser
 ################################
 # CALIPER
 ################################
+if( USE_CALIPER )
 message( INFO ": setting up caliper" )
 set(CALIPER_LOCAL_DIR ${PROJECT_BINARY_DIR}/thirdparty/caliper)
 set(CALIPER_DIR ${CALIPER_LOCAL_DIR})
@@ -203,6 +205,7 @@ blt_register_library( NAME caliper
                       DEFINES CHAI_DISABLE_RM=1 )
 
 
+endif()
 
 if (UNCRUSTIFY_EXECUTABLE)
   include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)

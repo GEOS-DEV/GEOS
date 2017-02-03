@@ -50,10 +50,10 @@
 #include "managers/Tables/Table.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "managers/FunctionManager.h"
-//#include "Utilities/Functions.h"
 
-//#include "DataStructures/Tables/TableTypes.h"
+#include "managers/FunctionManager.h"
+
+#include "managers/Tables/TableTypes.hpp"
 
 #include <map>
 #include "../codingUtilities/IOUtilities.hpp"
@@ -137,7 +137,7 @@ public:
   }
 
 private:
-  std::map<std::string, Table1D > m_tables1;
+  std::map<string, Table1D > m_tables1;
   std::map<std::string, Table2D > m_tables2;
   std::map<std::string, Table3D > m_tables3;
   std::map<std::string, Table4D > m_tables4;
@@ -218,7 +218,7 @@ inline void TableManager::NewTable<1>(const std::string& name, const Array1dT<rA
   table.SetGrid(x);
   table.SetValues(values);
   table.SetInterpolation(interp);
-  Function* tableFuncPtr = new ::Lookup1DTable(name, &table);
+  Function* tableFuncPtr = new Lookup1DTable(name, &table);
   FunctionManager::Instance().AddFunction(name, tableFuncPtr);
 }
 

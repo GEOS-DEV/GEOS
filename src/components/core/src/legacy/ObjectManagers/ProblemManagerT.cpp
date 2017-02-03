@@ -72,7 +72,7 @@
 #include "PhysicsSolvers/SubstepSolver.h"
 #include "InitialConditions/InitialConditions.h"
 #include "IO/RestartFile.h"
-#include "Utilities/Functions.h"
+#include "../../codingUtilities/Functions.hpp"
 #include "Utilities/Utilities.h"
 #include "Utilities/StringUtilities.h"
 #include "Utilities/IOUtilities.h"

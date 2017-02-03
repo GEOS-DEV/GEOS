@@ -12,4 +12,29 @@ else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON FORCE)
 endif()
 
+
+
+
+set( thirdPartyLibs "")
+option( ENABLE_CHAI ON CACHE BOOL "Enables CHAI" FORCE )
+if( ENABLE_CHAI )
+  set( thirdPartyLibs ${thirdPartyLibs} chai )
+endif()
+
+option( ENABLE_RAJA ON CACHE BOOL "Enables RAJA" FORCE )
+if( ENABLE_RAJA )
+  set( thirdPartyLibs ${thirdPartyLibs} raja )
+endif()
+
+option( ENABLE_CALIPER OFF CACHE BOOL "Enables CALIPER" FORCE )
+if( ENABLE_CALIPER )
+  set( thirdPartyLibs ${thirdPartyLibs} caliper )
+endif()
+
+option( ENABLE_FPARSER ON CACHE BOOL "Enables FPARSER" FORCE )
+if( ENABLE_FPARSER )
+  set( thirdPartyLibs ${thirdPartyLibs} fparser )
+endif()
+
+
 message("Leaving hc-defaults.cmake")

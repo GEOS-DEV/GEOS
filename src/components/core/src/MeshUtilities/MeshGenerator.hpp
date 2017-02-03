@@ -16,6 +16,9 @@
 
 namespace geosx
 {
+
+class NodeManager;
+
 class MeshGenerator : public dataRepository::ManagedGroup
 {
 public:
@@ -27,10 +30,10 @@ public:
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group );
 
-  void GenerateElementRegions( PhysicalDomainT& domain );
+  void GenerateElementRegions( DomainPartition& domain );
 
-  void GenerateMesh( SpatialPartition& partition,
-                     PhysicalDomainT& domain );
+  void GenerateMesh( //SpatialPartition& partition,
+                     DomainPartition & domain );
 
   void GenerateNodesets( pugi::xml_node const & targetNode,
                          NodeManager& nodeManager );
@@ -41,7 +44,7 @@ public:
                                      int nodeIDInBox[],
                                      const int size);
 
-  void RemapMesh ( PhysicalDomainT& domain );
+  void RemapMesh ( DomainPartition& domain );
 
   
   int m_delayMeshDeformation;

@@ -14,6 +14,31 @@ if( (CMAKE_CXX_STANDARD EQUAL 11) OR (CMAKE_CXX_STANDARD EQUAL 14) )
 endif()
 
 
+if( ENABLE_CHAI )
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CHAI=1)
+else()
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CHAI=0)  
+endif()
+
+if( ENABLE_RAJA )
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_RAJA=1)
+else()
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_RAJA=0)  
+endif()
+
+if( ENABLE_CALIPER )
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CALIPER=1)
+else()
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CALIPER=0)  
+endif()
+
+if( ENABLE_FPARSER )
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_FPARSER=1)
+else()
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_FPARSER=0)  
+endif()
+
+
 if( (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")  AND (CMAKE_CXX_STANDARD EQUAL 14) )
     blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -std=c++14)
 endif()

@@ -44,11 +44,12 @@
  */
 
 #include "BoundaryConditions.h"
+
+#include "../../codingUtilities/Functions.hpp"
 #include "ObjectManagers/FunctionManager.h"
 #include "ObjectManagers/PhysicalDomainT.h"
 //#include "ObjectManagers/ProblemManagerT.h"
 #include "ObjectManagers/TableManager.h"
-#include "Utilities/Functions.h"
 #include "Utilities/Utilities.h"
 #include "Utilities/FieldTypeMultiPtr.h"
 #include "PhysicsSolvers/PhysicsSolverStrings.h"

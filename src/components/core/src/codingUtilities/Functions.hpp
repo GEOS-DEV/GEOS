@@ -40,18 +40,12 @@
 #ifndef _FUNCTIONS_H_
 #define _FUNCTIONS_H_
 
-/**
- * @file Functions.h
- * @author walsh24
- */
 
-//#include "Common/Common.h"
-//#include "Common/GPException.h"
 #include "Common/DataTypes.hpp"
-#include "managers/Tables/Table.hpp"
-#include "managers/Tables/TableTypes.hpp"
 
+#if USE_FPARSER==1
 #include "fparser.hh"
+#endif
 
 #include <string>
 
@@ -163,6 +157,7 @@ private:
   int rank;
 };
 
+#if USE_FPARSER==1
 /// Function class for user-defined functions
 class SymbolicFunction: public Function
 {
@@ -174,6 +169,7 @@ public:
   }
 
   void ReadXML(TICPP::HierarchicalDataNode* hdn);
+
   realT operator()(const realT& x)
   {
     return m_fParser.Eval(&x);
@@ -187,6 +183,12 @@ public:
 private:
   FunctionParser m_fParser;
 };
+#endif
+
+
+#include "managers/Tables/Table.hpp"
+//#include "managers/TableManager.hpp"
+#include "managers/Tables/TableTypes.hpp"
 
 /// Function wrapper for 4D tables
 class Lookup4DTable: public Function

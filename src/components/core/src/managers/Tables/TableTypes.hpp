@@ -8,6 +8,9 @@
 #ifndef TABLETYPES_H_
 #define TABLETYPES_H_
 
+#include "common/DataTypes.hpp"
+#include "math/TensorT/TensorT.h"
+
 typedef Table<1, realT> Table1D;
 typedef Table<2, realT> Table2D;
 typedef Table<3, realT> Table3D;

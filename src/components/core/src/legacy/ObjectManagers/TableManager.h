@@ -52,11 +52,11 @@
 #include "Utilities/IOUtilities.h"
 #include "Utilities/Utilities.h"
 #include "ObjectManagers/FunctionManager.h"
-#include "Utilities/Functions.h"
-
 #include "DataStructures/Tables/TableTypes.h"
 
 #include <map>
+
+#include "../../codingUtilities/Functions.hpp"
 #include "../IO/ticpp/HierarchicalDataNode.h.old"
 
 class TableManager

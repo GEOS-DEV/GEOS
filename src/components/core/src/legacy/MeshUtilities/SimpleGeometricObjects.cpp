@@ -6,8 +6,9 @@
  */
 
 #include "SimpleGeometricObjects.h"
+
+#include "../../codingUtilities/Functions.hpp"
 #include "ObjectManagers/FunctionManager.h"
-#include "Utilities/Functions.h"
 
 
 // type strings
