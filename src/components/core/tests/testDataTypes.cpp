@@ -34,22 +34,22 @@ std::string Func1()
 
 TEST(testDataTypes,applyTypeLambda)
 {
-  std::string funcReturn_int32  = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::int32_id, []( auto a ) -> std::string {
+  std::string funcReturn_int32  = rtTypes::ApplyTypeLambda1( rtTypes::TypeIDs::int32_id, []( auto a ) -> std::string {
     return Func1<decltype(a)>();
   });
-  std::string funcReturn_int64  = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::int64_id, []( auto a ) -> std::string {
+  std::string funcReturn_int64  = rtTypes::ApplyTypeLambda1( rtTypes::TypeIDs::int64_id, []( auto a ) -> std::string {
     return Func1<decltype(a)>();
   });
-  std::string funcReturn_uint32 = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::uint32_id, []( auto a ) -> std::string {
+  std::string funcReturn_uint32 = rtTypes::ApplyTypeLambda1( rtTypes::TypeIDs::uint32_id, []( auto a ) -> std::string {
     return Func1<decltype(a)>();
   });
-  std::string funcReturn_uint64 = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::uint64_id, []( auto a ) -> std::string {
+  std::string funcReturn_uint64 = rtTypes::ApplyTypeLambda1( rtTypes::TypeIDs::uint64_id, []( auto a ) -> std::string {
     return Func1<decltype(a)>();
   });
-  std::string funcReturn_real32 = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::real32_id, []( auto a ) -> std::string {
+  std::string funcReturn_real32 = rtTypes::ApplyTypeLambda1( rtTypes::TypeIDs::real32_id, []( auto a ) -> std::string {
     return Func1<decltype(a)>();
   });
-  std::string funcReturn_real64 = rtTypes::ApplyTypeLambda( rtTypes::TypeIDs::real64_id, []( auto a ) -> std::string {
+  std::string funcReturn_real64 = rtTypes::ApplyTypeLambda1( rtTypes::TypeIDs::real64_id, []( auto a ) -> std::string {
     return Func1<decltype(a)>();
   });
 

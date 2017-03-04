@@ -352,6 +352,24 @@ namespace pugi
 		void load_float_array(std::vector<float>& target, std::string defValue);
 
 
+    template< typename T >
+    void as_type( std::vector<T> & target, std::string defValue );
+
+    template< typename T >
+    void as_type( T & target, std::string defValue );
+
+//		void as_type( int & target, std::string defValue );
+//	  void as_type( unsigned int & target, std::string defValue );
+//	  void as_type( unsigned long long & target, std::string defValue );
+//	  void as_type( double & target, std::string defValue );
+//	  void as_type( float & target, std::string defValue );
+//	  void as_type( std::string & target, std::string defValue );
+
+
+
+//    void as_type( std::vector<std::string> & target, std::string defValue);
+
+
 	#ifdef PUGIXML_HAS_LONG_LONG
 		long long as_llong(long long def = 0) const;
 		unsigned long long as_ullong(unsigned long long def = 0) const;

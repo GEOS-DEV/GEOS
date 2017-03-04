@@ -5160,6 +5160,73 @@ namespace pugi
 
 
 	// Modifications to parse lists in GEOS
+//  template< typename T >
+//  PUGI__FN void xml_attribute::as_type( T & target, std::string defValue )
+//  {
+//
+//  }
+
+  template< typename T >
+  PUGI__FN void xml_attribute::as_type( std::vector<T> & target, std::string defValue )
+  {
+    std::string csvstr = ( _attr!=NULL && _attr->value) ? _attr->value : defValue;
+    std::istringstream ss( csvstr );
+
+    T value;
+
+    while(ss.peek() == ',' || ss.peek() == ' ')
+    {
+      ss.ignore();
+    }
+    while( ss>>value )
+    {
+      target.push_back( value );
+      while(ss.peek() == ',' || ss.peek() == ' ')
+      {
+        ss.ignore();
+      }
+    }
+  }
+  template PUGI__FN void xml_attribute::as_type<int>( std::vector<int> & target, std::string defValue );
+  template PUGI__FN void xml_attribute::as_type<unsigned int>( std::vector<unsigned int> & target, std::string defValue );
+  template PUGI__FN void xml_attribute::as_type<long>( std::vector<long> & target, std::string defValue );
+  template PUGI__FN void xml_attribute::as_type<unsigned long>( std::vector<unsigned long> & target, std::string defValue );
+  template PUGI__FN void xml_attribute::as_type<long long>( std::vector<long long> & target, std::string defValue );
+  template PUGI__FN void xml_attribute::as_type<unsigned long long>( std::vector<unsigned long long> & target, std::string defValue );
+  template PUGI__FN void xml_attribute::as_type<float>( std::vector<float> & target, std::string defValue );
+  template PUGI__FN void xml_attribute::as_type<double>( std::vector<double> & target, std::string defValue );
+  template PUGI__FN void xml_attribute::as_type<std::string>( std::vector<std::string> & target, std::string defValue );
+
+
+  template<>
+  PUGI__FN void xml_attribute::as_type<int>( int & target, std::string defValue )
+  { target = as_int( std::stoi(defValue) ); }
+
+  template<>
+  PUGI__FN void xml_attribute::as_type<unsigned int>( unsigned int & target, std::string defValue )
+  { target = as_uint( std::stoul(defValue) ); }
+
+  template<>
+  PUGI__FN void xml_attribute::as_type<unsigned long long>( unsigned long long & target, std::string defValue )
+  { target = as_uint( std::stoull(defValue) ); }
+
+  template<>
+  PUGI__FN void xml_attribute::as_type<double>( double & target, std::string defValue )
+  { target = as_double( std::stod(defValue) ); }
+
+  template<>
+  PUGI__FN void xml_attribute::as_type<float>( float & target, std::string defValue )
+  { target = as_int( std::stof(defValue) ); }
+
+  template<>
+  PUGI__FN void xml_attribute::as_type<std::string>( std::string & target, std::string defValue )
+  { target = as_string( as_string(defValue.c_str()) ); }
+
+
+
+
+
+
 	PUGI__FN void xml_attribute::load_string_array(std::vector<std::string>& target, std::string defValue)
 	{
 		std::string csvstr = (_attr->value) ? _attr->value : defValue;
@@ -5175,7 +5242,7 @@ namespace pugi
 
 	PUGI__FN void xml_attribute::load_int_array(std::vector<int>& target, std::string defValue)
 	{
-		std::string csvstr = (_attr->value) ? _attr->value : defValue;
+		std::string csvstr = ( _attr && _attr->value) ? _attr->value : defValue;
 		std::istringstream ss( csvstr );
 
 	  while (ss)

@@ -203,7 +203,7 @@ public:
 
 
   template< typename LAMBDA >
-  static auto ApplyTypeLambda( const TypeIDs type,
+  static auto ApplyTypeLambda1( const TypeIDs type,
                                LAMBDA lambda )
   {
     switch( type )
@@ -291,6 +291,101 @@ public:
     }
   }
 
+
+  template< typename LAMBDA >
+  static auto ApplyTypeLambda2( const TypeIDs type,
+                               LAMBDA lambda )
+  {
+    switch( type )
+    {
+    case ( TypeIDs::int32_id ):
+    {
+      return lambda( int32(1), int32(1) );
+      break;
+    }
+    case ( TypeIDs::uint32_id ):
+    {
+      return lambda( uint32(1), uint32(1) );
+      break;
+    }
+    case ( TypeIDs::int64_id ):
+    {
+      return lambda( int64(1), int64(1) );
+      break;
+    }
+    case ( TypeIDs::uint64_id ):
+    {
+      return lambda( uint64(1), uint64(1) );
+      break;
+    }
+    case ( TypeIDs::real32_id ):
+    {
+      return lambda( real32(1), real32(1) );
+      break;
+    }
+    case ( TypeIDs::real64_id ):
+    {
+      return lambda( real64(1), real64(1) );
+      break;
+    }
+    case ( TypeIDs::int32_array_id ):
+    {
+      return lambda( int32_array(1), int32(1) );
+      break;
+    }
+    case ( TypeIDs::uint32_array_id ):
+    {
+      return lambda( uint32_array(1), uint32(1) );
+      break;
+    }
+    case ( TypeIDs::int64_array_id ):
+    {
+      return lambda( int64_array(1), int64(1) );
+      break;
+    }
+    case ( TypeIDs::uint64_array_id ):
+    {
+      return lambda( uint64_array(1), uint64(1) );
+      break;
+    }
+    case ( TypeIDs::real32_array_id ):
+    {
+      return lambda( real32_array(1), real32(1) );
+      break;
+    }
+    case ( TypeIDs::real64_array_id ):
+    {
+      return lambda( real64_array(1), real64(1) );
+      break;
+    }
+    case ( TypeIDs::std_size_t_id ):
+    {
+      return lambda( std_size_t(1), std_size_t(1) );
+      break;
+    }
+    case ( TypeIDs::string_id ):
+    {
+      return lambda( string(""), string("") );
+      break;
+    }
+    case ( TypeIDs::string_array_id ):
+    {
+      return lambda( string_array(1), string("") );
+      break;
+    }
+    default:
+    {
+      std::cout<<LOCATION<<std::endl;
+      assert( false );
+    }
+    }
+  }
+
 };
+
+namespace xmlwrapper
+{
+
+}
 
 #endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_DATATYPES_HPP_ */

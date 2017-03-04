@@ -8,6 +8,7 @@
 #include "ManagedGroup.hpp"
 
 #include "dataRepository/SidreWrapper.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 namespace geosx
 {
@@ -132,8 +133,8 @@ ManagedGroup::CatalogInterface::CatalogType& ManagedGroup::GetCatalog()
 
 ViewWrapperBase& ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
-  return *( rtTypes::ApplyTypeLambda( type,
-                                      [this, &name]( auto a ) -> ViewWrapperBase*
+  return *( rtTypes::ApplyTypeLambda1( type,
+                                       [this, &name]( auto a ) -> ViewWrapperBase*
       {
         return &( this->RegisterViewWrapper<decltype(a)>(name) );
       } ) );
@@ -202,6 +203,33 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
     {
       std::string childType = subDocNode.getSchemaType();    
 
+#if 1
+      rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
+      rtTypes::ApplyTypeLambda2 ( typeID,
+                                [this, typeID, &targetNode, &subDocNode]( auto a, auto b ) -> void
+      {
+        string defVal = subDocNode.getDefault();
+
+        pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
+        ViewWrapper<decltype(a)>& dataView = this->getWrapper<decltype(a)>(subDocNode.getStringKey());
+        std::vector<decltype(b)> xmlVal;
+        typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
+
+        if( !xmlatt.empty() )
+        {
+          xmlatt.as_type(xmlVal, defVal);
+        }
+        else
+        {
+          stringutilities::StringToType( xmlVal, defVal );
+        }
+        localIndex const size = xmlVal.size();
+        dataView.resize( size );
+        cxx_utilities::equateStlVector(data,xmlVal);
+      });
+
+
+#else
       switch (rtTypes::typeID(childType))
       {
         case rtTypes::TypeIDs::real64_id:
@@ -240,7 +268,7 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
           string defVal = subDocNode.getDefault();
           std::vector<real64> xmlVal;
           targetNode.attribute(subDocNode.getStringKey().c_str()).load_double_array(xmlVal, defVal);
-          // *(this->getData<real64_array>(subDocNode.getStringKey())) = xmlVal;
+          (this->getData<real64_array>(subDocNode.getStringKey())) = xmlVal;
           break;
         }
         case rtTypes::TypeIDs::int32_array_id:
@@ -249,6 +277,7 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
           std::vector<int32> xmlVal;
           targetNode.attribute(subDocNode.getStringKey().c_str()).load_int_array(xmlVal, defVal);
           // *(this->getData<int32_array>(subDocNode.getStringKey())) = xmlVal;
+
           break;
         }
         case rtTypes::TypeIDs::uint32_array_id:
@@ -282,6 +311,7 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
           throw std::invalid_argument("XML auto read method not defined");
         }
       }
+#endif
     }
   }
 }

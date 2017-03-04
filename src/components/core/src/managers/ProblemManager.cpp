@@ -61,7 +61,7 @@ ProblemManager::~ProblemManager()
 
 void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 {
-  RegisterGroup<MeshGenerator>("MeshGenerator").BuildDataStructure(nullptr);
+  RegisterGroup("MeshGenerators").BuildDataStructure(nullptr);
 
   RegisterGroup<DomainPartition>(keys::domain).BuildDataStructure(nullptr);
   RegisterGroup<ManagedGroup>(keys::commandLine);
@@ -359,9 +359,41 @@ void ProblemManager::ParseInputFile()
     std::cout << "Error offset: " << xmlResult.offset << std::endl;
   }
   xmlProblemNode = xmlDocument.child("Problem");
-  pugi::xml_node topLevelNode;
+//  pugi::xml_node topLevelNode;
 
   // Call manager readXML methods:
+  
+  {
+    ManagedGroup & meshGenerators = this->GetGroup(string("MeshGenerators"));
+    pugi::xml_node topLevelNode = xmlProblemNode.child("Mesh");
+    std::cout << "Reading Mesh Block:" << std::endl;
+    if (topLevelNode == NULL)
+    {
+      throw std::invalid_argument("Mesh block not present in input xml file!");
+    }
+    else
+    {
+      for (pugi::xml_node childNode=topLevelNode.first_child(); childNode; childNode=childNode.next_sibling())
+      {
+        std::cout << "   " << childNode.name() << std::endl;
+
+        // Register the new mesh generator
+        std::string meshID = childNode.attribute("name").value();
+
+        MeshGenerator & meshGenerator = meshGenerators.RegisterGroup<MeshGenerator>("meshID");
+
+        // Set the documentation node
+        meshGenerator.SetDocumentationNodes( &meshGenerators );
+
+        meshGenerator.RegisterDocumentationNodes();
+        meshGenerator.ReadXML(childNode );
+      }
+    }
+  }
+  
+  
+  
+  
   this->m_physicsSolverManager->ReadXML(domain, xmlProblemNode );
   this->m_eventManager->ReadXML( xmlProblemNode );
   

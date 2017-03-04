@@ -76,11 +76,6 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
       // Register fields in the solver and parse options
       newSolver.BuildDataStructure( &domain );
 
-
-
-
-
-
       newSolver.ReadXML(solverNode );
     }
   }

@@ -188,6 +188,30 @@ inline void Trim(string_array& strVect, const std::string& d=" \t\n\r"){
 bool ReplaceParameters(std::string& lineStr, const std::map<std::string,std::string>& parameterMap,const std::string& prefix= "$:");
 
 
+
+
+template< typename T >
+inline void StringToType( std::vector<T>& destination, std::string const & source )
+{
+  std::istringstream ss( source );
+
+  T value;
+
+  while(ss.peek() == ',' || ss.peek() == ' ')
+  {
+    ss.ignore();
+  }
+  while( ss>>value )
+  {
+    destination.push_back( value );
+    while(ss.peek() == ',' || ss.peek() == ' ')
+    {
+      ss.ignore();
+    }
+  }
+
+}
+
 }
 }
 

@@ -50,16 +50,137 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 
   docNode->setName(this->getName());
   docNode->setSchemaType("Node");
-  docNode->setShortDescription("An example solid mechanics solver");
+  docNode->setShortDescription("a mesh generator");
 
-  docNode->AllocateChildNode( "nElements",
-                              "nELements",
+  docNode->AllocateChildNode( "xCoords",
+                              "xCoords",
                               -1,
-                              "int32",
-                              "int32",
-                              "number of elements",
-                              "number of elements",
-                              "10",
+                              "real64",
+                              "real64",
+                              "x-coordinates of mesh vertex points",
+                              "x-coordinates of mesh vertex points",
+                              "1",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( "yCoords",
+                              "yCoords",
+                              -1,
+                              "real64",
+                              "real64",
+                              "y-coordinates of mesh vertex points",
+                              "y-coordinates of mesh vertex points",
+                              "1",
+                              "",
+                              1,
+                              0 );
+
+
+  docNode->AllocateChildNode( "zCoords",
+                              "zCoords",
+                              -1,
+                              "real64",
+                              "real64",
+                              "z-coordinates of mesh vertex points",
+                              "z-coordinates of mesh vertex points",
+                              "1",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( "nx",
+                              "nx",
+                              -1,
+                              "int32_array",
+                              "int32_array",
+                              "number of elements in x-direction",
+                              "number of elements in x-direction",
+                              "1",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( "ny",
+                              "ny",
+                              -1,
+                              "int32_array",
+                              "int32_array",
+                              "number of elements in y-direction",
+                              "number of elements in y-direction",
+                              "1",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( "nz",
+                              "nz",
+                              -1,
+                              "int32_array",
+                              "int32_array",
+                              "number of elements in z-direction",
+                              "number of elements in z-direction",
+                              "1",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( "xbias",
+                              "xbias",
+                              -1,
+                              "int32_array",
+                              "int32_array",
+                              "number of elements in x-direction",
+                              "number of elements in x-direction",
+                              "1",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( "ybias",
+                              "ybias",
+                              -1,
+                              "int32_array",
+                              "int32_array",
+                              "number of elements in y-direction",
+                              "number of elements in y-direction",
+                              "1",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( "zbias",
+                              "zbias",
+                              -1,
+                              "int32_array",
+                              "int32_array",
+                              "number of elements in z-direction",
+                              "number of elements in z-direction",
+                              "1",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( "regionNames",
+                              "regionNames",
+                              -1,
+                              "string_array",
+                              "string_array",
+                              "names of the regions",
+                              "names of the regions",
+                              "Region",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( "elementType",
+                              "elementType",
+                              -1,
+                              "string",
+                              "string",
+                              "topology of discrete volumes",
+                              "topology of discrete volumes",
+                              "C3D8",
                               "",
                               1,
                               0 );
