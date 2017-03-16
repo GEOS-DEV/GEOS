@@ -13,6 +13,7 @@
 namespace geosx
 {
 
+class PartitionBase;
 
 class DomainPartition : public dataRepository::ManagedGroup
 {
@@ -30,8 +31,11 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const );
 
+
+  PartitionBase * GetPartition() {return m_partition;}
 private:
 
+  PartitionBase * m_partition;
 
 };
 

@@ -18,11 +18,11 @@
                   name="mesh1"
                   elementType="C3D8" 
                   xCoords="0, 1"
-                  yCoords="0, 1" 
+                  yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="10" 
-                  ny="10" 
-                  nz="10" 
+                  nx="10"
+                  ny="10"
+                  nz="10"
                   regionNames="Region"/>
   </Mesh>
 

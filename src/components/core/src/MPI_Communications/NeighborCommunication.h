@@ -45,9 +45,9 @@
 
 #ifndef NEIGHBORCOMMUNICATION_H_
 #define NEIGHBORCOMMUNICATION_H_
-#include "../Common/Common.h"
-#include "../ObjectManagers/PhysicalDomainT.h"
-#include "../Utilities/Utilities.h"
+#include "common/DataTypes.hpp"
+//#include "../ObjectManagers/PhysicalDomainT.h"
+//#include "../Utilities/Utilities.h"
 #include "Communication.h"
 
 class PhysicalDomainT;

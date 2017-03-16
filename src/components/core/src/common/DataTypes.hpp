@@ -66,13 +66,14 @@ using real32_const_ptr  = c_ptr<real32>;
 using real64_ptr        = ptr<real64>;
 using real64_const_ptr  = c_ptr<real64>;
 
-//***** LEGACY TYPEDEFS *****
+//***** BEGIN LEGACY TYPEDEFS *****
 using globalIndex = int64;
 using localIndex  = int32;
 
 using realT    = double;
 
 #include "legacy/ArrayT/ArrayT.h"
+#include "math/TensorT/TensorT.h"
 
 template< typename T >
 //using array = std::vector<T>;
@@ -81,7 +82,7 @@ using array = Array1dT<T>;
 namespace geosx
 {
 }
-//***** LEGACY TYPEDEFS *****
+//***** END LEGACY TYPEDEFS *****
 
 
 
@@ -107,7 +108,7 @@ using string_array        = array<string>;
 using string_const_array  = array<string const>;
 
 
-//***** LEGACY TYPEDEFS *****
+//***** BEGIN LEGACY TYPEDEFS *****
 using rArray1d = Array1dT<real64>;
 using iArray1d = Array1dT<int32>;
 using lArray1d = Array1dT<localIndex>;
@@ -124,8 +125,11 @@ typedef Array2dT<localIndex> lArray2d;
 typedef Array1dT<std::pair<int,localIndex> > pArray1d;
 typedef std::set<std::pair<int,localIndex> > pSet;
 
+using r1_array = array<R1Tensor>;
+using r2_array = array<R2Tensor>;
+using r2Sym_array = array<R2SymTensor>;
 
-//***** LEGACY TYPEDEFS *****
+//***** END LEGACY TYPEDEFS *****
 
 
 
@@ -149,6 +153,9 @@ public:
       {std::type_index(typeid(uint64_array)), "uint64_array"},
       {std::type_index(typeid(real32_array)), "real32_array"},
       {std::type_index(typeid(real64_array)), "real64_array"},
+      {std::type_index(typeid(r1_array)), "r1_array"},
+      {std::type_index(typeid(r2_array)), "r2_array"},
+      {std::type_index(typeid(r2Sym_array)), "r2Sym_array"},
       {std::type_index(typeid(std_size_t)), "std_size_t"},
       {std::type_index(typeid(string)), "string"}
     };
@@ -171,6 +178,9 @@ public:
     uint64_array_id,
     real32_array_id,
     real64_array_id,
+    r1_array_id,
+    r2_array_id,
+    r2Sym_array_id,
     std_size_t_id,
     string_id,
     string_array_id,
@@ -193,6 +203,9 @@ public:
       { "uint64_array", TypeIDs::uint64_array_id },
       { "real32_array", TypeIDs::real32_array_id },
       { "real64_array", TypeIDs::real64_array_id },
+      { "r1_array",     TypeIDs::r1_array_id },
+      { "r2_array",     TypeIDs::r2_array_id },
+      { "r2Sym_array",  TypeIDs::r2Sym_array_id },
       { "std_size_t",   TypeIDs::std_size_t_id },
       { "string",       TypeIDs::string_id },
       { "string_array", TypeIDs::string_array_id },
@@ -266,6 +279,21 @@ public:
     case ( TypeIDs::real64_array_id ):
     {
       return lambda( real64_array(1) );
+      break;
+    }
+    case ( TypeIDs::r1_array_id ):
+    {
+      return lambda( r1_array(1) );
+      break;
+    }
+    case ( TypeIDs::r2_array_id ):
+    {
+      return lambda( r2_array(1) );
+      break;
+    }
+    case ( TypeIDs::r2Sym_array_id ):
+    {
+      return lambda( r2Sym_array(1) );
       break;
     }
     case ( TypeIDs::std_size_t_id ):
@@ -356,6 +384,21 @@ public:
     case ( TypeIDs::real64_array_id ):
     {
       return lambda( real64_array(1), real64(1) );
+      break;
+    }
+    case ( TypeIDs::r1_array_id ):
+    {
+      return lambda( r1_array(1), R1Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2_array_id ):
+    {
+      return lambda( r2_array(1), R2Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2Sym_array_id ):
+    {
+      return lambda( r2Sym_array(1), R2SymTensor() );
       break;
     }
     case ( TypeIDs::std_size_t_id ):

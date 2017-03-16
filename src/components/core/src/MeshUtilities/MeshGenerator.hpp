@@ -18,6 +18,7 @@ namespace geosx
 {
 
 class NodeManager;
+class DomainPartition;
 
 class MeshGenerator : public dataRepository::ManagedGroup
 {

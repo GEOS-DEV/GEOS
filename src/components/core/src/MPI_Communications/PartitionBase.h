@@ -46,9 +46,9 @@
 #ifndef PARTITIONBASE_H_
 #define PARTITIONBASE_H_
 
-#include "Common/Common.h"
+#include "Common/DataTypes.hpp"
 #include "NeighborCommunication.h"
-#include "IO/ticpp/TinyXMLParser.h"
+//#include "IO/ticpp/TinyXMLParser.h"
 
 #include <mpi.h>
 
