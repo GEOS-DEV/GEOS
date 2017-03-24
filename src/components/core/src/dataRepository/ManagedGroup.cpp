@@ -205,8 +205,8 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
 
 #if 1
       rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
-      rtTypes::ApplyTypeLambda2 ( typeID,
-                                [this, typeID, &targetNode, &subDocNode]( auto a, auto b ) -> void
+      rtTypes::ApplyIntrinsicTypeLambda2 ( typeID,
+                                           [this, typeID, &targetNode, &subDocNode]( auto a, auto b ) -> void
       {
         string defVal = subDocNode.getDefault();
 

@@ -15,6 +15,7 @@
 #include <string>
 #include <typeindex>
 #include <typeinfo>
+#include <map>
 #include <unordered_map>
 #include <vector>
 
@@ -79,6 +80,16 @@ template< typename T >
 //using array = std::vector<T>;
 using array = Array1dT<T>;
 
+template< typename T >
+using set = std::set<T>;
+
+template< typename TKEY, typename TVAL >
+using map = std::map<TKEY,TVAL>;
+
+template< typename TKEY, typename TVAL >
+using unordered_map = std::unordered_map<TKEY,TVAL>;
+
+
 namespace geosx
 {
 }
@@ -107,6 +118,28 @@ using real64_const_array  = array<real64 const>;
 using string_array        = array<string>;
 using string_const_array  = array<string const>;
 
+using int32_set        = set<int32>;
+using int32_const_set  = set<int32 const>;
+
+using uint32_set        = set<uint32>;
+using uint32_const_set  = set<uint32 const>;
+
+using int64_set        = set<int64>;
+using int64_const_set  = set<int64 const>;
+
+using uint64_set        = set<uint64>;
+using uint64_const_set  = set<uint64 const>;
+
+using real32_set        = set<real32>;
+using real32_const_set  = set<real32 const>;
+
+using real64_set        = set<real64>;
+using real64_const_set  = set<real64 const>;
+
+using string_set        = set<string>;
+using string_const_set  = set<string const>;
+
+
 
 //***** BEGIN LEGACY TYPEDEFS *****
 using rArray1d = Array1dT<real64>;
@@ -130,7 +163,6 @@ using r2_array = array<R2Tensor>;
 using r2Sym_array = array<R2SymTensor>;
 
 //***** END LEGACY TYPEDEFS *****
-
 
 
 class rtTypes
@@ -214,6 +246,89 @@ public:
     return type_names.at(name);
   }
 
+  template< typename LAMBDA >
+  static auto ApplyIntrinsicTypeLambda1( const TypeIDs type,
+                                         LAMBDA lambda )
+  {
+    switch( type )
+    {
+    case ( TypeIDs::int32_id ):
+    {
+      return lambda( int32(1) );
+      break;
+    }
+    case ( TypeIDs::uint32_id ):
+    {
+      return lambda( uint32(1) );
+      break;
+    }
+    case ( TypeIDs::int64_id ):
+    {
+      return lambda( int64(1) );
+      break;
+    }
+    case ( TypeIDs::uint64_id ):
+    {
+      return lambda( uint64(1) );
+      break;
+    }
+    case ( TypeIDs::real32_id ):
+    {
+      return lambda( real32(1) );
+      break;
+    }
+    case ( TypeIDs::real64_id ):
+    {
+      return lambda( real64(1) );
+      break;
+    }
+    case ( TypeIDs::int32_array_id ):
+    {
+      return lambda( int32_array(1) );
+      break;
+    }
+    case ( TypeIDs::uint32_array_id ):
+    {
+      return lambda( uint32_array(1) );
+      break;
+    }
+    case ( TypeIDs::int64_array_id ):
+    {
+      return lambda( int64_array(1) );
+      break;
+    }
+    case ( TypeIDs::uint64_array_id ):
+    {
+      return lambda( uint64_array(1) );
+      break;
+    }
+    case ( TypeIDs::real32_array_id ):
+    {
+      return lambda( real32_array(1) );
+      break;
+    }
+    case ( TypeIDs::real64_array_id ):
+    {
+      return lambda( real64_array(1) );
+      break;
+    }
+    case ( TypeIDs::std_size_t_id ):
+    {
+      return lambda( std_size_t(1) );
+      break;
+    }
+    case ( TypeIDs::string_id ):
+    {
+      return lambda( string("") );
+      break;
+    }
+    default:
+    {
+      std::cout<<LOCATION<<std::endl;
+      assert( false );
+    }
+    }
+  }
 
   template< typename LAMBDA >
   static auto ApplyTypeLambda1( const TypeIDs type,
@@ -424,11 +539,104 @@ public:
     }
   }
 
+
+
+  template< typename LAMBDA >
+  static auto ApplyIntrinsicTypeLambda2( const TypeIDs type,
+                                         LAMBDA lambda )
+  {
+    switch( type )
+    {
+    case ( TypeIDs::int32_id ):
+    {
+      return lambda( int32(1), int32(1) );
+      break;
+    }
+    case ( TypeIDs::uint32_id ):
+    {
+      return lambda( uint32(1), uint32(1) );
+      break;
+    }
+    case ( TypeIDs::int64_id ):
+    {
+      return lambda( int64(1), int64(1) );
+      break;
+    }
+    case ( TypeIDs::uint64_id ):
+    {
+      return lambda( uint64(1), uint64(1) );
+      break;
+    }
+    case ( TypeIDs::real32_id ):
+    {
+      return lambda( real32(1), real32(1) );
+      break;
+    }
+    case ( TypeIDs::real64_id ):
+    {
+      return lambda( real64(1), real64(1) );
+      break;
+    }
+    case ( TypeIDs::int32_array_id ):
+    {
+      return lambda( int32_array(1), int32(1) );
+      break;
+    }
+    case ( TypeIDs::uint32_array_id ):
+    {
+      return lambda( uint32_array(1), uint32(1) );
+      break;
+    }
+    case ( TypeIDs::int64_array_id ):
+    {
+      return lambda( int64_array(1), int64(1) );
+      break;
+    }
+    case ( TypeIDs::uint64_array_id ):
+    {
+      return lambda( uint64_array(1), uint64(1) );
+      break;
+    }
+    case ( TypeIDs::real32_array_id ):
+    {
+      return lambda( real32_array(1), real32(1) );
+      break;
+    }
+    case ( TypeIDs::real64_array_id ):
+    {
+      return lambda( real64_array(1), real64(1) );
+      break;
+    }
+    case ( TypeIDs::std_size_t_id ):
+    {
+      return lambda( std_size_t(1), std_size_t(1) );
+      break;
+    }
+    case ( TypeIDs::string_id ):
+    {
+      return lambda( string(""), string("") );
+      break;
+    }
+    case ( TypeIDs::string_array_id ):
+    {
+      return lambda( string_array(1), string("") );
+      break;
+    }
+    default:
+    {
+      std::cout<<LOCATION<<std::endl;
+      assert( false );
+    }
+    }
+  }
+
 };
 
 namespace xmlwrapper
 {
 
 }
+
+
 
 #endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_DATATYPES_HPP_ */

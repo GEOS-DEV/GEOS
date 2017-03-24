@@ -80,12 +80,25 @@ public:
     return ElementManager::CatalogName();
   }
 
+
+
+
   ///@}
 
   ElementManager( string const &, ManagedGroup * const parent );
   virtual ~ElementManager();
 
   void Initialize(  ){}
+
+  using ManagedGroup::resize;
+
+  void resize( int32_array const & numElements,
+               string_array const & regionNames,
+               string_array const & elementTypes );
+
+  ElementRegion & CreateRegion( string const & regionName,
+                               string const & elementType,
+                               int32 const & numElements );
 
 
 private:

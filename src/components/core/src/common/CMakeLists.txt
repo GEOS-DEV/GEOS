@@ -10,6 +10,7 @@ set(geosx_headers
 #
 # Specify all sources
 #
-#set(geosx_core_sources
-#  ${geosx_core_sources}
-#    PARENT_SCOPE )
+set(geosx_core_sources
+  ${geosx_core_sources}
+    common/DataTypes.cpp
+    PARENT_SCOPE )

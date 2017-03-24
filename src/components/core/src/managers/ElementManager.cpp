@@ -60,7 +60,7 @@ using namespace dataRepository;
 ElementManager::ElementManager(  string const &, ManagedGroup * const parent ):
 ObjectManagerBase("ElementManager",parent)
 {
-  this->RegisterGroup("ElementRegions");
+  this->RegisterGroup<ManagedGroup>("ElementRegions");
 }
 
 ElementManager::~ElementManager()
@@ -68,6 +68,29 @@ ElementManager::~ElementManager()
   // TODO Auto-generated destructor stub
 }
 
+void ElementManager::resize( int32_array const & numElements,
+                             string_array const & regionNames,
+                             string_array const & elementTypes )
+{
+  int32 const numRegions = regionNames.size();
+  ManagedGroup & elementRegions = this->GetGroup(string("ElementRegions"));
+  for( int32 reg=0 ; reg<numRegions ; ++reg )
+  {
+    ManagedGroup & elemRegion = elementRegions.RegisterGroup(regionNames[reg]);
+    elemRegion.resize(numElements[reg]);
+  }
+}
+
+
+ManagedGroup & CreateRegion( string const & regionName,
+                             string const & elementType,
+                             int32 const & numElements )
+{
+  ElementRegion & elemRegion = elementRegions.RegisterGroup( regionNames );
+  elemRegion.resize(numElements);
+  elemRegion
+
+}
 
 
 

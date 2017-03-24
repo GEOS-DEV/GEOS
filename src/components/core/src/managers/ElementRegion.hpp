@@ -97,7 +97,7 @@ public:
 private:
   ElementRegion& operator=(const ElementRegion& rhs);
 
-
+  string & m_elementType;
 
 };
 

@@ -50,14 +50,16 @@
 //#include "../Utilities/Utilities.h"
 #include "Communication.h"
 
-class PhysicalDomainT;
-class ObjectDataStructureBaseT;
-class FaceManagerT;
-class NodeManager;
-class DiscreteElementManagerT;
-class EllipsoidalDiscreteElementManagerT;
 class oBinStream;
 class iBinStream;
+
+namespace geosx
+{
+
+namespace dataRepository
+{
+class ManagedGroup;
+}
 
 struct TempNeighborData
 {
@@ -68,23 +70,23 @@ struct TempNeighborData
   Array1dT<bufvector::size_type> sendSizes;
 
   //node, edge, face (3)
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, gArray1d> neighborNumbers;
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, gArray1d> matchedNumbers;
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d> matchedIndices;
+  std::map<string, gArray1d> neighborNumbers;
+  std::map<string, gArray1d> matchedNumbers;
+  std::map<string, lArray1d> matchedIndices;
 
   //node, face (2)
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, lSet> indicesInRange;
+  std::map<string, lSet> indicesInRange;
 
-  lSet objectLocalIndicesToSend[PhysicalDomainT::numObjectDataStructureNames] ;
-  gArray1d objectGlobalIndicesToSend[PhysicalDomainT::numObjectDataStructureNames] ;
-  gArray1d objectGlobalIndicesToRecieve[PhysicalDomainT::numObjectDataStructureNames] ;
+  map< string, lSet > objectLocalIndicesToSend ;
+  map< string, gArray1d > objectGlobalIndicesToSend ;
+  map< string, gArray1d > objectGlobalIndicesToRecieve ;
 
   //node, edge, face, element (4)
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, bufvector> objectsToSend;
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, bufvector> objectsToReceive;
+  std::map<string, bufvector> objectsToSend;
+  std::map<string, bufvector> objectsToReceive;
 
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d > objectWithNewGlobalIndex;
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d > objectWithUnassignedGlobal;
+  std::map<string, lArray1d > objectWithNewGlobalIndex;
+  std::map<string, lArray1d > objectWithUnassignedGlobal;
 
   gArray1d::size_type sendGlobalIndexRequests[3];
   gArray1d::size_type recvGlobalIndexRequests[3];
@@ -168,13 +170,13 @@ public:
     this->m_sendBuffer.resize( newsize );
   }
 
-  void SetDomain( PhysicalDomainT& domain );
+  void SetDomain( dataRepository::ManagedGroup& domain );
 
-  bufvector::size_type PackBuffer( const std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d>& fieldNames,
+  bufvector::size_type PackBuffer( const std::map<string, sArray1d>& fieldNames,
                                    const CommRegistry::commID commID,
                                    const bool doBufferPacking = 1 );
 
-  bufvector::size_type GetPackedBufferSize( const std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d>& fieldNames,
+  bufvector::size_type GetPackedBufferSize( const std::map<string, sArray1d>& fieldNames,
                                             const CommRegistry::commID commID )
   {
 
@@ -184,10 +186,10 @@ public:
     return bufferSize;
   }
 
-  void UnpackBuffer( const std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d>& fieldNames);
+  void UnpackBuffer( const std::map<string, sArray1d>& fieldNames);
 
   void UnpackGhostElements( std::map<std::string,lArray1d>& newElementIndices );
-  int UnpackGhosts(const PhysicalDomainT::ObjectDataStructureKeys name, lArray1d& newIndices );
+  int UnpackGhosts(const string name, lArray1d& newIndices );
 
   void SendReceiveSizes(const CommRegistry::commID commID = CommRegistry::genericComm01  );
 
@@ -212,7 +214,7 @@ public:
 
 
   void DetermineMatchedBoundaryObject( const ObjectDataStructureBaseT& object,
-                                       const PhysicalDomainT::ObjectDataStructureKeys name,
+                                       const string name,
                                        const gArray1d& localObjectNumbers);
 
   void FindPackGhostsDiscreteElement( const bool contactActive, const int depth = 1 );
@@ -229,7 +231,7 @@ public:
 
 
 
-  const lArray1d& GetSendLocalIndices(const PhysicalDomainT::ObjectDataStructureKeys key){
+  const lArray1d& GetSendLocalIndices(const string key){
     return m_sendLocalIndices[key];
   };
 
@@ -245,7 +247,7 @@ public:
 
 
   template< typename TYPE >
-  void PackTopologyModifications( const PhysicalDomainT::ObjectDataStructureKeys key,
+  void PackTopologyModifications( const string key,
                                   const TYPE& newObjects,
                                   const TYPE& modifiedObjects,
                                   const bool packConnectivityToGlobal,
@@ -254,13 +256,13 @@ public:
 
 
 
-  void UnpackTopologyModifications( const PhysicalDomainT::ObjectDataStructureKeys key,
+  void UnpackTopologyModifications( const string key,
                                     const char*& pbuffer,
                                     lArray1d& newIndices,
                                     lArray1d& modifiedIndices,
                                     const bool reverseOp  );
 
-  void UnpackTopologyModifications( const PhysicalDomainT::ObjectDataStructureKeys key,
+  void UnpackTopologyModifications( const string key,
                                     const char*& pbuffer,
                                     std::map< std::string, lArray1d>& modifiedIndices );
 
@@ -324,20 +326,19 @@ public:
 private:
 
   int m_neighborRank;
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d> m_receiveLocalIndices;
+  std::map<string, lArray1d> m_receiveLocalIndices;
 
   void SetAllOwned(const gArray1d& localToGlobal, lArray1d& indices) const;
 
-  int UnpackGhosts(const PhysicalDomainT::ObjectDataStructureKeys name);
+  int UnpackGhosts(const string name);
 
-  PhysicalDomainT* const m_domain;
   int m_rank;
   int m_size;
   iSet m_rankOfNeighborNeighbors;
 
   //NOTE: element regions are currently being dealt with using a special structure ... everything else with general one
 
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d> m_sendLocalIndices;
+  std::map<string, lArray1d> m_sendLocalIndices;
   std::map< std::string, lArray1d> m_elementRegionsSendLocalIndices;
 
   std::map< std::string, lArray1d> m_elementRegionsReceiveLocalIndices;
@@ -383,43 +384,43 @@ public:
   int Rank() const {return m_rank;}
   int NeighborRank() const {return m_neighborRank;}
 
-  inline static localIndex NumberOfSyncNames() { return 8;}
-  inline static PhysicalDomainT::ObjectDataStructureKeys SyncName(const localIndex i)
-  {
-    switch(i)
-    {
-      case 0:
-        return PhysicalDomainT::FiniteElementNodeManager;
-      case 1:
-        return PhysicalDomainT::FiniteElementEdgeManager;
-      case 2:
-        return PhysicalDomainT::FiniteElementFaceManager;
-      case 3:
-        return PhysicalDomainT::FiniteElementElementManager;
-      case 4:
-        return PhysicalDomainT::DiscreteElementNodeManager;
-      case 5:
-        return PhysicalDomainT::DiscreteElementFaceManager;
-      case 6:
-        return PhysicalDomainT::DiscreteElementManager;
-      case 7:
-        return PhysicalDomainT::EllipsoidalDiscreteElementManager;
-      default:
-        throw GPException("Unrecognized index for SyncName");
-    }
-  }
-  inline static void SyncNames(Array1dT<PhysicalDomainT::ObjectDataStructureKeys>& syncNames)
-  {
-    syncNames.resize(8);
-    syncNames[0] = PhysicalDomainT::FiniteElementNodeManager;
-    syncNames[1] = PhysicalDomainT::FiniteElementEdgeManager;
-    syncNames[2] = PhysicalDomainT::FiniteElementFaceManager;
-    syncNames[3] = PhysicalDomainT::FiniteElementElementManager;
-    syncNames[4] = PhysicalDomainT::DiscreteElementNodeManager;
-    syncNames[5] = PhysicalDomainT::DiscreteElementFaceManager;
-    syncNames[6] = PhysicalDomainT::DiscreteElementManager;
-    syncNames[7] = PhysicalDomainT::EllipsoidalDiscreteElementManager;
-  }
+//  inline static localIndex NumberOfSyncNames() { return 8;}
+//  inline static string SyncName(const localIndex i)
+//  {
+//    switch(i)
+//    {
+//      case 0:
+//        return PhysicalDomainT::FiniteElementNodeManager;
+//      case 1:
+//        return PhysicalDomainT::FiniteElementEdgeManager;
+//      case 2:
+//        return PhysicalDomainT::FiniteElementFaceManager;
+//      case 3:
+//        return PhysicalDomainT::FiniteElementElementManager;
+//      case 4:
+//        return PhysicalDomainT::DiscreteElementNodeManager;
+//      case 5:
+//        return PhysicalDomainT::DiscreteElementFaceManager;
+//      case 6:
+//        return PhysicalDomainT::DiscreteElementManager;
+//      case 7:
+//        return PhysicalDomainT::EllipsoidalDiscreteElementManager;
+//      default:
+//        throw GPException("Unrecognized index for SyncName");
+//    }
+//  }
+//  inline static void SyncNames(Array1dT<string>& syncNames)
+//  {
+//    syncNames.resize(8);
+//    syncNames[0] = PhysicalDomainT::FiniteElementNodeManager;
+//    syncNames[1] = PhysicalDomainT::FiniteElementEdgeManager;
+//    syncNames[2] = PhysicalDomainT::FiniteElementFaceManager;
+//    syncNames[3] = PhysicalDomainT::FiniteElementElementManager;
+//    syncNames[4] = PhysicalDomainT::DiscreteElementNodeManager;
+//    syncNames[5] = PhysicalDomainT::DiscreteElementFaceManager;
+//    syncNames[6] = PhysicalDomainT::DiscreteElementManager;
+//    syncNames[7] = PhysicalDomainT::EllipsoidalDiscreteElementManager;
+//  }
 
   const lArray1d& ElementRegionsReceiveLocalIndices( const std::string& name ) const  {return stlMapLookup( m_elementRegionsReceiveLocalIndices, name );}
   const std::map< std::string, lArray1d>& ElementRegionsReceiveLocalIndices() const  {return m_elementRegionsReceiveLocalIndices;}
@@ -427,19 +428,23 @@ public:
   const lArray1d& ElementRegionsSendLocalIndices( const std::string& name ) const  {return stlMapLookup( m_elementRegionsSendLocalIndices, name );}
   const std::map< std::string, lArray1d>& ElementRegionsSendLocalIndices() const  {return m_elementRegionsSendLocalIndices;}
 
-  const lArray1d& ReceiveLocalIndices( const PhysicalDomainT::ObjectDataStructureKeys name) const
+  const lArray1d& ReceiveLocalIndices( const string name) const
   {
-    std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d>::const_iterator it = this->m_receiveLocalIndices.find(name);
+    std::map<string, lArray1d>::const_iterator it = this->m_receiveLocalIndices.find(name);
     if(it == this->m_receiveLocalIndices.end())
-      throw GPException("Failed to find name " + toString<int>(name) + " in m_receiveLocalIndices (ReceiveLocalIndices function)");
+    {
+      SLIC_ERROR("Failed to find name " + name + " in m_receiveLocalIndices (ReceiveLocalIndices function)");
+    }
     return it->second;
   }
 
-  const lArray1d& SendLocalIndices( const PhysicalDomainT::ObjectDataStructureKeys name) const
+  const lArray1d& SendLocalIndices( const string name) const
   {
-    std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d>::const_iterator it = this->m_sendLocalIndices.find(name);
+    std::map<string, lArray1d>::const_iterator it = this->m_sendLocalIndices.find(name);
     if(it == this->m_sendLocalIndices.end())
-      throw GPException("Failed to find name " + toString<int>(name) + " in m_sendLocalIndices (SendLocalIndices function)");
+    {
+      SLIC_ERROR("Failed to find name " + name + " in m_sendLocalIndices (SendLocalIndices function)");
+    }
     return it->second;
   }
 };
@@ -488,5 +493,5 @@ inline bool NeighborCommunication::MPI_Test_RecvBufferRequest( const CommRegistr
   return flag;
 }
 
-
+}
 #endif /* NEIGHBORCOMMUNICATION_H_ */

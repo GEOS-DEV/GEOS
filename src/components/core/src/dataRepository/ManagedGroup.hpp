@@ -289,6 +289,8 @@ public:
     return getData<T>( index );
   }
 
+
+
   template< typename T >
   T const & getReference( std::size_t const index ) const
   {

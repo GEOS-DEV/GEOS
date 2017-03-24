@@ -57,6 +57,14 @@ class oBinStream;
 class iBinStream;
 
 
+namespace geosx
+{
+
+namespace dataRepository
+{
+class ManagedGroup;
+}
+
 
 
 class PartitionBase
@@ -68,9 +76,14 @@ public:
 
   virtual void Initialize() = 0;
 
-  void SetDomain( PhysicalDomainT& domain );
+  void SetDomain( dataRepository::ManagedGroup& domain );
 
   virtual bool IsCoordInPartition( const R1Tensor& elemCenter ) = 0;
+  virtual bool IsCoordInPartition( const R1Tensor& elemCenter,
+                                   const int numDistPartition) = 0;
+  virtual bool IsCoordInPartition(const realT& coord, const int dir) = 0;
+
+  virtual void setSizes(const R1Tensor& min, const R1Tensor& max) = 0;
 
   virtual bool IsCoordInContactGhostRange( const R1Tensor& elemCenter ) = 0;
 
@@ -78,13 +91,13 @@ public:
   virtual void ReadXMLInput( TICPP::HierarchicalDataNode& hdn) = 0;
 
 
-  virtual void AssignGlobalIndices( PhysicalDomainT& domain );
+  virtual void AssignGlobalIndices( dataRepository::ManagedGroup& domain );
 
-  virtual void FindMatchedBoundaryIndices( const PhysicalDomainT::ObjectDataStructureKeys key,
+  virtual void FindMatchedBoundaryIndices( const std::string key,
                                            const ObjectDataStructureBaseT& object );
 
 
-  virtual void SetUpNeighborLists( PhysicalDomainT& domain,
+  virtual void SetUpNeighborLists( dataRepository::ManagedGroup& domain,
                                    const bool contactActive );
 
   void SetRankOfNeighborNeighbors();
@@ -97,16 +110,13 @@ public:
   template< typename T >
   void SendReceive( const Array1dT<Array1dT<T> >& sendArray, Array1dT<Array1dT<T> >& recvArray );
 
-  void SetBufferSizes( const std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d>& fieldNames,
-                       const CommRegistry::commID commID = CommRegistry::genericComm01 );
-
-  void SynchronizeFields( const std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d>& fieldNames,
+  void SynchronizeFields( const std::map<std::string, sArray1d>& fieldNames,
                           const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
-  void SetOwnedByRank( const std::map<PhysicalDomainT::ObjectDataStructureKeys, gArray1d>& localBoundaryGlobalIndices,
-                       std::map<PhysicalDomainT::ObjectDataStructureKeys, std::map< globalIndex, int > >& boundaryOwnership);
+  void SetOwnedByRank( const std::map< std::string, gArray1d>& localBoundaryGlobalIndices,
+                       std::map<std::string, std::map< globalIndex, int > >& boundaryOwnership);
 
-  void SetGhostArrays( PhysicalDomainT& domain );
+  void SetGhostArrays( dataRepository::ManagedGroup& domain );
 
   lArray1d GetFaceSendIndices();
 
@@ -144,7 +154,7 @@ protected:
   int m_color;
   int m_numColors;
 
-  PhysicalDomainT* const m_domain;
+//  PhysicalDomainT* const m_domain;
 
 public:
   realT m_t1;
@@ -153,10 +163,10 @@ public:
   realT m_t4;
 
   bool m_hasLocalGhosts;
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d> m_localGhosts;
+  std::map<std::string, lArray1d> m_localGhosts;
   std::map< std::string, lArray1d> m_elementRegionsLocalGhosts;
 
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d> m_localGhostSources;
+  std::map<std::string, lArray1d> m_localGhostSources;
   std::map< std::string, lArray1d> m_elementRegionsLocalGhostSources;
 
   int m_ghostDepth;
@@ -172,5 +182,7 @@ private:
 
 
 };
+
+}
 
 #endif /* PARTITIONBASE_H_ */

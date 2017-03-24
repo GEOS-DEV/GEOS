@@ -279,6 +279,11 @@ public:
   ViewWrapper() = delete;
 };
 
+template< typename T >
+using view_rtype = typename ViewWrapper<T>::rtype;
+
+template< typename T >
+using view_rtype_const = typename ViewWrapper<T>::rtype_const;
 
 }
 } /* namespace geosx */

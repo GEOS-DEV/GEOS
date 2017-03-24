@@ -54,7 +54,8 @@ using namespace dataRepository;
 
 
 ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent ):
-    ObjectManagerBase( "ElementRegion", parent )
+    ObjectManagerBase( "ElementRegion", parent ),
+    m_elementType( this->)
 {
 
 }
