@@ -19,6 +19,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "pugixml/src/pugixml.hpp"
+
 #include "Macros.hpp"
 
 #ifndef CONTAINERARRAY_RETURN_PTR
@@ -140,6 +142,7 @@ using string_set        = set<string>;
 using string_const_set  = set<string const>;
 
 
+using xmlNode = pugi::xml_node;
 
 //***** BEGIN LEGACY TYPEDEFS *****
 using rArray1d = Array1dT<real64>;

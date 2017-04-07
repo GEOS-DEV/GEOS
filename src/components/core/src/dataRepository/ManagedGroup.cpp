@@ -17,8 +17,120 @@ namespace dataRepository
 
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ) :
-  ManagedGroup( name, parent, nullptr )
-{}
+  m_docNode(nullptr),
+  m_keyLookup(),
+  m_wrappers(),
+  m_parent(parent),
+  m_subGroups(),
+  m_sidreGroup(nullptr)
+{
+
+  // SIDRE interaction
+  asctoolkit::sidre::DataGroup * sidreParent = nullptr;
+  if( m_parent==nullptr )
+  {
+    sidreParent = SidreWrapper::dataStore().getRoot();
+  }
+  else
+  {
+    sidreParent = parent->m_sidreGroup;
+  }
+
+  if( sidreParent->hasGroup(name) )
+  {
+    m_sidreGroup = sidreParent->getGroup(name);
+  }
+  else
+  {
+    m_sidreGroup = sidreParent->createGroup(name);
+  }
+
+
+
+  // Setup DocumentationNode
+  if( parent != nullptr )
+  {
+    if( parent->m_docNode != nullptr  )
+    {
+      if( this->m_docNode == nullptr )
+      {
+        m_docNode = parent->m_docNode->AllocateChildNode( name,
+                                                          name,
+                                                          0,
+                                                          "",
+                                                          "Node",
+                                                          "",
+                                                          "",
+                                                          "",
+                                                          parent->getName(),
+                                                          0,
+                                                          0 ) ;
+      }
+    }
+    else
+    {
+      m_docNode = new cxx_utilities::DocumentationNode( name,
+                                                        name,
+                                                        -1,
+                                                        "Node",
+                                                        "Node",
+                                                        "The Root DocumentationNode for " + name,
+                                                        "",
+                                                        "",
+                                                        "",
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        nullptr );
+    }
+  }
+  else
+  {
+    m_docNode = new cxx_utilities::DocumentationNode( name,
+                                                      name,
+                                                      -1,
+                                                      "Node",
+                                                      "Node",
+                                                      "The Root DocumentationNode for " + name,
+                                                      "",
+                                                      "",
+                                                      "",
+                                                      0,
+                                                      0,
+                                                      0,
+                                                      nullptr );
+  }
+
+
+  m_docNode->AllocateChildNode( "size",
+                                "size",
+                                -1,
+                                "int32",
+                                "int32",
+                                "size of group",
+                                "Number of entries in this group.",
+                                "0",
+                                "",
+                                0,
+                                0 );
+
+  m_docNode->AllocateChildNode( "name",
+                                "name",
+                                -1,
+                                "string",
+                                "string",
+                                "name of group",
+                                "name of group.",
+                                name,
+                                "",
+                                0,
+                                0 );
+
+  *(RegisterViewWrapper<int32>( "size" ).data()) = 0;
+  RegisterViewWrapper<std::string>( "name" ).reference() = name;
+  RegisterViewWrapper<std::string>( "path" );
+
+}
 
 
 ManagedGroup::ManagedGroup( std::string const & name,
@@ -57,19 +169,23 @@ ManagedGroup::ManagedGroup( std::string const & name,
   // Setup DocumentationNode
   if( parent != nullptr )
   {
-    if( parent->m_docNode != nullptr )
+    if( parent->m_docNode != nullptr && this->m_docNode != nullptr )
     {
       m_docNode = parent->m_docNode->AllocateChildNode( name,
                                                         name,
                                                         0,
                                                         "ManagedGroup",
-                                                        "",
+                                                        "Node",
                                                         "ManagedGroup",
                                                         "ManagedGroup",
                                                         "",
                                                         parent->getName(),
                                                         0,
                                                         0 ) ;
+
+    }
+    else
+    {
 
     }
   }
@@ -79,7 +195,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
                                 "size",
                                 -1,
                                 "int32",
-                                "",
+                                "int32",
                                 "size of group",
                                 "Number of entries in this group.",
                                 "0",
@@ -107,6 +223,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
 
 ManagedGroup::~ManagedGroup()
 {
+  delete m_docNode;
   // TODO Auto-generated destructor stub
 }
 
@@ -158,9 +275,11 @@ void ManagedGroup::RegisterDocumentationNodes()
 {
   for( auto&& subNode : m_docNode->getChildNodes() )
   {
-    if( subNode.second.getDataType() != "DocumentationNode" )
+//    std::cout<<subNode.first<<", "<<subNode.second.getName()<<std::endl;
+    if( ( subNode.second.getSchemaType() != "DocumentationNode" ) &&
+        ( subNode.second.getSchemaType() != "Node" ) )
     {
-//      std::cout<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
+      std::cout<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
       RegisterViewWrapper( subNode.second.getStringKey(),
                            rtTypes::typeID(subNode.second.getDataType() ) );
     }
@@ -195,6 +314,8 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
+  ReadXMLsub( targetNode );
+
   for( auto const & subDocEntry : docNode->m_child )
   {
     cxx_utilities::DocumentationNode subDocNode = subDocEntry.second;
@@ -221,7 +342,17 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
         }
         else
         {
-          stringutilities::StringToType( xmlVal, defVal );
+          if( defVal == "REQUIRED")
+          {
+            string message = "variable " + subDocNode.getName() + " is required in " + targetNode.path();
+            SLIC_ERROR( message );
+          }
+          else
+          {
+            stringutilities::StringToType( xmlVal, defVal );
+          }
+
+
         }
         localIndex const size = xmlVal.size();
         dataView.resize( size );
@@ -314,8 +445,24 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
 #endif
     }
   }
+
+  ReadXML_PostProcess();
 }
 
+
+void ManagedGroup::PrintDataHierarchy()
+{
+  for( auto& view : this->m_wrappers )
+  {
+    std::cout<<view->getName()<<", "<<view->get_typeid().name()<<std::endl;
+  }
+
+  for( auto& group : this->m_subGroups )
+  {
+    std::cout<<group.first<<std::endl;
+    group.second->PrintDataHierarchy();
+  }
+}
 
 
 }

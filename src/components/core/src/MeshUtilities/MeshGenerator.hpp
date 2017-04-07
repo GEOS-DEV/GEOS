@@ -17,6 +17,25 @@
 namespace geosx
 {
 
+namespace dataRepository
+{
+namespace keys
+{
+string const xCoords = "xCoords";
+string const yCoords = "yCoords";
+string const zCoords = "zCoords";
+string const xElems  = "nx";
+string const yElems  = "ny";
+string const zElems  = "nz";
+string const xBias  = "xbias";
+string const yBias  = "ybias";
+string const zBias  = "zbias";
+string const regionNames = "regionNames";
+string const elementTypes = "elementTypes";
+string const trianglePattern = "trianglePattern";
+}
+}
+
 class NodeManager;
 class DomainPartition;
 
@@ -47,6 +66,7 @@ public:
 
   void RemapMesh ( DomainPartition& domain );
 
+  void ReadXML_PostProcess() override final;
   
   int m_delayMeshDeformation;
 

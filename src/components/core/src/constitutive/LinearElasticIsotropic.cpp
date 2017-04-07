@@ -10,12 +10,13 @@
 namespace geosx
 {
 using namespace dataRepository;
+using namespace cxx_utilities;
 namespace constitutive
 {
 
 
-LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name ):
-    ConstitutiveBase(name)
+LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
+    ConstitutiveBase(name, parent )
 {
   // TODO Auto-generated constructor stub
 
@@ -26,6 +27,49 @@ LinearElasticIsotropic::~LinearElasticIsotropic()
   // TODO Auto-generated destructor stub
 }
 
+void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
+{
+
+  DocumentationNode * const docNode = this->getDocumentationNode();
+
+  docNode->setName(this->CatalogName());
+  docNode->setSchemaType("Node");
+  docNode->setShortDescription("Linear Elastic Isotropic Constitutive Relation");
+
+  ManagedGroup & parameterData = this->GetGroup( std::string("StateData") );
+  DocumentationNode * const parameterDocNode = parameterData.getDocumentationNode();
+  parameterDocNode->setSchemaType("Node");
+  parameterDocNode->setShortDescription("Parameters for Linear Elastic Isotropic Constitutive Relation");
+
+  parameterDocNode->AllocateChildNode( "YoungsModulus",
+                                       "YoungsModulus",
+                                       -1,
+                                       "real64",
+                                       "real64",
+                                       "Young's Elastic Modulus",
+                                       "Young's Elastic Modulus",
+                                       "0",
+                                       "",
+                                       1,
+                                       0 );
+
+  ManagedGroup & stateData     = this->GetGroup( std::string("ParameterData") );
+  DocumentationNode * const stateDocNode = stateData.getDocumentationNode();
+  stateDocNode->setSchemaType("Node");
+  stateDocNode->setShortDescription("State for Linear Elastic Isotropic Constitutive Relation");
+
+  parameterDocNode->AllocateChildNode( "Stress",
+                                       "Stress",
+                                       -1,
+                                       "real64",
+                                       "real64",
+                                       "Stress",
+                                       "Stress",
+                                       "0",
+                                       "",
+                                       1,
+                                       0 );
+}
 
 void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * const input,
                                                   dataRepository::ManagedGroup const * const parameters,
@@ -103,6 +147,6 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const & )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, ManagedGroup * const )
 }
 } /* namespace geosx */

@@ -21,6 +21,7 @@ add_subdirectory(math)
 add_subdirectory(schema)
 add_subdirectory(managers)
 add_subdirectory(MeshUtilities)
+add_subdirectory(MPI_Communications)
 add_subdirectory(PhysicsSolvers)
 add_subdirectory(python)
 

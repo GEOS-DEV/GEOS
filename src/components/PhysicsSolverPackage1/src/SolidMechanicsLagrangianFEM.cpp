@@ -75,7 +75,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               "real64",
                               "Elastic Young's Modulus",
                               "Elastic Young's Modulus",
-                              "1.0e9",
+                              "",
                               "",
                               1,
                               0 );
@@ -135,7 +135,7 @@ void SolidMechanics_LagrangianFEM::BuildDataStructure( ManagedGroup * const doma
   elems.RegisterViewWrapper<real64>(keys::Ey);
   elems.RegisterViewWrapper<real64_array>(keys::K);
 
-  nodes.RegisterViewWrapper<real64_array>(keys::ReferencePosition);
+  nodes.RegisterViewWrapper<r1_array>(keys::ReferencePosition);
   nodes.RegisterViewWrapper<real64_array>(keys::Mass);
 
   /*

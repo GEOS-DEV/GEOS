@@ -195,8 +195,16 @@ public:
 
 
   ///@}
+  ///
+
+
+  void PrintDataHierarchy();
 
   virtual void ReadXML( pugi::xml_node const & targetNode );
+
+  virtual void ReadXMLsub( pugi::xml_node const & targetNode ) {}
+
+  virtual void ReadXML_PostProcess() {}
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
 

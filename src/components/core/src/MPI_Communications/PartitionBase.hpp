@@ -47,10 +47,8 @@
 #define PARTITIONBASE_H_
 
 #include "Common/DataTypes.hpp"
-#include "NeighborCommunication.h"
-//#include "IO/ticpp/TinyXMLParser.h"
-
 #include <mpi.h>
+#include "NeighborCommunication.hpp"
 
 
 class oBinStream;
@@ -65,7 +63,7 @@ namespace dataRepository
 class ManagedGroup;
 }
 
-
+class DomainPartition;
 
 class PartitionBase
 {
@@ -76,7 +74,7 @@ public:
 
   virtual void Initialize() = 0;
 
-  void SetDomain( dataRepository::ManagedGroup& domain );
+  void SetDomain( DomainPartition& domain );
 
   virtual bool IsCoordInPartition( const R1Tensor& elemCenter ) = 0;
   virtual bool IsCoordInPartition( const R1Tensor& elemCenter,
@@ -88,16 +86,16 @@ public:
   virtual bool IsCoordInContactGhostRange( const R1Tensor& elemCenter ) = 0;
 
 
-  virtual void ReadXMLInput( TICPP::HierarchicalDataNode& hdn) = 0;
+//  virtual void ReadXMLInput( xmlNode const & hdn) = 0;
 
 
-  virtual void AssignGlobalIndices( dataRepository::ManagedGroup& domain );
+  virtual void AssignGlobalIndices( DomainPartition& domain );
 
-  virtual void FindMatchedBoundaryIndices( const std::string key,
-                                           const ObjectDataStructureBaseT& object );
+  virtual void FindMatchedBoundaryIndices( string const & key,
+                                           const ObjectManagerBase& object );
 
 
-  virtual void SetUpNeighborLists( dataRepository::ManagedGroup& domain,
+  virtual void SetUpNeighborLists( DomainPartition& domain,
                                    const bool contactActive );
 
   void SetRankOfNeighborNeighbors();
@@ -116,11 +114,14 @@ public:
   void SetOwnedByRank( const std::map< std::string, gArray1d>& localBoundaryGlobalIndices,
                        std::map<std::string, std::map< globalIndex, int > >& boundaryOwnership);
 
-  void SetGhostArrays( dataRepository::ManagedGroup& domain );
+  void SetGhostArrays( DomainPartition& domain );
 
   lArray1d GetFaceSendIndices();
 
   virtual void SetContactGhostRange( const double bufferSize ) = 0;
+
+  void SetBufferSizes( const std::map<string, sArray1d>& fieldNames,
+                                      const CommRegistry::commID commID  );
 
   int NumberOfNeighbors( ) {return m_neighbors.size();}
 
@@ -133,9 +134,9 @@ public:
   int Color() const {return m_color;}
   int NumColor() const {return m_numColors;}
 
-  void WriteSilo( SiloFile& siloFile );
-
-  void ReadSilo( const SiloFile& siloFile );
+//  void WriteSilo( SiloFile& siloFile );
+//
+//  void ReadSilo( const SiloFile& siloFile );
   void DeleteExcessNeighbors();
   void GraphBasedColoring();
 
@@ -154,7 +155,7 @@ protected:
   int m_color;
   int m_numColors;
 
-//  PhysicalDomainT* const m_domain;
+  DomainPartition* const m_domain;
 
 public:
   realT m_t1;
@@ -176,9 +177,9 @@ private:
 
   void CommunicateRequiredObjectIndices();
 
-  virtual void WriteSiloDerived( SiloFile& siloFile ) = 0;
-
-  virtual void ReadSiloDerived( const SiloFile& siloFile ) = 0;
+//  virtual void WriteSiloDerived( SiloFile& siloFile ) = 0;
+//
+//  virtual void ReadSiloDerived( const SiloFile& siloFile ) = 0;
 
 
 };

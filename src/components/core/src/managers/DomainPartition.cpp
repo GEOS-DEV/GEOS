@@ -6,6 +6,8 @@
  */
 
 #include "DomainPartition.hpp"
+
+#include "../MPI_Communications/SpatialPartition.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "NodeManager.hpp"
 
@@ -16,7 +18,9 @@ using namespace dataRepository;
 DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ) :
   ManagedGroup( name, parent )
-{}
+{
+  m_partition = new SpatialPartition();
+}
 
 DomainPartition::~DomainPartition()
 {}

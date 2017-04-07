@@ -13,6 +13,8 @@
 #include "finiteElement/FiniteElementSpace.hpp"
 #include "MeshUtilities/MeshGenerator.hpp"
 #include <stdexcept>
+#include "ElementManager.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 
 
 namespace geosx
@@ -34,6 +36,7 @@ namespace dataRepository
 }
 
 using namespace dataRepository;
+using namespace constitutive;
 
 ProblemManager::ProblemManager( const std::string& name,
                                 ManagedGroup * const parent ) :
@@ -41,17 +44,18 @@ ProblemManager::ProblemManager( const std::string& name,
   m_physicsSolverManager(nullptr)
 {
   m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
-}
-
-ProblemManager::ProblemManager( const std::string& name,
-                                ManagedGroup * const parent,
-                                cxx_utilities::DocumentationNode * docNode ) :
-  ObjectManagerBase( name, parent, docNode ),
-  m_physicsSolverManager(nullptr)
-{
-  m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
   m_eventManager = &(RegisterGroup<EventManager>("EventManager" ) ) ;
 }
+
+//ProblemManager::ProblemManager( const std::string& name,
+//                                ManagedGroup * const parent,
+//                                cxx_utilities::DocumentationNode * docNode ) :
+//  ObjectManagerBase( name, parent, docNode ),
+//  m_physicsSolverManager(nullptr)
+//{
+//  m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
+//  m_eventManager = &(RegisterGroup<EventManager>("EventManager" ) ) ;
+//}
 
 ProblemManager::~ProblemManager()
 {
@@ -65,6 +69,8 @@ void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 
   RegisterGroup<DomainPartition>(keys::domain).BuildDataStructure(nullptr);
   RegisterGroup<ManagedGroup>(keys::commandLine);
+  RegisterGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+
 }
 
 
@@ -380,7 +386,7 @@ void ProblemManager::ParseInputFile()
         // Register the new mesh generator
         std::string meshID = childNode.attribute("name").value();
 
-        MeshGenerator & meshGenerator = meshGenerators.RegisterGroup<MeshGenerator>("meshID");
+        MeshGenerator & meshGenerator = meshGenerators.RegisterGroup<MeshGenerator>(meshID);
 
         // Set the documentation node
         meshGenerator.SetDocumentationNodes( &meshGenerators );
@@ -391,7 +397,19 @@ void ProblemManager::ParseInputFile()
     }
   }
   
+  {
+    pugi::xml_node topLevelNode = xmlProblemNode.child("ElementRegions");
+    ElementManager & elementManager = domain.GetGroup<ElementManager>(keys::FEM_Elements);
+    elementManager.ReadXML( topLevelNode );
+
+  }
   
+  {
+    pugi::xml_node topLevelNode = xmlProblemNode.child("Constitutive");
+    ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+    constitutiveManager.ReadXML( topLevelNode );
+  }
+
   
   
   this->m_physicsSolverManager->ReadXML(domain, xmlProblemNode );
@@ -415,6 +433,14 @@ void ProblemManager::ParseInputFile()
 void ProblemManager::InitializeObjects()
 {
   DomainPartition& domain  = getDomainPartition();
+
+  // Generate Meshes
+  ManagedGroup & meshGenerators = this->GetGroup(string("MeshGenerators"));
+  meshGenerators.forSubGroups<MeshGenerator>([this,&domain]( MeshGenerator & meshGen ) -> void
+  {
+    meshGen.GenerateMesh( domain );
+  });
+
 
   // Initialize solvers
   m_physicsSolverManager->forSubGroups<SolverBase>( [this,&domain]( SolverBase & solver ) -> void

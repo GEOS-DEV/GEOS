@@ -101,4 +101,29 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   }
 }
 
+void ObjectManagerBase::ConstructListOfBoundaryObjects( lArray1d& objectList ) const
+{
+  const iArray1d& isDomainBoundary = this->GetFieldData<int>("isDomainBoundary");
+  for( localIndex k=0 ; k<this->m_DataLengths ; ++k )
+  {
+    if( isDomainBoundary[k] == 1 )
+    {
+      objectList.push_back( k );
+    }
+  }
+}
+
+void ObjectManagerBase::ConstructListOfBoundaryObjects( gArray1d& objectList ) const
+{
+  const iArray1d& isDomainBoundary = this->GetFieldData<int>("isDomainBoundary");
+  for( localIndex k=0 ; k<this->m_DataLengths ; ++k )
+  {
+    if( isDomainBoundary[k] == 1 )
+    {
+      objectList.push_back( this->m_localToGlobalMap[k] );
+    }
+  }
+  std::sort( objectList.begin(), objectList.end() );
+}
+
 } /* namespace geosx */

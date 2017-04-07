@@ -57,6 +57,16 @@ class StableTimeStep;
 
 namespace geosx
 {
+
+namespace dataRepository
+{
+namespace keys
+{
+string const numNodesPerElement = "numNodesPerElement";
+string const nodeList = "nodeList";
+}
+}
+
 /**
  * Class to manage the data stored at the element level.
  */
@@ -92,12 +102,16 @@ public:
 //  ElementRegion( ElementRegion&& init);
   
 
+  void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+
   virtual ~ElementRegion();
+
+  Array2dT<real64> & m_toNodesRelation;
 
 private:
   ElementRegion& operator=(const ElementRegion& rhs);
 
-  string & m_elementType;
+//  string & m_elementType;
 
 };
 

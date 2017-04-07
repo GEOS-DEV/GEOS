@@ -56,7 +56,13 @@
 namespace geosx
 {
 
-
+namespace dataRepository
+{
+namespace keys
+{
+string const elementRegions = "elementRegions";
+}
+}
 
 
 /**
@@ -90,6 +96,8 @@ public:
 
   void Initialize(  ){}
 
+  virtual void ReadXMLsub( pugi::xml_node const & targetNode );
+
   using ManagedGroup::resize;
 
   void resize( int32_array const & numElements,
@@ -99,6 +107,11 @@ public:
   ElementRegion & CreateRegion( string const & regionName,
                                string const & elementType,
                                int32 const & numElements );
+
+  ElementRegion & GetRegion( string const & regionName )
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions).GetGroup<ElementRegion>(regionName);
+  }
 
 
 private:

@@ -23,7 +23,7 @@
                   nx="10"
                   ny="10"
                   nz="10"
-                  regionNames="Region"/>
+                  regionNames="Region1"/>
   </Mesh>
 
 
@@ -37,10 +37,14 @@
 
 
   <ElementRegions>
-    <ElementRegion elementType="poly" name="Region">
-      <LinearElasticMaterial bulkModulus="5.5556e9" density="200000" shearModulus="4.16667e9"/>
-    </ElementRegion>
+    <ElementRegion elementType="poly" name="Region1" material="granite"/>
+    <ElementRegion elementType="poly" name="Region2" material="shale"/>
   </ElementRegions>
+
+  <Constitutive>
+      <LinearElasticIsotropic name="granite" bulkModulus="5.5556e9" density="2700" shearModulus="4.16667e9"/>
+      <LinearElasticIsotropic name="shale"   bulkModulus="5.5556e9" density="2700" shearModulus="4.16667e9"/>
+  </Constitutive>
 
 
   <BoundaryConditions>

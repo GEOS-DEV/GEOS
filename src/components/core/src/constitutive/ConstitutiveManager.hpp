@@ -24,7 +24,7 @@ public:
   ConstitutiveManager( std::string const & name,
                        ManagedGroup * const parent );
 
-  void ReadXMLInput();
+  void ReadXMLsub( pugi::xml_node const & targetNode );
 
   ~ConstitutiveManager();
 };

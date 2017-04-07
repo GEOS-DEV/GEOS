@@ -48,12 +48,12 @@ private:
 
 
   int m_dim;
-  rArray1d m_vertices[3];
-  iArray1d m_nElems[3];
-  rArray1d m_nElemScaling[3];
-  rArray1d m_nElemBias[3];
-
-  sArray1d m_regionNames;
+//  rArray1d m_vertices[3];
+//  iArray1d m_nElems[3];
+//  rArray1d m_nElemScaling[3];
+//  rArray1d m_nElemBias[3];
+//
+//  sArray1d m_regionNames;
 
   realT m_min[3]; // Minimum extent of mesh dimensions
   realT m_max[3]; // Maximum extent of mesh dimensions

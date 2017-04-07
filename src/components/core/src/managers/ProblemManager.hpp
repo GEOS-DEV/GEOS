@@ -75,9 +75,9 @@ public:
   explicit ProblemManager( const std::string& name,
                            ManagedGroup * const parent );
 
-  explicit ProblemManager( const std::string& name,
-                           ManagedGroup * const parent,
-                           cxx_utilities::DocumentationNode * docNode );
+//  explicit ProblemManager( const std::string& name,
+//                           ManagedGroup * const parent,
+//                           cxx_utilities::DocumentationNode * docNode );
   ~ProblemManager();
 
   /**

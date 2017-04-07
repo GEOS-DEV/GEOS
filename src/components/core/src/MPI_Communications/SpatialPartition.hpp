@@ -46,73 +46,74 @@
 #ifndef SPATIALPARTITION_H_
 #define SPATIALPARTITION_H_
 
-#include "PartitionBase.h"
-#include "IO/ticpp/TinyXMLParser.h"
 #include <map>
+#include "PartitionBase.hpp"
 
-// Planar Sorter
-// Sorts pairs of local and global indexes by the positions of their corresponding node points in a plane.
-class PlanarSorter {
-
-public:
-	PlanarSorter(const Array1dT<R1Tensor>& refPos, int dim) :
-			dimension(dim), refPositions(refPos) {
-	}
-	;
-
-	// sort operator for pairs containing local indexes (sort based on 1st element in pair)
-	bool operator()(const std::pair<localIndex, localIndex>& lhs,
-	const std::pair<localIndex, localIndex>& rhs) {
-		bool rv = false;
-		int a = 0;
-		int b = 2;
-		if (dimension == 0)
-			a = 1;
-		if (dimension == 2)
-			b = 1;
-
-		const R1Tensor& lhsVect = refPositions[lhs.first];
-		const R1Tensor& rhsVect = refPositions[rhs.first];
-
-		if (lhsVect[a] < rhsVect[a]) {
-			rv = true;
-		} else if (isEqual(lhsVect[a], rhsVect[a])
-				&& (lhsVect[b] < rhsVect[b])) {
-			rv = true;
-		};
-
-		return rv;
-	}
-	;
-
-	// sort operator for local indexes
-	bool operator()(const localIndex& lhs, const localIndex& rhs) {
-		bool rv = false;
-		int a = 0;
-		int b = 2;
-		if (dimension == 0)
-			a = 1;
-		if (dimension == 2)
-			b = 1;
-
-		const R1Tensor& lhsVect = refPositions[lhs];
-		const R1Tensor& rhsVect = refPositions[rhs];
-
-		if (lhsVect[a] < rhsVect[a]) {
-			rv = true;
-		} else if (isEqual(lhsVect[a], rhsVect[a])
-				&& (lhsVect[b] < rhsVect[b])) {
-			rv = true;
-		};
-
-		return rv;
-	}
-	;
-
-private:
-	int dimension;
-	const Array1dT<R1Tensor>& refPositions;
-};
+namespace geosx
+{
+//// Planar Sorter
+//// Sorts pairs of local and global indexes by the positions of their corresponding node points in a plane.
+//class PlanarSorter {
+//
+//public:
+//	PlanarSorter(const Array1dT<R1Tensor>& refPos, int dim) :
+//			dimension(dim), refPositions(refPos) {
+//	}
+//	;
+//
+//	// sort operator for pairs containing local indexes (sort based on 1st element in pair)
+//	bool operator()(const std::pair<localIndex, localIndex>& lhs,
+//	const std::pair<localIndex, localIndex>& rhs) {
+//		bool rv = false;
+//		int a = 0;
+//		int b = 2;
+//		if (dimension == 0)
+//			a = 1;
+//		if (dimension == 2)
+//			b = 1;
+//
+//		const R1Tensor& lhsVect = refPositions[lhs.first];
+//		const R1Tensor& rhsVect = refPositions[rhs.first];
+//
+//		if (lhsVect[a] < rhsVect[a]) {
+//			rv = true;
+//		} else if (isEqual(lhsVect[a], rhsVect[a])
+//				&& (lhsVect[b] < rhsVect[b])) {
+//			rv = true;
+//		};
+//
+//		return rv;
+//	}
+//	;
+//
+//	// sort operator for local indexes
+//	bool operator()(const localIndex& lhs, const localIndex& rhs) {
+//		bool rv = false;
+//		int a = 0;
+//		int b = 2;
+//		if (dimension == 0)
+//			a = 1;
+//		if (dimension == 2)
+//			b = 1;
+//
+//		const R1Tensor& lhsVect = refPositions[lhs];
+//		const R1Tensor& rhsVect = refPositions[rhs];
+//
+//		if (lhsVect[a] < rhsVect[a]) {
+//			rv = true;
+//		} else if (isEqual(lhsVect[a], rhsVect[a])
+//				&& (lhsVect[b] < rhsVect[b])) {
+//			rv = true;
+//		};
+//
+//		return rv;
+//	}
+//	;
+//
+//private:
+//	int dimension;
+//	const Array1dT<R1Tensor>& refPositions;
+//};
 
 class SpatialPartition: public PartitionBase {
 public:
@@ -136,12 +137,13 @@ public:
   void getSizes(R1Tensor& min, R1Tensor& max) const;
   void getPartitionSizes(R1Tensor& min, R1Tensor& max) const;
   void getPartitionGeometricalBoundary(R1Tensor& min, R1Tensor& max) const;
-  void UpdatePartitionBoundingBox(NodeManager& nodeManager);
+//  void UpdatePartitionBoundingBox(NodeManager& nodeManager);
   void GetPartitionBoundingBox(R1Tensor& xmin, R1Tensor& xmax);
   void SetPartitionGeometricalBoundary(R1Tensor& min, R1Tensor& max);
 
   void setPartitions(unsigned int xPartitions, unsigned int yPartitions,
       unsigned int zPartitions) {
+    m_Partitions.resize(3);
     m_Partitions(0) = xPartitions;
     m_Partitions(1) = yPartitions;
     m_Partitions(2) = zPartitions;
@@ -163,19 +165,19 @@ public:
     m_Periodic(1) = rPeriodic;
   }
 
-  virtual void ReadXMLInput(TICPP::HierarchicalDataNode& hdn);
+//  virtual void ReadXMLInput(TICPP::HierarchicalDataNode& hdn);
 
   virtual void SetContactGhostRange(const realT bufferSize);
 
-  virtual void ResetSinglePartitionGlobalToLocalMap(PhysicalDomainT& domain);
+//  virtual void ResetSinglePartitionGlobalToLocalMap(PhysicalDomainT& domain);
 
-  virtual void SetPeriodicDomainBoundaryObjects(PhysicalDomainT& domain);
-  virtual void CorrectReferencePositionsForPeriodicBoundaries(
-      PhysicalDomainT& domain);
+//  virtual void SetPeriodicDomainBoundaryObjects(PhysicalDomainT& domain);
+//  virtual void CorrectReferencePositionsForPeriodicBoundaries(
+//      PhysicalDomainT& domain);
 
-  void CreateSinglePartitionGhostObjects(PhysicalDomainT& domain,
-      const bool contactActive, const int elementGhostingDepth);
-  void SetSinglePartitionGhostArrays(PhysicalDomainT& domain);
+//  void CreateSinglePartitionGhostObjects(PhysicalDomainT& domain,
+//      const bool contactActive, const int elementGhostingDepth);
+//  void SetSinglePartitionGhostArrays(PhysicalDomainT& domain);
 
   int GetColor();
 
@@ -219,25 +221,25 @@ private:
 	R1Tensor m_gridMin; // Minimum extent of problem dimensions (excluding ghost objects)
 	R1Tensor m_gridMax; // Maximum extent of problem dimensions (excluding ghost objects)
 
-	struct PeriodicSet {
-		int m_dimension;
-		sArray1d m_setNames;
-		void ReadXML(TICPP::HierarchicalDataNode& hdn) {
-			m_dimension = hdn.GetAttributeValue<int>("dimension");
-			m_setNames = hdn.GetStringVector("setnames");
-		}
-	};
-	std::vector<PeriodicSet> m_periodicSets;
+//	struct PeriodicSet {
+//		int m_dimension;
+//		sArray1d m_setNames;
+//		void ReadXML(TICPP::HierarchicalDataNode& hdn) {
+//			m_dimension = hdn.GetAttributeValue<int>("dimension");
+//			m_setNames = hdn.GetStringVector("setnames");
+//		}
+//	};
+//	std::vector<PeriodicSet> m_periodicSets;
 
 	void AddNeighbors(const unsigned int idim, MPI_Comm& cartcomm,
 			int* ncoords);
 
 	std::map<Array1dT<int>, unsigned int> neighborCommPtrIndx;
 
-	virtual void WriteSiloDerived(SiloFile& siloFile);
-
-	virtual void ReadSiloDerived(const SiloFile& siloFile);
+//	virtual void WriteSiloDerived(SiloFile& siloFile);
+//
+//	virtual void ReadSiloDerived(const SiloFile& siloFile);
 
 };
-
+}
 #endif /* SPATIALPARTITION_H_ */

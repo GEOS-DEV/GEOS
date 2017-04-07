@@ -17,18 +17,18 @@ namespace constitutive
 class LinearElasticIsotropic : public ConstitutiveBase
 {
 public:
-  LinearElasticIsotropic( std::string const & name );
+  LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent );
+
   virtual ~LinearElasticIsotropic();
 
-  static std::string CatalogName() { return "HypoElasticLinear"; }
+  static std::string CatalogName() { return "LinearElasticIsotropic"; }
 
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const override;
 
-
-
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group );
 
 };
 

@@ -49,6 +49,7 @@
 //#include "../ObjectManagers/PhysicalDomainT.h"
 //#include "../Utilities/Utilities.h"
 #include "Communication.h"
+#include "legacy/ArrayT/bufvector.h"
 
 class oBinStream;
 class iBinStream;
@@ -60,6 +61,8 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
+
+class DomainPartition;
 
 struct TempNeighborData
 {
@@ -170,7 +173,7 @@ public:
     this->m_sendBuffer.resize( newsize );
   }
 
-  void SetDomain( dataRepository::ManagedGroup& domain );
+//  void SetDomain( DomainPartition& domain );
 
   bufvector::size_type PackBuffer( const std::map<string, sArray1d>& fieldNames,
                                    const CommRegistry::commID commID,
@@ -309,9 +312,9 @@ public:
                    MPI_Request& outReq,
                    const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
-  void WriteSilo( SiloFile& siloFile );
-
-  void ReadSilo( const SiloFile& siloFile );
+//  void WriteSilo( SiloFile& siloFile );
+//
+//  void ReadSilo( const SiloFile& siloFile );
 
   int ReturnNeighborRank()
   {

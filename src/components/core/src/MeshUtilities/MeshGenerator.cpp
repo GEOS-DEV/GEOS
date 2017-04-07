@@ -16,14 +16,18 @@
 //#include "SimpleGeometricObjects.hpp"
 #include "pugixml/src/pugixml.hpp"
 
-#include "MPI_Communications/PartitionBase.h"
 #include "slic/slic.hpp"
+
+#include "../MPI_Communications/PartitionBase.hpp"
 namespace geosx
 {
 using namespace dataRepository;
 
 MeshGenerator::MeshGenerator( string const & name, ManagedGroup * const parent ) :
     ManagedGroup( name, parent ),
+//    m_vertices({this->RegisterViewWrapper<real64_array>(keys::xCoords).reference(),
+//                this->RegisterViewWrapper<real64_array>(keys::yCoords).reference(),
+//                this->RegisterViewWrapper<real64_array>(keys::zCoords).reference() }),
     m_dim( 0 ),
     m_min(),
     m_max()
@@ -56,11 +60,11 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "a mesh generator" );
 
-  docNode->AllocateChildNode( "xCoords",
-                              "xCoords",
+  docNode->AllocateChildNode( keys::xCoords,
+                              keys::xCoords,
                               -1,
-                              "real64",
-                              "real64",
+                              "real64_array",
+                              "real64_array",
                               "x-coordinates of mesh vertex points",
                               "x-coordinates of mesh vertex points",
                               "1",
@@ -68,11 +72,11 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "yCoords",
-                              "yCoords",
+  docNode->AllocateChildNode( keys::yCoords,
+                              keys::yCoords,
                               -1,
-                              "real64",
-                              "real64",
+                              "real64_array",
+                              "real64_array",
                               "y-coordinates of mesh vertex points",
                               "y-coordinates of mesh vertex points",
                               "1",
@@ -80,11 +84,11 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "zCoords",
-                              "zCoords",
+  docNode->AllocateChildNode( keys::zCoords,
+                              keys::zCoords,
                               -1,
-                              "real64",
-                              "real64",
+                              "real64_array",
+                              "real64_array",
                               "z-coordinates of mesh vertex points",
                               "z-coordinates of mesh vertex points",
                               "1",
@@ -92,8 +96,8 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "nx",
-                              "nx",
+  docNode->AllocateChildNode( keys::xElems,
+                              keys::xElems,
                               -1,
                               "int32_array",
                               "int32_array",
@@ -104,8 +108,8 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "ny",
-                              "ny",
+  docNode->AllocateChildNode( keys::yElems,
+                              keys::yElems,
                               -1,
                               "int32_array",
                               "int32_array",
@@ -116,8 +120,8 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "nz",
-                              "nz",
+  docNode->AllocateChildNode( keys::zElems,
+                              keys::zElems,
                               -1,
                               "int32_array",
                               "int32_array",
@@ -128,44 +132,44 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "xbias",
-                              "xbias",
+  docNode->AllocateChildNode( keys::xBias,
+                              keys::xBias,
                               -1,
-                              "int32_array",
-                              "int32_array",
+                              "real64_array",
+                              "real64_array",
                               "spacing bias in x-direction",
                               "spacing bias in x-direction",
-                              "1",
+                              "0",
                               "",
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "ybias",
-                              "ybias",
+  docNode->AllocateChildNode( keys::yBias,
+                              keys::yBias,
                               -1,
-                              "int32_array",
-                              "int32_array",
+                              "real64_array",
+                              "real64_array",
                               "spacing bias in y-direction",
                               "spacing bias in y-direction",
-                              "1",
+                              "0",
                               "",
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "zbias",
-                              "zbias",
+  docNode->AllocateChildNode( keys::zBias,
+                              keys::zBias,
                               -1,
-                              "int32_array",
-                              "int32_array",
+                              "real64_array",
+                              "real64_array",
                               "spacing bias in z-direction",
                               "spacing bias in z-direction",
-                              "1",
+                              "0",
                               "",
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "regionNames",
-                              "regionNames",
+  docNode->AllocateChildNode( keys::regionNames,
+                              keys::regionNames,
                               -1,
                               "string_array",
                               "string_array",
@@ -176,14 +180,26 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "elementType",
-                              "elementType",
+  docNode->AllocateChildNode( keys::elementTypes,
+                              keys::elementTypes,
                               -1,
-                              "string",
-                              "string",
+                              "string_array",
+                              "string_array",
                               "topology of discrete volumes",
                               "topology of discrete volumes",
                               "C3D8",
+                              "",
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( keys::trianglePattern,
+                              keys::trianglePattern,
+                              -1,
+                              "int32",
+                              "int32",
+                              "",
+                              "",
+                              "0",
                               "",
                               1,
                               0 );
@@ -388,6 +404,170 @@ void MeshGenerator::GenerateElementRegions( DomainPartition& domain )
 
 }
 
+void MeshGenerator::ReadXML_PostProcess()
+{
+
+  real64_array const &  xCoords = this->getData<real64_array>(keys::xCoords);
+  real64_array const &  yCoords = this->getData<real64_array>(keys::yCoords);
+  real64_array const &  zCoords = this->getData<real64_array>(keys::zCoords);
+  m_vertices[0] = xCoords;
+  m_vertices[1] = yCoords;
+  m_vertices[2] = zCoords;
+
+  int32_array const &  xElems = this->getData<int32_array>(keys::xElems);
+  int32_array const &  yElems = this->getData<int32_array>(keys::yElems);
+  int32_array const &  zElems = this->getData<int32_array>(keys::zElems);
+  m_nElems[0] = xElems;
+  m_nElems[1] = yElems;
+  m_nElems[2] = zElems;
+
+  real64_array const &  xBias = this->getData<real64_array>(keys::xBias);
+  real64_array const &  yBias = this->getData<real64_array>(keys::yBias);
+  real64_array const &  zBias = this->getData<real64_array>(keys::zBias);
+  m_nElemBias[0] = xBias;
+  m_nElemBias[1] = yBias;
+  m_nElemBias[2] = zBias;
+
+  m_regionNames = this->getData<string_array>(keys::regionNames);
+  m_elementType = this->getData<string_array>(keys::elementTypes);
+  m_trianglePattern = *(this->getData<int32>(keys::trianglePattern));
+
+
+
+    if (m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6")
+    {
+      m_dim = 3;
+    }
+    else if (m_elementType[0] == "CPE4" || m_elementType[0] == "STRI" )
+    {
+      m_dim = 2;
+    }
+    else
+    {
+      throw GPException("MeshGenerator: incorrect element type!");
+    }
+
+    {
+      bool failFlag = false;
+      for( int i=0 ; i<m_dim ; ++i )
+      {
+        failFlag += ( m_nElems[i].size() != m_vertices[i].size()-1 );
+      }
+      if( failFlag )
+      {
+        SLIC_ERROR("vertex/element mismatch MeshGenerator::ReadXMLPost()");
+      }
+    }
+
+    m_numElePerBox.resize(m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
+
+    if (m_elementType.size() != m_numElePerBox.size())
+    {
+      if (m_elementType.size() == 1)
+      {
+        m_elementType.resize(m_numElePerBox.size());
+        m_elementType = m_elementType[0];
+      }
+      else
+      {
+        throw GPException("MeshGenerator: The number of element types is inconsistent with the number of total block.");
+      }
+    }
+
+
+    for (localIndex i = 0; i < m_elementType.size(); ++i)
+    {
+      if (m_elementType[i] == "C3D8")
+      {
+        m_numElePerBox[i] = 1;
+        m_dim = 3;
+      }
+      else if (m_elementType[i] == "C3D4")
+      {
+        m_numElePerBox[i] = 6;
+        m_dim = 3;
+      }
+      else if (m_elementType[i] == "C3D6")
+      {
+        m_numElePerBox[i] = 2;
+        m_dim = 3;
+      }
+      else if ( m_elementType[i] == "CPE4")
+      {
+        m_numElePerBox[i] = 1;
+        m_dim = 2;
+      }
+      else if (m_elementType[i] == "STRI")
+      {
+        m_numElePerBox[i] = 2;
+        m_dim = 2;
+      }
+    }
+
+
+//    ExpandMultipleTokens(m_regionNames);
+    {
+      unsigned int numBlocks = 1;
+      for( int i=0 ; i<m_dim ; ++i )
+      {
+        numBlocks *= m_nElems[i].size();
+      }
+      if( numBlocks != m_regionNames.size() )
+      {
+        if (m_regionNames.size() == 1)
+        {
+          m_regionNames.resize(numBlocks);
+          m_regionNames = m_regionNames[0];
+        }
+        else
+        {
+          throw GPException("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
+        }
+      }
+    }
+
+    for( int i=0 ; i<3 ; ++i )
+    {
+      m_min[i] = m_vertices[i].front();
+      m_max[i] = m_vertices[i].back();
+    }
+
+    for( int dir=0 ; dir<3 ; ++dir )
+    {
+      m_firstElemIndexForBlock[dir].resize( m_nElems[dir].size() );
+      m_lastElemIndexForBlock[dir].resize( m_nElems[dir].size() );
+      m_firstElemIndexForBlock[dir][0] = 0;
+      m_lastElemIndexForBlock[dir][0] = m_nElems[dir][0]-1;
+      for( unsigned int block=1 ; block<m_nElems[dir].size() ; ++block )
+      {
+        m_firstElemIndexForBlock[dir][block] = m_lastElemIndexForBlock[dir][block-1] + 1;
+        m_lastElemIndexForBlock[dir][block] = m_firstElemIndexForBlock[dir][block] + m_nElems[dir][block]-1;
+      }
+    }
+
+
+//    m_fPerturb = hdn.GetAttributeOrDefault<realT>("perturbationFactor", 0.0);
+//    m_randSeed = hdn.GetAttributeOrDefault<int>("perturbationSeed", time(NULL));
+//    srand(m_randSeed);
+//
+//    m_mapToRadial = hdn.GetAttributeOrDefault<int>("mapToRadial", 0);
+//
+//    m_skewAngle = hdn.GetAttributeOrDefault<realT>("skewAngle", 0.0);
+//    m_skewAngle *= 3.14159265/180;
+//    R1Tensor zeroVector;
+//    zeroVector *= 0.0;
+//    m_skewCenter = hdn.GetAttributeOrDefault<R1Tensor>("skewCenter", zeroVector);
+//
+//
+//    // Mesh deformation
+//    m_delayMeshDeformation = hdn.GetAttributeOrDefault<int>("delayMeshDeformation", 0);
+//    m_meshDx = hdn.GetAttributeString("dxTable");
+//    m_meshDy = hdn.GetAttributeString("dyTable");
+//    m_meshDz = hdn.GetAttributeString("dzTable");
+
+}
+
+
 /**
  * @author settgast, fu, sherman
  * @param partition
@@ -396,6 +576,8 @@ void MeshGenerator::GenerateElementRegions( DomainPartition& domain )
 void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
     DomainPartition& domain )
 {
+
+
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);
 
@@ -407,6 +589,8 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
   PartitionBase & partition = *( domain.GetPartition() );
 
   bool isRadialWithOneThetaPartition = false;
+
+
 
   int32_set & xnegNodes = nodeSets.RegisterViewWrapper<int32_set>( std::string("xneg") ).reference();
   int32_set & xposNodes = nodeSets.RegisterViewWrapper<int32_set>( std::string("xpos") ).reference();
@@ -420,6 +604,14 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
   // partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
+    m_min[0] = m_vertices[0].front();
+    m_min[1] = m_vertices[1].front();
+    m_min[2] = m_vertices[2].front();
+
+    m_max[0] = m_vertices[0].back();
+    m_max[1] = m_vertices[1].back();
+    m_max[2] = m_vertices[2].back();
+
     R1Tensor temp1( m_min );
     R1Tensor temp2( m_max );
     partition.setSizes( temp1, temp2 );
@@ -690,8 +882,8 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
         {
 //          ElementRegionT& elemRegion = domain.m_feElementManager.m_ElementRegions[*iterRegion];
 
-          ObjectManagerBase & elemRegion =  elementManager.GetGroup<ObjectManagerBase>(*iterRegion);
-          int32 const numNodesPerElem = *(elemRegion.getData<int32>(std::string("numNodesPerElem")));
+          ElementRegion & elemRegion =  elementManager.GetRegion(*iterRegion);
+          int32 const numNodesPerElem = *(elemRegion.getData<int32>(keys::numNodesPerElement));
 
           int numElemsInDirForRegion[3] =
               { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
@@ -781,7 +973,7 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
                     SLIC_ERROR("not implemented");
-//                    elemRegion.m_toNodesRelation[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
+                    elemRegion.m_toNodesRelation[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;
 

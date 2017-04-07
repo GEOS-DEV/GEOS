@@ -63,6 +63,15 @@ class ElementRegion;
 class FaceManager;
 class EdgeManager;
 
+namespace dataRepository
+{
+namespace keys
+{
+std::string const nodeManager    = "NodeManager";
+}
+}
+
+
 /**
  * @author Randolph Settgast
  *
@@ -83,7 +92,7 @@ public:
   /// default destructor
   ~NodeManager();
 
-  static string CatalogName() { return "NodeManager"; }
+  static string CatalogName() { return dataRepository::keys::nodeManager; }
   string getName() const      { return NodeManager::CatalogName(); }
 
 

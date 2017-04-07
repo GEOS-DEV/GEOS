@@ -54,10 +54,10 @@ using namespace dataRepository;
 
 
 ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent ):
-    ObjectManagerBase( "ElementRegion", parent ),
-    m_elementType( this->)
+    ObjectManagerBase( name, parent ),
+    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<real64> >(keys::nodeList).reference())
 {
-
+  m_toNodesRelation.resize2(0,8);
 }
 
 
@@ -65,6 +65,39 @@ ElementRegion::~ElementRegion()
 {
 }
 
+
+void ElementRegion::FillDocumentationNode( ManagedGroup * const group )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+
+  docNode->setName( this->getName() );
+  docNode->setSchemaType( "Node" );
+  docNode->setShortDescription( "an element region" );
+
+  docNode->AllocateChildNode( keys::numNodesPerElement,
+                              keys::numNodesPerElement,
+                              -1,
+                              "int32",
+                              "int32",
+                              "Number of Nodes Per Element",
+                              "Number of Nodes Per Element",
+                              "1",
+                              "",
+                              1,
+                              0 );
+
+//  docNode->AllocateChildNode( keys::numNodesPerElement,
+//                              keys::numNodesPerElement,
+//                              -1,
+//                              "int32",
+//                              "int32",
+//                              "Number of Nodes Per Element",
+//                              "Number of Nodes Per Element",
+//                              "1",
+//                              "",
+//                              1,
+//                              0 );
+}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ManagedGroup * const )
 

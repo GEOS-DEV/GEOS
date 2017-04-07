@@ -24,15 +24,18 @@ ConstitutiveManager::ConstitutiveManager( std::string const & name,
 ConstitutiveManager::~ConstitutiveManager()
 {}
 
-void ConstitutiveManager::ReadXMLInput()
+void ConstitutiveManager::ReadXMLsub( pugi::xml_node const & targetNode )
 {
-//  this->RegisterChildWrapperCollection<ConstitutiveBase>(keys::ConstitutiveBase);
-  std::string newName = "matmodel";
-
-//  RegisterGroup( newName,
-//               ConstitutiveBase::CatalogInterface::Factory("HypoElasticLinear", newName, this ) );
-
-  //RegisterGroup<ConstitutiveBase>(newName,"HypoElasticLinear");
+  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  {
+      std::string materialName = childNode.attribute("name").value();
+      std::string materialKey = childNode.name();
+      std::cout<<materialName<<std::endl;
+      std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( materialKey, materialName, this );
+      ConstitutiveBase & newMaterial = this->RegisterGroup<ConstitutiveBase>( materialName, std::move(material) );
+      newMaterial.SetDocumentationNodes( nullptr );
+      newMaterial.ReadXML( childNode );
+  }
 }
 
 }

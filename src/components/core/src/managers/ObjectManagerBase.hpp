@@ -203,8 +203,10 @@ private:
 
 
 
+    void ConstructListOfBoundaryObjects( lArray1d& objectList ) const;
+    void ConstructListOfBoundaryObjects( gArray1d& objectList ) const;
 
-  //**********************************************************************************************************************
+    //**********************************************************************************************************************
 
 
 };

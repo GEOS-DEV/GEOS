@@ -60,7 +60,7 @@ using namespace dataRepository;
 ElementManager::ElementManager(  string const &, ManagedGroup * const parent ):
 ObjectManagerBase("ElementManager",parent)
 {
-  this->RegisterGroup<ManagedGroup>("ElementRegions");
+  this->RegisterGroup<ManagedGroup>(keys::elementRegions);
 }
 
 ElementManager::~ElementManager()
@@ -73,25 +73,41 @@ void ElementManager::resize( int32_array const & numElements,
                              string_array const & elementTypes )
 {
   int32 const numRegions = regionNames.size();
-  ManagedGroup & elementRegions = this->GetGroup(string("ElementRegions"));
+  ManagedGroup & elementRegions = this->GetGroup(keys::elementRegions);
   for( int32 reg=0 ; reg<numRegions ; ++reg )
   {
-    ManagedGroup & elemRegion = elementRegions.RegisterGroup(regionNames[reg]);
+    ElementRegion & elemRegion = this->GetRegion( regionNames[reg] );
     elemRegion.resize(numElements[reg]);
   }
 }
 
 
-ManagedGroup & CreateRegion( string const & regionName,
-                             string const & elementType,
-                             int32 const & numElements )
+ElementRegion & ElementManager::CreateRegion( string const & regionName,
+                                             string const & elementType,
+                                             int32 const & numElements )
 {
-  ElementRegion & elemRegion = elementRegions.RegisterGroup( regionNames );
-  elemRegion.resize(numElements);
-  elemRegion
+//  ElementRegion & elemRegion = elementRegions.RegisterGroup( regionNames );
+//  elemRegion.resize(numElements);
 
 }
 
+void ElementManager::ReadXMLsub( pugi::xml_node const & targetNode )
+{
+  ManagedGroup & elementRegions = this->GetGroup(keys::elementRegions);
+  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  {
+    if( childNode.name() == string("ElementRegion") )
+    {
+      std::string regionName = childNode.attribute("name").value();
+      std::cout<<regionName<<std::endl;
+
+      ElementRegion & elemRegion = elementRegions.RegisterGroup<ElementRegion>( regionName );
+      elemRegion.SetDocumentationNodes( nullptr );
+      elemRegion.RegisterDocumentationNodes();
+      elemRegion.ReadXML(childNode);
+    }
+  }
+}
 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementManager, string const &, ManagedGroup * const )
