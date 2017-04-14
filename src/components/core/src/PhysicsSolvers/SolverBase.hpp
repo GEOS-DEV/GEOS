@@ -21,6 +21,15 @@
 namespace geosx
 {
 
+namespace dataRepository
+{
+namespace keys
+{
+string const courant = "courant";
+string const maxDt   = "maxDt";
+}
+}
+
 class SolverBase : public dataRepository::ManagedGroup
 {
 public:

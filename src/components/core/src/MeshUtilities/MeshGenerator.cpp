@@ -52,13 +52,31 @@ MeshGenerator::~MeshGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
+
+  NodeManager& nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
+  ElementManager& elems = domain->GetGroup<ElementManager>(keys::FEM_Elements);
+
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   docNode->setName( this->getName() );
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "a mesh generator" );
+
+
+  nodes.getDocumentationNode()->AllocateChildNode( keys::ReferencePosition,
+                                                   keys::ReferencePosition,
+                                                   -1,
+                                                   "r1_array",
+                                                   "r1_array",
+                                                   "Reference position of mesh vertex points",
+                                                   "Reference position of mesh vertex points",
+                                                   "1",
+                                                   "",
+                                                   1,
+                                                   0,
+                                                   0 );
 
   docNode->AllocateChildNode( keys::xCoords,
                               keys::xCoords,
@@ -69,6 +87,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "x-coordinates of mesh vertex points",
                               "1",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -81,6 +100,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "y-coordinates of mesh vertex points",
                               "1",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -93,6 +113,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "z-coordinates of mesh vertex points",
                               "1",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -105,6 +126,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "number of elements in x-direction",
                               "1",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -117,6 +139,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "number of elements in y-direction",
                               "1",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -129,6 +152,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "number of elements in z-direction",
                               "1",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -141,6 +165,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "spacing bias in x-direction",
                               "0",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -153,6 +178,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "spacing bias in y-direction",
                               "0",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -165,6 +191,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "spacing bias in z-direction",
                               "0",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -177,6 +204,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "names of the regions",
                               "Region",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -189,6 +217,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "topology of discrete volumes",
                               "C3D8",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -201,6 +230,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               "",
                               "0",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -972,7 +1002,7 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
 
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
-                    SLIC_ERROR("not implemented");
+//                    SLIC_ERROR("not implemented");
                     elemRegion.m_toNodesRelation[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;
@@ -1061,7 +1091,7 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
   // Node perturbation
   if( m_fPerturb > 0 )
   {
-    for( localIndex iN = 0 ; iN != nodeManager.DataLengths() ; ++iN )
+    for( localIndex iN = 0 ; iN != nodeManager.size() ; ++iN )
     {
 
       for( int i = 0 ; i < m_dim ; ++i )
@@ -1077,7 +1107,7 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
 
   if( std::fabs( m_skewAngle ) > 0.0 )
   {
-    for( localIndex iN = 0 ; iN != nodeManager.DataLengths() ; ++iN )
+    for( localIndex iN = 0 ; iN != nodeManager.size() ; ++iN )
     {
       X[iN][0] -= ( X[iN][1] - m_skewCenter[1] ) * std::tan( m_skewAngle );
     }
@@ -1086,7 +1116,7 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
   if( m_mapToRadial > 0 )
   {
     // Map to radial mesh
-    for( localIndex iN = 0 ; iN != nodeManager.DataLengths() ; ++iN )
+    for( localIndex iN = 0 ; iN != nodeManager.size() ; ++iN )
     {
       meshTheta = X[iN][1] * 3.141592654 / 180.0;
       meshAxis = round( meshTheta * 2.0 / 3.141592654 );

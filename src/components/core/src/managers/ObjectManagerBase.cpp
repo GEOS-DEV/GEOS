@@ -21,17 +21,17 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   this->RegisterGroup<ManagedGroup>("Sets");
   this->RegisterViewWrapper< iArray1d >("isExternal");
 }
-ObjectManagerBase::ObjectManagerBase( std::string const & name,
-                                      ManagedGroup * const parent,
-                                      cxx_utilities::DocumentationNode * docNode ):
-    ManagedGroup(name,parent,docNode),
-    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() )
-{
-
-
-  this->RegisterGroup<ManagedGroup>("Sets");
-  this->RegisterViewWrapper< iArray1d >("isExternal");
-}
+//ObjectManagerBase::ObjectManagerBase( std::string const & name,
+//                                      ManagedGroup * const parent,
+//                                      cxx_utilities::DocumentationNode * docNode ):
+//    ManagedGroup(name,parent,docNode),
+//    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() )
+//{
+//
+//
+//  this->RegisterGroup<ManagedGroup>("Sets");
+//  this->RegisterViewWrapper< iArray1d >("isExternal");
+//}
 
 
 ObjectManagerBase::~ObjectManagerBase()
@@ -56,7 +56,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   newset.clear();
 
   int mapSize = map.Dimension(1);
-  for( localIndex ka=0 ; ka<m_DataLengths ; ++ka )
+  for( localIndex ka=0 ; ka<size() ; ++ka )
   {
     const localIndex* const sublist = map[ka];
     int addToSet = 0;
@@ -83,7 +83,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   lSet& newset = sets.RegisterViewWrapper<lSet>(newSetName).reference();
   newset.clear();
 
-  for( localIndex ka=0 ; ka<m_DataLengths ; ++ka )
+  for( localIndex ka=0 ; ka<size() ; ++ka )
   {
     int addToSet = 0;
     int mapSize = map[ka].size();
@@ -104,7 +104,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
 void ObjectManagerBase::ConstructListOfBoundaryObjects( lArray1d& objectList ) const
 {
   const iArray1d& isDomainBoundary = this->GetFieldData<int>("isDomainBoundary");
-  for( localIndex k=0 ; k<this->m_DataLengths ; ++k )
+  for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
     {
@@ -116,7 +116,7 @@ void ObjectManagerBase::ConstructListOfBoundaryObjects( lArray1d& objectList ) c
 void ObjectManagerBase::ConstructListOfBoundaryObjects( gArray1d& objectList ) const
 {
   const iArray1d& isDomainBoundary = this->GetFieldData<int>("isDomainBoundary");
-  for( localIndex k=0 ; k<this->m_DataLengths ; ++k )
+  for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
     {

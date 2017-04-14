@@ -51,6 +51,7 @@ void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
                                        "0",
                                        "",
                                        1,
+                                       1,
                                        0 );
 
   ManagedGroup & stateData     = this->GetGroup( std::string("ParameterData") );
@@ -67,6 +68,7 @@ void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
                                        "Stress",
                                        "0",
                                        "",
+                                       1,
                                        1,
                                        0 );
 }

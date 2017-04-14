@@ -60,9 +60,9 @@ public:
   explicit ManagedGroup( std::string const & name,
                          ManagedGroup * const parent );
 
-  explicit ManagedGroup( std::string const & name,
-                         ManagedGroup * const parent,
-                         cxx_utilities::DocumentationNode * docNode );
+//  explicit ManagedGroup( std::string const & name,
+//                         ManagedGroup * const parent,
+//                         cxx_utilities::DocumentationNode * docNode );
 
   /**
    *
@@ -202,7 +202,7 @@ public:
 
   virtual void ReadXML( pugi::xml_node const & targetNode );
 
-  virtual void ReadXMLsub( pugi::xml_node const & targetNode ) {}
+  virtual void ReadXMLsub( pugi::xml_node const & ) {}
 
   virtual void ReadXML_PostProcess() {}
 
@@ -439,7 +439,7 @@ ViewWrapper<T>& ManagedGroup::RegisterViewWrapper( std::string const & name, std
     m_wrappers.push_back( std::move( ViewWrapper<T>::Factory(name,this) ) );
     key = m_wrappers.size() - 1;
     m_keyLookup.insert( std::make_pair(name,key) );
-    m_wrappers.back()->resize(this->size());
+    m_wrappers[key]->resize(this->size());
   }
   // if key was found, make sure that they are the same type
   else

@@ -6,6 +6,8 @@
  */
 
 #include "SolverBase.hpp"
+#include "Managers/ElementManager.hpp"
+#include "Managers/NodeManager.hpp"
 
 namespace geosx
 {
@@ -32,30 +34,39 @@ void SolverBase::BuildDataStructure( dataRepository::ManagedGroup * const /*doma
   this->RegisterViewWrapper<real64>(keys::courant);
 }
 
-void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
+void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const  )
 {
+
+
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setName(this->CatalogName());    // If this method lived in Managed groups, this could be done automatically
   docNode->setSchemaType("Node");
 
-  cxx_utilities::DocumentationNode docVar;
-  
-  // Document cfl number
-  docVar.m_name               = "cfl";
-  docVar.m_stringKey          = "cfl";
-  docVar.m_intKey             = -1;
-  docVar.m_dataType           = "real64";
-  docVar.m_schemaType         = "real64";
-  docVar.m_shortDescription   = "Courant–Friedrichs–Lewy (CFL) factor";
-  docVar.m_longDescription    = "Courant–Friedrichs–Lewy (CFL) factor is multiplied with CFL condition to reduce/increase "
-                                "allowable timestep.";
-  docVar.m_default            = "1.0";
-//  docVar.m_path               = "";
-  docVar.m_level              = m_docNode->m_level + 1;
-  docVar.m_isInput            = 1;
+  docNode->AllocateChildNode( keys::courant,
+                              keys::courant,
+                              -1,
+                              "real64",
+                              "real64",
+                              "courant Number",
+                              "courant Number",
+                              "0.7",
+                              "",
+                              1,
+                              1,
+                              0 );
 
-  docNode->m_child.insert( { docVar.m_name, docVar } );
-
+  docNode->AllocateChildNode( keys::maxDt,
+                              keys::maxDt,
+                              -1,
+                              "real64",
+                              "real64",
+                              "Maximum Stable Timestep",
+                              "Maximum Stable Timestep",
+                              "0.0",
+                              "",
+                              0,
+                              1,
+                              0 );
 
 
 

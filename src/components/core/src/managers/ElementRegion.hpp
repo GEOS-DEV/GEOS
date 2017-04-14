@@ -64,8 +64,12 @@ namespace keys
 {
 string const numNodesPerElement = "numNodesPerElement";
 string const nodeList = "nodeList";
+string const constitutiveMap = "constitutiveMap";
 }
 }
+
+
+
 
 /**
  * Class to manage the data stored at the element level.
@@ -103,6 +107,8 @@ public:
   
 
   void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+
+  virtual void ReadXML_PostProcess();
 
   virtual ~ElementRegion();
 

@@ -18,6 +18,24 @@
 
 #include "ViewWrapperBase.hpp"
 
+#if 0
+#define VIRTUAL_FUNCTION_WRAPPER( FUNCNAME, RTYPE, CONST, PARAMS, ARGS, PARAMS0, ARGS0 ) \
+struct virtual_function_wrapper_ ## FUNCNAME \
+{ \
+  HAS_MEMBER_FUNCTION(FUNCNAME, RTYPE, CONST, PARAMS, ARGS)\
+    template<class U = T> \
+    static typename std::enable_if<has_memberfunction_##FUNCNAME<U>::value, void>::type \
+    FUNCNAME(ViewWrapper * const parent, PARAMS0) \
+    {\
+      return parent->m_data.resize(ARGS0);\
+    }\
+    template<class U = T>\
+    static typename std::enable_if<!has_memberfunction_##FUNCNAME<U>::value, void>::type\
+    FUNCNAME(ViewWrapper * const, PARAMS0 ) { ARGS0; return; }\
+  };
+#endif
+
+
 namespace geosx
 {
 namespace dataRepository
@@ -158,9 +176,26 @@ public:
   HAS_MEMBER_FUNCTION(insert,void,,,)
   CONDITIONAL_VIRTUAL_FUNCTION0(ViewWrapper<T>,insert,void,)
 
-//  HAS_MEMBER_FUNCTION(resize, void, std::size_t(1) )
-  HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(std::size_t), VA_LIST(std::size_t(1)) )
-  CONDITIONAL_VIRTUAL_FUNCTION( ViewWrapper<T>,resize, void,, VA_LIST(localIndex a), VA_LIST(static_cast<size_t>(a)) )
+
+  struct resize_wrapper
+  {
+    HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(size_t), VA_LIST(size_t(1)) )
+
+    template<class U = T>
+    static typename std::enable_if<has_memberfunction_resize<U>::value && !std::is_same<U,string>::value, void>::type
+    resize(ViewWrapper * const parent, std::size_t new_size)
+    {
+      return parent->m_data.resize(new_size);
+    }
+
+    template<class U = T>
+    static typename std::enable_if<!has_memberfunction_resize<U>::value || std::is_same<U,string>::value, void>::type
+    resize(ViewWrapper * const, std::size_t ) { return; }
+  };
+  virtual void resize( localIndex new_size ) override final
+  {
+    return resize_wrapper::resize(this, new_size);
+  }
 
 
 

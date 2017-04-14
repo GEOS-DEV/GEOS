@@ -48,7 +48,7 @@ public:
 
   virtual ~MeshGenerator();
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const domain );
 
   void GenerateElementRegions( DomainPartition& domain );
 

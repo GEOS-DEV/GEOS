@@ -13,7 +13,7 @@
 // #include "RAJA/RAJA.hxx"
 #include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
-
+#include "constitutive/ConstitutiveManager.hpp"
 #include "managers/NodeManager.hpp"
 
 namespace geosx
@@ -33,6 +33,7 @@ std::string const nElements = "nElements";
 }
 
 using namespace dataRepository;
+using namespace constitutive;
 
 SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
                                                             ManagedGroup * const parent ) :
@@ -47,51 +48,19 @@ SolidMechanics_LagrangianFEM::~SolidMechanics_LagrangianFEM()
 }
 
 
-void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode( group );
+  SolverBase::FillDocumentationNode( domain );
+
+  NodeManager& nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
+  ElementManager& elems = domain->GetGroup<ElementManager>(keys::FEM_Elements);
+
 
   docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
   docNode->setShortDescription("An example solid mechanics solver");
   
-  docNode->AllocateChildNode( "nElements",
-                              keys::nElements,
-                              -1,
-                              "int32",
-                              "int32",
-                              "number of elements",
-                              "number of elements",
-                              "10",
-                              "",
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( "Ey",
-                              keys::Ey,
-                              -1,
-                              "real64",
-                              "real64",
-                              "Elastic Young's Modulus",
-                              "Elastic Young's Modulus",
-                              "",
-                              "",
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( "rho",
-                              keys::rho,
-                              -1,
-                              "real64",
-                              "real64",
-                              "Initial Density",
-                              "Initial Density",
-                              "2600.0",
-                              "",
-                              1,
-                              0 );
-
   docNode->AllocateChildNode( "area",
                               keys::area,
                               -1,
@@ -101,51 +70,110 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                               "cross section area",
                               "1.0",
                               "",
+                              0,
                               1,
                               0 );
 
-  docNode->AllocateChildNode( "barLength",
-                              "barLength",
-                              -1,
-                              "real64",
-                              "real64",
-                              "reference length",
-                              "reference length",
-                              "1.0",
-                              "",
-                              1,
-                              0 );
+  nodes.getDocumentationNode()->AllocateChildNode( keys::TotalDisplacement,
+                                                   keys::TotalDisplacement,
+                                                   -1,
+                                                   "real64_array",
+                                                   "real64_array",
+                                                   "Total Displacement",
+                                                   "Total Displacement",
+                                                   "0.0",
+                                                   keys::nodeManager,
+                                                   1,
+                                                   0,
+                                                   0 );
+
+  nodes.getDocumentationNode()->AllocateChildNode( keys::IncrementalDisplacement,
+                                                   keys::IncrementalDisplacement,
+                                                   -1,
+                                                   "real64_array",
+                                                   "real64_array",
+                                                   "Incremental Displacement",
+                                                   "Incremental Displacement",
+                                                   "0.0",
+                                                   keys::nodeManager,
+                                                   1,
+                                                   0,
+                                                   0 );
+
+  nodes.getDocumentationNode()->AllocateChildNode( keys::Velocity,
+                                                   keys::Velocity,
+                                                   -1,
+                                                   "real64_array",
+                                                   "real64_array",
+                                                   "Velocity",
+                                                   "Velocity",
+                                                   "0.0",
+                                                   keys::nodeManager,
+                                                   1,
+                                                   0,
+                                                   0 );
+
+  nodes.getDocumentationNode()->AllocateChildNode( keys::Acceleration,
+                                                   keys::Acceleration,
+                                                   -1,
+                                                   "real64_array",
+                                                   "real64_array",
+                                                   "Acceleration",
+                                                   "Acceleration",
+                                                   "0.0",
+                                                   keys::nodeManager,
+                                                   1,
+                                                   0,
+                                                   0 );
+
+  nodes.getDocumentationNode()->AllocateChildNode( keys::Mass,
+                                                   keys::Mass,
+                                                   -1,
+                                                   "real64_array",
+                                                   "real64_array",
+                                                   "Acceleration",
+                                                   "Acceleration",
+                                                   "0.0",
+                                                   keys::nodeManager,
+                                                   1,
+                                                   0,
+                                                   0 );
+
+  elems.getDocumentationNode()->AllocateChildNode( keys::Strain,
+                                                   keys::Strain,
+                                                   -1,
+                                                   "real64_array",
+                                                   "real64_array",
+                                                   "Acceleration",
+                                                   "Acceleration",
+                                                   "0.0",
+                                                   keys::nodeManager,
+                                                   1,
+                                                   0,
+                                                   0 );
+
+
+  elems.getDocumentationNode()->AllocateChildNode( keys::Force,
+                                                   keys::Force,
+                                                   -1,
+                                                   "real64_array",
+                                                   "real64_array",
+                                                   "Acceleration",
+                                                   "Acceleration",
+                                                   "0.0",
+                                                   keys::nodeManager,
+                                                   1,
+                                                   0,
+                                                   0 );
+
+
+
 }
 
 
 void SolidMechanics_LagrangianFEM::BuildDataStructure( ManagedGroup * const domain )
 {
   SolverBase::BuildDataStructure( domain );
-
-  NodeManager& nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
-  ElementManager& elems = domain->GetGroup<ElementManager>(keys::FEM_Elements);
-
-  nodes.RegisterViewWrapper<real64_array>(keys::TotalDisplacement);
-  nodes.RegisterViewWrapper<real64_array>(keys::IncrementalDisplacement);
-  nodes.RegisterViewWrapper<real64_array>(keys::Velocity);
-  nodes.RegisterViewWrapper<real64_array>(keys::Acceleration);
-
-  elems.RegisterViewWrapper<real64_array>(keys::Strain);
-  elems.RegisterViewWrapper(keys::Force,  rtTypes::TypeIDs::real64_array_id );
-  elems.RegisterViewWrapper<real64>(keys::Ey);
-  elems.RegisterViewWrapper<real64_array>(keys::K);
-
-  nodes.RegisterViewWrapper<r1_array>(keys::ReferencePosition);
-  nodes.RegisterViewWrapper<real64_array>(keys::Mass);
-
-  /*
-  // Lagrange solver parameters
-  this->RegisterViewWrapper<int>(keys::nElements);
-  this->RegisterViewWrapper<real64>(keys::Ey);
-  this->RegisterViewWrapper<real64>(keys::rho);
-  this->RegisterViewWrapper<real64>(keys::area);
-  this->RegisterViewWrapper<real64>(keys::barLength);
-  */
 
   // Test auto-registration:
   RegisterDocumentationNodes();
@@ -156,38 +184,27 @@ void SolidMechanics_LagrangianFEM::BuildDataStructure( ManagedGroup * const doma
 void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& domain )
 {
   ManagedGroup& nodes = domain.GetGroup<ManagedGroup >(keys::FEM_Nodes);
-  ManagedGroup& elems = domain.GetGroup<ManagedGroup >(keys::FEM_Elements);
+  ElementManager& elems = domain.GetGroup<ElementManager >(keys::FEM_Elements);
+  ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  int& nElements = *(this->getData<int>(keys::nElements));
-  real64& Ey = *(this->getData<real64>(keys::Ey));
-  real64& rho = *(this->getData<real64>(keys::rho));
-  real64& area = *(this->getData<real64>(keys::area));
-  real64& barLength = *(this->getData<real64>(keys::barLength));
-
-  // HACK
-  nodes.resize(nElements+1);
-  elems.resize(nElements);
-
-  ViewWrapper<real64_array>::rtype    X = nodes.getData<real64_array>(keys::ReferencePosition);
+  ViewWrapper<r1_array>::rtype    X = nodes.getData<r1_array>(keys::ReferencePosition);
   ViewWrapper<real64_array>::rtype mass = nodes.getData<real64_array>(keys::Mass);
-  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
+//  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
 
 
-  std::cout<<"sound speed = "<<sqrt(Ey/rho)<<std::endl;
-//  std::cout<<1.0/0.0<<std::endl;
-  for( localIndex a=0 ; a<nodes.size() ; ++a )
+  elems.forRegions([ this, &X, &mass ]( ElementRegion& elemRegion ) -> void
   {
-    X[a] = a * ( barLength/(nElements+1));
-  }
-
-  for( localIndex k=0 ; k<elems.size() ; ++k )
-  {
-    double dx = barLength / nElements;
-    mass[k] += rho * area * dx / 2;
-    mass[k+1] += rho * area * dx / 2;
-    K[k] = Ey*area*dx;
-  }
-
+    int32_array const & constitutiveMap = elemRegion.getData<int32_array>(keys::constitutiveMap);
+    real64 rho = *(elemRegion.getData<real64>(keys::rho));
+    lArray2d const & elemsToNodes = elemRegion.getData<lArray2d>(keys::nodeList);
+    real64 area = 1;
+    for( localIndex k=0 ; k<elemRegion.size() ; ++k )
+    {
+      localIndex const * nodeList = elemsToNodes[k];
+      real64 dx = X[nodeList[1]][0] - X[nodeList[0]][0];
+      mass[k]   += rho * area * dx / 2;
+      mass[k+1] += rho * area * dx / 2;    }
+  });
 }
 
 void SolidMechanics_LagrangianFEM::TimeStep( real64 const& time_n,

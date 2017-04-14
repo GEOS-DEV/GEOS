@@ -165,37 +165,40 @@ using r1_array = array<R1Tensor>;
 using r2_array = array<R2Tensor>;
 using r2Sym_array = array<R2SymTensor>;
 
+using mapPair = std::pair<int32, localIndex>;
+using mapPair_array = array<mapPair>;
 //***** END LEGACY TYPEDEFS *****
 
 
 class rtTypes
 {
 public:
-
-  static std::string typeNames( std::type_index const key )
-  {
-    const std::unordered_map<std::type_index, std::string> type_names =
-    {
-      {std::type_index(typeid(int32)), "int32"},
-      {std::type_index(typeid(uint32)), "uint32"},
-      {std::type_index(typeid(int64)), "int64"},
-      {std::type_index(typeid(uint64)), "uint64"},
-      {std::type_index(typeid(real32)), "real32"},
-      {std::type_index(typeid(real64)), "real64"},
-      {std::type_index(typeid(int32_array)), "int32_array"},
-      {std::type_index(typeid(uint32_array)), "uint32_array"},
-      {std::type_index(typeid(int64_array)), "int64_array"},
-      {std::type_index(typeid(uint64_array)), "uint64_array"},
-      {std::type_index(typeid(real32_array)), "real32_array"},
-      {std::type_index(typeid(real64_array)), "real64_array"},
-      {std::type_index(typeid(r1_array)), "r1_array"},
-      {std::type_index(typeid(r2_array)), "r2_array"},
-      {std::type_index(typeid(r2Sym_array)), "r2Sym_array"},
-      {std::type_index(typeid(std_size_t)), "std_size_t"},
-      {std::type_index(typeid(string)), "string"}
-    };
-    return type_names.at(key);
-  }
+//
+//  static std::string typeNames( std::type_index const key )
+//  {
+//    const std::unordered_map<std::type_index, std::string> type_names =
+//    {
+//      {std::type_index(typeid(int32)), "int32"},
+//      {std::type_index(typeid(uint32)), "uint32"},
+//      {std::type_index(typeid(int64)), "int64"},
+//      {std::type_index(typeid(uint64)), "uint64"},
+//      {std::type_index(typeid(real32)), "real32"},
+//      {std::type_index(typeid(real64)), "real64"},
+//      {std::type_index(typeid(int32_array)), "int32_array"},
+//      {std::type_index(typeid(uint32_array)), "uint32_array"},
+//      {std::type_index(typeid(int64_array)), "int64_array"},
+//      {std::type_index(typeid(uint64_array)), "uint64_array"},
+//      {std::type_index(typeid(real32_array)), "real32_array"},
+//      {std::type_index(typeid(real64_array)), "real64_array"},
+//      {std::type_index(typeid(r1_array)), "r1_array"},
+//      {std::type_index(typeid(r2_array)), "r2_array"},
+//      {std::type_index(typeid(r2Sym_array)), "r2Sym_array"},
+//      {std::type_index(typeid(std_size_t)), "std_size_t"},
+//      {std::type_index(typeid(string)), "string"},
+//      {std::type_index(typeid(mapPair)), "mapPair"}
+//    };
+//    return type_names.at(key);
+//  }
 
 
 
@@ -219,6 +222,8 @@ public:
     std_size_t_id,
     string_id,
     string_array_id,
+    mapPair_id,
+    mapPair_array_id,
     none_id
   };
 
@@ -244,6 +249,7 @@ public:
       { "std_size_t",   TypeIDs::std_size_t_id },
       { "string",       TypeIDs::string_id },
       { "string_array", TypeIDs::string_array_id },
+      { "mapPair",      TypeIDs::mapPair_id },
       { "",             TypeIDs::none_id }
     };
     return type_names.at(name);

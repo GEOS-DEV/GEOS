@@ -46,21 +46,8 @@ int main( int argc, char *argv[] )
 
 
 
-  cxx_utilities::DocumentationNode docNode( "RootDocumentationNode",
-                                            "",
-                                            -1,
-                                            "DocumentationNode",
-                                            "",
-                                            "The Root DocumentationNode",
-                                            "",
-                                            "",
-                                            "",
-                                            0,
-                                            0,
-                                            0,
-                                            nullptr );
 
-  ProblemManager problemManager( "ProblemManager", nullptr );//, &docNode );
+  ProblemManager problemManager( "ProblemManager", nullptr );
 
   problemManager.BuildDataStructure(nullptr);
   problemManager.SetDocumentationNodes( &problemManager );

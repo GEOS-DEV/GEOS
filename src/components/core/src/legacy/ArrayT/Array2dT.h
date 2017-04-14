@@ -83,7 +83,7 @@ class Array2dT : public VectorT<TYPE>
   
   //***** Memory Allocation and Release ***************************************
 	void resize2( const int dim1 , const int dim2 );
-  void resize(const int num_elem)
+  void resize(const size_type num_elem)
   { resize2( num_elem, dimension[1] );  }
 
   void Insert( const int dim1, const TYPE& t);

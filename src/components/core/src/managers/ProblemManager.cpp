@@ -98,6 +98,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                     "input.xml",
                                     "CommandLine",
                                     0,
+                                    0,
                                     0 );
 
   commandDocNode->AllocateChildNode( keys::restartFileName,
@@ -109,6 +110,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      "Name of the restart file.",
                                      "",
                                      "CommandLine",
+                                     0,
                                      0,
                                      0 );
 
@@ -122,6 +124,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      "0",
                                      "CommandLine",
                                      0,
+                                     0,
                                      0 );
 
   commandDocNode->AllocateChildNode( keys::xPartitionsOverride,
@@ -133,6 +136,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      "Number of partitions in the x-direction",
                                      "1",
                                      "CommandLine",
+                                     0,
                                      0,
                                      0 );
 
@@ -146,6 +150,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      "1",
                                      "CommandLine",
                                      0,
+                                     0,
                                      0 );
 
   commandDocNode->AllocateChildNode( keys::zPartitionsOverride,
@@ -157,6 +162,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      "Number of partitions in the z-direction",
                                      "1",
                                      "CommandLine",
+                                     0,
                                      0,
                                      0 );
 
@@ -170,6 +176,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      "0",
                                      "CommandLine",
                                      0,
+                                     0,
                                      0 );
 
   commandDocNode->AllocateChildNode( keys::schema,
@@ -181,6 +188,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      "Name of the output schema",
                                      "gpac.xsd",
                                      "CommandLine",
+                                     0,
                                      0,
                                      0 );
 
@@ -389,7 +397,7 @@ void ProblemManager::ParseInputFile()
         MeshGenerator & meshGenerator = meshGenerators.RegisterGroup<MeshGenerator>(meshID);
 
         // Set the documentation node
-        meshGenerator.SetDocumentationNodes( &meshGenerators );
+        meshGenerator.SetDocumentationNodes( &domain );
 
         meshGenerator.RegisterDocumentationNodes();
         meshGenerator.ReadXML(childNode );
@@ -433,6 +441,7 @@ void ProblemManager::ParseInputFile()
 void ProblemManager::InitializeObjects()
 {
   DomainPartition& domain  = getDomainPartition();
+  domain.RegisterDocumentationNodes();
 
   // Generate Meshes
   ManagedGroup & meshGenerators = this->GetGroup(string("MeshGenerators"));

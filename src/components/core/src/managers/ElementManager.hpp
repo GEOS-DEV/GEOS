@@ -113,7 +113,22 @@ public:
     return this->GetGroup(dataRepository::keys::elementRegions).GetGroup<ElementRegion>(regionName);
   }
 
+  template< typename LAMBDA >
+  void forRegions( LAMBDA lambda )
+  {
+    ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
+    elementRegions.forSubGroups<ElementRegion>( lambda );
+//    for( auto& subGroupIter : elementRegions )
+//    {
+//#ifdef USE_DYNAMIC_CASTING
+//      ElementRegion & elemRegion = dynamic_cast<ElementRegion &>( *(subGroupIter.second) );
+//#else
+//      ElementRegion & elemRegion = static_cast<ElementRegion &>( *(subGroupIter.second) );
+//#endif
+//      lambda( elemRegion );
+//    }
+  }
 private:
   ElementManager( const ElementManager& );
   ElementManager& operator=( const ElementManager&);

@@ -45,7 +45,7 @@
  */
 
 #include "ElementRegion.hpp"
-
+#include "Constitutive/ConstitutiveManager.hpp"
 
 namespace geosx
 {
@@ -58,6 +58,8 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
     m_toNodesRelation(this->RegisterViewWrapper< Array2dT<real64> >(keys::nodeList).reference())
 {
   m_toNodesRelation.resize2(0,8);
+  this->RegisterViewWrapper<mapPair>(keys::constitutiveMap).setSizedFromParent(1);
+
 }
 
 
@@ -83,6 +85,20 @@ void ElementRegion::FillDocumentationNode( ManagedGroup * const group )
                               "Number of Nodes Per Element",
                               "1",
                               "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( keys::constitutiveMap,
+                              keys::constitutiveMap,
+                              -1,
+                              "int32_array",
+                              "int32_array",
+                              "Number of Nodes Per Element",
+                              "Number of Nodes Per Element",
+                              "1",
+                              "",
+                              0,
                               1,
                               0 );
 
@@ -97,7 +113,17 @@ void ElementRegion::FillDocumentationNode( ManagedGroup * const group )
 //                              "",
 //                              1,
 //                              0 );
+
+
 }
+
+void ElementRegion::ReadXML_PostProcess()
+{
+  int32 & numNodesPerElem = *(getData<int32>(keys::numNodesPerElement));
+  numNodesPerElem = 8;
+
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ManagedGroup * const )
 

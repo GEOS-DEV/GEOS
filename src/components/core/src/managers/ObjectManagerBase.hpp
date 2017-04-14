@@ -22,9 +22,9 @@ public:
   explicit ObjectManagerBase( std::string const & name,
                               dataRepository::ManagedGroup * const parent );
 
-  explicit ObjectManagerBase( std::string const & name,
-                              dataRepository::ManagedGroup * const parent,
-                              cxx_utilities::DocumentationNode * docNode );
+//  explicit ObjectManagerBase( std::string const & name,
+//                              dataRepository::ManagedGroup * const parent,
+//                              cxx_utilities::DocumentationNode * docNode );
 
   ~ObjectManagerBase();
 
@@ -71,9 +71,9 @@ private:
 
     using dataRepository::ManagedGroup::resize;
 
-    localIndex m_DataLengths;
-
-    localIndex DataLengths() const { return size(); }
+//    localIndex m_DataLengths;
+//
+//    localIndex DataLengths() const { return size(); }
 
     void WriteSilo( SiloFile& siloFile,
                     const std::string& meshname,

@@ -18,9 +18,12 @@ namespace geosx
 namespace constitutive
 {
 
+
 class ConstitutiveBase : public dataRepository::ManagedGroup
 {
 public:
+
+
   ConstitutiveBase( std::string const & name,
                     ManagedGroup * const parent  );
 

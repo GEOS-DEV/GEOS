@@ -112,6 +112,7 @@ void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * co
                               "application start time",
                               "0.0",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -124,6 +125,7 @@ void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * co
                               "application endTime",
                               "1.0e9",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -136,6 +138,7 @@ void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * co
                               "application dt",
                               "-1.0",
                               "",
+                              0,
                               1,
                               0 );
 
@@ -148,6 +151,7 @@ void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * co
                               "application solvers",
                               "",
                               "",
+                              0,
                               1,
                               0 );
 
