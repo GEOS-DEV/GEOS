@@ -48,7 +48,8 @@ class ViewWrapper : public ViewWrapperBase
 public:
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent ) :
-    ViewWrapperBase(name,parent)
+    ViewWrapperBase(name,parent),
+    m_data( std::make_unique<T>() )
   {
     // set up properties of sidre::DataView
     if( std::is_array<T>::value )
@@ -60,6 +61,20 @@ public:
       getSidreView()->setExternalDataPtr( nullptr );
     }
   }
+
+  explicit ViewWrapper( std::string const & name,
+                        ManagedGroup * const parent,
+                        std::unique_ptr<T> object ):
+    ViewWrapperBase(name,parent),
+    m_data( std::move( object ) )
+  {}
+
+  explicit ViewWrapper( std::string const & name,
+                        ManagedGroup * const parent,
+                        T * object ):
+    ViewWrapperBase(name,parent),
+    m_data( std::move( std::unique_ptr<T>(object) ) )
+  {}
 
   virtual ~ViewWrapper() noexcept override final {}
 
@@ -110,7 +125,7 @@ public:
     template<class U = T>
     static typename std::enable_if<has_memberfunction_empty<U>::value, bool>::type empty(ViewWrapper const * parent)
     {
-      return parent->m_data.empty();
+      return parent->m_data->empty();
     }
     template<class U = T>
     static typename std::enable_if<!has_memberfunction_empty<U>::value, bool>::type empty(ViewWrapper const * parent)
@@ -129,7 +144,7 @@ public:
     template<class U = T>
     static typename std::enable_if<has_memberfunction_size<U>::value, localIndex>::type size(ViewWrapper const * parent)
     {
-      return static_cast<localIndex>(parent->m_data.size());
+      return static_cast<localIndex>(parent->m_data->size());
     }
     template<class U = T>
     static typename std::enable_if<!has_memberfunction_size<U>::value, localIndex>::type size(ViewWrapper const * )
@@ -149,7 +164,7 @@ public:
     template<class U = T>
     static typename std::enable_if<has_memberfunction_reserve<U>::value, void>::type reserve(ViewWrapper * const parent, std::size_t new_cap)
     {
-      return parent->m_data.reserve(new_cap);
+      return parent->m_data->reserve(new_cap);
     }
     template<class U = T>
     static typename std::enable_if<!has_memberfunction_reserve<U>::value, void>::type reserve(ViewWrapper * const, std::size_t )
@@ -185,7 +200,7 @@ public:
     static typename std::enable_if<has_memberfunction_resize<U>::value && !std::is_same<U,string>::value, void>::type
     resize(ViewWrapper * const parent, std::size_t new_size)
     {
-      return parent->m_data.resize(new_size);
+      return parent->m_data->resize(new_size);
     }
 
     template<class U = T>
@@ -254,9 +269,9 @@ public:
   data()
   {
 #if CONTAINERARRAY_RETURN_PTR == 1
-    return m_data.data();
+    return m_data->data();
 #else
-    return m_data;
+    return *m_data;
 #endif
   }
 
@@ -264,14 +279,14 @@ public:
   typename std::enable_if<std::is_same<U,std::string>::value, rtype>::type
   data()
   {
-    return m_data;
+    return *m_data;
   }
 
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
   data()
   {
-    return &m_data;
+    return m_data.get();
   }
 
 
@@ -280,9 +295,9 @@ public:
   data() const
   {
 #if CONTAINERARRAY_RETURN_PTR == 1
-    return m_data.data();
+    return m_data->data();
 #else
-    return m_data;
+    return *m_data;
 #endif
   }
 
@@ -290,26 +305,26 @@ public:
   typename std::enable_if<std::is_same<U,std::string>::value, rtype_const>::type
   data() const
   {
-    return m_data;
+    return *m_data;
   }
 
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
   data() const
   {
-    return &m_data;
+    return m_data.get();
   }
 
 
   T& reference()
-  { return m_data; }
+  { return *m_data; }
 
   T const & reference() const
-  { return m_data; }
+  { return *m_data; }
 
 private:
 public:
-  T m_data;
+  std::unique_ptr<T> m_data;
 
   ViewWrapper() = delete;
 };
