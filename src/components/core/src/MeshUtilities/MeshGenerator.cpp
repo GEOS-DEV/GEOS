@@ -56,7 +56,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 {
 
   NodeManager& nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
-  ElementManager& elems = domain->GetGroup<ElementManager>(keys::FEM_Elements);
+  CellBlockManager& elems = domain->GetGroup<CellBlockManager>(keys::FEM_Elements);
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -614,7 +614,7 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
   NodeManager & nodeManager = domain.GetGroup<NodeManager>( keys::FEM_Nodes );
   view_rtype<r1_array> X = nodeManager.getData<r1_array>( keys::ReferencePosition );
 
-  ElementManager & elementManager = domain.GetGroup<ElementManager>( keys::FEM_Elements );
+  CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>( keys::FEM_Elements );
   ManagedGroup & nodeSets = nodeManager.GetGroup( std::string( "Sets" ) );
   PartitionBase & partition = *( domain.GetPartition() );
 
@@ -912,7 +912,7 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
         {
 //          ElementRegionT& elemRegion = domain.m_feElementManager.m_ElementRegions[*iterRegion];
 
-          ElementRegion & elemRegion =  elementManager.GetRegion(*iterRegion);
+          CellBlock & elemRegion =  elementManager.GetRegion(*iterRegion);
           int32 const numNodesPerElem = *(elemRegion.getData<int32>(keys::numNodesPerElement));
 
           int numElemsInDirForRegion[3] =

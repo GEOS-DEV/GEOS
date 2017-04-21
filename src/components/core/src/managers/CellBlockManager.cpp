@@ -44,87 +44,71 @@
  *      Author: settgast1
  */
 
-#include "ElementRegion.hpp"
-#include "Constitutive/ConstitutiveManager.hpp"
+#include "CellBlockManager.hpp"
+
+#include "FaceManager.hpp"
+//#include "legacy/IO/BinStream.h"
+#include <map>
+#include <vector>
+//#include "legacy/Constitutive/Material/MaterialFactory.h"
+//#include "legacy/ArrayT/ArrayT.h"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-
-
-ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent ):
-    ObjectManagerBase( name, parent ),
-    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<real64> >(keys::nodeList).reference())
+CellBlockManager::CellBlockManager(  string const &, ManagedGroup * const parent ):
+ObjectManagerBase("ElementManager",parent)
 {
-  m_toNodesRelation.resize2(0,8);
-  this->RegisterViewWrapper<mapPair>(keys::constitutiveMap).setSizedFromParent(1);
+  this->RegisterGroup<ManagedGroup>(keys::cellBlocks);
+}
 
+CellBlockManager::~CellBlockManager()
+{
+  // TODO Auto-generated destructor stub
+}
+
+void CellBlockManager::resize( int32_array const & numElements,
+                             string_array const & regionNames,
+                             string_array const & elementTypes )
+{
+  int32 const numRegions = regionNames.size();
+  ManagedGroup & elementRegions = this->GetGroup(keys::cellBlocks);
+  for( int32 reg=0 ; reg<numRegions ; ++reg )
+  {
+    CellBlock & elemRegion = this->GetRegion( regionNames[reg] );
+    elemRegion.resize(numElements[reg]);
+  }
 }
 
 
-ElementRegion::~ElementRegion()
+CellBlock & CellBlockManager::CreateRegion( string const & regionName,
+                                             string const & elementType,
+                                             int32 const & numElements )
 {
-}
-
-
-void ElementRegion::FillDocumentationNode( ManagedGroup * const group )
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName( this->getName() );
-  docNode->setSchemaType( "Node" );
-  docNode->setShortDescription( "an element region" );
-
-  docNode->AllocateChildNode( keys::numNodesPerElement,
-                              keys::numNodesPerElement,
-                              -1,
-                              "int32",
-                              "int32",
-                              "Number of Nodes Per Element",
-                              "Number of Nodes Per Element",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::constitutiveMap,
-                              keys::constitutiveMap,
-                              -1,
-                              "int32_array",
-                              "int32_array",
-                              "Number of Nodes Per Element",
-                              "Number of Nodes Per Element",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-//  docNode->AllocateChildNode( keys::numNodesPerElement,
-//                              keys::numNodesPerElement,
-//                              -1,
-//                              "int32",
-//                              "int32",
-//                              "Number of Nodes Per Element",
-//                              "Number of Nodes Per Element",
-//                              "1",
-//                              "",
-//                              1,
-//                              0 );
-
+//  ElementRegion & elemRegion = elementRegions.RegisterGroup( regionNames );
+//  elemRegion.resize(numElements);
 
 }
 
-void ElementRegion::ReadXML_PostProcess()
+void CellBlockManager::ReadXMLsub( pugi::xml_node const & targetNode )
 {
-  int32 & numNodesPerElem = *(getData<int32>(keys::numNodesPerElement));
-  numNodesPerElem = 8;
+  ManagedGroup & elementRegions = this->GetGroup(keys::cellBlocks);
+  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  {
+    if( childNode.name() == string("ElementRegion") )
+    {
+      std::string regionName = childNode.attribute("name").value();
+      std::cout<<regionName<<std::endl;
 
+      CellBlock & elemRegion = elementRegions.RegisterGroup<CellBlock>( regionName );
+      elemRegion.SetDocumentationNodes( nullptr );
+      elemRegion.RegisterDocumentationNodes();
+      elemRegion.ReadXML(childNode);
+    }
+  }
 }
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ManagedGroup * const )
-
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlockManager, string const &, ManagedGroup * const )
 }

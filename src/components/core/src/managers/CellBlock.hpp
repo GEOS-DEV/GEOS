@@ -43,15 +43,17 @@
  * @date created on Sep 14, 2010
  */
 
-#ifndef ELEMENTMANAGERT_H_
-#define ELEMENTMANAGERT_H_
+#ifndef ELEMENTOBJECTT_H_
+#define ELEMENTOBJECTT_H_
 
-//#include "Common.h"
-//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
-#include "ElementRegion.hpp"
 #include "ObjectManagerBase.hpp"
-
+#include "legacy/ObjectManagers/EnergyT.h"
+#include "legacy/DataStructures/InterObjectRelation.h"
 #include "legacy/ArrayT/bufvector.h"
+#include "FaceManager.hpp"
+
+
+class StableTimeStep;
 
 namespace geosx
 {
@@ -60,17 +62,22 @@ namespace dataRepository
 {
 namespace keys
 {
-string const elementRegions = "elementRegions";
+string const numNodesPerElement = "numNodesPerElement";
+string const nodeList = "nodeList";
+string const constitutiveMap = "constitutiveMap";
 }
 }
+
+
 
 
 /**
  * Class to manage the data stored at the element level.
  */
-class ElementManager : public ObjectManagerBase
+class CellBlock : public ObjectManagerBase
 {
 public:
+
   /**
    * @name Static Factory Catalog Functions
    */
@@ -78,62 +85,54 @@ public:
 
   static string CatalogName()
   {
-    return "ElementManager";
+    return "CellBlock";
   }
 
   string getName() const override final
   {
-    return ElementManager::CatalogName();
+    return CellBlock::CatalogName();
   }
-
-
 
 
   ///@}
 
-  ElementManager( string const &, ManagedGroup * const parent );
-  virtual ~ElementManager();
 
-  void Initialize(  ){}
+  CellBlock() = delete;
 
-  virtual void ReadXMLsub( pugi::xml_node const & targetNode );
+  CellBlock( string const & name, ManagedGroup * const parent );
 
-  using ManagedGroup::resize;
 
-  void resize( int32_array const & numElements,
-               string_array const & regionNames,
-               string_array const & elementTypes );
+  CellBlock(const CellBlock& init);
+//  ElementRegion( ElementRegion&& init);
+  
 
-  ElementRegion & CreateRegion( string const & regionName,
-                               string const & elementType,
-                               int32 const & numElements );
+  void FillDocumentationNode( dataRepository::ManagedGroup * const group );
 
-  ElementRegion & GetRegion( string const & regionName )
-  {
-    return this->GetGroup(dataRepository::keys::elementRegions).GetGroup<ElementRegion>(regionName);
-  }
+  virtual void ReadXML_PostProcess();
 
-  template< typename LAMBDA >
-  void forRegions( LAMBDA lambda )
-  {
-    ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+  virtual ~CellBlock();
 
-    elementRegions.forSubGroups<ElementRegion>( lambda );
-//    for( auto& subGroupIter : elementRegions )
-//    {
-//#ifdef USE_DYNAMIC_CASTING
-//      ElementRegion & elemRegion = dynamic_cast<ElementRegion &>( *(subGroupIter.second) );
-//#else
-//      ElementRegion & elemRegion = static_cast<ElementRegion &>( *(subGroupIter.second) );
-//#endif
-//      lambda( elemRegion );
-//    }
-  }
+  Array2dT<real64> & m_toNodesRelation;
+
 private:
-  ElementManager( const ElementManager& );
-  ElementManager& operator=( const ElementManager&);
+  CellBlock& operator=(const CellBlock& rhs);
 
+//  string & m_elementType;
 
 };
+
+
+
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+
+
+
+
+
 }
-#endif /* ELEMENTMANAGERT_H_ */
+
+
+
+
+#endif /* ELEMENTOBJECTT_H_ */

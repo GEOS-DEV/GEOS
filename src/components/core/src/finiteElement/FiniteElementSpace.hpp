@@ -13,8 +13,15 @@ namespace geosx
 {
 
 class NodeManager;
-class ElementManager;
+class CellBlockManager;
 
+namespace dataRepository
+{
+namespace keys
+{
+string const finiteElementSpace = "finiteElementSpace";
+}
+}
 
 class FiniteElementSpace : public dataRepository::ManagedGroup
 {
@@ -36,6 +43,9 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const parent );
 
+  void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+
+
   virtual dataRepository::ManagedGroup & getNodeManager();
   virtual dataRepository::ManagedGroup & getEdgeManager();
   virtual dataRepository::ManagedGroup & getFaceManager();
@@ -44,7 +54,7 @@ public:
 private:
 
   NodeManager *    m_nodeManager    = nullptr;
-  ElementManager * m_elementManager = nullptr;
+  CellBlockManager * m_elementManager = nullptr;
 
 
 };

@@ -37,102 +37,14 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**
- * @file ElementManagerT.h
- * @author Randolph Settgast
- * @date created on Sep 14, 2010
- */
+#include "BasisBase.hpp"
 
-#ifndef ELEMENTOBJECTT_H_
-#define ELEMENTOBJECTT_H_
-
-#include "ObjectManagerBase.hpp"
-#include "legacy/ObjectManagers/EnergyT.h"
-#include "legacy/DataStructures/InterObjectRelation.h"
-#include "legacy/ArrayT/bufvector.h"
-#include "FaceManager.hpp"
-
-
-class StableTimeStep;
-
-namespace geosx
+BasisBase::CatalogInterface::CatalogType& BasisBase::GetCatalog()
 {
-
-namespace dataRepository
-{
-namespace keys
-{
-string const numNodesPerElement = "numNodesPerElement";
-string const nodeList = "nodeList";
-string const constitutiveMap = "constitutiveMap";
-}
+  static BasisBase::CatalogInterface::CatalogType catalog;
+  return catalog;
 }
 
+// ... no implementation required ...
 
 
-
-/**
- * Class to manage the data stored at the element level.
- */
-class ElementRegion : public ObjectManagerBase
-{
-public:
-
-  /**
-   * @name Static Factory Catalog Functions
-   */
-  ///@{
-
-  static string CatalogName()
-  {
-    return "ElementRegion";
-  }
-
-  string getName() const override final
-  {
-    return ElementRegion::CatalogName();
-  }
-
-
-  ///@}
-
-
-  ElementRegion() = delete;
-
-  ElementRegion( string const & name, ManagedGroup * const parent );
-
-
-  ElementRegion(const ElementRegion& init);
-//  ElementRegion( ElementRegion&& init);
-  
-
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group );
-
-  virtual void ReadXML_PostProcess();
-
-  virtual ~ElementRegion();
-
-  Array2dT<real64> & m_toNodesRelation;
-
-private:
-  ElementRegion& operator=(const ElementRegion& rhs);
-
-//  string & m_elementType;
-
-};
-
-
-
-///////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////
-
-
-
-
-
-}
-
-
-
-
-#endif /* ELEMENTOBJECTT_H_ */

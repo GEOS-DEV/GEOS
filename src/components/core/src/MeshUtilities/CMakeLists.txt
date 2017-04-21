@@ -6,6 +6,7 @@ set(geosx_headers
   ${geosx_headers}
     MeshUtilities/MeshGenerator.hpp
     MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp
+    MeshUtilities/StructuredGridUtilities.hpp
     PARENT_SCOPE )
 
 #

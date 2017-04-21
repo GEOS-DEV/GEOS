@@ -37,75 +37,39 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef STRUCTURED_GRID_UTILITIES_H
-#define STRUCTURED_GRID_UTILITIES_H
-
 /**
- * @file StructuredGridUtilities.h
+ * @file Polynomial.h
  * @author white230
  */
- 
-#include "legacy/Common/Common.h"
-#include <cassert>
 
-namespace StructuredGrid
+#ifndef POLYNOMIAL_H
+#define POLYNOMIAL_H
+
+//#include "legacy/Common/Common.h"
+#include <vector>
+
+/*! A class to represent polynomial objects of arbitrary order. */
+
+class Polynomial
 {
-  /*!
-   *  Given n, compute n^d, where d is the spatial dimension.
-   */
-  
-  template <int dim>
-  int dimpower(int n);
+  public:
 
-  template <> inline int dimpower<1>(int n) { return n; }
-  template <> inline int dimpower<2>(int n) { return n*n; }
-  template <> inline int dimpower<3>(int n) { return n*n*n; }
+    Polynomial(const std::vector<double> _coefficients);
+    ~Polynomial();
 
-  /*!
-   * Given a lexographical index N, map back to the original
-   * i,j,k indices of the point. The first variation here assumes
-   * a uniform number of points nnx in all coordinate directions.
-   */
+    unsigned  Degree();
 
-  template <int dim>
-  void map_index(const unsigned index,
-                 const unsigned nnx,
-                 std::vector<unsigned> &indices);
+    double Value(const double x);
+    double Deriv(const double x);
 
-  template <>
-  inline
-  void map_index<1>(const unsigned index,
-                    const unsigned nnx,
-                    std::vector<unsigned> &indices)
-  {
-    assert(index < nnx);
-    indices[0] = index;
-  }
+    void Evaluate(const double x,
+                  double &value,
+                  double &deriv);
 
-  template <>
-  inline
-  void map_index<2>(const unsigned index,
-                    const unsigned nnx,
-                    std::vector<unsigned> &indices)
-  {
-    assert(index < nnx*nnx);
-    indices[0] = index % nnx;
-    indices[1] = index / nnx;
-  }
+  private:
 
-  template <>
-  inline
-  void map_index<3>(const unsigned index,
-                    const unsigned nnx,
-                    std::vector<unsigned> &indices)
-  {
-    assert(index < nnx*nnx*nnx);
-    indices[0] = index % nnx;
-    indices[1] = (index / nnx) % nnx;
-    indices[2] = index / (nnx*nnx);
-  }
-
-} // end namespace
+    std::vector<double> m_coefficients;
+};
 
 #endif
 

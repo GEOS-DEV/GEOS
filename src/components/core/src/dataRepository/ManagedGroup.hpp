@@ -176,6 +176,8 @@ public:
 
   ViewWrapperBase& RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type );
 
+  template< typename T >
+  ViewWrapper<T>& RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject );
 
 
   ///@}
@@ -439,7 +441,10 @@ ViewWrapper<T>& ManagedGroup::RegisterViewWrapper( std::string const & name, std
     m_wrappers.push_back( std::move( ViewWrapper<T>::Factory(name,this) ) );
     key = m_wrappers.size() - 1;
     m_keyLookup.insert( std::make_pair(name,key) );
-    m_wrappers[key]->resize(this->size());
+    if( m_wrappers[key]->sizedFromParent() == 1 )
+    {
+      m_wrappers[key]->resize(this->size());
+    }
   }
   // if key was found, make sure that they are the same type
   else
@@ -449,7 +454,8 @@ ViewWrapper<T>& ManagedGroup::RegisterViewWrapper( std::string const & name, std
     if( typeid(T) != basePtr->get_typeid() )
     {
       std::string error = string("Call to Group::RegisterViewWrapper( ")
-                          +name+string(", std::size_t * const ) attempts to re-register ViewWrapper, but with different type") ;
+                          +name+string(", std::size_t * const ) attempts to re-register ViewWrapper<")
+                          +basePtr->get_typeid().name()+string(", but with different type") ;
       SLIC_ERROR(error);
 //      throw std::exception();
     }
@@ -494,6 +500,41 @@ T& ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE>
 #else
   return *(static_cast<T*>( (iterKeyLookup->second).get() ) );
 #endif
+}
+
+
+
+
+template < typename T >
+ViewWrapper<T>& ManagedGroup::RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject )
+{
+  std::size_t key = static_cast<std::size_t>(-1);
+  auto iterKeyLookup = m_keyLookup.find(name);
+//  auto iterKeyLookup = m_wrappers.find(name);
+
+  // if the key was not found, make DataObject<T> and insert
+  if( iterKeyLookup == m_keyLookup.end() )
+  {
+    std::unique_ptr< ViewWrapper<T> > newWrapper = std::make_unique< ViewWrapper<T> >( name, this, std::move(newObject) );
+    m_wrappers.push_back( std::move( newWrapper ) );
+    key = m_wrappers.size() - 1;
+    m_keyLookup.insert( std::make_pair(name,key) );
+    m_wrappers[key]->resize(this->size());
+  }
+  // if key was found, make sure that they are the same type
+  else
+  {
+    key = m_keyLookup.at(name);
+    auto& basePtr = m_wrappers[key];
+    if( typeid(T) != basePtr->get_typeid() )
+    {
+      std::string error = string("Call to Group::RegisterViewWrapper( ")
+                          +name+string(", std::size_t * const ) attempts to re-register ViewWrapper<")
+                          +basePtr->get_typeid().name()+string(", but with different type") ;
+      SLIC_ERROR(error);
+    }
+  }
+  return getWrapper<T>(key);
 }
 
 } // namespace dataRepository

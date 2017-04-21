@@ -13,6 +13,10 @@ namespace geosx
 {
 namespace constitutive
 {
+namespace keys
+{
+string const linearElasticIsotropic = "LinearElasticIsotropic";
+}
 
 class LinearElasticIsotropic : public ConstitutiveBase
 {
@@ -21,7 +25,7 @@ public:
 
   virtual ~LinearElasticIsotropic();
 
-  static std::string CatalogName() { return "LinearElasticIsotropic"; }
+  static std::string CatalogName() { return keys::linearElasticIsotropic; }
 
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,

@@ -37,40 +37,59 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifndef FINITE_ELEMENT_H
+#define FINITE_ELEMENT_H
+
 /**
- * @file Basis.h
+ * @file FiniteElement.h
  * @author white230
  */
 
-#ifndef BASIS_H
-#define BASIS_H
-
 #include "legacy/Common/Common.h"
+#include "legacy/ElementLibrary/Basis.h"
+#include "legacy/ElementLibrary/Quadrature.h"
+#include "legacy/ElementLibrary/FiniteElementBase.h"
 
 /**
- * Pure virtual base class representing a space
- * of finite element basis functions (i.e the set
- * of all basis functions defined on the parent 
- * cell).
+ * Class representing a generic finite element.  Its constructor
+ * takes a specific interpolation basis and quadrature rule in
+ * order to define a complete element. 
+ *
+ * The class assume that the
+ * mapping from parent coordinates to real coordinates is 
+ * iso-parametric, and therefore the same basis is used for both
+ * interpolation and mapping.
+ *
+ * The class also defines a generic interface for accessing finite
+ * element data.  In the future, more sophisticated element
+ * definitions that do not fit within the current class can be
+ * defined through derived classes.
  */
 
-class Basis
+template <int dim>
+class FiniteElement : public FiniteElementBase
 {
   public:
-    virtual ~Basis(){}
 
-    virtual unsigned size() = 0;
+    FiniteElement( const int num_q_points,
+                   const int num_dofs,
+                   const int num_zero_energy_modes = 0 );
 
-    virtual double value (const unsigned index,
-                          const R1Tensor &point) = 0;
+    FiniteElement(BasisBase& basis,
+                  Quadrature& quadrature,
+                  const int num_zero_energy_modes = 0 );
+    
+    virtual ~FiniteElement(){}
 
-    virtual R1Tensor gradient (const unsigned index,
-                               const R1Tensor &point) = 0;
 
-    virtual R1Tensor support_point(const unsigned index) = 0;
+    virtual void reinit(const std::vector<R1TensorT<3> > &mapped_support_points);
 
-  private: 
+
 
 };
 
+
+
+
 #endif
+

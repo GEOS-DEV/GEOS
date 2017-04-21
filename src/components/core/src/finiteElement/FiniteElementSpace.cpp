@@ -27,11 +27,27 @@ FiniteElementSpace::~FiniteElementSpace()
 void FiniteElementSpace::BuildDataStructure( dataRepository::ManagedGroup * const parent )
 {
   m_nodeManager    = &(parent->RegisterGroup<NodeManager,ObjectManagerBase>( keys::FEM_Nodes, NodeManager::CatalogName() ) );
-  m_elementManager = &(parent->RegisterGroup<ElementManager,ObjectManagerBase>( keys::FEM_Elements, ElementManager::CatalogName() ) );
+  m_elementManager = &(parent->RegisterGroup<CellBlockManager,ObjectManagerBase>( keys::FEM_Elements, CellBlockManager::CatalogName() ) );
 
 }
 
+void FiniteElementSpace::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
+//  docNode->AllocateChildNode( keys::inputFileName,
+//                              keys::inputFileName,
+//                              -1,
+//                              "string",
+//                              "",
+//                              "Name of the input xml file.",
+//                              "Name of the input xml file.",
+//                              "input.xml",
+//                              "CommandLine",
+//                              0,
+//                              0,
+//                              0 );
+}
 
 ManagedGroup & FiniteElementSpace::getNodeManager()
 {

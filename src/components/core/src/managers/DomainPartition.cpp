@@ -31,7 +31,7 @@ void DomainPartition::BuildDataStructure( ManagedGroup * const )
   this->RegisterGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
 
   this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
-  this->RegisterGroup<ElementManager>(keys::FEM_Elements);
+  this->RegisterGroup<CellBlockManager>(keys::FEM_Elements);
 //  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
 }
 

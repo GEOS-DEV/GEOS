@@ -37,78 +37,101 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
- * ElementManagerT.cpp
- *
- *  Created on: Sep 14, 2010
- *      Author: settgast1
+#include "ElementLibrary/FiniteElement.h"
+
+
+
+template <int dim>
+FiniteElement<dim> :: FiniteElement(const int num_q_points,
+                                    const int num_dofs,
+                                    const int num_zero_energy_modes):
+FiniteElementBase( dim, num_q_points, num_dofs, num_zero_energy_modes)
+{}
+
+
+/**
+ * Constructor.  Takes an interpolation basis and quadrature rule,
+ * and pre-computes all static finite element data.  Any data
+ * that depends on the mapped configuration of the element, however, 
+ * is left uninitialized until reinit(...) is called.
  */
 
-#include "ElementManager.hpp"
-
-#include "FaceManager.hpp"
-//#include "legacy/IO/BinStream.h"
-#include <map>
-#include <vector>
-//#include "legacy/Constitutive/Material/MaterialFactory.h"
-//#include "legacy/ArrayT/ArrayT.h"
-
-namespace geosx
+template <int dim>
+FiniteElement<dim> :: FiniteElement(BasisBase &basis,
+                                    Quadrature &quadrature,
+                                    const int num_zero_energy_modes ):
+FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
 {
-using namespace dataRepository;
 
-ElementManager::ElementManager(  string const &, ManagedGroup * const parent ):
-ObjectManagerBase("ElementManager",parent)
-{
-  this->RegisterGroup<ManagedGroup>(keys::elementRegions);
-}
-
-ElementManager::~ElementManager()
-{
-  // TODO Auto-generated destructor stub
-}
-
-void ElementManager::resize( int32_array const & numElements,
-                             string_array const & regionNames,
-                             string_array const & elementTypes )
-{
-  int32 const numRegions = regionNames.size();
-  ManagedGroup & elementRegions = this->GetGroup(keys::elementRegions);
-  for( int32 reg=0 ; reg<numRegions ; ++reg )
+  data.resize(n_q_points);
+  for(unsigned q=0; q<n_q_points; ++q)
   {
-    ElementRegion & elemRegion = this->GetRegion( regionNames[reg] );
-    elemRegion.resize(numElements[reg]);
-  }
-}
+    data[q].parent_q_point = quadrature.integration_point(q);
+    data[q].parent_q_weight = quadrature.integration_weight(q);
 
+    data[q].parent_values.resize(n_dofs);
+    data[q].parent_gradients.resize(n_dofs);
+    data[q].mapped_gradients.resize(n_dofs);
 
-ElementRegion & ElementManager::CreateRegion( string const & regionName,
-                                             string const & elementType,
-                                             int32 const & numElements )
-{
-//  ElementRegion & elemRegion = elementRegions.RegisterGroup( regionNames );
-//  elemRegion.resize(numElements);
-
-}
-
-void ElementManager::ReadXMLsub( pugi::xml_node const & targetNode )
-{
-  ManagedGroup & elementRegions = this->GetGroup(keys::elementRegions);
-  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
-  {
-    if( childNode.name() == string("ElementRegion") )
+    for(unsigned i=0; i<n_dofs; ++i)
     {
-      std::string regionName = childNode.attribute("name").value();
-      std::cout<<regionName<<std::endl;
-
-      ElementRegion & elemRegion = elementRegions.RegisterGroup<ElementRegion>( regionName );
-      elemRegion.SetDocumentationNodes( nullptr );
-      elemRegion.RegisterDocumentationNodes();
-      elemRegion.ReadXML(childNode);
+      data[q].parent_values[i]    = basis.value(i,data[q].parent_q_point);
+      data[q].parent_gradients[i] = basis.gradient(i,data[q].parent_q_point);
     }
   }
 }
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementManager, string const &, ManagedGroup * const )
+
+
+/**
+ * Reinitialize the finite element basis on a particular element.
+ * We use the coordinates of the support points in real space to
+ * construct the forward mapping from the parent coordinate system.  The
+ * support points are assumed to follow a lexicographic ordering:
+ * On the parent element, we loop over the x-coordinate fastest,
+ * the y, then z (depending on the desired spatial dimension of the
+ * element).
+ */
+
+template <int dim>
+void FiniteElement<dim> :: reinit(const std::vector<R1TensorT<3> > &mapped_support_points)
+{
+  assert(mapped_support_points.size() == n_dofs);
+
+  R2TensorT<3> jacobian;
+  R2TensorT<3> inv_jacobian;
+
+  for(unsigned q=0; q<n_q_points; ++q)
+  {
+ 
+     jacobian = 0;
+     for(unsigned a=0; a<n_dofs; ++a)
+     {
+       jacobian.plus_dyadic_ab( mapped_support_points[a], data[q].parent_gradients[a] );
+     }
+
+     if( dim==2 )
+     {
+       jacobian(2,2) = 1;
+     }
+
+     data[q].jacobian_determinant = inv_jacobian.Inverse(jacobian);
+     
+     for(unsigned i=0; i<n_dofs; ++i)
+     {
+       data[q].mapped_gradients[i].AijBi( inv_jacobian, data[q].parent_gradients[i] );
+     } 
+  }
 }
+
+
+/**
+ * Explicit instantiations
+ */
+
+//template class FiniteElement<1>;
+template class FiniteElement<2>;
+template class FiniteElement<3>;
+
+

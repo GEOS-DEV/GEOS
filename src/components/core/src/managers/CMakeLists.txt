@@ -6,8 +6,8 @@ set(geosx_headers
   ${geosx_headers}
     managers/CommandLineParser.hpp
     managers/DomainPartition.hpp
-    managers/ElementManager.hpp
-    managers/ElementRegion.hpp
+    managers/CellBlockManager.hpp
+    managers/CellBlock.hpp
     managers/EventManager.hpp
     managers/FaceManager.hpp
     managers/NodeManager.hpp
@@ -24,8 +24,8 @@ set(geosx_core_sources
   ${geosx_core_sources}
     managers/CommandLineParser.cpp
   	managers/DomainPartition.cpp
-    managers/ElementManager.cpp
-    managers/ElementRegion.cpp
+    managers/CellBlockManager.cpp
+    managers/CellBlock.cpp
     managers/EventManager.cpp
     managers/FaceManager.cpp
     managers/NodeManager.cpp

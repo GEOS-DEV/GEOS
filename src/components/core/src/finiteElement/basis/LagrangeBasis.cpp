@@ -37,8 +37,9 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include "ElementLibrary/LagrangeBasis.h"
+#include "LagrangeBasis.hpp"
 
+#include "MeshUtilities/StructuredGridUtilities.hpp"
 /*
  * Constructor.
  */
@@ -49,34 +50,34 @@ LagrangeBasis<dim> :: LagrangeBasis(const unsigned degree)
   m_degree(degree),
   n_shape_functions(StructuredGrid::dimpower<dim>(degree+1))
 {
-  std::vector<std::vector<double> > 
+  std::vector<std::vector<double> >
     coeff(degree+1,std::vector<double>(degree+1));
 
   switch(degree)
   {
     case 0:
-      coeff[0][0] =  1.0; 
+      coeff[0][0] =  1.0;
       break;
 
     case 1:
-      coeff[0][0] =  1.0; 
+      coeff[0][0] =  1.0;
       coeff[0][1] = -1.0;
 
-      coeff[1][0] =  0.0; 
+      coeff[1][0] =  0.0;
       coeff[1][1] =  1.0;
       break;
 
     case 2:
-      coeff[0][0] =  1.0; 
-      coeff[0][1] = -3.0; 
+      coeff[0][0] =  1.0;
+      coeff[0][1] = -3.0;
       coeff[0][2] =  2.0;
 
-      coeff[1][0] =  0.0; 
-      coeff[1][1] =  4.0; 
+      coeff[1][0] =  0.0;
+      coeff[1][1] =  4.0;
       coeff[1][2] = -4.0;
 
-      coeff[2][0] =  0.0; 
-      coeff[2][1] = -1.0; 
+      coeff[2][0] =  0.0;
+      coeff[2][1] = -1.0;
       coeff[2][2] =  2.0;
       break;
 
@@ -158,7 +159,7 @@ unsigned LagrangeBasis<dim> :: size()
  * Evaluate the basis at a particular point in parent coordinates
  */
 
-  
+
 template <int dim>
 double LagrangeBasis<dim> :: value(const unsigned       index,
                                    const R1Tensor &point)
@@ -195,7 +196,7 @@ R1Tensor LagrangeBasis<dim> :: gradient(const unsigned index,
   for(unsigned c=0; c<dim; ++c)
   {
     pvalue = m_polynomials[indices[c]].Value(point[c]);
-    pderiv = m_polynomials[indices[c]].Deriv(point[c]); 
+    pderiv = m_polynomials[indices[c]].Deriv(point[c]);
     for(unsigned r=0; r<dim; ++r)
     {
       grad[r] *= ( r==c ? pderiv : pvalue );
@@ -212,7 +213,7 @@ R1Tensor LagrangeBasis<dim> :: gradient(const unsigned index,
  * element.
  */
 
-template <int dim> 
+template <int dim>
 R1Tensor LagrangeBasis<dim> :: support_point(const unsigned index)
 {
   R1Tensor pt;
@@ -245,3 +246,7 @@ template class LagrangeBasis<1>;
 template class LagrangeBasis<2>;
 template class LagrangeBasis<3>;
 
+//REGISTER_CATALOG_ENTRY( BasisBase, LagrangeBasis<1>,void )
+namespace { cxx_utilities::CatalogEntryConstructor<BasisBase,LagrangeBasis<1> > catEntry_LagrangeBasis1; }
+namespace { cxx_utilities::CatalogEntryConstructor<BasisBase,LagrangeBasis<2> > catEntry_LagrangeBasis2; }
+namespace { cxx_utilities::CatalogEntryConstructor<BasisBase,LagrangeBasis<3> > catEntry_LagrangeBasis3; }

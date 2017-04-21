@@ -54,7 +54,7 @@ namespace geosx
 {
 class FaceManager;
 class NodeManager;
-class ElementManager;
+class CellBlockManager;
 
 class EdgeManager: public ObjectManagerBase
 {
@@ -71,7 +71,7 @@ public:
 
 
   void BuildEdges( const FaceManager& faceManager, const NodeManager& nodeManager );
-  void BuildEdges( const ElementManager& elementManager, const NodeManager& nodeManager );
+  void BuildEdges( const CellBlockManager& elementManager, const NodeManager& nodeManager );
   
   template< typename T_indices >
   unsigned int PackEdges( const T_indices& sendedges,

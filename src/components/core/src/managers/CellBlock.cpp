@@ -37,38 +37,95 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**
- * @file Polynomial.h
- * @author white230
+/*
+ * ElementManagerT.cpp
+ *
+ *  Created on: Sep 14, 2010
+ *      Author: settgast1
  */
 
-#ifndef POLYNOMIAL_H
-#define POLYNOMIAL_H
+#include "CellBlock.hpp"
 
-#include "legacy/Common/Common.h"
+#include "Constitutive/ConstitutiveManager.hpp"
 
-/*! A class to represent polynomial objects of arbitrary order. */
-
-class Polynomial
+namespace geosx
 {
-  public:
+using namespace dataRepository;
 
-    Polynomial(const std::vector<double> _coefficients);
-    ~Polynomial();
 
-    unsigned  Degree();
 
-    double Value(const double x);
-    double Deriv(const double x);
+CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
+    ObjectManagerBase( name, parent ),
+    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<real64> >(keys::nodeList).reference())
+{
+  m_toNodesRelation.resize2(0,8);
+  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap).setSizedFromParent(1);
 
-    void Evaluate(const double x,
-                  double &value,
-                  double &deriv);
+}
 
-  private:
 
-    std::vector<double> m_coefficients;
-};
+CellBlock::~CellBlock()
+{
+}
 
-#endif
 
+void CellBlock::FillDocumentationNode( ManagedGroup * const group )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+
+  docNode->setName( this->getName() );
+  docNode->setSchemaType( "Node" );
+  docNode->setShortDescription( "an element region" );
+
+  docNode->AllocateChildNode( keys::numNodesPerElement,
+                              keys::numNodesPerElement,
+                              -1,
+                              "int32",
+                              "int32",
+                              "Number of Nodes Per Element",
+                              "Number of Nodes Per Element",
+                              "1",
+                              "",
+                              0,
+                              1,
+                              0 );
+//
+//  docNode->AllocateChildNode( keys::constitutiveMap,
+//                              keys::constitutiveMap,
+//                              -1,
+//                              "mapPair_array",
+//                              "mapPair_array",
+//                              "Number of Nodes Per Element",
+//                              "Number of Nodes Per Element",
+//                              "1",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
+
+//  docNode->AllocateChildNode( keys::numNodesPerElement,
+//                              keys::numNodesPerElement,
+//                              -1,
+//                              "int32",
+//                              "int32",
+//                              "Number of Nodes Per Element",
+//                              "Number of Nodes Per Element",
+//                              "1",
+//                              "",
+//                              1,
+//                              0 );
+
+
+}
+
+void CellBlock::ReadXML_PostProcess()
+{
+  int32 & numNodesPerElem = *(getData<int32>(keys::numNodesPerElement));
+  numNodesPerElem = 8;
+
+}
+
+
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )
+
+}

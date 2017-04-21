@@ -10,11 +10,11 @@
 #include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-#include "finiteElement/FiniteElementSpace.hpp"
+#include "finiteElement/FiniteElementManager.hpp"
 #include "MeshUtilities/MeshGenerator.hpp"
 #include <stdexcept>
-#include "ElementManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "CellBlockManager.hpp"
 
 
 namespace geosx
@@ -70,6 +70,8 @@ void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
   RegisterGroup<DomainPartition>(keys::domain).BuildDataStructure(nullptr);
   RegisterGroup<ManagedGroup>(keys::commandLine);
   RegisterGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+
+  RegisterGroup<FiniteElementManager>(keys::finiteElementManager);
 
 }
 
@@ -407,7 +409,7 @@ void ProblemManager::ParseInputFile()
   
   {
     pugi::xml_node topLevelNode = xmlProblemNode.child("ElementRegions");
-    ElementManager & elementManager = domain.GetGroup<ElementManager>(keys::FEM_Elements);
+    CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>(keys::FEM_Elements);
     elementManager.ReadXML( topLevelNode );
 
   }
@@ -434,6 +436,13 @@ void ProblemManager::ParseInputFile()
     // m_inputDocumentationHead.Write("test_output.xml");
     ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode())) ;
     getDocumentationNode()->Print();
+  }
+
+
+  {
+    FiniteElementManager & finiteElementManager = this->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+    pugi::xml_node topLevelNode = xmlProblemNode.child("NumericalMethods");
+    finiteElementManager.ReadXML(topLevelNode);
   }
 }
 

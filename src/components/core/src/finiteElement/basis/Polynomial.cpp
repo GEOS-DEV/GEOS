@@ -37,8 +37,108 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include "ElementLibrary/Basis.h"
+/**
+ * @file Polynomial.cpp
+ * @author white203
+ * @date Apr 11, 2010
+ */
 
-// ... no implementation required ...
+#include "Polynomial.hpp"
 
+/*
+ * Constructor.  Takes a vector of coefficients
+ */
+
+Polynomial :: Polynomial(const std::vector<double> _coefficients)
+  :
+  m_coefficients(_coefficients)
+{}
+
+
+/*
+ * Destructor.  
+ */
+
+Polynomial :: ~Polynomial()
+{}
+
+
+/*
+ * Return polynomial degree
+ */
+
+unsigned Polynomial :: Degree ()
+{
+  return m_coefficients.size();
+}
+
+
+/* 
+ * Use Horner's method to evaluate the polynomial
+ * function value p(x).
+ */
+
+double Polynomial :: Value (const double x)
+{
+  std::vector<double>::reverse_iterator
+    it     = m_coefficients.rbegin(),
+    end_it = m_coefficients.rend();
+
+  double val = 0;
+  for(; it != end_it; ++it)
+    val = *it + val*x;
+
+  return val;
+}
+
+
+/* 
+ * Use Horner's method to evaluate the polynomial
+ * function derivative p'(x).
+ */
+
+double Polynomial :: Deriv (const double x)
+{
+  std::vector<double>::reverse_iterator
+    it     = m_coefficients.rbegin(),
+    end_it = m_coefficients.rend();
+
+  double value = *it;
+  double deriv = 0; 
+  ++it;
+
+  for(; it != end_it; ++it)
+  {
+    deriv = value + deriv*x;
+    value = *it + value*x;
+  }
+  return deriv;
+}
+
+
+/*
+ * Use Horner's method to recursively evaluate
+ * the polynomial value p(x) and derivative p'(x).
+ * Here, both are computed simultaneously to
+ * maximize efficiency.
+ */
+
+void Polynomial :: Evaluate (const double x,
+                             double &value,
+                             double &deriv)
+{
+  std::vector<double>::reverse_iterator
+    it     = m_coefficients.rbegin(),
+    end_it = m_coefficients.rend();
+
+  value = *it;
+  deriv = 0; 
+  ++it;
+
+  for(; it != end_it; ++it)
+  {
+    deriv = value + deriv*x;
+    value = *it + value*x;
+  }
+}
 

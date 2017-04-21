@@ -47,9 +47,9 @@
 #ifndef NODEMANAGERT_H_
 #define NODEMANAGERT_H_
 
-#include "ElementManager.hpp"
 #include "ObjectManagerBase.hpp"
 #include <string.h>
+#include "CellBlockManager.hpp"
 
 
 // *********************************************************************************************************************
@@ -59,7 +59,7 @@ class SiloFile;
 namespace geosx
 {
 
-class ElementRegion;
+class CellBlock;
 class FaceManager;
 class EdgeManager;
 

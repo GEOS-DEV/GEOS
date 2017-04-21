@@ -54,6 +54,46 @@ void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
                                        1,
                                        0 );
 
+  parameterDocNode->AllocateChildNode( "BulkModulus",
+                                       "BulkModulus",
+                                       -1,
+                                       "real64",
+                                       "real64",
+                                       "Elastic Bulk Modulus",
+                                       "Elastic Bulk Modulus",
+                                       "0",
+                                       "",
+                                       1,
+                                       1,
+                                       0 );
+
+  parameterDocNode->AllocateChildNode( "ShearModulus",
+                                       "ShearModulus",
+                                       -1,
+                                       "real64",
+                                       "real64",
+                                       "Elastic Bulk Modulus",
+                                       "Elastic Bulk Modulus",
+                                       "0",
+                                       "",
+                                       1,
+                                       1,
+                                       0 );
+
+  parameterDocNode->AllocateChildNode( "PoissonRatio",
+                                       "PoissonRatio",
+                                       -1,
+                                       "real64",
+                                       "real64",
+                                       "Elastic Poisson's Ratio",
+                                       "Elastic Poisson's Ratio",
+                                       "0",
+                                       "",
+                                       1,
+                                       1,
+                                       0 );
+
+
   ManagedGroup & stateData     = this->GetGroup( std::string("ParameterData") );
   DocumentationNode * const stateDocNode = stateData.getDocumentationNode();
   stateDocNode->setSchemaType("Node");

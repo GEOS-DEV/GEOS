@@ -54,7 +54,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
   SolverBase::FillDocumentationNode( domain );
 
   NodeManager& nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
-  ElementManager& elems = domain->GetGroup<ElementManager>(keys::FEM_Elements);
+  CellBlockManager& elems = domain->GetGroup<CellBlockManager>(keys::FEM_Elements);
 
 
   docNode->setName(this->CatalogName());
@@ -184,7 +184,7 @@ void SolidMechanics_LagrangianFEM::BuildDataStructure( ManagedGroup * const doma
 void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& domain )
 {
   ManagedGroup& nodes = domain.GetGroup<ManagedGroup >(keys::FEM_Nodes);
-  ElementManager& elems = domain.GetGroup<ElementManager >(keys::FEM_Elements);
+  CellBlockManager& cells = domain.GetGroup<CellBlockManager >(keys::FEM_Elements);
   ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   ViewWrapper<r1_array>::rtype    X = nodes.getData<r1_array>(keys::ReferencePosition);
@@ -192,13 +192,13 @@ void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& dom
 //  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
 
 
-  elems.forRegions([ this, &X, &mass ]( ElementRegion& elemRegion ) -> void
+  cells.forCellBlocks([ this, &X, &mass ]( CellBlock& cellBlock ) -> void
   {
-    int32_array const & constitutiveMap = elemRegion.getData<int32_array>(keys::constitutiveMap);
-    real64 rho = *(elemRegion.getData<real64>(keys::rho));
-    lArray2d const & elemsToNodes = elemRegion.getData<lArray2d>(keys::nodeList);
+    mapPair_array const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
+    real64 rho = *(cellBlock.getData<real64>(keys::rho));
+    lArray2d const & elemsToNodes = cellBlock.getData<lArray2d>(keys::nodeList);
     real64 area = 1;
-    for( localIndex k=0 ; k<elemRegion.size() ; ++k )
+    for( localIndex k=0 ; k<cellBlock.size() ; ++k )
     {
       localIndex const * nodeList = elemsToNodes[k];
       real64 dx = X[nodeList[1]][0] - X[nodeList[0]][0];

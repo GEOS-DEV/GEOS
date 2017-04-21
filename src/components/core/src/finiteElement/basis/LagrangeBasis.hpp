@@ -40,39 +40,48 @@
 #ifndef LAGRANGE_BASIS_H
 #define LAGRANGE_BASIS_H
 
-#include "legacy/Common/Common.h"
+//#include "legacy/Common/Common.h"
 #include <cassert>
 
-#include "legacy/ElementLibrary/Basis.h"
-#include "legacy/ElementLibrary/Polynomial.h"
-#include "legacy/Utilities/StructuredGridUtilities.h"
+#include "BasisBase.hpp"
+#include "Polynomial.hpp"
+//#include "legacy/Utilities/StructuredGridUtilities.h"
 
 /** A class to define a parent finite element space consisting
  *  of Lagrangian polynomial basis function. The class is
  *  templated on the spatial dimension. */
 
-template <int dim>
-class LagrangeBasis : public Basis
+template<int dim>
+class LagrangeBasis : public BasisBase
 {
-  public:
-    LagrangeBasis(const unsigned degree);
+public:
+  static string CatalogName()
+  {
+    string name = "LagrangeBasis";
+    name.append(std::to_string(dim));
+    return name;
+  }
 
-    unsigned size();
+  LagrangeBasis(void){}
 
-    double value(const unsigned index,
-                 const R1Tensor &point);
+  LagrangeBasis( const unsigned degree );
 
-    R1Tensor gradient(const unsigned index,
-                            const R1Tensor &point);
+  unsigned size();
 
-    R1Tensor support_point(const unsigned index);
+  double value( const unsigned index,
+                const R1Tensor &point );
 
-  private:
+  R1Tensor gradient( const unsigned index,
+                     const R1Tensor &point );
 
-    const unsigned m_degree;
-    const unsigned n_shape_functions;
+  R1Tensor support_point( const unsigned index );
 
-    std::vector<Polynomial> m_polynomials;
+private:
+
+  unsigned m_degree;
+  unsigned n_shape_functions;
+
+  std::vector<Polynomial> m_polynomials;
 };
 
 #endif

@@ -37,101 +37,75 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include "ElementLibrary/FiniteElement.h"
-
-
-
-template <int dim>
-FiniteElement<dim> :: FiniteElement(const int num_q_points,
-                                    const int num_dofs,
-                                    const int num_zero_energy_modes):
-FiniteElementBase( dim, num_q_points, num_dofs, num_zero_energy_modes)
-{}
-
+#ifndef STRUCTURED_GRID_UTILITIES_H
+#define STRUCTURED_GRID_UTILITIES_H
 
 /**
- * Constructor.  Takes an interpolation basis and quadrature rule,
- * and pre-computes all static finite element data.  Any data
- * that depends on the mapped configuration of the element, however, 
- * is left uninitialized until reinit(...) is called.
+ * @file StructuredGridUtilities.h
+ * @author white230
  */
-
-template <int dim>
-FiniteElement<dim> :: FiniteElement(Basis &basis,
-                                    Quadrature &quadrature,
-                                    const int num_zero_energy_modes ):
-FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
-{
-
-  data.resize(n_q_points);
-  for(unsigned q=0; q<n_q_points; ++q)
-  {
-    data[q].parent_q_point = quadrature.integration_point(q);
-    data[q].parent_q_weight = quadrature.integration_weight(q);
-
-    data[q].parent_values.resize(n_dofs);
-    data[q].parent_gradients.resize(n_dofs);
-    data[q].mapped_gradients.resize(n_dofs);
-
-    for(unsigned i=0; i<n_dofs; ++i)
-    {
-      data[q].parent_values[i]    = basis.value(i,data[q].parent_q_point);
-      data[q].parent_gradients[i] = basis.gradient(i,data[q].parent_q_point);
-    }
-  }
-}
-
-
-
-
-/**
- * Reinitialize the finite element basis on a particular element.
- * We use the coordinates of the support points in real space to
- * construct the forward mapping from the parent coordinate system.  The
- * support points are assumed to follow a lexicographic ordering:
- * On the parent element, we loop over the x-coordinate fastest,
- * the y, then z (depending on the desired spatial dimension of the
- * element).
- */
-
-template <int dim>
-void FiniteElement<dim> :: reinit(const std::vector<R1TensorT<3> > &mapped_support_points)
-{
-  assert(mapped_support_points.size() == n_dofs);
-
-  R2TensorT<3> jacobian;
-  R2TensorT<3> inv_jacobian;
-
-  for(unsigned q=0; q<n_q_points; ++q)
-  {
  
-     jacobian = 0;
-     for(unsigned a=0; a<n_dofs; ++a)
-     {
-       jacobian.plus_dyadic_ab( mapped_support_points[a], data[q].parent_gradients[a] );
-     }
+//#include "legacy/Common/Common.h"
+#include <cassert>
 
-     if( dim==2 )
-     {
-       jacobian(2,2) = 1;
-     }
+namespace StructuredGrid
+{
+  /*!
+   *  Given n, compute n^d, where d is the spatial dimension.
+   */
+  
+  template <int dim>
+  int dimpower(int n);
 
-     data[q].jacobian_determinant = inv_jacobian.Inverse(jacobian);
-     
-     for(unsigned i=0; i<n_dofs; ++i)
-     {
-       data[q].mapped_gradients[i].AijBi( inv_jacobian, data[q].parent_gradients[i] );
-     } 
+  template <> inline int dimpower<1>(int n) { return n; }
+  template <> inline int dimpower<2>(int n) { return n*n; }
+  template <> inline int dimpower<3>(int n) { return n*n*n; }
+
+  /*!
+   * Given a lexographical index N, map back to the original
+   * i,j,k indices of the point. The first variation here assumes
+   * a uniform number of points nnx in all coordinate directions.
+   */
+
+  template <int dim>
+  void map_index(const unsigned index,
+                 const unsigned nnx,
+                 std::vector<unsigned> &indices);
+
+  template <>
+  inline
+  void map_index<1>(const unsigned index,
+                    const unsigned nnx,
+                    std::vector<unsigned> &indices)
+  {
+    assert(index < nnx);
+    indices[0] = index;
   }
-}
 
+  template <>
+  inline
+  void map_index<2>(const unsigned index,
+                    const unsigned nnx,
+                    std::vector<unsigned> &indices)
+  {
+    assert(index < nnx*nnx);
+    indices[0] = index % nnx;
+    indices[1] = index / nnx;
+  }
 
-/**
- * Explicit instantiations
- */
+  template <>
+  inline
+  void map_index<3>(const unsigned index,
+                    const unsigned nnx,
+                    std::vector<unsigned> &indices)
+  {
+    assert(index < nnx*nnx*nnx);
+    indices[0] = index % nnx;
+    indices[1] = (index / nnx) % nnx;
+    indices[2] = index / (nnx*nnx);
+  }
 
-//template class FiniteElement<1>;
-template class FiniteElement<2>;
-template class FiniteElement<3>;
+} // end namespace
 
+#endif
 

@@ -38,107 +38,92 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @file Polynomial.cpp
- * @author white203
- * @date Apr 11, 2010
+ * @file ElementManagerT.h
+ * @author Randolph Settgast
+ * @date created on Sep 14, 2010
  */
 
-#include "ElementLibrary/Polynomial.h"
+#ifndef ELEMENTMANAGERT_H_
+#define ELEMENTMANAGERT_H_
 
-/*
- * Constructor.  Takes a vector of coefficients
- */
+//#include "Common.h"
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+#include "CellBlock.hpp"
+#include "ObjectManagerBase.hpp"
 
-Polynomial :: Polynomial(const std::vector<double> _coefficients)
-  :
-  m_coefficients(_coefficients)
-{}
+#include "legacy/ArrayT/bufvector.h"
 
-
-/*
- * Destructor.  
- */
-
-Polynomial :: ~Polynomial()
-{}
-
-
-/*
- * Return polynomial degree
- */
-
-unsigned Polynomial :: Degree ()
+namespace geosx
 {
-  return m_coefficients.size();
+
+namespace dataRepository
+{
+namespace keys
+{
+string const cellBlocks = "cellBlocks";
+}
 }
 
 
-/* 
- * Use Horner's method to evaluate the polynomial
- * function value p(x).
+/**
+ * Class to manage the data stored at the element level.
  */
-
-double Polynomial :: Value (const double x)
+class CellBlockManager : public ObjectManagerBase
 {
-  std::vector<double>::reverse_iterator
-    it     = m_coefficients.rbegin(),
-    end_it = m_coefficients.rend();
+public:
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
 
-  double val = 0;
-  for(; it != end_it; ++it)
-    val = *it + val*x;
-
-  return val;
-}
-
-
-/* 
- * Use Horner's method to evaluate the polynomial
- * function derivative p'(x).
- */
-
-double Polynomial :: Deriv (const double x)
-{
-  std::vector<double>::reverse_iterator
-    it     = m_coefficients.rbegin(),
-    end_it = m_coefficients.rend();
-
-  double value = *it;
-  double deriv = 0; 
-  ++it;
-
-  for(; it != end_it; ++it)
+  static string CatalogName()
   {
-    deriv = value + deriv*x;
-    value = *it + value*x;
+    return "CellBlockManager";
   }
-  return deriv;
-}
 
-
-/*
- * Use Horner's method to recursively evaluate
- * the polynomial value p(x) and derivative p'(x).
- * Here, both are computed simultaneously to
- * maximize efficiency.
- */
-
-void Polynomial :: Evaluate (const double x,
-                             double &value,
-                             double &deriv)
-{
-  std::vector<double>::reverse_iterator
-    it     = m_coefficients.rbegin(),
-    end_it = m_coefficients.rend();
-
-  value = *it;
-  deriv = 0; 
-  ++it;
-
-  for(; it != end_it; ++it)
+  string getName() const override final
   {
-    deriv = value + deriv*x;
-    value = *it + value*x;
+    return CellBlockManager::CatalogName();
   }
-}
 
+
+
+
+  ///@}
+
+  CellBlockManager( string const &, ManagedGroup * const parent );
+  virtual ~CellBlockManager();
+
+  void Initialize(  ){}
+
+  virtual void ReadXMLsub( pugi::xml_node const & targetNode );
+
+  using ManagedGroup::resize;
+
+  void resize( int32_array const & numElements,
+               string_array const & regionNames,
+               string_array const & elementTypes );
+
+  CellBlock & CreateRegion( string const & regionName,
+                               string const & elementType,
+                               int32 const & numElements );
+
+  CellBlock & GetRegion( string const & regionName )
+  {
+    return this->GetGroup(dataRepository::keys::cellBlocks).GetGroup<CellBlock>(regionName);
+  }
+
+  template< typename LAMBDA >
+  void forCellBlocks( LAMBDA lambda )
+  {
+    ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
+    elementRegions.forSubGroups<CellBlock>( lambda );
+  }
+private:
+  CellBlockManager( const CellBlockManager& );
+  CellBlockManager& operator=( const CellBlockManager&);
+
+
+};
+}
+#endif /* ELEMENTMANAGERT_H_ */
