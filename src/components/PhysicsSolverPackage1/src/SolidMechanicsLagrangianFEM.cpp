@@ -14,6 +14,7 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NodeManager.hpp"
 
 namespace geosx
@@ -23,12 +24,7 @@ namespace dataRepository
 {
 namespace keys
 {
-std::string const K = "K";
-std::string const Ey = "Ey";
-std::string const rho = "rho";
 std::string const area = "area";
-std::string const barLength = "barLength";
-std::string const nElements = "nElements";
 }
 }
 
@@ -186,24 +182,29 @@ void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& dom
   ManagedGroup& nodes = domain.GetGroup<ManagedGroup >(keys::FEM_Nodes);
   CellBlockManager& cells = domain.GetGroup<CellBlockManager >(keys::FEM_Elements);
   ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
 
   ViewWrapper<r1_array>::rtype    X = nodes.getData<r1_array>(keys::ReferencePosition);
   ViewWrapper<real64_array>::rtype mass = nodes.getData<real64_array>(keys::Mass);
 //  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
 
 
-  cells.forCellBlocks([ this, &X, &mass ]( CellBlock& cellBlock ) -> void
+  array< ConstitutiveWrapper< view_rtype<real64> > > const & rho = constitutiveManager.GetParameterData<real64>(keys::density);
+
+  cells.forCellBlocks([ this, &X, &mass, &rho ]( CellBlock& cellBlock ) -> void
   {
     mapPair_array const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
-    real64 rho = *(cellBlock.getData<real64>(keys::rho));
+//    constitutiveManager.GetGroup();
     lArray2d const & elemsToNodes = cellBlock.getData<lArray2d>(keys::nodeList);
     real64 area = 1;
+
     for( localIndex k=0 ; k<cellBlock.size() ; ++k )
     {
       localIndex const * nodeList = elemsToNodes[k];
       real64 dx = X[nodeList[1]][0] - X[nodeList[0]][0];
-      mass[k]   += rho * area * dx / 2;
-      mass[k+1] += rho * area * dx / 2;    }
+      mass[k]   += *(rho[ constitutiveMap[k].first ].m_object) * area * dx / 2;
+      mass[k+1] += *(rho[ constitutiveMap[k].first ].m_object) * area * dx / 2;
+    }
   });
 }
 
@@ -235,7 +236,7 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 
   ViewWrapper<real64_array>::rtype    Felem = elems.getData<real64_array>(keys::Force);
   ViewWrapper<real64_array>::rtype   Strain = elems.getData<real64_array>(keys::Strain);
-  ViewWrapper<real64_array>::rtype_const  K = elems.getData<real64_array>(keys::K);
+//  ViewWrapper<real64_array>::rtype_const  K = elems.getData<real64_array>(keys::K);
 
 
 //  ViewWrapper<real64_array>::rtype          X2 = nodes.GetData(keys::ReferencePosition);
@@ -253,7 +254,7 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
   for( localIndex k=0 ; k<numElems ; ++k )
   {
     Strain[k] = ( u[k+1] - u[k] ) / ( X[k+1] - X[k] );
-    Felem[k] = K[k] * Strain[k];
+//    Felem[k] = K[k] * Strain[k];
     acc[k]   += Felem[k];
     acc[k+1] -= Felem[k];
   }

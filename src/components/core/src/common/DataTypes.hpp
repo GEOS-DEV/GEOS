@@ -437,6 +437,11 @@ public:
       return lambda( string_array(1) );
       break;
     }
+    case ( TypeIDs::mapPair_array_id ):
+    {
+      return lambda( mapPair_array(1) );
+      break;
+    }
     default:
     {
       std::cout<<LOCATION<<std::endl;
@@ -542,6 +547,12 @@ public:
       return lambda( string_array(1), string("") );
       break;
     }
+//    case ( TypeIDs::mapPair_array_id ):
+//    {
+//      return lambda( mapPair_array(1), mapPair({}) );
+//      break;
+//    }
+
     default:
     {
       std::cout<<LOCATION<<std::endl;
@@ -633,6 +644,11 @@ public:
       return lambda( string_array(1), string("") );
       break;
     }
+//    case ( TypeIDs::mapPair_array_id ):
+//    {
+//      return lambda( mapPair_array(1), mapPair({}) );
+//      break;
+//    }
     default:
     {
       std::cout<<LOCATION<<std::endl;

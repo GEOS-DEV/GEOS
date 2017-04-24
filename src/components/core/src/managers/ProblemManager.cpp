@@ -407,17 +407,37 @@ void ProblemManager::ParseInputFile()
     }
   }
   
-  {
-    pugi::xml_node topLevelNode = xmlProblemNode.child("ElementRegions");
-    CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>(keys::FEM_Elements);
-    elementManager.ReadXML( topLevelNode );
 
-  }
-  
   {
     pugi::xml_node topLevelNode = xmlProblemNode.child("Constitutive");
     ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
     constitutiveManager.ReadXML( topLevelNode );
+
+
+    topLevelNode = xmlProblemNode.child("ElementRegions");
+    CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>(keys::FEM_Elements);
+    elementManager.ReadXML( topLevelNode );
+
+
+    map<string,int32> constitutiveSizes;
+
+    elementManager.forCellBlocks([ this, &domain, &constitutiveSizes ]( CellBlock& cellBlock ) -> void
+    {
+      map<string,int32> sizes = cellBlock.SetConstitutiveMap( domain );
+      for( auto& entry : sizes )
+      {
+        constitutiveSizes[entry.first] += entry.second;
+      }
+    });
+
+    for( auto & material : constitutiveManager.GetSubGroups() )
+    {
+      string name = material.first;
+      if( constitutiveSizes.count(name) > 0 )
+      {
+        material.second->resize( constitutiveSizes.at(name) );
+      }
+    }
   }
 
   
@@ -476,13 +496,15 @@ void ProblemManager::RunSimulation()
   int cycle = 0;
   real64 dt = 0.0;
 
-  cxx_utilities::DocumentationNode * const eventDocNode = m_eventManager->getDocumentationNode();
-  for( auto const & subEventDocNode : eventDocNode->m_child )
-  {
-    if (strcmp(subEventDocNode.second.getDataType().c_str(), "ManagedGroup") == 0)
-    {
+//  cxx_utilities::DocumentationNode * const eventDocNode = m_eventManager->getDocumentationNode();
+//  for( auto const & subEventDocNode : eventDocNode->m_child )
+//  {
+//    if (strcmp(subEventDocNode.second.getDataType().c_str(), "ManagedGroup") == 0)
 
-      dataRepository::ManagedGroup& currentApplication = m_eventManager->GetGroup( subEventDocNode.first );
+  for( auto& application : this->m_eventManager->GetSubGroups() )
+  {
+
+      dataRepository::ManagedGroup& currentApplication = *(application.second);
 
       ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solvers);
       real64& appDt = *(currentApplication.getData<real64>(keys::dt));
@@ -514,7 +536,7 @@ void ProblemManager::RunSimulation()
         dt = (endTime - time < dt)?(endTime-time):(dt);
       } 
     }
-  }
+//  }
 }
 
 

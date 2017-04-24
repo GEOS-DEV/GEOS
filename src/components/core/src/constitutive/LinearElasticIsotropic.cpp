@@ -36,65 +36,78 @@ void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Linear Elastic Isotropic Constitutive Relation");
 
-  ManagedGroup & parameterData = this->GetGroup( std::string("StateData") );
+  ManagedGroup & parameterData = this->GetGroup( keys::parameterData );
   DocumentationNode * const parameterDocNode = parameterData.getDocumentationNode();
   parameterDocNode->setSchemaType("Node");
   parameterDocNode->setShortDescription("Parameters for Linear Elastic Isotropic Constitutive Relation");
 
-  parameterDocNode->AllocateChildNode( "YoungsModulus",
-                                       "YoungsModulus",
+  parameterDocNode->AllocateChildNode( keys::youngsModulus,
+                                       keys::youngsModulus,
                                        -1,
                                        "real64",
                                        "real64",
                                        "Young's Elastic Modulus",
                                        "Young's Elastic Modulus",
-                                       "0",
+                                       "-1",
                                        "",
                                        1,
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( "BulkModulus",
-                                       "BulkModulus",
+  parameterDocNode->AllocateChildNode( keys::bulkModulus,
+                                       keys::bulkModulus,
                                        -1,
                                        "real64",
                                        "real64",
                                        "Elastic Bulk Modulus",
                                        "Elastic Bulk Modulus",
-                                       "0",
+                                       "-1",
                                        "",
                                        1,
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( "ShearModulus",
-                                       "ShearModulus",
+  parameterDocNode->AllocateChildNode( keys::shearModulus,
+                                       keys::shearModulus,
                                        -1,
                                        "real64",
                                        "real64",
                                        "Elastic Bulk Modulus",
                                        "Elastic Bulk Modulus",
-                                       "0",
+                                       "-1",
                                        "",
                                        1,
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( "PoissonRatio",
-                                       "PoissonRatio",
+  parameterDocNode->AllocateChildNode( keys::poissonRatio,
+                                       keys::poissonRatio,
                                        -1,
                                        "real64",
                                        "real64",
                                        "Elastic Poisson's Ratio",
                                        "Elastic Poisson's Ratio",
-                                       "0",
+                                       "-1",
+                                       "",
+                                       1,
+                                       1,
+                                       0 );
+
+  parameterDocNode->AllocateChildNode( keys::density,
+                                       keys::density,
+                                       -1,
+                                       "real64",
+                                       "real64",
+                                       "density",
+                                       "density",
+                                       "-1",
                                        "",
                                        1,
                                        1,
                                        0 );
 
 
-  ManagedGroup & stateData     = this->GetGroup( std::string("ParameterData") );
+  ManagedGroup & stateData     = this->GetGroup( keys::stateData );
   DocumentationNode * const stateDocNode = stateData.getDocumentationNode();
   stateDocNode->setSchemaType("Node");
   stateDocNode->setShortDescription("State for Linear Elastic Isotropic Constitutive Relation");
@@ -109,8 +122,54 @@ void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
                                        "0",
                                        "",
                                        1,
-                                       1,
+                                       0,
                                        0 );
+}
+
+void LinearElasticIsotropic::ReadXML_PostProcess()
+{
+  ManagedGroup & parameterData = this->GetGroup( keys::parameterData );
+  real64 & nu = *( parameterData.getData<real64>(keys::poissonRatio) );
+  real64 & E  = *( parameterData.getData<real64>(keys::youngsModulus) );
+  real64 & K  = *( parameterData.getData<real64>(keys::bulkModulus) );
+  real64 & G  = *( parameterData.getData<real64>(keys::shearModulus) );
+
+  int numConstantsSpecified = 0;
+  if( nu >= 0.0 )
+  {
+    ++numConstantsSpecified;
+  }
+  if( E >= 0.0 )
+  {
+    ++numConstantsSpecified;
+  }
+  if( K >= 0.0 )
+  {
+    ++numConstantsSpecified;
+  }
+  if( G >= 0.0 )
+  {
+    ++numConstantsSpecified;
+  }
+
+  if( numConstantsSpecified == 2 )
+  {
+    if( nu >= 0.0 && E >= 0.0 )
+    {
+      K = E / (3 * ( 1 - 2*nu ) );
+      G = E / (2 * ( 1 + nu ) );
+    }
+    else if( !( K >= 0.0 && G >= 0.0 ) )
+    {
+      string const message = "A specific pair of elastic constants is required. Either (K,G) or (E,nu)";
+      SLIC_ERROR(message);
+    }
+  }
+  else
+  {
+    string const message = std::to_string(numConstantsSpecified) + " Elastic Constants Specified. Must specify 2 constants!";
+    SLIC_ERROR(message);
+  }
 }
 
 void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * const input,

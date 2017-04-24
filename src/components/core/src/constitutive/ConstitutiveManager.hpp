@@ -16,6 +16,27 @@ namespace constitutive
 {
 
 
+template< typename T >
+class ConstitutiveWrapper
+{
+public:
+  ConstitutiveWrapper( T & object ):
+    m_object(object)
+  {}
+
+  ConstitutiveWrapper() = delete;
+
+  ConstitutiveWrapper( ConstitutiveWrapper const & source ):
+    m_object(source.m_object)
+  {}
+
+  ConstitutiveWrapper & operator=(ConstitutiveWrapper const &)
+  { return *this; }
+
+  T & m_object;
+};
+
+
 
 class ConstitutiveManager : public dataRepository::ManagedGroup
 {
@@ -28,7 +49,49 @@ public:
   void ReadXMLsub( pugi::xml_node const & targetNode );
 
   ~ConstitutiveManager();
+
+  using constitutiveMaps = std::pair< array<ManagedGroup *> , map<string,int32> > ;
+  constitutiveMaps & GetMaps( int32 const reinit ) const;
+
+
+  template< typename T >
+  array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > GetParameterData( string const & name );
+
+  template< typename T >
+  array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > GetData( string const & name );
+
+  template< typename T >
+  array< ConstitutiveWrapper< dataRepository::view_rtype_const<T> > > GetData( string const & name ) const;
+
 };
+
+
+
+template< typename T >
+array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > ConstitutiveManager::GetParameterData( string const & name )
+{
+  array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > rval;
+  string key = dataRepository::keys::parameterData;
+  this->forSubGroups( [this,&name, &rval, &key]( ManagedGroup & material ) -> void
+  {
+    dataRepository::view_rtype<T> temp0 = material.GetGroup(key).getData<T>(name);
+    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp( temp0 );
+    rval.push_back( temp );
+  });
+  return rval;
+}
+
+template< typename T >
+array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > ConstitutiveManager::GetData( string const & name )
+{
+  array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > rval;
+  this->forSubGroups( [this,&name, &rval]( ManagedGroup & material ) -> void
+  {
+    rval.push_back( material.getData<T>(name) );
+  });
+  return rval;
+}
+
 
 }
 } /* namespace geosx */

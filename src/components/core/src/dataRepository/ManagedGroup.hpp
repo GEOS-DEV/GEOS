@@ -204,7 +204,7 @@ public:
 
   virtual void ReadXML( pugi::xml_node const & targetNode );
 
-  virtual void ReadXMLsub( pugi::xml_node const & ) {}
+  virtual void ReadXMLsub( pugi::xml_node const & );
 
   virtual void ReadXML_PostProcess() {}
 
@@ -328,6 +328,24 @@ public:
   }
 
 
+  bool hasGroup( std::string const & name )
+  {
+    return m_subGroups.count(name);
+  }
+  bool hasGroup( std::string const & name ) const
+  {
+    return m_subGroups.count(name);
+  }
+
+  bool hasView( std::string const & name )
+  {
+    return m_keyLookup.count(name);
+  }
+  bool hasView( std::string const & name ) const
+  {
+    return m_keyLookup.count(name);
+  }
+
   inline string getName() const
   {
     return getData<string>(keys::Name);
@@ -378,11 +396,11 @@ protected:
   cxx_utilities::DocumentationNode * m_docNode = nullptr;
 
 private:
-  std::unordered_map<string,size_t> m_keyLookup;
+  unordered_map<string,size_t> m_keyLookup;
   std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
 
   ManagedGroup* m_parent = nullptr;
-  std::unordered_map< string, std::unique_ptr<ManagedGroup> > m_subGroups;
+  unordered_map< string, std::unique_ptr<ManagedGroup> > m_subGroups;
 
   asctoolkit::sidre::DataGroup* m_sidreGroup;
 

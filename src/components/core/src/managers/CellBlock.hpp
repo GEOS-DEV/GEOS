@@ -62,6 +62,7 @@ namespace dataRepository
 {
 namespace keys
 {
+string const defaultMaterial = "material";
 string const numNodesPerElement = "numNodesPerElement";
 string const nodeList = "nodeList";
 string const constitutiveMap = "constitutiveMap";
@@ -110,9 +111,11 @@ public:
 
   virtual void ReadXML_PostProcess();
 
+  map<string,int32> SetConstitutiveMap( dataRepository::ManagedGroup const & domain );
+
   virtual ~CellBlock();
 
-  Array2dT<real64> & m_toNodesRelation;
+  Array2dT<int32> & m_toNodesRelation;
 
 private:
   CellBlock& operator=(const CellBlock& rhs);

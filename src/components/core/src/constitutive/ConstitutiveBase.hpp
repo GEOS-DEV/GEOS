@@ -15,6 +15,16 @@
 
 namespace geosx
 {
+
+namespace dataRepository
+{
+namespace keys
+{
+string const stateData("StateData");
+string const parameterData("ParameterData");
+}
+}
+
 namespace constitutive
 {
 

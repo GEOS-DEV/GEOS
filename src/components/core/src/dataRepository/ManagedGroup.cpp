@@ -242,8 +242,6 @@ ManagedGroup::ManagedGroup( std::string const & name,
 
 ManagedGroup::~ManagedGroup()
 {
-  delete m_docNode;
-  // TODO Auto-generated destructor stub
 }
 
 //DataObjectManager::DataObjectManager( DataObjectManager const & source ):
@@ -297,12 +295,14 @@ void ManagedGroup::RegisterDocumentationNodes()
   {
 //    std::cout<<subNode.first<<", "<<subNode.second.getName()<<std::endl;
     if( ( subNode.second.getSchemaType() != "DocumentationNode" ) &&
-        ( subNode.second.getSchemaType() != "Node" ) )
+        ( subNode.second.getSchemaType() != "Node" ) &&
+        ( subNode.second.m_isRegistered == 0 ) )
     {
       std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
       ViewWrapperBase & view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                     rtTypes::typeID(subNode.second.getDataType() ) );
       view.setSizedFromParent( subNode.second.m_managedByParent);
+      subNode.second.m_isRegistered = 1;
     }
   }
 
@@ -330,6 +330,7 @@ void ManagedGroup::FillDocumentationNode( dataRepository::ManagedGroup * const  
 void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const group )
 {
   FillDocumentationNode(group);
+  RegisterDocumentationNodes();
   for( auto&& subGroup : m_subGroups )
   {
     subGroup.second->SetDocumentationNodes(group);
@@ -474,6 +475,14 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
   }
 
   ReadXML_PostProcess();
+}
+
+void ManagedGroup::ReadXMLsub( pugi::xml_node const & targetNode )
+{
+  this->forSubGroups( [this,&targetNode]( ManagedGroup & subGroup ) -> void
+  {
+    subGroup.ReadXML( targetNode );
+  });
 }
 
 

@@ -11,12 +11,21 @@
 
 namespace geosx
 {
-namespace constitutive
+namespace dataRepository
 {
 namespace keys
 {
 string const linearElasticIsotropic = "LinearElasticIsotropic";
+string const density("density");
+string const bulkModulus("bulkModulus");
+string const youngsModulus("youngsModulus");
+string const poissonRatio("poissonsRatio");
+string const shearModulus("shearModulus");
 }
+}
+
+namespace constitutive
+{
 
 class LinearElasticIsotropic : public ConstitutiveBase
 {
@@ -25,7 +34,7 @@ public:
 
   virtual ~LinearElasticIsotropic();
 
-  static std::string CatalogName() { return keys::linearElasticIsotropic; }
+  static std::string CatalogName() { return dataRepository::keys::linearElasticIsotropic; }
 
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
@@ -33,6 +42,8 @@ public:
                             integer const systemAssembleFlag ) const override;
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+
+  virtual void ReadXML_PostProcess();
 
 };
 

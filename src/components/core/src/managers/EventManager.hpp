@@ -42,7 +42,7 @@ public:
 
   virtual ~SolverApplication();
 
-  static string CatalogName() { return "SolverApplication"; }
+  static string CatalogName() { return "EventManager"; }
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 };
