@@ -1,8 +1,8 @@
-/*
- * DataObject.h
+/**
+ * @file ViewWrapper.hpp
  *
- *  Created on: Jun 8, 2016
- *      Author: settgast
+ * @date Created on: Jun 8, 2016
+ * @authors settgast
  */
 
 #ifndef GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
@@ -41,11 +41,19 @@ namespace geosx
 namespace dataRepository
 {
 
+/**
+ * Templated class to serve as a wrapper to arbitrary objects.
+ * @tparam T is any object that is to be wrapped by ViewWrapper
+ */
 template< typename T >
 class ViewWrapper : public ViewWrapperBase
 {
 
 public:
+  /**
+   * @param name name of the object
+   * @param parent parent group which owns the ViewWrapper
+   */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent ) :
     ViewWrapperBase(name,parent),
@@ -62,6 +70,11 @@ public:
     }
   }
 
+  /**
+   * @param name name of the object
+   * @param parent parent group that owns the ViewWrapper
+   * @param object object that is being wrapped by the ViewWrapper
+   */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
                         std::unique_ptr<T> object ):
@@ -69,6 +82,11 @@ public:
     m_data( std::move( object ) )
   {}
 
+  /**
+   * @param name name of the object
+   * @param parent parent group that owns the ViewWrapper
+   * @param object object that is being wrapped by the ViewWrapper
+   */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
                         T * object ):
@@ -76,27 +94,57 @@ public:
     m_data( std::move( std::unique_ptr<T>(object) ) )
   {}
 
+  /**
+   * default destructor
+   */
   virtual ~ViewWrapper() noexcept override final {}
 
+  /**
+   * Copy Constructor
+   * @param source source for the copy
+   */
   ViewWrapper( ViewWrapper const & source ) :
     m_data(source.m_data)
   {}
 
+  /**
+   * Move Constructor
+   * @param source source to be moved
+   */
   ViewWrapper( ViewWrapper&& source ) :
     m_data( std::move(source.m_data) )
   {}
 
+  /**
+   * Copy Assignment Operator
+   * @param source rhs
+   * @return *this
+   */
   ViewWrapper& operator=( ViewWrapper const & source )
   {
     m_data = source.m_data;
+    return *this;
   }
 
+  /**
+   * Move Assignment Operator
+   * @param source
+   * @return *this
+   */
   ViewWrapper& operator=( ViewWrapper && source )
   {
     m_data = std::move(source.m_data);
+    return *this;
   }
 
 
+  /**
+   * Factory Method to make a new ViewWrapper<T>, allocating a new T. Only is going to work if T has a default constructor.
+   * Perhaps this is worthless in the general case.
+   * @param name name of the object
+   * @param parent group that owns the ViewWrapper
+   * @return A std::unique_ptr<ViewWrapperBase> that holds the newly allocated ViewWrapper.
+   */
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
                                                    ManagedGroup * const parent )
   {
@@ -104,11 +152,20 @@ public:
   }
 
 
+  /**
+   * Virtual function to return the typeid of T. Not so sure this does what we want?? TODO
+   * @return typeid(T)
+   */
   virtual const std::type_info& get_typeid() const noexcept override final
   {
     return typeid(T);
   }
 
+  /**
+   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * @param base
+   * @return casted ViewWrapper<T>
+   */
   static ViewWrapper<T>& cast( ViewWrapperBase& base )
   {
     if( base.get_typeid() != typeid(T) )
@@ -214,24 +271,45 @@ public:
 
 
 
+
+
+
+
+
+
+
+  /**
+   * @name Structure to determine return types for data access functions
+   */
+  ///@{
+
+  /// Invoke macro to generate test to see if type has an alias named "pointer". This will be used to determine if the
+  /// type is to be treated as an "array" or a single object.
   HAS_ALIAS(pointer)
+
+  /**
+   * SFINAE specialized structure to control return type based on properties of T.
+   * The default template returns a pointer for all calls to data().
+   */
   template< class U=T,
             bool HASPOINTERTYPE = has_alias_pointer<U>::value,
             bool ISSTRING = std::is_same<U,std::string>::value >
   struct Get_Type
   {
-#if CONTAINERARRAY_RETURN_PTR == 1
     typedef U*       type;
-    typedef const U* const_type;
-#else
-    typedef U*       type;
-    typedef const U* const_type;
-#endif
+    typedef const U* const const_type;
 
     typedef U *       pointer;
     typedef U const * const_pointer;
   };
 
+  /**
+   *  Specialization for case when T has a pointer alias, and it is NOT a string.
+   *  In this case, we assume that we are storing an array type. The return type is then a reference, unless the
+   *  compilation flag is set such that we require a pointer back (good for speed, but no array class convenience).
+   *  The resulting types can both be dereferenced with operator[], so no code changes required
+   *  unless array member functions have been called.
+   */
   template<class U>
   struct Get_Type<U, true, false>
   {
@@ -246,6 +324,9 @@ public:
     typedef typename U::pointer       pointer;
     typedef typename U::const_pointer const_pointer;
   };
+
+
+  /// Specialization for string. Always return a reference.
   template<class U>
   struct Get_Type<U, true, true>
   {
@@ -261,9 +342,12 @@ public:
 
   using pointer       = typename Get_Type<T>::pointer;
   using const_pointer = typename Get_Type<T>::const_pointer;
+  ///@}
 
 
   HAS_MEMBER_FUNCTION(data,pointer,,,)
+
+  /// Case for if m_data has a member function called "data()", and is not a string
   template<class U = T>
   typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
   data()
@@ -275,17 +359,21 @@ public:
 #endif
   }
 
+  /// Case for if m_data is a string
   template<class U = T>
   typename std::enable_if<std::is_same<U,std::string>::value, rtype>::type
   data()
   {
+    /// return the object...or a reference to the object
     return *m_data;
   }
 
+  /// case for if m_data does NOT have a member function "data()", and is not a string
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
   data()
   {
+    /// return a c-pointer to the object
     return m_data.get();
   }
 
@@ -300,6 +388,9 @@ public:
     return *m_data;
 #endif
   }
+
+
+
 
   template<class U = T>
   typename std::enable_if<std::is_same<U,std::string>::value, rtype_const>::type

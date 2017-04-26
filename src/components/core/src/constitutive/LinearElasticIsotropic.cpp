@@ -164,6 +164,11 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
       string const message = "A specific pair of elastic constants is required. Either (K,G) or (E,nu)";
       SLIC_ERROR(message);
     }
+    else
+    {
+      E = 9 * K * G / ( 3 * K + G );
+      nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+    }
   }
   else
   {

@@ -16,25 +16,18 @@ namespace constitutive
 {
 
 
-template< typename T >
-class ConstitutiveWrapper
+template< typename T , bool HASPOINTERTYPE = std::is_pointer<T>::value >
+struct ConstitutiveWrapper
 {
-public:
-  ConstitutiveWrapper( T & object ):
-    m_object(object)
-  {}
+  T m_object;
+};
 
-  ConstitutiveWrapper() = delete;
-
-  ConstitutiveWrapper( ConstitutiveWrapper const & source ):
-    m_object(source.m_object)
-  {}
-
-  ConstitutiveWrapper & operator=(ConstitutiveWrapper const &)
-  { return *this; }
-
+template< typename T >
+struct ConstitutiveWrapper<T,false>
+{
   T & m_object;
 };
+
 
 
 
@@ -71,13 +64,19 @@ template< typename T >
 array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > ConstitutiveManager::GetParameterData( string const & name )
 {
   array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > rval;
-  string key = dataRepository::keys::parameterData;
-  this->forSubGroups( [this,&name, &rval, &key]( ManagedGroup & material ) -> void
+//  string key = dataRepository::keys::parameterData;
+//  this->forSubGroups( [this,&name, &rval, &key]( ManagedGroup & material ) -> void
+//  {
+//    dataRepository::view_rtype<T> temp0 = material.GetGroup(key).getData<T>(name);
+//    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp( temp0 );
+//    rval.push_back( std::move(temp) );
+//  });
+
+  for( auto& subGroupIter : this->GetSubGroups() )
   {
-    dataRepository::view_rtype<T> temp0 = material.GetGroup(key).getData<T>(name);
-    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp( temp0 );
-    rval.push_back( temp );
-  });
+    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp( {subGroupIter.second->GetGroup(dataRepository::keys::parameterData).getData<T>(name)} );
+    rval.push_back( std::move(temp) );
+  }
   return rval;
 }
 

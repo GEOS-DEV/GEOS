@@ -189,12 +189,11 @@ void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& dom
 //  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
 
 
-  array< ConstitutiveWrapper< view_rtype<real64> > > const & rho = constitutiveManager.GetParameterData<real64>(keys::density);
+  array< ConstitutiveWrapper< view_rtype<real64> > >  rho = constitutiveManager.GetParameterData<real64>(keys::density);
 
   cells.forCellBlocks([ this, &X, &mass, &rho ]( CellBlock& cellBlock ) -> void
   {
     mapPair_array const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
-//    constitutiveManager.GetGroup();
     lArray2d const & elemsToNodes = cellBlock.getData<lArray2d>(keys::nodeList);
     real64 area = 1;
 
@@ -202,8 +201,8 @@ void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& dom
     {
       localIndex const * nodeList = elemsToNodes[k];
       real64 dx = X[nodeList[1]][0] - X[nodeList[0]][0];
-      mass[k]   += *(rho[ constitutiveMap[k].first ].m_object) * area * dx / 2;
-      mass[k+1] += *(rho[ constitutiveMap[k].first ].m_object) * area * dx / 2;
+      mass[k]   += rho[ constitutiveMap[k].first ].m_object[0] * area * dx / 2;
+      mass[k+1] += rho[ constitutiveMap[k].first ].m_object[0] * area * dx / 2;
     }
   });
 }
@@ -222,42 +221,50 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
                                                      ManagedGroup& domain )
 {
   ManagedGroup& nodes = domain.GetGroup<ManagedGroup>(keys::FEM_Nodes);
-  ManagedGroup& elems = domain.GetGroup<ManagedGroup>(keys::FEM_Elements);
+  CellBlockManager & elems = domain.GetGroup<CellBlockManager>( keys::FEM_Elements );
 
   localIndex const numNodes = nodes.size();
-  localIndex const numElems = elems.size();
 
-  ViewWrapper<real64_array>::rtype          X = nodes.getData<real64_array>(keys::ReferencePosition);
-  ViewWrapper<real64_array>::rtype          u = nodes.getData<real64_array>(keys::TotalDisplacement);
-  ViewWrapper<real64_array>::rtype       uhat = nodes.getData<real64_array>(keys::IncrementalDisplacement);
-  ViewWrapper<real64_array>::rtype       vel  = nodes.getData<real64_array>(keys::Velocity);
-  ViewWrapper<real64_array>::rtype       acc  = nodes.getData<real64_array>(keys::Acceleration);
-  ViewWrapper<real64_array>::rtype_const mass = nodes.getWrapper<real64_array>(keys::Mass).data();
+  view_rtype_const<real64_array> X = nodes.getData<real64_array>(keys::ReferencePosition);
+  view_rtype<real64_array>       u = nodes.getData<real64_array>(keys::TotalDisplacement);
+  view_rtype<real64_array>       uhat = nodes.getData<real64_array>(keys::IncrementalDisplacement);
+  view_rtype<real64_array>       vel  = nodes.getData<real64_array>(keys::Velocity);
+  view_rtype<real64_array>       acc  = nodes.getData<real64_array>(keys::Acceleration);
+  view_rtype_const<real64_array> mass = nodes.getWrapper<real64_array>(keys::Mass).data();
 
-  ViewWrapper<real64_array>::rtype    Felem = elems.getData<real64_array>(keys::Force);
-  ViewWrapper<real64_array>::rtype   Strain = elems.getData<real64_array>(keys::Strain);
-//  ViewWrapper<real64_array>::rtype_const  K = elems.getData<real64_array>(keys::K);
+  view_rtype<real64_array>    Felem = elems.getData<real64_array>(keys::Force);
+  view_rtype<real64_array>   Strain = elems.getData<real64_array>(keys::Strain);
 
-
-//  ViewWrapper<real64_array>::rtype          X2 = nodes.GetData(keys::ReferencePosition);
-
+  ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
+  array< ConstitutiveWrapper< view_rtype<real64> > > const & E = constitutiveManager.GetParameterData<real64>(keys::youngsModulus);
 
   Integration::OnePoint( acc, vel, dt/2, numNodes );
   vel[0] = 1.0;
   Integration::OnePoint( vel, uhat, u, dt, numNodes );
 
-  for( localIndex a=0 ; a<numElems ; ++a )
+  for( localIndex a=0 ; a<numNodes ; ++a )
   {
     acc[a] = 0.0;
   }
 
-  for( localIndex k=0 ; k<numElems ; ++k )
+
+
+  elems.forCellBlocks([ & ]( CellBlock& cellBlock ) -> void
   {
-    Strain[k] = ( u[k+1] - u[k] ) / ( X[k+1] - X[k] );
-//    Felem[k] = K[k] * Strain[k];
-    acc[k]   += Felem[k];
-    acc[k+1] -= Felem[k];
-  }
+    mapPair_array const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
+    lArray2d const & elemsToNodes = cellBlock.getData<lArray2d>(keys::nodeList);
+    real64 area = 1;
+
+    for( localIndex k=0 ; k<cellBlock.size() ; ++k )
+    {
+      Strain[k] = ( u[k+1] - u[k] ) / ( X[k+1] - X[k] );
+      Felem[k] = *(E[ constitutiveMap[k].first ].m_object) * Strain[k];
+      acc[k]   += Felem[k];
+      acc[k+1] -= Felem[k];
+    }
+  });
+
 
   for( localIndex a=0 ; a<numNodes ; ++a )
   {
