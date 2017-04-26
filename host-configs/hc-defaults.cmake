@@ -13,7 +13,7 @@ else()
 endif()
 
 
-option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables ViewWrapper to return pointers instead of references" ON FORCE)
+option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables ViewWrapper to return pointers instead of references" OFF FORCE)
 
 
 

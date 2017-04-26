@@ -182,7 +182,7 @@ void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& dom
   ManagedGroup& nodes = domain.GetGroup<ManagedGroup >(keys::FEM_Nodes);
   CellBlockManager& cells = domain.GetGroup<CellBlockManager >(keys::FEM_Elements);
   ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
+//  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
 
   ViewWrapper<r1_array>::rtype    X = nodes.getData<r1_array>(keys::ReferencePosition);
   ViewWrapper<real64_array>::rtype mass = nodes.getData<real64_array>(keys::Mass);
@@ -236,7 +236,7 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
   view_rtype<real64_array>   Strain = elems.getData<real64_array>(keys::Strain);
 
   ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
+//  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
   array< ConstitutiveWrapper< view_rtype<real64> > > const & E = constitutiveManager.GetParameterData<real64>(keys::youngsModulus);
 
   Integration::OnePoint( acc, vel, dt/2, numNodes );
@@ -255,8 +255,8 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 //    mapPair_array const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
 //    lArray2d const & elemsToNodes = cellBlock.getData<lArray2d>(keys::nodeList);
     view_rtype_const<mapPair_array> constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
-    lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
-    real64 area = 1;
+//    lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
+//    real64 area = 1;
 
     for( localIndex k=0 ; k<cellBlock.size() ; ++k )
     {

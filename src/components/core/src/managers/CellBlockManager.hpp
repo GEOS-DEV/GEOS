@@ -104,9 +104,9 @@ public:
                string_array const & regionNames,
                string_array const & elementTypes );
 
-  CellBlock & CreateRegion( string const & regionName,
-                               string const & elementType,
-                               int32 const & numElements );
+//  CellBlock & CreateRegion( string const & regionName,
+//                               string const & elementType,
+//                               int32 const & numElements );
 
   CellBlock & GetRegion( string const & regionName )
   {

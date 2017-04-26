@@ -1127,5 +1127,6 @@ int NeighborCommunication::ReturnNeighborRcvSndSize()
 //  size += m_sendLocalIndices[PhysicalDomainT::FiniteElementEdgeManager].size();
 //  size += m_sendLocalIndices[PhysicalDomainT::FiniteElementFaceManager].size();
 //    return size;
+  return 0;
   }
 }

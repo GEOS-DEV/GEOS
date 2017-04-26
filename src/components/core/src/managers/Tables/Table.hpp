@@ -42,6 +42,7 @@
 #define __TABLE__
 
 #include "codingUtilities/StringUtilities.hpp"
+#include "codingUtilities/Utilities.hpp"
 #include "slic/slic.hpp"
 #include <vector>
 
@@ -85,7 +86,7 @@ public:
       //validate user input
       {
         realT xlast = -std::numeric_limits<realT>::max();
-        for(unsigned int j = 0; j < x[i].size(); j++)
+        for( int j = 0; j < x[i].size(); j++)
         {
           if(x[i][j] <= xlast)
             SLIC_ERROR("Table:SetGrid - ticks for axis " + std::to_string(i) +" must be a monotonic increasing vector of values");
@@ -262,7 +263,7 @@ private:
     {
       ret -= ret0;
       realT fct = m_x[dim][i1] - m_x[dim][i0];
-      if(fct != 0.0)
+      if( !isZero(fct) )
         fct = 1.0 / fct;
       ret *= fct;
     }

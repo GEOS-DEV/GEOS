@@ -73,7 +73,7 @@ void CellBlockManager::resize( int32_array const & numElements,
                              string_array const & elementTypes )
 {
   int32 const numRegions = regionNames.size();
-  ManagedGroup & elementRegions = this->GetGroup(keys::cellBlocks);
+//  ManagedGroup & elementRegions = this->GetGroup(keys::cellBlocks);
   for( int32 reg=0 ; reg<numRegions ; ++reg )
   {
     CellBlock & elemRegion = this->GetRegion( regionNames[reg] );
@@ -82,14 +82,13 @@ void CellBlockManager::resize( int32_array const & numElements,
 }
 
 
-CellBlock & CellBlockManager::CreateRegion( string const & regionName,
-                                             string const & elementType,
-                                             int32 const & numElements )
-{
-//  ElementRegion & elemRegion = elementRegions.RegisterGroup( regionNames );
-//  elemRegion.resize(numElements);
-
-}
+//CellBlock & CellBlockManager::CreateRegion( string const & regionName,
+//                                             string const & elementType,
+//                                             int32 const & numElements )
+//{
+////  ElementRegion & elemRegion = elementRegions.RegisterGroup( regionNames );
+////  elemRegion.resize(numElements);
+//}
 
 void CellBlockManager::ReadXMLsub( pugi::xml_node const & targetNode )
 {

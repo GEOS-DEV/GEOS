@@ -162,6 +162,8 @@ public:
 
   }*/
 
+  int size() const { return std::vector<TYPE>::size(); }
+
 //***** Range Checking ********************************************************
 #if RANGE_CHECKING==1
   inline       TYPE& operator[](const int index)       { return std::vector<TYPE>::at(index);}

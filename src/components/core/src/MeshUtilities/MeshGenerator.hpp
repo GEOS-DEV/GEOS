@@ -13,7 +13,7 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "pugixml/src/pugixml.hpp"
-
+#include "codingUtilities/Utilities.hpp"
 namespace geosx
 {
 
@@ -149,7 +149,7 @@ private:
     {
       int startingIndex = 0;
       int endingIndex = 0;
-      unsigned int block = 0;
+      int block = 0;
       for( block=0 ; block<m_nElems[0].size() ; ++block )
       {
         startingIndex = endingIndex;
@@ -163,7 +163,7 @@ private:
 
       int startingIndex = 0;
       int endingIndex = 0;
-      unsigned int block = 0;
+      int block = 0;
       for( block=0 ; block<m_nElems[i].size() ; ++block )
       {
         startingIndex = endingIndex;
@@ -179,7 +179,7 @@ private:
       
       X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
       
-      if ((m_nElemBias[i][block] != 0) & (m_nElems[i][block]>1))
+      if (( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
       {
         if (fabs(m_nElemBias[i][block]) >= 1)
         {

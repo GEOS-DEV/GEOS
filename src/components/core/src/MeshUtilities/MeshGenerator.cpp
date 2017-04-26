@@ -505,7 +505,7 @@ void MeshGenerator::ReadXML_PostProcess()
     }
 
 
-    for (localIndex i = 0; i < m_elementType.size(); ++i)
+    for (localIndex i = 0; i < static_cast<localIndex>( m_elementType.size() ); ++i)
     {
       if (m_elementType[i] == "C3D8")
       {
@@ -537,7 +537,7 @@ void MeshGenerator::ReadXML_PostProcess()
 
 //    ExpandMultipleTokens(m_regionNames);
     {
-      unsigned int numBlocks = 1;
+      int numBlocks = 1;
       for( int i=0 ; i<m_dim ; ++i )
       {
         numBlocks *= m_nElems[i].size();
@@ -568,7 +568,7 @@ void MeshGenerator::ReadXML_PostProcess()
       m_lastElemIndexForBlock[dir].resize( m_nElems[dir].size() );
       m_firstElemIndexForBlock[dir][0] = 0;
       m_lastElemIndexForBlock[dir][0] = m_nElems[dir][0]-1;
-      for( unsigned int block=1 ; block<m_nElems[dir].size() ; ++block )
+      for( int block=1 ; block<m_nElems[dir].size() ; ++block )
       {
         m_firstElemIndexForBlock[dir][block] = m_lastElemIndexForBlock[dir][block-1] + 1;
         m_lastElemIndexForBlock[dir][block] = m_firstElemIndexForBlock[dir][block] + m_nElems[dir][block]-1;
@@ -651,7 +651,7 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
   for( int i = 0 ; i < 3 ; ++i )
   {
     m_numElemsTotal[i] = 0;
-    for( unsigned int block = 0 ; block < m_nElems[i].size() ; ++block )
+    for( int block = 0 ; block < m_nElems[i].size() ; ++block )
     {
       m_numElemsTotal[i] += m_nElems[i][block];
     }
@@ -716,7 +716,7 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
     firstElemIndexForBlockInPartition[dir] = m_firstElemIndexForBlock[dir];
     lastElemIndexForBlockInPartition[dir] = m_lastElemIndexForBlock[dir];
 
-    for( unsigned int block = 0 ; block < m_nElems[dir].size() ; ++block )
+    for( int block = 0 ; block < m_nElems[dir].size() ; ++block )
     {
       if( firstElemIndexForBlockInPartition[dir][block] > lastElemIndexInPartition[dir] ||
           lastElemIndexForBlockInPartition[dir][block] < firstElemIndexInPartition[dir] )
@@ -740,11 +740,11 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
 
   // TODO This needs to be rewritten for dimensions lower than 3.
   sArray1d::const_iterator iterRegion = m_regionNames.begin();
-  for( unsigned int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
+  for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
   {
-    for( unsigned int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
+    for( int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
     {
-      for( unsigned int kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion )
+      for( int kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion )
       {
         numElemsInRegions[*iterRegion] = 0;
         elemTypeInRegions[*iterRegion] = "";
@@ -755,11 +755,11 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
   iterRegion = m_regionNames.begin();
   {
     localIndex iR = 0;
-    for( unsigned int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
+    for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
     {
-      for( unsigned int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
+      for( int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
       {
-        for( unsigned int kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion, ++iR )
+        for( int kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion, ++iR )
         {
           int numElemsInRegion = 1;
           numElemsInRegion *= lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1;
@@ -905,11 +905,11 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
     std::set<std::string> processedRegionNames;
     localIndex iR = 0;
 
-    for( unsigned int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
+    for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
     {
-      for( unsigned int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
+      for( int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
       {
-        for( unsigned int kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion, ++iR )
+        for( int kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion, ++iR )
         {
 //          ElementRegionT& elemRegion = domain.m_feElementManager.m_ElementRegions[*iterRegion];
 

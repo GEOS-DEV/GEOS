@@ -468,6 +468,10 @@ struct gp_static_assert<true>
 inline bool isGTE0( const int i )
 { return (i>=0); }
 
+
+
+
+
 /**
  * @author Randy Settgast
  * @param val1
@@ -483,19 +487,7 @@ inline bool isEqual( const realT& val1, const realT& val2, const realT& tolfac=0
   return val1<=(val2+tol) && val1>=(val2-tol);
 }
 
-inline realT Power(const realT val, const realT exponent)
-{
-  if(isEqual(exponent, 0.5))
-    return sqrt(val);
-  else if(isEqual(exponent, 1.5))
-    return val*sqrt(val);
-  else if(isEqual(exponent, 2.0))
-    return val*val;
-  else
-    return pow(val, exponent);
-}
-
-inline bool isZero( const realT& val, const realT& tol=1.0e-99 )
+inline bool isZero( const realT& val, const realT& tol=std::numeric_limits<realT>::epsilon() )
 {
   if( val<=tol && val>=-tol )
   {
@@ -507,6 +499,18 @@ inline bool isZero( const realT& val, const realT& tol=1.0e-99 )
   }
 }
 
+
+inline realT Power(const realT val, const realT exponent)
+{
+  if(isEqual(exponent, 0.5))
+    return sqrt(val);
+  else if(isEqual(exponent, 1.5))
+    return val*sqrt(val);
+  else if(isEqual(exponent, 2.0))
+    return val*val;
+  else
+    return pow(val, exponent);
+}
 
 /**
  * @author Randy Settgast

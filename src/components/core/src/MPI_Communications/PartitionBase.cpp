@@ -2652,7 +2652,7 @@ void PartitionBase::SynchronizeFields( const std::map<string, sArray1d>& fieldNa
   Array1dT<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
 
   // send and receive buffers
-  for( unsigned int neighborIndex=0 ; neighborIndex<m_neighbors.size() ; ++neighborIndex )
+  for( int neighborIndex=0 ; neighborIndex<m_neighbors.size() ; ++neighborIndex )
   {
     NeighborCommunication& neighbor = m_neighbors[neighborIndex];
     neighbor.PackBuffer( fieldNames, commID  );
@@ -2662,7 +2662,7 @@ void PartitionBase::SynchronizeFields( const std::map<string, sArray1d>& fieldNa
 
 
   // unpack the buffers
-  for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
+  for( int count=0 ; count<m_neighbors.size() ; ++count )
   {
     int neighborIndex;
     MPI_Waitany( mpiRecvBufferRequest.size(), mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data() );
@@ -2794,7 +2794,7 @@ void PartitionBase::SetRankOfNeighborNeighbors()
   Array1dT<MPI_Status>  mpiSendStatus(m_neighbors.size());
   Array1dT<MPI_Status>  mpiRecvStatus(m_neighbors.size());
 
-  for( VectorT<NeighborCommunication>::size_type i=0 ; i<m_neighbors.size() ; ++i )
+  for( int i=0 ; i<m_neighbors.size() ; ++i )
   {
     NeighborCommunication& neighbor = m_neighbors[i];
     neighbor.SendReceive( &sendSize, 1, mpiSendRequest[i],
@@ -2803,7 +2803,7 @@ void PartitionBase::SetRankOfNeighborNeighbors()
   MPI_Waitall( mpiSendRequest.size() , mpiSendRequest.data(), mpiSendStatus.data() );
   MPI_Waitall( mpiRecvRequest.size() , mpiRecvRequest.data(), mpiRecvStatus.data() );
 
-  for( VectorT<NeighborCommunication>::size_type i=0 ; i<m_neighbors.size() ; ++i )
+  for( int i=0 ; i<m_neighbors.size() ; ++i )
   {
     NeighborCommunication& neighbor = m_neighbors[i];
     neighborRanks[i].resize( recvSize[i] );
@@ -2814,7 +2814,7 @@ void PartitionBase::SetRankOfNeighborNeighbors()
   MPI_Waitall( mpiSendRequest.size() , mpiSendRequest.data(), mpiSendStatus.data() );
   MPI_Waitall( mpiRecvRequest.size() , mpiRecvRequest.data(), mpiRecvStatus.data() );
 
-  for( VectorT<NeighborCommunication>::size_type i=0 ; i<m_neighbors.size() ; ++i )
+  for( int i=0 ; i<m_neighbors.size() ; ++i )
   {
     NeighborCommunication& neighbor = m_neighbors[i];
     neighbor.SetRankOfNeighborNeighbors( neighborRanks[i] );
