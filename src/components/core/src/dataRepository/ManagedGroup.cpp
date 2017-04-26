@@ -290,7 +290,7 @@ void ManagedGroup::resize( int32 const newsize )
 
 void ManagedGroup::RegisterDocumentationNodes()
 {
-  std::cout<<std::string(m_docNode->m_level*2, ' ')<<"Registering Documentation Node for Group "<<this->getName()<<std::endl;
+  std::cout<<std::string(m_docNode->m_level*2, ' ')<<"Registering Documentation Nodes for Group "<<this->getName()<<std::endl;
   for( auto&& subNode : m_docNode->getChildNodes() )
   {
 //    std::cout<<subNode.first<<", "<<subNode.second.getName()<<std::endl;
@@ -362,7 +362,6 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
         pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
         ViewWrapper<decltype(a)>& dataView = this->getWrapper<decltype(a)>(subDocNode.getStringKey());
         std::vector<decltype(b)> xmlVal;
-        typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
 
         if( !xmlatt.empty() )
         {
@@ -384,6 +383,8 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
         }
         localIndex const size = xmlVal.size();
         dataView.resize( size );
+        typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
+//        decltype(a) * data = dataView.pointer();
         cxx_utilities::equateStlVector(data,xmlVal);
       });
 

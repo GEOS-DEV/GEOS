@@ -193,8 +193,8 @@ void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& dom
 
   cells.forCellBlocks([ this, &X, &mass, &rho ]( CellBlock& cellBlock ) -> void
   {
-    mapPair_array const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
-    lArray2d const & elemsToNodes = cellBlock.getData<lArray2d>(keys::nodeList);
+    view_rtype<mapPair_array> const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
+    lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
     real64 area = 1;
 
     for( localIndex k=0 ; k<cellBlock.size() ; ++k )
@@ -252,8 +252,10 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 
   elems.forCellBlocks([ & ]( CellBlock& cellBlock ) -> void
   {
-    mapPair_array const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
-    lArray2d const & elemsToNodes = cellBlock.getData<lArray2d>(keys::nodeList);
+//    mapPair_array const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
+//    lArray2d const & elemsToNodes = cellBlock.getData<lArray2d>(keys::nodeList);
+    view_rtype_const<mapPair_array> constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
+    lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
     real64 area = 1;
 
     for( localIndex k=0 ; k<cellBlock.size() ; ++k )

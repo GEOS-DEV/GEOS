@@ -103,7 +103,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
 
 void ObjectManagerBase::ConstructListOfBoundaryObjects( lArray1d& objectList ) const
 {
-  const iArray1d& isDomainBoundary = this->GetFieldData<int>("isDomainBoundary");
+  const iArray1d& isDomainBoundary = this->getReference<int>(string("isDomainBoundary"));
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -115,7 +115,7 @@ void ObjectManagerBase::ConstructListOfBoundaryObjects( lArray1d& objectList ) c
 
 void ObjectManagerBase::ConstructListOfBoundaryObjects( gArray1d& objectList ) const
 {
-  const iArray1d& isDomainBoundary = this->GetFieldData<int>("isDomainBoundary");
+  const iArray1d& isDomainBoundary = this->getReference<int>(string("isDomainBoundary"));
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )

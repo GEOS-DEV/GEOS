@@ -437,29 +437,29 @@ void MeshGenerator::GenerateElementRegions( DomainPartition& domain )
 void MeshGenerator::ReadXML_PostProcess()
 {
 
-  real64_array const &  xCoords = this->getData<real64_array>(keys::xCoords);
-  real64_array const &  yCoords = this->getData<real64_array>(keys::yCoords);
-  real64_array const &  zCoords = this->getData<real64_array>(keys::zCoords);
+  real64_array const &  xCoords = this->getReference<real64_array>(keys::xCoords);
+  real64_array const &  yCoords = this->getReference<real64_array>(keys::yCoords);
+  real64_array const &  zCoords = this->getReference<real64_array>(keys::zCoords);
   m_vertices[0] = xCoords;
   m_vertices[1] = yCoords;
   m_vertices[2] = zCoords;
 
-  int32_array const &  xElems = this->getData<int32_array>(keys::xElems);
-  int32_array const &  yElems = this->getData<int32_array>(keys::yElems);
-  int32_array const &  zElems = this->getData<int32_array>(keys::zElems);
+  int32_array const &  xElems = this->getReference<int32_array>(keys::xElems);
+  int32_array const &  yElems = this->getReference<int32_array>(keys::yElems);
+  int32_array const &  zElems = this->getReference<int32_array>(keys::zElems);
   m_nElems[0] = xElems;
   m_nElems[1] = yElems;
   m_nElems[2] = zElems;
 
-  real64_array const &  xBias = this->getData<real64_array>(keys::xBias);
-  real64_array const &  yBias = this->getData<real64_array>(keys::yBias);
-  real64_array const &  zBias = this->getData<real64_array>(keys::zBias);
+  real64_array const &  xBias = this->getReference<real64_array>(keys::xBias);
+  real64_array const &  yBias = this->getReference<real64_array>(keys::yBias);
+  real64_array const &  zBias = this->getReference<real64_array>(keys::zBias);
   m_nElemBias[0] = xBias;
   m_nElemBias[1] = yBias;
   m_nElemBias[2] = zBias;
 
-  m_regionNames = this->getData<string_array>(keys::regionNames);
-  m_elementType = this->getData<string_array>(keys::elementTypes);
+  m_regionNames = this->getReference<string_array>(keys::regionNames);
+  m_elementType = this->getReference<string_array>(keys::elementTypes);
   m_trianglePattern = *(this->getData<int32>(keys::trianglePattern));
 
 
@@ -612,7 +612,6 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);
 
   NodeManager & nodeManager = domain.GetGroup<NodeManager>( keys::FEM_Nodes );
-  view_rtype<r1_array> X = nodeManager.getData<r1_array>( keys::ReferencePosition );
 
   CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>( keys::FEM_Elements );
   ManagedGroup & nodeSets = nodeManager.GetGroup( std::string( "Sets" ) );
@@ -801,6 +800,8 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
   }
 
   nodeManager.resize( numNodes );
+  view_rtype<r1_array> X = nodeManager.getData<r1_array>( keys::ReferencePosition );
+
   {
     localIndex localNodeIndex = 0;
     for( int i = 0 ; i < numNodesInDir[0] ; ++i )

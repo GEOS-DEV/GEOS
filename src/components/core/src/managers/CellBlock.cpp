@@ -141,7 +141,7 @@ void CellBlock::ReadXML_PostProcess()
 map<string,int32> CellBlock::SetConstitutiveMap( ManagedGroup const & domain )
 {
   map<string,int32> counts;
-  mapPair_array & cellToConstitutiveMap = this->getData<mapPair_array>(keys::constitutiveMap);
+  view_rtype<mapPair_array> cellToConstitutiveMap = this->getData<mapPair_array>(keys::constitutiveMap);
   ConstitutiveManager const & constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 
   ConstitutiveManager::constitutiveMaps constitutiveMapPair = constitutiveManager.GetMaps( 1 );
