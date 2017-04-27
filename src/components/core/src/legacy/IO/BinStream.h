@@ -43,16 +43,17 @@
  * created : RRS (10/11/2001)
  */
  
-#ifndef _BIN_STREAM_H_
-#define _BIN_STREAM_H_
+#ifndef BIN_STREAM_H
+#define BIN_STREAM_H
 
 // ***** Included Headers *****************************************************
 #include "legacy/Common/Common.h"
-#include "legacy/Common/GPException.h"
 #include <map>
 #include <set>
 #include <fstream>
 #include <iostream>
+
+#include "slic/slic.hpp"
 
 
 // ****************************************************************************
@@ -310,7 +311,7 @@ public:
      }
      else
      {
-      throw GPException( "BinStream::read(Array1dT<TYPE>& array): length mismatch\n");
+      SLIC_ERROR( "BinStream::read(Array1dT<TYPE>& array): length mismatch\n");
      }
     }
 
@@ -326,7 +327,7 @@ public:
 
     if( readLength != set.size() && !realloc )
     {
-      throw GPException( "BinStream::read(std::set<TYPE>& set): length mismatch\n");
+      SLIC_ERROR( "BinStream::read(std::set<TYPE>& set): length mismatch\n");
     }
 
     for( typename std::set<TYPE>::size_type i=0 ; i<readLength ; ++i )
@@ -344,7 +345,7 @@ public:
     typename Array2dT<TYPE>::size_type readLength;
     this->read( readLength );
     if( readLength != length )
-      throw GPException( "BinStream::read(Array2dT<TYPE>& array): length mismatch\n");
+      SLIC_ERROR( "BinStream::read(Array2dT<TYPE>& array): length mismatch\n");
 
     size_t dimension[2] = { array.Dimension(0), array.Dimension(1) };
     size_t readDimension[2];
@@ -358,7 +359,7 @@ public:
       }
       else
       {
-        throw GPException( "BinStream::read(Array2dT<TYPE>& array): dimension mismatch\n");
+        SLIC_ERROR( "BinStream::read(Array2dT<TYPE>& array): dimension mismatch\n");
       }
     }
 
@@ -381,7 +382,7 @@ public:
       }
       else
       {
-        throw GPException( "BinStream::read(Array1dT<Array1dT<TYPE> >& array): length mismatch\n");
+        SLIC_ERROR( "BinStream::read(Array1dT<Array1dT<TYPE> >& array): length mismatch\n");
       }
     }
 
@@ -407,7 +408,7 @@ public:
       }
       else
       {
-        throw GPException( "BinStream::read(Array1dT<std::set<TYPE> >& array): length mismatch\n");
+        SLIC_ERROR( "BinStream::read(Array1dT<std::set<TYPE> >& array): length mismatch\n");
       }
     }
     for( typename Array1dT<std::set<TYPE> >::iterator i=array.begin() ; i!=array.end() ; ++i )
@@ -459,7 +460,7 @@ public:
         }
         else
         {
-          throw GPException("ObjectDataStructureBaseT::ReadMapFromRestart: name not found\n");
+          SLIC_ERROR("ObjectDataStructureBaseT::ReadMapFromRestart: name not found\n");
         }
       }
 
@@ -503,7 +504,7 @@ public:
         this->read(readFieldName);
 
         if( fieldName != readFieldName )
-          throw GPException("ObjectDataStructureBaseT::ReadMapFromRestart: field name mismatch\n");
+          SLIC_ERROR("ObjectDataStructureBaseT::ReadMapFromRestart: field name mismatch\n");
 
         // write the field data
         this->read( fieldData );

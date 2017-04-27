@@ -53,6 +53,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <slic/slic.hpp>
 
 #include "codingUtilities/StringUtilities.hpp"
 //#include "Common/GPException.h"
@@ -86,7 +87,7 @@ void dlmreadVector(const std::string& filename, ARRAY& values, char delim = ' ',
   }
   else
   {
-    throw GPException("dlmreadVector: Failed to load file:" + filename + " \n");
+    SLIC_ERROR("dlmreadVector: Failed to load file:" + filename + " \n");
   }
 }
 
@@ -123,7 +124,7 @@ void dlmreadArray(const std::string& filename, ARRAY& values, char delim = ' ', 
   }
   else
   {
-    throw GPException("dlmreadArray: Failed to load file:" + filename + " \n");
+    SLIC_ERROR("dlmreadArray: Failed to load file:" + filename + " \n");
   }
 }
 
@@ -170,7 +171,7 @@ void dlmreadArrayTranspose(const std::string& filename, ARRAY& values, char deli
   }
   else
   {
-    throw GPException("dlmreadArrayTranspose: Failed to load file:" + filename + " \n");
+    SLIC_ERROR("dlmreadArrayTranspose: Failed to load file:" + filename + " \n");
   }
 }
 

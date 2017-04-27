@@ -107,9 +107,9 @@ public:
 //  ElementRegion( ElementRegion&& init);
   
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+  void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
-  virtual void ReadXML_PostProcess();
+  virtual void ReadXML_PostProcess() override;
 
   map<string,int32> SetConstitutiveMap( dataRepository::ManagedGroup const & domain );
 

@@ -44,7 +44,7 @@ public:
   {
   }
 
-  virtual void ReadXML( pugi::xml_node& hdn ) = 0;
+//  virtual void ReadXML( pugi::xml_node& hdn ) = 0;
 
   virtual bool IsCoordInObject( const R1Tensor& coord ) = 0;
 

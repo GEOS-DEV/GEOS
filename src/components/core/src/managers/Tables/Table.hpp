@@ -131,7 +131,7 @@ public:
     return m_zeroGradient;
   }
 
-  void SetInterpolation(TableInterpolation::Order interpolate ){m_interpolation =  interpolate;};
+  void SetInterpolation(TableInterpolation::Order interpolate ){m_interpolation =  interpolate;}
 
   bool ZeroGradient() const
   {

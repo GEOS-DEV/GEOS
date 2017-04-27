@@ -49,7 +49,8 @@
 #include "Qspline.h"
 #include "time_functions.h"
 #include "Source.h"
-#include "GPException.h"
+
+#include "../../Common/GPException.h"
 
 using namespace std;
 

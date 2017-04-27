@@ -48,7 +48,7 @@ public:
 
   virtual ~MeshGenerator();
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const domain );
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const domain ) override;
 
   void GenerateElementRegions( DomainPartition& domain );
 
@@ -113,10 +113,10 @@ private:
 
   int m_mapToRadial = 0;
   int meshAxis;
-  float meshTheta;
-  float meshPhi;
-  float meshRout;
-  float meshRact;
+  realT meshTheta;
+  realT meshPhi;
+  realT meshRout;
+  realT meshRact;
 
   realT m_skewAngle;
   R1Tensor m_skewCenter;

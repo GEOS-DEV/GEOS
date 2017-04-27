@@ -64,22 +64,22 @@ public:
 
   LagrangeBasis(void){}
 
-  LagrangeBasis( const unsigned degree );
+  LagrangeBasis( const int degree );
 
-  unsigned size();
+  int size() override final;
 
-  double value( const unsigned index,
-                const R1Tensor &point );
+  double value( const int index,
+                const R1Tensor &point ) override final;
 
-  R1Tensor gradient( const unsigned index,
-                     const R1Tensor &point );
+  R1Tensor gradient( const int index,
+                     const R1Tensor &point ) override final;
 
-  R1Tensor support_point( const unsigned index );
+  R1Tensor support_point( const int index ) override final;
 
 private:
 
-  unsigned m_degree;
-  unsigned n_shape_functions;
+  int m_degree;
+  int n_shape_functions;
 
   std::vector<Polynomial> m_polynomials;
 };

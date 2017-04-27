@@ -46,8 +46,8 @@
 #ifndef PROBLEMMANAGERT_H_
 #define PROBLEMMANAGERT_H_
 
+#include "../Common/GPException.h"
 #include "DataStructures/Tables/Table.h"
-#include "Common/GPException.h"
 #include "PhysicalDomainT.h"
 
 #include "IO/FileManagerDataT.h"

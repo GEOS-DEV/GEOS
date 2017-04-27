@@ -239,7 +239,7 @@ void NeighborCommunication::CommunicatePackedObjectBufferSizes( )
 {
   const size_t n = tempNeighborData.objectsToSend.size();
   if(tempNeighborData.objectsToReceive.size() != n)
-    throw GPException("Cannot have number of object types received differ from those sent");
+    SLIC_ERROR("Cannot have number of object types received differ from those sent");
 
   bufvector::size_type* sendSizes = new bufvector::size_type[n];
   bufvector::size_type* receiveSizes = new bufvector::size_type[n];
@@ -292,7 +292,7 @@ void NeighborCommunication::DetermineMatchedBoundaryObject( const ObjectDataStru
 //  cgit = tempNeighborData.neighborNumbers.find(name);
 //  if (cgit == tempNeighborData.neighborNumbers.end())
 //  {
-////    throw GPException(
+////    SLIC_ERROR(
 ////        "Cannot find name " + toString<int>(name)
 ////            + " in neighborNumbers in NeighborCommunication::DetermineMatchedBoundaryObject");
 //  }
@@ -598,7 +598,7 @@ void NeighborCommunication::PackTopologyModifications( const string key,
 //    }
 //    else
 //    {
-//      throw GPException("NeighborCommunication::PackTopologyModifications: inappropriate type for PhysicalDomainT::Unpack " + toString<int>(key));
+//      SLIC_ERROR("NeighborCommunication::PackTopologyModifications: inappropriate type for PhysicalDomainT::Unpack " + toString<int>(key));
 //    }
 //  }
 }
@@ -650,7 +650,7 @@ void NeighborCommunication::UnpackTopologyModifications( const string key ,
 //  }
 //  else
 //  {
-//    throw GPException("NeighborCommunication::UnpackTopologyModifications: inappropriate type for PhysicalDomainT::Unpack " + toString<int>(key));
+//    SLIC_ERROR("NeighborCommunication::UnpackTopologyModifications: inappropriate type for PhysicalDomainT::Unpack " + toString<int>(key));
 //  }
 
 }
@@ -671,7 +671,7 @@ void NeighborCommunication::UnpackTopologyModifications( const string key ,
 //  }
 //  else
 //  {
-//    throw GPException("NeighborCommunication::UnpackTopologyModifications: inappropriate type for PhysicalDomainT::Unpack " + toString<int>(key));
+//    SLIC_ERROR("NeighborCommunication::UnpackTopologyModifications: inappropriate type for PhysicalDomainT::Unpack " + toString<int>(key));
 //  }
 
 }
@@ -896,14 +896,14 @@ bufvector::size_type NeighborCommunication::PackBuffer( const std::map<string, s
 //                                                                                      it->second,
 //                                                                                      m_sendLocalIndices[it->first],
 //                                                                                      doBufferPacking );
-//      //throw GPException("Trying for name (" + toString<int>(it->first) + ") size=" + toString<bufvector::size_type>(bufferSize));
+//      //SLIC_ERROR("Trying for name (" + toString<int>(it->first) + ") size=" + toString<bufvector::size_type>(bufferSize));
 //    }
 //  }
 //
 //  if( doBufferPacking && bufferSize != m_sendBuffer.size() )
 //  {
 //    printf( " rank %5i: bufferSize = %6lu, m_sendBuffer.size() = %6lu \n",this->m_rank, bufferSize, m_sendBuffer.size() );
-//    throw GPException("m_sendBuffer.size() isn't what it should be\n");
+//    SLIC_ERROR("m_sendBuffer.size() isn't what it should be\n");
 //  }
 
   return bufferSize;

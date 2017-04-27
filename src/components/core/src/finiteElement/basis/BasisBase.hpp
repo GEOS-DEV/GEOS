@@ -69,15 +69,15 @@ public:
   {
   }
 
-  virtual unsigned size() = 0;
+  virtual int size() = 0;
 
-  virtual double value( const unsigned index,
+  virtual double value( const int index,
                         const R1Tensor &point ) = 0;
 
-  virtual R1Tensor gradient( const unsigned index,
+  virtual R1Tensor gradient( const int index,
                              const R1Tensor &point ) = 0;
 
-  virtual R1Tensor support_point( const unsigned index ) = 0;
+  virtual R1Tensor support_point( const int index ) = 0;
 
 private:
   BasisBase( BasisBase const & ) = delete;

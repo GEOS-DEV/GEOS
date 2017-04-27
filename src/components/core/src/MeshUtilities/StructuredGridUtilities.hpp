@@ -68,15 +68,15 @@ namespace StructuredGrid
    */
 
   template <int dim>
-  void map_index(const unsigned index,
-                 const unsigned nnx,
-                 std::vector<unsigned> &indices);
+  void map_index(const int index,
+                 const int nnx,
+                 std::vector<int> &indices);
 
   template <>
   inline
-  void map_index<1>(const unsigned index,
-                    const unsigned nnx,
-                    std::vector<unsigned> &indices)
+  void map_index<1>(const int index,
+                    const int nnx,
+                    std::vector<int> &indices)
   {
     assert(index < nnx);
     indices[0] = index;
@@ -84,9 +84,9 @@ namespace StructuredGrid
 
   template <>
   inline
-  void map_index<2>(const unsigned index,
-                    const unsigned nnx,
-                    std::vector<unsigned> &indices)
+  void map_index<2>(const int index,
+                    const int nnx,
+                    std::vector<int> &indices)
   {
     assert(index < nnx*nnx);
     indices[0] = index % nnx;
@@ -95,9 +95,9 @@ namespace StructuredGrid
 
   template <>
   inline
-  void map_index<3>(const unsigned index,
-                    const unsigned nnx,
-                    std::vector<unsigned> &indices)
+  void map_index<3>(const int index,
+                    const int nnx,
+                    std::vector<int> &indices)
   {
     assert(index < nnx*nnx*nnx);
     indices[0] = index % nnx;

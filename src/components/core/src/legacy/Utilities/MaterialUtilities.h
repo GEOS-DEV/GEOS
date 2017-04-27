@@ -49,9 +49,9 @@
 
 #include "Common/typedefs.h"
 #include <sys/resource.h>
-#include "Common/GPException.h"
-
 #include <map>
+
+#include "../Common/GPException.h"
 
 /*
  * FillLinearElasticModuli

@@ -512,7 +512,7 @@ void PartitionBase::SendReceive( const Array1dT<Array1dT<T> >& sendArray, Array1
 
   if( sendArray.size() != m_neighbors.size() || recvArray.size() != m_neighbors.size() )
   {
-    throw GPException("PartitionBase::SendRecieve: size of arrays do not equal number of neighbors");
+    SLIC_ERROR("PartitionBase::SendRecieve: size of arrays do not equal number of neighbors");
   }
 
 
@@ -524,7 +524,7 @@ void PartitionBase::SendReceive( const Array1dT<Array1dT<T> >& sendArray, Array1
 
   Array1dT<typename Array1dT<T>::size_type> recvSize(m_neighbors.size());
 
-  for( VectorT<NeighborCommunication>::size_type i=0 ; i<m_neighbors.size() ; ++i )
+  for( localIndex i=0 ; i<m_neighbors.size() ; ++i )
   {
     NeighborCommunication& neighbor = m_neighbors[i];
     typename Array1dT<T>::size_type sendSize = sendArray[i].size();
@@ -537,7 +537,7 @@ void PartitionBase::SendReceive( const Array1dT<Array1dT<T> >& sendArray, Array1
   MPI_Waitall( mpiSendRequest.size() , mpiSendRequest.data(), mpiSendStatus.data() );
   MPI_Waitall( mpiRecvRequest.size() , mpiRecvRequest.data(), mpiRecvStatus.data() );
 
-  for( VectorT<NeighborCommunication>::size_type i=0 ; i<m_neighbors.size() ; ++i )
+  for( localIndex i=0 ; i<m_neighbors.size() ; ++i )
   {
     NeighborCommunication& neighbor = m_neighbors[i];
     recvArray[i].resize( recvSize[i] );
@@ -695,7 +695,7 @@ void PartitionBase::SetUpNeighborLists( DomainPartition& domain,
 //      {
 //        std::map<DomainPartition::ObjectDataStructureKeys, bufvector>::iterator itmp = neighbor->tempNeighborData.objectsToSend.find(*it);
 //        if(itmp == neighbor->tempNeighborData.objectsToSend.end())
-//          throw GPException("Cannot find name " + toString<int>(*it) + " in objectsToSend");
+//          SLIC_ERROR("Cannot find name " + toString<int>(*it) + " in objectsToSend");
 //
 //        bufvector& send = itmp->second;
 //        bufvector& recv = neighbor->tempNeighborData.objectsToReceive[*it];
@@ -941,7 +941,7 @@ void PartitionBase::CommunicateRequiredObjectIndices()
 //        {
 //          st<< *failed <<"\n";
 //        }
-////        throw GPException(st.str().c_str());
+////        SLIC_ERROR(st.str().c_str());
 //
 //      }
 //
@@ -3017,7 +3017,7 @@ void PartitionBase::GraphBasedColoring()
       for (localIndex i = 0; i < listNeighbors[rank].size(); ++i)
       {
         if (colorByRank[listNeighbors[rank][i]] ==  colorByRank[rank])
-          throw GPException("ERROR: Two neighbors were assigned the same color.");
+          SLIC_ERROR("ERROR: Two neighbors were assigned the same color.");
       }
     }
 

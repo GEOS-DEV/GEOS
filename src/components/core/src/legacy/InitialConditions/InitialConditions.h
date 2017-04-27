@@ -47,7 +47,6 @@
 #define InitialConditionFACTORY_H_
 
 #include "Common/Common.h"
-#include "Common/GPException.h"
 #include "Common/typedefs.h"
 #include "IO/ticpp/TinyXMLParser.h"
 #include "Utilities/StringUtilities.h"
@@ -57,6 +56,7 @@
 #include<map>
 #include<string>
 #include<vector>
+#include "../Common/GPException.h.old"
 
 
 class ProblemManagerT;

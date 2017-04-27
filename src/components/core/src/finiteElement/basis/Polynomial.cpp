@@ -67,7 +67,7 @@ Polynomial :: ~Polynomial()
  * Return polynomial degree
  */
 
-unsigned Polynomial :: Degree ()
+int Polynomial :: Degree ()
 {
   return m_coefficients.size();
 }

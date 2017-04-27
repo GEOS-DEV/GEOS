@@ -55,9 +55,12 @@ class Polynomial
   public:
 
     Polynomial(const std::vector<double> _coefficients);
+
+    Polynomial( Polynomial const & ) = default;
+
     ~Polynomial();
 
-    unsigned  Degree();
+    int  Degree();
 
     double Value(const double x);
     double Deriv(const double x);

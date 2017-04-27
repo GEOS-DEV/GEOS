@@ -48,7 +48,6 @@
 
 #include "DataStructures/Tables/Table.h"
 #include "Common/Common.h"
-#include "Common/GPException.h"
 #include "Common/typedefs.h"
 #include "IO/ticpp/TinyXMLParser.h"
 #include "Utilities/StringUtilities.h"
@@ -60,6 +59,7 @@
 #include<map>
 #include<string>
 #include<vector>
+#include "../../legacy/Common/GPException.h.old"
 
 class ProblemManagerT;
 class Function;

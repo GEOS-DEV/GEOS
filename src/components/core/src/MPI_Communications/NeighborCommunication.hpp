@@ -236,15 +236,15 @@ public:
 
   const lArray1d& GetSendLocalIndices(const string key){
     return m_sendLocalIndices[key];
-  };
+  }
 
   const lArray1d& GetElementRegionSendLocalIndices(const std::string& regionName){
     return  m_elementRegionsSendLocalIndices[regionName];
-  };
+  }
 
   const std::map< std::string, lArray1d>& GetElementRegionSendLocalIndices(){
     return  m_elementRegionsSendLocalIndices;
-  };
+  }
 
 
 

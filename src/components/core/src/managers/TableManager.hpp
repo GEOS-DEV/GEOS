@@ -58,6 +58,7 @@
 #include <map>
 #include "../codingUtilities/IOUtilities.hpp"
 #include "pugixml/src/pugixml.hpp"
+#include <slic/slic.hpp>
 
 
 class TableManager
@@ -75,22 +76,22 @@ public:
 
   //CONST
   template < unsigned int dim>
-  inline const std::map<std::string,  Table<dim, realT> >& Tables() const { throw GPException("Cannot call base specialization"); }
+  inline const std::map<std::string,  Table<dim, realT> >& Tables() const { SLIC_ERROR("Cannot call base specialization"); }
 
   //NON-CONST
   template < unsigned int dim>
-  inline std::map<std::string,  Table<dim, realT> >& Tables() { throw GPException("Cannot call base specialization"); }
+  inline std::map<std::string,  Table<dim, realT> >& Tables() { SLIC_ERROR("Cannot call base specialization"); }
 
   //ADD
   template < unsigned int dim, class ARRAY, class ARRAY2>
-  inline void NewTable(const std::string& name, const ARRAY2& x, const ARRAY& values, TableInterpolation::Order interp) { throw GPException("Cannot call base specialization"); }
+  inline void NewTable(const std::string& name, const ARRAY2& x, const ARRAY& values, TableInterpolation::Order interp) { SLIC_ERROR("Cannot call base specialization"); }
 
   template <unsigned int dim, class ARRAY>
   inline Table<dim,realT> * GetTable( const std::string& tableName )
   {
     typename std::map<std::string, Table<dim, realT> >::iterator table = Tables<dim>().find(tableName);
     if (table == Tables<dim>().end())
-      throw GPException("Table name " + tableName + " not found.\n");
+      SLIC_ERROR("Table name " + tableName + " not found.\n");
     return &(table->second);
 
   }
@@ -104,7 +105,7 @@ public:
     typename std::map<std::string, Table<dim, realT> >::const_iterator table =
         Tables<dim>().find(tableName);
     if (table == Tables<dim>().end())
-      throw GPException("Table name " + tableName + " not found.\n");
+      SLIC_ERROR("Table name " + tableName + " not found.\n");
     return table->second.Lookup(key, interpolate);
   }
 
@@ -113,15 +114,15 @@ public:
 
   //CONST
   template < unsigned int dim>
-  inline const std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() const { throw GPException("Cannot call base specialization"); }
+  inline const std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() const { SLIC_ERROR("Cannot call base specialization"); }
 
   //NON-CONST
   template < unsigned int dim>
-  inline std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() { throw GPException("Cannot call base specialization"); }
+  inline std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() { SLIC_ERROR("Cannot call base specialization"); }
 
   //ADD
   template < unsigned int dim, class ARRAY, class ARRAY2>
-  inline void NewVectorField(const std::string& name, const ARRAY2& x, const ARRAY& values) { throw GPException("Cannot call base specialization"); }
+  inline void NewVectorField(const std::string& name, const ARRAY2& x, const ARRAY& values) { SLIC_ERROR("Cannot call base specialization"); }
 
   //LOOKUP
   template <unsigned int dim, class ARRAY>
@@ -132,7 +133,7 @@ public:
     typename std::map<std::string, Table<dim, R1Tensor> >::const_iterator table =
         VectorFields<dim>().find(tableName);
     if (table == Tables<dim>().end())
-      throw GPException("VectorField name " + tableName + " not found.\n");
+      SLIC_ERROR("VectorField name " + tableName + " not found.\n");
     return table->second.Lookup(key, interpolate);
   }
 
@@ -371,7 +372,7 @@ void TableManager::ReadVoxelFile(const std::string& filename, localIndex nCompon
   }
   else
   {
-    throw GPException("ReadVoxelFile: Failed to load file:" + filename + " \n");
+    SLIC_ERROR("ReadVoxelFile: Failed to load file:" + filename + " \n");
   }
 }
 
@@ -399,7 +400,7 @@ void TableManager::ReadTimeVoxelFile(const std::string& filename, localIndex nCo
   }
   else
   {
-    throw GPException("ReadTimeVoxelFile: Failed to load file:" + filename + " \n");
+    SLIC_ERROR("ReadTimeVoxelFile: Failed to load file:" + filename + " \n");
   }
 }
 
@@ -480,7 +481,7 @@ void TableManager::ReadNUFTFile(const std::string& filename,
     }
     else
     {
-      throw GPException("readTimeVoxelFile: Failed to load file:" + filename + " \n");
+      SLIC_ERROR("readTimeVoxelFile: Failed to load file:" + filename + " \n");
     }
   }
 

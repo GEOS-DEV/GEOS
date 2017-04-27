@@ -247,7 +247,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 //  if (m_elementType.size() == 0)
 //    m_elementType = hdn.GetStringVector("elementType");
 //  if (m_elementType.size() == 0)
-//    throw GPException("MeshGenerator: No element type is specified");
+//    SLIC_ERROR("MeshGenerator: No element type is specified");
 //
 //  if (m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6")
 //  {
@@ -259,7 +259,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 //  }
 //  else
 //  {
-//    throw GPException("MeshGenerator: incorrect element type!");
+//    SLIC_ERROR("MeshGenerator: incorrect element type!");
 //  }
 //
 //
@@ -303,7 +303,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 //    }
 //    if( failFlag )
 //    {
-//      throw GPException("vertex/element mismatch MeshGenerator::ReadXML()");
+//      SLIC_ERROR("vertex/element mismatch MeshGenerator::ReadXML()");
 //    }
 //  }
 //
@@ -318,7 +318,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 //    }
 //    else
 //    {
-//      throw GPException("MeshGenerator: The number of element types is inconsistent with the number of total block.");
+//      SLIC_ERROR("MeshGenerator: The number of element types is inconsistent with the number of total block.");
 //    }
 //  }
 //
@@ -372,7 +372,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 //      }
 //      else
 //      {
-//        throw GPException("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
+//        SLIC_ERROR("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
 //      }
 //    }
 //  }
@@ -474,7 +474,7 @@ void MeshGenerator::ReadXML_PostProcess()
     }
     else
     {
-      throw GPException("MeshGenerator: incorrect element type!");
+      SLIC_ERROR("MeshGenerator: incorrect element type!");
     }
 
     {
@@ -500,7 +500,7 @@ void MeshGenerator::ReadXML_PostProcess()
       }
       else
       {
-        throw GPException("MeshGenerator: The number of element types is inconsistent with the number of total block.");
+        SLIC_ERROR("MeshGenerator: The number of element types is inconsistent with the number of total block.");
       }
     }
 
@@ -551,7 +551,7 @@ void MeshGenerator::ReadXML_PostProcess()
         }
         else
         {
-          throw GPException("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
+          SLIC_ERROR("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
         }
       }
     }
@@ -1120,7 +1120,7 @@ void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
     for( localIndex iN = 0 ; iN != nodeManager.size() ; ++iN )
     {
       meshTheta = X[iN][1] * 3.141592654 / 180.0;
-      meshAxis = round( meshTheta * 2.0 / 3.141592654 );
+      meshAxis = static_cast<int>(round( meshTheta * 2.0 / 3.141592654 ));
       meshPhi = fabs( meshTheta - meshAxis * 3.141592654 / 2.0 );
       meshRout = m_max[0] / cos( meshPhi );
 

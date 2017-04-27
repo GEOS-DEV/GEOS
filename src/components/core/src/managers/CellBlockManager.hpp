@@ -96,7 +96,7 @@ public:
 
   void Initialize(  ){}
 
-  virtual void ReadXMLsub( pugi::xml_node const & targetNode );
+  virtual void ReadXMLsub( pugi::xml_node const & targetNode ) override ;
 
   using ManagedGroup::resize;
 

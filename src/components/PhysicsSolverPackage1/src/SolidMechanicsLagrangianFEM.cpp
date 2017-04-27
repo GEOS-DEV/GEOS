@@ -193,7 +193,7 @@ void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& dom
 
   cells.forCellBlocks([ this, &X, &mass, &rho ]( CellBlock& cellBlock ) -> void
   {
-    view_rtype<mapPair_array> const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
+    view_rtype<mapPair_array> & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
     lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
     real64 area = 1;
 

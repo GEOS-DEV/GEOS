@@ -165,7 +165,7 @@ void Array2dT<TYPE>::resize2( const int dim1 , const int dim2)
   dimension[0] = dim1;
   dimension[1] = dim2;
 
-  std::vector<TYPE>::resize(dim1*dim2);
+  std::vector<TYPE>::resize(static_cast<unsigned int>(dim1*dim2));
 }
 
 template <class TYPE>

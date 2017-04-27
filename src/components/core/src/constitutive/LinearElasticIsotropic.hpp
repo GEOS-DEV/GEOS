@@ -41,9 +41,9 @@ public:
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const override;
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
-  virtual void ReadXML_PostProcess();
+  virtual void ReadXML_PostProcess() override;
 
 };
 

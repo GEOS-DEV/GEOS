@@ -49,11 +49,12 @@
 
 #include "legacy/Common/typedefs.h"
 #include <sys/resource.h>
-#include "legacy/Common/GPException.h"
-
 #include <map>
 #include <set>
 #include <algorithm>
+#include <slic/slic.hpp>
+
+//#include "../legacy/Common/GPException.h"
 
 /////////////////////////////////////////////////
 // Forward declaration of templated functions
@@ -365,7 +366,9 @@ T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& messag
     std::cout<<std::endl;
     std::stringstream st;
     st << "Error in stlMapLookup. Key not found in map! key: " << key << " message: " << message <<"\n";
-    throw GPException(st.str().c_str());
+//    throw GPException(st.str().c_str());
+    SLIC_ERROR(st.str());
+
   }
 
   return MapIter->second;
@@ -526,10 +529,10 @@ inline realT getcputime(void)
   getrusage(RUSAGE_SELF, &ru);        
 
   tim=ru.ru_utime;        
-  realT t=(realT)tim.tv_sec + (realT)tim.tv_usec / 1.0e6;
+  realT t= tim.tv_sec + tim.tv_usec / 1.0e6;
 
   tim=ru.ru_stime;        
-  t+=(realT)tim.tv_sec + (realT)tim.tv_usec / 1.0e6;
+  t+= tim.tv_sec + tim.tv_usec / 1.0e6;
   return t; 
 }
 
@@ -629,7 +632,7 @@ rArray1d logspace(realT start, realT stop, int count){
 inline double GetOrder( double number, const unsigned int digits = 1 )
 {
 
-  const int exp = std::log10(number);
+  const int exp = static_cast<int>(std::log10(number));
   const double magnitude = std::pow(10,exp);
 
   return ( digits>0 ? round( ( number / magnitude ) * std::pow(10,digits-1) ) / std::pow(10,digits-1) : 1 ) * magnitude ;

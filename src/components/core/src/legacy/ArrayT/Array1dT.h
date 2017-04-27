@@ -84,6 +84,7 @@ class Array1dT : public VectorT<TYPE>
   /// default destructor
 	virtual ~Array1dT(void);
 	
+	Array1dT& operator=( const Array1dT& rhs );
 	
   //***** Assignment Operators ************************************************
   /// equals operator for other arrays of any type
@@ -193,6 +194,15 @@ Array1dT<TYPE>& Array1dT<TYPE>::operator=( const Array1dT<rhsTYPE>& rhs )
   VectorT<TYPE>::operator=( static_cast<const VectorT<rhsTYPE>& >(rhs) );
 return (*this);
 }
+
+
+template <class TYPE>
+inline Array1dT<TYPE>& Array1dT<TYPE>::operator=( const Array1dT<TYPE>& rhs )
+{
+  VectorT<TYPE>::operator=( static_cast<const VectorT<TYPE>& >(rhs) );
+return (*this);
+}
+
 
 template <class TYPE>
 template <class rhsTYPE>

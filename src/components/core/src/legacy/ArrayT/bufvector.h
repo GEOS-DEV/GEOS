@@ -60,6 +60,10 @@ public:
   bufvector(){}
   virtual ~bufvector(){}
 
+  bufvector( bufvector const & ) = default;
+
+  bufvector & operator=( bufvector const & ) = default;
+
 
   unsigned int Pack( const int& var )           { return PrivatePack(var); }
   unsigned int Pack( const realT& var )         { return PrivatePack(var); }
@@ -221,7 +225,7 @@ private:
   {
     unsigned int sizeOfUnpackedChars = sizeof(T);
 
-    const T* const tbuffer = (const T*) buffer;
+    const T* const tbuffer = reinterpret_cast<const T*>(buffer);
     var = *tbuffer;
     buffer += sizeOfUnpackedChars;
 
@@ -312,13 +316,14 @@ private:
 
     if( array_length != indices.size() )
     {
-      throw GPException("bufvector::PrivateUnpackArray(): incorrect number of data");
+      SLIC_ERROR("bufvector::PrivateUnpackArray(): incorrect number of data");
+//      throw GPException("bufvector::PrivateUnpackArray(): incorrect number of data");
     }
 
 
     for( typename T_indices::const_iterator i=indices.begin() ; i!=indices.end() ; ++i )
     {
-      const T* const tbuffer = (const T*) buffer;
+      const T* const tbuffer = static_cast<const T*>(buffer);
       array[*i] = *tbuffer;
       buffer += sizeof(T);
     }
@@ -740,7 +745,7 @@ inline unsigned int bufvector::PrivateUnpackRelation( const char*& buffer, Fixed
   sizeOfUnpackedChars += bufvector::Unpack( buffer, dimension );
 
   if( dimension != static_cast<int>(relation.Dimension(1)) )
-    throw GPException("bufvector::PrivateUnpackRelation(): mismatched dimension");
+    SLIC_ERROR("bufvector::PrivateUnpackRelation(): mismatched dimension");
 
   if( unpackGlobal )
   {

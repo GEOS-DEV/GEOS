@@ -230,7 +230,7 @@ int SpatialPartition::GetColor()
 //         int nbrSetId = 1-mySetId;
 //         if(theSets[nbrSetId]->size() > 0)
 //         {
-//           throw GPException("SpatialPartition::SetPeriodicDomainBoundaryObjects: " + setnames[0] + " and " + setnames[1] + " present on same partition\n");
+//           SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: " + setnames[0] + " and " + setnames[1] + " present on same partition\n");
 //         }
 //         lSet& mySet =  *(theSets[mySetId]);
 //
@@ -278,7 +278,7 @@ int SpatialPartition::GetColor()
 //         // should have same number of nodes in both sets
 //         if(nbrSortedGlobalIds.size() !=  mySortedGlobalIds.size() )
 //         {
-//           throw GPException("SpatialPartition::SetPeriodicDomainBoundaryObjects: Size of " + setnames[mySetId] + " does not match size of " + setnames[nbrSetId] + " on neighboring partition\n");
+//           SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: Size of " + setnames[mySetId] + " does not match size of " + setnames[nbrSetId] + " on neighboring partition\n");
 //         }
 //
 //
@@ -310,7 +310,7 @@ int SpatialPartition::GetColor()
 //           // should have same number of nodes in both sets
 //           if(setLocalAndGlobalIds[0].size() !=  setLocalAndGlobalIds[1].size() )
 //           {
-//             throw GPException("SpatialPartition::SetPeriodicDomainBoundaryObjects: Size of " + setnames[0] + " does not match size of " + setnames[1] + " on process " +toString(m_rank) +  "\n");
+//             SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: Size of " + setnames[0] + " does not match size of " + setnames[1] + " on process " +toString(m_rank) +  "\n");
 //           }
 //
 //           // assign new global ids and make global to local map point to nodes on min boundary
@@ -1105,7 +1105,7 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 //      m_PartitionLocations[0] = hdn.GetAttributeVector<realT>("xloc",",");
 //      if( !(m_PartitionLocations[0].empty()) && (m_Partitions(0)-1) != static_cast<int>( m_PartitionLocations[0].size() ) )
 //      {
-//        throw GPException( "SpatialPartition::ReadXMLInput(): number of x-partition locations does not equal number of partitions - 1\n");
+//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of x-partition locations does not equal number of partitions - 1\n");
 //      }
 //    }
 //    if( m_Partitions(1) > 1 )
@@ -1113,7 +1113,7 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 //      m_PartitionLocations[1] = hdn.GetAttributeVector<realT>("yloc",",");
 //      if( !(m_PartitionLocations[1].empty()) && (m_Partitions(1)-1) != static_cast<int>( m_PartitionLocations[1].size() ) )
 //      {
-//        throw GPException( "SpatialPartition::ReadXMLInput(): number of y-partition locations does not equal number of partitions - 1\n");
+//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of y-partition locations does not equal number of partitions - 1\n");
 //      }
 //    }
 //    if( m_Partitions(2) > 1 )
@@ -1121,7 +1121,7 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 //      m_PartitionLocations[2] = hdn.GetAttributeVector<realT>("zloc",",");
 //      if( !(m_PartitionLocations[2].empty()) && (m_Partitions(2)-1) != static_cast<int>( m_PartitionLocations[2].size() ) )
 //      {
-//        throw GPException( "SpatialPartition::ReadXMLInput(): number of z-partition locations does not equal number of partitions - 1\n");
+//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of z-partition locations does not equal number of partitions - 1\n");
 //      }
 //    }
 //
@@ -1143,7 +1143,7 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 //        m_periodicSets.push_back(periodicSet);
 //
 //        if( m_Periodic( periodicSet.m_dimension ) != 1 ){
-//          throw GPException( "SpatialPartition::ReadXMLInput(): Periodic set requested for non-periodic dimension " + toString(periodicSet.m_dimension) + " \n");
+//          SLIC_ERROR( "SpatialPartition::ReadXMLInput(): Periodic set requested for non-periodic dimension " + toString(periodicSet.m_dimension) + " \n");
 //        }
 //      }
 //    }
@@ -1252,7 +1252,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     }
     else
     {
-      throw GPException( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n");
+      SLIC_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n");
     }
   }
 }

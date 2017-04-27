@@ -37,8 +37,8 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef _FUNCTIONS_H_
-#define _FUNCTIONS_H_
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
 
 
 #include "Common/DataTypes.hpp"
@@ -237,7 +237,7 @@ public:
       m_tablePtr(tablePtr)
   {/** Empty **/
   }
-  ;
+
   ~Lookup3DTable()
   {/** Empty **/
   }
