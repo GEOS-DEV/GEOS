@@ -64,7 +64,7 @@ class ElementRegionT;
 class PhysicalDomainT;
 
 class FiniteElementBase;
-class Quadrature ;
+class QuadratureBase ;
 class BasisBase;
 
 class MaterialBase;
@@ -321,7 +321,7 @@ public:
   unsigned int m_quadrature;
 
   FiniteElementBase* m_finiteElement;
-  Quadrature* m_elementQuadrature;
+  QuadratureBase* m_elementQuadrature;
   BasisBase* m_elementBasis;
 
 //  MaterialManagerT m_material;

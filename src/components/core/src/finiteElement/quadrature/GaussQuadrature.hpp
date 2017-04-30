@@ -37,33 +37,44 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef QUADRATURE_H
-#define QUADRATURE_H
+#ifndef GAUSS_QUADRATURE_H
+#define GAUSS_QUADRATURE_H
 
-/**
- * @file Quadrature.h
- * @author white230
- */
+//#include "legacy/Common/Common.h"
+#include "finiteElement/quadrature/QuadratureBase.hpp"
+//#include "legacy/Utilities/StructuredGridUtilities.h"
 
-#include "legacy/Common/Common.h"
 #include <cassert>
 
-/*
- * Pure virtual base class representing a generic quadrature object.
- */
-
-class Quadrature
+template<int dim>
+class GaussQuadrature : public QuadratureBase
 {
-  public:
-    virtual ~Quadrature(){}
+public:
 
-    virtual unsigned      size() = 0;
-    virtual R1Tensor      integration_point(const unsigned index) = 0;
-    virtual double        integration_weight(const unsigned index) = 0;
+  static string CatalogName()
+  {
+    string name = "GaussQuadrature";
+    name.append( std::to_string( dim ) );
+    return name;
+  }
 
-  private:
+  GaussQuadrature() = default;
+  ~GaussQuadrature();
+
+  int size() override final;
+  R1Tensor integration_point( const int index ) override final;
+  double integration_weight( const int index ) override final;
+
+  void ReadXML( pugi::xml_node const & xmlNode ) override final;
+
+private:
+
+  int m_degree;
+  int m_n_gauss_points;
+
+  std::vector<double> m_points_1d;
+  std::vector<double> m_weights_1d;
 
 };
 
 #endif
-

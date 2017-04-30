@@ -76,7 +76,7 @@ class FiniteElement : public FiniteElementBase
                    const int num_zero_energy_modes = 0 );
 
     FiniteElement(BasisBase& basis,
-                  Quadrature& quadrature,
+                  QuadratureBase& quadrature,
                   const int num_zero_energy_modes = 0 );
     
     virtual ~FiniteElement(){}

@@ -40,9 +40,15 @@
     <BasisFunctions> 
         <LagrangeBasis1
             name="linearBasis" 
-            order = "1"
+            degree = "1"
         />
     </BasisFunctions>
+    <QuadratureRules>
+        <GaussQuadrature1 name="gaussian" 
+                         degree="1"
+        />
+        
+    </QuadratureRules>
   </NumericalMethods>
 
   <ElementRegions>

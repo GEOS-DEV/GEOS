@@ -79,6 +79,8 @@ public:
 
   virtual R1Tensor support_point( const int index ) = 0;
 
+  virtual void ReadXML( pugi::xml_node const & targetNode ) = 0;
+
 private:
   BasisBase( BasisBase const & ) = delete;
 //  BasisBase( BasisBase && ) = delete;

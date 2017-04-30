@@ -58,7 +58,7 @@ FiniteElementBase( dim, num_q_points, num_dofs, num_zero_energy_modes)
 
 template <int dim>
 FiniteElement<dim> :: FiniteElement(BasisBase &basis,
-                                    Quadrature &quadrature,
+                                    QuadratureBase &quadrature,
                                     const int num_zero_energy_modes ):
 FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
 {

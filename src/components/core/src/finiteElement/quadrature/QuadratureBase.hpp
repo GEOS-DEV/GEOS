@@ -37,7 +37,44 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include "ElementLibrary/Quadrature.h"
+#ifndef QUADRATURE_H
+#define QUADRATURE_H
 
-// ... no implementation required ...
+/**
+ * @file Quadrature.h
+ * @author white230
+ */
+
+#include "common/DataTypes.hpp"
+#include "ObjectCatalog.hpp"
+
+#include <cassert>
+
+/*
+ * Pure virtual base class representing a generic quadrature object.
+ */
+
+class QuadratureBase
+{
+public:
+
+  using CatalogInterface = cxx_utilities::CatalogInterface< QuadratureBase >;
+  static CatalogInterface::CatalogType& GetCatalog();
+
+  QuadratureBase() = default;
+  virtual ~QuadratureBase()
+  {
+  }
+
+  virtual int size() = 0;
+  virtual R1Tensor integration_point( const int index ) = 0;
+  virtual double integration_weight( const int index ) = 0;
+
+  virtual void ReadXML( pugi::xml_node const & xmlNode ) = 0;
+
+private:
+
+};
+
+#endif
 

@@ -7,6 +7,7 @@
 
 #include "FiniteElementManager.hpp"
 #include "basis/BasisBase.hpp"
+#include "quadrature/QuadratureBase.hpp"
 
 namespace geosx
 {
@@ -48,12 +49,33 @@ void FiniteElementManager::ReadXMLsub( pugi::xml_node const & node )
 
         std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( catalogName );
 //        SolverBase & rval = this->RegisterGroup<SolverBase>( solverName, std::move(solver) );
-//
+        basis->ReadXML( childNode );
         basisFunctions.RegisterViewWrapper( name, std::move(basis) );
+//        ManagedGroup & basis = basisFunctions.Register<ManagedGroup>( childNode.attribute("name").value() );
+      }
+    }
+
+    pugi::xml_node quadratureNode = node.child(keys::quadratureRules.c_str());
+    if( quadratureNode != nullptr )
+    {
+      ManagedGroup & quadratureRules = this->GetGroup(keys::quadratureRules);
+
+      for (pugi::xml_node childNode=quadratureNode.first_child(); childNode; childNode=childNode.next_sibling())
+      {
+        string catalogName = childNode.name();
+        string name = childNode.attribute("name").value();
+        std::cout <<childNode.name()<<", "<<childNode.attribute("name").value()<< std::endl;
+
+        std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( catalogName );
+        quadrature->ReadXML(childNode);
+//        SolverBase & rval = this->RegisterGroup<SolverBase>( solverName, std::move(solver) );
+//
+        quadratureRules.RegisterViewWrapper( name, std::move(quadrature) );
 //        ManagedGroup & basis = basisFunctions.Register<ManagedGroup>( childNode.attribute("name").value() );
       }
 
     }
+
   }
 }
 

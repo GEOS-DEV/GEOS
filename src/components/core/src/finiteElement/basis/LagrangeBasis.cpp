@@ -236,6 +236,103 @@ R1Tensor LagrangeBasis<dim> :: support_point(const int index)
   return pt;
 }
 
+template <int dim>
+void LagrangeBasis<dim>::ReadXML( pugi::xml_node const & targetNode )
+{
+  m_degree = targetNode.attribute("degree").as_int(1);
+  n_shape_functions = StructuredGrid::dimpower<dim>(m_degree+1);
+
+  std::vector<std::vector<double> > coeff( m_degree+1, std::vector<double>(m_degree+1) );
+
+  switch(m_degree)
+  {
+    case 0:
+      coeff[0][0] =  1.0;
+      break;
+
+    case 1:
+      coeff[0][0] =  1.0;
+      coeff[0][1] = -1.0;
+
+      coeff[1][0] =  0.0;
+      coeff[1][1] =  1.0;
+      break;
+
+    case 2:
+      coeff[0][0] =  1.0;
+      coeff[0][1] = -3.0;
+      coeff[0][2] =  2.0;
+
+      coeff[1][0] =  0.0;
+      coeff[1][1] =  4.0;
+      coeff[1][2] = -4.0;
+
+      coeff[2][0] =  0.0;
+      coeff[2][1] = -1.0;
+      coeff[2][2] =  2.0;
+      break;
+
+    case 3:
+      coeff[0][0] =  1.0;
+      coeff[0][1] = -11.0/2.0;
+      coeff[0][2] =  9.0;
+      coeff[0][3] = -9.0/2.0;
+
+      coeff[1][0] =  0.0;
+      coeff[1][1] =  9.0;
+      coeff[1][2] = -45.0/2.0;
+      coeff[1][3] =  27.0/2.0;
+
+      coeff[2][0] =  0.0;
+      coeff[2][1] = -9.0/2.0;
+      coeff[2][2] =  18.0;
+      coeff[2][3] = -27.0/2.0;
+
+      coeff[3][0] =  0.0;
+      coeff[3][1] =  1.0;
+      coeff[3][2] = -9.0/2.0;
+      coeff[3][3] =  9.0/2.0;
+      break;
+
+    case 4:
+      coeff[0][0] =  1.0;
+      coeff[0][1] = -25.0/3.0;
+      coeff[0][2] =  70.0/3.0;
+      coeff[0][3] = -80.0/3.0;
+      coeff[0][4] =  32.0/3.0;
+
+      coeff[1][0] =  0.0;
+      coeff[1][1] =  16.0;
+      coeff[1][2] = -208.0/3.0;
+      coeff[1][3] =  96.0;
+      coeff[1][4] = -128.0/3.0;
+
+      coeff[2][0] =  0.0;
+      coeff[2][1] = -12.0;
+      coeff[2][2] =  76.0;
+      coeff[2][3] = -128.0;
+      coeff[2][4] =  64.0;
+
+      coeff[3][0] =  0.0;
+      coeff[3][1] =  16.0/3.0;
+      coeff[3][2] = -112.0/3.0;
+      coeff[3][3] =  224.0/3.0;
+      coeff[3][4] = -128.0/3.0;
+
+      coeff[4][0] =  0.0;
+      coeff[4][1] = -1.0;
+      coeff[4][2] =  22.0/3.0;
+      coeff[4][3] = -16.0;
+      coeff[4][4] =  32.0/3.0;
+      break;
+
+    default:
+      assert(m_degree<5);
+  }
+
+  for(int n=0; n<m_degree+1; ++n)
+    m_polynomials.push_back(Polynomial(coeff[n]));
+}
 
 /*
  * Explicit instantiations.
