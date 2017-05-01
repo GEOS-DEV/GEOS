@@ -37,18 +37,18 @@
 
 
   <NumericalMethods>
+
     <BasisFunctions> 
-        <LagrangeBasis1
-            name="linearBasis" 
-            degree = "1"
-        />
+        <LagrangeBasis1 name="linearBasis"  degree = "1"  />
     </BasisFunctions>
+    
     <QuadratureRules>
-        <GaussQuadrature1 name="gaussian" 
-                         degree="1"
-        />
-        
+        <GaussQuadrature1 name="gaussian"   degree="1"  />    
     </QuadratureRules>
+    
+    <FiniteElements>
+        <FiniteElement name="FE1" Basis="linearBasis" Quadrature="gassian" />
+    </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>

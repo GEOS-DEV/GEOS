@@ -48,10 +48,8 @@ void FiniteElementManager::ReadXMLsub( pugi::xml_node const & node )
         std::cout <<childNode.name()<<", "<<childNode.attribute("name").value()<< std::endl;
 
         std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( catalogName );
-//        SolverBase & rval = this->RegisterGroup<SolverBase>( solverName, std::move(solver) );
         basis->ReadXML( childNode );
         basisFunctions.RegisterViewWrapper( name, std::move(basis) );
-//        ManagedGroup & basis = basisFunctions.Register<ManagedGroup>( childNode.attribute("name").value() );
       }
     }
 
@@ -68,10 +66,7 @@ void FiniteElementManager::ReadXMLsub( pugi::xml_node const & node )
 
         std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( catalogName );
         quadrature->ReadXML(childNode);
-//        SolverBase & rval = this->RegisterGroup<SolverBase>( solverName, std::move(solver) );
-//
         quadratureRules.RegisterViewWrapper( name, std::move(quadrature) );
-//        ManagedGroup & basis = basisFunctions.Register<ManagedGroup>( childNode.attribute("name").value() );
       }
 
     }
