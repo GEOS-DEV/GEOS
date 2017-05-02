@@ -45,7 +45,7 @@ blt_add_library( NAME
                  DEPENDS_ON
                      cxx-utilities 
                  SYSTEM_DEPENDS_ON
-                     slic sidre conduit hdf5 pugixml ${extraComponentsListLink} ${thirdPartyLibs}
+                     slic sidre conduit caliper hdf5 pugixml ${extraComponentsListLink} ${thirdPartyLibs}
                  )
                  
 #target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR} )

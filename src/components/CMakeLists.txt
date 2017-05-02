@@ -54,7 +54,7 @@ endforeach()
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
                    DEPENDS_ON ${componentlistlink}
-                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja chai ${extraComponentsListLink}) 
+                   SYSTEM_DEPENDS_ON slic sidre conduit caliper hdf5 raja chai ${extraComponentsListLink}) 
 
 #blt_add_executable(NAME geosx
 #                   SOURCES core/src/main/main.cpp

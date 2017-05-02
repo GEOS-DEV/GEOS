@@ -1,3 +1,5 @@
+
+#include "caliper/Annotation.h"
 #include <slic/slic.hpp>
 #include <slic/GenericOutputStream.hpp>
 #include <iostream>
