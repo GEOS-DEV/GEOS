@@ -45,6 +45,8 @@ int main( int argc, char *argv[] )
 
 
 
+  // Mark begin of "initialization" phase
+  cali::Annotation init_ann = cali::Annotation("initialization").begin();
 
   ProblemManager problemManager( "ProblemManager", nullptr );
 
@@ -58,6 +60,8 @@ int main( int argc, char *argv[] )
 
   
   problemManager.InitializeObjects();
+  init_ann.end();
+
   problemManager.RunSimulation();
   
 

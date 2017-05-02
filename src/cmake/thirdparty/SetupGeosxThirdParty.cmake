@@ -206,7 +206,9 @@ ExternalProject_Add( caliper
 
 blt_register_library( NAME caliper
                       INCLUDES ${CALIPER_INSTALL_DIR}/include 
-                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper.a )
+                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper.a 
+                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-common.a
+                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-reader.a )
 
 #endif()
 

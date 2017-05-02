@@ -6,6 +6,7 @@
  */
 
 #include "ProblemManager.hpp"
+#include "caliper/Annotation.h"
 
 #include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
@@ -490,6 +491,8 @@ void ProblemManager::InitializeObjects()
 
 void ProblemManager::RunSimulation()
 {
+  cali::Annotation runSimulationAnnotation = cali::Annotation("RunSimulation").begin();
+
   DomainPartition& domain  = getDomainPartition();
 
   double time = 0.0;
@@ -537,6 +540,8 @@ void ProblemManager::RunSimulation()
       } 
     }
 //  }
+
+  runSimulationAnnotation.end();
 }
 
 
