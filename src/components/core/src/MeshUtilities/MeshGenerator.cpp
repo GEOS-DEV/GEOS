@@ -56,7 +56,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 {
 
   NodeManager& nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
-  CellBlockManager& elems = domain->GetGroup<CellBlockManager>(keys::FEM_Elements);
+  CellBlockManager& elems = domain->GetGroup<CellBlockManager>(keys::cellManager);
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -195,8 +195,8 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::regionNames,
-                              keys::regionNames,
+  docNode->AllocateChildNode( keys::cellBlockNames,
+                              keys::cellBlockNames,
                               -1,
                               "string_array",
                               "string_array",
@@ -458,7 +458,7 @@ void MeshGenerator::ReadXML_PostProcess()
   m_nElemBias[1] = yBias;
   m_nElemBias[2] = zBias;
 
-  m_regionNames = this->getReference<string_array>(keys::regionNames);
+  m_regionNames = this->getReference<string_array>(keys::cellBlockNames);
   m_elementType = this->getReference<string_array>(keys::elementTypes);
   m_trianglePattern = *(this->getData<int32>(keys::trianglePattern));
 
@@ -603,21 +603,32 @@ void MeshGenerator::ReadXML_PostProcess()
  * @param partition
  * @param domain
  */
-void MeshGenerator::GenerateMesh( //SpatialPartition& partition,
-    DomainPartition& domain )
+void MeshGenerator::GenerateMesh( DomainPartition & domain )
 {
-
 
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);
 
   NodeManager & nodeManager = domain.GetGroup<NodeManager>( keys::FEM_Nodes );
 
-  CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>( keys::FEM_Elements );
+  CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>( keys::cellManager );
   ManagedGroup & nodeSets = nodeManager.GetGroup( std::string( "Sets" ) );
   PartitionBase & partition = *( domain.GetPartition() );
 
   bool isRadialWithOneThetaPartition = false;
+
+
+
+
+  for( auto & cellBlockName : m_regionNames )
+  {
+    CellBlock & cellBlock = elementManager.GetGroup(keys::cellBlocks).RegisterGroup<CellBlock>(cellBlockName);
+    cellBlock.SetDocumentationNodes(nullptr);
+    cellBlock.RegisterDocumentationNodes();
+    cellBlock.ReadXML_PostProcess();
+  }
+
+
 
 
 

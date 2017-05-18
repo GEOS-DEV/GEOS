@@ -15,19 +15,13 @@ namespace geosx
 namespace dataRepository
 {
 
-ManagedGroup::ManagedGroup( std::string const & name,
-                            ManagedGroup * const parent ) :
-  m_docNode(nullptr),
-  m_keyLookup(),
-  m_wrappers(),
-  m_parent(parent),
-  m_subGroups(),
-  m_sidreGroup(nullptr)
+asctoolkit::sidre::DataGroup * ManagedGroup::setSidreGroup( string const& name,
+                                                            ManagedGroup * const parent )
 {
-
-  // SIDRE interaction
   asctoolkit::sidre::DataGroup * sidreParent = nullptr;
-  if( m_parent==nullptr )
+  asctoolkit::sidre::DataGroup * sidreGroup  = nullptr;
+
+  if( parent==nullptr )
   {
     sidreParent = SidreWrapper::dataStore().getRoot();
   }
@@ -38,14 +32,26 @@ ManagedGroup::ManagedGroup( std::string const & name,
 
   if( sidreParent->hasGroup(name) )
   {
-    m_sidreGroup = sidreParent->getGroup(name);
+    sidreGroup = sidreParent->getGroup(name);
   }
   else
   {
-    m_sidreGroup = sidreParent->createGroup(name);
+    sidreGroup = sidreParent->createGroup(name);
   }
+  return sidreGroup;
+}
 
-
+ManagedGroup::ManagedGroup( std::string const & name,
+                            ManagedGroup * const parent ) :
+  m_docNode(nullptr),
+  m_keyLookup(),
+  m_wrappers(),
+  m_parent(parent),
+  m_subGroups(),
+  m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
+  m_size(this->RegisterViewWrapper<int32>(keys::Size).reference()),
+  m_name(this->RegisterViewWrapper<string>(keys::Name).reference())
+{
 
   // Setup DocumentationNode
   if( parent != nullptr )
@@ -145,8 +151,8 @@ ManagedGroup::ManagedGroup( std::string const & name,
                                 0 );
 
 
-  this->RegisterViewWrapper<int32>("size").reference() = 0;
-  this->RegisterViewWrapper<string>("name").reference() = name;
+  this->getReference<int32>(keys::Size) = 0;
+  this->getReference<string>(keys::Name) = name;
 
   RegisterDocumentationNodes();
 }
@@ -256,8 +262,12 @@ ManagedGroup::~ManagedGroup()
 ManagedGroup::ManagedGroup( ManagedGroup&& source ) :
   m_keyLookup( std::move(source.m_keyLookup) ),
   m_wrappers( std::move(source.m_wrappers) ),
-  m_parent( std::move(source.m_parent) )
+  m_parent( std::move(source.m_parent) ),
+  m_size( source.m_size ),
+  m_name( source.m_name )
 {}
+
+
 
 ManagedGroup::CatalogInterface::CatalogType& ManagedGroup::GetCatalog()
 {
@@ -290,7 +300,7 @@ void ManagedGroup::resize( int32 const newsize )
 
 void ManagedGroup::RegisterDocumentationNodes()
 {
-  std::cout<<std::string(m_docNode->m_level*2, ' ')<<"Registering Documentation Nodes for Group "<<this->getName()<<std::endl;
+//  std::cout<<std::string(m_docNode->m_level*2, ' ')<<"Registering Documentation Nodes for Group "<<this->getName()<<std::endl;
   for( auto&& subNode : m_docNode->getChildNodes() )
   {
 //    std::cout<<subNode.first<<", "<<subNode.second.getName()<<std::endl;
@@ -298,7 +308,7 @@ void ManagedGroup::RegisterDocumentationNodes()
         ( subNode.second.getSchemaType() != "Node" ) &&
         ( subNode.second.m_isRegistered == 0 ) )
     {
-      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
+//      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
       ViewWrapperBase & view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                     rtTypes::typeID(subNode.second.getDataType() ) );
       view.setSizedFromParent( subNode.second.m_managedByParent);
@@ -499,6 +509,19 @@ void ManagedGroup::PrintDataHierarchy()
     std::cout<<group.first<<std::endl;
     group.second->PrintDataHierarchy();
   }
+}
+
+void ManagedGroup::Initialize( ManagedGroup & group )
+{
+  static int indent = 0;
+  std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on "<<this->getName()<<" of type "<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
+  Initialize_derived(group);
+  forSubGroups( [&]( ManagedGroup & subGroup ) -> void
+  {
+    ++indent;
+    subGroup.Initialize(group);
+    --indent;
+  });
 }
 
 

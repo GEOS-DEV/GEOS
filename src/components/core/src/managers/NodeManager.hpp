@@ -93,7 +93,7 @@ public:
   ~NodeManager();
 
   static string CatalogName() { return dataRepository::keys::nodeManager; }
-  string getName() const      { return NodeManager::CatalogName(); }
+  string getCatalogName() const      { return NodeManager::CatalogName(); }
 
 
   void Initialize();

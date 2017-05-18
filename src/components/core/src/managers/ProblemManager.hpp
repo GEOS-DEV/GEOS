@@ -85,7 +85,7 @@ public:
    */
   ///@{
   static std::string CatalogName() { return "ProblemManager"; }
-  string getName() const override final
+  string getCatalogName() const override final
   {
     return ProblemManager::CatalogName();
   }
@@ -105,7 +105,7 @@ public:
 
   void ParseInputFile();
 
-  void InitializeObjects();
+  void Initialize_derived( ManagedGroup & group );
 
   void RunSimulation();
 

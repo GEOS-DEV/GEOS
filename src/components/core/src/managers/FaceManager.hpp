@@ -26,7 +26,7 @@ public:
     return "FaceManager";
   }
 
-  string getName() const override final
+  string getCatalogName() const override final
   {
     return FaceManager::CatalogName();
   }

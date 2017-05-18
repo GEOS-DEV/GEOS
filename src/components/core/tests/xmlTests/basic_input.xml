@@ -6,10 +6,7 @@
   
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
-                    nElements="5"
-                    area="1.0"
-                    barLength="5.0"
-                    courant="0.25"/>
+                                  courant="0.25"/>
   </Solvers>
 
   
@@ -17,13 +14,13 @@
     <InternalMesh 
                   name="mesh1"
                   elementType="C3D8" 
-                  xCoords="0, 1"
+                  xCoords="0, 1, 2, 3"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="10"
-                  ny="10"
-                  nz="10"
-                  regionNames="Region1"/>
+                  nx="1,1,1"
+                  ny="1"
+                  nz="1"
+                  cellBlockNames="cb1 cb2 cb3"/>
   </Mesh>
 
 
@@ -47,13 +44,13 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <FiniteElement name="FE1" Basis="linearBasis" Quadrature="gassian" />
+        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion elementType="poly" name="Region1" material="granite"/>
-    <ElementRegion elementType="poly" name="Region2" material="shale"/>
+    <ElementRegion name="Region1" cellBlocks="cb1"      numericalMethod="FE1" material="granite"/>
+    <ElementRegion name="Region2" cellBlocks="cb2 cb3" numericalMethod="FE1" material="shale" />
   </ElementRegions>
 
   <Constitutive>

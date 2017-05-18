@@ -71,6 +71,25 @@ void FiniteElementManager::ReadXMLsub( pugi::xml_node const & node )
 
     }
 
+    pugi::xml_node finiteElementNode = node.child(keys::finiteElements.c_str());
+    if( finiteElementNode != nullptr )
+    {
+//      ManagedGroup & feSpaces = RegisterGroup(keys::FE_Space);
+      for (pugi::xml_node childNode=finiteElementNode.first_child(); childNode; childNode=childNode.next_sibling())
+      {
+        string catalogName = childNode.name();
+        string name = childNode.attribute("name").value();
+        std::cout <<childNode.name()<<", "<<childNode.attribute("name").value()<< std::endl;
+
+        std::unique_ptr<ManagedGroup> fem = ManagedGroup::CatalogInterface::Factory( catalogName, name, this );
+        fem->SetDocumentationNodes(nullptr);
+        fem->RegisterDocumentationNodes();
+        fem->ReadXML(childNode);
+        this->RegisterGroup( name, std::move(fem) );
+      }
+
+    }
+
   }
 }
 

@@ -46,12 +46,11 @@
 
 #include "CellBlock.hpp"
 
-#include "Constitutive/ConstitutiveManager.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
-using namespace constitutive;
+//using namespace constitutive;
 
 
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
@@ -59,7 +58,7 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
     m_toNodesRelation(this->RegisterViewWrapper< Array2dT<int32> >(keys::nodeList).reference())
 {
   m_toNodesRelation.resize2(0,8);
-  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap).setSizedFromParent(1);
+//  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap).setSizedFromParent(1);
 
 }
 
@@ -73,7 +72,7 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->setName( this->getName() );
+  docNode->setName( this->getCatalogName() );
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "an element region" );
 
@@ -90,32 +89,32 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::defaultMaterial,
-                              keys::defaultMaterial,
-                              -1,
-                              "string",
-                              "string",
-                              "Default Material Name",
-                              "Default Material Name",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-  docNode->AllocateChildNode( keys::constitutiveMap,
-                              keys::constitutiveMap,
-                              -1,
-                              "mapPair_array",
-                              "mapPair_array",
-                              "Number of Nodes Per Element",
-                              "Number of Nodes Per Element",
-                              "1",
-                              "",
-                              1,
-                              0,
-                              0 );
+//  docNode->AllocateChildNode( keys::defaultMaterial,
+//                              keys::defaultMaterial,
+//                              -1,
+//                              "string",
+//                              "string",
+//                              "Default Material Name",
+//                              "Default Material Name",
+//                              "REQUIRED",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
+//
+//
+//  docNode->AllocateChildNode( keys::constitutiveMap,
+//                              keys::constitutiveMap,
+//                              -1,
+//                              "mapPair_array",
+//                              "mapPair_array",
+//                              "Number of Nodes Per Element",
+//                              "Number of Nodes Per Element",
+//                              "1",
+//                              "",
+//                              1,
+//                              0,
+//                              0 );
 
 //  docNode->AllocateChildNode( keys::numNodesPerElement,
 //                              keys::numNodesPerElement,
@@ -138,26 +137,26 @@ void CellBlock::ReadXML_PostProcess()
   numNodesPerElem = 8;
 }
 
-map<string,int32> CellBlock::SetConstitutiveMap( ManagedGroup const & domain )
-{
-  map<string,int32> counts;
-  view_rtype<mapPair_array> cellToConstitutiveMap = this->getData<mapPair_array>(keys::constitutiveMap);
-  ConstitutiveManager const & constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-
-  ConstitutiveManager::constitutiveMaps constitutiveMapPair = constitutiveManager.GetMaps( 1 );
-
-  string defaultMaterial = this->getData<string>(keys::defaultMaterial);
-  int32 defaultMaterialIndex = constitutiveMapPair.second.at(defaultMaterial);
-
-
-  localIndex counter = 0;
-  for( localIndex k=0 ; k<this->size() ; ++k )
-  {
-    cellToConstitutiveMap[k] = std::make_pair( defaultMaterialIndex, counter++ );
-    ++(counts.at(defaultMaterial));
-  }
-  return counts;
-}
+//map<string,int32> CellBlock::SetConstitutiveMap( ManagedGroup const & domain )
+//{
+//  map<string,int32> counts;
+//  view_rtype<mapPair_array> cellToConstitutiveMap = this->getData<mapPair_array>(keys::constitutiveMap);
+//  ConstitutiveManager const & constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+//
+//  ConstitutiveManager::constitutiveMaps constitutiveMapPair = constitutiveManager.GetMaps( 1 );
+//
+//  string defaultMaterial = this->getData<string>(keys::defaultMaterial);
+//  int32 defaultMaterialIndex = constitutiveMapPair.second.at(defaultMaterial);
+//
+//
+//  localIndex counter = 0;
+//  for( localIndex k=0 ; k<this->size() ; ++k )
+//  {
+//    cellToConstitutiveMap[k] = std::make_pair( defaultMaterialIndex, counter++ );
+//    ++(counts.at(defaultMaterial));
+//  }
+//  return counts;
+//}
 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )

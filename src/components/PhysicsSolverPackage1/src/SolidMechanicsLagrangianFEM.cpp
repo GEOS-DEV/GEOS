@@ -16,6 +16,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NodeManager.hpp"
+#include "managers/ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -50,7 +51,7 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
   SolverBase::FillDocumentationNode( domain );
 
   NodeManager& nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
-  CellBlockManager& elems = domain->GetGroup<CellBlockManager>(keys::FEM_Elements);
+  CellBlockManager& elems = domain->GetGroup<CellBlockManager>(keys::cellManager);
 
 
   docNode->setName(this->CatalogName());
@@ -135,35 +136,6 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
                                                    0,
                                                    0 );
 
-  elems.getDocumentationNode()->AllocateChildNode( keys::Strain,
-                                                   keys::Strain,
-                                                   -1,
-                                                   "real64_array",
-                                                   "real64_array",
-                                                   "Acceleration",
-                                                   "Acceleration",
-                                                   "0.0",
-                                                   keys::nodeManager,
-                                                   1,
-                                                   0,
-                                                   0 );
-
-
-  elems.getDocumentationNode()->AllocateChildNode( keys::Force,
-                                                   keys::Force,
-                                                   -1,
-                                                   "real64_array",
-                                                   "real64_array",
-                                                   "Acceleration",
-                                                   "Acceleration",
-                                                   "0.0",
-                                                   keys::nodeManager,
-                                                   1,
-                                                   0,
-                                                   0 );
-
-
-
 }
 
 
@@ -177,10 +149,11 @@ void SolidMechanics_LagrangianFEM::BuildDataStructure( ManagedGroup * const doma
 }
 
 
-void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& domain )
+void SolidMechanics_LagrangianFEM::Initialize_derived( ManagedGroup& problemManager )
 {
+  ManagedGroup & domain = problemManager.GetGroup(keys::domain);
   ManagedGroup& nodes = domain.GetGroup<ManagedGroup >(keys::FEM_Nodes);
-  CellBlockManager& cells = domain.GetGroup<CellBlockManager >(keys::FEM_Elements);
+  ElementRegionManager& elementRegions = domain.GetGroup<ElementRegionManager >(keys::FEM_Elements);
   ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 //  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
 
@@ -191,7 +164,7 @@ void SolidMechanics_LagrangianFEM::Initialize( dataRepository::ManagedGroup& dom
 
   array< ConstitutiveWrapper< view_rtype<real64> > >  rho = constitutiveManager.GetParameterData<real64>(keys::density);
 
-  cells.forCellBlocks([ this, &X, &mass, &rho ]( CellBlock& cellBlock ) -> void
+  elementRegions.forCellBlocks([ this, &X, &mass, &rho ]( ManagedGroup& cellBlock ) -> void
   {
     view_rtype<mapPair_array> & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
     lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
@@ -221,19 +194,19 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
                                                      ManagedGroup& domain )
 {
   ManagedGroup& nodes = domain.GetGroup<ManagedGroup>(keys::FEM_Nodes);
-  CellBlockManager & elems = domain.GetGroup<CellBlockManager>( keys::FEM_Elements );
+  ElementRegionManager & elems = domain.GetGroup<ElementRegionManager>( keys::FEM_Elements );
 
   localIndex const numNodes = nodes.size();
 
-  view_rtype_const<real64_array> X = nodes.getData<real64_array>(keys::ReferencePosition);
+  view_rtype_const<r1_array> X = nodes.getData<r1_array>(keys::ReferencePosition);
   view_rtype<real64_array>       u = nodes.getData<real64_array>(keys::TotalDisplacement);
   view_rtype<real64_array>       uhat = nodes.getData<real64_array>(keys::IncrementalDisplacement);
   view_rtype<real64_array>       vel  = nodes.getData<real64_array>(keys::Velocity);
   view_rtype<real64_array>       acc  = nodes.getData<real64_array>(keys::Acceleration);
   view_rtype_const<real64_array> mass = nodes.getWrapper<real64_array>(keys::Mass).data();
 
-  view_rtype<real64_array>    Felem = elems.getData<real64_array>(keys::Force);
-  view_rtype<real64_array>   Strain = elems.getData<real64_array>(keys::Strain);
+//  view_rtype<real64_array>    Felem = elems.getData<real64_array>(keys::Force);
+//  view_rtype<real64_array>   Strain = elems.getData<real64_array>(keys::Strain);
 
   ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 //  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
@@ -250,20 +223,21 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 
 
 
-  elems.forCellBlocks([ & ]( CellBlock& cellBlock ) -> void
+  elems.forCellBlocks( [ & ]( CellBlockSubRegion& cellBlock )
   {
 //    mapPair_array const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
 //    lArray2d const & elemsToNodes = cellBlock.getData<lArray2d>(keys::nodeList);
     view_rtype_const<mapPair_array> constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
-//    lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
+    lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
 //    real64 area = 1;
 
     for( localIndex k=0 ; k<cellBlock.size() ; ++k )
     {
-      Strain[k] = ( u[k+1] - u[k] ) / ( X[k+1] - X[k] );
-      Felem[k] = *(E[ constitutiveMap[k].first ].m_object) * Strain[k];
-      acc[k]   += Felem[k];
-      acc[k+1] -= Felem[k];
+      localIndex const * nodelist = elemsToNodes[k];
+      real64 Strain = ( u[nodelist[k+1]] - u[nodelist[k]] ) / ( X[nodelist[k+1]][0] - X[nodelist[k]][0] );
+      real64 Felem = *(E[ constitutiveMap[k].first ].m_object) * Strain;
+      acc[k]   += Felem;
+      acc[k+1] -= Felem;
     }
   });
 

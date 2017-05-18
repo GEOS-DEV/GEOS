@@ -169,6 +169,10 @@ public:
     }
   }
 
+  void Initialize( ManagedGroup & group );
+
+  virtual void Initialize_derived( ManagedGroup & group ) {}
+
 
   template< typename T >
   ViewWrapper<T>& RegisterViewWrapper( std::string const & name, std::size_t * const rkey = nullptr );
@@ -363,10 +367,8 @@ public:
   asctoolkit::sidre::DataGroup * getSidreGroup()              { return m_sidreGroup; }
   asctoolkit::sidre::DataGroup const * getSidreGroup() const  { return m_sidreGroup; }
 
-  asctoolkit::sidre::DataGroup * setSidreGroup()
-  {
-    return m_sidreGroup;
-  }
+  static asctoolkit::sidre::DataGroup * setSidreGroup( string const& name,
+                                                       ManagedGroup * const parent );
 
   ManagedGroup * getParent()             { return m_parent; }
   ManagedGroup const * getParent() const { return m_parent; }
@@ -404,6 +406,9 @@ private:
 
   asctoolkit::sidre::DataGroup* m_sidreGroup;
 
+  int32 const & m_size;
+  string const & m_name;
+//  string const & m_path;
 
 
   /**

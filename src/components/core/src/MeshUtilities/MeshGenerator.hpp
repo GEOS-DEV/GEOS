@@ -30,7 +30,7 @@ string const zElems  = "nz";
 string const xBias  = "xbias";
 string const yBias  = "ybias";
 string const zBias  = "zbias";
-string const regionNames = "regionNames";
+string const cellBlockNames = "cellBlockNames";
 string const elementTypes = "elementTypes";
 string const trianglePattern = "trianglePattern";
 }

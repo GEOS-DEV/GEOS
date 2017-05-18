@@ -8,12 +8,15 @@ set(geosx_headers
     managers/DomainPartition.hpp
     managers/CellBlockManager.hpp
     managers/CellBlock.hpp
+    managers/CellBlockSubRegion.hpp
     managers/EventManager.hpp
     managers/FaceManager.hpp
     managers/NodeManager.hpp
     managers/ObjectManagerBase.hpp
     managers/ProblemManager.hpp
     managers/TableManager.hpp
+    managers/ElementRegion.hpp
+    managers/ElementRegionManager.hpp
     PARENT_SCOPE )
 
 
@@ -26,12 +29,15 @@ set(geosx_core_sources
   	managers/DomainPartition.cpp
     managers/CellBlockManager.cpp
     managers/CellBlock.cpp
+    managers/CellBlockSubRegion.cpp
     managers/EventManager.cpp
     managers/FaceManager.cpp
     managers/NodeManager.cpp
     managers/ObjectManagerBase.cpp
     managers/ProblemManager.cpp
     managers/TableManager.cpp
+    managers/ElementRegion.cpp
+    managers/ElementRegionManager.cpp
     PARENT_SCOPE )
 
 if( 0 )

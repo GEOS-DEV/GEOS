@@ -33,7 +33,7 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
 
-  virtual void Initialize( dataRepository::ManagedGroup& domain ) override;
+  virtual void Initialize_derived( dataRepository::ManagedGroup& problemManager ) override final;
 
   virtual void TimeStep( real64 const& time_n,
                          real64 const& dt,

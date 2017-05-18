@@ -6,7 +6,10 @@
  */
 
 #include "ProblemManager.hpp"
+
+#if USE_CALIPER == 1
 #include "caliper/Annotation.h"
+#endif
 
 #include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
@@ -16,7 +19,7 @@
 #include <stdexcept>
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
-
+#include "ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -409,6 +412,9 @@ void ProblemManager::ParseInputFile()
   }
   
 
+
+
+
   {
     pugi::xml_node topLevelNode = xmlProblemNode.child("Constitutive");
     ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
@@ -416,15 +422,15 @@ void ProblemManager::ParseInputFile()
 
 
     topLevelNode = xmlProblemNode.child("ElementRegions");
-    CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>(keys::FEM_Elements);
+    ElementRegionManager & elementManager = domain.GetGroup<ElementRegionManager>(keys::FEM_Elements);
     elementManager.ReadXML( topLevelNode );
 
 
     map<string,int32> constitutiveSizes;
 
-    elementManager.forCellBlocks([ this, &domain, &constitutiveSizes ]( CellBlock& cellBlock ) -> void
+    elementManager.forElementRegions([ this, &domain, &constitutiveSizes ]( ElementRegion& elementRegion ) -> void
     {
-      map<string,int32> sizes = cellBlock.SetConstitutiveMap( domain );
+      map<string,int32> sizes = elementRegion.SetConstitutiveMap( domain );
       for( auto& entry : sizes )
       {
         constitutiveSizes[entry.first] += entry.second;
@@ -468,7 +474,7 @@ void ProblemManager::ParseInputFile()
 }
 
 
-void ProblemManager::InitializeObjects()
+void ProblemManager::Initialize_derived( ManagedGroup & group )
 {
   DomainPartition& domain  = getDomainPartition();
   domain.RegisterDocumentationNodes();
@@ -481,18 +487,19 @@ void ProblemManager::InitializeObjects()
   });
 
 
-  // Initialize solvers
-  m_physicsSolverManager->forSubGroups<SolverBase>( [this,&domain]( SolverBase & solver ) -> void
-  {
-    solver.Initialize( domain );
-  });
+//  // Initialize solvers
+//  m_physicsSolverManager->forSubGroups<SolverBase>( [this,&domain]( SolverBase & solver ) -> void
+//  {
+//    solver.Initialize( domain );
+//  });
 }
 
 
 void ProblemManager::RunSimulation()
 {
+#if USE_CALIPER == 1
   cali::Annotation runSimulationAnnotation = cali::Annotation("RunSimulation").begin();
-
+#endif
   DomainPartition& domain  = getDomainPartition();
 
   double time = 0.0;
@@ -525,7 +532,7 @@ void ProblemManager::RunSimulation()
         std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
         real64 nextDt = std::numeric_limits<real64>::max();
 
-        for ( auto jj=0; jj<currentApplication.size(); ++jj)
+        for ( auto jj=0; jj<solverList.size(); ++jj)
         {
           SolverBase& currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
           currentSolver.TimeStep( time, dt, cycle, domain );
@@ -541,7 +548,9 @@ void ProblemManager::RunSimulation()
     }
 //  }
 
+#if USE_CALIPER == 1
   runSimulationAnnotation.end();
+#endif
 }
 
 

@@ -19,6 +19,7 @@ namespace keys
 string const finiteElementManager = "finiteElementManager";
 string const basisFunctions = "BasisFunctions";
 string const quadratureRules = "QuadratureRules";
+string const finiteElements = "FiniteElements";
 }
 }
 

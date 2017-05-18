@@ -30,11 +30,11 @@ void ConstitutiveManager::ReadXMLsub( pugi::xml_node const & targetNode )
   {
       std::string materialName = childNode.attribute("name").value();
       std::string materialKey = childNode.name();
-      std::cout<<materialName<<std::endl;
+//      std::cout<<materialName<<std::endl;
       std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( materialKey, materialName, this );
       ConstitutiveBase & newMaterial = this->RegisterGroup<ConstitutiveBase>( materialName, std::move(material) );
       newMaterial.SetDocumentationNodes( nullptr );
-      newMaterial.RegisterDocumentationNodes();
+//      newMaterial.RegisterDocumentationNodes();
       newMaterial.ReadXML( childNode );
   }
 }

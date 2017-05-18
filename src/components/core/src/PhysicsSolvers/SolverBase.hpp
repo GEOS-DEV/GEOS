@@ -52,7 +52,6 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
 
-  virtual void Initialize( dataRepository::ManagedGroup& domain );
 
   virtual void TimeStep( real64 const & time_n,
                          real64 const & dt,

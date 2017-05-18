@@ -35,18 +35,31 @@ void FiniteElementSpace::FillDocumentationNode( dataRepository::ManagedGroup * c
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-//  docNode->AllocateChildNode( keys::inputFileName,
-//                              keys::inputFileName,
-//                              -1,
-//                              "string",
-//                              "",
-//                              "Name of the input xml file.",
-//                              "Name of the input xml file.",
-//                              "input.xml",
-//                              "CommandLine",
-//                              0,
-//                              0,
-//                              0 );
+
+  docNode->AllocateChildNode( keys::basis,
+                              keys::basis,
+                              -1,
+                              "string",
+                              "string",
+                              "name of basis function object.",
+                              "name of the basis function object.",
+                              "REQUIRED",
+                              "",
+                              0,
+                              1,
+                              0 );
+  docNode->AllocateChildNode( keys::quadrature,
+                              keys::quadrature,
+                              -1,
+                              "string",
+                              "string",
+                              "name of basis function object.",
+                              "name of the basis function object.",
+                              "REQUIRED",
+                              "",
+                              0,
+                              1,
+                              0 );
 }
 
 ManagedGroup & FiniteElementSpace::getNodeManager()

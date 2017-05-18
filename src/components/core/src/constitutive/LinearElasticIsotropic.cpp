@@ -112,8 +112,8 @@ void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
   stateDocNode->setSchemaType("Node");
   stateDocNode->setShortDescription("State for Linear Elastic Isotropic Constitutive Relation");
 
-  parameterDocNode->AllocateChildNode( "Stress",
-                                       "Stress",
+  stateDocNode->AllocateChildNode( "Stress",
+                                   "Stress",
                                        -1,
                                        "real64",
                                        "real64",

@@ -10,6 +10,7 @@
 #include "../MPI_Communications/SpatialPartition.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "NodeManager.hpp"
+#include "managers/ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -31,7 +32,8 @@ void DomainPartition::BuildDataStructure( ManagedGroup * const )
   this->RegisterGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
 
   this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
-  this->RegisterGroup<CellBlockManager>(keys::FEM_Elements);
+  this->RegisterGroup<ElementRegionManager>(keys::FEM_Elements);
+  this->RegisterGroup<CellBlockManager>(keys::cellManager);
 //  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
 }
 

@@ -57,8 +57,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-CellBlockManager::CellBlockManager(  string const &, ManagedGroup * const parent ):
-ObjectManagerBase("ElementManager",parent)
+CellBlockManager::CellBlockManager(  string const & name, ManagedGroup * const parent ):
+ObjectManagerBase(name,parent)
 {
   this->RegisterGroup<ManagedGroup>(keys::cellBlocks);
 }
@@ -92,20 +92,20 @@ void CellBlockManager::resize( int32_array const & numElements,
 
 void CellBlockManager::ReadXMLsub( pugi::xml_node const & targetNode )
 {
-  ManagedGroup & elementRegions = this->GetGroup(keys::cellBlocks);
-  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
-  {
-    if( childNode.name() == string("ElementRegion") )
-    {
-      std::string regionName = childNode.attribute("name").value();
-      std::cout<<regionName<<std::endl;
-
-      CellBlock & elemRegion = elementRegions.RegisterGroup<CellBlock>( regionName );
-      elemRegion.SetDocumentationNodes( nullptr );
-      elemRegion.RegisterDocumentationNodes();
-      elemRegion.ReadXML(childNode);
-    }
-  }
+//  ManagedGroup & elementRegions = this->GetGroup(keys::cellBlocks);
+//  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+//  {
+//    if( childNode.name() == string("ElementRegion") )
+//    {
+//      std::string regionName = childNode.attribute("name").value();
+//      std::cout<<regionName<<std::endl;
+//
+//      CellBlock & elemRegion = elementRegions.RegisterGroup<CellBlock>( regionName );
+//      elemRegion.SetDocumentationNodes( nullptr );
+//      elemRegion.RegisterDocumentationNodes();
+//      elemRegion.ReadXML(childNode);
+//    }
+//  }
 }
 
 

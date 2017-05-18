@@ -74,9 +74,9 @@ void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const  )
 }
 
 
-void SolverBase::Initialize( dataRepository::ManagedGroup& /*domain*/ )
-{
-  *(this->getData<real64>(keys::courant)) = std::numeric_limits<real64>::max();
-}
+//void SolverBase::Initialize( dataRepository::ManagedGroup& /*domain*/ )
+//{
+//  *(this->getData<real64>(keys::courant)) = std::numeric_limits<real64>::max();
+//}
 
 } /* namespace ANST */

@@ -81,7 +81,7 @@ public:
     return "CellBlockManager";
   }
 
-  string getName() const override final
+  string getCatalogName() const override final
   {
     return CellBlockManager::CatalogName();
   }

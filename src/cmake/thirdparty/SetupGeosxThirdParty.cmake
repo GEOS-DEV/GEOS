@@ -178,7 +178,7 @@ endif()
 ################################
 # CALIPER
 ################################
-#if( USE_CALIPER )
+if( ENABLE_CALIPER )
 message( INFO ": setting up caliper" )
 set(CALIPER_LOCAL_DIR ${PROJECT_BINARY_DIR}/thirdparty/caliper)
 set(CALIPER_DIR ${CALIPER_LOCAL_DIR})
@@ -210,7 +210,7 @@ blt_register_library( NAME caliper
                       LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-common.a
                       LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-reader.a )
 
-#endif()
+endif()
 
 if (UNCRUSTIFY_EXECUTABLE)
   include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)

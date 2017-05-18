@@ -1,5 +1,7 @@
 
+#if USE_CALIPER==1
 #include "caliper/Annotation.h"
+#endif
 #include <slic/slic.hpp>
 #include <slic/GenericOutputStream.hpp>
 #include <iostream>
@@ -46,7 +48,9 @@ int main( int argc, char *argv[] )
 
 
   // Mark begin of "initialization" phase
+#if USE_CALIPER==1
   cali::Annotation init_ann = cali::Annotation("initialization").begin();
+#endif
 
   ProblemManager problemManager( "ProblemManager", nullptr );
 
@@ -59,9 +63,10 @@ int main( int argc, char *argv[] )
 
 
   
-  problemManager.InitializeObjects();
+  problemManager.Initialize( problemManager );
+#if USE_CALIPER==1
   init_ann.end();
-
+#endif
   problemManager.RunSimulation();
   
 

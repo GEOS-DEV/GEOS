@@ -62,10 +62,10 @@ namespace dataRepository
 {
 namespace keys
 {
-string const defaultMaterial = "material";
+//string const defaultMaterial = "material";
 string const numNodesPerElement = "numNodesPerElement";
 string const nodeList = "nodeList";
-string const constitutiveMap = "constitutiveMap";
+//string const constitutiveMap = "constitutiveMap";
 }
 }
 
@@ -89,7 +89,7 @@ public:
     return "CellBlock";
   }
 
-  string getName() const override final
+  string getCatalogName() const override final
   {
     return CellBlock::CatalogName();
   }
@@ -111,7 +111,7 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-  map<string,int32> SetConstitutiveMap( dataRepository::ManagedGroup const & domain );
+//  map<string,int32> SetConstitutiveMap( dataRepository::ManagedGroup const & domain );
 
   virtual ~CellBlock();
 

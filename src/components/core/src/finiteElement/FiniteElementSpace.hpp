@@ -20,6 +20,8 @@ namespace dataRepository
 namespace keys
 {
 string const finiteElementSpace = "finiteElementSpace";
+string const basis = "basis";
+string const quadrature = "quadrature";
 }
 }
 
@@ -37,7 +39,7 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  static string CatalogName() { return "FiniteElementSpace"; }
+  static string CatalogName() { return dataRepository::keys::finiteElementSpace; }
 
   ///@}
 
