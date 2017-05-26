@@ -16,7 +16,15 @@ namespace constitutive
 
 
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
-    ConstitutiveBase(name, parent )
+  ConstitutiveBase(name, parent ),
+  m_YoungsModulus(this->GetGroup(keys::parameterData).RegisterViewWrapper<real64>(keys::youngsModulus).reference()),
+  m_BulkModulus(this->GetGroup(keys::parameterData).RegisterViewWrapper<real64>(keys::bulkModulus).reference()),
+  m_ShearModulus(this->GetGroup(keys::parameterData).RegisterViewWrapper<real64>(keys::shearModulus).reference()),
+  m_PoissonRatio(this->GetGroup(keys::parameterData).RegisterViewWrapper<real64>(keys::poissonRatio).reference()),
+  m_Density(this->GetGroup(keys::parameterData).RegisterViewWrapper<real64>(keys::density).reference()),
+  m_devStress(this->GetGroup(keys::stateData).RegisterViewWrapper<r2Sym_array>(keys::deviatorStress).reference()),
+  m_meanStress(this->GetGroup(keys::stateData).RegisterViewWrapper<real64_array>(keys::meanStress).reference())
+
 {
   // TODO Auto-generated constructor stub
 
@@ -112,18 +120,18 @@ void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
   stateDocNode->setSchemaType("Node");
   stateDocNode->setShortDescription("State for Linear Elastic Isotropic Constitutive Relation");
 
-  stateDocNode->AllocateChildNode( "Stress",
+  stateDocNode->AllocateChildNode( keys::deviatorStress,
+                                   keys::deviatorStress,
+                                   -1,
+                                   "r2Sym_array",
+                                   "r2Sym_array",
                                    "Stress",
-                                       -1,
-                                       "real64",
-                                       "real64",
-                                       "Stress",
-                                       "Stress",
-                                       "0",
-                                       "",
-                                       1,
-                                       0,
-                                       0 );
+                                   "Stress",
+                                   "0",
+                                   "",
+                                   1,
+                                   0,
+                                   0 );
 }
 
 void LinearElasticIsotropic::ReadXML_PostProcess()
@@ -178,9 +186,9 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
 }
 
 void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * const input,
-                                                  dataRepository::ManagedGroup const * const parameters,
-                                                  dataRepository::ManagedGroup * const stateVariables,
-                                                  integer const systemAssembleFlag ) const
+                                          dataRepository::ManagedGroup const * const parameters,
+                                          dataRepository::ManagedGroup * const stateVariables,
+                                          integer const systemAssembleFlag ) const
 {
 
   index_t numberOfMaterialPoints = stateVariables->size();
@@ -251,6 +259,36 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 
 
 }
+
+R2SymTensor LinearElasticIsotropic::StateUpdatePoint( R2SymTensor const & D,
+                                               R2Tensor const & Rot,
+                                               int32 const i,
+                                               integer const systemAssembleFlag )
+{
+
+  
+//  auto & params = this->GetGroup(keys::parameterData);
+//  auto & state = this->GetGroup(keys::stateData);
+//  std::cout<<&m_BulkModulus<<" , "<<this->GetGroup(keys::parameterData).getData<real64>(keys::bulkModulus)<<std::endl;
+//  std::cout<<&m_meanStress<<" , "<<&(this->GetGroup(keys::stateData).getData<real64_array>(keys::meanStress))<<std::endl;
+//  
+  
+  real64 volumeStrain = D.Trace();
+  m_meanStress[i] += volumeStrain * m_BulkModulus;
+
+  R2SymTensor temp = D;
+  temp.PlusIdentity(-volumeStrain / 3.0);
+  temp *= 2.0 * m_ShearModulus;
+  m_devStress[i] += temp;
+
+
+  temp.QijAjkQlk(m_devStress[i],Rot);
+  m_devStress[i] = temp;
+
+  temp.PlusIdentity(m_meanStress[i]);
+  return temp;
+}
+
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, ManagedGroup * const )

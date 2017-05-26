@@ -48,7 +48,7 @@ ProblemManager::ProblemManager( const std::string& name,
   m_physicsSolverManager(nullptr)
 {
   m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
-  m_eventManager = &(RegisterGroup<EventManager>("EventManager" ) ) ;
+  m_eventManager = &(RegisterGroup<EventManager>(keys::eventManager) ) ;
 }
 
 //ProblemManager::ProblemManager( const std::string& name,
@@ -426,25 +426,25 @@ void ProblemManager::ParseInputFile()
     elementManager.ReadXML( topLevelNode );
 
 
-    map<string,int32> constitutiveSizes;
-
-    elementManager.forElementRegions([ this, &domain, &constitutiveSizes ]( ElementRegion& elementRegion ) -> void
-    {
-      map<string,int32> sizes = elementRegion.SetConstitutiveMap( domain );
-      for( auto& entry : sizes )
-      {
-        constitutiveSizes[entry.first] += entry.second;
-      }
-    });
-
-    for( auto & material : constitutiveManager.GetSubGroups() )
-    {
-      string name = material.first;
-      if( constitutiveSizes.count(name) > 0 )
-      {
-        material.second->resize( constitutiveSizes.at(name) );
-      }
-    }
+//    map<string,int32> constitutiveSizes;
+//
+//    elementManager.forElementRegions([ this, &domain, &constitutiveSizes ]( ElementRegion& elementRegion ) -> void
+//    {
+//      map<string,int32> sizes = elementRegion.SetConstitutiveMap( domain );
+//      for( auto& entry : sizes )
+//      {
+//        constitutiveSizes[entry.first] += entry.second;
+//      }
+//    });
+//
+//    for( auto & material : constitutiveManager.GetSubGroups() )
+//    {
+//      string name = material.first;
+//      if( constitutiveSizes.count(name) > 0 )
+//      {
+//        material.second->resize( constitutiveSizes.at(name) );
+//      }
+//    }
   }
 
   
@@ -474,7 +474,39 @@ void ProblemManager::ParseInputFile()
 }
 
 
-void ProblemManager::Initialize_derived( ManagedGroup & group )
+void ProblemManager::InitializationOrder( string_array & order )
+{
+  set<string> usedNames;
+
+
+  {
+    order.push_back(keys::finiteElementManager);
+    usedNames.insert(keys::finiteElementManager);
+  }
+
+  {
+    order.push_back(keys::domain);
+    usedNames.insert(keys::domain);
+  }
+
+  {
+    order.push_back(keys::eventManager);
+    usedNames.insert(keys::eventManager);
+  }
+
+  for( auto const & subGroup : this->GetSubGroups() )
+  {
+    if( usedNames.count(subGroup.first) == 0 )
+    {
+      order.push_back(subGroup.first);
+    }
+  }
+}
+
+
+
+
+void ProblemManager::InitializePreSubGroups( ManagedGroup & group )
 {
   DomainPartition& domain  = getDomainPartition();
   domain.RegisterDocumentationNodes();

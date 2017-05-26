@@ -48,6 +48,8 @@ namespace dataRepository
 class ManagedGroup
 {
 public:
+  using subGroupMap = map< string, std::unique_ptr<ManagedGroup> >;
+
   /**
    * @name constructors, destructor, copy, move, assignments
    */
@@ -145,12 +147,12 @@ public:
 #endif
   }
 
-  std::unordered_map< string, std::unique_ptr<ManagedGroup> > & GetSubGroups()
+  subGroupMap & GetSubGroups()
   {
     return m_subGroups;
   }
 
-  std::unordered_map< string, std::unique_ptr<ManagedGroup> > const & GetSubGroups() const
+  subGroupMap const & GetSubGroups() const
   {
     return m_subGroups;
   }
@@ -169,9 +171,13 @@ public:
     }
   }
 
-  void Initialize( ManagedGroup & group );
+  virtual void Initialize( ManagedGroup & group );
 
-  virtual void Initialize_derived( ManagedGroup & group ) {}
+  virtual void InitializationOrder( string_array & order );
+
+  virtual void InitializePreSubGroups( ManagedGroup & group ) {}
+
+  virtual void InitializePostSubGroups( ManagedGroup & group ) {}
 
 
   template< typename T >
@@ -355,7 +361,7 @@ public:
     return getData<string>(keys::Name);
   }
 
-  void resize( localIndex newsize );
+  virtual void resize( localIndex newsize );
 
   inline localIndex size() const
   {
@@ -402,7 +408,7 @@ private:
   std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
 
   ManagedGroup* m_parent = nullptr;
-  unordered_map< string, std::unique_ptr<ManagedGroup> > m_subGroups;
+  subGroupMap m_subGroups;
 
   asctoolkit::sidre::DataGroup* m_sidreGroup;
 

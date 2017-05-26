@@ -54,7 +54,8 @@
  * of all basis functions defined on the parent 
  * cell).
  */
-
+namespace geosx
+{
 class BasisBase
 {
 public:
@@ -69,13 +70,13 @@ public:
   {
   }
 
-  virtual int size() = 0;
+  virtual int size() const = 0;
 
   virtual double value( const int index,
-                        const R1Tensor &point ) = 0;
+                        const R1Tensor &point ) const = 0;
 
   virtual R1Tensor gradient( const int index,
-                             const R1Tensor &point ) = 0;
+                             const R1Tensor &point ) const = 0;
 
   virtual R1Tensor support_point( const int index ) = 0;
 
@@ -87,5 +88,5 @@ private:
   BasisBase & operator=( BasisBase const & ) = delete;
   BasisBase && operator=( BasisBase && ) = delete;
 };
-
+}
 #endif

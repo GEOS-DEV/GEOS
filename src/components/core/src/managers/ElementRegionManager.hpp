@@ -37,57 +37,116 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef LAGRANGE_BASIS_H
-#define LAGRANGE_BASIS_H
+/**
+ * @file ElementManagerT.h
+ * @author Randolph Settgast
+ * @date created on Sep 14, 2010
+ */
 
-//#include "legacy/Common/Common.h"
-#include <cassert>
+#ifndef ZONEMANAGER_H
+#define ZONEMANAGER_H
 
-#include "BasisBase.hpp"
-#include "Polynomial.hpp"
-//#include "legacy/Utilities/StructuredGridUtilities.h"
+//#include "Common.h"
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+#include "CellBlock.hpp"
+#include "CellBlockSubRegion.hpp"
+#include "ObjectManagerBase.hpp"
 
-/** A class to define a parent finite element space consisting
- *  of Lagrangian polynomial basis function. The class is
- *  templated on the spatial dimension. */
+#include "legacy/ArrayT/bufvector.h"
+#include "ElementRegion.hpp"
 
 namespace geosx
 {
 
-template<int dim>
-class LagrangeBasis : public BasisBase
+namespace dataRepository
+{
+namespace keys
+{
+string const elementRegions = "elementRegions";
+string const elementRegionManager="ElementRegions";
+}
+}
+
+/**
+ * Class to manage the data stored at the element level.
+ */
+class ElementRegionManager : public ObjectManagerBase
 {
 public:
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
   static string CatalogName()
   {
-    string name = "LagrangeBasis";
-    name.append(std::to_string(dim));
-    return name;
+    return "ZoneManager";
   }
 
-  LagrangeBasis(void){}
+  string getCatalogName() const override final
+  {
+    return ElementRegionManager::CatalogName();
+  }
 
-  LagrangeBasis( const int degree );
 
-  int size() const override final;
 
-  double value( const int index,
-                const R1Tensor &point ) const override final;
 
-  R1Tensor gradient( const int index,
-                     const R1Tensor &point ) const override final;
+  ///@}
 
-  R1Tensor support_point( const int index ) override final;
+  ElementRegionManager( string const &, ManagedGroup * const parent );
+  virtual ~ElementRegionManager();
 
-  void ReadXML( pugi::xml_node const & targetNode ) override final;
+//  void Initialize(  ){}
 
+  void InitializePreSubGroups( ManagedGroup & problemManager ) override final;
+  void InitializePostSubGroups( ManagedGroup & problemManager ) override final;
+
+  virtual void ReadXMLsub( pugi::xml_node const & targetNode ) override ;
+
+  using ManagedGroup::resize;
+
+  void resize( int32_array const & numElements,
+               string_array const & regionNames,
+               string_array const & elementTypes );
+
+//  CellBlock & CreateRegion( string const & regionName,
+//                               string const & elementType,
+//                               int32 const & numElements );
+
+  ElementRegion & GetRegion( string const & regionName )
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions).GetGroup<ElementRegion>(regionName);
+  }
+
+  template< typename LAMBDA >
+  void forElementRegions( LAMBDA lambda )
+  {
+    ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    elementRegions.forSubGroups<ElementRegion>( lambda );
+
+  }
+
+  template< typename LAMBDA >
+  void forCellBlocks( LAMBDA lambda )
+  {
+    ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+
+    for( auto & region : elementRegions.GetSubGroups() )
+    {
+      ElementRegion & elementRegion = elementRegions.GetGroup<ElementRegion>(region.first);
+      ManagedGroup & cellBlockSubRegions = elementRegion.GetGroup(dataRepository::keys::cellBlockSubRegions);
+      for( auto & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
+      {
+        CellBlockSubRegion & cellBlock = cellBlockSubRegions.GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+        lambda( cellBlock );
+      }
+    }
+  }
 private:
+  ElementRegionManager( const ElementRegionManager& );
+  ElementRegionManager& operator=( const ElementRegionManager&);
 
-  int m_degree;
-  int n_shape_functions;
 
-  std::vector<Polynomial> m_polynomials;
 };
 }
-#endif
-
+#endif /* ZONEMANAGER_H */

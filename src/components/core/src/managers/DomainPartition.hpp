@@ -31,6 +31,8 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const );
 
+  void InitializationOrder( string_array & order ) override final;
+
 
   PartitionBase * GetPartition() {return m_partition;}
 private:

@@ -84,14 +84,16 @@ void FiniteElementManager::ReadXMLsub( pugi::xml_node const & node )
         std::unique_ptr<ManagedGroup> fem = ManagedGroup::CatalogInterface::Factory( catalogName, name, this );
         fem->SetDocumentationNodes(nullptr);
         fem->RegisterDocumentationNodes();
-        fem->ReadXML(childNode);
-        this->RegisterGroup( name, std::move(fem) );
+        ManagedGroup & feSpace = this->RegisterGroup( name, std::move(fem) );
+        feSpace.ReadXML(childNode);
+
       }
 
     }
 
   }
 }
+
 
 
 } /* namespace geosx */

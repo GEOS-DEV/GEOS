@@ -62,8 +62,8 @@ class Polynomial
 
     int  Degree();
 
-    double Value(const double x);
-    double Deriv(const double x);
+    double Value(const double x) const;
+    double Deriv(const double x) const;
 
     void Evaluate(const double x,
                   double &value,

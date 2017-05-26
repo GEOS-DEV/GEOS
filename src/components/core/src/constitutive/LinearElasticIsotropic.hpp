@@ -21,6 +21,8 @@ string const bulkModulus("bulkModulus");
 string const youngsModulus("youngsModulus");
 string const poissonRatio("poissonsRatio");
 string const shearModulus("shearModulus");
+string const deviatorStress = "DeviatorStress";
+string const meanStress = "MeanStress";
 }
 }
 
@@ -41,9 +43,24 @@ public:
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const override;
 
+  R2SymTensor  StateUpdatePoint( R2SymTensor const & D,
+                                         R2Tensor const & Rot,
+                                         int32 const i,
+                                         integer const systemAssembleFlag ) override;
+
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
   virtual void ReadXML_PostProcess() override;
+
+private:
+  real64 const & m_YoungsModulus;
+  real64 const & m_BulkModulus;
+  real64 const & m_ShearModulus;
+  real64 const & m_PoissonRatio;
+  real64 const & m_Density;
+
+  r2Sym_array & m_devStress;
+  real64_array & m_meanStress;
 
 };
 

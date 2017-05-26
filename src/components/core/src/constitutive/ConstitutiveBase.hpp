@@ -44,10 +44,15 @@ public:
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const = 0;
 
+  virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
+                                                R2Tensor const & Rot,
+                                                int32 const i,
+                                                integer const systemAssembleFlag ) = 0;
+
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) = 0;
 
-
+  virtual void resize( localIndex ) override;
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 

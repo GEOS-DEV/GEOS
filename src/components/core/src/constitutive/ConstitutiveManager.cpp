@@ -37,6 +37,11 @@ void ConstitutiveManager::ReadXMLsub( pugi::xml_node const & targetNode )
 //      newMaterial.RegisterDocumentationNodes();
       newMaterial.ReadXML( childNode );
   }
+//  std::cout<<this->GetSubGroups().size()<<std::endl;
+//  for( auto const & material : this->GetSubGroups() )
+//  {
+//    std::cout<<material.first<<std::endl;
+//  }
 }
 
 ConstitutiveManager::constitutiveMaps & ConstitutiveManager::GetMaps( int32 const reinit ) const

@@ -30,6 +30,14 @@
 namespace geosx
 {
 
+namespace dataRepository
+{
+namespace keys
+{
+string const eventManager="EventManager";
+}
+}
+
 struct Arg : public option::Arg
 {
   static option::ArgStatus Unknown(const option::Option& option, bool /*error*/)
@@ -105,7 +113,9 @@ public:
 
   void ParseInputFile();
 
-  void Initialize_derived( ManagedGroup & group );
+  void InitializationOrder( string_array & order ) override final;
+
+  void InitializePreSubGroups( ManagedGroup & group ) override final;
 
   void RunSimulation();
 

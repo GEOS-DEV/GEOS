@@ -7,6 +7,8 @@
 
 #include "FiniteElementBase.h"
 
+namespace geosx
+{
 FiniteElementBase::FiniteElementBase( const int dim,
                                       const int num_q_points,
                                       const int num_dofs,
@@ -35,3 +37,4 @@ FiniteElementBase::~FiniteElementBase()
   // TODO Auto-generated destructor stub
 }
 
+}

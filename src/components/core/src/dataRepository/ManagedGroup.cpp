@@ -511,17 +511,38 @@ void ManagedGroup::PrintDataHierarchy()
   }
 }
 
+void ManagedGroup::InitializationOrder( string_array & order )
+{
+  for( auto & subGroup : this->m_subGroups )
+  {
+    order.push_back(subGroup.first);
+  }
+}
+
 void ManagedGroup::Initialize( ManagedGroup & group )
 {
   static int indent = 0;
   std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on "<<this->getName()<<" of type "<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
-  Initialize_derived(group);
-  forSubGroups( [&]( ManagedGroup & subGroup ) -> void
+
+  InitializePreSubGroups(group);
+
+  string_array initOrder;
+  InitializationOrder( initOrder );
+
+  for( auto const & groupName : initOrder )
   {
     ++indent;
-    subGroup.Initialize(group);
+    this->GetGroup(groupName).Initialize(group);
     --indent;
-  });
+  }
+
+//  forSubGroups( [&]( ManagedGroup & subGroup ) -> void
+//  {
+//    ++indent;
+//    subGroup.Initialize(group);
+//    --indent;
+//  });
+  InitializePostSubGroups(group);
 }
 
 

@@ -9,8 +9,8 @@
 #define FINITEELEMENTUTILITIES_H_
 
 #include <cassert>
-#include "Common/Common.h"
-#include "ElementLibrary/Basis.h"
+#include "Common/DataTypes.hpp"
+//#include "ElementLibrary/Basis.h"
 
 namespace FiniteElementUtilities
 {
@@ -23,29 +23,29 @@ namespace FiniteElementUtilities
                   R1Tensor* const result);
 
 
-  void Interp(const R1Tensor &globalCoord,
-	      const Array1dT<R1Tensor> &nodeCoords,
-              const rArray1d &nodeValues,
-              BasisBase *basis, 
-	      const unsigned int &ndofs,
-	      const unsigned int &ndim,
-              realT &result);
-
-
-  void InterpdNdX(const R1Tensor &globalCoord,
-		  const Array1dT<R1Tensor> &nodeCoords,
-		  BasisBase *basis,
-		  const unsigned int &ndofs,
-                  const unsigned int &ndim, 
-		  Array1dT<R1Tensor> &result);
-
-
-  void FindLocalCoord(const R1Tensor &globalCoord,
-		      const Array1dT<R1Tensor> &nodeCoords,
-		      BasisBase *basis,
-		      const unsigned int &ndofs,
-		      const unsigned int &ndim, 
-		      R1Tensor &localCoord);
+//  void Interp(const R1Tensor &globalCoord,
+//	      const Array1dT<R1Tensor> &nodeCoords,
+//              const rArray1d &nodeValues,
+//              BasisBase *basis,
+//	      const unsigned int &ndofs,
+//	      const unsigned int &ndim,
+//              realT &result);
+//
+//
+//  void InterpdNdX(const R1Tensor &globalCoord,
+//		  const Array1dT<R1Tensor> &nodeCoords,
+//		  BasisBase *basis,
+//		  const unsigned int &ndofs,
+//                  const unsigned int &ndim,
+//		  Array1dT<R1Tensor> &result);
+//
+//
+//  void FindLocalCoord(const R1Tensor &globalCoord,
+//		      const Array1dT<R1Tensor> &nodeCoords,
+//		      BasisBase *basis,
+//		      const unsigned int &ndofs,
+//		      const unsigned int &ndim,
+//		      R1Tensor &localCoord);
 
 }
 

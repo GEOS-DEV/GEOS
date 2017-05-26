@@ -37,9 +37,11 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include "ElementLibrary/FiniteElement.h"
+#include "FiniteElement.h"
 
 
+namespace geosx
+{
 
 template <int dim>
 FiniteElement<dim> :: FiniteElement(const int num_q_points,
@@ -57,8 +59,8 @@ FiniteElementBase( dim, num_q_points, num_dofs, num_zero_energy_modes)
  */
 
 template <int dim>
-FiniteElement<dim> :: FiniteElement(BasisBase &basis,
-                                    QuadratureBase &quadrature,
+FiniteElement<dim> :: FiniteElement(BasisBase const &basis,
+                                    QuadratureBase const &quadrature,
                                     const int num_zero_energy_modes ):
 FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
 {
@@ -134,4 +136,4 @@ void FiniteElement<dim> :: reinit(const std::vector<R1TensorT<3> > &mapped_suppo
 template class FiniteElement<2>;
 template class FiniteElement<3>;
 
-
+}

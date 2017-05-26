@@ -8,6 +8,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
 #include "../dataRepository/ManagedGroup.hpp"
+#include "dataRepository/ViewWrapper.hpp"
 
 namespace geosx
 {
@@ -22,8 +23,14 @@ namespace keys
 string const finiteElementSpace = "finiteElementSpace";
 string const basis = "basis";
 string const quadrature = "quadrature";
+string const dNdX = "dNdX";
+string const detJ = "detJ";
 }
 }
+
+class BasisBase;
+class QuadratureBase;
+class FiniteElementBase;
 
 class FiniteElementSpace : public dataRepository::ManagedGroup
 {
@@ -47,17 +54,20 @@ public:
 
   void FillDocumentationNode( dataRepository::ManagedGroup * const group );
 
+  void ApplySpaceToTargetCells( dataRepository::ManagedGroup * const group ) const;
 
-  virtual dataRepository::ManagedGroup & getNodeManager();
-  virtual dataRepository::ManagedGroup & getEdgeManager();
-  virtual dataRepository::ManagedGroup & getFaceManager();
-  virtual dataRepository::ManagedGroup & getElementManager();
+  void ReadXML_PostProcess() override final;
 
-private:
+  virtual void InitializePreSubGroups( ManagedGroup & group );
 
-  NodeManager *    m_nodeManager    = nullptr;
-  CellBlockManager * m_elementManager = nullptr;
+  void CalculateShapeFunctionGradients( dataRepository::view_rtype_const<r1_array> X,
+                                        dataRepository::ManagedGroup * const cellBlock ) const;
 
+public:
+
+  BasisBase const *    m_basis    = nullptr;
+  QuadratureBase const * m_quadrature = nullptr;
+  FiniteElementBase * m_finiteElement = nullptr;
 
 };
 

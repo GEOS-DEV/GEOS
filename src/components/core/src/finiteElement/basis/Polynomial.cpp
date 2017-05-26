@@ -78,9 +78,9 @@ int Polynomial :: Degree ()
  * function value p(x).
  */
 
-double Polynomial :: Value (const double x)
+double Polynomial :: Value (const double x) const
 {
-  std::vector<double>::reverse_iterator
+  std::vector<double>::const_reverse_iterator
     it     = m_coefficients.rbegin(),
     end_it = m_coefficients.rend();
 
@@ -97,9 +97,9 @@ double Polynomial :: Value (const double x)
  * function derivative p'(x).
  */
 
-double Polynomial :: Deriv (const double x)
+double Polynomial :: Deriv (const double x) const
 {
-  std::vector<double>::reverse_iterator
+  std::vector<double>::const_reverse_iterator
     it     = m_coefficients.rbegin(),
     end_it = m_coefficients.rend();
 

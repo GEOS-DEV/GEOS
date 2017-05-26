@@ -45,6 +45,8 @@
 //#include "legacy/Utilities/StructuredGridUtilities.h"
 
 #include <cassert>
+namespace geosx
+{
 
 template<int dim>
 class GaussQuadrature : public QuadratureBase
@@ -61,9 +63,9 @@ public:
   GaussQuadrature() = default;
   ~GaussQuadrature();
 
-  int size() override final;
-  R1Tensor integration_point( const int index ) override final;
-  double integration_weight( const int index ) override final;
+  int size() const override final;
+  R1Tensor integration_point( const int index ) const override final;
+  double integration_weight( const int index ) const override final;
 
   void ReadXML( pugi::xml_node const & xmlNode ) override final;
 
@@ -76,5 +78,6 @@ private:
   std::vector<double> m_weights_1d;
 
 };
+}
 
 #endif

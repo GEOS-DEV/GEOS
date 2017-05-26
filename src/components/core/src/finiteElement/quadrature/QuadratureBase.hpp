@@ -53,6 +53,8 @@
 /*
  * Pure virtual base class representing a generic quadrature object.
  */
+namespace geosx
+{
 
 class QuadratureBase
 {
@@ -66,15 +68,16 @@ public:
   {
   }
 
-  virtual int size() = 0;
-  virtual R1Tensor integration_point( const int index ) = 0;
-  virtual double integration_weight( const int index ) = 0;
+  virtual int size() const = 0;
+  virtual R1Tensor integration_point( const int index ) const = 0;
+  virtual double integration_weight( const int index ) const = 0;
 
   virtual void ReadXML( pugi::xml_node const & xmlNode ) = 0;
 
 private:
 
 };
+}
 
 #endif
 

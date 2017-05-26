@@ -17,8 +17,8 @@ ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     ManagedGroup * const parent ):
     ManagedGroup(name,parent)
 {
-  this->RegisterGroup<ManagedGroup>("StateData");
-  this->RegisterGroup<ManagedGroup>("ParameterData");
+  this->RegisterGroup<ManagedGroup>(keys::parameterData);
+  this->RegisterGroup<ManagedGroup>(keys::stateData);
 }
 
 ConstitutiveBase::~ConstitutiveBase()
@@ -33,6 +33,12 @@ ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()
   return catalog;
 }
 
+void ConstitutiveBase::resize( localIndex newsize )
+{
+  ManagedGroup::resize(newsize);
+  this->GetGroup(keys::parameterData).resize(newsize);
+  this->GetGroup(keys::stateData).resize(newsize);
+}
 
 
 

@@ -42,23 +42,26 @@
 #ifndef _KINEMATICS_H_
 #define _KINEMATICS_H_
 
-#include "Common/Common.h"
+#include "common/DataTypes.hpp"
 #include "assert.h"
 
 //*****************************************************************************
 //***** DECLARATIONS **********************************************************
 //*****************************************************************************
-void IncrementalKinematics( const R2TensorT<nsdof>& A ,
-                            R2SymTensorT<nsdof>& Dadt ,
-                            R2TensorT<nsdof>& Rhat );
 
-void IncrementalRotation( const R2TensorT<nsdof>& A ,
-                          R2TensorT<nsdof>& Rot );
+namespace geosx
+{
+void IncrementalKinematics( const R2TensorT<3>& A ,
+                            R2SymTensorT<3>& Dadt ,
+                            R2TensorT<3>& Rhat );
 
-inline void CalculateGradient( R2TensorT<nsdof>& Gradient ,
+void IncrementalRotation( const R2TensorT<3>& A ,
+                          R2TensorT<3>& Rot );
+
+inline void CalculateGradient( R2TensorT<3>& Gradient ,
                         const int* bConnectivity,
-                        const Array1dT<R1TensorT<nsdof> >& disp,
-                        const Array1dT<R1TensorT<nsdof> >& dNdX )
+                        const Array1dT<R1TensorT<3> >& disp,
+                        const Array1dT<R1TensorT<3> >& dNdX )
 
 {
   Gradient = 0.0;
@@ -100,15 +103,15 @@ inline void CalculateGradient( R2Tensor& Gradient ,
 
 
 
-void CalculatePhantomGradient( R2TensorT<nsdof>& Gradient ,
+void CalculatePhantomGradient( R2TensorT<3>& Gradient ,
                                const int* bConnectivity,
-                               const Array1dT<R1TensorT<nsdof> >& disp,
-                               const Array2dT<R1TensorT<nsdof> >& dNdX );
+                               const Array1dT<R1TensorT<3> >& disp,
+                               const Array2dT<R1TensorT<3> >& dNdX );
 
 
 //*****************************************************************************
 
                                             
-
+}
 
 #endif

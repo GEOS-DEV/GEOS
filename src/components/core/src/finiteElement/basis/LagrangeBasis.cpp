@@ -43,6 +43,8 @@
 /*
  * Constructor.
  */
+namespace geosx
+{
 
 template <int dim>
 LagrangeBasis<dim> :: LagrangeBasis(const int degree)
@@ -148,7 +150,7 @@ LagrangeBasis<dim> :: LagrangeBasis(const int degree)
  */
 
 template <int dim>
-int LagrangeBasis<dim> :: size()
+int LagrangeBasis<dim> :: size() const
 {
   return n_shape_functions;
 }
@@ -161,7 +163,7 @@ int LagrangeBasis<dim> :: size()
 
 template <int dim>
 double LagrangeBasis<dim> :: value(const int       index,
-                                   const R1Tensor &point)
+                                   const R1Tensor &point) const
 {
   std::vector<int> indices(dim);
   StructuredGrid::map_index<dim>(index,m_degree+1,indices);
@@ -180,7 +182,7 @@ double LagrangeBasis<dim> :: value(const int       index,
 
 template <int dim>
 R1Tensor LagrangeBasis<dim> :: gradient(const int index,
-                                              const R1Tensor &point)
+                                              const R1Tensor &point) const
 {
   std::vector<int> indices(dim);
   StructuredGrid::map_index<dim>(index,m_degree+1,indices);
@@ -346,3 +348,4 @@ void LagrangeBasis<dim>::ReadXML( pugi::xml_node const & targetNode )
 namespace { cxx_utilities::CatalogEntryConstructor<BasisBase,LagrangeBasis<1> > catEntry_LagrangeBasis1; }
 namespace { cxx_utilities::CatalogEntryConstructor<BasisBase,LagrangeBasis<2> > catEntry_LagrangeBasis2; }
 namespace { cxx_utilities::CatalogEntryConstructor<BasisBase,LagrangeBasis<3> > catEntry_LagrangeBasis3; }
+}

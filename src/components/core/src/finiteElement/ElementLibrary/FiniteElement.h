@@ -45,10 +45,9 @@
  * @author white230
  */
 
-#include "legacy/Common/Common.h"
-#include "legacy/ElementLibrary/Basis.h"
-#include "legacy/ElementLibrary/Quadrature.h"
-#include "legacy/ElementLibrary/FiniteElementBase.h"
+#include "FiniteElement/basis/BasisBase.hpp"
+#include "FiniteElement/quadrature/QuadratureBase.hpp"
+#include "FiniteElementBase.h"
 
 /**
  * Class representing a generic finite element.  Its constructor
@@ -65,7 +64,8 @@
  * definitions that do not fit within the current class can be
  * defined through derived classes.
  */
-
+namespace geosx
+{
 template <int dim>
 class FiniteElement : public FiniteElementBase
 {
@@ -75,8 +75,8 @@ class FiniteElement : public FiniteElementBase
                    const int num_dofs,
                    const int num_zero_energy_modes = 0 );
 
-    FiniteElement(BasisBase& basis,
-                  QuadratureBase& quadrature,
+    FiniteElement(BasisBase const & basis,
+                  QuadratureBase const & quadrature,
                   const int num_zero_energy_modes = 0 );
     
     virtual ~FiniteElement(){}
@@ -87,7 +87,7 @@ class FiniteElement : public FiniteElementBase
 
 
 };
-
+}
 
 
 

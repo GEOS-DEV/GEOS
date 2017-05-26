@@ -33,7 +33,7 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
 
-  virtual void Initialize_derived( dataRepository::ManagedGroup& problemManager ) override final;
+  virtual void InitializePreSubGroups( dataRepository::ManagedGroup& problemManager ) override final;
 
   virtual void TimeStep( real64 const& time_n,
                          real64 const& dt,
@@ -63,9 +63,9 @@ void OnePoint( T const * const __restrict__ dydx,
                real64 const dx,
                localIndex const length )
 #else
-void OnePoint( T dydx,
-               T dy,
-               T y,
+void OnePoint( T const & dydx,
+               T & dy,
+               T & y,
                real64 const dx,
                localIndex const length )
 #endif

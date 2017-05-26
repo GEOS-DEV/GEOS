@@ -5,6 +5,9 @@ set(geosx_core_sources
   ${geosx_core_sources}
     finiteElement/FiniteElementSpace.hpp
     finiteElement/FiniteElementManager.hpp
+    finiteElement/ElementLibrary/FiniteElement.h
+    finiteElement/ElementLibrary/FiniteElementBase.h
+    finiteElement/Kinematics.h
     finiteElement/basis/BasisBase.hpp
     finiteElement/basis/LagrangeBasis.hpp
     finiteElement/basis/Polynomial.hpp    
@@ -18,6 +21,9 @@ set(geosx_core_sources
   ${geosx_core_sources}
     finiteElement/FiniteElementSpace.cpp
     finiteElement/FiniteElementManager.cpp
+    finiteElement/ElementLibrary/FiniteElement.cpp
+    finiteElement/ElementLibrary/FiniteElementBase.cpp
+    finiteElement/Kinematics.cpp
     finiteElement/basis/BasisBase.cpp
     finiteElement/basis/LagrangeBasis.cpp
     finiteElement/basis/Polynomial.cpp    

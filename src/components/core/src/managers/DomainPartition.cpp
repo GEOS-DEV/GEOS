@@ -37,4 +37,28 @@ void DomainPartition::BuildDataStructure( ManagedGroup * const )
 //  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
 }
 
+void DomainPartition::InitializationOrder( string_array & order )
+{
+  set<string> usedNames;
+  {
+    order.push_back(keys::ConstitutiveManager);
+    usedNames.insert(keys::ConstitutiveManager);
+  }
+
+  {
+    order.push_back(keys::FEM_Elements);
+    usedNames.insert(keys::FEM_Elements);
+  }
+
+
+  for( auto const & subGroup : this->GetSubGroups() )
+  {
+    if( usedNames.count(subGroup.first) == 0 )
+    {
+      order.push_back(subGroup.first);
+    }
+  }
+}
+
+
 } /* namespace geosx */

@@ -14,21 +14,21 @@
     <InternalMesh 
                   name="mesh1"
                   elementType="C3D8" 
-                  xCoords="0, 1, 2, 3"
+                  xCoords="0, 3"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="1,1,1"
+                  nx="3"
                   ny="1"
                   nz="1"
-                  cellBlockNames="cb1 cb2 cb3"/>
+                  cellBlockNames="cb1"/>
   </Mesh>
 
 
   <SolverApplications>
     <Application name="1"
                  beginTime="0.0" 
-                 endTime="1.0" 
-                 dt="0.256"
+                 endTime="1.0e-4" 
+                 dt="1.0e-5"
                  solvers="lagsolve" />
   </SolverApplications>
 
@@ -36,11 +36,11 @@
   <NumericalMethods>
 
     <BasisFunctions> 
-        <LagrangeBasis1 name="linearBasis"  degree = "1"  />
+        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
     </BasisFunctions>
     
     <QuadratureRules>
-        <GaussQuadrature1 name="gaussian"   degree="1"  />    
+        <GaussQuadrature3 name="gaussian"   degree="2"  />    
     </QuadratureRules>
     
     <FiniteElements>
@@ -49,22 +49,22 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region1" cellBlocks="cb1"      numericalMethod="FE1" material="granite"/>
-    <ElementRegion name="Region2" cellBlocks="cb2 cb3" numericalMethod="FE1" material="shale" />
+    <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" />
   </ElementRegions>
 
   <Constitutive>
-      <LinearElasticIsotropic name="granite" 
-                              density="2700" 
-                              bulkModulus="5.5556e9" 
+      <LinearElasticIsotropic name="granite"
+                              density="2700"
+                              bulkModulus="5.5556e9"
                               shearModulus="4.16667e9"/>
-      <LinearElasticIsotropic name="shale"   
-                              density="2700" 
-                              bulkModulus="5.5556e9" 
+      <LinearElasticIsotropic name="shale"
+                              density="2700"
+                              bulkModulus="5.5556e9"
                               shearModulus="4.16667e9"/>
-      <LinearElasticIsotropic name="water"   
-                              density="1000" 
-                              bulkModulus="2.0e9"    
+      <LinearElasticIsotropic name="water"
+                              density="1000"
+                              bulkModulus="2.0e9"
                               shearModulus="0.0"/>
   </Constitutive>
 

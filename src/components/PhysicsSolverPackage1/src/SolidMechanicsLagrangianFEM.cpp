@@ -17,6 +17,10 @@
 #include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NodeManager.hpp"
 #include "managers/ElementRegionManager.hpp"
+#include "finiteElement/FiniteElementManager.hpp"
+#include "finiteElement/ElementLibrary/FiniteElement.h"
+#include "finiteElement/Kinematics.h"
+//#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
 
 namespace geosx
 {
@@ -31,6 +35,29 @@ std::string const area = "area";
 
 using namespace dataRepository;
 using namespace constitutive;
+
+void Integrate( const R2SymTensor& fieldvar,
+                const R1Tensor* const dNdX,
+                const realT& detJ,
+                const realT& detF,
+                const R2Tensor& Finv,
+                const int numPoints,
+                R1Tensor* const result)
+{
+  const realT integrationFactor = detJ * detF;
+
+  R2Tensor P;
+  P.AijBkj( fieldvar,Finv);
+  P *= integrationFactor;
+
+  for( int a=0 ; a<numPoints ; ++a )  // loop through all shape functions in element
+  {
+    result[a].minusAijBj( P , dNdX[a] );
+  }
+
+
+}
+
 
 SolidMechanics_LagrangianFEM::SolidMechanics_LagrangianFEM( const std::string& name,
                                                             ManagedGroup * const parent ) :
@@ -51,31 +78,17 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
   SolverBase::FillDocumentationNode( domain );
 
   NodeManager& nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
-  CellBlockManager& elems = domain->GetGroup<CellBlockManager>(keys::cellManager);
-
 
   docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
   docNode->setShortDescription("An example solid mechanics solver");
-  
-  docNode->AllocateChildNode( "area",
-                              keys::area,
-                              -1,
-                              "real64",
-                              "real64",
-                              "cross section area",
-                              "cross section area",
-                              "1.0",
-                              "",
-                              0,
-                              1,
-                              0 );
+
 
   nodes.getDocumentationNode()->AllocateChildNode( keys::TotalDisplacement,
                                                    keys::TotalDisplacement,
                                                    -1,
-                                                   "real64_array",
-                                                   "real64_array",
+                                                   "r1_array",
+                                                   "r1_array",
                                                    "Total Displacement",
                                                    "Total Displacement",
                                                    "0.0",
@@ -87,8 +100,8 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
   nodes.getDocumentationNode()->AllocateChildNode( keys::IncrementalDisplacement,
                                                    keys::IncrementalDisplacement,
                                                    -1,
-                                                   "real64_array",
-                                                   "real64_array",
+                                                   "r1_array",
+                                                   "r1_array",
                                                    "Incremental Displacement",
                                                    "Incremental Displacement",
                                                    "0.0",
@@ -100,8 +113,8 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
   nodes.getDocumentationNode()->AllocateChildNode( keys::Velocity,
                                                    keys::Velocity,
                                                    -1,
-                                                   "real64_array",
-                                                   "real64_array",
+                                                   "r1_array",
+                                                   "r1_array",
                                                    "Velocity",
                                                    "Velocity",
                                                    "0.0",
@@ -113,8 +126,8 @@ void SolidMechanics_LagrangianFEM::FillDocumentationNode( dataRepository::Manage
   nodes.getDocumentationNode()->AllocateChildNode( keys::Acceleration,
                                                    keys::Acceleration,
                                                    -1,
-                                                   "real64_array",
-                                                   "real64_array",
+                                                   "r1_array",
+                                                   "r1_array",
                                                    "Acceleration",
                                                    "Acceleration",
                                                    "0.0",
@@ -149,7 +162,7 @@ void SolidMechanics_LagrangianFEM::BuildDataStructure( ManagedGroup * const doma
 }
 
 
-void SolidMechanics_LagrangianFEM::Initialize_derived( ManagedGroup& problemManager )
+void SolidMechanics_LagrangianFEM::InitializePreSubGroups( ManagedGroup& problemManager )
 {
   ManagedGroup & domain = problemManager.GetGroup(keys::domain);
   ManagedGroup& nodes = domain.GetGroup<ManagedGroup >(keys::FEM_Nodes);
@@ -157,27 +170,36 @@ void SolidMechanics_LagrangianFEM::Initialize_derived( ManagedGroup& problemMana
   ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 //  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
 
-  ViewWrapper<r1_array>::rtype    X = nodes.getData<r1_array>(keys::ReferencePosition);
   ViewWrapper<real64_array>::rtype mass = nodes.getData<real64_array>(keys::Mass);
 //  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
 
 
   array< ConstitutiveWrapper< view_rtype<real64> > >  rho = constitutiveManager.GetParameterData<real64>(keys::density);
 
-  elementRegions.forCellBlocks([ this, &X, &mass, &rho ]( ManagedGroup& cellBlock ) -> void
+  elementRegions.forCellBlocks([&]( ManagedGroup& cellBlock ) -> void
   {
-    view_rtype<mapPair_array> & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
+    auto const & detJ            = cellBlock.RegisterViewWrapper< Array2dT<real64> >(keys::detJ).data();
+    auto const & constitutiveMap = cellBlock.getData< Array2dT<mapPair> >(keys::constitutiveMap);
     lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
-    real64 area = 1;
 
     for( localIndex k=0 ; k<cellBlock.size() ; ++k )
     {
       localIndex const * nodeList = elemsToNodes[k];
-      real64 dx = X[nodeList[1]][0] - X[nodeList[0]][0];
-      mass[k]   += rho[ constitutiveMap[k].first ].m_object[0] * area * dx / 2;
-      mass[k+1] += rho[ constitutiveMap[k].first ].m_object[0] * area * dx / 2;
+      real64 const * detJq = detJ[k];
+      for( localIndex q=0 ; q<constitutiveMap.Dimension(1) ; ++q )
+      {
+        mass[nodeList[q]] += rho[ constitutiveMap(k,q).first ].m_object[0] * detJq[q];
+      }
     }
   });
+  
+  real64 totalMass = 0;
+  for( localIndex a=0 ; a<mass.size() ; ++a )
+  {
+    std::cout<<"mass["<<a<<"] = "<<mass[a]<<std::endl;
+    totalMass += mass[a];
+  }
+  std::cout<<"totalMass = "<<totalMass<<std::endl;
 }
 
 void SolidMechanics_LagrangianFEM::TimeStep( real64 const& time_n,
@@ -194,26 +216,33 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
                                                      ManagedGroup& domain )
 {
   ManagedGroup& nodes = domain.GetGroup<ManagedGroup>(keys::FEM_Nodes);
-  ElementRegionManager & elems = domain.GetGroup<ElementRegionManager>( keys::FEM_Elements );
+  ElementRegionManager & elemManager = domain.GetGroup<ElementRegionManager>( keys::FEM_Elements );
+  FiniteElementManager const & numericalMethodManager = domain.getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
 
   localIndex const numNodes = nodes.size();
 
   view_rtype_const<r1_array> X = nodes.getData<r1_array>(keys::ReferencePosition);
-  view_rtype<real64_array>       u = nodes.getData<real64_array>(keys::TotalDisplacement);
-  view_rtype<real64_array>       uhat = nodes.getData<real64_array>(keys::IncrementalDisplacement);
-  view_rtype<real64_array>       vel  = nodes.getData<real64_array>(keys::Velocity);
-  view_rtype<real64_array>       acc  = nodes.getData<real64_array>(keys::Acceleration);
+  view_rtype<r1_array>       u = nodes.getData<r1_array>(keys::TotalDisplacement);
+  view_rtype<r1_array>       uhat = nodes.getData<r1_array>(keys::IncrementalDisplacement);
+  view_rtype<r1_array>       vel  = nodes.getData<r1_array>(keys::Velocity);
+  view_rtype<r1_array>       acc  = nodes.getData<r1_array>(keys::Acceleration);
   view_rtype_const<real64_array> mass = nodes.getWrapper<real64_array>(keys::Mass).data();
 
-//  view_rtype<real64_array>    Felem = elems.getData<real64_array>(keys::Force);
-//  view_rtype<real64_array>   Strain = elems.getData<real64_array>(keys::Strain);
-
-  ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-//  ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
   array< ConstitutiveWrapper< view_rtype<real64> > > const & E = constitutiveManager.GetParameterData<real64>(keys::youngsModulus);
 
   Integration::OnePoint( acc, vel, dt/2, numNodes );
-  vel[0] = 1.0;
+  vel[0][0] = 1.0;
+  vel[1][0] = 1.0;
+  vel[2][0] = 1.0;
+  vel[3][0] = 1.0;
+
+  for( localIndex a=0 ; a<numNodes ; ++a )
+  {
+    vel[a][1] = 0.0;
+    vel[a][2] = 0.0;
+  }
   Integration::OnePoint( vel, uhat, u, dt, numNodes );
 
   for( localIndex a=0 ; a<numNodes ; ++a )
@@ -221,25 +250,138 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
     acc[a] = 0.0;
   }
 
-
-
-  elems.forCellBlocks( [ & ]( CellBlockSubRegion& cellBlock )
+  
+  
+  elemManager.forElementRegions([&]( ElementRegion & elementRegion )
   {
-//    mapPair_array const & constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
-//    lArray2d const & elemsToNodes = cellBlock.getData<lArray2d>(keys::nodeList);
-    view_rtype_const<mapPair_array> constitutiveMap = cellBlock.getData<mapPair_array>(keys::constitutiveMap);
-    lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
-//    real64 area = 1;
+    auto const & numMethodName = elementRegion.getData<string>(keys::numericalMethod);
+    FiniteElementSpace const & feSpace = numericalMethodManager.GetGroup<FiniteElementSpace>(numMethodName);
 
-    for( localIndex k=0 ; k<cellBlock.size() ; ++k )
+    elementRegion.forCellBlocks( [&] ( CellBlockSubRegion& cellBlock )
     {
-      localIndex const * nodelist = elemsToNodes[k];
-      real64 Strain = ( u[nodelist[k+1]] - u[nodelist[k]] ) / ( X[nodelist[k+1]][0] - X[nodelist[k]][0] );
-      real64 Felem = *(E[ constitutiveMap[k].first ].m_object) * Strain;
-      acc[k]   += Felem;
-      acc[k+1] -= Felem;
-    }
+      auto const & dNdX            = cellBlock.RegisterViewWrapper< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX).data();
+      auto const & detJ            = cellBlock.RegisterViewWrapper< Array2dT<real64> >(keys::detJ).data();
+
+      view_rtype_const< Array2dT<mapPair> > constitutiveMap = cellBlock.getData< Array2dT<mapPair> >(keys::constitutiveMap);
+      auto const & constitutiveGrouping = cellBlock.getReference< map< string, int32_array > >(dataRepository::keys::constitutiveGrouping);
+      lArray2d const & elemsToNodes = cellBlock.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
+
+      r1_array uhat_local( elemsToNodes.Dimension(1) );
+      r1_array u_local( elemsToNodes.Dimension(1) );
+      r1_array f_local( elemsToNodes.Dimension(1) );
+
+      for( auto const & constitutiveGroup : constitutiveGrouping )
+      {
+        string const constitutiveName = constitutiveGroup.first;
+        int32_array const & elementList = constitutiveGroup.second;
+
+
+//        std::cout<<constitutiveManager.GetSubGroups().size()<<std::endl;
+//        for( auto const & material : constitutiveManager.GetSubGroups() )
+//        {
+//          std::cout<<material.first<<std::endl;
+//        }
+
+        ConstitutiveBase & constitutiveModel = constitutiveManager.GetGroup<ConstitutiveBase>( constitutiveName );
+
+        for( auto const k : elementList )
+        {
+          std::cout<<"Region "<<elementRegion.getName()<<", CellBlockSubRegion "<<cellBlock.getName()<<", Material "<<constitutiveName<<", index "<<k<<std::endl;
+
+          f_local = 0;
+
+          localIndex const * nodelist = elemsToNodes[k];
+
+          CopyGlobalToLocal( nodelist,
+                             u, uhat,
+                             u_local, uhat_local );
+
+          std::pair<int32,int32> const * constitutiveMapQuadrature = constitutiveMap[k];
+          for( auto q=0 ; q<feSpace.m_finiteElement->n_quadrature_points() ; ++q )
+          {
+//            std::cout<<"quadrature point "<<q<<std::endl;
+            R2Tensor dUhatdX, dUdX;
+            CalculateGradient( dUhatdX ,uhat_local, dNdX[k][q] );
+            CalculateGradient( dUdX ,u_local, dNdX[k][q] );
+//            std::cout<<"dUhatdX"<<std::endl;
+//            std::cout<<dUhatdX<<std::endl;
+
+            R2Tensor F,L, Finv;
+            {
+            // calculate dv/dX
+            R2Tensor dvdX = dUhatdX;
+            dvdX *= 1.0 / dt;
+
+            // calculate du/dX
+            F = dUhatdX;
+            F *= 0.5;
+            F += dUdX;
+            F.PlusIdentity(1.0);
+
+            // calculate dX/du
+            Finv.Inverse(F);
+
+            // chain rule: calculate dv/du = dv/dX * dX/du
+            L.AijBjk(dvdX, Finv);
+            }
+
+            // calculate gradient (end of step)
+            F = dUhatdX;
+            F += dUdX;
+            F.PlusIdentity(1.0);
+
+            realT detF = F.Det();
+
+          // calculate element volume
+  //        detJ_np1(k,q) = detJ(k,q) * detF;
+  //        volume[k] += detJ_np1(k,q);
+  //        initVolume += detJ(k,q);
+
+            Finv.Inverse(F);
+
+            // Calculate Rate of deformation tensor and rotationAxis tensor
+            R2Tensor A, Rot;
+            R2SymTensor Dadt;
+            A.AijBjk(dUhatdX,Finv);
+            IncrementalKinematics(A,Dadt,Rot);
+
+//            std::cout<<"Dadt"<<std::endl;
+//            std::cout<<Dadt<<std::endl;
+//
+//            std::cout<<"ConstitutiveIndex = "<<constitutiveMapQuadrature[q].second<<std::endl;
+            R2SymTensor const totalStress = constitutiveModel.StateUpdatePoint(Dadt,Rot,constitutiveMapQuadrature[q].second,0);
+
+//            std::cout<<"stress"<<q<<std::endl;
+//            std::cout<<totalStress<<std::endl;
+            Integrate( totalStress,
+                                               dNdX[k][q],
+                                               detJ(k,q),
+                                               detF,
+                                               Finv,
+                                               f_local.size(),
+                                               f_local.data() );
+
+          }
+
+          AddLocalToGlobal( nodelist, f_local, acc);
+          
+          std::cout<<"nodal forces"<<std::endl;
+          for( auto force : f_local )
+          {
+            printf(" %4.2f ",force[0] );
+//            std::cout<<force[0]<<std::endl;
+          }
+          printf("\n" );
+          
+        }
+      }
+
+
+    });
+
+
   });
+
 
 
   for( localIndex a=0 ; a<numNodes ; ++a )
@@ -247,14 +389,33 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
     acc[a] /= mass[a];
   }
   Integration::OnePoint( acc, vel, dt/2, numNodes );
-  vel[0] = 1.0;
-
-
-  printf(" %6.5f : ", time_n + dt );
+  vel[0][0] = 1.0;
+  vel[1][0] = 1.0;
+  vel[2][0] = 1.0;
+  vel[3][0] = 1.0;
   for( localIndex a=0 ; a<numNodes ; ++a )
   {
-    printf(" %4.2f ",vel[a] );
-//    std::cout<<vel[a]<<std::endl;
+    vel[a][1] = 0.0;
+    vel[a][2] = 0.0;
+  }
+
+  printf("\n            X at time %6.5f : ", time_n + dt );
+  for( localIndex a=0 ; a<numNodes ; ++a )
+  {
+    printf(" %7.2f ",X[a][0] );
+    //    std::cout<<vel[a]<<std::endl;
+  }
+  printf("\nAccelerations at time %6.5f : ", time_n + dt );
+  for( localIndex a=0 ; a<numNodes ; ++a )
+  {
+    printf(" %7.2f ",acc[a][0] );
+    //    std::cout<<vel[a]<<std::endl;
+  }
+  printf("\nVelocities    at time %6.5f : ", time_n + dt );
+  for( localIndex a=0 ; a<numNodes ; ++a )
+  {
+    printf(" %7.2f ",vel[a][0] );
+    //    std::cout<<vel[a]<<std::endl;
   }
   printf("\n" );
 

@@ -45,16 +45,17 @@
 
 
 #include "Kinematics.h"
-
-void IncrementalKinematics( const R2TensorT<nsdof>& A ,
-                            R2SymTensorT<nsdof>& Dadt ,
-                            R2TensorT<nsdof>& Rhat )
+namespace geosx
 {
-  R2SymTensorT<nsdof> C_I ;
-  R2SymTensorT<nsdof> C_I2 ;
-  //static R2SymTensorT<nsdof> C_I3 ;
-//  static R2TensorT<nsdof> Amod ;
-//  static R2TensorT<nsdof> UhatA ;
+void IncrementalKinematics( const R2TensorT<3>& A ,
+                            R2SymTensorT<3>& Dadt ,
+                            R2TensorT<3>& Rhat )
+{
+  R2SymTensorT<3> C_I ;
+  R2SymTensorT<3> C_I2 ;
+  //static R2SymTensorT<3> C_I3 ;
+//  static R2TensorT<3> Amod ;
+//  static R2TensorT<3> UhatA ;
 
   C_I.AijAkj_m_Aik_m_Aki(A);
   C_I2.AijAjk(C_I);
@@ -99,8 +100,8 @@ void IncrementalKinematics( const R2TensorT<nsdof>& A ,
 
 }
 
-void IncrementalRotation( const R2TensorT<nsdof>& A ,
-                          R2TensorT<nsdof>& Rot )
+void IncrementalRotation( const R2TensorT<3>& A ,
+                          R2TensorT<3>& Rot )
 {
 //  realT alpha[3];
   R1TensorT<3> alpha;
@@ -179,15 +180,17 @@ void IncrementalRotation( const R2TensorT<nsdof>& A ,
 
 
 
-void CalculatePhantomGradient( R2TensorT<nsdof>& Gradient ,
+void CalculatePhantomGradient( R2TensorT<3>& Gradient ,
                                const int* bConnectivity,
-                               const Array1dT<R1TensorT<nsdof> >& disp,
-                               const Array2dT<R1TensorT<nsdof> >& dNdX )
+                               const Array1dT<R1TensorT<3> >& disp,
+                               const Array2dT<R1TensorT<3> >& dNdX )
 
 {
   Gradient = 0.0;
   for( int side=1 ; side<=2 ; ++side )
     for( int a=1 ; a<=4 ; ++a )
       Gradient.plus_dyadic_ab( disp(bConnectivity[(side-1)*4+a-1]) , dNdX(side,a));
+
+}
 
 }

@@ -8,9 +8,11 @@
 #ifndef FINITEELEMENTBASE_H_
 #define FINITEELEMENTBASE_H_
 
-#include "legacy/Common/Common.h"
 #include <assert.h>
+#include "common/DataTypes.hpp"
 
+namespace geosx
+{
 class FiniteElementBase
 {
 public:
@@ -82,16 +84,16 @@ public:
 
 
   int Dim()                             { return m_dim; }
-  unsigned n_quadrature_points() const  { return n_q_points;  }
-  unsigned dofs_per_element() const     { return n_dofs;  }
+  int n_quadrature_points() const  { return n_q_points;  }
+  int dofs_per_element() const     { return n_dofs;  }
   inline int zero_energy_modes() const  { return m_zero_energy_modes; }
 
   std::string m_type;
 
 protected:
   iArray1d m_nodeOrdering;
-  unsigned n_q_points;
-  unsigned n_dofs;
+  int n_q_points;
+  int n_dofs;
   int m_zero_energy_modes;
 
   struct QuadraturePointData
@@ -116,5 +118,5 @@ private:
 
 
 };
-
+}
 #endif /* FINITEELEMENTBASE_H_ */

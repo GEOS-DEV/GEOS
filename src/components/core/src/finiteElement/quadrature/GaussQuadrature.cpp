@@ -49,6 +49,8 @@
 /*
  * Destructor.
  */
+namespace geosx
+{
 
 template<int dim>
 GaussQuadrature<dim>::~GaussQuadrature()
@@ -60,7 +62,7 @@ GaussQuadrature<dim>::~GaussQuadrature()
  */
 
 template<int dim>
-int GaussQuadrature<dim>::size()
+int GaussQuadrature<dim>::size() const
 {
   return m_n_gauss_points;
 }
@@ -70,7 +72,7 @@ int GaussQuadrature<dim>::size()
  */
 
 template<int dim>
-R1Tensor GaussQuadrature<dim>::integration_point( const int index )
+R1Tensor GaussQuadrature<dim>::integration_point( const int index ) const
 {
   std::vector<int> indices( dim );
   StructuredGrid::map_index<dim>( index, m_degree, indices );
@@ -87,7 +89,7 @@ R1Tensor GaussQuadrature<dim>::integration_point( const int index )
  */
 
 template<int dim>
-double GaussQuadrature<dim>::integration_weight( const int index )
+double GaussQuadrature<dim>::integration_weight( const int index ) const
 {
   std::vector<int> indices( dim );
   StructuredGrid::map_index<dim>( index, m_degree, indices );
@@ -158,3 +160,4 @@ cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<2> > catE
 cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<3> > catEntry_GaussQuadrature3;
 }
 
+}

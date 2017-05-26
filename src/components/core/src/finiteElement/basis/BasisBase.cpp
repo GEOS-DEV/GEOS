@@ -39,12 +39,14 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "BasisBase.hpp"
 
+namespace geosx
+{
 BasisBase::CatalogInterface::CatalogType& BasisBase::GetCatalog()
 {
   static BasisBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
-
+}
 // ... no implementation required ...
 
 
