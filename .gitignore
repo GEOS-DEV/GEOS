@@ -2,6 +2,7 @@ build-*
 install-*
 .cproject
 .project
+.pydevproject
 .settings
 *.swp
 *.swo
