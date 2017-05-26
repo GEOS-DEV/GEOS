@@ -252,15 +252,15 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 
   
   
-  elemManager.forElementRegions([&]( ElementRegion & elementRegion )
+  elemManager.forElementRegions( [&]( ElementRegion & elementRegion )
   {
     auto const & numMethodName = elementRegion.getData<string>(keys::numericalMethod);
     FiniteElementSpace const & feSpace = numericalMethodManager.GetGroup<FiniteElementSpace>(numMethodName);
 
     elementRegion.forCellBlocks( [&] ( CellBlockSubRegion& cellBlock )
     {
-      auto const & dNdX            = cellBlock.RegisterViewWrapper< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX).data();
-      auto const & detJ            = cellBlock.RegisterViewWrapper< Array2dT<real64> >(keys::detJ).data();
+      auto const & dNdX            = cellBlock.getData< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX).data();
+      auto const & detJ            = cellBlock.getData< Array2dT<real64> >(keys::detJ).data();
 
       view_rtype_const< Array2dT<mapPair> > constitutiveMap = cellBlock.getData< Array2dT<mapPair> >(keys::constitutiveMap);
       auto const & constitutiveGrouping = cellBlock.getReference< map< string, int32_array > >(dataRepository::keys::constitutiveGrouping);
@@ -274,13 +274,6 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
       {
         string const constitutiveName = constitutiveGroup.first;
         int32_array const & elementList = constitutiveGroup.second;
-
-
-//        std::cout<<constitutiveManager.GetSubGroups().size()<<std::endl;
-//        for( auto const & material : constitutiveManager.GetSubGroups() )
-//        {
-//          std::cout<<material.first<<std::endl;
-//        }
 
         ConstitutiveBase & constitutiveModel = constitutiveManager.GetGroup<ConstitutiveBase>( constitutiveName );
 
@@ -299,12 +292,9 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
           std::pair<int32,int32> const * constitutiveMapQuadrature = constitutiveMap[k];
           for( auto q=0 ; q<feSpace.m_finiteElement->n_quadrature_points() ; ++q )
           {
-//            std::cout<<"quadrature point "<<q<<std::endl;
             R2Tensor dUhatdX, dUdX;
             CalculateGradient( dUhatdX ,uhat_local, dNdX[k][q] );
             CalculateGradient( dUdX ,u_local, dNdX[k][q] );
-//            std::cout<<"dUhatdX"<<std::endl;
-//            std::cout<<dUhatdX<<std::endl;
 
             R2Tensor F,L, Finv;
             {
