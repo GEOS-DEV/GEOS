@@ -101,7 +101,7 @@ public:
   void InitializePreSubGroups( ManagedGroup & problemManager ) override final;
   void InitializePostSubGroups( ManagedGroup & problemManager ) override final;
 
-  virtual void ReadXMLsub( pugi::xml_node const & targetNode ) override ;
+  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override ;
 
   using ManagedGroup::resize;
 

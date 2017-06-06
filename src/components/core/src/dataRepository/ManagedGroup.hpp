@@ -17,7 +17,7 @@
 #include "depricated/Common.h"
 #include "DocumentationNode.hpp"
 
-#include "pugixml/src/pugixml.hpp"
+//#include "pugixml/src/pugixml.hpp"
 
 
 //#include "CodingUtilities/ANSTexception.hpp"
@@ -212,9 +212,9 @@ public:
 
   void PrintDataHierarchy();
 
-  virtual void ReadXML( pugi::xml_node const & targetNode );
+  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode );
 
-  virtual void ReadXMLsub( pugi::xml_node const & );
+  virtual void ReadXMLsub( xmlWrapper::xmlNode const & );
 
   virtual void ReadXML_PostProcess() {}
 

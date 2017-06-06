@@ -67,7 +67,7 @@ public:
   R1Tensor integration_point( const int index ) const override final;
   double integration_weight( const int index ) const override final;
 
-  void ReadXML( pugi::xml_node const & xmlNode ) override final;
+  void ReadXML( xmlWrapper::xmlNode const & xmlNode ) override final;
 
 private:
 

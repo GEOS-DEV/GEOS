@@ -90,7 +90,7 @@ void CellBlockManager::resize( int32_array const & numElements,
 ////  elemRegion.resize(numElements);
 //}
 
-void CellBlockManager::ReadXMLsub( pugi::xml_node const & targetNode )
+void CellBlockManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
 //  ManagedGroup & elementRegions = this->GetGroup(keys::cellBlocks);
 //  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())

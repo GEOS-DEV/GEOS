@@ -50,11 +50,11 @@ void PhysicsSolverManager::FillDocumentationNode( dataRepository::ManagedGroup *
 
 
 void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
-                                    pugi::xml_node const & problemNode )
+                                    xmlWrapper::xmlNode const & problemNode )
 {
 
   // Solvers
-  pugi::xml_node topLevelNode = problemNode.child("Solvers");
+  xmlWrapper::xmlNode topLevelNode = problemNode.child("Solvers");
   std::cout << "Solvers:" << std::endl;
   if (topLevelNode == NULL)
   {
@@ -62,7 +62,7 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
   }
   else
   {
-    for (pugi::xml_node solverNode=topLevelNode.first_child(); solverNode; solverNode=solverNode.next_sibling())
+    for (xmlWrapper::xmlNode solverNode=topLevelNode.first_child(); solverNode; solverNode=solverNode.next_sibling())
     {
       std::cout << "   " << solverNode.name() << std::endl;
 

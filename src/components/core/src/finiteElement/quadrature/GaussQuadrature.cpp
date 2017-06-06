@@ -102,7 +102,7 @@ double GaussQuadrature<dim>::integration_weight( const int index ) const
 }
 
 template<int dim>
-void GaussQuadrature<dim>::ReadXML( pugi::xml_node const & xmlNode )
+void GaussQuadrature<dim>::ReadXML( xmlWrapper::xmlNode const & xmlNode )
 {
   m_degree = xmlNode.attribute( "degree" ).as_int( 1 );
   m_n_gauss_points = StructuredGrid::dimpower<dim>( m_degree );

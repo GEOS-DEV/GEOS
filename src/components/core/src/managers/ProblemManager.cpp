@@ -379,13 +379,13 @@ void ProblemManager::ParseInputFile()
     std::cout << "Error offset: " << xmlResult.offset << std::endl;
   }
   xmlProblemNode = xmlDocument.child("Problem");
-//  pugi::xml_node topLevelNode;
+//  xmlWrapper::xmlNode topLevelNode;
 
   // Call manager readXML methods:
   
   {
     ManagedGroup & meshGenerators = this->GetGroup(string("MeshGenerators"));
-    pugi::xml_node topLevelNode = xmlProblemNode.child("Mesh");
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Mesh");
     std::cout << "Reading Mesh Block:" << std::endl;
     if (topLevelNode == NULL)
     {
@@ -393,7 +393,7 @@ void ProblemManager::ParseInputFile()
     }
     else
     {
-      for (pugi::xml_node childNode=topLevelNode.first_child(); childNode; childNode=childNode.next_sibling())
+      for (xmlWrapper::xmlNode childNode=topLevelNode.first_child(); childNode; childNode=childNode.next_sibling())
       {
         std::cout << "   " << childNode.name() << std::endl;
 
@@ -416,7 +416,7 @@ void ProblemManager::ParseInputFile()
 
 
   {
-    pugi::xml_node topLevelNode = xmlProblemNode.child("Constitutive");
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
     ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
     constitutiveManager.ReadXML( topLevelNode );
 
@@ -468,7 +468,7 @@ void ProblemManager::ParseInputFile()
 
   {
     FiniteElementManager & finiteElementManager = this->GetGroup<FiniteElementManager>(keys::finiteElementManager);
-    pugi::xml_node topLevelNode = xmlProblemNode.child("NumericalMethods");
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("NumericalMethods");
     finiteElementManager.ReadXML(topLevelNode);
   }
 }

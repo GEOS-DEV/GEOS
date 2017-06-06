@@ -79,7 +79,7 @@ public:
 
   R1Tensor support_point( const int index ) override final;
 
-  void ReadXML( pugi::xml_node const & targetNode ) override final;
+  void ReadXML( xmlWrapper::xmlNode const & targetNode ) override final;
 
 private:
 

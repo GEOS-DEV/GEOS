@@ -348,7 +348,7 @@ void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const g
 }
 
 
-void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
+void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
@@ -360,135 +360,136 @@ void ManagedGroup::ReadXML( pugi::xml_node const & targetNode )
     
     if (subDocNode.getIsInput() == 1)
     {
-      std::string childType = subDocNode.getSchemaType();    
-
-#if 1
-      rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
-      rtTypes::ApplyIntrinsicTypeLambda2 ( typeID,
-                                           [this, typeID, &targetNode, &subDocNode]( auto a, auto b ) -> void
-      {
-        string defVal = subDocNode.getDefault();
-
-        pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
-        ViewWrapper<decltype(a)>& dataView = this->getWrapper<decltype(a)>(subDocNode.getStringKey());
-        std::vector<decltype(b)> xmlVal;
-
-        if( !xmlatt.empty() )
-        {
-          xmlatt.as_type(xmlVal, defVal);
-        }
-        else
-        {
-          if( defVal == "REQUIRED")
-          {
-            string message = "variable " + subDocNode.getName() + " is required in " + targetNode.path();
-            SLIC_ERROR( message );
-          }
-          else
-          {
-            stringutilities::StringToType( xmlVal, defVal );
-          }
-
-
-        }
-        localIndex const size = xmlVal.size();
-        dataView.resize( size );
-        typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
-//        decltype(a) * data = dataView.pointer();
-        cxx_utilities::equateStlVector(data,xmlVal);
-      });
-
-
-#else
-      switch (rtTypes::typeID(childType))
-      {
-        case rtTypes::TypeIDs::real64_id:
-        {
-          real64 defVal = atof(subDocNode.getDefault().c_str());
-          real64 xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).as_double(defVal);
-          *(this->getData<real64>(subDocNode.getStringKey())) = xmlVal;
-          break;
-        }
-        case rtTypes::TypeIDs::int32_id:
-        {
-          int32 defVal = atoi(subDocNode.getDefault().c_str());
-          int32 xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).as_int(defVal);
-          *(this->getData<int32>(subDocNode.getStringKey())) = xmlVal;
-          break;
-        }
-        case rtTypes::TypeIDs::uint32_id:
-        {
-          uint32 defVal = atol(subDocNode.getDefault().c_str());
-          uint32 xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).as_uint(defVal);
-          *(this->getData<uint64>(subDocNode.getStringKey())) = xmlVal;
-          break;
-        }
-        case rtTypes::TypeIDs::string_id:
-        {
-          string defVal = subDocNode.getDefault();
-          string xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).value();
-          this->getData<string>(subDocNode.getStringKey()) = xmlVal.empty() ? defVal : xmlVal;
-          break;
-        }
-        // TODO: Define the assignment operator for std::vector<type> in viewWrapper
-        //       Alternatively, pass the array reference into the load_type_array methods directly
-        //       (This would require the push_back method to work on the viewWrappers)
-        case rtTypes::TypeIDs::real64_array_id:
-        {
-          string defVal = subDocNode.getDefault();
-          std::vector<real64> xmlVal;
-          targetNode.attribute(subDocNode.getStringKey().c_str()).load_double_array(xmlVal, defVal);
-          (this->getData<real64_array>(subDocNode.getStringKey())) = xmlVal;
-          break;
-        }
-        case rtTypes::TypeIDs::int32_array_id:
-        {
-          string defVal = subDocNode.getDefault();
-          std::vector<int32> xmlVal;
-          targetNode.attribute(subDocNode.getStringKey().c_str()).load_int_array(xmlVal, defVal);
-          // *(this->getData<int32_array>(subDocNode.getStringKey())) = xmlVal;
-
-          break;
-        }
-        case rtTypes::TypeIDs::uint32_array_id:
-        {
-          string defVal = subDocNode.getDefault();
-          std::vector<uint32> xmlVal;
-          targetNode.attribute(subDocNode.getStringKey().c_str()).load_uint_array(xmlVal, defVal);
-          // *(this->getData<uint32_array>(subDocNode.getStringKey())) = xmlVal;
-          break;
-        }
-        case rtTypes::TypeIDs::string_array_id:
-        {
-          string defVal = subDocNode.getDefault();
-          std::vector<string> xmlVal;
-          targetNode.attribute(subDocNode.getStringKey().c_str()).load_string_array(xmlVal, defVal);
-          // *(this->getData<string_array>(subDocNode.getStringKey())) = xmlVal;
-          
-          std::cout << "Resizing string_array " << subDocNode.getStringKey().c_str() << ".  Warning: this currently requires that the entire managed group to be resized." << std::endl;
-          this->resize(xmlVal.size());
-          ViewWrapper<string_array>::rtype saVal = this->getData<string_array>(subDocNode.getStringKey());
-          for (uint jj=0; jj<xmlVal.size(); ++jj)
-          {
-            saVal[static_cast<int>(jj)] = xmlVal[jj];
-          }
-
-          break;
-        }
-        default:
-        {
-          // TODO: Define missing cases
-          throw std::invalid_argument("XML auto read method not defined");
-        }
-      }
-#endif
+      xmlWrapper::ReadAttributeAsType( *this, subDocNode, targetNode );
+//      std::string childType = subDocNode.getSchemaType();
+//
+//#if 1
+//      rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
+//      rtTypes::ApplyIntrinsicTypeLambda2 ( typeID,
+//                                           [this, typeID, &targetNode, &subDocNode]( auto a, auto b ) -> void
+//      {
+//        string defVal = subDocNode.getDefault();
+//
+//        pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
+//        ViewWrapper<decltype(a)>& dataView = this->getWrapper<decltype(a)>(subDocNode.getStringKey());
+//        std::vector<decltype(b)> xmlVal;
+//
+//        if( !xmlatt.empty() )
+//        {
+//          xmlatt.as_type(xmlVal, defVal);
+//        }
+//        else
+//        {
+//          if( defVal == "REQUIRED")
+//          {
+//            string message = "variable " + subDocNode.getName() + " is required in " + targetNode.path();
+//            SLIC_ERROR( message );
+//          }
+//          else
+//          {
+//            stringutilities::StringToType( xmlVal, defVal );
+//          }
+//
+//
+//        }
+//        localIndex const size = xmlVal.size();
+//        dataView.resize( size );
+//        typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
+////        decltype(a) * data = dataView.pointer();
+//        cxx_utilities::equateStlVector(data,xmlVal);
+//      });
+//
+//
+//#else
+//      switch (rtTypes::typeID(childType))
+//      {
+//        case rtTypes::TypeIDs::real64_id:
+//        {
+//          real64 defVal = atof(subDocNode.getDefault().c_str());
+//          real64 xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).as_double(defVal);
+//          *(this->getData<real64>(subDocNode.getStringKey())) = xmlVal;
+//          break;
+//        }
+//        case rtTypes::TypeIDs::int32_id:
+//        {
+//          int32 defVal = atoi(subDocNode.getDefault().c_str());
+//          int32 xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).as_int(defVal);
+//          *(this->getData<int32>(subDocNode.getStringKey())) = xmlVal;
+//          break;
+//        }
+//        case rtTypes::TypeIDs::uint32_id:
+//        {
+//          uint32 defVal = atol(subDocNode.getDefault().c_str());
+//          uint32 xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).as_uint(defVal);
+//          *(this->getData<uint64>(subDocNode.getStringKey())) = xmlVal;
+//          break;
+//        }
+//        case rtTypes::TypeIDs::string_id:
+//        {
+//          string defVal = subDocNode.getDefault();
+//          string xmlVal = targetNode.attribute(subDocNode.getStringKey().c_str()).value();
+//          this->getData<string>(subDocNode.getStringKey()) = xmlVal.empty() ? defVal : xmlVal;
+//          break;
+//        }
+//        // TODO: Define the assignment operator for std::vector<type> in viewWrapper
+//        //       Alternatively, pass the array reference into the load_type_array methods directly
+//        //       (This would require the push_back method to work on the viewWrappers)
+//        case rtTypes::TypeIDs::real64_array_id:
+//        {
+//          string defVal = subDocNode.getDefault();
+//          std::vector<real64> xmlVal;
+//          targetNode.attribute(subDocNode.getStringKey().c_str()).load_double_array(xmlVal, defVal);
+//          (this->getData<real64_array>(subDocNode.getStringKey())) = xmlVal;
+//          break;
+//        }
+//        case rtTypes::TypeIDs::int32_array_id:
+//        {
+//          string defVal = subDocNode.getDefault();
+//          std::vector<int32> xmlVal;
+//          targetNode.attribute(subDocNode.getStringKey().c_str()).load_int_array(xmlVal, defVal);
+//          // *(this->getData<int32_array>(subDocNode.getStringKey())) = xmlVal;
+//
+//          break;
+//        }
+//        case rtTypes::TypeIDs::uint32_array_id:
+//        {
+//          string defVal = subDocNode.getDefault();
+//          std::vector<uint32> xmlVal;
+//          targetNode.attribute(subDocNode.getStringKey().c_str()).load_uint_array(xmlVal, defVal);
+//          // *(this->getData<uint32_array>(subDocNode.getStringKey())) = xmlVal;
+//          break;
+//        }
+//        case rtTypes::TypeIDs::string_array_id:
+//        {
+//          string defVal = subDocNode.getDefault();
+//          std::vector<string> xmlVal;
+//          targetNode.attribute(subDocNode.getStringKey().c_str()).load_string_array(xmlVal, defVal);
+//          // *(this->getData<string_array>(subDocNode.getStringKey())) = xmlVal;
+//
+//          std::cout << "Resizing string_array " << subDocNode.getStringKey().c_str() << ".  Warning: this currently requires that the entire managed group to be resized." << std::endl;
+//          this->resize(xmlVal.size());
+//          ViewWrapper<string_array>::rtype saVal = this->getData<string_array>(subDocNode.getStringKey());
+//          for (uint jj=0; jj<xmlVal.size(); ++jj)
+//          {
+//            saVal[static_cast<int>(jj)] = xmlVal[jj];
+//          }
+//
+//          break;
+//        }
+//        default:
+//        {
+//          // TODO: Define missing cases
+//          throw std::invalid_argument("XML auto read method not defined");
+//        }
+//      }
+//#endif
     }
   }
 
   ReadXML_PostProcess();
 }
 
-void ManagedGroup::ReadXMLsub( pugi::xml_node const & targetNode )
+void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
   this->forSubGroups( [this,&targetNode]( ManagedGroup & subGroup ) -> void
   {

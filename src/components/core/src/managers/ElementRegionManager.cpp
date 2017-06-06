@@ -90,10 +90,10 @@ void ElementRegionManager::resize( int32_array const & numElements,
 ////  elemRegion.resize(numElements);
 //}
 
-void ElementRegionManager::ReadXMLsub( pugi::xml_node const & targetNode )
+void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
   ManagedGroup & elementRegions = this->GetGroup(keys::elementRegions);
-  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
     if( childNode.name() == string("ElementRegion") )
     {

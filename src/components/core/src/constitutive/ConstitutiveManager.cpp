@@ -24,9 +24,9 @@ ConstitutiveManager::ConstitutiveManager( std::string const & name,
 ConstitutiveManager::~ConstitutiveManager()
 {}
 
-void ConstitutiveManager::ReadXMLsub( pugi::xml_node const & targetNode )
+void ConstitutiveManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
-  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
       std::string materialName = childNode.attribute("name").value();
       std::string materialKey = childNode.name();

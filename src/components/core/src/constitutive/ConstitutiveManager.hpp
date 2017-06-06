@@ -39,7 +39,7 @@ public:
   ConstitutiveManager( std::string const & name,
                        ManagedGroup * const parent );
 
-  void ReadXMLsub( pugi::xml_node const & targetNode );
+  void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
 
   ~ConstitutiveManager();
 

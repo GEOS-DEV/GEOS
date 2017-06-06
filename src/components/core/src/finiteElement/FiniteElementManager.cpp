@@ -27,7 +27,7 @@ FiniteElementManager::~FiniteElementManager()
   // TODO Auto-generated destructor stub
 }
 
-void FiniteElementManager::ReadXMLsub( pugi::xml_node const & node )
+void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
 {
   std::cout << "Reading Components for Numerical Methods:" << std::endl;
   if ( node == nullptr )
@@ -36,12 +36,12 @@ void FiniteElementManager::ReadXMLsub( pugi::xml_node const & node )
   }
   else
   {
-    pugi::xml_node basisNode = node.child(keys::basisFunctions.c_str());
+    xmlWrapper::xmlNode basisNode = node.child(keys::basisFunctions.c_str());
     if( basisNode != nullptr )
     {
       ManagedGroup & basisFunctions = this->GetGroup(keys::basisFunctions);
 
-      for (pugi::xml_node childNode=basisNode.first_child(); childNode; childNode=childNode.next_sibling())
+      for (xmlWrapper::xmlNode childNode=basisNode.first_child(); childNode; childNode=childNode.next_sibling())
       {
         string catalogName = childNode.name();
         string name = childNode.attribute("name").value();
@@ -53,12 +53,12 @@ void FiniteElementManager::ReadXMLsub( pugi::xml_node const & node )
       }
     }
 
-    pugi::xml_node quadratureNode = node.child(keys::quadratureRules.c_str());
+    xmlWrapper::xmlNode quadratureNode = node.child(keys::quadratureRules.c_str());
     if( quadratureNode != nullptr )
     {
       ManagedGroup & quadratureRules = this->GetGroup(keys::quadratureRules);
 
-      for (pugi::xml_node childNode=quadratureNode.first_child(); childNode; childNode=childNode.next_sibling())
+      for (xmlWrapper::xmlNode childNode=quadratureNode.first_child(); childNode; childNode=childNode.next_sibling())
       {
         string catalogName = childNode.name();
         string name = childNode.attribute("name").value();
@@ -71,11 +71,11 @@ void FiniteElementManager::ReadXMLsub( pugi::xml_node const & node )
 
     }
 
-    pugi::xml_node finiteElementNode = node.child(keys::finiteElements.c_str());
+    xmlWrapper::xmlNode finiteElementNode = node.child(keys::finiteElements.c_str());
     if( finiteElementNode != nullptr )
     {
 //      ManagedGroup & feSpaces = RegisterGroup(keys::FE_Space);
-      for (pugi::xml_node childNode=finiteElementNode.first_child(); childNode; childNode=childNode.next_sibling())
+      for (xmlWrapper::xmlNode childNode=finiteElementNode.first_child(); childNode; childNode=childNode.next_sibling())
       {
         string catalogName = childNode.name();
         string name = childNode.attribute("name").value();

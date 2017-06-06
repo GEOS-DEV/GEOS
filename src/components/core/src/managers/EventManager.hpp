@@ -10,10 +10,6 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 
-namespace pugi
-{
-class xml_node;
-}
 
 namespace geosx
 {
@@ -28,7 +24,7 @@ public:
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
-  void ReadXML( pugi::xml_node const & problemNode ) override;
+  void ReadXML( xmlWrapper::xmlNode const & problemNode ) override;
 
   void CheckEventTiming();
 

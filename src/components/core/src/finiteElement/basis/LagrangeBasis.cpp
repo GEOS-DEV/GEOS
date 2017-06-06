@@ -239,7 +239,7 @@ R1Tensor LagrangeBasis<dim> :: support_point(const int index)
 }
 
 template <int dim>
-void LagrangeBasis<dim>::ReadXML( pugi::xml_node const & targetNode )
+void LagrangeBasis<dim>::ReadXML( xmlWrapper::xmlNode const & targetNode )
 {
   m_degree = targetNode.attribute("degree").as_int(1);
   n_shape_functions = StructuredGrid::dimpower<dim>(m_degree+1);

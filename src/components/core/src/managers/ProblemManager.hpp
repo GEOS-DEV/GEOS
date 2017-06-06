@@ -126,7 +126,7 @@ public:
 
   pugi::xml_document xmlDocument;
   pugi::xml_parse_result xmlResult;
-  pugi::xml_node xmlProblemNode;
+  xmlWrapper::xmlNode xmlProblemNode;
 
 private:
   PhysicsSolverManager * m_physicsSolverManager;

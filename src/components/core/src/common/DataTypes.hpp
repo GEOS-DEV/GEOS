@@ -19,7 +19,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "pugixml/src/pugixml.hpp"
+//#include "pugixml/src/pugixml.hpp"
+#include "fileIO/xmlWrapper.hpp"
 
 #include "Macros.hpp"
 
@@ -142,7 +143,6 @@ using string_set        = set<string>;
 using string_const_set  = set<string const>;
 
 
-using xmlNode = pugi::xml_node;
 
 //***** BEGIN LEGACY TYPEDEFS *****
 using rArray1d = Array1dT<real64>;
@@ -184,6 +184,9 @@ public:
       {std::type_index(typeid(uint64)), "uint64"},
       {std::type_index(typeid(real32)), "real32"},
       {std::type_index(typeid(real64)), "real64"},
+      {std::type_index(typeid(R1Tensor)), "r1Tensor"},
+      {std::type_index(typeid(R2Tensor)), "r2Tensor"},
+      {std::type_index(typeid(R2SymTensor)), "r2SymTensor"},
       {std::type_index(typeid(int32_array)), "int32_array"},
       {std::type_index(typeid(uint32_array)), "uint32_array"},
       {std::type_index(typeid(int64_array)), "int64_array"},
@@ -211,6 +214,9 @@ public:
     uint64_id,
     real32_id,
     real64_id,
+    r1Tensor_id,
+    r2Tensor_id,
+    r2SymTensor_id,
     int32_array_id,
     uint32_array_id,
     int64_array_id,
@@ -238,6 +244,9 @@ public:
       { "uint64",       TypeIDs::uint64_id },
       { "real32",       TypeIDs::real32_id },
       { "real64",       TypeIDs::real64_id },
+      { "R1Tensor",     TypeIDs::r1Tensor_id },
+      { "R2Tensor",     TypeIDs::r2Tensor_id },
+      { "R2SymTensor",  TypeIDs::r2SymTensor_id },
       { "int32_array",  TypeIDs::int32_array_id },
       { "uint32_array", TypeIDs::uint32_array_id },
       { "int64_array",  TypeIDs::int64_array_id },
@@ -291,6 +300,21 @@ public:
     case ( TypeIDs::real64_id ):
     {
       return lambda( real64(1) );
+      break;
+    }
+    case ( TypeIDs::r1Tensor_id ):
+    {
+      return lambda( R1Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2Tensor_id ):
+    {
+      return lambda( R2Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2SymTensor_id ):
+    {
+      return lambda( R2SymTensor() );
       break;
     }
     case ( TypeIDs::int32_array_id ):
@@ -375,6 +399,21 @@ public:
     case ( TypeIDs::real64_id ):
     {
       return lambda( real64(1) );
+      break;
+    }
+    case ( TypeIDs::r1Tensor_id ):
+    {
+      return lambda( R1Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2Tensor_id ):
+    {
+      return lambda( R2Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2SymTensor_id ):
+    {
+      return lambda( R2SymTensor() );
       break;
     }
     case ( TypeIDs::int32_array_id ):
@@ -487,6 +526,21 @@ public:
       return lambda( real64(1), real64(1) );
       break;
     }
+    case ( TypeIDs::r1Tensor_id ):
+    {
+      return lambda( R1Tensor(), R1Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2Tensor_id ):
+    {
+      return lambda( R2Tensor(), R2Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2SymTensor_id ):
+    {
+      return lambda( R2SymTensor(), R2SymTensor() );
+      break;
+    }
     case ( TypeIDs::int32_array_id ):
     {
       return lambda( int32_array(1), int32(1) );
@@ -597,6 +651,21 @@ public:
     case ( TypeIDs::real64_id ):
     {
       return lambda( real64(1), real64(1) );
+      break;
+    }
+    case ( TypeIDs::r1Tensor_id ):
+    {
+      return lambda( R1Tensor(), R1Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2Tensor_id ):
+    {
+      return lambda( R2Tensor(), R2Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2SymTensor_id ):
+    {
+      return lambda( R2SymTensor(), R2SymTensor() );
       break;
     }
     case ( TypeIDs::int32_array_id ):

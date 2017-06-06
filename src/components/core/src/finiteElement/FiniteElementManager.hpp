@@ -31,7 +31,7 @@ public:
   FiniteElementManager(string const & name, ManagedGroup * const parent);
   virtual ~FiniteElementManager();
 
-  void ReadXMLsub( pugi::xml_node const & targetNode ) override final;
+  void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override final;
 
 
 };

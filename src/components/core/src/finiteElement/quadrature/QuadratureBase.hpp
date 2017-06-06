@@ -72,7 +72,7 @@ public:
   virtual R1Tensor integration_point( const int index ) const = 0;
   virtual double integration_weight( const int index ) const = 0;
 
-  virtual void ReadXML( pugi::xml_node const & xmlNode ) = 0;
+  virtual void ReadXML( xmlWrapper::xmlNode const & xmlNode ) = 0;
 
 private:
 

@@ -29,7 +29,6 @@ namespace dataRepository
 {
 namespace keys
 {
-std::string const area = "area";
 }
 }
 
@@ -259,8 +258,8 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 
     elementRegion.forCellBlocks( [&] ( CellBlockSubRegion& cellBlock )
     {
-      auto const & dNdX            = cellBlock.getData< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX).data();
-      auto const & detJ            = cellBlock.getData< Array2dT<real64> >(keys::detJ).data();
+      auto const & dNdX            = cellBlock.getData< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX);
+      auto const & detJ            = cellBlock.getData< Array2dT<real64> >(keys::detJ);
 
       view_rtype_const< Array2dT<mapPair> > constitutiveMap = cellBlock.getData< Array2dT<mapPair> >(keys::constitutiveMap);
       auto const & constitutiveGrouping = cellBlock.getReference< map< string, int32_array > >(dataRepository::keys::constitutiveGrouping);
@@ -344,12 +343,12 @@ void SolidMechanics_LagrangianFEM::TimeStepExplicit( real64 const& time_n,
 //            std::cout<<"stress"<<q<<std::endl;
 //            std::cout<<totalStress<<std::endl;
             Integrate( totalStress,
-                                               dNdX[k][q],
-                                               detJ(k,q),
-                                               detF,
-                                               Finv,
-                                               f_local.size(),
-                                               f_local.data() );
+                       dNdX[k][q],
+                       detJ(k,q),
+                       detF,
+                       Finv,
+                       f_local.size(),
+                       f_local.data() );
 
           }
 

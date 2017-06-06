@@ -35,9 +35,9 @@ void EventManager::FillDocumentationNode( dataRepository::ManagedGroup * const )
 }
 
 
-void EventManager::ReadXML( pugi::xml_node const & problemNode )
+void EventManager::ReadXML( xmlWrapper::xmlNode const & problemNode )
 {
-  pugi::xml_node topLevelNode = problemNode.child("SolverApplications");
+  xmlWrapper::xmlNode topLevelNode = problemNode.child("SolverApplications");
   if (topLevelNode == NULL)
   {
     throw std::invalid_argument("SolverApplications block not present in input xml file!");
@@ -45,7 +45,7 @@ void EventManager::ReadXML( pugi::xml_node const & problemNode )
   else
   {
     // Allow other event types here?
-    for (pugi::xml_node applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
+    for (xmlWrapper::xmlNode applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
     {
       std::string applicationName = applicationNode.attribute("name").value();
       SolverApplication& newApplication = RegisterGroup<SolverApplication>(applicationName);

@@ -136,7 +136,7 @@ public:
   }
 
 
-  void ReadXML(pugi::xml_node* hdn);
+  void ReadXML(xmlWrapper::xmlNode* hdn);
 
 private:
   std::map<std::string, Table1D > m_tables1;
