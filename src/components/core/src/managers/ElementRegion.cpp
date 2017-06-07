@@ -47,7 +47,7 @@
 #include "ElementRegion.hpp"
 #include "CellBlockManager.hpp"
 #include "CellBlockSubRegion.hpp"
-#include "Constitutive/ConstitutiveManager.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"

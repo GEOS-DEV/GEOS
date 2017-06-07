@@ -41,7 +41,7 @@
 #define FUNCTIONS_H
 
 
-#include "Common/DataTypes.hpp"
+#include "common/DataTypes.hpp"
 
 #if USE_FPARSER==1
 #include "fparser.hh"

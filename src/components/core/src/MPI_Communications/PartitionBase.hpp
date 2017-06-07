@@ -46,7 +46,7 @@
 #ifndef PARTITIONBASE_H_
 #define PARTITIONBASE_H_
 
-#include "Common/DataTypes.hpp"
+#include "common/DataTypes.hpp"
 #include <mpi.h>
 #include "NeighborCommunication.hpp"
 

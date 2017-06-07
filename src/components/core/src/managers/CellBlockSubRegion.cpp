@@ -6,7 +6,7 @@
  */
 
 #include "CellBlockSubRegion.hpp"
-#include "Constitutive/ConstitutiveManager.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 
 namespace geosx
 {

@@ -7,8 +7,8 @@
 
 #include "SolverBase.hpp"
 
-#include "../managers/CellBlockManager.hpp"
-#include "Managers/NodeManager.hpp"
+#include "managers/CellBlockManager.hpp"
+#include "managers/NodeManager.hpp"
 
 namespace geosx
 {

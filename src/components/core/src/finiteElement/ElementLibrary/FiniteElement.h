@@ -45,8 +45,8 @@
  * @author white230
  */
 
-#include "FiniteElement/basis/BasisBase.hpp"
-#include "FiniteElement/quadrature/QuadratureBase.hpp"
+#include "finiteElement/basis/BasisBase.hpp"
+#include "finiteElement/quadrature/QuadratureBase.hpp"
 #include "FiniteElementBase.h"
 
 /**
