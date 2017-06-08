@@ -82,7 +82,7 @@ inline void CalculateGradient( R2Tensor& Gradient ,
   assert( disp.size() == dNdX.size() );
 
   Gradient.dyadic_ab( disp(0) , dNdX(0) );
-  for( Array1dT<R1Tensor >::size_type a=1 ; a<disp.size() ; ++a )
+  for( auto a=1 ; a<disp.size() ; ++a )
   {
     Gradient.plus_dyadic_ab( disp(a) , dNdX(a) );
   }
@@ -95,7 +95,7 @@ inline void CalculateGradient( R2Tensor& Gradient ,
 {
 
   Gradient.dyadic_ab( disp(0) , dNdX[0] );
-  for( Array1dT<R1Tensor >::size_type a=1 ; a<disp.size() ; ++a )
+  for( auto a=1 ; a<disp.size() ; ++a )
   {
     Gradient.plus_dyadic_ab( disp(a) , dNdX[a] );
   }

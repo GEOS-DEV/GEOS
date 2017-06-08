@@ -13,11 +13,11 @@
 #include "common/DataTypes.hpp"
 //#include "KeyNames.hpp"
 
-namespace asctoolkit
+namespace axom
 {
 namespace sidre
 {
-class DataView;
+class View;
 }
 }
 
@@ -90,11 +90,11 @@ public:
     m_sizedFromParent = val;
   }
 
-  asctoolkit::sidre::DataView const * getSidreView() const
+  axom::sidre::View const * getSidreView() const
   {
     return m_sidreView;
   }
-  asctoolkit::sidre::DataView * getSidreView()
+  axom::sidre::View * getSidreView()
   {
     return m_sidreView;
   }
@@ -108,7 +108,7 @@ private:
   std::string m_name;
   ManagedGroup* m_parent;
   int m_sizedFromParent;
-  asctoolkit::sidre::DataView* m_sidreView;
+  axom::sidre::View* m_sidreView;
 
   ViewWrapperBase() = delete;
   ViewWrapperBase( ViewWrapperBase const & ) = delete;

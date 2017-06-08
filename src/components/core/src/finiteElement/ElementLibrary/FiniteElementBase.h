@@ -53,29 +53,29 @@ public:
                                          Array1dT<R1Tensor>&  ) {}
 
 
-  double value(const unsigned shape_index,
-               const unsigned q_index) const
+  double value(const int shape_index,
+               const int q_index) const
   {
     assert(q_index < n_q_points);
     assert(shape_index < n_dofs);
     return data[q_index].parent_values[shape_index];
   }
 
-  std::vector<double> const & values( const unsigned int q_index ) const
+  std::vector<double> const & values( const int q_index ) const
   {
     assert(q_index < n_q_points);
     return data[q_index].parent_values;
   }
 
-  R1Tensor gradient( const unsigned shape_index,
-                 const unsigned q_index ) const
+  R1Tensor gradient( const int shape_index,
+                 const int q_index ) const
   {
     assert(q_index < n_q_points);
     assert(shape_index < n_dofs);
     return data[q_index].mapped_gradients[shape_index];
   }
 
-  double JxW(const unsigned q_index) const
+  double JxW(const int q_index) const
   {
     assert(q_index < n_q_points);
     return data[q_index].jacobian_determinant *

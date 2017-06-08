@@ -5172,15 +5172,15 @@ namespace pugi
     std::string csvstr = ( _attr!=NULL && _attr->value) ? _attr->value : defValue;
     std::istringstream ss( csvstr );
 
-    T value;
+    T value0;
 
     while(ss.peek() == ',' || ss.peek() == ' ')
     {
       ss.ignore();
     }
-    while( ss>>value )
+    while( ss>>value0 )
     {
-      target.push_back( value );
+      target.push_back( value0 );
       while(ss.peek() == ',' || ss.peek() == ' ')
       {
         ss.ignore();

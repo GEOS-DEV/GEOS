@@ -370,10 +370,10 @@ public:
 
 
 
-  asctoolkit::sidre::DataGroup * getSidreGroup()              { return m_sidreGroup; }
-  asctoolkit::sidre::DataGroup const * getSidreGroup() const  { return m_sidreGroup; }
+  axom::sidre::Group * getSidreGroup()              { return m_sidreGroup; }
+  axom::sidre::Group const * getSidreGroup() const  { return m_sidreGroup; }
 
-  static asctoolkit::sidre::DataGroup * setSidreGroup( string const& name,
+  static axom::sidre::Group * setSidreGroup( string const& name,
                                                        ManagedGroup * const parent );
 
   ManagedGroup * getParent()             { return m_parent; }
@@ -410,7 +410,7 @@ private:
   ManagedGroup* m_parent = nullptr;
   subGroupMap m_subGroups;
 
-  asctoolkit::sidre::DataGroup* m_sidreGroup;
+  axom::sidre::Group* m_sidreGroup;
 
   int32 const & m_size;
   string const & m_name;

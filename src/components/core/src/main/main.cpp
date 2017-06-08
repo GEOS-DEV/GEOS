@@ -13,7 +13,7 @@
 #include <mpi.h>
 
 using namespace geosx;
-using namespace asctoolkit;
+using namespace axom;
 
 
 int main( int argc, char *argv[] )

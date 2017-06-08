@@ -15,11 +15,11 @@ namespace geosx
 namespace dataRepository
 {
 
-asctoolkit::sidre::DataGroup * ManagedGroup::setSidreGroup( string const& name,
+axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
                                                             ManagedGroup * const parent )
 {
-  asctoolkit::sidre::DataGroup * sidreParent = nullptr;
-  asctoolkit::sidre::DataGroup * sidreGroup  = nullptr;
+  axom::sidre::Group * sidreParent = nullptr;
+  axom::sidre::Group * sidreGroup  = nullptr;
 
   if( parent==nullptr )
   {
@@ -170,7 +170,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
 //{
 //
 //  // SIDRE interaction
-//  asctoolkit::sidre::DataGroup * sidreParent = nullptr;
+//  asctoolkit::sidre::Group * sidreParent = nullptr;
 //  if( m_parent==nullptr )
 //  {
 //    sidreParent = SidreWrapper::dataStore().getRoot();

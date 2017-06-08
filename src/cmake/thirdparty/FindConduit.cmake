@@ -61,7 +61,7 @@ endif()
 
 include(${CONDUIT_DIR}/lib/cmake/conduit.cmake)
 set(CONDUIT_FOUND TRUE)
-set(CONDUIT_INCLUDE_DIRS ${CONDUIT_DIR}/include)
+set(CONDUIT_INCLUDE_DIRS ${CONDUIT_DIR}/include/conduit)
 
 
 
