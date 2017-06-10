@@ -33,3 +33,6 @@
 	path = src/components/ReservoirSimulationPackage
 	url = ../reservoirsimulationpackage.git
 	branch = master
+[submodule "src/thirdparty/muparserx"]
+	path = src/thirdparty/muparserx
+	url = https://github.com/beltoforion/muparserx.git

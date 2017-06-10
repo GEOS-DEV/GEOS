@@ -33,6 +33,11 @@ if( ENABLE_PYTHON )
 endif()
 
 
+if( ENABLE_MUPARSERX )
+  set( extraComponentsListLink ${extraComponentsListLink} muparserx )
+endif()
+
+
 message("adding geosx_core library")
 blt_add_library( NAME
                      geosx_core
