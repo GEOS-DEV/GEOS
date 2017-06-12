@@ -17,6 +17,8 @@ else()
 	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=0)
 endif()
 
+# Add muparserx
+set(ENABLE_MUPARSERX ON CACHE BOOL  "Enables muparserx Plugin")
 
 blt_add_component(COMPONENT_NAME core DEFAULT_STATE ON)
 add_subdirectory(cxx-utilities/src)
