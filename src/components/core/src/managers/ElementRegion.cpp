@@ -186,14 +186,14 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const & problemManager,
 //        ++(counts[defaultMaterial]);
       }
     }
-    for( auto mat : constitutiveGrouping )
-    {
-      for( auto a=0 ; a<mat.second.size() ; ++a )
-      {
-        std::cout<<cellSubBlock.second->getName()<<" constitutiveGrouping["<<mat.first<<"]["<<a<<"] = "<<mat.second[a]<<std::endl;
-      }
+    // for( auto mat : constitutiveGrouping )
+    // {
+    //   for( auto a=0 ; a<mat.second.size() ; ++a )
+    //   {
+    //     std::cout<<cellSubBlock.second->getName()<<" constitutiveGrouping["<<mat.first<<"]["<<a<<"] = "<<mat.second[a]<<std::endl;
+    //   }
       
-    }
+    // }
   }
 //  return counts;
 }

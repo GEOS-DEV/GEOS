@@ -5,6 +5,7 @@
 #include <slic/slic.hpp>
 #include <slic/GenericOutputStream.hpp>
 #include <iostream>
+#include <sys/time.h>
 //#include "ManagedArray.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
 #include "SetSignalHandling.hpp"
@@ -18,6 +19,10 @@ using namespace asctoolkit;
 
 int main( int argc, char *argv[] )
 {
+  timeval tim;
+  gettimeofday(&tim, NULL);
+  real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
+  real64 t_initialize, t_run;
 
 #if USE_MPI
 
@@ -67,6 +72,10 @@ int main( int argc, char *argv[] )
 #if USE_CALIPER==1
   init_ann.end();
 #endif
+  gettimeofday(&tim, NULL);
+  t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
+
+  std::cout << std::endl << "Running simulation:" << std::endl;
   problemManager.RunSimulation();
   
 
@@ -74,8 +83,10 @@ int main( int argc, char *argv[] )
 
   slic::finalize();
 
+  gettimeofday(&tim, NULL);
+  t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-  std::cout<<"exiting main"<<std::endl;
-
+  printf("Done!\n\nScaling Data: initTime = %1.2fs, runTime = %1.2fs\n", t_initialize - t_start,  t_run - t_initialize );
+  
   return 0;
 }
