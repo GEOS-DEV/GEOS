@@ -16,7 +16,7 @@ foreach(test ${gtest_geosx_tests})
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON geosx_core  cxx-utilities
-                        SYSTEM_DEPENDS_ON gtest slic
+                        SYSTEM_DEPENDS_ON gtest slic pugixml
                         )
                         
     blt_add_test( NAME ${test_name} 

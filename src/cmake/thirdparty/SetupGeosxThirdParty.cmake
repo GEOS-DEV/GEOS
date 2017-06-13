@@ -266,6 +266,36 @@ blt_register_library( NAME mathpresso
 
 endif()
 
+
+
+################################
+# PUGIXML
+################################
+message( INFO ": setting up pugixml" )
+set(PUGIXML_LOCAL_DIR ${PROJECT_BINARY_DIR}/thirdparty/pugixml)
+set(PUGIXML_DIR ${PUGIXML_LOCAL_DIR})
+set(PUGIXML_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/pugixml)
+
+message( INFO ": PUGIXML_DIR = ${PUGIXML_DIR}" )
+message( INFO ": PUGIXML_LOCAL_DIR = ${PUGIXML_LOCAL_DIR}" )
+message( INFO ": PUGIXML_INSTALL_DIR = ${PUGIXML_INSTALL_DIR}" )
+
+ExternalProject_Add( pugixml
+                     PREFIX ${PROJECT_BINARY_DIR}/thirdparty/pugixml
+                     GIT_REPOSITORY https://github.com/zeux/pugixml.git
+                     GIT_TAG master
+                     INSTALL_DIR ${PUGIXML_INSTALL_DIR}
+                     INSTALL_COMMAND make install
+                     CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+blt_register_library( NAME pugixml
+                      INCLUDES ${PUGIXML_INSTALL_DIR}/include
+                      LIBRARIES ${PUGIXML_INSTALL_DIR}/lib64/libpugixml.a )
+
+
+
 if (UNCRUSTIFY_EXECUTABLE)
   include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
 endif()

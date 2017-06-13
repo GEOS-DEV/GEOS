@@ -14,7 +14,7 @@
 #include <math.h>
 #include "managers/TableManager.hpp"
 //#include "SimpleGeometricObjects.hpp"
-#include "pugixml/src/pugixml.hpp"
+#include "pugixml.hpp"
 
 #include "slic/slic.hpp"
 

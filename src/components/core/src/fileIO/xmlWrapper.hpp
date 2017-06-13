@@ -8,7 +8,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_FILEIO_XMLWRAPPER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FILEIO_XMLWRAPPER_HPP_
 
-#include "pugixml/src/pugixml.hpp"
+#include "pugixml.hpp"
 #include <vector>
 #include <string>
 #include <sstream>

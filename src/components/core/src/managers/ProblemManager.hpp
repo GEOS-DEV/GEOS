@@ -18,7 +18,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #endif
-#include "pugixml/src/pugixml.hpp"
+#include "pugixml.hpp"
 #include "optionparser/src/optionparser.h"
 
 #include "ObjectManagerBase.hpp"

@@ -8,7 +8,7 @@
 #include "EventManager.hpp"
 
 #include "DocumentationNode.hpp"
-#include "pugixml/src/pugixml.hpp"
+#include "pugixml.hpp"
 
 namespace geosx
 {

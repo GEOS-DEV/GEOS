@@ -12,7 +12,7 @@
 #include <time.h>       /* time */
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "pugixml/src/pugixml.hpp"
+#include "pugixml.hpp"
 #include "codingUtilities/Utilities.hpp"
 namespace geosx
 {
