@@ -24,8 +24,6 @@ option( ENABLE_RAJA "Enables RAJA" ON )
 option( ENABLE_CALIPER "Enables CALIPER" OFF )
 option( ENABLE_FPARSER "Enables FPARSER" OFF )
 
-option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" ON )
-option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" ON )
 
 
 message("Leaving hc-defaults.cmake\n")

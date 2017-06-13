@@ -28,6 +28,8 @@ set(GEOSX_LINK_POSTPEND_FLAG "" CACHE PATH "" FORCE)
 #######################################
 set( CHAI_DIR "${CMAKE_SOURCE_DIR}/../../chai" CACHE PATH "")
 set( RAJA_DIR "${CMAKE_SOURCE_DIR}/../../raja" CACHE PATH "")
+option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" ON )
+option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" ON )
 
 
 set(CUDA_ENABLED      "OFF"        CACHE PATH "" FORCE)

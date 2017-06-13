@@ -48,8 +48,9 @@ endif()
 # RAJA
 ################################
 if( EXISTS ${RAJA_DIR})
+message("${RAJA_DIR}")
     if( NOT BUILD_LOCAL_RAJA )
-        message(INFO ": Using system RAJA found at ${RAJA_DIR}")
+        message("Using system RAJA found at ${RAJA_DIR}")
         include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake)
         if (NOT RAJA_FOUND)
             message(FATAL_ERROR ": RAJA not found in ${RAJA_DIR}. Maybe you need to build it")
@@ -57,9 +58,9 @@ if( EXISTS ${RAJA_DIR})
     
         blt_register_library( NAME raja
                               INCLUDES ${RAJA_INCLUDE_DIRS}
-                              LIBRARIES RAJA  )
+                              LIBRARIES ${RAJA_LIBRARY} )
     else()
-        message(INFO ": Build RAJA from source found at {RAJA_DIR}")
+        message(INFO ": Build RAJA from source found at ${RAJA_DIR}")
         set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/raja)
         ExternalProject_Add( RAJA
                              PREFIX ${PROJECT_BINARY_DIR}/thirdparty/raja
@@ -115,7 +116,7 @@ if( EXISTS ${CHAI_DIR})
                               INCLUDES ${CHAI_INCLUDE_DIRS}
                               LIBRARIES ${CHAI_LIBRARY}  )
     else()
-        message(INFO ": Build CHAI from source found at {CHAI_DIR}")
+        message(INFO ": Build CHAI from source found at ${CHAI_DIR}")
         set(chai_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/chai)
         ExternalProject_Add( chai
                              PREFIX ${PROJECT_BINARY_DIR}/thirdparty/chai
