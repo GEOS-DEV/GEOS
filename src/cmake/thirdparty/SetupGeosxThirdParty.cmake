@@ -212,6 +212,60 @@ blt_register_library( NAME caliper
 
 endif()
 
+
+
+################################
+# ASMJIT / MATHPRESSO
+################################
+set(ENABLE_MATHPRESSO ON CACHE BOOL  "Enables mathpresso Plugin")
+if( ENABLE_MATHPRESSO )
+message( INFO ": setting up asmjit" )
+set(ASMJIT_LOCAL_DIR ${PROJECT_BINARY_DIR}/thirdparty/asmjit/src/asmjit)
+set(ASMJIT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/asmjit)
+
+ExternalProject_Add( asmjit
+                     PREFIX ${PROJECT_BINARY_DIR}/thirdparty/asmjit
+                     GIT_REPOSITORY https://github.com/asmjit/asmjit.git
+                     GIT_TAG master
+                     INSTALL_DIR ${ASMJIT_INSTALL_DIR}
+                     INSTALL_COMMAND make install
+                     CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DBUILD_SHARED_LIBS:BOOL=OFF
+                                -DCMAKE_BUILD_TYPE=Release
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+message( INFO ": setting up MathPresso" )
+set(MATHPRESSO_LOCAL_DIR ${PROJECT_BINARY_DIR}/thirdparty/mathpresso)
+set(MATHPRESSO_DIR ${MATHPRESSO_LOCAL_DIR})
+set(MATHPRESSO_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/mathpresso)
+
+message( INFO ": MATHPRESSO_DIR = ${MATHPRESSO_DIR}" )
+message( INFO ": MATHPRESSO_LOCAL_DIR = ${MATHPRESSO_LOCAL_DIR}" )
+message( INFO ": MATHPRESSO_INSTALL_DIR = ${MATHPRESSO_INSTALL_DIR}" )
+
+ExternalProject_Add( mathpresso
+                     PREFIX ${PROJECT_BINARY_DIR}/thirdparty/mathpresso
+                     GIT_REPOSITORY https://github.com/kobalicek/mathpresso.git
+                     GIT_TAG master
+                     DEPENDS asmjit 
+                     INSTALL_DIR ${MATHPRESSO_INSTALL_DIR}
+                     INSTALL_COMMAND mkdir -p <INSTALL_DIR>/include &&
+                                     mkdir -p <INSTALL_DIR>/lib &&
+                                     make INSTALL_DIR=<INSTALL_DIR> install &&
+                                     cp libmathpresso.a <INSTALL_DIR>/lib/
+                     CMAKE_ARGS -DMATHPRESSO_STATIC=TRUE
+                                -DASMJIT_DIR=${ASMJIT_LOCAL_DIR}
+                                -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+blt_register_library( NAME mathpresso
+                      INCLUDES ${MATHPRESSO_INSTALL_DIR}/include
+                      LIBRARIES ${MATHPRESSO_INSTALL_DIR}/lib/libmathpresso.a )
+
+endif()
+
 if (UNCRUSTIFY_EXECUTABLE)
   include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
 endif()

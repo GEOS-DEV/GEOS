@@ -33,10 +33,6 @@ if( ENABLE_PYTHON )
 endif()
 
 
-if( ENABLE_MUPARSERX )
-  set( extraComponentsListLink ${extraComponentsListLink} muparserx )
-endif()
-
 if( ENABLE_MATHPRESSO )
   set( extraComponentsListLink ${extraComponentsListLink} mathpresso )
 endif()

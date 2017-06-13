@@ -33,12 +33,3 @@
 	path = src/components/ReservoirSimulationPackage
 	url = ../reservoirsimulationpackage.git
 	branch = master
-[submodule "src/thirdparty/muparserx"]
-	path = src/thirdparty/muparserx
-	url = https://github.com/beltoforion/muparserx.git
-[submodule "src/thirdparty/mathpresso"]
-	path = src/thirdparty/mathpresso
-	url = https://github.com/kobalicek/mathpresso.git
-[submodule "src/thirdparty/asmjit"]
-	path = src/thirdparty/asmjit
-	url = https://github.com/asmjit/asmjit.git
