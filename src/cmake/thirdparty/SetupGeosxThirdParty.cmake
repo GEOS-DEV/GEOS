@@ -47,21 +47,39 @@ endif()
 ################################
 # RAJA
 ################################
-set(RAJA_LOCAL_DIR ${CMAKE_SOURCE_DIR}/thirdparty/raja)
-if(EXISTS ${RAJA_DIR})
-    message(INFO ": Using system RAJA found at ${RAJA_DIR}")
-    include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake)
-    if (NOT RAJA_FOUND)
-        message(FATAL_ERROR "RAJA not found in ${RAJA_DIR}. Maybe you need to build it")
+if( EXISTS ${RAJA_DIR})
+    if( NOT BUILD_LOCAL_RAJA )
+        message(INFO ": Using system RAJA found at ${RAJA_DIR}")
+        include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake)
+        if (NOT RAJA_FOUND)
+            message(FATAL_ERROR ": RAJA not found in ${RAJA_DIR}. Maybe you need to build it")
+        endif()
+    
+        blt_register_library( NAME raja
+                              INCLUDES ${RAJA_INCLUDE_DIRS}
+                              LIBRARIES RAJA  )
+    else()
+        message(INFO ": Build RAJA from source found at {RAJA_DIR}")
+        set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/raja)
+        ExternalProject_Add( RAJA
+                             PREFIX ${PROJECT_BINARY_DIR}/thirdparty/raja
+                             SOURCE_DIR ${RAJA_DIR}
+                             BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/raja/src
+                             INSTALL_COMMAND make install
+                             INSTALL_DIR ${raja_install_dir}
+                             CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                        -DRAJA_ENABLE_CUDA=${CUDA_ENABLED}
+                                        -DRAJA_ENABLE_TESTS=${RAJA_ENABLE_TESTS}
+                                        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>  )
+                                 
+        blt_register_library( NAME RAJA
+                              INCLUDES ${raja_install_dir}/include 
+                              LIBRARIES ${raja_install_dir}/lib/libRAJA.a )        
     endif()
-
-    blt_register_library( NAME raja
-                          INCLUDES ${RAJA_INCLUDE_DIRS} 
-                          LIBRARIES RAJA )
-
 else()
     message(INFO ": Using RAJA found at https://github.com/LLNL/RAJA/archive/develop.zip")
-    set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/raja2)
+    set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/raja)
     ExternalProject_Add( raja
                          URL https://github.com/LLNL/RAJA/archive/develop.zip
                          PREFIX ${PROJECT_BINARY_DIR}/thirdparty/raja
@@ -80,58 +98,56 @@ else()
 endif()
 
 
+
+
 ################################
 # CHAI
 ################################
-message( "CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}")
-message( "CHAI_DIR=${CHAI_DIR}")
 if( EXISTS ${CHAI_DIR})
-
-	message( INFO ": CHAI_DIR = ${CHAI_DIR}" )
-
-	if( NOT BUILD_LOCAL_CHAI )
-	    message(INFO ": Using system CHAI found at ${CHAI_DIR}")
-	    include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
-	    if (NOT CHAI_FOUND)
-	        message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
-	    endif()
-	
-	    blt_register_library( NAME chai
-	                          INCLUDES ${CHAI_INCLUDE_DIRS}
-	                          LIBRARIES ${CHAI_LIBRARY}  )
-	else()
-		message(INFO ": Build CHAI from source found at {CHAI_DIR}")
-	    set(chai_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/chai)
-	    ExternalProject_Add( chai
-	                         PREFIX ${PROJECT_BINARY_DIR}/thirdparty/chai
+    if( NOT BUILD_LOCAL_CHAI )
+        message(INFO ": Using system CHAI found at ${CHAI_DIR}")
+        include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
+        if (NOT CHAI_FOUND)
+            message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
+        endif()
+    
+        blt_register_library( NAME chai
+                              INCLUDES ${CHAI_INCLUDE_DIRS}
+                              LIBRARIES ${CHAI_LIBRARY}  )
+    else()
+        message(INFO ": Build CHAI from source found at {CHAI_DIR}")
+        set(chai_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/chai)
+        ExternalProject_Add( chai
+                             PREFIX ${PROJECT_BINARY_DIR}/thirdparty/chai
                              SOURCE_DIR ${CHAI_DIR}
                              BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/chai/src
-	                         INSTALL_COMMAND make install
-	                         INSTALL_DIR ${chai_install_dir}
-	                         CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-	                                    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-	                                    -DENABLE_CUDA=${CUDA_ENABLED}
-	                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
-	                             
-	    blt_register_library( NAME chai
-	                          INCLUDES ${chai_install_dir}/include 
-	                          LIBRARIES ${chai_install_dir}/lib/libchai.a )		
-	endif()
+                             INSTALL_COMMAND make install
+                             INSTALL_DIR ${chai_install_dir}
+                             CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                        -DENABLE_CUDA=${CUDA_ENABLED}
+                                        -DENABLE_OPENMP=${ENABLE_OPENMP}
+                                        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                                 
+        blt_register_library( NAME chai
+                              INCLUDES ${chai_install_dir}/include 
+                              LIBRARIES ${chai_install_dir}/lib/libchai.a )        
+    endif()
 else()
-	set(CHAI_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/chai)
-	message( INFO ": CHAI_INSTALL_DIR = ${CHAI_INSTALL_DIR}" )
+    set(CHAI_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/chai)
+    message( INFO ": CHAI_INSTALL_DIR = ${CHAI_INSTALL_DIR}" )
 
     message(INFO ": Using CHAI found at ssh://git@cz-bitbucket.llnl.gov:7999/um/chai.git")
     ExternalProject_Add( chai
                          PREFIX ${PROJECT_BINARY_DIR}/thirdparty/chai
-       					 GIT_REPOSITORY ssh://git@cz-bitbucket.llnl.gov:7999/um/chai.git
-        				 GIT_TAG master
+                            GIT_REPOSITORY ssh://git@cz-bitbucket.llnl.gov:7999/um/chai.git
+                         GIT_TAG master
                          INSTALL_DIR ${chai_install_dir}
                          INSTALL_COMMAND make install
-	                     CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-        	                        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-        	                        -DENABLE_CUDA=${CUDA_ENABLED}
-        	                        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                         CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                    -DENABLE_CUDA=${CUDA_ENABLED}
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
     blt_register_library( NAME chai
                           INCLUDES ${chai_install_dir}/include 
