@@ -1,4 +1,4 @@
-message("Processing geosxOptions.cmake")
+message("\nProcessing geosxOptions.cmake")
 
 
 if( BLT_CXX_STD STREQUAL c++11)
@@ -13,26 +13,31 @@ if( (CMAKE_CXX_STANDARD EQUAL 11) OR (CMAKE_CXX_STANDARD EQUAL 14) )
 	add_definitions("-DUSE_CXX11")
 endif()
 
+set( thirdPartyLibs "")
 
 if( ENABLE_CHAI )
+  set( thirdPartyLibs ${thirdPartyLibs} chai )
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CHAI=1)
 else()
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CHAI=0)  
 endif()
 
 if( ENABLE_RAJA )
+  set( thirdPartyLibs ${thirdPartyLibs} raja )
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_RAJA=1)
 else()
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_RAJA=0)  
 endif()
 
 if( ENABLE_CALIPER )
+  set( thirdPartyLibs ${thirdPartyLibs} caliper )
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CALIPER=1)
 else()
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CALIPER=0)  
 endif()
 
 if( ENABLE_FPARSER )
+  set( thirdPartyLibs ${thirdPartyLibs} fparser )
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_FPARSER=1)
 else()
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_FPARSER=0)  
@@ -137,4 +142,4 @@ endif()
 
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 
-message("Leaving geosxOptions.cmake")
+message("Leaving geosxOptions.cmake\n")

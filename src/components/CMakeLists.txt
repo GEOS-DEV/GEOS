@@ -55,13 +55,6 @@ blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
                    DEPENDS_ON ${componentlistlink}
                    SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja chai ${extraComponentsListLink}) 
-
-#blt_add_executable(NAME geosx
-#                   SOURCES core/src/main/main.cpp
-#                   DEPENDS_ON ${GEOSX_LINK_PREPEND_FLAG} geosx_core ${GEOSX_LINK_POSTPEND_FLAG} 
-#                              ${GEOSX_LINK_PREPEND_FLAG} newComponentTemplate ${GEOSX_LINK_POSTPEND_FLAG}
-#                              ${GEOSX_LINK_PREPEND_FLAG} cxx-utilities ${GEOSX_LINK_POSTPEND_FLAG}
-#                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 RAJA )
                    
 if (ENABLE_DOCS)
   add_subdirectory(docs)

@@ -1,4 +1,4 @@
-message("Processing hc-defaults.cmake")
+message("Processing hc-defaults.cmake/n")
 set(ENABLE_FORTRAN OFF CACHE BOOL  "Disables Fortran support")
 
 set(BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard")
@@ -6,6 +6,7 @@ set(BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard")
 #message("CMAKE_HOST_SYSTEM_NAME = ${CMAKE_HOST_SYSTEM_NAME}")
 #message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 #message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
+
 if( CMAKE_HOST_APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" OFF FORCE)  
 else()
@@ -18,26 +19,12 @@ option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables ViewWrapper to return point
 
 
 
-set( thirdPartyLibs "")
-option( ENABLE_CHAI ON CACHE BOOL "Enables CHAI" FORCE )
-if( ENABLE_CHAI )
-  set( thirdPartyLibs ${thirdPartyLibs} chai )
-endif()
+option( ENABLE_CHAI "Enables CHAI" ON )
+option( ENABLE_RAJA "Enables RAJA" ON )
+option( ENABLE_CALIPER "Enables CALIPER" OFF )
+option( ENABLE_FPARSER "Enables FPARSER" OFF )
 
-option( ENABLE_RAJA ON CACHE BOOL "Enables RAJA" FORCE )
-if( ENABLE_RAJA )
-  set( thirdPartyLibs ${thirdPartyLibs} raja )
-endif()
-
-option( ENABLE_CALIPER OFF CACHE BOOL "Enables CALIPER" FORCE )
-if( ENABLE_CALIPER )
-  set( thirdPartyLibs ${thirdPartyLibs} caliper )
-endif()
-
-option( ENABLE_FPARSER ON CACHE BOOL "Enables FPARSER" FORCE )
-if( ENABLE_FPARSER )
-  set( thirdPartyLibs ${thirdPartyLibs} fparser )
-endif()
+option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" ON )
 
 
-message("Leaving hc-defaults.cmake")
+message("Leaving hc-defaults.cmake\n")
