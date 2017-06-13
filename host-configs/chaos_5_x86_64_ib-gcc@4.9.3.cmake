@@ -17,7 +17,7 @@ set(ATK_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/axom" CACHE PATH "")
 set(ATK_CMAKE "${ATK_DIR}/lib/cmake" CACHE PATH "")
 
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
-
+set(ENABLE_MPI ON CACHE BOOL "" FORCE)
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 
 
