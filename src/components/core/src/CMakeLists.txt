@@ -37,6 +37,10 @@ if( ENABLE_MUPARSERX )
   set( extraComponentsListLink ${extraComponentsListLink} muparserx )
 endif()
 
+if( ENABLE_MATHPRESSO )
+  set( extraComponentsListLink ${extraComponentsListLink} mathpresso )
+endif()
+
 
 message("adding geosx_core library")
 blt_add_library( NAME
