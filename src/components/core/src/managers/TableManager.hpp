@@ -57,7 +57,6 @@
 
 #include <map>
 #include "../codingUtilities/IOUtilities.hpp"
-#include "pugixml.hpp"
 #include <slic/slic.hpp>
 
 

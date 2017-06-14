@@ -49,51 +49,19 @@ namespace geosx
 
 void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead)
 {
-  // Build the base of the schema
   std::string schemaBase="<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
   <xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\
   <xsd:annotation>\
   <xsd:documentation xml:lang=\"en\">New schema for GEOS</xsd:documentation>\
   </xsd:annotation>\
-  <xsd:simpleType name=\"string\">\
-    <xsd:restriction base=\"xsd:string\"/>\
-  </xsd:simpleType>\
-  <xsd:simpleType name=\"real64\">\
-    <xsd:restriction base=\"xsd:double\"/>\
-  </xsd:simpleType>\
-  <xsd:simpleType name=\"int32\">\
-    <xsd:restriction base=\"xsd:int\"/>\
-  </xsd:simpleType>\
-  <xsd:simpleType name=\"int64\">\
-    <xsd:restriction base=\"xsd:int\"/>\
-  </xsd:simpleType>\
-  <xsd:simpleType name=\"uint64\">\
-    <xsd:restriction base=\"xsd:unsignedInt\"/>\
-  </xsd:simpleType>\
-  <xsd:simpleType name=\"string_array\">\
-    <xsd:restriction base=\"xsd:string\">\
-      <xsd:pattern value=\"(([a-zA-Z0-9]*, )*)?[a-zA-Z0-9]*\"/>\
-    </xsd:restriction>\
-  </xsd:simpleType>\
-  <xsd:simpleType name=\"real64_array\">\
-    <xsd:restriction base=\"xsd:string\">\
-      <xsd:pattern value=\"((([0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?)\\s*\\[([-+.*/()a-zA-Z0-9]*)\\], )*)?([0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?)\\s*\\[([-+.*/()a-zA-Z0-9]*)\\]\"/>\
-    </xsd:restriction>\
-  </xsd:simpleType>\
-  <xsd:simpleType name=\"int32_array\">\
-    <xsd:restriction base=\"xsd:string\">\
-      <xsd:pattern value=\"(([-+]?[0-9]*, )*)?[-+]?[0-9]*\"/>\
-    </xsd:restriction>\
-  </xsd:simpleType>\
-  <xsd:simpleType name=\"uint32_array\">\
-    <xsd:restriction base=\"xsd:string\">\
-      <xsd:pattern value=\"(([0-9]*, )*)?[0-9]*\"/>\
-    </xsd:restriction>\
-  </xsd:simpleType>\
   </xsd:schema>";
-  pugi::xml_document schemaTree;
+
+  xmlWrapper::xmlDocument schemaTree;
   schemaTree.load_string(schemaBase.c_str());
-  pugi::xml_node schemaRoot = schemaTree.child("xsd:schema");
+  xmlWrapper::xmlNode schemaRoot = schemaTree.child("xsd:schema");
+
+  // Build the simple schema types
+  BuildSimpleSchemaTypes(schemaRoot);
 
   // Recursively build the schema from the documentation string
   SchemaConstruction(inputDocumentationHead, schemaRoot, schemaRoot);
@@ -102,12 +70,34 @@ void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::Docu
   schemaTree.save_file(fname.c_str());
 }
 
-void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::xml_node schemaNode, pugi::xml_node schemaRoot)
+
+void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
+{
+  rtTypes::typeRegex typeRegex;
+
+  for (auto regex=typeRegex.begin(); regex!=typeRegex.end(); ++regex)
+  {
+    if (!regex->second.empty())
+    {
+      xmlWrapper::xmlNode newNode = schemaRoot.append_child("xsd:simpleType");
+      newNode.append_attribute("name") = regex->first.c_str();
+
+      xmlWrapper::xmlNode restrictionNode = newNode.append_child("xsd:restriction");
+      restrictionNode.append_attribute("base") = "xsd:string";
+
+      xmlWrapper::xmlNode patternNode = restrictionNode.append_child("xsd:pattern");
+      patternNode.append_attribute("value") = regex->second.c_str();
+    }
+  }
+}
+
+
+void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWrapper::xmlNode schemaNode, xmlWrapper::xmlNode schemaRoot)
 {
   if (docNode.getSchemaType().find("Node") != std::string::npos)
   {
     // Set the type of target
-    pugi::xml_node targetNode = schemaNode;
+    xmlWrapper::xmlNode targetNode = schemaNode;
     if (docNode.getSchemaType().find("Unique") == std::string::npos)
     {
       targetNode = targetNode.child("xsd:choice");
@@ -119,7 +109,7 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::
     }
 
     // Add the entries to the current and root nodes
-    pugi::xml_node newNode = targetNode.append_child("xsd:element");
+    xmlWrapper::xmlNode newNode = targetNode.append_child("xsd:element");
     newNode.append_attribute("name") = docNode.m_name.c_str();
     newNode.append_attribute("type") = (docNode.m_name+"Type").c_str();
     newNode = schemaRoot.append_child("xsd:complexType");
@@ -132,9 +122,8 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::
   }
   else if (docNode.getSchemaType().empty() == 0)
   {
-    pugi::xml_node newNode = schemaNode.append_child("xsd:attribute");
+    xmlWrapper::xmlNode newNode = schemaNode.append_child("xsd:attribute");
     newNode.append_attribute("name") = docNode.m_name.c_str();
-    // newNode.append_attribute("type") = ("xsd:"+docNode.getSchemaType()).c_str();
     newNode.append_attribute("type") = (docNode.getSchemaType()).c_str();
 
     if (docNode.getDefault().empty())

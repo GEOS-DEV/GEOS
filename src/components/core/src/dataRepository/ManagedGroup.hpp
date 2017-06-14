@@ -17,8 +17,6 @@
 #include "depricated/Common.h"
 #include "DocumentationNode.hpp"
 
-//#include "pugixml/src/pugixml.hpp"
-
 
 //#include "CodingUtilities/ANSTexception.hpp"
 

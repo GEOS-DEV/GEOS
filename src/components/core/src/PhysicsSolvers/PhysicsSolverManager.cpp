@@ -9,7 +9,6 @@
 
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "SolverBase.hpp"
-#include "pugixml.hpp"
 
 namespace geosx
 {

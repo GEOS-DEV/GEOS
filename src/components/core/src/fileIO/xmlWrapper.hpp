@@ -28,6 +28,8 @@ class ManagedGroup;
 class xmlWrapper
 {
 public:
+  using xmlDocument = pugi::xml_document;
+  using xmlResult = pugi::xml_parse_result;
   using xmlNode = pugi::xml_node;
 
   xmlWrapper();

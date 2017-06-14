@@ -9,13 +9,14 @@
 #define SCHEMAUTILITIES_HPP_
 
 #include "DocumentationNode.hpp"
-#include "pugixml.hpp"
+#include "common/DataTypes.hpp"
 
 namespace geosx
 {
 
 void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead);
-void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, pugi::xml_node schemaNode, pugi::xml_node schemaRoot);
+void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot);
+void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWrapper::xmlNode schemaNode, xmlWrapper::xmlNode schemaRoot);
 
 }
 

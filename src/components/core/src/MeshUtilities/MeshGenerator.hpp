@@ -12,7 +12,6 @@
 #include <time.h>       /* time */
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "pugixml.hpp"
 #include "codingUtilities/Utilities.hpp"
 namespace geosx
 {
@@ -55,7 +54,7 @@ public:
   void GenerateMesh( //SpatialPartition& partition,
                      DomainPartition & domain );
 
-  void GenerateNodesets( pugi::xml_node const & targetNode,
+  void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
                          NodeManager& nodeManager );
 
   void GetElemToNodesRelationInBox ( const std::string& elementType,

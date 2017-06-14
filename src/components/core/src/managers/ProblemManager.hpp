@@ -18,7 +18,6 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #endif
-#include "pugixml.hpp"
 #include "optionparser/src/optionparser.h"
 
 #include "ObjectManagerBase.hpp"
@@ -124,8 +123,8 @@ public:
   DomainPartition & getDomainPartition();
   DomainPartition const & getDomainPartition() const;
 
-  pugi::xml_document xmlDocument;
-  pugi::xml_parse_result xmlResult;
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlWrapper::xmlResult xmlResult;
   xmlWrapper::xmlNode xmlProblemNode;
 
 private:

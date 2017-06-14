@@ -19,7 +19,6 @@
 #include <unordered_map>
 #include <vector>
 
-//#include "pugixml/src/pugixml.hpp"
 #include "fileIO/xmlWrapper.hpp"
 
 #include "Macros.hpp"
@@ -265,6 +264,49 @@ public:
     };
     return type_names.at(name);
   }
+
+
+  // Matching regex for data types in xml
+  class typeRegex
+  {
+  private:
+    std::string ru = "[0-9]*";
+    std::string ri = "[+-]?[0-9]*";    
+    std::string rr = "[0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?";
+    
+    std::unordered_map<std::string, std::string> regexMap = 
+    {
+      {"int32", ri},
+      {"uint32", ru},
+      {"int64", ri},
+      {"uint64", ru},
+      {"real32", rr},
+      {"real64", rr},
+      {"R1Tensor", rr + ", " + rr + ", " + rr},
+      {"R2Tensor", rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr},
+      {"R2SymTensor", rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr},
+      {"int32_array", "((" + ri + ", )*)?" + ri},
+      {"uint32_array", "((" + ru + ", )*)?" + ru},
+      {"int64_array", "((" + ri + ", )*)?" + ri},
+      {"uint64_array", "((" + ru + ", )*)?" + ru},
+      {"real32_array", "((" + rr + ", )*)?" + rr},
+      {"real64_array", "((" + rr + ", )*)?" + rr},
+      {"r1_array", ""},
+      {"r2_array", ""},
+      {"r2Sym_array", ""},
+      {"std_size_t", ru},
+      {"string", "[a-zA-Z0-9_,\\(\\)+-/\\*]*"},
+      {"mapPair", ""},
+      {"mapPair_array", ""}
+    };
+
+  public:
+    std::unordered_map<std::string, std::string>::iterator begin(){return regexMap.begin();};
+    std::unordered_map<std::string, std::string>::iterator end(){return regexMap.end();};
+    std::unordered_map<std::string, std::string>::const_iterator begin() const {return regexMap.begin();};
+    std::unordered_map<std::string, std::string>::const_iterator end() const {return regexMap.end();};
+  };
+
 
   template< typename LAMBDA >
   static auto ApplyIntrinsicTypeLambda1( const TypeIDs type,
