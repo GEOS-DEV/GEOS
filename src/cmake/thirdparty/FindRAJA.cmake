@@ -3,10 +3,34 @@
 if(NOT RAJA_DIR)
     MESSAGE(FATAL_ERROR "Could not find RAJA. RAJA requires explicit RAJA_DIR.")
 endif()
-MESSAGE("Finding RAJA in ${RAJA_DIR}")
-include(${RAJA_DIR}/share/raja/cmake/raja-config.cmake OPTIONAL)
-set (RAJA_FOUND FALSE)
-if (RAJA_INCLUDE_PATH)
-   set(RAJA_FOUND TRUE)
-   set(RAJA_INCLUDE_DIRS ${RAJA_INCLUDE_PATH})
-endif()
+
+
+#find includes
+find_path( RAJA_INCLUDE_DIRS 
+           NAMES RAJA.hxx
+           PATHS  ${RAJA_DIR}/include/RAJA
+           NO_DEFAULT_PATH
+           NO_CMAKE_ENVIRONMENT_PATH
+           NO_CMAKE_PATH
+           NO_SYSTEM_ENVIRONMENT_PATH
+           NO_CMAKE_SYSTEM_PATH)
+
+find_library( RAJA_LIBRARY 
+              NAMES RAJA libRAJA
+              PATHS ${RAJA_DIR}/lib
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+
+include(FindPackageHandleStandardArgs)
+
+# handle the QUIETLY and REQUIRED arguments and set RAJA_FOUND to TRUE
+# if all listed variables are TRUE
+set(RAJA_FOUND TRUE)
+
+find_package_handle_standard_args(RAJA  DEFAULT_MSG
+                                  RAJA_INCLUDE_DIRS
+                                  RAJA_LIBRARY )

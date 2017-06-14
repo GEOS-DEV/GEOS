@@ -20,7 +20,7 @@ m_zero_energy_modes(num_zero_energy_modes),
 m_dim(dim)
 {
   data.resize(n_q_points);
-  for(unsigned q=0; q<n_q_points; ++q)
+  for(auto q=0; q<n_q_points; ++q)
   {
 //    data[q].parent_q_point = quadrature.integration_point(q);
     data[q].parent_q_weight = 1;

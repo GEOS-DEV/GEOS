@@ -66,7 +66,7 @@ FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
 {
 
   data.resize(n_q_points);
-  for(unsigned q=0; q<n_q_points; ++q)
+  for(auto q=0; q<n_q_points; ++q)
   {
     data[q].parent_q_point = quadrature.integration_point(q);
     data[q].parent_q_weight = quadrature.integration_weight(q);
@@ -75,7 +75,7 @@ FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
     data[q].parent_gradients.resize(n_dofs);
     data[q].mapped_gradients.resize(n_dofs);
 
-    for(unsigned i=0; i<n_dofs; ++i)
+    for(auto i=0; i<n_dofs; ++i)
     {
       data[q].parent_values[i]    = basis.value(i,data[q].parent_q_point);
       data[q].parent_gradients[i] = basis.gradient(i,data[q].parent_q_point);
@@ -99,16 +99,16 @@ FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
 template <int dim>
 void FiniteElement<dim> :: reinit(const std::vector<R1TensorT<3> > &mapped_support_points)
 {
-  assert(mapped_support_points.size() == n_dofs);
+  assert(mapped_support_points.size() == static_cast<unsigned>(n_dofs));
 
   R2TensorT<3> jacobian;
   R2TensorT<3> inv_jacobian;
 
-  for(unsigned q=0; q<n_q_points; ++q)
+  for(auto q=0; q<n_q_points; ++q)
   {
  
      jacobian = 0;
-     for(unsigned a=0; a<n_dofs; ++a)
+     for(auto a=0; a<n_dofs; ++a)
      {
        jacobian.plus_dyadic_ab( mapped_support_points[a], data[q].parent_gradients[a] );
      }
@@ -120,7 +120,7 @@ void FiniteElement<dim> :: reinit(const std::vector<R1TensorT<3> > &mapped_suppo
 
      data[q].jacobian_determinant = inv_jacobian.Inverse(jacobian);
      
-     for(unsigned i=0; i<n_dofs; ++i)
+     for(auto i=0; i<n_dofs; ++i)
      {
        data[q].mapped_gradients[i].AijBi( inv_jacobian, data[q].parent_gradients[i] );
      } 

@@ -18,9 +18,9 @@ SidreWrapper::SidreWrapper()
 SidreWrapper::~SidreWrapper()
 {}
 
-asctoolkit::sidre::DataStore& SidreWrapper::dataStore()
+axom::sidre::DataStore& SidreWrapper::dataStore()
 {
-  static asctoolkit::sidre::DataStore datastore;
+  static axom::sidre::DataStore datastore;
   return datastore;
 }
 

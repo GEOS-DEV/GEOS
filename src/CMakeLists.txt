@@ -5,7 +5,6 @@ cmake_minimum_required(VERSION 3.1)
 ################################
 project(geosx LANGUAGES C CXX)
 
-set(CHAI_DIR thirdparty/chai)
 ################################
 # Include blt
 ################################

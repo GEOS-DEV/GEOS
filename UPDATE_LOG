@@ -1,5 +1,12 @@
 
 
+Tue Jun 13 13:51:38 2017 Randolph R. Settgast
+v4.0.4
+
+This branch updates CHAI, RAJA, and AXOM. Also modifications to cmake system for these external projects have been made to allow for direct use of system installations, recompilation of source located elsewhere on the system, or downloading from repo's 
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/blt/pull-requests/3
+
+
 Tue Jun  6 17:34:40 2017 Randolph R. Settgast
 v4.0.3
 
