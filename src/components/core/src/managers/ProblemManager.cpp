@@ -45,10 +45,12 @@ using namespace constitutive;
 ProblemManager::ProblemManager( const std::string& name,
                                 ManagedGroup * const parent ) :
   ObjectManagerBase( name, parent ),
-  m_physicsSolverManager(nullptr)
+  m_physicsSolverManager(nullptr),
+  m_functionManager(nullptr)
 {
   m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
   m_eventManager = &(RegisterGroup<EventManager>(keys::eventManager) ) ;
+  m_functionManager = &(RegisterGroup<FunctionManager>(keys::functionManager) ) ;
 }
 
 //ProblemManager::ProblemManager( const std::string& name,
@@ -451,6 +453,7 @@ void ProblemManager::ParseInputFile()
   
   this->m_physicsSolverManager->ReadXML(domain, xmlProblemNode );
   this->m_eventManager->ReadXML( xmlProblemNode );
+  this->m_functionManager->ReadXML( xmlProblemNode );
   
 
   // Documentation output
