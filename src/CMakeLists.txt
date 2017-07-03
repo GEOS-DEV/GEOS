@@ -42,3 +42,5 @@ install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
 # Add Thirdparty Builtin Libs
 ################################
 add_subdirectory(thirdparty)
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lz" )

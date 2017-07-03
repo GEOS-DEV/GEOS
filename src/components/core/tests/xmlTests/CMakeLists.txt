@@ -23,7 +23,7 @@ foreach(test ${gtest_geosx_tests})
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${componentlistlink}
-                        SYSTEM_DEPENDS_ON gtest slic sidre conduit hdf5
+                        SYSTEM_DEPENDS_ON gtest slic sidre conduit hdf5  "-lz"
                         )
 
     blt_add_test( NAME ${test_name} 
