@@ -48,6 +48,8 @@ public:
   using dataRepository::ManagedGroup::ReadXML;
   void ReadXML( dataRepository::ManagedGroup& domain, xmlWrapper::xmlNode const & problemNode );
 
+  static JIT_Function& getFunction(const std::string& name);
+
 };
 
 
