@@ -212,6 +212,13 @@ inline void StringToType( std::vector<T>& destination, std::string const & sourc
 
 }
 
+template <>
+inline void StringToType<std::string>( std::vector<std::string>& destination, std::string const & source )
+{
+  destination.push_back( source );
+}
+
+
 }
 }
 
