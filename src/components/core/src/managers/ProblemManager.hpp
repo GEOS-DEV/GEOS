@@ -23,7 +23,7 @@
 #include "ObjectManagerBase.hpp"
 #include "PhysicsSolvers/PhysicsSolverManager.hpp"
 #include "EventManager.hpp"
-#include "FunctionManager.hpp"
+#include "FunctionManagerJIT.hpp"
 #include "schema/SchemaUtilities.hpp"
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 
@@ -35,7 +35,6 @@ namespace dataRepository
 namespace keys
 {
 string const eventManager="EventManager";
-string const functionManager="FunctionManager";
 }
 }
 
@@ -132,7 +131,7 @@ public:
 private:
   PhysicsSolverManager * m_physicsSolverManager;
   EventManager * m_eventManager;
-  JIT_FunctionManager * m_functionManager;
+  FunctionManagerJIT * m_functionManager;
 };
 
 } /* namespace geosx */

@@ -1,11 +1,11 @@
 /*
- * FunctionManager.cpp
+ * FunctionManagerJIT.cpp
  *
  *  Created on: June 16, 2017
  *      Author: sherman
  */
 
-#include "FunctionManager.hpp"
+#include "FunctionManagerJIT.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include <mathpresso/mathpresso.h>
@@ -36,6 +36,12 @@ JIT_Function::JIT_Function( const std::string& name,
 JIT_Function::~JIT_Function()
 {
   // TODO Auto-generated destructor stub
+}
+
+JIT_Function::CatalogInterface::CatalogType& JIT_Function::GetCatalog()
+{
+  static JIT_Function::CatalogInterface::CatalogType catalog;
+  return catalog;
 }
 
 void JIT_Function::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
@@ -80,10 +86,10 @@ void JIT_Function::BuildDataStructure( ManagedGroup * const domain )
   RegisterDocumentationNodes();
 }
 
-void JIT_Function::Initialize( ManagedGroup& functionManager )
+void JIT_Function::Compile()
 {
   // Register variables
-  view_rtype<string_array> variables = nodes.getData<string_array>(keys::variableNames);
+  view_rtype<string_array> variables = getData<string_array>(keys::variableNames);
   for (int ii=0; ii<variables.size(); ++ii)
   {
     parserContext.addVariable(variables[ii].c_str(), ii * sizeof(double));
@@ -91,7 +97,7 @@ void JIT_Function::Initialize( ManagedGroup& functionManager )
 
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.), compile
   parserContext.addBuiltIns();
-  std::string expression = getData<std::string>(keys::JIT_Expression);
+  std::string expression = getData<std::string>(keys::expression);
   mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
   if (err != mathpresso::kErrorOk) 
   {
@@ -99,31 +105,31 @@ void JIT_Function::Initialize( ManagedGroup& functionManager )
   }
 }
 
+REGISTER_CATALOG_ENTRY( ManagedGroup, JIT_Function, std::string const &, ManagedGroup * const )
 
 
 // Function Manager
-FunctionManager::FunctionManager( const std::string& name,
+FunctionManagerJIT::FunctionManagerJIT( const std::string& name,
                                   ManagedGroup * const parent ) :
   ManagedGroup( name, parent )
 {}
 
-FunctionManager::~FunctionManager()
+FunctionManagerJIT::~FunctionManagerJIT()
 {
   // TODO Auto-generated destructor stub
 }
 
-void FunctionManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
+void FunctionManagerJIT::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode( domain );
   
   docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
   docNode->setShortDescription("JIT function manager");
 }
 
-void FunctionManager::ReadXML( dataRepository::ManagedGroup& domain,
-                               xmlWrapper::xmlNode const & problemNode )
+void FunctionManagerJIT::ReadXML( dataRepository::ManagedGroup& domain,
+                                  xmlWrapper::xmlNode const & problemNode )
 {
   xmlWrapper::xmlNode topLevelNode = problemNode.child("Functions");
   if (topLevelNode != NULL)
@@ -132,20 +138,21 @@ void FunctionManager::ReadXML( dataRepository::ManagedGroup& domain,
 
     for (xmlWrapper::xmlNode functionNode=topLevelNode.first_child(); functionNode; functionNode=functionNode.next_sibling())
     {
-      // Register the new solver
+      // Register the new function
       std::cout << "   " << functionNode.name() << std::endl;
       std::string functionID = functionNode.attribute("name").value();
-      JIT_Function & newFunction = CreateSolver( functionNode.name(), functionID );
+      JIT_Function & newFunction = CreateFunction( functionNode.name(), functionID );
 
       // Set the documentation node, register, and read xml
       newFunction.SetDocumentationNodes( &domain );
       newFunction.BuildDataStructure( &domain );
       newFunction.ReadXML(functionNode );
+      newFunction.Compile();
     }
   }
 }
 
-JIT_Function & FunctionManager::CreateFunction( string const & functionCatalogKey, string const & functionName )
+JIT_Function & FunctionManagerJIT::CreateFunction( string const & functionCatalogKey, string const & functionName )
 {
   std::unique_ptr<JIT_Function> function = JIT_Function::CatalogInterface::Factory( functionCatalogKey, functionName, this );
   JIT_Function & rval = this->RegisterGroup<JIT_Function>( functionName, std::move(function) );
@@ -153,5 +160,6 @@ JIT_Function & FunctionManager::CreateFunction( string const & functionCatalogKe
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, FunctionManager, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ManagedGroup, FunctionManagerJIT, std::string const &, ManagedGroup * const )
+
 } /* namespace ANST */

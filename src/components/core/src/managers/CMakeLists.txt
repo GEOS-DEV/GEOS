@@ -17,6 +17,7 @@ set(geosx_headers
     managers/TableManager.hpp
     managers/ElementRegion.hpp
     managers/ElementRegionManager.hpp
+    managers/FunctionManagerJIT.hpp
     PARENT_SCOPE )
 
 
@@ -38,6 +39,7 @@ set(geosx_core_sources
     managers/TableManager.cpp
     managers/ElementRegion.cpp
     managers/ElementRegionManager.cpp
+    managers/FunctionManagerJIT.cpp
     PARENT_SCOPE )
 
 if( 0 )

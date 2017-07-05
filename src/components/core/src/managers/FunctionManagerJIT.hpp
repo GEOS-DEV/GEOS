@@ -1,29 +1,25 @@
 /*
- * FunctionManager.hpp
+ * FunctionManagerJIT.hpp
  *
  *  Created on: Jun 16, 2017
  *      Author: sherman
  */
 
-#ifndef FUNCTIONMANAGER_HPP_
-#define FUNCTIONMANAGER_HPP_
+#ifndef FUNCTIONMANAGERJIT_HPP_
+#define FUNCTIONMANAGERJIT_HPP_
 
-#include "PhysicsSolvers/ManagedGroup.hpp"
+#include "dataRepository/ManagedGroup.hpp"
 #include <mathpresso/mathpresso.h>
 
 namespace geosx
 {
-namespace dataRepository
-{
-class ManagedGroup;
-}
 
 
-class JIT_Function : public ManagedGroup
+class JIT_Function : public dataRepository::ManagedGroup
 {
 public:
   JIT_Function( const std::string& name,
-                    ManagedGroup * const parent );
+                dataRepository::ManagedGroup * const parent );
 
   virtual ~JIT_Function();
   static string CatalogName() { return "JIT_Function"; }
@@ -36,23 +32,23 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface< JIT_Function, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
-
 private:
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
 };
 
 
-class FunctionManager : public ManagedGroup
+class FunctionManagerJIT : public dataRepository::ManagedGroup
 {
 public:
-  FunctionManager( const std::string& name,
-                   ManagedGroup * const parent );
-  virtual ~FunctionManager();
-  static string CatalogName() { return "FunctionManager"; }
+  FunctionManagerJIT( const std::string& name,
+                      dataRepository::ManagedGroup * const parent );
+  virtual ~FunctionManagerJIT();
+  
+  static string CatalogName() { return "FunctionManagerJIT"; }
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
 
+  using dataRepository::ManagedGroup::ReadXML;
   void ReadXML( dataRepository::ManagedGroup& domain, xmlWrapper::xmlNode const & problemNode );
   JIT_Function & CreateFunction( string const & functionCatalogKey, string const & functionName );
 
@@ -61,4 +57,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* FUNCTIONMANAGER_HPP_ */
+#endif /* FUNCTIONMANAGERJIT_HPP_ */

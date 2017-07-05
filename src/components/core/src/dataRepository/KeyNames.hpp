@@ -46,6 +46,7 @@ std::string const FEM_Edges    = "FEM_Edges";
 std::string const FEM_Faces    = "FEM_Faces";
 std::string const FEM_Elements = "FEM_Elements";
 std::string const cellManager = "cellMananger";
+std::string const functionManager = "FunctionManager";
 
 
 }
