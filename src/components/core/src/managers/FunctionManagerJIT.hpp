@@ -28,10 +28,7 @@ public:
 
   void Compile();
   double Evaluate(double* input) { return parserExpression.evaluate(input); };
-
-  using CatalogInterface = cxx_utilities::CatalogInterface< JIT_Function, std::string const &, ManagedGroup * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
-
+  
 private:
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
@@ -50,7 +47,6 @@ public:
 
   using dataRepository::ManagedGroup::ReadXML;
   void ReadXML( dataRepository::ManagedGroup& domain, xmlWrapper::xmlNode const & problemNode );
-  JIT_Function & CreateFunction( string const & functionCatalogKey, string const & functionName );
 
 };
 

@@ -38,11 +38,6 @@ JIT_Function::~JIT_Function()
   // TODO Auto-generated destructor stub
 }
 
-JIT_Function::CatalogInterface::CatalogType& JIT_Function::GetCatalog()
-{
-  static JIT_Function::CatalogInterface::CatalogType catalog;
-  return catalog;
-}
 
 void JIT_Function::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
@@ -82,7 +77,6 @@ void JIT_Function::FillDocumentationNode( dataRepository::ManagedGroup * const d
 
 void JIT_Function::BuildDataStructure( ManagedGroup * const domain )
 {
-  JIT_Function::BuildDataStructure( domain );
   RegisterDocumentationNodes();
 }
 
@@ -101,11 +95,9 @@ void JIT_Function::Compile()
   mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
   if (err != mathpresso::kErrorOk) 
   {
-    throw std::invalid_argument("JIT compile error: " + err);
+    throw std::invalid_argument("JIT Compiler Error");
   }
 }
-
-REGISTER_CATALOG_ENTRY( ManagedGroup, JIT_Function, std::string const &, ManagedGroup * const )
 
 
 // Function Manager
@@ -141,25 +133,16 @@ void FunctionManagerJIT::ReadXML( dataRepository::ManagedGroup& domain,
       // Register the new function
       std::cout << "   " << functionNode.name() << std::endl;
       std::string functionID = functionNode.attribute("name").value();
-      JIT_Function & newFunction = CreateFunction( functionNode.name(), functionID );
+
+      JIT_Function & newFunction = this->RegisterGroup<JIT_Function>( functionID, std::move(std::make_unique<JIT_Function>(functionID, this)) );
 
       // Set the documentation node, register, and read xml
-      newFunction.SetDocumentationNodes( &domain );
-      newFunction.BuildDataStructure( &domain );
+      newFunction.SetDocumentationNodes( this );
+      newFunction.BuildDataStructure( this );
       newFunction.ReadXML(functionNode );
       newFunction.Compile();
     }
   }
 }
-
-JIT_Function & FunctionManagerJIT::CreateFunction( string const & functionCatalogKey, string const & functionName )
-{
-  std::unique_ptr<JIT_Function> function = JIT_Function::CatalogInterface::Factory( functionCatalogKey, functionName, this );
-  JIT_Function & rval = this->RegisterGroup<JIT_Function>( functionName, std::move(function) );
-
-  return rval;
-}
-
-REGISTER_CATALOG_ENTRY( ManagedGroup, FunctionManagerJIT, std::string const &, ManagedGroup * const )
 
 } /* namespace ANST */
