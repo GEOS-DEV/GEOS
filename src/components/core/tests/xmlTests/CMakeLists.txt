@@ -23,7 +23,11 @@ foreach(test ${gtest_geosx_tests})
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${componentlistlink}
+<<<<<<< HEAD
                         SYSTEM_DEPENDS_ON gtest slic sidre conduit hdf5 pugixml mathpresso  "-lz"
+=======
+                        SYSTEM_DEPENDS_ON gtest slic sidre conduit hdf5 pugixml "-lz"
+>>>>>>> origin/feature/settgast/addLegacyCode
                         )
 
     blt_add_test( NAME ${test_name} 
