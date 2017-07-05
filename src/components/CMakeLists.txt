@@ -53,8 +53,10 @@ endforeach()
 
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
-                   DEPENDS_ON ${componentlistlink}
+                   DEPENDS_ON ${componentlistlink} "-lz"
                    SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja chai pugixml ${extraComponentsListLink}) 
+
+#set_property ( TARGET geosx APPEND_STRING PROPERTY LINK_FLAGS " -lz" )
 
 
                    
