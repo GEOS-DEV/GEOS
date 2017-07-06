@@ -5,6 +5,7 @@
 set(geosx_headers
   ${geosx_headers}
     codingUtilities/StringUtilities.hpp
+    codingUtilities/IOUtilities.hpp
     PARENT_SCOPE )
 
 #

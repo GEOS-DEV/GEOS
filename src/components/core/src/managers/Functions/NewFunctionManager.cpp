@@ -52,7 +52,7 @@ void NewFunctionManager::ReadXML( dataRepository::ManagedGroup& domain,
       newFunction.SetDocumentationNodes( this );
       newFunction.BuildDataStructure( this );
       newFunction.ReadXML(functionNode );
-      newFunction->InitializeFunction();
+      newFunction.InitializeFunction();
     }
   }
 }

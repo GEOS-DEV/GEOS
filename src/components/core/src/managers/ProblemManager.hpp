@@ -23,7 +23,7 @@
 #include "ObjectManagerBase.hpp"
 #include "PhysicsSolvers/PhysicsSolverManager.hpp"
 #include "EventManager.hpp"
-#include "NewFunctionManager.hpp"
+#include "managers/Functions/NewFunctionManager.hpp"
 #include "schema/SchemaUtilities.hpp"
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 

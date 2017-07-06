@@ -1,7 +1,7 @@
 /*
- * FunctionManagerJIT.cpp
+ * SymbolicFunction.cpp
  *
- *  Created on: June 16, 2017
+ *  Created on: July 6, 2017
  *      Author: sherman
  */
 

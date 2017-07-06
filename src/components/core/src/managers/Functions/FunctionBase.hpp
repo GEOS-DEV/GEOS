@@ -1,7 +1,7 @@
 /*
  * FunctionBase.hpp
  *
- *  Created on: Jun 6, 2017
+ *  Created on: July 6, 2017
  *      Author: sherman
  */
 
@@ -20,9 +20,12 @@ public:
                 dataRepository::ManagedGroup * const parent );
 
   virtual ~FunctionBase();
+
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  
   static string CatalogName() { return "FunctionBase"; }
-  virtual void InitializeFunction();
-  virtual double Evaluate(double* input);
+  virtual void InitializeFunction(){};
+  virtual double Evaluate(double* input) {return 0.0;};
 
   // Setup catalog
   using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, ManagedGroup * const >;
