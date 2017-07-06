@@ -12,12 +12,14 @@ set(geosx_headers
     managers/EventManager.hpp
     managers/FaceManager.hpp
     managers/NodeManager.hpp
+    managers/FunctionBase.hpp
+    managers/SymbolicFunction.hpp
+    managers/NewFunctionManager.hpp
     managers/ObjectManagerBase.hpp
     managers/ProblemManager.hpp
     managers/TableManager.hpp
     managers/ElementRegion.hpp
     managers/ElementRegionManager.hpp
-    managers/FunctionManagerJIT.hpp
     PARENT_SCOPE )
 
 
@@ -34,12 +36,13 @@ set(geosx_core_sources
     managers/EventManager.cpp
     managers/FaceManager.cpp
     managers/NodeManager.cpp
+    managers/SymbolicFunction.hpp
+    managers/NewFunctionManager.hpp
     managers/ObjectManagerBase.cpp
     managers/ProblemManager.cpp
     managers/TableManager.cpp
     managers/ElementRegion.cpp
     managers/ElementRegionManager.cpp
-    managers/FunctionManagerJIT.cpp
     PARENT_SCOPE )
 
 if( 0 )

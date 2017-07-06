@@ -5,8 +5,7 @@
  *      Author: sherman
  */
 
-#include "FunctionManagerJIT.hpp"
-#include "dataRepository/ManagedGroup.hpp"
+#include "SymbolicFunction.hpp"
 #include "common/DataTypes.hpp"
 #include <mathpresso/mathpresso.h>
 
@@ -25,21 +24,21 @@ namespace keys
 using namespace dataRepository;
 
 
-// JIT Compiled Functions
-JIT_Function::JIT_Function( const std::string& name,
-                            ManagedGroup * const parent ) :
-  ManagedGroup( name, parent ),
+
+SymbolicFunction::SymbolicFunction( const std::string& name,
+                                    ManagedGroup * const parent ) :
+  FunctionBase( name, parent ),
   parserContext(),
   parserExpression()
 {}
 
-JIT_Function::~JIT_Function()
+SymbolicFunction::~SymbolicFunction()
 {
   // TODO Auto-generated destructor stub
 }
 
 
-void JIT_Function::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void SymbolicFunction::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
@@ -75,12 +74,12 @@ void JIT_Function::FillDocumentationNode( dataRepository::ManagedGroup * const d
 
 }
 
-void JIT_Function::BuildDataStructure( ManagedGroup * const domain )
+void SymbolicFunction::BuildDataStructure( ManagedGroup * const domain )
 {
   RegisterDocumentationNodes();
 }
 
-void JIT_Function::Compile()
+void SymbolicFunction::InitializeFunction()
 {
   // Register variables
   view_rtype<string_array> variables = getData<string_array>(keys::variableNames);
@@ -99,50 +98,6 @@ void JIT_Function::Compile()
   }
 }
 
-
-// Function Manager
-FunctionManagerJIT::FunctionManagerJIT( const std::string& name,
-                                  ManagedGroup * const parent ) :
-  ManagedGroup( name, parent )
-{}
-
-FunctionManagerJIT::~FunctionManagerJIT()
-{
-  // TODO Auto-generated destructor stub
-}
-
-void FunctionManagerJIT::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("JIT function manager");
-}
-
-void FunctionManagerJIT::ReadXML( dataRepository::ManagedGroup& domain,
-                                  xmlWrapper::xmlNode const & problemNode )
-{
-  xmlWrapper::xmlNode topLevelNode = problemNode.child("Functions");
-  if (topLevelNode != NULL)
-  {
-    std::cout << "Functions:" << std::endl;
-
-    for (xmlWrapper::xmlNode functionNode=topLevelNode.first_child(); functionNode; functionNode=functionNode.next_sibling())
-    {
-      // Register the new function
-      std::cout << "   " << functionNode.name() << std::endl;
-      std::string functionID = functionNode.attribute("name").value();
-
-      JIT_Function & newFunction = this->RegisterGroup<JIT_Function>( functionID, std::move(std::make_unique<JIT_Function>(functionID, this)) );
-
-      // Set the documentation node, register, and read xml
-      newFunction.SetDocumentationNodes( this );
-      newFunction.BuildDataStructure( this );
-      newFunction.ReadXML(functionNode );
-      newFunction.Compile();
-    }
-  }
-}
+REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, std::string const &, ManagedGroup * const )
 
 } /* namespace ANST */

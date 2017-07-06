@@ -50,7 +50,7 @@ ProblemManager::ProblemManager( const std::string& name,
 {
   m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
   m_eventManager = &(RegisterGroup<EventManager>(keys::eventManager) ) ;
-  m_functionManager = &(RegisterGroup<FunctionManagerJIT>(keys::functionManager) ) ;
+  m_functionManager = &(RegisterGroup<NewFunctionManager>(keys::functionManager) ) ;
 }
 
 //ProblemManager::ProblemManager( const std::string& name,
