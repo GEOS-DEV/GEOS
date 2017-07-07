@@ -157,16 +157,13 @@ void TableFunction::InitializeFunction()
       m_values.insert(std::end(m_values), std::begin(tmpValues), std::end(tmpValues));
       m_size.push_back(tableSize);
     }
-    else
-    {
-      throw std::invalid_argument("Table dimensions do not match!");
-    }
   }
   else
   {
     m_dimensions = coordinateFiles.size();
     m_coordinates.resize(m_dimensions);
 
+    // TODO: Read these files on rank 0, then broadcast
     view_rtype<string> voxelFile = getData<string>(keys::voxelFile);
     IOUtilities::parse_file( m_values, voxelFile, ',' );
     for (localIndex ii=0; ii<m_dimensions; ++ii)
@@ -182,6 +179,12 @@ void TableFunction::InitializeFunction()
   {
     m_indexIncrement.push_back(increment);
     increment *= m_size[ii];
+  }
+
+  // Error checking
+  if (increment != m_values.size())
+  {
+    throw std::invalid_argument("Table dimensions do not match!");
   }
 
   // Build a quick map to help with linear interpolation
