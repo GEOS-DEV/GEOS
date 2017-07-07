@@ -190,7 +190,7 @@ void TableFunction::InitializeFunction()
   {
     for (localIndex jj=0; jj<m_dimensions; ++jj)
     {
-      m_corners[jj].push_back((ii / ((jj+1) * (jj+1))) % 2);
+      m_corners[jj].push_back(int(ii / pow(2, jj)) % 2);
     }
   }
 }
@@ -249,7 +249,7 @@ double TableFunction::Evaluate(double* input)
     weightedValue += cornerValue;
   }
   
-  return weightedValue / m_dimensions;
+  return weightedValue;
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, ManagedGroup * const )
