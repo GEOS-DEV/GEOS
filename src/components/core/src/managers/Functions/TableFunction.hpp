@@ -29,9 +29,12 @@ public:
   virtual double Evaluate(double* input) override;
 
 private:
-  localIndex m_dimensions;
   Array1dT<real64_array> m_coordinates;
   real64_array m_values;
+  localIndex m_dimensions;
+  lArray1d m_size;
+  lArray1d m_indexIncrement;
+  Array1dT<lArray1d> m_corners;
 };
 
 

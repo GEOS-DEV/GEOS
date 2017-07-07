@@ -33,9 +33,12 @@ using namespace dataRepository;
 TableFunction::TableFunction( const std::string& name,
                               ManagedGroup * const parent ) :
   FunctionBase( name, parent ),
-  m_dimensions(0),
   m_coordinates(),
-  m_values()
+  m_values(),
+  m_dimensions(0),
+  m_size(),
+  m_indexIncrement(),
+  m_corners()
 {}
 
 TableFunction::~TableFunction()
@@ -138,7 +141,9 @@ void TableFunction::BuildDataStructure( ManagedGroup * const domain )
 
 void TableFunction::InitializeFunction()
 {
-  if (true)
+  // Read in data
+  view_rtype<string_array> coordinateFiles = getData<string_array>(keys::coordinateFiles);
+  if (coordinateFiles.size() == 0)
   {
     // 1D Table
     m_dimensions = 1;
@@ -150,7 +155,7 @@ void TableFunction::InitializeFunction()
     {
       m_coordinates.push_back(coordinates);
       m_values.insert(std::end(m_values), std::begin(tmpValues), std::end(tmpValues));
-      
+      m_size.push_back(tableSize);
     }
     else
     {
@@ -159,27 +164,92 @@ void TableFunction::InitializeFunction()
   }
   else
   {
-    // TODO: Port existing method from geos
+    m_dimensions = coordinateFiles.size();
+    m_coordinates.resize(m_dimensions);
+
+    view_rtype<string> voxelFile = getData<string>(keys::voxelFile);
+    IOUtilities::parse_file( m_values, voxelFile, ',' );
+    for (localIndex ii=0; ii<m_dimensions; ++ii)
+    {
+      IOUtilities::parse_file( m_coordinates[ii], coordinateFiles[ii], ',' );
+      m_size.push_back(m_coordinates[ii].size());
+    }
+  }
+
+  // Setup index increment (assume data is in Fortran array order)
+  localIndex increment = 1;
+  for (localIndex ii=0; ii<m_dimensions; ++ii)
+  {
+    m_indexIncrement.push_back(increment);
+    increment *= m_size[ii];
+  }
+
+  // Build a quick map to help with linear interpolation
+  m_corners.resize(m_dimensions);
+  for (localIndex ii=0; ii<pow(2, m_dimensions); ++ii)
+  {
+    for (localIndex jj=0; jj<m_dimensions; ++jj)
+    {
+      m_corners[jj].push_back((ii / ((jj+1) * (jj+1))) % 2);
+    }
   }
 }
 
 double TableFunction::Evaluate(double* input)
 {
-  // Simple Lookup
-  // TODO: Use existing table functions
-  localIndex lowerBounds[m_dimensions];
+  localIndex bounds[m_dimensions][2];
+  double weights[m_dimensions][2];
+
+  // Determine position, weights
   for (localIndex ii=0; ii<m_dimensions; ++ii)
   {
-    auto lower = std::lower_bound(m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii]);
-    lowerBounds[ii] = std::distance(m_coordinates[ii].begin(), lower);
-
-    if (lowerBounds[ii] >= m_coordinates[ii].size())
+    if (input[ii] <= m_coordinates[ii][0])
     {
-      lowerBounds[ii] -= 1;
+      bounds[ii][0] = 0;
+      bounds[ii][1] = 0;
+      weights[ii][0] = 0;
+      weights[ii][1] = 1;
+    }
+    else if (input[ii] >= m_coordinates[ii][m_size[ii] - 1])
+    {
+      bounds[ii][0] = m_size[ii] - 1;
+      bounds[ii][1] = bounds[ii][0];
+      weights[ii][0] = 1;
+      weights[ii][1] = 0;
+    }
+    else
+    {
+      auto lower = std::lower_bound(m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii]);
+      bounds[ii][1] = std::distance(m_coordinates[ii].begin(), lower);
+      bounds[ii][0] = bounds[ii][1] - 1;
+
+      double dx = m_coordinates[ii][bounds[ii][1]] - m_coordinates[ii][bounds[ii][0]];
+      weights[ii][0] = 1.0 - (input[ii] - m_coordinates[ii][bounds[ii][0]]) / dx;
+      weights[ii][1] = 1.0 - weights[ii][0];
     }
   }
 
-  return m_values[lowerBounds[0]];
+  // Linear interpolation
+  double weightedValue = 0.0;
+  for (localIndex ii=0; ii<m_corners[0].size(); ++ii)
+  {
+    // Find array index
+    localIndex tableIndex = 0;
+    for (localIndex jj=0; jj<m_dimensions; ++jj)
+    {
+      tableIndex += bounds[jj][m_corners[jj][ii]] * m_indexIncrement[jj];
+    }
+
+    // Determine weighted value
+    double cornerValue = m_values[tableIndex];
+    for (localIndex jj=0; jj<m_dimensions; ++jj)
+    {
+      cornerValue *= weights[jj][m_corners[jj][ii]];
+    }
+    weightedValue += cornerValue;
+  }
+  
+  return weightedValue / m_dimensions;
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, ManagedGroup * const )
