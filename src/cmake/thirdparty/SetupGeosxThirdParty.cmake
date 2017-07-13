@@ -312,10 +312,15 @@ ExternalProject_Add( pugixml
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-blt_register_library( NAME pugixml
-                      INCLUDES ${PUGIXML_INSTALL_DIR}/include
-                      LIBRARIES ${PUGIXML_INSTALL_DIR}/lib64/libpugixml.a )
-
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	blt_register_library( NAME pugixml
+    	                  INCLUDES ${PUGIXML_INSTALL_DIR}/include
+        	              LIBRARIES ${PUGIXML_INSTALL_DIR}/lib/libpugixml.a )
+else()
+	blt_register_library( NAME pugixml
+    	                  INCLUDES ${PUGIXML_INSTALL_DIR}/include
+        	              LIBRARIES ${PUGIXML_INSTALL_DIR}/lib64/libpugixml.a )
+endif()
 
 
 if (UNCRUSTIFY_EXECUTABLE)
