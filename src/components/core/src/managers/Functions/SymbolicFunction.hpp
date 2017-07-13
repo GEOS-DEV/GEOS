@@ -27,7 +27,7 @@ public:
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
 
   virtual void InitializeFunction() override;
-  virtual double Evaluate(double* input) override { return parserExpression.evaluate(input); };
+  virtual double Evaluate(double* input) override { return parserExpression.evaluate(input); }
   
 private:
   mathpresso::Context parserContext;

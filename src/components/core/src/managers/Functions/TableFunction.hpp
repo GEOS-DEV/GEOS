@@ -31,6 +31,7 @@ public:
 private:
   Array1dT<real64_array> m_coordinates;
   real64_array m_values;
+  static localIndex constexpr m_maxDimensions = 3;
   localIndex m_dimensions;
   lArray1d m_size;
   lArray1d m_indexIncrement;

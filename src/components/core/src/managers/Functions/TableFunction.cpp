@@ -200,8 +200,10 @@ void TableFunction::InitializeFunction()
 
 double TableFunction::Evaluate(double* input)
 {
-  localIndex bounds[m_dimensions][2];
-  double weights[m_dimensions][2];
+//  localIndex bounds[m_dimensions][2];
+//  double weights[m_dimensions][2];
+  localIndex bounds[m_maxDimensions][2];
+  double weights[m_maxDimensions][2];
 
   // Determine position, weights
   for (localIndex ii=0; ii<m_dimensions; ++ii)

@@ -101,11 +101,11 @@ NodeManager::~NodeManager()
 }
 
 
-void NodeManager::Initialize()
-{
-  this->AddKeyedDataField<FieldInfo::referencePosition>();
-
-}
+//void NodeManager::Initialize()
+//{
+//  this->AddKeyedDataField<FieldInfo::referencePosition>();
+//
+//}
 
 
 

@@ -24,8 +24,8 @@ public:
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
   
   static string CatalogName() { return "FunctionBase"; }
-  virtual void InitializeFunction(){};
-  virtual double Evaluate(double* input) {return 0.0;};
+  virtual void InitializeFunction(){}
+  virtual double Evaluate(double* input) {return 0.0;}
 
   // Setup catalog
   using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, ManagedGroup * const >;
@@ -33,7 +33,7 @@ public:
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
-  };
+  }
 };
 
 } /* namespace geosx */

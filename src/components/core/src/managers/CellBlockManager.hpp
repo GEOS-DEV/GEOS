@@ -94,7 +94,8 @@ public:
   CellBlockManager( string const &, ManagedGroup * const parent );
   virtual ~CellBlockManager();
 
-  void Initialize(  ){}
+
+//  void Initialize(  ){}
 
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override ;
 

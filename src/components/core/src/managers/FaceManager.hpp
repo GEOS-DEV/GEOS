@@ -40,7 +40,7 @@ public:
   FaceManager( string const & , ManagedGroup * const parent );
   virtual ~FaceManager();
 
-  void Initialize(  ){}
+//  void Initialize(  ){}
 
 
 //  void BuildFaces( const NodeManager& nodeManager, const ElementManager& elemManager );

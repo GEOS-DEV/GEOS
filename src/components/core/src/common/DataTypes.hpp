@@ -301,10 +301,10 @@ public:
     };
 
   public:
-    std::unordered_map<std::string, std::string>::iterator begin(){return regexMap.begin();};
-    std::unordered_map<std::string, std::string>::iterator end(){return regexMap.end();};
-    std::unordered_map<std::string, std::string>::const_iterator begin() const {return regexMap.begin();};
-    std::unordered_map<std::string, std::string>::const_iterator end() const {return regexMap.end();};
+    std::unordered_map<std::string, std::string>::iterator begin(){return regexMap.begin();}
+    std::unordered_map<std::string, std::string>::iterator end(){return regexMap.end();}
+    std::unordered_map<std::string, std::string>::const_iterator begin() const {return regexMap.begin();}
+    std::unordered_map<std::string, std::string>::const_iterator end() const {return regexMap.end();}
   };
 
 

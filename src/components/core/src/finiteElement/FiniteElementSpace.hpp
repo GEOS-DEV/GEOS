@@ -50,15 +50,15 @@ public:
 
   ///@}
 
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const parent );
+  virtual void BuildDataStructure( dataRepository::ManagedGroup * const parent ) override;
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+  void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
   void ApplySpaceToTargetCells( dataRepository::ManagedGroup * const group ) const;
 
   void ReadXML_PostProcess() override final;
 
-  virtual void InitializePreSubGroups( ManagedGroup & group );
+  virtual void InitializePreSubGroups( ManagedGroup & group ) override;
 
   void CalculateShapeFunctionGradients( dataRepository::view_rtype_const<r1_array> X,
                                         dataRepository::ManagedGroup * const cellBlock ) const;
