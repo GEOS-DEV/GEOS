@@ -44,6 +44,72 @@ if (ATK_DIR)
 endif()
 
 
+
+################################
+# SILO
+################################
+if( EXISTS ${SILO_DIR})
+message("${SILO_DIR}")
+    if( NOT BUILD_LOCAL_SILO )
+        message("Using system SILO found at ${SILO_DIR}")
+        include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindSILO.cmake)
+        if (NOT SILO_FOUND)
+            message(FATAL_ERROR ": SILO not found in ${SILO_DIR}. Maybe you need to build it")
+        endif()
+    
+        blt_register_library( NAME silo
+                              INCLUDES ${SILO_INCLUDE_DIRS}
+                              LIBRARIES ${SILO_LIBRARY} )
+    else()
+        message(INFO ": Build SILO from source found at ${SILO_DIR}")
+        set(silo_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/silo)
+        ExternalProject_Add( SILO
+                             PREFIX ${PROJECT_BINARY_DIR}/thirdparty/silo
+                             SOURCE_DIR ${SILO_DIR}
+                             BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/silo/src
+                             INSTALL_COMMAND make install
+                             INSTALL_DIR ${silo_install_dir}
+		                     CONFIGURE_COMMAND ./configure CC=${CMAKE_C_COMPILER}
+                   			 				   CXX=${CMAKE_CXX_COMPILER}
+			                                   --prefix=$(CWD) 
+			                                   --disable-fortran
+			                                   --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+			                                   --disable-silex 
+        		             BUILD_COMMAND make
+                      		 INSTALL_COMMAND make install )
+                                 
+        blt_register_library( NAME SILO
+                              INCLUDES ${silo_install_dir}/include 
+                              LIBRARIES ${silo_install_dir}/lib/libsilo.a )        
+    endif()
+else()
+    message(INFO ": Using SILO found at https://wci.llnl.gov/content/assets/docs/simulation/computer-codes/silo/silo-4.10.2/silo-4.10.2-bsd.tar.gz")
+    set(silo_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/silo)
+    ExternalProject_Add( silo
+                         URL https://wci.llnl.gov/content/assets/docs/simulation/computer-codes/silo/silo-4.10.2/silo-4.10.2-bsd.tar.gz
+                         PREFIX ${PROJECT_BINARY_DIR}/thirdparty/silo
+                         INSTALL_DIR ${silo_install_dir}
+                         CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
+                                               CXX=${CMAKE_CXX_COMPILER}
+                                               --prefix=${PROJECT_BINARY_DIR}/thirdparty/silo
+                                               --disable-fortran
+                                               --enable-optimization
+                                               --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+                                               --disable-silex 
+                             BUILD_COMMAND make
+                             INSTALL_COMMAND make install )
+
+    blt_register_library( NAME silo
+                          INCLUDES ${silo_install_dir}/include 
+                          LIBRARIES ${silo_install_dir}/lib/libsilo.a )
+
+endif()
+
+
+
+
+
+
 ################################
 # RAJA
 ################################

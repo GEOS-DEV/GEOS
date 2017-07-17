@@ -20,11 +20,14 @@ DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ) :
   ManagedGroup( name, parent )
 {
-  m_partition = new SpatialPartition();
+  this->RegisterViewWrapper<SpatialPartition>(keys::partitionManager);
+//  m_partition = new SpatialPartition();
 }
 
 DomainPartition::~DomainPartition()
-{}
+{
+
+}
 
 
 void DomainPartition::BuildDataStructure( ManagedGroup * const )

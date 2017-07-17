@@ -612,7 +612,8 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
 
   CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>( keys::cellManager );
   ManagedGroup & nodeSets = nodeManager.GetGroup( std::string( "Sets" ) );
-  PartitionBase & partition = *( domain.GetPartition() );
+
+  PartitionBase & partition = domain.getReference<PartitionBase>(keys::partitionManager);
 
   bool isRadialWithOneThetaPartition = false;
 

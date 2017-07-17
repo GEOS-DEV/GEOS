@@ -13,6 +13,15 @@
 namespace geosx
 {
 
+
+namespace dataRepository
+{
+namespace keys
+{
+string const partitionManager("partitionManager");
+}
+}
+
 class PartitionBase;
 
 class DomainPartition : public dataRepository::ManagedGroup
@@ -34,10 +43,9 @@ public:
   void InitializationOrder( string_array & order ) override final;
 
 
-  PartitionBase * GetPartition() {return m_partition;}
+//  PartitionBase * GetPartition() {return m_partitio}
 private:
 
-  PartitionBase * m_partition;
 
 };
 

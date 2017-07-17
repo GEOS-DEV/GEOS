@@ -36,6 +36,7 @@ private:
   lArray1d m_size;
   lArray1d m_indexIncrement;
   Array1dT<lArray1d> m_corners;
+
 };
 
 

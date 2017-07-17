@@ -224,6 +224,7 @@ double TableFunction::Evaluate(double* input)
     }
     else
     {
+      ///TODO make this fast
       auto lower = std::lower_bound(m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii]);
       bounds[ii][1] = std::distance(m_coordinates[ii].begin(), lower);
       bounds[ii][0] = bounds[ii][1] - 1;
