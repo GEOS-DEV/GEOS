@@ -207,8 +207,7 @@ else()
     message(INFO ": Using CHAI found at ssh://git@cz-bitbucket.llnl.gov:7999/um/chai.git")
     ExternalProject_Add( chai
                          PREFIX ${PROJECT_BINARY_DIR}/thirdparty/chai
-                            GIT_REPOSITORY ssh://git@cz-bitbucket.llnl.gov:7999/um/chai.git
-                         GIT_TAG master
+                         URL https://lc.llnl.gov/bitbucket/rest/archive/latest/projects/UM/repos/chai/archive?format=zip                         
                          INSTALL_DIR ${chai_install_dir}
                          INSTALL_COMMAND make install
                          CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -281,8 +280,7 @@ message( INFO ": CALIPER_INSTALL_DIR = ${CALIPER_INSTALL_DIR}" )
 
 ExternalProject_Add( caliper
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/caliper
-                     GIT_REPOSITORY https://github.com/LLNL/Caliper.git
-                     GIT_TAG master
+                     URL https://github.com/LLNL/Caliper/archive/master.zip
                      INSTALL_DIR ${CALIPER_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -313,8 +311,7 @@ set(ASMJIT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/asmjit)
 
 ExternalProject_Add( asmjit
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/asmjit
-                     GIT_REPOSITORY https://github.com/asmjit/asmjit.git
-                     GIT_TAG master
+                     URL https://github.com/asmjit/asmjit/archive/master.zip
                      INSTALL_DIR ${ASMJIT_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -334,8 +331,7 @@ message( INFO ": MATHPRESSO_INSTALL_DIR = ${MATHPRESSO_INSTALL_DIR}" )
 
 ExternalProject_Add( mathpresso
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/mathpresso
-                     GIT_REPOSITORY https://github.com/kobalicek/mathpresso.git
-                     GIT_TAG master
+                     URL https://github.com/kobalicek/mathpresso/archive/master.zip
                      DEPENDS asmjit 
                      INSTALL_DIR ${MATHPRESSO_INSTALL_DIR}
                      INSTALL_COMMAND mkdir -p <INSTALL_DIR>/include &&
@@ -370,8 +366,7 @@ message( INFO ": PUGIXML_INSTALL_DIR = ${PUGIXML_INSTALL_DIR}" )
 
 ExternalProject_Add( pugixml
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/pugixml
-                     GIT_REPOSITORY https://github.com/zeux/pugixml.git
-                     GIT_TAG master
+                     URL https://github.com/zeux/pugixml/archive/master.zip
                      INSTALL_DIR ${PUGIXML_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}

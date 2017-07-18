@@ -71,7 +71,7 @@ ElementRegionManager::~ElementRegionManager()
 localIndex ElementRegionManager::getNumberOfElements() const
 {
   localIndex numElem = 0;
-  this->forCellBlocks([&]( ManagedGroup const & cellBlock ) -> localIndex
+  this->forCellBlocks([&]( ManagedGroup const & cellBlock ) -> void
   {
     numElem += cellBlock.size();
   });
