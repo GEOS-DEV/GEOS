@@ -20,6 +20,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
 #include "ElementRegionManager.hpp"
+#include "fileIO/silo/SiloFile.hpp"
 
 namespace geosx
 {
@@ -540,6 +541,14 @@ void ProblemManager::RunSimulation()
   double time = 0.0;
   int cycle = 0;
   real64 dt = 0.0;
+
+  SiloFile silo;
+  silo.Initialize(PMPIO_WRITE);
+  silo.WaitForBaton(0, 0, false );
+  domain.WriteSilo(silo,0,0,0);
+  silo.HandOffBaton();
+  silo.ClearEmptiesFromMultiObjects(0);
+  silo.Finish();
 
 //  cxx_utilities::DocumentationNode * const eventDocNode = m_eventManager->getDocumentationNode();
 //  for( auto const & subEventDocNode : eventDocNode->m_child )

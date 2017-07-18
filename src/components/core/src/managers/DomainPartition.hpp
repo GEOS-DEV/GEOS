@@ -13,7 +13,7 @@
 namespace geosx
 {
 
-
+class SiloFile;
 namespace dataRepository
 {
 namespace keys
@@ -42,8 +42,28 @@ public:
 
   void InitializationOrder( string_array & order ) override final;
 
+  // THIS STUFF NEEDS TO GO SOMEWHERE ELSE
+  void WriteSilo( SiloFile& siloFile,
+                  const int cycleNum,
+                  const realT problemTime,
+                  const bool isRestart );
 
-//  PartitionBase * GetPartition() {return m_partitio}
+  void ReadSilo( const SiloFile& siloFile,
+      const int cycleNum,
+      const realT problemTime,
+      const bool isRestart );
+
+  void WriteFiniteElementMesh( SiloFile& siloFile,
+                               const int cycleNum,
+                               const realT problemTime,
+                               const bool isRestart );
+
+  void ReadFiniteElementMesh( const SiloFile& siloFile,
+                              const int cycleNum,
+                              const realT problemTime,
+                              const bool isRestart );
+
+  //  PartitionBase * GetPartition() {return m_partitio}
 private:
 
 

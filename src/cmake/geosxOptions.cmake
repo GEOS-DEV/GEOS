@@ -43,6 +43,10 @@ else()
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_FPARSER=0)  
 endif()
 
+
+  set( thirdPartyLibs ${thirdPartyLibs} silo )
+
+
 if( ENABLE_CONTAINERARRAY_RETURN_PTR )
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DCONTAINERARRAY_RETURN_PTR=1)  
 else()

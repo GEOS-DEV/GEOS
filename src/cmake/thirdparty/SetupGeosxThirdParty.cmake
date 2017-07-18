@@ -91,7 +91,7 @@ else()
                          INSTALL_DIR ${silo_install_dir}
                          CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
                                                CXX=${CMAKE_CXX_COMPILER}
-                                               --prefix=${PROJECT_BINARY_DIR}/thirdparty/silo
+                                               --prefix=${silo_install_dir}
                                                --disable-fortran
                                                --enable-optimization
                                                --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
@@ -101,7 +101,7 @@ else()
 
     blt_register_library( NAME silo
                           INCLUDES ${silo_install_dir}/include 
-                          LIBRARIES ${silo_install_dir}/lib/libsilo.a )
+                          LIBRARIES ${silo_install_dir}/lib/libsiloh5.a )
 
 endif()
 

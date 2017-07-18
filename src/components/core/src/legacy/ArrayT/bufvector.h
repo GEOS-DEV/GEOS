@@ -51,7 +51,7 @@
 #include "legacy/Common/typedefs.h"
 #include <map>
 #include "codingUtilities/Utilities.hpp"
-#include "legacy/DataStructures/InterObjectRelation.h"
+#include "common/InterObjectRelation.hpp"
 #include "legacy/DataStructures/EncapsulatedObjects/EncapsulatedObjectBase.h"
 
 class bufvector: public VectorT<char>

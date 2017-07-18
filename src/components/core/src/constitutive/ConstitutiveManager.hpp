@@ -7,7 +7,7 @@
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
-#include "../dataRepository/ManagedGroup.hpp"
+#include "dataRepository/ManagedGroup.hpp"
 #include "ConstitutiveBase.hpp"
 
 namespace geosx

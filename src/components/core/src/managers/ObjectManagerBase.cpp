@@ -14,7 +14,8 @@ using namespace dataRepository;
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ManagedGroup * const parent ):
     ManagedGroup(name,parent),
-    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() )
+    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() ),
+    m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal").reference() )
 {
 
 

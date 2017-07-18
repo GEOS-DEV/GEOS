@@ -17,7 +17,9 @@
 
 #include "slic/slic.hpp"
 
-#include "../MPI_Communications/PartitionBase.hpp"
+#include "MPI_Communications/PartitionBase.hpp"
+#include "MPI_Communications/SpatialPartition.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;

@@ -49,12 +49,243 @@
 #include <algorithm>
 #include <iterator>
 
-#include "SiloFile.h"
-#include "pmpio.h"
-#include "ObjectManagers/ElementManagerT.h"
+#include "SiloFile.hpp"
+//#include "ObjectManagers/ElementManagerT.h"
+
+#include "common/Logger.hpp"
+
+#include "codingUtilities/Utilities.hpp"
+
+#include "constitutive/ConstitutiveManager.hpp"
+
+#include "managers/ElementRegionManager.hpp"
 
 /// forward declaration of NodeManagerT for use as a template argument
 class NodeManager;
+
+namespace geosx
+{
+
+
+/**
+ *
+ * @return
+ */
+namespace SiloFileUtilities
+{
+
+  template<> int DB_TYPE<int> ()
+  {
+    return DB_INT;
+  }
+  template<> int DB_TYPE<unsigned int> ()
+  {
+    return DB_INT;
+  }
+  template<> int DB_TYPE<float> ()
+  {
+    return DB_FLOAT;
+  }
+  template<> int DB_TYPE<realT> ()
+  {
+    return DB_DOUBLE;
+  }
+  template<> int DB_TYPE<R1Tensor> ()
+  {
+    return DB_DOUBLE;
+  }
+  template<> int DB_TYPE<R2Tensor> ()
+  {
+    return DB_DOUBLE;
+  }
+  template<> int DB_TYPE<R2SymTensor> ()
+  {
+    return DB_DOUBLE;
+  }
+  template<> int DB_TYPE<unsigned long> ()
+  {
+    return DB_LONG;
+  }
+  template<> int DB_TYPE<globalIndex> ()
+  {
+    return DB_LONG;
+  }
+
+  template<> int GetNumberOfVariablesInField<int> ()
+  {
+    return 1;
+  }
+  template<> int GetNumberOfVariablesInField<unsigned int> ()
+  {
+    return 1;
+  }
+  template<> int GetNumberOfVariablesInField<unsigned long> ()
+  {
+    return 1;
+  }
+  template<> int GetNumberOfVariablesInField<float> ()
+  {
+    return 1;
+  }
+  template<> int GetNumberOfVariablesInField<realT> ()
+  {
+    return 1;
+  }
+  template<> int GetNumberOfVariablesInField<long long unsigned int> ()
+  {
+    return 1;
+  }
+  template<> int GetNumberOfVariablesInField<long long int> ()
+  {
+    return 1;
+  }
+  template<> int GetNumberOfVariablesInField<R1Tensor> ()
+  {
+    return R1Tensor::Length();
+  }
+  template<> int GetNumberOfVariablesInField<R2Tensor> ()
+  {
+    return R2Tensor::Length();
+  }
+  template<> int GetNumberOfVariablesInField<R2SymTensor> ()
+  {
+    return R2SymTensor::Length();
+  }
+
+  template<typename TYPE>
+  void SetVariableNames(const std::string& fieldName, sArray1d& varnamestring, char* varnames[])
+  {
+    varnamestring.resize(GetNumberOfVariablesInField<TYPE> ());
+    int count = 0;
+    for (sArray1d::iterator i = varnamestring.begin(); i != varnamestring.end(); ++i)
+    {
+      *i = fieldName;
+      varnames[count++] = (char*) ((*i).c_str());
+    }
+  }
+  template void SetVariableNames<int> (const std::string& fieldName, sArray1d& varnamestring,
+                                       char* varnames[]);
+  template void SetVariableNames<unsigned long> (const std::string& fieldName, sArray1d& varnamestring,
+                                       char* varnames[]);
+  template void SetVariableNames<realT> (const std::string& fieldName, sArray1d& varnamestring,
+                                         char* varnames[]);
+  template void SetVariableNames<long long unsigned int> (const std::string& fieldName, sArray1d& varnamestring,
+                                       char* varnames[]);
+
+
+
+  template<>
+  void SetVariableNames<R1Tensor> (const std::string& fieldName, sArray1d& varnamestring,
+                                   char* varnames[])
+  {
+    varnamestring.resize(GetNumberOfVariablesInField<R1Tensor> ());
+    varnamestring[0] = fieldName + "_1";
+    varnamestring[1] = fieldName + "_2";
+    varnamestring[2] = fieldName + "_3";
+    varnames[0] = (char*) varnamestring[0].c_str();
+    varnames[1] = (char*) varnamestring[1].c_str();
+    varnames[2] = (char*) varnamestring[2].c_str();
+  }
+
+  template<>
+  void SetVariableNames<R2Tensor> (const std::string& fieldName, sArray1d& varnamestring,
+                                   char* varnames[])
+  {
+    varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
+    varnamestring[0] = fieldName + "_11";
+    varnamestring[1] = fieldName + "_12";
+    varnamestring[2] = fieldName + "_13";
+    varnamestring[3] = fieldName + "_21";
+    varnamestring[4] = fieldName + "_22";
+    varnamestring[5] = fieldName + "_23";
+    varnamestring[6] = fieldName + "_31";
+    varnamestring[7] = fieldName + "_32";
+    varnamestring[8] = fieldName + "_33";
+    varnames[0] = (char*) varnamestring[0].c_str();
+    varnames[1] = (char*) varnamestring[1].c_str();
+    varnames[2] = (char*) varnamestring[2].c_str();
+    varnames[3] = (char*) varnamestring[3].c_str();
+    varnames[4] = (char*) varnamestring[4].c_str();
+    varnames[5] = (char*) varnamestring[5].c_str();
+    varnames[6] = (char*) varnamestring[6].c_str();
+    varnames[7] = (char*) varnamestring[7].c_str();
+    varnames[8] = (char*) varnamestring[8].c_str();
+  }
+
+  template<>
+  void SetVariableNames<R2SymTensor> (const std::string& fieldName, sArray1d& varnamestring,
+                                      char* varnames[])
+  {
+    varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
+    varnamestring[0] = fieldName + "_11";
+    varnamestring[1] = fieldName + "_21";
+    varnamestring[2] = fieldName + "_22";
+    varnamestring[3] = fieldName + "_31";
+    varnamestring[4] = fieldName + "_32";
+    varnamestring[5] = fieldName + "_33";
+    varnames[0] = (char*) varnamestring[0].c_str();
+    varnames[1] = (char*) varnamestring[1].c_str();
+    varnames[2] = (char*) varnamestring[2].c_str();
+    varnames[3] = (char*) varnamestring[3].c_str();
+    varnames[4] = (char*) varnamestring[4].c_str();
+    varnames[5] = (char*) varnamestring[5].c_str();
+  }
+
+  template<> int FieldCentering<NodeManager> ()
+  {
+    return DB_NODECENT;
+  }
+
+  template<> int GetTensorRank<int> ()
+  {
+    return DB_VARTYPE_SCALAR;
+  }
+  template<> int GetTensorRank<unsigned long> ()
+  {
+    return DB_VARTYPE_SCALAR;
+  }
+  template<> int GetTensorRank<realT> ()
+  {
+    return DB_VARTYPE_SCALAR;
+  }
+  template<> int GetTensorRank<R1Tensor> ()
+  {
+    return DB_VARTYPE_VECTOR;
+  }
+  template<> int GetTensorRank<R2Tensor> ()
+  {
+    return DB_VARTYPE_TENSOR;
+  }
+  template<> int GetTensorRank<R2SymTensor> ()
+  {
+    return DB_VARTYPE_SYMTENSOR;
+  }
+  template<> int GetTensorRank<long long unsigned int> ()
+  {
+    return DB_VARTYPE_SCALAR;
+  }
+
+
+
+  void SetCenteringSubdir(const int centering, std::string& subdir)
+  {
+
+    if (centering == DB_NODECENT)
+      subdir = "node_fields";
+    else if (centering == DB_ZONECENT)
+      subdir = "zone_fields";
+    else if (centering == DB_FACECENT)
+      subdir = "face_fields";
+    else if (centering == DB_EDGECENT)
+      subdir = "edge_fields";
+  }
+}
+
+
+
+
+
+using namespace constitutive;
 
 // *********************************************************************************************************************
 /// Default Constructor
@@ -84,7 +315,7 @@ SiloFile::~SiloFile()
  */
 void SiloFile::Initialize( const PMPIO_iomode_t readwrite )
 {
-#if GPAC_MPI
+#if USE_MPI
   // Ensure all procs agree on numGroups, driver and file_ext
 
   MPI_Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -123,7 +354,7 @@ void SiloFile::WaitForBaton( const int domainNumber, const int cycleNum, const b
 {
 
   int rank = 0;
-#if GPAC_MPI
+#if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   const int groupRank = PMPIO_GroupRank(m_baton, rank);
@@ -180,7 +411,7 @@ void SiloFile::WaitForBaton( const int domainNumber, const std::string& restartF
 {
 
   int rank = 0;
-#if GPAC_MPI
+#if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   const int groupRank = PMPIO_GroupRank(m_baton, rank);
@@ -324,7 +555,7 @@ void SiloFile::WriteMeshObject(const std::string& meshName,
         }
         // write zonelist
   //      DBAddOption(optlist, DBOPT_ZONENUM, const_cast<globalIndex*> (globalZoneNumber.data()));
-        if (type_name<globalIndex>::name() == type_name<long long>::name())
+        if ( std::is_same<globalIndex,long long>::value )
           DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
       }
     }
@@ -365,7 +596,7 @@ void SiloFile::WriteMeshObject(const std::string& meshName,
 
   // write multimesh object
   int rank = 0;
-#if GPAC_MPI
+#if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   if (rank == 0)
@@ -446,7 +677,7 @@ void SiloFile::WritePolygonMeshObject(const std::string& meshName,
         }
         // write zonelist
   //      DBAddOption(optlist, DBOPT_ZONENUM, const_cast<globalIndex*> (globalZoneNumber.data()));
-        if (type_name<globalIndex>::name() == type_name<long long>::name())
+        if( std::is_same<globalIndex,long long>::value )
           DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
       }
     }
@@ -478,7 +709,7 @@ void SiloFile::WritePolygonMeshObject(const std::string& meshName,
 
   // write multimesh object
   int rank = 0;
-#if GPAC_MPI
+#if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   if (rank == 0)
@@ -539,7 +770,7 @@ int SiloFile::WriteQuadMeshObject(const std::string& meshName,
   //----write multimesh object
   {
     int rank = 0;
-  #if GPAC_MPI
+  #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
     if (rank == 0)
@@ -643,7 +874,7 @@ void SiloFile::WriteBeamMesh(const std::string& meshName,
   //----write multimesh object
   {
     int rank = 0;
-  #if GPAC_MPI
+  #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
     if (rank == 0)
@@ -744,7 +975,7 @@ void SiloFile::WriteArbitratryPolyhedralMeshObject( const std::string& meshName,
   //----write multimesh object
   {
     int rank = 0;
-  #if GPAC_MPI
+  #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
     if (rank == 0)
@@ -881,7 +1112,7 @@ void SiloFile::WriteDiscreteElementMeshObject(const std::string& meshName,
   //----write multimesh object
   {
     int rank = 0;
-  #if GPAC_MPI
+  #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
     if (rank == 0)
@@ -1114,7 +1345,7 @@ void SiloFile::WritePointMesh( const std::string& meshName,
   //----write multimesh object
   {
     int rank = 0;
-  #if GPAC_MPI
+  #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
     if (rank == 0)
@@ -1195,7 +1426,7 @@ void SiloFile::WritePointMesh( const std::string& meshName,
 //  //----write multimesh object
 //  {
 //    int rank = 0;
-//  #if GPAC_MPI
+//  #if USE_MPI
 //    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 //  #endif
 //    if (rank == 0)
@@ -1225,17 +1456,18 @@ void SiloFile::StopSiloCompilerWarnings()
  * @param cycleNumber
  * @param problemTime
  */
-void SiloFile::WriteRegionSpecifications(const ElementManagerT& elementManager,
-                                         const std::string& meshName,
-                                         const int cycleNumber,
-                                         const realT problemTime)
+void SiloFile::WriteRegionSpecifications( const ElementRegionManager& elementManager,
+                                          ConstitutiveManager const & constitutiveManager,
+                                          const std::string& meshName,
+                                          const int cycleNumber,
+                                          const realT problemTime)
 {
 
   std::string name = "Regions";
-  int nmat = elementManager.m_ElementRegions.size();
+  int nmat = constitutiveManager.GetSubGroups().size();
   ivector matnos(nmat);
   int ndims = 1;
-  int dims = elementManager.m_numElems;
+  int dims = elementManager.getNumberOfElements();
  // ivector matlist(dims * ndims);
   ivector matlist(dims * nmat);
 
@@ -1245,21 +1477,24 @@ void SiloFile::WriteRegionSpecifications(const ElementManagerT& elementManager,
 
   int elemCount = 0;
   int regionCount = 0;
-  for (std::map<ElementManagerT::RegKeyType, ElementRegionT>::const_iterator elementRegionIter =
-      elementManager.m_ElementRegions.begin(); elementRegionIter
-      != elementManager.m_ElementRegions.end(); ++elementRegionIter)
+  elementManager.forElementRegions([&]( ElementRegion const & elementRegion ) -> void
   {
-    const std::string& elementRegionName = elementRegionIter->first;
-    const ElementRegionT& elementRegion = elementRegionIter->second;
+    std::string const & elementRegionName = elementRegion.getName();
 
-    for (localIndex k = 0; k < elementRegion.m_numElems; ++k)
+    elementRegion.forCellBlocks( [&] ( CellBlockSubRegion const & cellBlock )
     {
-      matlist[elemCount++] = regionCount;
-    }
+      std::string const elementRegionPlusCellBlockName = elementRegionName + cellBlock.getName();
+      for (localIndex k = 0; k < cellBlock.size(); ++k)
+      {
+        matlist[elemCount++] = regionCount;
+      }
+
+    });
+
     matnos[regionCount] = regionCount;
     materialNames[regionCount++] = const_cast<char*> (elementRegionName.c_str());
 
-  }
+  } );
 
   {
     DBoptlist* optlist = DBMakeOptlist(3);
@@ -1274,14 +1509,14 @@ void SiloFile::WriteRegionSpecifications(const ElementManagerT& elementManager,
   }
   // write multimesh object
   int rank = 0;
-#if GPAC_MPI
+#if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   if (rank == 0)
   {
 
     int size = 1;
-#if GPAC_MPI
+#if USE_MPI
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
@@ -1321,7 +1556,7 @@ void SiloFile::WriteRegionSpecifications(const ElementManagerT& elementManager,
 
       }
       vBlockNames[i] = tempBuffer;
-      BlockNames[i] = (char*) vBlockNames[i].c_str();
+      BlockNames[i] = const_cast<char*>( vBlockNames[i].c_str() );
     }
 
     {
@@ -1538,7 +1773,7 @@ void SiloFile::DBWriteWrapper( const std::string& name, const TYPE& data )
 template void SiloFile::DBWriteWrapper( const std::string&, const int& );
 template void SiloFile::DBWriteWrapper( const std::string&, const unsigned int& );
 template void SiloFile::DBWriteWrapper( const std::string&, const double& );
-template void SiloFile::DBWriteWrapper( const std::string&, const localIndex& );
+//template void SiloFile::DBWriteWrapper( const std::string&, const localIndex& );
 template void SiloFile::DBWriteWrapper( const std::string&, const globalIndex& );
 template void SiloFile::DBWriteWrapper( const std::string&, const R1Tensor& );
 template<>
@@ -1564,7 +1799,7 @@ void SiloFile::DBWriteWrapper( const std::string& name, const Array1dT<TYPE>& da
   }
 
 }
-template void SiloFile::DBWriteWrapper( const std::string&, const lArray1d& );
+//template void SiloFile::DBWriteWrapper( const std::string&, const lArray1d& );
 template void SiloFile::DBWriteWrapper( const std::string&, const gArray1d& );
 template void SiloFile::DBWriteWrapper( const std::string&, const iArray1d& );
 template void SiloFile::DBWriteWrapper( const std::string&, const rArray1d& );
@@ -1604,7 +1839,7 @@ void SiloFile::DBWriteWrapper( const std::string& name, const std::set<TYPE>& da
   }
 }
 template void SiloFile::DBWriteWrapper( const std::string&, const lSet& );
-template void SiloFile::DBWriteWrapper( const std::string&, const iSet& );
+//template void SiloFile::DBWriteWrapper( const std::string&, const iSet& );
 
 
 template<typename TYPE>
@@ -1789,17 +2024,17 @@ void SiloFile::DBWriteWrapper( const std::string& subdir, const std::map< std::s
     memberNames.push_back( fieldName );
 
     // check to see if the field should be written
-    std::map<std::string, FieldBase*>::const_iterator fieldAttributes = FieldInfo::AttributesByName.find(fieldName);
+//    std::map<std::string, FieldBase*>::const_iterator fieldAttributes = FieldInfo::AttributesByName.find(fieldName);
 
-    bool writeField = false;
-    if( fieldAttributes == FieldInfo::AttributesByName.end() )
-    {
-      writeField = true;
-    }
-    else if( fieldAttributes->second->m_WriteToRestart )
-    {
-      writeField = true;
-    }
+    bool writeField = true;
+//    if( fieldAttributes == FieldInfo::AttributesByName.end() )
+//    {
+//      writeField = true;
+//    }
+//    else if( fieldAttributes->second->m_WriteToRestart )
+//    {
+//      writeField = true;
+//    }
 
     if( writeField )
     {
@@ -1896,24 +2131,24 @@ void SiloFile::DBReadWrapper( const std::string& name, TYPE& data ) const
 
     if( SiloFileUtilities::DB_TYPE<TYPE>() != DBGetVarType( m_dbFilePtr, name.c_str() ) )
     {
-      throw GPException("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
+      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
     }
     if( sizeof(TYPE) != DBGetVarByteLength( m_dbFilePtr, name.c_str() ) )
     {
-      throw GPException("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
+      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
     }
 
     DBReadVar( m_dbFilePtr, name.c_str(), &data );
   }
   else
   {
-    //throw GPException("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
+    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
   }
 }
 template void SiloFile::DBReadWrapper( const std::string&, int& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, unsigned int& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, double& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, localIndex& ) const;
+//template void SiloFile::DBReadWrapper( const std::string&, localIndex& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, globalIndex& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, R1Tensor& ) const;
 template<>
@@ -1924,7 +2159,7 @@ void SiloFile::DBReadWrapper( const std::string& name, std::string& data ) const
 
     if( DB_CHAR != DBGetVarType( m_dbFilePtr, name.c_str() ) )
     {
-      throw GPException("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
+      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
     }
 
     data.resize( DBGetVarByteLength( m_dbFilePtr, name.c_str() ) );
@@ -1932,7 +2167,7 @@ void SiloFile::DBReadWrapper( const std::string& name, std::string& data ) const
   }
   else
   {
-    //throw GPException("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
+    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
   }
 }
 
@@ -1945,7 +2180,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<TYPE>& data ) co
   {
     if( SiloFileUtilities::DB_TYPE<TYPE>() != DBGetVarType( m_dbFilePtr, name.c_str() ) )
     {
-      throw GPException("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
+      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
     }
 
     if( 1 )
@@ -1957,19 +2192,19 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<TYPE>& data ) co
     }
     else if( static_cast<int>(sizeof(TYPE)*data.size()) != DBGetVarByteLength( m_dbFilePtr, name.c_str() ) )
     {
-      throw GPException("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
+      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
     }
 
     DBReadVar( m_dbFilePtr, name.c_str(), data.data() );
   }
   else
   {
-    //throw GPException("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
+    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
   }
 }
 template void SiloFile::DBReadWrapper( const std::string&, lArray1d& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, gArray1d& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, iArray1d& ) const;
+//template void SiloFile::DBReadWrapper( const std::string&, iArray1d& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, rArray1d& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, Array1dT<R1Tensor>& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, Array1dT<R2Tensor>& ) const;
@@ -2003,7 +2238,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<std::string>& da
   }
   else
   {
-    //throw GPException("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
+    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
   }
 }
 
@@ -2030,7 +2265,7 @@ void SiloFile::DBReadWrapper( const std::string& name, std::set<TYPE>& data ) co
 
 }
 template void SiloFile::DBReadWrapper( const std::string&, lSet& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, iSet& ) const;
+//template void SiloFile::DBReadWrapper( const std::string&, iSet& ) const;
 
 
 template<typename TYPE>
@@ -2041,11 +2276,11 @@ void SiloFile::DBReadWrapper( const std::string& name, Array2dT<TYPE>& data ) co
   {
     if( SiloFileUtilities::DB_TYPE<TYPE>() != DBGetVarType( m_dbFilePtr, name.c_str() ) )
     {
-      throw GPException("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
+      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
     }
     if( static_cast<int>(sizeof(TYPE)*data.size()) != DBGetVarByteLength( m_dbFilePtr, name.c_str() ) )
     {
-      throw GPException("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
+      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
     }
 
     int dims[3];
@@ -2054,14 +2289,14 @@ void SiloFile::DBReadWrapper( const std::string& name, Array2dT<TYPE>& data ) co
         dims[1] != static_cast<int>(data.Dimension(1)) ||
         dims[2] != static_cast<int>(data.Dimension(0)) )
     {
-      throw GPException("SiloFile::DBReadWrapper: variable "+ name +" dimensions are incorrect" );
+      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" dimensions are incorrect" );
     }
 
     DBReadVar( m_dbFilePtr, name.c_str(), data.data() );
   }
   else
   {
-    //throw GPException("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
+    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
   }
 }
 template void SiloFile::DBReadWrapper( const std::string& name, rArray2d& data ) const;
@@ -2292,17 +2527,17 @@ void SiloFile::DBReadWrapper( const std::string& subdir, std::map< std::string, 
   {
     const std::string fieldName = *i;
     // check to see if the field should be written
-    std::map<std::string, FieldBase*>::const_iterator fieldAttributes = FieldInfo::AttributesByName.find(fieldName);
+//    std::map<std::string, FieldBase*>::const_iterator fieldAttributes = FieldInfo::AttributesByName.find(fieldName);
 
-    bool writeField = false;
-    if( fieldAttributes == FieldInfo::AttributesByName.end() )
-    {
-      writeField = true;
-    }
-    else if( fieldAttributes->second->m_WriteToRestart )
-    {
-      writeField = true;
-    }
+    bool writeField = true;
+//    if( fieldAttributes == FieldInfo::AttributesByName.end() )
+//    {
+//      writeField = true;
+//    }
+//    else if( fieldAttributes->second->m_WriteToRestart )
+//    {
+//      writeField = true;
+//    }
 
     if( writeField )
     {
@@ -2388,18 +2623,18 @@ void SiloFile::DBReadWrapper( const std::string& name, TYPE* const data, const i
   {
     if( SiloFileUtilities::DB_TYPE<TYPE>() != DBGetVarType( m_dbFilePtr, name.c_str() ) )
     {
-      throw GPException("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
+      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
     }
     if( static_cast<int>(sizeof(TYPE)*size) != DBGetVarByteLength( m_dbFilePtr, name.c_str() ) )
     {
-      throw GPException("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
+      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
     }
 
     DBReadVar( m_dbFilePtr, name.c_str(), data );
   }
   else
   {
-    //throw GPException("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
+    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
   }
 }
 template void SiloFile::DBReadWrapper( const std::string&, int* const, const int ) const;
@@ -2447,31 +2682,31 @@ void** SiloFile::GetDataVar( const std::string& fieldName,
 
     if( meshName.compare( ucdVar->meshname ) )
     {
-      throw GPException("SiloFile::GetDataVar: meshname is not consistent for " + meshName + ":" + fieldName );
+      GEOS_ERROR("SiloFile::GetDataVar: meshname is not consistent for " + meshName + ":" + fieldName );
     }
     if( (int)nels != ucdVar->nels )
     {
-      throw GPException("SiloFile::GetDataVar: size is not consistent for " + meshName + ":" + fieldName);
+      GEOS_ERROR("SiloFile::GetDataVar: size is not consistent for " + meshName + ":" + fieldName);
     }
     if( centering != ucdVar->centering )
     {
-      throw GPException("SiloFile::GetDataVar: centering is not consistent for " + meshName + ":" + fieldName);
+      GEOS_ERROR("SiloFile::GetDataVar: centering is not consistent for " + meshName + ":" + fieldName);
     }
     if( cycleNumber != ucdVar->cycle )
     {
-      throw GPException("SiloFile::GetDataVar: cycleNumber is not consistent for " + meshName + ":" + fieldName);
+      GEOS_ERROR("SiloFile::GetDataVar: cycleNumber is not consistent for " + meshName + ":" + fieldName);
     }
     if( !isEqual(problemTime,ucdVar->dtime) )
     {
-      throw GPException("SiloFile::GetDataVar: problemTime is not consistent for " + meshName + ":" + fieldName);
+      GEOS_ERROR("SiloFile::GetDataVar: problemTime is not consistent for " + meshName + ":" + fieldName);
     }
     if( nvars != ucdVar->nvals )
     {
-      throw GPException("SiloFile::GetDataVar: size is not consistent for " + meshName + ":" + fieldName);
+      GEOS_ERROR("SiloFile::GetDataVar: size is not consistent for " + meshName + ":" + fieldName);
     }
     if( SiloFileUtilities::DB_TYPE<TYPE>() != ucdVar->datatype )
     {
-      throw GPException("SiloFile::GetDataVar: datatype is not consistent for " + meshName + ":" + fieldName);
+      GEOS_ERROR("SiloFile::GetDataVar: datatype is not consistent for " + meshName + ":" + fieldName);
     }
 
     rval = ucdVar->vals;
@@ -2490,7 +2725,7 @@ void** SiloFile::GetDataVar( const std::string& fieldName,
   }
   else
   {
-    throw GPException("SiloFile::GetDataVar: invalid meshtype");
+    GEOS_ERROR("SiloFile::GetDataVar: invalid meshtype");
   }
 
 
@@ -2499,220 +2734,85 @@ void** SiloFile::GetDataVar( const std::string& fieldName,
 template void** SiloFile::GetDataVar<localIndex>( const std::string&, const std::string&, const Array1dT<localIndex>::size_type , const int, const int, const realT, const std::string& ) const;
 template void** SiloFile::GetDataVar<globalIndex>( const std::string&, const std::string&, const Array1dT<globalIndex>::size_type , const int, const int, const realT, const std::string& ) const;
 
-template void** SiloFile::GetDataVar<int>( const std::string&, const std::string&, const Array1dT<int>::size_type , const int, const int, const realT, const std::string& ) const;
+//template void** SiloFile::GetDataVar<int>( const std::string&, const std::string&, const Array1dT<int>::size_type , const int, const int, const realT, const std::string& ) const;
 template void** SiloFile::GetDataVar<realT>( const std::string&, const std::string&, const Array1dT<realT>::size_type , const int, const int, const realT, const std::string& ) const;
 template void** SiloFile::GetDataVar<R1Tensor>( const std::string&, const std::string&, const Array1dT<R1Tensor>::size_type , const int, const int, const realT, const std::string& ) const;
 template void** SiloFile::GetDataVar<R2Tensor>( const std::string&, const std::string&, const Array1dT<R2Tensor>::size_type , const int, const int, const realT, const std::string& ) const;
 template void** SiloFile::GetDataVar<R2SymTensor>( const std::string&, const std::string&, const Array1dT<R2SymTensor>::size_type , const int, const int, const realT, const std::string& ) const;
 
 
-/**
- *
- * @return
- */
-namespace SiloFileUtilities
+
+
+iArray1d SiloFile::SiloNodeOrdering()
 {
 
+  iArray1d nodeOrdering;
 
-  template<> int DB_TYPE<int> ()
-  {
-    return DB_INT;
-  }
-  template<> int DB_TYPE<unsigned int> ()
-  {
-    return DB_INT;
-  }
-  template<> int DB_TYPE<float> ()
-  {
-    return DB_FLOAT;
-  }
-  template<> int DB_TYPE<realT> ()
-  {
-    return DB_DOUBLE;
-  }
-  template<> int DB_TYPE<R1Tensor> ()
-  {
-    return DB_DOUBLE;
-  }
-  template<> int DB_TYPE<R2Tensor> ()
-  {
-    return DB_DOUBLE;
-  }
-  template<> int DB_TYPE<R2SymTensor> ()
-  {
-    return DB_DOUBLE;
-  }
-  template<> int DB_TYPE<localIndex> ()
-  {
-    return DB_LONG;
-  }
-  template<> int DB_TYPE<globalIndex> ()
-  {
-    return DB_LONG;
-  }
+//  if( !m_elementGeometryID.compare(0, 4, "CPE2") )
+//  {
+//    nodeOrdering.resize(2);
+//    nodeOrdering[0] = 0;
+//    nodeOrdering[1] = 1;
+//  }
+//  else if( !m_elementGeometryID.compare(0, 4, "CPE3") )
+//  {
+//    nodeOrdering.resize(3);
+//    nodeOrdering[0] = 0;
+//    nodeOrdering[1] = 1;
+//    nodeOrdering[2] = 2;
+//    //    throw GPException("ElementRegionT::AllocateElementLibrary(): CPE3 unimplemented");
+//  }
+//  else if (!m_elementGeometryID.compare(0, 4, "CPE4"))
+//  {
+//    nodeOrdering.resize(4);
+//    nodeOrdering[0] = 0;
+//    nodeOrdering[1] = 1;
+//    nodeOrdering[2] = 3;
+//    nodeOrdering[3] = 2;
+//  }
+//  else if (!m_elementGeometryID.compare(0, 4, "C3D4"))
+//  {
+//    nodeOrdering.resize(4);
+//    nodeOrdering[0] = 1;
+//    nodeOrdering[1] = 0;
+//    nodeOrdering[2] = 2;
+//    nodeOrdering[3] = 3;
+//  }
+//  else if (!m_elementGeometryID.compare(0, 4, "C3D8") || !m_elementGeometryID.compare(0, 4, "C3D6"))
+//  {
+    nodeOrdering.resize(8);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 1;
+    nodeOrdering[2] = 3;
+    nodeOrdering[3] = 2;
+    nodeOrdering[4] = 4;
+    nodeOrdering[5] = 5;
+    nodeOrdering[6] = 7;
+    nodeOrdering[7] = 6;
+//  }
+//  else if (!m_elementGeometryID.compare(0, 4, "STRI"))
+//  {
+//    nodeOrdering.resize(3);
+//    nodeOrdering[0] = 0;
+//    nodeOrdering[1] = 1;
+//    nodeOrdering[2] = 2;
+//  }
+//  else if (!m_elementGeometryID.compare(0, 3, "S4R"))
+//  {
+//    nodeOrdering.resize(4);
+//    nodeOrdering[0] = 0;
+//    nodeOrdering[1] = 1;
+//    nodeOrdering[2] = 2;
+//    nodeOrdering[3] = 3;
+//  }
+//  else if (!m_elementGeometryID.compare(0, 4, "TRSH"))
+//  {
+//    nodeOrdering.resize(4);
+//    nodeOrdering[0] = 0;
+//    nodeOrdering[1] = 1;
+//    nodeOrdering[2] = 2;
+//  }
+  return nodeOrdering;
+}
 
-  template<> int GetNumberOfVariablesInField<int> ()
-  {
-    return 1;
-  }
-  template<> int GetNumberOfVariablesInField<unsigned int> ()
-  {
-    return 1;
-  }
-  template<> int GetNumberOfVariablesInField<localIndex> ()
-  {
-    return 1;
-  }
-  template<> int GetNumberOfVariablesInField<float> ()
-  {
-    return 1;
-  }
-  template<> int GetNumberOfVariablesInField<realT> ()
-  {
-    return 1;
-  }
-  template<> int GetNumberOfVariablesInField<long long unsigned int> ()
-  {
-    return 1;
-  }
-  template<> int GetNumberOfVariablesInField<R1Tensor> ()
-  {
-    return R1Tensor::Length();
-  }
-  template<> int GetNumberOfVariablesInField<R2Tensor> ()
-  {
-    return R2Tensor::Length();
-  }
-  template<> int GetNumberOfVariablesInField<R2SymTensor> ()
-  {
-    return R2SymTensor::Length();
-  }
-
-  template<typename TYPE>
-  void SetVariableNames(const std::string& fieldName, sArray1d& varnamestring, char* varnames[])
-  {
-    varnamestring.resize(GetNumberOfVariablesInField<TYPE> ());
-    int count = 0;
-    for (sArray1d::iterator i = varnamestring.begin(); i != varnamestring.end(); ++i)
-    {
-      *i = fieldName;
-      varnames[count++] = (char*) ((*i).c_str());
-    }
-  }
-  template void SetVariableNames<int> (const std::string& fieldName, sArray1d& varnamestring,
-                                       char* varnames[]);
-  template void SetVariableNames<localIndex> (const std::string& fieldName, sArray1d& varnamestring,
-                                       char* varnames[]);
-  template void SetVariableNames<realT> (const std::string& fieldName, sArray1d& varnamestring,
-                                         char* varnames[]);
-  template void SetVariableNames<long long unsigned int> (const std::string& fieldName, sArray1d& varnamestring,
-                                       char* varnames[]);
-
-
-
-  template<>
-  void SetVariableNames<R1Tensor> (const std::string& fieldName, sArray1d& varnamestring,
-                                   char* varnames[])
-  {
-    varnamestring.resize(GetNumberOfVariablesInField<R1Tensor> ());
-    varnamestring[0] = fieldName + "_1";
-    varnamestring[1] = fieldName + "_2";
-    varnamestring[2] = fieldName + "_3";
-    varnames[0] = (char*) varnamestring[0].c_str();
-    varnames[1] = (char*) varnamestring[1].c_str();
-    varnames[2] = (char*) varnamestring[2].c_str();
-  }
-
-  template<>
-  void SetVariableNames<R2Tensor> (const std::string& fieldName, sArray1d& varnamestring,
-                                   char* varnames[])
-  {
-    varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
-    varnamestring[0] = fieldName + "_11";
-    varnamestring[1] = fieldName + "_12";
-    varnamestring[2] = fieldName + "_13";
-    varnamestring[3] = fieldName + "_21";
-    varnamestring[4] = fieldName + "_22";
-    varnamestring[5] = fieldName + "_23";
-    varnamestring[6] = fieldName + "_31";
-    varnamestring[7] = fieldName + "_32";
-    varnamestring[8] = fieldName + "_33";
-    varnames[0] = (char*) varnamestring[0].c_str();
-    varnames[1] = (char*) varnamestring[1].c_str();
-    varnames[2] = (char*) varnamestring[2].c_str();
-    varnames[3] = (char*) varnamestring[3].c_str();
-    varnames[4] = (char*) varnamestring[4].c_str();
-    varnames[5] = (char*) varnamestring[5].c_str();
-    varnames[6] = (char*) varnamestring[6].c_str();
-    varnames[7] = (char*) varnamestring[7].c_str();
-    varnames[8] = (char*) varnamestring[8].c_str();
-  }
-
-  template<>
-  void SetVariableNames<R2SymTensor> (const std::string& fieldName, sArray1d& varnamestring,
-                                      char* varnames[])
-  {
-    varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
-    varnamestring[0] = fieldName + "_11";
-    varnamestring[1] = fieldName + "_21";
-    varnamestring[2] = fieldName + "_22";
-    varnamestring[3] = fieldName + "_31";
-    varnamestring[4] = fieldName + "_32";
-    varnamestring[5] = fieldName + "_33";
-    varnames[0] = (char*) varnamestring[0].c_str();
-    varnames[1] = (char*) varnamestring[1].c_str();
-    varnames[2] = (char*) varnamestring[2].c_str();
-    varnames[3] = (char*) varnamestring[3].c_str();
-    varnames[4] = (char*) varnamestring[4].c_str();
-    varnames[5] = (char*) varnamestring[5].c_str();
-  }
-
-  template<> int FieldCentering<NodeManager> ()
-  {
-    return DB_NODECENT;
-  }
-
-  template<> int GetTensorRank<int> ()
-  {
-    return DB_VARTYPE_SCALAR;
-  }
-  template<> int GetTensorRank<localIndex> ()
-  {
-    return DB_VARTYPE_SCALAR;
-  }
-  template<> int GetTensorRank<realT> ()
-  {
-    return DB_VARTYPE_SCALAR;
-  }
-  template<> int GetTensorRank<R1Tensor> ()
-  {
-    return DB_VARTYPE_VECTOR;
-  }
-  template<> int GetTensorRank<R2Tensor> ()
-  {
-    return DB_VARTYPE_TENSOR;
-  }
-  template<> int GetTensorRank<R2SymTensor> ()
-  {
-    return DB_VARTYPE_SYMTENSOR;
-  }
-  template<> int GetTensorRank<long long unsigned int> ()
-  {
-    return DB_VARTYPE_SCALAR;
-  }
-
-
-
-  void SetCenteringSubdir(const int centering, std::string& subdir)
-  {
-
-    if (centering == DB_NODECENT)
-      subdir = "node_fields";
-    else if (centering == DB_ZONECENT)
-      subdir = "zone_fields";
-    else if (centering == DB_FACECENT)
-      subdir = "face_fields";
-    else if (centering == DB_EDGECENT)
-      subdir = "edge_fields";
-  }
 }

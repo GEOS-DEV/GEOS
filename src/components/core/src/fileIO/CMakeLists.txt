@@ -5,6 +5,7 @@
 set(geosx_headers
   ${geosx_headers}
   fileIO/xmlWrapper.hpp
+  fileIO/silo/SiloFile.hpp
     PARENT_SCOPE )
 
 #
@@ -13,4 +14,5 @@ set(geosx_headers
 set(geosx_core_sources
   ${geosx_core_sources}
   fileIO/xmlWrapper.cpp
+  fileIO/silo/SiloFile.cpp
     PARENT_SCOPE )
