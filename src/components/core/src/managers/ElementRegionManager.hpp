@@ -96,6 +96,8 @@ public:
   ElementRegionManager( string const &, ManagedGroup * const parent );
   virtual ~ElementRegionManager();
 
+  localIndex getNumberOfElements() const;
+
 //  void Initialize(  ){}
 
   void InitializePreSubGroups( ManagedGroup & problemManager ) override final;
@@ -127,6 +129,13 @@ public:
   }
 
   template< typename LAMBDA >
+  void forElementRegions( LAMBDA lambda ) const
+  {
+    ManagedGroup const & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    elementRegions.forSubGroups<ElementRegion>( lambda );
+  }
+
+  template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda )
   {
     ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
@@ -138,6 +147,23 @@ public:
       for( auto & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
       {
         CellBlockSubRegion & cellBlock = cellBlockSubRegions.GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+        lambda( cellBlock );
+      }
+    }
+  }
+
+  template< typename LAMBDA >
+  void forCellBlocks( LAMBDA lambda ) const
+  {
+    ManagedGroup const & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+
+    for( auto const & region : elementRegions.GetSubGroups() )
+    {
+      ElementRegion const & elementRegion = elementRegions.GetGroup<ElementRegion>(region.first);
+      ManagedGroup const & cellBlockSubRegions = elementRegion.GetGroup(dataRepository::keys::cellBlockSubRegions);
+      for( auto const & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
+      {
+        CellBlockSubRegion const & cellBlock = cellBlockSubRegions.GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
         lambda( cellBlock );
       }
     }

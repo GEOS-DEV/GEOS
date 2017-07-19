@@ -13,6 +13,7 @@
 
 namespace geosx
 {
+class SiloFile;
 
 class ObjectManagerBase : public dataRepository::ManagedGroup
 {
@@ -60,7 +61,6 @@ private:
   public:
 
     using ObjectType = string;
-    class SiloFile;
     localIndex resize( localIndex const newSize,
                        const bool /*assignGlobals*/ )
     {
@@ -187,6 +187,7 @@ private:
 
 
     gArray1d& m_localToGlobalMap;
+    map<globalIndex,localIndex> & m_globalToLocalMap;
 
 
     /// builds a new set on this object given another objects set and the map between them

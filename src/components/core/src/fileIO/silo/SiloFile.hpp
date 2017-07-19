@@ -46,28 +46,40 @@
 #ifndef SILOFILE_H_
 #define SILOFILE_H_
 
-#include "Common/Common.h"
+#include "common/DataTypes.hpp"
 #include "silo.h"
 #include <vector>
 
-#if GPAC_MPI
+#if USE_MPI
 #include <mpi.h>
 #endif
 
+#include "mpi.h"
 #include "pmpio.h"
-
+#include "common/Logger.hpp"
 
 /////////////////////////////////////////////////
 
 
-#include "DataStructures/InterObjectRelation.h"
+#include "common/InterObjectRelation.hpp"
+
+
 
 /// typedef my callback function for use with WriteMultiXXXX. This function is essentially a placeholder
 /// for DB,PutMultimesh, DBPutMultivar, etc.
 typedef struct _PMPIO_baton_t PMPIO_baton_t;
 //typedef int (*DBPutMultimeshType)(DBfile *, char DB_CONSTARR1, int, char DB_CONSTARR2, int DB_CONSTARR1, DBoptlist const *);
 //typedef int (*DBPutMultivarType)(DBfile *, const char *, int, char **, int *, DBoptlist *);
-class ElementManagerT;
+
+
+namespace geosx
+{
+
+class ElementRegionManager;
+namespace constitutive
+{
+class ConstitutiveManager;
+}
 
 // *********************************************************************************************************************
 // *********************************************************************************************************************
@@ -235,7 +247,8 @@ public:
 
 //  void TestWriteDiscreteElementMeshObject();
 
-  void WriteRegionSpecifications(const ElementManagerT& elementManager,
+  void WriteRegionSpecifications(const ElementRegionManager& elementManager,
+                                 constitutive::ConstitutiveManager const & constitutiveManager,
                                  const std::string& meshName,
                                  const int cycleNumber,
                                  const realT problemTime);
@@ -438,6 +451,8 @@ public:
 
   sArray1d m_emptyMeshes;
   sArray1d m_emptyVariables;
+
+  iArray1d SiloNodeOrdering();
 
 
 private:
@@ -699,16 +714,16 @@ void SiloFile::WriteDataField( const std::string& meshName,
     if(err < 0)
     {
       if(err < -1)
-        throw GPException("unhandled case in SiloFile::WriteDataField A\n");
+        GEOS_ERROR("unhandled case in SiloFile::WriteDataField A\n");
       else
-        throw GPException("unhandled failure in adding variable during SiloFile::WriteDataField\n");
+        GEOS_ERROR("unhandled failure in adding variable during SiloFile::WriteDataField\n");
     }
 
   }
 
   // write multimesh object
   int rank = 0;
-#if GPAC_MPI
+#if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   if (rank == 0)
@@ -733,7 +748,7 @@ void SiloFile::WriteDataField( const std::string& meshName,
     }
     else
     {
-      throw GPException("unhandled case in SiloFile::WriteDataField B\n");
+      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
 
@@ -789,7 +804,6 @@ void SiloFile::ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& me
       }
     }
   }
-
 }
 
 template< typename INPUTTYPE, typename TYPE>
@@ -839,7 +853,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   (void)centering;
 
   int size = 1;
-#if GPAC_MPI
+#if USE_MPI
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
@@ -899,4 +913,5 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 
 }
 
+}
 #endif /* SILOFILE_H_ */

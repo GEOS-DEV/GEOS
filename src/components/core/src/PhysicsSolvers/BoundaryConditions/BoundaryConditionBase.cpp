@@ -136,7 +136,7 @@ real64 BoundaryConditionBase::GetValue( realT time )
   {
     rArray1d t(1);
     t[0] = time;
-    real32 const tableval = TableManager::Instance().LookupTable<1>(m_timeTableName, t);
+    real64 const tableval = TableManager::Instance().LookupTable<1>(m_timeTableName, t);
     rval = m_scale * tableval;
   }
   else if (!(m_functionName.empty()))

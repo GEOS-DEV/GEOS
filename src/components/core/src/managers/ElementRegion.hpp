@@ -48,7 +48,7 @@
 
 #include "ObjectManagerBase.hpp"
 #include "legacy/ObjectManagers/EnergyT.h"
-#include "legacy/DataStructures/InterObjectRelation.h"
+#include "common/InterObjectRelation.hpp"
 #include "legacy/ArrayT/bufvector.h"
 #include "FaceManager.hpp"
 
@@ -147,6 +147,26 @@ public:
     }
 
   }
+
+
+  template< typename LAMBDA >
+  void forCellBlocks( LAMBDA lambda ) const
+  {
+    ManagedGroup const & cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
+
+    set<string> names;
+    for( auto const & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
+    {
+      names.insert(iterCellBlocks.first);
+    }
+
+    for( auto const & name : names )
+    {
+      lambda( cellBlockSubRegions.GetGroup<CellBlockSubRegion>(name) );
+    }
+
+  }
+
 
   string const & getNumericalMethod() const
   {

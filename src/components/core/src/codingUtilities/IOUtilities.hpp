@@ -46,19 +46,65 @@
 #ifndef IOUTILITIES_H_
 #define IOUTILITIES_H_
 
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <sstream>
+
 #include <vector>
-#include <map>
-#include <set>
-#include <slic/slic.hpp>
+#include <string>
+#include <sstream>
+#include <iostream>
+#include <fstream>
 
-#include "codingUtilities/StringUtilities.hpp"
-//#include "Common/GPException.h"
+namespace geosx
+{
+
+class IOUtilities
+{
+public:
+  IOUtilities();
+  virtual ~IOUtilities();
+
+  template< typename T >
+  static void parse_file( std::vector<T> & target, std::string filename, char delimiter );
+};
+
+template< typename T >
+void IOUtilities::parse_file( std::vector<T> & target, std::string filename, char delimiter )
+{
+  std::ifstream inputStream(filename.c_str());
+  std::string lineString;
+  T value;
+
+  if (inputStream)
+  {
+    while (std::getline(inputStream, lineString))
+    {
+      std::istringstream ss( lineString );
+      
+      while(ss.peek() == delimiter || ss.peek() == ' ')
+      {
+        ss.ignore();
+      }
+      while( ss>>value )
+      {
+        target.push_back( value );
+        while(ss.peek() == delimiter || ss.peek() == ' ')
+        {
+          ss.ignore();
+        }
+      }
+    }
+
+    inputStream.close();
+  }
+  else
+  {
+    throw std::invalid_argument("Could not read input file!");
+  }
+}
+
+}
 
 
+/*
 /// Read from a character deliminated file into a vector
 template<class ARRAY>
 void dlmreadVector(const std::string& filename, ARRAY& values, char delim = ' ', int skipLines = 0)
@@ -174,5 +220,6 @@ void dlmreadArrayTranspose(const std::string& filename, ARRAY& values, char deli
     SLIC_ERROR("dlmreadArrayTranspose: Failed to load file:" + filename + " \n");
   }
 }
+*/
 
 #endif /*IOUTILITIES_H_*/

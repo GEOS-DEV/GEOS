@@ -17,7 +17,9 @@
 
 #include "slic/slic.hpp"
 
-#include "../MPI_Communications/PartitionBase.hpp"
+#include "MPI_Communications/PartitionBase.hpp"
+#include "MPI_Communications/SpatialPartition.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -612,7 +614,8 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
 
   CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>( keys::cellManager );
   ManagedGroup & nodeSets = nodeManager.GetGroup( std::string( "Sets" ) );
-  PartitionBase & partition = *( domain.GetPartition() );
+
+  PartitionBase & partition = domain.getReference<PartitionBase>(keys::partitionManager);
 
   bool isRadialWithOneThetaPartition = false;
 

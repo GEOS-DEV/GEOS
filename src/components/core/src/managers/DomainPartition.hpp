@@ -13,6 +13,15 @@
 namespace geosx
 {
 
+class SiloFile;
+namespace dataRepository
+{
+namespace keys
+{
+string const partitionManager("partitionManager");
+}
+}
+
 class PartitionBase;
 
 class DomainPartition : public dataRepository::ManagedGroup
@@ -29,15 +38,34 @@ public:
   DomainPartition& operator=( DomainPartition const & ) = delete;
   DomainPartition& operator=( DomainPartition && ) = delete;
 
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const );
+  virtual void BuildDataStructure( dataRepository::ManagedGroup * const ) override;
 
   void InitializationOrder( string_array & order ) override final;
 
+  // THIS STUFF NEEDS TO GO SOMEWHERE ELSE
+  void WriteSilo( SiloFile& siloFile,
+                  const int cycleNum,
+                  const realT problemTime,
+                  const bool isRestart );
 
-  PartitionBase * GetPartition() {return m_partition;}
+  void ReadSilo( const SiloFile& siloFile,
+      const int cycleNum,
+      const realT problemTime,
+      const bool isRestart );
+
+  void WriteFiniteElementMesh( SiloFile& siloFile,
+                               const int cycleNum,
+                               const realT problemTime,
+                               const bool isRestart );
+
+  void ReadFiniteElementMesh( const SiloFile& siloFile,
+                              const int cycleNum,
+                              const realT problemTime,
+                              const bool isRestart );
+
+  //  PartitionBase * GetPartition() {return m_partitio}
 private:
 
-  PartitionBase * m_partition;
 
 };
 

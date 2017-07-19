@@ -5,6 +5,8 @@
 set(geosx_headers
   ${geosx_headers}
   	common/DataTypes.hpp
+  	common/Logger.hpp
+  	common/InterObjectRelation.hpp
     PARENT_SCOPE )
 
 #

@@ -44,6 +44,75 @@ if (ATK_DIR)
 endif()
 
 
+
+################################
+# SILO
+################################
+if( EXISTS ${SILO_DIR})
+message("${SILO_DIR}")
+    if( NOT BUILD_LOCAL_SILO )
+        message("Using system SILO found at ${SILO_DIR}")
+        include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindSILO.cmake)
+        if (NOT SILO_FOUND)
+            message(FATAL_ERROR ": SILO not found in ${SILO_DIR}. Maybe you need to build it")
+        endif()
+    
+        blt_register_library( NAME silo
+                              INCLUDES ${SILO_INCLUDE_DIRS}
+                              LIBRARIES ${SILO_LIBRARY} )
+    else()
+        message(INFO ": Build SILO from source found at ${SILO_DIR}")
+        set(silo_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/silo)
+        ExternalProject_Add( SILO
+                             PREFIX ${PROJECT_BINARY_DIR}/thirdparty/silo
+                             SOURCE_DIR ${SILO_DIR}
+                             BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/silo/src
+                             INSTALL_COMMAND make install
+                             INSTALL_DIR ${silo_install_dir}
+		                     CONFIGURE_COMMAND ./configure CC=${CMAKE_C_COMPILER}
+                   			 				   CXX=${CMAKE_CXX_COMPILER}
+			                                   --prefix=$(CWD) 
+			                                   --disable-fortran
+			                                   --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+			                                   --disable-silex 
+        		             BUILD_COMMAND make
+                      		 INSTALL_COMMAND make install )
+                                 
+        blt_register_library( NAME SILO
+                              INCLUDES ${silo_install_dir}/include 
+                              LIBRARIES ${silo_install_dir}/lib/libsilo.a )        
+    endif()
+else()
+    message(INFO ": Using SILO found at https://wci.llnl.gov/content/assets/docs/simulation/computer-codes/silo/silo-4.10.2/silo-4.10.2-bsd.tar.gz")
+    message("${CMAKE_SOURCE_DIR}")
+    set(silo_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/silo)
+    ExternalProject_Add( silo
+                         URL https://wci.llnl.gov/content/assets/docs/simulation/computer-codes/silo/silo-4.10.2/silo-4.10.2-bsd.tar.gz
+                         URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
+                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                         PREFIX ${PROJECT_BINARY_DIR}/thirdparty/silo
+                         INSTALL_DIR ${silo_install_dir}
+                         CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
+                                               CXX=${CMAKE_CXX_COMPILER}
+                                               --prefix=${silo_install_dir}
+                                               --disable-fortran
+                                               --enable-optimization
+                                               --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+                                               --disable-silex 
+                             BUILD_COMMAND make
+                             INSTALL_COMMAND make install )
+
+    blt_register_library( NAME silo
+                          INCLUDES ${silo_install_dir}/include 
+                          LIBRARIES ${silo_install_dir}/lib/libsiloh5.a )
+
+endif()
+
+
+
+
+
+
 ################################
 # RAJA
 ################################
@@ -83,6 +152,9 @@ else()
     set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/raja)
     ExternalProject_Add( raja
                          URL https://github.com/LLNL/RAJA/archive/develop.zip
+                         URL_HASH MD5=d60ad60c1c9d662893862e3b35d8b2dc
+                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                         DOWNLOAD_NAME raja.zip
                          PREFIX ${PROJECT_BINARY_DIR}/thirdparty/raja
                          INSTALL_COMMAND make install
                          INSTALL_DIR ${raja_install_dir}
@@ -141,8 +213,9 @@ else()
     message(INFO ": Using CHAI found at ssh://git@cz-bitbucket.llnl.gov:7999/um/chai.git")
     ExternalProject_Add( chai
                          PREFIX ${PROJECT_BINARY_DIR}/thirdparty/chai
-                            GIT_REPOSITORY ssh://git@cz-bitbucket.llnl.gov:7999/um/chai.git
-                         GIT_TAG master
+                         GIT_REPOSITORY ssh://git@cz-bitbucket.llnl.gov:7999/um/chai.git
+                         GIT_TAG develop
+                         PATCH_COMMAND git submodule init && git submodule update
                          INSTALL_DIR ${chai_install_dir}
                          INSTALL_COMMAND make install
                          CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -173,6 +246,8 @@ message( INFO ": FPARSER_INSTALL_DIR = ${FPARSER_INSTALL_DIR}" )
 
 ExternalProject_Add( fparser 
                      URL http://warp.povusers.org/FunctionParser/fparser4.5.2.zip
+                     URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
+                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
                      PREFIX ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/fparser
                      INSTALL_DIR ${FPARSER_INSTALL_DIR}
                      CONFIGURE_COMMAND ""
@@ -215,8 +290,10 @@ message( INFO ": CALIPER_INSTALL_DIR = ${CALIPER_INSTALL_DIR}" )
 
 ExternalProject_Add( caliper
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/caliper
-                     GIT_REPOSITORY https://github.com/LLNL/Caliper.git
-                     GIT_TAG master
+                     URL https://github.com/LLNL/Caliper/archive/master.zip
+                     URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
+                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                     DOWNLOAD_NAME caliper.zip
                      INSTALL_DIR ${CALIPER_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -247,8 +324,10 @@ set(ASMJIT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/asmjit)
 
 ExternalProject_Add( asmjit
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/asmjit
-                     GIT_REPOSITORY https://github.com/asmjit/asmjit.git
-                     GIT_TAG master
+                     URL https://github.com/asmjit/asmjit/archive/master.zip
+                     URL_HASH MD5=3c0b3190d422240b075dfc667a081a3a
+                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                     DOWNLOAD_NAME asmjit.zip
                      INSTALL_DIR ${ASMJIT_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -268,8 +347,10 @@ message( INFO ": MATHPRESSO_INSTALL_DIR = ${MATHPRESSO_INSTALL_DIR}" )
 
 ExternalProject_Add( mathpresso
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/mathpresso
-                     GIT_REPOSITORY https://github.com/kobalicek/mathpresso.git
-                     GIT_TAG master
+                     URL https://github.com/kobalicek/mathpresso/archive/master.zip
+                     URL_HASH MD5=b43212cafeab5e0e2ef5b87c29c15df1
+                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                     DOWNLOAD_NAME mathpresso.zip
                      DEPENDS asmjit 
                      INSTALL_DIR ${MATHPRESSO_INSTALL_DIR}
                      INSTALL_COMMAND mkdir -p <INSTALL_DIR>/include &&
@@ -304,18 +385,25 @@ message( INFO ": PUGIXML_INSTALL_DIR = ${PUGIXML_INSTALL_DIR}" )
 
 ExternalProject_Add( pugixml
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/pugixml
-                     GIT_REPOSITORY https://github.com/zeux/pugixml.git
-                     GIT_TAG master
+                     URL https://github.com/zeux/pugixml/archive/master.zip
+                     DOWNLOAD_NAME pugixml.zip
+                     URL_HASH MD5=0099563cb3f466fe03b10f9666c73993
+                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
                      INSTALL_DIR ${PUGIXML_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-blt_register_library( NAME pugixml
-                      INCLUDES ${PUGIXML_INSTALL_DIR}/include
-                      LIBRARIES ${PUGIXML_INSTALL_DIR}/lib64/libpugixml.a )
-
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	blt_register_library( NAME pugixml
+    	                  INCLUDES ${PUGIXML_INSTALL_DIR}/include
+        	              LIBRARIES ${PUGIXML_INSTALL_DIR}/lib/libpugixml.a )
+else()
+	blt_register_library( NAME pugixml
+    	                  INCLUDES ${PUGIXML_INSTALL_DIR}/include
+        	              LIBRARIES ${PUGIXML_INSTALL_DIR}/lib64/libpugixml.a )
+endif()
 
 
 if (UNCRUSTIFY_EXECUTABLE)

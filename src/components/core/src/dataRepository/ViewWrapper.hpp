@@ -145,10 +145,12 @@ public:
    * @param parent group that owns the ViewWrapper
    * @return A std::unique_ptr<ViewWrapperBase> that holds the newly allocated ViewWrapper.
    */
+  template<typename TNEW>
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
                                                    ManagedGroup * const parent )
   {
-    return std::move(std::make_unique<ViewWrapper<T> >( name, parent ) );
+    std::unique_ptr<TNEW> newObject = std::move( std::make_unique<TNEW>() );
+    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject) ) );
   }
 
 

@@ -68,6 +68,16 @@ ElementRegionManager::~ElementRegionManager()
   // TODO Auto-generated destructor stub
 }
 
+localIndex ElementRegionManager::getNumberOfElements() const
+{
+  localIndex numElem = 0;
+  this->forCellBlocks([&]( ManagedGroup const & cellBlock ) -> void
+  {
+    numElem += cellBlock.size();
+  });
+  return numElem;
+}
+
 void ElementRegionManager::resize( int32_array const & numElements,
                              string_array const & regionNames,
                              string_array const & elementTypes )

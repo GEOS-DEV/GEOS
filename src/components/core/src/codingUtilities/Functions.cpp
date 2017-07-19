@@ -157,7 +157,7 @@ void UniformRandomDistribution::ReadXML(TICPP::HierarchicalDataNode* hdn){
   uniqueAcrossProcessors= hdn->GetAttributeOrDefault<bool>("uniqueAcrossProcessors",true);
 
   rank =0;
-  #if GPAC_MPI
+  #if USE_MPI
      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
 }

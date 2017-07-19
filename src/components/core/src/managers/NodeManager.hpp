@@ -96,7 +96,7 @@ public:
   string getCatalogName() const      { return NodeManager::CatalogName(); }
 
 
-  void Initialize();
+//  void Initialize();
 
 
 public:
