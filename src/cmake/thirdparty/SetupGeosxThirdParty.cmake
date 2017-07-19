@@ -87,9 +87,10 @@ else()
     message("${CMAKE_SOURCE_DIR}")
     set(silo_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/silo)
     ExternalProject_Add( silo
-                         URL https://wci.llnl.gov/content/assets/docs/simulation/computer-codes/silo/silo-4.10.2/silo-4.10.2-bsd.tar.gz
-                         URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
-                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+#                         URL https://wci.llnl.gov/content/assets/docs/simulation/computer-codes/silo/silo-4.10.2/silo-4.10.2-bsd.tar.gz
+#                         URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
+#                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                         URL ${CMAKE_SOURCE_DIR}/tpl_mirror/silo-4.10.2-bsd.tar.gz
                          PREFIX ${PROJECT_BINARY_DIR}/thirdparty/silo
                          INSTALL_DIR ${silo_install_dir}
                          CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
@@ -97,7 +98,7 @@ else()
                                                --prefix=${silo_install_dir}
                                                --disable-fortran
                                                --enable-optimization
-                                               --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+                                               --with-hdf5=${HDF5_DIR}
                                                --disable-silex 
                              BUILD_COMMAND make
                              INSTALL_COMMAND make install )
@@ -151,10 +152,11 @@ else()
     message(INFO ": Using RAJA found at https://github.com/LLNL/RAJA/archive/develop.zip")
     set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/raja)
     ExternalProject_Add( raja
-                         URL https://github.com/LLNL/RAJA/archive/develop.zip
-                         URL_HASH MD5=d60ad60c1c9d662893862e3b35d8b2dc
-                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
-                         DOWNLOAD_NAME raja.zip
+#                         URL https://github.com/LLNL/RAJA/archive/develop.zip
+#                         URL_HASH MD5=d60ad60c1c9d662893862e3b35d8b2dc
+#                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+#                         DOWNLOAD_NAME raja.zip
+                         URL ${CMAKE_SOURCE_DIR}/tpl_mirror/RAJA-develop.zip
                          PREFIX ${PROJECT_BINARY_DIR}/thirdparty/raja
                          INSTALL_COMMAND make install
                          INSTALL_DIR ${raja_install_dir}
@@ -215,7 +217,7 @@ else()
                          PREFIX ${PROJECT_BINARY_DIR}/thirdparty/chai
                          GIT_REPOSITORY ssh://git@cz-bitbucket.llnl.gov:7999/um/chai.git
                          GIT_TAG develop
-                         PATCH_COMMAND git submodule init && git submodule update
+                         PATCH_COMMAND git submodule init && git submodule update                         
                          INSTALL_DIR ${chai_install_dir}
                          INSTALL_COMMAND make install
                          CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -245,9 +247,10 @@ message( INFO ": FPARSER_LOCAL_DIR = ${FPARSER_LOCAL_DIR}" )
 message( INFO ": FPARSER_INSTALL_DIR = ${FPARSER_INSTALL_DIR}" )
 
 ExternalProject_Add( fparser 
-                     URL http://warp.povusers.org/FunctionParser/fparser4.5.2.zip
-                     URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
-                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                     #URL http://warp.povusers.org/FunctionParser/fparser4.5.2.zip
+                     #URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
+                     #DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/fparser4.5.2.zip
                      PREFIX ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/fparser
                      INSTALL_DIR ${FPARSER_INSTALL_DIR}
                      CONFIGURE_COMMAND ""
@@ -289,11 +292,12 @@ message( INFO ": CALIPER_INSTALL_DIR = ${CALIPER_INSTALL_DIR}" )
 #git@github.com:LLNL/Caliper.git
 
 ExternalProject_Add( caliper
-                     PREFIX ${PROJECT_BINARY_DIR}/thirdparty/caliper
-                     URL https://github.com/LLNL/Caliper/archive/master.zip
-                     URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
-                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
-                     DOWNLOAD_NAME caliper.zip
+#                     PREFIX ${PROJECT_BINARY_DIR}/thirdparty/caliper
+#                     URL https://github.com/LLNL/Caliper/archive/master.zip
+#                     URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
+#                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+#                     DOWNLOAD_NAME caliper.zip
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/Caliper-master.zip
                      INSTALL_DIR ${CALIPER_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -324,10 +328,11 @@ set(ASMJIT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/asmjit)
 
 ExternalProject_Add( asmjit
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/asmjit
-                     URL https://github.com/asmjit/asmjit/archive/master.zip
-                     URL_HASH MD5=3c0b3190d422240b075dfc667a081a3a
-                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
-                     DOWNLOAD_NAME asmjit.zip
+#                     URL https://github.com/asmjit/asmjit/archive/master.zip
+#                     URL_HASH MD5=3c0b3190d422240b075dfc667a081a3a
+#                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+#                     DOWNLOAD_NAME asmjit.zip
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/asmjit-master.zip
                      INSTALL_DIR ${ASMJIT_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -347,10 +352,11 @@ message( INFO ": MATHPRESSO_INSTALL_DIR = ${MATHPRESSO_INSTALL_DIR}" )
 
 ExternalProject_Add( mathpresso
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/mathpresso
-                     URL https://github.com/kobalicek/mathpresso/archive/master.zip
-                     URL_HASH MD5=b43212cafeab5e0e2ef5b87c29c15df1
-                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
-                     DOWNLOAD_NAME mathpresso.zip
+#                     URL https://github.com/kobalicek/mathpresso/archive/master.zip
+#                     URL_HASH MD5=b43212cafeab5e0e2ef5b87c29c15df1
+#                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+#                     DOWNLOAD_NAME mathpresso.zip
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/mathpresso-master.zip
                      DEPENDS asmjit 
                      INSTALL_DIR ${MATHPRESSO_INSTALL_DIR}
                      INSTALL_COMMAND mkdir -p <INSTALL_DIR>/include &&
@@ -385,10 +391,11 @@ message( INFO ": PUGIXML_INSTALL_DIR = ${PUGIXML_INSTALL_DIR}" )
 
 ExternalProject_Add( pugixml
                      PREFIX ${PROJECT_BINARY_DIR}/thirdparty/pugixml
-                     URL https://github.com/zeux/pugixml/archive/master.zip
-                     DOWNLOAD_NAME pugixml.zip
-                     URL_HASH MD5=0099563cb3f466fe03b10f9666c73993
-                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+#                     URL https://github.com/zeux/pugixml/archive/master.zip
+#                     DOWNLOAD_NAME pugixml.zip
+#                     URL_HASH MD5=0099563cb3f466fe03b10f9666c73993
+#                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/pugixml.tar
                      INSTALL_DIR ${PUGIXML_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
