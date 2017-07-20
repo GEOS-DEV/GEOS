@@ -98,7 +98,7 @@ else()
                                                --prefix=${silo_install_dir}
                                                --disable-fortran
                                                --enable-optimization
-                                               --with-hdf5=${HDF5_DIR}
+                                               --with-hdf5=${HDF5_DIR},${HDF5_DIR}/include,${HDF5_DIR}/lib
                                                --disable-silex 
                              BUILD_COMMAND make
                              INSTALL_COMMAND make install )
