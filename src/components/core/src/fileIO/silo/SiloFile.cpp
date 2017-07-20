@@ -123,6 +123,10 @@ namespace SiloFileUtilities
   {
     return 1;
   }
+  template<> int GetNumberOfVariablesInField<long> ()
+  {
+    return 1;
+  }
   template<> int GetNumberOfVariablesInField<float> ()
   {
     return 1;

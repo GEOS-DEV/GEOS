@@ -186,8 +186,11 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
         const localIndex* const elemToNodeMap = elemsToNodes[k];
 
         const iArray1d nodeOrdering = siloFile.SiloNodeOrdering();
-        for (localIndex a = 0; a < *(cellBlock.getData<int32>(keys::numNodesPerElement)); ++a)
+        int32 numNodesPerElement = elemsToNodes.Dimension(1);
+        for (localIndex a = 0; a < numNodesPerElement; ++a)
+        {
           elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
+        }
 
       }
 

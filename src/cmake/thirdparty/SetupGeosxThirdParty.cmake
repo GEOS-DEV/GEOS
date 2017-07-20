@@ -48,11 +48,6 @@ endif()
 ################################
 # SILO
 ################################
-if( CMAKE_HOST_APPLE )
-  set(SILOHDF5 "${HDF5_DIR}/include,${HDF5_DIR}/lib" CACHE STRING "")
-else()
-  set(SILOHDF5 "${HDF5_DIR}" CACHE STRING "")  
-endif()
 if( EXISTS ${SILO_DIR})
     if( NOT BUILD_LOCAL_SILO )
         message("Using system SILO found at ${SILO_DIR}")
@@ -77,7 +72,8 @@ if( EXISTS ${SILO_DIR})
                    			 				   CXX=${CMAKE_CXX_COMPILER}
 			                                   --prefix=$(CWD) 
 			                                   --disable-fortran
-			                                   --with-hdf5=${SILOHDF5}
+                                               --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+                                               LDFLAGS=-ldl
 			                                   --disable-silex 
         		             BUILD_COMMAND make
                       		 INSTALL_COMMAND make install )
@@ -102,7 +98,8 @@ else()
                                                --prefix=${silo_install_dir}
                                                --disable-fortran
                                                --enable-optimization
-                                               --with-hdf5=${SILOHDF5}
+                                               --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+                                               LDFLAGS=-ldl
                                                --disable-silex 
                              BUILD_COMMAND make
                              INSTALL_COMMAND make install )
