@@ -542,13 +542,7 @@ void ProblemManager::RunSimulation()
   int cycle = 0;
   real64 dt = 0.0;
 
-  SiloFile silo;
-  silo.Initialize(PMPIO_WRITE);
-  silo.WaitForBaton(0, 0, false );
-  domain.WriteSilo(silo,0,0,0);
-  silo.HandOffBaton();
-  silo.ClearEmptiesFromMultiObjects(0);
-  silo.Finish();
+
 
 //  cxx_utilities::DocumentationNode * const eventDocNode = m_eventManager->getDocumentationNode();
 //  for( auto const & subEventDocNode : eventDocNode->m_child )
@@ -574,6 +568,7 @@ void ProblemManager::RunSimulation()
       while( time < endTime )
       {
         std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+        WriteSilo( cycle, time );
         real64 nextDt = std::numeric_limits<real64>::max();
 
         for ( auto jj=0; jj<solverList.size(); ++jj)
@@ -592,11 +587,29 @@ void ProblemManager::RunSimulation()
     }
 //  }
 
+  WriteSilo( cycle, time );
+
+
 #if USE_CALIPER == 1
   runSimulationAnnotation.end();
 #endif
 }
 
+void ProblemManager::WriteSilo( int32 const cycleNumber,
+                                real64 const problemTime )
+{
+  DomainPartition& domain  = getDomainPartition();
+  SiloFile silo;
+
+
+  silo.Initialize(PMPIO_WRITE);
+  silo.WaitForBaton(0, cycleNumber, false );
+  domain.WriteSilo(silo,cycleNumber,problemTime,0);
+  silo.HandOffBaton();
+  silo.ClearEmptiesFromMultiObjects(cycleNumber);
+  silo.Finish();
+
+}
 
 
 

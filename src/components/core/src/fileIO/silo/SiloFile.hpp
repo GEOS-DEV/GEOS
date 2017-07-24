@@ -253,17 +253,38 @@ public:
                                  const int cycleNumber,
                                  const realT problemTime);
 
+
+  void WriteManagedGroupSilo( dataRepository::ManagedGroup const & group,
+                              const std::string& siloDirName,
+                              const std::string& meshname,
+                              const int centering,
+                              const int cycleNum,
+                              const realT problemTime,
+                              const bool isRestart,
+                              const lArray1d& mask );
+
+
+
+  void WriteManagedGroupSilo( dataRepository::ManagedGroup const & group,
+                              const std::string& meshname,
+                              const int centering,
+                              const int cycleNum,
+                              const realT problemTime,
+                              const bool isRestart,
+                              const std::string& multiRoot,
+                              const lArray1d& mask );
+
   /// writes out fields in a data member map
-  template< typename OUTPUTTYPE, typename TYPE >
-  void WriteFieldMapToSilo( const std::string& meshname,
-                            const std::map< std::string, TYPE>& member,
-                            const int centering,
-                            const int cycleNum,
-                            const realT problemTime,
-                            const bool isRestart,
-                            const std::string& multiRoot,
-                            const std::string& regionName,
-                            const lArray1d& mask );
+  template< typename OUTPUTTYPE >
+  void WriteViewWrappersToSilo( const std::string& meshname,
+                                const std::vector< std::unique_ptr<dataRepository::ViewWrapperBase> > & wrappers,
+                                const int centering,
+                                const int cycleNum,
+                                const realT problemTime,
+                                const bool isRestart,
+                                const std::string& multiRoot,
+                                const std::string& regionName,
+                                const lArray1d& mask );
 
   template< typename INPUTTYPE, typename TYPE >
   void ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& member,
@@ -276,6 +297,16 @@ public:
                              const lArray1d& mask ) const;
 
   /// Write out a data field
+  template<typename OUTTYPE, typename TYPE>
+  void WriteDataField( const std::string& meshName,
+                       const std::string& fieldName,
+                       const TYPE& field,
+                       const int centering,
+                       const int cycleNumber,
+                       const realT problemTime,
+                       const std::string& multiRoot,
+                       const std::string& regionName );
+
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( const std::string& meshName,
                        const std::string& fieldName,
@@ -499,6 +530,7 @@ namespace SiloFileUtilities
   OUTTYPE CastField(const TYPE& field, const int i)
   {
     return static_cast<OUTTYPE>(field.Data()[i]);
+//    return field;
   }
 
   template<> inline int CastField<int, int> (const int& field, const int )
@@ -576,9 +608,9 @@ namespace SiloFileUtilities
  *
  * This function writes all fields in a member map to a silo file.
  */
-template< typename OUTPUTTYPE, typename T >
-void SiloFile::WriteFieldMapToSilo( const std::string& meshname,
-                                    const std::map< std::string, T>& member,
+template< typename OUTPUTTYPE >
+void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
+                                    const std::vector< std::unique_ptr<dataRepository::ViewWrapperBase> > & wrappers,
                                     const int centering,
                                     const int cycleNum,
                                     const realT problemTime,
@@ -589,35 +621,31 @@ void SiloFile::WriteFieldMapToSilo( const std::string& meshname,
 {
 
   // iterate over all entries in the member map
-  for( typename std::map< std::string, T >::const_iterator iter = member.begin() ; iter!=member.end() ; ++iter )
+  for( auto const & wrapper : wrappers )
   {
+
     // the field name is the key to the map
-    const std::string fieldName = iter->first;
+    const std::string fieldName = wrapper->getName();
 
-    // check to see if the field should be written
-    if( FieldInfo::AttributesByName.find(fieldName) != FieldInfo::AttributesByName.end() )
+    std::type_info const & typeID = wrapper->get_typeid();
+
+    // TODO This is wrong. problem with uniqueness
+    if( typeID==typeid(real64_array) )
     {
-      if( (  isRestart && FieldInfo::AttributesByName[fieldName]->m_WriteToRestart) ||
-          ( !isRestart && FieldInfo::AttributesByName[fieldName]->m_WriteToPlot ) )
-      {
-        // the field data is mapped value
-        const T& fieldData = iter->second;
-
-        if( !(mask.empty()) && !isRestart )
-        {
-          T dataToWrite(mask.size());
-          for( lArray1d::size_type i = 0; i < mask.size(); ++i)
-            dataToWrite[i] = fieldData[mask[i]];
-
-          // write the data field
-          WriteDataField<OUTPUTTYPE>(meshname.c_str(), fieldName, dataToWrite, centering, cycleNum, problemTime, multiRoot, regionName );
-        }
-        else
-        {
-          WriteDataField<OUTPUTTYPE>(meshname.c_str(), fieldName, fieldData, centering, cycleNum, problemTime, multiRoot, regionName );
-        }
-      }
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<real64_array> & >( *wrapper ) ;
+      this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
     }
+    if( typeID==typeid(r1_array) )
+    {
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> & >( *wrapper ) ;
+      this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
+    }
+    if( typeID==typeid(int32_array) )
+    {
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<int32_array> & >( *wrapper ) ;
+      this->WriteDataField<int32>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
+    }
+
   }
 }
 
@@ -631,6 +659,20 @@ void SiloFile::WriteFieldMapToSilo( const std::string& meshname,
  * @param cycleNumber
  * @param problemTime
  */
+
+template<typename OUTTYPE, typename TYPE>
+void SiloFile::WriteDataField( const std::string& meshName,
+                               const std::string& fieldName,
+                               const TYPE& field,
+                               const int centering,
+                               const int cycleNumber,
+                               const realT problemTime,
+                               const std::string& multiRoot,
+                               const std::string& regionName )
+{
+
+}
+
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( const std::string& meshName,
                                const std::string& fieldName,

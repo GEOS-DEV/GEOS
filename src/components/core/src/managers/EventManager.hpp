@@ -13,6 +13,13 @@
 
 namespace geosx
 {
+namespace dataRepository
+{
+namespace keys
+{
+string const Events("Events");
+}
+}
 
 class EventManager : public dataRepository::ManagedGroup
 {

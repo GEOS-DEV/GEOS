@@ -245,7 +245,8 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     // write node fields in silo mesh, and all restart data as unassociated variables.
 
 
-//    m_feNodeManager.WriteSilo(siloFile, "NodalFields", meshName, DB_NODECENT, cycleNum, problemTime, isRestart);
+
+    siloFile.WriteManagedGroupSilo( nodeManager, "NodalFields", meshName, DB_NODECENT, cycleNum, problemTime, isRestart, lArray1d());
 
 
 

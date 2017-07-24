@@ -266,11 +266,31 @@ public:
     static typename std::enable_if<!has_memberfunction_resize<U>::value || std::is_same<U,string>::value, void>::type
     resize(ViewWrapper * const, std::size_t ) { return; }
   };
-  virtual void resize( localIndex new_size ) override final
+  void resize( localIndex new_size ) override final
   {
     return resize_wrapper::resize(this, new_size);
   }
 
+//
+//  struct serialize_wrapper
+//  {
+//    HAS_MEMBER_FUNCTION(serialize,void,const,VA_LIST(void*,int64&),VA_LIST((void*)nullptr,int64(1) ))
+//    template<class U = T>
+//    static typename std::enable_if<has_memberfunction_serialize<U>::value, void>::type
+//    resize(ViewWrapper * const parent, char * dataPointer, int64 & length, string & typeName)
+//    {
+//      return parent->m_data->resize(new_size);
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if<!has_memberfunction_serialize<U>::value || std::is_same<U,string>::value, void>::type
+//    resize(ViewWrapper * const, std::size_t ) { return; }
+//
+//  };
+//  void serialize( char * dataPointer, int64 & length, string & typeName ) const override final
+//  {
+//    return serialize_wrapper::serialize(this,dataPointer,length, this->get_typeid().name() );
+//  }
 
 
 
@@ -404,7 +424,6 @@ public:
   {
     return m_data.get();
   }
-
 
 
 

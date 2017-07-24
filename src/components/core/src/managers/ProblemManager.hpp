@@ -121,6 +121,9 @@ public:
 
   void ApplySchedulerEvent();
 
+  void WriteSilo( int32 const cycleNumber, real64 const problemTime );
+
+
   DomainPartition & getDomainPartition();
   DomainPartition const & getDomainPartition() const;
 

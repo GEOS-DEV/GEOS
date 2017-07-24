@@ -77,7 +77,10 @@ public:
      void swap( vector& other );
    */
 
+
   virtual void resize( localIndex newsize ) = 0;
+
+//  virtual void serialize( char * dataPointer, int64 & length, string & typeName ) const = 0;
 
 
   int sizedFromParent() const

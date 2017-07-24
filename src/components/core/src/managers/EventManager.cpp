@@ -6,6 +6,7 @@
  */
 
 #include "EventManager.hpp"
+#include "Event.hpp"
 
 #include "DocumentationNode.hpp"
 
@@ -19,6 +20,7 @@ EventManager::EventManager( std::string const & name,
                             ManagedGroup * const parent ):
   ManagedGroup( name, parent)
 {
+  this->RegisterViewWrapper< map<double,std::unique_ptr<Event> > >(keys::Events);
 }
 
 EventManager::~EventManager()

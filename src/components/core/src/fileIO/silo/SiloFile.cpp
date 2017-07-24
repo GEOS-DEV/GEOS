@@ -110,6 +110,10 @@ namespace SiloFileUtilities
   {
     return DB_LONG;
   }
+  template<> int DB_TYPE<string> ()
+  {
+    return DB_CHAR;
+  }
 
   template<> int GetNumberOfVariablesInField<int> ()
   {
@@ -155,6 +159,10 @@ namespace SiloFileUtilities
   {
     return R2SymTensor::Length();
   }
+  template<> int GetNumberOfVariablesInField<string> ()
+  {
+    return 1;
+  }
 
   template<typename TYPE>
   void SetVariableNames(const std::string& fieldName, sArray1d& varnamestring, char* varnames[])
@@ -164,7 +172,7 @@ namespace SiloFileUtilities
     for (sArray1d::iterator i = varnamestring.begin(); i != varnamestring.end(); ++i)
     {
       *i = fieldName;
-      varnames[count++] = (char*) ((*i).c_str());
+      varnames[count++] =  const_cast<char*>((*i).c_str());
     }
   }
   template void SetVariableNames<int> (const std::string& fieldName, sArray1d& varnamestring,
@@ -186,9 +194,9 @@ namespace SiloFileUtilities
     varnamestring[0] = fieldName + "_1";
     varnamestring[1] = fieldName + "_2";
     varnamestring[2] = fieldName + "_3";
-    varnames[0] = (char*) varnamestring[0].c_str();
-    varnames[1] = (char*) varnamestring[1].c_str();
-    varnames[2] = (char*) varnamestring[2].c_str();
+    varnames[0] = const_cast<char*>( varnamestring[0].c_str() );
+    varnames[1] = const_cast<char*>( varnamestring[1].c_str() );
+    varnames[2] = const_cast<char*>( varnamestring[2].c_str() );
   }
 
   template<>
@@ -205,15 +213,15 @@ namespace SiloFileUtilities
     varnamestring[6] = fieldName + "_31";
     varnamestring[7] = fieldName + "_32";
     varnamestring[8] = fieldName + "_33";
-    varnames[0] = (char*) varnamestring[0].c_str();
-    varnames[1] = (char*) varnamestring[1].c_str();
-    varnames[2] = (char*) varnamestring[2].c_str();
-    varnames[3] = (char*) varnamestring[3].c_str();
-    varnames[4] = (char*) varnamestring[4].c_str();
-    varnames[5] = (char*) varnamestring[5].c_str();
-    varnames[6] = (char*) varnamestring[6].c_str();
-    varnames[7] = (char*) varnamestring[7].c_str();
-    varnames[8] = (char*) varnamestring[8].c_str();
+    varnames[0] = const_cast<char*>( varnamestring[0].c_str() );
+    varnames[1] = const_cast<char*>( varnamestring[1].c_str() );
+    varnames[2] = const_cast<char*>( varnamestring[2].c_str() );
+    varnames[3] = const_cast<char*>( varnamestring[3].c_str() );
+    varnames[4] = const_cast<char*>( varnamestring[4].c_str() );
+    varnames[5] = const_cast<char*>( varnamestring[5].c_str() );
+    varnames[6] = const_cast<char*>( varnamestring[6].c_str() );
+    varnames[7] = const_cast<char*>( varnamestring[7].c_str() );
+    varnames[8] = const_cast<char*>( varnamestring[8].c_str() );
   }
 
   template<>
@@ -227,12 +235,12 @@ namespace SiloFileUtilities
     varnamestring[3] = fieldName + "_31";
     varnamestring[4] = fieldName + "_32";
     varnamestring[5] = fieldName + "_33";
-    varnames[0] = (char*) varnamestring[0].c_str();
-    varnames[1] = (char*) varnamestring[1].c_str();
-    varnames[2] = (char*) varnamestring[2].c_str();
-    varnames[3] = (char*) varnamestring[3].c_str();
-    varnames[4] = (char*) varnamestring[4].c_str();
-    varnames[5] = (char*) varnamestring[5].c_str();
+    varnames[0] = const_cast<char*>( varnamestring[0].c_str() );
+    varnames[1] = const_cast<char*>( varnamestring[1].c_str() );
+    varnames[2] = const_cast<char*>( varnamestring[2].c_str() );
+    varnames[3] = const_cast<char*>( varnamestring[3].c_str() );
+    varnames[4] = const_cast<char*>( varnamestring[4].c_str() );
+    varnames[5] = const_cast<char*>( varnamestring[5].c_str() );
   }
 
   template<> int FieldCentering<NodeManager> ()
@@ -244,7 +252,19 @@ namespace SiloFileUtilities
   {
     return DB_VARTYPE_SCALAR;
   }
+  template<> int GetTensorRank<unsigned int> ()
+  {
+    return DB_VARTYPE_SCALAR;
+  }
+  template<> int GetTensorRank<long> ()
+  {
+    return DB_VARTYPE_SCALAR;
+  }
   template<> int GetTensorRank<unsigned long> ()
+  {
+    return DB_VARTYPE_SCALAR;
+  }
+  template<> int GetTensorRank<real32> ()
   {
     return DB_VARTYPE_SCALAR;
   }
@@ -265,6 +285,10 @@ namespace SiloFileUtilities
     return DB_VARTYPE_SYMTENSOR;
   }
   template<> int GetTensorRank<long long unsigned int> ()
+  {
+    return DB_VARTYPE_SCALAR;
+  }
+  template<> int GetTensorRank<string> ()
   {
     return DB_VARTYPE_SCALAR;
   }
@@ -290,6 +314,7 @@ namespace SiloFileUtilities
 
 
 using namespace constitutive;
+using namespace dataRepository;
 
 // *********************************************************************************************************************
 /// Default Constructor
@@ -578,7 +603,8 @@ void SiloFile::WriteMeshObject(const std::string& meshName,
     int hi_offset = 0;
 
     DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
-                    hi_offset, (int*) shapetype, (int*) shapesize2.data(), (int*) shapecnt, numRegions,
+                    hi_offset, const_cast<int*>(shapetype), const_cast<int*>(shapesize2.data()),
+                    const_cast<int*>(shapecnt), numRegions,
                     optlist);
 
     DBClearOptlist(optlist);
@@ -691,7 +717,7 @@ void SiloFile::WritePolygonMeshObject(const std::string& meshName,
     int hi_offset = 0;
 
     DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
-                    hi_offset, (int*) shapetype, (int*) shapesize, (int*) shapecnt, numRegions,
+                    hi_offset, const_cast<int*>(shapetype), const_cast<int*>(shapesize), const_cast<int*>(shapecnt), numRegions,
                     optlist);
 
     DBClearOptlist(optlist);
@@ -2818,5 +2844,97 @@ iArray1d SiloFile::SiloNodeOrdering()
 //  }
   return nodeOrdering;
 }
+
+
+
+void SiloFile::WriteManagedGroupSilo( ManagedGroup const & group,
+                                      const std::string& siloDirName,
+                                      const std::string& meshname,
+                                      const int centering,
+                                      const int cycleNum,
+                                      const realT problemTime,
+                                      const bool isRestart,
+                                      const lArray1d& mask )
+{
+
+  std::string subDirectory = siloDirName;
+  std::string rootDirectory = "/" + siloDirName;
+
+  {
+  std::string shortsubdir(siloDirName);
+  std::string::size_type pos = siloDirName.find_last_of("//");
+
+  if( pos != shortsubdir.npos )
+  {
+    shortsubdir.erase(0,pos+1);
+  }
+
+  MakeSubDirectory( shortsubdir, rootDirectory );
+  DBSetDir(m_dbFilePtr, shortsubdir.c_str());
+  }
+
+
+
+  WriteManagedGroupSilo( group, meshname, centering, cycleNum, problemTime, isRestart, rootDirectory
+                         , mask);
+
+//  WriteNonManagedDataMembersToSilo( siloFile, siloDirName, meshname, centering, cycleNum, problemTime, isRestart, rootDirectory, regionName, mask);
+
+  DBSetDir(m_dbFilePtr, "..");
+
+}
+
+
+
+
+void SiloFile::WriteManagedGroupSilo( ManagedGroup const & group,
+                                      const std::string& meshname,
+                                      const int centering,
+                                      const int cycleNum,
+                                      const realT problemTime,
+                                      const bool isRestart,
+                                      const std::string& multiRoot,
+                                      const lArray1d& mask )
+{
+
+//  if( isRestart )
+//  {
+//  // This data will not be visualized
+//    siloFile.DBWriteWrapper("m_objectType",static_cast<int>(m_objectType));
+//    siloFile.DBWriteWrapper("m_DataLengths",m_DataLengths);
+//    siloFile.DBWriteWrapper("m_localToGlobalMap",m_localToGlobalMap);
+//    siloFile.DBWriteWrapper("m_globalToLocalMap",m_globalToLocalMap);
+//    siloFile.DBWriteWrapper("m_maxGlobalNumber",m_maxGlobalNumber);
+//
+//
+//    siloFile.DBWriteWrapper("m_LocalIndexData",m_LocalIndexData);
+//    //siloFile.DBWriteWrapper("m_GlobalIndexData",m_GlobalIndexData);
+//    siloFile.DBWriteWrapper("m_OneToOneMaps",m_OneToOneMaps);
+//    siloFile.DBWriteWrapper("m_FixedOneToManyMaps",m_FixedOneToManyMaps);
+//    siloFile.DBWriteWrapper("m_VariableOneToManyMaps",m_VariableOneToManyMaps);
+//    siloFile.DBWriteWrapper("m_UnorderedVariableOneToManyMaps",m_UnorderedVariableOneToManyMaps);
+//
+//    sArray1d setNames;
+//    for( std::map<std::string,lSet>::const_iterator i=m_Sets.begin() ; i!=m_Sets.end() ; ++i )
+//    {
+//      setNames.push_back( i->first );
+//    }
+//    siloFile.DBWriteWrapper("setNames", setNames );
+//    siloFile.DBWriteWrapper("m_Sets", m_Sets);
+//  }
+
+  // Data for visualization
+    WriteViewWrappersToSilo<real64>(   meshname, group.wrappers() , centering, cycleNum, problemTime, isRestart, multiRoot, "none", mask);
+//  siloFile.WriteFieldMapToSilo<int>(   meshname, m_IntegerData,     centering, cycleNum, problemTime, isRestart, multiRoot, regionName, mask);
+//  siloFile.WriteFieldMapToSilo<localIndex>(   meshname, m_LocalIndexData,     centering, cycleNum, problemTime, isRestart, multiRoot, regionName, mask);
+//  siloFile.WriteFieldMapToSilo<globalIndex>(  meshname, m_GlobalIndexData,     centering, cycleNum, problemTime, isRestart, multiRoot, regionName, mask);
+//  siloFile.WriteFieldMapToSilo<realT>( meshname, m_realData,        centering, cycleNum, problemTime, isRestart,  multiRoot, regionName, mask );
+//  siloFile.WriteFieldMapToSilo<realT>( meshname, m_R1TensorData,    centering, cycleNum, problemTime, isRestart,  multiRoot, regionName, mask );
+//  siloFile.WriteFieldMapToSilo<realT>( meshname, m_R2TensorData,    centering, cycleNum, problemTime, isRestart,  multiRoot, regionName, mask );
+//  siloFile.WriteFieldMapToSilo<realT>( meshname, m_R2SymTensorData, centering, cycleNum, problemTime, isRestart,  multiRoot, regionName, mask );
+
+}
+
+
 
 }

@@ -9,6 +9,7 @@ set(geosx_headers
     managers/CellBlockManager.hpp
     managers/CellBlock.hpp
     managers/CellBlockSubRegion.hpp
+    managers/Event.hpp
     managers/EventManager.hpp
     managers/FaceManager.hpp
     managers/NodeManager.hpp

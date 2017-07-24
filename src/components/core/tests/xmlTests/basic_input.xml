@@ -27,7 +27,7 @@
   <SolverApplications>
     <Application name="1"
                  beginTime="0.0" 
-                 endTime="1.0e-4" 
+                 endTime="1.0e-1" 
                  dt="1.0e-5"
                  solvers="lagsolve" />
   </SolverApplications>
