@@ -115,7 +115,7 @@ public:
 
   void InitializationOrder( string_array & order ) override final;
 
-  void InitializePreSubGroups( ManagedGroup & group ) override final;
+  void InitializePreSubGroups( ManagedGroup * const group ) override final;
 
   void RunSimulation();
 

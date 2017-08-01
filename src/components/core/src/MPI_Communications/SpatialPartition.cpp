@@ -79,6 +79,7 @@ namespace{
 
 namespace geosx
 {
+using namespace dataRepository;
 
 SpatialPartition::SpatialPartition():
     PartitionBase(),
@@ -101,7 +102,7 @@ SpatialPartition::~SpatialPartition()
 {
 }
 
-void SpatialPartition::Initialize()
+void SpatialPartition::InitializePostSubGroups( ManagedGroup * const  )
 {
   //get size of problem and decomposition
   MPI_Comm_size(MPI_COMM_WORLD, &m_size);
@@ -1203,6 +1204,46 @@ void SpatialPartition::GetPartitionBoundingBox(R1Tensor& xmin, R1Tensor& xmax )
  **/
 void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
 {
+
+  {
+    //get size of problem and decomposition
+    MPI_Comm_size(MPI_COMM_WORLD, &m_size);
+
+    //check to make sure our dimensions agree
+    {
+      int check = 1;
+      for (unsigned int i = 0; i < nsdof; i++)
+      {
+        check *= this->m_Partitions(i);
+      }
+      assert(check == m_size);
+    }
+
+    //get communicator, rank, and coordinates
+    MPI_Comm cartcomm;
+    {
+      int reorder = 0;
+      MPI_Cart_create(MPI_COMM_WORLD, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm);
+    }
+    MPI_Comm_rank(cartcomm, &m_rank);
+    MPI_Cart_coords(cartcomm, m_rank, nsdof, m_coords.data());
+
+
+    m_color = GetColor();
+
+    //add neighbors
+    {
+      int ncoords[nsdof];
+      m_neighbors.clear();
+      AddNeighbors(0, cartcomm, ncoords);
+    }
+
+    MPI_Comm_free(&cartcomm);
+
+  }
+
+
+
   // global values
   m_gridMin = min;
   m_gridMax = max;

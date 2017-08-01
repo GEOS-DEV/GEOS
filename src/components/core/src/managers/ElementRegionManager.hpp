@@ -100,8 +100,8 @@ public:
 
 //  void Initialize(  ){}
 
-  void InitializePreSubGroups( ManagedGroup & problemManager ) override final;
-  void InitializePostSubGroups( ManagedGroup & problemManager ) override final;
+  void InitializePreSubGroups( ManagedGroup * const ) override final;
+  void InitializePostSubGroups( ManagedGroup * const ) override final;
 
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override ;
 

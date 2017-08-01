@@ -91,7 +91,7 @@ void CellBlockSubRegion::ReadXML_PostProcess()
   numNodesPerElem = 8;
 }
 
-void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup & domain )
+void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
 {
 //  auto const & elementRegion = static_cast<ElementRegion const&>( *(this->getParent()) );
 //  auto const & numMethod = elementRegion.getNumericalMethod();

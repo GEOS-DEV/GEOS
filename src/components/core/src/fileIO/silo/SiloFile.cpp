@@ -346,6 +346,7 @@ void SiloFile::Initialize( const PMPIO_iomode_t readwrite )
 {
 #if USE_MPI
   // Ensure all procs agree on numGroups, driver and file_ext
+  m_numGroups = 2;
 
   MPI_Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&m_driver, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -2347,7 +2348,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array1dT<TYPE> >
   DBReadWrapper( sizeName, dataSizes );
 
   typename Array1dT<TYPE>::size_type serialSize = 0;
-  for( typename Array1dT<Array1dT<TYPE> >::size_type i=0 ; i<data.size() ; ++i )
+  for( int32 i=0 ; i<data.size() ; ++i )
   {
     data[i].resize( dataSizes[i]);
     serialSize += dataSizes[i];
@@ -2361,9 +2362,9 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array1dT<TYPE> >
 
     typename Array1dT<TYPE>::const_iterator idataSerial = dataSerial.begin();
 
-    for( typename Array1dT<Array1dT<TYPE> >::size_type i=0 ; i<data.size() ; ++i )
+    for( int32 i=0 ; i<data.size() ; ++i )
     {
-      for( typename Array1dT<TYPE>::size_type j=0 ; j<data[i].size() ; ++j, ++idataSerial )
+      for( int32 j=0 ; j<data[i].size() ; ++j, ++idataSerial )
       {
         data[i][j] = *idataSerial;
       }
@@ -2392,7 +2393,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array2dT<TYPE> >
 
 
   typename Array1dT<TYPE>::size_type serialSize = 0 ;
-  for( typename Array1dT<Array2dT<TYPE> >::size_type i=0 ; i<data.size() ; ++i )
+  for( int32 i=0 ; i<data.size() ; ++i )
   {
     data[i].resize2(dataSizes0[i],dataSizes1[i]);
     serialSize += dataSizes0[i] * dataSizes1[i];
@@ -2405,11 +2406,11 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array2dT<TYPE> >
 
     typename Array1dT<TYPE>::const_iterator idataSerial = dataSerial.begin();
 
-    for( typename Array1dT<Array2dT<TYPE> >::size_type i=0 ; i<data.size() ; ++i )
+    for( int32 i=0 ; i<data.size() ; ++i )
     {
-      for( typename Array2dT<TYPE>::size_type j=0 ; j<data[i].Dimension(0) ; ++j )
+      for( int32 j=0 ; j<data[i].Dimension(0) ; ++j )
       {
-        for( typename Array2dT<TYPE>::size_type k=0 ; k<data[i].Dimension(1) ; ++k )
+        for( int32 k=0 ; k<data[i].Dimension(1) ; ++k )
         {
           data[i][j][k] = *idataSerial;
           ++idataSerial;
@@ -2438,7 +2439,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array1dT<Array1d
   DBReadWrapper( sizeName0, dataSizes0 );
 
   typename Array1dT<TYPE>::size_type sizeSize1 = 0;
-  for( typename Array1dT<Array1dT<TYPE> >::size_type i=0 ; i<data.size() ; ++i )
+  for( int32 i=0 ; i<data.size() ; ++i )
   {
     data[i].resize( dataSizes0[i]);
     sizeSize1 += dataSizes0[i];
@@ -2449,9 +2450,9 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array1dT<Array1d
 
   typename Array1dT<TYPE>::size_type serialSize = 0;
   typename Array1dT<TYPE>::size_type size1count = 0;
-  for( typename Array1dT<Array1dT<Array1dT<TYPE> > >::size_type i=0 ; i<data.size() ; ++i )
+  for( int32 i=0 ; i<data.size() ; ++i )
   {
-    for( typename Array1dT<Array1dT<TYPE> >::size_type j=0 ; j<data[i].size() ; ++j )
+    for( int32 j=0 ; j<data[i].size() ; ++j )
     {
       data[i][j].resize( dataSizes1[size1count]);
       serialSize += dataSizes1[size1count];
@@ -2466,11 +2467,11 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array1dT<Array1d
 
     typename Array1dT<TYPE>::const_iterator idataSerial = dataSerial.begin();
 
-    for( typename Array1dT<Array1dT<TYPE> >::size_type i=0 ; i<data.size() ; ++i )
+    for( int32 i=0 ; i<data.size() ; ++i )
     {
-      for( typename Array1dT<TYPE>::size_type j=0 ; j<data[i].size() ; ++j )
+      for( int32 j=0 ; j<data[i].size() ; ++j )
       {
-        for( typename Array1dT<TYPE>::size_type k=0 ; k<data[i][j].size() ; ++k, ++idataSerial )
+        for( int32 k=0 ; k<data[i][j].size() ; ++k, ++idataSerial )
         {
           data[i][j][k] = *idataSerial;
         }
@@ -2488,7 +2489,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<std::set<TYPE> >
 
   DBReadWrapper( name, vdata );
 
-  for( typename Array1dT<Array1dT<TYPE> >::size_type i=0 ; i<data.size() ; ++i )
+  for( int32 i=0 ; i<data.size() ; ++i )
   {
     data[i].clear();
     data[i].insert( vdata[i].begin(), vdata[i].end() );

@@ -148,7 +148,7 @@ void FiniteElementSpace::ReadXML_PostProcess()
 
 }
 
-void FiniteElementSpace::InitializePreSubGroups( ManagedGroup & group )
+void FiniteElementSpace::InitializePreSubGroups( ManagedGroup * const group )
 {
 //  auto const & basisName = this->getData<string>(keys::basis) ;
 //  auto const & quadratureName = this->getData<string>(keys::quadrature) ;

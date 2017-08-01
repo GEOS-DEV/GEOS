@@ -183,13 +183,13 @@ public:
     }
   }
 
-  virtual void Initialize( ManagedGroup & group );
+  virtual void Initialize( ManagedGroup * const group );
 
   virtual void InitializationOrder( string_array & order );
 
-  virtual void InitializePreSubGroups( ManagedGroup & group ) {}
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) {}
 
-  virtual void InitializePostSubGroups( ManagedGroup & group ) {}
+  virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
 
 
   template< typename T , typename TBASE=T >
