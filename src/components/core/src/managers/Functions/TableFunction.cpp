@@ -38,7 +38,8 @@ TableFunction::TableFunction( const std::string& name,
   m_dimensions(0),
   m_size(),
   m_indexIncrement(),
-  m_corners()
+  m_corners(),
+  m_numCorners(0)
 {}
 
 TableFunction::~TableFunction()
@@ -143,7 +144,7 @@ void TableFunction::InitializeFunction()
 {
   // Read in data
   view_rtype<string_array> coordinateFiles = getData<string_array>(keys::coordinateFiles);
-  if (coordinateFiles.size() == 0)
+  if (coordinateFiles[0].empty())
   {
     // 1D Table
     m_dimensions = 1;
@@ -188,20 +189,18 @@ void TableFunction::InitializeFunction()
   }
 
   // Build a quick map to help with linear interpolation
-  m_corners.resize(m_dimensions);
-  for (localIndex ii=0; ii<pow(2, m_dimensions); ++ii)
+  m_numCorners = pow(2, m_dimensions);
+  for (localIndex ii=0; ii<m_numCorners; ++ii)
   {
     for (localIndex jj=0; jj<m_dimensions; ++jj)
     {
-      m_corners[jj].push_back(int(ii / pow(2, jj)) % 2);
+      m_corners[jj][ii] = int(ii / pow(2, jj)) % 2;
     }
   }
 }
 
 double TableFunction::Evaluate(double* input)
 {
-//  localIndex bounds[m_dimensions][2];
-//  double weights[m_dimensions][2];
   localIndex bounds[m_maxDimensions][2];
   double weights[m_maxDimensions][2];
 
@@ -210,6 +209,7 @@ double TableFunction::Evaluate(double* input)
   {
     if (input[ii] <= m_coordinates[ii][0])
     {
+      // Coordinate is to the left of this axis
       bounds[ii][0] = 0;
       bounds[ii][1] = 0;
       weights[ii][0] = 0;
@@ -217,6 +217,7 @@ double TableFunction::Evaluate(double* input)
     }
     else if (input[ii] >= m_coordinates[ii][m_size[ii] - 1])
     {
+      // Coordinate is to the right of this axis
       bounds[ii][0] = m_size[ii] - 1;
       bounds[ii][1] = bounds[ii][0];
       weights[ii][0] = 1;
@@ -224,7 +225,9 @@ double TableFunction::Evaluate(double* input)
     }
     else
     {
+      // Find the coordinate index
       ///TODO make this fast
+      // Note: lower_bound uses a binary search...  If we assume coordinates are evenly spaced, we can speed things up considerably
       auto lower = std::lower_bound(m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii]);
       bounds[ii][1] = std::distance(m_coordinates[ii].begin(), lower);
       bounds[ii][0] = bounds[ii][1] - 1;
@@ -237,7 +240,7 @@ double TableFunction::Evaluate(double* input)
 
   // Linear interpolation
   double weightedValue = 0.0;
-  for (localIndex ii=0; ii<m_corners[0].size(); ++ii)
+  for (localIndex ii=0; ii<m_numCorners; ++ii)
   {
     // Find array index
     localIndex tableIndex = 0;
