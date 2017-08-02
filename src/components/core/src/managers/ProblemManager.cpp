@@ -22,6 +22,8 @@
 #include "ElementRegionManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 
+#include "MPI_Communications/SpatialPartition.hpp"
+
 namespace geosx
 {
 
@@ -510,10 +512,18 @@ void ProblemManager::InitializationOrder( string_array & order )
 
 
 
-void ProblemManager::InitializePreSubGroups( ManagedGroup & group )
+void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 {
   DomainPartition& domain  = getDomainPartition();
   domain.RegisterDocumentationNodes();
+
+  ManagedGroup const & commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  int32 const & xpar = *(commandLine.getData<int32>(keys::xPartitionsOverride));
+  int32 const & ypar = *(commandLine.getData<int32>(keys::yPartitionsOverride));
+  int32 const & zpar = *(commandLine.getData<int32>(keys::zPartitionsOverride));
+
+  PartitionBase & partition = domain.getReference<PartitionBase>(keys::partitionManager);
+  partition.setPartitions( xpar,  ypar, zpar );
 
   // Generate Meshes
   ManagedGroup & meshGenerators = this->GetGroup(string("MeshGenerators"));
@@ -601,9 +611,13 @@ void ProblemManager::WriteSilo( int32 const cycleNumber,
   DomainPartition& domain  = getDomainPartition();
   SiloFile silo;
 
+  int32 rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Barrier( MPI_COMM_WORLD );
+  std::cout<<"rank = "<<rank<<std::endl;
 
   silo.Initialize(PMPIO_WRITE);
-  silo.WaitForBaton(0, cycleNumber, false );
+  silo.WaitForBaton(rank, cycleNumber, false );
   domain.WriteSilo(silo,cycleNumber,problemTime,0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);

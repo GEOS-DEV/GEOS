@@ -72,9 +72,12 @@ public:
 
   virtual ~PartitionBase();
 
-  virtual void Initialize() = 0;
 
   void SetDomain( DomainPartition& domain );
+
+
+  virtual void InitializePostSubGroups( dataRepository::ManagedGroup * const ) = 0;
+
 
   virtual bool IsCoordInPartition( const R1Tensor& elemCenter ) = 0;
   virtual bool IsCoordInPartition( const R1Tensor& elemCenter,
@@ -82,6 +85,10 @@ public:
   virtual bool IsCoordInPartition(const realT& coord, const int dir) = 0;
 
   virtual void setSizes(const R1Tensor& min, const R1Tensor& max) = 0;
+
+  virtual void setPartitions( unsigned int xPartitions,
+                              unsigned int yPartitions,
+                              unsigned int zPartitions) = 0;
 
   virtual bool IsCoordInContactGhostRange( const R1Tensor& elemCenter ) = 0;
 

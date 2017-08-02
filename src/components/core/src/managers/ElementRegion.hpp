@@ -124,7 +124,7 @@ public:
 //  Array2dT<int32> & m_toNodesRelation;
 
 
-  virtual void InitializePreSubGroups( ManagedGroup & group ) override final;
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;
 
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda )

@@ -32,7 +32,7 @@ public:
 
   void ReadXML_PostProcess() override;
 
-  void InitializePreSubGroups( ManagedGroup & group ) override final;
+  void InitializePreSubGroups( ManagedGroup * const ) override final;
 
   void CopyFromCellBlock( CellBlock const & source );
 

@@ -58,7 +58,7 @@ public:
 
   void ReadXML_PostProcess() override final;
 
-  virtual void InitializePreSubGroups( ManagedGroup & group ) override;
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
 
   void CalculateShapeFunctionGradients( dataRepository::view_rtype_const<r1_array> X,
                                         dataRepository::ManagedGroup * const cellBlock ) const;

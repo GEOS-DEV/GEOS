@@ -520,7 +520,7 @@ void ManagedGroup::InitializationOrder( string_array & order )
   }
 }
 
-void ManagedGroup::Initialize( ManagedGroup & group )
+void ManagedGroup::Initialize( ManagedGroup * const group )
 {
   static int indent = 0;
   std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on "<<this->getName()<<" of type "<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;

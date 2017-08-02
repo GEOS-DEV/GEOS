@@ -119,7 +119,7 @@ void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 }
 
 
-void ElementRegionManager::InitializePreSubGroups( ManagedGroup & problemManager )
+void ElementRegionManager::InitializePreSubGroups( ManagedGroup * const )
 {
 //    map<string,int32> constitutiveSizes;
 //    ManagedGroup & domain = problemManager.GetGroup(keys::domain);
@@ -143,14 +143,14 @@ void ElementRegionManager::InitializePreSubGroups( ManagedGroup & problemManager
 //    }
 }
 
-void ElementRegionManager::InitializePostSubGroups( ManagedGroup & problemManager )
+void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problemManager )
 {
     map<string,localIndex> constitutiveSizes;
-    ManagedGroup & domain = problemManager.GetGroup(keys::domain);
+    ManagedGroup & domain = problemManager->GetGroup(keys::domain);
     forElementRegions([&]( ElementRegion& elementRegion ) -> void
     {
 //      map<string,localIndex> sizes;
-      elementRegion.SetConstitutiveMap( problemManager,constitutiveSizes );
+      elementRegion.SetConstitutiveMap( *problemManager,constitutiveSizes );
 //      for( auto& entry : sizes )
 //      {
 //        constitutiveSizes[entry.first] += entry.second;

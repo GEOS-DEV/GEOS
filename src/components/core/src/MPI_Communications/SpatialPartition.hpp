@@ -120,7 +120,7 @@ public:
   SpatialPartition();
   virtual ~SpatialPartition();
 
-  virtual void Initialize();
+  void InitializePostSubGroups( dataRepository::ManagedGroup * const );
   virtual void InitializeMetis();
   void AddNeighborsMetis(gSet& neighborList);
   virtual bool IsCoordInPartition(const realT& coord, const int dir);

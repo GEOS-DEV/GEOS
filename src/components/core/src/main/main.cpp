@@ -26,9 +26,11 @@ int main( int argc, char *argv[] )
 
 #if USE_MPI
 
+  int rank;
   MPI_Init(&argc,&argv);
-//  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 //  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  std::cout<<"rank = "<<rank<<std::endl;
 #endif
 
 
@@ -68,7 +70,7 @@ int main( int argc, char *argv[] )
 
 
   
-  problemManager.Initialize( problemManager );
+  problemManager.Initialize( &problemManager );
 #if USE_CALIPER==1
   init_ann.end();
 #endif

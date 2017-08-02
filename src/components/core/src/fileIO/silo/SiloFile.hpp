@@ -472,7 +472,7 @@ public:
 
   std::string m_restartFileRoot;
 
-  std::string m_slaveDirectory;
+  std::string m_slaveDirectory = "plotFiles";
 
   std::string m_fileName;
 
@@ -943,7 +943,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 
     }
     vBlockNames[i] = tempBuffer;
-    BlockNames[i] = (char*) vBlockNames[i].c_str();
+    BlockNames[i] = const_cast<char*>( vBlockNames[i].c_str() );
     blockTypes[i] = type;
   }
 

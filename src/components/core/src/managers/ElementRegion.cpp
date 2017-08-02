@@ -198,10 +198,10 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const & problemManager,
 //  return counts;
 }
 
-void ElementRegion::InitializePreSubGroups( ManagedGroup & problemManager )
+void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
 
-  ManagedGroup & domain = problemManager.GetGroup(keys::domain);
+  ManagedGroup const & domain = problemManager->GetGroup(keys::domain);
   ManagedGroup const & cellBlockManager = domain.GetGroup(keys::cellManager);
 
   ManagedGroup & cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
@@ -215,7 +215,7 @@ void ElementRegion::InitializePreSubGroups( ManagedGroup & problemManager )
 
 
   auto const & numMethodName = this->getData<string>(keys::numericalMethod);
-  FiniteElementManager const & numericalMethodManager = problemManager.GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  FiniteElementManager const & numericalMethodManager = problemManager->GetGroup<FiniteElementManager>(keys::finiteElementManager);
   FiniteElementSpace const & feSpace = numericalMethodManager.GetGroup<FiniteElementSpace>(numMethodName);
   auto const & basisName = feSpace.getData<string>(keys::basis) ;
   auto const & quadratureName = feSpace.getData<string>(keys::quadrature) ;
