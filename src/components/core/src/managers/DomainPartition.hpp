@@ -39,6 +39,7 @@ public:
   DomainPartition& operator=( DomainPartition && ) = delete;
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const ) override;
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
   void InitializationOrder( string_array & order ) override final;
 

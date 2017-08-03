@@ -44,6 +44,15 @@ void DomainPartition::BuildDataStructure( ManagedGroup * const )
 //  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
 }
 
+
+void DomainPartition::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  docNode->setName("Domain");
+  docNode->setSchemaType("UniqueNode");
+}
+
+
 void DomainPartition::InitializationOrder( string_array & order )
 {
   set<string> usedNames;

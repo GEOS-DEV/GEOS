@@ -30,7 +30,7 @@ void NewFunctionManager::FillDocumentationNode( dataRepository::ManagedGroup * c
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
-  docNode->setName(this->CatalogName());
+  docNode->setName("Functions");
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Function manager");
 }

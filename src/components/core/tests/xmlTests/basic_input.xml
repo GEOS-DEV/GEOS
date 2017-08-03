@@ -12,7 +12,7 @@
   
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementType="C3D8" 
+                  elementTypes="C3D8" 
                   xCoords="0, 3"
                   yCoords="0, 1"
                   zCoords="0, 1"

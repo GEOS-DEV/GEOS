@@ -31,6 +31,7 @@ public:
   FiniteElementManager(string const & name, ManagedGroup * const parent);
   virtual ~FiniteElementManager();
 
+  void FillDocumentationNode( dataRepository::ManagedGroup * const group );
   void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override final;
 
 

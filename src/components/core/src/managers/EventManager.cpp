@@ -31,6 +31,8 @@ void EventManager::FillDocumentationNode( dataRepository::ManagedGroup * const )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
+  // Set the name to SolverApplications for now
+  docNode->setName("SolverApplications");
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Contains the set of solver applications");
 }
@@ -100,7 +102,8 @@ void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * co
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
-  docNode->setName(this->CatalogName());
+  // docNode->setName(this->CatalogName());
+  docNode->setName("Application");
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Describes the timing of the solver application");
 

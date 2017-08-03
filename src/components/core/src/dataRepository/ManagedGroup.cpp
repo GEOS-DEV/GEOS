@@ -122,7 +122,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
                                 "",
                                 0,
                                 0,
-                                0 );
+                                2 );
 
   m_docNode->AllocateChildNode( "name",
                                 "name",
@@ -148,7 +148,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
                                 "",
                                 0,
                                 0,
-                                0 );
+                                2 );
 
 
   this->getReference<int32>(keys::Size) = 0;

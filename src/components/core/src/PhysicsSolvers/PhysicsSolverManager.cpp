@@ -39,11 +39,9 @@ SolverBase & PhysicsSolverManager::CreateSolver( string const & solverCatalogKey
 void PhysicsSolverManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  docNode->setName("Solvers");
   docNode->setSchemaType("UniqueNode");
-
-  docNode->m_name = this->getName();
-  docNode->m_dataType = "type";
-  docNode->m_shortDescription = "description";
+  docNode->setShortDescription("Solver manager");
 
 }
 
