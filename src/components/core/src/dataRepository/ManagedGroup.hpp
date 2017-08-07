@@ -286,18 +286,41 @@ public:
     return getWrapperBase(index);
   }
 
+  template< typename T >
+  ViewWrapper<T> const * getWrapperPtr( std::size_t const index ) const
+  {
+#ifdef USE_DYNAMIC_CASTING
+    ViewWrapperBase const * const temp = m_wrappers[index].get();
+    ViewWrapper<T> const * temp2 = dynamic_cast<ViewWrapper<T> const * >(temp);
+    return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[index]).get() );
+#else
+    return static_cast< ViewWrapper<T> const * >( (m_wrappers[index]).get() );
+#endif
+  }
+
+  template< typename T >
+  ViewWrapper<T> * getWrapperPtr( std::size_t const index )
+  {
+    return const_cast<ViewWrapper<T> *>( const_cast< ManagedGroup const *>(this)->getWrapperPtr<T>( index ) );
+  }
+
+  template< typename T >
+  ViewWrapper<T> const * getWrapperPtr( std::string const & name ) const
+  {
+    auto index = m_keyLookup.at(name);
+    return getWrapperPtr<T>(index);
+  }
+
+  template< typename T >
+  ViewWrapper<T> * getWrapperPtr( std::string const & name )
+  { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapperPtr<T>( name ) ); }
+
 
 
   template< typename T >
   ViewWrapper<T> const & getWrapper( std::size_t const index ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    ViewWrapperBase const * const temp = m_wrappers[index].get();
-    ViewWrapper<T> const * temp2 = dynamic_cast<ViewWrapper<T> const * >(temp);
-    return dynamic_cast< ViewWrapper<T> const & >( *(m_wrappers[index]) );
-#else
-    return static_cast< ViewWrapper<T> const & >( *(m_wrappers[index]) );
-#endif
+    return *getWrapperPtr<T>(index);
   }
 
   template< typename T >
@@ -375,13 +398,26 @@ public:
   }
 
 
-  bool hasGroup( std::string const & name )
+  ManagedGroup * hasGroup( std::string const & name )
   {
-    return m_subGroups.count(name);
+    ManagedGroup * rval = nullptr;
+    auto iter = m_subGroups.find(name);
+    if( iter!=m_subGroups.end() )
+    {
+      rval = iter->second.get();
+    }
+    return rval;
   }
-  bool hasGroup( std::string const & name ) const
+
+  ManagedGroup const * hasGroup( std::string const & name ) const
   {
-    return m_subGroups.count(name);
+    ManagedGroup const * rval = nullptr;
+    auto iter = m_subGroups.find(name);
+    if( iter!=m_subGroups.end() )
+    {
+      rval = iter->second.get();
+    }
+    return rval;
   }
 
   bool hasView( std::string const & name )

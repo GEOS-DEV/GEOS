@@ -17,9 +17,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
     m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() ),
     m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal").reference() )
 {
-
-
-  this->RegisterGroup<ManagedGroup>("Sets");
+  this->RegisterGroup<ManagedGroup>(keys::sets);
   this->RegisterViewWrapper< iArray1d >("isExternal");
 }
 //ObjectManagerBase::ObjectManagerBase( std::string const & name,

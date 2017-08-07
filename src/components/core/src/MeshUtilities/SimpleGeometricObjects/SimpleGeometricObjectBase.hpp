@@ -17,7 +17,16 @@ class Function;
 
 namespace geosx
 {
-class SimpleGeometricObjectBase : public dataRepository::ManagedGroup
+namespace dataRepository
+{
+namespace keys
+{
+string const geometricObjects("GeometricObjects");
+}
+}
+
+
+class SimpleGeometricObjectBase// : public dataRepository::ManagedGroup
 {
 public:
 
@@ -25,7 +34,7 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  using CatalogInterface = cxx_utilities::CatalogInterface< SimpleGeometricObjectBase, string const & >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< SimpleGeometricObjectBase >;
 
   static typename CatalogInterface::CatalogType& GetCatalog()
   {
@@ -34,8 +43,7 @@ public:
   }
   ///@}
 
-  SimpleGeometricObjectBase( string const & name, ManagedGroup * const parent ):
-    ManagedGroup(name,parent)
+  SimpleGeometricObjectBase(  )
   {
 
   }
@@ -46,8 +54,9 @@ public:
 
 //  virtual void ReadXML( pugi::xml_node& hdn ) = 0;
 
-  virtual bool IsCoordInObject( const R1Tensor& coord ) = 0;
+  virtual bool IsCoordInObject( const R1Tensor& coord ) const = 0;
 
+  virtual void ReadXML( xmlWrapper::xmlNode const & xmlNode ) = 0;
 };
 
 

@@ -102,6 +102,13 @@ SpatialPartition::~SpatialPartition()
 {
 }
 
+//void SpatialPartition::ReadXML( xmlWrapper::xmlNode const & targetNode )
+//{
+//  int xpar  = targetNode.attribute("xpar").as_int(1);
+//
+//}
+
+
 void SpatialPartition::InitializePostSubGroups( ManagedGroup * const  )
 {
   //get size of problem and decomposition

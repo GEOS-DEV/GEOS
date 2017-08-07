@@ -39,10 +39,10 @@ public:
 
   void FillDocumentationNode( dataRepository::ManagedGroup * const ) override;
 
-  real64 GetValue( realT time );
+  real64 GetValue( realT time ) const;
 
 
-  virtual const string& GetFieldName(realT time)
+  virtual const string& GetFieldName()
   {
     return m_fieldName;
   }
@@ -55,6 +55,21 @@ public:
   virtual const R1Tensor& GetDirection(realT time)
   {
     return m_direction;
+  }
+
+  real64 GetStartTime()
+  {
+    return -1;
+  }
+
+  real64 GetEndTime()
+  {
+    return 1.0e9;
+  }
+
+  string_array const & GetSetNames() const
+  {
+    return m_setNames;
   }
 
 

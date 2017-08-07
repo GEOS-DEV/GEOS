@@ -16,13 +16,16 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
 #include "MeshUtilities/MeshGenerator.hpp"
+#include "MeshUtilities/MeshUtilities.hpp"
 #include <stdexcept>
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
-
+#include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
+#include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
+
 
 namespace geosx
 {
@@ -81,6 +84,8 @@ void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
   RegisterGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 
   RegisterGroup<FiniteElementManager>(keys::finiteElementManager);
+//  RegisterGroup<BoundaryConditionManager>(keys::boundaryConditionMananger);
+
 
 }
 
@@ -477,6 +482,34 @@ void ProblemManager::ParseInputFile()
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("NumericalMethods");
     finiteElementManager.ReadXML(topLevelNode);
   }
+
+  {
+    BoundaryConditionManager & boundaryConditionManager = BoundaryConditionManager::get();//this->GetGroup<BoundaryConditionManager>(keys::boundaryConditionMananger);
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
+    boundaryConditionManager.ReadXML(topLevelNode);
+  }
+
+  {
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Nodesets");
+//    MeshUtilities::GenerateNodesets( topLevelNode, dataRepository::ManagedGroup& nodeManager );
+    ManagedGroup & geometricObjects = this->RegisterGroup(keys::geometricObjects);
+
+    for (xmlWrapper::xmlNode childNode=topLevelNode.first_child(); childNode; childNode=childNode.next_sibling())
+    {
+//      if( childNode.name() == string("Nodeset") )
+      {
+        string type = childNode.name();
+        std::string name = childNode.attribute("name").value();
+        std::unique_ptr<SimpleGeometricObjectBase> object;
+
+        // old allocation method for backwards compatibility
+//        std::string geometricObjectTypeStr = childNode.attribute("type").value();
+        object = SimpleGeometricObjectBase::CatalogInterface::Factory( type );
+        object->ReadXML( childNode );
+        geometricObjects.RegisterViewWrapper<SimpleGeometricObjectBase>(name,std::move(object));
+      }
+    }
+  }
 }
 
 
@@ -518,12 +551,34 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   domain.RegisterDocumentationNodes();
 
   ManagedGroup const & commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  int32 const & xpar = *(commandLine.getData<int32>(keys::xPartitionsOverride));
-  int32 const & ypar = *(commandLine.getData<int32>(keys::yPartitionsOverride));
-  int32 const & zpar = *(commandLine.getData<int32>(keys::zPartitionsOverride));
+  int32 const & xparCL = *(commandLine.getData<int32>(keys::xPartitionsOverride));
+  int32 const & yparCL = *(commandLine.getData<int32>(keys::yPartitionsOverride));
+  int32 const & zparCL = *(commandLine.getData<int32>(keys::zPartitionsOverride));
 
   PartitionBase & partition = domain.getReference<PartitionBase>(keys::partitionManager);
-  partition.setPartitions( xpar,  ypar, zpar );
+  bool repartition = false;
+  int32 xpar = 1;
+  int32 ypar = 1;
+  int32 zpar = 1;
+  if( xparCL != 0 )
+  {
+    repartition = true;
+    xpar = xparCL;
+  }
+  if( yparCL != 0 )
+  {
+    repartition = true;
+    ypar = yparCL;
+  }
+  if( zparCL != 0 )
+  {
+    repartition = true;
+    zpar = zparCL;
+  }
+  if( repartition )
+  {
+    partition.setPartitions( xpar,  ypar, zpar );
+  }
 
   // Generate Meshes
   ManagedGroup & meshGenerators = this->GetGroup(string("MeshGenerators"));
@@ -531,6 +586,11 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   {
     meshGen.GenerateMesh( domain );
   });
+
+  ManagedGroup & geometricObjects = this->GetGroup(keys::geometricObjects);
+
+  MeshUtilities::GenerateNodesets( geometricObjects,
+                                   domain.GetGroup(keys::FEM_Nodes) );
 
 
 //  // Initialize solvers

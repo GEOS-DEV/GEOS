@@ -6,7 +6,8 @@ set(geosx_headers
   ${geosx_headers}
     PhysicsSolvers/PhysicsSolverManager.hpp
   	PhysicsSolvers/SolverBase.hpp
-  	PhysicsSolvers/BoundaryConditions/BoundaryConditionBase.hpp
+    PhysicsSolvers/BoundaryConditions/BoundaryConditionBase.hpp
+    PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp
     PhysicsSolvers/BoundaryConditions/DirichletBoundaryCondition.hpp
     PARENT_SCOPE )
 
@@ -18,5 +19,6 @@ set(geosx_core_sources
     PhysicsSolvers/PhysicsSolverManager.cpp
     PhysicsSolvers/SolverBase.cpp
     PhysicsSolvers/BoundaryConditions/BoundaryConditionBase.cpp
+    PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.cpp
     PhysicsSolvers/BoundaryConditions/DirichletBoundaryCondition.cpp
     PARENT_SCOPE )

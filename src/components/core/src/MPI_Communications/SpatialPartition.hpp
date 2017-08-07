@@ -120,6 +120,8 @@ public:
   SpatialPartition();
   virtual ~SpatialPartition();
 
+//  void ReadXML( xmlWrapper::xmlNode const & targetNode );
+
   void InitializePostSubGroups( dataRepository::ManagedGroup * const );
   virtual void InitializeMetis();
   void AddNeighborsMetis(gSet& neighborList);

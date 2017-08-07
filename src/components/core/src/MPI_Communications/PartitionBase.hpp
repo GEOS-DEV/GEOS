@@ -92,9 +92,7 @@ public:
 
   virtual bool IsCoordInContactGhostRange( const R1Tensor& elemCenter ) = 0;
 
-
-//  virtual void ReadXMLInput( xmlNode const & hdn) = 0;
-
+//  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ) = 0;
 
   virtual void AssignGlobalIndices( DomainPartition& domain );
 

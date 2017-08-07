@@ -129,7 +129,7 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
 }
 
 
-real64 BoundaryConditionBase::GetValue( realT time )
+real64 BoundaryConditionBase::GetValue( realT time ) const
 {
   real64 rval = m_scale;
   if (!(m_timeTableName.empty()))

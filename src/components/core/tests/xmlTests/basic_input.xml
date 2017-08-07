@@ -69,9 +69,9 @@
 
 
   <BoundaryConditions>
-    <BoundaryCondition component="0" fieldName="Displacement" fieldType="Vector" object="Node" scale="0.0" setNames="xneg xpos"/>
-    <BoundaryCondition component="1" fieldName="Displacement" fieldType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
-    <BoundaryCondition component="2" fieldName="Displacement" fieldType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
+    <DirichletBoundaryCondition name="xconstraint" component="0" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="xneg xpos"/>
+    <DirichletBoundaryCondition name="yconstraint" component="1" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
+    <DirichletBoundaryCondition name="zconstraint" component="2" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
   </BoundaryConditions>
 
 
@@ -89,7 +89,7 @@
   
 
   <Nodesets>
-    <Nodeset name="perf" type="0" xMin="0, 0, 0" xMax="1, 1, 1"/>
+    <Box name="perf" type="0" xMin="0, 0, 0" xMax="1, 1, 1"/>
   </Nodesets>
 
 
