@@ -430,7 +430,7 @@ public:
 
   /// Case for if m_data has a member function called "data()", and is not a string
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
+  typename std::enable_if<has_memberfunction_data<U>::value, rtype>::type
   data_ptr()
   {
     return m_data->data();
@@ -438,39 +438,22 @@ public:
 
 
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,string>::value, rtype_const>::type
+  typename std::enable_if<has_memberfunction_data<U>::value, rtype_const>::type
   data_ptr() const
   {
     return m_data->data();
   }
-
-
-  /// Case for if m_data is a string
-  template<class U = T>
-  typename std::enable_if<std::is_same<U,std::string>::value, rtype>::type
-  data_ptr()
-  {
-    /// return the object...or a reference to the object
-    return m_data.get();
-  }
-  template<class U = T>
-  typename std::enable_if<std::is_same<U,std::string>::value, rtype_const>::type
-  data_ptr() const
-  {
-    return m_data.get();
-  }
-
 
   /// case for if m_data does NOT have a member function "data()", and is not a string
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
+  typename std::enable_if<!has_memberfunction_data<U>::value, rtype>::type
   data_ptr()
   {
     /// return a c-pointer to the object
     return m_data.get();
   }
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
+  typename std::enable_if<!has_memberfunction_data<U>::value, rtype_const>::type
   data_ptr() const
   {
     return m_data.get();
