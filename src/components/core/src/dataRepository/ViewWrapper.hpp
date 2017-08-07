@@ -451,13 +451,13 @@ public:
   data_ptr()
   {
     /// return the object...or a reference to the object
-    return *m_data;
+    return m_data.get();
   }
   template<class U = T>
   typename std::enable_if<std::is_same<U,std::string>::value, rtype_const>::type
   data_ptr() const
   {
-    return *m_data;
+    return m_data.get();
   }
 
 
