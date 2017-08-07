@@ -27,6 +27,13 @@ FiniteElementManager::~FiniteElementManager()
   // TODO Auto-generated destructor stub
 }
 
+void FiniteElementManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  docNode->setName("NumericalMethods");
+  docNode->setSchemaType("Node");
+}
+
 void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
 {
   std::cout << "Reading Components for Numerical Methods:" << std::endl;

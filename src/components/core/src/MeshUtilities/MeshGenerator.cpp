@@ -61,7 +61,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->setName( this->getName() );
+  docNode->setName( "InternalMesh" );
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "a mesh generator" );
 

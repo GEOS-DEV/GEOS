@@ -273,6 +273,10 @@ public:
     std::string ru = "[0-9]*";
     std::string ri = "[+-]?[0-9]*";    
     std::string rr = "[0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?";
+    std::string rs = "[a-zA-Z0-9_,\\(\\)+-/\\*]*";
+    std::string r1 = rr + ",? " + rr + ",? " + rr;
+    std::string r2 = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
+    std::string r2s = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
     
     std::unordered_map<std::string, std::string> regexMap = 
     {
@@ -282,22 +286,23 @@ public:
       {"uint64", ru},
       {"real32", rr},
       {"real64", rr},
-      {"R1Tensor", rr + ", " + rr + ", " + rr},
-      {"R2Tensor", rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr},
-      {"R2SymTensor", rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr + ", " + rr},
-      {"int32_array", "((" + ri + ", )*)?" + ri},
-      {"uint32_array", "((" + ru + ", )*)?" + ru},
-      {"int64_array", "((" + ri + ", )*)?" + ri},
-      {"uint64_array", "((" + ru + ", )*)?" + ru},
-      {"real32_array", "((" + rr + ", )*)?" + rr},
-      {"real64_array", "((" + rr + ", )*)?" + rr},
-      {"r1_array", ""},
-      {"r2_array", ""},
-      {"r2Sym_array", ""},
+      {"R1Tensor", r1},
+      {"R2Tensor", r2},
+      {"R2SymTensor", r2s},
+      {"int32_array", "((" + ri + ",? )*)?" + ri},
+      {"uint32_array", "((" + ru + ",? )*)?" + ru},
+      {"int64_array", "((" + ri + ",? )*)?" + ri},
+      {"uint64_array", "((" + ru + ",? )*)?" + ru},
+      {"real32_array", "((" + rr + ",? )*)?" + rr},
+      {"real64_array", "((" + rr + ",? )*)?" + rr},
+      {"r1_array", "((" + r1 + "; )*)?" + r1},
+      {"r2_array", "((" + r2 + "; )*)?" + r2},
+      {"r2Sym_array", "((" + r2s + "; )*)?" + r2s},
       {"std_size_t", ru},
-      {"string", "[a-zA-Z0-9_,\\(\\)+-/\\*]*"},
-      {"mapPair", ""},
-      {"mapPair_array", ""}
+      {"string", rs},
+      {"string_array", "((" + rs + ",? )*)?" + rs},
+      {"mapPair", rs},
+      {"mapPair_array", "((" + rs + ",? )*)?" + rs}
     };
 
   public:

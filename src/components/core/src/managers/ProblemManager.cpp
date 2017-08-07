@@ -35,6 +35,7 @@ namespace dataRepository
   namespace keys
   {
     std::string const commandLine = "commandLine";
+    std::string const meshGenerators = "meshGenerators";
     std::string const inputFileName = "inputFileName";
     std::string const restartFileName = "restartFileName";
     std::string const beginFromRestart = "beginFromRestart";
@@ -42,6 +43,7 @@ namespace dataRepository
     std::string const yPartitionsOverride = "yPartitionsOverride";
     std::string const zPartitionsOverride = "zPartitionsOverride";
     std::string const overridePartitionNumbers = "overridePartitionNumbers";
+    std::string const schemaLevel = "schemaLevel";
   }
 }
 
@@ -77,32 +79,29 @@ ProblemManager::~ProblemManager()
 
 void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 {
-  RegisterGroup("MeshGenerators").BuildDataStructure(nullptr);
-
   RegisterGroup<DomainPartition>(keys::domain).BuildDataStructure(nullptr);
   RegisterGroup<ManagedGroup>(keys::commandLine);
+  RegisterGroup<ManagedGroup>(keys::meshGenerators);
   RegisterGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-
   RegisterGroup<FiniteElementManager>(keys::finiteElementManager);
 //  RegisterGroup<BoundaryConditionManager>(keys::boundaryConditionMananger);
-
-
 }
 
 
 void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
 {
+  // Problem node documentation
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
   ObjectManagerBase::FillDocumentationNode( group );
-
   docNode->setName("Problem");
-  docNode->setSchemaType("UniqueNode");
+  docNode->setSchemaType("RootNode");
+  docNode->getChildNode("name")->setVerbosity(2);
 
-  // Fill command line documentation
+  // Command line documentation
   dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
   cxx_utilities::DocumentationNode * const commandDocNode = commandLine.getDocumentationNode();
   commandDocNode->setShortDescription("Command line input parameters");
+  commandDocNode->setVerbosity(2);
 
   commandDocNode->AllocateChildNode( keys::inputFileName,
                                     keys::inputFileName,
@@ -208,6 +207,25 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0,
                                      0 );
 
+  commandDocNode->AllocateChildNode( keys::schemaLevel,
+                                     keys::schemaLevel,
+                                     -1,
+                                     "uint32",
+                                     "",
+                                     "Schema verbosity level",
+                                     "Schema verbosity level (0=default, 1=development, 2=all)",
+                                     "0",
+                                     "CommandLine",
+                                     0,
+                                     0,
+                                     0 );
+
+  // Mesh node documentation
+  dataRepository::ManagedGroup& meshGenerators = GetGroup<ManagedGroup>(keys::meshGenerators);
+  cxx_utilities::DocumentationNode * const meshDocNode = meshGenerators.getDocumentationNode();
+  meshDocNode->setName("Mesh");
+  meshDocNode->setShortDescription("Mesh Generators");
+  meshDocNode->getChildNode("name")->setVerbosity(2);
 }
 
 void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
@@ -223,9 +241,11 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
   int32&        zPartitionsOverride = *(commandLine.getData<int32>(keys::zPartitionsOverride));
   int32&        overridePartitionNumbers = *(commandLine.getData<int32>(keys::overridePartitionNumbers));
   ViewWrapper<std::string>::rtype  schemaName = commandLine.getData<std::string>(keys::schema);
+  uint32&        schemaLevel = *(commandLine.getData<uint32>(keys::schemaLevel));
+  schemaLevel = 0;
 
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL};
   const option::Descriptor usage[] = 
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
@@ -236,6 +256,7 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
     {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
+    {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
     { 0, 0, 0, 0, 0, 0}
   };
 
@@ -300,6 +321,9 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
         break;
       case SCHEMA:
         schemaName = opt.arg;
+        break;
+      case SCHEMALEVEL:
+        schemaLevel = std::stoi(opt.arg);
         break;
     }
   }
@@ -394,7 +418,7 @@ void ProblemManager::ParseInputFile()
   // Call manager readXML methods:
   
   {
-    ManagedGroup & meshGenerators = this->GetGroup(string("MeshGenerators"));
+    ManagedGroup & meshGenerators = this->GetGroup(keys::meshGenerators);
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Mesh");
     std::cout << "Reading Mesh Block:" << std::endl;
     if (topLevelNode == NULL)
@@ -466,14 +490,15 @@ void ProblemManager::ParseInputFile()
 
   // Documentation output
   ViewWrapper<std::string>::rtype  schemaName = commandLine.getData<std::string>(keys::schema);
+  uint32& schemaLevel = *(commandLine.getData<uint32>(keys::schemaLevel));
 
   std::cout << schemaName << ", " << schemaName.empty() << ", " << schemaName.size() << std::endl;
 
   if (schemaName.empty() == 0)
   {
     // m_inputDocumentationHead.Write("test_output.xml");
-    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode())) ;
-    getDocumentationNode()->Print();
+    ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel) ;
+    // getDocumentationNode()->Print();
   }
 
 
@@ -581,7 +606,7 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   }
 
   // Generate Meshes
-  ManagedGroup & meshGenerators = this->GetGroup(string("MeshGenerators"));
+  ManagedGroup & meshGenerators = this->GetGroup(keys::meshGenerators);
   meshGenerators.forSubGroups<MeshGenerator>([this,&domain]( MeshGenerator & meshGen ) -> void
   {
     meshGen.GenerateMesh( domain );

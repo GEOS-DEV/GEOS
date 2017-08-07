@@ -24,6 +24,13 @@ ConstitutiveManager::ConstitutiveManager( std::string const & name,
 ConstitutiveManager::~ConstitutiveManager()
 {}
 
+void ConstitutiveManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  docNode->setName("Constitutive");
+  docNode->setSchemaType("Node");
+}
+
 void ConstitutiveManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
   for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())

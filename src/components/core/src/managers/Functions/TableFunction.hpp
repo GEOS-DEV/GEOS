@@ -31,12 +31,14 @@ public:
 private:
   Array1dT<real64_array> m_coordinates;
   real64_array m_values;
-  static localIndex constexpr m_maxDimensions = 3;
+  static localIndex constexpr m_maxDimensions = 4;
   localIndex m_dimensions;
   lArray1d m_size;
   lArray1d m_indexIncrement;
-  Array1dT<lArray1d> m_corners;
 
+  // m_corners should be of size m_maxDimensions x (2^m_maxDimensions)
+  localIndex m_corners[m_maxDimensions][16];
+  localIndex m_numCorners;
 };
 
 
