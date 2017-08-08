@@ -208,7 +208,7 @@ public:
     template<class U = T>
     static typename std::enable_if<!has_memberfunction_size<U>::value, localIndex>::type size(ViewWrapper const * )
     {
-      return 0;//parent->m_data;
+      return 1;//parent->m_data;
     }
   };
   virtual localIndex size() const override final
@@ -457,6 +457,12 @@ public:
   data_ptr() const
   {
     return m_data.get();
+  }
+
+
+  int32 data_size() const
+  {
+    return size_wrapper::size(this) * sizeof(T);
   }
 
 
