@@ -9,6 +9,7 @@
 #define GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
 
 #include "sidre/sidre.hpp"
+#include "sidre/SidreTypes.hpp"
 #include "KeyNames.hpp"
 #include "common/DataTypes.hpp"
 #include "SFINAE_Macros.hpp"
@@ -59,15 +60,7 @@ public:
     ViewWrapperBase(name,parent),
     m_data( std::make_unique<T>() )
   {
-    // set up properties of sidre::DataView
-    if( std::is_array<T>::value )
-    {
-
-    }
-    else
-    {
-      getSidreView()->setExternalDataPtr( nullptr );
-    }
+    register_data_ptr();
   }
 
   /**
@@ -80,7 +73,9 @@ public:
                         std::unique_ptr<T> object ):
     ViewWrapperBase(name,parent),
     m_data( std::move( object ) )
-  {}
+  {
+    register_data_ptr();
+  }
 
   /**
    * @param name name of the object
@@ -92,7 +87,9 @@ public:
                         T * object ):
     ViewWrapperBase(name,parent),
     m_data( std::move( std::unique_ptr<T>(object) ) )
-  {}
+  {
+    register_data_ptr();
+  }
 
   /**
    * default destructor
@@ -105,7 +102,9 @@ public:
    */
   ViewWrapper( ViewWrapper const & source ) :
     m_data(source.m_data)
-  {}
+  {
+    register_data_ptr();
+  }
 
   /**
    * Move Constructor
@@ -113,7 +112,9 @@ public:
    */
   ViewWrapper( ViewWrapper&& source ) :
     m_data( std::move(source.m_data) )
-  {}
+  {
+    register_data_ptr();
+  }
 
   /**
    * Copy Assignment Operator
@@ -123,6 +124,7 @@ public:
   ViewWrapper& operator=( ViewWrapper const & source )
   {
     m_data = source.m_data;
+    register_data_ptr();
     return *this;
   }
 
@@ -134,6 +136,7 @@ public:
   ViewWrapper& operator=( ViewWrapper && source )
   {
     m_data = std::move(source.m_data);
+    register_data_ptr();
     return *this;
   }
 
@@ -233,7 +236,8 @@ public:
   };
   virtual void reserve( std::size_t new_cap ) override final
   {
-    return reserve_wrapper::reserve(this, new_cap);
+    reserve_wrapper::reserve(this, new_cap);
+    register_data_ptr();
   }
 //  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,reserve , void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
@@ -268,7 +272,8 @@ public:
   };
   void resize( localIndex new_size ) override final
   {
-    return resize_wrapper::resize(this, new_size);
+    resize_wrapper::resize(this, new_size);
+    register_data_ptr();
   }
 
 //
@@ -402,6 +407,8 @@ public:
     /// return the object...or a reference to the object
     return *m_data;
   }
+  
+
   template<class U = T>
   typename std::enable_if<std::is_same<U,std::string>::value, rtype_const>::type
   data() const
@@ -418,6 +425,8 @@ public:
     /// return a c-pointer to the object
     return m_data.get();
   }
+
+
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
   data() const
@@ -426,9 +435,14 @@ public:
   }
 
 
+  T& reference()
+  { return *m_data; }
 
+  T const & reference() const
+  { return *m_data; }
 
-  /// Case for if m_data has a member function called "data()", and is not a string
+private:
+  /// Case for if m_data has a member function called "data()"
   template<class U = T>
   typename std::enable_if<has_memberfunction_data<U>::value, rtype>::type
   data_ptr()
@@ -444,7 +458,7 @@ public:
     return m_data->data();
   }
 
-  /// case for if m_data does NOT have a member function "data()", and is not a string
+  /// case for if m_data does NOT have a member function "data()"
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value, rtype>::type
   data_ptr()
@@ -452,6 +466,8 @@ public:
     /// return a c-pointer to the object
     return m_data.get();
   }
+
+
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value, rtype_const>::type
   data_ptr() const
@@ -460,20 +476,21 @@ public:
   }
 
 
+  /* Return the byte size of the object pointed to by data_ptr() */
   int32 data_size() const
   {
-    return size_wrapper::size(this) * sizeof(T);
+    return size_wrapper::size() * sizeof(T);
   }
 
+  /* Register the pointer to data with the associated sidre::View. */
+  void register_data_ptr() 
+  {
+    axom::sidre::View * mySidreView = getSidreView();
+    mySidreView->setExternalDataPtr(data_ptr());
+    mySidreView->apply(axom::sidre::TypeID::INT8_ID, data_size(), 0, 1);
+  } 
 
 
-  T& reference()
-  { return *m_data; }
-
-  T const & reference() const
-  { return *m_data; }
-
-private:
 public:
   std::unique_ptr<T> m_data;
 
