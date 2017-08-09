@@ -5,6 +5,8 @@
 set(gtest_geosx_tests
    testDataTypes.cpp
    testStackTrace.cpp
+   testFloatingPointExceptions.cpp
+   testSidre.cpp
    )
 
 #
@@ -15,7 +17,7 @@ foreach(test ${gtest_geosx_tests})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON geosx_core  cxx-utilities
+                        DEPENDS_ON geosx_core  cxx-utilities conduit
                         SYSTEM_DEPENDS_ON gtest slic pugixml
                         )
                         
