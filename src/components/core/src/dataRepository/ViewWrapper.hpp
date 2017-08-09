@@ -486,9 +486,9 @@ private:
   void register_data_ptr() 
   {
     axom::sidre::View * mySidreView = getSidreView();
-    mySidreView->setExternalDataPtr(data_ptr());
-    mySidreView->apply(axom::sidre::TypeID::INT8_ID, data_size(), 0, 1);
-  } 
+    mySidreView->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, data_size(), data_ptr());
+    mySidreView->apply();
+  }
 
 
 public:
