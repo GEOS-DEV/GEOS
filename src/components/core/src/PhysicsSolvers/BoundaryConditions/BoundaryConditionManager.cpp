@@ -38,6 +38,8 @@ void BoundaryConditionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNod
     string const typeName = childNode.name();
     string const name = childNode.attribute("name").value();
     std::unique_ptr<BoundaryConditionBase> bc = BoundaryConditionBase::CatalogInterface::Factory( typeName, name, this );
+    bc->SetDocumentationNodes(nullptr);
+    bc->ReadXML(childNode);
     this->RegisterGroup(name, std::move(bc) );
   }
 }

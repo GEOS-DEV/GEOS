@@ -66,7 +66,7 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
                               keys::direction,
                               -1,
                               "R1Tensor",
-                              "",
+                              "R1Tensor",
                               "Direction to apply boundary condition to",
                               "",
                               "{0,0,0}",
@@ -128,9 +128,23 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
                               0 );
 }
 
+void BoundaryConditionBase::ReadXML_PostProcess()
+{
+
+  m_setNames = this->getReference<string_array>( keys::setNames );
+  m_fieldName = this->getReference<string>( keys::fieldName );
+  m_component = this->getReference<int32>( keys::component );
+  m_direction = this->getReference<R1Tensor>( keys::direction );
+  m_timeTableName          = this->getReference<string>( keys::timeTableName );
+  m_bcApplicationTableName = this->getReference<string>( keys::bcApplicationTableName );
+  m_scale                  = this->getReference<real64>( keys::scale );
+  m_functionName           = this->getReference<string>( keys::functionName );
+
+}
 
 real64 BoundaryConditionBase::GetValue( realT time ) const
 {
+
   real64 rval = m_scale;
   if (!(m_timeTableName.empty()))
   {

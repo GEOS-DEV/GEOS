@@ -444,7 +444,7 @@ public:
 private:
   /// Case for if m_data has a member function called "data()"
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value, rtype>::type
+  typename std::enable_if<has_memberfunction_data<U>::value, T * >::type
   data_ptr()
   {
     return m_data->data();
@@ -452,7 +452,7 @@ private:
 
 
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value, rtype_const>::type
+  typename std::enable_if<has_memberfunction_data<U>::value, T const * >::type
   data_ptr() const
   {
     return m_data->data();
@@ -460,7 +460,7 @@ private:
 
   /// case for if m_data does NOT have a member function "data()"
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value, rtype>::type
+  typename std::enable_if<!has_memberfunction_data<U>::value, T * >::type
   data_ptr()
   {
     /// return a c-pointer to the object
@@ -469,7 +469,7 @@ private:
 
 
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value, rtype_const>::type
+  typename std::enable_if<!has_memberfunction_data<U>::value, T const *>::type
   data_ptr() const
   {
     return m_data.get();

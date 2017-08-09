@@ -66,7 +66,7 @@ void BoundaryConditionManager::ApplyBoundaryCondition( BCFunctionPtr boundaryCon
       string_array setNames = bc.GetSetNames();
       for( auto & setName : setNames )
       {
-        dataRepository::ViewWrapper<lSet> * setWrapper = getWrapperPtr<lSet>(setName);
+        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets.getWrapperPtr<lSet>(setName);
         if( setWrapper != nullptr )
         {
           lSet const & set = setWrapper->reference();
