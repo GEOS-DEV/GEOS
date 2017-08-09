@@ -69,7 +69,8 @@
 
 
   <BoundaryConditions>
-    <DirichletBoundaryCondition name="xconstraint" component="0" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="xneg xpos"/>
+    <DirichletBoundaryCondition name="v0"          component="0" fieldName="Velocity" fieldType="Vector" object="Node" scale="1.0" setNames="xneg"/>
+    <DirichletBoundaryCondition name="xconstraint" component="0" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="xpos"/>
     <DirichletBoundaryCondition name="yconstraint" component="1" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
     <DirichletBoundaryCondition name="zconstraint" component="2" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
   </BoundaryConditions>

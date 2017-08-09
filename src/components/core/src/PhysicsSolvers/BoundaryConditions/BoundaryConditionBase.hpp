@@ -39,6 +39,8 @@ public:
 
   void FillDocumentationNode( dataRepository::ManagedGroup * const ) override;
 
+  void ReadXML_PostProcess() override final;
+
   real64 GetValue( realT time ) const;
 
 
@@ -47,7 +49,7 @@ public:
     return m_fieldName;
   }
 
-  virtual int GetComponent(realT time)
+  virtual int GetComponent() const
   {
     return m_component;
   }
