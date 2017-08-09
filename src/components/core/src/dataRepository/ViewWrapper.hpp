@@ -479,7 +479,7 @@ private:
   /* Return the byte size of the object pointed to by data_ptr() */
   int32 data_size() const
   {
-    return size_wrapper::size() * sizeof(T);
+    return size() * sizeof(T);
   }
 
   /* Register the pointer to data with the associated sidre::View. */
