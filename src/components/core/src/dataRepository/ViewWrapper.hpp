@@ -101,6 +101,7 @@ public:
    * @param source source for the copy
    */
   ViewWrapper( ViewWrapper const & source ) :
+    ViewWrapperBase("test", nullptr),
     m_data(source.m_data)
   {
     register_data_ptr();
@@ -111,6 +112,7 @@ public:
    * @param source source to be moved
    */
   ViewWrapper( ViewWrapper&& source ) :
+    ViewWrapperBase("test", nullptr),
     m_data( std::move(source.m_data) )
   {
     register_data_ptr();

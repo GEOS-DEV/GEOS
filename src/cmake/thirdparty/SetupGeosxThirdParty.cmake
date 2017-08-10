@@ -38,6 +38,10 @@ if (ATK_DIR)
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  sidre)
 
+  blt_register_library( NAME spio
+                        INCLUDES ${ATK_INCLUDE_DIRS} 
+                        LIBRARIES  spio)
+
   blt_register_library( NAME slic
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  slic)
