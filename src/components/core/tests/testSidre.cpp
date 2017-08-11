@@ -27,6 +27,11 @@ TEST(testSidre, simpleRestore) {
   /* Resize the array */
   data_view.resize(num_items);
 
+  int64_array & data = data_view.reference();
+  std::cout<<"data.size() = "<<data.size()<<std::endl;
+  std::cout<<"data_view.size() = "<<data_view.size()<<std::endl;
+  std::cout<<"data_view.data_size() = "<<data_view.data_size()<<std::endl;
+
   /* Check that the ViewWrapper size and data_size functions return the proper values */
   EXPECT_TRUE(data_view.size() == num_items) << data_view.size() << ", " << num_items;
   EXPECT_TRUE(data_view.data_size() == expected_size) << data_view.data_size() << ", " << expected_size;

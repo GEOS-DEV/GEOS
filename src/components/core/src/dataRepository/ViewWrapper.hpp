@@ -213,14 +213,23 @@ public:
 
   struct size_wrapper
   {
-    HAS_MEMBER_FUNCTION(size,std::size_t,const,,)
+    HAS_MEMBER_FUNCTION_VARIANT(size,0,int32,const,,)
+    HAS_MEMBER_FUNCTION_VARIANT(size,1,uint32,const,,)
+    HAS_MEMBER_FUNCTION_VARIANT(size,2,int64,const,,)
+    HAS_MEMBER_FUNCTION_VARIANT(size,3,uint64,const,,)
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_size<U>::value, localIndex>::type size(ViewWrapper const * parent)
+    static typename std::enable_if< has_memberfunction_v0_size<U>::value ||
+                                    has_memberfunction_v1_size<U>::value ||
+                                    has_memberfunction_v2_size<U>::value ||
+                                    has_memberfunction_v3_size<U>::value, localIndex>::type size(ViewWrapper const * parent)
     {
       return static_cast<localIndex>(parent->m_data->size());
     }
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_size<U>::value, localIndex>::type size(ViewWrapper const * )
+    static typename std::enable_if< !(has_memberfunction_v0_size<U>::value ||
+                                      has_memberfunction_v1_size<U>::value ||
+                                      has_memberfunction_v2_size<U>::value ||
+                                      has_memberfunction_v3_size<U>::value ), localIndex>::type size(ViewWrapper const * )
     {
       std::cout << "no size function" << std::endl;
       return 1;//parent->m_data;
