@@ -43,6 +43,21 @@ else()
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_FPARSER=0)  
 endif()
 
+if( ENABLE_PYTHON )
+  set( thirdPartyLibs ${thirdPartyLibs} python_interp )
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=1)
+else()
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=0)  
+endif()
+
+
+if( ENABLE_MATHPRESSO )
+  set( thirdPartyLibs ${thirdPartyLibs} mathpresso )
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_MATHPRESSO=1)
+else()
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_MATHPRESSO=0)  
+endif()
+
 
   set( thirdPartyLibs ${thirdPartyLibs} silo )
 

@@ -231,7 +231,6 @@ public:
                                       has_memberfunction_v2_size<U>::value ||
                                       has_memberfunction_v3_size<U>::value ), localIndex>::type size(ViewWrapper const * )
     {
-      std::cout << "no size function" << std::endl;
       return 1;//parent->m_data;
     }
   };
@@ -498,11 +497,22 @@ public:
   }
 
 
-  /* Return the byte size of the object pointed to by data_ptr() */
-  int32 data_size() const
+  HAS_ALIAS(value_type)
+
+  template<class U = T>
+  typename std::enable_if<has_alias_value_type<U>::value, int32 >::type
+  data_size() const
+  {
+    return size() * sizeof(typename T::value_type);
+  }
+
+  template<class U = T>
+  typename std::enable_if<!has_alias_value_type<U>::value, int32>::type
+  data_size() const
   {
     return size() * sizeof(T);
   }
+
 
   /* Register the pointer to data with the associated sidre::View. */
   void register_data_ptr() 
