@@ -69,17 +69,16 @@
 
 
   <BoundaryConditions>
-    <DirichletBoundaryCondition name="v0"          component="0" fieldName="Velocity" fieldType="Vector" object="Node" scale="1.0" setNames="xneg"/>
-    <DirichletBoundaryCondition name="xconstraint" component="0" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="xpos"/>
-    <DirichletBoundaryCondition name="yconstraint" component="1" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
-    <DirichletBoundaryCondition name="zconstraint" component="2" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
+    <Dirichlet name="v0"          component="0" fieldName="Velocity" fieldType="Vector" object="Node" scale="1.0" setNames="xneg"/>
+    <Dirichlet name="xconstraint" component="0" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="xpos"/>
+    <Dirichlet name="yconstraint" component="1" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
+    <Dirichlet name="zconstraint" component="2" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
   </BoundaryConditions>
 
 
-  <Tables>
-    <Table1D coord="0.0, 1.0, 2.0" value="0.0, 1.0, 1.0" name="ttable1"/>
-  </Tables>
-  
+  <Functions>
+    <TableFunction name="ttable1" coordinates="0.0 1.0 2.0" values="0.0 1.0 1.0" />
+  </Functions>
 
   <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>

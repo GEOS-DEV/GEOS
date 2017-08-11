@@ -199,10 +199,10 @@ void TableFunction::InitializeFunction()
   }
 }
 
-double TableFunction::Evaluate(double* input)
+real64 TableFunction::Evaluate( real64 const * const input ) const
 {
   localIndex bounds[m_maxDimensions][2];
-  double weights[m_maxDimensions][2];
+  real64 weights[m_maxDimensions][2];
 
   // Determine position, weights
   for (localIndex ii=0; ii<m_dimensions; ++ii)
@@ -232,14 +232,14 @@ double TableFunction::Evaluate(double* input)
       bounds[ii][1] = std::distance(m_coordinates[ii].begin(), lower);
       bounds[ii][0] = bounds[ii][1] - 1;
 
-      double dx = m_coordinates[ii][bounds[ii][1]] - m_coordinates[ii][bounds[ii][0]];
+      real64 dx = m_coordinates[ii][bounds[ii][1]] - m_coordinates[ii][bounds[ii][0]];
       weights[ii][0] = 1.0 - (input[ii] - m_coordinates[ii][bounds[ii][0]]) / dx;
       weights[ii][1] = 1.0 - weights[ii][0];
     }
   }
 
   // Linear interpolation
-  double weightedValue = 0.0;
+  real64 weightedValue = 0.0;
   for (localIndex ii=0; ii<m_numCorners; ++ii)
   {
     // Find array index
@@ -250,7 +250,7 @@ double TableFunction::Evaluate(double* input)
     }
 
     // Determine weighted value
-    double cornerValue = m_values[tableIndex];
+    real64 cornerValue = m_values[tableIndex];
     for (localIndex jj=0; jj<m_dimensions; ++jj)
     {
       cornerValue *= weights[jj][m_corners[jj][ii]];

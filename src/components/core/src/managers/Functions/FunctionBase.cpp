@@ -39,6 +39,6 @@ void FunctionBase::FillDocumentationNode( dataRepository::ManagedGroup * const d
 
 
 
-REGISTER_CATALOG_ENTRY( FunctionBase, FunctionBase, std::string const &, ManagedGroup * const )
+//REGISTER_CATALOG_ENTRY( FunctionBase, FunctionBase, std::string const &, ManagedGroup * const )
 
 } /* namespace ANST */

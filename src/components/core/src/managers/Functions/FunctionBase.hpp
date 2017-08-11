@@ -25,7 +25,7 @@ public:
   
   static string CatalogName() { return "FunctionBase"; }
   virtual void InitializeFunction(){}
-  virtual double Evaluate(double* input) {return 0.0;}
+  virtual real64 Evaluate( real64 const * const input ) const = 0;
 
   // Setup catalog
   using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, ManagedGroup * const >;

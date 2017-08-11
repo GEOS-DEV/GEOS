@@ -58,7 +58,8 @@ ProblemManager::ProblemManager( const std::string& name,
 {
   m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
   m_eventManager = &(RegisterGroup<EventManager>(keys::eventManager) ) ;
-  m_functionManager = &(RegisterGroup<NewFunctionManager>(keys::functionManager) ) ;
+//  m_functionManager = &(RegisterGroup<NewFunctionManager>(keys::functionManager) ) ;
+  m_functionManager = &(NewFunctionManager::Instance());
 }
 
 //ProblemManager::ProblemManager( const std::string& name,
@@ -510,8 +511,12 @@ void ProblemManager::ParseInputFile()
 
   {
     BoundaryConditionManager & boundaryConditionManager = BoundaryConditionManager::get();//this->GetGroup<BoundaryConditionManager>(keys::boundaryConditionMananger);
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
-    boundaryConditionManager.ReadXML(topLevelNode);
+
+    xmlWrapper::xmlNode bcNode = xmlProblemNode.child("BoundaryConditions");
+    boundaryConditionManager.ReadXML(bcNode);
+    xmlWrapper::xmlNode icNode = xmlProblemNode.child("InitialConditions");
+    boundaryConditionManager.ReadXML(icNode);
+
   }
 
   {

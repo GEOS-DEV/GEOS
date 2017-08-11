@@ -20,7 +20,7 @@ public:
   DirichletBoundaryCondition() = delete;
   virtual ~DirichletBoundaryCondition();
 
-  static string CatalogName() { return "DirichletBoundaryCondition"; }
+  static string CatalogName() { return "Dirichlet"; }
 
   template< typename T >
   static void ApplyBounaryConditionDefaultMethod( BoundaryConditionBase const & bc,
@@ -31,15 +31,14 @@ public:
 
 template< typename T >
 void DirichletBoundaryCondition::ApplyBounaryConditionDefaultMethod(
-                                                                     BoundaryConditionBase const & bc,
-                                                                     real64 const time,
-                                                                     array<T> & field )
+                                 BoundaryConditionBase const & bc,
+                                 real64 const time,
+                                 array<T> & field )
 {
   for( auto & fieldValue : field )
   {
     fieldValue = bc.GetValue(time);
   }
-
 }
 
 

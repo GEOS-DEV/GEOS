@@ -22,11 +22,11 @@ public:
 
   virtual ~TableFunction();
   static string CatalogName() { return "TableFunction"; }
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override final;
+  virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override final;
 
   virtual void InitializeFunction() override;
-  virtual double Evaluate(double* input) override;
+  virtual real64 Evaluate( real64 const * const input) const override final;
 
 private:
   Array1dT<real64_array> m_coordinates;
