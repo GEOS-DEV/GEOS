@@ -19,6 +19,8 @@
 
 #include "ViewWrapperBase.hpp"
 
+#include <iostream>
+
 #if 0
 #define VIRTUAL_FUNCTION_WRAPPER( FUNCNAME, RTYPE, CONST, PARAMS, ARGS, PARAMS0, ARGS0 ) \
 struct virtual_function_wrapper_ ## FUNCNAME \
@@ -59,7 +61,8 @@ public:
                         ManagedGroup * const parent ) :
     ViewWrapperBase(name,parent),
     m_data( std::make_unique<T>() )
-  {
+  { 
+    // std::cout << "in constructor1" << std::endl;
     register_data_ptr();
   }
 
@@ -74,6 +77,7 @@ public:
     ViewWrapperBase(name,parent),
     m_data( std::move( object ) )
   {
+    // std::cout << "in constructor2" << std::endl;
     register_data_ptr();
   }
 
@@ -88,6 +92,7 @@ public:
     ViewWrapperBase(name,parent),
     m_data( std::move( std::unique_ptr<T>(object) ) )
   {
+    // std::cout << "in constructor3" << std::endl;
     register_data_ptr();
   }
 
@@ -104,6 +109,7 @@ public:
     ViewWrapperBase("test", nullptr),
     m_data(source.m_data)
   {
+    // std::cout << "in copy constructor" << std::endl;
     register_data_ptr();
   }
 
@@ -115,6 +121,7 @@ public:
     ViewWrapperBase("test", nullptr),
     m_data( std::move(source.m_data) )
   {
+    // std::cout << "in move constructor" << std::endl;
     register_data_ptr();
   }
 
@@ -126,6 +133,7 @@ public:
   ViewWrapper& operator=( ViewWrapper const & source )
   {
     m_data = source.m_data;
+    // std::cout << "in copy assignment" << std::endl;
     register_data_ptr();
     return *this;
   }
@@ -138,6 +146,7 @@ public:
   ViewWrapper& operator=( ViewWrapper && source )
   {
     m_data = std::move(source.m_data);
+    // std::cout << "in assignment" << std::endl;
     register_data_ptr();
     return *this;
   }
@@ -213,6 +222,7 @@ public:
     template<class U = T>
     static typename std::enable_if<!has_memberfunction_size<U>::value, localIndex>::type size(ViewWrapper const * )
     {
+      std::cout << "no size function" << std::endl;
       return 1;//parent->m_data;
     }
   };
@@ -239,6 +249,7 @@ public:
   virtual void reserve( std::size_t new_cap ) override final
   {
     reserve_wrapper::reserve(this, new_cap);
+    // std::cout << "in reserve" << std::endl;
     register_data_ptr();
   }
 //  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,reserve , void,, VA_LIST(std::size_t a), VA_LIST(a) )
@@ -275,6 +286,7 @@ public:
   void resize( localIndex new_size ) override final
   {
     resize_wrapper::resize(this, new_size);
+    // std::cout << "in resize" << std::endl;
     register_data_ptr();
   }
 
@@ -443,7 +455,6 @@ public:
   T const & reference() const
   { return *m_data; }
 
-private:
   /// Case for if m_data has a member function called "data()"
   template<class U = T>
   typename std::enable_if<has_memberfunction_data<U>::value && has_alias_pointer<U>::value, typename U::pointer >::type
@@ -488,8 +499,9 @@ private:
   void register_data_ptr() 
   {
     axom::sidre::View * mySidreView = getSidreView();
+    // std::cout << data_size() << std::endl;
+    // std::cout << data_ptr() << std::endl;
     mySidreView->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, data_size(), data_ptr());
-    mySidreView->apply();
   }
 
 
