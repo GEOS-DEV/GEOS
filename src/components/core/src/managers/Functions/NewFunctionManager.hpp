@@ -23,6 +23,14 @@ public:
                       dataRepository::ManagedGroup * const parent );
   virtual ~NewFunctionManager();
   
+  static NewFunctionManager& Instance()
+  {
+      static NewFunctionManager theFunctionManager("LastFunctionManagerOnEarth", nullptr);
+
+    return theFunctionManager;
+  }
+
+
   static string CatalogName() { return "NewFunctionManager"; }
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
