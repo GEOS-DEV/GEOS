@@ -386,7 +386,7 @@ public:
 
 
   HAS_MEMBER_FUNCTION(data,pointer,,,)
-  HAS_MEMBER_FUNCTION_VARIANT(data,_const, pointer,,,)
+  HAS_MEMBER_FUNCTION_VARIANT(data,_const, pointer,const,,)
 
   /// Case for if m_data has a member function called "data()", and is not a string
   template<class U = T>
@@ -459,7 +459,7 @@ public:
 
   /// Case for if m_data has a member function called "data()"
   template<class U = T>
-  typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) && has_alias_pointer<U>::value, typename U::pointer >::type
+  typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) && has_alias_pointer<U>::value && !std::is_same<U,string>::value, typename U::pointer >::type
   data_ptr()
   {
     return m_data->data();
@@ -467,7 +467,24 @@ public:
 
 
   template<class U = T>
-  typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) && has_alias_pointer<U>::value, typename U::const_pointer >::type
+  typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) && has_alias_pointer<U>::value && !std::is_same<U,string>::value, typename U::const_pointer >::type
+  data_ptr() const
+  {
+    return m_data->data();
+  }
+
+
+  /// Case for if m_data has a member function called "data()"
+  template<class U = T>
+  typename std::enable_if< std::is_same<U,string>::value, char const * >::type
+  data_ptr()
+  {
+    return m_data->data();
+  }
+
+
+  template<class U = T>
+  typename std::enable_if< std::is_same<U,string>::value, char const * >::type
   data_ptr() const
   {
     return m_data->data();
@@ -475,7 +492,7 @@ public:
 
   /// case for if m_data does NOT have a member function "data()"
   template<class U = T>
-  typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ), U * >::type
+  typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&& !std::is_same<U,string>::value, U * >::type
   data_ptr()
   {
     /// return a c-pointer to the object
@@ -484,7 +501,7 @@ public:
 
 
   template<class U = T>
-  typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ), U const *>::type
+  typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&& !std::is_same<U,string>::value, U const *>::type
   data_ptr() const
   {
     return m_data.get();
@@ -512,7 +529,7 @@ public:
   void register_data_ptr() 
   {
     axom::sidre::View * mySidreView = getSidreView();
-    mySidreView->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, data_size(), data_ptr());
+    mySidreView->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, data_size(), const_cast<void*>((void const *)data_ptr()));
   }
 
   std::unique_ptr<T> m_data;

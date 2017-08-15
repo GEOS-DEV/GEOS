@@ -52,8 +52,8 @@ TEST(testSidre, simpleRestore) {
   ViewWrapper<int32> & size_wrapper = root->getWrapper<int32>(string("size"));
 
   string & name_str = name_wrapper.data();
-  EXPECT_FALSE(&name_str == name_wrapper.data_ptr()) << "ViewWrapper<string>.data_ptr() points to string object." << std::endl;
-  EXPECT_TRUE(name_str.c_str() ==  (char *) name_wrapper.data_ptr()) << "ViewWrapper<string>.data_ptr() doesn't point to char[]." << std::endl;
+  EXPECT_FALSE( (void*)(&name_str) == (void const *)(name_wrapper.data_ptr())) << "ViewWrapper<string>.data_ptr() points to string object." << std::endl;
+  EXPECT_TRUE(name_str.c_str() ==  (char const*) name_wrapper.data_ptr()) << "ViewWrapper<string>.data_ptr() doesn't point to char[]." << std::endl;
 
 #if 0
   axom::sidre::Group * root_group = root->getSidreGroup();
