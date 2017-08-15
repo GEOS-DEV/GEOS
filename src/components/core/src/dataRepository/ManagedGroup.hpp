@@ -124,6 +124,46 @@ public:
 
 
   template< typename T = ManagedGroup >
+  T * GetGroupPtr( std::string const & name )
+  {
+
+    ManagedGroup * rval = nullptr;
+    auto iter = m_subGroups.find(name);
+    if( iter!=m_subGroups.end() )
+    {
+      rval = iter->second.get();
+    }
+
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T *>( rval );
+#else
+    return static_cast<T *>( rval );
+#endif
+  }
+
+  template< typename T = ManagedGroup >
+  T const * GetGroupPtr( std::string const & name ) const
+  {
+
+    ManagedGroup const * rval = nullptr;
+    auto iter = m_subGroups.find(name);
+    if( iter!=m_subGroups.end() )
+    {
+      rval = iter->second.get();
+    }
+
+
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T const *>( rval );
+#else
+    return static_cast<T const *>( rval );
+#endif
+  }
+
+
+
+
+  template< typename T = ManagedGroup >
   T& GetGroup( std::string const & name )
   {
 #ifdef USE_DYNAMIC_CASTING
@@ -132,8 +172,6 @@ public:
     return static_cast<T&>( *(m_subGroups.at(getName)) );
 #endif
   }
-
-
 
   template< typename T = ManagedGroup >
   T const & GetGroup( std::string const & name ) const
@@ -144,6 +182,10 @@ public:
     return static_cast<T const &>( *(m_subGroups.at(getName)) );
 #endif
   }
+
+
+
+
 
   subGroupMap & GetSubGroups()
   {

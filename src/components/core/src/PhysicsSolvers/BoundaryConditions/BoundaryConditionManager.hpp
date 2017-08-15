@@ -32,6 +32,12 @@ public:
   void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
 
 
+  template< typename ... ARGS>
+  void ApplyBoundaryCondition( dataRepository::ManagedGroup & object,
+                               std::string const & fieldName,
+                               real64 const time,
+                               ARGS & ... args );
+
   template< typename BCFunctionPtr, typename ... ARGS>
   void ApplyBoundaryCondition( BCFunctionPtr boundaryConditionFunctionPtr,
                                dataRepository::ManagedGroup & object,
@@ -46,7 +52,35 @@ public:
                                std::string const & fieldName,
                                real64 const time,
                                ARGS ... args );
-};
+  };
+
+
+template< typename ... ARGS>
+void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGroup & object,
+                                                       std::string const & fieldName,
+                                                       real64 const time,
+                                                       ARGS & ... args )
+{
+  dataRepository::ManagedGroup const & sets = object.GetGroup(dataRepository::keys::sets);
+
+  // iterate over all boundary conditions.
+  forSubGroups<BoundaryConditionBase>( [&]( BoundaryConditionBase & bc ) -> void
+  {
+    if( time >= bc.GetStartTime() && time < bc.GetEndTime() && ( bc.GetFieldName()==fieldName) )
+    {
+      string_array setNames = bc.GetSetNames();
+      for( auto & setName : setNames )
+      {
+        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets.getWrapperPtr<lSet>(setName);
+        if( setWrapper != nullptr )
+        {
+          lSet const & set = setWrapper->reference();
+          bc.ApplyBounaryConditionDefaultMethod(set,time,args...);
+        }
+      }
+    }
+  });
+}
 
 
 template< typename BCFunctionPtr, typename ... ARGS>
@@ -76,6 +110,8 @@ void BoundaryConditionManager::ApplyBoundaryCondition( BCFunctionPtr boundaryCon
     }
   });
 }
+
+
 
 
 template< typename Solver, typename BCFunctionPtr, typename ... ARGS>
@@ -110,6 +146,9 @@ void BoundaryConditionManager::ApplyBoundaryCondition( Solver* solverPtr,
     }
   });
 }
+
+
+
 
 
 
