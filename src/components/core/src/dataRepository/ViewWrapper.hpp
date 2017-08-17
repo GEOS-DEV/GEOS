@@ -62,7 +62,6 @@ public:
     ViewWrapperBase(name,parent),
     m_data( std::make_unique<T>() )
   { 
-    register_data_ptr();
   }
 
   /**
@@ -76,7 +75,6 @@ public:
     ViewWrapperBase(name,parent),
     m_data( std::move( object ) )
   {
-    register_data_ptr();
   }
 
   /**
@@ -90,7 +88,6 @@ public:
     ViewWrapperBase(name,parent),
     m_data( std::move( std::unique_ptr<T>(object) ) )
   {
-    register_data_ptr();
   }
 
   /**
@@ -106,7 +103,6 @@ public:
     ViewWrapperBase("test", nullptr),
     m_data(source.m_data)
   {
-    register_data_ptr();
   }
 
   /**
@@ -117,7 +113,6 @@ public:
     ViewWrapperBase("test", nullptr),
     m_data( std::move(source.m_data) )
   {
-    register_data_ptr();
   }
 
   /**
@@ -128,7 +123,6 @@ public:
   ViewWrapper& operator=( ViewWrapper const & source )
   {
     m_data = source.m_data;
-    register_data_ptr();
     return *this;
   }
 
@@ -140,7 +134,6 @@ public:
   ViewWrapper& operator=( ViewWrapper && source )
   {
     m_data = std::move(source.m_data);
-    register_data_ptr();
     return *this;
   }
 
@@ -250,7 +243,6 @@ public:
   virtual void reserve( std::size_t new_cap ) override final
   {
     reserve_wrapper::reserve(this, new_cap);
-    register_data_ptr();
   }
 //  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,reserve , void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
@@ -286,7 +278,6 @@ public:
   void resize( localIndex new_size ) override final
   {
     resize_wrapper::resize(this, new_size);
-    register_data_ptr();
   }
 
 //
@@ -460,49 +451,46 @@ public:
   /// Case for if m_data has a member function called "data()"
   template<class U = T>
   typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) && has_alias_pointer<U>::value && !std::is_same<U,string>::value, typename U::pointer >::type
-  data_ptr()
+  dataPtr()
   {
     return m_data->data();
   }
-
 
   template<class U = T>
   typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) && has_alias_pointer<U>::value && !std::is_same<U,string>::value, typename U::const_pointer >::type
-  data_ptr() const
+  dataPtr() const
   {
     return m_data->data();
   }
 
 
-  /// Case for if m_data has a member function called "data()"
+  /// Case for if m_data is a string"
   template<class U = T>
   typename std::enable_if< std::is_same<U,string>::value, char const * >::type
-  data_ptr()
+  dataPtr()
   {
     return m_data->data();
   }
-
 
   template<class U = T>
   typename std::enable_if< std::is_same<U,string>::value, char const * >::type
-  data_ptr() const
+  dataPtr() const
   {
     return m_data->data();
   }
+
 
   /// case for if m_data does NOT have a member function "data()"
   template<class U = T>
   typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&& !std::is_same<U,string>::value, U * >::type
-  data_ptr()
+  dataPtr()
   {
-    /// return a c-pointer to the object
     return m_data.get();
   }
 
-
   template<class U = T>
   typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&& !std::is_same<U,string>::value, U const *>::type
-  data_ptr() const
+  dataPtr() const
   {
     return m_data.get();
   }
@@ -510,26 +498,61 @@ public:
 
   HAS_ALIAS(value_type)
 
+  /// case for if U::value_type exists. Returns the size of dataPtr
   template<class U = T>
-  typename std::enable_if<has_alias_value_type<U>::value, int32 >::type
-  data_size() const
+  typename std::enable_if<has_alias_value_type<U>::value, uint32>::type
+  dataSize() const
   {
     return size() * sizeof(typename T::value_type);
   }
 
+
+  /// case for if U::value_type doesn't exists. Returns the size of dataPtr
   template<class U = T>
-  typename std::enable_if<!has_alias_value_type<U>::value, int32>::type
-  data_size() const
+  typename std::enable_if<!has_alias_value_type<U>::value, uint32>::type
+  dataSize() const
   {
     return size() * sizeof(T);
   }
 
 
-  /* Register the pointer to data with the associated sidre::View. */
-  void register_data_ptr() 
+  /// case for if U::value_type exists. Returns the number of elements given a byte size
+  template<class U = T>
+  typename std::enable_if<has_alias_value_type<U>::value, uint32>::type
+  numElementsFromDataSize(uint32 d_size) const
   {
-    axom::sidre::View * mySidreView = getSidreView();
-    mySidreView->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, data_size(), const_cast<void*>((void const *)data_ptr()));
+    return d_size / sizeof(typename T::value_type);
+  }
+
+
+  /// case for if U::value_type doesn't exists. Returns the number of elements given a byte size
+  template<class U = T>
+  typename std::enable_if<!has_alias_value_type<U>::value, uint32>::type
+  numElementsFromDataSize(uint32 d_size) const
+  {
+    return d_size / sizeof(T);
+  }
+
+
+  /* Register the pointer to data with the associated sidre::View. */
+  virtual void registerDataPtr() 
+  {
+    void * ptr = (dataSize() == 0) ? AXOM_NULLPTR : const_cast<void*>((void const *) dataPtr());
+    getSidreView()->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, dataSize(), ptr);
+  }
+
+
+  virtual void unregisterDataPtr()
+  {
+    getSidreView()->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, 0, AXOM_NULLPTR);
+  }
+
+
+  virtual void resizeFromSidre() 
+  {
+    uint32 d_size = getSidreView()->getTotalBytes();
+    uint32 numElements = numElementsFromDataSize(d_size);
+    resize(numElements);
   }
 
   std::unique_ptr<T> m_data;

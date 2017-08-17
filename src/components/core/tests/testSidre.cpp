@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 #include "sidre/sidre.hpp"
-#include "spio/IOManager.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/SidreWrapper.hpp"
@@ -17,6 +16,7 @@ namespace dataRepository {
 TEST(testSidre, simpleRestore) {
   MPI_Init(0, nullptr);
   const string path = "geos_simple_restore";
+  const string protocol = "sidre_hdf5";
   const int num_items = 10;
   const int expected_size = num_items * sizeof(int64);
   axom::sidre::DataStore & ds = SidreWrapper::dataStore();
@@ -30,9 +30,9 @@ TEST(testSidre, simpleRestore) {
   /* Resize the array */
   data_view.resize(num_items);
 
-  /* Check that the ViewWrapper size and data_size functions return the proper values */
+  /* Check that the ViewWrapper size and dataSize functions return the proper values */
   EXPECT_TRUE(data_view.size() == num_items) << data_view.size() << ", " << num_items << std::endl;
-  EXPECT_TRUE(data_view.data_size() == expected_size) << data_view.data_size() << ", " << expected_size << std::endl;
+  EXPECT_TRUE(data_view.dataSize() == expected_size) << data_view.dataSize() << ", " << expected_size << std::endl;
 
   /* Set the data */
   int64_array & data = data_view.data();
@@ -40,48 +40,62 @@ TEST(testSidre, simpleRestore) {
       data[i] = i;
   }
 
-  /* Check that the ViewWrapper data_ptr points to the right thing */
-  int64_ptr data_ptr = data_view.data_ptr();
-  EXPECT_TRUE(data_ptr == &(data[0])) << data_ptr << ", " << &(data[0]);
+  /* Check that the ViewWrapper dataPtr points to the right thing */
+  int64_ptr dataPtr = data_view.dataPtr();
+  EXPECT_TRUE(dataPtr == &(data[0])) << dataPtr << ", " << &(data[0]);
   for (int i = 0; i < data_view.size(); i++) {
-    EXPECT_TRUE(data_ptr[i] == data[i]) << data_ptr[i] << ", " << data[i] << std::endl;
+    EXPECT_TRUE(dataPtr[i] == data[i]) << dataPtr[i] << ", " << data[i] << std::endl;
   }
 
+  /* Check that the name ViewWrapper is self consistent. */
   ViewWrapper<string> & name_wrapper = root->getWrapper<string>(string("name"));
-  ViewWrapper<string> & path_wrapper = root->getWrapper<string>(string("path"));
-  ViewWrapper<int32> & size_wrapper = root->getWrapper<int32>(string("size"));
-
   string & name_str = name_wrapper.data();
-  EXPECT_FALSE((void* )(&name_str) == (void const *) (name_wrapper.data_ptr())) << "ViewWrapper<string>.data_ptr() points to string object." << std::endl;
-  EXPECT_TRUE(name_str.c_str() ==  (char const*) name_wrapper.data_ptr()) << "ViewWrapper<string>.data_ptr() doesn't point to char[]." << std::endl;
+  const char * name_ptr = name_wrapper.dataPtr();
+  EXPECT_TRUE(name_str.c_str() == name_ptr) << name_str.c_str() << ", " << name_ptr << std::endl;
+  EXPECT_TRUE(name_str.size() == (uint32) name_wrapper.dataSize()) << name_str.size() << ", " << name_wrapper.dataSize() << std::endl;
 
-#if 0
-  axom::sidre::Group * root_group = root->getSidreGroup();
-  root_group->destroyView("name");
-  root_group->destroyView("size");
-  root_group->destroyView("path");
+  for (uint32 i = 0; i < name_str.size(); i++) {
+    EXPECT_TRUE(name_str[i] == name_ptr[i]) << name_str[i] << ", " << name_ptr[i] << std::endl;
+  }
+
+  /* Check that the path ViewWrapper is self consistent. */
+  ViewWrapper<string> & path_wrapper = root->getWrapper<string>(string("path"));
+  string & path_str = path_wrapper.data();
+  const char * path_ptr = path_wrapper.dataPtr();
+  EXPECT_TRUE(path_str.c_str() == path_ptr) << path_str.c_str() << ", " << path_ptr << std::endl;
+  EXPECT_TRUE(path_str.size() == (uint32) path_wrapper.dataSize()) << path_str.size() << ", " << path_wrapper.dataSize() << std::endl;
+
+  for (uint32 i = 0; i < path_str.size(); i++) {
+    EXPECT_TRUE(path_str[i] == path_ptr[i]) << path_str[i] << ", " << path_ptr[i] << std::endl;
+  }
+
+  /* Check that the size ViewWrapper is self consistent. */
+  ViewWrapper<int32> & size_wrapper = root->getWrapper<int32>(string("size"));
+  int & size_int = *size_wrapper.data();
+  int * size_ptr = size_wrapper.dataPtr();
+  EXPECT_TRUE(&size_int == size_ptr) << &size_int << ", " << size_ptr << std::endl;
+  EXPECT_TRUE(size_int == *size_ptr) << size_int << ", " << *size_ptr << std::endl;
 
   /* Save the sidre tree */
-  axom::spio::IOManager ioManager(MPI_COMM_WORLD);
-  ioManager.write(ds.getRoot(), 1, path, "sidre_hdf5");
+  root->writeRestart(1, path, protocol, MPI_COMM_WORLD);
 
+#if 1
   /* Reset the DataStore and the mirrored ManagedGroup heirarchy. */
   SidreWrapper::dataStore().getRoot()->destroyGroups();
   SidreWrapper::dataStore().destroyAllBuffers();
   delete root;
 
   /* Restore the sidre tree */
-  ioManager.read(SidreWrapper::dataStore().getRoot(), path + ".root");
+  root = new ManagedGroup(std::string("data"), nullptr);
+  root->reconstructSidreTree(path + ".root", protocol, MPI_COMM_WORLD);
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
-  root = new ManagedGroup(std::string("int64_data"), nullptr);
-  ViewWrapper<int64_array> & data_view_new = root->RegisterViewWrapper<int64_array>("data");
-  
-  /* Data allocation */
-  data_view_new.resize(num_items);
+  ViewWrapper<int64_array> & data_view_new = root->RegisterViewWrapper<int64_array>("int64_data");
 
   /* Load the data */
-  ioManager.loadExternalData(SidreWrapper::dataStore().getRoot(), path + ".root");
+  root->resizeSubViews();
+  root->registerSubViews();
+  root->loadSidreExternalData(path + ".root", MPI_COMM_WORLD);
 
   /* Should be the same as stored. */
   data = data_view_new.data();

@@ -9,6 +9,10 @@
 
 #include "dataRepository/SidreWrapper.hpp"
 #include "codingUtilities/StringUtilities.hpp"
+#include "spio/IOManager.hpp"
+#include <mpi.h>
+
+
 
 namespace geosx
 {
@@ -422,6 +426,71 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
 //    --indent;
 //  });
   InitializePostSubGroups(group);
+}
+
+
+void ManagedGroup::registerSubViews() 
+{
+  for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
+  {
+    wrapper->registerDataPtr();
+  }
+
+  forSubGroups([](ManagedGroup & subGroup) -> void 
+  {
+    subGroup.registerSubViews();
+  });
+}
+
+
+void ManagedGroup::unregisterSubViews()
+{
+  for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
+  {
+    wrapper->unregisterDataPtr();
+  }
+
+  forSubGroups([](ManagedGroup & subGroup) -> void 
+  {
+    subGroup.unregisterSubViews();
+  });
+}
+
+
+void ManagedGroup::writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm) 
+{
+  registerSubViews();
+  axom::spio::IOManager ioManager(comm);
+  ioManager.write(m_sidreGroup, num_files, path, protocol);
+}
+
+
+void ManagedGroup::reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm)
+{
+  axom::spio::IOManager ioManager(comm);
+  ioManager.read(m_sidreGroup, root_path, protocol);
+}
+
+
+void ManagedGroup::resizeSubViews() 
+{
+  for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
+  {
+    wrapper->resizeFromSidre();
+  }
+
+  forSubGroups([](ManagedGroup & subGroup) -> void 
+  {
+    subGroup.resizeSubViews();
+  });
+}
+
+
+void ManagedGroup::loadSidreExternalData(const string & root_path, MPI_Comm comm)
+{
+  axom::spio::IOManager ioManager(comm);
+  ioManager.loadExternalData(m_sidreGroup, root_path);
+  unregisterSubViews();
 }
 
 

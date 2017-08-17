@@ -63,6 +63,10 @@ public:
   virtual std::size_t max_size() const = 0;
   virtual void clear() = 0;
   virtual void insert() = 0;
+  virtual void registerDataPtr() = 0;
+  virtual void unregisterDataPtr() = 0;
+  virtual void resizeFromSidre() = 0;
+
   /*
      iterator erase( iterator pos );
      iterator erase( const_iterator pos );

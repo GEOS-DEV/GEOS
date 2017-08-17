@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <slic/slic.hpp>
+#include <mpi.h>
 
 #include "ObjectCatalog.hpp"
 #include "ViewWrapper.hpp"
@@ -470,6 +471,18 @@ public:
     return m_wrappers;
   }
 
+
+void registerSubViews();
+
+void unregisterSubViews();
+
+void writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm);
+
+void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
+
+void resizeSubViews();
+
+void loadSidreExternalData(const string & root_path, MPI_Comm comm);
 
 
 
