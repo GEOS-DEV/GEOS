@@ -44,6 +44,7 @@ CompositeFunction::~CompositeFunction()
 
 void CompositeFunction::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
+  FunctionBase::FillDocumentationNode(domain);
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
   docNode->setName(this->CatalogName());
@@ -69,7 +70,7 @@ void CompositeFunction::FillDocumentationNode( dataRepository::ManagedGroup * co
                               "string_array",
                               "string_array",
                               "List of variables in expression",
-                              "List of variables in expression.  The order must match the variableNames argment.",
+                              "List of variables in expression",
                               "",
                               "",
                               1,
@@ -141,7 +142,7 @@ void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const gro
 
   // Evaluate the symbolic math
   real64 functionResults[m_numSubFunctions];
-  for (localIndex ii=0; ii<result.size(); ++ii)
+  for( auto const & ii : set )
   {
     for (localIndex jj=0; jj<m_numSubFunctions; ++jj)
     {

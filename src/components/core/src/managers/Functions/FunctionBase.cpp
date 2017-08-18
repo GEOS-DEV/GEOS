@@ -7,7 +7,6 @@
 
 #include "FunctionBase.hpp"
 #include "common/DataTypes.hpp"
-#include <mathpresso/mathpresso.h>
 
 namespace geosx
 {

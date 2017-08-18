@@ -79,7 +79,7 @@
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
     <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
-    <!--CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
+    <CompositeFunction name="timeSpaceFunction" functionNames="timeFunction spaceFunction" variableNames="t s" expression="t*s"/>
     
   </Functions>
 
