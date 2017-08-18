@@ -88,8 +88,8 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::timeFunctionName,
-                              keys::timeFunctionName,
+  docNode->AllocateChildNode( keys::functionName,
+                              keys::functionName,
                               -1,
                               "string",
                               "string",
@@ -100,21 +100,6 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
                               0,
                               1,
                               0 );
-
-
-  docNode->AllocateChildNode( keys::spaceFunctionName,
-                              keys::spaceFunctionName,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of table that specifies variation of BC with space.",
-                              "",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
 
   docNode->AllocateChildNode( keys::bcApplicationTableName,
                               keys::bcApplicationTableName,
@@ -142,153 +127,117 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::functionName,
-                              keys::functionName,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of table that specifies variation of BC with time.",
-                              "",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
+
 }
 
 void BoundaryConditionBase::ReadXML_PostProcess()
 {
-
   m_setNames = this->getReference<string_array>( keys::setNames );
   m_fieldName = this->getReference<string>( keys::fieldName );
   m_component = this->getReference<int32>( keys::component );
   m_direction = this->getReference<R1Tensor>( keys::direction );
-  m_timeFunctionName          = this->getReference<string>( keys::timeFunctionName );
+  m_functionName          = this->getReference<string>( keys::functionName );
   m_bcApplicationFunctionName = this->getReference<string>( keys::bcApplicationTableName );
   m_scale                  = this->getReference<real64>( keys::scale );
-  m_spaceFunctionName           = this->getReference<string>( keys::functionName );
-
 }
 
-real64 BoundaryConditionBase::GetValue( realT time ) const
-{
-
-  real64 rval = m_scale;
-  if (!(m_timeFunctionName.empty()))
-  {
-    rArray1d t(1);
-    t[0] = time;
-    real64 const tableval = TableManager::Instance().LookupTable<1>(m_timeFunctionName, t);
-    rval = m_scale * tableval;
-  }
-  else if (!(m_spaceFunctionName.empty()))
-  {
-//    rval = m_scale * (*m_function)(time);
-  }
-  return rval;
-}
-
-void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
-                                                                real64 const time,
-                                                                array<R1Tensor> const & X,
-                                                                array<R1Tensor> & field )
-{
-
-  int32 const component = GetComponent();
-  string const spaceFunctionName = getData<string>(dataRepository::keys::spaceFunctionName);
-  string const timeFunctionName = getData<string>(dataRepository::keys::timeFunctionName);
-  NewFunctionManager & functionManager = NewFunctionManager::Instance();
-
-  FunctionBase const * const spaceFunction = functionManager.GetGroupPtr<FunctionBase>(spaceFunctionName);
-  FunctionBase const * const timeFunction  = functionManager.GetGroupPtr<FunctionBase>(timeFunctionName);
-
-  if( timeFunction!=nullptr && spaceFunction!=nullptr )
-  {
-//    real64 const tfactor = m_scale * ( timeFunction->Evaluate( &time ) );
+//real64 BoundaryConditionBase::GetValue( realT time ) const
+//{
+//
+//  real64 rval = m_scale;
+//  if (!(m_functionName.empty()))
+//  {
+//    rArray1d t(1);
+//    t[0] = time;
+//    real64 const tableval = TableManager::Instance().LookupTable<1>(m_functionName, t);
+//    rval = m_scale * tableval;
+//  }
+////  else if (!(m_spaceFunctionName.empty()))
+////  {
+//////    rval = m_scale * (*m_function)(time);
+////  }
+//  return rval;
+//}
+//
+//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
+//                                                                real64 const time,
+//                                                                array<R1Tensor> const & X,
+//                                                                array<R1Tensor> & field )
+//{
+//
+//  int32 const component = GetComponent();
+//  string const functionName = getData<string>(dataRepository::keys::functionName);
+//  NewFunctionManager & functionManager = NewFunctionManager::Instance();
+//
+//  FunctionBase const * const function  = functionManager.GetGroupPtr<FunctionBase>(functionName);
+//
+//  if( function!=nullptr )
+//  {
+//    real64 const factor = m_scale * ( timeFunction->Evaluate( &time ) );
 //    for( auto a : set )
 //    {
-//      field[a][component] = tfactor * ( spaceFunction->Evaluate( &(X[a]) ) );
+//      field[a][component] = factor;
 //    }
-  }
-  else if( timeFunction!=nullptr )
-  {
-    real64 const factor = m_scale * ( timeFunction->Evaluate( &time ) );
-    for( auto a : set )
-    {
-      field[a][component] = factor;
-    }
-  }
-  else if( spaceFunction!=nullptr )
-  {
-    for( auto a : set )
-    {
-      field[a][component] = m_scale * ( spaceFunction->Evaluate( X[a].Data() ) );
-    }
-
-  }
-  else
-  {
-    for( auto a : set )
-    {
-      field[a][component] = m_scale;
-    }
-  }
-}
+//  }
+//  else
+//  {
+//    for( auto a : set )
+//    {
+//      field[a][component] = m_scale;
+//    }
+//  }
+//}
 
 void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
                                                                 real64 const time,
-                                                                array<R1Tensor> const & X,
                                                                 ManagedGroup & dataGroup,
-                                                                string const & fieldName )
+                                                                string const & fieldName ) const
 {
 
   int32 const component = GetComponent();
-  string const spaceFunctionName = getData<string>(dataRepository::keys::spaceFunctionName);
-  string const timeFunctionName = getData<string>(dataRepository::keys::timeFunctionName);
+  string const functionName = getData<string>(dataRepository::keys::functionName);
   NewFunctionManager & functionManager = NewFunctionManager::Instance();
-
-  FunctionBase const * const spaceFunction = functionManager.GetGroupPtr<FunctionBase>(spaceFunctionName);
-  FunctionBase const * const timeFunction  = functionManager.GetGroupPtr<FunctionBase>(timeFunctionName);
 
   ViewWrapperBase & vw = dataGroup.getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index(vw.get_typeid());
-
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
   {
     using fieldType = decltype(type);
     ViewWrapper<fieldType> & view = dynamic_cast< ViewWrapper<fieldType> & >(vw);
     view_rtype<fieldType> field = view.data();
-    if( timeFunction!=nullptr && spaceFunction!=nullptr )
-    {
-  //    real64 const tfactor = m_scale * ( timeFunction->Evaluate( &time ) );
-  //    for( auto a : set )
-  //    {
-  //      field[a][component] = tfactor * ( spaceFunction->Evaluate( &(X[a]) ) );
-  //    }
-    }
-    else if( timeFunction!=nullptr )
-    {
-      real64 const factor = m_scale * ( timeFunction->Evaluate( &time ) );
-      for( auto a : set )
-      {
-        rtTypes::equate( field[a], component, factor );
-      }
-    }
-    else if( spaceFunction!=nullptr )
-    {
-      for( auto a : set )
-      {
-//        field[a] = m_scale * ( spaceFunction->Evaluate( X[a].Data() ) );
-        rtTypes::equate( field[a], component, m_scale * ( spaceFunction->Evaluate( X[a].Data() ) ) );
-      }
-    }
-    else
+    if( functionName.empty() )
     {
       for( auto a : set )
       {
 //        field[a] = m_scale;
         rtTypes::equate( field[a], component, m_scale );
+      }
+    }
+    else
+    {
+      FunctionBase const * const function  = functionManager.GetGroupPtr<FunctionBase>(functionName);
+      if( function!=nullptr)
+      {
+        if( function->isFunctionOfTime()==2 )
+        {
+          real64 value = m_scale * function->Evaluate( &time );
+          for( auto a : set )
+          {
+            rtTypes::equate( field[a], component, value );
+          }
+        }
+        else
+        {
+          real64_array result(set.size());
+          function->Evaluate( &dataGroup, time, set, result );
+          int32 count=0;
+          for( auto a : set )
+          {
+            rtTypes::equate( field[a], component, result[count] );
+            ++count;
+          }
+        }
       }
     }
   });

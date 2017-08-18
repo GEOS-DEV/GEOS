@@ -50,6 +50,7 @@ TableFunction::~TableFunction()
 
 void TableFunction::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
+  FunctionBase::FillDocumentationNode(domain);
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
   docNode->setName(this->CatalogName());
@@ -197,6 +198,14 @@ void TableFunction::InitializeFunction()
       m_corners[jj][ii] = int(ii / pow(2, jj)) % 2;
     }
   }
+}
+
+void TableFunction::Evaluate( dataRepository::ManagedGroup const * const group,
+                              real64 const time,
+                              lSet const & set,
+                              real64_array & result ) const
+{
+  FunctionBase::EvaluateT<TableFunction>( group, time, set, result );
 }
 
 real64 TableFunction::Evaluate( real64 const * const input ) const

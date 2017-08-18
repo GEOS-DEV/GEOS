@@ -44,4 +44,28 @@ void BoundaryConditionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNod
   }
 }
 
+void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGroup & object,
+                                                       std::string const & fieldName,
+                                                       real64 const time )
+{
+  dataRepository::ManagedGroup const & sets = object.GetGroup(dataRepository::keys::sets);
+
+  // iterate over all boundary conditions.
+  forSubGroups<BoundaryConditionBase>( [&]( BoundaryConditionBase & bc ) -> void
+  {
+    if( time >= bc.GetStartTime() && time < bc.GetEndTime() && ( bc.GetFieldName()==fieldName) )
+    {
+      string_array setNames = bc.GetSetNames();
+      for( auto & setName : setNames )
+      {
+        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets.getWrapperPtr<lSet>(setName);
+        if( setWrapper != nullptr )
+        {
+          lSet const & set = setWrapper->reference();
+          bc.ApplyBounaryConditionDefaultMethod(set,time, object, fieldName);
+        }
+      }
+    }
+  });
+}
 } /* namespace geosx */

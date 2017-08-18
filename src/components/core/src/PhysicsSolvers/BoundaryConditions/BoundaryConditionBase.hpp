@@ -22,8 +22,6 @@ string const fieldName = "fieldName";
 string const dataType = "dataType";
 string const component("component");
 string const direction("direction");
-string const timeFunctionName("timeFunction");
-string const spaceFunctionName("spaceFunction");
 string const bcApplicationTableName("bcApplicationTableName");
 string const scale("scale");
 string const functionName("functionName");
@@ -50,28 +48,32 @@ public:
 
 
 
-  real64 GetValue( realT time ) const;
+//  real64 GetValue( realT time ) const;
 
 
-  template< typename T >
+//  template< typename T >
+//  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+//                                           real64 const time,
+//                                           array<R1Tensor> const & X,
+//                                           array<T> & field );
+
+//  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+//                                           real64 const time,
+//                                           array<R1Tensor> const & X,
+//                                           array<R1Tensor> & field );
+
   void ApplyBounaryConditionDefaultMethod( lSet const & set,
                                            real64 const time,
-                                           array<R1Tensor> const & X,
-                                           array<T> & field );
-
-  void ApplyBounaryConditionDefaultMethod( lSet const & set,
-                                           real64 const time,
-                                           array<R1Tensor> const & X,
-                                           array<R1Tensor> & field );
-
-  void ApplyBounaryConditionDefaultMethod( lSet const & set,
-                                           real64 const time,
-                                           array<R1Tensor> const & X,
                                            dataRepository::ManagedGroup & dataGroup,
-                                           string const & fieldname );
+                                           string const & fieldname ) const;
 
 
-  virtual const string& GetFieldName()
+  string const & GetFunctionName() const
+  {
+    return m_functionName;
+  }
+
+  virtual const string& GetFieldName() const
   {
     return m_fieldName;
   }
@@ -86,12 +88,12 @@ public:
     return m_direction;
   }
 
-  real64 GetStartTime()
+  real64 GetStartTime() const
   {
     return -1;
   }
 
-  real64 GetEndTime()
+  real64 GetEndTime() const
   {
     return 1.0e9;
   }
@@ -120,64 +122,60 @@ protected:
 
   int m_initialCondition;
 
-  string m_timeFunctionName;
-  string m_spaceFunctionName;
+  string m_functionName;
   string m_bcApplicationFunctionName;
 
   real64 m_scale;
 
-
-
-
 };
 
 
-template< typename T >
-void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
-                                                                real64 const time,
-                                                                array<R1Tensor> const & X,
-                                                                array<T> & field )
-{
-
-  string const spaceFunctionName = getData<string>(dataRepository::keys::spaceFunctionName);
-  string const timeFunctionName = getData<string>(dataRepository::keys::timeFunctionName);
-  NewFunctionManager & functionManager = NewFunctionManager::Instance();
-
-  FunctionBase const * const spaceFunction = functionManager.GetGroupPtr<FunctionBase>(spaceFunctionName);
-  FunctionBase const * const timeFunction  = functionManager.GetGroupPtr<FunctionBase>(timeFunctionName);
-
-  if( timeFunction!=nullptr && spaceFunction!=nullptr )
-  {
-//    real64 const tfactor = m_scale * ( timeFunction->Evaluate( &time ) );
+//template< typename T >
+//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
+//                                                                real64 const time,
+//                                                                array<R1Tensor> const & X,
+//                                                                array<T> & field )
+//{
+//
+//  string const spaceFunctionName = getData<string>(dataRepository::keys::spaceFunctionName);
+//  string const timeFunctionName = getData<string>(dataRepository::keys::functionName);
+//  NewFunctionManager & functionManager = NewFunctionManager::Instance();
+//
+//  FunctionBase const * const spaceFunction = functionManager.GetGroupPtr<FunctionBase>(spaceFunctionName);
+//  FunctionBase const * const timeFunction  = functionManager.GetGroupPtr<FunctionBase>(timeFunctionName);
+//
+//  if( timeFunction!=nullptr && spaceFunction!=nullptr )
+//  {
+////    real64 const tfactor = m_scale * ( timeFunction->Evaluate( &time ) );
+////    for( auto a : set )
+////    {
+////      field[a][component] = tfactor * ( spaceFunction->Evaluate( &(X[a]) ) );
+////    }
+//  }
+//  else if( timeFunction!=nullptr )
+//  {
+//    real64 const factor = m_scale * ( timeFunction->Evaluate( &time ) );
 //    for( auto a : set )
 //    {
-//      field[a][component] = tfactor * ( spaceFunction->Evaluate( &(X[a]) ) );
+//      field[a] = factor;
 //    }
-  }
-  else if( timeFunction!=nullptr )
-  {
-    real64 const factor = m_scale * ( timeFunction->Evaluate( &time ) );
-    for( auto a : set )
-    {
-      field[a] = factor;
-    }
-  }
-  else if( spaceFunction!=nullptr )
-  {
-    for( auto a : set )
-    {
-      field[a] = m_scale * ( spaceFunction->Evaluate( X[a].Data() ) );
-    }
-
-  }
-  else
-  {
-    for( auto a : set )
-    {
-      field[a] = m_scale;
-    }
-  }
-}
+//  }
+//  else if( spaceFunction!=nullptr )
+//  {
+//    for( auto a : set )
+//    {
+//      field[a] = m_scale * ( spaceFunction->Evaluate( X[a].Data() ) );
+//    }
+//
+//  }
+//  else
+//  {
+//    for( auto a : set )
+//    {
+//      field[a] = m_scale;
+//    }
+//  }
+//}
 
 
 
