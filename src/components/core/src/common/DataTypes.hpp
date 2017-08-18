@@ -483,6 +483,22 @@ public:
       return lambda( real64_array(1) );
       break;
     }
+    case ( TypeIDs::r1_array_id ):
+    {
+      return lambda( r1_array(1) );
+      break;
+    }
+    case ( TypeIDs::r2_array_id ):
+    {
+      return lambda( r2_array(1) );
+      break;
+    }
+    case ( TypeIDs::r2Sym_array_id ):
+    {
+      return lambda( r2Sym_array(1) );
+      break;
+    }
+
     default:
     {
       std::cout<<LOCATION<<std::endl;

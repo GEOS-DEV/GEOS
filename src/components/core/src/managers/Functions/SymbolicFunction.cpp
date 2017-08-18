@@ -98,6 +98,7 @@ void SymbolicFunction::InitializeFunction()
   }
 }
 
+
 REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, std::string const &, ManagedGroup * const )
 
 } /* namespace ANST */

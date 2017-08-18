@@ -35,6 +35,60 @@ void FunctionBase::FillDocumentationNode( dataRepository::ManagedGroup * const d
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Function Base");
 
+  docNode->AllocateChildNode( keys::inputVarNames,
+                              keys::inputVarNames,
+                              -1,
+                              "string_array",
+                              "string_array",
+                              "Name of fields are input to function.",
+                              "",
+                              "REQUIRED",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( keys::inputVarTypes,
+                              keys::inputVarTypes,
+                              -1,
+                              "string_array",
+                              "string_array",
+                              "Name of fields are input to function.",
+                              "",
+                              "REQUIRED",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+
+}
+
+int32 FunctionBase::isFunctionOfTime() const
+{
+  int32 rval=0;
+  string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
+  int32 const numVars = inputVarNames.size();
+
+  if( numVars==1 )
+  {
+    if( inputVarNames[0]=="time" )
+    {
+      rval = 2;
+    }
+  }
+  else
+  {
+    for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
+    {
+      if( inputVarNames[varIndex]=="time")
+      {
+        rval = 1;
+        break;
+      }
+    }
+  }
+  return rval;
 }
 
 

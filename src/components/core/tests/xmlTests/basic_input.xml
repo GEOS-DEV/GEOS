@@ -67,22 +67,19 @@
                               shearModulus="0.0"/>
   </Constitutive>
 
-  <InitialConditions>
-    < />
-  </InitialConditions>
 
   <BoundaryConditions>
-    <Dirichlet name="v0"          component="0" fieldName="Velocity" fieldType="Vector" functionName="timeSpaceFunction" object="Node" scale="1.0" setNames="xneg"/>
-    <Dirichlet name="xconstraint" component="0" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="xpos"/>
-    <Dirichlet name="yconstraint" component="1" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
-    <Dirichlet name="zconstraint" component="2" fieldName="Velocity" fieldType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
+    <Dirichlet name="v0"          component="0" fieldName="Velocity" dataType="Vector" functionName="timeFunction" object="Node" scale="1.0" setNames="xneg"/>
+    <Dirichlet name="xconstraint" component="0" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="0.0" setNames="xpos"/>
+    <Dirichlet name="yconstraint" component="1" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
+    <Dirichlet name="zconstraint" component="2" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
   </BoundaryConditions>
 
 
   <Functions>
-    <TableFunction     name="timeTable1"        coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
-    <SymbolicFunction  name="spaceFunction"     fieldNames="ReferencePosition" fieldTypes="" variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
-    <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/>
+    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
+    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <!--CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
     
   </Functions>
 
