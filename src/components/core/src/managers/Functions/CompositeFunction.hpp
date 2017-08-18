@@ -27,6 +27,12 @@ public:
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
 
   virtual void InitializeFunction() override;
+
+  virtual void Evaluate( dataRepository::ManagedGroup const * const group,
+                         real64 const time,
+                         lSet const & sets,
+                         real64_array & result ) const override final;
+
   virtual real64 Evaluate( real64 const * const input) const override final;
   
 private:

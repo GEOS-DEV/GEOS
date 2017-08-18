@@ -125,6 +125,33 @@ void CompositeFunction::InitializeFunction()
 }
 
 
+void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const group,
+                                  real64 const time,
+                                  lSet const & set,
+                                  real64_array & result ) const
+{
+  // Evaluate each of the subFunctions independently and place the results into a temporary field
+  Array1dT<real64_array> subFunctionResults;
+  for (localIndex ii=0; ii<m_numSubFunctions; ++ii)
+  {
+    real64_array tmp(result.size());
+    m_subFunctions[ii]->Evaluate(group, time, set, tmp);
+    subFunctionResults.emplace_back(std::move(tmp));
+  }
+
+  // Evaluate the symbolic math
+  real64 functionResults[m_numSubFunctions];
+  for (localIndex ii=0; ii<result.size(); ++ii)
+  {
+    for (localIndex jj=0; jj<m_numSubFunctions; ++jj)
+    {
+      functionResults[jj] = subFunctionResults[jj][ii];
+    }
+    result[ii] = parserExpression.evaluate( reinterpret_cast<void*>( functionResults ));
+  }
+}
+
+
 real64 CompositeFunction::Evaluate( real64 const * const input ) const
 {
   real64 functionResults[m_numSubFunctions];
