@@ -472,24 +472,29 @@ public:
   }
 
 
-void registerSubViews();
-
-void unregisterSubViews();
-
 void writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm);
 
 void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
 
-void resizeSubViews();
-
 void loadSidreExternalData(const string & root_path, MPI_Comm comm);
-
 
 
 protected:
   cxx_utilities::DocumentationNode * m_docNode = nullptr;
 
 private:
+  void registerSubViews();
+
+  void createSizeViews();
+
+  void loadSizeViews();
+
+  void unregisterSubViews();
+
+  void resizeSubViews();
+
+  void loadSizedFromParent()
+  
   unordered_map<string,size_t> m_keyLookup;
   std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
 
@@ -498,9 +503,7 @@ private:
 
   axom::sidre::Group* m_sidreGroup;
 
-  int32 const & m_size;
-  string const & m_name;
-//  string const & m_path;
+  int32 m_size;
 
 
   /**

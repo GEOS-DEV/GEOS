@@ -535,24 +535,38 @@ public:
 
 
   /* Register the pointer to data with the associated sidre::View. */
-  virtual void registerDataPtr() 
+  void registerDataPtr() 
   {
-    void * ptr = (dataSize() == 0) ? AXOM_NULLPTR : const_cast<void*>((void const *) dataPtr());
-    getSidreView()->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, dataSize(), ptr);
+    uint32 d_size = dataSize();
+    if (d_size > 0) 
+    {
+      void * ptr = const_cast<void*>((void const *) dataPtr());
+      getSidreView()->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, d_size, ptr);
+    }
+  }
+
+  void loadSizedFromParent()
+  {
+    setSizedFromParent(getSidreView()->getAttributeScalar("__sizedFromParent__"));
   }
 
 
-  virtual void unregisterDataPtr()
+  void unregisterDataPtr()
   {
-    getSidreView()->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, 0, AXOM_NULLPTR);
+    getSidreView()->setAttributeToDefault("__sizedFromParent__");
+    getSidreView()->setExternalDataPtr(AXOM_NULLPTR);
   }
 
 
-  virtual void resizeFromSidre() 
+  void resizeFromSidre() 
   {
-    uint32 d_size = getSidreView()->getTotalBytes();
-    uint32 numElements = numElementsFromDataSize(d_size);
-    resize(numElements);
+      if (getSidreView()->isExternal()) 
+      {
+        uint32 d_size = getSidreView()->getTotalBytes();
+        uint32 numElements = numElementsFromDataSize(d_size);
+        resize(numElements);
+      }
+      
   }
 
   std::unique_ptr<T> m_data;

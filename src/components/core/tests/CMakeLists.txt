@@ -6,7 +6,8 @@ set(gtest_geosx_tests
    testDataTypes.cpp
    testFloatingPointExceptions.cpp
    testStackTrace.cpp
-   testSidre.cpp
+   testSidreWrite.cpp
+   testSidreRead.cpp
    )
 
 #

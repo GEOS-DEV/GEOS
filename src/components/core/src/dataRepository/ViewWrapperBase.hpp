@@ -66,6 +66,7 @@ public:
   virtual void registerDataPtr() = 0;
   virtual void unregisterDataPtr() = 0;
   virtual void resizeFromSidre() = 0;
+  virtual void loadSizedFromParent() = 0;
 
   /*
      iterator erase( iterator pos );

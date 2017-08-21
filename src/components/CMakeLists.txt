@@ -57,7 +57,7 @@ endif()
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
                    DEPENDS_ON ${componentlistlink} "-lz"
-                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja chai pugixml silo ${extraComponentsListLink}) 
+                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja chai spio pugixml silo ${extraComponentsListLink}) 
 
                    
 if (ENABLE_DOCS)

@@ -53,8 +53,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_parent(parent),
   m_subGroups(),
   m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
-  m_size(this->RegisterViewWrapper<int32>(keys::Size).reference()),
-  m_name(this->RegisterViewWrapper<string>(keys::Name).reference())
+  m_size(0),
 {
 
   // Setup DocumentationNode
@@ -153,10 +152,6 @@ ManagedGroup::ManagedGroup( std::string const & name,
                                 0,
                                 0,
                                 2 );
-
-
-  this->getReference<int32>(keys::Size) = 0;
-  this->getReference<string>(keys::Name) = name;
 
   RegisterDocumentationNodes();
 }
@@ -428,7 +423,7 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
-
+/* Add pointers to ViewWrapper data to the sidre tree. */
 void ManagedGroup::registerSubViews() 
 {
   for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
@@ -442,7 +437,7 @@ void ManagedGroup::registerSubViews()
   });
 }
 
-
+/* Remove pointers to ViewWrapper data from the sidre tree. */
 void ManagedGroup::unregisterSubViews()
 {
   for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
@@ -456,22 +451,30 @@ void ManagedGroup::unregisterSubViews()
   });
 }
 
-
-void ManagedGroup::writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm) 
+/* Save m_size to sidre views. */
+void ManagedGroup::createSizeViews()
 {
-  registerSubViews();
-  axom::spio::IOManager ioManager(comm);
-  ioManager.write(m_sidreGroup, num_files, path, protocol);
+  m_sidreGroup.createView("__size__").setScalar(m_size);
+
+  forSubGroups([](ManagedGroup & subGroup) -> void 
+  {
+    subGroup.createSizeViews();
+  });
 }
 
-
-void ManagedGroup::reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm)
+/* Load m_size data from sidre views. */
+void ManagedGroup::loadSizeViews()
 {
-  axom::spio::IOManager ioManager(comm);
-  ioManager.read(m_sidreGroup, root_path, protocol);
+  m_size = m_sidreGroup.getView("__size__").getScalar();
+  m_sidreGroup.destroyView("__size__");
+
+  forSubGroups([](ManagedGroup & subGroup) -> void 
+  {
+    subGroup.loadSizeViews();
+  });
 }
 
-
+/* Resize views to hold data from sidre. */
 void ManagedGroup::resizeSubViews() 
 {
   for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
@@ -485,9 +488,37 @@ void ManagedGroup::resizeSubViews()
   });
 }
 
+void loadSizedFromParent()
+{
+  for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
+  {
+    wrapper->loadSizedFromParent();
+  }
+}
 
+/* Write out a restart file. */
+void ManagedGroup::writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm) 
+{
+  registerSubViews();
+  createSizeViews();
+  axom::spio::IOManager ioManager(comm);
+  ioManager.write(m_sidreGroup, num_files, path, protocol);
+}
+
+/* Read in a restart file and reconstruct the sidre tree. */
+void ManagedGroup::reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm)
+{
+  axom::spio::IOManager ioManager(comm);
+  ioManager.read(m_sidreGroup, root_path, protocol);
+}
+
+/* Load sidre external data. */
 void ManagedGroup::loadSidreExternalData(const string & root_path, MPI_Comm comm)
 {
+  loadSizedFromParent();
+  loadSizeViews();
+  resizeSubViews();
+  registerSubViews();
   axom::spio::IOManager ioManager(comm);
   ioManager.loadExternalData(m_sidreGroup, root_path);
   unregisterSubViews();
