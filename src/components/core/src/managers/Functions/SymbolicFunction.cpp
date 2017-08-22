@@ -40,6 +40,7 @@ SymbolicFunction::~SymbolicFunction()
 
 void SymbolicFunction::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
+  FunctionBase::FillDocumentationNode(domain);
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
   docNode->setName(this->CatalogName());

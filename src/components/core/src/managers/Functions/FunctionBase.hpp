@@ -116,6 +116,7 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
       }
     }
 
+    // TODO: Check this line to make sure it is correct
     result[count] = static_cast<LEAF const *>(this)->Evaluate(input);
     ++count;
   }
