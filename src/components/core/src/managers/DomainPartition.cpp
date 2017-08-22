@@ -77,6 +77,90 @@ void DomainPartition::InitializationOrder( string_array & order )
 }
 
 
+void DomainPartition::SetMaps(  )
+{
+  ManagedGroup & nodeManager = this->GetGroup(keys::FEM_Nodes);
+  ElementRegionManager & elementRegionManager = this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
+
+  {
+//    int32_array & elementRegionMap = nodeManager.getReference(keys::elementRegionMap);
+//    int32_array & elementSubRegionMap = nodeManager.getReference(keys::elementSubRegionMap);
+//    int32_array & elementMap = nodeManager.getReference(keys::elementMap);
+//
+//    ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+//
+//    int32 elementRegionIndex = 0;
+//    elementRegionManager.forElementRegions( [&](ElementRegion& elementRegion)-> void
+//    {
+//      elementRegion.forCellBlocks( [&]( CellBlockSubRegion & subRegion )->void
+//      {
+//
+//      });
+//      ++elementRegionIndex;
+//    });
+  }
+}
+
+void DomainPartition::GenerateSets(  )
+{
+  ManagedGroup & nodeManager = this->GetGroup(keys::FEM_Nodes);
+  dataRepository::ManagedGroup const & nodeSets = nodeManager.GetGroup(dataRepository::keys::sets);
+
+  std::map< string, int32_array > nodeInSet;
+  string_array setNames;
+
+  for( auto & viewWrapper : nodeSets.wrappers() )
+  {
+    string name = viewWrapper->getName();
+    nodeInSet[name].resize( nodeManager.size() );
+    nodeInSet[name] = 0;
+    ViewWrapper<lSet> const * const setPtr = nodeSets.getWrapperPtr<lSet>(name);
+    if( setPtr!=nullptr )
+    {
+      setNames.push_back(name);
+      lSet const & set = setPtr->reference();
+      for( auto const a : set )
+      {
+        nodeInSet[name][a] = 1;
+      }
+    }
+  }
+
+
+  ElementRegionManager & elementRegionManager = this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
+
+  elementRegionManager.forElementRegions( [&]( ElementRegion & elementRegion )
+  {
+    elementRegion.forCellBlocks( [&]( CellBlockSubRegion & subRegion )->void
+    {
+      lArray2d const & elemsToNodes = subRegion.getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
+      dataRepository::ManagedGroup & elementSets = subRegion.GetGroup(dataRepository::keys::sets);
+      std::map< string, int32_array > numNodesInSet;
+
+      for( auto & setName : setNames )
+      {
+
+        lSet & set = elementSets.RegisterViewWrapper<lSet>(setName).reference();
+        for( localIndex k=0 ; k<subRegion.size() ; ++k )
+        {
+          localIndex const * nodelist = elemsToNodes[k];
+          int32 count=0;
+          for( localIndex a=0 ; a<elemsToNodes.Dimension(1) ; ++a )
+          {
+            if( nodeInSet[setName][nodelist[a]]==1 )
+            {
+              ++count;
+            }
+          }
+          if( count == elemsToNodes.Dimension(1) )
+          {
+            set.insert(k);
+          }
+        }
+      }
+    });
+  });
+}
 
 
 
@@ -147,7 +231,8 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     localIndex numNodes = nodeManager.size();
 
     r1_array const & referencePosition = nodeManager.getReference<r1_array>(keys::ReferencePosition);
-    r1_array const & displacement = nodeManager.getReference<r1_array>(keys::TotalDisplacement);
+
+    r1_array const * const displacement = nodeManager.GetFieldDataPointer<r1_array>(keys::TotalDisplacement);
 
     bool writeArbitraryPolygon(false);
     const std::string meshName("volume_mesh");
@@ -160,7 +245,10 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     {
       R1Tensor nodePosition;
       nodePosition = referencePosition[a];
-      nodePosition += displacement[a];
+      if( displacement!=nullptr )
+      {
+        nodePosition += (*displacement)[a];
+      }
 
       xcoords[a] = nodePosition(0);
       ycoords[a] = nodePosition(1);

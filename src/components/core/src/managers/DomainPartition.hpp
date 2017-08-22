@@ -43,6 +43,10 @@ public:
 
   void InitializationOrder( string_array & order ) override final;
 
+  void SetMaps();
+  void GenerateSets();
+
+
   // THIS STUFF NEEDS TO GO SOMEWHERE ELSE
   void WriteSilo( SiloFile& siloFile,
                   const int cycleNum,

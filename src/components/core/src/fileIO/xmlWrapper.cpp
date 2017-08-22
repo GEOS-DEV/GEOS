@@ -75,4 +75,37 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
 
 }
 
+
+
+R1Tensor xmlWrapper::as_type( xmlNode const & node, std::string const name, R1Tensor defValue )
+{
+  R1Tensor rval = defValue;
+  pugi::xml_attribute att = node.attribute( name.c_str() );
+
+  if( !att.empty() )
+  {
+    string inputValue = att.value();
+    if( inputValue!="" )
+    {
+      std::string csvstr = inputValue;
+      std::istringstream ss( csvstr );
+
+      while(ss.peek() == ',' || ss.peek() == ' ')
+      {
+        ss.ignore();
+      }
+      for( int i=0 ; i<3 ; ++i )
+      {
+        ss>>rval[i];
+        while(ss.peek() == ',' || ss.peek() == ' ')
+        {
+          ss.ignore();
+        }
+      }
+    }
+  }
+
+  return rval;
+}
+
 } /* namespace geosx */

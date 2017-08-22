@@ -144,7 +144,7 @@ private:
 
     /// returns reference to specified field
     template< FieldKey FIELDKEY>
-    Array1dT< typename Field<FIELDKEY>::Type >* GetFieldDataPointer( )
+    typename Field<FIELDKEY>::Type * GetFieldDataPointer( )
     {
       return &this->getData< typename Field<FIELDKEY>::Type >( Field<FIELDKEY>::Name() );
     }
@@ -152,21 +152,21 @@ private:
 
     /// returns const reference to specified field
     template< FieldKey FIELDKEY>
-    Array1dT< typename Field<FIELDKEY>::Type > const * GetFieldDataPointer( ) const
+    typename Field<FIELDKEY>::Type const * GetFieldDataPointer( ) const
     {
       return &this->getData< typename Field<FIELDKEY>::Type >( Field<FIELDKEY>::Name() );
     }
 
     /// returns reference to specified field
     template< typename TYPE >
-    Array1dT<TYPE>* GetFieldDataPointer( const std::string& fieldName )
+    TYPE * GetFieldDataPointer( const std::string& fieldName )
     {
       return &this->getData< TYPE >( fieldName );
     }
 
     /// returns const reference to specified field
     template< typename TYPE >
-    Array1dT<TYPE>* GetFieldDataPointer( const std::string& fieldName ) const
+    TYPE const * GetFieldDataPointer( const std::string& fieldName ) const
     {
       return &this->getData< TYPE >( fieldName );
     }

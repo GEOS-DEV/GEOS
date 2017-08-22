@@ -47,6 +47,11 @@ public:
     }
   }
 
+  void MaterialPassThru( string const & matName,
+                         string const & setName,
+                         lSet & materialSet,
+                         ManagedGroup * material );
+
 };
 
 } /* namespace geosx */

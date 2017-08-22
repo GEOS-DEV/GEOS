@@ -68,6 +68,10 @@ namespace dataRepository
 namespace keys
 {
 std::string const nodeManager    = "NodeManager";
+std::string const elementRegionMap("elementRegionMap");
+std::string const elementSubRegionMap("elementSubRegionMap");
+std::string const elementMap("elementMap");
+
 }
 }
 
@@ -96,7 +100,12 @@ public:
   string getCatalogName() const      { return NodeManager::CatalogName(); }
 
 
+  void FillDocumentationNode( ManagedGroup * const group ) override final;
+
+
 //  void Initialize();
+
+
 
 
 public:

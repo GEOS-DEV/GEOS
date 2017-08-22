@@ -28,8 +28,8 @@ void Box::ReadXML( xmlWrapper::xmlNode const & xmlNode )
 //  m_degree = targetNode.attribute("degree").as_int(1);
 //  as_type( xmlVal, xmlatt.value(), defVal );
 
-  m_min = xmlWrapper::as_type<R1Tensor>( xmlNode, "xmin", {-1e99,-1e99,-1e99});
-  m_max = xmlWrapper::as_type<R1Tensor>( xmlNode, "xmax", { 1e99, 1e99, 1e99});
+  m_min = xmlWrapper::as_type( xmlNode, "xMin", {-1e99,-1e99,-1e99});
+  m_max = xmlWrapper::as_type( xmlNode, "xMax", { 1e99, 1e99, 1e99});
 //  m_strikeAngle = hdn.GetAttributeOrDefault<realT>("strikeAngle", -90.0); // from North
 //  m_strikeAngle += 90; // Counterclockwise from x-axis
 //  if (std::fabs(m_strikeAngle) > 1e-20)

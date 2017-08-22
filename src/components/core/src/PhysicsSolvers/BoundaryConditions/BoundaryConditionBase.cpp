@@ -22,6 +22,19 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
+  docNode->AllocateChildNode( keys::initialCondition,
+                              keys::initialCondition,
+                              -1,
+                              "int32",
+                              "int32",
+                              "BC is applied as an initial condition.",
+                              "",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
   docNode->AllocateChildNode( keys::setNames,
                               keys::setNames,
                               -1,
@@ -35,6 +48,19 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
                               1,
                               0 );
 
+
+  docNode->AllocateChildNode( keys::elementRegionName,
+                              keys::elementRegionName,
+                              -1,
+                              "string",
+                              "string",
+                              "Name of field that boundary condition is applied to.",
+                              "",
+                              "",
+                              "",
+                              0,
+                              1,
+                              0 );
 
   docNode->AllocateChildNode( keys::fieldName,
                               keys::fieldName,
@@ -133,12 +159,14 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
 void BoundaryConditionBase::ReadXML_PostProcess()
 {
   m_setNames = this->getReference<string_array>( keys::setNames );
+  m_elementRegionName = this->getReference<string>( keys::elementRegionName );
   m_fieldName = this->getReference<string>( keys::fieldName );
   m_component = this->getReference<int32>( keys::component );
   m_direction = this->getReference<R1Tensor>( keys::direction );
   m_functionName          = this->getReference<string>( keys::functionName );
   m_bcApplicationFunctionName = this->getReference<string>( keys::bcApplicationTableName );
   m_scale                  = this->getReference<real64>( keys::scale );
+  m_initialCondition = this->getReference<int32>(keys::initialCondition);
 }
 
 //real64 BoundaryConditionBase::GetValue( realT time ) const
@@ -242,6 +270,8 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
     }
   });
 }
+
+
 
 
 }

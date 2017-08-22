@@ -104,5 +104,13 @@ void CellBlockSubRegion::CopyFromCellBlock( CellBlock const & source )
   this->m_toNodesRelation = source.m_toNodesRelation;
 }
 
+void CellBlockSubRegion::MaterialPassThru( string const & matName,
+                                           string const & setName,
+                                           lSet & materialSet,
+                                           ManagedGroup * material )
+{
+
+}
+
 
 } /* namespace geosx */

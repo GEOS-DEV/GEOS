@@ -622,6 +622,7 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   MeshUtilities::GenerateNodesets( geometricObjects,
                                    domain.GetGroup(keys::FEM_Nodes) );
 
+//  domain.GenerateSets();
 
 //  // Initialize solvers
 //  m_physicsSolverManager->forSubGroups<SolverBase>( [this,&domain]( SolverBase & solver ) -> void
@@ -730,6 +731,18 @@ DomainPartition const & ProblemManager::getDomainPartition() const
 {
   return GetGroup<DomainPartition>(keys::domain);
 }
+
+void ProblemManager::ApplyInitialConditions()
+{
+  DomainPartition & domain = GetGroup<DomainPartition>(keys::domain);
+  domain.GenerateSets();
+
+  BoundaryConditionManager const & boundaryConditionManager = BoundaryConditionManager::get();
+
+  boundaryConditionManager.ApplyInitialConditions( domain );
+
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, ManagedGroup * const )
 

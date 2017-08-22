@@ -77,6 +77,7 @@ int main( int argc, char *argv[] )
   gettimeofday(&tim, NULL);
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
+  problemManager.ApplyInitialConditions();
   std::cout << std::endl << "Running simulation:" << std::endl;
   problemManager.RunSimulation();
   

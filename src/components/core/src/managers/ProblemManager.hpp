@@ -123,6 +123,7 @@ public:
 
   void WriteSilo( int32 const cycleNumber, real64 const problemTime );
 
+  void ApplyInitialConditions();
 
   DomainPartition & getDomainPartition();
   DomainPartition const & getDomainPartition() const;

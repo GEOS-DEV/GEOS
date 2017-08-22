@@ -63,7 +63,7 @@ namespace dataRepository
 namespace keys
 {
 string const elementRegions = "elementRegions";
-string const elementRegionManager="ElementRegions";
+//string const elementRegionManager="ElementRegions";
 }
 }
 

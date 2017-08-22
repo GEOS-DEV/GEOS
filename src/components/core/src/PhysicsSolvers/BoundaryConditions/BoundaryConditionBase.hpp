@@ -16,8 +16,8 @@ namespace dataRepository
 {
 namespace keys
 {
-string const objectPath = "objectPath";
 string const setNames = "setNames";
+string const elementRegionName = "elementRegionName";
 string const fieldName = "fieldName";
 string const dataType = "dataType";
 string const component("component");
@@ -25,6 +25,8 @@ string const direction("direction");
 string const bcApplicationTableName("bcApplicationTableName");
 string const scale("scale");
 string const functionName("functionName");
+string const initialCondition("initialCondition");
+
 }
 }
 
@@ -68,9 +70,15 @@ public:
                                            string const & fieldname ) const;
 
 
+
   string const & GetFunctionName() const
   {
     return m_functionName;
+  }
+
+  virtual const string& GetElementRegion() const
+  {
+    return m_elementRegionName;
   }
 
   virtual const string& GetFieldName() const
@@ -103,7 +111,7 @@ public:
     return m_setNames;
   }
 
-  int initialCondidion() const
+  int initialCondition() const
   {
     return m_initialCondition;
   }
@@ -112,7 +120,10 @@ protected:
 
   string_array m_setNames; // sets the boundary condition is applied to
 
+  string m_elementRegionName;
+
   string m_fieldName;    // the name of the field the boundary condition is applied to or a description of the boundary condition.
+
 
   string m_dataType;
   // TODO get rid of components. Replace with direction only.
@@ -126,6 +137,7 @@ protected:
   string m_bcApplicationFunctionName;
 
   real64 m_scale;
+
 
 };
 

@@ -21,6 +21,7 @@ string const boundaryConditionMananger("BoundaryConditionMananger");
 }
 }
 
+
 class BoundaryConditionManager : public dataRepository::ManagedGroup
 {
 public:
@@ -30,6 +31,8 @@ public:
   static BoundaryConditionManager & get();
 
   void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
+
+  void ApplyInitialConditions( dataRepository::ManagedGroup & domain ) const;
 
   void ApplyBoundaryCondition( dataRepository::ManagedGroup & object,
                                std::string const & fieldName,
