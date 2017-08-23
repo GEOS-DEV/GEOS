@@ -17,6 +17,8 @@
 #include "depricated/Common.h"
 #include "DocumentationNode.hpp"
 
+#include "MapVectorContainer.hpp"
+
 
 //#include "CodingUtilities/ANSTexception.hpp"
 
@@ -519,8 +521,12 @@ protected:
   cxx_utilities::DocumentationNode * m_docNode = nullptr;
 
 private:
+
+
   unordered_map<string,size_t> m_keyLookup;
   std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
+
+  MapVectorContainer< ViewWrapperBase > m_wrappers0;
 
   ManagedGroup* m_parent = nullptr;
   subGroupMap m_subGroups;
