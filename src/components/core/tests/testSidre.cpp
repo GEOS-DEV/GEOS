@@ -13,9 +13,9 @@ namespace geosx {
 namespace dataRepository {
 
 
-TEST(testSidre, simpleRestore) {
+TEST(testSidreWrite, simpleWrite) {
   MPI_Init(0, nullptr);
-  const string path = "geos_simple_restore";
+  const string path = "geos_simple_write";
   const string protocol = "sidre_hdf5";
   const int num_items = 10;
   const int expected_size = num_items * sizeof(int64);
@@ -56,6 +56,28 @@ TEST(testSidre, simpleRestore) {
 
   /* Save the sidre tree */
   root->writeRestart(1, path, protocol, MPI_COMM_WORLD);
+
+  /* Delete geos tree and reset sidre tree. */
+  delete root;
+  ds.destroyAllAttributes();
+  ds.destroyAllBuffers();
+  ds.getRoot()->destroyGroups();
+
+  /* Restore the sidre tree */
+  root = new ManagedGroup(std::string("data"), nullptr);
+  root->reconstructSidreTree(path + ".root", protocol, MPI_COMM_WORLD);
+
+  /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
+  ViewWrapper<int64_array> & data_view_new = root->RegisterViewWrapper<int64_array>("int64_data");
+
+  /* Load the data */
+  root->loadSidreExternalData(path + ".root", MPI_COMM_WORLD);
+
+  /* Should be the same as stored. */
+  data = data_view_new.data();
+  for (int i = 0; i < data_view.size(); i++) {
+    EXPECT_TRUE(data[i] == data[i]);
+  }
 
   delete root;
   MPI_Finalize();

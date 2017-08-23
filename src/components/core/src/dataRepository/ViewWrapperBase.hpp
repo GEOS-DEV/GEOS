@@ -11,7 +11,6 @@
 #include <string>
 #include <memory>
 #include "common/DataTypes.hpp"
-//#include "KeyNames.hpp"
 
 namespace axom
 {
@@ -66,27 +65,10 @@ public:
   virtual void registerDataPtr() = 0;
   virtual void unregisterDataPtr() = 0;
   virtual void resizeFromSidre() = 0;
+  virtual void storeSizedFromParent() = 0;
   virtual void loadSizedFromParent() = 0;
 
-  /*
-     iterator erase( iterator pos );
-     iterator erase( const_iterator pos );
-     iterator erase( const_iterator first, const_iterator last );
-     size_type erase( const key_type& key );
-
-     iterator erase( const_iterator pos );
-     iterator erase( iterator first, iterator last );
-     iterator erase( const_iterator first, const_iterator last );
-
-     void swap( unordered_map& other );
-     void swap( vector& other );
-   */
-
-
   virtual void resize( localIndex newsize ) = 0;
-
-//  virtual void serialize( char * dataPointer, int64 & length, string & typeName ) const = 0;
-
 
   int sizedFromParent() const
   {

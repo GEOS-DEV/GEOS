@@ -53,7 +53,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_parent(parent),
   m_subGroups(),
   m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
-  m_size(0),
+  m_size(0)
 {
 
   // Setup DocumentationNode
@@ -262,8 +262,7 @@ ManagedGroup::ManagedGroup( ManagedGroup&& source ) :
   m_keyLookup( std::move(source.m_keyLookup) ),
   m_wrappers( std::move(source.m_wrappers) ),
   m_parent( std::move(source.m_parent) ),
-  m_size( source.m_size ),
-  m_name( source.m_name )
+  m_size( source.m_size )
 {}
 
 
@@ -292,7 +291,7 @@ void ManagedGroup::resize( int32 const newsize )
       i->resize(newsize);
     }
   }
-  *(this->getWrapper<int32>( keys::Size ).data())=newsize;
+  m_size = newsize;
 }
 
 
@@ -454,7 +453,7 @@ void ManagedGroup::unregisterSubViews()
 /* Save m_size to sidre views. */
 void ManagedGroup::createSizeViews()
 {
-  m_sidreGroup.createView("__size__").setScalar(m_size);
+  m_sidreGroup->createView("__size__")->setScalar(m_size);
 
   forSubGroups([](ManagedGroup & subGroup) -> void 
   {
@@ -465,8 +464,8 @@ void ManagedGroup::createSizeViews()
 /* Load m_size data from sidre views. */
 void ManagedGroup::loadSizeViews()
 {
-  m_size = m_sidreGroup.getView("__size__").getScalar();
-  m_sidreGroup.destroyView("__size__");
+  m_size = m_sidreGroup->getView("__size__")->getScalar();
+  m_sidreGroup->destroyView("__size__");
 
   forSubGroups([](ManagedGroup & subGroup) -> void 
   {
@@ -488,17 +487,39 @@ void ManagedGroup::resizeSubViews()
   });
 }
 
-void loadSizedFromParent()
+
+void ManagedGroup::storeSizedFromParent()
+{
+  for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
+  {
+    wrapper->storeSizedFromParent();
+  }
+
+  forSubGroups([](ManagedGroup & subGroup) -> void 
+  {
+    subGroup.storeSizedFromParent();
+  });
+}
+
+void ManagedGroup::loadSizedFromParent()
 {
   for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
   {
     wrapper->loadSizedFromParent();
   }
+  
+
+  forSubGroups([](ManagedGroup & subGroup) -> void 
+  {
+    subGroup.loadSizedFromParent();
+  });
 }
 
 /* Write out a restart file. */
 void ManagedGroup::writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm) 
 {
+  SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
+  storeSizedFromParent();
   registerSubViews();
   createSizeViews();
   axom::spio::IOManager ioManager(comm);
@@ -516,6 +537,7 @@ void ManagedGroup::reconstructSidreTree(const string & root_path, const string &
 void ManagedGroup::loadSidreExternalData(const string & root_path, MPI_Comm comm)
 {
   loadSizedFromParent();
+  SidreWrapper::dataStore().destroyAttribute("__sizedFromParent__");
   loadSizeViews();
   resizeSubViews();
   registerSubViews();

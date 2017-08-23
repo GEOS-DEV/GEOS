@@ -21,23 +21,6 @@
 
 #include <iostream>
 
-#if 0
-#define VIRTUAL_FUNCTION_WRAPPER( FUNCNAME, RTYPE, CONST, PARAMS, ARGS, PARAMS0, ARGS0 ) \
-struct virtual_function_wrapper_ ## FUNCNAME \
-{ \
-  HAS_MEMBER_FUNCTION(FUNCNAME, RTYPE, CONST, PARAMS, ARGS)\
-    template<class U = T> \
-    static typename std::enable_if<has_memberfunction_##FUNCNAME<U>::value, void>::type \
-    FUNCNAME(ViewWrapper * const parent, PARAMS0) \
-    {\
-      return parent->m_data.resize(ARGS0);\
-    }\
-    template<class U = T>\
-    static typename std::enable_if<!has_memberfunction_##FUNCNAME<U>::value, void>::type\
-    FUNCNAME(ViewWrapper * const, PARAMS0 ) { ARGS0; return; }\
-  };
-#endif
-
 
 namespace geosx
 {
@@ -280,35 +263,6 @@ public:
     resize_wrapper::resize(this, new_size);
   }
 
-//
-//  struct serialize_wrapper
-//  {
-//    HAS_MEMBER_FUNCTION(serialize,void,const,VA_LIST(void*,int64&),VA_LIST((void*)nullptr,int64(1) ))
-//    template<class U = T>
-//    static typename std::enable_if<has_memberfunction_serialize<U>::value, void>::type
-//    resize(ViewWrapper * const parent, char * dataPointer, int64 & length, string & typeName)
-//    {
-//      return parent->m_data->resize(new_size);
-//    }
-//
-//    template<class U = T>
-//    static typename std::enable_if<!has_memberfunction_serialize<U>::value || std::is_same<U,string>::value, void>::type
-//    resize(ViewWrapper * const, std::size_t ) { return; }
-//
-//  };
-//  void serialize( char * dataPointer, int64 & length, string & typeName ) const override final
-//  {
-//    return serialize_wrapper::serialize(this,dataPointer,length, this->get_typeid().name() );
-//  }
-
-
-
-
-
-
-
-
-
   /**
    * @name Structure to determine return types for data access functions
    */
@@ -535,7 +489,7 @@ public:
 
 
   /* Register the pointer to data with the associated sidre::View. */
-  void registerDataPtr() 
+  virtual void registerDataPtr() 
   {
     uint32 d_size = dataSize();
     if (d_size > 0) 
@@ -545,20 +499,26 @@ public:
     }
   }
 
-  void loadSizedFromParent()
+
+  virtual void storeSizedFromParent()
+  {
+    getSidreView()->setAttributeScalar("__sizedFromParent__", sizedFromParent());
+  }
+
+
+  virtual void loadSizedFromParent()
   {
     setSizedFromParent(getSidreView()->getAttributeScalar("__sizedFromParent__"));
   }
 
 
-  void unregisterDataPtr()
+  virtual void unregisterDataPtr()
   {
-    getSidreView()->setAttributeToDefault("__sizedFromParent__");
     getSidreView()->setExternalDataPtr(AXOM_NULLPTR);
   }
 
 
-  void resizeFromSidre() 
+  virtual void resizeFromSidre() 
   {
       if (getSidreView()->isExternal()) 
       {

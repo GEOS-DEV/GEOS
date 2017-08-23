@@ -439,7 +439,7 @@ public:
 
   inline localIndex size() const
   {
-    return *(getData<localIndex>(keys::Size));
+    return m_size;
   }
 
 
@@ -472,11 +472,11 @@ public:
   }
 
 
-void writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm);
+  void writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm);
 
-void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
+  void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
 
-void loadSidreExternalData(const string & root_path, MPI_Comm comm);
+  void loadSidreExternalData(const string & root_path, MPI_Comm comm);
 
 
 protected:
@@ -493,7 +493,9 @@ private:
 
   void resizeSubViews();
 
-  void loadSizedFromParent()
+  void storeSizedFromParent();
+
+  void loadSizedFromParent();
   
   unordered_map<string,size_t> m_keyLookup;
   std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
