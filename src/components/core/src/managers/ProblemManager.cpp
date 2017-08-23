@@ -493,7 +493,7 @@ void ProblemManager::ParseInputFile()
   ViewWrapper<std::string>::rtype  schemaName = commandLine.getData<std::string>(keys::schema);
   uint32& schemaLevel = *(commandLine.getData<uint32>(keys::schemaLevel));
 
-  std::cout << schemaName << ", " << schemaName.empty() << ", " << schemaName.size() << std::endl;
+//  std::cout << schemaName << ", " << schemaName.empty() << ", " << schemaName.size() << std::endl;
 
   if (schemaName.empty() == 0)
   {
@@ -705,7 +705,7 @@ void ProblemManager::WriteSilo( int32 const cycleNumber,
   int32 rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Barrier( MPI_COMM_WORLD );
-  std::cout<<"rank = "<<rank<<std::endl;
+//  std::cout<<"rank = "<<rank<<std::endl;
 
   silo.Initialize(PMPIO_WRITE);
   silo.WaitForBaton(rank, cycleNumber, false );

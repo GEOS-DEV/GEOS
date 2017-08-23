@@ -71,7 +71,7 @@ class TensorBaseT
     for(int ii = 0 ; ii < T_length ; ++ii)
     {
       in >> tp[ii];
-      std::cout<<tp[ii]<<std::endl;
+//      std::cout<<tp[ii]<<std::endl;
     }
     return in;
   }
