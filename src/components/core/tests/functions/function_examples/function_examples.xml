@@ -1,0 +1,88 @@
+<?xml version="1.0" ?>
+<!--# # -->
+
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+
+  
+  <Solvers>
+    <!-- This solver will open up a field called FEM_Nodes/test, where it will place the results of the functions.
+         The argruments to the functions are (x, y, z, t).  Any of the symbolic or table-based functions will work
+         for this example -->
+    <SymbolicMathExample_JIT name="symmath" 
+                             functionName="f_d"
+                             targetObject="FEM_Nodes"
+                             targetName="test"/>
+  </Solvers>
+
+  
+  <Mesh>
+    <InternalMesh 
+                  name="mesh1"
+                  elementType="C3D8" 
+                  xCoords="-10, 10"
+                  yCoords="-10, 10"
+                  zCoords="-10, 10"
+                  nx="10"
+                  ny="10"
+                  nz="10"
+                  cellBlockNames="cb1"/>
+  </Mesh>
+
+
+  <SolverApplications>
+    <Application name="1"
+                 beginTime="0.0" 
+                 endTime="1.0" 
+                 dt="0.25"
+                 solvers="symmath" />
+  </SolverApplications>
+
+
+  <NumericalMethods>
+
+    <BasisFunctions> 
+        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+    </BasisFunctions>
+    
+    <QuadratureRules>
+        <GaussQuadrature3 name="gaussian"   degree="2"  />    
+    </QuadratureRules>
+    
+    <FiniteElements>
+        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" />
+  </ElementRegions>
+
+  <Constitutive>
+      <LinearElasticIsotropic name="shale"
+                              density="2700"
+                              bulkModulus="5.5556e9"
+                              shearModulus="4.16667e9"/>
+  </Constitutive>
+
+
+  <Functions>
+    <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the 
+    symbolic math function should expect the variables to be given, and an expression that it will compile.
+    A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
+    <SymbolicFunction name="f_a" variableNames="x y z t" expression="x+y*z"/>
+    <SymbolicFunction name="f_b" variableNames="x y z t" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))*t"/>
+    
+    <!-- As a special case, 1D tables may be specified using coordinates and values.
+         A 1D table will only evaluate the first entry in evaluate (for the demo solver, this is x) -->
+    <TableFunction name="f_c" coordinates="-10 10" values="-10 10" />
+
+    <!-- More generally, an ND table may be specified by giving a list of coordinate files, and a voxel file (with
+         data in Fortran-array order).  Note: Unlike the old code, I do not look for header values in the voxel file.
+         In the tables directory, I have a placed a few examples from my testing:
+         
+         fx(X,Y,Z)=X, fy(X,Y,Z)=Y, fz(X,Y,Z)=Z, r(X,Y,Z)=sqrt(X^2+Y^2+Z^2), poly(X,Y,Z)=X+Y^2+Z^3 
+       --> 
+    <TableFunction name="f_d" coordinateFiles="tables/x.geos tables/y.geos tables/z.geos" voxelFile="tables/poly.geos"/>
+  </Functions>  
+  
+</Problem>
