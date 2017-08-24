@@ -4,8 +4,10 @@
 #
 set(geosx_headers
   ${geosx_headers}
+    dataRepository/DataKey.hpp
     dataRepository/SidreWrapper.hpp
     dataRepository/ManagedGroup.hpp
+    dataRepository/MapVectorContainer.hpp    
     dataRepository/ViewWrapper.hpp
     dataRepository/ViewWrapperBase.hpp
     PARENT_SCOPE )

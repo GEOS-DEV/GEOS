@@ -168,7 +168,6 @@ using mapPair = std::pair<int32, localIndex>;
 using mapPair_array = array<mapPair>;
 //***** END LEGACY TYPEDEFS *****
 
-
 class rtTypes
 {
 public:

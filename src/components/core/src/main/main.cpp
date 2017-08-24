@@ -79,8 +79,16 @@ int main( int argc, char *argv[] )
 
   problemManager.ApplyInitialConditions();
   std::cout << std::endl << "Running simulation:" << std::endl;
+
+#if USE_CALIPER==1
+  cali::Annotation simulation_ann = cali::Annotation("RunSimulation").begin();
+#endif
+
   problemManager.RunSimulation();
-  
+
+#if USE_CALIPER==1
+  simulation_ann.end();
+#endif
 
   problemManager.ClosePythonInterpreter();
 

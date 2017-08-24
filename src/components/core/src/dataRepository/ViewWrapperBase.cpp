@@ -46,5 +46,11 @@ ViewWrapperBase::ViewWrapperBase( ViewWrapperBase&& source ) :
   m_sidreView( source.m_sidreView )
 {}
 
+void ViewWrapperBase::resize()
+{
+  resize(m_parent->size());
+}
+
+
 }
 } /* namespace geosx */

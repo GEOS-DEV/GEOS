@@ -44,7 +44,6 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ) :
   m_docNode(nullptr),
-  m_keyLookup(),
   m_wrappers(),
   m_parent(parent),
   m_subGroups(),
@@ -260,7 +259,6 @@ ManagedGroup::~ManagedGroup()
 //{}
 
 ManagedGroup::ManagedGroup( ManagedGroup&& source ) :
-  m_keyLookup( std::move(source.m_keyLookup) ),
   m_wrappers( std::move(source.m_wrappers) ),
   m_parent( std::move(source.m_parent) ),
   m_size( source.m_size ),
@@ -286,7 +284,7 @@ ViewWrapperBase& ManagedGroup::RegisterViewWrapper( std::string const & name, rt
 
 void ManagedGroup::resize( int32 const newsize )
 {
-  for( auto&& i : this->m_wrappers )
+  for( auto&& i : this->wrappers() )
   {
     if( i->sizedFromParent() == 1 )
     {
@@ -378,7 +376,7 @@ void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 
 void ManagedGroup::PrintDataHierarchy()
 {
-  for( auto& view : this->m_wrappers )
+  for( auto& view : this->wrappers() )
   {
     std::cout<<view->getName()<<", "<<view->get_typeid().name()<<std::endl;
   }

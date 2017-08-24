@@ -80,6 +80,7 @@ public:
 
   virtual void resize( localIndex newsize ) = 0;
 
+  void resize() ;
 //  virtual void serialize( char * dataPointer, int64 & length, string & typeName ) const = 0;
 
 

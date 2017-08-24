@@ -79,6 +79,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 
   auto & dNdXView        = cellBlock->RegisterViewWrapper< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX);
   dNdXView.setSizedFromParent(1);
+  dNdXView.resize();
   auto & dNdX            = dNdXView.data();
   
   for( auto & entry : dNdX )

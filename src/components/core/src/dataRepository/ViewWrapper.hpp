@@ -291,6 +291,7 @@ public:
     static typename std::enable_if<!has_memberfunction_resize<U>::value || std::is_same<U,string>::value, void>::type
     resize(ViewWrapper * const, std::size_t ) { return; }
   };
+  using ViewWrapperBase::resize;
   void resize( localIndex new_size ) override final
   {
     resize_wrapper::resize(this, new_size);
