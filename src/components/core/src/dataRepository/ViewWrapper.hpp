@@ -509,6 +509,7 @@ public:
   virtual void loadSizedFromParent()
   {
     setSizedFromParent(getSidreView()->getAttributeScalar("__sizedFromParent__"));
+    getSidreView()->setAttributeToDefault("__sizedFromParent__");
   }
 
 

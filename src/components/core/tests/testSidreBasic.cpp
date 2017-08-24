@@ -1,12 +1,11 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 #include "sidre/sidre.hpp"
+#include "sidre/SidreTypes.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/SidreWrapper.hpp"
 #include "common/DataTypes.hpp"
-
-#include <iostream>
 
 
 namespace geosx {
@@ -77,7 +76,7 @@ TEST(testSidreBasic, testSidreBasic) {
     EXPECT_TRUE(data_new[i] == i);
   }
 
-  // EXPECT_TRUE(data_view_new.sizedFromParent() == sized_from_parent);
+  EXPECT_TRUE(data_view_new.sizedFromParent() == sized_from_parent);
   EXPECT_TRUE(root->size() == group_size);
 
   delete root;

@@ -6,11 +6,103 @@
 #include "dataRepository/SidreWrapper.hpp"
 #include "common/DataTypes.hpp"
 
-#include <iostream>
-
 
 namespace geosx {
 namespace dataRepository {
+
+template<typename T> 
+ViewWrapper<T> & createArrayView(ManagedGroup * parent, const string name, const int sized_from_parent, const T & data) {
+  ViewWrapper<T> & view = parent->RegisterViewWrapper<T>(name);
+  view.setSizedFromParent(sized_from_parent);
+
+  /* Resize the array */
+  uint32 expected_size = data.size() * sizeof(typename T::value_type);
+  view.resize(data.size());
+
+  /* Check that the ViewWrapper size and dataSize functions return the proper values */
+  EXPECT_TRUE(view.size() == data.size());
+  EXPECT_TRUE(view.dataSize() == expected_size);
+
+  /* Set the data */
+  T & view_data = view.data();
+  for (int i = 0; i < view.size(); i++) {
+      view_data[i] = data[i];
+  }
+
+  /* Check that the ViewWrapper dataPtr points to the right thing */
+  EXPECT_TRUE(view.dataPtr() == &(view.data()[0]));
+
+  return view;
+}
+
+
+template<typename T> 
+void checkArrayView(ViewWrapper<T> & view, const int sized_from_parent, const T & data) 
+{
+  EXPECT_TRUE(view.sizedFromParent() == sized_from_parent);
+  EXPECT_TRUE(view.size() == data.size());
+  T & view_data = view.data();
+  bool same_data = true;
+  for (int i = 0; i < view.size(); i++) {
+    same_data &= view_data[i] == data[i];
+  }
+  
+  EXPECT_TRUE(same_data);
+
+}
+
+
+ViewWrapper<string> & createStringview(ManagedGroup * parent, const string name, const int sized_from_parent, const string str) {
+  ViewWrapper<string> & view = parent->RegisterViewWrapper<string>(name);
+  view.setSizedFromParent(sized_from_parent);
+  
+  uint expected_size = str.size() * sizeof(char);
+
+  /* Set the data */
+  view.data() = str;
+
+  /* Check that the ViewWrapper size and dataSize functions return the proper values */
+  EXPECT_TRUE(view.size() == str.size());
+  EXPECT_TRUE(view.dataSize() == expected_size);
+
+  /* Check that the ViewWrapper dataPtr points to the right thing */
+  EXPECT_TRUE(view.dataPtr() == view.data().c_str());
+
+  return view;
+}
+
+
+void checkStringView(ViewWrapper<string> & view, const int sized_from_parent, const string str) {
+  EXPECT_TRUE(view.sizedFromParent() == sized_from_parent);
+  EXPECT_TRUE(view.data().compare(str) == 0);
+}
+
+
+template<typename T>
+ViewWrapper<T> & createScalarView(ManagedGroup * parent, const string name, const int sized_from_parent, const T value) {
+  ViewWrapper<T> & view = parent->RegisterViewWrapper<T>(name);
+  view.setSizedFromParent(sized_from_parent);
+
+  /* Set the data */
+  *(view.data()) = value;
+
+  /* Check that the ViewWrapper size and dataSize functions return the proper values */
+  EXPECT_TRUE(view.size() == 1);
+  EXPECT_TRUE(view.dataSize() == sizeof(T));
+
+  /* Check that the ViewWrapper dataPtr points to the right thing */
+  EXPECT_TRUE(view.dataPtr() == view.data());
+
+  return view;
+}
+
+
+template<typename T>
+void checkScalarView(ViewWrapper<T> & view, const int sized_from_parent, const T value) {
+  EXPECT_TRUE(view.sizedFromParent() == sized_from_parent);
+  EXPECT_TRUE(*(view.data()) == value);
+}
+
 
 
 TEST(testSidreExtended, testSidreExtended) {
@@ -18,224 +110,104 @@ TEST(testSidreExtended, testSidreExtended) {
   const string path = "test_sidre_extended";
   const string protocol = "sidre_hdf5";
   const int group_size = 44;
+  int sized_from_parent = 55;
   axom::sidre::DataStore & ds = SidreWrapper::dataStore();
 
   /* Create a new ManagedGroup directly below the sidre::DataStore root. */
   ManagedGroup * root = new ManagedGroup(std::string("data"), nullptr);
   root->resize(group_size);
 
-  /* Create a ViewWrapper which creates the associated sidre::View */
-  ViewWrapper<int64_array> & view_int64 = root->RegisterViewWrapper<int64_array>("int64");
-
-  /* Resize the array */
-  int view_int64_size = 10;
-  uint32 expected_size = view_int64_size * sizeof(int64);
-  view_int64.resize(view_int64_size);
-
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view_int64.size() == view_int64_size);
-  EXPECT_TRUE(view_int64.dataSize() == expected_size);
-
-  /* Set the data */
-  for (int i = 0; i < view_int64.size(); i++) {
-      view_int64.data()[i] = i;
+  /* Create a new int64_array ViewWrapper. */
+  string view_int64_name = "int64";
+  int view_int64_sfp = sized_from_parent++;
+  int view_int64_size = 100;
+  int64_array view_int64_data(view_int64_size);
+  for (int i = 0; i < view_int64_size; i++) {
+    view_int64_data[i] = i * i * i;
   }
+  createArrayView(root, view_int64_name, view_int64_sfp, view_int64_data);
 
-  /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view_int64.dataPtr() == &(view_int64.data()[0]));
+  /* Create a new string ViewWrapper. */
+  string view_hope_name = "hope";
+  int view_hope_sfp = sized_from_parent++;
+  string view_hope_str = "I sure hope these tests pass.";
+  createStringview(root, view_hope_name, view_hope_sfp, view_hope_str);
 
-
-
-  /* Create a ViewWrapper which creates the associated sidre::View */
-  ViewWrapper<string> & view_hope = root->RegisterViewWrapper<string>("hope");
-  
-  string hope = "I hope this works";
-  int view_hope_size = hope.size();
-  expected_size = view_hope_size * sizeof(char);
-
-  /* Set the data */
-  view_hope.data() = hope;
-
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view_hope.size() == view_hope_size);
-  EXPECT_TRUE(view_hope.dataSize() == expected_size);
-
-  /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view_hope.dataPtr() == view_hope.data().c_str());
-
-
-
-
-
+  /* Create a new group. */
   ManagedGroup & strings_group = root->RegisterGroup("strings");
-  strings_group.resize(group_size);
+  strings_group.resize(group_size + 1);
 
+  /* Create a new string ViewWrapper. */
+  string view_hello_name = "hello";
+  int view_hello_sfp = sized_from_parent++;
+  string view_hello_str = "Hello, how are you doing on this fine day?";
+  createStringview(&strings_group, view_hello_name, view_hello_sfp, view_hello_str);
 
-  /* Create a ViewWrapper which creates the associated sidre::View */
-  ViewWrapper<string> & view_hello = strings_group.RegisterViewWrapper<string>("hello");
-  
-  string hello = "Hello, how are you doing today?";
-  int view_hello_size = hello.size();
-  expected_size = view_hello_size * sizeof(char);
+  /* Create a new string ViewWrapper. */
+  string view_goodbye_name = "goodbye";
+  int view_goodbye_sfp = sized_from_parent++;
+  string view_goodbye_str = "I hate this weather so I'm heading inside. Goodbye.";
+  createStringview(&strings_group, view_goodbye_name, view_goodbye_sfp, view_goodbye_str);
 
-  /* Set the data */
-  view_hello.data() = hello;
+  /* Create a new group. */
+  ManagedGroup & real64_group = root->RegisterGroup("real64");
+  real64_group.resize(group_size + 2);
 
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view_hello.size() == view_hello_size);
-  EXPECT_TRUE(view_hello.dataSize() == expected_size);
-
-  /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view_hello.dataPtr() == view_hello.data().c_str());
-
-
-
-  /* Create a ViewWrapper which creates the associated sidre::View */
-  ViewWrapper<string> & view_goodbye = strings_group.RegisterViewWrapper<string>("goodbye");
-  
-  string goodbye = "I am not doing very well so I'll bid you goodbye.";
-  int view_goodbye_size = goodbye.size();
-  expected_size = view_goodbye_size * sizeof(char);
-
-  /* Set the data */
-  view_goodbye.data() = goodbye;
-
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view_goodbye.size() == view_goodbye_size);
-  EXPECT_TRUE(view_goodbye.dataSize() == expected_size);
-
-  /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view_goodbye.dataPtr() == view_goodbye.data().c_str());
-
-
-
-
-  ManagedGroup & doubles_group = root->RegisterGroup("doubles");
-  doubles_group.resize(group_size);
-
-
-  ViewWrapper<real64_array> & view_real64_1 = doubles_group.RegisterViewWrapper<real64_array>("doubles1");
-
-  /* Resize the array */
-  int view_real64_1_size = 100;
-  expected_size = view_real64_1_size * sizeof(real64);
-  view_real64_1.resize(view_real64_1_size);
-
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view_real64_1.size() == view_real64_1_size);
-  EXPECT_TRUE(view_real64_1.dataSize() == expected_size);
-
-  /* Set the data */
-  for (int i = 0; i < view_real64_1.size(); i++) {
-      view_real64_1.data()[i] = double(i) / 100.0;
+  /* Create a new real64_array ViewWrapper. */
+  string view_real641_name = "real641";
+  int view_real641_sfp = sized_from_parent++;
+  int view_real641_size = 1000;
+  real64_array view_real641_data(view_real641_size);
+  for (real64 i = 0; i < view_real641_size; i++) {
+    view_real641_data[i] = i * i / (i + 5);
   }
+  createArrayView(&real64_group, view_real641_name, view_real641_sfp, view_real641_data);
 
-  /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view_real64_1.dataPtr() == &(view_real64_1.data()[0]));
-
-
-  ViewWrapper<real64_array> & view_real64_2 = doubles_group.RegisterViewWrapper<real64_array>("doubles2");
-
-  /* Resize the array */
-  int view_real64_2_size = 100;
-  expected_size = view_real64_2_size * sizeof(real64);
-  view_real64_2.resize(view_real64_2_size);
-
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view_real64_2.size() == view_real64_2_size);
-  EXPECT_TRUE(view_real64_2.dataSize() == expected_size);
-
-  /* Set the data */
-  for (int i = 0; i < view_real64_2.size(); i++) {
-      view_real64_2.data()[i] = double(i) * double(i) / 100.0;
+  /* Create a new real64_array ViewWrapper. */
+  string view_real642_name = "real642";
+  int view_real642_sfp = sized_from_parent++;
+  int view_real642_size = 1000;
+  real64_array view_real642_data(view_real642_size);
+  for (real64 i = 0; i < view_real642_size; i++) {
+    view_real642_data[i] = i * i / (5 + 5 * i + i * i);
   }
+  createArrayView(&real64_group, view_real642_name, view_real642_sfp, view_real642_data);
 
-  /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view_real64_2.dataPtr() == &(view_real64_2.data()[0]));
+  /* Create a new group. */
+  ManagedGroup & mixed_group = real64_group.RegisterGroup("mixed");
+  mixed_group.resize(group_size + 3);
 
-
-
-
-  ManagedGroup & mixed_group = doubles_group.RegisterGroup("mixed");
-  mixed_group.resize(group_size);
-
-
-  ViewWrapper<int32_array> & view_int32 = mixed_group.RegisterViewWrapper<int32_array>("int32");
-
-  /* Resize the array */
-  int view_int32_size = 1000;
-  expected_size = view_int32_size * sizeof(int32);
-  view_int32.resize(view_int32_size);
-
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view_int32.size() == view_int32_size);
-  EXPECT_TRUE(view_int32.dataSize() == expected_size);
-
-  /* Set the data */
-  for (int i = 0; i < view_int32.size(); i++) {
-      view_int32.data()[i] = i * i;
+  /* Create a new int32_array ViewWrapper. */
+  string view_int32_name = "int32";
+  int view_int32_sfp = sized_from_parent++;
+  int view_int32_size = 953;
+  int32_array view_int32_data(view_int32_size);
+  for (int32 i = 0; i < view_int32_size; i++) {
+    view_int32_data[i] = i * i - 100 * i + 3;
   }
+  createArrayView(&mixed_group, view_int32_name, view_int32_sfp, view_int32_data);
 
-  /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view_int32.dataPtr() == &(view_int32.data()[0]));
-
-
-  ViewWrapper<real32_array> & view_real32 = mixed_group.RegisterViewWrapper<real32_array>("real32");
-
-  /* Resize the array */
-  int view_real32_size = 1000;
-  expected_size = view_real32_size * sizeof(int32);
-  view_real32.resize(view_real32_size);
-
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view_real32.size() == view_real32_size);
-  EXPECT_TRUE(view_real32.dataSize() == expected_size);
-
-  /* Set the data */
-  for (int i = 0; i < view_real32.size(); i++) {
-      view_real32.data()[i] = float(i) / float(i + 1.0 - i * i);
+  /* Create a new real32_array ViewWrapper. */
+  string view_real32_name = "real32";
+  int view_real32_sfp = sized_from_parent++;
+  int view_real32_size = 782;
+  real32_array view_real32_data(view_real32_size);
+  for (real32 i = 0; i < view_real32_size; i++) {
+    view_real32_data[i] = (i * i - 100 * i + 3) / (i + 3);
   }
+  createArrayView(&mixed_group, view_real32_name, view_real32_sfp, view_real32_data);
 
-  /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view_real32.dataPtr() == &(view_real32.data()[0]));
+  /* Create a new string ViewWrapper. */
+  string view_what_name = "what";
+  int view_what_sfp = sized_from_parent++;
+  string view_what_str = "What are you talking about?! Who doesn't like thunder storms?";
+  createStringview(&mixed_group, view_what_name, view_what_sfp, view_what_str);
 
-
-  /* Create a ViewWrapper which creates the associated sidre::View */
-  ViewWrapper<string> & view_whatup = mixed_group.RegisterViewWrapper<string>("whatup");
-  
-  string whatup = "Whatup man? I like you're hat.";
-  int view_whatup_size = whatup.size();
-  expected_size = view_whatup_size * sizeof(char);
-
-  /* Set the data */
-  view_whatup.data() = whatup;
-
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view_whatup.size() == view_whatup_size);
-  EXPECT_TRUE(view_whatup.dataSize() == expected_size);
-
-  /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view_whatup.dataPtr() == view_whatup.data().c_str());
-
-
-   /* Create a ViewWrapper which creates the associated sidre::View */
-  ViewWrapper<real64> & view_pi = mixed_group.RegisterViewWrapper<real64>("pi");
-
-  int view_pi_size = 1;
-  expected_size = sizeof(real64);
-
-  /* Set the data */
-  *(view_pi.data()) = 3.14159;
-
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view_pi.size() == view_pi_size);
-  EXPECT_TRUE(view_pi.dataSize() == expected_size);
-
-  /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view_pi.dataPtr() == view_pi.data());
-
-
-
+  /* Create a new real64 ViewWrapper. */
+  string view_pi_name = "pi";
+  int view_pi_sfp = sized_from_parent++;
+  real64 view_pi_value = 3.14159;
+  createScalarView(&mixed_group, view_pi_name, view_pi_sfp, view_pi_value);
 
 
   /* Save the sidre tree */
@@ -252,71 +224,43 @@ TEST(testSidreExtended, testSidreExtended) {
   root->reconstructSidreTree(path + ".root", protocol, MPI_COMM_WORLD);
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
-  ViewWrapper<int64_array> & view_int64_new= root->RegisterViewWrapper<int64_array>("int64");
-  ViewWrapper<string> & view_hope_new = root->RegisterViewWrapper<string>("hope");
+  ViewWrapper<int64_array> & view_int64_new = root->RegisterViewWrapper<int64_array>(view_int64_name);
+  ViewWrapper<string> & view_hope_new = root->RegisterViewWrapper<string>(view_hope_name);
 
   ManagedGroup & strings_group_new = root->RegisterGroup("strings");
-  ViewWrapper<string> & view_hello_new = strings_group_new.RegisterViewWrapper<string>("hello");
-  ViewWrapper<string> & view_goodbye_new = strings_group_new.RegisterViewWrapper<string>("goodbye");
+  ViewWrapper<string> & view_hello_new = strings_group_new.RegisterViewWrapper<string>(view_hello_name);
+  ViewWrapper<string> & view_goodbye_new = strings_group_new.RegisterViewWrapper<string>(view_goodbye_name);
   
-  ManagedGroup & doubles_group_new = root->RegisterGroup("doubles");
-  ViewWrapper<real64_array> & view_real64_1_new = doubles_group_new.RegisterViewWrapper<real64_array>("doubles1");
-  ViewWrapper<real64_array> & view_real64_2_new = doubles_group_new.RegisterViewWrapper<real64_array>("doubles2");
+  ManagedGroup & real64_group_new = root->RegisterGroup("real64");
+  ViewWrapper<real64_array> & view_real641_new = real64_group_new.RegisterViewWrapper<real64_array>(view_real641_name);
+  ViewWrapper<real64_array> & view_real642_new = real64_group_new.RegisterViewWrapper<real64_array>(view_real642_name);
 
-  ManagedGroup & mixed_group_new = doubles_group_new.RegisterGroup("mixed");
-  ViewWrapper<int32_array> & view_int32_new = mixed_group_new.RegisterViewWrapper<int32_array>("int32");
-  ViewWrapper<real32_array> & view_real32_new = mixed_group_new.RegisterViewWrapper<real32_array>("real32");
-  ViewWrapper<string> & view_whatup_new = mixed_group_new.RegisterViewWrapper<string>("whatup");
-  ViewWrapper<real64> & view_pi_new = mixed_group_new.RegisterViewWrapper<real64>("pi");
-
+  ManagedGroup & mixed_group_new = real64_group_new.RegisterGroup("mixed");
+  ViewWrapper<int32_array> & view_int32_new = mixed_group_new.RegisterViewWrapper<int32_array>(view_int32_name);
+  ViewWrapper<real32_array> & view_real32_new = mixed_group_new.RegisterViewWrapper<real32_array>(view_real32_name);
+  ViewWrapper<string> & view_what_new = mixed_group_new.RegisterViewWrapper<string>(view_what_name);
+  ViewWrapper<real64> & view_pi_new = mixed_group_new.RegisterViewWrapper<real64>(view_pi_name);
 
   /* Load the data */
   root->loadSidreExternalData(path + ".root", MPI_COMM_WORLD);
 
-
   /* Group sizes should have carried over. */
   EXPECT_TRUE(root->size() == group_size);
-  EXPECT_TRUE(strings_group_new.size() == group_size);
-  EXPECT_TRUE(doubles_group_new.size() == group_size);
-  EXPECT_TRUE(mixed_group_new.size() == group_size);
+  EXPECT_TRUE(strings_group_new.size() == group_size + 1);
+  EXPECT_TRUE(real64_group_new.size() == group_size + 2);
+  EXPECT_TRUE(mixed_group_new.size() == group_size + 3);
 
-  
-
-  /* Should be the same as stored. */
-  EXPECT_TRUE(view_int64_new.size() == view_int64_size);
-  for (int i = 0; i < view_int64_new.size(); i++) {
-    EXPECT_TRUE(view_int64_new.data()[i] == i);
-  }
-
-  EXPECT_TRUE(view_hope_new.data().compare(hope) == 0);
-
-  EXPECT_TRUE(view_hello_new.data().compare(hello) == 0);
-
-  EXPECT_TRUE(view_goodbye_new.data().compare(goodbye) == 0);
-
-  EXPECT_TRUE(view_real64_1_new.size() == view_real64_1_size);
-  for (int i = 0; i < view_real64_1_new.size(); i++) {
-    EXPECT_TRUE(view_real64_1_new.data()[i] == double(i) / 100.0);
-  }
-
-  EXPECT_TRUE(view_real64_2_new.size() == view_real64_2_size);
-  for (int i = 0; i < view_real64_2_new.size(); i++) {
-    EXPECT_TRUE(view_real64_2_new.data()[i] == double(i) * double(i) / 100.0);
-  }
-
-  EXPECT_TRUE(view_int32_new.size() == view_int32_size);
-  for (int i = 0; i < view_int32_new.size(); i++) {
-    EXPECT_TRUE(view_int32_new.data()[i] == i * i);
-  }
-
-  EXPECT_TRUE(view_real32_new.size() == view_real32_size);
-  for (int i = 0; i < view_real32_new.size(); i++) {
-    EXPECT_TRUE(view_real32_new.data()[i] == float(i) / float(i + 1.0 - i * i));
-  }
-
-  EXPECT_TRUE(view_whatup_new.data().compare(whatup) == 0);
-
-  // EXPECT_TRUE(*(view_pi_new.data()) == 3.14159);
+  /* Check that ViewWrapper values were restored. */
+  checkArrayView(view_int64_new, view_int64_sfp, view_int64_data);  
+  checkStringView(view_hope_new, view_hope_sfp, view_hope_str);
+  checkStringView(view_hello_new, view_hello_sfp, view_hello_str);
+  checkStringView(view_goodbye_new, view_goodbye_sfp, view_goodbye_str);
+  checkArrayView(view_real641_new, view_real641_sfp, view_real641_data);  
+  checkArrayView(view_real642_new, view_real642_sfp, view_real642_data);  
+  checkArrayView(view_int32_new, view_int32_sfp, view_int32_data);  
+  checkArrayView(view_real32_new, view_real32_sfp, view_real32_data);  
+  checkStringView(view_what_new, view_what_sfp, view_what_str);
+  checkScalarView(view_pi_new, view_pi_sfp, view_pi_value);
 
   delete root;
   MPI_Finalize();

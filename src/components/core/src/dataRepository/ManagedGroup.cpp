@@ -382,8 +382,12 @@ void ManagedGroup::loadSizedFromParent()
 /* Write out a restart file. */
 void ManagedGroup::writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm) 
 {
-  // SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
-  // storeSizedFromParent();
+  if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
+  {
+    SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
+  }
+
+  storeSizedFromParent();
   registerSubViews();
   createSizeViews();
   axom::spio::IOManager ioManager(comm);
@@ -393,6 +397,11 @@ void ManagedGroup::writeRestart(int num_files, const string & path, const string
 /* Read in a restart file and reconstruct the sidre tree. */
 void ManagedGroup::reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm)
 {
+  if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
+  {
+    SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
+  }
+  
   axom::spio::IOManager ioManager(comm);
   ioManager.read(m_sidreGroup, root_path, protocol);
 }
@@ -400,13 +409,7 @@ void ManagedGroup::reconstructSidreTree(const string & root_path, const string &
 /* Load sidre external data. */
 void ManagedGroup::loadSidreExternalData(const string & root_path, MPI_Comm comm)
 {
-  // if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
-  // {
-  //   SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
-  // }
-
-  // loadSizedFromParent();
-  // SidreWrapper::dataStore().destroyAttribute("__sizedFromParent__");
+  loadSizedFromParent();
   loadSizeViews();
   resizeSubViews();
   registerSubViews();
