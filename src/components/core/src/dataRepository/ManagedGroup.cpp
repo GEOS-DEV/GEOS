@@ -169,8 +169,6 @@ void ManagedGroup::RegisterDocumentationNodes()
         ( subNode.second.m_isRegistered == 0 ) )
     {
 //      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
-      
-      /* BEN CORBETT */
       ViewWrapperBase & view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                     rtTypes::typeID(subNode.second.getDataType() ) );
       view.setSizedFromParent( subNode.second.m_managedByParent);
@@ -401,7 +399,7 @@ void ManagedGroup::reconstructSidreTree(const string & root_path, const string &
   {
     SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
   }
-  
+
   axom::spio::IOManager ioManager(comm);
   ioManager.read(m_sidreGroup, root_path, protocol);
 }
