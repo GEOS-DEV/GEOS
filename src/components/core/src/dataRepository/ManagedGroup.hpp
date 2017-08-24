@@ -432,7 +432,7 @@ public:
 
   inline string getName() const
   {
-    return getData<string>(keys::Name);
+    return m_sidreGroup->getName();
   }
 
   virtual void resize( localIndex newsize );

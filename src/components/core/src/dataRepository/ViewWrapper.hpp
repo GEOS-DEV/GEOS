@@ -248,14 +248,14 @@ public:
     HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(size_t), VA_LIST(size_t(1)) )
 
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_resize<U>::value && !std::is_same<U,string>::value, void>::type
+    static typename std::enable_if<has_memberfunction_resize<U>::value, void>::type
     resize(ViewWrapper * const parent, std::size_t new_size)
     {
       return parent->m_data->resize(new_size);
     }
 
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_resize<U>::value || std::is_same<U,string>::value, void>::type
+    static typename std::enable_if<!has_memberfunction_resize<U>::value, void>::type
     resize(ViewWrapper * const, std::size_t ) { return; }
   };
   void resize( localIndex new_size ) override final

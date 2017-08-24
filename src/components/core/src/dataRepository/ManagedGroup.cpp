@@ -113,150 +113,12 @@ ManagedGroup::ManagedGroup( std::string const & name,
                                                       nullptr );
   }
 
-
-  m_docNode->AllocateChildNode( "size",
-                                "size",
-                                -1,
-                                "int32",
-                                "int32",
-                                "size of group",
-                                "Number of entries in this group.",
-                                "0",
-                                "",
-                                0,
-                                0,
-                                2 );
-
-  m_docNode->AllocateChildNode( "name",
-                                "name",
-                                -1,
-                                "string",
-                                "string",
-                                "name of group",
-                                "name of group.",
-                                name,
-                                "",
-                                0,
-                                0,
-                                0 );
-
-  m_docNode->AllocateChildNode( "path",
-                                "path",
-                                -1,
-                                "string",
-                                "string",
-                                "path in hierarchy",
-                                "path in hierarchy",
-                                "",
-                                "",
-                                0,
-                                0,
-                                2 );
-
   RegisterDocumentationNodes();
 }
-
-
-//ManagedGroup::ManagedGroup( std::string const & name,
-//                            ManagedGroup * const parent,
-//                            cxx_utilities::DocumentationNode * docNode ) :
-//  m_docNode(docNode),
-//  m_keyLookup(),
-//  m_wrappers(),
-//  m_parent(parent),
-//  m_subGroups(),
-//  m_sidreGroup(nullptr)
-//{
-//
-//  // SIDRE interaction
-//  asctoolkit::sidre::Group * sidreParent = nullptr;
-//  if( m_parent==nullptr )
-//  {
-//    sidreParent = SidreWrapper::dataStore().getRoot();
-//  }
-//  else
-//  {
-//    sidreParent = parent->m_sidreGroup;
-//  }
-//
-//  if( sidreParent->hasGroup(name) )
-//  {
-//    m_sidreGroup = sidreParent->getGroup(name);
-//  }
-//  else
-//  {
-//    m_sidreGroup = sidreParent->createGroup(name);
-//  }
-//
-//
-//
-//  // Setup DocumentationNode
-//  if( parent != nullptr )
-//  {
-//    if( parent->m_docNode != nullptr && this->m_docNode != nullptr )
-//    {
-//      m_docNode = parent->m_docNode->AllocateChildNode( name,
-//                                                        name,
-//                                                        0,
-//                                                        "ManagedGroup",
-//                                                        "Node",
-//                                                        "ManagedGroup",
-//                                                        "ManagedGroup",
-//                                                        "",
-//                                                        parent->getName(),
-//                                                        0,
-//                                                        0 ) ;
-//
-//    }
-//    else
-//    {
-//
-//    }
-//  }
-//
-//
-//  m_docNode->AllocateChildNode( "size",
-//                                "size",
-//                                -1,
-//                                "int32",
-//                                "int32",
-//                                "size of group",
-//                                "Number of entries in this group.",
-//                                "0",
-//                                "",
-//                                0,
-//                                0 );
-//
-//  m_docNode->AllocateChildNode( "name",
-//                                "name",
-//                                -1,
-//                                "string",
-//                                "string",
-//                                "name of group",
-//                                "name of group.",
-//                                name,
-//                                "",
-//                                0,
-//                                0 );
-//
-//  *(RegisterViewWrapper<int32>( "size" ).data()) = 0;
-//  RegisterViewWrapper<std::string>( "name" ).reference() = name;
-//  RegisterViewWrapper<std::string>( "path" );
-//
-//}
 
 ManagedGroup::~ManagedGroup()
 {
 }
-
-//DataObjectManager::DataObjectManager( DataObjectManager const & source ):
-//    m_size( source.m_size ),
-//    m_name( source.m_name ),
-//    m_path( source.m_path ),
-//    m_keyLookup( source.m_keyLookup ),
-//    m_dataObjects( source.m_dataObjects ),
-//    m_parent( source.m_parent )
-//{}
 
 ManagedGroup::ManagedGroup( ManagedGroup&& source ) :
   m_keyLookup( std::move(source.m_keyLookup) ),
@@ -307,6 +169,8 @@ void ManagedGroup::RegisterDocumentationNodes()
         ( subNode.second.m_isRegistered == 0 ) )
     {
 //      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
+      
+      /* BEN CORBETT */
       ViewWrapperBase & view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                     rtTypes::typeID(subNode.second.getDataType() ) );
       view.setSizedFromParent( subNode.second.m_managedByParent);
@@ -518,8 +382,8 @@ void ManagedGroup::loadSizedFromParent()
 /* Write out a restart file. */
 void ManagedGroup::writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm) 
 {
-  SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
-  storeSizedFromParent();
+  // SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
+  // storeSizedFromParent();
   registerSubViews();
   createSizeViews();
   axom::spio::IOManager ioManager(comm);
@@ -536,8 +400,13 @@ void ManagedGroup::reconstructSidreTree(const string & root_path, const string &
 /* Load sidre external data. */
 void ManagedGroup::loadSidreExternalData(const string & root_path, MPI_Comm comm)
 {
-  loadSizedFromParent();
-  SidreWrapper::dataStore().destroyAttribute("__sizedFromParent__");
+  // if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
+  // {
+  //   SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
+  // }
+
+  // loadSizedFromParent();
+  // SidreWrapper::dataStore().destroyAttribute("__sizedFromParent__");
   loadSizeViews();
   resizeSubViews();
   registerSubViews();
