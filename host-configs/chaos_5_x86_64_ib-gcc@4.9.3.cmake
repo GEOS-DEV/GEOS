@@ -10,10 +10,10 @@
 
 set(CONFIG_NAME "cab-chaos_5_x86_64_ib-gcc@4.9.3" CACHE PATH "") 
 
-set(TPL_DIR "/usr/gapps/GEOS/geosx/2017_06_08_07_41_06" CACHE PATH "" )
+set(TPL_DIR "/usr/gapps/GEOS/geosx/2017_08_25_10_05_28" CACHE PATH "" )
 include("${TPL_DIR}/${CONFIG_NAME}.cmake")
 
-set(ATK_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/axom" CACHE PATH "")
+set(ATK_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/axom/release" CACHE PATH "")
 set(ATK_CMAKE "${ATK_DIR}/lib/cmake" CACHE PATH "")
 
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
