@@ -21,23 +21,6 @@
 
 #include <iostream>
 
-#if 0
-#define VIRTUAL_FUNCTION_WRAPPER( FUNCNAME, RTYPE, CONST, PARAMS, ARGS, PARAMS0, ARGS0 ) \
-struct virtual_function_wrapper_ ## FUNCNAME \
-{ \
-  HAS_MEMBER_FUNCTION(FUNCNAME, RTYPE, CONST, PARAMS, ARGS)\
-    template<class U = T> \
-    static typename std::enable_if<has_memberfunction_##FUNCNAME<U>::value, void>::type \
-    FUNCNAME(ViewWrapper * const parent, PARAMS0) \
-    {\
-      return parent->m_data.resize(ARGS0);\
-    }\
-    template<class U = T>\
-    static typename std::enable_if<!has_memberfunction_##FUNCNAME<U>::value, void>::type\
-    FUNCNAME(ViewWrapper * const, PARAMS0 ) { ARGS0; return; }\
-  };
-#endif
-
 
 namespace geosx
 {
@@ -62,8 +45,6 @@ public:
     ViewWrapperBase(name,parent),
     m_data( std::make_unique<T>() )
   { 
-    // std::cout << "in constructor1" << std::endl;
-    register_data_ptr();
   }
 
   /**
@@ -77,8 +58,6 @@ public:
     ViewWrapperBase(name,parent),
     m_data( std::move( object ) )
   {
-    // std::cout << "in constructor2" << std::endl;
-    register_data_ptr();
   }
 
   /**
@@ -92,8 +71,6 @@ public:
     ViewWrapperBase(name,parent),
     m_data( std::move( std::unique_ptr<T>(object) ) )
   {
-    // std::cout << "in constructor3" << std::endl;
-    register_data_ptr();
   }
 
   /**
@@ -109,8 +86,6 @@ public:
     ViewWrapperBase("test", nullptr),
     m_data(source.m_data)
   {
-    // std::cout << "in copy constructor" << std::endl;
-    register_data_ptr();
   }
 
   /**
@@ -121,8 +96,6 @@ public:
     ViewWrapperBase("test", nullptr),
     m_data( std::move(source.m_data) )
   {
-    // std::cout << "in move constructor" << std::endl;
-    register_data_ptr();
   }
 
   /**
@@ -133,8 +106,6 @@ public:
   ViewWrapper& operator=( ViewWrapper const & source )
   {
     m_data = source.m_data;
-    // std::cout << "in copy assignment" << std::endl;
-    register_data_ptr();
     return *this;
   }
 
@@ -146,8 +117,6 @@ public:
   ViewWrapper& operator=( ViewWrapper && source )
   {
     m_data = std::move(source.m_data);
-    // std::cout << "in assignment" << std::endl;
-    register_data_ptr();
     return *this;
   }
 
@@ -257,8 +226,6 @@ public:
   virtual void reserve( std::size_t new_cap ) override final
   {
     reserve_wrapper::reserve(this, new_cap);
-    // std::cout << "in reserve" << std::endl;
-    register_data_ptr();
   }
 //  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,reserve , void,, VA_LIST(std::size_t a), VA_LIST(a) )
 
@@ -281,52 +248,21 @@ public:
     HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(size_t), VA_LIST(size_t(1)) )
 
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_resize<U>::value && !std::is_same<U,string>::value, void>::type
+    static typename std::enable_if<has_memberfunction_resize<U>::value, void>::type
     resize(ViewWrapper * const parent, std::size_t new_size)
     {
       return parent->m_data->resize(new_size);
     }
 
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_resize<U>::value || std::is_same<U,string>::value, void>::type
+    static typename std::enable_if<!has_memberfunction_resize<U>::value, void>::type
     resize(ViewWrapper * const, std::size_t ) { return; }
   };
   using ViewWrapperBase::resize;
   void resize( localIndex new_size ) override final
   {
     resize_wrapper::resize(this, new_size);
-    // std::cout << "in resize" << std::endl;
-    register_data_ptr();
   }
-
-//
-//  struct serialize_wrapper
-//  {
-//    HAS_MEMBER_FUNCTION(serialize,void,const,VA_LIST(void*,int64&),VA_LIST((void*)nullptr,int64(1) ))
-//    template<class U = T>
-//    static typename std::enable_if<has_memberfunction_serialize<U>::value, void>::type
-//    resize(ViewWrapper * const parent, char * dataPointer, int64 & length, string & typeName)
-//    {
-//      return parent->m_data->resize(new_size);
-//    }
-//
-//    template<class U = T>
-//    static typename std::enable_if<!has_memberfunction_serialize<U>::value || std::is_same<U,string>::value, void>::type
-//    resize(ViewWrapper * const, std::size_t ) { return; }
-//
-//  };
-//  void serialize( char * dataPointer, int64 & length, string & typeName ) const override final
-//  {
-//    return serialize_wrapper::serialize(this,dataPointer,length, this->get_typeid().name() );
-//  }
-
-
-
-
-
-
-
-
 
   /**
    * @name Structure to determine return types for data access functions
@@ -396,6 +332,7 @@ public:
 
 
   HAS_MEMBER_FUNCTION(data,pointer,,,)
+  HAS_MEMBER_FUNCTION_VARIANT(data,_const, pointer,const,,)
 
   /// Case for if m_data has a member function called "data()", and is not a string
   template<class U = T>
@@ -464,35 +401,51 @@ public:
   T const & reference() const
   { return *m_data; }
 
+
+
   /// Case for if m_data has a member function called "data()"
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value && has_alias_pointer<U>::value, typename U::pointer >::type
-  data_ptr()
+  typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) && has_alias_pointer<U>::value && !std::is_same<U,string>::value, typename U::pointer >::type
+  dataPtr()
   {
     return m_data->data();
   }
-
 
   template<class U = T>
-  typename std::enable_if<has_memberfunction_data<U>::value && has_alias_pointer<U>::value, typename U::const_pointer >::type
-  data_ptr() const
+  typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) && has_alias_pointer<U>::value && !std::is_same<U,string>::value, typename U::const_pointer >::type
+  dataPtr() const
   {
     return m_data->data();
   }
+
+
+  /// Case for if m_data is a string"
+  template<class U = T>
+  typename std::enable_if< std::is_same<U,string>::value, char const * >::type
+  dataPtr()
+  {
+    return m_data->data();
+  }
+
+  template<class U = T>
+  typename std::enable_if< std::is_same<U,string>::value, char const * >::type
+  dataPtr() const
+  {
+    return m_data->data();
+  }
+
 
   /// case for if m_data does NOT have a member function "data()"
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value, T * >::type
-  data_ptr()
+  typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&& !std::is_same<U,string>::value, U * >::type
+  dataPtr()
   {
-    /// return a c-pointer to the object
     return m_data.get();
   }
 
-
   template<class U = T>
-  typename std::enable_if<!has_memberfunction_data<U>::value, T const *>::type
-  data_ptr() const
+  typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&& !std::is_same<U,string>::value, U const *>::type
+  dataPtr() const
   {
     return m_data.get();
   }
@@ -500,32 +453,84 @@ public:
 
   HAS_ALIAS(value_type)
 
+  /// case for if U::value_type exists. Returns the size of dataPtr
   template<class U = T>
-  typename std::enable_if<has_alias_value_type<U>::value, int32 >::type
-  data_size() const
+  typename std::enable_if<has_alias_value_type<U>::value, uint32>::type
+  dataSize() const
   {
     return size() * sizeof(typename T::value_type);
   }
 
+
+  /// case for if U::value_type doesn't exists. Returns the size of dataPtr
   template<class U = T>
-  typename std::enable_if<!has_alias_value_type<U>::value, int32>::type
-  data_size() const
+  typename std::enable_if<!has_alias_value_type<U>::value, uint32>::type
+  dataSize() const
   {
     return size() * sizeof(T);
   }
 
 
-  /* Register the pointer to data with the associated sidre::View. */
-  void register_data_ptr() 
+  /// case for if U::value_type exists. Returns the number of elements given a byte size
+  template<class U = T>
+  typename std::enable_if<has_alias_value_type<U>::value, uint32>::type
+  numElementsFromDataSize(uint32 d_size) const
   {
-    axom::sidre::View * mySidreView = getSidreView();
-    // std::cout << data_size() << std::endl;
-    // std::cout << data_ptr() << std::endl;
-    mySidreView->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, data_size(), data_ptr());
+    return d_size / sizeof(typename T::value_type);
   }
 
 
-public:
+  /// case for if U::value_type doesn't exists. Returns the number of elements given a byte size
+  template<class U = T>
+  typename std::enable_if<!has_alias_value_type<U>::value, uint32>::type
+  numElementsFromDataSize(uint32 d_size) const
+  {
+    return d_size / sizeof(T);
+  }
+
+
+  /* Register the pointer to data with the associated sidre::View. */
+  virtual void registerDataPtr() 
+  {
+    uint32 d_size = dataSize();
+    if (d_size > 0) 
+    {
+      void * ptr = const_cast<void*>((void const *) dataPtr());
+      getSidreView()->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, d_size, ptr);
+    }
+  }
+
+
+  virtual void storeSizedFromParent()
+  {
+    getSidreView()->setAttributeScalar("__sizedFromParent__", sizedFromParent());
+  }
+
+
+  virtual void loadSizedFromParent()
+  {
+    setSizedFromParent(getSidreView()->getAttributeScalar("__sizedFromParent__"));
+    getSidreView()->setAttributeToDefault("__sizedFromParent__");
+  }
+
+
+  virtual void unregisterDataPtr()
+  {
+    getSidreView()->setExternalDataPtr(AXOM_NULLPTR);
+  }
+
+
+  virtual void resizeFromSidre() 
+  {
+      if (getSidreView()->isExternal()) 
+      {
+        uint32 d_size = getSidreView()->getTotalBytes();
+        uint32 numElements = numElementsFromDataSize(d_size);
+        resize(numElements);
+      }
+      
+  }
+
   std::unique_ptr<T> m_data;
 
   ViewWrapper() = delete;

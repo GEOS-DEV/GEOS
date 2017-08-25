@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <slic/slic.hpp>
+#include <mpi.h>
 
 #include "ObjectCatalog.hpp"
 #include "ViewWrapper.hpp"
@@ -439,14 +440,14 @@ public:
 
   inline string getName() const
   {
-    return getData<string>(keys::Name);
+    return m_sidreGroup->getName();
   }
 
   virtual void resize( localIndex newsize );
 
   inline localIndex size() const
   {
-    return *(getData<localIndex>(keys::Size));
+    return m_size;
   }
 
 
@@ -479,6 +480,11 @@ public:
   }
 
 
+  void writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm);
+
+  void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
+
+  void loadSidreExternalData(const string & root_path, MPI_Comm comm);
 
 
 protected:
@@ -486,16 +492,29 @@ protected:
 
 private:
 
-  viewWrapperMap m_wrappers;
+
+  void registerSubViews();
+
+  void createSizeViews();
+
+  void loadSizeViews();
+
+  void unregisterSubViews();
+
+  void resizeSubViews();
+
+  void storeSizedFromParent();
+
+  void loadSizedFromParent();
+  
 
   ManagedGroup* m_parent = nullptr;
+  viewWrapperMap m_wrappers;
   subGroupMap m_subGroups;
 
   axom::sidre::Group* m_sidreGroup;
 
-  int32 const & m_size;
-  string const & m_name;
-//  string const & m_path;
+  int32 m_size;
 
 
   /**

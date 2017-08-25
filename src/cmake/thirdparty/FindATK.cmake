@@ -84,17 +84,18 @@ include(${ATK_DIR}/lib/cmake/sidre-targets.cmake)
 
 
 #include("${ATK_CMAKE}/lumberjack-targets.cmake")
-#include("${ATK_CMAKE}/slic-targets.cmake")
-include("${ATK_CMAKE}/slam-targets.cmake")
-include("${ATK_CMAKE}/mint-targets.cmake")
-include("${ATK_CMAKE}/quest-targets.cmake")
 #include("${ATK_CMAKE}/sidre-targets.cmake")
+#include("${ATK_CMAKE}/slic-targets.cmake")
+include("${ATK_CMAKE}/mint-targets.cmake")
+include("${ATK_CMAKE}/fmt-targets.cmake")
+include("${ATK_CMAKE}/primal-targets.cmake")
+include("${ATK_CMAKE}/slam-targets.cmake")
+include("${ATK_CMAKE}/quest-targets.cmake")
+include("${ATK_CMAKE}/slam-targets.cmake")
 include("${ATK_CMAKE}/spio-targets.cmake")
-
 
 set(ATK_FOUND TRUE)
 set(ATK_INCLUDE_DIRS ${ATK_DIR}/include)
-
 
 
 
