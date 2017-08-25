@@ -130,21 +130,21 @@ public:
   void forCellBlocks( LAMBDA lambda )
   {
     ManagedGroup & cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
+
+    cellBlockSubRegions.forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion & subRegion ) -> void
+    {
+      lambda( subRegion );
+    });
+
+//    set<string> names;
 //    for( auto & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
 //    {
-//      CellBlockSubRegion & cellBlock = cellBlockSubRegions.GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-//      lambda( cellBlock );
+//      names.insert(iterCellBlocks.first);
 //    }
-
-    set<string> names;
-    for( auto & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
-    {
-      names.insert(iterCellBlocks.first);
-    }
-    for( auto & name : names )
-    {
-      lambda( cellBlockSubRegions.GetGroup<CellBlockSubRegion>(name) );
-    }
+//    for( auto & name : names )
+//    {
+//      lambda( cellBlockSubRegions.GetGroup<CellBlockSubRegion>(name) );
+//    }
 
   }
 
@@ -154,16 +154,21 @@ public:
   {
     ManagedGroup const & cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
 
-    set<string> names;
-    for( auto const & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
+    cellBlockSubRegions.forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion const & subRegion ) -> void
     {
-      names.insert(iterCellBlocks.first);
-    }
+      lambda( subRegion );
+    });
 
-    for( auto const & name : names )
-    {
-      lambda( cellBlockSubRegions.GetGroup<CellBlockSubRegion>(name) );
-    }
+//        set<string> names;
+//    for( auto const & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
+//    {
+//      names.insert(iterCellBlocks.first);
+//    }
+//
+//    for( auto const & name : names )
+//    {
+//      lambda( cellBlockSubRegions.GetGroup<CellBlockSubRegion>(name) );
+//    }
 
   }
 

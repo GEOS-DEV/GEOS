@@ -15,6 +15,23 @@ template< typename T, typename T2=T*, typename KEY_TYPE=std::string, typename IN
 class MapVectorContainer
 {
 public:
+  using MapType = std::unordered_map<KEY_TYPE, INDEX_TYPE >;
+
+//  template< typename U=T2,
+//            bool isUniquePtr = std::is_same< U, std::unique_ptr<T> >::value >
+//  struct const_T2
+//  {
+//    typedef std::unique_ptr<T const> type;
+//  };
+//
+//  template<typename U>
+//  struct const_T2<U,false>
+//  {
+//    typedef T const * type;
+//  };
+
+
+
   MapVectorContainer() = default;
   ~MapVectorContainer() = default;
   MapVectorContainer( MapVectorContainer const & source ) = default ;
@@ -34,6 +51,28 @@ public:
   ///@{
 
 
+//  HAS_MEMBER_FUNCTION( get, T *,const,,)
+//  template<class U = T2>
+//  typename std::enable_if<has_memberfunction_get<U>::value, T const *>::type
+  T const *
+  operator[]( INDEX_TYPE index ) const
+  {
+    return ( index>-1 && index<static_cast<INDEX_TYPE>( m_objects.size() ) ) ? &(*m_objects[ index ]) : nullptr ;
+  }
+
+//  template<class U = T2>
+//  typename std::enable_if<!has_memberfunction_get<U>::value, T const *>::type
+//  operator[]( INDEX_TYPE index ) const
+//  {
+//    return ( index>-1 && index<static_cast<INDEX_TYPE>( m_objects.size() ) ) ? m_objects[ index ] : nullptr ;
+//  }
+
+  inline T * operator[]( INDEX_TYPE index )
+  {
+    return const_cast<T*>( const_cast< MapVectorContainer<T,T2,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](index) );
+  }
+
+
   T const * operator[]( KEY_TYPE const & keyName ) const
   {
     typename MapType::const_iterator iter = m_keyLookup.find(keyName);
@@ -47,24 +86,6 @@ public:
   }
 
 
-  inline T * operator[]( INDEX_TYPE index )
-  {
-    return const_cast<T*>( const_cast< MapVectorContainer<T,T2,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](index) );
-  }
-
-  HAS_MEMBER_FUNCTION( get, T *,const,,)
-  template<class U = T2>
-  typename std::enable_if<has_memberfunction_get<U>::value, T const *>::type
-  operator[]( INDEX_TYPE index ) const
-  {
-    return m_objects[ index ].get();
-  }
-  template<class U = T2>
-  typename std::enable_if<!has_memberfunction_get<U>::value, T const *>::type
-  operator[]( INDEX_TYPE index ) const
-  {
-    return m_objects[ index ];
-  }
 
   inline T const * operator[]( DataKeyT<KEY_TYPE,INDEX_TYPE> & dataKey ) const
   {
@@ -119,19 +140,71 @@ public:
     return m_objects.size();
   }
 
-  std::vector<T2> & objects()
+  std::vector<T *> & objects()
   {
     return m_objects;
   }
-  std::vector<T2> const & objects() const
+
+  std::vector<T const *> const objects() const
   {
-    return m_objects;
+    std::vector<T const *> rval(m_objects.size());
+    for( unsigned int a=0 ; a<m_objects.size() ; ++a )
+    {
+      rval[a] = &(*m_objects[a]);
+    }
+    return rval;
+  }
+
+  MapType const & keys() const
+  {
+    return m_keyLookup;
+  }
+
+//
+//  template<class U = T2>
+//  typename std::enable_if<has_memberfunction_get<U>::value, T *>::type
+//  iterDeref( typename std::vector<T2>::iterator objIter )
+//  {
+//    return objIter->get();
+//  }
+//
+//  template<class U = T2>
+//  typename std::enable_if<!has_memberfunction_get<U>::value, T *>::type
+//  iterDeref( typename std::vector<T2>::iterator objIter )
+//  {
+//    return *objIter;
+//  }
+//
+
+  std::map<KEY_TYPE,T*> map()
+  {
+    std::map<KEY_TYPE,T*> rval;
+    typename MapType::iterator keyIter = m_keyLookup.begin();
+    typename std::vector<T2>::iterator objIter = m_objects.begin();
+
+    for(  ; keyIter!=m_keyLookup.end() ; ++keyIter, ++objIter )
+    {
+      rval[keyIter->first] = &(*objIter);
+    }
+    return rval;
+  }
+
+  std::map<KEY_TYPE,T const*> map() const
+  {
+    std::map<KEY_TYPE,T const*> rval;
+    typename MapType::iterator keyIter = m_keyLookup.begin();
+    typename std::vector<T2>::const_iterator objIter = m_objects.begin();
+
+    for(  ; keyIter!=m_keyLookup.end() ; ++keyIter, ++objIter )
+    {
+      rval[keyIter->first] = &(*objIter);
+    }
+    return rval;
   }
 
 private:
   std::vector<T2> m_objects;
 
-  using MapType = std::unordered_map<KEY_TYPE, INDEX_TYPE >;
   MapType m_keyLookup;
 
   std::vector<KEY_TYPE> m_indexToKeys;
@@ -153,10 +226,6 @@ T * MapVectorContainer<T,T2,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyNa
 
     key = m_objects.size() - 1;
     m_keyLookup.insert( std::make_pair(keyName,key) );
-    if( m_objects[key]->sizedFromParent() == 1 )
-    {
-      m_objects[key]->resize(this->size());
-    }
   }
   // if key was found, make sure it is empty
   else

@@ -563,7 +563,7 @@ void ProblemManager::InitializationOrder( string_array & order )
     usedNames.insert(keys::eventManager);
   }
 
-  for( auto const & subGroup : this->GetSubGroups() )
+  for( auto const & subGroup : this->GetSubGroups().map() )
   {
     if( usedNames.count(subGroup.first) == 0 )
     {
@@ -650,10 +650,10 @@ void ProblemManager::RunSimulation()
 //  {
 //    if (strcmp(subEventDocNode.second.getDataType().c_str(), "ManagedGroup") == 0)
 
-  for( auto& application : this->m_eventManager->GetSubGroups() )
+  for( auto& application : this->m_eventManager->GetSubGroups().objects() )
   {
 
-      dataRepository::ManagedGroup& currentApplication = *(application.second);
+      dataRepository::ManagedGroup& currentApplication = *(application);
 
       ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solvers);
       real64& appDt = *(currentApplication.getData<real64>(keys::dt));

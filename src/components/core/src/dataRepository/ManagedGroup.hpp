@@ -53,8 +53,9 @@ using DataKey = DataKeyT<keyType,indexType>;
 class ManagedGroup
 {
 public:
-  using subGroupMap = map< string, std::unique_ptr<ManagedGroup> >;
-
+//  using subGroupMap = map< string, std::unique_ptr<ManagedGroup> >;
+  using subGroupMap = MapVectorContainer< ManagedGroup, std::unique_ptr<ManagedGroup>, keyType, indexType  >;
+  using viewWrapperMap = MapVectorContainer< ViewWrapperBase, std::unique_ptr<ViewWrapperBase>, keyType, indexType  >;
   /**
    * @name constructors, destructor, copy, move, assignments
    */
@@ -133,37 +134,20 @@ public:
   template< typename T = ManagedGroup >
   T * GetGroupPtr( std::string const & name )
   {
-
-    ManagedGroup * rval = nullptr;
-    auto iter = m_subGroups.find(name);
-    if( iter!=m_subGroups.end() )
-    {
-      rval = iter->second.get();
-    }
-
 #ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T *>( rval );
+    return dynamic_cast<T *>( m_subGroups[name] );
 #else
-    return static_cast<T *>( rval );
+    return static_cast<T *>( m_subGroups[name] );
 #endif
   }
 
   template< typename T = ManagedGroup >
   T const * GetGroupPtr( std::string const & name ) const
   {
-
-    ManagedGroup const * rval = nullptr;
-    auto iter = m_subGroups.find(name);
-    if( iter!=m_subGroups.end() )
-    {
-      rval = iter->second.get();
-    }
-
-
 #ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const *>( rval );
+    return dynamic_cast<T const *>( m_subGroups[name] );
 #else
-    return static_cast<T const *>( rval );
+    return static_cast<T const *>( m_subGroups[name] );
 #endif
   }
 
@@ -172,23 +156,11 @@ public:
 
   template< typename T = ManagedGroup >
   T& GetGroup( std::string const & name )
-  {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T&>( *(m_subGroups.at(name)) );
-#else
-    return static_cast<T&>( *(m_subGroups.at(getName)) );
-#endif
-  }
+  { return *(GetGroupPtr<T>(name)); }
 
   template< typename T = ManagedGroup >
   T const & GetGroup( std::string const & name ) const
-  {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const &>( *(m_subGroups.at(name)) );
-#else
-    return static_cast<T const &>( *(m_subGroups.at(getName)) );
-#endif
-  }
+  { return *(GetGroupPtr<T>(name)); }
 
 
 
@@ -207,12 +179,12 @@ public:
   template< typename T = ManagedGroup, typename LAMBDA >
   void forSubGroups( LAMBDA lambda )
   {
-    for( auto& subGroupIter : m_subGroups )
+    for( auto& subGroupIter : m_subGroups.objects() )
     {
 #ifdef USE_DYNAMIC_CASTING
-       T & subGroup = dynamic_cast<T &>( *(subGroupIter.second) );
+       T & subGroup = dynamic_cast<T &>( *(subGroupIter) );
 #else
-       T & subGroup = static_cast<T &>( *(subGroupIter.second) );
+       T & subGroup = static_cast<T &>( *(subGroupIter) );
 #endif
        lambda( subGroup );
     }
@@ -221,12 +193,12 @@ public:
   template< typename T = ManagedGroup, typename LAMBDA >
   void forSubGroups( LAMBDA lambda ) const
   {
-    for( auto const & subGroupIter : m_subGroups )
+    for( auto const & subGroupIter : m_subGroups.objects() )
     {
 #ifdef USE_DYNAMIC_CASTING
-       T const & subGroup = dynamic_cast<T const &>( *(subGroupIter.second) );
+       T const & subGroup = dynamic_cast<T const &>( *(subGroupIter) );
 #else
-       T const & subGroup = static_cast<T const &>( *(subGroupIter.second) );
+       T const & subGroup = static_cast<T const &>( *(subGroupIter) );
 #endif
        lambda( subGroup );
     }
@@ -455,26 +427,9 @@ public:
   { return getWrapper<T>(dataKey).reference(); }
 
 
-  ManagedGroup * hasGroup( std::string const & name )
-  {
-    ManagedGroup * rval = nullptr;
-    auto iter = m_subGroups.find(name);
-    if( iter!=m_subGroups.end() )
-    {
-      rval = iter->second.get();
-    }
-    return rval;
-  }
-
   ManagedGroup const * hasGroup( std::string const & name ) const
   {
-    ManagedGroup const * rval = nullptr;
-    auto iter = m_subGroups.find(name);
-    if( iter!=m_subGroups.end() )
-    {
-      rval = iter->second.get();
-    }
-    return rval;
+    return (m_subGroups[name]);
   }
 
   bool hasView( std::string const & name ) const
@@ -531,11 +486,7 @@ protected:
 
 private:
 
-
-//  unordered_map<string,size_t> m_keyLookup;
-//  std::vector< std::unique_ptr<ViewWrapperBase> > m_wrappers;
-
-  MapVectorContainer< ViewWrapperBase, std::unique_ptr<ViewWrapperBase>, keyType, indexType  > m_wrappers;
+  viewWrapperMap m_wrappers;
 
   ManagedGroup* m_parent = nullptr;
   subGroupMap m_subGroups;
@@ -590,35 +541,11 @@ private:
 template < typename T, typename TBASE >
 T& ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
 {
-  auto iterKeyLookup = m_subGroups.find(name);
-
-  // if the key was not found, make DataObject<T> and insert
-  if( iterKeyLookup == m_subGroups.end() )
-  {
-    auto insertResult = m_subGroups.insert( std::make_pair( name, std::move(newObject) ) );
-
-    if( !insertResult.second )
-    {
-      std::cout<<LOCATION<<std::endl;
-      throw std::exception();
-    }
-    iterKeyLookup = insertResult.first;
-//    iterKeyLookup->second.get()->
-  }
-  // if key was found, make sure that they are the same type
-  else
-  {
-    if( typeid(T) != iterKeyLookup->second->get_typeid() )
-    {
-      std::cout<<LOCATION<<std::endl;
-      throw std::exception();
-    }
-  }
-#ifdef USE_DYNAMIC_CASTING
-  return *(dynamic_cast<T*>( (iterKeyLookup->second).get() ) );
-#else
-  return *(static_cast<T*>( (iterKeyLookup->second).get() ) );
-#endif
+  #ifdef USE_DYNAMIC_CASTING
+    return *(dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) ) );
+  #else
+    return *(static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) ) );
+  #endif
 }
 
 
@@ -626,44 +553,13 @@ T& ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE>
 template< typename T , typename TBASE >
 ViewWrapper<TBASE>& ManagedGroup::RegisterViewWrapper( std::string const & name, std::size_t * const rkey )
 {
-//  std::size_t key = static_cast<std::size_t>(-1);
-
   m_wrappers.insert( name, std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ) );
-  return getWrapper<TBASE>(name);
-
-//  auto iterKeyLookup = m_keyLookup.find(name);
-//
-//  // if the key was not found, make DataObject<T> and insert
-//  if( iterKeyLookup == m_keyLookup.end() )
-//  {
-//    m_wrappers.push_back( std::move( ViewWrapper<TBASE>::template Factory<T>(name,this) ) );
-//    key = m_wrappers.size() - 1;
-//    m_keyLookup.insert( std::make_pair(name,key) );
-//    if( m_wrappers[key]->sizedFromParent() == 1 )
-//    {
-//      m_wrappers[key]->resize(this->size());
-//    }
-//  }
-//  // if key was found, make sure that they are the same type
-//  else
-//  {
-//    key = m_keyLookup.at(name);
-//    auto& basePtr = m_wrappers[key];
-//    if( typeid(T) != basePtr->get_typeid() )
-//    {
-//      std::string error = string("Call to Group::RegisterViewWrapper( ")
-//                          +name+string(", std::size_t * const ) attempts to re-register ViewWrapper<")
-//                          +basePtr->get_typeid().name()+string(", but with different type") ;
-//      SLIC_ERROR(error);
-////      throw std::exception();
-//    }
-//  }
-//
-//  if( rkey != nullptr )
-//  {
-//    *rkey = key;
-//  }
-//  return getWrapper<TBASE>(key);
+  ViewWrapper<T> & rval = getWrapper<TBASE>(name);
+  if( rval.sizedFromParent() == 1 )
+  {
+    rval.resize(this->size());
+  }
+  return rval;
 }
 
 
@@ -671,36 +567,15 @@ template < typename T >
 ViewWrapper<T>& ManagedGroup::RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject )
 {
   m_wrappers.insert( name, std::make_unique< ViewWrapper<T> >( name, this, std::move(newObject) ) );
-  return getWrapper<T>(name);
 
-//  std::size_t key = static_cast<std::size_t>(-1);
-//  auto iterKeyLookup = m_keyLookup.find(name);
-////  auto iterKeyLookup = m_wrappers.find(name);
-//
-//  // if the key was not found, make DataObject<T> and insert
-//  if( iterKeyLookup == m_keyLookup.end() )
-//  {
-//    std::unique_ptr< ViewWrapper<T> > newWrapper = std::make_unique< ViewWrapper<T> >( name, this, std::move(newObject) );
-//    m_wrappers.push_back( std::move( newWrapper ) );
-//    key = m_wrappers.size() - 1;
-//    m_keyLookup.insert( std::make_pair(name,key) );
-//    m_wrappers[key]->resize(this->size());
-//  }
-//  // if key was found, make sure that they are the same type
-//  else
-//  {
-//    key = m_keyLookup.at(name);
-//    auto& basePtr = m_wrappers[key];
-//    if( typeid(T) != basePtr->get_typeid() )
-//    {
-//      std::string error = string("Call to Group::RegisterViewWrapper( ")
-//                          +name+string(", std::size_t * const ) attempts to re-register ViewWrapper<")
-//                          +basePtr->get_typeid().name()+string(", but with different type") ;
-//      SLIC_ERROR(error);
-//    }
-//  }
-//  return getWrapper<T>(key);
+  ViewWrapper<T> & rval = getWrapper<T>(name);
+  if( rval.sizedFromParent() == 1 )
+  {
+    rval.resize(this->size());
+  }
+  return rval;
 }
+
 
 } // namespace dataRepository
 } /* namespace geosx */

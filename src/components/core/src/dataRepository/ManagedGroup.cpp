@@ -314,18 +314,18 @@ void ManagedGroup::RegisterDocumentationNodes()
     }
   }
 
-  for( auto& subGroupIter : m_subGroups )
+  for( auto& subGroupIter : m_subGroups.objects() )
   {
-    subGroupIter.second->RegisterDocumentationNodes();
+    subGroupIter->RegisterDocumentationNodes();
   }
 
 }
 
 void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const rootGroup )
 {
-  for( auto&& subGroup : m_subGroups )
+  for( auto&& subGroup : m_subGroups.objects() )
   {
-    subGroup.second->BuildDataStructure( rootGroup );
+    subGroup->BuildDataStructure( rootGroup );
   }
 }
 
@@ -339,9 +339,9 @@ void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const g
 {
   FillDocumentationNode(group);
   RegisterDocumentationNodes();
-  for( auto&& subGroup : m_subGroups )
+  for( auto&& subGroup : m_subGroups.objects() )
   {
-    subGroup.second->SetDocumentationNodes(group);
+    subGroup->SetDocumentationNodes(group);
   }
 }
 
@@ -381,16 +381,15 @@ void ManagedGroup::PrintDataHierarchy()
     std::cout<<view->getName()<<", "<<view->get_typeid().name()<<std::endl;
   }
 
-  for( auto& group : this->m_subGroups )
+  for( auto& group : this->m_subGroups.objects() )
   {
-    std::cout<<group.first<<std::endl;
-    group.second->PrintDataHierarchy();
+    group->PrintDataHierarchy();
   }
 }
 
 void ManagedGroup::InitializationOrder( string_array & order )
 {
-  for( auto & subGroup : this->m_subGroups )
+  for( auto & subGroup : this->m_subGroups.keys() )
   {
     order.push_back(subGroup.first);
   }
