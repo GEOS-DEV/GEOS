@@ -45,7 +45,7 @@
  */
 
 #include "NodeManager.hpp"
-
+#include "DomainPartition.hpp"
 //#include "ObjectManagers/FaceManagerT.h"
 //#include "ObjectManagers/EdgeManagerT.h"
 //#include "ObjectManagers/ElementManagerT.h"
@@ -108,6 +108,55 @@ NodeManager::~NodeManager()
 //}
 
 
+
+void NodeManager::FillDocumentationNode( ManagedGroup * const group )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+
+  docNode->setName( this->getCatalogName() );
+  docNode->setSchemaType( "Node" );
+  docNode->setShortDescription( "a node manager" );
+
+  docNode->AllocateChildNode( keys::elementRegionMap,
+                              keys::elementRegionMap,
+                              -1,
+                              "int32_array",
+                              "int32_array",
+                              "map to element region",
+                              "map to element region",
+                              "",
+                              "",
+                              0,
+                              0,
+                              0 );
+
+  docNode->AllocateChildNode( keys::elementSubRegionMap,
+                              keys::elementSubRegionMap,
+                              -1,
+                              "int32_array",
+                              "int32_array",
+                              "map to element sub regions",
+                              "map to element sub regions",
+                              "",
+                              "",
+                              0,
+                              0,
+                              0 );
+
+  docNode->AllocateChildNode( keys::elementMap,
+                              keys::elementMap,
+                              -1,
+                              "int64_array",
+                              "int64_array",
+                              "map to element in a subregion",
+                              "map to element in a subregion",
+                              "",
+                              "",
+                              0,
+                              0,
+                              0 );
+
+}
 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ManagedGroup * const )

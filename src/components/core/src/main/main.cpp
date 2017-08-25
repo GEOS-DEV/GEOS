@@ -30,7 +30,7 @@ int main( int argc, char *argv[] )
   MPI_Init(&argc,&argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 //  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  std::cout<<"rank = "<<rank<<std::endl;
+//  std::cout<<"rank = "<<rank<<std::endl;
 #endif
 
 
@@ -77,6 +77,7 @@ int main( int argc, char *argv[] )
   gettimeofday(&tim, NULL);
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
+  problemManager.ApplyInitialConditions();
   std::cout << std::endl << "Running simulation:" << std::endl;
   problemManager.RunSimulation();
   

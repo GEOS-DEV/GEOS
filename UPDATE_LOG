@@ -1,5 +1,14 @@
 
 
+Wed Aug 23 07:35:20 2017 Randolph R. Settgast
+v4.0.5
+
+General code porting.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/2
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/blt/pull-requests/4
+
+
 Tue Jun 13 13:51:38 2017 Randolph R. Settgast
 v4.0.4
 

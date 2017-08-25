@@ -21,6 +21,7 @@ string const boundaryConditionMananger("BoundaryConditionMananger");
 }
 }
 
+
 class BoundaryConditionManager : public dataRepository::ManagedGroup
 {
 public:
@@ -31,6 +32,17 @@ public:
 
   void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
 
+  void ApplyInitialConditions( dataRepository::ManagedGroup & domain ) const;
+
+  void ApplyBoundaryCondition( dataRepository::ManagedGroup & object,
+                               std::string const & fieldName,
+                               real64 const time );
+
+//  template< typename ... ARGS>
+//  void ApplyBoundaryCondition( dataRepository::ManagedGroup & object,
+//                               std::string const & fieldName,
+//                               real64 const time,
+//                               ARGS & ... args );
 
   template< typename BCFunctionPtr, typename ... ARGS>
   void ApplyBoundaryCondition( BCFunctionPtr boundaryConditionFunctionPtr,
@@ -45,9 +57,40 @@ public:
                                dataRepository::ManagedGroup & object,
                                std::string const & fieldName,
                                real64 const time,
-                               ARGS ... args );
+                               ARGS & ... args );
 };
 
+
+
+
+//
+//template< typename ... ARGS>
+//void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGroup & object,
+//                                                       std::string const & fieldName,
+//                                                       real64 const time,
+//                                                       ARGS & ... args )
+//{
+//  dataRepository::ManagedGroup const & sets = object.GetGroup(dataRepository::keys::sets);
+//
+//  // iterate over all boundary conditions.
+//  forSubGroups<BoundaryConditionBase>( [&]( BoundaryConditionBase & bc ) -> void
+//  {
+//    if( time >= bc.GetStartTime() && time < bc.GetEndTime() && ( bc.GetFieldName()==fieldName) )
+//    {
+//      string_array setNames = bc.GetSetNames();
+//      for( auto & setName : setNames )
+//      {
+//        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets.getWrapperPtr<lSet>(setName);
+//        if( setWrapper != nullptr )
+//        {
+//          lSet const & set = setWrapper->reference();
+//          bc.ApplyBounaryConditionDefaultMethod(set,time,args...);
+//        }
+//      }
+//    }
+//  });
+//}
+//
 
 template< typename BCFunctionPtr, typename ... ARGS>
 void BoundaryConditionManager::ApplyBoundaryCondition( BCFunctionPtr boundaryConditionFunctionPtr,
@@ -78,38 +121,39 @@ void BoundaryConditionManager::ApplyBoundaryCondition( BCFunctionPtr boundaryCon
 }
 
 
+
+
 template< typename Solver, typename BCFunctionPtr, typename ... ARGS>
 void BoundaryConditionManager::ApplyBoundaryCondition( Solver* solverPtr,
                                                        BCFunctionPtr boundaryConditionFunctionPtr,
                                                        dataRepository::ManagedGroup & object,
                                                        std::string const & fieldName,
                                                        real64 const time,
-                                                       ARGS... args )
+                                                       ARGS & ... args )
 {
-  dataRepository::ManagedGroup const & sets = object.GetGroup("Sets");
+  dataRepository::ManagedGroup const & sets = object.GetGroup(dataRepository::keys::sets);
 
   // iterate over all boundary conditions.
-  forSubGroups( [&]( BoundaryConditionBase & bc ) -> void
+  forSubGroups<BoundaryConditionBase>( [&]( BoundaryConditionBase const & bc ) -> void
   {
     if( time >= bc.GetStartTime() && time < bc.GetEndTime() && ( bc.GetFieldName()==fieldName) )
     {
-      for(localIndex i =0; i < bc.m_setNames.size(); ++i)
+      string_array setNames = bc.GetSetNames();
+      for( auto & setName : setNames )
       {
-        int findSet = 1;
-
-        string_array setNames = bc.GetSetNames();
-        for( auto & setName : setNames )
+        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets.getWrapperPtr<lSet>(setName);
+        if( setWrapper != nullptr )
         {
-          lSet const * const set = object.hasGroup(setName);
-          if( set != nullptr )
-          {
-            (solverPtr->*boundaryConditionFunctionPtr)(object,bc,*set,time,args...);
-          }
+          lSet const & set = setWrapper->reference();
+          (solverPtr->*boundaryConditionFunctionPtr)(object,&bc,set,time,args...);
         }
       }
     }
   });
 }
+
+
+
 
 
 

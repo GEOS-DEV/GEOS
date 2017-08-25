@@ -10,9 +10,9 @@
 
 #include "common/DataTypes.hpp"
 #include "pugixml.hpp"
-#include <vector>
 //#include <string>
 #include <sstream>
+#include "math/TensorT/TensorT.h"
 
 namespace cxx_utilities
 {
@@ -40,8 +40,10 @@ public:
   template< typename T >
   static void as_type( std::vector<T> & target, std::string value, std::string defValue );
 
-  template< typename T >
-  static T as_type( xmlNode const & node, std::string const name, T defValue );
+//  template< typename T >
+//  static T as_type( xmlNode const & node, std::string const name, T defValue );
+
+  static R1Tensor as_type( xmlNode const & node, std::string const name, R1Tensor defValue );
 
   static void ReadAttributeAsType( dataRepository::ManagedGroup & group,
                                    cxx_utilities::DocumentationNode const & subDocNode,
@@ -71,19 +73,24 @@ void xmlWrapper::as_type( std::vector<T> & target, std::string inputValue, std::
   }
 }
 
-template< typename T >
-T xmlWrapper::as_type( xmlNode const & node, std::string const name, T defValue )
-{
-  T rval = defValue;
-  pugi::xml_attribute att = node.attribute( name.c_str() );
 
-  if( !att.empty() )
-  {
+//
+//template< typename T >
+//T xmlWrapper::as_type( xmlNode const & node, std::string const name, T defValue )
+//{
+//  T rval = defValue;
+//  pugi::xml_attribute att = node.attribute( name.c_str() );
+//
+//  if( !att.empty() )
+//  {
+//
+//  }
+//
+//  return rval;
+//}
 
-  }
 
-  return rval;
-}
+
 
 
 } /* namespace geosx */

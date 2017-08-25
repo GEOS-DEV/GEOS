@@ -1,0 +1,19 @@
+#!/usr/gapps/GEOS/python/anaconda2/bin/python
+from lxml import etree as ElementTree
+import sys
+
+if (len(sys.argv) != 3):
+  print('Usage: validate_xml input.xml schema.xsd')
+  quit()
+
+print('Validating xml with schema...')
+ofile = ElementTree.parse(sys.argv[1])
+sfile = ElementTree.XMLSchema(ElementTree.parse(sys.argv[2]))
+
+if (sfile.validate(ofile)):
+  print('XML is valid!')
+else:
+  print('XML Validation Failed!\nErrors:')
+  for err in sfile.error_log:
+    print('   %i: %s' % (err.line, err.message))
+

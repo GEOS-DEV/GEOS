@@ -6,6 +6,7 @@
 #include "common/DataTypes.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/TableManager.hpp"
+#include "managers/Functions/NewFunctionManager.hpp"
 
 namespace geosx
 {
@@ -16,13 +17,16 @@ namespace dataRepository
 namespace keys
 {
 string const setNames = "setNames";
+string const elementRegionName = "elementRegionName";
 string const fieldName = "fieldName";
+string const dataType = "dataType";
 string const component("component");
 string const direction("direction");
-string const timeTableName("timeTableName");
 string const bcApplicationTableName("bcApplicationTableName");
 string const scale("scale");
 string const functionName("functionName");
+string const initialCondition("initialCondition");
+
 }
 }
 
@@ -37,14 +41,47 @@ public:
 
   virtual ~BoundaryConditionBase();
 
+
+
   void FillDocumentationNode( dataRepository::ManagedGroup * const ) override;
 
   void ReadXML_PostProcess() override final;
 
-  real64 GetValue( realT time ) const;
 
 
-  virtual const string& GetFieldName()
+
+//  real64 GetValue( realT time ) const;
+
+
+//  template< typename T >
+//  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+//                                           real64 const time,
+//                                           array<R1Tensor> const & X,
+//                                           array<T> & field );
+
+//  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+//                                           real64 const time,
+//                                           array<R1Tensor> const & X,
+//                                           array<R1Tensor> & field );
+
+  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+                                           real64 const time,
+                                           dataRepository::ManagedGroup & dataGroup,
+                                           string const & fieldname ) const;
+
+
+
+  string const & GetFunctionName() const
+  {
+    return m_functionName;
+  }
+
+  virtual const string& GetElementRegion() const
+  {
+    return m_elementRegionName;
+  }
+
+  virtual const string& GetFieldName() const
   {
     return m_fieldName;
   }
@@ -59,12 +96,12 @@ public:
     return m_direction;
   }
 
-  real64 GetStartTime()
+  real64 GetStartTime() const
   {
     return -1;
   }
 
-  real64 GetEndTime()
+  real64 GetEndTime() const
   {
     return 1.0e9;
   }
@@ -74,41 +111,83 @@ public:
     return m_setNames;
   }
 
+  int initialCondition() const
+  {
+    return m_initialCondition;
+  }
 
 protected:
 
   string_array m_setNames; // sets the boundary condition is applied to
 
+  string m_elementRegionName;
+
   string m_fieldName;    // the name of the field the boundary condition is applied to or a description of the boundary condition.
 
+
+  string m_dataType;
   // TODO get rid of components. Replace with direction only.
+
   int m_component;       // the component the boundary condition acts on (-ve indicates that direction should be used).
   R1Tensor m_direction;  // the direction the boundary condition acts in.
 
+  int m_initialCondition;
 
+  string m_functionName;
+  string m_bcApplicationFunctionName;
 
-  string m_timeTableName;
-  string m_bcApplicationTableName;
   real64 m_scale;
 
 
-
-  std::string m_functionName;
-//  localIndex m_nVars; // number of variables
-//
-//  bool m_isConstantInSpace;
-//  bool m_isConstantInTime;
-//
-//
-//  std::vector<FieldTypeMultiPtr> m_fieldPtrs;
-//  Array1dT<FieldType> m_variableTypes;
-//  sArray1d m_variableNames;
-//  std::vector<realT> m_x;  // function input vector
-//
-  Function* m_function;
-
-
 };
+
+
+//template< typename T >
+//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
+//                                                                real64 const time,
+//                                                                array<R1Tensor> const & X,
+//                                                                array<T> & field )
+//{
+//
+//  string const spaceFunctionName = getData<string>(dataRepository::keys::spaceFunctionName);
+//  string const timeFunctionName = getData<string>(dataRepository::keys::functionName);
+//  NewFunctionManager & functionManager = NewFunctionManager::Instance();
+//
+//  FunctionBase const * const spaceFunction = functionManager.GetGroupPtr<FunctionBase>(spaceFunctionName);
+//  FunctionBase const * const timeFunction  = functionManager.GetGroupPtr<FunctionBase>(timeFunctionName);
+//
+//  if( timeFunction!=nullptr && spaceFunction!=nullptr )
+//  {
+////    real64 const tfactor = m_scale * ( timeFunction->Evaluate( &time ) );
+////    for( auto a : set )
+////    {
+////      field[a][component] = tfactor * ( spaceFunction->Evaluate( &(X[a]) ) );
+////    }
+//  }
+//  else if( timeFunction!=nullptr )
+//  {
+//    real64 const factor = m_scale * ( timeFunction->Evaluate( &time ) );
+//    for( auto a : set )
+//    {
+//      field[a] = factor;
+//    }
+//  }
+//  else if( spaceFunction!=nullptr )
+//  {
+//    for( auto a : set )
+//    {
+//      field[a] = m_scale * ( spaceFunction->Evaluate( X[a].Data() ) );
+//    }
+//
+//  }
+//  else
+//  {
+//    for( auto a : set )
+//    {
+//      field[a] = m_scale;
+//    }
+//  }
+//}
 
 
 

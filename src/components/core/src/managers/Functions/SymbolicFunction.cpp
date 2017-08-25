@@ -40,6 +40,7 @@ SymbolicFunction::~SymbolicFunction()
 
 void SymbolicFunction::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
+  FunctionBase::FillDocumentationNode(domain);
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
   docNode->setName(this->CatalogName());
@@ -97,6 +98,7 @@ void SymbolicFunction::InitializeFunction()
     throw std::invalid_argument("JIT Compiler Error");
   }
 }
+
 
 REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, std::string const &, ManagedGroup * const )
 

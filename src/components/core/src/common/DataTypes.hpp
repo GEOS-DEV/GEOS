@@ -265,6 +265,38 @@ public:
     return type_names.at(name);
   }
 
+  static TypeIDs typeID( std::type_index typeIndex )
+  {
+    const std::unordered_map<std::type_index,TypeIDs> type_names =
+    {
+      { std::type_index(typeid(int32)),        TypeIDs::int32_id },
+      { std::type_index(typeid(uint32)),       TypeIDs::uint32_id },
+      { std::type_index(typeid(int64)),        TypeIDs::int64_id },
+      { std::type_index(typeid(uint64)),       TypeIDs::uint64_id },
+      { std::type_index(typeid(real32)),       TypeIDs::real32_id },
+      { std::type_index(typeid(real64)),       TypeIDs::real64_id },
+      { std::type_index(typeid(R1Tensor)),     TypeIDs::r1Tensor_id },
+      { std::type_index(typeid(R2Tensor)),     TypeIDs::r2Tensor_id },
+      { std::type_index(typeid(R2SymTensor)),  TypeIDs::r2SymTensor_id },
+      { std::type_index(typeid(int32_array)),  TypeIDs::int32_array_id },
+      { std::type_index(typeid(uint32_array)), TypeIDs::uint32_array_id },
+      { std::type_index(typeid(int64_array)),  TypeIDs::int64_array_id },
+      { std::type_index(typeid(uint64_array)), TypeIDs::uint64_array_id },
+      { std::type_index(typeid(real32_array)), TypeIDs::real32_array_id },
+      { std::type_index(typeid(real64_array)), TypeIDs::real64_array_id },
+      { std::type_index(typeid(r1_array)),     TypeIDs::r1_array_id },
+      { std::type_index(typeid(r2_array)),     TypeIDs::r2_array_id },
+      { std::type_index(typeid(r2Sym_array)),  TypeIDs::r2Sym_array_id },
+      { std::type_index(typeid(std_size_t)),   TypeIDs::std_size_t_id },
+      { std::type_index(typeid(string)),       TypeIDs::string_id },
+      { std::type_index(typeid(string_array)), TypeIDs::string_array_id },
+      { std::type_index(typeid(mapPair)),      TypeIDs::mapPair_id },
+      { std::type_index(typeid(mapPair_array)),TypeIDs::mapPair_array_id }
+    };
+    return type_names.at(typeIndex);
+  }
+
+
 
   // Matching regex for data types in xml
   class typeRegex
@@ -311,6 +343,7 @@ public:
     std::unordered_map<std::string, std::string>::const_iterator begin() const {return regexMap.begin();}
     std::unordered_map<std::string, std::string>::const_iterator end() const {return regexMap.end();}
   };
+
 
 
   template< typename LAMBDA >
@@ -404,6 +437,68 @@ public:
       return lambda( string("") );
       break;
     }
+    default:
+    {
+      std::cout<<LOCATION<<std::endl;
+      assert( false );
+    }
+    }
+  }
+
+
+
+  template< typename LAMBDA >
+  static auto ApplyArrayTypeLambda1( const TypeIDs type,
+                                         LAMBDA lambda )
+  {
+    switch( type )
+    {
+    case ( TypeIDs::int32_array_id ):
+    {
+      return lambda( int32_array(1) );
+      break;
+    }
+    case ( TypeIDs::uint32_array_id ):
+    {
+      return lambda( uint32_array(1) );
+      break;
+    }
+    case ( TypeIDs::int64_array_id ):
+    {
+      return lambda( int64_array(1) );
+      break;
+    }
+    case ( TypeIDs::uint64_array_id ):
+    {
+      return lambda( uint64_array(1) );
+      break;
+    }
+    case ( TypeIDs::real32_array_id ):
+    {
+      return lambda( real32_array(1) );
+      break;
+    }
+    case ( TypeIDs::real64_array_id ):
+    {
+      return lambda( real64_array(1) );
+      break;
+    }
+    case ( TypeIDs::r1_array_id ):
+    {
+      return lambda( r1_array(1) );
+      break;
+    }
+    case ( TypeIDs::r2_array_id ):
+    {
+      return lambda( r2_array(1) );
+      break;
+    }
+    case ( TypeIDs::r2Sym_array_id ):
+    {
+      return lambda( r2Sym_array(1) );
+      break;
+    }
+
     default:
     {
       std::cout<<LOCATION<<std::endl;
@@ -773,7 +868,19 @@ public:
     }
   }
 
+  inline static void equate( R1Tensor & lhs, int32 const component, real64 const & rhs )
+  {
+    lhs[component] = rhs;
+  }
+
+  template< typename TLHS, typename TRHS >
+  inline static void equate( TLHS & lhs, int32 const component, TRHS const & rhs )
+  {
+    lhs = rhs;
+  }
+
 };
+
 
 namespace xmlwrapper
 {

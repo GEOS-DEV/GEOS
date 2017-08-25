@@ -71,7 +71,7 @@ def main(platform, build ,local, dryRun=False):
             execute("cd src/thirdparty && chairajabuild",dryRun)
         if build:
             execute("scripts/config-build.py -hc host-configs/%s-%s.cmake" % (platform,host),dryRun)
-        cmd = "make -j4" if build else "make -j4 test"
+        cmd = "make " if build else "make  test"
         execute("cd build-%s-%s* && %s" % (platform,host,cmd),dryRun)
 
 

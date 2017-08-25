@@ -15,6 +15,7 @@ set(geosx_headers
     managers/Functions/FunctionBase.hpp
     managers/Functions/SymbolicFunction.hpp
     managers/Functions/TableFunction.hpp
+    managers/Functions/CompositeFunction.hpp
     managers/Functions/NewFunctionManager.hpp
     managers/ObjectManagerBase.hpp
     managers/ProblemManager.hpp
@@ -40,6 +41,7 @@ set(geosx_core_sources
     managers/Functions/FunctionBase.cpp
     managers/Functions/SymbolicFunction.cpp
     managers/Functions/TableFunction.cpp
+    managers/Functions/CompositeFunction.cpp
     managers/Functions/NewFunctionManager.cpp
     managers/ObjectManagerBase.cpp
     managers/ProblemManager.cpp
