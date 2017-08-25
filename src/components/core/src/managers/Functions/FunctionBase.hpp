@@ -96,7 +96,7 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
         using varType = decltype(type);
         dataRepository::ViewWrapper<varType> const & view = dynamic_cast< dataRepository::ViewWrapper<varType> const & >(vwb);
 
-        input_ptrs[varIndex] = reinterpret_cast<double const*>(view.data_ptr());
+        input_ptrs[varIndex] = reinterpret_cast<double const*>(view.dataPtr());
         varSize[varIndex] = sizeof(varType) / sizeof(double);
       });
     }
