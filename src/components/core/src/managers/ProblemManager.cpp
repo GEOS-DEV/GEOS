@@ -96,7 +96,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   ObjectManagerBase::FillDocumentationNode( group );
   docNode->setName("Problem");
   docNode->setSchemaType("RootNode");
-  docNode->getChildNode("name")->setVerbosity(2);
+//  docNode->getChildNode("name")->setVerbosity(2);
 
   // Command line documentation
   dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
@@ -226,7 +226,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   cxx_utilities::DocumentationNode * const meshDocNode = meshGenerators.getDocumentationNode();
   meshDocNode->setName("Mesh");
   meshDocNode->setShortDescription("Mesh Generators");
-  meshDocNode->getChildNode("name")->setVerbosity(2);
+//  meshDocNode->getChildNode("name")->setVerbosity(2);
 }
 
 void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
