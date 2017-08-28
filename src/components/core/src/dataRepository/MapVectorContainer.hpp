@@ -15,7 +15,7 @@ template< typename T, typename T2=T*, typename KEY_TYPE=std::string, typename IN
 class MapVectorContainer
 {
 public:
-  using MapType = std::unordered_map<KEY_TYPE, INDEX_TYPE >;
+  using LookupMapType = std::unordered_map<KEY_TYPE, INDEX_TYPE >;
 
 //  template< typename U=T2,
 //            bool isUniquePtr = std::is_same< U, std::unique_ptr<T> >::value >
@@ -75,7 +75,7 @@ public:
 
   T const * operator[]( KEY_TYPE const & keyName ) const
   {
-    typename MapType::const_iterator iter = m_keyLookup.find(keyName);
+    typename LookupMapType::const_iterator iter = m_keyLookup.find(keyName);
     return ( iter!=m_keyLookup.end() ? this->operator[]( iter->second ) : nullptr );
   }
 
@@ -109,7 +109,7 @@ public:
 
   inline INDEX_TYPE getIndex( KEY_TYPE const & keyName ) const
   {
-    typename MapType::const_iterator iter = m_keyLookup.find(keyName);
+    typename LookupMapType::const_iterator iter = m_keyLookup.find(keyName);
     return ( iter!=m_keyLookup.end() ? iter->second : -1 );
   }
 
@@ -122,7 +122,7 @@ public:
 
   void erase( KEY_TYPE const & keyName )
   {
-    typename MapType::const_iterator iter = m_keyLookup.find(keyName);
+    typename LookupMapType::const_iterator iter = m_keyLookup.find(keyName);
     if( iter!=m_keyLookup.end() )
     {
       m_objects[iter->second] = nullptr;
@@ -140,7 +140,7 @@ public:
     return m_objects.size();
   }
 
-  std::vector<T *> & objects()
+  std::vector<T2> & objects()
   {
     return m_objects;
   }
@@ -155,7 +155,7 @@ public:
     return rval;
   }
 
-  MapType const & keys() const
+  LookupMapType const & keys() const
   {
     return m_keyLookup;
   }
@@ -179,7 +179,7 @@ public:
   std::map<KEY_TYPE,T*> map()
   {
     std::map<KEY_TYPE,T*> rval;
-    typename MapType::iterator keyIter = m_keyLookup.begin();
+    typename LookupMapType::iterator keyIter = m_keyLookup.begin();
     typename std::vector<T2>::iterator objIter = m_objects.begin();
 
     for(  ; keyIter!=m_keyLookup.end() ; ++keyIter, ++objIter )
@@ -192,30 +192,208 @@ public:
   std::map<KEY_TYPE,T const*> map() const
   {
     std::map<KEY_TYPE,T const*> rval;
-    typename MapType::iterator keyIter = m_keyLookup.begin();
+    typename LookupMapType::iterator keyIter = m_keyLookup.begin();
     typename std::vector<T2>::const_iterator objIter = m_objects.begin();
 
     for(  ; keyIter!=m_keyLookup.end() ; ++keyIter, ++objIter )
     {
       rval[keyIter->first] = &(*objIter);
     }
+
+    std::map<string,int>::iterator iter;
+    iter->first;
+    (*iter).first;
     return rval;
+  }
+
+
+  struct iterator
+  {
+    typedef std::pair<KEY_TYPE,T *>  value_type;
+    typedef std::pair<KEY_TYPE,T *> & reference;
+    typedef std::pair<KEY_TYPE,T *> * pointer;
+
+    iterator( typename LookupMapType::iterator lookupIter,
+              std::vector<T2> * objectPtr ):
+      m_lookupIter(lookupIter),
+      m_objectPtr(objectPtr),
+      m_pair({m_lookupIter->first, &(*((*m_objectPtr)[m_lookupIter->second]))})
+    {
+
+    }
+
+    iterator( iterator const & source ):
+      m_lookupIter(source.m_lookupIter),
+      m_objectPtr(source.m_objectPtr),
+      m_pair(source.m_pair)
+    {}
+
+    iterator( iterator && source ):
+      m_lookupIter(std::move(source.m_lookupIter)),
+      m_objectPtr(std::move(source.m_objectPtr)),
+      m_pair(std::move(source.m_pair))
+    {}
+
+    iterator & operator=( iterator const & source )
+    {
+      m_lookupIter = source.m_lookupIter;
+      m_objectPtr = source.m_objectPtr;
+      m_pair = source.m_pair;
+
+      return *this;
+    }
+
+    iterator & operator=( iterator && source )
+    {
+      m_lookupIter = std::move(source.m_lookupIter);
+      m_objectPtr = std::move(source.m_objectPtr);
+      m_pair = std::move(source.m_pair);
+      return *this;
+    }
+
+    reference operator*()
+    {
+      return m_pair;
+    }
+
+    pointer operator->()
+    {
+      return m_pair;
+    }
+
+    iterator & operator++()
+    {
+      do
+      {
+        ++m_lookupIter;
+      } while( ((*m_objectPtr)[m_lookupIter->second])==nullptr );
+      m_pair.first = m_lookupIter->first;
+      m_pair.second = &(*((*m_objectPtr)[m_lookupIter->second]));
+
+      return *this;
+    }
+
+    bool
+    operator==(const iterator& rhs) const _GLIBCXX_NOEXCEPT
+    { return m_lookupIter == rhs.m_lookupIter; }
+
+    bool
+    operator!=(const iterator& rhs) const _GLIBCXX_NOEXCEPT
+    { return m_lookupIter != rhs.m_lookupIter; }
+
+    typename LookupMapType::iterator m_lookupIter;
+    std::vector<T2> const *  m_objectPtr;
+    std::pair<KEY_TYPE,T *> m_pair;
+  };
+
+  struct const_iterator
+  {
+    typedef std::pair<KEY_TYPE,T const *>  value_type;
+    typedef std::pair<KEY_TYPE,T const *> const & reference;
+    typedef std::pair<KEY_TYPE,T const *> const * pointer;
+
+    const_iterator( typename LookupMapType::const_iterator lookupIter,
+                    std::vector<T2> const * objectPtr ):
+      m_lookupIter(lookupIter),
+      m_objectPtr(objectPtr),
+      m_pair({m_lookupIter->first, &(*((*m_objectPtr)[m_lookupIter->second]))})
+    {
+
+    }
+
+    const_iterator( iterator const & source ):
+      m_lookupIter(source.m_lookupIter),
+      m_objectPtr(source.m_objectPtr),
+      m_pair(source.m_pair)
+    {}
+
+    const_iterator( iterator && source ):
+      m_lookupIter(std::move(source.m_lookupIter)),
+      m_objectPtr(std::move(source.m_objectPtr)),
+      m_pair(std::move(source.m_pair))
+    {}
+
+    const_iterator & operator=( iterator const & source )
+    {
+      m_lookupIter = source.m_lookupIter;
+      m_objectPtr = source.m_objectPtr;
+      m_pair = source.m_pair;
+
+      return *this;
+    }
+
+    const_iterator & operator=( iterator && source )
+    {
+      m_lookupIter = std::move(source.m_lookupIter);
+      m_objectPtr = std::move(source.m_objectPtr);
+      m_pair = std::move(source.m_pair);
+      return *this;
+    }
+
+    reference operator*()
+    {
+      return m_pair;
+    }
+
+    pointer operator->()
+    {
+      return m_pair;
+    }
+
+    const_iterator & operator++()
+    {
+      do
+      {
+        ++m_lookupIter;
+      } while( ((*m_objectPtr)[m_lookupIter->second])==nullptr );
+      m_pair.first = m_lookupIter->first;
+      m_pair.second = &(*((*m_objectPtr)[m_lookupIter->second]));
+
+      return *this;
+    }
+
+    bool
+    operator==(const const_iterator& rhs) const _GLIBCXX_NOEXCEPT
+    { return m_lookupIter == rhs.m_lookupIter; }
+
+    bool
+    operator!=(const const_iterator& rhs) const _GLIBCXX_NOEXCEPT
+    { return m_lookupIter != rhs.m_lookupIter; }
+
+    typename LookupMapType::const_iterator m_lookupIter;
+    std::vector<T2> const *  m_objectPtr;
+    std::pair<KEY_TYPE,T *> m_pair;
+  };
+
+  iterator begin()
+  { return iterator( m_keyLookup.begin(), &m_objects); }
+
+  const_iterator begin() const
+  { return const_iterator( m_keyLookup.begin(), &m_objects); }
+
+  iterator end()
+  {
+    return iterator( m_keyLookup.end(), &m_objects);
+  }
+
+  const_iterator end() const
+  {
+    return const_iterator( m_keyLookup.end(), &m_objects);
   }
 
 private:
   std::vector<T2> m_objects;
 
-  MapType m_keyLookup;
+  LookupMapType m_keyLookup;
 
   std::vector<KEY_TYPE> m_indexToKeys;
-
-
+  std::map<string,int>::iterator junk;
 };
 
 template< typename T, typename T2, typename KEY_TYPE, typename INDEX_TYPE >
 T * MapVectorContainer<T,T2,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName , T2 source )
 {
-  typename MapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
+  typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
 
   INDEX_TYPE key = -1;
   // if the key was not found, make DataObject<T> and insert

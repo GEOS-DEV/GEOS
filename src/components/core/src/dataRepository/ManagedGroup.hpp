@@ -469,7 +469,7 @@ public:
     return m_parent;
   }
 
-  std::vector< std::unique_ptr<ViewWrapperBase> > const & wrappers() const
+  std::vector< ViewWrapperBase const * > const & wrappers() const
   {
     return m_wrappers.objects();
   }

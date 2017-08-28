@@ -284,9 +284,9 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
 /* Add pointers to ViewWrapper data to the sidre tree. */
 void ManagedGroup::registerSubViews() 
 {
-  for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
+  for (auto & wrapper : m_wrappers)
   {
-    wrapper->registerDataPtr();
+    wrapper.second->registerDataPtr();
   }
 
   forSubGroups([](ManagedGroup & subGroup) -> void 
@@ -298,9 +298,9 @@ void ManagedGroup::registerSubViews()
 /* Remove pointers to ViewWrapper data from the sidre tree. */
 void ManagedGroup::unregisterSubViews()
 {
-  for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
+  for ( auto & wrapper : m_wrappers)
   {
-    wrapper->unregisterDataPtr();
+    wrapper.second->unregisterDataPtr();
   }
 
   forSubGroups([](ManagedGroup & subGroup) -> void 
@@ -335,9 +335,9 @@ void ManagedGroup::loadSizeViews()
 /* Resize views to hold data from sidre. */
 void ManagedGroup::resizeSubViews() 
 {
-  for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
+  for ( auto & wrapper : m_wrappers)
   {
-    wrapper->resizeFromSidre();
+    wrapper.second->resizeFromSidre();
   }
 
   forSubGroups([](ManagedGroup & subGroup) -> void 
@@ -349,9 +349,9 @@ void ManagedGroup::resizeSubViews()
 
 void ManagedGroup::storeSizedFromParent()
 {
-  for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
+  for ( auto & wrapper : m_wrappers)
   {
-    wrapper->storeSizedFromParent();
+    wrapper.second->storeSizedFromParent();
   }
 
   forSubGroups([](ManagedGroup & subGroup) -> void 
@@ -362,9 +362,9 @@ void ManagedGroup::storeSizedFromParent()
 
 void ManagedGroup::loadSizedFromParent()
 {
-  for (std::unique_ptr<ViewWrapperBase> & wrapper : m_wrappers) 
+  for ( auto & wrapper : m_wrappers)
   {
-    wrapper->loadSizedFromParent();
+    wrapper.second->loadSizedFromParent();
   }
   
 
