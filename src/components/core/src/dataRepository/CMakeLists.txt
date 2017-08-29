@@ -7,7 +7,7 @@ set(geosx_headers
     dataRepository/DataKey.hpp
     dataRepository/SidreWrapper.hpp
     dataRepository/ManagedGroup.hpp
-    dataRepository/MapVectorContainer.hpp    
+    dataRepository/MappedVector.hpp    
     dataRepository/ViewWrapper.hpp
     dataRepository/ViewWrapperBase.hpp
     PARENT_SCOPE )

@@ -277,7 +277,7 @@ public:
   /// writes out fields in a data member map
   template< typename OUTPUTTYPE >
   void WriteViewWrappersToSilo( const std::string& meshname,
-                                const std::vector< std::unique_ptr<dataRepository::ViewWrapperBase> > & wrappers,
+                                const std::vector< dataRepository::ViewWrapperBase const * > & wrappers,
                                 const int centering,
                                 const int cycleNum,
                                 const realT problemTime,
@@ -610,7 +610,7 @@ namespace SiloFileUtilities
  */
 template< typename OUTPUTTYPE >
 void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
-                                    const std::vector< std::unique_ptr<dataRepository::ViewWrapperBase> > & wrappers,
+                                    const std::vector< dataRepository::ViewWrapperBase const * > & wrappers,
                                     const int centering,
                                     const int cycleNum,
                                     const realT problemTime,
@@ -632,17 +632,17 @@ void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
     // TODO This is wrong. problem with uniqueness
     if( typeID==typeid(real64_array) )
     {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<real64_array> & >( *wrapper ) ;
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<real64_array> const & >( *wrapper ) ;
       this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
     }
     if( typeID==typeid(r1_array) )
     {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> & >( *wrapper ) ;
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper ) ;
       this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
     }
     if( typeID==typeid(int32_array) )
     {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<int32_array> & >( *wrapper ) ;
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<int32_array> const & >( *wrapper ) ;
       this->WriteDataField<int32>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
     }
 

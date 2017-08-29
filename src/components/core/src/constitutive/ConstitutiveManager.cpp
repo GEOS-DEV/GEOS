@@ -65,8 +65,8 @@ ConstitutiveManager::constitutiveMaps & ConstitutiveManager::GetMaps( int32 cons
     map1.clear();
     for( auto & material : this->GetSubGroups() )
     {
-//      map0.push_back( material.second );
-//      map1.insert({material.first,map0.size()-1});
+      map0.push_back( material.second );
+      map1.insert({material.first,map0.size()-1});
     }
   }
 

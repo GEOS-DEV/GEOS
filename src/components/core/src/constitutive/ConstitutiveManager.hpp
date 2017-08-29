@@ -44,7 +44,7 @@ public:
 
   ~ConstitutiveManager();
 
-  using constitutiveMaps = std::pair< array<ManagedGroup *> , map<string,int32> > ;
+  using constitutiveMaps = std::pair< array<ManagedGroup const *> , map<string,int32> > ;
   constitutiveMaps & GetMaps( int32 const reinit ) const;
 
 
@@ -73,9 +73,9 @@ array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > ConstitutiveManage
 //    rval.push_back( std::move(temp) );
 //  });
 
-  for( auto& subGroupIter : this->GetSubGroups() )
+  for( auto& subGroupIter : this->GetSubGroups().values() )
   {
-    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp( {subGroupIter.second->GetGroup(dataRepository::keys::parameterData).getData<T>(name)} );
+    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp( {subGroupIter->GetGroup(dataRepository::keys::parameterData).getData<T>(name)} );
     rval.push_back( std::move(temp) );
   }
   return rval;

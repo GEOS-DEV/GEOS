@@ -140,10 +140,9 @@ public:
   {
     ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
-    for( auto & region : elementRegions.GetSubGroups() )
+    for( auto & region : elementRegions.GetSubGroups().values() )
     {
-      ElementRegion & elementRegion = elementRegions.GetGroup<ElementRegion>(region.first);
-      ManagedGroup & cellBlockSubRegions = elementRegion.GetGroup(dataRepository::keys::cellBlockSubRegions);
+      ManagedGroup & cellBlockSubRegions = region->GetGroup(dataRepository::keys::cellBlockSubRegions);
       for( auto & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
       {
         CellBlockSubRegion & cellBlock = cellBlockSubRegions.GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
@@ -157,10 +156,9 @@ public:
   {
     ManagedGroup const & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
-    for( auto const & region : elementRegions.GetSubGroups() )
+    for( auto const & region : elementRegions.GetSubGroups().values() )
     {
-      ElementRegion const & elementRegion = elementRegions.GetGroup<ElementRegion>(region.first);
-      ManagedGroup const & cellBlockSubRegions = elementRegion.GetGroup(dataRepository::keys::cellBlockSubRegions);
+      ManagedGroup const & cellBlockSubRegions = region->GetGroup(dataRepository::keys::cellBlockSubRegions);
       for( auto const & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
       {
         CellBlockSubRegion const & cellBlock = cellBlockSubRegions.GetGroup<CellBlockSubRegion>(iterCellBlocks.first);

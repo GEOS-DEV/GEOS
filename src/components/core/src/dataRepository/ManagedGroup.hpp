@@ -18,7 +18,7 @@
 #include "depricated/Common.h"
 #include "DocumentationNode.hpp"
 
-#include "MapVectorContainer.hpp"
+#include "MappedVector.hpp"
 
 #include "DataKey.hpp"
 
@@ -55,8 +55,8 @@ class ManagedGroup
 {
 public:
 //  using subGroupMap = map< string, std::unique_ptr<ManagedGroup> >;
-  using subGroupMap = MapVectorContainer< ManagedGroup, std::unique_ptr<ManagedGroup>, keyType, indexType  >;
-  using viewWrapperMap = MapVectorContainer< ViewWrapperBase, std::unique_ptr<ViewWrapperBase>, keyType, indexType  >;
+  using subGroupMap = MappedVector< ManagedGroup, std::unique_ptr<ManagedGroup>, keyType, indexType  >;
+  using viewWrapperMap = MappedVector< ViewWrapperBase, std::unique_ptr<ViewWrapperBase>, keyType, indexType  >;
   /**
    * @name constructors, destructor, copy, move, assignments
    */
@@ -153,6 +153,27 @@ public:
   }
 
 
+  template< typename T = ManagedGroup >
+  T * GetGroupPtr( DataKey & key )
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T *>( m_subGroups[key] );
+#else
+    return static_cast<T *>( m_subGroups[key] );
+#endif
+  }
+
+  template< typename T = ManagedGroup >
+  T const * GetGroupPtr( DataKey & key ) const
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T const *>( m_subGroups[key] );
+#else
+    return static_cast<T const *>( m_subGroups[key] );
+#endif
+  }
+
+
 
 
   template< typename T = ManagedGroup >
@@ -164,6 +185,13 @@ public:
   { return *(GetGroupPtr<T>(name)); }
 
 
+  template< typename T = ManagedGroup >
+  T& GetGroup( DataKey & key )
+  { return *(GetGroupPtr<T>(key)); }
+
+  template< typename T = ManagedGroup >
+  T const & GetGroup( DataKey & key ) const
+  { return *(GetGroupPtr<T>(key)); }
 
 
 
@@ -180,7 +208,7 @@ public:
   template< typename T = ManagedGroup, typename LAMBDA >
   void forSubGroups( LAMBDA lambda )
   {
-    for( auto& subGroupIter : m_subGroups.objects() )
+    for( auto& subGroupIter : m_subGroups.values() )
     {
 #ifdef USE_DYNAMIC_CASTING
        T & subGroup = dynamic_cast<T &>( *(subGroupIter) );
@@ -194,7 +222,7 @@ public:
   template< typename T = ManagedGroup, typename LAMBDA >
   void forSubGroups( LAMBDA lambda ) const
   {
-    for( auto const & subGroupIter : m_subGroups.objects() )
+    for( auto const & subGroupIter : m_subGroups.values() )
     {
 #ifdef USE_DYNAMIC_CASTING
        T const & subGroup = dynamic_cast<T const &>( *(subGroupIter) );
@@ -469,14 +497,14 @@ public:
     return m_parent;
   }
 
-  std::vector< ViewWrapperBase const * > const & wrappers() const
+  std::vector< ViewWrapperBase const * > const wrappers() const
   {
-    return m_wrappers.objects();
+    return m_wrappers.values();
   }
 
   std::vector< std::unique_ptr<ViewWrapperBase> > & wrappers()
   {
-    return m_wrappers.objects();
+    return m_wrappers.values();
   }
 
 
@@ -573,7 +601,7 @@ template< typename T , typename TBASE >
 ViewWrapper<TBASE>& ManagedGroup::RegisterViewWrapper( std::string const & name, std::size_t * const rkey )
 {
   m_wrappers.insert( name, std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ) );
-  ViewWrapper<T> & rval = getWrapper<TBASE>(name);
+  ViewWrapper<TBASE> & rval = getWrapper<TBASE>(name);
   if( rval.sizedFromParent() == 1 )
   {
     rval.resize(this->size());
