@@ -42,7 +42,7 @@ namespace dataRepository
 
 using keyType = string;
 using indexType = int;
-using DataKey = DataKeyT<keyType,indexType>;
+//using DataKey = DataKeyT<keyType,indexType>;
 
 /**
  * @author Randolph R. Settgast
@@ -154,7 +154,7 @@ public:
 
 
   template< typename T = ManagedGroup >
-  T * GetGroupPtr( DataKey & key )
+  T * GetGroupPtr( subGroupMap::DataKey & key )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T *>( m_subGroups[key] );
@@ -164,7 +164,7 @@ public:
   }
 
   template< typename T = ManagedGroup >
-  T const * GetGroupPtr( DataKey & key ) const
+  T const * GetGroupPtr( subGroupMap::DataKey & key ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const *>( m_subGroups[key] );
@@ -186,11 +186,11 @@ public:
 
 
   template< typename T = ManagedGroup >
-  T& GetGroup( DataKey & key )
+  T& GetGroup( subGroupMap::DataKey & key )
   { return *(GetGroupPtr<T>(key)); }
 
   template< typename T = ManagedGroup >
-  T const & GetGroup( DataKey & key ) const
+  T const & GetGroup( subGroupMap::DataKey & key ) const
   { return *(GetGroupPtr<T>(key)); }
 
 
@@ -208,12 +208,12 @@ public:
   template< typename T = ManagedGroup, typename LAMBDA >
   void forSubGroups( LAMBDA lambda )
   {
-    for( auto& subGroupIter : m_subGroups.values() )
+    for( auto& subGroupIter : m_subGroups )
     {
 #ifdef USE_DYNAMIC_CASTING
-       T & subGroup = dynamic_cast<T &>( *(subGroupIter) );
+       T & subGroup = dynamic_cast<T &>( *(subGroupIter.second) );
 #else
-       T & subGroup = static_cast<T &>( *(subGroupIter) );
+       T & subGroup = static_cast<T &>( *(subGroupIter.second) );
 #endif
        lambda( subGroup );
     }
@@ -222,12 +222,12 @@ public:
   template< typename T = ManagedGroup, typename LAMBDA >
   void forSubGroups( LAMBDA lambda ) const
   {
-    for( auto const & subGroupIter : m_subGroups.values() )
+    for( auto const & subGroupIter : m_subGroups )
     {
 #ifdef USE_DYNAMIC_CASTING
-       T const & subGroup = dynamic_cast<T const &>( *(subGroupIter) );
+       T const & subGroup = dynamic_cast<T const &>( *(subGroupIter.second) );
 #else
-       T const & subGroup = static_cast<T const &>( *(subGroupIter) );
+       T const & subGroup = static_cast<T const &>( *(subGroupIter.second) );
 #endif
        lambda( subGroup );
     }
@@ -326,10 +326,10 @@ public:
   ViewWrapperBase & getWrapperBase( std::string const & name )
   { return *(m_wrappers[name]); }
 
-  ViewWrapperBase const & getWrapperBase( DataKey & dataKey ) const
+  ViewWrapperBase const & getWrapperBase( viewWrapperMap::DataKey & dataKey ) const
   { return *(m_wrappers[dataKey]); }
 
-  ViewWrapperBase & getWrapperBase( DataKey & dataKey )
+  ViewWrapperBase & getWrapperBase( viewWrapperMap::DataKey & dataKey )
   { return *(m_wrappers[dataKey]); }
 
 
@@ -362,7 +362,7 @@ public:
   { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapperPtr<T>( name ) ); }
 
   template< typename T >
-  ViewWrapper<T> const * getWrapperPtr( DataKey & dataKey ) const
+  ViewWrapper<T> const * getWrapperPtr( viewWrapperMap::DataKey & dataKey ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[dataKey]) );
@@ -372,7 +372,7 @@ public:
   }
 
   template< typename T >
-  ViewWrapper<T> * getWrapperPtr( DataKey & dataKey )
+  ViewWrapper<T> * getWrapperPtr( viewWrapperMap::DataKey & dataKey )
   { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapperPtr<T>( dataKey ) ); }
 
 
@@ -396,11 +396,11 @@ public:
   { return *getWrapperPtr<T>(name);  }
 
   template< typename T >
-  ViewWrapper<T> const & getWrapper( DataKey & dataKey ) const
+  ViewWrapper<T> const & getWrapper( viewWrapperMap::DataKey & dataKey ) const
   { return *getWrapperPtr<T>(dataKey);  }
 
   template< typename T >
-  ViewWrapper<T>& getWrapper( DataKey & dataKey )
+  ViewWrapper<T>& getWrapper( viewWrapperMap::DataKey & dataKey )
   { return *getWrapperPtr<T>(dataKey);  }
 
 
@@ -422,11 +422,11 @@ public:
   { return getWrapper<T>( name ).data(); }
 
   template< typename T >
-  typename ViewWrapper<T>::rtype_const getData( DataKey & dataKey ) const
+  typename ViewWrapper<T>::rtype_const getData( viewWrapperMap::DataKey & dataKey ) const
   { return getWrapper<T>( dataKey ).data(); }
 
   template< typename T >
-  typename ViewWrapper<T>::rtype getData( DataKey & dataKey )
+  typename ViewWrapper<T>::rtype getData( viewWrapperMap::DataKey & dataKey )
   { return getWrapper<T>( dataKey ).data(); }
 
 
@@ -448,11 +448,11 @@ public:
   { return getWrapper<T>(name).reference(); }
 
   template< typename T >
-  T const & getReference( DataKey & dataKey ) const
+  T const & getReference( viewWrapperMap::DataKey & dataKey ) const
   { return getWrapper<T>(dataKey).reference(); }
 
   template< typename T >
-  T & getReference( DataKey & dataKey )
+  T & getReference( viewWrapperMap::DataKey & dataKey )
   { return getWrapper<T>(dataKey).reference(); }
 
 
@@ -497,14 +497,14 @@ public:
     return m_parent;
   }
 
-  std::vector< ViewWrapperBase const * > const wrappers() const
+  viewWrapperMap const & wrappers() const
   {
-    return m_wrappers.values();
+    return m_wrappers;
   }
 
-  std::vector< std::unique_ptr<ViewWrapperBase> > & wrappers()
+  viewWrapperMap & wrappers()
   {
-    return m_wrappers.values();
+    return m_wrappers;
   }
 
 
@@ -582,6 +582,9 @@ private:
 
 #endif
 };
+
+using GroupKey = ManagedGroup::subGroupMap::DataKey;
+using ViewKey = ManagedGroup::viewWrapperMap::DataKey;
 
 
 

@@ -146,9 +146,9 @@ void ManagedGroup::resize( int32 const newsize )
 {
   for( auto&& i : this->wrappers() )
   {
-    if( i->sizedFromParent() == 1 )
+    if( i.second->sizedFromParent() == 1 )
     {
-      i->resize(newsize);
+      i.second->resize(newsize);
     }
   }
   m_size = newsize;
@@ -174,18 +174,18 @@ void ManagedGroup::RegisterDocumentationNodes()
     }
   }
 
-  for( auto& subGroupIter : m_subGroups.values() )
+  for( auto& subGroupIter : m_subGroups )
   {
-    subGroupIter->RegisterDocumentationNodes();
+    subGroupIter.second->RegisterDocumentationNodes();
   }
 
 }
 
 void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const rootGroup )
 {
-  for( auto&& subGroup : m_subGroups.values() )
+  for( auto&& subGroup : m_subGroups )
   {
-    subGroup->BuildDataStructure( rootGroup );
+    subGroup.second->BuildDataStructure( rootGroup );
   }
 }
 
@@ -199,9 +199,9 @@ void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const g
 {
   FillDocumentationNode(group);
   RegisterDocumentationNodes();
-  for( auto&& subGroup : m_subGroups.values() )
+  for( auto&& subGroup : m_subGroups )
   {
-    subGroup->SetDocumentationNodes(group);
+    subGroup.second->SetDocumentationNodes(group);
   }
 }
 
@@ -238,12 +238,12 @@ void ManagedGroup::PrintDataHierarchy()
 {
   for( auto& view : this->wrappers() )
   {
-    std::cout<<view->getName()<<", "<<view->get_typeid().name()<<std::endl;
+    std::cout<<view.second->getName()<<", "<<view.second->get_typeid().name()<<std::endl;
   }
 
-  for( auto& group : this->m_subGroups.values() )
+  for( auto& group : this->m_subGroups )
   {
-    group->PrintDataHierarchy();
+    group.second->PrintDataHierarchy();
   }
 }
 
@@ -284,9 +284,9 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
 /* Add pointers to ViewWrapper data to the sidre tree. */
 void ManagedGroup::registerSubViews() 
 {
-  for (auto & wrapper : m_wrappers.values())
+  for (auto & wrapper : m_wrappers)
   {
-    wrapper->registerDataPtr();
+    wrapper.second->registerDataPtr();
   }
 
   forSubGroups([](ManagedGroup & subGroup) -> void 
@@ -298,9 +298,9 @@ void ManagedGroup::registerSubViews()
 /* Remove pointers to ViewWrapper data from the sidre tree. */
 void ManagedGroup::unregisterSubViews()
 {
-  for ( auto & wrapper : m_wrappers.values() )
+  for ( auto & wrapper : m_wrappers )
   {
-    wrapper->unregisterDataPtr();
+    wrapper.second->unregisterDataPtr();
   }
 
   forSubGroups([](ManagedGroup & subGroup) -> void 
@@ -335,9 +335,9 @@ void ManagedGroup::loadSizeViews()
 /* Resize views to hold data from sidre. */
 void ManagedGroup::resizeSubViews() 
 {
-  for ( auto & wrapper : m_wrappers.values() )
+  for ( auto & wrapper : m_wrappers )
   {
-    wrapper->resizeFromSidre();
+    wrapper.second->resizeFromSidre();
   }
 
   forSubGroups([](ManagedGroup & subGroup) -> void 
@@ -349,9 +349,9 @@ void ManagedGroup::resizeSubViews()
 
 void ManagedGroup::storeSizedFromParent()
 {
-  for ( auto & wrapper : m_wrappers.values() )
+  for ( auto & wrapper : m_wrappers )
   {
-    wrapper->storeSizedFromParent();
+    wrapper.second->storeSizedFromParent();
   }
 
   forSubGroups([](ManagedGroup & subGroup) -> void 
@@ -362,9 +362,9 @@ void ManagedGroup::storeSizedFromParent()
 
 void ManagedGroup::loadSizedFromParent()
 {
-  for ( auto & wrapper : m_wrappers.values() )
+  for ( auto & wrapper : m_wrappers )
   {
-    wrapper->loadSizedFromParent();
+    wrapper.second->loadSizedFromParent();
   }
   
 

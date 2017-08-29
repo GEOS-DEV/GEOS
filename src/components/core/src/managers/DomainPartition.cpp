@@ -111,7 +111,7 @@ void DomainPartition::GenerateSets(  )
 
   for( auto & viewWrapper : nodeSets.wrappers() )
   {
-    string name = viewWrapper->getName();
+    string name = viewWrapper.second->getName();
     nodeInSet[name].resize( nodeManager.size() );
     nodeInSet[name] = 0;
     ViewWrapper<lSet> const * const setPtr = nodeSets.getWrapperPtr<lSet>(name);

@@ -277,7 +277,7 @@ public:
   /// writes out fields in a data member map
   template< typename OUTPUTTYPE >
   void WriteViewWrappersToSilo( const std::string& meshname,
-                                const std::vector< dataRepository::ViewWrapperBase const * > & wrappers,
+                                const dataRepository::ManagedGroup::viewWrapperMap & wrappers,
                                 const int centering,
                                 const int cycleNum,
                                 const realT problemTime,
@@ -610,7 +610,7 @@ namespace SiloFileUtilities
  */
 template< typename OUTPUTTYPE >
 void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
-                                    const std::vector< dataRepository::ViewWrapperBase const * > & wrappers,
+                                    const dataRepository::ManagedGroup::viewWrapperMap & wrappers,
                                     const int centering,
                                     const int cycleNum,
                                     const realT problemTime,
@@ -621,9 +621,9 @@ void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
 {
 
   // iterate over all entries in the member map
-  for( auto const & wrapper : wrappers )
+  for( auto const & wrapperIter : wrappers )
   {
-
+    auto const & wrapper = wrapperIter.second;
     // the field name is the key to the map
     const std::string fieldName = wrapper->getName();
 

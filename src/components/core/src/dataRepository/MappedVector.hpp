@@ -11,15 +11,30 @@
 #include "DataKey.hpp"
 #include "SFINAE_Macros.hpp"
 
-template< typename T, typename T2=T*, typename KEY_TYPE=std::string, typename INDEX_TYPE = int >
+template< typename T, typename T_PTR=T*, typename KEY_TYPE=std::string, typename INDEX_TYPE = int >
 class MappedVector
 {
 public:
-  using LookupMapType = std::unordered_map<KEY_TYPE, INDEX_TYPE >;
-  using iterMap = typename std::map<KEY_TYPE, T * >;
-  using const_iterMap = typename std::map<KEY_TYPE, T const * >;
-  using iterator = typename iterMap::iterator;
-  using const_iterator = typename const_iterMap::const_iterator;
+  using key_type      = KEY_TYPE ;
+  using mapped_type   = T_PTR;
+
+  using LookupMapType          = std::unordered_map<KEY_TYPE, INDEX_TYPE >;
+  using value_type             = typename std::pair< KEY_TYPE const, T_PTR >;
+//  using pointer                = typename iterMap::pointer;
+//  using const_pointer          = typename const_iterMap::const_pointer;
+//  using reference              = typename iterMap::reference;
+//  using const_reference        = typename const_iterMap::const_reference;
+//  using size_type              = typename iterMap::size_type;
+
+  using valueContainer         = std::vector<value_type>;
+
+  using iterator               = typename valueContainer::iterator;
+  using const_iterator         = typename valueContainer::const_iterator;
+  using reverse_iterator       = typename valueContainer::reverse_iterator;
+  using const_reverse_iterator = typename valueContainer::const_reverse_iterator;
+
+  using DataKey = DataKeyT<KEY_TYPE,INDEX_TYPE>;
+
 
   MappedVector() = default;
   ~MappedVector() = default;
@@ -30,7 +45,7 @@ public:
   MappedVector & operator=( MappedVector && source ) = default;
 
 
-  T * insert( KEY_TYPE const & keyName, T2 source );
+  T * insert( KEY_TYPE const & keyName, T_PTR source );
 
 
   /**
@@ -46,7 +61,7 @@ public:
    */
   T const * operator[]( INDEX_TYPE index ) const
   {
-    return ( index>-1 && index<static_cast<INDEX_TYPE>( m_objects.size() ) ) ? const_cast<T const *>(&(*m_objects[index])) : nullptr ;
+    return ( index>-1 && index<static_cast<INDEX_TYPE>( m_objects.size() ) ) ? const_cast<T const *>(&(*(m_objects[index].second))) : nullptr ;
   }
 
   /**
@@ -55,7 +70,7 @@ public:
    * @return
    */
   inline T * operator[]( INDEX_TYPE index )
-  { return const_cast<T*>( const_cast< MappedVector<T,T2,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](index) ); }
+  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](index) ); }
 
   /**
    *
@@ -74,7 +89,7 @@ public:
    * @return
    */
   inline T * operator[]( KEY_TYPE const & keyName )
-  { return const_cast<T*>( const_cast< MappedVector<T,T2,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyName) ); }
+  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyName) ); }
 
   /**
    *
@@ -85,7 +100,7 @@ public:
   {
     INDEX_TYPE index = dataKey.Index();
 
-    if( (index==-1) || (m_indexToKeys[index]!=dataKey.Key()) )
+    if( (index==-1) || (m_objects[index].first!=dataKey.Key()) )
     {
       index = getIndex( dataKey.Key() );
       dataKey.setIndex(index);
@@ -100,7 +115,7 @@ public:
    * @return
    */
   inline T * operator[]( DataKeyT<KEY_TYPE,INDEX_TYPE> & dataKey )
-  { return const_cast<T*>( const_cast< MappedVector<T,T2,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](dataKey) ); }
+  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](dataKey) ); }
 
   ///@}
 
@@ -137,19 +152,14 @@ public:
     return m_objects.size();
   }
 
-  std::vector<T2> & values()
+  valueContainer & values()
   {
     return m_objects;
   }
 
-  std::vector<T const *> const values() const
+  valueContainer const & values() const
   {
-    std::vector<T const *> rval(m_objects.size());
-    for( unsigned int a=0 ; a<m_objects.size() ; ++a )
-    {
-      rval[a] = &(*m_objects[a]);
-    }
-    return rval;
+    return m_objects;
   }
 
   LookupMapType const & keys() const
@@ -158,35 +168,29 @@ public:
   }
 
   iterator begin()
-  { return m_mapForIteration.begin(); }
+  { return m_objects.begin(); }
 
   const_iterator begin() const
-  { return m_mapForConstIteration.begin(); }
+  { return m_objects.begin(); }
 
   iterator end()
   {
-    return m_mapForIteration.end();
+    return m_objects.end();
   }
 
   const_iterator end() const
   {
-    return m_mapForConstIteration.end();
+    return m_objects.end();
   }
 
 private:
-  std::vector<T2> m_objects;
+  valueContainer m_objects;
 
   LookupMapType m_keyLookup;
-
-  std::vector<KEY_TYPE> m_indexToKeys;
-
-  iterMap m_mapForIteration;
-  const_iterMap m_mapForConstIteration;
-
 };
 
-template< typename T, typename T2, typename KEY_TYPE, typename INDEX_TYPE >
-T * MappedVector<T,T2,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName , T2 source )
+template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE >
+T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName , T_PTR source )
 {
   typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
 
@@ -194,27 +198,20 @@ T * MappedVector<T,T2,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName , T
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
-    m_objects.push_back( std::move( source ) );
-    m_indexToKeys.push_back( keyName );
+    value_type newEntry = std::make_pair( keyName, std::move( source ) );
+    m_objects.push_back( std::move( newEntry ) );
 
     key = m_objects.size() - 1;
     m_keyLookup.insert( std::make_pair(keyName,key) );
 
-//    std::cout<<&(*m_objects[key])<<std::endl;
-    m_mapForIteration.insert({keyName,&(*(m_objects[key]))});
-    m_mapForConstIteration.insert({keyName,&(*(m_objects[key]))});
   }
   // if key was found, make sure it is empty
   else
   {
     key = iterKeyLookup->second;
-    if( m_objects[key]==nullptr )
+    if( m_objects[key].second==nullptr )
     {
-      m_objects[key] = std::move(source);
-
-      m_mapForIteration.insert({keyName,&(*(m_objects[key]))});
-      m_mapForConstIteration.insert({keyName,&(*(m_objects[key]))});
-
+      m_objects[key].second = std::move( source );
     }
     else
     {
@@ -222,7 +219,7 @@ T * MappedVector<T,T2,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName , T
     }
   }
 
-return m_objects[key].get();
+return &(*(m_objects[key].second));
 }
 
 #endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPVECTORCONTAINER_HPP_ */

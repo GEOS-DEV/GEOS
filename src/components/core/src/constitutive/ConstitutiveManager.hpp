@@ -73,9 +73,9 @@ array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > ConstitutiveManage
 //    rval.push_back( std::move(temp) );
 //  });
 
-  for( auto& subGroupIter : this->GetSubGroups().values() )
+  for( auto& subGroupIter : this->GetSubGroups() )
   {
-    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp( {subGroupIter->GetGroup(dataRepository::keys::parameterData).getData<T>(name)} );
+    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp( {subGroupIter.second->GetGroup(dataRepository::keys::parameterData).getData<T>(name)} );
     rval.push_back( std::move(temp) );
   }
   return rval;

@@ -650,10 +650,10 @@ void ProblemManager::RunSimulation()
 //  {
 //    if (strcmp(subEventDocNode.second.getDataType().c_str(), "ManagedGroup") == 0)
 
-  for( auto& application : this->m_eventManager->GetSubGroups().values() )
+  for( auto& application : this->m_eventManager->GetSubGroups() )
   {
 
-      dataRepository::ManagedGroup& currentApplication = *(application);
+      dataRepository::ManagedGroup& currentApplication = *(application.second);
 
       ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solvers);
       real64& appDt = *(currentApplication.getData<real64>(keys::dt));
