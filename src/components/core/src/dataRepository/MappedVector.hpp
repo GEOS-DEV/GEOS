@@ -20,20 +20,22 @@ public:
 
   using LookupMapType          = std::unordered_map<KEY_TYPE, INDEX_TYPE >;
   using value_type             = typename std::pair< KEY_TYPE const, T_PTR >;
-//  using pointer                = typename iterMap::pointer;
-//  using const_pointer          = typename const_iterMap::const_pointer;
-//  using reference              = typename iterMap::reference;
-//  using const_reference        = typename const_iterMap::const_reference;
-//  using size_type              = typename iterMap::size_type;
-
+  using const_value_type       = typename std::pair< KEY_TYPE const, T const * >;
   using valueContainer         = std::vector<value_type>;
+  using const_valueContainer   = std::vector<const_value_type>;
+  using pointer                = typename valueContainer::pointer;
+  using const_pointer          = typename valueContainer::const_pointer;
+  using reference              = typename valueContainer::reference;
+  using const_reference        = typename valueContainer::const_reference;
+  using size_type              = typename valueContainer::size_type;
+
 
   using iterator               = typename valueContainer::iterator;
-  using const_iterator         = typename valueContainer::const_iterator;
+  using const_iterator         = typename const_valueContainer::const_iterator;
   using reverse_iterator       = typename valueContainer::reverse_iterator;
-  using const_reverse_iterator = typename valueContainer::const_reverse_iterator;
+  using const_reverse_iterator = typename const_valueContainer::const_reverse_iterator;
 
-  using DataKey = DataKeyT<KEY_TYPE,INDEX_TYPE>;
+  using DataKey = DataKeyT<KEY_TYPE const,INDEX_TYPE>;
 
 
   MappedVector() = default;
@@ -59,7 +61,7 @@ public:
    * @param index
    * @return
    */
-  T const * operator[]( INDEX_TYPE index ) const
+  inline T const * operator[]( INDEX_TYPE index ) const
   {
     return ( index>-1 && index<static_cast<INDEX_TYPE>( m_objects.size() ) ) ? const_cast<T const *>(&(*(m_objects[index].second))) : nullptr ;
   }
@@ -77,7 +79,7 @@ public:
    * @param keyName
    * @return
    */
-  T const * operator[]( KEY_TYPE const & keyName ) const
+  inline T const * operator[]( KEY_TYPE const & keyName ) const
   {
     typename LookupMapType::const_iterator iter = m_keyLookup.find(keyName);
     return ( iter!=m_keyLookup.end() ? this->operator[]( iter->second ) : nullptr );
@@ -96,7 +98,7 @@ public:
    * @param dataKey
    * @return
    */
-  inline T const * operator[]( DataKeyT<KEY_TYPE,INDEX_TYPE> & dataKey ) const
+  inline T const * operator[]( DataKey & dataKey ) const
   {
     INDEX_TYPE index = dataKey.Index();
 
@@ -114,10 +116,12 @@ public:
    * @param dataKey
    * @return
    */
-  inline T * operator[]( DataKeyT<KEY_TYPE,INDEX_TYPE> & dataKey )
+  inline T * operator[]( DataKey & dataKey )
   { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](dataKey) ); }
 
   ///@}
+
+
 
   inline INDEX_TYPE getIndex( KEY_TYPE const & keyName ) const
   {
@@ -142,49 +146,51 @@ public:
     return;
   }
 
+  void erase( DataKey & dataKey )
+  {
+    INDEX_TYPE index = dataKey.Index();
+
+    if( (index==-1) || (m_objects[index].first!=dataKey.Key()) )
+    {
+      index = getIndex( dataKey.Key() );
+      dataKey.setIndex(index);
+    }
+    erase( index );
+  }
+
   void clear()
   {
+    m_keyLookup.clear();
     m_objects.clear();
   }
 
   inline INDEX_TYPE size() const
-  {
-    return m_objects.size();
-  }
+  { return m_objects.size(); }
 
-  valueContainer & values()
-  {
-    return m_objects;
-  }
+  inline valueContainer & values()
+  { return m_objects; }
 
-  valueContainer const & values() const
-  {
-    return m_objects;
-  }
+  inline const_valueContainer const & values() const
+  { return this->m_constObjects; }
 
-  LookupMapType const & keys() const
-  {
-    return m_keyLookup;
-  }
+  inline LookupMapType const & keys() const
+  { return m_keyLookup; }
 
   iterator begin()
   { return m_objects.begin(); }
 
   const_iterator begin() const
-  { return m_objects.begin(); }
+  { return m_constObjects.begin(); }
 
   iterator end()
-  {
-    return m_objects.end();
-  }
+  { return m_objects.end(); }
 
   const_iterator end() const
-  {
-    return m_objects.end();
-  }
+  { return m_constObjects.end(); }
 
 private:
   valueContainer m_objects;
+  const_valueContainer m_constObjects;
 
   LookupMapType m_keyLookup;
 };
@@ -200,9 +206,10 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName 
   {
     value_type newEntry = std::make_pair( keyName, std::move( source ) );
     m_objects.push_back( std::move( newEntry ) );
-
     key = m_objects.size() - 1;
+
     m_keyLookup.insert( std::make_pair(keyName,key) );
+    m_constObjects.push_back( std::make_pair( keyName, &(*(m_objects[key].second)) ) );
 
   }
   // if key was found, make sure it is empty
@@ -212,6 +219,7 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName 
     if( m_objects[key].second==nullptr )
     {
       m_objects[key].second = std::move( source );
+      m_constObjects[key].second =  &(*(m_objects[key].second));
     }
     else
     {

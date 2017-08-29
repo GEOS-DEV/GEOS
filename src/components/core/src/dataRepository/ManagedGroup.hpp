@@ -406,27 +406,27 @@ public:
 
 
   template< typename T >
-  typename ViewWrapper<T>::rtype_const getData( size_t const index ) const
+  view_rtype_const<T> getData( size_t const index ) const
   { return getWrapper<T>(index).data(); }
 
   template< typename T >
-  typename ViewWrapper<T>::rtype getData( size_t const index )
+  view_rtype<T> getData( size_t const index )
   { return getWrapper<T>(index).data(); }
 
   template< typename T >
-  typename ViewWrapper<T>::rtype_const getData( std::string const & name ) const
+  view_rtype_const<T> getData( std::string const & name ) const
   { return getWrapper<T>( name ).data(); }
 
   template< typename T >
-  typename ViewWrapper<T>::rtype getData( std::string const & name )
+  view_rtype<T> getData( std::string const & name )
   { return getWrapper<T>( name ).data(); }
 
   template< typename T >
-  typename ViewWrapper<T>::rtype_const getData( viewWrapperMap::DataKey & dataKey ) const
+  view_rtype_const<T> getData( viewWrapperMap::DataKey & dataKey ) const
   { return getWrapper<T>( dataKey ).data(); }
 
   template< typename T >
-  typename ViewWrapper<T>::rtype getData( viewWrapperMap::DataKey & dataKey )
+  view_rtype<T> getData( viewWrapperMap::DataKey & dataKey )
   { return getWrapper<T>( dataKey ).data(); }
 
 
@@ -456,14 +456,14 @@ public:
   { return getWrapper<T>(dataKey).reference(); }
 
 
-  ManagedGroup const * hasGroup( std::string const & name ) const
+  bool hasGroup( std::string const & name ) const
   {
-    return (m_subGroups[name]);
+    return (m_subGroups[name] != nullptr);
   }
 
   bool hasView( std::string const & name ) const
   {
-    return m_wrappers[name];
+    return (m_wrappers[name] != nullptr);
   }
 
   inline string getName() const
