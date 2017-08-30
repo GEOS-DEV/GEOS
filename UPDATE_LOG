@@ -1,5 +1,14 @@
 
 
+Tue Aug 29 20:32:19 2017 Randolph R. Settgast
+v4.0.7
+
+implement a mapped vector to hold subgroups and views. objects are stored in a vector, but there is a hash lookup in a map. also implement a smart key that contains a string and an int. it uses the int to perform the lookup, and verifies the key is correct. If key is incorrect performs the map lookup and resets the int value.
+
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/3
+
+
 Thu Aug 24 17:35:46 2017 Benjamin Curtice Corbett
 v4.0.6
 
