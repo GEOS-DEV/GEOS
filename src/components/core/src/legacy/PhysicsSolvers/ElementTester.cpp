@@ -81,12 +81,12 @@ ElementTester::~ElementTester()
 void ElementTester::ReadXML( TICPP::HierarchicalDataNode* const hdn ) {}
 
 
-void ElementTester::RegisterFields( PhysicalDomainT& domain )
+void ElementTester::RegisterFields( PhysicalDomainT * domain )
 {
 	
-  domain.m_feNodeManager.AddKeyedDataField<FieldInfo::referencePosition>();
-  domain.m_feNodeManager.AddKeyedDataField<FieldInfo::displacement>();
-  domain.m_feNodeManager.AddKeyedDataField<FieldInfo::incrementalDisplacement>();
+  domain->m_feNodeManager.AddKeyedDataField<FieldInfo::referencePosition>();
+  domain->m_feNodeManager.AddKeyedDataField<FieldInfo::displacement>();
+  domain->m_feNodeManager.AddKeyedDataField<FieldInfo::incrementalDisplacement>();
    
 }
 
@@ -97,7 +97,7 @@ void ElementTester::RegisterFields( PhysicalDomainT& domain )
 double ElementTester::TimeStep( const realT& time,
                               const realT& dt,
                               const int cycleNumber,
-                              PhysicalDomainT& domain,
+                              PhysicalDomainT * domain,
                               const sArray1d& namesOfSolverRegions,
                               SpatialPartition& partition,
                               FractunatorBase* const fractunator )
@@ -108,8 +108,8 @@ double ElementTester::TimeStep( const realT& time,
     
   if(myPID == 0){
   
-	  for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator elementRegionIter = domain.m_feElementManager.m_ElementRegions.begin() ;
-	       elementRegionIter != domain.m_feElementManager.m_ElementRegions.end() ;
+	  for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator elementRegionIter = domain->m_feElementManager.m_ElementRegions.begin() ;
+	       elementRegionIter != domain->m_feElementManager.m_ElementRegions.end() ;
 	       ++elementRegionIter )
 	  {
 	    ElementRegionT& elementRegion = elementRegionIter->second;
@@ -127,7 +127,7 @@ double ElementTester::TimeStep( const realT& time,
 void ElementTester::TestRegion(const realT& time ,
                                const realT& dt ,
                                ElementRegionT& elementRegion,
-                               PhysicalDomainT& domain){
+                               PhysicalDomainT * domain){
   
   LagrangeBasis<3> feBasis(1);
   GaussQuadrature<3> feQuadrature(1);
@@ -149,8 +149,8 @@ void ElementTester::TestRegion(const realT& time ,
     // Get coordinates
     for( int a=0 ; a<numNodesPerElem ; ++a ){
       const localIndex nd = nodeList[a];
-      nodeCoords[a] = (*domain.m_feNodeManager.m_refposition)[nd];
-      nodeCoords[a] += (*domain.m_feNodeManager.m_displacement)[nd]; 
+      nodeCoords[a] = (*domain->m_feNodeManager.m_refposition)[nd];
+      nodeCoords[a] += (*domain->m_feNodeManager.m_displacement)[nd]; 
     } 
     
     // Update finite element geometry and record element data

@@ -35,7 +35,7 @@ public:
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
   using dataRepository::ManagedGroup::ReadXML;
-  void ReadXML( dataRepository::ManagedGroup& domain, xmlWrapper::xmlNode const & problemNode );
+  void ReadXML( dataRepository::ManagedGroup * domain, xmlWrapper::xmlNode const & problemNode );
 
   FunctionBase& CreateFunction( string const & functionCatalogKey, string const & functionName );
 };

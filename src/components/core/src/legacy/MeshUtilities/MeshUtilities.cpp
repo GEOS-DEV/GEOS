@@ -25,11 +25,11 @@ MeshUtilities::~MeshUtilities()
 
 
 void MeshUtilities::GenerateNodesets( TICPP::HierarchicalDataNode& hdn,
-                                      NodeManager& nodeManager )
+                                      NodeManager * nodeManager )
 {
 
-  std::map< std::string, lSet >& sets = nodeManager.m_Sets;
-  Array1dT<R1Tensor>& X = *(nodeManager.m_refposition);
+  std::map< std::string, lSet >& sets = nodeManager->m_Sets;
+  Array1dT<R1Tensor>& X = *(nodeManager->m_refposition);
 
   for(TICPP::HierarchicalDataNode* hdnNode = hdn.Next(true); hdnNode; hdnNode = hdn.Next() )
   {
@@ -87,25 +87,25 @@ void MeshUtilities::GenerateNodesets( TICPP::HierarchicalDataNode& hdn,
 }
 
 void MeshUtilities::GenerateFasesetsAndAssociatedNodesets( TICPP::HierarchicalDataNode& hdn,
-                                                           FaceManagerT& faceManager,
-                                                           NodeManager& nodeManager )
+                                                           FaceManagerT * faceManager,
+                                                           NodeManager * nodeManager )
 {
 
-//  std::map< std::string, lSet >& nodeSets = nodeManager.m_Sets;
-  std::map< std::string, lSet >& faceSets = faceManager.m_Sets;
-//  Array1dT<R1Tensor>& X = *(nodeManager.m_refposition);
+//  std::map< std::string, lSet >& nodeSets = nodeManager->m_Sets;
+  std::map< std::string, lSet >& faceSets = faceManager->m_Sets;
+//  Array1dT<R1Tensor>& X = *(nodeManager->m_refposition);
 
   //We calculate face centers here. This is cheaper than calculating it when we loop through faces.
 
-  faceManager.AddKeylessDataField( FieldInfo::R1TensorField, "FaceCenter", true, true );
-  faceManager.AddKeylessDataField( FieldInfo::R1TensorField, "FaceNormal", true, true );
-  Array1dT<R1Tensor>& faceCenter = faceManager.GetFieldData<R1Tensor>( "FaceCenter" );
-  Array1dT<R1Tensor>& faceNormal = faceManager.GetFieldData<R1Tensor>( "FaceNormal" );
+  faceManager->AddKeylessDataField( FieldInfo::R1TensorField, "FaceCenter", true, true );
+  faceManager->AddKeylessDataField( FieldInfo::R1TensorField, "FaceNormal", true, true );
+  Array1dT<R1Tensor>& faceCenter = faceManager->GetFieldData<R1Tensor>( "FaceCenter" );
+  Array1dT<R1Tensor>& faceNormal = faceManager->GetFieldData<R1Tensor>( "FaceNormal" );
 
-  for( localIndex kf=0 ; kf<faceManager.DataLengths() ; ++kf )
+  for( localIndex kf=0 ; kf<faceManager->DataLengths() ; ++kf )
   {
-    faceManager.FaceCenter( nodeManager, kf, faceCenter[kf] );
-    faceManager.FaceNormal( nodeManager, kf, faceNormal[kf] );
+    faceManager->FaceCenter( nodeManager, kf, faceCenter[kf] );
+    faceManager->FaceNormal( nodeManager, kf, faceNormal[kf] );
   }
 
   for(TICPP::HierarchicalDataNode* hdnNode = hdn.Next(true); hdnNode; hdnNode = hdn.Next() )
@@ -159,13 +159,13 @@ void MeshUtilities::GenerateFasesetsAndAssociatedNodesets( TICPP::HierarchicalDa
       realT withinAngle = hdnNode->GetAttributeOrDefault<realT>("withinAngle", 1.0);
       realT tol = std::cos(withinAngle / 180.0 * 3.14159265);
 
-      for( localIndex kf=0 ; kf<faceManager.DataLengths() ; ++kf )
+      for( localIndex kf=0 ; kf<faceManager->DataLengths() ; ++kf )
       {
         if( object->IsCoordInObject( faceCenter[kf] ) && std::fabs(Dot(faceNormal[kf], normalVector)) > tol)
         {
           currentFaceset.insert(kf);
-//          for( localIndex a=0 ; a<faceManager.m_toNodesRelation[kf].size() ; ++a )
-//            currentNodeset.insert(faceManager.m_toNodesRelation[kf][a]);
+//          for( localIndex a=0 ; a<faceManager->m_toNodesRelation[kf].size() ; ++a )
+//            currentNodeset.insert(faceManager->m_toNodesRelation[kf][a]);
         }
       }
       SimpleGeometricObjectBase::Deallocate( object );

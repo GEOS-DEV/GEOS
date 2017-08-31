@@ -35,7 +35,7 @@ void NewFunctionManager::FillDocumentationNode( dataRepository::ManagedGroup * c
   docNode->setShortDescription("Function manager");
 }
 
-void NewFunctionManager::ReadXML( dataRepository::ManagedGroup& domain,
+void NewFunctionManager::ReadXML( dataRepository::ManagedGroup * domain,
                                   xmlWrapper::xmlNode const & problemNode )
 {
   xmlWrapper::xmlNode topLevelNode = problemNode.child("Functions");

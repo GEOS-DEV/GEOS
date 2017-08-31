@@ -99,7 +99,7 @@ const char* ImplicitLaplaceSolver<3> :: SolverName()
 /* Initialization */
 
 template <int dim>
-void ImplicitLaplaceSolver<dim> :: Initialize (PhysicalDomainT &domain , SpatialPartition& partition )
+void ImplicitLaplaceSolver<dim> :: Initialize (PhysicalDomainT * domain , SpatialPartition& partition )
 {
 	// ... can't do much without partition info ....
 
@@ -111,10 +111,10 @@ void ImplicitLaplaceSolver<dim> :: Initialize (PhysicalDomainT &domain , Spatial
 /* Registration */
 
 template <int dim>
-void ImplicitLaplaceSolver<dim> :: RegisterFields (PhysicalDomainT &domain)
+void ImplicitLaplaceSolver<dim> :: RegisterFields (PhysicalDomainT * domain)
 {
-  domain.m_feNodeManager.AddKeyedDataField<FieldInfo::pressure>();
-  domain.m_feNodeManager.AddKeylessDataField<int>("TrilinosIndex",true,true);
+  domain->m_feNodeManager.AddKeyedDataField<FieldInfo::pressure>();
+  domain->m_feNodeManager.AddKeylessDataField<int>("TrilinosIndex",true,true);
 }
 
 
@@ -136,7 +136,7 @@ template <int dim>
 double ImplicitLaplaceSolver<dim> :: TimeStep (const realT& time ,
                                              const realT& dt ,
                                              const int cycleNumber,
-                                             PhysicalDomainT& domain,
+                                             PhysicalDomainT * domain,
                                              const sArray1d& namesOfSolverRegions ,
                                              SpatialPartition& partition,
                                              FractunatorBase* const fractunator )
@@ -148,9 +148,9 @@ double ImplicitLaplaceSolver<dim> :: TimeStep (const realT& time ,
             << " :: LAPLACE SOLVER | " << dim << "D" << std::endl
             << " :: No. mpi processes ... " << n_mpi_processes << std::endl;
 
-  SetupSystem (domain,partition);
-  Assemble    (domain,partition);
-  Solve       (domain,partition);
+  SetupSystem (domain, partition);
+  Assemble    (domain, partition);
+  Solve       (domain, partition);
 
   if(verbose)
   std::cout << std::endl;
@@ -162,13 +162,13 @@ double ImplicitLaplaceSolver<dim> :: TimeStep (const realT& time ,
 /* Setup System */
 
 template <int dim>
-void ImplicitLaplaceSolver<dim> :: SetupSystem (PhysicalDomainT&  domain, 
+void ImplicitLaplaceSolver<dim> :: SetupSystem (PhysicalDomainT * domain, 
                                                 SpatialPartition& partition)
 {
 		// determine the global/local degree of freedom distribution.
 
-  int n_ghost_rows  = domain.m_feNodeManager.GetNumGhosts();
-  int n_local_rows  = domain.m_feNodeManager.DataLengths()-n_ghost_rows; 
+  int n_ghost_rows  = domain->m_feNodeManager.GetNumGhosts();
+  int n_local_rows  = domain->m_feNodeManager.DataLengths()-n_ghost_rows; 
 //  int n_hosted_rows = n_local_rows+n_ghost_rows;
 
   std::vector<int> gather(n_mpi_processes);
@@ -189,8 +189,8 @@ void ImplicitLaplaceSolver<dim> :: SetupSystem (PhysicalDomainT&  domain,
 
 		// create trilinos dof indexing
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>("TrilinosIndex");
-  iArray1d& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>("TrilinosIndex");
+  iArray1d& is_ghost       = domain->m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
 
   unsigned local_count = 0;
   for(unsigned r=0; r<trilinos_index.size(); ++r)
@@ -219,8 +219,8 @@ void ImplicitLaplaceSolver<dim> :: SetupSystem (PhysicalDomainT&  domain,
   sparsity = new Epetra_FECrsGraph(Copy,*row_map,0);
 
   RegionMap::iterator
-    region     = domain.m_feElementManager.m_ElementRegions.begin(),
-    end_region = domain.m_feElementManager.m_ElementRegions.end();
+    region     = domain->m_feElementManager.m_ElementRegions.begin(),
+    end_region = domain->m_feElementManager.m_ElementRegions.end();
 
   for(; region != end_region; ++region)
   {
@@ -253,7 +253,7 @@ void ImplicitLaplaceSolver<dim> :: SetupSystem (PhysicalDomainT&  domain,
 /* Assemble */
 
 template <int dim>
-void ImplicitLaplaceSolver<dim> :: Assemble (PhysicalDomainT&  domain,
+void ImplicitLaplaceSolver<dim> :: Assemble (PhysicalDomainT * domain,
                                              SpatialPartition& partition  )
 
 {
@@ -265,15 +265,15 @@ void ImplicitLaplaceSolver<dim> :: Assemble (PhysicalDomainT&  domain,
 
 		// basic nodal data ( = dof data for our problem)
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>("TrilinosIndex");
-//  iArray1d& is_ghost       = domain.m_nodeManager.GetFieldData<FieldInfo::ghostRank>();
-  const iArray1d& isExternal    = domain.m_feNodeManager.m_isExternal;
+  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>("TrilinosIndex");
+//  iArray1d& is_ghost       = domain->m_nodeManager.GetFieldData<FieldInfo::ghostRank>();
+  const iArray1d& isExternal    = domain->m_feNodeManager.m_isExternal;
 
 		// begin region loop
 
   RegionMap::iterator
-    region     = domain.m_feElementManager.m_ElementRegions.begin(),
-    end_region = domain.m_feElementManager.m_ElementRegions.end();
+    region     = domain->m_feElementManager.m_ElementRegions.begin(),
+    end_region = domain->m_feElementManager.m_ElementRegions.end();
 
   for(; region != end_region; ++region)
   {
@@ -319,7 +319,7 @@ void ImplicitLaplaceSolver<dim> :: Assemble (PhysicalDomainT&  domain,
         const localIndex n = local_index[i];
         element_index[i] = trilinos_index[n];
 
-        nodal_coord[i] = (*domain.m_feNodeManager.m_refposition)[n];
+        nodal_coord[i] = (*domain->m_feNodeManager.m_refposition)[n];
       }
 
 		// now the actual integration loop
@@ -387,7 +387,7 @@ void ImplicitLaplaceSolver<dim> :: Assemble (PhysicalDomainT&  domain,
 /* Solve */
 
 template <int dim>
-void ImplicitLaplaceSolver<dim> :: Solve (PhysicalDomainT&  domain,
+void ImplicitLaplaceSolver<dim> :: Solve (PhysicalDomainT * domain,
                                           SpatialPartition& partition)
 {
 	// krylov solver
@@ -421,9 +421,9 @@ void ImplicitLaplaceSolver<dim> :: Solve (PhysicalDomainT&  domain,
 
 	// copy vector solution into geos data structures
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>("TrilinosIndex");
-  iArray1d& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-  rArray1d& geos_pressure  = domain.m_feNodeManager.GetFieldData<FieldInfo::pressure>();
+  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>("TrilinosIndex");
+  iArray1d& is_ghost       = domain->m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  rArray1d& geos_pressure  = domain->m_feNodeManager.GetFieldData<FieldInfo::pressure>();
 
   int dummy;
   double* local_solution = NULL;

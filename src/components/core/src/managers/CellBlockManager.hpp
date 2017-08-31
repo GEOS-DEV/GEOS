@@ -109,16 +109,16 @@ public:
 //                               string const & elementType,
 //                               int32 const & numElements );
 
-  CellBlock & GetRegion( string const & regionName )
+  CellBlock * GetRegion( string const & regionName )
   {
-    return this->GetGroup(dataRepository::keys::cellBlocks).GetGroup<CellBlock>(regionName);
+    return this->GetGroup(dataRepository::keys::cellBlocks)->GetGroup<CellBlock>(regionName);
   }
 
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda )
   {
-    ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
-    elementRegions.forSubGroups<CellBlock>( lambda );
+    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
+    elementRegions->forSubGroups<CellBlock>( lambda );
   }
 private:
   CellBlockManager( const CellBlockManager& );

@@ -46,7 +46,7 @@ void PhysicsSolverManager::FillDocumentationNode( dataRepository::ManagedGroup *
 }
 
 
-void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
+void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup * domain,
                                     xmlWrapper::xmlNode const & problemNode )
 {
 
@@ -68,10 +68,10 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
       SolverBase & newSolver = CreateSolver( solverNode.name(), solverID );
 
       // Set the documentation node
-      newSolver.SetDocumentationNodes( &domain );
+      newSolver.SetDocumentationNodes( domain );
 
       // Register fields in the solver and parse options
-      newSolver.BuildDataStructure( &domain );
+      newSolver.BuildDataStructure( domain );
 
       newSolver.ReadXML(solverNode );
     }

@@ -147,14 +147,14 @@ void ElementRegion::ReadXML_PostProcess()
 //  numNodesPerElem = 8;
 }
 
-void ElementRegion::SetConstitutiveMap( ManagedGroup const & problemManager,
+void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
                                                      map<string,localIndex> & counts )
 {
 //  map<string,int32> counts;
-  ManagedGroup const & domain = problemManager.GetGroup(keys::domain);
-  ConstitutiveManager const & constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  ManagedGroup const * domain = problemManager->GetGroup(keys::domain);
+  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 
-  ConstitutiveManager::constitutiveMaps constitutiveMapPair = constitutiveManager.GetMaps( 1 );
+  ConstitutiveManager::constitutiveMaps constitutiveMapPair = constitutiveManager->GetMaps( 1 );
 
 
   string defaultMaterial = this->getData<string>(keys::defaultMaterial);
@@ -162,14 +162,14 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const & problemManager,
 
 
   auto const & numMethodName = this->getData<string>(keys::numericalMethod);
-  FiniteElementManager const & numericalMethodManager = problemManager.GetGroup<FiniteElementManager>(keys::finiteElementManager);
-  FiniteElementSpace const & feSpace = numericalMethodManager.GetGroup<FiniteElementSpace>(numMethodName);
-  auto const & quadratureName = feSpace.getData<string>(keys::quadrature) ;
-  QuadratureBase const & quadrature = numericalMethodManager.GetGroup(keys::quadratureRules).getReference<QuadratureBase>( quadratureName );
+  FiniteElementManager const * numericalMethodManager = problemManager->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  FiniteElementSpace const * feSpace = numericalMethodManager->GetGroup<FiniteElementSpace>(numMethodName);
+  auto const & quadratureName = feSpace->getData<string>(keys::quadrature) ;
+  QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
 
 
-  ManagedGroup & cellBlockSubRegions = this->GetGroup(keys::cellBlockSubRegions);
-  for( auto & cellSubBlock : cellBlockSubRegions.GetSubGroups() )
+  ManagedGroup * cellBlockSubRegions = this->GetGroup(keys::cellBlockSubRegions);
+  for( auto & cellSubBlock : cellBlockSubRegions->GetSubGroups() )
   {
     auto & cellToConstitutiveMap = cellSubBlock.second->getReference< Array2dT< mapPair > >(keys::constitutiveMap);
     auto & constitutiveGrouping = cellSubBlock.second->getReference< map< string, int32_array > >(keys::constitutiveGrouping);
@@ -177,10 +177,10 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const & problemManager,
 //    constitutiveGrouping["mix"];
     
 //    localIndex counter = 0;
-    for( localIndex k=0 ; k<cellSubBlock.second->size() ; ++k )
+    for( localIndex k = 0 ; k < cellSubBlock.second->size() ; ++k )
     {
       constitutiveGrouping[defaultMaterial].push_back(k);
-      for( localIndex q=0 ; q<quadrature.size() ; ++q )
+      for( localIndex q = 0; q < quadrature.size(); ++q )
       {
         cellToConstitutiveMap(k,q) = std::make_pair( defaultMaterialIndex, counts[defaultMaterial]++ );
 //        ++(counts[defaultMaterial]);
@@ -201,38 +201,38 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const & problemManager,
 void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
 
-  ManagedGroup const & domain = problemManager->GetGroup(keys::domain);
-  ManagedGroup const & cellBlockManager = domain.GetGroup(keys::cellManager);
+  ManagedGroup const * domain = problemManager->GetGroup(keys::domain);
+  ManagedGroup const * cellBlockManager = domain->GetGroup(keys::cellManager);
 
-  ManagedGroup & cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
+  ManagedGroup * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
 
   for( auto const & cellBlockName : this->getReference<string_array>(keys::cellBlockSubRegionNames) )
   {
-    CellBlockSubRegion & cellBlock = cellBlockSubRegions.RegisterGroup<CellBlockSubRegion>(cellBlockName);
+    CellBlockSubRegion & cellBlock = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(cellBlockName);
     cellBlock.FillDocumentationNode(nullptr);
     cellBlock.RegisterDocumentationNodes();
   }
 
 
   auto const & numMethodName = this->getData<string>(keys::numericalMethod);
-  FiniteElementManager const & numericalMethodManager = problemManager->GetGroup<FiniteElementManager>(keys::finiteElementManager);
-  FiniteElementSpace const & feSpace = numericalMethodManager.GetGroup<FiniteElementSpace>(numMethodName);
-  auto const & basisName = feSpace.getData<string>(keys::basis) ;
-  auto const & quadratureName = feSpace.getData<string>(keys::quadrature) ;
-  BasisBase const & basis = numericalMethodManager.GetGroup(keys::basisFunctions).getReference<BasisBase>( basisName );
-  QuadratureBase const & quadrature = numericalMethodManager.GetGroup(keys::quadratureRules).getReference<QuadratureBase>( quadratureName );
+  FiniteElementManager const * numericalMethodManager = problemManager->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  FiniteElementSpace const * feSpace = numericalMethodManager->GetGroup<FiniteElementSpace>(numMethodName);
+  auto const & basisName = feSpace->getData<string>(keys::basis) ;
+  auto const & quadratureName = feSpace->getData<string>(keys::quadrature) ;
+  BasisBase const & basis = numericalMethodManager->GetGroup(keys::basisFunctions)->getReference<BasisBase>( basisName );
+  QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
 
-  view_rtype_const<r1_array> X = domain.GetGroup(keys::FEM_Nodes).getData<r1_array>(keys::ReferencePosition);
+  view_rtype_const<r1_array> X = domain->GetGroup(keys::FEM_Nodes)->getData<r1_array>(keys::ReferencePosition);
 
-  forCellBlocks([&]( CellBlockSubRegion & subRegion )
+  forCellBlocks([&]( CellBlockSubRegion * subRegion )
   {
-    ManagedGroup const & cellBlocks = cellBlockManager.GetGroup(keys::cellBlocks);
-    subRegion.CopyFromCellBlock( cellBlocks.GetGroup<CellBlock>( subRegion.getName() ) );
+    ManagedGroup const * cellBlocks = cellBlockManager->GetGroup(keys::cellBlocks);
+    subRegion->CopyFromCellBlock( cellBlocks->GetGroup<CellBlock>( subRegion->getName() ) );
 
-    feSpace.ApplySpaceToTargetCells(&subRegion);
+    feSpace->ApplySpaceToTargetCells(subRegion);
     
 
-    feSpace.CalculateShapeFunctionGradients( X, &subRegion);
+    feSpace->CalculateShapeFunctionGradients( X, subRegion);
 
 //    feSpace
   });

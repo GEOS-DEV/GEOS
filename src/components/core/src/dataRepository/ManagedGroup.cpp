@@ -233,9 +233,9 @@ void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 
 void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
-  this->forSubGroups( [this,&targetNode]( ManagedGroup & subGroup ) -> void
+  this->forSubGroups( [this,&targetNode]( ManagedGroup * subGroup ) -> void
   {
-    subGroup.ReadXML( targetNode );
+    subGroup->ReadXML( targetNode );
   });
 }
 
@@ -274,14 +274,14 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   for( auto const & groupName : initOrder )
   {
     ++indent;
-    this->GetGroup(groupName).Initialize(group);
+    this->GetGroup(groupName)->Initialize(group);
     --indent;
   }
 
-//  forSubGroups( [&]( ManagedGroup & subGroup ) -> void
+//  forSubGroups( [&]( ManagedGroup * subGroup ) -> void
 //  {
 //    ++indent;
-//    subGroup.Initialize(group);
+//    subGroup->Initialize(group);
 //    --indent;
 //  });
   InitializePostSubGroups(group);
@@ -296,9 +296,9 @@ void ManagedGroup::registerSubViews()
     wrapper.second->registerDataPtr();
   }
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.registerSubViews();
+    subGroup->registerSubViews();
   });
 }
 
@@ -310,9 +310,9 @@ void ManagedGroup::unregisterSubViews()
     wrapper.second->unregisterDataPtr();
   }
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.unregisterSubViews();
+    subGroup->unregisterSubViews();
   });
 }
 
@@ -321,9 +321,9 @@ void ManagedGroup::createSizeViews()
 {
   m_sidreGroup->createView("__size__")->setScalar(m_size);
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.createSizeViews();
+    subGroup->createSizeViews();
   });
 }
 
@@ -333,9 +333,9 @@ void ManagedGroup::loadSizeViews()
   m_size = m_sidreGroup->getView("__size__")->getScalar();
   m_sidreGroup->destroyView("__size__");
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.loadSizeViews();
+    subGroup->loadSizeViews();
   });
 }
 
@@ -347,9 +347,9 @@ void ManagedGroup::resizeSubViews()
     wrapper.second->resizeFromSidre();
   }
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.resizeSubViews();
+    subGroup->resizeSubViews();
   });
 }
 
@@ -361,9 +361,9 @@ void ManagedGroup::storeSizedFromParent()
     wrapper.second->storeSizedFromParent();
   }
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.storeSizedFromParent();
+    subGroup->storeSizedFromParent();
   });
 }
 
@@ -375,9 +375,9 @@ void ManagedGroup::loadSizedFromParent()
   }
   
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.loadSizedFromParent();
+    subGroup->loadSizedFromParent();
   });
 }
 

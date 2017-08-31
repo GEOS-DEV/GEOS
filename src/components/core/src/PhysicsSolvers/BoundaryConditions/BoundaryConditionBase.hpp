@@ -37,13 +37,13 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface< BoundaryConditionBase, string const &, dataRepository::ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
-  BoundaryConditionBase( string const & name, dataRepository::ManagedGroup *const parent );
+  BoundaryConditionBase( string const & name, dataRepository::ManagedGroup * parent );
 
   virtual ~BoundaryConditionBase();
 
 
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const ) override;
+  void FillDocumentationNode( dataRepository::ManagedGroup * UNUSED ) override;
 
   void ReadXML_PostProcess() override final;
 
@@ -66,7 +66,7 @@ public:
 
   void ApplyBounaryConditionDefaultMethod( lSet const & set,
                                            real64 const time,
-                                           dataRepository::ManagedGroup & dataGroup,
+                                           dataRepository::ManagedGroup * dataGroup,
                                            string const & fieldname ) const;
 
 
@@ -153,8 +153,8 @@ protected:
 //  string const timeFunctionName = getData<string>(dataRepository::keys::functionName);
 //  NewFunctionManager & functionManager = NewFunctionManager::Instance();
 //
-//  FunctionBase const * const spaceFunction = functionManager.GetGroupPtr<FunctionBase>(spaceFunctionName);
-//  FunctionBase const * const timeFunction  = functionManager.GetGroupPtr<FunctionBase>(timeFunctionName);
+//  FunctionBase const * const spaceFunction = functionManager.GetGroup<FunctionBase>(spaceFunctionName);
+//  FunctionBase const * const timeFunction  = functionManager.GetGroup<FunctionBase>(timeFunctionName);
 //
 //  if( timeFunction!=nullptr && spaceFunction!=nullptr )
 //  {

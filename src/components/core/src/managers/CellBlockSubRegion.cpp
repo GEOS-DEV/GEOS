@@ -98,10 +98,10 @@ void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
 
 }
 
-void CellBlockSubRegion::CopyFromCellBlock( CellBlock const & source )
+void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
-  this->resize(source.size());
-  this->m_toNodesRelation = source.m_toNodesRelation;
+  this->resize(source->size());
+  this->m_toNodesRelation = source->m_toNodesRelation;
 }
 
 void CellBlockSubRegion::MaterialPassThru( string const & matName,

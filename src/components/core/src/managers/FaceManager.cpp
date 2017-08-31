@@ -31,7 +31,7 @@ FaceManager::~FaceManager()
 {
 }
 //
-//void FaceManager::BuildFaces( const NodeManager& nodeManager, const ElementManager& elementManager )
+//void FaceManager::BuildFaces( const NodeManager * nodeManager, const ElementManager * elementManager )
 //{
 //
 //  lArray1d tempNodeList;
@@ -42,8 +42,8 @@ FaceManager::~FaceManager()
 //
 //
 //
-//  for( std::map< ElementManager::RegKeyType, ElementRegionT >::const_iterator elementRegionIter = elementManager.m_ElementRegions.begin() ;
-//       elementRegionIter != elementManager.m_ElementRegions.end() ;
+//  for( std::map< ElementManager::RegKeyType, ElementRegionT >::const_iterator elementRegionIter = elementManager->m_ElementRegions.begin() ;
+//       elementRegionIter != elementManager->m_ElementRegions.end() ;
 //       ++elementRegionIter )
 //  {
 //    const ElementRegionT& elementRegion = elementRegionIter->second;
@@ -142,7 +142,7 @@ FaceManager::~FaceManager()
 //  // set m_FaceToNodeMap
 //  this->m_toNodesRelation = tempFaceToNodeMap;
 //
-//  auto const & nodeSets = nodeManager.GetGroup(string("Sets")).wrappers();
+//  auto const & nodeSets = nodeManager->GetGroup(string("Sets"))->wrappers();
 //
 //  // make sets from nodesets
 //  for( auto const & setWrapper : nodeSets )

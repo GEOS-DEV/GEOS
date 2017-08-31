@@ -247,14 +247,14 @@ public:
 
 //  void TestWriteDiscreteElementMeshObject();
 
-  void WriteRegionSpecifications(const ElementRegionManager& elementManager,
-                                 constitutive::ConstitutiveManager const & constitutiveManager,
+  void WriteRegionSpecifications(const ElementRegionManager*  elementManager,
+                                 constitutive::ConstitutiveManager const * constitutiveManager,
                                  const std::string& meshName,
                                  const int cycleNumber,
                                  const realT problemTime);
 
 
-  void WriteManagedGroupSilo( dataRepository::ManagedGroup const & group,
+  void WriteManagedGroupSilo( dataRepository::ManagedGroup const * group,
                               const std::string& siloDirName,
                               const std::string& meshname,
                               const int centering,
@@ -265,7 +265,7 @@ public:
 
 
 
-  void WriteManagedGroupSilo( dataRepository::ManagedGroup const & group,
+  void WriteManagedGroupSilo( dataRepository::ManagedGroup const * group,
                               const std::string& meshname,
                               const int centering,
                               const int cycleNum,

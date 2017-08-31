@@ -121,7 +121,7 @@ void CompositeFunction::InitializeFunction()
   m_numSubFunctions = functionNames.size();
   for (localIndex ii=0; ii<m_numSubFunctions; ++ii)
   {
-    m_subFunctions.push_back(&(functionManager.GetGroup<FunctionBase>(functionNames[ii])));
+    m_subFunctions.push_back(functionManager.GetGroup<FunctionBase>(functionNames[ii]));
   }
 }
 

@@ -116,7 +116,7 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-  void SetConstitutiveMap( dataRepository::ManagedGroup const & domain,
+  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
                                         map<string,localIndex> & counts );
 
   virtual ~ElementRegion();
@@ -129,21 +129,21 @@ public:
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda )
   {
-    ManagedGroup & cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    ManagedGroup * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
 
-    cellBlockSubRegions.forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion & subRegion ) -> void
+    cellBlockSubRegions->forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion * subRegion ) -> void
     {
       lambda( subRegion );
     });
 
 //    set<string> names;
-//    for( auto & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
+//    for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
 //    {
 //      names.insert(iterCellBlocks.first);
 //    }
 //    for( auto & name : names )
 //    {
-//      lambda( cellBlockSubRegions.GetGroup<CellBlockSubRegion>(name) );
+//      lambda( cellBlockSubRegions->GetGroup<CellBlockSubRegion>(name) );
 //    }
 
   }
@@ -152,22 +152,22 @@ public:
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda ) const
   {
-    ManagedGroup const & cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    ManagedGroup const * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
 
-    cellBlockSubRegions.forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion const & subRegion ) -> void
+    cellBlockSubRegions->forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion const * subRegion ) -> void
     {
       lambda( subRegion );
     });
 
 //        set<string> names;
-//    for( auto const & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
+//    for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
 //    {
 //      names.insert(iterCellBlocks.first);
 //    }
 //
 //    for( auto const & name : names )
 //    {
-//      lambda( cellBlockSubRegions.GetGroup<CellBlockSubRegion>(name) );
+//      lambda( cellBlockSubRegions->GetGroup<CellBlockSubRegion>(name) );
 //    }
 
   }

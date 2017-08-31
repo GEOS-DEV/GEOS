@@ -50,8 +50,8 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
                                                           const std::string& newSetName )
 {
 
-  ManagedGroup& sets = GetGroup(std::string("Sets"));
-  lSet& newset = sets.RegisterViewWrapper<lSet>(newSetName).reference();
+  ManagedGroup * sets = GetGroup(std::string("Sets"));
+  lSet& newset = sets->RegisterViewWrapper<lSet>(newSetName).reference();
   newset.clear();
 
   int mapSize = map.Dimension(1);
@@ -78,8 +78,8 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
                                                           const std::string& newSetName )
 {
 
-  ManagedGroup& sets = GetGroup(std::string("Sets"));
-  lSet& newset = sets.RegisterViewWrapper<lSet>(newSetName).reference();
+  ManagedGroup * sets = GetGroup(std::string("Sets"));
+  lSet& newset = sets->RegisterViewWrapper<lSet>(newSetName).reference();
   newset.clear();
 
   for( localIndex ka=0 ; ka<size() ; ++ka )

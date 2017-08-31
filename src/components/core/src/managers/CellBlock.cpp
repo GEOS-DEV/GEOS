@@ -137,13 +137,13 @@ void CellBlock::ReadXML_PostProcess()
   numNodesPerElem = 8;
 }
 
-//map<string,int32> CellBlock::SetConstitutiveMap( ManagedGroup const & domain )
+//map<string,int32> CellBlock::SetConstitutiveMap( ManagedGroup const * domain )
 //{
 //  map<string,int32> counts;
 //  view_rtype<mapPair_array> cellToConstitutiveMap = this->getData<mapPair_array>(keys::constitutiveMap);
-//  ConstitutiveManager const & constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+//  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 //
-//  ConstitutiveManager::constitutiveMaps constitutiveMapPair = constitutiveManager.GetMaps( 1 );
+//  ConstitutiveManager::constitutiveMaps constitutiveMapPair = constitutiveManager->GetMaps( 1 );
 //
 //  string defaultMaterial = this->getData<string>(keys::defaultMaterial);
 //  int32 defaultMaterialIndex = constitutiveMapPair.second.at(defaultMaterial);

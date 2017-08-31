@@ -57,10 +57,10 @@ public:
   void GenerateElementRegions( DomainPartition& domain );
 
   void GenerateMesh( //SpatialPartition& partition,
-                     DomainPartition & domain );
+                     DomainPartition * domain );
 
   void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
-                         NodeManager& nodeManager );
+                         NodeManager * nodeManager );
 
   void GetElemToNodesRelationInBox ( const std::string& elementType,
                                      const int index[],
@@ -68,7 +68,7 @@ public:
                                      int nodeIDInBox[],
                                      const int size);
 
-  void RemapMesh ( DomainPartition& domain );
+  void RemapMesh ( DomainPartition * domain );
 
   void ReadXML_PostProcess() override final;
   
@@ -116,11 +116,11 @@ private:
   int m_randSeed;
 
   int m_mapToRadial = 0;
-  int meshAxis;
-  realT meshTheta;
-  realT meshPhi;
-  realT meshRout;
-  realT meshRact;
+  int m_meshAxis;
+  realT m_meshTheta;
+  realT m_meshPhi;
+  realT m_meshRout;
+  realT m_meshRact;
 
   realT m_skewAngle;
   R1Tensor m_skewCenter;
