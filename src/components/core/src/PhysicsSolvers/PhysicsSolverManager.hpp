@@ -27,7 +27,7 @@ public:
 
   virtual ~PhysicsSolverManager();
 
-  SolverBase & CreateSolver( string const & solverCatalogKey, string const & solverName );
+  SolverBase * CreateSolver( string const & solverCatalogKey, string const & solverName );
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 

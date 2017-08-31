@@ -86,8 +86,8 @@ void CellBlockManager::resize( int32_array const & numElements,
 //                                             string const & elementType,
 //                                             int32 const & numElements )
 //{
-////  ElementRegion & elemRegion = elementRegions.RegisterGroup( regionNames );
-////  elemRegion.resize(numElements);
+////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
+////  elemRegion->resize(numElements);
 //}
 
 void CellBlockManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
@@ -100,10 +100,10 @@ void CellBlockManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 //      std::string regionName = childNode.attribute("name").value();
 //      std::cout<<regionName<<std::endl;
 //
-//      CellBlock & elemRegion = elementRegions->RegisterGroup<CellBlock>( regionName );
-//      elemRegion.SetDocumentationNodes( nullptr );
-//      elemRegion.RegisterDocumentationNodes();
-//      elemRegion.ReadXML(childNode);
+//      CellBlock * elemRegion = elementRegions->RegisterGroup<CellBlock>( regionName );
+//      elemRegion->SetDocumentationNodes( nullptr );
+//      elemRegion->RegisterDocumentationNodes();
+//      elemRegion->ReadXML(childNode);
 //    }
 //  }
 }

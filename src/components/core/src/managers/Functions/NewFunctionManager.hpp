@@ -23,11 +23,11 @@ public:
                       dataRepository::ManagedGroup * const parent );
   virtual ~NewFunctionManager();
   
-  static NewFunctionManager& Instance()
+  static NewFunctionManager * Instance()
   {
       static NewFunctionManager theFunctionManager("LastFunctionManagerOnEarth", nullptr);
 
-    return theFunctionManager;
+    return &theFunctionManager;
   }
 
 
@@ -37,7 +37,7 @@ public:
   using dataRepository::ManagedGroup::ReadXML;
   void ReadXML( dataRepository::ManagedGroup * domain, xmlWrapper::xmlNode const & problemNode );
 
-  FunctionBase& CreateFunction( string const & functionCatalogKey, string const & functionName );
+  FunctionBase * CreateFunction( string const & functionCatalogKey, string const & functionName );
 };
 
 

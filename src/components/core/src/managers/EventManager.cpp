@@ -51,10 +51,10 @@ void EventManager::ReadXML( xmlWrapper::xmlNode const & problemNode )
     for (xmlWrapper::xmlNode applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
     {
       std::string applicationName = applicationNode.attribute("name").value();
-      SolverApplication& newApplication = RegisterGroup<SolverApplication>(applicationName);
-      newApplication.SetDocumentationNodes(this);
-      newApplication.RegisterDocumentationNodes();
-      newApplication.ReadXML(applicationNode);
+      SolverApplication * newApplication = RegisterGroup<SolverApplication>(applicationName);
+      newApplication->SetDocumentationNodes(this);
+      newApplication->RegisterDocumentationNodes();
+      newApplication->ReadXML(applicationNode);
     }
   }
 }

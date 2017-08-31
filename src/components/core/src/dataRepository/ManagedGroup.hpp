@@ -110,10 +110,10 @@ public:
 
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T& RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject );
+  T * RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject );
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T& RegisterGroup( std::string const & name )
+  T * RegisterGroup( std::string const & name )
   {
 //    T* temp = dynamic_cast<T*>(this);
     return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
@@ -121,7 +121,7 @@ public:
   }
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T& RegisterGroup( std::string const & name, std::string const & catalogName )
+  T * RegisterGroup( std::string const & name, std::string const & catalogName )
   {
 //    T* temp = dynamic_cast<T*>(this);
     std::unique_ptr<TBASE> newGroup = TBASE::CatalogInterface::Factory(catalogName, name, this );
@@ -576,12 +576,12 @@ using ViewKey = ManagedGroup::viewWrapperMap::DataKey;
 
 
 template < typename T, typename TBASE >
-T& ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
+T* ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
 {
   #ifdef USE_DYNAMIC_CASTING
-    return *(dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) ) );
+    return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
   #else
-    return *(static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) ) );
+    return static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
   #endif
 }
 

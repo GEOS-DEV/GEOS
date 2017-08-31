@@ -52,14 +52,15 @@ using namespace constitutive;
 
 ProblemManager::ProblemManager( const std::string& name,
                                 ManagedGroup * const parent ) :
-  ObjectManagerBase( name, parent ),
+  ObjectManagerBase(name, parent),
   m_physicsSolverManager(nullptr),
+  m_eventManager(nullptr),
   m_functionManager(nullptr)
 {
-  m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
-  m_eventManager = &(RegisterGroup<EventManager>(keys::eventManager) ) ;
-//  m_functionManager = &(RegisterGroup<NewFunctionManager>(keys::functionManager) ) ;
-  m_functionManager = &(NewFunctionManager::Instance());
+  m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager");
+  m_eventManager = RegisterGroup<EventManager>(keys::eventManager);
+//  m_functionManager = RegisterGroup<NewFunctionManager>(keys::functionManager);
+  m_functionManager = NewFunctionManager::Instance();
 }
 
 //ProblemManager::ProblemManager( const std::string& name,
@@ -68,8 +69,8 @@ ProblemManager::ProblemManager( const std::string& name,
 //  ObjectManagerBase( name, parent, docNode ),
 //  m_physicsSolverManager(nullptr)
 //{
-//  m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
-//  m_eventManager = &(RegisterGroup<EventManager>("EventManager" ) ) ;
+//  m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager");
+//  m_eventManager = RegisterGroup<EventManager>("EventManager");
 //}
 
 ProblemManager::~ProblemManager()
@@ -80,7 +81,7 @@ ProblemManager::~ProblemManager()
 
 void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 {
-  RegisterGroup<DomainPartition>(keys::domain).BuildDataStructure(nullptr);
+  RegisterGroup<DomainPartition>(keys::domain)->BuildDataStructure(nullptr);
   RegisterGroup<ManagedGroup>(keys::commandLine);
   RegisterGroup<ManagedGroup>(keys::meshGenerators);
   RegisterGroup<ConstitutiveManager>(keys::ConstitutiveManager);
@@ -435,13 +436,13 @@ void ProblemManager::ParseInputFile()
         // Register the new mesh generator
         std::string meshID = childNode.attribute("name").value();
 
-        MeshGenerator & meshGenerator = meshGenerators->RegisterGroup<MeshGenerator>(meshID);
+        MeshGenerator * meshGenerator = meshGenerators->RegisterGroup<MeshGenerator>(meshID);
 
         // Set the documentation node
-        meshGenerator.SetDocumentationNodes(domain);
+        meshGenerator->SetDocumentationNodes(domain);
 
-        meshGenerator.RegisterDocumentationNodes();
-        meshGenerator.ReadXML(childNode );
+        meshGenerator->RegisterDocumentationNodes();
+        meshGenerator->ReadXML(childNode );
       }
     }
   }
@@ -522,7 +523,7 @@ void ProblemManager::ParseInputFile()
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Nodesets");
 //    MeshUtilities::GenerateNodesets( topLevelNode, dataRepository::ManagedGroup& nodeManager );
-    ManagedGroup & geometricObjects = this->RegisterGroup(keys::geometricObjects);
+    ManagedGroup * geometricObjects = this->RegisterGroup(keys::geometricObjects);
 
     for (xmlWrapper::xmlNode childNode=topLevelNode.first_child(); childNode; childNode=childNode.next_sibling())
     {
@@ -536,7 +537,7 @@ void ProblemManager::ParseInputFile()
 //        std::string geometricObjectTypeStr = childNode.attribute("type").value();
         object = SimpleGeometricObjectBase::CatalogInterface::Factory( type );
         object->ReadXML( childNode );
-        geometricObjects.RegisterViewWrapper<SimpleGeometricObjectBase>(name,std::move(object));
+        geometricObjects->RegisterViewWrapper<SimpleGeometricObjectBase>(name,std::move(object));
       }
     }
   }

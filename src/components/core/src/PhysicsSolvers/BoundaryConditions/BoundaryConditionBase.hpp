@@ -151,10 +151,10 @@ protected:
 //
 //  string const spaceFunctionName = getData<string>(dataRepository::keys::spaceFunctionName);
 //  string const timeFunctionName = getData<string>(dataRepository::keys::functionName);
-//  NewFunctionManager & functionManager = NewFunctionManager::Instance();
+//  NewFunctionManager * functionManager = NewFunctionManager::Instance();
 //
-//  FunctionBase const * const spaceFunction = functionManager.GetGroup<FunctionBase>(spaceFunctionName);
-//  FunctionBase const * const timeFunction  = functionManager.GetGroup<FunctionBase>(timeFunctionName);
+//  FunctionBase const * const spaceFunction = functionManager->GetGroup<FunctionBase>(spaceFunctionName);
+//  FunctionBase const * const timeFunction  = functionManager->GetGroup<FunctionBase>(timeFunctionName);
 //
 //  if( timeFunction!=nullptr && spaceFunction!=nullptr )
 //  {

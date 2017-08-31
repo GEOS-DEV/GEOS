@@ -644,10 +644,10 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 
   for( auto & cellBlockName : m_regionNames )
   {
-    CellBlock & cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
-    cellBlock.SetDocumentationNodes(nullptr);
-    cellBlock.RegisterDocumentationNodes();
-    cellBlock.ReadXML_PostProcess();
+    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
+    cellBlock->SetDocumentationNodes(nullptr);
+    cellBlock->RegisterDocumentationNodes();
+    cellBlock->ReadXML_PostProcess();
   }
 
 

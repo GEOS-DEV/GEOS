@@ -193,9 +193,9 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //
 //  int32 const component = GetComponent();
 //  string const functionName = getData<string>(dataRepository::keys::functionName);
-//  NewFunctionManager & functionManager = NewFunctionManager::Instance();
+//  NewFunctionManager * functionManager = NewFunctionManager::Instance();
 //
-//  FunctionBase const * const function  = functionManager.GetGroup<FunctionBase>(functionName);
+//  FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
 //
 //  if( function!=nullptr )
 //  {
@@ -222,7 +222,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
 
   int32 const component = GetComponent();
   string const functionName = getData<string>(dataRepository::keys::functionName);
-  NewFunctionManager & functionManager = NewFunctionManager::Instance();
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   ViewWrapperBase & vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index(vw.get_typeid());
@@ -242,7 +242,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
     }
     else
     {
-      FunctionBase const * const function  = functionManager.GetGroup<FunctionBase>(functionName);
+      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
       if( function!=nullptr)
       {
         if( function->isFunctionOfTime()==2 )
