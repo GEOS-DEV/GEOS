@@ -52,7 +52,10 @@
 #include <map>
 #include <set>
 #include <algorithm>
-#include <slic/slic.hpp>
+
+#if ATK_FOUND
+#include "slic/slic.hpp"
+#endif
 
 //#include "../legacy/Common/GPException.h"
 
@@ -367,7 +370,9 @@ T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& messag
     std::stringstream st;
     st << "Error in stlMapLookup. Key not found in map! key: " << key << " message: " << message <<"\n";
 //    throw GPException(st.str().c_str());
+#if ATK_FOUND
     SLIC_ERROR(st.str());
+#endif
 
   }
 

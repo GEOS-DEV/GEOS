@@ -8,12 +8,14 @@
 #ifndef COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
 #define COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
 
+#if ATK_FOUND
 #include "sidre/DataStore.hpp"
 
 namespace geosx
 {
 namespace dataRepository
 {
+
 class SidreWrapper
 {
 public:
@@ -29,4 +31,5 @@ private:
 }
 } /* namespace geosx */
 
+#endif /* ATK_FOUND */
 #endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_ */

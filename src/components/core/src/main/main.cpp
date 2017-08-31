@@ -1,20 +1,22 @@
 
-#if USE_CALIPER==1
+#if USE_CALIPER
 #include "caliper/Annotation.h"
 #endif
+
+#if ATK_FOUND
 #include <slic/slic.hpp>
 #include <slic/GenericOutputStream.hpp>
+#endif
+
+#include <mpi.h>
 #include <iostream>
 #include <sys/time.h>
-//#include "ManagedArray.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
-#include <mpi.h>
 
 using namespace geosx;
-using namespace axom;
 
 
 int main( int argc, char *argv[] )
@@ -24,22 +26,17 @@ int main( int argc, char *argv[] )
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
   real64 t_initialize, t_run;
 
-#if USE_MPI
-
+#if USE_MPI == 1
   int rank;
   MPI_Init(&argc,&argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-//  MPI_Comm_size(MPI_COMM_WORLD, &size);
-//  std::cout<<"rank = "<<rank<<std::endl;
 #endif
 
 
   std::cout<<"starting main"<<std::endl;
 
-
-  slic::initialize();
-
-
+#if ATK_FOUND
+  axom::slic::initialize();
   std::string format =  std::string( "***********************************\n" )+
                         std::string( "* <TIMESTAMP>\n\n" ) +
                         std::string( "* LEVEL=<LEVEL>\n" ) +
@@ -47,15 +44,16 @@ int main( int argc, char *argv[] )
                         std::string( "* FILE=<FILE>\n" ) +
                         std::string( "* LINE=<LINE>\n" ) +
                         std::string( "***********************************\n" );
-  slic::setLoggingMsgLevel( slic::message::Debug );
-  slic::addStreamToAllMsgLevels( new slic::GenericOutputStream( &std::cout, format ) );
+  axom::slic::setLoggingMsgLevel( axom::slic::message::Debug );
+  axom::slic::addStreamToAllMsgLevels( new axom::slic::GenericOutputStream( &std::cout, format ) );
 
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+#endif
 
 
 
   // Mark begin of "initialization" phase
-#if USE_CALIPER==1
+#if USE_CALIPER
   cali::Annotation init_ann = cali::Annotation("initialization").begin();
 #endif
 
@@ -71,7 +69,7 @@ int main( int argc, char *argv[] )
 
   
   problemManager.Initialize( &problemManager );
-#if USE_CALIPER==1
+#if USE_CALIPER
   init_ann.end();
 #endif
   gettimeofday(&tim, NULL);
@@ -80,24 +78,31 @@ int main( int argc, char *argv[] )
   problemManager.ApplyInitialConditions();
   std::cout << std::endl << "Running simulation:" << std::endl;
 
-#if USE_CALIPER==1
+#if USE_CALIPER
   cali::Annotation simulation_ann = cali::Annotation("RunSimulation").begin();
 #endif
 
   problemManager.RunSimulation();
 
-#if USE_CALIPER==1
+#if USE_CALIPER
   simulation_ann.end();
 #endif
 
   problemManager.ClosePythonInterpreter();
 
-  slic::finalize();
-
+#if ATK_FOUND
+  axom::slic::finalize();
+#endif
+  
   gettimeofday(&tim, NULL);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   printf("Done!\n\nScaling Data: initTime = %1.2fs, runTime = %1.2fs\n", t_initialize - t_start,  t_run - t_initialize );
+
+#if USE_MPI
+  MPI_Finalize();
+#endif
+
   
   return 0;
 }

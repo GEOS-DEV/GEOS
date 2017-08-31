@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
-#include "sidre/sidre.hpp"
-#include "sidre/SidreTypes.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/SidreWrapper.hpp"
@@ -11,7 +9,7 @@
 namespace geosx {
 namespace dataRepository {
 
-
+#if ATK_FOUND
 TEST(testSidreBasic, testSidreBasic) {
   MPI_Init(0, nullptr);
   const string path = "test_sidre_basic";
@@ -82,19 +80,16 @@ TEST(testSidreBasic, testSidreBasic) {
   delete root;
   MPI_Finalize();
 }
+#endif /* ATK_FOUND */
 
 
 int main(int argc, char* argv[]) {
   int result = 0;
-
   testing::InitGoogleTest(&argc, argv);
-  MPI_Init(&argc, &argv);
   result = RUN_ALL_TESTS();
-  MPI_Finalize();
-
   return result;
 }
 
 
-} // end namespace dataRepository
-} // end namespace goesx
+} /* end namespace dataRepository */
+} /* end namespace goesx */

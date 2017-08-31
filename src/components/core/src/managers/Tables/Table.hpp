@@ -41,9 +41,12 @@
 #ifndef __TABLE__
 #define __TABLE__
 
+#if ATK_FOUND
+#include "slic/slic.hpp"
+#endif
+
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "slic/slic.hpp"
 #include <vector>
 
 // If we wanted to be super fancy we could move this inside the class and then specialize on the dimension of the table class.
@@ -88,8 +91,11 @@ public:
         realT xlast = -std::numeric_limits<realT>::max();
         for( int j = 0; j < x[i].size(); j++)
         {
-          if(x[i][j] <= xlast)
+          if(x[i][j] <= xlast) {
+#if ATK_FOUND
             SLIC_ERROR("Table:SetGrid - ticks for axis " + std::to_string(i) +" must be a monotonic increasing vector of values");
+#endif
+          }
           xlast = x[i][j];
         }
       }
@@ -121,7 +127,9 @@ public:
   {
     m_p = p;
     if(m_size == 0 || m_p.size() != m_size)
-      SLIC_ERROR("Table:SetValues - Must set axes before attempting to set data");
+#if ATK_FOUND
+      SLIC_EROR("Table:SetValues - Must set axes before attempting to set data");
+#endif
     m_set = true;
   }
 
@@ -142,22 +150,31 @@ public:
 
   unsigned int Dimension(const unsigned dim) const
   {
-    if(dim >= T_dim)
+    if(dim >= T_dim) {
+#if ATK_FOUND
       SLIC_ERROR("Table dimension out of range");
+#endif
+    }
     return this->m_x[dim].size();
   }
 
   const std::vector<realT>& AxisValues(const unsigned int dim) const
   {
-    if(dim >= T_dim)
+    if(dim >= T_dim) {
+#if ATK_FOUND
       SLIC_ERROR("Table dimension out of range");
+#endif
+    }
     return m_x[dim];
   }
 
   unsigned int ValuesPerBlock(const unsigned int dim) const
   {
-    if(dim >= T_dim)
+    if(dim >= T_dim) {
+#if ATK_FOUND
       SLIC_ERROR("Table dimension out of range");
+#endif
+    }
     return m_mult[dim];
   }
 
@@ -313,8 +330,11 @@ private:
     T ret = 0;
     if(m_zeroGradient || !m_set || T_dim < 1)
       return ret;
-    if(gradientDimension >= T_dim)
+    if(gradientDimension >= T_dim) {
+#if ATK_FOUND
       SLIC_ERROR("Table:Gradient - cannot have gradient dimension >= dimension");
+#endif
+    }
 
     unsigned int i = 0, dim = T_dim - 1;
     return Gradient(xx, dim, gradientDimension, i);

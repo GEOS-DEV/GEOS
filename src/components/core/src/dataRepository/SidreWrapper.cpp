@@ -4,7 +4,7 @@
  *  Created on: Jul 22, 2016
  *      Author: rrsettgast
  */
-
+#if ATK_FOUND
 #include "SidreWrapper.hpp"
 
 namespace geosx
@@ -24,5 +24,6 @@ axom::sidre::DataStore& SidreWrapper::dataStore()
   return datastore;
 }
 
-}
-} /* namespace geosx */
+} /* end namespace dataRepository */
+} /* end namespace geosx */
+#endif /* ATK_FOUND */

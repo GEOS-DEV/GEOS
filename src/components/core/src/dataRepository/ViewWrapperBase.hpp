@@ -12,6 +12,7 @@
 #include <memory>
 #include "common/DataTypes.hpp"
 
+#if ATK_FOUND
 namespace axom
 {
 namespace sidre
@@ -19,6 +20,7 @@ namespace sidre
 class View;
 }
 }
+#endif
 
 namespace geosx
 {
@@ -62,13 +64,17 @@ public:
   virtual std::size_t max_size() const = 0;
   virtual void clear() = 0;
   virtual void insert() = 0;
+  virtual void resize( localIndex newsize ) = 0;
+
+
+#if ATK_FOUND
   virtual void registerDataPtr() = 0;
   virtual void unregisterDataPtr() = 0;
   virtual void resizeFromSidre() = 0;
   virtual void storeSizedFromParent() = 0;
   virtual void loadSizedFromParent() = 0;
+#endif
 
-  virtual void resize( localIndex newsize ) = 0;
 
   void resize() ;
 //  virtual void serialize( char * dataPointer, int64 & length, string & typeName ) const = 0;
@@ -84,6 +90,7 @@ public:
     m_sizedFromParent = val;
   }
 
+#if ATK_FOUND
   axom::sidre::View const * getSidreView() const
   {
     return m_sidreView;
@@ -92,6 +99,7 @@ public:
   {
     return m_sidreView;
   }
+#endif
 
   string const & getName() const
   {
@@ -102,7 +110,9 @@ private:
   std::string m_name;
   ManagedGroup* m_parent;
   int m_sizedFromParent;
+#if ATK_FOUND
   axom::sidre::View* m_sidreView;
+#endif
 
   ViewWrapperBase() = delete;
   ViewWrapperBase( ViewWrapperBase const & ) = delete;

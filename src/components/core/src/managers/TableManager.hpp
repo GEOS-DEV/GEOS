@@ -57,7 +57,10 @@
 
 #include <map>
 #include "../codingUtilities/IOUtilities.hpp"
+
+#if ATK_FOUND
 #include <slic/slic.hpp>
+#endif
 
 
 class TableManager
@@ -75,22 +78,37 @@ public:
 
   //CONST
   template < unsigned int dim>
-  inline const std::map<std::string,  Table<dim, realT> >& Tables() const { SLIC_ERROR("Cannot call base specialization"); }
+  inline const std::map<std::string,  Table<dim, realT> >& Tables() const { 
+#if ATK_FOUND
+    SLIC_ERROR("Cannot call base specialization");
+#endif
+  }
 
   //NON-CONST
   template < unsigned int dim>
-  inline std::map<std::string,  Table<dim, realT> >& Tables() { SLIC_ERROR("Cannot call base specialization"); }
+  inline std::map<std::string,  Table<dim, realT> >& Tables() { 
+#if ATK_FOUND
+    SLIC_ERROR("Cannot call base specialization"); 
+#endif
+  }
 
   //ADD
   template < unsigned int dim, class ARRAY, class ARRAY2>
-  inline void NewTable(const std::string& name, const ARRAY2& x, const ARRAY& values, TableInterpolation::Order interp) { SLIC_ERROR("Cannot call base specialization"); }
+  inline void NewTable(const std::string& name, const ARRAY2& x, const ARRAY& values, TableInterpolation::Order interp) { 
+#if ATK_FOUND
+    SLIC_ERROR("Cannot call base specialization"); 
+#endif
+  }
 
   template <unsigned int dim, class ARRAY>
   inline Table<dim,realT> * GetTable( const std::string& tableName )
   {
     typename std::map<std::string, Table<dim, realT> >::iterator table = Tables<dim>().find(tableName);
-    if (table == Tables<dim>().end())
+    if (table == Tables<dim>().end()) {
+#if ATK_FOUND
       SLIC_ERROR("Table name " + tableName + " not found.\n");
+#endif
+    }
     return &(table->second);
 
   }
@@ -103,8 +121,11 @@ public:
   {
     typename std::map<std::string, Table<dim, realT> >::const_iterator table =
         Tables<dim>().find(tableName);
-    if (table == Tables<dim>().end())
+    if (table == Tables<dim>().end()) {
+#if ATK_FOUND
       SLIC_ERROR("Table name " + tableName + " not found.\n");
+#endif
+    }
     return table->second.Lookup(key, interpolate);
   }
 
@@ -113,15 +134,27 @@ public:
 
   //CONST
   template < unsigned int dim>
-  inline const std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() const { SLIC_ERROR("Cannot call base specialization"); }
+  inline const std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() const { 
+#if ATK_FOUND
+    SLIC_ERROR("Cannot call base specialization"); 
+#endif
+  }
 
   //NON-CONST
   template < unsigned int dim>
-  inline std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() { SLIC_ERROR("Cannot call base specialization"); }
+  inline std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() { 
+#if ATK_FOUND
+    SLIC_ERROR("Cannot call base specialization"); 
+#endif
+  }
 
   //ADD
   template < unsigned int dim, class ARRAY, class ARRAY2>
-  inline void NewVectorField(const std::string& name, const ARRAY2& x, const ARRAY& values) { SLIC_ERROR("Cannot call base specialization"); }
+  inline void NewVectorField(const std::string& name, const ARRAY2& x, const ARRAY& values) { 
+#if ATK_FOUND
+    SLIC_ERROR("Cannot call base specialization"); 
+#endif
+  }
 
   //LOOKUP
   template <unsigned int dim, class ARRAY>
@@ -131,8 +164,11 @@ public:
   {
     typename std::map<std::string, Table<dim, R1Tensor> >::const_iterator table =
         VectorFields<dim>().find(tableName);
-    if (table == Tables<dim>().end())
+    if (table == Tables<dim>().end()) {
+#if ATK_FOUND
       SLIC_ERROR("VectorField name " + tableName + " not found.\n");
+#endif
+    }
     return table->second.Lookup(key, interpolate);
   }
 
@@ -371,7 +407,9 @@ void TableManager::ReadVoxelFile(const std::string& filename, localIndex nCompon
   }
   else
   {
+#if ATK_FOUND
     SLIC_ERROR("ReadVoxelFile: Failed to load file:" + filename + " \n");
+#endif
   }
 }
 
@@ -399,7 +437,9 @@ void TableManager::ReadTimeVoxelFile(const std::string& filename, localIndex nCo
   }
   else
   {
+#if ATK_FOUND
     SLIC_ERROR("ReadTimeVoxelFile: Failed to load file:" + filename + " \n");
+#endif
   }
 }
 
@@ -480,7 +520,9 @@ void TableManager::ReadNUFTFile(const std::string& filename,
     }
     else
     {
+#if ATK_FOUND
       SLIC_ERROR("readTimeVoxelFile: Failed to load file:" + filename + " \n");
+#endif
     }
   }
 

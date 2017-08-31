@@ -51,6 +51,11 @@
 #include "Communication.h"
 #include "legacy/ArrayT/bufvector.h"
 
+#if ATK_FOUND
+#include "slic/slic.hpp"
+#endif
+
+
 class oBinStream;
 class iBinStream;
 
@@ -436,7 +441,9 @@ public:
     std::map<string, lArray1d>::const_iterator it = this->m_receiveLocalIndices.find(name);
     if(it == this->m_receiveLocalIndices.end())
     {
+#if ATK_FOUND
       SLIC_ERROR("Failed to find name " + name + " in m_receiveLocalIndices (ReceiveLocalIndices function)");
+#endif
     }
     return it->second;
   }
@@ -446,7 +453,9 @@ public:
     std::map<string, lArray1d>::const_iterator it = this->m_sendLocalIndices.find(name);
     if(it == this->m_sendLocalIndices.end())
     {
+#if ATK_FOUND
       SLIC_ERROR("Failed to find name " + name + " in m_sendLocalIndices (SendLocalIndices function)");
+#endif
     }
     return it->second;
   }

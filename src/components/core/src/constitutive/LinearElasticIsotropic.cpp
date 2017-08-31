@@ -7,6 +7,10 @@
 
 #include "LinearElasticIsotropic.hpp"
 
+#if ATK_FOUND
+#include "slic/slic.hpp"
+#endif
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -170,7 +174,9 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
     else if( !( K >= 0.0 && G >= 0.0 ) )
     {
       string const message = "A specific pair of elastic constants is required. Either (K,G) or (E,nu)";
+#if ATK_FOUND
       SLIC_ERROR(message);
+#endif
     }
     else
     {
@@ -181,7 +187,9 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
   else
   {
     string const message = std::to_string(numConstantsSpecified) + " Elastic Constants Specified. Must specify 2 constants!";
+#if ATK_FOUND
     SLIC_ERROR(message);
+#endif
   }
 }
 

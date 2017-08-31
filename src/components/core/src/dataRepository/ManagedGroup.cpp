@@ -7,18 +7,20 @@
 
 #include "ManagedGroup.hpp"
 
-#include "dataRepository/SidreWrapper.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "spio/IOManager.hpp"
 #include <mpi.h>
 
-
+#if ATK_FOUND
+#include "dataRepository/SidreWrapper.hpp"
+#endif
 
 namespace geosx
 {
 namespace dataRepository
 {
 
+#if ATK_FOUND
 axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
                                                             ManagedGroup * const parent )
 {
@@ -44,14 +46,18 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
   }
   return sidreGroup;
 }
+#endif /* ATK_FOUND */
 
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ) :
+#if ATK_FOUND
+  m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
+#endif
+  m_name(name),
   m_docNode(nullptr),
   m_wrappers(),
   m_parent(parent),
   m_subGroups(),
-  m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
   m_size(0)
 {
 
@@ -281,6 +287,7 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
+#if ATK_FOUND
 /* Add pointers to ViewWrapper data to the sidre tree. */
 void ManagedGroup::registerSubViews() 
 {
@@ -412,7 +419,7 @@ void ManagedGroup::loadSidreExternalData(const string & root_path, MPI_Comm comm
   ioManager.loadExternalData(m_sidreGroup, root_path);
   unregisterSubViews();
 }
+#endif /* ATK_FOUND */
 
-
-}
-} /* namespace ODS */
+} /* end namespace dataRepository */
+} /* end namespace geosx  */
