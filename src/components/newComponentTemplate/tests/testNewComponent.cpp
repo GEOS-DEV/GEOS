@@ -22,7 +22,6 @@
 
 
 //#include <cstring>
-//#include "slic/slic.hpp"
 //#include "../src/codingUtilities/stackTrace.hpp"
 
 // API coverage tests

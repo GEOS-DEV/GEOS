@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
-#include "sidre/sidre.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/SidreWrapper.hpp"
@@ -10,18 +9,21 @@
 namespace geosx {
 namespace dataRepository {
 
+#if ATK_FOUND
 template<typename T> 
-ViewWrapper<T> & createArrayView(ManagedGroup * parent, const string name, const int sized_from_parent, const T & data) {
+ViewWrapper<T> & createArrayView(ManagedGroup * parent, const string name,
+                                 int sfp, const T & data)
+{
   ViewWrapper<T> & view = parent->RegisterViewWrapper<T>(name);
-  view.setSizedFromParent(sized_from_parent);
+  view.setSizedFromParent(sfp);
 
   /* Resize the array */
   uint32 expected_size = data.size() * sizeof(typename T::value_type);
   view.resize(data.size());
 
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view.size() == data.size());
-  EXPECT_TRUE(view.dataSize() == expected_size);
+  /* Check that the ViewWrapper size and dataSize return the proper values */
+  EXPECT_EQ(view.size(), data.size());
+  EXPECT_EQ(view.dataSize(), expected_size);
 
   /* Set the data */
   T & view_data = view.data();
@@ -30,77 +32,76 @@ ViewWrapper<T> & createArrayView(ManagedGroup * parent, const string name, const
   }
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view.dataPtr() == &(view.data()[0]));
+  EXPECT_EQ(view.dataPtr(), &(view.data()[0]));
 
   return view;
 }
 
 
 template<typename T> 
-void checkArrayView(ViewWrapper<T> & view, const int sized_from_parent, const T & data) 
+void checkArrayView(ViewWrapper<T> & view, int sfp, const T & data) 
 {
-  EXPECT_TRUE(view.sizedFromParent() == sized_from_parent);
-  EXPECT_TRUE(view.size() == data.size());
+  EXPECT_EQ(view.sizedFromParent(), sfp);
+  EXPECT_EQ(view.size(), data.size());
   T & view_data = view.data();
-  bool same_data = true;
   for (int i = 0; i < view.size(); i++) {
-    same_data &= view_data[i] == data[i];
+    EXPECT_DOUBLE_EQ(view_data[i], data[i]);
   }
-  
-  EXPECT_TRUE(same_data);
-
 }
 
 
-ViewWrapper<string> & createStringview(ManagedGroup * parent, const string name, const int sized_from_parent, const string str) {
+ViewWrapper<string> & createStringview(ManagedGroup * parent, const string name,
+                                       int sfp, const string str) 
+{
   ViewWrapper<string> & view = parent->RegisterViewWrapper<string>(name);
-  view.setSizedFromParent(sized_from_parent);
+  view.setSizedFromParent(sfp);
   
   uint expected_size = str.size() * sizeof(char);
 
   /* Set the data */
   view.data() = str;
 
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view.size() == str.size());
-  EXPECT_TRUE(view.dataSize() == expected_size);
+  /* Check that the ViewWrapper size and dataSize return the proper values */
+  EXPECT_EQ(view.size(), str.size());
+  EXPECT_EQ(view.dataSize(), expected_size);
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view.dataPtr() == view.data().c_str());
+  EXPECT_EQ(view.dataPtr(), view.data().c_str());
 
   return view;
 }
 
 
-void checkStringView(ViewWrapper<string> & view, const int sized_from_parent, const string str) {
-  EXPECT_TRUE(view.sizedFromParent() == sized_from_parent);
-  EXPECT_TRUE(view.data().compare(str) == 0);
+void checkStringView(ViewWrapper<string> & view, const int sfp, const string str) {
+  EXPECT_EQ(view.sizedFromParent(), sfp);
+  EXPECT_EQ(view.data().compare(str), 0);
 }
 
 
 template<typename T>
-ViewWrapper<T> & createScalarView(ManagedGroup * parent, const string name, const int sized_from_parent, const T value) {
+ViewWrapper<T> & createScalarView(ManagedGroup * parent, const string name, 
+                                  int sfp, const T value) {
   ViewWrapper<T> & view = parent->RegisterViewWrapper<T>(name);
-  view.setSizedFromParent(sized_from_parent);
+  view.setSizedFromParent(sfp);
 
   /* Set the data */
   *(view.data()) = value;
 
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(view.size() == 1);
-  EXPECT_TRUE(view.dataSize() == sizeof(T));
+  /* Check that the ViewWrapper size and dataSize return the proper values */
+  EXPECT_EQ(view.size(), 1);
+  EXPECT_EQ(view.dataSize(), sizeof(T));
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_TRUE(view.dataPtr() == view.data());
+  EXPECT_EQ(view.dataPtr(), view.data());
 
   return view;
 }
 
 
 template<typename T>
-void checkScalarView(ViewWrapper<T> & view, const int sized_from_parent, const T value) {
-  EXPECT_TRUE(view.sizedFromParent() == sized_from_parent);
-  EXPECT_TRUE(*(view.data()) == value);
+void checkScalarView(ViewWrapper<T> & view, int sfp, const T value) {
+  EXPECT_EQ(view.sizedFromParent(), sfp);
+  EXPECT_EQ(*(view.data()), value);
 }
 
 
@@ -110,7 +111,7 @@ TEST(testSidreExtended, testSidreExtended) {
   const string path = "test_sidre_extended";
   const string protocol = "sidre_hdf5";
   const int group_size = 44;
-  int sized_from_parent = 55;
+  int sfp = 55;
   axom::sidre::DataStore & ds = SidreWrapper::dataStore();
 
   /* Create a new ManagedGroup directly below the sidre::DataStore root. */
@@ -119,7 +120,7 @@ TEST(testSidreExtended, testSidreExtended) {
 
   /* Create a new int64_array ViewWrapper. */
   string view_int64_name = "int64";
-  int view_int64_sfp = sized_from_parent++;
+  int view_int64_sfp = sfp++;
   int view_int64_size = 100;
   int64_array view_int64_data(view_int64_size);
   for (int i = 0; i < view_int64_size; i++) {
@@ -129,7 +130,7 @@ TEST(testSidreExtended, testSidreExtended) {
 
   /* Create a new string ViewWrapper. */
   string view_hope_name = "hope";
-  int view_hope_sfp = sized_from_parent++;
+  int view_hope_sfp = sfp++;
   string view_hope_str = "I sure hope these tests pass.";
   createStringview(root, view_hope_name, view_hope_sfp, view_hope_str);
 
@@ -139,15 +140,17 @@ TEST(testSidreExtended, testSidreExtended) {
 
   /* Create a new string ViewWrapper. */
   string view_hello_name = "hello";
-  int view_hello_sfp = sized_from_parent++;
+  int view_hello_sfp = sfp++;
   string view_hello_str = "Hello, how are you doing on this fine day?";
-  createStringview(&strings_group, view_hello_name, view_hello_sfp, view_hello_str);
+  createStringview(&strings_group, view_hello_name, view_hello_sfp,
+                   view_hello_str);
 
   /* Create a new string ViewWrapper. */
   string view_goodbye_name = "goodbye";
-  int view_goodbye_sfp = sized_from_parent++;
+  int view_goodbye_sfp = sfp++;
   string view_goodbye_str = "I hate this weather so I'm heading inside. Goodbye.";
-  createStringview(&strings_group, view_goodbye_name, view_goodbye_sfp, view_goodbye_str);
+  createStringview(&strings_group, view_goodbye_name, view_goodbye_sfp, 
+                   view_goodbye_str);
 
   /* Create a new group. */
   ManagedGroup & real64_group = root->RegisterGroup("real64");
@@ -155,23 +158,25 @@ TEST(testSidreExtended, testSidreExtended) {
 
   /* Create a new real64_array ViewWrapper. */
   string view_real641_name = "real641";
-  int view_real641_sfp = sized_from_parent++;
+  int view_real641_sfp = sfp++;
   int view_real641_size = 1000;
   real64_array view_real641_data(view_real641_size);
   for (real64 i = 0; i < view_real641_size; i++) {
     view_real641_data[i] = i * i / (i + 5);
   }
-  createArrayView(&real64_group, view_real641_name, view_real641_sfp, view_real641_data);
+  createArrayView(&real64_group, view_real641_name, view_real641_sfp, 
+                  view_real641_data);
 
   /* Create a new real64_array ViewWrapper. */
   string view_real642_name = "real642";
-  int view_real642_sfp = sized_from_parent++;
+  int view_real642_sfp = sfp++;
   int view_real642_size = 1000;
   real64_array view_real642_data(view_real642_size);
   for (real64 i = 0; i < view_real642_size; i++) {
     view_real642_data[i] = i * i / (5 + 5 * i + i * i);
   }
-  createArrayView(&real64_group, view_real642_name, view_real642_sfp, view_real642_data);
+  createArrayView(&real64_group, view_real642_name, view_real642_sfp, 
+                  view_real642_data);
 
   /* Create a new group. */
   ManagedGroup & mixed_group = real64_group.RegisterGroup("mixed");
@@ -179,7 +184,7 @@ TEST(testSidreExtended, testSidreExtended) {
 
   /* Create a new int32_array ViewWrapper. */
   string view_int32_name = "int32";
-  int view_int32_sfp = sized_from_parent++;
+  int view_int32_sfp = sfp++;
   int view_int32_size = 953;
   int32_array view_int32_data(view_int32_size);
   for (int32 i = 0; i < view_int32_size; i++) {
@@ -189,23 +194,24 @@ TEST(testSidreExtended, testSidreExtended) {
 
   /* Create a new real32_array ViewWrapper. */
   string view_real32_name = "real32";
-  int view_real32_sfp = sized_from_parent++;
+  int view_real32_sfp = sfp++;
   int view_real32_size = 782;
   real32_array view_real32_data(view_real32_size);
   for (real32 i = 0; i < view_real32_size; i++) {
     view_real32_data[i] = (i * i - 100 * i + 3) / (i + 3);
   }
-  createArrayView(&mixed_group, view_real32_name, view_real32_sfp, view_real32_data);
+  createArrayView(&mixed_group, view_real32_name, view_real32_sfp, 
+                  view_real32_data);
 
   /* Create a new string ViewWrapper. */
   string view_what_name = "what";
-  int view_what_sfp = sized_from_parent++;
-  string view_what_str = "What are you talking about?! Who doesn't like thunder storms?";
+  int view_what_sfp = sfp++;
+  string view_what_str = "What are you talking about? Who doesn't like storms?";
   createStringview(&mixed_group, view_what_name, view_what_sfp, view_what_str);
 
   /* Create a new real64 ViewWrapper. */
   string view_pi_name = "pi";
-  int view_pi_sfp = sized_from_parent++;
+  int view_pi_sfp = sfp++;
   real64 view_pi_value = 3.14159;
   createScalarView(&mixed_group, view_pi_name, view_pi_sfp, view_pi_value);
 
@@ -245,10 +251,10 @@ TEST(testSidreExtended, testSidreExtended) {
   root->loadSidreExternalData(path + ".root", MPI_COMM_WORLD);
 
   /* Group sizes should have carried over. */
-  EXPECT_TRUE(root->size() == group_size);
-  EXPECT_TRUE(strings_group_new.size() == group_size + 1);
-  EXPECT_TRUE(real64_group_new.size() == group_size + 2);
-  EXPECT_TRUE(mixed_group_new.size() == group_size + 3);
+  EXPECT_EQ(root->size(), group_size);
+  EXPECT_EQ(strings_group_new.size(), group_size + 1);
+  EXPECT_EQ(real64_group_new.size(), group_size + 2);
+  EXPECT_EQ(mixed_group_new.size(), group_size + 3);
 
   /* Check that ViewWrapper values were restored. */
   checkArrayView(view_int64_new, view_int64_sfp, view_int64_data);  
@@ -265,19 +271,15 @@ TEST(testSidreExtended, testSidreExtended) {
   delete root;
   MPI_Finalize();
 }
-
+#endif /* ATK_FOUND */
 
 int main(int argc, char* argv[]) {
   int result = 0;
-
   testing::InitGoogleTest(&argc, argv);
-  MPI_Init(&argc, &argv);
   result = RUN_ALL_TESTS();
-  MPI_Finalize();
-
   return result;
 }
 
 
-} // end namespace dataRepository
-} // end namespace goesx
+} /* end namespace dataRepository */
+} /* end namespace goesx */

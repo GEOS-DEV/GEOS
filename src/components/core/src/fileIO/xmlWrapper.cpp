@@ -8,10 +8,14 @@
 #include "common/DataTypes.hpp"
 #include "xmlWrapper.hpp"
 #include "DocumentationNode.hpp"
-#include <slic/slic.hpp>
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/StringUtilities.hpp"
+
+#if ATK_FOUND
+#include <slic/slic.hpp>
+#endif
+
 
 using namespace cxx_utilities;
 
@@ -56,7 +60,9 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
       if( defVal == "REQUIRED")
       {
         string message = "variable " + subDocNode.getName() + " is required in " + targetNode.path();
+#if ATK_FOUND
         SLIC_ERROR( message );
+#endif
       }
       else
       {

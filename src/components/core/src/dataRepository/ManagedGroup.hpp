@@ -9,7 +9,6 @@
 #define MANAGEDGROUP_H_
 
 #include <iostream>
-#include <slic/slic.hpp>
 #include <mpi.h>
 
 #include "ObjectCatalog.hpp"
@@ -464,9 +463,9 @@ public:
     return (m_wrappers[name] != nullptr);
   }
 
-  inline string getName() const
+  inline const string getName() const
   {
-    return m_sidreGroup->getName();
+    return m_name;
   }
 
   virtual void resize( localIndex newsize );
@@ -477,12 +476,13 @@ public:
   }
 
 
-
+#ifdef ATK_FOUND
   axom::sidre::Group * getSidreGroup()              { return m_sidreGroup; }
   axom::sidre::Group const * getSidreGroup() const  { return m_sidreGroup; }
 
   static axom::sidre::Group * setSidreGroup( string const& name,
                                                        ManagedGroup * const parent );
+#endif
 
   ManagedGroup * getParent()             { return m_parent; }
   ManagedGroup const * getParent() const { return m_parent; }
@@ -490,7 +490,9 @@ public:
   ManagedGroup * setParent( ManagedGroup * const parent )
   {
     m_parent = parent;
+#if ATK_FOUND
     m_sidreGroup = m_parent->getSidreGroup();
+#endif
 
     return m_parent;
   }
@@ -508,17 +510,18 @@ public:
 
   void writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm);
 
+#if ATK_FOUND
   void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
 
   void loadSidreExternalData(const string & root_path, MPI_Comm comm);
-
+#endif
 
 protected:
   cxx_utilities::DocumentationNode * m_docNode = nullptr;
 
 private:
 
-
+#if ATK_FOUND
   void registerSubViews();
 
   void createSizeViews();
@@ -532,15 +535,20 @@ private:
   void storeSizedFromParent();
 
   void loadSizedFromParent();
+#endif
   
 
   ManagedGroup* m_parent = nullptr;
   viewWrapperMap m_wrappers;
   subGroupMap m_subGroups;
 
+#if ATK_FOUND
   axom::sidre::Group* m_sidreGroup;
+#endif
 
   int32 m_size;
+
+  string m_name;
 
 
   /**
@@ -625,8 +633,8 @@ ViewWrapper<T>& ManagedGroup::RegisterViewWrapper( std::string const & name, std
 }
 
 
-} // namespace dataRepository
-} /* namespace geosx */
+} /* end namespace dataRepository */
+} /* end namespace geosx */
 
 
 //typedef geosx::dataRepository::ManagedGroup ObjectDataStructureBaseT;

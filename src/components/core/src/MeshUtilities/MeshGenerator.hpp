@@ -13,6 +13,11 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/Utilities.hpp"
+
+#if ATK_FOUND
+#include <slic/slic.hpp>
+#endif
+
 namespace geosx
 {
 
@@ -182,7 +187,9 @@ private:
       {
         if (fabs(m_nElemBias[i][block]) >= 1)
         {
+#if ATK_FOUND
           SLIC_ERROR("Mesh bias must between -1 and 1!");
+#endif
         }
 
         realT len = max -  min;

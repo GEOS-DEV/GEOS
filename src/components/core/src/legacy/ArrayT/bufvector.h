@@ -54,6 +54,10 @@
 #include "common/InterObjectRelation.hpp"
 #include "legacy/DataStructures/EncapsulatedObjects/EncapsulatedObjectBase.h"
 
+#if ATK_FOUND
+#include <slic/slic.hpp>
+#endif
+
 class bufvector: public VectorT<char>
 {
 public:
@@ -316,7 +320,9 @@ private:
 
     if( array_length != indices.size() )
     {
+#if ATK_FOUND
       SLIC_ERROR("bufvector::PrivateUnpackArray(): incorrect number of data");
+#endif
 //      throw GPException("bufvector::PrivateUnpackArray(): incorrect number of data");
     }
 
@@ -744,8 +750,11 @@ inline unsigned int bufvector::PrivateUnpackRelation( const char*& buffer, Fixed
   localIndex dimension;
   sizeOfUnpackedChars += bufvector::Unpack( buffer, dimension );
 
-  if( dimension != static_cast<int>(relation.Dimension(1)) )
+  if( dimension != static_cast<int>(relation.Dimension(1)) ) {
+#if ATK_FOUND
     SLIC_ERROR("bufvector::PrivateUnpackRelation(): mismatched dimension");
+#endif
+  }
 
   if( unpackGlobal )
   {

@@ -53,7 +53,9 @@
 #include <fstream>
 #include <iostream>
 
+#if ATK_FOUND
 #include "slic/slic.hpp"
+#endif
 
 
 // ****************************************************************************
@@ -311,7 +313,9 @@ public:
      }
      else
      {
+#if ATK_FOUND
       SLIC_ERROR( "BinStream::read(Array1dT<TYPE>& array): length mismatch\n");
+#endif
      }
     }
 
@@ -327,7 +331,9 @@ public:
 
     if( readLength != set.size() && !realloc )
     {
+#if ATK_FOUND
       SLIC_ERROR( "BinStream::read(std::set<TYPE>& set): length mismatch\n");
+#endif
     }
 
     for( typename std::set<TYPE>::size_type i=0 ; i<readLength ; ++i )
@@ -344,8 +350,11 @@ public:
     const typename Array2dT<TYPE>::size_type length = array.size();
     typename Array2dT<TYPE>::size_type readLength;
     this->read( readLength );
-    if( readLength != length )
+    if( readLength != length ) {
+#if ATK_FOUND
       SLIC_ERROR( "BinStream::read(Array2dT<TYPE>& array): length mismatch\n");
+#endif
+    }
 
     size_t dimension[2] = { array.Dimension(0), array.Dimension(1) };
     size_t readDimension[2];
@@ -359,7 +368,9 @@ public:
       }
       else
       {
+#if ATK_FOUND
         SLIC_ERROR( "BinStream::read(Array2dT<TYPE>& array): dimension mismatch\n");
+#endif
       }
     }
 
@@ -382,7 +393,9 @@ public:
       }
       else
       {
+#if ATK_FOUND
         SLIC_ERROR( "BinStream::read(Array1dT<Array1dT<TYPE> >& array): length mismatch\n");
+#endif
       }
     }
 
@@ -408,7 +421,9 @@ public:
       }
       else
       {
+#if ATK_FOUND
         SLIC_ERROR( "BinStream::read(Array1dT<std::set<TYPE> >& array): length mismatch\n");
+#endif
       }
     }
     for( typename Array1dT<std::set<TYPE> >::iterator i=array.begin() ; i!=array.end() ; ++i )
@@ -460,7 +475,9 @@ public:
         }
         else
         {
+#if ATK_FOUND
           SLIC_ERROR("ObjectDataStructureBaseT::ReadMapFromRestart: name not found\n");
+#endif
         }
       }
 
@@ -504,7 +521,9 @@ public:
         this->read(readFieldName);
 
         if( fieldName != readFieldName )
+#if ATK_FOUND
           SLIC_ERROR("ObjectDataStructureBaseT::ReadMapFromRestart: field name mismatch\n");
+#endif
 
         // write the field data
         this->read( fieldData );

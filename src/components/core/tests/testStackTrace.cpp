@@ -22,7 +22,6 @@
 #endif
 
 #include <cstring>
-#include "slic/slic.hpp"
 #include "stackTrace.hpp"
 #include "SetSignalHandling.hpp"
 // API coverage tests
