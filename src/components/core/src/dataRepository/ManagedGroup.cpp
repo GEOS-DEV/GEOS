@@ -249,9 +249,9 @@ void ManagedGroup::PrintDataHierarchy()
 
 void ManagedGroup::InitializationOrder( string_array & order )
 {
-  for( auto & subGroup : this->m_subGroups.keys() )
+  for( auto & subGroupIter : this->m_subGroups )
   {
-    order.push_back(subGroup.first);
+    order.push_back(subGroupIter.first);
   }
 }
 

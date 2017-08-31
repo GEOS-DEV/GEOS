@@ -20,8 +20,6 @@
 
 #include "MappedVector.hpp"
 
-#include "DataKey.hpp"
-
 //#include "CodingUtilities/ANSTexception.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
@@ -154,7 +152,7 @@ public:
 
 
   template< typename T = ManagedGroup >
-  T * GetGroupPtr( subGroupMap::DataKey & key )
+  T * GetGroupPtr( subGroupMap::KeyIndex & key )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T *>( m_subGroups[key] );
@@ -164,7 +162,7 @@ public:
   }
 
   template< typename T = ManagedGroup >
-  T const * GetGroupPtr( subGroupMap::DataKey & key ) const
+  T const * GetGroupPtr( subGroupMap::KeyIndex & key ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const *>( m_subGroups[key] );
@@ -186,11 +184,11 @@ public:
 
 
   template< typename T = ManagedGroup >
-  T& GetGroup( subGroupMap::DataKey & key )
+  T& GetGroup( subGroupMap::KeyIndex & key )
   { return *(GetGroupPtr<T>(key)); }
 
   template< typename T = ManagedGroup >
-  T const & GetGroup( subGroupMap::DataKey & key ) const
+  T const & GetGroup( subGroupMap::KeyIndex & key ) const
   { return *(GetGroupPtr<T>(key)); }
 
 
@@ -326,11 +324,11 @@ public:
   ViewWrapperBase & getWrapperBase( std::string const & name )
   { return *(m_wrappers[name]); }
 
-  ViewWrapperBase const & getWrapperBase( viewWrapperMap::DataKey & dataKey ) const
-  { return *(m_wrappers[dataKey]); }
+  ViewWrapperBase const & getWrapperBase( viewWrapperMap::KeyIndex & keyIndex ) const
+  { return *(m_wrappers[keyIndex]); }
 
-  ViewWrapperBase & getWrapperBase( viewWrapperMap::DataKey & dataKey )
-  { return *(m_wrappers[dataKey]); }
+  ViewWrapperBase & getWrapperBase( viewWrapperMap::KeyIndex & keyIndex )
+  { return *(m_wrappers[keyIndex]); }
 
 
   template< typename T >
@@ -362,18 +360,18 @@ public:
   { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapperPtr<T>( name ) ); }
 
   template< typename T >
-  ViewWrapper<T> const * getWrapperPtr( viewWrapperMap::DataKey & dataKey ) const
+  ViewWrapper<T> const * getWrapperPtr( viewWrapperMap::KeyIndex & keyIndex ) const
   {
 #ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[dataKey]) );
+    return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[keyIndex]) );
 #else
-    return static_cast< ViewWrapper<T> const * >( (m_wrappers[dataKey]) );
+    return static_cast< ViewWrapper<T> const * >( (m_wrappers[keyIndex]) );
 #endif
   }
 
   template< typename T >
-  ViewWrapper<T> * getWrapperPtr( viewWrapperMap::DataKey & dataKey )
-  { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapperPtr<T>( dataKey ) ); }
+  ViewWrapper<T> * getWrapperPtr( viewWrapperMap::KeyIndex & keyIndex )
+  { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapperPtr<T>( keyIndex ) ); }
 
 
 
@@ -396,12 +394,12 @@ public:
   { return *getWrapperPtr<T>(name);  }
 
   template< typename T >
-  ViewWrapper<T> const & getWrapper( viewWrapperMap::DataKey & dataKey ) const
-  { return *getWrapperPtr<T>(dataKey);  }
+  ViewWrapper<T> const & getWrapper( viewWrapperMap::KeyIndex & keyIndex ) const
+  { return *getWrapperPtr<T>(keyIndex);  }
 
   template< typename T >
-  ViewWrapper<T>& getWrapper( viewWrapperMap::DataKey & dataKey )
-  { return *getWrapperPtr<T>(dataKey);  }
+  ViewWrapper<T>& getWrapper( viewWrapperMap::KeyIndex & keyIndex )
+  { return *getWrapperPtr<T>(keyIndex);  }
 
 
 
@@ -422,12 +420,12 @@ public:
   { return getWrapper<T>( name ).data(); }
 
   template< typename T >
-  view_rtype_const<T> getData( viewWrapperMap::DataKey & dataKey ) const
-  { return getWrapper<T>( dataKey ).data(); }
+  view_rtype_const<T> getData( viewWrapperMap::KeyIndex & keyIndex ) const
+  { return getWrapper<T>( keyIndex ).data(); }
 
   template< typename T >
-  view_rtype<T> getData( viewWrapperMap::DataKey & dataKey )
-  { return getWrapper<T>( dataKey ).data(); }
+  view_rtype<T> getData( viewWrapperMap::KeyIndex & keyIndex )
+  { return getWrapper<T>( keyIndex ).data(); }
 
 
 
@@ -448,12 +446,12 @@ public:
   { return getWrapper<T>(name).reference(); }
 
   template< typename T >
-  T const & getReference( viewWrapperMap::DataKey & dataKey ) const
-  { return getWrapper<T>(dataKey).reference(); }
+  T const & getReference( viewWrapperMap::KeyIndex & keyIndex ) const
+  { return getWrapper<T>(keyIndex).reference(); }
 
   template< typename T >
-  T & getReference( viewWrapperMap::DataKey & dataKey )
-  { return getWrapper<T>(dataKey).reference(); }
+  T & getReference( viewWrapperMap::KeyIndex & keyIndex )
+  { return getWrapper<T>(keyIndex).reference(); }
 
 
   bool hasGroup( std::string const & name ) const
@@ -583,8 +581,8 @@ private:
 #endif
 };
 
-using GroupKey = ManagedGroup::subGroupMap::DataKey;
-using ViewKey = ManagedGroup::viewWrapperMap::DataKey;
+using GroupKey = ManagedGroup::subGroupMap::KeyIndex;
+using ViewKey = ManagedGroup::viewWrapperMap::KeyIndex;
 
 
 
