@@ -3,10 +3,7 @@
 #include "caliper/Annotation.h"
 #endif
 
-#if ATK_FOUND
-#include <slic/slic.hpp>
-#include <slic/GenericOutputStream.hpp>
-#endif
+#include "common/Logger.hpp"
 
 #include <mpi.h>
 #include <iostream>

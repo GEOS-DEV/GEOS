@@ -17,10 +17,17 @@
  * the flexibility of a mapped key lookup O(n) if only the key is known. In addition, a keyIndex can be used for lookup,
  * which will give similar performance to an index lookup after the first use of a keyIndex.
  */
-template< typename T, typename T_PTR=T*, typename KEY_TYPE=std::string, typename INDEX_TYPE = int >
+template< typename T,
+          typename T_PTR=T*,
+          typename KEY_TYPE=std::string,
+          typename INDEX_TYPE = int,
+          bool OWNS_DATA = true >
 class MappedVector
 {
 public:
+  static_assert( std::is_same< T_PTR , T * >::value || std::is_same< T_PTR , std::unique_ptr<T> >::value,
+                 "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
+
   using key_type      = KEY_TYPE ;
   using mapped_type   = T_PTR;
 
@@ -45,7 +52,15 @@ public:
 
 
   MappedVector() = default;
-  ~MappedVector() = default;
+
+
+  ~MappedVector()
+  {
+    clear();
+  }
+
+
+
   MappedVector( MappedVector const & source ) = default ;
   MappedVector & operator=( MappedVector const & source ) = default;
   MappedVector( MappedVector && source ) = default;
@@ -191,21 +206,50 @@ public:
    */
   ///@{
 
-
-  T * insert( KEY_TYPE const & keyName, T_PTR source );
+  /**
+   *
+   * @param keyName
+   * @param source
+   * @param overwrite
+   * @return
+   */
+  T * insert( KEY_TYPE const & keyName, T_PTR source, bool overwrite = false );
 
 
 
   /**
-   *  @brief  Remove element at given index
-   *  @param  index  index of element to remove.
-   *  @return  void
+   * @brief  Remove element at given index
+   * @tparam dummy parameter to allow use of enable_if for multiple definitions based on type.
+   * @param  index  index of element to remove.
+   * @return  void
    *
-   *  This function will set the element at the given index to nullptr.
+   *  This function will call delete on the pointer at given index and set it to nullptr.
    */
-  void erase( INDEX_TYPE index )
+  template< typename U = T_PTR >
+  typename std::enable_if< std::is_same< U , T * >::value, void >::type
+  erase( INDEX_TYPE index )
   {
-    m_values[index] = nullptr;
+    if( OWNS_DATA )
+    {
+      delete m_values[index].second;
+    }
+    m_values[index].second = nullptr;
+    return;
+  }
+
+  /**
+   * @brief  Remove element at given index
+   * @tparam dummy parameter to allow use of enable_if for multiple definitions based on type.
+   * @param  index  index of element to remove.
+   * @return  void
+   *
+   *  This function will the pointer at given index and set it to nullptr.
+   */
+  template< typename U = T_PTR >
+  typename std::enable_if< std::is_same< T_PTR , std::unique_ptr<T> >::value, void >::type
+  erase( INDEX_TYPE index )
+  {
+    m_values[index].second = nullptr;
     return;
   }
 
@@ -221,7 +265,7 @@ public:
     typename LookupMapType::const_iterator iter = m_keyLookup.find(key);
     if( iter!=m_keyLookup.end() )
     {
-      m_values[iter->second] = nullptr;
+      erase(iter->second);
     }
     return;
   }
@@ -245,17 +289,26 @@ public:
     erase( index );
   }
 
+
   void clear()
   {
+    for( typename valueContainer::size_type a=0 ; a<m_values.size() ; ++a )
+    {
+      erase(a);
+    }
     m_keyLookup.clear();
     m_values.clear();
   }
+
 
   ///@}
 
 
   inline INDEX_TYPE size() const
   { return m_values.size(); }
+
+  inline valueContainer const & values()
+  { return this->m_values; }
 
   inline const_valueContainer const & values() const
   { return this->m_constValues; }
@@ -269,10 +322,12 @@ private:
   const_valueContainer m_constValues;
 
   LookupMapType m_keyLookup;
+
+  bool m_ownsValues = true;
 };
 
-template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE >
-T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName , T_PTR source )
+template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE, bool OWNS_DATA >
+T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const & keyName , T_PTR source, bool overwrite )
 {
   typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
 
@@ -288,10 +343,12 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName 
     m_constValues.push_back( std::make_pair( keyName, &(*(m_values[key].second)) ) );
 
   }
-  // if key was found, make sure it is empty
+  // if key was found
   else
   {
     key = iterKeyLookup->second;
+
+    // if value is empty, then move source into value slot
     if( m_values[key].second==nullptr )
     {
       m_values[key].second = std::move( source );
@@ -299,7 +356,16 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName 
     }
     else
     {
-      // error?
+      if( overwrite )
+      {
+        erase(key);
+        m_values[key].second = std::move( source );
+        m_constValues[key].second =  &(*(m_values[key].second));
+      }
+      else
+      {
+        // throw error?
+      }
     }
   }
 

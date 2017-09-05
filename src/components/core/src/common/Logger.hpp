@@ -10,6 +10,7 @@
 
 #if ATK_FOUND
 #include <slic/slic.hpp>
+#include <slic/GenericOutputStream.hpp>
 #endif
 
 
@@ -19,6 +20,9 @@ namespace geosx
 #define GEOS_ERROR(msg) SLIC_ERROR(msg)
 #else
 #define GEOS_ERROR(msg)
+
+void abort();
+
 #endif
 }
 

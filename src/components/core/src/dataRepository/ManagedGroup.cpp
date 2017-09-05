@@ -8,11 +8,11 @@
 #include "ManagedGroup.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
-#include "spio/IOManager.hpp"
 #include <mpi.h>
 
 #if ATK_FOUND
 #include "dataRepository/SidreWrapper.hpp"
+#include "spio/IOManager.hpp"
 #endif
 
 namespace geosx

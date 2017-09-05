@@ -756,9 +756,13 @@ void SiloFile::WriteDataField( const std::string& meshName,
     if(err < 0)
     {
       if(err < -1)
+      {
         GEOS_ERROR("unhandled case in SiloFile::WriteDataField A\n");
+      }
       else
+      {
         GEOS_ERROR("unhandled failure in adding variable during SiloFile::WriteDataField\n");
+      }
     }
 
   }
