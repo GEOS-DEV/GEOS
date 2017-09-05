@@ -143,8 +143,8 @@ void FiniteElementSpace::ReadXML_PostProcess()
 
   // TODO find a better way to do this that doesn't involve getParent(). We shouldn't really use that unless there is no
   // other choice.
-  m_basis = this->getParent()->GetGroup(keys::basisFunctions).getData<BasisBase>(basisName);
-  m_quadrature = this->getParent()->GetGroup(keys::quadratureRules).getData<QuadratureBase>(quadratureName);
+  m_basis = this->getParent()->GetGroup(keys::basisFunctions)->getData<BasisBase>(basisName);
+  m_quadrature = this->getParent()->GetGroup(keys::quadratureRules)->getData<QuadratureBase>(quadratureName);
   m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
 
 }
@@ -156,8 +156,8 @@ void FiniteElementSpace::InitializePreSubGroups( ManagedGroup * const group )
 //
 //  // TODO find a better way to do this that doesn't involve getParent(). We shouldn't really use that unless there is no
 //  // other choice.
-//  m_basis = this->getParent()->GetGroup(keys::basisFunctions).getData<BasisBase>(basisName);
-//  m_quadrature = this->getParent()->GetGroup(keys::quadratureRules).getData<QuadratureBase>(quadratureName);
+//  m_basis = this->getParent()->GetGroup(keys::basisFunctions)->getData<BasisBase>(basisName);
+//  m_quadrature = this->getParent()->GetGroup(keys::quadratureRules)->getData<QuadratureBase>(quadratureName);
 //  m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
 }
 

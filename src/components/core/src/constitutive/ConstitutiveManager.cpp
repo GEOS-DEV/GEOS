@@ -39,10 +39,10 @@ void ConstitutiveManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
       std::string materialKey = childNode.name();
 //      std::cout<<materialName<<std::endl;
       std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( materialKey, materialName, this );
-      ConstitutiveBase & newMaterial = this->RegisterGroup<ConstitutiveBase>( materialName, std::move(material) );
-      newMaterial.SetDocumentationNodes( nullptr );
-//      newMaterial.RegisterDocumentationNodes();
-      newMaterial.ReadXML( childNode );
+      ConstitutiveBase * newMaterial = this->RegisterGroup<ConstitutiveBase>( materialName, std::move(material) );
+      newMaterial->SetDocumentationNodes( nullptr );
+//      newMaterial->RegisterDocumentationNodes();
+      newMaterial->ReadXML( childNode );
   }
 //  std::cout<<this->GetSubGroups().size()<<std::endl;
 //  for( auto const & material : this->GetSubGroups() )

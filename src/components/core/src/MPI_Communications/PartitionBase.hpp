@@ -73,7 +73,7 @@ public:
   virtual ~PartitionBase();
 
 
-  void SetDomain( DomainPartition& domain );
+  void SetDomain( DomainPartition * domain );
 
 
   virtual void InitializePostSubGroups( dataRepository::ManagedGroup * const ) = 0;
@@ -94,13 +94,13 @@ public:
 
 //  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ) = 0;
 
-  virtual void AssignGlobalIndices( DomainPartition& domain );
+  virtual void AssignGlobalIndices( DomainPartition * domain );
 
   virtual void FindMatchedBoundaryIndices( string const & key,
                                            const ObjectManagerBase& object );
 
 
-  virtual void SetUpNeighborLists( DomainPartition& domain,
+  virtual void SetUpNeighborLists( DomainPartition * domain,
                                    const bool contactActive );
 
   void SetRankOfNeighborNeighbors();
@@ -119,7 +119,7 @@ public:
   void SetOwnedByRank( const std::map< std::string, gArray1d>& localBoundaryGlobalIndices,
                        std::map<std::string, std::map< globalIndex, int > >& boundaryOwnership);
 
-  void SetGhostArrays( DomainPartition& domain );
+  void SetGhostArrays( DomainPartition * domain );
 
   lArray1d GetFaceSendIndices();
 
@@ -160,7 +160,7 @@ protected:
   int m_color;
   int m_numColors;
 
-  DomainPartition* const m_domain;
+  DomainPartition * const m_domain;
 
 public:
   realT m_t1;

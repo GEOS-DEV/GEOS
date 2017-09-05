@@ -108,10 +108,10 @@ public:
 
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T& RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject );
+  T * RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject );
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T& RegisterGroup( std::string const & name )
+  T * RegisterGroup( std::string const & name )
   {
 //    T* temp = dynamic_cast<T*>(this);
     return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
@@ -119,7 +119,7 @@ public:
   }
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T& RegisterGroup( std::string const & name, std::string const & catalogName )
+  T * RegisterGroup( std::string const & name, std::string const & catalogName )
   {
 //    T* temp = dynamic_cast<T*>(this);
     std::unique_ptr<TBASE> newGroup = TBASE::CatalogInterface::Factory(catalogName, name, this );
@@ -130,7 +130,7 @@ public:
 
 
   template< typename T = ManagedGroup >
-  T * GetGroupPtr( std::string const & name )
+  T * GetGroup( std::string const & name )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T *>( m_subGroups[name] );
@@ -140,7 +140,7 @@ public:
   }
 
   template< typename T = ManagedGroup >
-  T const * GetGroupPtr( std::string const & name ) const
+  T const * GetGroup( std::string const & name ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const *>( m_subGroups[name] );
@@ -151,7 +151,7 @@ public:
 
 
   template< typename T = ManagedGroup >
-  T * GetGroupPtr( subGroupMap::KeyIndex & key )
+  T * GetGroup( subGroupMap::KeyIndex & key )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T *>( m_subGroups[key] );
@@ -161,7 +161,7 @@ public:
   }
 
   template< typename T = ManagedGroup >
-  T const * GetGroupPtr( subGroupMap::KeyIndex & key ) const
+  T const * GetGroup( subGroupMap::KeyIndex & key ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const *>( m_subGroups[key] );
@@ -169,27 +169,6 @@ public:
     return static_cast<T const *>( m_subGroups[key] );
 #endif
   }
-
-
-
-
-  template< typename T = ManagedGroup >
-  T& GetGroup( std::string const & name )
-  { return *(GetGroupPtr<T>(name)); }
-
-  template< typename T = ManagedGroup >
-  T const & GetGroup( std::string const & name ) const
-  { return *(GetGroupPtr<T>(name)); }
-
-
-  template< typename T = ManagedGroup >
-  T& GetGroup( subGroupMap::KeyIndex & key )
-  { return *(GetGroupPtr<T>(key)); }
-
-  template< typename T = ManagedGroup >
-  T const & GetGroup( subGroupMap::KeyIndex & key ) const
-  { return *(GetGroupPtr<T>(key)); }
-
 
 
   subGroupMap & GetSubGroups()
@@ -208,9 +187,9 @@ public:
     for( auto& subGroupIter : m_subGroups )
     {
 #ifdef USE_DYNAMIC_CASTING
-       T & subGroup = dynamic_cast<T &>( *(subGroupIter.second) );
+       T * subGroup = dynamic_cast<T *>( subGroupIter.second.get() );
 #else
-       T & subGroup = static_cast<T &>( *(subGroupIter.second) );
+       T * subGroup = static_cast<T *>( subGroupIter.second.get() );
 #endif
        lambda( subGroup );
     }
@@ -222,9 +201,9 @@ public:
     for( auto const & subGroupIter : m_subGroups )
     {
 #ifdef USE_DYNAMIC_CASTING
-       T const & subGroup = dynamic_cast<T const &>( *(subGroupIter.second) );
+       T const * subGroup = dynamic_cast<T const *>( subGroupIter.second );
 #else
-       T const & subGroup = static_cast<T const &>( *(subGroupIter.second) );
+       T const * subGroup = static_cast<T const *>( subGroupIter.second );
 #endif
        lambda( subGroup );
     }
@@ -558,10 +537,10 @@ private:
 #if NOCHARTOSTRING_KEYLOOKUP == 1
 
   template< typename T = ManagedGroup >
-  T const & GetGroup( char const * ) const;
+  T const * GetGroup( char const * ) const;
 
   template< typename T = ManagedGroup >
-  T& GetGroup( char const * name );
+  T * GetGroup( char const * name );
 
 
   template< typename T >
@@ -595,12 +574,12 @@ using ViewKey = ManagedGroup::viewWrapperMap::KeyIndex;
 
 
 template < typename T, typename TBASE >
-T& ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
+T* ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
 {
   #ifdef USE_DYNAMIC_CASTING
-    return *(dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) ) );
+    return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
   #else
-    return *(static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) ) );
+    return static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
   #endif
 }
 

@@ -28,8 +28,8 @@ public:
 
 
 
-  static void GenerateNodesets( dataRepository::ManagedGroup const & geometry,
-                                dataRepository::ManagedGroup& nodeManager );
+  static void GenerateNodesets( dataRepository::ManagedGroup const * geometry,
+                                dataRepository::ManagedGroup * nodeManager );
 
 //  static void GenerateFasesetsAndAssociatedNodesets( xmlWrapper const & hdn,
 //                                                     ManagedGroup& faceManager,

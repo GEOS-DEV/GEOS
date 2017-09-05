@@ -71,9 +71,9 @@ ElementRegionManager::~ElementRegionManager()
 localIndex ElementRegionManager::getNumberOfElements() const
 {
   localIndex numElem = 0;
-  this->forCellBlocks([&]( ManagedGroup const & cellBlock ) -> void
+  this->forCellBlocks([&]( ManagedGroup const * cellBlock ) -> void
   {
-    numElem += cellBlock.size();
+    numElem += cellBlock->size();
   });
   return numElem;
 }
@@ -83,11 +83,11 @@ void ElementRegionManager::resize( int32_array const & numElements,
                              string_array const & elementTypes )
 {
   int32 const numRegions = regionNames.size();
-//  ManagedGroup & elementRegions = this->GetGroup(keys::cellBlocks);
+//  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
   for( int32 reg=0 ; reg<numRegions ; ++reg )
   {
-    ElementRegion & elemRegion = this->GetRegion( regionNames[reg] );
-    elemRegion.resize(numElements[reg]);
+    ElementRegion * elemRegion = this->GetRegion( regionNames[reg] );
+    elemRegion->resize(numElements[reg]);
   }
 }
 
@@ -96,13 +96,13 @@ void ElementRegionManager::resize( int32_array const & numElements,
 //                                             string const & elementType,
 //                                             int32 const & numElements )
 //{
-////  ElementRegion & elemRegion = elementRegions.RegisterGroup( regionNames );
-////  elemRegion.resize(numElements);
+////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
+////  elemRegion->resize(numElements);
 //}
 
 void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
-  ManagedGroup & elementRegions = this->GetGroup(keys::elementRegions);
+  ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
   for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
     if( childNode.name() == string("ElementRegion") )
@@ -110,10 +110,10 @@ void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
       std::string regionName = childNode.attribute("name").value();
       std::cout<<regionName<<std::endl;
 
-      ElementRegion & elemRegion = elementRegions.RegisterGroup<ElementRegion>( regionName );
-      elemRegion.SetDocumentationNodes( nullptr );
-//      elemRegion.RegisterDocumentationNodes();
-      elemRegion.ReadXML(childNode);
+      ElementRegion * elemRegion = elementRegions->RegisterGroup<ElementRegion>( regionName );
+      elemRegion->SetDocumentationNodes( nullptr );
+//      elemRegion->RegisterDocumentationNodes();
+      elemRegion->ReadXML(childNode);
     }
   }
 }
@@ -122,7 +122,7 @@ void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 void ElementRegionManager::InitializePreSubGroups( ManagedGroup * const )
 {
 //    map<string,int32> constitutiveSizes;
-//    ManagedGroup & domain = problemManager.GetGroup(keys::domain);
+//    ManagedGroup * domain = problemManager.GetGroup(keys::domain);
 //    forElementRegions([&]( ElementRegion& elementRegion ) -> void
 //    {
 //      map<string,int32> sizes = elementRegion.SetConstitutiveMap( problemManager );
@@ -132,8 +132,8 @@ void ElementRegionManager::InitializePreSubGroups( ManagedGroup * const )
 //      }
 //    });
 //
-//    ManagedGroup & constitutiveManager = domain.GetGroup(keys::ConstitutiveManager);
-//    for( auto & material : constitutiveManager.GetSubGroups() )
+//    ManagedGroup * constitutiveManager = domain->GetGroup(keys::ConstitutiveManager);
+//    for( auto & material : constitutiveManager->GetSubGroups() )
 //    {
 //      string name = material.first;
 //      if( constitutiveSizes.count(name) > 0 )
@@ -146,24 +146,24 @@ void ElementRegionManager::InitializePreSubGroups( ManagedGroup * const )
 void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problemManager )
 {
     map<string,localIndex> constitutiveSizes;
-    ManagedGroup & domain = problemManager->GetGroup(keys::domain);
-    forElementRegions([&]( ElementRegion& elementRegion ) -> void
+    ManagedGroup * domain = problemManager->GetGroup(keys::domain);
+    forElementRegions([&]( ElementRegion * elementRegion ) -> void
     {
 //      map<string,localIndex> sizes;
-      elementRegion.SetConstitutiveMap( *problemManager,constitutiveSizes );
+      elementRegion->SetConstitutiveMap(problemManager, constitutiveSizes);
 //      for( auto& entry : sizes )
 //      {
 //        constitutiveSizes[entry.first] += entry.second;
 //      }
     });
 
-    ManagedGroup & constitutiveManager = domain.GetGroup(keys::ConstitutiveManager);
-    for( auto & material : constitutiveManager.GetSubGroups() )
+    ManagedGroup * constitutiveManager = domain->GetGroup(keys::ConstitutiveManager);
+    for( auto & material : constitutiveManager->GetSubGroups() )
     {
       string name = material.first;
       if( constitutiveSizes.count(name) > 0 )
       {
-        material.second->resize( constitutiveSizes.at(name) );
+        material.second->resize(constitutiveSizes.at(name));
       }
     }
 }

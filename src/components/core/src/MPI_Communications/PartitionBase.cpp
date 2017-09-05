@@ -90,13 +90,13 @@ PartitionBase::~PartitionBase()
 /**
  * @brief Call SetDomain on each neighbor
  */
-void PartitionBase::SetDomain( DomainPartition& domain )
+void PartitionBase::SetDomain( DomainPartition * domain )
 {
   // set the const pointer "m_domain" by casting away the the const
   // on the address of the pointer, and modifying what the address of
   // the pointer.
   DomainPartition** temp = const_cast<DomainPartition**>(&m_domain);
-  *temp = &domain;
+  *temp = domain;
 
   for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
   {
@@ -107,7 +107,7 @@ void PartitionBase::SetDomain( DomainPartition& domain )
 ///**
 // * @brief Call Clear on each neighbor and set up neighbor lists
 // */
-//void PartitionBase::ResetNeighborLists( DomainPartition& domain,
+//void PartitionBase::ResetNeighborLists( DomainPartition * domain,
 //                                        const int elementGhostingDepth )
 //{
 //  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
@@ -118,7 +118,7 @@ void PartitionBase::SetDomain( DomainPartition& domain )
 //}
 
 
-void PartitionBase::AssignGlobalIndices( DomainPartition& domain )
+void PartitionBase::AssignGlobalIndices( DomainPartition * domain )
 {
 //
 //  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
@@ -138,11 +138,11 @@ void PartitionBase::AssignGlobalIndices( DomainPartition& domain )
 //  gArray1d localBoundaryNodesGlobalIndex;
 //  gArray1d localBoundaryNodesNewGlobalIndex;
 //
-//  domain.m_feNodeManager.ConstructListOfBoundaryObjects( localBoundaryNodesLocalIndex );
+//  domain->m_feNodeManager.ConstructListOfBoundaryObjects( localBoundaryNodesLocalIndex );
 //
 //  for( lArray1d::const_iterator a=localBoundaryNodesLocalIndex.begin() ; a!=localBoundaryNodesLocalIndex.end() ; ++a )
 //  {
-//    localBoundaryNodesGlobalIndex.push_back( domain.m_feNodeManager.m_localToGlobalMap[*a] );
+//    localBoundaryNodesGlobalIndex.push_back( domain->m_feNodeManager.m_localToGlobalMap[*a] );
 //    localBoundaryNodesNewGlobalIndex.push_back( GlobalIndexManager::Index( this->m_rank, *a ) );
 //  }
 //  //(1)
@@ -204,9 +204,9 @@ void PartitionBase::AssignGlobalIndices( DomainPartition& domain )
 //  {
 //    std::map<globalIndex,globalIndex> globalIndexTransformation;
 //
-//    for( localIndex a=0 ; a<domain.m_feNodeManager.m_numNodes ; ++a )
+//    for( localIndex a=0 ; a<domain->m_feNodeManager.m_numNodes ; ++a )
 //    {
-//      globalIndexTransformation.insert( std::make_pair( domain.m_feNodeManager.m_localToGlobalMap[a], GlobalIndexManager::Index(this->m_rank,a) ) );
+//      globalIndexTransformation.insert( std::make_pair( domain->m_feNodeManager.m_localToGlobalMap[a], GlobalIndexManager::Index(this->m_rank,a) ) );
 //    }
 //
 //    // now check the global num
@@ -228,11 +228,11 @@ void PartitionBase::AssignGlobalIndices( DomainPartition& domain )
 //      }
 //    }
 //
-//    for( localIndex a=0 ; a<domain.m_feNodeManager.m_numNodes ; ++a )
+//    for( localIndex a=0 ; a<domain->m_feNodeManager.m_numNodes ; ++a )
 //    {
-//      domain.m_feNodeManager.m_localToGlobalMap[a] = globalIndexTransformation[domain.m_feNodeManager.m_localToGlobalMap[a]];
+//      domain->m_feNodeManager.m_localToGlobalMap[a] = globalIndexTransformation[domain->m_feNodeManager.m_localToGlobalMap[a]];
 //    }
-//    domain.m_feNodeManager.ResetGlobalToLocalMap();
+//    domain->m_feNodeManager.ResetGlobalToLocalMap();
 //  }
 //  //(4)
 //
@@ -244,17 +244,17 @@ void PartitionBase::AssignGlobalIndices( DomainPartition& domain )
 //  {
 //    neighbor->Clear();
 //  }
-//  AssignGlobalIndices( domain.m_feFaceManager, domain.m_feNodeManager );
+//  AssignGlobalIndices( domain->m_feFaceManager, domain->m_feNodeManager );
 //
 //  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //  {
 //    neighbor->Clear();
 //  }
-//  AssignGlobalIndices( domain.m_feEdgeManager, domain.m_feNodeManager );
+//  AssignGlobalIndices( domain->m_feEdgeManager, domain->m_feNodeManager );
 //
 //
 //  // set the global indices of elements
-//  for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator iter_elemReg=domain.m_feElementManager.m_ElementRegions.begin() ; iter_elemReg!=domain.m_feElementManager.m_ElementRegions.end(); ++iter_elemReg )
+//  for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator iter_elemReg=domain->m_feElementManager.m_ElementRegions.begin() ; iter_elemReg!=domain->m_feElementManager.m_ElementRegions.end(); ++iter_elemReg )
 //  {
 //    ElementRegionT& elemRegion = iter_elemReg->second;
 //    for( localIndex a=0 ; a<elemRegion.DataLengths() ; ++a)
@@ -264,39 +264,39 @@ void PartitionBase::AssignGlobalIndices( DomainPartition& domain )
 //  }
 //
 //  // set the global indices for the discrete element surface nodes
-//  for( localIndex a=0 ; a<domain.m_discreteElementSurfaceNodes.DataLengths() ; ++a )
+//  for( localIndex a=0 ; a<domain->m_discreteElementSurfaceNodes.DataLengths() ; ++a )
 //  {
-//    domain.m_discreteElementSurfaceNodes.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
+//    domain->m_discreteElementSurfaceNodes.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
 //  }
 //
-//  for( localIndex a=0 ; a<domain.m_discreteElementSurfaceFaces.DataLengths() ; ++a )
+//  for( localIndex a=0 ; a<domain->m_discreteElementSurfaceFaces.DataLengths() ; ++a )
 //  {
-//    domain.m_discreteElementSurfaceFaces.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
+//    domain->m_discreteElementSurfaceFaces.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
 //  }
 //
 //  // set the global indices for the discrete elements
-//  for( localIndex a=0 ; a<domain.m_discreteElementManager.DataLengths() ; ++a )
+//  for( localIndex a=0 ; a<domain->m_discreteElementManager.DataLengths() ; ++a )
 //  {
-//    domain.m_discreteElementManager.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
+//    domain->m_discreteElementManager.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
 //  }
 //
 //  // set the global indices for the ellipsoidal discrete elements
-//  for( localIndex a=0 ; a<domain.m_ellipsoidalDiscreteElementManager.DataLengths() ; ++a )
+//  for( localIndex a=0 ; a<domain->m_ellipsoidalDiscreteElementManager.DataLengths() ; ++a )
 //  {
-//    domain.m_ellipsoidalDiscreteElementManager.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
+//    domain->m_ellipsoidalDiscreteElementManager.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
 //  }
 //
 //#ifdef SRC_EXTERNAL
 //  // set the global indices for the fault nodes
-//  for( localIndex a=0 ; a<domain.m_faultPatchNodes.DataLengths() ; ++a )
+//  for( localIndex a=0 ; a<domain->m_faultPatchNodes.DataLengths() ; ++a )
 //  {
-//    domain.m_faultPatchNodes.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
+//    domain->m_faultPatchNodes.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
 //  }
 //
 //  // set the global indices for the fault elements
-//  for( localIndex a=0 ; a<domain.m_faultPatchFaces.DataLengths() ; ++a )
+//  for( localIndex a=0 ; a<domain->m_faultPatchFaces.DataLengths() ; ++a )
 //  {
-//    domain.m_faultPatchFaces.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
+//    domain->m_faultPatchFaces.m_localToGlobalMap[a] = GlobalIndexManager::Index(this->m_rank,a);
 //  }
 //#endif
 }
@@ -565,7 +565,7 @@ void PartitionBase::SendReceive( const Array1dT<Array1dT<T> >& sendArray, Array1
  * @param[in] contactActive Flag whether contact is used
  * @param[in] elementGhostingDepth Depth
  */
-void PartitionBase::SetUpNeighborLists( DomainPartition& domain,
+void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
                                         const bool contactActive )
 {
   for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
@@ -578,8 +578,8 @@ void PartitionBase::SetUpNeighborLists( DomainPartition& domain,
 
 //
 //
-//  FindMatchedBoundaryIndices( keys::nodeManager, domain.GetGroup<ObjectManagerBase>(keys::nodeManager) );
-//  FindMatchedBoundaryIndices( DomainPartition::FiniteElementFaceManager, domain.m_feFaceManager );
+//  FindMatchedBoundaryIndices( keys::nodeManager, domain->GetGroup<ObjectManagerBase>(keys::nodeManager) );
+//  FindMatchedBoundaryIndices( DomainPartition::FiniteElementFaceManager, domain->m_feFaceManager );
 //
 //  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //  {
@@ -588,23 +588,23 @@ void PartitionBase::SetUpNeighborLists( DomainPartition& domain,
 //
 //    // create an array to contain all faces that have a matched face on a neighbor. That means that the face CANNOT
 //    // be an external face.
-//    domain.m_feFaceManager.m_matchedBoundaryFaces.insert(matchedBoundaryFaceIndices.begin(),
+//    domain->m_feFaceManager.m_matchedBoundaryFaces.insert(matchedBoundaryFaceIndices.begin(),
 //                                                       matchedBoundaryFaceIndices.end() );
 //
-//    domain.m_feNodeManager.m_matchedBoundaryNodes.insert(matchedBoundaryNodeIndices.begin(),
+//    domain->m_feNodeManager.m_matchedBoundaryNodes.insert(matchedBoundaryNodeIndices.begin(),
 //                                                       matchedBoundaryNodeIndices.end() );
 //
 //  }
 //
-//  domain.m_feFaceManager.SetIsExternal();
-//  domain.m_feNodeManager.SetIsExternal( &domain.m_feFaceManager );
+//  domain->m_feFaceManager.SetIsExternal();
+//  domain->m_feNodeManager.SetIsExternal( &(domain->m_feFaceManager) );
 //
-//  domain.m_discreteElementSurfaceFaces.m_isExternal = 1;
-//  domain.m_discreteElementSurfaceNodes.m_isExternal = 1;
+//  domain->m_discreteElementSurfaceFaces.m_isExternal = 1;
+//  domain->m_discreteElementSurfaceNodes.m_isExternal = 1;
 //
 //#ifdef SRC_EXTERNAL
-//  domain.m_faultPatchFaces.SetIsExternal();
-//  domain.m_faultPatchNodes.SetIsExternal( &domain.m_faultPatchFaces );
+//  domain->m_faultPatchFaces.SetIsExternal();
+//  domain->m_faultPatchNodes.SetIsExternal( &(domain->m_faultPatchFaces) );
 //#endif
 //  //------------------------------------------
 //  //(5) SENDRECV "GHOST" SIZES
@@ -769,8 +769,8 @@ void PartitionBase::SetUpNeighborLists( DomainPartition& domain,
 //
 //    // (6d) update maps in the anti-dependency direction
 //    //      must update the "upward" pointing maps, as the unpacking only updated "downward" pointing maps
-//    domain.m_feNodeManager.AddToNodeToElementMap( domain.m_feElementManager, newElementIndices );
-//    domain.m_feFaceManager.AddToFaceToElementMap( domain.m_feElementManager, newElementIndices );
+//    domain->m_feNodeManager.AddToNodeToElementMap( domain->m_feElementManager, newElementIndices );
+//    domain->m_feFaceManager.AddToFaceToElementMap( domain->m_feElementManager, newElementIndices );
 //
 //    std::map<DomainPartition::ObjectDataStructureKeys, lArray1d>::iterator iArr;
 //
@@ -780,8 +780,8 @@ void PartitionBase::SetUpNeighborLists( DomainPartition& domain,
 //      if( iArr != newIndices.end() )
 //      {
 //        lArray1d& newFaceIndices = iArr->second;
-//        domain.m_feNodeManager.AddToVariableOneToManyFromInverse( "nodeToFaceMap", domain.m_feFaceManager.m_toNodesRelation,  newFaceIndices);
-//        domain.m_feEdgeManager.AddToVariableOneToManyFromInverse( "edgesToFaces", domain.m_feFaceManager.m_toEdgesRelation, newFaceIndices);
+//        domain->m_feNodeManager.AddToVariableOneToManyFromInverse( "nodeToFaceMap", domain->m_feFaceManager.m_toNodesRelation,  newFaceIndices);
+//        domain->m_feEdgeManager.AddToVariableOneToManyFromInverse( "edgesToFaces", domain->m_feFaceManager.m_toEdgesRelation, newFaceIndices);
 //      }
 //    }
 //
@@ -791,7 +791,7 @@ void PartitionBase::SetUpNeighborLists( DomainPartition& domain,
 //      if( iArr != newIndices.end() )
 //      {
 //        lArray1d& newEdgeIndices = iArr->second;
-//        domain.m_feNodeManager.AddToNodeToEdgeMap( domain.m_feEdgeManager, newEdgeIndices );
+//        domain->m_feNodeManager.AddToNodeToEdgeMap( domain->m_feEdgeManager, newEdgeIndices );
 //      }
 //    }
 //
@@ -802,7 +802,7 @@ void PartitionBase::SetUpNeighborLists( DomainPartition& domain,
 //      if(iArr != newIndices.end())
 //      {
 //        lArray1d& newDEFaceIndices = iArr->second;
-//        domain.m_discreteElementSurfaceNodes.AddToNodeToFaceMap( domain.m_discreteElementSurfaceFaces, newDEFaceIndices);
+//        domain->m_discreteElementSurfaceNodes.AddToNodeToFaceMap( domain->m_discreteElementSurfaceFaces, newDEFaceIndices);
 //      }
 //    }
 //  }
@@ -1273,18 +1273,6 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 
   MPI_Waitall( mpiSendSizeRequest.size() , mpiSendSizeRequest.data(), mpiSendSizeStatus.data() );
   MPI_Waitall( mpiSendBufferRequest.size() , mpiSendBufferRequest.data(), mpiSendBufferStatus.data() );
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   // must send the new objects that are local to this processor, but created on a neighbor, to the other neighbors.
@@ -2694,7 +2682,7 @@ void PartitionBase::SynchronizeFields( const std::map<string, sArray1d>& fieldNa
  * Runs through exchange indicies (send recv) and if it is a recv index it sets the object's ghost rank.
  *
  */
-void PartitionBase::SetGhostArrays( DomainPartition& domain )
+void PartitionBase::SetGhostArrays( DomainPartition * domain )
 {
   //(1) initialize ghost arrays
 //  std::map<DomainPartition::ObjectDataStructureKeys, Array1dT<Field<FieldInfo::ghostRank>::Type>*> ghostRank;
@@ -2707,15 +2695,15 @@ void PartitionBase::SetGhostArrays( DomainPartition& domain )
 //    {
 //      if(objectNames[i] != DomainPartition::FiniteElementElementManager)
 //      {
-//        ghostRank[objectNames[i]] = &(domain.GetObjectDataStructure(objectNames[i]).GetFieldData<FieldInfo::ghostRank>());
+//        ghostRank[objectNames[i]] = &(domain->GetObjectDataStructure(objectNames[i]).GetFieldData<FieldInfo::ghostRank>());
 //        *ghostRank[objectNames[i]] = INT_MIN;
 //      }
 //      else
 //      {
 //        ghostRank[DomainPartition::FiniteElementElementManager] = NULL;
 //        //--per usual: elements are treated as a special case
-//        for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator iregion=domain.m_feElementManager.m_ElementRegions.begin() ;
-//             iregion!=domain.m_feElementManager.m_ElementRegions.end() ; ++iregion )
+//        for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator iregion=domain->m_feElementManager.m_ElementRegions.begin() ;
+//             iregion!=domain->m_feElementManager.m_ElementRegions.end() ; ++iregion )
 //        {
 //          ElementRegionT& elemRegion = iregion->second;
 //          Array1dT<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr = elemRegion.GetFieldData<FieldInfo::ghostRank>();
@@ -2756,8 +2744,8 @@ void PartitionBase::SetGhostArrays( DomainPartition& domain )
 //        //--per usual: elements are treated as a special case
 //        const int neighborRank = neighbor->NeighborRank();
 //        const std::map<std::string,lArray1d>& elementRegionsReceiveLocalIndices = neighbor->ElementRegionsReceiveLocalIndices();
-//        for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator iregion=domain.m_feElementManager.m_ElementRegions.begin() ;
-//             iregion!=domain.m_feElementManager.m_ElementRegions.end() ; ++iregion )
+//        for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator iregion=domain->m_feElementManager.m_ElementRegions.begin() ;
+//             iregion!=domain->m_feElementManager.m_ElementRegions.end() ; ++iregion )
 //        {
 //          const std::string& elemRegionName = iregion->first;
 //          ElementRegionT& elemRegion = iregion->second;

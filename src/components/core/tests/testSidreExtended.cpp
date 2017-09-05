@@ -135,26 +135,26 @@ TEST(testSidreExtended, testSidreExtended) {
   createStringview(root, view_hope_name, view_hope_sfp, view_hope_str);
 
   /* Create a new group. */
-  ManagedGroup & strings_group = root->RegisterGroup("strings");
-  strings_group.resize(group_size + 1);
+  ManagedGroup * strings_group = root->RegisterGroup("strings");
+  strings_group->resize(group_size + 1);
 
   /* Create a new string ViewWrapper. */
   string view_hello_name = "hello";
   int view_hello_sfp = sfp++;
   string view_hello_str = "Hello, how are you doing on this fine day?";
-  createStringview(&strings_group, view_hello_name, view_hello_sfp,
+  createStringview(strings_group, view_hello_name, view_hello_sfp,
                    view_hello_str);
 
   /* Create a new string ViewWrapper. */
   string view_goodbye_name = "goodbye";
   int view_goodbye_sfp = sfp++;
   string view_goodbye_str = "I hate this weather so I'm heading inside. Goodbye.";
-  createStringview(&strings_group, view_goodbye_name, view_goodbye_sfp, 
+  createStringview(strings_group, view_goodbye_name, view_goodbye_sfp, 
                    view_goodbye_str);
 
   /* Create a new group. */
-  ManagedGroup & real64_group = root->RegisterGroup("real64");
-  real64_group.resize(group_size + 2);
+  ManagedGroup * real64_group = root->RegisterGroup("real64");
+  real64_group->resize(group_size + 2);
 
   /* Create a new real64_array ViewWrapper. */
   string view_real641_name = "real641";
@@ -164,7 +164,7 @@ TEST(testSidreExtended, testSidreExtended) {
   for (real64 i = 0; i < view_real641_size; i++) {
     view_real641_data[i] = i * i / (i + 5);
   }
-  createArrayView(&real64_group, view_real641_name, view_real641_sfp, 
+  createArrayView(real64_group, view_real641_name, view_real641_sfp, 
                   view_real641_data);
 
   /* Create a new real64_array ViewWrapper. */
@@ -175,12 +175,12 @@ TEST(testSidreExtended, testSidreExtended) {
   for (real64 i = 0; i < view_real642_size; i++) {
     view_real642_data[i] = i * i / (5 + 5 * i + i * i);
   }
-  createArrayView(&real64_group, view_real642_name, view_real642_sfp, 
+  createArrayView(real64_group, view_real642_name, view_real642_sfp, 
                   view_real642_data);
 
   /* Create a new group. */
-  ManagedGroup & mixed_group = real64_group.RegisterGroup("mixed");
-  mixed_group.resize(group_size + 3);
+  ManagedGroup * mixed_group = real64_group->RegisterGroup("mixed");
+  mixed_group->resize(group_size + 3);
 
   /* Create a new int32_array ViewWrapper. */
   string view_int32_name = "int32";
@@ -190,7 +190,7 @@ TEST(testSidreExtended, testSidreExtended) {
   for (int32 i = 0; i < view_int32_size; i++) {
     view_int32_data[i] = i * i - 100 * i + 3;
   }
-  createArrayView(&mixed_group, view_int32_name, view_int32_sfp, view_int32_data);
+  createArrayView(mixed_group, view_int32_name, view_int32_sfp, view_int32_data);
 
   /* Create a new real32_array ViewWrapper. */
   string view_real32_name = "real32";
@@ -200,20 +200,20 @@ TEST(testSidreExtended, testSidreExtended) {
   for (real32 i = 0; i < view_real32_size; i++) {
     view_real32_data[i] = (i * i - 100 * i + 3) / (i + 3);
   }
-  createArrayView(&mixed_group, view_real32_name, view_real32_sfp, 
+  createArrayView(mixed_group, view_real32_name, view_real32_sfp, 
                   view_real32_data);
 
   /* Create a new string ViewWrapper. */
   string view_what_name = "what";
   int view_what_sfp = sfp++;
   string view_what_str = "What are you talking about? Who doesn't like storms?";
-  createStringview(&mixed_group, view_what_name, view_what_sfp, view_what_str);
+  createStringview(mixed_group, view_what_name, view_what_sfp, view_what_str);
 
   /* Create a new real64 ViewWrapper. */
   string view_pi_name = "pi";
   int view_pi_sfp = sfp++;
   real64 view_pi_value = 3.14159;
-  createScalarView(&mixed_group, view_pi_name, view_pi_sfp, view_pi_value);
+  createScalarView(mixed_group, view_pi_name, view_pi_sfp, view_pi_value);
 
 
   /* Save the sidre tree */
@@ -233,28 +233,28 @@ TEST(testSidreExtended, testSidreExtended) {
   ViewWrapper<int64_array> & view_int64_new = root->RegisterViewWrapper<int64_array>(view_int64_name);
   ViewWrapper<string> & view_hope_new = root->RegisterViewWrapper<string>(view_hope_name);
 
-  ManagedGroup & strings_group_new = root->RegisterGroup("strings");
-  ViewWrapper<string> & view_hello_new = strings_group_new.RegisterViewWrapper<string>(view_hello_name);
-  ViewWrapper<string> & view_goodbye_new = strings_group_new.RegisterViewWrapper<string>(view_goodbye_name);
+  ManagedGroup * strings_group_new = root->RegisterGroup("strings");
+  ViewWrapper<string> & view_hello_new = strings_group_new->RegisterViewWrapper<string>(view_hello_name);
+  ViewWrapper<string> & view_goodbye_new = strings_group_new->RegisterViewWrapper<string>(view_goodbye_name);
   
-  ManagedGroup & real64_group_new = root->RegisterGroup("real64");
-  ViewWrapper<real64_array> & view_real641_new = real64_group_new.RegisterViewWrapper<real64_array>(view_real641_name);
-  ViewWrapper<real64_array> & view_real642_new = real64_group_new.RegisterViewWrapper<real64_array>(view_real642_name);
+  ManagedGroup * real64_group_new = root->RegisterGroup("real64");
+  ViewWrapper<real64_array> & view_real641_new = real64_group_new->RegisterViewWrapper<real64_array>(view_real641_name);
+  ViewWrapper<real64_array> & view_real642_new = real64_group_new->RegisterViewWrapper<real64_array>(view_real642_name);
 
-  ManagedGroup & mixed_group_new = real64_group_new.RegisterGroup("mixed");
-  ViewWrapper<int32_array> & view_int32_new = mixed_group_new.RegisterViewWrapper<int32_array>(view_int32_name);
-  ViewWrapper<real32_array> & view_real32_new = mixed_group_new.RegisterViewWrapper<real32_array>(view_real32_name);
-  ViewWrapper<string> & view_what_new = mixed_group_new.RegisterViewWrapper<string>(view_what_name);
-  ViewWrapper<real64> & view_pi_new = mixed_group_new.RegisterViewWrapper<real64>(view_pi_name);
+  ManagedGroup * mixed_group_new = real64_group_new->RegisterGroup("mixed");
+  ViewWrapper<int32_array> & view_int32_new = mixed_group_new->RegisterViewWrapper<int32_array>(view_int32_name);
+  ViewWrapper<real32_array> & view_real32_new = mixed_group_new->RegisterViewWrapper<real32_array>(view_real32_name);
+  ViewWrapper<string> & view_what_new = mixed_group_new->RegisterViewWrapper<string>(view_what_name);
+  ViewWrapper<real64> & view_pi_new = mixed_group_new->RegisterViewWrapper<real64>(view_pi_name);
 
   /* Load the data */
   root->loadSidreExternalData(path + ".root", MPI_COMM_WORLD);
 
   /* Group sizes should have carried over. */
   EXPECT_EQ(root->size(), group_size);
-  EXPECT_EQ(strings_group_new.size(), group_size + 1);
-  EXPECT_EQ(real64_group_new.size(), group_size + 2);
-  EXPECT_EQ(mixed_group_new.size(), group_size + 3);
+  EXPECT_EQ(strings_group_new->size(), group_size + 1);
+  EXPECT_EQ(real64_group_new->size(), group_size + 2);
+  EXPECT_EQ(mixed_group_new->size(), group_size + 3);
 
   /* Check that ViewWrapper values were restored. */
   checkArrayView(view_int64_new, view_int64_sfp, view_int64_data);  

@@ -115,37 +115,37 @@ public:
 //                               string const & elementType,
 //                               int32 const & numElements );
 
-  ElementRegion & GetRegion( string const & regionName )
+  ElementRegion * GetRegion( string const & regionName )
   {
-    return this->GetGroup(dataRepository::keys::elementRegions).GetGroup<ElementRegion>(regionName);
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(regionName);
   }
 
   template< typename LAMBDA >
   void forElementRegions( LAMBDA lambda )
   {
-    ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
-    elementRegions.forSubGroups<ElementRegion>( lambda );
+    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    elementRegions->forSubGroups<ElementRegion>( lambda );
 
   }
 
   template< typename LAMBDA >
   void forElementRegions( LAMBDA lambda ) const
   {
-    ManagedGroup const & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
-    elementRegions.forSubGroups<ElementRegion>( lambda );
+    ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    elementRegions->forSubGroups<ElementRegion>( lambda );
   }
 
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda )
   {
-    ManagedGroup & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
-    for( auto & region : elementRegions.GetSubGroups() )
+    for( auto & region : elementRegions->GetSubGroups() )
     {
-      ManagedGroup & cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
-      for( auto & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
+      ManagedGroup * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+      for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
       {
-        CellBlockSubRegion & cellBlock = cellBlockSubRegions.GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+        CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
         lambda( cellBlock );
       }
     }
@@ -154,14 +154,14 @@ public:
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda ) const
   {
-    ManagedGroup const & elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
-    for( auto const & region : elementRegions.GetSubGroups() )
+    for( auto const & region : elementRegions->GetSubGroups() )
     {
-      ManagedGroup const & cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
-      for( auto const & iterCellBlocks : cellBlockSubRegions.GetSubGroups() )
+      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+      for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
       {
-        CellBlockSubRegion const & cellBlock = cellBlockSubRegions.GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+        CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
         lambda( cellBlock );
       }
     }

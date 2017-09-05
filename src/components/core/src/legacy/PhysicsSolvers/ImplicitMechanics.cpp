@@ -109,29 +109,29 @@ void ImplicitMechanicsSolver<dim>::ReadXML( TICPP::HierarchicalDataNode* const h
 
 
 template <int dim>
-void ImplicitMechanicsSolver<dim>::RegisterFields( PhysicalDomainT& domain )
+void ImplicitMechanicsSolver<dim>::RegisterFields( PhysicalDomainT * domain )
 {
 
   // register nodal fields
-  domain.m_feNodeManager.AddKeyedDataField<FieldInfo::displacement>();
+  domain->m_feNodeManager.AddKeyedDataField<FieldInfo::displacement>();
   
   if(m_recordIncrementalDisplacement){
-    domain.m_feNodeManager.AddKeyedDataField<FieldInfo::incrementalDisplacement>();
+    domain->m_feNodeManager.AddKeyedDataField<FieldInfo::incrementalDisplacement>();
   }
   
-  domain.m_feNodeManager.AddKeylessDataField<int>("inContact",true,true);
+  domain->m_feNodeManager.AddKeylessDataField<int>("inContact",true,true);
 
-  domain.m_feNodeManager.AddKeylessDataField<int>(m_trilinosIndexStr,true,true);
+  domain->m_feNodeManager.AddKeylessDataField<int>(m_trilinosIndexStr,true,true);
 
 }
 
 
 template <int dim>
-void ImplicitMechanicsSolver<dim>::Initialize(PhysicalDomainT& domain, SpatialPartition& partition )
+void ImplicitMechanicsSolver<dim>::Initialize(PhysicalDomainT * domain, SpatialPartition& partition )
 {
   using namespace BoundaryConditionFunctions;
   ApplyMultiSetBoundaryCondition<R1Tensor>(this, &ImplicitMechanicsSolver<dim>::NonpenetratingBC_NeighborUpdate, 
-                                           domain, domain.m_feNodeManager,
+                                           domain, domain->m_feNodeManager,
                        NonPenetratingBoundaryCondition::BoundaryConditionName(), 0.0 );
 }
 
@@ -149,7 +149,7 @@ template <int dim>
 double ImplicitMechanicsSolver<dim>::TimeStep( const realT& time,
                                                const realT& dt ,
                                                const int cycleNumber,
-                                               PhysicalDomainT& domain,
+                                               PhysicalDomainT * domain,
                                                const sArray1d& namesOfSolverRegions ,
                                                SpatialPartition& partition,
                                                FractunatorBase* const fractunator )
@@ -163,11 +163,11 @@ double ImplicitMechanicsSolver<dim>::TimeStep( const realT& time,
             << " :: No. mpi processes ... " << n_mpi_processes << std::endl;
 
   std::cout << "Setting up system" << std::endl;
-  SetupSystem (domain,partition);
+  SetupSystem (domain, partition);
   std::cout << "Assembling matrix" << std::endl;
-  Assemble    (domain,partition,time);
+  Assemble    (domain, partition, time);
   std::cout << "Solving system" << std::endl;
-  Solve       (domain,partition,time);
+  Solve       (domain, partition, time);
 
   if(verbose)
   std::cout << std::endl;
@@ -179,7 +179,7 @@ double ImplicitMechanicsSolver<dim>::TimeStep( const realT& time,
 
 
 template <int dim>
-void ImplicitMechanicsSolver<dim> :: SetupSystem (PhysicalDomainT&  domain,
+void ImplicitMechanicsSolver<dim> :: SetupSystem (PhysicalDomainT *  domain,
                                                 SpatialPartition& partition)
 {
 
@@ -187,8 +187,8 @@ void ImplicitMechanicsSolver<dim> :: SetupSystem (PhysicalDomainT&  domain,
 
   // determine the global/local degree of freedom distribution.
 
-  int n_ghost_rows  = domain.m_feNodeManager.GetNumGhosts();
-  int n_local_rows  = domain.m_feNodeManager.DataLengths()-n_ghost_rows;
+  int n_ghost_rows  = domain->m_feNodeManager.GetNumGhosts();
+  int n_local_rows  = domain->m_feNodeManager.DataLengths()-n_ghost_rows;
 //  int n_hosted_rows = n_local_rows+n_ghost_rows;
 
   std::vector<int> gather(n_mpi_processes);
@@ -209,8 +209,8 @@ void ImplicitMechanicsSolver<dim> :: SetupSystem (PhysicalDomainT&  domain,
 
     // create trilinos dof indexing
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  iArray1d& is_ghost       = domain->m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
 
   unsigned local_count = 0;
   for(unsigned r=0; r<trilinos_index.size(); ++r )
@@ -231,7 +231,7 @@ void ImplicitMechanicsSolver<dim> :: SetupSystem (PhysicalDomainT&  domain,
   partition.SynchronizeFields(syncedFields, CommRegistry::lagrangeSolver02);
  
 //  ApplyMultiSetBoundaryCondition<R1Tensor>(this, &ImplicitMechanicsSolver<dim>::NonpenetratingBC_DetectContact,
-//                                           domain, domain.m_feNodeManager,
+//                                           domain, domain->m_feNodeManager,
 //                                           NonPenetratingBoundaryCondition::BoundaryConditionName(), time );
 
 
@@ -247,12 +247,12 @@ void ImplicitMechanicsSolver<dim> :: SetupSystem (PhysicalDomainT&  domain,
 
   dummyDof.resize(0);                                 
 //  ApplyMultiSetBoundaryCondition<R1Tensor>(this, &ImplicitMechanicsSolver<dim>::NonpenetratingBC_Sparsity,
-//                                           domain, domain.m_feNodeManager,
+//                                           domain, domain->m_feNodeManager,
 //                                           NonPenetratingBoundaryCondition::BoundaryConditionName(), time );
 
   RegionMap::iterator
-    region     = domain.m_feElementManager.m_ElementRegions.begin(),
-    end_region = domain.m_feElementManager.m_ElementRegions.end();
+    region     = domain->m_feElementManager.m_ElementRegions.begin(),
+    end_region = domain->m_feElementManager.m_ElementRegions.end();
 
   for(; region != end_region; ++region)
   {
@@ -289,7 +289,7 @@ void ImplicitMechanicsSolver<dim> :: SetupSystem (PhysicalDomainT&  domain,
 /* Assemble */
 
 template <int dim>
-void ImplicitMechanicsSolver<dim> :: Assemble (PhysicalDomainT&  domain,
+void ImplicitMechanicsSolver<dim> :: Assemble (PhysicalDomainT *  domain,
                                              SpatialPartition& partition , realT time)
 
 {
@@ -302,13 +302,13 @@ void ImplicitMechanicsSolver<dim> :: Assemble (PhysicalDomainT&  domain,
 
     // basic nodal data ( = dof data for our problem)
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
 
     // begin region loop
 
   RegionMap::iterator
-    region     = domain.m_feElementManager.m_ElementRegions.begin(),
-    end_region = domain.m_feElementManager.m_ElementRegions.end();
+    region     = domain->m_feElementManager.m_ElementRegions.begin(),
+    end_region = domain->m_feElementManager.m_ElementRegions.end();
 
   for(; region != end_region; ++region)
   {
@@ -384,8 +384,8 @@ void ImplicitMechanicsSolver<dim> :: Assemble (PhysicalDomainT&  domain,
             elementLocalDofIndex[i*dim+d] = dim*trilinos_index[localNodeIndex]+d;
           }
   
-          nodal_coord[i] = (*domain.m_feNodeManager.m_refposition)[localNodeIndex];
-          nodal_disp[i] = (*domain.m_feNodeManager.m_displacement)[localNodeIndex];
+          nodal_coord[i] = (*domain->m_feNodeManager.m_refposition)[localNodeIndex];
+          nodal_disp[i] = (*domain->m_feNodeManager.m_displacement)[localNodeIndex];
 
         }
 
@@ -473,15 +473,15 @@ void ImplicitMechanicsSolver<dim> :: Assemble (PhysicalDomainT&  domain,
 
   // Apply boundary conditions
   ApplyBoundaryCondition<R1Tensor>(this, &ImplicitMechanicsSolver<dim>::TractionBC, 
-                                   domain, domain.m_feFaceManager, "Traction", time );
+                                   domain, domain->m_feFaceManager, "Traction", time );
   ApplyBoundaryCondition<R1Tensor>(this, &ImplicitMechanicsSolver<dim>::DisplacementBC, 
-                                   domain, domain.m_feNodeManager, 
+                                   domain, domain->m_feNodeManager, 
                                    Field<FieldInfo::displacement>::Name(), time );
   ApplyMultiSetBoundaryCondition<R1Tensor>(this, &ImplicitMechanicsSolver<dim>::NonpenetratingBC_Apply, 
-                                           domain, domain.m_feNodeManager, 
+                                           domain, domain->m_feNodeManager, 
                                            NonPenetratingBoundaryCondition::BoundaryConditionName(), time );
   ApplyBoundaryCondition<R1Tensor>(this, &ImplicitMechanicsSolver<dim>::PressureBC,
-                                   domain, domain.m_feFaceManager, "Pressure", time );
+                                   domain, domain->m_feFaceManager, "Pressure", time );
 
   // Global assemble
   matrix->GlobalAssemble(true);
@@ -497,17 +497,17 @@ void ImplicitMechanicsSolver<dim> :: Assemble (PhysicalDomainT&  domain,
 /* Solve */
 
 template <int dim>
-void ImplicitMechanicsSolver<dim> :: Solve (PhysicalDomainT&  domain,
+void ImplicitMechanicsSolver<dim> :: Solve (PhysicalDomainT *  domain,
                                           SpatialPartition& partition, realT time)
 {
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-  Array1dT<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  iArray1d& is_ghost       = domain->m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  Array1dT<R1Tensor>& disp = domain->m_feNodeManager.GetFieldData<FieldInfo::displacement>();
   Array1dT<R1Tensor>* inc_disp = NULL;
  
   if(m_recordIncrementalDisplacement){ 
-    inc_disp = &(domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>() );
+    inc_disp = &(domain->m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>() );
   }
   
 	
@@ -609,7 +609,7 @@ void ImplicitMechanicsSolver<dim> :: Solve (PhysicalDomainT&  domain,
   if(m_doApertureUpdate){
   	using namespace BoundaryConditionFunctions;
     ApplyMultiSetBoundaryCondition<R1Tensor>(this, &ImplicitMechanicsSolver<dim>::NonpenetratingBC_UpdateAperture, 
-                                             domain, domain.m_feNodeManager, 
+                                             domain, domain->m_feNodeManager, 
                                              NonPenetratingBoundaryCondition::BoundaryConditionName(), time );
   }
 }
@@ -624,7 +624,7 @@ void ImplicitMechanicsSolver<dim> :: Solve (PhysicalDomainT&  domain,
  * 
  */
 template <int dim>
-void ImplicitMechanicsSolver<dim>::TractionBC( PhysicalDomainT& domain,
+void ImplicitMechanicsSolver<dim>::TractionBC( PhysicalDomainT * domain,
                                                ObjectDataStructureBaseT& object ,
                                                BoundaryConditionBase* bc,
                                                const lSet& set, realT time )
@@ -633,8 +633,8 @@ void ImplicitMechanicsSolver<dim>::TractionBC( PhysicalDomainT& domain,
   TractionBoundaryCondition* trbc 
      = dynamic_cast<TractionBoundaryCondition*> ( bc);
   if( trbc ){
-  	iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-    iArray1d& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  	iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+    iArray1d& face_is_ghost  = domain->m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
    
     Epetra_IntSerialDenseVector  node_dof(1);
     Epetra_SerialDenseVector     node_rhs(1);
@@ -644,18 +644,18 @@ void ImplicitMechanicsSolver<dim>::TractionBC( PhysicalDomainT& domain,
     for( lSet::const_iterator fc=set.begin() ; fc!=set.end() ; ++fc ) {	
       if( face_is_ghost[*fc] < 0 ){
         //std::cout << "time "<< time << " traction " << value << std::endl;
-        const realT area = domain.m_feFaceManager.SurfaceArea( domain.m_feNodeManager, *fc ); 
+        const realT area = domain->m_feFaceManager.SurfaceArea( domain->m_feNodeManager, *fc ); 
 
         /* old way
-        realT value = trbc->GetValue(domain.m_feFaceManager,fc,time);
+        realT value = trbc->GetValue(domain->m_feFaceManager,fc,time);
         R1Tensor traction = n;
         traction *= value * area * 0.25; // TODO hardcoded for 4 node face
         */
         R1Tensor traction = trbc->GetTractionOnFace(domain,fc,time);
-        traction *= area*0.25; // / domain.m_feFaceManager.m_toNodesRelation[*fc].size(); // if test fail this may be why (prev hard coded for 4 node face)
+        traction *= area*0.25; // / domain->m_feFaceManager.m_toNodesRelation[*fc].size(); // if test fail this may be why (prev hard coded for 4 node face)
         
-        for( lArray1d::const_iterator nd=domain.m_feFaceManager.m_toNodesRelation[*fc].begin() ;
-                 nd!=domain.m_feFaceManager.m_toNodesRelation[*fc].end() ; ++nd )
+        for( lArray1d::const_iterator nd=domain->m_feFaceManager.m_toNodesRelation[*fc].begin() ;
+                 nd!=domain->m_feFaceManager.m_toNodesRelation[*fc].end() ; ++nd )
         {
       
           for(int ii =0; ii < dim;++ii){
@@ -675,15 +675,15 @@ void ImplicitMechanicsSolver<dim>::TractionBC( PhysicalDomainT& domain,
  *
  */
 template <int dim>
-void ImplicitMechanicsSolver<dim>::PressureBC( PhysicalDomainT& domain,
+void ImplicitMechanicsSolver<dim>::PressureBC( PhysicalDomainT * domain,
                                                ObjectDataStructureBaseT& ,
                                                BoundaryConditionBase*,
                                                const lSet& set, realT )
 {
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  rArray1d& pressures = domain.m_feFaceManager.GetFieldData<realT>(PS_STR::PressureStr);
+  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  iArray1d& face_is_ghost  = domain->m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  rArray1d& pressures = domain->m_feFaceManager.GetFieldData<realT>(PS_STR::PressureStr);
   rArray1d* apertures;
 
   Epetra_IntSerialDenseVector  node_dof(1);
@@ -691,9 +691,9 @@ void ImplicitMechanicsSolver<dim>::PressureBC( PhysicalDomainT& domain,
 
   // If aperture is defined and is <= 0, the pressure BC is not enforced.
   bool isApertureControlled = false;
-  if( domain.m_feFaceManager.HasField<realT>(PS_STR::ApertureStr) ){
+  if( domain->m_feFaceManager.HasField<realT>(PS_STR::ApertureStr) ){
     isApertureControlled = true;
-    apertures = &(domain.m_feFaceManager.GetFieldData<realT>(PS_STR::ApertureStr));
+    apertures = &(domain->m_feFaceManager.GetFieldData<realT>(PS_STR::ApertureStr));
   }
 
   for( lSet::const_iterator fc=set.begin() ; fc!=set.end() ; ++fc ) {
@@ -704,13 +704,13 @@ void ImplicitMechanicsSolver<dim>::PressureBC( PhysicalDomainT& domain,
         if ( (*apertures)[*fc] <= 0.0) break;
       }
 
-      const realT area = domain.m_feFaceManager.SurfaceArea( domain.m_feNodeManager, *fc );
+      const realT area = domain->m_feFaceManager.SurfaceArea( domain->m_feNodeManager, *fc );
 
-      R1Tensor traction = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, *fc);
-      traction *= -pressure * area/ domain.m_feFaceManager.m_toNodesRelation[*fc].size();
+      R1Tensor traction = domain->m_feFaceManager.FaceNormal(domain->m_feNodeManager, *fc);
+      traction *= -pressure * area/ domain->m_feFaceManager.m_toNodesRelation[*fc].size();
 
-      for( lArray1d::const_iterator nd=domain.m_feFaceManager.m_toNodesRelation[*fc].begin() ;
-          nd!=domain.m_feFaceManager.m_toNodesRelation[*fc].end() ; ++nd )
+      for( lArray1d::const_iterator nd=domain->m_feFaceManager.m_toNodesRelation[*fc].begin() ;
+          nd!=domain->m_feFaceManager.m_toNodesRelation[*fc].end() ; ++nd )
       {
 
         for(int ii =0; ii < dim;++ii){
@@ -732,29 +732,29 @@ void ImplicitMechanicsSolver<dim>::PressureBC( PhysicalDomainT& domain,
  */
 template <int dim>
 void ImplicitMechanicsSolver<dim> :: 
-DisplacementBC(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
+DisplacementBC(PhysicalDomainT * domain, ObjectDataStructureBaseT& object ,
                BoundaryConditionBase* bc, const lSet& set, realT time){
 
   const realT LARGE = 1e64;
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-  Array1dT<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  iArray1d& node_is_ghost  = domain->m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  Array1dT<R1Tensor>& disp = domain->m_feNodeManager.GetFieldData<FieldInfo::displacement>();
   Epetra_IntSerialDenseVector  node_dof(1);
   Epetra_SerialDenseVector     node_rhs(1);
   Epetra_SerialDenseMatrix     node_matrix  (1,1);
   node_matrix(0,0) = LARGE; 
   int component = bc->GetComponent(time);
-  if (component == 2 && domain.m_feFaceManager.m_toNodesRelation[0].size() == 2)
+  if (component == 2 && domain->m_feFaceManager.m_toNodesRelation[0].size() == 2)
     throw GPException("This is a 2D problem but you are applying BC to component 2 (z).");
   for( lSet::const_iterator nd=set.begin() ; nd!=set.end() ; ++nd ) {	 
       if( node_is_ghost[*nd] < 0 ){
    //   int rank = 0;
    //  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-   //   std::cout << trilinos_index[*nd] << " " << component << " "<< rank << " " << bc->GetValue(domain.m_faceManager,nd,time) << std::endl;
+   //   std::cout << trilinos_index[*nd] << " " << component << " "<< rank << " " << bc->GetValue(domain->m_faceManager,nd,time) << std::endl;
         
         node_dof(0) = dim*trilinos_index[*nd]+component; 
-        node_rhs(0) = LARGE*(bc->GetValue(domain.m_feFaceManager,nd,time) - (disp[*nd])[component] );
+        node_rhs(0) = LARGE*(bc->GetValue(domain->m_feFaceManager,nd,time) - (disp[*nd])[component] );
         
         rhs->ReplaceGlobalValues(node_dof, node_rhs);     
         matrix->ReplaceGlobalValues(node_dof, node_matrix);
@@ -771,7 +771,7 @@ DisplacementBC(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
  */
 template <int dim>
 void ImplicitMechanicsSolver<dim> :: 
-NonpenetratingBC_NeighborUpdate(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
+NonpenetratingBC_NeighborUpdate(PhysicalDomainT * domain, ObjectDataStructureBaseT& object ,
                                 BoundaryConditionBase* bc, realT time  ){
                	
   NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   	
@@ -786,17 +786,17 @@ NonpenetratingBC_NeighborUpdate(PhysicalDomainT& domain, ObjectDataStructureBase
  */
 template <int dim>
 void ImplicitMechanicsSolver<dim> :: 
-NonpenetratingBC_DetectContact(PhysicalDomainT& domain, ObjectDataStructureBaseT& object, 
+NonpenetratingBC_DetectContact(PhysicalDomainT * domain, ObjectDataStructureBaseT& object, 
                                BoundaryConditionBase* bc, realT time  ){
   NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
   if(npbc){     
   
-  	iArray1d& inContact = domain.m_feNodeManager.GetFieldData<int>("inContact");
+  	iArray1d& inContact = domain->m_feNodeManager.GetFieldData<int>("inContact");
   	
     Array1dT<R1Tensor>& disp = object.GetFieldData<FieldInfo::displacement> ();
     const Array1dT<R1Tensor>& X = object.GetFieldData<FieldInfo::referencePosition> ();
     
-//    iArray1d& face_is_ghost  = domain.m_faceManager.GetFieldData<FieldInfo::ghostRank>();
+//    iArray1d& face_is_ghost  = domain->m_faceManager.GetFieldData<FieldInfo::ghostRank>();
     
   	lSet&  contactingNodes = npbc->m_contactingNodes;
   	std::map<localIndex,localIndex>&  nearestNodeNeighborMap = npbc->m_nearestNodeNeighborMap;
@@ -808,8 +808,8 @@ NonpenetratingBC_DetectContact(PhysicalDomainT& domain, ObjectDataStructureBaseT
 //  	  localIndex fc_nbr = itr->second;
   	 
   	  // loop over nodes in face
-  	  lArray1d& nodeList = domain.m_feFaceManager.m_toNodesRelation[fc];
-  	  R1Tensor n = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc);
+  	  lArray1d& nodeList = domain->m_feFaceManager.m_toNodesRelation[fc];
+  	  R1Tensor n = domain->m_feFaceManager.FaceNormal(domain->m_feNodeManager, fc);
   	  for(lArray1d::size_type i =0 ; i< nodeList.size(); ++i){
   	 	
   	    localIndex nd = nodeList[i];
@@ -836,12 +836,12 @@ NonpenetratingBC_DetectContact(PhysicalDomainT& domain, ObjectDataStructureBaseT
 
 template <int dim>
 void ImplicitMechanicsSolver<dim> :: 
-NonpenetratingBC_UpdateAperture(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
+NonpenetratingBC_UpdateAperture(PhysicalDomainT * domain, ObjectDataStructureBaseT& object ,
                                BoundaryConditionBase* bc, realT time  ){
   NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
   if(npbc){     
   
-  	rArray1d& aperture = domain.m_feFaceManager.GetFieldData<realT>("Aperture");
+  	rArray1d& aperture = domain->m_feFaceManager.GetFieldData<realT>("Aperture");
   	
   	
   	std::map<localIndex,localIndex>::iterator itr = npbc->m_nearestFaceNeighborMap.begin();
@@ -852,10 +852,10 @@ NonpenetratingBC_UpdateAperture(PhysicalDomainT& domain, ObjectDataStructureBase
   	  
   	  //if(npbc->m_nearestFaceNeighborMap[fc_nbr] == fc){
   	  	
-        R1Tensor norm  = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc);
-        R1Tensor normB = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc_nbr);
-        R1Tensor center; domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager, fc,center);
-        R1Tensor centerB; domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager, fc_nbr,centerB);
+        R1Tensor norm  = domain->m_feFaceManager.FaceNormal(domain->m_feNodeManager, fc);
+        R1Tensor normB = domain->m_feFaceManager.FaceNormal(domain->m_feNodeManager, fc_nbr);
+        R1Tensor center; domain->m_feFaceManager.FaceCenter(domain->m_feNodeManager, fc,center);
+        R1Tensor centerB; domain->m_feFaceManager.FaceCenter(domain->m_feNodeManager, fc_nbr,centerB);
         norm -= normB;
         norm.Normalize();
         
@@ -872,15 +872,15 @@ NonpenetratingBC_UpdateAperture(PhysicalDomainT& domain, ObjectDataStructureBase
  */
 template <int dim>
 void ImplicitMechanicsSolver<dim> :: 
-NonpenetratingBC_Sparsity(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
+NonpenetratingBC_Sparsity(PhysicalDomainT * domain, ObjectDataStructureBaseT& object ,
                           BoundaryConditionBase* bc, realT time  ){
   
 
   NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
   if(npbc){
   	
-    iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);	
-    iArray1d& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+    iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);	
+    iArray1d& node_is_ghost  = domain->m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
     
     std::map<localIndex,localIndex>&  nearestNodeNeighborMap = npbc->m_nearestNodeNeighborMap;
     
@@ -949,7 +949,7 @@ NonpenetratingBC_Sparsity(PhysicalDomainT& domain, ObjectDataStructureBaseT& obj
  */
 template <int dim>
 void ImplicitMechanicsSolver<dim> :: 
-NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
+NonpenetratingBC_Apply(PhysicalDomainT * domain, ObjectDataStructureBaseT& object ,
                BoundaryConditionBase* bc, realT time  ){
 
 
@@ -957,9 +957,9 @@ NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object
   if(npbc){
 //    const Array1dT<R1Tensor>& disp = object.GetFieldData<FieldInfo::displacement> ();
   	
-    iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);	
-//    iArray1d& node_is_ghost  = domain.m_nodeManager.GetFieldData<FieldInfo::ghostRank>();
-    iArray1d& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+    iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);	
+//    iArray1d& node_is_ghost  = domain->m_nodeManager.GetFieldData<FieldInfo::ghostRank>();
+    iArray1d& face_is_ghost  = domain->m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
   	
     Epetra_IntSerialDenseVector  node_row_dof(1);
     Epetra_IntSerialDenseVector  node_row_dofB(dim);
@@ -985,22 +985,22 @@ NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object
       
       if(face_is_ghost[fc] < 0){
         localIndex fcb =  itr->second;
-        R1Tensor norm  = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc);
-        R1Tensor normB = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fcb);
-        R1Tensor center; domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager, fc,center);
-        R1Tensor centerB; domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager, fcb,centerB);
+        R1Tensor norm  = domain->m_feFaceManager.FaceNormal(domain->m_feNodeManager, fc);
+        R1Tensor normB = domain->m_feFaceManager.FaceNormal(domain->m_feNodeManager, fcb);
+        R1Tensor center; domain->m_feFaceManager.FaceCenter(domain->m_feNodeManager, fc,center);
+        R1Tensor centerB; domain->m_feFaceManager.FaceCenter(domain->m_feNodeManager, fcb,centerB);
         norm -= normB;
         norm.Normalize();
 
         R1Tensor dl = centerB-center;
  
 //        realT l = sqrt(Dot(dl,dl));
-        realT a = 0.5*(domain.m_feFaceManager.SurfaceArea(domain.m_feNodeManager, fc)
-                       + domain.m_feFaceManager.SurfaceArea(domain.m_feNodeManager, fcb));
+        realT a = 0.5*(domain->m_feFaceManager.SurfaceArea(domain->m_feNodeManager, fc)
+                       + domain->m_feFaceManager.SurfaceArea(domain->m_feNodeManager, fcb));
 
         realT k =  0.25*a*m_nonContactModulus; // FIXME /l;    // spring stiffness
    
-  	    lArray1d& nodeList = domain.m_feFaceManager.m_toNodesRelation[fc];
+  	    lArray1d& nodeList = domain->m_feFaceManager.m_toNodesRelation[fc];
   	    for( lArray1d::size_type nn =0 ; nn< nodeList.size(); ++nn){
           localIndex nd = nodeList[nn];
           localIndex nbr = nearestNodeNeighborMap[nd];
@@ -1033,9 +1033,9 @@ NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object
     if(npbc->m_updatePressure){
 
       // loop over second set - update pressure based on nearest neighbor from first
-      rArray1d& pressures = domain.m_feFaceManager.GetFieldData<realT>(PS_STR::PressureStr);
+      rArray1d& pressures = domain->m_feFaceManager.GetFieldData<realT>(PS_STR::PressureStr);
 
-      const lSet& setB = domain.m_feFaceManager.m_Sets[npbc->m_setNames[1] ];
+      const lSet& setB = domain->m_feFaceManager.m_Sets[npbc->m_setNames[1] ];
       for( lSet::const_iterator fcB=setB.begin(); fcB!=setB.end() ; ++fcB ) {
         localIndex nbr = nearestFaceNeighborMap[*fcB];
         pressures[*fcB] = pressures[nbr];

@@ -46,7 +46,7 @@ void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
     xmlWrapper::xmlNode basisNode = node.child(keys::basisFunctions.c_str());
     if( basisNode != nullptr )
     {
-      ManagedGroup & basisFunctions = this->GetGroup(keys::basisFunctions);
+      ManagedGroup * basisFunctions = this->GetGroup(keys::basisFunctions);
 
       for (xmlWrapper::xmlNode childNode=basisNode.first_child(); childNode; childNode=childNode.next_sibling())
       {
@@ -56,14 +56,14 @@ void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
 
         std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( catalogName );
         basis->ReadXML( childNode );
-        basisFunctions.RegisterViewWrapper( name, std::move(basis) );
+        basisFunctions->RegisterViewWrapper( name, std::move(basis) );
       }
     }
 
     xmlWrapper::xmlNode quadratureNode = node.child(keys::quadratureRules.c_str());
     if( quadratureNode != nullptr )
     {
-      ManagedGroup & quadratureRules = this->GetGroup(keys::quadratureRules);
+      ManagedGroup * quadratureRules = this->GetGroup(keys::quadratureRules);
 
       for (xmlWrapper::xmlNode childNode=quadratureNode.first_child(); childNode; childNode=childNode.next_sibling())
       {
@@ -73,7 +73,7 @@ void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
 
         std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( catalogName );
         quadrature->ReadXML(childNode);
-        quadratureRules.RegisterViewWrapper( name, std::move(quadrature) );
+        quadratureRules->RegisterViewWrapper( name, std::move(quadrature) );
       }
 
     }
@@ -81,7 +81,7 @@ void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
     xmlWrapper::xmlNode finiteElementNode = node.child(keys::finiteElements.c_str());
     if( finiteElementNode != nullptr )
     {
-//      ManagedGroup & feSpaces = RegisterGroup(keys::FE_Space);
+//      ManagedGroup * feSpaces = RegisterGroup(keys::FE_Space);
       for (xmlWrapper::xmlNode childNode=finiteElementNode.first_child(); childNode; childNode=childNode.next_sibling())
       {
         string catalogName = childNode.name();
@@ -91,8 +91,8 @@ void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
         std::unique_ptr<ManagedGroup> fem = ManagedGroup::CatalogInterface::Factory( catalogName, name, this );
         fem->SetDocumentationNodes(nullptr);
         fem->RegisterDocumentationNodes();
-        ManagedGroup & feSpace = this->RegisterGroup( name, std::move(fem) );
-        feSpace.ReadXML(childNode);
+        ManagedGroup * feSpace = this->RegisterGroup( name, std::move(fem) );
+        feSpace->ReadXML(childNode);
 
       }
 

@@ -36,7 +36,7 @@ public:
   virtual void TimeStep( real64 const& time_n,
                          real64 const& dt,
                          int32 const cycleNumber,
-                         dataRepository::ManagedGroup& domain ) ;
+                         dataRepository::ManagedGroup * domain ) ;
 
 private:
   NewComponent() = delete;

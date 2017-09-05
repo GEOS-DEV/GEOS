@@ -56,7 +56,7 @@ public:
   virtual void TimeStep( real64 const & time_n,
                          real64 const & dt,
                          int const cycleNumber,
-                         dataRepository::ManagedGroup& domain ) = 0;
+                         dataRepository::ManagedGroup * domain ) = 0;
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 

@@ -1487,18 +1487,18 @@ void SiloFile::StopSiloCompilerWarnings()
  * @param cycleNumber
  * @param problemTime
  */
-void SiloFile::WriteRegionSpecifications( const ElementRegionManager& elementManager,
-                                          ConstitutiveManager const & constitutiveManager,
+void SiloFile::WriteRegionSpecifications( const ElementRegionManager * elementManager,
+                                          ConstitutiveManager const  * constitutiveManager,
                                           const std::string& meshName,
                                           const int cycleNumber,
                                           const realT problemTime)
 {
 
   std::string name = "Regions";
-  int nmat = constitutiveManager.GetSubGroups().size();
+  int nmat = constitutiveManager->GetSubGroups().size();
   ivector matnos(nmat);
   int ndims = 1;
-  int dims = elementManager.getNumberOfElements();
+  int dims = elementManager->getNumberOfElements();
  // ivector matlist(dims * ndims);
   ivector matlist(dims * nmat);
 
@@ -1508,14 +1508,14 @@ void SiloFile::WriteRegionSpecifications( const ElementRegionManager& elementMan
 
   int elemCount = 0;
   int regionCount = 0;
-  elementManager.forElementRegions([&]( ElementRegion const & elementRegion ) -> void
+  elementManager->forElementRegions([&]( ElementRegion const * elementRegion ) -> void
   {
-    std::string const & elementRegionName = elementRegion.getName();
+    std::string const & elementRegionName = elementRegion->getName();
 
-    elementRegion.forCellBlocks( [&] ( CellBlockSubRegion const & cellBlock )
+    elementRegion->forCellBlocks( [&] ( CellBlockSubRegion const * cellBlock )
     {
-      std::string const elementRegionPlusCellBlockName = elementRegionName + cellBlock.getName();
-      for (localIndex k = 0; k < cellBlock.size(); ++k)
+      std::string const elementRegionPlusCellBlockName = elementRegionName + cellBlock->getName();
+      for (localIndex k = 0; k < cellBlock->size(); ++k)
       {
         matlist[elemCount++] = regionCount;
       }
@@ -2848,7 +2848,7 @@ iArray1d SiloFile::SiloNodeOrdering()
 
 
 
-void SiloFile::WriteManagedGroupSilo( ManagedGroup const & group,
+void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
                                       const std::string& siloDirName,
                                       const std::string& meshname,
                                       const int centering,
@@ -2888,7 +2888,7 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const & group,
 
 
 
-void SiloFile::WriteManagedGroupSilo( ManagedGroup const & group,
+void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
                                       const std::string& meshname,
                                       const int centering,
                                       const int cycleNum,
@@ -2925,7 +2925,7 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const & group,
 //  }
 
   // Data for visualization
-    WriteViewWrappersToSilo<real64>(   meshname, group.wrappers() , centering, cycleNum, problemTime, isRestart, multiRoot, "none", mask);
+    WriteViewWrappersToSilo<real64>(   meshname, group->wrappers() , centering, cycleNum, problemTime, isRestart, multiRoot, "none", mask);
 //  siloFile.WriteFieldMapToSilo<int>(   meshname, m_IntegerData,     centering, cycleNum, problemTime, isRestart, multiRoot, regionName, mask);
 //  siloFile.WriteFieldMapToSilo<localIndex>(   meshname, m_LocalIndexData,     centering, cycleNum, problemTime, isRestart, multiRoot, regionName, mask);
 //  siloFile.WriteFieldMapToSilo<globalIndex>(  meshname, m_GlobalIndexData,     centering, cycleNum, problemTime, isRestart, multiRoot, regionName, mask);

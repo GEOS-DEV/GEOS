@@ -125,8 +125,8 @@ public:
 
   void ApplyInitialConditions();
 
-  DomainPartition & getDomainPartition();
-  DomainPartition const & getDomainPartition() const;
+  DomainPartition * getDomainPartition();
+  DomainPartition const * getDomainPartition() const;
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
