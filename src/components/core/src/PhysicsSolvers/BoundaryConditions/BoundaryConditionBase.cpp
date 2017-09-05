@@ -224,7 +224,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
   string const functionName = getData<string>(dataRepository::keys::functionName);
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
-  ViewWrapperBase & vw = dataGroup->getWrapperBase( fieldName );
+  ViewWrapperBase & vw = *(dataGroup->getWrapperBase( fieldName ));
   std::type_index typeIndex = std::type_index(vw.get_typeid());
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void

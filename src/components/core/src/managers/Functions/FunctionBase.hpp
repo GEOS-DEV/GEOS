@@ -89,7 +89,7 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
     }
     else
     {
-      dataRepository::ViewWrapperBase const & vwb = group->getWrapperBase( varName );
+      dataRepository::ViewWrapperBase const & vwb = *(group->getWrapperBase( varName ));
       std::type_index typeIndex = std::type_index(vwb.get_typeid());
       rtTypes::ApplyTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
       {

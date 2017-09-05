@@ -66,7 +66,7 @@ void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGr
       string_array setNames = bc->GetSetNames();
       for( auto & setName : setNames )
       {
-        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapperPtr<lSet>(setName);
+        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
         if( setWrapper != nullptr )
         {
           lSet const & set = setWrapper->reference();
@@ -100,7 +100,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
         string_array setNames = bc->GetSetNames();
         for( auto & setName : setNames )
         {
-          dataRepository::ViewWrapper<lSet> const * const setWrapper = setGroup->getWrapperPtr<lSet>(setName);
+          dataRepository::ViewWrapper<lSet> const * const setWrapper = setGroup->getWrapper<lSet>(setName);
           if( setWrapper != nullptr )
           {
             lSet const & set = setWrapper->reference();
@@ -149,7 +149,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
           for( auto & setName : setNames )
           {
-            dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapperPtr<lSet>(setName);
+            dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
             if( setWrapper != nullptr )
             {
               lSet const & set = setWrapper->reference();

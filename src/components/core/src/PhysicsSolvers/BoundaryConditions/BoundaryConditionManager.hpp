@@ -109,7 +109,7 @@ void BoundaryConditionManager::ApplyBoundaryCondition( BCFunctionPtr boundaryCon
       string_array setNames = bc->GetSetNames();
       for( auto & setName : setNames )
       {
-        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapperPtr<lSet>(setName);
+        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
         if( setWrapper != nullptr )
         {
           lSet const & set = setWrapper->reference();
@@ -141,7 +141,7 @@ void BoundaryConditionManager::ApplyBoundaryCondition( Solver* solverPtr,
       string_array setNames = bc->GetSetNames();
       for( auto & setName : setNames )
       {
-        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapperPtr<lSet>(setName);
+        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
         if( setWrapper != nullptr )
         {
           lSet const & set = setWrapper->reference();

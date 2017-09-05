@@ -21,13 +21,13 @@ namespace constitutive
 
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
   ConstitutiveBase(name, parent ),
-  m_YoungsModulus(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::youngsModulus).reference()),
-  m_BulkModulus(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::bulkModulus).reference()),
-  m_ShearModulus(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::shearModulus).reference()),
-  m_PoissonRatio(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::poissonRatio).reference()),
-  m_Density(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::density).reference()),
-  m_devStress(this->GetGroup(keys::stateData)->RegisterViewWrapper<r2Sym_array>(keys::deviatorStress).reference()),
-  m_meanStress(this->GetGroup(keys::stateData)->RegisterViewWrapper<real64_array>(keys::meanStress).reference())
+  m_YoungsModulus(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::youngsModulus)->reference()),
+  m_BulkModulus(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::bulkModulus)->reference()),
+  m_ShearModulus(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::shearModulus)->reference()),
+  m_PoissonRatio(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::poissonRatio)->reference()),
+  m_Density(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::density)->reference()),
+  m_devStress(this->GetGroup(keys::stateData)->RegisterViewWrapper<r2Sym_array>(keys::deviatorStress)->reference()),
+  m_meanStress(this->GetGroup(keys::stateData)->RegisterViewWrapper<real64_array>(keys::meanStress)->reference())
 
 {
   // TODO Auto-generated constructor stub

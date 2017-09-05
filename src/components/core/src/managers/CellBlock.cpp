@@ -55,7 +55,7 @@ using namespace dataRepository;
 
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
     ObjectManagerBase( name, parent ),
-    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<int32> >(keys::nodeList).reference())
+    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<int32> >(keys::nodeList)->reference())
 {
   m_toNodesRelation.resize2(0,8);
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap).setSizedFromParent(1);

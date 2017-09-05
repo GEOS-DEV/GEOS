@@ -654,13 +654,13 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 
 
 
-  int32_set & xnegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("xneg") ).reference();
-  int32_set & xposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("xpos") ).reference();
-  int32_set & ynegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("yneg") ).reference();
-  int32_set & yposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("ypos") ).reference();
-  int32_set & znegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("zneg") ).reference();
-  int32_set & zposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("zpos") ).reference();
-  int32_set & allNodes  = nodeSets->RegisterViewWrapper<int32_set>( std::string("all") ).reference();
+  int32_set & xnegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("xneg") )->reference();
+  int32_set & xposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("xpos") )->reference();
+  int32_set & ynegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("yneg") )->reference();
+  int32_set & yposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("ypos") )->reference();
+  int32_set & znegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("zneg") )->reference();
+  int32_set & zposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("zpos") )->reference();
+  int32_set & allNodes  = nodeSets->RegisterViewWrapper<int32_set>( std::string("all") )->reference();
 
 
   // partition based on even spacing to get load balance

@@ -39,12 +39,12 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 
   for (int i = 0 ; i < geometries->wrappers().size() ; ++i)
   {
-    ViewWrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getWrapperPtr<SimpleGeometricObjectBase>(i);
+    ViewWrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getWrapper<SimpleGeometricObjectBase>(i);
     if (wrapper!=nullptr)
     {
       SimpleGeometricObjectBase const & object = wrapper->reference();
       string name = wrapper->getName();
-      lSet & set = sets->RegisterViewWrapper<lSet>(name).reference();
+      lSet & set = sets->RegisterViewWrapper<lSet>(name)->reference();
       for (localIndex a=0 ; a<X.size() ; ++a)
       {
         if (object.IsCoordInObject(X[a]))

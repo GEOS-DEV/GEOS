@@ -48,7 +48,7 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
     string defVal = subDocNode.getDefault();
 
     pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
-    ViewWrapper<decltype(a)>& dataView = group.getWrapper<decltype(a)>(subDocNode.getStringKey());
+    ViewWrapper<decltype(a)>& dataView = *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
     std::vector<decltype(b)> xmlVal;
 
     if( !xmlatt.empty() )

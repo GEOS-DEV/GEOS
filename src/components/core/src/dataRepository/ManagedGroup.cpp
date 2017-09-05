@@ -139,13 +139,13 @@ ManagedGroup::CatalogInterface::CatalogType& ManagedGroup::GetCatalog()
   return catalog;
 }
 
-ViewWrapperBase& ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
+ViewWrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
-  return *( rtTypes::ApplyTypeLambda1( type,
+  return rtTypes::ApplyTypeLambda1( type,
                                        [this, &name]( auto a ) -> ViewWrapperBase*
       {
-        return &( this->RegisterViewWrapper<decltype(a)>(name) );
-      } ) );
+        return this->RegisterViewWrapper<decltype(a)>(name);
+      } );
 }
 
 void ManagedGroup::resize( int32 const newsize )
@@ -173,9 +173,9 @@ void ManagedGroup::RegisterDocumentationNodes()
         ( subNode.second.m_isRegistered == 0 ) )
     {
 //      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
-      ViewWrapperBase & view = RegisterViewWrapper( subNode.second.getStringKey(),
-                                                    rtTypes::typeID(subNode.second.getDataType() ) );
-      view.setSizedFromParent( subNode.second.m_managedByParent);
+      ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
+                                                          rtTypes::typeID(subNode.second.getDataType() ) );
+      view->setSizedFromParent( subNode.second.m_managedByParent);
       subNode.second.m_isRegistered = 1;
     }
   }

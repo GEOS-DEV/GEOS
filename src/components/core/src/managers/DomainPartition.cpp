@@ -114,7 +114,7 @@ void DomainPartition::GenerateSets(  )
     string name = viewWrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
     nodeInSet[name] = 0;
-    ViewWrapper<lSet> const * const setPtr = nodeSets->getWrapperPtr<lSet>(name);
+    ViewWrapper<lSet> const * const setPtr = nodeSets->getWrapper<lSet>(name);
     if( setPtr!=nullptr )
     {
       setNames.push_back(name);
@@ -133,14 +133,14 @@ void DomainPartition::GenerateSets(  )
   {
     elementRegion->forCellBlocks( [&]( CellBlockSubRegion * subRegion )->void
     {
-      lArray2d const & elemsToNodes = subRegion->getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
+      lArray2d const & elemsToNodes = subRegion->getWrapper<lArray2d>(keys::nodeList)->reference();// getData<lArray2d>(keys::nodeList);
       dataRepository::ManagedGroup * elementSets = subRegion->GetGroup(dataRepository::keys::sets);
       std::map< string, int32_array > numNodesInSet;
 
       for( auto & setName : setNames )
       {
 
-        lSet & set = elementSets->RegisterViewWrapper<lSet>(setName).reference();
+        lSet & set = elementSets->RegisterViewWrapper<lSet>(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
           localIndex const * nodelist = elemsToNodes[k];
@@ -273,7 +273,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     int count = 0;
     elementManager->forCellBlocks([&]( ManagedGroup const * cellBlock ) -> void
     {
-      lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
+      lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(keys::nodeList)->reference();// getData<lArray2d>(keys::nodeList);
 
       // The following line seems to be redundant. It's actual function is to size this temp array.(pfu)
       elementToNodeMap[count].resize2(elemsToNodes.Dimension(0),elemsToNodes.Dimension(1));

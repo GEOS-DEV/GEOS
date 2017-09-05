@@ -77,10 +77,10 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   // registration.
 
 
-  auto & dNdXView        = cellBlock->RegisterViewWrapper< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX);
-  dNdXView.setSizedFromParent(1);
-  dNdXView.resize();
-  auto & dNdX            = dNdXView.data();
+  auto dNdXView        = cellBlock->RegisterViewWrapper< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX);
+  dNdXView->setSizedFromParent(1);
+  dNdXView->resize();
+  auto & dNdX            = dNdXView->data();
   
   for( auto & entry : dNdX )
   {
@@ -89,14 +89,14 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 
 
 
-  auto & constitutiveMapView = cellBlock->RegisterViewWrapper< Array2dT< mapPair > >(keys::constitutiveMap);
+  auto & constitutiveMapView = *(cellBlock->RegisterViewWrapper< Array2dT< mapPair > >(keys::constitutiveMap));
   constitutiveMapView.setSizedFromParent(1);
   auto & constitutiveMap = constitutiveMapView.data();
   constitutiveMap.resize2(cellBlock->size(), m_quadrature->size() );
 
 
   
-  auto & detJView = cellBlock->RegisterViewWrapper< Array2dT< real64 > >(keys::detJ);
+  auto & detJView = *(cellBlock->RegisterViewWrapper< Array2dT< real64 > >(keys::detJ));
   detJView.setSizedFromParent(1);
   auto & detJ = detJView.data();
   detJ.resize2(cellBlock->size(), m_quadrature->size() );
@@ -107,9 +107,9 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 void FiniteElementSpace::CalculateShapeFunctionGradients( view_rtype_const<r1_array> X,
                                                           dataRepository::ManagedGroup * const cellBlock ) const
 {
-  auto & dNdX            = cellBlock->RegisterViewWrapper< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX).data();
-  auto & detJ            = cellBlock->RegisterViewWrapper< Array2dT<real64> >(keys::detJ).data();
-  lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(keys::nodeList).reference();// getData<lArray2d>(keys::nodeList);
+  auto & dNdX            = cellBlock->RegisterViewWrapper< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX)->data();
+  auto & detJ            = cellBlock->RegisterViewWrapper< Array2dT<real64> >(keys::detJ)->data();
+  lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(keys::nodeList)->reference();// getData<lArray2d>(keys::nodeList);
 
   Array1dT<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
 
