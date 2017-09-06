@@ -48,20 +48,17 @@ blt_add_library( NAME
                  HEADERS_OUTPUT_SUBDIR
                      geosx_core
                  DEPENDS_ON
-                     cxx-utilities 
-                 SYSTEM_DEPENDS_ON
-                     slic sidre conduit hdf5 pugixml spio ${extraComponentsListLink} ${thirdPartyLibs}
+                     cxx-utilities slic sidre conduit hdf5 pugixml spio silo ${extraComponentsListLink} ${thirdPartyLibs}
                  )
                  
 #target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 #target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR}/legacy )
 #target_include_directories( geosx_core PUBLIC /Users/rrsettgast/Codes/geos/gpaclib/include )
 
-blt_add_executable(NAME geosx_corex
-                   SOURCES main/main.cpp
-                   DEPENDS_ON ${GEOSX_LINK_PREPEND_FLAG} geosx_core ${GEOSX_LINK_POSTPEND_FLAG}  "-lz"
-                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 spio raja chai cxx-utilities pugixml ${extraComponentsListLink}
-                   )
+#blt_add_executable(NAME geosx_corex
+#                   SOURCES main/main.cpp
+#                   DEPENDS_ON ${GEOSX_LINK_PREPEND_FLAG} geosx_core ${GEOSX_LINK_POSTPEND_FLAG}  "-lz" slic sidre conduit hdf5 spio raja chai cxx-utilities pugixml ${extraComponentsListLink}
+#                   )
                    
 #set_property ( TARGET geosx_corex APPEND_STRING PROPERTY LINK_FLAGS " -lz" )
 
