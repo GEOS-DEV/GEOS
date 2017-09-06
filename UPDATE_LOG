@@ -1,5 +1,15 @@
 
 
+Tue Sep  5 23:19:46 2017 Randolph R. Settgast
+v4.0.8
+
+Updates blt to the github version.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/6
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/constitutivepackage1/pull-requests/3
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/5
+
+
 Tue Aug 29 20:32:19 2017 Randolph R. Settgast
 v4.0.7
 
