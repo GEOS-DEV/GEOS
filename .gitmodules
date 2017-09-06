@@ -1,10 +1,6 @@
 [submodule "src/components/cxx-utilities"]
 	path = src/components/cxx-utilities
 	url = ../cxx-utilities.git
-[submodule "src/cmake/blt"]
-	path = src/cmake/blt
-	url = ../blt.git
-	branch = feature/settgast/ATK-779
 [submodule "src/components/PhysicsSolverPackage1"]
 	path = src/components/PhysicsSolverPackage1
 	url = ../physicssolverpackage1.git

@@ -18,7 +18,8 @@ else()
 endif()
 
 
-blt_add_component(COMPONENT_NAME core DEFAULT_STATE ON)
+#blt_add_component(COMPONENT_NAME core DEFAULT_STATE ON)
+add_subdirectory(core/src)
 add_subdirectory(cxx-utilities/src)
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
@@ -36,7 +37,8 @@ foreach(child ${children})
               ${child} STREQUAL "PhysicsSolverPackage2" OR 
               ${child} STREQUAL "ReservoirSimulationPackage" ) )
 #      list(APPEND dirlist ${child})
-      blt_add_component(COMPONENT_NAME ${child} DEFAULT_STATE ON)    
+#      blt_add_component(COMPONENT_NAME ${child} DEFAULT_STATE ON)    
+      add_subdirectory(${child})
       set(componentlist ${componentlist} ${child} )  
     endif()
   endif()
@@ -48,7 +50,7 @@ set(componentlistlink "")
 foreach(component ${componentlist})
   set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
 endforeach()
-#message("componentlistlink = ${componentlistlink}")
+message("componentlistlink = ${componentlistlink}")
 
 if( ENABLE_MATHPRESSO )
   set( extraComponentsListLink ${extraComponentsListLink} mathpresso )
@@ -56,8 +58,7 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
-                   DEPENDS_ON ${componentlistlink} "-lz"
-                   SYSTEM_DEPENDS_ON slic sidre conduit hdf5 raja chai spio pugixml silo ${extraComponentsListLink}) 
+                   DEPENDS_ON ${componentlistlink} "-lz" geosx_core ${extraComponentsListLink}) 
 
                    
 if (ENABLE_DOCS)

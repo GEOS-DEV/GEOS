@@ -14,10 +14,12 @@ if (CONDUIT_DIR)
   include(cmake/thirdparty/FindConduit.cmake)
   blt_register_library( NAME conduit
                         INCLUDES ${CONDUIT_INCLUDE_DIRS} 
-                        LIBRARIES  conduit)
+                        LIBRARIES  conduit
+                        TREAT_INCLUDES_AS_SYSTEM ON )
   blt_register_library( NAME conduit_io
                         INCLUDES ${CONDUIT_INCLUDE_DIRS}
-                        LIBRARIES  conduit_io)
+                        LIBRARIES  conduit_io
+                        TREAT_INCLUDES_AS_SYSTEM ON )
 endif()
 
 
@@ -28,7 +30,8 @@ if (HDF5_DIR)
   include(cmake/thirdparty/FindHDF5.cmake)
   blt_register_library(NAME hdf5
                        INCLUDES ${HDF5_INCLUDE_DIRS}
-                       LIBRARIES ${HDF5_LIBRARY} )
+                       LIBRARIES ${HDF5_LIBRARY} 
+                       TREAT_INCLUDES_AS_SYSTEM ON )
 endif()
 
 
@@ -36,15 +39,18 @@ if (ATK_DIR)
   include(cmake/thirdparty/FindATK.cmake)
   blt_register_library( NAME sidre
                         INCLUDES ${ATK_INCLUDE_DIRS} 
-                        LIBRARIES  sidre)
+                        LIBRARIES  sidre
+                        TREAT_INCLUDES_AS_SYSTEM ON )
 
   blt_register_library( NAME spio
                         INCLUDES ${ATK_INCLUDE_DIRS} 
-                        LIBRARIES  spio)
+                        LIBRARIES  spio
+                        TREAT_INCLUDES_AS_SYSTEM ON)
 
   blt_register_library( NAME slic
                         INCLUDES ${ATK_INCLUDE_DIRS} 
-                        LIBRARIES  slic)
+                        LIBRARIES  slic
+                        TREAT_INCLUDES_AS_SYSTEM ON)
 endif()
 
 
@@ -62,7 +68,9 @@ if( EXISTS ${SILO_DIR})
     
         blt_register_library( NAME silo
                               INCLUDES ${SILO_INCLUDE_DIRS}
-                              LIBRARIES ${SILO_LIBRARY} )
+                              LIBRARIES ${SILO_LIBRARY}
+                              TREAT_INCLUDES_AS_SYSTEM ON
+                              DEPENDS_ON hdf5 )
     else()
         message(INFO ": Build SILO from source found at ${SILO_DIR}")
         set(silo_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/silo)
@@ -70,6 +78,7 @@ if( EXISTS ${SILO_DIR})
                              PREFIX ${PROJECT_BINARY_DIR}/thirdparty/silo
                              SOURCE_DIR ${SILO_DIR}
                              BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/silo/src
+                             DEPENDS hdf5
                              INSTALL_COMMAND make install
                              INSTALL_DIR ${silo_install_dir}
 		                     CONFIGURE_COMMAND ./configure CC=${CMAKE_C_COMPILER}
@@ -84,7 +93,9 @@ if( EXISTS ${SILO_DIR})
                                  
         blt_register_library( NAME SILO
                               INCLUDES ${silo_install_dir}/include 
-                              LIBRARIES ${silo_install_dir}/lib/libsilo.a )        
+                              LIBRARIES ${silo_install_dir}/lib/libsilo.a
+                              TREAT_INCLUDES_AS_SYSTEM ON
+                              DEPENDS_ON hdf5 )        
     endif()
 else()
     message(INFO ": Using SILO found at https://wci.llnl.gov/content/assets/docs/simulation/computer-codes/silo/silo-4.10.2/silo-4.10.2-bsd.tar.gz")
@@ -110,7 +121,9 @@ else()
 
     blt_register_library( NAME silo
                           INCLUDES ${silo_install_dir}/include 
-                          LIBRARIES ${silo_install_dir}/lib/libsiloh5.a )
+                          LIBRARIES ${silo_install_dir}/lib/libsiloh5.a
+                          TREAT_INCLUDES_AS_SYSTEM ON
+                          DEPENDS_ON hdf5  )
 
 endif()
 
@@ -133,7 +146,8 @@ message("${RAJA_DIR}")
     
         blt_register_library( NAME raja
                               INCLUDES ${RAJA_INCLUDE_DIRS}
-                              LIBRARIES ${RAJA_LIBRARY} )
+                              LIBRARIES ${RAJA_LIBRARY}
+                              TREAT_INCLUDES_AS_SYSTEM ON )
     else()
         message(INFO ": Build RAJA from source found at ${RAJA_DIR}")
         set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/raja)
@@ -151,7 +165,8 @@ message("${RAJA_DIR}")
                                  
         blt_register_library( NAME RAJA
                               INCLUDES ${raja_install_dir}/include 
-                              LIBRARIES ${raja_install_dir}/lib/libRAJA.a )        
+                              LIBRARIES ${raja_install_dir}/lib/libRAJA.a
+                              TREAT_INCLUDES_AS_SYSTEM ON )        
     endif()
 else()
     message(INFO ": Using RAJA found at https://github.com/LLNL/RAJA/archive/develop.zip")
@@ -173,7 +188,8 @@ else()
 
     blt_register_library( NAME raja
                           INCLUDES ${raja_install_dir}/include 
-                          LIBRARIES ${raja_install_dir}/lib/libRAJA.a )
+                          LIBRARIES ${raja_install_dir}/lib/libRAJA.a
+                          TREAT_INCLUDES_AS_SYSTEM ON )
 
 endif()
 
@@ -193,7 +209,8 @@ if( EXISTS ${CHAI_DIR})
     
         blt_register_library( NAME chai
                               INCLUDES ${CHAI_INCLUDE_DIRS}
-                              LIBRARIES ${CHAI_LIBRARY}  )
+                              LIBRARIES ${CHAI_LIBRARY}
+                              TREAT_INCLUDES_AS_SYSTEM ON  )
     else()
         message(INFO ": Build CHAI from source found at ${CHAI_DIR}")
         set(chai_install_dir ${CMAKE_INSTALL_PREFIX}/thirdparty/chai)
@@ -211,7 +228,8 @@ if( EXISTS ${CHAI_DIR})
                                  
         blt_register_library( NAME chai
                               INCLUDES ${chai_install_dir}/include 
-                              LIBRARIES ${chai_install_dir}/lib/libchai.a )        
+                              LIBRARIES ${chai_install_dir}/lib/libchai.a
+                              TREAT_INCLUDES_AS_SYSTEM ON )        
     endif()
 else()
     set(CHAI_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/chai)
@@ -232,7 +250,8 @@ else()
 
     blt_register_library( NAME chai
                           INCLUDES ${chai_install_dir}/include 
-                          LIBRARIES ${chai_install_dir}/lib/libchai.a  )
+                          LIBRARIES ${chai_install_dir}/lib/libchai.a 
+                          TREAT_INCLUDES_AS_SYSTEM ON )
 endif()
 
 
@@ -271,7 +290,8 @@ ExternalProject_Add( fparser
 
 blt_register_library( NAME fparser
                       INCLUDES ${FPARSER_INSTALL_DIR}/include 
-                      LIBRARIES ${FPARSER_INSTALL_DIR}/lib/libfparser.a )
+                      LIBRARIES ${FPARSER_INSTALL_DIR}/lib/libfparser.a
+                      TREAT_INCLUDES_AS_SYSTEM ON )
 
 endif()
 
@@ -316,7 +336,8 @@ blt_register_library( NAME caliper
                       INCLUDES ${CALIPER_INSTALL_DIR}/include 
                       LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper.a 
                       LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-common.a
-                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-reader.a )
+                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-reader.a
+                      TREAT_INCLUDES_AS_SYSTEM ON )
 
 endif()
 
@@ -376,7 +397,8 @@ ExternalProject_Add( mathpresso
 
 blt_register_library( NAME mathpresso
                       INCLUDES ${MATHPRESSO_INSTALL_DIR}/include
-                      LIBRARIES ${MATHPRESSO_INSTALL_DIR}/lib/libmathpresso.a )
+                      LIBRARIES ${MATHPRESSO_INSTALL_DIR}/lib/libmathpresso.a
+                      TREAT_INCLUDES_AS_SYSTEM ON )
 
 endif()
 
@@ -410,11 +432,13 @@ ExternalProject_Add( pugixml
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	blt_register_library( NAME pugixml
     	                  INCLUDES ${PUGIXML_INSTALL_DIR}/include
-        	              LIBRARIES ${PUGIXML_INSTALL_DIR}/lib/libpugixml.a )
+        	              LIBRARIES ${PUGIXML_INSTALL_DIR}/lib/libpugixml.a
+        	              TREAT_INCLUDES_AS_SYSTEM ON )
 else()
 	blt_register_library( NAME pugixml
     	                  INCLUDES ${PUGIXML_INSTALL_DIR}/include
-        	              LIBRARIES ${PUGIXML_INSTALL_DIR}/lib64/libpugixml.a )
+        	              LIBRARIES ${PUGIXML_INSTALL_DIR}/lib64/libpugixml.a
+        	              TREAT_INCLUDES_AS_SYSTEM ON )
 endif()
 
 
