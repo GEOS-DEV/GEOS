@@ -1,7 +1,7 @@
 
 
 Tue Sep  5 23:19:46 2017 Randolph R. Settgast
-v4.0.8
+v0.0.8
 
 Updates blt to the github version.
 
@@ -11,7 +11,7 @@ This pull request is related to the pull request at: https://lc.llnl.gov/bitbuck
 
 
 Tue Aug 29 20:32:19 2017 Randolph R. Settgast
-v4.0.7
+v0.0.7
 
 implement a mapped vector to hold subgroups and views. objects are stored in a vector, but there is a hash lookup in a map. also implement a smart key that contains a string and an int. it uses the int to perform the lookup, and verifies the key is correct. If key is incorrect performs the map lookup and resets the int value.
 
@@ -20,13 +20,13 @@ This pull request is related to the pull request at: https://lc.llnl.gov/bitbuck
 
 
 Thu Aug 24 17:35:46 2017 Benjamin Curtice Corbett
-v4.0.6
+v0.0.6
 
 added sidre restart capability
 
 
 Wed Aug 23 07:35:20 2017 Randolph R. Settgast
-v4.0.5
+v0.0.5
 
 General code porting.
 
@@ -35,14 +35,14 @@ This pull request is related to the pull request at: https://lc.llnl.gov/bitbuck
 
 
 Tue Jun 13 13:51:38 2017 Randolph R. Settgast
-v4.0.4
+v0.0.4
 
 This branch updates CHAI, RAJA, and AXOM. Also modifications to cmake system for these external projects have been made to allow for direct use of system installations, recompilation of source located elsewhere on the system, or downloading from repo's 
 This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/blt/pull-requests/3
 
 
 Tue Jun  6 17:34:40 2017 Randolph R. Settgast
-v4.0.3
+v0.0.3
 
 Modifications to DocumentationNode, and self initial documentation features implemented.
 
@@ -54,7 +54,7 @@ This pull request is related to the pull request at: https://lc.llnl.gov/bitbuck
 
 
 Tue Jun  6 17:09:22 2017 Randolph R. Settgast
-v4.0.3
+v0.0.3
 
 Modifications to DocumentationNode, and self initial documentation features implemented.
 
@@ -66,14 +66,14 @@ This pull request is related to the pull request at: https://lc.llnl.gov/bitbuck
 
 
 Mon Oct 17 22:39:38 2016 Randolph R. Settgast
-v4.0.2
+v0.0.2
 
 This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/chai/pull-requests/1
 This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/raja/pull-requests/1
 
 
 Tue Sep 27 10:45:44 2016 Randolph R. Settgast
-v4.0.1
+v0.0.1
 
 This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/blt/pull-requests/2
 This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/2
