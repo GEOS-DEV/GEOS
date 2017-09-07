@@ -147,6 +147,24 @@ void ElementRegion::ReadXML_PostProcess()
 //  numNodesPerElem = 8;
 }
 
+/**
+ *
+ * @param problemManager
+ * @param counts
+ *
+ * This function sets two mapping objects.
+ *
+ * The first is the constitutiveMap, which is a pair of 2D arrays. The size of
+ * each array is ( numberOfElements x numberOfQuadraturePointsPerElement ). The first array contains the material index.
+ * The second array contains the index for a given material. This is a preliminary implementation of this concept.
+ * Ultimately, there will be an arbitrary number of material points per quadrature point.
+ *
+ * The second mapping object is a so called material grouping array. It is a map that contains the elements that contain
+ * a given material. So the key is the material, and the value is an array of element indices that contain that material.
+ * Again, this is preliminary. This will be refined to contain elements that are pure of a single material for all
+ * quadrature points.
+ *
+ */
 void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
                                                      map<string,localIndex> & counts )
 {
