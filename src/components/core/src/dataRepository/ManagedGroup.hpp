@@ -456,7 +456,7 @@ public:
   }
 
 
-#ifdef ATK_FOUND
+#if ATK_FOUND
   axom::sidre::Group * getSidreGroup()              { return m_sidreGroup; }
   axom::sidre::Group const * getSidreGroup() const  { return m_sidreGroup; }
 
