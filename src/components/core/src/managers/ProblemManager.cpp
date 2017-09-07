@@ -656,7 +656,7 @@ void ProblemManager::RunSimulation()
 
       dataRepository::ManagedGroup& currentApplication = *(application.second);
 
-      ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solvers);
+      string_array const & solverList = currentApplication.getReference<string_array>(keys::solvers);
       real64& appDt = *(currentApplication.getData<real64>(keys::dt));
       real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
 
@@ -670,7 +670,7 @@ void ProblemManager::RunSimulation()
       while( time < endTime )
       {
         std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-//        WriteSilo( cycle, time );
+        WriteSilo( cycle, time );
         real64 nextDt = std::numeric_limits<real64>::max();
 
         for ( auto jj=0; jj<solverList.size(); ++jj)

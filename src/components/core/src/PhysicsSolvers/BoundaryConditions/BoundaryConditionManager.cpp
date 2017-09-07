@@ -111,7 +111,8 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
       else
       {
         ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-        ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager->GetMaps(0);
+//        ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager->GetMaps(0);
+        typename ManagedGroup::subGroupMap::LookupMapType const & constitutiveIndexLookup = constitutiveManager->GetSubGroups().keys();
 
         lSet targetSet;
 
@@ -144,7 +145,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
         elementRegion->forCellBlocks( [&] ( CellBlockSubRegion * subRegion ) -> void
         {
-          view_rtype_const< Array2dT<mapPair> > constitutiveMap = subRegion->getData< Array2dT<mapPair> >(keys::constitutiveMap);
+          auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<int32>,Array2dT<int32> > >(keys::constitutiveMap);
           ManagedGroup const * sets = subRegion->GetGroup(keys::sets);
 
           for( auto & setName : setNames )
@@ -153,14 +154,14 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
             if( setWrapper != nullptr )
             {
               lSet const & set = setWrapper->reference();
-              int32 materialIndex = constitutiveMaps.second.at(materialName);
+              int32 materialIndex = constitutiveIndexLookup.at(materialName);
               for( auto const & k : set )
               {
-                if( constitutiveMap[k]->first == materialIndex )
+                if( constitutiveMap.first(k,0) == materialIndex )
                 {
                   for( auto q=0 ; q < feSpace->m_finiteElement->n_quadrature_points() ; ++q )
                   {
-                    targetSet.insert(constitutiveMap[k][q].second);
+                    targetSet.insert(constitutiveMap.second(k,q));
                   }
                 }
               }

@@ -83,7 +83,7 @@ void SymbolicFunction::BuildDataStructure( ManagedGroup * const domain )
 void SymbolicFunction::InitializeFunction()
 {
   // Register variables
-  view_rtype<string_array> variables = getData<string_array>(keys::variableNames);
+  string_array & variables = getReference<string_array>(keys::variableNames);
   for (int ii=0; ii<variables.size(); ++ii)
   {
     parserContext.addVariable(variables[ii].c_str(), ii * sizeof(double));

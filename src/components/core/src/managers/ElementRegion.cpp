@@ -63,7 +63,7 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
 //    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<int32> >(keys::nodeList).reference())
 {
 //  m_toNodesRelation.resize2(0,8);
-  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap)->setSizedFromParent(1);
+//  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap)->setSizedFromParent(1);
   this->RegisterGroup(keys::cellBlockSubRegions);
 }
 
@@ -154,11 +154,11 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
   ManagedGroup const * domain = problemManager->GetGroup(keys::domain);
   ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 
-  ConstitutiveManager::constitutiveMaps constitutiveMapPair = constitutiveManager->GetMaps( 1 );
-
+//  ConstitutiveManager::constitutiveMaps constitutiveMapPair = constitutiveManager->GetMaps( 1 );
+  typename ManagedGroup::subGroupMap::LookupMapType const & constitutiveIndexLookup = constitutiveManager->GetSubGroups().keys();
 
   string defaultMaterial = this->getData<string>(keys::defaultMaterial);
-  int32 defaultMaterialIndex = constitutiveMapPair.second.at(defaultMaterial);
+  int32 defaultMaterialIndex = constitutiveIndexLookup.at(defaultMaterial);
 
 
   auto const & numMethodName = this->getData<string>(keys::numericalMethod);
@@ -171,7 +171,7 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
   ManagedGroup * cellBlockSubRegions = this->GetGroup(keys::cellBlockSubRegions);
   for( auto & cellSubBlock : cellBlockSubRegions->GetSubGroups() )
   {
-    auto & cellToConstitutiveMap = cellSubBlock.second->getReference< Array2dT< mapPair > >(keys::constitutiveMap);
+    auto & cellToConstitutiveMap = cellSubBlock.second->getReference< std::pair< Array2dT< int32 >, Array2dT< int32 > > >(keys::constitutiveMap);
     auto & constitutiveGrouping = cellSubBlock.second->getReference< map< string, int32_array > >(keys::constitutiveGrouping);
 //    constitutiveGrouping.resize( constitutiveMapPair.second.size() );
 //    constitutiveGrouping["mix"];
@@ -182,7 +182,8 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
       constitutiveGrouping[defaultMaterial].push_back(k);
       for( localIndex q = 0; q < quadrature.size(); ++q )
       {
-        cellToConstitutiveMap(k,q) = std::make_pair( defaultMaterialIndex, counts[defaultMaterial]++ );
+        cellToConstitutiveMap.first(k,q)  = defaultMaterialIndex;
+        cellToConstitutiveMap.second(k,q) = counts[defaultMaterial]++;
 //        ++(counts[defaultMaterial]);
       }
     }
@@ -222,7 +223,7 @@ void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager 
   BasisBase const & basis = numericalMethodManager->GetGroup(keys::basisFunctions)->getReference<BasisBase>( basisName );
   QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
 
-  view_rtype_const<r1_array> X = domain->GetGroup(keys::FEM_Nodes)->getData<r1_array>(keys::ReferencePosition);
+  r1_array const & X = domain->GetGroup(keys::FEM_Nodes)->getReference<r1_array>(keys::ReferencePosition);
 
   forCellBlocks([&]( CellBlockSubRegion * subRegion )
   {

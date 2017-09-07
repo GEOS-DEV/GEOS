@@ -51,6 +51,12 @@ else()
 endif()
 
 
+#if( ATK_FOUND )
+#  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DATK_FOUND=1)
+#else()
+#  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DATK_FOUND=0)  
+#endif()
+
 if( ENABLE_MATHPRESSO )
   set( thirdPartyLibs ${thirdPartyLibs} mathpresso )
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_MATHPRESSO=1)
@@ -62,6 +68,7 @@ endif()
   set( thirdPartyLibs ${thirdPartyLibs} silo )
 
 
+message( "ENABLE_CONTAINERARRAY_RETURN_PTR = ${ENABLE_CONTAINERARRAY_RETURN_PTR}" )
 if( ENABLE_CONTAINERARRAY_RETURN_PTR )
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DCONTAINERARRAY_RETURN_PTR=1)  
 else()

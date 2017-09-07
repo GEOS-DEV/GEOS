@@ -60,7 +60,7 @@ public:
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
 
-  void CalculateShapeFunctionGradients( dataRepository::view_rtype_const<r1_array> X,
+  void CalculateShapeFunctionGradients( r1_array const & X,
                                         dataRepository::ManagedGroup * const cellBlock ) const;
 
 public:
