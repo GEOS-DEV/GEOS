@@ -48,7 +48,7 @@ blt_add_library( NAME
                  HEADERS_OUTPUT_SUBDIR
                      geosx_core
                  DEPENDS_ON
-                     cxx-utilities slic sidre conduit hdf5 pugixml spio silo ${extraComponentsListLink} ${thirdPartyLibs}
+                     cxx-utilities slic sidre conduit hdf5 pugixml spio silo trilinos ${extraComponentsListLink} ${thirdPartyLibs}
                  )
                  
 #target_include_directories( geosx_core PUBLIC ${CMAKE_CURRENT_LIST_DIR} )

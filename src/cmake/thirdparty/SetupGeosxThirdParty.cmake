@@ -312,6 +312,53 @@ blt_register_library( NAME pugixml
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
 
+
+################################
+# TRILINOS
+################################
+#if( ENABLE_TRILINOS )
+message( INFO ": setting up TRILINOS" )
+
+set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
+include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+#message("Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
+
+
+find_path( TRILINOS_INCLUDE_DIRS TrilinosConfig.cmake
+           PATHS  ${TRILINOS_DIR}/include
+           NO_DEFAULT_PATH
+           NO_CMAKE_ENVIRONMENT_PATH
+           NO_CMAKE_PATH
+           NO_SYSTEM_ENVIRONMENT_PATH
+           NO_CMAKE_SYSTEM_PATH)
+
+find_library( TRILINOS_LIBRARY NAMES ${Trilinos_LIBRARIES}
+              PATHS ${TRILINOS_DIR}/lib
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(TRILINOS  DEFAULT_MSG
+                                  TRILINOS_INCLUDE_DIRS
+                                  TRILINOS_LIBRARY )
+                                  
+if (NOT TRILINOS_FOUND)
+    message(FATAL_ERROR ": TRILINOS not found in ${TRILINOS_DIR}. Maybe you need to build it")
+endif()
+
+blt_register_library( NAME trilinos
+                      INCLUDES ${TRILINOS_INCLUDE_DIRS} 
+                      LIBRARIES ${TRILINOS_LIBRARY}
+                      TREAT_INCLUDES_AS_SYSTEM ON )
+
+#endif()
+
+
+
 if (UNCRUSTIFY_EXECUTABLE)
   include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
 endif()

@@ -94,7 +94,7 @@ else()
     message(INFO ": Using RAJA found at https://github.com/LLNL/RAJA/archive/develop.zip")
     set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/raja)
     ExternalProject_Add( raja
-                         GIT_REPOSITORY ssh://git@github.com:LLNL/RAJA.git
+                         GIT_REPOSITORY https://github.com/LLNL/RAJA.git
                          GIT_TAG develop
                          PATCH_COMMAND git submodule init && git submodule update                         
                          PREFIX ${PROJECT_BINARY_DIR}/raja
@@ -332,7 +332,62 @@ else()
                         TREAT_INCLUDES_AS_SYSTEM ON )
 endif()
 
+
+
+################################
+# TRILINOS
+################################
+message( INFO ": setting up TRILINOS" )
+set(TRILINOS_LOCAL_DIR ${PROJECT_BINARY_DIR}/trilinos)
+set(TRILINOS_DIR ${TRILINOS_LOCAL_DIR})
+set(TRILINOS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/trilinos)
+
+ExternalProject_Add( trilinos
+                     PREFIX ${PROJECT_BINARY_DIR}/trilinos
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/trilinos-12.10.1-Source.tar.gz
+                     BUILD_COMMAND make -j8
+                     INSTALL_DIR ${TRILINOS_INSTALL_DIR}
+                     INSTALL_COMMAND make install
+                     CMAKE_ARGS -D CMAKE_C_COMPILER=${MPI_C_COMPILER}
+                                -D CMAKE_CXX_COMPILER=${MPI_CXX_COMPILER}
+                                -D BUILD_SHARED_LIBS:BOOL=OFF
+                                -D CMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+                                -D TPL_ENABLE_MPI:BOOL=ON 
+                                -D BUILD_SHARED_LIBS:BOOL=OFF
+                                -D CMAKE_BUILD_TYPE:STRING=RELEASE
+                                -D Trilinos_ENABLE_Fortran:BOOL=OFF 
+                                -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" 
+                                -D CMAKE_VERBOSE_MAKEFILE:BOOL=TRUE 
+                                -D Trilinos_ENABLE_TESTS:BOOL=OFF 
+                                -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=FALSE 
+                                -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=ON 
+                                -D Trilinos_ENABLE_Epetra:BOOL=ON 
+                                -D Trilinos_ENABLE_EpetraExt:BOOL=ON 
+                                -D Trilinos_ENABLE_Tpetra:BOOL=ON 
+                                -D Trilinos_ENABLE_Jpetra:BOOL=ON 
+                                -D Trilinos_ENABLE_Kokkos:BOOL=ON 
+                                -D Trilinos_ENABLE_Mesquite:BOOL=ON 
+                                -D Trilinos_ENABLE_Sacado:BOOL=ON 
+                                -D Trilinos_ENABLE_Stratimikos:BOOL=ON 
+                                -D Trilinos_ENABLE_Amesos:BOOL=ON 
+                                -D Trilinos_ENABLE_AztecOO:BOOL=ON 
+                                -D Trilinos_ENABLE_Ifpack:BOOL=ON 
+                                -D Trilinos_ENABLE_Teuchos:BOOL=ON 
+                                -D Trilinos_ENABLE_ML:BOOL=ON 
+                                -D Trilinos_ENABLE_Intrepid:BOOL=ON 
+                                -D Trilinos_ENABLE_Shards:BOOL=ON 
+                                -D Trilinos_ENABLE_Pamgen:BOOL=ON 
+                                -D Trilinos_ENABLE_Thyra:BOOL=ON 
+                                -D Trilinos_ENABLE_Boost=OFF
+                                -D Trilinos_ENABLE_STK=OFF
+                                -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON  )
+
+
+
+
 blt_add_executable( NAME             tpl
                     SOURCES          tpl.cpp
                     DEPENDS_ON       hdf5 silo RAJA chai pugixml mathpresso
                   )
+add_dependencies( tpl trilinos)
+

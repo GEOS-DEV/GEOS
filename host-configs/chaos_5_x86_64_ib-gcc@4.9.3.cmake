@@ -32,7 +32,7 @@ set(ENABLE_MATHPRESSO ON CACHE BOOL  "Enables mathpresso Plugin")
 #######################################
 # RAJA/CHAI SETUP
 #######################################
-set(RAJA_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/raja/" CACHE PATH "" FORCE )
+#set(RAJA_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/raja/" CACHE PATH "" FORCE )
 set(CHAI_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/chai/" CACHE PATH "" FORCE )
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
