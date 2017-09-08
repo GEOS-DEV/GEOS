@@ -65,9 +65,16 @@ parser.add_argument("-hc",
                     type=str,
                     help="select a specific host-config file to initalize CMake's cache")
 
+parser.add_argument("-tpl",
+                    "--thirdpartylib",
+                    action='store_true',
+                    help="build third party libraries")
+
 args, unknown_args = parser.parse_known_args()
 if unknown_args:
     print "[config-build]: Passing the following unknown arguments directly to cmake... %s" % unknown_args
+
+
 
 ########################
 # Find CMake Cache File
@@ -91,7 +98,11 @@ if args.buildpath != "":
     buildpath = args.buildpath
 else:
     # use platform info & build type
-    buildpath = "-".join(["build",platform_info,args.buildtype.lower()])
+    if args.thirdpartylib:
+        buildpath = "-".join(["thirdPartyLibs/build",platform_info,args.buildtype.lower()])        
+    else:
+        buildpath = "-".join(["build",platform_info,args.buildtype.lower()])
+print "buildpath = ", buildpath
 
 buildpath = os.path.abspath(buildpath)
 
@@ -111,7 +122,10 @@ if args.installpath != "":
     installpath = os.path.abspath(args.installpath)
 else:
     # use platform info & build type
-    installpath = "-".join(["install",platform_info,args.buildtype.lower()])
+    if args.thirdpartylib:
+        installpath = "-".join(["thirdPartyLibs/install",platform_info,args.buildtype.lower()])        
+    else:
+        installpath = "-".join(["install",platform_info,args.buildtype.lower()])
 
 installpath = os.path.abspath(installpath)
 
@@ -122,32 +136,6 @@ if os.path.exists(installpath):
 
 print "Creating install path '%s'..." % installpath
 os.makedirs(installpath)
-
-
-##########################################
-# Setup ThirdParty Build 
-##########################################
-#thirdPartyBuildPath = buildpath + "/thirdparty"
-#thirdPartyInstallPath = installpath + "/thirdparty"
-
-#if os.path.exists(thirdPartyBuildPath):
-#    shutil.rmtree(thirdPartyBuildPath)
-#os.makedirs(thirdPartyBuildPath)
-    
-#if os.path.exists(thirdPartyInstallPath):
-#    shutil.rmtree(thirdPartyInstallPath)
-#os.makedirs(thirdPartyInstallPath)
-
-
-
-#os.system("cp src/thirdparty/buildthirdparty.sh "+ thirdPartyBuildPath)
-#os.system("perl scripts/lns.pl -r src/thirdparty/chai " + thirdPartyBuildPath + "/chai")
-
-#os.makedirs( thirdPartyInstallPath + "/chai" )
-
-#os.system("rm " + thirdPartyBuildPath + "/chai/.g*")
-
-
 
 
 ############################
@@ -177,7 +165,10 @@ if args.xcode:
 if unknown_args:
     cmakeline += " " + " ".join( unknown_args )
 
-cmakeline += " %s/../src " % scriptsdir
+if args.thirdpartylib:
+    cmakeline += " %s/../thirdPartyLibs " % scriptsdir
+else:
+    cmakeline += " %s/../src " % scriptsdir
 
 # Dump the cmake command to file for convenience
 cmdfile = open("%s/cmake_cmd" % buildpath, "w")

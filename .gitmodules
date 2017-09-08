@@ -22,6 +22,6 @@
 	url = ../reservoirsimulationpackage.git
 	branch = master
 [submodule "src/tpl_mirror"]
-	path = src/tpl_mirror
+	path = thirdPartyLibs/tpl_mirror
 	url = ../tpl_mirror.git
 	branch = master

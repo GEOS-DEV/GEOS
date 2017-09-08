@@ -1,0 +1,338 @@
+cmake_minimum_required(VERSION 3.1)
+
+################################
+# GEOS_TPL
+################################
+project(geosx_tpl LANGUAGES C CXX)
+
+################################
+# Include blt
+################################
+include(cmake/blt/SetupBLT.cmake)
+
+include(ExternalProject)
+
+
+################################
+# install targets from build
+################################s
+#install(DIRECTORY ${PROJECT_BINARY_DIR}/bin DESTINATION . OPTIONAL)
+#install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
+
+
+
+
+################################
+# HDF5
+################################
+if (HDF5_DIR)
+  include(../src/cmake/thirdparty/FindHDF5.cmake)
+  blt_register_library(NAME hdf5
+                       INCLUDES ${HDF5_INCLUDE_DIRS}
+                       LIBRARIES ${HDF5_LIBRARY} 
+                       TREAT_INCLUDES_AS_SYSTEM ON )
+endif()
+
+
+################################
+# SILO
+################################
+if( EXISTS ${SILO_DIR})
+    message("Using system SILO found at ${SILO_DIR}")
+    include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindSILO.cmake)
+    if (NOT SILO_FOUND)
+        message(FATAL_ERROR ": SILO not found in ${SILO_DIR}. Maybe you need to build it")
+    endif()
+else()
+    message(INFO ": Using SILO found at https://wci.llnl.gov/content/assets/docs/simulation/computer-codes/silo/silo-4.10.2/silo-4.10.2-bsd.tar.gz")
+    message("${CMAKE_SOURCE_DIR}")
+    set(silo_install_dir ${CMAKE_INSTALL_PREFIX}/silo)
+    ExternalProject_Add( silo
+#                         URL https://wci.llnl.gov/content/assets/docs/simulation/computer-codes/silo/silo-4.10.2/silo-4.10.2-bsd.tar.gz
+#                         URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
+#                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                         URL ${CMAKE_SOURCE_DIR}/tpl_mirror/silo-4.10.2-bsd.tar.gz
+                         PREFIX ${PROJECT_BINARY_DIR}/silo
+                         INSTALL_DIR ${silo_install_dir}
+                         CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
+                                               CXX=${CMAKE_CXX_COMPILER}
+                                               --prefix=${silo_install_dir}
+                                               --disable-fortran
+                                               --enable-optimization
+                                               --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+                                               LDFLAGS=-ldl
+                                               --disable-silex 
+                             BUILD_COMMAND make
+                             INSTALL_COMMAND make install )
+
+    set(SILO_INCLUDE_DIRS ${silo_install_dir}/include)
+    set(SILO_LIBRARY ${silo_install_dir}/lib/libsiloh5.a)    
+endif()
+        
+blt_register_library( NAME silo
+                      INCLUDES ${SILO_INCLUDE_DIRS}
+                      LIBRARIES ${SILO_LIBRARY}
+                      TREAT_INCLUDES_AS_SYSTEM ON
+                      DEPENDS_ON hdf5 )
+
+
+
+
+
+
+################################
+# RAJA
+################################
+if( EXISTS ${RAJA_DIR})
+message("${RAJA_DIR}")
+    message("Using system RAJA found at ${RAJA_DIR}")
+    include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake)
+    if (NOT RAJA_FOUND)
+        message(FATAL_ERROR ": RAJA not found in ${RAJA_DIR}. Maybe you need to build it")
+    endif()    
+else()
+    message(INFO ": Using RAJA found at https://github.com/LLNL/RAJA/archive/develop.zip")
+    set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/raja)
+    ExternalProject_Add( raja
+                         GIT_REPOSITORY ssh://git@github.com:LLNL/RAJA.git
+                         GIT_TAG develop
+                         PATCH_COMMAND git submodule init && git submodule update                         
+                         PREFIX ${PROJECT_BINARY_DIR}/raja
+                         INSTALL_COMMAND make install
+                         INSTALL_DIR ${raja_install_dir}
+                         CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                    -DRAJA_ENABLE_CUDA=${CUDA_ENABLED}
+                                    -DRAJA_ENABLE_TESTS=${RAJA_ENABLE_TESTS}
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+    set(RAJA_INCLUDE_DIRS ${raja_install_dir}/include )
+    set(RAJA_LIBRARY ${raja_install_dir}/lib/libRAJA.a )    
+endif()
+
+blt_register_library( NAME raja
+                      INCLUDES ${RAJA_INCLUDE_DIRS}
+                      LIBRARIES ${RAJA_LIBRARY}
+                      TREAT_INCLUDES_AS_SYSTEM ON )
+
+
+
+
+################################
+# CHAI
+################################
+if( EXISTS ${CHAI_DIR})
+    message(INFO ": Using system CHAI found at ${CHAI_DIR}")
+    include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
+    if (NOT CHAI_FOUND)
+        message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
+    endif()
+else()
+    set(CHAI_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/chai)
+    message(INFO ": Using CHAI found at git@github.com:LLNL/CHAI.git")
+    ExternalProject_Add( chai
+                         PREFIX ${PROJECT_BINARY_DIR}/chai
+                         GIT_REPOSITORY git@github.com:LLNL/CHAI.git
+                         GIT_TAG develop
+                         PATCH_COMMAND git submodule init && git submodule update                         
+                         INSTALL_DIR ${chai_install_dir}
+                         INSTALL_COMMAND make install
+                         CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                    -DENABLE_CUDA=${CUDA_ENABLED}
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+    set(CHAI_INCLUDE_DIRS ${chai_install_dir}/include )
+    set(CHAI_LIBRARY ${chai_install_dir}/lib/libchai.a )    
+
+endif()
+
+blt_register_library( NAME chai
+                      INCLUDES ${CHAI_INCLUDE_DIRS}
+                      LIBRARIES ${CHAI_LIBRARY}
+                      TREAT_INCLUDES_AS_SYSTEM ON  )
+
+
+
+################################
+# FPARSER
+################################
+if( USE_FPARSER )
+message( INFO ": setting up fparser" )
+set(FPARSER_LOCAL_DIR ${CMAKE_SOURCE_DIR}/fparser)
+set(FPARSER_DIR ${FPARSER_LOCAL_DIR})
+set(FPARSER_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/fparser)
+set(FPARSER_INCLUDE_DIR ${fparser_install_dir}/include)
+
+message( INFO ": FPARSER_DIR = ${FPARSER_DIR}" )
+message( INFO ": FPARSER_LOCAL_DIR = ${FPARSER_LOCAL_DIR}" )
+message( INFO ": FPARSER_INSTALL_DIR = ${FPARSER_INSTALL_DIR}" )
+
+ExternalProject_Add( fparser 
+                     #URL http://warp.povusers.org/FunctionParser/fparser4.5.2.zip
+                     #URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
+                     #DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/fparser4.5.2.zip
+                     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/fparser
+                     INSTALL_DIR ${FPARSER_INSTALL_DIR}
+                     CONFIGURE_COMMAND ""
+                     BUILD_COMMAND ${CMAKE_CXX_COMPILER} -c -DFP_NO_SUPPORT_OPTIMIZER -I../fparser ../fparser/fparser.cc ../fparser/fpoptimizer.cc &&
+                                   ar rcs libfparser.a fparser.o fpoptimizer.o
+                     INSTALL_COMMAND mkdir -p ${FPARSER_INSTALL_DIR}/lib &&
+                                     cp libfparser.a ${FPARSER_INSTALL_DIR}/lib &&
+                                     cd ../fparser &&
+                                     mkdir -p ${FPARSER_INSTALL_DIR}/include && 
+                                     ls  &&
+                                     cp fparser.hh fparser_gmpint.hh fparser_mpfr.hh fpconfig.hh ${FPARSER_INSTALL_DIR}/include;
+                     )
+
+blt_register_library( NAME fparser
+                      INCLUDES ${FPARSER_INSTALL_DIR}/include 
+                      LIBRARIES ${FPARSER_INSTALL_DIR}/lib/libfparser.a
+                      TREAT_INCLUDES_AS_SYSTEM ON )
+
+endif()
+
+
+
+
+
+
+################################
+# CALIPER
+################################
+if( ENABLE_CALIPER )
+message( INFO ": setting up caliper" )
+set(CALIPER_LOCAL_DIR ${PROJECT_BINARY_DIR}/caliper)
+set(CALIPER_DIR ${CALIPER_LOCAL_DIR})
+set(CALIPER_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/caliper)
+
+message( INFO ": CALIPER_DIR = ${CALIPER_DIR}" )
+message( INFO ": CALIPER_LOCAL_DIR = ${CALIPER_LOCAL_DIR}" )
+message( INFO ": CALIPER_INSTALL_DIR = ${CALIPER_INSTALL_DIR}" )
+
+ExternalProject_Add( caliper
+                     GIT_REPOSITORY git@github.com:LLNL/Caliper.git
+                     GIT_TAG master
+                     PATCH_COMMAND git submodule init && git submodule update                         
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/Caliper-master.zip
+                     INSTALL_DIR ${CALIPER_INSTALL_DIR}
+                     INSTALL_COMMAND make install
+                     CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DBUILD_SHARED_LIBS:BOOL=OFF
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+blt_register_library( NAME caliper
+                      INCLUDES ${CALIPER_INSTALL_DIR}/include 
+                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper.a 
+                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-common.a
+                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-reader.a
+                      TREAT_INCLUDES_AS_SYSTEM ON )
+
+endif()
+
+
+
+################################
+# ASMJIT / MATHPRESSO
+################################
+set(ENABLE_MATHPRESSO ON CACHE BOOL  "Enables mathpresso Plugin")
+if( ENABLE_MATHPRESSO )
+message( INFO ": setting up asmjit" )
+set(ASMJIT_LOCAL_DIR ${PROJECT_BINARY_DIR}/asmjit/src/asmjit)
+set(ASMJIT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/asmjit)
+
+ExternalProject_Add( asmjit
+                     PREFIX ${PROJECT_BINARY_DIR}/asmjit
+#                     URL https://github.com/asmjit/asmjit/archive/master.zip
+#                     URL_HASH MD5=3c0b3190d422240b075dfc667a081a3a
+#                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+#                     DOWNLOAD_NAME asmjit.zip
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/asmjit-master.zip
+                     INSTALL_DIR ${ASMJIT_INSTALL_DIR}
+                     INSTALL_COMMAND make install
+                     CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DBUILD_SHARED_LIBS:BOOL=OFF
+                                -DCMAKE_BUILD_TYPE=Release
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+message( INFO ": setting up MathPresso" )
+set(MATHPRESSO_LOCAL_DIR ${PROJECT_BINARY_DIR}/mathpresso)
+set(MATHPRESSO_DIR ${MATHPRESSO_LOCAL_DIR})
+set(MATHPRESSO_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/mathpresso)
+
+message( INFO ": MATHPRESSO_DIR = ${MATHPRESSO_DIR}" )
+message( INFO ": MATHPRESSO_LOCAL_DIR = ${MATHPRESSO_LOCAL_DIR}" )
+message( INFO ": MATHPRESSO_INSTALL_DIR = ${MATHPRESSO_INSTALL_DIR}" )
+
+ExternalProject_Add( mathpresso
+                     PREFIX ${PROJECT_BINARY_DIR}/mathpresso
+#                     URL https://github.com/kobalicek/mathpresso/archive/master.zip
+#                     URL_HASH MD5=b43212cafeab5e0e2ef5b87c29c15df1
+#                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+#                     DOWNLOAD_NAME mathpresso.zip
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/mathpresso-master.zip
+                     DEPENDS asmjit 
+                     INSTALL_DIR ${MATHPRESSO_INSTALL_DIR}
+                     INSTALL_COMMAND mkdir -p <INSTALL_DIR>/include &&
+                                     mkdir -p <INSTALL_DIR>/lib &&
+                                     make INSTALL_DIR=<INSTALL_DIR> install &&
+                                     cp libmathpresso.a <INSTALL_DIR>/lib/
+                     CMAKE_ARGS -DMATHPRESSO_STATIC=TRUE
+                                -DASMJIT_DIR=${ASMJIT_LOCAL_DIR}
+                                -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+blt_register_library( NAME mathpresso
+                      INCLUDES ${MATHPRESSO_INSTALL_DIR}/include
+                      LIBRARIES ${MATHPRESSO_INSTALL_DIR}/lib/libmathpresso.a
+                      TREAT_INCLUDES_AS_SYSTEM ON )
+
+endif()
+
+
+
+################################
+# PUGIXML
+################################
+message( INFO ": setting up pugixml" )
+set(PUGIXML_LOCAL_DIR ${PROJECT_BINARY_DIR}/pugixml)
+set(PUGIXML_DIR ${PUGIXML_LOCAL_DIR})
+set(PUGIXML_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/pugixml)
+
+message( INFO ": PUGIXML_DIR = ${PUGIXML_DIR}" )
+message( INFO ": PUGIXML_LOCAL_DIR = ${PUGIXML_LOCAL_DIR}" )
+message( INFO ": PUGIXML_INSTALL_DIR = ${PUGIXML_INSTALL_DIR}" )
+
+ExternalProject_Add( pugixml
+                     PREFIX ${PROJECT_BINARY_DIR}/pugixml
+#                     URL https://github.com/zeux/pugixml/archive/master.zip
+#                     DOWNLOAD_NAME pugixml.zip
+#                     URL_HASH MD5=0099563cb3f466fe03b10f9666c73993
+#                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
+                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/pugixml.tar
+                     INSTALL_DIR ${PUGIXML_INSTALL_DIR}
+                     INSTALL_COMMAND make install
+                     CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  blt_register_library( NAME pugixml
+                        INCLUDES ${PUGIXML_INSTALL_DIR}/include
+                        LIBRARIES ${PUGIXML_INSTALL_DIR}/lib/libpugixml.a
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+else()
+  blt_register_library( NAME pugixml
+                        INCLUDES ${PUGIXML_INSTALL_DIR}/include
+                        LIBRARIES ${PUGIXML_INSTALL_DIR}/lib64/libpugixml.a
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+endif()
+
+blt_add_executable( NAME             tpl
+                    SOURCES          tpl.cpp
+                    DEPENDS_ON       hdf5 silo RAJA chai pugixml mathpresso
+                  )

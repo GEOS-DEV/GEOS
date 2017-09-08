@@ -13,15 +13,15 @@ if(NOT SILO_DIR)
 endif()
 
 #find includes
-find_path( SILO_INCLUDE_DIRS silo.h pmpio.h
-           PATHS  ${SILO_DIR}/include/
+find_path( SILO_INCLUDE_DIRS silo.h
+           PATHS  ${SILO_DIR}/include
            NO_DEFAULT_PATH
            NO_CMAKE_ENVIRONMENT_PATH
            NO_CMAKE_PATH
            NO_SYSTEM_ENVIRONMENT_PATH
            NO_CMAKE_SYSTEM_PATH)
 
-find_library( SILO_LIBRARY NAMES silo libsilo
+find_library( SILO_LIBRARY NAMES siloh5
               PATHS ${SILO_DIR}/lib
               NO_DEFAULT_PATH
               NO_CMAKE_ENVIRONMENT_PATH

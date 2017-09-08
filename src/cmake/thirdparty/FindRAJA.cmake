@@ -7,7 +7,7 @@ endif()
 
 #find includes
 find_path( RAJA_INCLUDE_DIRS 
-           NAMES RAJA/RAJA.hxx
+           NAMES RAJA/RAJA.hpp
            PATHS  ${RAJA_DIR}/include
            NO_DEFAULT_PATH
            NO_CMAKE_ENVIRONMENT_PATH
