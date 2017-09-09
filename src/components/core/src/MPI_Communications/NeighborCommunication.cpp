@@ -50,6 +50,11 @@
 //#include "Utilities/Utilities.h"
 
 
+#if ATK_FOUND
+#include <slic/slic.hpp>
+#endif
+
+
 static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
                                         const lArray1d& existingNeighborIndices,
                                         const lSet& modifiedIndices,
@@ -238,8 +243,11 @@ void NeighborCommunication::Clear()
 void NeighborCommunication::CommunicatePackedObjectBufferSizes( )
 {
   const size_t n = tempNeighborData.objectsToSend.size();
-  if(tempNeighborData.objectsToReceive.size() != n)
+  if(tempNeighborData.objectsToReceive.size() != n) {
+#if ATK_FOUND
     SLIC_ERROR("Cannot have number of object types received differ from those sent");
+#endif
+  }
 
   bufvector::size_type* sendSizes = new bufvector::size_type[n];
   bufvector::size_type* receiveSizes = new bufvector::size_type[n];
@@ -292,9 +300,11 @@ void NeighborCommunication::DetermineMatchedBoundaryObject( const ObjectDataStru
 //  cgit = tempNeighborData.neighborNumbers.find(name);
 //  if (cgit == tempNeighborData.neighborNumbers.end())
 //  {
+////#if ATK_FOUND
 ////    SLIC_ERROR(
 ////        "Cannot find name " + toString<int>(name)
 ////            + " in neighborNumbers in NeighborCommunication::DetermineMatchedBoundaryObject");
+////#endif
 //  }
 //  const gArray1d& neighborObjectNumbers = cgit->second;
 //
@@ -598,7 +608,9 @@ void NeighborCommunication::PackTopologyModifications( const string key,
 //    }
 //    else
 //    {
+//#if ATK_FOUND
 //      SLIC_ERROR("NeighborCommunication::PackTopologyModifications: inappropriate type for PhysicalDomainT::Unpack " + toString<int>(key));
+//#endif
 //    }
 //  }
 }
@@ -650,7 +662,9 @@ void NeighborCommunication::UnpackTopologyModifications( const string key ,
 //  }
 //  else
 //  {
+//#if ATK_FOUND
 //    SLIC_ERROR("NeighborCommunication::UnpackTopologyModifications: inappropriate type for PhysicalDomainT::Unpack " + toString<int>(key));
+//#endif
 //  }
 
 }
@@ -671,7 +685,9 @@ void NeighborCommunication::UnpackTopologyModifications( const string key ,
 //  }
 //  else
 //  {
+//#if ATK_FOUND
 //    SLIC_ERROR("NeighborCommunication::UnpackTopologyModifications: inappropriate type for PhysicalDomainT::Unpack " + toString<int>(key));
+//#endif
 //  }
 
 }
@@ -896,14 +912,18 @@ bufvector::size_type NeighborCommunication::PackBuffer( const std::map<string, s
 //                                                                                      it->second,
 //                                                                                      m_sendLocalIndices[it->first],
 //                                                                                      doBufferPacking );
+//#if ATK_FOUND
 //      //SLIC_ERROR("Trying for name (" + toString<int>(it->first) + ") size=" + toString<bufvector::size_type>(bufferSize));
+//#endif
 //    }
 //  }
 //
 //  if( doBufferPacking && bufferSize != m_sendBuffer.size() )
 //  {
 //    printf( " rank %5i: bufferSize = %6lu, m_sendBuffer.size() = %6lu \n",this->m_rank, bufferSize, m_sendBuffer.size() );
+//#if ATK_FOUND
 //    SLIC_ERROR("m_sendBuffer.size() isn't what it should be\n");
+//#endif
 //  }
 
   return bufferSize;

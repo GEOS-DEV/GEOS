@@ -23,11 +23,11 @@ public:
                       dataRepository::ManagedGroup * const parent );
   virtual ~NewFunctionManager();
   
-  static NewFunctionManager& Instance()
+  static NewFunctionManager * Instance()
   {
       static NewFunctionManager theFunctionManager("LastFunctionManagerOnEarth", nullptr);
 
-    return theFunctionManager;
+    return &theFunctionManager;
   }
 
 
@@ -35,9 +35,9 @@ public:
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
   using dataRepository::ManagedGroup::ReadXML;
-  void ReadXML( dataRepository::ManagedGroup& domain, xmlWrapper::xmlNode const & problemNode );
+  void ReadXML( dataRepository::ManagedGroup * domain, xmlWrapper::xmlNode const & problemNode );
 
-  FunctionBase& CreateFunction( string const & functionCatalogKey, string const & functionName );
+  FunctionBase * CreateFunction( string const & functionCatalogKey, string const & functionName );
 };
 
 

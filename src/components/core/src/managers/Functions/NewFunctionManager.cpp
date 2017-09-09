@@ -35,7 +35,7 @@ void NewFunctionManager::FillDocumentationNode( dataRepository::ManagedGroup * c
   docNode->setShortDescription("Function manager");
 }
 
-void NewFunctionManager::ReadXML( dataRepository::ManagedGroup& domain,
+void NewFunctionManager::ReadXML( dataRepository::ManagedGroup * domain,
                                   xmlWrapper::xmlNode const & problemNode )
 {
   xmlWrapper::xmlNode topLevelNode = problemNode.child("Functions");
@@ -46,23 +46,23 @@ void NewFunctionManager::ReadXML( dataRepository::ManagedGroup& domain,
     for (xmlWrapper::xmlNode functionNode=topLevelNode.first_child(); functionNode; functionNode=functionNode.next_sibling())
     {
       // Register the new function
-      FunctionBase & newFunction = CreateFunction(functionNode.name(), functionNode.attribute("name").value());
+      FunctionBase * newFunction = CreateFunction(functionNode.name(), functionNode.attribute("name").value());
 
       // Set the documentation node, register, and read xml
-      newFunction.SetDocumentationNodes( this );
-      newFunction.BuildDataStructure( this );
-      newFunction.ReadXML(functionNode );
-      newFunction.InitializeFunction();
+      newFunction->SetDocumentationNodes( this );
+      newFunction->BuildDataStructure( this );
+      newFunction->ReadXML(functionNode );
+      newFunction->InitializeFunction();
     }
   }
 }
 
-FunctionBase & NewFunctionManager::CreateFunction( string const & functionCatalogKey,
+FunctionBase * NewFunctionManager::CreateFunction( string const & functionCatalogKey,
                                                    string const & functionName )
 {
   std::cout << "   " << functionCatalogKey << ": " << functionName << std::endl;
   std::unique_ptr<FunctionBase> function = FunctionBase::CatalogInterface::Factory( functionCatalogKey, functionName, this );
-  FunctionBase & rval = this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
+  FunctionBase * rval = this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
 
   return rval;
 }

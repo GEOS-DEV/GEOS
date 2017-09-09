@@ -9,7 +9,6 @@
 #define MANAGEDGROUP_H_
 
 #include <iostream>
-#include <slic/slic.hpp>
 #include <mpi.h>
 
 #include "ObjectCatalog.hpp"
@@ -19,8 +18,6 @@
 #include "DocumentationNode.hpp"
 
 #include "MappedVector.hpp"
-
-#include "DataKey.hpp"
 
 //#include "CodingUtilities/ANSTexception.hpp"
 
@@ -111,10 +108,10 @@ public:
 
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T& RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject );
+  T * RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject );
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T& RegisterGroup( std::string const & name )
+  T * RegisterGroup( std::string const & name )
   {
 //    T* temp = dynamic_cast<T*>(this);
     return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
@@ -122,7 +119,7 @@ public:
   }
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T& RegisterGroup( std::string const & name, std::string const & catalogName )
+  T * RegisterGroup( std::string const & name, std::string const & catalogName )
   {
 //    T* temp = dynamic_cast<T*>(this);
     std::unique_ptr<TBASE> newGroup = TBASE::CatalogInterface::Factory(catalogName, name, this );
@@ -133,7 +130,7 @@ public:
 
 
   template< typename T = ManagedGroup >
-  T * GetGroupPtr( std::string const & name )
+  T * GetGroup( std::string const & name )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T *>( m_subGroups[name] );
@@ -143,7 +140,7 @@ public:
   }
 
   template< typename T = ManagedGroup >
-  T const * GetGroupPtr( std::string const & name ) const
+  T const * GetGroup( std::string const & name ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const *>( m_subGroups[name] );
@@ -154,7 +151,7 @@ public:
 
 
   template< typename T = ManagedGroup >
-  T * GetGroupPtr( subGroupMap::DataKey & key )
+  T * GetGroup( subGroupMap::KeyIndex & key )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T *>( m_subGroups[key] );
@@ -164,7 +161,7 @@ public:
   }
 
   template< typename T = ManagedGroup >
-  T const * GetGroupPtr( subGroupMap::DataKey & key ) const
+  T const * GetGroup( subGroupMap::KeyIndex & key ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const *>( m_subGroups[key] );
@@ -172,27 +169,6 @@ public:
     return static_cast<T const *>( m_subGroups[key] );
 #endif
   }
-
-
-
-
-  template< typename T = ManagedGroup >
-  T& GetGroup( std::string const & name )
-  { return *(GetGroupPtr<T>(name)); }
-
-  template< typename T = ManagedGroup >
-  T const & GetGroup( std::string const & name ) const
-  { return *(GetGroupPtr<T>(name)); }
-
-
-  template< typename T = ManagedGroup >
-  T& GetGroup( subGroupMap::DataKey & key )
-  { return *(GetGroupPtr<T>(key)); }
-
-  template< typename T = ManagedGroup >
-  T const & GetGroup( subGroupMap::DataKey & key ) const
-  { return *(GetGroupPtr<T>(key)); }
-
 
 
   subGroupMap & GetSubGroups()
@@ -211,9 +187,9 @@ public:
     for( auto& subGroupIter : m_subGroups )
     {
 #ifdef USE_DYNAMIC_CASTING
-       T & subGroup = dynamic_cast<T &>( *(subGroupIter.second) );
+       T * subGroup = dynamic_cast<T *>( subGroupIter.second.get() );
 #else
-       T & subGroup = static_cast<T &>( *(subGroupIter.second) );
+       T * subGroup = static_cast<T *>( subGroupIter.second.get() );
 #endif
        lambda( subGroup );
     }
@@ -225,9 +201,9 @@ public:
     for( auto const & subGroupIter : m_subGroups )
     {
 #ifdef USE_DYNAMIC_CASTING
-       T const & subGroup = dynamic_cast<T const &>( *(subGroupIter.second) );
+       T const * subGroup = dynamic_cast<T const *>( subGroupIter.second );
 #else
-       T const & subGroup = static_cast<T const &>( *(subGroupIter.second) );
+       T const * subGroup = static_cast<T const *>( subGroupIter.second );
 #endif
        lambda( subGroup );
     }
@@ -243,13 +219,13 @@ public:
 
 
   template< typename T , typename TBASE=T >
-  ViewWrapper<TBASE>& RegisterViewWrapper( std::string const & name, std::size_t * const rkey = nullptr );
+  ViewWrapper<TBASE> * RegisterViewWrapper( std::string const & name, std::size_t * const rkey = nullptr );
 
 
-  ViewWrapperBase& RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type );
+  ViewWrapperBase * RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type );
 
   template< typename T >
-  ViewWrapper<T>& RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject );
+  ViewWrapper<T> * RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject );
 
 
   ///@}
@@ -314,27 +290,27 @@ public:
 //  GetDataClass GetData = {*this};
 
 
-  ViewWrapperBase const & getWrapperBase( size_t const index ) const
-  { return *(m_wrappers[index]); }
+  ViewWrapperBase const * getWrapperBase( size_t const index ) const
+  { return m_wrappers[index]; }
 
-  ViewWrapperBase & getWrapperBase( size_t const index )
-  { return *(m_wrappers[index]); }
+  ViewWrapperBase * getWrapperBase( size_t const index )
+  { return m_wrappers[index]; }
 
-  ViewWrapperBase const & getWrapperBase( std::string const & name ) const
-  { return *(m_wrappers[name]); }
+  ViewWrapperBase const * getWrapperBase( std::string const & name ) const
+  { return m_wrappers[name]; }
 
-  ViewWrapperBase & getWrapperBase( std::string const & name )
-  { return *(m_wrappers[name]); }
+  ViewWrapperBase * getWrapperBase( std::string const & name )
+  { return m_wrappers[name]; }
 
-  ViewWrapperBase const & getWrapperBase( viewWrapperMap::DataKey & dataKey ) const
-  { return *(m_wrappers[dataKey]); }
+  ViewWrapperBase const * getWrapperBase( viewWrapperMap::KeyIndex & keyIndex ) const
+  { return m_wrappers[keyIndex]; }
 
-  ViewWrapperBase & getWrapperBase( viewWrapperMap::DataKey & dataKey )
-  { return *(m_wrappers[dataKey]); }
+  ViewWrapperBase * getWrapperBase( viewWrapperMap::KeyIndex & keyIndex )
+  { return m_wrappers[keyIndex]; }
 
 
   template< typename T >
-  ViewWrapper<T> const * getWrapperPtr( std::size_t const index ) const
+  ViewWrapper<T> const * getWrapper( std::size_t const index ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[index]) );
@@ -344,11 +320,11 @@ public:
   }
 
   template< typename T >
-  ViewWrapper<T> * getWrapperPtr( std::size_t const index )
-  { return const_cast<ViewWrapper<T> *>( const_cast< ManagedGroup const *>(this)->getWrapperPtr<T>( index ) ); }
+  ViewWrapper<T> * getWrapper( std::size_t const index )
+  { return const_cast<ViewWrapper<T> *>( const_cast< ManagedGroup const *>(this)->getWrapper<T>( index ) ); }
 
   template< typename T >
-  ViewWrapper<T> const * getWrapperPtr( std::string const & name ) const
+  ViewWrapper<T> const * getWrapper( std::string const & name ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[name]) );
@@ -358,82 +334,83 @@ public:
   }
 
   template< typename T >
-  ViewWrapper<T> * getWrapperPtr( std::string const & name )
-  { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapperPtr<T>( name ) ); }
+  ViewWrapper<T> * getWrapper( std::string const & name )
+  { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapper<T>( name ) ); }
+
 
   template< typename T >
-  ViewWrapper<T> const * getWrapperPtr( viewWrapperMap::DataKey & dataKey ) const
+  ViewWrapper<T> const * getWrapper( viewWrapperMap::KeyIndex & keyIndex ) const
   {
 #ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[dataKey]) );
+    return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[keyIndex]) );
 #else
-    return static_cast< ViewWrapper<T> const * >( (m_wrappers[dataKey]) );
+    return static_cast< ViewWrapper<T> const * >( (m_wrappers[keyIndex]) );
 #endif
   }
 
   template< typename T >
-  ViewWrapper<T> * getWrapperPtr( viewWrapperMap::DataKey & dataKey )
-  { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapperPtr<T>( dataKey ) ); }
+  ViewWrapper<T> * getWrapper( viewWrapperMap::KeyIndex & keyIndex )
+  { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapper<T>( keyIndex ) ); }
 
 
 
-
-
-  template< typename T >
-  ViewWrapper<T> const & getWrapper( std::size_t const index ) const
-  { return *getWrapperPtr<T>(index); }
-
-  template< typename T >
-  ViewWrapper<T> & getWrapper( std::size_t const index )
-  { return *getWrapperPtr<T>(index); }
-
-  template< typename T >
-  ViewWrapper<T> const & getWrapper( std::string const & name ) const
-  { return *getWrapperPtr<T>(name);  }
-
-  template< typename T >
-  ViewWrapper<T>& getWrapper( std::string const & name )
-  { return *getWrapperPtr<T>(name);  }
-
-  template< typename T >
-  ViewWrapper<T> const & getWrapper( viewWrapperMap::DataKey & dataKey ) const
-  { return *getWrapperPtr<T>(dataKey);  }
-
-  template< typename T >
-  ViewWrapper<T>& getWrapper( viewWrapperMap::DataKey & dataKey )
-  { return *getWrapperPtr<T>(dataKey);  }
+//
+//
+//  template< typename T >
+//  ViewWrapper<T> const & getWrapper( std::size_t const index ) const
+//  { return *getWrapperPtr<T>(index); }
+//
+//  template< typename T >
+//  ViewWrapper<T> & getWrapper( std::size_t const index )
+//  { return *getWrapperPtr<T>(index); }
+//
+//  template< typename T >
+//  ViewWrapper<T> const & getWrapper( std::string const & name ) const
+//  { return *getWrapperPtr<T>(name);  }
+//
+//  template< typename T >
+//  ViewWrapper<T>& getWrapper( std::string const & name )
+//  { return *getWrapperPtr<T>(name);  }
+//
+//  template< typename T >
+//  ViewWrapper<T> const & getWrapper( viewWrapperMap::KeyIndex & keyIndex ) const
+//  { return *getWrapperPtr<T>(keyIndex);  }
+//
+//  template< typename T >
+//  ViewWrapper<T>& getWrapper( viewWrapperMap::KeyIndex & keyIndex )
+//  { return *getWrapperPtr<T>(keyIndex);  }
 
 
 
   template< typename T >
   view_rtype_const<T> getData( size_t const index ) const
-  { return getWrapper<T>(index).data(); }
+  { return getWrapper<T>(index)->data(); }
 
   template< typename T >
   view_rtype<T> getData( size_t const index )
-  { return getWrapper<T>(index).data(); }
+  { return getWrapper<T>(index)->data(); }
 
   template< typename T >
   view_rtype_const<T> getData( std::string const & name ) const
-  { return getWrapper<T>( name ).data(); }
+  { return getWrapper<T>( name )->data(); }
 
   template< typename T >
   view_rtype<T> getData( std::string const & name )
-  { return getWrapper<T>( name ).data(); }
+  { return getWrapper<T>( name )->data(); }
 
   template< typename T >
-  view_rtype_const<T> getData( viewWrapperMap::DataKey & dataKey ) const
-  { return getWrapper<T>( dataKey ).data(); }
+  view_rtype_const<T> getData( viewWrapperMap::KeyIndex & keyIndex ) const
+  { return getWrapper<T>( keyIndex )->data(); }
 
   template< typename T >
-  view_rtype<T> getData( viewWrapperMap::DataKey & dataKey )
-  { return getWrapper<T>( dataKey ).data(); }
+  view_rtype<T> getData( viewWrapperMap::KeyIndex & keyIndex )
+  { return getWrapper<T>( keyIndex )->data(); }
 
 
 
   template< typename T >
   T const & getReference( std::size_t const index ) const
-  { return getWrapper<T>(index).reference(); }
+  { return getWrapper<T>(index)->reference(); }
 
   template< typename T >
   T& getReference( std::size_t const index )
@@ -441,19 +418,19 @@ public:
 
   template< typename T >
   T const & getReference( std::string const & name ) const
-  { return getWrapper<T>(name).reference(); }
+  { return getWrapper<T>(name)->reference(); }
 
   template< typename T >
   T & getReference( std::string const & name )
-  { return getWrapper<T>(name).reference(); }
+  { return getWrapper<T>(name)->reference(); }
 
   template< typename T >
-  T const & getReference( viewWrapperMap::DataKey & dataKey ) const
-  { return getWrapper<T>(dataKey).reference(); }
+  T const & getReference( viewWrapperMap::KeyIndex & keyIndex ) const
+  { return getWrapper<T>(keyIndex)->reference(); }
 
   template< typename T >
-  T & getReference( viewWrapperMap::DataKey & dataKey )
-  { return getWrapper<T>(dataKey).reference(); }
+  T & getReference( viewWrapperMap::KeyIndex & keyIndex )
+  { return getWrapper<T>(keyIndex)->reference(); }
 
 
   bool hasGroup( std::string const & name ) const
@@ -466,9 +443,9 @@ public:
     return (m_wrappers[name] != nullptr);
   }
 
-  inline string getName() const
+  inline const string getName() const
   {
-    return m_sidreGroup->getName();
+    return m_name;
   }
 
   virtual void resize( localIndex newsize );
@@ -479,12 +456,13 @@ public:
   }
 
 
-
+#if ATK_FOUND
   axom::sidre::Group * getSidreGroup()              { return m_sidreGroup; }
   axom::sidre::Group const * getSidreGroup() const  { return m_sidreGroup; }
 
   static axom::sidre::Group * setSidreGroup( string const& name,
                                                        ManagedGroup * const parent );
+#endif
 
   ManagedGroup * getParent()             { return m_parent; }
   ManagedGroup const * getParent() const { return m_parent; }
@@ -492,7 +470,9 @@ public:
   ManagedGroup * setParent( ManagedGroup * const parent )
   {
     m_parent = parent;
+#if ATK_FOUND
     m_sidreGroup = m_parent->getSidreGroup();
+#endif
 
     return m_parent;
   }
@@ -510,17 +490,18 @@ public:
 
   void writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm);
 
+#if ATK_FOUND
   void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
 
   void loadSidreExternalData(const string & root_path, MPI_Comm comm);
-
+#endif
 
 protected:
   cxx_utilities::DocumentationNode * m_docNode = nullptr;
 
 private:
 
-
+#if ATK_FOUND
   void registerSubViews();
 
   void createSizeViews();
@@ -534,15 +515,20 @@ private:
   void storeSizedFromParent();
 
   void loadSizedFromParent();
+#endif
   
 
   ManagedGroup* m_parent = nullptr;
   viewWrapperMap m_wrappers;
   subGroupMap m_subGroups;
 
+#if ATK_FOUND
   axom::sidre::Group* m_sidreGroup;
+#endif
 
   int32 m_size;
+
+  string m_name;
 
 
   /**
@@ -552,10 +538,10 @@ private:
 #if NOCHARTOSTRING_KEYLOOKUP == 1
 
   template< typename T = ManagedGroup >
-  T const & GetGroup( char const * ) const;
+  T const * GetGroup( char const * ) const;
 
   template< typename T = ManagedGroup >
-  T& GetGroup( char const * name );
+  T * GetGroup( char const * name );
 
 
   template< typename T >
@@ -583,52 +569,52 @@ private:
 #endif
 };
 
-using GroupKey = ManagedGroup::subGroupMap::DataKey;
-using ViewKey = ManagedGroup::viewWrapperMap::DataKey;
+using GroupKey = ManagedGroup::subGroupMap::KeyIndex;
+using ViewKey = ManagedGroup::viewWrapperMap::KeyIndex;
 
 
 
 template < typename T, typename TBASE >
-T& ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
+T * ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
 {
   #ifdef USE_DYNAMIC_CASTING
-    return *(dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) ) );
+    return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
   #else
-    return *(static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) ) );
+    return static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
   #endif
 }
 
 
 
 template< typename T , typename TBASE >
-ViewWrapper<TBASE>& ManagedGroup::RegisterViewWrapper( std::string const & name, std::size_t * const rkey )
+ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name, std::size_t * const rkey )
 {
   m_wrappers.insert( name, std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ) );
-  ViewWrapper<TBASE> & rval = getWrapper<TBASE>(name);
-  if( rval.sizedFromParent() == 1 )
+  ViewWrapper<TBASE> * const rval = getWrapper<TBASE>(name);
+  if( rval->sizedFromParent() == 1 )
   {
-    rval.resize(this->size());
+    rval->resize(this->size());
   }
   return rval;
 }
 
 
 template < typename T >
-ViewWrapper<T>& ManagedGroup::RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject )
+ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject )
 {
   m_wrappers.insert( name, std::make_unique< ViewWrapper<T> >( name, this, std::move(newObject) ) );
 
-  ViewWrapper<T> & rval = getWrapper<T>(name);
-  if( rval.sizedFromParent() == 1 )
+  ViewWrapper<T> * const rval = getWrapper<T>(name);
+  if( rval->sizedFromParent() == 1 )
   {
-    rval.resize(this->size());
+    rval->resize(this->size());
   }
   return rval;
 }
 
 
-} // namespace dataRepository
-} /* namespace geosx */
+} /* end namespace dataRepository */
+} /* end namespace geosx */
 
 
 //typedef geosx::dataRepository::ManagedGroup ObjectDataStructureBaseT;

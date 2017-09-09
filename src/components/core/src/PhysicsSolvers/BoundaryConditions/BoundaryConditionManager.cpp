@@ -27,10 +27,10 @@ ManagedGroup(name,parent)
 }
 
 
-BoundaryConditionManager & BoundaryConditionManager::get()
+BoundaryConditionManager * BoundaryConditionManager::get()
 {
   static BoundaryConditionManager bcman("bcMan",nullptr);
-  return bcman;
+  return &bcman;
 }
 
 
@@ -52,115 +52,116 @@ void BoundaryConditionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNod
   }
 }
 
-void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGroup & object,
+void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGroup * object,
                                                        std::string const & fieldName,
                                                        real64 const time )
 {
-  dataRepository::ManagedGroup const & sets = object.GetGroup(dataRepository::keys::sets);
+  dataRepository::ManagedGroup const * sets = object->GetGroup(dataRepository::keys::sets);
 
   // iterate over all boundary conditions.
-  forSubGroups<BoundaryConditionBase>( [&]( BoundaryConditionBase & bc ) -> void
+  forSubGroups<BoundaryConditionBase>( [&]( BoundaryConditionBase * bc ) -> void
   {
-    if( time >= bc.GetStartTime() && time < bc.GetEndTime() && ( bc.GetFieldName()==fieldName) )
+    if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
     {
-      string_array setNames = bc.GetSetNames();
+      string_array setNames = bc->GetSetNames();
       for( auto & setName : setNames )
       {
-        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets.getWrapperPtr<lSet>(setName);
+        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
         if( setWrapper != nullptr )
         {
           lSet const & set = setWrapper->reference();
-          bc.ApplyBounaryConditionDefaultMethod(set,time, object, fieldName);
+          bc->ApplyBounaryConditionDefaultMethod(set,time, object, fieldName);
         }
       }
     }
   });
 }
 
-void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup & domain ) const
+void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) const
 {
 
-  forSubGroups<BoundaryConditionBase>( [&] ( BoundaryConditionBase const & bc )-> void
+  forSubGroups<BoundaryConditionBase>( [&] ( BoundaryConditionBase const * bc )-> void
   {
-    if( bc.initialCondition() )
+    if( bc->initialCondition() )
     {
 
-      if( bc.GetElementRegion().empty() )
+      if( bc->GetElementRegion().empty() )
       {
-        string_array objectPath = stringutilities::Tokenize( bc.GetFieldName(), "/");
+        string_array objectPath = stringutilities::Tokenize( bc->GetFieldName(), "/");
         int32 const pathLength = objectPath.size();
-        ManagedGroup * currentGroup = &domain;
+        ManagedGroup * currentGroup = domain;
         for( int32 a=0 ; a<(pathLength-1) ; ++a )
         {
-          currentGroup = currentGroup->GetGroupPtr(objectPath[a]);
+          currentGroup = currentGroup->GetGroup(objectPath[a]);
         }
         string const fieldName = objectPath[pathLength-1];
 
-        dataRepository::ManagedGroup const & setGroup = currentGroup->GetGroup(dataRepository::keys::sets);
-        string_array setNames = bc.GetSetNames();
+        dataRepository::ManagedGroup const * setGroup = currentGroup->GetGroup(dataRepository::keys::sets);
+        string_array setNames = bc->GetSetNames();
         for( auto & setName : setNames )
         {
-          dataRepository::ViewWrapper<lSet> const * const setWrapper = setGroup.getWrapperPtr<lSet>(setName);
+          dataRepository::ViewWrapper<lSet> const * const setWrapper = setGroup->getWrapper<lSet>(setName);
           if( setWrapper != nullptr )
           {
             lSet const & set = setWrapper->reference();
-            bc.ApplyBounaryConditionDefaultMethod( set, 0.0, *currentGroup, fieldName );
+            bc->ApplyBounaryConditionDefaultMethod( set, 0.0, currentGroup, fieldName );
           }
         }
       }
       else
       {
-        ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-        ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager.GetMaps(0);
+        ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+//        ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager->GetMaps(0);
+        typename ManagedGroup::subGroupMap::LookupMapType const & constitutiveIndexLookup = constitutiveManager->GetSubGroups().keys();
 
         lSet targetSet;
 
 
 
-        string_array targetPath = stringutilities::Tokenize( bc.GetFieldName(), "/");
+        string_array targetPath = stringutilities::Tokenize( bc->GetFieldName(), "/");
         int32 const targetPathLength = targetPath.size();
-        ManagedGroup * targetGroup = &domain;
+        ManagedGroup * targetGroup = domain;
         for( int32 a=0 ; a<(targetPathLength-1) ; ++a )
         {
-          targetGroup = targetGroup->GetGroupPtr(targetPath[a]);
+          targetGroup = targetGroup->GetGroup(targetPath[a]);
         }
         string const materialName = targetPath[targetPathLength-3];
         string const fieldName = targetPath[targetPathLength-1];
 
 
-        FiniteElementManager const & numericalMethodManager = domain.getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+        FiniteElementManager const * numericalMethodManager = domain->getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
 
         // Get element Region
-        string const elementRegionName = bc.GetElementRegion();
-        ManagedGroup & ElementRegionManager = domain.GetGroup(keys::FEM_Elements);
-        ManagedGroup & ElementRegions = ElementRegionManager.GetGroup(keys::elementRegions);
-        ElementRegion & elementRegion = ElementRegions.GetGroup<ElementRegion>(elementRegionName);
-        ManagedGroup & elementSubRegions = elementRegion.GetGroup(dataRepository::keys::cellBlockSubRegions);
+        string const elementRegionName = bc->GetElementRegion();
+        ManagedGroup * ElementRegionManager = domain->GetGroup(keys::FEM_Elements);
+        ManagedGroup * ElementRegions = ElementRegionManager->GetGroup(keys::elementRegions);
+        ElementRegion * elementRegion = ElementRegions->GetGroup<ElementRegion>(elementRegionName);
+        // ManagedGroup * elementSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
 
-        auto const & numMethodName = elementRegion.getData<string>(keys::numericalMethod);
-        FiniteElementSpace const & feSpace = numericalMethodManager.GetGroup<FiniteElementSpace>(numMethodName);
+        auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+        FiniteElementSpace const * feSpace = numericalMethodManager->GetGroup<FiniteElementSpace>(numMethodName);
 
-        string_array setNames = bc.GetSetNames();
+        string_array setNames = bc->GetSetNames();
 
-        elementRegion.forCellBlocks( [&] ( CellBlockSubRegion & subRegion ) -> void
+        elementRegion->forCellBlocks( [&] ( CellBlockSubRegion * subRegion ) -> void
         {
-          view_rtype_const< Array2dT<mapPair> > constitutiveMap = subRegion.getData< Array2dT<mapPair> >(keys::constitutiveMap);
-          ManagedGroup const & sets = subRegion.GetGroup(keys::sets);
+          auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<int32>,Array2dT<int32> > >(keys::constitutiveMap);
+          ManagedGroup const * sets = subRegion->GetGroup(keys::sets);
 
           for( auto & setName : setNames )
           {
-            dataRepository::ViewWrapper<lSet> const * const setWrapper = sets.getWrapperPtr<lSet>(setName);
+            dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
             if( setWrapper != nullptr )
             {
               lSet const & set = setWrapper->reference();
-              int32 materialIndex = constitutiveMaps.second.at(materialName);
+              int32 materialIndex = constitutiveIndexLookup.at(materialName);
               for( auto const & k : set )
               {
-                if( constitutiveMap[k]->first == materialIndex )
+                if( constitutiveMap.first(k,0) == materialIndex )
                 {
-                  for( auto q=0 ; q<feSpace.m_finiteElement->n_quadrature_points() ; ++q )
+                  for( auto q=0 ; q < feSpace->m_finiteElement->n_quadrature_points() ; ++q )
                   {
-                    targetSet.insert(constitutiveMap[k][q].second);
+                    targetSet.insert(constitutiveMap.second(k,q));
                   }
                 }
               }
@@ -169,23 +170,10 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup & domain ) c
 
         });
 
-        ManagedGroup const & elementSets = elementRegion.GetGroup(dataRepository::keys::sets);
+        // ManagedGroup const * elementSets = elementRegion->GetGroup(dataRepository::keys::sets);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-        bc.ApplyBounaryConditionDefaultMethod( targetSet, 0.0, *targetGroup, fieldName );
+        bc->ApplyBounaryConditionDefaultMethod( targetSet, 0.0, targetGroup, fieldName );
       }
     }
   });

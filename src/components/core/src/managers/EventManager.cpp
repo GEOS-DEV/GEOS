@@ -51,10 +51,10 @@ void EventManager::ReadXML( xmlWrapper::xmlNode const & problemNode )
     for (xmlWrapper::xmlNode applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
     {
       std::string applicationName = applicationNode.attribute("name").value();
-      SolverApplication& newApplication = RegisterGroup<SolverApplication>(applicationName);
-      newApplication.SetDocumentationNodes(this);
-      newApplication.RegisterDocumentationNodes();
-      newApplication.ReadXML(applicationNode);
+      SolverApplication * newApplication = RegisterGroup<SolverApplication>(applicationName);
+      newApplication->SetDocumentationNodes(this);
+      newApplication->RegisterDocumentationNodes();
+      newApplication->ReadXML(applicationNode);
     }
   }
 }
@@ -66,13 +66,13 @@ void EventManager::CheckEventTiming()
 
   for (std::map<std::string,DocumentationNode>::iterator eit=docNode->m_child.begin(); eit!=docNode->m_child.end(); ++eit)
   {
-    dataRepository::ManagedGroup& applicationA = GetGroup(eit->first);
-    ViewWrapper<real64>::rtype endTime = applicationA.getData<real64>(keys::endTime);
+    dataRepository::ManagedGroup * applicationA = GetGroup(eit->first);
+    ViewWrapper<real64>::rtype endTime = applicationA->getData<real64>(keys::endTime);
 
     if (++eit != docNode->m_child.end())
     {
-      dataRepository::ManagedGroup& applicationB = GetGroup(eit->first);
-      ViewWrapper<real64>::rtype beginTime = applicationB.getData<real64>(keys::beginTime);
+      dataRepository::ManagedGroup * applicationB = GetGroup(eit->first);
+      ViewWrapper<real64>::rtype beginTime = applicationB->getData<real64>(keys::beginTime);
 
       if (fabs(*(beginTime) - *(endTime)) > 1e-6)
       {

@@ -100,7 +100,7 @@ void CompositeFunction::BuildDataStructure( ManagedGroup * const domain )
 void CompositeFunction::InitializeFunction()
 {
   // Register variables
-  view_rtype<string_array> variables = getData<string_array>(keys::variableNames);
+  string_array const & variables = getReference<string_array>(keys::variableNames);
   for (int ii=0; ii<variables.size(); ++ii)
   {
     parserContext.addVariable(variables[ii].c_str(), ii * sizeof(double));
@@ -116,12 +116,12 @@ void CompositeFunction::InitializeFunction()
   }
 
   // Grab pointers to sub functions
-  NewFunctionManager& functionManager = NewFunctionManager::Instance();
-  view_rtype<string_array> functionNames = getData<string_array>(keys::functionNames);
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  string_array const & functionNames = getReference<string_array>(keys::functionNames);
   m_numSubFunctions = functionNames.size();
   for (localIndex ii=0; ii<m_numSubFunctions; ++ii)
   {
-    m_subFunctions.push_back(&(functionManager.GetGroup<FunctionBase>(functionNames[ii])));
+    m_subFunctions.push_back(functionManager->GetGroup<FunctionBase>(functionNames[ii]));
   }
 }
 

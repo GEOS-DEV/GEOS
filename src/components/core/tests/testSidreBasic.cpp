@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
-#include "sidre/sidre.hpp"
-#include "sidre/SidreTypes.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/SidreWrapper.hpp"
@@ -11,7 +9,7 @@
 namespace geosx {
 namespace dataRepository {
 
-
+#if ATK_FOUND
 TEST(testSidreBasic, testSidreBasic) {
   MPI_Init(0, nullptr);
   const string path = "test_sidre_basic";
@@ -34,8 +32,8 @@ TEST(testSidreBasic, testSidreBasic) {
   data_view.resize(num_items);
 
   /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_TRUE(data_view.size() == num_items) << data_view.size() << ", " << num_items << std::endl;
-  EXPECT_TRUE(data_view.dataSize() == expected_size) << data_view.dataSize() << ", " << expected_size << std::endl;
+  EXPECT_EQ(data_view.size(), num_items);
+  EXPECT_EQ(data_view.dataSize(), expected_size);
 
   /* Set the data */
   int64_array & data = data_view.data();
@@ -45,9 +43,9 @@ TEST(testSidreBasic, testSidreBasic) {
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
   int64_ptr dataPtr = data_view.dataPtr();
-  EXPECT_TRUE(dataPtr == &(data[0])) << dataPtr << ", " << &(data[0]);
+  EXPECT_EQ(dataPtr, &(data[0]));
   for (int i = 0; i < data_view.size(); i++) {
-    EXPECT_TRUE(dataPtr[i] == data[i]) << dataPtr[i] << ", " << data[i] << std::endl;
+    EXPECT_EQ(dataPtr[i], data[i]);
   }
 
   /* Save the sidre tree */
@@ -70,31 +68,28 @@ TEST(testSidreBasic, testSidreBasic) {
   root->loadSidreExternalData(path + ".root", MPI_COMM_WORLD);
 
   /* Should be the same as stored. */
-  EXPECT_TRUE(data_view_new.size() == num_items);
+  EXPECT_EQ(data_view_new.size(), num_items);
   int64_array & data_new = data_view_new.data();
   for (int i = 0; i < data_view_new.size(); i++) {
-    EXPECT_TRUE(data_new[i] == i);
+    EXPECT_EQ(data_new[i], i);
   }
 
-  EXPECT_TRUE(data_view_new.sizedFromParent() == sized_from_parent);
-  EXPECT_TRUE(root->size() == group_size);
+  EXPECT_EQ(data_view_new.sizedFromParent(), sized_from_parent);
+  EXPECT_EQ(root->size(), group_size);
 
   delete root;
   MPI_Finalize();
 }
+#endif /* ATK_FOUND */
 
 
 int main(int argc, char* argv[]) {
   int result = 0;
-
   testing::InitGoogleTest(&argc, argv);
-  MPI_Init(&argc, &argv);
   result = RUN_ALL_TESTS();
-  MPI_Finalize();
-
   return result;
 }
 
 
-} // end namespace dataRepository
-} // end namespace goesx
+} /* end namespace dataRepository */
+} /* end namespace goesx */

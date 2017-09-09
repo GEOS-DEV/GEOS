@@ -1,20 +1,36 @@
-/*
- * MapVectorContainer.hpp
- *
- *  Created on: Aug 23, 2017
- *      Author: settgast
+/**
+ * @file MappedVector.hpp
+ * @date Aug 23, 2017
+ * @authors settgast
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPVECTORCONTAINER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPVECTORCONTAINER_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
+#define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
-#include "DataKey.hpp"
+#include "KeyIndexT.hpp"
 #include "SFINAE_Macros.hpp"
 
-template< typename T, typename T_PTR=T*, typename KEY_TYPE=std::string, typename INDEX_TYPE = int >
+/**
+ * @class MappedVector
+ * This class defines a stl-like container that stores values in an stl vector, and has a map lookup table to
+ * access the values by a key. It combines the random access performance of a vector when the index is known,
+ * the flexibility of a mapped key lookup O(n) if only the key is known. In addition, a keyIndex can be used for lookup,
+ * which will give similar performance to an index lookup after the first use of a keyIndex.
+ */
+template< typename T,
+          typename T_PTR=T*,
+          typename KEY_TYPE=std::string,
+          typename INDEX_TYPE = int,
+          bool OWNS_DATA = true >
 class MappedVector
 {
 public:
+  static_assert( std::is_same< T_PTR , T * >::value || std::is_same< T_PTR , std::unique_ptr<T> >::value,
+                 "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
+
+  static_assert( ( std::is_same< T_PTR , std::unique_ptr<T> >::value && OWNS_DATA ) || std::is_same< T_PTR , T * >::value,
+                 "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
+
   using key_type      = KEY_TYPE ;
   using mapped_type   = T_PTR;
 
@@ -35,41 +51,46 @@ public:
   using reverse_iterator       = typename valueContainer::reverse_iterator;
   using const_reverse_iterator = typename const_valueContainer::const_reverse_iterator;
 
-  using DataKey = DataKeyT<KEY_TYPE const,INDEX_TYPE>;
+  using KeyIndex = KeyIndexT<KEY_TYPE const,INDEX_TYPE>;
 
 
   MappedVector() = default;
-  ~MappedVector() = default;
+
+
+  ~MappedVector()
+  {
+    clear();
+  }
+
+
+
   MappedVector( MappedVector const & source ) = default ;
   MappedVector & operator=( MappedVector const & source ) = default;
-
   MappedVector( MappedVector && source ) = default;
   MappedVector & operator=( MappedVector && source ) = default;
 
 
-  T * insert( KEY_TYPE const & keyName, T_PTR source );
 
 
   /**
-   * @name accessor functions
+   * @name element access functions
    */
   ///@{
 
 
   /**
-   *
    * @param index
-   * @return
+   * @return pointer to const T
    */
   inline T const * operator[]( INDEX_TYPE index ) const
   {
-    return ( index>-1 && index<static_cast<INDEX_TYPE>( m_objects.size() ) ) ? const_cast<T const *>(&(*(m_objects[index].second))) : nullptr ;
+    return ( index>KeyIndex::invalid_index && index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>(&(*(m_values[index].second))) : nullptr ;
   }
 
   /**
    *
    * @param index
-   * @return
+   * @return pointer to T
    */
   inline T * operator[]( INDEX_TYPE index )
   { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](index) ); }
@@ -77,7 +98,7 @@ public:
   /**
    *
    * @param keyName
-   * @return
+   * @return pointer to const T
    */
   inline T const * operator[]( KEY_TYPE const & keyName ) const
   {
@@ -88,24 +109,24 @@ public:
   /**
    *
    * @param keyName
-   * @return
+   * @return pointer to T
    */
   inline T * operator[]( KEY_TYPE const & keyName )
   { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyName) ); }
 
   /**
    *
-   * @param dataKey
-   * @return
+   * @param keyIndex
+   * @return pointer to const T
    */
-  inline T const * operator[]( DataKey & dataKey ) const
+  inline T const * operator[]( KeyIndex & keyIndex ) const
   {
-    INDEX_TYPE index = dataKey.Index();
+    INDEX_TYPE index = keyIndex.Index();
 
-    if( (index==-1) || (m_objects[index].first!=dataKey.Key()) )
+    if( (index==KeyIndex::invalid_index) || (m_values[index].first!=keyIndex.Key()) )
     {
-      index = getIndex( dataKey.Key() );
-      dataKey.setIndex(index);
+      index = getIndex( keyIndex.Key() );
+      keyIndex.setIndex(index);
     }
 
     return this->operator[]( index );
@@ -113,121 +134,247 @@ public:
 
   /**
    *
-   * @param dataKey
-   * @return
+   * @param keyIndex
+   * @return pointer to T
    */
-  inline T * operator[]( DataKey & dataKey )
-  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](dataKey) ); }
+  inline T * operator[]( KeyIndex & keyIndex )
+  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyIndex) ); }
 
   ///@}
 
 
+  /**
+   * @name iterator functions
+   */
+  ///@{
 
-  inline INDEX_TYPE getIndex( KEY_TYPE const & keyName ) const
+  /**
+   * @return  a read/write iterator that points to the first
+   *  element in the in m_objects.
+   */
+  iterator begin()
+  { return m_values.begin(); }
+
+  /**
+   * @return  a read-only iterator that points to the first
+   *  element in the in m_objects.
+   */
+  const_iterator begin() const
+  { return m_constValues.begin(); }
+
+  /**
+   * @return  a read-only iterator that points to the first
+   *  element in the in m_objects.
+   */
+  const_iterator cbegin()
+  { return m_constValues.begin(); }
+
+  /**
+   * @return  a read/write iterator that points to the last
+   *  element in the in m_objects.
+   */
+  iterator end()
+  { return m_values.end(); }
+
+  /**
+   * @return  a read-only iterator that points to the last
+   *  element in the in m_objects.
+   */
+  const_iterator end() const
+  { return m_constValues.end(); }
+
+  /**
+   * @return  a read-only iterator that points to the last
+   *  element in the in m_objects.
+   */
+  const_iterator cend()
+  { return m_constValues.end(); }
+  ///@}
+
+
+  /**
+   *
+   * @param key value of the key to use in the lookup
+   * @return index associated with key
+   */
+  inline INDEX_TYPE getIndex( KEY_TYPE const & key ) const
   {
-    typename LookupMapType::const_iterator iter = m_keyLookup.find(keyName);
-    return ( iter!=m_keyLookup.end() ? iter->second : -1 );
+    typename LookupMapType::const_iterator iter = m_keyLookup.find(key);
+    return ( iter!=m_keyLookup.end() ? iter->second : KeyIndex::invalid_index );
   }
 
 
-  void erase( INDEX_TYPE index )
+  /**
+   * @name modifier functions
+   */
+  ///@{
+
+  /**
+   *
+   * @param keyName
+   * @param source
+   * @param overwrite
+   * @return
+   */
+  T * insert( KEY_TYPE const & keyName, T_PTR source, bool overwrite = false );
+
+
+
+  /**
+   * @brief  Remove element at given index
+   * @tparam dummy parameter to allow use of enable_if for multiple definitions based on type.
+   * @param  index  index of element to remove.
+   * @return  void
+   *
+   *  This function will call delete on the pointer at given index and set it to nullptr.
+   */
+  template< typename U = T_PTR >
+  typename std::enable_if< std::is_same< U , T * >::value, void >::type
+  erase( INDEX_TYPE index )
   {
-    m_objects[index] = nullptr;
+    if( OWNS_DATA )
+    {
+      delete m_values[index].second;
+    }
+    m_values[index].second = nullptr;
+    m_constValues[index].second = nullptr;
     return;
   }
 
-  void erase( KEY_TYPE const & keyName )
+  /**
+   * @brief  Remove element at given index
+   * @tparam dummy parameter to allow use of enable_if for multiple definitions based on type.
+   * @param  index  index of element to remove.
+   * @return  void
+   *
+   *  This function will the pointer at given index and set it to nullptr.
+   */
+  template< typename U = T_PTR >
+  typename std::enable_if< std::is_same< T_PTR , std::unique_ptr<T> >::value, void >::type
+  erase( INDEX_TYPE index )
   {
-    typename LookupMapType::const_iterator iter = m_keyLookup.find(keyName);
+    m_values[index].second = nullptr;
+    m_constValues[index].second = nullptr;
+    return;
+  }
+
+  /**
+   *  @brief  Remove element at given key
+   *  @param  key  key of element to remove.
+   *  @return  void
+   *
+   *  This function will set the element at the given key to nullptr.
+   */
+  void erase( KEY_TYPE const & key )
+  {
+    typename LookupMapType::const_iterator iter = m_keyLookup.find(key);
     if( iter!=m_keyLookup.end() )
     {
-      m_objects[iter->second] = nullptr;
+      erase(iter->second);
     }
     return;
   }
 
-  void erase( DataKey & dataKey )
+  /**
+   *  @brief  Remove element at given key
+   *  @param  key  key of element to remove.
+   *  @return  void
+   *
+   *  This function will set the element at the given key to nullptr.
+   */
+  void erase( KeyIndex & keyIndex )
   {
-    INDEX_TYPE index = dataKey.Index();
+    INDEX_TYPE index = keyIndex.Index();
 
-    if( (index==-1) || (m_objects[index].first!=dataKey.Key()) )
+    if( (index==KeyIndex::invalid_index) || (m_values[index].first!=keyIndex.Key()) )
     {
-      index = getIndex( dataKey.Key() );
-      dataKey.setIndex(index);
+      index = getIndex( keyIndex.Key() );
+      keyIndex.setIndex(index);
     }
     erase( index );
   }
 
+
   void clear()
   {
+    for( typename valueContainer::size_type a=0 ; a<m_values.size() ; ++a )
+    {
+      erase(a);
+    }
     m_keyLookup.clear();
-    m_objects.clear();
+    m_values.clear();
   }
 
-  inline INDEX_TYPE size() const
-  { return m_objects.size(); }
 
-  inline valueContainer & values()
-  { return m_objects; }
+  ///@}
+
+
+  inline INDEX_TYPE size() const
+  { return m_values.size(); }
+
+  inline valueContainer const & values()
+  { return this->m_values; }
 
   inline const_valueContainer const & values() const
-  { return this->m_constObjects; }
+  { return this->m_constValues; }
 
   inline LookupMapType const & keys() const
   { return m_keyLookup; }
 
-  iterator begin()
-  { return m_objects.begin(); }
-
-  const_iterator begin() const
-  { return m_constObjects.begin(); }
-
-  iterator end()
-  { return m_objects.end(); }
-
-  const_iterator end() const
-  { return m_constObjects.end(); }
 
 private:
-  valueContainer m_objects;
-  const_valueContainer m_constObjects;
+  valueContainer m_values;
+  const_valueContainer m_constValues;
 
   LookupMapType m_keyLookup;
+
+  bool m_ownsValues = true;
 };
 
-template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE >
-T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName , T_PTR source )
+template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE, bool OWNS_DATA >
+T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const & keyName , T_PTR source, bool overwrite )
 {
   typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
 
-  INDEX_TYPE key = -1;
+  INDEX_TYPE key = KeyIndex::invalid_index;
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
     value_type newEntry = std::make_pair( keyName, std::move( source ) );
-    m_objects.push_back( std::move( newEntry ) );
-    key = m_objects.size() - 1;
+    m_values.push_back( std::move( newEntry ) );
+    key = m_values.size() - 1;
 
     m_keyLookup.insert( std::make_pair(keyName,key) );
-    m_constObjects.push_back( std::make_pair( keyName, &(*(m_objects[key].second)) ) );
+    m_constValues.push_back( std::make_pair( keyName, &(*(m_values[key].second)) ) );
 
   }
-  // if key was found, make sure it is empty
+  // if key was found
   else
   {
     key = iterKeyLookup->second;
-    if( m_objects[key].second==nullptr )
+
+    // if value is empty, then move source into value slot
+    if( m_values[key].second==nullptr )
     {
-      m_objects[key].second = std::move( source );
-      m_constObjects[key].second =  &(*(m_objects[key].second));
+      m_values[key].second = std::move( source );
+      m_constValues[key].second =  &(*(m_values[key].second));
     }
     else
     {
-      // error?
+      if( overwrite )
+      {
+        erase(key);
+        m_values[key].second = std::move( source );
+        m_constValues[key].second =  &(*(m_values[key].second));
+      }
+      else
+      {
+        // throw error?
+      }
     }
   }
 
-return &(*(m_objects[key].second));
+return &(*(m_values[key].second));
 }
 
-#endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPVECTORCONTAINER_HPP_ */
+#endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_ */

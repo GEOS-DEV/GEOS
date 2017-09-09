@@ -144,13 +144,13 @@ void TableFunction::BuildDataStructure( ManagedGroup * const domain )
 void TableFunction::InitializeFunction()
 {
   // Read in data
-  view_rtype<string_array> coordinateFiles = getData<string_array>(keys::coordinateFiles);
+  string_array const & coordinateFiles = getReference<string_array>(keys::coordinateFiles);
   if (coordinateFiles[0].empty())
   {
     // 1D Table
     m_dimensions = 1;
-    view_rtype<real64_array> coordinates = getData<real64_array>(keys::tableCoordinates);
-    view_rtype<real64_array> tmpValues = getData<real64_array>(keys::tableValues);
+    real64_array const & coordinates = getReference<real64_array>(keys::tableCoordinates);
+    real64_array const & tmpValues = getReference<real64_array>(keys::tableValues);
     localIndex tableSize = tmpValues.size();
 
     if (coordinates.size() == tableSize)

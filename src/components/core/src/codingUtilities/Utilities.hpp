@@ -52,7 +52,10 @@
 #include <map>
 #include <set>
 #include <algorithm>
-#include <slic/slic.hpp>
+
+#if ATK_FOUND
+#include "slic/slic.hpp"
+#endif
 
 //#include "../legacy/Common/GPException.h"
 
@@ -199,6 +202,40 @@ template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
                               const Array1dT< T >& globalField1,
                               const Array1dT< T >& globalField2,
+                              T * __restrict__ const localField1,
+                              T * __restrict__ const localField2,
+                              localIndex N)
+{
+//  const typename Array1dT<T>::size_type N = localField1.size() ;
+
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    localField1[a] = globalField1[ globalToLocalRelation[a] ];
+    localField2[a] = globalField2[ globalToLocalRelation[a] ];
+  }
+}
+
+template< typename T >
+inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
+                              T const * __restrict__ const globalField1,
+                              T const * __restrict__ const globalField2,
+                              T * __restrict__ const localField1,
+                              T * __restrict__ const localField2,
+                              localIndex N)
+{
+//  const typename Array1dT<T>::size_type N = localField1.size() ;
+
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    localField1[a] = globalField1[ globalToLocalRelation[a] ];
+    localField2[a] = globalField2[ globalToLocalRelation[a] ];
+  }
+}
+
+template< typename T >
+inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
+                              const Array1dT< T >& globalField1,
+                              const Array1dT< T >& globalField2,
                               const Array1dT< T >& globalField3,
                               Array1dT< T >& localField1,
                               Array1dT< T >& localField2,
@@ -244,6 +281,30 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
   const typename Array1dT<T>::size_type N = localField.size() ;
 
   for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  {
+    globalField[ globalToLocalRelation[a] ] += localField[a];
+  }
+}
+
+template< typename T >
+inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
+                              T const * __restrict__ const localField,
+                              Array1dT< T >& globalField,
+                              localIndex const N )
+{
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    globalField[ globalToLocalRelation[a] ] += localField[a];
+  }
+}
+
+template< typename T >
+inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
+                              T const * __restrict__ const localField,
+                              T * __restrict__ const globalField,
+                              localIndex const N )
+{
+  for( localIndex a=0 ; a<N ; ++a )
   {
     globalField[ globalToLocalRelation[a] ] += localField[a];
   }
@@ -367,7 +428,9 @@ T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& messag
     std::stringstream st;
     st << "Error in stlMapLookup. Key not found in map! key: " << key << " message: " << message <<"\n";
 //    throw GPException(st.str().c_str());
+#if ATK_FOUND
     SLIC_ERROR(st.str());
+#endif
 
   }
 

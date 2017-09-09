@@ -33,7 +33,7 @@ public:
   using const_reference        = typename const_iterMap::const_reference;
   using size_type              = typename iterMap::size_type;
 
-  using DataKey = DataKeyT<KEY_TYPE,INDEX_TYPE>;
+  using KeyIndex = KeyIndexT<KEY_TYPE,INDEX_TYPE>;
 
 
   MappedVector() = default;
@@ -61,7 +61,7 @@ public:
    */
   T const * operator[]( INDEX_TYPE index ) const
   {
-    return ( index>-1 && index<static_cast<INDEX_TYPE>( m_objects.size() ) ) ? const_cast<T const *>(&(*m_objects[index])) : nullptr ;
+    return ( index>-1 && index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>(&(*m_values[index])) : nullptr ;
   }
 
   /**
@@ -96,7 +96,7 @@ public:
    * @param dataKey
    * @return
    */
-  inline T const * operator[]( DataKeyT<KEY_TYPE,INDEX_TYPE> & dataKey ) const
+  inline T const * operator[]( KeyIndexT<KEY_TYPE,INDEX_TYPE> & dataKey ) const
   {
     INDEX_TYPE index = dataKey.Index();
 
@@ -114,7 +114,7 @@ public:
    * @param dataKey
    * @return
    */
-  inline T * operator[]( DataKeyT<KEY_TYPE,INDEX_TYPE> & dataKey )
+  inline T * operator[]( KeyIndexT<KEY_TYPE,INDEX_TYPE> & dataKey )
   { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](dataKey) ); }
 
   ///@}
@@ -128,7 +128,7 @@ public:
 
   void erase( INDEX_TYPE index )
   {
-    m_objects[index] = nullptr;
+    m_values[index] = nullptr;
     return;
   }
 
@@ -137,32 +137,32 @@ public:
     typename LookupMapType::const_iterator iter = m_keyLookup.find(keyName);
     if( iter!=m_keyLookup.end() )
     {
-      m_objects[iter->second] = nullptr;
+      m_values[iter->second] = nullptr;
     }
     return;
   }
 
   void clear()
   {
-    m_objects.clear();
+    m_values.clear();
   }
 
   inline INDEX_TYPE size() const
   {
-    return m_objects.size();
+    return m_values.size();
   }
 
   std::vector<T_PTR> & values()
   {
-    return m_objects;
+    return m_values;
   }
 
   std::vector<T const *> const values() const
   {
-    std::vector<T const *> rval(m_objects.size());
-    for( unsigned int a=0 ; a<m_objects.size() ; ++a )
+    std::vector<T const *> rval(m_values.size());
+    for( unsigned int a=0 ; a<m_values.size() ; ++a )
     {
-      rval[a] = &(*m_objects[a]);
+      rval[a] = &(*m_values[a]);
     }
     return rval;
   }
@@ -189,7 +189,7 @@ public:
   }
 
 private:
-  std::vector<T_PTR> m_objects;
+  std::vector<T_PTR> m_values;
 
   LookupMapType m_keyLookup;
 
@@ -209,26 +209,26 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName 
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
-    m_objects.push_back( std::move( source ) );
+    m_values.push_back( std::move( source ) );
     m_indexToKeys.push_back( keyName );
 
-    key = m_objects.size() - 1;
+    key = m_values.size() - 1;
     m_keyLookup.insert( std::make_pair(keyName,key) );
 
 //    std::cout<<&(*m_objects[key])<<std::endl;
-    m_mapForIteration.insert({keyName,&(*(m_objects[key]))});
-    m_mapForConstIteration.insert({keyName,&(*(m_objects[key]))});
+    m_mapForIteration.insert({keyName,&(*(m_values[key]))});
+    m_mapForConstIteration.insert({keyName,&(*(m_values[key]))});
   }
   // if key was found, make sure it is empty
   else
   {
     key = iterKeyLookup->second;
-    if( m_objects[key]==nullptr )
+    if( m_values[key]==nullptr )
     {
-      m_objects[key] = std::move(source);
+      m_values[key] = std::move(source);
 
-      m_mapForIteration.insert({keyName,&(*(m_objects[key]))});
-      m_mapForConstIteration.insert({keyName,&(*(m_objects[key]))});
+      m_mapForIteration.insert({keyName,&(*(m_values[key]))});
+      m_mapForConstIteration.insert({keyName,&(*(m_values[key]))});
 
     }
     else
@@ -237,7 +237,7 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName 
     }
   }
 
-return m_objects[key].get();
+return m_values[key].get();
 }
 
 #endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPVECTORCONTAINER_HPP_ */

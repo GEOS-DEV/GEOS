@@ -33,10 +33,10 @@ void NewComponent::BuildDataStructure( dataRepository::ManagedGroup * const /*do
 {}
 
 
-void NewComponent::TimeStep( real64 const& /*time_n*/,
-               real64 const& /*dt*/,
+void NewComponent::TimeStep( real64 const & /*time_n*/,
+               real64 const & /*dt*/,
                int32 const /*cycleNumber*/,
-               dataRepository::ManagedGroup& /*domain*/ )
+               dataRepository::ManagedGroup * /*domain*/ )
 {}
 
 REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string const &, dataRepository::ManagedGroup * const )

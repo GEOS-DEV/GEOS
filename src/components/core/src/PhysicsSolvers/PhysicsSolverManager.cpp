@@ -28,10 +28,10 @@ PhysicsSolverManager::~PhysicsSolverManager()
 
 
 
-SolverBase & PhysicsSolverManager::CreateSolver( string const & solverCatalogKey, string const & solverName )
+SolverBase * PhysicsSolverManager::CreateSolver( string const & solverCatalogKey, string const & solverName )
 {
   std::unique_ptr<SolverBase> solver = SolverBase::CatalogInterface::Factory( solverCatalogKey, solverName, this );
-  SolverBase & rval = this->RegisterGroup<SolverBase>( solverName, std::move(solver) );
+  SolverBase * rval = this->RegisterGroup<SolverBase>( solverName, std::move(solver) );
 
   return rval;
 }
@@ -46,7 +46,7 @@ void PhysicsSolverManager::FillDocumentationNode( dataRepository::ManagedGroup *
 }
 
 
-void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
+void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup * domain,
                                     xmlWrapper::xmlNode const & problemNode )
 {
 
@@ -65,15 +65,15 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup& domain,
 
       // Register the new solver
       std::string solverID = solverNode.attribute("name").value();
-      SolverBase & newSolver = CreateSolver( solverNode.name(), solverID );
+      SolverBase * newSolver = CreateSolver( solverNode.name(), solverID );
 
       // Set the documentation node
-      newSolver.SetDocumentationNodes( &domain );
+      newSolver->SetDocumentationNodes( domain );
 
       // Register fields in the solver and parse options
-      newSolver.BuildDataStructure( &domain );
+      newSolver->BuildDataStructure( domain );
 
-      newSolver.ReadXML(solverNode );
+      newSolver->ReadXML(solverNode );
     }
   }
 

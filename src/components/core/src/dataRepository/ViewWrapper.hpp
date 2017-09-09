@@ -8,8 +8,7 @@
 #ifndef GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
 
-#include "sidre/sidre.hpp"
-#include "sidre/SidreTypes.hpp"
+#include "ViewWrapperBase.hpp"
 #include "KeyNames.hpp"
 #include "common/DataTypes.hpp"
 #include "SFINAE_Macros.hpp"
@@ -17,9 +16,10 @@
 #include "StringUtilities.hpp"
 #include "Macros.hpp"
 
-#include "ViewWrapperBase.hpp"
-
-#include <iostream>
+#if ATK_FOUND
+#include "sidre/sidre.hpp"
+#include "sidre/SidreTypes.hpp"
+#endif
 
 
 namespace geosx
@@ -155,7 +155,9 @@ public:
   {
     if( base.get_typeid() != typeid(T) )
     {
+#if ATK_FOUND
       SLIC_ERROR("invalid cast attempt");
+#endif
     }
     return static_cast< ViewWrapper<T>& >(base);
   }
@@ -488,7 +490,7 @@ public:
     return d_size / sizeof(T);
   }
 
-
+#if ATK_FOUND
   /* Register the pointer to data with the associated sidre::View. */
   virtual void registerDataPtr() 
   {
@@ -530,6 +532,7 @@ public:
       }
       
   }
+  #endif /* ATK_FOUND */
 
   std::unique_ptr<T> m_data;
 

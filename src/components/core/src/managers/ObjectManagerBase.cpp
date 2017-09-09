@@ -14,8 +14,8 @@ using namespace dataRepository;
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ManagedGroup * const parent ):
     ManagedGroup(name,parent),
-    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() ),
-    m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal").reference() )
+    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal")->reference() ),
+    m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
 {
   this->RegisterGroup<ManagedGroup>(keys::sets);
   this->RegisterViewWrapper< iArray1d >("isExternal");
@@ -24,7 +24,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //                                      ManagedGroup * const parent,
 //                                      cxx_utilities::DocumentationNode * docNode ):
 //    ManagedGroup(name,parent,docNode),
-//    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal").reference() )
+//    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal")->reference() )
 //{
 //
 //
@@ -50,8 +50,8 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
                                                           const std::string& newSetName )
 {
 
-  ManagedGroup& sets = GetGroup(std::string("Sets"));
-  lSet& newset = sets.RegisterViewWrapper<lSet>(newSetName).reference();
+  ManagedGroup * sets = GetGroup(std::string("Sets"));
+  lSet& newset = sets->RegisterViewWrapper<lSet>(newSetName)->reference();
   newset.clear();
 
   int mapSize = map.Dimension(1);
@@ -78,8 +78,8 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
                                                           const std::string& newSetName )
 {
 
-  ManagedGroup& sets = GetGroup(std::string("Sets"));
-  lSet& newset = sets.RegisterViewWrapper<lSet>(newSetName).reference();
+  ManagedGroup * sets = GetGroup(std::string("Sets"));
+  lSet& newset = sets->RegisterViewWrapper<lSet>(newSetName)->reference();
   newset.clear();
 
   for( localIndex ka=0 ; ka<size() ; ++ka )

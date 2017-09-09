@@ -24,7 +24,7 @@
 #include "Macros.hpp"
 
 #ifndef CONTAINERARRAY_RETURN_PTR
-#define CONTAINERARRAY_RETURN_PTR 0
+#define CONTAINERARRAY_RETURN_PTR 1
 #endif
 
 
@@ -164,8 +164,8 @@ using r1_array = array<R1Tensor>;
 using r2_array = array<R2Tensor>;
 using r2Sym_array = array<R2SymTensor>;
 
-using mapPair = std::pair<int32, localIndex>;
-using mapPair_array = array<mapPair>;
+//using mapPair = std::pair<int32, localIndex>;
+using mapPair_array = std::pair<int32_array, int32_array>;
 //***** END LEGACY TYPEDEFS *****
 
 class rtTypes
@@ -196,7 +196,6 @@ public:
       {std::type_index(typeid(r2Sym_array)), "r2Sym_array"},
       {std::type_index(typeid(std_size_t)), "std_size_t"},
       {std::type_index(typeid(string)), "string"},
-      {std::type_index(typeid(mapPair)), "mapPair"},
       {std::type_index(typeid(mapPair_array)), "mapPair_array"}
     };
     return type_names.at(key);
@@ -227,7 +226,6 @@ public:
     std_size_t_id,
     string_id,
     string_array_id,
-    mapPair_id,
     mapPair_array_id,
     none_id
   };
@@ -257,7 +255,6 @@ public:
       { "std_size_t",   TypeIDs::std_size_t_id },
       { "string",       TypeIDs::string_id },
       { "string_array", TypeIDs::string_array_id },
-      { "mapPair",      TypeIDs::mapPair_id },
       { "mapPair_array",      TypeIDs::mapPair_array_id },
       { "",             TypeIDs::none_id }
     };
@@ -289,7 +286,6 @@ public:
       { std::type_index(typeid(std_size_t)),   TypeIDs::std_size_t_id },
       { std::type_index(typeid(string)),       TypeIDs::string_id },
       { std::type_index(typeid(string_array)), TypeIDs::string_array_id },
-      { std::type_index(typeid(mapPair)),      TypeIDs::mapPair_id },
       { std::type_index(typeid(mapPair_array)),TypeIDs::mapPair_array_id }
     };
     return type_names.at(typeIndex);
@@ -619,7 +615,7 @@ public:
     }
     case ( TypeIDs::mapPair_array_id ):
     {
-      return lambda( mapPair_array(1) );
+      return lambda( mapPair_array({1,1}) );
       break;
     }
     default:

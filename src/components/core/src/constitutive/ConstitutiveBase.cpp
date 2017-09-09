@@ -36,8 +36,8 @@ ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()
 void ConstitutiveBase::resize( localIndex newsize )
 {
   ManagedGroup::resize(newsize);
-  this->GetGroup(keys::parameterData).resize(newsize);
-  this->GetGroup(keys::stateData).resize(newsize);
+  this->GetGroup(keys::parameterData)->resize(newsize);
+  this->GetGroup(keys::stateData)->resize(newsize);
 }
 
 

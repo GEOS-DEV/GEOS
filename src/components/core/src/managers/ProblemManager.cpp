@@ -52,14 +52,15 @@ using namespace constitutive;
 
 ProblemManager::ProblemManager( const std::string& name,
                                 ManagedGroup * const parent ) :
-  ObjectManagerBase( name, parent ),
+  ObjectManagerBase(name, parent),
   m_physicsSolverManager(nullptr),
+  m_eventManager(nullptr),
   m_functionManager(nullptr)
 {
-  m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
-  m_eventManager = &(RegisterGroup<EventManager>(keys::eventManager) ) ;
-//  m_functionManager = &(RegisterGroup<NewFunctionManager>(keys::functionManager) ) ;
-  m_functionManager = &(NewFunctionManager::Instance());
+  m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager");
+  m_eventManager = RegisterGroup<EventManager>(keys::eventManager);
+//  m_functionManager = RegisterGroup<NewFunctionManager>(keys::functionManager);
+  m_functionManager = NewFunctionManager::Instance();
 }
 
 //ProblemManager::ProblemManager( const std::string& name,
@@ -68,8 +69,8 @@ ProblemManager::ProblemManager( const std::string& name,
 //  ObjectManagerBase( name, parent, docNode ),
 //  m_physicsSolverManager(nullptr)
 //{
-//  m_physicsSolverManager = &(RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager" ) ) ;
-//  m_eventManager = &(RegisterGroup<EventManager>("EventManager" ) ) ;
+//  m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager");
+//  m_eventManager = RegisterGroup<EventManager>("EventManager");
 //}
 
 ProblemManager::~ProblemManager()
@@ -80,7 +81,7 @@ ProblemManager::~ProblemManager()
 
 void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 {
-  RegisterGroup<DomainPartition>(keys::domain).BuildDataStructure(nullptr);
+  RegisterGroup<DomainPartition>(keys::domain)->BuildDataStructure(nullptr);
   RegisterGroup<ManagedGroup>(keys::commandLine);
   RegisterGroup<ManagedGroup>(keys::meshGenerators);
   RegisterGroup<ConstitutiveManager>(keys::ConstitutiveManager);
@@ -99,8 +100,8 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
 //  docNode->getChildNode("name")->setVerbosity(2);
 
   // Command line documentation
-  dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  cxx_utilities::DocumentationNode * const commandDocNode = commandLine.getDocumentationNode();
+  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  cxx_utilities::DocumentationNode * const commandDocNode = commandLine->getDocumentationNode();
   commandDocNode->setShortDescription("Command line input parameters");
   commandDocNode->setVerbosity(2);
 
@@ -222,8 +223,8 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0 );
 
   // Mesh node documentation
-  dataRepository::ManagedGroup& meshGenerators = GetGroup<ManagedGroup>(keys::meshGenerators);
-  cxx_utilities::DocumentationNode * const meshDocNode = meshGenerators.getDocumentationNode();
+  dataRepository::ManagedGroup * meshGenerators = GetGroup<ManagedGroup>(keys::meshGenerators);
+  cxx_utilities::DocumentationNode * const meshDocNode = meshGenerators->getDocumentationNode();
   meshDocNode->setName("Mesh");
   meshDocNode->setShortDescription("Mesh Generators");
 //  meshDocNode->getChildNode("name")->setVerbosity(2);
@@ -231,18 +232,18 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
 
 void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
 {
-  dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  commandLine.RegisterDocumentationNodes();
+  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  commandLine->RegisterDocumentationNodes();
   
-  ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
-  ViewWrapper<std::string>::rtype  restartFileName = commandLine.getData<std::string>(keys::restartFileName);
-  int32&        beginFromRestart = *(commandLine.getData<int32>(keys::beginFromRestart));
-  int32&        xPartitionsOverride = *(commandLine.getData<int32>(keys::xPartitionsOverride));
-  int32&        yPartitionsOverride = *(commandLine.getData<int32>(keys::yPartitionsOverride));
-  int32&        zPartitionsOverride = *(commandLine.getData<int32>(keys::zPartitionsOverride));
-  int32&        overridePartitionNumbers = *(commandLine.getData<int32>(keys::overridePartitionNumbers));
-  ViewWrapper<std::string>::rtype  schemaName = commandLine.getData<std::string>(keys::schema);
-  uint32&        schemaLevel = *(commandLine.getData<uint32>(keys::schemaLevel));
+  ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(keys::inputFileName);
+  ViewWrapper<std::string>::rtype  restartFileName = commandLine->getData<std::string>(keys::restartFileName);
+  int32&        beginFromRestart = *(commandLine->getData<int32>(keys::beginFromRestart));
+  int32&        xPartitionsOverride = *(commandLine->getData<int32>(keys::xPartitionsOverride));
+  int32&        yPartitionsOverride = *(commandLine->getData<int32>(keys::yPartitionsOverride));
+  int32&        zPartitionsOverride = *(commandLine->getData<int32>(keys::zPartitionsOverride));
+  int32&        overridePartitionNumbers = *(commandLine->getData<int32>(keys::overridePartitionNumbers));
+  ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
+  uint32&        schemaLevel = *(commandLine->getData<uint32>(keys::schemaLevel));
   schemaLevel = 0;
 
   // Set the options structs and parse
@@ -261,8 +262,8 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
     { 0, 0, 0, 0, 0, 0}
   };
 
-  argc-=(argc>0); 
-  argv+=(argc>0);
+  argc -= (argc>0); 
+  argv += (argc>0);
   option::Stats stats(usage, argc, argv);
   option::Option options[100];//stats.options_max];
   option::Option buffer[100];//stats.buffer_max];
@@ -371,10 +372,10 @@ void ProblemManager::ClosePythonInterpreter()
 
 void ProblemManager::ParseInputFile()
 {
-  DomainPartition& domain  = getDomainPartition();
+  DomainPartition * domain  = getDomainPartition();
 
-  dataRepository::ManagedGroup& commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  ViewWrapper<std::string>::rtype  inputFileName = commandLine.getData<std::string>(keys::inputFileName);
+  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(keys::inputFileName);
 
 
 #if USE_PYTHON==1
@@ -419,7 +420,7 @@ void ProblemManager::ParseInputFile()
   // Call manager readXML methods:
   
   {
-    ManagedGroup & meshGenerators = this->GetGroup(keys::meshGenerators);
+    ManagedGroup * meshGenerators = this->GetGroup(keys::meshGenerators);
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Mesh");
     std::cout << "Reading Mesh Block:" << std::endl;
     if (topLevelNode == NULL)
@@ -435,13 +436,13 @@ void ProblemManager::ParseInputFile()
         // Register the new mesh generator
         std::string meshID = childNode.attribute("name").value();
 
-        MeshGenerator & meshGenerator = meshGenerators.RegisterGroup<MeshGenerator>(meshID);
+        MeshGenerator * meshGenerator = meshGenerators->RegisterGroup<MeshGenerator>(meshID);
 
         // Set the documentation node
-        meshGenerator.SetDocumentationNodes( &domain );
+        meshGenerator->SetDocumentationNodes(domain);
 
-        meshGenerator.RegisterDocumentationNodes();
-        meshGenerator.ReadXML(childNode );
+        meshGenerator->RegisterDocumentationNodes();
+        meshGenerator->ReadXML(childNode );
       }
     }
   }
@@ -452,27 +453,27 @@ void ProblemManager::ParseInputFile()
 
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
-    ConstitutiveManager & constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-    constitutiveManager.ReadXML( topLevelNode );
+    ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+    constitutiveManager->ReadXML(topLevelNode);
 
 
     topLevelNode = xmlProblemNode.child("ElementRegions");
-    ElementRegionManager & elementManager = domain.GetGroup<ElementRegionManager>(keys::FEM_Elements);
-    elementManager.ReadXML( topLevelNode );
+    ElementRegionManager * elementManager = domain->GetGroup<ElementRegionManager>(keys::FEM_Elements);
+    elementManager->ReadXML(topLevelNode);
 
 
 //    map<string,int32> constitutiveSizes;
 //
-//    elementManager.forElementRegions([ this, &domain, &constitutiveSizes ]( ElementRegion& elementRegion ) -> void
+//    elementManager->forElementRegions([ this, domain, &constitutiveSizes ]( ElementRegion& elementRegion ) -> void
 //    {
-//      map<string,int32> sizes = elementRegion.SetConstitutiveMap( domain );
+//      map<string,int32> sizes = elementRegion.SetConstitutiveMap(domain);
 //      for( auto& entry : sizes )
 //      {
 //        constitutiveSizes[entry.first] += entry.second;
 //      }
 //    });
 //
-//    for( auto & material : constitutiveManager.GetSubGroups() )
+//    for( auto & material : constitutiveManager->GetSubGroups() )
 //    {
 //      string name = material.first;
 //      if( constitutiveSizes.count(name) > 0 )
@@ -485,13 +486,13 @@ void ProblemManager::ParseInputFile()
   
   
   this->m_physicsSolverManager->ReadXML(domain, xmlProblemNode );
-  this->m_eventManager->ReadXML( xmlProblemNode );
-  this->m_functionManager->ReadXML( domain, xmlProblemNode );
+  this->m_eventManager->ReadXML(xmlProblemNode);
+  this->m_functionManager->ReadXML(domain, xmlProblemNode);
   
 
   // Documentation output
-  ViewWrapper<std::string>::rtype  schemaName = commandLine.getData<std::string>(keys::schema);
-  uint32& schemaLevel = *(commandLine.getData<uint32>(keys::schemaLevel));
+  ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
+  uint32& schemaLevel = *(commandLine->getData<uint32>(keys::schemaLevel));
 
 //  std::cout << schemaName << ", " << schemaName.empty() << ", " << schemaName.size() << std::endl;
 
@@ -504,25 +505,25 @@ void ProblemManager::ParseInputFile()
 
 
   {
-    FiniteElementManager & finiteElementManager = this->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+    FiniteElementManager * finiteElementManager = this->GetGroup<FiniteElementManager>(keys::finiteElementManager);
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("NumericalMethods");
-    finiteElementManager.ReadXML(topLevelNode);
+    finiteElementManager->ReadXML(topLevelNode);
   }
 
   {
-    BoundaryConditionManager & boundaryConditionManager = BoundaryConditionManager::get();//this->GetGroup<BoundaryConditionManager>(keys::boundaryConditionMananger);
+    BoundaryConditionManager * boundaryConditionManager = BoundaryConditionManager::get();//this->GetGroup<BoundaryConditionManager>(keys::boundaryConditionMananger);
 
     xmlWrapper::xmlNode bcNode = xmlProblemNode.child("BoundaryConditions");
-    boundaryConditionManager.ReadXML(bcNode);
+    boundaryConditionManager->ReadXML(bcNode);
     xmlWrapper::xmlNode icNode = xmlProblemNode.child("InitialConditions");
-    boundaryConditionManager.ReadXML(icNode);
+    boundaryConditionManager->ReadXML(icNode);
 
   }
 
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Nodesets");
 //    MeshUtilities::GenerateNodesets( topLevelNode, dataRepository::ManagedGroup& nodeManager );
-    ManagedGroup & geometricObjects = this->RegisterGroup(keys::geometricObjects);
+    ManagedGroup * geometricObjects = this->RegisterGroup(keys::geometricObjects);
 
     for (xmlWrapper::xmlNode childNode=topLevelNode.first_child(); childNode; childNode=childNode.next_sibling())
     {
@@ -536,7 +537,7 @@ void ProblemManager::ParseInputFile()
 //        std::string geometricObjectTypeStr = childNode.attribute("type").value();
         object = SimpleGeometricObjectBase::CatalogInterface::Factory( type );
         object->ReadXML( childNode );
-        geometricObjects.RegisterViewWrapper<SimpleGeometricObjectBase>(name,std::move(object));
+        geometricObjects->RegisterViewWrapper<SimpleGeometricObjectBase>(name,std::move(object));
       }
     }
   }
@@ -577,15 +578,15 @@ void ProblemManager::InitializationOrder( string_array & order )
 
 void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 {
-  DomainPartition& domain  = getDomainPartition();
-  domain.RegisterDocumentationNodes();
+  DomainPartition * domain  = getDomainPartition();
+  domain->RegisterDocumentationNodes();
 
-  ManagedGroup const & commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  int32 const & xparCL = *(commandLine.getData<int32>(keys::xPartitionsOverride));
-  int32 const & yparCL = *(commandLine.getData<int32>(keys::yPartitionsOverride));
-  int32 const & zparCL = *(commandLine.getData<int32>(keys::zPartitionsOverride));
+  ManagedGroup const * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  int32 const & xparCL = *(commandLine->getData<int32>(keys::xPartitionsOverride));
+  int32 const & yparCL = *(commandLine->getData<int32>(keys::yPartitionsOverride));
+  int32 const & zparCL = *(commandLine->getData<int32>(keys::zPartitionsOverride));
 
-  PartitionBase & partition = domain.getReference<PartitionBase>(keys::partitionManager);
+  PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
   bool repartition = false;
   int32 xpar = 1;
   int32 ypar = 1;
@@ -611,21 +612,21 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   }
 
   // Generate Meshes
-  ManagedGroup & meshGenerators = this->GetGroup(keys::meshGenerators);
-  meshGenerators.forSubGroups<MeshGenerator>([this,&domain]( MeshGenerator & meshGen ) -> void
+  ManagedGroup * meshGenerators = this->GetGroup(keys::meshGenerators);
+  meshGenerators->forSubGroups<MeshGenerator>([this, domain]( MeshGenerator * meshGen ) -> void
   {
-    meshGen.GenerateMesh( domain );
+    meshGen->GenerateMesh( domain );
   });
 
-  ManagedGroup & geometricObjects = this->GetGroup(keys::geometricObjects);
+  ManagedGroup * geometricObjects = this->GetGroup(keys::geometricObjects);
 
   MeshUtilities::GenerateNodesets( geometricObjects,
-                                   domain.GetGroup(keys::FEM_Nodes) );
+                                   domain->GetGroup(keys::FEM_Nodes) );
 
-//  domain.GenerateSets();
+//  domain->GenerateSets();
 
 //  // Initialize solvers
-//  m_physicsSolverManager->forSubGroups<SolverBase>( [this,&domain]( SolverBase & solver ) -> void
+//  m_physicsSolverManager->forSubGroups<SolverBase>( [this, domain]( SolverBase & solver ) -> void
 //  {
 //    solver.Initialize( domain );
 //  });
@@ -637,7 +638,7 @@ void ProblemManager::RunSimulation()
 #if USE_CALIPER == 1
   cali::Annotation runSimulationAnnotation = cali::Annotation("RunSimulation").begin();
 #endif
-  DomainPartition& domain  = getDomainPartition();
+  DomainPartition * domain  = getDomainPartition();
 
   double time = 0.0;
   int cycle = 0;
@@ -655,7 +656,7 @@ void ProblemManager::RunSimulation()
 
       dataRepository::ManagedGroup& currentApplication = *(application.second);
 
-      ViewWrapper<string_array>::rtype solverList = currentApplication.getData<string_array>(keys::solvers);
+      string_array const & solverList = currentApplication.getReference<string_array>(keys::solvers);
       real64& appDt = *(currentApplication.getData<real64>(keys::dt));
       real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
 
@@ -669,21 +670,21 @@ void ProblemManager::RunSimulation()
       while( time < endTime )
       {
         std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-//        WriteSilo( cycle, time );
+        WriteSilo( cycle, time );
         real64 nextDt = std::numeric_limits<real64>::max();
 
         for ( auto jj=0; jj<solverList.size(); ++jj)
         {
-          SolverBase& currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
-          currentSolver.TimeStep( time, dt, cycle, domain );
-          nextDt = std::min(nextDt, *(currentSolver.getData<real64>(keys::maxDt)));
+          SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
+          currentSolver->TimeStep( time, dt, cycle, domain );
+          nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
         }
 
         // Update time, cycle, timestep
         time += dt;
         cycle ++;
-        dt = (lockDt)?(dt):(nextDt);
-        dt = (endTime - time < dt)?(endTime-time):(dt);
+        dt = (lockDt)? dt : nextDt;
+        dt = (endTime - time < dt)? endTime-time : dt;
       } 
     }
 //  }
@@ -699,7 +700,7 @@ void ProblemManager::RunSimulation()
 void ProblemManager::WriteSilo( int32 const cycleNumber,
                                 real64 const problemTime )
 {
-  DomainPartition& domain  = getDomainPartition();
+  DomainPartition * domain  = getDomainPartition();
   SiloFile silo;
 
   int32 rank;
@@ -709,7 +710,7 @@ void ProblemManager::WriteSilo( int32 const cycleNumber,
 
   silo.Initialize(PMPIO_WRITE);
   silo.WaitForBaton(rank, cycleNumber, false );
-  domain.WriteSilo(silo,cycleNumber,problemTime,0);
+  domain->WriteSilo(silo,cycleNumber,problemTime,0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);
   silo.Finish();
@@ -722,24 +723,24 @@ void ProblemManager::ApplySchedulerEvent()
 {}
 
 
-DomainPartition & ProblemManager::getDomainPartition()
+DomainPartition * ProblemManager::getDomainPartition()
 {
   return GetGroup<DomainPartition>(keys::domain);
 }
 
-DomainPartition const & ProblemManager::getDomainPartition() const
+DomainPartition const * ProblemManager::getDomainPartition() const
 {
   return GetGroup<DomainPartition>(keys::domain);
 }
 
 void ProblemManager::ApplyInitialConditions()
 {
-  DomainPartition & domain = GetGroup<DomainPartition>(keys::domain);
-  domain.GenerateSets();
+  DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
+  domain->GenerateSets();
 
-  BoundaryConditionManager const & boundaryConditionManager = BoundaryConditionManager::get();
+  BoundaryConditionManager const * boundaryConditionManager = BoundaryConditionManager::get();
 
-  boundaryConditionManager.ApplyInitialConditions( domain );
+  boundaryConditionManager->ApplyInitialConditions( domain );
 
 }
 

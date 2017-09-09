@@ -4,7 +4,7 @@
 #
 set(geosx_headers
   ${geosx_headers}
-    dataRepository/DataKey.hpp
+    dataRepository/KeyIndexT.hpp
     dataRepository/SidreWrapper.hpp
     dataRepository/ManagedGroup.hpp
     dataRepository/MappedVector.hpp    

@@ -51,6 +51,10 @@
 #include <map>
 #include "codingUtilities/Functions.hpp"
 
+#if ATK_FOUND
+#include <slic/slic.hpp>
+#endif
+
 class FunctionManager
 {
 public:
@@ -70,7 +74,9 @@ public:
     std::map<std::string,Function* >::const_iterator function = m_functions.find( functionName );
     if( function == m_functions.end() )
     {
+#if ATK_FOUND
       SLIC_ERROR("Error FunctionManager: Function name `" + functionName + "' not found\n");
+#endif
     }
 
     return *(function->second);

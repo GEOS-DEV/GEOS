@@ -15,7 +15,9 @@
 #include "managers/TableManager.hpp"
 //#include "SimpleGeometricObjects.hpp"
 
+#if ATK_FOUND
 #include "slic/slic.hpp"
+#endif
 
 #include "MPI_Communications/PartitionBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
@@ -56,8 +58,8 @@ MeshGenerator::~MeshGenerator()
 void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
 
-  NodeManager& nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
-  CellBlockManager& elems = domain->GetGroup<CellBlockManager>(keys::cellManager);
+  NodeManager * nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
+  // CellBlockManager * elems = domain->GetGroup<CellBlockManager>(keys::cellManager);
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -66,7 +68,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
   docNode->setShortDescription( "a mesh generator" );
 
 
-  nodes.getDocumentationNode()->AllocateChildNode( keys::ReferencePosition,
+  nodes->getDocumentationNode()->AllocateChildNode( keys::ReferencePosition,
                                                    keys::ReferencePosition,
                                                    -1,
                                                    "r1_array",
@@ -247,9 +249,11 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 //  m_elementType = hdn.GetStringVector("elementTypes");
 //  if (m_elementType.size() == 0)
 //    m_elementType = hdn.GetStringVector("elementType");
-//  if (m_elementType.size() == 0)
+//  if (m_elementType.size() == 0) {
+//#if ATK_FOUND
 //    SLIC_ERROR("MeshGenerator: No element type is specified");
-//
+//#endif
+//  }
 //  if (m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6")
 //  {
 //    m_dim = 3;
@@ -259,8 +263,10 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 //    m_dim = 2;
 //  }
 //  else
-//  {
+//  { 
+//#if ATK_FOUND
 //    SLIC_ERROR("MeshGenerator: incorrect element type!");
+//#endif
 //  }
 //
 //
@@ -304,7 +310,9 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 //    }
 //    if( failFlag )
 //    {
+//#if ATK_FOUND
 //      SLIC_ERROR("vertex/element mismatch MeshGenerator::ReadXML()");
+//#endif
 //    }
 //  }
 //
@@ -319,7 +327,9 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 //    }
 //    else
 //    {
+//#if ATK_FOUND
 //      SLIC_ERROR("MeshGenerator: The number of element types is inconsistent with the number of total block.");
+//#endif
 //    }
 //  }
 //
@@ -373,7 +383,9 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 //      }
 //      else
 //      {
+//#if ATK_FOUND
 //        SLIC_ERROR("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
+//#endif
 //      }
 //    }
 //  }
@@ -431,7 +443,7 @@ void MeshGenerator::GenerateElementRegions( DomainPartition& domain )
   //    numElements.push_back( 0 );
   //  }
   //
-  //  domain.m_feElementManager.resize( numElements, m_regionNames, m_elementType );
+  //  domain.m_feElementManager->resize( numElements, m_regionNames, m_elementType );
 
 }
 
@@ -475,7 +487,9 @@ void MeshGenerator::ReadXML_PostProcess()
     }
     else
     {
+#if ATK_FOUND
       SLIC_ERROR("MeshGenerator: incorrect element type!");
+#endif
     }
 
     {
@@ -486,7 +500,9 @@ void MeshGenerator::ReadXML_PostProcess()
       }
       if( failFlag )
       {
+#if ATK_FOUND
         SLIC_ERROR("vertex/element mismatch MeshGenerator::ReadXMLPost()");
+#endif
       }
     }
 
@@ -501,7 +517,9 @@ void MeshGenerator::ReadXML_PostProcess()
       }
       else
       {
+#if ATK_FOUND
         SLIC_ERROR("MeshGenerator: The number of element types is inconsistent with the number of total block.");
+#endif
       }
     }
 
@@ -552,7 +570,9 @@ void MeshGenerator::ReadXML_PostProcess()
         }
         else
         {
+#if ATK_FOUND
           SLIC_ERROR("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
+#endif
         }
       }
     }
@@ -604,18 +624,18 @@ void MeshGenerator::ReadXML_PostProcess()
  * @param partition
  * @param domain
  */
-void MeshGenerator::GenerateMesh( DomainPartition & domain )
+void MeshGenerator::GenerateMesh( DomainPartition * domain )
 {
 
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);
 
-  NodeManager & nodeManager = domain.GetGroup<NodeManager>( keys::FEM_Nodes );
+  NodeManager * nodeManager = domain->GetGroup<NodeManager>( keys::FEM_Nodes );
 
-  CellBlockManager & elementManager = domain.GetGroup<CellBlockManager>( keys::cellManager );
-  ManagedGroup & nodeSets = nodeManager.GetGroup( std::string( "Sets" ) );
+  CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
+  ManagedGroup * nodeSets = nodeManager->GetGroup( std::string( "Sets" ) );
 
-  PartitionBase & partition = domain.getReference<PartitionBase>(keys::partitionManager);
+  PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
 
   bool isRadialWithOneThetaPartition = false;
 
@@ -624,23 +644,23 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
 
   for( auto & cellBlockName : m_regionNames )
   {
-    CellBlock & cellBlock = elementManager.GetGroup(keys::cellBlocks).RegisterGroup<CellBlock>(cellBlockName);
-    cellBlock.SetDocumentationNodes(nullptr);
-    cellBlock.RegisterDocumentationNodes();
-    cellBlock.ReadXML_PostProcess();
+    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
+    cellBlock->SetDocumentationNodes(nullptr);
+    cellBlock->RegisterDocumentationNodes();
+    cellBlock->ReadXML_PostProcess();
   }
 
 
 
 
 
-  int32_set & xnegNodes = nodeSets.RegisterViewWrapper<int32_set>( std::string("xneg") ).reference();
-  int32_set & xposNodes = nodeSets.RegisterViewWrapper<int32_set>( std::string("xpos") ).reference();
-  int32_set & ynegNodes = nodeSets.RegisterViewWrapper<int32_set>( std::string("yneg") ).reference();
-  int32_set & yposNodes = nodeSets.RegisterViewWrapper<int32_set>( std::string("ypos") ).reference();
-  int32_set & znegNodes = nodeSets.RegisterViewWrapper<int32_set>( std::string("zneg") ).reference();
-  int32_set & zposNodes = nodeSets.RegisterViewWrapper<int32_set>( std::string("zpos") ).reference();
-  int32_set & allNodes  = nodeSets.RegisterViewWrapper<int32_set>( std::string("all") ).reference();
+  int32_set & xnegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("xneg") )->reference();
+  int32_set & xposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("xpos") )->reference();
+  int32_set & ynegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("yneg") )->reference();
+  int32_set & yposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("ypos") )->reference();
+  int32_set & znegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("zneg") )->reference();
+  int32_set & zposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("zpos") )->reference();
+  int32_set & allNodes  = nodeSets->RegisterViewWrapper<int32_set>( std::string("all") )->reference();
 
 
   // partition based on even spacing to get load balance
@@ -812,8 +832,8 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
     numNodes *= numNodesInDir[i];
   }
 
-  nodeManager.resize( numNodes );
-  view_rtype<r1_array> X = nodeManager.getData<r1_array>( keys::ReferencePosition );
+  nodeManager->resize( numNodes );
+  view_rtype<r1_array> X = nodeManager->getData<r1_array>( keys::ReferencePosition );
 
   {
     localIndex localNodeIndex = 0;
@@ -841,7 +861,7 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
             }
           }
 
-          nodeManager.m_localToGlobalMap[localNodeIndex] = NodeGlobalIndex( index );
+          nodeManager->m_localToGlobalMap[localNodeIndex] = NodeGlobalIndex( index );
 
           // cartesian-specific nodesets
           if( m_mapToRadial == 0 )
@@ -911,7 +931,7 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
       localElemIndexInRegion[iterNumElemsInRegion->first] = 0;
     }
 
-    elementManager.resize( numElements, elementRegionNames, elementTypes );
+    elementManager->resize( numElements, elementRegionNames, elementTypes );
 
     // assign global numbers to elements
     iterRegion = m_regionNames.begin();
@@ -924,10 +944,10 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
       {
         for( int kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion, ++iR )
         {
-//          ElementRegionT& elemRegion = domain.m_feElementManager.m_ElementRegions[*iterRegion];
+//          ElementRegionT& elemRegion = domain->m_feElementManager->m_ElementRegions[*iterRegion];
 
-          CellBlock & elemRegion =  elementManager.GetRegion(*iterRegion);
-          int32 const numNodesPerElem = *(elemRegion.getData<int32>(keys::numNodesPerElement));
+          CellBlock * elemRegion =  elementManager->GetRegion(*iterRegion);
+          int32 const numNodesPerElem = *(elemRegion->getData<int32>(keys::numNodesPerElement));
 
           int numElemsInDirForRegion[3] =
               { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
@@ -1007,7 +1027,7 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
                 for( int iEle = 0 ; iEle < m_numElePerBox[iR] ; ++iEle )
                 {
                   localIndex& localElemIndex = localElemIndexInRegion[*iterRegion];
-                  elemRegion.m_localToGlobalMap[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
+                  elemRegion->m_localToGlobalMap[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
 
                   iArray1d nodeIDInBox( numNodesPerElem );
 
@@ -1016,8 +1036,10 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
 
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
+// #if ATK_FOUND
 //                    SLIC_ERROR("not implemented");
-                    elemRegion.m_toNodesRelation[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
+// #endif
+                    elemRegion->m_toNodesRelation[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;
 
@@ -1082,7 +1104,7 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
   /*
    {// Move nodes in the extension layers.
 
-   for (localIndex iN = 0; iN != nodeManager.DataLengths(); ++iN)
+   for (localIndex iN = 0; iN != nodeManager->DataLengths(); ++iN)
    {
    for (int i=0; i<m_dim; ++i)
    {
@@ -1105,14 +1127,14 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
   // Node perturbation
   if( m_fPerturb > 0 )
   {
-    for( localIndex iN = 0 ; iN != nodeManager.size() ; ++iN )
+    for( localIndex iN = 0 ; iN != nodeManager->size() ; ++iN )
     {
 
       for( int i = 0 ; i < m_dim ; ++i )
       {
         if( X[iN][i] > m_min[i] && X[iN][i] < m_max[i] )
         {
-          srand( nodeManager.m_localToGlobalMap[iN] + m_randSeed + i ); // This ensures that the perturbation pattern is unaffected by domain partitioning.
+          srand( nodeManager->m_localToGlobalMap[iN] + m_randSeed + i ); // This ensures that the perturbation pattern is unaffected by domain partitioning.
           X[iN][i] += ( ( m_max[i] - m_min[i] ) / m_numElemsTotal[i] ) * ( ( rand() * 1.0 ) / RAND_MAX - 0.5 ) * 2 * m_fPerturb;
         }
       }
@@ -1121,7 +1143,7 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
 
   if( std::fabs( m_skewAngle ) > 0.0 )
   {
-    for( localIndex iN = 0 ; iN != nodeManager.size() ; ++iN )
+    for( localIndex iN = 0 ; iN != nodeManager->size() ; ++iN )
     {
       X[iN][0] -= ( X[iN][1] - m_skewCenter[1] ) * std::tan( m_skewAngle );
     }
@@ -1130,24 +1152,24 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
   if( m_mapToRadial > 0 )
   {
     // Map to radial mesh
-    for( localIndex iN = 0 ; iN != nodeManager.size() ; ++iN )
+    for( localIndex iN = 0 ; iN != nodeManager->size() ; ++iN )
     {
-      meshTheta = X[iN][1] * 3.141592654 / 180.0;
-      meshAxis = static_cast<int>(round( meshTheta * 2.0 / 3.141592654 ));
-      meshPhi = fabs( meshTheta - meshAxis * 3.141592654 / 2.0 );
-      meshRout = m_max[0] / cos( meshPhi );
+      m_meshTheta = X[iN][1] * M_PI / 180.0;
+      m_meshAxis = static_cast<int>(round( m_meshTheta * 2.0 / M_PI ));
+      m_meshPhi = fabs( m_meshTheta - m_meshAxis * M_PI / 2.0 );
+      m_meshRout = m_max[0] / cos( m_meshPhi );
 
       if( m_mapToRadial > 1 )
       {
-        meshRact = ( ( meshRout - m_min[0] ) / ( m_max[0] - m_min[0] ) ) * ( X[iN][0] - m_min[0] ) + m_min[0];
+        m_meshRact = ( ( m_meshRout - m_min[0] ) / ( m_max[0] - m_min[0] ) ) * ( X[iN][0] - m_min[0] ) + m_min[0];
       }
       else
       {
-        meshRact = X[iN][0];
+        m_meshRact = X[iN][0];
       }
 
-      X[iN][0] = meshRact * cos( meshTheta );
-      X[iN][1] = meshRact * sin( meshTheta );
+      X[iN][0] = m_meshRact * cos( m_meshTheta );
+      X[iN][1] = m_meshRact * sin( m_meshTheta );
 
       // add mapped values to nodesets
       if( m_mapToRadial > 1 )
@@ -1184,13 +1206,13 @@ void MeshGenerator::GenerateMesh( DomainPartition & domain )
  * @param index
  * @param iEle
  * @param nodeIDInBox
- * @param size
+ * @param node_size
  */
 void MeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
                                                  const int index[],
                                                  const int& iEle,
                                                  int nodeIDInBox[],
-                                                 const int size )
+                                                 const int node_size )
 
 {
   if( elementType == "C3D8" )
@@ -1459,7 +1481,7 @@ void MeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
     mapBoxType[1][1][1] = 7;
 
     int boxType = mapBoxType[index[0] % 2][index[1] % 2][index[2] % 2];
-    for( int i = 0 ; i < size ; ++i )
+    for( int i = 0 ; i < node_size ; ++i )
     {
       nodeIDInBox[i] = mapBoxTet[boxType][iEle][i];
     }
@@ -1467,14 +1489,14 @@ void MeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
   }
 }
 
-void MeshGenerator::RemapMesh( DomainPartition& domain )
+void MeshGenerator::RemapMesh( DomainPartition * domain )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())
   //  {
   //    const Table3D* tableDx = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDx);
   //
-  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
+  //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
   //    {
   //      realT dx=tableDx->Lookup(X[iN]);
   //      X[iN][0] += dx;
@@ -1485,7 +1507,7 @@ void MeshGenerator::RemapMesh( DomainPartition& domain )
   //  {
   //    const Table3D* tableDy = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDy);
   //
-  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
+  //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
   //    {
   //      realT dy=tableDy->Lookup(X[iN]);
   //      X[iN][1] += dy;
@@ -1496,7 +1518,7 @@ void MeshGenerator::RemapMesh( DomainPartition& domain )
   //  {
   //    const Table3D* tableDz = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDz);
   //
-  //    for (localIndex iN=0; iN!=nodeManager.DataLengths(); ++iN)
+  //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
   //    {
   //      realT dz=tableDz->Lookup(X[iN]);
   //      X[iN][2] += dz;

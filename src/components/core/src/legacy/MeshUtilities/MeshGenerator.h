@@ -25,13 +25,13 @@ public:
 
   void ReadXML( TICPP::HierarchicalDataNode& hdn );
 
-  void GenerateElementRegions( PhysicalDomainT& domain );
+  void GenerateElementRegions( PhysicalDomainT * domain );
 
   void GenerateMesh( SpatialPartition& partition,
-                     PhysicalDomainT& domain );
+                     PhysicalDomainT * domain );
 
   void GenerateNodesets( TICPP::HierarchicalDataNode& hdn,
-                         NodeManager& nodeManager );
+                         NodeManager * nodeManager );
 
   void GetElemToNodesRelationInBox ( const std::string& elementType,
                                      const int index[],
@@ -39,7 +39,7 @@ public:
                                      int nodeIDInBox[],
                                      const int size);
 
-  void RemapMesh ( PhysicalDomainT& domain );
+  void RemapMesh ( PhysicalDomainT * domain );
 
   
   int m_delayMeshDeformation;

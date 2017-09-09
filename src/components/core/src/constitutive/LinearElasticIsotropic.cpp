@@ -7,6 +7,10 @@
 
 #include "LinearElasticIsotropic.hpp"
 
+#if ATK_FOUND
+#include "slic/slic.hpp"
+#endif
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -17,13 +21,13 @@ namespace constitutive
 
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
   ConstitutiveBase(name, parent ),
-  m_YoungsModulus(this->GetGroup(keys::parameterData).RegisterViewWrapper<real64>(keys::youngsModulus).reference()),
-  m_BulkModulus(this->GetGroup(keys::parameterData).RegisterViewWrapper<real64>(keys::bulkModulus).reference()),
-  m_ShearModulus(this->GetGroup(keys::parameterData).RegisterViewWrapper<real64>(keys::shearModulus).reference()),
-  m_PoissonRatio(this->GetGroup(keys::parameterData).RegisterViewWrapper<real64>(keys::poissonRatio).reference()),
-  m_Density(this->GetGroup(keys::parameterData).RegisterViewWrapper<real64>(keys::density).reference()),
-  m_devStress(this->GetGroup(keys::stateData).RegisterViewWrapper<r2Sym_array>(keys::deviatorStress).reference()),
-  m_meanStress(this->GetGroup(keys::stateData).RegisterViewWrapper<real64_array>(keys::meanStress).reference())
+  m_YoungsModulus(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::youngsModulus)->reference()),
+  m_BulkModulus(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::bulkModulus)->reference()),
+  m_ShearModulus(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::shearModulus)->reference()),
+  m_PoissonRatio(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::poissonRatio)->reference()),
+  m_Density(this->GetGroup(keys::parameterData)->RegisterViewWrapper<real64>(keys::density)->reference()),
+  m_devStress(this->GetGroup(keys::stateData)->RegisterViewWrapper<r2Sym_array>(keys::deviatorStress)->reference()),
+  m_meanStress(this->GetGroup(keys::stateData)->RegisterViewWrapper<real64_array>(keys::meanStress)->reference())
 
 {
   // TODO Auto-generated constructor stub
@@ -44,8 +48,8 @@ void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Linear Elastic Isotropic Constitutive Relation");
 
-  ManagedGroup & parameterData = this->GetGroup( keys::parameterData );
-  DocumentationNode * const parameterDocNode = parameterData.getDocumentationNode();
+  ManagedGroup * parameterData = this->GetGroup( keys::parameterData );
+  DocumentationNode * const parameterDocNode = parameterData->getDocumentationNode();
   parameterDocNode->setSchemaType("Node");
   parameterDocNode->setShortDescription("Parameters for Linear Elastic Isotropic Constitutive Relation");
 
@@ -115,8 +119,8 @@ void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
                                        0 );
 
 
-  ManagedGroup & stateData     = this->GetGroup( keys::stateData );
-  DocumentationNode * const stateDocNode = stateData.getDocumentationNode();
+  ManagedGroup * stateData     = this->GetGroup( keys::stateData );
+  DocumentationNode * const stateDocNode = stateData->getDocumentationNode();
   stateDocNode->setSchemaType("Node");
   stateDocNode->setShortDescription("State for Linear Elastic Isotropic Constitutive Relation");
 
@@ -136,11 +140,11 @@ void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
 
 void LinearElasticIsotropic::ReadXML_PostProcess()
 {
-  ManagedGroup & parameterData = this->GetGroup( keys::parameterData );
-  real64 & nu = *( parameterData.getData<real64>(keys::poissonRatio) );
-  real64 & E  = *( parameterData.getData<real64>(keys::youngsModulus) );
-  real64 & K  = *( parameterData.getData<real64>(keys::bulkModulus) );
-  real64 & G  = *( parameterData.getData<real64>(keys::shearModulus) );
+  ManagedGroup * parameterData = this->GetGroup( keys::parameterData );
+  real64 & nu = *( parameterData->getData<real64>(keys::poissonRatio) );
+  real64 & E  = *( parameterData->getData<real64>(keys::youngsModulus) );
+  real64 & K  = *( parameterData->getData<real64>(keys::bulkModulus) );
+  real64 & G  = *( parameterData->getData<real64>(keys::shearModulus) );
 
   int numConstantsSpecified = 0;
   if( nu >= 0.0 )
@@ -170,7 +174,9 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
     else if( !( K >= 0.0 && G >= 0.0 ) )
     {
       string const message = "A specific pair of elastic constants is required. Either (K,G) or (E,nu)";
+#if ATK_FOUND
       SLIC_ERROR(message);
+#endif
     }
     else
     {
@@ -181,7 +187,9 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
   else
   {
     string const message = std::to_string(numConstantsSpecified) + " Elastic Constants Specified. Must specify 2 constants!";
+#if ATK_FOUND
     SLIC_ERROR(message);
+#endif
   }
 }
 
@@ -267,10 +275,10 @@ R2SymTensor LinearElasticIsotropic::StateUpdatePoint( R2SymTensor const & D,
 {
 
   
-//  auto & params = this->GetGroup(keys::parameterData);
-//  auto & state = this->GetGroup(keys::stateData);
-//  std::cout<<&m_BulkModulus<<" , "<<this->GetGroup(keys::parameterData).getData<real64>(keys::bulkModulus)<<std::endl;
-//  std::cout<<&m_meanStress<<" , "<<&(this->GetGroup(keys::stateData).getData<real64_array>(keys::meanStress))<<std::endl;
+//  auto * params = this->GetGroup(keys::parameterData);
+//  auto * state = this->GetGroup(keys::stateData);
+//  std::cout<<&m_BulkModulus<<" , "<<this->GetGroup(keys::parameterData)->getData<real64>(keys::bulkModulus)<<std::endl;
+//  std::cout<<&m_meanStress<<" , "<<&(this->GetGroup(keys::stateData)->getData<real64_array>(keys::meanStress))<<std::endl;
 //  
   
   real64 volumeStrain = D.Trace();

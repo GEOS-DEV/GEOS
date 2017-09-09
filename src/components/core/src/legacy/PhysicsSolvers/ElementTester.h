@@ -82,7 +82,7 @@ public:
   virtual double TimeStep( const realT& time,
                          const realT& dt,
                          const int cycleNumber,
-                         PhysicalDomainT& domain,
+                         PhysicalDomainT * domain,
                          const sArray1d& namesOfSolverRegions,
                          SpatialPartition& partition,
                          FractunatorBase* const fractunator );

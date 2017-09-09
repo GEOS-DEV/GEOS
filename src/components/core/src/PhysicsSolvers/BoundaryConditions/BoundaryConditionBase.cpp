@@ -4,7 +4,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup *const parent ):
+BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup * parent ):
   ManagedGroup(name,parent)
 {}
 
@@ -18,7 +18,7 @@ BoundaryConditionBase::CatalogInterface::CatalogType& BoundaryConditionBase::Get
   return catalog;
 }
 
-void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup * const )
+void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup * UNUSED )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -152,8 +152,6 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
                               0,
                               1,
                               0 );
-
-
 }
 
 void BoundaryConditionBase::ReadXML_PostProcess()
@@ -195,9 +193,9 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //
 //  int32 const component = GetComponent();
 //  string const functionName = getData<string>(dataRepository::keys::functionName);
-//  NewFunctionManager & functionManager = NewFunctionManager::Instance();
+//  NewFunctionManager * functionManager = NewFunctionManager::Instance();
 //
-//  FunctionBase const * const function  = functionManager.GetGroupPtr<FunctionBase>(functionName);
+//  FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
 //
 //  if( function!=nullptr )
 //  {
@@ -218,15 +216,15 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 
 void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
                                                                 real64 const time,
-                                                                ManagedGroup & dataGroup,
+                                                                ManagedGroup * dataGroup,
                                                                 string const & fieldName ) const
 {
 
   int32 const component = GetComponent();
   string const functionName = getData<string>(dataRepository::keys::functionName);
-  NewFunctionManager & functionManager = NewFunctionManager::Instance();
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
-  ViewWrapperBase & vw = dataGroup.getWrapperBase( fieldName );
+  ViewWrapperBase & vw = *(dataGroup->getWrapperBase( fieldName ));
   std::type_index typeIndex = std::type_index(vw.get_typeid());
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
@@ -244,7 +242,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
     }
     else
     {
-      FunctionBase const * const function  = functionManager.GetGroupPtr<FunctionBase>(functionName);
+      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
       if( function!=nullptr)
       {
         if( function->isFunctionOfTime()==2 )
@@ -258,7 +256,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
         else
         {
           real64_array result(set.size());
-          function->Evaluate( &dataGroup, time, set, result );
+          function->Evaluate( dataGroup, time, set, result );
           int32 count=0;
           for( auto a : set )
           {

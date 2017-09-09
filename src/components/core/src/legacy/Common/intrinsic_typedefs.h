@@ -48,7 +48,7 @@
 
 #include <string>
 #include <vector>
-#include <limits>
+#include <climits>
 #include "common/DataTypes.hpp"
 
 /// set the default iteration type

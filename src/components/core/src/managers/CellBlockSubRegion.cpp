@@ -16,8 +16,8 @@ using namespace constitutive;
 CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * const parent ):
   CellBlock( name, parent )
 {
-  auto & constitutiveGrouping = this->RegisterViewWrapper< map< string, int32_array > >(keys::constitutiveGrouping);
-  constitutiveGrouping.setSizedFromParent(0);
+  auto constitutiveGrouping = this->RegisterViewWrapper< map< string, int32_array > >(keys::constitutiveGrouping);
+  constitutiveGrouping->setSizedFromParent(0);
 }
 
 CellBlockSubRegion::~CellBlockSubRegion()
@@ -98,10 +98,10 @@ void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
 
 }
 
-void CellBlockSubRegion::CopyFromCellBlock( CellBlock const & source )
+void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
-  this->resize(source.size());
-  this->m_toNodesRelation = source.m_toNodesRelation;
+  this->resize(source->size());
+  this->m_toNodesRelation = source->m_toNodesRelation;
 }
 
 void CellBlockSubRegion::MaterialPassThru( string const & matName,

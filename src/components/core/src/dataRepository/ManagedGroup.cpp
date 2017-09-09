@@ -7,18 +7,20 @@
 
 #include "ManagedGroup.hpp"
 
-#include "dataRepository/SidreWrapper.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-#include "spio/IOManager.hpp"
 #include <mpi.h>
 
-
+#if ATK_FOUND
+#include "dataRepository/SidreWrapper.hpp"
+#include "spio/IOManager.hpp"
+#endif
 
 namespace geosx
 {
 namespace dataRepository
 {
 
+#if ATK_FOUND
 axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
                                                             ManagedGroup * const parent )
 {
@@ -44,14 +46,18 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
   }
   return sidreGroup;
 }
+#endif /* ATK_FOUND */
 
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ) :
+#if ATK_FOUND
+  m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
+#endif
+  m_name(name),
   m_docNode(nullptr),
   m_wrappers(),
   m_parent(parent),
   m_subGroups(),
-  m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
   m_size(0)
 {
 
@@ -133,13 +139,13 @@ ManagedGroup::CatalogInterface::CatalogType& ManagedGroup::GetCatalog()
   return catalog;
 }
 
-ViewWrapperBase& ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
+ViewWrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
-  return *( rtTypes::ApplyTypeLambda1( type,
+  return rtTypes::ApplyTypeLambda1( type,
                                        [this, &name]( auto a ) -> ViewWrapperBase*
       {
-        return &( this->RegisterViewWrapper<decltype(a)>(name) );
-      } ) );
+        return this->RegisterViewWrapper<decltype(a)>(name);
+      } );
 }
 
 void ManagedGroup::resize( int32 const newsize )
@@ -167,9 +173,9 @@ void ManagedGroup::RegisterDocumentationNodes()
         ( subNode.second.m_isRegistered == 0 ) )
     {
 //      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
-      ViewWrapperBase & view = RegisterViewWrapper( subNode.second.getStringKey(),
-                                                    rtTypes::typeID(subNode.second.getDataType() ) );
-      view.setSizedFromParent( subNode.second.m_managedByParent);
+      ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
+                                                          rtTypes::typeID(subNode.second.getDataType() ) );
+      view->setSizedFromParent( subNode.second.m_managedByParent);
       subNode.second.m_isRegistered = 1;
     }
   }
@@ -227,9 +233,9 @@ void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 
 void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
-  this->forSubGroups( [this,&targetNode]( ManagedGroup & subGroup ) -> void
+  this->forSubGroups( [this,&targetNode]( ManagedGroup * subGroup ) -> void
   {
-    subGroup.ReadXML( targetNode );
+    subGroup->ReadXML( targetNode );
   });
 }
 
@@ -249,9 +255,9 @@ void ManagedGroup::PrintDataHierarchy()
 
 void ManagedGroup::InitializationOrder( string_array & order )
 {
-  for( auto & subGroup : this->m_subGroups.keys() )
+  for( auto & subGroupIter : this->m_subGroups )
   {
-    order.push_back(subGroup.first);
+    order.push_back(subGroupIter.first);
   }
 }
 
@@ -268,19 +274,20 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   for( auto const & groupName : initOrder )
   {
     ++indent;
-    this->GetGroup(groupName).Initialize(group);
+    this->GetGroup(groupName)->Initialize(group);
     --indent;
   }
 
-//  forSubGroups( [&]( ManagedGroup & subGroup ) -> void
+//  forSubGroups( [&]( ManagedGroup * subGroup ) -> void
 //  {
 //    ++indent;
-//    subGroup.Initialize(group);
+//    subGroup->Initialize(group);
 //    --indent;
 //  });
   InitializePostSubGroups(group);
 }
 
+#if ATK_FOUND
 /* Add pointers to ViewWrapper data to the sidre tree. */
 void ManagedGroup::registerSubViews() 
 {
@@ -289,9 +296,9 @@ void ManagedGroup::registerSubViews()
     wrapper.second->registerDataPtr();
   }
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.registerSubViews();
+    subGroup->registerSubViews();
   });
 }
 
@@ -303,9 +310,9 @@ void ManagedGroup::unregisterSubViews()
     wrapper.second->unregisterDataPtr();
   }
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.unregisterSubViews();
+    subGroup->unregisterSubViews();
   });
 }
 
@@ -314,9 +321,9 @@ void ManagedGroup::createSizeViews()
 {
   m_sidreGroup->createView("__size__")->setScalar(m_size);
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.createSizeViews();
+    subGroup->createSizeViews();
   });
 }
 
@@ -326,9 +333,9 @@ void ManagedGroup::loadSizeViews()
   m_size = m_sidreGroup->getView("__size__")->getScalar();
   m_sidreGroup->destroyView("__size__");
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.loadSizeViews();
+    subGroup->loadSizeViews();
   });
 }
 
@@ -340,9 +347,9 @@ void ManagedGroup::resizeSubViews()
     wrapper.second->resizeFromSidre();
   }
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.resizeSubViews();
+    subGroup->resizeSubViews();
   });
 }
 
@@ -354,9 +361,9 @@ void ManagedGroup::storeSizedFromParent()
     wrapper.second->storeSizedFromParent();
   }
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.storeSizedFromParent();
+    subGroup->storeSizedFromParent();
   });
 }
 
@@ -368,9 +375,9 @@ void ManagedGroup::loadSizedFromParent()
   }
   
 
-  forSubGroups([](ManagedGroup & subGroup) -> void 
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    subGroup.loadSizedFromParent();
+    subGroup->loadSizedFromParent();
   });
 }
 
@@ -412,7 +419,7 @@ void ManagedGroup::loadSidreExternalData(const string & root_path, MPI_Comm comm
   ioManager.loadExternalData(m_sidreGroup, root_path);
   unregisterSubViews();
 }
+#endif /* ATK_FOUND */
 
-
-}
-} /* namespace ODS */
+} /* end namespace dataRepository */
+} /* end namespace geosx  */

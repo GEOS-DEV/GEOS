@@ -34,7 +34,7 @@ public:
 
   void InitializePreSubGroups( ManagedGroup * const ) override final;
 
-  void CopyFromCellBlock( CellBlock const & source );
+  void CopyFromCellBlock( CellBlock const * source );
 
   template< typename LAMBDA >
   void forMaterials( LAMBDA lambda )

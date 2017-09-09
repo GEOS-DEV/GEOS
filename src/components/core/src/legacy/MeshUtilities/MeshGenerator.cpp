@@ -223,7 +223,7 @@ void MeshGenerator::ReadXML( TICPP::HierarchicalDataNode& hdn )
  * @author settgast
  * @param domain
  */
-void MeshGenerator::GenerateElementRegions( PhysicalDomainT& domain )
+void MeshGenerator::GenerateElementRegions( PhysicalDomainT * domain )
 {
   lvector numElements;
 
@@ -232,7 +232,7 @@ void MeshGenerator::GenerateElementRegions( PhysicalDomainT& domain )
     numElements.push_back( 0 );
   }
 
-  domain.m_feElementManager.resize( numElements, m_regionNames, m_elementType );
+  domain->m_feElementManager.resize( numElements, m_regionNames, m_elementType );
 
 }
 
@@ -242,7 +242,7 @@ void MeshGenerator::GenerateElementRegions( PhysicalDomainT& domain )
  * @param domain
  */
 void MeshGenerator::GenerateMesh( SpatialPartition& partition,
-                                  PhysicalDomainT& domain )
+                                  PhysicalDomainT * domain )
 {
   // special case
   bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1); 
@@ -416,7 +416,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
     numNodes *= numNodesInDir[i];
   }
 
-  domain.m_feNodeManager.resize( numNodes );
+  domain->m_feNodeManager.resize( numNodes );
   {
     localIndex localNodeIndex = 0;
     for( int i=0 ; i<numNodesInDir[0] ; ++i )
@@ -431,62 +431,62 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
             index[a] += firstElemIndexInPartition[a];
           }
 
-          (*domain.m_feNodeManager.m_refposition)[localNodeIndex] = NodePosition( index, m_trianglePattern );
+          (*domain->m_feNodeManager.m_refposition)[localNodeIndex] = NodePosition( index, m_trianglePattern );
 
           // alter global node map for radial mesh
           if (m_mapToRadial > 0)
           {
-            if (isEqual( (*domain.m_feNodeManager.m_refposition)[localNodeIndex][1], m_max[1], 1e-10 ))
+            if (isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][1], m_max[1], 1e-10 ))
             {
               index[1] = 0;
             }
           }   
 
-          domain.m_feNodeManager.m_localToGlobalMap[localNodeIndex] = NodeGlobalIndex( index );
+          domain->m_feNodeManager.m_localToGlobalMap[localNodeIndex] = NodeGlobalIndex( index );
 
           // cartesian-specific nodesets
           if (m_mapToRadial == 0){
-              if( isEqual( (*domain.m_feNodeManager.m_refposition)[localNodeIndex][0], m_min[0], 1e-10 ) )
+              if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][0], m_min[0], 1e-10 ) )
             {
-              domain.m_feNodeManager.m_Sets["xneg"].insert(localNodeIndex);
+              domain->m_feNodeManager.m_Sets["xneg"].insert(localNodeIndex);
             }
-            if( isEqual( (*domain.m_feNodeManager.m_refposition)[localNodeIndex][0], m_max[0], 1e-10 ) )
+            if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][0], m_max[0], 1e-10 ) )
             {
-              domain.m_feNodeManager.m_Sets["xpos"].insert(localNodeIndex);
+              domain->m_feNodeManager.m_Sets["xpos"].insert(localNodeIndex);
             }
-            if( isEqual( (*domain.m_feNodeManager.m_refposition)[localNodeIndex][1], m_min[1], 1e-10 ) )
+            if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][1], m_min[1], 1e-10 ) )
             {
-              domain.m_feNodeManager.m_Sets["yneg"].insert(localNodeIndex);
+              domain->m_feNodeManager.m_Sets["yneg"].insert(localNodeIndex);
             }
-            if( isEqual( (*domain.m_feNodeManager.m_refposition)[localNodeIndex][1], m_max[1], 1e-10 ) )
+            if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][1], m_max[1], 1e-10 ) )
             {
-              domain.m_feNodeManager.m_Sets["ypos"].insert(localNodeIndex);
+              domain->m_feNodeManager.m_Sets["ypos"].insert(localNodeIndex);
             }
           }
           else{
             // radial-specific nodesets
-        	domain.m_feNodeManager.m_Sets["rin"];  // generate the empty sets
-        	domain.m_feNodeManager.m_Sets["rout"];
-            if( isEqual( (*domain.m_feNodeManager.m_refposition)[localNodeIndex][0], m_min[0], 1e-10 ) )
+        	domain->m_feNodeManager.m_Sets["rin"];  // generate the empty sets
+        	domain->m_feNodeManager.m_Sets["rout"];
+            if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][0], m_min[0], 1e-10 ) )
             {
-              domain.m_feNodeManager.m_Sets["rin"].insert(localNodeIndex);
+              domain->m_feNodeManager.m_Sets["rin"].insert(localNodeIndex);
             }
-            if( isEqual( (*domain.m_feNodeManager.m_refposition)[localNodeIndex][0], m_max[0], 1e-10 ) )
+            if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][0], m_max[0], 1e-10 ) )
             {
-              domain.m_feNodeManager.m_Sets["rout"].insert(localNodeIndex);
+              domain->m_feNodeManager.m_Sets["rout"].insert(localNodeIndex);
             }
           }
           
           // general nodesets  
-          if( isEqual( (*domain.m_feNodeManager.m_refposition)[localNodeIndex][2], m_min[2], 1e-10 ) )
+          if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][2], m_min[2], 1e-10 ) )
           {
-            domain.m_feNodeManager.m_Sets["zneg"].insert(localNodeIndex);
+            domain->m_feNodeManager.m_Sets["zneg"].insert(localNodeIndex);
           }
-          if( isEqual( (*domain.m_feNodeManager.m_refposition)[localNodeIndex][2], m_max[2], 1e-10 ) )
+          if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][2], m_max[2], 1e-10 ) )
           {
-            domain.m_feNodeManager.m_Sets["zpos"].insert(localNodeIndex);
+            domain->m_feNodeManager.m_Sets["zpos"].insert(localNodeIndex);
           }
-          domain.m_feNodeManager.m_Sets["all"].insert(localNodeIndex);
+          domain->m_feNodeManager.m_Sets["all"].insert(localNodeIndex);
           
 
           ++localNodeIndex;
@@ -513,7 +513,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
       localElemIndexInRegion[iterNumElemsInRegion->first] = 0;
     }
-    domain.m_feElementManager.resize( numElements, elementRegionNames, elementTypes );
+    domain->m_feElementManager.resize( numElements, elementRegionNames, elementTypes );
 
     // assign global numbers to elements
     iterRegion=m_regionNames.begin();
@@ -526,7 +526,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
       {
         for( unsigned int kblock=0 ; kblock<m_nElems[2].size() ; ++kblock, ++iterRegion, ++iR )
         {
-          ElementRegionT& elemRegion = domain.m_feElementManager.m_ElementRegions[*iterRegion];
+          ElementRegionT& elemRegion = domain->m_feElementManager.m_ElementRegions[*iterRegion];
 
 
           int numElemsInDirForRegion[3] = { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
@@ -676,19 +676,19 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
   /*
   {// Move nodes in the extension layers.
 
-    for (localIndex iN = 0; iN != domain.m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN = 0; iN != domain->m_feNodeManager.DataLengths(); ++iN)
     {
       for (int i=0; i<m_dim; ++i)
       {
-        if ( (*domain.m_feNodeManager.m_refposition)[iN][i] < m_min[i])
+        if ( (*domain->m_feNodeManager.m_refposition)[iN][i] < m_min[i])
         {
-          int eLayer = (int) ((m_min[i] -(*domain.m_feNodeManager.m_refposition)[iN][i]) / ((m_max[i] - m_min[i]) / m_numElems[i]) + 0.5);
-          (*domain.m_feNodeManager.m_refposition)[iN][i] = m_min[i] - ((m_max[i] - m_min[i]) / m_numElems[i]) * m_commonRatioMin[i] * (1- pow(m_commonRatioMin[i], eLayer)) / (1 - m_commonRatioMin[i]);
+          int eLayer = (int) ((m_min[i] -(*domain->m_feNodeManager.m_refposition)[iN][i]) / ((m_max[i] - m_min[i]) / m_numElems[i]) + 0.5);
+          (*domain->m_feNodeManager.m_refposition)[iN][i] = m_min[i] - ((m_max[i] - m_min[i]) / m_numElems[i]) * m_commonRatioMin[i] * (1- pow(m_commonRatioMin[i], eLayer)) / (1 - m_commonRatioMin[i]);
         }
-        else if ((*domain.m_feNodeManager.m_refposition)[iN][i] > m_max[i])
+        else if ((*domain->m_feNodeManager.m_refposition)[iN][i] > m_max[i])
         {
-          int eLayer = (int) (((*domain.m_feNodeManager.m_refposition)[iN][i] - m_max[i] ) / ((m_max[i] - m_min[i]) / m_numElems[i]) + 0.5);
-          (*domain.m_feNodeManager.m_refposition)[iN][i] = m_max[i] + ((m_max[i] - m_min[i]) / m_numElems[i]) * m_commonRatioMax[i] * (1- pow(m_commonRatioMax[i], eLayer)) / (1 - m_commonRatioMax[i]);
+          int eLayer = (int) (((*domain->m_feNodeManager.m_refposition)[iN][i] - m_max[i] ) / ((m_max[i] - m_min[i]) / m_numElems[i]) + 0.5);
+          (*domain->m_feNodeManager.m_refposition)[iN][i] = m_max[i] + ((m_max[i] - m_min[i]) / m_numElems[i]) * m_commonRatioMax[i] * (1- pow(m_commonRatioMax[i], eLayer)) / (1 - m_commonRatioMax[i]);
         }
 
       }
@@ -700,15 +700,15 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
   // Node perturbation
   if (m_fPerturb > 0)
   {
-    for (localIndex iN = 0; iN != domain.m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN = 0; iN != domain->m_feNodeManager.DataLengths(); ++iN)
     {
 
       for (int i=0; i<m_dim; ++i)
       {
-        if ( (*domain.m_feNodeManager.m_refposition)[iN][i] > m_min[i] && (*domain.m_feNodeManager.m_refposition)[iN][i] < m_max[i] )
+        if ( (*domain->m_feNodeManager.m_refposition)[iN][i] > m_min[i] && (*domain->m_feNodeManager.m_refposition)[iN][i] < m_max[i] )
         {
-          srand(domain.m_feNodeManager.m_localToGlobalMap[iN] + m_randSeed + i); // This ensures that the perturbation pattern is unaffected by domain partitioning.
-          (*domain.m_feNodeManager.m_refposition)[iN][i] += ((m_max[i] - m_min[i]) / m_numElemsTotal[i]) * ( (rand()*1.0) / RAND_MAX - 0.5) * 2 * m_fPerturb;
+          srand(domain->m_feNodeManager.m_localToGlobalMap[iN] + m_randSeed + i); // This ensures that the perturbation pattern is unaffected by domain partitioning.
+          (*domain->m_feNodeManager.m_refposition)[iN][i] += ((m_max[i] - m_min[i]) / m_numElemsTotal[i]) * ( (rand()*1.0) / RAND_MAX - 0.5) * 2 * m_fPerturb;
         }
       }
     }
@@ -716,51 +716,51 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
   if (std::fabs(m_skewAngle) > 0.0)
   {
-    for (localIndex iN = 0; iN != domain.m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN = 0; iN != domain->m_feNodeManager.DataLengths(); ++iN)
     {
-      (*domain.m_feNodeManager.m_refposition)[iN][0] -= ((*domain.m_feNodeManager.m_refposition)[iN][1] - m_skewCenter[1]) * std::tan(m_skewAngle);
+      (*domain->m_feNodeManager.m_refposition)[iN][0] -= ((*domain->m_feNodeManager.m_refposition)[iN][1] - m_skewCenter[1]) * std::tan(m_skewAngle);
     }
   }
 
   if (m_mapToRadial > 0)
   {
     // Map to radial mesh
-    for (localIndex iN = 0; iN != domain.m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN = 0; iN != domain->m_feNodeManager.DataLengths(); ++iN)
     {
-      meshTheta = (*domain.m_feNodeManager.m_refposition)[iN][1]*3.141592654/180.0;
+      meshTheta = (*domain->m_feNodeManager.m_refposition)[iN][1]*3.141592654/180.0;
       meshAxis = round(meshTheta*2.0/3.141592654);
       meshPhi = fabs(meshTheta - meshAxis*3.141592654/2.0);
       meshRout = m_max[0]/cos(meshPhi);
       
       if (m_mapToRadial > 1)
       {
-        meshRact = ((meshRout - m_min[0])/(m_max[0] - m_min[0]))*((*domain.m_feNodeManager.m_refposition)[iN][0]-m_min[0]) + m_min[0];
+        meshRact = ((meshRout - m_min[0])/(m_max[0] - m_min[0]))*((*domain->m_feNodeManager.m_refposition)[iN][0]-m_min[0]) + m_min[0];
       }
       else
       {
-        meshRact = (*domain.m_feNodeManager.m_refposition)[iN][0];
+        meshRact = (*domain->m_feNodeManager.m_refposition)[iN][0];
       }
       
-      (*domain.m_feNodeManager.m_refposition)[iN][0] = meshRact * cos(meshTheta);
-      (*domain.m_feNodeManager.m_refposition)[iN][1] = meshRact * sin(meshTheta);
+      (*domain->m_feNodeManager.m_refposition)[iN][0] = meshRact * cos(meshTheta);
+      (*domain->m_feNodeManager.m_refposition)[iN][1] = meshRact * sin(meshTheta);
 
       // add mapped values to nodesets
       if (m_mapToRadial > 1){
-        if( isEqual( (*domain.m_feNodeManager.m_refposition)[iN][0], -1*m_max[0], 1e-6 ) )
+        if( isEqual( (*domain->m_feNodeManager.m_refposition)[iN][0], -1*m_max[0], 1e-6 ) )
         {
-          domain.m_feNodeManager.m_Sets["xneg"].insert(iN);
+          domain->m_feNodeManager.m_Sets["xneg"].insert(iN);
         }
-        if( isEqual( (*domain.m_feNodeManager.m_refposition)[iN][0], m_max[0], 1e-6 ) )
+        if( isEqual( (*domain->m_feNodeManager.m_refposition)[iN][0], m_max[0], 1e-6 ) )
         {
-          domain.m_feNodeManager.m_Sets["xpos"].insert(iN);
+          domain->m_feNodeManager.m_Sets["xpos"].insert(iN);
         }
-        if( isEqual( (*domain.m_feNodeManager.m_refposition)[iN][1], -1*m_max[0], 1e-6 ) )
+        if( isEqual( (*domain->m_feNodeManager.m_refposition)[iN][1], -1*m_max[0], 1e-6 ) )
         {
-          domain.m_feNodeManager.m_Sets["yneg"].insert(iN);
+          domain->m_feNodeManager.m_Sets["yneg"].insert(iN);
         }
-        if( isEqual( (*domain.m_feNodeManager.m_refposition)[iN][1], m_max[0], 1e-6 ) )
+        if( isEqual( (*domain->m_feNodeManager.m_refposition)[iN][1], m_max[0], 1e-6 ) )
         {
-          domain.m_feNodeManager.m_Sets["ypos"].insert(iN);
+          domain->m_feNodeManager.m_Sets["ypos"].insert(iN);
         }
       }
     }
@@ -1016,17 +1016,17 @@ void MeshGenerator::GetElemToNodesRelationInBox ( const std::string& elementType
 }
 
 
-void MeshGenerator::RemapMesh ( PhysicalDomainT& domain )
+void MeshGenerator::RemapMesh ( PhysicalDomainT * domain )
 {
   // Node mapping
   if (!m_meshDx.empty())
   {
     const Table3D* tableDx = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDx);
 
-    for (localIndex iN=0; iN!=domain.m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN=0; iN!=domain->m_feNodeManager.DataLengths(); ++iN)
     {
-      realT dx=tableDx->Lookup((*domain.m_feNodeManager.m_refposition)[iN]);
-      (*domain.m_feNodeManager.m_refposition)[iN][0] += dx;
+      realT dx=tableDx->Lookup((*domain->m_feNodeManager.m_refposition)[iN]);
+      (*domain->m_feNodeManager.m_refposition)[iN][0] += dx;
     }
   }
 
@@ -1034,10 +1034,10 @@ void MeshGenerator::RemapMesh ( PhysicalDomainT& domain )
   {
     const Table3D* tableDy = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDy);
 
-    for (localIndex iN=0; iN!=domain.m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN=0; iN!=domain->m_feNodeManager.DataLengths(); ++iN)
     {
-      realT dy=tableDy->Lookup((*domain.m_feNodeManager.m_refposition)[iN]);
-      (*domain.m_feNodeManager.m_refposition)[iN][1] += dy;
+      realT dy=tableDy->Lookup((*domain->m_feNodeManager.m_refposition)[iN]);
+      (*domain->m_feNodeManager.m_refposition)[iN][1] += dy;
     }
   }
 
@@ -1045,10 +1045,10 @@ void MeshGenerator::RemapMesh ( PhysicalDomainT& domain )
   {
     const Table3D* tableDz = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDz);
 
-    for (localIndex iN=0; iN!=domain.m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN=0; iN!=domain->m_feNodeManager.DataLengths(); ++iN)
     {
-      realT dz=tableDz->Lookup((*domain.m_feNodeManager.m_refposition)[iN]);
-      (*domain.m_feNodeManager.m_refposition)[iN][2] += dz;
+      realT dz=tableDz->Lookup((*domain->m_feNodeManager.m_refposition)[iN]);
+      (*domain->m_feNodeManager.m_refposition)[iN][2] += dz;
     }
   }
 
