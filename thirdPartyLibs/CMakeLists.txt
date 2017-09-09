@@ -21,7 +21,7 @@ include(ExternalProject)
 
 
 
-
+set( dependency_list "" )
 ################################
 # HDF5
 ################################
@@ -51,10 +51,10 @@ else()
 #                         URL https://wci.llnl.gov/content/assets/docs/simulation/computer-codes/silo/silo-4.10.2/silo-4.10.2-bsd.tar.gz
 #                         URL_HASH MD5=60fef9ce373daf1e9cc8320cfa509bc5
 #                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
-                         URL ${CMAKE_SOURCE_DIR}/tpl_mirror/silo-4.10.2-bsd.tar.gz
-                         PREFIX ${PROJECT_BINARY_DIR}/silo
-                         INSTALL_DIR ${silo_install_dir}
-                         CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
+                          URL ${CMAKE_SOURCE_DIR}/tpl_mirror/silo-4.10.2-bsd.tar.gz
+                          PREFIX ${PROJECT_BINARY_DIR}/silo
+                          INSTALL_DIR ${silo_install_dir}
+                          CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
                                                CXX=${CMAKE_CXX_COMPILER}
                                                --prefix=${silo_install_dir}
                                                --disable-fortran
@@ -62,19 +62,12 @@ else()
                                                --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
                                                LDFLAGS=-ldl
                                                --disable-silex 
-                             BUILD_COMMAND make
-                             INSTALL_COMMAND make install )
+                          BUILD_COMMAND make -j8
+                          INSTALL_COMMAND make install )
 
-    set(SILO_INCLUDE_DIRS ${silo_install_dir}/include)
-    set(SILO_LIBRARY ${silo_install_dir}/lib/libsiloh5.a)    
+    set( dependency_list "${dependency_list};silo" )
 endif()
         
-blt_register_library( NAME silo
-                      INCLUDES ${SILO_INCLUDE_DIRS}
-                      LIBRARIES ${SILO_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON
-                      DEPENDS_ON hdf5 )
-
 
 
 
@@ -98,6 +91,7 @@ else()
                          GIT_TAG develop
                          PATCH_COMMAND git submodule init && git submodule update                         
                          PREFIX ${PROJECT_BINARY_DIR}/raja
+                         BUILD_COMMAND make -j8
                          INSTALL_COMMAND make install
                          INSTALL_DIR ${raja_install_dir}
                          CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -106,14 +100,8 @@ else()
                                     -DRAJA_ENABLE_TESTS=${RAJA_ENABLE_TESTS}
                                     -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-    set(RAJA_INCLUDE_DIRS ${raja_install_dir}/include )
-    set(RAJA_LIBRARY ${raja_install_dir}/lib/libRAJA.a )    
+    set( dependency_list "${dependency_list};raja" )
 endif()
-
-blt_register_library( NAME raja
-                      INCLUDES ${RAJA_INCLUDE_DIRS}
-                      LIBRARIES ${RAJA_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
 
 
 
@@ -135,6 +123,7 @@ else()
                          GIT_REPOSITORY git@github.com:LLNL/CHAI.git
                          GIT_TAG develop
                          PATCH_COMMAND git submodule init && git submodule update                         
+                         BUILD_COMMAND make -j8
                          INSTALL_DIR ${chai_install_dir}
                          INSTALL_COMMAND make install
                          CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -142,16 +131,9 @@ else()
                                     -DENABLE_CUDA=${CUDA_ENABLED}
                                     -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-    set(CHAI_INCLUDE_DIRS ${chai_install_dir}/include )
-    set(CHAI_LIBRARY ${chai_install_dir}/lib/libchai.a )    
+    set( dependency_list "${dependency_list};chai" )
 
 endif()
-
-blt_register_library( NAME chai
-                      INCLUDES ${CHAI_INCLUDE_DIRS}
-                      LIBRARIES ${CHAI_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON  )
-
 
 
 ################################
@@ -186,10 +168,7 @@ ExternalProject_Add( fparser
                                      cp fparser.hh fparser_gmpint.hh fparser_mpfr.hh fpconfig.hh ${FPARSER_INSTALL_DIR}/include;
                      )
 
-blt_register_library( NAME fparser
-                      INCLUDES ${FPARSER_INSTALL_DIR}/include 
-                      LIBRARIES ${FPARSER_INSTALL_DIR}/lib/libfparser.a
-                      TREAT_INCLUDES_AS_SYSTEM ON )
+    set( dependency_list "${dependency_list};fparser" )
 
 endif()
 
@@ -216,6 +195,7 @@ ExternalProject_Add( caliper
                      GIT_TAG master
                      PATCH_COMMAND git submodule init && git submodule update                         
                      URL ${CMAKE_SOURCE_DIR}/tpl_mirror/Caliper-master.zip
+                     BUILD_COMMAND make -j8
                      INSTALL_DIR ${CALIPER_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -223,12 +203,7 @@ ExternalProject_Add( caliper
                                 -DBUILD_SHARED_LIBS:BOOL=OFF
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-blt_register_library( NAME caliper
-                      INCLUDES ${CALIPER_INSTALL_DIR}/include 
-                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper.a 
-                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-common.a
-                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-reader.a
-                      TREAT_INCLUDES_AS_SYSTEM ON )
+    set( dependency_list "${dependency_list};caliper" )
 
 endif()
 
@@ -250,6 +225,7 @@ ExternalProject_Add( asmjit
 #                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
 #                     DOWNLOAD_NAME asmjit.zip
                      URL ${CMAKE_SOURCE_DIR}/tpl_mirror/asmjit-master.zip
+                     BUILD_COMMAND make -j8
                      INSTALL_DIR ${ASMJIT_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -275,6 +251,7 @@ ExternalProject_Add( mathpresso
 #                     DOWNLOAD_NAME mathpresso.zip
                      URL ${CMAKE_SOURCE_DIR}/tpl_mirror/mathpresso-master.zip
                      DEPENDS asmjit 
+                     BUILD_COMMAND make -j8
                      INSTALL_DIR ${MATHPRESSO_INSTALL_DIR}
                      INSTALL_COMMAND mkdir -p <INSTALL_DIR>/include &&
                                      mkdir -p <INSTALL_DIR>/lib &&
@@ -286,10 +263,7 @@ ExternalProject_Add( mathpresso
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-blt_register_library( NAME mathpresso
-                      INCLUDES ${MATHPRESSO_INSTALL_DIR}/include
-                      LIBRARIES ${MATHPRESSO_INSTALL_DIR}/lib/libmathpresso.a
-                      TREAT_INCLUDES_AS_SYSTEM ON )
+set( dependency_list "${dependency_list};mathpresso" )
 
 endif()
 
@@ -314,23 +288,15 @@ ExternalProject_Add( pugixml
 #                     URL_HASH MD5=0099563cb3f466fe03b10f9666c73993
 #                     DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
                      URL ${CMAKE_SOURCE_DIR}/tpl_mirror/pugixml.tar
+                     BUILD_COMMAND make -j8
                      INSTALL_DIR ${PUGIXML_INSTALL_DIR}
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  blt_register_library( NAME pugixml
-                        INCLUDES ${PUGIXML_INSTALL_DIR}/include
-                        LIBRARIES ${PUGIXML_INSTALL_DIR}/lib/libpugixml.a
-                        TREAT_INCLUDES_AS_SYSTEM ON )
-else()
-  blt_register_library( NAME pugixml
-                        INCLUDES ${PUGIXML_INSTALL_DIR}/include
-                        LIBRARIES ${PUGIXML_INSTALL_DIR}/lib64/libpugixml.a
-                        TREAT_INCLUDES_AS_SYSTEM ON )
-endif()
+set( dependency_list "${dependency_list};pugixml" )
+
 
 
 
@@ -382,12 +348,12 @@ ExternalProject_Add( trilinos
                                 -D Trilinos_ENABLE_STK=OFF
                                 -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON  )
 
+set( dependency_list "${dependency_list};trilinos" )
 
 
 
 blt_add_executable( NAME             tpl
-                    SOURCES          tpl.cpp
-                    DEPENDS_ON       hdf5 silo RAJA chai pugixml mathpresso
-                  )
-add_dependencies( tpl trilinos)
+                    SOURCES          tpl.cpp )
+
+add_dependencies( tpl ${dependency_list} )
 

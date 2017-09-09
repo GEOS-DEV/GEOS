@@ -18,7 +18,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #endif
-#include "optionparser/src/optionparser.h"
+#include "optionparser.h"
 
 #include "ObjectManagerBase.hpp"
 #include "PhysicsSolvers/PhysicsSolverManager.hpp"
