@@ -615,7 +615,7 @@ public:
     }
     case ( TypeIDs::mapPair_array_id ):
     {
-      return lambda( mapPair_array(1) );
+      return lambda( mapPair_array({1,1}) );
       break;
     }
     default:

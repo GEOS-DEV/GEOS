@@ -1,11 +1,11 @@
 /**
- * @file MapVectorContainer.hpp
+ * @file MappedVector.hpp
  * @date Aug 23, 2017
  * @authors settgast
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPVECTORCONTAINER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPVECTORCONTAINER_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
+#define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
 #include "KeyIndexT.hpp"
 #include "SFINAE_Macros.hpp"
@@ -26,6 +26,9 @@ class MappedVector
 {
 public:
   static_assert( std::is_same< T_PTR , T * >::value || std::is_same< T_PTR , std::unique_ptr<T> >::value,
+                 "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
+
+  static_assert( ( std::is_same< T_PTR , std::unique_ptr<T> >::value && OWNS_DATA ) || std::is_same< T_PTR , T * >::value,
                  "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
 
   using key_type      = KEY_TYPE ;
@@ -81,7 +84,7 @@ public:
    */
   inline T const * operator[]( INDEX_TYPE index ) const
   {
-    return ( index>-1 && index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>(&(*(m_values[index].second))) : nullptr ;
+    return ( index>KeyIndex::invalid_index && index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>(&(*(m_values[index].second))) : nullptr ;
   }
 
   /**
@@ -120,7 +123,7 @@ public:
   {
     INDEX_TYPE index = keyIndex.Index();
 
-    if( (index==-1) || (m_values[index].first!=keyIndex.Key()) )
+    if( (index==KeyIndex::invalid_index) || (m_values[index].first!=keyIndex.Key()) )
     {
       index = getIndex( keyIndex.Key() );
       keyIndex.setIndex(index);
@@ -197,7 +200,7 @@ public:
   inline INDEX_TYPE getIndex( KEY_TYPE const & key ) const
   {
     typename LookupMapType::const_iterator iter = m_keyLookup.find(key);
-    return ( iter!=m_keyLookup.end() ? iter->second : -1 );
+    return ( iter!=m_keyLookup.end() ? iter->second : KeyIndex::invalid_index );
   }
 
 
@@ -234,6 +237,7 @@ public:
       delete m_values[index].second;
     }
     m_values[index].second = nullptr;
+    m_constValues[index].second = nullptr;
     return;
   }
 
@@ -250,6 +254,7 @@ public:
   erase( INDEX_TYPE index )
   {
     m_values[index].second = nullptr;
+    m_constValues[index].second = nullptr;
     return;
   }
 
@@ -281,7 +286,7 @@ public:
   {
     INDEX_TYPE index = keyIndex.Index();
 
-    if( (index==-1) || (m_values[index].first!=keyIndex.Key()) )
+    if( (index==KeyIndex::invalid_index) || (m_values[index].first!=keyIndex.Key()) )
     {
       index = getIndex( keyIndex.Key() );
       keyIndex.setIndex(index);
@@ -331,7 +336,7 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const 
 {
   typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
 
-  INDEX_TYPE key = -1;
+  INDEX_TYPE key = KeyIndex::invalid_index;
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
@@ -372,4 +377,4 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const 
 return &(*(m_values[key].second));
 }
 
-#endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPVECTORCONTAINER_HPP_ */
+#endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_ */

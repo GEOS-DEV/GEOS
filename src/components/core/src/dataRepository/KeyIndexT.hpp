@@ -1,16 +1,16 @@
 /**
- * @file DataKey.hpp
+ * @file KeyIndexT.hpp
  * @date Aug 23, 2017
  * @authors settgast
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_DATAKEY_HPP_
-#define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_DATAKEY_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYINDEXT_HPP_
+#define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYINDEXT_HPP_
 
 #include <string>
 
 /**
- * @class DataKeyT
+ * @class KeyIndexT
  * @tparam KEY_TYPE the key type
  * @tparam INDEX_TYPE the index type
  * @tparam INVALID_INDEX the value of an unset/invalid index
@@ -22,7 +22,7 @@ template< typename KEY_TYPE = std::string, typename INDEX_TYPE = int, int INVALI
 class KeyIndexT
 {
 public:
-  constexpr static int invalid_index = INVALID_INDEX;
+  constexpr static INDEX_TYPE invalid_index = INVALID_INDEX;
 
   /**
    * deleted default constructor
@@ -31,7 +31,7 @@ public:
 
   /**
    * constructor sets the value of m_name
-   * @param name the key that defines the dataKey
+   * @param name the key that defines the KeyIndex
    */
   KeyIndexT( KEY_TYPE const & key ):
     m_key(key),
@@ -93,4 +93,4 @@ private:
   INDEX_TYPE m_index;
 };
 
-#endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_DATAKEY_HPP_ */
+#endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYINDEXT_HPP_ */
