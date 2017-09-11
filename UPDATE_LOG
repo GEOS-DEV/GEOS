@@ -1,5 +1,16 @@
 
 
+Mon Sep 11 16:22:02 2017 Randolph R. Settgast
+v4.0.9
+
+Renamed/Updated MappedVector class. Added iterators, and proper const_iterator.
+
+Changed ManagedGroup::GetView and GetGroup to return pointers instead of references to keep interface cleaner. 
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/4
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/constitutivepackage1/pull-requests/2
+
+
 Tue Sep  5 23:19:46 2017 Randolph R. Settgast
 v0.0.8
 
