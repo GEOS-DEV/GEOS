@@ -50,7 +50,7 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
-                   DEPENDS_ON ${componentlistlink} "-lz" geosx_core ${extraComponentsListLink}) 
+                   DEPENDS_ON ${componentlistlink} ${extraComponentsListLink}) 
 
                    
 if (ENABLE_DOCS)

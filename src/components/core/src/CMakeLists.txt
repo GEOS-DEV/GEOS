@@ -24,6 +24,7 @@ add_subdirectory(MeshUtilities)
 add_subdirectory(MPI_Communications)
 add_subdirectory(PhysicsSolvers)
 add_subdirectory(python)
+add_subdirectory(systemSolverInterface)
 
 
 # Python config
@@ -43,5 +44,5 @@ blt_add_library( NAME                  geosx_core
                  SOURCES               ${geosx_core_sources}
                  HEADERS               ${geosx_headers}
                  HEADERS_OUTPUT_SUBDIR geosx_core
-                 DEPENDS_ON            cxx-utilities slic sidre conduit hdf5 pugixml spio silo trilinos optionparser ${extraComponentsListLink} ${thirdPartyLibs} )
+                 DEPENDS_ON            optionparser cxx-utilities slic sidre conduit  pugixml spio silo hdf5 trilinos  ${extraComponentsListLink} ${thirdPartyLibs} )
                  

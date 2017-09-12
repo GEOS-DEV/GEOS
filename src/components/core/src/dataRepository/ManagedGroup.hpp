@@ -353,35 +353,6 @@ public:
   { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapper<T>( keyIndex ) ); }
 
 
-
-//
-//
-//  template< typename T >
-//  ViewWrapper<T> const & getWrapper( std::size_t const index ) const
-//  { return *getWrapperPtr<T>(index); }
-//
-//  template< typename T >
-//  ViewWrapper<T> & getWrapper( std::size_t const index )
-//  { return *getWrapperPtr<T>(index); }
-//
-//  template< typename T >
-//  ViewWrapper<T> const & getWrapper( std::string const & name ) const
-//  { return *getWrapperPtr<T>(name);  }
-//
-//  template< typename T >
-//  ViewWrapper<T>& getWrapper( std::string const & name )
-//  { return *getWrapperPtr<T>(name);  }
-//
-//  template< typename T >
-//  ViewWrapper<T> const & getWrapper( viewWrapperMap::KeyIndex & keyIndex ) const
-//  { return *getWrapperPtr<T>(keyIndex);  }
-//
-//  template< typename T >
-//  ViewWrapper<T>& getWrapper( viewWrapperMap::KeyIndex & keyIndex )
-//  { return *getWrapperPtr<T>(keyIndex);  }
-
-
-
   template< typename T >
   view_rtype_const<T> getData( size_t const index ) const
   { return getWrapper<T>(index)->data(); }
@@ -406,6 +377,25 @@ public:
   view_rtype<T> getData( viewWrapperMap::KeyIndex & keyIndex )
   { return getWrapper<T>( keyIndex )->data(); }
 
+  /**
+   *
+   * @param keyIndex
+   * @return
+   * @note BREAKS const correctness for keyIndex
+   */
+  template< typename T >
+  view_rtype_const<T> getData( viewWrapperMap::KeyIndex const & keyIndex ) const
+  { return getWrapper<T>( const_cast<viewWrapperMap::KeyIndex & >(keyIndex) )->data(); }
+
+  /**
+   *
+   * @param keyIndex
+   * @return
+   * @note BREAKS const correctness for keyIndex
+   */
+  template< typename T >
+  view_rtype<T> getData( viewWrapperMap::KeyIndex const & keyIndex )
+  { return getWrapper<T>( const_cast<viewWrapperMap::KeyIndex & >(keyIndex) )->data(); }
 
 
   template< typename T >

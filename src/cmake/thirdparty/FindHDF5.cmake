@@ -1,38 +1,25 @@
 ###############################################################################
-#
 # Setup HDF5
-# This file defines:
-#  HDF5_FOUND - If HDF5 was found
-#  HDF5_INCLUDE_DIRS - The HDF5 include directories
-#  HDF5_LIBRARY - The HDF5 library
-
-# first Check for HDF5_DIR
+# Wrapper around standard CMake' HDF5 Find Logic.
+#
 
 if(NOT HDF5_DIR)
     MESSAGE(FATAL_ERROR "Could not find HDF5. HDF5 support needs explicit HDF5_DIR")
 endif()
 
-#find includes
-find_path( HDF5_INCLUDE_DIRS hdf5.h
-           PATHS  ${HDF5_DIR}/include/
-           NO_DEFAULT_PATH
-           NO_CMAKE_ENVIRONMENT_PATH
-           NO_CMAKE_PATH
-           NO_SYSTEM_ENVIRONMENT_PATH
-           NO_CMAKE_SYSTEM_PATH)
+# CMake's FindHDF5 module uses the HDF5_ROOT env var
+set(HDF5_ROOT ${HDF5_DIR})
+set(ENV{HDF5_ROOT} ${HDF5_ROOT}/bin)
 
-find_library( HDF5_LIBRARY NAMES hdf5 libhdf5
-              PATHS ${HDF5_DIR}/lib
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
+# Use CMake's FindHDF5 module, which uses hdf5's compiler wrappers to extract
+# all the info about the hdf5 install
+include(FindHDF5)
 
+message(STATUS "HDF5_INCLUDE_DIRS: ${HDF5_INCLUDE_DIRS}")
+message(STATUS "HDF5_LIBRARIES: ${HDF5_LIBRARIES}")
 
-include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set HDF5_FOUND to TRUE
-# if all listed variables are TRUE
-find_package_handle_standard_args(HDF5  DEFAULT_MSG
-                                  HDF5_INCLUDE_DIRS
-                                  HDF5_LIBRARY )
+# FindHDF5 sets HDF5_DIR to it's installed CMake info if it exists
+# we want to keep HDF5_DIR as the root dir of the install to be 
+# consistent with other packages
+
+set(HDF5_DIR ${HDF5_ROOT} CACHE PATH "" FORCE)
