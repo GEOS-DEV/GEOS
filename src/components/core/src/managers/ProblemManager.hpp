@@ -134,7 +134,6 @@ public:
 
   void ReadRestartOverwrite( const std::string& restartFileName );
 
-
   void ApplyInitialConditions();
 
   DomainPartition * getDomainPartition();

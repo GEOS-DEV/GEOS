@@ -741,6 +741,35 @@ void ProblemManager::ApplyInitialConditions()
 
 }
 
+void ProblemManager::WriteRestart( int32 const cycleNumber )
+{
+  char fileName[200] = {0};
+  sprintf(fileName, "%s_%09d", "restart", cycleNumber);
+
+  this->writeRestart( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
+}
+
+void ProblemManager::ReadRestartFile(  )
+{
+  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  string const &  restartFileName = commandLine->getReference<std::string>(keys::restartFileName);
+  if( !(restartFileName.empty() ) )
+  {
+    this->reconstructSidreTree(restartFileName, "sidre_hdf5", MPI_COMM_WORLD);
+  }
+}
+
+void ProblemManager::ReadRestartOverwrite()
+{
+  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  string const &  restartFileName = commandLine->getReference<std::string>(keys::restartFileName);
+  if( !(restartFileName.empty() ) )
+  {
+    this->loadSidreExternalData(restartFileName, MPI_COMM_WORLD);
+  }
+}
+
+
 
 void ProblemManager::WriteRestart( int32 const cycleNumber )
 {
