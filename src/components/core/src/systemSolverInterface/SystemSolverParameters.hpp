@@ -16,6 +16,8 @@ namespace geosx
 class SystemSolverParameters : public dataRepository::ManagedGroup
 {
 public:
+  SystemSolverParameters() = delete;
+
   SystemSolverParameters( std::string const & name,
                           ManagedGroup * const parent );
   virtual ~SystemSolverParameters();
