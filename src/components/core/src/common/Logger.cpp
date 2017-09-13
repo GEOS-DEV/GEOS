@@ -11,7 +11,8 @@
 
 namespace geosx
 {
- inline void abort()
+
+void abort()
 {
 #if USE_MPI == 1
   int mpi = 0;

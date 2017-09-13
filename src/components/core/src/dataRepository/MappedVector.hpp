@@ -7,9 +7,12 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 #define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
+#include "common/Logger.hpp"
 #include "KeyIndexT.hpp"
 #include "SFINAE_Macros.hpp"
 
+namespace geosx
+{
 /**
  * @class MappedVector
  * This class defines a stl-like container that stores values in an stl vector, and has a map lookup table to
@@ -123,11 +126,18 @@ public:
   {
     INDEX_TYPE index = keyIndex.Index();
 
-    if( (index==KeyIndex::invalid_index) || (m_values[index].first!=keyIndex.Key()) )
+    if( index==KeyIndex::invalid_index )
     {
       index = getIndex( keyIndex.Key() );
       keyIndex.setIndex(index);
     }
+#if RANGE_CHECKING==1
+    else if (m_values[index].first!=keyIndex.Key() )
+    {
+      index = getIndex( keyIndex.Key() );
+      keyIndex.setIndex(index);
+    }
+#endif
 
     return this->operator[]( index );
   }
@@ -139,6 +149,40 @@ public:
    */
   inline T * operator[]( KeyIndex & keyIndex )
   { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyIndex) ); }
+
+
+
+  /**
+   *
+   * @param keyIndex
+   * @return pointer to const T
+   */
+  inline T const * operator[]( KeyIndex const & keyIndex ) const
+  {
+    INDEX_TYPE index = keyIndex.Index();
+
+    if( index==KeyIndex::invalid_index )
+    {
+      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ): invalid key index passed as const into accessor function\n");
+    }
+#if RANGE_CHECKING==1
+    else if (m_values[index].first!=keyIndex.Key() )
+    {
+      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ): inconsistent key passed as const into accessor function\n")
+    }
+#endif
+
+    return this->operator[]( index );
+  }
+
+  /**
+   *
+   * @param keyIndex
+   * @return pointer to T
+   */
+  inline T * operator[]( KeyIndex const & keyIndex )
+  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyIndex) ); }
+
 
   ///@}
 
@@ -367,14 +411,16 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const 
         m_values[key].second = std::move( source );
         m_constValues[key].second =  &(*(m_values[key].second));
       }
-      else
+      else if( source->get_typeid() != m_values[key].second->get_typeid() )
       {
-        // throw error?
+        string const message = "MappedVector::insert(): Tried to insert existing key that was not empty without overwrite flag\n";
+        GEOS_ERROR(message);
       }
     }
   }
 
 return &(*(m_values[key].second));
+}
 }
 
 #endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_ */
