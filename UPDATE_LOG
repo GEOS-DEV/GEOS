@@ -1,5 +1,12 @@
 
 
+Wed Sep 13 00:18:37 2017 Randolph R. Settgast
+v0.0.10
+
+this pr separates tpl's from the main build. They are now built manually prior to the main build, albeit using the same cmake build procedure as the main build. The config-build.py script option -tpl has been added to indicate setup of the tpl build.
+
+
+
 Mon Sep 11 16:22:02 2017 Randolph R. Settgast
 v4.0.9
 
