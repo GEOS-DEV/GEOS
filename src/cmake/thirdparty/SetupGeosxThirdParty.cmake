@@ -51,9 +51,6 @@ endif()
 
 
 
-
-
-
 get_filename_component( TEMP_DIR "${CMAKE_INSTALL_PREFIX}" NAME)
 string(REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
 set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR2}" )

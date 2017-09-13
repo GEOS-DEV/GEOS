@@ -127,6 +127,13 @@ public:
 
   void WriteSilo( integer const cycleNumber, real64 const problemTime );
 
+  // function to create and dump the restart file
+  void WriteRestart( int32 const cycleNumber );
+
+  void ReadRestartFile(  );
+
+  void ReadRestartOverwrite();
+
   void ApplyInitialConditions();
 
   DomainPartition * getDomainPartition();

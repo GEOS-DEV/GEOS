@@ -58,6 +58,9 @@ int main( int argc, char *argv[] )
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
+
+  problemManager.ReadRestartFile();
+
   problemManager.ParseInputFile();
 
 
@@ -70,6 +73,9 @@ int main( int argc, char *argv[] )
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   problemManager.ApplyInitialConditions();
+
+  problemManager.ReadRestartOverwrite();
+
   std::cout << std::endl << "Running simulation:" << std::endl;
 
   GEOS_MARK_BEGIN("RunSimulation");
