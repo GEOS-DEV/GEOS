@@ -68,14 +68,14 @@ class R1TensorT : public TensorBaseT< T_dim >
 
 //**** Overloaded arithmetic operators  ******************************************
 
-// Scalar product
-  friend R1TensorT<T_dim> operator*(realT k, const R1TensorT<T_dim> &V){ return V*k; }
-  friend R1TensorT<T_dim> operator*(R1TensorT<T_dim> V, realT k){return V*=k; }
-// Dot product *
-  friend realT operator*(const R1TensorT<T_dim> &Va, const R1TensorT<T_dim> &Vb){return Dot(Va,Vb); }
-
-// Division by scalar
-  friend R1TensorT<T_dim> operator/(R1TensorT<T_dim> V, realT k){return V/=k; }
+//// Scalar product
+//  friend R1TensorT<T_dim> operator*(realT k, const R1TensorT<T_dim> &V){ return V*k; }
+//  friend R1TensorT<T_dim> operator*(R1TensorT<T_dim> V, realT k){return V*=k; }
+//// Dot product *
+//  friend realT operator*(const R1TensorT<T_dim> &Va, const R1TensorT<T_dim> &Vb){return Dot(Va,Vb); }
+//
+//// Division by scalar
+//  friend R1TensorT<T_dim> operator/(R1TensorT<T_dim> V, realT k){return V/=k; }
 
 
 public:
