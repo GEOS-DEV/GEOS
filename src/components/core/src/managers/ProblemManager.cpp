@@ -30,22 +30,22 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-  namespace keys
-  {
-    std::string const commandLine = "commandLine";
-    std::string const meshGenerators = "meshGenerators";
-    std::string const inputFileName = "inputFileName";
-    std::string const restartFileName = "restartFileName";
-    std::string const beginFromRestart = "beginFromRestart";
-    std::string const xPartitionsOverride = "xPartitionsOverride";
-    std::string const yPartitionsOverride = "yPartitionsOverride";
-    std::string const zPartitionsOverride = "zPartitionsOverride";
-    std::string const overridePartitionNumbers = "overridePartitionNumbers";
-    std::string const schemaLevel = "schemaLevel";
-  }
-}
+//namespace dataRepository
+//{
+//  namespace keys
+//  {
+//    std::string const commandLine = "commandLine";
+//    std::string const meshGenerators = "meshGenerators";
+//    std::string const inputFileName = "inputFileName";
+//    std::string const restartFileName = "restartFileName";
+//    std::string const beginFromRestart = "beginFromRestart";
+//    std::string const xPartitionsOverride = "xPartitionsOverride";
+//    std::string const yPartitionsOverride = "yPartitionsOverride";
+//    std::string const zPartitionsOverride = "zPartitionsOverride";
+//    std::string const overridePartitionNumbers = "overridePartitionNumbers";
+//    std::string const schemaLevel = "schemaLevel";
+//  }
+//}
 
 using namespace dataRepository;
 using namespace constitutive;
@@ -82,8 +82,8 @@ ProblemManager::~ProblemManager()
 void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
 {
   RegisterGroup<DomainPartition>(keys::domain)->BuildDataStructure(nullptr);
-  RegisterGroup<ManagedGroup>(keys::commandLine);
-  RegisterGroup<ManagedGroup>(keys::meshGenerators);
+  RegisterGroup<ManagedGroup>(groupKeys.commandLine);
+  RegisterGroup<ManagedGroup>(groupKeys.meshGenerators);
   RegisterGroup<ConstitutiveManager>(keys::ConstitutiveManager);
   RegisterGroup<FiniteElementManager>(keys::finiteElementManager);
 //  RegisterGroup<BoundaryConditionManager>(keys::boundaryConditionMananger);
@@ -100,13 +100,13 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
 //  docNode->getChildNode("name")->setVerbosity(2);
 
   // Command line documentation
-  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   cxx_utilities::DocumentationNode * const commandDocNode = commandLine->getDocumentationNode();
   commandDocNode->setShortDescription("Command line input parameters");
   commandDocNode->setVerbosity(2);
 
-  commandDocNode->AllocateChildNode( keys::inputFileName,
-                                    keys::inputFileName,
+  commandDocNode->AllocateChildNode( viewKeys.inputFileName.Key(),
+                                    viewKeys.inputFileName.Key(),
                                     -1,
                                     "string",
                                     "",
@@ -118,8 +118,8 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                     0,
                                     0 );
 
-  commandDocNode->AllocateChildNode( keys::restartFileName,
-                                     keys::restartFileName,
+  commandDocNode->AllocateChildNode( viewKeys.restartFileName.Key(),
+                                     viewKeys.restartFileName.Key(),
                                      -1,
                                      "string",
                                      "",
@@ -131,8 +131,8 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0,
                                      0 );
 
-  commandDocNode->AllocateChildNode( keys::beginFromRestart,
-                                     keys::beginFromRestart,
+  commandDocNode->AllocateChildNode( viewKeys.beginFromRestart.Key(),
+                                     viewKeys.beginFromRestart.Key(),
                                      -1,
                                      "int32",
                                      "",
@@ -144,8 +144,8 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0,
                                      0 );
 
-  commandDocNode->AllocateChildNode( keys::xPartitionsOverride,
-                                     keys::xPartitionsOverride,
+  commandDocNode->AllocateChildNode( viewKeys.xPartitionsOverride.Key(),
+                                     viewKeys.xPartitionsOverride.Key(),
                                      -1,
                                      "int32",
                                      "",
@@ -157,8 +157,8 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0,
                                      0 );
 
-  commandDocNode->AllocateChildNode( keys::yPartitionsOverride,
-                                     keys::yPartitionsOverride,
+  commandDocNode->AllocateChildNode( viewKeys.yPartitionsOverride.Key(),
+                                     viewKeys.yPartitionsOverride.Key(),
                                      -1,
                                      "int32",
                                      "",
@@ -170,8 +170,8 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0,
                                      0 );
 
-  commandDocNode->AllocateChildNode( keys::zPartitionsOverride,
-                                     keys::zPartitionsOverride,
+  commandDocNode->AllocateChildNode( viewKeys.zPartitionsOverride.Key(),
+                                     viewKeys.zPartitionsOverride.Key(),
                                      -1,
                                      "int32",
                                      "",
@@ -183,8 +183,8 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0,
                                      0 );
 
-  commandDocNode->AllocateChildNode( keys::overridePartitionNumbers,
-                                     keys::overridePartitionNumbers,
+  commandDocNode->AllocateChildNode( viewKeys.overridePartitionNumbers.Key(),
+                                     viewKeys.overridePartitionNumbers.Key(),
                                      -1,
                                      "int32",
                                      "",
@@ -209,8 +209,8 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0,
                                      0 );
 
-  commandDocNode->AllocateChildNode( keys::schemaLevel,
-                                     keys::schemaLevel,
+  commandDocNode->AllocateChildNode( viewKeys.schemaLevel.Key(),
+                                     viewKeys.schemaLevel.Key(),
                                      -1,
                                      "uint32",
                                      "",
@@ -223,7 +223,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0 );
 
   // Mesh node documentation
-  dataRepository::ManagedGroup * meshGenerators = GetGroup<ManagedGroup>(keys::meshGenerators);
+  dataRepository::ManagedGroup * meshGenerators = GetGroup<ManagedGroup>(groupKeys.meshGenerators);
   cxx_utilities::DocumentationNode * const meshDocNode = meshGenerators->getDocumentationNode();
   meshDocNode->setName("Mesh");
   meshDocNode->setShortDescription("Mesh Generators");
@@ -232,18 +232,18 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
 
 void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
 {
-  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
+  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->RegisterDocumentationNodes();
   
-  ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(keys::inputFileName);
-  ViewWrapper<std::string>::rtype  restartFileName = commandLine->getData<std::string>(keys::restartFileName);
-  int32&        beginFromRestart = *(commandLine->getData<int32>(keys::beginFromRestart));
-  int32&        xPartitionsOverride = *(commandLine->getData<int32>(keys::xPartitionsOverride));
-  int32&        yPartitionsOverride = *(commandLine->getData<int32>(keys::yPartitionsOverride));
-  int32&        zPartitionsOverride = *(commandLine->getData<int32>(keys::zPartitionsOverride));
-  int32&        overridePartitionNumbers = *(commandLine->getData<int32>(keys::overridePartitionNumbers));
+  ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
+  ViewWrapper<std::string>::rtype  restartFileName = commandLine->getData<std::string>(viewKeys.restartFileName);
+  int32&        beginFromRestart = *(commandLine->getData<int32>(viewKeys.beginFromRestart));
+  int32&        xPartitionsOverride = *(commandLine->getData<int32>(viewKeys.xPartitionsOverride));
+  int32&        yPartitionsOverride = *(commandLine->getData<int32>(viewKeys.yPartitionsOverride));
+  int32&        zPartitionsOverride = *(commandLine->getData<int32>(viewKeys.zPartitionsOverride));
+  int32&        overridePartitionNumbers = *(commandLine->getData<int32>(viewKeys.overridePartitionNumbers));
   ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
-  uint32&        schemaLevel = *(commandLine->getData<uint32>(keys::schemaLevel));
+  uint32&        schemaLevel = *(commandLine->getData<uint32>(viewKeys.schemaLevel));
   schemaLevel = 0;
 
   // Set the options structs and parse
@@ -374,8 +374,8 @@ void ProblemManager::ParseInputFile()
 {
   DomainPartition * domain  = getDomainPartition();
 
-  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(keys::inputFileName);
+  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
 
 
 #if USE_PYTHON==1
@@ -420,7 +420,7 @@ void ProblemManager::ParseInputFile()
   // Call manager readXML methods:
   
   {
-    ManagedGroup * meshGenerators = this->GetGroup(keys::meshGenerators);
+    ManagedGroup * meshGenerators = this->GetGroup(groupKeys.meshGenerators);
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Mesh");
     std::cout << "Reading Mesh Block:" << std::endl;
     if (topLevelNode == NULL)
@@ -492,7 +492,7 @@ void ProblemManager::ParseInputFile()
 
   // Documentation output
   ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
-  uint32& schemaLevel = *(commandLine->getData<uint32>(keys::schemaLevel));
+  uint32& schemaLevel = *(commandLine->getData<uint32>(viewKeys.schemaLevel));
 
 //  std::cout << schemaName << ", " << schemaName.empty() << ", " << schemaName.size() << std::endl;
 
@@ -581,10 +581,10 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   DomainPartition * domain  = getDomainPartition();
   domain->RegisterDocumentationNodes();
 
-  ManagedGroup const * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  int32 const & xparCL = *(commandLine->getData<int32>(keys::xPartitionsOverride));
-  int32 const & yparCL = *(commandLine->getData<int32>(keys::yPartitionsOverride));
-  int32 const & zparCL = *(commandLine->getData<int32>(keys::zPartitionsOverride));
+  ManagedGroup const * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  int32 const & xparCL = *(commandLine->getData<int32>(viewKeys.xPartitionsOverride));
+  int32 const & yparCL = *(commandLine->getData<int32>(viewKeys.yPartitionsOverride));
+  int32 const & zparCL = *(commandLine->getData<int32>(viewKeys.zPartitionsOverride));
 
   PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
   bool repartition = false;
@@ -612,7 +612,7 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   }
 
   // Generate Meshes
-  ManagedGroup * meshGenerators = this->GetGroup(keys::meshGenerators);
+  ManagedGroup * meshGenerators = this->GetGroup(groupKeys.meshGenerators);
   meshGenerators->forSubGroups<MeshGenerator>([this, domain]( MeshGenerator * meshGen ) -> void
   {
     meshGen->GenerateMesh( domain );

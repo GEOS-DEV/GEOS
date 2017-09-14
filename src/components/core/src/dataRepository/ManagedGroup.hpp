@@ -113,17 +113,21 @@ public:
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
   T * RegisterGroup( std::string const & name )
   {
-//    T* temp = dynamic_cast<T*>(this);
     return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
-//    return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
+  }
+
+  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
+  T * RegisterGroup( subGroupMap::KeyIndex & keyIndex )
+  {
+    T * rval = RegisterGroup<T>( keyIndex.Key(), std::move(std::make_unique< T >( keyIndex.Key(), this )) );
+    keyIndex.setIndex( this->m_subGroups.getIndex(keyIndex.Key()) );
+    return rval;
   }
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
   T * RegisterGroup( std::string const & name, std::string const & catalogName )
   {
-//    T* temp = dynamic_cast<T*>(this);
     std::unique_ptr<TBASE> newGroup = TBASE::CatalogInterface::Factory(catalogName, name, this );
-//    std::unique_ptr<T> newGroup = T::CatalogInterface::Factory(catalogName, name, (this) );
     return RegisterGroup<T,TBASE>( name, std::move(newGroup) );
   }
 
@@ -219,7 +223,10 @@ public:
 
 
   template< typename T , typename TBASE=T >
-  ViewWrapper<TBASE> * RegisterViewWrapper( std::string const & name, std::size_t * const rkey = nullptr );
+  ViewWrapper<TBASE> * RegisterViewWrapper( std::string const & name, viewWrapperMap::KeyIndex::index_type * const rkey = nullptr );
+
+  template< typename T , typename TBASE=T >
+  ViewWrapper<TBASE> * RegisterViewWrapper( ManagedGroup::viewWrapperMap::KeyIndex & viewKey );
 
 
   ViewWrapperBase * RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type );
@@ -604,7 +611,7 @@ T * ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE
 
 
 template< typename T , typename TBASE >
-ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name, std::size_t * const rkey )
+ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name, ViewKey::index_type * const rkey )
 {
   m_wrappers.insert( name, std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ) );
   ViewWrapper<TBASE> * const rval = getWrapper<TBASE>(name);
@@ -612,6 +619,16 @@ ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name
   {
     rval->resize(this->size());
   }
+  return rval;
+}
+
+template< typename T , typename TBASE >
+ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( ViewKey & viewKey )
+{
+  ViewKey::index_type index;
+  ViewWrapper<TBASE> * const rval = RegisterViewWrapper<T,TBASE>( viewKey.Key(), &index );
+  viewKey.setIndex(index);
+
   return rval;
 }
 

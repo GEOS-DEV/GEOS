@@ -14,8 +14,22 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
                                                 ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
-  // TODO Auto-generated constructor stub
-
+  RegisterViewWrapper<int32>( viewKeys.verbosity );
+  RegisterViewWrapper<real64>( viewKeys.krylovTol );
+  RegisterViewWrapper<int32>( viewKeys.numKrylovIter );
+  RegisterViewWrapper<int32>( viewKeys.kspace );
+  RegisterViewWrapper<real64>( viewKeys.ilut_fill );
+  RegisterViewWrapper<real64>( viewKeys.ilut_drop );
+  RegisterViewWrapper<int32>( viewKeys.useMLPrecond );
+  RegisterViewWrapper<int32>( viewKeys.useInnerSolver );
+  RegisterViewWrapper<int32>( viewKeys.scalingOption );
+  RegisterViewWrapper<int32>( viewKeys.useBicgstab );
+  RegisterViewWrapper<int32>( viewKeys.useDirectSolver );
+  RegisterViewWrapper<real64>( viewKeys.KrylovResidualInit );
+  RegisterViewWrapper<real64>( viewKeys.KrylovResidualFinal );
+  RegisterViewWrapper<int32>( viewKeys.useNewtonSolve );
+  RegisterViewWrapper<real64>( viewKeys.newtonTol );
+  RegisterViewWrapper<int32>( viewKeys.maxIterNewton );
 }
 
 SystemSolverParameters::~SystemSolverParameters()
@@ -34,8 +48,8 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
   docNode->setShortDescription("Parameters for linear/non-linear system solver");
 
 
-  docNode->AllocateChildNode( keys.verbosity.Key(),
-                              keys.verbosity.Key(),
+  docNode->AllocateChildNode( viewKeys.verbosity.Key(),
+                              viewKeys.verbosity.Key(),
                               -1,
                               "int32",
                               "int32",

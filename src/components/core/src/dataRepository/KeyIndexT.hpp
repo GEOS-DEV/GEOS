@@ -22,6 +22,10 @@ template< typename KEY_TYPE = std::string, typename INDEX_TYPE = int, int INVALI
 class KeyIndexT
 {
 public:
+  using key_type      = KEY_TYPE ;
+  using index_type    = INDEX_TYPE;
+
+
   constexpr static INDEX_TYPE invalid_index = INVALID_INDEX;
 
   /**
