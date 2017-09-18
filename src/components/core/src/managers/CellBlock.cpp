@@ -59,7 +59,7 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
     viewKeys(),
     groupKeys(),
     m_toNodesRelation(this->RegisterViewWrapper< Array2dT<int32> >(viewKeys.nodeList.Key())->reference()),
-    m_toFacesRelation(this->RegisterViewWrapper< Array2dT<int32> >(viewKeys.nodeList.Key())->reference())
+    m_toFacesRelation(this->RegisterViewWrapper< Array2dT<int32> >(viewKeys.faceList.Key())->reference())
 
 {
   m_toNodesRelation.resize2(0,8);

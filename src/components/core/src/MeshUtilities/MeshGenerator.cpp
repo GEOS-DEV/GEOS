@@ -439,8 +439,8 @@ void MeshGenerator::ReadXML_PostProcess()
 void MeshGenerator::GenerateMesh( DomainPartition * domain )
 {
 
-  ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-  meshBodies->RegisterGroup<MeshBody>( this->getName() );
+//  ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+//  meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);
