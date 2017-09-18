@@ -50,10 +50,11 @@
 namespace geosx
 {
 
-EdgeManager::EdgeManager( ObjectManagerBase * const parent ):
-    ObjectManagerBase("EdgeManager",parent)
+EdgeManager::EdgeManager( std::string const & name,
+                          ManagedGroup * const parent ):
+    ObjectManagerBase(name,parent)
 {
-  FixedOneToManyRelation& toNodesRelation = this->RegisterViewWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
+  FixedOneToManyRelation& toNodesRelation = this->RegisterViewWrapper<FixedOneToManyRelation>(string("edgesToNodes"))->reference();
   this->RegisterViewWrapper<UnorderedVariableOneToManyRelation>(string("edgesToFaces"));
 
   toNodesRelation.resize2( 0, 2 );
@@ -68,11 +69,11 @@ EdgeManager::~EdgeManager()
 
 
 
-void EdgeManager::BuildEdges( const FaceManager * faceManager, const NodeManager * nodeManager )
+void EdgeManager::BuildEdges( const FaceManager * const faceManager, const NodeManager * const nodeManager )
 {
 
 
-  if (faceManager->DataLengths() == 0 || nodeManager->DataLengths() == 0)
+  if (faceManager->size() == 0 || nodeManager->size() == 0)
     return;
 
   localIndex numMultiNodeEdges = 0;
@@ -250,154 +251,6 @@ void EdgeManager::BuildEdges( const FaceManager * faceManager, const NodeManager
 }
 
 
-/*
-
-void EdgeManager::BuildEdges( const ElementManagerT& elementManager, const NodeManagerT& nodeManager )
-{
-
-  localIndex numEdges = 0;
-  Array1dT<lArray1d>& faceToEdgeMap = faceManager->m_ToEdgesRelation;
-
-  // this will be used to hold a list pairs that store the 2nd node in the edge, and the edge number.
-  // they are keyed the edges lowest node.
-  std::map< localIndex , Array1dT<std::pair<localIndex, localIndex> > > edgesByLowestNode;
-
-
-  // loop over elements
-  for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator i=elementManager.m_ElementRegions.begin() ;
-       i!=elementManager.m_ElementRegions.end() ; ++i )
-  {
-    ElementRegionT& elementRegion = i->second;
-
-    FixedOneToManyRelation& elementToEdges = elementRegion.m_toEdgesMap;
-
-    for( localIndex ke=0 ; ke<elementRegion.DataLengths() ; ++ke )
-    {
-      const lArray1d::size_type numNodesInElement = elementRegion.m_numNodesPerElem;
-//      const localIndex* nodeList = elementRegion.m_.m_ToNodesRelation[kf];
-
-    }
-  }
-
-
-  // loop over all the faces
-  for( localIndex kf=0 ; kf<faceManager->DataLengths() ; ++kf )
-  {
-    const lArray1d::size_type numNodesInFace = faceManager->m_ToNodesRelation[kf].size();
-    const lArray1d& nodeList = faceManager->m_ToNodesRelation[kf];
-
-
-    localIndex node0, node1, temp;
-
-    // loop over all the nodes in the face. there will be an edge for each node.
-    for( lArray1d::size_type a=0 ; a<numNodesInFace ; ++a )
-    {
-      // sort the nodes in order of index value
-      node0 = nodeList[a];
-      if( a == numNodesInFace-1 )
-      {
-        node1 = nodeList[0];
-      }
-      else
-      {
-        node1 = nodeList[a+1];
-      }
-
-      if( node0 > node1 )
-      {
-        temp = node0;
-        node0 = node1;
-        node1 = temp;
-      }
-
-
-      // check to see if the edge is in the edgesByLowestNode array (i.e. it is already registered)
-
-
-      bool duplicate = false;
-      Array1dT<std::pair<localIndex, localIndex> >& edgesWithSameFirstNode = edgesByLowestNode[node0];
-      Array1dT<std::pair<localIndex, localIndex> >::iterator i=edgesWithSameFirstNode.begin();
-      for(  ; i!=edgesWithSameFirstNode.end() ; ++i )
-      {
-        localIndex existingNode1 = i->first;
-        localIndex existingEdgeIndex = i->second;
-        if( existingNode1 == node1 ) // node1 is has already been entered...thus the edge already had been processed
-        {
-          duplicate = true;
-          faceToEdgeMap(kf).push_back(existingEdgeIndex);
-
-          break;
-        }
-      }
-
-      // if the edge is not duplicate, then we will assign a new pair into the edgesByLowestNode array
-      if( !duplicate )
-      {
-        edgesByLowestNode[node0].push_back( std::make_pair(node1,numEdges) );
-        faceToEdgeMap(kf).push_back(numEdges);
-        ++numEdges;
-      }
-    }
-  }
-
-  // all edge data is stored in the edgesByLowest node and faceManager::faceToEdgeMap arrays. So now we can
-  // just extract the data into the edgeManager structures
-  this->resize(numEdges);
-
-
-  // fill edgesToNodes array by using data in the edgesByLowestNode array
-  for( std::map< localIndex , Array1dT<std::pair<localIndex, localIndex> > >::iterator a=edgesByLowestNode.begin() ;
-       a!=edgesByLowestNode.end() ; ++a )
-  {
-    Array1dT<std::pair<localIndex, localIndex> >& edgesWithSameFirstNode = a->second;
-    const localIndex& node0 = a->first;
-    for( Array1dT<std::pair<localIndex, localIndex> >::iterator i=edgesWithSameFirstNode.begin() ;
-         i!=edgesWithSameFirstNode.end() ; ++i )
-    {
-      const localIndex& node1 = i->first;
-      const localIndex& edgeIndex = i->second;
-
-      m_toNodesRelation(edgeIndex,0) = node0;
-      m_toNodesRelation(edgeIndex,1) = node1;
-
-      nodeManager->m_nodeToEdgeMap(node0).insert(edgeIndex);
-      nodeManager->m_nodeToEdgeMap(node1).insert(edgeIndex);
-
-//      std::cout<<"m_edgesToNodes("<<edgeIndex<<",*) = "<<node0<<' '<<node1<<std::endl;
-    }
-  }
-
-  for( localIndex kf=0 ; kf<faceManager->DataLengths() ; ++kf )
-  {
-    const lArray1d::size_type numEdgesInFace = faceToEdgeMap(kf).size();
-
-    // loop over all the nodes in the face. there will be an edge for each node.
-    for( lArray1d::size_type a=0 ; a<numEdgesInFace ; ++a )
-    {
-      localIndex edgeIndex = faceToEdgeMap(kf)(a);
-      m_toFacesRelation(edgeIndex).insert(kf);
-
-    }
-  }
-
-
-
-
-
-  // make sets from nodesets
-  for( std::map< std::string, lSet >::const_iterator i = nodeManager->m_Sets.begin() ;
-       i != nodeManager->m_Sets.end() ; ++i )
-  {
-    const std::string& setname = i->first;
-    const lSet& set = i->second;
-    this->ConstructSetFromSetAndMap( set, this->m_toNodesRelation, setname );
-  }
-
-}
-*/
-
-
-
 
 
 
@@ -405,67 +258,67 @@ void EdgeManager::BuildEdges( const ElementManagerT& elementManager, const NodeM
 
 
 /// Calculates the midpoint of the edge
-void EdgeManager::EdgeCenter(const NodeManager * nodeManager, localIndex edge, R1Tensor& center) const
-{
+//void EdgeManager::EdgeCenter(const NodeManager * nodeManager, localIndex edge, R1Tensor& center) const
+//{
+//
+//  const Array1dT< R1Tensor >& refPosition = nodeManager->GetFieldData<FieldInfo::referencePosition>();
+//  const Array1dT< R1Tensor >& displacement = nodeManager->GetFieldData<FieldInfo::displacement>();
+//  FixedOneToManyRelation const & toNodesRelation = this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
+////  UnorderedVariableOneToManyRelation const & toFacesRelation = this->getWrapper<UnorderedVariableOneToManyRelation>(string("edgesToFaces")).reference();
+//
+//  if (toNodesRelation.Dimension(1) >= 2)
+//  {
+//    const localIndex& node0 = toNodesRelation(edge,0);
+//    center =  refPosition[node0];
+//    center += displacement[node0];
+//    const localIndex& node1 = toNodesRelation(edge,1);
+//    center += refPosition[node1];
+//    center += displacement[node1];
+//    center *= 0.5;
+//  }
+//  else
+//  {
+//    const localIndex& node0 = toNodesRelation(edge,0);
+//    center =  refPosition[node0];
+//  }
+//}
 
-  const Array1dT< R1Tensor >& refPosition = nodeManager->GetFieldData<FieldInfo::referencePosition>();
-  const Array1dT< R1Tensor >& displacement = nodeManager->GetFieldData<FieldInfo::displacement>();
-  FixedOneToManyRelation const & toNodesRelation = this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
-//  UnorderedVariableOneToManyRelation const & toFacesRelation = this->getWrapper<UnorderedVariableOneToManyRelation>(string("edgesToFaces")).reference();
-
-  if (toNodesRelation.Dimension(1) >= 2)
-  {
-    const localIndex& node0 = toNodesRelation(edge,0);
-    center =  refPosition[node0];
-    center += displacement[node0];
-    const localIndex& node1 = toNodesRelation(edge,1);
-    center += refPosition[node1];
-    center += displacement[node1];
-    center *= 0.5;
-  }
-  else
-  {
-    const localIndex& node0 = toNodesRelation(edge,0);
-    center =  refPosition[node0];
-  }
-}
-
-
-/// Calculates the vector from node 0 to node 1
-void EdgeManager::EdgeVector(const NodeManager * nodeManager, localIndex edge, R1Tensor& v) const{
-  const Array1dT< R1Tensor >& refPosition = nodeManager->GetFieldData<FieldInfo::referencePosition>();
-  const Array1dT< R1Tensor >& displacement = nodeManager->GetFieldData<FieldInfo::displacement>();
-  FixedOneToManyRelation const & toNodesRelation = this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
-
-  const localIndex& node1 = toNodesRelation(edge,1);
-  v =  refPosition[node1];
-  v += displacement[node1];
-  const localIndex& node0 = toNodesRelation(edge,0);
-  v -= refPosition[node0];
-  v -= displacement[node0];
-}
-
-/// Returns the length of the edge
-realT EdgeManager::EdgeLength(const NodeManager * nodeManager, localIndex edge) const{
-  const Array1dT< R1Tensor >& refPosition = nodeManager->GetFieldData<FieldInfo::referencePosition>();
-  const Array1dT< R1Tensor >& displacement = nodeManager->GetFieldData<FieldInfo::displacement>();
-  FixedOneToManyRelation const & toNodesRelation = this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
-
-  if (toNodesRelation.Dimension(1) >= 2)
-  {
-  const localIndex& node0 = toNodesRelation(edge,0);
-  const localIndex& node1 = toNodesRelation(edge,1);
-  R1Tensor v =  refPosition[node0];
-  v += displacement[node0];
-  v -= refPosition[node1];
-  v -= displacement[node1];
-  return v.L2_Norm();
-  }
-  else
-  {
-    return 1.0;
-  }
-}
+//
+///// Calculates the vector from node 0 to node 1
+//void EdgeManager::EdgeVector(const NodeManager * nodeManager, localIndex edge, R1Tensor& v) const{
+//  const Array1dT< R1Tensor >& refPosition = nodeManager->GetFieldData<FieldInfo::referencePosition>();
+//  const Array1dT< R1Tensor >& displacement = nodeManager->GetFieldData<FieldInfo::displacement>();
+//  FixedOneToManyRelation const & toNodesRelation = this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
+//
+//  const localIndex& node1 = toNodesRelation(edge,1);
+//  v =  refPosition[node1];
+//  v += displacement[node1];
+//  const localIndex& node0 = toNodesRelation(edge,0);
+//  v -= refPosition[node0];
+//  v -= displacement[node0];
+//}
+//
+///// Returns the length of the edge
+//realT EdgeManager::EdgeLength(const NodeManager * nodeManager, localIndex edge) const{
+//  const Array1dT< R1Tensor >& refPosition = nodeManager->GetFieldData<FieldInfo::referencePosition>();
+//  const Array1dT< R1Tensor >& displacement = nodeManager->GetFieldData<FieldInfo::displacement>();
+//  FixedOneToManyRelation const & toNodesRelation = this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
+//
+//  if (toNodesRelation.Dimension(1) >= 2)
+//  {
+//  const localIndex& node0 = toNodesRelation(edge,0);
+//  const localIndex& node1 = toNodesRelation(edge,1);
+//  R1Tensor v =  refPosition[node0];
+//  v += displacement[node0];
+//  v -= refPosition[node1];
+//  v -= displacement[node1];
+//  return v.L2_Norm();
+//  }
+//  else
+//  {
+//    return 1.0;
+//  }
+//}
 
 
 void EdgeManager::SetDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject )

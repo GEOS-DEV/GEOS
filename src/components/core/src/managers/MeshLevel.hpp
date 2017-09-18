@@ -8,6 +8,8 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHLEVEL_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHLEVEL_HPP_
 
+#include "dataRepository/ManagedGroup.hpp"
+
 namespace geosx
 {
 

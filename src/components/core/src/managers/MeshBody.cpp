@@ -28,8 +28,7 @@ MeshBody::~MeshBody()
 
 MeshLevel * MeshBody::CreateMeshLevel( int32 const newLevel )
 {
-  this->RegisterGroup<MeshLevel>( "Level0" );
-  this->RegisterGroup<MeshLevel>( "Level1" );
+  return this->RegisterGroup<MeshLevel>( "Level0" );
 }
 
 } /* namespace geosx */

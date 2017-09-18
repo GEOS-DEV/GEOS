@@ -126,6 +126,25 @@ public:
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;
 
+
+  CellBlockSubRegion const * GetSubRegion( string const & regionName ) const
+  {
+    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
+  }
+  CellBlockSubRegion * GetSubRegion( string const & regionName )
+  {
+    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
+  }
+
+  CellBlockSubRegion const * GetSubRegion( int32 const & index ) const
+  {
+    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
+  }
+  CellBlockSubRegion * GetSubRegion( int32 const & index )
+  {
+    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
+  }
+
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda )
   {

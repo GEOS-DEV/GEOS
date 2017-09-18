@@ -25,7 +25,10 @@ DomainPartition::DomainPartition( std::string const & name,
   ManagedGroup( name, parent )
 {
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager);
-//  m_partition = new SpatialPartition();
+
+  RegisterGroup( groupKeys.meshBodies );
+  RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
+
 }
 
 DomainPartition::~DomainPartition()
@@ -36,7 +39,6 @@ DomainPartition::~DomainPartition()
 
 void DomainPartition::BuildDataStructure( ManagedGroup * const )
 {
-  this->RegisterGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
 
   this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
   this->RegisterGroup<ElementRegionManager>(keys::FEM_Elements);
@@ -133,7 +135,7 @@ void DomainPartition::GenerateSets(  )
   {
     elementRegion->forCellBlocks( [&]( CellBlockSubRegion * subRegion )->void
     {
-      lArray2d const & elemsToNodes = subRegion->getWrapper<lArray2d>(keys::nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+      lArray2d const & elemsToNodes = subRegion->getWrapper<lArray2d>(subRegion->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
       dataRepository::ManagedGroup * elementSets = subRegion->GetGroup(dataRepository::keys::sets);
       std::map< string, int32_array > numNodesInSet;
 
@@ -271,9 +273,9 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     Array1dT<FixedOneToManyRelation> elementToNodeMap( numElementRegions );
 
     int count = 0;
-    elementManager->forCellBlocks([&]( ManagedGroup const * cellBlock ) -> void
+    elementManager->forCellBlocks([&]( CellBlockSubRegion const * cellBlock ) -> void
     {
-      lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(keys::nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+      lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(cellBlock->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
 
       // The following line seems to be redundant. It's actual function is to size this temp array.(pfu)
       elementToNodeMap[count].resize2(elemsToNodes.Dimension(0),elemsToNodes.Dimension(1));

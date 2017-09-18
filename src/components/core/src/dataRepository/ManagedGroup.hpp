@@ -133,8 +133,9 @@ public:
 
 
 
-  template< typename T = ManagedGroup >
-  T * GetGroup( std::string const & name )
+
+  template< typename T = ManagedGroup, typename T_LOOKUP >
+  T * GetGroup( T_LOOKUP const & name )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T *>( m_subGroups[name] );
@@ -143,8 +144,8 @@ public:
 #endif
   }
 
-  template< typename T = ManagedGroup >
-  T const * GetGroup( std::string const & name ) const
+  template< typename T = ManagedGroup, typename T_LOOKUP >
+  T const * GetGroup( T_LOOKUP const & name ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const *>( m_subGroups[name] );
@@ -449,7 +450,7 @@ public:
   { return getWrapper<T>(name)->reference(); }
 
   template< typename T >
-  T const & getReference( viewWrapperMap::KeyIndex & keyIndex ) const
+  T const & getReference( viewWrapperMap::KeyIndex const & keyIndex ) const
   { return getWrapper<T>(keyIndex)->reference(); }
 
   template< typename T >

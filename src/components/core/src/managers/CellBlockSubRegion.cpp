@@ -37,8 +37,8 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "an element region" );
 
-  docNode->AllocateChildNode( keys::numNodesPerElement,
-                              keys::numNodesPerElement,
+  docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
+                              viewKeys.numNodesPerElement.Key(),
                               -1,
                               "int32",
                               "int32",
@@ -50,6 +50,18 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
                               1,
                               0 );
 
+//  docNode->AllocateChildNode( keys::numNodesPerElement,
+//                              keys::numNodesPerElement,
+//                              -1,
+//                              "int32",
+//                              "int32",
+//                              "Number of Nodes Per Element",
+//                              "Number of Nodes Per Element",
+//                              "1",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
 
 
 
@@ -87,7 +99,7 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
 
 void CellBlockSubRegion::ReadXML_PostProcess()
 {
-  int32 & numNodesPerElem = *(getData<int32>(keys::numNodesPerElement));
+  int32 & numNodesPerElem = numNodesPerElement();
   numNodesPerElem = 8;
 }
 

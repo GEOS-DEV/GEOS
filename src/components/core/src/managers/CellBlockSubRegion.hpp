@@ -52,6 +52,11 @@ public:
                          lSet & materialSet,
                          ManagedGroup * material );
 
+  struct viewKeys : public CellBlock::viewKeysStruct
+  {
+  }viewKeys;
+
+
 };
 
 } /* namespace geosx */

@@ -7,7 +7,7 @@
 
 #include "MeshLevel.hpp"
 #include "NodeManager.hpp"
-#include "EdgeManager.hpp"
+//#include "EdgeManager.hpp"
 #include "FaceManager.hpp"
 #include "ElementRegionManager.hpp"
 
@@ -19,12 +19,12 @@ MeshLevel::MeshLevel( string const & name,
                       ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
-  RegisterGroup<NodeManager>( groupKeys.vertexManager );
-  RegisterGroup<EdgeManager>( groupKeys.cellManager );
+//  RegisterGroup<NodeManager>( groupKeys.vertexManager );
+//  RegisterGroup<EdgeManager>( groupKeys.cellManager );
 
 
   RegisterGroup<NodeManager>( groupKeys.nodeManager );
-  RegisterGroup<EdgeManager>( groupKeys.edgeManager );
+//  RegisterGroup<EdgeManager>( groupKeys.edgeManager );
   RegisterGroup<FaceManager>( groupKeys.faceManager );
   RegisterGroup<ElementRegionManager>( groupKeys.elementManager );
 

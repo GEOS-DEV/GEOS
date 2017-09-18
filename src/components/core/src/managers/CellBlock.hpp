@@ -63,8 +63,8 @@ namespace dataRepository
 namespace keys
 {
 //string const defaultMaterial = "material";
-string const numNodesPerElement = "numNodesPerElement";
-string const nodeList = "nodeList";
+//string const numNodesPerElement = "numNodesPerElement";
+//string const nodeList = "nodeList";
 //string const constitutiveMap = "constitutiveMap";
 }
 }
@@ -115,7 +115,35 @@ public:
 
   virtual ~CellBlock();
 
+  void GetFaceNodes( const localIndex elementIndex,
+                     const localIndex localFaceIndex,
+                     lArray1d& nodeIndicies) const;
+
+  R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
+
+
+  struct viewKeysStruct
+  {
+    dataRepository::ViewKey numNodesPerElement = { "numNodesPerElement" };
+    dataRepository::ViewKey nodeList           = { "nodeList" };
+    dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
+    dataRepository::ViewKey faceList           = { "faceList" };
+  } viewKeys;
+
+  class groupKeysStruct
+  {
+  public:
+  }groupKeys;
+
+
   Array2dT<int32> & m_toNodesRelation;
+  Array2dT<int32> & m_toFacesRelation;
+
+
+  int32 const & numNodesPerElement() const { return this->getReference<int32>( viewKeys.numNodesPerElement ); }
+  int32       & numNodesPerElement()       { return this->getReference<int32>( viewKeys.numNodesPerElement ); }
+  int32 const & numFacesPerElement() const { return this->getReference<int32>( viewKeys.numFacesPerElement ); }
+  int32       & numFacesPerElement()       { return this->getReference<int32>( viewKeys.numFacesPerElement ); }
 
 private:
   CellBlock& operator=(const CellBlock& rhs);

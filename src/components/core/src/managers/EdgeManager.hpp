@@ -59,7 +59,8 @@ class CellBlockManager;
 class EdgeManager: public ObjectManagerBase
 {
 public:
-  EdgeManager( ObjectManagerBase * const parent );
+  EdgeManager( std::string const & name,
+               ManagedGroup * const parent );
   ~EdgeManager();
 
   void Initialize() {}
@@ -70,8 +71,7 @@ public:
                                                          Array1dT<gArray1d>& objectToCompositionObject );
 
 
-  void BuildEdges( const FaceManager& faceManager, const NodeManager& nodeManager );
-  void BuildEdges( const CellBlockManager& elementManager, const NodeManager& nodeManager );
+  void BuildEdges( const FaceManager * const faceManager, const NodeManager * const nodeManager );
   
   template< typename T_indices >
   unsigned int PackEdges( const T_indices& sendedges,
@@ -100,9 +100,9 @@ public:
 //                                     const lSet& newEdgeIndices,
 //                                     const lSet& modifiedEdgeIndices );
 
-  void EdgeCenter(const NodeManager& nodeManager, localIndex edge, R1Tensor& center)const;
-  void EdgeVector(const NodeManager& nodeManager, localIndex edge, R1Tensor& vector)const;
-  realT EdgeLength(const NodeManager& nodeManager, localIndex edge) const;
+//  void EdgeCenter(const NodeManager& nodeManager, localIndex edge, R1Tensor& center)const;
+//  void EdgeVector(const NodeManager& nodeManager, localIndex edge, R1Tensor& vector)const;
+//  realT EdgeLength(const NodeManager& nodeManager, localIndex edge) const;
 
   void AddToEdgeToFaceMap( const FaceManager& faceManager,
                            const lArray1d& newFaceIndices );
@@ -114,7 +114,7 @@ public:
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
 
-  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex nodeB, const NodeManager& nodeManager);
+//  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex nodeB, const NodeManager& nodeManager);
 
   void SetLayersFromDomainBoundary(const NodeManager& nodeManager);
 
