@@ -23,6 +23,7 @@
 #include "MPI_Communications/SpatialPartition.hpp"
 
 #include "managers/MeshBody.hpp"
+#include "managers/MeshLevel.hpp"
 
 namespace geosx
 {
@@ -439,8 +440,9 @@ void MeshGenerator::ReadXML_PostProcess()
 void MeshGenerator::GenerateMesh( DomainPartition * domain )
 {
 
-//  ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-//  meshBodies->RegisterGroup<MeshBody>( this->getName() );
+  ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
+  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
 
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);

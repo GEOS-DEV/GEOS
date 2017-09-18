@@ -145,6 +145,10 @@ public:
     return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
   }
 
+  int32 numSubRegions() const
+  {
+    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups().size();
+  }
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda )
   {

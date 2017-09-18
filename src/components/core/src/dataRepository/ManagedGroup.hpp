@@ -134,8 +134,28 @@ public:
 
 
 
-  template< typename T = ManagedGroup, typename T_LOOKUP >
-  T * GetGroup( T_LOOKUP const & name )
+  template< typename T = ManagedGroup >
+  T * GetGroup( int32 index )
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T *>( m_subGroups[index] );
+#else
+    return static_cast<T *>( m_subGroups[index] );
+#endif
+  }
+
+  template< typename T = ManagedGroup >
+  T const * GetGroup( int32 index ) const
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T const *>( m_subGroups[index] );
+#else
+    return static_cast<T const *>( m_subGroups[index] );
+#endif
+  }
+
+  template< typename T = ManagedGroup >
+  T * GetGroup( string const & name )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T *>( m_subGroups[name] );
@@ -144,8 +164,8 @@ public:
 #endif
   }
 
-  template< typename T = ManagedGroup, typename T_LOOKUP >
-  T const * GetGroup( T_LOOKUP const & name ) const
+  template< typename T = ManagedGroup >
+  T const * GetGroup( string const & name ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast<T const *>( m_subGroups[name] );

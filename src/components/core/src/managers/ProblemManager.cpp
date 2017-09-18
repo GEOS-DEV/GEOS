@@ -26,7 +26,9 @@
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 
-
+#include "managers/MeshBody.hpp"
+#include "managers/MeshLevel.hpp"
+#include "NodeManager.hpp"
 namespace geosx
 {
 
@@ -618,10 +620,14 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
     meshGen->GenerateMesh( domain );
   });
 
+
+
   ManagedGroup * geometricObjects = this->GetGroup(keys::geometricObjects);
 
   MeshUtilities::GenerateNodesets( geometricObjects,
                                    domain->GetGroup(keys::FEM_Nodes) );
+
+
 
 //  domain->GenerateSets();
 
@@ -632,6 +638,21 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 //  });
 }
 
+
+void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
+{
+  DomainPartition * domain  = getDomainPartition();
+
+  ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
+  MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
+  FaceManager * const faceManager = meshLevel->GetGroup<FaceManager>(meshLevel->groupKeys.faceManager);
+
+  ElementRegionManager * elementManager = domain->GetGroup<ElementRegionManager>( keys::FEM_Elements );
+  NodeManager * nodeManager = domain->GetGroup<NodeManager>( keys::FEM_Nodes );
+  faceManager->BuildFaces( nodeManager, elementManager );
+
+}
 
 void ProblemManager::RunSimulation()
 {

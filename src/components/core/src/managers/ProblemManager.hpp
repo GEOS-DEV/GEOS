@@ -117,6 +117,8 @@ public:
 
   void InitializePreSubGroups( ManagedGroup * const group ) override final;
 
+  void InitializePostSubGroups( ManagedGroup * const group ) override final;
+
   void RunSimulation();
 
   void ApplySchedulerEvent();

@@ -82,23 +82,23 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
   Array2dT<int32> & elemSubRegionList = this->elementSubRegionList();
   Array2dT<int32> & elemList = this->elementList();
 
-  elemRegionList.resize( 2*nodeManager->size() );
-  elemSubRegionList.resize( 2*nodeManager->size() );
-  elemList.resize( 2*nodeManager->size() );
+  elemRegionList.resize( 4*nodeManager->size() );
+  elemSubRegionList.resize( 4*nodeManager->size() );
+  elemList.resize( 4*nodeManager->size() );
 
   elemRegionList = -1;
   elemSubRegionList = -1;
   elemList = -1;
 
-  for( typename dataRepository::indexType kReg=0 ; kReg<elementManager->GetSubGroups().size() ; ++kReg  )
+  for( typename dataRepository::indexType kReg=0 ; kReg<elementManager->numRegions() ; ++kReg  )
   {
-    ElementRegion * const elemRegion = elementManager->GetGroup<ElementRegion>(kReg);
+    ElementRegion * const elemRegion = elementManager->GetRegion(kReg);
 
-    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->GetSubGroups().size() ; ++kSubReg  )
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      CellBlockSubRegion * const subRegion = elementManager->GetGroup<CellBlockSubRegion>(kSubReg);
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
 
-      for( localIndex ke=0 ; ke<subRegion->GetSubGroups().size() ; ++ke )
+      for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
           {
             // kelf = k'th element local face index
             for( localIndex kelf=0 ; kelf<subRegion->numFacesPerElement() ; ++kelf )
@@ -213,7 +213,7 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
   for( auto const & setWrapper : nodeSets )
   {
     std::string const & setName = setWrapper.second->getName();
-    const lSet& set = nodeManager->getReference<lSet>( setName ) ;
+    const lSet& set = nodeManager->GetGroup(keys::sets)->getReference<lSet>( setName ) ;
     this->ConstructSetFromSetAndMap( set, faceToNodes, setName );
   }
 
@@ -269,7 +269,6 @@ void FaceManager::AddNewFace( localIndex const & kReg,
 //  tempFaceToElemEntry.push_back( std::pair<ElementRegionT*, localIndex>( const_cast<ElementRegionT*>(&elementRegion), ke) );
 //  m_toElementsRelation.push_back(tempFaceToElemEntry);
 
-  ++numFaces;
 
 
   if( elementRegionList()[numFaces][0] == -1 )
@@ -287,6 +286,7 @@ void FaceManager::AddNewFace( localIndex const & kReg,
 
   // now increment numFaces to reflect the number of faces rather than the index of the new face
   ++numFaces;
+
 }
 
 

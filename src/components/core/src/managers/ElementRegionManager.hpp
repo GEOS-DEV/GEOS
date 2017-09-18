@@ -133,6 +133,12 @@ public:
     return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(index);
   }
 
+  int32 numRegions() const
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups().size();
+  }
+
+
   template< typename LAMBDA >
   void forElementRegions( LAMBDA lambda )
   {

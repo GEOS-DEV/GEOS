@@ -37,6 +37,8 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "an element region" );
 
+  CellBlock::FillDocumentationNode(group);
+
   docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
                               viewKeys.numNodesPerElement.Key(),
                               -1,
@@ -99,8 +101,9 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
 
 void CellBlockSubRegion::ReadXML_PostProcess()
 {
-  int32 & numNodesPerElem = numNodesPerElement();
-  numNodesPerElem = 8;
+//  int32 & numNodesPerElem = numNodesPerElement();
+//  numNodesPerElem = 8;
+
 }
 
 void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
@@ -108,6 +111,12 @@ void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
 //  auto const & elementRegion = static_cast<ElementRegion const&>( *(this->getParent()) );
 //  auto const & numMethod = elementRegion.getNumericalMethod();
 
+}
+
+void CellBlockSubRegion::InitializePostSubGroups( ManagedGroup * const )
+{
+  this->numNodesPerElement() = 8;
+  this->numFacesPerElement() = 6;
 }
 
 void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )

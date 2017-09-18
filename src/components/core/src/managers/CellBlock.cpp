@@ -62,6 +62,7 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
     m_toFacesRelation(this->RegisterViewWrapper< Array2dT<int32> >(viewKeys.faceList.Key())->reference())
 
 {
+
   m_toNodesRelation.resize2(0,8);
   m_toFacesRelation.resize2(0,6);
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap).setSizedFromParent(1);
@@ -111,8 +112,8 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
   docNode->AllocateChildNode( viewKeys.numFacesPerElement.Key(),
                               viewKeys.numFacesPerElement.Key(),
                               -1,
-                              "int32_array",
-                              "int32_array",
+                              "int32",
+                              "int32",
                               "Number of Faces Per Element",
                               "Number of Faces Per Element",
                               "6",
@@ -165,8 +166,11 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
 
 void CellBlock::ReadXML_PostProcess()
 {
-  int32 & numNodesPerElem = this->numNodesPerElement();
-  numNodesPerElem = 8;
+//  int32 & numNodesPerElem = this->numNodesPerElement();
+//  numNodesPerElem = 8;
+  this->numNodesPerElement() = 8;
+  this->numFacesPerElement() = 6;
+
 }
 
 //map<string,int32> CellBlock::SetConstitutiveMap( ManagedGroup const * domain )
