@@ -66,14 +66,11 @@ public:
   virtual void insert() = 0;
   virtual void resize( localIndex newsize ) = 0;
 
-
-#ifdef USE_ATK
   virtual void registerDataPtr() = 0;
   virtual void unregisterDataPtr() = 0;
   virtual void resizeFromSidre() = 0;
   virtual void storeSizedFromParent() = 0;
   virtual void loadSizedFromParent() = 0;
-#endif
 
 
   void resize();

@@ -109,6 +109,8 @@ public:
 
   void ParseCommandLineInput( int & argc, char* argv[]);
 
+  static bool ParseRestart( int argc, char* argv[], std::string& restartFileName );
+
   void InitializePythonInterpreter();
 
   void ClosePythonInterpreter();
@@ -130,9 +132,10 @@ public:
   // function to create and dump the restart file
   void WriteRestart( int32 const cycleNumber );
 
-  void ReadRestartFile(  );
+  static void ReadRestartFile( const std::string& restartFileName );
 
-  void ReadRestartOverwrite();
+  void ReadRestartOverwrite( const std::string& restartFileName );
+
 
   void ApplyInitialConditions();
 

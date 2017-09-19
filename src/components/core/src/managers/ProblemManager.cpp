@@ -309,6 +309,84 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
   }
 }
 
+bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartFileName )
+{
+  // Set the options structs and parse
+  // Set the options structs and parse
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL};
+  const option::Descriptor usage[] = 
+  {
+    {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
+    {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
+    {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t Input xml filename (required)"},
+    {RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t Target restart filename"},
+    {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-x, --x-partitions, \t Number of partitions in the x-direction"},
+    {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
+    {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
+    {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
+    {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
+    { 0, 0, 0, 0, 0, 0}
+  };
+
+  argc -= (argc>0); 
+  argv += (argc>0);
+  option::Stats stats(usage, argc, argv);
+  option::Option options[100];//stats.options_max];
+  option::Option buffer[100];//stats.buffer_max];
+  option::Parser parse(usage, argc, argv, options, buffer);
+
+  
+  // Handle special cases
+  if (parse.error())
+  {
+    throw std::invalid_argument("Bad input arguments");
+  }
+
+  if (options[HELP] || (argc == 0))
+  {
+    int columns = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
+    option::printUsage(fwrite, stdout, usage, columns);
+    exit(0);
+  }
+
+  if (options[INPUT] == 0)
+  {
+    std::cout << "An input xml must be specified!  Exiting..." << std::endl;
+    exit(1);
+  }
+
+  // Iterate over the remaining inputs
+  bool beginFromRestart = false;
+  for (int ii=0; ii<parse.optionsCount(); ++ii)
+  {
+    option::Option& opt = buffer[ii];
+    switch (opt.index())
+    {
+      case UNKNOWN:
+        break;
+      case HELP:
+        break;
+      case INPUT:
+        break;
+      case RESTART:
+        restartFileName = opt.arg;
+        beginFromRestart = 1;
+        break;
+      case XPAR:
+        break;
+      case YPAR:
+        break;
+      case ZPAR:
+        break;
+      case SCHEMA:
+        break;
+      case SCHEMALEVEL:
+        break;
+    }
+  }
+  return beginFromRestart;
+}
+
 
 void ProblemManager::InitializePythonInterpreter()
 {
@@ -661,32 +739,29 @@ void ProblemManager::ApplyInitialConditions()
 
 }
 
+
 void ProblemManager::WriteRestart( int32 const cycleNumber )
 {
+#if ATK_FOUND
   char fileName[200] = {0};
   sprintf(fileName, "%s_%09d", "restart", cycleNumber);
 
   this->writeRestart( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
+#endif
 }
 
-void ProblemManager::ReadRestartFile(  )
+void ProblemManager::ReadRestartFile( const std::string& restartFileName )
 {
-  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  string const &  restartFileName = commandLine->getReference<std::string>(keys::restartFileName);
-  if( !(restartFileName.empty() ) )
-  {
-    this->reconstructSidreTree(restartFileName, "sidre_hdf5", MPI_COMM_WORLD);
-  }
+#if ATK_FOUND
+  ManagedGroup::reconstructEntireSidreTree(restartFileName + ".root", "sidre_hdf5", MPI_COMM_WORLD);
+#endif
 }
 
-void ProblemManager::ReadRestartOverwrite()
+void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 {
-  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  string const &  restartFileName = commandLine->getReference<std::string>(keys::restartFileName);
-  if( !(restartFileName.empty() ) )
-  {
-    this->loadSidreExternalData(restartFileName, MPI_COMM_WORLD);
-  }
+#if ATK_FOUND
+  this->loadSidreExternalData(restartFileName + ".root", MPI_COMM_WORLD);
+#endif
 }
 
 

@@ -30,7 +30,6 @@ int main( int argc, char *argv[] )
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 
-
   std::cout<<"starting main"<<std::endl;
 
 #ifdef USE_ATK
@@ -52,17 +51,22 @@ int main( int argc, char *argv[] )
   // Mark begin of "initialization" phase
   GEOS_MARK_BEGIN("Initialization");
 
+  std::string restartFileName;
+  bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
+  if (restart) {
+    ProblemManager::ReadRestartFile( restartFileName );
+  }
+
   ProblemManager problemManager( "ProblemManager", nullptr );
-  problemManager.SetDocumentationNodes();
-  problemManager.RegisterDocumentationNodes();
+
+  problemManager.BuildDataStructure(nullptr);
+  problemManager.SetDocumentationNodes( &problemManager );
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
 
-  problemManager.ReadRestartFile();
 
   problemManager.ParseInputFile();
-
 
 
   problemManager.Initialize( &problemManager );
@@ -74,7 +78,9 @@ int main( int argc, char *argv[] )
 
   problemManager.ApplyInitialConditions();
 
-  problemManager.ReadRestartOverwrite();
+  if (restart) {
+    problemManager.ReadRestartOverwrite( restartFileName );
+  }
 
   std::cout << std::endl << "Running simulation:" << std::endl;
 

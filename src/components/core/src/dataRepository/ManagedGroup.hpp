@@ -574,15 +574,15 @@ public:
 #ifdef USE_ATK
   void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
 
+  static void reconstructEntireSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
+
   void loadSidreExternalData(const string & root_path, MPI_Comm comm);
-#endif
 
 protected:
   cxx_utilities::DocumentationNode * m_docNode = nullptr;
 
 private:
 
-#ifdef USE_ATK
   void registerSubViews();
 
   void createSizeViews();
@@ -596,16 +596,13 @@ private:
   void storeSizedFromParent();
 
   void loadSizedFromParent();
-#endif
 
 
   ManagedGroup* m_parent = nullptr;
   viewWrapperMap m_wrappers;
   subGroupMap m_subGroups;
 
-#ifdef USE_ATK
   axom::sidre::Group* m_sidreGroup;
-#endif
 
   indexType m_size;
 
