@@ -187,7 +187,7 @@ find_path( CALIPER_INCLUDE_DIRS caliper.h
            NO_CMAKE_SYSTEM_PATH)
 
 find_library( CALIPER_LIBRARY NAMES caliper
-              PATHS ${CALIPER_DIR}/lib
+              PATHS ${CALIPER_DIR}/lib64
               NO_DEFAULT_PATH
               NO_CMAKE_ENVIRONMENT_PATH
               NO_CMAKE_PATH

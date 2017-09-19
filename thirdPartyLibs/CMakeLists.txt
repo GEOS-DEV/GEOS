@@ -180,6 +180,7 @@ endif()
 ################################
 # CALIPER
 ################################
+message( "ENABLE_CALIPER = ${ENABLE_CALIPER}" )
 if( ENABLE_CALIPER )
 message( INFO ": setting up caliper" )
 set(CALIPER_LOCAL_DIR ${PROJECT_BINARY_DIR}/caliper)
