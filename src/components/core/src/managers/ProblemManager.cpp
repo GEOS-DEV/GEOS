@@ -741,32 +741,29 @@ void ProblemManager::ApplyInitialConditions()
 
 }
 
+
 void ProblemManager::WriteRestart( int32 const cycleNumber )
 {
+#if ATK_FOUND
   char fileName[200] = {0};
   sprintf(fileName, "%s_%09d", "restart", cycleNumber);
 
   this->writeRestart( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
+#endif
 }
 
-void ProblemManager::ReadRestartFile(  )
+void ProblemManager::ReadRestartFile( const std::string& restartFileName )
 {
-  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  string const &  restartFileName = commandLine->getReference<std::string>(keys::restartFileName);
-  if( !(restartFileName.empty() ) )
-  {
-    this->reconstructSidreTree(restartFileName, "sidre_hdf5", MPI_COMM_WORLD);
-  }
+#if ATK_FOUND
+  ManagedGroup::reconstructEntireSidreTree(restartFileName + ".root", "sidre_hdf5", MPI_COMM_WORLD);
+#endif
 }
 
-void ProblemManager::ReadRestartOverwrite()
+void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 {
-  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(keys::commandLine);
-  string const &  restartFileName = commandLine->getReference<std::string>(keys::restartFileName);
-  if( !(restartFileName.empty() ) )
-  {
-    this->loadSidreExternalData(restartFileName, MPI_COMM_WORLD);
-  }
+#if ATK_FOUND
+  this->loadSidreExternalData(restartFileName + ".root", MPI_COMM_WORLD);
+#endif
 }
 
 

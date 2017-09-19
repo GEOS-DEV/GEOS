@@ -59,9 +59,6 @@ int main( int argc, char *argv[] )
 
   ProblemManager problemManager( "ProblemManager", nullptr );
 
-
-
-
   problemManager.BuildDataStructure(nullptr);
   problemManager.SetDocumentationNodes( &problemManager );
 

@@ -1,4 +1,4 @@
-/**
+f/**
  * @file DataObjectManager.h
  * @date created on Nov 21, 2014
  * @author Randolph R. Settgast
@@ -568,14 +568,11 @@ public:
     return m_wrappers;
   }
 
+  void prepareToWriteRestart();
 
-void prepareToWriteRestart();
+  void prepareToLoadExternalData();
 
-void prepareToLoadExternalData();
-
-void finishLoadingExternalData();
-
-  
+  void finishLoadingExternalData();
 
 protected:
   cxx_utilities::DocumentationNode * m_docNode = nullptr;
