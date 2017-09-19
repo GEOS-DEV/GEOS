@@ -495,5 +495,6 @@ void ManagedGroup::finishLoadingExternalData()
 #endif
 }
 
+
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

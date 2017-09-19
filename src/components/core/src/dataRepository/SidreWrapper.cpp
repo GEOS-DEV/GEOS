@@ -4,14 +4,16 @@
  *  Created on: Jul 22, 2016
  *      Author: rrsettgast
  */
-#include <string>
 #if ATK_FOUND
 #include "SidreWrapper.hpp"
-#include <mpi.h>
 #include "spio/IOManager.hpp"
 #include "slic/slic.hpp"
-#include <cstdio>
 #endif
+
+#include <string>
+#include <cstdio>
+#include <mpi.h>
+
 
 namespace geosx
 {
@@ -80,7 +82,6 @@ bool checkSidreTree(Group * group)
 
   return valid;
 }
-
 
 /* Load sidre external data. */
 void SidreWrapper::loadExternalData(const std::string & root_path, MPI_Comm comm)

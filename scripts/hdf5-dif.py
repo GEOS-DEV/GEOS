@@ -8,25 +8,18 @@ atol = 1e-8
 
 
 def errorMsg(path1, path2, prefix, postfix):
-<<<<<<< c41a68c33d9a0f5a11d26e492bbbfc217d797b63
   global different
-=======
->>>>>>> enabling restart
   print prefix + path1 + " and " + path2 + postfix
   different = True
 
 
 def nameErrorMsg(path1, path2, typeName, msgs):
-<<<<<<< c41a68c33d9a0f5a11d26e492bbbfc217d797b63
   global different
-=======
->>>>>>> enabling restart
   print path1 + " has a " + typeName + " that is not in " + path2 + ": " + msg
   different = True
 
 
 def compareArrays(path1, arr1, path2, arr2):
-<<<<<<< c41a68c33d9a0f5a11d26e492bbbfc217d797b63
   if arr1.dtype in [np.float16, np.float32, np.float64, np.complex64, np.complex128]:
     notClose = np.logical_not(np.isclose(arr1, arr2, rtol, atol))
   else:
@@ -35,16 +28,6 @@ def compareArrays(path1, arr1, path2, arr2):
   if notClose.any():
     numNotClose = notClose.sum()
     errorMsg(path1, path2, "Datasets ", " have " + str(numNotClose) + " items that aren't close.")
-=======
-  if data1.dtype in [np.float16, np.float32, np.float64, np.complex64, np.complex128]:
-    notClose = np.logical_not(np.isclose(data1, data2, rtol, atol))
-  else:
-    notClose = (data1 != data2)
-
-  if np.notClose.any():
-    numNotClose = notClose.sum()
-    errorMsg(path1, path2, "Datasets ", " have " + numNotClose + " items that aren't close.")
->>>>>>> enabling restart
 
 
 def compareAttributes(path1, attr1, path2, attr2):
@@ -54,7 +37,6 @@ def compareAttributes(path1, attr1, path2, attr2):
   for attrName in attr1.keys():
     if attrName not in attr2:
       nameErrorMsg(path1, path2, "Attribute", attrName)
-<<<<<<< c41a68c33d9a0f5a11d26e492bbbfc217d797b63
 
     attr1Path = path1 + ".attrs[" + attrName + "]"
     attr2Path = path2 + ".attrs[" + attrName + "]"
@@ -67,20 +49,11 @@ def compareAttributes(path1, attr1, path2, attr2):
 def compareDatasets(dset1, dset2):
   path1 = dset1.file.filename + dset1.name
   path2 = dset2.file.filename + dset2.name
-=======
-    compareArrays(path1 + ".attrs[" + attrName + "]", attr1[attrName], path2 + ".attrs[" + attrName + "]", attr2[attrName])
-
-
-def compareDatasets(dset1, dset2):
-  path1 = dset1.name
-  path2 = dset2.name
->>>>>>> enabling restart
   if dset1.shape != dset2.shape:
     errorMsg(path1, path2, "Datasets ", " have different shapes: " + dset1.shape + " " + dset2.shape)
   if dset1.dtype != dset2.dtype:
     errorMsg(path1, path2, "Datasets ", " have different types: " + dset1.type + " " + dset2.type)
 
-<<<<<<< c41a68c33d9a0f5a11d26e492bbbfc217d797b63
   compareAttributes(path1, dset1.attrs, path2, dset2.attrs)
   compareArrays(path1, dset1[:], path2, dset2[:])
 
@@ -88,15 +61,6 @@ def compareDatasets(dset1, dset2):
 def compareGroups(group1, group2):
   path1 = group1.file.filename + group1.name
   path2 = group2.file.filename + group2.name
-=======
-  compareAttributes(dset1.attrs, dset2.attrs)
-  compareArrays(dset1[:], dset2[:])
-
-
-def compareGroups(group1, group2):
-  path1 = group1.name
-  path2 = group2.name
->>>>>>> enabling restart
   if len(group1.keys()) != len(group2.keys()):
     errorMsg(path1, path2, "Groups ", " have a different number of items.")
   
@@ -137,10 +101,7 @@ def main():
   f2 = h5py.File(path2, "r")
 
   compareGroups(f1, f2)
-<<<<<<< c41a68c33d9a0f5a11d26e492bbbfc217d797b63
   print
-=======
->>>>>>> enabling restart
   if not different:
     print "The files are similar."
     return 0
@@ -151,4 +112,3 @@ def main():
 
 if __name__ == "__main__" and not sys.flags.interactive:
   sys.exit(main())
-
