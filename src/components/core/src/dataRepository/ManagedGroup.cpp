@@ -20,7 +20,6 @@ namespace geosx
 namespace dataRepository
 {
 
-#ifdef USE_ATK
 axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
                                                   ManagedGroup * const parent )
 {
@@ -388,7 +387,11 @@ void ManagedGroup::unregisterSubViews()
 void ManagedGroup::createSizeViews()
 {
 #ifdef USE_ATK
-  m_sidreGroup->createView("__size__")->setScalar(m_size);
+  if ( m_sidreGroup->hasView("__size__") ) {
+    m_sidreGroup->getView("__size__")->setScalar(m_size);
+  } else {
+    m_sidreGroup->createView("__size__")->setScalar(m_size);  
+  }
 
   forSubGroups([](ManagedGroup * subGroup) -> void 
   {
@@ -459,8 +462,8 @@ void ManagedGroup::loadSizedFromParent()
 #endif
 }
 
-/* Write out a restart file. */
-void ManagedGroup::writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm)
+
+void ManagedGroup::prepareToWriteRestart() 
 {
 #ifdef USE_ATK
   if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
@@ -471,51 +474,26 @@ void ManagedGroup::writeRestart(int num_files, const string & path, const string
   storeSizedFromParent();
   registerSubViews();
   createSizeViews();
-  axom::spio::IOManager ioManager(comm);
-  ioManager.write(m_sidreGroup, num_files, path, protocol);
 #endif
 }
 
-/* Read in a restart file and reconstruct the sidre tree. */
-void ManagedGroup::reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm)
-{
-#ifdef USE_ATK
-  if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
-  {
-    SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
-  }
-
-  axom::spio::IOManager ioManager(comm);
-  ioManager.read(m_sidreGroup, root_path, protocol);
-#endif
-}
-
-void ManagedGroup::reconstructEntireSidreTree(const string & root_path, const string & protocol, MPI_Comm comm) 
-{
-#ifdef USE_ATK
-  if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
-  {
-    SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
-  }
-
-  axom::spio::IOManager ioManager(comm);
-  ioManager.read(SidreWrapper::dataStore().getRoot(), root_path, protocol);
-#endif
-}
-
-/* Load sidre external data. */
-void ManagedGroup::loadSidreExternalData(const string & root_path, MPI_Comm comm)
+void ManagedGroup::prepareToLoadExternalData()
 {
 #ifdef USE_ATK
   loadSizedFromParent();
   loadSizeViews();
   resizeSubViews();
   registerSubViews();
-  axom::spio::IOManager ioManager(comm);
-  ioManager.loadExternalData(m_sidreGroup, root_path);
+#endif
+}
+
+void ManagedGroup::finishLoadingExternalData()
+{
+#ifdef USE_ATK
   unregisterSubViews();
 #endif
 }
+
 
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

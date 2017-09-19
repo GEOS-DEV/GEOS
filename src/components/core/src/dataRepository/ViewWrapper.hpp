@@ -532,28 +532,25 @@ public:
 #endif
   }
 
-
-  virtual void storeSizedFromParent() override final
+  virtual void unregisterDataPtr()
   {
-#ifdef USE_ATK
+#if ATK_FOUND
+      getSidreView()->setExternalDataPtr(AXOM_NULLPTR);
+#endif
+  }
+
+  virtual void storeSizedFromParent()
+  {
+#if ATK_FOUND
     getSidreView()->setAttributeScalar("__sizedFromParent__", sizedFromParent());
 #endif
   }
 
-
-  virtual void loadSizedFromParent() override final
+  virtual void loadSizedFromParent()
   {
-#ifdef USE_ATK
+#if ATK_FOUND
     setSizedFromParent(getSidreView()->getAttributeScalar("__sizedFromParent__"));
     getSidreView()->setAttributeToDefault("__sizedFromParent__");
-#endif
-  }
-
-
-  virtual void unregisterDataPtr() override final
-  {
-#ifdef USE_ATK
-    getSidreView()->setExternalDataPtr(AXOM_NULLPTR);
 #endif
   }
 

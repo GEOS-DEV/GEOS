@@ -22,6 +22,8 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
+#include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
+#include "dataRepository/SidreWrapper.hpp"
 
 #include "mesh/MeshBody.hpp"
 #include "MeshUtilities/MeshUtilities.hpp"
@@ -746,21 +748,20 @@ void ProblemManager::WriteRestart( int32 const cycleNumber )
   char fileName[200] = {0};
   sprintf(fileName, "%s_%09d", "restart", cycleNumber);
 
-  this->writeRestart( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
-#endif
-}
-
-void ProblemManager::ReadRestartFile( const std::string& restartFileName )
-{
-#if ATK_FOUND
-  ManagedGroup::reconstructEntireSidreTree(restartFileName + ".root", "sidre_hdf5", MPI_COMM_WORLD);
+  this->prepareToWriteRestart();
+  m_functionManager->prepareToWriteRestart();
+  SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
 #endif
 }
 
 void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 {
 #if ATK_FOUND
-  this->loadSidreExternalData(restartFileName + ".root", MPI_COMM_WORLD);
+  this->prepareToLoadExternalData();
+  m_functionManager->prepareToLoadExternalData();
+  SidreWrapper::loadExternalData(restartFileName + ".root", MPI_COMM_WORLD);
+  this->finishLoadingExternalData();
+  m_functionManager->finishLoadingExternalData();
 #endif
 }
 

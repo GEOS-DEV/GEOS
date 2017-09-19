@@ -132,8 +132,6 @@ public:
   // function to create and dump the restart file
   void WriteRestart( int32 const cycleNumber );
 
-  static void ReadRestartFile( const std::string& restartFileName );
-
   void ReadRestartOverwrite( const std::string& restartFileName );
 
 

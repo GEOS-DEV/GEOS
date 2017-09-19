@@ -6,7 +6,7 @@
 #include <mpi.h>
 #include <iostream>
 #include <sys/time.h>
-#include "../dataRepository/ManagedGroup.hpp"
+#include "../dataRepository/SidreWrapper.hpp"
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
@@ -54,7 +54,7 @@ int main( int argc, char *argv[] )
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
   if (restart) {
-    ProblemManager::ReadRestartFile( restartFileName );
+    dataRepository::SidreWrapper::reconstructTree( restartFileName + ".root", "sidre_hdf5", MPI_COMM_WORLD );
   }
 
   ProblemManager problemManager( "ProblemManager", nullptr );

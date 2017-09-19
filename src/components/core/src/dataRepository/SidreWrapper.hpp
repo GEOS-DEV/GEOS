@@ -9,8 +9,13 @@
 #define COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
 #include "common/GeosxConfig.hpp"
 
-#ifdef USE_ATK
+
+#include <string>
+#if USE_ATK
 #include "sidre/DataStore.hpp"
+#include <mpi.h>
+#include "spio/IOManager.hpp"
+#endif
 
 namespace geosx
 {
@@ -25,12 +30,17 @@ public:
 
   static axom::sidre::DataStore& dataStore();
 
+  static void writeTree(int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm);
+
+  static void reconstructTree(const std::string & root_path, const std::string & protocol, MPI_Comm comm);
+
+  static void loadExternalData(const std::string & root_path, MPI_Comm comm);
+
 private:
 
 };
 
-}
+} /* namespace dataRepository */
 } /* namespace geosx */
-#endif
 
 #endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_ */

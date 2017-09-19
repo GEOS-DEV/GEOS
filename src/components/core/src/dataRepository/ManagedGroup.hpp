@@ -569,14 +569,13 @@ public:
   }
 
 
-  void writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm);
+void prepareToWriteRestart();
 
-#ifdef USE_ATK
-  void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
+void prepareToLoadExternalData();
 
-  static void reconstructEntireSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
+void finishLoadingExternalData();
 
-  void loadSidreExternalData(const string & root_path, MPI_Comm comm);
+  
 
 protected:
   cxx_utilities::DocumentationNode * m_docNode = nullptr;
