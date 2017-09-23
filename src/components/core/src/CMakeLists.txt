@@ -29,9 +29,9 @@ add_subdirectory(systemSolverInterface)
 
 # Python config
 set( extraComponentsListLink "")
-if( ENABLE_PYTHON )
-  set( extraComponentsListLink ${extraComponentsListLink} python_interp )
-endif()
+#if( ENABLE_PYTHON )
+#  set( extraComponentsListLink ${extraComponentsListLink} python_interp )
+#endif()
 
 
 
