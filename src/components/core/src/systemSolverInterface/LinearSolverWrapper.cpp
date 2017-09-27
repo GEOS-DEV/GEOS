@@ -12,7 +12,12 @@ namespace geosx
 namespace systemSolverInterface
 {
 
-LinearSolverWrapper::LinearSolverWrapper()
+LinearSolverWrapper::LinearSolverWrapper():
+#if USE_MPI
+  m_epetraComm(MPI_COMM_WORLD)
+#else
+  m_epetraComm()
+#endif
 {
   // TODO Auto-generated constructor stub
 

@@ -12,10 +12,23 @@ namespace geosx
 namespace systemSolverInterface
 {
 
-EpetraBlockSystem::EpetraBlockSystem()
+EpetraBlockSystem::EpetraBlockSystem():
+  m_blockID(),
+  m_blockIndex(),
+  m_solverNames(),
+  m_solverNameMap(),
+  m_numBlocks(0),
+  m_rowMap(),
+  m_solution(),
+  m_lastSolution(),
+  m_rhs(),
+  m_sparsity(),
+  m_matrix()
 {
-  // TODO Auto-generated constructor stub
-
+  for( int i=0 ; i<MAX_NUM_BLOCKS ; ++i )
+  {
+    m_blockID[i] = BlockIDs::invalidBlock;
+  }
 }
 
 EpetraBlockSystem::~EpetraBlockSystem()

@@ -273,6 +273,30 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
   }
 }
 
+
+template< typename T >
+inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
+                              T const * __restrict__ const globalField1,
+                              T const * __restrict__ const globalField2,
+                              T const * __restrict__ const globalField3,
+                              T const * __restrict__ const globalField4,
+                              T * __restrict__ const localField1,
+                              T * __restrict__ const localField2,
+                              T * __restrict__ const localField3,
+                              T * __restrict__ const localField4,
+                              localIndex N)
+{
+//  const typename Array1dT<T>::size_type N = localField1.size() ;
+
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    localField1[a] = globalField1[ globalToLocalRelation[a] ];
+    localField2[a] = globalField2[ globalToLocalRelation[a] ];
+    localField3[a] = globalField3[ globalToLocalRelation[a] ];
+    localField4[a] = globalField4[ globalToLocalRelation[a] ];
+  }
+}
+
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                               const Array1dT< T >& localField,
