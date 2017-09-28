@@ -16,13 +16,6 @@ namespace dataRepository
 namespace keys
 {
 string const linearElasticIsotropic = "LinearElasticIsotropic";
-string const density("density");
-string const bulkModulus("bulkModulus");
-string const youngsModulus("youngsModulus");
-string const poissonRatio("poissonsRatio");
-string const shearModulus("shearModulus");
-string const deviatorStress = "DeviatorStress";
-string const meanStress = "MeanStress";
 }
 }
 
@@ -52,15 +45,47 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-private:
-  real64 const & m_YoungsModulus;
-  real64 const & m_BulkModulus;
-  real64 const & m_ShearModulus;
-  real64 const & m_PoissonRatio;
-  real64 const & m_Density;
+  struct ViewKeyStruct : public ConstitutiveBase::ViewKeyStruct
+  {
+    dataRepository::ViewKey youngsModulus = { "YoungsModulus" };
+    dataRepository::ViewKey bulkModulus = { "BulkModulus" };
+    dataRepository::ViewKey shearModulus = { "ShearModulus" };
+    dataRepository::ViewKey poissonRatio = { "PoissonRatio" };
+    dataRepository::ViewKey density = { "Density" };
 
-  r2Sym_array & m_devStress;
-  real64_array & m_meanStress;
+    dataRepository::ViewKey deviatorStress = { "DeviatorStress" };
+    dataRepository::ViewKey meanStress = { "MeanStress" };
+  }viewKeys;
+
+  struct GroupKeyStruct : public ConstitutiveBase::GroupKeyStruct
+  {
+    dataRepository::GroupKey StateData      = { "StateData" };
+    dataRepository::GroupKey ParameterData  = { "ParameterData" };
+  }groupKeys;
+
+
+  dataRepository::view_rtype<real64>       youngsModulus()       { return GetParameterData()->getData<real64>(viewKeys.youngsModulus); }
+  dataRepository::view_rtype_const<real64> youngsModulus() const { return GetParameterData()->getData<real64>(viewKeys.youngsModulus); }
+
+  dataRepository::view_rtype<real64>       bulkModulus()       { return GetParameterData()->getData<real64>(viewKeys.bulkModulus); }
+  dataRepository::view_rtype_const<real64> bulkModulus() const { return GetParameterData()->getData<real64>(viewKeys.bulkModulus); }
+
+  dataRepository::view_rtype<real64>       shearModulus()       { return GetParameterData()->getData<real64>(viewKeys.shearModulus); }
+  dataRepository::view_rtype_const<real64> shearModulus() const { return GetParameterData()->getData<real64>(viewKeys.shearModulus); }
+
+  dataRepository::view_rtype<real64>       poissonRatio()       { return GetParameterData()->getData<real64>(viewKeys.poissonRatio); }
+  dataRepository::view_rtype_const<real64> poissonRatio() const { return GetParameterData()->getData<real64>(viewKeys.poissonRatio); }
+
+  dataRepository::view_rtype<real64>       density()       { return GetParameterData()->getData<real64>(viewKeys.density); }
+  dataRepository::view_rtype_const<real64> density() const { return GetParameterData()->getData<real64>(viewKeys.density); }
+
+  dataRepository::view_rtype<r2Sym_array>       deviatorStress()       { return GetStateData()->getData<r2Sym_array>(viewKeys.deviatorStress); }
+  dataRepository::view_rtype_const<r2Sym_array> deviatorStress() const { return GetStateData()->getData<r2Sym_array>(viewKeys.deviatorStress); }
+
+  dataRepository::view_rtype<real64_array>       meanStress()       { return GetStateData()->getData<real64_array>(viewKeys.meanStress); }
+  dataRepository::view_rtype_const<real64_array> meanStress() const { return GetStateData()->getData<real64_array>(viewKeys.meanStress); }
+
+private:
 
 };
 

@@ -195,6 +195,26 @@ public:
 #endif
   }
 
+template< typename T = ManagedGroup >
+  T * GetGroup( subGroupMap::KeyIndex const & key )
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T *>( m_subGroups[key] );
+#else
+    return static_cast<T *>( m_subGroups[key] );
+#endif
+  }
+
+  template< typename T = ManagedGroup >
+  T const * GetGroup( subGroupMap::KeyIndex const & key ) const
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T const *>( m_subGroups[key] );
+#else
+    return static_cast<T const *>( m_subGroups[key] );
+#endif
+  }
+
 
   subGroupMap & GetSubGroups()
   {

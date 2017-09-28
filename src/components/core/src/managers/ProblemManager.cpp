@@ -8,7 +8,7 @@
 #include "ProblemManager.hpp"
 
 #if USE_CALIPER == 1
-#include "caliper/Annotation.h"
+//#include "caliper/Annotation.h"
 #endif
 
 #include "DomainPartition.hpp"
@@ -657,7 +657,7 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 void ProblemManager::RunSimulation()
 {
 #if USE_CALIPER == 1
-  cali::Annotation runSimulationAnnotation = cali::Annotation("RunSimulation").begin();
+//  cali::Annotation runSimulationAnnotation = cali::Annotation("RunSimulation").begin();
 #endif
   DomainPartition * domain  = getDomainPartition();
 
@@ -714,7 +714,7 @@ void ProblemManager::RunSimulation()
 
 
 #if USE_CALIPER == 1
-  runSimulationAnnotation.end();
+//  runSimulationAnnotation.end();
 #endif
 }
 

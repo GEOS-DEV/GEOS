@@ -224,13 +224,13 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
   string const functionName = getData<string>(dataRepository::keys::functionName);
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
-  ViewWrapperBase & vw = *(dataGroup->getWrapperBase( fieldName ));
-  std::type_index typeIndex = std::type_index(vw.get_typeid());
+  ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index(vw->get_typeid());
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
   {
     using fieldType = decltype(type);
-    ViewWrapper<fieldType> & view = dynamic_cast< ViewWrapper<fieldType> & >(vw);
+    ViewWrapper<fieldType> & view = dynamic_cast< ViewWrapper<fieldType> & >(*vw);
     view_rtype<fieldType> field = view.data();
     if( functionName.empty() )
     {

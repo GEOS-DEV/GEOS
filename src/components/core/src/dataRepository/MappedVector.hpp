@@ -159,20 +159,21 @@ public:
    */
   inline T const * operator[]( KeyIndex const & keyIndex ) const
   {
-    INDEX_TYPE index = keyIndex.Index();
-
-    if( index==KeyIndex::invalid_index )
-    {
-      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ): invalid key index passed as const into accessor function\n");
-    }
-#if RANGE_CHECKING==1
-    else if (m_values[index].first!=keyIndex.Key() )
-    {
-      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ): inconsistent key passed as const into accessor function\n")
-    }
-#endif
-
-    return this->operator[]( index );
+//    INDEX_TYPE index = keyIndex.Index();
+//
+//    if( index==KeyIndex::invalid_index )
+//    {
+//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ): invalid key index passed as const into accessor function\n");
+//    }
+//#if RANGE_CHECKING==1
+//    else if (m_values[index].first!=keyIndex.Key() )
+//    {
+//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ): inconsistent key passed as const into accessor function\n")
+//    }
+//#endif
+//
+//    return this->operator[]( index );
+    return this->operator[]( const_cast<KeyIndex&>(keyIndex) );
   }
 
   /**

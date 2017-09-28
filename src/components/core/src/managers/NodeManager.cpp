@@ -65,6 +65,7 @@ NodeManager::NodeManager( std::string const & name,
                           ManagedGroup * const parent ):
 ObjectManagerBase( name, parent )
 {
+
 }
 
 
