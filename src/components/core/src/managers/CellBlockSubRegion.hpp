@@ -54,7 +54,7 @@ public:
                          lSet & materialSet,
                          ManagedGroup * material );
 
-  struct viewKeys : public CellBlock::viewKeysStruct
+  struct viewKeysStruct : public CellBlock::viewKeysStruct
   {
   }viewKeys;
 

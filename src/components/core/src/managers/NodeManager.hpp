@@ -126,7 +126,7 @@ public:
   ///@}
 
 
-  struct
+  struct viewKeysStruct
   {
     dataRepository::ViewKey referencePosition = { "ReferencePosition" };
     dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
@@ -135,6 +135,11 @@ public:
     dataRepository::ViewKey faceList           = { "faceList" };
 
   }viewKeys;
+
+
+  struct groupKeysStruct
+  {
+  }groupKeys;
 
   view_rtype_const<r1_array> referencePosition() const { return this->getData<r1_array>(viewKeys.referencePosition); }
   view_rtype<r1_array>       referencePosition()       { return this->getData<r1_array>(viewKeys.referencePosition); }

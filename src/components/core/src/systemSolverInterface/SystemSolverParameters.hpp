@@ -22,7 +22,7 @@ public:
 
   void FillDocumentationNode( dataRepository::ManagedGroup * const  );
 
-  struct
+  struct viewKeysStruct
   {
     dataRepository::ViewKey verbosity           = { "verbosityFlag" };
     dataRepository::ViewKey krylovTol           = { "krylovTol" };
@@ -42,7 +42,7 @@ public:
     dataRepository::ViewKey maxIterNewton       = { "maxIterNewton" };
   }viewKeys;
 
-  struct
+  struct groupKeysStruct
   {
   }groupKeys;
 

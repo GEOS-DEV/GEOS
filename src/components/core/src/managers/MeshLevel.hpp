@@ -20,12 +20,12 @@ public:
              ManagedGroup * const parent );
   virtual ~MeshLevel();
 
-  struct
+  struct viewStructKeys
   {
     dataRepository::ViewKey meshLevel                = { "meshLevel" };
   }viewKeys;
 
-  struct
+  struct groupStructKeys
   {
     dataRepository::GroupKey vertexManager  = { "vertexManager" };
     dataRepository::GroupKey cellManager    = { "cellManager" };

@@ -68,12 +68,12 @@ public:
                               const realT problemTime,
                               const bool isRestart );
 
-  struct
+  struct viewKeysStruct
   {
     dataRepository::ViewKey partitionManager    = { "partitionManager" };
   }viewKeys;
 
-  struct
+  struct groupKeysStruct
   {
     dataRepository::GroupKey meshBodies           = { "MeshBodies" };
     dataRepository::GroupKey constitutiveManager  = { "ConstitutiveManager" };

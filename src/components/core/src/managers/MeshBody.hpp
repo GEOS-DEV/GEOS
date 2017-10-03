@@ -24,12 +24,12 @@ public:
 
   MeshLevel * CreateMeshLevel( int32 const newLevel );
 
-  struct
+  struct viewKeysStruct
   {
     dataRepository::ViewKey meshLevels                = { "meshLevels" };
   }viewKeys;
 
-  struct
+  struct groupStructKeys
   {
   }groupKeys;
 

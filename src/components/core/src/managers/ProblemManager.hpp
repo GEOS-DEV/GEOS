@@ -134,7 +134,7 @@ public:
   xmlWrapper::xmlResult xmlResult;
   xmlWrapper::xmlNode xmlProblemNode;
 
-  struct
+  struct viewKeysStruct
   {
     dataRepository::ViewKey verbosity                = { "verbosityFlag" };
     dataRepository::ViewKey inputFileName            = {"inputFileName"};
@@ -147,7 +147,7 @@ public:
     dataRepository::ViewKey schemaLevel              = {"schemaLevel"};
   }viewKeys;
 
-  struct
+  struct groupKeysStruct
   {
     dataRepository::GroupKey commandLine    = { "commandLine" };
     dataRepository::GroupKey meshGenerators = { "meshGenerators" };

@@ -69,13 +69,17 @@ public:
                       R1Tensor const & elementCenter,
                       const localIndex faceIndex );
 
-  struct
+  struct viewKeysStruct
   {
     dataRepository::ViewKey nodeList              = { "nodeList" };
     dataRepository::ViewKey elementRegionList     = { "elemRegionList" };
     dataRepository::ViewKey elementSubRegionList  = { "elemSubRegionList" };
     dataRepository::ViewKey elementList           = { "elemList" };
   }viewKeys;
+
+  struct groupKeysStruct
+  {
+  }groupKeys;
 
   array< int32_array > const & nodeList() const        { return this->getReference< array< int32_array > >(viewKeys.nodeList); }
   array< int32_array > & nodeList()                    { return this->getReference< array< int32_array > >(viewKeys.nodeList); }
@@ -87,9 +91,6 @@ public:
   Array2dT<int32> & elementList()                      { return this->getReference< Array2dT<int32> >(viewKeys.elementList); }
 
 
-  struct
-  {
-  }groupKeys;
 
 
 private:
