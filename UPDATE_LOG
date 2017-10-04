@@ -1,5 +1,13 @@
 
 
+Tue Oct  3 23:22:04 2017 Randolph R. Settgast
+v0.0.11
+
+This PR implements the keyIndex concept in various places throughout the code.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/8
+
+
 Wed Sep 13 00:18:37 2017 Randolph R. Settgast
 v0.0.10
 

@@ -34,6 +34,8 @@ public:
 
   void InitializePreSubGroups( ManagedGroup * const ) override final;
 
+  void InitializePostSubGroups( ManagedGroup * const ) override final;
+
   void CopyFromCellBlock( CellBlock const * source );
 
   template< typename LAMBDA >
@@ -51,6 +53,11 @@ public:
                          string const & setName,
                          lSet & materialSet,
                          ManagedGroup * material );
+
+  struct viewKeysStruct : public CellBlock::viewKeysStruct
+  {
+  }viewKeys;
+
 
 };
 

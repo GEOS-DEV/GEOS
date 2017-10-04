@@ -53,8 +53,28 @@ public:
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override = 0;
 
   virtual void resize( localIndex ) override;
+
+  void SetVariableParameters();
+
+
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
+
+  struct ViewKeyStruct
+  {
+  }viewKeys;
+
+  struct GroupKeyStruct
+  {
+    dataRepository::GroupKey StateData      = { "StateData" };
+    dataRepository::GroupKey ParameterData  = { "ParameterData" };
+  }groupKeys;
+
+  ManagedGroup * GetParameterData()             { return this->GetGroup(groupKeys.ParameterData); }
+  ManagedGroup const * GetParameterData() const { return this->GetGroup(groupKeys.ParameterData); }
+
+  ManagedGroup * GetStateData()             { return this->GetGroup(groupKeys.StateData); }
+  ManagedGroup const * GetStateData() const { return this->GetGroup(groupKeys.StateData); }
 
 };
 

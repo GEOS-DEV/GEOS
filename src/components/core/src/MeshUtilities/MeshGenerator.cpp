@@ -22,6 +22,9 @@
 #include "MPI_Communications/PartitionBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 
+#include "managers/MeshBody.hpp"
+#include "managers/MeshLevel.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -239,196 +242,6 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
 
 }
 
-/**
- * @author settgast, fu
- * @param hdn
- */
-//void MeshGenerator::ReadXML( pugi::xml_node& hdn )
-//{
-//
-//  m_elementType = hdn.GetStringVector("elementTypes");
-//  if (m_elementType.size() == 0)
-//    m_elementType = hdn.GetStringVector("elementType");
-//  if (m_elementType.size() == 0) {
-//#if ATK_FOUND
-//    SLIC_ERROR("MeshGenerator: No element type is specified");
-//#endif
-//  }
-//  if (m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6")
-//  {
-//    m_dim = 3;
-//  }
-//  else if (m_elementType[0] == "CPE4" || m_elementType[0] == "STRI" )
-//  {
-//    m_dim = 2;
-//  }
-//  else
-//  { 
-//#if ATK_FOUND
-//    SLIC_ERROR("MeshGenerator: incorrect element type!");
-//#endif
-//  }
-//
-//
-//  m_vertices[0] = hdn.GetAttributeVector<realT>("xcoords");
-//  m_nElems[0] = hdn.GetAttributeVector<int>("nx");
-//  m_nElemBias[0] = hdn.GetAttributeVectorOrDefault<realT>("xbias", std::vector<realT>(m_nElems[0].size(), 0.0));
-//
-//  if( m_dim > 1 )
-//  {
-//    m_vertices[1] = hdn.GetAttributeVector<realT>("ycoords");
-//    m_nElems[1] = hdn.GetAttributeVector<int>("ny");
-//    m_nElemBias[1] = hdn.GetAttributeVectorOrDefault<realT>("ybias", std::vector<realT>(m_nElems[1].size(), 0.0));
-//  }
-//  else
-//  {
-//    m_vertices[1].push_back(0.0);
-//    m_vertices[1].push_back(0.0);
-//    m_nElems[1].push_back(1);
-//    m_nElemBias[1].push_back(0);
-//  }
-//
-//  if( m_dim > 2 )
-//  {
-//    m_vertices[2] = hdn.GetAttributeVector<realT>("zcoords");
-//    m_nElems[2] = hdn.GetAttributeVector<int>("nz");
-//    m_nElemBias[2] = hdn.GetAttributeVectorOrDefault<realT>("zbias", std::vector<realT>(m_nElems[2].size(), 0.0));
-//  }
-//  else
-//  {
-//    m_vertices[2].push_back(0.0);
-//    m_vertices[2].push_back(0.0);
-//    m_nElems[2].push_back(1);
-//    m_nElemBias[2].push_back(0);
-//  }
-//
-//  {
-//    bool failFlag = false;
-//    for( int i=0 ; i<m_dim ; ++i )
-//    {
-//      failFlag += ( m_nElems[i].size() != m_vertices[i].size()-1 );
-//    }
-//    if( failFlag )
-//    {
-//#if ATK_FOUND
-//      SLIC_ERROR("vertex/element mismatch MeshGenerator::ReadXML()");
-//#endif
-//    }
-//  }
-//
-//  m_numElePerBox.resize(m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
-//
-//  if (m_elementType.size() != m_numElePerBox.size())
-//  {
-//    if (m_elementType.size() == 1)
-//    {
-//      m_elementType.resize(m_numElePerBox.size());
-//      m_elementType = m_elementType[0];
-//    }
-//    else
-//    {
-//#if ATK_FOUND
-//      SLIC_ERROR("MeshGenerator: The number of element types is inconsistent with the number of total block.");
-//#endif
-//    }
-//  }
-//
-//
-//  for (localIndex i = 0; i < m_elementType.size(); ++i)
-//  {
-//    if (m_elementType[i] == "C3D8")
-//    {
-//      m_numElePerBox[i] = 1;
-//      m_dim = 3;
-//    }
-//    else if (m_elementType[i] == "C3D4")
-//    {
-//      m_numElePerBox[i] = 6;
-//      m_dim = 3;
-//    }
-//    else if (m_elementType[i] == "C3D6")
-//    {
-//      m_numElePerBox[i] = 2;
-//      m_dim = 3;
-//      m_trianglePattern = hdn.GetAttributeOrDefault<int>("trianglePattern", 0);
-//    }
-//    else if ( m_elementType[i] == "CPE4")
-//    {
-//      m_numElePerBox[i] = 1;
-//      m_dim = 2;
-//    }
-//    else if (m_elementType[i] == "STRI")
-//    {
-//      m_numElePerBox[i] = 2;
-//      m_trianglePattern = hdn.GetAttributeOrDefault<int>("trianglePattern", 0);
-//      m_dim = 2;
-//    }
-//  }
-//
-//
-//  m_regionNames = hdn.GetStringVector("regionNames");
-//  ExpandMultipleTokens(m_regionNames);
-//  {
-//    unsigned int numBlocks = 1;
-//    for( int i=0 ; i<m_dim ; ++i )
-//    {
-//      numBlocks *= m_nElems[i].size();
-//    }
-//    if( numBlocks != m_regionNames.size() )
-//    {
-//      if (m_regionNames.size() == 1)
-//      {
-//        m_regionNames.resize(numBlocks);
-//        m_regionNames = m_regionNames[0];
-//      }
-//      else
-//      {
-//#if ATK_FOUND
-//        SLIC_ERROR("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
-//#endif
-//      }
-//    }
-//  }
-//
-//  for( int i=0 ; i<3 ; ++i )
-//  {
-//    m_min[i] = m_vertices[i].front();
-//    m_max[i] = m_vertices[i].back();
-//  }
-//
-//  for( int dir=0 ; dir<3 ; ++dir )
-//  {
-//    m_firstElemIndexForBlock[dir].resize( m_nElems[dir].size() );
-//    m_lastElemIndexForBlock[dir].resize( m_nElems[dir].size() );
-//    m_firstElemIndexForBlock[dir][0] = 0;
-//    m_lastElemIndexForBlock[dir][0] = m_nElems[dir][0]-1;
-//    for( unsigned int block=1 ; block<m_nElems[dir].size() ; ++block )
-//    {
-//      m_firstElemIndexForBlock[dir][block] = m_lastElemIndexForBlock[dir][block-1] + 1;
-//      m_lastElemIndexForBlock[dir][block] = m_firstElemIndexForBlock[dir][block] + m_nElems[dir][block]-1;
-//    }
-//  }
-//
-//
-//  m_fPerturb = hdn.GetAttributeOrDefault<realT>("perturbationFactor", 0.0);
-//  m_randSeed = hdn.GetAttributeOrDefault<int>("perturbationSeed", time(NULL));
-//  srand(m_randSeed);
-//
-//  m_mapToRadial = hdn.GetAttributeOrDefault<int>("mapToRadial", 0);
-//
-//  m_skewAngle = hdn.GetAttributeOrDefault<realT>("skewAngle", 0.0);
-//  m_skewAngle *= 3.14159265/180;
-//  R1Tensor zeroVector;
-//  zeroVector *= 0.0;
-//  m_skewCenter = hdn.GetAttributeOrDefault<R1Tensor>("skewCenter", zeroVector);
-//
-//
-//  // Mesh deformation
-//  m_delayMeshDeformation = hdn.GetAttributeOrDefault<int>("delayMeshDeformation", 0);
-//  m_meshDx = hdn.GetAttributeString("dxTable");
-//  m_meshDy = hdn.GetAttributeString("dyTable");
-//  m_meshDz = hdn.GetAttributeString("dzTable");
-//
 //}
 /**
  * @author settgast
@@ -626,6 +439,10 @@ void MeshGenerator::ReadXML_PostProcess()
  */
 void MeshGenerator::GenerateMesh( DomainPartition * domain )
 {
+
+  ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
+  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
 
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);
@@ -947,7 +764,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 //          ElementRegionT& elemRegion = domain->m_feElementManager->m_ElementRegions[*iterRegion];
 
           CellBlock * elemRegion =  elementManager->GetRegion(*iterRegion);
-          int32 const numNodesPerElem = *(elemRegion->getData<int32>(keys::numNodesPerElement));
+          int32 const numNodesPerElem = elemRegion->numNodesPerElement();
 
           int numElemsInDirForRegion[3] =
               { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,

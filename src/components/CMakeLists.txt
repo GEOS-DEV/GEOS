@@ -1,3 +1,4 @@
+message( "Entering /src/components/CMakeLists.txt")
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_SOURCE_DIR}/components/core/src)
 
 
@@ -17,7 +18,7 @@ else()
 endif()
 
 
-add_subdirectory(core/src)
+add_subdirectory(core)
 add_subdirectory(cxx-utilities/src)
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
@@ -52,3 +53,4 @@ blt_add_executable(NAME geosx
 if (ENABLE_DOCS)
   add_subdirectory(docs)
 endif()
+message( "Leaving /src/components/CMakeLists.txt")

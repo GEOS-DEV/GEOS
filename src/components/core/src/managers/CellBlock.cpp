@@ -46,6 +46,7 @@
 
 #include "CellBlock.hpp"
 
+#include "NodeManager.hpp"
 
 namespace geosx
 {
@@ -55,9 +56,15 @@ using namespace dataRepository;
 
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
     ObjectManagerBase( name, parent ),
-    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<int32> >(keys::nodeList)->reference())
+    viewKeys(),
+    groupKeys(),
+    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<int32> >(viewKeys.nodeList.Key())->reference()),
+    m_toFacesRelation(this->RegisterViewWrapper< Array2dT<int32> >(viewKeys.faceList.Key())->reference())
+
 {
+
   m_toNodesRelation.resize2(0,8);
+  m_toFacesRelation.resize2(0,6);
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap).setSizedFromParent(1);
 
 }
@@ -76,14 +83,40 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "an element region" );
 
-  docNode->AllocateChildNode( keys::numNodesPerElement,
-                              keys::numNodesPerElement,
+  docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
+                              viewKeys.numNodesPerElement.Key(),
                               -1,
                               "int32",
                               "int32",
                               "Number of Nodes Per Element",
                               "Number of Nodes Per Element",
                               "1",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+//  docNode->AllocateChildNode( viewKeys.nodeList.Key(),
+//                              viewKeys.nodeList.Key(),
+//                              -1,
+//                              "int32_array",
+//                              "int32_array",
+//                              "nodelist",
+//                              "nodelist",
+//                              "8",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
+
+  docNode->AllocateChildNode( viewKeys.numFacesPerElement.Key(),
+                              viewKeys.numFacesPerElement.Key(),
+                              -1,
+                              "int32",
+                              "int32",
+                              "Number of Faces Per Element",
+                              "Number of Faces Per Element",
+                              "6",
                               "",
                               0,
                               1,
@@ -133,8 +166,11 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
 
 void CellBlock::ReadXML_PostProcess()
 {
-  int32 & numNodesPerElem = *(getData<int32>(keys::numNodesPerElement));
-  numNodesPerElem = 8;
+//  int32 & numNodesPerElem = this->numNodesPerElement();
+//  numNodesPerElem = 8;
+  this->numNodesPerElement() = 8;
+  this->numFacesPerElement() = 6;
+
 }
 
 //map<string,int32> CellBlock::SetConstitutiveMap( ManagedGroup const * domain )
@@ -158,6 +194,247 @@ void CellBlock::ReadXML_PostProcess()
 //  return counts;
 //}
 
+
+void CellBlock::GetFaceNodes( const localIndex elementIndex,
+                              const localIndex localFaceIndex,
+                              lArray1d& nodeIndicies) const
+{
+  // get nodelist for this element
+  const localIndex* const elemToNodeMap = m_toNodesRelation[elementIndex];
+
+  // resize the nodeIndicies based on element type (this is wrong for some types of elements)
+  nodeIndicies.resize(4);
+
+//  if (!m_elementGeometryID.compare(0, 4, "C3D8"))
+  {
+    if (localFaceIndex == 0)
+    {
+      nodeIndicies[0] = elemToNodeMap[0];
+      nodeIndicies[1] = elemToNodeMap[1];
+      nodeIndicies[2] = elemToNodeMap[5];
+      nodeIndicies[3] = elemToNodeMap[4];
+    }
+    else if (localFaceIndex == 1)
+    {
+      nodeIndicies[0] = elemToNodeMap[0];
+      nodeIndicies[1] = elemToNodeMap[2];
+      nodeIndicies[2] = elemToNodeMap[3];
+      nodeIndicies[3] = elemToNodeMap[1];
+    }
+    else if (localFaceIndex == 2)
+    {
+      nodeIndicies[0] = elemToNodeMap[0];
+      nodeIndicies[1] = elemToNodeMap[4];
+      nodeIndicies[2] = elemToNodeMap[6];
+      nodeIndicies[3] = elemToNodeMap[2];
+    }
+    else if (localFaceIndex == 3)
+    {
+      nodeIndicies[0] = elemToNodeMap[1];
+      nodeIndicies[1] = elemToNodeMap[3];
+      nodeIndicies[2] = elemToNodeMap[7];
+      nodeIndicies[3] = elemToNodeMap[5];
+    }
+    else if (localFaceIndex == 4)
+    {
+      nodeIndicies[0] = elemToNodeMap[3];
+      nodeIndicies[1] = elemToNodeMap[2];
+      nodeIndicies[2] = elemToNodeMap[6];
+      nodeIndicies[3] = elemToNodeMap[7];
+    }
+    else if (localFaceIndex == 5)
+    {
+      nodeIndicies[0] = elemToNodeMap[4];
+      nodeIndicies[1] = elemToNodeMap[5];
+      nodeIndicies[2] = elemToNodeMap[7];
+      nodeIndicies[3] = elemToNodeMap[6];
+    }
+
+  }
+//  else if (!m_elementGeometryID.compare(0, 4, "C3D6"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[2] = elemToNodeMap[5];
+//      nodeIndicies[3] = elemToNodeMap[4];
+//    }
+//    else if (localFaceIndex == 1)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[2] = elemToNodeMap[3];
+//      nodeIndicies[3] = elemToNodeMap[1];
+//    }
+//    else if (localFaceIndex == 2)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[2] = elemToNodeMap[4];
+//      nodeIndicies[3] = std::numeric_limits<localIndex>::max();
+//    }
+//    else if (localFaceIndex == 3)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[1];
+//      nodeIndicies[1] = elemToNodeMap[3];
+//      nodeIndicies[2] = elemToNodeMap[5];
+//      nodeIndicies[3] = std::numeric_limits<localIndex>::max();
+//    }
+//    else if (localFaceIndex == 4)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[2];
+//      nodeIndicies[1] = elemToNodeMap[3];
+//      nodeIndicies[2] = elemToNodeMap[5];
+//      nodeIndicies[3] = elemToNodeMap[4];
+//    }
+//  }
+//
+//  else if (!m_elementGeometryID.compare(0, 4, "C3D4"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[2] = elemToNodeMap[1];
+//    }
+//    else if (localFaceIndex == 1)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[2] = elemToNodeMap[3];
+//    }
+//    else if (localFaceIndex == 2)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[3];
+//      nodeIndicies[2] = elemToNodeMap[2];
+//    }
+//    else if (localFaceIndex == 3)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[1];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//      nodeIndicies[2] = elemToNodeMap[3];
+//    }
+//  }
+//
+//  else if ( !m_elementGeometryID.compare(0,4,"CPE2") )
+//  {
+//    if( localFaceIndex == 0 )
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//    }
+//  }
+//
+//  else if ( !m_elementGeometryID.compare(0,4,"CPE3") )
+//  {
+//    if( localFaceIndex == 0 )
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//    }
+//    else if( localFaceIndex == 1 )
+//    {
+//      nodeIndicies[0] = elemToNodeMap[1];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//    }
+//    else if( localFaceIndex == 2 )
+//    {
+//      nodeIndicies[0] = elemToNodeMap[2];
+//      nodeIndicies[1] = elemToNodeMap[0];
+//    }
+//  }
+//
+//  else if (!m_elementGeometryID.compare(0, 4, "CPE4"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//    }
+//    else if (localFaceIndex == 1)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[1];
+//      nodeIndicies[1] = elemToNodeMap[3];
+//    }
+//    else if (localFaceIndex == 2)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[3];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//    }
+//    else if (localFaceIndex == 3)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[2];
+//      nodeIndicies[1] = elemToNodeMap[0];
+//    }
+//  }
+//
+//  else if (!m_elementGeometryID.compare(0, 4, "STRI"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//    }
+//    else if (localFaceIndex == 1)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[1];
+//      nodeIndicies[1] = elemToNodeMap[2];
+//    }
+//    else if (localFaceIndex == 2)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[2];
+//      nodeIndicies[1] = elemToNodeMap[0];
+//    }
+//  }
+//
+//  else if (!m_elementGeometryID.compare(0, 3, "S4R"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[2] = elemToNodeMap[2];
+//      nodeIndicies[3] = elemToNodeMap[3];
+//    }
+//  }
+//
+//  else if (!m_elementGeometryID.compare(0, 4, "TRSH"))
+//  {
+//    if (localFaceIndex == 0)
+//    {
+//      nodeIndicies[0] = elemToNodeMap[0];
+//      nodeIndicies[1] = elemToNodeMap[1];
+//      nodeIndicies[2] = elemToNodeMap[2];
+//    }
+//  }
+//
+//  else
+//  {
+//    GEOS_ERROR("Error.  Don't know what kind of element this is and cannot build faces.");
+//  }
+
+}
+
+R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos) const
+{
+
+  view_rtype_const<r1_array> X = nodeManager.referencePosition();
+  view_rtype_const<r1_array> u = nodeManager.totalDisplacement();
+  const localIndex* const nodelist = m_toNodesRelation[k];
+  R1Tensor elementCenter(0.0);
+  for ( localIndex a = 0; a < numNodesPerElement(); ++a)
+  {
+    const localIndex b = nodelist[a];
+    elementCenter += X[b];
+    if(!useReferencePos)
+      elementCenter += X[b];
+  }
+  elementCenter /= numNodesPerElement();
+
+  return elementCenter;
+}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )
 

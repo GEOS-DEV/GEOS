@@ -68,7 +68,17 @@ public:
                               const realT problemTime,
                               const bool isRestart );
 
-  //  PartitionBase * GetPartition() {return m_partitio}
+  struct viewKeysStruct
+  {
+    dataRepository::ViewKey partitionManager    = { "partitionManager" };
+  }viewKeys;
+
+  struct groupKeysStruct
+  {
+    dataRepository::GroupKey meshBodies           = { "MeshBodies" };
+    dataRepository::GroupKey constitutiveManager  = { "ConstitutiveManager" };
+  }groupKeys;
+
 private:
 
 

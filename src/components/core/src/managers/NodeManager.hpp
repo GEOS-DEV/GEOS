@@ -75,7 +75,7 @@ std::string const elementMap("elementMap");
 }
 }
 
-
+using namespace dataRepository;
 /**
  * @author Randolph Settgast
  *
@@ -126,7 +126,25 @@ public:
   ///@}
 
 
+  struct viewKeysStruct
+  {
+    dataRepository::ViewKey referencePosition = { "ReferencePosition" };
+    dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
+    dataRepository::ViewKey nodeList           = { "nodeList" };
+    dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
+    dataRepository::ViewKey faceList           = { "faceList" };
 
+  }viewKeys;
+
+
+  struct groupKeysStruct
+  {
+  }groupKeys;
+
+  view_rtype_const<r1_array> referencePosition() const { return this->getData<r1_array>(viewKeys.referencePosition); }
+  view_rtype<r1_array>       referencePosition()       { return this->getData<r1_array>(viewKeys.referencePosition); }
+  view_rtype_const<r1_array> totalDisplacement() const { return this->getData<r1_array>(viewKeys.totalDisplacement); }
+  view_rtype<r1_array>       totalDisplacement()       { return this->getData<r1_array>(viewKeys.totalDisplacement); }
 protected:
 
 private:

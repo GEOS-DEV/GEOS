@@ -57,6 +57,7 @@ public:
   template< typename T >
   array< ConstitutiveWrapper< dataRepository::view_rtype_const<T> > > GetData( string const & name ) const;
 
+
 };
 
 

@@ -37,7 +37,6 @@ set(CHAI_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/chai/" CACHE PATH "" FORCE )
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
 option( ENABLE_CALIPER "Enables CALIPER" ON )
-message( "ENABLE_CALIPER = ${ENABLE_CALIPER}" )
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)

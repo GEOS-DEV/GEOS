@@ -117,6 +117,8 @@ public:
 
   void InitializePreSubGroups( ManagedGroup * const group ) override final;
 
+  void InitializePostSubGroups( ManagedGroup * const group ) override final;
+
   void RunSimulation();
 
   void ApplySchedulerEvent();
@@ -131,6 +133,27 @@ public:
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
   xmlWrapper::xmlNode xmlProblemNode;
+
+  struct viewKeysStruct
+  {
+    dataRepository::ViewKey verbosity                = { "verbosityFlag" };
+    dataRepository::ViewKey inputFileName            = {"inputFileName"};
+    dataRepository::ViewKey restartFileName          = {"restartFileName"};
+    dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};
+    dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};
+    dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};
+    dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};
+    dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"};
+    dataRepository::ViewKey schemaLevel              = {"schemaLevel"};
+  }viewKeys;
+
+  struct groupKeysStruct
+  {
+    dataRepository::GroupKey commandLine    = { "commandLine" };
+    dataRepository::GroupKey meshGenerators = { "meshGenerators" };
+  }groupKeys;
+
+
 
 private:
   PhysicsSolverManager * m_physicsSolverManager;

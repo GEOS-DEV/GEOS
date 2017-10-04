@@ -22,6 +22,8 @@ set(geosx_headers
     managers/TableManager.hpp
     managers/ElementRegion.hpp
     managers/ElementRegionManager.hpp
+    managers/MeshBody.hpp
+    managers/MeshLevel.hpp    
     PARENT_SCOPE )
 
 
@@ -48,6 +50,9 @@ set(geosx_core_sources
     managers/TableManager.cpp
     managers/ElementRegion.cpp
     managers/ElementRegionManager.cpp
+    managers/MeshBody.cpp
+    managers/MeshLevel.cpp    
+    
     PARENT_SCOPE )
 
 if( 0 )
@@ -61,7 +66,6 @@ set(geosx_headers
     
 set(geosx_core_sources
   ${geosx_core_sources}
-    managers/EdgeManager.cpp
     managers/ElementManager.cpp
     managers/ElementRegionT.cpp
     managers/FaceManager.cpp

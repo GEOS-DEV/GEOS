@@ -110,7 +110,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
 {
   auto & dNdX            = cellBlock->getReference< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX);
   auto & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ);
-  lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(keys::nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+  lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(std::string("nodeList"))->reference();// getData<lArray2d>(keys::nodeList);
 
   Array1dT<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
 

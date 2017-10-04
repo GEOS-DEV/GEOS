@@ -115,10 +115,29 @@ public:
 //                               string const & elementType,
 //                               int32 const & numElements );
 
+  ElementRegion const * GetRegion( string const & regionName ) const
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(regionName);
+  }
   ElementRegion * GetRegion( string const & regionName )
   {
     return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(regionName);
   }
+
+  ElementRegion const * GetRegion( int32 const & index ) const
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(index);
+  }
+  ElementRegion * GetRegion( int32 const & index )
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(index);
+  }
+
+  int32 numRegions() const
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups().size();
+  }
+
 
   template< typename LAMBDA >
   void forElementRegions( LAMBDA lambda )

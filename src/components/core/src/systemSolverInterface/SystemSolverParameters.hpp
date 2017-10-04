@@ -24,7 +24,7 @@ public:
 
   void FillDocumentationNode( dataRepository::ManagedGroup * const  );
 
-  struct viewKeyStruct
+  struct viewKeysStruct
   {
     dataRepository::ViewKey verbosity           = { "verbosityFlag" };
     dataRepository::ViewKey krylovTol           = { "krylovTol" };
@@ -43,6 +43,10 @@ public:
     dataRepository::ViewKey newtonTol           = { "newtonTol" };
     dataRepository::ViewKey maxIterNewton       = { "maxIterNewton" };
   }viewKeys;
+
+  struct groupKeysStruct
+  {
+  }groupKeys;
 
   int32  verbose() const              { return *(this->getData<int32>( viewKeys.verbosity )); }
   real64 krylovTol() const            { return *(this->getData<real64>( viewKeys.krylovTol )); }
