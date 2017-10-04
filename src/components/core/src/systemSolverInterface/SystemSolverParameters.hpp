@@ -24,7 +24,7 @@ public:
 
   void FillDocumentationNode( dataRepository::ManagedGroup * const  );
 
-  struct keyStruct
+  struct viewKeyStruct
   {
     dataRepository::ViewKey verbosity           = { "verbosityFlag" };
     dataRepository::ViewKey krylovTol           = { "krylovTol" };
@@ -42,24 +42,24 @@ public:
     dataRepository::ViewKey useNewtonSolve      = { "useNewtonSolve" };
     dataRepository::ViewKey newtonTol           = { "newtonTol" };
     dataRepository::ViewKey maxIterNewton       = { "maxIterNewton" };
-  }keys;
+  }viewKeys;
 
-  int32  verbose() const              { return *(this->getData<int32>( keys.verbosity )); }
-  real64 krylovTol() const            { return *(this->getData<int32>( keys.krylovTol )); }
-  int32  numKrylovIter() const        { return *(this->getData<int32>( keys.numKrylovIter )); }
-  int32  kspace() const               { return *(this->getData<int32>( keys.kspace )); }
-  real64 ilut_fill() const            { return *(this->getData<int32>( keys.ilut_fill )); }
-  real64 ilut_drop() const            { return *(this->getData<int32>( keys.ilut_drop )); }
-  bool   useMLPrecond() const         { return *(this->getData<int32>( keys.useMLPrecond )); }
-  bool   useInnerSolver() const       { return *(this->getData<int32>( keys.useInnerSolver )); }
-  int32  scalingOption() const        { return *(this->getData<int32>( keys.scalingOption )); }
-  bool   useBicgstab() const          { return *(this->getData<int32>( keys.useBicgstab )); }
-  bool   useDirectSolver() const      { return *(this->getData<int32>( keys.useDirectSolver )); }
-  real64 KrylovResidualInit() const   { return *(this->getData<int32>( keys.KrylovResidualInit )); }
-  real64 KrylovResidualFinal() const  { return *(this->getData<int32>( keys.KrylovResidualFinal )); }
-  bool   useNewtonSolve() const       { return *(this->getData<int32>( keys.useNewtonSolve )); }
-  real64 newtonTol() const            { return *(this->getData<int32>( keys.newtonTol )); }
-  int32  maxIterNewton() const        { return *(this->getData<int32>( keys.maxIterNewton )); }
+  int32  verbose() const              { return *(this->getData<int32>( viewKeys.verbosity )); }
+  real64 krylovTol() const            { return *(this->getData<real64>( viewKeys.krylovTol )); }
+  int32  numKrylovIter() const        { return *(this->getData<int32>( viewKeys.numKrylovIter )); }
+  int32  kspace() const               { return *(this->getData<int32>( viewKeys.kspace )); }
+  real64 ilut_fill() const            { return *(this->getData<real64>( viewKeys.ilut_fill )); }
+  real64 ilut_drop() const            { return *(this->getData<int32>( viewKeys.ilut_drop )); }
+  int32   useMLPrecond() const         { return *(this->getData<int32>( viewKeys.useMLPrecond )); }
+  int32   useInnerSolver() const       { return *(this->getData<int32>( viewKeys.useInnerSolver )); }
+  int32  scalingOption() const        { return *(this->getData<int32>( viewKeys.scalingOption )); }
+  int32   useBicgstab() const          { return *(this->getData<int32>( viewKeys.useBicgstab )); }
+  int32   useDirectSolver() const      { return *(this->getData<int32>( viewKeys.useDirectSolver )); }
+  real64 KrylovResidualInit() const   { return *(this->getData<real64>( viewKeys.KrylovResidualInit )); }
+  real64 KrylovResidualFinal() const  { return *(this->getData<real64>( viewKeys.KrylovResidualFinal )); }
+  int32   useNewtonSolve() const       { return *(this->getData<int32>( viewKeys.useNewtonSolve )); }
+  real64 newtonTol() const            { return *(this->getData<real64>( viewKeys.newtonTol )); }
+  int32  maxIterNewton() const        { return *(this->getData<int32>( viewKeys.maxIterNewton )); }
 
 
 };

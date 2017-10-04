@@ -34,19 +34,57 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
   docNode->setShortDescription("Parameters for linear/non-linear system solver");
 
 
-  docNode->AllocateChildNode( keys.verbosity.Key(),
-                              keys.verbosity.Key(),
+  docNode->AllocateChildNode( viewKeys.verbosity.Key(),
+                              viewKeys.verbosity.Key(),
                               -1,
                               "int32",
                               "int32",
                               "verbosity level",
                               "verbosity level",
-                              "0.5",
+                              "0",
                               "",
                               0,
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys.krylovTol.Key(),
+                              viewKeys.krylovTol.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "verbosity level",
+                              "verbosity level",
+                              "1.0e-6",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.numKrylovIter.Key(),
+                              viewKeys.numKrylovIter.Key(),
+                              -1,
+                              "int32",
+                              "int32",
+                              "verbosity level",
+                              "verbosity level",
+                              "20",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.useNewtonSolve.Key(),
+                              viewKeys.useNewtonSolve.Key(),
+                              -1,
+                              "int32",
+                              "int32",
+                              "verbosity level",
+                              "verbosity level",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
 //  real64 m_krylovTol;          // Solver convergence criteria
 //  int32  m_numKrylovIter;
 //  int32  m_kspace;             // Number of krylov vectors before GMRES restart
