@@ -45,6 +45,8 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
+  void GetStiffness( realT c[6][6]) const override;
+
   struct ViewKeyStruct : public ConstitutiveBase::ViewKeyStruct
   {
     dataRepository::ViewKey youngsModulus = { "YoungsModulus" };

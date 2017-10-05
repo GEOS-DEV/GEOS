@@ -56,6 +56,8 @@ public:
 
   void SetVariableParameters();
 
+  virtual void GetStiffness( realT c[6][6]) const = 0;
+
 
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
