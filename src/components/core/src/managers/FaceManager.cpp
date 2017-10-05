@@ -394,7 +394,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
     {
       R1Tensor v = faceCoords[n];
       v -= fc;
-      thetaOrder[n] = std::pair<realT,int>(atan2(v*ey,v*ex),faceNodes[n]);
+      thetaOrder[n] = std::pair<realT,int>(atan2(Dot(v,ey),Dot(v,ex)),faceNodes[n]);
     }
 
     sort(thetaOrder.begin(), thetaOrder.end());
