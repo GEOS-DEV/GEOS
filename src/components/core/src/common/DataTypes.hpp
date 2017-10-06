@@ -11,7 +11,6 @@
 #include <cassert>
 #include <cstdint>
 #include <iostream>
-#include <set>
 #include <string>
 #include <typeindex>
 #include <typeinfo>
@@ -20,6 +19,7 @@
 #include <vector>
 
 #include "common/GeosxConfig.hpp"
+#include "common/SortedArray.hpp"
 
 #include "Macros.hpp"
 
@@ -85,7 +85,7 @@ using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
 
 
 template< typename T >
-using set = std::set<T>;
+using set = SortedArray<T>;
 
 template< typename TKEY, typename TVAL >
 using map = std::map<TKEY,TVAL>;
@@ -140,18 +140,17 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 //***** BEGIN LEGACY TYPEDEFS *****
 
-typedef std::set<localIndex> lSet;
-typedef std::set<globalIndex> gSet;
+typedef SortedArray<localIndex> lSet;
+typedef SortedArray<globalIndex> gSet;
 
 typedef int FieldKey;
-
 
 template< typename T >
 using Array2dT = multidimensionalArray::ManagedArray<T,2,localIndex>;
 
 typedef multidimensionalArray::ManagedArray<localIndex,2,localIndex> lArray2d;
 typedef array<std::pair<int,localIndex> > pArray1d;
-typedef std::set<std::pair<int,localIndex> > pSet;
+typedef SortedArray<std::pair<int,localIndex> > pSet;
 
 using r1_array = array<R1Tensor>;
 using r2_array = array<R2Tensor>;

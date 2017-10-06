@@ -17,7 +17,7 @@ TEST(testSidreBasic, testSidreBasic) {
   const int group_size = 44;
   const int sized_from_parent = 55;
   const int num_items = 10;
-  const int expected_size = num_items * sizeof(int64);
+  const uint expected_size = num_items * sizeof(int64);
   axom::sidre::DataStore & ds = SidreWrapper::dataStore();
 
   /* Create a new ManagedGroup directly below the sidre::DataStore root. */
@@ -25,26 +25,26 @@ TEST(testSidreBasic, testSidreBasic) {
   root->resize(group_size);
 
   /* Create a ViewWrapper which creates the associated sidre::View */
-  ViewWrapper<int64_array> & data_view = root->RegisterViewWrapper<int64_array>("int64_data");
-  data_view.setSizedFromParent(sized_from_parent);
+  ViewWrapper<int64_array> * data_view = root->RegisterViewWrapper<int64_array>("int64_data");
+  data_view->setSizedFromParent(sized_from_parent);
 
   /* Resize the array */
-  data_view.resize(num_items);
+  data_view->resize(num_items);
 
   /* Check that the ViewWrapper size and dataSize functions return the proper values */
-  EXPECT_EQ(data_view.size(), num_items);
-  EXPECT_EQ(data_view.dataSize(), expected_size);
+  EXPECT_EQ(data_view->size(), num_items);
+  EXPECT_EQ(data_view->dataSize(), expected_size);
 
   /* Set the data */
-  int64_array & data = data_view.data();
+  ViewWrapper<int64_array>::rtype data = data_view->data();
   for (int i = 0; i < num_items; i++) {
       data[i] = i;
   }
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  int64_ptr dataPtr = data_view.dataPtr();
+  int64_ptr dataPtr = data_view->dataPtr();
   EXPECT_EQ(dataPtr, &(data[0]));
-  for (int i = 0; i < data_view.size(); i++) {
+  for (int i = 0; i < data_view->size(); i++) {
     EXPECT_EQ(dataPtr[i], data[i]);
   }
 
@@ -59,25 +59,25 @@ TEST(testSidreBasic, testSidreBasic) {
   ds.getRoot()->destroyGroups();
 
   /* Restore the sidre tree */
-  root = new ManagedGroup(std::string("data"), nullptr);
   SidreWrapper::reconstructTree(path + ".root", protocol, MPI_COMM_WORLD);
+  root = new ManagedGroup(std::string("data"), nullptr);
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
-  ViewWrapper<int64_array> & data_view_new = root->RegisterViewWrapper<int64_array>("int64_data");
+  ViewWrapper<int64_array> * data_view_new = root->RegisterViewWrapper<int64_array>("int64_data");
 
   /* Load the data */
   root->prepareToLoadExternalData();
-  SidreWrapper::loadSidreExternalData(path + ".root", MPI_COMM_WORLD);
+  SidreWrapper::loadExternalData(path + ".root", MPI_COMM_WORLD);
   root->finishLoadingExternalData();
 
   /* Should be the same as stored. */
-  EXPECT_EQ(data_view_new.size(), num_items);
-  int64_array & data_new = data_view_new.data();
-  for (int i = 0; i < data_view_new.size(); i++) {
+  EXPECT_EQ(data_view_new->size(), num_items);
+  ViewWrapper<int64_array>::rtype_const data_new = data_view_new->data();
+  for (int i = 0; i < data_view_new->size(); i++) {
     EXPECT_EQ(data_new[i], i);
   }
 
-  EXPECT_EQ(data_view_new.sizedFromParent(), sized_from_parent);
+  EXPECT_EQ(data_view_new->sizedFromParent(), sized_from_parent);
   EXPECT_EQ(root->size(), group_size);
 
   delete root;

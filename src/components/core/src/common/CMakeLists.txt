@@ -7,6 +7,7 @@ set(geosx_headers
   	common/DataTypes.hpp
   	common/InterObjectRelation.hpp
     common/Logger.hpp
+    common/SortedArray.hpp
     PARENT_SCOPE )
 
 #

@@ -9,6 +9,8 @@
 #include "SidreWrapper.hpp"
 #include <mpi.h>
 #include "spio/IOManager.hpp"
+#include "slic/slic.hpp"
+#include <cstdio>
 #endif
 
 namespace geosx
@@ -16,16 +18,18 @@ namespace geosx
 namespace dataRepository
 {
 
+using namespace axom::sidre;
+
 SidreWrapper::SidreWrapper()
 {}
 
 SidreWrapper::~SidreWrapper()
 {}
 
-axom::sidre::DataStore& SidreWrapper::dataStore()
+DataStore& SidreWrapper::dataStore()
 {
 #if ATK_FOUND
-  static axom::sidre::DataStore datastore;
+  static DataStore datastore;
   return datastore;
 #endif
 }
@@ -52,10 +56,39 @@ void SidreWrapper::reconstructTree(const std::string & root_path, const std::str
 #endif
 }
 
+
+bool checkSidreTree(Group * group) 
+{ 
+  bool valid = true;
+  for (int i = group->getFirstValidViewIndex(); i != InvalidIndex; i = group->getNextValidViewIndex(i)) 
+  {
+    View * view = group->getView(i);
+    if (!view->isExternal()) {
+      // std::cout << "Not external: " << view->getPathName() << std::endl;
+    }
+    if (view->isExternal() && view->getVoidPtr() == nullptr) {
+      std::cout << "Pointer should be valid: " << view->getPathName() << std::endl;
+      valid = false;
+    }
+  }
+
+  for (int i = group->getFirstValidGroupIndex(); i != InvalidIndex; i = group->getNextValidGroupIndex(i)) 
+  {
+    Group * childGroup = group->getGroup(i);
+    valid &= checkSidreTree(childGroup);
+  }
+
+  return valid;
+}
+
+
 /* Load sidre external data. */
 void SidreWrapper::loadExternalData(const std::string & root_path, MPI_Comm comm)
 {
 #if ATK_FOUND
+  if (!checkSidreTree(SidreWrapper::dataStore().getRoot())) {
+    SLIC_ERROR("Tree not valid");
+  }
   axom::spio::IOManager ioManager(comm);
   ioManager.loadExternalData(SidreWrapper::dataStore().getRoot(), root_path);
 #endif

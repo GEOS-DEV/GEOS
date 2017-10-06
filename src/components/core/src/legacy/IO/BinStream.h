@@ -67,7 +67,6 @@
 // ***** Included Headers *****************************************************
 #include "common/DataTypes.hpp"
 #include <map>
-#include <set>
 #include <fstream>
 #include <iostream>
 
@@ -135,11 +134,11 @@ public:
   }
 
   template< typename TYPE >
-  void write( const std::set<TYPE>& set )
+  void write( const set<TYPE>& set )
   {
-    const typename std::set<TYPE>::size_type length = set.size();
+    const typename set<TYPE>::size_type length = set.size();
     this->write( length );
-    for( typename std::set<TYPE>::const_iterator i=set.begin() ; i!=set.end() ; ++i )
+    for( typename set<TYPE>::const_iterator i=set.begin() ; i!=set.end() ; ++i )
     {
       this->write( *i );
     }
@@ -172,13 +171,13 @@ public:
 
 
   template< typename TYPE >
-  void write( const array<std::set<TYPE> >& arr )
+  void write( const Array1dT<set<TYPE> >& array )
   {
 
-    const typename array<std::set<TYPE> >::size_type length0 = arr.size();
-    this->write( reinterpret_cast<const char*>(&length0), sizeof(typename array<std::set<TYPE> >::size_type) );
+    const typename Array1dT<set<TYPE> >::size_type length0 = array.size();
+    this->write( reinterpret_cast<const char*>(&length0), sizeof(typename Array1dT<set<TYPE> >::size_type) );
 
-    for( typename array<std::set<TYPE> >::const_iterator i=arr.begin() ; i!=arr.end() ; ++i )
+    for( typename Array1dT<set<TYPE> >::const_iterator i=array.begin() ; i!=array.end() ; ++i )
     {
       this->write( *i );
     }
@@ -338,9 +337,9 @@ public:
 
 
   template< typename TYPE >
-  void read( std::set<TYPE>& set, const bool realloc = true )
+  void read( set<TYPE>& set, const bool realloc = true )
   {
-    typename std::set<TYPE>::size_type readLength;
+    typename set<TYPE>::size_type readLength;
     this->read( readLength );
 
     if( readLength != set.size() && !realloc )
@@ -350,7 +349,7 @@ public:
 #endif
     }
 
-    for( typename std::set<TYPE>::size_type i=0 ; i<readLength ; ++i )
+    for( typename set<TYPE>::size_type i=0 ; i<readLength ; ++i )
     {
       TYPE readVal;
       this->read( readVal );
@@ -422,10 +421,10 @@ public:
 
 
   template< typename TYPE >
-  void read( array<std::set<TYPE> >& arr, const bool realloc = true )
+  void read( Array1dT<set<TYPE> >& array, const bool realloc = true )
   {
-    const typename array<std::set<TYPE> >::size_type length = arr.size();
-    typename array<std::set<TYPE> >::size_type readLength;
+    const typename Array1dT<set<TYPE> >::size_type length = array.size();
+    typename Array1dT<set<TYPE> >::size_type readLength;
     this->read( readLength );
 
     if( readLength != length )
@@ -437,11 +436,11 @@ public:
       else
       {
 #ifdef USE_ATK
-        SLIC_ERROR( "BinStream::read(array<std::set<TYPE> >& arr): length mismatch\n");
+        SLIC_ERROR( "BinStream::read(Array1dT<set<TYPE> >& array): length mismatch\n");
 #endif
       }
     }
-    for( typename array<std::set<TYPE> >::iterator i=arr.begin() ; i!=arr.end() ; ++i )
+    for( typename Array1dT<set<TYPE> >::iterator i=array.begin() ; i!=array.end() ; ++i )
     {
       this->read( *i, realloc );
     }

@@ -67,8 +67,8 @@
 #include "intrinsic_typedefs.h"
 #include "legacy/ArrayT/array.h"
 #include "legacy/ArrayT/Array2dT.h"
-#include <set>
 #include "math/TensorT/TensorT.h"
+#include "common/SortedArray.hpp"
 
 /// set number of degrees of freedom
 const unsigned int nsdof = 3;
@@ -100,11 +100,14 @@ typedef array<globalIndex> gArray1d;
 typedef array<std::pair<int,localIndex> > pArray1d;
 
 
-typedef std::set<int> iSet;
-typedef std::set<localIndex> lSet;
-typedef std::set<globalIndex> gSet;
-typedef std::set<std::pair<int,localIndex> > pSet;
-typedef std::set<std::string> sSet;
+template< typename T >
+using set = SortedArray<T>;
+
+typedef SortedArray<int> iSet;
+typedef SortedArray<localIndex> lSet;
+typedef SortedArray<globalIndex> gSet;
+typedef SortedArray<std::pair<int,localIndex> > pSet;
+typedef SortedArray<std::string> sSet;
 
 template<typename T> struct type_name
 {

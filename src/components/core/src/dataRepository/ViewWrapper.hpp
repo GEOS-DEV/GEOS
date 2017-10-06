@@ -22,6 +22,8 @@
 #endif
 
 
+#include <cstdio>
+
 namespace geosx
 {
 namespace dataRepository

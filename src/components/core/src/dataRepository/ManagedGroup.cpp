@@ -355,6 +355,11 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
 void ManagedGroup::registerSubViews()
 {
 #ifdef USE_ATK
+  std::string problem = "ProblemManager/domain/FEM_Elements/elementRegions/Region2/cellBlockSubRegions/cb1/Sets";
+  if (m_sidreGroup->getPathName() == problem) {
+    std::cout << "in problem group" << std::endl;
+  }
+
   for (auto & wrapper : m_wrappers)
   {
     wrapper.second->registerDataPtr();
@@ -446,6 +451,7 @@ void ManagedGroup::storeSizedFromParent()
   });
 #endif
 }
+
 
 void ManagedGroup::loadSizedFromParent()
 {

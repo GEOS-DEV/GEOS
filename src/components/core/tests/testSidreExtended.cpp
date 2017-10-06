@@ -11,97 +11,111 @@ namespace dataRepository {
 
 #ifdef USE_ATK
 template<typename T> 
-ViewWrapper<T> & createArrayView(ManagedGroup * parent, const string name,
+ViewWrapper<T> * createArrayView(ManagedGroup * parent, const string name,
                                  int sfp, const T & data)
 {
-  ViewWrapper<T> & view = *parent->RegisterViewWrapper<T>(name);
-  view.setSizedFromParent(sfp);
+  ViewWrapper<T> * view = parent->RegisterViewWrapper<T>(name);
+  view->setSizedFromParent(sfp);
 
   /* Resize the array */
-  localIndex expected_size = data.size() * sizeof(typename T::value_type);
-  view.resize(data.size());
+  uint32 expected_size = data.size() * sizeof(typename T::value_type);
+  view->resize(data.size());
 
   /* Check that the ViewWrapper size and dataSize return the proper values */
-  EXPECT_EQ(view.size(), data.size());
-  EXPECT_EQ(view.dataSize(), expected_size);
+  EXPECT_EQ(view->size(), data.size());
+  EXPECT_EQ(view->dataSize(), expected_size);
 
   /* Set the data */
-  view_rtype<T> view_data = view.data();
-  for (int i = 0; i < view.size(); i++) {
+  typename ViewWrapper<T>::rtype view_data = view->data();
+  for (int i = 0; i < view->size(); i++) {
       view_data[i] = data[i];
   }
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_EQ(view.dataPtr(), &(view.data()[0]));
+  EXPECT_EQ(view->dataPtr(), &(view->data()[0]));
 
   return view;
 }
 
 
 template<typename T> 
-void checkArrayView(ViewWrapper<T> & view, int sfp, const T & data) 
+void checkArrayView(ViewWrapper<T> * view, int sfp, const T & data) 
 {
-  EXPECT_EQ(view.sizedFromParent(), sfp);
-  EXPECT_EQ(view.size(), data.size());
-  view_rtype<T> view_data = view.data();
-  for (int i = 0; i < view.size(); i++) {
+  EXPECT_EQ(view->sizedFromParent(), sfp);
+  EXPECT_EQ(view->size(), data.size());
+  typename ViewWrapper<T>::rtype_const view_data = view->data();
+  for (int i = 0; i < view->size(); i++) {
     EXPECT_DOUBLE_EQ(view_data[i], data[i]);
   }
 }
 
 
-ViewWrapper<string> & createStringview(ManagedGroup * parent, const string name,
+ViewWrapper<string> * createStringview(ManagedGroup * parent, const string name,
                                        int sfp, const string str) 
 {
-  ViewWrapper<string> & view = *parent->RegisterViewWrapper<string>(name);
-  view.setSizedFromParent(sfp);
+  ViewWrapper<string> * view = parent->RegisterViewWrapper<string>(name);
+  view->setSizedFromParent(sfp);
   
   localIndex expected_size = str.size() * sizeof(char);
 
   /* Set the data */
-  view.data() = str;
+  view->data() = str;
 
   /* Check that the ViewWrapper size and dataSize return the proper values */
-  EXPECT_EQ(view.size(), str.size());
-  EXPECT_EQ(view.dataSize(), expected_size);
+  EXPECT_EQ(static_cast<uint>(view->size()), str.size());
+  EXPECT_EQ(view->dataSize(), expected_size);
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_EQ(view.dataPtr(), view.data().c_str());
+  EXPECT_EQ(view->dataPtr(), view->data().c_str());
 
   return view;
 }
 
 
-void checkStringView(ViewWrapper<string> & view, const int sfp, const string str) {
-  EXPECT_EQ(view.sizedFromParent(), sfp);
-  EXPECT_EQ(view.data().compare(str), 0);
+void checkStringView(ViewWrapper<string> * view, const int sfp, const string str) {
+  EXPECT_EQ(view->sizedFromParent(), sfp);
+  EXPECT_EQ(view->data().compare(str), 0);
 }
 
 
 template<typename T>
-ViewWrapper<T> & createScalarView(ManagedGroup * parent, const string name, 
+ViewWrapper<T> * createScalarView(ManagedGroup * parent, const string name, 
                                   int sfp, const T value) {
-  ViewWrapper<T> & view = *parent->RegisterViewWrapper<T>(name);
-  view.setSizedFromParent(sfp);
+  ViewWrapper<T> * view = parent->RegisterViewWrapper<T>(name);
+  view->setSizedFromParent(sfp);
 
   /* Set the data */
-  *(view.data()) = value;
+  *(view->data()) = value;
 
   /* Check that the ViewWrapper size and dataSize return the proper values */
-  EXPECT_EQ(view.size(), 1);
-  EXPECT_EQ(view.dataSize(), sizeof(T));
+  EXPECT_EQ(view->size(), 1);
+  EXPECT_EQ(view->dataSize(), sizeof(T));
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_EQ(view.dataPtr(), view.data());
+  EXPECT_EQ(view->dataPtr(), view->data());
 
   return view;
 }
 
 
 template<typename T>
-void checkScalarView(ViewWrapper<T> & view, int sfp, const T value) {
-  EXPECT_EQ(view.sizedFromParent(), sfp);
-  EXPECT_EQ(*(view.data()), value);
+void checkScalarView(ViewWrapper<T> * view, int sfp, const T value) {
+  EXPECT_EQ(view->sizedFromParent(), sfp);
+  EXPECT_EQ(*(view->data()), value);
+}
+
+
+template<>
+void checkScalarView<real64>(ViewWrapper<real64> * view, int sfp, const real64 value) {
+  EXPECT_EQ(view->sizedFromParent(), sfp);
+  EXPECT_DOUBLE_EQ(*(view->data()), value);
+}
+
+
+template<>
+void checkScalarView<real32>(ViewWrapper<real32> * view, int sfp, const real32 value) {
+  EXPECT_EQ(view->sizedFromParent(), sfp);
+  EXPECT_DOUBLE_EQ(*(view->data()), value);
 }
 
 
@@ -226,30 +240,30 @@ TEST(testSidreExtended, testSidreExtended) {
   ds.getRoot()->destroyGroups();
 
   /* Restore the sidre tree */
-  root = new ManagedGroup(std::string("data"), nullptr);
   SidreWrapper::reconstructTree(path + ".root", protocol, MPI_COMM_WORLD);
+  root = new ManagedGroup(std::string("data"), nullptr);
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
-  ViewWrapper<int64_array> & view_int64_new = root->RegisterViewWrapper<int64_array>(view_int64_name);
-  ViewWrapper<string> & view_hope_new = root->RegisterViewWrapper<string>(view_hope_name);
+  ViewWrapper<int64_array> * view_int64_new = root->RegisterViewWrapper<int64_array>(view_int64_name);
+  ViewWrapper<string> * view_hope_new = root->RegisterViewWrapper<string>(view_hope_name);
 
   ManagedGroup * strings_group_new = root->RegisterGroup("strings");
-  ViewWrapper<string> & view_hello_new = strings_group_new->RegisterViewWrapper<string>(view_hello_name);
-  ViewWrapper<string> & view_goodbye_new = strings_group_new->RegisterViewWrapper<string>(view_goodbye_name);
+  ViewWrapper<string> * view_hello_new = strings_group_new->RegisterViewWrapper<string>(view_hello_name);
+  ViewWrapper<string> * view_goodbye_new = strings_group_new->RegisterViewWrapper<string>(view_goodbye_name);
   
   ManagedGroup * real64_group_new = root->RegisterGroup("real64");
-  ViewWrapper<real64_array> & view_real641_new = real64_group_new->RegisterViewWrapper<real64_array>(view_real641_name);
-  ViewWrapper<real64_array> & view_real642_new = real64_group_new->RegisterViewWrapper<real64_array>(view_real642_name);
+  ViewWrapper<real64_array> * view_real641_new = real64_group_new->RegisterViewWrapper<real64_array>(view_real641_name);
+  ViewWrapper<real64_array> * view_real642_new = real64_group_new->RegisterViewWrapper<real64_array>(view_real642_name);
 
   ManagedGroup * mixed_group_new = real64_group_new->RegisterGroup("mixed");
-  ViewWrapper<int32_array> & view_int32_new = mixed_group_new->RegisterViewWrapper<int32_array>(view_int32_name);
-  ViewWrapper<real32_array> & view_real32_new = mixed_group_new->RegisterViewWrapper<real32_array>(view_real32_name);
-  ViewWrapper<string> & view_what_new = mixed_group_new->RegisterViewWrapper<string>(view_what_name);
-  ViewWrapper<real64> & view_pi_new = mixed_group_new->RegisterViewWrapper<real64>(view_pi_name);
+  ViewWrapper<int32_array> * view_int32_new = mixed_group_new->RegisterViewWrapper<int32_array>(view_int32_name);
+  ViewWrapper<real32_array> * view_real32_new = mixed_group_new->RegisterViewWrapper<real32_array>(view_real32_name);
+  ViewWrapper<string> * view_what_new = mixed_group_new->RegisterViewWrapper<string>(view_what_name);
+  ViewWrapper<real64> * view_pi_new = mixed_group_new->RegisterViewWrapper<real64>(view_pi_name);
 
   /* Load the data */
   root->prepareToLoadExternalData();
-  SidreWrapper::loadSidreExternalData(path + ".root", MPI_COMM_WORLD);
+  SidreWrapper::loadExternalData(path + ".root", MPI_COMM_WORLD);
   root->finishLoadingExternalData();
 
   /* Group sizes should have carried over. */

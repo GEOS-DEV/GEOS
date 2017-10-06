@@ -1903,7 +1903,7 @@ void SiloFile::DBWriteWrapper( const std::string& name, const array<std::string>
 
 
 template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const std::set<TYPE>& data )
+void SiloFile::DBWriteWrapper( const std::string& name, const set<TYPE>& data )
 {
   if( !data.empty() )
   {
@@ -2031,7 +2031,7 @@ template void SiloFile::DBWriteWrapper( const std::string& name, const array<arr
 
 
 template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const array<std::set<TYPE> >& data )
+void SiloFile::DBWriteWrapper( const std::string& name, const Array1dT<set<TYPE> >& data )
 {
   const std::string sizeName = name+"_sizes";
   const std::string dataName = name+"_data";
@@ -2040,7 +2040,7 @@ void SiloFile::DBWriteWrapper( const std::string& name, const array<std::set<TYP
   array<typename array<TYPE>::size_type> dataSizes;
   array<TYPE> dataSerial;
 
-  for( typename array<std::set<TYPE> >::const_iterator i=data.begin() ; i!=data.end() ; ++i )
+  for( typename Array1dT<set<TYPE> >::const_iterator i=data.begin() ; i!=data.end() ; ++i )
   {
     dataSizes.push_back(i->size());
     dataSerial.insert( dataSerial.end(), i->begin(), i->end() );
@@ -2310,7 +2310,7 @@ void SiloFile::DBReadWrapper( const std::string& name, array<std::string>& data 
 
 
 template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, std::set<TYPE>& data ) const
+void SiloFile::DBReadWrapper( const std::string& name, set<TYPE>& data ) const
 {
 
   if( DBInqVarExists( m_dbFilePtr, name.c_str() ) )
@@ -2516,7 +2516,7 @@ void SiloFile::DBReadWrapper( const std::string& name, array<array<array<TYPE> >
 template void SiloFile::DBReadWrapper( const std::string& name, array<array<array<R1Tensor> > >& data ) const;
 
 template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, array<std::set<TYPE> >& data ) const
+void SiloFile::DBReadWrapper( const std::string& name, Array1dT<set<TYPE> >& data ) const
 {
 
   array<array<TYPE> > vdata(data.size());

@@ -70,7 +70,6 @@
 #include <limits>
 #include <sys/resource.h>
 #include <map>
-#include <set>
 #include <algorithm>
 
 #ifdef USE_ATK
@@ -699,11 +698,11 @@ inline realT getcputime(void)
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set1, const std::set<TYPE>& set2, std::set<TYPE>& intersection )
+inline void Intersection( const set<TYPE>& set1, const set<TYPE>& set2, set<TYPE>& intersection )
 {
   intersection.clear();
-  typename std::set<TYPE>::const_iterator iter_1 = set1.begin();
-  typename std::set<TYPE>::const_iterator iter_2 = set2.begin();
+  typename set<TYPE>::const_iterator iter_1 = set1.begin();
+  typename set<TYPE>::const_iterator iter_2 = set2.begin();
 
   while( iter_1!=set1.end() && iter_2!=set2.end() )
   {
@@ -725,13 +724,13 @@ inline void Intersection( const std::set<TYPE>& set1, const std::set<TYPE>& set2
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& arr, std::set<TYPE>& intersection )
+inline void Intersection( const set<TYPE>& input, const Array1dT<TYPE>& array, set<TYPE>& intersection )
 {
   intersection.clear();
 
   for( typename array<TYPE>::const_iterator iter_arr=arr.begin() ; iter_arr!=arr.end() ; ++iter_arr )
   {
-    if( set.count( *iter_arr ) == 1 )
+    if( input.count( *iter_arr ) == 1 )
     {
       intersection.insert(*iter_arr);
     }
@@ -739,13 +738,13 @@ inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& arr, std
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& arr, array<TYPE>& intersection )
+inline void Intersection( const set<TYPE>& input, const Array1dT<TYPE>& array, Array1dT<TYPE>& intersection )
 {
   intersection.clear();
 
-  for( typename std::set<TYPE>::const_iterator iter_arr=arr.begin() ; iter_arr!=arr.end() ; ++iter_arr )
+  for( typename set<TYPE>::const_iterator iter_arr=array.begin() ; iter_arr!=array.end() ; ++iter_arr )
   {
-    if( set.count( *iter_arr ) == 1 )
+    if( input.count( *iter_arr ) == 1 )
     {
       intersection.push_back(*iter_arr);
     }
