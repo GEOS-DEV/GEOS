@@ -47,7 +47,8 @@
 #ifndef UTILITIES_H_
 #define UTILITIES_H_
 
-#include "legacy/Common/typedefs.h"
+#include "common/DataTypes.hpp"
+//#include "legacy/Common/typedefs.h"
 #include <sys/resource.h>
 #include <map>
 #include <set>
@@ -62,6 +63,8 @@
 /////////////////////////////////////////////////
 // Forward declaration of templated functions
 
+namespace geosx
+{
 template< class T >
 void PushFieldForwardInTime( const realT& dt,
                              const Array1dT< T >& dfield,
@@ -724,7 +727,7 @@ inline double GetOrder( double number, const unsigned int digits = 1 )
 
   return ( digits>0 ? round( ( number / magnitude ) * std::pow(10,digits-1) ) / std::pow(10,digits-1) : 1 ) * magnitude ;
 }
-
+}
 
 
 #endif /* UTILITIES_H_ */

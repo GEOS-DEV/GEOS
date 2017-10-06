@@ -19,6 +19,7 @@
 
 #include "MappedVector.hpp"
 
+#include "fileIO/xmlWrapper.hpp"
 //#include "CodingUtilities/ANSTexception.hpp"
 
 #ifndef USE_DYNAMIC_CASTING

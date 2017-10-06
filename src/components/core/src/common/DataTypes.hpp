@@ -19,15 +19,20 @@
 #include <unordered_map>
 #include <vector>
 
-#include "fileIO/xmlWrapper.hpp"
 
 #include "Macros.hpp"
+
+
+#include "legacy/ArrayT/ArrayT.h"
+#include "math/TensorT/TensorT.h"
 
 #ifndef CONTAINERARRAY_RETURN_PTR
 #define CONTAINERARRAY_RETURN_PTR 1
 #endif
 
 
+namespace geosx
+{
 
 using  int32      = std::int32_t;
 using uint32      = std::uint32_t;
@@ -75,8 +80,6 @@ using localIndex  = int32;
 
 using realT    = double;
 
-#include "legacy/ArrayT/ArrayT.h"
-#include "math/TensorT/TensorT.h"
 
 template< typename T >
 //using array = std::vector<T>;
@@ -92,9 +95,6 @@ template< typename TKEY, typename TVAL >
 using unordered_map = std::unordered_map<TKEY,TVAL>;
 
 
-namespace geosx
-{
-}
 //***** END LEGACY TYPEDEFS *****
 
 
@@ -875,10 +875,6 @@ public:
   }
 
 };
-
-
-namespace xmlwrapper
-{
 
 }
 

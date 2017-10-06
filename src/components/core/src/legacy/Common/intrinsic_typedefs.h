@@ -76,10 +76,10 @@ typedef std::vector<int> ivector;
 typedef std::vector<realT> dvector;
 
 
-typedef std::vector<localIndex> lvector;
+//typedef std::vector<localIndex> lvector;
 
 
-typedef std::vector<globalIndex> gvector;
+//typedef std::vector<globalIndex> gvector;
 
 
 
