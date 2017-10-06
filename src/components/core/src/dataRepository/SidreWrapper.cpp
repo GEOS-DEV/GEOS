@@ -69,7 +69,7 @@ bool checkSidreTree(Group * group)
       // std::cout << "Not external: " << view->getPathName() << std::endl;
     }
     if (view->isExternal() && view->getVoidPtr() == nullptr) {
-      std::cout << "Pointer should be valid: " << view->getPathName() << std::endl;
+      SLIC_WARNING("Pointer should be valid: " << view->getPathName() << std::endl);
       valid = false;
     }
   }

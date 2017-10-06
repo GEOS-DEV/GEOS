@@ -750,6 +750,7 @@ void ProblemManager::WriteRestart( int32 const cycleNumber )
 
   this->prepareToWriteRestart();
   m_functionManager->prepareToWriteRestart();
+  BoundaryConditionManager::get()->prepareToWriteRestart();
   SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
 #endif
 }
@@ -759,9 +760,11 @@ void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 #if ATK_FOUND
   this->prepareToLoadExternalData();
   m_functionManager->prepareToLoadExternalData();
+  BoundaryConditionManager::get()->prepareToLoadExternalData();
   SidreWrapper::loadExternalData(restartFileName + ".root", MPI_COMM_WORLD);
   this->finishLoadingExternalData();
   m_functionManager->finishLoadingExternalData();
+  BoundaryConditionManager::get()->finishLoadingExternalData();
 #endif
 }
 
