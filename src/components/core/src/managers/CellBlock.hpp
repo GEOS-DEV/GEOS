@@ -48,8 +48,8 @@
 
 #include "ObjectManagerBase.hpp"
 #include "legacy/ObjectManagers/EnergyT.h"
-#include "common/InterObjectRelation.hpp"
-#include "legacy/ArrayT/bufvector.h"
+//#include "common/InterObjectRelation.hpp"
+//#include "legacy/ArrayT/bufvector.h"
 #include "FaceManager.hpp"
 
 

@@ -13,7 +13,7 @@
 #include "basis/BasisBase.hpp"
 #include "quadrature/QuadratureBase.hpp"
 #include "ElementLibrary/FiniteElement.h"
-
+#include "codingUtilities/Utilities.hpp"
 
 // TODO make this not dependent on this header...need better key implementation
 #include "managers/CellBlockSubRegion.hpp"

@@ -22,6 +22,10 @@ public:
   LinearSolverWrapper();
   virtual ~LinearSolverWrapper();
 
+  void SolveSingleBlockSystem( EpetraBlockSystem * const system,
+                               SystemSolverParameters const * const params,
+                               EpetraBlockSystem::BlockIDs const blockID );
+
 #if USE_MPI
   Epetra_MpiComm m_epetraComm;
 #else

@@ -14,6 +14,7 @@
 #include "managers/ElementRegion.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
+#include "codingUtilities/StringUtilities.hpp"
 
 namespace geosx
 {

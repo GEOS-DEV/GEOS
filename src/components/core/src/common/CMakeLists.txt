@@ -14,6 +14,5 @@ set(geosx_headers
 #
 set(geosx_core_sources
   ${geosx_core_sources}
-    common/DataTypes.cpp
     common/Logger.cpp
     PARENT_SCOPE )

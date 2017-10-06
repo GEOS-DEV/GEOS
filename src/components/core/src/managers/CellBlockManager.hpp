@@ -51,7 +51,7 @@
 #include "CellBlock.hpp"
 #include "ObjectManagerBase.hpp"
 
-#include "legacy/ArrayT/bufvector.h"
+//#include "legacy/ArrayT/bufvector.h"
 
 namespace geosx
 {

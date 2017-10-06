@@ -61,6 +61,20 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeys.solverType.Key(),
+                              viewKeys.solverType.Key(),
+                              -1,
+                              "string",
+                              "string",
+                              "verbosity level",
+                              "verbosity level",
+                              "Klu",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+
   docNode->AllocateChildNode( viewKeys.krylovTol.Key(),
                               viewKeys.krylovTol.Key(),
                               -1,

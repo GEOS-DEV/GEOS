@@ -5,7 +5,7 @@
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/ManagedGroup.hpp"
-#include "managers/TableManager.hpp"
+//#include "managers/TableManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 
 namespace geosx

@@ -86,6 +86,7 @@ message("${RAJA_DIR}")
 else()
     message(INFO ": Using RAJA found at https://github.com/LLNL/RAJA/archive/develop.zip")
     set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/raja)
+    message("RAJA_CMAKE_ARGS=${RAJA_CMAKE_ARGS}")
     ExternalProject_Add( raja
                          GIT_REPOSITORY https://github.com/LLNL/RAJA.git
                          GIT_TAG develop
@@ -98,7 +99,8 @@ else()
                                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                     -DRAJA_ENABLE_CUDA=${CUDA_ENABLED}
                                     -DRAJA_ENABLE_TESTS=${RAJA_ENABLE_TESTS}
-                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+                                    -DRAJA_ENABLE_TBB=${RAJA_ENABLE_TBB} )
 
     set( dependency_list "${dependency_list};raja" )
 endif()

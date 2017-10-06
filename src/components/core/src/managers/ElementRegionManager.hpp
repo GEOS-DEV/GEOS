@@ -52,7 +52,7 @@
 #include "CellBlockSubRegion.hpp"
 #include "ObjectManagerBase.hpp"
 
-#include "legacy/ArrayT/bufvector.h"
+//#include "legacy/ArrayT/bufvector.h"
 #include "ElementRegion.hpp"
 
 namespace geosx

@@ -27,6 +27,7 @@ public:
   struct viewKeysStruct
   {
     dataRepository::ViewKey verbosity           = { "verbosityFlag" };
+    dataRepository::ViewKey solverType          = { "solverType" };
     dataRepository::ViewKey krylovTol           = { "krylovTol" };
     dataRepository::ViewKey numKrylovIter       = { "numKrylovIter" };
     dataRepository::ViewKey kspace              = { "kspace" };
@@ -42,6 +43,7 @@ public:
     dataRepository::ViewKey useNewtonSolve      = { "useNewtonSolve" };
     dataRepository::ViewKey newtonTol           = { "newtonTol" };
     dataRepository::ViewKey maxIterNewton       = { "maxIterNewton" };
+
   }viewKeys;
 
   struct groupKeysStruct
@@ -49,6 +51,7 @@ public:
   }groupKeys;
 
   int32  verbose() const              { return *(this->getData<int32>( viewKeys.verbosity )); }
+  string  solverType() const            { return this->getData<string>( viewKeys.solverType ); }
   real64 krylovTol() const            { return *(this->getData<real64>( viewKeys.krylovTol )); }
   int32  numKrylovIter() const        { return *(this->getData<int32>( viewKeys.numKrylovIter )); }
   int32  kspace() const               { return *(this->getData<int32>( viewKeys.kspace )); }
