@@ -99,8 +99,13 @@ else()
                                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                     -DRAJA_ENABLE_CUDA=${CUDA_ENABLED}
                                     -DRAJA_ENABLE_TESTS=${RAJA_ENABLE_TESTS}
+<<<<<<< HEAD
                                     -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
                                     -DRAJA_ENABLE_TBB=${RAJA_ENABLE_TBB} )
+=======
+                                    -DRAJA_ENABLE_TBB=${RAJA_ENABLE_TBB}
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+>>>>>>> e15debb59235e8fa5c96f51c2d4c685d6808c83d
 
     set( dependency_list "${dependency_list};raja" )
 endif()
