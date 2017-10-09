@@ -213,61 +213,61 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //    }
 //  }
 //}
+//
+//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
+//                                                                real64 const time,
+//                                                                ManagedGroup * dataGroup,
+//                                                                string const & fieldName ) const
+//{
+//
+//  int32 const component = GetComponent();
+//  string const functionName = getData<string>(dataRepository::keys::functionName);
+//  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+//
+//  ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
+//  std::type_index typeIndex = std::type_index(vw->get_typeid());
+//
+//  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
+//  {
+//    using fieldType = decltype(type);
+//    ViewWrapper<fieldType> & view = dynamic_cast< ViewWrapper<fieldType> & >(*vw);
+//    view_rtype<fieldType> field = view.data();
+//    if( functionName.empty() )
+//    {
+//      for( auto a : set )
+//      {
+//        rtTypes::equate( field[a], component, m_scale );
+//      }
+//    }
+//    else
+//    {
+//      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+//      if( function!=nullptr)
+//      {
+//        if( function->isFunctionOfTime()==2 )
+//        {
+//          real64 value = m_scale * function->Evaluate( &time );
+//          for( auto a : set )
+//          {
+//            rtTypes::equate( field[a], component, value );
+//          }
+//        }
+//        else
+//        {
+//          real64_array result(set.size());
+//          function->Evaluate( dataGroup, time, set, result );
+//          int32 count=0;
+//          for( auto a : set )
+//          {
+//            rtTypes::equate( field[a], component, result[count] );
+//            ++count;
+//          }
+//        }
+//      }
+//    }
+//  });
+//}
 
-void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
-                                                                real64 const time,
-                                                                ManagedGroup * dataGroup,
-                                                                string const & fieldName ) const
-{
-
-  int32 const component = GetComponent();
-  string const functionName = getData<string>(dataRepository::keys::functionName);
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
-
-  ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index(vw->get_typeid());
-
-  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
-  {
-    using fieldType = decltype(type);
-    ViewWrapper<fieldType> & view = dynamic_cast< ViewWrapper<fieldType> & >(*vw);
-    view_rtype<fieldType> field = view.data();
-    if( functionName.empty() )
-    {
-      for( auto a : set )
-      {
-//        field[a] = m_scale;
-        rtTypes::equate( field[a], component, m_scale );
-      }
-    }
-    else
-    {
-      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
-      if( function!=nullptr)
-      {
-        if( function->isFunctionOfTime()==2 )
-        {
-          real64 value = m_scale * function->Evaluate( &time );
-          for( auto a : set )
-          {
-            rtTypes::equate( field[a], component, value );
-          }
-        }
-        else
-        {
-          real64_array result(set.size());
-          function->Evaluate( dataGroup, time, set, result );
-          int32 count=0;
-          for( auto a : set )
-          {
-            rtTypes::equate( field[a], component, result[count] );
-            ++count;
-          }
-        }
-      }
-    }
-  });
-}
 
 
 

@@ -179,7 +179,7 @@ if( ENABLE_CALIPER )
 message( INFO ": setting up caliper" )
 
 set(CALIPER_DIR ${GEOSX_TPL_DIR}/caliper)
-find_path( CALIPER_INCLUDE_DIRS caliper.h
+find_path( CALIPER_INCLUDE_DIRS caliper/Caliper.h
            PATHS  ${CALIPER_DIR}/include
            NO_DEFAULT_PATH
            NO_CMAKE_ENVIRONMENT_PATH
@@ -187,30 +187,35 @@ find_path( CALIPER_INCLUDE_DIRS caliper.h
            NO_SYSTEM_ENVIRONMENT_PATH
            NO_CMAKE_SYSTEM_PATH)
 
-find_library( CALIPER_LIBRARY NAMES caliper
-              PATHS ${CALIPER_DIR}/lib
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
+set( caliper_lib_list caliper caliper-reader caliper-common  gotcha )
+#set( caliper_lib_list caliper  caliper-common  caliper-mpi  caliper-mpiwrap  caliper-reader  caliper-stub  caliper-stub-c  caliper-tools-util  gotcha )
 
+
+set( CALIPER_LIBRARIES )
+foreach(lib ${caliper_lib_list})
+  unset( temp CACHE )
+  find_library( temp NAMES ${lib}
+                PATHS ${CALIPER_DIR}/lib ${CALIPER_DIR}/lib64
+                NO_DEFAULT_PATH
+                NO_CMAKE_ENVIRONMENT_PATH
+                NO_CMAKE_PATH
+                NO_SYSTEM_ENVIRONMENT_PATH
+                NO_CMAKE_SYSTEM_PATH)
+  set( CALIPER_LIBRARIES ${CALIPER_LIBRARIES} ${temp} )
+endforeach()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(CALIPER  DEFAULT_MSG
                                   CALIPER_INCLUDE_DIRS
-                                  CALIPER_LIBRARY )
-                                  
+                                  CALIPER_LIBRARIES )
+
 if (NOT CALIPER_FOUND)
     message(FATAL_ERROR ": CALIPER not found in ${CALIPER_DIR}. Maybe you need to build it")
 endif()
 blt_register_library( NAME caliper
-                      INCLUDES ${CALIPER_INSTALL_DIR}/include 
-                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper.a 
-                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-common.a
-                      LIBRARIES ${CALIPER_INSTALL_DIR}/lib/libcaliper-reader.a
+                      INCLUDES ${CALIPER_INCLUDE_DIRS}
+                      LIBRARIES ${CALIPER_LIBRARIES}
                       TREAT_INCLUDES_AS_SYSTEM ON )
-
 endif()
 
 

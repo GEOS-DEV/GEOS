@@ -49,6 +49,7 @@
 #include "ObjectCatalog.hpp"
 
 #include <cassert>
+#include "fileIO/xmlWrapper.hpp"
 
 /*
  * Pure virtual base class representing a generic quadrature object.

@@ -10,9 +10,10 @@
 
 #include "DocumentationNode.hpp"
 #include "common/DataTypes.hpp"
-
+#include "fileIO/xmlWrapper.hpp"
 namespace geosx
 {
+
 
 void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead, uint32 verbosityLevel);
 void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot);

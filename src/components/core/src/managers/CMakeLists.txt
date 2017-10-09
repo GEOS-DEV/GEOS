@@ -19,7 +19,6 @@ set(geosx_headers
     managers/Functions/NewFunctionManager.hpp
     managers/ObjectManagerBase.hpp
     managers/ProblemManager.hpp
-    managers/TableManager.hpp
     managers/ElementRegion.hpp
     managers/ElementRegionManager.hpp
     managers/MeshBody.hpp
@@ -47,7 +46,6 @@ set(geosx_core_sources
     managers/Functions/NewFunctionManager.cpp
     managers/ObjectManagerBase.cpp
     managers/ProblemManager.cpp
-    managers/TableManager.cpp
     managers/ElementRegion.cpp
     managers/ElementRegionManager.cpp
     managers/MeshBody.cpp

@@ -19,6 +19,7 @@
 
 #include "MappedVector.hpp"
 
+#include "fileIO/xmlWrapper.hpp"
 //#include "CodingUtilities/ANSTexception.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
@@ -655,6 +656,10 @@ template< typename T , typename TBASE >
 ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name, ViewKey::index_type * const rkey )
 {
   m_wrappers.insert( name, std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ) );
+  if( rkey != nullptr )
+  {
+    *rkey = m_wrappers.getIndex(name);
+  }
   ViewWrapper<TBASE> * const rval = getWrapper<TBASE>(name);
   if( rval->sizedFromParent() == 1 )
   {

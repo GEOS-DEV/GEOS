@@ -30,7 +30,7 @@ else()
 endif()
 
 if( ENABLE_CALIPER )
-  set( thirdPartyLibs ${thirdPartyLibs} caliper )
+  set( thirdPartyLibs ${thirdPartyLibs} caliper -lunwind -lpapi )
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CALIPER=1)
 else()
   blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CALIPER=0)  

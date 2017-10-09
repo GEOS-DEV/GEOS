@@ -285,7 +285,7 @@ public:
   struct Get_Type
   {
     typedef U*       type;
-    typedef const U* const const_type;
+    typedef U const * const_type;
 
     typedef U *       pointer;
     typedef U const * const_pointer;

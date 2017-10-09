@@ -141,7 +141,7 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
 
 
                   // there are faces in facesByLowestNode, so lets loop over them and check for duplicates
-                  for( lvector::iterator existingFaceIndex = facesByLowestNode[lowNode].begin() ;
+                  for( lArray1d::iterator existingFaceIndex = facesByLowestNode[lowNode].begin() ;
                       existingFaceIndex != facesByLowestNode[lowNode].end() ; ++existingFaceIndex )
                   {
                     // this is the nodelist of the face that we are testing agains
@@ -394,7 +394,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
     {
       R1Tensor v = faceCoords[n];
       v -= fc;
-      thetaOrder[n] = std::pair<realT,int>(atan2(v*ey,v*ex),faceNodes[n]);
+      thetaOrder[n] = std::pair<realT,int>(atan2(Dot(v,ey),Dot(v,ex)),faceNodes[n]);
     }
 
     sort(thetaOrder.begin(), thetaOrder.end());

@@ -295,7 +295,7 @@ namespace FieldInfo
 
 } // Field Info
 
-//typedef unsigned int FieldKey;
+typedef unsigned int FieldKey;
 typedef FieldInfo::FieldType FieldType;
 
 
@@ -390,7 +390,7 @@ template<> struct FieldStructWrapper<FieldInfo::ownedByRank>
 //*************************************************************************************************
 struct demIndex : public FieldBase
 {
-  typedef localIndex Type;
+  typedef int Type;
   static size_t key() { return FieldInfo::demIndex; }
   static const char* Name() { return "demIndex"; }
 

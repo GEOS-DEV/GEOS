@@ -177,6 +177,12 @@ void ManagedGroup::RegisterDocumentationNodes()
                                                           rtTypes::typeID(subNode.second.getDataType() ) );
       view->setSizedFromParent( subNode.second.m_managedByParent);
       subNode.second.m_isRegistered = 1;
+//      rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(subNode.second.getDataType()) , [&](auto a)->void
+//      {
+//        ViewWrapper<decltype(a)>& dataView = *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
+//        typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
+//
+//      });
     }
   }
 

@@ -49,6 +49,8 @@
 #include <map>
 #include "PartitionBase.hpp"
 
+
+constexpr int nsdof = 3;
 namespace geosx
 {
 //// Planar Sorter

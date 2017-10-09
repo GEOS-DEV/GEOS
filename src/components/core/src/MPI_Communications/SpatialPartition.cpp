@@ -61,7 +61,7 @@ namespace{
   // returns a positive value regardless of the sign of numerator
   realT Mod(realT num, realT denom)
   {
-    if ( isZero(denom) )
+    if( fabs(denom)<fabs(num)*1.0e-14 )
     {
       return num;
     }

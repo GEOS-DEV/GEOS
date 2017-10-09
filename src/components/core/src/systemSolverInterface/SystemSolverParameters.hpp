@@ -16,6 +16,8 @@ namespace geosx
 class SystemSolverParameters : public dataRepository::ManagedGroup
 {
 public:
+  SystemSolverParameters() = delete;
+
   SystemSolverParameters( std::string const & name,
                           ManagedGroup * const parent );
   virtual ~SystemSolverParameters();
@@ -25,6 +27,7 @@ public:
   struct viewKeysStruct
   {
     dataRepository::ViewKey verbosity           = { "verbosityFlag" };
+    dataRepository::ViewKey solverType          = { "solverType" };
     dataRepository::ViewKey krylovTol           = { "krylovTol" };
     dataRepository::ViewKey numKrylovIter       = { "numKrylovIter" };
     dataRepository::ViewKey kspace              = { "kspace" };
@@ -40,6 +43,7 @@ public:
     dataRepository::ViewKey useNewtonSolve      = { "useNewtonSolve" };
     dataRepository::ViewKey newtonTol           = { "newtonTol" };
     dataRepository::ViewKey maxIterNewton       = { "maxIterNewton" };
+
   }viewKeys;
 
   struct groupKeysStruct
@@ -47,19 +51,20 @@ public:
   }groupKeys;
 
   int32  verbose() const              { return *(this->getData<int32>( viewKeys.verbosity )); }
+  string  solverType() const            { return this->getData<string>( viewKeys.solverType ); }
   real64 krylovTol() const            { return *(this->getData<real64>( viewKeys.krylovTol )); }
   int32  numKrylovIter() const        { return *(this->getData<int32>( viewKeys.numKrylovIter )); }
   int32  kspace() const               { return *(this->getData<int32>( viewKeys.kspace )); }
   real64 ilut_fill() const            { return *(this->getData<real64>( viewKeys.ilut_fill )); }
   real64 ilut_drop() const            { return *(this->getData<real64>( viewKeys.ilut_drop )); }
-  bool   useMLPrecond() const         { return *(this->getData<int32>( viewKeys.useMLPrecond )); }
-  bool   useInnerSolver() const       { return *(this->getData<int32>( viewKeys.useInnerSolver )); }
+  int32   useMLPrecond() const         { return *(this->getData<int32>( viewKeys.useMLPrecond )); }
+  int32   useInnerSolver() const       { return *(this->getData<int32>( viewKeys.useInnerSolver )); }
   int32  scalingOption() const        { return *(this->getData<int32>( viewKeys.scalingOption )); }
-  bool   useBicgstab() const          { return *(this->getData<int32>( viewKeys.useBicgstab )); }
-  bool   useDirectSolver() const      { return *(this->getData<int32>( viewKeys.useDirectSolver )); }
+  int32   useBicgstab() const          { return *(this->getData<int32>( viewKeys.useBicgstab )); }
+  int32   useDirectSolver() const      { return *(this->getData<int32>( viewKeys.useDirectSolver )); }
   real64 KrylovResidualInit() const   { return *(this->getData<real64>( viewKeys.KrylovResidualInit )); }
   real64 KrylovResidualFinal() const  { return *(this->getData<real64>( viewKeys.KrylovResidualFinal )); }
-  bool   useNewtonSolve() const       { return *(this->getData<int32>( viewKeys.useNewtonSolve )); }
+  int32   useNewtonSolve() const       { return *(this->getData<int32>( viewKeys.useNewtonSolve )); }
   real64 newtonTol() const            { return *(this->getData<real64>( viewKeys.newtonTol )); }
   int32  maxIterNewton() const        { return *(this->getData<int32>( viewKeys.maxIterNewton )); }
 

@@ -25,7 +25,7 @@
 #include <string>
 #include <typeindex>
 
-
+using namespace geosx;
 
 template< typename T >
 std::string Func1()

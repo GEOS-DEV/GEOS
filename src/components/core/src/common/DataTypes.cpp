@@ -8,3 +8,7 @@
 
 #include "DataTypes.hpp"
 
+namespace geosx
+{
+
+}

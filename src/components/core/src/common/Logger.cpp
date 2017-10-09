@@ -12,7 +12,7 @@
 namespace geosx
 {
 
-void abort()
+void geos_abort()
 {
 #if USE_MPI == 1
   int mpi = 0;
@@ -27,4 +27,5 @@ void abort()
     exit( EXIT_FAILURE );
   }
 }
+
 }

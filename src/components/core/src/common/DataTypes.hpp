@@ -19,15 +19,20 @@
 #include <unordered_map>
 #include <vector>
 
-#include "fileIO/xmlWrapper.hpp"
 
 #include "Macros.hpp"
+
+
+#include "legacy/ArrayT/ArrayT.h"
+#include "math/TensorT/TensorT.h"
 
 #ifndef CONTAINERARRAY_RETURN_PTR
 #define CONTAINERARRAY_RETURN_PTR 1
 #endif
 
 
+namespace geosx
+{
 
 using  int32      = std::int32_t;
 using uint32      = std::uint32_t;
@@ -75,8 +80,6 @@ using localIndex  = int32;
 
 using realT    = double;
 
-#include "legacy/ArrayT/ArrayT.h"
-#include "math/TensorT/TensorT.h"
 
 template< typename T >
 //using array = std::vector<T>;
@@ -92,9 +95,6 @@ template< typename TKEY, typename TVAL >
 using unordered_map = std::unordered_map<TKEY,TVAL>;
 
 
-namespace geosx
-{
-}
 //***** END LEGACY TYPEDEFS *****
 
 
@@ -863,6 +863,12 @@ public:
     }
   }
 
+
+
+
+
+
+
   inline static void equate( R1Tensor & lhs, int32 const component, real64 const & rhs )
   {
     lhs[component] = rhs;
@@ -874,11 +880,90 @@ public:
     lhs = rhs;
   }
 
+
+  inline static void add( R1Tensor & lhs, int32 const component, real64 const & rhs )
+  {
+    lhs[component] += rhs;
+  }
+
+  template< typename TLHS, typename TRHS >
+  inline static void add( TLHS & lhs, int32 const component, TRHS const & rhs )
+  {
+    lhs += rhs;
+  }
+
+
+
+  inline static real64 value( R1Tensor & lhs, int32 const component )
+  {
+    return lhs[component];
+  }
+
+  inline static real64 value( R2Tensor & lhs, int32 const component )
+  {
+    return lhs.Data()[component];
+  }
+
+  inline static real64 value( R2SymTensor & lhs, int32 const component )
+  {
+    return lhs.Data()[component];
+  }
+
+  template< typename TLHS >
+  inline static TLHS value( TLHS & lhs, int32 const component )
+  {
+    return lhs;
+  }
+
+
+  struct equateValue
+  {
+    inline static void f( R1Tensor & lhs, int32 const component, real64 const & rhs )
+    {
+      lhs[component] = rhs;
+    }
+
+    template< typename TLHS, typename TRHS >
+    inline static void f( TLHS & lhs, int32 const component, TRHS const & rhs )
+    {
+      lhs = rhs;
+    }
+
+  };
+
+  struct addValue
+  {
+    inline static void f( R1Tensor & lhs, int32 const component, real64 const & rhs )
+    {
+      lhs[component] += rhs;
+    }
+
+    inline static void f( R2Tensor & lhs, int32 const component, real64 const & rhs )
+    {
+      lhs.Data()[component] += rhs;
+    }
+
+    inline static void f( R2SymTensor & lhs, int32 const component, real64 const & rhs )
+    {
+      lhs.Data()[component] += rhs;
+    }
+
+    template< typename TLHS, typename TRHS >
+    inline static void f( TLHS & lhs, int32 const component, TRHS const & rhs )
+    {
+      lhs += rhs;
+    }
+
+  };
+
+
+  enum class operationType
+  {
+    add,
+    multiply,
+    equate
+  };
 };
-
-
-namespace xmlwrapper
-{
 
 }
 

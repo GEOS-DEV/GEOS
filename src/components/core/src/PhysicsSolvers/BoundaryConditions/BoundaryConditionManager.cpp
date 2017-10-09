@@ -14,6 +14,7 @@
 #include "managers/ElementRegion.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
+#include "codingUtilities/StringUtilities.hpp"
 
 namespace geosx
 {
@@ -70,7 +71,7 @@ void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGr
         if( setWrapper != nullptr )
         {
           lSet const & set = setWrapper->reference();
-          bc->ApplyBounaryConditionDefaultMethod(set,time, object, fieldName);
+          bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>(set,time, object, fieldName);
         }
       }
     }
@@ -104,7 +105,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
           if( setWrapper != nullptr )
           {
             lSet const & set = setWrapper->reference();
-            bc->ApplyBounaryConditionDefaultMethod( set, 0.0, currentGroup, fieldName );
+            bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( set, 0.0, currentGroup, fieldName );
           }
         }
       }
@@ -173,7 +174,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
         // ManagedGroup const * elementSets = elementRegion->GetGroup(dataRepository::keys::sets);
 
 
-        bc->ApplyBounaryConditionDefaultMethod( targetSet, 0.0, targetGroup, fieldName );
+        bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( targetSet, 0.0, targetGroup, fieldName );
       }
     }
   });

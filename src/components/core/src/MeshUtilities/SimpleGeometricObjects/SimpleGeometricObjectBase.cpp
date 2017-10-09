@@ -5,8 +5,8 @@
  *      Author: settgast1
  */
 
-#include "codingUtilities/Functions.hpp"
-#include "managers/FunctionManager.h"
+//#include "codingUtilities/Functions.hpp"
+//#include "managers/FunctionManager.h"
 #include "SimpleGeometricObjectBase.hpp"
 
 namespace geosx

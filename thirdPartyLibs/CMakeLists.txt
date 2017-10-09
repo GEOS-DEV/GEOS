@@ -86,6 +86,7 @@ message("${RAJA_DIR}")
 else()
     message(INFO ": Using RAJA found at https://github.com/LLNL/RAJA/archive/develop.zip")
     set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/raja)
+    message("RAJA_CMAKE_ARGS=${RAJA_CMAKE_ARGS}")
     ExternalProject_Add( raja
                          GIT_REPOSITORY https://github.com/LLNL/RAJA.git
                          GIT_TAG develop
@@ -181,6 +182,7 @@ endif()
 ################################
 # CALIPER
 ################################
+message( "ENABLE_CALIPER = ${ENABLE_CALIPER}" )
 if( ENABLE_CALIPER )
 message( INFO ": setting up caliper" )
 set(CALIPER_LOCAL_DIR ${PROJECT_BINARY_DIR}/caliper)

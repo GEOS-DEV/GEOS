@@ -13,7 +13,6 @@
 #include "managers/ElementRegionManager.hpp"
 
 #include "fileIO/silo/SiloFile.hpp"
-
 #include "common/Logger.hpp"
 
 namespace geosx

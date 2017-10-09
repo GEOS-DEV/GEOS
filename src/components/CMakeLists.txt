@@ -45,10 +45,6 @@ foreach(component ${componentlist})
 endforeach()
 message("componentlistlink = ${componentlistlink}")
 
-if( ENABLE_MATHPRESSO )
-  set( extraComponentsListLink ${extraComponentsListLink} mathpresso )
-endif()
-
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
                    DEPENDS_ON ${componentlistlink} ${extraComponentsListLink}) 

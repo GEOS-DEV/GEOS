@@ -381,38 +381,38 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const 
 {
   typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
 
-  INDEX_TYPE key = KeyIndex::invalid_index;
+  INDEX_TYPE index = KeyIndex::invalid_index;
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
     value_type newEntry = std::make_pair( keyName, std::move( source ) );
     m_values.push_back( std::move( newEntry ) );
-    key = m_values.size() - 1;
+    index = m_values.size() - 1;
 
-    m_keyLookup.insert( std::make_pair(keyName,key) );
-    m_constValues.push_back( std::make_pair( keyName, &(*(m_values[key].second)) ) );
+    m_keyLookup.insert( std::make_pair(keyName,index) );
+    m_constValues.push_back( std::make_pair( keyName, &(*(m_values[index].second)) ) );
 
   }
   // if key was found
   else
   {
-    key = iterKeyLookup->second;
+    index = iterKeyLookup->second;
 
     // if value is empty, then move source into value slot
-    if( m_values[key].second==nullptr )
+    if( m_values[index].second==nullptr )
     {
-      m_values[key].second = std::move( source );
-      m_constValues[key].second =  &(*(m_values[key].second));
+      m_values[index].second = std::move( source );
+      m_constValues[index].second =  &(*(m_values[index].second));
     }
     else
     {
       if( overwrite )
       {
-        erase(key);
-        m_values[key].second = std::move( source );
-        m_constValues[key].second =  &(*(m_values[key].second));
+        erase(index);
+        m_values[index].second = std::move( source );
+        m_constValues[index].second =  &(*(m_values[index].second));
       }
-      else if( source->get_typeid() != m_values[key].second->get_typeid() )
+      else if( source->get_typeid() != m_values[index].second->get_typeid() )
       {
         string const message = "MappedVector::insert(): Tried to insert existing key that was not empty without overwrite flag\n";
         GEOS_ERROR(message);
@@ -420,7 +420,7 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const 
     }
   }
 
-return &(*(m_values[key].second));
+return &(*(m_values[index].second));
 }
 }
 

@@ -561,7 +561,7 @@ void SiloFile::WriteMeshObject(const std::string& meshName,
     DBClearOptlist(optlist);
 
     ivector nodelist(lnodelist);
-    gvector globalZoneNumber(lnodelist);
+    gArray1d globalZoneNumber(lnodelist);
 
     int count = 0;
     int elemCount = 0;
@@ -691,7 +691,7 @@ void SiloFile::WritePolygonMeshObject(const std::string& meshName,
     DBClearOptlist(optlist);
 
     ivector nodelist(lnodelist);
-    gvector globalZoneNumber(lnodelist);
+    gArray1d globalZoneNumber(lnodelist);
 
     int elemCount = 0;
     for (int j = 0; j < lnodelist; ++j)
@@ -1094,7 +1094,7 @@ void SiloFile::WriteDiscreteElementMeshObject(const std::string& meshName,
 
     //write a UCD mesh to the Silo file
     //UCD = unstructured cell data ... used to define any unstructured mesh
-    DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), nsdof, NULL, (float**) coords, nnodes, nDiscreteElements,
+    DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), 3, NULL, (float**) coords, nnodes, nDiscreteElements,
                  NULL, NULL, DB_DOUBLE, optlist);
     DBClearOptlist(optlist);
   }
