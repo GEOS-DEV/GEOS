@@ -1,5 +1,11 @@
 
 
+Sun Oct  8 21:47:03 2017 Randolph R. Settgast
+v0.0.12
+
+Added build options for toss3 using gcc7 and clang4.
+
+
 Sun Oct  8 21:44:40 2017 Randolph R. Settgast
 v0.0.12
 
