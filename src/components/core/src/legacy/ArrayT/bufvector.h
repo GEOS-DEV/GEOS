@@ -48,16 +48,19 @@
 
 #include <string>
 #include <string.h>
-#include "legacy/Common/typedefs.h"
+//#include "legacy/Common/typedefs.h"
+#include "common/DataTypes.hpp"
 #include <map>
 #include "codingUtilities/Utilities.hpp"
 #include "common/InterObjectRelation.hpp"
-#include "legacy/DataStructures/EncapsulatedObjects/EncapsulatedObjectBase.h"
+//#include "legacy/DataStructures/EncapsulatedObjects/EncapsulatedObjectBase.h"
 
 #if ATK_FOUND
 #include <slic/slic.hpp>
 #endif
 
+namespace geosx
+{
 class bufvector: public VectorT<char>
 {
 public:
@@ -98,10 +101,10 @@ public:
   unsigned int Pack( const std::map<T_KEY,T_VAL>& var ) { return PrivatePackMap(var);}
 
   template< typename T > unsigned int PackSerialObject( const T& object ) { return PrivatePack(object); }
-  template< int NINT, int NR0, int NR1, int NR2, int NR2S >
-  unsigned int PackSerialObject( const EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivatePack( object ); }
-  template< int NINT, int NR0, int NR1, int NR2, int NR2S >
-  static unsigned int PackSerialObject( char*& buffer, const EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivatePack(buffer, object ); }
+//  template< int NINT, int NR0, int NR1, int NR2, int NR2S >
+//  unsigned int PackSerialObject( const EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivatePack( object ); }
+//  template< int NINT, int NR0, int NR1, int NR2, int NR2S >
+//  static unsigned int PackSerialObject( char*& buffer, const EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivatePack(buffer, object ); }
 
   template< typename T_indices > unsigned int Pack( const iArray1d& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
   template< typename T_indices > unsigned int Pack( const rArray1d& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
@@ -149,8 +152,8 @@ public:
   template< typename T >
   static unsigned int UnpackSerialObject( const char*& buffer, T& object ) { return PrivateUnpack(buffer,object); }
 
-  template< int NINT, int NR0, int NR1, int NR2, int NR2S >
-  static unsigned int UnpackSerialObject( const char*& buffer, EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivateUnpack(buffer, object ); }
+//  template< int NINT, int NR0, int NR1, int NR2, int NR2S >
+//  static unsigned int UnpackSerialObject( const char*& buffer, EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivateUnpack(buffer, object ); }
 
 
 
@@ -842,7 +845,7 @@ inline unsigned int bufvector::Unpack( const char*& buffer, std::string& var )
   return sizeOfUnpackedChars;
 }
 
-
+}
 
 
 

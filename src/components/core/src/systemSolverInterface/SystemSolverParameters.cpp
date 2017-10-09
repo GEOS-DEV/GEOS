@@ -19,7 +19,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   RegisterViewWrapper<int32>( viewKeys.numKrylovIter );
   RegisterViewWrapper<int32>( viewKeys.kspace );
   RegisterViewWrapper<real64>( viewKeys.ilut_fill );
-  RegisterViewWrapper<real64>( viewKeys.ilut_drop );
+  real64 * ilut_drop = RegisterViewWrapper<real64>( viewKeys.ilut_drop )->data();
   RegisterViewWrapper<int32>( viewKeys.useMLPrecond );
   RegisterViewWrapper<int32>( viewKeys.useInnerSolver );
   RegisterViewWrapper<int32>( viewKeys.scalingOption );
@@ -95,7 +95,7 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
                               "int32",
                               "verbosity level",
                               "verbosity level",
-                              "20",
+                              "100",
                               "",
                               0,
                               1,
@@ -109,6 +109,34 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
                               "verbosity level",
                               "verbosity level",
                               "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+
+
+  docNode->AllocateChildNode( viewKeys.ilut_drop.Key(),
+                              viewKeys.ilut_drop.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "verbosity level",
+                              "verbosity level",
+                              "0.0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.ilut_fill.Key(),
+                              viewKeys.ilut_fill.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "verbosity level",
+                              "verbosity level",
+                              "3.0",
                               "",
                               0,
                               1,

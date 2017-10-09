@@ -47,6 +47,7 @@
 
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
+#include "fileIO/xmlWrapper.hpp"
 
 /**
  * Pure virtual base class representing a space
@@ -56,6 +57,8 @@
  */
 namespace geosx
 {
+
+
 class BasisBase
 {
 public:

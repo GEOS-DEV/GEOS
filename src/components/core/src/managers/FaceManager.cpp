@@ -141,7 +141,7 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
 
 
                   // there are faces in facesByLowestNode, so lets loop over them and check for duplicates
-                  for( lvector::iterator existingFaceIndex = facesByLowestNode[lowNode].begin() ;
+                  for( lArray1d::iterator existingFaceIndex = facesByLowestNode[lowNode].begin() ;
                       existingFaceIndex != facesByLowestNode[lowNode].end() ; ++existingFaceIndex )
                   {
                     // this is the nodelist of the face that we are testing agains

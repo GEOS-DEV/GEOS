@@ -14,6 +14,8 @@
 
 #include "managers/ObjectManagerBase.hpp"
 
+namespace geosx
+{
 template < typename BASETYPE >
 class InterObjectRelation : public BASETYPE
 {
@@ -100,7 +102,7 @@ typedef InterObjectRelation<Array1dT<Array1dT<lArray1d> > > OrderedVariableOneTo
 
 typedef InterObjectRelation<Array1dT< pArray1d > > OrderedVariableOneToManyPairRelation;
 typedef InterObjectRelation<Array1dT< pSet > > UnorderedVariableOneToManyPairRelation;
-
+}
 
 
 #endif /* INTEROBJECTRELATION_H_ */

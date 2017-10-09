@@ -54,56 +54,56 @@
 #include <slic/slic.hpp>
 #endif
 
-
-static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
-                                        const lArray1d& existingNeighborIndices,
-                                        const lSet& modifiedIndices,
-                                        lArray1d& modifiedNeighborIndices );
-
-static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
-                                        const lArray1d& existingNeighborIndices,
-                                        const lArray1d& modifiedIndices,
-                                        lArray1d& modifiedNeighborIndices );
-
-
-
-
-
-static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
-                                        const lArray1d& existingNeighborIndices,
-                                        const lSet& modifiedIndices,
-                                        lArray1d& modifiedNeighborIndices )
-{
-
-//  if( !(modifiedIndices.empty()) )
-//  {
-//    lSet existingNeighborIndicesSet( existingNeighborIndices.begin(), existingNeighborIndices.end() );
 //
-//    for( lSet::const_iterator a=modifiedIndices.begin() ; a!=modifiedIndices.end() ; ++a )
-//    {
+//static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
+//                                        const lArray1d& existingNeighborIndices,
+//                                        const lSet& modifiedIndices,
+//                                        lArray1d& modifiedNeighborIndices );
 //
-//      const localIndex parentIndex = object.GetParentIndex(*a);
-//      if( existingNeighborIndicesSet.count( parentIndex ) == 1 )
-//      {
-//        modifiedNeighborIndices.push_back(*a);
-//      }
+//static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
+//                                        const lArray1d& existingNeighborIndices,
+//                                        const lArray1d& modifiedIndices,
+//                                        lArray1d& modifiedNeighborIndices );
 //
-//    }
-//  }
-
-}
-
-
-static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
-                                        const lArray1d& existingNeighborIndices,
-                                        const lArray1d& modifiedIndices,
-                                        lArray1d& modifiedNeighborIndices )
-{
-  lSet modifiedIndicesSet( modifiedIndices.begin(), modifiedIndices.end() );
-  GetModifiedNeighborIndices( object, existingNeighborIndices, modifiedIndicesSet, modifiedNeighborIndices );
-
-}
-
+//
+//
+//
+//
+//static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
+//                                        const lArray1d& existingNeighborIndices,
+//                                        const lSet& modifiedIndices,
+//                                        lArray1d& modifiedNeighborIndices )
+//{
+//
+////  if( !(modifiedIndices.empty()) )
+////  {
+////    lSet existingNeighborIndicesSet( existingNeighborIndices.begin(), existingNeighborIndices.end() );
+////
+////    for( lSet::const_iterator a=modifiedIndices.begin() ; a!=modifiedIndices.end() ; ++a )
+////    {
+////
+////      const localIndex parentIndex = object.GetParentIndex(*a);
+////      if( existingNeighborIndicesSet.count( parentIndex ) == 1 )
+////      {
+////        modifiedNeighborIndices.push_back(*a);
+////      }
+////
+////    }
+////  }
+//
+//}
+//
+//
+//static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
+//                                        const lArray1d& existingNeighborIndices,
+//                                        const lArray1d& modifiedIndices,
+//                                        lArray1d& modifiedNeighborIndices )
+//{
+//  lSet modifiedIndicesSet( modifiedIndices.begin(), modifiedIndices.end() );
+//  GetModifiedNeighborIndices( object, existingNeighborIndices, modifiedIndicesSet, modifiedNeighborIndices );
+//
+//}
+//
 
 
 

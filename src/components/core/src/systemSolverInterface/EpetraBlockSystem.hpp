@@ -28,6 +28,41 @@ namespace geosx
 namespace systemSolverInterface
 {
 
+static double ClearRow ( Epetra_FECrsMatrix * matrix,
+                         int const row,
+                         const double factor )
+{
+  long long int rowTmp = static_cast<long long int>(row);
+  int local_row = matrix->LRID(rowTmp);
+  double LARGE = 0.0;
+
+  if (local_row >= 0)
+  {
+    double *values = NULL;
+    int *col_indices = NULL;
+    int num_entries;
+
+    matrix->ExtractMyRowView( local_row, num_entries, values, col_indices);
+
+
+    if( values!=NULL && col_indices!=NULL && num_entries>0 )
+    {
+      int* diag_find = std::find(col_indices,col_indices+num_entries-1, local_row);
+      int diag_index = (int)(diag_find - col_indices);
+
+      for (int j=0; j<num_entries; ++j)
+      {
+        if (diag_index != j )
+        {
+          values[j] = 0.;
+        }
+      }
+      values[diag_index] *= factor;
+      LARGE = values[diag_index];
+    }
+  }
+  return (LARGE);
+}
 
 /**
  * @author settgast
@@ -114,7 +149,7 @@ public:
   }
 
 
-  Epetra_Map * GetRowMap( const int index )
+  Epetra_Map const * GetRowMap( const int index ) const
   {
     if( m_blockID[index]==BlockIDs::invalidBlock )
     {
@@ -123,11 +158,23 @@ public:
     return m_rowMap[ index ].get();
   }
 
-  Epetra_Map * GetRowMap( const BlockIDs dofID )
+  Epetra_Map * GetRowMap( const int index )
   {
-    int index = m_blockIndex[dofID];
+    return const_cast<Epetra_Map *>( const_cast<EpetraBlockSystem const *>(this)->GetRowMap(index) );
+  }
+
+
+  Epetra_Map const * GetRowMap( const BlockIDs dofID ) const
+  {
+    int const index = m_blockIndex.find(dofID)->second;
     return GetRowMap(index);
   }
+
+  Epetra_Map * GetRowMap( const BlockIDs dofID )
+  {
+    return const_cast<Epetra_Map *>( const_cast<EpetraBlockSystem const *>(this)->GetRowMap(dofID) );
+  }
+
 
 
   Epetra_Map * SetRowMap( const BlockIDs dofID, std::unique_ptr<Epetra_Map> rowMap )
@@ -138,7 +185,7 @@ public:
   }
 
 
-  Epetra_FEVector * GetSolutionVector( int const index )
+  Epetra_FEVector const * GetSolutionVector( int const index ) const
   {
     if( m_blockID[index]==BlockIDs::invalidBlock )
     {
@@ -147,11 +194,23 @@ public:
     return m_solution[ index ].get();
   }
 
-  Epetra_FEVector * GetSolutionVector( const BlockIDs dofID )
+  Epetra_FEVector * GetSolutionVector( int const index )
   {
-    int index = m_blockIndex[dofID];
+    return const_cast<Epetra_FEVector *>( const_cast<EpetraBlockSystem const *>(this)->GetSolutionVector(index) );
+  }
+
+
+  Epetra_FEVector const * GetSolutionVector( const BlockIDs dofID ) const
+  {
+    int const index = m_blockIndex.find(dofID)->second;
     return GetSolutionVector(index);
   }
+
+  Epetra_FEVector * GetSolutionVector( BlockIDs const dofID )
+  {
+    return const_cast<Epetra_FEVector *>( const_cast<EpetraBlockSystem const *>(this)->GetSolutionVector(dofID) );
+  }
+
 
   Epetra_FEVector * SetSolutionVector( const BlockIDs dofID, std::unique_ptr<Epetra_FEVector> solution )
   {
@@ -245,7 +304,35 @@ public:
     return m_matrix[rowIndex][colIndex].get();
   }
 
+  double ClearSystemRow ( int const blockRow,
+                          int const rowIndex,
+                          const double factor )
+  {
+    double LARGE = 0;
+    for( int col=0 ; col<m_numBlocks ; ++col )
+    {
+      if( blockRow == col )
+      {
+        LARGE=ClearRow( m_matrix[blockRow][col].get(), rowIndex, factor );
+      }
+      else
+      {
+        ClearRow( m_matrix[blockRow][col].get(), rowIndex, 0.0 );
+      }
+    }
+    return (LARGE);
+  }
 
+  double ClearSystemRow ( const BlockIDs rowDofID,
+                          int const rowIndex,
+                          const double factor )
+  {
+    int rowBlockIndex = m_blockIndex[rowDofID];
+    return ClearSystemRow( rowBlockIndex, rowIndex, factor );
+  }
+
+
+  int numBlocks() const { return m_numBlocks; }
 
 
 private:

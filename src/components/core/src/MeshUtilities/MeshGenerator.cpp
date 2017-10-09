@@ -12,7 +12,7 @@
 
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
-#include "managers/TableManager.hpp"
+//#include "managers/TableManager.hpp"
 //#include "SimpleGeometricObjects.hpp"
 
 #if ATK_FOUND

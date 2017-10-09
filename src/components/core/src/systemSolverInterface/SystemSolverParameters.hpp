@@ -56,7 +56,7 @@ public:
   int32  numKrylovIter() const        { return *(this->getData<int32>( viewKeys.numKrylovIter )); }
   int32  kspace() const               { return *(this->getData<int32>( viewKeys.kspace )); }
   real64 ilut_fill() const            { return *(this->getData<real64>( viewKeys.ilut_fill )); }
-  real64 ilut_drop() const            { return *(this->getData<int32>( viewKeys.ilut_drop )); }
+  real64 ilut_drop() const            { return *(this->getData<real64>( viewKeys.ilut_drop )); }
   int32   useMLPrecond() const         { return *(this->getData<int32>( viewKeys.useMLPrecond )); }
   int32   useInnerSolver() const       { return *(this->getData<int32>( viewKeys.useInnerSolver )); }
   int32  scalingOption() const        { return *(this->getData<int32>( viewKeys.scalingOption )); }
