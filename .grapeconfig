@@ -50,7 +50,7 @@ submodulepublicmappings = master:master
 names = 
 
 [publish]
-buildcmds = ./scripts/buildOrTest.py build
+buildcmds =
 builddir = . 
 testcmds = 
 testdir = .
