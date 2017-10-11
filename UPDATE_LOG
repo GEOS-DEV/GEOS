@@ -1,5 +1,19 @@
 
 
+Wed Oct 11 08:44:28 2017 Arturo Vargas
+v0.0.13
+
+* added some more required code for implicit
+* post merge cleanup
+* fixed some compilation issues
+* hooked up system assembly for solid mechanics FEM
+* hooked up system assembly for solid mechanics FEM
+* added linear system solve function
+* wrapped DataTypes in geosx namespace to prevent clashes with names in trilinos
+* Fixed some compilation issues with wrapping DataTypes in geosx namespace. Added BC's for solid mechanics solves
+* cleaned up RAJA loops
+
+
 Sun Oct  8 21:47:03 2017 Randolph R. Settgast
 v0.0.12
 
