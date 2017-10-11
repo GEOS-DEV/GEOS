@@ -445,6 +445,8 @@ void ProblemManager::ParseInputFile()
 
         meshGenerator->RegisterDocumentationNodes();
         meshGenerator->ReadXML(childNode );
+
+        domain->getMeshBodies()->RegisterGroup<MeshBody>(meshID)->CreateMeshLevel(0)->SetDocumentationNodes(nullptr);
       }
     }
   }
@@ -460,7 +462,7 @@ void ProblemManager::ParseInputFile()
 
 
     topLevelNode = xmlProblemNode.child("ElementRegions");
-    ElementRegionManager * elementManager = domain->GetGroup<ElementRegionManager>(keys::FEM_Elements);
+    ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
     elementManager->ReadXML(topLevelNode);
 
 
@@ -621,11 +623,16 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   });
 
 
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    NodeManager * const nodeManager = ManagedGroup::group_cast<MeshBody*>(mesh.second.get())->getMeshLevel(0)->getNodeManager();
 
-  ManagedGroup * geometricObjects = this->GetGroup(keys::geometricObjects);
+    ManagedGroup * geometricObjects = this->GetGroup(keys::geometricObjects);
 
-  MeshUtilities::GenerateNodesets( geometricObjects,
-                                   domain->GetGroup(keys::FEM_Nodes) );
+    MeshUtilities::GenerateNodesets( geometricObjects,
+                                     nodeManager );
+
+  }
 
 
 
@@ -643,13 +650,15 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
   DomainPartition * domain  = getDomainPartition();
 
-  ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  ManagedGroup * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
-  FaceManager * const faceManager = meshLevel->GetGroup<FaceManager>(meshLevel->groupKeys.faceManager);
 
-  ElementRegionManager * elementManager = domain->GetGroup<ElementRegionManager>( keys::FEM_Elements );
-  NodeManager * nodeManager = domain->GetGroup<NodeManager>( keys::FEM_Nodes );
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+
+  ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
+
+  NodeManager * nodeManager = meshLevel->getNodeManager();
   faceManager->BuildFaces( nodeManager, elementManager );
 
 }

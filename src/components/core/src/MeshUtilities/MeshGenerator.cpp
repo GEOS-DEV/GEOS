@@ -60,8 +60,8 @@ MeshGenerator::~MeshGenerator()
 
 void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
-
-  NodeManager * nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
+  //MeshLevel * const mesh = domain->group_cast<DomainPartition*>()->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  //NodeManager * const nodes    = mesh->getNodeManager();
   // CellBlockManager * elems = domain->GetGroup<CellBlockManager>(keys::cellManager);
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
@@ -71,18 +71,18 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
   docNode->setShortDescription( "a mesh generator" );
 
 
-  nodes->getDocumentationNode()->AllocateChildNode( keys::ReferencePosition,
-                                                   keys::ReferencePosition,
-                                                   -1,
-                                                   "r1_array",
-                                                   "r1_array",
-                                                   "Reference position of mesh vertex points",
-                                                   "Reference position of mesh vertex points",
-                                                   "1",
-                                                   "",
-                                                   1,
-                                                   0,
-                                                   0 );
+//  nodes->getDocumentationNode()->AllocateChildNode( keys::ReferencePosition,
+//                                                   keys::ReferencePosition,
+//                                                   -1,
+//                                                   "r1_array",
+//                                                   "r1_array",
+//                                                   "Reference position of mesh vertex points",
+//                                                   "Reference position of mesh vertex points",
+//                                                   "1",
+//                                                   "",
+//                                                   1,
+//                                                   0,
+//                                                   0 );
 
   docNode->AllocateChildNode( keys::xCoords,
                               keys::xCoords,
@@ -447,7 +447,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);
 
-  NodeManager * nodeManager = domain->GetGroup<NodeManager>( keys::FEM_Nodes );
+  NodeManager * nodeManager = meshLevel0->getNodeManager();
 
   CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
   ManagedGroup * nodeSets = nodeManager->GetGroup( std::string( "Sets" ) );

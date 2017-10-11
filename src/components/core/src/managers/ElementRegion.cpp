@@ -52,6 +52,8 @@
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"
 
+#include "managers/DomainPartition.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -220,7 +222,7 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
 void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
 
-  ManagedGroup const * domain = problemManager->GetGroup(keys::domain);
+  DomainPartition const * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
   ManagedGroup const * cellBlockManager = domain->GetGroup(keys::cellManager);
 
   ManagedGroup * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
@@ -241,7 +243,8 @@ void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager 
   BasisBase const & basis = numericalMethodManager->GetGroup(keys::basisFunctions)->getReference<BasisBase>( basisName );
   QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
 
-  r1_array const & X = domain->GetGroup(keys::FEM_Nodes)->getReference<r1_array>(keys::ReferencePosition);
+  MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  r1_array const & X = mesh->getNodeManager()->getReference<r1_array>(keys::ReferencePosition);
 
   forCellBlocks([&]( CellBlockSubRegion * subRegion )
   {

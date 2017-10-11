@@ -133,87 +133,94 @@ public:
   }
 
 
+  template< typename T >
+  static T group_cast( ManagedGroup * group )
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T>( group );
+#else
+    return static_cast<T>( group );
+#endif
+  }
+
+  template< typename T >
+  static T group_cast( ManagedGroup const * group )
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T>( group );
+#else
+    return static_cast<T>( group );
+#endif
+  }
+
+  template< typename T >
+  T group_cast()
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T>( this );
+#else
+    return static_cast<T>( this );
+#endif
+  }
+
+  template< typename T >
+  T group_cast() const
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T>( this );
+#else
+    return static_cast<T>( this );
+#endif
+  }
 
 
   template< typename T = ManagedGroup >
   T * GetGroup( int32 index )
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T *>( m_subGroups[index] );
-#else
-    return static_cast<T *>( m_subGroups[index] );
-#endif
+    return group_cast<T*>(m_subGroups[index]);
   }
 
   template< typename T = ManagedGroup >
   T const * GetGroup( int32 index ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const *>( m_subGroups[index] );
-#else
-    return static_cast<T const *>( m_subGroups[index] );
-#endif
+    return group_cast<T const *>(m_subGroups[index]);
   }
 
   template< typename T = ManagedGroup >
   T * GetGroup( string const & name )
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T *>( m_subGroups[name] );
-#else
-    return static_cast<T *>( m_subGroups[name] );
-#endif
+    return group_cast<T *>(m_subGroups[name]);
   }
 
   template< typename T = ManagedGroup >
   T const * GetGroup( string const & name ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const *>( m_subGroups[name] );
-#else
-    return static_cast<T const *>( m_subGroups[name] );
-#endif
+    return group_cast<T const *>(m_subGroups[name]);
   }
 
 
   template< typename T = ManagedGroup >
   T * GetGroup( subGroupMap::KeyIndex & key )
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T *>( m_subGroups[key] );
-#else
-    return static_cast<T *>( m_subGroups[key] );
-#endif
+    return group_cast<T *>(m_subGroups[key]);
   }
 
   template< typename T = ManagedGroup >
   T const * GetGroup( subGroupMap::KeyIndex & key ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const *>( m_subGroups[key] );
-#else
-    return static_cast<T const *>( m_subGroups[key] );
-#endif
+    return group_cast<T const *>(m_subGroups[key]);
   }
 
 template< typename T = ManagedGroup >
   T * GetGroup( subGroupMap::KeyIndex const & key )
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T *>( m_subGroups[key] );
-#else
-    return static_cast<T *>( m_subGroups[key] );
-#endif
+  return group_cast<T *>(m_subGroups[key]);
   }
 
   template< typename T = ManagedGroup >
   T const * GetGroup( subGroupMap::KeyIndex const & key ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const *>( m_subGroups[key] );
-#else
-    return static_cast<T const *>( m_subGroups[key] );
-#endif
+    return group_cast<T const *>(m_subGroups[key]);
   }
 
 
@@ -603,11 +610,11 @@ private:
   ///@{
 #if NOCHARTOSTRING_KEYLOOKUP == 1
 
-  template< typename T = ManagedGroup >
-  T const * GetGroup( char const * ) const;
-
-  template< typename T = ManagedGroup >
-  T * GetGroup( char const * name );
+//  template< typename T = ManagedGroup >
+//  T const * GetGroup( char const * ) const;
+//
+//  template< typename T = ManagedGroup >
+//  T * GetGroup( char const * name );
 
 
   template< typename T >

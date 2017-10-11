@@ -26,7 +26,7 @@ MeshLevel::MeshLevel( string const & name,
   RegisterGroup<NodeManager>( groupKeys.nodeManager );
 //  RegisterGroup<EdgeManager>( groupKeys.edgeManager );
   RegisterGroup<FaceManager>( groupKeys.faceManager );
-  RegisterGroup<ElementRegionManager>( groupKeys.elementManager );
+  RegisterGroup<ElementRegionManager>( groupKeys.elemManager );
 
   RegisterViewWrapper<int32>( viewKeys.meshLevel );
 }
