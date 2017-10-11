@@ -47,7 +47,7 @@
 #define EDGEMANAGERT_H_
 
 #include "legacy/ArrayT/bufvector.h"
-#include "ObjectManagerBase.hpp"
+#include "managers/ObjectManagerBase.hpp"
 
 
 namespace geosx

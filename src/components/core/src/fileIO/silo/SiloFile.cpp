@@ -58,7 +58,7 @@
 
 #include "constitutive/ConstitutiveManager.hpp"
 
-#include "managers/ElementRegionManager.hpp"
+#include "mesh/MeshBody.hpp"
 
 /// forward declaration of NodeManagerT for use as a template argument
 class NodeManager;

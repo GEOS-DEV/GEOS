@@ -45,7 +45,7 @@
  */
 
 #include "NodeManager.hpp"
-#include "DomainPartition.hpp"
+//#include "managers/DomainPartition.hpp"
 //#include "ObjectManagers/FaceManagerT.h"
 //#include "ObjectManagers/EdgeManagerT.h"
 //#include "ObjectManagers/ElementManagerT.h"

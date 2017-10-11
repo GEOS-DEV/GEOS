@@ -9,7 +9,7 @@
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "managers/MeshBody.hpp"
+#include "mesh/MeshBody.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 namespace geosx
 {

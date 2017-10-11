@@ -19,16 +19,12 @@
 #include "MeshUtilities/MeshUtilities.hpp"
 #include <stdexcept>
 #include "constitutive/ConstitutiveManager.hpp"
-#include "CellBlockManager.hpp"
-#include "ElementRegionManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 
-#include "managers/MeshBody.hpp"
-#include "managers/MeshLevel.hpp"
-#include "NodeManager.hpp"
+#include "mesh/MeshBody.hpp"
 namespace geosx
 {
 

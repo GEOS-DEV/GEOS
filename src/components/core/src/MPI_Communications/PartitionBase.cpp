@@ -45,7 +45,7 @@
 
 #include "PartitionBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/NodeManager.hpp"
+#include "mesh/NodeManager.hpp"
 
 //#include "IO/BinStream.h"
 //#include "ObjectManagers/DomainPartition.h"

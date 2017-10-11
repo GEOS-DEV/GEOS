@@ -8,10 +8,9 @@
 #include "BoundaryConditionManager.hpp"
 #include "BoundaryConditionBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "managers/CellBlockSubRegion.hpp"
 
-#include "managers/ElementRegionManager.hpp"
-#include "managers/ElementRegion.hpp"
+#include "mesh/MeshBody.hpp"
+
 #include "finiteElement/FiniteElementManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "codingUtilities/StringUtilities.hpp"

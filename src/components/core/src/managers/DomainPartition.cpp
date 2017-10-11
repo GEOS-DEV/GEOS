@@ -9,8 +9,6 @@
 
 #include "../MPI_Communications/SpatialPartition.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "NodeManager.hpp"
-#include "managers/ElementRegionManager.hpp"
 
 #include "fileIO/silo/SiloFile.hpp"
 #include "common/Logger.hpp"

@@ -38,132 +38,132 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @file ElementManagerT.h
+ * @file NodeManagerT.h
  * @author Randolph Settgast
- * @date created on Sep 14, 2010
+ * @date created on Sep 13, 2010
  */
 
-#ifndef ELEMENTOBJECTT_H_
-#define ELEMENTOBJECTT_H_
 
-#include "ObjectManagerBase.hpp"
-#include "legacy/ObjectManagers/EnergyT.h"
-//#include "common/InterObjectRelation.hpp"
-//#include "legacy/ArrayT/bufvector.h"
-#include "FaceManager.hpp"
+#ifndef NODEMANAGERT_H_
+#define NODEMANAGERT_H_
+
+#include "managers/ObjectManagerBase.hpp"
+#include <string.h>
+#include "CellBlockManager.hpp"
 
 
-class StableTimeStep;
+// *********************************************************************************************************************
+// *********************************************************************************************************************
+class SiloFile;
 
 namespace geosx
 {
+
+class CellBlock;
+class FaceManager;
+class EdgeManager;
 
 namespace dataRepository
 {
 namespace keys
 {
-//string const defaultMaterial = "material";
-//string const numNodesPerElement = "numNodesPerElement";
-//string const nodeList = "nodeList";
-//string const constitutiveMap = "constitutiveMap";
+std::string const nodeManager    = "NodeManager";
+std::string const elementRegionMap("elementRegionMap");
+std::string const elementSubRegionMap("elementSubRegionMap");
+std::string const elementMap("elementMap");
+
 }
 }
 
-
-
-
+using namespace dataRepository;
 /**
- * Class to manage the data stored at the element level.
+ * @author Randolph Settgast
+ *
+ * The NodeManagerT class manages the node data using the ObjectDataStructureBaseT as a data manager.
+ * This means that each field is stored in an array where each array entry corresponds to a node.
  */
-class CellBlock : public ObjectManagerBase
+class NodeManager : public ObjectManagerBase
 {
 public:
 
-  /**
-   * @name Static Factory Catalog Functions
+
+  /// default constructor
+  NodeManager( std::string const & name,
+               ManagedGroup * const parent );
+
+
+
+  /// default destructor
+  ~NodeManager();
+
+  static string CatalogName() { return dataRepository::keys::nodeManager; }
+  string getCatalogName() const      { return NodeManager::CatalogName(); }
+
+
+  void FillDocumentationNode( ManagedGroup * const group ) override final;
+
+
+//  void Initialize();
+
+
+
+
+public:
+
+
+
+  /** @name Maps
+   * The Maps
    */
   ///@{
 
-  static string CatalogName()
-  {
-    return "CellBlock";
-  }
 
-  string getCatalogName() const override final
-  {
-    return CellBlock::CatalogName();
-  }
+//  UnorderedVariableOneToManyRelation&  m_nodeToFaceMap;
+//  UnorderedVariableOneToManyRelation&  m_nodeToEdgeMap;
 
+//  UnorderedVariableOneToManyRelation& m_toCrackSurfacesRelation;
 
   ///@}
 
 
-  CellBlock() = delete;
-
-  CellBlock( string const & name, ManagedGroup * const parent );
-
-
-  CellBlock(const CellBlock& init);
-//  ElementRegion( ElementRegion&& init);
-  
-
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
-
-  virtual void ReadXML_PostProcess() override;
-
-//  map<string,int32> SetConstitutiveMap( dataRepository::ManagedGroup const & domain );
-
-  virtual ~CellBlock();
-
-  void GetFaceNodes( const localIndex elementIndex,
-                     const localIndex localFaceIndex,
-                     lArray1d& nodeIndicies) const;
-
-  R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
-
-
   struct viewKeysStruct
   {
-    dataRepository::ViewKey numNodesPerElement = { "numNodesPerElement" };
+    static constexpr auto referencePositionString = "ReferencePosition";
+    dataRepository::ViewKey referencePosition = { referencePositionString };
+    dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
     dataRepository::ViewKey nodeList           = { "nodeList" };
     dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
     dataRepository::ViewKey faceList           = { "faceList" };
-  } viewKeys;
 
-  class groupKeysStruct
+  }viewKeys;
+
+
+  struct groupKeysStruct
   {
-  public:
   }groupKeys;
 
-
-  Array2dT<int32> & m_toNodesRelation;
-  Array2dT<int32> & m_toFacesRelation;
-
-
-  int32 const & numNodesPerElement() const { return this->getReference<int32>( viewKeys.numNodesPerElement ); }
-  int32       & numNodesPerElement()       { return this->getReference<int32>( viewKeys.numNodesPerElement ); }
-  int32 const & numFacesPerElement() const { return this->getReference<int32>( viewKeys.numFacesPerElement ); }
-  int32       & numFacesPerElement()       { return this->getReference<int32>( viewKeys.numFacesPerElement ); }
+  view_rtype_const<r1_array> referencePosition() const { return this->getData<r1_array>(viewKeys.referencePosition); }
+  view_rtype<r1_array>       referencePosition()       { return this->getData<r1_array>(viewKeys.referencePosition); }
+  view_rtype_const<r1_array> totalDisplacement() const { return this->getData<r1_array>(viewKeys.totalDisplacement); }
+  view_rtype<r1_array>       totalDisplacement()       { return this->getData<r1_array>(viewKeys.totalDisplacement); }
+protected:
 
 private:
-  CellBlock& operator=(const CellBlock& rhs);
+  /// copy constructor
+  NodeManager() = delete;
+  NodeManager( const NodeManager& init ) = delete;
+  NodeManager& operator=( const NodeManager&) = delete;
 
-//  string & m_elementType;
 
 };
+// *********************************************************************************************************************
+// *********************************************************************************************************************
 
 
-
-///////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////
-
-
-
+// *********************************************************************************************************************
 
 
 }
 
 
-
-
-#endif /* ELEMENTOBJECTT_H_ */
+#endif /* NODEMANAGERT_H_ */

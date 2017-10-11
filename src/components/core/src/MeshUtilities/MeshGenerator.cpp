@@ -8,7 +8,6 @@
 #include "MeshGenerator.hpp"
 
 #include "managers/DomainPartition.hpp"
-#include "managers/NodeManager.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
@@ -22,8 +21,7 @@
 #include "MPI_Communications/PartitionBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 
-#include "managers/MeshBody.hpp"
-#include "managers/MeshLevel.hpp"
+#include "mesh/MeshBody.hpp"
 
 namespace geosx
 {
