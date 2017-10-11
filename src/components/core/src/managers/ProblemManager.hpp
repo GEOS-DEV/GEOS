@@ -94,11 +94,10 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  static std::string CatalogName() { return "ProblemManager"; }
-  string getCatalogName() const override final
-  {
-    return ProblemManager::CatalogName();
-  }
+  const static string CatalogName() 
+  { return "ProblemManager"; }
+  virtual const string getCatalogName() const override final
+  { return ProblemManager::CatalogName(); }
   ///@}
 
 

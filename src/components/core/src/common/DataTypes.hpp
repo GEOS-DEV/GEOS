@@ -19,6 +19,10 @@
 #include <vector>
 
 #include "common/GeosxConfig.hpp"
+#if ATK_FOUND
+#include "sidre/SidreTypes.hpp"
+#endif
+
 #include "common/SortedArray.hpp"
 
 #include "Macros.hpp"
@@ -275,6 +279,63 @@ public:
       { std::type_index(typeid(mapPair_array)),TypeIDs::mapPair_array_id }
     };
     return type_names.at(typeIndex);
+  }
+
+  static axom::sidre::TypeID toSidreType( std::type_index typeIndex )
+  {
+    const std::unordered_map<std::type_index, axom::sidre::TypeID> type_sizes =
+    {
+      { std::type_index(typeid(int32)),         axom::sidre::TypeID::INT32_ID },
+      { std::type_index(typeid(uint32)),        axom::sidre::TypeID::UINT32_ID },
+      { std::type_index(typeid(int64)),         axom::sidre::TypeID::INT64_ID },
+      { std::type_index(typeid(uint64)),        axom::sidre::TypeID::UINT64_ID },
+      { std::type_index(typeid(real32)),        axom::sidre::TypeID::FLOAT32_ID },   
+      { std::type_index(typeid(real64)),        axom::sidre::TypeID::FLOAT64_ID },
+      { std::type_index(typeid(R1Tensor)),      axom::sidre::TypeID::FLOAT64_ID },
+      { std::type_index(typeid(R2Tensor)),      axom::sidre::TypeID::FLOAT64_ID },
+      { std::type_index(typeid(R2SymTensor)),   axom::sidre::TypeID::FLOAT64_ID },
+      { std::type_index(typeid(int32_array)),   axom::sidre::TypeID::INT32_ID },
+      { std::type_index(typeid(uint32_array)),  axom::sidre::TypeID::UINT32_ID },
+      { std::type_index(typeid(int64_array)),   axom::sidre::TypeID::INT64_ID },
+      { std::type_index(typeid(uint64_array)),  axom::sidre::TypeID::UINT64_ID },
+      { std::type_index(typeid(real32_array)),  axom::sidre::TypeID::FLOAT32_ID },
+      { std::type_index(typeid(real64_array)),  axom::sidre::TypeID::FLOAT64_ID },
+      { std::type_index(typeid(r1_array)),      axom::sidre::TypeID::FLOAT64_ID },
+      { std::type_index(typeid(r2_array)),      axom::sidre::TypeID::FLOAT64_ID },
+      { std::type_index(typeid(r2Sym_array)),   axom::sidre::TypeID::FLOAT64_ID },
+      { std::type_index(typeid(std_size_t)),    axom::sidre::TypeID::UINT64_ID },
+      { std::type_index(typeid(string)),        axom::sidre::TypeID::UINT8_ID }
+    };
+    return type_sizes.at(typeIndex);
+  }
+
+
+  static std_size_t getSidreSize( std::type_index typeIndex )
+  {
+    const std::unordered_map<std::type_index, std_size_t> type_sizes =
+    {
+      { std::type_index(typeid(int32)),         sizeof(int32) },
+      { std::type_index(typeid(uint32)),        sizeof(uint32) },
+      { std::type_index(typeid(int64)),         sizeof(int64) },
+      { std::type_index(typeid(uint64)),        sizeof(uint64) },
+      { std::type_index(typeid(real32)),        sizeof(real32) },   
+      { std::type_index(typeid(real64)),        sizeof(real64) },
+      { std::type_index(typeid(R1Tensor)),      sizeof(real64) },
+      { std::type_index(typeid(R2Tensor)),      sizeof(real64) },
+      { std::type_index(typeid(R2SymTensor)),   sizeof(real64) },
+      { std::type_index(typeid(int32_array)),   sizeof(int32) },
+      { std::type_index(typeid(uint32_array)),  sizeof(uint32) },
+      { std::type_index(typeid(int64_array)),   sizeof(int64) },
+      { std::type_index(typeid(uint64_array)),  sizeof(uint64) },
+      { std::type_index(typeid(real32_array)),  sizeof(real32) },
+      { std::type_index(typeid(real64_array)),  sizeof(real64) },
+      { std::type_index(typeid(r1_array)),      sizeof(real64) },
+      { std::type_index(typeid(r2_array)),      sizeof(real64) },
+      { std::type_index(typeid(r2Sym_array)),   sizeof(real64) },
+      { std::type_index(typeid(std_size_t)),    sizeof(uint64) },
+      { std::type_index(typeid(string)),        sizeof(char) }
+    };
+    return type_sizes.at(typeIndex);
   }
 
 

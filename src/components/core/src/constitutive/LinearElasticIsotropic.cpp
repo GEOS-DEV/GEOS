@@ -208,7 +208,7 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
   ViewWrapper<real64_array>::rtype_const K = parameters->getData<real64_array>(std::string("BulkModulus"));
   ViewWrapper<real64_array>::rtype_const G = parameters->getData<real64_array>(std::string("ShearModulus"));
 
-  ViewWrapper<real64_array>::rtype meanStress = stateVariables->getData<real64_array>(std::string("MeanStress"));
+  ViewWrapper<real64_array>::rtype mean_stress = stateVariables->getData<real64_array>(std::string("MeanStress"));
   ViewWrapper<real64_array>::rtype S11 = stateVariables->getData<real64_array>(std::string("S11"));
   ViewWrapper<real64_array>::rtype S22 = stateVariables->getData<real64_array>(std::string("S22"));
   ViewWrapper<real64_array>::rtype S33 = stateVariables->getData<real64_array>(std::string("S33"));
@@ -226,7 +226,7 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
   for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
   {
     real volumeStrain = ( D11[i] + D22[i] + D33[i] );
-    meanStress[i] += volumeStrain * K[i];
+    mean_stress[i] += volumeStrain * K[i];
 
     S11[i] += ( D11[i] - volumeStrain/3.0 ) * 2.0 * G[i];
     S22[i] += ( D22[i] - volumeStrain/3.0 ) * 2.0 * G[i];

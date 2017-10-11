@@ -20,6 +20,7 @@
 #include "MeshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
+#include "fileIO/blueprint/Blueprint.hpp"
 #include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
@@ -638,6 +639,9 @@ void ProblemManager::RunSimulation()
   int cycle = 0;
   real64 dt = 0.0;
 
+  Blueprint bpWriter(*domain->GetGroup<NodeManager>( keys::FEM_Nodes ),
+                     *domain->GetGroup<ElementRegionManager>( keys::FEM_Elements ),
+                     "bp_plot", MPI_COMM_WORLD);
 
 
 //  cxx_utilities::DocumentationNode * const eventDocNode =
@@ -676,11 +680,27 @@ void ProblemManager::RunSimulation()
         nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
       }
 
-      // Update time, cycle, timestep
-      time += dt;
-      cycle++;
-      dt = (lockDt) ? dt : nextDt;
-      dt = (endTime - time < dt) ? endTime-time : dt;
+      while( time < endTime )
+      {
+        std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+        bpWriter.write( cycle );
+        // WriteSilo( cycle, time );
+
+        real64 nextDt = std::numeric_limits<real64>::max();
+
+        for ( auto jj=0; jj<solverList.size(); ++jj)
+        {
+          SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
+          currentSolver->TimeStep( time, dt, cycle, domain );
+          nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
+        }
+
+        // Update time, cycle, timestep
+        time += dt;
+        cycle ++;
+        dt = (lockDt)? dt : nextDt;
+        dt = (endTime - time < dt)? endTime-time : dt;
+      } 
     }
   }
 //  }
@@ -740,35 +760,6 @@ void ProblemManager::ApplyInitialConditions()
   boundaryConditionManager->ApplyInitialConditions( domain );
 
 }
-
-
-void ProblemManager::WriteRestart( int32 const cycleNumber )
-{
-#if ATK_FOUND
-  char fileName[200] = {0};
-  sprintf(fileName, "%s_%09d", "restart", cycleNumber);
-
-  this->prepareToWriteRestart();
-  m_functionManager->prepareToWriteRestart();
-  BoundaryConditionManager::get()->prepareToWriteRestart();
-  SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
-#endif
-}
-
-void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
-{
-#if ATK_FOUND
-  this->prepareToLoadExternalData();
-  m_functionManager->prepareToLoadExternalData();
-  BoundaryConditionManager::get()->prepareToLoadExternalData();
-  SidreWrapper::loadExternalData(restartFileName + ".root", MPI_COMM_WORLD);
-  this->finishLoadingExternalData();
-  m_functionManager->finishLoadingExternalData();
-  BoundaryConditionManager::get()->finishLoadingExternalData();
-#endif
-}
-
-
 
 void ProblemManager::WriteRestart( int32 const cycleNumber )
 {

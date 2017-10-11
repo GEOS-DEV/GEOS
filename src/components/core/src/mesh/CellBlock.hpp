@@ -101,15 +101,11 @@ public:
    */
   ///@{
 
-  static string CatalogName()
-  {
-    return "CellBlock";
-  }
+  static const string CatalogName()
+  { return "CellBlock"; }
 
-  string getCatalogName() const override final
-  {
-    return CellBlock::CatalogName();
-  }
+  virtual const string getCatalogName() const override final
+  { return CellBlock::CatalogName(); }
 
 
   ///@}
@@ -165,7 +161,6 @@ public:
 
 private:
   CellBlock& operator=(const CellBlock& rhs);
-
 //  string & m_elementType;
 
 };

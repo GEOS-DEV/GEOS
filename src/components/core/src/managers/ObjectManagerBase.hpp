@@ -46,7 +46,7 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
-  virtual string getCatalogName() const = 0;
+  virtual const string getCatalogName() const = 0;
   ///@}
 
 

@@ -20,7 +20,6 @@ namespace sidre
 class View;
 }
 }
-#endif
 
 namespace geosx
 {
@@ -66,10 +65,10 @@ public:
   virtual void insert() = 0;
   virtual void resize( localIndex newsize ) = 0;
 
-  virtual void registerDataPtr() = 0;
-  virtual void unregisterDataPtr() = 0;
+  virtual void registerDataPtr( axom::sidre::View* view = nullptr ) const = 0;
+  virtual void unregisterDataPtr( axom::sidre::View* view = nullptr ) const = 0;
   virtual void resizeFromSidre() = 0;
-  virtual void storeSizedFromParent() = 0;
+  virtual void storeSizedFromParent() const = 0;
   virtual void loadSizedFromParent() = 0;
 
 
@@ -89,11 +88,7 @@ public:
   }
 
 #ifdef USE_ATK
-  axom::sidre::View const * getSidreView() const
-  {
-    return m_sidreView;
-  }
-  axom::sidre::View * getSidreView()
+  axom::sidre::View * getSidreView() const
   {
     return m_sidreView;
   }

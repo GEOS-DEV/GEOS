@@ -131,7 +131,6 @@ public:
 public:
 
 
-
   /** @name Maps
    * The Maps
    */
@@ -151,9 +150,9 @@ public:
 //    static constexpr auto referencePositionString = "ReferencePosition";
     dataRepository::ViewKey referencePosition = { dataRepository::keys::referencePositionString };
     dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
-    dataRepository::ViewKey nodeList           = { "nodeList" };
-    dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
-    dataRepository::ViewKey faceList           = { "faceList" };
+    // dataRepository::ViewKey nodeList           = { "nodeList" };
+    // dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
+    // dataRepository::ViewKey faceList           = { "faceList" };
 
   } viewKeys;
 

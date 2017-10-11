@@ -31,9 +31,9 @@ TEST(testSidreBasic, testSidreBasic) {
   /* Resize the array */
   data_view->resize(num_items);
 
-  /* Check that the ViewWrapper size and dataSize functions return the proper values */
+  /* Check that the ViewWrapper size and byteSize functions return the proper values */
   EXPECT_EQ(data_view->size(), num_items);
-  EXPECT_EQ(data_view->dataSize(), expected_size);
+  EXPECT_EQ(data_view->byteSize(), expected_size);
 
   /* Set the data */
   ViewWrapper<int64_array>::rtype data = data_view->data();

@@ -1,4 +1,4 @@
-f/**
+/**
  * @file DataObjectManager.h
  * @date created on Nov 21, 2014
  * @author Randolph R. Settgast
@@ -366,10 +366,10 @@ public:
   ViewWrapperBase * getWrapperBase( std::string const & name )
   { return m_wrappers[name]; }
 
-  ViewWrapperBase const * getWrapperBase( viewWrapperMap::KeyIndex & keyIndex ) const
+  ViewWrapperBase const * getWrapperBase( viewWrapperMap::KeyIndex const & keyIndex ) const
   { return m_wrappers[keyIndex]; }
 
-  ViewWrapperBase * getWrapperBase( viewWrapperMap::KeyIndex & keyIndex )
+  ViewWrapperBase * getWrapperBase( viewWrapperMap::KeyIndex const & keyIndex )
   { return m_wrappers[keyIndex]; }
 
 
@@ -400,21 +400,6 @@ public:
   template< typename T >
   ViewWrapper<T> * getWrapper( std::string const & name )
   { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapper<T>( name ) ); }
-
-
-  template< typename T >
-  ViewWrapper<T> const * getWrapper( viewWrapperMap::KeyIndex & keyIndex ) const
-  {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[keyIndex]) );
-#else
-    return static_cast< ViewWrapper<T> const * >( (m_wrappers[keyIndex]) );
-#endif
-  }
-
-  template< typename T >
-  ViewWrapper<T> * getWrapper( viewWrapperMap::KeyIndex & keyIndex )
-  { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapper<T>( keyIndex ) ); }
 
 
   template< typename T >

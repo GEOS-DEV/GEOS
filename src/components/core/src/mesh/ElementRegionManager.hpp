@@ -96,15 +96,11 @@ public:
    */
   ///@{
 
-  static string CatalogName()
-  {
-    return "ZoneManager";
-  }
+  static const string CatalogName()
+  { return "ZoneManager"; }
 
-  string getCatalogName() const override final
-  {
-    return ElementRegionManager::CatalogName();
-  }
+  virtual const string getCatalogName() const override final
+  { return ElementRegionManager::CatalogName(); }
 
 
 
@@ -207,8 +203,6 @@ public:
 private:
   ElementRegionManager( const ElementRegionManager& );
   ElementRegionManager& operator=( const ElementRegionManager&);
-
-
 };
 }
 #endif /* ZONEMANAGER_H */

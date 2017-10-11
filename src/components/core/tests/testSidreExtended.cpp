@@ -21,9 +21,9 @@ ViewWrapper<T> * createArrayView(ManagedGroup * parent, const string name,
   uint32 expected_size = data.size() * sizeof(typename T::value_type);
   view->resize(data.size());
 
-  /* Check that the ViewWrapper size and dataSize return the proper values */
+  /* Check that the ViewWrapper size and byteSize return the proper values */
   EXPECT_EQ(view->size(), data.size());
-  EXPECT_EQ(view->dataSize(), expected_size);
+  EXPECT_EQ(view->byteSize(), expected_size);
 
   /* Set the data */
   typename ViewWrapper<T>::rtype view_data = view->data();
@@ -61,9 +61,9 @@ ViewWrapper<string> * createStringview(ManagedGroup * parent, const string name,
   /* Set the data */
   view->data() = str;
 
-  /* Check that the ViewWrapper size and dataSize return the proper values */
+  /* Check that the ViewWrapper size and byteSize return the proper values */
   EXPECT_EQ(static_cast<uint>(view->size()), str.size());
-  EXPECT_EQ(view->dataSize(), expected_size);
+  EXPECT_EQ(view->byteSize(), expected_size);
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
   EXPECT_EQ(view->dataPtr(), view->data().c_str());
@@ -87,9 +87,9 @@ ViewWrapper<T> * createScalarView(ManagedGroup * parent, const string name,
   /* Set the data */
   *(view->data()) = value;
 
-  /* Check that the ViewWrapper size and dataSize return the proper values */
+  /* Check that the ViewWrapper size and byteSize return the proper values */
   EXPECT_EQ(view->size(), 1);
-  EXPECT_EQ(view->dataSize(), sizeof(T));
+  EXPECT_EQ(view->byteSize(), sizeof(T));
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
   EXPECT_EQ(view->dataPtr(), view->data());
