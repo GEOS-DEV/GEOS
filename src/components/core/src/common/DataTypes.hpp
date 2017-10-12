@@ -281,9 +281,11 @@ public:
     return type_names.at(typeIndex);
   }
 
+#if ATK_FOUND
+
   static axom::sidre::TypeID toSidreType( std::type_index typeIndex )
   {
-    const std::unordered_map<std::type_index, axom::sidre::TypeID> type_sizes =
+    const std::unordered_map<std::type_index, axom::sidre::TypeID> sidre_types =
     {
       { std::type_index(typeid(int32)),         axom::sidre::TypeID::INT32_ID },
       { std::type_index(typeid(uint32)),        axom::sidre::TypeID::UINT32_ID },
@@ -306,13 +308,18 @@ public:
       { std::type_index(typeid(std_size_t)),    axom::sidre::TypeID::UINT64_ID },
       { std::type_index(typeid(string)),        axom::sidre::TypeID::UINT8_ID }
     };
-    return type_sizes.at(typeIndex);
+    auto it = sidre_types.find(typeIndex); 
+    if (it == sidre_types.end())
+    {
+      SLIC_ERROR("Unsupported type of with type index name: " << typeIndex.name());
+    }
+    return it->second;
   }
 
 
   static std_size_t getSidreSize( std::type_index typeIndex )
   {
-    const std::unordered_map<std::type_index, std_size_t> type_sizes =
+    const std::unordered_map<std::type_index, std_size_t> sidre_sizes =
     {
       { std::type_index(typeid(int32)),         sizeof(int32) },
       { std::type_index(typeid(uint32)),        sizeof(uint32) },
@@ -335,9 +342,16 @@ public:
       { std::type_index(typeid(std_size_t)),    sizeof(uint64) },
       { std::type_index(typeid(string)),        sizeof(char) }
     };
-    return type_sizes.at(typeIndex);
+
+    auto it = sidre_sizes.find(typeIndex); 
+    if (it == sidre_sizes.end())
+    {
+      SLIC_ERROR("Unsupported type of with type index name: "  << typeIndex.name());
+    }
+    return it->second;
   }
 
+#endif /* ATK_FOUND */
 
 
   // Matching regex for data types in xml

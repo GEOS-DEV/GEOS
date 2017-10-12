@@ -37,7 +37,7 @@ private:
   void addCells(axom::sidre::Group* topo, axom::sidre::Group* fields) const;
 
 
-  const static std::string numNodesToElemName[4];
+  const static std::unordered_map<int, const std::string> numNodesToElemName;
 
   const NodeManager& m_node_manager;
   const ElementRegionManager& m_elem_reg_manager;

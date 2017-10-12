@@ -7,21 +7,25 @@
 #include "sidre/SidreTypes.hpp"
 #include "spio/IOManager.hpp"
 
+#include "conduit_blueprint.hpp"
+
 #include <cstring>
 #include <unordered_map>
 #include <utility>
 #include <mpi.h>
+#include <iostream>
 
 using namespace axom::sidre;
 
 namespace geosx {
 
-const std::string Blueprint::numNodesToElemName[] = 
+const std::unordered_map<int, const std::string> Blueprint::numNodesToElemName = 
 { 
-  "point",
-  "line",
-  "tet",
-  "hex"
+  {1, "point"},
+  {2, "line"},
+  {3, "triangle"},
+  {4, "tet"},
+  {8, "hex"}
 };
 
 
@@ -43,12 +47,24 @@ void Blueprint::write(int cycle) const
 {
   DataStore ds;
   Group* root = ds.getRoot();
-
   Group* coords = root->createGroup("coordsets/" + m_coord_name);
   Group* topo = root->createGroup("topologies/" + m_topo_name);
   Group* fields = root->createGroup("fields");
+
   addNodes(coords, fields);
   addCells(topo, fields);
+
+  conduit::Node root_node;
+  conduit::Node info;
+  root->createNativeLayout(root_node);
+  if (!conduit::blueprint::verify("mesh", root_node, info))
+  {
+    std::cout << "does not conform to the blueprint:";
+    info.print();
+    std::cout << std::endl;
+  }
+
+  root_node.print();
 
   axom::spio::IOManager ioManager(m_comm);
   ioManager.write(root, 1, m_output_path + "_" + std::to_string(cycle), "sidre_hdf5");
@@ -64,7 +80,9 @@ void Blueprint::addNodes(Group* coords, Group* fields) const
   for (const std::pair<const std::string, const ViewWrapperBase*>& pair : m_node_manager.wrappers())
   {
     const ViewWrapperBase *view = pair.second;
-    if (view->sizedFromParent() == 1 && view->getName() != m_node_manager.viewKeys.referencePosition.Key()) 
+    if (view->sizedFromParent() == 1 &&
+        view->size() > 0 &&
+        view->getName() != m_node_manager.viewKeys.referencePosition.Key()) 
     {
       Group* curField = fields->createGroup(view->getName());
       curField->createView("association")->setString("vertex");
@@ -89,11 +107,15 @@ void Blueprint::addCells(Group* topo, Group* fields) const
 
   m_elem_reg_manager.forCellBlocks([this, &numberOfNodesOfType](const CellBlock* cell_block) 
   {
-    const std::string& elem_name = this->numNodesToElemName[cell_block->numNodesPerElement()];
+    const std::string& elem_name = this->numNodesToElemName.at(cell_block->numNodesPerElement());
     numberOfNodesOfType[elem_name] += cell_block->m_toNodesRelation.size();
   });
 
   std::unordered_map<std::string, std::pair<int32*, int32>> elementsToNodes;
+
+  topo->createView("coordset")->setString(m_coord_name);
+  topo->createView("type")->setString("unstructured");
+  Group* elements = topo->createGroup("elements");
 
   for (std::pair<const std::string, int>& value : numberOfNodesOfType)
   {
@@ -101,11 +123,9 @@ void Blueprint::addCells(Group* topo, Group* fields) const
     const int32 num_nodes = value.second;
     if (num_nodes > 0)
     {
-      Group* elem_group = topo->createGroup(elem_type);
-      elem_group->createView("coordset")->setString(m_coord_name);
-      elem_group->createView("type")->setString("unstructured");
-      elem_group->createView("elements/shape")->setString(elem_type);
-      View* coordinates = elem_group->createView("elements/connectivity", INT32_ID, num_nodes);
+      Group* elem_group = elements->createGroup(elem_type);
+      elem_group->createView("shape")->setString(elem_type);
+      View* coordinates = elem_group->createView("connectivity", INT32_ID, num_nodes);
       coordinates->allocate();
       elementsToNodes[elem_type] = std::pair<int32*, int32>(coordinates->getArray(), 0);
     }
@@ -113,7 +133,7 @@ void Blueprint::addCells(Group* topo, Group* fields) const
 
   m_elem_reg_manager.forCellBlocks([this, &elementsToNodes](const CellBlock* cell_block) 
   {
-    const std::string& elem_name = this->numNodesToElemName[cell_block->numNodesPerElement()];
+    const std::string& elem_name = this->numNodesToElemName.at(cell_block->numNodesPerElement());
     std::pair<int32*, int32>& pair = elementsToNodes[elem_name];
     int32* to = pair.first + pair.second;
     const int32* from = cell_block->m_toNodesRelation[0];
