@@ -684,15 +684,12 @@ void ProblemManager::RunSimulation()
       {
         std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
         bpWriter.write( cycle );
-        // WriteSilo( cycle, time );
+        WriteSilo( cycle, time );
 
         real64 nextDt = std::numeric_limits<real64>::max();
 
         for ( auto jj=0; jj<solverList.size(); ++jj)
         {
-          ViewWrapper<r1_array>::rtype_const velocity;
-          velocity = domain->GetGroup<NodeManager>( keys::FEM_Nodes )->getData<r1_array>(std::string("Velocity"));
-
           SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
           currentSolver->TimeStep( time, dt, cycle, domain );
           nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
