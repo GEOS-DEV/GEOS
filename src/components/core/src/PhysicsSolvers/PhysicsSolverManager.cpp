@@ -48,6 +48,7 @@ void PhysicsSolverManager::FillDocumentationNode( dataRepository::ManagedGroup *
 
 void PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
 {
+  std::cout << "Adding Solver: " << childKey << ", " << childName << std::endl;
   std::unique_ptr<SolverBase> solver = SolverBase::CatalogInterface::Factory( childKey, childName, this );
   this->RegisterGroup<SolverBase>( childName, std::move(solver) );
 }

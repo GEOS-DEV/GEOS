@@ -222,9 +222,14 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
 {
   for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
-    CreateChild( childNode.name(), childNode.attribute("name").value() );
-
-    // Add grandchildren
+    std::string childName = childNode.attribute("name").value();
+    CreateChild(childNode.name(), childName);
+    
+    ManagedGroup * newChild = this->GetGroup<ManagedGroup>(childName);
+    if (newChild != nullptr)
+    {
+      newChild->AddChildren(childNode);
+    }
   }
 }
 
