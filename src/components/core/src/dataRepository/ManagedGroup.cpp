@@ -218,6 +218,23 @@ void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const g
 }
 
 
+void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
+{
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  {
+    CreateChild( childNode.name(), childNode.attribute("name").value() );
+
+    // Add grandchildren
+  }
+}
+
+
+void ManagedGroup::CreateChild( string const & childKey, string const & childName )
+{
+  std::cout << "Child not recognized: " << childKey << ", " << childName << std::endl;
+}
+
+
 void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();

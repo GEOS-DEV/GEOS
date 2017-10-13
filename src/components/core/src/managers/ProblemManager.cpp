@@ -485,9 +485,18 @@ void ProblemManager::ParseInputFile()
 //    }
   }
 
-  
-  
-  this->m_physicsSolverManager->ReadXML(domain, xmlProblemNode );
+
+  {
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Solvers");
+    this->m_physicsSolverManager->AddChildren( topLevelNode );
+    this->m_physicsSolverManager->SetDocumentationNodes( domain );
+    this->m_physicsSolverManager->ReadXML( topLevelNode );
+  }
+
+
+  // this->m_physicsSolverManager->ReadXML(domain, xmlProblemNode );
+
+
   this->m_eventManager->ReadXML(xmlProblemNode);
   this->m_functionManager->ReadXML(domain, xmlProblemNode);
   
