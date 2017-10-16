@@ -40,51 +40,20 @@
 #
 ###############################################################################
 
-################################
-# MPI
-################################
+cmake_minimum_required(VERSION 3.3)
 
-if (ENABLE_FIND_MPI)
-    find_package(MPI REQUIRED)
+project( blt_docs )
 
-    message(STATUS "MPI C Compile Flags:  ${MPI_C_COMPILE_FLAGS}")
-    message(STATUS "MPI C Include Path:   ${MPI_C_INCLUDE_PATH}")
-    message(STATUS "MPI C Link Flags:     ${MPI_C_LINK_FLAGS}")
-    message(STATUS "MPI C Libraries:      ${MPI_C_LIBRARIES}")
+###############################################################################
+# Setup BLT
+###############################################################################
 
-    message(STATUS "MPI CXX Compile Flags: ${MPI_CXX_COMPILE_FLAGS}")
-    message(STATUS "MPI CXX Include Path:  ${MPI_CXX_INCLUDE_PATH}")
-    message(STATUS "MPI CXX Link Flags:    ${MPI_CXX_LINK_FLAGS}")
-    message(STATUS "MPI CXX Libraries:     ${MPI_CXX_LIBRARIES}")
+if(NOT BLT_SOURCE_DIR)
+    set(BLT_SOURCE_DIR "blt")
 endif()
 
-message(STATUS "MPI Executable:       ${MPIEXEC}")
-message(STATUS "MPI Num Proc Flag:    ${MPIEXEC_NUMPROC_FLAG}")
+include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
 
-
-if (ENABLE_FORTRAN)
-    # Determine if we should use fortran mpif.h header or fortran mpi module
-    find_path(mpif_path
-        NAMES "mpif.h"
-        PATHS ${MPI_Fortran_INCLUDE_PATH}
-        NO_DEFAULT_PATH
-        )
-    
-    if(mpif_path)
-        set(MPI_Fortran_USE_MPIF ON CACHE PATH "")
-        message(STATUS "Using MPI Fortran header: mpif.h")
-    else()
-        set(MPI_Fortran_USE_MPIF OFF CACHE PATH "")
-        message(STATUS "Using MPI Fortran module: mpi.mod")
-    endif()
+if (SPHINX_FOUND)
+    blt_add_sphinx_target(blt_sphinx_tutorial_docs)
 endif()
-
-# register MPI with blt
-blt_register_library(NAME mpi
-                     INCLUDES ${MPI_C_INCLUDE_PATH} ${MPI_CXX_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
-                     LIBRARIES ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES}
-                     COMPILE_FLAGS ${MPI_C_COMPILE_FLAGS}
-                     LINK_FLAGS    ${MPI_C_COMPILE_FLAGS} ${MPI_Fortran_LINK_FLAGS}
-                     DEFINES USE_MPI)
-
-
