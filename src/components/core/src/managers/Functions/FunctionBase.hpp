@@ -75,8 +75,8 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
   string_array const & inputVarTypes = this->getReference<string_array>( dataRepository::keys::inputVarTypes );
 
-  int32 const numVars = inputVarNames.size();
-  int32 varSize[4];
+  int64 const numVars = inputVarNames.size();
+  int64 varSize[4];
   for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
   {
     string const & varName = inputVarNames[varIndex];

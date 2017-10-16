@@ -12,7 +12,7 @@
 #include <memory>
 #include "common/DataTypes.hpp"
 
-#if ATK_FOUND
+#ifdef USE_ATK
 namespace axom
 {
 namespace sidre
@@ -67,7 +67,7 @@ public:
   virtual void resize( localIndex newsize ) = 0;
 
 
-#if ATK_FOUND
+#ifdef USE_ATK
   virtual void registerDataPtr() = 0;
   virtual void unregisterDataPtr() = 0;
   virtual void resizeFromSidre() = 0;
@@ -90,7 +90,7 @@ public:
     m_sizedFromParent = val;
   }
 
-#if ATK_FOUND
+#ifdef USE_ATK
   axom::sidre::View const * getSidreView() const
   {
     return m_sidreView;
@@ -110,7 +110,7 @@ private:
   std::string m_name;
   ManagedGroup* m_parent;
   int m_sizedFromParent;
-#if ATK_FOUND
+#ifdef USE_ATK
   axom::sidre::View* m_sidreView;
 #endif
 

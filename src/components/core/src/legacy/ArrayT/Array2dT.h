@@ -59,9 +59,8 @@ class Array2dT : public VectorT<TYPE>
 
   //***** Constructors & Destructors ******************************************
 	Array2dT(void);
-	Array2dT( const int dim1, const int dim2 );
+	Array2dT( const long dim1, const long dim2 );
 	Array2dT(const Array2dT<TYPE>& source);
-	virtual ~Array2dT(void);
 	
 	
   //***** Assignment Operators ************************************************
@@ -82,37 +81,37 @@ class Array2dT : public VectorT<TYPE>
   
   
   //***** Memory Allocation and Release ***************************************
-	void resize2( const int dim1 , const int dim2 );
+	void resize2( const long dim1 , const long dim2 );
   void resize(const size_type num_elem)
   { resize2( num_elem, dimension[1] );  }
 
-  void Insert( const int dim1, const TYPE& t);
-  void Erase( const int dim1 );
+  void Insert( const long dim1, const TYPE& t);
+  void Erase( const long dim1 );
 
 
 	//***** Accessors **********************************************************
 
 
 
-  inline const TYPE& operator()(const int dim1 , const int dim2) const ;
-  inline TYPE& operator()(const int dim1 , const int dim2) ;
+  inline const TYPE& operator()(const long dim1 , const long dim2) const ;
+  inline TYPE& operator()(const long dim1 , const long dim2) ;
 
 
 
   private:
-  int dimension[2];
+  long dimension[2];
 
   public:
 	//***** Class Information Functions ****************************************
 
-  inline int Dimension( const int dimnum ) const ;
+  inline long Dimension( const long dimnum ) const ;
 
-  inline const TYPE* operator[]( const int index ) const
+  inline const TYPE* operator[]( const long index ) const
   {
     return ( &(VectorT<TYPE>::operator[](index*dimension[1])) );
   }
 
-  inline TYPE* operator[]( const int index )
+  inline TYPE* operator[]( const long index )
   {
     return ( &(VectorT<TYPE>::operator[](index*dimension[1])) );
   }
@@ -136,7 +135,7 @@ Array2dT<TYPE>::Array2dT(void)
 }
 
 template <class TYPE> 
-Array2dT<TYPE>::Array2dT( const int dim1 , const int dim2):
+Array2dT<TYPE>::Array2dT( const long dim1 , const long dim2):
 VectorT<TYPE>::VectorT()
 {
   resize2(dim1,dim2);
@@ -149,9 +148,6 @@ VectorT<TYPE>(source)
   operator=(source);	
 }
 
-template <class TYPE> 
-Array2dT<TYPE>::~Array2dT(void)
-{}
 
 
 
@@ -160,16 +156,16 @@ Array2dT<TYPE>::~Array2dT(void)
 // ***** MEMORY ALLOCATION *****************************************************
 // *****************************************************************************
 template <class TYPE> 
-void Array2dT<TYPE>::resize2( const int dim1 , const int dim2)
+void Array2dT<TYPE>::resize2( const long dim1 , const long dim2)
 {
   dimension[0] = dim1;
   dimension[1] = dim2;
 
-  std::vector<TYPE>::resize(static_cast<unsigned int>(dim1*dim2));
+  std::vector<TYPE>::resize((dim1*dim2));
 }
 
 template <class TYPE>
-void Array2dT<TYPE>::Insert( const int dim1, const TYPE& t)
+void Array2dT<TYPE>::Insert( const long dim1, const TYPE& t)
 {
   const size_type index = (dim1)*dimension[1];
   for(size_type tt = 0; tt < dimension[1]; tt++)
@@ -178,7 +174,7 @@ void Array2dT<TYPE>::Insert( const int dim1, const TYPE& t)
 }
 
 template <class TYPE>
-void Array2dT<TYPE>::Erase( const int dim1 )
+void Array2dT<TYPE>::Erase( const long dim1 )
 {
   const size_type index = (dim1)*dimension[1];
   for(size_type tt = 0; tt < dimension[1]; tt++)
@@ -307,7 +303,7 @@ return (*this);
 //*****************************************************************************
 
 template <class TYPE>
-const TYPE& Array2dT<TYPE>::operator()( const int dim1 , const int dim2 ) const
+const TYPE& Array2dT<TYPE>::operator()( const long dim1 , const long dim2 ) const
 {
 #if RANGE_CHECKING==1
     if (/*(dim1) < 0 ||*/ (dim1 ) >= dimension[0] ||
@@ -320,7 +316,7 @@ const TYPE& Array2dT<TYPE>::operator()( const int dim1 , const int dim2 ) const
 }
 
 template <class TYPE>
-TYPE& Array2dT<TYPE>::operator()( const int dim1 , const int dim2 )
+TYPE& Array2dT<TYPE>::operator()( const long dim1 , const long dim2 )
 {
 #if RANGE_CHECKING==1
     if (/*(dim1) < 0 ||*/ (dim1 ) >= dimension[0] ||
@@ -334,7 +330,7 @@ TYPE& Array2dT<TYPE>::operator()( const int dim1 , const int dim2 )
 }
 
 template <class TYPE>
-int Array2dT<TYPE>::Dimension( const int dimnum ) const
+long Array2dT<TYPE>::Dimension( const long dimnum ) const
 { 
 #if RANGE_CHECKING==1
   if ( dimnum>1 ) throw 1;

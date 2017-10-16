@@ -55,7 +55,7 @@
 #include "common/InterObjectRelation.hpp"
 //#include "legacy/DataStructures/EncapsulatedObjects/EncapsulatedObjectBase.h"
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include <slic/slic.hpp>
 #endif
 
@@ -79,7 +79,7 @@ public:
   unsigned int Pack( const R1Tensor& var )      { return PrivatePack(var); }
   unsigned int Pack( const R2Tensor& var )      { return PrivatePack(var); }
   unsigned int Pack( const R2SymTensor& var )   { return PrivatePack(var); }
-  unsigned int Pack( const size_t& var )   { return PrivatePack(var); }
+//  unsigned int Pack( const size_t& var )   { return PrivatePack(var); }
 
 
   unsigned int Pack( const std::string& var );
@@ -146,7 +146,7 @@ public:
   static unsigned int Unpack( const char*& buffer, R1Tensor& var ) { return PrivateUnpack(buffer,var); }
   static unsigned int Unpack( const char*& buffer, R2Tensor& var ) { return PrivateUnpack(buffer,var); }
   static unsigned int Unpack( const char*& buffer, R2SymTensor& var ) { return PrivateUnpack(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, size_t& var ) { return PrivateUnpack(buffer,var); }
+//  static unsigned int Unpack( const char*& buffer, size_t& var ) { return PrivateUnpack(buffer,var); }
   static unsigned int Unpack( const char*& buffer, std::string& var );
 
   template< typename T >
@@ -250,8 +250,8 @@ private:
   {
     unsigned int sizeOfPackedChars = 0;
 
-    const typename Array1dT<T>::size_type length = container.size();
-    unsigned int sizeOfPackedArrayChars = length*sizeof(T);
+    const localIndex length = container.size();
+    localIndex sizeOfPackedArrayChars = length*sizeof(T);
 
 
     sizeOfPackedChars += this->Pack( length );
@@ -274,7 +274,7 @@ private:
 
     unsigned int sizeOfUnpackedChars = 0;
 
-    typename Array1dT<T>::size_type array_length;
+    localIndex array_length;
     sizeOfUnpackedChars += Unpack( buffer, array_length );
     array.resize(array_length);
     unsigned int length = array_length * sizeof(T);
@@ -323,7 +323,7 @@ private:
 
     if( array_length != indices.size() )
     {
-#if ATK_FOUND
+#ifdef USE_ATK
       SLIC_ERROR("bufvector::PrivateUnpackArray(): incorrect number of data");
 #endif
 //      throw GPException("bufvector::PrivateUnpackArray(): incorrect number of data");
@@ -542,7 +542,7 @@ inline unsigned int bufvector::Unpack( const char*& buffer, sArray1d& array )
 template< typename T>
 unsigned int bufvector::PrivatePackGlobal( const T& container, const gArray1d& localToGlobal )
 {
-  const typename T::size_type length = container.size();
+  const localIndex length = container.size();
   unsigned int sizeOfPackedChars = 0;
 
 //  std::cout<<"container.size() = "<<length<<std::endl;
@@ -754,7 +754,7 @@ inline unsigned int bufvector::PrivateUnpackRelation( const char*& buffer, Fixed
   sizeOfUnpackedChars += bufvector::Unpack( buffer, dimension );
 
   if( dimension != static_cast<int>(relation.Dimension(1)) ) {
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("bufvector::PrivateUnpackRelation(): mismatched dimension");
 #endif
   }

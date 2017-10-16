@@ -9,12 +9,12 @@
 namespace geosx {
 namespace dataRepository {
 
-#if ATK_FOUND
+#ifdef USE_ATK
 template<typename T> 
 ViewWrapper<T> & createArrayView(ManagedGroup * parent, const string name,
                                  int sfp, const T & data)
 {
-  ViewWrapper<T> & view = parent->RegisterViewWrapper<T>(name);
+  ViewWrapper<T> & view = *parent->RegisterViewWrapper<T>(name);
   view.setSizedFromParent(sfp);
 
   /* Resize the array */
@@ -26,7 +26,7 @@ ViewWrapper<T> & createArrayView(ManagedGroup * parent, const string name,
   EXPECT_EQ(view.dataSize(), expected_size);
 
   /* Set the data */
-  T & view_data = view.data();
+  view_rtype<T> view_data = view.data();
   for (int i = 0; i < view.size(); i++) {
       view_data[i] = data[i];
   }
@@ -43,7 +43,7 @@ void checkArrayView(ViewWrapper<T> & view, int sfp, const T & data)
 {
   EXPECT_EQ(view.sizedFromParent(), sfp);
   EXPECT_EQ(view.size(), data.size());
-  T & view_data = view.data();
+  view_rtype<T> view_data = view.data();
   for (int i = 0; i < view.size(); i++) {
     EXPECT_DOUBLE_EQ(view_data[i], data[i]);
   }
@@ -53,7 +53,7 @@ void checkArrayView(ViewWrapper<T> & view, int sfp, const T & data)
 ViewWrapper<string> & createStringview(ManagedGroup * parent, const string name,
                                        int sfp, const string str) 
 {
-  ViewWrapper<string> & view = parent->RegisterViewWrapper<string>(name);
+  ViewWrapper<string> & view = *parent->RegisterViewWrapper<string>(name);
   view.setSizedFromParent(sfp);
   
   uint expected_size = str.size() * sizeof(char);
@@ -81,7 +81,7 @@ void checkStringView(ViewWrapper<string> & view, const int sfp, const string str
 template<typename T>
 ViewWrapper<T> & createScalarView(ManagedGroup * parent, const string name, 
                                   int sfp, const T value) {
-  ViewWrapper<T> & view = parent->RegisterViewWrapper<T>(name);
+  ViewWrapper<T> & view = *parent->RegisterViewWrapper<T>(name);
   view.setSizedFromParent(sfp);
 
   /* Set the data */
@@ -230,22 +230,22 @@ TEST(testSidreExtended, testSidreExtended) {
   root->reconstructSidreTree(path + ".root", protocol, MPI_COMM_WORLD);
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
-  ViewWrapper<int64_array> & view_int64_new = root->RegisterViewWrapper<int64_array>(view_int64_name);
-  ViewWrapper<string> & view_hope_new = root->RegisterViewWrapper<string>(view_hope_name);
+  ViewWrapper<int64_array> & view_int64_new = *root->RegisterViewWrapper<int64_array>(view_int64_name);
+  ViewWrapper<string> & view_hope_new = *root->RegisterViewWrapper<string>(view_hope_name);
 
   ManagedGroup * strings_group_new = root->RegisterGroup("strings");
-  ViewWrapper<string> & view_hello_new = strings_group_new->RegisterViewWrapper<string>(view_hello_name);
-  ViewWrapper<string> & view_goodbye_new = strings_group_new->RegisterViewWrapper<string>(view_goodbye_name);
+  ViewWrapper<string> & view_hello_new = *strings_group_new->RegisterViewWrapper<string>(view_hello_name);
+  ViewWrapper<string> & view_goodbye_new = *strings_group_new->RegisterViewWrapper<string>(view_goodbye_name);
   
   ManagedGroup * real64_group_new = root->RegisterGroup("real64");
-  ViewWrapper<real64_array> & view_real641_new = real64_group_new->RegisterViewWrapper<real64_array>(view_real641_name);
-  ViewWrapper<real64_array> & view_real642_new = real64_group_new->RegisterViewWrapper<real64_array>(view_real642_name);
+  ViewWrapper<real64_array> & view_real641_new = *real64_group_new->RegisterViewWrapper<real64_array>(view_real641_name);
+  ViewWrapper<real64_array> & view_real642_new = *real64_group_new->RegisterViewWrapper<real64_array>(view_real642_name);
 
   ManagedGroup * mixed_group_new = real64_group_new->RegisterGroup("mixed");
-  ViewWrapper<int32_array> & view_int32_new = mixed_group_new->RegisterViewWrapper<int32_array>(view_int32_name);
-  ViewWrapper<real32_array> & view_real32_new = mixed_group_new->RegisterViewWrapper<real32_array>(view_real32_name);
-  ViewWrapper<string> & view_what_new = mixed_group_new->RegisterViewWrapper<string>(view_what_name);
-  ViewWrapper<real64> & view_pi_new = mixed_group_new->RegisterViewWrapper<real64>(view_pi_name);
+  ViewWrapper<int32_array> & view_int32_new = *mixed_group_new->RegisterViewWrapper<int32_array>(view_int32_name);
+  ViewWrapper<real32_array> & view_real32_new = *mixed_group_new->RegisterViewWrapper<real32_array>(view_real32_name);
+  ViewWrapper<string> & view_what_new = *mixed_group_new->RegisterViewWrapper<string>(view_what_name);
+  ViewWrapper<real64> & view_pi_new = *mixed_group_new->RegisterViewWrapper<real64>(view_pi_name);
 
   /* Load the data */
   root->loadSidreExternalData(path + ".root", MPI_COMM_WORLD);

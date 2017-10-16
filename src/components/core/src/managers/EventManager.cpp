@@ -38,7 +38,7 @@ void EventManager::FillDocumentationNode( dataRepository::ManagedGroup * const )
 }
 
 
-void EventManager::ReadXML( xmlWrapper::xmlNode const & problemNode )
+void EventManager::ReadXMLsub( xmlWrapper::xmlNode const & problemNode )
 {
   xmlWrapper::xmlNode topLevelNode = problemNode.child("SolverApplications");
   if (topLevelNode == NULL)

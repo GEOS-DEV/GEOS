@@ -90,8 +90,8 @@ void CellBlockManager::resize( int32_array const & numElements,
 ////  elemRegion->resize(numElements);
 //}
 
-void CellBlockManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
-{
+//void CellBlockManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+//{
 //  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
 //  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
 //  {
@@ -106,7 +106,7 @@ void CellBlockManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 //      elemRegion->ReadXML(childNode);
 //    }
 //  }
-}
+//}
 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlockManager, string const &, ManagedGroup * const )

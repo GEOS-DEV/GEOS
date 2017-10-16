@@ -31,7 +31,7 @@ public:
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
-  void ReadXML( xmlWrapper::xmlNode const & problemNode ) override;
+  void ReadXMLsub( xmlWrapper::xmlNode const & problemNode ) override;
 
   void CheckEventTiming();
 

@@ -26,17 +26,17 @@ public:
 
   static std::string CatalogName() { return "NewComponent"; }
 
-  virtual void ReadXML( xmlWrapper::xmlNode const & solverNode );
+  virtual void ReadXML_PostProcess( ) override;
 
-  virtual void Initialize( dataRepository::ManagedGroup& domain );
+  virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
 
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) ;
+  virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
 
 
   virtual void TimeStep( real64 const& time_n,
                          real64 const& dt,
                          int32 const cycleNumber,
-                         dataRepository::ManagedGroup * domain ) ;
+                         dataRepository::ManagedGroup * domain ) override;
 
 private:
   NewComponent() = delete;

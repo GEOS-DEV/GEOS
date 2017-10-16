@@ -14,7 +14,7 @@
 //#include "managers/TableManager.hpp"
 //#include "SimpleGeometricObjects.hpp"
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include "slic/slic.hpp"
 #endif
 
@@ -298,7 +298,7 @@ void MeshGenerator::ReadXML_PostProcess()
     }
     else
     {
-#if ATK_FOUND
+#ifdef USE_ATK
       SLIC_ERROR("MeshGenerator: incorrect element type!");
 #endif
     }
@@ -311,7 +311,7 @@ void MeshGenerator::ReadXML_PostProcess()
       }
       if( failFlag )
       {
-#if ATK_FOUND
+#ifdef USE_ATK
         SLIC_ERROR("vertex/element mismatch MeshGenerator::ReadXMLPost()");
 #endif
       }
@@ -328,7 +328,7 @@ void MeshGenerator::ReadXML_PostProcess()
       }
       else
       {
-#if ATK_FOUND
+#ifdef USE_ATK
         SLIC_ERROR("MeshGenerator: The number of element types is inconsistent with the number of total block.");
 #endif
       }
@@ -381,7 +381,7 @@ void MeshGenerator::ReadXML_PostProcess()
         }
         else
         {
-#if ATK_FOUND
+#ifdef USE_ATK
           SLIC_ERROR("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
 #endif
         }
@@ -851,7 +851,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
-// #if ATK_FOUND
+// #ifdef USE_ATK
 //                    SLIC_ERROR("not implemented");
 // #endif
                     elemRegion->m_toNodesRelation[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];

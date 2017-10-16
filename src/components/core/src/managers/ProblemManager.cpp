@@ -7,7 +7,7 @@
 
 #include "ProblemManager.hpp"
 
-#if USE_CALIPER == 1
+#ifdef USE_CALIPER
 //#include "caliper/Annotation.h"
 #endif
 
@@ -661,7 +661,7 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 
 void ProblemManager::RunSimulation()
 {
-#if USE_CALIPER == 1
+#ifdef USE_CALIPER
 //  cali::Annotation runSimulationAnnotation = cali::Annotation("RunSimulation").begin();
 #endif
   DomainPartition * domain  = getDomainPartition();
@@ -718,7 +718,7 @@ void ProblemManager::RunSimulation()
 //  WriteSilo( cycle, time );
 
 
-#if USE_CALIPER == 1
+#ifdef USE_CALIPER
 //  runSimulationAnnotation.end();
 #endif
 }

@@ -66,7 +66,7 @@ template<typename TYPE>
 class VectorT : public std::vector<TYPE>
 {
 public:
-  typedef typename std::vector<TYPE>::size_type size_type;
+  typedef long size_type;
 
   //***** Constructors & Destructors ********************************************
   /// default constructor
@@ -162,7 +162,7 @@ public:
 
   }*/
 
-  int size() const { return std::vector<TYPE>::size(); }
+  long int size() const { return std::vector<TYPE>::size(); }
 
 //***** Range Checking ********************************************************
 #if RANGE_CHECKING==1

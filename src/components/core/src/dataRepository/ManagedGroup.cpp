@@ -10,7 +10,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include <mpi.h>
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include "dataRepository/SidreWrapper.hpp"
 #include "spio/IOManager.hpp"
 #endif
@@ -20,7 +20,7 @@ namespace geosx
 namespace dataRepository
 {
 
-#if ATK_FOUND
+#ifdef USE_ATK
 axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
                                                             ManagedGroup * const parent )
 {
@@ -50,15 +50,15 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
 
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ) :
-#if ATK_FOUND
+  m_docNode(nullptr),
+  m_parent(parent),
+  m_wrappers(),
+  m_subGroups(),
+#ifdef USE_ATK
   m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
 #endif
-  m_name(name),
-  m_docNode(nullptr),
-  m_wrappers(),
-  m_parent(parent),
-  m_subGroups(),
-  m_size(0)
+  m_size(0),
+  m_name(name)
 {
 
   // Setup DocumentationNode
@@ -126,9 +126,13 @@ ManagedGroup::~ManagedGroup()
 }
 
 ManagedGroup::ManagedGroup( ManagedGroup&& source ) :
-  m_wrappers( std::move(source.m_wrappers) ),
   m_parent( std::move(source.m_parent) ),
-  m_size( source.m_size )
+  m_wrappers( std::move(source.m_wrappers) ),
+#ifdef USE_ATK
+  m_sidreGroup( std::move(source.m_sidreGroup) ),
+#endif
+  m_size( source.m_size ),
+  m_name( source.m_name )
 {}
 
 
@@ -148,7 +152,7 @@ ViewWrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, r
       } );
 }
 
-void ManagedGroup::resize( int32 const newsize )
+void ManagedGroup::resize( indexType const newsize )
 {
   for( auto&& i : this->wrappers() )
   {
@@ -220,9 +224,18 @@ void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const g
 
 void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+
   
+  ReadXML_Group( targetNode );
+
   ReadXMLsub( targetNode );
+
+  ReadXML_PostProcess();
+}
+
+void ManagedGroup::ReadXML_Group( xmlWrapper::xmlNode const & targetNode )
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   for( auto const & subDocEntry : docNode->m_child )
   {
@@ -234,8 +247,9 @@ void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
     }
   }
 
-  ReadXML_PostProcess();
 }
+
+
 
 void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
@@ -293,7 +307,7 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
-#if ATK_FOUND
+#ifdef USE_ATK
 /* Add pointers to ViewWrapper data to the sidre tree. */
 void ManagedGroup::registerSubViews() 
 {

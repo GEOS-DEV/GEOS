@@ -9,9 +9,10 @@
 #define SRC_COMPONENTS_CORE_SRC_COMMON_LOGGER_HPP_
 
 #include<string>
-#if ATK_FOUND
-#include "slic/slic.hpp"
-#include "slic/GenericOutputStream.hpp"
+
+#ifdef USE_ATK
+#include "slic.hpp"
+#include "GenericOutputStream.hpp"
 #endif
 
 
@@ -19,7 +20,7 @@ namespace geosx
 {
 void geos_abort( std::string message );
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #define GEOS_ERROR(msg) SLIC_ERROR(msg)
 #else
 #define GEOS_ERROR(msg)

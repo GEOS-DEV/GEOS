@@ -51,7 +51,7 @@
 //#include "ObjectManagers/DomainPartition.h"
 #include <limits.h>
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include "slic/slic.hpp"
 #endif
 
@@ -516,7 +516,7 @@ void PartitionBase::SendReceive( const Array1dT<Array1dT<T> >& sendArray, Array1
 
   if( sendArray.size() != m_neighbors.size() || recvArray.size() != m_neighbors.size() )
   {
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("PartitionBase::SendRecieve: size of arrays do not equal number of neighbors");
 #endif
   }
@@ -701,7 +701,7 @@ void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
 //      {
 //        std::map<DomainPartition::ObjectDataStructureKeys, bufvector>::iterator itmp = neighbor->tempNeighborData.objectsToSend.find(*it);
 //        if(itmp == neighbor->tempNeighborData.objectsToSend.end())
-//#if ATK_FOUND
+//#ifdef USE_ATK
 //          SLIC_ERROR("Cannot find name " + toString<int>(*it) + " in objectsToSend");
 //#endif
 //
@@ -949,7 +949,7 @@ void PartitionBase::CommunicateRequiredObjectIndices()
 //        {
 //          st<< *failed <<"\n";
 //        }
-////#if ATK_FOUND
+////#ifdef USE_ATK
 ////        SLIC_ERROR(st.str().c_str());
 ////#endif
 //
@@ -3015,7 +3015,7 @@ void PartitionBase::GraphBasedColoring()
       for (localIndex i = 0; i < listNeighbors[rank].size(); ++i)
       {
         if (colorByRank[listNeighbors[rank][i]] ==  colorByRank[rank]) {
-#if ATK_FOUND
+#ifdef USE_ATK
           SLIC_ERROR("ERROR: Two neighbors were assigned the same color.");
 #endif
         }

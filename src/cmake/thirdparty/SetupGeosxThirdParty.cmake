@@ -188,21 +188,12 @@ find_path( CALIPER_INCLUDE_DIRS caliper/Caliper.h
            NO_CMAKE_SYSTEM_PATH)
 
 set( caliper_lib_list caliper caliper-reader caliper-common  gotcha )
-#set( caliper_lib_list caliper  caliper-common  caliper-mpi  caliper-mpiwrap  caliper-reader  caliper-stub  caliper-stub-c  caliper-tools-util  gotcha )
 
+blt_find_libraries( CALIPER_LIBRARIES
+                    NAMES ${caliper_lib_list}
+                    PATHS ${CALIPER_DIR}/lib ${CALIPER_DIR}/lib64
+                   )
 
-set( CALIPER_LIBRARIES )
-foreach(lib ${caliper_lib_list})
-  unset( temp CACHE )
-  find_library( temp NAMES ${lib}
-                PATHS ${CALIPER_DIR}/lib ${CALIPER_DIR}/lib64
-                NO_DEFAULT_PATH
-                NO_CMAKE_ENVIRONMENT_PATH
-                NO_CMAKE_PATH
-                NO_SYSTEM_ENVIRONMENT_PATH
-                NO_CMAKE_SYSTEM_PATH)
-  set( CALIPER_LIBRARIES ${CALIPER_LIBRARIES} ${temp} )
-endforeach()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(CALIPER  DEFAULT_MSG

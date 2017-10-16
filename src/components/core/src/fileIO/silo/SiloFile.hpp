@@ -573,7 +573,7 @@ namespace SiloFileUtilities
 
   template< typename TYPE, typename PTR_TYPE> inline PTR_TYPE* DataPtr( TYPE& data)
   {
-    return (PTR_TYPE*)&data;
+    return static_cast<PTR_TYPE*>(&data);
   }
 
   template<> inline realT* DataPtr( R1Tensor& data)        {    return data.begin();  }
@@ -740,17 +740,17 @@ void SiloFile::WriteDataField( const std::string& meshName,
     int err = -2;
     if( meshType == DB_UCDMESH )
     {
-      err = DBPutUcdvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, varnames.data(), (float**) vars.data(),
+      err = DBPutUcdvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, varnames.data(), reinterpret_cast<float**>(vars.data()),
                          nels, NULL, 0, SiloFileUtilities::DB_TYPE<OUTTYPE>(), centering, optlist);
     }
     else if( meshType == DB_POINTMESH )
     {
-      err = DBPutPointvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, (float**) vars.data(),
+      err = DBPutPointvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, reinterpret_cast<float**>(vars.data()),
                            nels, SiloFileUtilities::DB_TYPE<OUTTYPE>(), optlist);
     }
     else if( meshType == DB_QUADCURV )
     {
-      err = DBPutQuadvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, varnames.data(), (float**) vars.data(),
+      err = DBPutQuadvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, varnames.data(), reinterpret_cast<float**>(vars.data()),
                           m_quadMeshDims,m_quadMeshNDims,NULL, 0,  SiloFileUtilities::DB_TYPE<OUTTYPE>() ,centering, optlist);
     }
     if(err < 0)
@@ -777,7 +777,7 @@ void SiloFile::WriteDataField( const std::string& meshName,
     DBAddOption(optlist, DBOPT_TENSOR_RANK, const_cast<int*> (&tensorRank));
     DBAddOption(optlist, DBOPT_MMESH_NAME, const_cast<char*> (meshName.c_str()));
 
-    DBObjectType vartype;
+    DBObjectType vartype = DB_INVALID_OBJECT;
 
     if( meshType == DB_UCDMESH )
     {
@@ -861,7 +861,7 @@ void SiloFile::ReadDataField( Array1dT<TYPE>& field,
                               const std::string& regionName ) const
 {
 
-  INPUTTYPE** var = (INPUTTYPE**) GetDataVar<TYPE>( fieldName, meshName, field.size(), centering, cycleNumber, problemTime, regionName );
+  INPUTTYPE** var = static_cast<INPUTTYPE**>( GetDataVar<TYPE>( fieldName, meshName, field.size(), centering, cycleNumber, problemTime, regionName ) );
 
   for( typename Array1dT<TYPE>::size_type a=0 ; a<field.size() ; ++a )
   {

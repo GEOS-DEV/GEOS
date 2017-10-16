@@ -7,8 +7,8 @@
 
 #ifndef COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
 #define COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
+#include "common/GeosxConfig.hpp"
 
-#if ATK_FOUND
 #include "sidre/DataStore.hpp"
 
 namespace geosx
@@ -31,5 +31,4 @@ private:
 }
 } /* namespace geosx */
 
-#endif /* ATK_FOUND */
 #endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_ */

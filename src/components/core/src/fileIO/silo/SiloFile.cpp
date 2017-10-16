@@ -49,6 +49,13 @@
 #include <algorithm>
 #include <iterator>
 
+
+
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshorten-64-to-32"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
 #include "SiloFile.hpp"
 //#include "ObjectManagers/ElementManagerT.h"
 
@@ -106,7 +113,7 @@ namespace SiloFileUtilities
   {
     return DB_LONG;
   }
-  template<> int DB_TYPE<globalIndex> ()
+  template<> int DB_TYPE<long> ()
   {
     return DB_LONG;
   }
@@ -430,7 +437,7 @@ void SiloFile::WaitForBaton( const int domainNumber, const int cycleNum, const b
   }
   sprintf(dirName, "domain_%04d", domainNumber);
 
-  m_dbFilePtr = (DBfile *) PMPIO_WaitForBaton(m_baton, fileName, dirName);
+  m_dbFilePtr = static_cast<DBfile *>( PMPIO_WaitForBaton(m_baton, fileName, dirName) );
 
   m_fileName = fileName;
   m_baseFileName = baseFileName;
@@ -2702,7 +2709,7 @@ void** SiloFile::GetDataVar( const std::string& fieldName,
 
   const int nvars = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
 
-  void** rval;
+  void** rval = nullptr;
 
   const int meshType = GetMeshType( meshName );
 
@@ -2939,3 +2946,4 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
 
 
 }
+#pragma GCC diagnostic pop

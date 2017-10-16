@@ -63,7 +63,7 @@ public:
                ManagedGroup * const parent );
   ~EdgeManager();
 
-  void Initialize() {}
+//  void Initialize() {}
 
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL) ;
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = NULL) ;

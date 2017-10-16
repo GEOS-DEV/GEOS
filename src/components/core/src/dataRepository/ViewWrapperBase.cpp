@@ -9,7 +9,7 @@
 
 #include "ManagedGroup.hpp"
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include "slic/slic.hpp"
 #endif
 
@@ -20,15 +20,14 @@ namespace dataRepository
 
 ViewWrapperBase::ViewWrapperBase( std::string const & name,
                                   ManagedGroup * const parent ) :
-#if ATK_FOUND
-  m_sidreView(nullptr),
-#endif
   m_name(name),
   m_parent(parent),
   m_sizedFromParent(1)
-
+#ifdef USE_ATK
+  ,m_sidreView(nullptr)
+#endif
 {
-#if ATK_FOUND
+#ifdef USE_ATK
   SLIC_ERROR_IF(parent==nullptr,"parameter WrapperCollection * const parent must not be nullptr");
 
   if( parent->getSidreGroup()->hasView(name) )
@@ -48,12 +47,13 @@ ViewWrapperBase::~ViewWrapperBase()
 
 
 ViewWrapperBase::ViewWrapperBase( ViewWrapperBase&& source ) :
-  #if ATK_FOUND
-  m_sidreView( source.m_sidreView ),
-#endif
   m_name( std::move(source.m_name) ),
   m_parent( source.m_parent),
   m_sizedFromParent( source.m_sizedFromParent)
+#ifdef USE_ATK
+  ,m_sidreView( source.m_sidreView )
+#endif
+
 {}
 
 void ViewWrapperBase::resize()

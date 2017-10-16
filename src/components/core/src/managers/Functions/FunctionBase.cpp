@@ -67,7 +67,7 @@ int32 FunctionBase::isFunctionOfTime() const
 {
   int32 rval=0;
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
-  int32 const numVars = inputVarNames.size();
+  int64 const numVars = inputVarNames.size();
 
   if( numVars==1 )
   {

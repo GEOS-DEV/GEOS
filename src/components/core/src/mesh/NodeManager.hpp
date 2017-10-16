@@ -97,7 +97,8 @@ public:
   ~NodeManager();
 
   static string CatalogName() { return dataRepository::keys::nodeManager; }
-  string getCatalogName() const      { return NodeManager::CatalogName(); }
+  string getCatalogName() const override final
+  { return NodeManager::CatalogName(); }
 
 
   void FillDocumentationNode( ManagedGroup * const group ) override final;

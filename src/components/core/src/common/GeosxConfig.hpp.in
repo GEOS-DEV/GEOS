@@ -1,0 +1,21 @@
+#ifndef GEOSX_CONFIG_HPP
+#define GEOSX_CONFIG_HPP
+
+
+#define GEOSX_VERSION_MAJOR @GEOSX_VERSION_MAJOR@
+#define GEOSX_VERSION_MINOR @GEOSX_VERSION_MINOR@
+#define GEOSX_VERSION_PATCH @GEOSX_VERSION_PATCH@
+#define GEOSX_VERSION_FULL  "@GEOSX_VERSION_FULL@"
+
+
+#cmakedefine USE_ATK
+#cmakedefine USE_CALIPER
+#cmakedefine USE_CHAI
+#cmakedefine USE_FPARSER
+#cmakedefine USE_MATHPRESSO
+#cmakedefine USE_PYTHON
+#cmakedefine USE_RAJA
+
+
+#endif  /* GEOSX_CONFIG_HPP */
+

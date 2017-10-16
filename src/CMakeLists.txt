@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8)
 
 ################################
 # ASCTK ToolKit
@@ -42,3 +42,8 @@ install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
 # Add Thirdparty Builtin Libs
 ################################
 add_subdirectory(thirdparty)
+
+################################
+# Create header of configuration options
+################################s
+include(cmake/GeosxConfig.cmake)

@@ -97,7 +97,7 @@ public:
 
 //  void Initialize(  ){}
 
-  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override ;
+//  virtual void ReadXML_Group( xmlWrapper::xmlNode const & targetNode ) override ;
 
   using ManagedGroup::resize;
 
