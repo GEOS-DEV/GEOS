@@ -200,8 +200,12 @@ find_package_handle_standard_args(CALIPER  DEFAULT_MSG
                                   CALIPER_INCLUDE_DIRS
                                   CALIPER_LIBRARIES )
 
+
 if (NOT CALIPER_FOUND)
     message(FATAL_ERROR ": CALIPER not found in ${CALIPER_DIR}. Maybe you need to build it")
+else() 
+    message("CALIPER_INCLUDE_DIRS = ${CALIPER_INCLUDE_DIRS}")
+    message("CALIPER_LIBRARIES = ${CALIPER_LIBRARIES}")    
 endif()
 blt_register_library( NAME caliper
                       INCLUDES ${CALIPER_INCLUDE_DIRS}

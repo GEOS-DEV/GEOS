@@ -26,6 +26,11 @@ configure_file(
     ${CMAKE_SOURCE_DIR}/components/core/src/common/GeosxConfig.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/include/common/GeosxConfig.hpp
 )
+configure_file(
+    ${CMAKE_SOURCE_DIR}/components/core/src/common/GeosxConfig.hpp.in
+    ${CMAKE_SOURCE_DIR}/components/core/src/common/GeosxConfig.hpp
+)
 
 install( FILES ${CMAKE_CURRENT_BINARY_DIR}/include/common/GeosxConfig.hpp
          DESTINATION ${CMAKE_INSTALL_PREFIX}/include/common )
+
