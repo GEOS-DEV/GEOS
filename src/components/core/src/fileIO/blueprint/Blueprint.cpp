@@ -64,8 +64,6 @@ void Blueprint::write(int cycle) const
     std::cout << std::endl;
   }
 
-  root_node.print();
-
   axom::spio::IOManager ioManager(m_comm);
   ioManager.write(root, 1, m_output_path + "_" + std::to_string(cycle), "sidre_hdf5");
 }

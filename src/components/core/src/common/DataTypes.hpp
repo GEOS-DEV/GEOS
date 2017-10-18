@@ -144,8 +144,8 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 //***** BEGIN LEGACY TYPEDEFS *****
 
-typedef SortedArray<localIndex> lSet;
-typedef SortedArray<globalIndex> gSet;
+typedef set<localIndex> lSet;
+typedef set<globalIndex> gSet;
 
 typedef int FieldKey;
 
@@ -154,7 +154,8 @@ using Array2dT = multidimensionalArray::ManagedArray<T,2,localIndex>;
 
 typedef multidimensionalArray::ManagedArray<localIndex,2,localIndex> lArray2d;
 typedef array<std::pair<int,localIndex> > pArray1d;
-typedef SortedArray<std::pair<int,localIndex> > pSet;
+typedef set<std::pair<int,localIndex> > pSet;
+
 
 using r1_array = array<R1Tensor>;
 using r2_array = array<R2Tensor>;
