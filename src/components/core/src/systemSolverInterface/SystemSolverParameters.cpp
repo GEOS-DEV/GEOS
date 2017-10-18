@@ -14,22 +14,22 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
                                                 ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
-  RegisterViewWrapper<int32>( viewKeys.verbosity );
+  RegisterViewWrapper<integer>( viewKeys.verbosity );
   RegisterViewWrapper<real64>( viewKeys.krylovTol );
-  RegisterViewWrapper<int32>( viewKeys.numKrylovIter );
-  RegisterViewWrapper<int32>( viewKeys.kspace );
+  RegisterViewWrapper<integer>( viewKeys.numKrylovIter );
+  RegisterViewWrapper<integer>( viewKeys.kspace );
   RegisterViewWrapper<real64>( viewKeys.ilut_fill );
   RegisterViewWrapper<real64>( viewKeys.ilut_drop )->data();
-  RegisterViewWrapper<int32>( viewKeys.useMLPrecond );
-  RegisterViewWrapper<int32>( viewKeys.useInnerSolver );
-  RegisterViewWrapper<int32>( viewKeys.scalingOption );
-  RegisterViewWrapper<int32>( viewKeys.useBicgstab );
-  RegisterViewWrapper<int32>( viewKeys.useDirectSolver );
+  RegisterViewWrapper<integer>( viewKeys.useMLPrecond );
+  RegisterViewWrapper<integer>( viewKeys.useInnerSolver );
+  RegisterViewWrapper<integer>( viewKeys.scalingOption );
+  RegisterViewWrapper<integer>( viewKeys.useBicgstab );
+  RegisterViewWrapper<integer>( viewKeys.useDirectSolver );
   RegisterViewWrapper<real64>( viewKeys.KrylovResidualInit );
   RegisterViewWrapper<real64>( viewKeys.KrylovResidualFinal );
-  RegisterViewWrapper<int32>( viewKeys.useNewtonSolve );
+  RegisterViewWrapper<integer>( viewKeys.useNewtonSolve );
   RegisterViewWrapper<real64>( viewKeys.newtonTol );
-  RegisterViewWrapper<int32>( viewKeys.maxIterNewton );
+  RegisterViewWrapper<integer>( viewKeys.maxIterNewton );
 }
 
 SystemSolverParameters::~SystemSolverParameters()

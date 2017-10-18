@@ -78,13 +78,13 @@ localIndex ElementRegionManager::getNumberOfElements() const
   return numElem;
 }
 
-void ElementRegionManager::resize( int32_array const & numElements,
+void ElementRegionManager::resize( integer_array const & numElements,
                              string_array const & regionNames,
                              string_array const & elementTypes )
 {
-  int32 const numRegions = regionNames.size();
+  integer const numRegions = regionNames.size();
 //  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
-  for( int32 reg=0 ; reg<numRegions ; ++reg )
+  for( integer reg=0 ; reg<numRegions ; ++reg )
   {
     ElementRegion * elemRegion = this->GetRegion( regionNames[reg] );
     elemRegion->resize(numElements[reg]);

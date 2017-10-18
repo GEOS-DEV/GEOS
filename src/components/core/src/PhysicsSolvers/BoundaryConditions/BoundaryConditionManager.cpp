@@ -90,9 +90,9 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
       if( bc->GetElementRegion().empty() )
       {
         string_array objectPath = stringutilities::Tokenize( bc->GetFieldName(), "/");
-        int32 const pathLength = objectPath.size();
+        integer const pathLength = objectPath.size();
         ManagedGroup * currentGroup = domain;
-        for( int32 a=0 ; a<(pathLength-1) ; ++a )
+        for( integer a=0 ; a<(pathLength-1) ; ++a )
         {
           currentGroup = currentGroup->GetGroup(objectPath[a]);
         }
@@ -121,9 +121,9 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
 
         string_array targetPath = stringutilities::Tokenize( bc->GetFieldName(), "/");
-        int32 const targetPathLength = targetPath.size();
+        integer const targetPathLength = targetPath.size();
         ManagedGroup * targetGroup = domain;
-        for( int32 a=0 ; a<(targetPathLength-1) ; ++a )
+        for( integer a=0 ; a<(targetPathLength-1) ; ++a )
         {
           targetGroup = targetGroup->GetGroup(targetPath[a]);
         }
@@ -149,7 +149,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
         elementRegion->forCellBlocks( [&] ( CellBlockSubRegion * subRegion ) -> void
         {
-          auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<int32>,Array2dT<int32> > >(keys::constitutiveMap);
+          auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<integer>,Array2dT<integer> > >(keys::constitutiveMap);
           ManagedGroup const * sets = subRegion->GetGroup(keys::sets);
 
           for( auto & setName : setNames )
@@ -158,7 +158,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
             if( setWrapper != nullptr )
             {
               lSet const & set = setWrapper->reference();
-              int32 materialIndex = constitutiveIndexLookup.at(materialName);
+              integer materialIndex = constitutiveIndexLookup.at(materialName);
               for( auto const & k : set )
               {
                 if( constitutiveMap.first(k,0) == materialIndex )

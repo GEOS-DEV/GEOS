@@ -107,7 +107,7 @@ void DomainPartition::GenerateSets(  )
 
   dataRepository::ManagedGroup const * nodeSets = nodeManager->GetGroup(dataRepository::keys::sets);
 
-  std::map< string, int32_array > nodeInSet;
+  std::map< string, integer_array > nodeInSet;
   string_array setNames;
 
   for( auto & viewWrapper : nodeSets->wrappers() )
@@ -136,7 +136,7 @@ void DomainPartition::GenerateSets(  )
     {
       lArray2d const & elemsToNodes = subRegion->getWrapper<lArray2d>(subRegion->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
       dataRepository::ManagedGroup * elementSets = subRegion->GetGroup(dataRepository::keys::sets);
-      std::map< string, int32_array > numNodesInSet;
+      std::map< string, integer_array > numNodesInSet;
 
       for( auto & setName : setNames )
       {
@@ -145,7 +145,7 @@ void DomainPartition::GenerateSets(  )
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
           localIndex const * nodelist = elemsToNodes[k];
-          int32 count = 0;
+          integer count = 0;
           for( localIndex a = 0 ; a<elemsToNodes.Dimension(1) ; ++a )
           {
             if( nodeInSet[setName][nodelist[a]] == 1 )
@@ -287,7 +287,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
         const localIndex* const elemToNodeMap = elemsToNodes[k];
 
         const iArray1d nodeOrdering = siloFile.SiloNodeOrdering();
-        int32 numNodesPerElement = elemsToNodes.Dimension(1);
+        integer numNodesPerElement = elemsToNodes.Dimension(1);
         for (localIndex a = 0; a < numNodesPerElement; ++a)
         {
           elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];

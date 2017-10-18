@@ -275,7 +275,7 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 
 R2SymTensor LinearElasticIsotropic::StateUpdatePoint( R2SymTensor const & D,
                                                R2Tensor const & Rot,
-                                               int32 const i,
+                                               integer const i,
                                                integer const systemAssembleFlag )
 {
   real64 volumeStrain = D.Trace();

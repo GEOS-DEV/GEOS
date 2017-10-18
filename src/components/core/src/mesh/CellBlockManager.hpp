@@ -101,7 +101,7 @@ public:
 
   using ManagedGroup::resize;
 
-  void resize( int32_array const & numElements,
+  void resize( integer_array const & numElements,
                string_array const & regionNames,
                string_array const & elementTypes );
 

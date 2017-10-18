@@ -640,10 +640,10 @@ void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
       auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper ) ;
       this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
     }
-    if( typeID==typeid(int32_array) )
+    if( typeID==typeid(integer_array) )
     {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<int32_array> const & >( *wrapper ) ;
-      this->WriteDataField<int32>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper ) ;
+      this->WriteDataField<integer>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
     }
 
   }

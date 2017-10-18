@@ -342,7 +342,7 @@ private:
 
   int m_rank;
   int m_size;
-  int32_set m_rankOfNeighborNeighbors;
+  integer_set m_rankOfNeighborNeighbors;
 
   //NOTE: element regions are currently being dealt with using a special structure ... everything else with general one
 

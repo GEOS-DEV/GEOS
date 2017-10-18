@@ -268,9 +268,9 @@ void MeshGenerator::ReadXML_PostProcess()
   m_vertices[1] = yCoords;
   m_vertices[2] = zCoords;
 
-  int32_array const &  xElems = this->getReference<int32_array>(keys::xElems);
-  int32_array const &  yElems = this->getReference<int32_array>(keys::yElems);
-  int32_array const &  zElems = this->getReference<int32_array>(keys::zElems);
+  integer_array const &  xElems = this->getReference<integer_array>(keys::xElems);
+  integer_array const &  yElems = this->getReference<integer_array>(keys::yElems);
+  integer_array const &  zElems = this->getReference<integer_array>(keys::zElems);
   m_nElems[0] = xElems;
   m_nElems[1] = yElems;
   m_nElems[2] = zElems;
@@ -284,7 +284,7 @@ void MeshGenerator::ReadXML_PostProcess()
 
   m_regionNames = this->getReference<string_array>(keys::cellBlockNames);
   m_elementType = this->getReference<string_array>(keys::elementTypes);
-  m_trianglePattern = *(this->getData<int32>(keys::trianglePattern));
+  m_trianglePattern = *(this->getData<integer>(keys::trianglePattern));
 
 
 
@@ -469,13 +469,13 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 
 
 
-  int32_set & xnegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("xneg") )->reference();
-  int32_set & xposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("xpos") )->reference();
-  int32_set & ynegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("yneg") )->reference();
-  int32_set & yposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("ypos") )->reference();
-  int32_set & znegNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("zneg") )->reference();
-  int32_set & zposNodes = nodeSets->RegisterViewWrapper<int32_set>( std::string("zpos") )->reference();
-  int32_set & allNodes  = nodeSets->RegisterViewWrapper<int32_set>( std::string("all") )->reference();
+  integer_set & xnegNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("xneg") )->reference();
+  integer_set & xposNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("xpos") )->reference();
+  integer_set & ynegNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("yneg") )->reference();
+  integer_set & yposNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("ypos") )->reference();
+  integer_set & znegNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("zneg") )->reference();
+  integer_set & zposNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("zpos") )->reference();
+  integer_set & allNodes  = nodeSets->RegisterViewWrapper<integer_set>( std::string("all") )->reference();
 
 
   // partition based on even spacing to get load balance
@@ -730,7 +730,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
   }
 
   {
-    int32_array numElements;
+    integer_array numElements;
     sArray1d elementRegionNames;
     sArray1d elementTypes;
     std::map<std::string, localIndex> localElemIndexInRegion;
@@ -762,7 +762,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 //          ElementRegionT& elemRegion = domain->m_feElementManager->m_ElementRegions[*iterRegion];
 
           CellBlock * elemRegion =  elementManager->GetRegion(*iterRegion);
-          int32 const numNodesPerElem = elemRegion->numNodesPerElement();
+          integer const numNodesPerElem = elemRegion->numNodesPerElement();
 
           int numElemsInDirForRegion[3] =
               { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,

@@ -81,14 +81,14 @@ public:
   {
   }groupKeys;
 
-  array< int32_array > const & nodeList() const        { return this->getReference< array< int32_array > >(viewKeys.nodeList); }
-  array< int32_array > & nodeList()                    { return this->getReference< array< int32_array > >(viewKeys.nodeList); }
-  Array2dT<int32> const & elementRegionList() const    { return this->getReference< Array2dT<int32> >(viewKeys.elementRegionList); }
-  Array2dT<int32> & elementRegionList()                { return this->getReference< Array2dT<int32> >(viewKeys.elementRegionList); }
-  Array2dT<int32> const & elementSubRegionList() const { return this->getReference< Array2dT<int32> >(viewKeys.elementSubRegionList); }
-  Array2dT<int32> & elementSubRegionList()             { return this->getReference< Array2dT<int32> >(viewKeys.elementSubRegionList); }
-  Array2dT<int32> const & elementList() const          { return this->getReference< Array2dT<int32> >(viewKeys.elementList); }
-  Array2dT<int32> & elementList()                      { return this->getReference< Array2dT<int32> >(viewKeys.elementList); }
+  array< localIndex_array > const & nodeList() const        { return this->getReference< array< localIndex_array > >(viewKeys.nodeList); }
+  array< localIndex_array > & nodeList()                    { return this->getReference< array< localIndex_array > >(viewKeys.nodeList); }
+  Array2dT<integer> const & elementRegionList() const    { return this->getReference< Array2dT<integer> >(viewKeys.elementRegionList); }
+  Array2dT<integer> & elementRegionList()                { return this->getReference< Array2dT<integer> >(viewKeys.elementRegionList); }
+  Array2dT<integer> const & elementSubRegionList() const { return this->getReference< Array2dT<integer> >(viewKeys.elementSubRegionList); }
+  Array2dT<integer> & elementSubRegionList()             { return this->getReference< Array2dT<integer> >(viewKeys.elementSubRegionList); }
+  Array2dT<integer> const & elementList() const          { return this->getReference< Array2dT<integer> >(viewKeys.elementList); }
+  Array2dT<integer> & elementList()                      { return this->getReference< Array2dT<integer> >(viewKeys.elementList); }
 
 
 

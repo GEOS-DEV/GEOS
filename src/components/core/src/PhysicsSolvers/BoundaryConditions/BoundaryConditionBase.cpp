@@ -159,12 +159,12 @@ void BoundaryConditionBase::ReadXML_PostProcess()
   m_setNames = this->getReference<string_array>( keys::setNames );
   m_elementRegionName = this->getReference<string>( keys::elementRegionName );
   m_fieldName = this->getReference<string>( keys::fieldName );
-  m_component = this->getReference<int32>( keys::component );
+  m_component = this->getReference<integer>( keys::component );
   m_direction = this->getReference<R1Tensor>( keys::direction );
   m_functionName          = this->getReference<string>( keys::functionName );
   m_bcApplicationFunctionName = this->getReference<string>( keys::bcApplicationTableName );
   m_scale                  = this->getReference<real64>( keys::scale );
-  m_initialCondition = this->getReference<int32>(keys::initialCondition);
+  m_initialCondition = this->getReference<integer>(keys::initialCondition);
 }
 
 //real64 BoundaryConditionBase::GetValue( realT time ) const

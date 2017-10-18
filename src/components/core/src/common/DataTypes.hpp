@@ -35,16 +35,16 @@
 namespace geosx
 {
 
-using  int32      = std::int32_t;
-using uint32      = std::uint32_t;
-using  int64      = std::int64_t;
-using uint64      = std::uint64_t;
+// underlying types not for general use!!
+using int32 = std::int32_t;
+using int64 = std::int64_t;
+
+using integer     = std::int32_t;
+using localIndex  = std::int_fast32_t;
+using globalIndex = std::int64_t;
+
 using string      = std::string;
 
-using integer     = int;//int_fast32_t;
-using uinteger    = unsigned int;//uint_fast32_t;
-using localIndex  = int32;//std::int_fast32_t;
-using globalIndex = uint64;
 
 
 using real32 = float;
@@ -58,17 +58,17 @@ template< typename T >
 using c_ptr = T const *;
 
 
-using int32_ptr        = ptr<int32>;
-using int32_const_ptr  = c_ptr<int32>;
+using integer_ptr        = ptr<integer>;
+using integer_const_ptr  = c_ptr<integer>;
 
-using uint32_ptr        = ptr<uint32>;
-using uint32_const_ptr  = c_ptr<uint32>;
-
-using int64_ptr        = ptr<int64>;
-using int64_const_ptr  = c_ptr<int64>;
-
-using uint64_ptr        = ptr<uint64>;
-using uint64_const_ptr  = c_ptr<uint64>;
+//using uint32_ptr        = ptr<uint32>;
+//using uint32_const_ptr  = c_ptr<uint32>;
+//
+//using int64_ptr        = ptr<int64>;
+//using int64_const_ptr  = c_ptr<int64>;
+//
+//using uint64_ptr        = ptr<uint64>;
+//using uint64_const_ptr  = c_ptr<uint64>;
 
 using localIndex_ptr         = ptr<localIndex>;
 using localIndex_const_ptr   = c_ptr<localIndex>;
@@ -102,17 +102,17 @@ using unordered_map = std::unordered_map<TKEY,TVAL>;
 
 
 
-using int32_array        = array<int32>;
-using int32_const_array  = array<int32 const>;
+using integer_array        = array<integer>;
+using integer_const_array  = array<integer const>;
 
-using uint32_array        = array<uint32>;
-using uint32_const_array  = array<uint32 const>;
-
-using int64_array        = array<int64>;
-using int64_const_array  = array<int64 const>;
-
-using uint64_array        = array<uint64>;
-using uint64_const_array  = array<uint64 const>;
+//using uint32_array        = array<uint32>;
+//using uint32_const_array  = array<uint32 const>;
+//
+//using int64_array        = array<int64>;
+//using int64_const_array  = array<int64 const>;
+//
+//using uint64_array        = array<uint64>;
+//using uint64_const_array  = array<uint64 const>;
 
 using real32_array        = array<real32>;
 using real32_const_array  = array<real32 const>;
@@ -131,17 +131,17 @@ using globalIndex_const_array  = array<globalIndex const>;
 
 
 
-using int32_set        = set<int32>;
-using int32_const_set  = set<int32 const>;
+using integer_set        = set<integer>;
+using integer_const_set  = set<integer const>;
 
-using uint32_set        = set<uint32>;
-using uint32_const_set  = set<uint32 const>;
-
-using int64_set        = set<int64>;
-using int64_const_set  = set<int64 const>;
-
-using uint64_set        = set<uint64>;
-using uint64_const_set  = set<uint64 const>;
+//using uint32_set        = set<uint32>;
+//using uint32_const_set  = set<uint32 const>;
+//
+//using int64_set        = set<int64>;
+//using int64_const_set  = set<int64 const>;
+//
+//using uint64_set        = set<uint64>;
+//using uint64_const_set  = set<uint64 const>;
 
 using real32_set        = set<real32>;
 using real32_const_set  = set<real32 const>;
@@ -162,7 +162,7 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 //***** BEGIN LEGACY TYPEDEFS *****
 using rArray1d = Array1dT<real64>;
-using iArray1d = Array1dT<int32>;
+using iArray1d = Array1dT<integer>;
 using lArray1d = Array1dT<localIndex>;
 using gArray1d = Array1dT<globalIndex>;
 
@@ -181,8 +181,8 @@ using r1_array = array<R1Tensor>;
 using r2_array = array<R2Tensor>;
 using r2Sym_array = array<R2SymTensor>;
 
-//using mapPair = std::pair<int32, localIndex>;
-using mapPair_array = std::pair<int32_array, int32_array>;
+//using mapPair = std::pair<integer, localIndex>;
+using mapPair_array = std::pair<integer_array, integer_array>;
 //***** END LEGACY TYPEDEFS *****
 
 class rtTypes
@@ -193,10 +193,7 @@ public:
   {
     const std::unordered_map<std::type_index, std::string> type_names =
     {
-      {std::type_index(typeid(int32)), "int32"},
-      {std::type_index(typeid(uint32)), "uint32"},
-      {std::type_index(typeid(int64)), "int64"},
-      {std::type_index(typeid(uint64)), "uint64"},
+      {std::type_index(typeid(integer)), "integer"},
       {std::type_index(typeid(real32)), "real32"},
       {std::type_index(typeid(real64)), "real64"},
       {std::type_index(typeid(localIndex)), "localIndex"},
@@ -204,10 +201,7 @@ public:
       {std::type_index(typeid(R1Tensor)), "r1Tensor"},
       {std::type_index(typeid(R2Tensor)), "r2Tensor"},
       {std::type_index(typeid(R2SymTensor)), "r2SymTensor"},
-      {std::type_index(typeid(int32_array)), "int32_array"},
-      {std::type_index(typeid(uint32_array)), "uint32_array"},
-      {std::type_index(typeid(int64_array)), "int64_array"},
-      {std::type_index(typeid(uint64_array)), "uint64_array"},
+      {std::type_index(typeid(integer_array)), "integer_array"},
       {std::type_index(typeid(real32_array)), "real32_array"},
       {std::type_index(typeid(real64_array)), "real64_array"},
       {std::type_index(typeid(localIndex_array)), "localIndex_array"},
@@ -225,7 +219,7 @@ public:
 
   enum class TypeIDs
   {
-    int32_id,
+    integer_id,
     uint32_id,
     int64_id,
     uint64_id,
@@ -236,7 +230,7 @@ public:
     r1Tensor_id,
     r2Tensor_id,
     r2SymTensor_id,
-    int32_array_id,
+    integer_array_id,
     uint32_array_id,
     int64_array_id,
     uint64_array_id,
@@ -258,7 +252,7 @@ public:
   {
     const std::unordered_map<string,TypeIDs> type_names =
     {
-      { "int32",        TypeIDs::int32_id },
+      { "integer",        TypeIDs::integer_id },
       { "uint32",       TypeIDs::uint32_id },
       { "int64",        TypeIDs::int64_id },
       { "uint64",       TypeIDs::uint64_id },
@@ -269,7 +263,7 @@ public:
       { "R1Tensor",     TypeIDs::r1Tensor_id },
       { "R2Tensor",     TypeIDs::r2Tensor_id },
       { "R2SymTensor",  TypeIDs::r2SymTensor_id },
-      { "int32_array",  TypeIDs::int32_array_id },
+      { "integer_array",  TypeIDs::integer_array_id },
       { "uint32_array", TypeIDs::uint32_array_id },
       { "int64_array",  TypeIDs::int64_array_id },
       { "uint64_array", TypeIDs::uint64_array_id },
@@ -293,10 +287,7 @@ public:
   {
     const std::unordered_map<std::type_index,TypeIDs> type_names =
     {
-      { std::type_index(typeid(int32)),        TypeIDs::int32_id },
-      { std::type_index(typeid(uint32)),       TypeIDs::uint32_id },
-      { std::type_index(typeid(int64)),        TypeIDs::int64_id },
-      { std::type_index(typeid(uint64)),       TypeIDs::uint64_id },
+      { std::type_index(typeid(integer)),        TypeIDs::integer_id },
       { std::type_index(typeid(real32)),       TypeIDs::real32_id },
       { std::type_index(typeid(real64)),       TypeIDs::real64_id },
       { std::type_index(typeid(localIndex)),   TypeIDs::real32_id },
@@ -304,10 +295,7 @@ public:
       { std::type_index(typeid(R1Tensor)),     TypeIDs::r1Tensor_id },
       { std::type_index(typeid(R2Tensor)),     TypeIDs::r2Tensor_id },
       { std::type_index(typeid(R2SymTensor)),  TypeIDs::r2SymTensor_id },
-      { std::type_index(typeid(int32_array)),  TypeIDs::int32_array_id },
-      { std::type_index(typeid(uint32_array)), TypeIDs::uint32_array_id },
-      { std::type_index(typeid(int64_array)),  TypeIDs::int64_array_id },
-      { std::type_index(typeid(uint64_array)), TypeIDs::uint64_array_id },
+      { std::type_index(typeid(integer_array)),  TypeIDs::integer_array_id },
       { std::type_index(typeid(real32_array)), TypeIDs::real32_array_id },
       { std::type_index(typeid(real64_array)), TypeIDs::real64_array_id },
       { std::type_index(typeid(r1_array)),     TypeIDs::r1_array_id },
@@ -336,7 +324,7 @@ public:
     
     std::unordered_map<std::string, std::string> regexMap = 
     {
-      {"int32", ri},
+      {"integer", ri},
       {"uint32", ru},
       {"int64", ri},
       {"uint64", ru},
@@ -345,7 +333,7 @@ public:
       {"R1Tensor", r1},
       {"R2Tensor", r2},
       {"R2SymTensor", r2s},
-      {"int32_array", "((" + ri + ",? )*)?" + ri},
+      {"integer_array", "((" + ri + ",? )*)?" + ri},
       {"uint32_array", "((" + ru + ",? )*)?" + ru},
       {"int64_array", "((" + ri + ",? )*)?" + ri},
       {"uint64_array", "((" + ru + ",? )*)?" + ru},
@@ -376,24 +364,9 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::int32_id ):
+    case ( TypeIDs::integer_id ):
     {
-      return lambda( int32(1) );
-      break;
-    }
-    case ( TypeIDs::uint32_id ):
-    {
-      return lambda( uint32(1) );
-      break;
-    }
-    case ( TypeIDs::int64_id ):
-    {
-      return lambda( int64(1) );
-      break;
-    }
-    case ( TypeIDs::uint64_id ):
-    {
-      return lambda( uint64(1) );
+      return lambda( integer(1) );
       break;
     }
     case ( TypeIDs::real32_id ):
@@ -421,24 +394,9 @@ public:
       return lambda( R2SymTensor() );
       break;
     }
-    case ( TypeIDs::int32_array_id ):
+    case ( TypeIDs::integer_array_id ):
     {
-      return lambda( int32_array(1) );
-      break;
-    }
-    case ( TypeIDs::uint32_array_id ):
-    {
-      return lambda( uint32_array(1) );
-      break;
-    }
-    case ( TypeIDs::int64_array_id ):
-    {
-      return lambda( int64_array(1) );
-      break;
-    }
-    case ( TypeIDs::uint64_array_id ):
-    {
-      return lambda( uint64_array(1) );
+      return lambda( integer_array(1) );
       break;
     }
     case ( TypeIDs::real32_array_id ):
@@ -472,24 +430,9 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::int32_array_id ):
+    case ( TypeIDs::integer_array_id ):
     {
-      return lambda( int32_array(1) );
-      break;
-    }
-    case ( TypeIDs::uint32_array_id ):
-    {
-      return lambda( uint32_array(1) );
-      break;
-    }
-    case ( TypeIDs::int64_array_id ):
-    {
-      return lambda( int64_array(1) );
-      break;
-    }
-    case ( TypeIDs::uint64_array_id ):
-    {
-      return lambda( uint64_array(1) );
+      return lambda( integer_array(1) );
       break;
     }
     case ( TypeIDs::real32_array_id ):
@@ -534,24 +477,9 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::int32_array_id ):
+    case ( TypeIDs::integer_array_id ):
     {
-      return lambda( int32_array(1), int32(1) );
-      break;
-    }
-    case ( TypeIDs::uint32_array_id ):
-    {
-      return lambda( uint32_array(1), uint32(1) );
-      break;
-    }
-    case ( TypeIDs::int64_array_id ):
-    {
-      return lambda( int64_array(1), int64(1) );
-      break;
-    }
-    case ( TypeIDs::uint64_array_id ):
-    {
-      return lambda( uint64_array(1), uint64(1) );
+      return lambda( integer_array(1), integer(1) );
       break;
     }
     case ( TypeIDs::real32_array_id ):
@@ -594,24 +522,9 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::int32_id ):
+    case ( TypeIDs::integer_id ):
     {
-      return lambda( int32(1) );
-      break;
-    }
-    case ( TypeIDs::uint32_id ):
-    {
-      return lambda( uint32(1) );
-      break;
-    }
-    case ( TypeIDs::int64_id ):
-    {
-      return lambda( int64(1) );
-      break;
-    }
-    case ( TypeIDs::uint64_id ):
-    {
-      return lambda( uint64(1) );
+      return lambda( integer(1) );
       break;
     }
     case ( TypeIDs::real32_id ):
@@ -639,24 +552,9 @@ public:
       return lambda( R2SymTensor() );
       break;
     }
-    case ( TypeIDs::int32_array_id ):
+    case ( TypeIDs::integer_array_id ):
     {
-      return lambda( int32_array(1) );
-      break;
-    }
-    case ( TypeIDs::uint32_array_id ):
-    {
-      return lambda( uint32_array(1) );
-      break;
-    }
-    case ( TypeIDs::int64_array_id ):
-    {
-      return lambda( int64_array(1) );
-      break;
-    }
-    case ( TypeIDs::uint64_array_id ):
-    {
-      return lambda( uint64_array(1) );
+      return lambda( integer_array(1) );
       break;
     }
     case ( TypeIDs::real32_array_id ):
@@ -714,24 +612,9 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::int32_id ):
+    case ( TypeIDs::integer_id ):
     {
-      return lambda( int32(1), int32(1) );
-      break;
-    }
-    case ( TypeIDs::uint32_id ):
-    {
-      return lambda( uint32(1), uint32(1) );
-      break;
-    }
-    case ( TypeIDs::int64_id ):
-    {
-      return lambda( int64(1), int64(1) );
-      break;
-    }
-    case ( TypeIDs::uint64_id ):
-    {
-      return lambda( uint64(1), uint64(1) );
+      return lambda( integer(1), integer(1) );
       break;
     }
     case ( TypeIDs::real32_id ):
@@ -759,24 +642,9 @@ public:
       return lambda( R2SymTensor(), R2SymTensor() );
       break;
     }
-    case ( TypeIDs::int32_array_id ):
+    case ( TypeIDs::integer_array_id ):
     {
-      return lambda( int32_array(1), int32(1) );
-      break;
-    }
-    case ( TypeIDs::uint32_array_id ):
-    {
-      return lambda( uint32_array(1), uint32(1) );
-      break;
-    }
-    case ( TypeIDs::int64_array_id ):
-    {
-      return lambda( int64_array(1), int64(1) );
-      break;
-    }
-    case ( TypeIDs::uint64_array_id ):
-    {
-      return lambda( uint64_array(1), uint64(1) );
+      return lambda( integer_array(1), integer(1) );
       break;
     }
     case ( TypeIDs::real32_array_id ):
@@ -836,24 +704,9 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::int32_id ):
+    case ( TypeIDs::integer_id ):
     {
-      return lambda( int32(1), int32(1) );
-      break;
-    }
-    case ( TypeIDs::uint32_id ):
-    {
-      return lambda( uint32(1), uint32(1) );
-      break;
-    }
-    case ( TypeIDs::int64_id ):
-    {
-      return lambda( int64(1), int64(1) );
-      break;
-    }
-    case ( TypeIDs::uint64_id ):
-    {
-      return lambda( uint64(1), uint64(1) );
+      return lambda( integer(1), integer(1) );
       break;
     }
     case ( TypeIDs::real32_id ):
@@ -881,24 +734,9 @@ public:
       return lambda( R2SymTensor(), R2SymTensor() );
       break;
     }
-    case ( TypeIDs::int32_array_id ):
+    case ( TypeIDs::integer_array_id ):
     {
-      return lambda( int32_array(1), int32(1) );
-      break;
-    }
-    case ( TypeIDs::uint32_array_id ):
-    {
-      return lambda( uint32_array(1), uint32(1) );
-      break;
-    }
-    case ( TypeIDs::int64_array_id ):
-    {
-      return lambda( int64_array(1), int64(1) );
-      break;
-    }
-    case ( TypeIDs::uint64_array_id ):
-    {
-      return lambda( uint64_array(1), uint64(1) );
+      return lambda( integer_array(1), integer(1) );
       break;
     }
     case ( TypeIDs::real32_array_id ):
@@ -940,48 +778,48 @@ public:
 
 
 
-  inline static void equate( R1Tensor & lhs, int32 const component, real64 const & rhs )
+  inline static void equate( R1Tensor & lhs, integer const component, real64 const & rhs )
   {
     lhs[component] = rhs;
   }
 
   template< typename TLHS, typename TRHS >
-  inline static void equate( TLHS & lhs, int32 const component, TRHS const & rhs )
+  inline static void equate( TLHS & lhs, integer const component, TRHS const & rhs )
   {
     lhs = rhs;
   }
 
 
-  inline static void add( R1Tensor & lhs, int32 const component, real64 const & rhs )
+  inline static void add( R1Tensor & lhs, integer const component, real64 const & rhs )
   {
     lhs[component] += rhs;
   }
 
   template< typename TLHS, typename TRHS >
-  inline static void add( TLHS & lhs, int32 const component, TRHS const & rhs )
+  inline static void add( TLHS & lhs, integer const component, TRHS const & rhs )
   {
     lhs += rhs;
   }
 
 
 
-  inline static real64 value( R1Tensor & lhs, int32 const component )
+  inline static real64 value( R1Tensor & lhs, integer const component )
   {
     return lhs[component];
   }
 
-  inline static real64 value( R2Tensor & lhs, int32 const component )
+  inline static real64 value( R2Tensor & lhs, integer const component )
   {
     return lhs.Data()[component];
   }
 
-  inline static real64 value( R2SymTensor & lhs, int32 const component )
+  inline static real64 value( R2SymTensor & lhs, integer const component )
   {
     return lhs.Data()[component];
   }
 
   template< typename TLHS >
-  inline static TLHS value( TLHS & lhs, int32 const component )
+  inline static TLHS value( TLHS & lhs, integer const component )
   {
     return lhs;
   }
@@ -989,19 +827,19 @@ public:
 
   struct equateValue
   {
-    inline static void f( R1Tensor & lhs, int32 const component, real64 const & rhs )
+    inline static void f( R1Tensor & lhs, integer const component, real64 const & rhs )
     {
       lhs[component] = rhs;
     }
 
     template< typename T >
-    inline static void f( R1Tensor & lhs, int32 const component, T const & rhs )
+    inline static void f( R1Tensor & lhs, integer const component, T const & rhs )
     {
       lhs[component] = rhs;
     }
 
     template< typename TLHS, typename TRHS >
-    inline static void f( TLHS & lhs, int32 const component, TRHS const & rhs )
+    inline static void f( TLHS & lhs, integer const component, TRHS const & rhs )
     {
       lhs = rhs;
     }
@@ -1010,23 +848,23 @@ public:
 
   struct addValue
   {
-    inline static void f( R1Tensor & lhs, int32 const component, real64 const & rhs )
+    inline static void f( R1Tensor & lhs, integer const component, real64 const & rhs )
     {
       lhs[component] += rhs;
     }
 
-    inline static void f( R2Tensor & lhs, int32 const component, real64 const & rhs )
+    inline static void f( R2Tensor & lhs, integer const component, real64 const & rhs )
     {
       lhs.Data()[component] += rhs;
     }
 
-    inline static void f( R2SymTensor & lhs, int32 const component, real64 const & rhs )
+    inline static void f( R2SymTensor & lhs, integer const component, real64 const & rhs )
     {
       lhs.Data()[component] += rhs;
     }
 
     template< typename TLHS, typename TRHS >
-    inline static void f( TLHS & lhs, int32 const component, TRHS const & rhs )
+    inline static void f( TLHS & lhs, integer const component, TRHS const & rhs )
     {
       lhs += rhs;
     }

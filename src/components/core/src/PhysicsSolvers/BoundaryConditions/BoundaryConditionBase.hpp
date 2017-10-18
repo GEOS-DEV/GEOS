@@ -80,7 +80,7 @@ public:
                                            systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const;
 
   template< int OPERATION >
-  inline void ApplyBounaryConditionDefaultMethodPoint( int32 const dof,
+  inline void ApplyBounaryConditionDefaultMethodPoint( integer const dof,
                                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                        systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
                                                        real64 & rhs,
@@ -165,7 +165,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
                                                                 string const & fieldName ) const
 {
 
-  int32 const component = GetComponent();
+  integer const component = GetComponent();
   string const functionName = getData<string>(dataRepository::keys::functionName);
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
@@ -202,7 +202,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
         {
           real64_array result(set.size());
           function->Evaluate( dataGroup, time, set, result );
-          int32 count=0;
+          integer count=0;
           for( auto a : set )
           {
             OPERATION::f( field[a], component, (result[count]) );
@@ -217,7 +217,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
 
 
 template<>
-inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( int32 const dof,
+inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( integer const dof,
                                                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                         systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
                                                         real64 & rhs,
@@ -239,7 +239,7 @@ inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( i
 
 
 template<>
-inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( int32 const dof,
+inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( integer const dof,
                                                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                         systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
                                                         real64 & rhs,
@@ -263,21 +263,21 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
                                                                 systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const
 {
   int dim = 3;
-  int32 const component = GetComponent();
+  integer const component = GetComponent();
   string const functionName = getData<string>(dataRepository::keys::functionName);
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index(vw->get_typeid());
 
-  int32 const numBlocks = blockSystem->numBlocks();
+  integer const numBlocks = blockSystem->numBlocks();
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
 
   Epetra_IntSerialDenseVector  node_dof(set.size());
   Epetra_SerialDenseVector     node_rhs(set.size());
 
 
-  dataRepository::view_rtype_const<int32_array> dofMap = dataGroup->getData<int32_array>(dofMapName);
+  dataRepository::view_rtype_const<integer_array> dofMap = dataGroup->getData<integer_array>(dofMapName);
 
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
@@ -288,7 +288,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
     if( functionName.empty() )
     {
 
-      int32 counter=0;
+      integer counter=0;
       for( auto a : set )
       {
         node_dof(counter) = dim*dofMap[a]+component;
@@ -317,7 +317,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
         if( function->isFunctionOfTime()==2 )
         {
           real64 value = m_scale * function->Evaluate( &time );
-          int32 counter=0;
+          integer counter=0;
           for( auto a : set )
           {
             node_dof(counter) = dim*dofMap[a]+component;
@@ -342,7 +342,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
         {
           real64_array result(set.size());
           function->Evaluate( dataGroup, time, set, result );
-          int32 counter=0;
+          integer counter=0;
           for( auto a : set )
           {
             node_dof(counter) = dim*dofMap[a]+component;
