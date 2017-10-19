@@ -130,10 +130,14 @@ void DomainPartition::GenerateSets(  )
 
   ElementRegionManager * elementRegionManager = mesh->getElemManager();
 
-  elementRegionManager->forElementRegions( [&]( ElementRegion * elementRegion )
+  for( auto & subGroup : elementRegionManager->GetGroup( dataRepository::keys::elementRegions )->GetSubGroups() )
+//  elementRegionManager->forElementRegions( [&]( ElementRegion * elementRegion )
   {
-    elementRegion->forCellBlocks( [&]( CellBlockSubRegion * subRegion )->void
+    ElementRegion * elementRegion = subGroup.second->group_cast<ElementRegion *>();
+//    elementRegion->forCellBlocks( [&]( CellBlockSubRegion * subRegion )->void
+    for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
+      CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
       lArray2d const & elemsToNodes = subRegion->getWrapper<lArray2d>(subRegion->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
       dataRepository::ManagedGroup * elementSets = subRegion->GetGroup(dataRepository::keys::sets);
       std::map< string, integer_array > numNodesInSet;
@@ -159,8 +163,8 @@ void DomainPartition::GenerateSets(  )
           }
         }
       }
-    });
-  });
+    }
+  }
 }
 
 

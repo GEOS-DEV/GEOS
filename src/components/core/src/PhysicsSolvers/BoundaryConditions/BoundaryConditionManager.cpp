@@ -82,8 +82,11 @@ void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGr
 void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) const
 {
 
-  forSubGroups<BoundaryConditionBase>( [&] ( BoundaryConditionBase const * bc )-> void
+//  forSubGroups<BoundaryConditionBase>( [&] ( BoundaryConditionBase const * bc )-> void
+//  {
+  for( auto & subGroup : this->GetSubGroups() )
   {
+    BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
     if( bc->initialCondition() )
     {
 
@@ -147,8 +150,11 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
         string_array setNames = bc->GetSetNames();
 
-        elementRegion->forCellBlocks( [&] ( CellBlockSubRegion * subRegion ) -> void
+        for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
         {
+          CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
+//        elementRegion->forCellBlocks( [&] ( CellBlockSubRegion * subRegion ) -> void
+//        {
           auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<integer>,Array2dT<integer> > >(keys::constitutiveMap);
           ManagedGroup const * sets = subRegion->GetGroup(keys::sets);
 
@@ -172,7 +178,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
             }
           }
 
-        });
+        }
 
         // ManagedGroup const * elementSets = elementRegion->GetGroup(dataRepository::keys::sets);
 
@@ -180,7 +186,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
         bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( targetSet, 0.0, targetGroup, fieldName );
       }
     }
-  });
+  }
 }
 
 } /* namespace geosx */
