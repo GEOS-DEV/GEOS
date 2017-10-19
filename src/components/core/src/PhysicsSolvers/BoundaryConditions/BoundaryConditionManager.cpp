@@ -8,13 +8,14 @@
 #include "BoundaryConditionManager.hpp"
 #include "BoundaryConditionBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "managers/CellBlockSubRegion.hpp"
 
-#include "managers/ElementRegionManager.hpp"
-#include "managers/ElementRegion.hpp"
+#include "mesh/MeshBody.hpp"
+
 #include "finiteElement/FiniteElementManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "codingUtilities/StringUtilities.hpp"
+
+#include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -127,10 +128,12 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
         // Get element Region
         string const elementRegionName = bc->GetElementRegion();
-        ManagedGroup * ElementRegionManager = domain->GetGroup(keys::FEM_Elements);
+        ManagedGroup * ElementRegionManager = ManagedGroup::group_cast<DomainPartition*>(domain)->getMeshBody(0)->getMeshLevel(0)->getElemManager();
         ManagedGroup * ElementRegions = ElementRegionManager->GetGroup(keys::elementRegions);
         ElementRegion * elementRegion = ElementRegions->GetGroup<ElementRegion>(elementRegionName);
         // ManagedGroup * elementSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
+
+
 
         auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
         FiniteElementSpace const * feSpace = numericalMethodManager->GetGroup<FiniteElementSpace>(numMethodName);

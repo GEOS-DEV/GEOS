@@ -37,133 +37,78 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**
- * @file ElementManagerT.h
- * @author Randolph Settgast
- * @date created on Sep 14, 2010
+/*
+ * ElementManagerT.cpp
+ *
+ *  Created on: Sep 14, 2010
+ *      Author: settgast1
  */
 
-#ifndef ELEMENTOBJECTT_H_
-#define ELEMENTOBJECTT_H_
+#include "CellBlockManager.hpp"
 
-#include "ObjectManagerBase.hpp"
-#include "legacy/ObjectManagers/EnergyT.h"
-//#include "common/InterObjectRelation.hpp"
-//#include "legacy/ArrayT/bufvector.h"
 #include "FaceManager.hpp"
-
-
-class StableTimeStep;
+//#include "legacy/IO/BinStream.h"
+#include <map>
+#include <vector>
+//#include "legacy/Constitutive/Material/MaterialFactory.h"
+//#include "legacy/ArrayT/ArrayT.h"
 
 namespace geosx
 {
+using namespace dataRepository;
 
-namespace dataRepository
+CellBlockManager::CellBlockManager(  string const & name, ManagedGroup * const parent ):
+ObjectManagerBase(name,parent)
 {
-namespace keys
-{
-//string const defaultMaterial = "material";
-//string const numNodesPerElement = "numNodesPerElement";
-//string const nodeList = "nodeList";
-//string const constitutiveMap = "constitutiveMap";
-}
+  this->RegisterGroup<ManagedGroup>(keys::cellBlocks);
 }
 
-
-
-
-/**
- * Class to manage the data stored at the element level.
- */
-class CellBlock : public ObjectManagerBase
+CellBlockManager::~CellBlockManager()
 {
-public:
+  // TODO Auto-generated destructor stub
+}
 
-  /**
-   * @name Static Factory Catalog Functions
-   */
-  ///@{
-
-  static string CatalogName()
+void CellBlockManager::resize( int32_array const & numElements,
+                             string_array const & regionNames,
+                             string_array const & elementTypes )
+{
+  int32 const numRegions = regionNames.size();
+//  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
+  for( int32 reg=0 ; reg<numRegions ; ++reg )
   {
-    return "CellBlock";
+    CellBlock * elemRegion = this->GetRegion( regionNames[reg] );
+    elemRegion->resize(numElements[reg]);
   }
-
-  string getCatalogName() const override final
-  {
-    return CellBlock::CatalogName();
-  }
-
-
-  ///@}
-
-
-  CellBlock() = delete;
-
-  CellBlock( string const & name, ManagedGroup * const parent );
-
-
-  CellBlock(const CellBlock& init);
-//  ElementRegion( ElementRegion&& init);
-  
-
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
-
-  virtual void ReadXML_PostProcess() override;
-
-//  map<string,int32> SetConstitutiveMap( dataRepository::ManagedGroup const & domain );
-
-  virtual ~CellBlock();
-
-  void GetFaceNodes( const localIndex elementIndex,
-                     const localIndex localFaceIndex,
-                     lArray1d& nodeIndicies) const;
-
-  R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
-
-
-  struct viewKeysStruct
-  {
-    dataRepository::ViewKey numNodesPerElement = { "numNodesPerElement" };
-    dataRepository::ViewKey nodeList           = { "nodeList" };
-    dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
-    dataRepository::ViewKey faceList           = { "faceList" };
-  } viewKeys;
-
-  class groupKeysStruct
-  {
-  public:
-  }groupKeys;
-
-
-  Array2dT<int32> & m_toNodesRelation;
-  Array2dT<int32> & m_toFacesRelation;
-
-
-  int32 const & numNodesPerElement() const { return this->getReference<int32>( viewKeys.numNodesPerElement ); }
-  int32       & numNodesPerElement()       { return this->getReference<int32>( viewKeys.numNodesPerElement ); }
-  int32 const & numFacesPerElement() const { return this->getReference<int32>( viewKeys.numFacesPerElement ); }
-  int32       & numFacesPerElement()       { return this->getReference<int32>( viewKeys.numFacesPerElement ); }
-
-private:
-  CellBlock& operator=(const CellBlock& rhs);
-
-//  string & m_elementType;
-
-};
-
-
-
-///////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////
-
-
-
-
-
 }
 
 
+//CellBlock & CellBlockManager::CreateRegion( string const & regionName,
+//                                             string const & elementType,
+//                                             int32 const & numElements )
+//{
+////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
+////  elemRegion->resize(numElements);
+//}
+
+void CellBlockManager::CreateChild( string const & childKey, string const & childName )
+{
+}
+//  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
+//  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+//  {
+//    if( childNode.name() == string("ElementRegion") )
+//    {
+//      std::string regionName = childNode.attribute("name").value();
+//      std::cout<<regionName<<std::endl;
+//
+//      CellBlock * elemRegion = elementRegions->RegisterGroup<CellBlock>( regionName );
+//      elemRegion->SetDocumentationNodes( nullptr );
+//      elemRegion->RegisterDocumentationNodes();
+//      elemRegion->ReadXML(childNode);
+//    }
+//  }
+//}
 
 
-#endif /* ELEMENTOBJECTT_H_ */
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlockManager, string const &, ManagedGroup * const )
+}

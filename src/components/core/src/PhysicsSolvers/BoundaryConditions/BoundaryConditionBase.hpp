@@ -172,7 +172,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index(vw->get_typeid());
 
-  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeIndex) , [&]( auto type, auto baseType ) -> void
   {
     using fieldType = decltype(type);
     dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
@@ -181,7 +181,8 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
     {
       for( auto a : set )
       {
-        OPERATION::f( field[a], component, m_scale );
+        OPERATION::f( field[a], component, (m_scale) );
+//        OPERATION::f( field[a], component, static_cast<decltype(baseType)>(m_scale) );
       }
     }
     else
@@ -194,7 +195,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
           real64 value = m_scale * function->Evaluate( &time );
           for( auto a : set )
           {
-            OPERATION::f( field[a], component, value );
+            OPERATION::f( field[a], component, (value) );
           }
         }
         else
@@ -204,7 +205,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
           int32 count=0;
           for( auto a : set )
           {
-            OPERATION::f( field[a], component, result[count] );
+            OPERATION::f( field[a], component, (result[count]) );
             ++count;
           }
         }
@@ -296,7 +297,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
                                                  blockID,
                                                  node_rhs(counter),
                                                  m_scale,
-                                                 rtTypes::value(field[a],component));
+                                                 static_cast<real64>(rtTypes::value(field[a],component)));
         ++counter;
       }
       if( OPERATION==0 )

@@ -41,10 +41,10 @@ std::string const domain  = "domain";
 std::string const solvers = "solvers";
 std::string const simulationParameterMap = "simulationParameterMap";
 std::string const FE_Space    = "FE_Space";
-std::string const FEM_Nodes    = "FEM_Nodes";
-std::string const FEM_Edges    = "FEM_Edges";
-std::string const FEM_Faces    = "FEM_Faces";
-std::string const FEM_Elements = "FEM_Elements";
+//std::string const FEM_Nodes    = "FEM_Nodes";
+//std::string const FEM_Edges    = "FEM_Edges";
+//std::string const FEM_Faces    = "FEM_Faces";
+//std::string const FEM_Elements = "FEM_Elements";
 std::string const cellManager = "cellMananger";
 std::string const functionManager = "FunctionManager";
 

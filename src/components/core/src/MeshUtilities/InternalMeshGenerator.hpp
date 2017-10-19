@@ -15,7 +15,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "MeshGeneratorBase.hpp"
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include <slic/slic.hpp>
 #endif
 
@@ -189,7 +189,7 @@ private:
       {
         if (fabs(m_nElemBias[i][block]) >= 1)
         {
-#if ATK_FOUND
+#ifdef USE_ATK
           SLIC_ERROR("Mesh bias must between -1 and 1!");
 #endif
         }

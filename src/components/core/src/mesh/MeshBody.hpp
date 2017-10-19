@@ -8,10 +8,13 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHBODY_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHBODY_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "MeshLevel.hpp"
+
 
 namespace geosx
 {
+
+
 
 class MeshLevel;
 
@@ -24,14 +27,20 @@ public:
 
   MeshLevel * CreateMeshLevel( int32 const newLevel );
 
+  MeshLevel * getMeshLevel( int32 const level ) { return this->GetGroup<MeshLevel>(level); }
+  MeshLevel const * getMeshLevel( int32 const level ) const { return this->GetGroup<MeshLevel>(level); }
+
   struct viewKeysStruct
   {
+
+
     dataRepository::ViewKey meshLevels                = { "meshLevels" };
   }viewKeys;
 
   struct groupStructKeys
   {
   }groupKeys;
+
 
 };
 

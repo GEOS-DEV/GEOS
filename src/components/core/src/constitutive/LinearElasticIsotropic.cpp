@@ -7,7 +7,7 @@
 
 #include "LinearElasticIsotropic.hpp"
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include "slic/slic.hpp"
 #endif
 
@@ -179,7 +179,7 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
     else if( !( K >= 0.0 && G >= 0.0 ) )
     {
       string const message = "A specific pair of elastic constants is required. Either (K,G) or (E,nu)";
-#if ATK_FOUND
+#ifdef USE_ATK
       SLIC_ERROR(message);
 #endif
     }
@@ -192,7 +192,7 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
   else
   {
     string const message = std::to_string(numConstantsSpecified) + " Elastic Constants Specified. Must specify 2 constants!";
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR(message);
 #endif
   }
@@ -204,7 +204,7 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
                                           integer const systemAssembleFlag ) const
 {
 
-  index_t numberOfMaterialPoints = stateVariables->size();
+  localIndex numberOfMaterialPoints = stateVariables->size();
   ViewWrapper<real64_array>::rtype_const K = parameters->getData<real64_array>(std::string("BulkModulus"));
   ViewWrapper<real64_array>::rtype_const G = parameters->getData<real64_array>(std::string("ShearModulus"));
 
@@ -223,7 +223,7 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
   ViewWrapper<real64_array>::rtype_const D13 = input->getData<real64_array>(std::string("D13"));
   ViewWrapper<real64_array>::rtype_const D12 = input->getData<real64_array>(std::string("D12"));
 
-  for( index_t i=0 ; i<numberOfMaterialPoints ; ++i )
+  for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
   {
     real volumeStrain = ( D11[i] + D22[i] + D33[i] );
     meanStress[i] += volumeStrain * K[i];
@@ -249,7 +249,7 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
     ViewWrapper<real64_array>::rtype K55 = stateVariables->getData<real64_array>(std::string("K55"));
     ViewWrapper<real64_array>::rtype K66 = stateVariables->getData<real64_array>(std::string("K66"));
 
-    for( index_t i=0 ; i<numberOfMaterialPoints ; ++i )
+    for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
     {
       real Stiffness[6][6] = {{ K[i]+4.0/3.0*G[i], K[i]-2.0/3.0*G[i], K[i]-2.0/3.0*G[i], 0,               0,        0 },
                               { K[i]-2.0/3.0*G[i], K[i]+4.0/3.0*G[i], K[i]-2.0/3.0*G[i], 0,               0,        0 },

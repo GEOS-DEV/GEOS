@@ -16,7 +16,7 @@
 #include "StringUtilities.hpp"
 #include "Macros.hpp"
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include "sidre/sidre.hpp"
 #include "sidre/SidreTypes.hpp"
 #endif
@@ -155,7 +155,7 @@ public:
   {
     if( base.get_typeid() != typeid(T) )
     {
-#if ATK_FOUND
+#ifdef USE_ATK
       SLIC_ERROR("invalid cast attempt");
 #endif
     }
@@ -247,17 +247,45 @@ public:
 
   struct resize_wrapper
   {
-    HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(size_t), VA_LIST(size_t(1)) )
+    HAS_MEMBER_FUNCTION_VARIANT(resize,0,void,,VA_LIST(int32), VA_LIST(int32(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,1,void,,VA_LIST(uint32), VA_LIST(uint32(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,2,void,,VA_LIST(int64), VA_LIST(int64(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,3,void,,VA_LIST(uint64), VA_LIST(uint64(1)))
+
 
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_resize<U>::value, void>::type
-    resize(ViewWrapper * const parent, std::size_t new_size)
+    static typename std::enable_if<has_memberfunction_v0_resize<U>::value, void>::type
+    resize(ViewWrapper * const parent, int32 const new_size)
     {
       return parent->m_data->resize(new_size);
     }
 
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_resize<U>::value, void>::type
+    static typename std::enable_if<has_memberfunction_v1_resize<U>::value, void>::type
+    resize(ViewWrapper * const parent, uint32 const new_size)
+    {
+      return parent->m_data->resize(new_size);
+    }
+
+    template<class U = T>
+    static typename std::enable_if<has_memberfunction_v2_resize<U>::value, void>::type
+    resize(ViewWrapper * const parent, int64 const new_size)
+    {
+      return parent->m_data->resize(new_size);
+    }
+
+    template<class U = T>
+    static typename std::enable_if<has_memberfunction_v3_resize<U>::value, void>::type
+    resize(ViewWrapper * const parent, uint64 const new_size)
+    {
+      return parent->m_data->resize(new_size);
+    }
+
+    template<class U = T>
+    static typename std::enable_if<!(has_memberfunction_v0_resize<U>::value ||
+                                     has_memberfunction_v1_resize<U>::value ||
+                                     has_memberfunction_v2_resize<U>::value ||
+                                     has_memberfunction_v3_resize<U>::value), void>::type
     resize(ViewWrapper * const, std::size_t ) { return; }
   };
   using ViewWrapperBase::resize;
@@ -490,44 +518,44 @@ public:
     return d_size / sizeof(T);
   }
 
-#if ATK_FOUND
+#ifdef USE_ATK
   /* Register the pointer to data with the associated sidre::View. */
-  virtual void registerDataPtr() 
+  virtual void registerDataPtr() override final
   {
     uint32 d_size = dataSize();
     if (d_size > 0) 
     {
-      void * ptr = const_cast<void*>((void const *) dataPtr());
+      void * ptr = const_cast<void*>( static_cast<void const *>( dataPtr() ) );
       getSidreView()->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, d_size, ptr);
     }
   }
 
 
-  virtual void storeSizedFromParent()
+  virtual void storeSizedFromParent() override final
   {
     getSidreView()->setAttributeScalar("__sizedFromParent__", sizedFromParent());
   }
 
 
-  virtual void loadSizedFromParent()
+  virtual void loadSizedFromParent() override final
   {
     setSizedFromParent(getSidreView()->getAttributeScalar("__sizedFromParent__"));
     getSidreView()->setAttributeToDefault("__sizedFromParent__");
   }
 
 
-  virtual void unregisterDataPtr()
+  virtual void unregisterDataPtr() override final
   {
     getSidreView()->setExternalDataPtr(AXOM_NULLPTR);
   }
 
 
-  virtual void resizeFromSidre() 
+  virtual void resizeFromSidre() override final
   {
       if (getSidreView()->isExternal()) 
       {
-        uint32 d_size = getSidreView()->getTotalBytes();
-        uint32 numElements = numElementsFromDataSize(d_size);
+        int64 d_size = getSidreView()->getTotalBytes();
+        int64 numElements = numElementsFromDataSize(d_size);
         resize(numElements);
       }
       

@@ -39,7 +39,7 @@ namespace dataRepository
 {
 
 using keyType = string;
-using indexType = int;
+using indexType = localIndex;
 //using DataKey = DataKeyT<keyType,indexType>;
 
 /**
@@ -133,87 +133,94 @@ public:
   }
 
 
+  template< typename T >
+  static T group_cast( ManagedGroup * group )
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T>( group );
+#else
+    return static_cast<T>( group );
+#endif
+  }
+
+  template< typename T >
+  static T group_cast( ManagedGroup const * group )
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T>( group );
+#else
+    return static_cast<T>( group );
+#endif
+  }
+
+  template< typename T >
+  T group_cast()
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T>( this );
+#else
+    return static_cast<T>( this );
+#endif
+  }
+
+  template< typename T >
+  T group_cast() const
+  {
+#ifdef USE_DYNAMIC_CASTING
+    return dynamic_cast<T>( this );
+#else
+    return static_cast<T>( this );
+#endif
+  }
 
 
   template< typename T = ManagedGroup >
   T * GetGroup( int32 index )
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T *>( m_subGroups[index] );
-#else
-    return static_cast<T *>( m_subGroups[index] );
-#endif
+    return group_cast<T*>(m_subGroups[index]);
   }
 
   template< typename T = ManagedGroup >
   T const * GetGroup( int32 index ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const *>( m_subGroups[index] );
-#else
-    return static_cast<T const *>( m_subGroups[index] );
-#endif
+    return group_cast<T const *>(m_subGroups[index]);
   }
 
   template< typename T = ManagedGroup >
   T * GetGroup( string const & name )
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T *>( m_subGroups[name] );
-#else
-    return static_cast<T *>( m_subGroups[name] );
-#endif
+    return group_cast<T *>(m_subGroups[name]);
   }
 
   template< typename T = ManagedGroup >
   T const * GetGroup( string const & name ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const *>( m_subGroups[name] );
-#else
-    return static_cast<T const *>( m_subGroups[name] );
-#endif
+    return group_cast<T const *>(m_subGroups[name]);
   }
 
 
   template< typename T = ManagedGroup >
   T * GetGroup( subGroupMap::KeyIndex & key )
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T *>( m_subGroups[key] );
-#else
-    return static_cast<T *>( m_subGroups[key] );
-#endif
+    return group_cast<T *>(m_subGroups[key]);
   }
 
   template< typename T = ManagedGroup >
   T const * GetGroup( subGroupMap::KeyIndex & key ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const *>( m_subGroups[key] );
-#else
-    return static_cast<T const *>( m_subGroups[key] );
-#endif
+    return group_cast<T const *>(m_subGroups[key]);
   }
 
 template< typename T = ManagedGroup >
   T * GetGroup( subGroupMap::KeyIndex const & key )
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T *>( m_subGroups[key] );
-#else
-    return static_cast<T *>( m_subGroups[key] );
-#endif
+  return group_cast<T *>(m_subGroups[key]);
   }
 
   template< typename T = ManagedGroup >
   T const * GetGroup( subGroupMap::KeyIndex const & key ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T const *>( m_subGroups[key] );
-#else
-    return static_cast<T const *>( m_subGroups[key] );
-#endif
+    return group_cast<T const *>(m_subGroups[key]);
   }
 
 
@@ -299,10 +306,6 @@ template< typename T = ManagedGroup >
 
   void PrintDataHierarchy();
 
-  void AddChildren( xmlWrapper::xmlNode const & targetNode );
-
-  virtual void CreateChild( string const & childKey, string const & childName );
-
   virtual void ReadXML( xmlWrapper::xmlNode const & targetNode );
 
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
@@ -343,10 +346,10 @@ template< typename T = ManagedGroup >
 //  GetDataClass GetData = {*this};
 
 
-  ViewWrapperBase const * getWrapperBase( size_t const index ) const
+  ViewWrapperBase const * getWrapperBase( indexType const index ) const
   { return m_wrappers[index]; }
 
-  ViewWrapperBase * getWrapperBase( size_t const index )
+  ViewWrapperBase * getWrapperBase( indexType const index )
   { return m_wrappers[index]; }
 
   ViewWrapperBase const * getWrapperBase( std::string const & name ) const
@@ -363,7 +366,7 @@ template< typename T = ManagedGroup >
 
 
   template< typename T >
-  ViewWrapper<T> const * getWrapper( std::size_t const index ) const
+  ViewWrapper<T> const * getWrapper( indexType const index ) const
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[index]) );
@@ -373,7 +376,7 @@ template< typename T = ManagedGroup >
   }
 
   template< typename T >
-  ViewWrapper<T> * getWrapper( std::size_t const index )
+  ViewWrapper<T> * getWrapper( indexType const index )
   { return const_cast<ViewWrapper<T> *>( const_cast< ManagedGroup const *>(this)->getWrapper<T>( index ) ); }
 
   template< typename T >
@@ -426,11 +429,11 @@ template< typename T = ManagedGroup >
 
 
   template< typename T >
-  view_rtype_const<T> getData( size_t const index ) const
+  view_rtype_const<T> getData( indexType const index ) const
   { return getWrapper<T>(index)->data(); }
 
   template< typename T >
-  view_rtype<T> getData( size_t const index )
+  view_rtype<T> getData( indexType const index )
   { return getWrapper<T>(index)->data(); }
 
   template< typename T >
@@ -479,11 +482,11 @@ template< typename T = ManagedGroup >
 
 
   template< typename T >
-  T const & getReference( std::size_t const index ) const
+  T const & getReference( indexType const index ) const
   { return getWrapper<T>(index)->reference(); }
 
   template< typename T >
-  T& getReference( std::size_t const index )
+  T& getReference( indexType const index )
   { return const_cast<T&>( const_cast<const ManagedGroup*>(this)->getReference<T>( index ) ); }
 
   template< typename T >
@@ -526,7 +529,7 @@ template< typename T = ManagedGroup >
   }
 
 
-#if ATK_FOUND
+#ifdef USE_ATK
   axom::sidre::Group * getSidreGroup()              { return m_sidreGroup; }
   axom::sidre::Group const * getSidreGroup() const  { return m_sidreGroup; }
 
@@ -540,7 +543,7 @@ template< typename T = ManagedGroup >
   ManagedGroup * setParent( ManagedGroup * const parent )
   {
     m_parent = parent;
-#if ATK_FOUND
+#ifdef USE_ATK
     m_sidreGroup = m_parent->getSidreGroup();
 #endif
 
@@ -560,7 +563,7 @@ template< typename T = ManagedGroup >
 
   void writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm);
 
-#if ATK_FOUND
+#ifdef USE_ATK
   void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
 
   void loadSidreExternalData(const string & root_path, MPI_Comm comm);
@@ -571,7 +574,7 @@ protected:
 
 private:
 
-#if ATK_FOUND
+#ifdef USE_ATK
   void registerSubViews();
 
   void createSizeViews();
@@ -592,11 +595,11 @@ private:
   viewWrapperMap m_wrappers;
   subGroupMap m_subGroups;
 
-#if ATK_FOUND
+#ifdef USE_ATK
   axom::sidre::Group* m_sidreGroup;
 #endif
 
-  int32 m_size;
+  indexType m_size;
 
   string m_name;
 
@@ -607,11 +610,11 @@ private:
   ///@{
 #if NOCHARTOSTRING_KEYLOOKUP == 1
 
-  template< typename T = ManagedGroup >
-  T const * GetGroup( char const * ) const;
-
-  template< typename T = ManagedGroup >
-  T * GetGroup( char const * name );
+//  template< typename T = ManagedGroup >
+//  T const * GetGroup( char const * ) const;
+//
+//  template< typename T = ManagedGroup >
+//  T * GetGroup( char const * name );
 
 
   template< typename T >

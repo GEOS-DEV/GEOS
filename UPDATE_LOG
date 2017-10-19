@@ -1,5 +1,16 @@
 
 
+Tue Oct 17 13:06:52 2017 Randolph R. Settgast
+v0.0.14
+
+This PR is intended to add better structure to the main mesh data objects. Specifically, the concept of a MeshBody is introduced, which contains MeshLevel objects to represent each level of mesh refinement.
+
+Also modified some build config to generate a GeosxConfig.hpp file that contains preprocessor variable rather than inputing from the compilation line. this allows IDE's to recognize the variables, and allows for easier troubleshooting later on.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/7
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/11
+
+
 Wed Oct 11 08:44:28 2017 Arturo Vargas
 v0.0.13
 

@@ -8,7 +8,7 @@
 #include "FiniteElementSpace.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
-#include "managers/NodeManager.hpp"
+#include "mesh/NodeManager.hpp"
 #include "FiniteElementManager.hpp"
 #include "basis/BasisBase.hpp"
 #include "quadrature/QuadratureBase.hpp"
@@ -16,7 +16,7 @@
 #include "codingUtilities/Utilities.hpp"
 
 // TODO make this not dependent on this header...need better key implementation
-#include "managers/CellBlockSubRegion.hpp"
+#include "mesh/CellBlockSubRegion.hpp"
 
 namespace geosx
 {

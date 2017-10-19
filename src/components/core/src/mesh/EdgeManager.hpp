@@ -47,7 +47,7 @@
 #define EDGEMANAGERT_H_
 
 #include "legacy/ArrayT/bufvector.h"
-#include "ObjectManagerBase.hpp"
+#include "managers/ObjectManagerBase.hpp"
 
 
 namespace geosx
@@ -63,7 +63,7 @@ public:
                ManagedGroup * const parent );
   ~EdgeManager();
 
-  void Initialize() {}
+//  void Initialize() {}
 
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL) ;
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = NULL) ;

@@ -21,16 +21,19 @@ NewComponent::~NewComponent()
 {}
 
 
-void NewComponent::Initialize( dataRepository::ManagedGroup& /*domain*/ )
+
+void NewComponent::InitializePreSubGroups( ManagedGroup * const )
+{}
+
+void NewComponent::InitializePostSubGroups( ManagedGroup * const )
 {}
 
 
-void NewComponent::ReadXML( xmlWrapper::xmlNode const & /*solverNode*/  )
+
+void NewComponent::ReadXML_PostProcess( )
 {}
 
 
-void NewComponent::BuildDataStructure( dataRepository::ManagedGroup * const /*domain*/ )
-{}
 
 
 void NewComponent::TimeStep( real64 const & /*time_n*/,

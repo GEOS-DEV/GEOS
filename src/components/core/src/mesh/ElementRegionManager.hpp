@@ -43,15 +43,17 @@
  * @date created on Sep 14, 2010
  */
 
-#ifndef ELEMENTMANAGERT_H_
-#define ELEMENTMANAGERT_H_
+#ifndef ZONEMANAGER_H
+#define ZONEMANAGER_H
 
 //#include "Common.h"
 //#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 #include "CellBlock.hpp"
-#include "ObjectManagerBase.hpp"
+#include "CellBlockSubRegion.hpp"
+#include "managers/ObjectManagerBase.hpp"
 
 //#include "legacy/ArrayT/bufvector.h"
+#include "ElementRegion.hpp"
 
 namespace geosx
 {
@@ -60,15 +62,15 @@ namespace dataRepository
 {
 namespace keys
 {
-string const cellBlocks = "cellBlocks";
+string const elementRegions = "elementRegions";
+//string const elementRegionManager="ElementRegions";
 }
 }
-
 
 /**
  * Class to manage the data stored at the element level.
  */
-class CellBlockManager : public ObjectManagerBase
+class ElementRegionManager : public ObjectManagerBase
 {
 public:
   /**
@@ -78,12 +80,12 @@ public:
 
   static string CatalogName()
   {
-    return "CellBlockManager";
+    return "ZoneManager";
   }
 
   string getCatalogName() const override final
   {
-    return CellBlockManager::CatalogName();
+    return ElementRegionManager::CatalogName();
   }
 
 
@@ -91,11 +93,15 @@ public:
 
   ///@}
 
-  CellBlockManager( string const &, ManagedGroup * const parent );
-  virtual ~CellBlockManager();
+  ElementRegionManager( string const &, ManagedGroup * const parent );
+  virtual ~ElementRegionManager();
 
+  localIndex getNumberOfElements() const;
 
 //  void Initialize(  ){}
+
+  void InitializePreSubGroups( ManagedGroup * const ) override final;
+  void InitializePostSubGroups( ManagedGroup * const ) override final;
 
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
@@ -109,22 +115,81 @@ public:
 //                               string const & elementType,
 //                               int32 const & numElements );
 
-  CellBlock * GetRegion( string const & regionName )
+  ElementRegion const * GetRegion( string const & regionName ) const
   {
-    return this->GetGroup(dataRepository::keys::cellBlocks)->GetGroup<CellBlock>(regionName);
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(regionName);
+  }
+  ElementRegion * GetRegion( string const & regionName )
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(regionName);
+  }
+
+  ElementRegion const * GetRegion( int32 const & index ) const
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(index);
+  }
+  ElementRegion * GetRegion( int32 const & index )
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(index);
+  }
+
+  int32 numRegions() const
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups().size();
+  }
+
+
+  template< typename LAMBDA >
+  void forElementRegions( LAMBDA lambda )
+  {
+    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    elementRegions->forSubGroups<ElementRegion>( lambda );
+
+  }
+
+  template< typename LAMBDA >
+  void forElementRegions( LAMBDA lambda ) const
+  {
+    ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    elementRegions->forSubGroups<ElementRegion>( lambda );
   }
 
   template< typename LAMBDA >
   void forCellBlocks( LAMBDA lambda )
   {
-    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
-    elementRegions->forSubGroups<CellBlock>( lambda );
+    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+
+    for( auto & region : elementRegions->GetSubGroups() )
+    {
+      ManagedGroup * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+      for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+      {
+        CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+        lambda( cellBlock );
+      }
+    }
+  }
+
+  template< typename LAMBDA >
+  void forCellBlocks( LAMBDA lambda ) const
+  {
+    ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+
+    for( auto const & region : elementRegions->GetSubGroups() )
+    {
+      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+      for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+      {
+        CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+        lambda( cellBlock );
+      }
+    }
   }
 private:
-  CellBlockManager( const CellBlockManager& );
-  CellBlockManager& operator=( const CellBlockManager&);
+  ElementRegionManager( const ElementRegionManager& );
+  ElementRegionManager& operator=( const ElementRegionManager&);
 
 
 };
 }
-#endif /* ELEMENTMANAGERT_H_ */
+#endif /* ZONEMANAGER_H */

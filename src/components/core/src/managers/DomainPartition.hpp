@@ -9,7 +9,8 @@
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-
+#include "mesh/MeshBody.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 namespace geosx
 {
 
@@ -75,9 +76,36 @@ public:
 
   struct groupKeysStruct
   {
-    dataRepository::GroupKey meshBodies           = { "MeshBodies" };
-    dataRepository::GroupKey constitutiveManager  = { "ConstitutiveManager" };
+    static constexpr auto meshBodiesString = "MeshBodies";
+    static constexpr auto constitutiveManagerString = "ConstitutiveManager";
+
+    dataRepository::GroupKey meshBodies           = { meshBodiesString };
+    dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
   }groupKeys;
+
+
+  constitutive::ConstitutiveManager const * getConstitutiveManager() const
+  { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
+
+  constitutive::ConstitutiveManager * getConstitutiveManager()
+  { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
+
+
+  ManagedGroup const * getMeshBodies() const
+  { return this->GetGroup(groupKeys.meshBodies); }
+  ManagedGroup * getMeshBodies()
+  { return this->GetGroup(groupKeys.meshBodies); }
+
+  MeshBody const * getMeshBody( string const & meshName ) const
+  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
+  MeshBody * getMeshBody( string const & meshName )
+  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
+
+  MeshBody const * getMeshBody( int32 const index ) const
+  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
+  MeshBody * getMeshBody( int32 const index )
+  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
+
 
 private:
 

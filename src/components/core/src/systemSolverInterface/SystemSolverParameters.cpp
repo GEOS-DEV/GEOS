@@ -19,7 +19,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   RegisterViewWrapper<int32>( viewKeys.numKrylovIter );
   RegisterViewWrapper<int32>( viewKeys.kspace );
   RegisterViewWrapper<real64>( viewKeys.ilut_fill );
-  real64 * ilut_drop = RegisterViewWrapper<real64>( viewKeys.ilut_drop )->data();
+  RegisterViewWrapper<real64>( viewKeys.ilut_drop )->data();
   RegisterViewWrapper<int32>( viewKeys.useMLPrecond );
   RegisterViewWrapper<int32>( viewKeys.useInnerSolver );
   RegisterViewWrapper<int32>( viewKeys.scalingOption );

@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/GeosxConfig.hpp"
 
 #include "Macros.hpp"
 
@@ -38,11 +39,12 @@ using  int32      = std::int32_t;
 using uint32      = std::uint32_t;
 using  int64      = std::int64_t;
 using uint64      = std::uint64_t;
-using std_size_t  = std::size_t;
 using string      = std::string;
-using integer     = int;
-using uinteger    = unsigned int;
-using index_t     = int;
+
+using integer     = int;//int_fast32_t;
+using uinteger    = unsigned int;//uint_fast32_t;
+using localIndex  = int32;//std::int_fast32_t;
+using globalIndex = uint64;
 
 
 using real32 = float;
@@ -68,6 +70,9 @@ using int64_const_ptr  = c_ptr<int64>;
 using uint64_ptr        = ptr<uint64>;
 using uint64_const_ptr  = c_ptr<uint64>;
 
+using localIndex_ptr         = ptr<localIndex>;
+using localIndex_const_ptr   = c_ptr<localIndex>;
+
 using real32_ptr        = ptr<real32>;
 using real32_const_ptr  = c_ptr<real32>;
 
@@ -75,8 +80,6 @@ using real64_ptr        = ptr<real64>;
 using real64_const_ptr  = c_ptr<real64>;
 
 //***** BEGIN LEGACY TYPEDEFS *****
-using globalIndex = int64;
-using localIndex  = int32;
 
 using realT    = double;
 
@@ -120,6 +123,14 @@ using real64_const_array  = array<real64 const>;
 using string_array        = array<string>;
 using string_const_array  = array<string const>;
 
+using localIndex_array        = array<localIndex>;
+using localIndex_const_array  = array<localIndex const>;
+
+using globalIndex_array        = array<globalIndex>;
+using globalIndex_const_array  = array<globalIndex const>;
+
+
+
 using int32_set        = set<int32>;
 using int32_const_set  = set<int32 const>;
 
@@ -140,6 +151,12 @@ using real64_const_set  = set<real64 const>;
 
 using string_set        = set<string>;
 using string_const_set  = set<string const>;
+
+using localIndex_set        = set<localIndex>;
+using localIndex_const_set  = set<localIndex const>;
+
+using globalIndex_set        = set<globalIndex>;
+using globalIndex_const_set  = set<globalIndex const>;
 
 
 
@@ -182,6 +199,8 @@ public:
       {std::type_index(typeid(uint64)), "uint64"},
       {std::type_index(typeid(real32)), "real32"},
       {std::type_index(typeid(real64)), "real64"},
+      {std::type_index(typeid(localIndex)), "localIndex"},
+      {std::type_index(typeid(globalIndex)), "globalIndex"},
       {std::type_index(typeid(R1Tensor)), "r1Tensor"},
       {std::type_index(typeid(R2Tensor)), "r2Tensor"},
       {std::type_index(typeid(R2SymTensor)), "r2SymTensor"},
@@ -191,10 +210,11 @@ public:
       {std::type_index(typeid(uint64_array)), "uint64_array"},
       {std::type_index(typeid(real32_array)), "real32_array"},
       {std::type_index(typeid(real64_array)), "real64_array"},
+      {std::type_index(typeid(localIndex_array)), "localIndex_array"},
+      {std::type_index(typeid(globalIndex_array)), "globalIndex_array"},
       {std::type_index(typeid(r1_array)), "r1_array"},
       {std::type_index(typeid(r2_array)), "r2_array"},
       {std::type_index(typeid(r2Sym_array)), "r2Sym_array"},
-      {std::type_index(typeid(std_size_t)), "std_size_t"},
       {std::type_index(typeid(string)), "string"},
       {std::type_index(typeid(mapPair_array)), "mapPair_array"}
     };
@@ -211,6 +231,8 @@ public:
     uint64_id,
     real32_id,
     real64_id,
+    localIndex_id,
+    globalIndex_id,
     r1Tensor_id,
     r2Tensor_id,
     r2SymTensor_id,
@@ -220,6 +242,8 @@ public:
     uint64_array_id,
     real32_array_id,
     real64_array_id,
+    localIndex_array_id,
+    globalIndex_array_id,
     r1_array_id,
     r2_array_id,
     r2Sym_array_id,
@@ -238,6 +262,8 @@ public:
       { "uint32",       TypeIDs::uint32_id },
       { "int64",        TypeIDs::int64_id },
       { "uint64",       TypeIDs::uint64_id },
+      { "localIndex",   TypeIDs::localIndex_id },
+      { "globalIndex",  TypeIDs::globalIndex_id },
       { "real32",       TypeIDs::real32_id },
       { "real64",       TypeIDs::real64_id },
       { "R1Tensor",     TypeIDs::r1Tensor_id },
@@ -249,6 +275,8 @@ public:
       { "uint64_array", TypeIDs::uint64_array_id },
       { "real32_array", TypeIDs::real32_array_id },
       { "real64_array", TypeIDs::real64_array_id },
+      { "localIndex_array",   TypeIDs::localIndex_array_id },
+      { "globalIndex_array",  TypeIDs::globalIndex_array_id },
       { "r1_array",     TypeIDs::r1_array_id },
       { "r2_array",     TypeIDs::r2_array_id },
       { "r2Sym_array",  TypeIDs::r2Sym_array_id },
@@ -271,6 +299,8 @@ public:
       { std::type_index(typeid(uint64)),       TypeIDs::uint64_id },
       { std::type_index(typeid(real32)),       TypeIDs::real32_id },
       { std::type_index(typeid(real64)),       TypeIDs::real64_id },
+      { std::type_index(typeid(localIndex)),   TypeIDs::real32_id },
+      { std::type_index(typeid(globalIndex)),  TypeIDs::real64_id },
       { std::type_index(typeid(R1Tensor)),     TypeIDs::r1Tensor_id },
       { std::type_index(typeid(R2Tensor)),     TypeIDs::r2Tensor_id },
       { std::type_index(typeid(R2SymTensor)),  TypeIDs::r2SymTensor_id },
@@ -283,7 +313,6 @@ public:
       { std::type_index(typeid(r1_array)),     TypeIDs::r1_array_id },
       { std::type_index(typeid(r2_array)),     TypeIDs::r2_array_id },
       { std::type_index(typeid(r2Sym_array)),  TypeIDs::r2Sym_array_id },
-      { std::type_index(typeid(std_size_t)),   TypeIDs::std_size_t_id },
       { std::type_index(typeid(string)),       TypeIDs::string_id },
       { std::type_index(typeid(string_array)), TypeIDs::string_array_id },
       { std::type_index(typeid(mapPair_array)),TypeIDs::mapPair_array_id }
@@ -422,11 +451,6 @@ public:
       return lambda( real64_array(1) );
       break;
     }
-    case ( TypeIDs::std_size_t_id ):
-    {
-      return lambda( std_size_t(1) );
-      break;
-    }
     case ( TypeIDs::string_id ):
     {
       return lambda( string("") );
@@ -491,6 +515,68 @@ public:
     case ( TypeIDs::r2Sym_array_id ):
     {
       return lambda( r2Sym_array(1) );
+      break;
+    }
+
+    default:
+    {
+      std::cout<<LOCATION<<std::endl;
+      assert( false );
+    }
+    }
+  }
+
+
+
+  template< typename LAMBDA >
+  static auto ApplyArrayTypeLambda2( const TypeIDs type,
+                                         LAMBDA lambda )
+  {
+    switch( type )
+    {
+    case ( TypeIDs::int32_array_id ):
+    {
+      return lambda( int32_array(1), int32(1) );
+      break;
+    }
+    case ( TypeIDs::uint32_array_id ):
+    {
+      return lambda( uint32_array(1), uint32(1) );
+      break;
+    }
+    case ( TypeIDs::int64_array_id ):
+    {
+      return lambda( int64_array(1), int64(1) );
+      break;
+    }
+    case ( TypeIDs::uint64_array_id ):
+    {
+      return lambda( uint64_array(1), uint64(1) );
+      break;
+    }
+    case ( TypeIDs::real32_array_id ):
+    {
+      return lambda( real32_array(1), real32(1) );
+      break;
+    }
+    case ( TypeIDs::real64_array_id ):
+    {
+      return lambda( real64_array(1), real64(1) );
+      break;
+    }
+    case ( TypeIDs::r1_array_id ):
+    {
+      return lambda( r1_array(1), R1Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2_array_id ):
+    {
+      return lambda( r2_array(1), R2Tensor() );
+      break;
+    }
+    case ( TypeIDs::r2Sym_array_id ):
+    {
+      return lambda( r2Sym_array(1), R2SymTensor()  );
       break;
     }
 
@@ -596,11 +682,6 @@ public:
     case ( TypeIDs::r2Sym_array_id ):
     {
       return lambda( r2Sym_array(1) );
-      break;
-    }
-    case ( TypeIDs::std_size_t_id ):
-    {
-      return lambda( std_size_t(1) );
       break;
     }
     case ( TypeIDs::string_id ):
@@ -723,11 +804,6 @@ public:
       return lambda( r2Sym_array(1), R2SymTensor() );
       break;
     }
-    case ( TypeIDs::std_size_t_id ):
-    {
-      return lambda( std_size_t(1), std_size_t(1) );
-      break;
-    }
     case ( TypeIDs::string_id ):
     {
       return lambda( string(""), string("") );
@@ -835,11 +911,6 @@ public:
       return lambda( real64_array(1), real64(1) );
       break;
     }
-    case ( TypeIDs::std_size_t_id ):
-    {
-      return lambda( std_size_t(1), std_size_t(1) );
-      break;
-    }
     case ( TypeIDs::string_id ):
     {
       return lambda( string(""), string("") );
@@ -919,6 +990,12 @@ public:
   struct equateValue
   {
     inline static void f( R1Tensor & lhs, int32 const component, real64 const & rhs )
+    {
+      lhs[component] = rhs;
+    }
+
+    template< typename T >
+    inline static void f( R1Tensor & lhs, int32 const component, T const & rhs )
     {
       lhs[component] = rhs;
     }

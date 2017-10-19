@@ -54,7 +54,7 @@
 #include <set>
 #include <algorithm>
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include "slic/slic.hpp"
 #endif
 
@@ -455,7 +455,7 @@ T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& messag
     std::stringstream st;
     st << "Error in stlMapLookup. Key not found in map! key: " << key << " message: " << message <<"\n";
 //    throw GPException(st.str().c_str());
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR(st.str());
 #endif
 

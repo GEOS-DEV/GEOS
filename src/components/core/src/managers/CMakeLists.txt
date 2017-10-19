@@ -6,12 +6,7 @@ set(geosx_headers
   ${geosx_headers}
     managers/CommandLineParser.hpp
     managers/DomainPartition.hpp
-    managers/CellBlockManager.hpp
-    managers/CellBlock.hpp
-    managers/CellBlockSubRegion.hpp
     managers/EventManager.hpp
-    managers/FaceManager.hpp
-    managers/NodeManager.hpp
     managers/Functions/FunctionBase.hpp
     managers/Functions/SymbolicFunction.hpp
     managers/Functions/TableFunction.hpp
@@ -19,10 +14,6 @@ set(geosx_headers
     managers/Functions/NewFunctionManager.hpp
     managers/ObjectManagerBase.hpp
     managers/ProblemManager.hpp
-    managers/ElementRegion.hpp
-    managers/ElementRegionManager.hpp
-    managers/MeshBody.hpp
-    managers/MeshLevel.hpp    
     PARENT_SCOPE )
 
 
@@ -33,24 +24,14 @@ set(geosx_core_sources
   ${geosx_core_sources}
     managers/CommandLineParser.cpp
   	managers/DomainPartition.cpp
-    managers/CellBlockManager.cpp
-    managers/CellBlock.cpp
-    managers/CellBlockSubRegion.cpp
     managers/EventManager.cpp
-    managers/FaceManager.cpp
-    managers/NodeManager.cpp
     managers/Functions/FunctionBase.cpp
     managers/Functions/SymbolicFunction.cpp
     managers/Functions/TableFunction.cpp
     managers/Functions/CompositeFunction.cpp
     managers/Functions/NewFunctionManager.cpp
     managers/ObjectManagerBase.cpp
-    managers/ProblemManager.cpp
-    managers/ElementRegion.cpp
-    managers/ElementRegionManager.cpp
-    managers/MeshBody.cpp
-    managers/MeshLevel.cpp    
-    
+    managers/ProblemManager.cpp    
     PARENT_SCOPE )
 
 if( 0 )

@@ -22,6 +22,7 @@
 #include "EpetraExt_MatrixMatrix.h"
 
 #include "common/Logger.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 namespace geosx
 {
@@ -48,7 +49,7 @@ static double ClearRow ( Epetra_FECrsMatrix * matrix,
     if( values!=NULL && col_indices!=NULL && num_entries>0 )
     {
       int* diag_find = std::find(col_indices,col_indices+num_entries-1, local_row);
-      int diag_index = (int)(diag_find - col_indices);
+      long int diag_index = (diag_find - col_indices);
 
       for (int j=0; j<num_entries; ++j)
       {
@@ -81,6 +82,28 @@ public:
     invalidBlock
   };
 
+  string BlockIDString( BlockIDs const id ) const
+  {
+    string rval;
+    switch( id )
+    {
+      case BlockIDs::displacementBlock:
+        rval = "displacementBlock";
+        break;
+      case BlockIDs::fluidPressureBlock:
+        rval = "fluidPressureBlock";
+        break;
+      case BlockIDs::temperatureBlock:
+        rval = "temperatureBlock";
+        break;
+      default:
+        rval = "invalidBlock";
+        break;
+    }
+    return rval;
+  }
+
+
   EpetraBlockSystem();
 
   ~EpetraBlockSystem();
@@ -96,7 +119,7 @@ public:
     }
     else
     {
-      throw GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+toString(id)+") has already been registered to index "+ toString(index) );
+      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+BlockIDString(id)+") has already been registered to index "+ std::to_string(m_blockIndex[id]) );
     }
 
     if( m_blockID[m_numBlocks] == BlockIDs::invalidBlock )
@@ -105,7 +128,7 @@ public:
     }
     else
     {
-      throw GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+toString(id)+") has already been registered to index "+ toString(index) );
+      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+BlockIDString(id)+") has already been registered to index "+ std::to_string(m_numBlocks) );
     }
 
 
@@ -115,7 +138,7 @@ public:
     }
     else
     {
-      throw GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Block ("+toString(block)+") has already been used to register a solver named "+ m_solverNames[block] );
+      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Block ("+std::to_string(m_numBlocks)+") has already been used to register a solver named "+ m_solverNames[m_numBlocks] );
     }
 
 
@@ -125,7 +148,7 @@ public:
     }
     else
     {
-      throw GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Solver Name ("+name+") has already been used to register index "+ toString(index)+ ". Ya betta check yoself befo ya wreck yoself.\n" );
+      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Solver Name ("+name+") has already been used to register index "+ std::to_string(m_numBlocks) );
     }
 
 
@@ -153,7 +176,7 @@ public:
   {
     if( m_blockID[index]==BlockIDs::invalidBlock )
     {
-      throw GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetRowMap():m_blockID isn't set \n");
+      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetRowMap():m_blockID isn't set \n");
     }
     return m_rowMap[ index ].get();
   }
@@ -189,7 +212,7 @@ public:
   {
     if( m_blockID[index]==BlockIDs::invalidBlock )
     {
-      throw GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetSolutionVector():m_blockID isn't set \n");
+      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetSolutionVector():m_blockID isn't set \n");
     }
     return m_solution[ index ].get();
   }
@@ -225,7 +248,7 @@ public:
   {
     if( m_blockID[index]==BlockIDs::invalidBlock )
     {
-      throw GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n");
+      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n");
     }
     return m_rhs[ index ].get();
   }
@@ -250,7 +273,7 @@ public:
   {
     if( m_blockID[rowIndex]==BlockIDs::invalidBlock && m_blockID[colIndex]==BlockIDs::invalidBlock )
     {
-      throw GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetSparsity():m_blockID isn't set \n");
+      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetSparsity():m_blockID isn't set \n");
     }
     return m_sparsity[ rowIndex ][ colIndex ].get() ;
   }
@@ -280,7 +303,7 @@ public:
   {
     if( m_blockID[rowIndex]==BlockIDs::invalidBlock && m_blockID[colIndex]==BlockIDs::invalidBlock )
     {
-      throw GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetMatrix():m_blockID isn't set \n");
+      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetMatrix():m_blockID isn't set \n");
     }
     return m_matrix[ rowIndex ][ colIndex ].get() ;
   }

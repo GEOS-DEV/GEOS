@@ -36,7 +36,7 @@ set(ENABLE_MATHPRESSO ON CACHE BOOL  "Enables mathpresso Plugin")
 set(CHAI_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/chai/" CACHE PATH "" FORCE )
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
-option( ENABLE_CALIPER "Enables CALIPER" ON )
+option( ENABLE_CALIPER "Enables CALIPER" OFF )
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)

@@ -10,58 +10,37 @@ if(NOT BLT_CXX_STD STREQUAL c++14)
 endif(NOT BLT_CXX_STD STREQUAL c++14)
 
 if( (CMAKE_CXX_STANDARD EQUAL 11) OR (CMAKE_CXX_STANDARD EQUAL 14) )
-	add_definitions("-DUSE_CXX11")
+  add_definitions("-DUSE_CXX11")
 endif()
 
 set( thirdPartyLibs "")
 
 if( ENABLE_CHAI )
   set( thirdPartyLibs ${thirdPartyLibs} chai )
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CHAI=1)
-else()
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CHAI=0)  
 endif()
 
 if( ENABLE_RAJA )
   set( thirdPartyLibs ${thirdPartyLibs} raja )
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_RAJA=1)
-else()
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_RAJA=0)  
 endif()
 
 if( ENABLE_CALIPER )
   set( thirdPartyLibs ${thirdPartyLibs} caliper -lunwind -lpapi )
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CALIPER=1)
-else()
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_CALIPER=0)  
 endif()
 
 if( ENABLE_FPARSER )
   set( thirdPartyLibs ${thirdPartyLibs} fparser )
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_FPARSER=1)
-else()
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_FPARSER=0)  
 endif()
 
 if( ENABLE_PYTHON )
   set( thirdPartyLibs ${thirdPartyLibs} python_interp )
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=1)
-else()
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_PYTHON=0)  
 endif()
 
 
-#if( ATK_FOUND )
-#  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DATK_FOUND=1)
-#else()
-#  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DATK_FOUND=0)  
-#endif()
+if( ATK_FOUND )
+endif()
 
 if( ENABLE_MATHPRESSO )
   set( thirdPartyLibs ${thirdPartyLibs} mathpresso )
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_MATHPRESSO=1)
-else()
-  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DUSE_MATHPRESSO=0)  
 endif()
 
 
@@ -146,23 +125,9 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
     blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-cast-align)
     
   endif()
-
-	if(0)
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-global-constructors)
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-exit-time-destructors)
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-reserved-id-macro)
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-undef)
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-extra-semi)
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-deprecated)
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-switch-enum)
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-missing-noreturn)
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-weak-vtables)
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-used-but-marked-unused)
-    blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-shift-sign-overflow)
-	endif()	
 	
 	# FLAGS TO SUPRESS RAJA WARNINGS
-	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-shorten-64-to-32)
+#	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-shorten-64-to-32)
 
 endif()
 

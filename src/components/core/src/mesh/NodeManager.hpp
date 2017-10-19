@@ -47,7 +47,7 @@
 #ifndef NODEMANAGERT_H_
 #define NODEMANAGERT_H_
 
-#include "ObjectManagerBase.hpp"
+#include "managers/ObjectManagerBase.hpp"
 #include <string.h>
 #include "CellBlockManager.hpp"
 
@@ -97,7 +97,8 @@ public:
   ~NodeManager();
 
   static string CatalogName() { return dataRepository::keys::nodeManager; }
-  string getCatalogName() const      { return NodeManager::CatalogName(); }
+  string getCatalogName() const override final
+  { return NodeManager::CatalogName(); }
 
 
   void FillDocumentationNode( ManagedGroup * const group ) override final;
@@ -128,7 +129,8 @@ public:
 
   struct viewKeysStruct
   {
-    dataRepository::ViewKey referencePosition = { "ReferencePosition" };
+    static constexpr auto referencePositionString = "ReferencePosition";
+    dataRepository::ViewKey referencePosition = { referencePositionString };
     dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
     dataRepository::ViewKey nodeList           = { "nodeList" };
     dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };

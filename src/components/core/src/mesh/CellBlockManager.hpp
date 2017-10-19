@@ -37,77 +37,94 @@
 //  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
- * ElementManagerT.cpp
- *
- *  Created on: Sep 14, 2010
- *      Author: settgast1
+/**
+ * @file ElementManagerT.h
+ * @author Randolph Settgast
+ * @date created on Sep 14, 2010
  */
 
-#include "CellBlockManager.hpp"
+#ifndef ELEMENTMANAGERT_H_
+#define ELEMENTMANAGERT_H_
 
-#include "FaceManager.hpp"
-//#include "legacy/IO/BinStream.h"
-#include <map>
-#include <vector>
-//#include "legacy/Constitutive/Material/MaterialFactory.h"
-//#include "legacy/ArrayT/ArrayT.h"
+//#include "Common.h"
+//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
+#include "CellBlock.hpp"
+#include "managers/ObjectManagerBase.hpp"
+
+//#include "legacy/ArrayT/bufvector.h"
 
 namespace geosx
 {
-using namespace dataRepository;
 
-CellBlockManager::CellBlockManager(  string const & name, ManagedGroup * const parent ):
-ObjectManagerBase(name,parent)
+namespace dataRepository
 {
-  this->RegisterGroup<ManagedGroup>(keys::cellBlocks);
+namespace keys
+{
+string const cellBlocks = "cellBlocks";
+}
 }
 
-CellBlockManager::~CellBlockManager()
-{
-  // TODO Auto-generated destructor stub
-}
 
-void CellBlockManager::resize( int32_array const & numElements,
-                             string_array const & regionNames,
-                             string_array const & elementTypes )
+/**
+ * Class to manage the data stored at the element level.
+ */
+class CellBlockManager : public ObjectManagerBase
 {
-  int32 const numRegions = regionNames.size();
-//  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
-  for( int32 reg=0 ; reg<numRegions ; ++reg )
+public:
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
+  static string CatalogName()
   {
-    CellBlock * elemRegion = this->GetRegion( regionNames[reg] );
-    elemRegion->resize(numElements[reg]);
+    return "CellBlockManager";
   }
+
+  string getCatalogName() const override final
+  {
+    return CellBlockManager::CatalogName();
+  }
+
+
+
+
+  ///@}
+
+  CellBlockManager( string const &, ManagedGroup * const parent );
+  virtual ~CellBlockManager();
+
+
+//  void Initialize(  ){}
+
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
+
+  using ManagedGroup::resize;
+
+  void resize( int32_array const & numElements,
+               string_array const & regionNames,
+               string_array const & elementTypes );
+
+//  CellBlock & CreateRegion( string const & regionName,
+//                               string const & elementType,
+//                               int32 const & numElements );
+
+  CellBlock * GetRegion( string const & regionName )
+  {
+    return this->GetGroup(dataRepository::keys::cellBlocks)->GetGroup<CellBlock>(regionName);
+  }
+
+  template< typename LAMBDA >
+  void forCellBlocks( LAMBDA lambda )
+  {
+    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
+    elementRegions->forSubGroups<CellBlock>( lambda );
+  }
+private:
+  CellBlockManager( const CellBlockManager& );
+  CellBlockManager& operator=( const CellBlockManager&);
+
+
+};
 }
-
-
-//CellBlock & CellBlockManager::CreateRegion( string const & regionName,
-//                                             string const & elementType,
-//                                             int32 const & numElements )
-//{
-////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
-////  elemRegion->resize(numElements);
-//}
-
-void CellBlockManager::CreateChild( string const & childKey, string const & childName )
-{
-//  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
-//  for (pugi::xml_node childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
-//  {
-//    if( childNode.name() == string("ElementRegion") )
-//    {
-//      std::string regionName = childNode.attribute("name").value();
-//      std::cout<<regionName<<std::endl;
-//
-//      CellBlock * elemRegion = elementRegions->RegisterGroup<CellBlock>( regionName );
-//      elemRegion->SetDocumentationNodes( nullptr );
-//      elemRegion->RegisterDocumentationNodes();
-//      elemRegion->ReadXML(childNode);
-//    }
-//  }
-}
-
-
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlockManager, string const &, ManagedGroup * const )
-}
+#endif /* ELEMENTMANAGERT_H_ */

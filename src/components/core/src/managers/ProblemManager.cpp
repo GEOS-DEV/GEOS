@@ -7,7 +7,7 @@
 
 #include "ProblemManager.hpp"
 
-#if USE_CALIPER == 1
+#ifdef USE_CALIPER
 //#include "caliper/Annotation.h"
 #endif
 
@@ -19,16 +19,12 @@
 #include "MeshUtilities/MeshManager.hpp"
 #include "MeshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "CellBlockManager.hpp"
-#include "ElementRegionManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 
-// #include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-#include "managers/MeshBody.hpp"
-#include "managers/MeshLevel.hpp"
-// #include "NodeManager.hpp"
+#include "mesh/MeshBody.hpp"
+// #include "managers/MeshLevel.hpp"
 namespace geosx
 {
 
@@ -488,24 +484,21 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
     partition.setPartitions( xpar,  ypar, zpar );
   }
 
-  // // Generate Meshes
-  // ManagedGroup * meshGenerators = this->GetGroup(groupKeys.meshGenerators);
-  // meshGenerators->forSubGroups<MeshGenerator>([this, domain]( MeshGenerator * meshGen ) -> void
+  // Do we want to do this here?
+  // MeshManager * meshManager = this->GetGroup(groupKeys.meshManager);
+  // meshManager->GenerateMeshes(domain);
+
+  // for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   // {
-  //   meshGen->GenerateMesh( domain );
-  // });
+  //   NodeManager * const nodeManager = ManagedGroup::group_cast<MeshBody*>(mesh.second.get())->getMeshLevel(0)->getNodeManager();
 
-  // ManagedGroup * geometricObjects = this->GetGroup(keys::geometricObjects);
-  // MeshUtilities::GenerateNodesets( geometricObjects,
-  //                                  domain->GetGroup(keys::FEM_Nodes) );
+  //   ManagedGroup * geometricObjects = this->GetGroup(keys::geometricObjects);
 
-//  domain->GenerateSets();
+  //   MeshUtilities::GenerateNodesets( geometricObjects,
+  //                                    nodeManager );
 
-//  // Initialize solvers
-//  m_physicsSolverManager->forSubGroups<SolverBase>( [this, domain]( SolverBase & solver ) -> void
-//  {
-//    solver.Initialize( domain );
-//  });
+  // }
+
 }
 
 
@@ -513,12 +506,13 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
   DomainPartition * domain  = getDomainPartition();
 
-  ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  ManagedGroup * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
-  FaceManager * const faceManager = meshLevel->GetGroup<FaceManager>(meshLevel->groupKeys.faceManager);
 
   ElementRegionManager * elementManager = domain->GetGroup<ElementRegionManager>( keys::FEM_Elements );
+  
+  // TO DO: Fix this
   // NodeManager * nodeManager = domain->GetGroup<NodeManager>( keys::FEM_Nodes );
   // faceManager->BuildFaces( nodeManager, elementManager );
 
@@ -526,7 +520,7 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 
 void ProblemManager::RunSimulation()
 {
-#if USE_CALIPER == 1
+#ifdef USE_CALIPER
 //  cali::Annotation runSimulationAnnotation = cali::Annotation("RunSimulation").begin();
 #endif
   DomainPartition * domain  = getDomainPartition();
@@ -583,7 +577,7 @@ void ProblemManager::RunSimulation()
 //  WriteSilo( cycle, time );
 
 
-#if USE_CALIPER == 1
+#ifdef USE_CALIPER
 //  runSimulationAnnotation.end();
 #endif
 }

@@ -9,8 +9,6 @@
 
 #include "../MPI_Communications/SpatialPartition.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "NodeManager.hpp"
-#include "managers/ElementRegionManager.hpp"
 
 #include "fileIO/silo/SiloFile.hpp"
 #include "common/Logger.hpp"
@@ -39,8 +37,8 @@ DomainPartition::~DomainPartition()
 void DomainPartition::BuildDataStructure( ManagedGroup * const )
 {
 
-  this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
-  this->RegisterGroup<ElementRegionManager>(keys::FEM_Elements);
+//  this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
+//  this->RegisterGroup<ElementRegionManager>(keys::FEM_Elements);
   this->RegisterGroup<CellBlockManager>(keys::cellManager);
 //  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
 }
@@ -63,8 +61,8 @@ void DomainPartition::InitializationOrder( string_array & order )
   }
 
   {
-    order.push_back(keys::FEM_Elements);
-    usedNames.insert(keys::FEM_Elements);
+    order.push_back(groupKeysStruct::meshBodiesString);
+    usedNames.insert(groupKeysStruct::meshBodiesString);
   }
 
 
@@ -104,7 +102,9 @@ void DomainPartition::SetMaps(  )
 
 void DomainPartition::GenerateSets(  )
 {
-  ManagedGroup * nodeManager = this->GetGroup(keys::FEM_Nodes);
+  MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
+  ManagedGroup * nodeManager = mesh->getNodeManager();
+
   dataRepository::ManagedGroup const * nodeSets = nodeManager->GetGroup(dataRepository::keys::sets);
 
   std::map< string, int32_array > nodeInSet;
@@ -128,7 +128,7 @@ void DomainPartition::GenerateSets(  )
   }
 
 
-  ElementRegionManager * elementRegionManager = this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
+  ElementRegionManager * elementRegionManager = mesh->getElemManager();
 
   elementRegionManager->forElementRegions( [&]( ElementRegion * elementRegion )
   {
@@ -228,7 +228,10 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 //  if (m_feElementManager->m_numElems > 0)
   {
 
-    NodeManager const * nodeManager = this->GetGroup<NodeManager>(keys::FEM_Nodes);
+    MeshLevel const * const mesh = this->getMeshBody(0)->getMeshLevel(0);
+    NodeManager const * const nodeManager = mesh->getNodeManager();
+
+//    NodeManager const * nodeManager = this->GetGroup<NodeManager>(keys::FEM_Nodes);
     localIndex numNodes = nodeManager->size();
 
     r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::ReferencePosition);
@@ -260,7 +263,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     coords[1] = ycoords.data();
     coords[2] = zcoords.data();
 
-    ElementRegionManager const * elementManager = this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
+    ElementRegionManager const * const elementManager = mesh->getElemManager();
     const int numElementRegions = elementManager->GetGroup(keys::elementRegions)->GetSubGroups().size();
     Array1dT<localIndex*> meshConnectivity(numElementRegions);
     Array1dT<int*> isGhostElement(numElementRegions);

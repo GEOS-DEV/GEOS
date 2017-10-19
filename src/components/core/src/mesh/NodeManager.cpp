@@ -45,7 +45,7 @@
  */
 
 #include "NodeManager.hpp"
-#include "DomainPartition.hpp"
+//#include "managers/DomainPartition.hpp"
 //#include "ObjectManagers/FaceManagerT.h"
 //#include "ObjectManagers/EdgeManagerT.h"
 //#include "ObjectManagers/ElementManagerT.h"
@@ -127,7 +127,7 @@ void NodeManager::FillDocumentationNode( ManagedGroup * const group )
                               "map to element region",
                               "",
                               "",
-                              0,
+                              1,
                               0,
                               0 );
 
@@ -140,7 +140,7 @@ void NodeManager::FillDocumentationNode( ManagedGroup * const group )
                               "map to element sub regions",
                               "",
                               "",
-                              0,
+                              1,
                               0,
                               0 );
 
@@ -153,10 +153,22 @@ void NodeManager::FillDocumentationNode( ManagedGroup * const group )
                               "map to element in a subregion",
                               "",
                               "",
-                              0,
+                              1,
                               0,
                               0 );
 
+  docNode->AllocateChildNode( viewKeysStruct::referencePositionString,
+                              viewKeysStruct::referencePositionString,
+                              -1,
+                              "r1_array",
+                              "r1_array",
+                              "reference position of nodes",
+                              "reference position of nodes",
+                              "",
+                              "",
+                              1,
+                              0,
+                              0 );
 }
 
 
