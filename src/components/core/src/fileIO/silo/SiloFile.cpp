@@ -2088,7 +2088,7 @@ void SiloFile::DBWriteWrapper( const std::string& subdir, const std::map< std::s
   DBSetDir( m_dbFilePtr, ".." );
 
 }
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<int32> >& );
+template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<integer> >& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<int64> >& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, lArray2d>& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, Array1dT<lArray1d> >& );
@@ -2240,7 +2240,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<TYPE>& data ) co
     //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
   }
 }
-template void SiloFile::DBReadWrapper( const std::string&, array<int32>& ) const;
+template void SiloFile::DBReadWrapper( const std::string&, array<integer>& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, array<int64>& ) const;
 //template void SiloFile::DBReadWrapper( const std::string&, iArray1d& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, rArray1d& ) const;
@@ -2619,7 +2619,7 @@ void SiloFile::DBReadWrapper( const std::string& subdir, std::map< std::string, 
   DBSetDir( m_dbFilePtr, ".." );
 
 }
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<int32> >& ) const;
+template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<integer> >& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<int64> >& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, lArray2d>& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, Array1dT<lArray1d> >& ) const;
@@ -2769,7 +2769,7 @@ void** SiloFile::GetDataVar( const std::string& fieldName,
 
   return rval;
 }
-template void** SiloFile::GetDataVar<int32>( const std::string&, const std::string&, const Array1dT<localIndex>::size_type , const int, const int, const realT, const std::string& ) const;
+template void** SiloFile::GetDataVar<integer>( const std::string&, const std::string&, const Array1dT<localIndex>::size_type , const int, const int, const realT, const std::string& ) const;
 template void** SiloFile::GetDataVar<int64>( const std::string&, const std::string&, const Array1dT<globalIndex>::size_type , const int, const int, const realT, const std::string& ) const;
 
 //template void** SiloFile::GetDataVar<int>( const std::string&, const std::string&, const Array1dT<int>::size_type , const int, const int, const realT, const std::string& ) const;

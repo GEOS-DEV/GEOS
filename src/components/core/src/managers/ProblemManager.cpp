@@ -132,7 +132,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.beginFromRestart.Key(),
                                      viewKeys.beginFromRestart.Key(),
                                      -1,
-                                     "int32",
+                                     "integer",
                                      "",
                                      "Flag to indicate restart run",
                                      "Flag to indicate restart run",
@@ -145,7 +145,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.xPartitionsOverride.Key(),
                                      viewKeys.xPartitionsOverride.Key(),
                                      -1,
-                                     "int32",
+                                     "integer",
                                      "",
                                      "Number of partitions in the x-direction",
                                      "Number of partitions in the x-direction",
@@ -158,7 +158,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.yPartitionsOverride.Key(),
                                      viewKeys.yPartitionsOverride.Key(),
                                      -1,
-                                     "int32",
+                                     "integer",
                                      "",
                                      "Number of partitions in the y-direction",
                                      "Number of partitions in the y-direction",
@@ -171,7 +171,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.zPartitionsOverride.Key(),
                                      viewKeys.zPartitionsOverride.Key(),
                                      -1,
-                                     "int32",
+                                     "integer",
                                      "",
                                      "Number of partitions in the z-direction",
                                      "Number of partitions in the z-direction",
@@ -184,7 +184,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.overridePartitionNumbers.Key(),
                                      viewKeys.overridePartitionNumbers.Key(),
                                      -1,
-                                     "int32",
+                                     "integer",
                                      "",
                                      "Flag to indicate partition number override",
                                      "Flag to indicate partition number override",
@@ -462,11 +462,11 @@ void ProblemManager::ParseInputFile()
     elementManager->ReadXML(topLevelNode);
 
 
-//    map<string,int32> constitutiveSizes;
+//    map<string,integer> constitutiveSizes;
 //
 //    elementManager->forElementRegions([ this, domain, &constitutiveSizes ]( ElementRegion& elementRegion ) -> void
 //    {
-//      map<string,int32> sizes = elementRegion.SetConstitutiveMap(domain);
+//      map<string,integer> sizes = elementRegion.SetConstitutiveMap(domain);
 //      for( auto& entry : sizes )
 //      {
 //        constitutiveSizes[entry.first] += entry.second;

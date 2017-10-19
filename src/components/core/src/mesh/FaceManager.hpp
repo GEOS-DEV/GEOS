@@ -83,12 +83,12 @@ public:
 
   array< localIndex_array > const & nodeList() const        { return this->getReference< array< localIndex_array > >(viewKeys.nodeList); }
   array< localIndex_array > & nodeList()                    { return this->getReference< array< localIndex_array > >(viewKeys.nodeList); }
-  Array2dT<integer> const & elementRegionList() const    { return this->getReference< Array2dT<integer> >(viewKeys.elementRegionList); }
-  Array2dT<integer> & elementRegionList()                { return this->getReference< Array2dT<integer> >(viewKeys.elementRegionList); }
-  Array2dT<integer> const & elementSubRegionList() const { return this->getReference< Array2dT<integer> >(viewKeys.elementSubRegionList); }
-  Array2dT<integer> & elementSubRegionList()             { return this->getReference< Array2dT<integer> >(viewKeys.elementSubRegionList); }
-  Array2dT<integer> const & elementList() const          { return this->getReference< Array2dT<integer> >(viewKeys.elementList); }
-  Array2dT<integer> & elementList()                      { return this->getReference< Array2dT<integer> >(viewKeys.elementList); }
+  Array2dT<localIndex> const & elementRegionList() const    { return this->getReference< Array2dT<localIndex> >(viewKeys.elementRegionList); }
+  Array2dT<localIndex> & elementRegionList()                { return this->getReference< Array2dT<localIndex> >(viewKeys.elementRegionList); }
+  Array2dT<localIndex> const & elementSubRegionList() const { return this->getReference< Array2dT<localIndex> >(viewKeys.elementSubRegionList); }
+  Array2dT<localIndex> & elementSubRegionList()             { return this->getReference< Array2dT<localIndex> >(viewKeys.elementSubRegionList); }
+  Array2dT<localIndex> const & elementList() const          { return this->getReference< Array2dT<localIndex> >(viewKeys.elementList); }
+  Array2dT<localIndex> & elementList()                      { return this->getReference< Array2dT<localIndex> >(viewKeys.elementList); }
 
 
 

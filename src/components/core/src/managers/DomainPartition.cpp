@@ -82,13 +82,13 @@ void DomainPartition::SetMaps(  )
   // ElementRegionManager * elementRegionManager = this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
 
   // {
-  //  int32_array & elementRegionMap = nodeManager->getReference(keys::elementRegionMap);
-  //  int32_array & elementSubRegionMap = nodeManager->getReference(keys::elementSubRegionMap);
-  //  int32_array & elementMap = nodeManager->getReference(keys::elementMap);
+  //  integer_array & elementRegionMap = nodeManager->getReference(keys::elementRegionMap);
+  //  integer_array & elementSubRegionMap = nodeManager->getReference(keys::elementSubRegionMap);
+  //  integer_array & elementMap = nodeManager->getReference(keys::elementMap);
 
   //  ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
-  //  int32 elementRegionIndex = 0;
+  //  integer elementRegionIndex = 0;
   //  elementRegionManager->forElementRegions( [&](ElementRegion& elementRegion)-> void
   //  {
   //    elementRegion.forCellBlocks( [&]( CellBlockSubRegion & subRegion )->void

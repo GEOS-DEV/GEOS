@@ -111,7 +111,7 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-//  map<string,int32> SetConstitutiveMap( dataRepository::ManagedGroup const & domain );
+//  map<string,integer> SetConstitutiveMap( dataRepository::ManagedGroup const & domain );
 
   virtual ~CellBlock();
 

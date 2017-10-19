@@ -220,24 +220,18 @@ public:
   enum class TypeIDs
   {
     integer_id,
-    uint32_id,
-    int64_id,
-    uint64_id,
-    real32_id,
-    real64_id,
     localIndex_id,
     globalIndex_id,
+    real32_id,
+    real64_id,
     r1Tensor_id,
     r2Tensor_id,
     r2SymTensor_id,
     integer_array_id,
-    uint32_array_id,
-    int64_array_id,
-    uint64_array_id,
-    real32_array_id,
-    real64_array_id,
     localIndex_array_id,
     globalIndex_array_id,
+    real32_array_id,
+    real64_array_id,
     r1_array_id,
     r2_array_id,
     r2Sym_array_id,
@@ -253,9 +247,6 @@ public:
     const std::unordered_map<string,TypeIDs> type_names =
     {
       { "integer",        TypeIDs::integer_id },
-      { "uint32",       TypeIDs::uint32_id },
-      { "int64",        TypeIDs::int64_id },
-      { "uint64",       TypeIDs::uint64_id },
       { "localIndex",   TypeIDs::localIndex_id },
       { "globalIndex",  TypeIDs::globalIndex_id },
       { "real32",       TypeIDs::real32_id },
@@ -264,13 +255,10 @@ public:
       { "R2Tensor",     TypeIDs::r2Tensor_id },
       { "R2SymTensor",  TypeIDs::r2SymTensor_id },
       { "integer_array",  TypeIDs::integer_array_id },
-      { "uint32_array", TypeIDs::uint32_array_id },
-      { "int64_array",  TypeIDs::int64_array_id },
-      { "uint64_array", TypeIDs::uint64_array_id },
-      { "real32_array", TypeIDs::real32_array_id },
-      { "real64_array", TypeIDs::real64_array_id },
       { "localIndex_array",   TypeIDs::localIndex_array_id },
       { "globalIndex_array",  TypeIDs::globalIndex_array_id },
+      { "real32_array", TypeIDs::real32_array_id },
+      { "real64_array", TypeIDs::real64_array_id },
       { "r1_array",     TypeIDs::r1_array_id },
       { "r2_array",     TypeIDs::r2_array_id },
       { "r2Sym_array",  TypeIDs::r2Sym_array_id },
@@ -288,14 +276,16 @@ public:
     const std::unordered_map<std::type_index,TypeIDs> type_names =
     {
       { std::type_index(typeid(integer)),        TypeIDs::integer_id },
-      { std::type_index(typeid(real32)),       TypeIDs::real32_id },
-      { std::type_index(typeid(real64)),       TypeIDs::real64_id },
       { std::type_index(typeid(localIndex)),   TypeIDs::real32_id },
       { std::type_index(typeid(globalIndex)),  TypeIDs::real64_id },
+      { std::type_index(typeid(real32)),       TypeIDs::real32_id },
+      { std::type_index(typeid(real64)),       TypeIDs::real64_id },
       { std::type_index(typeid(R1Tensor)),     TypeIDs::r1Tensor_id },
       { std::type_index(typeid(R2Tensor)),     TypeIDs::r2Tensor_id },
       { std::type_index(typeid(R2SymTensor)),  TypeIDs::r2SymTensor_id },
       { std::type_index(typeid(integer_array)),  TypeIDs::integer_array_id },
+      { std::type_index(typeid(localIndex_array)),  TypeIDs::localIndex_array_id },
+      { std::type_index(typeid(globalIndex_array)),  TypeIDs::globalIndex_array_id },
       { std::type_index(typeid(real32_array)), TypeIDs::real32_array_id },
       { std::type_index(typeid(real64_array)), TypeIDs::real64_array_id },
       { std::type_index(typeid(r1_array)),     TypeIDs::r1_array_id },
@@ -325,18 +315,12 @@ public:
     std::unordered_map<std::string, std::string> regexMap = 
     {
       {"integer", ri},
-      {"uint32", ru},
-      {"int64", ri},
-      {"uint64", ru},
       {"real32", rr},
       {"real64", rr},
       {"R1Tensor", r1},
       {"R2Tensor", r2},
       {"R2SymTensor", r2s},
       {"integer_array", "((" + ri + ",? )*)?" + ri},
-      {"uint32_array", "((" + ru + ",? )*)?" + ru},
-      {"int64_array", "((" + ri + ",? )*)?" + ri},
-      {"uint64_array", "((" + ru + ",? )*)?" + ru},
       {"real32_array", "((" + rr + ",? )*)?" + rr},
       {"real64_array", "((" + rr + ",? )*)?" + rr},
       {"r1_array", "((" + r1 + "; )*)?" + r1},
@@ -435,6 +419,16 @@ public:
       return lambda( integer_array(1) );
       break;
     }
+    case ( TypeIDs::localIndex_array_id ):
+    {
+      return lambda( localIndex_array(1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array_id ):
+    {
+      return lambda( globalIndex_array(1) );
+      break;
+    }
     case ( TypeIDs::real32_array_id ):
     {
       return lambda( real32_array(1) );
@@ -480,6 +474,16 @@ public:
     case ( TypeIDs::integer_array_id ):
     {
       return lambda( integer_array(1), integer(1) );
+      break;
+    }
+    case ( TypeIDs::localIndex_array_id ):
+    {
+      return lambda( localIndex_array(1), localIndex(1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array_id ):
+    {
+      return lambda( globalIndex_array(1), globalIndex() );
       break;
     }
     case ( TypeIDs::real32_array_id ):
@@ -555,6 +559,16 @@ public:
     case ( TypeIDs::integer_array_id ):
     {
       return lambda( integer_array(1) );
+      break;
+    }
+    case ( TypeIDs::localIndex_array_id ):
+    {
+      return lambda( localIndex_array(1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array_id ):
+    {
+      return lambda( globalIndex_array(1) );
       break;
     }
     case ( TypeIDs::real32_array_id ):
@@ -645,6 +659,16 @@ public:
     case ( TypeIDs::integer_array_id ):
     {
       return lambda( integer_array(1), integer(1) );
+      break;
+    }
+    case ( TypeIDs::localIndex_array_id ):
+    {
+      return lambda( localIndex_array(1), localIndex(1) );
+      break;
+    }
+    case ( TypeIDs::globalIndex_array_id ):
+    {
+      return lambda( globalIndex_array(1), globalIndex(1) );
       break;
     }
     case ( TypeIDs::real32_array_id ):

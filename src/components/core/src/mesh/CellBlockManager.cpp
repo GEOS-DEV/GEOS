@@ -84,7 +84,7 @@ void CellBlockManager::resize( integer_array const & numElements,
 
 //CellBlock & CellBlockManager::CreateRegion( string const & regionName,
 //                                             string const & elementType,
-//                                             int32 const & numElements )
+//                                             integer const & numElements )
 //{
 ////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
 ////  elemRegion->resize(numElements);

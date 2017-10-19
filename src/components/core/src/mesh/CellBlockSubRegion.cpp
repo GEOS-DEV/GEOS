@@ -42,8 +42,8 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
   docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
                               viewKeys.numNodesPerElement.Key(),
                               -1,
-                              "int32",
-                              "int32",
+                              "integer",
+                              "integer",
                               "Number of Nodes Per Element",
                               "Number of Nodes Per Element",
                               "1",
@@ -55,8 +55,8 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
 //  docNode->AllocateChildNode( keys::numNodesPerElement,
 //                              keys::numNodesPerElement,
 //                              -1,
-//                              "int32",
-//                              "int32",
+//                              "integer",
+//                              "integer",
 //                              "Number of Nodes Per Element",
 //                              "Number of Nodes Per Element",
 //                              "1",
@@ -101,7 +101,7 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
 
 void CellBlockSubRegion::ReadXML_PostProcess()
 {
-//  int32 & numNodesPerElem = numNodesPerElement();
+//  integer & numNodesPerElem = numNodesPerElement();
 //  numNodesPerElem = 8;
 
 }

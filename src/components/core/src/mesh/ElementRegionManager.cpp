@@ -94,7 +94,7 @@ void ElementRegionManager::resize( integer_array const & numElements,
 
 //CellBlock & ZoneManager::CreateRegion( string const & regionName,
 //                                             string const & elementType,
-//                                             int32 const & numElements )
+//                                             integer const & numElements )
 //{
 ////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
 ////  elemRegion->resize(numElements);
@@ -121,11 +121,11 @@ void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 
 void ElementRegionManager::InitializePreSubGroups( ManagedGroup * const )
 {
-//    map<string,int32> constitutiveSizes;
+//    map<string,integer> constitutiveSizes;
 //    ManagedGroup * domain = problemManager.GetGroup(keys::domain);
 //    forElementRegions([&]( ElementRegion& elementRegion ) -> void
 //    {
-//      map<string,int32> sizes = elementRegion.SetConstitutiveMap( problemManager );
+//      map<string,integer> sizes = elementRegion.SetConstitutiveMap( problemManager );
 //      for( auto& entry : sizes )
 //      {
 //        constitutiveSizes[entry.first] += entry.second;

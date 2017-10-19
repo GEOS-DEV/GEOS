@@ -182,15 +182,15 @@ void checkScalarView(ViewWrapper<T> & view, int sfp, const T value) {
 //  ManagedGroup * mixed_group = real64_group->RegisterGroup("mixed");
 //  mixed_group->resize(group_size + 3);
 //
-//  /* Create a new int32_array ViewWrapper. */
-//  string view_int32_name = "int32";
-//  int view_int32_sfp = sfp++;
-//  int view_int32_size = 953;
-//  int32_array view_int32_data(view_int32_size);
-//  for (int32 i = 0; i < view_int32_size; i++) {
-//    view_int32_data[i] = i * i - 100 * i + 3;
+//  /* Create a new integer_array ViewWrapper. */
+//  string view_integer_name = "integer";
+//  int view_integer_sfp = sfp++;
+//  int view_integer_size = 953;
+//  integer_array view_integer_data(view_integer_size);
+//  for (integer i = 0; i < view_integer_size; i++) {
+//    view_integer_data[i] = i * i - 100 * i + 3;
 //  }
-//  createArrayView(mixed_group, view_int32_name, view_int32_sfp, view_int32_data);
+//  createArrayView(mixed_group, view_integer_name, view_integer_sfp, view_integer_data);
 //
 //  /* Create a new real32_array ViewWrapper. */
 //  string view_real32_name = "real32";
@@ -242,7 +242,7 @@ void checkScalarView(ViewWrapper<T> & view, int sfp, const T value) {
 //  ViewWrapper<real64_array> & view_real642_new = *real64_group_new->RegisterViewWrapper<real64_array>(view_real642_name);
 //
 //  ManagedGroup * mixed_group_new = real64_group_new->RegisterGroup("mixed");
-//  ViewWrapper<int32_array> & view_int32_new = *mixed_group_new->RegisterViewWrapper<int32_array>(view_int32_name);
+//  ViewWrapper<integer_array> & view_integer_new = *mixed_group_new->RegisterViewWrapper<integer_array>(view_integer_name);
 //  ViewWrapper<real32_array> & view_real32_new = *mixed_group_new->RegisterViewWrapper<real32_array>(view_real32_name);
 //  ViewWrapper<string> & view_what_new = *mixed_group_new->RegisterViewWrapper<string>(view_what_name);
 //  ViewWrapper<real64> & view_pi_new = *mixed_group_new->RegisterViewWrapper<real64>(view_pi_name);
@@ -263,7 +263,7 @@ void checkScalarView(ViewWrapper<T> & view, int sfp, const T value) {
 //  checkStringView(view_goodbye_new, view_goodbye_sfp, view_goodbye_str);
 //  checkArrayView(view_real641_new, view_real641_sfp, view_real641_data);
 //  checkArrayView(view_real642_new, view_real642_sfp, view_real642_data);
-//  checkArrayView(view_int32_new, view_int32_sfp, view_int32_data);
+//  checkArrayView(view_integer_new, view_integer_sfp, view_integer_data);
 //  checkArrayView(view_real32_new, view_real32_sfp, view_real32_data);
 //  checkStringView(view_what_new, view_what_sfp, view_what_str);
 //  checkScalarView(view_pi_new, view_pi_sfp, view_pi_value);

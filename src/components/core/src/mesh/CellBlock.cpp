@@ -86,8 +86,8 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
   docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
                               viewKeys.numNodesPerElement.Key(),
                               -1,
-                              "int32",
-                              "int32",
+                              "integer",
+                              "integer",
                               "Number of Nodes Per Element",
                               "Number of Nodes Per Element",
                               "1",
@@ -99,8 +99,8 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
 //  docNode->AllocateChildNode( viewKeys.nodeList.Key(),
 //                              viewKeys.nodeList.Key(),
 //                              -1,
-//                              "int32_array",
-//                              "int32_array",
+//                              "integer_array",
+//                              "integer_array",
 //                              "nodelist",
 //                              "nodelist",
 //                              "8",
@@ -112,8 +112,8 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
   docNode->AllocateChildNode( viewKeys.numFacesPerElement.Key(),
                               viewKeys.numFacesPerElement.Key(),
                               -1,
-                              "int32",
-                              "int32",
+                              "integer",
+                              "integer",
                               "Number of Faces Per Element",
                               "Number of Faces Per Element",
                               "6",
@@ -152,8 +152,8 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
 //  docNode->AllocateChildNode( keys::numNodesPerElement,
 //                              keys::numNodesPerElement,
 //                              -1,
-//                              "int32",
-//                              "int32",
+//                              "integer",
+//                              "integer",
 //                              "Number of Nodes Per Element",
 //                              "Number of Nodes Per Element",
 //                              "1",
@@ -166,23 +166,23 @@ void CellBlock::FillDocumentationNode( ManagedGroup * const group )
 
 void CellBlock::ReadXML_PostProcess()
 {
-//  int32 & numNodesPerElem = this->numNodesPerElement();
+//  integer & numNodesPerElem = this->numNodesPerElement();
 //  numNodesPerElem = 8;
   this->numNodesPerElement() = 8;
   this->numFacesPerElement() = 6;
 
 }
 
-//map<string,int32> CellBlock::SetConstitutiveMap( ManagedGroup const * domain )
+//map<string,integer> CellBlock::SetConstitutiveMap( ManagedGroup const * domain )
 //{
-//  map<string,int32> counts;
+//  map<string,integer> counts;
 //  view_rtype<mapPair_array> cellToConstitutiveMap = this->getData<mapPair_array>(keys::constitutiveMap);
 //  ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 //
 //  ConstitutiveManager::constitutiveMaps constitutiveMapPair = constitutiveManager->GetMaps( 1 );
 //
 //  string defaultMaterial = this->getData<string>(keys::defaultMaterial);
-//  int32 defaultMaterialIndex = constitutiveMapPair.second.at(defaultMaterial);
+//  integer defaultMaterialIndex = constitutiveMapPair.second.at(defaultMaterial);
 //
 //
 //  localIndex counter = 0;

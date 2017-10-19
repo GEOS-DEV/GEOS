@@ -62,7 +62,7 @@ using namespace constitutive;
 
 ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent ):
     ObjectManagerBase( name, parent )//,
-//    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<int32> >(keys::nodeList).reference())
+//    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<integer> >(keys::nodeList).reference())
 {
 //  m_toNodesRelation.resize2(0,8);
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap)->setSizedFromParent(1);
@@ -145,7 +145,7 @@ void ElementRegion::FillDocumentationNode( ManagedGroup * const group )
 
 void ElementRegion::ReadXML_PostProcess()
 {
-//  int32 & numNodesPerElem = *(getData<int32>(keys::numNodesPerElement));
+//  integer & numNodesPerElem = *(getData<integer>(keys::numNodesPerElement));
 //  numNodesPerElem = 8;
 }
 
@@ -170,7 +170,7 @@ void ElementRegion::ReadXML_PostProcess()
 void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
                                                      map<string,localIndex> & counts )
 {
-//  map<string,int32> counts;
+//  map<string,integer> counts;
   ManagedGroup const * domain = problemManager->GetGroup(keys::domain);
   ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 

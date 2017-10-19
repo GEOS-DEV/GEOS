@@ -113,7 +113,7 @@ public:
 
 //  CellBlock & CreateRegion( string const & regionName,
 //                               string const & elementType,
-//                               int32 const & numElements );
+//                               integer const & numElements );
 
   ElementRegion const * GetRegion( string const & regionName ) const
   {

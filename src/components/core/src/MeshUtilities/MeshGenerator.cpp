@@ -124,8 +124,8 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
   docNode->AllocateChildNode( keys::xElems,
                               keys::xElems,
                               -1,
-                              "int32_array",
-                              "int32_array",
+                              "integer_array",
+                              "integer_array",
                               "number of elements in x-direction",
                               "number of elements in x-direction",
                               "1",
@@ -137,8 +137,8 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
   docNode->AllocateChildNode( keys::yElems,
                               keys::yElems,
                               -1,
-                              "int32_array",
-                              "int32_array",
+                              "integer_array",
+                              "integer_array",
                               "number of elements in y-direction",
                               "number of elements in y-direction",
                               "1",
@@ -150,8 +150,8 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
   docNode->AllocateChildNode( keys::zElems,
                               keys::zElems,
                               -1,
-                              "int32_array",
-                              "int32_array",
+                              "integer_array",
+                              "integer_array",
                               "number of elements in z-direction",
                               "number of elements in z-direction",
                               "1",
@@ -228,8 +228,8 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
   docNode->AllocateChildNode( keys::trianglePattern,
                               keys::trianglePattern,
                               -1,
-                              "int32",
-                              "int32",
+                              "integer",
+                              "integer",
                               "",
                               "",
                               "0",
@@ -469,13 +469,13 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 
 
 
-  integer_set & xnegNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("xneg") )->reference();
-  integer_set & xposNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("xpos") )->reference();
-  integer_set & ynegNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("yneg") )->reference();
-  integer_set & yposNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("ypos") )->reference();
-  integer_set & znegNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("zneg") )->reference();
-  integer_set & zposNodes = nodeSets->RegisterViewWrapper<integer_set>( std::string("zpos") )->reference();
-  integer_set & allNodes  = nodeSets->RegisterViewWrapper<integer_set>( std::string("all") )->reference();
+  localIndex_set & xnegNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("xneg") )->reference();
+  localIndex_set & xposNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("xpos") )->reference();
+  localIndex_set & ynegNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("yneg") )->reference();
+  localIndex_set & yposNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("ypos") )->reference();
+  localIndex_set & znegNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("zneg") )->reference();
+  localIndex_set & zposNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("zpos") )->reference();
+  localIndex_set & allNodes  = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("all") )->reference();
 
 
   // partition based on even spacing to get load balance

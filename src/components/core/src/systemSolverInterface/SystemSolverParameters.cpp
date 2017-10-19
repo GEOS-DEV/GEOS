@@ -51,8 +51,8 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
   docNode->AllocateChildNode( viewKeys.verbosity.Key(),
                               viewKeys.verbosity.Key(),
                               -1,
-                              "int32",
-                              "int32",
+                              "integer",
+                              "integer",
                               "verbosity level",
                               "verbosity level",
                               "0",
@@ -91,8 +91,8 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
   docNode->AllocateChildNode( viewKeys.numKrylovIter.Key(),
                               viewKeys.numKrylovIter.Key(),
                               -1,
-                              "int32",
-                              "int32",
+                              "integer",
+                              "integer",
                               "verbosity level",
                               "verbosity level",
                               "100",
@@ -104,8 +104,8 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
   docNode->AllocateChildNode( viewKeys.useNewtonSolve.Key(),
                               viewKeys.useNewtonSolve.Key(),
                               -1,
-                              "int32",
-                              "int32",
+                              "integer",
+                              "integer",
                               "verbosity level",
                               "verbosity level",
                               "0",
@@ -142,13 +142,13 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
                               1,
                               0 );
 //  real64 m_krylovTol;          // Solver convergence criteria
-//  int32  m_numKrylovIter;
-//  int32  m_kspace;             // Number of krylov vectors before GMRES restart
+//  integer  m_numKrylovIter;
+//  integer  m_kspace;             // Number of krylov vectors before GMRES restart
 //  real64 m_ilut_fill;          // Fill factor for ILUT preconditioner
 //  real64 m_ilut_drop;          // Drop tolerance for ILUT preconditioner
 //  bool   m_useMLPrecond;       // Use ML preconditioner
 //  bool   m_useInnerSolver;     // Use row scaling
-//  int32  m_scalingOption;      // Use row scaling
+//  integer  m_scalingOption;      // Use row scaling
 //  bool   m_useBicgstab;        // Use bicgstab instead of gmres
 //  bool   m_useDirectSolver;    // Use Direct solver
 //  real64 m_KrylovResidualInit;
@@ -156,7 +156,7 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
 //
 //  bool   m_useNewtonSolve;    // Use Newton-Raphson iterations
 //  real64 m_newtonTol;
-//  int32  m_maxIterNewton;     // Maximum number of Newton-Raphson iterations
+//  integer  m_maxIterNewton;     // Maximum number of Newton-Raphson iterations
 }
 
 } /* namespace geosx */

@@ -238,9 +238,9 @@ public:
 
   struct resize_wrapper
   {
-    HAS_MEMBER_FUNCTION_VARIANT(resize,0,void,,VA_LIST(integer), VA_LIST(integer(1)))
-//    HAS_MEMBER_FUNCTION_VARIANT(resize,1,void,,VA_LIST(uint32), VA_LIST(uint32(1)))
-//    HAS_MEMBER_FUNCTION_VARIANT(resize,2,void,,VA_LIST(int64), VA_LIST(int64(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,0,void,,VA_LIST(localIndex), VA_LIST(localIndex(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,1,void,,VA_LIST(std::size_t), VA_LIST(std::size_t(1)))
+//    HAS_MEMBER_FUNCTION_VARIANT(resize,2,void,,VA_LIST(unsigned long long), VA_LIST(unsigned long long(1)))
 //    HAS_MEMBER_FUNCTION_VARIANT(resize,3,void,,VA_LIST(uint64), VA_LIST(uint64(1)))
 
 
@@ -251,13 +251,13 @@ public:
       return parent->m_data->resize(new_size);
     }
 
-//    template<class U = T>
-//    static typename std::enable_if<has_memberfunction_v1_resize<U>::value, void>::type
-//    resize(ViewWrapper * const parent, uint32 const new_size)
-//    {
-//      return parent->m_data->resize(new_size);
-//    }
-//
+    template<class U = T>
+    static typename std::enable_if<has_memberfunction_v1_resize<U>::value, void>::type
+    resize(ViewWrapper * const parent, std::size_t const new_size)
+    {
+      return parent->m_data->resize(new_size);
+    }
+
 //    template<class U = T>
 //    static typename std::enable_if<has_memberfunction_v2_resize<U>::value, void>::type
 //    resize(ViewWrapper * const parent, int64 const new_size)
@@ -273,7 +273,8 @@ public:
 //    }
 
     template<class U = T>
-    static typename std::enable_if<!(has_memberfunction_v0_resize<U>::value), void>::type
+    static typename std::enable_if<!(has_memberfunction_v0_resize<U>::value)&&
+                                   !(has_memberfunction_v1_resize<U>::value), void>::type
     resize(ViewWrapper * const, localIndex ) { return; }
   };
   using ViewWrapperBase::resize;

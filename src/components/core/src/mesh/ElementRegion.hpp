@@ -121,7 +121,7 @@ public:
 
   virtual ~ElementRegion();
 
-//  Array2dT<int32> & m_toNodesRelation;
+//  Array2dT<integer> & m_toNodesRelation;
 
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;

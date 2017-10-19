@@ -189,11 +189,10 @@ find_path( CALIPER_INCLUDE_DIRS caliper/Caliper.h
 
 set( caliper_lib_list caliper caliper-reader caliper-common  gotcha )
 
-blt_find_libraries( CALIPER_LIBRARIES
+blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES
                     NAMES ${caliper_lib_list}
                     PATHS ${CALIPER_DIR}/lib ${CALIPER_DIR}/lib64
                    )
-
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(CALIPER  DEFAULT_MSG
