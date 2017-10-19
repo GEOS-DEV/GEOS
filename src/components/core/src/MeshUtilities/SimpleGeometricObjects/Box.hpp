@@ -16,20 +16,32 @@ namespace geosx
 class Box : public SimpleGeometricObjectBase
 {
 public:
-  Box();
-  ~Box();
+  Box( const std::string& name,
+       ManagedGroup * const parent );
+
+  virtual ~Box();
 
   static string CatalogName() { return "Box"; }
 
-  void ReadXML( xmlWrapper::xmlNode const & xmlNode ) override final;
+  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+
+  virtual void ReadXML_PostProcess() override final;
 
   bool IsCoordInObject( const R1Tensor& coord ) const override final;
-  private:
+  
+private:
   R1Tensor m_min;
   R1Tensor m_max;
   realT m_strikeAngle;
   R1Tensor m_boxCenter;
   realT m_cosStrike, m_sinStrike;
+
+  struct viewKeyStruct
+  {
+    dataRepository::ViewKey xmin = { "xmin" };
+    dataRepository::ViewKey xmax = { "xmax" };
+  }viewKeys;
+
 
 };
 } /* namespace geosx */

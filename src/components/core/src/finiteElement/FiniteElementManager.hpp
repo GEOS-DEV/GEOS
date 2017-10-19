@@ -32,7 +32,7 @@ public:
   virtual ~FiniteElementManager();
 
   void FillDocumentationNode( dataRepository::ManagedGroup * const group );
-  void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override final;
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
 
 };

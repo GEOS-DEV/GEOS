@@ -40,7 +40,7 @@ public:
                        ManagedGroup * const parent );
 
   void FillDocumentationNode( dataRepository::ManagedGroup * const group );
-  void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   ~ConstitutiveManager();
 

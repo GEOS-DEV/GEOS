@@ -103,7 +103,7 @@ public:
   void InitializePreSubGroups( ManagedGroup * const ) override final;
   void InitializePostSubGroups( ManagedGroup * const ) override final;
 
-  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override ;
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   using ManagedGroup::resize;
 

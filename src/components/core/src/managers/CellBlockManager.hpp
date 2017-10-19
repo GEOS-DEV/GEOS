@@ -97,7 +97,7 @@ public:
 
 //  void Initialize(  ){}
 
-  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override ;
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   using ManagedGroup::resize;
 

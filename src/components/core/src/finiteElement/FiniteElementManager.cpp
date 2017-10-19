@@ -34,70 +34,28 @@ void FiniteElementManager::FillDocumentationNode( dataRepository::ManagedGroup *
   docNode->setSchemaType("Node");
 }
 
-void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
+void FiniteElementManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Reading Components for Numerical Methods:" << std::endl;
-  if ( node == nullptr )
+  if (strcmp(childKey.c_str(), keys::basisFunctions.c_str()) == 0)
   {
-    throw std::invalid_argument("Numerical Methods block not present in input xml file!");
+    // This will not place the pointer in a place where ReadXML will find:
+    // Maybe place it on this?
+    ManagedGroup * basisFunctions = this->GetGroup(keys::basisFunctions);
+    std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey );
+    basisFunctions->RegisterViewWrapper( childName, std::move(basis) );
+  }
+  else if (strcmp(childKey.c_str(), keys::quadratureRules.c_str()) == 0)
+  {
+    // This will not place the pointer in a place where ReadXML will find:
+    // Maybe place it on this?
+    ManagedGroup * quadratureRules = this->GetGroup(keys::quadratureRules);
+    std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey );
+    quadratureRules->RegisterViewWrapper( childName, std::move(quadrature) );
   }
   else
   {
-    xmlWrapper::xmlNode basisNode = node.child(keys::basisFunctions.c_str());
-    if( basisNode != nullptr )
-    {
-      ManagedGroup * basisFunctions = this->GetGroup(keys::basisFunctions);
-
-      for (xmlWrapper::xmlNode childNode=basisNode.first_child(); childNode; childNode=childNode.next_sibling())
-      {
-        string catalogName = childNode.name();
-        string name = childNode.attribute("name").value();
-        std::cout <<childNode.name()<<", "<<childNode.attribute("name").value()<< std::endl;
-
-        std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( catalogName );
-        basis->ReadXML( childNode );
-        basisFunctions->RegisterViewWrapper( name, std::move(basis) );
-      }
-    }
-
-    xmlWrapper::xmlNode quadratureNode = node.child(keys::quadratureRules.c_str());
-    if( quadratureNode != nullptr )
-    {
-      ManagedGroup * quadratureRules = this->GetGroup(keys::quadratureRules);
-
-      for (xmlWrapper::xmlNode childNode=quadratureNode.first_child(); childNode; childNode=childNode.next_sibling())
-      {
-        string catalogName = childNode.name();
-        string name = childNode.attribute("name").value();
-        std::cout <<childNode.name()<<", "<<childNode.attribute("name").value()<< std::endl;
-
-        std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( catalogName );
-        quadrature->ReadXML(childNode);
-        quadratureRules->RegisterViewWrapper( name, std::move(quadrature) );
-      }
-
-    }
-
-    xmlWrapper::xmlNode finiteElementNode = node.child(keys::finiteElements.c_str());
-    if( finiteElementNode != nullptr )
-    {
-//      ManagedGroup * feSpaces = RegisterGroup(keys::FE_Space);
-      for (xmlWrapper::xmlNode childNode=finiteElementNode.first_child(); childNode; childNode=childNode.next_sibling())
-      {
-        string catalogName = childNode.name();
-        string name = childNode.attribute("name").value();
-        std::cout <<childNode.name()<<", "<<childNode.attribute("name").value()<< std::endl;
-
-        std::unique_ptr<ManagedGroup> fem = ManagedGroup::CatalogInterface::Factory( catalogName, name, this );
-        fem->SetDocumentationNodes(nullptr);
-        fem->RegisterDocumentationNodes();
-        ManagedGroup * feSpace = this->RegisterGroup( name, std::move(fem) );
-        feSpace->ReadXML(childNode);
-
-      }
-
-    }
-
+    std::unique_ptr<ManagedGroup> fem = ManagedGroup::CatalogInterface::Factory( childKey, childName, this );
+    ManagedGroup * feSpace = this->RegisterGroup( childName, std::move(fem) );
   }
 }
 

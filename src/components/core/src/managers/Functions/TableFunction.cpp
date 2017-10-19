@@ -138,7 +138,6 @@ void TableFunction::FillDocumentationNode( dataRepository::ManagedGroup * const 
 
 void TableFunction::BuildDataStructure( ManagedGroup * const domain )
 {
-  RegisterDocumentationNodes();
 }
 
 void TableFunction::InitializeFunction()

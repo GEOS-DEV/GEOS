@@ -94,7 +94,6 @@ void CompositeFunction::FillDocumentationNode( dataRepository::ManagedGroup * co
 
 void CompositeFunction::BuildDataStructure( ManagedGroup * const domain )
 {
-  RegisterDocumentationNodes();
 }
 
 void CompositeFunction::InitializeFunction()

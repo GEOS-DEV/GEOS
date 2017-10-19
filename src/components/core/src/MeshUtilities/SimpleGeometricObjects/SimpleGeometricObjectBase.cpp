@@ -13,6 +13,22 @@ namespace geosx
 {
 
 
+SimpleGeometricObjectBase::SimpleGeometricObjectBase( std::string const & name,
+                                                      ManagedGroup * const parent ) :
+  ManagedGroup( name, parent )
+{}
+
+
+SimpleGeometricObjectBase::~SimpleGeometricObjectBase()
+{}
+
+
+SimpleGeometricObjectBase::CatalogInterface::CatalogType& SimpleGeometricObjectBase::GetCatalog()
+{
+  static SimpleGeometricObjectBase::CatalogInterface::CatalogType catalog;
+  return catalog;
+}
+
 
 //
 //// type strings

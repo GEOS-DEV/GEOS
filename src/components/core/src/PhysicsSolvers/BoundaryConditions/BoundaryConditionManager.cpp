@@ -40,17 +40,10 @@ BoundaryConditionManager::~BoundaryConditionManager()
   // TODO Auto-generated destructor stub
 }
 
-void BoundaryConditionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+void BoundaryConditionManager::CreateChild( string const & childKey, string const & childName )
 {
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
-  {
-    string const typeName = childNode.name();
-    string const name = childNode.attribute("name").value();
-    std::unique_ptr<BoundaryConditionBase> bc = BoundaryConditionBase::CatalogInterface::Factory( typeName, name, this );
-    bc->SetDocumentationNodes(nullptr);
-    bc->ReadXML(childNode);
-    this->RegisterGroup(name, std::move(bc) );
-  }
+  std::unique_ptr<BoundaryConditionBase> bc = BoundaryConditionBase::CatalogInterface::Factory( childKey, childName, this );
+  this->RegisterGroup(childName, std::move(bc) );
 }
 
 void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGroup * object,

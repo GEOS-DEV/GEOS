@@ -31,8 +31,6 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
 
 void SolverBase::BuildDataStructure( dataRepository::ManagedGroup * const /*domain*/ )
 {
-  this->RegisterViewWrapper<real64>(keys::maxDt);
-  this->RegisterViewWrapper<real64>(keys::courant);
 }
 
 void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const  )

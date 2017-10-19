@@ -1,18 +1,19 @@
 /*
- * MeshGenerator.h
+ * InternalMeshGenerator.h
  *
  *  Created on: Nov 19, 2012
  *      Author: settgast1
  */
 
-#ifndef MESHGENERATOR_H_
-#define MESHGENERATOR_H_
+#ifndef INTERNALMESHGENERATOR_H_
+#define INTERNALMESHGENERATOR_H_
 
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "MeshGeneratorBase.hpp"
 
 #if ATK_FOUND
 #include <slic/slic.hpp>
@@ -43,34 +44,35 @@ string const trianglePattern = "trianglePattern";
 class NodeManager;
 class DomainPartition;
 
-class MeshGenerator : public dataRepository::ManagedGroup
+class InternalMeshGenerator : public MeshGeneratorBase
 {
 public:
-  MeshGenerator() = delete;
+  InternalMeshGenerator( const std::string& name,
+                         ManagedGroup * const parent );
 
-  MeshGenerator( string const & name, ManagedGroup * const parent );
+  virtual ~InternalMeshGenerator();
 
-  virtual ~MeshGenerator();
+  static string CatalogName() { return "InternalMeshGenerator"; }
+
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const domain ) override;
 
-  void GenerateElementRegions( DomainPartition& domain );
+  virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
-  void GenerateMesh( //SpatialPartition& partition,
-                     DomainPartition * domain );
+  virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) override;
 
-  void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
-                         NodeManager * nodeManager );
+  // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
+  //                                NodeManager * nodeManager ) override;
 
-  void GetElemToNodesRelationInBox ( const std::string& elementType,
+  virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
                                      const int index[],
                                      const int& iEle,
                                      int nodeIDInBox[],
-                                     const int size);
+                                     const int size) override;
 
-  void RemapMesh ( DomainPartition * domain );
+  virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  void ReadXML_PostProcess() override final;
+  virtual void ReadXML_PostProcess() override final;
   
   int m_delayMeshDeformation;
 
@@ -231,4 +233,4 @@ public:
 };
 }
 
-#endif /* MESHGENERATOR_H_ */
+#endif /* INTERNALMESHGENERATOR_H_ */

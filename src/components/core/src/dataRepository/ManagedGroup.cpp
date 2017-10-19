@@ -222,9 +222,17 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
 {
   for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
+    // Get the child tag and name
     std::string childName = childNode.attribute("name").value();
+    if (childName.empty())
+    {
+      childName = childNode.name();
+    }
+
+    // Create children
     CreateChild(childNode.name(), childName);
     
+    // Add grandchildren
     ManagedGroup * newChild = this->GetGroup<ManagedGroup>(childName);
     if (newChild != nullptr)
     {
@@ -244,8 +252,6 @@ void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   
-  ReadXMLsub( targetNode );
-
   for( auto const & subDocEntry : docNode->m_child )
   {
     cxx_utilities::DocumentationNode subDocNode = subDocEntry.second;
@@ -256,17 +262,30 @@ void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
     }
   }
 
+  ReadXMLsub(targetNode);
+
   ReadXML_PostProcess();
 }
 
 void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
-  this->forSubGroups( [this,&targetNode]( ManagedGroup * subGroup ) -> void
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
-    subGroup->ReadXML( targetNode );
-  });
-}
+    // Get the child tag and name
+    std::string childName = childNode.attribute("name").value();
+    if (childName.empty())
+    {
+      childName = childNode.name();
+    }
 
+    // Read the xml on children
+    ManagedGroup * child = this->GetGroup<ManagedGroup>(childName);
+    if (child != nullptr)
+    {
+      child->ReadXML(childNode);
+    }
+  }
+}
 
 void ManagedGroup::PrintDataHierarchy()
 {

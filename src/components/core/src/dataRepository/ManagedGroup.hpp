@@ -305,7 +305,7 @@ template< typename T = ManagedGroup >
 
   virtual void ReadXML( xmlWrapper::xmlNode const & targetNode );
 
-  virtual void ReadXMLsub( xmlWrapper::xmlNode const & );
+  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
 
   virtual void ReadXML_PostProcess() {}
 

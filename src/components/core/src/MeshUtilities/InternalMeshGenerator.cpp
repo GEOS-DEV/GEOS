@@ -1,11 +1,11 @@
 /*
- * MeshGenerator.cpp
+ * InternalMeshGenerator.cpp
  *
  *  Created on: Nov 19, 2012
  *      Author: settgast1
  */
 
-#include "MeshGenerator.hpp"
+#include "InternalMeshGenerator.hpp"
 
 #include "managers/DomainPartition.hpp"
 #include "managers/NodeManager.hpp"
@@ -29,8 +29,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-MeshGenerator::MeshGenerator( string const & name, ManagedGroup * const parent ) :
-    ManagedGroup( name, parent ),
+InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup * const parent ) :
+    MeshGeneratorBase( name, parent ),
 //    m_vertices({this->RegisterViewWrapper<real64_array>(keys::xCoords).reference(),
 //                this->RegisterViewWrapper<real64_array>(keys::yCoords).reference(),
 //                this->RegisterViewWrapper<real64_array>(keys::zCoords).reference() }),
@@ -53,12 +53,12 @@ MeshGenerator::MeshGenerator( string const & name, ManagedGroup * const parent )
   m_dim = 3;
 }
 
-MeshGenerator::~MeshGenerator()
+InternalMeshGenerator::~InternalMeshGenerator()
 {
   // TODO Auto-generated destructor stub
 }
 
-void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void InternalMeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
 
   NodeManager * nodes    = domain->GetGroup<NodeManager>(keys::FEM_Nodes);
@@ -247,7 +247,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
  * @author settgast
  * @param domain
  */
-void MeshGenerator::GenerateElementRegions( DomainPartition& domain )
+void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {
   //  lvector numElements;
   //
@@ -260,7 +260,7 @@ void MeshGenerator::GenerateElementRegions( DomainPartition& domain )
 
 }
 
-void MeshGenerator::ReadXML_PostProcess()
+void InternalMeshGenerator::ReadXML_PostProcess()
 {
 
   real64_array const &  xCoords = this->getReference<real64_array>(keys::xCoords);
@@ -301,7 +301,7 @@ void MeshGenerator::ReadXML_PostProcess()
     else
     {
 #if ATK_FOUND
-      SLIC_ERROR("MeshGenerator: incorrect element type!");
+      SLIC_ERROR("InternalMeshGenerator: incorrect element type!");
 #endif
     }
 
@@ -314,7 +314,7 @@ void MeshGenerator::ReadXML_PostProcess()
       if( failFlag )
       {
 #if ATK_FOUND
-        SLIC_ERROR("vertex/element mismatch MeshGenerator::ReadXMLPost()");
+        SLIC_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
 #endif
       }
     }
@@ -331,7 +331,7 @@ void MeshGenerator::ReadXML_PostProcess()
       else
       {
 #if ATK_FOUND
-        SLIC_ERROR("MeshGenerator: The number of element types is inconsistent with the number of total block.");
+        SLIC_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
 #endif
       }
     }
@@ -384,7 +384,7 @@ void MeshGenerator::ReadXML_PostProcess()
         else
         {
 #if ATK_FOUND
-          SLIC_ERROR("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
+          SLIC_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
 #endif
         }
       }
@@ -437,12 +437,12 @@ void MeshGenerator::ReadXML_PostProcess()
  * @param partition
  * @param domain
  */
-void MeshGenerator::GenerateMesh( DomainPartition * domain )
+void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
-
-  ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-  MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
+  // This throws a compile error:
+  // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  // MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
+  // MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
 
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);
@@ -458,14 +458,14 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 
 
 
-
-  for( auto & cellBlockName : m_regionNames )
-  {
-    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
-    cellBlock->SetDocumentationNodes(nullptr);
-    cellBlock->RegisterDocumentationNodes();
-    cellBlock->ReadXML_PostProcess();
-  }
+  // Where should this be read? :
+  // for( auto & cellBlockName : m_regionNames )
+  // {
+  //   CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
+  //   cellBlock->SetDocumentationNodes(nullptr);
+  //   cellBlock->RegisterDocumentationNodes();
+  //   cellBlock->ReadXML_PostProcess();
+  // }
 
 
 
@@ -1025,7 +1025,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
  * @param nodeIDInBox
  * @param node_size
  */
-void MeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
+void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
                                                  const int index[],
                                                  const int& iEle,
                                                  int nodeIDInBox[],
@@ -1306,7 +1306,7 @@ void MeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
   }
 }
 
-void MeshGenerator::RemapMesh( DomainPartition * domain )
+void InternalMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const domain )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())
@@ -1343,4 +1343,6 @@ void MeshGenerator::RemapMesh( DomainPartition * domain )
   //  }
 
 }
+
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, std::string const &, ManagedGroup * const )
 }

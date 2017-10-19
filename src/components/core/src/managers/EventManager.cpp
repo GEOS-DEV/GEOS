@@ -38,25 +38,10 @@ void EventManager::FillDocumentationNode( dataRepository::ManagedGroup * const )
 }
 
 
-void EventManager::ReadXML( xmlWrapper::xmlNode const & problemNode )
+void EventManager::CreateChild( string const & childKey, string const & childName )
 {
-  xmlWrapper::xmlNode topLevelNode = problemNode.child("SolverApplications");
-  if (topLevelNode == NULL)
-  {
-    throw std::invalid_argument("SolverApplications block not present in input xml file!");
-  }
-  else
-  {
-    // Allow other event types here?
-    for (xmlWrapper::xmlNode applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
-    {
-      std::string applicationName = applicationNode.attribute("name").value();
-      SolverApplication * newApplication = RegisterGroup<SolverApplication>(applicationName);
-      newApplication->SetDocumentationNodes(this);
-      newApplication->RegisterDocumentationNodes();
-      newApplication->ReadXML(applicationNode);
-    }
-  }
+  std::cout << "Adding Event: " << childKey << ", " << childName << std::endl;
+  this->RegisterGroup<SolverApplication>( childName );
 }
 
 
