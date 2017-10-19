@@ -510,11 +510,12 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
-  ElementRegionManager * elementManager = domain->GetGroup<ElementRegionManager>( keys::FEM_Elements );
-  
-  // TO DO: Fix this
-  // NodeManager * nodeManager = domain->GetGroup<NodeManager>( keys::FEM_Nodes );
-  // faceManager->BuildFaces( nodeManager, elementManager );
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+
+  ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
+
+  NodeManager * nodeManager = meshLevel->getNodeManager();
+  faceManager->BuildFaces( nodeManager, elementManager );
 
 }
 

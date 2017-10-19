@@ -254,6 +254,8 @@ void ManagedGroup::CreateChild( string const & childKey, string const & childNam
 
 void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 {
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  
   for( auto const & subDocEntry : docNode->m_child )
   {
     cxx_utilities::DocumentationNode subDocNode = subDocEntry.second;
@@ -263,6 +265,8 @@ void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
       xmlWrapper::ReadAttributeAsType( *this, subDocNode, targetNode );
     }
   }
+
+  ReadXMLsub(targetNode);
 }
 
 

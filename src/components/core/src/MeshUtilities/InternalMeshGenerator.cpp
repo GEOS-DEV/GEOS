@@ -437,13 +437,11 @@ void InternalMeshGenerator::ReadXML_PostProcess()
  */
 void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
-  // This throws a compile error:
+  // This cannot find groupkeys:
   // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-  // MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
-  // MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
-
-  // special case
-  //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);
+  ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
+  MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
+  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
 
   NodeManager * nodeManager = meshLevel0->getNodeManager();
 

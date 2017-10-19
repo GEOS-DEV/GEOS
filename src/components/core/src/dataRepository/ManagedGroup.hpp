@@ -306,6 +306,10 @@ template< typename T = ManagedGroup >
 
   void PrintDataHierarchy();
 
+  virtual void AddChildren( xmlWrapper::xmlNode const & targetNode );
+
+  virtual void CreateChild( string const & childKey, string const & childName );
+
   virtual void ReadXML( xmlWrapper::xmlNode const & targetNode );
 
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
