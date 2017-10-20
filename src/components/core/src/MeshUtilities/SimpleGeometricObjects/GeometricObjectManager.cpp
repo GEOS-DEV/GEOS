@@ -30,7 +30,7 @@ GeometricObjectManager::~GeometricObjectManager()
 void GeometricObjectManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName("GeometricObjects");
+  docNode->setName("Geometry");
   docNode->setSchemaType("UniqueNode");
   docNode->setShortDescription("Geometric object manager");
 }

@@ -168,25 +168,15 @@ void ManagedGroup::resize( indexType const newsize )
 
 void ManagedGroup::RegisterDocumentationNodes()
 {
-//  std::cout<<std::string(m_docNode->m_level*2, ' ')<<"Registering Documentation Nodes for Group "<<this->getName()<<std::endl;
   for( auto&& subNode : m_docNode->getChildNodes() )
   {
-//    std::cout<<subNode.first<<", "<<subNode.second.getName()<<std::endl;
-    if( ( subNode.second.getSchemaType() != "DocumentationNode" ) &&
-        ( subNode.second.getSchemaType() != "Node" ) &&
+    if( ( subNode.second.getSchemaType().find("Node") == std::string::npos ) &&
         ( subNode.second.m_isRegistered == 0 ) )
     {
-//      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                           rtTypes::typeID(subNode.second.getDataType() ) );
       view->setSizedFromParent( subNode.second.m_managedByParent);
       subNode.second.m_isRegistered = 1;
-//      rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(subNode.second.getDataType()) , [&](auto a)->void
-//      {
-//        ViewWrapper<decltype(a)>& dataView = *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
-//        typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
-//
-//      });
     }
   }
 
