@@ -639,8 +639,9 @@ void ProblemManager::RunSimulation()
   int cycle = 0;
   real64 dt = 0.0;
 
-  Blueprint bpWriter(*domain->GetGroup<NodeManager>( keys::FEM_Nodes ),
-                     *domain->GetGroup<ElementRegionManager>( keys::FEM_Elements ),
+  const MeshLevel * meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
+  Blueprint bpWriter(*meshLevel->getNodeManager(),
+                     *meshLevel->getElemManager(),
                      "bp_plot", MPI_COMM_WORLD);
 
 

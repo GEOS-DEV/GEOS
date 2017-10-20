@@ -15,6 +15,8 @@ using namespace geosx;
 
 #ifdef USE_ATK
 using namespace axom;
+#include "slic/slic.hpp"
+#include "slic/GenericOutputStream.hpp"
 #endif
 
 int main( int argc, char *argv[] )
@@ -92,7 +94,7 @@ int main( int argc, char *argv[] )
   problemManager.ClosePythonInterpreter();
 
 #ifdef USE_ATK
-  axom::slic::finalize();
+  slic::finalize();
 #endif
 
   gettimeofday(&tim, NULL);

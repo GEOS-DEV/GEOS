@@ -26,7 +26,7 @@ ViewWrapper<T> * createArrayView(ManagedGroup * parent, const string name,
   EXPECT_EQ(view->byteSize(), expected_size);
 
   /* Set the data */
-  typename ViewWrapper<T>::rtype view_data = view->data();
+  view_rtype<T> view_data = view->data();
   for (int i = 0; i < view->size(); i++) {
       view_data[i] = data[i];
   }
@@ -43,7 +43,7 @@ void checkArrayView(ViewWrapper<T> * view, int sfp, const T & data)
 {
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->size(), data.size());
-  typename ViewWrapper<T>::rtype_const view_data = view->data();
+  view_rtype<T> view_data = view->data();
   for (int i = 0; i < view->size(); i++) {
     EXPECT_DOUBLE_EQ(view_data[i], data[i]);
   }

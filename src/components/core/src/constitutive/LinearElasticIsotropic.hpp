@@ -67,19 +67,19 @@ public:
 
 
   dataRepository::view_rtype<real64>       youngsModulus()       { return GetParameterData()->getData<real64>(viewKeys.youngsModulus); }
-  // dataRepository::view_rtype_const<real64> youngsModulus() const { return GetParameterData()->getData<real64>(viewKeys.youngsModulus); }
+  dataRepository::view_rtype_const<real64> youngsModulus() const { return GetParameterData()->getData<real64>(viewKeys.youngsModulus); }
 
   dataRepository::view_rtype<real64>       bulkModulus()       { return GetParameterData()->getData<real64>(viewKeys.bulkModulus); }
-  // dataRepository::view_rtype_const<real64> bulkModulus() const { return GetParameterData()->getData<real64>(viewKeys.bulkModulus); }
+  dataRepository::view_rtype_const<real64> bulkModulus() const { return GetParameterData()->getData<real64>(viewKeys.bulkModulus); }
 
   dataRepository::view_rtype<real64>       shearModulus()       { return GetParameterData()->getData<real64>(viewKeys.shearModulus); }
-  // dataRepository::view_rtype_const<real64> shearModulus() const { return GetParameterData()->getData<real64>(viewKeys.shearModulus); }
+  dataRepository::view_rtype_const<real64> shearModulus() const { return GetParameterData()->getData<real64>(viewKeys.shearModulus); }
 
   dataRepository::view_rtype<real64>       poissonRatio()       { return GetParameterData()->getData<real64>(viewKeys.poissonRatio); }
-  // dataRepository::view_rtype_const<real64> poissonRatio() const { return GetParameterData()->getData<real64>(viewKeys.poissonRatio); }
+  dataRepository::view_rtype_const<real64> poissonRatio() const { return GetParameterData()->getData<real64>(viewKeys.poissonRatio); }
 
   dataRepository::view_rtype<real64>       density()       { return GetParameterData()->getData<real64>(viewKeys.density); }
-  // dataRepository::view_rtype_const<real64> density() const { return GetParameterData()->getData<real64>(viewKeys.density); }
+  dataRepository::view_rtype_const<real64> density() const { return GetParameterData()->getData<real64>(viewKeys.density); }
 
   dataRepository::view_rtype<r2Sym_array>       deviatorStress()       { return GetStateData()->getData<r2Sym_array>(viewKeys.deviatorStress); }
   dataRepository::view_rtype_const<r2Sym_array> deviatorStress() const { return GetStateData()->getData<r2Sym_array>(viewKeys.deviatorStress); }

@@ -486,7 +486,7 @@ public:
 
   /// case for if U::value_type exists. Returns the size of dataPtr
   template<class U = T>
-  typename std::enable_if<has_alias_value_type<U>::value, std_size_t>::type
+  typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
   byteSize() const
   {
     return size() * sizeof(typename T::value_type);
@@ -495,7 +495,7 @@ public:
 
   /// case for if U::value_type doesn't exists. Returns the size of dataPtr
   template<class U = T>
-  typename std::enable_if<!has_alias_value_type<U>::value, std_size_t>::type
+  typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
   byteSize() const
   {
     return size() * sizeof(T);
@@ -504,7 +504,7 @@ public:
 
   /// case for if U::value_type exists. Returns the size of an element of dataPtr
   template<class U = T>
-  typename std::enable_if<has_alias_value_type<U>::value, std_size_t>::type
+  typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
   elementSize() const
   {
     return sizeof(typename T::value_type);
@@ -513,17 +513,35 @@ public:
 
   /// case for if U::value_type doesn't exists. Returns the size of an element of dataPtr
   template<class U = T>
-  typename std::enable_if<!has_alias_value_type<U>::value, std_size_t>::type
+  typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
   elementSize() const
   {
     return sizeof(T);
   }
 
 
+  /// case for if U::value_type exists. Returns the typeid of an element of dataPtr
+  template<class U = T>
+  typename std::enable_if<has_alias_value_type<U>::value, const std::type_info&>::type
+  elementTypeID() const
+  {
+    return typeid(typename T::value_type);
+  }
+
+
+  /// case for if U::value_type doesn't exists. Returns the typeid of an element of dataPtr
+  template<class U = T>
+  typename std::enable_if<!has_alias_value_type<U>::value, const std::type_info&>::type
+  elementTypeID() const
+  {
+    return typeid(T);
+  }
+
+
   /// case for if U::value_type exists. Returns the number of elements given a byte size
   template<class U = T>
-  typename std::enable_if<has_alias_value_type<U>::value, std_size_t>::type
-  numElementsFromByteSize(std_size_t d_size) const
+  typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
+  numElementsFromByteSize(localIndex d_size) const
   {
     return d_size / sizeof(typename T::value_type);
   }
@@ -532,26 +550,59 @@ public:
   /// case for if U::value_type doesn't exists. Returns the number of elements
   // given a byte size
   template<class U = T>
-  typename std::enable_if<!has_alias_value_type<U>::value, std_size_t>::type
-  numElementsFromByteSize(std_size_t d_size) const
+  typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
+  numElementsFromByteSize(localIndex d_size) const
   {
     return d_size / sizeof(T);
   }
 
+  template<class U = T>
+  typename std::enable_if<(std::is_base_of<SimpleGeometricObjectBase, U>::value ||
+                           std::is_base_of<QuadratureBase, U>::value ||
+                           std::is_base_of<PartitionBase, U>::value ||
+                           std::is_base_of<BasisBase, U>::value), void>::type
+  registerDataPtr(axom::sidre::View * view=nullptr) const 
+  { unregisterDataPtr(); 
+  }
+
+  template<class U = T>
+  typename std::enable_if<has_alias_value_type<U>::value &&
+                          std::is_base_of<Array2dT<U::value_type>, U>::value, void>::type
+  registerDataPtr(axom::sidre::View * view=nullptr) const 
+  {
+    localIndex byte_size;
+    void * ptr = Buffer::pack(reference(), byte_size);
+    view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, ptr);
+  }
+
 
   /* Register the pointer to data with the associated sidre::View. */
-  virtual void registerDataPtr( axom::sidre::View* view = nullptr ) const
+  typename std::enable_if<!(std::is_base_of<SimpleGeometricObjectBase, U>::value ||
+                            std::is_base_of<QuadratureBase, U>::value ||
+                            std::is_base_of<PartitionBase, U>::value ||
+                            std::is_base_of<BasisBase, U>::value) &&
+                          !(has_alias_value_type<U>::value &&
+                            std::is_base_of<Array2dT<U::value_type>, U>::value), void>::type
+  registerDataPtr(axom::sidre::View * view = nullptr) const
   {
 #if ATK_FOUND
     view = (view != nullptr) ? view : getSidreView();
     localIndex num_elements = size();
     if (num_elements > 0) 
     {
-      std::type_index type_index = std::type_index(get_typeid());
+      std::type_index type_index = std::type_index(elementTypeID());
       axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
-      std_size_t sidre_size = rtTypes::getSidreSize(type_index);
-      std_size_t byte_size = byteSize();
-      std_size_t element_size = elementSize();
+      if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
+      {
+        localIndex byte_size;
+        void * ptr = Buffer::pack(reference(), byte_size);
+        view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, ptr);
+        return;
+      }
+
+      localIndex sidre_size = rtTypes::getSidreSize(type_index);
+      localIndex byte_size = byteSize();
+      localIndex element_size = elementSize();
 
       int ndims;
       axom::sidre::SidreLength dims[2];
@@ -574,7 +625,7 @@ public:
 #endif
   }
 
-  virtual void unregisterDataPtr( axom::sidre::View* view = nullptr ) const
+  void unregisterDataPtr( axom::sidre::View* view = nullptr ) const
   {
 #if ATK_FOUND
     view = (view != nullptr) ? view : getSidreView();
@@ -582,14 +633,14 @@ public:
 #endif
   }
 
-  virtual void storeSizedFromParent() const
+  void storeSizedFromParent() const
   {
 #if ATK_FOUND
     getSidreView()->setAttributeScalar("__sizedFromParent__", sizedFromParent());
 #endif
   }
 
-  virtual void loadSizedFromParent()
+  void loadSizedFromParent() override final
   {
 #if ATK_FOUND
     setSizedFromParent(getSidreView()->getAttributeScalar("__sizedFromParent__"));
@@ -598,7 +649,7 @@ public:
   }
 
 
-  virtual void resizeFromSidre() override final
+  void resizeFromSidre() override final
   {
 #ifdef USE_ATK
     if (getSidreView()->isExternal()) 

@@ -1,3 +1,7 @@
+#ifndef FILEIO_BLUEPRINT_BLUEPRINT_HPP
+#define FILEIO_BLUEPRINT_BLUEPRINT_HPP
+
+
 #include <unordered_map>
 #include <string>
 #include <mpi.h>
@@ -48,3 +52,5 @@ private:
 };
 
 } /* end namespace geosx */
+
+#endif /* FILEIO_BLUEPRINT_BLUEPRINT_HPP */

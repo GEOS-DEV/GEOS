@@ -9,7 +9,7 @@
 
 
 #define USE_ATK
-#define USE_CALIPER
+/* #undef USE_CALIPER */
 #define USE_CHAI
 /* #undef USE_FPARSER */
 #define USE_MATHPRESSO

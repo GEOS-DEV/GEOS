@@ -21,12 +21,11 @@ namespace geosx
 {
 void geos_abort( std::string message );
 
-//#ifdef USE_ATK
-//#define GEOS_ERROR(msg) SLIC_ERROR(msg)
-//#else
-#define GEOS_ERROR(msg) \
-  geos_abort(msg)
-//#endif
+#ifdef USE_ATK
+#define GEOS_ERROR(msg) SLIC_ERROR(msg)
+#else
+#define GEOS_ERROR(msg) geos_abort(msg)
+#endif
 
 }
 

@@ -117,7 +117,7 @@ public:
   ~NodeManager();
 
   static string CatalogName() { return dataRepository::keys::nodeManager; }
-  string getCatalogName() const override final
+  const string getCatalogName() const override final
   { return NodeManager::CatalogName(); }
 
 

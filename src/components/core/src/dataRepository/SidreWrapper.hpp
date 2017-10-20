@@ -11,7 +11,8 @@
 
 
 #include <string>
-#if USE_ATK
+
+#ifdef USE_ATK
 #include "sidre/DataStore.hpp"
 #include <mpi.h>
 #include "spio/IOManager.hpp"
@@ -27,8 +28,10 @@ class SidreWrapper
 public:
   SidreWrapper();
   ~SidreWrapper();
-
+  
+#ifdef USE_ATK
   static axom::sidre::DataStore& dataStore();
+#endif
 
   static void writeTree(int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm);
 

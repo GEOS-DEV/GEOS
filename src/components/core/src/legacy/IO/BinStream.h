@@ -65,6 +65,7 @@
 #define BIN_STREAM_H
 
 // ***** Included Headers *****************************************************
+#include "legacy/Common/Common.h"
 #include "common/DataTypes.hpp"
 #include <map>
 #include <fstream>
@@ -134,11 +135,11 @@ public:
   }
 
   template< typename TYPE >
-  void write( const set<TYPE>& set )
+  void write( const geosx::set<TYPE>& s )
   {
-    const typename set<TYPE>::size_type length = set.size();
+    const typename geosx::set<TYPE>::size_type length = s.size();
     this->write( length );
-    for( typename set<TYPE>::const_iterator i=set.begin() ; i!=set.end() ; ++i )
+    for( typename geosx::set<TYPE>::const_iterator i=s.begin() ; i!=s.end() ; ++i )
     {
       this->write( *i );
     }
@@ -171,13 +172,13 @@ public:
 
 
   template< typename TYPE >
-  void write( const Array1dT<set<TYPE> >& array )
+  void write( const Array1dT<geosx::set<TYPE> >& array )
   {
 
-    const typename Array1dT<set<TYPE> >::size_type length0 = array.size();
-    this->write( reinterpret_cast<const char*>(&length0), sizeof(typename Array1dT<set<TYPE> >::size_type) );
+    const typename Array1dT<geosx::set<TYPE> >::size_type length0 = array.size();
+    this->write( reinterpret_cast<const char*>(&length0), sizeof(typename Array1dT<geosx::set<TYPE> >::size_type) );
 
-    for( typename Array1dT<set<TYPE> >::const_iterator i=array.begin() ; i!=array.end() ; ++i )
+    for( typename Array1dT<geosx::set<TYPE> >::const_iterator i=array.begin() ; i!=array.end() ; ++i )
     {
       this->write( *i );
     }
@@ -337,23 +338,23 @@ public:
 
 
   template< typename TYPE >
-  void read( set<TYPE>& set, const bool realloc = true )
+  void read( geosx::set<TYPE>& s, const bool realloc = true )
   {
-    typename set<TYPE>::size_type readLength;
+    typename geosx::set<TYPE>::size_type readLength;
     this->read( readLength );
 
-    if( readLength != set.size() && !realloc )
+    if( readLength != s.size() && !realloc )
     {
 #ifdef USE_ATK
-      SLIC_ERROR( "BinStream::read(std::set<TYPE>& set): length mismatch\n");
+      SLIC_ERROR( "BinStream::read(std::geosx::set<TYPE>& s): length mismatch\n");
 #endif
     }
 
-    for( typename set<TYPE>::size_type i=0 ; i<readLength ; ++i )
+    for( typename geosx::set<TYPE>::size_type i=0 ; i<readLength ; ++i )
     {
       TYPE readVal;
       this->read( readVal );
-      set.insert(readVal);
+      s.insert(readVal);
     }
   }
 
@@ -421,10 +422,10 @@ public:
 
 
   template< typename TYPE >
-  void read( Array1dT<set<TYPE> >& array, const bool realloc = true )
+  void read( Array1dT<geosx::set<TYPE> >& array, const bool realloc = true )
   {
-    const typename Array1dT<set<TYPE> >::size_type length = array.size();
-    typename Array1dT<set<TYPE> >::size_type readLength;
+    const typename Array1dT<geosx::set<TYPE> >::size_type length = array.size();
+    typename Array1dT<geosx::set<TYPE> >::size_type readLength;
     this->read( readLength );
 
     if( readLength != length )
@@ -440,7 +441,7 @@ public:
 #endif
       }
     }
-    for( typename Array1dT<set<TYPE> >::iterator i=array.begin() ; i!=array.end() ; ++i )
+    for( typename Array1dT<geosx::set<TYPE> >::iterator i=array.begin() ; i!=array.end() ; ++i )
     {
       this->read( *i, realloc );
     }

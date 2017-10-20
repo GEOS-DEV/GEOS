@@ -1,6 +1,7 @@
 #include "Blueprint.hpp"
-#include "managers/NodeManager.hpp"
-#include "managers/ElementRegionManager.hpp"
+#include "common/DataTypes.hpp"
+#include "mesh/NodeManager.hpp"
+#include "mesh/ElementRegionManager.hpp"
 
 #include "sidre/sidre.hpp"
 #include "sidre/DataStore.hpp"
@@ -136,7 +137,7 @@ void Blueprint::addCells(Group* topo, Group* fields) const
     int32* to = pair.first + pair.second;
     const int32* from = cell_block->m_toNodesRelation[0];
     const int32 num_nodes = cell_block->m_toNodesRelation.size();
-    const std_size_t byte_size = num_nodes * sizeof(int32);
+    const localIndex byte_size = num_nodes * sizeof(int32);
     std::memcpy(to, from, byte_size);
     pair.second += num_nodes;
   });

@@ -87,7 +87,6 @@ template< typename T >
 //using array = array<T>;
 using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
 
-
 template< typename T >
 using set = SortedArray<T>;
 
@@ -219,7 +218,6 @@ public:
     r1_array_id,
     r2_array_id,
     r2Sym_array_id,
-    std_size_t_id,
     string_id,
     string_array_id,
     mapPair_array_id,
@@ -246,7 +244,6 @@ public:
       { "r1_array",     TypeIDs::r1_array_id },
       { "r2_array",     TypeIDs::r2_array_id },
       { "r2Sym_array",  TypeIDs::r2Sym_array_id },
-      { "std_size_t",   TypeIDs::std_size_t_id },
       { "string",       TypeIDs::string_id },
       { "string_array", TypeIDs::string_array_id },
       { "mapPair_array",      TypeIDs::mapPair_array_id },
@@ -282,7 +279,7 @@ public:
     return type_names.at(typeIndex);
   }
 
-#if ATK_FOUND
+#ifdef USE_ATK
 
   static axom::sidre::TypeID toSidreType( std::type_index typeIndex )
   {
@@ -297,30 +294,22 @@ public:
       { std::type_index(typeid(R1Tensor)),      axom::sidre::TypeID::FLOAT64_ID },
       { std::type_index(typeid(R2Tensor)),      axom::sidre::TypeID::FLOAT64_ID },
       { std::type_index(typeid(R2SymTensor)),   axom::sidre::TypeID::FLOAT64_ID },
-      { std::type_index(typeid(int32_array)),   axom::sidre::TypeID::INT32_ID },
-      { std::type_index(typeid(uint32_array)),  axom::sidre::TypeID::UINT32_ID },
-      { std::type_index(typeid(int64_array)),   axom::sidre::TypeID::INT64_ID },
-      { std::type_index(typeid(uint64_array)),  axom::sidre::TypeID::UINT64_ID },
-      { std::type_index(typeid(real32_array)),  axom::sidre::TypeID::FLOAT32_ID },
-      { std::type_index(typeid(real64_array)),  axom::sidre::TypeID::FLOAT64_ID },
-      { std::type_index(typeid(r1_array)),      axom::sidre::TypeID::FLOAT64_ID },
-      { std::type_index(typeid(r2_array)),      axom::sidre::TypeID::FLOAT64_ID },
-      { std::type_index(typeid(r2Sym_array)),   axom::sidre::TypeID::FLOAT64_ID },
-      { std::type_index(typeid(std_size_t)),    axom::sidre::TypeID::UINT64_ID },
-      { std::type_index(typeid(string)),        axom::sidre::TypeID::UINT8_ID }
+      { std::type_index(typeid(char)),          axom::sidre::TypeID::UINT8_ID }
     };
+
     auto it = sidre_types.find(typeIndex); 
     if (it == sidre_types.end())
     {
-      SLIC_ERROR("Unsupported type of with type index name: " << typeIndex.name());
+      return axom::sidre::TypeID::NO_TYPE_ID;
+      // GEOS_ERROR("Unsupported type of with type index name: " << typeIndex.name());
     }
     return it->second;
   }
 
 
-  static std_size_t getSidreSize( std::type_index typeIndex )
+  static localIndex getSidreSize( std::type_index typeIndex )
   {
-    const std::unordered_map<std::type_index, std_size_t> sidre_sizes =
+    const std::unordered_map<std::type_index, localIndex> sidre_sizes =
     {
       { std::type_index(typeid(int32)),         sizeof(int32) },
       { std::type_index(typeid(uint32)),        sizeof(uint32) },
@@ -331,23 +320,13 @@ public:
       { std::type_index(typeid(R1Tensor)),      sizeof(real64) },
       { std::type_index(typeid(R2Tensor)),      sizeof(real64) },
       { std::type_index(typeid(R2SymTensor)),   sizeof(real64) },
-      { std::type_index(typeid(int32_array)),   sizeof(int32) },
-      { std::type_index(typeid(uint32_array)),  sizeof(uint32) },
-      { std::type_index(typeid(int64_array)),   sizeof(int64) },
-      { std::type_index(typeid(uint64_array)),  sizeof(uint64) },
-      { std::type_index(typeid(real32_array)),  sizeof(real32) },
-      { std::type_index(typeid(real64_array)),  sizeof(real64) },
-      { std::type_index(typeid(r1_array)),      sizeof(real64) },
-      { std::type_index(typeid(r2_array)),      sizeof(real64) },
-      { std::type_index(typeid(r2Sym_array)),   sizeof(real64) },
-      { std::type_index(typeid(std_size_t)),    sizeof(uint64) },
-      { std::type_index(typeid(string)),        sizeof(char) }
+      { std::type_index(typeid(char)),          sizeof(char) }
     };
 
     auto it = sidre_sizes.find(typeIndex); 
     if (it == sidre_sizes.end())
     {
-      SLIC_ERROR("Unsupported type of with type index name: "  << typeIndex.name());
+      GEOS_ERROR("Unsupported type of with type index name: "  << typeIndex.name());
     }
     return it->second;
   }
@@ -381,7 +360,6 @@ private:
       {"r1_array", "((" + r1 + "; )*)?" + r1},
       {"r2_array", "((" + r2 + "; )*)?" + r2},
       {"r2Sym_array", "((" + r2s + "; )*)?" + r2s},
-      {"std_size_t", ru},
       {"string", rs},
       {"string_array", "((" + rs + ",? )*)?" + rs},
       {"mapPair", rs},

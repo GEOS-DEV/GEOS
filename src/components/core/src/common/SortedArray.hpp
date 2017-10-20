@@ -9,9 +9,13 @@ class SortedArray
 {
 
 public:
-  typedef typename std::vector<T>::iterator iterator;
-  typedef typename std::vector<T>::const_iterator const_iterator;
-  typedef typename std::vector<T>::size_type size_type;
+  // typedef typename std::vector<T>::iterator iterator;
+  // typedef typename std::vector<T>::const_iterator const_iterator;
+  // typedef typename std::vector<T>::size_type size_type;
+  using iterator = typename std::vector<T>::iterator;
+  using const_iterator = typename std::vector<T>::const_iterator;
+  using size_type = typename std::vector<T>::size_type;
+  using value_type = typename std::vector<T>::value_type;
 
 
   SortedArray():
