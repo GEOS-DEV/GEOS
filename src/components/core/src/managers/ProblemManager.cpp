@@ -24,6 +24,7 @@
 #include "MPI_Communications/SpatialPartition.hpp"
 
 #include "mesh/MeshBody.hpp"
+#include "MeshUtilities/MeshUtilities.hpp"
 // #include "managers/MeshLevel.hpp"
 namespace geosx
 {
@@ -39,7 +40,8 @@ ProblemManager::ProblemManager( const std::string& name,
   m_functionManager(nullptr)
 {
   // Groups that do not read from the xml
-  RegisterGroup<DomainPartition>(groupKeys.domain)->BuildDataStructure(nullptr);
+  // RegisterGroup<DomainPartition>(groupKeys.domain)->BuildDataStructure(nullptr);
+  RegisterGroup<DomainPartition>(groupKeys.domain);
   RegisterGroup<ManagedGroup>(groupKeys.commandLine);
 
   // Mandatory groups that read from the xml
@@ -484,21 +486,18 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
     partition.setPartitions( xpar,  ypar, zpar );
   }
 
-  // Do we want to do this here?
-  // MeshManager * meshManager = this->GetGroup(groupKeys.meshManager);
-  // meshManager->GenerateMeshes(domain);
+  MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+  meshManager->GenerateMeshes(domain);
 
-  // for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
-  // {
-  //   NodeManager * const nodeManager = ManagedGroup::group_cast<MeshBody*>(mesh.second.get())->getMeshLevel(0)->getNodeManager();
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    NodeManager * const nodeManager = ManagedGroup::group_cast<MeshBody*>(mesh.second.get())->getMeshLevel(0)->getNodeManager();
 
-  //   ManagedGroup * geometricObjects = this->GetGroup(keys::geometricObjects);
+    GeometricObjectManager * geometricObjects = this->GetGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
 
-  //   MeshUtilities::GenerateNodesets( geometricObjects,
-  //                                    nodeManager );
-
-  // }
-
+    MeshUtilities::GenerateNodesets( geometricObjects,
+                                     nodeManager );
+  }
 }
 
 

@@ -25,7 +25,7 @@ DomainPartition::DomainPartition( std::string const & name,
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
-
+  RegisterGroup<CellBlockManager>( keys::cellManager );
 }
 
 DomainPartition::~DomainPartition()
@@ -39,7 +39,7 @@ void DomainPartition::BuildDataStructure( ManagedGroup * const )
 
 //  this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
 //  this->RegisterGroup<ElementRegionManager>(keys::FEM_Elements);
-  this->RegisterGroup<CellBlockManager>(keys::cellManager);
+//  this->RegisterGroup<CellBlockManager>(keys::cellManager);
 //  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
 }
 
