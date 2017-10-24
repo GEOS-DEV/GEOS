@@ -31,6 +31,26 @@ if (HDF5_DIR)
                        INCLUDES ${HDF5_INCLUDE_DIRS}
                        LIBRARIES ${HDF5_LIBRARY} 
                        TREAT_INCLUDES_AS_SYSTEM ON )
+else()
+    message(INFO ": Using HDF5 found at https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz")
+    message("${CMAKE_SOURCE_DIR}")
+    set(hdf5_install_dir "${CMAKE_INSTALL_PREFIX}/hdf5")
+    message("hdf5_install_dir = ${hdf5_install_dir}")
+    ExternalProject_Add( hdf5
+                          URL ${CMAKE_SOURCE_DIR}/tpl_mirror/hdf5-1.10.1.tar.gz
+#                          URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz
+                          PREFIX ${PROJECT_BINARY_DIR}/hdf5
+                          INSTALL_DIR ${silo_install_dir}
+                          CONFIGURE_COMMAND ../hdf5/configure CC=${CMAKE_C_COMPILER}
+                                               CXX=${CMAKE_CXX_COMPILER}
+                                               --enable-build-mode=production
+                                               --enable-cxx
+                                               --prefix=${hdf5_install_dir}
+                          BUILD_COMMAND make -j8
+                          INSTALL_COMMAND make install )
+
+    set( dependency_list "${dependency_list};hdf5" )
+
 endif()
 
 
@@ -53,13 +73,14 @@ else()
 #                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/silo-4.10.2-bsd.tar.gz
                           PREFIX ${PROJECT_BINARY_DIR}/silo
+                          DEPENDS hdf5
                           INSTALL_DIR ${silo_install_dir}
                           CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
                                                CXX=${CMAKE_CXX_COMPILER}
                                                --prefix=${silo_install_dir}
                                                --disable-fortran
                                                --enable-optimization
-                                               --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+                                               --with-hdf5=${hdf5_install_dir}/include,${hdf5_install_dir}/lib
                                                LDFLAGS=-ldl
                                                --disable-silex 
                           BUILD_COMMAND make -j8
@@ -88,9 +109,11 @@ else()
     set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/raja)
     message("RAJA_CMAKE_ARGS=${RAJA_CMAKE_ARGS}")
     ExternalProject_Add( raja
-                         GIT_REPOSITORY https://github.com/LLNL/RAJA.git
-                         GIT_TAG develop
-                         PATCH_COMMAND git submodule init && git submodule update                         
+#                         GIT_REPOSITORY https://github.com/LLNL/RAJA.git
+#                         GIT_TAG develop
+#                         PATCH_COMMAND git submodule init && git submodule update                         
+                         URL ${CMAKE_SOURCE_DIR}/tpl_mirror/RAJA-develop.zip
+                         PATCH_COMMAND pwd && cp -r ../../../../../master/src/cmake/blt .
                          PREFIX ${PROJECT_BINARY_DIR}/raja
                          BUILD_COMMAND make -j8
                          INSTALL_COMMAND make install
@@ -122,9 +145,11 @@ else()
     message(INFO ": Using CHAI found at git@github.com:LLNL/CHAI.git")
     ExternalProject_Add( chai
                          PREFIX ${PROJECT_BINARY_DIR}/chai
-                         GIT_REPOSITORY git@github.com:LLNL/CHAI.git
-                         GIT_TAG develop
-                         PATCH_COMMAND git submodule init && git submodule update                         
+#                         GIT_REPOSITORY git@github.com:LLNL/CHAI.git
+#                         GIT_TAG develop
+#                         PATCH_COMMAND git submodule init && git submodule update                         
+                         URL ${CMAKE_SOURCE_DIR}/tpl_mirror/CHAI-develop.zip
+                         PATCH_COMMAND pwd && cp -r ../../../../../master/src/cmake/blt .
                          BUILD_COMMAND make -j8
                          INSTALL_DIR ${chai_install_dir}
                          INSTALL_COMMAND make install

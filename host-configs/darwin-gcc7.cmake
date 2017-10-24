@@ -1,6 +1,6 @@
 
 site_name(HOST_NAME)
-set(CONFIG_NAME "${HOST_NAME}-darwin-x86_64-clang@apple-mp" CACHE PATH "") 
+set(CONFIG_NAME "${HOST_NAME}-darwin-x86_64-gcc@mp7" CACHE PATH "") 
 message( "CONFIG_NAME = ${CONFIG_NAME}" )
 
 
@@ -14,18 +14,18 @@ message( "CONFIG_NAME = ${CONFIG_NAME}" )
 #set(ATK_CMAKE "${ATK_DIR}/lib/cmake" CACHE PATH "")
 
 
-set(CMAKE_C_COMPILER "/usr/bin/clang" CACHE PATH "")
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++" CACHE PATH "")
+
+set(CMAKE_C_COMPILER "/opt/local/bin/gcc-mp-7" CACHE PATH "")
+set(CMAKE_CXX_COMPILER "/opt/local/bin/g++-mp-7" CACHE PATH "")
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MPI ON CACHE PATH "")
-set(MPI_C_COMPILER "/opt/local/bin/mpicc-openmpi-clang" CACHE PATH "")
-set(MPI_CXX_COMPILER "/opt/local/bin/mpicxx-openmpi-clang" CACHE PATH "")
-set(MPI_Fortran_COMPILER "/opt/local/bin/mpifort-openmpi-clang" CACHE PATH "")
-set(MPIEXEC "mpirun-openmpi-gcc7" CACHE PATH "")
+set(MPI_C_COMPILER "/opt/local/bin/mpicc-mpich-gcc7" CACHE PATH "")
+set(MPI_CXX_COMPILER "/opt/local/bin/mpicxx-mpich-gcc7" CACHE PATH "")
+set(MPI_Fortran_COMPILER "/opt/local/bin/mpifort-mpich-gcc7" CACHE PATH "")
+set(MPIEXEC "mpirun-mpich-gcc7" CACHE PATH "")
 
 
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
-
 
 set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE PATH "" FORCE)
 set(GEOSX_LINK_POSTPEND_FLAG "" CACHE PATH "" FORCE)
@@ -44,8 +44,8 @@ option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
 option( RAJA_ENABLE_TBB "" OFF)
 option( ENABLE_CALIPER "Enables CALIPER" OFF )
 
-set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
-set(ENABLE_OPENMP     "OFF"        CACHE PATH "" FORCE)
+set(CUDA_ENABLED      "OFF"        CACHE PATH "" FORCE)
+set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)
 set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
 set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
 set(CALIPER_INSTALL   ""          CACHE PATH "" FORCE)
