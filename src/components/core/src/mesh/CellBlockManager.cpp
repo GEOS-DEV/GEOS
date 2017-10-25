@@ -68,13 +68,13 @@ CellBlockManager::~CellBlockManager()
   // TODO Auto-generated destructor stub
 }
 
-void CellBlockManager::resize( int32_array const & numElements,
+void CellBlockManager::resize( integer_array const & numElements,
                              string_array const & regionNames,
                              string_array const & elementTypes )
 {
-  int32 const numRegions = regionNames.size();
+  localIndex const numRegions = regionNames.size();
 //  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
-  for( int32 reg=0 ; reg<numRegions ; ++reg )
+  for( localIndex reg=0 ; reg<numRegions ; ++reg )
   {
     CellBlock * elemRegion = this->GetRegion( regionNames[reg] );
     elemRegion->resize(numElements[reg]);
@@ -84,7 +84,7 @@ void CellBlockManager::resize( int32_array const & numElements,
 
 //CellBlock & CellBlockManager::CreateRegion( string const & regionName,
 //                                             string const & elementType,
-//                                             int32 const & numElements )
+//                                             integer const & numElements )
 //{
 ////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
 ////  elemRegion->resize(numElements);

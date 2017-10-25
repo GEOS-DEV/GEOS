@@ -44,8 +44,8 @@ public:
 
   ~ConstitutiveManager();
 
-//  using constitutiveMaps = std::pair< array<ManagedGroup const *> , map<string,int32> > ;
-//  constitutiveMaps & GetMaps( int32 const reinit ) const;
+//  using constitutiveMaps = std::pair< array<ManagedGroup const *> , map<string,integer> > ;
+//  constitutiveMaps & GetMaps( integer const reinit ) const;
 
 
   template< typename T >

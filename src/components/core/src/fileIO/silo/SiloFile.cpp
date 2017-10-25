@@ -2088,8 +2088,8 @@ void SiloFile::DBWriteWrapper( const std::string& subdir, const std::map< std::s
   DBSetDir( m_dbFilePtr, ".." );
 
 }
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, lArray1d>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, gArray1d>& );
+template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<integer> >& );
+template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<int64> >& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, lArray2d>& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, Array1dT<lArray1d> >& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, lSet>& );
@@ -2240,8 +2240,8 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<TYPE>& data ) co
     //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
   }
 }
-template void SiloFile::DBReadWrapper( const std::string&, lArray1d& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, gArray1d& ) const;
+template void SiloFile::DBReadWrapper( const std::string&, array<integer>& ) const;
+template void SiloFile::DBReadWrapper( const std::string&, array<int64>& ) const;
 //template void SiloFile::DBReadWrapper( const std::string&, iArray1d& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, rArray1d& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, Array1dT<R1Tensor>& ) const;
@@ -2355,7 +2355,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array1dT<TYPE> >
   DBReadWrapper( sizeName, dataSizes );
 
   typename Array1dT<TYPE>::size_type serialSize = 0;
-  for( int32 i=0 ; i<data.size() ; ++i )
+  for( integer i=0 ; i<data.size() ; ++i )
   {
     data[i].resize( dataSizes[i]);
     serialSize += dataSizes[i];
@@ -2369,9 +2369,9 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array1dT<TYPE> >
 
     typename Array1dT<TYPE>::const_iterator idataSerial = dataSerial.begin();
 
-    for( int32 i=0 ; i<data.size() ; ++i )
+    for( integer i=0 ; i<data.size() ; ++i )
     {
-      for( int32 j=0 ; j<data[i].size() ; ++j, ++idataSerial )
+      for( integer j=0 ; j<data[i].size() ; ++j, ++idataSerial )
       {
         data[i][j] = *idataSerial;
       }
@@ -2400,7 +2400,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array2dT<TYPE> >
 
 
   typename Array1dT<TYPE>::size_type serialSize = 0 ;
-  for( int32 i=0 ; i<data.size() ; ++i )
+  for( integer i=0 ; i<data.size() ; ++i )
   {
     data[i].resize2(dataSizes0[i],dataSizes1[i]);
     serialSize += dataSizes0[i] * dataSizes1[i];
@@ -2413,11 +2413,11 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array2dT<TYPE> >
 
     typename Array1dT<TYPE>::const_iterator idataSerial = dataSerial.begin();
 
-    for( int32 i=0 ; i<data.size() ; ++i )
+    for( integer i=0 ; i<data.size() ; ++i )
     {
-      for( int32 j=0 ; j<data[i].Dimension(0) ; ++j )
+      for( integer j=0 ; j<data[i].Dimension(0) ; ++j )
       {
-        for( int32 k=0 ; k<data[i].Dimension(1) ; ++k )
+        for( integer k=0 ; k<data[i].Dimension(1) ; ++k )
         {
           data[i][j][k] = *idataSerial;
           ++idataSerial;
@@ -2446,7 +2446,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array1dT<Array1d
   DBReadWrapper( sizeName0, dataSizes0 );
 
   typename Array1dT<TYPE>::size_type sizeSize1 = 0;
-  for( int32 i=0 ; i<data.size() ; ++i )
+  for( integer i=0 ; i<data.size() ; ++i )
   {
     data[i].resize( dataSizes0[i]);
     sizeSize1 += dataSizes0[i];
@@ -2457,9 +2457,9 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array1dT<Array1d
 
   typename Array1dT<TYPE>::size_type serialSize = 0;
   typename Array1dT<TYPE>::size_type size1count = 0;
-  for( int32 i=0 ; i<data.size() ; ++i )
+  for( integer i=0 ; i<data.size() ; ++i )
   {
-    for( int32 j=0 ; j<data[i].size() ; ++j )
+    for( integer j=0 ; j<data[i].size() ; ++j )
     {
       data[i][j].resize( dataSizes1[size1count]);
       serialSize += dataSizes1[size1count];
@@ -2474,11 +2474,11 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array1dT<Array1d
 
     typename Array1dT<TYPE>::const_iterator idataSerial = dataSerial.begin();
 
-    for( int32 i=0 ; i<data.size() ; ++i )
+    for( integer i=0 ; i<data.size() ; ++i )
     {
-      for( int32 j=0 ; j<data[i].size() ; ++j )
+      for( integer j=0 ; j<data[i].size() ; ++j )
       {
-        for( int32 k=0 ; k<data[i][j].size() ; ++k, ++idataSerial )
+        for( integer k=0 ; k<data[i][j].size() ; ++k, ++idataSerial )
         {
           data[i][j][k] = *idataSerial;
         }
@@ -2496,7 +2496,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<std::set<TYPE> >
 
   DBReadWrapper( name, vdata );
 
-  for( int32 i=0 ; i<data.size() ; ++i )
+  for( integer i=0 ; i<data.size() ; ++i )
   {
     data[i].clear();
     data[i].insert( vdata[i].begin(), vdata[i].end() );
@@ -2619,8 +2619,8 @@ void SiloFile::DBReadWrapper( const std::string& subdir, std::map< std::string, 
   DBSetDir( m_dbFilePtr, ".." );
 
 }
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, lArray1d>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, gArray1d>& ) const;
+template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<integer> >& ) const;
+template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<int64> >& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, lArray2d>& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, Array1dT<lArray1d> >& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, lSet>& ) const;
@@ -2769,8 +2769,8 @@ void** SiloFile::GetDataVar( const std::string& fieldName,
 
   return rval;
 }
-template void** SiloFile::GetDataVar<localIndex>( const std::string&, const std::string&, const Array1dT<localIndex>::size_type , const int, const int, const realT, const std::string& ) const;
-template void** SiloFile::GetDataVar<globalIndex>( const std::string&, const std::string&, const Array1dT<globalIndex>::size_type , const int, const int, const realT, const std::string& ) const;
+template void** SiloFile::GetDataVar<integer>( const std::string&, const std::string&, const Array1dT<localIndex>::size_type , const int, const int, const realT, const std::string& ) const;
+template void** SiloFile::GetDataVar<int64>( const std::string&, const std::string&, const Array1dT<globalIndex>::size_type , const int, const int, const realT, const std::string& ) const;
 
 //template void** SiloFile::GetDataVar<int>( const std::string&, const std::string&, const Array1dT<int>::size_type , const int, const int, const realT, const std::string& ) const;
 template void** SiloFile::GetDataVar<realT>( const std::string&, const std::string&, const Array1dT<realT>::size_type , const int, const int, const realT, const std::string& ) const;

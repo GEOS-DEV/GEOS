@@ -230,6 +230,7 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
   for( localIndex a=0 ; a<N ; ++a )
   {
+//    std::cout<<globalToLocalRelation[a]<<std::endl;
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
     localField2[a] = globalField2[ globalToLocalRelation[a] ];
   }

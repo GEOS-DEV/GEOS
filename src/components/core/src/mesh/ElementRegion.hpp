@@ -121,7 +121,7 @@ public:
 
   virtual ~ElementRegion();
 
-//  Array2dT<int32> & m_toNodesRelation;
+//  Array2dT<integer> & m_toNodesRelation;
 
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;
@@ -136,16 +136,16 @@ public:
     return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
   }
 
-  CellBlockSubRegion const * GetSubRegion( int32 const & index ) const
+  CellBlockSubRegion const * GetSubRegion( integer const & index ) const
   {
     return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
   }
-  CellBlockSubRegion * GetSubRegion( int32 const & index )
+  CellBlockSubRegion * GetSubRegion( integer const & index )
   {
     return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
   }
 
-  int32 numSubRegions() const
+  integer numSubRegions() const
   {
     return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups().size();
   }

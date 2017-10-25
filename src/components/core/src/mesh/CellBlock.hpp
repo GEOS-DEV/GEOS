@@ -111,7 +111,7 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-//  map<string,int32> SetConstitutiveMap( dataRepository::ManagedGroup const & domain );
+//  map<string,integer> SetConstitutiveMap( dataRepository::ManagedGroup const & domain );
 
   virtual ~CellBlock();
 
@@ -136,14 +136,14 @@ public:
   }groupKeys;
 
 
-  Array2dT<int32> & m_toNodesRelation;
-  Array2dT<int32> & m_toFacesRelation;
+  Array2dT<localIndex> & m_toNodesRelation;
+  Array2dT<localIndex> & m_toFacesRelation;
 
 
-  int32 const & numNodesPerElement() const { return this->getReference<int32>( viewKeys.numNodesPerElement ); }
-  int32       & numNodesPerElement()       { return this->getReference<int32>( viewKeys.numNodesPerElement ); }
-  int32 const & numFacesPerElement() const { return this->getReference<int32>( viewKeys.numFacesPerElement ); }
-  int32       & numFacesPerElement()       { return this->getReference<int32>( viewKeys.numFacesPerElement ); }
+  integer const & numNodesPerElement() const { return this->getReference<integer>( viewKeys.numNodesPerElement ); }
+  integer       & numNodesPerElement()       { return this->getReference<integer>( viewKeys.numNodesPerElement ); }
+  integer const & numFacesPerElement() const { return this->getReference<integer>( viewKeys.numFacesPerElement ); }
+  integer       & numFacesPerElement()       { return this->getReference<integer>( viewKeys.numFacesPerElement ); }
 
 private:
   CellBlock& operator=(const CellBlock& rhs);
