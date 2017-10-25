@@ -33,6 +33,8 @@ set(GEOSX_LINK_POSTPEND_FLAG "" CACHE PATH "" FORCE)
 #set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
 #set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
 
+set(ENABLE_MATHPRESSO ON CACHE BOOL  "Enables mathpresso Plugin")
+
 #######################################
 # RAJA/CHAI SETUP
 #######################################

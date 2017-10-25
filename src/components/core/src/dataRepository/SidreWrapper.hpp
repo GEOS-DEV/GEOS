@@ -9,6 +9,7 @@
 #define COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
 #include "common/GeosxConfig.hpp"
 
+#if USE_ATK
 #include "sidre/DataStore.hpp"
 
 namespace geosx
@@ -30,5 +31,6 @@ private:
 
 }
 } /* namespace geosx */
+#endif
 
 #endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_ */

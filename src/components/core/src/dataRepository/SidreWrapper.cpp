@@ -7,6 +7,7 @@
 
 #include "SidreWrapper.hpp"
 
+#if USE_ATK
 namespace geosx
 {
 namespace dataRepository
@@ -26,3 +27,5 @@ axom::sidre::DataStore& SidreWrapper::dataStore()
 
 } /* end namespace dataRepository */
 } /* end namespace geosx */
+
+#endif

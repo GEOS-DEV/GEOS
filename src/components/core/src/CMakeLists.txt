@@ -38,11 +38,19 @@ if( ENABLE_MPI )
   set( extraComponentsListLink ${extraComponentsListLink} mpi )
 endif()
 
+if( USE_ATK )
+  set( extraComponentsListLink ${extraComponentsListLink} slic sidre conduit spio )
+endif()
 
+message( "extraComponentsListLink = ${extraComponentsListLink}" )
 message("adding geosx_core library")
+
+message("thirdPartyLibs = ${thirdPartyLibs}")
 blt_add_library( NAME                  geosx_core
                  SOURCES               ${geosx_core_sources}
                  HEADERS               ${geosx_headers}
                  HEADERS_OUTPUT_SUBDIR geosx_core
-                 DEPENDS_ON            optionparser cxx-utilities slic sidre conduit pugixml spio silo hdf5 trilinos  ${extraComponentsListLink} ${thirdPartyLibs} )
+                 DEPENDS_ON            optionparser cxx-utilities pugixml ${extraComponentsListLink} ${thirdPartyLibs} )
+                 
+#                 DEPENDS_ON            optionparser cxx-utilities  pugixml  silo hdf5 trilinos  ${extraComponentsListLink} ${thirdPartyLibs} )
                  

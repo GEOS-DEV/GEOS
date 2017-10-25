@@ -6,6 +6,7 @@ message("\nProcessing SetupGeosxThirdParty.cmake")
 ####################################
 include(ExternalProject)
 
+set( thirdPartyLibs "")
 
 ################################
 # Conduit
@@ -20,19 +21,13 @@ if (CONDUIT_DIR)
                         INCLUDES ${CONDUIT_INCLUDE_DIRS}
                         LIBRARIES  conduit_io
                         TREAT_INCLUDES_AS_SYSTEM ON )
+                        
+  set( thirdPartyLibs ${thirdPartyLibs} conduit conduit_io )
+  
 endif()
 
 
-################################
-# HDF5
-################################
-if (HDF5_DIR)
-  include(cmake/thirdparty/FindHDF5.cmake)
-  blt_register_library(NAME hdf5
-                       INCLUDES ${HDF5_INCLUDE_DIRS}
-                       LIBRARIES ${HDF5_LIBRARIES} 
-                       TREAT_INCLUDES_AS_SYSTEM ON )
-endif()
+
 
 
 if (ATK_DIR)
@@ -51,6 +46,8 @@ if (ATK_DIR)
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  slic
                         TREAT_INCLUDES_AS_SYSTEM ON)
+                        
+    set( thirdPartyLibs ${thirdPartyLibs} sidre spio slic )  
 endif()
 
 
@@ -61,6 +58,29 @@ endif()
 get_filename_component( TEMP_DIR "${CMAKE_INSTALL_PREFIX}" NAME)
 string(REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
 set( GEOSX_TPL_DIR "../../thirdPartyLibs/${TEMP_DIR2}" )
+
+
+################################
+# HDF5
+################################
+if( EXISTS ${HDF5_DIR})
+    message("Using system HDF5 found at ${HDF5_DIR}")
+else()
+    message(INFO ": Using HDF5 from thirdPartyLibs")
+    set(HDF5_DIR ${GEOSX_TPL_DIR}/hdf5)
+endif()
+
+if (HDF5_DIR)
+  include(cmake/thirdparty/FindHDF5.cmake)
+  blt_register_library(NAME hdf5
+                       INCLUDES ${HDF5_INCLUDE_DIRS}
+                       LIBRARIES ${HDF5_LIBRARIES} 
+                       TREAT_INCLUDES_AS_SYSTEM ON )
+                       
+  set( thirdPartyLibs ${thirdPartyLibs} hdf5 )
+
+endif()
+
 ################################
 # SILO
 ################################
@@ -81,6 +101,7 @@ blt_register_library( NAME silo
                       TREAT_INCLUDES_AS_SYSTEM ON
                       DEPENDS_ON hdf5 )
 
+set( thirdPartyLibs ${thirdPartyLibs} silo )  
 
 
 
@@ -91,7 +112,7 @@ blt_register_library( NAME silo
 if( EXISTS ${RAJA_DIR})
     message("Using system RAJA found at ${RAJA_DIR}")
 else()
-    message(INFO ": Using SILO from thirdPartyLibs")
+    message(INFO ": Using RAJA from thirdPartyLibs")
     set(RAJA_DIR ${GEOSX_TPL_DIR}/raja)
 endif()
 
@@ -104,6 +125,7 @@ blt_register_library( NAME raja
                       LIBRARIES ${RAJA_LIBRARY}
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
+set( thirdPartyLibs ${thirdPartyLibs} raja )  
 
 
 
@@ -113,7 +135,7 @@ blt_register_library( NAME raja
 if( EXISTS ${CHAI_DIR})
     message("Using system CHAI found at ${CHAI_DIR}")
 else()
-    message(INFO ": Using SILO from thirdPartyLibs")
+    message(INFO ": Using CHAI from thirdPartyLibs")
     set(CHAI_DIR ${GEOSX_TPL_DIR}/chai)
 endif()
 
@@ -126,13 +148,15 @@ blt_register_library( NAME chai
                       LIBRARIES ${CHAI_LIBRARY}
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
+set( thirdPartyLibs ${thirdPartyLibs} chai )  
+
 
 ################################
 # FPARSER
 ################################
 if( USE_FPARSER )
 
-message(INFO ": Using SILO from thirdPartyLibs")
+message(INFO ": Using FPARSER from thirdPartyLibs")
 set(FPARSER_INSTALL_DIR ${GEOSX_TPL_DIR}/fparser)
 
 find_path( FPARSER_INCLUDE_DIRS fparser.h
@@ -164,6 +188,7 @@ blt_register_library( NAME fparser
                       LIBRARIES ${FPARSER_LIBRARY}
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
+set( thirdPartyLibs ${thirdPartyLibs} fparser )  
 
 endif()
 
@@ -210,6 +235,9 @@ blt_register_library( NAME caliper
                       INCLUDES ${CALIPER_INCLUDE_DIRS}
                       LIBRARIES ${CALIPER_LIBRARIES}
                       TREAT_INCLUDES_AS_SYSTEM ON )
+
+set( thirdPartyLibs ${thirdPartyLibs} caliper )  
+                      
 endif()
 
 
@@ -257,6 +285,8 @@ blt_register_library( NAME mathpresso
                       INCLUDES ${MATHPRESSO_INCLUDE_DIRS}
                       LIBRARIES ${MATHPRESSO_LIBRARY}
                       TREAT_INCLUDES_AS_SYSTEM ON )
+
+set( thirdPartyLibs ${thirdPartyLibs} mathpresso )  
 
 endif()
 
@@ -311,6 +341,8 @@ blt_register_library( NAME pugixml
                       LIBRARIES ${PUGIXML_LIBRARY}
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
+set( thirdPartyLibs ${thirdPartyLibs} pugixml )  
+
 
 
 ################################
@@ -326,6 +358,8 @@ blt_register_library( NAME trilinos
                       INCLUDES ${Trilinos_INCLUDE_DIRS} 
                       LIBRARIES ${Trilinos_LIBRARIES}
                       TREAT_INCLUDES_AS_SYSTEM ON )
+
+set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
 
 #endif()
 

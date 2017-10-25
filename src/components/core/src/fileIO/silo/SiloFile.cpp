@@ -117,6 +117,10 @@ namespace SiloFileUtilities
   {
     return DB_LONG;
   }
+  template<> int DB_TYPE<long long> ()
+  {
+    return DB_LONG_LONG;
+  }
   template<> int DB_TYPE<string> ()
   {
     return DB_CHAR;
