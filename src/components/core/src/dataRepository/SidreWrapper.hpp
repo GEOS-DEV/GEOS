@@ -9,7 +9,7 @@
 #define COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
 #include "common/GeosxConfig.hpp"
 
-#if USE_ATK
+#ifdef USE_ATK
 #include "sidre/DataStore.hpp"
 
 namespace geosx

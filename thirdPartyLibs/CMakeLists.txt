@@ -31,11 +31,13 @@ if (HDF5_DIR)
                        INCLUDES ${HDF5_INCLUDE_DIRS}
                        LIBRARIES ${HDF5_LIBRARY} 
                        TREAT_INCLUDES_AS_SYSTEM ON )
+
 else()
     message(INFO ": Using HDF5 found at https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz")
     message("${CMAKE_SOURCE_DIR}")
-    set(hdf5_install_dir "${CMAKE_INSTALL_PREFIX}/hdf5")
-    message("hdf5_install_dir = ${hdf5_install_dir}")
+    set(HDF5_ROOT "${CMAKE_INSTALL_PREFIX}/hdf5")
+    message("HDF5_ROOT = ${HDF5_ROOT}")
+
     ExternalProject_Add( hdf5
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/hdf5-1.10.1.tar.gz
 #                          URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz
@@ -45,9 +47,9 @@ else()
                                                CXX=${CMAKE_CXX_COMPILER}
                                                --enable-build-mode=production
                                                --enable-cxx
-                                               --prefix=${hdf5_install_dir}
-                          BUILD_COMMAND make -j8
-                          INSTALL_COMMAND make install )
+                                               --prefix=${HDF5_ROOT}
+                                               BUILD_COMMAND make -j8
+                                               INSTALL_COMMAND make install )
 
     set( dependency_list "${dependency_list};hdf5" )
 
@@ -73,14 +75,14 @@ else()
 #                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/silo-4.10.2-bsd.tar.gz
                           PREFIX ${PROJECT_BINARY_DIR}/silo
-                          DEPENDS hdf5
+#                          DEPENDS hdf5
                           INSTALL_DIR ${silo_install_dir}
                           CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
                                                CXX=${CMAKE_CXX_COMPILER}
                                                --prefix=${silo_install_dir}
                                                --disable-fortran
                                                --enable-optimization
-                                               --with-hdf5=${hdf5_install_dir}/include,${hdf5_install_dir}/lib
+                                               --with-hdf5=${HDF5_ROOT}/include,${HDF5_ROOT}/lib
                                                LDFLAGS=-ldl
                                                --disable-silex 
                           BUILD_COMMAND make -j8

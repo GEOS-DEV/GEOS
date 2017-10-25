@@ -22,7 +22,7 @@ if (CONDUIT_DIR)
                         LIBRARIES  conduit_io
                         TREAT_INCLUDES_AS_SYSTEM ON )
                         
-  set( thirdPartyLibs ${thirdPartyLibs} conduit conduit_io )
+  set( thirdPartyLibs ${thirdPartyLibs} conduit  )
   
 endif()
 

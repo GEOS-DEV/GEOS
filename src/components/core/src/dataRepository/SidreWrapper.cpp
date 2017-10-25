@@ -7,7 +7,7 @@
 
 #include "SidreWrapper.hpp"
 
-#if USE_ATK
+#ifdef USE_ATK
 namespace geosx
 {
 namespace dataRepository
