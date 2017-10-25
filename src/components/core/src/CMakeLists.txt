@@ -34,6 +34,9 @@ set( extraComponentsListLink "")
 #  set( extraComponentsListLink ${extraComponentsListLink} python_interp )
 #endif()
 
+if( ENABLE_MPI )
+  set( extraComponentsListLink ${extraComponentsListLink} mpi )
+endif()
 
 
 message("adding geosx_core library")

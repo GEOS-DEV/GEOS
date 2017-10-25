@@ -60,7 +60,7 @@ endif()
 
 get_filename_component( TEMP_DIR "${CMAKE_INSTALL_PREFIX}" NAME)
 string(REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
-set( GEOSX_TPL_DIR "../thirdPartyLibs/${TEMP_DIR2}" )
+set( GEOSX_TPL_DIR "../../thirdPartyLibs/${TEMP_DIR2}" )
 ################################
 # SILO
 ################################

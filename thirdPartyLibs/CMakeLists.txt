@@ -123,6 +123,8 @@ else()
                                     -DRAJA_ENABLE_CUDA=${CUDA_ENABLED}
                                     -DRAJA_ENABLE_TESTS=${RAJA_ENABLE_TESTS}
                                     -DRAJA_ENABLE_TBB=${RAJA_ENABLE_TBB}
+                                    -DENABLE_OPENMP=${ENABLE_OPENMP}
+                                    -DRAJA_ENABLE_OPENMP=${ENABLE_OPENMP}
                                     -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
     set( dependency_list "${dependency_list};raja" )
@@ -141,8 +143,10 @@ if( EXISTS ${CHAI_DIR})
         message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
     endif()
 else()
-    set(CHAI_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/chai)
+    set(chai_install_dir ${CMAKE_INSTALL_PREFIX}/chai)
     message(INFO ": Using CHAI found at git@github.com:LLNL/CHAI.git")
+    
+    message("PROJECT_BINARY_DIR = ${PROJECT_BINARY_DIR}")
     ExternalProject_Add( chai
                          PREFIX ${PROJECT_BINARY_DIR}/chai
 #                         GIT_REPOSITORY git@github.com:LLNL/CHAI.git
@@ -152,10 +156,11 @@ else()
                          PATCH_COMMAND pwd && cp -r ../../../../../master/src/cmake/blt .
                          BUILD_COMMAND make -j8
                          INSTALL_DIR ${chai_install_dir}
-                         INSTALL_COMMAND make install
+                         INSTALL_COMMAND make install && cp -r ${PROJECT_BINARY_DIR}/chai/src/chai-build/include ${chai_install_dir}
                          CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                     -DENABLE_CUDA=${CUDA_ENABLED}
+                                    -DENABLE_OPENMP=${ENABLE_OPENMP}
                                     -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
     set( dependency_list "${dependency_list};chai" )
