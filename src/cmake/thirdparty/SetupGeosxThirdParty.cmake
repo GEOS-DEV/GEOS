@@ -12,6 +12,7 @@ set( thirdPartyLibs "")
 # Conduit
 ################################
 if (CONDUIT_DIR)
+  message( "CONDUIT_DIR = ${CONDUIT_DIR}" )
   include(cmake/thirdparty/FindConduit.cmake)
   blt_register_library( NAME conduit
                         INCLUDES ${CONDUIT_INCLUDE_DIRS} 
@@ -27,10 +28,8 @@ if (CONDUIT_DIR)
 endif()
 
 
-
-
-
 if (ATK_DIR)
+  message( "ATK_DIR = ${ATK_DIR}" )
   include(cmake/thirdparty/FindATK.cmake)
   blt_register_library( NAME sidre
                         INCLUDES ${ATK_INCLUDE_DIRS} 

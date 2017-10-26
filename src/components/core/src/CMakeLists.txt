@@ -39,7 +39,7 @@ if( ENABLE_MPI )
 endif()
 
 if( USE_ATK )
-  set( extraComponentsListLink ${extraComponentsListLink} slic sidre conduit spio )
+  set( extraComponentsListLink ${extraComponentsListLink}  )
 endif()
 
 #message( "extraComponentsListLink = ${extraComponentsListLink}" )
