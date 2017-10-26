@@ -57,19 +57,23 @@ public:
 
 
   virtual bool empty() const = 0;
-  virtual localIndex size( ) const = 0;
-  virtual void reserve( std::size_t new_cap ) = 0;
+  virtual localIndex size() const = 0;
+  virtual localIndex numDimensions() const = 0;
+  virtual localIndex dimension(localIndex i) const = 0;
+  virtual void setDimensions(long num_dims, const long * dims) = 0;
+  virtual void reserve(std::size_t new_cap) = 0;
   virtual std::size_t capacity() const = 0;
   virtual std::size_t max_size() const = 0;
   virtual void clear() = 0;
   virtual void insert() = 0;
-  virtual void resize( localIndex newsize ) = 0;
+  virtual void resize(localIndex newsize) = 0;
+  virtual bool shouldResize() const = 0;
 
-  virtual void registerDataPtr( axom::sidre::View* view = nullptr ) const = 0;
-  virtual void unregisterDataPtr( axom::sidre::View* view = nullptr ) const = 0;
-  virtual void resizeFromSidre() = 0;
-  virtual void storeSizedFromParent() const = 0;
-  virtual void loadSizedFromParent() = 0;
+  virtual void registerDataPtr(axom::sidre::View * view=nullptr) const = 0; 
+  virtual void registerToWrite(axom::sidre::View * view=nullptr) const = 0;
+  virtual void finishWriting(axom::sidre::View * view=nullptr) const = 0;
+  virtual void registerToRead(axom::sidre::View * view=nullptr) = 0;
+  virtual void finishReading(axom::sidre::View * view=nullptr) = 0;
 
 
   void resize();

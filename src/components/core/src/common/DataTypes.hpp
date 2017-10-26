@@ -301,7 +301,6 @@ public:
     if (it == sidre_types.end())
     {
       return axom::sidre::TypeID::NO_TYPE_ID;
-      // GEOS_ERROR("Unsupported type of with type index name: " << typeIndex.name());
     }
     return it->second;
   }

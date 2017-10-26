@@ -56,7 +56,7 @@ void EventManager::CheckEventTiming()
     if (++eit != docNode->m_child.end())
     {
       dataRepository::ManagedGroup * applicationB = GetGroup(eit->first);
-      ViewWrapper<real64>::rtype beginTime = applicationB->getData<real64>(keys::beginTime);
+      ViewWrapper<real64>::rtype beginTime = applicationB->getData<real64>(keys::time);
 
       if (fabs(*(beginTime) - *(endTime)) > 1e-6)
       {
@@ -88,13 +88,13 @@ void SolverApplication::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Describes the timing of the solver application");
 
-  docNode->AllocateChildNode( keys::beginTime,
-                              keys::beginTime,
+  docNode->AllocateChildNode( keys::time,
+                              keys::time,
                               -1,
                               "real64",
                               "real64",
-                              "application start time",
-                              "application start time",
+                              "application start/current time",
+                              "application start/current time",
                               "0.0",
                               "",
                               0,
@@ -122,6 +122,19 @@ void SolverApplication::FillDocumentationNode()
                               "application dt",
                               "application dt",
                               "-1.0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( keys::cycle,
+                              keys::cycle,
+                              -1,
+                              "int32",
+                              "int32",
+                              "application current cycle",
+                              "application current cycle",
+                              "0.0",
                               "",
                               0,
                               1,

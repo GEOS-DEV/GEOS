@@ -35,9 +35,10 @@ static constexpr auto ConstitutiveBase = "ConstitutiveBase";
 static constexpr auto solverNames = "solverNames";
 
 static constexpr auto schema = "schema";
-static constexpr auto beginTime = "beginTime";
+static constexpr auto beginTime = "time";
 static constexpr auto endTime = "endTime";
 static constexpr auto dt = "dt";
+static constexpr auto cycle = "cycle";
 
 static constexpr auto domain  = "domain";
 static constexpr auto solvers = "solvers";
@@ -49,7 +50,6 @@ static constexpr auto FE_Space    = "FE_Space";
 //static constexpr auto FEM_Elements = "FEM_Elements";
 static constexpr auto cellManager = "cellMananger";
 static constexpr auto functionManager = "FunctionManager";
-
 
 }
 }

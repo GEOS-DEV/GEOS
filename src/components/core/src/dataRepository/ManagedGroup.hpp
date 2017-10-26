@@ -553,31 +553,19 @@ public:
     return m_wrappers;
   }
 
-  void prepareToWriteRestart();
+void prepareToWrite() const;
 
-  void prepareToLoadExternalData();
+void finishWriting() const;
 
-  void finishLoadingExternalData();
+void prepareToRead();
+
+void finishReading();
+
 
 protected:
   cxx_utilities::DocumentationNode * m_docNode = nullptr;
 
-private:
-
-  void registerSubViews();
-
-  void createSizeViews();
-
-  void loadSizeViews();
-
-  void unregisterSubViews();
-
-  void resizeSubViews();
-
-  void storeSizedFromParent();
-
-  void loadSizedFromParent();
-
+private:  
 
   ManagedGroup* m_parent = nullptr;
   viewWrapperMap m_wrappers;
@@ -654,7 +642,7 @@ ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name
     *rkey = m_wrappers.getIndex(name);
   }
   ViewWrapper<TBASE> * const rval = getWrapper<TBASE>(name);
-  if( rval->sizedFromParent() == 1 )
+  if( rval->sizedFromParent() == 1 && rval->shouldResize())
   {
     rval->resize(this->size());
   }
@@ -678,7 +666,7 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name, st
   m_wrappers.insert( name, std::make_unique< ViewWrapper<T> >( name, this, std::move(newObject) ) );
 
   ViewWrapper<T> * const rval = getWrapper<T>(name);
-  if( rval->sizedFromParent() == 1 )
+  if( rval->sizedFromParent() == 1 && rval->shouldResize())
   {
     rval->resize(this->size());
   }

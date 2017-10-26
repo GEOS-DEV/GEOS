@@ -635,8 +635,6 @@ void ProblemManager::RunSimulation()
 #endif
   DomainPartition * domain  = getDomainPartition();
 
-  double time = 0.0;
-  int cycle = 0;
   real64 dt = 0.0;
 
   const MeshLevel * meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
@@ -659,10 +657,11 @@ void ProblemManager::RunSimulation()
 
     string_array const & solverList = currentApplication.getReference<string_array>(keys::solvers);
     real64& appDt = *(currentApplication.getData<real64>(keys::dt));
+    real64& time = *(currentApplication.getData<real64>(keys::time));
     real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
+    int32& cycle = *(currentApplication.getData<int32>(keys::cycle));
 
-
-    integer lockDt = (appDt > 0.0);
+    int32 lockDt = (appDt > 0.0);
     if (lockDt)
     {
       dt = appDt;
@@ -671,43 +670,32 @@ void ProblemManager::RunSimulation()
     while( time < endTime )
     {
       std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+      bpWriter.write( cycle );
       WriteSilo( cycle, time );
+
       real64 nextDt = std::numeric_limits<real64>::max();
 
-      for ( auto jj=0 ; jj<solverList.size() ; ++jj)
+      for ( auto jj=0; jj<solverList.size(); ++jj)
       {
         SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
         currentSolver->TimeStep( time, dt, cycle, domain );
         nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
       }
 
-      while( time < endTime )
-      {
-        std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-        bpWriter.write( cycle );
-        WriteSilo( cycle, time );
-
-        real64 nextDt = std::numeric_limits<real64>::max();
-
-        for ( auto jj=0; jj<solverList.size(); ++jj)
-        {
-          SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
-          currentSolver->TimeStep( time, dt, cycle, domain );
-          nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
-        }
-
-        // Update time, cycle, timestep
-        time += dt;
-        cycle ++;
-        dt = (lockDt)? dt : nextDt;
-        dt = (endTime - time < dt)? endTime-time : dt;
-      } 
+      // Update time, cycle, timestep
+      time += dt;
+      cycle ++;
+      dt = (lockDt)? dt : nextDt;
+      dt = (endTime - time < dt)? endTime-time : dt;
     }
   }
-//  }
 
-//  WriteSilo( cycle, time );
-  WriteRestart( cycle );
+    bpWriter.write(cycle);  
+    WriteSilo(cycle, time);
+    WriteRestart(cycle);
+  }
+
+
 
 
 #ifdef USE_CALIPER
@@ -768,23 +756,26 @@ void ProblemManager::WriteRestart( int32 const cycleNumber )
   char fileName[200] = {0};
   sprintf(fileName, "%s_%09d", "restart", cycleNumber);
 
-  this->prepareToWriteRestart();
-  m_functionManager->prepareToWriteRestart();
-  BoundaryConditionManager::get()->prepareToWriteRestart();
+  this->prepareToWrite();
+  m_functionManager->prepareToWrite();
+  BoundaryConditionManager::get()->prepareToWrite();
   SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
+  this->finishWriting();
+  m_functionManager->finishWriting();
+  BoundaryConditionManager::get()->finishWriting();
 #endif
 }
 
 void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 {
 #if ATK_FOUND
-  this->prepareToLoadExternalData();
-  m_functionManager->prepareToLoadExternalData();
-  BoundaryConditionManager::get()->prepareToLoadExternalData();
+  this->prepareToRead();
+  m_functionManager->prepareToRead();
+  BoundaryConditionManager::get()->prepareToRead();
   SidreWrapper::loadExternalData(restartFileName + ".root", MPI_COMM_WORLD);
-  this->finishLoadingExternalData();
-  m_functionManager->finishLoadingExternalData();
-  BoundaryConditionManager::get()->finishLoadingExternalData();
+  this->finishReading();
+  m_functionManager->finishReading();
+  BoundaryConditionManager::get()->finishReading();
 #endif
 }
 

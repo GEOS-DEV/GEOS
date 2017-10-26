@@ -1,5 +1,6 @@
 #include "Blueprint.hpp"
 #include "common/DataTypes.hpp"
+#include "common/Logger.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 

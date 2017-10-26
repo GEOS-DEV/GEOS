@@ -9,13 +9,12 @@ class SortedArray
 {
 
 public:
-  // typedef typename std::vector<T>::iterator iterator;
-  // typedef typename std::vector<T>::const_iterator const_iterator;
-  // typedef typename std::vector<T>::size_type size_type;
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
   using size_type = typename std::vector<T>::size_type;
   using value_type = typename std::vector<T>::value_type;
+  using pointer = typename std::vector<T>::pointer;
+  using const_pointer = typename std::vector<T>::const_pointer;
 
 
   SortedArray():
@@ -32,12 +31,19 @@ public:
   {}
 
 
-  T* data()
+  T * data()
   { return m_data.data(); }
 
 
-  const T* data() const
+  const T * data() const
   { return m_data.data(); }
+
+
+  T & operator[](size_type i)
+  { return m_data[i]; }
+
+  const T & operator[](size_type i) const
+  { return m_data[i]; }
 
 
   iterator begin() 
@@ -62,6 +68,10 @@ public:
 
   size_type size() const
   { return m_data.size(); }
+
+
+  void resize(size_type new_size)
+  { return m_data.resize(new_size); }
 
 
   void clear()
@@ -101,6 +111,10 @@ public:
 
   size_type count(const T& value) const
   { return std::binary_search(begin(), end(), value); }
+
+
+  bool isSorted() const
+  { return std::is_sorted(begin(), end()); }
 
 private:
 

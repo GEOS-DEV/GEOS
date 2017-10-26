@@ -351,120 +351,7 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
 }
 
 
-/* Add pointers to ViewWrapper data to the sidre tree. */
-void ManagedGroup::registerSubViews()
-{
-#ifdef USE_ATK
-  for (auto & wrapper : m_wrappers)
-  {
-    wrapper.second->registerDataPtr();
-  }
-
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->registerSubViews();
-  });
-#endif
-}
-
-/* Remove pointers to ViewWrapper data from the sidre tree. */
-void ManagedGroup::unregisterSubViews()
-{
-#ifdef USE_ATK
-  for ( auto & wrapper : m_wrappers )
-  {
-    wrapper.second->unregisterDataPtr();
-  }
-
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->unregisterSubViews();
-  });
-#endif
-}
-
-/* Save m_size to sidre views. */
-void ManagedGroup::createSizeViews()
-{
-#ifdef USE_ATK
-  if ( m_sidreGroup->hasView("__size__") ) {
-    m_sidreGroup->getView("__size__")->setScalar(m_size);
-  } else {
-    m_sidreGroup->createView("__size__")->setScalar(m_size);  
-  }
-
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->createSizeViews();
-  });
-#endif
-}
-
-/* Load m_size data from sidre views. */
-void ManagedGroup::loadSizeViews()
-{
-#ifdef USE_ATK
-  axom::sidre::View* temp = m_sidreGroup->getView("__size__");
-  m_size = temp->getScalar();
-  m_sidreGroup->destroyView("__size__");
-
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->loadSizeViews();
-  });
-#endif
-}
-
-/* Resize views to hold data from sidre. */
-void ManagedGroup::resizeSubViews()
-{
-#ifdef USE_ATK
-  for ( auto & wrapper : m_wrappers )
-  {
-    wrapper.second->resizeFromSidre();
-  }
-
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->resizeSubViews();
-  });
-#endif
-}
-
-
-void ManagedGroup::storeSizedFromParent()
-{
-#ifdef USE_ATK
-  for ( auto & wrapper : m_wrappers )
-  {
-    wrapper.second->storeSizedFromParent();
-  }
-
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->storeSizedFromParent();
-  });
-#endif
-}
-
-
-void ManagedGroup::loadSizedFromParent()
-{
-#ifdef USE_ATK
-  for ( auto & wrapper : m_wrappers )
-  {
-    wrapper.second->loadSizedFromParent();
-  }
-
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->loadSizedFromParent();
-  });
-#endif
-}
-
-
-void ManagedGroup::prepareToWriteRestart() 
+void ManagedGroup::prepareToWrite() const
 {
 #ifdef USE_ATK
   if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
@@ -472,26 +359,76 @@ void ManagedGroup::prepareToWriteRestart()
     SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
   }
 
-  storeSizedFromParent();
-  registerSubViews();
-  createSizeViews();
+  for (auto & pair : m_wrappers)
+  {
+    pair.second->registerToWrite();
+  }
+
+  if ( m_sidreGroup->hasView("__size__") ) {
+    m_sidreGroup->getView("__size__")->setScalar(m_size);
+  } else {
+    m_sidreGroup->createView("__size__")->setScalar(m_size);  
+  }
+
+  forSubGroups([](const ManagedGroup * subGroup) -> void 
+  {
+    subGroup->prepareToWrite();
+  });
 #endif
 }
 
-void ManagedGroup::prepareToLoadExternalData()
+
+void ManagedGroup::finishWriting() const
 {
 #ifdef USE_ATK
-  loadSizedFromParent();
-  loadSizeViews();
-  resizeSubViews();
-  registerSubViews();
+  axom::sidre::View* temp = m_sidreGroup->getView("__size__");
+  m_sidreGroup->destroyView("__size__");
+
+  for (auto & pair : m_wrappers)
+  {
+    pair.second->finishWriting();
+  }
+
+  forSubGroups([](const ManagedGroup * subGroup) -> void 
+  {
+    subGroup->finishWriting();
+  });
 #endif
 }
 
-void ManagedGroup::finishLoadingExternalData()
+
+void ManagedGroup::prepareToRead()
 {
 #ifdef USE_ATK
-  unregisterSubViews();
+  axom::sidre::View* temp = m_sidreGroup->getView("__size__");
+  m_size = temp->getScalar();
+  m_sidreGroup->destroyView("__size__");
+
+  for (auto & pair : m_wrappers)
+  {
+    pair.second->registerToRead();
+  }
+
+  forSubGroups([](ManagedGroup * subGroup) -> void 
+  {
+    subGroup->prepareToRead();
+  });  
+#endif
+}
+
+
+void ManagedGroup::finishReading()
+{
+#ifdef USE_ATK
+  for (auto & pair : m_wrappers)
+  {
+    pair.second->finishReading();
+  }
+
+  forSubGroups([](ManagedGroup * subGroup) -> void 
+  {
+    subGroup->finishReading();
+  });
 #endif
 }
 

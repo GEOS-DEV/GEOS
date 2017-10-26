@@ -49,8 +49,9 @@ TEST(testSidreBasic, testSidreBasic) {
   }
 
   /* Save the sidre tree */
-  root->prepareToWriteRestart();
+  root->prepareToWrite();
   SidreWrapper::writeTree(1, path, protocol, MPI_COMM_WORLD);
+  root->finishWriting();
 
   /* Delete geos tree and reset sidre tree. */
   delete root;
@@ -66,9 +67,9 @@ TEST(testSidreBasic, testSidreBasic) {
   ViewWrapper<int64_array> * data_view_new = root->RegisterViewWrapper<int64_array>("int64_data");
 
   /* Load the data */
-  root->prepareToLoadExternalData();
+  root->prepareToRead();
   SidreWrapper::loadExternalData(path + ".root", MPI_COMM_WORLD);
-  root->finishLoadingExternalData();
+  root->finishReading();
 
   /* Should be the same as stored. */
   EXPECT_EQ(data_view_new->size(), num_items);

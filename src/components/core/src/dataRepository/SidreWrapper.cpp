@@ -5,6 +5,7 @@
  *      Author: rrsettgast
  */
 #include "SidreWrapper.hpp"
+#include "dataRepository/Buffer.hpp"
 
 #ifdef USE_ATK
 #include "spio/IOManager.hpp"
@@ -56,7 +57,7 @@ void SidreWrapper::reconstructTree(const std::string & root_path, const std::str
   {
     SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
   }
-
+  
   axom::spio::IOManager ioManager(comm);
   ioManager.read(SidreWrapper::dataStore().getRoot(), root_path, protocol);
 #endif
@@ -96,6 +97,7 @@ void SidreWrapper::loadExternalData(const std::string & root_path, MPI_Comm comm
   if (!checkSidreTree(SidreWrapper::dataStore().getRoot())) {
     SLIC_ERROR("Tree not valid");
   }
+
   axom::spio::IOManager ioManager(comm);
   ioManager.loadExternalData(SidreWrapper::dataStore().getRoot(), root_path);
 #endif
