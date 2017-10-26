@@ -18,6 +18,7 @@ namespace geosx
 namespace dataRepository
 {
 
+
 ViewWrapperBase::ViewWrapperBase( std::string const & name,
                                   ManagedGroup * const parent ):
   m_name(name),

@@ -10,6 +10,7 @@
 #include "spio/IOManager.hpp"
 
 #include "conduit_blueprint.hpp"
+#include "conduit_relay.hpp"
 
 #include <cstring>
 #include <unordered_map>
@@ -47,8 +48,10 @@ Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManage
 
 void Blueprint::write(int cycle) const
 {
+  const string mesh_name = "bp_mesh";
+  
   DataStore ds;
-  Group* root = ds.getRoot();
+  Group* root = ds.getRoot()->createGroup(mesh_name);
   Group* coords = root->createGroup("coordsets/" + m_coord_name);
   Group* topo = root->createGroup("topologies/" + m_topo_name);
   Group* fields = root->createGroup("fields");
@@ -56,26 +59,71 @@ void Blueprint::write(int cycle) const
   addNodes(coords, fields);
   addCells(topo, fields);
 
-  conduit::Node root_node;
+  conduit::Node mesh_node;
   conduit::Node info;
-  root->createNativeLayout(root_node);
-  if (!conduit::blueprint::verify("mesh", root_node, info))
+  ds.getRoot()->createNativeLayout(mesh_node);
+  if (!conduit::blueprint::verify("mesh", mesh_node[mesh_name], info))
   {
     std::cout << "does not conform to the blueprint:";
     info.print();
     std::cout << std::endl;
+
+    GEOS_ERROR("Does not conform to the blueprint. See above errors");
   }
 
-  axom::spio::IOManager ioManager(m_comm);
-  ioManager.write(root, 1, m_output_path + "_" + std::to_string(cycle), "sidre_hdf5");
+  conduit::Node root_node;
+  Node & index = root_node["blueprint_index"];
+
+  conduit::blueprint::mesh::generate_index(mesh_node[mesh_name], mesh_name, 1, index[mesh_name]);
+
+  info.reset();
+  if (!conduit::blueprint::mesh::index::verify(index[mesh_name], info))
+  {
+    std::cout << "index does not conform to the blueprint:";
+    info.print();
+    std::cout << std::endl;
+
+    GEOS_ERROR("Does not conform to the blueprint. See above errors");
+  }
+
+
+  const std::string root_output_path = m_output_path + "_" + std::to_string(cycle) + ".blueprint_root_hdf5";
+  const std::string output_path = m_output_path + "_" + std::to_string(cycle) + ".hdf5";
+
+  root_node["protocol/name"] = "conduit_hdf5";
+  root_node["protocol/version"] = "0.1";
+        
+  root_node["number_of_files"] = 1;
+  root_node["number_of_trees"] = 1;
+  root_node["file_pattern"] = output_path;
+  root_node["tree_pattern"] = "/";
+
+  conduit::relay::io::save(root_node, root_output_path, "hdf5");
+  conduit::relay::io::save(mesh_node, output_path);
 }
 
 
 void Blueprint::addNodes(Group* coords, Group* fields) const
 {
   coords->createView("type")->setString("explicit");
-  View* xyz = coords->createGroup("values")->createView("xyz");
-  m_node_manager.getWrapperBase(m_node_manager.viewKeys.referencePosition)->registerDataPtr(xyz);
+
+  localIndex n_nodes = m_node_manager.getWrapperBase(m_node_manager.viewKeys.referencePosition)->size();
+
+  View * x_view = coords->createView("values/x", axom::sidre::TypeID::DOUBLE_ID, n_nodes);
+  View * y_view = coords->createView("values/y", axom::sidre::TypeID::DOUBLE_ID, n_nodes);
+  View * z_view = coords->createView("values/z", axom::sidre::TypeID::DOUBLE_ID, n_nodes);
+
+  double * x = x_view->allocate()->getData();
+  double * y = y_view->allocate()->getData();
+  double * z = z_view->allocate()->getData();
+  view_rtype_const<r1_array> position = m_node_manager.referencePosition();
+
+  for (localIndex i = 0; i < n_nodes; i++)
+  {
+    x[i] = position[i][0];
+    y[i] = position[i][1];
+    z[i] = position[i][2];
+  }
 
   for (const std::pair<const std::string, const ViewWrapperBase*>& pair : m_node_manager.wrappers())
   {

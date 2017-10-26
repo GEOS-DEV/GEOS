@@ -103,10 +103,12 @@ public:
     return m_name;
   }
 
+
 private:
   std::string m_name;
   ManagedGroup* m_parent;
   int m_sizedFromParent;
+
 #ifdef USE_ATK
   axom::sidre::View* m_sidreView;
 #endif
