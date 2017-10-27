@@ -238,44 +238,36 @@ public:
 
   struct resize_wrapper
   {
-    HAS_MEMBER_FUNCTION_VARIANT(resize,0,void,,VA_LIST(localIndex), VA_LIST(localIndex(1)))
-    HAS_MEMBER_FUNCTION_VARIANT(resize,1,void,,VA_LIST(std::size_t), VA_LIST(std::size_t(1)))
-//    HAS_MEMBER_FUNCTION_VARIANT(resize,2,void,,VA_LIST(unsigned long long), VA_LIST(unsigned long long(1)))
-//    HAS_MEMBER_FUNCTION_VARIANT(resize,3,void,,VA_LIST(uint64), VA_LIST(uint64(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,0,void,,VA_LIST(int), VA_LIST(int32(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,1,void,,VA_LIST(unsigned int), VA_LIST(uint32(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,2,void,,VA_LIST(long), VA_LIST(int64(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,3,void,,VA_LIST(unsigned long), VA_LIST(uint64(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,4,void,,VA_LIST(long long), VA_LIST(size_t(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,5,void,,VA_LIST(unsigned long long), VA_LIST(int(1)))
 
 
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_v0_resize<U>::value, void>::type
-    resize(ViewWrapper * const parent, integer const new_size)
+    static typename std::enable_if< has_memberfunction_v0_resize<U>::value ||
+                                    has_memberfunction_v1_resize<U>::value ||
+                                    has_memberfunction_v2_resize<U>::value ||
+                                    has_memberfunction_v3_resize<U>::value ||
+                                    has_memberfunction_v4_resize<U>::value, void>::type
+    resize(ViewWrapper * const parent, localIndex const new_size)
     {
       return parent->m_data->resize(new_size);
     }
 
-    template<class U = T>
-    static typename std::enable_if<has_memberfunction_v1_resize<U>::value, void>::type
-    resize(ViewWrapper * const parent, std::size_t const new_size)
-    {
-      return parent->m_data->resize(new_size);
-    }
-
-//    template<class U = T>
-//    static typename std::enable_if<has_memberfunction_v2_resize<U>::value, void>::type
-//    resize(ViewWrapper * const parent, int64 const new_size)
-//    {
-//      return parent->m_data->resize(new_size);
-//    }
-//
-//    template<class U = T>
-//    static typename std::enable_if<has_memberfunction_v3_resize<U>::value, void>::type
-//    resize(ViewWrapper * const parent, uint64 const new_size)
-//    {
-//      return parent->m_data->resize(new_size);
-//    }
-
+    
     template<class U = T>
     static typename std::enable_if<!(has_memberfunction_v0_resize<U>::value)&&
-                                   !(has_memberfunction_v1_resize<U>::value), void>::type
-    resize(ViewWrapper * const, localIndex ) { return; }
+                                   !(has_memberfunction_v1_resize<U>::value)&&
+                                   !(has_memberfunction_v2_resize<U>::value)&&
+                                   !(has_memberfunction_v3_resize<U>::value)&&
+                                   !(has_memberfunction_v4_resize<U>::value), void>::type
+    resize(ViewWrapper * const, localIndex )
+    {
+      return;
+    }
   };
   using ViewWrapperBase::resize;
   void resize( localIndex new_size ) override final
