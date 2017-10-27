@@ -28,7 +28,7 @@ MeshLevel::MeshLevel( string const & name,
   RegisterGroup<FaceManager>( groupKeys.faceManager );
   RegisterGroup<ElementRegionManager>( groupKeys.elemManager );
 
-  RegisterViewWrapper<int32>( viewKeys.meshLevel );
+  RegisterViewWrapper<integer>( viewKeys.meshLevel );
 }
 
 MeshLevel::~MeshLevel()

@@ -25,10 +25,10 @@ public:
              ManagedGroup * const parent );
   virtual ~MeshBody();
 
-  MeshLevel * CreateMeshLevel( int32 const newLevel );
+  MeshLevel * CreateMeshLevel( integer const newLevel );
 
-  MeshLevel * getMeshLevel( int32 const level ) { return this->GetGroup<MeshLevel>(level); }
-  MeshLevel const * getMeshLevel( int32 const level ) const { return this->GetGroup<MeshLevel>(level); }
+  MeshLevel * getMeshLevel( integer const level ) { return this->GetGroup<MeshLevel>(level); }
+  MeshLevel const * getMeshLevel( integer const level ) const { return this->GetGroup<MeshLevel>(level); }
 
   struct viewKeysStruct
   {

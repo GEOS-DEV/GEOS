@@ -101,9 +101,9 @@ public:
   MeshBody * getMeshBody( string const & meshName )
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
 
-  MeshBody const * getMeshBody( int32 const index ) const
+  MeshBody const * getMeshBody( integer const index ) const
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
-  MeshBody * getMeshBody( int32 const index )
+  MeshBody * getMeshBody( integer const index )
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
 
 

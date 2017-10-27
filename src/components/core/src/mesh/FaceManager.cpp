@@ -19,12 +19,12 @@ FaceManager::FaceManager( string const & , ManagedGroup * const parent ):
 ObjectManagerBase("FaceManager",parent)
 {
 
-  this->RegisterViewWrapper< array< int32_array > >(viewKeys.nodeList.Key());
+  this->RegisterViewWrapper< array< localIndex_array > >(viewKeys.nodeList.Key());
 
 
-  this->RegisterViewWrapper< Array2dT<int32> >(viewKeys.elementRegionList.Key())->reference().resize2(0,2);
-  this->RegisterViewWrapper< Array2dT<int32> >(viewKeys.elementSubRegionList.Key())->reference().resize2(0,2);
-  this->RegisterViewWrapper< Array2dT<int32> >(viewKeys.elementList.Key())->reference().resize2(0,2);
+  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementRegionList.Key())->reference().resize2(0,2);
+  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementSubRegionList.Key())->reference().resize2(0,2);
+  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementList.Key())->reference().resize2(0,2);
   //0-based; note that the following field is ALSO 0
   //for faces that are not external faces, so check isExternal before using
 //  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
@@ -54,8 +54,8 @@ void FaceManager::FillDocumentationNode( dataRepository::ManagedGroup * const  )
 //  docNode->AllocateChildNode( viewKeys.elementRegionList.Key(),
 //                              viewKeys.elementRegionList.Key(),
 //                              -1,
-//                              "int32_array",
-//                              "int32_array",
+//                              "integer_array",
+//                              "integer_array",
 //                              "List containing the element regions of the faces",
 //                              "List containing the element regions of the faces",
 //                              "1",
@@ -78,9 +78,9 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
   localIndex numFaces = 0;
   Array1dT<lArray1d> facesByLowestNode;
 
-  Array2dT<int32> & elemRegionList = this->elementRegionList();
-  Array2dT<int32> & elemSubRegionList = this->elementSubRegionList();
-  Array2dT<int32> & elemList = this->elementList();
+  Array2dT<localIndex> & elemRegionList = this->elementRegionList();
+  Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
+  Array2dT<localIndex> & elemList = this->elementList();
 
   elemRegionList.resize( 4*nodeManager->size() );
   elemSubRegionList.resize( 4*nodeManager->size() );
@@ -204,7 +204,7 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
   this->resize(tempFaceToNodeMap.size());
 
   // set m_FaceToNodeMap
-  array< int32_array > & faceToNodes = this->getReference< array< int32_array > >( viewKeys.nodeList ) ;
+  array< localIndex_array > & faceToNodes = this->getReference< array< localIndex_array > >( viewKeys.nodeList ) ;
   faceToNodes = tempFaceToNodeMap;
 
   auto const & nodeSets = nodeManager->GetGroup(string("Sets"))->wrappers();
@@ -295,9 +295,9 @@ void FaceManager::AddNewFace( localIndex const & kReg,
 void FaceManager::SortAllFaceNodes( NodeManager const & nodeManager,
                                     ElementRegionManager const & elemManager )
 {
-  Array2dT<int32> & elemRegionList = this->elementRegionList();
-  Array2dT<int32> & elemSubRegionList = this->elementSubRegionList();
-  Array2dT<int32> & elemList = this->elementList();
+  Array2dT<localIndex> & elemRegionList = this->elementRegionList();
+  Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
+  Array2dT<localIndex> & elemList = this->elementList();
 
   for(localIndex kf =0; kf < size(); ++kf )
   {

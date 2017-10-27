@@ -55,7 +55,7 @@ class Array2dT : public VectorT<TYPE>
 {
   public:
 
-  typedef typename VectorT<TYPE>::size_type size_type;
+  typedef long size_type;
 
   //***** Constructors & Destructors ******************************************
 	Array2dT(void);
@@ -81,37 +81,37 @@ class Array2dT : public VectorT<TYPE>
   
   
   //***** Memory Allocation and Release ***************************************
-	void resize2( const long dim1 , const long dim2 );
+	void resize2( const size_type dim1 , const size_type dim2 );
   void resize(const size_type num_elem)
   { resize2( num_elem, dimension[1] );  }
 
-  void Insert( const long dim1, const TYPE& t);
-  void Erase( const long dim1 );
+  void Insert( const size_type dim1, const TYPE& t);
+  void Erase( const size_type dim1 );
 
 
 	//***** Accessors **********************************************************
 
 
 
-  inline const TYPE& operator()(const long dim1 , const long dim2) const ;
-  inline TYPE& operator()(const long dim1 , const long dim2) ;
+  inline const TYPE& operator()(const size_type dim1 , const size_type dim2) const ;
+  inline TYPE& operator()(const size_type dim1 , const size_type dim2) ;
 
 
 
   private:
-  long dimension[2];
+  size_type dimension[2];
 
   public:
 	//***** Class Information Functions ****************************************
 
-  inline long Dimension( const long dimnum ) const ;
+  inline size_type Dimension( const size_type dimnum ) const ;
 
-  inline const TYPE* operator[]( const long index ) const
+  inline const TYPE* operator[]( const size_type index ) const
   {
     return ( &(VectorT<TYPE>::operator[](index*dimension[1])) );
   }
 
-  inline TYPE* operator[]( const long index )
+  inline TYPE* operator[]( const size_type index )
   {
     return ( &(VectorT<TYPE>::operator[](index*dimension[1])) );
   }
@@ -135,7 +135,7 @@ Array2dT<TYPE>::Array2dT(void)
 }
 
 template <class TYPE> 
-Array2dT<TYPE>::Array2dT( const long dim1 , const long dim2):
+Array2dT<TYPE>::Array2dT( const size_type dim1 , const size_type dim2):
 VectorT<TYPE>::VectorT()
 {
   resize2(dim1,dim2);
@@ -156,7 +156,7 @@ VectorT<TYPE>(source)
 // ***** MEMORY ALLOCATION *****************************************************
 // *****************************************************************************
 template <class TYPE> 
-void Array2dT<TYPE>::resize2( const long dim1 , const long dim2)
+void Array2dT<TYPE>::resize2( const size_type dim1 , const size_type dim2)
 {
   dimension[0] = dim1;
   dimension[1] = dim2;
@@ -165,7 +165,7 @@ void Array2dT<TYPE>::resize2( const long dim1 , const long dim2)
 }
 
 template <class TYPE>
-void Array2dT<TYPE>::Insert( const long dim1, const TYPE& t)
+void Array2dT<TYPE>::Insert( const size_type dim1, const TYPE& t)
 {
   const size_type index = (dim1)*dimension[1];
   for(size_type tt = 0; tt < dimension[1]; tt++)
@@ -174,7 +174,7 @@ void Array2dT<TYPE>::Insert( const long dim1, const TYPE& t)
 }
 
 template <class TYPE>
-void Array2dT<TYPE>::Erase( const long dim1 )
+void Array2dT<TYPE>::Erase( const size_type dim1 )
 {
   const size_type index = (dim1)*dimension[1];
   for(size_type tt = 0; tt < dimension[1]; tt++)
@@ -303,7 +303,7 @@ return (*this);
 //*****************************************************************************
 
 template <class TYPE>
-const TYPE& Array2dT<TYPE>::operator()( const long dim1 , const long dim2 ) const
+const TYPE& Array2dT<TYPE>::operator()( const size_type dim1 , const size_type dim2 ) const
 {
 #if RANGE_CHECKING==1
     if (/*(dim1) < 0 ||*/ (dim1 ) >= dimension[0] ||
@@ -316,7 +316,7 @@ const TYPE& Array2dT<TYPE>::operator()( const long dim1 , const long dim2 ) cons
 }
 
 template <class TYPE>
-TYPE& Array2dT<TYPE>::operator()( const long dim1 , const long dim2 )
+TYPE& Array2dT<TYPE>::operator()( const size_type dim1 , const size_type dim2 )
 {
 #if RANGE_CHECKING==1
     if (/*(dim1) < 0 ||*/ (dim1 ) >= dimension[0] ||
@@ -330,7 +330,7 @@ TYPE& Array2dT<TYPE>::operator()( const long dim1 , const long dim2 )
 }
 
 template <class TYPE>
-long Array2dT<TYPE>::Dimension( const long dimnum ) const
+typename Array2dT<TYPE>::size_type Array2dT<TYPE>::Dimension( const size_type dimnum ) const
 { 
 #if RANGE_CHECKING==1
   if ( dimnum>1 ) throw 1;

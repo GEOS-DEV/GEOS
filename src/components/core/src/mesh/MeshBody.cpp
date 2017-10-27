@@ -16,7 +16,7 @@ MeshBody::MeshBody( string const & name,
                       ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
-  RegisterViewWrapper<int32>( viewKeys.meshLevels );
+  RegisterViewWrapper<integer>( viewKeys.meshLevels );
 }
 
 MeshBody::~MeshBody()
@@ -26,7 +26,7 @@ MeshBody::~MeshBody()
 
 
 
-MeshLevel * MeshBody::CreateMeshLevel( int32 const newLevel )
+MeshLevel * MeshBody::CreateMeshLevel( integer const newLevel )
 {
   return this->RegisterGroup<MeshLevel>( "Level0" );
 }

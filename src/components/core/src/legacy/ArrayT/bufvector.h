@@ -72,119 +72,119 @@ public:
   bufvector & operator=( bufvector const & ) = default;
 
 
-  unsigned int Pack( const int& var )           { return PrivatePack(var); }
-  unsigned int Pack( const realT& var )         { return PrivatePack(var); }
-//  unsigned int Pack( const localIndex& var )    { return PrivatePack(var); }
-  unsigned int Pack( const globalIndex& var )   { return PrivatePack(var); }
-  unsigned int Pack( const R1Tensor& var )      { return PrivatePack(var); }
-  unsigned int Pack( const R2Tensor& var )      { return PrivatePack(var); }
-  unsigned int Pack( const R2SymTensor& var )   { return PrivatePack(var); }
-//  unsigned int Pack( const size_t& var )   { return PrivatePack(var); }
+  localIndex Pack( const integer& var )           { return PrivatePack(var); }
+  localIndex Pack( const realT& var )         { return PrivatePack(var); }
+//  localIndex Pack( const localIndex& var )    { return PrivatePack(var); }
+  localIndex Pack( const globalIndex& var )   { return PrivatePack(var); }
+  localIndex Pack( const R1Tensor& var )      { return PrivatePack(var); }
+  localIndex Pack( const R2Tensor& var )      { return PrivatePack(var); }
+  localIndex Pack( const R2SymTensor& var )   { return PrivatePack(var); }
+//  localIndex Pack( const size_t& var )   { return PrivatePack(var); }
 
 
-  unsigned int Pack( const std::string& var );
+  localIndex Pack( const std::string& var );
 
-  unsigned int Pack( const iArray1d& var )              { return PrivatePackArray(var); }
-  unsigned int Pack( const rArray1d& var )              { return PrivatePackArray(var); }
-//  unsigned int Pack( const lArray1d& var )              { return PrivatePackArray(var); }
-  unsigned int Pack( const gArray1d& var )              { return PrivatePackArray(var); }
-  unsigned int Pack( const Array1dT<R1Tensor>& var )    { return PrivatePackArray(var); }
-  unsigned int Pack( const Array1dT<R2Tensor>& var )    { return PrivatePackArray(var); }
-  unsigned int Pack( const Array1dT<R2SymTensor>& var ) { return PrivatePackArray(var); }
-  unsigned int Pack( const sArray1d& var );
+  localIndex Pack( const iArray1d& var )              { return PrivatePackArray(var); }
+  localIndex Pack( const rArray1d& var )              { return PrivatePackArray(var); }
+//  localIndex Pack( const lArray1d& var )              { return PrivatePackArray(var); }
+  localIndex Pack( const gArray1d& var )              { return PrivatePackArray(var); }
+  localIndex Pack( const Array1dT<R1Tensor>& var )    { return PrivatePackArray(var); }
+  localIndex Pack( const Array1dT<R2Tensor>& var )    { return PrivatePackArray(var); }
+  localIndex Pack( const Array1dT<R2SymTensor>& var ) { return PrivatePackArray(var); }
+  localIndex Pack( const sArray1d& var );
 
 
-  unsigned int Pack( const lSet& var )              { return PrivatePackSet(var); }
-  unsigned int Pack( const gSet& var )              { return PrivatePackSet(var); }
+  localIndex Pack( const set<int32>& var )              { return PrivatePackSet(var); }
+  localIndex Pack( const set<int64>& var )              { return PrivatePackSet(var); }
 
   template< typename T_KEY, typename T_VAL >
-  unsigned int Pack( const std::map<T_KEY,T_VAL>& var ) { return PrivatePackMap(var);}
+  localIndex Pack( const std::map<T_KEY,T_VAL>& var ) { return PrivatePackMap(var);}
 
-  template< typename T > unsigned int PackSerialObject( const T& object ) { return PrivatePack(object); }
+  template< typename T > localIndex PackSerialObject( const T& object ) { return PrivatePack(object); }
 //  template< int NINT, int NR0, int NR1, int NR2, int NR2S >
-//  unsigned int PackSerialObject( const EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivatePack( object ); }
+//  localIndex PackSerialObject( const EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivatePack( object ); }
 //  template< int NINT, int NR0, int NR1, int NR2, int NR2S >
-//  static unsigned int PackSerialObject( char*& buffer, const EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivatePack(buffer, object ); }
+//  static localIndex PackSerialObject( char*& buffer, const EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivatePack(buffer, object ); }
 
-  template< typename T_indices > unsigned int Pack( const iArray1d& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
-  template< typename T_indices > unsigned int Pack( const rArray1d& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
-//  template< typename T_indices > unsigned int Pack( const lArray1d& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
-  template< typename T_indices > unsigned int Pack( const gArray1d& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
-  template< typename T_indices > unsigned int Pack( const Array1dT<R1Tensor>& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
-  template< typename T_indices > unsigned int Pack( const Array1dT<R2Tensor>& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
-  template< typename T_indices > unsigned int Pack( const Array1dT<R2SymTensor>& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
-
-
-
-  static unsigned int Pack( char*& buffer, const int& var ) { return PrivatePack(buffer,var); }
-  static unsigned int Pack( char*& buffer, const realT& var ) { return PrivatePack(buffer,var); }
-//  static unsigned int Pack( char*& buffer, const localIndex& var ) { return PrivatePack(buffer,var); }
-  static unsigned int Pack( char*& buffer, const globalIndex& var ) { return PrivatePack(buffer,var); }
-  static unsigned int Pack( char*& buffer, const R1Tensor& var ) { return PrivatePack(buffer,var); }
-  static unsigned int Pack( char*& buffer, const R2Tensor& var ) { return PrivatePack(buffer,var); }
-  static unsigned int Pack( char*& buffer, const R2SymTensor& var ) { return PrivatePack(buffer,var); }
-  template< typename T > static unsigned int PackSerialObject( char*& buffer, const T& object ) { return PrivatePack(buffer,object); }
+  template< typename T_indices > localIndex Pack( const iArray1d& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
+  template< typename T_indices > localIndex Pack( const rArray1d& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
+//  template< typename T_indices > localIndex Pack( const lArray1d& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
+  template< typename T_indices > localIndex Pack( const gArray1d& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
+  template< typename T_indices > localIndex Pack( const Array1dT<R1Tensor>& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
+  template< typename T_indices > localIndex Pack( const Array1dT<R2Tensor>& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
+  template< typename T_indices > localIndex Pack( const Array1dT<R2SymTensor>& array, const T_indices& indices ) { return PrivatePackArray( array, indices ); }
 
 
-  static unsigned int Pack( char*& buffer, const std::string& var );
 
-  unsigned int PackGlobal( const lArray1d& container, const gArray1d& localToGlobal ) { return PrivatePackGlobal(container,localToGlobal); }
-  unsigned int PackGlobal( const lSet& container, const gArray1d& localToGlobal ) { return PrivatePackGlobal(container,localToGlobal); }
-
-  template< typename T_indices > unsigned int Pack( const OneToOneRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
-  template< typename T_indices > unsigned int Pack( const FixedOneToManyRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
-  template< typename T_indices > unsigned int Pack( const OrderedVariableOneToManyRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
-  template< typename T_indices > unsigned int Pack( const UnorderedVariableOneToManyRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
-  template< typename T_indices > unsigned int Pack( const OrderedVariableOneToManyPairRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
-  template< typename T_indices > unsigned int Pack( const UnorderedVariableOneToManyPairRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
+  static localIndex Pack( char*& buffer, const int& var ) { return PrivatePack(buffer,var); }
+  static localIndex Pack( char*& buffer, const realT& var ) { return PrivatePack(buffer,var); }
+//  static localIndex Pack( char*& buffer, const localIndex& var ) { return PrivatePack(buffer,var); }
+  static localIndex Pack( char*& buffer, const globalIndex& var ) { return PrivatePack(buffer,var); }
+  static localIndex Pack( char*& buffer, const R1Tensor& var ) { return PrivatePack(buffer,var); }
+  static localIndex Pack( char*& buffer, const R2Tensor& var ) { return PrivatePack(buffer,var); }
+  static localIndex Pack( char*& buffer, const R2SymTensor& var ) { return PrivatePack(buffer,var); }
+  template< typename T > static localIndex PackSerialObject( char*& buffer, const T& object ) { return PrivatePack(buffer,object); }
 
 
-  static unsigned int Unpack( const char*& buffer, int& var ) { return PrivateUnpack(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, realT& var ) { return PrivateUnpack(buffer,var); }
-//  static unsigned int Unpack( const char*& buffer, localIndex& var ) { return PrivateUnpack(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, globalIndex& var ) { return PrivateUnpack(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, R1Tensor& var ) { return PrivateUnpack(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, R2Tensor& var ) { return PrivateUnpack(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, R2SymTensor& var ) { return PrivateUnpack(buffer,var); }
-//  static unsigned int Unpack( const char*& buffer, size_t& var ) { return PrivateUnpack(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, std::string& var );
+  static localIndex Pack( char*& buffer, const std::string& var );
+
+  localIndex PackGlobal( const lArray1d& container, const gArray1d& localToGlobal ) { return PrivatePackGlobal(container,localToGlobal); }
+  localIndex PackGlobal( const lSet& container, const gArray1d& localToGlobal ) { return PrivatePackGlobal(container,localToGlobal); }
+
+  template< typename T_indices > localIndex Pack( const OneToOneRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
+  template< typename T_indices > localIndex Pack( const FixedOneToManyRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
+  template< typename T_indices > localIndex Pack( const OrderedVariableOneToManyRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
+  template< typename T_indices > localIndex Pack( const UnorderedVariableOneToManyRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
+  template< typename T_indices > localIndex Pack( const OrderedVariableOneToManyPairRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
+  template< typename T_indices > localIndex Pack( const UnorderedVariableOneToManyPairRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
+
+
+  static localIndex Unpack( const char*& buffer, integer& var ) { return PrivateUnpack(buffer,var); }
+  static localIndex Unpack( const char*& buffer, realT& var ) { return PrivateUnpack(buffer,var); }
+//  static localIndex Unpack( const char*& buffer, localIndex& var ) { return PrivateUnpack(buffer,var); }
+  static localIndex Unpack( const char*& buffer, globalIndex& var ) { return PrivateUnpack(buffer,var); }
+  static localIndex Unpack( const char*& buffer, R1Tensor& var ) { return PrivateUnpack(buffer,var); }
+  static localIndex Unpack( const char*& buffer, R2Tensor& var ) { return PrivateUnpack(buffer,var); }
+  static localIndex Unpack( const char*& buffer, R2SymTensor& var ) { return PrivateUnpack(buffer,var); }
+//  static localIndex Unpack( const char*& buffer, size_t& var ) { return PrivateUnpack(buffer,var); }
+  static localIndex Unpack( const char*& buffer, std::string& var );
 
   template< typename T >
-  static unsigned int UnpackSerialObject( const char*& buffer, T& object ) { return PrivateUnpack(buffer,object); }
+  static localIndex UnpackSerialObject( const char*& buffer, T& object ) { return PrivateUnpack(buffer,object); }
 
 //  template< int NINT, int NR0, int NR1, int NR2, int NR2S >
-//  static unsigned int UnpackSerialObject( const char*& buffer, EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivateUnpack(buffer, object ); }
+//  static localIndex UnpackSerialObject( const char*& buffer, EncapsulatedObjectBase< NINT, NR0, NR1, NR2, NR2S >& object ) { return PrivateUnpack(buffer, object ); }
 
 
 
-  static unsigned int Unpack( const char*& buffer, iArray1d& var ) { return PrivateUnpackArray(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, rArray1d& var ) { return PrivateUnpackArray(buffer,var); }
-//  static unsigned int Unpack( const char*& buffer, lArray1d& var ) { return PrivateUnpackArray(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, gArray1d& var ) { return PrivateUnpackArray(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, Array1dT<R1Tensor>& var ) { return PrivateUnpackArray(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, Array1dT<R2Tensor>& var ) { return PrivateUnpackArray(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, Array1dT<R2SymTensor>& var ) { return PrivateUnpackArray(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, sArray1d& var );
+  static localIndex Unpack( const char*& buffer, iArray1d& var ) { return PrivateUnpackArray(buffer,var); }
+  static localIndex Unpack( const char*& buffer, rArray1d& var ) { return PrivateUnpackArray(buffer,var); }
+//  static localIndex Unpack( const char*& buffer, lArray1d& var ) { return PrivateUnpackArray(buffer,var); }
+  static localIndex Unpack( const char*& buffer, gArray1d& var ) { return PrivateUnpackArray(buffer,var); }
+  static localIndex Unpack( const char*& buffer, Array1dT<R1Tensor>& var ) { return PrivateUnpackArray(buffer,var); }
+  static localIndex Unpack( const char*& buffer, Array1dT<R2Tensor>& var ) { return PrivateUnpackArray(buffer,var); }
+  static localIndex Unpack( const char*& buffer, Array1dT<R2SymTensor>& var ) { return PrivateUnpackArray(buffer,var); }
+  static localIndex Unpack( const char*& buffer, sArray1d& var );
 
-  static unsigned int Unpack( const char*& buffer, lSet& var ) { return PrivateUnpackSet(buffer,var); }
-  static unsigned int Unpack( const char*& buffer, gSet& var ) { return PrivateUnpackSet(buffer,var); }
+  static localIndex Unpack( const char*& buffer, set<int32>& var ) { return PrivateUnpackSet(buffer,var); }
+  static localIndex Unpack( const char*& buffer, set<int64>& var ) { return PrivateUnpackSet(buffer,var); }
 
   template< typename T_KEY, typename T_VAL >
-  static unsigned int Unpack( const char*& buffer, std::map<T_KEY,T_VAL>& var ) { return PrivateUnpackMap( buffer, var );}
+  static localIndex Unpack( const char*& buffer, std::map<T_KEY,T_VAL>& var ) { return PrivateUnpackMap( buffer, var );}
 
 
-  static unsigned int UnpackGlobal( const char*& buffer, const std::map<globalIndex,localIndex>& globalToLocal, lArray1d& array );
-  static unsigned int UnpackGlobal( const char*& buffer, const std::map<globalIndex,localIndex>& globalToLocal, lSet& set );
+  static localIndex UnpackGlobal( const char*& buffer, const std::map<globalIndex,localIndex>& globalToLocal, lArray1d& array );
+  static localIndex UnpackGlobal( const char*& buffer, const std::map<globalIndex,localIndex>& globalToLocal, lSet& set );
 
-  static unsigned int Unpack( const char*& buffer, OneToOneRelation& relation, const lArray1d& indices, const bool unpackGlobal );
-  static unsigned int Unpack( const char*& buffer, FixedOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal );
-  static unsigned int Unpack( const char*& buffer, OrderedVariableOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal );
-  static unsigned int Unpack( const char*& buffer, UnorderedVariableOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal );
-//  static unsigned int Unpack( const char*& buffer, OrderedVariableOneToManyPairRelation& relation, const lArray1d& indices, const bool unpackGlobal );
-//  static unsigned int Unpack( const char*& buffer, UnorderedVariableOneToManyPairRelation& relation, const lArray1d& indices, const bool unpackGlobal );
+  static localIndex Unpack( const char*& buffer, OneToOneRelation& relation, const lArray1d& indices, const bool unpackGlobal );
+  static localIndex Unpack( const char*& buffer, FixedOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal );
+  static localIndex Unpack( const char*& buffer, OrderedVariableOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal );
+  static localIndex Unpack( const char*& buffer, UnorderedVariableOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal );
+//  static localIndex Unpack( const char*& buffer, OrderedVariableOneToManyPairRelation& relation, const lArray1d& indices, const bool unpackGlobal );
+//  static localIndex Unpack( const char*& buffer, UnorderedVariableOneToManyPairRelation& relation, const lArray1d& indices, const bool unpackGlobal );
 
-  unsigned int PackFieldname( std::string fieldname ); // nb not passed by reference
-  static unsigned int PackFieldname( char*& buffer,  std::string fieldname );
+  localIndex PackFieldname( std::string fieldname ); // nb not passed by reference
+  static localIndex PackFieldname( char*& buffer,  std::string fieldname );
   static bool FieldnameMatchesIdString(std::string fieldname, std::string id);
   static const unsigned sizeOfPackedFieldString;
 private:
@@ -197,10 +197,10 @@ private:
    * @return size (in bytes) of packed data
    */
   template< typename T >
-  unsigned int PrivatePack( const T& var )
+  localIndex PrivatePack( const T& var )
   {
 
-    unsigned int sizeOfPackedChars = sizeof(T);
+    localIndex sizeOfPackedChars = sizeof(T);
 
   #if 1
     this->resize(this->size() + sizeOfPackedChars);
@@ -212,7 +212,7 @@ private:
 
   #else
     const char* cvar = (const char*)(&var);
-    for( unsigned int i=0 ; i<sizeOfPackedChars ; ++i )
+    for( localIndex i=0 ; i<sizeOfPackedChars ; ++i )
     {
       this->push_back(*(cvar++));
     }
@@ -228,9 +228,9 @@ private:
    * @return size (in bytes) of unpacked data
    */
   template< typename T>
-  static unsigned int PrivateUnpack( const char*& buffer, T& var )
+  static localIndex PrivateUnpack( const char*& buffer, T& var )
   {
-    unsigned int sizeOfUnpackedChars = sizeof(T);
+    localIndex sizeOfUnpackedChars = sizeof(T);
 
     const T* const tbuffer = reinterpret_cast<const T*>(buffer);
     var = *tbuffer;
@@ -246,9 +246,9 @@ private:
    * @return
    */
   template< typename T >
-  unsigned int PrivatePackArray( const Array1dT<T>& container )
+  localIndex PrivatePackArray( const Array1dT<T>& container )
   {
-    unsigned int sizeOfPackedChars = 0;
+    localIndex sizeOfPackedChars = 0;
 
     const localIndex length = container.size();
     localIndex sizeOfPackedArrayChars = length*sizeof(T);
@@ -269,15 +269,15 @@ private:
 
 
   template< typename T>
-  static unsigned int PrivateUnpackArray( const char*& buffer, Array1dT<T>& array )
+  static localIndex PrivateUnpackArray( const char*& buffer, Array1dT<T>& array )
   {
 
-    unsigned int sizeOfUnpackedChars = 0;
+    localIndex sizeOfUnpackedChars = 0;
 
     localIndex array_length;
     sizeOfUnpackedChars += Unpack( buffer, array_length );
     array.resize(array_length);
-    unsigned int length = array_length * sizeof(T);
+    localIndex length = array_length * sizeof(T);
 
     memcpy( array.data() , buffer, length );
     buffer += length;
@@ -289,12 +289,12 @@ private:
 
   //********************************************************************************************************************
   template< typename T, typename T_indices >
-  unsigned int PrivatePackArray( const Array1dT<T>& container, const T_indices& indices )
+  localIndex PrivatePackArray( const Array1dT<T>& container, const T_indices& indices )
   {
-    unsigned int sizeOfPackedChars = 0;
+    localIndex sizeOfPackedChars = 0;
 
     const typename T_indices::size_type length = indices.size();
-    unsigned int sizeOfPackedArrayChars = length*sizeof(T);
+    localIndex sizeOfPackedArrayChars = length*sizeof(T);
     this->resize( this->size() + sizeOfPackedArrayChars );
 
     sizeOfPackedChars += this->Pack( length );
@@ -312,10 +312,10 @@ private:
 
 
   template< typename T, typename T_indices >
-  static unsigned int PrivateUnpackArray( const char*& buffer, Array1dT<T>& array, const T_indices& indices )
+  static localIndex PrivateUnpackArray( const char*& buffer, Array1dT<T>& array, const T_indices& indices )
   {
 
-    unsigned int sizeOfUnpackedChars = 0;
+    localIndex sizeOfUnpackedChars = 0;
 
     typename T_indices::size_type array_length;
 
@@ -346,12 +346,12 @@ private:
 
   //********************************************************************************************************************
   template< typename T >
-  unsigned int PrivatePackSet( const std::set<T>& var )
+  localIndex PrivatePackSet( const std::set<T>& var )
   {
 
-    unsigned int sizeOfPackedChars = 0;
+    localIndex sizeOfPackedChars = 0;
 
-    const typename std::set<T>::size_type length = var.size();
+    const localIndex length = var.size();
 
     sizeOfPackedChars += Pack( length );
 
@@ -366,17 +366,17 @@ private:
 
 
   template< typename T>
-  static unsigned int PrivateUnpackSet( const char*& buffer, std::set<T>& setToRead )
+  static localIndex PrivateUnpackSet( const char*& buffer, std::set<T>& setToRead )
   {
     setToRead.clear();
 
-    unsigned int sizeOfUnpackedChars = 0;
+    localIndex sizeOfUnpackedChars = 0;
 
-    typename std::set<T>::size_type set_length;
+    localIndex set_length;
     sizeOfUnpackedChars += Unpack( buffer, set_length );
 
 
-    for( typename std::set<T>::size_type a=0 ; a<set_length ; ++a )
+    for( localIndex a=0 ; a<set_length ; ++a )
     {
       T temp;
       sizeOfUnpackedChars += Unpack( buffer, temp );
@@ -392,10 +392,10 @@ private:
 
   //********************************************************************************************************************
   template< typename T_KEY, typename T_VAL >
-  unsigned int PrivatePackMap( const std::map<T_KEY,T_VAL>& var )
+  localIndex PrivatePackMap( const std::map<T_KEY,T_VAL>& var )
   {
 
-    unsigned int sizeOfPackedChars = 0;
+    localIndex sizeOfPackedChars = 0;
 
     const typename std::map<T_KEY,T_VAL>::size_type length = var.size();
 
@@ -415,11 +415,11 @@ private:
 
 
   template< typename T_KEY, typename T_VAL >
-  static unsigned int PrivateUnpackMap( const char*& buffer, std::map<T_KEY,T_VAL>& map )
+  static localIndex PrivateUnpackMap( const char*& buffer, std::map<T_KEY,T_VAL>& map )
   {
     map.clear();
 
-    unsigned int sizeOfUnpackedChars = 0;
+    localIndex sizeOfUnpackedChars = 0;
 
     typename std::map<T_KEY,T_VAL>::size_type map_length;
     sizeOfUnpackedChars += Unpack( buffer, map_length );
@@ -445,7 +445,7 @@ private:
   //********************************************************************************************************************
 
   template< typename T>
-  static unsigned int PrivatePack( char*& buffer, const T& var )
+  static localIndex PrivatePack( char*& buffer, const T& var )
   {
     memcpy( buffer, &var, sizeof(T) );
     buffer += sizeof(T);
@@ -460,12 +460,12 @@ private:
 
 
   template< typename T>
-  unsigned int PrivatePackGlobal( const T& container, const gArray1d& localToGlobal );
+  localIndex PrivatePackGlobal( const T& container, const gArray1d& localToGlobal );
 
 
 
   template< typename T, typename T_indices >
-  unsigned int PrivatePackGlobal( const T& container, const T_indices& indices, const gArray1d& localToGlobal );
+  localIndex PrivatePackGlobal( const T& container, const T_indices& indices, const gArray1d& localToGlobal );
 
 
 
@@ -475,21 +475,21 @@ private:
   template< typename T, typename T_indices >
   struct PrivatePackRelationT
   {
-    static unsigned int Pack( bufvector& buffer, const T& relation, const T_indices& indices, const bool packGlobal );
+    static localIndex Pack( bufvector& buffer, const T& relation, const T_indices& indices, const bool packGlobal );
   };
   template< typename T_indices >
   struct PrivatePackRelationT<OneToOneRelation,T_indices>
   {
-    static unsigned int Pack( bufvector& buffer, const OneToOneRelation& relation, const T_indices& indices, const bool packGlobal );
+    static localIndex Pack( bufvector& buffer, const OneToOneRelation& relation, const T_indices& indices, const bool packGlobal );
   };
   template< typename T_indices >
   struct PrivatePackRelationT<FixedOneToManyRelation,T_indices>
   {
-    static unsigned int Pack( bufvector& buffer, const FixedOneToManyRelation& relation, const T_indices& indices, const bool packGlobal );
+    static localIndex Pack( bufvector& buffer, const FixedOneToManyRelation& relation, const T_indices& indices, const bool packGlobal );
   };
 
   template< typename T, typename T_indices >
-  unsigned int PrivatePackRelation( const T& relation, const T_indices& indices, const bool packGlobal )
+  localIndex PrivatePackRelation( const T& relation, const T_indices& indices, const bool packGlobal )
   {
     return PrivatePackRelationT<T,T_indices>::Pack(*this,relation,indices,packGlobal);
   }
@@ -497,16 +497,16 @@ private:
 
 
   template< typename T >
-  static unsigned int PrivateUnpackRelation( const char*& buffer, T& relation, const lArray1d& indices, const bool unpackGlobal );
+  static localIndex PrivateUnpackRelation( const char*& buffer, T& relation, const lArray1d& indices, const bool unpackGlobal );
 
 
 
 };
 
 
-inline unsigned int bufvector::Pack( const sArray1d& container )
+inline localIndex bufvector::Pack( const sArray1d& container )
 {
-  unsigned int sizeOfPackedChars = 0;
+  localIndex sizeOfPackedChars = 0;
   const localIndex arrayLength = container.size();
 
   sizeOfPackedChars += this->Pack( arrayLength );
@@ -520,10 +520,10 @@ inline unsigned int bufvector::Pack( const sArray1d& container )
 
 
 
-inline unsigned int bufvector::Unpack( const char*& buffer, sArray1d& array )
+inline localIndex bufvector::Unpack( const char*& buffer, sArray1d& array )
 {
   array.clear();
-  unsigned int sizeOfUnpackedChars = 0;
+  localIndex sizeOfUnpackedChars = 0;
 
   localIndex arrayLength;
   sizeOfUnpackedChars += Unpack( buffer, arrayLength );
@@ -540,10 +540,10 @@ inline unsigned int bufvector::Unpack( const char*& buffer, sArray1d& array )
 
 //********************************************************************************************************************
 template< typename T>
-unsigned int bufvector::PrivatePackGlobal( const T& container, const gArray1d& localToGlobal )
+localIndex bufvector::PrivatePackGlobal( const T& container, const gArray1d& localToGlobal )
 {
   const localIndex length = container.size();
-  unsigned int sizeOfPackedChars = 0;
+  localIndex sizeOfPackedChars = 0;
 
 //  std::cout<<"container.size() = "<<length<<std::endl;
 
@@ -557,10 +557,10 @@ unsigned int bufvector::PrivatePackGlobal( const T& container, const gArray1d& l
 }
 
 
-inline unsigned int bufvector::UnpackGlobal( const char*& buffer, const std::map<globalIndex,localIndex>& globalToLocal, lArray1d& array )
+inline localIndex bufvector::UnpackGlobal( const char*& buffer, const std::map<globalIndex,localIndex>& globalToLocal, lArray1d& array )
 {
   array.clear();
-  unsigned int sizeOfUnpackedChars = 0;
+  localIndex sizeOfUnpackedChars = 0;
 
 
   localIndex array_length;
@@ -568,7 +568,7 @@ inline unsigned int bufvector::UnpackGlobal( const char*& buffer, const std::map
 
   array.resize(array_length);
   gArray1d temp(array_length);
-  unsigned int length = array_length * sizeof(localIndex);
+  localIndex length = array_length * sizeof(localIndex);
 
   memcpy( temp.data() , buffer, length );
   buffer += length;
@@ -585,10 +585,10 @@ inline unsigned int bufvector::UnpackGlobal( const char*& buffer, const std::map
   return sizeOfUnpackedChars;
 }
 
-inline unsigned int bufvector::UnpackGlobal( const char*& buffer, const std::map<globalIndex,localIndex>& globalToLocal, lSet& array )
+inline localIndex bufvector::UnpackGlobal( const char*& buffer, const std::map<globalIndex,localIndex>& globalToLocal, lSet& array )
 {
   array.clear();
-  unsigned int sizeOfUnpackedChars = 0;
+  localIndex sizeOfUnpackedChars = 0;
 
 
   localIndex array_length;
@@ -597,7 +597,7 @@ inline unsigned int bufvector::UnpackGlobal( const char*& buffer, const std::map
 //  std::cout<<"array_length = "<<array_length<<std::endl;
 
   gArray1d temp(array_length);
-  unsigned int length = array_length * sizeof(localIndex);
+  localIndex length = array_length * sizeof(localIndex);
 
   memcpy( temp.data() , buffer, length );
   buffer += length;
@@ -619,9 +619,9 @@ inline unsigned int bufvector::UnpackGlobal( const char*& buffer, const std::map
 //**********************************************************************************************************************
 
 template< typename T, typename T_indices >
-inline unsigned int bufvector::PrivatePackRelationT<T,T_indices>::Pack( bufvector& buffer, const T& relation, const T_indices& indices, const bool packGlobal )
+inline localIndex bufvector::PrivatePackRelationT<T,T_indices>::Pack( bufvector& buffer, const T& relation, const T_indices& indices, const bool packGlobal )
 {
-  unsigned int sizeOfPackedChars = 0;
+  localIndex sizeOfPackedChars = 0;
 
   if( packGlobal )
   {
@@ -642,9 +642,9 @@ inline unsigned int bufvector::PrivatePackRelationT<T,T_indices>::Pack( bufvecto
   return sizeOfPackedChars;
 }
 template<typename T_indices>
-inline unsigned int bufvector::PrivatePackRelationT<OneToOneRelation,T_indices>::Pack( bufvector& buffer, const OneToOneRelation& relation, const T_indices& indices, const bool packGlobal )
+inline localIndex bufvector::PrivatePackRelationT<OneToOneRelation,T_indices>::Pack( bufvector& buffer, const OneToOneRelation& relation, const T_indices& indices, const bool packGlobal )
 {
-  unsigned int sizeOfPackedChars = 0;
+  localIndex sizeOfPackedChars = 0;
 
   if( packGlobal )
   {
@@ -664,9 +664,9 @@ inline unsigned int bufvector::PrivatePackRelationT<OneToOneRelation,T_indices>:
   return sizeOfPackedChars;
 }
 template<typename T_indices>
-inline unsigned int bufvector::PrivatePackRelationT<FixedOneToManyRelation,T_indices>::Pack( bufvector& buffer, const FixedOneToManyRelation& relation, const T_indices& indices, const bool packGlobal )
+inline localIndex bufvector::PrivatePackRelationT<FixedOneToManyRelation,T_indices>::Pack( bufvector& buffer, const FixedOneToManyRelation& relation, const T_indices& indices, const bool packGlobal )
 {
-  unsigned int sizeOfPackedChars = 0;
+  localIndex sizeOfPackedChars = 0;
 
   sizeOfPackedChars += buffer.Pack( static_cast<localIndex>(relation.Dimension(1)) );
 
@@ -696,9 +696,9 @@ inline unsigned int bufvector::PrivatePackRelationT<FixedOneToManyRelation,T_ind
 
 
 template< typename T >
-inline unsigned int bufvector::PrivateUnpackRelation( const char*& buffer, T& relation, const lArray1d& indices, const bool unpackGlobal )
+inline localIndex bufvector::PrivateUnpackRelation( const char*& buffer, T& relation, const lArray1d& indices, const bool unpackGlobal )
 {
-  unsigned int sizeOfUnpackedChars = 0;
+  localIndex sizeOfUnpackedChars = 0;
 
   if( unpackGlobal )
   {
@@ -720,9 +720,9 @@ inline unsigned int bufvector::PrivateUnpackRelation( const char*& buffer, T& re
 }
 
 template<>
-inline unsigned int bufvector::PrivateUnpackRelation( const char*& buffer, OneToOneRelation& relation, const lArray1d& indices, const bool unpackGlobal )
+inline localIndex bufvector::PrivateUnpackRelation( const char*& buffer, OneToOneRelation& relation, const lArray1d& indices, const bool unpackGlobal )
 {
-  unsigned int sizeOfUnpackedChars = 0;
+  localIndex sizeOfUnpackedChars = 0;
 
   if( unpackGlobal )
   {
@@ -746,14 +746,14 @@ inline unsigned int bufvector::PrivateUnpackRelation( const char*& buffer, OneTo
 }
 
 template<>
-inline unsigned int bufvector::PrivateUnpackRelation( const char*& buffer, FixedOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal )
+inline localIndex bufvector::PrivateUnpackRelation( const char*& buffer, FixedOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal )
 {
-  unsigned int sizeOfUnpackedChars = 0;
+  localIndex sizeOfUnpackedChars = 0;
 
   localIndex dimension;
   sizeOfUnpackedChars += bufvector::Unpack( buffer, dimension );
 
-  if( dimension != static_cast<int>(relation.Dimension(1)) ) {
+  if( dimension != relation.Dimension(1)) {
 #ifdef USE_ATK
     SLIC_ERROR("bufvector::PrivateUnpackRelation(): mismatched dimension");
 #endif
@@ -787,54 +787,54 @@ inline unsigned int bufvector::PrivateUnpackRelation( const char*& buffer, Fixed
 }
 
 
-inline unsigned int bufvector::Unpack( const char*& buffer, OneToOneRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
-inline unsigned int bufvector::Unpack( const char*& buffer, FixedOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
-inline unsigned int bufvector::Unpack( const char*& buffer, OrderedVariableOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
-inline unsigned int bufvector::Unpack( const char*& buffer, UnorderedVariableOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
-//inline unsigned int bufvector::Unpack( const char*& buffer, OrderedVariableOneToManyPairRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
-//inline unsigned int bufvector::Unpack( const char*& buffer, UnorderedVariableOneToManyPairRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
+inline localIndex bufvector::Unpack( const char*& buffer, OneToOneRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
+inline localIndex bufvector::Unpack( const char*& buffer, FixedOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
+inline localIndex bufvector::Unpack( const char*& buffer, OrderedVariableOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
+inline localIndex bufvector::Unpack( const char*& buffer, UnorderedVariableOneToManyRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
+//inline localIndex bufvector::Unpack( const char*& buffer, OrderedVariableOneToManyPairRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
+//inline localIndex bufvector::Unpack( const char*& buffer, UnorderedVariableOneToManyPairRelation& relation, const lArray1d& indices, const bool unpackGlobal ) { return PrivateUnpackRelation( buffer, relation, indices, unpackGlobal ); }
 
 
 
 
 
 //**********************************************************************************************************************
-inline unsigned int bufvector::Pack( const std::string& var )
+inline localIndex bufvector::Pack( const std::string& var )
 {
-  unsigned int sizeOfPackedChars = var.size();
+  localIndex sizeOfPackedChars = var.size();
 
   this->PrivatePack( sizeOfPackedChars );
 
   const char* cvar = var.data();
-  for( unsigned int i=0 ; i<sizeOfPackedChars ; ++i )
+  for( localIndex i=0 ; i<sizeOfPackedChars ; ++i )
   {
     this->push_back(*(cvar++));
   }
 
-  sizeOfPackedChars += sizeof( unsigned int );
+  sizeOfPackedChars += sizeof( localIndex );
   return sizeOfPackedChars;
 }
 
-inline unsigned int bufvector::Pack(char*& buffer,  const std::string& var )
+inline localIndex bufvector::Pack(char*& buffer,  const std::string& var )
 {
-  unsigned int sizeOfPackedChars = var.size();
+  localIndex sizeOfPackedChars = var.size();
 
   PrivatePack(buffer,  sizeOfPackedChars );
 
-  for( unsigned int i=0 ; i<sizeOfPackedChars ; ++i )
+  for( localIndex i=0 ; i<sizeOfPackedChars ; ++i )
   {
 	*buffer = var[i];
 	buffer++;
   }
 
-  sizeOfPackedChars += sizeof( unsigned int );
+  sizeOfPackedChars += sizeof( localIndex );
   return sizeOfPackedChars;
 }
 
-inline unsigned int bufvector::Unpack( const char*& buffer, std::string& var )
+inline localIndex bufvector::Unpack( const char*& buffer, std::string& var )
 {
-  unsigned int sizeOfUnpackedChars = 0;
-  unsigned int stringsize = 0;
+  localIndex sizeOfUnpackedChars = 0;
+  localIndex stringsize = 0;
 
   sizeOfUnpackedChars += PrivateUnpack( buffer, stringsize );
 

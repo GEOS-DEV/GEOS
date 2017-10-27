@@ -63,11 +63,11 @@ void FunctionBase::FillDocumentationNode( dataRepository::ManagedGroup * const d
 
 }
 
-int32 FunctionBase::isFunctionOfTime() const
+integer FunctionBase::isFunctionOfTime() const
 {
-  int32 rval=0;
+  integer rval=0;
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
-  int64 const numVars = inputVarNames.size();
+  localIndex numVars = inputVarNames.size();
 
   if( numVars==1 )
   {

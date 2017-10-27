@@ -66,3 +66,5 @@ else ()
     )
 endif()
 
+#include_directories(SYSTEM ${MPI_INCLUDE_PATH} )
+#TARGET_LINK_LIBRARIES(${MPI_CXX_LIBRARIES})

@@ -84,8 +84,8 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
 
   for( localIndex ka=0 ; ka<size() ; ++ka )
   {
-    int addToSet = 0;
-    int mapSize = map[ka].size();
+    localIndex addToSet = 0;
+    localIndex mapSize = map[ka].size();
     for( int a=0 ; a<mapSize ; ++a )
     {
       if( inputSet.count( map[ka][a] ) == 1 )
@@ -100,7 +100,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   }
 }
 
-void ObjectManagerBase::ConstructListOfBoundaryObjects( lArray1d& objectList ) const
+void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( lArray1d& objectList ) const
 {
   const iArray1d& isDomainBoundary = this->getReference<int>(string("isDomainBoundary"));
   for( localIndex k=0 ; k<size() ; ++k )
@@ -112,7 +112,7 @@ void ObjectManagerBase::ConstructListOfBoundaryObjects( lArray1d& objectList ) c
   }
 }
 
-void ObjectManagerBase::ConstructListOfBoundaryObjects( gArray1d& objectList ) const
+void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( gArray1d& objectList ) const
 {
   const iArray1d& isDomainBoundary = this->getReference<int>(string("isDomainBoundary"));
   for( localIndex k=0 ; k<size() ; ++k )

@@ -212,8 +212,8 @@ private:
 
 
 
-    void ConstructListOfBoundaryObjects( lArray1d& objectList ) const;
-    void ConstructListOfBoundaryObjects( gArray1d& objectList ) const;
+    void ConstructLocalListOfBoundaryObjects( lArray1d& objectList ) const;
+    void ConstructGlobalListOfBoundaryObjects( gArray1d& objectList ) const;
 
     //**********************************************************************************************************************
 
