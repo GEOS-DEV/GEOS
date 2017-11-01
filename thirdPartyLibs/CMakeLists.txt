@@ -235,6 +235,8 @@ ExternalProject_Add( caliper
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DMPI_C_COMPILER=${MPI_C_COMPILER}
+                                -DMPI_CXX_COMPILER=${MPI_CXX_COMPILER}
                                 -DBUILD_SHARED_LIBS:BOOL=OFF
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
