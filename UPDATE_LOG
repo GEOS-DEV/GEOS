@@ -1,5 +1,16 @@
 
 
+Tue Oct 31 23:22:31 2017 Randolph R. Settgast
+v0.0.16
+
+Update configuration of GEOSX Third Party Libraries. Point LC builds to common installations. 
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/13
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/constitutivepackage1/pull-requests/4
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/tpl_mirror/pull-requests/3
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/9
+
+
 Mon Oct 30 12:35:22 2017 Randolph R. Settgast
 v0.0.15
 
