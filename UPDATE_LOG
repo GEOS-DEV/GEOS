@@ -1,5 +1,24 @@
 
 
+Tue Oct 31 23:22:31 2017 Randolph R. Settgast
+v0.0.16
+
+Update configuration of GEOSX Third Party Libraries. Point LC builds to common installations. 
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/13
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/constitutivepackage1/pull-requests/4
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/tpl_mirror/pull-requests/3
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/9
+
+
+Mon Oct 30 12:35:22 2017 Randolph R. Settgast
+v0.0.15
+
+This pull request replaces int32, int64, uint32 and uint64 as part of the interface for geos. The aliases for int32 and int64 are still defined in DataTypes.hpp, but are not part of the interface. They are replaced by integer, localIndex, globalIndex. These types are actually aliases for one of the fundamental integer types.Also, unsigned ints are not to be used in GEOS. This allows use of -1 as an invalid localIndex and globalIndex. 
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/12
+
+
 Tue Oct 17 13:06:52 2017 Randolph R. Settgast
 v0.0.14
 
