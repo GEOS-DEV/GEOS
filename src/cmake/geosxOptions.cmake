@@ -13,38 +13,6 @@ if( (CMAKE_CXX_STANDARD EQUAL 11) OR (CMAKE_CXX_STANDARD EQUAL 14) )
   add_definitions("-DUSE_CXX11")
 endif()
 
-set( thirdPartyLibs "")
-
-if( ENABLE_CHAI )
-  set( thirdPartyLibs ${thirdPartyLibs} chai )
-endif()
-
-if( ENABLE_RAJA )
-  set( thirdPartyLibs ${thirdPartyLibs} raja )
-endif()
-
-if( ENABLE_CALIPER )
-  set( thirdPartyLibs ${thirdPartyLibs} caliper -lunwind -lpapi )
-endif()
-
-if( ENABLE_FPARSER )
-  set( thirdPartyLibs ${thirdPartyLibs} fparser )
-endif()
-
-if( ENABLE_PYTHON )
-  set( thirdPartyLibs ${thirdPartyLibs} python_interp )
-endif()
-
-
-if( ATK_FOUND )
-endif()
-
-if( ENABLE_MATHPRESSO )
-  set( thirdPartyLibs ${thirdPartyLibs} mathpresso )
-endif()
-
-
-  set( thirdPartyLibs ${thirdPartyLibs} silo )
 
 
 message( "ENABLE_CONTAINERARRAY_RETURN_PTR = ${ENABLE_CONTAINERARRAY_RETURN_PTR}" )

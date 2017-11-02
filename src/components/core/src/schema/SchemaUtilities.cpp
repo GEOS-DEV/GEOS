@@ -47,7 +47,7 @@
 namespace geosx
 {
 
-void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead, uint32 verbosityLevel)
+void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead, integer verbosityLevel)
 {
   std::string schemaBase="<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
   <xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\
@@ -97,7 +97,7 @@ void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
 }
 
 
-void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWrapper::xmlNode schemaNode, xmlWrapper::xmlNode schemaRoot, uint32 verbosityLevel)
+void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWrapper::xmlNode schemaNode, xmlWrapper::xmlNode schemaRoot, integer verbosityLevel)
 {
   if (docNode.getVerbosity() > verbosityLevel)
   {

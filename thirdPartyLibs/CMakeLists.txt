@@ -31,6 +31,28 @@ if (HDF5_DIR)
                        INCLUDES ${HDF5_INCLUDE_DIRS}
                        LIBRARIES ${HDF5_LIBRARY} 
                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+else()
+    message(INFO ": Using HDF5 found at https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz")
+    message("${CMAKE_SOURCE_DIR}")
+    set(HDF5_ROOT "${CMAKE_INSTALL_PREFIX}/hdf5")
+    message("HDF5_ROOT = ${HDF5_ROOT}")
+
+    ExternalProject_Add( hdf5
+                          URL ${CMAKE_SOURCE_DIR}/tpl_mirror/hdf5-1.10.1.tar.gz
+#                          URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz
+                          PREFIX ${PROJECT_BINARY_DIR}/hdf5
+                          INSTALL_DIR ${silo_install_dir}
+                          CONFIGURE_COMMAND ../hdf5/configure CC=${CMAKE_C_COMPILER}
+                                               CXX=${CMAKE_CXX_COMPILER}
+                                               --enable-build-mode=production
+                                               --enable-cxx
+                                               --prefix=${HDF5_ROOT}
+                                               BUILD_COMMAND make -j8
+                                               INSTALL_COMMAND make install )
+
+    set( dependency_list "${dependency_list};hdf5" )
+
 endif()
 
 
@@ -53,13 +75,14 @@ else()
 #                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/silo-4.10.2-bsd.tar.gz
                           PREFIX ${PROJECT_BINARY_DIR}/silo
+#                          DEPENDS hdf5
                           INSTALL_DIR ${silo_install_dir}
                           CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
                                                CXX=${CMAKE_CXX_COMPILER}
                                                --prefix=${silo_install_dir}
                                                --disable-fortran
                                                --enable-optimization
-                                               --with-hdf5=${HDF5_DIR}/include,${HDF5_DIR}/lib
+                                               --with-hdf5=${HDF5_ROOT}/include,${HDF5_ROOT}/lib
                                                LDFLAGS=-ldl
                                                --disable-silex 
                           BUILD_COMMAND make -j8
@@ -88,9 +111,11 @@ else()
     set(raja_install_dir ${CMAKE_INSTALL_PREFIX}/raja)
     message("RAJA_CMAKE_ARGS=${RAJA_CMAKE_ARGS}")
     ExternalProject_Add( raja
-                         GIT_REPOSITORY https://github.com/LLNL/RAJA.git
-                         GIT_TAG develop
-                         PATCH_COMMAND git submodule init && git submodule update                         
+#                         GIT_REPOSITORY https://github.com/LLNL/RAJA.git
+#                         GIT_TAG develop
+#                         PATCH_COMMAND git submodule init && git submodule update                         
+                         URL ${CMAKE_SOURCE_DIR}/tpl_mirror/RAJA-develop.zip
+                         PATCH_COMMAND pwd && cp -r ../../../../../master/src/cmake/blt .
                          PREFIX ${PROJECT_BINARY_DIR}/raja
                          BUILD_COMMAND make -j8
                          INSTALL_COMMAND make install
@@ -100,6 +125,8 @@ else()
                                     -DRAJA_ENABLE_CUDA=${CUDA_ENABLED}
                                     -DRAJA_ENABLE_TESTS=${RAJA_ENABLE_TESTS}
                                     -DRAJA_ENABLE_TBB=${RAJA_ENABLE_TBB}
+                                    -DENABLE_OPENMP=${ENABLE_OPENMP}
+                                    -DRAJA_ENABLE_OPENMP=${ENABLE_OPENMP}
                                     -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
     set( dependency_list "${dependency_list};raja" )
@@ -118,19 +145,24 @@ if( EXISTS ${CHAI_DIR})
         message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
     endif()
 else()
-    set(CHAI_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/chai)
+    set(chai_install_dir ${CMAKE_INSTALL_PREFIX}/chai)
     message(INFO ": Using CHAI found at git@github.com:LLNL/CHAI.git")
+    
+    message("PROJECT_BINARY_DIR = ${PROJECT_BINARY_DIR}")
     ExternalProject_Add( chai
                          PREFIX ${PROJECT_BINARY_DIR}/chai
-                         GIT_REPOSITORY git@github.com:LLNL/CHAI.git
-                         GIT_TAG develop
-                         PATCH_COMMAND git submodule init && git submodule update                         
+#                         GIT_REPOSITORY git@github.com:LLNL/CHAI.git
+#                         GIT_TAG develop
+#                         PATCH_COMMAND git submodule init && git submodule update                         
+                         URL ${CMAKE_SOURCE_DIR}/tpl_mirror/CHAI-develop.zip
+                         PATCH_COMMAND pwd && cp -r ../../../../../master/src/cmake/blt .
                          BUILD_COMMAND make -j8
                          INSTALL_DIR ${chai_install_dir}
-                         INSTALL_COMMAND make install
+                         INSTALL_COMMAND make install && cp -r ${PROJECT_BINARY_DIR}/chai/src/chai-build/include ${chai_install_dir}
                          CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                     -DENABLE_CUDA=${CUDA_ENABLED}
+                                    -DENABLE_OPENMP=${ENABLE_OPENMP}
                                     -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
     set( dependency_list "${dependency_list};chai" )
@@ -203,6 +235,8 @@ ExternalProject_Add( caliper
                      INSTALL_COMMAND make install
                      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DMPI_C_COMPILER=${MPI_C_COMPILER}
+                                -DMPI_CXX_COMPILER=${MPI_CXX_COMPILER}
                                 -DBUILD_SHARED_LIBS:BOOL=OFF
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 

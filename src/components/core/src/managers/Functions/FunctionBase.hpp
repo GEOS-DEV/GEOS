@@ -36,7 +36,7 @@ public:
   static string CatalogName() { return "FunctionBase"; }
   virtual void InitializeFunction(){}
 
-  int32 isFunctionOfTime() const;
+  integer isFunctionOfTime() const;
 
   virtual void Evaluate( dataRepository::ManagedGroup const * const group,
                          real64 const time,
@@ -75,8 +75,8 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
   string_array const & inputVarTypes = this->getReference<string_array>( dataRepository::keys::inputVarTypes );
 
-  int64 const numVars = inputVarNames.size();
-  int64 varSize[4];
+  localIndex const numVars = inputVarNames.size();
+  localIndex varSize[4];
   for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
   {
     string const & varName = inputVarNames[varIndex];
@@ -102,7 +102,7 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
     }
   }
 
-  int32 count=0;
+  integer count=0;
   for( auto const & index : set )
   {
     double input[4];

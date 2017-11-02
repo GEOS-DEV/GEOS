@@ -22,3 +22,4 @@ set(geosx_core_sources
     dataRepository/ViewWrapper.cpp
     dataRepository/ViewWrapperBase.cpp
     PARENT_SCOPE )
+

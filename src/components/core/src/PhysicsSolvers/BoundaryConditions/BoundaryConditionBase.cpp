@@ -25,8 +25,8 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
   docNode->AllocateChildNode( keys::initialCondition,
                               keys::initialCondition,
                               -1,
-                              "int32",
-                              "int32",
+                              "integer",
+                              "integer",
                               "BC is applied as an initial condition.",
                               "",
                               "0",
@@ -91,8 +91,8 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
   docNode->AllocateChildNode( keys::component,
                               keys::component,
                               -1,
-                              "int32",
-                              "int32",
+                              "integer",
+                              "integer",
                               "Component of field (if tensor) to apply boundary condition to",
                               "",
                               "-1",
@@ -159,12 +159,12 @@ void BoundaryConditionBase::ReadXML_PostProcess()
   m_setNames = this->getReference<string_array>( keys::setNames );
   m_elementRegionName = this->getReference<string>( keys::elementRegionName );
   m_fieldName = this->getReference<string>( keys::fieldName );
-  m_component = this->getReference<int32>( keys::component );
+  m_component = this->getReference<integer>( keys::component );
   m_direction = this->getReference<R1Tensor>( keys::direction );
   m_functionName          = this->getReference<string>( keys::functionName );
   m_bcApplicationFunctionName = this->getReference<string>( keys::bcApplicationTableName );
   m_scale                  = this->getReference<real64>( keys::scale );
-  m_initialCondition = this->getReference<int32>(keys::initialCondition);
+  m_initialCondition = this->getReference<integer>(keys::initialCondition);
 }
 
 //real64 BoundaryConditionBase::GetValue( realT time ) const
@@ -191,7 +191,7 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //                                                                array<R1Tensor> & field )
 //{
 //
-//  int32 const component = GetComponent();
+//  integer const component = GetComponent();
 //  string const functionName = getData<string>(dataRepository::keys::functionName);
 //  NewFunctionManager * functionManager = NewFunctionManager::Instance();
 //
@@ -220,7 +220,7 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //                                                                string const & fieldName ) const
 //{
 //
-//  int32 const component = GetComponent();
+//  integer const component = GetComponent();
 //  string const functionName = getData<string>(dataRepository::keys::functionName);
 //  NewFunctionManager * functionManager = NewFunctionManager::Instance();
 //
@@ -256,7 +256,7 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //        {
 //          real64_array result(set.size());
 //          function->Evaluate( dataGroup, time, set, result );
-//          int32 count=0;
+//          integer count=0;
 //          for( auto a : set )
 //          {
 //            rtTypes::equate( field[a], component, result[count] );

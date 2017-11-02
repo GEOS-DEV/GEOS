@@ -19,9 +19,6 @@ foreach( DEP in ${TPL_DEPENDENCIES})
 endforeach()
 
 
-message("CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
-message("CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
-
 configure_file(
     ${CMAKE_SOURCE_DIR}/components/core/src/common/GeosxConfig.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/include/common/GeosxConfig.hpp

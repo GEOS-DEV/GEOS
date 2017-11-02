@@ -99,7 +99,7 @@ if args.buildpath != "":
 else:
     # use platform info & build type
     if args.thirdpartylib:
-        buildpath = "-".join(["thirdPartyLibs/build",platform_info,args.buildtype.lower()])        
+        buildpath = "-".join(["../thirdPartyLibs/build",platform_info,args.buildtype.lower()])        
     else:
         buildpath = "-".join(["build",platform_info,args.buildtype.lower()])
 print "buildpath = ", buildpath
@@ -123,7 +123,7 @@ if args.installpath != "":
 else:
     # use platform info & build type
     if args.thirdpartylib:
-        installpath = "-".join(["thirdPartyLibs/install",platform_info,args.buildtype.lower()])        
+        installpath = "-".join(["../thirdPartyLibs/install",platform_info,args.buildtype.lower()])        
     else:
         installpath = "-".join(["install",platform_info,args.buildtype.lower()])
 

@@ -82,13 +82,13 @@ void DomainPartition::SetMaps(  )
   // ElementRegionManager * elementRegionManager = this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
 
   // {
-  //  int32_array & elementRegionMap = nodeManager->getReference(keys::elementRegionMap);
-  //  int32_array & elementSubRegionMap = nodeManager->getReference(keys::elementSubRegionMap);
-  //  int32_array & elementMap = nodeManager->getReference(keys::elementMap);
+  //  integer_array & elementRegionMap = nodeManager->getReference(keys::elementRegionMap);
+  //  integer_array & elementSubRegionMap = nodeManager->getReference(keys::elementSubRegionMap);
+  //  integer_array & elementMap = nodeManager->getReference(keys::elementMap);
 
   //  ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
 
-  //  int32 elementRegionIndex = 0;
+  //  integer elementRegionIndex = 0;
   //  elementRegionManager->forElementRegions( [&](ElementRegion& elementRegion)-> void
   //  {
   //    elementRegion.forCellBlocks( [&]( CellBlockSubRegion & subRegion )->void
@@ -107,7 +107,7 @@ void DomainPartition::GenerateSets(  )
 
   dataRepository::ManagedGroup const * nodeSets = nodeManager->GetGroup(dataRepository::keys::sets);
 
-  std::map< string, int32_array > nodeInSet;
+  std::map< string, integer_array > nodeInSet;
   string_array setNames;
 
   for( auto & viewWrapper : nodeSets->wrappers() )
@@ -130,13 +130,17 @@ void DomainPartition::GenerateSets(  )
 
   ElementRegionManager * elementRegionManager = mesh->getElemManager();
 
-  elementRegionManager->forElementRegions( [&]( ElementRegion * elementRegion )
+  for( auto & subGroup : elementRegionManager->GetGroup( dataRepository::keys::elementRegions )->GetSubGroups() )
+//  elementRegionManager->forElementRegions( [&]( ElementRegion * elementRegion )
   {
-    elementRegion->forCellBlocks( [&]( CellBlockSubRegion * subRegion )->void
+    ElementRegion * elementRegion = subGroup.second->group_cast<ElementRegion *>();
+//    elementRegion->forCellBlocks( [&]( CellBlockSubRegion * subRegion )->void
+    for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
+      CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
       lArray2d const & elemsToNodes = subRegion->getWrapper<lArray2d>(subRegion->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
       dataRepository::ManagedGroup * elementSets = subRegion->GetGroup(dataRepository::keys::sets);
-      std::map< string, int32_array > numNodesInSet;
+      std::map< string, integer_array > numNodesInSet;
 
       for( auto & setName : setNames )
       {
@@ -145,7 +149,7 @@ void DomainPartition::GenerateSets(  )
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
           localIndex const * nodelist = elemsToNodes[k];
-          int32 count = 0;
+          integer count = 0;
           for( localIndex a = 0 ; a<elemsToNodes.Dimension(1) ; ++a )
           {
             if( nodeInSet[setName][nodelist[a]] == 1 )
@@ -159,8 +163,8 @@ void DomainPartition::GenerateSets(  )
           }
         }
       }
-    });
-  });
+    }
+  }
 }
 
 
@@ -287,7 +291,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
         const localIndex* const elemToNodeMap = elemsToNodes[k];
 
         const iArray1d nodeOrdering = siloFile.SiloNodeOrdering();
-        int32 numNodesPerElement = elemsToNodes.Dimension(1);
+        integer numNodesPerElement = elemsToNodes.Dimension(1);
         for (localIndex a = 0; a < numNodesPerElement; ++a)
         {
           elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];

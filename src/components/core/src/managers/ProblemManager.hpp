@@ -123,7 +123,7 @@ public:
 
   void ApplySchedulerEvent();
 
-  void WriteSilo( int32 const cycleNumber, real64 const problemTime );
+  void WriteSilo( integer const cycleNumber, real64 const problemTime );
 
   void ApplyInitialConditions();
 

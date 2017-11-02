@@ -184,23 +184,14 @@ public:
 
   struct size_wrapper
   {
-    HAS_MEMBER_FUNCTION_VARIANT(size,0,int32,const,,)
-    HAS_MEMBER_FUNCTION_VARIANT(size,1,uint32,const,,)
-    HAS_MEMBER_FUNCTION_VARIANT(size,2,int64,const,,)
-    HAS_MEMBER_FUNCTION_VARIANT(size,3,uint64,const,,)
+    HAS_MEMBER_FUNCTION_VARIANT(size,0,localIndex,const,,)
     template<class U = T>
-    static typename std::enable_if< has_memberfunction_v0_size<U>::value ||
-                                    has_memberfunction_v1_size<U>::value ||
-                                    has_memberfunction_v2_size<U>::value ||
-                                    has_memberfunction_v3_size<U>::value, localIndex>::type size(ViewWrapper const * parent)
+    static typename std::enable_if< has_memberfunction_v0_size<U>::value,localIndex >::type size(ViewWrapper const * parent)
     {
       return static_cast<localIndex>(parent->m_data->size());
     }
     template<class U = T>
-    static typename std::enable_if< !(has_memberfunction_v0_size<U>::value ||
-                                      has_memberfunction_v1_size<U>::value ||
-                                      has_memberfunction_v2_size<U>::value ||
-                                      has_memberfunction_v3_size<U>::value ), localIndex>::type size(ViewWrapper const * )
+    static typename std::enable_if< !(has_memberfunction_v0_size<U>::value), localIndex>::type size(ViewWrapper const * )
     {
       return 1;//parent->m_data;
     }
@@ -247,46 +238,36 @@ public:
 
   struct resize_wrapper
   {
-    HAS_MEMBER_FUNCTION_VARIANT(resize,0,void,,VA_LIST(int32), VA_LIST(int32(1)))
-    HAS_MEMBER_FUNCTION_VARIANT(resize,1,void,,VA_LIST(uint32), VA_LIST(uint32(1)))
-    HAS_MEMBER_FUNCTION_VARIANT(resize,2,void,,VA_LIST(int64), VA_LIST(int64(1)))
-    HAS_MEMBER_FUNCTION_VARIANT(resize,3,void,,VA_LIST(uint64), VA_LIST(uint64(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,0,void,,VA_LIST(int), VA_LIST(int32(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,1,void,,VA_LIST(unsigned int), VA_LIST(uint32(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,2,void,,VA_LIST(long), VA_LIST(int64(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,3,void,,VA_LIST(unsigned long), VA_LIST(uint64(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,4,void,,VA_LIST(long long), VA_LIST(size_t(1)))
+    HAS_MEMBER_FUNCTION_VARIANT(resize,5,void,,VA_LIST(unsigned long long), VA_LIST(int(1)))
 
 
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_v0_resize<U>::value, void>::type
-    resize(ViewWrapper * const parent, int32 const new_size)
+    static typename std::enable_if< has_memberfunction_v0_resize<U>::value ||
+                                    has_memberfunction_v1_resize<U>::value ||
+                                    has_memberfunction_v2_resize<U>::value ||
+                                    has_memberfunction_v3_resize<U>::value ||
+                                    has_memberfunction_v4_resize<U>::value, void>::type
+    resize(ViewWrapper * const parent, localIndex const new_size)
     {
       return parent->m_data->resize(new_size);
     }
 
+    
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_v1_resize<U>::value, void>::type
-    resize(ViewWrapper * const parent, uint32 const new_size)
+    static typename std::enable_if<!(has_memberfunction_v0_resize<U>::value)&&
+                                   !(has_memberfunction_v1_resize<U>::value)&&
+                                   !(has_memberfunction_v2_resize<U>::value)&&
+                                   !(has_memberfunction_v3_resize<U>::value)&&
+                                   !(has_memberfunction_v4_resize<U>::value), void>::type
+    resize(ViewWrapper * const, localIndex )
     {
-      return parent->m_data->resize(new_size);
+      return;
     }
-
-    template<class U = T>
-    static typename std::enable_if<has_memberfunction_v2_resize<U>::value, void>::type
-    resize(ViewWrapper * const parent, int64 const new_size)
-    {
-      return parent->m_data->resize(new_size);
-    }
-
-    template<class U = T>
-    static typename std::enable_if<has_memberfunction_v3_resize<U>::value, void>::type
-    resize(ViewWrapper * const parent, uint64 const new_size)
-    {
-      return parent->m_data->resize(new_size);
-    }
-
-    template<class U = T>
-    static typename std::enable_if<!(has_memberfunction_v0_resize<U>::value ||
-                                     has_memberfunction_v1_resize<U>::value ||
-                                     has_memberfunction_v2_resize<U>::value ||
-                                     has_memberfunction_v3_resize<U>::value), void>::type
-    resize(ViewWrapper * const, std::size_t ) { return; }
   };
   using ViewWrapperBase::resize;
   void resize( localIndex new_size ) override final
@@ -485,7 +466,7 @@ public:
 
   /// case for if U::value_type exists. Returns the size of dataPtr
   template<class U = T>
-  typename std::enable_if<has_alias_value_type<U>::value, uint32>::type
+  typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
   dataSize() const
   {
     return size() * sizeof(typename T::value_type);
@@ -494,7 +475,7 @@ public:
 
   /// case for if U::value_type doesn't exists. Returns the size of dataPtr
   template<class U = T>
-  typename std::enable_if<!has_alias_value_type<U>::value, uint32>::type
+  typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
   dataSize() const
   {
     return size() * sizeof(T);
@@ -503,8 +484,8 @@ public:
 
   /// case for if U::value_type exists. Returns the number of elements given a byte size
   template<class U = T>
-  typename std::enable_if<has_alias_value_type<U>::value, uint32>::type
-  numElementsFromDataSize(uint32 d_size) const
+  typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
+  numElementsFromDataSize(localIndex d_size) const
   {
     return d_size / sizeof(typename T::value_type);
   }
@@ -512,8 +493,8 @@ public:
 
   /// case for if U::value_type doesn't exists. Returns the number of elements given a byte size
   template<class U = T>
-  typename std::enable_if<!has_alias_value_type<U>::value, uint32>::type
-  numElementsFromDataSize(uint32 d_size) const
+  typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
+  numElementsFromDataSize(localIndex d_size) const
   {
     return d_size / sizeof(T);
   }
@@ -522,7 +503,7 @@ public:
   /* Register the pointer to data with the associated sidre::View. */
   virtual void registerDataPtr() override final
   {
-    uint32 d_size = dataSize();
+    localIndex d_size = dataSize();
     if (d_size > 0) 
     {
       void * ptr = const_cast<void*>( static_cast<void const *>( dataPtr() ) );
@@ -554,8 +535,8 @@ public:
   {
       if (getSidreView()->isExternal()) 
       {
-        int64 d_size = getSidreView()->getTotalBytes();
-        int64 numElements = numElementsFromDataSize(d_size);
+        localIndex d_size = getSidreView()->getTotalBytes();
+        localIndex numElements = numElementsFromDataSize(d_size);
         resize(numElements);
       }
       

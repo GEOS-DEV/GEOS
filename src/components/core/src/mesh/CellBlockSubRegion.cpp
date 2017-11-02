@@ -16,7 +16,7 @@ using namespace constitutive;
 CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * const parent ):
   CellBlock( name, parent )
 {
-  auto constitutiveGrouping = this->RegisterViewWrapper< map< string, int32_array > >(keys::constitutiveGrouping);
+  auto constitutiveGrouping = this->RegisterViewWrapper< map< string, integer_array > >(keys::constitutiveGrouping);
   constitutiveGrouping->setSizedFromParent(0);
 }
 
@@ -42,8 +42,8 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
   docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
                               viewKeys.numNodesPerElement.Key(),
                               -1,
-                              "int32",
-                              "int32",
+                              "integer",
+                              "integer",
                               "Number of Nodes Per Element",
                               "Number of Nodes Per Element",
                               "1",
@@ -55,8 +55,8 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
 //  docNode->AllocateChildNode( keys::numNodesPerElement,
 //                              keys::numNodesPerElement,
 //                              -1,
-//                              "int32",
-//                              "int32",
+//                              "integer",
+//                              "integer",
 //                              "Number of Nodes Per Element",
 //                              "Number of Nodes Per Element",
 //                              "1",
@@ -101,7 +101,7 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
 
 void CellBlockSubRegion::ReadXML_PostProcess()
 {
-//  int32 & numNodesPerElem = numNodesPerElement();
+//  integer & numNodesPerElem = numNodesPerElement();
 //  numNodesPerElem = 8;
 
 }

@@ -45,10 +45,13 @@ foreach(component ${componentlist})
   set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
 endforeach()
 message("componentlistlink = ${componentlistlink}")
+message("thirdPartyLibs = ${thirdPartyLibs}")
 
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
-                   DEPENDS_ON ${componentlistlink} ${extraComponentsListLink}) 
+                   DEPENDS_ON ${componentlistlink} 
+                              ${extraComponentsListLink} 
+                              ${thirdPartyLibs} ) 
 
                    
 if (ENABLE_DOCS)

@@ -107,13 +107,13 @@ public:
 
   using ManagedGroup::resize;
 
-  void resize( int32_array const & numElements,
+  void resize( integer_array const & numElements,
                string_array const & regionNames,
                string_array const & elementTypes );
 
 //  CellBlock & CreateRegion( string const & regionName,
 //                               string const & elementType,
-//                               int32 const & numElements );
+//                               integer const & numElements );
 
   ElementRegion const * GetRegion( string const & regionName ) const
   {
@@ -124,16 +124,16 @@ public:
     return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(regionName);
   }
 
-  ElementRegion const * GetRegion( int32 const & index ) const
+  ElementRegion const * GetRegion( integer const & index ) const
   {
     return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(index);
   }
-  ElementRegion * GetRegion( int32 const & index )
+  ElementRegion * GetRegion( integer const & index )
   {
     return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(index);
   }
 
-  int32 numRegions() const
+  integer numRegions() const
   {
     return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups().size();
   }

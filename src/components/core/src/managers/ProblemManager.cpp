@@ -112,7 +112,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.beginFromRestart.Key(),
                                      viewKeys.beginFromRestart.Key(),
                                      -1,
-                                     "int32",
+                                     "integer",
                                      "",
                                      "Flag to indicate restart run",
                                      "Flag to indicate restart run",
@@ -125,7 +125,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.xPartitionsOverride.Key(),
                                      viewKeys.xPartitionsOverride.Key(),
                                      -1,
-                                     "int32",
+                                     "integer",
                                      "",
                                      "Number of partitions in the x-direction",
                                      "Number of partitions in the x-direction",
@@ -138,7 +138,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.yPartitionsOverride.Key(),
                                      viewKeys.yPartitionsOverride.Key(),
                                      -1,
-                                     "int32",
+                                     "integer",
                                      "",
                                      "Number of partitions in the y-direction",
                                      "Number of partitions in the y-direction",
@@ -151,7 +151,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.zPartitionsOverride.Key(),
                                      viewKeys.zPartitionsOverride.Key(),
                                      -1,
-                                     "int32",
+                                     "integer",
                                      "",
                                      "Number of partitions in the z-direction",
                                      "Number of partitions in the z-direction",
@@ -164,7 +164,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.overridePartitionNumbers.Key(),
                                      viewKeys.overridePartitionNumbers.Key(),
                                      -1,
-                                     "int32",
+                                     "integer",
                                      "",
                                      "Flag to indicate partition number override",
                                      "Flag to indicate partition number override",
@@ -190,7 +190,7 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->AllocateChildNode( viewKeys.schemaLevel.Key(),
                                      viewKeys.schemaLevel.Key(),
                                      -1,
-                                     "uint32",
+                                     "integer",
                                      "",
                                      "Schema verbosity level",
                                      "Schema verbosity level (0=default, 1=development, 2=all)",
@@ -214,13 +214,13 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
   
   ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
   ViewWrapper<std::string>::rtype  restartFileName = commandLine->getData<std::string>(viewKeys.restartFileName);
-  int32&        beginFromRestart = *(commandLine->getData<int32>(viewKeys.beginFromRestart));
-  int32&        xPartitionsOverride = *(commandLine->getData<int32>(viewKeys.xPartitionsOverride));
-  int32&        yPartitionsOverride = *(commandLine->getData<int32>(viewKeys.yPartitionsOverride));
-  int32&        zPartitionsOverride = *(commandLine->getData<int32>(viewKeys.zPartitionsOverride));
-  int32&        overridePartitionNumbers = *(commandLine->getData<int32>(viewKeys.overridePartitionNumbers));
+  integer&        beginFromRestart = *(commandLine->getData<integer>(viewKeys.beginFromRestart));
+  integer&        xPartitionsOverride = *(commandLine->getData<integer>(viewKeys.xPartitionsOverride));
+  integer&        yPartitionsOverride = *(commandLine->getData<integer>(viewKeys.yPartitionsOverride));
+  integer&        zPartitionsOverride = *(commandLine->getData<integer>(viewKeys.zPartitionsOverride));
+  integer&        overridePartitionNumbers = *(commandLine->getData<integer>(viewKeys.overridePartitionNumbers));
   ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
-  uint32&        schemaLevel = *(commandLine->getData<uint32>(viewKeys.schemaLevel));
+  integer&        schemaLevel = *(commandLine->getData<integer>(viewKeys.schemaLevel));
   schemaLevel = 0;
 
   // Set the options structs and parse
@@ -457,15 +457,15 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   domain->RegisterDocumentationNodes();
 
   ManagedGroup const * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-  int32 const & xparCL = *(commandLine->getData<int32>(viewKeys.xPartitionsOverride));
-  int32 const & yparCL = *(commandLine->getData<int32>(viewKeys.yPartitionsOverride));
-  int32 const & zparCL = *(commandLine->getData<int32>(viewKeys.zPartitionsOverride));
+  integer const & xparCL = *(commandLine->getData<integer>(viewKeys.xPartitionsOverride));
+  integer const & yparCL = *(commandLine->getData<integer>(viewKeys.yPartitionsOverride));
+  integer const & zparCL = *(commandLine->getData<integer>(viewKeys.zPartitionsOverride));
 
   PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
   bool repartition = false;
-  int32 xpar = 1;
-  int32 ypar = 1;
-  int32 zpar = 1;
+  integer xpar = 1;
+  integer ypar = 1;
+  integer zpar = 1;
   if( xparCL != 0 )
   {
     repartition = true;
@@ -546,7 +546,7 @@ void ProblemManager::RunSimulation()
       real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
 
 
-      int32 lockDt = (appDt > 0.0);
+      integer lockDt = (appDt > 0.0);
       if (lockDt)
       {
         dt = appDt;
@@ -582,13 +582,13 @@ void ProblemManager::RunSimulation()
 #endif
 }
 
-void ProblemManager::WriteSilo( int32 const cycleNumber,
+void ProblemManager::WriteSilo( integer const cycleNumber,
                                 real64 const problemTime )
 {
   DomainPartition * domain  = getDomainPartition();
   SiloFile silo;
 
-  int32 rank;
+  integer rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Barrier( MPI_COMM_WORLD );
 //  std::cout<<"rank = "<<rank<<std::endl;
