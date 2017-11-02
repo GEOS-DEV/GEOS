@@ -413,7 +413,7 @@ void ProblemManager::ParseInputFile()
   ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
   if (schemaName.empty() == 0)
   {
-    uint32& schemaLevel = *(commandLine->getData<uint32>(viewKeys.schemaLevel));
+    integer& schemaLevel = *(commandLine->getData<integer>(viewKeys.schemaLevel));
     ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
   }
 }
