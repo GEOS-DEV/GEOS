@@ -276,7 +276,8 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     ivector shapetype(numElementRegions);
     ivector shapesize(numElementRegions);
 
-    Array1dT<FixedOneToManyRelation> elementToNodeMap( numElementRegions );
+    Array1dT<FixedOneToManyRelation> elementToNodeMap;
+//    elementToNodeMap.resize( numElementRegions );
 
     int count = 0;
     elementManager->forCellBlocks([&]( CellBlockSubRegion const * cellBlock ) -> void
@@ -284,13 +285,13 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
       lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(cellBlock->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
 
       // The following line seems to be redundant. It's actual function is to size this temp array.(pfu)
-      elementToNodeMap[count].resize2(elemsToNodes.Dimension(0),elemsToNodes.Dimension(1));
+      elementToNodeMap[count].resize(elemsToNodes.Dimension(0),elemsToNodes.Dimension(1));
 
       for (localIndex k = 0; k < cellBlock->size(); ++k)
       {
         const localIndex* const elemToNodeMap = elemsToNodes[k];
 
-        const iArray1d nodeOrdering = siloFile.SiloNodeOrdering();
+        const integer_array nodeOrdering = siloFile.SiloNodeOrdering();
         integer numNodesPerElement = elemsToNodes.Dimension(1);
         for (localIndex a = 0; a < numNodesPerElement; ++a)
         {
@@ -351,7 +352,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 
 
 
-    siloFile.WriteManagedGroupSilo( nodeManager, "NodalFields", meshName, DB_NODECENT, cycleNum, problemTime, isRestart, lArray1d());
+    siloFile.WriteManagedGroupSilo( nodeManager, "NodalFields", meshName, DB_NODECENT, cycleNum, problemTime, isRestart, localIndex_array());
 
 
 

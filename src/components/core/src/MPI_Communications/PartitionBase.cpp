@@ -98,7 +98,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
   DomainPartition** temp = const_cast<DomainPartition**>(&m_domain);
   *temp = domain;
 
-  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
   {
 //    neighbor->SetDomain( domain );
   }
@@ -134,13 +134,13 @@ void PartitionBase::AssignGlobalIndices( DomainPartition * domain )
 //
 //
 //  // array of global nodes on the boundary by old global index
-//  lArray1d localBoundaryNodesLocalIndex;
+//  localIndex_array localBoundaryNodesLocalIndex;
 //  gArray1d localBoundaryNodesGlobalIndex;
 //  gArray1d localBoundaryNodesNewGlobalIndex;
 //
 //  domain->m_feNodeManager.ConstructListOfBoundaryObjects( localBoundaryNodesLocalIndex );
 //
-//  for( lArray1d::const_iterator a=localBoundaryNodesLocalIndex.begin() ; a!=localBoundaryNodesLocalIndex.end() ; ++a )
+//  for( localIndex_array::const_iterator a=localBoundaryNodesLocalIndex.begin() ; a!=localBoundaryNodesLocalIndex.end() ; ++a )
 //  {
 //    localBoundaryNodesGlobalIndex.push_back( domain->m_feNodeManager.m_localToGlobalMap[*a] );
 //    localBoundaryNodesNewGlobalIndex.push_back( GlobalIndexManager::Index( this->m_rank, *a ) );
@@ -568,7 +568,7 @@ void PartitionBase::SendReceive( const Array1dT<Array1dT<T> >& sendArray, Array1
 void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
                                         const bool contactActive )
 {
-  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
   {
     neighbor->Clear();
   }
@@ -583,8 +583,8 @@ void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
 //
 //  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //  {
-//    lArray1d& matchedBoundaryFaceIndices = stlMapLookup( neighbor->tempNeighborData.matchedIndices, DomainPartition::FiniteElementFaceManager, "Cannot find FiniteElementFaceManager in matchedIndices in PartitionBase::SetupNeighborLists" );
-//    lArray1d& matchedBoundaryNodeIndices = stlMapLookup( neighbor->tempNeighborData.matchedIndices, DomainPartition::FiniteElementNodeManager, "Cannot find FiniteElementNodeManager in matchedIndices in PartitionBase::SetupNeighborLists" );
+//    localIndex_array& matchedBoundaryFaceIndices = stlMapLookup( neighbor->tempNeighborData.matchedIndices, DomainPartition::FiniteElementFaceManager, "Cannot find FiniteElementFaceManager in matchedIndices in PartitionBase::SetupNeighborLists" );
+//    localIndex_array& matchedBoundaryNodeIndices = stlMapLookup( neighbor->tempNeighborData.matchedIndices, DomainPartition::FiniteElementNodeManager, "Cannot find FiniteElementNodeManager in matchedIndices in PartitionBase::SetupNeighborLists" );
 //
 //    // create an array to contain all faces that have a matched face on a neighbor. That means that the face CANNOT
 //    // be an external face.
@@ -690,8 +690,8 @@ void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
 //    DomainPartition::ObjectDataStructureKeys last = DomainPartition::Last_ObjectDataStructureNames_Index;
 //    localIndex index = 0;
 //
-//    std::map<DomainPartition::ObjectDataStructureKeys, lArray1d> newIndices;
-//    std::map<std::string,lArray1d> newElementIndices;
+//    std::map<DomainPartition::ObjectDataStructureKeys, localIndex_array> newIndices;
+//    std::map<std::string,localIndex_array> newElementIndices;
 //
 //    // (6a) do the communication
 //    for(Array1dT<DomainPartition::ObjectDataStructureKeys>::const_iterator it = objectNames.begin() ; it != objectNames.end(); ++it, ++index)
@@ -745,13 +745,13 @@ void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
 //
 //
 //    // (6c) per usual: handle elements as a special case
-//    for( std::map<std::string,lArray1d>::iterator i=newElementIndices.begin() ; i!=newElementIndices.end() ; ++i )
+//    for( std::map<std::string,localIndex_array>::iterator i=newElementIndices.begin() ; i!=newElementIndices.end() ; ++i )
 //    {
-//      lArray1d& newElems = i->second;
+//      localIndex_array& newElems = i->second;
 //      // sort the entries
 //      std::sort(newElems.begin(),newElems.end());
 //      // now remove the duplicates
-//      lArray1d::iterator iend = std::unique(newElems.begin(),newElems.end());
+//      localIndex_array::iterator iend = std::unique(newElems.begin(),newElems.end());
 //      newElems.resize( iend - newElems.begin() );
 //    }
 //
@@ -772,14 +772,14 @@ void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
 //    domain->m_feNodeManager.AddToNodeToElementMap( domain->m_feElementManager, newElementIndices );
 //    domain->m_feFaceManager.AddToFaceToElementMap( domain->m_feElementManager, newElementIndices );
 //
-//    std::map<DomainPartition::ObjectDataStructureKeys, lArray1d>::iterator iArr;
+//    std::map<DomainPartition::ObjectDataStructureKeys, localIndex_array>::iterator iArr;
 //
 //    //Faces
 //    {
 //      iArr = newIndices.find(DomainPartition::FiniteElementFaceManager);
 //      if( iArr != newIndices.end() )
 //      {
-//        lArray1d& newFaceIndices = iArr->second;
+//        localIndex_array& newFaceIndices = iArr->second;
 //        domain->m_feNodeManager.AddToVariableOneToManyFromInverse( "nodeToFaceMap", domain->m_feFaceManager.m_toNodesRelation,  newFaceIndices);
 //        domain->m_feEdgeManager.AddToVariableOneToManyFromInverse( "edgesToFaces", domain->m_feFaceManager.m_toEdgesRelation, newFaceIndices);
 //      }
@@ -790,7 +790,7 @@ void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
 //      iArr = newIndices.find(DomainPartition::FiniteElementEdgeManager);
 //      if( iArr != newIndices.end() )
 //      {
-//        lArray1d& newEdgeIndices = iArr->second;
+//        localIndex_array& newEdgeIndices = iArr->second;
 //        domain->m_feNodeManager.AddToNodeToEdgeMap( domain->m_feEdgeManager, newEdgeIndices );
 //      }
 //    }
@@ -801,7 +801,7 @@ void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
 //      iArr = newIndices.find(DomainPartition::DiscreteElementFaceManager);
 //      if(iArr != newIndices.end())
 //      {
-//        lArray1d& newDEFaceIndices = iArr->second;
+//        localIndex_array& newDEFaceIndices = iArr->second;
 //        domain->m_discreteElementSurfaceNodes.AddToNodeToFaceMap( domain->m_discreteElementSurfaceFaces, newDEFaceIndices);
 //      }
 //    }
@@ -1216,16 +1216,16 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   // unpack the buffers
   for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
   {
-    lArray1d newLocalNodes, modifiedLocalNodes;
-    lArray1d newGhostNodes, modifiedGhostNodes;
+    localIndex_array newLocalNodes, modifiedLocalNodes;
+    localIndex_array newGhostNodes, modifiedGhostNodes;
 
-    lArray1d newLocalEdges, modifiedLocalEdges;
-    lArray1d newGhostEdges, modifiedGhostEdges;
+    localIndex_array newLocalEdges, modifiedLocalEdges;
+    localIndex_array newGhostEdges, modifiedGhostEdges;
 
-    lArray1d newLocalFaces, modifiedLocalFaces;
-    lArray1d newGhostFaces, modifiedGhostFaces;
+    localIndex_array newLocalFaces, modifiedLocalFaces;
+    localIndex_array newGhostFaces, modifiedGhostFaces;
 
-    std::map< std::string, lArray1d> modifiedElements;
+    std::map< std::string, localIndex_array> modifiedElements;
 
 
 
@@ -1265,7 +1265,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     allModifiedFaces.insert( modifiedLocalFaces.begin(), modifiedLocalFaces.end() );
     allModifiedFaces.insert( modifiedGhostFaces.begin(), modifiedGhostFaces.end() );
 
-    for( std::map< std::string, lArray1d>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
+    for( std::map< std::string, localIndex_array>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
     {
       allModifiedElements[i->first].insert( i->second.begin(), i->second.end() );
     }
@@ -1302,16 +1302,16 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   // unpack the buffers
   for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
   {
-    lArray1d newLocalNodes, modifiedLocalNodes;
-    lArray1d newGhostNodes, modifiedGhostNodes;
+    localIndex_array newLocalNodes, modifiedLocalNodes;
+    localIndex_array newGhostNodes, modifiedGhostNodes;
 
-    lArray1d newLocalEdges, modifiedLocalEdges;
-    lArray1d newGhostEdges, modifiedGhostEdges;
+    localIndex_array newLocalEdges, modifiedLocalEdges;
+    localIndex_array newGhostEdges, modifiedGhostEdges;
 
-    lArray1d newLocalFaces, modifiedLocalFaces;
-    lArray1d newGhostFaces, modifiedGhostFaces;
+    localIndex_array newLocalFaces, modifiedLocalFaces;
+    localIndex_array newGhostFaces, modifiedGhostFaces;
 
-    std::map< std::string, lArray1d> modifiedElements;
+    std::map< std::string, localIndex_array> modifiedElements;
 
 
 
@@ -1347,7 +1347,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     allModifiedFaces.insert( modifiedLocalFaces.begin(), modifiedLocalFaces.end() );
     allModifiedFaces.insert( modifiedGhostFaces.begin(), modifiedGhostFaces.end() );
 
-    for( std::map< std::string, lArray1d>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
+    for( std::map< std::string, localIndex_array>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
     {
       allModifiedElements[i->first].insert( i->second.begin(), i->second.end() );
     }
@@ -1513,10 +1513,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   // unpack the buffers
   for( unsigned int neighborIndex=0 ; neighborIndex<m_neighbors.size() ; ++neighborIndex )
   {
-    lArray1d newNodes, modifiedNodes;
-    lArray1d newEdges, modifiedEdges;
-    lArray1d newFaces, modifiedFaces;
-    std::map< std::string, lArray1d> modifiedElements;
+    localIndex_array newNodes, modifiedNodes;
+    localIndex_array newEdges, modifiedEdges;
+    localIndex_array newFaces, modifiedFaces;
+    std::map< std::string, localIndex_array> modifiedElements;
 
 //    int neighborIndex = -1;
 //    MPI_Waitany( mpiRecvBufferRequest0.size(), mpiRecvBufferRequest0.data(), &neighborIndex, mpiRecvBufferStatus0.data() );
@@ -1539,7 +1539,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     newLocalFacesFromNeighbor.insert( newFaces.begin(), newFaces.end() );
     modifiedLocalFacesFromNeighbor.insert( modifiedFaces.begin(), modifiedFaces.end() );
 
-    for( std::map< std::string, lArray1d>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
+    for( std::map< std::string, localIndex_array>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
     {
       modifiedLocalElementsFromNeighbor[i->first].insert( i->second.begin(), i->second.end() );
     }
@@ -1560,7 +1560,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     newGhostFacesFromNeighbor.insert( newFaces.begin(), newFaces.end() );
     modifiedGhostFacesFromNeighbor.insert( modifiedFaces.begin(), modifiedFaces.end() );
 
-    for( std::map< std::string, lArray1d>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
+    for( std::map< std::string, localIndex_array>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
     {
       modifiedGhostElementsFromNeighbor[i->first].insert( i->second.begin(), i->second.end() );
     }
@@ -1625,10 +1625,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   // unpack the buffers
   for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
   {
-    lArray1d newNodes, modifiedNodes;
-    lArray1d newEdges, modifiedEdges;
-    lArray1d newFaces, modifiedFaces;
-    std::map< std::string, lArray1d> modifiedElements;
+    localIndex_array newNodes, modifiedNodes;
+    localIndex_array newEdges, modifiedEdges;
+    localIndex_array newFaces, modifiedFaces;
+    std::map< std::string, localIndex_array> modifiedElements;
 
     int neighborIndex;
     MPI_Waitany( mpiRecvBufferRequest0.size(), mpiRecvBufferRequest0.data(), &neighborIndex, mpiRecvBufferStatus0.data() );
@@ -1651,7 +1651,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     newGhostFacesFromNeighbor.insert( newFaces.begin(), newFaces.end() );
     modifiedGhostFacesFromNeighbor.insert( modifiedFaces.begin(), modifiedFaces.end() );
 
-    for( std::map< std::string, lArray1d>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
+    for( std::map< std::string, localIndex_array>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
     {
       modifiedGhostElementsFromNeighbor[i->first].insert( i->second.begin(), i->second.end() );
     }
@@ -1867,16 +1867,16 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //  // unpack the buffers
 //  for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
 //  {
-//    lArray1d newLocalNodes, modifiedLocalNodes;
-//    lArray1d newGhostNodes, modifiedGhostNodes;
+//    localIndex_array newLocalNodes, modifiedLocalNodes;
+//    localIndex_array newGhostNodes, modifiedGhostNodes;
 //
-//    lArray1d newLocalEdges, modifiedLocalEdges;
-//    lArray1d newGhostEdges, modifiedGhostEdges;
+//    localIndex_array newLocalEdges, modifiedLocalEdges;
+//    localIndex_array newGhostEdges, modifiedGhostEdges;
 //
-//    lArray1d newLocalFaces, modifiedLocalFaces;
-//    lArray1d newGhostFaces, modifiedGhostFaces;
+//    localIndex_array newLocalFaces, modifiedLocalFaces;
+//    localIndex_array newGhostFaces, modifiedGhostFaces;
 //
-//    std::map< std::string, lArray1d> modifiedElements;
+//    std::map< std::string, localIndex_array> modifiedElements;
 //
 //
 //
@@ -1918,7 +1918,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //    allModifiedFaces.insert( modifiedLocalFaces.begin(), modifiedLocalFaces.end() );
 //    allModifiedFaces.insert( modifiedGhostFaces.begin(), modifiedGhostFaces.end() );
 //
-//    for( std::map< std::string, lArray1d>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
+//    for( std::map< std::string, localIndex_array>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
 //    {
 //      allModifiedElements[i->first].insert( i->second.begin(), i->second.end() );
 //    }
@@ -1971,16 +1971,16 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //  // unpack the buffers
 //  for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
 //  {
-//    lArray1d newLocalNodes, modifiedLocalNodes;
-//    lArray1d newGhostNodes, modifiedGhostNodes;
+//    localIndex_array newLocalNodes, modifiedLocalNodes;
+//    localIndex_array newGhostNodes, modifiedGhostNodes;
 //
-//    lArray1d newLocalEdges, modifiedLocalEdges;
-//    lArray1d newGhostEdges, modifiedGhostEdges;
+//    localIndex_array newLocalEdges, modifiedLocalEdges;
+//    localIndex_array newGhostEdges, modifiedGhostEdges;
 //
-//    lArray1d newLocalFaces, modifiedLocalFaces;
-//    lArray1d newGhostFaces, modifiedGhostFaces;
+//    localIndex_array newLocalFaces, modifiedLocalFaces;
+//    localIndex_array newGhostFaces, modifiedGhostFaces;
 //
-//    std::map< std::string, lArray1d> modifiedElements;
+//    std::map< std::string, localIndex_array> modifiedElements;
 //
 //
 //
@@ -2021,7 +2021,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //    allModifiedFaces.insert( modifiedLocalFaces.begin(), modifiedLocalFaces.end() );
 //    allModifiedFaces.insert( modifiedGhostFaces.begin(), modifiedGhostFaces.end() );
 //
-//    for( std::map< std::string, lArray1d>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
+//    for( std::map< std::string, localIndex_array>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
 //    {
 //      allModifiedElements[i->first].insert( i->second.begin(), i->second.end() );
 //    }
@@ -2183,26 +2183,26 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 
 
 
-  lArray1d allNewLocalNodes, allModifiedLocalNodes;
-  lArray1d allNewLocalEdges, allModifiedLocalEdges;
-  lArray1d allNewLocalFaces, allModifiedLocalFaces;
-  std::map< std::string, lArray1d> allModifiedElements;
+  localIndex_array allNewLocalNodes, allModifiedLocalNodes;
+  localIndex_array allNewLocalEdges, allModifiedLocalEdges;
+  localIndex_array allNewLocalFaces, allModifiedLocalFaces;
+  std::map< std::string, localIndex_array> allModifiedElements;
 
 
 
   // unpack the buffers
   for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
   {
-    lArray1d newLocalNodes, modifiedLocalNodes;
-    lArray1d newGhostNodes, modifiedGhostNodes;
+    localIndex_array newLocalNodes, modifiedLocalNodes;
+    localIndex_array newGhostNodes, modifiedGhostNodes;
 
-    lArray1d newLocalEdges, modifiedLocalEdges;
-    lArray1d newGhostEdges, modifiedGhostEdges;
+    localIndex_array newLocalEdges, modifiedLocalEdges;
+    localIndex_array newGhostEdges, modifiedGhostEdges;
 
-    lArray1d newLocalFaces, modifiedLocalFaces;
-    lArray1d newGhostFaces, modifiedGhostFaces;
+    localIndex_array newLocalFaces, modifiedLocalFaces;
+    localIndex_array newGhostFaces, modifiedGhostFaces;
 
-    std::map< std::string, lArray1d> modifiedElements;
+    std::map< std::string, localIndex_array> modifiedElements;
 
 
 
@@ -2232,7 +2232,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     allNewLocalFaces.insert( allNewLocalFaces.end(), newLocalFaces.begin(), newLocalFaces.end() );
     allModifiedLocalFaces.insert( allModifiedLocalFaces.end(), modifiedLocalFaces.begin(), modifiedLocalFaces.end() );
 
-    for( std::map< std::string, lArray1d>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
+    for( std::map< std::string, localIndex_array>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
     {
       allModifiedElements[i->first].insert( allModifiedElements[i->first].end(), i->second.begin(), i->second.end() );
     }
@@ -2273,11 +2273,11 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   // unpack the buffers
   for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
   {
-    lArray1d newGhostNodes, modifiedGhostNodes;
-    lArray1d newGhostEdges, modifiedGhostEdges;
-    lArray1d newGhostFaces, modifiedGhostFaces;
+    localIndex_array newGhostNodes, modifiedGhostNodes;
+    localIndex_array newGhostEdges, modifiedGhostEdges;
+    localIndex_array newGhostFaces, modifiedGhostFaces;
 
-    std::map< std::string, lArray1d> modifiedElements;
+    std::map< std::string, localIndex_array> modifiedElements;
 
 
 
@@ -2365,10 +2365,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   // unpack the buffers
   for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
   {
-    lArray1d newNodes, modifiedNodes;
-    lArray1d newEdges, modifiedEdges;
-    lArray1d newFaces, modifiedFaces;
-    std::map< std::string, lArray1d> modifiedElements;
+    localIndex_array newNodes, modifiedNodes;
+    localIndex_array newEdges, modifiedEdges;
+    localIndex_array newFaces, modifiedFaces;
+    std::map< std::string, localIndex_array> modifiedElements;
 
     int neighborIndex;
     MPI_Waitany( mpiRecvBufferRequest.size(), mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data() );
@@ -2392,7 +2392,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     localModifiedFaces.insert( modifiedFaces.begin(), modifiedFaces.end() );
 
 
-    for( std::map< std::string, lArray1d>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
+    for( std::map< std::string, localIndex_array>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
     {
       localModifiedElements[i->first].insert( i->second.begin(), i->second.end() );
     }
@@ -2483,10 +2483,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   // unpack the buffers
   for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
   {
-    lArray1d newNodes, modifiedNodes;
-    lArray1d newEdges, modifiedEdges;
-    lArray1d newFaces, modifiedFaces;
-    std::map< std::string, lArray1d> modifiedElements;
+    localIndex_array newNodes, modifiedNodes;
+    localIndex_array newEdges, modifiedEdges;
+    localIndex_array newFaces, modifiedFaces;
+    std::map< std::string, localIndex_array> modifiedElements;
 
     int neighborIndex;
     MPI_Waitany( mpiRecvBufferRequest.size(), mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data() );
@@ -2510,7 +2510,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     ghostModifiedFaces.insert( modifiedFaces.begin(), modifiedFaces.end() );
 
 
-    for( std::map< std::string, lArray1d>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
+    for( std::map< std::string, localIndex_array>::const_iterator i=modifiedElements.begin() ; i!=modifiedElements.end() ; ++i )
     {
       ghostModifiedElements[i->first].insert( i->second.begin(), i->second.end() );
     }
@@ -2551,7 +2551,7 @@ void PartitionBase::SetBufferSizes( const std::map<string, sArray1d>& fieldNames
                                     const CommRegistry::commID commID  )
 {
   // get buffer sizes, and send/receive sizes
-  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
   {
 
     neighbor->GetPackedBufferSize( fieldNames,
@@ -2560,7 +2560,7 @@ void PartitionBase::SetBufferSizes( const std::map<string, sArray1d>& fieldNames
     neighbor->SendReceiveSizes(commID);
   }
 
-  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
   {
     neighbor->MPI_Wait_RecvSizeRequest(commID);
     neighbor->MPI_Wait_SendSizeRequest(commID);
@@ -2586,8 +2586,8 @@ void PartitionBase::SynchronizeFields( const std::map<string, sArray1d>& fieldNa
 //
 //          const std::string& regionName = ielemReg->first;
 //
-//          const lArray1d& source = m_elementRegionsLocalGhostSources[regionName];
-//          const lArray1d& target = m_elementRegionsLocalGhosts[regionName];
+//          const localIndex_array& source = m_elementRegionsLocalGhostSources[regionName];
+//          const localIndex_array& target = m_elementRegionsLocalGhosts[regionName];
 //
 //          for( sArray1d::size_type i =0; i < it->second.size(); ++i){
 //            const std::string& fieldName = it->second[i];
@@ -2602,8 +2602,8 @@ void PartitionBase::SynchronizeFields( const std::map<string, sArray1d>& fieldNa
 //      } else {
 //        ObjectDataStructureBaseT& object = m_domain->GetObjectDataStructure(it->first);
 //
-//        const lArray1d& source = m_localGhostSources[it->first];
-//        const lArray1d& target = m_localGhosts[it->first];
+//        const localIndex_array& source = m_localGhostSources[it->first];
+//        const localIndex_array& target = m_localGhosts[it->first];
 //
 //        for( sArray1d::size_type i =0; i < it->second.size(); ++i){
 //          const std::string& fieldName = it->second[i];
@@ -2724,14 +2724,14 @@ void PartitionBase::SetGhostArrays( DomainPartition * domain )
 //        const int neighborRank = neighbor->NeighborRank();
 //        Array1dT<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr = *ghostRank[it->first];
 //
-//        const lArray1d& receiveLocalIndices = neighbor->ReceiveLocalIndices(it->first);
-//        for( lArray1d::const_iterator i=receiveLocalIndices.begin() ; i!=receiveLocalIndices.end() ; ++i )
+//        const localIndex_array& receiveLocalIndices = neighbor->ReceiveLocalIndices(it->first);
+//        for( localIndex_array::const_iterator i=receiveLocalIndices.begin() ; i!=receiveLocalIndices.end() ; ++i )
 //        {
 //          ghostRankCurr[*i] = neighborRank;
 //        }
 //
-//        const lArray1d& sendLocalIndices = neighbor->SendLocalIndices(it->first);
-//        for( lArray1d::const_iterator i=sendLocalIndices.begin() ; i!=sendLocalIndices.end() ; ++i )
+//        const localIndex_array& sendLocalIndices = neighbor->SendLocalIndices(it->first);
+//        for( localIndex_array::const_iterator i=sendLocalIndices.begin() ; i!=sendLocalIndices.end() ; ++i )
 //        {
 //          ghostRankCurr[*i] = -1;
 //        }
@@ -2743,7 +2743,7 @@ void PartitionBase::SetGhostArrays( DomainPartition * domain )
 //      {
 //        //--per usual: elements are treated as a special case
 //        const int neighborRank = neighbor->NeighborRank();
-//        const std::map<std::string,lArray1d>& elementRegionsReceiveLocalIndices = neighbor->ElementRegionsReceiveLocalIndices();
+//        const std::map<std::string,localIndex_array>& elementRegionsReceiveLocalIndices = neighbor->ElementRegionsReceiveLocalIndices();
 //        for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator iregion=domain->m_feElementManager.m_ElementRegions.begin() ;
 //             iregion!=domain->m_feElementManager.m_ElementRegions.end() ; ++iregion )
 //        {
@@ -2752,20 +2752,20 @@ void PartitionBase::SetGhostArrays( DomainPartition * domain )
 //          Array1dT<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr = elemRegion.GetFieldData<FieldInfo::ghostRank>();
 //
 //
-//          const lArray1d* const receiveLocalIndices = stlMapLookupPointer( elementRegionsReceiveLocalIndices,
+//          const localIndex_array* const receiveLocalIndices = stlMapLookupPointer( elementRegionsReceiveLocalIndices,
 //                                                                           elemRegionName );
 //
-//          //const lArray1d& receiveLocalIndices = neighbor->ElementRegionReceiveLocalIndices(elemRegionName);
+//          //const localIndex_array& receiveLocalIndices = neighbor->ElementRegionReceiveLocalIndices(elemRegionName);
 //          if( receiveLocalIndices )
-//          for( lArray1d::const_iterator i=receiveLocalIndices->begin() ; i!=receiveLocalIndices->end() ; ++i )
+//          for( localIndex_array::const_iterator i=receiveLocalIndices->begin() ; i!=receiveLocalIndices->end() ; ++i )
 //          {
 //            ghostRankCurr[*i] = neighborRank;
 //          }
 //
-//          const lArray1d* const sendLocalIndices = stlMapLookupPointer( neighbor->ElementRegionsSendLocalIndices() ,
+//          const localIndex_array* const sendLocalIndices = stlMapLookupPointer( neighbor->ElementRegionsSendLocalIndices() ,
 //                                                                             elemRegionName );
 //          if( sendLocalIndices )
-//          for( lArray1d::const_iterator i=sendLocalIndices->begin() ; i!=sendLocalIndices->end() ; ++i )
+//          for( localIndex_array::const_iterator i=sendLocalIndices->begin() ; i!=sendLocalIndices->end() ; ++i )
 //          {
 //            ghostRankCurr[*i] = -1;
 //          }
@@ -2780,7 +2780,7 @@ void PartitionBase::SetRankOfNeighborNeighbors()
   iArray1d ranks;
   Array1dT<iArray1d> neighborRanks(m_neighbors.size());
 
-  for( VectorT<NeighborCommunication>::const_iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+  for( array<NeighborCommunication>::const_iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
   {
     ranks.push_back( neighbor->NeighborRank() );
   }
@@ -2899,7 +2899,7 @@ void PartitionBase::SetRankOfNeighborNeighbors()
 //Delete the neighbors that do not communicate
 void PartitionBase::DeleteExcessNeighbors()
 {
-  for( VectorT<NeighborCommunication>::iterator neighbor = m_neighbors.end()-1 ; neighbor!=m_neighbors.begin()-1 ; --neighbor )
+  for( array<NeighborCommunication>::iterator neighbor = m_neighbors.end()-1 ; neighbor!=m_neighbors.begin()-1 ; --neighbor )
   {
 //    std::cout << m_rank << ":" << neighbor-> ReturnNeighborRank() << ": " << neighbor->ReturnNeighborRcvSndSize() << std::endl;
     if (neighbor->ReturnNeighborRcvSndSize() == 0)
@@ -2921,8 +2921,9 @@ void PartitionBase::GraphBasedColoring()
   //First collect the partition graph to rank 0
 
   if (m_rank == 0) std::cout<<"Coloring partitions ... ";
-  iArray1d localNeighborList(1, 0);
-  for( VectorT<NeighborCommunication>::iterator neighbor = m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+  iArray1d localNeighborList(1);
+  localNeighborList = 0;
+  for( array<NeighborCommunication>::iterator neighbor = m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
   {
     localNeighborList.push_back(neighbor->NeighborRank());
   }

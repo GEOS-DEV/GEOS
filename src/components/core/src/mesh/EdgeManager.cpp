@@ -77,7 +77,7 @@ void EdgeManager::BuildEdges( const FaceManager * const faceManager, const NodeM
     return;
 
   localIndex numMultiNodeEdges = 0;
-  Array1dT<lArray1d>& faceToEdgeMap = faceManager->m_toEdgesRelation;
+  Array1dT<localIndex_array>& faceToEdgeMap = faceManager->m_toEdgesRelation;
   FixedOneToManyRelation& toNodesRelation = this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
   UnorderedVariableOneToManyRelation& toFacesRelation = this->getWrapper<UnorderedVariableOneToManyRelation>(string("edgesToFaces")).reference();
 
@@ -101,17 +101,17 @@ void EdgeManager::BuildEdges( const FaceManager * const faceManager, const NodeM
   // loop over all the faces
   for( localIndex kf=0 ; kf<faceManager->DataLengths() ; ++kf )
   {
-    const lArray1d::size_type numNodesInFace = faceManager->m_toNodesRelation[kf].size();
+    const localIndex_array::size_type numNodesInFace = faceManager->m_toNodesRelation[kf].size();
 
     if( numNodesInFace > 2 )
     {
-      const lArray1d& nodeList = faceManager->m_toNodesRelation[kf];
+      const localIndex_array& nodeList = faceManager->m_toNodesRelation[kf];
 
 
       localIndex node0, node1, temp;
 
       // loop over all the nodes in the face. there will be an edge for each node.
-      for( lArray1d::size_type a=0 ; a<numNodesInFace ; ++a )
+      for( localIndex_array::size_type a=0 ; a<numNodesInFace ; ++a )
       {
         // sort the nodes in order of index value
         node0 = nodeList[a];
@@ -162,7 +162,7 @@ void EdgeManager::BuildEdges( const FaceManager * const faceManager, const NodeM
     }
     else if( numNodesInFace == 2 )
     {
-      const lArray1d& nodeList = faceManager->m_toNodesRelation[kf];
+      const localIndex_array& nodeList = faceManager->m_toNodesRelation[kf];
 
       const localIndex node0 = nodeList[0];
       const localIndex node1 = nodeList[1];
@@ -214,10 +214,10 @@ void EdgeManager::BuildEdges( const FaceManager * const faceManager, const NodeM
 
   for( localIndex kf=0 ; kf<faceManager->DataLengths() ; ++kf )
   {
-    const lArray1d::size_type numEdgesInFace = faceToEdgeMap(kf).size();
+    const localIndex_array::size_type numEdgesInFace = faceToEdgeMap(kf).size();
 
     // loop over all the nodes in the face. there will be an edge for each node.
-    for( lArray1d::size_type a=0 ; a<numEdgesInFace ; ++a )
+    for( localIndex_array::size_type a=0 ; a<numEdgesInFace ; ++a )
     {
       localIndex edgeIndex = faceToEdgeMap(kf)(a);
       toFacesRelation(edgeIndex).insert(kf);
@@ -342,10 +342,10 @@ void EdgeManager::SetDomainBoundaryObjects( const ObjectDataStructureBaseT * con
     // check to see if the face is on a domain boundary
     if( isFaceOnDomainBoundary[kf] == 1 )
     {
-      lArray1d& faceToEdges = faceManager->m_toEdgesRelation(kf);
+      localIndex_array& faceToEdges = faceManager->m_toEdgesRelation(kf);
 
       // loop over all nodes connected to face, and set isNodeDomainBoundary
-      for( lArray1d::const_iterator a=faceToEdges.begin() ; a!=faceToEdges.end() ; ++a )
+      for( localIndex_array::const_iterator a=faceToEdges.begin() ; a!=faceToEdges.end() ; ++a )
       {
         isNodeOnDomainBoundary(*a) = 1;
       }
@@ -400,10 +400,10 @@ void EdgeManager::SetIsExternal( const ObjectDataStructureBaseT * const referenc
     // check to see if the face is on a domain boundary
     if( isExternalFace[kf] == 1 )
     {
-      lArray1d& faceToEdges = faceManager->m_toEdgesRelation(kf);
+      localIndex_array& faceToEdges = faceManager->m_toEdgesRelation(kf);
 
       // loop over all nodes connected to face, and set isNodeDomainBoundary
-      for( lArray1d::const_iterator a=faceToEdges.begin() ; a!=faceToEdges.end() ; ++a )
+      for( localIndex_array::const_iterator a=faceToEdges.begin() ; a!=faceToEdges.end() ; ++a )
       {
         isExternal(*a) = 1;
       }
@@ -537,14 +537,14 @@ unsigned int EdgeManager::PackEdges( const T_indices& sendedges,
   return sizeOfPacked;
 }
 template unsigned int EdgeManager::PackEdges( const lSet&, const NodeManager&, const FaceManager&, bufvector&, const bool, const bool, const bool, const bool ) const;
-template unsigned int EdgeManager::PackEdges( const lArray1d&, const NodeManager&, const FaceManager&, bufvector&, const bool, const bool, const bool, const bool ) const;
+template unsigned int EdgeManager::PackEdges( const localIndex_array&, const NodeManager&, const FaceManager&, bufvector&, const bool, const bool, const bool, const bool ) const;
 
 
 
 unsigned int EdgeManager::UnpackEdges( const char*& buffer,
                                         const NodeManager& nodeManager,
                                         const FaceManager& faceManager,
-                                        lArray1d& edgeReceiveLocalIndices,
+                                        localIndex_array& edgeReceiveLocalIndices,
                                         const bool unpackConnectivityToLocal,
                                         const bool unpackFields,
                                         const bool unpackMaps,
@@ -561,13 +561,13 @@ unsigned int EdgeManager::UnpackEdges( const char*& buffer,
     throw GPException("EdgeManager::UnpackEdges: buffer location incorrect\n");
   }
 
-  lArray1d newEdgeLocalIndices;
+  localIndex_array newEdgeLocalIndices;
   // unpack data from base object
   sizeOfUnpacked += ObjectDataStructureBaseT::UnpackBaseObjectData( buffer, edgeReceiveLocalIndices, newEdgeLocalIndices, unpackFields, unpackMaps, unpackSets, unpackConnectivityToLocal );
 
-  const lArray1d::size_type numReceivedEdges = edgeReceiveLocalIndices.size();
+  const localIndex_array::size_type numReceivedEdges = edgeReceiveLocalIndices.size();
   // unpack face specific data
-  for( lArray1d::size_type ke=0 ; ke<numReceivedEdges ; ++ke )
+  for( localIndex_array::size_type ke=0 ; ke<numReceivedEdges ; ++ke )
   {
     int numnodes;
     sizeOfUnpacked += bufvector::Unpack( buffer, numnodes );
@@ -593,7 +593,7 @@ unsigned int EdgeManager::UnpackEdges( const char*& buffer,
   Array1dT<lSet>* const edgesToFlowFaces = GetUnorderedVariableOneToManyMapPointer("edgeToFlowFaces");
   if( edgesToFlowFaces != NULL )
   {
-    for( lArray1d::iterator edgeIndex=edgeReceiveLocalIndices.begin() ; edgeIndex!=edgeReceiveLocalIndices.end() ; ++edgeIndex )
+    for( localIndex_array::iterator edgeIndex=edgeReceiveLocalIndices.begin() ; edgeIndex!=edgeReceiveLocalIndices.end() ; ++edgeIndex )
     {
       lSet newEdgeToFlowFaces;
       lSet& edgeToFlowFaces = (*edgesToFlowFaces)[*edgeIndex];
@@ -732,7 +732,7 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalObjectNumbers( const Object
 
 
 void EdgeManager::AddToEdgeToFaceMap( const FaceManager * faceManager,
-                                       const lArray1d& newFaceIndices )
+                                       const localIndex_array& newFaceIndices )
 {
   FixedOneToManyRelation& toNodesRelation = this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
   UnorderedVariableOneToManyRelation& toFacesRelation = this->getWrapper<UnorderedVariableOneToManyRelation>(string("edgesToFaces")).reference();
@@ -742,7 +742,7 @@ void EdgeManager::AddToEdgeToFaceMap( const FaceManager * faceManager,
   {
     localIndex lfi = newFaceIndices(kf);
     // now iterate over the faceToNodeMap (i.e. all nodes in the faceToNodeMap)
-    for( lArray1d::const_iterator a=faceManager->m_toEdgesRelation[lfi].begin() ;
+    for( localIndex_array::const_iterator a=faceManager->m_toEdgesRelation[lfi].begin() ;
          a != faceManager->m_toEdgesRelation[lfi].end() ; ++a )
     {
       // enter the value of the face index into the nodeToFace map

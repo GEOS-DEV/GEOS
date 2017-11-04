@@ -39,8 +39,8 @@ private:
   real64_array m_values;
   static localIndex constexpr m_maxDimensions = 4;
   localIndex m_dimensions;
-  lArray1d m_size;
-  lArray1d m_indexIncrement;
+  localIndex_array m_size;
+  localIndex_array m_indexIncrement;
 
   // m_corners should be of size m_maxDimensions x (2^m_maxDimensions)
   localIndex m_corners[m_maxDimensions][16];

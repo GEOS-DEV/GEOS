@@ -238,7 +238,7 @@ private:
 	void AddNeighbors(const unsigned int idim, MPI_Comm& cartcomm,
 			int* ncoords);
 
-	std::map<Array1dT<int>, unsigned int> neighborCommPtrIndx;
+//	std::map<Array1dT<int>, unsigned int> neighborCommPtrIndx;
 
 //	virtual void WriteSiloDerived(SiloFile& siloFile);
 //

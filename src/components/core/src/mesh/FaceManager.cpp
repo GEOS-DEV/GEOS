@@ -22,9 +22,9 @@ ObjectManagerBase("FaceManager",parent)
   this->RegisterViewWrapper< array< localIndex_array > >(viewKeys.nodeList.Key());
 
 
-  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementRegionList.Key())->reference().resize2(0,2);
-  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementSubRegionList.Key())->reference().resize2(0,2);
-  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementList.Key())->reference().resize2(0,2);
+  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementRegionList.Key())->reference().resize(0,2);
+  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementSubRegionList.Key())->reference().resize(0,2);
+  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementList.Key())->reference().resize(0,2);
   //0-based; note that the following field is ALSO 0
   //for faces that are not external faces, so check isExternal before using
 //  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
@@ -72,11 +72,11 @@ void FaceManager::FillDocumentationNode( dataRepository::ManagedGroup * const  )
 void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegionManager * const elementManager )
 {
 
-  lArray1d tempNodeList;
-  Array1dT<lArray1d> tempFaceToNodeMap;
+  localIndex_array tempNodeList;
+  Array1dT<localIndex_array> tempFaceToNodeMap;
 
   localIndex numFaces = 0;
-  Array1dT<lArray1d> facesByLowestNode;
+  Array1dT<localIndex_array> facesByLowestNode;
 
   Array2dT<localIndex> & elemRegionList = this->elementRegionList();
   Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
@@ -141,11 +141,11 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
 
 
                   // there are faces in facesByLowestNode, so lets loop over them and check for duplicates
-                  for( lArray1d::iterator existingFaceIndex = facesByLowestNode[lowNode].begin() ;
+                  for( localIndex_array::iterator existingFaceIndex = facesByLowestNode[lowNode].begin() ;
                       existingFaceIndex != facesByLowestNode[lowNode].end() ; ++existingFaceIndex )
                   {
                     // this is the nodelist of the face that we are testing agains
-                    const lArray1d& existingFaceNodelist = tempFaceToNodeMap[*existingFaceIndex];
+                    const localIndex_array& existingFaceNodelist = tempFaceToNodeMap[*existingFaceIndex];
 
                     // test to see if the size of the nodelists are the same....
                     if( existingFaceNodelist.size() == tempNodeList.size() )
@@ -250,9 +250,9 @@ void FaceManager::AddNewFace( localIndex const & kReg,
                               localIndex const & ke,
                               localIndex const & kelf,
                               localIndex & numFaces,
-                              Array1dT<lArray1d>& facesByLowestNode,
-                              lArray1d& tempNodeList,
-                              Array1dT<lArray1d>& tempFaceToNodeMap,
+                              Array1dT<localIndex_array>& facesByLowestNode,
+                              localIndex_array& tempNodeList,
+                              Array1dT<localIndex_array>& tempFaceToNodeMap,
                               CellBlockSubRegion const & elementRegion )
 {
   // and add the face to facesByLowestNode[]
@@ -315,7 +315,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
                                  const localIndex faceIndex )
 {
 
-  Array1dT<localIndex>& faceNodes = nodeList()[faceIndex];
+  array<localIndex>& faceNodes = nodeList()[faceIndex];
   const localIndex firstNodeIndex = faceNodes[0];
   const unsigned int numFaceNodes = faceNodes.size();
 
@@ -405,7 +405,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
       faceNodes[n] = thetaOrder[n].second;
     }
 
-    lArray1d tempFaceNodes(numFaceNodes);
+    localIndex_array tempFaceNodes(numFaceNodes);
     localIndex firstIndexIndex = 0;
     for( unsigned int n =0; n < numFaceNodes; ++n)
     {

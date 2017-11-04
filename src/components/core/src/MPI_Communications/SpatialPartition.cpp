@@ -1040,9 +1040,9 @@ void SpatialPartition::AddNeighbors(const unsigned int idim,
       MPI_Cart_rank(cartcomm, ncoords, &rank);
       m_neighbors.back().Initialize( rank, this->m_rank, this->m_size );
 
-      Array1dT<int> nbrcoords(nsdof);
-      for(unsigned int i =0; i < nsdof; ++i) nbrcoords[i] = ncoords[i];
-      neighborCommPtrIndx[nbrcoords] = m_neighbors.size()-1;
+//      Array1dT<int> nbrcoords(nsdof);
+//      for(unsigned int i =0; i < nsdof; ++i) nbrcoords[i] = ncoords[i];
+//      neighborCommPtrIndx[nbrcoords] = m_neighbors.size()-1;
     }
   }
   else

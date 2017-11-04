@@ -47,7 +47,7 @@
 #define BIN_STREAM_H
 
 // ***** Included Headers *****************************************************
-#include "legacy/Common/Common.h"
+#include "common/DataTypes.hpp"
 #include <map>
 #include <set>
 #include <fstream>
@@ -57,7 +57,8 @@
 #include "slic/slic.hpp"
 #endif
 
-
+namespace geosx
+{
 // ****************************************************************************
 // ***** BINSTREAM CLASS DECLARATION ******************************************
 // ****************************************************************************
@@ -542,5 +543,5 @@ public:
 };
 
 
-
+}
 #endif

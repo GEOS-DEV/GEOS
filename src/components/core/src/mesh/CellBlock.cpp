@@ -63,8 +63,8 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
 
 {
 
-  m_toNodesRelation.resize2(0,8);
-  m_toFacesRelation.resize2(0,6);
+  m_toNodesRelation.resize(0,8);
+  m_toFacesRelation.resize(0,6);
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap).setSizedFromParent(1);
 
 }
@@ -197,7 +197,7 @@ void CellBlock::ReadXML_PostProcess()
 
 void CellBlock::GetFaceNodes( const localIndex elementIndex,
                               const localIndex localFaceIndex,
-                              lArray1d& nodeIndicies) const
+                              localIndex_array& nodeIndicies) const
 {
   // get nodelist for this element
   const localIndex* const elemToNodeMap = m_toNodesRelation[elementIndex];

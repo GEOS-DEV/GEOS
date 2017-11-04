@@ -84,7 +84,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   
   for( auto & entry : dNdX )
   {
-    entry.resize2( m_finiteElement->dofs_per_element(), m_quadrature->size() );
+    entry.resize( m_finiteElement->dofs_per_element(), m_quadrature->size() );
   }
 
 
@@ -92,15 +92,15 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   auto & constitutiveMapView = *(cellBlock->RegisterViewWrapper< std::pair< Array2dT< integer >, Array2dT< integer > > >(keys::constitutiveMap) );
   constitutiveMapView.setSizedFromParent(1);
   auto & constitutiveMap = constitutiveMapView.reference();
-  constitutiveMap.first.resize2(cellBlock->size(), m_quadrature->size() );
-  constitutiveMap.second.resize2(cellBlock->size(), m_quadrature->size() );
+  constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
+  constitutiveMap.second.resize(cellBlock->size(), m_quadrature->size() );
 
 
   
   auto & detJView = *(cellBlock->RegisterViewWrapper< Array2dT< real64 > >(keys::detJ));
   detJView.setSizedFromParent(1);
   auto & detJ = detJView.reference();
-  detJ.resize2(cellBlock->size(), m_quadrature->size() );
+  detJ.resize(cellBlock->size(), m_quadrature->size() );
 
 
 }

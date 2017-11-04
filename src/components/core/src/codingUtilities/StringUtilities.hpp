@@ -168,7 +168,7 @@ inline void ExpandMultipleTokens(string_array& sVector, const std::string& multi
     }
 
   }
-  sVector.swap(newVec);
+  sVector = newVec;
 }
 
 /// Trim whitespace from string

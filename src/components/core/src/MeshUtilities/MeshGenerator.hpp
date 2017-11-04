@@ -79,7 +79,7 @@ private:
 
   int m_dim;
   rArray1d m_vertices[3];
-  iArray1d m_nElems[3];
+  integer_array m_nElems[3];
   rArray1d m_nElemScaling[3];
   rArray1d m_nElemBias[3];
 
@@ -89,8 +89,8 @@ private:
   realT m_max[3]; // Maximum extent of mesh dimensions
 
   //int m_numElems[3];
-  iArray1d m_firstElemIndexForBlock[3];
-  iArray1d m_lastElemIndexForBlock[3];
+  integer_array m_firstElemIndexForBlock[3];
+  integer_array m_lastElemIndexForBlock[3];
 
 
 

@@ -97,7 +97,7 @@ FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
  */
 
 template <int dim>
-void FiniteElement<dim> :: reinit(const std::vector<R1TensorT<3> > &mapped_support_points)
+void FiniteElement<dim> :: reinit(const array<R1TensorT<3> > &mapped_support_points)
 {
   assert(mapped_support_points.size() == static_cast<unsigned>(n_dofs));
 

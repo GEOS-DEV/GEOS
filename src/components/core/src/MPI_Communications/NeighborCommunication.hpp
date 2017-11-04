@@ -73,31 +73,31 @@ struct TempNeighborData
 {
 //
   //sizes to receive
-  Array1dT<gArray1d::size_type> neighborBoundaryObjectsSizes;
+  Array1dT<globalIndex_array::size_type> neighborBoundaryObjectsSizes;
   Array1dT<bufvector::size_type> receiveSizes;
   Array1dT<bufvector::size_type> sendSizes;
 
   //node, edge, face (3)
-  std::map<string, gArray1d> neighborNumbers;
-  std::map<string, gArray1d> matchedNumbers;
-  std::map<string, lArray1d> matchedIndices;
+  std::map<string, globalIndex_array> neighborNumbers;
+  std::map<string, globalIndex_array> matchedNumbers;
+  std::map<string, localIndex_array> matchedIndices;
 
   //node, face (2)
   std::map<string, lSet> indicesInRange;
 
   map< string, lSet > objectLocalIndicesToSend ;
-  map< string, gArray1d > objectGlobalIndicesToSend ;
-  map< string, gArray1d > objectGlobalIndicesToRecieve ;
+  map< string, globalIndex_array > objectGlobalIndicesToSend ;
+  map< string, globalIndex_array > objectGlobalIndicesToRecieve ;
 
   //node, edge, face, element (4)
   std::map<string, bufvector> objectsToSend;
   std::map<string, bufvector> objectsToReceive;
 
-  std::map<string, lArray1d > objectWithNewGlobalIndex;
-  std::map<string, lArray1d > objectWithUnassignedGlobal;
+  std::map<string, localIndex_array > objectWithNewGlobalIndex;
+  std::map<string, localIndex_array > objectWithUnassignedGlobal;
 
-  gArray1d::size_type sendGlobalIndexRequests[3];
-  gArray1d::size_type recvGlobalIndexRequests[3];
+  globalIndex_array::size_type sendGlobalIndexRequests[3];
+  globalIndex_array::size_type recvGlobalIndexRequests[3];
   globalIndex sendFirstNewGlobalIndices[3];
   globalIndex recvFirstNewGlobalIndices[3];
 
@@ -196,8 +196,8 @@ public:
 
   void UnpackBuffer( const std::map<string, sArray1d>& fieldNames);
 
-  void UnpackGhostElements( std::map<std::string,lArray1d>& newElementIndices );
-  int UnpackGhosts(const string name, lArray1d& newIndices );
+  void UnpackGhostElements( std::map<std::string,localIndex_array>& newElementIndices );
+  int UnpackGhosts(const string name, localIndex_array& newIndices );
 
   void SendReceiveSizes(const CommRegistry::commID commID = CommRegistry::genericComm01  );
 
@@ -223,7 +223,7 @@ public:
 
   void DetermineMatchedBoundaryObject( const ObjectDataStructureBaseT& object,
                                        const string name,
-                                       const gArray1d& localObjectNumbers);
+                                       const globalIndex_array& localObjectNumbers);
 
   void FindPackGhostsDiscreteElement( const bool contactActive, const int depth = 1 );
 
@@ -239,15 +239,15 @@ public:
 
 
 
-  const lArray1d& GetSendLocalIndices(const string key){
+  const localIndex_array& GetSendLocalIndices(const string key){
     return m_sendLocalIndices[key];
   }
 
-  const lArray1d& GetElementRegionSendLocalIndices(const std::string& regionName){
+  const localIndex_array& GetElementRegionSendLocalIndices(const std::string& regionName){
     return  m_elementRegionsSendLocalIndices[regionName];
   }
 
-  const std::map< std::string, lArray1d>& GetElementRegionSendLocalIndices(){
+  const std::map< std::string, localIndex_array>& GetElementRegionSendLocalIndices(){
     return  m_elementRegionsSendLocalIndices;
   }
 
@@ -266,13 +266,13 @@ public:
 
   void UnpackTopologyModifications( const string key,
                                     const char*& pbuffer,
-                                    lArray1d& newIndices,
-                                    lArray1d& modifiedIndices,
+                                    localIndex_array& newIndices,
+                                    localIndex_array& modifiedIndices,
                                     const bool reverseOp  );
 
   void UnpackTopologyModifications( const string key,
                                     const char*& pbuffer,
-                                    std::map< std::string, lArray1d>& modifiedIndices );
+                                    std::map< std::string, localIndex_array>& modifiedIndices );
 
 
   void PackNewGlobalIndexRequests( const ModifiedObjectLists& modifiedObjects );
@@ -334,9 +334,9 @@ public:
 private:
 
   int m_neighborRank;
-  std::map<string, lArray1d> m_receiveLocalIndices;
+  std::map<string, localIndex_array> m_receiveLocalIndices;
 
-  void SetAllOwned(const gArray1d& localToGlobal, lArray1d& indices) const;
+  void SetAllOwned(const globalIndex_array& localToGlobal, localIndex_array& indices) const;
 
   int UnpackGhosts(const string name);
 
@@ -346,10 +346,10 @@ private:
 
   //NOTE: element regions are currently being dealt with using a special structure ... everything else with general one
 
-  std::map<string, lArray1d> m_sendLocalIndices;
-  std::map< std::string, lArray1d> m_elementRegionsSendLocalIndices;
+  std::map<string, localIndex_array> m_sendLocalIndices;
+  std::map< std::string, localIndex_array> m_elementRegionsSendLocalIndices;
 
-  std::map< std::string, lArray1d> m_elementRegionsReceiveLocalIndices;
+  std::map< std::string, localIndex_array> m_elementRegionsReceiveLocalIndices;
 
   bufvector m_sendBuffer;
   int m_sendSize[CommRegistry::maxComm];
@@ -430,15 +430,15 @@ public:
 //    syncNames[7] = PhysicalDomainT::EllipsoidalDiscreteElementManager;
 //  }
 
-  const lArray1d& ElementRegionsReceiveLocalIndices( const std::string& name ) const  {return stlMapLookup( m_elementRegionsReceiveLocalIndices, name );}
-  const std::map< std::string, lArray1d>& ElementRegionsReceiveLocalIndices() const  {return m_elementRegionsReceiveLocalIndices;}
+  const localIndex_array& ElementRegionsReceiveLocalIndices( const std::string& name ) const  {return stlMapLookup( m_elementRegionsReceiveLocalIndices, name );}
+  const std::map< std::string, localIndex_array>& ElementRegionsReceiveLocalIndices() const  {return m_elementRegionsReceiveLocalIndices;}
 
-  const lArray1d& ElementRegionsSendLocalIndices( const std::string& name ) const  {return stlMapLookup( m_elementRegionsSendLocalIndices, name );}
-  const std::map< std::string, lArray1d>& ElementRegionsSendLocalIndices() const  {return m_elementRegionsSendLocalIndices;}
+  const localIndex_array& ElementRegionsSendLocalIndices( const std::string& name ) const  {return stlMapLookup( m_elementRegionsSendLocalIndices, name );}
+  const std::map< std::string, localIndex_array>& ElementRegionsSendLocalIndices() const  {return m_elementRegionsSendLocalIndices;}
 
-  const lArray1d& ReceiveLocalIndices( const string name) const
+  const localIndex_array& ReceiveLocalIndices( const string name) const
   {
-    std::map<string, lArray1d>::const_iterator it = this->m_receiveLocalIndices.find(name);
+    std::map<string, localIndex_array>::const_iterator it = this->m_receiveLocalIndices.find(name);
     if(it == this->m_receiveLocalIndices.end())
     {
 #ifdef USE_ATK
@@ -448,9 +448,9 @@ public:
     return it->second;
   }
 
-  const lArray1d& SendLocalIndices( const string name) const
+  const localIndex_array& SendLocalIndices( const string name) const
   {
-    std::map<string, lArray1d>::const_iterator it = this->m_sendLocalIndices.find(name);
+    std::map<string, localIndex_array>::const_iterator it = this->m_sendLocalIndices.find(name);
     if(it == this->m_sendLocalIndices.end())
     {
 #ifdef USE_ATK

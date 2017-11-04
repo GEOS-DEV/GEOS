@@ -556,8 +556,8 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
   std::map<std::string, int> numElemsInRegions;
   std::map<std::string, std::string> elemTypeInRegions;
 
-  iArray1d firstElemIndexForBlockInPartition[3];
-  iArray1d lastElemIndexForBlockInPartition[3];
+  integer_array firstElemIndexForBlockInPartition[3];
+  integer_array lastElemIndexForBlockInPartition[3];
 
   for( int dir = 0 ; dir < 3 ; ++dir )
   {
@@ -844,7 +844,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
                   localIndex& localElemIndex = localElemIndexInRegion[*iterRegion];
                   elemRegion->m_localToGlobalMap[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
 
-                  iArray1d nodeIDInBox( numNodesPerElem );
+                  integer_array nodeIDInBox( numNodesPerElem );
 
                   GetElemToNodesRelationInBox( m_elementType[iR], index, iEle, nodeIDInBox.data(),
                                                numNodesPerElem );

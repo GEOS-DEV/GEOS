@@ -91,7 +91,7 @@ private:
                     const bool isRestart,
                     const std::string& multiRoot,
                     const std::string& regionName = "none",
-                    const lArray1d& mask = lArray1d() ) const;
+                    const localIndex_array& mask = localIndex_array() ) const;
 
 
     void ReadSilo( const SiloFile& siloFile,
@@ -101,7 +101,7 @@ private:
                    const realT problemTime,
                    const bool isRestart,
                    const std::string& regionName = "none",
-                   const lArray1d& mask = lArray1d() );
+                   const localIndex_array& mask = localIndex_array() );
 
 
 
@@ -195,7 +195,7 @@ private:
     }
 
 
-    gArray1d& m_localToGlobalMap;
+    globalIndex_array & m_localToGlobalMap;
     map<globalIndex,localIndex> & m_globalToLocalMap;
 
 
@@ -206,14 +206,14 @@ private:
 
     /// builds a new set on this object given another objects set and the map between them
     void ConstructSetFromSetAndMap( const lSet& inputSet,
-                                    const Array1dT<lArray1d>& map,
+                                    const array<localIndex_array>& map,
                                     const std::string& newSetName );
 
 
 
 
-    void ConstructLocalListOfBoundaryObjects( lArray1d& objectList ) const;
-    void ConstructGlobalListOfBoundaryObjects( gArray1d& objectList ) const;
+    void ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
+    void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
 
     //**********************************************************************************************************************
 

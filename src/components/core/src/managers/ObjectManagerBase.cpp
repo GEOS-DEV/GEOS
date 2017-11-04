@@ -14,7 +14,7 @@ using namespace dataRepository;
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ManagedGroup * const parent ):
     ManagedGroup(name,parent),
-    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal")->reference() ),
+    m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() ),
     m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
 {
   this->RegisterGroup<ManagedGroup>(keys::sets);
@@ -24,7 +24,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //                                      ManagedGroup * const parent,
 //                                      cxx_utilities::DocumentationNode * docNode ):
 //    ManagedGroup(name,parent,docNode),
-//    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal")->reference() )
+//    m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() )
 //{
 //
 //
@@ -74,8 +74,8 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
 }
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
-                                                          const Array1dT<lArray1d>& map,
-                                                          const std::string& newSetName )
+                                                   const array<localIndex_array>& map,
+                                                   const std::string& newSetName )
 {
 
   ManagedGroup * sets = GetGroup(std::string("Sets"));
@@ -100,9 +100,9 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   }
 }
 
-void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( lArray1d& objectList ) const
+void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& objectList ) const
 {
-  const iArray1d& isDomainBoundary = this->getReference<int>(string("isDomainBoundary"));
+  const iArray1d& isDomainBoundary = this->getReference<integer_array>(string("isDomainBoundary"));
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -112,9 +112,9 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( lArray1d& objectLis
   }
 }
 
-void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( gArray1d& objectList ) const
+void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array& objectList ) const
 {
-  const iArray1d& isDomainBoundary = this->getReference<int>(string("isDomainBoundary"));
+  const iArray1d& isDomainBoundary = this->getReference<integer_array>(string("isDomainBoundary"));
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )

@@ -572,7 +572,7 @@ void SiloFile::WriteMeshObject(const std::string& meshName,
     DBClearOptlist(optlist);
 
     ivector nodelist(lnodelist);
-    gArray1d globalZoneNumber(lnodelist);
+    globalIndex_array globalZoneNumber(lnodelist);
 
     int count = 0;
     int elemCount = 0;
@@ -601,7 +601,7 @@ void SiloFile::WriteMeshObject(const std::string& meshName,
       }
     }
 
-    iArray1d shapesize2(numRegions);
+    integer_array shapesize2(numRegions);
     for (int i = 0; i < numRegions; ++i)
     {
       if( shapesize[i] < 0 )
@@ -702,7 +702,7 @@ void SiloFile::WritePolygonMeshObject(const std::string& meshName,
     DBClearOptlist(optlist);
 
     ivector nodelist(lnodelist);
-    gArray1d globalZoneNumber(lnodelist);
+    globalIndex_array globalZoneNumber(lnodelist);
 
     int elemCount = 0;
     for (int j = 0; j < lnodelist; ++j)
@@ -832,17 +832,17 @@ int SiloFile::WriteQuadMeshObject(const std::string& meshName,
 void SiloFile::WriteBeamMesh(const std::string& meshName,
                              const localIndex nnodes,
                              realT* coords[3],
-                             const lArray1d& node1,
-                             const lArray1d& node2,
+                             const localIndex_array& node1,
+                             const localIndex_array& node2,
                              const int cycleNumber,
                              const realT problemTime)
 {
   // Connectivity.
-  iArray1d nodelist;
+  integer_array nodelist;
   {
     nodelist.reserve(2*node1.size());
-    lArray1d::const_iterator it2 = node2.begin();
-    for (lArray1d::const_iterator it = node1.begin();
+    localIndex_array::const_iterator it2 = node2.begin();
+    for (localIndex_array::const_iterator it = node1.begin();
          it != node1.end(); ++it, ++it2)
     {
         nodelist.push_back(static_cast<int>(*it));
@@ -862,7 +862,7 @@ void SiloFile::WriteBeamMesh(const std::string& meshName,
                              const realT problemTime)
 {
   // Connectivity.
-  iArray1d nodelist;
+  integer_array nodelist;
   {
     nodelist.reserve(2*connectivity.size());
     for (std::map<int,int>::const_iterator it = connectivity.begin();
@@ -879,7 +879,7 @@ void SiloFile::WriteBeamMesh(const std::string& meshName,
 void SiloFile::WriteBeamMesh(const std::string& meshName,
                              const localIndex nnodes,
                              realT* coords[3],
-                             iArray1d& nodelist,
+                             integer_array& nodelist,
                              const int cycleNumber,
                              const realT problemTime)
 {
@@ -1652,8 +1652,8 @@ void SiloFile::ClearEmptiesFromMultiObjects(const int cycleNum)
   int sizeOfSendBufferVars = sendbufferVars.size();
   int sizeOfSendBufferMesh = sendbufferMesh.size();
 
-  iArray1d rcounts(size);
-  iArray1d displs(size);
+  integer_array rcounts(size);
+  integer_array displs(size);
   MPI_Gather( &sizeOfSendBufferVars, 1, MPI_INT, rcounts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   int sizeOfReceiveBuffer = 0;
@@ -1841,13 +1841,14 @@ void SiloFile::DBWriteWrapper( const std::string& name, const Array1dT<TYPE>& da
   }
 
 }
-//template void SiloFile::DBWriteWrapper( const std::string&, const lArray1d& );
-template void SiloFile::DBWriteWrapper( const std::string&, const gArray1d& );
-template void SiloFile::DBWriteWrapper( const std::string&, const iArray1d& );
+//template void SiloFile::DBWriteWrapper( const std::string&, const localIndex_array& );
+template void SiloFile::DBWriteWrapper( const std::string&, const globalIndex_array& );
+template void SiloFile::DBWriteWrapper( const std::string&, const integer_array& );
 template void SiloFile::DBWriteWrapper( const std::string&, const rArray1d& );
 template void SiloFile::DBWriteWrapper( const std::string&, const Array1dT<R1Tensor>& );
 template void SiloFile::DBWriteWrapper( const std::string&, const Array1dT<R2Tensor>& );
 template void SiloFile::DBWriteWrapper( const std::string&, const Array1dT<R2SymTensor>& );
+
 
 template<>
 void SiloFile::DBWriteWrapper( const std::string& name, const Array1dT<std::string>& data )
@@ -1898,7 +1899,7 @@ void SiloFile::DBWriteWrapper( const std::string& name, const Array2dT<TYPE>& da
              3, SiloFileUtilities::DB_TYPE<TYPE>() );
   }
 }
-template void SiloFile::DBWriteWrapper( const std::string&, const rArray2d& );
+template void SiloFile::DBWriteWrapper( const std::string&, const Array2dT<real64>& );
 template void SiloFile::DBWriteWrapper( const std::string&, const Array2dT<R1Tensor>& );
 template void SiloFile::DBWriteWrapper( const std::string&, const Array2dT<R2Tensor>& );
 
@@ -2095,7 +2096,7 @@ void SiloFile::DBWriteWrapper( const std::string& subdir, const std::map< std::s
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<integer> >& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<int64> >& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, lArray2d>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, Array1dT<lArray1d> >& );
+template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, Array1dT<localIndex_array> >& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, lSet>& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, sArray1d>& );
 
@@ -2246,7 +2247,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<TYPE>& data ) co
 }
 template void SiloFile::DBReadWrapper( const std::string&, array<integer>& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, array<int64>& ) const;
-//template void SiloFile::DBReadWrapper( const std::string&, iArray1d& ) const;
+//template void SiloFile::DBReadWrapper( const std::string&, integer_array& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, rArray1d& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, Array1dT<R1Tensor>& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, Array1dT<R2Tensor>& ) const;
@@ -2341,7 +2342,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array2dT<TYPE>& data ) co
     //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in silo file" );
   }
 }
-template void SiloFile::DBReadWrapper( const std::string& name, rArray2d& data ) const;
+template void SiloFile::DBReadWrapper( const std::string& name, Array2dT<real64>& data ) const;
 template void SiloFile::DBReadWrapper( const std::string& name, Array2dT<R1Tensor>& data ) const;
 template void SiloFile::DBReadWrapper( const std::string& name, Array2dT<R2Tensor>& data ) const;
 
@@ -2406,7 +2407,7 @@ void SiloFile::DBReadWrapper( const std::string& name, Array1dT<Array2dT<TYPE> >
   typename Array1dT<TYPE>::size_type serialSize = 0 ;
   for( integer i=0 ; i<data.size() ; ++i )
   {
-    data[i].resize2(dataSizes0[i],dataSizes1[i]);
+    data[i].resize(dataSizes0[i],dataSizes1[i]);
     serialSize += dataSizes0[i] * dataSizes1[i];
   }
 
@@ -2626,7 +2627,7 @@ void SiloFile::DBReadWrapper( const std::string& subdir, std::map< std::string, 
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<integer> >& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<int64> >& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, lArray2d>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, Array1dT<lArray1d> >& ) const;
+template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, Array1dT<localIndex_array> >& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, lSet>& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, sArray1d>& ) const;
 
@@ -2785,10 +2786,10 @@ template void** SiloFile::GetDataVar<R2SymTensor>( const std::string&, const std
 
 
 
-iArray1d SiloFile::SiloNodeOrdering()
+integer_array SiloFile::SiloNodeOrdering()
 {
 
-  iArray1d nodeOrdering;
+  integer_array nodeOrdering;
 
 //  if( !m_elementGeometryID.compare(0, 4, "CPE2") )
 //  {
@@ -2866,7 +2867,7 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
                                       const int cycleNum,
                                       const realT problemTime,
                                       const bool isRestart,
-                                      const lArray1d& mask )
+                                      const localIndex_array& mask )
 {
 
   std::string subDirectory = siloDirName;
@@ -2906,7 +2907,7 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
                                       const realT problemTime,
                                       const bool isRestart,
                                       const std::string& multiRoot,
-                                      const lArray1d& mask )
+                                      const localIndex_array& mask )
 {
 
 //  if( isRestart )

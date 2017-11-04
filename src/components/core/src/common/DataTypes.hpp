@@ -23,8 +23,9 @@
 
 #include "Macros.hpp"
 
+#include "ManagedArray.hpp"
 
-#include "legacy/ArrayT/ArrayT.h"
+//#include "legacy/ArrayT/ArrayT.h"
 #include "math/TensorT/TensorT.h"
 
 #ifndef CONTAINERARRAY_RETURN_PTR
@@ -63,15 +64,6 @@ using c_ptr = T const *;
 using integer_ptr        = ptr<integer>;
 using integer_const_ptr  = c_ptr<integer>;
 
-//using uint32_ptr        = ptr<uint32>;
-//using uint32_const_ptr  = c_ptr<uint32>;
-//
-//using int64_ptr        = ptr<int64>;
-//using int64_const_ptr  = c_ptr<int64>;
-//
-//using uint64_ptr        = ptr<uint64>;
-//using uint64_const_ptr  = c_ptr<uint64>;
-
 using localIndex_ptr         = ptr<localIndex>;
 using localIndex_const_ptr   = c_ptr<localIndex>;
 
@@ -88,7 +80,9 @@ using realT    = double;
 
 template< typename T >
 //using array = std::vector<T>;
-using array = Array1dT<T>;
+//using array = Array1dT<T>;
+using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
+
 
 template< typename T >
 using set = std::set<T>;
@@ -105,16 +99,8 @@ using unordered_map = std::unordered_map<TKEY,TVAL>;
 
 
 using integer_array        = array<integer>;
+//using integer_array = multidimensionalArray::ManagedArray<integer,1,localIndex>;
 using integer_const_array  = array<integer const>;
-
-//using uint32_array        = array<uint32>;
-//using uint32_const_array  = array<uint32 const>;
-//
-//using int64_array        = array<int64>;
-//using int64_const_array  = array<int64 const>;
-//
-//using uint64_array        = array<uint64>;
-//using uint64_const_array  = array<uint64 const>;
 
 using real32_array        = array<real32>;
 using real32_const_array  = array<real32 const>;
@@ -163,28 +149,41 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 
 //***** BEGIN LEGACY TYPEDEFS *****
-using rArray1d = Array1dT<real64>;
-using iArray1d = Array1dT<integer>;
-using lArray1d = Array1dT<localIndex>;
-using gArray1d = Array1dT<globalIndex>;
+//using rArray1d = Array1dT<real64>;
+//using iArray1d = Array1dT<integer>;
+//using lArray1d = Array1dT<localIndex>;
+//using gArray1d = Array1dT<globalIndex>;
 
-typedef Array1dT<std::string> sArray1d;
+//typedef Array1dT<std::string> sArray1d;
 
 typedef std::set<localIndex> lSet;
 typedef std::set<globalIndex> gSet;
 
 typedef int FieldKey;
 
-typedef Array2dT<localIndex> lArray2d;
+template< typename T >
+using Array1dT = multidimensionalArray::ManagedArray<T,1,localIndex>;
+
+template< typename T >
+using Array2dT = multidimensionalArray::ManagedArray<T,2,localIndex>;
+
+typedef multidimensionalArray::ManagedArray<localIndex,2,localIndex> lArray2d;
 typedef Array1dT<std::pair<int,localIndex> > pArray1d;
 typedef std::set<std::pair<int,localIndex> > pSet;
 
+using rArray1d = array<real64>;
+using iArray1d = array<integer>;
+using sArray1d = array<string>;
 using r1_array = array<R1Tensor>;
 using r2_array = array<R2Tensor>;
 using r2Sym_array = array<R2SymTensor>;
 
 //using mapPair = std::pair<integer, localIndex>;
 using mapPair_array = std::pair<integer_array, integer_array>;
+
+
+constexpr static auto GLOBALINDEX_MAX = std::numeric_limits<globalIndex>::max();
+
 //***** END LEGACY TYPEDEFS *****
 
 class rtTypes
@@ -610,7 +609,7 @@ public:
     }
     case ( TypeIDs::mapPair_array_id ):
     {
-      return lambda( mapPair_array({1,1}) );
+      return lambda( mapPair_array() );
       break;
     }
     default:

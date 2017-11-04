@@ -200,7 +200,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
         }
         else
         {
-          real64_array result(set.size());
+          real64_array result(static_cast<localIndex>(set.size()));
           function->Evaluate( dataGroup, time, set, result );
           integer count=0;
           for( auto a : set )

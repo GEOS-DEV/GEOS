@@ -67,13 +67,13 @@ namespace geosx
 {
 template< class T >
 void PushFieldForwardInTime( const realT& dt,
-                             const Array1dT< T >& dfield,
-                             Array1dT< T >& field );
+                             const array< T >& dfield,
+                             array< T >& field );
 
 template< class T >
 void IntegrateFieldInTime( const realT& dt,
-                           const Array1dT< T >& field,
-                           Array1dT< T >& Ifield );
+                           const array< T >& field,
+                           array< T >& Ifield );
 
 template< class T >
 inline void IntegrateField( const realT& dt,
@@ -103,8 +103,8 @@ template< typename T1, typename T2 >
 T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& message="" );
 
 
-rArray1d logspace(realT start, realT stop, int count=100);
-rArray1d linspace(realT start, realT stop, int count=100);
+real64_array logspace(realT start, realT stop, int count=100);
+real64_array linspace(realT start, realT stop, int count=100);
 
 
 
@@ -116,8 +116,8 @@ rArray1d linspace(realT start, realT stop, int count=100);
 
 template< class T >
 inline void PushFieldForwardInTime( const realT& dt,
-                                    const Array1dT< T >& dfield,
-                                    Array1dT< T >& field )
+                                    const array< T >& dfield,
+                                    array< T >& field )
 {
   T dfieldDt;
 
@@ -134,8 +134,8 @@ inline void PushFieldForwardInTime( const realT& dt,
 
 template< class T >
 inline void IntegrateFieldInTime( const realT& dt,
-                                  const Array1dT< T >& field,
-                                  Array1dT< T >& Ifield )
+                                  const array< T >& field,
+                                  array< T >& Ifield )
 {
   const int N = field.size();
   for( int a=0 ; a<N ; ++a )
@@ -158,13 +158,13 @@ inline void IntegrateField( const realT& dt,
 
 
 template< typename T >
-inline void CopyGlobalToLocal(const lArray1d& globalToLocalRelation,
-                              const Array1dT< T >& globalField,
-                              Array1dT< T >& localField)
+inline void CopyGlobalToLocal(const localIndex_array& globalToLocalRelation,
+                              const array< T >& globalField,
+                              array< T >& localField)
 {
-  const typename Array1dT<T>::size_type N = globalToLocalRelation.size() ;
+  const typename array<T>::size_type N = globalToLocalRelation.size() ;
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     localField[a] = globalField[ globalToLocalRelation[a] ];
   }
@@ -174,12 +174,12 @@ inline void CopyGlobalToLocal(const lArray1d& globalToLocalRelation,
 
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& globalField,
-                              Array1dT< T >& localField)
+                              const array< T >& globalField,
+                              array< T >& localField)
 {
-  const typename Array1dT<T>::size_type N = localField.size() ;
+  const typename array<T>::size_type N = localField.size() ;
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     localField[a] = globalField[ globalToLocalRelation[a] ];
   }
@@ -187,14 +187,14 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& globalField1,
-                              const Array1dT< T >& globalField2,
-                              Array1dT< T >& localField1,
-                              Array1dT< T >& localField2 )
+                              const array< T >& globalField1,
+                              const array< T >& globalField2,
+                              array< T >& localField1,
+                              array< T >& localField2 )
 {
-  const typename Array1dT<T>::size_type N = localField1.size() ;
+  const typename array<T>::size_type N = localField1.size() ;
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
     localField2[a] = globalField2[ globalToLocalRelation[a] ];
@@ -203,13 +203,13 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& globalField1,
-                              const Array1dT< T >& globalField2,
+                              const array< T >& globalField1,
+                              const array< T >& globalField2,
                               T * __restrict__ const localField1,
                               T * __restrict__ const localField2,
                               localIndex N)
 {
-//  const typename Array1dT<T>::size_type N = localField1.size() ;
+//  const typename array<T>::size_type N = localField1.size() ;
 
   for( localIndex a=0 ; a<N ; ++a )
   {
@@ -226,7 +226,7 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               T * __restrict__ const localField2,
                               localIndex N)
 {
-//  const typename Array1dT<T>::size_type N = localField1.size() ;
+//  const typename array<T>::size_type N = localField1.size() ;
 
   for( localIndex a=0 ; a<N ; ++a )
   {
@@ -238,16 +238,16 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& globalField1,
-                              const Array1dT< T >& globalField2,
-                              const Array1dT< T >& globalField3,
-                              Array1dT< T >& localField1,
-                              Array1dT< T >& localField2,
-                              Array1dT< T >& localField3 )
+                              const array< T >& globalField1,
+                              const array< T >& globalField2,
+                              const array< T >& globalField3,
+                              array< T >& localField1,
+                              array< T >& localField2,
+                              array< T >& localField3 )
 {
-  const typename Array1dT<T>::size_type N = localField1.size() ;
+  const typename array<T>::size_type N = localField1.size() ;
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
     localField2[a] = globalField2[ globalToLocalRelation[a] ];
@@ -257,18 +257,18 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& globalField1,
-                              const Array1dT< T >& globalField2,
-                              const Array1dT< T >& globalField3,
-                              const Array1dT< T >& globalField4,
-                              Array1dT< T >& localField1,
-                              Array1dT< T >& localField2,
-                              Array1dT< T >& localField3 ,
-                              Array1dT< T >& localField4 )
+                              const array< T >& globalField1,
+                              const array< T >& globalField2,
+                              const array< T >& globalField3,
+                              const array< T >& globalField4,
+                              array< T >& localField1,
+                              array< T >& localField2,
+                              array< T >& localField3 ,
+                              array< T >& localField4 )
 {
-  const typename Array1dT<T>::size_type N = localField1.size() ;
+  const typename array<T>::size_type N = localField1.size() ;
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
     localField2[a] = globalField2[ globalToLocalRelation[a] ];
@@ -290,7 +290,7 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               T * __restrict__ const localField4,
                               localIndex N)
 {
-//  const typename Array1dT<T>::size_type N = localField1.size() ;
+//  const typename array<T>::size_type N = localField1.size() ;
 
   for( localIndex a=0 ; a<N ; ++a )
   {
@@ -303,12 +303,12 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& localField,
-                              Array1dT< T >& globalField)
+                              const array< T >& localField,
+                              array< T >& globalField)
 {
-  const typename Array1dT<T>::size_type N = localField.size() ;
+  const typename array<T>::size_type N = localField.size() ;
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     globalField[ globalToLocalRelation[a] ] += localField[a];
   }
@@ -317,7 +317,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                               T const * __restrict__ const localField,
-                              Array1dT< T >& globalField,
+                              array< T >& globalField,
                               localIndex const N )
 {
   for( localIndex a=0 ; a<N ; ++a )
@@ -340,14 +340,14 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& localField1,
-                              const Array1dT< T >& localField2,
-                              Array1dT< T >& globalField1,
-                              Array1dT< T >& globalField2 )
+                              const array< T >& localField1,
+                              const array< T >& localField2,
+                              array< T >& globalField1,
+                              array< T >& globalField2 )
 {
-  const typename Array1dT<T>::size_type  N = localField1.size() ;
+  const typename array<T>::size_type  N = localField1.size() ;
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     globalField1[ globalToLocalRelation[a] ] += localField1[a];
     globalField2[ globalToLocalRelation[a] ] += localField2[a];
@@ -390,7 +390,7 @@ inline bool isOdd(int x) {
 /// find if object is member of vector
 template <class ElementClass>
 bool isMember(const ElementClass& x, const std::vector<ElementClass>& aVec) {return ( std::find(aVec.begin(), aVec.end(), x) !=  aVec.end() );}
-inline bool isMember(localIndex x, const lArray1d& aVec) {return ( std::find(aVec.begin(), aVec.end(), x) !=  aVec.end() );}
+inline bool isMember(localIndex x, const localIndex_array& aVec) {return ( std::find(aVec.begin(), aVec.end(), x) !=  aVec.end() );}
 
 
 /// find if object is member of set or map
@@ -527,19 +527,19 @@ template <class T> vector_inserter<T>& operator+=(std::vector<T>& v,const T& x){
 /*
  * Initialize string vector values with chars
  * Usage:
- *   sArray1d aVect;
+ *   string_array aVect;
  *   aVect += "The","quick","brown","fox";
  */
 class svector_inserter{
 public:
-    sArray1d& v;
-    svector_inserter(sArray1d& vv):v(vv){}
+    string_array& v;
+    svector_inserter(string_array& vv):v(vv){}
     svector_inserter& operator,(const char* val){v.push_back(std::string(val));return *this;}
 };
-svector_inserter& operator+=(sArray1d& v,const std::string& x);
+svector_inserter& operator+=(string_array& v,const std::string& x);
 
 inline
-svector_inserter& operator+=(sArray1d& v,const char* x){
+svector_inserter& operator+=(string_array& v,const char* x){
     return svector_inserter(v),x;
 }
 
@@ -654,11 +654,11 @@ inline void Intersection( const std::set<TYPE>& set1, const std::set<TYPE>& set2
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set, const Array1dT<TYPE>& array, std::set<TYPE>& intersection )
+inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& array, std::set<TYPE>& intersection )
 {
   intersection.clear();
 
-  for( typename Array1dT<TYPE>::const_iterator iter_arr=array.begin() ; iter_arr!=array.end() ; ++iter_arr )
+  for( typename array<TYPE>::const_iterator iter_arr=array.begin() ; iter_arr!=array.end() ; ++iter_arr )
   {
     if( set.count( *iter_arr ) == 1 )
     {
@@ -668,11 +668,11 @@ inline void Intersection( const std::set<TYPE>& set, const Array1dT<TYPE>& array
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set, const Array1dT<TYPE>& array, Array1dT<TYPE>& intersection )
+inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& arr, array<TYPE>& intersection )
 {
   intersection.clear();
 
-  for( typename std::set<TYPE>::const_iterator iter_arr=array.begin() ; iter_arr!=array.end() ; ++iter_arr )
+  for( typename std::set<TYPE>::const_iterator iter_arr=arr.begin() ; iter_arr!=arr.end() ; ++iter_arr )
   {
     if( set.count( *iter_arr ) == 1 )
     {
@@ -682,8 +682,9 @@ inline void Intersection( const std::set<TYPE>& set, const Array1dT<TYPE>& array
 }
 
 inline
-rArray1d linspace(realT start, realT stop, int count){
-  rArray1d rv(count,start);
+real64_array linspace(realT start, realT stop, int count){
+  real64_array rv(count);
+  rv = start;
 
   if(count > 1){
 
@@ -701,8 +702,9 @@ rArray1d linspace(realT start, realT stop, int count){
 
 
 inline
-rArray1d logspace(realT start, realT stop, int count){
-  rArray1d rv(count,start);
+real64_array logspace(realT start, realT stop, int count){
+  real64_array rv(count);
+  rv = start;
 
   if(count > 1){
 

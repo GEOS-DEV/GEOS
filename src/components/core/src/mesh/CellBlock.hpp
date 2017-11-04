@@ -117,7 +117,7 @@ public:
 
   void GetFaceNodes( const localIndex elementIndex,
                      const localIndex localFaceIndex,
-                     lArray1d& nodeIndicies) const;
+                     localIndex_array& nodeIndicies) const;
 
   R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
 

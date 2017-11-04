@@ -82,7 +82,7 @@ class FiniteElement : public FiniteElementBase
     virtual ~FiniteElement(){}
 
 
-    virtual void reinit(const std::vector<R1TensorT<3> > &mapped_support_points);
+    virtual void reinit(const array<R1TensorT<3> > &mapped_support_points);
 
 
 

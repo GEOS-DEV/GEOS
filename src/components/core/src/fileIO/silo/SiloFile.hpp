@@ -179,9 +179,9 @@ public:
 				      const realT problemTime);
   
   void TestPolyhedralCells();
-  void XFEMMesh(dvector xcoords,
-                dvector ycoords,
-                dvector zcoords,
+  void XFEMMesh(std::vector<double> xcoords,
+                std::vector<double> ycoords,
+                std::vector<double> zcoords,
                 std::vector<int> nodelist,
                 int lnodelist,
                 std::vector<int> shapesize,
@@ -214,8 +214,8 @@ public:
   void WriteBeamMesh(const std::string& meshName,
                      const localIndex nnodes,
                      realT* coords[3],
-                     const lArray1d& node1,
-                     const lArray1d& node2,
+                     const localIndex_array& node1,
+                     const localIndex_array& node2,
                      const int cycleNumber,
                      const realT problemTime);
 
@@ -229,7 +229,7 @@ public:
   void WriteBeamMesh(const std::string& meshName,
                      const localIndex nnodes,
                      realT* coords[3],
-                     iArray1d& nodelist,
+                     integer_array& nodelist,
                      const int cycleNumber,
                      const realT problemTime);
 
@@ -261,7 +261,7 @@ public:
                               const int cycleNum,
                               const realT problemTime,
                               const bool isRestart,
-                              const lArray1d& mask );
+                              const localIndex_array& mask );
 
 
 
@@ -272,7 +272,7 @@ public:
                               const realT problemTime,
                               const bool isRestart,
                               const std::string& multiRoot,
-                              const lArray1d& mask );
+                              const localIndex_array& mask );
 
   /// writes out fields in a data member map
   template< typename OUTPUTTYPE >
@@ -284,7 +284,7 @@ public:
                                 const bool isRestart,
                                 const std::string& multiRoot,
                                 const std::string& regionName,
-                                const lArray1d& mask );
+                                const localIndex_array& mask );
 
   template< typename INPUTTYPE, typename TYPE >
   void ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& member,
@@ -294,7 +294,7 @@ public:
                              const realT problemTime,
                              const bool isRestart,
                              const std::string& regionName,
-                             const lArray1d& mask ) const;
+                             const localIndex_array& mask ) const;
 
   /// Write out a data field
   template<typename OUTTYPE, typename TYPE>
@@ -369,6 +369,8 @@ public:
 
   template<typename TYPE>
   void DBWriteWrapper( const std::string& name, const Array1dT<TYPE>& data );
+
+  void DBWriteWrapper( const std::string& name, const integer_array& data );
 
   template<typename TYPE>
   void DBWriteWrapper( const std::string& name, const std::set<TYPE>& data );
@@ -483,7 +485,7 @@ public:
   sArray1d m_emptyMeshes;
   sArray1d m_emptyVariables;
 
-  iArray1d SiloNodeOrdering();
+  integer_array SiloNodeOrdering();
 
 
 private:
@@ -617,7 +619,7 @@ void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
                                     const bool isRestart,
                                     const std::string& multiRoot,
                                     const std::string& regionName,
-                                    const lArray1d& mask )
+                                    const localIndex_array& mask )
 {
 
   // iterate over all entries in the member map
@@ -813,7 +815,7 @@ void SiloFile::ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& me
                                      const realT problemTime,
                                      const bool isRestart,
                                      const std::string& regionName,
-                                     const lArray1d& mask ) const
+                                     const localIndex_array& mask ) const
 {
   // iterate over all entries in the member map
   for( typename std::map< std::string, Array1dT<TYPE> >::iterator iter = member.begin() ; iter!=member.end() ; ++iter )
@@ -836,7 +838,7 @@ void SiloFile::ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& me
           // write the data field
           ReadDataField<INPUTTYPE>( dataToRead, meshname.c_str(), fieldName, centering, cycleNum, problemTime, regionName );
 
-          for( lArray1d::size_type i = 0; i < mask.size(); ++i)
+          for( localIndex_array::size_type i = 0; i < mask.size(); ++i)
           {
             fieldData[mask[i]] = dataToRead[i];
           }
@@ -904,7 +906,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 
   sArray1d vBlockNames(size);
   std::vector<char*> BlockNames(size);
-  ivector blockTypes(size);
+  std::vector<int> blockTypes(size);
   char tempBuffer[1024];
   char currentDirectory[256];
 

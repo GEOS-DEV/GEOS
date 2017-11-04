@@ -137,7 +137,7 @@ void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const gro
   {
     real64_array tmp(result.size());
     m_subFunctions[ii]->Evaluate(group, time, set, tmp);
-    subFunctionResults.emplace_back(std::move(tmp));
+    subFunctionResults.push_back(std::move(tmp));
   }
 
   // Evaluate the symbolic math

@@ -116,12 +116,12 @@ public:
   void SynchronizeFields( const std::map<std::string, sArray1d>& fieldNames,
                           const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
-  void SetOwnedByRank( const std::map< std::string, gArray1d>& localBoundaryGlobalIndices,
+  void SetOwnedByRank( const std::map< std::string, globalIndex_array>& localBoundaryGlobalIndices,
                        std::map<std::string, std::map< globalIndex, int > >& boundaryOwnership);
 
   void SetGhostArrays( DomainPartition * domain );
 
-  lArray1d GetFaceSendIndices();
+  localIndex_array GetFaceSendIndices();
 
   virtual void SetContactGhostRange( const double bufferSize ) = 0;
 
@@ -149,10 +149,10 @@ protected:
   PartitionBase();
   PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton );
 
-  VectorT<NeighborCommunication> m_neighbors;
+  array<NeighborCommunication> m_neighbors;
 
-  VectorT<MPI_Request> m_mpiRequest;
-  VectorT<MPI_Status> m_mpiStatus;
+  array<MPI_Request> m_mpiRequest;
+  array<MPI_Status> m_mpiStatus;
 
   R1Tensor m_contactGhostMin;
   R1Tensor m_contactGhostMax;
@@ -169,11 +169,11 @@ public:
   realT m_t4;
 
   bool m_hasLocalGhosts;
-  std::map<std::string, lArray1d> m_localGhosts;
-  std::map< std::string, lArray1d> m_elementRegionsLocalGhosts;
+  std::map<std::string, localIndex_array> m_localGhosts;
+  std::map< std::string, localIndex_array> m_elementRegionsLocalGhosts;
 
-  std::map<std::string, lArray1d> m_localGhostSources;
-  std::map< std::string, lArray1d> m_elementRegionsLocalGhostSources;
+  std::map<std::string, localIndex_array> m_localGhostSources;
+  std::map< std::string, localIndex_array> m_elementRegionsLocalGhostSources;
 
   int m_ghostDepth;
 

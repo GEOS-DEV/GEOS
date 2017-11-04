@@ -56,23 +56,23 @@
 
 //
 //static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
-//                                        const lArray1d& existingNeighborIndices,
+//                                        const localIndex_array& existingNeighborIndices,
 //                                        const lSet& modifiedIndices,
-//                                        lArray1d& modifiedNeighborIndices );
+//                                        localIndex_array& modifiedNeighborIndices );
 //
 //static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
-//                                        const lArray1d& existingNeighborIndices,
-//                                        const lArray1d& modifiedIndices,
-//                                        lArray1d& modifiedNeighborIndices );
+//                                        const localIndex_array& existingNeighborIndices,
+//                                        const localIndex_array& modifiedIndices,
+//                                        localIndex_array& modifiedNeighborIndices );
 //
 //
 //
 //
 //
 //static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
-//                                        const lArray1d& existingNeighborIndices,
+//                                        const localIndex_array& existingNeighborIndices,
 //                                        const lSet& modifiedIndices,
-//                                        lArray1d& modifiedNeighborIndices )
+//                                        localIndex_array& modifiedNeighborIndices )
 //{
 //
 ////  if( !(modifiedIndices.empty()) )
@@ -95,9 +95,9 @@
 //
 //
 //static void GetModifiedNeighborIndices( const ObjectDataStructureBaseT& object,
-//                                        const lArray1d& existingNeighborIndices,
-//                                        const lArray1d& modifiedIndices,
-//                                        lArray1d& modifiedNeighborIndices )
+//                                        const localIndex_array& existingNeighborIndices,
+//                                        const localIndex_array& modifiedIndices,
+//                                        localIndex_array& modifiedNeighborIndices )
 //{
 //  lSet modifiedIndicesSet( modifiedIndices.begin(), modifiedIndices.end() );
 //  GetModifiedNeighborIndices( object, existingNeighborIndices, modifiedIndicesSet, modifiedNeighborIndices );
@@ -207,12 +207,12 @@ void NeighborCommunication::Clear()
 {
   tempNeighborData.clear();
 
-  std::map<string, lArray1d>::iterator it;
+  std::map<string, localIndex_array>::iterator it;
   for(it = m_sendLocalIndices.begin(); it != m_sendLocalIndices.end(); ++it)
   {
     it->second.clear();
   }
-  for( std::map< std::string, lArray1d>::iterator i=m_elementRegionsSendLocalIndices.begin() ;
+  for( std::map< std::string, localIndex_array>::iterator i=m_elementRegionsSendLocalIndices.begin() ;
        i!=m_elementRegionsSendLocalIndices.end() ; ++i )
   {
     i->second.clear();
@@ -222,7 +222,7 @@ void NeighborCommunication::Clear()
   {
     it->second.clear();
   }
-  for( std::map< std::string, lArray1d>::iterator i=m_elementRegionsReceiveLocalIndices.begin() ;
+  for( std::map< std::string, localIndex_array>::iterator i=m_elementRegionsReceiveLocalIndices.begin() ;
       i!=m_elementRegionsReceiveLocalIndices.end() ; ++i )
   {
     i->second.clear();
@@ -293,10 +293,10 @@ void NeighborCommunication::CommunicatePackedObjectBufferSizes( )
  */
 void NeighborCommunication::DetermineMatchedBoundaryObject( const ObjectDataStructureBaseT& object,
                                                             const string name,
-                                                            const gArray1d& localObjectNumbers)
+                                                            const globalIndex_array& localObjectNumbers)
 {
 //  //get temporary reference to the (already created) numbers list for the given object type
-//  std::map<string, gArray1d>::const_iterator cgit;
+//  std::map<string, globalIndex_array>::const_iterator cgit;
 //  cgit = tempNeighborData.neighborNumbers.find(name);
 //  if (cgit == tempNeighborData.neighborNumbers.end())
 //  {
@@ -306,18 +306,18 @@ void NeighborCommunication::DetermineMatchedBoundaryObject( const ObjectDataStru
 ////            + " in neighborNumbers in NeighborCommunication::DetermineMatchedBoundaryObject");
 ////#endif
 //  }
-//  const gArray1d& neighborObjectNumbers = cgit->second;
+//  const globalIndex_array& neighborObjectNumbers = cgit->second;
 //
 //  //instantiate indices and numbers lists for the given object type
 //  //and assign a temporary reference
-//  lArray1d& matchedObjectsIndices = tempNeighborData.matchedIndices[name];
-//  gArray1d& matchedObjectsNumbers = tempNeighborData.matchedNumbers[name];
+//  localIndex_array& matchedObjectsIndices = tempNeighborData.matchedIndices[name];
+//  globalIndex_array& matchedObjectsNumbers = tempNeighborData.matchedNumbers[name];
 //
 //  // now compare local and neighbor lists. They are sorted, so that makes it a lot easier.
 //  // the looping here is a little funny. We are going to loop over all entries in the localNodes array, but the
 //  // neighborNodes array is also being iterated over...just not as part of the loop counter.
-//  gArray1d::const_iterator localObjectNumber = localObjectNumbers.begin();
-//  gArray1d::const_iterator neighborObjectNumber = neighborObjectNumbers.begin();
+//  globalIndex_array::const_iterator localObjectNumber = localObjectNumbers.begin();
+//  globalIndex_array::const_iterator neighborObjectNumber = neighborObjectNumbers.begin();
 //
 //  // loop over local objects. exit loop if either the local or neighbor object is at end()
 //  for( ; (localObjectNumber!=localObjectNumbers.end() && neighborObjectNumber!=neighborObjectNumbers.end()) ;
@@ -395,7 +395,7 @@ void NeighborCommunication::FindGhosts( const bool contactActive,
 //      if( isExternalFace[a] == 1 )
 //      {
 //        bool allValidNodes = true;
-//        for( lArray1d::const_iterator i=m_domain->m_feFaceManager.m_toNodesRelation[a].begin() ;
+//        for( localIndex_array::const_iterator i=m_domain->m_feFaceManager.m_toNodesRelation[a].begin() ;
 //             i!=m_domain->m_feFaceManager.m_toNodesRelation[a].end() ; ++i )
 //        {
 //          const globalIndex gnode = m_domain->m_feNodeManager.m_localToGlobalMap[*i];
@@ -416,7 +416,7 @@ void NeighborCommunication::FindGhosts( const bool contactActive,
 //
 //  for( lSet::const_iterator faceIndex=allFaces.begin() ; faceIndex!=allFaces.end() ; ++faceIndex )
 //  {
-//    for( lArray1d::const_iterator edgeIndex=m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].begin() ;
+//    for( localIndex_array::const_iterator edgeIndex=m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].begin() ;
 //         edgeIndex!=m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].end() ; ++edgeIndex )
 //    {
 //      const globalIndex gi = m_domain->m_feEdgeManager.m_localToGlobalMap[*edgeIndex];
@@ -426,7 +426,7 @@ void NeighborCommunication::FindGhosts( const bool contactActive,
 //      }
 //    }
 //
-//    for( lArray1d::const_iterator i=m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].begin() ;
+//    for( localIndex_array::const_iterator i=m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].begin() ;
 //         i!=m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].end() ; ++i )
 //    {
 //      allNodes.insert(*i);
@@ -441,7 +441,7 @@ void NeighborCommunication::FindGhosts( const bool contactActive,
 //  for( int i=0 ; i<3 ; ++i )
 //  {
 //    const lSet& localSends = tempNeighborData.objectLocalIndicesToSend[keys[i]];
-//    gArray1d& globalSends = tempNeighborData.objectGlobalIndicesToSend[keys[i]];
+//    globalIndex_array& globalSends = tempNeighborData.objectGlobalIndicesToSend[keys[i]];
 //
 //    for( lSet::const_iterator a=localSends.begin() ; a!=localSends.end() ; ++a )
 //    {
@@ -460,7 +460,7 @@ void NeighborCommunication::FindGhosts( const bool contactActive,
 //  const lSet& allEdges = tempNeighborData.objectLocalIndicesToSend[PhysicalDomainT::FiniteElementEdgeManager];
 //  const lSet& allFaces = tempNeighborData.objectLocalIndicesToSend[PhysicalDomainT::FiniteElementFaceManager];
 //
-//  lArray1d nodalSendList;
+//  localIndex_array nodalSendList;
 //  for( lSet::const_iterator a=allNodes.begin() ; a!=allNodes.end() ; ++a )
 //  {
 //    const globalIndex gnode = m_domain->m_feNodeManager.m_localToGlobalMap[*a];
@@ -474,7 +474,7 @@ void NeighborCommunication::FindGhosts( const bool contactActive,
 //
 //
 //  //***** FACES *****
-//  lArray1d faceSendList;
+//  localIndex_array faceSendList;
 //  for( lSet::const_iterator a=allFaces.begin() ; a!=allFaces.end() ; ++a )
 //  {
 //    const globalIndex gface = m_domain->m_feFaceManager.m_localToGlobalMap[*a];
@@ -493,7 +493,7 @@ void NeighborCommunication::FindGhosts( const bool contactActive,
 //
 //
 //
-//  lArray1d edgeSendList;
+//  localIndex_array edgeSendList;
 //  for( lSet::const_iterator a=allEdges.begin() ; a!=allEdges.end() ; ++a )
 //  {
 //    const globalIndex gEdge = m_domain->m_feEdgeManager.m_localToGlobalMap[*a];
@@ -514,11 +514,11 @@ void NeighborCommunication::FindGhosts( const bool contactActive,
 
 
 
-void NeighborCommunication::SetAllOwned(const gArray1d& localToGlobal, lArray1d& indices) const
+void NeighborCommunication::SetAllOwned(const globalIndex_array& localToGlobal, localIndex_array& indices) const
 {
 //  indices.clear();
 //  localIndex i = 0;
-//  for( gArray1d::const_iterator a=localToGlobal.begin() ; a!=localToGlobal.end() ; ++a, ++i )
+//  for( globalIndex_array::const_iterator a=localToGlobal.begin() ; a!=localToGlobal.end() ; ++a, ++i )
 //    if( GlobalIndexManager::OwningRank( *a ) == m_rank)
 //      indices.push_back( i );
 }
@@ -544,7 +544,7 @@ void NeighborCommunication::PackTopologyModifications( const string key,
 //  m_sendBuffer.Pack( numNew );
 //  if( numNew > 0 )
 //  {
-//    lArray1d newObjectsOnNeighbor;
+//    localIndex_array newObjectsOnNeighbor;
 //
 //    GetModifiedNeighborIndices( m_domain->GetObjectDataStructure(key),
 //                                reverseOp ? ReceiveLocalIndices(key) : SendLocalIndices(key),
@@ -568,7 +568,7 @@ void NeighborCommunication::PackTopologyModifications( const string key,
 //  m_sendBuffer.Pack( numModified );
 //  if( numModified > 0 )
 //  {
-//    lArray1d modifiedSendIndices;
+//    localIndex_array modifiedSendIndices;
 //    GetModifiedNeighborIndices(  m_domain->GetObjectDataStructure(key),
 //                                 reverseOp ? ReceiveLocalIndices(key) : SendLocalIndices(key),
 //                                 modifiedObjects,
@@ -577,7 +577,7 @@ void NeighborCommunication::PackTopologyModifications( const string key,
 //  }
 }
 template void NeighborCommunication::PackTopologyModifications( const string, const lSet&, const lSet&, const bool, const bool );
-template void NeighborCommunication::PackTopologyModifications( const string, const lArray1d&, const lArray1d&, const bool, const bool );
+template void NeighborCommunication::PackTopologyModifications( const string, const localIndex_array&, const localIndex_array&, const bool, const bool );
 template<>
 void NeighborCommunication::PackTopologyModifications( const string key,
                                                        const std::map< std::string, lSet >&,
@@ -592,7 +592,7 @@ void NeighborCommunication::PackTopologyModifications( const string key,
 //  {
 //    if( key == PhysicalDomainT::FiniteElementElementManager )
 //    {
-//      std::map< std::string, lArray1d > modifiedSendIndices;
+//      std::map< std::string, localIndex_array > modifiedSendIndices;
 //      for( std::map< std::string, lSet >::const_iterator iter_mod=modifiedObjects.begin() ; iter_mod!=modifiedObjects.end() ; ++iter_mod )
 //      {
 //        const std::string& name = iter_mod->first;
@@ -628,14 +628,14 @@ void NeighborCommunication::PackTopologyModifications( const string key,
 
 void NeighborCommunication::UnpackTopologyModifications( const string key ,
                                                          const char*& pbuffer,
-                                                         lArray1d& newIndices,
-                                                         lArray1d& modifiedIndices,
+                                                         localIndex_array& newIndices,
+                                                         localIndex_array& modifiedIndices,
                                                          const bool reverseOp )
 {
 //  if( key!=PhysicalDomainT::FiniteElementElementManager )
 //  {
 //
-//    lArray1d::size_type numNew;
+//    localIndex_array::size_type numNew;
 //    bufvector::Unpack( pbuffer, numNew );
 //
 //    if( numNew > 0 )
@@ -652,7 +652,7 @@ void NeighborCommunication::UnpackTopologyModifications( const string key ,
 //      }
 //    }
 //
-//    lArray1d::size_type numModified;
+//    localIndex_array::size_type numModified;
 //    bufvector::Unpack( pbuffer, numModified );
 //
 //    if( numModified > 0 )
@@ -671,11 +671,11 @@ void NeighborCommunication::UnpackTopologyModifications( const string key ,
 
 void NeighborCommunication::UnpackTopologyModifications( const string key ,
                                                          const char*& pbuffer,
-                                                         std::map< std::string, lArray1d>& modifiedIndices )
+                                                         std::map< std::string, localIndex_array>& modifiedIndices )
 {
 //  if( key==PhysicalDomainT::FiniteElementElementManager )
 //  {
-//    lArray1d::size_type numModified;
+//    localIndex_array::size_type numModified;
 //    bufvector::Unpack( pbuffer, numModified );
 //
 //    if( numModified > 0 )
@@ -744,7 +744,7 @@ void NeighborCommunication::UnpackNewGlobalIndices(  )
 //
 //  {
 //    globalIndex num = 0;
-//    for( lArray1d::const_iterator i=tempNeighborData.objectWithUnassignedGlobal[PhysicalDomainT::FiniteElementNodeManager].begin() ;
+//    for( localIndex_array::const_iterator i=tempNeighborData.objectWithUnassignedGlobal[PhysicalDomainT::FiniteElementNodeManager].begin() ;
 //         i!=tempNeighborData.objectWithUnassignedGlobal[PhysicalDomainT::FiniteElementNodeManager].end() ; ++i, ++num )
 //    {
 //      m_domain->m_feNodeManager.m_localToGlobalMap[*i] = tempNeighborData.recvFirstNewGlobalIndices[0] + num;
@@ -754,7 +754,7 @@ void NeighborCommunication::UnpackNewGlobalIndices(  )
 //
 //  {
 //    globalIndex num = 0;
-//    for( lArray1d::const_iterator i=tempNeighborData.objectWithUnassignedGlobal[PhysicalDomainT::FiniteElementEdgeManager].begin() ;
+//    for( localIndex_array::const_iterator i=tempNeighborData.objectWithUnassignedGlobal[PhysicalDomainT::FiniteElementEdgeManager].begin() ;
 //         i!=tempNeighborData.objectWithUnassignedGlobal[PhysicalDomainT::FiniteElementEdgeManager].end() ; ++i, ++num )
 //    {
 //      m_domain->m_feEdgeManager.m_localToGlobalMap[*i] = tempNeighborData.recvFirstNewGlobalIndices[1] + num;
@@ -764,7 +764,7 @@ void NeighborCommunication::UnpackNewGlobalIndices(  )
 //
 //  {
 //    globalIndex num = 0;
-//    for( lArray1d::const_iterator i=tempNeighborData.objectWithUnassignedGlobal[PhysicalDomainT::FiniteElementFaceManager].begin() ;
+//    for( localIndex_array::const_iterator i=tempNeighborData.objectWithUnassignedGlobal[PhysicalDomainT::FiniteElementFaceManager].begin() ;
 //         i!=tempNeighborData.objectWithUnassignedGlobal[PhysicalDomainT::FiniteElementFaceManager].end() ; ++i, ++num )
 //    {
 //      m_domain->m_feFaceManager.m_localToGlobalMap[*i] = tempNeighborData.recvFirstNewGlobalIndices[2] + num;
@@ -778,13 +778,13 @@ void NeighborCommunication::UnpackNewGlobalIndices(  )
 
 void NeighborCommunication::ProcessNewGlobalIndexRequests( lSet& newNodeGlobals, lSet& newEdgeGlobals, lSet& newFaceGlobals )
 {
-//  const lArray1d::size_type numGlobalNodeRequests = tempNeighborData.recvGlobalIndexRequests[0];
-//  const lArray1d::size_type numGlobalEdgeRequests = tempNeighborData.recvGlobalIndexRequests[1];
-//  const lArray1d::size_type numGlobalFaceRequests = tempNeighborData.recvGlobalIndexRequests[2];
+//  const localIndex_array::size_type numGlobalNodeRequests = tempNeighborData.recvGlobalIndexRequests[0];
+//  const localIndex_array::size_type numGlobalEdgeRequests = tempNeighborData.recvGlobalIndexRequests[1];
+//  const localIndex_array::size_type numGlobalFaceRequests = tempNeighborData.recvGlobalIndexRequests[2];
 //
 //  if( numGlobalNodeRequests > 0 )
 //  {
-//    for( lArray1d::size_type i=0 ; i<numGlobalNodeRequests ; ++i )
+//    for( localIndex_array::size_type i=0 ; i<numGlobalNodeRequests ; ++i )
 //    {
 //      newNodeGlobals.insert( m_domain->m_feNodeManager.DataLengths() + i );
 //    }
@@ -793,7 +793,7 @@ void NeighborCommunication::ProcessNewGlobalIndexRequests( lSet& newNodeGlobals,
 //
 //  if( numGlobalEdgeRequests > 0 )
 //  {
-//    for( lArray1d::size_type i=0 ; i<numGlobalEdgeRequests ; ++i )
+//    for( localIndex_array::size_type i=0 ; i<numGlobalEdgeRequests ; ++i )
 //    {
 //      newEdgeGlobals.insert( m_domain->m_feNodeManager.DataLengths() + i );
 //    }
@@ -802,7 +802,7 @@ void NeighborCommunication::ProcessNewGlobalIndexRequests( lSet& newNodeGlobals,
 //
 //  if( numGlobalFaceRequests > 0 )
 //  {
-//    for( lArray1d::size_type i=0 ; i<numGlobalFaceRequests ; ++i )
+//    for( localIndex_array::size_type i=0 ; i<numGlobalFaceRequests ; ++i )
 //    {
 //      newFaceGlobals.insert( m_domain->m_feNodeManager.DataLengths() + i );
 //    }
@@ -827,7 +827,7 @@ int NeighborCommunication::UnpackGhosts(const string name)
   return 1;
 }
 
-void NeighborCommunication::UnpackGhostElements( std::map<std::string,lArray1d>& newElementIndices )
+void NeighborCommunication::UnpackGhostElements( std::map<std::string,localIndex_array>& newElementIndices )
 {
 //
 //
@@ -837,7 +837,7 @@ void NeighborCommunication::UnpackGhostElements( std::map<std::string,lArray1d>&
 //                                             m_elementRegionsReceiveLocalIndices,
 //                                             true, true, true, true );
 //
-//  for( std::map< std::string, lArray1d>::iterator i=m_elementRegionsReceiveLocalIndices.begin();
+//  for( std::map< std::string, localIndex_array>::iterator i=m_elementRegionsReceiveLocalIndices.begin();
 //      i!=m_elementRegionsReceiveLocalIndices.end() ;
 //      ++i )
 //  {
@@ -845,7 +845,7 @@ void NeighborCommunication::UnpackGhostElements( std::map<std::string,lArray1d>&
 //  }
 }
 
-int NeighborCommunication::UnpackGhosts(const string name, lArray1d& newIndices )
+int NeighborCommunication::UnpackGhosts(const string name, localIndex_array& newIndices )
 {
   //for edge, face, and de_face
   int i = UnpackGhosts(name);
@@ -858,7 +858,7 @@ int NeighborCommunication::UnpackGhosts(const string name, lArray1d& newIndices 
 //    m_receiveLocalIndices[PhysicalDomainT::VirtualFaceManager] = m_receiveLocalIndices[name];
 //    std::sort(newIndices.begin(),newIndices.end());
 //    // now remove the duplicates
-//    lArray1d::iterator iend = std::unique(newIndices.begin(),newIndices.end());
+//    localIndex_array::iterator iend = std::unique(newIndices.begin(),newIndices.end());
 //    newIndices.resize( iend - newIndices.begin() );
 //  }
 
@@ -897,7 +897,7 @@ bufvector::size_type NeighborCommunication::PackBuffer( const std::map<string, s
 //      {
 //        const std::string& elementRegionName = ielemReg->first;
 //        const ElementRegionT& elementRegion = ielemReg->second;
-//        const lArray1d* const elementRegionSendLocalIndices = stlMapLookupPointer( m_elementRegionsSendLocalIndices,
+//        const localIndex_array* const elementRegionSendLocalIndices = stlMapLookupPointer( m_elementRegionsSendLocalIndices,
 //                                                                                   elementRegionName );
 //        if( elementRegionSendLocalIndices )
 //          bufferSize += elementRegion.PackFieldsIntoBuffer( buffer,
@@ -950,7 +950,7 @@ void NeighborCommunication::UnpackBuffer( const std::map<string, sArray1d>& fiel
 //      {
 //        const std::string& elementRegionName = ielemReg->first;
 //        ElementRegionT& elementRegion = ielemReg->second;
-//        const lArray1d* const elementRegionReceiveLocalIndices = stlMapLookupPointer( m_elementRegionsReceiveLocalIndices,
+//        const localIndex_array* const elementRegionReceiveLocalIndices = stlMapLookupPointer( m_elementRegionsReceiveLocalIndices,
 //                                                                                      elementRegionName );
 //
 //        if( elementRegionReceiveLocalIndices )
@@ -1044,10 +1044,10 @@ void NeighborCommunication::SendReceiveBuffers(const CommRegistry::commID sizeCo
 //  siloFile.DBWriteWrapper("m_size",m_size);
 //  siloFile.DBWriteWrapper("m_rankOfNeighborNeighbors",m_rankOfNeighborNeighbors);
 //
-//  std::map<std::string, lArray1d> sendLocalIndices;
-//  std::map<std::string, lArray1d> receiveLocalIndices;
+//  std::map<std::string, localIndex_array> sendLocalIndices;
+//  std::map<std::string, localIndex_array> receiveLocalIndices;
 //
-//  for( std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d>::const_iterator i=m_sendLocalIndices.begin() ;
+//  for( std::map<PhysicalDomainT::ObjectDataStructureKeys, localIndex_array>::const_iterator i=m_sendLocalIndices.begin() ;
 //      i!= m_sendLocalIndices.end() ; ++i )
 //  {
 ////    if( !(i->second.empty()) )
@@ -1056,7 +1056,7 @@ void NeighborCommunication::SendReceiveBuffers(const CommRegistry::commID sizeCo
 //    }
 //  }
 //
-//  for( std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d>::const_iterator i=m_receiveLocalIndices.begin() ;
+//  for( std::map<PhysicalDomainT::ObjectDataStructureKeys, localIndex_array>::const_iterator i=m_receiveLocalIndices.begin() ;
 //      i!= m_receiveLocalIndices.end() ; ++i )
 //  {
 ////    if( !(i->second.empty()) )
@@ -1083,12 +1083,12 @@ void NeighborCommunication::SendReceiveBuffers(const CommRegistry::commID sizeCo
 //  siloFile.DBReadWrapper("m_size",m_size);
 //  siloFile.DBReadWrapper("m_rankOfNeighborNeighbors",m_rankOfNeighborNeighbors);
 //
-//  std::map<std::string, lArray1d> sendLocalIndices;
-//  std::map<std::string, lArray1d> receiveLocalIndices;
+//  std::map<std::string, localIndex_array> sendLocalIndices;
+//  std::map<std::string, localIndex_array> receiveLocalIndices;
 //
 //
 ///*
-//  for( std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d>::const_iterator i=m_sendLocalIndices.begin() ;
+//  for( std::map<PhysicalDomainT::ObjectDataStructureKeys, localIndex_array>::const_iterator i=m_sendLocalIndices.begin() ;
 //      i!= m_sendLocalIndices.end() ; ++i )
 //  {
 //    if( !(i->second.empty()) )
@@ -1097,7 +1097,7 @@ void NeighborCommunication::SendReceiveBuffers(const CommRegistry::commID sizeCo
 //    }
 //  }
 //
-//  for( std::map<PhysicalDomainT::ObjectDataStructureKeys, lArray1d>::const_iterator i=m_receiveLocalIndices.begin() ;
+//  for( std::map<PhysicalDomainT::ObjectDataStructureKeys, localIndex_array>::const_iterator i=m_receiveLocalIndices.begin() ;
 //      i!= m_receiveLocalIndices.end() ; ++i )
 //  {
 //    if( !(i->second.empty()) )
@@ -1121,13 +1121,13 @@ void NeighborCommunication::SendReceiveBuffers(const CommRegistry::commID sizeCo
 //  siloFile.DBReadWrapper("m_receiveSize",m_receiveSize,CommRegistry::maxComm);
 //
 //
-//  for( std::map<std::string, lArray1d>::const_iterator i=sendLocalIndices.begin() ;
+//  for( std::map<std::string, localIndex_array>::const_iterator i=sendLocalIndices.begin() ;
 //      i!= sendLocalIndices.end() ; ++i )
 //  {
 //    m_sendLocalIndices[ PhysicalDomainT::GetObjectDataStructureKey(i->first)] = i->second;
 //  }
 //
-//  for( std::map<std::string, lArray1d>::const_iterator i=receiveLocalIndices.begin() ;
+//  for( std::map<std::string, localIndex_array>::const_iterator i=receiveLocalIndices.begin() ;
 //      i!= receiveLocalIndices.end() ; ++i )
 //  {
 //    m_receiveLocalIndices[ PhysicalDomainT::GetObjectDataStructureKey(i->first)] = i->second;

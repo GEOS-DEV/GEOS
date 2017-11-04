@@ -25,7 +25,7 @@ public:
 
 
 
-  virtual void reinit( const std::vector<R1TensorT<3> > &mapped_support_points) = 0;
+  virtual void reinit( const array<R1TensorT<3> > &mapped_support_points) = 0;
 
 
 //  virtual void zero_energy_mode_control( const Array1dT<R1Tensor>& dNdx,

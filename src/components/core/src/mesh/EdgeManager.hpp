@@ -68,7 +68,7 @@ public:
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL) ;
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = NULL) ;
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-                                                         Array1dT<gArray1d>& objectToCompositionObject );
+                                                         Array1dT<globalIndex_array>& objectToCompositionObject );
 
 
   void BuildEdges( const FaceManager * const faceManager, const NodeManager * const nodeManager );
@@ -86,7 +86,7 @@ public:
   unsigned int UnpackEdges( const char*& buffer,
                             const NodeManager& nodeManager,
                             const FaceManager& faceManager,
-                            lArray1d& edgeReceiveLocalIndices,
+                            localIndex_array& edgeReceiveLocalIndices,
                             const bool unpackConnectivityToLocal,
                             const bool unpackFields,
                             const bool unpackMaps,
@@ -105,7 +105,7 @@ public:
 //  realT EdgeLength(const NodeManager& nodeManager, localIndex edge) const;
 
   void AddToEdgeToFaceMap( const FaceManager& faceManager,
-                           const lArray1d& newFaceIndices );
+                           const localIndex_array& newFaceIndices );
 
   void SplitEdge( const localIndex indexToSplit,
                   const localIndex parentNodeIndex,
