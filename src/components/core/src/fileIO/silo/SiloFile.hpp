@@ -367,10 +367,11 @@ public:
   template<typename TYPE>
   void DBWriteWrapper( const std::string& name, const TYPE& data );
 
+  void DBWriteWrapper( const std::string& name, const string_array& data );
+
   template<typename TYPE>
   void DBWriteWrapper( const std::string& name, const Array1dT<TYPE>& data );
 
-  void DBWriteWrapper( const std::string& name, const integer_array& data );
 
   template<typename TYPE>
   void DBWriteWrapper( const std::string& name, const std::set<TYPE>& data );
@@ -959,6 +960,23 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   DBSetDir(m_dbFilePtr, currentDirectory);
 
 }
+
+
+template<typename TYPE>
+void SiloFile::DBWriteWrapper( const std::string& name, const Array1dT<TYPE>& data )
+{
+  if( !data.empty() )
+  {
+    int dims[2];
+    dims[0] = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>() ;
+    dims[1] = data.size();
+
+    DBWrite( m_dbFilePtr, name.c_str(), const_cast<TYPE*>(data.data()), dims,
+             2, SiloFileUtilities::DB_TYPE<TYPE>() );
+  }
+
+}
+
 
 }
 #endif /* SILOFILE_H_ */

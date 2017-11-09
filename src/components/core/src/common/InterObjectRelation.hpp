@@ -85,7 +85,7 @@ m_relatedObject(NULL)
 
 template < typename BASETYPE >
 InterObjectRelation<BASETYPE>::InterObjectRelation( const InterObjectRelation& copiedRelationship ):
-BASETYPE(copiedRelationship),
+BASETYPE( static_cast<BASETYPE const&>(copiedRelationship)),
 m_relatedObject(copiedRelationship.m_relatedObject)
 {
 

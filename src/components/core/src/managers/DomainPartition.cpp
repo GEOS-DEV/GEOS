@@ -277,7 +277,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     ivector shapesize(numElementRegions);
 
     Array1dT<FixedOneToManyRelation> elementToNodeMap;
-//    elementToNodeMap.resize( numElementRegions );
+    elementToNodeMap.resize( numElementRegions );
 
     int count = 0;
     elementManager->forCellBlocks([&]( CellBlockSubRegion const * cellBlock ) -> void

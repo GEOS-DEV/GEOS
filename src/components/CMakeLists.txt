@@ -50,8 +50,8 @@ message("thirdPartyLibs = ${thirdPartyLibs}")
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
                    DEPENDS_ON ${componentlistlink} 
-                              ${extraComponentsListLink} 
-                              ${thirdPartyLibs} ) 
+                              ${extraComponentsListLink}
+                  ) 
 
                    
 if (ENABLE_DOCS)

@@ -1827,30 +1827,6 @@ void SiloFile::DBWriteWrapper( const std::string& name, const std::string& data 
 }
 
 
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const Array1dT<TYPE>& data )
-{
-  if( !data.empty() )
-  {
-    int dims[2];
-    dims[0] = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>() ;
-    dims[1] = data.size();
-
-    DBWrite( m_dbFilePtr, name.c_str(), const_cast<TYPE*>(data.data()), dims,
-             2, SiloFileUtilities::DB_TYPE<TYPE>() );
-  }
-
-}
-//template void SiloFile::DBWriteWrapper( const std::string&, const localIndex_array& );
-template void SiloFile::DBWriteWrapper( const std::string&, const globalIndex_array& );
-template void SiloFile::DBWriteWrapper( const std::string&, const integer_array& );
-template void SiloFile::DBWriteWrapper( const std::string&, const rArray1d& );
-template void SiloFile::DBWriteWrapper( const std::string&, const Array1dT<R1Tensor>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const Array1dT<R2Tensor>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const Array1dT<R2SymTensor>& );
-
-
-template<>
 void SiloFile::DBWriteWrapper( const std::string& name, const Array1dT<std::string>& data )
 {
 
