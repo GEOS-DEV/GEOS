@@ -62,44 +62,44 @@ namespace SpatialSorting
 
     static std::string SpatialSorterName() { return "CellVerlet"; }
 
-    virtual bool Sort(const rArray1d& radii, const Array1dT<R1Tensor>& x,
-                      Array1dT<lArray1d>& neighborList, Array1dT<lSet>& neighborListInverse,
+    virtual bool Sort(const array<real64>& radii, const array<R1Tensor>& x,
+                      array<lArray1d>& neighborList, array<lSet>& neighborListInverse,
                       const int* const excludeFromSorting = 0);
 
-    virtual bool Update(const rArray1d& radii, const Array1dT<R1Tensor>& x, const lSet& toResort,
-                        Array1dT<lArray1d>& neighborList, Array1dT<lSet>& neighborListInverse,
+    virtual bool Update(const array<real64>& radii, const array<R1Tensor>& x, const lSet& toResort,
+                        array<lArray1d>& neighborList, array<lSet>& neighborListInverse,
                         const int* const excludeFromSorting = 0);
 
     virtual void Clear();
 
   private:
 
-    void RemoveToCheck(const std::map<localIndex, iArray1d>& toCheckFurther);
-    void Add(const rArray1d& radii, const Array1dT<R1Tensor>& x, const localIndex ixfc0, const iArray1d& index,
-             Array1dT<lArray1d>& neighborList, Array1dT<lSet>& neighborListInverse,
+    void RemoveToCheck(const std::map<localIndex, array<integer>>& toCheckFurther);
+    void Add(const array<real64>& radii, const array<R1Tensor>& x, const localIndex ixfc0, const array<integer>& index,
+             array<lArray1d>& neighborList, array<lSet>& neighborListInverse,
              const int* const excludeFromSorting);
 
-    bool UpdateMinMaxDimension(const rArray1d& radii,
-                               const Array1dT<R1Tensor>& x,
+    bool UpdateMinMaxDimension(const array<real64>& radii,
+                               const array<R1Tensor>& x,
                                const int* const excludeFromContact);
 
-    bool UpdateMinMaxDimension(const rArray1d& radii,
-                               const Array1dT<R1Tensor>& x,
+    bool UpdateMinMaxDimension(const array<real64>& radii,
+                               const array<R1Tensor>& x,
                                const lSet& toResort);
 
-    bool SortSub(const bool reset, const rArray1d& radii, const Array1dT<R1Tensor>& x,
-                 Array1dT<lArray1d>& neighborList, Array1dT<lSet>& neighborListInverse,
+    bool SortSub(const bool reset, const array<real64>& radii, const array<R1Tensor>& x,
+                 array<lArray1d>& neighborList, array<lSet>& neighborListInverse,
                  const int* const excludeFromSorting);
 
-    bool Remove(const localIndex, const iArray1d& guess);
+    bool Remove(const localIndex, const array<integer>& guess);
 
     realT binFct;
     Array3dT< lArray1d > bins;
-    Array3dT< Array1dT<lArray1d*> > neighborBins;
+    Array3dT< array<lArray1d*> > neighborBins;
     R1Tensor xmin, xmax;
     realT dx;
 
-    inline void BinIndices(const R1Tensor& x, iArray1d& bin)
+    inline void BinIndices(const R1Tensor& x, array<integer>& bin)
     {
       R1Tensor xx(x);
       xx -= this->xmin; //adjust by the minimum

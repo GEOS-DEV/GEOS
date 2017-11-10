@@ -86,7 +86,7 @@ unsigned FractalSurface::Initialize(const Array2dT<realT>& parameters,
   }
 
   //fill the intermediate value hierarchical grid
-  Array1dT< Array2dT<SurfaceKernel*> > vals;
+  array< Array2dT<SurfaceKernel*> > vals;
   vals.resize(nlevels);
   {
     realT dx0 = 1.0 / n0;
@@ -177,7 +177,7 @@ void FractalSurface::InitializeSumMW(const int nj, const int nk, const int ioffs
 }
 
 void FractalSurface::FillValues(const int ioffset, const localIndex nlevels,
-                                Array1dT< Array2dT<SurfaceKernel*> >& vals)
+                                array< Array2dT<SurfaceKernel*> >& vals)
 {
   //note: values will only hold cells away from the compact support
   //informed boundary, so make sure to remove the indices of
@@ -208,7 +208,7 @@ void FractalSurface::FillValues(const int ioffset, const localIndex nlevels,
   {
     for (int k = 0; k < nk; k++) //for each cell at the finest level - k
     {
-      Array1dT<Array1dT<SurfaceKernel*> >& currentVal = m_values(j, k); // get the list of kernels for each level
+      array<array<SurfaceKernel*> >& currentVal = m_values(j, k); // get the list of kernels for each level
       int nper = 1;
       for (localIndex i = 1; i < nlevels; i++)
         nper *= 2;
@@ -257,7 +257,7 @@ realT FractalSurface::Value(const R1TensorT<2>& position) const
   int coords[2];
   for(localIndex i = 0; i < 2; i++)
     coords[i] = (int)(m_values.Dimension(i) * (xt(i) >= 1 ? (1.0-1.0e-10) : xt(i)) );
-  const Array1dT<Array1dT<SurfaceKernel*> >& valArray = m_values(coords[0], coords[1]);
+  const array<array<SurfaceKernel*> >& valArray = m_values(coords[0], coords[1]);
 
   //for each refinement level and then for each applicable kernel at that refinement level add the contribution
   {

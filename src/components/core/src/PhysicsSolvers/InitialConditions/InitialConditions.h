@@ -145,7 +145,7 @@ public:
 
 protected:
   template <class TABLE, class ARRAY, class ARRAY2>
-  inline static bool SetField(const TABLE* ptable, int component, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield)
+  inline static bool SetField(const TABLE* ptable, int component, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const array<lSet>& sets, ARRAY2* pfield)
   {
     if((!pfield) || (!ptable))
       return false;
@@ -156,7 +156,7 @@ protected:
     {
       if(sets.size() > 0)
       {
-        for (Array1dT<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
+        for (array<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
         {
           const lSet& set = *iset;
           for (lSet::const_iterator si = set.begin(); si != set.end(); ++si)
@@ -179,7 +179,7 @@ protected:
     {
       if(sets.size() > 0)
       {
-        for (Array1dT<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
+        for (array<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
         {
           const lSet& set = *iset;
           for (lSet::const_iterator si = set.begin(); si != set.end(); ++si)
@@ -197,7 +197,7 @@ protected:
   }
 
   template <class TABLE, class ARRAY, class ARRAY2>
-  inline static bool SetField(const TABLE* ptable, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield)
+  inline static bool SetField(const TABLE* ptable, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const array<lSet>& sets, ARRAY2* pfield)
   {
     if((!pfield) || (!ptable))
       return false;
@@ -208,7 +208,7 @@ protected:
     {
       if(sets.size() > 0)
       {
-        for (Array1dT<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
+        for (array<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
         {
           const lSet& set = *iset;
           for (lSet::const_iterator si = set.begin(); si != set.end(); ++si)
@@ -231,7 +231,7 @@ protected:
     {
       if(sets.size() > 0)
       {
-        for (Array1dT<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
+        for (array<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
         {
           const lSet& set = *iset;
           for (lSet::const_iterator si = set.begin(); si != set.end(); ++si)
@@ -249,7 +249,7 @@ protected:
   }
 
   template <class TABLE, class ARRAY, class ARRAY2>
-  inline static bool AddToField(const TABLE* ptable, int component, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield, realT& scale)
+  inline static bool AddToField(const TABLE* ptable, int component, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const array<lSet>& sets, ARRAY2* pfield, realT& scale)
   {
     if((!pfield) || (!ptable))
       return false;
@@ -260,7 +260,7 @@ protected:
     {
       if(sets.size() > 0)
       {
-        for (Array1dT<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
+        for (array<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
         {
           const lSet& set = *iset;
           for (lSet::const_iterator si = set.begin(); si != set.end(); ++si)
@@ -283,7 +283,7 @@ protected:
     {
       if(sets.size() > 0)
       {
-        for (Array1dT<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
+        for (array<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
         {
           const lSet& set = *iset;
           for (lSet::const_iterator si = set.begin(); si != set.end(); ++si)
@@ -301,7 +301,7 @@ protected:
   }
 
   template <class TABLE, class ARRAY, class ARRAY2>
-  inline static bool AddToField(const TABLE* ptable, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const Array1dT<lSet>& sets, ARRAY2* pfield, realT& scale)
+  inline static bool AddToField(const TABLE* ptable, const ARRAY* pos, const NodeManager& nodeManager, ElementRegionT& region, const array<lSet>& sets, ARRAY2* pfield, realT& scale)
   {
     if((!pfield) || (!ptable))
       return false;
@@ -312,7 +312,7 @@ protected:
     {
       if(sets.size() > 0)
       {
-        for (Array1dT<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
+        for (array<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
         {
           const lSet& set = *iset;
           for (lSet::const_iterator si = set.begin(); si != set.end(); ++si)
@@ -335,7 +335,7 @@ protected:
     {
       if(sets.size() > 0)
       {
-        for (Array1dT<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
+        for (array<lSet>::const_iterator iset = sets.begin(); iset != sets.end(); ++iset)
         {
           const lSet& set = *iset;
           for (lSet::const_iterator si = set.begin(); si != set.end(); ++si)
@@ -353,8 +353,8 @@ protected:
   }
 
   std::string m_tableName;
-  sArray1d m_variableNames;
-  Array1dT<FieldType> m_variableTypes;
+  array<string> m_variableNames;
+  array<FieldType> m_variableTypes;
   int m_component;
 };
 
@@ -375,8 +375,8 @@ public:
 
 protected:
   std::string functionName_;
-  sArray1d variableNames_;
-  Array1dT<FieldType> variableTypes_;
+  array<string> variableNames_;
+  array<FieldType> variableTypes_;
   int component_;
 
 };

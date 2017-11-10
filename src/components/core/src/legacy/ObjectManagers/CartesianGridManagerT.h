@@ -64,7 +64,7 @@ public:
 
   void SetDomainBoundaryObjects(const ObjectDataStructureBaseT* const referenceObject ){
     // get the "isDomainBoundary" field from for *this, and set it to zero
-    iArray1d& isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
+    array<integer>& isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
     isDomainBoundary = 0;
     /*
      * Loop over array boundaries and set to true if borders a partition
@@ -165,7 +165,7 @@ public:
 
    };
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager ,
-                                                         Array1dT<gArray1d>& objectToCompositionObject  )
+                                                         array<gArray1d>& objectToCompositionObject  )
   {
     (void)compositionObjectManager;
     (void)objectToCompositionObject;
@@ -189,7 +189,7 @@ public:
 
   // get value at local x,y,z coordinate
   template<class T>
-  T GetValue(Array1dT<T>& values, int x, int y, int z){
+  T GetValue(array<T>& values, int x, int y, int z){
      return values[ lxyz2ind(x, y, z) ];
   }
 
@@ -208,7 +208,7 @@ public:
 
 
   /// Reference position
-  Array1dT< R1Tensor >* const m_refposition;
+  array< R1Tensor >* const m_refposition;
 
 
 private:

@@ -55,9 +55,9 @@ public:
                     localIndex const & ke,
                     localIndex const & kelf,
                     localIndex & numFaces,
-                    Array1dT<localIndex_array>& facesByLowestNode,
+                    array<localIndex_array>& facesByLowestNode,
                     localIndex_array& tempNodeList,
-                    Array1dT<localIndex_array>& tempFaceToNodeMap,
+                    array<localIndex_array>& tempFaceToNodeMap,
                     CellBlockSubRegion const & elementRegion );
 
 

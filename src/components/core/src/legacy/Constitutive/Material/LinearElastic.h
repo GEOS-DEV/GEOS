@@ -91,11 +91,11 @@ public:
 
   }
 
-  static void GetVariableNames( sArray1d& intNames,
-                                sArray1d& realNames,
-                                sArray1d& R1TensorNames,
-                                sArray1d& R2TensorNames,
-                                sArray1d& R2SymTensorNames )
+  static void GetVariableNames( array<string>& intNames,
+                                array<string>& realNames,
+                                array<string>& R1TensorNames,
+                                array<string>& R2TensorNames,
+                                array<string>& R2SymTensorNames )
   {
     base::GetVariableNames( intNames, realNames, R1TensorNames, R2TensorNames, R2SymTensorNames);
   }
@@ -119,11 +119,11 @@ public:
   }
 
   void Serialize(const localIndex index,
-                  Array1dT<iArray1d*>& intVars,
-                  Array1dT<rArray1d*>& realVars,
-                  Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                  Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                  Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                  array<array<integer>*>& intVars,
+                  array<array<real64>*>& realVars,
+                  array<array<R1Tensor>*>& R1Vars,
+                  array<array<R2Tensor>*>& R2Vars,
+                  array<array<R2SymTensor>*>& R2SymVars,
                   localIndex& intVarCounts,
                   localIndex& realVarCounts,
                   localIndex& R1TensorVarCounts,
@@ -136,11 +136,11 @@ public:
 
 
   void  Deserialize( const localIndex index,
-                     const Array1dT<iArray1d*>& intVars,
-                     const Array1dT<rArray1d*>& realVars,
-                     const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                     const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                     const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                     const array<array<integer>*>& intVars,
+                     const array<array<real64>*>& realVars,
+                     const array<array<R1Tensor>*>& R1Vars,
+                     const array<array<R2Tensor>*>& R2Vars,
+                     const array<array<R2SymTensor>*>& R2SymVars,
                   localIndex& intVarCounts,
                   localIndex& realVarCounts,
                   localIndex& R1TensorVarCounts,
@@ -236,11 +236,11 @@ public:
 
   }
 
-  static void GetVariableNames( sArray1d& intNames,
-                                sArray1d& realNames,
-                                sArray1d& R1TensorNames,
-                                sArray1d& R2TensorNames,
-                                sArray1d& R2SymTensorNames )
+  static void GetVariableNames( array<string>& intNames,
+                                array<string>& realNames,
+                                array<string>& R1TensorNames,
+                                array<string>& R2TensorNames,
+                                array<string>& R2SymTensorNames )
   {
     base::GetVariableNames( intNames, realNames, R1TensorNames, R2TensorNames, R2SymTensorNames);
   }
@@ -266,11 +266,11 @@ public:
   void Serialize(const localIndex index,
                   const unsigned int stride,
                   const localIndex elemNum,
-                  Array1dT<iArray1d*>& intVars,
-                  Array1dT<rArray1d*>& realVars,
-                  Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                  Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                  Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                  array<array<integer>*>& intVars,
+                  array<array<real64>*>& realVars,
+                  array<array<R1Tensor>*>& R1Vars,
+                  array<array<R2Tensor>*>& R2Vars,
+                  array<array<R2SymTensor>*>& R2SymVars,
                   localIndex& intVarCounts,
                   localIndex& realVarCounts,
                   localIndex& R1TensorVarCounts,
@@ -285,11 +285,11 @@ public:
   void  Deserialize( const localIndex index,
                   const unsigned int stride,
                   const localIndex elemNum,
-                     const Array1dT<iArray1d*>& intVars,
-                     const Array1dT<rArray1d*>& realVars,
-                     const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                     const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                     const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                     const array<array<integer>*>& intVars,
+                     const array<array<real64>*>& realVars,
+                     const array<array<R1Tensor>*>& R1Vars,
+                     const array<array<R2Tensor>*>& R2Vars,
+                     const array<array<R2SymTensor>*>& R2SymVars,
                   localIndex& intVarCounts,
                   localIndex& realVarCounts,
                   localIndex& R1TensorVarCounts,
@@ -346,7 +346,7 @@ public:
   typedef LinearElasticParameterData ParameterClass;
   typedef LinearElasticStateData     StateClass;
 
-  typedef Array1dT<ParameterClass> ParameterArrayType;
+  typedef array<ParameterClass> ParameterArrayType;
   typedef Array2dT<StateClass>     StateArrayType;
 
 
@@ -429,7 +429,7 @@ public:
   virtual void erase( const localIndex num )
   { EraseFromDerived<LinearElastic>( num ); }
  
-  void GetVariableNames( sArray1d& intVars, sArray1d& realVars, sArray1d& R1TensorVars, sArray1d& R2TensorVars, sArray1d& R2SymTensorVars ) const
+  void GetVariableNames( array<string>& intVars, array<string>& realVars, array<string>& R1TensorVars, array<string>& R2TensorVars, array<string>& R2SymTensorVars ) const
   { GetVariableNamesFromDerived<LinearElastic>(intVars, realVars, R1TensorVars, R2TensorVars, R2SymTensorVars ); }
 
   size_t GetStateOffset( const std::string& name, const int type ) const
@@ -438,22 +438,22 @@ public:
   size_t GetParameterOffset( const std::string& name, const int type ) const
   { return GetParameterOffsetFromDerived<LinearElastic>(name, type ); }
   
-  bool GetStateValues( const std::string& name, rArray1d& values ) const
+  bool GetStateValues( const std::string& name, array<real64>& values ) const
   { return GetStateValuesFromDerived<LinearElastic>(name, values); }
 
-  bool GetParameterValues( const std::string& name, rArray1d& values ) const
+  bool GetParameterValues( const std::string& name, array<real64>& values ) const
   { return GetParameterValuesFromDerived<LinearElastic>(name, values); }
 
-  bool SetStateValues( const std::string& name, const rArray1d& values )
+  bool SetStateValues( const std::string& name, const array<real64>& values )
   { return SetStateValuesFromDerived<LinearElastic>(name, values); }
 
-  bool SetParameterValues( const std::string& name, const rArray1d& values )
+  bool SetParameterValues( const std::string& name, const array<real64>& values )
   { return SetParameterValuesFromDerived<LinearElastic>(name, values); }
 
-  virtual void Serialize( Array1dT<iArray1d*>& intVars, Array1dT<rArray1d*>& realVars, Array1dT<Array1dT<R1Tensor>*>& R1Vars, Array1dT<Array1dT<R2Tensor>*>& R2Vars, Array1dT<Array1dT<R2SymTensor>*>& R2SymVars ) const
+  virtual void Serialize( array<array<integer>*>& intVars, array<array<real64>*>& realVars, array<array<R1Tensor>*>& R1Vars, array<array<R2Tensor>*>& R2Vars, array<array<R2SymTensor>*>& R2SymVars ) const
   { SerializeFromDerived<LinearElastic>( intVars, realVars, R1Vars, R2Vars, R2SymVars ); }
 
-  virtual void Deserialize( const Array1dT<iArray1d*>& intVars, const Array1dT<rArray1d*>& realVars, const Array1dT<Array1dT<R1Tensor>*>& R1Vars, const Array1dT<Array1dT<R2Tensor>*>& R2Vars, const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars  )
+  virtual void Deserialize( const array<array<integer>*>& intVars, const array<array<real64>*>& realVars, const array<array<R1Tensor>*>& R1Vars, const array<array<R2Tensor>*>& R2Vars, const array<array<R2SymTensor>*>& R2SymVars  )
   { DeserializeFromDerived<LinearElastic>( intVars, realVars, R1Vars, R2Vars, R2SymVars ); }
 
   virtual unsigned int Pack( const lArray1d& localIndices, bufvector& buffer, const bool doBufferPacking )
@@ -508,10 +508,10 @@ public:
 
 protected:
   virtual void
-  PreSetValues(const sArray1d& names);
+  PreSetValues(const array<string>& names);
 
   virtual void
-  PostSetValues(const sArray1d& names);
+  PostSetValues(const array<string>& names);
 
 
 private:

@@ -81,10 +81,10 @@ realT LagrangeSmallStrainLinearElastic::CalculateElementResidualAndDerivative( c
                                                                                    const Array2dT<R1Tensor>& dNdX,
                                                                                    const realT* const detJ,
                                                                                    R2SymTensor const * const refStress,
-                                                                                   Array1dT<R1Tensor> const & u,
-                                                                                   Array1dT<R1Tensor> const & uhat,
-                                                                                   Array1dT<R1Tensor> const & uhattilde,
-                                                                                   Array1dT<R1Tensor> const & vtilde,
+                                                                                   array<R1Tensor> const & u,
+                                                                                   array<R1Tensor> const & uhat,
+                                                                                   array<R1Tensor> const & uhattilde,
+                                                                                   array<R1Tensor> const & vtilde,
                                                                                    realT const dt,
                                                                                    Epetra_SerialDenseMatrix& dRdU,
                                                                                    Epetra_SerialDenseVector& R )
@@ -272,15 +272,15 @@ void LagrangeSmallStrainLinearElastic::ApplyThermalStress( ElementRegionT& elemR
                          Epetra_SerialDenseVector * rhs)
 {
 
-  rArray1d& temperature = elemRegion.GetFieldData<realT>("temperature");
-  rArray1d& CTE = elemRegion.GetFieldData<realT>("linearCTE");
-  rArray1d& antiThermalStress = elemRegion.GetFieldData<realT>("antiThermalStress");
-  rArray1d* refTemperature = elemRegion.GetFieldDataPointer<realT>("refTemperature");
+  array<real64>& temperature = elemRegion.GetFieldData<realT>("temperature");
+  array<real64>& CTE = elemRegion.GetFieldData<realT>("linearCTE");
+  array<real64>& antiThermalStress = elemRegion.GetFieldData<realT>("antiThermalStress");
+  array<real64>* refTemperature = elemRegion.GetFieldDataPointer<realT>("refTemperature");
 
 
   if (m_useNodalTemperature > 0)
   {
-    const rArray1d& nodalTemp = nodeManager.GetFieldData<realT>("Temperature");
+    const array<real64>& nodalTemp = nodeManager.GetFieldData<realT>("Temperature");
     temperature[elementID] = 0.0;
     for (localIndex i = 0; i<elemRegion.m_toNodesRelation.Dimension(1); ++i)
     {
@@ -310,7 +310,7 @@ void LagrangeSmallStrainLinearElastic::ApplyThermalStress( ElementRegionT& elemR
 
     antiThermalStress[elementID] = thermalStress(0,0);
 
-    Array1dT<R1Tensor> fNode(elemRegion.m_numNodesPerElem);
+    array<R1Tensor> fNode(elemRegion.m_numNodesPerElem);
     elemRegion.CalculateNodalForceFromStress(elementID, nodeManager, thermalStress, fNode);
 
     for (localIndex i = 0; i < elemRegion.m_numNodesPerElem; ++i)
@@ -352,14 +352,14 @@ void LagrangeSmallStrainLinearElastic::PostSyncConsistency( PhysicalDomainT& dom
 
       // determine ghost elements
 
-      //const iArray1d& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+      //const array<integer>& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
 
 
       // apply cohesive forces
       const OrderedVariableOneToManyRelation& childFaceIndex = domain.m_feFaceManager.GetVariableOneToManyMap( "childIndices" );
-      Array1dT<R1Tensor>& cohesiveForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
+      array<R1Tensor>& cohesiveForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
 
-      const iArray1d& ruptureState = domain.m_feFaceManager.GetFieldData<int>("ruptureState");
+      const array<integer>& ruptureState = domain.m_feFaceManager.GetFieldData<int>("ruptureState");
 
       cohesiveForce = 0.0;
 
@@ -423,7 +423,7 @@ void LagrangeSmallStrainLinearElastic::PostSyncConsistency( PhysicalDomainT& dom
 void LagrangeSmallStrainLinearElastic::CalculateElementStresses( const NodeManager& nodeManager,
                                                                       ElementManagerT& elementManager )
 {
-  const Array1dT<R1Tensor>& disp = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& disp = nodeManager.GetFieldData<FieldInfo::displacement>();
 
   for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator iReg = elementManager.m_ElementRegions.begin();
       iReg != elementManager.m_ElementRegions.end(); ++iReg)
@@ -431,7 +431,7 @@ void LagrangeSmallStrainLinearElastic::CalculateElementStresses( const NodeManag
     ElementRegionT& elemRegion = iReg->second;
 
     const FiniteElementBase& fe = *(elemRegion.m_finiteElement);
-    Array1dT<R2SymTensor> const * const refStresses = elemRegion.GetFieldDataPointer<R2SymTensor>("referenceStress");
+    array<R2SymTensor> const * const refStresses = elemRegion.GetFieldDataPointer<R2SymTensor>("referenceStress");
 
     realT lambda = 0.0, G = 0.0, TwoG = 0.0;
 //    std:cout<<elemRegion.m_mat->NumParameterIndex0();
@@ -511,11 +511,11 @@ void LagrangeSmallStrainLinearElastic::CalculateElementStresses( const NodeManag
 //
 //    ElementRegionT& elemRegion = it -> second;
 //    const FiniteElementBase& fe = *(elemRegion.m_finiteElement);
-//    rArray1d& temperature = elemRegion.GetFieldData<realT>("temperature");
-//    rArray1d& CTE = elemRegion.GetFieldData<realT>("linearCTE");
-//    rArray1d& antiThermalStress = elemRegion.GetFieldData<realT>("antiThermalStress");
+//    array<real64>& temperature = elemRegion.GetFieldData<realT>("temperature");
+//    array<real64>& CTE = elemRegion.GetFieldData<realT>("linearCTE");
+//    array<real64>& antiThermalStress = elemRegion.GetFieldData<realT>("antiThermalStress");
 //
-//    rArray1d* refTemperature = elemRegion.GetFieldDataPointer<realT>("refTemperature");
+//    array<real64>* refTemperature = elemRegion.GetFieldDataPointer<realT>("refTemperature");
 //
 //    for(localIndex element = 0; element < elemRegion.m_numElems; ++element)
 //    {
@@ -547,7 +547,7 @@ void LagrangeSmallStrainLinearElastic::UpdateContactDataStructures( PhysicalDoma
       domain.m_contactManager.Update(domain.m_externalFaces.m_neighborList);
     }
     {
-      Array1dT<Array1dT<R1Tensor> > xs;
+      array<array<R1Tensor> > xs;
       xs.resize(domain.m_externalFaces.DataLengths());
       std::cout<<"Updating contact data structures"<<std::endl;
       domain.m_externalFaces.UpdateGeometricContactProperties(0.0, domain, xs, false);
@@ -555,8 +555,8 @@ void LagrangeSmallStrainLinearElastic::UpdateContactDataStructures( PhysicalDoma
 
     if( setActiveInit )
     {
-      const iArray1d& activeC = domain.m_contactManager.GetFieldData<int>("active");
-      iArray1d& activeInit = domain.m_contactManager.GetFieldData<int>("activeInit");
+      const array<integer>& activeC = domain.m_contactManager.GetFieldData<int>("active");
+      array<integer>& activeInit = domain.m_contactManager.GetFieldData<int>("activeInit");
 
       activeInit = activeC;
     }
@@ -589,7 +589,7 @@ void LagrangeSmallStrainLinearElastic::InsertGlobalIndices( PhysicalDomainT& dom
 
 //    if(domain.m_contactManager.m_use_contact_search)
 //    {
-//      const iArray1d& active = domain.m_contactManager.GetFieldData<int>("activeInit");
+//      const array<integer>& active = domain.m_contactManager.GetFieldData<int>("activeInit");
 //
 //      if(active[iContFace]!=0)
 //      {
@@ -608,8 +608,8 @@ void LagrangeSmallStrainLinearElastic::InsertGlobalIndices( PhysicalDomainT& dom
 
     if(contActiv)
     {
-      iArray1d rowDofIndex;
-      iArray1d colDofIndex;
+      array<integer> rowDofIndex;
+      array<integer> colDofIndex;
 
       const bool nitsche_active = domain.m_contactManager.m_nitsche_active;
       const bool nitsche_symmetry_active = domain.m_contactManager.m_nitsche_symmetry_active;
@@ -630,7 +630,7 @@ void LagrangeSmallStrainLinearElastic::InsertGlobalIndices( PhysicalDomainT& dom
 
 void LagrangeSmallStrainLinearElastic::GetContactStiffnessContribution( PhysicalDomainT& domain)
 {
-  rArray1d gauss(2);
+  array<real64> gauss(2);
   gauss[0] = -1 / sqrt(3);
   gauss[1] = 1 / sqrt(3);
 
@@ -638,7 +638,7 @@ void LagrangeSmallStrainLinearElastic::GetContactStiffnessContribution( Physical
   const bool nitsche_symmetry_active = domain.m_contactManager.m_nitsche_symmetry_active;
   std::string externalFaceIndexStr = "externalFaceIndex";
   const lArray1d& faceToExternalFaceMap = domain.m_feFaceManager.GetFieldData<localIndex>(externalFaceIndexStr);
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
 
   Epetra_IntSerialDenseVector rowDofIndexPenalty;
   Epetra_IntSerialDenseVector colDofIndexPenalty;
@@ -681,18 +681,18 @@ void LagrangeSmallStrainLinearElastic::GetContactStiffnessContribution( Physical
       const localIndex numNodesParentEle = elemRegionPar->m_numNodesPerElem;
       const localIndex numNodesSiblingEle = elemRegionSib->m_numNodesPerElem;
 
-      rArray1d xe, psi, eta;
+      array<real64> xe, psi, eta;
       lArray1d localParentFaceNodes;
       rArray2d P_par(dim,dim), P_sib(dim,dim);
       rArray2d alphaPar(dim,dim), alphaSib(dim,dim);
 
       std::string s_previous_base = "uJumpPl_Previous_gp", s_current_base  = "uJumpPl_Current_gp";
-      iArray1d stickGP_par(numNodes), stickGP_sib(numNodes);
-      iArray1d openingGP_par(numNodes), openingGP_sib(numNodes);
+      array<integer> stickGP_par(numNodes), stickGP_sib(numNodes);
+      array<integer> openingGP_par(numNodes), openingGP_sib(numNodes);
 //      realT tol = domain.m_contactManager.m_traction_n_tol;
 
       // Declaration of Nitsche specific variables
-      iArray1d FaceConnToElemConnPar(numNodes), FaceConnToElemConnSib(numNodes);
+      array<integer> FaceConnToElemConnPar(numNodes), FaceConnToElemConnSib(numNodes);
       rArray2d normalVoigtPar(dim,0.5*dim*(dim+1)), normalVoigtSib(dim,0.5*dim*(dim+1));
       rArray2d DPar(0.5*dim*(dim+1),0.5*dim*(dim+1)), DSib(0.5*dim*(dim+1),0.5*dim*(dim+1));
       rArray2d BPar(0.5*dim*(dim+1),dim*numNodesParentEle), BSib(0.5*dim*(dim+1),dim*numNodesSiblingEle);
@@ -736,7 +736,7 @@ void LagrangeSmallStrainLinearElastic::GetContactStiffnessContribution( Physical
         GetElasticityTensorVoigt(domain, kf1, DPar);
         GetElasticityTensorVoigt(domain, kf2, DSib);
 
-        const rArray1d& nitscheGamma = domain.m_externalFaces.GetFieldData<realT>("nitscheGamma");
+        const array<real64>& nitscheGamma = domain.m_externalFaces.GetFieldData<realT>("nitscheGamma");
 
         gamPar = nitscheGamma(faceToExternalFaceMap(kf1));
         gamSib = nitscheGamma(faceToExternalFaceMap(kf2));
@@ -747,7 +747,7 @@ void LagrangeSmallStrainLinearElastic::GetContactStiffnessContribution( Physical
       }
 
       // Calculate shape functions, shape function derivatives, jacobian and tractions at gauss points
-      Array1dT<rArray2d> N_sub; Array1dT<realT> jcob_sub;
+      array<rArray2d> N_sub; array<realT> jcob_sub;
       TrialTractions trialTractions; UpdatedTractions updatedTractions; UpdatedModulii updatedModulus;
 
       trialTractions.tracPar.resize(numNodes,dim); trialTractions.tracSib.resize(numNodes,dim);
@@ -805,7 +805,7 @@ void LagrangeSmallStrainLinearElastic::GetContactStiffnessContribution( Physical
         {
           for (localIndex iGp = 0; iGp < numNodes; ++iGp)
           {
-            rArray1d tracPar(dim), tracSib(dim);
+            array<real64> tracPar(dim), tracSib(dim);
             tracPar = updatedTractions.tracPar[iGp]; tracSib = updatedTractions.tracSib[iGp];
 
             faceRhs(aDof+i)     += jcob_sub[iGp]*N_sub[iGp](i,dim*edgeLocalIndexRow+i)*tracPar(i);
@@ -912,11 +912,11 @@ bool LagrangeSmallStrainLinearElastic::IsContactActive( const PhysicalDomainT& d
                                                         const localIndex& iContFace)
 {
   bool contActive = false;
-  iArray1d const & faceGhostRank = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  array<integer> const & faceGhostRank = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
 
   if(domain.m_contactManager.m_use_contact_search)
   {
-    const iArray1d& active = domain.m_contactManager.GetFieldData<int>("activeInit");
+    const array<integer>& active = domain.m_contactManager.GetFieldData<int>("activeInit");
 
     if(active[iContFace]!=0)
     {
@@ -932,7 +932,7 @@ bool LagrangeSmallStrainLinearElastic::IsContactActive( const PhysicalDomainT& d
       localIndex kf1 = 0, kf2 = 0;
       GetContactFacePairIndices (domain, iContFace, kf1, kf2);
 
-      const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+      const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
 
       // This case considers a ghost element face that has a child but is not shared with any non-ghost element
       // This will be accounted for from the neighboring partition and does not need to be considered here.
@@ -990,8 +990,8 @@ void LagrangeSmallStrainLinearElastic::GetContactFacePairIndices ( const Physica
 void LagrangeSmallStrainLinearElastic::GetRowDofIndexColDofIndex( const localIndex i,
                                                                   const PhysicalDomainT& domain,
                                                                   const bool nitsche_active,
-                                                                  iArray1d& rowDofIndex,
-                                                                  iArray1d& colDofIndex)
+                                                                  array<integer>& rowDofIndex,
+                                                                  array<integer>& colDofIndex)
 {
   localIndex kf1 = 0;
   localIndex kf2 = 0;
@@ -999,9 +999,9 @@ void LagrangeSmallStrainLinearElastic::GetRowDofIndexColDofIndex( const localInd
   GetContactFacePairIndices (domain, i, kf1, kf2);
 
   const localIndex numNodes = domain.m_feFaceManager.m_toNodesRelation[kf1].size();
-  const iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  const array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
 
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegionPar = ftoe[kf1][0].first;
   const ElementRegionT* elemRegionSib = ftoe[kf2][0].first;
 
@@ -1009,7 +1009,7 @@ void LagrangeSmallStrainLinearElastic::GetRowDofIndexColDofIndex( const localInd
   const localIndex numNodesSiblingEle = elemRegionSib->m_numNodesPerElem;
 
   rowDofIndex.resize(2*dim*numNodes);
-  iArray1d ParNodIDNotOnFace(numNodesParentEle-numNodes), SibNodIDNotOnFace(numNodesSiblingEle-numNodes);
+  array<integer> ParNodIDNotOnFace(numNodesParentEle-numNodes), SibNodIDNotOnFace(numNodesSiblingEle-numNodes);
 
   if(nitsche_active)
   {
@@ -1075,9 +1075,9 @@ void LagrangeSmallStrainLinearElastic::GetRowDofIndexColDofIndex( const localInd
   GetContactFacePairIndices (domain, i, kf1, kf2);
 
   const localIndex numNodes = domain.m_feFaceManager.m_toNodesRelation[kf1].size();
-  const iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  const array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
 
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegionPar = ftoe[kf1][0].first;
   const ElementRegionT* elemRegionSib = ftoe[kf2][0].first;
 
@@ -1085,7 +1085,7 @@ void LagrangeSmallStrainLinearElastic::GetRowDofIndexColDofIndex( const localInd
   const localIndex numNodesSiblingEle = elemRegionSib->m_numNodesPerElem;
 
   rowDofIndex.Resize(2*dim*numNodes);
-  iArray1d ParNodIDNotOnFace(numNodesParentEle-numNodes), SibNodIDNotOnFace(numNodesSiblingEle-numNodes);
+  array<integer> ParNodIDNotOnFace(numNodesParentEle-numNodes), SibNodIDNotOnFace(numNodesSiblingEle-numNodes);
 
   if(nitsche_active)
   {
@@ -1142,10 +1142,10 @@ void LagrangeSmallStrainLinearElastic::GetRowDofIndexColDofIndex( const localInd
 void LagrangeSmallStrainLinearElastic::GetNodIndicesNotOnFace( const PhysicalDomainT& domain,
                                                                const localIndex kf,
                                                                const bool globFlag,
-                                                               iArray1d& NodIDNotOnFace)
+                                                               array<integer>& NodIDNotOnFace)
 {
   const localIndex numNodes = domain.m_feFaceManager.m_toNodesRelation[kf].size();
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegion = ftoe[kf][0].first;
   const localIndex numNodesParentEle = elemRegion->m_numNodesPerElem;
   const localIndex EleID = domain.m_feFaceManager.m_toElementsRelation[kf][0].second;
@@ -1248,7 +1248,7 @@ void LagrangeSmallStrainLinearElastic::GetLocalIndexOnInterface( const localInde
 // GetJacobianAndShapeFunctionsOnInterface: Gets Jacobian for the surface element and shape function values on the surface
 
 void LagrangeSmallStrainLinearElastic::GetJacobianAndShapeFunctionsOnInterface( const localIndex numNodes,
-                                                                                const rArray1d& xe,
+                                                                                const array<real64>& xe,
                                                                                 const realT& psi,
                                                                                 const realT& eta,
                                                                                 realT& jcob_sub,
@@ -1338,11 +1338,11 @@ void LagrangeSmallStrainLinearElastic::GetJacobianAndShapeFunctionsOnInterface( 
 
 void LagrangeSmallStrainLinearElastic::GetParentFaceNodesAndCoordsAndInterfaceGaussPoints( const localIndex i,
                                                                                                 const PhysicalDomainT& domain,
-                                                                                                const rArray1d& gauss,
+                                                                                                const array<real64>& gauss,
                                                                                                 lArray1d& localParentFaceNodes,
-                                                                                                rArray1d& xe,
-                                                                                                rArray1d& psi,
-                                                                                                rArray1d& eta)
+                                                                                                array<real64>& xe,
+                                                                                                array<real64>& psi,
+                                                                                                array<real64>& eta)
 {
   const localIndex& numTotNodesDomain = domain.m_feNodeManager.m_numNodes;
   const OneToOneRelation& parentNodeIndex = domain.m_feNodeManager.GetOneToOneMap("parentIndex");
@@ -1428,8 +1428,8 @@ void LagrangeSmallStrainLinearElastic::MultiplyArray( const rArray2d& A,
 // Multiples matrix A: (m x n) with vector B: (n x 1) to give vector C: (n x 1)
 
 void LagrangeSmallStrainLinearElastic::MultiplyArray( const rArray2d& A,
-                                                      const rArray1d& B,
-                                                      rArray1d& C)
+                                                      const array<real64>& B,
+                                                      array<real64>& C)
 
 {
   const int m = A.Dimension(0), n = A.Dimension(1);
@@ -1454,10 +1454,10 @@ void LagrangeSmallStrainLinearElastic::MultiplyArray( const rArray2d& A,
 void LagrangeSmallStrainLinearElastic::GetFaceConnToElemConnMap( const PhysicalDomainT& domain,
                                                                       const localIndex kf,
                                                                       const bool sibFlag,
-                                                                      iArray1d& FaceConnToElemConn)
+                                                                      array<integer>& FaceConnToElemConn)
 {
   const localIndex numNodes = domain.m_feFaceManager.m_toNodesRelation[kf].size();
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegion = ftoe[kf][0].first;
 
   const localIndex numNodesParentEle = elemRegion->m_numNodesPerElem;
@@ -1519,7 +1519,7 @@ void LagrangeSmallStrainLinearElastic::GetElasticityTensorVoigt( const PhysicalD
                                                                       rArray2d& D)
 {
   const localIndex EleID = domain.m_feFaceManager.m_toElementsRelation[kf][0].second;
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegion = ftoe[kf][0].first;
 
   const localIndex paramIndex = elemRegion->m_mat->NumParameterIndex0() > 1 ? EleID : 0 ;
@@ -1548,12 +1548,12 @@ void LagrangeSmallStrainLinearElastic::GetElasticityTensorVoigt( const PhysicalD
 
 
 void LagrangeSmallStrainLinearElastic::GetShapeFunctionDerivativeMatrixConstStr( const PhysicalDomainT& domain,
-                                                                                      const iArray1d& FaceConnToElemConn,
+                                                                                      const array<integer>& FaceConnToElemConn,
                                                                                       const localIndex kf,
                                                                                       rArray2d& B)
 {
   const localIndex EleID = domain.m_feFaceManager.m_toElementsRelation[kf][0].second;
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegion = ftoe[kf][0].first;
 
   const localIndex numNodesParentEle = elemRegion->m_numNodesPerElem;
@@ -1601,19 +1601,19 @@ void LagrangeSmallStrainLinearElastic::GetShapeFunctionDerivativeMatrixConstStr(
 
 
 void LagrangeSmallStrainLinearElastic::GetShapeFunctionDerivativeMatrixQuadHex( const PhysicalDomainT& domain,
-                                                                                     const iArray1d& FaceConnToElemConn,
+                                                                                     const array<integer>& FaceConnToElemConn,
                                                                                      const localIndex kf,
                                                                                      realT psi,
                                                                                      realT eta,
                                                                                      rArray2d& B)
 {
   const localIndex EleID = domain.m_feFaceManager.m_toElementsRelation[kf][0].second;
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegion = ftoe[kf][0].first;
 
   const localIndex numNodesParentEle = elemRegion->m_numNodesPerElem;
 
-  rArray1d xEle(dim*numNodesParentEle);
+  array<real64> xEle(dim*numNodesParentEle);
   for (localIndex iNod = 0; iNod < numNodesParentEle; ++iNod)
   {
     for( int d=0 ; d<dim ; ++d )
@@ -1622,7 +1622,7 @@ void LagrangeSmallStrainLinearElastic::GetShapeFunctionDerivativeMatrixQuadHex( 
     }
   }
 
-  iArray1d FaceConnToElemConnSort = FaceConnToElemConn;
+  array<integer> FaceConnToElemConnSort = FaceConnToElemConn;
   std::sort(FaceConnToElemConnSort.begin(), FaceConnToElemConnSort.end());
 
   if(elemRegion->m_elementGeometryID.compare(0,4,"CPE4") ==0)
@@ -1709,8 +1709,8 @@ void LagrangeSmallStrainLinearElastic::GetShapeFunctionDerivativeMatrixQuadHex( 
       psi = 1;
     }
 
-    rArray1d dNdPsi(numNodesParentEle), dNdEta(numNodesParentEle), dNdChi(numNodesParentEle);
-    rArray1d psi_a(numNodesParentEle), eta_a(numNodesParentEle), chi_a(numNodesParentEle);
+    array<real64> dNdPsi(numNodesParentEle), dNdEta(numNodesParentEle), dNdChi(numNodesParentEle);
+    array<real64> psi_a(numNodesParentEle), eta_a(numNodesParentEle), chi_a(numNodesParentEle);
     psi_a(0) = -1; psi_a(1) = 1; psi_a(2) = -1; psi_a(3) = 1; psi_a(4) = -1; psi_a(5) = 1; psi_a(6) = -1; psi_a(7) = 1;
     eta_a(0) = -1; eta_a(1) = -1; eta_a(2) = 1; eta_a(3) = 1; eta_a(4) = -1; eta_a(5) = -1; eta_a(6) = 1; eta_a(7) = 1;
     chi_a(0) = -1; chi_a(1) = -1; chi_a(2) = -1; chi_a(3) = -1; chi_a(4) = 1; chi_a(5) = 1; chi_a(6) = 1; chi_a(7) = 1;
@@ -1757,7 +1757,7 @@ void LagrangeSmallStrainLinearElastic::GetShapeFunctionDerivativeMatrixQuadHex( 
 
     jcob = dXdPsi*cof11 + dXdEta*cof12 + dXdChi*cof13;
 
-    rArray1d dNdX(numNodesParentEle), dNdY(numNodesParentEle), dNdZ(numNodesParentEle);
+    array<real64> dNdX(numNodesParentEle), dNdY(numNodesParentEle), dNdZ(numNodesParentEle);
     for (localIndex jNod = 0; jNod< numNodesParentEle; ++jNod)
     {
       dNdX(jNod) = (dNdPsi(jNod)*cof11 + dNdEta(jNod)*cof12 + dNdChi(jNod)*cof13)/jcob;
@@ -1833,17 +1833,17 @@ void LagrangeSmallStrainLinearElastic::GetDBDotN( const rArray2d& D,
 
 void LagrangeSmallStrainLinearElastic::GetPermutedDBDotN( const PhysicalDomainT& domain,
                                                                const rArray2d& nDotDB,
-                                                               const iArray1d& FaceConnToElemConn,
+                                                               const array<integer>& FaceConnToElemConn,
                                                                const localIndex kf,
                                                                rArray2d& nDotDBPermute)
 {
   const localIndex numNodes = domain.m_feFaceManager.m_toNodesRelation[kf].size();
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegion = ftoe[kf][0].first;
 
   const localIndex numNodesParentEle = elemRegion->m_numNodesPerElem;
 
-  iArray1d NodIDNotOnFace(numNodesParentEle-numNodes);
+  array<integer> NodIDNotOnFace(numNodesParentEle-numNodes);
   GetNodIndicesNotOnFace(domain, kf, false, NodIDNotOnFace);
 
   for (int iRow=0; iRow<dim; ++iRow)
@@ -1873,7 +1873,7 @@ void LagrangeSmallStrainLinearElastic::GetNitscheSpecificMatrices ( const Physic
                                                                     rArray2d& B,
                                                                     const rArray2d& normalVoigt,
                                                                     const rArray2d& P,
-                                                                    const iArray1d& FaceConnToElemConn,
+                                                                    const array<integer>& FaceConnToElemConn,
                                                                     const realT psi,
                                                                     const realT eta,
                                                                     const localIndex kf,
@@ -1904,9 +1904,9 @@ void LagrangeSmallStrainLinearElastic::GetInitialAlphaTensor( const PhysicalDoma
   realT alpha_n, alpha_t1, alpha_t2 = 0.0;
   if(domain.m_contactManager.m_nitsche_active)
   {
-    const rArray1d& nitscheStabNormal = domain.m_externalFaces.GetFieldData<realT>("nitscheStab_n");
-    const rArray1d& nitscheStabT1 = domain.m_externalFaces.GetFieldData<realT>("nitscheStab_t1");
-    const rArray1d& nitscheStabT2 = domain.m_externalFaces.GetFieldData<realT>("nitscheStab_t2");
+    const array<real64>& nitscheStabNormal = domain.m_externalFaces.GetFieldData<realT>("nitscheStab_n");
+    const array<real64>& nitscheStabT1 = domain.m_externalFaces.GetFieldData<realT>("nitscheStab_t1");
+    const array<real64>& nitscheStabT2 = domain.m_externalFaces.GetFieldData<realT>("nitscheStab_t2");
     const static std::string externalFaceIndexStr = "externalFaceIndex";
     const lArray1d& faceToExternalFaceMap = domain.m_feFaceManager.GetFieldData<localIndex>(externalFaceIndexStr);
 
@@ -2057,14 +2057,14 @@ void LagrangeSmallStrainLinearElastic::GetTransformationTensor( const PhysicalDo
 
 void LagrangeSmallStrainLinearElastic::GetDisplacementEleNodes( const PhysicalDomainT& domain,
                                                                      const localIndex kf,
-                                                                     rArray1d& uEle)
+                                                                     array<real64>& uEle)
 {
   const localIndex EleID = domain.m_feFaceManager.m_toElementsRelation[kf][0].second;
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegion = ftoe[kf][0].first;
 
   const localIndex* const localNodeIndices = elemRegion->m_toNodesRelation[EleID];
-  const Array1dT<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
 
   for(unsigned i=0; i<elemRegion->m_numNodesPerElem; ++i)
   {
@@ -2083,23 +2083,23 @@ void LagrangeSmallStrainLinearElastic::GetDisplacementJumpInterface( const Physi
                                                                           const rArray2d& N_sub,
                                                                           const localIndex iContFace,
                                                                           const lArray1d& localParentFaceNodes,
-                                                                          rArray1d& uJump)
+                                                                          array<real64>& uJump)
 {
-  rArray1d uFaceElm(dim), uFaceSib(dim);
+  array<real64> uFaceElm(dim), uFaceSib(dim);
   const localIndex numNodes = domain.m_feFaceManager.m_toNodesRelation[kf1].size();
 
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegionPar = ftoe[kf1][0].first;
   const ElementRegionT* elemRegionSib = ftoe[kf2][0].first;
 
   const localIndex numNodesParentEle = elemRegionPar->m_numNodesPerElem;
   const localIndex numNodesSiblingEle = elemRegionSib->m_numNodesPerElem;
 
-  rArray1d uElm(dim*numNodesParentEle), uSib(dim*numNodesSiblingEle);
+  array<real64> uElm(dim*numNodesParentEle), uSib(dim*numNodesSiblingEle);
   GetDisplacementEleNodes(domain, kf1, uElm);
   GetDisplacementEleNodes(domain, kf2, uSib);
 
-  iArray1d FaceConnToElemConnPar(numNodes), FaceConnToElemConnSib(numNodes);
+  array<integer> FaceConnToElemConnPar(numNodes), FaceConnToElemConnSib(numNodes);
   GetFaceConnToElemConnMap(domain, kf1, false, FaceConnToElemConnPar);
   GetFaceConnToElemConnMap(domain, kf2, true, FaceConnToElemConnSib);
 
@@ -2134,14 +2134,14 @@ void LagrangeSmallStrainLinearElastic::GetTrialAndUpdatedTractions ( PhysicalDom
                                                                      const localIndex numNodesSiblingEle,
                                                                      const std::string s_previous_base,
                                                                      const std::string s_current_base,
-                                                                     iArray1d& stickGP_par,
-                                                                     iArray1d& stickGP_sib,
-                                                                     iArray1d& openingGP_par,
-                                                                     iArray1d& openingGP_sib,
+                                                                     array<integer>& stickGP_par,
+                                                                     array<integer>& stickGP_sib,
+                                                                     array<integer>& openingGP_par,
+                                                                     array<integer>& openingGP_sib,
                                                                      TrialTractions& trialTractions,
                                                                      UpdatedTractions& updatedTractions)
 {
-  rArray1d tracPar(dim), tracSib(dim);
+  array<real64> tracPar(dim), tracSib(dim);
   rArray2d alphaPar(dim,dim), alphaSib(dim,dim);
   rArray2d nParDotDParBParPermute(dim,dim*numNodesParentEle), nSibDotDSibBSibPermute(dim,dim*numNodesSiblingEle);
 
@@ -2194,23 +2194,23 @@ void LagrangeSmallStrainLinearElastic::GetTractionInterface( const PhysicalDomai
                                                              const localIndex kf1,
                                                              const localIndex kf2,
                                                              const localIndex iContFace,
-                                                             rArray1d& tracPar,
-                                                             rArray1d& tracSib)
+                                                             array<real64>& tracPar,
+                                                             array<real64>& tracSib)
 {
-  rArray1d uFaceElm(dim), uFaceSib(dim), uJump(dim), uJumpSib(dim), tracParPenalty(dim), tracSibPenalty(dim), tracParNitsche(dim), tracSibNitsche(dim);
+  array<real64> uFaceElm(dim), uFaceSib(dim), uJump(dim), uJumpSib(dim), tracParPenalty(dim), tracSibPenalty(dim), tracParNitsche(dim), tracSibNitsche(dim);
   const localIndex numNodes = domain.m_feFaceManager.m_toNodesRelation[kf1].size();
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegionPar = ftoe[kf1][0].first;
   const ElementRegionT* elemRegionSib = ftoe[kf2][0].first;
 
   const localIndex numNodesParentEle = elemRegionPar->m_numNodesPerElem;
   const localIndex numNodesSiblingEle = elemRegionSib->m_numNodesPerElem;
 
-  rArray1d uElm(dim*numNodesParentEle), uSib(dim*numNodesSiblingEle), uElmPermute(dim*numNodesParentEle), uSibPermute(dim*numNodesSiblingEle);
+  array<real64> uElm(dim*numNodesParentEle), uSib(dim*numNodesSiblingEle), uElmPermute(dim*numNodesParentEle), uSibPermute(dim*numNodesSiblingEle);
   GetDisplacementEleNodes(domain, kf1, uElm);
   GetDisplacementEleNodes(domain, kf2, uSib);
 
-  iArray1d FaceConnToElemConnPar(numNodes), FaceConnToElemConnSib(numNodes);
+  array<integer> FaceConnToElemConnPar(numNodes), FaceConnToElemConnSib(numNodes);
   GetFaceConnToElemConnMap(domain, kf1, false, FaceConnToElemConnPar);
   GetFaceConnToElemConnMap(domain, kf2, true, FaceConnToElemConnSib);
 
@@ -2263,14 +2263,14 @@ void LagrangeSmallStrainLinearElastic::GetTractionInterfaceSlidingTrial( const P
                                                                          const localIndex kf2,
                                                                          const localIndex iContFace,
                                                                          const std::string FieldName,
-                                                                         rArray1d& tracPar,
-                                                                         rArray1d& tracSib)
+                                                                         array<real64>& tracPar,
+                                                                         array<real64>& tracSib)
 {
-  rArray1d uFaceElm(dim), uFaceSib(dim), uJump(dim), uJumpSib(dim), uJumpPlPar(dim), uJumpPlSib(dim), uJumpPlParNT(dim), uJumpPlSibNT(dim);
-  rArray1d uJumpElPar(dim), uJumpElSib(dim), tracParPenalty(dim), tracSibPenalty(dim), tracParNitsche(dim), tracSibNitsche(dim);
+  array<real64> uFaceElm(dim), uFaceSib(dim), uJump(dim), uJumpSib(dim), uJumpPlPar(dim), uJumpPlSib(dim), uJumpPlParNT(dim), uJumpPlSibNT(dim);
+  array<real64> uJumpElPar(dim), uJumpElSib(dim), tracParPenalty(dim), tracSibPenalty(dim), tracParNitsche(dim), tracSibNitsche(dim);
   const localIndex numNodes = domain.m_feFaceManager.m_toNodesRelation[kf1].size();
 
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegionPar = ftoe[kf1][0].first;
   const ElementRegionT* elemRegionSib = ftoe[kf2][0].first;
 
@@ -2280,7 +2280,7 @@ void LagrangeSmallStrainLinearElastic::GetTractionInterfaceSlidingTrial( const P
   const lArray1d& faceToExternalFaceMap = domain.m_feFaceManager.GetFieldData<localIndex>(externalFaceIndexStr);
 
 
-  const Array1dT<R1Tensor>& uJumpPl_Previous = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldName);
+  const array<R1Tensor>& uJumpPl_Previous = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldName);
   for (localIndex iSize=0; iSize<uJumpPlParNT.size(); ++iSize)
   {
     uJumpPlParNT(iSize) = uJumpPl_Previous(faceToExternalFaceMap(kf1))(iSize);
@@ -2294,11 +2294,11 @@ void LagrangeSmallStrainLinearElastic::GetTractionInterfaceSlidingTrial( const P
   MultiplyArray(P_ParTranspose,uJumpPlParNT,uJumpPlPar);
   MultiplyArray(P_SibTranspose,uJumpPlSibNT,uJumpPlSib);
 
-  rArray1d uElm(dim*numNodesParentEle), uSib(dim*numNodesSiblingEle), uElmPermute(dim*numNodesParentEle), uSibPermute(dim*numNodesSiblingEle);
+  array<real64> uElm(dim*numNodesParentEle), uSib(dim*numNodesSiblingEle), uElmPermute(dim*numNodesParentEle), uSibPermute(dim*numNodesSiblingEle);
   GetDisplacementEleNodes(domain, kf1, uElm);
   GetDisplacementEleNodes(domain, kf2, uSib);
 
-  iArray1d FaceConnToElemConnPar(numNodes), FaceConnToElemConnSib(numNodes);
+  array<integer> FaceConnToElemConnPar(numNodes), FaceConnToElemConnSib(numNodes);
   GetFaceConnToElemConnMap(domain, kf1, false, FaceConnToElemConnPar);
   GetFaceConnToElemConnMap(domain, kf2, true, FaceConnToElemConnSib);
 
@@ -2353,7 +2353,7 @@ void LagrangeSmallStrainLinearElastic::GetTractionInterfaceSlidingTrial( const P
   auto initPorePressure = domain.m_feFaceManager.GetFieldDataPointer<realT>("initPorePressure");
   if(initPorePressure!=NULL)
   {
-    rArray1d porePressureParNT(dim), porePressureSibNT(dim), porePressurePar(dim), porePressureSib(dim);
+    array<real64> porePressureParNT(dim), porePressureSibNT(dim), porePressurePar(dim), porePressureSib(dim);
     porePressureParNT(0) = (*initPorePressure)[kf1];
     porePressureSibNT(0) = (*initPorePressure)[kf2];
 
@@ -2398,14 +2398,14 @@ void LagrangeSmallStrainLinearElastic::GetTractionInterfaceSliding( const rArray
                                                                     const std::string s_previous_base,
                                                                     const std::string s_current_base,
                                                                     PhysicalDomainT& domain,
-                                                                    iArray1d& stickGP_par,
-                                                                    iArray1d& stickGP_sib,
-                                                                    iArray1d& openingGP_par,
-                                                                    iArray1d& openingGP_sib,
-                                                                    rArray1d& tracPar,
-                                                                    rArray1d& tracSib,
-                                                                    Array1dT<rArray1d>& tracParTrial,
-                                                                    Array1dT<rArray1d>& tracSibTrial)
+                                                                    array<integer>& stickGP_par,
+                                                                    array<integer>& stickGP_sib,
+                                                                    array<integer>& openingGP_par,
+                                                                    array<integer>& openingGP_sib,
+                                                                    array<real64>& tracPar,
+                                                                    array<real64>& tracSib,
+                                                                    array<array<real64>>& tracParTrial,
+                                                                    array<array<real64>>& tracSibTrial)
 {
   // Gets the name of the field associated with Gauss point iGp for previous and current load steps
   std::stringstream ss; ss << iGp;
@@ -2434,8 +2434,8 @@ void LagrangeSmallStrainLinearElastic::GetTractionInterfaceSliding( const rArray
     const static std::string externalFaceIndexStr = "externalFaceIndex";
     const lArray1d& faceToExternalFaceMap = domain.m_feFaceManager.GetFieldData<localIndex>(externalFaceIndexStr);
 
-    Array1dT<R1Tensor>& uJumpPl_Previous = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNamePrevious);
-    Array1dT<R1Tensor>& uJumpPl_Current  = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNameCurrent);
+    array<R1Tensor>& uJumpPl_Previous = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNamePrevious);
+    array<R1Tensor>& uJumpPl_Current  = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNameCurrent);
 
     uJumpPl_Current(faceToExternalFaceMap(kf1)) = uJumpPl_Previous(faceToExternalFaceMap(kf1));
   }
@@ -2452,8 +2452,8 @@ void LagrangeSmallStrainLinearElastic::GetTractionInterfaceSliding( const rArray
     const static std::string externalFaceIndexStr = "externalFaceIndex";
     const lArray1d& faceToExternalFaceMap = domain.m_feFaceManager.GetFieldData<localIndex>(externalFaceIndexStr);
 
-    Array1dT<R1Tensor>& uJumpPl_Previous = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNamePrevious);
-    Array1dT<R1Tensor>& uJumpPl_Current  = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNameCurrent);
+    array<R1Tensor>& uJumpPl_Previous = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNamePrevious);
+    array<R1Tensor>& uJumpPl_Current  = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNameCurrent);
 
     uJumpPl_Current(faceToExternalFaceMap(kf2)) = uJumpPl_Previous(faceToExternalFaceMap(kf2));
   }
@@ -2469,7 +2469,7 @@ void LagrangeSmallStrainLinearElastic::GetTractionInterfaceSliding( const rArray
 void LagrangeSmallStrainLinearElastic::GetTrialTangentModulus( const PhysicalDomainT& domain,
                                                                  const localIndex kf,
                                                                  const rArray2d& P,
-                                                                 const iArray1d& FaceConnToElemConn,
+                                                                 const array<integer>& FaceConnToElemConn,
                                                                  const realT psi,
                                                                  const realT eta,
                                                                  const rArray2d& D,
@@ -2481,7 +2481,7 @@ void LagrangeSmallStrainLinearElastic::GetTrialTangentModulus( const PhysicalDom
   GetInitialAlphaTensor(domain, kf, P, alpha);
   if(domain.m_contactManager.m_nitsche_active)
   {
-    const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+    const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
     const ElementRegionT* elemRegion = ftoe[kf][0].first;
 
     const localIndex numNodesParentEle = elemRegion->m_numNodesPerElem;
@@ -2502,18 +2502,18 @@ void LagrangeSmallStrainLinearElastic::GetTrialTangentModulus( const PhysicalDom
 }
 
 void LagrangeSmallStrainLinearElastic::GetPermutedNodalVector( const PhysicalDomainT& domain,
-                                                                    const rArray1d& Vector,
-                                                                    const iArray1d& FaceConnToElemConn,
+                                                                    const array<real64>& Vector,
+                                                                    const array<integer>& FaceConnToElemConn,
                                                                     const localIndex kf,
-                                                                    rArray1d& PermutedVector)
+                                                                    array<real64>& PermutedVector)
 {
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegion = ftoe[kf][0].first;
 
   const localIndex numNodes = domain.m_feFaceManager.m_toNodesRelation[kf].size();
   const localIndex numNodesParentEle = elemRegion->m_numNodesPerElem;
 
-  iArray1d NodIDNotOnFace(numNodesParentEle-numNodes);
+  array<integer> NodIDNotOnFace(numNodesParentEle-numNodes);
   GetNodIndicesNotOnFace(domain, kf, false, NodIDNotOnFace);
 
   for (localIndex iCol=0;iCol<numNodesParentEle;++iCol)
@@ -2535,11 +2535,11 @@ void LagrangeSmallStrainLinearElastic::GetPermutedNodalVector( const PhysicalDom
 }
 
 realT LagrangeSmallStrainLinearElastic::GetSlipStickState ( const PhysicalDomainT& domain,
-                                                            const rArray1d& trac,
+                                                            const array<real64>& trac,
                                                             const rArray2d& P,
                                                             int& stick)
 {
-  rArray1d tracNT_trial(dim);
+  array<real64> tracNT_trial(dim);
 
   realT tracYield = 0.0;
   realT phiTrial = 0.0;
@@ -2574,10 +2574,10 @@ realT LagrangeSmallStrainLinearElastic::GetSlipStickState ( const PhysicalDomain
 void LagrangeSmallStrainLinearElastic::GetUpdatedTractionsOpeningMode( const rArray2d& P,
                                                                        const localIndex iGp,
                                                                        const realT tol,
-                                                                       iArray1d& openingGP,
-                                                                       rArray1d& trac)
+                                                                       array<integer>& openingGP,
+                                                                       array<real64>& trac)
 {
-  rArray1d tracNT_trial(dim);
+  array<real64> tracNT_trial(dim);
   MultiplyArray(P,trac,tracNT_trial);
 
   int signTracN = 0;
@@ -2601,13 +2601,13 @@ void LagrangeSmallStrainLinearElastic::GetUpdatedTractionsAndPlasticSlip ( const
                                                                            const std::string FieldNameCurrent,
                                                                            const rArray2d& alphaXYZ,
                                                                            PhysicalDomainT& domain,
-                                                                           rArray1d& tracXYZ)
+                                                                           array<real64>& tracXYZ)
 {
   const static std::string externalFaceIndexStr = "externalFaceIndex";
   const lArray1d& faceToExternalFaceMap = domain.m_feFaceManager.GetFieldData<localIndex>(externalFaceIndexStr);
 
-  Array1dT<R1Tensor>& uJumpPl_Previous = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNamePrevious);
-  Array1dT<R1Tensor>& uJumpPl_Current  = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNameCurrent);
+  array<R1Tensor>& uJumpPl_Previous = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNamePrevious);
+  array<R1Tensor>& uJumpPl_Current  = domain.m_externalFaces.GetFieldData<R1Tensor>(FieldNameCurrent);
 
   if(stick == 0)
   {
@@ -2628,7 +2628,7 @@ void LagrangeSmallStrainLinearElastic::GetUpdatedTractionsAndPlasticSlip ( const
     // Negative of tracXYZ is used for updating plastic slips as tracXYZ is a penalization force that is in the opposite direction of the tendency to slip
     GetNegativeArray(tracXYZ);
 
-    rArray1d tracNT(dim), tracNT_trial(dim);
+    array<real64> tracNT(dim), tracNT_trial(dim);
     MultiplyArray(P,tracXYZ,tracNT_trial);
 
     // Normal direction, the traction is the same as the trial traction
@@ -2663,7 +2663,7 @@ void LagrangeSmallStrainLinearElastic::GetUpdatedTractionsAndPlasticSlip ( const
 
 }
 
-void LagrangeSmallStrainLinearElastic::GetNegativeArray (rArray1d& myVec)
+void LagrangeSmallStrainLinearElastic::GetNegativeArray (array<real64>& myVec)
 {
   for (localIndex iSize = 0; iSize<myVec.size(); ++iSize)
   {
@@ -2685,9 +2685,9 @@ void LagrangeSmallStrainLinearElastic::GetMatrixTranspose (const rArray2d& myMat
 
 void LagrangeSmallStrainLinearElastic::GetUpdatedTangentModulus (const PhysicalDomainT& domain,
                                                                  const rArray2d& P,
-                                                                 const iArray1d& FaceConnToElemConn,
+                                                                 const array<integer>& FaceConnToElemConn,
                                                                  const localIndex kf,
-                                                                 rArray1d& trac,
+                                                                 array<real64>& trac,
                                                                  rArray2d& alpha,
                                                                  rArray2d& nDotDB,
                                                                  const bool parFlag)
@@ -2705,7 +2705,7 @@ void LagrangeSmallStrainLinearElastic::GetUpdatedTangentModulus (const PhysicalD
 void LagrangeSmallStrainLinearElastic::GetUpdatedModulusAtGaussPoints (const PhysicalDomainT& domain,
                                                                        const rArray2d& N_sub,
                                                                        const rArray2d& P,
-                                                                       const iArray1d& FaceConnToElemConn,
+                                                                       const array<integer>& FaceConnToElemConn,
                                                                        const localIndex kf,
                                                                        const localIndex iGp,
                                                                        const localIndex numNodesEle,
@@ -2725,7 +2725,7 @@ void LagrangeSmallStrainLinearElastic::GetUpdatedModulusAtGaussPoints (const Phy
     rArray2d nDotDBPermute(dim,dim*numNodesEle);
 
     // tracPar and tracSib are only needed here to calculate slip directions in 3D.
-    rArray1d trac(dim);
+    array<real64> trac(dim);
 
     if(parFlag)
     {
@@ -2760,9 +2760,9 @@ void LagrangeSmallStrainLinearElastic::GetUpdatedModulusAtGaussPoints (const Phy
 }
 void LagrangeSmallStrainLinearElastic::UpdateTangentModulusForOpeningAndSliding(const PhysicalDomainT& domain,
                                                                                 const rArray2d& P,
-                                                                                const iArray1d& FaceConnToElemConn,
+                                                                                const array<integer>& FaceConnToElemConn,
                                                                                 const localIndex kf,
-                                                                                rArray1d& trac,
+                                                                                array<real64>& trac,
                                                                                 const int openingGP,
                                                                                 const int stickGP,
                                                                                 const bool parFlag,
@@ -2793,7 +2793,7 @@ void LagrangeSmallStrainLinearElastic::UpdateTangentModulusForOpeningAndSliding(
 }
 void LagrangeSmallStrainLinearElastic::GetUpdatedStiffnessPenalty ( const PhysicalDomainT& domain,
                                                                     const rArray2d& P,
-                                                                    rArray1d& trac,
+                                                                    array<real64>& trac,
                                                                     rArray2d& alphaXYZ,
                                                                     const bool parFlag)
 {
@@ -2802,7 +2802,7 @@ void LagrangeSmallStrainLinearElastic::GetUpdatedStiffnessPenalty ( const Physic
 
   GetNegativeArray(trac);
 
-  rArray1d tracNT_trial;
+  array<real64> tracNT_trial;
   MultiplyArray(P,trac,tracNT_trial);
   int signtracTauTrial = tracNT_trial(1)/(std::fabs(tracNT_trial(1)));
 
@@ -2869,14 +2869,14 @@ void LagrangeSmallStrainLinearElastic::GetUpdatedStiffnessPenalty ( const Physic
 
 void LagrangeSmallStrainLinearElastic::GetUpdatedStiffnessNitsche ( const PhysicalDomainT& domain,
                                                                     const rArray2d& P,
-                                                                    rArray1d& trac,
+                                                                    array<real64>& trac,
                                                                     rArray2d& nDotDB)
 {
   rArray2d nDotDB_NT(nDotDB.Dimension(0), nDotDB.Dimension(1));
 
   GetNegativeArray(trac);
 
-  rArray1d tracNT_trial;
+  array<real64> tracNT_trial;
   MultiplyArray(P,trac,tracNT_trial);
 
   int signTracTauTrial = tracNT_trial(1)/(std::fabs(tracNT_trial(1)));
@@ -2982,12 +2982,12 @@ void LagrangeSmallStrainLinearElastic::GetUpdatedStiffnessNitsche ( const Physic
 
 void LagrangeSmallStrainLinearElastic::PostProcessFieldsForVisualizationAndConsistency( PhysicalDomainT& domain)
 {
-  rArray1d gauss(2);
+  array<real64> gauss(2);
   gauss[0] = -1 / sqrt(3);
   gauss[1] = 1 / sqrt(3);
 
   const bool nitsche_active = domain.m_contactManager.m_nitsche_active;
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const std::string externalFaceIndexStr = "externalFaceIndex";
   const lArray1d& faceToExternalFaceMap = domain.m_feFaceManager.GetFieldData<localIndex>(externalFaceIndexStr);
 
@@ -3022,18 +3022,18 @@ void LagrangeSmallStrainLinearElastic::PostProcessFieldsForVisualizationAndConsi
       const localIndex numNodesParentEle = elemRegionPar->m_numNodesPerElem;
       const localIndex numNodesSiblingEle = elemRegionSib->m_numNodesPerElem;
 
-      rArray1d xe, psi, eta;
+      array<real64> xe, psi, eta;
       lArray1d localParentFaceNodes;
       rArray2d P_par(dim,dim), P_sib(dim,dim);
       rArray2d alphaPar(dim,dim), alphaSib(dim,dim);
 
       std::string s_previous_base = "uJumpPl_Previous_gp", s_current_base  = "uJumpPl_Current_gp";
-      iArray1d stickGP_par(numNodes), stickGP_sib(numNodes);
-      iArray1d openingGP_par(numNodes), openingGP_sib(numNodes);
+      array<integer> stickGP_par(numNodes), stickGP_sib(numNodes);
+      array<integer> openingGP_par(numNodes), openingGP_sib(numNodes);
 //      realT tol = domain.m_contactManager.m_traction_n_tol;
 
       // Declaration of Nitsche specific variables
-      iArray1d FaceConnToElemConnPar(numNodes), FaceConnToElemConnSib(numNodes);
+      array<integer> FaceConnToElemConnPar(numNodes), FaceConnToElemConnSib(numNodes);
       rArray2d normalVoigtPar(dim,0.5*dim*(dim+1)), normalVoigtSib(dim,0.5*dim*(dim+1));
       rArray2d DPar(0.5*dim*(dim+1),0.5*dim*(dim+1)), DSib(0.5*dim*(dim+1),0.5*dim*(dim+1));
       rArray2d BPar(0.5*dim*(dim+1),dim*numNodesParentEle), BSib(0.5*dim*(dim+1),dim*numNodesSiblingEle);
@@ -3066,7 +3066,7 @@ void LagrangeSmallStrainLinearElastic::PostProcessFieldsForVisualizationAndConsi
         GetElasticityTensorVoigt(domain, kf1, DPar);
         GetElasticityTensorVoigt(domain, kf2, DSib);
 
-        const rArray1d& nitscheGamma = domain.m_externalFaces.GetFieldData<realT>("nitscheGamma");
+        const array<real64>& nitscheGamma = domain.m_externalFaces.GetFieldData<realT>("nitscheGamma");
 
         gamPar = nitscheGamma(faceToExternalFaceMap(kf1));
         gamSib = nitscheGamma(faceToExternalFaceMap(kf2));
@@ -3077,7 +3077,7 @@ void LagrangeSmallStrainLinearElastic::PostProcessFieldsForVisualizationAndConsi
       }
 
       // Calculate shape functions, shape function derivatives, jacobian and tractions at gauss points
-      Array1dT<rArray2d> N_sub; Array1dT<realT> jcob_sub;
+      array<rArray2d> N_sub; array<realT> jcob_sub;
       TrialTractions trialTractions; UpdatedTractions updatedTractions; UpdatedModulii updatedModulus;
 
       trialTractions.tracPar.resize(numNodes,dim); trialTractions.tracSib.resize(numNodes,dim);
@@ -3142,17 +3142,17 @@ void LagrangeSmallStrainLinearElastic::PostProcessFieldsForVisualizationAndConsi
 
 void LagrangeSmallStrainLinearElastic::StoreHistoryVariablesForCurrentLoadStepAndResetTheField( PhysicalDomainT& domain)
 {
-  Array1dT<R1Tensor>& uJumpPl_Previous_gp0 = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Previous_gp0");
-  Array1dT<R1Tensor>& uJumpPl_Current_gp0  = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Current_gp0");
+  array<R1Tensor>& uJumpPl_Previous_gp0 = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Previous_gp0");
+  array<R1Tensor>& uJumpPl_Current_gp0  = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Current_gp0");
 
-  Array1dT<R1Tensor>& uJumpPl_Previous_gp1 = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Previous_gp1");
-  Array1dT<R1Tensor>& uJumpPl_Current_gp1  = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Current_gp1");
+  array<R1Tensor>& uJumpPl_Previous_gp1 = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Previous_gp1");
+  array<R1Tensor>& uJumpPl_Current_gp1  = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Current_gp1");
 
-  Array1dT<R1Tensor>& uJumpPl_Previous_gp2 = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Previous_gp2");
-  Array1dT<R1Tensor>& uJumpPl_Current_gp2  = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Current_gp2");
+  array<R1Tensor>& uJumpPl_Previous_gp2 = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Previous_gp2");
+  array<R1Tensor>& uJumpPl_Current_gp2  = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Current_gp2");
 
-  Array1dT<R1Tensor>& uJumpPl_Previous_gp3 = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Previous_gp3");
-  Array1dT<R1Tensor>& uJumpPl_Current_gp3  = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Current_gp3");
+  array<R1Tensor>& uJumpPl_Previous_gp3 = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Previous_gp3");
+  array<R1Tensor>& uJumpPl_Current_gp3  = domain.m_externalFaces.GetFieldData<R1Tensor>("uJumpPl_Current_gp3");
 
   uJumpPl_Previous_gp0 = uJumpPl_Current_gp0; uJumpPl_Previous_gp1 = uJumpPl_Current_gp1;
   uJumpPl_Previous_gp2 = uJumpPl_Current_gp2; uJumpPl_Previous_gp3 = uJumpPl_Current_gp3;
@@ -3177,15 +3177,15 @@ void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManager& nodeMa
   R2Tensor Rot;
 
 
-  static Array1dT< R1Tensor > u_local;
-  static Array1dT< R1Tensor > uhat_local;
-  static Array1dT<R1Tensor> f_local;
-  static Array1dT<R1Tensor> fdamp_local;
-  static Array1dT< R1Tensor > x;
-  static Array1dT< R1Tensor > v_local;
-  static Array1dT<R1Tensor> s_dNdx;
-  static Array1dT<R1Tensor> f_zemc;
-  static Array1dT<R1Tensor> Q;
+  static array< R1Tensor > u_local;
+  static array< R1Tensor > uhat_local;
+  static array<R1Tensor> f_local;
+  static array<R1Tensor> fdamp_local;
+  static array< R1Tensor > x;
+  static array< R1Tensor > v_local;
+  static array<R1Tensor> s_dNdx;
+  static array<R1Tensor> f_zemc;
+  static array<R1Tensor> Q;
 
   FiniteElementBase*& finiteElement = elemRegion.m_finiteElement;
 
@@ -3255,16 +3255,16 @@ void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManager& nodeMa
   }
 
 
-  const Array1dT<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
-  const Array1dT<R1Tensor>& incDisplacement = nodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
-  const Array1dT<R1Tensor>& referencePosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
-  const Array1dT<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
-  Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
-  Array1dT<R1Tensor>& hgforce = nodeManager.GetFieldData<FieldInfo::hgforce> ();
-  rArray1d& volume = elemRegion.GetFieldData<FieldInfo::volume>();
-  Array1dT<R1Tensor>& dampingForce = nodeManager.GetFieldData<R1Tensor>("dampingForce");
+  const array<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& incDisplacement = nodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+  const array<R1Tensor>& referencePosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const array<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
+  array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& hgforce = nodeManager.GetFieldData<FieldInfo::hgforce> ();
+  array<real64>& volume = elemRegion.GetFieldData<FieldInfo::volume>();
+  array<R1Tensor>& dampingForce = nodeManager.GetFieldData<R1Tensor>("dampingForce");
 
-  Array1dT<Array1dT<R1Tensor>*> Qstiffness(elemRegion.m_finiteElement->zero_energy_modes(),NULL);
+  array<array<R1Tensor>*> Qstiffness(elemRegion.m_finiteElement->zero_energy_modes(),NULL);
   if( finiteElement->zero_energy_modes() >= 1 )
   {
     Qstiffness[0] = &(elemRegion.GetFieldData<R1Tensor>("Qhg1"));
@@ -3286,7 +3286,7 @@ void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManager& nodeMa
 
   dim = elemRegion.m_ElementDimension;
 
-//  Array1dT<R2SymTensor> const * const refStresses = elemRegion.GetFieldDataPointer<R2SymTensor>("referenceStress");
+//  array<R2SymTensor> const * const refStresses = elemRegion.GetFieldDataPointer<R2SymTensor>("referenceStress");
 
   for( localIndex k=0 ; k<elemRegion.m_numElems ; ++k )
   {
@@ -3326,7 +3326,7 @@ void LagrangeSmallStrainLinearElastic::ProcessElementRegion( NodeManager& nodeMa
     f_local = 0.0;
     fdamp_local = 0.0;
 
-//    Array1dT<R1Tensor> tempforce;
+//    array<R1Tensor> tempforce;
 //    tempforce = f_local;
 
     if (m_staticKMatrix)

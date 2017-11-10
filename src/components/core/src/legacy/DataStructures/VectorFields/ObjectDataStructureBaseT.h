@@ -148,10 +148,10 @@ protected:
   virtual globalIndex insert( const localIndex i, const bool assignGlobals = false );
 
   template< typename T >
-  void AllocateTemporaryFields( const sArray1d& names, Array1dT<Array1dT<T>* >& vars );
+  void AllocateTemporaryFields( const array<string>& names, array<array<T>* >& vars );
 
   template< typename T >
-  void DeallocateTemporaryFields( const sArray1d& names );
+  void DeallocateTemporaryFields( const array<string>& names );
 
 private:
   virtual void insertBase( const localIndex i );
@@ -162,17 +162,17 @@ private:
 
   /// templated insert function for fields
   template< typename T >
-  void insert( std::map< std::string, Array1dT<T> >& member, const localIndex i );
+  void insert( std::map< std::string, array<T> >& member, const localIndex i );
 
   /// insert in map to hold fixed size one-to-many maps
   void insert( std::map< std::string, FixedOneToManyRelation >& member, const localIndex i);
 
   template< typename T >
-  void insert( std::map< std::string, InterObjectRelation<Array1dT<T> > >& member, const localIndex i );
+  void insert( std::map< std::string, InterObjectRelation<array<T> > >& member, const localIndex i );
 
 
   template< typename T >
-  void erase( std::map< std::string, Array1dT<T> >& member, const localIndex i );
+  void erase( std::map< std::string, array<T> >& member, const localIndex i );
 
   template< typename T >
   void erase( std::map< std::string, InterObjectRelation<T> >& member, const localIndex i );
@@ -213,43 +213,43 @@ public:
 
   /// returns reference to specified field
   template< FieldKey FIELDKEY>
-  Array1dT<typename Field<FIELDKEY>::Type>& GetFieldData( )
-  { return const_cast<Array1dT<typename Field<FIELDKEY>::Type>&>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldData<FIELDKEY>()); }
+  array<typename Field<FIELDKEY>::Type>& GetFieldData( )
+  { return const_cast<array<typename Field<FIELDKEY>::Type>&>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldData<FIELDKEY>()); }
 
 
   /// returns const reference to specified field
   template< FieldKey FIELDKEY>
-  const Array1dT<typename Field<FIELDKEY>::Type>& GetFieldData( ) const;
+  const array<typename Field<FIELDKEY>::Type>& GetFieldData( ) const;
 
 
   /// returns reference to specified field
   template< FieldKey FIELDKEY>
-  Array1dT<typename Field<FIELDKEY>::Type>* GetFieldDataPointer( )
-  { return const_cast<Array1dT<typename Field<FIELDKEY>::Type>*>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldDataPointer<FIELDKEY>()); }
+  array<typename Field<FIELDKEY>::Type>* GetFieldDataPointer( )
+  { return const_cast<array<typename Field<FIELDKEY>::Type>*>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldDataPointer<FIELDKEY>()); }
 
 
   /// returns const reference to specified field
   template< FieldKey FIELDKEY>
-  const Array1dT<typename Field<FIELDKEY>::Type>* GetFieldDataPointer( ) const;
+  const array<typename Field<FIELDKEY>::Type>* GetFieldDataPointer( ) const;
 
 
   /// returns reference to specified field
   template< typename TYPE >
-  Array1dT<TYPE>& GetFieldData( const std::string& fieldName )
-  { return const_cast<Array1dT<TYPE>&>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldData<TYPE>(fieldName)); }
+  array<TYPE>& GetFieldData( const std::string& fieldName )
+  { return const_cast<array<TYPE>&>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldData<TYPE>(fieldName)); }
 
   /// returns const reference to specified field
   template< typename TYPE >
-  const Array1dT<TYPE>& GetFieldData( const std::string& name ) const;
+  const array<TYPE>& GetFieldData( const std::string& name ) const;
 
   /// returns reference to specified field
   template< typename TYPE >
-  Array1dT<TYPE>* GetFieldDataPointer( const std::string& fieldName )
-  { return const_cast<Array1dT<TYPE>*>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldDataPointer<TYPE>(fieldName)); }
+  array<TYPE>* GetFieldDataPointer( const std::string& fieldName )
+  { return const_cast<array<TYPE>*>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldDataPointer<TYPE>(fieldName)); }
 
   /// returns const reference to specified field
   template< typename TYPE >
-  const Array1dT<TYPE>* GetFieldDataPointer( const std::string& name ) const;
+  const array<TYPE>* GetFieldDataPointer( const std::string& name ) const;
 
   
   /// returns reference to specified set
@@ -328,7 +328,7 @@ public:
 
   // sets the value of a const pointer to a keyed field location
   template< FieldKey FIELDKEY >
-  void SetConstPointer( Array1dT<typename Field<FIELDKEY>::Type>* const& pointer );
+  void SetConstPointer( array<typename Field<FIELDKEY>::Type>* const& pointer );
 
 
 
@@ -393,9 +393,9 @@ protected:
 
 public:
   template< typename T >
-  void AllocateDummyFields( const sArray1d& names, const bool plotFlag  )
+  void AllocateDummyFields( const array<string>& names, const bool plotFlag  )
   {
-    for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+    for( array<string>::size_type i=0 ; i<names.size() ; ++i )
     {
       this->AddKeylessDataField<T>(names[i],true,plotFlag);
     }
@@ -403,10 +403,10 @@ public:
 
 
   template< typename T >
-  void AllocateDummyFields( const sArray1d& names, Array1dT<Array1dT<T>* >& vars, const bool plotFlag  )
+  void AllocateDummyFields( const array<string>& names, array<array<T>* >& vars, const bool plotFlag  )
   {
     vars.resize( names.size() );
-    for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+    for( array<string>::size_type i=0 ; i<names.size() ; ++i )
     {
       this->AddKeylessDataField<T>(names[i],true,plotFlag);
       vars[i] = &this->GetFieldData<T>(names[i]);
@@ -414,19 +414,19 @@ public:
   }
 
   template< typename T >
-  void SetDummyFieldPointers( const sArray1d& names, Array1dT<Array1dT<T>* >& vars )
+  void SetDummyFieldPointers( const array<string>& names, array<array<T>* >& vars )
   {
     vars.resize( names.size() );
-    for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+    for( array<string>::size_type i=0 ; i<names.size() ; ++i )
     {
       vars[i] = &this->GetFieldData<T>(names[i]);
     }
   }
 
   template< typename T >
-  void DeallocateDummyFields( const sArray1d& names )
+  void DeallocateDummyFields( const array<string>& names )
   {
-    for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+    for( array<string>::size_type i=0 ; i<names.size() ; ++i )
       this->RemoveDataField<T>(names[i]);
   }
 
@@ -581,9 +581,9 @@ public:
   };
 
 
-  void WriteAsciiFieldData( const std::vector<FieldType>& types, const sArray1d& fieldNames, const std::string& fileName, bool append);
+  void WriteAsciiFieldData( const std::vector<FieldType>& types, const array<string>& fieldNames, const std::string& fileName, bool append);
 
-  void WriteAsciiFieldData( const std::vector<FieldType>& types, const sArray1d& fieldNames, const std::string& fileName, const lSet& subset, bool append );
+  void WriteAsciiFieldData( const std::vector<FieldType>& types, const array<string>& fieldNames, const std::string& fileName, const lSet& subset, bool append );
   
   /// sets field to constant value 
   template< typename T >
@@ -630,14 +630,14 @@ public:
   /// Set the value of a field using a named function
   void SetFieldEqualToFunction(FieldType fieldType, const std::string& fieldName, 
                                const std::string& functionName,
-                               const sArray1d& variables, 
-                               const Array1dT<FieldType>& variable_types,
+                               const array<string>& variables, 
+                               const array<FieldType>& variable_types,
                                int component=0, realT time=0.0, realT dt=0.0);
   /// Set the value of a subset of a Yuliyafield using a named function
   void SetFieldEqualToFunction(FieldType fieldType, const std::string& fieldName, 
                                const std::string& functionName,
-                               const sArray1d& variables, 
-                               const Array1dT<FieldType>& variable_types,
+                               const array<string>& variables, 
+                               const array<FieldType>& variable_types,
                                const lSet& aSet,
                                int component=0, realT time=0.0, realT dt=0.0);
 
@@ -669,7 +669,7 @@ public:
   //********************************************************************************************************************
 
   virtual void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-                                                                 Array1dT<gArray1d>& objectToCompositionObject ) = 0;
+                                                                 array<gArray1d>& objectToCompositionObject ) = 0;
 
   /// pure virtual function that sets what objects are on the boundary of the domain
   virtual void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = nullptr) = 0 ;
@@ -686,7 +686,7 @@ public:
   localIndex GetNumGhosts() const
   {
 
-    const iArray1d& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
+    const array<integer>& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
 
 
     return ( std::count_if( ghostRank.begin(), ghostRank.end(), isGTE0 ) );
@@ -722,7 +722,7 @@ public:
 
 
   /// generate vector containing all field names
-  void GetAllFieldNames( sArray1d& fieldNames ) const;
+  void GetAllFieldNames( array<string>& fieldNames ) const;
 
   /// get list of objects on the boundary of a computational domain
   virtual void ConstructListOfBoundaryObjects( lArray1d& objectList ) const ;
@@ -738,7 +738,7 @@ public:
 
   /// builds a new set on this object given another objects set and the map between them
   void ConstructSetFromSetAndMap( const lSet& inputSet,
-                                  const Array1dT<lArray1d>& map,
+                                  const array<lArray1d>& map,
                                   const std::string& newSetName );
 
   bool SplitObject( const localIndex indexToSplit,
@@ -761,23 +761,23 @@ public:
 
   void CopyObject( const localIndex source, const localIndex destination0, const localIndex destination1 );
 
-  void CopyObjectWithExcludedSets( const localIndex source, const localIndex destination, const sArray1d& excludeSets );
+  void CopyObjectWithExcludedSets( const localIndex source, const localIndex destination, const array<string>& excludeSets );
 
   void CopyObjectFields( const localIndex source, const localIndex destination );
 
   template< typename T >
-  void CopyMemberFields( const localIndex source, const localIndex destination, std::map< std::string, Array1dT<T> >& member );
+  void CopyMemberFields( const localIndex source, const localIndex destination, std::map< std::string, array<T> >& member );
 
   template< typename T >
-  void CopyMemberFields( const localIndex source, const localIndex destination0, const localIndex destination1, std::map< std::string, Array1dT<T> >& member );
+  void CopyMemberFields( const localIndex source, const localIndex destination0, const localIndex destination1, std::map< std::string, array<T> >& member );
 
   template< typename T >
-  void CopyMemberFields( const localIndex source, const lArray1d& destination, std::map< std::string, Array1dT<T> >& member );
+  void CopyMemberFields( const localIndex source, const lArray1d& destination, std::map< std::string, array<T> >& member );
 
 
   void UpdateMaximumGlobalNumber();
 
-  virtual void DeserializeObjectField(const std::string& name, const rArray1d& field)
+  virtual void DeserializeObjectField(const std::string& name, const array<real64>& field)
   {
     (void)name;
     (void)field;
@@ -785,7 +785,7 @@ public:
     throw GPException("DeserializeObjectField - undefined in base");
   }
 
-  virtual void DeserializeObjectFields(const sArray1d& names, const Array1dT<rArray1d>& fields)
+  virtual void DeserializeObjectFields(const array<string>& names, const array<array<real64>>& fields)
   {
     if(names.size() != fields.size())
       throw GPException("DeserializeObjectFields - input array sizes do not match");
@@ -801,14 +801,14 @@ public:
   /// packs a list of fields into a bufvector
   template< typename T_indices, typename T_buffer >
   unsigned int PackFieldsIntoBuffer( T_buffer& buffer,
-                                     const sArray1d& fieldNames,
+                                     const array<string>& fieldNames,
                                      const T_indices& localIndices,
                                      const bool doBufferPacking=true ) const;
 
   /// unpacks a list of fields from a buffer pointer. Changes the pointer!
   template< typename T_indices >
   unsigned int UnpackFieldsFromBuffer( const char*& buffer,
-                                       const sArray1d& fieldNames,
+                                       const array<string>& fieldNames,
                                        const T_indices& localIndices );
 
   /// a wrapper of PackFieldsIntoBuffer to pack ALL fields.
@@ -887,15 +887,15 @@ private:
 
   template< typename T, typename T_indices, typename T_buffer >
   unsigned int PackMemberFieldsIntoBuffer( T_buffer& buffer,
-                                           const std::map< std::string, Array1dT<T> >& member,
+                                           const std::map< std::string, array<T> >& member,
                                            const T_indices& localIndices,
                                            const bool doBufferPacking ) const;
 
   /// pack the fields of member into the bufvector
   template< typename T, typename T_indices, typename T_buffer >
   unsigned int PackMemberFieldsIntoBuffer( T_buffer& buffer,
-                                           const sArray1d& fieldNames,
-                                           const std::map< std::string, Array1dT<T> >& member,
+                                           const array<string>& fieldNames,
+                                           const std::map< std::string, array<T> >& member,
                                            const T_indices& localIndices,
                                            const bool doBufferPacking ) const;
 
@@ -903,21 +903,21 @@ private:
   /// unpack the fields of member from a buffer
   template< typename T, typename T_indices >
   unsigned int UnpackMemberFieldsFromBuffer( const char*& buffer,
-                                             std::map< std::string, Array1dT<T> >& member,
+                                             std::map< std::string, array<T> >& member,
                                              const T_indices& localIndices );
 
   /// unpack the fields of member from a buffer
   template< typename T, typename T_indices >
   unsigned int UnpackMemberFieldsFromBuffer( const char*& buffer,
-                                             const sArray1d& fieldNames,
-                                             std::map< std::string, Array1dT<T> >& member,
+                                             const array<string>& fieldNames,
+                                             std::map< std::string, array<T> >& member,
                                              const T_indices& localIndices );
 
   /// pack a single field into a bufvector
   template< typename T, typename T_indices >
   unsigned int PackFieldIntoBuffer( bufvector& buffer,
                                     const std::string& fieldName,
-                                    const Array1dT<T>& field,
+                                    const array<T>& field,
                                     const T_indices& localIndices,
                                     const bool doBufferPacking ) const;
 
@@ -925,7 +925,7 @@ private:
   template< typename T, typename T_indices >
   unsigned int PackFieldIntoBuffer( char*& buffer,
                                     const std::string& fieldName,
-                                    const Array1dT<T>& field,
+                                    const array<T>& field,
                                     const T_indices& localIndices,
                                     const bool doBufferPacking ) const;
 
@@ -933,7 +933,7 @@ private:
   template< typename T, typename T_indices >
   unsigned int UnpackFieldFromBuffer( const char*& buffer,
                                       const std::string& fieldName,
-                                      Array1dT<T>& field,
+                                      array<T>& field,
                                       const T_indices& localIndices );
 
 
@@ -971,7 +971,7 @@ public:
   std::map< std::string, lSet >             m_Sets;
 
   /// boundary conditions on this object
-  Array1dT<BoundaryConditionBase*>  m_bcData;
+  array<BoundaryConditionBase*>  m_bcData;
 
   
 
@@ -993,22 +993,22 @@ protected:
   std::map< std::string, gArray1d >             m_GlobalIndexData;
 
   /// map to hold arrays of integers
-  std::map< std::string, iArray1d >             m_IntegerData;
+  std::map< std::string, array<integer> >             m_IntegerData;
 
   /// map to hold arrays of reals
-  std::map< std::string, rArray1d >             m_realData;
+  std::map< std::string, array<real64> >             m_realData;
 
   /// map to hold arrays of R1Tensors
-  std::map< std::string, Array1dT<R1Tensor> >    m_R1TensorData;
+  std::map< std::string, array<R1Tensor> >    m_R1TensorData;
 
   /// map to hold arrays of R2Tensors
-  std::map< std::string, Array1dT<R2Tensor> >    m_R2TensorData;
+  std::map< std::string, array<R2Tensor> >    m_R2TensorData;
 
   /// map to hold arrays of R2SymTensors
-  std::map< std::string, Array1dT<R2SymTensor> > m_R2SymTensorData;
+  std::map< std::string, array<R2SymTensor> > m_R2SymTensorData;
 
   /// map to hold arrays of arrays of R1Tensors
-  std::map< std::string, Array1dT<Array1dT<R1Tensor>>>  m_ArrayR1TensorData;
+  std::map< std::string, array<array<R1Tensor>>>  m_ArrayR1TensorData;
 
   /// map to hold one-to-one maps
   std::map< std::string, OneToOneRelation >             m_OneToOneMaps;
@@ -1028,8 +1028,8 @@ protected:
 
 public:
 
-  iArray1d& m_isExternal;
-  iArray1d& m_processColor;
+  array<integer>& m_isExternal;
+  array<integer>& m_processColor;
   localIndex m_processColorPad;
 
   OrderedVariableOneToManyRelation& m_childIndices;
@@ -1037,10 +1037,10 @@ public:
   int m_rank = -1;
 
   template< typename TYPE >
-  void ConstructVariableOneToManyFromInverse( const std::string& mapname, const Array1dT<TYPE>& inverse );
+  void ConstructVariableOneToManyFromInverse( const std::string& mapname, const array<TYPE>& inverse );
 
   template< typename TYPE, typename TYPE2 >
-  void AddToVariableOneToManyFromInverse( const std::string& mapname, const Array1dT<TYPE>& inverseMap, const TYPE2& newIndices );
+  void AddToVariableOneToManyFromInverse( const std::string& mapname, const array<TYPE>& inverseMap, const TYPE2& newIndices );
 
 
   const OneToOneRelation& GetOneToOneMap( const std::string& name ) const { return stlMapLookup(m_OneToOneMaps,name); }
@@ -1060,8 +1060,8 @@ public:
   UnorderedVariableOneToManyRelation& GetUnorderedVariableOneToManyMap( const std::string& name ) { return stlMapLookup(m_UnorderedVariableOneToManyMaps,name); }
 
 
-  const Array1dT<lSet>* GetUnorderedVariableOneToManyMapPointer( const std::string& name ) const { return stlMapLookupPointer(m_UnorderedVariableOneToManyMaps,name); }
-  Array1dT<lSet>* GetUnorderedVariableOneToManyMapPointer( const std::string& name ) { return stlMapLookupPointer(m_UnorderedVariableOneToManyMaps,name); }
+  const array<lSet>* GetUnorderedVariableOneToManyMapPointer( const std::string& name ) const { return stlMapLookupPointer(m_UnorderedVariableOneToManyMaps,name); }
+  array<lSet>* GetUnorderedVariableOneToManyMapPointer( const std::string& name ) { return stlMapLookupPointer(m_UnorderedVariableOneToManyMaps,name); }
 
   //const lSet* GetNodeMapPointer(localIndex indx){return 0;};
 
@@ -1085,7 +1085,7 @@ int ObjectDataStructureBaseT::AddKeyedDataField()
 
 
   // get data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& DataArrayMember = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& DataArrayMember = GetDataMemberMap<array<T> >();
 
   std::string name = Field<FIELDKEY>::Name();
 
@@ -1123,16 +1123,16 @@ int ObjectDataStructureBaseT::AddKeyedDataField()
  *
  */
 template< FieldKey FIELDKEY>
-inline const Array1dT<typename Field<FIELDKEY>::Type>& ObjectDataStructureBaseT::GetFieldData( ) const
+inline const array<typename Field<FIELDKEY>::Type>& ObjectDataStructureBaseT::GetFieldData( ) const
 {
   // define a typedef of the "type" corresponding to FIELDKEY for easier reading
   typedef typename Field<FIELDKEY>::Type T;
 
   // get the data member map corresponding to the type
-  const std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  const std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name and return it.
-  const typename std::map< std::string, Array1dT<T> >::const_iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
+  const typename std::map< std::string, array<T> >::const_iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
 
   if( iobjectmap == objectmap.end() ){
   	std::string errStr = Field<FIELDKEY>::Name();
@@ -1144,19 +1144,19 @@ inline const Array1dT<typename Field<FIELDKEY>::Type>& ObjectDataStructureBaseT:
 
 
 template< FieldKey FIELDKEY>
-inline const Array1dT<typename Field<FIELDKEY>::Type>* ObjectDataStructureBaseT::GetFieldDataPointer( ) const
+inline const array<typename Field<FIELDKEY>::Type>* ObjectDataStructureBaseT::GetFieldDataPointer( ) const
 {
   // define a typedef of the "type" corresponding to FIELDKEY for easier reading
   typedef typename Field<FIELDKEY>::Type T;
 
   // get the data member map corresponding to the type
-  const std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  const std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name and return it.
-  const typename std::map< std::string, Array1dT<T> >::const_iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
+  const typename std::map< std::string, array<T> >::const_iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
 
 
-  const Array1dT<typename Field<FIELDKEY>::Type>* rval = nullptr;
+  const array<typename Field<FIELDKEY>::Type>* rval = nullptr;
   if( iobjectmap != objectmap.end() )
   {
     rval = &(iobjectmap->second);
@@ -1177,13 +1177,13 @@ inline const Array1dT<typename Field<FIELDKEY>::Type>* ObjectDataStructureBaseT:
  *
  */
 template< typename T >
-inline const Array1dT<T>& ObjectDataStructureBaseT::GetFieldData( const std::string& fieldName ) const
+inline const array<T>& ObjectDataStructureBaseT::GetFieldData( const std::string& fieldName ) const
 {
   // get the data member map corresponding to the type
-  const std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  const std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name and return it.
-  const typename std::map< std::string, Array1dT<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
+  const typename std::map< std::string, array<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field '" + fieldName + "' in ObjectDataStructureBaseT /n");
 
@@ -1192,15 +1192,15 @@ inline const Array1dT<T>& ObjectDataStructureBaseT::GetFieldData( const std::str
 }
 
 template< typename T >
-inline const Array1dT<T>* ObjectDataStructureBaseT::GetFieldDataPointer( const std::string& fieldName ) const
+inline const array<T>* ObjectDataStructureBaseT::GetFieldDataPointer( const std::string& fieldName ) const
 {
   // get the data member map corresponding to the type
-  const std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  const std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name and return it.
-  const typename std::map< std::string, Array1dT<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
+  const typename std::map< std::string, array<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
 
-  const Array1dT<T>* rval = nullptr;
+  const array<T>* rval = nullptr;
   if( iobjectmap != objectmap.end() )
   {
     rval = &(iobjectmap->second);
@@ -1255,7 +1255,7 @@ void ObjectDataStructureBaseT::SetSubsetValue(const std::string& fieldName,
    std::set<localIndex>::iterator itr = theSet.begin();
    std::set<localIndex>::iterator iend = theSet.end();
 
-   Array1dT<T>& field = GetFieldData<T>(fieldName);
+   array<T>& field = GetFieldData<T>(fieldName);
    for(; itr != iend;++itr){
      field[*itr] = value;
    }
@@ -1270,10 +1270,10 @@ template< typename T >
 bool ObjectDataStructureBaseT::HasField( const std::string& fieldName ) const
 {
   // get the data member map corresponding to the type
-  const std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  const std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  const typename std::map< std::string, Array1dT<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
+  const typename std::map< std::string, array<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
 
   return(iobjectmap != objectmap.end());
 }
@@ -1284,17 +1284,17 @@ bool ObjectDataStructureBaseT::HasField( const std::string& fieldName ) const
  * this function sets the value of a const* to the location of a field array
  */
 template< FieldKey FIELDKEY >
-void ObjectDataStructureBaseT::SetConstPointer( Array1dT<typename Field<FIELDKEY>::Type>* const& pointer )
+void ObjectDataStructureBaseT::SetConstPointer( array<typename Field<FIELDKEY>::Type>* const& pointer )
 {
   // define a typedef of the "type" corresponding to FIELDKEY for easier reading
   typedef typename Field<FIELDKEY>::Type T;
 
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
-  const typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
+  const typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
 
-  Array1dT<T>** temp = const_cast< Array1dT<T>**>(&pointer);
+  array<T>** temp = const_cast< array<T>**>(&pointer);
 
   if( iobjectmap == objectmap.end() )
     *temp = nullptr;
@@ -1318,7 +1318,7 @@ void ObjectDataStructureBaseT::SetConstPointer( Array1dT<typename Field<FIELDKEY
  */
 template< typename T_indices, typename T_buffer >
 unsigned int ObjectDataStructureBaseT::PackFieldsIntoBuffer( T_buffer& buffer,
-                                                             const sArray1d& fieldNames,
+                                                             const array<string>& fieldNames,
                                                              const T_indices& localIndices,
                                                              const bool doBufferPacking ) const
 {
@@ -1370,7 +1370,7 @@ unsigned int ObjectDataStructureBaseT::PackAllFieldsIntoBuffer( T_buffer& buffer
  */
 template< typename T_indices >
 unsigned int ObjectDataStructureBaseT::UnpackFieldsFromBuffer( const char*& buffer,
-                                                              const sArray1d& fieldNames,
+                                                              const array<string>& fieldNames,
                                                               const T_indices& localIndices )
 {
   unsigned int sizeOfUnpackedChars = 0;
@@ -1413,16 +1413,16 @@ unsigned int ObjectDataStructureBaseT::UnpackAllFieldsFromBuffer( const char*& b
 
 template< typename T, typename T_indices, typename T_buffer >
 unsigned int ObjectDataStructureBaseT::PackMemberFieldsIntoBuffer( T_buffer& buffer,
-                                                                   const std::map< std::string, Array1dT<T> >& member,
+                                                                   const std::map< std::string, array<T> >& member,
                                                                    const T_indices& localIndices,
                                                                    const bool doBufferPacking ) const
 {
   unsigned int sizeOfPackedChars = 0;
 
-  for( typename std::map< std::string, Array1dT<T> >::const_iterator i = member.begin() ; i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::const_iterator i = member.begin() ; i!=member.end() ; ++i )
   {
     const std::string fieldName = i->first;
-    const Array1dT<T>& field = i->second;
+    const array<T>& field = i->second;
     sizeOfPackedChars += PackFieldIntoBuffer( buffer, fieldName, field, localIndices, doBufferPacking );
   }
   return sizeOfPackedChars ;
@@ -1441,21 +1441,21 @@ unsigned int ObjectDataStructureBaseT::PackMemberFieldsIntoBuffer( T_buffer& buf
  */
 template< typename T, typename T_indices, typename T_buffer  >
 unsigned int ObjectDataStructureBaseT::PackMemberFieldsIntoBuffer( T_buffer& buffer,
-                                                                   const sArray1d& fieldNames,
-                                                                   const std::map< std::string, Array1dT<T> >& member,
+                                                                   const array<string>& fieldNames,
+                                                                   const std::map< std::string, array<T> >& member,
                                                                    const T_indices& localIndices,
                                                                    const bool doBufferPacking ) const
 {
   unsigned int sizeOfPackedChars = 0;
 
-  sArray1d::const_iterator fieldName=fieldNames.begin() ;
+  array<string>::const_iterator fieldName=fieldNames.begin() ;
 
   for(  ; fieldName!=fieldNames.end(); ++fieldName )
   {
-    const typename std::map< std::string, Array1dT<T> >::const_iterator i = member.find(*fieldName);
+    const typename std::map< std::string, array<T> >::const_iterator i = member.find(*fieldName);
     if( i != member.end() )
     {
-      const Array1dT<T>& field = i->second;
+      const array<T>& field = i->second;
       sizeOfPackedChars += PackFieldIntoBuffer( buffer, *fieldName, field, localIndices, doBufferPacking );
     }
   }
@@ -1464,15 +1464,15 @@ unsigned int ObjectDataStructureBaseT::PackMemberFieldsIntoBuffer( T_buffer& buf
 
 template< typename T, typename T_indices >
 unsigned int ObjectDataStructureBaseT::UnpackMemberFieldsFromBuffer( const char*& buffer,
-                                                                     std::map< std::string, Array1dT<T> >& member,
+                                                                     std::map< std::string, array<T> >& member,
                                                                      const T_indices& localIndices )
 {
   unsigned int sizeOfUnpackedChars = 0;
 
-  for( typename std::map< std::string, Array1dT<T> >::iterator i = member.begin() ; i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::iterator i = member.begin() ; i!=member.end() ; ++i )
   {
     const std::string fieldName = i->first;
-    Array1dT<T>& field = i->second;
+    array<T>& field = i->second;
 
     sizeOfUnpackedChars += UnpackFieldFromBuffer(  buffer, fieldName, field, localIndices );
   }
@@ -1492,20 +1492,20 @@ unsigned int ObjectDataStructureBaseT::UnpackMemberFieldsFromBuffer( const char*
  */
 template< typename T, typename T_indices >
 unsigned int ObjectDataStructureBaseT::UnpackMemberFieldsFromBuffer( const char*& buffer,
-                                                            const sArray1d& fieldNames,
-                                                            std::map< std::string, Array1dT<T> >& member,
+                                                            const array<string>& fieldNames,
+                                                            std::map< std::string, array<T> >& member,
                                                             const T_indices& localIndices )
 {
   unsigned int sizeOfUnpackedChars = 0;
 
-  sArray1d::const_iterator fieldName=fieldNames.begin() ;
+  array<string>::const_iterator fieldName=fieldNames.begin() ;
 
   for(  ; fieldName!=fieldNames.end(); ++fieldName )
   {
-    const typename std::map< std::string, Array1dT<T> >::iterator i = member.find(*fieldName);
+    const typename std::map< std::string, array<T> >::iterator i = member.find(*fieldName);
     if( i != member.end() )
     {
-      Array1dT<T>& field = i->second;
+      array<T>& field = i->second;
       sizeOfUnpackedChars += UnpackFieldFromBuffer(  buffer, *fieldName, field, localIndices );
     }
   }
@@ -1525,7 +1525,7 @@ unsigned int ObjectDataStructureBaseT::UnpackMemberFieldsFromBuffer( const char*
 template< typename T, typename T_indices >
 unsigned int ObjectDataStructureBaseT::PackFieldIntoBuffer( bufvector& buffer,
                                                             const std::string& fieldName ,
-                                                            const Array1dT<T>& field,
+                                                            const array<T>& field,
                                                             const T_indices& localIndices,
                                                             const bool doBufferPacking ) const
 {
@@ -1561,7 +1561,7 @@ unsigned int ObjectDataStructureBaseT::PackFieldIntoBuffer( bufvector& buffer,
 template< typename T, typename T_indices >
 unsigned int ObjectDataStructureBaseT::PackFieldIntoBuffer( char*& buffer,
                                                             const std::string& fieldName ,
-                                                            const Array1dT<T>& field,
+                                                            const array<T>& field,
                                                             const T_indices& localIndices,
                                                             const bool doBufferPacking ) const
 {
@@ -1610,7 +1610,7 @@ unsigned int ObjectDataStructureBaseT::PackFieldIntoBuffer( char*& buffer,
 template< typename T, typename T_indices >
 unsigned int ObjectDataStructureBaseT::UnpackFieldFromBuffer( const char*& buffer,
                                                               const std::string& fieldName ,
-                                                              Array1dT<T>& field,
+                                                              array<T>& field,
                                                               const T_indices& localIndices )
 {
   unsigned int sizeOfUnpackedChars = 0;
@@ -1662,15 +1662,15 @@ template< typename T >
 void ObjectDataStructureBaseT::ReadAsciiFieldData(const std::string& fieldName, const std::string& fileName)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
   std::ifstream fStream(fileName.c_str());
-  Array1dT<T>& field = iobjectmap->second;
+  array<T>& field = iobjectmap->second;
 
   // read data
   for( size_t i =0; i < field.size(); ++i){
@@ -1690,15 +1690,15 @@ template< typename T >
 void ObjectDataStructureBaseT::ReadIndexedAsciiFieldData(const std::string& fieldName, const std::string& fileName)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
   std::ifstream fStream(fileName.c_str());
-  Array1dT<T>& field = iobjectmap->second;
+  array<T>& field = iobjectmap->second;
 
   // read data
   std::string lineStr;
@@ -1724,15 +1724,15 @@ void ObjectDataStructureBaseT::ReadAsciiFieldData(const std::string& fieldName, 
                                                   const lSet& subset)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
   std::ifstream fStream(fileName.c_str());
-  Array1dT<T>& field = iobjectmap->second;
+  array<T>& field = iobjectmap->second;
 
   // read data
 
@@ -1758,10 +1758,10 @@ template< typename T >
 void ObjectDataStructureBaseT::WriteAsciiFieldData(const std::string& fieldName, const std::string& fileName, bool append)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
@@ -1775,7 +1775,7 @@ void ObjectDataStructureBaseT::WriteAsciiFieldData(const std::string& fieldName,
 
   fStream.precision(std::numeric_limits<realT>::digits10 + 2);
 
-  Array1dT<T>& field = iobjectmap->second;
+  array<T>& field = iobjectmap->second;
 
   // write data
   for( size_t i =0; i < field.size(); ++i){
@@ -1791,10 +1791,10 @@ void ObjectDataStructureBaseT::WriteAsciiFieldData(const std::string& fieldName,
                                                   const lSet& subset, bool append)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
@@ -1808,7 +1808,7 @@ void ObjectDataStructureBaseT::WriteAsciiFieldData(const std::string& fieldName,
 
   fStream.precision(std::numeric_limits<realT>::digits10 + 2);
 
-  Array1dT<T>& field = iobjectmap->second;
+  array<T>& field = iobjectmap->second;
 
   // write data
   lSet::const_iterator isubset=subset.begin();
@@ -1837,10 +1837,10 @@ void ObjectDataStructureBaseT::SetFieldToConstantFromString(const std::string& f
                                                             const bool& additive)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // check if field exisits
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
@@ -1863,10 +1863,10 @@ void ObjectDataStructureBaseT::SetFieldToConstantFromString(const std::string& f
                                                             const bool& additive)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // check if field exisits
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
@@ -1894,10 +1894,10 @@ void ObjectDataStructureBaseT::CopyFieldSubset(const std::string& fieldName,
                                                             const lArray1d& target)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // check if field exisits
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
@@ -1915,12 +1915,12 @@ void ObjectDataStructureBaseT::CopyFieldSubset(const std::string& fieldName,
 
 
 template< typename TYPE >
-void ObjectDataStructureBaseT::ConstructVariableOneToManyFromInverse( const std::string& mapname, const Array1dT<TYPE>& inverseMap )
+void ObjectDataStructureBaseT::ConstructVariableOneToManyFromInverse( const std::string& mapname, const array<TYPE>& inverseMap )
 {
-  Array1dT<lSet>& map = this->m_UnorderedVariableOneToManyMaps[mapname];
+  array<lSet>& map = this->m_UnorderedVariableOneToManyMaps[mapname];
 
   map.resize(this->m_DataLengths);
-  for( typename Array1dT<TYPE>::const_iterator i=inverseMap.begin() ; i!=inverseMap.end() ; ++i )
+  for( typename array<TYPE>::const_iterator i=inverseMap.begin() ; i!=inverseMap.end() ; ++i )
   {
     for( typename TYPE::const_iterator j=i->begin() ; j!=i->end() ; ++j  )
     {
@@ -1931,9 +1931,9 @@ void ObjectDataStructureBaseT::ConstructVariableOneToManyFromInverse( const std:
 
 
 template< typename TYPE, typename TYPE2 >
-void ObjectDataStructureBaseT::AddToVariableOneToManyFromInverse( const std::string& mapname, const Array1dT<TYPE>& inverseMap, const TYPE2& newIndices )
+void ObjectDataStructureBaseT::AddToVariableOneToManyFromInverse( const std::string& mapname, const array<TYPE>& inverseMap, const TYPE2& newIndices )
 {
-  Array1dT<lSet>& map = this->m_UnorderedVariableOneToManyMaps[mapname];
+  array<lSet>& map = this->m_UnorderedVariableOneToManyMaps[mapname];
 
   for( typename TYPE2::const_iterator i=newIndices.begin() ; i!=newIndices.end() ; ++i )
   {
@@ -1947,11 +1947,11 @@ void ObjectDataStructureBaseT::AddToVariableOneToManyFromInverse( const std::str
 
 
 template< typename T >
-void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source, const localIndex destination, std::map< std::string, Array1dT<T> >& member )
+void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source, const localIndex destination, std::map< std::string, array<T> >& member )
 {
-  for( typename std::map< std::string, Array1dT<T> >::iterator i=member.begin() ; i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::iterator i=member.begin() ; i!=member.end() ; ++i )
   {
-    Array1dT<T>& field = i->second;
+    array<T>& field = i->second;
     field[destination] = field[source];
 
   }
@@ -1961,11 +1961,11 @@ template< typename T >
 void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source,
                                                  const localIndex destination0,
                                                  const localIndex destination1,
-                                                 std::map< std::string, Array1dT<T> >& member )
+                                                 std::map< std::string, array<T> >& member )
 {
-  for( typename std::map< std::string, Array1dT<T> >::iterator i=member.begin() ; i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::iterator i=member.begin() ; i!=member.end() ; ++i )
   {
-    Array1dT<T>& field = i->second;
+    array<T>& field = i->second;
     field[destination0] = field[source];
     field[destination1] = field[source];
 
@@ -1973,12 +1973,12 @@ void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source,
 }
 
 template< typename T >
-void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source, const lArray1d& destination, std::map< std::string, Array1dT<T> >& member )
+void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source, const lArray1d& destination, std::map< std::string, array<T> >& member )
 {
 
-  for( typename std::map< std::string, Array1dT<T> >::iterator i=member.begin(); i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::iterator i=member.begin(); i!=member.end() ; ++i )
   {
-    Array1dT<T>& field = i->second;
+    array<T>& field = i->second;
     for( lArray1d::const_iterator iterDest=destination.begin() ; iterDest!=destination.end() ; ++iterDest )
     {
       field[*iterDest] = field[source];
@@ -1988,10 +1988,10 @@ void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source, const 
 }
 
 template< typename T >
-void ObjectDataStructureBaseT::AllocateTemporaryFields( const sArray1d& names, Array1dT<Array1dT<T>* >& vars )
+void ObjectDataStructureBaseT::AllocateTemporaryFields( const array<string>& names, array<array<T>* >& vars )
 {
   vars.resize( names.size() );
-  for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+  for( array<string>::size_type i=0 ; i<names.size() ; ++i )
   {
     this->AddKeylessDataField<T>(names[i],true,true);
     vars[i] = &(this->GetFieldData<T>(names[i]));
@@ -1999,9 +1999,9 @@ void ObjectDataStructureBaseT::AllocateTemporaryFields( const sArray1d& names, A
 }
 
 template< typename T >
-void ObjectDataStructureBaseT::DeallocateTemporaryFields( const sArray1d& names )
+void ObjectDataStructureBaseT::DeallocateTemporaryFields( const array<string>& names )
 {
-  for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+  for( array<string>::size_type i=0 ; i<names.size() ; ++i )
   {
       this->RemoveDataField<T>(names[i]);
   }
@@ -2027,45 +2027,45 @@ inline const std::map< std::string, gArray1d>& ObjectDataStructureBaseT::GetData
 { return m_GlobalIndexData; }
 
 template<>
-inline std::map< std::string, Array1dT<int> >& ObjectDataStructureBaseT::GetDataMemberMap<iArray1d>()
+inline std::map< std::string, array<int> >& ObjectDataStructureBaseT::GetDataMemberMap<array<integer>>()
 { return m_IntegerData; }
 template<>
-inline const std::map< std::string, Array1dT<int> >& ObjectDataStructureBaseT::GetDataMemberMap<iArray1d>() const
+inline const std::map< std::string, array<int> >& ObjectDataStructureBaseT::GetDataMemberMap<array<integer>>() const
 { return m_IntegerData; }
 
 template<>
-inline std::map< std::string, Array1dT<realT> >& ObjectDataStructureBaseT::GetDataMemberMap<rArray1d>()
+inline std::map< std::string, array<realT> >& ObjectDataStructureBaseT::GetDataMemberMap<array<real64>>()
 { return m_realData; }
 template<>
-inline const std::map< std::string, Array1dT<realT> >& ObjectDataStructureBaseT::GetDataMemberMap<rArray1d>() const
+inline const std::map< std::string, array<realT> >& ObjectDataStructureBaseT::GetDataMemberMap<array<real64>>() const
 { return m_realData; }
 
 template<>
-inline std::map< std::string, Array1dT<R1Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R1Tensor> >()
+inline std::map< std::string, array<R1Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R1Tensor> >()
 { return m_R1TensorData; }
 template<>
-inline const std::map< std::string, Array1dT<R1Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R1Tensor> >() const
+inline const std::map< std::string, array<R1Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R1Tensor> >() const
 { return m_R1TensorData; }
 
 template<>
-inline std::map< std::string, Array1dT<R2Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R2Tensor> >()
+inline std::map< std::string, array<R2Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R2Tensor> >()
 { return m_R2TensorData; }
 template<>
-inline const std::map< std::string, Array1dT<R2Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R2Tensor> >() const
+inline const std::map< std::string, array<R2Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R2Tensor> >() const
 { return m_R2TensorData; }
 
 template<>
-inline std::map< std::string, Array1dT<R2SymTensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R2SymTensor> >()
+inline std::map< std::string, array<R2SymTensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R2SymTensor> >()
 { return m_R2SymTensorData; }
 template<>
-inline const std::map< std::string, Array1dT<R2SymTensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R2SymTensor> >() const
+inline const std::map< std::string, array<R2SymTensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R2SymTensor> >() const
 { return m_R2SymTensorData; }
 
 template<>
-inline std::map< std::string, Array1dT<Array1dT<R1Tensor> > >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<Array1dT<R1Tensor> > >()
+inline std::map< std::string, array<array<R1Tensor> > >& ObjectDataStructureBaseT::GetDataMemberMap<array<array<R1Tensor> > >()
 { return m_ArrayR1TensorData; }
 template<>
-inline const std::map< std::string, Array1dT<Array1dT<R1Tensor> > >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<Array1dT<R1Tensor> > >() const
+inline const std::map< std::string, array<array<R1Tensor> > >& ObjectDataStructureBaseT::GetDataMemberMap<array<array<R1Tensor> > >() const
 { return m_ArrayR1TensorData; }
 
 

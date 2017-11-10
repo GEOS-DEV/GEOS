@@ -437,36 +437,36 @@ void ParallelPlateFlowSolverBase::InitializeCommunications( PartitionBase& parti
 
 void ParallelPlateFlowSolverBase::Initialize( PhysicalDomainT& domain, SpatialPartition& partition )
 {
-  // iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  // iArray1d& flowEdgeType = domain.m_feEdgeManager.GetFieldData<int>("flowEdgeType");
+  // array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  // array<integer>& flowEdgeType = domain.m_feEdgeManager.GetFieldData<int>("flowEdgeType");
 
   // flowFaceType = -1;
   // flowEdgeType = -1;
   
 
   // Viscosity fields
-  rArray1d& viscosity = domain.m_feEdgeManager.GetFieldData<realT>(ViscosityStr);
-  rArray1d& edgeDensity = domain.m_feEdgeManager.GetFieldData<realT>("edgeDensity");
+  array<real64>& viscosity = domain.m_feEdgeManager.GetFieldData<realT>(ViscosityStr);
+  array<real64>& edgeDensity = domain.m_feEdgeManager.GetFieldData<realT>("edgeDensity");
   viscosity = m_mu;
   edgeDensity = m_rho_o;
 
-  rArray1d& refDensity = domain.m_feFaceManager.GetFieldData<realT>("referenceDensity");
-  rArray1d& faceMu = domain.m_feFaceManager.GetFieldData<realT>("faceMu");
+  array<real64>& refDensity = domain.m_feFaceManager.GetFieldData<realT>("referenceDensity");
+  array<real64>& faceMu = domain.m_feFaceManager.GetFieldData<realT>("faceMu");
   refDensity = m_rho_o;
   faceMu = m_mu;  
 
   // Multiphase tracers
   if (m_multiphaseFlow)
   {
-    const rArray1d& faceFluidVolume = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+    const array<real64>& faceFluidVolume = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 
 
     for(localIndex ii=0; ii<m_tracerNames.size(); ii++)
     {
       
-      rArray1d& fluidTracerVolume = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesMass[ii]);
-      rArray1d& fluidTracerDVDT = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesDMDT[ii]);
-      rArray1d& fluidTracerVolumeFraction = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
+      array<real64>& fluidTracerVolume = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesMass[ii]);
+      array<real64>& fluidTracerDVDT = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesDMDT[ii]);
+      array<real64>& fluidTracerVolumeFraction = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
 
       fluidTracerDVDT = 0.0;
       if (ii == 0)
@@ -484,7 +484,7 @@ void ParallelPlateFlowSolverBase::Initialize( PhysicalDomainT& domain, SpatialPa
 #ifdef SRC_EXTERNAL
   if (m_leakoffModel.GetLeakoffCoefficient() > 0)
   {
-    rArray1d& initialSaturatedTime = domain.m_feFaceManager.GetFieldData<realT>("initialSaturatedTime");
+    array<real64>& initialSaturatedTime = domain.m_feFaceManager.GetFieldData<realT>("initialSaturatedTime");
     initialSaturatedTime = std::numeric_limits<realT>::max();
   }
 #endif
@@ -493,22 +493,22 @@ void ParallelPlateFlowSolverBase::Initialize( PhysicalDomainT& domain, SpatialPa
 void ParallelPlateFlowSolverBase::AdvectMultiphaseFields(PhysicalDomainT& domain, SpatialPartition& partition, realT time, realT dt)
 {
  
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  const rArray1d& faceFluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
-  const rArray1d& faceFluidVolume_old  = domain.m_feFaceManager.GetFieldData<realT>("Volume_old");
-  const rArray1d& faceFluidMass  = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  const rArray1d& faceFluidDensity  = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  // const rArray1d& faceArea = domain.m_feFaceManager.GetFieldData<realT>( PS_STR::FaceAreaStr );
-  const Array1dT<R1Tensor>& edgeCenters = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
-  const Array1dT<R1Tensor>& faceCenters = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-  const rArray1d& edgeLengths = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
-  const rArray1d& apertures = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr  );
-  // const rArray1d& faceFluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  const rArray1d& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  const Array1dT<R1Tensor>& faceVelocities = domain.m_feFaceManager.GetFieldData<R1Tensor>( FluidVelocityStr );
-  const rArray1d& facePackVfs = domain.m_feFaceManager.GetFieldData<realT>(ProppantPackVolumeFractionStr);
-  const rArray1d& edgeMus = domain.m_feEdgeManager.GetFieldData<realT>(ViscosityStr);
-  const rArray1d& edgeDeltaP = domain.m_feEdgeManager.GetFieldData<realT>("DeltaP");
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  const array<real64>& faceFluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+  const array<real64>& faceFluidVolume_old  = domain.m_feFaceManager.GetFieldData<realT>("Volume_old");
+  const array<real64>& faceFluidMass  = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<real64>& faceFluidDensity  = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  // const array<real64>& faceArea = domain.m_feFaceManager.GetFieldData<realT>( PS_STR::FaceAreaStr );
+  const array<R1Tensor>& edgeCenters = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
+  const array<R1Tensor>& faceCenters = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+  const array<real64>& edgeLengths = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
+  const array<real64>& apertures = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr  );
+  // const array<real64>& faceFluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<real64>& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  const array<R1Tensor>& faceVelocities = domain.m_feFaceManager.GetFieldData<R1Tensor>( FluidVelocityStr );
+  const array<real64>& facePackVfs = domain.m_feFaceManager.GetFieldData<realT>(ProppantPackVolumeFractionStr);
+  const array<real64>& edgeMus = domain.m_feEdgeManager.GetFieldData<realT>(ViscosityStr);
+  const array<real64>& edgeDeltaP = domain.m_feEdgeManager.GetFieldData<realT>("DeltaP");
   std::vector<multiphaseSort> mpsort(m_tracerNames.size());
   
   // Apply volume fractions to given setnames (or to flow BC's if not defined)
@@ -687,7 +687,7 @@ void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& doma
     }
   }   
 
-  void ParallelPlateFlowSolverBase::GenerateMultiphaseArray(rArrayPtrs& multiphasePtrs, localIndex kf, rArray1d& multiphaseVolumeFraction)
+  void ParallelPlateFlowSolverBase::GenerateMultiphaseArray(rArrayPtrs& multiphasePtrs, localIndex kf, array<real64>& multiphaseVolumeFraction)
   {
     realT scale = 0.0;
     for (localIndex ii=0; ii<m_tracerNames.size(); ii++)
@@ -698,10 +698,10 @@ void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& doma
     multiphaseVolumeFraction /= scale;
   }
 
-  void ParallelPlateFlowSolverBase::GenerateMultiphaseBCArray(rArray1d& multiphaseVolumeFraction, realT time)
+  void ParallelPlateFlowSolverBase::GenerateMultiphaseBCArray(array<real64>& multiphaseVolumeFraction, realT time)
   {
     realT scale = 0.0;
-    rArray1d t(1);
+    array<real64> t(1);
     t[0] = time;
 
     for(localIndex ii=0; ii<m_tracerNames.size(); ii++)
@@ -716,11 +716,11 @@ void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& doma
   // void ParallelPlateFlowSolverBase::BoundaryTracerValues( PhysicalDomainT& domain,ObjectDataStructureBaseT& object,
   //                                                         BoundaryConditionBase* const bc, const lSet& aset, const realT time, const realT dt )
   // {
-  //   const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  //   const rArray1d& faceFluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+  //   const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  //   const array<real64>& faceFluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 
   //   // Read input tables
-  //   rArray1d faceVolumeFraction(m_tracerNames.size());
+  //   array<real64> faceVolumeFraction(m_tracerNames.size());
   //   GenerateMultiphaseBCArray(faceVolumeFraction, time);
 
   //   // Set values at BC locations
@@ -751,11 +751,11 @@ void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& doma
 
   void ParallelPlateFlowSolverBase::BoundaryTracerValuesToSet( PhysicalDomainT& domain, const realT time )
   {
-    const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-    const rArray1d& faceFluidMass  = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();    
+    const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+    const array<real64>& faceFluidMass  = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();    
 
     // Read input tables
-    rArray1d faceVolumeFraction(m_tracerNames.size());
+    array<real64> faceVolumeFraction(m_tracerNames.size());
     GenerateMultiphaseBCArray(faceVolumeFraction, time);
 
     // Set values at BC locations
@@ -785,9 +785,9 @@ void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& doma
 
   void ParallelPlateFlowSolverBase::MarkFaceSaturationTime( PhysicalDomainT& domain, const realT time,const realT dt )
   {
-    rArray1d& pressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-    const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-    rArray1d& initialSaturatedTime = domain.m_feFaceManager.GetFieldData<realT>("initialSaturatedTime");
+    array<real64>& pressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+    const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+    array<real64>& initialSaturatedTime = domain.m_feFaceManager.GetFieldData<realT>("initialSaturatedTime");
 
       for( localIndex kf = 0; kf < domain.m_feFaceManager.DataLengths(); ++kf )
       {
@@ -808,14 +808,14 @@ void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& doma
 // {
 //   if (m_multiphaseFlow)
 //   {
-//     const rArray1d& faceFluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+//     const array<real64>& faceFluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 //     localIndex numFlowFaces = itr->second.size();
 //     realT viscosity = 0.0;
 //     realT volume = 0.0;
 
 //     for(localIndex ii=0; ii<m_tracerNamesVolumeFraction.size(); ii++)
 //     {
-//       const rArray1d& fluidTracerVolumeFraction = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
+//       const array<real64>& fluidTracerVolumeFraction = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
       
 //       for( localIndex jj=0; jj<numFlowFaces; jj++)
 //       {
@@ -844,7 +844,7 @@ void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& doma
 
 //     for(localIndex ii=0; ii<m_tracerNamesVolumeFraction.size(); ii++)
 //     {
-//       const rArray1d& fluidTracerVolumeFraction = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
+//       const array<real64>& fluidTracerVolumeFraction = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
         
 //       if (m_multiphaseMixingMode == 0)
 //       {
@@ -905,8 +905,8 @@ void HerschelBulkleyParallelPlateFluidModel::ReadXML( TICPP::HierarchicalDataNod
   m_phi = m_phiM/m_M;
 
   /* build lookup table */
-  rArray1d xs;
-  rArray1d values;
+  array<real64> xs;
+  array<real64> values;
   xs.resize(16);
   values.resize(16);
   for(int i =0 ; i < 16; i++)

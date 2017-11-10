@@ -136,9 +136,9 @@ void ParallelPlateFlowSolverFEM:: SetupSystem (PhysicalDomainT&  domain,
                                                 SpatialPartition& partition, const realT& time)
 {
   
-  const iArray1d& faceGhostRank  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  const iArray1d& nodeGhostRank  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_TrilinosIndexStr);
+  const array<integer>& faceGhostRank  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<integer>& nodeGhostRank  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_TrilinosIndexStr);
   
   //if(m_doApertureUpdate) UpdateAperture(domain);
   
@@ -225,7 +225,7 @@ void ParallelPlateFlowSolverFEM:: SetupSystem (PhysicalDomainT&  domain,
     {
 
       const lArray1d& nodelist = domain.m_feFaceManager.m_toNodesRelation[*kf];
-      iArray1d dofIndex (nodelist.size());
+      array<integer> dofIndex (nodelist.size());
       for( lArray1d::size_type a=0 ; a<=nodelist.size() ; ++ a )
       {
         localIndex b = nodelist[b];
@@ -257,8 +257,8 @@ void ParallelPlateFlowSolverFEM :: Assemble (PhysicalDomainT&  domain,
                                                   const realT& time,
                                                   const realT& dt)
 {
-  const iArray1d& faceGhostRank  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  const iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_TrilinosIndexStr);
+  const array<integer>& faceGhostRank  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_TrilinosIndexStr);
 
 
   matrix->Scale(0.0);
@@ -323,10 +323,10 @@ void ParallelPlateFlowSolverFEM:: Solve (PhysicalDomainT&  domain,
 {
 
   // face fields
-  iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_TrilinosIndexStr);
-  iArray1d& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_TrilinosIndexStr);
+  array<integer>& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
 
-  rArray1d& massRate = domain.m_feFaceManager.GetFieldData<realT>("massRate");
+  array<real64>& massRate = domain.m_feFaceManager.GetFieldData<realT>("massRate");
 
   // set initial guess
   int dummy;
@@ -397,7 +397,7 @@ void ParallelPlateFlowSolverFEM::InitializeCommunications( PartitionBase& partit
 void ParallelPlateFlowSolverFEM::TimeStep( const realT& time,
                                                         const realT& dt,
                                                         PhysicalDomainT& domain,
-                                                        const sArray1d& namesOfSolverRegions ,
+                                                        const array<string>& namesOfSolverRegions ,
                                                         SpatialPartition& partition,
                                                         FractunatorBase* const fractunator )
 {
@@ -411,7 +411,7 @@ void ParallelPlateFlowSolverFEM::DefineFlowSets( PhysicalDomainT& domain )
     FaceManagerT& faceManager = domain.m_feFaceManager;
     EdgeManagerT& edgeManager = domain.m_feEdgeManager;
 
-    const iArray1d& flowFaceType = faceManager.GetFieldData<int>("flowFaceType");
+    const array<integer>& flowFaceType = faceManager.GetFieldData<int>("flowFaceType");
 
     m_faceSet.clear();
 

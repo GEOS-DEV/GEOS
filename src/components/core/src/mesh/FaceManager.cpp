@@ -73,10 +73,10 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
 {
 
   localIndex_array tempNodeList;
-  Array1dT<localIndex_array> tempFaceToNodeMap;
+  array<localIndex_array> tempFaceToNodeMap;
 
   localIndex numFaces = 0;
-  Array1dT<localIndex_array> facesByLowestNode;
+  array<localIndex_array> facesByLowestNode;
 
   Array2dT<localIndex> & elemRegionList = this->elementRegionList();
   Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
@@ -222,7 +222,7 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
   SortAllFaceNodes(*nodeManager,*elementManager);
 
 
-//  Array1dT<R1Tensor>& faceCenter = this->GetFieldData<R1Tensor>( "FaceCenter" );
+//  array<R1Tensor>& faceCenter = this->GetFieldData<R1Tensor>( "FaceCenter" );
 //  for( localIndex k=0 ; k<DataLengths() ; ++k )
 //  {
 //    FaceCenter( nodeManager, k , faceCenter[k] );
@@ -250,9 +250,9 @@ void FaceManager::AddNewFace( localIndex const & kReg,
                               localIndex const & ke,
                               localIndex const & kelf,
                               localIndex & numFaces,
-                              Array1dT<localIndex_array>& facesByLowestNode,
+                              array<localIndex_array>& facesByLowestNode,
                               localIndex_array& tempNodeList,
-                              Array1dT<localIndex_array>& tempFaceToNodeMap,
+                              array<localIndex_array>& tempFaceToNodeMap,
                               CellBlockSubRegion const & elementRegion )
 {
   // and add the face to facesByLowestNode[]
@@ -322,7 +322,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   view_rtype_const<r1_array> const & X = nodeManager.referencePosition();
 
   // get face center (average vertex location) and store node coordinates
-  Array1dT<R1Tensor> faceCoords(numFaceNodes);
+  array<R1Tensor> faceCoords(numFaceNodes);
   R1Tensor fc;
   for( unsigned int n =0; n < numFaceNodes; ++n){
     localIndex nd = faceNodes[n];
@@ -389,7 +389,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   if (numFaceNodes > 2)
   {
     /// Sort nodes counterclockwise around face center
-    Array1dT< std::pair<realT,int> > thetaOrder(numFaceNodes);
+    array< std::pair<realT,int> > thetaOrder(numFaceNodes);
     for( unsigned int n =0; n < numFaceNodes; ++n)
     {
       R1Tensor v = faceCoords[n];

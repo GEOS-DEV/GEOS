@@ -99,7 +99,7 @@ public:
   double TimeStep( const realT& time, const realT& dt,
                  const int cycleNumber,
                  PhysicalDomainT& domain,
-                 const sArray1d& namesOfSolverRegions, SpatialPartition& partition,
+                 const array<string>& namesOfSolverRegions, SpatialPartition& partition,
                  FractunatorBase* const fractunator );
                  
   void DefineFlowSets( PhysicalDomainT& domain );
@@ -156,7 +156,7 @@ public:
                                      SpatialPartition& partition,
                                      int& numLocalRows,
                                      int& numGlobalRows,
-                                     iArray1d& localIndices,
+                                     array<integer>& localIndices,
                                      int offset );
 
 
@@ -223,16 +223,16 @@ private:
   void InitializeDensity( PhysicalDomainT& domain);
   void UpdateAperture(PhysicalDomainT&  domain);
 
-  realT TwoFacePermeability_FV(const Array1dT<R1Tensor>& edgeCenters,
-                            const rArray1d& edgeLengths,
-                            const Array1dT<R1Tensor>& faceCenters,
-                            const rArray1d& apertures,
+  realT TwoFacePermeability_FV(const array<R1Tensor>& edgeCenters,
+                            const array<real64>& edgeLengths,
+                            const array<R1Tensor>& faceCenters,
+                            const array<real64>& apertures,
                             const localIndex eg,
                             const localIndex kf,
                             const localIndex kfb,
-                            const Array1dT<rArray1d>* const dwdu,
-                            rArray1d* const dkdu_r,
-                            rArray1d* const dkdu_s);
+                            const array<array<real64>>* const dwdu,
+                            array<real64>* const dkdu_r,
+                            array<real64>* const dkdu_s);
   
   lSet m_faceSet;
   localIndex m_numFaces;
@@ -249,12 +249,12 @@ private:
   const int this_mpi_process;
   const int n_mpi_processes;
   
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+  std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
   
   static int m_instances;
   realT m_gamma;
   
-  Array1dT<locallyIndexedReal> indexedFluxes;
+  array<locallyIndexedReal> indexedFluxes;
 
   
 };

@@ -166,8 +166,8 @@ void CalculateGradient( realT Gradient[3][3] ,
 
 
 void CalculateGradient( R2TensorT<nsdof>& Gradient ,
-                        const Array1dT<R1TensorT<nsdof> >& disp,
-                        const Array1dT<R1TensorT<nsdof> >& dNdX )
+                        const array<R1TensorT<nsdof> >& disp,
+                        const array<R1TensorT<nsdof> >& dNdX )
 
 {
   Gradient = 0.0;

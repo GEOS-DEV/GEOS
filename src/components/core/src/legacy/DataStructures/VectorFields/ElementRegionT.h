@@ -103,8 +103,8 @@ public:
 
   void Initialize( const PhysicalDomainT& domain );
 
-  virtual void DeserializeObjectField(const std::string& ifield, const rArray1d& field);
-  virtual void DeserializeObjectFields(const sArray1d& names, const Array1dT<rArray1d>& fields);
+  virtual void DeserializeObjectField(const std::string& ifield, const array<real64>& field);
+  virtual void DeserializeObjectFields(const array<string>& names, const array<array<real64>>& fields);
   
   void ReadXML( TICPP::HierarchicalDataNode* const hdn,
                 const bool isRestart );
@@ -121,7 +121,7 @@ public:
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL);
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  = NULL) { (void)referenceObject; }
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager ,
-                                                         Array1dT<gArray1d>& objectToCompositionObject  )
+                                                         array<gArray1d>& objectToCompositionObject  )
   {
     (void)compositionObjectManager;
     (void)objectToCompositionObject;
@@ -166,7 +166,7 @@ public:
   void CalculateNodalForceFromStress(const localIndex elemID,
                                      const NodeManager& nodeManager,
                                      R2SymTensor& stress,
-                                     Array1dT<R1Tensor>& fNode);
+                                     array<R1Tensor>& fNode);
 
   int ProcessElements(  NodeManager& nodeManager,
                         StableTimeStep& timeStep,
@@ -206,18 +206,18 @@ public:
 
   template< typename T_indices >
   unsigned int PackFieldsIntoBuffer( bufvector& buffer,
-                                     const sArray1d& fieldNames,
+                                     const array<string>& fieldNames,
                                      const T_indices& localIndices,
                                      const bool doBufferPacking=true ) const;
 
   template< typename T_indices >
   unsigned int PackFieldsIntoBuffer( char*& buffer,
-                                     const sArray1d& fieldNames,
+                                     const array<string>& fieldNames,
                                      const T_indices& localIndices,
                                      const bool doBufferPacking=true ) const;
 
   unsigned int UnpackFieldsFromBuffer( const char*& buffer,
-                                       const sArray1d& fieldNames,
+                                       const array<string>& fieldNames,
                                        const lArray1d& localIndices );
 
   template< typename T_indices >
@@ -262,7 +262,7 @@ public:
   /// returns true if element id pair is inside region
   bool ContainsElement(const ElementIdPair& ep);
 
-  iArray1d SiloNodeOrdering();
+  array<integer> SiloNodeOrdering();
 
   bool SplitObject( const localIndex indexToSplit,
                     const int rank,
@@ -299,21 +299,21 @@ public:
 //  UnorderedVariableOneToManyRelation& m_toLocalVolumeRelation;
 //  /////////////////////////////////////////////
 
-  Array1dT< Array2dT<R1Tensor> > m_dNdX;
+  array< Array2dT<R1Tensor> > m_dNdX;
   rArray2d m_detJ;
   rArray2d m_detJ_n;
   rArray2d m_detJ_np1;
   Array2dT< R2Tensor >  m_dUdX;
   Array2dT< R2Tensor > m_Finv;
-  rArray1d m_Kregion;
+  array<real64> m_Kregion;
 
-  Array1dT< Array1dT<R2SymTensor> > m_Dadt;
-  Array1dT< Array1dT<R2Tensor> >  m_Rot;
+  array< array<R2SymTensor> > m_Dadt;
+  array< array<R2Tensor> >  m_Rot;
 
 
-  Array1dT< rArray2d > m_Ke;
-  Array1dT< rArray2d > m_matrixB;
-  Array1dT< rArray2d > m_matrixE;
+  array< rArray2d > m_Ke;
+  array< rArray2d > m_matrixB;
+  array< rArray2d > m_matrixE;
 
 
 

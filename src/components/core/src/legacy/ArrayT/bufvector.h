@@ -96,7 +96,7 @@ public:
   localIndex Pack( r1_array const& var )    { return PrivatePackArray(var); }
   localIndex Pack( r2_array const& var )    { return PrivatePackArray(var); }
   localIndex Pack( r2Sym_array const& var ) { return PrivatePackArray(var); }
-  localIndex Pack( const sArray1d& var );
+  localIndex Pack( const array<string>& var );
 
 
   localIndex Pack( const set<int>& var )              { return PrivatePackSet(var); }
@@ -172,7 +172,7 @@ public:
   static localIndex Unpack( const char*& buffer, r1_array& var ) { return PrivateUnpackArray(buffer,var); }
   static localIndex Unpack( const char*& buffer, r2_array& var ) { return PrivateUnpackArray(buffer,var); }
   static localIndex Unpack( const char*& buffer, r2Sym_array& var ) { return PrivateUnpackArray(buffer,var); }
-  static localIndex Unpack( const char*& buffer, sArray1d& var );
+  static localIndex Unpack( const char*& buffer, array<string>& var );
 
   static localIndex Unpack( const char*& buffer, set<int>& var ) { return PrivateUnpackSet(buffer,var); }
   static localIndex Unpack( const char*& buffer, set<long int>& var ) { return PrivateUnpackSet(buffer,var); }
@@ -513,13 +513,13 @@ private:
 };
 
 
-inline localIndex bufvector::Pack( const sArray1d& container )
+inline localIndex bufvector::Pack( const array<string>& container )
 {
   localIndex sizeOfPackedChars = 0;
   const localIndex arrayLength = container.size();
 
   sizeOfPackedChars += this->Pack( arrayLength );
-  for( sArray1d::const_iterator i=container.begin() ; i!=container.end() ; ++i )
+  for( array<string>::const_iterator i=container.begin() ; i!=container.end() ; ++i )
   {
     sizeOfPackedChars += this->Pack(*i);
   }
@@ -529,7 +529,7 @@ inline localIndex bufvector::Pack( const sArray1d& container )
 
 
 
-inline localIndex bufvector::Unpack( const char*& buffer, sArray1d& array )
+inline localIndex bufvector::Unpack( const char*& buffer, array<string>& array )
 {
   array.clear();
   localIndex sizeOfUnpackedChars = 0;

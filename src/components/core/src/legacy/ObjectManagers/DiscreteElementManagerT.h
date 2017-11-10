@@ -141,8 +141,8 @@ struct DiscreteElementContact
     siloFile.DBWriteWrapper("m_normal_z",m_normal[2]);
   }
 
-  void Serialize(std::map<std::string, rArray1d>& realFields,
-                 std::map<std::string, Array1dT<R1Tensor> >& R1Fields) const
+  void Serialize(std::map<std::string, array<real64>>& realFields,
+                 std::map<std::string, array<R1Tensor> >& R1Fields) const
   {
     realFields["CDEM_Area"].push_back(m_area);
     realFields["CDEM_R1"].push_back(m_r0);
@@ -154,8 +154,8 @@ struct DiscreteElementContact
   }
 
   static void WriteSilo(SiloFile& siloFile,
-                        std::map<std::string, rArray1d>& realFields,
-                        std::map<std::string, Array1dT<R1Tensor> >& R1Fields,
+                        std::map<std::string, array<real64>>& realFields,
+                        std::map<std::string, array<R1Tensor> >& R1Fields,
                         const std::string& siloDirName,
                         const std::string& meshname,
                         const int centering,
@@ -168,10 +168,10 @@ struct DiscreteElementContact
     siloFile.MakeSubDirectory( subDirectory, rootDirectory );
     DBSetDir(siloFile.m_dbFilePtr, subDirectory.c_str());
 
-    for(std::map<std::string, rArray1d>::iterator it = realFields.begin(); it != realFields.end(); ++it)
+    for(std::map<std::string, array<real64>>::iterator it = realFields.begin(); it != realFields.end(); ++it)
       siloFile.WriteDataField<realT>(meshname.c_str(), it->first, it->second, centering, cycleNum, problemTime, rootDirectory, "none" );
 
-    for(std::map<std::string, Array1dT<R1Tensor> >::iterator it = R1Fields.begin(); it != R1Fields.end(); ++it)
+    for(std::map<std::string, array<R1Tensor> >::iterator it = R1Fields.begin(); it != R1Fields.end(); ++it)
       siloFile.WriteDataField<realT>(meshname.c_str(), it->first, it->second, centering, cycleNum, problemTime, rootDirectory, "none" );
 
     DBSetDir(siloFile.m_dbFilePtr, "..");
@@ -258,7 +258,7 @@ public:
     //get the local frame velocity
     R1Tensor vl;
     {
-      const Array1dT<R1Tensor>& rotationalVelocity = this->GetFieldData< FieldInfo::rotationalVelocity> ();
+      const array<R1Tensor>& rotationalVelocity = this->GetFieldData< FieldInfo::rotationalVelocity> ();
       R1Tensor lpt;
       this->GlobalToLocal(idem, point, lpt);
       vl.Cross(lpt, rotationalVelocity[idem]);
@@ -286,8 +286,8 @@ public:
     R1Tensor vl;
     {
       const localIndex inode = m_discreteElementToExternalNodesMap[idem][a];
-      const Array1dT<R1Tensor>& rotationalVelocity = this->GetFieldData< FieldInfo::rotationalVelocity> ();
-      const Array1dT<R1Tensor>& relativePosition = m_nodeManager->GetFieldData< FieldInfo::relativePosition> ();
+      const array<R1Tensor>& rotationalVelocity = this->GetFieldData< FieldInfo::rotationalVelocity> ();
+      const array<R1Tensor>& relativePosition = m_nodeManager->GetFieldData< FieldInfo::relativePosition> ();
       vl.Cross(relativePosition[inode], rotationalVelocity[idem]);
     }
 
@@ -314,8 +314,8 @@ public:
     R1Tensor vl;
     {
       int inode = m_discreteElementToExternalNodesMap[i][j];
-      const Array1dT<R1Tensor>& rotationalVelocity = this->GetFieldData< FieldInfo::rotationalVelocity> ();
-      const Array1dT<R1Tensor>& relativePosition = m_nodeManager->GetFieldData< FieldInfo::relativePosition> ();
+      const array<R1Tensor>& rotationalVelocity = this->GetFieldData< FieldInfo::rotationalVelocity> ();
+      const array<R1Tensor>& relativePosition = m_nodeManager->GetFieldData< FieldInfo::relativePosition> ();
       vl.Cross(relativePosition[inode], rotationalVelocity[i]);
     }
 
@@ -412,7 +412,7 @@ private:
    * @param[out] inertia Moment of inertia of the polyhedron
    */
   static void CalculatePhysicalProperties(
-      const Array1dT<R1Tensor>& p,
+      const array<R1Tensor>& p,
       const unsigned int tmax,
       const lArray1d& index,
       realT& mass,
@@ -529,7 +529,7 @@ private:
  * @param[out] Pbbb Projection integral
  */
 /*
-static void ComputeProjectionIntegrals(const Array1dT<R1Tensor>& p,
+static void ComputeProjectionIntegrals(const array<R1Tensor>& p,
                                     const unsigned int tmax,
                                     const lArray1d& index,
                                     const unsigned int faceIndex,
@@ -663,7 +663,7 @@ static void ComputeProjectionIntegrals(const Array1dT<R1Tensor>& p,
  * @param[out] Fcca Face integral
  */
 /*
-static void ComputeFaceIntegrals(const Array1dT<R1Tensor>& p,
+static void ComputeFaceIntegrals(const array<R1Tensor>& p,
                           const unsigned int tmax,
                           const lArray1d& index,
                           const unsigned int faceIndex,
@@ -751,7 +751,7 @@ static void ComputeFaceIntegrals(const Array1dT<R1Tensor>& p,
  * @param[out] T0 Volume integral
  * @param[out] T Volume integral
  *//*
-static void ComputeVolumeIntegrals( const Array1dT<R1Tensor>& p,
+static void ComputeVolumeIntegrals( const array<R1Tensor>& p,
                              const unsigned int tmax,
                              const lArray1d& index,
                              realT& T0,
@@ -839,7 +839,7 @@ static void ComputeVolumeIntegrals( const Array1dT<R1Tensor>& p,
  */
 /*
 static void CalculatePhysicalProperties2(
-    const Array1dT<R1Tensor>& p,
+    const array<R1Tensor>& p,
     const unsigned int tmax,
     const lArray1d& index,
     realT& mass,

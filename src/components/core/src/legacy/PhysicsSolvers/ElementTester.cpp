@@ -98,7 +98,7 @@ double ElementTester::TimeStep( const realT& time,
                               const realT& dt,
                               const int cycleNumber,
                               PhysicalDomainT * domain,
-                              const sArray1d& namesOfSolverRegions,
+                              const array<string>& namesOfSolverRegions,
                               SpatialPartition& partition,
                               FractunatorBase* const fractunator )
 {  
@@ -166,7 +166,7 @@ void ElementTester::TestRegion(const realT& time ,
     CheckElement(feElement);
     
     std::cout << "**Rotating element 90 deg in x/y**" << std::endl;
-    for( Array1dT<R1Tensor>::size_type i =0; i < nodeCoords.size(); ++i){
+    for( array<R1Tensor>::size_type i =0; i < nodeCoords.size(); ++i){
     	realT x = nodeCoords[i][0];
     	realT y = nodeCoords[i][1];
     	nodeCoords[i][0] = -y;
@@ -176,7 +176,7 @@ void ElementTester::TestRegion(const realT& time ,
     CheckElement(feElement);
     
     std::cout << "**Rotating element 90 deg in x/z**" << std::endl;
-    for(Array1dT<R1Tensor>::size_type i =0; i < nodeCoords.size(); ++i){
+    for(array<R1Tensor>::size_type i =0; i < nodeCoords.size(); ++i){
     	realT x = nodeCoords[i][0];
     	realT z = nodeCoords[i][2];
     	nodeCoords[i][0] =  z;

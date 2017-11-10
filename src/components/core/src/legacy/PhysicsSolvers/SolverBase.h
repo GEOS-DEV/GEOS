@@ -350,17 +350,17 @@ public:
   }
 */
 #if USECPP11==1
-  Array1dT<std::shared_ptr<Epetra_Map> >         m_rowMap;
-  Array1dT<std::shared_ptr<Epetra_FEVector> >    m_solution;
-  Array1dT<std::shared_ptr<Epetra_FEVector> >    m_lastSolution;
-  Array1dT<std::shared_ptr<Epetra_FEVector> >    m_rhs;
+  array<std::shared_ptr<Epetra_Map> >         m_rowMap;
+  array<std::shared_ptr<Epetra_FEVector> >    m_solution;
+  array<std::shared_ptr<Epetra_FEVector> >    m_lastSolution;
+  array<std::shared_ptr<Epetra_FEVector> >    m_rhs;
   Array2dT<std::shared_ptr<Epetra_FECrsGraph> >  m_sparsity;
   Array2dT<std::shared_ptr<Epetra_FECrsMatrix> > m_matrix;
 //  Array2dT<std::shared_ptr<Epetra_FECrsMatrix> > m_scratch;
 #else
-  Array1dT<Epetra_Map*>         m_rowMap;
-  Array1dT<Epetra_FEVector*>    m_solution;
-  Array1dT<Epetra_FEVector*>    m_rhs;
+  array<Epetra_Map*>         m_rowMap;
+  array<Epetra_FEVector*>    m_solution;
+  array<Epetra_FEVector*>    m_rhs;
   Array2dT<Epetra_FECrsGraph*>  m_sparsity;
   Array2dT<Epetra_FECrsMatrix*> m_matrix;
 #endif
@@ -420,7 +420,7 @@ public:
                          const realT& dt,
                          const int cycleNumber,
                          PhysicalDomainT& domain,
-                         const sArray1d& namesOfSolverRegions,
+                         const array<string>& namesOfSolverRegions,
                          SpatialPartition& partition,
                          FractunatorBase* const fractunator ) = 0;
 
@@ -428,11 +428,11 @@ public:
   
   virtual void PostProcess( PhysicalDomainT& domain,
                             SpatialPartition& partition,
-                            const sArray1d& namesOfSolverRegions);
+                            const array<string>& namesOfSolverRegions);
 
   virtual void SetMaxStableTimeStep( const realT& time,
                                      PhysicalDomainT& domain,
-                                     const sArray1d& namesOfSolverRegions,
+                                     const array<string>& namesOfSolverRegions,
                                      SpatialPartition& partition);
 
   virtual void Initialize( PhysicalDomainT& domain, SpatialPartition& partition ) = 0;
@@ -444,7 +444,7 @@ public:
                                              SpatialPartition& partition,
                                              int& numLocalRows,
                                              int& numGlobalRows,
-                                             iArray1d& localIndices,
+                                             array<integer>& localIndices,
                                              int offset )
   {
     (void)domain;
@@ -486,7 +486,7 @@ public:
   bool m_solverErrorFlag;
 
 
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> m_syncedFields;
+  std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> m_syncedFields;
 
   std::string m_name;
 
@@ -602,7 +602,7 @@ protected:
   std::map<std::string,SolverBase*>& m_solvers;
 
 public:
-  sArray1d m_commonFields;
+  array<string> m_commonFields;
 
 protected:
 
@@ -652,7 +652,7 @@ private:
   virtual void TimeStepDerived( const realT& time,
                                  const realT& dt,
                                  PhysicalDomainT& domain,
-                                 const sArray1d& namesOfSolverRegions,
+                                 const array<string>& namesOfSolverRegions,
                                  SpatialPartition& partition ) {};
 
 

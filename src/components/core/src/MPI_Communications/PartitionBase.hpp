@@ -111,9 +111,9 @@ public:
   virtual void ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects );
 
   template< typename T >
-  void SendReceive( const Array1dT<Array1dT<T> >& sendArray, Array1dT<Array1dT<T> >& recvArray );
+  void SendReceive( const array<array<T> >& sendArray, array<array<T> >& recvArray );
 
-  void SynchronizeFields( const std::map<std::string, sArray1d>& fieldNames,
+  void SynchronizeFields( const std::map<std::string, array<string>>& fieldNames,
                           const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
   void SetOwnedByRank( const std::map< std::string, globalIndex_array>& localBoundaryGlobalIndices,
@@ -125,7 +125,7 @@ public:
 
   virtual void SetContactGhostRange( const double bufferSize ) = 0;
 
-  void SetBufferSizes( const std::map<string, sArray1d>& fieldNames,
+  void SetBufferSizes( const std::map<string, array<string>>& fieldNames,
                                       const CommRegistry::commID commID  );
 
   int NumberOfNeighbors( ) {return m_neighbors.size();}

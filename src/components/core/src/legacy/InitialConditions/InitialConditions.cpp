@@ -122,7 +122,7 @@ void InitialConditionBase::ReadXML( TICPP::HierarchicalDataNode*  hdn)
   }
 
   {
-    sArray1d tempSetName;
+    array<string> tempSetName;
     tempSetName = hdn->GetStringVector("setname");
     if (!tempSetName.empty())
       throw GPException("ERROR!!! 'setname' is no longer supported for initial conditions.  Use 'setnames' instead.");
@@ -190,7 +190,7 @@ void ReadInitialConditionFromFile::Apply( PhysicalDomainT& domain )
 	if(isIndexedFile_){
 	      throw GPException("Error ReadInitialConditionFromFile: Specifying an subset with an indexed file is currently not supported.");
 	} else {
-  	  for( sArray1d::size_type i =0; i < setNames_.size(); ++i){
+  	  for( array<string>::size_type i =0; i < setNames_.size(); ++i){
         lSet& set = objectManager.GetSet(setNames_[i]);
         objectManager.ReadAsciiFieldData(fieldType_, fieldName_, filename_, set);
   	  }
@@ -239,7 +239,7 @@ void ConstantInitialCondition::Apply( PhysicalDomainT& domain )
   if( setNames_.empty() ){
     objectManager.SetFieldToConstantFromString( fieldType_,  fieldName_, valueStr_, m_additive);
   } else {
-  	for( sArray1d::size_type i =0; i < setNames_.size(); ++i){
+  	for( array<string>::size_type i =0; i < setNames_.size(); ++i){
       lSet& set = objectManager.GetSet(setNames_[i]);
       objectManager.SetFieldToConstantFromString( fieldType_,  fieldName_, valueStr_, set, m_additive);
   	}
@@ -295,12 +295,12 @@ void InitialConditionTable::Apply(PhysicalDomainT& domain)
   objectManager.AddKeylessDataField(fieldType_, fieldName_, true, true);
 
   //get temporary pointers to fields to set
-  Array1dT<R1Tensor>* r1ptr = fieldType_ != FieldInfo::realField ? objectManager.GetFieldDataPointer<R1Tensor>(fieldName_) : 0;
-  rArray1d* r0ptr =           fieldType_ != FieldInfo::realField ? 0 : objectManager.GetFieldDataPointer<realT>(fieldName_);
+  array<R1Tensor>* r1ptr = fieldType_ != FieldInfo::realField ? objectManager.GetFieldDataPointer<R1Tensor>(fieldName_) : 0;
+  array<real64>* r0ptr =           fieldType_ != FieldInfo::realField ? 0 : objectManager.GetFieldDataPointer<realT>(fieldName_);
 
   //get whether this is a finite element region
   const bool isFE = objectManager.GetObjectType() == ObjectDataStructureBaseT::ElementRegion;
-  const Array1dT<R1Tensor>* pos = !isFE ? objectManager.GetFieldDataPointer<FieldInfo::referencePosition>() : 0;
+  const array<R1Tensor>* pos = !isFE ? objectManager.GetFieldDataPointer<FieldInfo::referencePosition>() : 0;
   {
     if ((!isFE) && (!pos))
       throw GPException(
@@ -329,8 +329,8 @@ void InitialConditionTable::Apply(PhysicalDomainT& domain)
       throw GPException("InitialConditionTable::Apply : unrecognized table or vector field");
 
   //fill the sets
-  Array1dT<lSet> sets(setNames_.size());
-  for (sArray1d::const_iterator ss = setNames_.begin(); ss != setNames_.end(); ++ss)
+  array<lSet> sets(setNames_.size());
+  for (array<string>::const_iterator ss = setNames_.begin(); ss != setNames_.end(); ++ss)
     sets.push_back(objectManager.GetSet(*ss));
 
   //now that we know what's going on, let's call the right function template ... we need to know at compile
@@ -426,15 +426,15 @@ void InitialConditionFunction::ReadXML( TICPP::HierarchicalDataNode*  hdn){
   
   std::string varTypesStr = hdn->GetAttributeStringOrDefault("variableTypes","");
   if( varTypesStr.empty() ){
-    variableTypes_ = Array1dT<FieldType>(variableNames_.size(),FieldInfo::realField);
+    variableTypes_ = array<FieldType>(variableNames_.size(),FieldInfo::realField);
   } else {
-    sArray1d vTypesVect = Tokenize(varTypesStr," ");
+    array<string> vTypesVect = Tokenize(varTypesStr," ");
     variableTypes_.resize(vTypesVect.size()); 
       
     if(variableTypes_.size() != variableNames_.size()) 
       throw GPException("Error InitialConditionFunction: Number of variable types not equal to number of variables.");
   
-    for( sArray1d::size_type i=0 ; i < vTypesVect.size() ; ++i )
+    for( array<string>::size_type i=0 ; i < vTypesVect.size() ; ++i )
       variableTypes_[i] = fromString<FieldType>(vTypesVect[i]);
     
   }
@@ -454,7 +454,7 @@ void InitialConditionFunction::Apply( PhysicalDomainT& domain ){
   if( setNames_.empty() ){
     objectManager.SetFieldEqualToFunction(fieldType_,  fieldName_, functionName_, variableNames_, variableTypes_,component_);
   } else {
-  	for( sArray1d::size_type i =0; i < setNames_.size(); ++i){
+  	for( array<string>::size_type i =0; i < setNames_.size(); ++i){
       lSet& set = objectManager.GetSet(setNames_[i]);
       objectManager.SetFieldEqualToFunction(fieldType_,  fieldName_, functionName_, variableNames_, variableTypes_,set,component_);
   	}
@@ -562,7 +562,7 @@ void CalculateFaceCenters::RegisterFields( PhysicalDomainT& domain ){
 void CalculateFaceCenters::Apply( PhysicalDomainT& domain )
 {
 	
-  Array1dT<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>( PS_STR::FaceCenterStr );
+  array<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>( PS_STR::FaceCenterStr );
   
   if( setNames_.empty() ){
     
@@ -571,7 +571,7 @@ void CalculateFaceCenters::Apply( PhysicalDomainT& domain )
     
   } else {
   	
-  	for( sArray1d::size_type i =0; i < setNames_.size(); ++i){
+  	for( array<string>::size_type i =0; i < setNames_.size(); ++i){
       lSet& subset = domain.m_feFaceManager.GetSet(setNames_[i]);
   	  for( lSet::const_iterator si=subset.begin() ; si!=subset.end() ; ++si ){
         localIndex kf = *si;
@@ -630,7 +630,7 @@ void CalculateElementCenters::Apply( PhysicalDomainT& domain)
     //const std::string& elementRegionName = elementRegionIter->first;
     ElementRegionT& elementRegion = elementRegionIter->second;
 
-    Array1dT<R1Tensor>& elementCenter = elementRegion.GetFieldData<R1Tensor>( PS_STR::ElementCenterStr );
+    array<R1Tensor>& elementCenter = elementRegion.GetFieldData<R1Tensor>( PS_STR::ElementCenterStr );
 
     if( setNames_.empty() )
     {
@@ -641,7 +641,7 @@ void CalculateElementCenters::Apply( PhysicalDomainT& domain)
     }
     else
     {
-      for( sArray1d::size_type i =0; i < setNames_.size(); ++i)
+      for( array<string>::size_type i =0; i < setNames_.size(); ++i)
       {
         lSet& subset = elementRegion.GetSet(setNames_[i]);
         for( lSet::const_iterator si=subset.begin() ; si!=subset.end() ; ++si )
@@ -687,7 +687,7 @@ void CalculateFaceNormals::RegisterFields( PhysicalDomainT& domain ){
 void CalculateFaceNormals::Apply( PhysicalDomainT& domain )
 {
 	
-  Array1dT<R1Tensor>& faceNormal = domain.m_feFaceManager.GetFieldData<R1Tensor>( PS_STR::FaceNormalStr );
+  array<R1Tensor>& faceNormal = domain.m_feFaceManager.GetFieldData<R1Tensor>( PS_STR::FaceNormalStr );
   
   if( setNames_.empty() ){
     
@@ -696,7 +696,7 @@ void CalculateFaceNormals::Apply( PhysicalDomainT& domain )
     
   } else {
   	
-  	for( sArray1d::size_type i =0; i < setNames_.size(); ++i){
+  	for( array<string>::size_type i =0; i < setNames_.size(); ++i){
       lSet& subset = domain.m_feFaceManager.GetSet(setNames_[i]);
   	  for( lSet::const_iterator si=subset.begin() ; si!=subset.end() ; ++si ){
         localIndex kf = *si;
@@ -749,18 +749,18 @@ void CalculateAperture::RegisterFields( PhysicalDomainT& domain ){
 void CalculateAperture::Apply( PhysicalDomainT& domain )
 {
 	  
-//  Array1dT<R1Tensor>& faceCenter = domain.m_faceManager.GetFieldData<R1Tensor>( PS_STR::FaceCenterStr );
+//  array<R1Tensor>& faceCenter = domain.m_faceManager.GetFieldData<R1Tensor>( PS_STR::FaceCenterStr );
   //std::cout << "Calculating Aperture" << std::endl;
-  const iArray1d& isExternal = domain.m_feFaceManager.m_isExternal;
+  const array<integer>& isExternal = domain.m_feFaceManager.m_isExternal;
   const lArray1d& externalFaceIndex = domain.m_feFaceManager.GetFieldData<localIndex>("externalFaceIndex");
-  //rArray1d& external_aperture = domain.m_externalFaces.GetFieldData<realT>("aperture");
-  const rArray1d& normal_approach = domain.m_externalFaces.GetFieldData<realT>("normalApproach");
+  //array<real64>& external_aperture = domain.m_externalFaces.GetFieldData<realT>("aperture");
+  const array<real64>& normal_approach = domain.m_externalFaces.GetFieldData<realT>("normalApproach");
 
-  rArray1d& face_aperture = domain.m_feFaceManager.GetFieldData<realT>("Aperture");
+  array<real64>& face_aperture = domain.m_feFaceManager.GetFieldData<realT>("Aperture");
   
   ///////////////////////////////////////
   
-  Array1dT<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce> ();
+  array<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce> ();
   contactForce = 0.0;
   
   //update face geometry and sort faces if necessary
@@ -791,7 +791,7 @@ void CalculateAperture::Apply( PhysicalDomainT& domain )
     
   } else {
   	
-  	for( sArray1d::size_type i =0; i < setNames_.size(); ++i){
+  	for( array<string>::size_type i =0; i < setNames_.size(); ++i){
       lSet& subset = domain.m_feFaceManager.GetSet(setNames_[i]);
   	  for( lSet::const_iterator si=subset.begin() ; si!=subset.end() ; ++si ){
         localIndex kf = *si;
@@ -846,10 +846,10 @@ void LinkFractureFaces::Apply( PhysicalDomainT& domain )
     throw GPException("LinkFractureFaces:: two sets are required");
   }
 
-  const Array1dT<R1Tensor>& u = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement> ();
-  const Array1dT<R1Tensor>& X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition> ();
+  const array<R1Tensor>& u = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement> ();
+  const array<R1Tensor>& X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition> ();
 
-  Array1dT<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>("FaceCenter");
+  array<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>("FaceCenter");
 
   //nodes
   {

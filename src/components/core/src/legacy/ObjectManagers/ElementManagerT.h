@@ -75,8 +75,8 @@ public:
 
   using ObjectDataStructureBaseT::resize;
   globalIndex resize( const lvector& numElements,
-                      const sArray1d& elementRegionNames,
-                      const sArray1d& elementTypes );
+                      const array<string>& elementRegionNames,
+                      const array<string>& elementTypes );
 
 
   void HACKInitialConditions();
@@ -88,7 +88,7 @@ public:
   }
 
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager ,
-                                                         Array1dT<gArray1d>& objectToCompositionObject  )
+                                                         array<gArray1d>& objectToCompositionObject  )
   {
     (void)compositionObjectManager;
     (void)objectToCompositionObject;
@@ -100,7 +100,7 @@ public:
 
   int AddElementToRegion( const int regionNumber, const int* const elemsToNodes );
 
-  void ConstructListOfIndexesFromMap( const Array1dT< std::set< std::pair<ElementRegionT*,localIndex> > >& toElementMap,
+  void ConstructListOfIndexesFromMap( const array< std::set< std::pair<ElementRegionT*,localIndex> > >& toElementMap,
                                       const lArray1d& nodeList,
                                       std::map< std::string, lArray1d>& localIndexes,
                                       const int depth );
@@ -192,14 +192,14 @@ public:
 
   void ResizeNumberOfElementsAfterSplit();
 
-  Array1dT<lArray1d>& m_ElementToNodeMap;
-  Array1dT<lArray1d>& m_ElementToFaceMap;
-  Array1dT<lArray1d>& m_ElementToElementMap;
+  array<lArray1d>& m_ElementToNodeMap;
+  array<lArray1d>& m_ElementToFaceMap;
+  array<lArray1d>& m_ElementToElementMap;
 
-  iArray1d& m_ElementIndexToRegionIndex;
+  array<integer>& m_ElementIndexToRegionIndex;
   lArray1d& m_ElementIndexToRegionLocalIndex;
 
-  sArray1d m_regionIndexToKey;
+  array<string> m_regionIndexToKey;
 
 
   typedef std::string RegKeyType;

@@ -83,18 +83,18 @@ public:
   /// copy some field data from the global array to a local array
   template < FieldKey FIELDNAME, typename T>
   void CopyGlobalFieldToLocalField( const int* const nodelist,
-                                    Array1dT< T >& localField ) const;
+                                    array< T >& localField ) const;
 
   /// copy a pair of field data from their global arrays to local arrays
   template < FieldKey FIELDNAME1, FieldKey FIELDNAME2, typename T >
   void CopyGlobalFieldsToLocalFields( const int* __restrict__ const nodelist,
-                                      Array1dT< T >& localField1,
-                                      Array1dT< T >& localField2 ) const;
+                                      array< T >& localField1,
+                                      array< T >& localField2 ) const;
 
   /// add the contents of a local field to a global field
   template < FieldKey FIELDNAME, typename T>
   void AddLocalFieldToGlobalField( const int* const nodelist,
-                                   const Array1dT< T >& localField );
+                                   const array< T >& localField );
 
   /// write the node data to ensight6
   template < FieldKey FIELDKEY, typename T >
@@ -127,7 +127,7 @@ private:
  */
 template < FieldKey FIELDNAME, typename T>
 inline void NodeManager::CopyGlobalFieldToLocalField( const int* __restrict__ const nodelist,
-                                                      Array1dT< T >& localField ) const
+                                                      array< T >& localField ) const
 {
 
   const int N = localField.size() ;
@@ -150,8 +150,8 @@ inline void NodeManager::CopyGlobalFieldToLocalField( const int* __restrict__ co
  */
 template < FieldKey FIELDNAME1, FieldKey FIELDNAME2, typename T>
 inline void NodeManager::CopyGlobalFieldsToLocalFields( const int* __restrict__ const nodelist,
-                                                        Array1dT< T >& localField1,
-                                                        Array1dT< T >& localField2 ) const
+                                                        array< T >& localField1,
+                                                        array< T >& localField2 ) const
 {
 
   const int N = localField1.size() ;
@@ -176,7 +176,7 @@ inline void NodeManager::CopyGlobalFieldsToLocalFields( const int* __restrict__ 
  */
 template < FieldKey FIELDNAME, typename T>
 inline void NodeManager::AddLocalFieldToGlobalField( const int* const nodelist,
-                                                     const Array1dT< T >& localField )
+                                                     const array< T >& localField )
 {
   const int N = localField.size() ;
 

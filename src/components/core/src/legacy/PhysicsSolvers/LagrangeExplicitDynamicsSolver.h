@@ -65,16 +65,16 @@ public:
   TimeStep(const realT& time, const realT& dt,
            const int cycleNumber,
            PhysicalDomainT& domain,
-           const sArray1d& namesOfSolverRegions, SpatialPartition& partition,
+           const array<string>& namesOfSolverRegions, SpatialPartition& partition,
            FractunatorBase* const fractunator);
 
   void PostProcess (PhysicalDomainT& domain,
                     SpatialPartition& partition,
-                    const sArray1d& namesOfSolverRegions);
+                    const array<string>& namesOfSolverRegions);
 
   virtual void SetMaxStableTimeStep( const realT& time,
                                      PhysicalDomainT& domain,
-                                     const sArray1d& namesOfSolverRegions,
+                                     const array<string>& namesOfSolverRegions,
                                      SpatialPartition& partition);
 
   void Initialize(PhysicalDomainT& domain, SpatialPartition& partition  );
@@ -106,8 +106,8 @@ public:
 
   realT m_dampingM;
   realT m_gapdamping;
-  Array1dT<lSet> m_KinematicConstraintNodes;
-//  Array1dT<std::pair<localIndex,localIndex> > m_KinematicConstraintFaces;
+  array<lSet> m_KinematicConstraintNodes;
+//  array<std::pair<localIndex,localIndex> > m_KinematicConstraintFaces;
 
   bool m_tiedNodesFlag;
   realT m_tiedNodeNormalRuptureStress;

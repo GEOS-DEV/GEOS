@@ -158,8 +158,8 @@ public:
 
   void AdvectMultiphaseFields(PhysicalDomainT& domain, SpatialPartition& partition, realT time, realT dt);
   void UpdateMultiphasePointers(PhysicalDomainT& domain);   
-  void GenerateMultiphaseArray(rArrayPtrs& multiphasePtrs, localIndex kf, rArray1d& multiphase);
-  void GenerateMultiphaseBCArray(rArray1d& faceVolumeFraction, realT time);
+  void GenerateMultiphaseArray(rArrayPtrs& multiphasePtrs, localIndex kf, array<real64>& multiphase);
+  void GenerateMultiphaseBCArray(array<real64>& faceVolumeFraction, realT time);
 
   // void BoundaryTracerValues( PhysicalDomainT& domain,
   //                            ObjectDataStructureBaseT& object,
@@ -360,11 +360,11 @@ public:
     throw GPException("ParallelPlateFlowSolverBase::SetInitialGuess() not overridden");
   }
 
-  virtual realT TwoFacePermeability( const Array1dT<R1Tensor>& edgeCenters,
-                                     const rArray1d& edgeLengths,
-                                     const Array1dT<R1Tensor>& faceCenters,
-                                     const rArray1d& apertures,
-                                     const rArray1d& packVfs,
+  virtual realT TwoFacePermeability( const array<R1Tensor>& edgeCenters,
+                                     const array<real64>& edgeLengths,
+                                     const array<R1Tensor>& faceCenters,
+                                     const array<real64>& apertures,
+                                     const array<real64>& packVfs,
                                      realT mu,
                                      localIndex eg, localIndex kf, localIndex kfb)
   {
@@ -383,16 +383,16 @@ public:
     return kappa;
   }
 
-  // virtual realT TwoFacePermeability( const Array1dT<R1Tensor>& edgeCenters,
-  //                                    const rArray1d& edgeLengths,
-  //                                    const Array1dT<R1Tensor>& faceCenters,
-  //                                    const rArray1d& apertures,
+  // virtual realT TwoFacePermeability( const array<R1Tensor>& edgeCenters,
+  //                                    const array<real64>& edgeLengths,
+  //                                    const array<R1Tensor>& faceCenters,
+  //                                    const array<real64>& apertures,
   //                                    const localIndex eg,
   //                                    const localIndex r,
   //                                    const localIndex s,
-  //                                    const Array1dT<rArray1d>* const dwdu,
-  //                                    rArray1d* const dkdu_r,
-  //                                    rArray1d* const dkdu_s )
+  //                                    const array<array<real64>>* const dwdu,
+  //                                    array<real64>* const dkdu_r,
+  //                                    array<real64>* const dkdu_s )
   // {
   //   (void)edgeCenters;
   //   (void)edgeLengths;
@@ -410,12 +410,12 @@ public:
   //   return kappa;
   // }
   
-  virtual realT TwoFacePermeability_PowerLaw(const Array1dT<R1Tensor>& edgeCenters,
-                                             const rArray1d& edgeLengths,
-                                             const Array1dT<R1Tensor>& faceCenters,
-                                             const rArray1d& apertures,
-                                             const Array1dT<R1Tensor>& fluidVelocity,
-                                             const rArray1d& packVfs,
+  virtual realT TwoFacePermeability_PowerLaw(const array<R1Tensor>& edgeCenters,
+                                             const array<real64>& edgeLengths,
+                                             const array<R1Tensor>& faceCenters,
+                                             const array<real64>& apertures,
+                                             const array<R1Tensor>& fluidVelocity,
+                                             const array<real64>& packVfs,
                                              realT mu,
                                              localIndex eg, localIndex kf, localIndex kfb )
   {
@@ -438,22 +438,22 @@ public:
   Table<1,realT> const * const m_ApertureTable;
 
   // Synced fields
-  // std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> m_syncedFieldsB;
+  // std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
+  std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> m_syncedFieldsB;
 
   // Multiphase flow
-  sArray1d m_tracerNames, m_tracerNamesMass, m_tracerNamesDMDT, m_tracerNamesVolumeFraction;
+  array<string> m_tracerNames, m_tracerNamesMass, m_tracerNamesDMDT, m_tracerNamesVolumeFraction;
   rArrayPtrs m_tracerMassPtrs, m_tracerDMDTPtrs, m_volumeFractionPtrs;
   bool m_multiphaseFlow, m_proppantActive;
   int m_multiphaseMixingMode;
   realT m_multiphaseMixingThreshold_serialFlow, m_multiphaseMixingThreshold_singlePhase;
-  sArray1d m_multiphaseSetnames;
+  array<string> m_multiphaseSetnames;
 
-  Array1dT< rArray1d > m_dwdu;
-  Array1dT< iArray1d > m_dwdu_dof;
-  rArray1d m_dwdw;
+  array< array<real64> > m_dwdu;
+  array< array<integer> > m_dwdu_dof;
+  array<real64> m_dwdw;
 
-  rArray1d m_multiphaseDensity, m_multiphaseBulkModulus, m_multiphaseViscosity;
+  array<real64> m_multiphaseDensity, m_multiphaseBulkModulus, m_multiphaseViscosity;
 
   
 
@@ -1115,12 +1115,12 @@ namespace PPFS
              virtual realT dPdRho(realT rho, realT rho0) { return dPdRho(rho);}
              virtual realT rho_o(){return m_rho_o;}
 
-             virtual realT pressure_mp(rArray1d volumeFraction, realT rho){return pressure(rho);}
-             virtual realT density_mp(rArray1d volumeFraction, realT P){return density(P);}
-             virtual realT dPdRho_mp(rArray1d volumeFraction, realT rho){return dPdRho(rho);}
-             virtual realT rho_o_mp(rArray1d volumeFraction){return rho_o();}
-             virtual realT viscosity_mp(rArray1d volumeFraction){return 0.0;}    	   
-             virtual realT PressureAndApertureCloseJoint_mp( rArray1d volumeFraction, realT area, realT fluidMass,
+             virtual realT pressure_mp(array<real64> volumeFraction, realT rho){return pressure(rho);}
+             virtual realT density_mp(array<real64> volumeFraction, realT P){return density(P);}
+             virtual realT dPdRho_mp(array<real64> volumeFraction, realT rho){return dPdRho(rho);}
+             virtual realT rho_o_mp(array<real64> volumeFraction){return rho_o();}
+             virtual realT viscosity_mp(array<real64> volumeFraction){return 0.0;}    	   
+             virtual realT PressureAndApertureCloseJoint_mp( array<real64> volumeFraction, realT area, realT fluidMass,
                                                     realT totalStress, realT a, realT b, realT &aperture )
              {
                // We need to calculate both pressure and aperture based on the fluid mass and total stress.
@@ -1214,7 +1214,7 @@ namespace PPFS
          	     return rval;
              };
 
-             virtual realT PressureAndApertureCloseJoint_mp( rArray1d volumeFraction, realT area, realT fluidMass,
+             virtual realT PressureAndApertureCloseJoint_mp( array<real64> volumeFraction, realT area, realT fluidMass,
                                                     realT totalStress, realT a, realT b, realT &aperture )
              {
 
@@ -1452,7 +1452,7 @@ namespace PPFS
          public:
 
            MultiphasePressureEOS(TICPP::HierarchicalDataNode* hdn);
-           MultiphasePressureEOS(rArray1d multiphaseDensity, rArray1d multiphaseBulkModulus, rArray1d multiphaseViscosity): LinearEOS(multiphaseDensity[0], multiphaseBulkModulus[0])
+           MultiphasePressureEOS(array<real64> multiphaseDensity, array<real64> multiphaseBulkModulus, array<real64> multiphaseViscosity): LinearEOS(multiphaseDensity[0], multiphaseBulkModulus[0])
            {
               m_NFluids = multiphaseDensity.size();
 
@@ -1472,7 +1472,7 @@ namespace PPFS
            static const char* FluidEOSName(){return "MultiphasePressureEOS";};
 
         
-          virtual realT viscosity_mp(rArray1d volumeFraction)
+          virtual realT viscosity_mp(array<real64> volumeFraction)
           {
             realT tmpViscosity = 0.0;
             for (localIndex ii=0; ii<m_NFluids; ii++)
@@ -1483,7 +1483,7 @@ namespace PPFS
             return tmpViscosity;
           };
 
-          virtual realT rho_o_mp(rArray1d volumeFraction)
+          virtual realT rho_o_mp(array<real64> volumeFraction)
           {
             realT tmpRho = 0.0;
             for (localIndex ii=0; ii<m_NFluids; ii++)
@@ -1495,7 +1495,7 @@ namespace PPFS
           };
 
 
-          virtual realT pressure_mp(rArray1d volumeFraction, realT rho)
+          virtual realT pressure_mp(array<real64> volumeFraction, realT rho)
           {
             realT P;
             realT tmpRho = 0.0;
@@ -1518,7 +1518,7 @@ namespace PPFS
             return (P);
           };
 
-          virtual realT PressureAndApertureCloseJoint_mp( rArray1d volumeFraction, realT area, realT fluidMass,
+          virtual realT PressureAndApertureCloseJoint_mp( array<real64> volumeFraction, realT area, realT fluidMass,
                                                  realT totalStress, realT a, realT b, realT &aperture )
           {
             realT P;
@@ -1552,7 +1552,7 @@ namespace PPFS
           }
 
 
-          virtual realT density_mp(rArray1d volumeFraction, realT P)
+          virtual realT density_mp(array<real64> volumeFraction, realT P)
           {
             realT tmpRho = 0.0;
             realT tmpK = 0.0;
@@ -1577,7 +1577,7 @@ namespace PPFS
           };
 
 
-          virtual realT dPdRho_mp(rArray1d volumeFraction, realT rho)
+          virtual realT dPdRho_mp(array<real64> volumeFraction, realT rho)
           {
             realT tmpRho = 0.0;
             realT tmpK = 0.0;
@@ -1601,7 +1601,7 @@ namespace PPFS
          localIndex m_NFluids;
 
          protected:
-             rArray1d m_multiphaseDensity, m_multiphaseBulkModulus, m_multiphaseViscosity;
+             array<real64> m_multiphaseDensity, m_multiphaseBulkModulus, m_multiphaseViscosity;
        };
 
 

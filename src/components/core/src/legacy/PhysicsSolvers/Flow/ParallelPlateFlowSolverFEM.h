@@ -93,7 +93,7 @@ public:
   void InitializeCommunications( PartitionBase& partition );
 
   void TimeStep( const realT& time, const realT& dt,PhysicalDomainT& domain,
-                 const sArray1d& namesOfSolverRegions, SpatialPartition& partition,
+                 const array<string>& namesOfSolverRegions, SpatialPartition& partition,
                  FractunatorBase* const fractunator );
                  
   void DefineFlowSets( PhysicalDomainT& domain );

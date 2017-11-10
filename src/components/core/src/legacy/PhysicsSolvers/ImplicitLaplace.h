@@ -102,7 +102,7 @@ class ImplicitLaplaceSolver : public SolverBase
                           const realT& dt,
                           const int cycleNumber,
                           PhysicalDomainT * domain,
-                          const sArray1d& namesOfSolverRegions,
+                          const array<string>& namesOfSolverRegions,
                           SpatialPartition& partition,
                           FractunatorBase* const fractunator);
 
@@ -145,7 +145,7 @@ class ImplicitLaplaceSolver : public SolverBase
     Epetra_FEVector*    solution;
     Epetra_FEVector*    rhs;
 
-    std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+    std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
 };
  
 

@@ -77,7 +77,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   // registration.
 
 
-  auto dNdXView        = cellBlock->RegisterViewWrapper< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX);
+  auto dNdXView        = cellBlock->RegisterViewWrapper< array< Array2dT<R1Tensor> > >(keys::dNdX);
   dNdXView->setSizedFromParent(1);
   dNdXView->resize();
   auto & dNdX            = dNdXView->reference();
@@ -108,11 +108,11 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
                                                           dataRepository::ManagedGroup * const cellBlock ) const
 {
-  auto & dNdX            = cellBlock->getReference< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX);
+  auto & dNdX            = cellBlock->getReference< array< Array2dT<R1Tensor> > >(keys::dNdX);
   auto & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ);
   lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(std::string("nodeList"))->reference();// getData<lArray2d>(keys::nodeList);
 
-  Array1dT<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
+  array<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
 
 
   for (localIndex k = 0 ; k < cellBlock->size() ; ++k)

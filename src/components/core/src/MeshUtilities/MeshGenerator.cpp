@@ -249,7 +249,7 @@ void MeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {
   //  lvector numElements;
   //
-  //  for( sArray1d::size_type r=0 ; r<m_regionNames.size() ; ++r )
+  //  for( array<string>::size_type r=0 ; r<m_regionNames.size() ; ++r )
   //  {
   //    numElements.push_back( 0 );
   //  }
@@ -495,7 +495,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
   }
 
   // find elemCenters for even uniform element sizes
-  Array1dT<rArray1d> elemCenterCoords( 3 );
+  array<array<real64>> elemCenterCoords( 3 );
   for( int i = 0 ; i < 3 ; ++i )
   {
     m_numElemsTotal[i] = 0;
@@ -505,7 +505,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
     }
 
     elemCenterCoords[i].resize( m_numElemsTotal[i] );
-    rArray1d elemCenterCoordsLocal( m_numElemsTotal[i] );
+    array<real64> elemCenterCoordsLocal( m_numElemsTotal[i] );
     for( int k = 0 ; k < m_numElemsTotal[i] ; ++k )
     {
       elemCenterCoordsLocal[k] = m_min[i] + ( m_max[i] - m_min[i] ) * ( k + 0.5 ) / m_numElemsTotal[i];
@@ -587,7 +587,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
   }
 
   // TODO This needs to be rewritten for dimensions lower than 3.
-  sArray1d::const_iterator iterRegion = m_regionNames.begin();
+  array<string>::const_iterator iterRegion = m_regionNames.begin();
   for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
   {
     for( int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
@@ -731,8 +731,8 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 
   {
     integer_array numElements;
-    sArray1d elementRegionNames;
-    sArray1d elementTypes;
+    array<string> elementRegionNames;
+    array<string> elementTypes;
     std::map<std::string, localIndex> localElemIndexInRegion;
 
     for( std::map<std::string, int>::iterator iterNumElemsInRegion = numElemsInRegions.begin() ;

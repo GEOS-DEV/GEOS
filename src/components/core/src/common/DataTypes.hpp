@@ -80,7 +80,7 @@ using realT    = double;
 
 template< typename T >
 //using array = std::vector<T>;
-//using array = Array1dT<T>;
+//using array = array<T>;
 using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
 
 
@@ -139,31 +139,20 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 
 //***** BEGIN LEGACY TYPEDEFS *****
-//using rArray1d = Array1dT<real64>;
-//using iArray1d = Array1dT<integer>;
-//using lArray1d = Array1dT<localIndex>;
-//using gArray1d = Array1dT<globalIndex>;
-
-//typedef Array1dT<std::string> sArray1d;
 
 typedef std::set<localIndex> lSet;
 typedef std::set<globalIndex> gSet;
 
 typedef int FieldKey;
 
-template< typename T >
-using Array1dT = multidimensionalArray::ManagedArray<T,1,localIndex>;
 
 template< typename T >
 using Array2dT = multidimensionalArray::ManagedArray<T,2,localIndex>;
 
 typedef multidimensionalArray::ManagedArray<localIndex,2,localIndex> lArray2d;
-typedef Array1dT<std::pair<int,localIndex> > pArray1d;
+typedef array<std::pair<int,localIndex> > pArray1d;
 typedef std::set<std::pair<int,localIndex> > pSet;
 
-using rArray1d = array<real64>;
-using iArray1d = array<integer>;
-using sArray1d = array<string>;
 using r1_array = array<R1Tensor>;
 using r2_array = array<R2Tensor>;
 using r2Sym_array = array<R2SymTensor>;

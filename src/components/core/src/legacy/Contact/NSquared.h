@@ -61,17 +61,17 @@ namespace SpatialSorting
 
     static std::string SpatialSorterName() { return "N2"; }
 
-    virtual bool Sort(const rArray1d& radii,
-                      const Array1dT<R1Tensor>& x,
-                      Array1dT<lArray1d>& neighborList,
-                      Array1dT<lSet>& neighborListInverse,
+    virtual bool Sort(const array<real64>& radii,
+                      const array<R1Tensor>& x,
+                      array<lArray1d>& neighborList,
+                      array<lSet>& neighborListInverse,
                       const int* const excludeFromSorting = 0);
 
-    virtual bool Update(const rArray1d& radii,
-                        const Array1dT<R1Tensor>& x,
+    virtual bool Update(const array<real64>& radii,
+                        const array<R1Tensor>& x,
                         const lSet& toResort,
-                        Array1dT<lArray1d>& neighborList,
-                        Array1dT<lSet>& neighborListInverse,
+                        array<lArray1d>& neighborList,
+                        array<lSet>& neighborListInverse,
                         const int* const excludeFromSorting = 0);
   };
 }

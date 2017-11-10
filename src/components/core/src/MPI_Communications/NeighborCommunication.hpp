@@ -73,9 +73,9 @@ struct TempNeighborData
 {
 //
   //sizes to receive
-  Array1dT<globalIndex_array::size_type> neighborBoundaryObjectsSizes;
-  Array1dT<bufvector::size_type> receiveSizes;
-  Array1dT<bufvector::size_type> sendSizes;
+  array<globalIndex_array::size_type> neighborBoundaryObjectsSizes;
+  array<bufvector::size_type> receiveSizes;
+  array<bufvector::size_type> sendSizes;
 
   //node, edge, face (3)
   std::map<string, globalIndex_array> neighborNumbers;
@@ -180,11 +180,11 @@ public:
 
 //  void SetDomain( DomainPartition& domain );
 
-  bufvector::size_type PackBuffer( const std::map<string, sArray1d>& fieldNames,
+  bufvector::size_type PackBuffer( const std::map<string, array<string>>& fieldNames,
                                    const CommRegistry::commID commID,
                                    const bool doBufferPacking = 1 );
 
-  bufvector::size_type GetPackedBufferSize( const std::map<string, sArray1d>& fieldNames,
+  bufvector::size_type GetPackedBufferSize( const std::map<string, array<string>>& fieldNames,
                                             const CommRegistry::commID commID )
   {
 
@@ -194,7 +194,7 @@ public:
     return bufferSize;
   }
 
-  void UnpackBuffer( const std::map<string, sArray1d>& fieldNames);
+  void UnpackBuffer( const std::map<string, array<string>>& fieldNames);
 
   void UnpackGhostElements( std::map<std::string,localIndex_array>& newElementIndices );
   int UnpackGhosts(const string name, localIndex_array& newIndices );
@@ -382,7 +382,7 @@ public:
   bool MPI_Test_SendBufferRequest( const CommRegistry::commID commID );
   bool MPI_Test_RecvBufferRequest( const CommRegistry::commID commID );
 
-  void SetRankOfNeighborNeighbors( const iArray1d& ranks )
+  void SetRankOfNeighborNeighbors( const array<integer>& ranks )
   {
 
     m_rankOfNeighborNeighbors.clear();
@@ -417,7 +417,7 @@ public:
 //        throw GPException("Unrecognized index for SyncName");
 //    }
 //  }
-//  inline static void SyncNames(Array1dT<string>& syncNames)
+//  inline static void SyncNames(array<string>& syncNames)
 //  {
 //    syncNames.resize(8);
 //    syncNames[0] = PhysicalDomainT::FiniteElementNodeManager;

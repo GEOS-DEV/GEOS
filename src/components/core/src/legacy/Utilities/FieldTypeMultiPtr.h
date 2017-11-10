@@ -58,13 +58,13 @@ class FieldTypeMultiPtr{
 
     // Constructors
     FieldTypeMultiPtr():m_fieldType(FieldInfo::realField),m_sArrayPtr(){};
-    FieldTypeMultiPtr(Array1dT<int>*   iArrayPtr):m_fieldType(FieldInfo::integerField),m_iArrayPtr(iArrayPtr){};
+    FieldTypeMultiPtr(array<int>*   iArrayPtr):m_fieldType(FieldInfo::integerField),m_iArrayPtr(iArrayPtr){};
     FieldTypeMultiPtr(lArray1d*        lArrayPtr):m_fieldType(FieldInfo::localIndexField),m_lArrayPtr(lArrayPtr){};
     FieldTypeMultiPtr(gArray1d*        gArrayPtr):m_fieldType(FieldInfo::globalIndexField),m_gArrayPtr(gArrayPtr){};
-    FieldTypeMultiPtr(Array1dT<realT>*        sArrayPtr):m_fieldType(FieldInfo::realField),m_sArrayPtr(sArrayPtr){};
-    FieldTypeMultiPtr(Array1dT<R1Tensor>*     vArrayPtr):m_fieldType(FieldInfo::R1TensorField),m_vArrayPtr(vArrayPtr){};
-    FieldTypeMultiPtr(Array1dT<R2Tensor>*     tArrayPtr):m_fieldType(FieldInfo::R2TensorField),m_tArrayPtr(tArrayPtr){};
-    FieldTypeMultiPtr(Array1dT<R2SymTensor>* stArrayPtr):m_fieldType(FieldInfo::R2SymTensorField),m_stArrayPtr(stArrayPtr){};
+    FieldTypeMultiPtr(array<realT>*        sArrayPtr):m_fieldType(FieldInfo::realField),m_sArrayPtr(sArrayPtr){};
+    FieldTypeMultiPtr(array<R1Tensor>*     vArrayPtr):m_fieldType(FieldInfo::R1TensorField),m_vArrayPtr(vArrayPtr){};
+    FieldTypeMultiPtr(array<R2Tensor>*     tArrayPtr):m_fieldType(FieldInfo::R2TensorField),m_tArrayPtr(tArrayPtr){};
+    FieldTypeMultiPtr(array<R2SymTensor>* stArrayPtr):m_fieldType(FieldInfo::R2SymTensorField),m_stArrayPtr(stArrayPtr){};
     FieldTypeMultiPtr(int* integerPtr):m_fieldType(FieldInfo::integerParameter), m_integerPtr(integerPtr){};
     FieldTypeMultiPtr(realT* scalarPtr): m_fieldType(FieldInfo::realParameter), m_scalarPtr(scalarPtr){};
 
@@ -74,24 +74,24 @@ class FieldTypeMultiPtr{
       return *this;
     };
 
-    FieldTypeMultiPtr& operator=(Array1dT<int>*         const ptr){ m_fieldType = FieldInfo::integerField;  m_iArrayPtr = ptr; return *this;};
+    FieldTypeMultiPtr& operator=(array<int>*         const ptr){ m_fieldType = FieldInfo::integerField;  m_iArrayPtr = ptr; return *this;};
     FieldTypeMultiPtr& operator=(lArray1d*              const ptr){ m_fieldType = FieldInfo::localIndexField;  m_lArrayPtr = ptr; return *this;};
     FieldTypeMultiPtr& operator=(gArray1d*              const ptr){ m_fieldType = FieldInfo::globalIndexField;  m_gArrayPtr = ptr; return *this;};
-    FieldTypeMultiPtr& operator=(Array1dT<realT>*       const ptr){ m_fieldType = FieldInfo::realField;     m_sArrayPtr = ptr; return *this;};
-    FieldTypeMultiPtr& operator=(Array1dT<R1Tensor>*    const ptr){ m_fieldType = FieldInfo::R1TensorField; m_vArrayPtr = ptr; return *this;};
-    FieldTypeMultiPtr& operator=(Array1dT<R2Tensor>*    const ptr){ m_fieldType = FieldInfo::R2TensorField; m_tArrayPtr = ptr; return *this;};
-    FieldTypeMultiPtr& operator=(Array1dT<R2SymTensor>* const ptr){ m_fieldType = FieldInfo::R2SymTensorField; m_stArrayPtr = ptr; return *this;};
+    FieldTypeMultiPtr& operator=(array<realT>*       const ptr){ m_fieldType = FieldInfo::realField;     m_sArrayPtr = ptr; return *this;};
+    FieldTypeMultiPtr& operator=(array<R1Tensor>*    const ptr){ m_fieldType = FieldInfo::R1TensorField; m_vArrayPtr = ptr; return *this;};
+    FieldTypeMultiPtr& operator=(array<R2Tensor>*    const ptr){ m_fieldType = FieldInfo::R2TensorField; m_tArrayPtr = ptr; return *this;};
+    FieldTypeMultiPtr& operator=(array<R2SymTensor>* const ptr){ m_fieldType = FieldInfo::R2SymTensorField; m_stArrayPtr = ptr; return *this;};
     FieldTypeMultiPtr& operator=(int* ptr){ m_fieldType = FieldInfo::integerParameter; m_integerPtr = ptr; return *this;};
     FieldTypeMultiPtr& operator=(realT* ptr){ m_fieldType = FieldInfo::realParameter; m_scalarPtr = ptr; return *this;};
 
     /// GetPtr(ptr) set ptr to the field pointer if pointer type corresponds to m_fieldType, otherwise set ptr to 0;
-    void GetPtr(Array1dT<int>*&          iArrayPtr){iArrayPtr  = (m_fieldType == FieldInfo::integerField)? m_iArrayPtr: 0;};
+    void GetPtr(array<int>*&          iArrayPtr){iArrayPtr  = (m_fieldType == FieldInfo::integerField)? m_iArrayPtr: 0;};
     void GetPtr(lArray1d*&               lArrayPtr){lArrayPtr  = (m_fieldType == FieldInfo::localIndexField)? m_lArrayPtr: 0;};
     void GetPtr(gArray1d*&               gArrayPtr){gArrayPtr  = (m_fieldType == FieldInfo::globalIndexField)? m_gArrayPtr: 0;};
-    void GetPtr(Array1dT<realT>*&        sArrayPtr){sArrayPtr  = (m_fieldType == FieldInfo::realField)? m_sArrayPtr: 0;};
-    void GetPtr(Array1dT<R1Tensor>*&     vArrayPtr){vArrayPtr  = (m_fieldType == FieldInfo::R1TensorField)? m_vArrayPtr: 0;};
-    void GetPtr(Array1dT<R2Tensor>*&     tArrayPtr){tArrayPtr  = (m_fieldType == FieldInfo::R2TensorField)? m_tArrayPtr: 0;};
-    void GetPtr(Array1dT<R2SymTensor>*& stArrayPtr){stArrayPtr = (m_fieldType == FieldInfo::R2SymTensorField)? m_stArrayPtr: 0;};
+    void GetPtr(array<realT>*&        sArrayPtr){sArrayPtr  = (m_fieldType == FieldInfo::realField)? m_sArrayPtr: 0;};
+    void GetPtr(array<R1Tensor>*&     vArrayPtr){vArrayPtr  = (m_fieldType == FieldInfo::R1TensorField)? m_vArrayPtr: 0;};
+    void GetPtr(array<R2Tensor>*&     tArrayPtr){tArrayPtr  = (m_fieldType == FieldInfo::R2TensorField)? m_tArrayPtr: 0;};
+    void GetPtr(array<R2SymTensor>*& stArrayPtr){stArrayPtr = (m_fieldType == FieldInfo::R2SymTensorField)? m_stArrayPtr: 0;};
     void GetPtr(int*& integerPtr){integerPtr = (m_fieldType == FieldInfo::integerParameter)? m_integerPtr: 0;};
     void GetPtr(realT*& scalarPtr){scalarPtr = (m_fieldType == FieldInfo::realParameter)? m_scalarPtr: 0;};
 
@@ -196,13 +196,13 @@ class FieldTypeMultiPtr{
   private:
 
     union {
-      Array1dT<int>*         m_iArrayPtr;
+      array<int>*         m_iArrayPtr;
       lArray1d*              m_lArrayPtr;
       gArray1d*              m_gArrayPtr;
-      Array1dT<realT>*       m_sArrayPtr;
-      Array1dT<R1Tensor>*    m_vArrayPtr;
-      Array1dT<R2Tensor>*    m_tArrayPtr;
-      Array1dT<R2SymTensor>* m_stArrayPtr;
+      array<realT>*       m_sArrayPtr;
+      array<R1Tensor>*    m_vArrayPtr;
+      array<R2Tensor>*    m_tArrayPtr;
+      array<R2SymTensor>* m_stArrayPtr;
       realT*                 m_scalarPtr;
       int*                   m_integerPtr;
     };

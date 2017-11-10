@@ -47,7 +47,7 @@
 #define _TYPEDEFS_H_
 
 #include "intrinsic_typedefs.h"
-#include "legacy/ArrayT/Array1dT.h"
+#include "legacy/ArrayT/array.h"
 #include "legacy/ArrayT/Array2dT.h"
 #include <set>
 #include "math/TensorT/TensorT.h"
@@ -65,11 +65,11 @@ typedef R2SymTensorT<nsdof> R2SymTensor;
 typedef R1TensorT<nsdof>    R1Tensor;
 
 
-typedef Array1dT<int> iArray1d;
-typedef Array1dT<realT> rArray1d;
-typedef Array1dT<std::string> sArray1d;
-typedef Array1dT<iArray1d*> iArrayPtrs;
-typedef Array1dT<rArray1d*> rArrayPtrs;
+typedef array<int> array<integer>;
+typedef array<realT> array<real64>;
+typedef array<std::string> array<string>;
+typedef array<array<integer>*> iArrayPtrs;
+typedef array<array<real64>*> rArrayPtrs;
 
 typedef Array2dT<int> iArray2d;
 typedef Array2dT<localIndex> lArray2d;
@@ -77,9 +77,9 @@ typedef Array2dT<globalIndex> gArray2d;
 typedef Array2dT<realT> rArray2d;
 typedef Array2dT<std::pair<int,localIndex> > pArray2d;
 
-typedef Array1dT<localIndex> lArray1d;
-typedef Array1dT<globalIndex> gArray1d;
-typedef Array1dT<std::pair<int,localIndex> > pArray1d;
+typedef array<localIndex> lArray1d;
+typedef array<globalIndex> gArray1d;
+typedef array<std::pair<int,localIndex> > pArray1d;
 
 
 typedef std::set<int> iSet;

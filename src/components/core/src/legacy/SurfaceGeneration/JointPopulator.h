@@ -26,11 +26,11 @@ public:
   void AddJointSet(const realT weight, const JointSetT& jointSet);
 
   void Populate(const ElementRegionT& elementRegion,
-                const Array1dT<R1Tensor>& nodesRef,
-                const Array1dT<R1Tensor>& nodesDisp,
+                const array<R1Tensor>& nodesRef,
+                const array<R1Tensor>& nodesDisp,
                 const R1Tensor& min,
                 const R1Tensor& max,
-                Array1dT<rArray1d>& frequencies);
+                array<array<real64>>& frequencies);
 
   bool Populate(const std::map< std::string, ElementRegionT >& m_ElementRegions,
                 const R1Tensor& min,
@@ -42,18 +42,18 @@ public:
                 FaceManagerT& faceManager,
                 NodeManager& nodeManager);
 
-  bool Populate(Array1dT<R1Tensor>& positions,
-                Array1dT<R1Tensor>& normals,
-                Array1dT<R1Tensor>& strikes,
-                Array1dT<R1Tensor>& dips) const;
+  bool Populate(array<R1Tensor>& positions,
+                array<R1Tensor>& normals,
+                array<R1Tensor>& strikes,
+                array<R1Tensor>& dips) const;
 
   static bool Populate(const std::map< std::string, ElementRegionT >& elementRegions,
-                       const sArray1d& elementRegionNames,
+                       const array<string>& elementRegionNames,
                        const std::string& nodeSetName,
-                       Array1dT<R1Tensor>& positions,
-                       Array1dT<R1Tensor>& normals,
-                       Array1dT<R1Tensor>& strikes,
-                       Array1dT<R1Tensor>& dips,
+                       array<R1Tensor>& positions,
+                       array<R1Tensor>& normals,
+                       array<R1Tensor>& strikes,
+                       array<R1Tensor>& dips,
                        FaceManagerT& faceManager,
                        NodeManager& nodeManager);
 
@@ -95,7 +95,7 @@ public:
 
 private:
   std::vector<JointSetT> m_jointSets;
-  rArray1d m_jointWeights;
+  array<real64> m_jointWeights;
   bool m_isActive;
 public:
   std::string m_elementRegionName, m_nodeSetName, m_fileName;

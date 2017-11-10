@@ -76,11 +76,11 @@ public:
                  const realT& dt,
                  const int cycleNumber,
                  PhysicalDomainT& domain,
-                 const sArray1d& namesOfSolverRegions,
+                 const array<string>& namesOfSolverRegions,
                  SpatialPartition& partition,
                  FractunatorBase* const fractunator );
 
-  void SetMaxStableTimeStep( const realT& time, PhysicalDomainT& domain, const sArray1d& namesOfSolverRegions,
+  void SetMaxStableTimeStep( const realT& time, PhysicalDomainT& domain, const array<string>& namesOfSolverRegions,
                              SpatialPartition& partition );
 
   /// name of solver class
@@ -90,14 +90,14 @@ public:
 protected:
 
    std::string m_filePrefix;
-   sArray1d m_setNames; 
+   array<string> m_setNames; 
    realT m_dt;  // used for regular output intervals
    std::deque<realT> m_outputTimes; // preset output times
    
    PhysicalDomainT::ObjectDataStructureKeys m_objectType;
    std::string m_regionName; // only used if setting field in an element region
 
-   sArray1d m_fieldNames;
+   array<string> m_fieldNames;
    std::vector<FieldType> m_fieldTypes;
    
    std::string m_headerString;

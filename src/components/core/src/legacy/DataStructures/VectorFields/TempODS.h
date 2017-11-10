@@ -20,7 +20,7 @@ public:
 
 
    void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-                                                                 Array1dT<gArray1d>& objectToCompositionObject ){}
+                                                                 array<gArray1d>& objectToCompositionObject ){}
 
   /// pure virtual function that sets what objects are on the boundary of the domain
    void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL){}

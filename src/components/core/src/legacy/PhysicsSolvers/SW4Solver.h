@@ -23,7 +23,7 @@ class SW4Solver : public SolverBase
                  const realT& dt,
                  const int cycleNumber,
                  PhysicalDomainT& domain,
-                 const sArray1d& namesOfSolverRegions,
+                 const array<string>& namesOfSolverRegions,
                  SpatialPartition& partition,
                  FractunatorBase* const fractunator );
 
@@ -33,7 +33,7 @@ class SW4Solver : public SolverBase
 
    //  void PostProcess (PhysicalDomainT& domain,
    //                    SpatialPartition& partition,
-   //                    const sArray1d& namesOfSolverRegions);
+   //                    const array<string>& namesOfSolverRegions);
 
   void RegisterFields( PhysicalDomainT& domain );
 
@@ -43,7 +43,7 @@ class SW4Solver : public SolverBase
 
   void SetMaxStableTimeStep( const realT& time,
            PhysicalDomainT& domain,
-			     const sArray1d& namesOfSolverRegions,
+			     const array<string>& namesOfSolverRegions,
 			     SpatialPartition& partition  );
 
   void GetStencilCoefficients( realT* _acof, realT* _ghcof, realT* _bope, realT* _sbop );
@@ -54,31 +54,31 @@ class SW4Solver : public SolverBase
 			  realT* _acof, realT* _ghcof, realT* _bope );
 
 private:
-  void Forcing( realT time, Array1dT<R1Tensor>& F );
+  void Forcing( realT time, array<R1Tensor>& F );
 
-  void Forcing_tt( realT time, Array1dT<R1Tensor>& F );
+  void Forcing_tt( realT time, array<R1Tensor>& F );
 
-  void evalPredictor( Array1dT<R1Tensor>& Up, Array1dT<R1Tensor>& U, Array1dT<R1Tensor>& Um,
-		      Array1dT<realT>& rho, Array1dT<R1Tensor>& Lu, Array1dT<R1Tensor>& F, realT dt );
-  void evalDpDmInTime( Array1dT<R1Tensor>& Up, Array1dT<R1Tensor>& U,  Array1dT<R1Tensor>& Um,
-		       Array1dT<R1Tensor>& Uacc, realT dt );
+  void evalPredictor( array<R1Tensor>& Up, array<R1Tensor>& U, array<R1Tensor>& Um,
+		      array<realT>& rho, array<R1Tensor>& Lu, array<R1Tensor>& F, realT dt );
+  void evalDpDmInTime( array<R1Tensor>& Up, array<R1Tensor>& U,  array<R1Tensor>& Um,
+		       array<R1Tensor>& Uacc, realT dt );
 
-  void evalCorrector( Array1dT<R1Tensor>& Up,  Array1dT<realT>& rho, Array1dT<R1Tensor>& Lu,
-		      Array1dT<R1Tensor>& F, realT dt );
+  void evalCorrector( array<R1Tensor>& Up,  array<realT>& rho, array<R1Tensor>& Lu,
+		      array<R1Tensor>& F, realT dt );
 
-  void enforceBC( Array1dT<R1Tensor>& Up, Array1dT<R2SymTensor>& metric,
-		  Array1dT<realT>& lame_mu, Array1dT<realT>& lame_lambda );
+  void enforceBC( array<R1Tensor>& Up, array<R2SymTensor>& metric,
+		  array<realT>& lame_mu, array<realT>& lame_lambda );
 
   void addSuperGridDamping( realT* Up, realT* U, realT* Um, realT* _rho,
 			    realT* _dcx, realT* _dcy, realT* _dcz, realT* _strx, realT* _stry, realT* _strz,
 			    realT* _jac, realT* _cox, realT* _coy, realT* _coz, realT coeff );
 
-  void cycleSolutionArrays( Array1dT<R1Tensor>& Up, Array1dT<R1Tensor>& U, Array1dT<R1Tensor>& Um );
+  void cycleSolutionArrays( array<R1Tensor>& Up, array<R1Tensor>& U, array<R1Tensor>& Um );
 
   void setupSupergrid( realT* strx, realT* stry, realT* strz, realT* dcx, realT* dcy, realT* dcz,
 		       realT* cox, realT* coy, realT* coz );
 
-  void setupCartesianMetric( Array1dT<R2SymTensor>& metric, Array1dT<realT>& jacobian );
+  void setupCartesianMetric( array<R2SymTensor>& metric, array<realT>& jacobian );
   
   void preProcessSources( realT dt, int numberOfTimeSteps, realT tstart );
 
@@ -91,8 +91,8 @@ private:
   void processSupergrid(char * buffer);
   void processPrefilter(char* buffer);
   void processTimeSeries( char* buffer );
-  void convert_to_mulambda( Array1dT<realT>& rho, Array1dT<realT>& mu,
-			    Array1dT<realT>& lambda );
+  void convert_to_mulambda( array<realT>& rho, array<realT>& mu,
+			    array<realT>& lambda );
   void Forcing( realT time, realT* F );
   void Forcing_tt( realT time, realT* F );
   void evalPredictor( realT* Up, realT* U, realT* Um, realT* rho,

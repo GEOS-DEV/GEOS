@@ -88,9 +88,9 @@ bool MaterialBlock::inside_block( double x, double y, double z )
 }
 
 //-----------------------------------------------------------------------
-void MaterialBlock::set_material_properties( Array1dT<realT> & rho,
-					     Array1dT<realT>& cs, Array1dT<realT> & cp,
-					     Array1dT<R1Tensor>& coord, realT zsurf )
+void MaterialBlock::set_material_properties( array<realT> & rho,
+					     array<realT>& cs, array<realT> & cp,
+					     array<R1Tensor>& coord, realT zsurf )
 {
    for( localIndex ind = 0 ; ind < rho.size() ; ind++ )
       if(inside_block(coord[ind][0],coord[ind][1],coord[ind][2]))

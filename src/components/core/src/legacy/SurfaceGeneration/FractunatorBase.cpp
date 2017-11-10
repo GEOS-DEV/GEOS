@@ -25,7 +25,7 @@ m_maxTurnAngle(91.0/180.0 * 3.14159265)
   // TODO Auto-generated constructor stub
 
 
-//  m_virtualNodes.AddMap< Array1dT<lSet> >("usedFaces");
+//  m_virtualNodes.AddMap< array<lSet> >("usedFaces");
 }
 
 FractunatorBase::~FractunatorBase()
@@ -74,7 +74,7 @@ void FractunatorBase::RegisterFieldsAndMaps( NodeManager& nodeManager,
 
   faceManager.AddKeylessDataField<int>("isSeparable", true, true );
 
-  rArray1d* toughnessPointer = faceManager.GetFieldDataPointer<realT>("faceToughness");
+  array<real64>* toughnessPointer = faceManager.GetFieldDataPointer<realT>("faceToughness");
   if (toughnessPointer == NULL)
   {
     faceManager.AddKeylessDataField<realT>("faceToughness", true, true);
@@ -85,7 +85,7 @@ void FractunatorBase::RegisterFieldsAndMaps( NodeManager& nodeManager,
     m_tounessSetByInitialCondition = true;
   }
 
-  rArray1d* failStressPointer = faceManager.GetFieldDataPointer<realT>("faceFailStress");
+  array<real64>* failStressPointer = faceManager.GetFieldDataPointer<realT>("faceFailStress");
   if (failStressPointer == NULL)
   {
     if (m_failCriterion == 0 || m_failCriterion == 2)
@@ -104,7 +104,7 @@ void FractunatorBase::RegisterFieldsAndMaps( NodeManager& nodeManager,
     faceManager.AddKeylessDataField<int>( "DFN_Index", true, true );
   }
 
-  rArray1d* delta0N = faceManager.GetFieldDataPointer<realT>("delta0N");
+  array<real64>* delta0N = faceManager.GetFieldDataPointer<realT>("delta0N");
   if (delta0N != NULL)
   {
     faceManager.AddKeylessDataField<realT>( "faceContactStiffness", true, false );
@@ -119,7 +119,7 @@ void FractunatorBase::Initialize( NodeManager& nodeManager,
                                   ElementManagerT& elementManager)
 {
   std::map< std::string, lSet >::const_iterator setMap = nodeManager.m_Sets.find( m_separableNodeSet );
-  iArray1d& isSeparable = nodeManager.GetFieldData<int>("isSeparable");
+  array<integer>& isSeparable = nodeManager.GetFieldData<int>("isSeparable");
   isSeparable = 1;
 
 
@@ -134,7 +134,7 @@ void FractunatorBase::Initialize( NodeManager& nodeManager,
     }
   }
 
-  iArray1d& isFaceSeparable = faceManager.GetFieldData<int>("isSeparable");
+  array<integer>& isFaceSeparable = faceManager.GetFieldData<int>("isSeparable");
   isFaceSeparable = 1;
 
   std::map< std::string, lSet >::const_iterator faceSetMap = faceManager.m_Sets.find( m_separableFaceSet );
@@ -151,7 +151,7 @@ void FractunatorBase::Initialize( NodeManager& nodeManager,
 
 
 
-  rArray1d& separationCoeff = faceManager.GetFieldData<realT>("separationCoeff");
+  array<real64>& separationCoeff = faceManager.GetFieldData<realT>("separationCoeff");
   separationCoeff = 0.0;
 
 
@@ -162,11 +162,11 @@ void FractunatorBase::Initialize( NodeManager& nodeManager,
 
   if ( !m_tounessSetByInitialCondition)
   {
-    rArray1d& faceToughness = faceManager.GetFieldData<realT>("faceToughness");
+    array<real64>& faceToughness = faceManager.GetFieldData<realT>("faceToughness");
     faceToughness = m_rockToughness;
   }
 
-  rArray1d* faceFailStress =  faceManager.GetFieldDataPointer<realT>("faceFailStress");
+  array<real64>* faceFailStress =  faceManager.GetFieldDataPointer<realT>("faceFailStress");
 
   if ( !m_failStressSetByInitialCondition && faceFailStress != NULL)
   {
@@ -175,13 +175,13 @@ void FractunatorBase::Initialize( NodeManager& nodeManager,
 
 
   // Set an initial value for contact stress if necessary (this will get over-written later)
-  rArray1d* faceContactStiffness = faceManager.GetFieldDataPointer<realT>("faceContactStiffness");
+  array<real64>* faceContactStiffness = faceManager.GetFieldDataPointer<realT>("faceContactStiffness");
   if (faceContactStiffness != NULL)
   {
     (*faceContactStiffness) = m_kJn;
   }
 
-  iArray1d * const degreeFromCrack = nodeManager.GetFieldDataPointer<int>("degreeFromCrack");
+  array<integer> * const degreeFromCrack = nodeManager.GetFieldDataPointer<int>("degreeFromCrack");
   if( degreeFromCrack!=nullptr )
   {
     (*degreeFromCrack) = 1000;
@@ -239,8 +239,8 @@ void FractunatorBase::ReadXML( TICPP::HierarchicalDataNode& hdn )
 //{
 //
 //
-//  Array1dT<lSet> nodesToRupturedFaces;
-//  Array1dT<lSet> edgesToRupturedFaces;
+//  array<lSet> nodesToRupturedFaces;
+//  array<lSet> edgesToRupturedFaces;
 //
 //  UpdateRuptureStates( nodeManager,
 //                       edgeManager,
@@ -254,11 +254,11 @@ void FractunatorBase::ReadXML( TICPP::HierarchicalDataNode& hdn )
 //  int rank ;
 //  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 //
-////  Array1dT<MaterialBaseStateDataT*>&  temp = elementManager.m_ElementRegions["PM1"].m_materialStates;
+////  array<MaterialBaseStateDataT*>&  temp = elementManager.m_ElementRegions["PM1"].m_materialStates;
 //
-//  const iArray1d& isNodeGhost = nodeManager.GetFieldData<FieldInfo::ghostRank>();
-//  const iArray1d& isSeparable = nodeManager.GetFieldData<int>("isSeparable");
-//  const iArray1d& layersFromDomainBoundary = nodeManager.GetFieldData<int>("LayersFromDomainBoundary");
+//  const array<integer>& isNodeGhost = nodeManager.GetFieldData<FieldInfo::ghostRank>();
+//  const array<integer>& isSeparable = nodeManager.GetFieldData<int>("isSeparable");
+//  const array<integer>& layersFromDomainBoundary = nodeManager.GetFieldData<int>("LayersFromDomainBoundary");
 //
 //  // process nodes on the interior
 //  {
@@ -312,10 +312,10 @@ void FractunatorBase::ReadXML( TICPP::HierarchicalDataNode& hdn )
 //
 //    // If a face is split by a domains that does not own this face, the rupture state for the virtual face will not be communicated to the owner.
 //    // The following is to fix this problem.
-//    iArray1d* vfaceRuptureState = m_virtualFaces.GetFieldDataPointer<int>( "ruptureState" );
+//    array<integer>* vfaceRuptureState = m_virtualFaces.GetFieldDataPointer<int>( "ruptureState" );
 //    if (vfaceRuptureState != NULL)
 //    {
-//      const iArray1d& faceRuptureState = faceManager.GetFieldData<int>( "ruptureState" );
+//      const array<integer>& faceRuptureState = faceManager.GetFieldData<int>( "ruptureState" );
 //      for( localIndex kf=0 ; kf<(*vfaceRuptureState).size() ; ++kf )
 //      {
 //        if( faceRuptureState[kf]==2 )
@@ -349,8 +349,8 @@ bool FractunatorBase::ProcessNode( const localIndex nodeID,
                                    EdgeManagerT& edgeManager,
                                    FaceManagerT& faceManager,
                                    ExternalFaceManagerT& externalFaceManager,
-                                   Array1dT<lSet>& nodesToRupturedFaces,
-                                   Array1dT<lSet>& edgesToRupturedFaces,
+                                   array<lSet>& nodesToRupturedFaces,
+                                   array<lSet>& edgesToRupturedFaces,
                                    ElementManagerT& elementManager,
                                    ModifiedObjectLists& modifiedObjects,
                                    const bool prefrac)
@@ -406,8 +406,8 @@ void FractunatorBase::UpdateRuptureStates( NodeManager& nodeManager,
                                        EdgeManagerT& edgeManager,
                                        FaceManagerT& faceManager,
                                        ElementManagerT& elementManager,
-                                       Array1dT<lSet>& nodesToRupturedFaces,
-                                       Array1dT<lSet>& edgesToRupturedFaces,
+                                       array<lSet>& nodesToRupturedFaces,
+                                       array<lSet>& edgesToRupturedFaces,
                                        const bool prefrac )
 {
 
@@ -427,7 +427,7 @@ void FractunatorBase::UpdateRuptureStates( NodeManager& nodeManager,
 
   const OrderedVariableOneToManyRelation& childFaceIndex = faceManager.GetVariableOneToManyMap( "childIndices" );
 
-  iArray1d& faceRuptureState = faceManager.GetFieldData<int>( "ruptureState" );
+  array<integer>& faceRuptureState = faceManager.GetFieldData<int>( "ruptureState" );
 
   // assign the values of the nodeToRupturedFaces and edgeToRupturedFaces arrays.
   for( localIndex kf=0 ; kf<faceManager.DataLengths() ; ++kf )
@@ -448,7 +448,7 @@ void FractunatorBase::UpdateRuptureStates( NodeManager& nodeManager,
     }
   }
 
-  for( iArray1d::iterator i=edgeManager.m_isExternal.begin() ; i!=edgeManager.m_isExternal.end() ; ++i )
+  for( array<integer>::iterator i=edgeManager.m_isExternal.begin() ; i!=edgeManager.m_isExternal.end() ; ++i )
   {
     if( *i == -1 )
     {
@@ -459,8 +459,8 @@ void FractunatorBase::UpdateRuptureStates( NodeManager& nodeManager,
   }
 
 
-  Array1dT<lSet>::iterator i=nodesToRupturedFaces.begin();
-  iArray1d::iterator j=nodeManager.GetFieldData<int>("numberOfRupturedFaces").begin();
+  array<lSet>::iterator i=nodesToRupturedFaces.begin();
+  array<integer>::iterator j=nodeManager.GetFieldData<int>("numberOfRupturedFaces").begin();
 
   for( localIndex a=0 ; a<nodeManager.DataLengths() ; ++a, ++i, ++j )
   {
@@ -524,11 +524,11 @@ void FractunatorBase::ReadSilo( const SiloFile& siloFile,
 int FractunatorBase::CheckOrphanElement (FaceManagerT& faceManager,
                                        localIndex iFace)
 {
-  iArray1d& ruptureState = faceManager.GetFieldData<int>("ruptureState");
+  array<integer>& ruptureState = faceManager.GetFieldData<int>("ruptureState");
 
   localIndex iEle;
   int flagOrphan = 0;
-  for (Array1dT< std::pair< ElementRegionT*, localIndex > >::iterator iter = faceManager.m_toElementsRelation[iFace].begin();
+  for (array< std::pair< ElementRegionT*, localIndex > >::iterator iter = faceManager.m_toElementsRelation[iFace].begin();
       iter != faceManager.m_toElementsRelation[iFace].end(); ++iter )
   {
     const ElementRegionT* elementRegion = iter->first;
@@ -554,7 +554,7 @@ void FractunatorBase::MarkBirthTime( FaceManagerT& faceManager,
                                      ModifiedObjectLists& modifiedObjects,
                                      const realT time)
 {
-  rArray1d& birthTime = faceManager.GetFieldData<realT>("birthTime");
+  array<real64>& birthTime = faceManager.GetFieldData<realT>("birthTime");
 
   for( lSet::const_iterator i=modifiedObjects.newFaces.begin() ; i!=modifiedObjects.newFaces.end() ; ++i )
   {
@@ -568,7 +568,7 @@ void FractunatorBase::CorrectSplitNodalMass (NodeManager& nodeManager,
                               localIndex node0,
                               localIndex node1)
 {
-  Array1dT<realT>& mass = nodeManager.GetFieldData<FieldInfo::mass> ();
+  array<realT>& mass = nodeManager.GetFieldData<FieldInfo::mass> ();
 
   realT totalMass = mass[node0] + mass[node1];
   mass[node0] = totalMass * nodeManager.m_toElementsRelation[node0].size() / (nodeManager.m_toElementsRelation[node0].size() + nodeManager.m_toElementsRelation[node1].size());
@@ -581,7 +581,7 @@ realT FractunatorBase::MinimumToughnessOnEdge( const localIndex edgeID,
                                                FaceManagerT& faceManager)
 {
   realT val = std::numeric_limits<realT>::max();
-  rArray1d& faceToughness = faceManager.GetFieldData<realT>("faceToughness");
+  array<real64>& faceToughness = faceManager.GetFieldData<realT>("faceToughness");
 
   for( lSet::const_iterator iface=edgeManager.m_toFacesRelation[edgeID].begin() ;
       iface!=edgeManager.m_toFacesRelation[edgeID].end() ; ++iface )
@@ -597,7 +597,7 @@ realT FractunatorBase::MinimumToughnessOnNode( const localIndex nodeID,
                                                FaceManagerT& faceManager)
 {
   realT val = std::numeric_limits<realT>::max();
-  rArray1d& faceToughness = faceManager.GetFieldData<realT>("faceToughness");
+  array<real64>& faceToughness = faceManager.GetFieldData<realT>("faceToughness");
 
   for (lSet::const_iterator iface=nodeManager.m_nodeToFaceMap[nodeID].begin() ;
           iface!=nodeManager.m_nodeToFaceMap[nodeID].end() ; ++iface)
@@ -612,7 +612,7 @@ void FractunatorBase::MarkDiscreteFractureNetworkFaces(FaceManagerT& faceManager
                                                        SpatialPartition& partition)
 {
   if (partition.m_rank == 0) std::cout << "Marking DFN ID." << std::endl;
-  iArray1d& dfnIndexMap = faceManager.GetFieldData<int>("DFN_Index");
+  array<integer>& dfnIndexMap = faceManager.GetFieldData<int>("DFN_Index");
   dfnIndexMap = -1;
   int dfnCount = 0;
 

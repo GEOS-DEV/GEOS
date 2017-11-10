@@ -20,8 +20,8 @@ class MaterialPfile : public MaterialData
 
   ~MaterialPfile();
 
-   virtual void set_material_properties( Array1dT<realT> &rho, Array1dT<realT> &cs,
-					 Array1dT<realT> &cp,  Array1dT<R1Tensor>& coord,
+   virtual void set_material_properties( array<realT> &rho, array<realT> &cs,
+					 array<realT> &cp,  array<R1Tensor>& coord,
 					 realT zsurf );
 
   //  int get_material_pt( double x, double y, double z, double& rho, double& cs, double& cp,

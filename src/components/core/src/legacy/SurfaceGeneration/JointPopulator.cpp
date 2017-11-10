@@ -24,11 +24,11 @@ void
 JointPopulator::Initialize()
 {
   realT weightTotal = 0.0;
-  for(rArray1d::const_iterator it = m_jointWeights.begin(); it != m_jointWeights.end(); ++it)
+  for(array<real64>::const_iterator it = m_jointWeights.begin(); it != m_jointWeights.end(); ++it)
     weightTotal += *it;
   if(!isEqual(weightTotal, 1.0) && !isZero(weightTotal))
   {
-    for(rArray1d::iterator it = m_jointWeights.begin(); it != m_jointWeights.end(); ++it)
+    for(array<real64>::iterator it = m_jointWeights.begin(); it != m_jointWeights.end(); ++it)
       *it /= weightTotal;
   }
 }
@@ -127,16 +127,16 @@ bool JointPopulator::Next(R1Tensor& strikeVector,
  */
 void
 JointPopulator::Populate(const ElementRegionT& elementRegion,
-                         const Array1dT<R1Tensor>& nodesRef,
-                         const Array1dT<R1Tensor>& nodesDisp,
+                         const array<R1Tensor>& nodesRef,
+                         const array<R1Tensor>& nodesDisp,
                          const R1Tensor& min,
                          const R1Tensor& max,
-                         Array1dT<rArray1d>& frequencies)
+                         array<array<real64>>& frequencies)
 {
   const gArray1d& localToGlobal = elementRegion.m_localToGlobalMap;
 
   //GET EVERY ELEMENT'S CENTROID
-  Array1dT<R1Tensor> centroids(localToGlobal.size(), static_cast<R1Tensor>(0.0) );
+  array<R1Tensor> centroids(localToGlobal.size(), static_cast<R1Tensor>(0.0) );
   {
     const FixedOneToManyRelation& elementToNodes = elementRegion.m_toNodesRelation;
     for (localIndex i = 0; i < elementToNodes.Dimension(0); ++i)
@@ -176,7 +176,7 @@ JointPopulator::Populate(const std::map< std::string, ElementRegionT >& elementR
   if(!m_isActive || m_nodeSetName.length() == 0)
     return false;
 
-  sArray1d elementRegionNames;
+  array<string> elementRegionNames;
   if(m_elementRegionName.length() == 0)
   {
     elementRegionNames.reserve(elementRegions.size());
@@ -190,11 +190,11 @@ JointPopulator::Populate(const std::map< std::string, ElementRegionT >& elementR
   }
 
   //get position references
-  const Array1dT<R1Tensor>& ref = nodeManager.GetFieldData<FieldInfo::referencePosition>();
-  const Array1dT<R1Tensor>& disp = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& ref = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const array<R1Tensor>& disp = nodeManager.GetFieldData<FieldInfo::displacement>();
 
   //first, generate the spatial distribution of joints and get normals/dimensions
-  Array1dT<R1Tensor> positions, normals, strikes, dips;
+  array<R1Tensor> positions, normals, strikes, dips;
   for(localIndex ijs = 0; ijs < m_jointSets.size(); ++ijs)
   {
     JointSetT& js = m_jointSets[ijs];
@@ -207,10 +207,10 @@ JointPopulator::Populate(const std::map< std::string, ElementRegionT >& elementR
   return Populate(elementRegions, elementRegionNames, m_nodeSetName, positions, normals, strikes, dips, faceManager, nodeManager);
 }
 
-bool JointPopulator::Populate(Array1dT<R1Tensor>& positions,
-                              Array1dT<R1Tensor>& normals,
-                              Array1dT<R1Tensor>& strikes,
-                              Array1dT<R1Tensor>& dips) const
+bool JointPopulator::Populate(array<R1Tensor>& positions,
+                              array<R1Tensor>& normals,
+                              array<R1Tensor>& strikes,
+                              array<R1Tensor>& dips) const
 {
   std::ifstream geometry;
   geometry.open(m_fileName.c_str());
@@ -254,7 +254,7 @@ bool JointPopulator::Populate(const std::map<std::string, ElementRegionT>& eleme
   if(!m_isActive || m_nodeSetName.length() == 0 || m_fileName.empty())
     return false;
 
-  sArray1d elementRegionNames;
+  array<string> elementRegionNames;
   if(m_elementRegionName.length() == 0)
   {
     elementRegionNames.reserve(elementRegions.size());
@@ -268,11 +268,11 @@ bool JointPopulator::Populate(const std::map<std::string, ElementRegionT>& eleme
   }
 
   //get position references
-  //const Array1dT<R1Tensor>& ref = nodeManager.GetFieldData<FieldInfo::referencePosition>();
-  //const Array1dT<R1Tensor>& disp = nodeManager.GetFieldData<FieldInfo::displacement>();
+  //const array<R1Tensor>& ref = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  //const array<R1Tensor>& disp = nodeManager.GetFieldData<FieldInfo::displacement>();
 
   //first, generate the spatial distribution of joints and get normals/dimensions
-  Array1dT<R1Tensor> positions, normals, strikes, dips;
+  array<R1Tensor> positions, normals, strikes, dips;
   Populate(positions, normals, strikes, dips);
   return Populate(elementRegions, elementRegionNames, m_nodeSetName,
                   positions, normals, strikes, dips,
@@ -287,21 +287,21 @@ bool JointPopulator::Populate(const std::map<std::string, ElementRegionT>& eleme
  */
 bool
 JointPopulator::Populate(const std::map< std::string, ElementRegionT >& elementRegions,
-                         const sArray1d& elementRegionNames,
+                         const array<string>& elementRegionNames,
                          const std::string& nodeSetName,
-                         Array1dT<R1Tensor>& positions,
-                         Array1dT<R1Tensor>& normals,
-                         Array1dT<R1Tensor>& strikes,
-                         Array1dT<R1Tensor>& dips,
+                         array<R1Tensor>& positions,
+                         array<R1Tensor>& normals,
+                         array<R1Tensor>& strikes,
+                         array<R1Tensor>& dips,
                          FaceManagerT& faceManager,
                          NodeManager& nodeManager)
 {
   //get position references
-  const Array1dT<R1Tensor>& ref = nodeManager.GetFieldData<FieldInfo::referencePosition>();
-  const Array1dT<R1Tensor>& disp = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& ref = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const array<R1Tensor>& disp = nodeManager.GetFieldData<FieldInfo::displacement>();
 
   lSet nodes;
-  for(sArray1d::const_iterator it = elementRegionNames.begin(); it != elementRegionNames.end(); ++it)
+  for(array<string>::const_iterator it = elementRegionNames.begin(); it != elementRegionNames.end(); ++it)
   {
     std::map< std::string, ElementRegionT >::const_iterator iter = elementRegions.find(*it);
     if(iter == elementRegions.end())

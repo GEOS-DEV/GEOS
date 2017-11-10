@@ -213,7 +213,7 @@ inline std::map<std::string,  Table4D >& TableManager::Tables<4>() { return m_ta
 
 
 template <>
-inline void TableManager::NewTable<1>(const std::string& name, const Array1dT<rArray1d>& x, const rArray1d& values, TableInterpolation::Order interp)
+inline void TableManager::NewTable<1>(const std::string& name, const array<array<real64>>& x, const array<real64>& values, TableInterpolation::Order interp)
 {
   m_tables1.insert(std::make_pair(name, Table1D()));
   Table1D& table = m_tables1[name];
@@ -225,7 +225,7 @@ inline void TableManager::NewTable<1>(const std::string& name, const Array1dT<rA
 }
 
 template <>
-inline void TableManager::NewTable<2>(const std::string& name, const Array1dT<rArray1d>& x, const rArray1d& values,TableInterpolation::Order interp)
+inline void TableManager::NewTable<2>(const std::string& name, const array<array<real64>>& x, const array<real64>& values,TableInterpolation::Order interp)
 {
   m_tables2.insert(std::make_pair(name, Table2D()));
   Table2D& table = m_tables2[name];
@@ -237,7 +237,7 @@ inline void TableManager::NewTable<2>(const std::string& name, const Array1dT<rA
 }
 
 template <>
-inline void TableManager::NewTable<3>(const std::string& name, const Array1dT<rArray1d>& x, const rArray1d& values,TableInterpolation::Order interp)
+inline void TableManager::NewTable<3>(const std::string& name, const array<array<real64>>& x, const array<real64>& values,TableInterpolation::Order interp)
 {
   m_tables3.insert(std::make_pair(name, Table3D()));
   Table3D& table = m_tables3[name];
@@ -249,7 +249,7 @@ inline void TableManager::NewTable<3>(const std::string& name, const Array1dT<rA
 }
 
 template <>
-inline void TableManager::NewTable<4>(const std::string& name, const Array1dT<rArray1d>& x, const rArray1d& values,TableInterpolation::Order interp)
+inline void TableManager::NewTable<4>(const std::string& name, const array<array<real64>>& x, const array<real64>& values,TableInterpolation::Order interp)
 {
   m_tables4.insert(std::make_pair(name, Table4D()));
   Table4D& table = m_tables4[name];
@@ -300,7 +300,7 @@ inline std::map<std::string,  VectorField4D >& TableManager::VectorFields<4>() {
 
 
 template <>
-inline void TableManager::NewVectorField<1>(const std::string& name, const Array1dT<rArray1d>& x, const Array1dT<R1Tensor>& values)
+inline void TableManager::NewVectorField<1>(const std::string& name, const array<array<real64>>& x, const array<R1Tensor>& values)
 {
   m_vectorFields1.insert(std::make_pair(name, VectorField1D()));
   VectorField1D& table = m_vectorFields1[name];
@@ -310,7 +310,7 @@ inline void TableManager::NewVectorField<1>(const std::string& name, const Array
 }
 
 template <>
-inline void TableManager::NewVectorField<2>(const std::string& name, const Array1dT<rArray1d>& x, const Array1dT<R1Tensor>& values)
+inline void TableManager::NewVectorField<2>(const std::string& name, const array<array<real64>>& x, const array<R1Tensor>& values)
 {
   m_vectorFields2.insert(std::make_pair(name, VectorField2D()));
   VectorField2D& table = m_vectorFields2[name];
@@ -320,7 +320,7 @@ inline void TableManager::NewVectorField<2>(const std::string& name, const Array
 }
 
 template <>
-inline void TableManager::NewVectorField<3>(const std::string& name, const Array1dT<rArray1d>& x, const Array1dT<R1Tensor>& values)
+inline void TableManager::NewVectorField<3>(const std::string& name, const array<array<real64>>& x, const array<R1Tensor>& values)
 {
   m_vectorFields3.insert(std::make_pair(name, VectorField3D()));
   VectorField3D& table = m_vectorFields3[name];
@@ -330,7 +330,7 @@ inline void TableManager::NewVectorField<3>(const std::string& name, const Array
 }
 
 template <>
-inline void TableManager::NewVectorField<4>(const std::string& name, const Array1dT<rArray1d>& x, const Array1dT<R1Tensor>& values)
+inline void TableManager::NewVectorField<4>(const std::string& name, const array<array<real64>>& x, const array<R1Tensor>& values)
 {
   m_vectorFields4.insert(std::make_pair(name, VectorField4D()));
   VectorField4D& table = m_vectorFields4[name];

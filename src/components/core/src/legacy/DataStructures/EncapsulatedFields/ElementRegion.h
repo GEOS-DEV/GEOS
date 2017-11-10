@@ -58,12 +58,12 @@ public:
 
   const localIndex& m_numElements;
 
-  Array1dT<R1Tensor> xi;
+  array<R1Tensor> xi;
 
-  Array1dT<R1Tensor>  m_dNdXi;
+  array<R1Tensor>  m_dNdXi;
 
 
-  Array2dT< Array1dT<R1Tensor> >  m_dNdX;
+  Array2dT< array<R1Tensor> >  m_dNdX;
 
   rArray2d detJ;
 

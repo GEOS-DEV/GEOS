@@ -120,7 +120,7 @@ double UpdateParentIndicies::TimeStep( const realT& time,
                                         const realT& dt,
                                         const int cycleNumber,
                                         PhysicalDomainT& domain,
-                                        const sArray1d& namesOfSolverRegions ,
+                                        const array<string>& namesOfSolverRegions ,
                                         SpatialPartition& partition ,
                                         FractunatorBase* const fractunator )
 {  
@@ -132,12 +132,12 @@ double UpdateParentIndicies::TimeStep( const realT& time,
   gArray1d& parentIndexes = objectManager.GetFieldData<globalIndex>("parentGlobalIndex");
 
   if(m_setNames.empty()){
-	  for( sArray1d::size_type i =0;  i < objectManager.DataLengths(); ++i){
+	  for( array<string>::size_type i =0;  i < objectManager.DataLengths(); ++i){
 		  localIndex localPI =  objectManager.GetParentIndex(i);
 		  parentIndexes[i] =  objectManager.m_localToGlobalMap[localPI];
 	  }
   } else {
-    for( sArray1d::size_type i =0; i < m_setNames.size(); ++i){
+    for( array<string>::size_type i =0; i < m_setNames.size(); ++i){
       lSet& set = objectManager.GetSet(m_setNames[i]);
 	  for( lSet::iterator si = set.begin();  si != set.end(); ++si){
 		  localIndex localPI =  objectManager.GetParentIndex(*si);

@@ -14,39 +14,39 @@
 namespace GeometryUtilities
 {
 
-  realT Area_2DPolygon(const Array1dT<R1TensorT<2> >& pointsLocalProjection);
+  realT Area_2DPolygon(const array<R1TensorT<2> >& pointsLocalProjection);
 
   realT CentroidAndVolume_3DTetrahedron(const R1Tensor& x0, const R1Tensor& x1, const R1Tensor& x2,
                                         const R1Tensor& x3, R1Tensor& x);
 
-  realT Centroid_2DPolygon(const Array1dT<R1TensorT<2> >& points, R1TensorT<2>& center);
+  realT Centroid_2DPolygon(const array<R1TensorT<2> >& points, R1TensorT<2>& center);
 
   realT Centroid_3DPolygon(const lArray1d& pointsEntries,
-                           const Array1dT<R1Tensor>& points,
+                           const array<R1Tensor>& points,
                            R1Tensor& center,
                            R1Tensor& normal);
 
   realT Centroid_3DPolygon(const lArray1d& pointsEntries,
-                           const Array1dT<R1Tensor>& pointsCommonPlanes,
+                           const array<R1Tensor>& pointsCommonPlanes,
                            R1Tensor& center);
 
   realT Centroid_3DPolygon(const lArray1d& pointsEntries,
-                           const Array1dT<R1Tensor>& pointReferences,
-                           const Array1dT<R1Tensor>& pointDisplacements,
+                           const array<R1Tensor>& pointReferences,
+                           const array<R1Tensor>& pointDisplacements,
                            R1Tensor& center,
                            R1Tensor& normal);
 
   realT Centroid_3DPolygon(const lArray1d& pointsEntries,
-                           const Array1dT<R1Tensor>& pointReferences,
-                           const Array1dT<R1Tensor>& pointDisplacements,
+                           const array<R1Tensor>& pointReferences,
+                           const array<R1Tensor>& pointDisplacements,
                            R1Tensor& center);
 
   void FaceNormal3DPolygonReferenceConfig(const lArray1d& pointsEntries,
-                                          const Array1dT<R1Tensor>& pointReferences,
+                                          const array<R1Tensor>& pointReferences,
                                           R1Tensor& normal );
 
   void FindProjectionInParentSpace(const R1Tensor& xPoint, const R1Tensor& normal,
-                                   const Array1dT<R1Tensor>& xNodes, R1Tensor& soln, realT N[4],
+                                   const array<R1Tensor>& xNodes, R1Tensor& soln, realT N[4],
                                    const bool initialGuess = false,
                                    const realT tol = 1e-6);
 
@@ -87,7 +87,7 @@ namespace GeometryUtilities
                           const R1Tensor& x2,
                           const R1Tensor& x3);
 
-  bool PointInFace(const Array1dT<R1TensorT<2> >& uv,
+  bool PointInFace(const array<R1TensorT<2> >& uv,
                    const R1TensorT<2>& uv0,
                    const realT tol = 1e-10);
 
@@ -95,9 +95,9 @@ namespace GeometryUtilities
                          const localIndex elementIndex,
                          const lArray2d& toFaces,
                          const lArray2d& toNodes,
-                         const Array1dT<lArray1d>& faceToNodes,
-                         const Array1dT<R1Tensor>& referencePosition,
-                         const Array1dT<R1Tensor>& displacement,
+                         const array<lArray1d>& faceToNodes,
+                         const array<R1Tensor>& referencePosition,
+                         const array<R1Tensor>& displacement,
                          const bool planarFaces = true);
 
   bool PointInTriangle(
@@ -105,28 +105,28 @@ namespace GeometryUtilities
       const R1TensorT<2>& uvc, const R1TensorT<2>& uv0,
       const realT tol = 1e-10);
 
-  Array1dT<R1TensorT<2> >::size_type CoincidentIntersection_2DPolygons(
-                                                    const Array1dT<R1TensorT<2> >& a1,
-                                                    const Array1dT<R1TensorT<2> >& a2,
-                                                    Array1dT<R1TensorT<2> >& aa
+  array<R1TensorT<2> >::size_type CoincidentIntersection_2DPolygons(
+                                                    const array<R1TensorT<2> >& a1,
+                                                    const array<R1TensorT<2> >& a2,
+                                                    array<R1TensorT<2> >& aa
                                                     );
 
-  void Intersections_2DPolygons(const Array1dT<R1TensorT<2> >& a1,
-                                const Array1dT<R1TensorT<2> >& a2,
-                                Array1dT<R1TensorT<2> >& intersections);
+  void Intersections_2DPolygons(const array<R1TensorT<2> >& a1,
+                                const array<R1TensorT<2> >& a2,
+                                array<R1TensorT<2> >& intersections);
 
-  void OrderPoints_2DPolygon(Array1dT<R1TensorT<2> >& polygonPoints, const realT tol );
+  void OrderPoints_2DPolygon(array<R1TensorT<2> >& polygonPoints, const realT tol );
 
   template< int T_size >
-  void RemoveCoincidentOrderedPoints(Array1dT<R1TensorT<T_size> >& polygonPoints, const realT tol = 1e-6);
+  void RemoveCoincidentOrderedPoints(array<R1TensorT<T_size> >& polygonPoints, const realT tol = 1e-6);
 
-  realT Intersection_2DPolygons(const Array1dT<R1TensorT<2> >& a1,
-                                const Array1dT<R1TensorT<2> >& a2);
+  realT Intersection_2DPolygons(const array<R1TensorT<2> >& a1,
+                                const array<R1TensorT<2> >& a2);
 
-  realT Intersection_2DPolygons(const Array1dT<R1TensorT<2> >& a1,
-                                const Array1dT<R1TensorT<2> >& a2,
+  realT Intersection_2DPolygons(const array<R1TensorT<2> >& a1,
+                                const array<R1TensorT<2> >& a2,
                                 const realT& positionTolerance,
-                                Array1dT<R1TensorT<2> >& polygonPoints);
+                                array<R1TensorT<2> >& polygonPoints);
 
   bool VectorInPlane(const R1Tensor& normal,
                      const R1Tensor& point,
@@ -138,18 +138,18 @@ namespace GeometryUtilities
                       R1Tensor& e2);
 
   void CartesianPointsProjectedToPlanarPoints(const lArray1d& pointsEntries,
-                                              const Array1dT<R1Tensor>& pointReferences,
-                                              const Array1dT<R1Tensor>& pointDisplacements,
+                                              const array<R1Tensor>& pointReferences,
+                                              const array<R1Tensor>& pointDisplacements,
                                               const R1Tensor& e1,
                                               const R1Tensor& e2,
-                                              Array1dT<R1TensorT<2> >& localPoints,
+                                              array<R1TensorT<2> >& localPoints,
                                               R1TensorT<2>& min,
                                               R1TensorT<2>& max);
 
-  void CartesianPointsProjectedToPlanarPoints(  const Array1dT<R1Tensor>& points,
+  void CartesianPointsProjectedToPlanarPoints(  const array<R1Tensor>& points,
                                                 const R1Tensor& e1,
                                                 const R1Tensor& e2,
-                                                Array1dT<R1TensorT<2> >& localPoints,
+                                                array<R1TensorT<2> >& localPoints,
                                                 R1TensorT<2>& min,
                                                 R1TensorT<2>& max);
 
@@ -171,41 +171,41 @@ namespace GeometryUtilities
 
   void ClipByPlane_3DPolygon(const R1Tensor& normal,
                              const R1Tensor& pointOnPlane,
-                             const Array1dT<R1Tensor>& points,
+                             const array<R1Tensor>& points,
                              const R1Tensor& e1,
                              const R1Tensor& e2,
-                             const rArray1d& penetration,
-                             Array1dT<R1TensorT<2> >& inContact,
-                             Array1dT<R1TensorT<2> >& outContact,
-                             rArray1d& inDistance,
-                             rArray1d& outDistance,
+                             const array<real64>& penetration,
+                             array<R1TensorT<2> >& inContact,
+                             array<R1TensorT<2> >& outContact,
+                             array<real64>& inDistance,
+                             array<real64>& outDistance,
                              const bool reverse = false);
 
   void ClipByPlane_3DPolygon(const R1Tensor& normal,
                              const R1Tensor& pointOnPlane,
-                             const Array1dT<R1Tensor>& points,
+                             const array<R1Tensor>& points,
                              const R1Tensor& e1,
                              const R1Tensor& e2,
-                             const rArray1d& penetration,
-                             Array1dT<Array1dT<R1TensorT<2> > >& inContact,
-                             Array1dT<Array1dT<R1TensorT<2> > >& outContact,
+                             const array<real64>& penetration,
+                             array<array<R1TensorT<2> > >& inContact,
+                             array<array<R1TensorT<2> > >& outContact,
                              const bool reverse = false);
 
   void ClipByPlane_3DPolygon(const R1Tensor& normal,
                              const R1Tensor& pointOnPlane,
-                             const Array1dT<R1Tensor>& points,
-                             Array1dT<Array1dT<R1TensorT<2> > >& inContact,
-                             Array1dT<Array1dT<R1TensorT<2> > >& outContact,
+                             const array<R1Tensor>& points,
+                             array<array<R1TensorT<2> > >& inContact,
+                             array<array<R1TensorT<2> > >& outContact,
                              const bool reverse = false);
 
-  realT Overlap2DPolygons( const Array1dT<R1TensorT<2> >& a1,
-                           const Array1dT<R1TensorT<2> >& a2,
+  realT Overlap2DPolygons( const array<R1TensorT<2> >& a1,
+                           const array<R1TensorT<2> >& a2,
                            const realT& positionTolerance,
-                           Array1dT<R1TensorT<2> >& polygonPoints);
+                           array<R1TensorT<2> >& polygonPoints);
 
-  void Intersections2DPolygon( const Array1dT<R1TensorT<2> >& a1,
-                               const Array1dT<R1TensorT<2> >& a2,
-                               Array1dT<R1TensorT<2> >& intersections);
+  void Intersections2DPolygon( const array<R1TensorT<2> >& a1,
+                               const array<R1TensorT<2> >& a2,
+                               array<R1TensorT<2> >& intersections);
 
   localIndex LineIntersection( const R1TensorT<2>& uv1,
                                const R1TensorT<2>& uv1p,

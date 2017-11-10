@@ -34,8 +34,8 @@ namespace FiniteElementUtilities
 
 //
 //  void Interp(const R1Tensor &globalCoord,
-//	      const Array1dT<R1Tensor> &nodeCoords,
-//              const rArray1d &nodeValues,
+//	      const array<R1Tensor> &nodeCoords,
+//              const array<real64> &nodeValues,
 //              BasisBase *basis,
 //	      const unsigned int &ndofs,
 //	      const unsigned int &ndim,
@@ -63,11 +63,11 @@ namespace FiniteElementUtilities
 //  // Calcuate dN/dX at a specific position
 //
 //  void InterpdNdX(const R1Tensor &globalCoord,
-//		  const Array1dT<R1Tensor> &nodeCoords,
+//		  const array<R1Tensor> &nodeCoords,
 //		  BasisBase *basis,
 //		  const unsigned int &ndofs,
 //                  const unsigned int &ndim,
-//		  Array1dT<R1Tensor> &result)
+//		  array<R1Tensor> &result)
 //  {
 //
 //    assert(nodeCoords.size() == ndofs);
@@ -107,7 +107,7 @@ namespace FiniteElementUtilities
 //
 //
 //  void FindLocalCoord(const R1Tensor &globalCoord,
-//		      const Array1dT<R1Tensor> &nodeCoords,
+//		      const array<R1Tensor> &nodeCoords,
 //		      BasisBase *basis,
 //		      const unsigned int &ndofs,
 //		      const unsigned int &ndim,
@@ -115,14 +115,14 @@ namespace FiniteElementUtilities
 //  {
 //
 //    assert(nodeCoords.size() == ndofs);
-//    rArray1d resid(ndim);
+//    array<real64> resid(ndim);
 //    rArray2d A(ndim, ndim);
-//    rArray1d x(ndim);
+//    array<real64> x(ndim);
 //
 //    localCoord = 0.0;
 //
-//    rArray1d values(ndofs);
-//    Array1dT<R1Tensor>  gradients(ndofs);
+//    array<real64> values(ndofs);
+//    array<R1Tensor>  gradients(ndofs);
 //
 //    realT nrTol = 1.0e-6;
 //    int iterMax = 4;

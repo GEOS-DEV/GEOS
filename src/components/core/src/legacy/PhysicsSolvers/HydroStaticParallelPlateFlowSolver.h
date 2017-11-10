@@ -59,7 +59,7 @@ public:
 
   void PostProcess (PhysicalDomainT& domain,
                     SpatialPartition& partition,
-                    const sArray1d& namesOfSolverRegions);
+                    const array<string>& namesOfSolverRegions);
 
   virtual void ReadXML( TICPP::HierarchicalDataNode* const hdn ) ;
 
@@ -76,7 +76,7 @@ public:
 private:
   realT m_cavityVolume;
   realT m_cavityMass;
-  sArray1d m_boreholeSetNames;
+  array<string> m_boreholeSetNames;
 
 };
 

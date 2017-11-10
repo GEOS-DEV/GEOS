@@ -92,8 +92,8 @@
 int LagrangeSolverBase::m_instances = 0;
 
 static void ML_Coord2RBM( int Nnodes,
-                          const Array1dT<R1Tensor>& x,
-                          rArray1d& rbm,
+                          const array<R1Tensor>& x,
+                          array<real64>& rbm,
                           const int Ndof );
 
 
@@ -219,8 +219,8 @@ void LagrangeSolverBase::RegisterFields( PhysicalDomainT& domain )
     elemRegion.AddKeylessDataField<realT>("antiThermalStress", false, true);
     // This is the hydrostatic stress that would cause the same amount of volumetric strain as the thermal expantion/contraction would
 
-    rArray1d& temperature = elemRegion.GetFieldData<realT>("temperature");
-    rArray1d& CTE = elemRegion.GetFieldData<realT>("linearCTE");
+    array<real64>& temperature = elemRegion.GetFieldData<realT>("temperature");
+    array<real64>& CTE = elemRegion.GetFieldData<realT>("linearCTE");
     temperature = m_refTemperature;
     CTE = m_defaultCTE;
 
@@ -345,8 +345,8 @@ void LagrangeSolverBase::DeregisterTemporaryFields( PhysicalDomainT& domain )
 
 void LagrangeSolverBase::FillTemporaryFields( PhysicalDomainT& domain  )
 {
-  const Array1dT<R1Tensor>& disp_np1 = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
-  Array1dT<R1Tensor>& disp_n   = domain.m_feNodeManager.GetFieldData<R1Tensor>("displacement_n");
+  const array<R1Tensor>& disp_np1 = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+  array<R1Tensor>& disp_n   = domain.m_feNodeManager.GetFieldData<R1Tensor>("displacement_n");
   disp_n = disp_np1;
 }
 
@@ -354,8 +354,8 @@ void LagrangeSolverBase::FillTemporaryFields( PhysicalDomainT& domain  )
 
 void LagrangeSolverBase::OverwriteFieldsWithTemporaryFields( PhysicalDomainT& domain )
 {
-  Array1dT<R1Tensor>& disp_np1 = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
-  const Array1dT<R1Tensor>& disp_n   = domain.m_feNodeManager.GetFieldData<R1Tensor>("displacement_n");
+  array<R1Tensor>& disp_np1 = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& disp_n   = domain.m_feNodeManager.GetFieldData<R1Tensor>("displacement_n");
   disp_np1 = disp_n;
 }
 
@@ -424,7 +424,7 @@ double LagrangeSolverBase::TimeStep( const realT& time,
                                      const realT& dt,
                                      const int cycleNumber,
                                      PhysicalDomainT& domain,
-                                     const sArray1d& namesOfSolverRegions,
+                                     const array<string>& namesOfSolverRegions,
                                      SpatialPartition& partition,
                                      FractunatorBase* const fractunator)
 {
@@ -469,7 +469,7 @@ double LagrangeSolverBase::TimeStep( const realT& time,
 //                                        const realT& dt,
 //                                        const int cycleNumber,
 //                                        PhysicalDomainT& domain,
-//                                        const sArray1d& namesOfSolverRegions,
+//                                        const array<string>& namesOfSolverRegions,
 //                                        SpatialPartition& partition,
 //                                        FractunatorBase* const fractunator,
 //                                        XfemManager* elementSplitter)
@@ -480,7 +480,7 @@ double LagrangeSolverBase::TimeStep( const realT& time,
 //  if( m_timeIntegrationOption==QuasiStatic)
 //  {
 //
-//    Array1dT<R1Tensor>& incdisp  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+//    array<R1Tensor>& incdisp  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
 //
 //    int resolve = 1; int count = 0;
 //    while( resolve != 0 )
@@ -597,13 +597,13 @@ void LagrangeSolverBase::TimeStepXFEM( const realT& time,
                                        const realT& dt,
                                        const int cycleNumber,
                                        PhysicalDomainT& domain,
-                                       const sArray1d& namesOfSolverRegions,
+                                       const array<string>& namesOfSolverRegions,
                                        SpatialPartition& partition)
 {
   if( m_timeIntegrationOption==QuasiStatic)
   {
 
-    Array1dT<R1Tensor>& incdisp  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+    array<R1Tensor>& incdisp  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
 
     int resolve = 1; int count = 0;
     while( resolve != 0 )
@@ -725,13 +725,13 @@ void LagrangeSolverBase::TimeStepImplicitSetup( const realT& time,
 
   if( this->m_timeIntegrationOption == ImplicitDynamic )
   {
-    Array1dT<R1Tensor> const & v_n = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
-    Array1dT<R1Tensor> const & a_n = domain.m_feNodeManager.GetFieldData<FieldInfo::acceleration>();
-    Array1dT<R1Tensor> & vtilde   = domain.m_feNodeManager.GetFieldData<R1Tensor>("vel_tilde");
-    Array1dT<R1Tensor> & uhatTilde   = domain.m_feNodeManager.GetFieldData<R1Tensor>("inc_disp_tilde");
+    array<R1Tensor> const & v_n = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
+    array<R1Tensor> const & a_n = domain.m_feNodeManager.GetFieldData<FieldInfo::acceleration>();
+    array<R1Tensor> & vtilde   = domain.m_feNodeManager.GetFieldData<R1Tensor>("vel_tilde");
+    array<R1Tensor> & uhatTilde   = domain.m_feNodeManager.GetFieldData<R1Tensor>("inc_disp_tilde");
 
-    Array1dT<R1Tensor>& uhat  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
-    Array1dT<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+    array<R1Tensor>& uhat  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+    array<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
 
     for( auto a = 0u ; a < domain.m_feNodeManager.m_numNodes ; ++a )
     {
@@ -748,11 +748,11 @@ void LagrangeSolverBase::TimeStepImplicitSetup( const realT& time,
   else if( this->m_timeIntegrationOption == QuasiStatic  )
   {
 
-    Array1dT<R1Tensor>& uhat  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+    array<R1Tensor>& uhat  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
     if( m_useVelocityQS==1 )
     {
-      Array1dT<R1Tensor> const & v_n = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
-      Array1dT<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+      array<R1Tensor> const & v_n = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
+      array<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
 
       for( auto a = 0u ; a < domain.m_feNodeManager.m_numNodes ; ++a )
       {
@@ -776,12 +776,12 @@ void LagrangeSolverBase::TimeStepImplicitComplete( const realT& time,
 {
   if( this->m_timeIntegrationOption == ImplicitDynamic )
   {
-    Array1dT<R1Tensor>& v_n = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
-    Array1dT<R1Tensor>& uhat  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
-    Array1dT<R1Tensor>& a_n = domain.m_feNodeManager.GetFieldData<FieldInfo::acceleration>();
+    array<R1Tensor>& v_n = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
+    array<R1Tensor>& uhat  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+    array<R1Tensor>& a_n = domain.m_feNodeManager.GetFieldData<FieldInfo::acceleration>();
 
-    Array1dT<R1Tensor> & vtilde   = domain.m_feNodeManager.GetFieldData<R1Tensor>("vel_tilde");
-    Array1dT<R1Tensor> & uhatTilde   = domain.m_feNodeManager.GetFieldData<R1Tensor>("inc_disp_tilde");
+    array<R1Tensor> & vtilde   = domain.m_feNodeManager.GetFieldData<R1Tensor>("vel_tilde");
+    array<R1Tensor> & uhatTilde   = domain.m_feNodeManager.GetFieldData<R1Tensor>("inc_disp_tilde");
 
     for( auto a = 0u ; a < domain.m_feNodeManager.m_numNodes ; ++a )
     {
@@ -795,8 +795,8 @@ void LagrangeSolverBase::TimeStepImplicitComplete( const realT& time,
   }
   else if( this->m_timeIntegrationOption == QuasiStatic && dt > 0.0)
   {
-    Array1dT<R1Tensor>& v_n = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
-    Array1dT<R1Tensor>& uhat  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+    array<R1Tensor>& v_n = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
+    array<R1Tensor>& uhat  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
     for( auto a = 0u ; a < domain.m_feNodeManager.m_numNodes ; ++a )
     {
       for( int i=0 ; i<dim ; ++i )
@@ -811,7 +811,7 @@ void LagrangeSolverBase::TimeStepImplicitComplete( const realT& time,
 realT LagrangeSolverBase::TimeStepImplicit( const realT& time,
                                             const realT& dt ,
                                             PhysicalDomainT& domain,
-                                            const sArray1d& namesOfSolverRegions,
+                                            const array<string>& namesOfSolverRegions,
                                             SpatialPartition& partition,
                                             FractunatorBase* const fractunator )
 {
@@ -819,7 +819,7 @@ realT LagrangeSolverBase::TimeStepImplicit( const realT& time,
 //  CalculateAllNodalMassAndVolume( domain, partition );
 
   realT dt_return = dt;
-//  Array1dT<R1Tensor>& uhat  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+//  array<R1Tensor>& uhat  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
 
 
   TimeStepImplicitSetup( time, dt, domain );
@@ -1113,11 +1113,11 @@ realT LagrangeSolverBase::TimeStepImplicit( const realT& time,
 void LagrangeSolverBase::TimeStepExplicitDynamic( const realT& time,
                                                   const realT& dt ,
                                                   PhysicalDomainT& domain,
-                                                  const sArray1d& namesOfSolverRegions,
+                                                  const array<string>& namesOfSolverRegions,
                                                   SpatialPartition& partition )
 {
   m_stabledt.m_maxdt = std::numeric_limits<double>::max();
-  Array1dT<R1Tensor>& hgforce = domain.m_feNodeManager.GetFieldData<FieldInfo::hgforce> ();
+  array<R1Tensor>& hgforce = domain.m_feNodeManager.GetFieldData<FieldInfo::hgforce> ();
   hgforce = 0.0;
 
   // update nodes
@@ -1194,12 +1194,12 @@ void LagrangeSolverBase::TimeStepExplicitDynamic( const realT& time,
 
 void LagrangeSolverBase::ProcessElementRegions( NodeManager& nodeManager,
                                                 ElementManagerT& elementManager,
-                                                const sArray1d& namesOfSolverRegions,
+                                                const array<string>& namesOfSolverRegions,
                                                 const realT dt )
 {
 
   std::set<std::string> usedRegionNames;
-  for( sArray1d::const_iterator regionName = namesOfSolverRegions.begin() ;
+  for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
       regionName != namesOfSolverRegions.end() ; ++regionName )
   {
     //this conditional supports DE, since an element region in DE may not exist in FE; this case should not
@@ -1251,10 +1251,10 @@ void LagrangeSolverBase::ProcessCohesiveZones( NodeManager& nodeManager,
   {
     // apply cohesive forces
     const OrderedVariableOneToManyRelation& childFaceIndex = faceManager.GetVariableOneToManyMap( "childIndices" );
-    Array1dT<R1Tensor>& nodalForce = nodeManager.GetFieldData<FieldInfo::force>();
-    Array1dT<R1Tensor>& cohesiveForce = nodeManager.GetFieldData<R1Tensor>("cohesiveForce");
+    array<R1Tensor>& nodalForce = nodeManager.GetFieldData<FieldInfo::force>();
+    array<R1Tensor>& cohesiveForce = nodeManager.GetFieldData<R1Tensor>("cohesiveForce");
 
-    iArray1d& ruptureState = faceManager.GetFieldData<int>("ruptureState");
+    array<integer>& ruptureState = faceManager.GetFieldData<int>("ruptureState");
 
     cohesiveForce = 0.0;
 
@@ -1317,7 +1317,7 @@ void LagrangeSolverBase::SetNumRowsAndTrilinosIndices( PhysicalDomainT& domain,
                                                        SpatialPartition& partition,
                                                        int& numLocalRows,
                                                        int& numGlobalRows,
-                                                       iArray1d& localIndices,
+                                                       array<integer>& localIndices,
                                                        int offset )
 {
 
@@ -1344,8 +1344,8 @@ void LagrangeSolverBase::SetNumRowsAndTrilinosIndices( PhysicalDomainT& domain,
 
   // create trilinos dof indexing
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
 
   unsigned local_count = 0;
   for(unsigned r=0; r<trilinos_index.size(); ++r )
@@ -1392,7 +1392,7 @@ void LagrangeSolverBase :: SetupSystem ( PhysicalDomainT&  domain,
 
   //  const auto& kinematicSibling = domain.m_feNodeManager.GetOneToOneMap("NodeToKinematicSibling");
   //  const auto& isNodeDead = domain.m_feNodeManager.GetFieldData<int>("isDead");
-  //  iArray1d kinematicSibling(domain.m_feNodeManager.m_numNodes);
+  //  array<integer> kinematicSibling(domain.m_feNodeManager.m_numNodes);
 
   dim = domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension;
   int n_ghost_rows  = domain.m_feNodeManager.GetNumGhosts();
@@ -1400,7 +1400,7 @@ void LagrangeSolverBase :: SetupSystem ( PhysicalDomainT&  domain,
   //  int n_hosted_rows = n_local_rows+n_ghost_rows;
   int n_global_rows = 0;
 
-  iArray1d displacementIndices;
+  array<integer> displacementIndices;
   SetNumRowsAndTrilinosIndices( domain,
                                 partition,
                                 n_local_rows,
@@ -1439,7 +1439,7 @@ void LagrangeSolverBase :: SetupSystem ( PhysicalDomainT&  domain,
   region     = domain.m_feElementManager.m_ElementRegions.begin(),
   end_region = domain.m_feElementManager.m_ElementRegions.end();
 
-//  const Array1dT<int>* isDetachedFromSolidMesh = domain.m_feNodeManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
+//  const array<int>* isDetachedFromSolidMesh = domain.m_feNodeManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
 
 //  if(domain.m_externalFaces.m_contactActive && domain.m_contactManager.m_use_contact_search)
 //  {
@@ -1474,20 +1474,20 @@ void LagrangeSolverBase :: SetupSystem ( PhysicalDomainT&  domain,
 
 void LagrangeSolverBase::SetSparsityPattern( PhysicalDomainT& domain )
 {
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
 
   RegionMap::iterator
   region     = domain.m_feElementManager.m_ElementRegions.begin(),
   end_region = domain.m_feElementManager.m_ElementRegions.end();
 
-  const Array1dT<int>* isDetachedFromSolidMesh = domain.m_feNodeManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
+  const array<int>* isDetachedFromSolidMesh = domain.m_feNodeManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
 
   for(; region != end_region; ++region)
   {
     ElementRegionT& elemRegion = region->second;
     const unsigned numNodesPerElement = elemRegion.m_numNodesPerElem;
 
-    iArray1d elementLocalDofIndex (dim*numNodesPerElement);
+    array<integer> elementLocalDofIndex (dim*numNodesPerElement);
 
     for(localIndex element = 0; element < elemRegion.m_numElems; ++element)
     {
@@ -1544,8 +1544,8 @@ void LagrangeSolverBase::SetSparsityPatternXFEM ( PhysicalDomainT& domain)
 {
   const auto& kinematicSibling = domain.m_feNodeManager.GetOneToOneMap("NodeToKinematicSibling");
   const auto& isNodeDead = domain.m_feNodeManager.GetFieldData<int>("isDead");
-  const Array1dT<int>* isDetachedFromSolidMesh = domain.m_feNodeManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  const array<int>* isDetachedFromSolidMesh = domain.m_feNodeManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
+  array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
 
   RegionMap::iterator
   region     = domain.m_feElementManager.m_ElementRegions.begin(),
@@ -1556,8 +1556,8 @@ void LagrangeSolverBase::SetSparsityPatternXFEM ( PhysicalDomainT& domain)
     ElementRegionT& elemRegion = region->second;
     const unsigned numNodesPerElement = elemRegion.m_numNodesPerElem;
 
-    iArray1d elementLocalDofIndex (dim*numNodesPerElement);
-    iArray1d diagIndices(dim);
+    array<integer> elementLocalDofIndex (dim*numNodesPerElement);
+    array<integer> diagIndices(dim);
 
     for(localIndex element = 0; element < elemRegion.m_numElems; ++element)
     {
@@ -1645,17 +1645,17 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
                                        realT const dt )
 {
   realT maxForce = 0.0;
-  const Array1dT<int>* isDetachedFromSolidMesh = domain.m_feNodeManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
+  const array<int>* isDetachedFromSolidMesh = domain.m_feNodeManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
 
   using namespace BoundaryConditionFunctions;
   // (re-)init linear system
 
-  const Array1dT<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
-  const Array1dT<R1Tensor>& uhat = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
-  //  const Array1dT<R1Tensor>& vel = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
+  const array<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& uhat = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+  //  const array<R1Tensor>& vel = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
 
-  Array1dT<R1Tensor> const * uhattilde = nullptr;
-  Array1dT<R1Tensor> const * vtilde = nullptr;
+  array<R1Tensor> const * uhattilde = nullptr;
+  array<R1Tensor> const * vtilde = nullptr;
 
   if( this->m_timeIntegrationOption == ImplicitDynamic )
   {
@@ -1665,7 +1665,7 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
 
   // basic nodal data ( = dof data for our problem)
 
-  const iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  const array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
 
   if(domain.m_contactManager.m_contact && domain.m_contactManager.m_implicitContactActive)
   {
@@ -1682,10 +1682,10 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
 
 
 
-  static Array1dT< R1Tensor > u_local(8);
-  static Array1dT< R1Tensor > uhat_local(8);
-  static Array1dT< R1Tensor > vtilde_local(8);
-  static Array1dT< R1Tensor > uhattilde_local(8);
+  static array< R1Tensor > u_local(8);
+  static array< R1Tensor > uhat_local(8);
+  static array< R1Tensor > vtilde_local(8);
+  static array< R1Tensor > uhattilde_local(8);
 
 
 
@@ -1700,7 +1700,7 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
   {
     const ElementRegionT& elemRegion = region->second;
 
-    Array1dT<R2SymTensor> const * const refStress = elemRegion.GetFieldDataPointer<R2SymTensor>("referenceStress");
+    array<R2SymTensor> const * const refStress = elemRegion.GetFieldDataPointer<R2SymTensor>("referenceStress");
 
     if (elemRegion.m_elementType.compare("flow_only"))
     {
@@ -1727,9 +1727,9 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
       realT reasonableDiagValue = 0.0 ;
       // determine ghost elements
 
-      const iArray1d& elem_is_ghost = elemRegion.GetFieldData<FieldInfo::ghostRank>();
+      const array<integer>& elem_is_ghost = elemRegion.GetFieldData<FieldInfo::ghostRank>();
       const auto elem_is_physical = elemRegion.GetFieldDataPointer<int>("isPhysical");
-      //      const iArray1d& elem_is_physical = elemRegion.GetFieldData<int>("isPhysical");
+      //      const array<integer>& elem_is_physical = elemRegion.GetFieldData<int>("isPhysical");
 
       // begin element loop, skipping ghost elements
 
@@ -1912,8 +1912,8 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
     Epetra_SerialDenseVector     localRHS     (dim*domain.m_feNodeManager.DataLengths());
 
     const realT* const gravityVector = m_gravityVector.Data();
-    const iArray1d& nodeIsGhost = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-    const Array1dT<realT>& mass = domain.m_feNodeManager.GetFieldData<FieldInfo::mass>();
+    const array<integer>& nodeIsGhost = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+    const array<realT>& mass = domain.m_feNodeManager.GetFieldData<FieldInfo::mass>();
 
 
     for(unsigned i=0; i<domain.m_feNodeManager.DataLengths(); ++i)
@@ -1951,7 +1951,7 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
     const unsigned int dof_per_fe = elemRegion.m_finiteElement->dofs_per_element();
     assert(dof_per_fe == elemRegion.m_numNodesPerElem);
 
-    const iArray1d& elem_is_ghost = elemRegion.GetFieldData<FieldInfo::ghostRank>();
+    const array<integer>& elem_is_ghost = elemRegion.GetFieldData<FieldInfo::ghostRank>();
 
     Epetra_SerialDenseVector     ele_rhs(dim*dof_per_fe);
 
@@ -1986,10 +1986,10 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
 
 
 
-  //  const rArray1d* const ppFlowPressure = domain.m_feFaceManager.GetFieldDataPointer<FieldInfo::pressure>();
-  //  const rArray1d& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
-  //  const rArray1d& density  = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  //  const rArray1d& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+  //  const array<real64>* const ppFlowPressure = domain.m_feFaceManager.GetFieldDataPointer<FieldInfo::pressure>();
+  //  const array<real64>& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
+  //  const array<real64>& density  = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  //  const array<real64>& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 
   if(false) // Randy turned this off in his branch.  I am turned it on temporarily to pass the tests.
     if( domain.m_feFaceManager.HasField<int>("ruptureState") &&
@@ -2004,15 +2004,15 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
 
       // determine ghost elements
 
-      const iArray1d& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+      const array<integer>& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
 
 
       // apply cohesive forces
       const OrderedVariableOneToManyRelation& childFaceIndex = domain.m_feFaceManager.GetVariableOneToManyMap( "childIndices" );
-      Array1dT<R1Tensor>& cohesiveForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
+      array<R1Tensor>& cohesiveForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
 
       R1Tensor cohesiveTraction;
-      iArray1d& ruptureState = domain.m_feFaceManager.GetFieldData<int>("ruptureState");
+      array<integer>& ruptureState = domain.m_feFaceManager.GetFieldData<int>("ruptureState");
 
       cohesiveForce = 0.0;
 
@@ -2119,8 +2119,8 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
 
 
   /*
-  Array1dT<R1Tensor>& force = domain.m_feNodeManager.GetFieldData<FieldInfo::force>();
-  const iArray1d& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<R1Tensor>& force = domain.m_feNodeManager.GetFieldData<FieldInfo::force>();
+  const array<integer>& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
 
   int dummy;
   double* rhs = NULL;
@@ -2175,24 +2175,24 @@ realT LagrangeSolverBase :: Assemble ( PhysicalDomainT&  domain,
 /*
 
 realT LagrangeSolverBase::AssembleFluidPressureContributions( PhysicalDomainT& domain,
-                                                                  const iArray1d& deformationTrilinosIndex,
-                                                                  const iArray1d& flowTrilinosIndex,
-                                                                  const Array1dT< rArray1d >& dwdu,
-                                                                  const rArray1d& dwdw,
+                                                                  const array<integer>& deformationTrilinosIndex,
+                                                                  const array<integer>& flowTrilinosIndex,
+                                                                  const array< array<real64> >& dwdu,
+                                                                  const array<real64>& dwdw,
                                                                   const int flowDofOffset  )
 {
 
   realT maxForce = 0.0 ;
 
-  const rArray1d* const ppFlowPressure = domain.m_feFaceManager.GetFieldDataPointer<FieldInfo::pressure>();
+  const array<real64>* const ppFlowPressure = domain.m_feFaceManager.GetFieldDataPointer<FieldInfo::pressure>();
 
   if( ppFlowPressure!=NULL )
   {
-    Array1dT<R1Tensor>& hydroForce    = domain.m_feNodeManager.GetFieldData<R1Tensor>("hydroForce");
-    Array1dT<R1Tensor>& hgForce    = domain.m_feNodeManager.GetFieldData<FieldInfo::hgforce>();
+    array<R1Tensor>& hydroForce    = domain.m_feNodeManager.GetFieldData<R1Tensor>("hydroForce");
+    array<R1Tensor>& hgForce    = domain.m_feNodeManager.GetFieldData<FieldInfo::hgforce>();
     hydroForce = 0;
     hgForce = 0;
-    const rArray1d& density_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+    const array<real64>& density_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
 
     Epetra_IntSerialDenseVector  rowDofIndex;
     Epetra_IntSerialDenseVector  colDofIndex;
@@ -2203,22 +2203,22 @@ realT LagrangeSolverBase::AssembleFluidPressureContributions( PhysicalDomainT& d
 
     // determine ghost elements
 
-    const iArray1d& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+    const array<integer>& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
 
 
     // apply cohesive forces
     const OrderedVariableOneToManyRelation& childFaceIndex = domain.m_feFaceManager.GetVariableOneToManyMap( "childIndices" );
 
 
-    const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+    const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
 
 
-    const rArray1d& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
+    const array<real64>& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
 
-//    const rArray1d& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+//    const array<real64>& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 
 
-//    const Array1dT<R1Tensor>& effectiveNodalNormal = domain.m_feNodeManager.GetFieldData<R1Tensor>( "effectiveNormal");
+//    const array<R1Tensor>& effectiveNodalNormal = domain.m_feNodeManager.GetFieldData<R1Tensor>( "effectiveNormal");
 
 
     for(localIndex kf = 0 ; kf < domain.m_feFaceManager.m_numFaces ; ++kf)
@@ -2403,7 +2403,7 @@ void LagrangeSolverBase::SetupMLPreconditioner( const PhysicalDomainT& domain, M
   MLList.set("PDE equations",3);
 
   // create the preconditioning object.
-  rArray1d rigid;
+  array<real64> rigid;
 
 
   if(m_numerics.m_useMLPrecond)
@@ -2412,7 +2412,7 @@ void LagrangeSolverBase::SetupMLPreconditioner( const PhysicalDomainT& domain, M
 
     MLPrec->PrintUnused();
 
-    const Array1dT<R1Tensor>& x = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
+    const array<R1Tensor>& x = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
 
 
 
@@ -2435,8 +2435,8 @@ void LagrangeSolverBase::SetupMLPreconditioner( const PhysicalDomainT& domain, M
 
 
 static void ML_Coord2RBM( int Nnodes,
-                          const Array1dT<R1Tensor>& x,
-                          rArray1d& rbm,
+                          const array<R1Tensor>& x,
+                          array<real64>& rbm,
                           const int Ndof )
 {
 
@@ -2494,9 +2494,9 @@ void LagrangeSolverBase::ApplyForcesFromContact( PhysicalDomainT& domain,
   //external faces
   //-----------------------------
   {
-    Array1dT<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
+    array<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
     contactForce = 0.0;
-    Array1dT<R1Tensor>& decontactForce = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::contactForce>();
+    array<R1Tensor>& decontactForce = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::contactForce>();
     decontactForce = 0.0;
 
     //update nodal positions, velocities, and accelerations before updating face geometry
@@ -2514,7 +2514,7 @@ void LagrangeSolverBase::ApplyForcesFromContact( PhysicalDomainT& domain,
       domain.m_contactManager.Update(domain.m_externalFaces.m_neighborList);
 
     {
-      Array1dT<Array1dT<R1Tensor> > xs;
+      array<array<R1Tensor> > xs;
       xs.resize(domain.m_externalFaces.DataLengths());
       domain.m_externalFaces.UpdateGeometricContactProperties(dt, domain, xs);
 #ifdef STATES_ON_CONTACTS
@@ -2572,7 +2572,7 @@ void LagrangeSolverBase::ApplyTemperatureBC( PhysicalDomainT& domain, realT time
 
 void LagrangeSolverBase::PostProcess (PhysicalDomainT& domain,
                                       SpatialPartition& partition,
-                                      const sArray1d& namesOfSolverRegions)
+                                      const array<string>& namesOfSolverRegions)
 {
 
   if (domain.m_feNodeManager.HasField<int>("isDetachedFromSolidMesh"))
@@ -2582,12 +2582,12 @@ void LagrangeSolverBase::PostProcess (PhysicalDomainT& domain,
 
   if (m_writeNodalStress)
   {
-    rArray1d& sigma_x = domain.m_feNodeManager.GetFieldData<realT>("nsigma_x");
-    rArray1d& sigma_y = domain.m_feNodeManager.GetFieldData<realT>("nsigma_y");
-    rArray1d& sigma_z = domain.m_feNodeManager.GetFieldData<realT>("nsigma_z");
-    rArray1d& sigma_xy = domain.m_feNodeManager.GetFieldData<realT>("nsigma_xy");
-    rArray1d& sigma_yz = domain.m_feNodeManager.GetFieldData<realT>("nsigma_yz");
-    rArray1d& sigma_zx = domain.m_feNodeManager.GetFieldData<realT>("nsigma_zx");
+    array<real64>& sigma_x = domain.m_feNodeManager.GetFieldData<realT>("nsigma_x");
+    array<real64>& sigma_y = domain.m_feNodeManager.GetFieldData<realT>("nsigma_y");
+    array<real64>& sigma_z = domain.m_feNodeManager.GetFieldData<realT>("nsigma_z");
+    array<real64>& sigma_xy = domain.m_feNodeManager.GetFieldData<realT>("nsigma_xy");
+    array<real64>& sigma_yz = domain.m_feNodeManager.GetFieldData<realT>("nsigma_yz");
+    array<real64>& sigma_zx = domain.m_feNodeManager.GetFieldData<realT>("nsigma_zx");
 
     sigma_x = 0.0;
     sigma_y = 0.0;
@@ -2596,7 +2596,7 @@ void LagrangeSolverBase::PostProcess (PhysicalDomainT& domain,
     sigma_yz = 0.0;
     sigma_zx = 0.0;
 
-    for( sArray1d::const_iterator regionName = namesOfSolverRegions.begin() ;
+    for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
         regionName != namesOfSolverRegions.end() ; ++regionName )
     {
       std::map<std::string, ElementRegionT>::iterator iter = domain.m_feElementManager.m_ElementRegions.find(*regionName);
@@ -2652,7 +2652,7 @@ void LagrangeSolverBase::PostProcess (PhysicalDomainT& domain,
       }
 
       {
-        std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+        std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
 
         if (m_writeNodalStress)
         {
@@ -2672,8 +2672,8 @@ void LagrangeSolverBase::PostProcess (PhysicalDomainT& domain,
 
 void LagrangeSolverBase::SnapshotNodalDisplacement( NodeManager& nodeManager)
 {
-  Array1dT<R1Tensor>& refDisplacement = nodeManager.GetFieldData<R1Tensor>("refDisplacement");
-  Array1dT<R1Tensor>& u = nodeManager.GetFieldData<FieldInfo::displacement>();
+  array<R1Tensor>& refDisplacement = nodeManager.GetFieldData<R1Tensor>("refDisplacement");
+  array<R1Tensor>& u = nodeManager.GetFieldData<FieldInfo::displacement>();
   for (localIndex i = 0; i < nodeManager.DataLengths(); ++i)
   {
     refDisplacement[i] = u[i];
@@ -2692,7 +2692,7 @@ void LagrangeSolverBase::EvaluateDispAtVertex(PhysicalDomainT&  domain,
   auto& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
   const auto& refPos = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
   const auto& isNodeVertex = domain.m_feNodeManager.GetFieldData<int>("isVertex");
-  iArray1d vertexAccounted(domain.m_feNodeManager.m_numNodes);
+  array<integer> vertexAccounted(domain.m_feNodeManager.m_numNodes);
 
   for(; region != end_region; ++region)
   {
@@ -2705,8 +2705,8 @@ void LagrangeSolverBase::EvaluateDispAtVertex(PhysicalDomainT&  domain,
     {
       if (elemRegion.m_elementType.compare("flow_only"))
       {
-        const iArray1d& elem_is_ghost = elemRegion.GetFieldData<FieldInfo::ghostRank>();
-        const iArray1d& elem_is_physical = elemRegion.GetFieldData<int>("isPhysical");
+        const array<integer>& elem_is_ghost = elemRegion.GetFieldData<FieldInfo::ghostRank>();
+        const array<integer>& elem_is_physical = elemRegion.GetFieldData<int>("isPhysical");
 
         // begin element loop, skipping ghost elements
 
@@ -2735,7 +2735,7 @@ void LagrangeSolverBase::EvaluateDispAtVertex(PhysicalDomainT&  domain,
               localIndex currentNod = elementToPhysicalNodes[element][iPNod];
               if(isNodeVertex[currentNod] && vertexAccounted[currentNod]==0)
               {
-                rArray1d vertPos(3), shapeFuncPos(3); vertPos(0) = 1;
+                array<real64> vertPos(3), shapeFuncPos(3); vertPos(0) = 1;
                 for( int d=0 ; d<dim ; ++d )
                 {
                   vertPos(d+1) = refPos[currentNod][d];
@@ -2805,8 +2805,8 @@ void LagrangeSolverBase::GetInverseOfA3By3Mat(const rArray2d& mat,
 }
 
 void LagrangeSolverBase::MultiplyArray(const rArray2d& A,
-                                       const rArray1d& B,
-                                       rArray1d& C)
+                                       const array<real64>& B,
+                                       array<real64>& C)
 {
   const int m = A.Dimension(0), n = A.Dimension(1);
   C.resize(m);
@@ -2840,8 +2840,8 @@ void LagrangeSolverBase::GetNodalForces( PhysicalDomainT&  domain,
 
     if (elemRegion.m_elementType.compare("flow_only"))
     {
-      const iArray1d& elem_is_ghost = elemRegion.GetFieldData<FieldInfo::ghostRank>();
-      const iArray1d& elem_is_physical = elemRegion.GetFieldData<int>("isPhysical");
+      const array<integer>& elem_is_ghost = elemRegion.GetFieldData<FieldInfo::ghostRank>();
+      const array<integer>& elem_is_physical = elemRegion.GetFieldData<int>("isPhysical");
 
       // begin element loop, skipping ghost elements
 
@@ -2870,9 +2870,9 @@ void LagrangeSolverBase::CalculateNodalForces ( NodeManager& nodeManager,
   R2Tensor dUhatdX;
 
 
-  static Array1dT< R1Tensor > u_local;
-  static Array1dT< R1Tensor > uhat_local;
-  static Array1dT<R1Tensor> f_local;
+  static array< R1Tensor > u_local;
+  static array< R1Tensor > uhat_local;
+  static array<R1Tensor> f_local;
 
   rArray2d& detJ = elemRegion.m_detJ;
 
@@ -2888,11 +2888,11 @@ void LagrangeSolverBase::CalculateNodalForces ( NodeManager& nodeManager,
   }
 
 
-  const Array1dT<R1Tensor>& incrementalDisplacement = nodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
-  const Array1dT<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& incrementalDisplacement = nodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+  const array<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
 
 
-  Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
 
   const localIndex* const elemToNodeMap = elemRegion.m_toNodesRelation[elementID];
 
@@ -2940,9 +2940,9 @@ void LagrangeSolverBase::ApplyGravity( NodeManager& nodeManager,
                                        ElementRegionT& elemRegion,
                                        const realT dt )
 {
-  Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
-  Array1dT<realT>& mass = elemRegion.GetFieldData<FieldInfo::mass> ();
-  Array1dT<R1Tensor> gravityForce;
+  array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
+  array<realT>& mass = elemRegion.GetFieldData<FieldInfo::mass> ();
+  array<R1Tensor> gravityForce;
   gravityForce.resize(elemRegion.m_numNodesPerElem);
   gravityForce *= 0.0;
   R1Tensor gravityForceElem;
@@ -2969,13 +2969,13 @@ void LagrangeSolverBase::ApplyDisplacementPenalty( NodeManager& nodeManager )
     Epetra_FECrsMatrix junk(*m_matrix);
     junk.PutScalar(0.0);
 
-    Array1dT<R1Tensor> const & disp = nodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
-//    Array1dT<R1Tensor> const & disp = nodeManager.GetFieldData<FieldInfo::displacement>();
-    rArray1d const & volume = nodeManager.GetFieldData<FieldInfo::volume>();
-    iArray1d const & trilinos_index = nodeManager.GetFieldData<int>(m_trilinosIndexStr);
-    iArray1d const & ghostRank       = nodeManager.GetFieldData<FieldInfo::ghostRank>();
+    array<R1Tensor> const & disp = nodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+//    array<R1Tensor> const & disp = nodeManager.GetFieldData<FieldInfo::displacement>();
+    array<real64> const & volume = nodeManager.GetFieldData<FieldInfo::volume>();
+    array<integer> const & trilinos_index = nodeManager.GetFieldData<int>(m_trilinosIndexStr);
+    array<integer> const & ghostRank       = nodeManager.GetFieldData<FieldInfo::ghostRank>();
 
-    Array1dT<realT>& penaltyForce = nodeManager.GetFieldData<realT>("displacementPenaltyForce");
+    array<realT>& penaltyForce = nodeManager.GetFieldData<realT>("displacementPenaltyForce");
     penaltyForce = 0.0;
     localIndex const numNodes = nodeManager.m_numNodes;
     Epetra_IntSerialDenseVector  elementLocalDofIndex   (dim);
@@ -3025,9 +3025,9 @@ void LagrangeSolverBase::ApplyDisplacementPenalty( NodeManager& nodeManager )
 
 void LagrangeSolverBase::CalculateAllNodalMassAndVolume( PhysicalDomainT& domain, SpatialPartition& partition )
 {
-  rArray1d& mass = domain.m_feNodeManager.GetFieldData<FieldInfo::mass>();
-  rArray1d * const volume = domain.m_feNodeManager.GetFieldDataPointer<FieldInfo::volume>();
-  iArray1d * isDetachedFromSolidMesh = domain.m_feNodeManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
+  array<real64>& mass = domain.m_feNodeManager.GetFieldData<FieldInfo::mass>();
+  array<real64> * const volume = domain.m_feNodeManager.GetFieldDataPointer<FieldInfo::volume>();
+  array<integer> * isDetachedFromSolidMesh = domain.m_feNodeManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
 
   // Zero out values
   mass = 0.0;
@@ -3041,7 +3041,7 @@ void LagrangeSolverBase::CalculateAllNodalMassAndVolume( PhysicalDomainT& domain
   {
     i->second.CalculateNodalMasses( domain.m_feNodeManager ) ;
 
-//    iArray1d& partitionColor = i->second.GetFieldData<int>("partitionColor");
+//    array<integer>& partitionColor = i->second.GetFieldData<int>("partitionColor");
 //    partitionColor = partition.Color();
   }
 
@@ -3058,7 +3058,7 @@ void LagrangeSolverBase::CalculateAllNodalMassAndVolume( PhysicalDomainT& domain
   }
 
 
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+  std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
 
   syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::mass>::Name());
   if( volume!=nullptr )

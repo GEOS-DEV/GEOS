@@ -77,13 +77,13 @@ void HydroStaticParallelPlateFlowSolver::ReadXML( TICPP::HierarchicalDataNode* c
 
 void HydroStaticParallelPlateFlowSolver::PostProcess(PhysicalDomainT & domain,
                                           SpatialPartition& partition,
-                                          const sArray1d& namesOfSolverRegions)
+                                          const array<string>& namesOfSolverRegions)
 {
 
 
-  rArray1d& aperture = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
-  rArray1d& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  array<real64>& aperture = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
+  array<real64>& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
 
   // Get field values of child faces from their parents.
   for( localIndex kf=0 ; kf<domain.m_feFaceManager.DataLengths() ; ++kf )
@@ -117,15 +117,15 @@ void HydroStaticParallelPlateFlowSolver::UpdateEOS( const realT time,
                                          const realT dt ,
                                          PhysicalDomainT& domain )
 {
-  rArray1d& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  rArray1d& faceFluidDensity = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  rArray1d& faceFluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  const rArray1d& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+  array<real64>& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  array<real64>& faceFluidDensity = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  array<real64>& faceFluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<real64>& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
 
-  rArray1d* initialSaturatedTime = domain.m_feFaceManager.GetFieldDataPointer<realT>("initialSaturatedTime");
-  const iArray1d& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  array<real64>* initialSaturatedTime = domain.m_feFaceManager.GetFieldDataPointer<realT>("initialSaturatedTime");
+  const array<integer>& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
 
 
   int rank, size ;
@@ -149,7 +149,7 @@ void HydroStaticParallelPlateFlowSolver::UpdateEOS( const realT time,
   realT meanDensity = (totalFluidMass + m_cavityMass)/ (totalFluidVolume + m_cavityVolume);
   realT meanPressure = P_EOS(meanDensity, m_bulk_modulus, m_rho_o, m_pressureCap);
 
-  for( Array1dT<BoundaryConditionBase*>::const_iterator bcItr=domain.m_feFaceManager.m_bcData.begin() ; bcItr!=domain.m_feFaceManager.m_bcData.end() ; ++ bcItr )
+  for( array<BoundaryConditionBase*>::const_iterator bcItr=domain.m_feFaceManager.m_bcData.begin() ; bcItr!=domain.m_feFaceManager.m_bcData.end() ; ++ bcItr )
   {
     // check to see if the requested field has a boundary condition applied to it.
     BoundaryConditionBase* bc = *bcItr;
@@ -208,8 +208,8 @@ void HydroStaticParallelPlateFlowSolver::ApplyBoreholePressure( const realT time
 {
   FaceManagerT& faceManager = domain.m_feFaceManager;
   NodeManager& nodeManager = domain.m_feNodeManager;
-  Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force> ();
-  for(sArray1d::size_type i =0; i < m_boreholeSetNames.size(); ++i)
+  array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force> ();
+  for(array<string>::size_type i =0; i < m_boreholeSetNames.size(); ++i)
   {
     std::string setName = m_boreholeSetNames[i];
     std::map< std::string, lSet >::const_iterator setMap = faceManager.m_Sets.find( setName );

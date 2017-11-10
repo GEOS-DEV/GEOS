@@ -66,24 +66,24 @@ public:
 
   virtual void ReadXML( TICPP::HierarchicalDataNode& node ) = 0;
 
-  virtual void GetVariableNames( sArray1d& intVars,
-                                 sArray1d& realVars,
-                                 sArray1d& R1TensorVars,
-                                 sArray1d& R2TensorVars,
-                                 sArray1d& R2SymTensorVars ) const = 0;
+  virtual void GetVariableNames( array<string>& intVars,
+                                 array<string>& realVars,
+                                 array<string>& R1TensorVars,
+                                 array<string>& R2TensorVars,
+                                 array<string>& R2SymTensorVars ) const = 0;
 
 
-  virtual void Serialize( Array1dT<iArray1d*>& intVars,
-                          Array1dT<rArray1d*>& realVars,
-                          Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                          Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                          Array1dT<Array1dT<R2SymTensor>*>& R2SymVars ) const = 0;
+  virtual void Serialize( array<array<integer>*>& intVars,
+                          array<array<real64>*>& realVars,
+                          array<array<R1Tensor>*>& R1Vars,
+                          array<array<R2Tensor>*>& R2Vars,
+                          array<array<R2SymTensor>*>& R2SymVars ) const = 0;
 
-  virtual void Deserialize( const Array1dT<iArray1d*>& intVars,
-                            const Array1dT<rArray1d*>& realVars,
-                            const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                            const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                            const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars  ) = 0;
+  virtual void Deserialize( const array<array<integer>*>& intVars,
+                            const array<array<real64>*>& realVars,
+                            const array<array<R1Tensor>*>& R1Vars,
+                            const array<array<R2Tensor>*>& R2Vars,
+                            const array<array<R2SymTensor>*>& R2SymVars  ) = 0;
 
   virtual unsigned int Pack( const lArray1d& localIndices, bufvector& buffer, const bool doBufferPacking =true ) = 0;
   virtual unsigned int Pack( const lSet& localIndices, bufvector& buffer, const bool doBufferPacking = true) = 0;
@@ -94,9 +94,9 @@ public:
   virtual unsigned int Unpack( const lArray1d& localIndices, const char*& buffer ) = 0;
   virtual unsigned int Unpack( const lSet& localIndices, const char*& buffer ) = 0;
 
-  static void SubNames( const sArray1d& names, const localIndex num, sArray1d& subnames )
+  static void SubNames( const array<string>& names, const localIndex num, array<string>& subnames )
   {
-    for( sArray1d::const_iterator inames=names.begin() ; inames!=names.end() ; ++inames )
+    for( array<string>::const_iterator inames=names.begin() ; inames!=names.end() ; ++inames )
     {
       for( auto i=0 ; i<num ; ++i )
       {
@@ -108,10 +108,10 @@ public:
     }
   }
 
-  virtual bool GetStateValues( const std::string& name, rArray1d& values ) const = 0;
-  virtual bool GetParameterValues( const std::string& name, rArray1d& values ) const = 0;
-  virtual bool SetStateValues( const std::string& name, const rArray1d& values ) = 0;
-  virtual bool SetParameterValues( const std::string& name, const rArray1d& values ) = 0;
+  virtual bool GetStateValues( const std::string& name, array<real64>& values ) const = 0;
+  virtual bool GetParameterValues( const std::string& name, array<real64>& values ) const = 0;
+  virtual bool SetStateValues( const std::string& name, const array<real64>& values ) = 0;
+  virtual bool SetParameterValues( const std::string& name, const array<real64>& values ) = 0;
 
   template< typename LeafClass, typename ARRAY >
   bool GetStateValuesFromDerived( const std::string& name,
@@ -146,25 +146,25 @@ protected:
   void EraseFromDerived( const localIndex num );
 
   template< typename LeafClass >
-  void GetVariableNamesFromDerived( sArray1d& intVars,
-                                    sArray1d& realVars,
-                                    sArray1d& R1TensorVars,
-                                    sArray1d& R2TensorVars,
-                                    sArray1d& R2SymTensorVars ) const;
+  void GetVariableNamesFromDerived( array<string>& intVars,
+                                    array<string>& realVars,
+                                    array<string>& R1TensorVars,
+                                    array<string>& R2TensorVars,
+                                    array<string>& R2SymTensorVars ) const;
 
   template< typename LeafClass >
-  void SerializeFromDerived( Array1dT<iArray1d*>& intVars,
-                             Array1dT<rArray1d*>& realVars,
-                             Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                             Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                             Array1dT<Array1dT<R2SymTensor>*>& R2SymVars ) const;
+  void SerializeFromDerived( array<array<integer>*>& intVars,
+                             array<array<real64>*>& realVars,
+                             array<array<R1Tensor>*>& R1Vars,
+                             array<array<R2Tensor>*>& R2Vars,
+                             array<array<R2SymTensor>*>& R2SymVars ) const;
 
   template< typename LeafClass >
-  void DeserializeFromDerived( const Array1dT<iArray1d*>& intVars,
-                               const Array1dT<rArray1d*>& realVars,
-                               const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                               const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                               const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars  );
+  void DeserializeFromDerived( const array<array<integer>*>& intVars,
+                               const array<array<real64>*>& realVars,
+                               const array<array<R1Tensor>*>& R1Vars,
+                               const array<array<R2Tensor>*>& R2Vars,
+                               const array<array<R2SymTensor>*>& R2SymVars  );
 
   template< typename LeafClass, typename T_indices >
   unsigned int PackFromDerived( const T_indices& localIndices,
@@ -195,11 +195,11 @@ protected:
   template< typename LeafClass >
   size_t GetStateOffsetFromDerived( const std::string& name, const int type ) const;
 
-  virtual void PreSetValues(const sArray1d& ){}
-  virtual void PostSetValues(const sArray1d& ){}
+  virtual void PreSetValues(const array<string>& ){}
+  virtual void PostSetValues(const array<string>& ){}
 
 public:
-  void SetValues( const std::string& name, const rArray1d& values )
+  void SetValues( const std::string& name, const array<real64>& values )
   {
     bool ok = SetParameterValues(name, values);
     if(!ok)
@@ -212,7 +212,7 @@ public:
     }
   }
 
-  void SetValues( const sArray1d& names, const Array1dT<rArray1d>& values )
+  void SetValues( const array<string>& names, const array<array<real64>>& values )
   {
     if(names.size() != values.size())
       throw GPException("Attempt to SetValues with arrays of different lengths");
@@ -222,7 +222,7 @@ public:
     PostSetValues(names);
   }
 
-  void GetValues( const std::string& name, rArray1d& values ) const
+  void GetValues( const std::string& name, array<real64>& values ) const
   {
     if(!(GetParameterValues(name, values) || GetStateValues(name, values)))
     {
@@ -290,11 +290,11 @@ void ConstitutiveBase::InsertFromDerived( const localIndex num )
 }
 
 template< typename LeafClass >
-void ConstitutiveBase::GetVariableNamesFromDerived( sArray1d& intVars,
-                                                    sArray1d& realVars,
-                                                    sArray1d& R1TensorVars,
-                                                    sArray1d& R2TensorVars,
-                                                    sArray1d& R2SymTensorVars ) const
+void ConstitutiveBase::GetVariableNamesFromDerived( array<string>& intVars,
+                                                    array<string>& realVars,
+                                                    array<string>& R1TensorVars,
+                                                    array<string>& R2TensorVars,
+                                                    array<string>& R2SymTensorVars ) const
 {
   const LeafClass& dthis = static_cast<const LeafClass&>(*this);
   if( hasVariableParams ) //dthis.m_parameterData.size() > 1 )
@@ -302,11 +302,11 @@ void ConstitutiveBase::GetVariableNamesFromDerived( sArray1d& intVars,
     LeafClass::ParameterClass::GetVariableNames( intVars, realVars, R1TensorVars, R2TensorVars, R2SymTensorVars);
   }
 
-  sArray1d intVarsTemp;
-  sArray1d realVarsTemp;
-  sArray1d R1TensorVarsTemp;
-  sArray1d R2TensorVarsTemp;
-  sArray1d R2SymTensorVarsTemp;
+  array<string> intVarsTemp;
+  array<string> realVarsTemp;
+  array<string> R1TensorVarsTemp;
+  array<string> R2TensorVarsTemp;
+  array<string> R2SymTensorVarsTemp;
   LeafClass::StateClass::GetVariableNames( intVarsTemp, realVarsTemp, R1TensorVarsTemp, R2TensorVarsTemp, R2SymTensorVarsTemp);
 
   SubNames( intVarsTemp, dthis.NumStateIndex1(), intVars );
@@ -521,11 +521,11 @@ void ConstitutiveBase::SetVariableParametersFromDerived(const bool varParams, co
 
 
 template< typename LeafClass >
-void ConstitutiveBase::SerializeFromDerived( Array1dT<iArray1d*>& intVars,
-                                             Array1dT<rArray1d*>& realVars,
-                                             Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                                             Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                                             Array1dT<Array1dT<R2SymTensor>*>& R2SymVars ) const
+void ConstitutiveBase::SerializeFromDerived( array<array<integer>*>& intVars,
+                                             array<array<real64>*>& realVars,
+                                             array<array<R1Tensor>*>& R1Vars,
+                                             array<array<R2Tensor>*>& R2Vars,
+                                             array<array<R2SymTensor>*>& R2SymVars ) const
 {
 
   const LeafClass& dthis = static_cast<const LeafClass&>(*this);
@@ -571,11 +571,11 @@ void ConstitutiveBase::SerializeFromDerived( Array1dT<iArray1d*>& intVars,
 }
 
 template< typename LeafClass >
-void ConstitutiveBase::DeserializeFromDerived( const Array1dT<iArray1d*>& intVars,
-                                               const Array1dT<rArray1d*>& realVars,
-                                               const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                                               const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                                               const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars  )
+void ConstitutiveBase::DeserializeFromDerived( const array<array<integer>*>& intVars,
+                                               const array<array<real64>*>& realVars,
+                                               const array<array<R1Tensor>*>& R1Vars,
+                                               const array<array<R2Tensor>*>& R2Vars,
+                                               const array<array<R2SymTensor>*>& R2SymVars  )
 {
   LeafClass& dthis = static_cast<LeafClass&>(*this);
 

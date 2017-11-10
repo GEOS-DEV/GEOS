@@ -62,7 +62,7 @@ namespace BoundaryConditionFunctions
     inline void SetValue( const lSet& set,
                           ObjectDataStructureBaseT& object,
                           BoundaryConditionBase* bc,
-                          Array1dT<T>& fieldData,
+                          array<T>& fieldData,
                           realT time );
 
   template< typename T >
@@ -100,7 +100,7 @@ namespace BoundaryConditionFunctions
   inline void SetValue( const lSet& set,
                         ObjectDataStructureBaseT& object,
                         BoundaryConditionBase* bc,
-                        Array1dT<T>& fieldData,
+                        array<T>& fieldData,
                         realT time )
   {
     T replace;
@@ -122,7 +122,7 @@ namespace BoundaryConditionFunctions
   inline void SetValue<realT>( const lSet& set,
                                ObjectDataStructureBaseT& object,
                                BoundaryConditionBase* bc,
-                               Array1dT<realT>& fieldData, 
+                               array<realT>& fieldData, 
                                realT time )
   {
     for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a )
@@ -141,10 +141,10 @@ namespace BoundaryConditionFunctions
 
 //    const TableManager& tableManager = TableManager::Instance();
 
-    Array1dT<T>& fieldData = object.GetFieldData<T>(fieldName);
+    array<T>& fieldData = object.GetFieldData<T>(fieldName);
 
     // iterate over all boundary conditions.
-    for( Array1dT<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++ bcItr )
+    for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++ bcItr )
     {
       // check to see if the requested field has a boundary condition applied to it.
       BoundaryConditionBase* bc = *bcItr;
@@ -250,7 +250,7 @@ namespace BoundaryConditionFunctions
   
 
     // iterate over all boundary conditions.
-    for( Array1dT<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
+    for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
 
       // check if field has the boundary condition applied to it.
       BoundaryConditionBase* bc = *bcItr;
@@ -300,7 +300,7 @@ namespace BoundaryConditionFunctions
 
 
     // iterate over all boundary conditions.
-    for( Array1dT<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
+    for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
 
       // check if field has the boundary condition applied to it.
       BoundaryConditionBase* bc = *bcItr;
@@ -351,7 +351,7 @@ namespace BoundaryConditionFunctions
 
 
     // iterate over all boundary conditions.
-    for( Array1dT<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
+    for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
 
       // check if field has the boundary condition applied to it.
       BoundaryConditionBase* bc = *bcItr;
@@ -414,7 +414,7 @@ namespace BoundaryConditionFunctions
                                       const std::string& fieldName, realT time ){
                                       	
     // iterate over all boundary conditions.
-    for( Array1dT<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
+    for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
 
       // check if field has the boundary condition applied to it.
       BoundaryConditionBase* bc = *bcItr;
@@ -447,7 +447,7 @@ namespace BoundaryConditionFunctions
   
 
     // iterate over all boundary conditions.
-    for( Array1dT<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
+    for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
 
       // check if field has the boundary condition applied to it.
       BoundaryConditionBase* bc = *bcItr;
@@ -520,7 +520,7 @@ namespace BoundaryConditionFunctions
 
 
     // iterate over all boundary conditions.
-    for( Array1dT<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
+    for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr ){
 
       // check if field has the boundary condition applied to it.
       BoundaryConditionBase* bc = *bcItr;
@@ -568,13 +568,13 @@ namespace BoundaryConditionFunctions
 
   void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
                                                   FaceManagerT& faceManager,
-                                                  Array1dT<lSet>& KinematicConstraintNodes,
+                                                  array<lSet>& KinematicConstraintNodes,
                                                   const realT tiedNodeTolerance );
 
 
   void ApplyKinematicConstraintBoundaryCondition( FaceManagerT& faceManager,
                                                   NodeManager& nodeManager,
-                                                  Array1dT<lSet>& KinematicConstraintNodes,
+                                                  array<lSet>& KinematicConstraintNodes,
                                                   const realT tiedNodeNormalRuptureStress,
                                                   const realT tiedNodeShearRuptureStress  );
 

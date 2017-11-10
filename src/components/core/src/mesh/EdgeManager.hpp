@@ -68,7 +68,7 @@ public:
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL) ;
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = NULL) ;
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-                                                         Array1dT<globalIndex_array>& objectToCompositionObject );
+                                                         array<globalIndex_array>& objectToCompositionObject );
 
 
   void BuildEdges( const FaceManager * const faceManager, const NodeManager * const nodeManager );
@@ -110,7 +110,7 @@ public:
   void SplitEdge( const localIndex indexToSplit,
                   const localIndex parentNodeIndex,
                   const localIndex childNodeIndex[2],
-                  Array1dT<lSet>& nodesToEdges );
+                  array<lSet>& nodesToEdges );
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
 

@@ -44,7 +44,7 @@
 #include "Teuchos_SerialDenseVector.hpp"
 
 /// Convert row column value format to epetra FECrs Matrix
-void RCVToEpetraFECrsMatrix(const Array1dT<rcv>& K, Epetra_FECrsMatrix& A)
+void RCVToEpetraFECrsMatrix(const array<rcv>& K, Epetra_FECrsMatrix& A)
 {
 
   for (size_t i = 0; i < K.size(); ++i)
@@ -60,7 +60,7 @@ void RCVToEpetraFECrsMatrix(const Array1dT<rcv>& K, Epetra_FECrsMatrix& A)
 }
 
 /// Convert array to epetra finite element vector
-void ArrayToEpetraFEVector(const rArray1d& a, Epetra_FEVector& v)
+void ArrayToEpetraFEVector(const array<real64>& a, Epetra_FEVector& v)
 {
   if (a.size() >= INT_MAX)
     throw GPException(
@@ -73,7 +73,7 @@ void ArrayToEpetraFEVector(const rArray1d& a, Epetra_FEVector& v)
 }
 
 /// Convert epetra finite element vector to real array. 	
-void EpetraFEVectorToArray(Epetra_FEVector& v, rArray1d& a)
+void EpetraFEVectorToArray(Epetra_FEVector& v, array<real64>& a)
 {
   a.resize(v.MyLength());
   double ** vp;
@@ -97,7 +97,7 @@ void WriteEpetraFEVectorToMatlabFile(const std::string& filename, const Epetra_F
 }
 
 /// Solve Ax = b with a conjugate gradient solver and jacobi precoditioning
-void LinSolve_CG(const Array1dT<rcv>& A, rArray1d& x, const rArray1d& b, const Epetra_Comm* commPtr,
+void LinSolve_CG(const array<rcv>& A, array<real64>& x, const array<real64>& b, const Epetra_Comm* commPtr,
                  realT tol, int maxNumIters, bool verboseFlag, bool doDataWrite)
 {
 
@@ -166,7 +166,7 @@ void LinSolve_CG(const Array1dT<rcv>& A, rArray1d& x, const rArray1d& b, const E
 }
 
 /// Solve Ax = b with a biconjugate gradient stabilized solver and jacobi precoditioning
-void LinSolve_BICGSTAB(const Array1dT<rcv>& A, rArray1d& x, const rArray1d& b,
+void LinSolve_BICGSTAB(const array<rcv>& A, array<real64>& x, const array<real64>& b,
                        const Epetra_Comm* commPtr, realT tol, int maxNumIters, bool verboseFlag,
                        bool doDataWrite)
 {
@@ -238,12 +238,12 @@ void LinSolve_BICGSTAB(const Array1dT<rcv>& A, rArray1d& x, const rArray1d& b,
 /// FIXME - the following won't work on settgast's machine - some problem with Teuchos and compiler
 //#ifdef WALSH24
 #if 1
-int LinSolve_Local(rArray2d& A, rArray1d& x, rArray1d& b)
+int LinSolve_Local(rArray2d& A, array<real64>& x, array<real64>& b)
 {
 
   bool doEquilibrate = false;
 
-  rArray1d::size_type n = x.size();
+  array<real64>::size_type n = x.size();
 
   Teuchos::SerialDenseMatrix<int, realT> A_Teuch(Teuchos::Copy, A.data(), n, n, n);
 
@@ -287,11 +287,11 @@ int LinSolve_Local(rArray2d& A, rArray1d& x, rArray1d& b)
       std::cout << std::endl;
     }
     std::cout << "x" << std::endl;
-    for (rArray1d::size_type i = 0; i < x.size(); ++i)
+    for (array<real64>::size_type i = 0; i < x.size(); ++i)
       std::cout << x(i) << " ";
     std::cout << std::endl;
     std::cout << "b" << std::endl;
-    for (rArray1d::size_type i = 0; i < b.size(); ++i)
+    for (array<real64>::size_type i = 0; i < b.size(); ++i)
       std::cout << b(i) << " ";
     std::cout << std::endl;
     exit(0);
@@ -299,7 +299,7 @@ int LinSolve_Local(rArray2d& A, rArray1d& x, rArray1d& b)
   return info;
 }
 #else
-int LinSolve_Local(rArray2d& A, rArray1d& x,rArray1d& b)
+int LinSolve_Local(rArray2d& A, array<real64>& x,array<real64>& b)
 {
   throw GPException("LinSolve_Local - FIXME - problem with Teuchos compilation.");
   return 1;

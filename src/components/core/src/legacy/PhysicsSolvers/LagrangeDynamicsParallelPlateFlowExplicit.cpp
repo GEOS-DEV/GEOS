@@ -110,9 +110,9 @@ void LagrangeDynamicsParallelPlateFlowExplicit::Initialize(PhysicalDomainT& doma
   m_ppSolve.Initialize(domain,partition);
   m_ldSolve.Initialize(domain,partition);
 
-  rArray1d& initialContactStress = domain.m_feFaceManager.GetFieldData<realT>("initialContactStress");
-  rArray1d& faceContactStiffness = domain.m_feFaceManager.GetFieldData<realT>("faceContactStiffness");
-  rArray1d* faceStrengthRandomFactor = domain.m_feFaceManager.GetFieldDataPointer<realT>("faceStrengthRandomFactor");
+  array<real64>& initialContactStress = domain.m_feFaceManager.GetFieldData<realT>("initialContactStress");
+  array<real64>& faceContactStiffness = domain.m_feFaceManager.GetFieldData<realT>("faceContactStiffness");
+  array<real64>* faceStrengthRandomFactor = domain.m_feFaceManager.GetFieldDataPointer<realT>("faceStrengthRandomFactor");
   faceContactStiffness = m_kJn;
 
   for( localIndex kf=0 ; kf<domain.m_feFaceManager.m_numFaces ; ++kf )
@@ -166,9 +166,9 @@ void LagrangeDynamicsParallelPlateFlowExplicit::Initialize(PhysicalDomainT& doma
 
   if (m_ppSolve.m_leakoffCoef > 0.0)
   {
-    rArray1d& totalLeakedVolume = domain.m_feFaceManager.GetFieldData<realT>("totalLeakedVolume");
+    array<real64>& totalLeakedVolume = domain.m_feFaceManager.GetFieldData<realT>("totalLeakedVolume");
     totalLeakedVolume = 0.0;
-    rArray1d& initialSaturatedTime = domain.m_feFaceManager.GetFieldData<realT>("initialSaturatedTime");
+    array<real64>& initialSaturatedTime = domain.m_feFaceManager.GetFieldData<realT>("initialSaturatedTime");
     initialSaturatedTime = std::numeric_limits<realT>::max();
   }
 
@@ -178,7 +178,7 @@ void LagrangeDynamicsParallelPlateFlowExplicit::Initialize(PhysicalDomainT& doma
 void LagrangeDynamicsParallelPlateFlowExplicit::InitializeCommunications( PartitionBase& partition )
 {
 
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+  std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
   syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::acceleration>::Name());
   syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::velocity>::Name());
   syncedFields[PhysicalDomainT::FiniteElementFaceManager].push_back(Field<FieldInfo::mass>::Name());
@@ -195,9 +195,9 @@ void LagrangeDynamicsParallelPlateFlowExplicit::ApplyForcesFromContact(PhysicalD
   //external faces
   //-----------------------------
   {
-    Array1dT<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
+    array<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
     contactForce = 0.0;
-    Array1dT<R1Tensor>& decontactForce = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::contactForce>();
+    array<R1Tensor>& decontactForce = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::contactForce>();
     decontactForce = 0.0;
 
     //update nodal positions, velocities, and accelerations before updating face geometry
@@ -215,7 +215,7 @@ void LagrangeDynamicsParallelPlateFlowExplicit::ApplyForcesFromContact(PhysicalD
       domain.m_contactManager.Update(domain.m_externalFaces.m_neighborList);
 
     {
-      Array1dT<Array1dT<R1Tensor> > xs;
+      array<array<R1Tensor> > xs;
       xs.resize(domain.m_externalFaces.DataLengths());
       domain.m_externalFaces.UpdateGeometricContactProperties(dt, domain, xs);
 #ifdef STATES_ON_CONTACTS
@@ -242,7 +242,7 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
                                                           const realT& dt,
                                                           const int cycleNumber,
                                                           PhysicalDomainT& domain,
-                                                          const sArray1d& namesOfSolverRegions ,
+                                                          const array<string>& namesOfSolverRegions ,
                                                           SpatialPartition& partition ,
                                                           FractunatorBase* const fractunator )
 {
@@ -262,14 +262,14 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
   }
 
   m_stabledt.m_maxdt = std::numeric_limits<double>::max();
-  Array1dT<R1Tensor>& hgforce = domain.m_feNodeManager.GetFieldData<FieldInfo::hgforce> ();
+  array<R1Tensor>& hgforce = domain.m_feNodeManager.GetFieldData<FieldInfo::hgforce> ();
   hgforce = 0.0;
 
-  iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-//  Array1dT<lArray1d>& edgeToFlowFaces = domain.m_edgeManager.GetVariableOneToManyMap("edgeToFlowFaces");
+  array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+//  array<lArray1d>& edgeToFlowFaces = domain.m_edgeManager.GetVariableOneToManyMap("edgeToFlowFaces");
 
-  Array1dT<R1Tensor>* u0 = domain.m_feNodeManager.GetFieldDataPointer<R1Tensor>("displacement0");
-  Array1dT<R1Tensor>* unet = domain.m_feNodeManager.GetFieldDataPointer<R1Tensor>("netDisplacement");
+  array<R1Tensor>* u0 = domain.m_feNodeManager.GetFieldDataPointer<R1Tensor>("displacement0");
+  array<R1Tensor>* unet = domain.m_feNodeManager.GetFieldDataPointer<R1Tensor>("netDisplacement");
 
   m_ppSolve.GenerateParallelPlateGeometricQuantities( domain,time,dt );
 
@@ -326,7 +326,7 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
 
 
   {
-    std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+    std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
 
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::acceleration>::Name());
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::velocity>::Name());
@@ -340,16 +340,16 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
 
   // apply fluid pressure to faces
   const OrderedVariableOneToManyRelation& childFaceIndex = domain.m_feFaceManager.GetVariableOneToManyMap( "childIndices" );
-  const rArray1d& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-//  const rArray1d& initialContactStress = domain.m_feFaceManager.GetFieldData<realT>("initialContactStress");
-  Array1dT<R1Tensor>& nodalForce = domain.m_feNodeManager.GetFieldData<FieldInfo::force>();
-  Array1dT<R1Tensor>& hydroForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("hydroForce");
-  Array1dT<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
-  Array1dT<R1Tensor>& contactStress = domain.m_feFaceManager.GetFieldData<R1Tensor>("contactStress");
+  const array<real64>& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+//  const array<real64>& initialContactStress = domain.m_feFaceManager.GetFieldData<realT>("initialContactStress");
+  array<R1Tensor>& nodalForce = domain.m_feNodeManager.GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& hydroForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("hydroForce");
+  array<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
+  array<R1Tensor>& contactStress = domain.m_feFaceManager.GetFieldData<R1Tensor>("contactStress");
 
-//  Array1dT<R1Tensor>& cohesiveForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
+//  array<R1Tensor>& cohesiveForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
 
-//  const Array1dT<R1Tensor>& cohesiveTraction = domain.m_feFaceManager.GetFieldData<R1Tensor>("cohesiveTraction");
+//  const array<R1Tensor>& cohesiveTraction = domain.m_feFaceManager.GetFieldData<R1Tensor>("cohesiveTraction");
 
   hydroForce = 0.0;
   contactForce = 0.0;
@@ -453,14 +453,14 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
   }
 
   {
-    std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+    std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
 
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::acceleration>::Name());
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::velocity>::Name());
     syncedFields[PhysicalDomainT::FiniteElementFaceManager].push_back(Field<FieldInfo::mass>::Name());
     syncedFields[PhysicalDomainT::FiniteElementFaceManager].push_back("tracer");
     {
-      rArray1d* initialSaturatedTime = domain.m_feFaceManager.GetFieldDataPointer<realT>("initialSaturatedTime");
+      array<real64>* initialSaturatedTime = domain.m_feFaceManager.GetFieldDataPointer<realT>("initialSaturatedTime");
       if (initialSaturatedTime != NULL )
         syncedFields[PhysicalDomainT::FiniteElementFaceManager].push_back("initialSaturatedTime");
     }
@@ -482,10 +482,10 @@ void LagrangeDynamicsParallelPlateFlowExplicit::CalculateContactStress(PhysicalD
 {
   stressPen = 0;
   stressShear = 0;
-  rArray1d& delta0N = domain.m_feFaceManager.GetFieldData<realT>("delta0N");
-  Array1dT<R1Tensor>& gapShear0 = domain.m_feFaceManager.GetFieldData<R1Tensor>("gapShear0");
-  Array1dT<R1Tensor>& stressShear0 = domain.m_feFaceManager.GetFieldData<R1Tensor>("stressShear0");
-  rArray1d& effectiveStressN = domain.m_feFaceManager.GetFieldData<realT>("effectiveStressN");
+  array<real64>& delta0N = domain.m_feFaceManager.GetFieldData<realT>("delta0N");
+  array<R1Tensor>& gapShear0 = domain.m_feFaceManager.GetFieldData<R1Tensor>("gapShear0");
+  array<R1Tensor>& stressShear0 = domain.m_feFaceManager.GetFieldData<R1Tensor>("stressShear0");
+  array<real64>& effectiveStressN = domain.m_feFaceManager.GetFieldData<realT>("effectiveStressN");
 
 
   const R1Tensor N[2] = { domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, faceIndex[0] ),
@@ -577,7 +577,7 @@ void LagrangeDynamicsParallelPlateFlowExplicit::CalculateContactStress(PhysicalD
 
 void LagrangeDynamicsParallelPlateFlowExplicit::PostProcess (PhysicalDomainT& domain,
                                                              SpatialPartition& partition,
-                                                             const sArray1d& namesOfSolverRegions)
+                                                             const array<string>& namesOfSolverRegions)
 {
   m_ppSolve.PostProcess(domain, partition, namesOfSolverRegions);
   m_ldSolve.PostProcess(domain, partition, namesOfSolverRegions);

@@ -96,7 +96,7 @@ void SubstepSolver::ReadXML(TICPP::HierarchicalDataNode* const hdn)
     const std::string& apType = applicationNode->Heading();
 
     std::string solverName;
-    sArray1d regionNames;
+    array<string> regionNames;
 
     if( streq(apType,"Substep") ){
       // Recursive substep solver
@@ -125,7 +125,7 @@ double SubstepSolver::TimeStep( const realT& time,
                               const realT& dt,
                               const int cycleNumber,
                               PhysicalDomainT& domain,
-                              const sArray1d& namesOfSolverRegions ,
+                              const array<string>& namesOfSolverRegions ,
                               SpatialPartition& partition,
                               FractunatorBase* const fractunator )
 {  

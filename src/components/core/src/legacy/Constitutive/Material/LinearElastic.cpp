@@ -172,7 +172,7 @@ void LinearElastic::MeanPressureDevStress(const localIndex index, realT& pressur
   MeanPressureDevStressFromDerived<LinearElastic>(index, pressure, devStress);
 }
 void
-LinearElastic::PreSetValues(const sArray1d& names)
+LinearElastic::PreSetValues(const array<string>& names)
 {
   //reset mechanical constants
   for (localIndex a = 0; a < m_parameterData.size(); ++a)
@@ -186,7 +186,7 @@ LinearElastic::PreSetValues(const sArray1d& names)
 }
 
 void
-LinearElastic::PostSetValues(const sArray1d& names)
+LinearElastic::PostSetValues(const array<string>& names)
 {
   //recalculate mechanical parameters that were not already explicitly set
   for(localIndex a = 0; a < m_parameterData.size(); a++)

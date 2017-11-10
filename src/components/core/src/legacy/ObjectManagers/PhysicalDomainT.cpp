@@ -205,7 +205,7 @@ void PhysicalDomainT::SetInterObjectRelations()
  * @brief Get the map of all enumerated and managed ObjectDataStructureBase managers
  * @author Scott Johnson
  */
-/*const Array1dT<ObjectDataStructureBaseT*>& PhysicalDomainT::GetObjectDataStructures()
+/*const array<ObjectDataStructureBaseT*>& PhysicalDomainT::GetObjectDataStructures()
 {
   return m_managedObjectDataStructures;
 }*/
@@ -791,8 +791,8 @@ void PhysicalDomainT::WriteFaultElementMesh(SiloFile& siloFile,
     dvector ycoords(m_faultPatchNodes.m_numNodes);
     dvector zcoords(m_faultPatchNodes.m_numNodes);
 
-    const Array1dT<R1Tensor>& refpos = m_faultPatchNodes.GetFieldData<FieldInfo::referencePosition>();
-    const Array1dT<R1Tensor>& disp = m_faultPatchNodes.GetFieldData<FieldInfo::displacement>();
+    const array<R1Tensor>& refpos = m_faultPatchNodes.GetFieldData<FieldInfo::referencePosition>();
+    const array<R1Tensor>& disp = m_faultPatchNodes.GetFieldData<FieldInfo::displacement>();
 
     for (localIndex a = 0; a < m_faultPatchNodes.m_numNodes; ++a)
     {
@@ -813,13 +813,13 @@ void PhysicalDomainT::WriteFaultElementMesh(SiloFile& siloFile,
     // face mesh
 
     const int numFaceTypes = 1;
-    Array1dT<localIndex*> faceConnectivity(numFaceTypes);
-    Array1dT<globalIndex*> globalFaceNumbers(numFaceTypes);
+    array<localIndex*> faceConnectivity(numFaceTypes);
+    array<globalIndex*> globalFaceNumbers(numFaceTypes);
     ivector fshapecnt(numFaceTypes);
     ivector fshapetype(numFaceTypes);
     ivector fshapesize(numFaceTypes);
 
-    Array1dT<lArray2d> faceToNodeMap(numFaceTypes);
+    array<lArray2d> faceToNodeMap(numFaceTypes);
 
     for (int faceType = 0; faceType < numFaceTypes; ++faceType)
     {
@@ -888,7 +888,7 @@ void PhysicalDomainT::WriteFaultElementMesh(SiloFile& siloFile,
     i1 *= nXYZ;
     {
       const std::string meshName("pore_pressure_grid");
-      std::map< std::string, rArray1d> realData;
+      std::map< std::string, array<real64>> realData;
 
       //-----------------------------
       //Write grid mesh
@@ -899,7 +899,7 @@ void PhysicalDomainT::WriteFaultElementMesh(SiloFile& siloFile,
         dvector zcoords(nXYZ);
 
         realData["Pressure"].resize(nXYZ);
-        rArray1d& pp = realData["Pressure"];
+        array<real64>& pp = realData["Pressure"];
         const std::vector<realT>& ppAll = ppptr->Values();
 
         localIndex a = 0;
@@ -1011,14 +1011,14 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
     coords[2] = zcoords.data();
 
     const int numElementRegions = m_feElementManager.m_ElementRegions.size();
-    Array1dT<localIndex*> meshConnectivity(numElementRegions);
-    Array1dT<int*> isGhostElement(numElementRegions);
-    Array1dT<globalIndex*> globalElementNumbers(numElementRegions);
+    array<localIndex*> meshConnectivity(numElementRegions);
+    array<int*> isGhostElement(numElementRegions);
+    array<globalIndex*> globalElementNumbers(numElementRegions);
     ivector shapecnt(numElementRegions);
     ivector shapetype(numElementRegions);
     ivector shapesize(numElementRegions);
 
-    Array1dT<FixedOneToManyRelation> elementToNodeMap(m_feElementManager.m_ElementRegions.size());
+    array<FixedOneToManyRelation> elementToNodeMap(m_feElementManager.m_ElementRegions.size());
 
     int count = 0;
     for (std::map<ElementManagerT::RegKeyType, ElementRegionT>::iterator elementRegionIter =
@@ -1035,7 +1035,7 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
         const localIndex* const elemToNodeMap =
             elementRegion.m_toNodesRelation[k];
 
-        const iArray1d nodeOrdering = elementRegion.SiloNodeOrdering();
+        const array<integer> nodeOrdering = elementRegion.SiloNodeOrdering();
         for (localIndex a = 0; a < elementRegion.m_numNodesPerElem; ++a)
           elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
 
@@ -1117,13 +1117,13 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
         // See a discussion of silo's arbitrary polygon implementation at
         // https://visitbugs.ornl.gov/projects/7/wiki/Arbitrary_Polygons_and_Polyhedra_in_Silo
         // It is not documented in silo manual.
-        Array1dT<localIndex*> faceConnectivity(numFaceTypes);
-        Array1dT<globalIndex*> globalFaceNumbers(numFaceTypes);
+        array<localIndex*> faceConnectivity(numFaceTypes);
+        array<globalIndex*> globalFaceNumbers(numFaceTypes);
         ivector fshapecnt(numFaceTypes);
         ivector fshapetype(numFaceTypes);
         ivector fshapesize(numFaceTypes);
 
-        Array1dT<lArray1d> faceToNodeMap(numFaceTypes);
+        array<lArray1d> faceToNodeMap(numFaceTypes);
         {
           for (localIndex k = 0; k < m_feFaceManager.m_numFaces; ++k)
           {
@@ -1163,13 +1163,13 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
           dbZoneType = DB_ZONETYPE_BEAM;
         }
 
-        Array1dT<localIndex*> faceConnectivity(numFaceTypes);
-        Array1dT<globalIndex*> globalFaceNumbers(numFaceTypes);
+        array<localIndex*> faceConnectivity(numFaceTypes);
+        array<globalIndex*> globalFaceNumbers(numFaceTypes);
         ivector fshapecnt(numFaceTypes);
         ivector fshapetype(numFaceTypes);
         ivector fshapesize(numFaceTypes);
 
-        Array1dT<lArray2d> faceToNodeMap(numFaceTypes);
+        array<lArray2d> faceToNodeMap(numFaceTypes);
 
 
         for (int faceType = 0; faceType < numFaceTypes; ++faceType)
@@ -1217,13 +1217,13 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
       {
         const int numFaceTypes = 1;
         int dbZoneType = DB_ZONETYPE_POLYGON;
-        Array1dT<localIndex*> faceConnectivity(numFaceTypes);
-        Array1dT<globalIndex*> globalFaceNumbers(numFaceTypes);
+        array<localIndex*> faceConnectivity(numFaceTypes);
+        array<globalIndex*> globalFaceNumbers(numFaceTypes);
         ivector fshapecnt(numFaceTypes);
         ivector fshapetype(numFaceTypes);
         ivector fshapesize(numFaceTypes);
 
-        Array1dT<lArray1d> faceToNodeMap(numFaceTypes);
+        array<lArray1d> faceToNodeMap(numFaceTypes);
         {
           for (localIndex k = 0;  k < m_externalFaces.DataLengths(); ++k)
           {
@@ -1262,13 +1262,13 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
           dbZoneType = DB_ZONETYPE_QUAD;
         }
 
-        Array1dT<localIndex*> faceConnectivity(numFaceTypes);
-        Array1dT<globalIndex*> globalFaceNumbers(numFaceTypes);
+        array<localIndex*> faceConnectivity(numFaceTypes);
+        array<globalIndex*> globalFaceNumbers(numFaceTypes);
         ivector fshapecnt(numFaceTypes);
         ivector fshapetype(numFaceTypes);
         ivector fshapesize(numFaceTypes);
 
-        Array1dT<lArray2d> faceToNodeMap(numFaceTypes);
+        array<lArray2d> faceToNodeMap(numFaceTypes);
 
         for (int faceType = 0; faceType < numFaceTypes; ++faceType)
         {
@@ -1312,13 +1312,13 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
       const int numNodesPerEdge = 2;
       int dbZoneType = DB_ZONETYPE_BEAM;
 
-      Array1dT<localIndex*> edgeConnectivity(numEdgeTypes);
-      Array1dT<globalIndex*> globalEdgeNumbers(numEdgeTypes);
+      array<localIndex*> edgeConnectivity(numEdgeTypes);
+      array<globalIndex*> globalEdgeNumbers(numEdgeTypes);
       ivector eshapecnt(numEdgeTypes);
       ivector eshapetype(numEdgeTypes);
       ivector eshapesize(numEdgeTypes);
 
-      Array1dT<lArray2d> edgeToNodeMap(numEdgeTypes);
+      array<lArray2d> edgeToNodeMap(numEdgeTypes);
 
 
       for (int edgeType = 0; edgeType < numEdgeTypes; ++edgeType)
@@ -1365,7 +1365,7 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
 //      const std::string edgeMeshName("edge_mesh");
 //      const localIndex numEdges = m_feEdgeManager.DataLengths();
 //
-//      Array1dT<lArray1d> edgeToNodes(1);
+//      array<lArray1d> edgeToNodes(1);
 //
 //      count = 0;
 //
@@ -1391,7 +1391,7 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
 //        }
 //      }
 //
-//      Array1dT<localIndex*> edgeMeshConnectivity(1);
+//      array<localIndex*> edgeMeshConnectivity(1);
 //      ivector eshapecnt(1);
 //      ivector eshapetype(1);
 //      ivector eshapesize(1);
@@ -1478,7 +1478,7 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
     dvector xcoords(m_discreteElementSurfaceNodes.m_numNodes);
     dvector ycoords(m_discreteElementSurfaceNodes.m_numNodes);
     dvector zcoords(m_discreteElementSurfaceNodes.m_numNodes);
-    Array1dT<R1Tensor>& cpos =
+    array<R1Tensor>& cpos =
         m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::currentPosition>();
     for (localIndex a = 0; a < m_discreteElementSurfaceNodes.m_numNodes; ++a)
     {
@@ -1532,9 +1532,9 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
 
       if(m_discreteElementManager.m_discreteElementToDiscreteElementContactsMap.size() > 0)
       {
-        iArray1d tnodelist;
-        std::map<std::string, rArray1d> realFields;
-        std::map<std::string, Array1dT<R1Tensor> > R1Fields;
+        array<integer> tnodelist;
+        std::map<std::string, array<real64>> realFields;
+        std::map<std::string, array<R1Tensor> > R1Fields;
         int i = 0;
         for(std::map<localIndex, std::map<localIndex, DiscreteElementContact> >::const_iterator it = m_discreteElementManager.m_discreteElementToDiscreteElementContactsMap.begin();
             it != m_discreteElementManager.m_discreteElementToDiscreteElementContactsMap.end(); ++it, ++i)
@@ -1554,7 +1554,7 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
           dvector txcoords(m_discreteElementManager.DataLengths());
           dvector tycoords(m_discreteElementManager.DataLengths());
           dvector tzcoords(m_discreteElementManager.DataLengths());
-          Array1dT<R1Tensor>& tcpos =
+          array<R1Tensor>& tcpos =
               m_discreteElementManager.GetFieldData<FieldInfo::currentPosition>();
           for (localIndex a = 0; a < m_discreteElementManager.DataLengths(); ++a)
           {
@@ -1584,8 +1584,8 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
       // face mesh
       const std::string facemeshName("de_face_mesh");
 
-      Array1dT<lArray1d> elementToNodeMap(1);
-      for (Array1dT<lArray1d>::const_iterator it = m_discreteElementManager.m_discreteElementToExternalNodesMap.begin();
+      array<lArray1d> elementToNodeMap(1);
+      for (array<lArray1d>::const_iterator it = m_discreteElementManager.m_discreteElementToExternalNodesMap.begin();
           it != m_discreteElementManager.m_discreteElementToExternalNodesMap.end(); ++it)
       {
         elementToNodeMap.begin()->push_back(it->size());
@@ -1593,7 +1593,7 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
           elementToNodeMap.begin()->push_back(*it1);
       }
 
-      Array1dT<localIndex*> meshConnectivity(1);
+      array<localIndex*> meshConnectivity(1);
       ivector shapecnt(1);
       ivector shapetype(1);
       ivector shapesize(1);
@@ -1953,7 +1953,7 @@ void PhysicalDomainT::WriteEllipsoidalDiscreteElements( SiloFile& siloFile,
     dvector xcoords(numPoints);
     dvector ycoords(numPoints);
     dvector zcoords(numPoints);
-    Array1dT<R1Tensor>& cpos = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::currentPosition> ();
+    array<R1Tensor>& cpos = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::currentPosition> ();
     for (localIndex a = 0; a < numPoints; ++a)
     {
       xcoords[a] = cpos[a](0);
@@ -1968,12 +1968,12 @@ void PhysicalDomainT::WriteEllipsoidalDiscreteElements( SiloFile& siloFile,
 
 
 
-    const rArray1d& q = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationMagnitude>();
-    const Array1dT<R1Tensor>& xyz = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationAxis>();
-    const Array1dT<R1Tensor>& r = m_ellipsoidalDiscreteElementManager.GetFieldData<R1Tensor>("principalRadii");
+    const array<real64>& q = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationMagnitude>();
+    const array<R1Tensor>& xyz = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationAxis>();
+    const array<R1Tensor>& r = m_ellipsoidalDiscreteElementManager.GetFieldData<R1Tensor>("principalRadii");
 
-    Array1dT<R2Tensor> R(m_ellipsoidalDiscreteElementManager.DataLengths());
-    Array1dT<rArray1d> RComponents(9);
+    array<R2Tensor> R(m_ellipsoidalDiscreteElementManager.DataLengths());
+    array<array<real64>> RComponents(9);
 
 
     for( int a=0 ; a<9 ; ++a )
@@ -2018,7 +2018,7 @@ void PhysicalDomainT::WriteEllipsoidalDiscreteElements( SiloFile& siloFile,
     std::string rootDirectory = "/EllipsoidDiscreteElementFields";
     DBSetDir(siloFile.m_dbFilePtr, subDirectory.c_str());
 
-    sArray1d RNames(9);
+    array<string> RNames(9);
     RNames[0] = "R_11";
     RNames[1] = "R_12";
     RNames[2] = "R_13";
@@ -2046,10 +2046,10 @@ void PhysicalDomainT::WriteEllipsoidalDiscreteElements( SiloFile& siloFile,
       const char name[] = "DefVars";
       const int ndefs = 1;
 
-      sArray1d vnames;
+      array<string> vnames;
       vnames.push_back("RotationTensor");
 
-      sArray1d vdefns;
+      array<string> vdefns;
       vdefns.push_back("{{</EllipsoidDiscreteElementFields/R_11>,</EllipsoidDiscreteElementFields/R_12>,</EllipsoidDiscreteElementFields/R_13>}, "
                         "{</EllipsoidDiscreteElementFields/R_21>,</EllipsoidDiscreteElementFields/R_22>,</EllipsoidDiscreteElementFields/R_23>},"
                         "{</EllipsoidDiscreteElementFields/R_31>,</EllipsoidDiscreteElementFields/R_32>,</EllipsoidDiscreteElementFields/R_33>}}");
@@ -2130,8 +2130,8 @@ void PhysicalDomainT::WriteCommonPlanes( SiloFile& siloFile,
   //  std::cout << "number of contacts: " << numContacts;
   if (writeCP && m_contactManager.m_contact)
   {
-    Array1dT<lArray1d> elementToNodeMap(1);
-    Array1dT<localIndex> mask;
+    array<lArray1d> elementToNodeMap(1);
+    array<localIndex> mask;
 
     const int count = 0;
     int numCommonPlanes = 0;
@@ -2180,7 +2180,7 @@ void PhysicalDomainT::WriteCommonPlanes( SiloFile& siloFile,
       dvector xcoords(numCommonPlanePoints);
       dvector ycoords(numCommonPlanePoints);
       dvector zcoords(numCommonPlanePoints);
-      Array1dT<R1Tensor>& cpos = m_contactManager.m_intersectionPolygonPoints;
+      array<R1Tensor>& cpos = m_contactManager.m_intersectionPolygonPoints;
       for (localIndex a = 0; a < numCommonPlanePoints; ++a)
       {
         xcoords[a] = cpos[a](0);
@@ -2191,7 +2191,7 @@ void PhysicalDomainT::WriteCommonPlanes( SiloFile& siloFile,
       coords[1] = ycoords.data();
       coords[2] = zcoords.data();
 
-      Array1dT<localIndex*> meshConnectivity(1);
+      array<localIndex*> meshConnectivity(1);
       ivector shapecnt(1);
       ivector shapetype(1);
       ivector shapesize(1);
@@ -2330,11 +2330,11 @@ void PhysicalDomainT::RegisterBCFields(ObjectDataStructureBaseT& object){
 
 void PhysicalDomainT::UpdateEnergy()
 {
-  const rArray1d& nodalMass = m_feNodeManager.GetFieldData<FieldInfo::mass>();
-  const Array1dT<R1Tensor>& velocity = m_feNodeManager.GetFieldData<FieldInfo::velocity>();
-  const iArray1d& ghostRank = m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<real64>& nodalMass = m_feNodeManager.GetFieldData<FieldInfo::mass>();
+  const array<R1Tensor>& velocity = m_feNodeManager.GetFieldData<FieldInfo::velocity>();
+  const array<integer>& ghostRank = m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
 
-  const rArray1d& work = m_feNodeManager.GetFieldData<realT>("work");
+  const array<real64>& work = m_feNodeManager.GetFieldData<realT>("work");
 
   this->m_energy.Zero();
 

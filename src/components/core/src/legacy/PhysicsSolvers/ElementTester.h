@@ -83,7 +83,7 @@ public:
                          const realT& dt,
                          const int cycleNumber,
                          PhysicalDomainT * domain,
-                         const sArray1d& namesOfSolverRegions,
+                         const array<string>& namesOfSolverRegions,
                          SpatialPartition& partition,
                          FractunatorBase* const fractunator );
 
@@ -102,7 +102,7 @@ private:
   void CheckElement(FiniteElement<3>& feElement);
   
    // Element data
-  Array1dT<R1Tensor> nodeCoords;
+  array<R1Tensor> nodeCoords;
   const localIndex* nodeList;
   int numNodesPerElem;
   

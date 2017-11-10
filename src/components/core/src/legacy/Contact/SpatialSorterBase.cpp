@@ -23,8 +23,8 @@ namespace SpatialSorting
   }
 
   void SpatialSorterBase::Remove(const lSet& toRemove,
-                             Array1dT<lArray1d>& neighborList,
-                             Array1dT<lSet>& neighborListInverse)
+                             array<lArray1d>& neighborList,
+                             array<lSet>& neighborListInverse)
   {
     for(lSet::const_iterator iter = toRemove.begin(); iter != toRemove.end(); ++iter)
     {
@@ -40,10 +40,10 @@ namespace SpatialSorting
     }
   }
 
-  void SpatialSorterBase::RemoveDuplicates(Array1dT<lArray1d>& neighborList)
+  void SpatialSorterBase::RemoveDuplicates(array<lArray1d>& neighborList)
   {
     lArray1d::iterator it;
-    for(Array1dT<lArray1d>::iterator iter = neighborList.begin(); iter != neighborList.end(); ++iter)
+    for(array<lArray1d>::iterator iter = neighborList.begin(); iter != neighborList.end(); ++iter)
     {
       lArray1d& curr = *iter;
       if(curr.size() < 2)
@@ -68,8 +68,8 @@ namespace SpatialSorting
   }
 
   void SpatialSorterBase::insert(const localIndex i, const localIndex count,
-                             Array1dT<lArray1d>& neighborList,
-                             Array1dT<lSet>& neighborListInverse)
+                             array<lArray1d>& neighborList,
+                             array<lSet>& neighborListInverse)
   {
     if(i >= neighborList.size())
       throw GPException("SpatialSorter::insert out of range");
@@ -109,8 +109,8 @@ namespace SpatialSorting
   }
 
   void SpatialSorterBase::Add(const localIndex kf0, const localIndex kf1,
-                          Array1dT<lArray1d>& neighborList,
-                          Array1dT<lSet>& neighborListInverse)
+                          array<lArray1d>& neighborList,
+                          array<lSet>& neighborListInverse)
   {
     if(kf0 < kf1)
     {
@@ -127,9 +127,9 @@ namespace SpatialSorting
   }
 
   void SpatialSorterBase::AddIfClose(const localIndex kf0, const localIndex kf1,
-                                 const rArray1d& radii, const Array1dT<R1Tensor>& centers,
-                                 Array1dT<lArray1d>& neighborList,
-                                 Array1dT<lSet>& neighborListInverse)
+                                 const array<real64>& radii, const array<R1Tensor>& centers,
+                                 array<lArray1d>& neighborList,
+                                 array<lSet>& neighborListInverse)
   {
     if(Close(kf0, kf1, radii, centers))
       Add(kf0, kf1, neighborList, neighborListInverse);

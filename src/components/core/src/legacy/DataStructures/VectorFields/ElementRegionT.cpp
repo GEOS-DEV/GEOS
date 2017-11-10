@@ -74,11 +74,11 @@
 #include "Constitutive/Material/MaterialFactory.h"
 
 void AddElementResidual( const R2SymTensor& cauchyStress,
-                         const Array1dT<R1Tensor>& dNdX,
+                         const array<R1Tensor>& dNdX,
                          const realT& detJ,
                          const realT& detF,
                          const R2Tensor& Finv,
-                         Array1dT<R1Tensor>& force );
+                         array<R1Tensor>& force );
 
 
 void AddElementResidual( const R2SymTensor& cauchyStress,
@@ -86,7 +86,7 @@ void AddElementResidual( const R2SymTensor& cauchyStress,
                          const realT& detJ,
                          const realT& detF,
                          const R2Tensor& Finv,
-                         Array1dT<R1Tensor>& force );
+                         array<R1Tensor>& force );
 
   const char ElementRegionT::ElementObjectToElementManager[] = "ElementObjectToElementManager";
   const char ElementRegionT::ElementToNode[] = "ElementToNode";
@@ -231,14 +231,14 @@ ElementRegionT::~ElementRegionT()
   delete m_finiteElement;
 }
 
-void ElementRegionT::DeserializeObjectField(const std::string& name, const rArray1d& field)
+void ElementRegionT::DeserializeObjectField(const std::string& name, const array<real64>& field)
 {
   if(m_DataLengths == 0)
     return;
   m_mat->SetValues(name, field);
 }
 
-void ElementRegionT::DeserializeObjectFields(const sArray1d& names, const Array1dT<rArray1d>& fields)
+void ElementRegionT::DeserializeObjectFields(const array<string>& names, const array<array<real64>>& fields)
 {
   if (m_DataLengths == 0)
     return;
@@ -553,9 +553,9 @@ globalIndex ElementRegionT::resize( const localIndex size, const bool assignGlob
 
 void ElementRegionT::Initialize()
 {
-  rArray1d& density = this->GetFieldData<FieldInfo::density>();
-  rArray1d& mass = this->GetFieldData<FieldInfo::mass>();
-  rArray1d& volume = this->GetFieldData<FieldInfo::volume>();
+  array<real64>& density = this->GetFieldData<FieldInfo::density>();
+  array<real64>& mass = this->GetFieldData<FieldInfo::mass>();
+  array<real64>& volume = this->GetFieldData<FieldInfo::volume>();
 
   // For a cracked element, physical volume represents the part of the element with material
   // Initially, physical volume is equal to the volume of the element
@@ -632,9 +632,9 @@ void ElementRegionT::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* co
   referenceObject->CheckObjectType(ObjectDataStructureBaseT::FaceManager);
   const FaceManagerT& faceManager = static_cast<const FaceManagerT&>(*referenceObject);
 
-  const iArray1d& isFaceOnDomainBoundary = faceManager.GetFieldData<FieldInfo::isDomainBoundary>();
+  const array<integer>& isFaceOnDomainBoundary = faceManager.GetFieldData<FieldInfo::isDomainBoundary>();
 
-  iArray1d& isElemOnDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
+  array<integer>& isElemOnDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
   isElemOnDomainBoundary = 0;
 
   for (localIndex k = 0; k < m_numElems; ++k)
@@ -655,9 +655,9 @@ void ElementRegionT::SetDomainBoundaryObjects(const ObjectDataStructureBaseT* co
 int ElementRegionT::CalculateShapeFunctionDerivatives(const NodeManager& nodeManager)
 {
 
-  Array1dT<R1Tensor> X(this->m_numNodesPerElem);
+  array<R1Tensor> X(this->m_numNodesPerElem);
 
-  const Array1dT<R1Tensor>& referencePosition = nodeManager.GetFieldData<
+  const array<R1Tensor>& referencePosition = nodeManager.GetFieldData<
       FieldInfo::referencePosition>();
 
   if (m_finiteElement != NULL)
@@ -695,13 +695,13 @@ int ElementRegionT::CalculateShapeFunctionDerivatives(const NodeManager& nodeMan
 //int ElementRegionT::CalculateShapeFunctionDerivativesCutElements(const NodeManagerT& nodeManager)
 //{
 //
-//  Array1dT<R1Tensor> X(this->m_numNodesPerElem);
+//  array<R1Tensor> X(this->m_numNodesPerElem);
 //
-//  const Array1dT<R1Tensor>& referencePosition = nodeManager.GetFieldData<
+//  const array<R1Tensor>& referencePosition = nodeManager.GetFieldData<
 //      FieldInfo::referencePosition>();
 //
-//  rArray1d& physicalVolume = this->GetFieldData<realT>("physicalVolume");
-//  rArray1d& volume = this->GetFieldData<FieldInfo::volume>();
+//  array<real64>& physicalVolume = this->GetFieldData<realT>("physicalVolume");
+//  array<real64>& volume = this->GetFieldData<FieldInfo::volume>();
 //  realT volFrac;
 //
 //  if (m_finiteElement != NULL)
@@ -743,18 +743,18 @@ int ElementRegionT::CalculateVelocityGradients(const NodeManager& nodeManager, c
   R2Tensor F;
   R2Tensor dUhatdX;
 
-  Array1dT<R1Tensor> u_local(this->m_numNodesPerElem);
-  Array1dT<R1Tensor> uhat_local(this->m_numNodesPerElem);
+  array<R1Tensor> u_local(this->m_numNodesPerElem);
+  array<R1Tensor> uhat_local(this->m_numNodesPerElem);
 
-  const Array1dT<R1Tensor>& incrementalDisplacement = nodeManager.GetFieldData<
+  const array<R1Tensor>& incrementalDisplacement = nodeManager.GetFieldData<
       FieldInfo::incrementalDisplacement>();
-  const Array1dT<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
 
-//  const iArray1d& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
-//  const iArray1d& attachedToSendingGhostNode = GetFieldData<int>("attachedToSendingGhostNode");
+//  const array<integer>& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
+//  const array<integer>& attachedToSendingGhostNode = GetFieldData<int>("attachedToSendingGhostNode");
 
-  rArray1d& volume = GetFieldData<FieldInfo::volume>();
-  rArray1d& volume_n = GetFieldData<realT>("volume_n");
+  array<real64>& volume = GetFieldData<FieldInfo::volume>();
+  array<real64>& volume_n = GetFieldData<realT>("volume_n");
 
   volume_n = volume;
   m_detJ_n = m_detJ_np1;
@@ -802,7 +802,7 @@ int ElementRegionT::CalculateVelocityGradients(const NodeManager& nodeManager, c
 
 int ElementRegionT::MaterialUpdate(const realT dt)
 {
-  const iArray1d& ghostRankAll = this->GetFieldData<FieldInfo::ghostRank>();
+  const array<integer>& ghostRankAll = this->GetFieldData<FieldInfo::ghostRank>();
   m_energy.Zero();
 
   for (localIndex k = 0; k < m_numElems; ++k)
@@ -839,23 +839,23 @@ int ElementRegionT::CalculateNodalForces(NodeManager& nodeManager, StableTimeSte
 
   R2SymTensor totalStress;
   R2Tensor F;
-  Array1dT<R1Tensor> f_local(m_numNodesPerElem);
+  array<R1Tensor> f_local(m_numNodesPerElem);
 
-  Array1dT<R1Tensor> x(m_numNodesPerElem);
-  Array1dT<R1Tensor> u(m_numNodesPerElem);
-  Array1dT<R1Tensor> v(m_numNodesPerElem);
-  Array1dT<R1Tensor> dNdx(m_numNodesPerElem);
-  Array1dT<R1Tensor> f_zemc(m_numNodesPerElem);
+  array<R1Tensor> x(m_numNodesPerElem);
+  array<R1Tensor> u(m_numNodesPerElem);
+  array<R1Tensor> v(m_numNodesPerElem);
+  array<R1Tensor> dNdx(m_numNodesPerElem);
+  array<R1Tensor> f_zemc(m_numNodesPerElem);
 
-  const Array1dT<R1Tensor>& referencePosition = nodeManager.GetFieldData<
+  const array<R1Tensor>& referencePosition = nodeManager.GetFieldData<
       FieldInfo::referencePosition>();
-  const Array1dT<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
-  const Array1dT<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
-  Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
-  Array1dT<R1Tensor>& hgforce = nodeManager.GetFieldData<FieldInfo::hgforce>();
+  const array<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
+  array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& hgforce = nodeManager.GetFieldData<FieldInfo::hgforce>();
 
 //  hgforce = 0.0;
-  Array1dT<Array1dT<R1Tensor>*> Qstiffness(m_finiteElement->zero_energy_modes(), NULL);
+  array<array<R1Tensor>*> Qstiffness(m_finiteElement->zero_energy_modes(), NULL);
   if (m_finiteElement->zero_energy_modes() >= 1)
   {
     Qstiffness[0] = &(this->GetFieldData<R1Tensor>("Qhg1"));
@@ -873,9 +873,9 @@ int ElementRegionT::CalculateNodalForces(NodeManager& nodeManager, StableTimeSte
     Qstiffness[3] = &(this->GetFieldData<R1Tensor>("Qhg4"));
   }
 
-//  const iArray1d& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
+//  const array<integer>& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
 
-  Array1dT<R1Tensor> Q(m_finiteElement->zero_energy_modes());
+  array<R1Tensor> Q(m_finiteElement->zero_energy_modes());
 
   for (localIndex k = 0; k < m_numElems; ++k)
   {
@@ -973,23 +973,23 @@ int ElementRegionT::CalculateNodalForcesFromOneElement(const localIndex nodeID,
     return 1;
 
   fNode = 0.0;
-  // Array1dT<R1Tensor> fOnNode_Local(m_numNodesPerElem);
+  // array<R1Tensor> fOnNode_Local(m_numNodesPerElem);
 
   R2SymTensor totalStress;
   R2Tensor F;
-  Array1dT<R1Tensor> f_local(m_numNodesPerElem);
+  array<R1Tensor> f_local(m_numNodesPerElem);
 
-  Array1dT<R1Tensor> x(m_numNodesPerElem);
-  Array1dT<R1Tensor> u(m_numNodesPerElem);
-  Array1dT<R1Tensor> v(m_numNodesPerElem);
-  Array1dT<R1Tensor> dNdx(m_numNodesPerElem);
-  Array1dT<R1Tensor> f_zemc(m_numNodesPerElem);
+  array<R1Tensor> x(m_numNodesPerElem);
+  array<R1Tensor> u(m_numNodesPerElem);
+  array<R1Tensor> v(m_numNodesPerElem);
+  array<R1Tensor> dNdx(m_numNodesPerElem);
+  array<R1Tensor> f_zemc(m_numNodesPerElem);
 
-//  const Array1dT<R1Tensor>& referencePosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
-//  const Array1dT<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
-//  const Array1dT<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
-//  Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
-  //Array1dT<R1Tensor>& hgforce = nodeManager.GetFieldData<FieldInfo::hgforce>();
+//  const array<R1Tensor>& referencePosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+//  const array<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+//  const array<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
+//  array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
+  //array<R1Tensor>& hgforce = nodeManager.GetFieldData<FieldInfo::hgforce>();
 
   const localIndex paramIndex = m_mat->NumParameterIndex0() > 1 ? elemID : 0;
   const MaterialBaseParameterData& parameter = *(m_mat->ParameterData(paramIndex));
@@ -1033,15 +1033,15 @@ realT ElementRegionT::ElementGDivBeta(const localIndex elemID)
 void ElementRegionT::CalculateNodalForceFromStress(const localIndex elemID,
                                    const NodeManager& nodeManager,
                                    R2SymTensor& stress,
-                                   Array1dT<R1Tensor>& fNode)
+                                   array<R1Tensor>& fNode)
 {
 
   fNode = 0.0;
-  Array1dT<R1Tensor> f_local(m_numNodesPerElem);
+  array<R1Tensor> f_local(m_numNodesPerElem);
 
   R2Tensor F;
 
-  Array1dT<R1Tensor> dNdx(m_numNodesPerElem);
+  array<R1Tensor> dNdx(m_numNodesPerElem);
 
 //  const localIndex paramIndex = m_mat->NumParameterIndex0() > 1 ? elemID : 0;
 //  const MaterialBaseParameterData& parameter = *(m_mat->ParameterData(paramIndex));
@@ -1067,13 +1067,13 @@ void ElementRegionT::CalculateNodalForceFromStress(const localIndex elemID,
 int ElementRegionT::CalculateSmallDeformationNodalForces(NodeManager& nodeManager, StableTimeStep&,
                                                          const realT)
 {
-  Array1dT<R1Tensor> f_local(m_numNodesPerElem);
+  array<R1Tensor> f_local(m_numNodesPerElem);
 //  realT f_vec;
 //  realT u_vec[m_numNodesPerElem*3];
 
-  Array1dT<R1Tensor> u(m_numNodesPerElem);
-  const Array1dT<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
-  Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
+  array<R1Tensor> u(m_numNodesPerElem);
+  const array<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
 
   for (localIndex k = 0; k < m_numElems; ++k)
   {
@@ -1127,10 +1127,10 @@ int ElementRegionT::CalculateSmallDeformationNodalForces(NodeManager& nodeManage
 int ElementRegionT::CalculateNodalMasses(NodeManager& nodeManager)
 {
 
-  rArray1d& mass = nodeManager.GetFieldData<FieldInfo::mass>();
-  rArray1d& massEle = this->GetFieldData<FieldInfo::mass>();
-  rArray1d& density = this->GetFieldData<FieldInfo::density>();
-  rArray1d * const volume = nodeManager.GetFieldDataPointer<FieldInfo::volume>();
+  array<real64>& mass = nodeManager.GetFieldData<FieldInfo::mass>();
+  array<real64>& massEle = this->GetFieldData<FieldInfo::mass>();
+  array<real64>& density = this->GetFieldData<FieldInfo::density>();
+  array<real64> * const volume = nodeManager.GetFieldDataPointer<FieldInfo::volume>();
 
 
   for (localIndex k = 0; k < m_numElems; ++k)
@@ -1148,8 +1148,8 @@ int ElementRegionT::CalculateNodalMasses(NodeManager& nodeManager)
     }
     massEle[k] = elemMass;
     density[k] = parameter.init_density;
-    rArray1d nodalMass(m_numNodesPerElem);
-    rArray1d nodalVolume(m_numNodesPerElem);
+    array<real64> nodalMass(m_numNodesPerElem);
+    array<real64> nodalVolume(m_numNodesPerElem);
 
     nodalVolume = elemVolume / m_numNodesPerElem;
     nodalMass = elemMass / m_numNodesPerElem;
@@ -1173,10 +1173,10 @@ int ElementRegionT::CalculateNodalMasses(NodeManager& nodeManager)
 
 void ElementRegionT::SetIsAttachedToSendingGhostNode(const NodeManager& nodeManager)
 {
-  const iArray1d& nodeGhostRank = nodeManager.GetFieldData<FieldInfo::ghostRank>();
-  Array1dT<NodeManager::nodeToElemType> nodeToElements = nodeManager.m_toElementsRelation;
+  const array<integer>& nodeGhostRank = nodeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<NodeManager::nodeToElemType> nodeToElements = nodeManager.m_toElementsRelation;
 
-  iArray1d& attachedToSendingGhostNode = GetFieldData<int>("attachedToSendingGhostNode");
+  array<integer>& attachedToSendingGhostNode = GetFieldData<int>("attachedToSendingGhostNode");
   attachedToSendingGhostNode = 0;
 
   for (localIndex k = 0; k < m_numElems; ++k)
@@ -1195,9 +1195,9 @@ void ElementRegionT::SetIsAttachedToSendingGhostNode(const NodeManager& nodeMana
 
 }
 
-void AddElementResidual(const R2SymTensor& cauchyStress, const Array1dT<R1Tensor>& dNdX,
+void AddElementResidual(const R2SymTensor& cauchyStress, const array<R1Tensor>& dNdX,
                         const realT& detJ, const realT& detF, const R2Tensor& Finv,
-                        Array1dT<R1Tensor>& force)
+                        array<R1Tensor>& force)
 {
   R2Tensor P;
 
@@ -1208,7 +1208,7 @@ void AddElementResidual(const R2SymTensor& cauchyStress, const Array1dT<R1Tensor
   P.AijBkj(cauchyStress, Finv);
   P *= integration_factor;
 
-  for (Array1dT<R1Tensor>::size_type a = 0; a < force.size(); ++a) // loop through all shape functions in element
+  for (array<R1Tensor>::size_type a = 0; a < force.size(); ++a) // loop through all shape functions in element
   {
     force(a).minusAijBj(P, dNdX(a));
   }
@@ -1217,7 +1217,7 @@ void AddElementResidual(const R2SymTensor& cauchyStress, const Array1dT<R1Tensor
 
 void AddElementResidual(const R2SymTensor& cauchyStress, const R1Tensor* const dNdX,
                         const realT& detJ, const realT& detF, const R2Tensor& Finv,
-                        Array1dT<R1Tensor>& force)
+                        array<R1Tensor>& force)
 {
   R2Tensor P;
 
@@ -1228,7 +1228,7 @@ void AddElementResidual(const R2SymTensor& cauchyStress, const R1Tensor* const d
   P.AijBkj(cauchyStress, Finv);
   P *= integration_factor;
 
-  for (Array1dT<R1Tensor>::size_type a = 0; a < force.size(); ++a) // loop through all shape functions in element
+  for (array<R1Tensor>::size_type a = 0; a < force.size(); ++a) // loop through all shape functions in element
   {
     force(a).minusAijBj(P, dNdX[a]);
   }
@@ -1245,7 +1245,7 @@ void ElementRegionT::GetElementNeighbors(localIndex el, const FaceManagerT& face
   {
     localIndex fc = facelist[kf];
 
-    const Array1dT<std::pair<ElementRegionT*, localIndex> >& nbrs = faceManager.m_toElementsRelation[fc];
+    const array<std::pair<ElementRegionT*, localIndex> >& nbrs = faceManager.m_toElementsRelation[fc];
     if (nbrs.size() > 1)
     {
       ElementIdPair nbr = nbrs[0];
@@ -1706,7 +1706,7 @@ void ElementRegionT::ConnectivityFromGlobalToLocal( const lSet& list,
 
 template< typename T_indices >
 unsigned int ElementRegionT::PackFieldsIntoBuffer( bufvector& buffer,
-                                                   const sArray1d& fieldNames,
+                                                   const array<string>& fieldNames,
                                                    const T_indices& localIndices,
                                                    const bool doBufferPacking ) const
 {
@@ -1718,13 +1718,13 @@ unsigned int ElementRegionT::PackFieldsIntoBuffer( bufvector& buffer,
 }
 
 
-template unsigned int ElementRegionT::PackFieldsIntoBuffer( bufvector& buffer, const sArray1d& fieldNames, const lSet& localIndices, const bool doBufferPacking ) const;
-template unsigned int ElementRegionT::PackFieldsIntoBuffer( bufvector& buffer, const sArray1d& fieldNames, const lArray1d& localIndices, const bool doBufferPacking ) const;
+template unsigned int ElementRegionT::PackFieldsIntoBuffer( bufvector& buffer, const array<string>& fieldNames, const lSet& localIndices, const bool doBufferPacking ) const;
+template unsigned int ElementRegionT::PackFieldsIntoBuffer( bufvector& buffer, const array<string>& fieldNames, const lArray1d& localIndices, const bool doBufferPacking ) const;
 
 
 template< typename T_indices >
 unsigned int ElementRegionT::PackFieldsIntoBuffer( char*& buffer,
-                                                   const sArray1d& fieldNames,
+                                                   const array<string>& fieldNames,
                                                    const T_indices& localIndices,
                                                    const bool doBufferPacking ) const
 {
@@ -1735,12 +1735,12 @@ unsigned int ElementRegionT::PackFieldsIntoBuffer( char*& buffer,
     packedSize += m_mat->Pack(localIndices, buffer, doBufferPacking);
   return packedSize;
 }
-template unsigned int ElementRegionT::PackFieldsIntoBuffer( char*& buffer, const sArray1d& fieldNames, const lSet& localIndices, const bool doBufferPacking ) const;
-template unsigned int ElementRegionT::PackFieldsIntoBuffer( char*& buffer, const sArray1d& fieldNames, const lArray1d& localIndices, const bool doBufferPacking ) const;
+template unsigned int ElementRegionT::PackFieldsIntoBuffer( char*& buffer, const array<string>& fieldNames, const lSet& localIndices, const bool doBufferPacking ) const;
+template unsigned int ElementRegionT::PackFieldsIntoBuffer( char*& buffer, const array<string>& fieldNames, const lArray1d& localIndices, const bool doBufferPacking ) const;
 
 
 unsigned int ElementRegionT::UnpackFieldsFromBuffer( const char*& buffer,
-                                                     const sArray1d& fieldNames,
+                                                     const array<string>& fieldNames,
                                                      const lArray1d& localIndices )
 {
   unsigned int sizeOfUnpackedChars = 0;
@@ -1776,17 +1776,17 @@ unsigned int ElementRegionT::UnpackAllFieldsFromBuffer( const char*& buffer,
 }
 
 void ElementRegionT::UpdateElementFieldsWithGaussPointData(){
-	sArray1d intVarNames;
-	sArray1d realVarNames;
-	sArray1d R1TensorVarNames;
-	sArray1d R2TensorVarNames;
-	sArray1d R2SymTensorVarNames;
+	array<string> intVarNames;
+	array<string> realVarNames;
+	array<string> R1TensorVarNames;
+	array<string> R2TensorVarNames;
+	array<string> R2SymTensorVarNames;
 
-	Array1dT<iArray1d*> intVars;
-	Array1dT<rArray1d*> realVars;
-	Array1dT<Array1dT<R1Tensor>*> R1Vars;
-	Array1dT<Array1dT<R2Tensor>*> R2Vars;
-	Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+	array<array<integer>*> intVars;
+	array<array<real64>*> realVars;
+	array<array<R1Tensor>*> R1Vars;
+	array<array<R2Tensor>*> R2Vars;
+	array<array<R2SymTensor>*> R2SymVars;
 
 	if (m_mat)
 	{
@@ -1802,16 +1802,16 @@ void ElementRegionT::UpdateElementFieldsWithGaussPointData(){
 
 		m_mat->Serialize(intVars, realVars, R1Vars, R2Vars, R2SymVars);
 
-		rArray1d& sigma_x = GetFieldData<realT>("sigma_x");
-		rArray1d& sigma_y = GetFieldData<realT>("sigma_y");
-		rArray1d& sigma_z = GetFieldData<realT>("sigma_z");
-		rArray1d& sigma_xy = GetFieldData<realT>("sigma_xy");
-		rArray1d& sigma_yz = GetFieldData<realT>("sigma_yz");
-		rArray1d& sigma_xz = GetFieldData<realT>("sigma_xz");
+		array<real64>& sigma_x = GetFieldData<realT>("sigma_x");
+		array<real64>& sigma_y = GetFieldData<realT>("sigma_y");
+		array<real64>& sigma_z = GetFieldData<realT>("sigma_z");
+		array<real64>& sigma_xy = GetFieldData<realT>("sigma_xy");
+		array<real64>& sigma_yz = GetFieldData<realT>("sigma_yz");
+		array<real64>& sigma_xz = GetFieldData<realT>("sigma_xz");
 
-		rArray1d& pressure = GetFieldData<FieldInfo::pressure>();
-		Array1dT<R2SymTensor>& s = GetFieldData<FieldInfo::deviatorStress>();
-		rArray1d& density = GetFieldData<FieldInfo::density>();
+		array<real64>& pressure = GetFieldData<FieldInfo::pressure>();
+		array<R2SymTensor>& s = GetFieldData<FieldInfo::deviatorStress>();
+		array<real64>& density = GetFieldData<FieldInfo::density>();
 
 		for (localIndex k = 0; k < m_numElems; ++k)
 		{
@@ -1848,10 +1848,10 @@ void ElementRegionT::UpdateElementFieldsWithGaussPointData(){
 
 /*
 template< typename T >
-void ElementRegionT::AllocateDummyFields( const sArray1d& names, Array1dT<Array1dT<T>* >& vars )
+void ElementRegionT::AllocateDummyFields( const array<string>& names, array<array<T>* >& vars )
 {
   vars.resize( names.size() );
-  for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+  for( array<string>::size_type i=0 ; i<names.size() ; ++i )
   {
     this->AddKeylessDataField<T>(names[i],true,true);
     vars[i] = &this->GetFieldData<T>(names[i]);
@@ -1861,9 +1861,9 @@ void ElementRegionT::AllocateDummyFields( const sArray1d& names, Array1dT<Array1
 
 
 template< typename T >
-void ElementRegionT::DeallocateDummyFields( const sArray1d& names )
+void ElementRegionT::DeallocateDummyFields( const array<string>& names )
 {
-  for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+  for( array<string>::size_type i=0 ; i<names.size() ; ++i )
     this->RemoveDataField<T>(names[i]);
 }
 */
@@ -1886,17 +1886,17 @@ void ElementRegionT::WriteSiloRegionMesh( SiloFile& siloFile,
 
   DBSetDir(siloFile.m_dbFilePtr, regionName.c_str());
 
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
-  Array1dT<iArray1d*> intVars;
-  Array1dT<rArray1d*> realVars;
-  Array1dT<Array1dT<R1Tensor>*> R1Vars;
-  Array1dT<Array1dT<R2Tensor>*> R2Vars;
-  Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+  array<array<integer>*> intVars;
+  array<array<real64>*> realVars;
+  array<array<R1Tensor>*> R1Vars;
+  array<array<R2Tensor>*> R2Vars;
+  array<array<R2SymTensor>*> R2SymVars;
 
   if (m_mat)
   {
@@ -1912,15 +1912,15 @@ void ElementRegionT::WriteSiloRegionMesh( SiloFile& siloFile,
 
     m_mat->Serialize(intVars, realVars, R1Vars, R2Vars, R2SymVars);
 
-    rArray1d& sigma_x = GetFieldData<realT>("sigma_x");
-    rArray1d& sigma_y = GetFieldData<realT>("sigma_y");
-    rArray1d& sigma_z = GetFieldData<realT>("sigma_z");
-    rArray1d& sigma_xy = GetFieldData<realT>("sigma_xy");
-    rArray1d& sigma_yz = GetFieldData<realT>("sigma_yz");
-    rArray1d& sigma_xz = GetFieldData<realT>("sigma_xz");
+    array<real64>& sigma_x = GetFieldData<realT>("sigma_x");
+    array<real64>& sigma_y = GetFieldData<realT>("sigma_y");
+    array<real64>& sigma_z = GetFieldData<realT>("sigma_z");
+    array<real64>& sigma_xy = GetFieldData<realT>("sigma_xy");
+    array<real64>& sigma_yz = GetFieldData<realT>("sigma_yz");
+    array<real64>& sigma_xz = GetFieldData<realT>("sigma_xz");
 
-    rArray1d& pressure = GetFieldData<FieldInfo::pressure>();
-    Array1dT<R2SymTensor>& s = GetFieldData<FieldInfo::deviatorStress>();
+    array<real64>& pressure = GetFieldData<FieldInfo::pressure>();
+    array<R2SymTensor>& s = GetFieldData<FieldInfo::deviatorStress>();
 
     for (localIndex k = 0; k < m_numElems; ++k)
     {
@@ -1944,7 +1944,7 @@ void ElementRegionT::WriteSiloRegionMesh( SiloFile& siloFile,
       sigma_xz[k] = s[k](0, 2);
     }
 
-    rArray1d* antiThermalStress = this->GetFieldDataPointer<realT>("antiThermalStress");
+    array<real64>* antiThermalStress = this->GetFieldDataPointer<realT>("antiThermalStress");
 
     if (antiThermalStress != NULL) // We need to correct for the anti thermal stress
     {
@@ -1995,7 +1995,7 @@ void ElementRegionT::WriteSiloRegionMesh( SiloFile& siloFile,
     siloFile.DBWriteWrapper("m_numFacesPerElement", m_numFacesPerElement);
     siloFile.DBWriteWrapper("m_numNodesPerFace", m_numNodesPerFace);
 
-    rArray1d energy(EnergyT::numVars);
+    array<real64> energy(EnergyT::numVars);
     m_energy.Serialize(energy.data());
     siloFile.DBWriteWrapper("m_energy", energy);
   }
@@ -2040,7 +2040,7 @@ void ElementRegionT::ReadSiloRegionMesh( const SiloFile& siloFile,
     siloFile.DBReadWrapper("m_numFacesPerElement", m_numFacesPerElement);
     siloFile.DBReadWrapper("m_numNodesPerFace", m_numNodesPerFace);
 
-    rArray1d energy(EnergyT::numVars);
+    array<real64> energy(EnergyT::numVars);
     siloFile.DBReadWrapper("m_energy", energy);
     m_energy.Deserialize(energy.data());
 
@@ -2048,17 +2048,17 @@ void ElementRegionT::ReadSiloRegionMesh( const SiloFile& siloFile,
 //    m_material.SetNumberOfIntegrationPointsPerState(m_numIntegrationPointsPerElem);
   }
 
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
-  Array1dT<iArray1d*> intVars;
-  Array1dT<rArray1d*> realVars;
-  Array1dT<Array1dT<R1Tensor>*> R1Vars;
-  Array1dT<Array1dT<R2Tensor>*> R2Vars;
-  Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+  array<array<integer>*> intVars;
+  array<array<real64>*> realVars;
+  array<array<R1Tensor>*> R1Vars;
+  array<array<R2Tensor>*> R2Vars;
+  array<array<R2SymTensor>*> R2SymVars;
 
   m_mat->GetVariableNames(intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames,
                           R2SymTensorVarNames);
@@ -2175,8 +2175,8 @@ void ElementRegionT::ModifyToElementMapsFromSplit( const lSet& modifiedElements 
         {
 
           // get iterators to each element attached to the face
-          Array1dT<std::pair<ElementRegionT*, localIndex> >::iterator iter0 = faceManager.m_toElementsRelation[deletedFaceIndex].begin();
-          Array1dT<std::pair<ElementRegionT*, localIndex> >::iterator iter1 = iter0 + 1;
+          array<std::pair<ElementRegionT*, localIndex> >::iterator iter0 = faceManager.m_toElementsRelation[deletedFaceIndex].begin();
+          array<std::pair<ElementRegionT*, localIndex> >::iterator iter1 = iter0 + 1;
 
           // if the first element is equal to this element pair, then erasd
           if (iter0 != faceManager.m_toElementsRelation[deletedFaceIndex].end())
@@ -2197,8 +2197,8 @@ void ElementRegionT::ModifyToElementMapsFromSplit( const lSet& modifiedElements 
 
         // add the element to the face
         {
-          Array1dT<std::pair<ElementRegionT*, localIndex> >::iterator iter0 = faceManager.m_toElementsRelation[faceIndex].begin();
-          Array1dT<std::pair<ElementRegionT*, localIndex> >::iterator iter1 = iter0 + 1;
+          array<std::pair<ElementRegionT*, localIndex> >::iterator iter0 = faceManager.m_toElementsRelation[faceIndex].begin();
+          array<std::pair<ElementRegionT*, localIndex> >::iterator iter1 = iter0 + 1;
           {
 
             bool elemPresent = false;
@@ -2224,11 +2224,11 @@ void ElementRegionT::ModifyToElementMapsFromSplit( const lSet& modifiedElements 
           }
         }
 
-        Array1dT<std::pair<ElementRegionT*, localIndex> >::size_type size0 = 1;
+        array<std::pair<ElementRegionT*, localIndex> >::size_type size0 = 1;
         if (parentFaceIndex != LOCALINDEX_MAX)
           size0 = faceManager.m_toElementsRelation[parentFaceIndex].size();
 
-        const Array1dT<std::pair<ElementRegionT*, localIndex> >::size_type size1 = faceManager.m_toElementsRelation[faceIndex].size();
+        const array<std::pair<ElementRegionT*, localIndex> >::size_type size1 = faceManager.m_toElementsRelation[faceIndex].size();
         if (size0 > 2 || size0 <= 0 || size1 > 2 || size1 <= 0)
         {
           //throw GPException("ElementRegionT::ModifyToElementMapsFromSplit(): number of faces in faceManager.m_toElementsRelation is invalid");
@@ -2252,8 +2252,8 @@ void ElementRegionT::ModifyToElementMapsFromSplit( const lSet& modifiedElements 
 
         // add the element to the face
         {
-          Array1dT<std::pair<ElementRegionT*, localIndex> >::iterator iter0 = faceManager.m_toElementsRelation[faceIndex].begin();
-          Array1dT<std::pair<ElementRegionT*, localIndex> >::iterator iter1 = iter0 + 1;
+          array<std::pair<ElementRegionT*, localIndex> >::iterator iter0 = faceManager.m_toElementsRelation[faceIndex].begin();
+          array<std::pair<ElementRegionT*, localIndex> >::iterator iter1 = iter0 + 1;
           {
 
             bool elemPresent = false;
@@ -2279,11 +2279,11 @@ void ElementRegionT::ModifyToElementMapsFromSplit( const lSet& modifiedElements 
           }
         }
 
-        Array1dT<std::pair<ElementRegionT*, localIndex> >::size_type size0 = 1;
+        array<std::pair<ElementRegionT*, localIndex> >::size_type size0 = 1;
         if (parentFaceIndex != LOCALINDEX_MAX)
           size0 = faceManager.m_toElementsRelation[parentFaceIndex].size();
 
-        const Array1dT<std::pair<ElementRegionT*, localIndex> >::size_type size1 = faceManager.m_toElementsRelation[faceIndex].size();
+        const array<std::pair<ElementRegionT*, localIndex> >::size_type size1 = faceManager.m_toElementsRelation[faceIndex].size();
         if (size0 > 2 || size0 <= 0 || size1 > 2 || size1 <= 0)
         {
           //throw GPException("ElementRegionT::ModifyToElementMapsFromSplit(): number of faces in faceManager.m_toElementsRelation is invalid");
@@ -2333,10 +2333,10 @@ void ElementRegionT::UpdateExternalityFromSplit( const lSet& modifiedElements ,
 
 
 
-iArray1d ElementRegionT::SiloNodeOrdering()
+array<integer> ElementRegionT::SiloNodeOrdering()
 {
 
-  iArray1d nodeOrdering;
+  array<integer> nodeOrdering;
 
   if( !m_elementGeometryID.compare(0, 4, "CPE2") )
   {

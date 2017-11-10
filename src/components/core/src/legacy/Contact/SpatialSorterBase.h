@@ -82,46 +82,46 @@ namespace SpatialSorting
      * @param[in] centers List of centers of the potentials
      * @return Whether the potentials interfere
      */
-    inline static bool Close(const localIndex kf0, const localIndex kf1, const rArray1d& radii, const Array1dT<R1Tensor>& centers)
+    inline static bool Close(const localIndex kf0, const localIndex kf1, const array<real64>& radii, const array<R1Tensor>& centers)
     {
       return Close(radii[kf0], centers[kf0], radii[kf1], centers[kf1]);
     }
 
     static void Remove(const lSet& toRemove,
-                       Array1dT<lArray1d>& neighborList,
-                       Array1dT<lSet>& neighborListInverse);
+                       array<lArray1d>& neighborList,
+                       array<lSet>& neighborListInverse);
 
-    static void RemoveDuplicates(Array1dT<lArray1d>& neighborList);
+    static void RemoveDuplicates(array<lArray1d>& neighborList);
 
     static void insert(const localIndex i, const localIndex count,
-                       Array1dT<lArray1d>& neighborList,
-                       Array1dT<lSet>& neighborListInverse);
+                       array<lArray1d>& neighborList,
+                       array<lSet>& neighborListInverse);
 
     static void Add(const localIndex kf0, const localIndex kf1,
-                    Array1dT<lArray1d>& neighborList,
-                    Array1dT<lSet>& neighborListInverse);
+                    array<lArray1d>& neighborList,
+                    array<lSet>& neighborListInverse);
 
     static void AddIfClose(const localIndex kf0, const localIndex kf1,
-                           const rArray1d& radii, const Array1dT<R1Tensor>& centers,
-                           Array1dT<lArray1d>& neighborList,
-                           Array1dT<lSet>& neighborListInverse);
+                           const array<real64>& radii, const array<R1Tensor>& centers,
+                           array<lArray1d>& neighborList,
+                           array<lSet>& neighborListInverse);
 
     static void OffsetIndexing(const localIndex start, const localIndex offset,
-                               Array1dT<lArray1d>& neighborList,
-                               Array1dT<lSet>& neighborListInverse);
+                               array<lArray1d>& neighborList,
+                               array<lSet>& neighborListInverse);
 
 
-    virtual bool Sort(const rArray1d& radii,
-                      const Array1dT<R1Tensor>& x,
-                      Array1dT<lArray1d>& neighborList,
-                      Array1dT<lSet>& neighborListInverse,
+    virtual bool Sort(const array<real64>& radii,
+                      const array<R1Tensor>& x,
+                      array<lArray1d>& neighborList,
+                      array<lSet>& neighborListInverse,
                       const int* const excludeFromSorting = 0) = 0;
 
-    virtual bool Update(const rArray1d& radii,
-                        const Array1dT<R1Tensor>& x,
+    virtual bool Update(const array<real64>& radii,
+                        const array<R1Tensor>& x,
                         const lSet& toResort,
-                        Array1dT<lArray1d>& neighborList,
-                        Array1dT<lSet>& neighborListInverse,
+                        array<lArray1d>& neighborList,
+                        array<lSet>& neighborListInverse,
                         const int* const excludeFromSorting = 0) = 0;
 
 

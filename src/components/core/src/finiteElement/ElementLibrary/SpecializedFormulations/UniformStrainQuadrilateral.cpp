@@ -56,9 +56,9 @@ CalcFBHourForce( const R1Tensor vel[4],
                  const realT& rho,
                  const realT& modulus,
                  const realT& area,
-                 const Array1dT<R1Tensor>& dNdx,
+                 const array<R1Tensor>& dNdx,
                  const realT& dt,
-                 Array1dT<R1Tensor>& Qstiffness,
+                 array<R1Tensor>& Qstiffness,
                  R1Tensor hgforce[4] );
 
 
@@ -149,17 +149,17 @@ void UniformStrainQuadrilateral::reinit(const std::vector<R1TensorT<3> > &mapped
 
 }
 
-void UniformStrainQuadrilateral::zero_energy_mode_control( const Array1dT<R1Tensor>& dNdx,
+void UniformStrainQuadrilateral::zero_energy_mode_control( const array<R1Tensor>& dNdx,
                                                            const realT& volume,
-                                                           const Array1dT<R1Tensor>& x0,
-                                                           const Array1dT<R1Tensor>& v0,
+                                                           const array<R1Tensor>& x0,
+                                                           const array<R1Tensor>& v0,
                                                            const realT& dampcoef,
                                                            const realT& stiffcoef,
                                                            const realT& rho,
                                                            const realT& modulus,
                                                            const realT& dt,
-                                                           Array1dT<R1Tensor>& Qstiffness,
-                                                           Array1dT<R1Tensor>& force )
+                                                           array<R1Tensor>& Qstiffness,
+                                                           array<R1Tensor>& force )
 {
 
   const R1Tensor x[4] = { x0[m_nodeOrdering[0]],
@@ -206,9 +206,9 @@ CalcFBHourForce( const R1Tensor vel[4],
                  const realT& rho,
                  const realT& modulus,
                  const realT& area,
-                 const Array1dT<R1Tensor>& dNdx,
+                 const array<R1Tensor>& dNdx,
                  const realT& dt,
-                 Array1dT<R1Tensor>& Qstiffness,
+                 array<R1Tensor>& Qstiffness,
                  R1Tensor hgforce[4] )
 {
 

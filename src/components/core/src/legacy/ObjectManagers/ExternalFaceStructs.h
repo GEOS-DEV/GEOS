@@ -52,13 +52,13 @@ struct ExternalFaceStruct
 {
   R1Tensor xmin, xmax;
   realT area;
-  Array1dT<R1Tensor> xs, dxs;
+  array<R1Tensor> xs, dxs;
 };
 
 struct CommonPlaneStruct
 {
   R1Tensor centerCommonPlane, normalCommonPlane;
-  Array1dT<R1Tensor> pointsCommonPlane;
+  array<R1Tensor> pointsCommonPlane;
   realT areaCommonPlane, penetration;
 };
 

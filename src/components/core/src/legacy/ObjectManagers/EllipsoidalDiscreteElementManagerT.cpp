@@ -169,17 +169,17 @@ void EllipsoidalDiscreteElementManagerT::ReadXML(TICPP::HierarchicalDataNode* ED
 
 void EllipsoidalDiscreteElementManagerT::WriteVTKPointData(std::ofstream& out)
 {
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
-  Array1dT<iArray1d*> intVars;
-  Array1dT<rArray1d*> realVars;
-  Array1dT<Array1dT<R1Tensor>*> R1Vars;
-  Array1dT<Array1dT<R2Tensor>*> R2Vars;
-  Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+  array<array<integer>*> intVars;
+  array<array<real64>*> realVars;
+  array<array<R1Tensor>*> R1Vars;
+  array<array<R2Tensor>*> R2Vars;
+  array<array<R2SymTensor>*> R2SymVars;
 
   m_boundaryContact->GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -221,17 +221,17 @@ void EllipsoidalDiscreteElementManagerT::WriteSilo( SiloFile& siloFile,
 
   //-----------------------------------------------------
   //HANDLE THE VARIABLES ASSOCIATED WITH THE JOINT STATE
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
-  Array1dT<iArray1d*> intVars;
-  Array1dT<rArray1d*> realVars;
-  Array1dT<Array1dT<R1Tensor>*> R1Vars;
-  Array1dT<Array1dT<R2Tensor>*> R2Vars;
-  Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+  array<array<integer>*> intVars;
+  array<array<real64>*> realVars;
+  array<array<R1Tensor>*> R1Vars;
+  array<array<R2Tensor>*> R2Vars;
+  array<array<R2SymTensor>*> R2SymVars;
 
   m_mat->GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -278,17 +278,17 @@ void EllipsoidalDiscreteElementManagerT::ReadSilo( const SiloFile& siloFile,
         m_mat->SetVariableParameters(varParams == 1);
     }
 
-    sArray1d intVarNames;
-    sArray1d realVarNames;
-    sArray1d R1TensorVarNames;
-    sArray1d R2TensorVarNames;
-    sArray1d R2SymTensorVarNames;
+    array<string> intVarNames;
+    array<string> realVarNames;
+    array<string> R1TensorVarNames;
+    array<string> R2TensorVarNames;
+    array<string> R2SymTensorVarNames;
 
-    Array1dT<iArray1d*> intVars;
-    Array1dT<rArray1d*> realVars;
-    Array1dT<Array1dT<R1Tensor>*> R1Vars;
-    Array1dT<Array1dT<R2Tensor>*> R2Vars;
-    Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+    array<array<integer>*> intVars;
+    array<array<real64>*> realVars;
+    array<array<R1Tensor>*> R1Vars;
+    array<array<R2Tensor>*> R2Vars;
+    array<array<R2SymTensor>*> R2SymVars;
 
     m_mat->GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -322,9 +322,9 @@ void EllipsoidalDiscreteElementManagerT::ReadSilo( const SiloFile& siloFile,
  */
 void EllipsoidalDiscreteElementManagerT::RecalculatePhysicalProperties()
 {
-  Array1dT<realT>& mass = GetFieldData<FieldInfo::mass>();
-  const Array1dT<R1Tensor>& radii = GetFieldData<R1Tensor>("principalRadii");
-  Array1dT<R1Tensor>& I = GetFieldData<FieldInfo::rotationalInertia>();
+  array<realT>& mass = GetFieldData<FieldInfo::mass>();
+  const array<R1Tensor>& radii = GetFieldData<R1Tensor>("principalRadii");
+  array<R1Tensor>& I = GetFieldData<FieldInfo::rotationalInertia>();
 
   for (localIndex i = 0; i < this->DataLengths(); i++)
   {
@@ -346,19 +346,19 @@ bool EllipsoidalDiscreteElementManagerT::RecalculateNeighborList(const realT dt)
   if(num == 0)
     return sort;
 
-  const Array1dT<R1Tensor>& pradii = this->GetFieldData<R1Tensor>("principalRadii");
+  const array<R1Tensor>& pradii = this->GetFieldData<R1Tensor>("principalRadii");
 
-  const Array1dT<R1Tensor>& disp = this->GetFieldData<FieldInfo::displacement>();
-  const Array1dT<R1Tensor>& refpos = this->GetFieldData<FieldInfo::referencePosition>();
-  Array1dT<R1Tensor>& centers = this->GetFieldData<FieldInfo::currentPosition>();
+  const array<R1Tensor>& disp = this->GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& refpos = this->GetFieldData<FieldInfo::referencePosition>();
+  array<R1Tensor>& centers = this->GetFieldData<FieldInfo::currentPosition>();
 
-  const Array1dT<R1Tensor>& vel = this->GetFieldData<FieldInfo::velocity>();
-  rArray1d& radii = this->GetFieldData<realT>("boundingRadius");
+  const array<R1Tensor>& vel = this->GetFieldData<FieldInfo::velocity>();
+  array<real64>& radii = this->GetFieldData<realT>("boundingRadius");
 
   if(this->sorted)
   {
-    const rArray1d& lradii = this->GetFieldData<realT>("boundingRadiusLastSort");
-    const Array1dT<R1Tensor>& lcenters = this->GetFieldData<R1Tensor>("currentPositionLastSort");
+    const array<real64>& lradii = this->GetFieldData<realT>("boundingRadiusLastSort");
+    const array<R1Tensor>& lcenters = this->GetFieldData<R1Tensor>("currentPositionLastSort");
     R1Tensor dx;
 
     //iterate through
@@ -410,8 +410,8 @@ bool EllipsoidalDiscreteElementManagerT::RecalculateNeighborList(const realT dt)
 
   //reset the values of the last sort
   {
-    rArray1d& lradii = this->GetFieldData<realT>("boundingRadiusLastSort");
-    Array1dT<R1Tensor>& lcenters = this->GetFieldData<R1Tensor>("currentPositionLastSort");
+    array<real64>& lradii = this->GetFieldData<realT>("boundingRadiusLastSort");
+    array<R1Tensor>& lcenters = this->GetFieldData<R1Tensor>("currentPositionLastSort");
     std::copy(centers.begin(), centers.end(), lcenters.begin());
     std::copy(radii.begin(), radii.end(), lradii.begin());
   }
@@ -447,20 +447,20 @@ void EllipsoidalDiscreteElementManagerT::UpdateAndApplyContactStresses( StableTi
   std::map<std::string, R2Tensor>     pr20,  pr21;
   std::map<std::string, R2SymTensor>  pr2s0, pr2s1;
 
-  const Array1dT<R1Tensor>& pradii = this->GetFieldData<R1Tensor>("principalRadii");
-  const Array1dT<R1Tensor>& centers = this->GetFieldData<FieldInfo::currentPosition>();
-  const Array1dT<R1Tensor>& velocity = this->GetFieldData<FieldInfo::velocity>();
-  Array1dT<R1Tensor>& frc = this->GetFieldData<FieldInfo::force>();
-  Array1dT<R1Tensor>& mom = this->GetFieldData<FieldInfo::moment>();
-  const rArray1d& mass = this->GetFieldData<FieldInfo::mass>();
+  const array<R1Tensor>& pradii = this->GetFieldData<R1Tensor>("principalRadii");
+  const array<R1Tensor>& centers = this->GetFieldData<FieldInfo::currentPosition>();
+  const array<R1Tensor>& velocity = this->GetFieldData<FieldInfo::velocity>();
+  array<R1Tensor>& frc = this->GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& mom = this->GetFieldData<FieldInfo::moment>();
+  const array<real64>& mass = this->GetFieldData<FieldInfo::mass>();
 
   //contact points
-  Array1dT<R1Tensor>& contactPointsC = ecm.GetFieldData<R1Tensor>("applicationPoint");
-  Array1dT<R1Tensor>& normalC = ecm.GetFieldData<R1Tensor>("normal");
-  iArray1d& activeC = ecm.GetFieldData<int>("active");
-  rArray1d& normalApproachC = ecm.GetFieldData<realT>("normalApproach");
-  Array1dT<R1Tensor>& velocityC = ecm.GetFieldData<R1Tensor>("velocity");
-  Array1dT<R1Tensor>& shearSlipC = ecm.GetFieldData<R1Tensor>("shearSlip");
+  array<R1Tensor>& contactPointsC = ecm.GetFieldData<R1Tensor>("applicationPoint");
+  array<R1Tensor>& normalC = ecm.GetFieldData<R1Tensor>("normal");
+  array<integer>& activeC = ecm.GetFieldData<int>("active");
+  array<real64>& normalApproachC = ecm.GetFieldData<realT>("normalApproach");
+  array<R1Tensor>& velocityC = ecm.GetFieldData<R1Tensor>("velocity");
+  array<R1Tensor>& shearSlipC = ecm.GetFieldData<R1Tensor>("shearSlip");
 
   //-----ITERATE NEIGHBORLIST AND UPDATE WHETHER IT IS ACTIVE, ETC-----
   localIndex index = 0;
@@ -468,7 +468,7 @@ void EllipsoidalDiscreteElementManagerT::UpdateAndApplyContactStresses( StableTi
     bool isActive;
     R1Tensor dx, cpLocal;
     R2Tensor rotation0, rotation1;
-    for (Array1dT<lArray1d>::size_type kf0 = 0; kf0 < this->m_neighborList.size(); ++kf0)
+    for (array<lArray1d>::size_type kf0 = 0; kf0 < this->m_neighborList.size(); ++kf0)
     {
       this->RotationTensor(kf0, rotation0);
       for (lArray1d::size_type it = 0; it < this->m_neighborList[kf0].size(); ++it, ++index)
@@ -555,19 +555,19 @@ void EllipsoidalDiscreteElementManagerT::UpdateCylindricalBoundary(StableTimeSte
 
   m_boundary.Update(time);
 
-  const Array1dT<R1Tensor>& pradii = this->GetFieldData<R1Tensor>("principalRadii");
-  const Array1dT<R1Tensor>& centers = this->GetFieldData<FieldInfo::currentPosition>();
-  const Array1dT<R1Tensor>& velocity = this->GetFieldData<FieldInfo::velocity>();
-  Array1dT<R1Tensor>& frc = this->GetFieldData<FieldInfo::force>();
-  Array1dT<R1Tensor>& mom = this->GetFieldData<FieldInfo::moment>();
-  const rArray1d& mass = this->GetFieldData<FieldInfo::mass>();
+  const array<R1Tensor>& pradii = this->GetFieldData<R1Tensor>("principalRadii");
+  const array<R1Tensor>& centers = this->GetFieldData<FieldInfo::currentPosition>();
+  const array<R1Tensor>& velocity = this->GetFieldData<FieldInfo::velocity>();
+  array<R1Tensor>& frc = this->GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& mom = this->GetFieldData<FieldInfo::moment>();
+  const array<real64>& mass = this->GetFieldData<FieldInfo::mass>();
 
   //Boundary contact
-  Array1dT<R1Tensor>& shearSlips = this->GetFieldData<R1Tensor>("shearSlipBoundary");
-  Array1dT<R1Tensor>& contactPoints = this->GetFieldData<R1Tensor>("contactPointBoundary");
-  Array1dT<R1Tensor>& normals = this->GetFieldData<R1Tensor>("normalBoundary");
-  rArray1d& normalApproaches = this->GetFieldData<realT>("normalApproachBoundary");
-  iArray1d& actives = this->GetFieldData<int>("activeBoundary");
+  array<R1Tensor>& shearSlips = this->GetFieldData<R1Tensor>("shearSlipBoundary");
+  array<R1Tensor>& contactPoints = this->GetFieldData<R1Tensor>("contactPointBoundary");
+  array<R1Tensor>& normals = this->GetFieldData<R1Tensor>("normalBoundary");
+  array<real64>& normalApproaches = this->GetFieldData<realT>("normalApproachBoundary");
+  array<integer>& actives = this->GetFieldData<int>("activeBoundary");
 
   //-----ITERATE SHAPE LIST FOR BOUNDARY CONTACT AND UPDATE WHETHER IT IS ACTIVE, ETC-----
   {
@@ -808,12 +808,12 @@ realT EllipsoidalDiscreteElementManagerT::Iterate(const R1Tensor& radii0,
 void EllipsoidalDiscreteElementManagerT::UpdateNodalStatesZeroForcesAndAccelerations()
 {
   //zero the DE accelerations and forces
-  Array1dT<R1Tensor>& acceleration = this->GetFieldData<FieldInfo::acceleration> ();
-  Array1dT<R1Tensor>& force = this->GetFieldData<FieldInfo::force> ();
+  array<R1Tensor>& acceleration = this->GetFieldData<FieldInfo::acceleration> ();
+  array<R1Tensor>& force = this->GetFieldData<FieldInfo::force> ();
 
   //zero the DE rotation accelerations and moments
-  Array1dT<R1Tensor>& racc = this->GetFieldData<FieldInfo::rotationalAcceleration> ();
-  Array1dT<R1Tensor>& moment = this->GetFieldData<FieldInfo::moment> ();
+  array<R1Tensor>& racc = this->GetFieldData<FieldInfo::rotationalAcceleration> ();
+  array<R1Tensor>& moment = this->GetFieldData<FieldInfo::moment> ();
 
   acceleration = 0.0;
   force = 0.0;

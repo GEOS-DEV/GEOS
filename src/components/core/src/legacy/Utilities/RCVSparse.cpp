@@ -52,7 +52,7 @@ inline bool columnRowOrder(const rcv& A, const rcv& B){  return (A.c < B.c)|| ( 
 /// and reduce the vector size
 ///
 /// K = the sparse array stored in row, column value format
-void ConsolidateSparseArray(Array1dT<rcv>& K){
+void ConsolidateSparseArray(array<rcv>& K){
   	sort (K.begin(), K.end(), rowColumnOrder); 
   	localIndex i = 0;
   	localIndex ii = 1; 
@@ -71,7 +71,7 @@ void ConsolidateSparseArray(Array1dT<rcv>& K){
   	K.resize(i+1); 
 }
 
-void WriteSparseArrayToFile(std::string filename, const Array1dT<rcv>& K){
+void WriteSparseArrayToFile(std::string filename, const array<rcv>& K){
     std::ofstream outputfile(filename.c_str());
     for(unsigned int i =0; i < K.size(); ++i){
      	  outputfile <<  K[i].r << " " <<  K[i].c << " "  <<  K[i].v << "\n";  

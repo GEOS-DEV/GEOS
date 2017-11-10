@@ -73,9 +73,9 @@
 
 namespace GPAC_IO
 {
-  static iArray1d AbaqusNodeOrdering( const std::string& elementGeometry ){
+  static array<integer> AbaqusNodeOrdering( const std::string& elementGeometry ){
 
-    iArray1d nodeOrdering;
+    array<integer> nodeOrdering;
 
 
 
@@ -396,7 +396,7 @@ namespace GPAC_IO
   void FileManagerT::ReadMesh(PhysicalDomainT& domain, SpatialPartition& partition)
   {
     //setup variables to store FE, DE, and FPE properties, respectively
-    Array1dT<FileManagerDataT*> fd;
+    array<FileManagerDataT*> fd;
     AbaqusFileManagerDataT fe, de, fp;
     EllipsoidFileManagerDataT ee;
 
@@ -419,7 +419,7 @@ namespace GPAC_IO
 
     {
       localIndex ifd = 0;
-      for (Array1dT<FileManagerDataT*>::iterator it = fd.begin(); it != fd.end(); ++it, ++ifd)
+      for (array<FileManagerDataT*>::iterator it = fd.begin(); it != fd.end(); ++it, ++ifd)
       {
         if((*it)->OpenFile())
         {
@@ -546,7 +546,7 @@ namespace GPAC_IO
    //Read FE, DE, FPE, EDE
     {
       localIndex ifd = 0;
-      for (Array1dT<FileManagerDataT*>::iterator itt = fd.begin(); itt != fd.end(); ++itt, ++ifd)
+      for (array<FileManagerDataT*>::iterator itt = fd.begin(); itt != fd.end(); ++itt, ++ifd)
       {
         if((*itt)->OpenFile())
         {
@@ -565,7 +565,7 @@ namespace GPAC_IO
 
             globalIndex sizeofBuf;
 
-            rArray1d bufNodalPositions( (mpiNodeLimit+1)*nsdof );
+            array<real64> bufNodalPositions( (mpiNodeLimit+1)*nsdof );
             gArray1d bufNodes(mpiNodeLimit+1);
 
             std::map<globalIndex,R1Tensor> tempNodalPositionsMap;
@@ -658,7 +658,7 @@ namespace GPAC_IO
     //read the FE, DE, and FPE files more
     {
       localIndex ifd = 0;
-      for (Array1dT<FileManagerDataT*>::iterator it = fd.begin(); it != fd.end(); ++it, ++ifd)
+      for (array<FileManagerDataT*>::iterator it = fd.begin(); it != fd.end(); ++it, ++ifd)
       {
         if((*it)->exist)
         {
@@ -774,7 +774,7 @@ namespace GPAC_IO
       std::map<globalIndex,R1Tensor>::iterator npos = finiteElementFileData.nodalPositionsMap.begin();
 
       gArray1d& ltog = domain.m_feNodeManager.m_localToGlobalMap;
-      Array1dT<R1Tensor>& rpos = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
+      array<R1Tensor>& rpos = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
       for (; npos != finiteElementFileData.nodalPositionsMap.end(); ++npos)
       {
 
@@ -819,7 +819,7 @@ namespace GPAC_IO
       elemRegion.m_numNodesPerElem = numNodes;
       if (elemRegion.m_numElems > 0)
       {
-        const iArray1d nodeOrdering = AbaqusNodeOrdering(elemRegion.m_elementGeometryID);
+        const array<integer> nodeOrdering = AbaqusNodeOrdering(elemRegion.m_elementGeometryID);
         gArray1d& elemLocalToGlobal = elemRegion.m_localToGlobalMap;
 
         // fill element node array
@@ -912,7 +912,7 @@ namespace GPAC_IO
     std::map<globalIndex,gArray1d> tempNodeToElemsMap;
 
     std::map<globalIndex,gSet> tempNodeToPartsMap;
-    Array1dT<gArray1d> bufRegionGElem;
+    array<gArray1d> bufRegionGElem;
     std::vector <idx_t> elementConnectVector, elementStartVector;
 
     std::vector<std::map<std::string,gArray1d>> tempPartRegionToGElemMap;
@@ -1038,8 +1038,8 @@ namespace GPAC_IO
       idx_t *options = NULL;
       idx_t objval;
 
-      Array1dT<idx_t> elePart(ne);
-      Array1dT<idx_t> nodePart(nn);
+      array<idx_t> elePart(ne);
+      array<idx_t> nodePart(nn);
 //      elePart.resize(ne);
 //      nodePart.resize(nn);
 
@@ -1154,7 +1154,7 @@ namespace GPAC_IO
         femData.elemsInRegion = tempPartRegionToGElemMap[partition.m_rank];
         femData.nodalPositionsMap = tempPartNodalPositionMap[partition.m_rank];
         femData.neighborList = tempPartNeighborList[partition.m_rank];
-        sArray1d::const_iterator iRegionName = femData.elementRegionNames.begin();
+        array<string>::const_iterator iRegionName = femData.elementRegionNames.begin();
         for (; iRegionName != femData.elementRegionNames.end(); ++iRegionName)
         {
           femData.numElementsInRegion[*iRegionName] = femData.elemsInRegion[*iRegionName].size();
@@ -1188,7 +1188,7 @@ namespace GPAC_IO
         bufvector::Unpack( pbuffer, femData.elemsInRegion);
         bufvector::Unpack( pbuffer, femData.nodalPositionsMap);
         bufvector::Unpack( pbuffer, femData.neighborList);
-        sArray1d::const_iterator iRegionName = femData.elementRegionNames.begin();
+        array<string>::const_iterator iRegionName = femData.elementRegionNames.begin();
         for (; iRegionName != femData.elementRegionNames.end(); ++iRegionName)
         {
           femData.numElementsInRegion[*iRegionName] = femData.elemsInRegion[*iRegionName].size();
@@ -1378,11 +1378,11 @@ namespace GPAC_IO
     // allocate ellipsoid objects
     domain.m_ellipsoidalDiscreteElementManager.resize(fd.numNodes);
 
-    Array1dT<R1Tensor>& pradii = domain.m_ellipsoidalDiscreteElementManager.GetFieldData<R1Tensor>("principalRadii");
-    Array1dT<R1Tensor>& rotationAxis = domain.m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationAxis> ();//qx,qy,qz
-    rArray1d& rotationMagnitude = domain.m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationMagnitude> ();//qw
-    Array1dT<R1Tensor>& refpos = domain.m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::referencePosition> ();//x,y,z
-    Array1dT<R1Tensor>& curpos = domain.m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::currentPosition> ();//x,y,z
+    array<R1Tensor>& pradii = domain.m_ellipsoidalDiscreteElementManager.GetFieldData<R1Tensor>("principalRadii");
+    array<R1Tensor>& rotationAxis = domain.m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationAxis> ();//qx,qy,qz
+    array<real64>& rotationMagnitude = domain.m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationMagnitude> ();//qw
+    array<R1Tensor>& refpos = domain.m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::referencePosition> ();//x,y,z
+    array<R1Tensor>& curpos = domain.m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::currentPosition> ();//x,y,z
 
     // third pass through file set node positions, rotations, and radii
     fd.geometry.clear();
@@ -1463,7 +1463,7 @@ namespace GPAC_IO
 
 
     bufvector buffer;
-    sArray1d inputLines;
+    array<string> inputLines;
 
     AbaqusFileManagerDataT fd;
     fd.filename = this->geometryfilename;
@@ -1512,7 +1512,7 @@ namespace GPAC_IO
         const char* pbuffer = buffer.data();
         bufvector::Unpack( pbuffer, inputLines );
 
-        for( sArray1d::iterator inputLine=inputLines.begin() ; inputLine!=inputLines.end() ; ++inputLine )
+        for( array<string>::iterator inputLine=inputLines.begin() ; inputLine!=inputLines.end() ; ++inputLine )
         {
           fd.AddElementRegionLine(*inputLine);
         }
@@ -1628,7 +1628,7 @@ namespace GPAC_IO
   {
     // find number of nodes in the computational domain
     fd.numNodes = 0;
-    for (iArray1d::const_iterator i = fd.isNodeInDomain.begin(); i != fd.isNodeInDomain.end(); ++i)
+    for (array<integer>::const_iterator i = fd.isNodeInDomain.begin(); i != fd.isNodeInDomain.end(); ++i)
     {
       if (*i == 1)
         ++fd.numNodes;
@@ -1728,12 +1728,12 @@ namespace GPAC_IO
     {
       domain.m_discreteElementManager.m_nodeManager->resize(fd.numNodes);
 
-      Array1dT<R1Tensor>& rpos = domain.m_discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::referencePosition>();
-      Array1dT<R1Tensor>& cpos = domain.m_discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::currentPosition>();
+      array<R1Tensor>& rpos = domain.m_discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::referencePosition>();
+      array<R1Tensor>& cpos = domain.m_discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::currentPosition>();
 
       globalIndex globalNodeNumber = 0;
-      Array1dT<R1Tensor>::iterator npos = fd.nodalPositions.begin();
-      for (iArray1d::const_iterator it = fd.isNodeInDomain.begin();
+      array<R1Tensor>::iterator npos = fd.nodalPositions.begin();
+      for (array<integer>::const_iterator it = fd.isNodeInDomain.begin();
           it != fd.isNodeInDomain.end(); ++it, ++npos, ++globalNodeNumber)
       {
         if (*it == 1)
@@ -1916,7 +1916,7 @@ namespace GPAC_IO
 
     std::map<std::string,gSet> tempRegionGElemMap;
     std::map<globalIndex,gArray1d> tempElemToNodesMap;
-    Array1dT<gArray1d> bufRegionGElem;
+    array<gArray1d> bufRegionGElem;
 
     /************* allow mixed type elements **************/
 
@@ -2336,7 +2336,7 @@ namespace GPAC_IO
       std::map<globalIndex,R1Tensor>::iterator npos = fd.nodalPositionsMap.begin();
 
       gArray1d& ltog = domain.m_feNodeManager.m_localToGlobalMap;
-      Array1dT<R1Tensor>& rpos = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
+      array<R1Tensor>& rpos = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
       for (; npos != fd.nodalPositionsMap.end(); ++npos)
       {
 
@@ -2383,7 +2383,7 @@ namespace GPAC_IO
       elemRegion.m_numNodesPerElem = numNodes;
       if (elemRegion.m_numElems > 0)
       {
-        const iArray1d nodeOrdering = AbaqusNodeOrdering(elemRegion.m_elementGeometryID);
+        const array<integer> nodeOrdering = AbaqusNodeOrdering(elemRegion.m_elementGeometryID);
         gArray1d& elemLocalToGlobal = elemRegion.m_localToGlobalMap;
 
         // fill element node array
@@ -2531,7 +2531,7 @@ namespace GPAC_IO
 
       std::map<globalIndex,R1Tensor>::iterator npos = fd.nodalPositionsMap.begin();
 
-      Array1dT<R1Tensor>& nref = domain.m_faultPatchNodes.GetFieldData<FieldInfo::referencePosition>();
+      array<R1Tensor>& nref = domain.m_faultPatchNodes.GetFieldData<FieldInfo::referencePosition>();
 
       globalIndex globalNodeNumber = 0;
       localIndex localNodeNumber = 0;

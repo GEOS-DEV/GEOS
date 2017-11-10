@@ -205,9 +205,9 @@ void LagrangeExplicitDynamicsSolver::ApplyForcesFromContact(PhysicalDomainT& dom
   //external faces
   //-----------------------------
   {
-    Array1dT<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
+    array<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
     contactForce = 0.0;
-    Array1dT<R1Tensor>& decontactForce = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::contactForce>();
+    array<R1Tensor>& decontactForce = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::contactForce>();
     decontactForce = 0.0;
 
     //update nodal positions, velocities, and accelerations before updating face geometry
@@ -225,7 +225,7 @@ void LagrangeExplicitDynamicsSolver::ApplyForcesFromContact(PhysicalDomainT& dom
       domain.m_contactManager.Update(domain.m_externalFaces.m_neighborList);
 
     {
-      Array1dT<Array1dT<R1Tensor> > xs;
+      array<array<R1Tensor> > xs;
       xs.resize(domain.m_externalFaces.DataLengths());
       domain.m_externalFaces.UpdateGeometricContactProperties(dt, domain, xs);
 #ifdef STATES_ON_CONTACTS
@@ -272,7 +272,7 @@ double LagrangeExplicitDynamicsSolver::TimeStep( const realT& time,
                                                const realT& dt,
                                                const int cycleNumber,
                                                PhysicalDomainT& domain,
-                                               const sArray1d& namesOfSolverRegions,
+                                               const array<string>& namesOfSolverRegions,
                                                SpatialPartition& partition,
                                                FractunatorBase* const fractunator )
 {
@@ -282,7 +282,7 @@ double LagrangeExplicitDynamicsSolver::TimeStep( const realT& time,
 
   m_stabledt.m_maxdt = std::numeric_limits<double>::max();
 
-  Array1dT<R1Tensor>& hgforce = domain.m_feNodeManager.GetFieldData<FieldInfo::hgforce> ();
+  array<R1Tensor>& hgforce = domain.m_feNodeManager.GetFieldData<FieldInfo::hgforce> ();
   hgforce = 0.0;
 
   /////////////////////////////////
@@ -313,7 +313,7 @@ double LagrangeExplicitDynamicsSolver::TimeStep( const realT& time,
   LagrangeExplicitDynamicsFunctions::RotationalPointUpdatePart1b( domain.m_discreteElementManager);
   LagrangeExplicitDynamicsFunctions::RotationalPointUpdatePart1( domain.m_ellipsoidalDiscreteElementManager, time, dt );
 
-  for( sArray1d::const_iterator regionName = namesOfSolverRegions.begin() ;
+  for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
       regionName != namesOfSolverRegions.end() ; ++regionName )
   {
     //this conditional supports DE, since an element region in DE may not exist in FE; this case should not
@@ -327,7 +327,7 @@ double LagrangeExplicitDynamicsSolver::TimeStep( const realT& time,
     elementRegion.MaterialUpdate(dt);
   }
 
-  for( sArray1d::const_iterator regionName = namesOfSolverRegions.begin() ;
+  for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
       regionName != namesOfSolverRegions.end() ; ++regionName )
   {
     //this conditional supports DE, since an element region in DE may not exist in FE; this case should not
@@ -367,11 +367,11 @@ double LagrangeExplicitDynamicsSolver::TimeStep( const realT& time,
   {
     // apply cohesive forces
     const OrderedVariableOneToManyRelation& childFaceIndex = domain.m_feFaceManager.GetVariableOneToManyMap( "childIndices" );
-    Array1dT<R1Tensor>& nodalForce = domain.m_feNodeManager.GetFieldData<FieldInfo::force>();
-    Array1dT<R1Tensor>& cohesiveForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
+    array<R1Tensor>& nodalForce = domain.m_feNodeManager.GetFieldData<FieldInfo::force>();
+    array<R1Tensor>& cohesiveForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
 
-    const Array1dT<R1Tensor>& cohesiveTraction = domain.m_feFaceManager.GetFieldData<R1Tensor>("cohesiveTraction");
-    const iArray1d& ruptureState = domain.m_feFaceManager.GetFieldData<int>("ruptureState");
+    const array<R1Tensor>& cohesiveTraction = domain.m_feFaceManager.GetFieldData<R1Tensor>("cohesiveTraction");
+    const array<integer>& ruptureState = domain.m_feFaceManager.GetFieldData<int>("ruptureState");
 
     cohesiveForce = 0.0;
 
@@ -442,14 +442,14 @@ double LagrangeExplicitDynamicsSolver::TimeStep( const realT& time,
 
 void LagrangeExplicitDynamicsSolver::PostProcess (PhysicalDomainT& domain,
                                                   SpatialPartition& partition,
-                                                  const sArray1d& namesOfSolverRegions)
+                                                  const array<string>& namesOfSolverRegions)
 {
-  rArray1d& sigma_x = domain.m_feNodeManager.GetFieldData<realT>("nsigma_x");
-  rArray1d& sigma_y = domain.m_feNodeManager.GetFieldData<realT>("nsigma_y");
-  rArray1d& sigma_z = domain.m_feNodeManager.GetFieldData<realT>("nsigma_z");
-  rArray1d& sigma_xy = domain.m_feNodeManager.GetFieldData<realT>("nsigma_xy");
-  rArray1d& sigma_yz = domain.m_feNodeManager.GetFieldData<realT>("nsigma_yz");
-  rArray1d& sigma_zx = domain.m_feNodeManager.GetFieldData<realT>("nsigma_zx");
+  array<real64>& sigma_x = domain.m_feNodeManager.GetFieldData<realT>("nsigma_x");
+  array<real64>& sigma_y = domain.m_feNodeManager.GetFieldData<realT>("nsigma_y");
+  array<real64>& sigma_z = domain.m_feNodeManager.GetFieldData<realT>("nsigma_z");
+  array<real64>& sigma_xy = domain.m_feNodeManager.GetFieldData<realT>("nsigma_xy");
+  array<real64>& sigma_yz = domain.m_feNodeManager.GetFieldData<realT>("nsigma_yz");
+  array<real64>& sigma_zx = domain.m_feNodeManager.GetFieldData<realT>("nsigma_zx");
 
   sigma_x = 0.0;
   sigma_y = 0.0;
@@ -458,7 +458,7 @@ void LagrangeExplicitDynamicsSolver::PostProcess (PhysicalDomainT& domain,
   sigma_yz = 0.0;
   sigma_zx = 0.0;
 
-  for( sArray1d::const_iterator regionName = namesOfSolverRegions.begin() ;
+  for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
       regionName != namesOfSolverRegions.end() ; ++regionName )
   {
     std::map<std::string, ElementRegionT>::iterator iter = domain.m_feElementManager.m_ElementRegions.find(*regionName);
@@ -515,7 +515,7 @@ void LagrangeExplicitDynamicsSolver::PostProcess (PhysicalDomainT& domain,
   }
 
   {
-    std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+    std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back("nsigma_x");
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back("nsigma_y");
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back("nsigma_z");
@@ -536,9 +536,9 @@ void LagrangeExplicitDynamicsSolver::ApplyGapDamping( NodeManager& nodeManager,
 {
   if( dt>0.0 )
   {
-    const Array1dT<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
-    Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
-    const Array1dT<realT>& mass = nodeManager.GetFieldData<FieldInfo::mass>();
+    const array<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
+    array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
+    const array<realT>& mass = nodeManager.GetFieldData<FieldInfo::mass>();
 
     const OrderedVariableOneToManyRelation& childFaces = faceManager.GetVariableOneToManyMap("childIndices");
 
@@ -599,13 +599,13 @@ void LagrangeExplicitDynamicsSolver::ApplyGapDamping( NodeManager& nodeManager,
 
 void LagrangeExplicitDynamicsSolver::SetMaxStableTimeStep( const realT& time,
                                                            PhysicalDomainT& domain,
-                                                           const sArray1d& namesOfSolverRegions,
+                                                           const array<string>& namesOfSolverRegions,
                                                            SpatialPartition& partition  )
 {
-  Array1dT<R1Tensor>& incrementalDisplacement = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
+  array<R1Tensor>& incrementalDisplacement = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
   incrementalDisplacement = 0.0;
 
-  for( sArray1d::const_iterator regionName = namesOfSolverRegions.begin() ;
+  for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
       regionName != namesOfSolverRegions.end() ; ++regionName )
   {
     //this conditional supports DE, since an element region in DE may not exist in FE; this case should not
@@ -667,13 +667,13 @@ namespace LagrangeExplicitDynamicsFunctions
   {
     if( objectManager.DataLengths() > 0 )
     {
-      Array1dT<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
-      const Array1dT<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
-      Array1dT<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
-      Array1dT<R1Tensor>& displacement = objectManager.GetFieldData<FieldInfo::displacement> ();
-      Array1dT<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
+      array<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
+      const array<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
+      array<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
+      array<R1Tensor>& displacement = objectManager.GetFieldData<FieldInfo::displacement> ();
+      array<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
 
-      rArray1d& work = objectManager.GetFieldData<realT>("work");
+      array<real64>& work = objectManager.GetFieldData<realT>("work");
 
 
       const realT dtdiv2 = 0.5 * dt;
@@ -704,7 +704,7 @@ namespace LagrangeExplicitDynamicsFunctions
 
 
       /*
-      const Array1dT<lArray1d>& childIndices = objectManager.GetVariableOneToManyMap( "childIndices" );
+      const array<lArray1d>& childIndices = objectManager.GetVariableOneToManyMap( "childIndices" );
       for (localIndex a = 0; a < objectManager.DataLengths(); ++a)
       {
         if( !(childIndices[a].empty()) )
@@ -744,14 +744,14 @@ namespace LagrangeExplicitDynamicsFunctions
   {
     if( objectManager.DataLengths() > 0 )
     {
-      Array1dT<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
-      Array1dT<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
-      Array1dT<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
-      Array1dT<realT>& mass = objectManager.GetFieldData<FieldInfo::mass> ();
-      rArray1d& work = objectManager.GetFieldData<realT>("work");
+      array<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
+      array<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
+      array<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
+      array<realT>& mass = objectManager.GetFieldData<FieldInfo::mass> ();
+      array<real64>& work = objectManager.GetFieldData<realT>("work");
 
-      const Array1dT<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
-      const Array1dT<int>* isDetachedFromSolidMesh = objectManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
+      const array<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
+      const array<int>* isDetachedFromSolidMesh = objectManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
 
       const realT dtdiv2 = 0.5 * dt;
       realT dampedMass;
@@ -862,12 +862,12 @@ namespace LagrangeExplicitDynamicsFunctions
     if( discreteElementManager.DataLengths() > 0 )
     {
 
-      Array1dT<R1Tensor>& rotationalVelocity        = discreteElementManager.GetFieldData<FieldInfo::rotationalVelocity> ();
-      Array1dT<R1Tensor>& rotationalAcceleration    = discreteElementManager.GetFieldData<FieldInfo::rotationalAcceleration> ();
-      Array1dT<R1Tensor>& rotationalAxisIncrement   = discreteElementManager.GetFieldData<FieldInfo::rotationalAxisIncrement> ();
-      Array1dT<realT>& rotationalMagnitudeIncrement = discreteElementManager.GetFieldData<FieldInfo::rotationalMagnitudeIncrement> ();
-      Array1dT<R1Tensor>& rotationAxis              = discreteElementManager.GetFieldData<FieldInfo::rotationAxis> ();
-      Array1dT<realT>& rotationMagnitude            = discreteElementManager.GetFieldData<FieldInfo::rotationMagnitude> ();
+      array<R1Tensor>& rotationalVelocity        = discreteElementManager.GetFieldData<FieldInfo::rotationalVelocity> ();
+      array<R1Tensor>& rotationalAcceleration    = discreteElementManager.GetFieldData<FieldInfo::rotationalAcceleration> ();
+      array<R1Tensor>& rotationalAxisIncrement   = discreteElementManager.GetFieldData<FieldInfo::rotationalAxisIncrement> ();
+      array<realT>& rotationalMagnitudeIncrement = discreteElementManager.GetFieldData<FieldInfo::rotationalMagnitudeIncrement> ();
+      array<R1Tensor>& rotationAxis              = discreteElementManager.GetFieldData<FieldInfo::rotationAxis> ();
+      array<realT>& rotationMagnitude            = discreteElementManager.GetFieldData<FieldInfo::rotationMagnitude> ();
 
       const realT dtdiv2 = 0.5 * dt;
 
@@ -919,13 +919,13 @@ namespace LagrangeExplicitDynamicsFunctions
     if( discreteElementManager.DataLengths() > 0 )
     {
       //discrete element positions
-      Array1dT<R1Tensor>& deCurrentPosition         = discreteElementManager.GetFieldData<FieldInfo::currentPosition> ();
-      Array1dT<R1Tensor>& deReferencePosition       = discreteElementManager.GetFieldData<FieldInfo::referencePosition> ();
-      Array1dT<R1Tensor>& deDisplacement            = discreteElementManager.GetFieldData<FieldInfo::displacement> ();
+      array<R1Tensor>& deCurrentPosition         = discreteElementManager.GetFieldData<FieldInfo::currentPosition> ();
+      array<R1Tensor>& deReferencePosition       = discreteElementManager.GetFieldData<FieldInfo::referencePosition> ();
+      array<R1Tensor>& deDisplacement            = discreteElementManager.GetFieldData<FieldInfo::displacement> ();
 
       //nodal positions
-      Array1dT<R1Tensor>& nodeRelativePosition      = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::relativePosition> ();
-      Array1dT<R1Tensor>& nodeCurrentPosition       = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::currentPosition> ();
+      array<R1Tensor>& nodeRelativePosition      = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::relativePosition> ();
+      array<R1Tensor>& nodeCurrentPosition       = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::currentPosition> ();
 
       //update nodal and discrete element current positions
       //note: all quantities are in body frame
@@ -976,10 +976,10 @@ namespace LagrangeExplicitDynamicsFunctions
   {
     if( objectManager.DataLengths() > 0 )
     {
-      Array1dT<R1Tensor>& rotationalVelocity = objectManager.GetFieldData< FieldInfo::rotationalVelocity> ();
-      Array1dT<R1Tensor>& rotationalAcceleration = objectManager.GetFieldData< FieldInfo::rotationalAcceleration> ();
-      Array1dT<R1Tensor>& moment = objectManager.GetFieldData<FieldInfo::moment> ();
-      Array1dT<R1Tensor>& rotationalInertia = objectManager.GetFieldData<FieldInfo::rotationalInertia> ();
+      array<R1Tensor>& rotationalVelocity = objectManager.GetFieldData< FieldInfo::rotationalVelocity> ();
+      array<R1Tensor>& rotationalAcceleration = objectManager.GetFieldData< FieldInfo::rotationalAcceleration> ();
+      array<R1Tensor>& moment = objectManager.GetFieldData<FieldInfo::moment> ();
+      array<R1Tensor>& rotationalInertia = objectManager.GetFieldData<FieldInfo::rotationalInertia> ();
 
       const realT dtdiv2 = 0.5 * dt;
       for (localIndex a = 0; a < objectManager.DataLengths(); ++a)

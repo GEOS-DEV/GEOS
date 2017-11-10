@@ -116,7 +116,7 @@ namespace GPAC_IO
         it != elementRegionNameTypes.end(); ++it)
       std::cout << " " << it->first << " " << it->second << "\n";
     std::cout << "nodalPositions " << nodalPositions.size() << "\n";
-    for (Array1dT<R1Tensor>::size_type i = 0; i < nodalPositions.size(); ++i)
+    for (array<R1Tensor>::size_type i = 0; i < nodalPositions.size(); ++i)
       std::cout << " " << nodalPositions[i](0) << " " << nodalPositions[i](1) << " "
                 << nodalPositions[i](2) << "\n";
     std::cout << "maxGlobalNodeID " << maxGlobalNodeID << "\n";
@@ -131,10 +131,10 @@ namespace GPAC_IO
         std::cout << " " << it->first << " " << it->second[j] << "\n";
     std::cout << "maxGlobalElemID " << maxGlobalElemID << "\n";
     std::cout << "isNodeInDomain " << isNodeInDomain.size() << "\n";
-    for (iArray1d::size_type i = 0; i < isNodeInDomain.size(); ++i)
+    for (array<integer>::size_type i = 0; i < isNodeInDomain.size(); ++i)
       std::cout << " " << isNodeInDomain[i] << "\n";
     std::cout << "isElemInDomain " << isElemInDomain.size() << "\n";
-    for (iArray1d::size_type i = 0; i < isElemInDomain.size(); ++i)
+    for (array<integer>::size_type i = 0; i < isElemInDomain.size(); ++i)
       std::cout << " " << isElemInDomain[i] << "\n";
     std::cout << "numNodes " << numNodes << "\n";
     std::cout << "elemToNodes " << elemToNodes.size() << "\n";
@@ -142,10 +142,10 @@ namespace GPAC_IO
   //      std::cout << " " << elemToNodes[i,j] << "\n";
     std::cout << "numElementRegions " << numElementRegions << "\n";
     std::cout << "elementRegionNames " << elementRegionNames.size() << "\n";
-    for (sArray1d::size_type i = 0; i < elementRegionNames.size(); ++i)
+    for (array<string>::size_type i = 0; i < elementRegionNames.size(); ++i)
       std::cout << " " << elementRegionNames[i] << "\n";
     std::cout << "elementRegionTypes " << elementRegionTypes.size() << "\n";
-    for (sArray1d::size_type i = 0; i < elementRegionTypes.size(); ++i)
+    for (array<string>::size_type i = 0; i < elementRegionTypes.size(); ++i)
       std::cout << " " << elementRegionTypes[i] << "\n";
     std::cout << "elementRegionNameTypes " << elementRegionNameTypes.size() << "\n";
     for (std::map<std::string, std::string>::const_iterator it = elementRegionNameTypes.begin();

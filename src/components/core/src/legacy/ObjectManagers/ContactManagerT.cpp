@@ -72,9 +72,9 @@ ContactManagerT::~ContactManagerT()
 
 localIndex ContactManagerT::NumberOfPolygons() const
 {
-  Array1dT<lArray1d>& tmp = m_contactToIntersectionPolygonPointsMap;
+  array<lArray1d>& tmp = m_contactToIntersectionPolygonPointsMap;
   localIndex num = 0;
-  for( Array1dT<lArray1d>::size_type i = 0; i < tmp.size(); ++i)
+  for( array<lArray1d>::size_type i = 0; i < tmp.size(); ++i)
     num += tmp[i].size() > 0 ? 1 : 0;
   return num;
 }

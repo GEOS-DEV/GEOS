@@ -35,7 +35,7 @@ public:
   virtual real64 Evaluate( real64 const * const input) const override final;
 
 private:
-  Array1dT<real64_array> m_coordinates;
+  array<real64_array> m_coordinates;
   real64_array m_values;
   static localIndex constexpr m_maxDimensions = 4;
   localIndex m_dimensions;

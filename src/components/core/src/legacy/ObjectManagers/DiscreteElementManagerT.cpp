@@ -281,12 +281,12 @@ void DiscreteElementManagerT::ApplyNodalForce(const localIndex nodeIndex, const 
 
 void DiscreteElementManagerT::CalculateEnergy()
 {
-  const rArray1d& mass = GetFieldData<FieldInfo::mass>();
-  const Array1dT<R1Tensor>& vels = GetFieldData<FieldInfo::velocity> ();
-  const Array1dT<R1Tensor>& rvels = GetFieldData<FieldInfo::rotationalVelocity> ();
-  const Array1dT<R1Tensor>& inertias = GetFieldData<FieldInfo::rotationalInertia> ();
+  const array<real64>& mass = GetFieldData<FieldInfo::mass>();
+  const array<R1Tensor>& vels = GetFieldData<FieldInfo::velocity> ();
+  const array<R1Tensor>& rvels = GetFieldData<FieldInfo::rotationalVelocity> ();
+  const array<R1Tensor>& inertias = GetFieldData<FieldInfo::rotationalInertia> ();
 
-  rArray1d& energy = GetFieldData<realT> ("kinetic_energy");
+  array<real64>& energy = GetFieldData<realT> ("kinetic_energy");
   for(localIndex a = 0; a < this->DataLengths(); a++)
   {
     R1Tensor omega2(rvels[a]);
@@ -302,12 +302,12 @@ void DiscreteElementManagerT::ApplyDiscreteElementContactForces(const realT youn
   std::map<localIndex, std::map<localIndex, DiscreteElementContact> >::const_iterator iter0;
   std::map<localIndex, DiscreteElementContact>::const_iterator iter1;
 
-  Array1dT<R1Tensor>& deMoment    = GetFieldData<FieldInfo::moment> ();
+  array<R1Tensor>& deMoment    = GetFieldData<FieldInfo::moment> ();
   deMoment = 0.0;
-  Array1dT<R1Tensor>& deForce     = GetFieldData<FieldInfo::force> ();
+  array<R1Tensor>& deForce     = GetFieldData<FieldInfo::force> ();
   deForce = 0.0;
 
-  const Array1dT<R1Tensor>& dePosition  = GetFieldData<FieldInfo::currentPosition> ();
+  const array<R1Tensor>& dePosition  = GetFieldData<FieldInfo::currentPosition> ();
 
   R2Tensor r1, r2;
   R1Tensor m, ml, frc, tmp, tmp1;
@@ -403,23 +403,23 @@ void DiscreteElementManagerT::ApplyNodalForces()
     return;
 
   //for contact resolution of faces
-  const Array1dT<R1Tensor>& nodalForce = m_nodeManager->GetFieldData<FieldInfo::force> ();
-  const Array1dT<R1Tensor>& relativePosition = m_nodeManager->GetFieldData<FieldInfo::relativePosition> ();
+  const array<R1Tensor>& nodalForce = m_nodeManager->GetFieldData<FieldInfo::force> ();
+  const array<R1Tensor>& relativePosition = m_nodeManager->GetFieldData<FieldInfo::relativePosition> ();
 
-  Array1dT<R1Tensor>& deMoment               = GetFieldData<FieldInfo::moment> ();
+  array<R1Tensor>& deMoment               = GetFieldData<FieldInfo::moment> ();
   deMoment = 0.0;
-  Array1dT<R1Tensor>& deForce                = GetFieldData<FieldInfo::force> ();
+  array<R1Tensor>& deForce                = GetFieldData<FieldInfo::force> ();
   deForce = 0.0;
 
   R2Tensor r;
   R1Tensor m, fl;
 
   //--FOR ENERGY CALCULATION--
-  const rArray1d& mass = GetFieldData<FieldInfo::mass>();
-  const Array1dT<R1Tensor>& vels = GetFieldData<FieldInfo::velocity> ();
-  const Array1dT<R1Tensor>& rvels = GetFieldData<FieldInfo::rotationalVelocity> ();
-  const Array1dT<R1Tensor>& inertias = GetFieldData<FieldInfo::rotationalInertia> ();
-  rArray1d& energy = GetFieldData<realT> ("kinetic_energy");
+  const array<real64>& mass = GetFieldData<FieldInfo::mass>();
+  const array<R1Tensor>& vels = GetFieldData<FieldInfo::velocity> ();
+  const array<R1Tensor>& rvels = GetFieldData<FieldInfo::rotationalVelocity> ();
+  const array<R1Tensor>& inertias = GetFieldData<FieldInfo::rotationalInertia> ();
+  array<real64>& energy = GetFieldData<realT> ("kinetic_energy");
 
   for (localIndex a = 0; a < this->DataLengths(); ++a)
   {
@@ -458,19 +458,19 @@ void DiscreteElementManagerT::ApplyNodalForces()
 void DiscreteElementManagerT::RecalculatePhysicalProperties()
 {
   //mass, volume, position
-  rArray1d& mass = GetFieldData<FieldInfo::mass> ();
-  Array1dT<R1Tensor>& pos = GetFieldData<FieldInfo::currentPosition> ();
-  Array1dT<R1Tensor>& rpos = GetFieldData<FieldInfo::referencePosition> ();
+  array<real64>& mass = GetFieldData<FieldInfo::mass> ();
+  array<R1Tensor>& pos = GetFieldData<FieldInfo::currentPosition> ();
+  array<R1Tensor>& rpos = GetFieldData<FieldInfo::referencePosition> ();
 
   //rotational inertia
-  Array1dT<R1Tensor>& I = GetFieldData<FieldInfo::rotationalInertia> ();
+  array<R1Tensor>& I = GetFieldData<FieldInfo::rotationalInertia> ();
 
   //nodal position and mass
-  Array1dT<R1Tensor>& nodeRelativePosition = m_nodeManager->GetFieldData<
+  array<R1Tensor>& nodeRelativePosition = m_nodeManager->GetFieldData<
       FieldInfo::relativePosition> ();
-  Array1dT<R1Tensor>& nodeCurrentPosition =
+  array<R1Tensor>& nodeCurrentPosition =
       m_nodeManager->GetFieldData<FieldInfo::currentPosition> ();
-  rArray1d& nodeMass =
+  array<real64>& nodeMass =
       m_nodeManager->GetFieldData<FieldInfo::mass> ();
 
   //go through each DE
@@ -573,21 +573,21 @@ void DiscreteElementManagerT::RecalculatePhysicalProperties()
 void DiscreteElementManagerT::UpdateNodalStatesZeroForcesAndAccelerations()
 {
   //zero the DE accelerations and forces
-  Array1dT<R1Tensor>& acceleration = this->GetFieldData<FieldInfo::acceleration> ();
-  Array1dT<R1Tensor>& force = this->GetFieldData<FieldInfo::force> ();
+  array<R1Tensor>& acceleration = this->GetFieldData<FieldInfo::acceleration> ();
+  array<R1Tensor>& force = this->GetFieldData<FieldInfo::force> ();
 
   //zero the DE rotation accelerations and moments
-  Array1dT<R1Tensor>& racc = this->GetFieldData<FieldInfo::rotationalAcceleration> ();
-  Array1dT<R1Tensor>& moment = this->GetFieldData<FieldInfo::moment> ();
+  array<R1Tensor>& racc = this->GetFieldData<FieldInfo::rotationalAcceleration> ();
+  array<R1Tensor>& moment = this->GetFieldData<FieldInfo::moment> ();
 
   //for contact resolution of faces
-  Array1dT<R1Tensor>& nodeVelocity       = m_nodeManager->GetFieldData<FieldInfo::velocity> ();
-  Array1dT<R1Tensor>& nodeAcceleration   = m_nodeManager->GetFieldData<FieldInfo::acceleration> ();
-  Array1dT<R1Tensor>& nodeForce          = m_nodeManager->GetFieldData<FieldInfo::force> ();
-  Array1dT<R1Tensor>& nodeDisplacement   = m_nodeManager->GetFieldData<FieldInfo::displacement> ();
+  array<R1Tensor>& nodeVelocity       = m_nodeManager->GetFieldData<FieldInfo::velocity> ();
+  array<R1Tensor>& nodeAcceleration   = m_nodeManager->GetFieldData<FieldInfo::acceleration> ();
+  array<R1Tensor>& nodeForce          = m_nodeManager->GetFieldData<FieldInfo::force> ();
+  array<R1Tensor>& nodeDisplacement   = m_nodeManager->GetFieldData<FieldInfo::displacement> ();
 
-  const Array1dT<R1Tensor>& nodeCurrentPosition   = m_nodeManager->GetFieldData<FieldInfo::currentPosition> ();
-  const Array1dT<R1Tensor>& nodeReferencePosition = m_nodeManager->GetFieldData<FieldInfo::referencePosition> ();
+  const array<R1Tensor>& nodeCurrentPosition   = m_nodeManager->GetFieldData<FieldInfo::currentPosition> ();
+  const array<R1Tensor>& nodeReferencePosition = m_nodeManager->GetFieldData<FieldInfo::referencePosition> ();
 
   R2Tensor r;
   acceleration = 0.0;

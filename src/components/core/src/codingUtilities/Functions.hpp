@@ -129,7 +129,7 @@ public:
   }
 
 private:
-  rArray1d coeffs;
+  array<real64> coeffs;
 };
 
 /// Class representing a uniform random distribution
@@ -209,7 +209,7 @@ public:
   void ReadXML(TICPP::HierarchicalDataNode* hdn);
   realT operator()(const realT& x)
   {
-    rArray1d xx(3);
+    array<real64> xx(3);
     xx[0] = (&x)[0];
     xx[1] = (&x)[1];
     xx[2] = (&x)[2];
@@ -245,7 +245,7 @@ public:
   void ReadXML(TICPP::HierarchicalDataNode* hdn);
   realT operator()(const realT& x)
   {
-    rArray1d xx(3);
+    array<real64> xx(3);
     xx[0] = (&x)[0];
     xx[1] = (&x)[1];
     xx[2] = (&x)[2];
@@ -280,7 +280,7 @@ public:
   void ReadXML(TICPP::HierarchicalDataNode* hdn);
   realT operator()(const realT& x)
   {
-    rArray1d xx(2);
+    array<real64> xx(2);
     xx[0] = (&x)[0];
     xx[1] = (&x)[1];
     return m_tablePtr->Lookup(xx);
@@ -314,7 +314,7 @@ public:
   void ReadXML(TICPP::HierarchicalDataNode* hdn);
   realT operator()(const realT& x)
   {
-    rArray1d xx(1);
+    array<real64> xx(1);
     xx[0] = x;
     return m_tablePtr->Lookup(xx);
   }

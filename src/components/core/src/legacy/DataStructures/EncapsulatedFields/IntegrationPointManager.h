@@ -54,7 +54,7 @@ public:
   IntegrationPointManager();
   ~IntegrationPointManager();
 
-  Array2dT< Array1dT<R1Tensor> >  m_dNdX;
+  Array2dT< array<R1Tensor> >  m_dNdX;
   rArray2d m_detJ;
 
 };

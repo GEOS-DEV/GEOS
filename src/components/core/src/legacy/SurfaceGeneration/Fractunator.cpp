@@ -28,9 +28,9 @@ void Fractunator::RegisterFieldsAndMaps( NodeManager& nodeManager,
 
 
 
-  nodeManager.AddMap<Array1dT<lArray1d> >("nodesToRupturedFaces");
+  nodeManager.AddMap<array<lArray1d> >("nodesToRupturedFaces");
 
-  edgeManager.AddMap<Array1dT<lArray1d> >("edgesToRupturedFaces");
+  edgeManager.AddMap<array<lArray1d> >("edgesToRupturedFaces");
 
   // the faceManager's rutpureState will be used with the following definitions:
   //   ruptureState = 0 means not reached rupture criteria
@@ -42,17 +42,17 @@ void Fractunator::RegisterFieldsAndMaps( NodeManager& nodeManager,
 
 
 
-  nodeManager.AddMap<Array1dT<lArray1d> >("childIndices");
+  nodeManager.AddMap<array<lArray1d> >("childIndices");
   nodeManager.AddMap<lArray1d>("parentIndex");
   OneToOneRelation& parentIndexNodes = nodeManager.GetOneToOneMap( "parentIndex" );
   parentIndexNodes = LOCALINDEX_MAX;
 
-  edgeManager.AddMap<Array1dT<lArray1d> >("childIndices");
+  edgeManager.AddMap<array<lArray1d> >("childIndices");
   edgeManager.AddMap<lArray1d>("parentIndex");
   lArray1d& parentIndexEdge = edgeManager.GetOneToOneMap( "parentIndex" );
   parentIndexEdge = LOCALINDEX_MAX;
 
-  faceManager.AddMap<Array1dT<lArray1d> >("childIndices");
+  faceManager.AddMap<array<lArray1d> >("childIndices");
   faceManager.AddMap<lArray1d>("parentIndex");
   lArray1d& parentIndexFace = faceManager.GetOneToOneMap( "parentIndex" );
   parentIndexFace = LOCALINDEX_MAX;
@@ -89,9 +89,9 @@ void Fractunator::SeparationDriver( NodeManager& nodeManager,
 
   const OrderedVariableOneToManyRelation& nodeToRupturedFaces = nodeManager.GetVariableOneToManyMap( "nodesToRupturedFaces" );
 
-  const Array1dT<lArray1d>& childNodeIndex = nodeManager.GetVariableOneToManyMap( "childIndices" );
+  const array<lArray1d>& childNodeIndex = nodeManager.GetVariableOneToManyMap( "childIndices" );
 
-  const iArray1d& isNodeGhost = nodeManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<integer>& isNodeGhost = nodeManager.GetFieldData<FieldInfo::ghostRank>();
   for( localIndex a=0 ; a<nodeManager.DataLengths() ; ++a )
   {
 
@@ -148,7 +148,7 @@ void Fractunator::UpdateRuptureStates( NodeManager& nodeManager,
   OrderedVariableOneToManyRelation& edgesToRupturedFaces = edgeManager.GetVariableOneToManyMap( "edgesToRupturedFaces" );
   const OrderedVariableOneToManyRelation& childFaceIndex = faceManager.GetVariableOneToManyMap( "childIndices" );
 
-  iArray1d& faceRuptureState = faceManager.GetFieldData<int>( "ruptureState" );
+  array<integer>& faceRuptureState = faceManager.GetFieldData<int>( "ruptureState" );
 
   // assign the values of the nodeToRupturedFaces and edgeToRupturedFaces arrays.
   for( localIndex kf=0 ; kf<faceManager.DataLengths() ; ++kf )
@@ -169,15 +169,15 @@ void Fractunator::UpdateRuptureStates( NodeManager& nodeManager,
     }
   }
 
-  for( iArray1d::iterator i=edgeManager.m_isExternal.begin() ; i!=edgeManager.m_isExternal.end() ; ++i )
+  for( array<integer>::iterator i=edgeManager.m_isExternal.begin() ; i!=edgeManager.m_isExternal.end() ; ++i )
   {
     if( *i == -1 )
       *i = 1;
   }
 
 
-  Array1dT<lArray1d>::iterator i=nodeToRupturedFaces.begin();
-  iArray1d::iterator j=nodeManager.GetFieldData<int>("numberOfRupturedFaces").begin();
+  array<lArray1d>::iterator i=nodeToRupturedFaces.begin();
+  array<integer>::iterator j=nodeManager.GetFieldData<int>("numberOfRupturedFaces").begin();
 
   for( localIndex a=0 ; a<nodeManager.DataLengths() ; ++a, ++i, ++j )
   {
@@ -206,10 +206,10 @@ bool Fractunator::FindFracturePlanes( const localIndex nodeID,
   const std::set< std::pair<ElementRegionT*,localIndex> >& nodesToElements = nodeManager.m_toElementsRelation[nodeID] ;
 
 
-  const Array1dT<lArray1d>& edgesToRupturedFaces = edgeManager.GetVariableOneToManyMap( "edgesToRupturedFaces" );
-  const iArray1d& isEdgeExternal = edgeManager.m_isExternal;
+  const array<lArray1d>& edgesToRupturedFaces = edgeManager.GetVariableOneToManyMap( "edgesToRupturedFaces" );
+  const array<integer>& isEdgeExternal = edgeManager.m_isExternal;
 
-  const Array1dT<lArray1d>& faceToEdges = faceManager.m_toEdgesRelation;
+  const array<lArray1d>& faceToEdges = faceManager.m_toEdgesRelation;
 
 
   // **** local working arrays ****
@@ -816,7 +816,7 @@ void Fractunator::PerformFracture( const localIndex nodeID,
 
 
     // split edges
-    iArray1d& flowEdgeType = edgeManager.GetFieldData<int>("flowEdgeType");
+    array<integer>& flowEdgeType = edgeManager.GetFieldData<int>("flowEdgeType");
     lSet splitEdges;
     // loop over all edges connected to the node
     for( std::map<localIndex,int>::const_iterator iter_edge=edgeLocations.begin() ; iter_edge!=edgeLocations.end() ; ++iter_edge )
@@ -850,8 +850,8 @@ void Fractunator::PerformFracture( const localIndex nodeID,
 
 
     // split the faces
-    iArray1d& ruptureState = faceManager.GetFieldData<int>("ruptureState");
-    iArray1d& flowFaceType = faceManager.GetFieldData<int>("flowFaceType");
+    array<integer>& ruptureState = faceManager.GetFieldData<int>("ruptureState");
+    array<integer>& flowFaceType = faceManager.GetFieldData<int>("flowFaceType");
     lSet splitFaces;
 
     // loop over all faces attached to the nodeID
@@ -1034,9 +1034,9 @@ void Fractunator::PerformFracture( const localIndex nodeID,
 
 
         // 3b) correct faceToNodes and nodeToFaces
-        Array1dT<lArray1d>& nodeToRupturedFaces = nodeManager.GetVariableOneToManyMap( "nodesToRupturedFaces" );
-        Array1dT<lArray1d>& edgesToRupturedFaces = edgeManager.GetVariableOneToManyMap( "edgesToRupturedFaces" );
-        iArray1d& faceRuptureState = faceManager.GetFieldData<int>( "ruptureState" );
+        array<lArray1d>& nodeToRupturedFaces = nodeManager.GetVariableOneToManyMap( "nodesToRupturedFaces" );
+        array<lArray1d>& edgesToRupturedFaces = edgeManager.GetVariableOneToManyMap( "edgesToRupturedFaces" );
+        array<integer>& faceRuptureState = faceManager.GetFieldData<int>( "ruptureState" );
 
 
         if( m_verbose )
@@ -1317,7 +1317,7 @@ void Fractunator::PerformFracture( const localIndex nodeID,
     if( m_verbose == 2 )
     {
     // nodeToEdge
-    Array1dT<lSet> tempNodesToEdges( nodeManager.m_numNodes );
+    array<lSet> tempNodesToEdges( nodeManager.m_numNodes );
 
     for( localIndex ke=0 ; ke<edgeManager.DataLengths() ; ++ke )
     {
@@ -1358,7 +1358,7 @@ void Fractunator::PerformFracture( const localIndex nodeID,
     if( m_verbose == 2 )
     {
     // nodeToFace
-    Array1dT<lSet> tempNodesToFaces( nodeManager.m_numNodes );
+    array<lSet> tempNodesToFaces( nodeManager.m_numNodes );
     for( localIndex kf=0 ; kf<faceManager.m_numFaces ; ++kf )
     {
       for( lArray1d::const_iterator b=faceManager.m_toNodesRelation[kf].begin() ;
@@ -1401,7 +1401,7 @@ void Fractunator::PerformFracture( const localIndex nodeID,
 
 
     // nodeToElement
-    Array1dT<std::set<std::pair< ElementRegionT*, localIndex > > > tempNodesToElems( nodeManager.m_numNodes );
+    array<std::set<std::pair< ElementRegionT*, localIndex > > > tempNodesToElems( nodeManager.m_numNodes );
     for( std::map< std::string, ElementRegionT >::iterator ielem=elementManager.m_ElementRegions.begin() ;
          ielem!=elementManager.m_ElementRegions.end() ; ++ielem )
     {
@@ -1443,7 +1443,7 @@ void Fractunator::PerformFracture( const localIndex nodeID,
 
 
     // edgeToFace
-    Array1dT<lSet> tempEdgeToFaces( edgeManager.DataLengths() );
+    array<lSet> tempEdgeToFaces( edgeManager.DataLengths() );
     for( localIndex kf=0 ; kf<faceManager.m_numFaces ; ++kf )
     {
       for( lArray1d::const_iterator b=faceManager.m_toEdgesRelation[kf].begin() ;
@@ -1479,7 +1479,7 @@ void Fractunator::PerformFracture( const localIndex nodeID,
 
     // faceToElement
     OneToOneRelation& parentFaceIndex = faceManager.GetOneToOneMap("parentIndex");
-    Array1dT<std::set<std::pair< ElementRegionT*, localIndex > > > tempFacesToElems( faceManager.m_numFaces );
+    array<std::set<std::pair< ElementRegionT*, localIndex > > > tempFacesToElems( faceManager.m_numFaces );
     for( std::map< std::string, ElementRegionT >::iterator ielem=elementManager.m_ElementRegions.begin() ;
          ielem!=elementManager.m_ElementRegions.end() ; ++ielem )
     {
@@ -1505,7 +1505,7 @@ void Fractunator::PerformFracture( const localIndex nodeID,
     {
       std::cout<<"m_FaceToElementMap["<<a<<"] = ( ";
 
-      for( Array1dT<std::pair< ElementRegionT*, localIndex > >::const_iterator ielem=faceManager.m_toElementsRelation[a].begin() ;
+      for( array<std::pair< ElementRegionT*, localIndex > >::const_iterator ielem=faceManager.m_toElementsRelation[a].begin() ;
            ielem!=faceManager.m_toElementsRelation[a].end() ; ++ielem )
       {
         if( tempFacesToElems[a].count(*ielem) == 0 )

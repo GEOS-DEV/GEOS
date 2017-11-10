@@ -80,7 +80,7 @@ public:
   OrderedVariableOneToManyRelation& m_contactToIntersectionPolygonPointsMap;
 
   ///stateless cache of the points comprising the contact patches
-  Array1dT<R1Tensor> m_intersectionPolygonPoints;
+  array<R1Tensor> m_intersectionPolygonPoints;
 
 private:
   // FOR DEFAULT VISUALIZATION

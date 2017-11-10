@@ -60,8 +60,8 @@ struct rcv{
 bool rowColumnOrder(const rcv& A, const rcv& B);
 bool columnRowOrder(const rcv& A, const rcv& B);
 
-void ConsolidateSparseArray(Array1dT<rcv>& K);
+void ConsolidateSparseArray(array<rcv>& K);
 
-void WriteSparseArrayToFile(std::string filename, const Array1dT<rcv>& K);
+void WriteSparseArrayToFile(std::string filename, const array<rcv>& K);
                        
 #endif

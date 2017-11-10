@@ -102,11 +102,11 @@ public:
 
   }
 
-  static void GetVariableNames( sArray1d&,
-                                 sArray1d& realNames,
-                                 sArray1d& ,
-                                 sArray1d& ,
-                                 sArray1d&  )
+  static void GetVariableNames( array<string>&,
+                                 array<string>& realNames,
+                                 array<string>& ,
+                                 array<string>& ,
+                                 array<string>&  )
   {
     realNames.push_back("shearToNormalStiffnessRatio");
     realNames.push_back("frictionCoefficient");
@@ -148,11 +148,11 @@ public:
   }
 
   void Serialize(const localIndex index,
-                  Array1dT<iArray1d*>& ,
-                  Array1dT<rArray1d*>& realVars,
-                  Array1dT<Array1dT<R1Tensor>*>& ,
-                  Array1dT<Array1dT<R2Tensor>*>& ,
-                  Array1dT<Array1dT<R2SymTensor>*>& ,
+                  array<array<integer>*>& ,
+                  array<array<real64>*>& realVars,
+                  array<array<R1Tensor>*>& ,
+                  array<array<R2Tensor>*>& ,
+                  array<array<R2SymTensor>*>& ,
                   localIndex& ,
                   localIndex& realVarCounts,
                   localIndex& ,
@@ -170,11 +170,11 @@ public:
 
 
   void  Deserialize( const localIndex index,
-                     const Array1dT<iArray1d*>& ,
-                  const Array1dT<rArray1d*>& realVars,
-                  const Array1dT<Array1dT<R1Tensor>*>& ,
-                  const Array1dT<Array1dT<R2Tensor>*>& ,
-                  const Array1dT<Array1dT<R2SymTensor>*>& ,
+                     const array<array<integer>*>& ,
+                  const array<array<real64>*>& realVars,
+                  const array<array<R1Tensor>*>& ,
+                  const array<array<R2Tensor>*>& ,
+                  const array<array<R2SymTensor>*>& ,
                   localIndex& ,
                   localIndex& realVarCounts,
                   localIndex& ,
@@ -339,11 +339,11 @@ public:
 
   }
 
-  static void GetVariableNames( sArray1d&,
-                                 sArray1d& realNames,
-                                 sArray1d& R1TensorNames,
-                                 sArray1d& ,
-                                 sArray1d&  )
+  static void GetVariableNames( array<string>&,
+                                 array<string>& realNames,
+                                 array<string>& R1TensorNames,
+                                 array<string>& ,
+                                 array<string>&  )
   {
     realNames.push_back("elasticStrainEnergy");
     realNames.push_back("dissipatedEnergy");
@@ -399,11 +399,11 @@ public:
   void Serialize(const localIndex index,
                   const unsigned int stride,
                   const localIndex elemNum,
-                  Array1dT<iArray1d*>& ,
-                  Array1dT<rArray1d*>& realVars,
-                  Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                  Array1dT<Array1dT<R2Tensor>*>& ,
-                  Array1dT<Array1dT<R2SymTensor>*>& ,
+                  array<array<integer>*>& ,
+                  array<array<real64>*>& realVars,
+                  array<array<R1Tensor>*>& R1Vars,
+                  array<array<R2Tensor>*>& ,
+                  array<array<R2SymTensor>*>& ,
                   localIndex& ,
                   localIndex& realVarCounts,
                   localIndex& R1TensorVarCounts,
@@ -428,11 +428,11 @@ public:
   void  Deserialize( const localIndex /*index*/,
                   const unsigned int stride,
                   const localIndex elemNum,
-                     const Array1dT<iArray1d*>& ,
-                  const Array1dT<rArray1d*>& realVars,
-                  const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                  const Array1dT<Array1dT<R2Tensor>*>& ,
-                  const Array1dT<Array1dT<R2SymTensor>*>& ,
+                     const array<array<integer>*>& ,
+                  const array<array<real64>*>& realVars,
+                  const array<array<R1Tensor>*>& R1Vars,
+                  const array<array<R2Tensor>*>& ,
+                  const array<array<R2SymTensor>*>& ,
                   localIndex& ,
                   localIndex& realVarCounts,
                   localIndex& R1TensorVarCounts,

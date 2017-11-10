@@ -15,7 +15,7 @@
 #include <fstream>
 
 template<int T>
-localIndex Fill(const localIndex num, rArray1d& radii, Array1dT<R1Tensor>& x)
+localIndex Fill(const localIndex num, array<real64>& radii, array<R1Tensor>& x)
 {
   StatisticalDistributionBaseT::InitializeRandom();
 
@@ -37,7 +37,7 @@ localIndex Fill(const localIndex num, rArray1d& radii, Array1dT<R1Tensor>& x)
 }
 
 template<int T>
-localIndex FillRegular(const localIndex numPerDim, rArray1d& radii, Array1dT<R1Tensor>& x)
+localIndex FillRegular(const localIndex numPerDim, array<real64>& radii, array<R1Tensor>& x)
 {
   StatisticalDistributionBaseT::InitializeRandom();
 
@@ -88,7 +88,7 @@ localIndex FillRegular(const localIndex numPerDim, rArray1d& radii, Array1dT<R1T
   return num;
 }
 
-bool Compare(const Array1dT<lArray1d>& truth, const Array1dT<lArray1d>& current)
+bool Compare(const array<lArray1d>& truth, const array<lArray1d>& current)
 {
   if (truth.size() != current.size())
     return false;
@@ -154,9 +154,9 @@ bool Compare(const Array1dT<lArray1d>& truth, const Array1dT<lArray1d>& current)
   return true;
 }
 
-void Sort(const localIndex type, const rArray1d& radii, const Array1dT<R1Tensor>& x,
+void Sort(const localIndex type, const array<real64>& radii, const array<R1Tensor>& x,
           const lSet& toResort,
-          Array1dT<lArray1d>& current, Array1dT<lSet>& currentInverse)
+          array<lArray1d>& current, array<lSet>& currentInverse)
 {
   static SpatialSorting::CellVerlet cellverlet;
   static SpatialSorting::CGRID cgrid;
@@ -211,8 +211,8 @@ int main(int* argc, char** argv)
   std::cout << "+++++++++++++++++++++++++++++++++++++++++\n";
 
   //setup the problem with a random distribution
-  rArray1d radii;
-  Array1dT<R1Tensor> x;
+  array<real64> radii;
+  array<R1Tensor> x;
   std::cout << "\n-> FILLING -- \n";
 
   const localIndex num = Fill<3>(80, radii, x);
@@ -220,8 +220,8 @@ int main(int* argc, char** argv)
   //exit(1);
 
   //check each sorter
-  Array1dT<lArray1d> current;
-  Array1dT<lSet> currentInverse;
+  array<lArray1d> current;
+  array<lSet> currentInverse;
   current.resize(num);
   currentInverse.resize(num);
   lSet toResort, toResortUpdate;
@@ -230,9 +230,9 @@ int main(int* argc, char** argv)
   {
     //get the truth
     std::cout << "\n-> GETTING THE TRUTH\n";
-    Array1dT<lArray1d> truth;
+    array<lArray1d> truth;
     {
-      Array1dT<lSet> truthInverse;
+      array<lSet> truthInverse;
       truth.resize(num);
       truthInverse.resize(num);
       Sort(0, radii, x, toResort, truth, truthInverse);
@@ -257,9 +257,9 @@ int main(int* argc, char** argv)
 
     //get the truth
     std::cout << "\n-> GETTING THE TRUTH FOR UPDATE\n";
-    Array1dT<lArray1d> truthUpdate;
+    array<lArray1d> truthUpdate;
     {
-      Array1dT<lSet> truthInverseUpdate;
+      array<lSet> truthInverseUpdate;
       truthUpdate.resize(num);
       truthInverseUpdate.resize(num);
       Sort(0, radii, x, toResort, truthUpdate, truthInverseUpdate);

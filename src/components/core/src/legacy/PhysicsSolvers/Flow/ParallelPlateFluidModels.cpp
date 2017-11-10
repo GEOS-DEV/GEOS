@@ -126,8 +126,8 @@ void HerschelBulkleyParallelPlateFluidModel::ReadXML( TICPP::HierarchicalDataNod
 	m_phi = m_phiM/m_M;
 
 	/* build lookup table */
-    rArray1d xs;
-    rArray1d values;
+    array<real64> xs;
+    array<real64> values;
     xs.resize(16);
     values.resize(16);
     for(int i =0 ; i < 16; i++){

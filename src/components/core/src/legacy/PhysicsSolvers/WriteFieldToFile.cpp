@@ -103,7 +103,7 @@ void WriteFieldToFile::ReadXML(TICPP::HierarchicalDataNode* const hdn)
   m_objectType = PhysicalDomainT::GetObjectDataStructureConditionKey(objectTypeStr);
 
   m_fieldNames = hdn->GetStringVector("fieldname"); Trim(m_fieldNames);
-  sArray1d fieldTypesStrs = hdn->GetStringVector("fieldtype");
+  array<string> fieldTypesStrs = hdn->GetStringVector("fieldtype");
   m_fieldTypes.resize(fieldTypesStrs.size());
   for( unsigned i = 0; i < fieldTypesStrs.size(); ++i)
       m_fieldTypes[i] = fromString<FieldType>(fieldTypesStrs[i]);
@@ -137,7 +137,7 @@ void WriteFieldToFile::ReadXML(TICPP::HierarchicalDataNode* const hdn)
   }
 
   {
-    sArray1d tempSetName;
+    array<string> tempSetName;
     tempSetName = hdn->GetStringVector("setname");
     if (!tempSetName.empty())
       throw GPException("Error WriteFieldToFile: 'setname' is no longer supported.  Use 'setnames' instead.");
@@ -180,7 +180,7 @@ double WriteFieldToFile::TimeStep( const realT& time,
                                  const realT& dt ,
                                  const int cycleNumber,
                                  PhysicalDomainT& domain,
-                                 const sArray1d& namesOfSolverRegions ,
+                                 const array<string>& namesOfSolverRegions ,
                                  SpatialPartition& partition,
                                  FractunatorBase* const fractunator)
 {  
@@ -257,7 +257,7 @@ double WriteFieldToFile::TimeStep( const realT& time,
 **/
 void WriteFieldToFile::SetMaxStableTimeStep( const realT& time,
                                              PhysicalDomainT& ,
-                                             const sArray1d& namesOfSolverRegions,
+                                             const array<string>& namesOfSolverRegions,
                                              SpatialPartition& partition __attribute__((unused)) )
 {
 

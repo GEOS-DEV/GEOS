@@ -107,32 +107,32 @@ private:
 
     /// returns reference to specified field
     template< FieldKey FIELDKEY>
-    typename dataRepository::ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype GetFieldData( )
+    typename dataRepository::ViewWrapper< array< typename Field<FIELDKEY>::Type > >::rtype GetFieldData( )
     {
-      return const_cast<typename dataRepository::ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype>( static_cast<const ObjectManagerBase&>(*this).GetFieldData<FIELDKEY>());
+      return const_cast<typename dataRepository::ViewWrapper< array< typename Field<FIELDKEY>::Type > >::rtype>( static_cast<const ObjectManagerBase&>(*this).GetFieldData<FIELDKEY>());
     }
 
 
     /// returns const reference to specified field
     template< FieldKey FIELDKEY>
-    typename dataRepository::ViewWrapper< Array1dT< typename Field<FIELDKEY>::Type > >::rtype_const GetFieldData( ) const
+    typename dataRepository::ViewWrapper< array< typename Field<FIELDKEY>::Type > >::rtype_const GetFieldData( ) const
     {
-      return this->getData< Array1dT< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
+      return this->getData< array< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
     }
 
 
     /// returns reference to specified field
     template< typename TYPE >
-    typename dataRepository::ViewWrapper< Array1dT< TYPE > >::rtype GetFieldData( const std::string& fieldName )
+    typename dataRepository::ViewWrapper< array< TYPE > >::rtype GetFieldData( const std::string& fieldName )
     {
-      return const_cast<typename dataRepository::ViewWrapper<Array1dT<TYPE> >::rtype>( static_cast<const ObjectManagerBase&>(*this).GetFieldData<TYPE>(fieldName));
+      return const_cast<typename dataRepository::ViewWrapper<array<TYPE> >::rtype>( static_cast<const ObjectManagerBase&>(*this).GetFieldData<TYPE>(fieldName));
     }
 
     /// returns const reference to specified field
     template< typename TYPE >
-    typename dataRepository::ViewWrapper< Array1dT< TYPE > >::rtype_const GetFieldData( const std::string& name ) const
+    typename dataRepository::ViewWrapper< array< TYPE > >::rtype_const GetFieldData( const std::string& name ) const
     {
-      return this->getData< Array1dT<TYPE> >( name );
+      return this->getData< array<TYPE> >( name );
     }
 
 

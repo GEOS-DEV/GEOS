@@ -110,11 +110,11 @@ public:
   }
 
   template< typename TYPE >
-  void write( const Array1dT<TYPE>& array )
+  void write( const array<TYPE>& arr )
   {
-    const typename Array1dT<TYPE>::size_type length = array.size();
+    const typename array<TYPE>::size_type length = arr.size();
     this->write( length );
-    this->write( array.data(), array.size() );
+    this->write( arr.data(), arr.size() );
   }
 
   template< typename TYPE >
@@ -130,24 +130,24 @@ public:
 
 
   template< typename TYPE >
-  void write( const Array2dT<TYPE>& array )
+  void write( const Array2dT<TYPE>& arr )
   {
-    const typename Array2dT<TYPE>::size_type length = array.size();
+    const typename Array2dT<TYPE>::size_type length = arr.size();
     this->write( length );
 
-    const typename Array2dT<TYPE>::size_type dimension[2] = { array.Dimension(0), array.Dimension(1) };
+    const typename Array2dT<TYPE>::size_type dimension[2] = { arr.Dimension(0), arr.Dimension(1) };
     this->write( dimension, 2 );
-    this->write( array.data(), array.size() );
+    this->write( arr.data(), arr.size() );
   }
 
 
   template< typename TYPE >
-  void write( const Array1dT<Array1dT<TYPE> >& array )
+  void write( const array<array<TYPE> >& arr )
   {
-    const typename Array1dT<Array1dT<TYPE> >::size_type length0 = array.size();
+    const typename array<array<TYPE> >::size_type length0 = arr.size();
     this->write( length0 );
 
-    for( typename Array1dT<Array1dT<TYPE> >::const_iterator i=array.begin() ; i!=array.end() ; ++i )
+    for( typename array<array<TYPE> >::const_iterator i=arr.begin() ; i!=arr.end() ; ++i )
     {
       this->write(*i);
     }
@@ -155,13 +155,13 @@ public:
 
 
   template< typename TYPE >
-  void write( const Array1dT<std::set<TYPE> >& array )
+  void write( const array<std::set<TYPE> >& arr )
   {
 
-    const typename Array1dT<std::set<TYPE> >::size_type length0 = array.size();
-    this->write( reinterpret_cast<const char*>(&length0), sizeof(typename Array1dT<std::set<TYPE> >::size_type) );
+    const typename array<std::set<TYPE> >::size_type length0 = arr.size();
+    this->write( reinterpret_cast<const char*>(&length0), sizeof(typename array<std::set<TYPE> >::size_type) );
 
-    for( typename Array1dT<std::set<TYPE> >::const_iterator i=array.begin() ; i!=array.end() ; ++i )
+    for( typename array<std::set<TYPE> >::const_iterator i=arr.begin() ; i!=arr.end() ; ++i )
     {
       this->write( *i );
     }
@@ -291,7 +291,7 @@ public:
     std::string::size_type length;
     this->read( length );
 
-    Array1dT<char> readstring;
+    array<char> readstring;
     readstring.resize(length);
     this->read( readstring.data(), readstring.size() );
 
@@ -300,27 +300,27 @@ public:
   }
 
   template< typename TYPE >
-  void read( Array1dT<TYPE>& array, const bool realloc = true )
+  void read( array<TYPE>& arr, const bool realloc = true )
   {
-    const typename Array1dT<TYPE>::size_type length = array.size();
-    typename Array1dT<TYPE>::size_type readLength;
+    const typename array<TYPE>::size_type length = arr.size();
+    typename array<TYPE>::size_type readLength;
     this->read( readLength );
 
     if( readLength != length )
     {
      if( realloc )
      {
-       array.resize(readLength);
+       arr.resize(readLength);
      }
      else
      {
 #ifdef USE_ATK
-      SLIC_ERROR( "BinStream::read(Array1dT<TYPE>& array): length mismatch\n");
+      SLIC_ERROR( "BinStream::read(array<TYPE>& arr): length mismatch\n");
 #endif
      }
     }
 
-    this->read( array.data(), array.size() );
+    this->read( arr.data(), arr.size() );
   }
 
 
@@ -346,18 +346,18 @@ public:
   }
 
   template< typename TYPE >
-  void read( Array2dT<TYPE>& array, const bool realloc = true )
+  void read( Array2dT<TYPE>& arr, const bool realloc = true )
   {
-    const typename Array2dT<TYPE>::size_type length = array.size();
+    const typename Array2dT<TYPE>::size_type length = arr.size();
     typename Array2dT<TYPE>::size_type readLength;
     this->read( readLength );
     if( readLength != length ) {
 #ifdef USE_ATK
-      SLIC_ERROR( "BinStream::read(Array2dT<TYPE>& array): length mismatch\n");
+      SLIC_ERROR( "BinStream::read(Array2dT<TYPE>& arr): length mismatch\n");
 #endif
     }
 
-    size_t dimension[2] = { array.Dimension(0), array.Dimension(1) };
+    size_t dimension[2] = { arr.Dimension(0), arr.Dimension(1) };
     size_t readDimension[2];
     this->read( readDimension, 2 );
 
@@ -365,42 +365,42 @@ public:
     {
       if( realloc )
       {
-        array.resize2( readDimension[0], readDimension[1] );
+        arr.resize2( readDimension[0], readDimension[1] );
       }
       else
       {
 #ifdef USE_ATK
-        SLIC_ERROR( "BinStream::read(Array2dT<TYPE>& array): dimension mismatch\n");
+        SLIC_ERROR( "BinStream::read(Array2dT<TYPE>& arr): dimension mismatch\n");
 #endif
       }
     }
 
-    this->read( array.data(), array.size() );
+    this->read( arr.data(), arr.size() );
   }
 
 
   template< typename TYPE >
-  void read( Array1dT<Array1dT<TYPE> >& array, const bool realloc = true )
+  void read( array<array<TYPE> >& arr, const bool realloc = true )
   {
-    const typename Array1dT<Array1dT<TYPE> >::size_type length = array.size();
-    typename Array1dT<Array1dT<TYPE> >::size_type readLength;
+    const typename array<array<TYPE> >::size_type length = arr.size();
+    typename array<array<TYPE> >::size_type readLength;
     this->read( readLength );
 
     if( readLength != length )
     {
       if( realloc )
       {
-        array.resize(readLength);
+        arr.resize(readLength);
       }
       else
       {
 #ifdef USE_ATK
-        SLIC_ERROR( "BinStream::read(Array1dT<Array1dT<TYPE> >& array): length mismatch\n");
+        SLIC_ERROR( "BinStream::read(array<array<TYPE> >& arr): length mismatch\n");
 #endif
       }
     }
 
-    for( typename Array1dT<Array1dT<TYPE> >::iterator i=array.begin() ; i!=array.end() ; ++i )
+    for( typename array<array<TYPE> >::iterator i=arr.begin() ; i!=arr.end() ; ++i )
     {
       read( *i, realloc );
     }
@@ -408,26 +408,26 @@ public:
 
 
   template< typename TYPE >
-  void read( Array1dT<std::set<TYPE> >& array, const bool realloc = true )
+  void read( array<std::set<TYPE> >& arr, const bool realloc = true )
   {
-    const typename Array1dT<std::set<TYPE> >::size_type length = array.size();
-    typename Array1dT<std::set<TYPE> >::size_type readLength;
+    const typename array<std::set<TYPE> >::size_type length = arr.size();
+    typename array<std::set<TYPE> >::size_type readLength;
     this->read( readLength );
 
     if( readLength != length )
     {
       if( realloc )
       {
-        array.resize(readLength);
+        arr.resize(readLength);
       }
       else
       {
 #ifdef USE_ATK
-        SLIC_ERROR( "BinStream::read(Array1dT<std::set<TYPE> >& array): length mismatch\n");
+        SLIC_ERROR( "BinStream::read(array<std::set<TYPE> >& arr): length mismatch\n");
 #endif
       }
     }
-    for( typename Array1dT<std::set<TYPE> >::iterator i=array.begin() ; i!=array.end() ; ++i )
+    for( typename array<std::set<TYPE> >::iterator i=arr.begin() ; i!=arr.end() ; ++i )
     {
       this->read( *i, realloc );
     }

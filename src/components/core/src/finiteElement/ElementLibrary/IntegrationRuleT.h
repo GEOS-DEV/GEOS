@@ -55,8 +55,8 @@ public:
   virtual ~IntegrationRuleT();
 
 
-  void CalculateShapeFunctionDerivatives( const Array1dT<R1Tensor>& X_local,
-                                          Array1dT<R1Tensor>& dNdX,
+  void CalculateShapeFunctionDerivatives( const array<R1Tensor>& X_local,
+                                          array<R1Tensor>& dNdX,
                                           realT& detJ );
 
 

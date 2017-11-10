@@ -90,11 +90,11 @@ namespace GPAC_IO
     localIndex numNodeSets; // Number of nodes - init (A) set (B)
     std::map<std::string, localIndex> numElementsInRegion; // Number of elements in a region
     std::map<std::string, std::string> elementRegionNameTypes; // Map of element region names to their types
-    sArray1d elementRegionNames;
-    sArray1d elementRegionTypes;
+    array<string> elementRegionNames;
+    array<string> elementRegionTypes;
     gArray2d elemToNodes;
 
-    Array1dT<R1Tensor> nodalPositions;
+    array<R1Tensor> nodalPositions;
     std::map<globalIndex,R1Tensor> nodalPositionsMap;
     std::map<globalIndex,R1Tensor> potentialNodalPositionsMap;
     std::map<globalIndex,gArray1d> elemToNodesMap;
@@ -106,8 +106,8 @@ namespace GPAC_IO
     // these arrays indicate if the objects status in the computational domain. The values are:
     //  0 = Not in the domain
     //  1 = In the domain
-    iArray1d isElemInDomain;
-    iArray1d isNodeInDomain;
+    array<integer> isElemInDomain;
+    array<integer> isNodeInDomain;
     std::map<std::string, gArray1d> elemsInRegion;
     std::map<std::string, globalIndex> maxNumElementsInRegion;
     std::streampos beginElems;

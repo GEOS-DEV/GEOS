@@ -227,7 +227,7 @@ void MeshGenerator::GenerateElementRegions( PhysicalDomainT * domain )
 {
   lvector numElements;
 
-  for( sArray1d::size_type r=0 ; r<m_regionNames.size() ; ++r )
+  for( array<string>::size_type r=0 ; r<m_regionNames.size() ; ++r )
   {
     numElements.push_back( 0 );
   }
@@ -257,7 +257,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
   }
 
   // find elemCenters for even uniform element sizes
-  Array1dT<rArray1d> elemCenterCoords(3);
+  array<array<real64>> elemCenterCoords(3);
   for( int i=0 ; i<3 ; ++i )
   {
     m_numElemsTotal[i] = 0;
@@ -267,7 +267,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
     }
 
     elemCenterCoords[i].resize(m_numElemsTotal[i]);
-    rArray1d elemCenterCoordsLocal(m_numElemsTotal[i]);
+    array<real64> elemCenterCoordsLocal(m_numElemsTotal[i]);
     for( int k=0 ; k<m_numElemsTotal[i] ; ++k )
     {
       elemCenterCoordsLocal[k] = m_min[i] + ( m_max[i] - m_min[i] ) * (k+0.5) / m_numElemsTotal[i];
@@ -322,8 +322,8 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
 
 
-  iArray1d firstElemIndexForBlockInPartition[3];
-  iArray1d lastElemIndexForBlockInPartition[3];
+  array<integer> firstElemIndexForBlockInPartition[3];
+  array<integer> lastElemIndexForBlockInPartition[3];
 
   for( int dir=0 ; dir<3 ; ++dir )
   {
@@ -354,7 +354,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
 
   // TODO This needs to be rewritten for dimensions lower than 3.
-  sArray1d::const_iterator iterRegion=m_regionNames.begin();
+  array<string>::const_iterator iterRegion=m_regionNames.begin();
   for( unsigned int iblock=0 ; iblock<m_nElems[0].size() ; ++iblock )
   {
     for( unsigned int jblock=0 ; jblock<m_nElems[1].size() ; ++jblock )
@@ -499,8 +499,8 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
   {
     lvector numElements;
-    sArray1d elementRegionNames;
-    sArray1d elementTypes;
+    array<string> elementRegionNames;
+    array<string> elementTypes;
     std::map<std::string,localIndex> localElemIndexInRegion;
 
     for( std::map< std::string, int >::iterator iterNumElemsInRegion=numElemsInRegions.begin() ;
@@ -608,7 +608,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
                   localIndex& localElemIndex = localElemIndexInRegion[*iterRegion];
                   elemRegion.m_localToGlobalMap[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
 
-                  iArray1d nodeIDInBox(elemRegion.m_numNodesPerElem);
+                  array<integer> nodeIDInBox(elemRegion.m_numNodesPerElem);
 
                   GetElemToNodesRelationInBox ( m_elementType[iR], index, iEle, nodeIDInBox.data(), elemRegion.m_numNodesPerElem);
 

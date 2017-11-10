@@ -92,7 +92,7 @@ public:
                 const realT& dt,
                 const int cycleNumber,
                 PhysicalDomainT& domain,
-                const sArray1d& namesOfSolverRegions,
+                const array<string>& namesOfSolverRegions,
                 SpatialPartition& partition,
                 FractunatorBase* const fractunator);
 
@@ -100,14 +100,14 @@ public:
                      const realT& dt,
                      const int cycleNumber,
                      PhysicalDomainT& domain,
-                     const sArray1d& namesOfSolverRegions,
+                     const array<string>& namesOfSolverRegions,
                      SpatialPartition& partition);
 
 //  double TimeStep(const realT& time,
 //                const realT& dt,
 //                const int cycleNumber,
 //                PhysicalDomainT& domain,
-//                const sArray1d& namesOfSolverRegions,
+//                const array<string>& namesOfSolverRegions,
 //                SpatialPartition& partition,
 //                FractunatorBase* const fractunator,
 //                XfemManager* elementSplitter);
@@ -128,7 +128,7 @@ public:
 
   void PostProcess (PhysicalDomainT& domain,
                     SpatialPartition& partition,
-                    const sArray1d& namesOfSolverRegions);
+                    const array<string>& namesOfSolverRegions);
   void ApplyTemperatureBC(PhysicalDomainT& domain, realT time);
 
   enum TimeIntegrationEnum
@@ -182,7 +182,7 @@ public:
                                      SpatialPartition& partition,
                                      int& numLocalRows,
                                      int& numGlobalRows,
-                                     iArray1d& localIndices,
+                                     array<integer>& localIndices,
                                      int offset );
 
   virtual void SetSparsityPattern( PhysicalDomainT& domain );
@@ -210,8 +210,8 @@ public:
                             rArray2d& invMat);
 
   void MultiplyArray(const rArray2d& A,
-                     const rArray1d& B,
-                     rArray1d& C);
+                     const array<real64>& B,
+                     array<real64>& C);
 
   void CalculateNodalForces ( NodeManager& nodeManager,
                               ElementRegionT& elemRegion,
@@ -231,10 +231,10 @@ public:
 
   /*
   realT AssembleFluidPressureContributions( PhysicalDomainT& domain,
-                                           const iArray1d& deformationTrilinosIndex,
-                                           const iArray1d& flowTrilinosIndex,
-                                           const Array1dT< rArray1d >& dwdu,
-                                           const rArray1d& dwdw,
+                                           const array<integer>& deformationTrilinosIndex,
+                                           const array<integer>& flowTrilinosIndex,
+                                           const array< array<real64> >& dwdu,
+                                           const array<real64>& dwdw,
                                            const int flowDofOffset );
 */
 
@@ -289,10 +289,10 @@ public:
   realT m_refTemperature;
   realT m_defaultCTE;
   int m_useNodalTemperature;
-  sArray1d m_thermalRegionNames;
+  array<string> m_thermalRegionNames;
   int m_relax = 0;
 //  int m_reassembleMatrix = 1;
-//  Array1dT< std::tuple< localIndex,localIndex,realT > > m_originalMatrixValues;
+//  array< std::tuple< localIndex,localIndex,realT > > m_originalMatrixValues;
 
   virtual void TimeStepImplicitSetup( const realT& time,
                                        const realT& dt ,
@@ -306,12 +306,12 @@ public:
 
 protected:
   int m_tiedNodesFlag;
-  Array1dT<lSet> m_KinematicConstraintNodes;
+  array<lSet> m_KinematicConstraintNodes;
   realT m_tiedNodeNormalRuptureStress;
   realT m_tiedNodeShearRuptureStress;
   realT m_tiedNodeTolerance;
 
-  iArray1d dummyDof;
+  array<integer> dummyDof;
   
 
   realT m_cfl;
@@ -334,7 +334,7 @@ private:
   virtual void TimeStepExplicitDynamic( const realT& time,
                                         const realT& dt ,
                                         PhysicalDomainT& domain,
-                                        const sArray1d& namesOfSolverRegions,
+                                        const array<string>& namesOfSolverRegions,
                                         SpatialPartition& partition );
 
 
@@ -342,7 +342,7 @@ private:
   virtual realT TimeStepImplicit( const realT& time,
                                   const realT& dt ,
                                   PhysicalDomainT& domain,
-                                  const sArray1d& namesOfSolverRegions,
+                                  const array<string>& namesOfSolverRegions,
                                   SpatialPartition& partition,
                                   FractunatorBase* const fractunator );
 
@@ -366,7 +366,7 @@ public:  // Fu note: We need to access this from the new hydrofrac solver, which
 
   virtual void ProcessElementRegions( NodeManager& nodeManager,
                                       ElementManagerT& elemManager,
-                                      const sArray1d& namesOfSolverRegions,
+                                      const array<string>& namesOfSolverRegions,
                                       const realT dt  ) ;
 
   void SnapshotNodalDisplacement( NodeManager& nodeManager) ;
@@ -400,10 +400,10 @@ private:
                                                       const Array2dT<R1Tensor>& dNdX,
                                                       const realT* const detJ,
                                                       R2SymTensor const * const refStress,
-                                                      Array1dT<R1Tensor> const & u,
-                                                      Array1dT<R1Tensor> const & uhat,
-                                                      Array1dT<R1Tensor> const & uhattilde,
-                                                      Array1dT<R1Tensor> const & vtilde,
+                                                      array<R1Tensor> const & u,
+                                                      array<R1Tensor> const & uhat,
+                                                      array<R1Tensor> const & uhattilde,
+                                                      array<R1Tensor> const & vtilde,
                                                       realT const dt,
                                                       Epetra_SerialDenseMatrix& dRdU,
                                                       Epetra_SerialDenseVector& R) = 0;

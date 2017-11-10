@@ -1,6 +1,6 @@
 //FUNCTION_BEGIN_PARSE
 virtual_void
-LinearElastic::PreSetValues(const sArray1d& names)
+LinearElastic::PreSetValues(const array<string>& names)
 {
   //reset mechanical constants
   for (localIndex a = 0; a < m_parameterData.size(); ++a)
@@ -15,7 +15,7 @@ LinearElastic::PreSetValues(const sArray1d& names)
 
 //FUNCTION_BEGIN_PARSE
 virtual_void
-LinearElastic::PostSetValues(const sArray1d& names)
+LinearElastic::PostSetValues(const array<string>& names)
 {
   //recalculate mechanical parameters that were not already explicitly set
   for(localIndex a = 0; a < m_parameterData.size(); a++)

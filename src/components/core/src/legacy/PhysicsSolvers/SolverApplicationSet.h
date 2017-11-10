@@ -48,7 +48,7 @@
 
 #include "Common/Common.h"
 
-typedef std::pair< std::string, sArray1d > SolverApplication;
+typedef std::pair< std::string, array<string> > SolverApplication;
 
 class SolverApplicationSet
 {

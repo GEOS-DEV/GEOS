@@ -65,7 +65,7 @@ public:
                  const realT& dt,
                  const int cycleNumber,
                  PhysicalDomainT& domain,
-                 const sArray1d& namesOfSolverRegions,
+                 const array<string>& namesOfSolverRegions,
                  SpatialPartition& partition,
                  FractunatorBase* const fractunator );
 
@@ -83,8 +83,8 @@ private:
   
   ProblemManagerT* m_problemManagerPtr;
   std::map<std::string,SolverBase*>* m_solverMapPtr;
-  sArray1d m_SolverNames;
-  std::vector<sArray1d >m_namesOfSolverRegions;
+  array<string> m_SolverNames;
+  std::vector<array<string> >m_namesOfSolverRegions;
 
   realT m_dt;  // maximum substep timestep
   unsigned m_depth;

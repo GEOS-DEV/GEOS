@@ -78,7 +78,7 @@ public:
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject  = NULL) { (void)referenceObject; }
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  = NULL) { (void)referenceObject; }
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager ,
-                                                         Array1dT<gArray1d>& objectToCompositionObject  )
+                                                         array<gArray1d>& objectToCompositionObject  )
   {
     (void)compositionObjectManager;
     (void)objectToCompositionObject;
@@ -320,7 +320,7 @@ public:
    */
   inline void Calculate_dqdt(const localIndex a, const realT* const qh, realT* const dqdt) const
   {
-    const Array1dT<R1Tensor>& rotationalVelocity   = GetFieldData<FieldInfo::rotationalVelocity> ();
+    const array<R1Tensor>& rotationalVelocity   = GetFieldData<FieldInfo::rotationalVelocity> ();
 
     //dq[0] = dot([-q1, -q2, -q3], [w0, w1, w2])
     dqdt[0] = -1. * (qh[1] * rotationalVelocity[a][0] + qh[2]

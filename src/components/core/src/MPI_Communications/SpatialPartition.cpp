@@ -208,7 +208,7 @@ int SpatialPartition::GetColor()
 ////   gArray1d& edgeGlobalIds = domain.m_feEdgeManager.m_localToGlobalMap;
 //
 //   std::map<globalIndex,localIndex>& nodeGlobalToLocalMap = domain.m_feNodeManager.m_globalToLocalMap;
-//   Array1dT< R1Tensor >& refPositions = *(domain.m_feNodeManager.m_refposition);
+//   array< R1Tensor >& refPositions = *(domain.m_feNodeManager.m_refposition);
 //
 //   for(unsigned int i =0; i < m_periodicSets.size();++i){
 //     int dimension = m_periodicSets[i].m_dimension;
@@ -220,7 +220,7 @@ int SpatialPartition::GetColor()
 //       // Reset global id numbers
 //       ///////////////////////////
 //
-//       sArray1d& setnames = m_periodicSets[i].m_setNames;
+//       array<string>& setnames = m_periodicSets[i].m_setNames;
 //       lSet* theSets[2];
 //       theSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //       theSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
@@ -232,7 +232,7 @@ int SpatialPartition::GetColor()
 //         // Multiple partitions
 //         //--------------------
 //
-//         Array1dT<int> nbr_coords = m_coords;
+//         array<int> nbr_coords = m_coords;
 //         if(m_coords[dimension] == 0){
 //           nbr_coords[dimension] = m_Partitions[dimension]-1;
 //         } else {
@@ -397,7 +397,7 @@ int SpatialPartition::GetColor()
 //    // single partition
 //    if(m_Partitions[dimension]==1){
 //
-//      sArray1d& setnames = m_periodicSets[ps].m_setNames;
+//      array<string>& setnames = m_periodicSets[ps].m_setNames;
 //      lSet* theNodeSets[2];
 //      theNodeSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //      theNodeSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
@@ -550,7 +550,7 @@ int SpatialPartition::GetColor()
 //                                                         const int elementGhostingDepth )
 //{
 //
-//  Array1dT<PhysicalDomainT::ObjectDataStructureKeys> objectNames;
+//  array<PhysicalDomainT::ObjectDataStructureKeys> objectNames;
 //  NeighborCommunication::SyncNames(objectNames);
 //
 //
@@ -571,7 +571,7 @@ int SpatialPartition::GetColor()
 //      realT myMid = 0.5*(myMax+myMin);
 //      realT gridLength = m_gridSize[dimension];
 //
-//      sArray1d& setnames = m_periodicSets[ps].m_setNames;
+//      array<string>& setnames = m_periodicSets[ps].m_setNames;
 //      lSet* theNodeSets[2];
 //      theNodeSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //      theNodeSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
@@ -724,7 +724,7 @@ int SpatialPartition::GetColor()
 //        // create new nodes
 //        ///////////////////
 //        m_domain->m_feNodeManager.resize(firstNodeIndex+numNewNodes);
-//        Array1dT<R1Tensor>& referencePosition = m_domain->m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
+//        array<R1Tensor>& referencePosition = m_domain->m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
 //
 //        for(unsigned  kn = firstNodeIndex; kn < m_domain->m_feNodeManager.DataLengths();++kn){
 //            localIndex oldNode = oldNodeMap[kn];
@@ -881,14 +881,14 @@ int SpatialPartition::GetColor()
 //  if(isSinglePartition){
 //
 //    const localIndex n = NeighborCommunication::NumberOfSyncNames();
-//    Array1dT<PhysicalDomainT::ObjectDataStructureKeys> objectNames;
+//    array<PhysicalDomainT::ObjectDataStructureKeys> objectNames;
 //    NeighborCommunication::SyncNames(objectNames);
 //
 //    for(localIndex i = 0; i < n; ++i){
 //
 //      if(objectNames[i] != PhysicalDomainT::FiniteElementElementManager)
 //      {
-//        Array1dT<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr
+//        array<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr
 //            = domain.GetObjectDataStructure(objectNames[i]).GetFieldData<FieldInfo::ghostRank>();
 //        ObjectDataStructureBaseT& object =  domain.GetObjectDataStructure(objectNames[i]);
 //
@@ -917,7 +917,7 @@ int SpatialPartition::GetColor()
 //        {
 //          const std::string& elemRegionName = iregion->first;
 //          ElementRegionT& elemRegion = iregion->second;
-//          Array1dT<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr = elemRegion.GetFieldData<FieldInfo::ghostRank>();
+//          array<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr = elemRegion.GetFieldData<FieldInfo::ghostRank>();
 //
 //
 //          gArray1d& localToGlobalMap = elemRegion.m_localToGlobalMap;
@@ -949,7 +949,7 @@ int SpatialPartition::GetColor()
 // *
 //**/
 //void SpatialPartition::CorrectReferencePositionsForPeriodicBoundaries(PhysicalDomainT& domain){
-//  Array1dT< R1Tensor >& refPositions = *(domain.m_feNodeManager.m_refposition);
+//  array< R1Tensor >& refPositions = *(domain.m_feNodeManager.m_refposition);
 //
 //  for(unsigned int i =0; i < m_periodicSets.size();++i){
 //
@@ -1040,7 +1040,7 @@ void SpatialPartition::AddNeighbors(const unsigned int idim,
       MPI_Cart_rank(cartcomm, ncoords, &rank);
       m_neighbors.back().Initialize( rank, this->m_rank, this->m_size );
 
-//      Array1dT<int> nbrcoords(nsdof);
+//      array<int> nbrcoords(nsdof);
 //      for(unsigned int i =0; i < nsdof; ++i) nbrcoords[i] = ncoords[i];
 //      neighborCommPtrIndx[nbrcoords] = m_neighbors.size()-1;
     }
@@ -1198,7 +1198,7 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 //
 //void SpatialPartition::UpdatePartitionBoundingBox(NodeManager& nodeManager)
 //{
-//  const iArray1d& isGhost = nodeManager.GetFieldData<FieldInfo::ghostRank>();
+//  const array<integer>& isGhost = nodeManager.GetFieldData<FieldInfo::ghostRank>();
 //  m_xBoundingBoxMin = (*nodeManager.m_refposition)[0];
 //  m_xBoundingBoxMin += (*nodeManager.m_displacement)[0];
 //  m_xBoundingBoxMax = m_xBoundingBoxMin;
@@ -1293,7 +1293,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
 
       m_PartitionLocations[i].resize(nlocl);
       localIndex j = 0;
-      for(rArray1d::iterator it = m_PartitionLocations[i].begin(); it != m_PartitionLocations[i].end(); ++it, ++j)
+      for(array<real64>::iterator it = m_PartitionLocations[i].begin(); it != m_PartitionLocations[i].end(); ++it, ++j)
       {
         *it = (j+1) * m_blockSize(i);
       }

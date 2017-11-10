@@ -96,7 +96,7 @@ m_relatedObject(copiedRelationship.m_relatedObject)
 typedef InterObjectRelation<localIndex_array> OneToOneRelation;
 typedef InterObjectRelation<lArray2d> FixedOneToManyRelation;
 typedef InterObjectRelation<array<localIndex_array> > OrderedVariableOneToManyRelation;
-typedef InterObjectRelation<Array1dT<lSet> > UnorderedVariableOneToManyRelation;
+typedef InterObjectRelation<array<lSet> > UnorderedVariableOneToManyRelation;
 
 typedef InterObjectRelation<array<array<localIndex_array> > > OrderedVariableOneToManyToManyRelation;
 

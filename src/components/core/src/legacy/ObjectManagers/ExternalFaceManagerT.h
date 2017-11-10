@@ -78,8 +78,8 @@ public:
 
   void Initialize(  ) {}
 
-  virtual void DeserializeObjectField(const std::string& name, const rArray1d& field);
-  virtual void DeserializeObjectFields(const sArray1d& names, const Array1dT<rArray1d>& fields);
+  virtual void DeserializeObjectField(const std::string& name, const array<real64>& field);
+  virtual void DeserializeObjectFields(const array<string>& names, const array<array<real64>>& fields);
 
   void erase( const localIndex i );
   globalIndex resize( const localIndex size, const bool assignGlobals = false );
@@ -87,7 +87,7 @@ public:
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject  = NULL) {}
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  = NULL) {}
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager ,
-                                                         Array1dT<gArray1d>& objectToCompositionObject  )
+                                                         array<gArray1d>& objectToCompositionObject  )
   {
     (void)compositionObjectManager;
     (void)objectToCompositionObject;
@@ -173,14 +173,14 @@ public:
   void UpdateGeometricContactProperties(const realT dt,
                                           PhysicalDomainT& domain)
   {
-    Array1dT<Array1dT<R1Tensor> > xs;
+    array<array<R1Tensor> > xs;
     xs.resize(this->size());
     UpdateGeometricContactProperties(dt, domain, xs);
   }
 
   void UpdateGeometricContactProperties(const realT dt,
                                         PhysicalDomainT& domain,
-                                        Array1dT<Array1dT<R1Tensor> >& xs,
+                                        array<array<R1Tensor> >& xs,
                                         const bool updateFESoln = true);
 
   void SetExcludeFromContact( const NodeManager& nodeManager, bool reset );
@@ -188,7 +188,7 @@ public:
   void UpdateAndApplyContactStresses( StableTimeStep& maxdt,
                                       const realT dt,
                                       PhysicalDomainT& domain,
-                                      const Array1dT<Array1dT<R1Tensor> >& xs);
+                                      const array<array<R1Tensor> >& xs);
 
   inline bool AutoContact() const { return m_autoContact; }
 
@@ -229,22 +229,22 @@ private:
 
   void UpdateGeometricContactPropertiesSub(const realT dt,
                                         PhysicalDomainT& domain,
-                                        const Array1dT<Array1dT<R1Tensor> >& xs);
+                                        const array<array<R1Tensor> >& xs);
 
   void SetCommonPlaneGeometryAsOverlap(const localIndex index,
                                        const localIndex kf1,
                                        const localIndex kf2,
                                        PhysicalDomainT& domain,
-                                       const Array1dT<Array1dT<R1Tensor> >& xs);
+                                       const array<array<R1Tensor> >& xs);
 
   void SetGhostRank(    const NodeManager& m_nodeManager,
                         const NodeManager& m_discreteElementNodeManager,
-                        const iArray1d& excludeFromContact,
-                        iArray1d& faceAttachedToALocalNode);
+                        const array<integer>& excludeFromContact,
+                        array<integer>& faceAttachedToALocalNode);
 
   void SetGhostRank(    const NodeManager& m_nodeManager,
-                        const iArray1d& excludeFromContact,
-                        iArray1d& faceAttachedToALocalNode);
+                        const array<integer>& excludeFromContact,
+                        array<integer>& faceAttachedToALocalNode);
 
   void PostSortUpdate( const NodeManager& nodeManager,
                        const NodeManager& discreteElementNodeManager,
@@ -268,12 +268,12 @@ private:
    * @brief In parallel, it is advantageous to prevent the ghost faces from contacting each other and to avoid self-contact
    * @author Scott Johnson
    */
-  void RemoveInvalidPairsFromNeighborList(const iArray1d& faceAttachedToALocalNode,
+  void RemoveInvalidPairsFromNeighborList(const array<integer>& faceAttachedToALocalNode,
                                           const lSet& toResort);
 
   void RemoveInvalidPairsFromNeighborListSub(const lArray1d& parentElement,
-                                             const iArray1d& parentElementRegion,
-                                             const iArray1d& faceAttachedToALocalNode,
+                                             const array<integer>& parentElementRegion,
+                                             const array<integer>& faceAttachedToALocalNode,
                                              const localIndex a,
                                              lArray1d& current);
 
@@ -291,7 +291,7 @@ private:
                                              R1Tensor& applicationPoint,
                                              R1Tensor& normalCommonPlane,
                                              realT& areaCommonPlane,
-                                             Array1dT<R1Tensor>& pointsCommonPlane);
+                                             array<R1Tensor>& pointsCommonPlane);
 
   static int CommonEdgeInterferenceGeometry(  const R1Tensor& xfc1,
                                               const R1Tensor& nx1,
@@ -306,26 +306,26 @@ private:
                                               R1Tensor& centerCommonEdge,
                                               R1Tensor& normalCommonEdge,
                                               realT& lengthCommonEdge,
-                                              Array1dT<R1Tensor>& pointCommonEdge);
+                                              array<R1Tensor>& pointCommonEdge);
 
   static realT ApplyStress(const R1Tensor& normal,
                            const R1Tensor& applicationPoint,
-                           const Array1dT<R1Tensor>& xs,
+                           const array<R1Tensor>& xs,
                            const lArray1d& faceToNodes,
-                           const Array1dT<lSet>&  nodeToFaces,
-                           const rArray1d& mass,
+                           const array<lSet>&  nodeToFaces,
+                           const array<real64>& mass,
                            const bool is_fe,
                            const R1Tensor& stress,
                            const realT area,
                            const realT tolParentSolution,
                            R1Tensor& faceParentSolution,
-                           Array1dT<R1Tensor>& forces,
-                           Array1dT<R1Tensor>& contactForces);
+                           array<R1Tensor>& forces,
+                           array<R1Tensor>& contactForces);
 
   static void FacePositionAndVelocityFE(const R1Tensor& normal,
                                         const R1Tensor& applicationPoint,
-                                        const Array1dT<R1Tensor>& xs,
-                                        const Array1dT<R1Tensor>& vs,
+                                        const array<R1Tensor>& xs,
+                                        const array<R1Tensor>& vs,
                                         const realT tolParentSolution,
                                         R1Tensor& faceParentSolution,
                                         R1Tensor& point,
@@ -333,13 +333,13 @@ private:
 
   static void FacePositionAndVelocityFE(const R1Tensor& normal,
                                         const R1Tensor& applicationPoint,
-                                        const Array1dT<R1Tensor>& xs,
-                                        const Array1dT<R1Tensor>& vs,
+                                        const array<R1Tensor>& xs,
+                                        const array<R1Tensor>& vs,
                                         R1Tensor& point,
                                         R1Tensor& velocity);
 
-  static void FacePositionAndVelocityFE(const Array1dT<R1Tensor>& xs,
-                                        const Array1dT<R1Tensor>& vs,
+  static void FacePositionAndVelocityFE(const array<R1Tensor>& xs,
+                                        const array<R1Tensor>& vs,
                                         R1Tensor& point,
                                         R1Tensor& velocity);
 
@@ -364,14 +364,14 @@ private:
   static bool Criterion1(const R1Tensor& nx1, const R1Tensor& nx2, const realT tolCosMin);
   static bool Criterion2(const R1Tensor& e1,
                                 const R1Tensor& e2,
-                                const Array1dT<R1Tensor>& xs1,
-                                const Array1dT<R1Tensor>& xs2,
-                                Array1dT<R1TensorT<2> >& xsl1,
-                                Array1dT<R1TensorT<2> >& xsl2,
+                                const array<R1Tensor>& xs1,
+                                const array<R1Tensor>& xs2,
+                                array<R1TensorT<2> >& xsl1,
+                                array<R1TensorT<2> >& xsl2,
                                 realT& minDim);
-  static bool Criterion3(const Array1dT<R1TensorT<2> >& xsl1,
-                                const Array1dT<R1TensorT<2> >& xsl2,
-                                Array1dT<R1TensorT<2> >& xsl,
+  static bool Criterion3(const array<R1TensorT<2> >& xsl1,
+                                const array<R1TensorT<2> >& xsl2,
+                                array<R1TensorT<2> >& xsl,
                                 realT& area,
                                 const realT positionTolerance,
                                 const realT areaTolerance);
@@ -395,8 +395,8 @@ public:
   FaceManagerT* m_faceManager;
   FaceManagerT* m_discreteElementFaceManager;
 
-  Array1dT< lArray1d >& m_neighborList;
-  Array1dT< lSet >& m_neighborListInverse;
+  array< lArray1d >& m_neighborList;
+  array< lSet >& m_neighborListInverse;
 
   ///Flag for whether contact is turned on
   bool m_contactActive;

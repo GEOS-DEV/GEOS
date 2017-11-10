@@ -63,11 +63,11 @@ namespace SpatialSorting
     // TODO Auto-generated destructor stub
   }
 
-  bool NSquared::Update(const rArray1d& radii,
-                          const Array1dT<R1Tensor>& x,
+  bool NSquared::Update(const array<real64>& radii,
+                          const array<R1Tensor>& x,
                           const lSet& toResort,
-                          Array1dT<lArray1d>& neighborList,
-                          Array1dT<lSet>& neighborListInverse,
+                          array<lArray1d>& neighborList,
+                          array<lSet>& neighborListInverse,
                           const int* const excludeFromSorting)
   {
     return Sort(radii, x, neighborList, neighborListInverse, excludeFromSorting);
@@ -81,10 +81,10 @@ namespace SpatialSorting
    * @param[in] centers Centers vector
    * @param[out] neighborList Neighbor
    */
-  bool NSquared::Sort(const rArray1d& radii,
-                      const Array1dT<R1Tensor>& centers,
-                      Array1dT<lArray1d>& neighborList,
-                      Array1dT<lSet>& neighborListInverse,
+  bool NSquared::Sort(const array<real64>& radii,
+                      const array<R1Tensor>& centers,
+                      array<lArray1d>& neighborList,
+                      array<lSet>& neighborListInverse,
                       const int* const excludeFromContact)
   {
     localIndex num = radii.size();

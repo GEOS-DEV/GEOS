@@ -89,7 +89,7 @@ public:
   TimeStep(const realT& time, const realT& dt,
            const int cycleNumber,
            PhysicalDomainT& domain,
-           const sArray1d& namesOfSolverRegions, SpatialPartition& partition,
+           const array<string>& namesOfSolverRegions, SpatialPartition& partition,
            FractunatorBase* const fractunator);
 
 
@@ -174,7 +174,7 @@ private:
   Teuchos::RCP<Epetra_FECrsMatrix> matrix;
   Teuchos::RCP<Epetra_FEVector>    solution;
   Teuchos::RCP<Epetra_FEVector>    rhs;
-  iArray1d dummyDof;
+  array<integer> dummyDof;
   
   std::string m_trilinosIndexStr;
   static int m_instances;
@@ -186,7 +186,7 @@ private:
   
   bool m_recordIncrementalDisplacement;
   
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+  std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
 };
 
 template <int dim>

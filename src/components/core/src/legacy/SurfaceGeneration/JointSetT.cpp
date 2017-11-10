@@ -156,14 +156,14 @@ void JointSetT::ReadXML( TICPP::HierarchicalDataNode* hdn )
   }
 }
 
-void JointSetT::SamplePositionsFractal(const Array1dT<R1Tensor>& ref,
-                                       const Array1dT<R1Tensor>& disp,
+void JointSetT::SamplePositionsFractal(const array<R1Tensor>& ref,
+                                       const array<R1Tensor>& disp,
                                        const R1Tensor& min,
                                        const R1Tensor& max,
-                                       Array1dT<R1Tensor>& positions,
-                                       Array1dT<R1Tensor>& normals,
-                                       Array1dT<R1Tensor>& strikes,
-                                       Array1dT<R1Tensor>& dips,
+                                       array<R1Tensor>& positions,
+                                       array<R1Tensor>& normals,
+                                       array<R1Tensor>& strikes,
+                                       array<R1Tensor>& dips,
                                        const realT weight)
 {
   FractalVolume spatial;
@@ -238,7 +238,7 @@ void JointSetT::SamplePositionsFractal(const Array1dT<R1Tensor>& ref,
   //----------GET DISTRIBUTION
   // note: hard-coding discretization to 20 per smallest dimension
   {
-    Array1dT<R1Tensor> tpos;
+    array<R1Tensor> tpos;
     spatial.Positions(0.05 * dxv.MinVal(), tpos, weight);
     for(localIndex a = 0; a < tpos.size(); ++a)
     {
@@ -262,11 +262,11 @@ void JointSetT::SamplePositionsFractal(const Array1dT<R1Tensor>& ref,
   }
 }
 
-void JointSetT::SampleFrequenciesFractal(const Array1dT<R1Tensor>& centroids,
+void JointSetT::SampleFrequenciesFractal(const array<R1Tensor>& centroids,
                                          const gArray1d& localToGlobal,
                                          const R1Tensor& min,
                                          const R1Tensor& max,
-                                         rArray1d& frequencies)
+                                         array<real64>& frequencies)
 {
   //GET PARAMETERS
   const realT* hurst = this->m_hypocenterDistribution.GetParameter(
@@ -289,8 +289,8 @@ void JointSetT::SampleFrequenciesFractal(const Array1dT<R1Tensor>& centroids,
 
   //SAMPLE
   {
-    rArray1d::iterator itf = frequencies.begin();
-    for (Array1dT<R1Tensor>::const_iterator itc = centroids.begin(); itc != centroids.end(); ++itc, ++itf)
+    array<real64>::iterator itf = frequencies.begin();
+    for (array<R1Tensor>::const_iterator itc = centroids.begin(); itc != centroids.end(); ++itc, ++itf)
     {
 #if 0
       *itf = spatial.Value(*itc);
@@ -306,12 +306,12 @@ void JointSetT::SampleFrequenciesFractal(const Array1dT<R1Tensor>& centroids,
 }
 
 
-//void JointSetT::SampleFrequenciesGaussian(const rArray1d& centroids,
+//void JointSetT::SampleFrequenciesGaussian(const array<real64>& centroids,
 //                                          const gArray1d& localToGlobal,
 //                                          const bool serial,
 //                                          const globalIndex minGlobalNumber,
 //                                          const globalIndex maxGlobalNumber,
-//                                          rArray1d& frequencies)
+//                                          array<real64>& frequencies)
 //{
 //  //I AM ROOT ... I HAVE TO DO ALL OF THE WORK
 //

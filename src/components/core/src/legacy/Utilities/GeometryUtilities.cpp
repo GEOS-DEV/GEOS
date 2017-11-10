@@ -17,7 +17,7 @@ namespace GeometryUtilities
    * @param[in] pointsLocalProjection Ordered points of the convex polygon in local 2D coordinates
    * @return Area of the polygon
    */
-  realT Area_2DPolygon(const Array1dT<R1TensorT<2> >& pointsLocalProjection)
+  realT Area_2DPolygon(const array<R1TensorT<2> >& pointsLocalProjection)
   {
     realT area = 0.;
     if(pointsLocalProjection.size() < 3)
@@ -82,16 +82,16 @@ namespace GeometryUtilities
    * @param[out] center 2D center of the given ordered polygon point list
    * @return area of the convex 2D polygon
    */
-  realT Centroid_2DPolygon( const Array1dT<R1TensorT<2> >& points, R1TensorT<2>& center )
+  realT Centroid_2DPolygon( const array<R1TensorT<2> >& points, R1TensorT<2>& center )
   {
     R1TensorT<2> v0,v1,vc;
-    const Array1dT<R1TensorT<2> >::size_type n = points.size();
+    const array<R1TensorT<2> >::size_type n = points.size();
     realT area = 0.0;
     center = 0.0;
 
     if (n > 2)
     {
-      for (Array1dT<R1TensorT<2> >::size_type a = 0; a < (n - 2); ++a)
+      for (array<R1TensorT<2> >::size_type a = 0; a < (n - 2); ++a)
       {
         //get the directional vectors
         v0 = points[a + 1];
@@ -164,7 +164,7 @@ namespace GeometryUtilities
    * @return area of the convex 3D polygon
    */
   realT Centroid_3DPolygon(const lArray1d& pointsIndices,
-                           const Array1dT<R1Tensor>& points,
+                           const array<R1Tensor>& points,
                            R1Tensor& center,
                            R1Tensor& normal )
   {
@@ -248,8 +248,8 @@ namespace GeometryUtilities
    * @return area of the convex 3D polygon
    */
   realT Centroid_3DPolygon(const lArray1d& pointsIndices,
-                           const Array1dT<R1Tensor>& pointReferences,
-                           const Array1dT<R1Tensor>& pointDisplacements,
+                           const array<R1Tensor>& pointReferences,
+                           const array<R1Tensor>& pointDisplacements,
                            R1Tensor& center,
                            R1Tensor& normal )
   {
@@ -394,7 +394,7 @@ namespace GeometryUtilities
    * @return area of the convex 3D polygon
    */
   void FaceNormal3DPolygonReferenceConfig(const lArray1d& pointsIndices,
-                                           const Array1dT<R1Tensor>& pointReferences,
+                                           const array<R1Tensor>& pointReferences,
                                            R1Tensor& normal )
   {
     R1Tensor v1,v2;
@@ -494,7 +494,7 @@ namespace GeometryUtilities
    * @return area of the convex 2D polygon
    */
   realT Centroid_3DPolygon( const lArray1d& pointsEntries,
-                              const Array1dT<R1Tensor>& pointsCommonPlanes,
+                              const array<R1Tensor>& pointsCommonPlanes,
                               R1Tensor& center )
   {
     R1Tensor normal;
@@ -510,8 +510,8 @@ namespace GeometryUtilities
    * @return area of the convex 2D polygon
    */
   realT Centroid_3DPolygon( const lArray1d& pointsEntries,
-                            const Array1dT<R1Tensor>& pointReferences,
-                            const Array1dT<R1Tensor>& pointDisplacements,
+                            const array<R1Tensor>& pointReferences,
+                            const array<R1Tensor>& pointDisplacements,
                             R1Tensor& center )
   {
     R1Tensor normal;
@@ -522,7 +522,7 @@ namespace GeometryUtilities
 
   void FindProjectionInParentSpace ( const R1Tensor& xPoint,
                                      const R1Tensor& normal,
-                                     const Array1dT<R1Tensor>& xNodes,
+                                     const array<R1Tensor>& xNodes,
                                      R1Tensor& S,
                                      realT N[4],
                                      const bool initialGuess,
@@ -968,14 +968,14 @@ namespace GeometryUtilities
    * @param[in] uv0 2D point to test
    * @return flag true if inside
    */
-  bool PointInFace(const Array1dT<R1TensorT<2> >& uv, const R1TensorT<2>& uv0, const realT tol)
+  bool PointInFace(const array<R1TensorT<2> >& uv, const R1TensorT<2>& uv0, const realT tol)
   {
-    Array1dT<R1TensorT<2> >::size_type sz = uv.size();
+    array<R1TensorT<2> >::size_type sz = uv.size();
     if(sz < 3)
       throw GPException("Cannot define a face with less than 3 vertices");
     else
       --sz;
-    for(Array1dT<R1TensorT<2> >::size_type ii = 1; ii < sz; ++ii)
+    for(array<R1TensorT<2> >::size_type ii = 1; ii < sz; ++ii)
       if(PointInTriangle(uv[0], uv[ii], uv[ii+1], uv0, tol))
         return true;
     return false;
@@ -1047,9 +1047,9 @@ namespace GeometryUtilities
                          const localIndex elementIndex,
                          const lArray2d& toFaces,
                          const lArray2d& toNodes,
-                         const Array1dT<lArray1d>& faceToNodes,
-                         const Array1dT<R1Tensor>& referencePosition,
-                         const Array1dT<R1Tensor>& displacement,
+                         const array<lArray1d>& faceToNodes,
+                         const array<R1Tensor>& referencePosition,
+                         const array<R1Tensor>& displacement,
                          const bool planarFaces)
   {
     //Get element center
@@ -1185,17 +1185,17 @@ namespace GeometryUtilities
    * @param[out] aa Ordered 2D points associated with the polygon of intersection
    * @return Number of points in the polygon of intersection
    */
-  Array1dT<R1TensorT<2> >::size_type CoincidentIntersection_2DPolygons( const Array1dT<R1TensorT<2> >& a1,
-                                                                        const Array1dT<R1TensorT<2> >& a2,
-                                                                        Array1dT<R1TensorT<2> >& aa)
+  array<R1TensorT<2> >::size_type CoincidentIntersection_2DPolygons( const array<R1TensorT<2> >& a1,
+                                                                        const array<R1TensorT<2> >& a2,
+                                                                        array<R1TensorT<2> >& aa)
   {
-    Array1dT<R1TensorT<2> > uv;
+    array<R1TensorT<2> > uv;
     uv.resize(3,static_cast< R1TensorT<2> >(0.0) );
 
     bool allIn1 = true, allIn2 = false;
 
     //FIRST, CHECK WHETHER ALL POINTS OF 2 ARE IN 1
-    for (Array1dT<R1TensorT<2> >::size_type ii = 0; ii < a2.size(); ++ii)
+    for (array<R1TensorT<2> >::size_type ii = 0; ii < a2.size(); ++ii)
     {
       bool found = false;
       for (int i = 2; i < static_cast<int>(a1.size()); ++i)
@@ -1215,7 +1215,7 @@ namespace GeometryUtilities
     if(!allIn1)
     {
       allIn2 = true;
-      for (Array1dT<R1TensorT<2> >::size_type ii = 0; ii < a1.size(); ++ii)
+      for (array<R1TensorT<2> >::size_type ii = 0; ii < a1.size(); ++ii)
       {
         bool found = false;
         for (int i = 2; i < static_cast<int>(a2.size()); ++i)
@@ -1240,14 +1240,14 @@ namespace GeometryUtilities
     {
       //all the points of polygon 2 are contained in 1
       //so populate the list with the points in 2
-      for (Array1dT<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
+      for (array<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
         aa.push_back(a2[i]);
     }
     else if(allIn2)
     {
       //all the points of polygon 1 are contained in 2
       //so populate the list with the points in 1
-      for (Array1dT<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
+      for (array<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
         aa.push_back(a1[i]);
     }
     return aa.size();
@@ -1267,21 +1267,21 @@ namespace GeometryUtilities
    * @param[in] a2 Points on polygon 2
    * @param[out] intersections Points where polygons 1 and 2 intersect
    */
-  void Intersections_2DPolygons(const Array1dT<R1TensorT<2> >& a1,
-                                const Array1dT<R1TensorT<2> >& a2,
-                                Array1dT<R1TensorT<2> >& intersections)
+  void Intersections_2DPolygons(const array<R1TensorT<2> >& a1,
+                                const array<R1TensorT<2> >& a2,
+                                array<R1TensorT<2> >& intersections)
   {
     //note: this is an O(N^2) algorithm ... shouldn't matter since typical faces have
     //limited numbers of segments
     //intersections.clear();
 
     //identify intersections
-    for (Array1dT<R1TensorT<2> >::size_type i1 = 1; i1 <= a1.size(); ++i1)
+    for (array<R1TensorT<2> >::size_type i1 = 1; i1 <= a1.size(); ++i1)
     {
-      Array1dT<R1TensorT<2> >::size_type ii1 = i1 == a1.size() ? 0 : i1;
-      for (Array1dT<R1TensorT<2> >::size_type i2 = 1; i2 <= a2.size(); ++i2)
+      array<R1TensorT<2> >::size_type ii1 = i1 == a1.size() ? 0 : i1;
+      for (array<R1TensorT<2> >::size_type i2 = 1; i2 <= a2.size(); ++i2)
       {
-        Array1dT<R1TensorT<2> >::size_type ii2 = i2 == a2.size() ? 0 : i2;
+        array<R1TensorT<2> >::size_type ii2 = i2 == a2.size() ? 0 : i2;
 
         //find intersection of segments 1 and 2, otherwise go to the next iteration
         R1TensorT<2> intersection, intersection2;
@@ -1315,7 +1315,7 @@ namespace GeometryUtilities
    *
    * @param[in,out] polygonPoints List of unordered points coming in, reordered out
    */
-  void OrderPoints_2DPolygon(Array1dT<R1TensorT<2> >& polygonPoints, const realT tol  )
+  void OrderPoints_2DPolygon(array<R1TensorT<2> >& polygonPoints, const realT tol  )
   {
     if(polygonPoints.size() < 3)
       return;
@@ -1323,9 +1323,9 @@ namespace GeometryUtilities
     R1TensorT<2> vpivot = static_cast< R1TensorT<2> >(0.0);
 
     //(0) fill array of point structs
-    Array1dT<PointStruct> arr;
+    array<PointStruct> arr;
     arr.push_back(vpivot);
-    for(Array1dT<R1TensorT<2> >::size_type i = 0; i < polygonPoints.size(); ++i)
+    for(array<R1TensorT<2> >::size_type i = 0; i < polygonPoints.size(); ++i)
     {
       arr.push_back(PointStruct(polygonPoints[i]));
       arr[0].m_point += polygonPoints[i];
@@ -1334,7 +1334,7 @@ namespace GeometryUtilities
     polygonPoints.clear();
 
     //(1) make sure the lowest coordinate point is first
-    Array1dT<PointStruct>::iterator iter = arr.begin();
+    array<PointStruct>::iterator iter = arr.begin();
 
     //(2) get the pivot vector 0->1
     //remove any colocated points at the beginning of the array
@@ -1425,7 +1425,7 @@ namespace GeometryUtilities
     if(arr.size() < 4)
       return;
 
-    for(Array1dT<PointStruct>::size_type i = 1; i < arr.size(); ++i)
+    for(array<PointStruct>::size_type i = 1; i < arr.size(); ++i)
       polygonPoints.push_back(arr[i].m_point);
 
     RemoveCoincidentOrderedPoints( polygonPoints, 1.0e-8 );
@@ -1440,13 +1440,13 @@ namespace GeometryUtilities
    * @param[in,out] polygonPoints List of ordered points coming in and going out (less the redundant points)
    */
   template< int T_size >
-  void RemoveCoincidentOrderedPoints(Array1dT<R1TensorT<T_size> >& polygonPoints, const realT tol)
+  void RemoveCoincidentOrderedPoints(array<R1TensorT<T_size> >& polygonPoints, const realT tol)
   {
     if(polygonPoints.size() < 2)
       return;
 
     const realT tt = tol * tol;
-    typename Array1dT<R1TensorT<T_size> >::iterator iter = polygonPoints.end();
+    typename array<R1TensorT<T_size> >::iterator iter = polygonPoints.end();
     --iter;
 
     R1TensorT<T_size> v(*iter);
@@ -1463,8 +1463,8 @@ namespace GeometryUtilities
     }
   }
 
-  template void RemoveCoincidentOrderedPoints<2>(Array1dT<R1TensorT<2> >& polygonPoints, const realT tol);
-  template void RemoveCoincidentOrderedPoints<3>(Array1dT<R1TensorT<3> >& polygonPoints, const realT tol);
+  template void RemoveCoincidentOrderedPoints<2>(array<R1TensorT<2> >& polygonPoints, const realT tol);
+  template void RemoveCoincidentOrderedPoints<3>(array<R1TensorT<3> >& polygonPoints, const realT tol);
 
   ///Calculate the area and volume of intersection of 2D polygons quickly
   /**
@@ -1476,8 +1476,8 @@ namespace GeometryUtilities
    * @param[in] a2 Local planar coordinates of the projected face 2
    * @return Area of intersection
    */
-  realT Intersection_2DPolygons(const Array1dT<R1TensorT<2> >& a1,
-                                const Array1dT<R1TensorT<2> >& a2)
+  realT Intersection_2DPolygons(const array<R1TensorT<2> >& a1,
+                                const array<R1TensorT<2> >& a2)
   {
     if (a2.size() < 3 || a1.size() < 3)
       return 0.0;
@@ -1626,10 +1626,10 @@ namespace GeometryUtilities
     * NOTE: for this to work, both a1 and a2 have to be listed in the same loop direction (either CW or CCW)
     * THERE IS NO CHECKING FOR THIS CONDITION, SO BE CAREFUL
     */
-   realT Intersection_2DPolygons(const Array1dT<R1TensorT<2> >& a1,
-                                 const Array1dT<R1TensorT<2> >& a2,
+   realT Intersection_2DPolygons(const array<R1TensorT<2> >& a1,
+                                 const array<R1TensorT<2> >& a2,
                                  const realT& positionTolerance,
-                                 Array1dT<R1TensorT<2> >& polygonPoints)
+                                 array<R1TensorT<2> >& polygonPoints)
    {
      //make sure the polygonPoints have been cleared
      polygonPoints.clear();
@@ -1645,12 +1645,12 @@ namespace GeometryUtilities
        R1TensorT<2> max1 = static_cast< R1TensorT<2> >(-std::numeric_limits<realT>::max());
        R1TensorT<2> max2 = static_cast< R1TensorT<2> >(-std::numeric_limits<realT>::max());
 
-       for(Array1dT<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
+       for(array<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
        {
          min1.SetMin(a1[i]);
          max1.SetMax(a1[i]);
        }
-       for(Array1dT<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
+       for(array<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
        {
          min2.SetMin(a2[i]);
          max2.SetMax(a2[i]);
@@ -1666,7 +1666,7 @@ namespace GeometryUtilities
      //here is the contact problem
      {
        ret = true;
-       for(Array1dT<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
+       for(array<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
        {
          if(!PointInFace(a2, a1[i]))
            ret = false;
@@ -1679,7 +1679,7 @@ namespace GeometryUtilities
      if(!ret)
      {
        ret = polygonPoints.size() == 0;
-       for(Array1dT<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
+       for(array<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
        {
          if(!PointInFace(a1, a2[i]))
            ret = false;
@@ -1705,10 +1705,10 @@ namespace GeometryUtilities
     * There is a lot of machinery in the original routines that is specific to contact detection
     * For my purposes, those were unnecessary and were also resulting in errors.
     */
-  realT Overlap2DPolygons( const Array1dT<R1TensorT<2> >& a1,
-                          const Array1dT<R1TensorT<2> >& a2,
+  realT Overlap2DPolygons( const array<R1TensorT<2> >& a1,
+                          const array<R1TensorT<2> >& a2,
                           const realT& positionTolerance,
-                          Array1dT<R1TensorT<2> >& polygonPoints)
+                          array<R1TensorT<2> >& polygonPoints)
   {
     //make sure the polygonPoints have been cleared
     polygonPoints.clear();
@@ -1724,12 +1724,12 @@ namespace GeometryUtilities
       R1TensorT<2> max1 = static_cast< R1TensorT<2> >(-std::numeric_limits<realT>::max());
       R1TensorT<2> max2 = static_cast< R1TensorT<2> >(-std::numeric_limits<realT>::max());
 
-      for(Array1dT<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
+      for(array<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
       {
         min1.SetMin(a1[i]);
         max1.SetMax(a1[i]);
       }
-      for(Array1dT<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
+      for(array<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
       {
         min2.SetMin(a2[i]);
         max2.SetMax(a2[i]);
@@ -1740,7 +1740,7 @@ namespace GeometryUtilities
     }
 
     bool allInOne = true;
-    for(Array1dT<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
+    for(array<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
     {
       if(!PointInFace(a2, a1[i]))
       {
@@ -1755,7 +1755,7 @@ namespace GeometryUtilities
     bool allInTwo = true;
     if(!allInOne)
     {
-      for(Array1dT<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
+      for(array<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
       {
         if(!PointInFace(a1, a2[i]))
         {
@@ -1776,7 +1776,7 @@ namespace GeometryUtilities
       //here is the contact problem
       {
         ret = true;
-        for(Array1dT<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
+        for(array<R1TensorT<2> >::size_type i = 0; i < a1.size(); ++i)
         {
           if(!PointInFace(a2, a1[i]))
             ret = false;
@@ -1789,7 +1789,7 @@ namespace GeometryUtilities
       if(!ret)
       {
         ret = polygonPoints.size() == 0;
-        for(Array1dT<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
+        for(array<R1TensorT<2> >::size_type i = 0; i < a2.size(); ++i)
         {
           if(!PointInFace(a1, a2[i]))
             ret = false;
@@ -1810,21 +1810,21 @@ namespace GeometryUtilities
     return area;
   }//PolygonPairIntersection
 
-  void Intersections2DPolygon( const Array1dT<R1TensorT<2> >& a1,
-                               const Array1dT<R1TensorT<2> >& a2,
-                               Array1dT<R1TensorT<2> >& intersections)
+  void Intersections2DPolygon( const array<R1TensorT<2> >& a1,
+                               const array<R1TensorT<2> >& a2,
+                               array<R1TensorT<2> >& intersections)
   {
     //note: this is an O(N^2) algorithm ... shouldn't matter since typical faces have
     //limited numbers of segments
     //intersections.clear();
 
     //identify intersections
-    for (Array1dT<R1TensorT<2> >::size_type i1 = 1; i1 <= a1.size(); ++i1)
+    for (array<R1TensorT<2> >::size_type i1 = 1; i1 <= a1.size(); ++i1)
     {
-      Array1dT<R1TensorT<2> >::size_type ii1 = i1 == a1.size() ? 0 : i1;
-      for (Array1dT<R1TensorT<2> >::size_type i2 = 1; i2 <= a2.size(); ++i2)
+      array<R1TensorT<2> >::size_type ii1 = i1 == a1.size() ? 0 : i1;
+      for (array<R1TensorT<2> >::size_type i2 = 1; i2 <= a2.size(); ++i2)
       {
-        Array1dT<R1TensorT<2> >::size_type ii2 = i2 == a2.size() ? 0 : i2;
+        array<R1TensorT<2> >::size_type ii2 = i2 == a2.size() ? 0 : i2;
 
         //find intersection of segments 1 and 2, otherwise go to the next iteration
         R1TensorT<2> intersection;
@@ -1968,11 +1968,11 @@ namespace GeometryUtilities
    * @return return
    */
   void CartesianPointsProjectedToPlanarPoints(const lArray1d& pointsEntries,
-                                              const Array1dT<R1Tensor>& pointReferences,
-                                              const Array1dT<R1Tensor>& pointDisplacements,
+                                              const array<R1Tensor>& pointReferences,
+                                              const array<R1Tensor>& pointDisplacements,
                                               const R1Tensor& e1,
                                               const R1Tensor& e2,
-                                              Array1dT<R1TensorT<2> >& localPoints,
+                                              array<R1TensorT<2> >& localPoints,
                                               R1TensorT<2>& min,
                                               R1TensorT<2>& max)
   {
@@ -2009,10 +2009,10 @@ namespace GeometryUtilities
    * @param[out] max maxima of the point list in the e1 and e2 coordinates
    * @return return
    */
-  void CartesianPointsProjectedToPlanarPoints(  const Array1dT<R1Tensor>& points,
+  void CartesianPointsProjectedToPlanarPoints(  const array<R1Tensor>& points,
                                                 const R1Tensor& e1,
                                                 const R1Tensor& e2,
-                                                Array1dT<R1TensorT<2> >& localPoints,
+                                                array<R1TensorT<2> >& localPoints,
                                                 R1TensorT<2>& min,
                                                 R1TensorT<2>& max)
   {
@@ -2064,12 +2064,12 @@ namespace GeometryUtilities
    */
   void ClipByPlane_3DPolygon(const R1Tensor& normal,
                              const R1Tensor& pointOnPlane,
-                             const Array1dT<R1Tensor>& points,
+                             const array<R1Tensor>& points,
                              const R1Tensor& e1,
                              const R1Tensor& e2,
-                             const rArray1d& penetration,
-                             Array1dT<Array1dT<R1TensorT<2> > >& inContact,
-                             Array1dT<Array1dT<R1TensorT<2> > >& outContact,
+                             const array<real64>& penetration,
+                             array<array<R1TensorT<2> > >& inContact,
+                             array<array<R1TensorT<2> > >& outContact,
                              const bool reverse)
   {
     if(inContact.size() != points.size())
@@ -2157,14 +2157,14 @@ namespace GeometryUtilities
    */
   void ClipByPlane_3DPolygon(const R1Tensor& normal,
                              const R1Tensor& pointOnPlane,
-                             const Array1dT<R1Tensor>& points,
+                             const array<R1Tensor>& points,
                              const R1Tensor& e1,
                              const R1Tensor& e2,
-                             const rArray1d& penetration,
-                             Array1dT<R1TensorT<2> >& inContact,
-                             Array1dT<R1TensorT<2> >& outContact,
-                             rArray1d& inDistance,
-                             rArray1d& outDistance,
+                             const array<real64>& penetration,
+                             array<R1TensorT<2> >& inContact,
+                             array<R1TensorT<2> >& outContact,
+                             array<real64>& inDistance,
+                             array<real64>& outDistance,
                              const bool reverse)
   {
     inContact.clear();
@@ -2242,18 +2242,18 @@ namespace GeometryUtilities
    * @param[in] reverse Option to specify that both the polygon loop order should be reversed and the normal inverted
    */
   void ClipByPlane_3DPolygon(const R1Tensor& normal, const R1Tensor& pointOnPlane,
-                             const Array1dT<R1Tensor>& points,
-                             Array1dT<Array1dT<R1TensorT<2> > >& inContact,
-                             Array1dT<Array1dT<R1TensorT<2> > >& outContact, const bool reverse)
+                             const array<R1Tensor>& points,
+                             array<array<R1TensorT<2> > >& inContact,
+                             array<array<R1TensorT<2> > >& outContact, const bool reverse)
   {
     //get e1, e2
     R1Tensor e1, e2;
     VectorsInPlane(normal, e1, e2);
 
     //get normal penetration distances
-    rArray1d penetration(points.size(), 0.0);
-    rArray1d::size_type a = 0;
-    for (Array1dT<R1Tensor>::const_iterator it = points.begin(); it != points.end(); ++it, ++a)
+    array<real64> penetration(points.size(), 0.0);
+    array<real64>::size_type a = 0;
+    for (array<R1Tensor>::const_iterator it = points.begin(); it != points.end(); ++it, ++a)
       penetration[a] = (reverse ? -1.0 : 1.0) * DistanceToPlane(normal, pointOnPlane, *it);
 
     //call the base function

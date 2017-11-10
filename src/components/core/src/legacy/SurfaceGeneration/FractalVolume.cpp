@@ -90,7 +90,7 @@ unsigned FractalVolume::Initialize(const Array2dT<realT>& parameters,
   }
 
   //fill the intermediate value hierarchical grid
-  Array1dT< Array3dT<VolumeKernel*>* > vals;
+  array< Array3dT<VolumeKernel*>* > vals;
   vals.resize(nlevels);
   {
     realT dx0 = 1.0 / n0;
@@ -198,7 +198,7 @@ void FractalVolume::InitializeSumMW(const int nj, const int nk, const int nl, co
 
 
 void FractalVolume::FillValues(const int ioffset, const localIndex nlevels,
-                               Array1dT< Array3dT<VolumeKernel*>* >& vals)
+                               array< Array3dT<VolumeKernel*>* >& vals)
 {
   //note: values will only hold cells away from the compact support
   //informed boundary, so make sure to remove the indices of
@@ -229,7 +229,7 @@ void FractalVolume::FillValues(const int ioffset, const localIndex nlevels,
     {
       for( int l = 0; l < nl; l++)  //for each cell at the finest level - l
       {
-        Array1dT<Array1dT<VolumeKernel*> >& currentVal = m_values(j, k, l); // get the list of kernels for each level
+        array<array<VolumeKernel*> >& currentVal = m_values(j, k, l); // get the list of kernels for each level
         int nper = 1;
         for (localIndex i = 1; i < nlevels; i++)
           nper *= 2;
@@ -281,7 +281,7 @@ realT FractalVolume::Value(const R1Tensor& position) const
   int coords[nsdof];
   for(localIndex i = 0; i < nsdof; i++)
     coords[i] = (int)(m_values.Dimension(i) * (xt(i) >= 1 ? (1.0-1.0e-10) : xt(i)) );
-  const Array1dT<Array1dT<VolumeKernel*> >& valArray = m_values(coords[0], coords[1], coords[2]);
+  const array<array<VolumeKernel*> >& valArray = m_values(coords[0], coords[1], coords[2]);
 
   //for each refinement level and then for each applicable kernel at that refinement level add the contribution
   {
@@ -301,7 +301,7 @@ realT FractalVolume::Value(const R1Tensor& position) const
 }
 
 localIndex FractalVolume::Positions(const realT dx,
-                                 Array1dT<R1Tensor>& positions,
+                                 array<R1Tensor>& positions,
                                  const realT weight) const
 {
   return Positions(m_lower, m_upper, dx, positions, weight);
@@ -310,7 +310,7 @@ localIndex FractalVolume::Positions(const realT dx,
 localIndex FractalVolume::Positions(const R1Tensor& min,
                                     const R1Tensor& max,
                                     const realT dx,
-                                    Array1dT<R1Tensor>& positions,
+                                    array<R1Tensor>& positions,
                                     const realT weight) const
 {
   //------GET INCREMENTAL DISTANCE ALONG EACH DIRECTION

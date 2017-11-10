@@ -103,7 +103,7 @@ public:
   { (void)referenceObject; }
 
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager  ,
-                                                         Array1dT<gArray1d>& objectToCompositionObject  )
+                                                         array<gArray1d>& objectToCompositionObject  )
   {
     (void)compositionObjectManager;
     (void)objectToCompositionObject;
@@ -114,7 +114,7 @@ public:
 
   //TODO: feed in an array of valid entries so you don't need to check each entry's size
   //better: take out size==0 entries and use an array with the face index associated with each (now non-0 sized) array in the collection
-  size_t Update(const Array1dT< lArray1d >& neighborList);
+  size_t Update(const array< lArray1d >& neighborList);
 
   void WriteVTKCellData(std::ofstream& out);
 

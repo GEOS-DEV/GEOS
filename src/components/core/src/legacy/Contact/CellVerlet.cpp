@@ -73,7 +73,7 @@ namespace SpatialSorting
     neighborBins.clear();
   }
 
-  bool CellVerlet::UpdateMinMaxDimension(const rArray1d& radii, const Array1dT<R1Tensor>& x,
+  bool CellVerlet::UpdateMinMaxDimension(const array<real64>& radii, const array<R1Tensor>& x,
                                          const int* const excludeFromContact)
   {
     //initialize the other variables
@@ -128,7 +128,7 @@ namespace SpatialSorting
     return ret;
   }
 
-  bool CellVerlet::UpdateMinMaxDimension(const rArray1d& radii, const Array1dT<R1Tensor>& x,
+  bool CellVerlet::UpdateMinMaxDimension(const array<real64>& radii, const array<R1Tensor>& x,
                                          const lSet& toResort)
   {
     //initialize the other variables
@@ -170,8 +170,8 @@ namespace SpatialSorting
   }
 
 
-  bool CellVerlet::Update(const rArray1d& radii, const Array1dT<R1Tensor>& x, const lSet& toResort,
-                          Array1dT<lArray1d>& neighborList, Array1dT<lSet>& neighborListInverse,
+  bool CellVerlet::Update(const array<real64>& radii, const array<R1Tensor>& x, const lSet& toResort,
+                          array<lArray1d>& neighborList, array<lSet>& neighborListInverse,
                           const int* const excludeFromSorting)
   {
     if (this->UpdateMinMaxDimension(radii, x, toResort))
@@ -182,7 +182,7 @@ namespace SpatialSorting
     SpatialSorterBase::Remove(toResort, neighborList, neighborListInverse); //remove the moved from the neighbor lists
 
     //second, let's re-insert the entries
-    iArray1d index(nsdof);
+    array<integer> index(nsdof);
     for (lSet::const_iterator iter = toResort.begin(); iter != toResort.end();
         ++iter)
     {
@@ -198,7 +198,7 @@ namespace SpatialSorting
     return true;
   }
 
-  void CellVerlet::RemoveToCheck(const std::map<localIndex, iArray1d>& toCheckFurther)
+  void CellVerlet::RemoveToCheck(const std::map<localIndex, array<integer>>& toCheckFurther)
   {
     //remove those to check from the current bins
     for (int i = 0; i < this->bins.Dimension(0); ++i)
@@ -211,7 +211,7 @@ namespace SpatialSorting
           lArray1d::iterator iter = current.begin();
           while (iter != current.end())
           {
-            std::map<localIndex, iArray1d>::const_iterator it = toCheckFurther.find(*iter);
+            std::map<localIndex, array<integer>>::const_iterator it = toCheckFurther.find(*iter);
             if (it != toCheckFurther.end())
               iter = current.erase(iter);
             else
@@ -232,8 +232,8 @@ namespace SpatialSorting
    * @param[out] neighborListInverse Neighbor inverse
    * @param[in] excludeFromSorting Exclusion list with integer binary values
    */
-  bool CellVerlet::Sort(const rArray1d& radii, const Array1dT<R1Tensor>& x,
-                        Array1dT<lArray1d>& neighborList, Array1dT<lSet>& neighborListInverse,
+  bool CellVerlet::Sort(const array<real64>& radii, const array<R1Tensor>& x,
+                        array<lArray1d>& neighborList, array<lSet>& neighborListInverse,
                         const int* const excludeFromSorting)
   {
     //update problem dimensions
@@ -242,7 +242,7 @@ namespace SpatialSorting
 
   } //Sort
 
-  bool CellVerlet::Remove(const localIndex iRemove, const iArray1d& guess)
+  bool CellVerlet::Remove(const localIndex iRemove, const array<integer>& guess)
   {
     //check last known location
     {
@@ -261,9 +261,9 @@ namespace SpatialSorting
 
     //check neighbors
     {
-      const Array1dT<lArray1d*>& neighborBinsCurrent = this->neighborBins(guess[0], guess[1],
+      const array<lArray1d*>& neighborBinsCurrent = this->neighborBins(guess[0], guess[1],
                                                                           guess[2]);
-      for (Array1dT<lArray1d*>::const_iterator i0 = neighborBinsCurrent.begin();
+      for (array<lArray1d*>::const_iterator i0 = neighborBinsCurrent.begin();
           i0 != neighborBinsCurrent.end(); ++i0)
       {
         lArray1d& binCurrent = *(*i0);
@@ -284,15 +284,15 @@ namespace SpatialSorting
 
 
 
-  void CellVerlet::Add(const rArray1d& radii, const Array1dT<R1Tensor>& x, const localIndex ixfc0,
-                       const iArray1d& index, Array1dT<lArray1d>& neighborList,
-                       Array1dT<lSet>& neighborListInverse, const int* const excludeFromSorting)
+  void CellVerlet::Add(const array<real64>& radii, const array<R1Tensor>& x, const localIndex ixfc0,
+                       const array<integer>& index, array<lArray1d>& neighborList,
+                       array<lSet>& neighborListInverse, const int* const excludeFromSorting)
   {
     //check neighbors
     {
-      const Array1dT<lArray1d*>& neighborBinsCurrent = this->neighborBins(index[0], index[1],
+      const array<lArray1d*>& neighborBinsCurrent = this->neighborBins(index[0], index[1],
                                                                           index[2]);
-      for (Array1dT<lArray1d*>::const_iterator i0 = neighborBinsCurrent.begin();
+      for (array<lArray1d*>::const_iterator i0 = neighborBinsCurrent.begin();
           i0 != neighborBinsCurrent.end(); ++i0)
       {
         const lArray1d& neighbor = *(*i0);
@@ -320,14 +320,14 @@ namespace SpatialSorting
    * @param[out] neighborListInverse Neighbor inverse
    * @param[in] excludeFromSorting Exclusion list with integer binary values
    */
-  bool CellVerlet::SortSub(const bool reset, const rArray1d& radii, const Array1dT<R1Tensor>& x,
-                           Array1dT<lArray1d>& neighborList, Array1dT<lSet>& neighborListInverse,
+  bool CellVerlet::SortSub(const bool reset, const array<real64>& radii, const array<R1Tensor>& x,
+                           array<lArray1d>& neighborList, array<lSet>& neighborListInverse,
                            const int* const excludeFromSorting)
   {
     //---------------------------------------------------
     // DEAL WITH A TOTAL REBUILDING OF THE BIN STRUCTURE
     //---------------------------------------------------
-    iArray1d index(nsdof);
+    array<integer> index(nsdof);
     if (reset)
     {
       //std::cout << "CELL VERLET: rebuilding bin structure" << std::endl;

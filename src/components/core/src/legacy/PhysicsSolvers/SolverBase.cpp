@@ -113,7 +113,7 @@ void SolverBase::ReadXML( TICPP::HierarchicalDataNode* const hdn )
 
 void SolverBase::PostProcess( PhysicalDomainT& domain,
                               SpatialPartition& partition,
-                              const sArray1d& namesOfSolverRegions)
+                              const array<string>& namesOfSolverRegions)
 {
   //Do nothing.  To be implemented by each solver as needed;
   //For operations that we don't need at each step but need for plotting.
@@ -122,7 +122,7 @@ void SolverBase::PostProcess( PhysicalDomainT& domain,
 
 void SolverBase::SetMaxStableTimeStep( const realT& time,
                                        PhysicalDomainT& domain,
-                                       const sArray1d& namesOfSolverRegions,
+                                       const array<string>& namesOfSolverRegions,
                                        SpatialPartition& partition)
 {
   TimeStep( time, 0.0, 0, domain, namesOfSolverRegions, partition, nullptr );
@@ -133,8 +133,8 @@ void SolverBase::WriteSilo( SiloFile& siloFile ) const
 {
   siloFile.DBWriteWrapper( "m_stabledt__m_maxdt", m_stabledt.m_maxdt );
 
-  std::map<std::string, sArray1d> syncedFields;
-  for( std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d>::const_iterator i=m_syncedFields.begin() ;
+  std::map<std::string, array<string>> syncedFields;
+  for( std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>>::const_iterator i=m_syncedFields.begin() ;
       i!= m_syncedFields.end() ; ++i )
   {
     if( !(i->second.empty()) )
@@ -157,11 +157,11 @@ void SolverBase::ReadSilo( const SiloFile& siloFile )
 {
   siloFile.DBReadWrapper( "m_stabledt__m_maxdt", m_stabledt.m_maxdt );
 
-  std::map<std::string, sArray1d> syncedFields;
+  std::map<std::string, array<string>> syncedFields;
   siloFile.DBReadWrapper( "syncedFields", syncedFields );
 
 
-  for( std::map<std::string, sArray1d>::const_iterator i=syncedFields.begin() ;
+  for( std::map<std::string, array<string>>::const_iterator i=syncedFields.begin() ;
       i!= syncedFields.end() ; ++i )
   {
     m_syncedFields[ PhysicalDomainT::GetObjectDataStructureKey(i->first)] = i->second;
@@ -658,15 +658,15 @@ void SolverBase::SolveBlock ( PhysicalDomainT&  domain,
 #define AGGREGATION 0
 #if     AGGREGATION==1
 
-  Array1dT<double> x_coord;
-  Array1dT<double> y_coord; // set to to 0 for 1D problems
-  Array1dT<double> z_coord; // set to to 0 for 2D problems
+  array<double> x_coord;
+  array<double> y_coord; // set to to 0 for 1D problems
+  array<double> z_coord; // set to to 0 for 2D problems
 
   if(m_numerics.m_useMLPrecond)
   {
-    const iArray1d & is_ghost = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-    //iArray1d const & trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-    const Array1dT<R1Tensor> & X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
+    const array<integer> & is_ghost = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+    //array<integer> const & trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+    const array<R1Tensor> & X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
     x_coord.resize(domain.m_feNodeManager.m_numNodes);
     y_coord.resize(domain.m_feNodeManager.m_numNodes);
     z_coord.resize(domain.m_feNodeManager.m_numNodes);
@@ -1377,7 +1377,7 @@ void SolverBase::SolveBlock ( PhysicalDomainT&  domain,
     /*
     Epetra_FECrsGraph sparsity_00_diag( Copy, *(epetraSystem.m_rowMap[0]), 1 );
 
-    iArray1d nonEmptyDOF;
+    array<integer> nonEmptyDOF;
     for( int a=0; a<epetraSystem.m_matrix[0][0]->NumMyRows(); ++a )
     {
       nonEmptyDOF.push_back(a);

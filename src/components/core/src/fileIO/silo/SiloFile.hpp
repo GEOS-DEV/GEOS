@@ -199,9 +199,9 @@ public:
    * @author Scott Johnson
    */
   void WriteDiscreteElementCSGObject(const std::string& meshName,
-                                     const Array1dT<R1Tensor>& x,
-                                     const Array1dT<R1Tensor>& r,
-                                     const Array1dT<R2Tensor>& R,
+                                     const array<R1Tensor>& x,
+                                     const array<R1Tensor>& r,
+                                     const array<R2Tensor>& R,
                                      const int cycleNumber,
                                      const realT problemTime);
 
@@ -287,7 +287,7 @@ public:
                                 const localIndex_array& mask );
 
   template< typename INPUTTYPE, typename TYPE >
-  void ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& member,
+  void ReadFieldMapFromSilo( std::map< std::string, array<TYPE> >& member,
                              const std::string& meshname,
                              const int centering,
                              const int cycleNum,
@@ -310,7 +310,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( const std::string& meshName,
                        const std::string& fieldName,
-                       const Array1dT<TYPE>& field,
+                       const array<TYPE>& field,
                        const int centering,
                        const int cycleNumber,
                        const realT problemTime,
@@ -319,7 +319,7 @@ public:
 
   /// Write out a data field
   template< typename INPUTTYPE, typename TYPE>
-  void ReadDataField( Array1dT<TYPE>& field,
+  void ReadDataField( array<TYPE>& field,
                       const std::string& meshName,
                       const std::string& fieldName,
                       const int centering,
@@ -351,7 +351,7 @@ public:
   template <typename TYPE>
   void** GetDataVar( const std::string& fieldName,
                      const std::string& meshName,
-                     const typename Array1dT<TYPE>::size_type nels,
+                     const typename array<TYPE>::size_type nels,
                      const int centering,
                      const int cycleNumber,
                      const realT problemTime,
@@ -370,7 +370,7 @@ public:
   void DBWriteWrapper( const std::string& name, const string_array& data );
 
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<TYPE>& data );
+  void DBWriteWrapper( const std::string& name, const array<TYPE>& data );
 
 
   template<typename TYPE>
@@ -380,16 +380,16 @@ public:
   void DBWriteWrapper( const std::string& name, const Array2dT<TYPE>& data );
 
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<Array1dT<TYPE> >& data );
+  void DBWriteWrapper( const std::string& name, const array<array<TYPE> >& data );
 
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<Array2dT<TYPE> >& data );
+  void DBWriteWrapper( const std::string& name, const array<Array2dT<TYPE> >& data );
 
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<Array1dT<Array1dT<TYPE> > >& data );
+  void DBWriteWrapper( const std::string& name, const array<array<array<TYPE> > >& data );
 
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<std::set<TYPE> >& data );
+  void DBWriteWrapper( const std::string& name, const array<std::set<TYPE> >& data );
 
   template< typename T1, typename T2 >
   void DBWriteWrapper( const std::string& name, const std::map< T1, T2 >& datamap );
@@ -411,7 +411,7 @@ public:
   void DBReadWrapper( const std::string& name, TYPE& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<TYPE>& data ) const;
+  void DBReadWrapper( const std::string& name, array<TYPE>& data ) const;
 
   template<typename TYPE>
   void DBReadWrapper( const std::string& name, std::set<TYPE>& data ) const;
@@ -420,16 +420,16 @@ public:
   void DBReadWrapper( const std::string& name, Array2dT<TYPE>& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<Array1dT<TYPE> >& data ) const;
+  void DBReadWrapper( const std::string& name, array<array<TYPE> >& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<Array2dT<TYPE> >& data ) const;
+  void DBReadWrapper( const std::string& name, array<Array2dT<TYPE> >& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<Array1dT<Array1dT<TYPE> > >& data ) const;
+  void DBReadWrapper( const std::string& name, array<array<array<TYPE> > >& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<std::set<TYPE> >& data ) const;
+  void DBReadWrapper( const std::string& name, array<std::set<TYPE> >& data ) const;
 
   template< typename T1, typename T2 >
   void DBReadWrapper( const std::string& name, std::map< T1, T2 >& datamap ) const;
@@ -483,8 +483,8 @@ public:
 
   bool m_markGhosts;
 
-  sArray1d m_emptyMeshes;
-  sArray1d m_emptyVariables;
+  array<string> m_emptyMeshes;
+  array<string> m_emptyVariables;
 
   integer_array SiloNodeOrdering();
 
@@ -586,7 +586,7 @@ namespace SiloFileUtilities
 
 
   template<typename TYPE>
-  void SetVariableNames(const std::string& fieldName, sArray1d& varnamestring, char* varnames[]);
+  void SetVariableNames(const std::string& fieldName, array<string>& varnamestring, char* varnames[]);
 
   template<typename OBJECT_TYPE>
   int FieldCentering();
@@ -679,7 +679,7 @@ void SiloFile::WriteDataField( const std::string& meshName,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( const std::string& meshName,
                                const std::string& fieldName,
-                               const Array1dT<TYPE>& field,
+                               const array<TYPE>& field,
                                const int centering,
                                const int cycleNumber,
                                const realT problemTime,
@@ -721,11 +721,11 @@ void SiloFile::WriteDataField( const std::string& meshName,
   }
   else
   {
-    Array1dT<char*> varnames(nvars);
-    Array1dT<void*> vars(nvars);
+    array<char*> varnames(nvars);
+    array<void*> vars(nvars);
 
 
-    sArray1d varnamestring(nvars);
+    array<string> varnamestring(nvars);
     std::vector<std::vector<OUTTYPE> > castedField(nvars);
 
     SiloFileUtilities::SetVariableNames<TYPE>(fieldName, varnamestring, varnames.data() );
@@ -809,7 +809,7 @@ void SiloFile::WriteDataField( const std::string& meshName,
 }
 
 template< typename INPUTTYPE, typename TYPE >
-void SiloFile::ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& member,
+void SiloFile::ReadFieldMapFromSilo( std::map< std::string, array<TYPE> >& member,
                                      const std::string& meshname,
                                      const int centering,
                                      const int cycleNum,
@@ -819,7 +819,7 @@ void SiloFile::ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& me
                                      const localIndex_array& mask ) const
 {
   // iterate over all entries in the member map
-  for( typename std::map< std::string, Array1dT<TYPE> >::iterator iter = member.begin() ; iter!=member.end() ; ++iter )
+  for( typename std::map< std::string, array<TYPE> >::iterator iter = member.begin() ; iter!=member.end() ; ++iter )
   {
     // the field name is the key to the map
     const std::string fieldName = iter->first;
@@ -831,11 +831,11 @@ void SiloFile::ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& me
           ( !isRestart && FieldInfo::AttributesByName[fieldName]->m_WriteToPlot ) )
       {
         // the field data is mapped value
-        Array1dT<TYPE> & fieldData = iter->second;
+        array<TYPE> & fieldData = iter->second;
 
         if( !(mask.empty()) && !isRestart )
         {
-          Array1dT<TYPE> dataToRead( mask.size() );
+          array<TYPE> dataToRead( mask.size() );
           // write the data field
           ReadDataField<INPUTTYPE>( dataToRead, meshname.c_str(), fieldName, centering, cycleNum, problemTime, regionName );
 
@@ -855,7 +855,7 @@ void SiloFile::ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& me
 }
 
 template< typename INPUTTYPE, typename TYPE>
-void SiloFile::ReadDataField( Array1dT<TYPE>& field,
+void SiloFile::ReadDataField( array<TYPE>& field,
                               const std::string& meshName,
                               const std::string& fieldName,
                               const int centering,
@@ -866,7 +866,7 @@ void SiloFile::ReadDataField( Array1dT<TYPE>& field,
 
   INPUTTYPE** var = static_cast<INPUTTYPE**>( GetDataVar<TYPE>( fieldName, meshName, field.size(), centering, cycleNumber, problemTime, regionName ) );
 
-  for( typename Array1dT<TYPE>::size_type a=0 ; a<field.size() ; ++a )
+  for( typename array<TYPE>::size_type a=0 ; a<field.size() ; ++a )
   {
     TYPE temp;
     INPUTTYPE* ptemp = SiloFileUtilities::DataPtr<TYPE,INPUTTYPE>( temp );
@@ -905,7 +905,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-  sArray1d vBlockNames(size);
+  array<string> vBlockNames(size);
   std::vector<char*> BlockNames(size);
   std::vector<int> blockTypes(size);
   char tempBuffer[1024];
@@ -963,7 +963,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 
 
 template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const Array1dT<TYPE>& data )
+void SiloFile::DBWriteWrapper( const std::string& name, const array<TYPE>& data )
 {
   if( !data.empty() )
   {

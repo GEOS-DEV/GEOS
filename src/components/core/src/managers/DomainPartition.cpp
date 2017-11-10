@@ -269,14 +269,14 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 
     ElementRegionManager const * const elementManager = mesh->getElemManager();
     const int numElementRegions = elementManager->GetGroup(keys::elementRegions)->GetSubGroups().size();
-    Array1dT<localIndex*> meshConnectivity(numElementRegions);
-    Array1dT<int*> isGhostElement(numElementRegions);
-    Array1dT<globalIndex*> globalElementNumbers(numElementRegions);
+    array<localIndex*> meshConnectivity(numElementRegions);
+    array<int*> isGhostElement(numElementRegions);
+    array<globalIndex*> globalElementNumbers(numElementRegions);
     ivector shapecnt(numElementRegions);
     ivector shapetype(numElementRegions);
     ivector shapesize(numElementRegions);
 
-    Array1dT<FixedOneToManyRelation> elementToNodeMap;
+    array<FixedOneToManyRelation> elementToNodeMap;
     elementToNodeMap.resize( numElementRegions );
 
     int count = 0;

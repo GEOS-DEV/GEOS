@@ -49,8 +49,8 @@ class MaterialBlock : public MaterialData
 		  double ymax, double zmin, double zmax, double qs=-1, double qp=-1,
 		  double freq=1 );
 
-   void set_material_properties( Array1dT<realT> &rho, Array1dT<realT> &cs,
-				 Array1dT<realT> &cp, Array1dT<R1Tensor>& coord, realT zsurf );
+   void set_material_properties( array<realT> &rho, array<realT> &cs,
+				 array<realT> &cp, array<R1Tensor>& coord, realT zsurf );
    void set_gradients( double rhograd, double vsgrad, double vpgrad );
    void set_absoluteDepth( bool absDepth );
 private:

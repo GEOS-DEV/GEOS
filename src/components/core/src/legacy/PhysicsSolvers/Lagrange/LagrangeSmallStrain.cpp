@@ -175,8 +175,8 @@ void LagrangeSmallStrain::RegisterFields( PhysicalDomainT& domain )
     elemRegion.AddKeylessDataField<realT>("antiThermalStress", false, false);
     // This is the hydrostatic stress that would cause the same amount of volumetric strain as the thermal expantion/contraction would
 
-    rArray1d& temperature = elemRegion.GetFieldData<realT>("temperature");
-    rArray1d& CTE = elemRegion.GetFieldData<realT>("linearCTE");
+    array<real64>& temperature = elemRegion.GetFieldData<realT>("temperature");
+    array<real64>& CTE = elemRegion.GetFieldData<realT>("linearCTE");
     temperature = m_refTemperature;
     CTE = m_defaultCTE;
 
@@ -246,9 +246,9 @@ void LagrangeSmallStrain::SetInitialGuess( const PhysicalDomainT& domain,
                                                 realT* const local_solution )
 {
 /*
-  const iArray1d& trilinos_index     = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  const Array1dT<R1Tensor>& incdisp  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
-  const iArray1d& is_ghost           = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<integer>& trilinos_index     = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  const array<R1Tensor>& incdisp  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+  const array<integer>& is_ghost           = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
 
 //  std::cout<<"LagrangeSmallStrain::SetInitialGuess"<<std::endl;
 
@@ -274,24 +274,24 @@ void LagrangeSmallStrain::PropagateSolution( const realT* const local_solution,
                                                   PhysicalDomainT& domain,
                                                   const localIndex dofOffset )
 {
-  const iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  const iArray1d& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-  Array1dT<R1Tensor>& X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
-  Array1dT<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
-//  Array1dT<R1Tensor>& velocity = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
-  Array1dT<R1Tensor>& incdisp  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+  const array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  const array<integer>& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<R1Tensor>& X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
+  array<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+//  array<R1Tensor>& velocity = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
+  array<R1Tensor>& incdisp  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
 
   realT maxpos = 0.0;
   realT maxdisp = 0.0;
 
 #if 0
-  rArray1d const * const contactOffset = domain.m_feFaceManager.GetFieldDataPointer<realT>("contactOffset" );
+  array<real64> const * const contactOffset = domain.m_feFaceManager.GetFieldDataPointer<realT>("contactOffset" );
 
-  const iArray1d& faceGhostRank = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<integer>& faceGhostRank = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
   const OrderedVariableOneToManyRelation& childFaceIndex = domain.m_feFaceManager.GetVariableOneToManyMap( "childIndices" );
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
 
-  Array1dT<R1Tensor> solnMod(domain.m_feNodeManager.m_numNodes);
+  array<R1Tensor> solnMod(domain.m_feNodeManager.m_numNodes);
   solnMod = 0.0;
   for(localIndex kf = 0 ; kf < domain.m_feFaceManager.m_numFaces ; ++kf)
   {
@@ -435,9 +435,9 @@ void LagrangeSmallStrain::TractionBC( PhysicalDomainT& domain,
   TractionBoundaryCondition* trbc = bc->UpcastActiveBCPointer<TractionBoundaryCondition>(time); //   = dynamic_cast<TractionBoundaryCondition*> ( bc);
   if( trbc )
   {
-    iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-//    iArray1d& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-    iArray1d& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+    array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+//    array<integer>& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+    array<integer>& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
    
     Epetra_IntSerialDenseVector  node_dof(1);
     Epetra_SerialDenseVector     node_rhs(1);
@@ -498,10 +498,10 @@ void LagrangeSmallStrain::PressureBC( PhysicalDomainT& domain,
                                                const lSet& set, realT )
 {
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  rArray1d& pressures = domain.m_feFaceManager.GetFieldData<realT>(PS_STR::PressureStr);
-  rArray1d* apertures;
+  array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  array<real64>& pressures = domain.m_feFaceManager.GetFieldData<realT>(PS_STR::PressureStr);
+  array<real64>* apertures;
 
   Epetra_IntSerialDenseVector  node_dof(1);
   Epetra_SerialDenseVector     node_rhs(1);
@@ -555,9 +555,9 @@ DisplacementBC(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
 
   realT LARGE ;
 
-  iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-  Array1dT<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+  array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
   Epetra_IntSerialDenseVector  node_dof(1);
   Epetra_SerialDenseVector     node_rhs(1);
 
@@ -623,12 +623,12 @@ NonpenetratingBC_DetectContact(PhysicalDomainT& domain, ObjectDataStructureBaseT
   NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
   if(npbc){     
   
-  	iArray1d& inContact = domain.m_feNodeManager.GetFieldData<int>("inContact");
+  	array<integer>& inContact = domain.m_feNodeManager.GetFieldData<int>("inContact");
   	
-    Array1dT<R1Tensor>& disp = object.GetFieldData<FieldInfo::displacement> ();
-    const Array1dT<R1Tensor>& X = object.GetFieldData<FieldInfo::referencePosition> ();
+    array<R1Tensor>& disp = object.GetFieldData<FieldInfo::displacement> ();
+    const array<R1Tensor>& X = object.GetFieldData<FieldInfo::referencePosition> ();
     
-//    iArray1d& face_is_ghost  = domain.m_faceManager.GetFieldData<FieldInfo::ghostRank>();
+//    array<integer>& face_is_ghost  = domain.m_faceManager.GetFieldData<FieldInfo::ghostRank>();
     
   	lSet&  contactingNodes = npbc->m_contactingNodes;
   	std::map<localIndex,localIndex>&  nearestNodeNeighborMap = npbc->m_nearestNodeNeighborMap;
@@ -673,7 +673,7 @@ NonpenetratingBC_UpdateAperture(PhysicalDomainT& domain, ObjectDataStructureBase
   NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
   if(npbc){     
   
-  	rArray1d& aperture = domain.m_feFaceManager.GetFieldData<realT>("Aperture");
+  	array<real64>& aperture = domain.m_feFaceManager.GetFieldData<realT>("Aperture");
   	
   	
   	std::map<localIndex,localIndex>::iterator itr = npbc->m_nearestFaceNeighborMap.begin();
@@ -711,8 +711,8 @@ NonpenetratingBC_Sparsity(PhysicalDomainT& domain, ObjectDataStructureBaseT& obj
   NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
   if(npbc){
   	
-    iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);	
-    iArray1d& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+    array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);	
+    array<integer>& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
     
     std::map<localIndex,localIndex>&  nearestNodeNeighborMap = npbc->m_nearestNodeNeighborMap;
     
@@ -787,11 +787,11 @@ NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object
 
   NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
   if(npbc){
-//    const Array1dT<R1Tensor>& disp = object.GetFieldData<FieldInfo::displacement> ();
+//    const array<R1Tensor>& disp = object.GetFieldData<FieldInfo::displacement> ();
   	
-    iArray1d& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);	
-//    iArray1d& node_is_ghost  = domain.m_nodeManager.GetFieldData<FieldInfo::ghostRank>();
-    iArray1d& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+    array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);	
+//    array<integer>& node_is_ghost  = domain.m_nodeManager.GetFieldData<FieldInfo::ghostRank>();
+    array<integer>& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
   	
     Epetra_IntSerialDenseVector  node_row_dof(1);
     Epetra_IntSerialDenseVector  node_row_dofB(dim);
@@ -802,7 +802,7 @@ NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object
   	
     // Set diagonal of dummy dofs to 1
     node_matrix(0,0) = 1.0;
-    for( iArray1d::size_type i=0; i < dummyDof.size() ; ++i ) {
+    for( array<integer>::size_type i=0; i < dummyDof.size() ; ++i ) {
       node_row_dof(0) = dummyDof[i];	
       m_matrix->ReplaceGlobalValues(node_row_dof,node_matrix);
     }       	
@@ -865,7 +865,7 @@ NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object
     if(npbc->m_updatePressure){
 
       // loop over second set - update pressure based on nearest neighbor from first
-      rArray1d& pressures = domain.m_feFaceManager.GetFieldData<realT>(PS_STR::PressureStr);
+      array<real64>& pressures = domain.m_feFaceManager.GetFieldData<realT>(PS_STR::PressureStr);
 
       const lSet& setB = domain.m_feFaceManager.m_Sets[npbc->m_setNames[1] ];
       for( lSet::const_iterator fcB=setB.begin(); fcB!=setB.end() ; ++fcB ) {
@@ -881,8 +881,8 @@ NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object
 
 void LagrangeSmallStrain::FixNodesBC( NodeManager const& nodeManager, const lSet& set )
 {
-  iArray1d const & trilinos_index = nodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d const & ghostRank  = nodeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<integer> const & trilinos_index = nodeManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer> const & ghostRank  = nodeManager.GetFieldData<FieldInfo::ghostRank>();
 
   Epetra_IntSerialDenseVector  node_dof(1);
   Epetra_SerialDenseVector     node_rhs(1);

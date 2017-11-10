@@ -58,17 +58,17 @@ public:
 
   void reinit(const std::vector<R1TensorT<3> > &mapped_support_points);
 
-  void zero_energy_mode_control( const Array1dT<R1Tensor>& dNdx,
+  void zero_energy_mode_control( const array<R1Tensor>& dNdx,
                                  const realT& volume,
-                                 const Array1dT<R1Tensor>& x,
-                                 const Array1dT<R1Tensor>& vel,
+                                 const array<R1Tensor>& x,
+                                 const array<R1Tensor>& vel,
                                  const realT& dampcoef,
                                  const realT& stiffcoef,
                                  const realT& rho,
                                  const realT& modulus,
                                  const realT& dt,
-                                 Array1dT<R1Tensor>& Qstiffness,
-                                 Array1dT<R1Tensor>& force );
+                                 array<R1Tensor>& Qstiffness,
+                                 array<R1Tensor>& force );
 
 };
 

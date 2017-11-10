@@ -69,7 +69,7 @@
 #include "Common/Common.h"
 #include "IO/ticpp/TinyXMLParser.h"
 #include "RCVSparse.h"
-#include "ArrayT/Array1dT.h"
+#include "ArrayT/array.h"
 #include "ArrayT/Array2dT.h"
 
 #include <string>
@@ -81,13 +81,13 @@
 #include "NOX_Epetra_Group.H"
 
 /// Convert row column value format to epetra FECrs Matrix
-void RCVToEpetraFECrsMatrix(const Array1dT<rcv>& K, Epetra_FECrsMatrix& A);
+void RCVToEpetraFECrsMatrix(const array<rcv>& K, Epetra_FECrsMatrix& A);
 
 /// Convert array to epetra finite element vector
-void ArrayToEpetraFEVector(const rArray1d& a, Epetra_FEVector& v);
+void ArrayToEpetraFEVector(const array<real64>& a, Epetra_FEVector& v);
 
 /// Convert epetra finite element vector to real array. 	
-void EpetraFEVectorToArray(Epetra_FEVector& v, rArray1d& a);
+void EpetraFEVectorToArray(Epetra_FEVector& v, array<real64>& a);
 
 /// 
 void WriteEpetraFECrsMatrixToMatlabFile(std::string filename, Epetra_FECrsMatrix& A);
@@ -95,23 +95,23 @@ void WriteEpetraFECrsMatrixToMatlabFile(std::string filename, Epetra_FECrsMatrix
 void WriteEpetraFEVectorToMatlabFile(const std::string& filename, const Epetra_FEVector& X,const std::string&  descr1="", const std::string& descr2="");
 
 /// Conjugate gradient linear solver
-void LinSolve_CG(const Array1dT<rcv>& A,
-                 rArray1d& x,
-                 const rArray1d& b, 
+void LinSolve_CG(const array<rcv>& A,
+                 array<real64>& x,
+                 const array<real64>& b, 
                  const Epetra_Comm* commPtr,
                  realT tol=1e-10, int maxNumIters=1000, 
                  bool verboseFlag=false, bool doDataWrite=false);
 
 /// Biconjugate gradient linear solver      
-void LinSolve_BICGSTAB(const Array1dT<rcv>& A,
-                   rArray1d& x,
-                   const rArray1d& b, 
+void LinSolve_BICGSTAB(const array<rcv>& A,
+                   array<real64>& x,
+                   const array<real64>& b, 
                    const Epetra_Comm* commPtr,
                    realT tol=1e-10, int maxNumIters=1000, 
                    bool verboseFlag=false, bool doDataWrite=false);
 
 /// Dense local linear solver.                   
-int LinSolve_Local(rArray2d& A, rArray1d& x,rArray1d& b);
+int LinSolve_Local(rArray2d& A, array<real64>& x,array<real64>& b);
 
 void NonlinearSolve( Epetra_Vector& x,
                      NOX::Epetra::Interface::Required& iReq,

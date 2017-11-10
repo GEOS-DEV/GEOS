@@ -388,9 +388,9 @@ void NeighborCommunication::FindGhosts( const bool contactActive,
 //  // add the "external" faces if the contact is on
 //  if( contactActive )
 //  {
-//    const iArray1d& isExternalFace = m_domain->m_feFaceManager.m_isExternal;
+//    const array<integer>& isExternalFace = m_domain->m_feFaceManager.m_isExternal;
 //
-//    for( iArray1d::size_type a=0 ; a<m_domain->m_feFaceManager.m_numFaces ; ++a )
+//    for( array<integer>::size_type a=0 ; a<m_domain->m_feFaceManager.m_numFaces ; ++a )
 //    {
 //      if( isExternalFace[a] == 1 )
 //      {
@@ -866,7 +866,7 @@ int NeighborCommunication::UnpackGhosts(const string name, localIndex_array& new
 }
 
 
-bufvector::size_type NeighborCommunication::PackBuffer( const std::map<string, sArray1d>& fieldNames,
+bufvector::size_type NeighborCommunication::PackBuffer( const std::map<string, array<string>>& fieldNames,
                                                         const CommRegistry::commID commID,
                                                         const bool doBufferPacking )
 {
@@ -886,8 +886,8 @@ bufvector::size_type NeighborCommunication::PackBuffer( const std::map<string, s
   // pack external face contributions to the buffer
   // pack virtual face contributions to the buffer
 
-//  const Array1dT<ObjectDataStructureBaseT*>& omap = m_domain->GetObjectDataStructures();
-//  std::map< PhysicalDomainT::ObjectDataStructureKeys, sArray1d>::const_iterator it;
+//  const array<ObjectDataStructureBaseT*>& omap = m_domain->GetObjectDataStructures();
+//  std::map< PhysicalDomainT::ObjectDataStructureKeys, array<string>>::const_iterator it;
 //  for(it = fieldNames.begin(); it != fieldNames.end(); ++it)
 //  {
 //    if(it->first == PhysicalDomainT::FiniteElementElementManager)
@@ -929,7 +929,7 @@ bufvector::size_type NeighborCommunication::PackBuffer( const std::map<string, s
   return bufferSize;
 }
 
-void NeighborCommunication::UnpackBuffer( const std::map<string, sArray1d>& fieldNames)
+void NeighborCommunication::UnpackBuffer( const std::map<string, array<string>>& fieldNames)
 {
   const char* pbuffer = m_receiveBuffer.data();
 
@@ -939,8 +939,8 @@ void NeighborCommunication::UnpackBuffer( const std::map<string, sArray1d>& fiel
   // unpack external face contributions to the buffer
   // unpack virtual face contributions to the buffer
 
-//  const Array1dT<ObjectDataStructureBaseT*>& omap = m_domain->GetObjectDataStructures();
-//  std::map< PhysicalDomainT::ObjectDataStructureKeys, sArray1d>::const_iterator it;
+//  const array<ObjectDataStructureBaseT*>& omap = m_domain->GetObjectDataStructures();
+//  std::map< PhysicalDomainT::ObjectDataStructureKeys, array<string>>::const_iterator it;
 //  for(it = fieldNames.begin(); it != fieldNames.end(); ++it)
 //  {
 //    if(it->first == PhysicalDomainT::FiniteElementElementManager)

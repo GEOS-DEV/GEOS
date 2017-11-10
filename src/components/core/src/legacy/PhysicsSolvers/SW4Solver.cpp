@@ -50,7 +50,7 @@ double SW4Solver::TimeStep( const realT& time,
                             const realT& dt,
                             const int cycleNumber,
                             PhysicalDomainT& domain,
-                            const sArray1d& namesOfSolverRegions,
+                            const array<string>& namesOfSolverRegions,
                             SpatialPartition& partition,
                             FractunatorBase* const fractunator )
 {
@@ -62,17 +62,17 @@ double SW4Solver::TimeStep( const realT& time,
 
   ObjectDataStructureBaseT& objectManager = domain.m_feNodeManager;
 
-  Array1dT<realT>& rho = objectManager.GetFieldData<realT>( "rho" );
-  Array1dT<realT>& mu = objectManager.GetFieldData<realT>( "mu" );
-  Array1dT<realT>& lambda = objectManager.GetFieldData<realT>( "lambda" );
-  Array1dT<R1Tensor>& Lu = objectManager.GetFieldData<R1Tensor>( "Lu" );
-  Array1dT<R1Tensor>& F = objectManager.GetFieldData<R1Tensor>( "Src" );
-  Array1dT<R1Tensor>& U = objectManager.GetFieldData<FieldInfo::displacement>();
-  Array1dT<R1Tensor>& Uacc = objectManager.GetFieldData<R1Tensor>( "Uacc" );
-  Array1dT<R1Tensor>& Um = objectManager.GetFieldData<R1Tensor>( "Um" );
-  Array1dT<R1Tensor>& Up = objectManager.GetFieldData<R1Tensor>( "Up" );
-  Array1dT<R2SymTensor>& metric = objectManager.GetFieldData<R2SymTensor>( "metric" );
-  Array1dT<realT>& jacobian = objectManager.GetFieldData<realT>( "jacobian" );
+  array<realT>& rho = objectManager.GetFieldData<realT>( "rho" );
+  array<realT>& mu = objectManager.GetFieldData<realT>( "mu" );
+  array<realT>& lambda = objectManager.GetFieldData<realT>( "lambda" );
+  array<R1Tensor>& Lu = objectManager.GetFieldData<R1Tensor>( "Lu" );
+  array<R1Tensor>& F = objectManager.GetFieldData<R1Tensor>( "Src" );
+  array<R1Tensor>& U = objectManager.GetFieldData<FieldInfo::displacement>();
+  array<R1Tensor>& Uacc = objectManager.GetFieldData<R1Tensor>( "Uacc" );
+  array<R1Tensor>& Um = objectManager.GetFieldData<R1Tensor>( "Um" );
+  array<R1Tensor>& Up = objectManager.GetFieldData<R1Tensor>( "Up" );
+  array<R2SymTensor>& metric = objectManager.GetFieldData<R2SymTensor>( "metric" );
+  array<realT>& jacobian = objectManager.GetFieldData<realT>( "jacobian" );
 
   std::vector<realT> t( 13 );
 
@@ -167,11 +167,11 @@ void SW4Solver::Initialize( PhysicalDomainT& domain, SpatialPartition& partition
 
   ObjectDataStructureBaseT& objectManager = domain.m_feNodeManager;
 
-  Array1dT<realT>& jac = objectManager.GetFieldData<realT>( "jacobian" );
-  Array1dT<R2SymTensor>& metric = objectManager.GetFieldData<R2SymTensor>( "metric" );
-  Array1dT<realT>& rho = objectManager.GetFieldData<realT>( "rho" );
-  Array1dT<realT>& mu = objectManager.GetFieldData<realT>( "mu" );
-  Array1dT<realT>& lambda = objectManager.GetFieldData<realT>( "lambda" );
+  array<realT>& jac = objectManager.GetFieldData<realT>( "jacobian" );
+  array<R2SymTensor>& metric = objectManager.GetFieldData<R2SymTensor>( "metric" );
+  array<realT>& rho = objectManager.GetFieldData<realT>( "rho" );
+  array<realT>& mu = objectManager.GetFieldData<realT>( "mu" );
+  array<realT>& lambda = objectManager.GetFieldData<realT>( "lambda" );
 
   // five supergrid boundaries (==1), and one free surface (==2)
   m_bctype[0] = 1;
@@ -183,7 +183,7 @@ void SW4Solver::Initialize( PhysicalDomainT& domain, SpatialPartition& partition
 
   //   std::cout << " sizeof R1Tensor is " << sizeof(R1Tensor) << std::endl;
   // Try to back out the dimensions, assuming Cartesian grid.
-  Array1dT<R1Tensor>& coords = objectManager.GetFieldData<FieldInfo::referencePosition>();
+  array<R1Tensor>& coords = objectManager.GetFieldData<FieldInfo::referencePosition>();
   std::vector<realT> xpos;
   std::vector<realT> ypos;
   std::vector<realT> zpos;
@@ -320,7 +320,7 @@ void SW4Solver::Initialize( PhysicalDomainT& domain, SpatialPartition& partition
   // Define metric and grid
   setupCartesianMetric( metric, jac );
 
-  const sArray1d dummy;
+  const array<string> dummy;
   SetMaxStableTimeStep( 0.0, domain, dummy, partition );
 
   // Supergrid damping layers at non-reflecting boundaries
@@ -367,8 +367,8 @@ void SW4Solver::Initialize( PhysicalDomainT& domain, SpatialPartition& partition
 
   m_npts = ( static_cast<size_t>( m_ilast - m_ifirst + 1 ) ) * ( m_jlast - m_jfirst + 1 ) * ( m_klast - m_kfirst + 1 );
   // Give initial data
-  Array1dT<R1Tensor>& U = objectManager.GetFieldData<FieldInfo::displacement>();
-  Array1dT<R1Tensor>& Um = objectManager.GetFieldData<R1Tensor>( "Um" );
+  array<R1Tensor>& U = objectManager.GetFieldData<FieldInfo::displacement>();
+  array<R1Tensor>& Um = objectManager.GetFieldData<R1Tensor>( "Um" );
 
   U = 0;
   Um = 0;
@@ -637,17 +637,17 @@ int SW4Solver::mkdirs( const string& path )
 //-----------------------------------------------------------------------
 void SW4Solver::SetMaxStableTimeStep( const realT& time,
                                       PhysicalDomainT& domain,
-                                      const sArray1d& namesOfSolverRegions,
+                                      const array<string>& namesOfSolverRegions,
                                       SpatialPartition& partition )
 {
   std::cout << "Calling SetMaxStableTimeStep" << std::endl;
   ObjectDataStructureBaseT& objectManager = domain.m_feNodeManager;
 
-  Array1dT<realT>& rho = objectManager.GetFieldData<realT>( "rho" );
-  Array1dT<realT>& mu = objectManager.GetFieldData<realT>( "mu" );
-  Array1dT<realT>& lambda = objectManager.GetFieldData<realT>( "lambda" );
-  Array1dT<R2SymTensor>& metric = objectManager.GetFieldData<R2SymTensor>( "metric" );
-  Array1dT<realT>& jac = objectManager.GetFieldData<realT>( "jacobian" );
+  array<realT>& rho = objectManager.GetFieldData<realT>( "rho" );
+  array<realT>& mu = objectManager.GetFieldData<realT>( "mu" );
+  array<realT>& lambda = objectManager.GetFieldData<realT>( "lambda" );
+  array<R2SymTensor>& metric = objectManager.GetFieldData<R2SymTensor>( "metric" );
+  array<realT>& jac = objectManager.GetFieldData<realT>( "jacobian" );
 
 #define SQR(x) ((x)*(x))
   realT dtloc = 1e38;
@@ -675,7 +675,7 @@ void SW4Solver::SetMaxStableTimeStep( const realT& time,
 }
 
 //-----------------------------------------------------------------------
-void SW4Solver::Forcing( realT time, Array1dT<R1Tensor>& F )
+void SW4Solver::Forcing( realT time, array<R1Tensor>& F )
 {
   F = 0;
   //int ni = m_ilast - m_ifirst + 1;
@@ -693,7 +693,7 @@ void SW4Solver::Forcing( realT time, Array1dT<R1Tensor>& F )
 }
 
 //-----------------------------------------------------------------------
-void SW4Solver::Forcing_tt( realT time, Array1dT<R1Tensor>& F )
+void SW4Solver::Forcing_tt( realT time, array<R1Tensor>& F )
 {
   F = 0;
   //int ni = m_ilast - m_ifirst + 1;
@@ -752,9 +752,9 @@ void SW4Solver::Forcing_tt( realT time, realT* F )
 }
 
 //-----------------------------------------------------------------------
-void SW4Solver::evalPredictor( Array1dT<R1Tensor>& Up, Array1dT<R1Tensor>& U, Array1dT<R1Tensor>& Um,
-                               Array1dT<realT>& rho,
-                               Array1dT<R1Tensor>& Lu, Array1dT<R1Tensor>& F, realT dt )
+void SW4Solver::evalPredictor( array<R1Tensor>& Up, array<R1Tensor>& U, array<R1Tensor>& Um,
+                               array<realT>& rho,
+                               array<R1Tensor>& Lu, array<R1Tensor>& F, realT dt )
 {
   for( localIndex ind = 0 ; ind < rho.size() ; ind++ )
   {
@@ -780,8 +780,8 @@ void SW4Solver::evalPredictor( realT* Up, realT* U, realT* Um, realT* rho,
 }
 
 //-----------------------------------------------------------------------
-void SW4Solver::evalDpDmInTime( Array1dT<R1Tensor>& Up, Array1dT<R1Tensor>& U, Array1dT<R1Tensor>& Um,
-                                Array1dT<R1Tensor>& Uacc,
+void SW4Solver::evalDpDmInTime( array<R1Tensor>& Up, array<R1Tensor>& U, array<R1Tensor>& Um,
+                                array<R1Tensor>& Uacc,
                                 realT dt )
 {
   realT idt2 = 1 / ( dt * dt );
@@ -808,8 +808,8 @@ void SW4Solver::evalDpDmInTime( realT* Up, realT* U, realT* Um,
 }
 
 //-----------------------------------------------------------------------
-void SW4Solver::evalCorrector( Array1dT<R1Tensor>& Up, Array1dT<realT>& rho, Array1dT<R1Tensor>& Lu,
-                               Array1dT<R1Tensor>& F,
+void SW4Solver::evalCorrector( array<R1Tensor>& Up, array<realT>& rho, array<R1Tensor>& Lu,
+                               array<R1Tensor>& F,
                                realT dt )
 {
   realT dt4 = dt * dt * dt * dt / 12;
@@ -838,9 +838,9 @@ void SW4Solver::evalCorrector( realT* Up, realT* rho, realT* Lu,
 }
 
 //-----------------------------------------------------------------------
-void SW4Solver::enforceBC( Array1dT<R1Tensor>& Up, Array1dT<R2SymTensor>& metric,
-                           Array1dT<realT>& lame_mu,
-                           Array1dT<realT>& lame_lambda )
+void SW4Solver::enforceBC( array<R1Tensor>& Up, array<R2SymTensor>& metric,
+                           array<realT>& lame_mu,
+                           array<realT>& lame_lambda )
 {
 //  int ni = m_ilast - m_ifirst + 1,
   int nj = m_jlast - m_jfirst + 1, nk = m_klast - m_kfirst + 1;
@@ -994,10 +994,10 @@ void SW4Solver::enforceBC( Array1dT<R1Tensor>& Up, Array1dT<R2SymTensor>& metric
 }
 
 //-----------------------------------------------------------------------
-//void SW4Solver::addSuperGridDamping( Array1dT<R1Tensor>& Up, Array1dT<R1Tensor>& U,
-//				     Array1dT<R1Tensor>& Um, Array1dT<realT>& _rho,
+//void SW4Solver::addSuperGridDamping( array<R1Tensor>& Up, array<R1Tensor>& U,
+//				     array<R1Tensor>& Um, array<realT>& _rho,
 //				     realT* _dcx, realT* _dcy, realT* _strx, realT* _stry,
-//				     Array1dT<realT>& _jac, realT* _cox, realT* _coy, realT coeff )
+//				     array<realT>& _jac, realT* _cox, realT* _coy, realT coeff )
 void SW4Solver::addSuperGridDamping( realT* Up, realT* U, realT* Um, realT* _rho,
                                      realT* _dcx,
                                      realT* _dcy, realT* _dcz,
@@ -1142,7 +1142,7 @@ void SW4Solver::setupSupergrid( realT* _strx, realT* _stry, realT* _strz,
 }
 
 //-----------------------------------------------------------------------
-void SW4Solver::cycleSolutionArrays( Array1dT<R1Tensor>& Up, Array1dT<R1Tensor>& U, Array1dT<R1Tensor>& Um )
+void SW4Solver::cycleSolutionArrays( array<R1Tensor>& Up, array<R1Tensor>& U, array<R1Tensor>& Um )
 {
   // There must be a better way to do this, copying pointers instead of moving the data.
 
@@ -1212,7 +1212,7 @@ void SW4Solver::preProcessSources( realT dt, int numberOfTimeSteps, realT tstart
 }
 
 //-----------------------------------------------------------------------
-void SW4Solver::setupCartesianMetric( Array1dT<R2SymTensor>& metric, Array1dT<realT>& jacobian )
+void SW4Solver::setupCartesianMetric( array<R2SymTensor>& metric, array<realT>& jacobian )
 {
   realT dx3 = m_dx * m_dx * m_dx;
   realT sqrtdx = sqrt( m_dx );
@@ -1936,8 +1936,8 @@ void SW4Solver::processPrefilter( char* buffer )
 }
 
 //-----------------------------------------------------------------------
-void SW4Solver::convert_to_mulambda( Array1dT<realT>& rho, Array1dT<realT>& mu,
-                                     Array1dT<realT>& lambda )
+void SW4Solver::convert_to_mulambda( array<realT>& rho, array<realT>& mu,
+                                     array<realT>& lambda )
 {
   // On input, we have stored cs in MU, cp in Lambda
   // use mu = rho*cs*cs and lambda = rho*cp*cp  - 2*mu
@@ -2094,7 +2094,7 @@ void SW4Solver::sw4discretization( realT* displacement, realT* lame_mu, realT* l
   // met(3) is sqrt(J)*ry
   // met(4) is sqrt(J)*rz
   int kcarteff = m_kcart;
-  // Array1dT  arrays
+  // array  arrays
   //#define u(c,i,j,k) (displacement[k-m_kfirst+nk*(j-m_jfirst)+nk*nj*(i-m_ifirst)][c-1])
   //#define mu(i,j,k) (lame_mu[k-m_kfirst+nk*(j-m_jfirst)+nk*nj*(i-m_ifirst)])
   //#define la(i,j,k) (lame_lambda[k-m_kfirst+nk*(j-m_jfirst)+nk*nj*(i-m_ifirst)])

@@ -34,7 +34,7 @@ public:
 
 
   virtual void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-                                                                 Array1dT<gArray1d>& objectToCompositionObject )
+                                                                 array<gArray1d>& objectToCompositionObject )
   {
     (void)compositionObjectManager;
     (void)objectToCompositionObject;
@@ -54,8 +54,8 @@ public:
   OrderedVariableOneToManyRelation& m_crackSurface2ToCutFaces;
   OrderedVariableOneToManyRelation& m_crackToElements;
 
-  Array1dT<rArray2d> m_crackNodeCoords;
-  Array1dT<iArray2d> m_crackConn;
+  array<rArray2d> m_crackNodeCoords;
+  array<iArray2d> m_crackConn;
 
 //  UnorderedVariableOneToManyRelation& m_crackSurfaceToCrackFaces;
 

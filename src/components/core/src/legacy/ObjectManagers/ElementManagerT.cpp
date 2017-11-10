@@ -75,8 +75,8 @@ ElementManagerT::~ElementManagerT()
 
 
 globalIndex ElementManagerT::resize( const lvector& numElements,
-                                     const sArray1d& elementRegionNames,
-                                     const sArray1d& elementTypes )
+                                     const array<string>& elementRegionNames,
+                                     const array<string>& elementTypes )
 {
   m_numElems = 0;
 
@@ -167,17 +167,17 @@ void ElementManagerT::HACKInitialConditions(  )
     ElementRegionT& elementRegion = i->second;
 
 
-    const rArray1d& sigma_x = elementRegion.GetFieldData<realT>("sigma_x");
-    const rArray1d& sigma_y = elementRegion.GetFieldData<realT>("sigma_y");
-    const rArray1d& sigma_z = elementRegion.GetFieldData<realT>("sigma_z");
-    const rArray1d& sigma_xy = elementRegion.GetFieldData<realT>("sigma_xy");
-    const rArray1d& sigma_yz = elementRegion.GetFieldData<realT>("sigma_yz");
-    const rArray1d& sigma_xz = elementRegion.GetFieldData<realT>("sigma_xz");
+    const array<real64>& sigma_x = elementRegion.GetFieldData<realT>("sigma_x");
+    const array<real64>& sigma_y = elementRegion.GetFieldData<realT>("sigma_y");
+    const array<real64>& sigma_z = elementRegion.GetFieldData<realT>("sigma_z");
+    const array<real64>& sigma_xy = elementRegion.GetFieldData<realT>("sigma_xy");
+    const array<real64>& sigma_yz = elementRegion.GetFieldData<realT>("sigma_yz");
+    const array<real64>& sigma_xz = elementRegion.GetFieldData<realT>("sigma_xz");
 
-    rArray1d& pressure       = elementRegion.GetFieldData<FieldInfo::pressure>();
-    Array1dT<R2SymTensor>& s = elementRegion.GetFieldData<FieldInfo::deviatorStress>();
+    array<real64>& pressure       = elementRegion.GetFieldData<FieldInfo::pressure>();
+    array<R2SymTensor>& s = elementRegion.GetFieldData<FieldInfo::deviatorStress>();
 
-    Array1dT<R2SymTensor> *refStress = elementRegion.GetFieldDataPointer<R2SymTensor>("referenceStress");
+    array<R2SymTensor> *refStress = elementRegion.GetFieldDataPointer<R2SymTensor>("referenceStress");
 
     if (refStress != nullptr)
     {
@@ -224,7 +224,7 @@ void ElementManagerT::HACKInitialConditions(  )
  * This function takes a list of nodes, and makes a list of all elements connected to those nodes.
  *
  */
-void ElementManagerT::ConstructListOfIndexesFromMap( const Array1dT< std::set< std::pair<ElementRegionT*,localIndex> > >& toElementMap,
+void ElementManagerT::ConstructListOfIndexesFromMap( const array< std::set< std::pair<ElementRegionT*,localIndex> > >& toElementMap,
                                                      const lArray1d& nodeList,
                                                      std::map< std::string, lArray1d>& localIndexes,
                                                      const int depth )
@@ -467,8 +467,8 @@ void ElementManagerT::UpdateExternalityFromSplit( const std::map< std::string, l
 void ElementManagerT::InitializeFlowFaceRegion()
 {
   lvector numElements;
-  sArray1d elementRegionNames;
-  sArray1d elementTypes;
+  array<string> elementRegionNames;
+  array<string> elementTypes;
   std::string type0=" ";
   localIndex nRegion = 0;
   for( std::map< RegKeyType, ElementRegionT >::iterator iter=m_ElementRegions.begin() ; iter!=m_ElementRegions.end() ; ++iter)
@@ -505,8 +505,8 @@ void ElementManagerT::InitializeFlowFaceRegion()
 void ElementManagerT::GenerateFlowFaceRegion(FaceManagerT& faceManager)
 {
   lvector numElements;
-  sArray1d elementRegionNames;
-  sArray1d elementTypes;
+  array<string> elementRegionNames;
+  array<string> elementTypes;
 
   ElementRegionT& elemRegion = m_ElementRegions["FlowFaceRegion"];
   lSet facesToInclude;
@@ -517,7 +517,7 @@ void ElementManagerT::GenerateFlowFaceRegion(FaceManagerT& faceManager)
   }
   else
   {
-    for( sArray1d::size_type i =0; i < elemRegion.m_parentFaceSetNames.size(); ++i)
+    for( array<string>::size_type i =0; i < elemRegion.m_parentFaceSetNames.size(); ++i)
     {
       lSet& set = faceManager.GetSet(elemRegion.m_parentFaceSetNames[i]);
       facesToInclude.insert(set.begin(), set.end());
@@ -567,7 +567,7 @@ void ElementManagerT::WriteSilo( SiloFile& siloFile,
 
   siloFile.WriteRegionSpecifications(*this, meshname, cycleNum, problemTime);
 
-  sArray1d regionNames;
+  array<string> regionNames;
 
   for (std::map<RegKeyType, ElementRegionT>::iterator elementRegionIter=m_ElementRegions.begin() ;
       elementRegionIter!= m_ElementRegions.end(); ++elementRegionIter)
@@ -598,10 +598,10 @@ void ElementManagerT::ReadSilo( const SiloFile& siloFile,
 
   siloFile.DBReadWrapper("m_numElems",m_numElems );
 
-  sArray1d regionNames;
+  array<string> regionNames;
   siloFile.DBReadWrapper( "regionNames", regionNames );
 
-  for( sArray1d::const_iterator i=regionNames.begin() ; i!=regionNames.end() ; ++i )
+  for( array<string>::const_iterator i=regionNames.begin() ; i!=regionNames.end() ; ++i )
   {
     m_ElementRegions[*i];
   }

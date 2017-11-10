@@ -74,7 +74,7 @@ public:
                  const realT& dt,
                  const int cycleNumber,
                  PhysicalDomainT& domain,
-                 const sArray1d& namesOfSolverRegions, SpatialPartition& partition,
+                 const array<string>& namesOfSolverRegions, SpatialPartition& partition,
                  FractunatorBase* const fractunator );
 
   /// name of solver class
@@ -84,10 +84,10 @@ public:
 private:
 
    std::string m_functionName;
-   sArray1d m_variables;
-   Array1dT<FieldType> m_variable_types;
+   array<string> m_variables;
+   array<FieldType> m_variable_types;
    
-   sArray1d m_setNames;
+   array<string> m_setNames;
 
    PhysicalDomainT::ObjectDataStructureKeys m_objectKey;
    std::string m_regionName; // only used if setting field in an element region

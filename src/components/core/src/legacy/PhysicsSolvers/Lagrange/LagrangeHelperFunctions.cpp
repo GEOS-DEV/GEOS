@@ -35,15 +35,15 @@ namespace LagrangeHelperFunctions
   {
     if( objectManager.DataLengths() > 0 )
     {
-      Array1dT<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
-      const Array1dT<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
-      Array1dT<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
-      Array1dT<R1Tensor>& displacement = objectManager.GetFieldData<FieldInfo::displacement> ();
-      Array1dT<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
-      Array1dT<R1Tensor>* const hgForce = objectManager.GetFieldDataPointer<FieldInfo::hgforce> ();
-      Array1dT<R1Tensor>* const dampingForce = objectManager.GetFieldDataPointer<R1Tensor> ("dampingForce");
+      array<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
+      const array<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
+      array<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
+      array<R1Tensor>& displacement = objectManager.GetFieldData<FieldInfo::displacement> ();
+      array<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
+      array<R1Tensor>* const hgForce = objectManager.GetFieldDataPointer<FieldInfo::hgforce> ();
+      array<R1Tensor>* const dampingForce = objectManager.GetFieldDataPointer<R1Tensor> ("dampingForce");
 
-      rArray1d& work = objectManager.GetFieldData<realT>("work");
+      array<real64>& work = objectManager.GetFieldData<realT>("work");
 
 
       const realT dtdiv2 = 0.5 * dt;
@@ -75,7 +75,7 @@ namespace LagrangeHelperFunctions
 
 
   /*
-      const Array1dT<lArray1d>& childIndices = objectManager.GetVariableOneToManyMap( "childIndices" );
+      const array<lArray1d>& childIndices = objectManager.GetVariableOneToManyMap( "childIndices" );
       for (localIndex a = 0; a < objectManager.DataLengths(); ++a)
       {
         if( !(childIndices[a].empty()) )
@@ -130,15 +130,15 @@ namespace LagrangeHelperFunctions
      ///TODO why does this change answers???
     if( objectManager.DataLengths() > 0 ) //&& dt>0.0 )
     {
-      Array1dT<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
-      Array1dT<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
-      Array1dT<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
+      array<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
+      array<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
+      array<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
 
-      Array1dT<R1Tensor>* const dampingForce = objectManager.GetFieldDataPointer<R1Tensor>("dampingForce");
-      Array1dT<realT>& mass = objectManager.GetFieldData<FieldInfo::mass> ();
-      rArray1d& work = objectManager.GetFieldData<realT>("work");
+      array<R1Tensor>* const dampingForce = objectManager.GetFieldDataPointer<R1Tensor>("dampingForce");
+      array<realT>& mass = objectManager.GetFieldData<FieldInfo::mass> ();
+      array<real64>& work = objectManager.GetFieldData<realT>("work");
 
-      const Array1dT<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
+      const array<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
 
 
       const realT dtdiv2 = 0.5 * dt;
@@ -265,12 +265,12 @@ namespace LagrangeHelperFunctions
     if( discreteElementManager.DataLengths() > 0 )
     {
 
-    Array1dT<R1Tensor>& rotationalVelocity        = discreteElementManager.GetFieldData<FieldInfo::rotationalVelocity> ();
-    Array1dT<R1Tensor>& rotationalAcceleration    = discreteElementManager.GetFieldData<FieldInfo::rotationalAcceleration> ();
-    Array1dT<R1Tensor>& rotationalAxisIncrement   = discreteElementManager.GetFieldData<FieldInfo::rotationalAxisIncrement> ();
-    Array1dT<realT>& rotationalMagnitudeIncrement = discreteElementManager.GetFieldData<FieldInfo::rotationalMagnitudeIncrement> ();
-    Array1dT<R1Tensor>& rotationAxis              = discreteElementManager.GetFieldData<FieldInfo::rotationAxis> ();
-    Array1dT<realT>& rotationMagnitude            = discreteElementManager.GetFieldData<FieldInfo::rotationMagnitude> ();
+    array<R1Tensor>& rotationalVelocity        = discreteElementManager.GetFieldData<FieldInfo::rotationalVelocity> ();
+    array<R1Tensor>& rotationalAcceleration    = discreteElementManager.GetFieldData<FieldInfo::rotationalAcceleration> ();
+    array<R1Tensor>& rotationalAxisIncrement   = discreteElementManager.GetFieldData<FieldInfo::rotationalAxisIncrement> ();
+    array<realT>& rotationalMagnitudeIncrement = discreteElementManager.GetFieldData<FieldInfo::rotationalMagnitudeIncrement> ();
+    array<R1Tensor>& rotationAxis              = discreteElementManager.GetFieldData<FieldInfo::rotationAxis> ();
+    array<realT>& rotationMagnitude            = discreteElementManager.GetFieldData<FieldInfo::rotationMagnitude> ();
 
     const realT dtdiv2 = 0.5 * dt;
 
@@ -322,13 +322,13 @@ namespace LagrangeHelperFunctions
     if( discreteElementManager.DataLengths() > 0 )
     {
       //discrete element positions
-      Array1dT<R1Tensor>& deCurrentPosition         = discreteElementManager.GetFieldData<FieldInfo::currentPosition> ();
-      Array1dT<R1Tensor>& deReferencePosition       = discreteElementManager.GetFieldData<FieldInfo::referencePosition> ();
-      Array1dT<R1Tensor>& deDisplacement            = discreteElementManager.GetFieldData<FieldInfo::displacement> ();
+      array<R1Tensor>& deCurrentPosition         = discreteElementManager.GetFieldData<FieldInfo::currentPosition> ();
+      array<R1Tensor>& deReferencePosition       = discreteElementManager.GetFieldData<FieldInfo::referencePosition> ();
+      array<R1Tensor>& deDisplacement            = discreteElementManager.GetFieldData<FieldInfo::displacement> ();
 
       //nodal positions
-      Array1dT<R1Tensor>& nodeRelativePosition      = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::relativePosition> ();
-      Array1dT<R1Tensor>& nodeCurrentPosition       = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::currentPosition> ();
+      array<R1Tensor>& nodeRelativePosition      = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::relativePosition> ();
+      array<R1Tensor>& nodeCurrentPosition       = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::currentPosition> ();
 
       //update nodal and discrete element current positions
       //note: all quantities are in body frame
@@ -379,10 +379,10 @@ namespace LagrangeHelperFunctions
   {
     if( objectManager.DataLengths() > 0 )
     {
-    Array1dT<R1Tensor>& rotationalVelocity = objectManager.GetFieldData< FieldInfo::rotationalVelocity> ();
-    Array1dT<R1Tensor>& rotationalAcceleration = objectManager.GetFieldData< FieldInfo::rotationalAcceleration> ();
-    Array1dT<R1Tensor>& moment = objectManager.GetFieldData<FieldInfo::moment> ();
-    Array1dT<R1Tensor>& rotationalInertia = objectManager.GetFieldData<FieldInfo::rotationalInertia> ();
+    array<R1Tensor>& rotationalVelocity = objectManager.GetFieldData< FieldInfo::rotationalVelocity> ();
+    array<R1Tensor>& rotationalAcceleration = objectManager.GetFieldData< FieldInfo::rotationalAcceleration> ();
+    array<R1Tensor>& moment = objectManager.GetFieldData<FieldInfo::moment> ();
+    array<R1Tensor>& rotationalInertia = objectManager.GetFieldData<FieldInfo::rotationalInertia> ();
 
     const realT dtdiv2 = 0.5 * dt;
     for (localIndex a = 0; a < objectManager.DataLengths(); ++a)

@@ -18,7 +18,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
     m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
 {
   this->RegisterGroup<ManagedGroup>(keys::sets);
-  this->RegisterViewWrapper< iArray1d >("isExternal");
+  this->RegisterViewWrapper< array<integer> >("isExternal");
 }
 //ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //                                      ManagedGroup * const parent,
@@ -29,7 +29,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //
 //
 //  this->RegisterGroup<ManagedGroup>("Sets");
-//  this->RegisterViewWrapper< iArray1d >("isExternal");
+//  this->RegisterViewWrapper< array<integer> >("isExternal");
 //}
 
 
@@ -102,7 +102,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
 
 void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& objectList ) const
 {
-  const iArray1d& isDomainBoundary = this->getReference<integer_array>(string("isDomainBoundary"));
+  const array<integer>& isDomainBoundary = this->getReference<integer_array>(string("isDomainBoundary"));
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -114,7 +114,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& o
 
 void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array& objectList ) const
 {
-  const iArray1d& isDomainBoundary = this->getReference<integer_array>(string("isDomainBoundary"));
+  const array<integer>& isDomainBoundary = this->getReference<integer_array>(string("isDomainBoundary"));
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )

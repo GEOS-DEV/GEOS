@@ -85,7 +85,7 @@ R2SymTensor fromString<R2SymTensor>(std::string theVar)
   R2SymTensor var;
   //std::cout  << theVar << " " << um.Convert(theVar) <<std::endl;
 
-  sArray1d svalues = Tokenize(theVar,",");
+  array<string> svalues = Tokenize(theVar,",");
 
   for( int i=0 ; i<R2SymTensor::Length() ; ++i )
   {
@@ -97,9 +97,9 @@ R2SymTensor fromString<R2SymTensor>(std::string theVar)
 /**
  * String tokenizing function
 **/
-sArray1d Tokenize(const std::string& str, const std::string& delimiters)
+array<string> Tokenize(const std::string& str, const std::string& delimiters)
 {
-  sArray1d tokens;
+  array<string> tokens;
 
   if ( str.length() == 0 ) {
     tokens.push_back(str);
@@ -145,9 +145,9 @@ sArray1d Tokenize(const std::string& str, const std::string& delimiters)
  * String tokenizing function using a character sequence,
  * ie. Tokenize "1.0000 HPO4-- +1.0000 Cu++" with " +" gives {"1.0000 HPO4--","1.0000 Cu++"}
 **/
-sArray1d TokenizeSeq(const std::string& str, const std::string& seq)
+array<string> TokenizeSeq(const std::string& str, const std::string& seq)
 {
-  sArray1d tokens;
+  array<string> tokens;
   
   if ( str.length() == 0 ) {
     tokens.push_back(str);
@@ -168,9 +168,9 @@ sArray1d TokenizeSeq(const std::string& str, const std::string& seq)
 /**
  * Split string at deliminator
 **/
-sArray1d Split(const std::string& str, const std::string& delimiters)
+array<string> Split(const std::string& str, const std::string& delimiters)
 {
-  sArray1d tokens;
+  array<string> tokens;
 
   if ( str.length() == 0 ) {
     tokens.push_back(str);

@@ -137,7 +137,7 @@ double ImplicitLaplaceSolver<dim> :: TimeStep (const realT& time ,
                                              const realT& dt ,
                                              const int cycleNumber,
                                              PhysicalDomainT * domain,
-                                             const sArray1d& namesOfSolverRegions ,
+                                             const array<string>& namesOfSolverRegions ,
                                              SpatialPartition& partition,
                                              FractunatorBase* const fractunator )
 {
@@ -189,8 +189,8 @@ void ImplicitLaplaceSolver<dim> :: SetupSystem (PhysicalDomainT * domain,
 
 		// create trilinos dof indexing
 
-  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>("TrilinosIndex");
-  iArray1d& is_ghost       = domain->m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<integer>& trilinos_index = domain->m_feNodeManager.GetFieldData<int>("TrilinosIndex");
+  array<integer>& is_ghost       = domain->m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
 
   unsigned local_count = 0;
   for(unsigned r=0; r<trilinos_index.size(); ++r)
@@ -265,9 +265,9 @@ void ImplicitLaplaceSolver<dim> :: Assemble (PhysicalDomainT * domain,
 
 		// basic nodal data ( = dof data for our problem)
 
-  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>("TrilinosIndex");
-//  iArray1d& is_ghost       = domain->m_nodeManager.GetFieldData<FieldInfo::ghostRank>();
-  const iArray1d& isExternal    = domain->m_feNodeManager.m_isExternal;
+  array<integer>& trilinos_index = domain->m_feNodeManager.GetFieldData<int>("TrilinosIndex");
+//  array<integer>& is_ghost       = domain->m_nodeManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<integer>& isExternal    = domain->m_feNodeManager.m_isExternal;
 
 		// begin region loop
 
@@ -300,7 +300,7 @@ void ImplicitLaplaceSolver<dim> :: Assemble (PhysicalDomainT * domain,
 
 		// determine ghost elements
 
-    iArray1d& elem_is_ghost = region->second.GetFieldData<FieldInfo::ghostRank>();
+    array<integer>& elem_is_ghost = region->second.GetFieldData<FieldInfo::ghostRank>();
     
 		// begin element loop, skipping ghost elements
 
@@ -421,9 +421,9 @@ void ImplicitLaplaceSolver<dim> :: Solve (PhysicalDomainT * domain,
 
 	// copy vector solution into geos data structures
 
-  iArray1d& trilinos_index = domain->m_feNodeManager.GetFieldData<int>("TrilinosIndex");
-  iArray1d& is_ghost       = domain->m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-  rArray1d& geos_pressure  = domain->m_feNodeManager.GetFieldData<FieldInfo::pressure>();
+  array<integer>& trilinos_index = domain->m_feNodeManager.GetFieldData<int>("TrilinosIndex");
+  array<integer>& is_ghost       = domain->m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<real64>& geos_pressure  = domain->m_feNodeManager.GetFieldData<FieldInfo::pressure>();
 
   int dummy;
   double* local_solution = NULL;

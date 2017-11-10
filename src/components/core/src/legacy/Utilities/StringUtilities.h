@@ -157,13 +157,13 @@ inline bool strIsInt(std::string theString){
 }
 
 /// Subdivide string by delimiters
-sArray1d Tokenize(const std::string& str, const std::string& delimiters);
+array<string> Tokenize(const std::string& str, const std::string& delimiters);
 
 /// Subdivide string delimited by sequence of characters
-sArray1d TokenizeSeq(const std::string& str, const std::string& seq);
+array<string> TokenizeSeq(const std::string& str, const std::string& seq);
 
 /// Split string at first token
-sArray1d Split(const std::string& str, const std::string& delimiters);
+array<string> Split(const std::string& str, const std::string& delimiters);
 
 /// Remove comments from end of string
 void RemoveComments(std::string& str, char d='%');
@@ -174,11 +174,11 @@ inline void RemoveSpaces(std::string& aString){
 }
 
 /// Expand string vector based on multiple tokens eg [a, b**3, c] => [a,b,b,b,c]
-inline void ExpandMultipleTokens(sArray1d& sVector , const std::string& multipleToken="**"){
+inline void ExpandMultipleTokens(array<string>& sVector , const std::string& multipleToken="**"){
 	int n= sVector.size();
-	sArray1d newVec;
+	array<string> newVec;
 	for(int i =0; i < n; ++i){
-		sArray1d keyMult = TokenizeSeq(sVector[i], multipleToken);
+		array<string> keyMult = TokenizeSeq(sVector[i], multipleToken);
 		if( (keyMult.size() == 2) && strIsInt(keyMult[1]) ){
 		  int numMult = fromString<int>(keyMult[1]);
 		  for(int j=0; j < numMult; ++j ){
@@ -197,7 +197,7 @@ void TrimLeft(std::string& str, const std::string& d=" \t\n\r");
 void TrimRight(std::string& str, const std::string& d=" \t\n\r");
 void Trim(std::string& str, const std::string& d=" \t\n\r");
 
-inline void Trim(sArray1d& strVect, const std::string& d=" \t\n\r"){
+inline void Trim(array<string>& strVect, const std::string& d=" \t\n\r"){
   for(unsigned i =0; i < strVect.size(); ++i) Trim(strVect[i],d);	
 }
 

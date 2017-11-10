@@ -284,8 +284,8 @@ void DiscreteElementManagerBaseT::WriteVTK(const int cycleNum, ContactManagerBas
   //write points
   out << "POINTS " << m_DataLengths << " double" << std::endl;
   {
-    const Array1dT<R1Tensor>& deCurrentPosition         = GetFieldData<FieldInfo::currentPosition> ();
-    for(Array1dT<R1Tensor>::const_iterator it = deCurrentPosition.begin(); it != deCurrentPosition.end(); ++it)
+    const array<R1Tensor>& deCurrentPosition         = GetFieldData<FieldInfo::currentPosition> ();
+    for(array<R1Tensor>::const_iterator it = deCurrentPosition.begin(); it != deCurrentPosition.end(); ++it)
     {
       out << (*it)(0) << " " << (*it)(1) << " " << (*it)(2) << std::endl;
     }
@@ -323,33 +323,33 @@ void DiscreteElementManagerBaseT::WriteVTK(const int cycleNum, ContactManagerBas
 
 void DiscreteElementManagerBaseT::WriteVTKPointData(std::ofstream& out)
 {
-  for( std::map<std::string, rArray1d>::const_iterator itn=m_realData.begin() ; itn!=m_realData.end() ; ++itn )
+  for( std::map<std::string, array<real64>>::const_iterator itn=m_realData.begin() ; itn!=m_realData.end() ; ++itn )
   {
     out << "SCALARS pt" << itn->first << " double" << std::endl << "LOOKUP_TABLE default" << std::endl;
-    const rArray1d& scalar = itn->second;
-    for(rArray1d::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    const array<real64>& scalar = itn->second;
+    for(array<real64>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
     {
       out << (*it) << " ";
     }
     out << std::endl;
   }
 
-  for( std::map<std::string, Array1dT<R1Tensor> >::const_iterator itn=m_R1TensorData.begin() ; itn!=m_R1TensorData.end() ; ++itn )
+  for( std::map<std::string, array<R1Tensor> >::const_iterator itn=m_R1TensorData.begin() ; itn!=m_R1TensorData.end() ; ++itn )
   {
     out << "SCALARS pt" << itn->first << "_Magnitude double" << std::endl << "LOOKUP_TABLE default" << std::endl;
-    const Array1dT<R1Tensor>& scalar = itn->second;
-    for(Array1dT<R1Tensor>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    const array<R1Tensor>& scalar = itn->second;
+    for(array<R1Tensor>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
     {
       out << it->L2_Norm() << " ";
     }
     out << std::endl;
   }
 
-  for( std::map<std::string, iArray1d>::const_iterator itn=m_IntegerData.begin() ; itn!=m_IntegerData.end() ; ++itn )
+  for( std::map<std::string, array<integer>>::const_iterator itn=m_IntegerData.begin() ; itn!=m_IntegerData.end() ; ++itn )
   {
     out << "SCALARS pt" << itn->first << " integer" << std::endl << "LOOKUP_TABLE default" << std::endl;
-    const iArray1d& scalar = itn->second;
-    for(iArray1d::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    const array<integer>& scalar = itn->second;
+    for(array<integer>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
     {
       out << (*it) << " ";
     }

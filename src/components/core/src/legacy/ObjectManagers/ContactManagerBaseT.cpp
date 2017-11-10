@@ -284,17 +284,17 @@ globalIndex ContactManagerBaseT::resize( const localIndex size, const bool assig
 
 void ContactManagerBaseT::WriteVTKCellData(std::ofstream& out)
 {
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
-  Array1dT<iArray1d*> intVars;
-  Array1dT<rArray1d*> realVars;
-  Array1dT<Array1dT<R1Tensor>*> R1Vars;
-  Array1dT<Array1dT<R2Tensor>*> R2Vars;
-  Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+  array<array<integer>*> intVars;
+  array<array<real64>*> realVars;
+  array<array<R1Tensor>*> R1Vars;
+  array<array<R2Tensor>*> R2Vars;
+  array<array<R2SymTensor>*> R2SymVars;
 
   m_contact->GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -307,33 +307,33 @@ void ContactManagerBaseT::WriteVTKCellData(std::ofstream& out)
   m_contact->Serialize(intVars, realVars, R1Vars, R2Vars, R2SymVars);
 
   localIndex i = 0;
-  for( sArray1d::const_iterator itn=realVarNames.begin() ; itn!=realVarNames.end() ; ++itn, ++i )
+  for( array<string>::const_iterator itn=realVarNames.begin() ; itn!=realVarNames.end() ; ++itn, ++i )
   {
     out << "SCALARS ln" << (*itn) << " double" << std::endl << "LOOKUP_TABLE default" << std::endl;
-    const rArray1d& scalar = *(realVars[i]);
-    for(rArray1d::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    const array<real64>& scalar = *(realVars[i]);
+    for(array<real64>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
     {
       out << (*it) << " ";
     }
     out << std::endl;
   }
   i = 0;
-  for( sArray1d::const_iterator itn=R1TensorVarNames.begin() ; itn!=R1TensorVarNames.end() ; ++itn, ++i )
+  for( array<string>::const_iterator itn=R1TensorVarNames.begin() ; itn!=R1TensorVarNames.end() ; ++itn, ++i )
   {
     out << "SCALARS ln" << (*itn) << "_Magnitude double" << std::endl << "LOOKUP_TABLE default" << std::endl;
-    const Array1dT<R1Tensor>& scalar = *(R1Vars[i]);
-    for(Array1dT<R1Tensor>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    const array<R1Tensor>& scalar = *(R1Vars[i]);
+    for(array<R1Tensor>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
     {
       out << it->L2_Norm() << " ";
     }
     out << std::endl;
   }
   i = 0;
-  for( sArray1d::const_iterator itn=intVarNames.begin() ; itn!=intVarNames.end() ; ++itn, ++i )
+  for( array<string>::const_iterator itn=intVarNames.begin() ; itn!=intVarNames.end() ; ++itn, ++i )
   {
     out << "SCALARS ln" << (*itn) << " integer" << std::endl << "LOOKUP_TABLE default" << std::endl;
-    const iArray1d& scalar = *(intVars[i]);
-    for(iArray1d::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    const array<integer>& scalar = *(intVars[i]);
+    for(array<integer>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
     {
       out << (*it) << " ";
     }
@@ -369,17 +369,17 @@ void ContactManagerBaseT::WriteSilo( SiloFile& siloFile,
 
   //-----------------------------------------------------
   //HANDLE THE VARIABLES ASSOCIATED WITH THE JOINT STATE
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
-  Array1dT<iArray1d*> intVars;
-  Array1dT<rArray1d*> realVars;
-  Array1dT<Array1dT<R1Tensor>*> R1Vars;
-  Array1dT<Array1dT<R2Tensor>*> R2Vars;
-  Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+  array<array<integer>*> intVars;
+  array<array<real64>*> realVars;
+  array<array<R1Tensor>*> R1Vars;
+  array<array<R2Tensor>*> R2Vars;
+  array<array<R2SymTensor>*> R2SymVars;
 
   m_contact->GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -425,17 +425,17 @@ void ContactManagerBaseT::ReadSilo( const SiloFile& siloFile,
         m_contact->SetVariableParameters(varParams == 1);
     }
 
-    sArray1d intVarNames;
-    sArray1d realVarNames;
-    sArray1d R1TensorVarNames;
-    sArray1d R2TensorVarNames;
-    sArray1d R2SymTensorVarNames;
+    array<string> intVarNames;
+    array<string> realVarNames;
+    array<string> R1TensorVarNames;
+    array<string> R2TensorVarNames;
+    array<string> R2SymTensorVarNames;
 
-    Array1dT<iArray1d*> intVars;
-    Array1dT<rArray1d*> realVars;
-    Array1dT<Array1dT<R1Tensor>*> R1Vars;
-    Array1dT<Array1dT<R2Tensor>*> R2Vars;
-    Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+    array<array<integer>*> intVars;
+    array<array<real64>*> realVars;
+    array<array<R1Tensor>*> R1Vars;
+    array<array<R2Tensor>*> R2Vars;
+    array<array<R2SymTensor>*> R2SymVars;
 
     m_contact->GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -506,11 +506,11 @@ int ContactManagerBaseT::GetIndex(const localIndex body1, const localIndex body2
  * any new entries from the given neighbor list
  * @param[in] neighborList List of external face indices associated with a particular external face
  */
-size_t ContactManagerBaseT::Update(const Array1dT< lArray1d >& neighborList)
+size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
 {
   lArray1d& face1 = this->GetFieldData<localIndex>("face1");
   lArray1d& face2 = this->GetFieldData<localIndex>("face2");
-  iArray1d& activeC = this->GetFieldData<int>("active");
+  array<integer>& activeC = this->GetFieldData<int>("active");
     
   //-------------------------------------------------
   //case A: neighbor list is empty, so remove all contacts
@@ -529,13 +529,13 @@ size_t ContactManagerBaseT::Update(const Array1dT< lArray1d >& neighborList)
 
     // B.1: allocate space for the new common planes
     localIndex newsize = 0;
-    for( Array1dT<lArray1d>::const_iterator i=neighborList.begin() ; i!=neighborList.end() ; ++i )
+    for( array<lArray1d>::const_iterator i=neighborList.begin() ; i!=neighborList.end() ; ++i )
       newsize += i->size();
     this->resize( newsize );
 
     // B.2: now iterate over the neighborList and fill the common plane face entries
     localIndex icount = 0, ii = 0;
-    for( Array1dT<lArray1d>::const_iterator i=neighborList.begin() ; i!=neighborList.end() ; ++i, ++icount)
+    for( array<lArray1d>::const_iterator i=neighborList.begin() ; i!=neighborList.end() ; ++i, ++icount)
     {
       // iterate over each entry in the neighborList for a given face1 value
       for( lArray1d::const_iterator j=i->begin() ; j!=i->end() ; ++j, ++ii)
@@ -571,7 +571,7 @@ size_t ContactManagerBaseT::Update(const Array1dT< lArray1d >& neighborList)
   // common plane index (the index of the data in *this)
   {
     lArray1d::size_type cp_index = 0;
-    for(Array1dT<lArray1d>::size_type nl_indexf1 = 0; nl_indexf1<neighborList.size() ; ++nl_indexf1 )
+    for(array<lArray1d>::size_type nl_indexf1 = 0; nl_indexf1<neighborList.size() ; ++nl_indexf1 )
     {
       lArray1d::size_type i2=0;
       while(i2<neighborList[nl_indexf1].size())
@@ -656,7 +656,7 @@ size_t ContactManagerBaseT::Update(const Array1dT< lArray1d >& neighborList)
   {
     size_t neighbor_index = 0;
     std::cout << "CONTACTS: " << this->DataLengths() << " FACEPAIRS: " << numFacePairs << "\n";
-    for( Array1dT<lArray1d>::size_type nl_indexf1=0 ; nl_indexf1<neighborList.size() ; ++nl_indexf1 )
+    for( array<lArray1d>::size_type nl_indexf1=0 ; nl_indexf1<neighborList.size() ; ++nl_indexf1 )
     {
       for( lArray1d::size_type i2=0 ; i2<neighborList[nl_indexf1].size() ; ++i2, ++neighbor_index)
       {

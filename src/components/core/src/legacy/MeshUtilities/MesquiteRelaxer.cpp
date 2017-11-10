@@ -40,15 +40,15 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
   PatchType patch = PatchType::PATCH_GLOBAL;
 
 
-  Array1dT<R1Tensor>& Xref = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
-  const Array1dT<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
-  const iArray1d& isNodeExternal = domain.m_feNodeManager.m_isExternal;
+  array<R1Tensor>& Xref = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const array<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<integer>& isNodeExternal = domain.m_feNodeManager.m_isExternal;
   R1Tensor nodePosition;
   int xyzIdx, nodeIdx;
   ElementTypes topo;
 
   unsigned long int numNodes = domain.m_feNodeManager.m_numNodes;
-  rArray1d coords(3*numNodes);
+  array<real64> coords(3*numNodes);
   // Interleave x/y/z coordinates into "coords"
   for (localIndex a = 0; a < numNodes; ++a)
   {
@@ -98,7 +98,7 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
     }
 
     const FixedOneToManyRelation& elementToNodeMap = region.m_toNodesRelation;
-    const iArray1d nodeOrdering = region.SiloNodeOrdering();
+    const array<integer> nodeOrdering = region.SiloNodeOrdering();
 
     // Interleave connectivity into array of integers such that for tri elements you have:
     //     quads = [ elem1_node1, elem1_node2, elem1_node3, elem2_node1, elem2_node2, elem2_node3, ...] and so on.

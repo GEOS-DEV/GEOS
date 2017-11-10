@@ -48,19 +48,19 @@ private:
 
 
   int m_dim;
-//  rArray1d m_vertices[3];
-//  iArray1d m_nElems[3];
-//  rArray1d m_nElemScaling[3];
-//  rArray1d m_nElemBias[3];
+//  array<real64> m_vertices[3];
+//  array<integer> m_nElems[3];
+//  array<real64> m_nElemScaling[3];
+//  array<real64> m_nElemBias[3];
 //
-//  sArray1d m_regionNames;
+//  array<string> m_regionNames;
 
   realT m_min[3]; // Minimum extent of mesh dimensions
   realT m_max[3]; // Maximum extent of mesh dimensions
 
   //int m_numElems[3];
-  iArray1d m_firstElemIndexForBlock[3];
-  iArray1d m_lastElemIndexForBlock[3];
+  array<integer> m_firstElemIndexForBlock[3];
+  array<integer> m_lastElemIndexForBlock[3];
 
 
 
@@ -76,9 +76,9 @@ private:
 
 
 
-  sArray1d m_elementType;
+  array<string> m_elementType;
 
-  iArray1d m_numElePerBox;
+  array<integer> m_numElePerBox;
 
   int m_trianglePattern  ; // In pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
 

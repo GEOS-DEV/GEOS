@@ -112,9 +112,9 @@ m_parentIndex( m_OneToOneMaps["parentIndex"] )
   this->AddKeyedDataField<FieldInfo::ghostRank>( );
   this->AddKeyedDataField<FieldInfo::ownedByRank>( );
 
-  Array1dT<Field<FieldInfo::isDomainBoundary>::Type>& isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
-  Array1dT<Field<FieldInfo::ghostRank>::Type>& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
-  Array1dT<Field<FieldInfo::ownedByRank>::Type>& isLocallyOwned = this->GetFieldData<FieldInfo::ownedByRank>();
+  array<Field<FieldInfo::isDomainBoundary>::Type>& isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
+  array<Field<FieldInfo::ghostRank>::Type>& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
+  array<Field<FieldInfo::ownedByRank>::Type>& isLocallyOwned = this->GetFieldData<FieldInfo::ownedByRank>();
 
   isDomainBoundary = 0;
   m_isExternal = 0;
@@ -177,7 +177,7 @@ m_rank(init.m_rank)
  */
 ObjectDataStructureBaseT::~ObjectDataStructureBaseT()
 {
-  for( Array1dT<BoundaryConditionBase*>::iterator i=m_bcData.begin() ; i!=m_bcData.end() ; ++i )
+  for( array<BoundaryConditionBase*>::iterator i=m_bcData.begin() ; i!=m_bcData.end() ; ++i )
   {
     delete *i;
   }
@@ -268,15 +268,15 @@ void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, T>& mem
   }
 }
 /*
-template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, iArray1d>& );
-template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, rArray1d>& );
-template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, Array1dT<R1Tensor> >& );
-template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, Array1dT<R2Tensor> >& );
-template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, Array1dT<R2SymTensor> >& );
+template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, array<integer>>& );
+template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, array<real64>>& );
+template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, array<R1Tensor> >& );
+template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, array<R2Tensor> >& );
+template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, array<R2SymTensor> >& );
 template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, OneToOneRelationship >& );
 template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, FixedOneToManyRelationship >& );
-template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, Array1dT<lArray1d> >& );
-template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, Array1dT< lSet > >& );
+template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, array<lArray1d> >& );
+template void ObjectDataStructureBaseT::ResizeObjectField( std::map< std::string, array< lSet > >& );
 */
 
 
@@ -343,12 +343,12 @@ void ObjectDataStructureBaseT::insertBase( const localIndex i)
 
 
 template< typename T >
-void ObjectDataStructureBaseT::insert( std::map< std::string, Array1dT<T> >& member, const localIndex index )
+void ObjectDataStructureBaseT::insert( std::map< std::string, array<T> >& member, const localIndex index )
 {
-  for( typename std::map< std::string, Array1dT<T> >::iterator i=member.begin(); i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::iterator i=member.begin(); i!=member.end() ; ++i )
   {
-    Array1dT<T>& field = i->second;
-    typename Array1dT<T>::iterator iter0 = field.begin() + index;
+    array<T>& field = i->second;
+    typename array<T>::iterator iter0 = field.begin() + index;
     T zero ;
     zero = 0;
     field.insert(iter0,zero);
@@ -375,12 +375,12 @@ void ObjectDataStructureBaseT::insert( std::map< std::string, FixedOneToManyRela
 }
 
 template< typename T >
-void ObjectDataStructureBaseT::insert( std::map< std::string, InterObjectRelation<Array1dT<T> > >& member, const localIndex index )
+void ObjectDataStructureBaseT::insert( std::map< std::string, InterObjectRelation<array<T> > >& member, const localIndex index )
 {
-  for( typename std::map< std::string, InterObjectRelation<Array1dT<T> > >::iterator i=member.begin(); i!=member.end() ; ++i )
+  for( typename std::map< std::string, InterObjectRelation<array<T> > >::iterator i=member.begin(); i!=member.end() ; ++i )
   {
-    InterObjectRelation<Array1dT<T> >& field = i->second;
-    typename InterObjectRelation<Array1dT<T> >::iterator iter0 = field.begin() + index;
+    InterObjectRelation<array<T> >& field = i->second;
+    typename InterObjectRelation<array<T> >::iterator iter0 = field.begin() + index;
     field.insert(iter0, T());
   }
 }
@@ -430,12 +430,12 @@ void ObjectDataStructureBaseT::erase( const localIndex i )
 
 
 template< typename T >
-void ObjectDataStructureBaseT::erase( std::map< std::string, Array1dT<T> >& member, const localIndex index )
+void ObjectDataStructureBaseT::erase( std::map< std::string, array<T> >& member, const localIndex index )
 {
-  for( typename std::map< std::string, Array1dT<T> >::iterator i=member.begin(); i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::iterator i=member.begin(); i!=member.end() ; ++i )
   {
-    Array1dT<T>& field = i->second;
-    typename Array1dT<T>::iterator iter0 = field.begin() + index;
+    array<T>& field = i->second;
+    typename array<T>::iterator iter0 = field.begin() + index;
     field.erase(iter0);
   }
 
@@ -495,7 +495,7 @@ template< typename T >
 int ObjectDataStructureBaseT::AddKeylessDataField( const std::string& name, const bool restart, const bool plot )
 {
   // get data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& DataArrayMember = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& DataArrayMember = GetDataMemberMap<array<T> >();
 
   // the [] will create the new map entry
   DataArrayMember[name];
@@ -530,7 +530,7 @@ template int ObjectDataStructureBaseT::AddKeylessDataField<realT>( const std::st
 template int ObjectDataStructureBaseT::AddKeylessDataField<R1Tensor>( const std::string&, const bool, const bool );
 template int ObjectDataStructureBaseT::AddKeylessDataField<R2Tensor>( const std::string&, const bool, const bool );
 template int ObjectDataStructureBaseT::AddKeylessDataField<R2SymTensor>( const std::string&, const bool, const bool );
-template int ObjectDataStructureBaseT::AddKeylessDataField<Array1dT<R1Tensor> >( const std::string&, const bool, const bool );
+template int ObjectDataStructureBaseT::AddKeylessDataField<array<R1Tensor> >( const std::string&, const bool, const bool );
 
 
 int ObjectDataStructureBaseT::AddKeylessDataField( FieldType type, const std::string& name, const bool restart, const bool plot )
@@ -595,7 +595,7 @@ void ObjectDataStructureBaseT::AddMap< UnorderedVariableOneToManyRelation >( con
 template< typename T >
 void ObjectDataStructureBaseT::RemoveDataField( const std::string& name )
 {
-  std::map< std::string, Array1dT<T> >& DataArrayMember = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& DataArrayMember = GetDataMemberMap<array<T> >();
 
   // the [] will create the new map entry
   DataArrayMember.erase(name);
@@ -707,7 +707,7 @@ void ObjectDataStructureBaseT::WriteSilo( SiloFile& siloFile,
     siloFile.DBWriteWrapper("m_VariableOneToManyMaps",m_VariableOneToManyMaps);
     siloFile.DBWriteWrapper("m_UnorderedVariableOneToManyMaps",m_UnorderedVariableOneToManyMaps);
 
-    sArray1d setNames;
+    array<string> setNames;
     for( std::map<std::string,lSet>::const_iterator i=m_Sets.begin() ; i!=m_Sets.end() ; ++i )
     {
       setNames.push_back( i->first );
@@ -770,10 +770,10 @@ void ObjectDataStructureBaseT::ReadSilo( const SiloFile& siloFile,
     siloFile.DBReadWrapper("m_UnorderedVariableOneToManyMaps",m_UnorderedVariableOneToManyMaps);
 
 
-    sArray1d setNames;
+    array<string> setNames;
     siloFile.DBReadWrapper("setNames", setNames );
 
-    for( sArray1d::const_iterator i=setNames.begin() ; i!=setNames.end() ; ++i )
+    for( array<string>::const_iterator i=setNames.begin() ; i!=setNames.end() ; ++i )
     {
       m_Sets[*i];
     }
@@ -834,17 +834,17 @@ void ObjectDataStructureBaseT::UncheckAllFieldsForPlot( const std::map< std::str
 void ObjectDataStructureBaseT::EncapsulatedObjectsToManagedData_PreRead( const EncapsulatedObjectManagerBase& eom )
 {
 
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
-  Array1dT<iArray1d*> intVars;
-  Array1dT<rArray1d*> realVars;
-  Array1dT<Array1dT<R1Tensor>*> R1Vars;
-  Array1dT<Array1dT<R2Tensor>*> R2Vars;
-  Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+  array<array<integer>*> intVars;
+  array<array<real64>*> realVars;
+  array<array<R1Tensor>*> R1Vars;
+  array<array<R2Tensor>*> R2Vars;
+  array<array<R2SymTensor>*> R2SymVars;
 
   eom.GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -861,11 +861,11 @@ void ObjectDataStructureBaseT::EncapsulatedObjectsToManagedData_PreRead( const E
 void ObjectDataStructureBaseT::EncapsulatedObjectsToManagedData_PostRead( const EncapsulatedObjectManagerBase& eom )
 {
 
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
   eom.GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -879,11 +879,11 @@ void ObjectDataStructureBaseT::EncapsulatedObjectsToManagedData_PostRead( const 
 
 void ObjectDataStructureBaseT::ManagedDataToEncapsulatedObjects_PreRead( const EncapsulatedObjectManagerBase& eom )
 {
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
   eom.GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -898,17 +898,17 @@ void ObjectDataStructureBaseT::ManagedDataToEncapsulatedObjects_PreRead( const E
 void ObjectDataStructureBaseT::ManagedDataToEncapsulatedObjects_PostRead( EncapsulatedObjectManagerBase& eom )
 {
 
-  Array1dT<iArray1d*> intVars;
-  Array1dT<rArray1d*> realVars;
-  Array1dT<Array1dT<R1Tensor>*> R1Vars;
-  Array1dT<Array1dT<R2Tensor>*> R2Vars;
-  Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+  array<array<integer>*> intVars;
+  array<array<real64>*> realVars;
+  array<array<R1Tensor>*> R1Vars;
+  array<array<R2Tensor>*> R2Vars;
+  array<array<R2SymTensor>*> R2SymVars;
 
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
   eom.GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -932,7 +932,7 @@ void ObjectDataStructureBaseT::ManagedDataToEncapsulatedObjects_PostRead( Encaps
 
 /******************************************************/
 
-void ObjectDataStructureBaseT::WriteAsciiFieldData( const std::vector<FieldType>& types, const sArray1d& fieldNames, const std::string& fileName, bool append ){
+void ObjectDataStructureBaseT::WriteAsciiFieldData( const std::vector<FieldType>& types, const array<string>& fieldNames, const std::string& fileName, bool append ){
 
   std::ofstream fStream;
 
@@ -960,7 +960,7 @@ void ObjectDataStructureBaseT::WriteAsciiFieldData( const std::vector<FieldType>
     fieldPtr[j].SetFieldPtr(*this, types[j], fieldNames[j]);	
   }
     
-  rArray1d x(nComponents );
+  array<real64> x(nComponents );
 
   for(localIndex i = 0; i < m_DataLengths; ++i){
     std::vector<realT>::iterator xItr = x.begin(); 
@@ -975,7 +975,7 @@ void ObjectDataStructureBaseT::WriteAsciiFieldData( const std::vector<FieldType>
 
 }
 
-void ObjectDataStructureBaseT::WriteAsciiFieldData( const std::vector<FieldType>& types, const sArray1d& fieldNames, const std::string& fileName, const lSet& subset, bool append ){
+void ObjectDataStructureBaseT::WriteAsciiFieldData( const std::vector<FieldType>& types, const array<string>& fieldNames, const std::string& fileName, const lSet& subset, bool append ){
 
   std::ofstream fStream;
 
@@ -1002,7 +1002,7 @@ void ObjectDataStructureBaseT::WriteAsciiFieldData( const std::vector<FieldType>
     fieldPtr[j].SetFieldPtr(*this, types[j], fieldNames[j]);	
   }
     
-  rArray1d x(nComponents );
+  array<real64> x(nComponents );
 
   for(lSet::const_iterator itr = subset.begin() ; itr != subset.end(); ++itr){
     
@@ -1037,10 +1037,10 @@ void ObjectDataStructureBaseT::WriteAsciiFieldData( const std::vector<FieldType>
  * This function generates a vector of all field names by iterating through each data member and doing a
  * push_back operation on the argument list vector.
 **/
-void ObjectDataStructureBaseT::GetAllFieldNames( sArray1d& fieldNames ) const
+void ObjectDataStructureBaseT::GetAllFieldNames( array<string>& fieldNames ) const
 {
   fieldNames.clear();
-  for( std::map<std::string,iArray1d>::const_iterator i=m_IntegerData.begin() ; i!=m_IntegerData.end() ; ++i )
+  for( std::map<std::string,array<integer>>::const_iterator i=m_IntegerData.begin() ; i!=m_IntegerData.end() ; ++i )
     fieldNames.push_back(i->first);
 
   for( std::map<std::string,lArray1d>::const_iterator i=m_LocalIndexData.begin() ; i!=m_LocalIndexData.end() ; ++i )
@@ -1049,16 +1049,16 @@ void ObjectDataStructureBaseT::GetAllFieldNames( sArray1d& fieldNames ) const
   for( std::map<std::string,gArray1d>::const_iterator i=m_GlobalIndexData.begin() ; i!=m_GlobalIndexData.end() ; ++i )
     fieldNames.push_back(i->first);
 
-  for( std::map<std::string,rArray1d>::const_iterator i=m_realData.begin() ; i!=m_realData.end() ; ++i )
+  for( std::map<std::string,array<real64>>::const_iterator i=m_realData.begin() ; i!=m_realData.end() ; ++i )
     fieldNames.push_back(i->first);
 
-  for( std::map<std::string,Array1dT<R1Tensor> >::const_iterator i=m_R1TensorData.begin() ; i!=m_R1TensorData.end() ; ++i )
+  for( std::map<std::string,array<R1Tensor> >::const_iterator i=m_R1TensorData.begin() ; i!=m_R1TensorData.end() ; ++i )
     fieldNames.push_back(i->first);
 
-  for( std::map<std::string,Array1dT<R2Tensor> >::const_iterator i=m_R2TensorData.begin() ; i!=m_R2TensorData.end() ; ++i )
+  for( std::map<std::string,array<R2Tensor> >::const_iterator i=m_R2TensorData.begin() ; i!=m_R2TensorData.end() ; ++i )
     fieldNames.push_back(i->first);
 
-  for( std::map<std::string,Array1dT<R2SymTensor> >::const_iterator i=m_R2SymTensorData.begin() ; i!=m_R2SymTensorData.end() ; ++i )
+  for( std::map<std::string,array<R2SymTensor> >::const_iterator i=m_R2SymTensorData.begin() ; i!=m_R2SymTensorData.end() ; ++i )
     fieldNames.push_back(i->first);
 }
 
@@ -1100,7 +1100,7 @@ template void ObjectDataStructureBaseT::LocalToGlobal( const lSet&, gArray1d& );
  */
 void ObjectDataStructureBaseT::ConstructListOfBoundaryObjects( lArray1d& objectList ) const
 {
-  const iArray1d& isDomainBoundary = this->GetFieldData<int>("isDomainBoundary");
+  const array<integer>& isDomainBoundary = this->GetFieldData<int>("isDomainBoundary");
   for( localIndex k=0 ; k<this->m_DataLengths ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -1112,7 +1112,7 @@ void ObjectDataStructureBaseT::ConstructListOfBoundaryObjects( lArray1d& objectL
 
 void ObjectDataStructureBaseT::ConstructListOfBoundaryObjects( gArray1d& objectList ) const
 {
-  const iArray1d& isDomainBoundary = this->GetFieldData<int>("isDomainBoundary");
+  const array<integer>& isDomainBoundary = this->GetFieldData<int>("isDomainBoundary");
   for( localIndex k=0 ; k<this->m_DataLengths ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -1163,7 +1163,7 @@ void ObjectDataStructureBaseT::ConstructSetFromSetAndMap( const lSet& inputSet,
 }
 
 void ObjectDataStructureBaseT::ConstructSetFromSetAndMap( const lSet& inputSet,
-                                                          const Array1dT<lArray1d>& map,
+                                                          const array<lArray1d>& map,
                                                           const std::string& newSetName )
 {
 
@@ -1239,7 +1239,7 @@ void ObjectDataStructureBaseT::CopyObject( const localIndex source, const localI
 
 
 void ObjectDataStructureBaseT::CopyObjectWithExcludedSets( const localIndex source, const localIndex destination,
-                                           const sArray1d& excludedSets )
+                                           const array<string>& excludedSets )
 {
 
   CopyMemberFields( source, destination, this->m_IntegerData );
@@ -1545,7 +1545,7 @@ void ObjectDataStructureBaseT::CreateObject( const int rank,
 
 void ObjectDataStructureBaseT::SetFieldEqualToFunction(FieldType fieldType, const std::string& fieldName, 
                              const std::string& functionName,
-                             const sArray1d& variables, const Array1dT<FieldType>& variable_types,
+                             const array<string>& variables, const array<FieldType>& variable_types,
                              int component, realT time, realT dt)
 {
     FunctionManager& functionManager = FunctionManager::Instance();   
@@ -1584,7 +1584,7 @@ void ObjectDataStructureBaseT::SetFieldEqualToFunction(FieldType fieldType, cons
 
 void ObjectDataStructureBaseT::SetFieldEqualToFunction(FieldType fieldType, const std::string& fieldName, 
                                                        const std::string& functionName,
-                                                       const sArray1d& variables, const Array1dT<FieldType>& variable_types,
+                                                       const array<string>& variables, const array<FieldType>& variable_types,
                                                        const lSet& subset,
                                                        int component, realT time , realT dt )
 {
@@ -1772,7 +1772,7 @@ unsigned int ObjectDataStructureBaseT::UnpackBaseObjectData( const char*& buffer
   // arrays to provide temporary storage to the unpacked data
   gArray1d            globalIndices(numReceivedObjects);
   gArray1d            parentIndices(numReceivedObjects);
-  Array1dT<gArray1d>  childIndices(numReceivedObjects);
+  array<gArray1d>  childIndices(numReceivedObjects);
 
   gArray1d newGlobalIndices;
 
@@ -1786,10 +1786,10 @@ unsigned int ObjectDataStructureBaseT::UnpackBaseObjectData( const char*& buffer
     sizeOfUnpacked += bufvector::Unpack( buffer, parentIndices[a] );
 
     // unpack the child indices
-    Array1dT<lArray1d>::size_type childSize;
+    array<lArray1d>::size_type childSize;
     sizeOfUnpacked += bufvector::Unpack( buffer, childSize );
     childIndices[a].resize(childSize);
-    for( Array1dT<lArray1d>::size_type i=0 ; i<childSize ; ++i )
+    for( array<lArray1d>::size_type i=0 ; i<childSize ; ++i )
     {
       sizeOfUnpacked += bufvector::Unpack( buffer, childIndices[a][i] );
     }
@@ -1892,7 +1892,7 @@ unsigned int ObjectDataStructureBaseT::UnpackBaseObjectData( const char*& buffer
 
   // have to modify the ghostRank field manually, as the data comes across in reference to the sending
   // rank.
-  Array1dT<Field<FieldInfo::ghostRank>::Type>& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
+  array<Field<FieldInfo::ghostRank>::Type>& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
 
   for( int a=0 ; a<numReceivedObjects ; ++a )
   {

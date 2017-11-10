@@ -173,7 +173,7 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //  real64 rval = m_scale;
 //  if (!(m_functionName.empty()))
 //  {
-//    rArray1d t(1);
+//    array<real64> t(1);
 //    t[0] = time;
 //    real64 const tableval = TableManager::Instance().LookupTable<1>(m_functionName, t);
 //    rval = m_scale * tableval;

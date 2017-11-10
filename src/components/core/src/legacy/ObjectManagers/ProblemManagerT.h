@@ -176,11 +176,11 @@ public:
   bool m_writeFEMEdges;
   bool m_writeFlowText;
 //  bool m_writeXFEM;
-  sArray1d m_nameFieldsToPlot;
-  sArray1d m_nameAdditionalFieldsToPlot;
+  array<string> m_nameFieldsToPlot;
+  array<string> m_nameAdditionalFieldsToPlot;
 
   int m_fractureFlag;
-  sArray1d m_preFractureSets;
+  array<string> m_preFractureSets;
 
   bool m_writePlot;
   std::string m_visitFileGroupFile; // ".visit" file with list of time series files (usually "geos.visit")
@@ -240,7 +240,7 @@ private:
 
   ProblemManagerT(const ProblemManagerT&);
   ProblemManagerT& operator=(const ProblemManagerT&);
-  void RegisterFilesIncludedFromCommandLine(HierarchicalDataNode* hdn, sArray1d& includedFiles);
+  void RegisterFilesIncludedFromCommandLine(HierarchicalDataNode* hdn, array<string>& includedFiles);
   void ParseIncludedFiles(HierarchicalDataNode* hdn);
   void BuildSimulationParameterMap(HierarchicalDataNode* hdn);
   bool ReplaceMathematicalExpressions(std::string& valueStr);
@@ -257,7 +257,7 @@ private:
   void InitializeObjectManagers();
   void ResetGlobalToLocal();
   void SetExternal();
-  void SetupNeighborListsPackUnpack(std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d>& syncedFields);
+  void SetupNeighborListsPackUnpack(std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>>& syncedFields);
   void InitializeSurfaceSeparation();
   void InitializeElementSplitting();
 

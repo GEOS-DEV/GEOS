@@ -61,13 +61,13 @@ public:
                  const realT& dt,
                  const int cycleNumber,
                  PhysicalDomainT& domain,
-                 const sArray1d& namesOfSolverRegions,
+                 const array<string>& namesOfSolverRegions,
                  SpatialPartition& partition,
                  FractunatorBase* const fractunator );
 
   void PostProcess (PhysicalDomainT& domain,
                     SpatialPartition& partition,
-                    const sArray1d& namesOfSolverRegions);
+                    const array<string>& namesOfSolverRegions);
 
   virtual void ReadXML( TICPP::HierarchicalDataNode* const hdn ) ;
 

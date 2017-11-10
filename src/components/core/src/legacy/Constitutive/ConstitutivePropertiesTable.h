@@ -31,9 +31,9 @@ public:
 
   void Apply(const realT time = 0.0);
 
-  sArray1d m_fieldNames;
-  sArray1d m_tableNames;
-  rArray1d m_scalars;
+  array<string> m_fieldNames;
+  array<string> m_tableNames;
+  array<real64> m_scalars;
   std::map<ObjectDataStructureBaseT*, lArray1d> m_managerFields;
 
   //Have to do something special for the finite element manager

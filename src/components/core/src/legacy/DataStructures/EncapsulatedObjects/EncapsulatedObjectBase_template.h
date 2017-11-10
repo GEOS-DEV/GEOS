@@ -18,7 +18,7 @@ inline void SerializeMember( const localIndex subIndex,
                              const unsigned int stride,
                              const localIndex index,
                              const T data[N],
-                             Array1dT<Array1dT<T>*>& vars )
+                             array<array<T>*>& vars )
 {
   for( int i=0 ; i<N ; ++i )
   {
@@ -31,7 +31,7 @@ template< int N, typename T >
 inline void DeserializeMember( const localIndex varIndex,
                                const unsigned int stride,
                                const localIndex index,
-                               const Array1dT<Array1dT<T>*>& vars,
+                               const array<array<T>*>& vars,
                                T data[N] )
 {
   for( int i=0 ; i<N ; ++i )
@@ -73,11 +73,11 @@ public:
   void Serialize( const localIndex subIndex,
                   const unsigned int stride,
                   const localIndex index,
-                  Array1dT<iArray1d*>& intVars,
-                  Array1dT<rArray1d*>& realVars,
-                  Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                  Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                  Array1dT<Array1dT<R2SymTensor>*>& R2SymVars ) const
+                  array<array<integer>*>& intVars,
+                  array<array<real64>*>& realVars,
+                  array<array<R1Tensor>*>& R1Vars,
+                  array<array<R2Tensor>*>& R2Vars,
+                  array<array<R2SymTensor>*>& R2SymVars ) const
   {
     EOB_Helpers::SerializeMember<NINT>( subIndex, stride, index, Ints(),          intVars );
     EOB_Helpers::SerializeMember<NR0> ( subIndex, stride, index, Reals(),         realVars );
@@ -89,11 +89,11 @@ public:
   void Deserialize( const localIndex subIndex,
                     const unsigned int stride,
                     const localIndex index,
-                    const Array1dT<iArray1d*>& intVars,
-                    const Array1dT<rArray1d*>& realVars,
-                    const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                    const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                    const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars )
+                    const array<array<integer>*>& intVars,
+                    const array<array<real64>*>& realVars,
+                    const array<array<R1Tensor>*>& R1Vars,
+                    const array<array<R2Tensor>*>& R2Vars,
+                    const array<array<R2SymTensor>*>& R2SymVars )
   {
     EOB_Helpers::DeserializeMember<NINT>( subIndex, stride, index, intVars, Ints() );
     EOB_Helpers::DeserializeMember<NR0> ( subIndex, stride, index, realVars, Reals() );

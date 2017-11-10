@@ -46,8 +46,8 @@
 #include "Array2dT.h"
 #include "Array3dT.h"
   
-typedef Array1dT<int> iArray1d;
-typedef Array1dT<realT> rArray1d;
+typedef Array1dT<int> array<integer>;
+typedef Array1dT<realT> array<real64>;
 
 typedef Array2dT<int> iArray2d;
 typedef Array2dT<realT> rArray2d;

@@ -113,8 +113,8 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
       throw GPException("Table specified without a name");
 
     //read grid data
-    Array1dT<rArray1d> x(dim);
-    Array1dT<rArray1d> bufX(dim);
+    array<array<real64>> x(dim);
+    array<array<real64>> bufX(dim);
     gArray1d bufXLength(dim);
 
     if (rank == 0)
@@ -197,8 +197,8 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
     }
 
     //read value data
-    rArray1d values;
-    rArray1d bufValues;
+    array<real64> values;
+    array<real64> bufValues;
     globalIndex bufValuesLength = 0;
 
     if (rank == 0)
@@ -328,10 +328,10 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
     }
     else if(nComponents == 3)
     {
-      Array1dT<R1Tensor> values1(values.size() / 3);
+      array<R1Tensor> values1(values.size() / 3);
       {
         localIndex i= 0, j = 0;
-        for(rArray1d::const_iterator it = values.begin(); it != values.end(); ++it)
+        for(array<real64>::const_iterator it = values.begin(); it != values.end(); ++it)
         {
           values1[i][j++] = *it;
           if(j==4) {

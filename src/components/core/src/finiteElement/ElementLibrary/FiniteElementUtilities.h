@@ -24,8 +24,8 @@ namespace FiniteElementUtilities
 
 
 //  void Interp(const R1Tensor &globalCoord,
-//	      const Array1dT<R1Tensor> &nodeCoords,
-//              const rArray1d &nodeValues,
+//	      const array<R1Tensor> &nodeCoords,
+//              const array<real64> &nodeValues,
 //              BasisBase *basis,
 //	      const unsigned int &ndofs,
 //	      const unsigned int &ndim,
@@ -33,15 +33,15 @@ namespace FiniteElementUtilities
 //
 //
 //  void InterpdNdX(const R1Tensor &globalCoord,
-//		  const Array1dT<R1Tensor> &nodeCoords,
+//		  const array<R1Tensor> &nodeCoords,
 //		  BasisBase *basis,
 //		  const unsigned int &ndofs,
 //                  const unsigned int &ndim,
-//		  Array1dT<R1Tensor> &result);
+//		  array<R1Tensor> &result);
 //
 //
 //  void FindLocalCoord(const R1Tensor &globalCoord,
-//		      const Array1dT<R1Tensor> &nodeCoords,
+//		      const array<R1Tensor> &nodeCoords,
 //		      BasisBase *basis,
 //		      const unsigned int &ndofs,
 //		      const unsigned int &ndim,

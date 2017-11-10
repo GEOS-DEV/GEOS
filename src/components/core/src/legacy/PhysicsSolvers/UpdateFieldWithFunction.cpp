@@ -112,9 +112,9 @@ void UpdateFieldWithFunction::ReadXML( TICPP::HierarchicalDataNode* const hdn )
   std::string varTypesStr = hdn->GetAttributeStringOrDefault("variabletypes","");
   
   if(varTypesStr == ""){
-    m_variable_types = Array1dT<FieldType>(m_variables.size(),FieldInfo::realField);
+    m_variable_types = array<FieldType>(m_variables.size(),FieldInfo::realField);
   } else {
-    sArray1d vTypesVect = Tokenize(varTypesStr," ");
+    array<string> vTypesVect = Tokenize(varTypesStr," ");
     m_variable_types.resize(vTypesVect.size());   
     
     if(m_variable_types.size() != m_variables.size()) 
@@ -153,7 +153,7 @@ double UpdateFieldWithFunction::TimeStep( const realT& time,
                                         const realT& dt,
                                         const int cycleNumber,
                                         PhysicalDomainT& domain,
-                                        const sArray1d& namesOfSolverRegions ,
+                                        const array<string>& namesOfSolverRegions ,
                                         SpatialPartition& partition ,
                                         FractunatorBase* const fractunator )
 {  
@@ -165,7 +165,7 @@ double UpdateFieldWithFunction::TimeStep( const realT& time,
   if(m_setNames.empty()){
     objectManager.SetFieldEqualToFunction(m_fieldType,  m_fieldName, m_functionName, m_variables, m_variable_types, m_component,time,dt);
   } else {
-    for( sArray1d::size_type i =0; i < m_setNames.size(); ++i){
+    for( array<string>::size_type i =0; i < m_setNames.size(); ++i){
       lSet& set = objectManager.GetSet(m_setNames[i]);
       objectManager.SetFieldEqualToFunction(m_fieldType,  m_fieldName, m_functionName, m_variables, m_variable_types,set, m_component,time,dt);
     }

@@ -63,8 +63,8 @@ void ConstitutivePropertiesTable::Apply(const realT time)
   //foreach name and manager pair
   for(std::map<ObjectDataStructureBaseT*, lArray1d>::iterator im = m_managerFields.begin(); im != m_managerFields.end(); ++im)
   {
-    Array1dT<rArray1d> fields;
-    sArray1d names;
+    array<array<real64>> fields;
+    array<string> names;
     ObjectDataStructureBaseT& ods = *(im->first);
     for(lArray1d::const_iterator it = im->second.begin(); it != im->second.end(); ++it)
     {
@@ -72,7 +72,7 @@ void ConstitutivePropertiesTable::Apply(const realT time)
       const std::string& tableName = m_tableNames[*it];
 
       //fill the temporary array
-      rArray1d field;
+      array<real64> field;
       if(!tableName.empty())
       {
         field.resize(ods.DataLengths());
@@ -94,8 +94,8 @@ void ConstitutivePropertiesTable::Apply(const realT time)
         else
         {
           localIndex i = 0;
-          const Array1dT<R1Tensor>& pos = ods.GetFieldData<FieldInfo::referencePosition>();
-          for (Array1dT<R1Tensor>::const_iterator it4 = pos.begin(); it4 != pos.end(); ++it4, ++i)
+          const array<R1Tensor>& pos = ods.GetFieldData<FieldInfo::referencePosition>();
+          for (array<R1Tensor>::const_iterator it4 = pos.begin(); it4 != pos.end(); ++it4, ++i)
             field[i] = t3dp->Lookup(*it4); // , TableInterpolation::linear
         }
       }

@@ -95,11 +95,11 @@ public:
 
   }
 
-  static void GetVariableNames( sArray1d& intNames,
-                                sArray1d& realNames,
-                                sArray1d& R1TensorNames,
-                                sArray1d& R2TensorNames,
-                                sArray1d& R2SymTensorNames )
+  static void GetVariableNames( array<string>& intNames,
+                                array<string>& realNames,
+                                array<string>& R1TensorNames,
+                                array<string>& R2TensorNames,
+                                array<string>& R2SymTensorNames )
   {
     base::GetVariableNames( intNames, realNames, R1TensorNames, R2TensorNames, R2SymTensorNames);
     realNames.push_back("BulkModulus");
@@ -126,11 +126,11 @@ public:
   }
 
   void Serialize(const localIndex index,
-                  Array1dT<iArray1d*>& intVars,
-                  Array1dT<rArray1d*>& realVars,
-                  Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                  Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                  Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                  array<array<integer>*>& intVars,
+                  array<array<real64>*>& realVars,
+                  array<array<R1Tensor>*>& R1Vars,
+                  array<array<R2Tensor>*>& R2Vars,
+                  array<array<R2SymTensor>*>& R2SymVars,
                   localIndex& intVarCounts,
                   localIndex& realVarCounts,
                   localIndex& R1TensorVarCounts,
@@ -144,11 +144,11 @@ public:
 
 
   void  Deserialize( const localIndex index,
-                     const Array1dT<iArray1d*>& intVars,
-                     const Array1dT<rArray1d*>& realVars,
-                     const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                     const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                     const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                     const array<array<integer>*>& intVars,
+                     const array<array<real64>*>& realVars,
+                     const array<array<R1Tensor>*>& R1Vars,
+                     const array<array<R2Tensor>*>& R2Vars,
+                     const array<array<R2SymTensor>*>& R2SymVars,
                   localIndex& intVarCounts,
                   localIndex& realVarCounts,
                   localIndex& R1TensorVarCounts,
@@ -256,11 +256,11 @@ public:
 
   }
 
-  static void GetVariableNames( sArray1d& intNames,
-                                sArray1d& realNames,
-                                sArray1d& R1TensorNames,
-                                sArray1d& R2TensorNames,
-                                sArray1d& R2SymTensorNames )
+  static void GetVariableNames( array<string>& intNames,
+                                array<string>& realNames,
+                                array<string>& R1TensorNames,
+                                array<string>& R2TensorNames,
+                                array<string>& R2SymTensorNames )
   {
     base::GetVariableNames( intNames, realNames, R1TensorNames, R2TensorNames, R2SymTensorNames);
     realNames.push_back("density");
@@ -295,11 +295,11 @@ public:
   void Serialize(const localIndex index,
                   const unsigned int stride,
                   const localIndex elemNum,
-                  Array1dT<iArray1d*>& intVars,
-                  Array1dT<rArray1d*>& realVars,
-                  Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                  Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                  Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                  array<array<integer>*>& intVars,
+                  array<array<real64>*>& realVars,
+                  array<array<R1Tensor>*>& R1Vars,
+                  array<array<R2Tensor>*>& R2Vars,
+                  array<array<R2SymTensor>*>& R2SymVars,
                   localIndex& intVarCounts,
                   localIndex& realVarCounts,
                   localIndex& R1TensorVarCounts,
@@ -317,11 +317,11 @@ public:
   void  Deserialize( const localIndex index,
                   const unsigned int stride,
                   const localIndex elemNum,
-                     const Array1dT<iArray1d*>& intVars,
-                     const Array1dT<rArray1d*>& realVars,
-                     const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                     const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                     const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars,
+                     const array<array<integer>*>& intVars,
+                     const array<array<real64>*>& realVars,
+                     const array<array<R1Tensor>*>& R1Vars,
+                     const array<array<R2Tensor>*>& R2Vars,
+                     const array<array<R2SymTensor>*>& R2SymVars,
                   localIndex& intVarCounts,
                   localIndex& realVarCounts,
                   localIndex& R1TensorVarCounts,

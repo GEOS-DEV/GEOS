@@ -112,7 +112,7 @@ double WriteVTK::TimeStep( const realT& time,
                                  const realT& dt ,
                                  const int cycleNumber,
                                  PhysicalDomainT& domain,
-                                 const sArray1d& namesOfSolverRegions ,
+                                 const array<string>& namesOfSolverRegions ,
                                  SpatialPartition& partition,
                                  FractunatorBase* const fractunator)
 {

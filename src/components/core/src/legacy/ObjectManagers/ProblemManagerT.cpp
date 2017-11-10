@@ -185,9 +185,9 @@ ProblemManagerT::~ProblemManagerT()
  * Note that files can be included from within the input file also via
  * <Include file="someFilePath.xml">
  */
-void ProblemManagerT::RegisterFilesIncludedFromCommandLine(HierarchicalDataNode* hdn, sArray1d& includedFiles)
+void ProblemManagerT::RegisterFilesIncludedFromCommandLine(HierarchicalDataNode* hdn, array<string>& includedFiles)
 {
- for( sArray1d::size_type i =0; i < includedFiles.size(); ++i ){
+ for( array<string>::size_type i =0; i < includedFiles.size(); ++i ){
    HierarchicalDataNode* includeNode =  hdn->NewChild("Include");
    includeNode->AddAttributePair("file",includedFiles[i]);
  }
@@ -374,8 +374,8 @@ void ProblemManagerT::ParseMetadata(HierarchicalDataNode* hdn, bool isRoot)
       // attributes
       std::string value;
       std::string key;
-      sArray1d newKeys;
-      sArray1d newValues;
+      array<string> newKeys;
+      array<string> newValues;
       childNode->ResetCursors();
       while (childNode->Next(key, value))
       {
@@ -388,7 +388,7 @@ void ProblemManagerT::ParseMetadata(HierarchicalDataNode* hdn, bool isRoot)
           newValues.push_back(value);
         }
       }
-      for (sArray1d::size_type i = 0; i < newKeys.size(); ++i)
+      for (array<string>::size_type i = 0; i < newKeys.size(); ++i)
         childNode->AddAttributePair(newKeys[i], newValues[i]);
 
       // depth first traversal
@@ -916,7 +916,7 @@ void ProblemManagerT::ReadXML(HierarchicalDataNode& hdn)
     					applyNode->AddAttributePair("name",solverName);
     				}
     				m_solvers[solverName] = SolverFactory::NewSolver(SubstepSolver::SolverName(), applyNode,this);
-    				sArray1d applyToRegionNames;
+    				array<string> applyToRegionNames;
 
     				currentSet.m_solverAppliedToRegion.push_back(SolverApplication(solverName,
     						applyToRegionNames));
@@ -930,10 +930,10 @@ void ProblemManagerT::ReadXML(HierarchicalDataNode& hdn)
     					<< toRegionsNames << std::endl;
 
     				std::istringstream iss(toRegionsNames);
-    				sArray1d applyToRegionNames;
+    				array<string> applyToRegionNames;
 
     				copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(),
-    						std::back_inserter<sArray1d>(applyToRegionNames));
+    						std::back_inserter<array<string>>(applyToRegionNames));
 
     				currentSet.m_solverAppliedToRegion.push_back(SolverApplication(solverName,
     						applyToRegionNames));
@@ -1266,7 +1266,7 @@ void ProblemManagerT::ParseCommandLineInput(const int& argc, char* const argv[])
   unsigned int yPartitions = 1;
   unsigned int zPartitions = 1;
 
-  sArray1d commandLineIncludedFileList;
+  array<string> commandLineIncludedFileList;
 
   // Get command line input
   while (true)
@@ -1374,7 +1374,7 @@ void ProblemManagerT::ParseCommandLineInput(const int& argc, char* const argv[])
       case 'p': // Record model parameter key=value
       {
         std::string keyValStr = optarg;
-        sArray1d keyVal = Tokenize(keyValStr, "=");
+        array<string> keyVal = Tokenize(keyValStr, "=");
         if (keyVal.size() == 2)
         {
           m_simulationParameterMap[keyVal[0]] = keyVal[1];
@@ -1678,7 +1678,7 @@ void ProblemManagerT::CompleteObjectInitialization()
 #endif
 
   // set up the neighbor lists and pack/unpack ghosts
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+  std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
   SetupNeighborListsPackUnpack(syncedFields);
 
   if (m_useMetis)
@@ -1844,7 +1844,7 @@ void ProblemManagerT::SetDomainBoundaryObjects()
   //TODO: be more discriminating about parallelization at some point
   //** from Scott:
   //Sample logic might be ...
-  //  const Array1dT<R1Tensor>& x = discreteElementSurfaceNodes.GetFieldData<FieldInfo::currentPosition>();
+  //  const array<R1Tensor>& x = discreteElementSurfaceNodes.GetFieldData<FieldInfo::currentPosition>();
   //  IsCoordInContactGhostRange( x(a) )
 
   m_Domains.m_discreteElementManager.GetFieldData<FieldInfo::isDomainBoundary>() = 1;
@@ -1901,7 +1901,7 @@ void ProblemManagerT::ResetGlobalToLocal()
   m_partition.ResetSinglePartitionGlobalToLocalMap(m_Domains);
 }
 
-void ProblemManagerT::SetupNeighborListsPackUnpack(std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d>& syncedFields)
+void ProblemManagerT::SetupNeighborListsPackUnpack(std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>>& syncedFields)
 {
   //***** SETTING UP NEIGHBOR LISTS, PACKING/UNPACKING GHOSTS **********************************************************
   // now determine what the neighbor relations are for the elements
@@ -1955,7 +1955,7 @@ void ProblemManagerT::InitializeSurfaceSeparation()
   OutputMeshInformation();
   if( m_fractureFlag!=0 && m_preFractureSets.size()>0 )
   {
-    for (sArray1d::size_type i=0; i<m_preFractureSets.size(); ++i)
+    for (array<string>::size_type i=0; i<m_preFractureSets.size(); ++i)
     {
       m_Domains.m_feFaceManager.PreSeparateFaces(m_preFractureSets[i], 1);
       if (m_Domains.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension == 3 )
@@ -2094,7 +2094,7 @@ void ProblemManagerT::Run( double& outputTime, realT t_start )
               solver != solverSet->m_solverAppliedToRegion.end(); ++solver)
           {
             const std::string& solverName = solver->first;
-            const sArray1d& regionsSolved = solver->second;
+            const array<string>& regionsSolved = solver->second;
             SolverBase* const solverPtr = m_solvers[solverName];
             solverPtr->PostProcess(m_Domains, m_partition, regionsSolved);
           }
@@ -2108,7 +2108,7 @@ void ProblemManagerT::Run( double& outputTime, realT t_start )
               solver != solverSet->m_solverAppliedToRegion.end(); ++solver)
           {
             const std::string& solverName = solver->first;
-            const sArray1d& regionsSolved = solver->second;
+            const array<string>& regionsSolved = solver->second;
             SolverBase* const solverPtr = m_solvers[solverName];
             solverPtr->PostProcess(m_Domains, m_partition, regionsSolved);
           }
@@ -2151,7 +2151,7 @@ void ProblemManagerT::Run( double& outputTime, realT t_start )
       {
 
         const std::string& solverName = solver->first;
-        const sArray1d& regionsSolved = solver->second;
+        const array<string>& regionsSolved = solver->second;
         SolverBase* const solverPtr = m_solvers[solverName];
 
 //        if(m_elementSplitting != NULL)
@@ -2231,7 +2231,7 @@ void ProblemManagerT::Run( double& outputTime, realT t_start )
           solver != solverSet->m_solverAppliedToRegion.end(); ++solver)
       {
         const std::string& solverName = solver->first;
-        const sArray1d& regionsSolved = solver->second;
+        const array<string>& regionsSolved = solver->second;
         SolverBase* const solverPtr = m_solvers[solverName];
         solverPtr->PostProcess(m_Domains, m_partition, regionsSolved);
       }
@@ -2294,7 +2294,7 @@ void ProblemManagerT::WriteSilo( const bool isRestart )
 // This is for 2D hydrofrac postprocessing
 if (m_writeFlowText && m_Domains.m_feFaceManager.m_toNodesRelation[0].size() == 2)
 {
-  const Array1dT<R1Tensor>* u0 = m_Domains.m_feNodeManager.GetFieldDataPointer<R1Tensor>("displacement0");
+  const array<R1Tensor>* u0 = m_Domains.m_feNodeManager.GetFieldDataPointer<R1Tensor>("displacement0");
   if (u0 != NULL)
   {
     if (!isRestart) WriteFlowTxt(m_cycleNumber, m_problemTime);
@@ -2346,7 +2346,7 @@ if (m_writeFlowText && m_Domains.m_feFaceManager.m_toNodesRelation[0].size() == 
 
     m_siloFile.DBWriteWrapper("m_trackEnergy",m_trackEnergy);
 
-    rArray1d energy( EnergyT::numVars );
+    array<real64> energy( EnergyT::numVars );
     m_energy.Serialize( energy.data() );
     m_siloFile.DBWriteWrapper("energy",energy);
 
@@ -2411,13 +2411,13 @@ void ProblemManagerT::WriteFlowTxt (const int cycleNum, const realT time)
         fStream.open(filename.c_str(),std::ios::app);
       }
 
-      const Array1dT<R1Tensor>& u0 = m_Domains.m_feNodeManager.GetFieldData<R1Tensor>("displacement0");
-      const iArray1d& isGhost = m_Domains.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-      const rArray1d& aperture = m_Domains.m_feFaceManager.GetFieldData<realT>( "Aperture" );
-      const rArray1d& faceFluidPressure = m_Domains.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-      const rArray1d& faceFluidDensity = m_Domains.m_feFaceManager.GetFieldData<FieldInfo::density>();
-      const rArray1d& flowRate = m_Domains.m_feFaceManager.GetFieldData<realT>("flowRate");
-      const iArray1d& flowFaceType = m_Domains.m_feFaceManager.GetFieldData<int>("flowFaceType");
+      const array<R1Tensor>& u0 = m_Domains.m_feNodeManager.GetFieldData<R1Tensor>("displacement0");
+      const array<integer>& isGhost = m_Domains.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+      const array<real64>& aperture = m_Domains.m_feFaceManager.GetFieldData<realT>( "Aperture" );
+      const array<real64>& faceFluidPressure = m_Domains.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+      const array<real64>& faceFluidDensity = m_Domains.m_feFaceManager.GetFieldData<FieldInfo::density>();
+      const array<real64>& flowRate = m_Domains.m_feFaceManager.GetFieldData<realT>("flowRate");
+      const array<integer>& flowFaceType = m_Domains.m_feFaceManager.GetFieldData<int>("flowFaceType");
 
       if (iRank==0)
         {
@@ -2484,7 +2484,7 @@ void ProblemManagerT::ReadSilo( const bool isRestart )
       std::string subDirectory =   "Solvers";
       DBSetDir(m_siloFile.m_dbFilePtr, subDirectory.c_str());
       DBtoc* silotoc = DBGetToc(m_siloFile.m_dbFilePtr);
-      sArray1d dirs(silotoc->ndir);
+      array<string> dirs(silotoc->ndir);
       for(int i = 0; i < silotoc->ndir; i++)
         dirs[i] = silotoc->dir_names[i];
       for(localIndex i = 0; i < dirs.size(); i++)
@@ -2523,7 +2523,7 @@ void ProblemManagerT::ReadSilo( const bool isRestart )
 
     m_siloFile.DBReadWrapper("m_trackEnergy",m_trackEnergy);
 
-    rArray1d energy( EnergyT::numVars );
+    array<real64> energy( EnergyT::numVars );
     m_siloFile.DBReadWrapper("energy",energy);
     m_energy.Deserialize( energy.data() );
 
@@ -2693,7 +2693,7 @@ void ProblemManagerT::DisplayFields()
 
 
         // get field names
-        sArray1d fieldNames;
+        array<string> fieldNames;
         object.GetAllFieldNames( fieldNames );
 
         // loop over fields and report status
@@ -2740,7 +2740,7 @@ void ProblemManagerT::DisplayFields()
   {
     ElementRegionT& elementRegion = elementRegionIter->second;
     // get field names
-    sArray1d fieldNames;
+    array<string> fieldNames;
     elementRegion.GetAllFieldNames( fieldNames );
 
     // loop over fields and report status
@@ -2832,7 +2832,7 @@ realT ProblemManagerT::SetInitialTimeStep( const realT& time, std::vector<Solver
          solver != solverSet->m_solverAppliedToRegion.end(); ++solver)
     {
       const std::string& solverName = solver->first;
-      const sArray1d& regionsSolved = solver->second;
+      const array<string>& regionsSolved = solver->second;
       SolverBase* const solverPtr = m_solvers[solverName];
 
       solverPtr->SetMaxStableTimeStep( time, m_Domains, regionsSolved, this->m_partition );
@@ -2947,7 +2947,7 @@ void ProblemManagerT::UpdateOwnership()
   MPI_Comm_rank(MPI_COMM_WORLD, &rank );
 
   m_Domains.m_feFaceManager.AddKeylessDataField<localIndex>("myRank", true, true);
-  Array1dT<localIndex>& myRank = m_Domains.m_feFaceManager.GetFieldData<localIndex>( "myRank" );
+  array<localIndex>& myRank = m_Domains.m_feFaceManager.GetFieldData<localIndex>( "myRank" );
 
   for (localIndex i = 0; i != m_Domains.m_feFaceManager.DataLengths(); ++i)
   {
@@ -2996,7 +2996,7 @@ void ProblemManagerT::MarkFieldsToWrite()
  
         for (std::map<std::string, SolverBase*>::iterator it_solver = m_solvers.begin(); it_solver!= m_solvers.end(); ++it_solver)
         {
-          for( sArray1d::iterator cf=it_solver->second->m_commonFields.begin(); cf!=it_solver->second->m_commonFields.end(); ++cf )
+          for( array<string>::iterator cf=it_solver->second->m_commonFields.begin(); cf!=it_solver->second->m_commonFields.end(); ++cf )
           {
             m_nameFieldsToPlot.push_back(*cf);
           }
@@ -3043,7 +3043,7 @@ void ProblemManagerT::WriteNodeGraph( const localIndex nodeID,
 //  std::fill_n(edgeIDToGraphNodeMap, domain.m_feEdgeManager.DataLengths(), -1);
 //  std::unique_ptr<int[]> edgeIDToGraphNodeMap(new int[domain.m_feEdgeManager.DataLengths()]);
 
-  iArray1d edgeIDToGraphNodeMap(domain.m_feEdgeManager.DataLengths());
+  array<integer> edgeIDToGraphNodeMap(domain.m_feEdgeManager.DataLengths());
   edgeIDToGraphNodeMap = -1;
 
   localIndex nGNode = 0;
