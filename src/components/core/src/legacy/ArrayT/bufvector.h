@@ -73,10 +73,12 @@ public:
   bufvector & operator=( bufvector const & ) = default;
 
 
-  localIndex Pack( const integer& var )           { return PrivatePack(var); }
+  localIndex Pack( const int& var )           { return PrivatePack(var); }
+  localIndex Pack( const long int& var )           { return PrivatePack(var); }
+  localIndex Pack( const long long int& var )           { return PrivatePack(var); }
   localIndex Pack( const realT& var )         { return PrivatePack(var); }
 //  localIndex Pack( const localIndex& var )    { return PrivatePack(var); }
-  localIndex Pack( const globalIndex& var )   { return PrivatePack(var); }
+//  localIndex Pack( const globalIndex& var )   { return PrivatePack(var); }
   localIndex Pack( const R1Tensor& var )      { return PrivatePack(var); }
   localIndex Pack( const R2Tensor& var )      { return PrivatePack(var); }
   localIndex Pack( const R2SymTensor& var )   { return PrivatePack(var); }
@@ -85,18 +87,21 @@ public:
 
   localIndex Pack( const std::string& var );
 
-  localIndex Pack( integer_array const & var )              { return 0;}//PrivatePackArray(var); }
+  localIndex Pack( array<int> const & var )              { return 0;}//PrivatePackArray(var); }
+  localIndex Pack( array<long int> const & var )              { return 0;}//PrivatePackArray(var); }
+  localIndex Pack( array<long long int> const & var )              { return 0;}//PrivatePackArray(var); }
   localIndex Pack( real64_array const& var )              { return PrivatePackArray(var); }
 //  localIndex Pack( localIndex_array const& var )              { return PrivatePackArray(var); }
-  localIndex Pack( globalIndex_array const& var )              { return PrivatePackArray(var); }
+//  localIndex Pack( globalIndex_array const& var )              { return PrivatePackArray(var); }
   localIndex Pack( r1_array const& var )    { return PrivatePackArray(var); }
   localIndex Pack( r2_array const& var )    { return PrivatePackArray(var); }
   localIndex Pack( r2Sym_array const& var ) { return PrivatePackArray(var); }
   localIndex Pack( const sArray1d& var );
 
 
-  localIndex Pack( const set<int32>& var )              { return PrivatePackSet(var); }
-  localIndex Pack( const set<int64>& var )              { return PrivatePackSet(var); }
+  localIndex Pack( const set<int>& var )              { return PrivatePackSet(var); }
+  localIndex Pack( const set<long int>& var )              { return PrivatePackSet(var); }
+  localIndex Pack( const set<long long int>& var )              { return PrivatePackSet(var); }
 
   template< typename T_KEY, typename T_VAL >
   localIndex Pack( const std::map<T_KEY,T_VAL>& var ) { return PrivatePackMap(var);}
@@ -140,10 +145,12 @@ public:
   template< typename T_indices > localIndex Pack( const UnorderedVariableOneToManyPairRelation& relation, const T_indices& indices, const bool packGlobal ) { return PrivatePackRelation( relation, indices, packGlobal );}
 
 
-  static localIndex Unpack( const char*& buffer, integer& var ) { return PrivateUnpack(buffer,var); }
+  static localIndex Unpack( const char*& buffer, int& var ) { return PrivateUnpack(buffer,var); }
+  static localIndex Unpack( const char*& buffer, long int& var ) { return PrivateUnpack(buffer,var); }
+  static localIndex Unpack( const char*& buffer, long long int& var ) { return PrivateUnpack(buffer,var); }
   static localIndex Unpack( const char*& buffer, realT& var ) { return PrivateUnpack(buffer,var); }
 //  static localIndex Unpack( const char*& buffer, localIndex& var ) { return PrivateUnpack(buffer,var); }
-  static localIndex Unpack( const char*& buffer, globalIndex& var ) { return PrivateUnpack(buffer,var); }
+//  static localIndex Unpack( const char*& buffer, globalIndex& var ) { return PrivateUnpack(buffer,var); }
   static localIndex Unpack( const char*& buffer, R1Tensor& var ) { return PrivateUnpack(buffer,var); }
   static localIndex Unpack( const char*& buffer, R2Tensor& var ) { return PrivateUnpack(buffer,var); }
   static localIndex Unpack( const char*& buffer, R2SymTensor& var ) { return PrivateUnpack(buffer,var); }
@@ -167,8 +174,9 @@ public:
   static localIndex Unpack( const char*& buffer, r2Sym_array& var ) { return PrivateUnpackArray(buffer,var); }
   static localIndex Unpack( const char*& buffer, sArray1d& var );
 
-  static localIndex Unpack( const char*& buffer, set<int32>& var ) { return PrivateUnpackSet(buffer,var); }
-  static localIndex Unpack( const char*& buffer, set<int64>& var ) { return PrivateUnpackSet(buffer,var); }
+  static localIndex Unpack( const char*& buffer, set<int>& var ) { return PrivateUnpackSet(buffer,var); }
+  static localIndex Unpack( const char*& buffer, set<long int>& var ) { return PrivateUnpackSet(buffer,var); }
+  static localIndex Unpack( const char*& buffer, set<long long int>& var ) { return PrivateUnpackSet(buffer,var); }
 
   template< typename T_KEY, typename T_VAL >
   static localIndex Unpack( const char*& buffer, std::map<T_KEY,T_VAL>& var ) { return PrivateUnpackMap( buffer, var );}

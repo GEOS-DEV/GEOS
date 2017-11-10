@@ -37,10 +37,10 @@ namespace geosx
 {
 
 // underlying types not for general use!!
-using int32 = std::int32_t;
-using int64 = std::int64_t;
-using uint32 = std::uint32_t;
-using uint64 = std::uint64_t;
+//using int32 = std::int32_t;
+//using int64 = std::int64_t;
+//using uint32 = std::uint32_t;
+//using uint64 = std::uint64_t;
 
 using integer     = std::int32_t;
 using localIndex  = std::int_fast32_t;
@@ -99,7 +99,6 @@ using unordered_map = std::unordered_map<TKEY,TVAL>;
 
 
 using integer_array        = array<integer>;
-//using integer_array = multidimensionalArray::ManagedArray<integer,1,localIndex>;
 using integer_const_array  = array<integer const>;
 
 using real32_array        = array<real32>;
@@ -121,15 +120,6 @@ using globalIndex_const_array  = array<globalIndex const>;
 
 using integer_set        = set<integer>;
 using integer_const_set  = set<integer const>;
-
-//using uint32_set        = set<uint32>;
-//using uint32_const_set  = set<uint32 const>;
-//
-//using int64_set        = set<int64>;
-//using int64_const_set  = set<int64 const>;
-//
-//using uint64_set        = set<uint64>;
-//using uint64_const_set  = set<uint64 const>;
 
 using real32_set        = set<real32>;
 using real32_const_set  = set<real32 const>;
