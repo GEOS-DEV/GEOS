@@ -87,7 +87,7 @@ void Blueprint::write(int cycle) const
   }
 
 
-  const std::string root_output_path = m_output_path + "_" + std::to_string(cycle) + ".blueprint_root_hdf5";
+  const std::string root_output_path = m_output_path + "_" + std::to_string(cycle) + ".root";
   const std::string output_path = m_output_path + "_" + std::to_string(cycle) + ".hdf5";
 
   root_node["protocol/name"] = "conduit_hdf5";
