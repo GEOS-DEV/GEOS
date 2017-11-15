@@ -362,6 +362,24 @@ set( thirdPartyLibs ${thirdPartyLibs} trilinos )
 
 #endif()
 
+################################
+# HYPRE
+################################
+#if( ENABLE_HYPRE )
+message( INFO ": setting up HYPRE" )
+
+set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre)
+include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+
+blt_register_library( NAME hypre
+                      INCLUDES ${Trilinos_INCLUDE_DIRS} 
+                      LIBRARIES ${Trilinos_LIBRARIES}
+                      TREAT_INCLUDES_AS_SYSTEM ON )
+
+set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
+
+#endif()
+
 
 
 if (UNCRUSTIFY_EXECUTABLE)
