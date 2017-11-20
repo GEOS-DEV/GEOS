@@ -2400,11 +2400,11 @@ void SiloFile::DBReadWrapper( const std::string& name, array<Array2dT<TYPE> >& d
 
     typename array<TYPE>::const_iterator idataSerial = dataSerial.begin();
 
-    for( integer i=0 ; i<data.size() ; ++i )
+    for( integer i=0 ; i<data.size<integer>() ; ++i )
     {
-      for( integer j=0 ; j<data[i].size(0) ; ++j )
+      for( integer j=0 ; j<data[i].size<integer>(0) ; ++j )
       {
-        for( integer k=0 ; k<data[i].size(1) ; ++k )
+        for( integer k=0 ; k<data[i].size<integer>(1) ; ++k )
         {
           data[i][j][k] = *idataSerial;
           ++idataSerial;
