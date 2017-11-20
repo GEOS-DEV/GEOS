@@ -41,7 +41,7 @@ public:
   template< typename LAMBDA >
   void forMaterials( LAMBDA lambda )
   {
-    auto const & constitutiveGrouping = this->getReference< map< string, integer_array > >(dataRepository::keys::constitutiveGrouping);
+    auto const & constitutiveGrouping = this->getReference< map< string, localIndex_array > >(dataRepository::keys::constitutiveGrouping);
 
     for( auto & constitutiveGroup : constitutiveGrouping )
     {

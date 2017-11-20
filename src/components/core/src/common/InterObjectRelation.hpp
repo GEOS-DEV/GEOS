@@ -60,9 +60,9 @@ public:
   const ObjectDataStructureBaseT* RelatedObject() const
   { return m_relatedObject; }
 
-  globalIndex_const_array& RelatedObjectLocalToGlobal() const
+  globalIndex_array const & RelatedObjectLocalToGlobal() const
   {
-//    return this->m_relatedObject->m_localToGlobalMap;
+    return this->m_relatedObject->m_localToGlobalMap;
   }
 
   const std::map<globalIndex,localIndex>& RelatedObjectGlobalToLocal() const

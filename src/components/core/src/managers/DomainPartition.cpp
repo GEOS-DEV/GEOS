@@ -150,14 +150,14 @@ void DomainPartition::GenerateSets(  )
         {
           localIndex const * nodelist = elemsToNodes[k];
           integer count = 0;
-          for( localIndex a = 0 ; a<elemsToNodes.Dimension(1) ; ++a )
+          for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
           {
             if( nodeInSet[setName][nodelist[a]] == 1 )
             {
               ++count;
             }
           }
-          if( count == elemsToNodes.Dimension(1) )
+          if( count == elemsToNodes.size(1) )
           {
             set.insert(k);
           }
@@ -268,7 +268,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     coords[2] = zcoords.data();
 
     ElementRegionManager const * const elementManager = mesh->getElemManager();
-    const int numElementRegions = elementManager->GetGroup(keys::elementRegions)->GetSubGroups().size();
+    const localIndex numElementRegions = elementManager->GetGroup(keys::elementRegions)->GetSubGroups().size();
     array<localIndex*> meshConnectivity(numElementRegions);
     array<int*> isGhostElement(numElementRegions);
     array<globalIndex*> globalElementNumbers(numElementRegions);
@@ -285,14 +285,14 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
       lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(cellBlock->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
 
       // The following line seems to be redundant. It's actual function is to size this temp array.(pfu)
-      elementToNodeMap[count].resize(elemsToNodes.Dimension(0),elemsToNodes.Dimension(1));
+      elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
 
       for (localIndex k = 0; k < cellBlock->size(); ++k)
       {
         const localIndex* const elemToNodeMap = elemsToNodes[k];
 
         const integer_array nodeOrdering = siloFile.SiloNodeOrdering();
-        integer numNodesPerElement = elemsToNodes.Dimension(1);
+        integer numNodesPerElement = elemsToNodes.size<int>(1);
         for (localIndex a = 0; a < numNodesPerElement; ++a)
         {
           elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
@@ -306,7 +306,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 //      isGhostElement[count] = (cellBlock->GetFieldData<FieldInfo::ghostRank>()).data();
 
 //      globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
-      shapecnt[count] = cellBlock->size();
+      shapecnt[count] = static_cast<int>(cellBlock->size());
 
 //      if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D8") )
 //      {
@@ -338,12 +338,12 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 //        GEOS_ERROR("PhysicalDomainT::WriteFiniteElementMesh: Do not recognize geometry type " + elementRegion.m_elementGeometryID + " \n");
 //      }
 
-      shapesize[count] = elemsToNodes.Dimension(1);
+      shapesize[count] = integer_conversion<int>(elemsToNodes.size(1));
       count++;
     });
 
     siloFile.WriteMeshObject(meshName, numNodes, coords,
-                             nullptr, numElementRegions,
+                             nullptr, integer_conversion<int>(numElementRegions),
                              shapecnt.data(), meshConnectivity.data(), nullptr/*globalElementNumbers.data()*/,
                              isGhostElement.data(), shapetype.data(), shapesize.data(), cycleNum, problemTime);
 

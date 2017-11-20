@@ -131,7 +131,7 @@ public:
       index = getIndex( keyIndex.Key() );
       keyIndex.setIndex(index);
     }
-#if RANGE_CHECKING==1
+#ifdef MAPPED_VECTOR_RANGE_CHECKING
     else if (m_values[index].first!=keyIndex.Key() )
     {
       index = getIndex( keyIndex.Key() );

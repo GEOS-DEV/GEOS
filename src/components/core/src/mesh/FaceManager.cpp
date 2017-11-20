@@ -317,7 +317,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
 
   array<localIndex>& faceNodes = nodeList()[faceIndex];
   const localIndex firstNodeIndex = faceNodes[0];
-  const unsigned int numFaceNodes = faceNodes.size();
+  const localIndex numFaceNodes = faceNodes.size();
 
   view_rtype_const<r1_array> const & X = nodeManager.referencePosition();
 

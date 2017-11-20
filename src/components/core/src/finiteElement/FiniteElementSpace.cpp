@@ -89,7 +89,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 
 
 
-  auto & constitutiveMapView = *(cellBlock->RegisterViewWrapper< std::pair< Array2dT< integer >, Array2dT< integer > > >(keys::constitutiveMap) );
+  auto & constitutiveMapView = *(cellBlock->RegisterViewWrapper< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(keys::constitutiveMap) );
   constitutiveMapView.setSizedFromParent(1);
   auto & constitutiveMap = constitutiveMapView.reference();
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );

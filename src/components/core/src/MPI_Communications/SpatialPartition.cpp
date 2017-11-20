@@ -1078,7 +1078,7 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
   for (; itNeighbor != neighborList.end(); itNeighbor++)
   {
     m_neighbors.push_back(NeighborCommunication());
-    m_neighbors.back().Initialize( *itNeighbor, this->m_rank, this->m_size );
+    m_neighbors.back().Initialize( integer_conversion<int>(*itNeighbor), this->m_rank, this->m_size );
   }
 }
 

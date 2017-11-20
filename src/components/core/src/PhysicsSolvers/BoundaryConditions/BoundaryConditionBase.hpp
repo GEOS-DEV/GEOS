@@ -8,6 +8,8 @@
 //#include "managers/TableManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
+#include "codingUtilities/Utilities.hpp"
+
 namespace geosx
 {
 class Function;
@@ -273,8 +275,8 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
   integer const numBlocks = blockSystem->numBlocks();
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
 
-  Epetra_IntSerialDenseVector  node_dof(set.size());
-  Epetra_SerialDenseVector     node_rhs(set.size());
+  Epetra_IntSerialDenseVector  node_dof( integer_conversion<int>( set.size() ) );
+  Epetra_SerialDenseVector     node_rhs( integer_conversion<int>( set.size() ) );
 
 
   dataRepository::view_rtype_const<integer_array> dofMap = dataGroup->getData<integer_array>(dofMapName);

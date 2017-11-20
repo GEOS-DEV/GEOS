@@ -677,14 +677,14 @@ inline localIndex bufvector::PrivatePackRelationT<FixedOneToManyRelation,T_indic
 {
   localIndex sizeOfPackedChars = 0;
 
-  sizeOfPackedChars += buffer.Pack( static_cast<localIndex>(relation.Dimension(1)) );
+  sizeOfPackedChars += buffer.Pack( static_cast<localIndex>(relation.size(1)) );
 
   if( packGlobal )
   {
     globalIndex_array const& localToGlobal = relation.RelatedObjectLocalToGlobal();
     for( typename T_indices::const_iterator i = indices.begin() ; i != indices.end() ; ++i )
     {
-      for( auto j=0u ; j<relation.Dimension(1) ; ++j )
+      for( auto j=0u ; j<relation.size(1) ; ++j )
       {
         sizeOfPackedChars += buffer.Pack( localToGlobal[relation[*i][j]] );
       }
@@ -694,7 +694,7 @@ inline localIndex bufvector::PrivatePackRelationT<FixedOneToManyRelation,T_indic
   {
     for( typename T_indices::const_iterator i = indices.begin() ; i != indices.end() ; ++i )
     {
-      for( auto j=0u ; j<relation.Dimension(1) ; ++j )
+      for( auto j=0u ; j<relation.size(1) ; ++j )
       {
         sizeOfPackedChars += buffer.Pack( relation[*i][j] );
       }
@@ -762,7 +762,7 @@ inline localIndex bufvector::PrivateUnpackRelation( const char*& buffer, FixedOn
   localIndex dimension;
   sizeOfUnpackedChars += bufvector::Unpack( buffer, dimension );
 
-  if( dimension != relation.Dimension(1)) {
+  if( dimension != relation.size(1)) {
 #ifdef USE_ATK
     SLIC_ERROR("bufvector::PrivateUnpackRelation(): mismatched dimension");
 #endif

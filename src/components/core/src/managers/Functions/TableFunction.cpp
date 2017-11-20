@@ -190,7 +190,7 @@ void TableFunction::InitializeFunction()
   }
 
   // Build a quick map to help with linear interpolation
-  m_numCorners = pow(2, m_dimensions);
+  m_numCorners = static_cast<localIndex>(pow(2, m_dimensions));
   for (localIndex ii=0; ii<m_numCorners; ++ii)
   {
     for (localIndex jj=0; jj<m_dimensions; ++jj)

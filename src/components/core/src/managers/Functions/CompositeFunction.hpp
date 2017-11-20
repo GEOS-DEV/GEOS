@@ -40,6 +40,7 @@ private:
   mathpresso::Expression parserExpression;
 
   localIndex m_numSubFunctions;
+  static constexpr localIndex m_maxNumSubFunctions = 10;
   std::vector<FunctionBase*> m_subFunctions;
 
 };

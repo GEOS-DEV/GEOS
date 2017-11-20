@@ -136,16 +136,16 @@ public:
     return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
   }
 
-  CellBlockSubRegion const * GetSubRegion( integer const & index ) const
+  CellBlockSubRegion const * GetSubRegion( localIndex const & index ) const
   {
     return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
   }
-  CellBlockSubRegion * GetSubRegion( integer const & index )
+  CellBlockSubRegion * GetSubRegion( localIndex const & index )
   {
     return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
   }
 
-  integer numSubRegions() const
+  localIndex numSubRegions() const
   {
     return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups().size();
   }

@@ -141,7 +141,7 @@ void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const gro
   }
 
   // Evaluate the symbolic math
-  real64 functionResults[m_numSubFunctions];
+  real64 functionResults[m_maxNumSubFunctions];
   for( auto const & ii : set )
   {
     for (localIndex jj=0; jj<m_numSubFunctions; ++jj)
@@ -155,7 +155,7 @@ void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const gro
 
 real64 CompositeFunction::Evaluate( real64 const * const input ) const
 {
-  real64 functionResults[m_numSubFunctions];
+  real64 functionResults[m_maxNumSubFunctions];
 
   for (localIndex ii=0; ii<m_numSubFunctions; ++ii)
   {

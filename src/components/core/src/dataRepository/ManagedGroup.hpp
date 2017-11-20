@@ -175,13 +175,13 @@ public:
 
 
   template< typename T = ManagedGroup >
-  T * GetGroup( integer index )
+  T * GetGroup( localIndex index )
   {
     return group_cast<T*>(m_subGroups[index]);
   }
 
   template< typename T = ManagedGroup >
-  T const * GetGroup( integer index ) const
+  T const * GetGroup( localIndex index ) const
   {
     return group_cast<T const *>(m_subGroups[index]);
   }

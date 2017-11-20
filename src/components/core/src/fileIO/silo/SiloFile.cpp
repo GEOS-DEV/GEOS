@@ -53,7 +53,11 @@
 
 
 #pragma GCC diagnostic push
+
+#ifdef __clang__
 #pragma GCC diagnostic ignored "-Wshorten-64-to-32"
+#endif
+
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
 #include "SiloFile.hpp"
@@ -1868,8 +1872,8 @@ void SiloFile::DBWriteWrapper( const std::string& name, const Array2dT<TYPE>& da
   {
     int dims[3];
     dims[0] = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>() ;
-    dims[1] = data.Dimension(1);
-    dims[2] = data.Dimension(0);
+    dims[1] = data.size<int>(1);
+    dims[2] = data.size<int>(0);
 
     DBWrite( m_dbFilePtr, name.c_str(), const_cast<TYPE*>(data.data()), dims,
              3, SiloFileUtilities::DB_TYPE<TYPE>() );
@@ -1923,8 +1927,8 @@ void SiloFile::DBWriteWrapper( const std::string& name, const array<Array2dT<TYP
 
   for( typename array<Array2dT<TYPE> >::const_iterator i=data.begin() ; i!=data.end() ; ++i )
   {
-    dataSizes0.push_back(i->Dimension(0));
-    dataSizes1.push_back(i->Dimension(1));
+    dataSizes0.push_back(i->size(0));
+    dataSizes1.push_back(i->size(1));
     dataSerial.insert( dataSerial.end(), i->begin(), i->end() );
   }
 
@@ -2307,8 +2311,8 @@ void SiloFile::DBReadWrapper( const std::string& name, Array2dT<TYPE>& data ) co
     int dims[3];
     DBGetVarDims( m_dbFilePtr, name.c_str(), 3, dims);
     if( dims[0] != SiloFileUtilities::GetNumberOfVariablesInField<TYPE>() ||
-        dims[1] != static_cast<int>(data.Dimension(1)) ||
-        dims[2] != static_cast<int>(data.Dimension(0)) )
+        dims[1] != integer_conversion<int>(data.size(1)) ||
+        dims[2] != integer_conversion<int>(data.size(0)) )
     {
       GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" dimensions are incorrect" );
     }
@@ -2398,9 +2402,9 @@ void SiloFile::DBReadWrapper( const std::string& name, array<Array2dT<TYPE> >& d
 
     for( integer i=0 ; i<data.size() ; ++i )
     {
-      for( integer j=0 ; j<data[i].Dimension(0) ; ++j )
+      for( integer j=0 ; j<data[i].size(0) ; ++j )
       {
-        for( integer k=0 ; k<data[i].Dimension(1) ; ++k )
+        for( integer k=0 ; k<data[i].size(1) ; ++k )
         {
           data[i][j][k] = *idataSerial;
           ++idataSerial;

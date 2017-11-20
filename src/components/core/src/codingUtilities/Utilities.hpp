@@ -49,6 +49,7 @@
 
 #include "common/DataTypes.hpp"
 //#include "legacy/Common/typedefs.h"
+#include <limits>
 #include <sys/resource.h>
 #include <map>
 #include <set>
@@ -106,6 +107,22 @@ T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& messag
 real64_array logspace(realT start, realT stop, int count=100);
 real64_array linspace(realT start, realT stop, int count=100);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+template< typename RTYPE, typename T >
+RTYPE integer_conversion( T input )
+{
+  static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
+  static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
+
+  if( input > std::numeric_limits<RTYPE>::max() ||
+      input < std::numeric_limits<RTYPE>::lowest() )
+  {
+    abort();
+  }
+  return static_cast<RTYPE>(input);
+}
+#pragma GCC diagnostic pop
 
 
 /////////////////////////////////////////////////
@@ -654,11 +671,11 @@ inline void Intersection( const std::set<TYPE>& set1, const std::set<TYPE>& set2
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& array, std::set<TYPE>& intersection )
+inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& arr, std::set<TYPE>& intersection )
 {
   intersection.clear();
 
-  for( typename array<TYPE>::const_iterator iter_arr=array.begin() ; iter_arr!=array.end() ; ++iter_arr )
+  for( typename array<TYPE>::const_iterator iter_arr=arr.begin() ; iter_arr!=arr.end() ; ++iter_arr )
   {
     if( set.count( *iter_arr ) == 1 )
     {

@@ -162,7 +162,7 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
         MLList.set("smoother: type","ILU");
         MLList.set("ML output",1);
         MLList.set("PDE equations",3);
-        MLPrec = std::move(std::make_unique<ML_Epetra::MultiLevelPreconditioner>(*matrix, MLList));
+        MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>(*matrix, MLList);
         solver.SetPrecOperator(MLPrec.get());
       }
       else // use ILUT preconditioner with domain decomp

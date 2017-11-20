@@ -47,7 +47,7 @@
 
 #include "legacy/IO/BinStream.h"
 //#include "../ObjectManagers/PhysicalDomainT.h"
-//#include "Utilities/Utilities.h"
+#include "codingUtilities/Utilities.hpp"
 
 
 #ifdef USE_ATK
@@ -263,8 +263,8 @@ void NeighborCommunication::CommunicatePackedObjectBufferSizes( )
   MPI_Request mpiRequest[2];
   MPI_Status mpiStatus;
 
-  SendReceive( reinterpret_cast<char*>(&receiveSizes), n*sizeof(bufvector::size_type),
-               reinterpret_cast<char*>(&sendSizes), n*sizeof(bufvector::size_type),
+  SendReceive( reinterpret_cast<char*>(&receiveSizes), integer_conversion<int>(n*sizeof(bufvector::size_type)),
+               reinterpret_cast<char*>(&sendSizes), integer_conversion<int>(n*sizeof(bufvector::size_type)),
                mpiRequest[0], mpiRequest[1] );
 
   MPI_Waitall( 2, mpiRequest, &mpiStatus );
@@ -990,7 +990,7 @@ void NeighborCommunication::SendReceive(char* inBuffer,
 
 void NeighborCommunication::SendReceiveSizes(const CommRegistry::commID commID)
 {
-  this->m_sendSize[commID] = m_sendBuffer.size();
+  this->m_sendSize[commID] = integer_conversion<int>(m_sendBuffer.size());
   SendReceive( reinterpret_cast<char*>(&m_receiveSize[commID]), sizeof(int),
                reinterpret_cast<char*>(&m_sendSize[commID]), sizeof(int),
                mpiRecvSizeRequest[commID], mpiSendSizeRequest[commID], commID);
@@ -1000,7 +1000,7 @@ void NeighborCommunication::SendReceiveBufferSizes( const CommRegistry::commID c
                                                     MPI_Request& mpiSendRequest,
                                                     MPI_Request& mpiRecvRequest )
 {
-  this->m_sendSize[commID] = m_sendBuffer.size();
+  this->m_sendSize[commID] = integer_conversion<int>(m_sendBuffer.size());
   SendReceive( &m_sendSize[commID], 1, mpiSendRequest,
                &m_receiveSize[commID], 1, mpiRecvRequest, commID);
 }
@@ -1009,8 +1009,8 @@ void NeighborCommunication::SendReceiveBufferSizes( const CommRegistry::commID c
 void NeighborCommunication::SendReceiveBuffers(const CommRegistry::commID commID)
 {
   this->m_receiveBuffer.resize( this->m_receiveSize[commID] );
-  SendReceive(m_receiveBuffer.data(), m_receiveBuffer.size(),
-              m_sendBuffer.data(), m_sendBuffer.size(),
+  SendReceive(m_receiveBuffer.data(), integer_conversion<int>(m_receiveBuffer.size()),
+              m_sendBuffer.data(), integer_conversion<int>(m_sendBuffer.size()),
               mpiRecvBufferRequest[commID], mpiSendBufferRequest[commID], commID);
 }
 
@@ -1019,8 +1019,8 @@ void NeighborCommunication::SendReceiveBuffers(const CommRegistry::commID commID
                                                MPI_Request& mpiRecvRequest)
 {
   this->m_receiveBuffer.resize( this->m_receiveSize[commID] );
-  SendReceive( m_receiveBuffer.data(), m_receiveBuffer.size(),
-               m_sendBuffer.data(), m_sendBuffer.size(),
+  SendReceive( m_receiveBuffer.data(), integer_conversion<int>(m_receiveBuffer.size()),
+               m_sendBuffer.data(), integer_conversion<int>(m_sendBuffer.size()),
                mpiRecvRequest, mpiSendRequest, commID);
 
 }
@@ -1031,8 +1031,8 @@ void NeighborCommunication::SendReceiveBuffers(const CommRegistry::commID sizeCo
                                                MPI_Request& mpiRecvRequest)
 {
   this->m_receiveBuffer.resize( this->m_receiveSize[sizeCommID] );
-  SendReceive( m_receiveBuffer.data(), m_receiveBuffer.size(),
-               m_sendBuffer.data(), m_sendBuffer.size(),
+  SendReceive( m_receiveBuffer.data(), integer_conversion<int>(m_receiveBuffer.size()),
+               m_sendBuffer.data(), integer_conversion<int>(m_sendBuffer.size()),
                mpiRecvRequest, mpiSendRequest, commID);
 
 }

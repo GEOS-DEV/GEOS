@@ -633,7 +633,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
   localIndex numNodes = 1;
 
   //  int numElemsInDir[3] = {1,1,1};
-  int numNodesInDir[3] =
+  localIndex numNodesInDir[3] =
       { 1, 1, 1 };
 
   for( int i = 0 ; i < m_dim ; ++i )
@@ -783,7 +783,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
                 const localIndex firstNodeIndex = numNodesInDir[1] * numNodesInDir[2] * ( index[0] - firstElemIndexInPartition[0] )
                     + numNodesInDir[2] * ( index[1] - firstElemIndexInPartition[1] )
                     + ( index[2] - firstElemIndexInPartition[2] );
-                int nodeOfBox[8];
+                localIndex nodeOfBox[8];
 
                 if( m_elementType[iR] == "CPE4" || m_elementType[iR] == "STRI" )
                 {
@@ -949,7 +949,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
       {
         if( X[iN][i] > m_min[i] && X[iN][i] < m_max[i] )
         {
-          srand( nodeManager->m_localToGlobalMap[iN] + m_randSeed + i ); // This ensures that the perturbation pattern is unaffected by domain partitioning.
+          srand( integer_conversion<int>(nodeManager->m_localToGlobalMap[iN]) + m_randSeed + i ); // This ensures that the perturbation pattern is unaffected by domain partitioning.
           X[iN][i] += ( ( m_max[i] - m_min[i] ) / m_numElemsTotal[i] ) * ( ( rand() * 1.0 ) / RAND_MAX - 0.5 ) * 2 * m_fPerturb;
         }
       }

@@ -69,7 +69,7 @@ Polynomial :: ~Polynomial()
 
 int Polynomial :: Degree ()
 {
-  return m_coefficients.size();
+  return static_cast<int>(m_coefficients.size());
 }
 
 

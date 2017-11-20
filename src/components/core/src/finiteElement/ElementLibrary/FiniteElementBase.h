@@ -67,15 +67,15 @@ public:
     return data[q_index].parent_values;
   }
 
-  R1Tensor gradient( const int shape_index,
-                 const int q_index ) const
+  R1Tensor gradient( const localIndex shape_index,
+                     const localIndex q_index ) const
   {
     assert(q_index < n_q_points);
     assert(shape_index < n_dofs);
     return data[q_index].mapped_gradients[shape_index];
   }
 
-  double JxW(const int q_index) const
+  double JxW(const localIndex q_index) const
   {
     assert(q_index < n_q_points);
     return data[q_index].jacobian_determinant *

@@ -158,7 +158,7 @@ using r2_array = array<R2Tensor>;
 using r2Sym_array = array<R2SymTensor>;
 
 //using mapPair = std::pair<integer, localIndex>;
-using mapPair_array = std::pair<integer_array, integer_array>;
+using mapPair_array = std::pair<localIndex_array, localIndex_array>;
 
 
 constexpr static auto GLOBALINDEX_MAX = std::numeric_limits<globalIndex>::max();
@@ -845,7 +845,7 @@ public:
     template< typename TLHS, typename TRHS >
     inline static void f( TLHS & lhs, integer const component, TRHS const & rhs )
     {
-      lhs = rhs;
+      lhs = static_cast<TLHS>(rhs);
     }
 
   };

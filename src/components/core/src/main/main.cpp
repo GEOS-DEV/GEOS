@@ -45,9 +45,8 @@ int main( int argc, char *argv[] )
   slic::setLoggingMsgLevel( slic::message::Debug );
 //  slic::addStreamToAllMsgLevels( new slic::GenericOutputStream( &std::cout, format ) );
 
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 #endif
-
+  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
 
   // Mark begin of "initialization" phase

@@ -128,7 +128,7 @@ public:
   void SetBufferSizes( const std::map<string, array<string>>& fieldNames,
                                       const CommRegistry::commID commID  );
 
-  int NumberOfNeighbors( ) {return m_neighbors.size();}
+  int NumberOfNeighbors( ) {return integer_conversion<int>(m_neighbors.size());}
 
   int m_size;
   int m_sizeMetis;

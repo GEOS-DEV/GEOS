@@ -90,8 +90,8 @@ public:
   void open( const char* filename, const bool truncate = false );
   void close(void);
 
-  template<class TYPE>
-  void write( const TYPE* const p_var , const int var_length )
+  template<class TYPE,typename INDEX_TYPE>
+  void write( const TYPE* const p_var , const INDEX_TYPE var_length )
   {
     output.write( reinterpret_cast<const char*>(p_var) , sizeof(TYPE)*var_length );
   }
@@ -275,7 +275,7 @@ public:
   void close(void);
 
   template<class TYPE>
-  void read( TYPE* const p_var , const int var_length )
+  void read( TYPE* const p_var , const localIndex var_length )
   {
     input.read( reinterpret_cast<char*>(p_var) , sizeof(TYPE)*var_length );
   }

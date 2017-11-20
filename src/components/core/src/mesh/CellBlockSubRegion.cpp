@@ -16,7 +16,7 @@ using namespace constitutive;
 CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * const parent ):
   CellBlock( name, parent )
 {
-  auto constitutiveGrouping = this->RegisterViewWrapper< map< string, integer_array > >(keys::constitutiveGrouping);
+  auto constitutiveGrouping = this->RegisterViewWrapper< map< string, localIndex_array > >(keys::constitutiveGrouping);
   constitutiveGrouping->setSizedFromParent(0);
 }
 

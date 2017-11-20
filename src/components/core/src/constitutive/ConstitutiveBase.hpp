@@ -46,7 +46,7 @@ public:
 
   virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
                                                 R2Tensor const & Rot,
-                                                integer const i,
+                                                localIndex const i,
                                                 integer const systemAssembleFlag ) = 0;
 
 

@@ -50,7 +50,7 @@
 //#include "../Utilities/Utilities.h"
 #include "Communication.h"
 #include "legacy/ArrayT/bufvector.h"
-
+#include "codingUtilities/Utilities.hpp"
 #ifdef USE_ATK
 #include "slic/slic.hpp"
 #endif
@@ -303,8 +303,8 @@ public:
                     MPI_Request& recvReq,
                     const CommRegistry::commID commID = CommRegistry::genericComm01 )
   {
-    SendReceive( reinterpret_cast<char*>(recvBuffer.data()), recvBuffer.size()*sizeof(bufvector::size_type),
-                 reinterpret_cast<char*>(sendBuffer.data()), sendBuffer.size()*sizeof(bufvector::size_type),
+    SendReceive( reinterpret_cast<char*>(recvBuffer.data()), integer_conversion<int>(recvBuffer.size())*sizeof(bufvector::size_type),
+                 reinterpret_cast<char*>(sendBuffer.data()), integer_conversion<int>(sendBuffer.size())*sizeof(bufvector::size_type),
                  recvReq, sendReq, commID );
   }
 

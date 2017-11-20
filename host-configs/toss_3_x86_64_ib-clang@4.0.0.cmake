@@ -40,7 +40,7 @@ option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
 
 option( RAJA_ENABLE_TBB "" OFF)
 
-option( ENABLE_CALIPER "Enables CALIPER" ON )
+option( ENABLE_CALIPER "Enables CALIPER" OFF )
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)

@@ -124,16 +124,16 @@ public:
     return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(regionName);
   }
 
-  ElementRegion const * GetRegion( integer const & index ) const
+  ElementRegion const * GetRegion( localIndex const & index ) const
   {
     return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(index);
   }
-  ElementRegion * GetRegion( integer const & index )
+  ElementRegion * GetRegion( localIndex const & index )
   {
     return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(index);
   }
 
-  integer numRegions() const
+  localIndex numRegions() const
   {
     return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups().size();
   }

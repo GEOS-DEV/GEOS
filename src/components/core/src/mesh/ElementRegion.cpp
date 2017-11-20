@@ -178,7 +178,7 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
   typename ManagedGroup::subGroupMap::LookupMapType const & constitutiveIndexLookup = constitutiveManager->GetSubGroups().keys();
 
   string defaultMaterial = this->getData<string>(keys::defaultMaterial);
-  integer defaultMaterialIndex = constitutiveIndexLookup.at(defaultMaterial);
+  localIndex defaultMaterialIndex = constitutiveIndexLookup.at(defaultMaterial);
 
 
   auto const & numMethodName = this->getData<string>(keys::numericalMethod);
@@ -191,8 +191,8 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
   ManagedGroup * cellBlockSubRegions = this->GetGroup(keys::cellBlockSubRegions);
   for( auto & cellSubBlock : cellBlockSubRegions->GetSubGroups() )
   {
-    auto & cellToConstitutiveMap = cellSubBlock.second->getReference< std::pair< Array2dT< integer >, Array2dT< integer > > >(keys::constitutiveMap);
-    auto & constitutiveGrouping = cellSubBlock.second->getReference< map< string, integer_array > >(keys::constitutiveGrouping);
+    auto & cellToConstitutiveMap = cellSubBlock.second->getReference< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(keys::constitutiveMap);
+    auto & constitutiveGrouping = cellSubBlock.second->getReference< map< string, localIndex_array > >(keys::constitutiveGrouping);
 //    constitutiveGrouping.resize( constitutiveMapPair.second.size() );
 //    constitutiveGrouping["mix"];
     

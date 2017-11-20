@@ -38,7 +38,7 @@ public:
 
   R2SymTensor  StateUpdatePoint( R2SymTensor const & D,
                                          R2Tensor const & Rot,
-                                         integer const i,
+                                         localIndex const i,
                                          integer const systemAssembleFlag ) override;
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;

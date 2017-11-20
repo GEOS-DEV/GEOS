@@ -540,8 +540,8 @@ void PartitionBase::SendReceive( const array<array<T> >& sendArray, array<array<
 
   }
 
-  MPI_Waitall( mpiSendRequest.size() , mpiSendRequest.data(), mpiSendStatus.data() );
-  MPI_Waitall( mpiRecvRequest.size() , mpiRecvRequest.data(), mpiRecvStatus.data() );
+  MPI_Waitall( mpiSendRequest.size<int>() , mpiSendRequest.data(), mpiSendStatus.data() );
+  MPI_Waitall( mpiRecvRequest.size<int>() , mpiRecvRequest.data(), mpiRecvStatus.data() );
 
   for( localIndex i=0 ; i<m_neighbors.size() ; ++i )
   {
@@ -552,8 +552,8 @@ void PartitionBase::SendReceive( const array<array<T> >& sendArray, array<array<
                           recvArray[i].data(), recvArray[i].size(), mpiRecvRequest[i] );
 
   }
-  MPI_Waitall( mpiSendRequest.size() , mpiSendRequest.data(), mpiSendStatus.data() );
-  MPI_Waitall( mpiRecvRequest.size() , mpiRecvRequest.data(), mpiRecvStatus.data() );
+  MPI_Waitall( mpiSendRequest.size<int>() , mpiSendRequest.data(), mpiSendStatus.data() );
+  MPI_Waitall( mpiRecvRequest.size<int>() , mpiRecvRequest.data(), mpiRecvStatus.data() );
 
 }
 
@@ -2663,13 +2663,13 @@ void PartitionBase::SynchronizeFields( const std::map<string, array<string>>& fi
   for( int count=0 ; count<m_neighbors.size() ; ++count )
   {
     int neighborIndex;
-    MPI_Waitany( mpiRecvBufferRequest.size(), mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data() );
+    MPI_Waitany( mpiRecvBufferRequest.size<int>(), mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data() );
 
     NeighborCommunication& neighbor = this->m_neighbors[neighborIndex];
     neighbor.UnpackBuffer( fieldNames );
   }
 
-  MPI_Waitall( mpiSendBufferRequest.size() , mpiSendBufferRequest.data(), mpiSendBufferStatus.data() );
+  MPI_Waitall( mpiSendBufferRequest.size<int>() , mpiSendBufferRequest.data(), mpiSendBufferStatus.data() );
 
 
 #endif
@@ -2798,19 +2798,19 @@ void PartitionBase::SetRankOfNeighborNeighbors()
     neighbor.SendReceive( &sendSize, 1, mpiSendRequest[i],
                           &(recvSize[i]), 1, mpiRecvRequest[i] );
   }
-  MPI_Waitall( mpiSendRequest.size() , mpiSendRequest.data(), mpiSendStatus.data() );
-  MPI_Waitall( mpiRecvRequest.size() , mpiRecvRequest.data(), mpiRecvStatus.data() );
+  MPI_Waitall( mpiSendRequest.size<int>() , mpiSendRequest.data(), mpiSendStatus.data() );
+  MPI_Waitall( mpiRecvRequest.size<int>() , mpiRecvRequest.data(), mpiRecvStatus.data() );
 
   for( int i=0 ; i<m_neighbors.size() ; ++i )
   {
     NeighborCommunication& neighbor = m_neighbors[i];
     neighborRanks[i].resize( recvSize[i] );
 
-    neighbor.SendReceive( ranks.data(), ranks.size(), mpiSendRequest[i],
-                          neighborRanks[i].data(), neighborRanks[i].size(), mpiRecvRequest[i] );
+    neighbor.SendReceive( ranks.data(), ranks.size<int>(), mpiSendRequest[i],
+                          neighborRanks[i].data(), neighborRanks[i].size<int>(), mpiRecvRequest[i] );
   }
-  MPI_Waitall( mpiSendRequest.size() , mpiSendRequest.data(), mpiSendStatus.data() );
-  MPI_Waitall( mpiRecvRequest.size() , mpiRecvRequest.data(), mpiRecvStatus.data() );
+  MPI_Waitall( mpiSendRequest.size<int>() , mpiSendRequest.data(), mpiSendStatus.data() );
+  MPI_Waitall( mpiRecvRequest.size<int>() , mpiRecvRequest.data(), mpiRecvStatus.data() );
 
   for( int i=0 ; i<m_neighbors.size() ; ++i )
   {
@@ -2928,9 +2928,9 @@ void PartitionBase::GraphBasedColoring()
     localNeighborList.push_back(neighbor->NeighborRank());
   }
   // localNeighborList.insert(localNeighborList.begin(), localNeighborList.size());
-  localNeighborList[0] = localNeighborList.size() - 1;
+  localNeighborList[0] = localNeighborList.size<int>() - 1;
 
-  int localNumNeighbors = localNeighborList.size();
+  int localNumNeighbors = localNeighborList.size<int>();
   int maxLocalNumNeighbors = 0;
   MPI_Allreduce(&localNumNeighbors, &maxLocalNumNeighbors, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 

@@ -54,7 +54,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   lSet& newset = sets->RegisterViewWrapper<lSet>(newSetName)->reference();
   newset.clear();
 
-  int mapSize = map.Dimension(1);
+  localIndex mapSize = map.size(1);
   for( localIndex ka=0 ; ka<size() ; ++ka )
   {
     const localIndex* const sublist = map[ka];
