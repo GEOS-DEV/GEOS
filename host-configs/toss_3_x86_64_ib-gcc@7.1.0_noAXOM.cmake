@@ -8,7 +8,7 @@
 
 
 
-set(CONFIG_NAME "quartz-toss_3_x86_64_ib-gcc@7.1.0" CACHE PATH "") 
+set(CONFIG_NAME "quartz-toss_3_x86_64_ib-gcc@7.1.0_noAXOM" CACHE PATH "") 
 
 #set(TPL_DIR "/usr/gapps/GEOS/geosx/2017_10_04_13_56_50" CACHE PATH "" )
 #include("${TPL_DIR}/${CONFIG_NAME}.cmake")
@@ -40,6 +40,7 @@ set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 
 
+set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
 
 
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
