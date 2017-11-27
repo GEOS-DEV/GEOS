@@ -1,12 +1,12 @@
 ###############################################################################
 #
-# Setup HDF5
+# Setup SILO
 # This file defines:
-#  HDF5_FOUND - If HDF5 was found
-#  HDF5_INCLUDE_DIRS - The HDF5 include directories
-#  HDF5_LIBRARY - The HDF5 library
+#  SILO_FOUND - If SILO was found
+#  SILO_INCLUDE_DIRS - The SILO include directories
+#  SILO_LIBRARY - The SILO library
 
-# first Check for HDF5_DIR
+# first Check for SILO_DIR
 
 if(NOT SILO_DIR)
     MESSAGE(FATAL_ERROR "Could not find SILO. SILO support needs explicit SILO_DIR")
