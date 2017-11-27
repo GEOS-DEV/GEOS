@@ -300,7 +300,7 @@ ExternalProject_Add( mathpresso
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-set( dependency_list "${dependency_list};mathpresso" )
+#set( dependency_list "${dependency_list};mathpresso" )
 
 endif()
 
@@ -332,7 +332,7 @@ ExternalProject_Add( pugixml
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-set( dependency_list "${dependency_list};pugixml" )
+#set( dependency_list "${dependency_list};pugixml" )
 
 
 
@@ -385,12 +385,48 @@ ExternalProject_Add( trilinos
                                 -D Trilinos_ENABLE_STK=OFF
                                 -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON  )
 
-set( dependency_list "${dependency_list};trilinos" )
+#set( dependency_list "${dependency_list};trilinos" )
+
+################################
+# HYPRE
+################################
+if( ENABLE_HYPRE )
+message( INFO ": setting up HYPRE" )
+set(HYPRE_LOCAL_DIR ${PROJECT_BINARY_DIR}/hypre)
+set(HYPRE_DIR ${HYPRE_LOCAL_DIR})
+set(HYPRE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/hypre)
+
+message( INFO ": HYPRE_DIR = ${HYPRE_DIR}" )
+message( INFO ": HYPRE_LOCAL_DIR = ${HYPRE_LOCAL_DIR}" )
+message( INFO ": HYPRE_INSTALL_DIR = ${HYPRE_INSTALL_DIR}" )
+
+ExternalProject_Add( hypre
+                     GIT_REPOSITORY git@github.com:LLNL/hypre.git
+                     GIT_TAG master
+                     PREFIX ${HYPRE_LOCAL_DIR}
+                     BUILD_COMMAND make -j8
+#                     SOURCE_DIR ${HYPRE_LOCAL_DIR}
+                     SOURCE_SUBDIR src
+                     INSTALL_DIR ${HYPRE_INSTALL_DIR}
+                     INSTALL_COMMAND make install && 
+                                     cp -rfp ${HYPRE_LOCAL_DIR}/src/hypre/src/hypre/include ${HYPRE_INSTALL_DIR} &&
+                                     cp -rfp ${HYPRE_LOCAL_DIR}/src/hypre/src/hypre/lib ${HYPRE_INSTALL_DIR}
+                     CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DMPI_C_COMPILER=${MPI_C_COMPILER}
+                                -DMPI_CXX_COMPILER=${MPI_CXX_COMPILER}
+                                -DBUILD_SHARED_LIBS:BOOL=OFF
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+    set( dependency_list "${dependency_list};hypre" )
+
+endif()
 
 
+message("dependency_list=${dependency_list}")
 
 blt_add_executable( NAME             tpl
                     SOURCES          tpl.cpp )
-
+                    
 add_dependencies( tpl ${dependency_list} )
 
