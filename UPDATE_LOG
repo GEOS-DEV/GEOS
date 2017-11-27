@@ -1,5 +1,12 @@
 
 
+Mon Nov 27 00:01:55 2017 Randolph R. Settgast
+v0.0.17
+
+Add HYPRE to TPL build.
+Add noAXOM build.
+
+
 Tue Oct 31 23:22:31 2017 Randolph R. Settgast
 v0.0.16
 
