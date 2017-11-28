@@ -23,6 +23,38 @@ include(ExternalProject)
 
 set( dependency_list "" )
 ################################
+# UNCRUSTIFY
+################################
+if (UNCRUSTIFY_DIR)
+#  include(../src/cmake/thirdparty/FindHDF5.cmake)
+#  blt_register_library(NAME hdf5
+#                       INCLUDES ${HDF5_INCLUDE_DIRS}
+#                       LIBRARIES ${HDF5_LIBRARY} 
+#                       TREAT_INCLUDES_AS_SYSTEM ON )
+else()
+    message(INFO ": Using uncrustify found at github")
+    set(UNCRUSTIFY_ROOT "${CMAKE_INSTALL_PREFIX}/uncrustify")
+    set(uncrustify_install_dir ${CMAKE_INSTALL_PREFIX}/uncrustify)
+
+    ExternalProject_Add( uncrustify
+                          URL ${CMAKE_SOURCE_DIR}/tpl_mirror/uncrustify-master.zip
+                          PREFIX ${PROJECT_BINARY_DIR}/uncrustify
+                          BUILD_COMMAND make -j8
+                          INSTALL_COMMAND make install
+                          INSTALL_DIR ${uncrustify_install_dir}
+                          CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+    set( dependency_list "${dependency_list};uncrustify" )
+
+endif()
+
+
+
+
+
+################################
 # HDF5
 ################################
 if (HDF5_DIR)
@@ -42,7 +74,6 @@ else()
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/hdf5-1.10.1.tar.gz
 #                          URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz
                           PREFIX ${PROJECT_BINARY_DIR}/hdf5
-                          INSTALL_DIR ${silo_install_dir}
                           CONFIGURE_COMMAND ../hdf5/configure CC=${CMAKE_C_COMPILER}
                                                CXX=${CMAKE_CXX_COMPILER}
                                                --enable-build-mode=production
@@ -300,7 +331,7 @@ ExternalProject_Add( mathpresso
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-#set( dependency_list "${dependency_list};mathpresso" )
+set( dependency_list "${dependency_list};mathpresso" )
 
 endif()
 
@@ -332,7 +363,7 @@ ExternalProject_Add( pugixml
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
-#set( dependency_list "${dependency_list};pugixml" )
+set( dependency_list "${dependency_list};pugixml" )
 
 
 
@@ -385,7 +416,7 @@ ExternalProject_Add( trilinos
                                 -D Trilinos_ENABLE_STK=OFF
                                 -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON  )
 
-#set( dependency_list "${dependency_list};trilinos" )
+set( dependency_list "${dependency_list};trilinos" )
 
 ################################
 # HYPRE

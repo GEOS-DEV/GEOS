@@ -59,6 +59,11 @@ string(REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
 set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR2}" )
 message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
+
+
+set(UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" FORCE )
+
+
 ################################
 # HDF5
 ################################

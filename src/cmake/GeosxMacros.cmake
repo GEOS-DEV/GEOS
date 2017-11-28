@@ -1,6 +1,7 @@
 ##------------------------------------------------------------------------------
 ## geosx_add_code_checks( PREFIX     <Prefix used for created targets>
-##                       EXCLUDES   [path1 [path2 ...]])
+##                        UNCRUSTIFY_CFG_FILE <path to style config file> 
+##                        EXCLUDES   [path1 [path2 ...]])
 ##
 ## Adds code checks to all source files under this directory.
 ##
@@ -14,7 +15,7 @@
 macro(geosx_add_code_checks)
 
     set(options)
-    set(singleValueArgs PREFIX )
+    set(singleValueArgs PREFIX UNCRUSTIFY_CFG_FILE )
     set(multiValueArgs EXCLUDES )
 
     # Parse the arguments to the macro
@@ -46,8 +47,11 @@ macro(geosx_add_code_checks)
         endforeach()
     endif()
 
-    blt_add_code_checks(PREFIX    ${arg_PREFIX}
-                        SOURCES   ${_sources}
+    blt_add_code_checks( PREFIX    ${arg_PREFIX}
+                         SOURCES   ${_sources}
                         UNCRUSTIFY_CFG_FILE ${PROJECT_SOURCE_DIR}/uncrustify.cfg)
+#                         UNCRUSTIFY_CFG_FILE ${arg_UNCRUSTIFY_CFG_FILE}
+#                        )
+
 
 endmacro(geosx_add_code_checks)

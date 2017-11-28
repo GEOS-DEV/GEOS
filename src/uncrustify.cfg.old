@@ -1142,18 +1142,18 @@ nl_class_init_args                        = force   # ignore/add/remove/force
 nl_constr_init_args                       = force   # ignore/add/remove/force
 
 # Add or remove newline between return type and function name in a function definition
-nl_func_type_name                         = add   # ignore/add/remove/force
+nl_func_type_name                         = ignore   # ignore/add/remove/force
 
 # Add or remove newline between return type and function name inside a class {}
 # Uses nl_func_type_name or nl_func_proto_type_name if set to ignore.
-nl_func_type_name_class                   = add   # ignore/add/remove/force
+nl_func_type_name_class                   = ignore   # ignore/add/remove/force
 
 # Add or remove newline between function scope and name in a definition
 # Controls the newline after '::' in 'void A::f() { }'
 nl_func_scope_name                        = ignore   # ignore/add/remove/force
 
 # Add or remove newline between return type and function name in a prototype
-nl_func_proto_type_name                   = add   # ignore/add/remove/force
+nl_func_proto_type_name                   = ignore   # ignore/add/remove/force
 
 # Add or remove newline between a function name and the opening '('
 nl_func_paren                             = ignore   # ignore/add/remove/force
