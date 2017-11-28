@@ -57,6 +57,6 @@ blt_add_executable(NAME geosx
 if (ENABLE_DOCS)
   add_subdirectory(docs)
 endif()
-blt_add_code_check_targets(uncrustify.cfg)
+geosx_add_code_checks(uncrustify.cfg)
 
 message( "Leaving /src/components/CMakeLists.txt")
