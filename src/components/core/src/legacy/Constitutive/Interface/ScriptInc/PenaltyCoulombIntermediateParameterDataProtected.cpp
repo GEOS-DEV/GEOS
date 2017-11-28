@@ -41,7 +41,8 @@ PenaltyCoulombIntermediateParameterData::PostReadXML( const TICPP::HierarchicalD
   //set all derived values
   Initialize();
 
-  //set the rest ... arealStiffnessSoften is not calculated or used in SimpleInitialize
+  //set the rest ... arealStiffnessSoften is not calculated or used in
+  // SimpleInitialize
   if(ksoften <= 0)
     ksoften = (1e-5) * kyield;
   if(kshear <= 0)

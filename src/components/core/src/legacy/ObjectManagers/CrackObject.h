@@ -12,7 +12,7 @@
 #define CRACKOBJECT_H_
 
 
-class CrackFaceManager: public ObjectDataStructureBaseT
+class CrackFaceManager : public ObjectDataStructureBaseT
 {
 public:
   CrackFaceManager():
@@ -25,7 +25,7 @@ public:
 
 };
 
-class CrackObjectManager: public ObjectDataStructureBaseT
+class CrackObjectManager : public ObjectDataStructureBaseT
 {
 public:
   CrackObjectManager();

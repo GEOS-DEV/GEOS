@@ -14,15 +14,18 @@
  * @tparam KEY_TYPE the key type
  * @tparam INDEX_TYPE the index type
  * @tparam INVALID_INDEX the value of an unset/invalid index
- * This class is used for fast index based lookups for a MappedVector type. It is templated on a contains a KEY_TYPE, which is defaulted
- * to a string, an INDEX_TYPE that defaults to an int. The key is const, while the index is set upon first use. The intent
- * is to use the index for lookups, and check the key to confirm the key is correct.
+ * This class is used for fast index based lookups for a MappedVector type. It
+ * is templated on a contains a KEY_TYPE, which is defaulted
+ * to a string, an INDEX_TYPE that defaults to an int. The key is const, while
+ * the index is set upon first use. The intent
+ * is to use the index for lookups, and check the key to confirm the key is
+ * correct.
  */
 template< typename KEY_TYPE = std::string, typename INDEX_TYPE = int, int INVALID_INDEX = -1 >
 class KeyIndexT
 {
 public:
-  using key_type      = KEY_TYPE ;
+  using key_type      = KEY_TYPE;
   using index_type    = INDEX_TYPE;
 
 

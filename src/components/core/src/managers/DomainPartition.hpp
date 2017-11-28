@@ -55,9 +55,9 @@ public:
                   const bool isRestart );
 
   void ReadSilo( const SiloFile& siloFile,
-      const int cycleNum,
-      const realT problemTime,
-      const bool isRestart );
+                 const int cycleNum,
+                 const realT problemTime,
+                 const bool isRestart );
 
   void WriteFiniteElementMesh( SiloFile& siloFile,
                                const int cycleNum,
@@ -72,7 +72,7 @@ public:
   struct viewKeysStruct
   {
     dataRepository::ViewKey partitionManager    = { "partitionManager" };
-  }viewKeys;
+  } viewKeys;
 
   struct groupKeysStruct
   {
@@ -81,7 +81,7 @@ public:
 
     dataRepository::GroupKey meshBodies           = { meshBodiesString };
     dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
-  }groupKeys;
+  } groupKeys;
 
 
   constitutive::ConstitutiveManager const * getConstitutiveManager() const

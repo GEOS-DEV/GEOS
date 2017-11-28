@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,7 +63,7 @@
  *  Created on: Tue Jan  7 22:46:45 PST 2014
  *      Author: johnson346, settgast
  */
- 
+
 
 #include "Utilities/GeometryUtilities.h"
 #include "Utilities/FindRoots.h"
@@ -58,19 +76,17 @@
 #include "../../IO/ticpp/HierarchicalDataNode.h.old"
 
 Linearized::Linearized( ):
-HertzianIntermediate( sizeof(ParameterClass), sizeof(StateClass) )
+  HertzianIntermediate( sizeof(ParameterClass), sizeof(StateClass) )
 {
   // TODO Auto-generated constructor stub
 }
 
 Linearized::~Linearized()
-{
-
-}
+{}
 
 void
 LinearizedStateData::Update(const realT curvature1,
-                             const realT curvature2)
+                            const realT curvature2)
 {
   HertzianIntermediateStateData::Update(curvature1, curvature2);
 
@@ -113,14 +129,14 @@ LinearizedStateData::Update(const realT curvature1,
 
 void
 LinearizedStateData::Initialize(const realT curvature1, const realT curvature2,
-                                 const realT poissons1, const realT poissons2,
-                                 const realT youngs1, const realT youngs2,
-                                 const realT mass1, const realT mass2,
-                                 const realT rest1, const realT rest2,
-                                 const realT yield1, const realT yield2,
-                                 const realT velHalf1, const realT velHalf2,
-                                 const realT surfaceEnergy1, const realT surfaceEnergy2,
-                                 const realT cement1, const realT cement2)
+                                const realT poissons1, const realT poissons2,
+                                const realT youngs1, const realT youngs2,
+                                const realT mass1, const realT mass2,
+                                const realT rest1, const realT rest2,
+                                const realT yield1, const realT yield2,
+                                const realT velHalf1, const realT velHalf2,
+                                const realT surfaceEnergy1, const realT surfaceEnergy2,
+                                const realT cement1, const realT cement2)
 {
   youngs = EffectiveYoungsModulus(poissons1, poissons2, youngs1, youngs2);
   mass = EffectiveMass(mass1, mass2);
@@ -141,16 +157,19 @@ LinearizedStateData::Initialize(const realT curvature1, const realT curvature2,
     if(isCohesive > 0)
     {
       dupre = surfaceEnergy1 + surfaceEnergy2
-          - 0.0;
+              - 0.0;
       //0.0 should be replaced with interface energy
       //the following assumes a JKR model
       {
         //The following is the direct calculation using JKR
         //  REAL w2K2_two_thirds = dupre*dupre/(Eeff*Eeff);
         //  w2K2_two_thirds = pow(w2K2_two_thirds,2.0/3.0);
-        //  dcoh0 = w2K2_two_thirds * pow(reff,2.0/3.0) * (7.08273 - 22.2956*w2K2_two_thirds);
-        //...however, we would like to linearize the relationship while still dissipating the correct amount of energy
-        //looking at the functional form of the JKR model, the energy in the hysteretic part of the force displacement
+        //  dcoh0 = w2K2_two_thirds * pow(reff,2.0/3.0) * (7.08273 -
+        // 22.2956*w2K2_two_thirds);
+        //...however, we would like to linearize the relationship while still
+        // dissipating the correct amount of energy
+        //looking at the functional form of the JKR model, the energy in the
+        // hysteretic part of the force displacement
         //curve is ...
         dcoh0 = 0.0;
       }
@@ -186,7 +205,7 @@ LinearizedStateData::EffectiveCoefficientOfRestitutionSquared(const realT Eeff,
 {
   realT ret = Eeff;
   ret *= rest1 * rest1 * (1 - poissons1 * poissons1) / youngs1
-      + rest2 * rest2 * (1 - poissons2 * poissons2) / youngs2;
+         + rest2 * rest2 * (1 - poissons2 * poissons2) / youngs2;
   return ret;
 }
 
@@ -195,7 +214,8 @@ LinearizedStateData::EffectiveYieldStrength(const realT yield1,
                                             const realT yield2) const
 {
   return 2.0 / (1.0 / yield1 + 1.0 / yield2);
-  //note that for similar yield strengths this would yield the same yield strength
+  //note that for similar yield strengths this would yield the same yield
+  // strength
 }
 
 realT
@@ -205,8 +225,8 @@ LinearizedStateData::HalfCoefficientOfRestitutionVelocity(const realT Eeff,
                                                           const realT youngs1, const realT youngs2) const
 {
   return Eeff
-      * (velHalf1 * velHalf1 * (1 - poissons1 * poissons1) / youngs1
-          + velHalf2 * velHalf2 * (1 - poissons2 * poissons2) / youngs2);
+         * (velHalf1 * velHalf1 * (1 - poissons1 * poissons1) / youngs1
+            + velHalf2 * velHalf2 * (1 - poissons2 * poissons2) / youngs2);
 }
 
 
@@ -254,26 +274,26 @@ LinearizedStateData::ThetaK(const realT Tk_old,
   realT tmp = tangentialForces.L2_Norm();
   switch (k)
   {
-    case 0:
-      tmp += mu_ * dfn_mag / fn_mag;
-      break;
-    case 1:
-      tmp -= Tk_;
-      tmp *= -1.0;
-      tmp += 2.0 * mu_ * dfn_mag;
-      tmp /= 2.0 * mu_;
-      break;
-    default:
-      tmp -= Tk_;
-      tmp += 2.0 * mu_ * dfn_mag;
-      tmp /= 2.0 * mu_;
-      break;
+  case 0:
+    tmp += mu_ * dfn_mag / fn_mag;
+    break;
+  case 1:
+    tmp -= Tk_;
+    tmp *= -1.0;
+    tmp += 2.0 * mu_ * dfn_mag;
+    tmp /= 2.0 * mu_;
+    break;
+  default:
+    tmp -= Tk_;
+    tmp += 2.0 * mu_ * dfn_mag;
+    tmp /= 2.0 * mu_;
+    break;
   }
   tmp = pow(1 - tmp, (1.0 / 3.0));
   return tmp;
 }
 realT
-Linearized::NormalStiffness(const InterfaceBaseParameterData& ,
+Linearized::NormalStiffness(const InterfaceBaseParameterData&,
                             InterfaceBaseStateData& matStateBase,
                             const realT normalApproach,
                             const bool setForces) const
@@ -295,11 +315,11 @@ Linearized::NormalStiffness(const InterfaceBaseParameterData& ,
     {
       //cohesive stiffness
       coh_stiffness = matState.at <= matState.ac ?
-          matState.linearStiffnessElastic :
-          PlasticUnloadingSlope(matState.youngs, youngs2,
-                                matState.mass, matState.vark2,
-                                matState.linearStiffnessElastic,
-                                matState.at, matState.ac, matState.halfRestVel);
+                      matState.linearStiffnessElastic :
+                      PlasticUnloadingSlope(matState.youngs, youngs2,
+                                            matState.mass, matState.vark2,
+                                            matState.linearStiffnessElastic,
+                                            matState.at, matState.ac, matState.halfRestVel);
       //get the cohesion distance
       if (setForces)
       {
@@ -316,7 +336,8 @@ Linearized::NormalStiffness(const InterfaceBaseParameterData& ,
   }
 
   //------GRAIN LOADING/UNLOADING------
-  //otherwise, contact is in a different regime ... note dcoh0 = 0 for !is_cohesive
+  //otherwise, contact is in a different regime ... note dcoh0 = 0 for
+  // !is_cohesive
   realT at; //at >= ac ... if > ac, then it is yielding
   if(setForces)
   {
@@ -346,7 +367,8 @@ Linearized::NormalStiffness(const InterfaceBaseParameterData& ,
       fnmag_mat = k2 * (normalApproach - matState.a0);
       matState.ElasticStrainEnergy += 0.5 * fnmag_mat * fnmag_mat / k2;
       //why was I adding in a cohesive force during post-yield loading????
-      //fnmag_coh = matState.pullOffForce; //just a constant value here ... could alter this in the future
+      //fnmag_coh = matState.pullOffForce; //just a constant value here ...
+      // could alter this in the future
       matState.stress += fnmag_mat;//+fnmag_coh
     }
     return k2;
@@ -395,7 +417,8 @@ Linearized::PlasticUnloadingSlope(const realT Eeff, const realT Eeff2, const rea
     //Calculate k2 with saturation at e = 0.1
     realT k2 = at > ac ? linearStiffnessElastic + slope * linearStiffnessElastic * (at - ac) : linearStiffnessElastic;
 
-    if (k2 > 100.0 * linearStiffnessElastic) //saturate at 100*K1, e = sqrt(K1/K2) = 0.1
+    if (k2 > 100.0 * linearStiffnessElastic) //saturate at 100*K1, e =
+                                             // sqrt(K1/K2) = 0.1
       k2 = 100.0 * linearStiffnessElastic;
     return k2;
   }

@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,7 +63,7 @@
  *  Created on: Tue Jan  7 22:46:45 PST 2014
  *      Author: johnson346, settgast
  */
- 
+
 
 #include "Utilities/GeometryUtilities.h"
 #include "Utilities/FindRoots.h"
@@ -56,20 +74,18 @@
 #include "../../IO/ticpp/HierarchicalDataNode.h.old"
 
 HertzianIntermediate::HertzianIntermediate( const int paramSize, const int stateSize ):
-InterfaceBase( paramSize, stateSize )
+  InterfaceBase( paramSize, stateSize )
 {
   // TODO Auto-generated constructor stub
 
 }
 
 HertzianIntermediate::~HertzianIntermediate()
-{
-
-}
+{}
 
 void
 HertzianIntermediateStateData::Update(const realT curvature1,
-                                  const realT curvature2)
+                                      const realT curvature2)
 {
   radius = EffectiveRadius(curvature1, curvature2);
   //set other derived values:
@@ -82,11 +98,11 @@ HertzianIntermediateStateData::Initialize(const realT curvature1, const realT cu
                                           const realT poissons1, const realT poissons2,
                                           const realT youngs1, const realT youngs2,
                                           const realT mass1, const realT mass2,
-                                          const realT , const realT ,
-                                          const realT , const realT ,
-                                          const realT , const realT ,
-                                          const realT , const realT ,
-                                          const realT , const realT )
+                                          const realT, const realT,
+                                          const realT, const realT,
+                                          const realT, const realT,
+                                          const realT, const realT,
+                                          const realT, const realT )
 {
   youngs = EffectiveYoungsModulus(poissons1, poissons2, youngs1, youngs2);
   mass = EffectiveMass(mass1, mass2);
@@ -123,8 +139,10 @@ HertzianIntermediateStateData::EffectiveMass(const realT mass1,
   realT em1 = 1/mass1 + 1/mass2;
   em1 = 1. / em1;
   return em1;
-// EBH comment: if either mass1 or mass2 is large due to boundary conditions, etc. (e.g. 1.e100)
-// EBH comment: then c++ will produce garbage for the line below.  The fix above accounts for this.
+// EBH comment: if either mass1 or mass2 is large due to boundary conditions,
+// etc. (e.g. 1.e100)
+// EBH comment: then c++ will produce garbage for the line below.  The fix above
+// accounts for this.
 //  return mass1 * mass2 / (mass1 + mass2);
 }
 void
@@ -147,7 +165,7 @@ HertzianIntermediate::UpdateProperties(const localIndex index, std::map<std::str
                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 realT
-HertzianIntermediate::NormalStiffness(const InterfaceBaseParameterData& ,
+HertzianIntermediate::NormalStiffness(const InterfaceBaseParameterData&,
                                       InterfaceBaseStateData& matStateBase,
                                       const realT normalApproach,
                                       const bool setForces) const
@@ -171,7 +189,7 @@ HertzianIntermediate::UpdateFriction( const InterfaceBaseParameterData& matParam
 }
 
 realT
-HertzianIntermediate::ShearStrength(const InterfaceBaseParameterData& ,
+HertzianIntermediate::ShearStrength(const InterfaceBaseParameterData&,
                                     InterfaceBaseStateData& matStateBase) const
 {
   //get temporary references

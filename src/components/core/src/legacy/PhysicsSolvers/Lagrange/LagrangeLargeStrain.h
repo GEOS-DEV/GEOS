@@ -10,7 +10,7 @@
 
 #include "LagrangeSolverBase.h"
 
-class LagrangeLargeStrain: public LagrangeSolverBase
+class LagrangeLargeStrain : public LagrangeSolverBase
 {
 public:
   LagrangeLargeStrain(  const std::string& name,
@@ -43,20 +43,17 @@ private:
                                      R2SymTensor& stress );
 
   virtual realT CalculateElementResidualAndDerivative( const MaterialBaseParameterData& matParams,
-                                                const FiniteElementBase& fe,
-                                                const Array2dT<R1Tensor>& dNdX,
-                                                const realT* const detJ,
-                                                R2SymTensor const * const refStress,
-                                                array<R1Tensor> const & u,
-                                                array<R1Tensor> const & uhat,
-                                                array<R1Tensor> const & uhattilde,
-                                                array<R1Tensor> const & vtilde,
-                                                realT const dt,
-                                                Epetra_SerialDenseMatrix& dRdU,
-                                                Epetra_SerialDenseVector& R ){ return 0;}
-
-
-
+                                                       const FiniteElementBase& fe,
+                                                       const Array2dT<R1Tensor>& dNdX,
+                                                       const realT* const detJ,
+                                                       R2SymTensor const * const refStress,
+                                                       array<R1Tensor> const & u,
+                                                       array<R1Tensor> const & uhat,
+                                                       array<R1Tensor> const & uhattilde,
+                                                       array<R1Tensor> const & vtilde,
+                                                       realT const dt,
+                                                       Epetra_SerialDenseMatrix& dRdU,
+                                                       Epetra_SerialDenseVector& R ){ return 0;}
 
 
 

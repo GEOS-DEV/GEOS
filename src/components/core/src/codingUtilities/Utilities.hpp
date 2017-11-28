@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -129,8 +147,6 @@ RTYPE integer_conversion( T input )
 
 
 
-
-
 template< class T >
 inline void PushFieldForwardInTime( const realT& dt,
                                     const array< T >& dfield,
@@ -144,7 +160,7 @@ inline void PushFieldForwardInTime( const realT& dt,
     dfieldDt = dfield(a);
     dfieldDt *= dt;
 
-    field(a) += dfieldDt ;
+    field(a) += dfieldDt;
   }
 }
 
@@ -157,7 +173,7 @@ inline void IntegrateFieldInTime( const realT& dt,
   const int N = field.size();
   for( int a=0 ; a<N ; ++a )
   {
-    Ifield(a) = field(a) ;
+    Ifield(a) = field(a);
     Ifield(a) *= dt;
   }
 }
@@ -179,7 +195,7 @@ inline void CopyGlobalToLocal(const localIndex_array& globalToLocalRelation,
                               const array< T >& globalField,
                               array< T >& localField)
 {
-  const typename array<T>::size_type N = globalToLocalRelation.size() ;
+  const typename array<T>::size_type N = globalToLocalRelation.size();
 
   for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
@@ -194,7 +210,7 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               const array< T >& globalField,
                               array< T >& localField)
 {
-  const typename array<T>::size_type N = localField.size() ;
+  const typename array<T>::size_type N = localField.size();
 
   for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
@@ -209,7 +225,7 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               array< T >& localField1,
                               array< T >& localField2 )
 {
-  const typename array<T>::size_type N = localField1.size() ;
+  const typename array<T>::size_type N = localField1.size();
 
   for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
@@ -262,7 +278,7 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               array< T >& localField2,
                               array< T >& localField3 )
 {
-  const typename array<T>::size_type N = localField1.size() ;
+  const typename array<T>::size_type N = localField1.size();
 
   for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
@@ -280,10 +296,10 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               const array< T >& globalField4,
                               array< T >& localField1,
                               array< T >& localField2,
-                              array< T >& localField3 ,
+                              array< T >& localField3,
                               array< T >& localField4 )
 {
-  const typename array<T>::size_type N = localField1.size() ;
+  const typename array<T>::size_type N = localField1.size();
 
   for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
@@ -323,7 +339,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
                               const array< T >& localField,
                               array< T >& globalField)
 {
-  const typename array<T>::size_type N = localField.size() ;
+  const typename array<T>::size_type N = localField.size();
 
   for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
@@ -362,7 +378,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
                               array< T >& globalField1,
                               array< T >& globalField2 )
 {
-  const typename array<T>::size_type  N = localField1.size() ;
+  const typename array<T>::size_type  N = localField1.size();
 
   for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
@@ -417,15 +433,15 @@ bool isMember(const ElementClass& x, const SetClass& aSetOrMap) {return ( aSetOr
 
 
 /// permutation tensor
-inline int eijk(int i,int j,int k){ 
-  return ((i-j)*(j-k)*(k-i))/2; 
+inline int eijk(int i,int j,int k){
+  return ((i-j)*(j-k)*(k-i))/2;
 }
 
 
 template< typename T >
 void SetConstPointer( T* const& pointer,  T*  newpointer )
 {
-   T** temp = const_cast< T**>(&pointer);
+  T** temp = const_cast< T**>(&pointer);
   *temp = newpointer;
 
   return;
@@ -498,17 +514,17 @@ template <typename K, typename V>
 class CreateStlMap
 {
 private:
-    std::map<K, V> m_map;
+  std::map<K, V> m_map;
 public:
-    CreateStlMap(const K& key, const V& value){ m_map[key] = value; }
+  CreateStlMap(const K& key, const V& value){ m_map[key] = value; }
 
-    CreateStlMap<K, V>& operator()(const K& key, const V& value)
-    {
-        m_map[key] = value;
-        return *this;
-    }
+  CreateStlMap<K, V>& operator()(const K& key, const V& value)
+  {
+    m_map[key] = value;
+    return *this;
+  }
 
-    operator std::map<K, V>() { return m_map; }
+  operator std::map<K, V>() { return m_map; }
 };
 
 
@@ -527,16 +543,17 @@ void ClearStlMapValues( std::map<T1,T2>& Map )
  *   std::vector<int> aVect;
  *   aVect += 1,1,2,3,4;
  */
-template <class T> class vector_inserter{
+template <class T> class vector_inserter
+{
 public:
-    std::vector<T>& v;
-    vector_inserter(std::vector<T>& vv):v(vv){}
-    vector_inserter& operator,(const T& val){v.push_back(val);return *this;}
+  std::vector<T>& v;
+  vector_inserter(std::vector<T>& vv): v(vv){}
+  vector_inserter& operator,(const T& val){v.push_back(val); return *this;}
 };
 template <class T> vector_inserter<T>& operator+=(std::vector<T>& v,const T& x);
 
 template <class T> vector_inserter<T>& operator+=(std::vector<T>& v,const T& x){
-    return vector_inserter<T>(v),x;
+  return vector_inserter<T>(v),x;
 }
 
 
@@ -547,17 +564,18 @@ template <class T> vector_inserter<T>& operator+=(std::vector<T>& v,const T& x){
  *   string_array aVect;
  *   aVect += "The","quick","brown","fox";
  */
-class svector_inserter{
+class svector_inserter
+{
 public:
-    string_array& v;
-    svector_inserter(string_array& vv):v(vv){}
-    svector_inserter& operator,(const char* val){v.push_back(std::string(val));return *this;}
+  string_array& v;
+  svector_inserter(string_array& vv): v(vv){}
+  svector_inserter& operator,(const char* val){v.push_back(std::string(val)); return *this;}
 };
 svector_inserter& operator+=(string_array& v,const std::string& x);
 
 inline
 svector_inserter& operator+=(string_array& v,const char* x){
-    return svector_inserter(v),x;
+  return svector_inserter(v),x;
 }
 
 
@@ -565,7 +583,7 @@ svector_inserter& operator+=(string_array& v,const char* x){
 /// Static Assert
 /// Check satement at compile time
 template <bool b>
-struct gp_static_assert{};
+struct gp_static_assert {};
 // Specialization with member function
 template <>
 struct gp_static_assert<true>
@@ -578,8 +596,6 @@ struct gp_static_assert<true>
 
 inline bool isGTE0( const int i )
 { return (i>=0); }
-
-
 
 
 
@@ -627,21 +643,22 @@ inline realT Power(const realT val, const realT exponent)
  * @author Randy Settgast
  * @return cpu usage
  *
- * This function uses the rusage structure to query elapsed system time and user time, and returns
+ * This function uses the rusage structure to query elapsed system time and user
+ * time, and returns
  * the result.
  */
-inline realT getcputime(void)        
-{ 
-  struct timeval tim;        
-  struct rusage ru;        
-  getrusage(RUSAGE_SELF, &ru);        
+inline realT getcputime(void)
+{
+  struct timeval tim;
+  struct rusage ru;
+  getrusage(RUSAGE_SELF, &ru);
 
-  tim=ru.ru_utime;        
+  tim=ru.ru_utime;
   realT t= tim.tv_sec + tim.tv_usec / 1.0e6;
 
-  tim=ru.ru_stime;        
+  tim=ru.ru_stime;
   t+= tim.tv_sec + tim.tv_usec / 1.0e6;
-  return t; 
+  return t;
 }
 
 template< typename TYPE >
@@ -703,11 +720,13 @@ real64_array linspace(realT start, realT stop, int count){
   real64_array rv(count);
   rv = start;
 
-  if(count > 1){
+  if(count > 1)
+  {
 
     realT dL = (stop-start)/double(count-1);
     realT sum = start;
-    for(int i = 1;i < count-1; ++i){
+    for(int i = 1 ; i < count-1 ; ++i)
+    {
       sum += dL;
       rv[i] =  sum;
     }
@@ -723,11 +742,13 @@ real64_array logspace(realT start, realT stop, int count){
   real64_array rv(count);
   rv = start;
 
-  if(count > 1){
+  if(count > 1)
+  {
 
     realT dL = std::pow(stop/start,1.0/double(count-1));
     realT prod = start;
-    for(int i = 1;i < count-1; ++i){
+    for(int i = 1 ; i < count-1 ; ++i)
+    {
       prod *= dL;
       rv[i] =  prod;
     }
@@ -745,7 +766,7 @@ inline double GetOrder( double number, const unsigned int digits = 1 )
   const int exp = static_cast<int>(std::log10(number));
   const double magnitude = std::pow(10,exp);
 
-  return ( digits>0 ? round( ( number / magnitude ) * std::pow(10,digits-1) ) / std::pow(10,digits-1) : 1 ) * magnitude ;
+  return ( digits>0 ? round( ( number / magnitude ) * std::pow(10,digits-1) ) / std::pow(10,digits-1) : 1 ) * magnitude;
 }
 }
 

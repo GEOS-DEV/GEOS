@@ -18,7 +18,7 @@ class TableFunction : public FunctionBase
 {
 public:
   TableFunction( const std::string& name,
-                    dataRepository::ManagedGroup * const parent );
+                 dataRepository::ManagedGroup * const parent );
 
   virtual ~TableFunction();
   static string CatalogName() { return "TableFunction"; }

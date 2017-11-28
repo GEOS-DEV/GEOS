@@ -251,12 +251,14 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 
     for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
     {
-      real Stiffness[6][6] = {{ K[i]+4.0/3.0*G[i], K[i]-2.0/3.0*G[i], K[i]-2.0/3.0*G[i], 0,               0,        0 },
-                              { K[i]-2.0/3.0*G[i], K[i]+4.0/3.0*G[i], K[i]-2.0/3.0*G[i], 0,               0,        0 },
-                              { K[i]-2.0/3.0*G[i], K[i]-2.0/3.0*G[i], K[i]+4.0/3.0*G[i], 0,               0,        0 },
-                              {                 0,                 0,                 0, 2.0*G[i],        0,        0 },
-                              {                 0,                 0,                 0,        0, 2.0*G[i],        0 },
-                              {                 0,                 0,                 0,        0 ,       0, 2.0*G[i] } };
+      real Stiffness[6][6] = {
+        { K[i]+4.0/3.0*G[i], K[i]-2.0/3.0*G[i], K[i]-2.0/3.0*G[i], 0,               0,        0 },
+        { K[i]-2.0/3.0*G[i], K[i]+4.0/3.0*G[i], K[i]-2.0/3.0*G[i], 0,               0,        0 },
+        { K[i]-2.0/3.0*G[i], K[i]-2.0/3.0*G[i], K[i]+4.0/3.0*G[i], 0,               0,        0 },
+        {                 0,                 0,                 0, 2.0*G[i],        0,        0 },
+        {                 0,                 0,                 0,        0, 2.0*G[i],        0 },
+        {                 0,                 0,                 0,        0,       0, 2.0*G[i] }
+      };
 
       K11[i] = Stiffness[0][0];
       K22[i] = Stiffness[1][1];
@@ -274,9 +276,9 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 }
 
 R2SymTensor LinearElasticIsotropic::StateUpdatePoint( R2SymTensor const & D,
-                                               R2Tensor const & Rot,
-                                               localIndex const i,
-                                               integer const systemAssembleFlag )
+                                                      R2Tensor const & Rot,
+                                                      localIndex const i,
+                                                      integer const systemAssembleFlag )
 {
   real64 volumeStrain = D.Trace();
   meanStress()[i] += volumeStrain * bulkModulus()[0];
@@ -298,48 +300,48 @@ void LinearElasticIsotropic::GetStiffness( realT c[6][6]) const
 {
   real64 G = *shearModulus();
   real64 Lame = *bulkModulus() - 2.0/3.0 * G;
-   c[0][0] = Lame + 2 * G;
-   c[0][1] = Lame;
-   c[0][2] = Lame;
-   c[0][3] = 0.0;
-   c[0][4] = 0.0;
-   c[0][5] = 0.0;
+  c[0][0] = Lame + 2 * G;
+  c[0][1] = Lame;
+  c[0][2] = Lame;
+  c[0][3] = 0.0;
+  c[0][4] = 0.0;
+  c[0][5] = 0.0;
 
-   c[1][0] = Lame;
-   c[1][1] = Lame + 2 * G;
-   c[1][2] = Lame;
-   c[1][3] = 0.0;
-   c[1][4] = 0.0;
-   c[1][5] = 0.0;
+  c[1][0] = Lame;
+  c[1][1] = Lame + 2 * G;
+  c[1][2] = Lame;
+  c[1][3] = 0.0;
+  c[1][4] = 0.0;
+  c[1][5] = 0.0;
 
-   c[2][0] = Lame;
-   c[2][1] = Lame;
-   c[2][2] = Lame + 2 * G;
-   c[2][3] = 0.0;
-   c[2][4] = 0.0;
-   c[2][5] = 0.0;
+  c[2][0] = Lame;
+  c[2][1] = Lame;
+  c[2][2] = Lame + 2 * G;
+  c[2][3] = 0.0;
+  c[2][4] = 0.0;
+  c[2][5] = 0.0;
 
-   c[3][0] = 0.0;
-   c[3][1] = 0.0;
-   c[3][2] = 0.0;
-   c[3][3] = G;
-   c[3][4] = 0.0;
-   c[3][5] = 0.0;
+  c[3][0] = 0.0;
+  c[3][1] = 0.0;
+  c[3][2] = 0.0;
+  c[3][3] = G;
+  c[3][4] = 0.0;
+  c[3][5] = 0.0;
 
-   c[4][0] = 0.0;
-   c[4][1] = 0.0;
-   c[4][2] = 0.0;
-   c[4][3] = 0.0;
-   c[4][4] = G;
-   c[4][5] = 0.0;
+  c[4][0] = 0.0;
+  c[4][1] = 0.0;
+  c[4][2] = 0.0;
+  c[4][3] = 0.0;
+  c[4][4] = G;
+  c[4][5] = 0.0;
 
-   c[5][0] = 0.0;
-   c[5][1] = 0.0;
-   c[5][2] = 0.0;
-   c[5][3] = 0.0;
-   c[5][4] = 0.0;
-   c[5][5] = G;
- }
+  c[5][0] = 0.0;
+  c[5][1] = 0.0;
+  c[5][2] = 0.0;
+  c[5][3] = 0.0;
+  c[5][4] = 0.0;
+  c[5][5] = G;
+}
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, ManagedGroup * const )

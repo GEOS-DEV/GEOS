@@ -13,7 +13,7 @@ void init_numpy()
 }
 
 
-int main(int argc , char** argv)
+int main(int argc, char** argv)
 {
   if (argc != 5)
   {
@@ -23,12 +23,12 @@ int main(int argc , char** argv)
 
   // Initialize Python, setup the user-defined search path
   std::cout << "Initializing python..." << std::endl;
-  Py_Initialize() ;
+  Py_Initialize();
   PyObject *sysPath = PySys_GetObject((char*)"path");
   PyObject *modPath = PyString_FromString((char*)argv[1]);
   PyList_Insert(sysPath, 0, modPath);
   init_numpy();
-  
+
   // Load the targeted module and function
   PyObject *pModule = PyImport_ImportModule((char*)argv[2]);
   if (pModule == NULL)
@@ -36,7 +36,7 @@ int main(int argc , char** argv)
     PyErr_Print();
     throw std::invalid_argument("Error in loading python module");
   }
-  
+
   // Call the function designed to print and return modified string
   PyObject *pFunc = PyObject_GetAttrString(pModule, (char*)"printStringFromPython");
   PyObject *pValue = Py_BuildValue("(z)", (char*)"blah-blah-blah");
@@ -47,20 +47,20 @@ int main(int argc , char** argv)
   const int numpy_size = 10;
   double numpy_array[numpy_size];
   npy_intp numpy_dims = numpy_size;
-  for (int ii=0; ii<numpy_size; ++ii)
+  for (int ii=0 ; ii<numpy_size ; ++ii)
   {
     numpy_array[ii] = (double)ii;
   }
-  
+
   PyObject *pArray = PyArray_SimpleNewFromData(1, &numpy_dims, NPY_DOUBLE, (void*)numpy_array);
-  PyObject* pFuncArgsA = PyTuple_New(1) ;
-  PyTuple_SetItem( pFuncArgsA , 0 , pArray ) ;
+  PyObject* pFuncArgsA = PyTuple_New(1);
+  PyTuple_SetItem( pFuncArgsA, 0, pArray );
   pFunc = PyObject_GetAttrString(pModule, (char*)"modifyNumpyArray");
   pResult = PyObject_CallObject(pFunc, pFuncArgsA);
 
   // Print modified values
   std::cout << "Modified Array:\n[";
-  for (int ii; ii<numpy_size; ++ii)
+  for (int ii ; ii<numpy_size ; ++ii)
   {
     std::cout << numpy_array[ii] << ", ";
   }
@@ -70,25 +70,25 @@ int main(int argc , char** argv)
   // On the fly, generate a function that will add two floats
   std::stringstream buf;
   buf << "def add( n1 , n2 ) :" << std::endl
-      << "    return n1+n2" << std::endl ;
-  PyObject* pCompiledFn = Py_CompileString( buf.str().c_str() , "" , Py_file_input ) ;
-  assert( pCompiledFn != NULL ) ;
-       
-  // Convert into a module       
-  PyObject* pModuleB = PyImport_ExecCodeModule( (char*)"test_mod_b" , pCompiledFn ) ;
-  PyObject* pAddFn = PyObject_GetAttrString( pModuleB , "add" ) ;
-  PyObject* pPosArgsB = PyTuple_New( 2 ) ;
-  PyObject* pVal1 = PyFloat_FromDouble( atof(argv[3]) ) ;
-  PyObject* pVal2 = PyFloat_FromDouble( atof(argv[4]) ) ;
-  PyTuple_SetItem(pPosArgsB , 0 , pVal1) ;
-  PyTuple_SetItem(pPosArgsB , 1 , pVal2) ;
+      << "    return n1+n2" << std::endl;
+  PyObject* pCompiledFn = Py_CompileString( buf.str().c_str(), "", Py_file_input );
+  assert( pCompiledFn != NULL );
+
+  // Convert into a module
+  PyObject* pModuleB = PyImport_ExecCodeModule( (char*)"test_mod_b", pCompiledFn );
+  PyObject* pAddFn = PyObject_GetAttrString( pModuleB, "add" );
+  PyObject* pPosArgsB = PyTuple_New( 2 );
+  PyObject* pVal1 = PyFloat_FromDouble( atof(argv[3]) );
+  PyObject* pVal2 = PyFloat_FromDouble( atof(argv[4]) );
+  PyTuple_SetItem(pPosArgsB, 0, pVal1);
+  PyTuple_SetItem(pPosArgsB, 1, pVal2);
 
   // Create a dict for folding keyword arguments
-  PyObject* pKywdArgs = PyDict_New() ;
-  PyObject* pResultB = PyObject_Call( pAddFn , pPosArgsB , pKywdArgs );
-  PyObject* pResultRepr = PyObject_Repr( pResultB ) ;
+  PyObject* pKywdArgs = PyDict_New();
+  PyObject* pResultB = PyObject_Call( pAddFn, pPosArgsB, pKywdArgs );
+  PyObject* pResultRepr = PyObject_Repr( pResultB );
   std::cout << "Python add result:" << std::endl;
-  std::cout << argv[3] << "+" << argv[4] << "=" << PyString_AsString(pResultRepr) << std::endl ;
+  std::cout << argv[3] << "+" << argv[4] << "=" << PyString_AsString(pResultRepr) << std::endl;
 
   // Clean up
   // Note: Tuples have ownership of their children, so no need to doulble decref
@@ -107,7 +107,7 @@ int main(int argc , char** argv)
   // Py_DecRef( pModule );
   // Py_DecRef( modPath );
   // Py_DecRef( sysPath );
- 
-  Py_Finalize() ;
+
+  Py_Finalize();
   std::cout << "Done!" << std::endl;
 }

@@ -10,27 +10,28 @@
 
 namespace FiniteElementUtilities
 {
-  void Integrate( const R2SymTensor& fieldvar,
-                  const R1Tensor* const dNdX,
-                  const realT& detJ,
-                  const realT& detF,
-                  const R2Tensor& Finv,
-                  const int numPoints,
-                  R1Tensor* const result)
+void Integrate( const R2SymTensor& fieldvar,
+                const R1Tensor* const dNdX,
+                const realT& detJ,
+                const realT& detF,
+                const R2Tensor& Finv,
+                const int numPoints,
+                R1Tensor* const result)
+{
+  const realT integrationFactor = detJ * detF;
+
+  R2Tensor P;
+  P.AijBkj( fieldvar,Finv);
+  P *= integrationFactor;
+
+  for( int a=0 ; a<numPoints ; ++a )    // loop through all shape functions in
+                                        // element
   {
-    const realT integrationFactor = detJ * detF;
-
-    R2Tensor P;
-    P.AijBkj( fieldvar,Finv);
-    P *= integrationFactor;
-
-    for( int a=0 ; a<numPoints ; ++a )  // loop through all shape functions in element
-    {
-      result[a].minusAijBj( P , dNdX[a] );
-    }
-
-
+    result[a].minusAijBj( P, dNdX[a] );
   }
+
+
+}
 
 //
 //  void Interp(const R1Tensor &globalCoord,

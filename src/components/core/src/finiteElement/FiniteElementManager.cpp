@@ -48,7 +48,7 @@ void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
     {
       ManagedGroup * basisFunctions = this->GetGroup(keys::basisFunctions);
 
-      for (xmlWrapper::xmlNode childNode=basisNode.first_child(); childNode; childNode=childNode.next_sibling())
+      for (xmlWrapper::xmlNode childNode=basisNode.first_child() ; childNode ; childNode=childNode.next_sibling())
       {
         string catalogName = childNode.name();
         string name = childNode.attribute("name").value();
@@ -65,7 +65,7 @@ void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
     {
       ManagedGroup * quadratureRules = this->GetGroup(keys::quadratureRules);
 
-      for (xmlWrapper::xmlNode childNode=quadratureNode.first_child(); childNode; childNode=childNode.next_sibling())
+      for (xmlWrapper::xmlNode childNode=quadratureNode.first_child() ; childNode ; childNode=childNode.next_sibling())
       {
         string catalogName = childNode.name();
         string name = childNode.attribute("name").value();
@@ -82,7 +82,7 @@ void FiniteElementManager::ReadXMLsub( xmlWrapper::xmlNode const & node )
     if( finiteElementNode != nullptr )
     {
 //      ManagedGroup * feSpaces = RegisterGroup(keys::FE_Space);
-      for (xmlWrapper::xmlNode childNode=finiteElementNode.first_child(); childNode; childNode=childNode.next_sibling())
+      for (xmlWrapper::xmlNode childNode=finiteElementNode.first_child() ; childNode ; childNode=childNode.next_sibling())
       {
         string catalogName = childNode.name();
         string name = childNode.attribute("name").value();

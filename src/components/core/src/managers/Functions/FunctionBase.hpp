@@ -32,7 +32,7 @@ public:
   virtual ~FunctionBase();
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
-  
+
   static string CatalogName() { return "FunctionBase"; }
   virtual void InitializeFunction(){}
 
@@ -91,14 +91,14 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
     {
       dataRepository::ViewWrapperBase const & vwb = *(group->getWrapperBase( varName ));
       std::type_index typeIndex = std::type_index(vwb.get_typeid());
-      rtTypes::ApplyTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
-      {
-        using varType = decltype(type);
-        dataRepository::ViewWrapper<varType> const & view = dynamic_cast< dataRepository::ViewWrapper<varType> const & >(vwb);
+      rtTypes::ApplyTypeLambda1( rtTypes::typeID(typeIndex), [&]( auto type ) -> void
+        {
+          using varType = decltype(type);
+          dataRepository::ViewWrapper<varType> const & view = dynamic_cast< dataRepository::ViewWrapper<varType> const & >(vwb);
 
-        input_ptrs[varIndex] = reinterpret_cast<double const*>(view.dataPtr());
-        varSize[varIndex] = sizeof(varType) / sizeof(double);
-      });
+          input_ptrs[varIndex] = reinterpret_cast<double const*>(view.dataPtr());
+          varSize[varIndex] = sizeof(varType) / sizeof(double);
+        });
     }
   }
 

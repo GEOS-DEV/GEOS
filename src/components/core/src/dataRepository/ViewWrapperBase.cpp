@@ -19,7 +19,7 @@ namespace dataRepository
 {
 
 ViewWrapperBase::ViewWrapperBase( std::string const & name,
-                                  ManagedGroup * const parent ) :
+                                  ManagedGroup * const parent ):
   m_name(name),
   m_parent(parent),
   m_sizedFromParent(1)
@@ -46,7 +46,7 @@ ViewWrapperBase::~ViewWrapperBase()
 {}
 
 
-ViewWrapperBase::ViewWrapperBase( ViewWrapperBase&& source ) :
+ViewWrapperBase::ViewWrapperBase( ViewWrapperBase&& source ):
   m_name( std::move(source.m_name) ),
   m_parent( source.m_parent),
   m_sizedFromParent( source.m_sizedFromParent)

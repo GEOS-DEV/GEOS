@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -64,16 +82,16 @@
 int term_flag = 0;
 extern "C"
 {
-  void sigproc(int s); //catch function
+void sigproc(int s);   //catch function
 }
 
 
 /// returns the amount of cpu time use for this process
-realT getcputime(void)  ;
+realT getcputime(void);
 
 #ifdef SRC_INTERNAL
 /// Coupling to other codes Comm
-extern MPI_Comm MPI_DOMAIN_COMM ;
+extern MPI_Comm MPI_DOMAIN_COMM;
 #endif
 
 #include "DataStructures/EncapsulatedObjects/EncapsulatedObjectBase.h"
@@ -88,20 +106,20 @@ int main( int argc, char* argv[] )
 {
 
   timeval tim;
-	gettimeofday(&tim, NULL);
-	realT t_start=tim.tv_sec+(tim.tv_usec/1000000.0);
-	realT t_initialize, t_run;
+  gettimeofday(&tim, NULL);
+  realT t_start=tim.tv_sec+(tim.tv_usec/1000000.0);
+  realT t_initialize, t_run;
 
-	signal(SIGINT, &sigproc);   //set handler for interrupt
-	signal(SIGTERM, &sigproc);   //set handler for interrupt
+  signal(SIGINT, &sigproc);   //set handler for interrupt
+  signal(SIGTERM, &sigproc);   //set handler for interrupt
 
 
-	int rank = 0, size = 1, returnValue = 0;
+  int rank = 0, size = 1, returnValue = 0;
 
 #if GPAC_MPI
-	MPI_Init(&argc,&argv);
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Init(&argc,&argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 #if SRC_INTERNAL
   MPI_DOMAIN_COMM=MPI_COMM_WORLD;
 #endif
@@ -114,9 +132,10 @@ int main( int argc, char* argv[] )
 
 #ifdef __APPLE__// && __MACH__
 //  _MM_SET_EXCEPTION_MASK(  _MM_EXCEPT_DIV_ZERO);
-//  _MM_SET_EXCEPTION_MASK(_MM_EXCEPT_INVALID | _MM_EXCEPT_DIV_ZERO | _MM_EXCEPT_OVERFLOW);
-  //  _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
-  //fesetenv(FE_ALL_EXCEPT);
+//  _MM_SET_EXCEPTION_MASK(_MM_EXCEPT_INVALID | _MM_EXCEPT_DIV_ZERO |
+// _MM_EXCEPT_OVERFLOW);
+//  _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
+//fesetenv(FE_ALL_EXCEPT);
 #endif
 
 #ifdef __INTEL_COMPILER
@@ -154,16 +173,17 @@ int main( int argc, char* argv[] )
       if (rank == 0)
       {
         printf(
-            "   RANK   SETUP TIME     RUN TIME   TOTAL TIME     CPU TIME  OUTPUT TIME    WAIT TIME       %%WAIT\n");
+          "   RANK   SETUP TIME     RUN TIME   TOTAL TIME     CPU TIME  OUTPUT TIME    WAIT TIME       %%WAIT\n");
         printf(
-            " ------ ------------ ------------ ------------ ------------ ------------ ------------ ------------\n");
+          " ------ ------------ ------------ ------------ ------------ ------------ ------------ ------------\n");
       }
 
       MPI_Barrier(MPI_COMM_WORLD);
       printf(" %6i %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f \n", rank,
              t_initialize - t_start, t_run - t_initialize, t_total, cputime, outputTime,
              t_total - cputime, (t_total - cputime) / cputime * 100);
-      //  printf( "Scaling Data: mpiSize, rank, runtime:  %12.3f %12.3f %12.3f \n", size, rank, t_run-t_initialize );
+      //  printf( "Scaling Data: mpiSize, rank, runtime:  %12.3f %12.3f %12.3f
+      // \n", size, rank, t_run-t_initialize );
 
       realT runtime = t_run - t_initialize - outputTime;
       realT maxruntime;

@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -55,7 +73,8 @@
  * @author Randolph Settgast
  * @tparam TYPE type of data that is contained.
  *
- * VectorT is a class to add some operators to std::vector. It has a std::vector as a member, and
+ * VectorT is a class to add some operators to std::vector. It has a std::vector
+ * as a member, and
  * provides some wrapper function as well.
  */
 template<class TYPE>
@@ -83,8 +102,8 @@ public:
 
   /// default destructor
   virtual ~VectorT(void);
-  
-  
+
+
 // ***** Memory Allocation ****************************************************
   /// wrapper for std::vector.resize()
   inline void resize(const int num_elem)    { data_vector.resize(num_elem);  }
@@ -129,8 +148,8 @@ public:
 
   /// divide equals operator for individual value of any type
   template<class rTYPE> VectorT& operator/=( const rTYPE& rhs );
-  
-  
+
+
 //***** Range Checking ********************************************************
 #if RANGE_CHECKING==1
   /// wrapper for std::vector.at()
@@ -148,21 +167,21 @@ public:
 //***** Access Pointers *******************************************************
   /// returns a TYPE* to the first element of the std::vector
   inline TYPE* Pointer(void)
-  { 
+  {
     TYPE* rval=0;
     if( this->data_vector.size() > 0 )
       rval = (&data_vector[0]);
-  return rval; 
-  }  
+    return rval;
+  }
 
   /// returns a const TYPE* to the first element of the std::vector
   inline const TYPE* Pointer(void) const
-  { 
+  {
     if( this->data_vector.size() > 0 )
       return (&data_vector[0]);
     else
       return 0;
-  }  
+  }
 
 };
 
@@ -178,23 +197,23 @@ public:
 
 template<class TYPE>
 VectorT<TYPE>::VectorT(void):
-data_vector()
+  data_vector()
 {}
 
 
 template<class TYPE>
 VectorT<TYPE>::VectorT(const int num_elem):
-data_vector(num_elem)
+  data_vector(num_elem)
 {}
 
 template<class TYPE>
 VectorT<TYPE>::VectorT( const std::string& name ):
-data_vector()
+  data_vector()
 {}
 
 template<class TYPE>
 VectorT<TYPE>::VectorT(const int num_elem, const std::string& name):
-data_vector(num_elem)
+  data_vector(num_elem)
 {}
 
 
@@ -206,7 +225,7 @@ VectorT<TYPE>::~VectorT(void)
 
 template<class TYPE>
 VectorT<TYPE>::VectorT( const VectorT& source ):
-data_vector()
+  data_vector()
 {
   operator=(source);
 }
@@ -223,8 +242,10 @@ data_vector()
  * @param[in] rhs VectorT to set *this equal to
  * @return reference to *this
  *
- * Templated operator=() to set the values contained in *this to those of rhs on an element
- * by element basis. If there is no valid cast from rTYPE to TYPE, then compilation should fail.
+ * Templated operator=() to set the values contained in *this to those of rhs on
+ * an element
+ * by element basis. If there is no valid cast from rTYPE to TYPE, then
+ * compilation should fail.
  */
 template<class TYPE>
 template<class rTYPE>
@@ -238,8 +259,8 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator=( const VectorT<rTYPE>& rhs )
       *(ptr++) = *(rhs_ptr++);
   }
 
-return (*this);
-} 
+  return (*this);
+}
 
 /**
  * @author Randolph Settgast
@@ -247,8 +268,10 @@ return (*this);
  * @param[in] rhs VectorT to set *this equal to
  * @return reference to *this
  *
- * Templated operator+=() to add the values contained in rhs to those of *this on an element
- * by element basis. If there is no valid cast from rTYPE to TYPE, then compilation should fail.
+ * Templated operator+=() to add the values contained in rhs to those of *this
+ * on an element
+ * by element basis. If there is no valid cast from rTYPE to TYPE, then
+ * compilation should fail.
  */
 template<class TYPE>
 template<class rTYPE>
@@ -262,8 +285,8 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator+=( const VectorT<rTYPE>& rhs )
       *(ptr++) += *(rhs_ptr++);
   }
   else
-    throw 1;//1;//eOutOfRange;
-return (*this);
+    throw 1; //1;//eOutOfRange;
+  return (*this);
 }
 
 
@@ -273,8 +296,10 @@ return (*this);
  * @param[in] rhs VectorT to set *this equal to
  * @return reference to *this
  *
- * Templated operator-=() to subtract the values contained in rhs from those of *this on an element
- * by element basis. If there is no valid cast from rTYPE to TYPE, then compilation should fail.
+ * Templated operator-=() to subtract the values contained in rhs from those of
+ **this on an element
+ * by element basis. If there is no valid cast from rTYPE to TYPE, then
+ * compilation should fail.
  */
 template<class TYPE>
 template<class rTYPE>
@@ -288,8 +313,8 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator-=( const VectorT<rTYPE>& rhs )
       *(ptr++) -= *(rhs_ptr++);
   }
   else
-    throw 1;//eOutOfRange;
-return (*this);
+    throw 1; //eOutOfRange;
+  return (*this);
 }
 
 /**
@@ -298,8 +323,10 @@ return (*this);
  * @param[in] rhs VectorT to set *this equal to
  * @return reference to *this
  *
- * Templated operator*=() to multiply the values contained in *this by those of rhs on an element
- * by element basis. If there is no valid cast from rTYPE to TYPE, then compilation should fail.
+ * Templated operator*=() to multiply the values contained in *this by those of
+ * rhs on an element
+ * by element basis. If there is no valid cast from rTYPE to TYPE, then
+ * compilation should fail.
  */
 template<class TYPE>
 template<class rTYPE>
@@ -313,8 +340,8 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator*=( const VectorT<rTYPE>& rhs )
       *(ptr++) *= *(rhs_ptr++);
   }
   else
-    throw 1;//eOutOfRange;
-return (*this);
+    throw 1; //eOutOfRange;
+  return (*this);
 }
 
 
@@ -324,8 +351,10 @@ return (*this);
  * @param[in] rhs VectorT to set *this equal to
  * @return reference to *this
  *
- * Templated operator/=() to divide the values contained in *this by those of rhs on an element
- * by element basis. If there is no valid cast from rTYPE to TYPE, then compilation should fail.
+ * Templated operator/=() to divide the values contained in *this by those of
+ * rhs on an element
+ * by element basis. If there is no valid cast from rTYPE to TYPE, then
+ * compilation should fail.
  */
 template<class TYPE>
 template<class rTYPE>
@@ -339,8 +368,8 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator/=( const VectorT<rTYPE>& rhs )
       *(ptr++) /= *(rhs_ptr++);
   }
   else
-    throw 1;//eOutOfRange;
-return (*this);
+    throw 1; //eOutOfRange;
+  return (*this);
 }
 
 
@@ -363,8 +392,8 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator=( const rTYPE& rhs )
     for( unsigned int a=0 ; a<data_vector.size() ; ++a )
       *(ptr++) = rhs;
   }
-return (*this);
-} 
+  return (*this);
+}
 
 /**
  * @author Randolph Settgast
@@ -381,11 +410,11 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator+=( const rTYPE& rhs )
 {
   if( data_vector.size() )
   {
-  TYPE* ptr = &data_vector[0];
-  for( unsigned int a=0 ; a<data_vector.size() ; ++a )
-    *(ptr++) += rhs;
+    TYPE* ptr = &data_vector[0];
+    for( unsigned int a=0 ; a<data_vector.size() ; ++a )
+      *(ptr++) += rhs;
   }
-return (*this);
+  return (*this);
 }
 
 /**
@@ -403,11 +432,11 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator-=( const rTYPE& rhs )
 {
   if( data_vector.size() )
   {
-  TYPE* ptr = &data_vector[0];
-  for( unsigned int a=0 ; a<data_vector.size() ; ++a )
-    *(ptr++) -= rhs;
+    TYPE* ptr = &data_vector[0];
+    for( unsigned int a=0 ; a<data_vector.size() ; ++a )
+      *(ptr++) -= rhs;
   }
-return (*this);
+  return (*this);
 }
 
 /**
@@ -425,11 +454,11 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator*=( const rTYPE& rhs )
 {
   if( data_vector.size() )
   {
-  TYPE* ptr = &data_vector[0];
-  for( unsigned int a=0 ; a<data_vector.size() ; ++a )
-    *(ptr++) *= rhs;
+    TYPE* ptr = &data_vector[0];
+    for( unsigned int a=0 ; a<data_vector.size() ; ++a )
+      *(ptr++) *= rhs;
   }
-return (*this);
+  return (*this);
 }
 
 /**
@@ -447,20 +476,13 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator/=( const rTYPE& rhs )
 {
   if( data_vector.size() )
   {
-  TYPE* ptr = &data_vector[0];
-  for( unsigned int a=0 ; a<data_vector.size() ; ++a )
-    *(ptr++) /= rhs;
+    TYPE* ptr = &data_vector[0];
+    for( unsigned int a=0 ; a<data_vector.size() ; ++a )
+      *(ptr++) /= rhs;
   }
-return (*this);
+  return (*this);
 }
 
 
 
-
-
-
-
-
-
 #endif
-

@@ -59,7 +59,8 @@ protected:
   ///upper 3D coordinates of the points that will be queried
   R1TensorT<2> m_upper;
 
-  ///For each cell at the finest level, holds, for each level, the kernels applicable to the cell
+  ///For each cell at the finest level, holds, for each level, the kernels
+  // applicable to the cell
   Array2dT<array<array<SurfaceKernel*> > > m_values;
 
   ///Kernels referenced in values

@@ -45,7 +45,8 @@ using indexType = localIndex;
 /**
  * @author Randolph R. Settgast
  *
- * class that encapsulates and manages a collection of DataObjects. Can be considered a "node" in a
+ * class that encapsulates and manages a collection of DataObjects. Can be
+ * considered a "node" in a
  * hierarchy of managers that represent physical groupings of data.
  *
  */
@@ -211,10 +212,10 @@ public:
     return group_cast<T const *>(m_subGroups[key]);
   }
 
-template< typename T = ManagedGroup >
+  template< typename T = ManagedGroup >
   T * GetGroup( subGroupMap::KeyIndex const & key )
   {
-  return group_cast<T *>(m_subGroups[key]);
+    return group_cast<T *>(m_subGroups[key]);
   }
 
   template< typename T = ManagedGroup >
@@ -240,11 +241,11 @@ template< typename T = ManagedGroup >
     for( auto& subGroupIter : m_subGroups )
     {
 #ifdef USE_DYNAMIC_CASTING
-       T * subGroup = dynamic_cast<T *>( subGroupIter.second.get() );
+      T * subGroup = dynamic_cast<T *>( subGroupIter.second.get() );
 #else
-       T * subGroup = static_cast<T *>( subGroupIter.second.get() );
+      T * subGroup = static_cast<T *>( subGroupIter.second.get() );
 #endif
-       lambda( subGroup );
+      lambda( subGroup );
     }
   }
 
@@ -254,11 +255,11 @@ template< typename T = ManagedGroup >
     for( auto const & subGroupIter : m_subGroups )
     {
 #ifdef USE_DYNAMIC_CASTING
-       T const * subGroup = dynamic_cast<T const *>( subGroupIter.second );
+      T const * subGroup = dynamic_cast<T const *>( subGroupIter.second );
 #else
-       T const * subGroup = static_cast<T const *>( subGroupIter.second );
+      T const * subGroup = static_cast<T const *>( subGroupIter.second );
 #endif
-       lambda( subGroup );
+      lambda( subGroup );
     }
   }
 
@@ -271,10 +272,10 @@ template< typename T = ManagedGroup >
   virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
 
 
-  template< typename T , typename TBASE=T >
+  template< typename T, typename TBASE=T >
   ViewWrapper<TBASE> * RegisterViewWrapper( std::string const & name, viewWrapperMap::KeyIndex::index_type * const rkey = nullptr );
 
-  template< typename T , typename TBASE=T >
+  template< typename T, typename TBASE=T >
   ViewWrapper<TBASE> * RegisterViewWrapper( ManagedGroup::viewWrapperMap::KeyIndex & viewKey );
 
 
@@ -427,9 +428,6 @@ template< typename T = ManagedGroup >
 
 
 
-
-
-
   template< typename T >
   view_rtype_const<T> getData( indexType const index ) const
   { return getWrapper<T>(index)->data(); }
@@ -469,8 +467,10 @@ template< typename T = ManagedGroup >
 //   * @note BREAKS const correctness for keyIndex
 //   */
 //  template< typename T >
-//  view_rtype_const<T> getData( viewWrapperMap::KeyIndex const & keyIndex ) const
-//  { return getWrapper<T>( const_cast<viewWrapperMap::KeyIndex & >(keyIndex) )->data(); }
+//  view_rtype_const<T> getData( viewWrapperMap::KeyIndex const & keyIndex )
+// const
+//  { return getWrapper<T>( const_cast<viewWrapperMap::KeyIndex & >(keyIndex)
+// )->data(); }
 //
 //  /**
 //   *
@@ -480,7 +480,8 @@ template< typename T = ManagedGroup >
 //   */
 //  template< typename T >
 //  view_rtype<T> getData( viewWrapperMap::KeyIndex const & keyIndex )
-//  { return getWrapper<T>( const_cast<viewWrapperMap::KeyIndex & >(keyIndex) )->data(); }
+//  { return getWrapper<T>( const_cast<viewWrapperMap::KeyIndex & >(keyIndex)
+// )->data(); }
 
 
   template< typename T >
@@ -536,7 +537,7 @@ template< typename T = ManagedGroup >
   axom::sidre::Group const * getSidreGroup() const  { return m_sidreGroup; }
 
   static axom::sidre::Group * setSidreGroup( string const& name,
-                                                       ManagedGroup * const parent );
+                                             ManagedGroup * const parent );
 #endif
 
   ManagedGroup * getParent()             { return m_parent; }
@@ -591,7 +592,7 @@ private:
 
   void loadSizedFromParent();
 #endif
-  
+
 
   ManagedGroup* m_parent = nullptr;
   viewWrapperMap m_wrappers;
@@ -653,15 +654,15 @@ template < typename T, typename TBASE >
 T * ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
 {
   #ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
+  return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
   #else
-    return static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
+  return static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
   #endif
 }
 
 
 
-template< typename T , typename TBASE >
+template< typename T, typename TBASE >
 ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name, ViewKey::index_type * const rkey )
 {
   m_wrappers.insert( name, std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ) );
@@ -677,7 +678,7 @@ ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name
   return rval;
 }
 
-template< typename T , typename TBASE >
+template< typename T, typename TBASE >
 ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( ViewKey & viewKey )
 {
   ViewKey::index_type index;

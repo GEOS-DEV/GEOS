@@ -11,10 +11,10 @@
 static FractalSurface fractalSurface;
 
 int GenerateFractalSurface(double loweru, double lowerv,
-			   double upperu, double upperv,
-			   double hurst, double hfct,
-			   double mean, double stdev,
-			   int nlevels, int n0, int n1)
+                           double upperu, double upperv,
+                           double hurst, double hfct,
+                           double mean, double stdev,
+                           int nlevels, int n0, int n1)
 {
   //u0, v0, u1, v1, 1.3, 1.2, mu, sig, 5, 5, 5
 
@@ -28,9 +28,9 @@ int GenerateFractalSurface(double loweru, double lowerv,
   upper[1] = upperv;
 
   fractalSurface.InitializeFractal(mean, stdev,
-				lower, upper,
-				hurst, nlevels,
-				n0, n1, hfct);
+                                   lower, upper,
+                                   hurst, nlevels,
+                                   n0, n1, hfct);
   return 0;
 }
 

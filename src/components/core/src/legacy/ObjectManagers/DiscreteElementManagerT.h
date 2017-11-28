@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -141,7 +159,7 @@ struct DiscreteElementContact
     siloFile.DBWriteWrapper("m_normal_z",m_normal[2]);
   }
 
-  void Serialize(std::map<std::string, array<real64>>& realFields,
+  void Serialize(std::map<std::string, array<real64> >& realFields,
                  std::map<std::string, array<R1Tensor> >& R1Fields) const
   {
     realFields["CDEM_Area"].push_back(m_area);
@@ -154,7 +172,7 @@ struct DiscreteElementContact
   }
 
   static void WriteSilo(SiloFile& siloFile,
-                        std::map<std::string, array<real64>>& realFields,
+                        std::map<std::string, array<real64> >& realFields,
                         std::map<std::string, array<R1Tensor> >& R1Fields,
                         const std::string& siloDirName,
                         const std::string& meshname,
@@ -168,10 +186,10 @@ struct DiscreteElementContact
     siloFile.MakeSubDirectory( subDirectory, rootDirectory );
     DBSetDir(siloFile.m_dbFilePtr, subDirectory.c_str());
 
-    for(std::map<std::string, array<real64>>::iterator it = realFields.begin(); it != realFields.end(); ++it)
+    for(std::map<std::string, array<real64> >::iterator it = realFields.begin() ; it != realFields.end() ; ++it)
       siloFile.WriteDataField<realT>(meshname.c_str(), it->first, it->second, centering, cycleNum, problemTime, rootDirectory, "none" );
 
-    for(std::map<std::string, array<R1Tensor> >::iterator it = R1Fields.begin(); it != R1Fields.end(); ++it)
+    for(std::map<std::string, array<R1Tensor> >::iterator it = R1Fields.begin() ; it != R1Fields.end() ; ++it)
       siloFile.WriteDataField<realT>(meshname.c_str(), it->first, it->second, centering, cycleNum, problemTime, rootDirectory, "none" );
 
     DBSetDir(siloFile.m_dbFilePtr, "..");
@@ -240,7 +258,6 @@ public:
 
   //the following needs to be written and read for restart
   std::map<localIndex, std::map<localIndex, DiscreteElementContact> > m_discreteElementToDiscreteElementContactsMap;
-
 
 
 
@@ -330,9 +347,11 @@ public:
 private:
 
   /**
-   * @brief Get the geometric properties of the tetrahedron described by the four points
+   * @brief Get the geometric properties of the tetrahedron described by the
+   * four points
    * @author Scott Johnson
-   * @param[in] x0 First point in global frame (about which rotational inertia is taken)
+   * @param[in] x0 First point in global frame (about which rotational inertia
+   * is taken)
    * @param[in] x1 Second point in global frame
    * @param[in] x2 Third point in global frame
    * @param[in] x3 Fourth point in global frame
@@ -346,7 +365,7 @@ private:
                               const R1Tensor& x2,
                               const R1Tensor& x3,
                               realT& volume,
-                              R2Tensor& momentOfInertia ,
+                              R2Tensor& momentOfInertia,
                               R1Tensor& centroid)
   {
     R1Tensor v1 = x1;
@@ -373,7 +392,8 @@ private:
    * @brief Helper function for
    * @author Scott Johnson
    * From David Eberly's "Geometric Tools"
-   * see http://www.geometrictools.com/Documentation/PolyhedralMassProperties.pdf
+   * see
+   * http://www.geometrictools.com/Documentation/PolyhedralMassProperties.pdf
    * @param[in] w0
    * @param[in] w1
    * @param[in] w2
@@ -385,8 +405,8 @@ private:
    * @param[out] g2
    */
   static void Subexpressions(const realT w0, const realT w1, const realT w2,
-                      realT& f1,realT& f2,realT& f3,
-                      realT& g0, realT& g1, realT& g2)
+                             realT& f1,realT& f2,realT& f3,
+                             realT& g0, realT& g1, realT& g2)
   {
     realT temp0 = w0 + w1;
     f1 = temp0 + w2;
@@ -403,31 +423,33 @@ private:
    * @brief Compute the moment of inertia of the polyhedron
    * @author Scott Johnson
    * From David Eberly's "Geometric Tools"
-   * see http://www.geometrictools.com/Documentation/PolyhedralMassProperties.pdf
+   * see
+   * http://www.geometrictools.com/Documentation/PolyhedralMassProperties.pdf
    * @param[in] p Points on the polyhedron
    * @param[in] tmax Number of triangular facets
-   * @param[in] index Indices of the nodes of the triangles in an ordered array of 3-element tuples
+   * @param[in] index Indices of the nodes of the triangles in an ordered array
+   * of 3-element tuples
    * @param[out] mass Mass of the polyhedron
    * @param[out] cm Centroid of the polyhedron
    * @param[out] inertia Moment of inertia of the polyhedron
    */
   static void CalculatePhysicalProperties(
-      const array<R1Tensor>& p,
-      const unsigned int tmax,
-      const lArray1d& index,
-      realT& mass,
-      R1Tensor& cm,
-      R2SymTensor& inertia)
+    const array<R1Tensor>& p,
+    const unsigned int tmax,
+    const lArray1d& index,
+    realT& mass,
+    R1Tensor& cm,
+    R2SymTensor& inertia)
   {
     const realT mult[10] = { 1./6,1./24,1./24,1./24,1./60,1./60,1./60,1./120,1./120,1./120};
     realT intg[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     // order: 1, x, y, z, x^2, y^2, z^2, xy, yz, zx
 
-    for (unsigned int t = 0; t < tmax; ++t)
+    for (unsigned int t = 0 ; t < tmax ; ++t)
     {
       //get the coordinates of the vertices
       R1Tensor x[3];
-      for(unsigned int ii = 0; ii < 3; ii++)
+      for(unsigned int ii = 0 ; ii < 3 ; ii++)
         x[ii] = p[index[3*t + ii]];
 
       //get the cross product of the triangular face vectors
@@ -443,7 +465,7 @@ private:
       // compute integral terms
       R1Tensor f[3];
       R1Tensor g[3];
-      for(unsigned int ii = 0; ii < 3; ii++)
+      for(unsigned int ii = 0 ; ii < 3 ; ii++)
         Subexpressions(x[0](ii), x[1](ii), x[2](ii), f[0](ii), f[1](ii), f[2](ii), g[0](ii), g[1](ii), g[2](ii));
 
       // update integrals
@@ -461,12 +483,12 @@ private:
       intg[8] += d(1) * (x[0](2) * g[0](1) + x[1](2) * g[1](1) + x[2](2) * g[2](1));
       intg[9] += d(2) * (x[0](0) * g[0](2) + x[1](0) * g[1](2) + x[2](0) * g[2](2));
     }
-    for (unsigned int i = 0; i < 10; i++)
+    for (unsigned int i = 0 ; i < 10 ; i++)
       intg[i] *= mult[i];
     mass = intg[0];
 
     // center of mass
-    for (unsigned int i = 0; i < 3; i++)
+    for (unsigned int i = 0 ; i < 3 ; i++)
       cm(i) = intg[i+1] / mass;
 
     // inertia tensor relative to center of mass
@@ -481,16 +503,12 @@ private:
 
 
 
-
-
-
-
-
 /**
  * @brief Compute various integrations over projection of face
  * @author Scott Johnson
  *
- * Adapted from volInt.c at http://www.cs.berkeley.edu/~jfc/mirtich/code/volumeIntegration.tar
+ * Adapted from volInt.c at
+ * http://www.cs.berkeley.edu/~jfc/mirtich/code/volumeIntegration.tar
  * Disclaimer with volInt.c:
  *
  *  This code computes volume integrals needed for
@@ -512,7 +530,8 @@ private:
  *
  * @param[in] p Points on the polyhedron
  * @param[in] tmax Number of triangular facets
- * @param[in] index Indices of the nodes of the triangles in an ordered array of 3-element tuples
+ * @param[in] index Indices of the nodes of the triangles in an ordered array of
+ * 3-element tuples
  * @param[in] faceIndex Index of the triangular facet
  * @param[in] A Alpha
  * @param[in] B Beta
@@ -529,7 +548,7 @@ private:
  * @param[out] Pbbb Projection integral
  */
 /*
-static void ComputeProjectionIntegrals(const array<R1Tensor>& p,
+   static void ComputeProjectionIntegrals(const array<R1Tensor>& p,
                                     const unsigned int tmax,
                                     const lArray1d& index,
                                     const unsigned int faceIndex,
@@ -546,19 +565,19 @@ static void ComputeProjectionIntegrals(const array<R1Tensor>& p,
                                     realT& Paab,
                                     realT& Pabb,
                                     realT& Pbbb)
-{
-  realT a0, a1, da;
-  realT b0, b1, db;
-  realT a0_2, a0_3, a0_4, b0_2, b0_3, b0_4;
-  realT a1_2, a1_3, b1_2, b1_3;
-  realT C1, Ca, Caa, Caaa, Cb, Cbb, Cbbb;
-  realT Cab, Kab, Caab, Kaab, Cabb, Kabb;
+   {
+   realT a0, a1, da;
+   realT b0, b1, db;
+   realT a0_2, a0_3, a0_4, b0_2, b0_3, b0_4;
+   realT a1_2, a1_3, b1_2, b1_3;
+   realT C1, Ca, Caa, Caaa, Cb, Cbb, Cbbb;
+   realT Cab, Kab, Caab, Kaab, Cabb, Kabb;
 
-  P1 = Pa = Pb = Paa = Pab = Pbb = Paaa = Paab = Pabb = Pbbb = 0.0;
+   P1 = Pa = Pb = Paa = Pab = Pbb = Paaa = Paab = Pabb = Pbbb = 0.0;
 
-  //note: here we assume TRIANGULAR ELEMENTS
-  for (int i = 0; i < 3; i++)
-  {
+   //note: here we assume TRIANGULAR ELEMENTS
+   for (int i = 0; i < 3; i++)
+   {
     a0 = p[index[3*faceIndex+i]](A);
     b0 = p[index[3*faceIndex+i]](B);
 
@@ -602,25 +621,26 @@ static void ComputeProjectionIntegrals(const array<R1Tensor>& p,
     Pab += db * (b1 * Cab + b0 * Kab);
     Paab += db * (b1 * Caab + b0 * Kaab);
     Pabb += da * (a1 * Cabb + a0 * Kabb);
-  }
+   }
 
-  P1 /= 2.0;
-  Pa /= 6.0;
-  Paa /= 12.0;
-  Paaa /= 20.0;
-  Pb /= -6.0;
-  Pbb /= -12.0;
-  Pbbb /= -20.0;
-  Pab /= 24.0;
-  Paab /= 60.0;
-  Pabb /= -60.0;
-};
-*/
+   P1 /= 2.0;
+   Pa /= 6.0;
+   Paa /= 12.0;
+   Paaa /= 20.0;
+   Pb /= -6.0;
+   Pbb /= -12.0;
+   Pbbb /= -20.0;
+   Pab /= 24.0;
+   Paab /= 60.0;
+   Pabb /= -60.0;
+   };
+ */
 /**
  * @brief Compute various integrations over projection of face
  * @author Scott Johnson
  *
- * Adapted from volInt.c at http://www.cs.berkeley.edu/~jfc/mirtich/code/volumeIntegration.tar
+ * Adapted from volInt.c at
+ * http://www.cs.berkeley.edu/~jfc/mirtich/code/volumeIntegration.tar
  * Disclaimer with volInt.c:
  *
  *  This code computes volume integrals needed for
@@ -642,7 +662,8 @@ static void ComputeProjectionIntegrals(const array<R1Tensor>& p,
  *
  * @param[in] p Points on the polyhedron
  * @param[in] tmax Number of triangular facets
- * @param[in] index Indices of the nodes of the triangles in an ordered array of 3-element tuples
+ * @param[in] index Indices of the nodes of the triangles in an ordered array of
+ * 3-element tuples
  * @param[in] faceIndex Index of the triangular facet
  * @param[in] A Alpha
  * @param[in] B Beta
@@ -663,7 +684,7 @@ static void ComputeProjectionIntegrals(const array<R1Tensor>& p,
  * @param[out] Fcca Face integral
  */
 /*
-static void ComputeFaceIntegrals(const array<R1Tensor>& p,
+   static void ComputeFaceIntegrals(const array<R1Tensor>& p,
                           const unsigned int tmax,
                           const lArray1d& index,
                           const unsigned int faceIndex,
@@ -684,48 +705,49 @@ static void ComputeFaceIntegrals(const array<R1Tensor>& p,
                           realT& Faab,
                           realT& Fbbc,
                           realT& Fcca)
-{
-  realT k1, k2, k3, k4;
-  realT P1, Pa, Pb, Paa, Pab, Pbb, Paaa, Paab, Pabb, Pbbb;
+   {
+   realT k1, k2, k3, k4;
+   realT P1, Pa, Pb, Paa, Pab, Pbb, Paaa, Paab, Pabb, Pbbb;
 
-  ComputeProjectionIntegrals(p, tmax, index, faceIndex,
+   ComputeProjectionIntegrals(p, tmax, index, faceIndex,
                              A, B, C,
                              P1, Pa, Pb,
                              Paa, Pab, Pbb,
                              Paaa, Paab, Pabb, Pbbb);
 
-  k1 = 1 / n(C);
-  k2 = k1 * k1;
-  k3 = k2 * k1;
-  k4 = k3 * k1;
+   k1 = 1 / n(C);
+   k2 = k1 * k1;
+   k3 = k2 * k1;
+   k4 = k3 * k1;
 
-  Fa = k1 * Pa;
-  Fb = k1 * Pb;
-  Fc = -k2 * (n(A)*Pa + n(B)*Pb + w*P1);
+   Fa = k1 * Pa;
+   Fb = k1 * Pb;
+   Fc = -k2 * (n(A)*Pa + n(B)*Pb + w*P1);
 
-  Faa = k1 * Paa;
-  Fbb = k1 * Pbb;
-  Fcc = k3 * ((n(A)*n(A))*Paa + 2*n(A)*n(B)*Pab + (n(B)*n(B))*Pbb
-      + w*(2*(n(A)*Pa + n(B)*Pb) + w*P1));
+   Faa = k1 * Paa;
+   Fbb = k1 * Pbb;
+   Fcc = k3 * ((n(A)*n(A))*Paa + 2*n(A)*n(B)*Pab + (n(B)*n(B))*Pbb
+ + w*(2*(n(A)*Pa + n(B)*Pb) + w*P1));
 
-  Faaa = k1 * Paaa;
-  Fbbb = k1 * Pbbb;
-  Fccc = -k4 * ((n(A)*n(A)*n(A))*Paaa + 3*(n(A)*n(A))*n(B)*Paab
-      + 3*n(A)*(n(B)*n(B))*Pabb + (n(B)*n(B)*n(B))*Pbbb
-      + 3*w*((n(A)*n(A))*Paa + 2*n(A)*n(B)*Pab + (n(B)*n(B))*Pbb)
-      + w*w*(3*(n(A)*Pa + n(B)*Pb) + w*P1));
+   Faaa = k1 * Paaa;
+   Fbbb = k1 * Pbbb;
+   Fccc = -k4 * ((n(A)*n(A)*n(A))*Paaa + 3*(n(A)*n(A))*n(B)*Paab
+ + 3*n(A)*(n(B)*n(B))*Pabb + (n(B)*n(B)*n(B))*Pbbb
+ + 3*w*((n(A)*n(A))*Paa + 2*n(A)*n(B)*Pab + (n(B)*n(B))*Pbb)
+ + w*w*(3*(n(A)*Pa + n(B)*Pb) + w*P1));
 
-  Faab = k1 * Paab;
-  Fbbc = -k2 * (n(A)*Pabb + n(B)*Pbbb + w*Pbb);
-  Fcca = k3 * ((n(A)*n(A))*Paaa + 2*n(A)*n(B)*Paab + (n(B)*n(B))*Pabb
-      + w*(2*(n(A)*Paa + n(B)*Pab) + w*Pa));
-};
-*/
+   Faab = k1 * Paab;
+   Fbbc = -k2 * (n(A)*Pabb + n(B)*Pbbb + w*Pbb);
+   Fcca = k3 * ((n(A)*n(A))*Paaa + 2*n(A)*n(B)*Paab + (n(B)*n(B))*Pabb
+ + w*(2*(n(A)*Paa + n(B)*Pab) + w*Pa));
+   };
+ */
 /**
  * @brief Compute various integrations over projection of face
  * @author Scott Johnson
  *
- * Adapted from volInt.c at http://www.cs.berkeley.edu/~jfc/mirtich/code/volumeIntegration.tar
+ * Adapted from volInt.c at
+ * http://www.cs.berkeley.edu/~jfc/mirtich/code/volumeIntegration.tar
  * Disclaimer with volInt.c:
  *
  *  This code computes volume integrals needed for
@@ -747,21 +769,22 @@ static void ComputeFaceIntegrals(const array<R1Tensor>& p,
  *
  * @param[in] p Points on the polyhedron
  * @param[in] tmax Number of triangular facets
- * @param[in] index Indices of the nodes of the triangles in an ordered array of 3-element tuples
+ * @param[in] index Indices of the nodes of the triangles in an ordered array of
+ * 3-element tuples
  * @param[out] T0 Volume integral
  * @param[out] T Volume integral
  *//*
-static void ComputeVolumeIntegrals( const array<R1Tensor>& p,
+   static void ComputeVolumeIntegrals( const array<R1Tensor>& p,
                              const unsigned int tmax,
                              const lArray1d& index,
                              realT& T0,
                              R2Tensor& T)
-{
-  T0  = 0;
-  T = 0.;
+   {
+   T0  = 0;
+   T = 0.;
 
-  for (unsigned int i = 0; i < tmax; i++)
-  {
+   for (unsigned int i = 0; i < tmax; i++)
+   {
     // compute face normal and offset w from first 3 vertices
     R1Tensor n;
     {
@@ -773,11 +796,12 @@ static void ComputeVolumeIntegrals( const array<R1Tensor>& p,
       n.Normalize();
     }
 
-//    //display
-//    std::cout << "FACE " << i << " of " << tmax << "\n";
-//    for(int j = 0; j < 3; j++)
-//      std::cout << "  v" << j << ": " << p[index[3*i+j]](0) << " " << p[index[3*i+j]](1) << " " << p[index[3*i+j]](2) << "\n";
-//    std::cout << "  n: " << n(0) << " " << n(1) << " " << n(2) << "\n";
+   //    //display
+   //    std::cout << "FACE " << i << " of " << tmax << "\n";
+   //    for(int j = 0; j < 3; j++)
+   //      std::cout << "  v" << j << ": " << p[index[3*i+j]](0) << " " <<
+ * p[index[3*i+j]](1) << " " << p[index[3*i+j]](2) << "\n";
+   //    std::cout << "  n: " << n(0) << " " << n(1) << " " << n(2) << "\n";
 
     //get the component of v0 in the opposite normal direction
     realT w = -1. * Dot(n, p[index[3*i]]);
@@ -813,64 +837,66 @@ static void ComputeVolumeIntegrals( const array<R1Tensor>& p,
     T(2,A) += n(A) * Faab;
     T(2,B) += n(B) * Fbbc;
     T(2,C) += n(C) * Fcca;
-  }
+   }
 
-  T(0,0) /= 2;
-  T(0,1) /= 2;
-  T(0,2) /= 2;
-  T(1,0) /= 3;
-  T(1,1) /= 3;
-  T(1,2) /= 3;
-  T(2,0) /= 2;
-  T(2,1) /= 2;
-  T(2,2) /= 2;
-};
-*/
+   T(0,0) /= 2;
+   T(0,1) /= 2;
+   T(0,2) /= 2;
+   T(1,0) /= 3;
+   T(1,1) /= 3;
+   T(1,2) /= 3;
+   T(2,0) /= 2;
+   T(2,1) /= 2;
+   T(2,2) /= 2;
+   };
+ */
 /**
  * @brief Compute the moment of inertia of the polyhedron
  * @author Scott Johnson
- * Adapted from Mirtrich's volInt.c at http://www.cs.berkeley.edu/~jfc/mirtich/code/volumeIntegration.tar
+ * Adapted from Mirtrich's volInt.c at
+ * http://www.cs.berkeley.edu/~jfc/mirtich/code/volumeIntegration.tar
  * @param[in] p Points on the polyhedron
  * @param[in] tmax Number of triangular facets
- * @param[in] index Indices of the nodes of the triangles in an ordered array of 3-element tuples
+ * @param[in] index Indices of the nodes of the triangles in an ordered array of
+ * 3-element tuples
  * @param[out] mass Mass of the polyhedron
  * @param[out] cm Centroid of the polyhedron
  * @param[out] inertia Moment of inertia of the polyhedron
  */
 /*
-static void CalculatePhysicalProperties2(
+   static void CalculatePhysicalProperties2(
     const array<R1Tensor>& p,
     const unsigned int tmax,
     const lArray1d& index,
     realT& mass,
     R1Tensor& cm,
     R2SymTensor& inertia)
-{
-  realT density = 1.;
+   {
+   realT density = 1.;
 
-  R2Tensor T;
-  ComputeVolumeIntegrals(p, tmax, index, mass, T);
+   R2Tensor T;
+   ComputeVolumeIntegrals(p, tmax, index, mass, T);
 
-  // compute center of mass
-  for(int i = 0; i < 3; i++)
+   // compute center of mass
+   for(int i = 0; i < 3; i++)
     cm(i) = T(0,i) / mass;
-  mass *= density;
+   mass *= density;
 
-  // compute inertia tensor
-  inertia(0,0) = density * (T(1,1) + T(1,2));
-  inertia(1,1) = density * (T(1,2) + T(1,0));
-  inertia(2,2) = density * (T(1,0) + T(1,1));
-  inertia(0,1) = inertia(1,0) = - density * T(2,0);
-  inertia(1,2) = inertia(2,1) = - density * T(2,1);
-  inertia(2,0) = inertia(0,2) = - density * T(2,2);
+   // compute inertia tensor
+   inertia(0,0) = density * (T(1,1) + T(1,2));
+   inertia(1,1) = density * (T(1,2) + T(1,0));
+   inertia(2,2) = density * (T(1,0) + T(1,1));
+   inertia(0,1) = inertia(1,0) = - density * T(2,0);
+   inertia(1,2) = inertia(2,1) = - density * T(2,1);
+   inertia(2,0) = inertia(0,2) = - density * T(2,2);
 
-  // translate inertia tensor to center of mass
-  inertia(0,0) -= mass * (cm(1)*cm(1) + cm(2)*cm(2));
-  inertia(1,1) -= mass * (cm(2)*cm(2) + cm(0)*cm(0));
-  inertia(2,2) -= mass * (cm(0)*cm(0) + cm(1)*cm(1));
-  inertia(0,1) = inertia(1,0) += mass * cm(0) * cm(1);
-  inertia(1,2) = inertia(2,1) += mass * cm(1) * cm(2);
-  inertia(2,0) = inertia(0,2) += mass * cm(2) * cm(0);
-};
-*/
+   // translate inertia tensor to center of mass
+   inertia(0,0) -= mass * (cm(1)*cm(1) + cm(2)*cm(2));
+   inertia(1,1) -= mass * (cm(2)*cm(2) + cm(0)*cm(0));
+   inertia(2,2) -= mass * (cm(0)*cm(0) + cm(1)*cm(1));
+   inertia(0,1) = inertia(1,0) += mass * cm(0) * cm(1);
+   inertia(1,2) = inertia(2,1) += mass * cm(1) * cm(2);
+   inertia(2,0) = inertia(0,2) += mass * cm(2) * cm(0);
+   };
+ */
 #endif /* DISCRETELEMENTMANAGERT_H_ */

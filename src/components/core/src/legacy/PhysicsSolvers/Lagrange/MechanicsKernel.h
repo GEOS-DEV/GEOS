@@ -31,12 +31,17 @@ public:
   virtual ~MechanicsKernel();
 
   /*
-  void ElementStiffnessMatrix_SmallStrainLinearElastic( const MaterialBaseParameterDataT& matParams,
-                                                        const FiniteElement<3>& fe,
-                                                        const Array2dT<R1Tensor>& dNdX,
+     void ElementStiffnessMatrix_SmallStrainLinearElastic( const
+        MaterialBaseParameterDataT& matParams,
+                                                        const FiniteElement<3>&
+                                                           fe,
+                                                        const
+                                                           Array2dT<R1Tensor>&
+                                                           dNdX,
                                                         const realT* const detJ,
-                                                        Epetra_SerialDenseMatrix& element_matrix );
-*/
+                                                        Epetra_SerialDenseMatrix&
+                                                           element_matrix );
+   */
 };
 
 #endif /* MECHANICSKERNEL_H_ */

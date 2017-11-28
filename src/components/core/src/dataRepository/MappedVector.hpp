@@ -15,10 +15,14 @@ namespace geosx
 {
 /**
  * @class MappedVector
- * This class defines a stl-like container that stores values in an stl vector, and has a map lookup table to
- * access the values by a key. It combines the random access performance of a vector when the index is known,
- * the flexibility of a mapped key lookup O(n) if only the key is known. In addition, a keyIndex can be used for lookup,
- * which will give similar performance to an index lookup after the first use of a keyIndex.
+ * This class defines a stl-like container that stores values in an stl vector,
+ * and has a map lookup table to
+ * access the values by a key. It combines the random access performance of a
+ * vector when the index is known,
+ * the flexibility of a mapped key lookup O(n) if only the key is known. In
+ * addition, a keyIndex can be used for lookup,
+ * which will give similar performance to an index lookup after the first use of
+ * a keyIndex.
  */
 template< typename T,
           typename T_PTR=T*,
@@ -28,13 +32,13 @@ template< typename T,
 class MappedVector
 {
 public:
-  static_assert( std::is_same< T_PTR , T * >::value || std::is_same< T_PTR , std::unique_ptr<T> >::value,
+  static_assert( std::is_same< T_PTR, T * >::value || std::is_same< T_PTR, std::unique_ptr<T> >::value,
                  "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
 
-  static_assert( ( std::is_same< T_PTR , std::unique_ptr<T> >::value && OWNS_DATA ) || std::is_same< T_PTR , T * >::value,
+  static_assert( ( std::is_same< T_PTR, std::unique_ptr<T> >::value && OWNS_DATA ) || std::is_same< T_PTR, T * >::value,
                  "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
 
-  using key_type      = KEY_TYPE ;
+  using key_type      = KEY_TYPE;
   using mapped_type   = T_PTR;
 
   using LookupMapType          = std::unordered_map<KEY_TYPE, INDEX_TYPE >;
@@ -67,11 +71,10 @@ public:
 
 
 
-  MappedVector( MappedVector const & source ) = default ;
+  MappedVector( MappedVector const & source ) = default;
   MappedVector & operator=( MappedVector const & source ) = default;
   MappedVector( MappedVector && source ) = default;
   MappedVector & operator=( MappedVector && source ) = default;
-
 
 
 
@@ -87,7 +90,8 @@ public:
    */
   inline T const * operator[]( INDEX_TYPE index ) const
   {
-    return ( index>KeyIndex::invalid_index && index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>(&(*(m_values[index].second))) : nullptr ;
+    return ( index>KeyIndex::invalid_index &&
+             index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>(&(*(m_values[index].second))) : nullptr;
   }
 
   /**
@@ -163,12 +167,14 @@ public:
 //
 //    if( index==KeyIndex::invalid_index )
 //    {
-//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ): invalid key index passed as const into accessor function\n");
+//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
+// invalid key index passed as const into accessor function\n");
 //    }
 //#if RANGE_CHECKING==1
 //    else if (m_values[index].first!=keyIndex.Key() )
 //    {
-//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ): inconsistent key passed as const into accessor function\n")
+//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
+// inconsistent key passed as const into accessor function\n")
 //    }
 //#endif
 //
@@ -267,14 +273,16 @@ public:
 
   /**
    * @brief  Remove element at given index
-   * @tparam dummy parameter to allow use of enable_if for multiple definitions based on type.
+   * @tparam dummy parameter to allow use of enable_if for multiple definitions
+   * based on type.
    * @param  index  index of element to remove.
    * @return  void
    *
-   *  This function will call delete on the pointer at given index and set it to nullptr.
+   *  This function will call delete on the pointer at given index and set it to
+   * nullptr.
    */
   template< typename U = T_PTR >
-  typename std::enable_if< std::is_same< U , T * >::value, void >::type
+  typename std::enable_if< std::is_same< U, T * >::value, void >::type
   erase( INDEX_TYPE index )
   {
     if( OWNS_DATA )
@@ -288,14 +296,15 @@ public:
 
   /**
    * @brief  Remove element at given index
-   * @tparam dummy parameter to allow use of enable_if for multiple definitions based on type.
+   * @tparam dummy parameter to allow use of enable_if for multiple definitions
+   * based on type.
    * @param  index  index of element to remove.
    * @return  void
    *
    *  This function will the pointer at given index and set it to nullptr.
    */
   template< typename U = T_PTR >
-  typename std::enable_if< std::is_same< T_PTR , std::unique_ptr<T> >::value, void >::type
+  typename std::enable_if< std::is_same< T_PTR, std::unique_ptr<T> >::value, void >::type
   erase( INDEX_TYPE index )
   {
     m_values[index].second = nullptr;
@@ -377,7 +386,7 @@ private:
 };
 
 template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE, bool OWNS_DATA >
-T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const & keyName , T_PTR source, bool overwrite )
+T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const & keyName, T_PTR source, bool overwrite )
 {
   typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
 
@@ -420,7 +429,7 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const 
     }
   }
 
-return &(*(m_values[index].second));
+  return &(*(m_values[index].second));
 }
 }
 

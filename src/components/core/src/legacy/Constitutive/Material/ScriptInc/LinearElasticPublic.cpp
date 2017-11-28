@@ -2,7 +2,7 @@
 void LinearElastic::InitializeStates(const localIndex index)
 {
 
-  for (localIndex a = 0; a < m_stateData.Dimension(1); ++a)
+  for (localIndex a = 0 ; a < m_stateData.Dimension(1) ; ++a)
   {
     const localIndex paramIndex = m_parameterData.size() > 1 ? index : 0;
 
@@ -68,7 +68,8 @@ LinearElastic::StrainDrivenUpdateMember(const localIndex index0,
   const realT trDdt = Ddt.Trace();
 
   realT StressPowerIncrement = 0.5 * (Dot(devStress, Ddt) + pressure * trDdt) * volume_n;
-  //  realT strainEnergyIncrement = - 0.5 * ( devStress.Inner() / (2*G) + pow(pressure,2)/K ) * volume_n;
+  //  realT strainEnergyIncrement = - 0.5 * ( devStress.Inner() / (2*G) +
+  // pow(pressure,2)/K ) * volume_n;
 
   pressure += trDdt * K;
 
@@ -81,10 +82,13 @@ LinearElastic::StrainDrivenUpdateMember(const localIndex index0,
   }
 
   StressPowerIncrement += 0.5 * (Dot(devStress, Ddt) + pressure * trDdt) * volume_np1;
-  //  strainEnergyIncrement += 0.5 * ( devStress.Inner() / (2*G) + pow(pressure,2)/K ) * volume_np1;
+  //  strainEnergyIncrement += 0.5 * ( devStress.Inner() / (2*G) +
+  // pow(pressure,2)/K ) * volume_np1;
 
-  matState.ElasticStrainEnergy += StressPowerIncrement; //* 0.5 * ( volume_n + volume_np1);
-  matState.StressPower += StressPowerIncrement; //* 0.5 * ( volume_n + volume_np1 );
+  matState.ElasticStrainEnergy += StressPowerIncrement; //* 0.5 * ( volume_n +
+                                                        // volume_np1);
+  matState.StressPower += StressPowerIncrement; //* 0.5 * ( volume_n +
+                                                // volume_np1 );
 
   matState.RotateState(Rot);
   return;

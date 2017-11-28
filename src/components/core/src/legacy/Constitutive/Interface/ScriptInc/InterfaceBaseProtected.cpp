@@ -1,22 +1,21 @@
 //FUNCTION_BEGIN_PARSE
 virtual_realT InterfaceBase::ShearStrength(const InterfaceBaseParameterData& matParams,
-                                               InterfaceBaseStateData& matState) const
+                                           InterfaceBaseStateData& matState) const
 {
   return matState.stress * matParams.mu0;
 }
 
 //FUNCTION_BEGIN_PARSE
 virtual_void InterfaceBase::UpdateFriction(const InterfaceBaseParameterData&,
-                                               InterfaceBaseStateData&) const
-{
-}
+                                           InterfaceBaseStateData&) const
+{}
 
 //FUNCTION_BEGIN_PARSE
 virtual_realT
 InterfaceBase::NormalStiffness(const InterfaceBaseParameterData&,
-                                   InterfaceBaseStateData&,
-                                   const realT ,
-                                   const bool ) const
+                               InterfaceBaseStateData&,
+                               const realT,
+                               const bool ) const
 {
   return 0.0;
 }
@@ -27,7 +26,8 @@ InterfaceBase::ThresholdToFailureSurface(const InterfaceBaseParameterData& matPa
                                          InterfaceBaseStateData& matState,
                                          const realT dxs)
 {
-  //determine whether strength exceeded and return to failure surface if necessary
+  //determine whether strength exceeded and return to failure surface if
+  // necessary
   const realT strength = ShearStrength( matParams, matState);
   if(strength < fabs(matState.stressShear))
   {

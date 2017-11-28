@@ -15,45 +15,47 @@
 namespace LagrangeHelperFunctions
 {
 
-  void LinearPointUpdatePart1( ObjectDataStructureBaseT& objectManager,
-                               const realT& time,
-                               const realT& dt,
-                               const bool clearForces = true);
+void LinearPointUpdatePart1( ObjectDataStructureBaseT& objectManager,
+                             const realT& time,
+                             const realT& dt,
+                             const bool clearForces = true);
 
-  void LinearPointUpdatePart2( ObjectDataStructureBaseT& objectManager,
-                               const realT& time,
-                               const realT& dt,
-                               const R1Tensor& gravity,
-                               const realT& damping = 0.0,
-                               const realT& stiffDamping = 0.0 );
+void LinearPointUpdatePart2( ObjectDataStructureBaseT& objectManager,
+                             const realT& time,
+                             const realT& dt,
+                             const R1Tensor& gravity,
+                             const realT& damping = 0.0,
+                             const realT& stiffDamping = 0.0 );
 
-//  void RotationalPointUpdatePart1(DiscreteElementManagerBaseT& discreteElementManager,
+//  void RotationalPointUpdatePart1(DiscreteElementManagerBaseT&
+// discreteElementManager,
 //                                  const realT& time, const realT& dt);
 //
-//  void RotationalPointUpdatePart1b(DiscreteElementManagerT& discreteElementManager);
+//  void RotationalPointUpdatePart1b(DiscreteElementManagerT&
+// discreteElementManager);
 
 
-  void RotationalPointUpdatePart2(ObjectDataStructureBaseT& objectManager,
-                                  const realT& time, const realT& dt);
+void RotationalPointUpdatePart2(ObjectDataStructureBaseT& objectManager,
+                                const realT& time, const realT& dt);
 
-  realT CalculateMaxStableExplicitTimestep( const realT& density,
-                                            const realT& stiffness,
-                                            const realT& BB );
+realT CalculateMaxStableExplicitTimestep( const realT& density,
+                                          const realT& stiffness,
+                                          const realT& BB );
 
-  inline realT BulkQ( const realT& rho,
-                      const realT& soundSpeed,
-                      const realT& qLinear,
-                      const realT& qQuadratic,
-                      const realT& trD,
-                      const realT& L )
+inline realT BulkQ( const realT& rho,
+                    const realT& soundSpeed,
+                    const realT& qLinear,
+                    const realT& qQuadratic,
+                    const realT& trD,
+                    const realT& L )
+{
+  realT Q = 0;
+  if( trD < 0.0 )
   {
-    realT Q = 0;
-    if( trD < 0.0 )
-    {
-      Q = rho * ( soundSpeed * qLinear + qQuadratic  * ( trD * L ) )  * ( trD * L );
-    }
-    return Q;
+    Q = rho * ( soundSpeed * qLinear + qQuadratic  * ( trD * L ) )  * ( trD * L );
   }
+  return Q;
+}
 
 }
 

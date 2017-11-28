@@ -18,9 +18,9 @@ public:
   Fractunator();
   virtual ~Fractunator();
 
-  void Initialize( const NodeManager& nodeManager ,
-                   const EdgeManagerT& edgeManager ,
-                   const FaceManagerT& faceManager ,
+  void Initialize( const NodeManager& nodeManager,
+                   const EdgeManagerT& edgeManager,
+                   const FaceManagerT& faceManager,
                    const ElementManagerT& elementManager );
 
 
@@ -68,14 +68,14 @@ private:
                         const std::map<localIndex,int>& faceLocations,
                         const std::map< std::pair< ElementRegionT*, localIndex >, int>& elemLocations );
 
-bool SetLocations( const int side,
-                   const lSet& separationPathFaces,
-                   const FaceManagerT& faceManager,
-                   const std::set< std::pair<ElementRegionT*,localIndex> >& nodesToElements,
-                   std::map< localIndex, std::pair<localIndex,localIndex> >& localFacesToEdges,
-                   std::map<localIndex,int>& edgeLocations,
-                   std::map<localIndex,int>& faceLocations,
-                   std::map< std::pair< ElementRegionT*, localIndex >, int>& elemLocations );
+  bool SetLocations( const int side,
+                     const lSet& separationPathFaces,
+                     const FaceManagerT& faceManager,
+                     const std::set< std::pair<ElementRegionT*,localIndex> >& nodesToElements,
+                     std::map< localIndex, std::pair<localIndex,localIndex> >& localFacesToEdges,
+                     std::map<localIndex,int>& edgeLocations,
+                     std::map<localIndex,int>& faceLocations,
+                     std::map< std::pair< ElementRegionT*, localIndex >, int>& elemLocations );
 
   void ApplyGapDamping( NodeManager& nodeManager,
                         const FaceManagerT& faceManager,

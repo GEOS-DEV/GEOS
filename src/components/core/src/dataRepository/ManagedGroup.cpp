@@ -22,7 +22,7 @@ namespace dataRepository
 
 #ifdef USE_ATK
 axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
-                                                            ManagedGroup * const parent )
+                                                  ManagedGroup * const parent )
 {
   axom::sidre::Group * sidreParent = nullptr;
   axom::sidre::Group * sidreGroup  = nullptr;
@@ -49,7 +49,7 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
 #endif /* ATK_FOUND */
 
 ManagedGroup::ManagedGroup( std::string const & name,
-                            ManagedGroup * const parent ) :
+                            ManagedGroup * const parent ):
   m_docNode(nullptr),
   m_parent(parent),
   m_wrappers(),
@@ -79,7 +79,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
                                                           parent->getName(),
                                                           0,
                                                           0,
-                                                          0 ) ;
+                                                          0 );
       }
     }
     else
@@ -122,10 +122,9 @@ ManagedGroup::ManagedGroup( std::string const & name,
 }
 
 ManagedGroup::~ManagedGroup()
-{
-}
+{}
 
-ManagedGroup::ManagedGroup( ManagedGroup&& source ) :
+ManagedGroup::ManagedGroup( ManagedGroup&& source ):
   m_parent( std::move(source.m_parent) ),
   m_wrappers( std::move(source.m_wrappers) ),
 #ifdef USE_ATK
@@ -146,7 +145,7 @@ ManagedGroup::CatalogInterface::CatalogType& ManagedGroup::GetCatalog()
 ViewWrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return rtTypes::ApplyTypeLambda1( type,
-                                       [this, &name]( auto a ) -> ViewWrapperBase*
+                                    [this, &name]( auto a ) -> ViewWrapperBase*
       {
         return this->RegisterViewWrapper<decltype(a)>(name);
       } );
@@ -168,7 +167,8 @@ void ManagedGroup::resize( indexType const newsize )
 
 void ManagedGroup::RegisterDocumentationNodes()
 {
-//  std::cout<<std::string(m_docNode->m_level*2, ' ')<<"Registering Documentation Nodes for Group "<<this->getName()<<std::endl;
+//  std::cout<<std::string(m_docNode->m_level*2, ' ')<<"Registering
+// Documentation Nodes for Group "<<this->getName()<<std::endl;
   for( auto&& subNode : m_docNode->getChildNodes() )
   {
 //    std::cout<<subNode.first<<", "<<subNode.second.getName()<<std::endl;
@@ -176,14 +176,18 @@ void ManagedGroup::RegisterDocumentationNodes()
         ( subNode.second.getSchemaType() != "Node" ) &&
         ( subNode.second.m_isRegistered == 0 ) )
     {
-//      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register "<<subNode.second.getStringKey()<<" of type "<<subNode.second.getDataType()<<std::endl;
+//      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register
+// "<<subNode.second.getStringKey()<<" of type
+// "<<subNode.second.getDataType()<<std::endl;
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                           rtTypes::typeID(subNode.second.getDataType() ) );
       view->setSizedFromParent( subNode.second.m_managedByParent);
       subNode.second.m_isRegistered = 1;
-//      rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(subNode.second.getDataType()) , [&](auto a)->void
+//      rtTypes::ApplyArrayTypeLambda1(
+// rtTypes::typeID(subNode.second.getDataType()) , [&](auto a)->void
 //      {
-//        ViewWrapper<decltype(a)>& dataView = *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
+//        ViewWrapper<decltype(a)>& dataView =
+// *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
 //        typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
 //
 //      });
@@ -206,9 +210,7 @@ void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const root
 }
 
 void ManagedGroup::FillDocumentationNode( dataRepository::ManagedGroup * const  )
-{
-
-}
+{}
 
 
 void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const group )
@@ -225,7 +227,7 @@ void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const g
 void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 {
 
-  
+
   ReadXML_Group( targetNode );
 
   ReadXMLsub( targetNode );
@@ -240,7 +242,7 @@ void ManagedGroup::ReadXML_Group( xmlWrapper::xmlNode const & targetNode )
   for( auto const & subDocEntry : docNode->m_child )
   {
     cxx_utilities::DocumentationNode subDocNode = subDocEntry.second;
-    
+
     if (subDocNode.getIsInput() == 1)
     {
       xmlWrapper::ReadAttributeAsType( *this, subDocNode, targetNode );
@@ -254,9 +256,9 @@ void ManagedGroup::ReadXML_Group( xmlWrapper::xmlNode const & targetNode )
 void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
   this->forSubGroups( [this,&targetNode]( ManagedGroup * subGroup ) -> void
-  {
-    subGroup->ReadXML( targetNode );
-  });
+      {
+        subGroup->ReadXML( targetNode );
+      });
 }
 
 
@@ -284,7 +286,9 @@ void ManagedGroup::InitializationOrder( string_array & order )
 void ManagedGroup::Initialize( ManagedGroup * const group )
 {
   static int indent = 0;
-//  std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on "<<this->getName()<<" of type "<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
+//  std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on
+// "<<this->getName()<<" of type
+// "<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
 
   InitializePreSubGroups(group);
 
@@ -309,17 +313,17 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
 
 #ifdef USE_ATK
 /* Add pointers to ViewWrapper data to the sidre tree. */
-void ManagedGroup::registerSubViews() 
+void ManagedGroup::registerSubViews()
 {
   for (auto & wrapper : m_wrappers)
   {
     wrapper.second->registerDataPtr();
   }
 
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->registerSubViews();
-  });
+  forSubGroups([](ManagedGroup * subGroup) -> void
+      {
+        subGroup->registerSubViews();
+      });
 }
 
 /* Remove pointers to ViewWrapper data from the sidre tree. */
@@ -330,10 +334,10 @@ void ManagedGroup::unregisterSubViews()
     wrapper.second->unregisterDataPtr();
   }
 
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->unregisterSubViews();
-  });
+  forSubGroups([](ManagedGroup * subGroup) -> void
+      {
+        subGroup->unregisterSubViews();
+      });
 }
 
 /* Save m_size to sidre views. */
@@ -341,10 +345,10 @@ void ManagedGroup::createSizeViews()
 {
   m_sidreGroup->createView("__size__")->setScalar(m_size);
 
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->createSizeViews();
-  });
+  forSubGroups([](ManagedGroup * subGroup) -> void
+      {
+        subGroup->createSizeViews();
+      });
 }
 
 /* Load m_size data from sidre views. */
@@ -353,24 +357,24 @@ void ManagedGroup::loadSizeViews()
   m_size = m_sidreGroup->getView("__size__")->getScalar();
   m_sidreGroup->destroyView("__size__");
 
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->loadSizeViews();
-  });
+  forSubGroups([](ManagedGroup * subGroup) -> void
+      {
+        subGroup->loadSizeViews();
+      });
 }
 
 /* Resize views to hold data from sidre. */
-void ManagedGroup::resizeSubViews() 
+void ManagedGroup::resizeSubViews()
 {
   for ( auto & wrapper : m_wrappers )
   {
     wrapper.second->resizeFromSidre();
   }
 
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->resizeSubViews();
-  });
+  forSubGroups([](ManagedGroup * subGroup) -> void
+      {
+        subGroup->resizeSubViews();
+      });
 }
 
 
@@ -381,10 +385,10 @@ void ManagedGroup::storeSizedFromParent()
     wrapper.second->storeSizedFromParent();
   }
 
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->storeSizedFromParent();
-  });
+  forSubGroups([](ManagedGroup * subGroup) -> void
+      {
+        subGroup->storeSizedFromParent();
+      });
 }
 
 void ManagedGroup::loadSizedFromParent()
@@ -393,16 +397,16 @@ void ManagedGroup::loadSizedFromParent()
   {
     wrapper.second->loadSizedFromParent();
   }
-  
 
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->loadSizedFromParent();
-  });
+
+  forSubGroups([](ManagedGroup * subGroup) -> void
+      {
+        subGroup->loadSizedFromParent();
+      });
 }
 
 /* Write out a restart file. */
-void ManagedGroup::writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm) 
+void ManagedGroup::writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm)
 {
   if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
   {

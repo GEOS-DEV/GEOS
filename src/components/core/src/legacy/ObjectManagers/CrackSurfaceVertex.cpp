@@ -8,7 +8,7 @@
 #include "CrackSurfaceVertex.h"
 
 CrackSurfaceVertex::CrackSurfaceVertex():
-ObjectDataStructureBaseT( ObjectDataStructureBaseT::CrackSurfaceVertexManager )
+  ObjectDataStructureBaseT( ObjectDataStructureBaseT::CrackSurfaceVertexManager )
 {
   // TODO Auto-generated constructor stub
 
@@ -18,4 +18,3 @@ CrackSurfaceVertex::~CrackSurfaceVertex()
 {
   // TODO Auto-generated destructor stub
 }
-

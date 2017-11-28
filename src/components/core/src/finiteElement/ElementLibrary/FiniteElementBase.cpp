@@ -13,14 +13,14 @@ FiniteElementBase::FiniteElementBase( const int dim,
                                       const int num_q_points,
                                       const int num_dofs,
                                       const int num_zero_energy_modes ):
-m_nodeOrdering(),
-n_q_points(num_q_points),
-n_dofs(num_dofs),
-m_zero_energy_modes(num_zero_energy_modes),
-m_dim(dim)
+  m_nodeOrdering(),
+  n_q_points(num_q_points),
+  n_dofs(num_dofs),
+  m_zero_energy_modes(num_zero_energy_modes),
+  m_dim(dim)
 {
   data.resize(n_q_points);
-  for(auto q=0; q<n_q_points; ++q)
+  for(auto q=0 ; q<n_q_points ; ++q)
   {
 //    data[q].parent_q_point = quadrature.integration_point(q);
     data[q].parent_q_weight = 1;

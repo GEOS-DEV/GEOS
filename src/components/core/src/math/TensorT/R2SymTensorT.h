@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security,
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -87,7 +105,8 @@ template< int T_dim > class R6minSymTensorT;
  * @author Randolph Settgast
  * @tparam T_dim length of tensor index
  *
- * R2symTensorT derives from TensorBaseT, and defines basic operations that can be
+ * R2symTensorT derives from TensorBaseT, and defines basic operations that can
+ * be
  * done on a symmetric rank-2 tensor, as well as operations that result in a
  * symmetric rank-2 tensor.
  */
@@ -103,7 +122,7 @@ public:
    * @author Randolph Settgast
    * @param[in] data use for initialization of t_data
    */
-  explicit R2SymTensorT( const realT data ) : TensorBaseT< SymSize< T_dim >::value >(data) {}
+  explicit R2SymTensorT( const realT data ): TensorBaseT< SymSize< T_dim >::value >(data) {}
 
 
   /// default destructor
@@ -112,10 +131,11 @@ public:
   /// copy constructor
   R2SymTensorT(const R2SymTensorT< T_dim >& rhs);
 
-  explicit R2SymTensorT( const TensorBaseT< SymSize< T_dim >::value  >& rhs ) : TensorBaseT< SymSize< T_dim >::value  > ()
+  explicit R2SymTensorT( const TensorBaseT< SymSize< T_dim >::value  >& rhs ): TensorBaseT< SymSize< T_dim >::value  > ()
   { TensorBaseT< SymSize< T_dim >::value  >::operator=( rhs ); }
 
-  //***** ASSIGNMENT OPERATORS **************************************************
+  //***** ASSIGNMENT OPERATORS
+  // **************************************************
 
   /// assignment of all data to an integer
   R2SymTensorT< T_dim >& operator=(const int& rhs);
@@ -153,7 +173,8 @@ public:
   void AijklBkl(const R4minSymTensorT< T_dim >&A, const R2SymTensorT< T_dim >& B );
   void AijklBij(const R4minSymTensorT< T_dim >&A, const R2SymTensorT< T_dim >& B );
 
-  //**** Overloaded arithmetic operators  ******************************************
+  //**** Overloaded arithmetic operators
+  //  ******************************************
 
   // Scalar product
   friend R2SymTensorT<T_dim> operator*(realT k, const R2SymTensorT<T_dim> &V){ return R2SymTensorT<T_dim>(V*k); }
@@ -165,8 +186,20 @@ public:
   realT Det(void) const;
   realT AijAij(void) const;
   void EigenVals(realT eigenvals[T_dim], const realT limArg) const;
-  void EigenVals(realT eigenvals[T_dim]) const { EigenVals(eigenvals,0.0); } // limArg is not used - causes issues with cray compiler - SW
-  //  void EigenSystem( realT eigenvals[T_dim] , R1TensorT<T_dim> v[T_dim] ) const;
+  void EigenVals(realT eigenvals[T_dim]) const { EigenVals(eigenvals,0.0); } // limArg
+                                                                             // is
+                                                                             // not
+                                                                             // used
+                                                                             // -
+                                                                             // causes
+                                                                             // issues
+                                                                             // with
+                                                                             // cray
+                                                                             // compiler
+                                                                             // -
+                                                                             // SW
+  //  void EigenSystem( realT eigenvals[T_dim] , R1TensorT<T_dim> v[T_dim] )
+  // const;
   void EigenVecs(const realT eigenvals[T_dim], R1TensorT< T_dim > v[T_dim]) const;
   void EigenVector(const realT eigenval, R1TensorT< T_dim > & v) const;
 
@@ -236,7 +269,7 @@ void R2SymTensorT< T_dim >::print(std::ostream& os) const
 }
 
 template<int T_dim>
-R2SymTensorT< T_dim >::R2SymTensorT(void) :
+R2SymTensorT< T_dim >::R2SymTensorT(void):
   TensorBaseT< SymSize< T_dim >::value > ()
 {}
 
@@ -245,7 +278,7 @@ R2SymTensorT< T_dim >::~R2SymTensorT(void)
 {}
 
 template<int T_dim>
-R2SymTensorT< T_dim >::R2SymTensorT(const R2SymTensorT< T_dim >& rhs) :
+R2SymTensorT< T_dim >::R2SymTensorT(const R2SymTensorT< T_dim >& rhs):
   TensorBaseT< SymSize< T_dim >::value > ()
 {
   TensorBaseT< SymSize< T_dim >::value >::operator=( rhs );
@@ -920,7 +953,8 @@ inline realT R2SymTensorT< T_dim >::AijBij(const R2SymTensorT< T_dim >& A, const
  * @param[in] A symmetric rank-2 tensor
  * @param[in] B symmetric rank-2 tensor
  *
- * This function performs matrix multiplication \f$\mathbf {AB}\f$ -or- \f$A_{ij} B_{jk}\f$
+ * This function performs matrix multiplication \f$\mathbf {AB}\f$ -or-
+ *\f$A_{ij} B_{jk}\f$
  */
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::AijBjk(const R2SymTensorT< T_dim >& A, const R2SymTensorT< T_dim >& B)
@@ -956,7 +990,8 @@ inline void R2SymTensorT< T_dim >::AijBjk(const R2SymTensorT< T_dim >& A, const 
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
- * This function performs matrix multiplication \f$\mathbf {AA^T}\f$ -or- \f$A_{ij} A_{kj}\f$
+ * This function performs matrix multiplication \f$\mathbf {AA^T}\f$ -or-
+ *\f$A_{ij} A_{kj}\f$
  */
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::AijAkj(const R2TensorT< T_dim >& A)
@@ -989,7 +1024,8 @@ inline void R2SymTensorT< T_dim >::AijAkj(const R2TensorT< T_dim >& A)
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
- * This function performs matrix multiplication \f$\mathbf {A^TA}\f$ -or- \f$A_{ji} A_{jk}\f$
+ * This function performs matrix multiplication \f$\mathbf {A^TA}\f$ -or-
+ *\f$A_{ji} A_{jk}\f$
  */
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::AjiAjk(const R2TensorT< T_dim >& A)
@@ -1022,7 +1058,8 @@ inline void R2SymTensorT< T_dim >::AjiAjk(const R2TensorT< T_dim >& A)
  * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  *
- * This function performs matrix multiplication \f$\mathbf {AA}\f$ -or- \f$A_{ij} A_{jk}\f$
+ * This function performs matrix multiplication \f$\mathbf {AA}\f$ -or-
+ *\f$A_{ij} A_{jk}\f$
  */
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::AijAjk(const R2SymTensorT< T_dim >& A)
@@ -1036,14 +1073,20 @@ inline void R2SymTensorT< T_dim >::AijAjk(const R2SymTensorT< T_dim >& A)
   }
   else if (T_dim == 3)
   {
-    /*    this->t_data[0] = A.t_data[0]*A.t_data[0] + A.t_data[3]*A.t_data[3] + A.t_data[6]*A.t_data[6];
+    /*    this->t_data[0] = A.t_data[0]*A.t_data[0] + A.t_data[3]*A.t_data[3] +
+       A.t_data[6]*A.t_data[6];
 
-       this->t_data[1] = A.t_data[0]*A.t_data[1] + A.t_data[3]*A.t_data[4] + A.t_data[6]*A.t_data[7];
-       this->t_data[2] = A.t_data[1]*A.t_data[1] + A.t_data[4]*A.t_data[4] + A.t_data[7]*A.t_data[7];
+       this->t_data[1] = A.t_data[0]*A.t_data[1] + A.t_data[3]*A.t_data[4] +
+          A.t_data[6]*A.t_data[7];
+       this->t_data[2] = A.t_data[1]*A.t_data[1] + A.t_data[4]*A.t_data[4] +
+          A.t_data[7]*A.t_data[7];
 
-       this->t_data[3] = A.t_data[0]*A.t_data[2] + A.t_data[3]*A.t_data[5] + A.t_data[6]*A.t_data[8];
-       this->t_data[4] = A.t_data[1]*A.t_data[2] + A.t_data[4]*A.t_data[5] + A.t_data[7]*A.t_data[8];
-       this->t_data[5] = A.t_data[2]*A.t_data[2] + A.t_data[5]*A.t_data[5] + A.t_data[8]*A.t_data[8];*/
+       this->t_data[3] = A.t_data[0]*A.t_data[2] + A.t_data[3]*A.t_data[5] +
+          A.t_data[6]*A.t_data[8];
+       this->t_data[4] = A.t_data[1]*A.t_data[2] + A.t_data[4]*A.t_data[5] +
+          A.t_data[7]*A.t_data[8];
+       this->t_data[5] = A.t_data[2]*A.t_data[2] + A.t_data[5]*A.t_data[5] +
+          A.t_data[8]*A.t_data[8];*/
 
     const realT o1 = A.t_data[1] * A.t_data[1];
     const realT o2 = A.t_data[3] * A.t_data[3];
@@ -1068,7 +1111,8 @@ inline void R2SymTensorT< T_dim >::AijAjk(const R2SymTensorT< T_dim >& A)
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
- * This function performs compound matrix operation \f$\mathbf {AA^T+A+A^T}\f$ -or- \f$A_{ij} A_{kj} +  A_{ik} +  A_{ki}\f$
+ * This function performs compound matrix operation \f$\mathbf {AA^T+A+A^T}\f$
+ *-or- \f$A_{ij} A_{kj} +  A_{ik} +  A_{ki}\f$
  */
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_dim >& A)
@@ -1102,7 +1146,8 @@ inline void R2SymTensorT< T_dim >::AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_d
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
- * This function performs compound matrix operation \f$\mathbf {A^TA+A+A^T}\f$ -or- \f$A_{ji} A_{jk} +  A_{ik} +  A_{ki}\f$
+ * This function performs compound matrix operation \f$\mathbf {A^TA+A+A^T}\f$
+ *-or- \f$A_{ji} A_{jk} +  A_{ik} +  A_{ki}\f$
  */
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_dim >& A)
@@ -1137,7 +1182,8 @@ inline void R2SymTensorT< T_dim >::AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_d
  * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
- * This function performs compound matrix operation \f$\mathbf {AA^T-A-A^T}\f$ -or- \f$A_{ij} A_{kj} -  A_{ik} -  A_{ki}\f$
+ * This function performs compound matrix operation \f$\mathbf {AA^T-A-A^T}\f$
+ *-or- \f$A_{ij} A_{kj} -  A_{ik} -  A_{ki}\f$
  */
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& A)
@@ -1173,8 +1219,10 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& 
  * @param[in] A symmetric rank-2 tensor
  * @param[in] Q rank-2 tensor
  *
- * This function performs compound matrix operation \f$\mathbf {QAQ^T}\f$ -or- \f$Q_{ij} A_{jk} Q_{lk}\f$. This is
- * inteded to be a rotationAxis of a R2SymTensor with Q being an orthonormal matrix.
+ * This function performs compound matrix operation \f$\mathbf {QAQ^T}\f$ -or-
+ *\f$Q_{ij} A_{jk} Q_{lk}\f$. This is
+ * inteded to be a rotationAxis of a R2SymTensor with Q being an orthonormal
+ * matrix.
  */
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, const R2TensorT< T_dim >& Q)

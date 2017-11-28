@@ -1,11 +1,11 @@
 //FUNCTION_BEGIN_PARSE
 virtual_void
 MaterialBase::StrainDrivenUpdateMember( const localIndex index0,
-                            const localIndex index1,
-                            const R2SymTensorT < 3 >& Ddt,
-                            const R2TensorT < 3 >& L,
-                            const R2Tensor& Rot,
-                            const realT dt )
+                                        const localIndex index1,
+                                        const R2SymTensorT < 3 >& Ddt,
+                                        const R2TensorT < 3 >& L,
+                                        const R2Tensor& Rot,
+                                        const realT dt )
 {
   throw GPException("Cannot call MaterialBase::StrainDrivenUpdateMember; must have derived method\n");
 }
@@ -13,13 +13,13 @@ MaterialBase::StrainDrivenUpdateMember( const localIndex index0,
 //FUNCTION_BEGIN_PARSE
 virtual_void
 MaterialBase::StrainDrivenUpdateMember( const localIndex index0,
-                            const localIndex index1,
-                            const R2SymTensorT < 3 >& Ddt,
-                            const R2TensorT < 3 >& L,
-                            const R2Tensor& Rot,
-                            const realT& volume_n,
-                            const realT& volume_np1,
-                            const realT dt)
+                                        const localIndex index1,
+                                        const R2SymTensorT < 3 >& Ddt,
+                                        const R2TensorT < 3 >& L,
+                                        const R2Tensor& Rot,
+                                        const realT& volume_n,
+                                        const realT& volume_np1,
+                                        const realT dt)
 {
   throw GPException("Cannot call MaterialBase::StrainDrivenUpdateMember; must have derived method\n");
 }
@@ -35,7 +35,7 @@ MaterialBase::MeanPressureDevStress( const localIndex index,
 //FUNCTION_BEGIN_PARSE
 template< typename LeafClass > void
 MaterialBase::MeanPressureDevStressFromDerived( const localIndex index,
-                                  realT& pressure, R2SymTensor& devStress) const
+                                                realT& pressure, R2SymTensor& devStress) const
 {
   pressure = 0;
   devStress = 0;

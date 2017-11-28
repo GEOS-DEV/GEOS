@@ -24,7 +24,7 @@ public:
   void ReadXML( xmlWrapper::xmlNode const & xmlNode ) override final;
 
   bool IsCoordInObject( const R1Tensor& coord ) const override final;
-  private:
+private:
   R1Tensor m_min;
   R1Tensor m_max;
   realT m_strikeAngle;
@@ -34,4 +34,5 @@ public:
 };
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOX_HPP_ */
+#endif /* SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOX_HPP_
+        */

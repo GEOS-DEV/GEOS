@@ -27,8 +27,8 @@ public:
                            ElementManagerT& elementManager);
 
   virtual void RegisterFieldsAndMaps( NodeManager& nodeManager,
-                              EdgeManagerT& edgeManager,
-                              FaceManagerT& faceManager );
+                                      EdgeManagerT& edgeManager,
+                                      FaceManagerT& faceManager );
 
   virtual int SeparationDriver( NodeManager& nodeManager,
                                 EdgeManagerT& edgeManager,
@@ -61,8 +61,6 @@ public:
 
 
 
-
-
   int m_verbose;
   realT m_failstress;
   std::string m_separableNodeSet;
@@ -73,24 +71,25 @@ public:
   realT m_rockToughness;
   realT m_maxTurnAngle;
   int m_failCriterion;  // =0 stress based; = 1 SIF based; =2 mixed.
-  int m_allowVacuumFrac;  // If = 0, only allow fracture to propagate when the tip cell is saturated
+  int m_allowVacuumFrac;  // If = 0, only allow fracture to propagate when the
+                          // tip cell is saturated
   bool m_displacementBasedSIF;
   realT m_kJn;
 
 
   virtual void UpdateCohesiveZones( NodeManager& nodeManager,
-                                   EdgeManagerT& edgeManager,
-                                   FaceManagerT& faceManager ){}
+                                    EdgeManagerT& edgeManager,
+                                    FaceManagerT& faceManager ){}
 
 
 protected:
   virtual void UpdateRuptureStates( NodeManager& nodeManager,
-                            EdgeManagerT& edgeManager,
-                            FaceManagerT& faceManager,
-                            ElementManagerT& elementManager,
-                            array<lSet>& nodesToRupturedFaces,
-                            array<lSet>& edgesToRupturedFaces,
-                            const bool prefrac = false );
+                                    EdgeManagerT& edgeManager,
+                                    FaceManagerT& faceManager,
+                                    ElementManagerT& elementManager,
+                                    array<lSet>& nodesToRupturedFaces,
+                                    array<lSet>& edgesToRupturedFaces,
+                                    const bool prefrac = false );
 
   virtual bool ProcessNode( const localIndex nodeID,
                             NodeManager& nodeManager,
@@ -104,7 +103,7 @@ protected:
                             const bool prefrac);
 
   int CheckOrphanElement (FaceManagerT& faceManager,
-                        localIndex iFace);
+                          localIndex iFace);
 
   void MarkBirthTime( FaceManagerT& faceManager,
                       ModifiedObjectLists& modifiedObjects,
@@ -116,8 +115,8 @@ protected:
 
   //The two functions are for 3D and 2D, respectively.
   realT MinimumToughnessOnEdge( const localIndex edgeID,
-                            EdgeManagerT& edgeManager,
-                            FaceManagerT& faceManager);
+                                EdgeManagerT& edgeManager,
+                                FaceManagerT& faceManager);
   realT MinimumToughnessOnNode( const localIndex nodeID,
                                 NodeManager& nodeManager,
                                 FaceManagerT& faceManager);
@@ -136,16 +135,16 @@ private:
 
 
   virtual int CheckNodeSplitability( const localIndex nodeID,
-                              NodeManager& nodeManager,
-                              FaceManagerT& faceManager,
-                              EdgeManagerT& edgeManager,
-                              const bool prefrac) = 0;
+                                     NodeManager& nodeManager,
+                                     FaceManagerT& faceManager,
+                                     EdgeManagerT& edgeManager,
+                                     const bool prefrac) = 0;
 
   virtual int CheckEdgeSplitability( const localIndex edgeID,
-                                 NodeManager& nodeManager,
-                                 FaceManagerT& faceManager,
-                                 EdgeManagerT& edgeManager,
-                                 const bool prefrac) = 0;
+                                     NodeManager& nodeManager,
+                                     FaceManagerT& faceManager,
+                                     EdgeManagerT& edgeManager,
+                                     const bool prefrac) = 0;
 
 
   virtual bool FindFracturePlanes( const localIndex nodeID,
@@ -189,8 +188,6 @@ private:
 
 
 };
-
-
 
 
 

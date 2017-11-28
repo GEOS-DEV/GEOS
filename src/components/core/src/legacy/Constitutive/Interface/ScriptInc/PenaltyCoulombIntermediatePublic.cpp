@@ -32,6 +32,6 @@ PenaltyCoulombIntermediate::StiffnessProjected(const localIndex index)
   const PenaltyCoulombIntermediateParameterData& matParams = *this->ParameterData(index);
   const PenaltyCoulombIntermediateStateData& matState = *this->StateData(index, 0);
   const realT normalApproachEstimate = matState.normalApproach +
-      (matState.dxndt > 0 ? matState.dxndt * matState.dt : 0.0);
+                                       (matState.dxndt > 0 ? matState.dxndt * matState.dt : 0.0);
   return matParams.Stiffness(normalApproachEstimate);
 }

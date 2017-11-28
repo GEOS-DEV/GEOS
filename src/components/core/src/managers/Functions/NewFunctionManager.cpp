@@ -17,7 +17,7 @@ using namespace dataRepository;
 
 
 NewFunctionManager::NewFunctionManager( const std::string& name,
-                                        ManagedGroup * const parent ) :
+                                        ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {}
 
@@ -29,7 +29,7 @@ NewFunctionManager::~NewFunctionManager()
 void NewFunctionManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  
+
   docNode->setName("Functions");
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Function manager");
@@ -43,7 +43,7 @@ void NewFunctionManager::ReadXML( dataRepository::ManagedGroup * domain,
   {
     std::cout << "Functions:" << std::endl;
 
-    for (xmlWrapper::xmlNode functionNode=topLevelNode.first_child(); functionNode; functionNode=functionNode.next_sibling())
+    for (xmlWrapper::xmlNode functionNode=topLevelNode.first_child() ; functionNode ; functionNode=functionNode.next_sibling())
     {
       // Register the new function
       FunctionBase * newFunction = CreateFunction(functionNode.name(), functionNode.attribute("name").value());

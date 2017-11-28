@@ -71,7 +71,8 @@ private:
   ///Initial value of n2
   localIndex m_n2;
 
-  ///For each cell at the finest level, holds, for each level, the kernels applicable to the cell
+  ///For each cell at the finest level, holds, for each level, the kernels
+  // applicable to the cell
   Array3dT<array<array<VolumeKernel*> > > m_values;
 
   ///Kernels referenced in values

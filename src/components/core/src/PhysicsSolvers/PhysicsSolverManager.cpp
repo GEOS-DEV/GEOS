@@ -19,12 +19,10 @@ using namespace cxx_utilities;
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
                                             ManagedGroup * const parent ):
   ManagedGroup( name, parent)
-{
-}
+{}
 
 PhysicsSolverManager::~PhysicsSolverManager()
-{
-}
+{}
 
 
 
@@ -59,7 +57,7 @@ void PhysicsSolverManager::ReadXML( dataRepository::ManagedGroup * domain,
   }
   else
   {
-    for (xmlWrapper::xmlNode solverNode=topLevelNode.first_child(); solverNode; solverNode=solverNode.next_sibling())
+    for (xmlWrapper::xmlNode solverNode=topLevelNode.first_child() ; solverNode ; solverNode=solverNode.next_sibling())
     {
       std::cout << "   " << solverNode.name() << std::endl;
 

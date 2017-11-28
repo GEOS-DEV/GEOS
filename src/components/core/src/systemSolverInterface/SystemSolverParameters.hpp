@@ -44,11 +44,10 @@ public:
     dataRepository::ViewKey newtonTol           = { "newtonTol" };
     dataRepository::ViewKey maxIterNewton       = { "maxIterNewton" };
 
-  }viewKeys;
+  } viewKeys;
 
   struct groupKeysStruct
-  {
-  }groupKeys;
+  {} groupKeys;
 
   integer  verbose() const              { return *(this->getData<integer>( viewKeys.verbosity )); }
   string  solverType() const            { return this->getData<string>( viewKeys.solverType ); }
@@ -73,4 +72,6 @@ public:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_SYSTEMSOLVERINTERFACE_SYSTEMSOLVERPARAMETERS_HPP_ */
+#endif /*
+          SRC_COMPONENTS_CORE_SRC_SYSTEMSOLVERINTERFACE_SYSTEMSOLVERPARAMETERS_HPP_
+        */

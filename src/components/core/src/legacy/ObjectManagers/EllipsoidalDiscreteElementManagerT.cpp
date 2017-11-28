@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -54,7 +72,7 @@
  * @brief Constructor to set initial states
  * @author Scott Johnson
  */
-EllipsoidalDiscreteElementManagerT::EllipsoidalDiscreteElementManagerT() :
+EllipsoidalDiscreteElementManagerT::EllipsoidalDiscreteElementManagerT():
   DiscreteElementManagerBaseT(ObjectDataStructureBaseT::EllipsoidalDiscreteElementManager),
   m_neighborList(m_VariableOneToManyMaps["neighborList"]),
   m_neighborListInverse(m_UnorderedVariableOneToManyMaps["neighborListInverse"]),
@@ -160,7 +178,7 @@ void EllipsoidalDiscreteElementManagerT::ReadXML(TICPP::HierarchicalDataNode* ED
     m_mat = MaterialFactory::NewMaterial(EDemNodeMaterial1->Heading(), EDemNodeMaterial1);
     m_mat->SetVariableParameters(true);
     m_mat->resize(DataLengths(), 1);
-    for(localIndex i = 0; i < DataLengths(); i++)
+    for(localIndex i = 0 ; i < DataLengths() ; i++)
     {
       m_mat->ParameterData(i)->ReadXML(*EDemNodeMaterial1);
     }
@@ -199,14 +217,14 @@ void EllipsoidalDiscreteElementManagerT::WriteVTKPointData(std::ofstream& out)
 }
 
 void EllipsoidalDiscreteElementManagerT::WriteSilo( SiloFile& siloFile,
-                                             const std::string& siloDirName,
-                                             const std::string& meshname,
-                                             const int centering,
-                                             const int cycleNum,
-                                             const realT problemTime,
-                                             const bool isRestart,
-                                             const std::string& regionName,
-                                             const lArray1d& mask )
+                                                    const std::string& siloDirName,
+                                                    const std::string& meshname,
+                                                    const int centering,
+                                                    const int cycleNum,
+                                                    const realT problemTime,
+                                                    const bool isRestart,
+                                                    const std::string& regionName,
+                                                    const lArray1d& mask )
 {
   std::string subDirectory = siloDirName;
   std::string rootDirectory = "/" + siloDirName;
@@ -258,14 +276,14 @@ void EllipsoidalDiscreteElementManagerT::WriteSilo( SiloFile& siloFile,
 }
 
 void EllipsoidalDiscreteElementManagerT::ReadSilo( const SiloFile& siloFile,
-                                            const std::string& siloDirName,
-                                            const std::string& meshname,
-                                            const int centering,
-                                            const int cycleNum,
-                                            const realT problemTime,
-                                            const bool isRestart,
-                                            const std::string& regionName,
-                                            const lArray1d& mask )
+                                                   const std::string& siloDirName,
+                                                   const std::string& meshname,
+                                                   const int centering,
+                                                   const int cycleNum,
+                                                   const realT problemTime,
+                                                   const bool isRestart,
+                                                   const std::string& regionName,
+                                                   const lArray1d& mask )
 {
   if( DBSetDir(siloFile.m_dbFilePtr, siloDirName.c_str()) != -1 )
   {
@@ -326,7 +344,7 @@ void EllipsoidalDiscreteElementManagerT::RecalculatePhysicalProperties()
   const array<R1Tensor>& radii = GetFieldData<R1Tensor>("principalRadii");
   array<R1Tensor>& I = GetFieldData<FieldInfo::rotationalInertia>();
 
-  for (localIndex i = 0; i < this->DataLengths(); i++)
+  for (localIndex i = 0 ; i < this->DataLengths() ; i++)
   {
     mass[i] = m_mat->ParameterData(i)->init_density * Volume(radii[i]);
     MomentOfInertia(radii[i], mass[i], I[i]);
@@ -362,7 +380,7 @@ bool EllipsoidalDiscreteElementManagerT::RecalculateNeighborList(const realT dt)
     R1Tensor dx;
 
     //iterate through
-    for (localIndex kf0 = 0; kf0 < this->DataLengths(); ++kf0)
+    for (localIndex kf0 = 0 ; kf0 < this->DataLengths() ; ++kf0)
     {
       centers[kf0] = refpos[kf0];
       centers[kf0] += disp[kf0];
@@ -393,7 +411,7 @@ bool EllipsoidalDiscreteElementManagerT::RecalculateNeighborList(const realT dt)
     sorted = true;
 
     //iterate through
-    for (localIndex kf0 = 0; kf0 < this->DataLengths(); ++kf0)
+    for (localIndex kf0 = 0 ; kf0 < this->DataLengths() ; ++kf0)
     {
       centers[kf0] = refpos[kf0];
       centers[kf0] += disp[kf0];
@@ -428,7 +446,8 @@ bool EllipsoidalDiscreteElementManagerT::RecalculateNeighborList(const realT dt)
 }
 
 /**
- * @brief Update the contact properties and then the forces/stresses from the contact
+ * @brief Update the contact properties and then the forces/stresses from the
+ * contact
  * @author Scott Johnson
  * @param[in] dt Current timestep
  * @param[in] ecm Ellipsoidal contact manager object
@@ -436,7 +455,8 @@ bool EllipsoidalDiscreteElementManagerT::RecalculateNeighborList(const realT dt)
 void EllipsoidalDiscreteElementManagerT::UpdateAndApplyContactStresses( StableTimeStep& maxdt, const realT dt,
                                                                         EllipsoidalContactManagerT& ecm)
 {
-  //TODO make not so hard-wired for the boundary ... need to more gracefully handle boundaries in general
+  //TODO make not so hard-wired for the boundary ... need to more gracefully
+  // handle boundaries in general
   //this->m_boundaryContactParameters = ecm.m_contactParameters;
   if(this->m_DataLengths == 0)
     return;
@@ -468,10 +488,10 @@ void EllipsoidalDiscreteElementManagerT::UpdateAndApplyContactStresses( StableTi
     bool isActive;
     R1Tensor dx, cpLocal;
     R2Tensor rotation0, rotation1;
-    for (array<lArray1d>::size_type kf0 = 0; kf0 < this->m_neighborList.size(); ++kf0)
+    for (array<lArray1d>::size_type kf0 = 0 ; kf0 < this->m_neighborList.size() ; ++kf0)
     {
       this->RotationTensor(kf0, rotation0);
-      for (lArray1d::size_type it = 0; it < this->m_neighborList[kf0].size(); ++it, ++index)
+      for (lArray1d::size_type it = 0 ; it < this->m_neighborList[kf0].size() ; ++it, ++index)
       {
         const localIndex kf1 = this->m_neighborList[kf0][it];
         this->RotationTensor(kf1, rotation1);
@@ -509,7 +529,7 @@ void EllipsoidalDiscreteElementManagerT::UpdateAndApplyContactStresses( StableTi
 
           R1Tensor dxs;
           state.UpdateOrientation(normalApproachC[index], dt, normalC[index], velocityC[index], dxs,
-                                   shearSlipC[index]);
+                                  shearSlipC[index]);
 
           //-----------------------------------------------------------
           //CONTACT 4: ONLY FOR FE-DE OR FE-FE CONTACT
@@ -528,10 +548,10 @@ void EllipsoidalDiscreteElementManagerT::UpdateAndApplyContactStresses( StableTi
 
           //----GET THE STABLE TIMESTEP ESTIMATE ----
           maxdt.SetIfSmaller(
-              StableTimestep(
-                  mass[kf0],
-                  mass[kf1],
-                  ecm.m_contact->StiffnessProjected(index)));
+            StableTimestep(
+              mass[kf0],
+              mass[kf1],
+              ecm.m_contact->StiffnessProjected(index)));
           //-----------------------------------------
 
           //UPDATE THE SHEAR SLIP
@@ -569,7 +589,8 @@ void EllipsoidalDiscreteElementManagerT::UpdateCylindricalBoundary(StableTimeSte
   array<real64>& normalApproaches = this->GetFieldData<realT>("normalApproachBoundary");
   array<integer>& actives = this->GetFieldData<int>("activeBoundary");
 
-  //-----ITERATE SHAPE LIST FOR BOUNDARY CONTACT AND UPDATE WHETHER IT IS ACTIVE, ETC-----
+  //-----ITERATE SHAPE LIST FOR BOUNDARY CONTACT AND UPDATE WHETHER IT IS
+  // ACTIVE, ETC-----
   {
     m_boundary.m_mat->ParameterData(0)->GetVariableValues(pi0, pr0, pr10, pr20, pr2s0);
     pr0["radius"] = m_boundary.radiusCylinder;
@@ -577,7 +598,7 @@ void EllipsoidalDiscreteElementManagerT::UpdateCylindricalBoundary(StableTimeSte
     bool isActive;
     R1Tensor dx, cpLocal;
     R2Tensor rotation;
-    for (localIndex a = 0; a < this->m_DataLengths; ++a)
+    for (localIndex a = 0 ; a < this->m_DataLengths ; ++a)
     {
       this->RotationTensor(a, rotation);
 
@@ -607,7 +628,7 @@ void EllipsoidalDiscreteElementManagerT::UpdateCylindricalBoundary(StableTimeSte
 
         R1Tensor dxs;
         state.UpdateOrientation(normalApproaches[a], dt, normals[a], velocity[a], dxs,
-                                 shearSlips[a]);
+                                shearSlips[a]);
 
         //-----------------------------------------------------------
         //CONTACT 4: ONLY FOR FE-DE OR FE-FE CONTACT
@@ -623,10 +644,10 @@ void EllipsoidalDiscreteElementManagerT::UpdateCylindricalBoundary(StableTimeSte
 
         //----GET THE STABLE TIMESTEP ESTIMATE ----
         maxdt.SetIfSmaller(
-            StableTimestep(
-                mass[a],
-                mass[a],
-                m_boundaryContact->StiffnessProjected(a)));
+          StableTimestep(
+            mass[a],
+            mass[a],
+            m_boundaryContact->StiffnessProjected(a)));
 
         //-----------------------------------------
 
@@ -638,17 +659,20 @@ void EllipsoidalDiscreteElementManagerT::UpdateCylindricalBoundary(StableTimeSte
 
 //  //TODO: add ability to iterate to find a particular applied stress
 //  //this would involve Newton solver on contact with a sub-set of particles
-//  //determined during the above loop (probably just grab those particles within a certain distance of
+//  //determined during the above loop (probably just grab those particles
+// within a certain distance of
 //  //the current axial bound)
 //  if (!isZero(this->stressRateCylinder))
 //  {
-//    throw GPException("Cannot yet handle stress rate application in uniaxial cylinder");
+//    throw GPException("Cannot yet handle stress rate application in uniaxial
+// cylinder");
 //    const realT err = 1.0e-12;
 //    realT tol = 0.1 * err; //TODO: change this to an error metric
 //    while (tol > err)
 //    {
 //      //do Newton iteration here
-//      //need to have ordered list of particles according to fabs(dx1) descending
+//      //need to have ordered list of particles according to fabs(dx1)
+// descending
 //      //to complete the procedure
 //    }
 //  }
@@ -662,7 +686,7 @@ bool EllipsoidalDiscreteElementManagerT::InContact(const R1Tensor& radii,
                                                    R1Tensor& contactPoint)
 {
   if(!isEqual(radii(0),radii(1)) ||
-      !isEqual(radii(1),radii(2)))
+     !isEqual(radii(1),radii(2)))
     throw GPException("Cannot current handle non-spherical bodies in contact with cylindrical boundaries");
 
   const realT radius = radii.MaxVal();
@@ -670,14 +694,14 @@ bool EllipsoidalDiscreteElementManagerT::InContact(const R1Tensor& radii,
 }
 
 bool EllipsoidalDiscreteElementManagerT::InContact(const R1Tensor& radii0,
-                                                    const R1Tensor& center0,
-                                                    const R2Tensor& rotation0,
-                                                    const R1Tensor& radii1,
-                                                    const R1Tensor& center1,
-                                                    const R2Tensor& rotation1,
-                                                    realT& overlap,
-                                                    R1Tensor& normal1,
-                                                    R1Tensor& contactPoint)
+                                                   const R1Tensor& center0,
+                                                   const R2Tensor& rotation0,
+                                                   const R1Tensor& radii1,
+                                                   const R1Tensor& center1,
+                                                   const R2Tensor& rotation1,
+                                                   realT& overlap,
+                                                   R1Tensor& normal1,
+                                                   R1Tensor& contactPoint)
 {
   //exclude obviously out of contact case
   R1Tensor dist(center0);
@@ -695,9 +719,9 @@ bool EllipsoidalDiscreteElementManagerT::InContact(const R1Tensor& radii0,
 
   //handle spheres
   if(isEqual(radii0(0),radii1(0)) &&
-      isEqual(radii0(1),radii1(1)) &&
-      isEqual(radii0(2),radii1(2)) &&
-      isEqual(radii0(0),radii1(1)))
+     isEqual(radii0(1),radii1(1)) &&
+     isEqual(radii0(2),radii1(2)) &&
+     isEqual(radii0(0),radii1(1)))
   {
     //GET NORMAL (1 to 0)
     normal1 = dist;
@@ -800,7 +824,6 @@ realT EllipsoidalDiscreteElementManagerT::Iterate(const R1Tensor& radii0,
 
 
 
-
 /**
  * @brief Zero out the discrete element forces and accelerations
  * @author Scott Johnson
@@ -835,10 +858,6 @@ void EllipsoidalDiscreteElementManagerT::MomentOfInertia(const R1Tensor& radii, 
   moi(1) = fct * (radii(0) * radii(0) + radii(2) * radii(2));
   moi(2) = fct * (radii(0) * radii(0) + radii(1) * radii(1));
 }
-
-
-
-
 
 
 
@@ -886,10 +905,13 @@ void EllipsoidalDiscreteElementManagerT::PointAtSurface( const R1Tensor& radii,
 
 
 /**
- * @brief Get the normal to the point in the local frame on the scaled potential surface of the ellipsoid
+ * @brief Get the normal to the point in the local frame on the scaled potential
+ * surface of the ellipsoid
  * @author Scott Johnson
  * \f[\frac{x}{a}^2 + \frac{y}{b}^2 + \frac{z}{c}^2 = 1\f]
- * \f[\hat{n} = \left[\begin{array}{ccc} \frac{x}{a^2} & \frac{y}{b^2} & \frac{z}{c^2} \end{array}\right] / | \left[\begin{array}{ccc} \frac{x}{a^2} & \frac{y}{b^2} & \frac{z}{c^2} \end{array}\right] | \f]
+ * \f[\hat{n} = \left[\begin{array}{ccc} \frac{x}{a^2} & \frac{y}{b^2} &
+ *\frac{z}{c^2} \end{array}\right] / | \left[\begin{array}{ccc} \frac{x}{a^2} &
+ *\frac{y}{b^2} & \frac{z}{c^2} \end{array}\right] | \f]
  * @param[in] local Point in space in the local frame
  * @param[in] radii Principal radii of the ellipsoid
  * @param[out] normal Normal to the potential surface in local frame
@@ -897,10 +919,10 @@ void EllipsoidalDiscreteElementManagerT::PointAtSurface( const R1Tensor& radii,
 void EllipsoidalDiscreteElementManagerT::NormalCartesian(const R1Tensor& radii,
                                                          const R1Tensor& local,
                                                          R1Tensor& normal)
- {
+{
   realT mag = 0.;
   normal = local;
-  for (unsigned int i = 0; i < nsdof; i++)
+  for (unsigned int i = 0 ; i < nsdof ; i++)
   {
     normal(i) /= (radii(i) * radii(i));
     mag += normal(i) * normal(i);
@@ -913,7 +935,8 @@ void EllipsoidalDiscreteElementManagerT::NormalCartesian(const R1Tensor& radii,
 }
 
 /**
- * @brief Get the normal to the point in the glboal frame on the scaled potential surface of the ellipsoid
+ * @brief Get the normal to the point in the glboal frame on the scaled
+ * potential surface of the ellipsoid
  * @author Scott Johnson
  * @param[in] radii Principal radii of the ellipsoid
  * @param[in] center Center of the ellipsoid
@@ -956,7 +979,7 @@ void EllipsoidalDiscreteElementManagerT::PointAtNormalCartesian(const R1Tensor& 
 {
   local = normalLocal;
   //realT mag = 0.;
-  for (unsigned int i = 0; i < nsdof; i++)
+  for (unsigned int i = 0 ; i < nsdof ; i++)
   {
     local(i) *= radii(i);
   }
@@ -996,7 +1019,7 @@ realT EllipsoidalDiscreteElementManagerT::PotentialValue(const R1Tensor& radii,
                                                          const R1Tensor& local)
 {
   realT ret = 0;
-  for(unsigned int i = 0; i < 3; i++)
+  for(unsigned int i = 0 ; i < 3 ; i++)
   {
     realT ff = local(i) / radii(i);
     ff *= ff;
@@ -1020,7 +1043,7 @@ realT EllipsoidalDiscreteElementManagerT::PotentialValue(const R1Tensor& radii,
 void EllipsoidalDiscreteElementManagerT::AngularCoordinates(const R1Tensor& point, const R1Tensor& r, realT& cu, realT& su, realT& cv, realT& sv)
 {
   R1Tensor spt = point;
-  for(localIndex i = 0; i < nsdof; i++)
+  for(localIndex i = 0 ; i < nsdof ; i++)
     spt(i) /= r(i);
   spt.Normalize();
 
@@ -1046,7 +1069,8 @@ void EllipsoidalDiscreteElementManagerT::AngularCoordinates(const R1Tensor& poin
  * @param[in] cv V-angle cosine
  * @param[in] su U-angle sine
  * @param[in] sv V-angle sine
- * @return Gaussian curvature of the surface at the given local angular coordinate
+ * @return Gaussian curvature of the surface at the given local angular
+ * coordinate
  */
 realT EllipsoidalDiscreteElementManagerT::GaussianCurvature(const R1Tensor& r, const realT cu, const realT su, const realT cv, const realT sv)
 {

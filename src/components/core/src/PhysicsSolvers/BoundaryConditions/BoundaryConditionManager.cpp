@@ -22,7 +22,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 BoundaryConditionManager::BoundaryConditionManager( string const & name, ManagedGroup * const parent ):
-ManagedGroup(name,parent)
+  ManagedGroup(name,parent)
 {
   // TODO Auto-generated constructor stub
 
@@ -43,7 +43,7 @@ BoundaryConditionManager::~BoundaryConditionManager()
 
 void BoundaryConditionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
     string const typeName = childNode.name();
     string const name = childNode.attribute("name").value();
@@ -62,27 +62,28 @@ void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGr
 
   // iterate over all boundary conditions.
   forSubGroups<BoundaryConditionBase>( [&]( BoundaryConditionBase * bc ) -> void
-  {
-    if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
     {
-      string_array setNames = bc->GetSetNames();
-      for( auto & setName : setNames )
+      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
       {
-        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
-        if( setWrapper != nullptr )
+        string_array setNames = bc->GetSetNames();
+        for( auto & setName : setNames )
         {
-          lSet const & set = setWrapper->reference();
-          bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>(set,time, object, fieldName);
+          dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+          if( setWrapper != nullptr )
+          {
+            lSet const & set = setWrapper->reference();
+            bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>(set,time, object, fieldName);
+          }
         }
       }
-    }
-  });
+    });
 }
 
 void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) const
 {
 
-//  forSubGroups<BoundaryConditionBase>( [&] ( BoundaryConditionBase const * bc )-> void
+//  forSubGroups<BoundaryConditionBase>( [&] ( BoundaryConditionBase const * bc
+// )-> void
 //  {
   for( auto & subGroup : this->GetSubGroups() )
   {
@@ -116,7 +117,8 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
       else
       {
         ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-//        ConstitutiveManager::constitutiveMaps const & constitutiveMaps = constitutiveManager->GetMaps(0);
+//        ConstitutiveManager::constitutiveMaps const & constitutiveMaps =
+// constitutiveManager->GetMaps(0);
         typename ManagedGroup::subGroupMap::LookupMapType const & constitutiveIndexLookup = constitutiveManager->GetSubGroups().keys();
 
         lSet targetSet;
@@ -141,7 +143,8 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
         ManagedGroup * ElementRegionManager = ManagedGroup::group_cast<DomainPartition*>(domain)->getMeshBody(0)->getMeshLevel(0)->getElemManager();
         ManagedGroup * ElementRegions = ElementRegionManager->GetGroup(keys::elementRegions);
         ElementRegion * elementRegion = ElementRegions->GetGroup<ElementRegion>(elementRegionName);
-        // ManagedGroup * elementSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
+        // ManagedGroup * elementSubRegions =
+        // elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
 
 
 
@@ -153,7 +156,8 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
         for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
         {
           CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
-//        elementRegion->forCellBlocks( [&] ( CellBlockSubRegion * subRegion ) -> void
+//        elementRegion->forCellBlocks( [&] ( CellBlockSubRegion * subRegion )
+// -> void
 //        {
           auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(keys::constitutiveMap);
           ManagedGroup const * sets = subRegion->GetGroup(keys::sets);
@@ -180,7 +184,8 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
         }
 
-        // ManagedGroup const * elementSets = elementRegion->GetGroup(dataRepository::keys::sets);
+        // ManagedGroup const * elementSets =
+        // elementRegion->GetGroup(dataRepository::keys::sets);
 
 
         bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( targetSet, 0.0, targetGroup, fieldName );

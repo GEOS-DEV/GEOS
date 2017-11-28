@@ -45,7 +45,7 @@ public:
   void RelaxMesh( PhysicalDomainT& domain );
 
   /*
-  void RelaxMesh(int *dimen,
+     void RelaxMesh(int *dimen,
                  unsigned long *num_nod,
                  double *coords,
                  const int *fixed,
@@ -55,9 +55,10 @@ public:
                  const ElementTypes topo,
                  const SolverTypes solver,
                  const PatchType patch);
-  */
+   */
 
-  // EBH: you may want to declare a default constructor/destructor for MesquiteRelaxer
+  // EBH: you may want to declare a default constructor/destructor for
+  // MesquiteRelaxer
   //MesquiteRelaxer();
   //~MesquiteRelaxer();
 
@@ -73,11 +74,11 @@ private:
                             const int num_iter,
                             const PatchType patch);
   void RunFeasibleNewton(const ElementTypes topo,
-                            const int num_iter,
-                            const PatchType patch);
+                         const int num_iter,
+                         const PatchType patch);
   void RunSteepestDescent(const ElementTypes topo,
-                            const int num_iter,
-                            const PatchType patch);
+                          const int num_iter,
+                          const PatchType patch);
   void ConstructMesh(unsigned long num_nod,
                      double *coords,
                      const int *fixed,

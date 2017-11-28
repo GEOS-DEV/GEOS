@@ -55,8 +55,7 @@ public:
                          ManagedGroup * material );
 
   struct viewKeysStruct : public CellBlock::viewKeysStruct
-  {
-  }viewKeys;
+  {} viewKeys;
 
 
 };
