@@ -90,6 +90,8 @@ else()
     set(SILO_DIR ${GEOSX_TPL_DIR}/silo)
 endif()
 
+   message(INFO ":${SILO_DIR}")
+
 include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindSilo.cmake)
 if (NOT SILO_FOUND)
     message(FATAL_ERROR ": SILO not found in ${SILO_DIR}. Maybe you need to build it")
@@ -348,17 +350,24 @@ set( thirdPartyLibs ${thirdPartyLibs} pugixml )
 # TRILINOS
 ################################
 #if( ENABLE_TRILINOS )
-message( INFO ": setting up TRILINOS" )
 
-set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
+
+if(EXISTS ${TRILINOS_DIR})
+
+else()
+    message( INFO ": setting up TRILINOS" )
+    set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
+endif()
+
+#include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
 include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
 
+
 blt_register_library( NAME trilinos
-                      INCLUDES ${Trilinos_INCLUDE_DIRS} 
+    		      INCLUDES ${Trilinos_INCLUDE_DIRS} 
                       LIBRARIES ${Trilinos_LIBRARIES}
                       TREAT_INCLUDES_AS_SYSTEM ON )
-
-set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
+		      set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
 
 #endif()
 

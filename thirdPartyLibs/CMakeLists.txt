@@ -340,14 +340,21 @@ ExternalProject_Add( pugixml
 ################################
 # TRILINOS
 ################################
-message( INFO ": setting up TRILINOS" )
-set(TRILINOS_LOCAL_DIR ${PROJECT_BINARY_DIR}/trilinos)
-set(TRILINOS_DIR ${TRILINOS_LOCAL_DIR})
-set(TRILINOS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/trilinos)
 
-ExternalProject_Add( trilinos
-                     PREFIX ${PROJECT_BINARY_DIR}/trilinos
-                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/trilinos-12.10.1-Source.tar.gz
+
+message( INFO ": TRILINOS_DIR ${TRILINOS_DIR}" ) 
+
+if (EXISTS "${TRILINOS_DIR}")
+
+else()
+
+    message( INFO ": setting up TRILINOS (thirparty/CmakeList.txt)" )
+    set(TRILINOS_LOCAL_DIR ${PROJECT_BINARY_DIR}/trilinos)
+    set(TRILINOS_DIR ${TRILINOS_LOCAL_DIR})
+    set(TRILINOS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/trilinos)
+    ExternalProject_Add( trilinos
+    	             PREFIX ${PROJECT_BINARY_DIR}/trilinos
+		     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/trilinos-12.10.1-Source.tar.gz
                      BUILD_COMMAND make -j16
                      INSTALL_DIR ${TRILINOS_INSTALL_DIR}
                      INSTALL_COMMAND make install
@@ -385,7 +392,8 @@ ExternalProject_Add( trilinos
                                 -D Trilinos_ENABLE_STK=OFF
                                 -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON  )
 
-#set( dependency_list "${dependency_list};trilinos" )
+				#set( dependency_list "${dependency_list};trilinos" )
+endif()
 
 ################################
 # HYPRE
