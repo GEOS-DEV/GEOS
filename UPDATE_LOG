@@ -1,5 +1,16 @@
 
 
+Wed Nov 29 09:56:11 2017 Randolph R. Settgast
+v0.0.19
+
+Formatting using initial uncrustify configuration.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage2/pull-requests/5
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/10
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/16
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/tpl_mirror/pull-requests/4
+
+
 Mon Nov 27 10:10:45 2017 Randolph R. Settgast
 v0.0.18
 
