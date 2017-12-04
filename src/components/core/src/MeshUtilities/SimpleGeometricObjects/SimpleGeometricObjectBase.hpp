@@ -31,7 +31,7 @@ class SimpleGeometricObjectBase : public dataRepository::ManagedGroup
 public:
 
   explicit SimpleGeometricObjectBase( std::string const & name,
-                       ManagedGroup * const parent );
+                                      ManagedGroup * const parent );
 
   virtual ~SimpleGeometricObjectBase();
 

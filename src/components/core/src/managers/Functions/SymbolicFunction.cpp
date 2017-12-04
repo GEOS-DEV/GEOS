@@ -76,8 +76,7 @@ void SymbolicFunction::FillDocumentationNode( dataRepository::ManagedGroup * con
 }
 
 void SymbolicFunction::BuildDataStructure( ManagedGroup * const domain )
-{
-}
+{}
 
 void SymbolicFunction::InitializeFunction()
 {

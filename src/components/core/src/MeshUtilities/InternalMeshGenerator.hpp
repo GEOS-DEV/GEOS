@@ -67,10 +67,10 @@ public:
   //                                NodeManager * nodeManager ) override;
 
   virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
-                                     const int index[],
-                                     const int& iEle,
-                                     int nodeIDInBox[],
-                                     const int size) override;
+                                             const int index[],
+                                             const int& iEle,
+                                             int nodeIDInBox[],
+                                             const int size) override;
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 

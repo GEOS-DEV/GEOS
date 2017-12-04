@@ -109,8 +109,7 @@ void CellBlockManager::resize( integer_array const & numElements,
 //}
 
 void CellBlockManager::CreateChild( string const & childKey, string const & childName )
-{
-}
+{}
 //  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
 //  for (pugi::xml_node childNode=targetNode.first_child(); childNode;
 // childNode=childNode.next_sibling())

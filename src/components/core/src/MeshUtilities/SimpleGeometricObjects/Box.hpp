@@ -39,7 +39,7 @@ private:
   {
     dataRepository::ViewKey xmin = { "xmin" };
     dataRepository::ViewKey xmax = { "xmax" };
-  }viewKeys;
+  } viewKeys;
 
 
 };

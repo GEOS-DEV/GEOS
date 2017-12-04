@@ -12,7 +12,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-MeshGeneratorBase::MeshGeneratorBase( string const & name, ManagedGroup * const parent ) :
+MeshGeneratorBase::MeshGeneratorBase( string const & name, ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {}
 

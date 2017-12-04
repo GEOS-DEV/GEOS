@@ -19,7 +19,7 @@ class MeshManager : public dataRepository::ManagedGroup
 {
 public:
   MeshManager( std::string const & name,
-                        ManagedGroup * const parent );
+               ManagedGroup * const parent );
 
   virtual ~MeshManager();
 

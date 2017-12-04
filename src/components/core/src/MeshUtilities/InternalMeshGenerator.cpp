@@ -27,8 +27,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup * const parent ) :
-    MeshGeneratorBase( name, parent ),
+InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup * const parent ):
+  MeshGeneratorBase( name, parent ),
 //    m_vertices({this->RegisterViewWrapper<real64_array>(keys::xCoords).reference(),
 //                this->RegisterViewWrapper<real64_array>(keys::yCoords).reference(),
 //                this->RegisterViewWrapper<real64_array>(keys::zCoords).reference()
@@ -294,18 +294,18 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
 
 
-    if (m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6")
-    {
-      m_dim = 3;
-    }
-    else if (m_elementType[0] == "CPE4" || m_elementType[0] == "STRI" )
-    {
-      m_dim = 2;
-    }
-    else
-    {
+  if (m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6")
+  {
+    m_dim = 3;
+  }
+  else if (m_elementType[0] == "CPE4" || m_elementType[0] == "STRI" )
+  {
+    m_dim = 2;
+  }
+  else
+  {
 #if ATK_FOUND
-      SLIC_ERROR("InternalMeshGenerator: incorrect element type!");
+    SLIC_ERROR("InternalMeshGenerator: incorrect element type!");
 #endif
   }
 
@@ -440,7 +440,6 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
 
 
-
 void InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
   this->RegisterGroup<CellBlock>( childName );
@@ -455,7 +454,8 @@ void InternalMeshGenerator::CreateChild( string const & childKey, string const &
 void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
   // This cannot find groupkeys:
-  // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  // ManagedGroup * const meshBodies =
+  // domain->GetGroup(domain->groupKeys.meshBodies);
   ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
@@ -1050,10 +1050,10 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
  * @param node_size
  */
 void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
-                                                 const int index[],
-                                                 const int& iEle,
-                                                 int nodeIDInBox[],
-                                                 const int node_size )
+                                                         const int index[],
+                                                         const int& iEle,
+                                                         int nodeIDInBox[],
+                                                         const int node_size )
 
 {
   if( elementType == "C3D8" )

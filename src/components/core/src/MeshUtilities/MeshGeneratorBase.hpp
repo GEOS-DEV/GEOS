@@ -16,8 +16,7 @@ namespace geosx
 {
 
 namespace dataRepository
-{
-}
+{}
 
 class NodeManager;
 class DomainPartition;
@@ -26,7 +25,7 @@ class MeshGeneratorBase : public dataRepository::ManagedGroup
 {
 public:
   explicit MeshGeneratorBase( std::string const & name,
-                       ManagedGroup * const parent );
+                              ManagedGroup * const parent );
 
   virtual ~MeshGeneratorBase();
 
@@ -52,7 +51,7 @@ public:
                                              const int size) = 0;
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) = 0;
-  
+
   int m_delayMeshDeformation;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< MeshGeneratorBase, std::string const &, ManagedGroup * const >;

@@ -211,7 +211,7 @@ void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const g
 
 void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
 {
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
     // Get the child tag and name
     std::string childName = childNode.attribute("name").value();
@@ -222,7 +222,7 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
 
     // Create children
     CreateChild(childNode.name(), childName);
-    
+
     // Add grandchildren
     ManagedGroup * newChild = this->GetGroup<ManagedGroup>(childName);
     if (newChild != nullptr)
@@ -242,7 +242,7 @@ void ManagedGroup::CreateChild( string const & childKey, string const & childNam
 void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  
+
   for( auto const & subDocEntry : docNode->m_child )
   {
     cxx_utilities::DocumentationNode subDocNode = subDocEntry.second;
@@ -260,7 +260,7 @@ void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 
 void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
     // Get the child tag and name
     std::string childName = childNode.attribute("name").value();

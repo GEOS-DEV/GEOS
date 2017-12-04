@@ -50,10 +50,11 @@ ProblemManager::ProblemManager( const std::string& name,
   RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
   RegisterGroup<FiniteElementManager>(groupKeys.finiteElementManager);
-  RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);     // Add this
+  RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);     // Add
+                                                                               // this
   RegisterGroup<MeshManager>(groupKeys.meshManager);
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
-  
+
   // The function manager is handled separately
   m_functionManager = NewFunctionManager::Instance();
 }
@@ -64,8 +65,7 @@ ProblemManager::~ProblemManager()
 
 
 void ProblemManager::CreateChild( string const & childKey, string const & childName )
-{
-}
+{}
 
 
 void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
@@ -200,8 +200,10 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0 );
 
   // // Mesh node documentation
-  // dataRepository::ManagedGroup * meshGenerators = GetGroup<ManagedGroup>(groupKeys.meshGenerators);
-  // cxx_utilities::DocumentationNode * const meshDocNode = meshGenerators->getDocumentationNode();
+  // dataRepository::ManagedGroup * meshGenerators =
+  // GetGroup<ManagedGroup>(groupKeys.meshGenerators);
+  // cxx_utilities::DocumentationNode * const meshDocNode =
+  // meshGenerators->getDocumentationNode();
   // meshDocNode->setName("Mesh");
   // meshDocNode->setShortDescription("Mesh Generators");
 }
@@ -406,7 +408,7 @@ void ProblemManager::ParseInputFile()
     this->m_functionManager->SetDocumentationNodes( domain );
     this->m_functionManager->ReadXML( topLevelNode );
   }
-  
+
 
   // Documentation output
   ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);

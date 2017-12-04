@@ -19,12 +19,10 @@ using namespace cxx_utilities;
 GeometricObjectManager::GeometricObjectManager( std::string const & name,
                                                 ManagedGroup * const parent ):
   ManagedGroup( name, parent)
-{
-}
+{}
 
 GeometricObjectManager::~GeometricObjectManager()
-{
-}
+{}
 
 
 void GeometricObjectManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )

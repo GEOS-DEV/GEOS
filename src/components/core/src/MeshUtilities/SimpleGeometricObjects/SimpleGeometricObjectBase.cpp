@@ -14,7 +14,7 @@ namespace geosx
 
 
 SimpleGeometricObjectBase::SimpleGeometricObjectBase( std::string const & name,
-                                                      ManagedGroup * const parent ) :
+                                                      ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {}
 

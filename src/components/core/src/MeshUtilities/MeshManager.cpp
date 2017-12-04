@@ -19,12 +19,10 @@ using namespace cxx_utilities;
 MeshManager::MeshManager( std::string const & name,
                           ManagedGroup * const parent ):
   ManagedGroup( name, parent)
-{
-}
+{}
 
 MeshManager::~MeshManager()
-{
-}
+{}
 
 
 void MeshManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
@@ -48,9 +46,9 @@ void MeshManager::CreateChild( string const & childKey, string const & childName
 void MeshManager::GenerateMeshes( dataRepository::ManagedGroup * const domain )
 {
   this->forSubGroups<MeshGeneratorBase>([this, domain]( MeshGeneratorBase * meshGen ) -> void
-  {
-    meshGen->GenerateMesh( domain );
-  });
+    {
+      meshGen->GenerateMesh( domain );
+    });
 }
 
 

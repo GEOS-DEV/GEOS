@@ -160,7 +160,7 @@ public:
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };
     dataRepository::GroupKey meshManager = { "Mesh" };
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };
-  }groupKeys;
+  } groupKeys;
 
 
 

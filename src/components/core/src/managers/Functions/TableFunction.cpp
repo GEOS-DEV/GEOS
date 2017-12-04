@@ -137,8 +137,7 @@ void TableFunction::FillDocumentationNode( dataRepository::ManagedGroup * const 
 }
 
 void TableFunction::BuildDataStructure( ManagedGroup * const domain )
-{
-}
+{}
 
 void TableFunction::InitializeFunction()
 {

@@ -11,10 +11,9 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Box::Box( const std::string& name, ManagedGroup * const parent ) :
+Box::Box( const std::string& name, ManagedGroup * const parent ):
   SimpleGeometricObjectBase( name, parent )
-{
-}
+{}
 
 Box::~Box()
 {
@@ -24,7 +23,7 @@ Box::~Box()
 void Box::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  
+
   docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
   docNode->setShortDescription("A simple box object");
@@ -64,13 +63,15 @@ void Box::ReadXML_PostProcess()
 
 //void Box::ReadXML( xmlWrapper::xmlNode const & xmlNode )
 //{
-//  pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
+//  pugi::xml_attribute xmlatt =
+// targetNode.attribute(subDocNode.getStringKey().c_str());
 //  m_degree = targetNode.attribute("degree").as_int(1);
 //  as_type( xmlVal, xmlatt.value(), defVal );
 //
 //  m_min = xmlWrapper::as_type( xmlNode, "xMin", {-1e99,-1e99,-1e99});
 //  m_max = xmlWrapper::as_type( xmlNode, "xMax", { 1e99, 1e99, 1e99});
-//  m_strikeAngle = hdn.GetAttributeOrDefault<realT>("strikeAngle", -90.0); // from North
+//  m_strikeAngle = hdn.GetAttributeOrDefault<realT>("strikeAngle", -90.0); //
+// from North
 //  m_strikeAngle += 90; // Counterclockwise from x-axis
 //  if (std::fabs(m_strikeAngle) > 1e-20)
 //  {

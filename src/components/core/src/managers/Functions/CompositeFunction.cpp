@@ -93,8 +93,7 @@ void CompositeFunction::FillDocumentationNode( dataRepository::ManagedGroup * co
 }
 
 void CompositeFunction::BuildDataStructure( ManagedGroup * const domain )
-{
-}
+{}
 
 void CompositeFunction::InitializeFunction()
 {
