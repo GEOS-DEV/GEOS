@@ -52,7 +52,7 @@ public:
 
   virtual ~InternalMeshGenerator();
 
-  static string CatalogName() { return "InternalMeshGenerator"; }
+  static string CatalogName() { return "InternalMesh"; }
 
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const domain ) override;
@@ -61,8 +61,7 @@ public:
 
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
-  void GenerateMesh( //SpatialPartition& partition,
-     DomainPartition * domain );
+  virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) override;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
