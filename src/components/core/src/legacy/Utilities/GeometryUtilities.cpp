@@ -2156,7 +2156,7 @@ realT DistanceToPlane(const R1Tensor& normal,
  *(0 points ... or 2 points with the pointOnPlane implied as the terminus)
  * @param[out] outContact list of triangles for each face not overlapping the
  * plane (0 points ... or 2 points with the pointOnPlane implied as the
- *terminus)
+ * terminus)
  * @param[in] reverse Option to specify that both the polygon loop order should
  * be reversed and the normal inverted
  */

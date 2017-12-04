@@ -282,7 +282,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
   Epetra_SerialDenseVector     node_rhs( integer_conversion<int>( set.size() ) );
 
 
-  dataRepository::view_rtype_const<integer_array> dofMap = dataGroup->getData<integer_array>(dofMapName);
+  dataRepository::view_rtype_const<localIndex_array> dofMap = dataGroup->getData<localIndex_array>(dofMapName);
 
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex), [&]( auto type ) -> void

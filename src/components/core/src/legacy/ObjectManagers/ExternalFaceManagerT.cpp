@@ -1825,7 +1825,7 @@ bool ExternalFaceManagerT::Criterion3(const array<R1TensorT<2> >& xsl1,
  * contact
  * @param[out] pointsCommonPlane Points in clockwise order formed by the
  * interference of the faces on the common plane of for the interference
- *geometry
+ * geometry
  * of the flow contact
  * @return 0 if no contact, 1 if mechanical contact, 2 if flow contact
  */

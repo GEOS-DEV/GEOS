@@ -1,5 +1,15 @@
 
 
+Mon Dec  4 10:37:46 2017 Randolph R. Settgast
+v0.0.20
+
+This PR addresses:
+1) a bug in the implicit mechanics solver functionality. The trilinosIndex has been changed from an integer_array to a localIndex_array and this was not consistent everywhere resulting in failed lookups. 
+
+2) a bug in the integer_conversion function. Previously conversion between signed and unsigned types failed when trying to ensure that no truncation occured. This has been addressed by implementing separate functions to handle the signed->unsigned and the unsigned->signed cases.
+
+
+
 Wed Nov 29 09:56:11 2017 Randolph R. Settgast
 v0.0.19
 

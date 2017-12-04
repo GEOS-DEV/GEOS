@@ -127,8 +127,42 @@ real64_array linspace(realT start, realT stop, int count=100);
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
+
+
 template< typename RTYPE, typename T >
-RTYPE integer_conversion( T input )
+typename std::enable_if< std::is_unsigned<T>::value && std::is_signed<RTYPE>::value, RTYPE >::type
+integer_conversion( T input )
+{
+  static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
+  static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
+
+  if( input > std::numeric_limits<RTYPE>::max()  )
+  {
+    abort();
+  }
+  return static_cast<RTYPE>(input);
+}
+
+template< typename RTYPE, typename T >
+typename std::enable_if< std::is_signed<T>::value && std::is_unsigned<RTYPE>::value, RTYPE >::type
+integer_conversion( T input )
+{
+  static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
+  static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
+
+  if( input > std::numeric_limits<RTYPE>::max() ||
+      input < 0 )
+  {
+    abort();
+  }
+  return static_cast<RTYPE>(input);
+}
+
+
+template< typename RTYPE, typename T >
+typename std::enable_if< ( std::is_signed<T>::value && std::is_signed<RTYPE>::value ) ||
+                         ( std::is_unsigned<T>::value && std::is_unsigned<RTYPE>::value ), RTYPE >::type
+integer_conversion( T input )
 {
   static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
   static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
@@ -140,6 +174,9 @@ RTYPE integer_conversion( T input )
   }
   return static_cast<RTYPE>(input);
 }
+
+
+
 #pragma GCC diagnostic pop
 
 
