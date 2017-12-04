@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -91,11 +109,6 @@ int ParallelPlateFlowSolverFV::m_instances = 0;
 
 
 
-
-
-
-
-
 /**
  * @author settgast
  * @param nodeIndex the local node index relative to the face
@@ -106,8 +119,8 @@ int ParallelPlateFlowSolverFV::m_instances = 0;
  * forming and applying contributions to the system.
  */
 static void faceNodePairIndexing( const int nodeIndex,
-                                    const int ndofPerNode,
-                                    int index[2])
+                                  const int ndofPerNode,
+                                  int index[2])
 {
   index[0] = ndofPerNode*(nodeIndex*2);
   index[1] = ndofPerNode*(nodeIndex*2+1);
@@ -115,16 +128,16 @@ static void faceNodePairIndexing( const int nodeIndex,
 
 ParallelPlateFlowSolverFV::ParallelPlateFlowSolverFV(  const std::string& name,
                                                        ProblemManagerT* const pm ):
-ParallelPlateFlowSolverBase(name,pm),
-m_faceSet(),
-m_numFaces(0),
-m_faceDofMap(),
-m_phi(1.0),
-this_mpi_process(pm->m_epetraComm.MyPID()),
-n_mpi_processes(pm->m_epetraComm.NumProc()),
-syncedFields()
+  ParallelPlateFlowSolverBase(name,pm),
+  m_faceSet(),
+  m_numFaces(0),
+  m_faceDofMap(),
+  m_phi(1.0),
+  this_mpi_process(pm->m_epetraComm.MyPID()),
+  n_mpi_processes(pm->m_epetraComm.NumProc()),
+  syncedFields()
 {
-  ++m_instances; 
+  ++m_instances;
   m_trilinosIndexStr = "TwoDIMPPFS_" +  toString<int>(m_instances) + "_GlobalDof";
 
   m_dofVariable = dofVariable::mass;
@@ -140,8 +153,9 @@ void ParallelPlateFlowSolverFV::ReadXML( TICPP::HierarchicalDataNode* const hdn 
   ParallelPlateFlowSolverBase::ReadXML(hdn);
 
   // Mixed difference parameter
-  m_phi = hdn->GetAttributeOrDefault<realT>("phi",1.0); // backward difference by default.
-  
+  m_phi = hdn->GetAttributeOrDefault<realT>("phi",1.0); // backward difference
+                                                        // by default.
+
   // Linear Solver
   m_numerics.krylov_tol = hdn->GetAttributeOrDefault<realT>("tol",1e-10);
   m_numerics.m_maxIters = hdn->GetAttributeOrDefault<int>("maxSolverIterations",1000);
@@ -158,18 +172,20 @@ void ParallelPlateFlowSolverFV::ReadXML( TICPP::HierarchicalDataNode* const hdn 
 
 void ParallelPlateFlowSolverFV::RegisterFields( PhysicalDomainT& domain )
 {
-  
+
   ParallelPlateFlowSolverBase::RegisterFields( domain.m_feFaceManager, domain.m_feEdgeManager );
 
-  const bool plotOldValues = false; // no need to plot old values unless debugging - overwritten at end of timestep.
+  const bool plotOldValues = false; // no need to plot old values unless
+                                    // debugging - overwritten at end of
+                                    // timestep.
 
   domain.m_feFaceManager.AddKeylessDataField<realT>(ApertureStr,true,true);
 
   domain.m_feFaceManager.AddKeylessDataField<R1Tensor>(FaceCenterStr,true,true);
   domain.m_feFaceManager.AddKeylessDataField<R1Tensor>(FluidVelocityStr,true,true);
-  domain.m_feFaceManager.AddKeyedDataField<FieldInfo::pressure>();    
-  domain.m_feFaceManager.AddKeyedDataField<FieldInfo::density>(); 
-  domain.m_feFaceManager.AddKeyedDataField<FieldInfo::mass>(); 
+  domain.m_feFaceManager.AddKeyedDataField<FieldInfo::pressure>();
+  domain.m_feFaceManager.AddKeyedDataField<FieldInfo::density>();
+  domain.m_feFaceManager.AddKeyedDataField<FieldInfo::mass>();
   domain.m_feFaceManager.AddKeyedDataField<FieldInfo::volume>();
 //  domain.m_feFaceManager.AddKeylessDataField<realT>("BoundedAperture",true,true);
   domain.m_feFaceManager.AddKeylessDataField<realT>("massIncrement",true,true);
@@ -223,43 +239,46 @@ void ParallelPlateFlowSolverFV::DeregisterTemporaryFields( PhysicalDomainT& doma
 
 void ParallelPlateFlowSolverFV::FillTemporaryFields( PhysicalDomainT& domain )
 {
-  const rArray1d& mass_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  rArray1d& mass_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidMass_n");
+  const array<real64>& mass_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  array<real64>& mass_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidMass_n");
   mass_n = mass_np1;
 
-  const rArray1d& volume_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
-  rArray1d& volume_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidVolume_n");
+  const array<real64>& volume_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+  array<real64>& volume_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidVolume_n");
   volume_n = volume_np1;
 
-  const rArray1d& density_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  rArray1d& density_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
+  const array<real64>& density_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  array<real64>& density_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
   density_n = density_np1;
 
-  const rArray1d& pressure_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  rArray1d& pressure_n   = domain.m_feFaceManager.GetFieldData<realT>("Pressure_n");
+  const array<real64>& pressure_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  array<real64>& pressure_n   = domain.m_feFaceManager.GetFieldData<realT>("Pressure_n");
   pressure_n = pressure_np1;
 
-  const rArray1d& apertures_np1 = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
-  rArray1d& apertures_n   = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
+  const array<real64>& apertures_np1 = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
+  array<real64>& apertures_n   = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
   apertures_n = apertures_np1;
 
-//  const rArray1d& boundedApertures_np1 = domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture" );
-//  rArray1d& boundedApertures_n   = domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture_n" );
+//  const array<real64>& boundedApertures_np1 =
+// domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture" );
+//  array<real64>& boundedApertures_n   =
+// domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture_n" );
 //  boundedApertures_n = boundedApertures_np1;
 
-  const Array1dT<R1Tensor>& faceCenters_np1 = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-  Array1dT<R1Tensor>& faceCenters_n   = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr+std::string("_n") );
+  const array<R1Tensor>& faceCenters_np1 = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+  array<R1Tensor>& faceCenters_n   = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr+std::string("_n") );
   faceCenters_n = faceCenters_np1;
 
-  const Array1dT<R1Tensor>& edgeCenters_np1 = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
-  Array1dT<R1Tensor>& edgeCenters_n   = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr+std::string("_n"));
+  const array<R1Tensor>& edgeCenters_np1 = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
+  array<R1Tensor>& edgeCenters_n   = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr+std::string("_n"));
   edgeCenters_n = edgeCenters_np1;
 
-  const rArray1d& edgeLengths_np1 = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
-  rArray1d& edgeLengths_n   = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr+std::string("_n") );
+  const array<real64>& edgeLengths_np1 = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
+  array<real64>& edgeLengths_n   = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr+std::string("_n") );
   edgeLengths_n = edgeLengths_np1;
 
-//  for( lSet::const_iterator kf=m_faceSet.begin() ; kf!=m_faceSet.end() ; ++kf )
+//  for( lSet::const_iterator kf=m_faceSet.begin() ; kf!=m_faceSet.end() ; ++kf
+// )
   for( localIndex kf=0 ; kf<domain.m_feFaceManager.m_numFaces ; ++kf )
   {
     if( isZero(apertures_n[kf]) )
@@ -284,40 +303,42 @@ void ParallelPlateFlowSolverFV::FillTemporaryFields( PhysicalDomainT& domain )
 
 void ParallelPlateFlowSolverFV::OverwriteFieldsWithTemporaryFields( PhysicalDomainT& domain )
 {
-  rArray1d& mass_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  const rArray1d& mass_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidMass_n");
+  array<real64>& mass_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<real64>& mass_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidMass_n");
   mass_np1 = mass_n;
 
-  rArray1d& volume_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
-  const rArray1d& volume_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidVolume_n");
+  array<real64>& volume_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+  const array<real64>& volume_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidVolume_n");
   volume_np1 = volume_n;
 
-  rArray1d& density_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  const rArray1d& density_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
+  array<real64>& density_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  const array<real64>& density_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
   density_np1 = density_n;
 
-  rArray1d& pressure_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  const rArray1d& pressure_n   = domain.m_feFaceManager.GetFieldData<realT>("Pressure_n");
+  array<real64>& pressure_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  const array<real64>& pressure_n   = domain.m_feFaceManager.GetFieldData<realT>("Pressure_n");
   pressure_np1 = pressure_n;
 
-  rArray1d& apertures_np1 = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
-  const rArray1d& apertures_n   = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
+  array<real64>& apertures_np1 = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
+  const array<real64>& apertures_n   = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
   apertures_np1 = apertures_n;
 
-//  rArray1d& boundedApertures_np1 = domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture" );
-//  const rArray1d& boundedApertures_n   = domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture_n" );
+//  array<real64>& boundedApertures_np1 =
+// domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture" );
+//  const array<real64>& boundedApertures_n   =
+// domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture_n" );
 //  boundedApertures_np1 = boundedApertures_n;
 
-  Array1dT<R1Tensor>& faceCenters_np1 = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-  const Array1dT<R1Tensor>& faceCenters_n   = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr+std::string("_n") );
+  array<R1Tensor>& faceCenters_np1 = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+  const array<R1Tensor>& faceCenters_n   = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr+std::string("_n") );
   faceCenters_np1 = faceCenters_n;
 
-  Array1dT<R1Tensor>& edgeCenters_np1 = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
-  const Array1dT<R1Tensor>& edgeCenters_n   = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr+std::string("_n"));
+  array<R1Tensor>& edgeCenters_np1 = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
+  const array<R1Tensor>& edgeCenters_n   = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr+std::string("_n"));
   edgeCenters_np1 = edgeCenters_n;
 
-  rArray1d& edgeLengths_np1 = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
-  const rArray1d& edgeLengths_n   = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr+std::string("_n") );
+  array<real64>& edgeLengths_np1 = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
+  const array<real64>& edgeLengths_n   = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr+std::string("_n") );
   edgeLengths_np1 = edgeLengths_n;
 
 }
@@ -334,27 +355,31 @@ void ParallelPlateFlowSolverFV::Initialize( PhysicalDomainT& domain, SpatialPart
     m_numFaces = m_faceSet.size();
 
     // build face-dof map
-  
+
     lSet::const_iterator si=m_faceSet.begin();
-    for(localIndex i =0; i < m_numFaces; ++i, ++si){
+    for(localIndex i =0 ; i < m_numFaces ; ++i, ++si)
+    {
       localIndex f = *si;
       m_faceDofMap[f] = i;
     }
 
-    iArray1d& ffCount = domain.m_feEdgeManager.GetFieldData<int>("FlowFaceCount"); // debug
+    array<integer>& ffCount = domain.m_feEdgeManager.GetFieldData<int>("FlowFaceCount"); // debug
 
-  
+
     for( lSet::const_iterator kf=m_faceSet.begin() ; kf!=m_faceSet.end() ; ++kf )
     {
       localIndex numEdges = faceManager.m_toEdgesRelation[*kf].size();
-      for(localIndex a =0; a < numEdges; ++a){
+      for(localIndex a =0 ; a < numEdges ; ++a)
+      {
         localIndex eg = faceManager.m_toEdgesRelation[*kf][a];
 
         lSet& edgeFaces = edgeManager.m_toFacesRelation[eg];
         lArray1d edgeList;
 
-        for( lSet::iterator edgeFace=edgeFaces.begin() ; edgeFace!=edgeFaces.end() ; ++edgeFace ){
-          if(isMember(*edgeFace,m_faceDofMap)){
+        for( lSet::iterator edgeFace=edgeFaces.begin() ; edgeFace!=edgeFaces.end() ; ++edgeFace )
+        {
+          if(isMember(*edgeFace,m_faceDofMap))
+          {
             edgeList.push_back(*edgeFace);
           }
         }
@@ -368,7 +393,7 @@ void ParallelPlateFlowSolverFV::Initialize( PhysicalDomainT& domain, SpatialPart
     DefineFlowSets(domain);
   }
 
-  rArray1d& faceArea = domain.m_feFaceManager.GetFieldData<realT>("faceArea");
+  array<real64>& faceArea = domain.m_feFaceManager.GetFieldData<realT>("faceArea");
   for( localIndex kf=0 ; kf<domain.m_feFaceManager.DataLengths() ; ++kf )
   {
     faceArea[kf] = domain.m_feFaceManager.SurfaceArea( domain.m_feNodeManager, kf );
@@ -382,33 +407,32 @@ void ParallelPlateFlowSolverFV::Initialize( PhysicalDomainT& domain, SpatialPart
 
 
 
-
 void ParallelPlateFlowSolverFV::SetNumRowsAndTrilinosIndices( PhysicalDomainT& domain,
                                                               SpatialPartition& partition,
                                                               int& numLocalRows,
                                                               int& numGlobalRows,
-                                                              iArray1d& localIndices,
+                                                              array<integer>& localIndices,
                                                               int offset )
 {
 
-  iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  
+  array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+
   //if(m_doApertureUpdate) UpdateAperture(domain);
-  
-  
+
+
   // count local dof
   ///////////////////////////////
-  
+
   // local rows
   numLocalRows = 0;
-  
+
   for( lSet::const_iterator kf=m_faceSet.begin() ; kf!=m_faceSet.end() ; ++kf )
   {
     if( is_ghost[*kf] < 0 )
     {
       ++numLocalRows;
-    } 
+    }
   }
 
   // determine the global/local degree of freedom distribution.
@@ -418,20 +442,20 @@ void ParallelPlateFlowSolverFV::SetNumRowsAndTrilinosIndices( PhysicalDomainT& d
   std::vector<int> cum_global_rows(n_mpi_processes);
 
   epetra_comm->GatherAll(&numLocalRows,
-                        &gather.front(),
-                        1);
+                         &gather.front(),
+                         1);
 
   int first_local_row = 0;
   numGlobalRows = 0;
 
-  for( int p=0; p<n_mpi_processes; ++p)
+  for( int p=0 ; p<n_mpi_processes ; ++p)
   {
     numGlobalRows += gather[p];
     if(p<this_mpi_process)
       first_local_row += gather[p];
     cum_global_rows[p] = numGlobalRows;
   }
-  
+
   // create trilinos dof indexing
   //////////////////////////////////
   unsigned local_count = 0;
@@ -460,14 +484,14 @@ void ParallelPlateFlowSolverFV:: SetupSystem (PhysicalDomainT&  domain,
 {
   int n_local_rows;
   int n_global_rows;
-  iArray1d flowIndices;
+  array<integer> flowIndices;
   SetNumRowsAndTrilinosIndices( domain, partition,
                                 n_local_rows,
                                 n_global_rows,
                                 flowIndices,
                                 0 );
 
-  const iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  const array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
 
 
   #if USECPP11==1
@@ -485,14 +509,14 @@ void ParallelPlateFlowSolverFV:: SetupSystem (PhysicalDomainT&  domain,
   delete m_sparsity;
   m_rowMap = new Epetra_Map(n_global_rows,n_local_rows,0,*epetra_comm);
   m_sparsity = new Epetra_FECrsGraph(Copy,*m_rowMap,0);
-  
+
 #endif
-  iArray1d& edge_is_ghost = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<integer>& edge_is_ghost = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
 
   // loop over edges
   std::map<localIndex,lArray1d>::iterator itrEnd = m_edgesToFaces.end();
-  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin(); itr!=itrEnd  ; ++itr )
-  {    
+  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin() ; itr!=itrEnd ; ++itr )
+  {
     localIndex eg = itr->first;
     if( edge_is_ghost[eg] < 0 )
     {
@@ -500,23 +524,23 @@ void ParallelPlateFlowSolverFV:: SetupSystem (PhysicalDomainT&  domain,
       if( numFaces > 0)
       {
         std::vector<int> dofIndex (numFaces);
-        for(unsigned i=0; i<numFaces; ++i)
+        for(unsigned i=0 ; i<numFaces ; ++i)
         {
           localIndex kf = itr->second[i];
           dofIndex[i] = trilinos_index[kf];
         }
 
         m_sparsity->InsertGlobalIndices(dofIndex.size(),
-                                      &dofIndex.front(),
-                                      dofIndex.size(),
-                                      &dofIndex.front());
+                                        &dofIndex.front(),
+                                        dofIndex.size(),
+                                        &dofIndex.front());
       }
     }
   }
-  
+
   m_sparsity->GlobalAssemble();
   m_sparsity->OptimizeStorage();
-  
+
 
 #if USECPP11==1
   m_matrix   = std::make_shared<Epetra_FECrsMatrix>(Copy,*m_sparsity);
@@ -547,55 +571,59 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
 
   // basic face data ( = dof data for our problem)
 
-  iArray1d& trilinosIndexFace = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& trilinosIndexFace = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
 
-  iArray1d& edge_is_ghost       = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
-  iArray1d& face_is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  
-  const Array1dT<R1Tensor>& faceCenters_np1 = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-  const Array1dT<R1Tensor>& faceCenters_n   = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr+std::string("_n") );
+  array<integer>& edge_is_ghost       = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<integer>& face_is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+
+  const array<R1Tensor>& faceCenters_np1 = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+  const array<R1Tensor>& faceCenters_n   = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr+std::string("_n") );
 
 
-  const Array1dT<R1Tensor>& edgeCenters_np1 = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
-  const Array1dT<R1Tensor>& edgeCenters_n   = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr+std::string("_n"));
+  const array<R1Tensor>& edgeCenters_np1 = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
+  const array<R1Tensor>& edgeCenters_n   = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr+std::string("_n"));
 
-  const rArray1d& edgeLengths_np1 = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
-  rArray1d& edgeLengths_n   = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr+std::string("_n") );
+  const array<real64>& edgeLengths_np1 = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
+  array<real64>& edgeLengths_n   = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr+std::string("_n") );
 
-  const rArray1d& apertures_np1 = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
-  const rArray1d& apertures_n   = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
-  
-  const rArray1d& mass_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  const rArray1d& mass_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidMass_n");
+  const array<real64>& apertures_np1 = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
+  const array<real64>& apertures_n   = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
 
-  const rArray1d& volume_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
-//  const rArray1d& volume_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidVolume_n");
+  const array<real64>& mass_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<real64>& mass_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidMass_n");
 
-  const rArray1d&  faceArea = domain.m_feFaceManager.GetFieldData<realT>( "faceArea" );
+  const array<real64>& volume_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+//  const array<real64>& volume_n   =
+// domain.m_feFaceManager.GetFieldData<realT>("FluidVolume_n");
 
-  const rArray1d& density_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  const rArray1d& density_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
+  const array<real64>&  faceArea = domain.m_feFaceManager.GetFieldData<realT>( "faceArea" );
 
-  const rArray1d& pressure_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  const rArray1d& pressure_n   = domain.m_feFaceManager.GetFieldData<realT>("Pressure_n");
+  const array<real64>& density_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  const array<real64>& density_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
 
-  const rArray1d& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
+  const array<real64>& pressure_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  const array<real64>& pressure_n   = domain.m_feFaceManager.GetFieldData<realT>("Pressure_n");
 
-  rArray1d& edgePermeability = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
-  rArray1d& facePerm = domain.m_feFaceManager.GetFieldData<realT>("permeability");
+  const array<real64>& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
+
+  array<real64>& edgePermeability = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
+  array<real64>& facePerm = domain.m_feFaceManager.GetFieldData<realT>("permeability");
   facePerm = 0.0;
 
   const int dim = 3;
 
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  const iArray1d& flowEdgeType = domain.m_feEdgeManager.GetFieldData<int>("flowEdgeType");
-//  const OrderedVariableOneToManyRelation& childFaceIndex = domain.m_feFaceManager.GetVariableOneToManyMap( "childIndices" );
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  const array<integer>& flowEdgeType = domain.m_feEdgeManager.GetFieldData<int>("flowEdgeType");
+//  const OrderedVariableOneToManyRelation& childFaceIndex =
+// domain.m_feFaceManager.GetVariableOneToManyMap( "childIndices" );
 
 
-//  Epetra_FECrsMatrix& dRdDisp = epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement );
+//  Epetra_FECrsMatrix& dRdDisp = epetraSystem.GetMatrix(
+// EpetraBlock::fluidBlock, EpetraBlock::displacement );
 
 
-  // Calculate the self(i.e. diagonal) contributions of the mass Residual, and dRdM. Also find the maximum mass in the
+  // Calculate the self(i.e. diagonal) contributions of the mass Residual, and
+  // dRdM. Also find the maximum mass in the
   // problem for scaling of the residual norm.
   {
     localIndex numFaces = domain.m_feFaceManager.DataLengths();
@@ -632,16 +660,17 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
 
   }
 
-    CalculateApertureDerivatives( domain.m_feFaceManager,
-                                  domain.m_feNodeManager );
+  CalculateApertureDerivatives( domain.m_feFaceManager,
+                                domain.m_feNodeManager );
 
-   Epetra_IntSerialDenseVector  faceDofIndex ;
-   Epetra_SerialDenseVector     flowRHS     ;
-   Epetra_SerialDenseMatrix     flowMatrix  ;
+  Epetra_IntSerialDenseVector  faceDofIndex;
+  Epetra_SerialDenseVector     flowRHS;
+  Epetra_SerialDenseMatrix     flowMatrix;
 
-  // loop over edges and process all flow through edges between faces attached to this edge
+  // loop over edges and process all flow through edges between faces attached
+  // to this edge
   std::map<localIndex,lArray1d>::iterator itrEnd = m_edgesToFaces.end();
-  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin(); itr!=itrEnd  ; ++itr )
+  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin() ; itr!=itrEnd ; ++itr )
   {
     localIndex eg = itr->first;
     if( edge_is_ghost[eg] < 0  && flowEdgeType[eg] == 1 )
@@ -656,7 +685,7 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
       faceDofIndex.Resize(numFaces);
       flowRHS.Resize(numFaces);
       flowMatrix.Reshape(numFaces,numFaces);
-     
+
       flowRHS.Scale(0.0);
       flowMatrix.Scale(0.0);
 
@@ -664,11 +693,11 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
       Epetra_SerialDenseMatrix     matrix_10;
 
 
-      rArray1d dVr_du;
-      rArray1d dVs_du;
+      array<real64> dVr_du;
+      array<real64> dVs_du;
 
-      rArray1d dKappa_du_rterm;
-      rArray1d dKappa_du_sterm;
+      array<real64> dKappa_du_rterm;
+      array<real64> dKappa_du_sterm;
 
       for( unsigned int kr=0 ; kr<facelist.size() ; ++kr )
       {
@@ -704,13 +733,13 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
               }
 
               realT kappa_n  = TwoFacePermeability_FV( edgeCenters_n, edgeLengths_n,
-                                                          faceCenters_n, apertures_n,
-                                                          eg, r_eff, s_eff,
-                                                          NULL, NULL, NULL );
+                                                       faceCenters_n, apertures_n,
+                                                       eg, r_eff, s_eff,
+                                                       NULL, NULL, NULL );
 
               realT kappa_np1  = TwoFacePermeability_FV( edgeCenters_np1, edgeLengths_np1,
-                                                      faceCenters_np1, apertures_np1,
-                                                      eg, r_eff, s_eff, &m_dwdu, &dKappa_du_rterm, &dKappa_du_sterm );
+                                                         faceCenters_np1, apertures_np1,
+                                                         eg, r_eff, s_eff, &m_dwdu, &dKappa_du_rterm, &dKappa_du_sterm );
 
               if( m_permeabilityUpdateOption == 0 )
               {
@@ -723,22 +752,20 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
 
 
 
-
-
-
               // set variables for upwinding
 
-              const localIndex ku_n   =   pressure_n[r] > pressure_n[s]   ? kr : ks ;
-//              const localIndex ku_np1 = pressure_np1[r] > pressure_np1[s] ? kr : ks ;
-              const localIndex ku_np1 = ku_n ;
+              const localIndex ku_n   =   pressure_n[r] > pressure_n[s]   ? kr : ks;
+//              const localIndex ku_np1 = pressure_np1[r] > pressure_np1[s] ? kr
+// : ks ;
+              const localIndex ku_np1 = ku_n;
 
               const localIndex u_n   = facelist[ku_n];
               const localIndex u_np1 = facelist[ku_np1];
 
-              const realT rho_n   = density_n[u_n] ;
-              const realT rho_np1 = density_np1[u_np1] ;
+              const realT rho_n   = density_n[u_n];
+              const realT rho_np1 = density_np1[u_np1];
 
-              const realT drho_dm = 1.0 / volume_np1[u_np1] ;
+              const realT drho_dm = 1.0 / volume_np1[u_np1];
 
               realT area_s = faceArea[s];
 
@@ -747,13 +774,14 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
               const realT dp_np1 = pressure_np1[s] - pressure_np1[r];
 
 
-              // while adding contributions, we are doing this for a face pair (s,r) on the residual for r.s
+              // while adding contributions, we are doing this for a face pair
+              // (s,r) on the residual for r.s
               // add the contributions to the residual
 
               const realT gamma = m_gamma;
 
               realT R_sr = ( ( 1.0 - m_phi ) * kappa_n * rho_n * dp_n
-                           + m_phi * ( kappa_np1 * rho_np1 + gamma ) * dp_np1 ) * dt;
+                             + m_phi * ( kappa_np1 * rho_np1 + gamma ) * dp_np1 ) * dt;
               flowRHS[kr] -=  R_sr;
               flowRHS[ks] -= -R_sr;
 
@@ -766,9 +794,9 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
 
 
               // when q=r
-              const realT dRdm_dpr = - m_phi * ( kappa_np1 * rho_np1 + gamma ) * dPdM[r] * dt ;
+              const realT dRdm_dpr = -m_phi * ( kappa_np1 * rho_np1 + gamma ) * dPdM[r] * dt;
               // when q=s
-              const realT dRdm_dps =   m_phi * ( kappa_np1 * rho_np1 + gamma ) * dPdM[s] * dt ;
+              const realT dRdm_dps =   m_phi * ( kappa_np1 * rho_np1 + gamma ) * dPdM[s] * dt;
 
               flowMatrix(kr,kr) +=  dRdm_dpr;
               flowMatrix(kr,ks) +=  dRdm_dps;
@@ -780,8 +808,6 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
 
 
 
-
-
               if( epetraSystem.GetBlockID(EpetraBlock::solidBlock) != -1 )
               {
                 // form coupled matrix for flow DOF's wrt displacement DOF's
@@ -790,14 +816,14 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
                   // calculate displacement DOF for these two faces
                   const localIndex rnodes = domain.m_feFaceManager.m_toNodesRelation[r].size();
                   const localIndex snodes = domain.m_feFaceManager.m_toNodesRelation[s].size();
-                  rArray1d drhoRdu = m_dwdu(r);
+                  array<real64> drhoRdu = m_dwdu(r);
                   drhoRdu *= -density_np1[r]/volume_np1[r]*area_r * m_dwdw(r);
-                  rArray1d drhoSdu = m_dwdu(s);
+                  array<real64> drhoSdu = m_dwdu(s);
                   drhoSdu *= -density_np1[s]/volume_np1[s]*area_s * m_dwdw(s);
 
 
-                  const realT dPdrho_r = dPdM[r] * volume_np1[r] ;
-                  const realT dPdrho_s = dPdM[s] * volume_np1[s] ;
+                  const realT dPdrho_r = dPdM[r] * volume_np1[r];
+                  const realT dPdrho_s = dPdM[s] * volume_np1[s];
 
                   Epetra_IntSerialDenseVector  dispSubFaceDofIndex(2);
                   dispSubFaceDofIndex(0) = trilinosIndexFace[r];
@@ -812,7 +838,7 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
                   // loop over the nodes on the r-face
                   for( localIndex a=0 ; a<rnodes ; ++a )
                   {
-                    int rnodeDofIndex[2] ;
+                    int rnodeDofIndex[2];
                     faceNodePairIndexing( a, dim, rnodeDofIndex);
                     for( int i=0 ; i<dim ; ++i )
                     {
@@ -823,16 +849,17 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
 
                         // r-face residual derivative
                         realT dRrdu = m_phi * ( rho_np1*dp_np1*dKappa_du_rterm(ai)
-                                              + ( kappa_np1*rho_np1 + gamma ) *(-dPdrho_r*drhoRdu(ai) ) ) * dt;
+                                                + ( kappa_np1*rho_np1 + gamma ) *(-dPdrho_r*drhoRdu(ai) ) ) * dt;
 
-                        // upwind density derivative only applied if r is the upwind face.
+                        // upwind density derivative only applied if r is the
+                        // upwind face.
                         if( ku_np1==kr )
                         {
                           dRrdu += m_phi * ( kappa_np1*drhoRdu(ai) * dp_np1 ) * dt;
                         }
 
                         // s-face residual derivative
-                        realT dRsdu = - dRrdu;
+                        realT dRsdu = -dRrdu;
 
                         matrix_10(0,ai) += dRrdu;
                         matrix_10(1,ai) += dRsdu;
@@ -844,7 +871,7 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
                   // loop over the nodes on the s-face
                   for( localIndex a=0 ; a<snodes ; ++a )
                   {
-                    int snodeDofIndex[2] ;
+                    int snodeDofIndex[2];
                     faceNodePairIndexing( a, dim, snodeDofIndex);
                     for( int i=0 ; i<dim ; ++i )
                     {
@@ -856,16 +883,17 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
 
                         // r-face residual derivative
                         realT dRrdu = m_phi * ( rho_np1*dp_np1*dKappa_du_sterm(ai)
-                                              + ( kappa_np1*rho_np1 + gamma )*(dPdrho_s*drhoSdu(ai) ) ) * dt;
+                                                + ( kappa_np1*rho_np1 + gamma )*(dPdrho_s*drhoSdu(ai) ) ) * dt;
 
-                        // upwind density derivative only applied if r is the upwind face.
+                        // upwind density derivative only applied if r is the
+                        // upwind face.
                         if( ku_np1==ks )
                         {
                           dRrdu += m_phi * ( kappa_np1*drhoSdu(ai) * dp_np1 ) * dt;
                         }
 
                         // s-face residual derivative
-                        realT dRsdu = - dRrdu;
+                        realT dRsdu = -dRrdu;
 
                         matrix_10(0,aiOffset) += dRrdu;
                         matrix_10(1,aiOffset) += dRsdu;
@@ -876,7 +904,8 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
 
 
 
-                  epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock )->SumIntoGlobalValues(dispSubFaceDofIndex, displacementDofIndex, matrix_10);
+                  epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock )->SumIntoGlobalValues(dispSubFaceDofIndex, displacementDofIndex,
+                                                                                                                  matrix_10);
                 }
               }
 
@@ -885,69 +914,76 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
         }
       }
 
-      
+
       m_matrix->SumIntoGlobalValues(faceDofIndex, flowMatrix);
       m_rhs->SumIntoGlobalValues(faceDofIndex,flowRHS);
 
     } // ghost edge
   } // edge loop
-  
+
 
   // boundary conditions
-//  ApplyBoundaryCondition<realT>(this, &ParallelPlateFlowSolverFV::PressureBoundaryCondition,
-//                                domain, domain.m_feEdgeManager, std::string(Field<FieldInfo::pressure>::Name()),
+//  ApplyBoundaryCondition<realT>(this,
+// &ParallelPlateFlowSolverFV::PressureBoundaryCondition,
+//                                domain, domain.m_feEdgeManager,
+// std::string(Field<FieldInfo::pressure>::Name()),
 //                                time, dt, flowDofOffset );
 
   ApplyBoundaryCondition<realT>(this, &ParallelPlateFlowSolverFV::MassRateBC,
-                                   domain, domain.m_feFaceManager,
-                                   "MassRate", time + 0.5*dt, dt );
+                                domain, domain.m_feFaceManager,
+                                "MassRate", time + 0.5*dt, dt );
 
   ApplyBoundaryCondition<realT>(this, &ParallelPlateFlowSolverFV::VolumeRateBC,
-                                   domain, domain.m_feFaceManager,
-                                   "VolumeRate", time + 0.5*dt, dt );
+                                domain, domain.m_feFaceManager,
+                                "VolumeRate", time + 0.5*dt, dt );
 
   ApplyBoundaryCondition<realT>(this, &ParallelPlateFlowSolverFV::MassBC,
-                                   domain, domain.m_feFaceManager,
-                                   Field<FieldInfo::mass>::Name(), time + dt );
+                                domain, domain.m_feFaceManager,
+                                Field<FieldInfo::mass>::Name(), time + dt );
 #ifdef SRC_EXTERNAL
   ApplyBoundaryCondition<realT>(this, &ParallelPlateFlowSolverFV::FaceFluxBoundaryCondition,
-                                domain, domain.m_feFaceManager, PerforatedCasedWellboreBoundaryCondition::BoundaryConditionName() , time, dt );
+                                domain, domain.m_feFaceManager, PerforatedCasedWellboreBoundaryCondition::BoundaryConditionName(), time, dt );
 #endif
 
   ApplyBoundaryCondition<realT>(this, &ParallelPlateFlowSolverFV::FaceFluxBoundaryCondition,
-                                  domain, domain.m_feFaceManager,"combinedFlowRate", time, dt );
+                                domain, domain.m_feFaceManager,"combinedFlowRate", time, dt );
 
   m_matrix->GlobalAssemble(true);
   m_rhs->GlobalAssemble();
 
 
   if( epetraSystem.GetBlockID(EpetraBlock::solidBlock) != -1 )
-  if( epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock ) )
-  {
-//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement )->Print(std::cout);
+    if( epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock ) )
+    {
+//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement
+// )->Print(std::cout);
 
 #if USECPP11==1
-    const std::shared_ptr<Epetra_Map> dispRowMap = epetraSystem.GetRowMap(EpetraBlock::solidBlock);
-    const std::shared_ptr<Epetra_Map> flowRowMap = epetraSystem.GetRowMap(EpetraBlock::fluidBlock);
+      const std::shared_ptr<Epetra_Map> dispRowMap = epetraSystem.GetRowMap(EpetraBlock::solidBlock);
+      const std::shared_ptr<Epetra_Map> flowRowMap = epetraSystem.GetRowMap(EpetraBlock::fluidBlock);
 #else
-    const Epetra_Map* const dispRowMap = epetraSystem.GetRowMap(EpetraBlock::solidBlock);
-    const Epetra_Map* const flowRowMap = epetraSystem.GetRowMap(EpetraBlock::fluidBlock);
+      const Epetra_Map* const dispRowMap = epetraSystem.GetRowMap(EpetraBlock::solidBlock);
+      const Epetra_Map* const flowRowMap = epetraSystem.GetRowMap(EpetraBlock::fluidBlock);
 #endif
-//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement )->Print(std::cout);
-    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock )->GlobalAssemble(*dispRowMap,*flowRowMap);
-//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement )->Print(std::cout);
-  }
+//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement
+// )->Print(std::cout);
+      epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock )->GlobalAssemble(*dispRowMap,*flowRowMap);
+//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement
+// )->Print(std::cout);
+    }
 
 
 //  m_rhs->Print(std::cout);
 //  m_matrix->Print( std::cout);
 //  std::cout << m_matrix->NormInf() << std::endl;
 //  EpetraExt::RowMatrixToMatlabFile("system-matrix.dat",*(m_matrix.get()));
-  //exit(0);
+//exit(0);
 
   {
-//    std::shared_ptr<Epetra_FECrsMatrix> scratch = epetraSystem.GetScratch( EpetraBlock::fluidBlock, EpetraBlock::fluidBlock );
-//    scratch = std::make_shared<Epetra_FECrsMatrix>( epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::fluidBlock ) );
+//    std::shared_ptr<Epetra_FECrsMatrix> scratch = epetraSystem.GetScratch(
+// EpetraBlock::fluidBlock, EpetraBlock::fluidBlock );
+//    scratch = std::make_shared<Epetra_FECrsMatrix>( epetraSystem.GetMatrix(
+// EpetraBlock::fluidBlock, EpetraBlock::fluidBlock ) );
 
   }
 
@@ -957,55 +993,58 @@ realT ParallelPlateFlowSolverFV :: Assemble ( PhysicalDomainT&  domain,
 }
 
 realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
-                                              Epetra_System& epetraSystem,
-                                              const realT& time,
-                                              const realT& dt )
+                                                Epetra_System& epetraSystem,
+                                                const realT& time,
+                                                const realT& dt )
 {
   realT maxMassScale = 0.0;
   // (re-)init linear system
 
   // basic face data ( = dof data for our problem)
 
-  iArray1d& trilinosIndexFace = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& trilinosIndexFace = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
 
-  iArray1d& edge_is_ghost       = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
-  iArray1d& face_is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  array<integer>& edge_is_ghost       = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<integer>& face_is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
 
-//  const Array1dT<R1Tensor>& faceCenters_np1 = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-  const Array1dT<R1Tensor>& faceCenters_n   = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr+std::string("_n") );
+//  const array<R1Tensor>& faceCenters_np1 =
+// domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+  const array<R1Tensor>& faceCenters_n   = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr+std::string("_n") );
 
 
-//  const Array1dT<R1Tensor>& edgeCenters_np1 = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
-  const Array1dT<R1Tensor>& edgeCenters_n   = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr+std::string("_n"));
+//  const array<R1Tensor>& edgeCenters_np1 =
+// domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
+  const array<R1Tensor>& edgeCenters_n   = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr+std::string("_n"));
 
-  const rArray1d& edgeLengths_np1 = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
-  rArray1d& edgeLengths_n   = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr+std::string("_n") );
+  const array<real64>& edgeLengths_np1 = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
+  array<real64>& edgeLengths_n   = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr+std::string("_n") );
 
-  const rArray1d& apertures_np1 = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
-  const rArray1d& apertures_n   = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
+  const array<real64>& apertures_np1 = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
+  const array<real64>& apertures_n   = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
 
-  const rArray1d& mass_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  const rArray1d& mass_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidMass_n");
+  const array<real64>& mass_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<real64>& mass_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidMass_n");
 
-  const rArray1d& volume_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
-//  const rArray1d& volume_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidVolume_n");
+  const array<real64>& volume_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+//  const array<real64>& volume_n   =
+// domain.m_feFaceManager.GetFieldData<realT>("FluidVolume_n");
 
-  const rArray1d& density_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  const rArray1d& density_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
+  const array<real64>& density_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  const array<real64>& density_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
 
-  const rArray1d& pressure_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  const rArray1d& pressure_n   = domain.m_feFaceManager.GetFieldData<realT>("Pressure_n");
+  const array<real64>& pressure_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  const array<real64>& pressure_n   = domain.m_feFaceManager.GetFieldData<realT>("Pressure_n");
 
-  const rArray1d& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
+  const array<real64>& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
 
-  rArray1d& edgePermeability = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
+  array<real64>& edgePermeability = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
 
-  const rArray1d& faceArea = domain.m_feFaceManager.GetFieldData<realT>("faceArea");
+  const array<real64>& faceArea = domain.m_feFaceManager.GetFieldData<realT>("faceArea");
 
   const int dim = 3;
 
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  const iArray1d& flowEdgeType = domain.m_feEdgeManager.GetFieldData<int>("flowEdgeType");
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  const array<integer>& flowEdgeType = domain.m_feEdgeManager.GetFieldData<int>("flowEdgeType");
 
   const bool displacementCouplingFlag = epetraSystem.HasMatrixBlock( EpetraBlock::fluidBlock, EpetraBlock::solidBlock );
 
@@ -1025,7 +1064,8 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
                                 domain.m_feNodeManager );
 
 
-  // Calculate the self(i.e. diagonal) contributions of the mass Residual, and dRdM. Also find the maximum mass in the
+  // Calculate the self(i.e. diagonal) contributions of the mass Residual, and
+  // dRdM. Also find the maximum mass in the
   // problem for scaling of the residual norm.
   {
     localIndex numFaces = domain.m_feFaceManager.DataLengths();
@@ -1057,9 +1097,10 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
 
 
 
-  // loop over edges and process all flow through edges between faces attached to this edge
+  // loop over edges and process all flow through edges between faces attached
+  // to this edge
   std::map<localIndex,lArray1d>::iterator itrEnd = m_edgesToFaces.end();
-  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin(); itr!=itrEnd  ; ++itr )
+  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin() ; itr!=itrEnd ; ++itr )
   {
     localIndex eg = itr->first;
     if( edge_is_ghost[eg] < 0  && flowEdgeType[eg] == 1 )
@@ -1081,11 +1122,11 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
       Epetra_SerialDenseMatrix     matrix_10;
 
 
-      rArray1d dVr_du;
-      rArray1d dVs_du;
+      array<real64> dVr_du;
+      array<real64> dVs_du;
 
-      rArray1d dKappa_du_rterm;
-      rArray1d dKappa_du_sterm;
+      array<real64> dKappa_du_rterm;
+      array<real64> dKappa_du_sterm;
 
       for( unsigned int kr=0 ; kr<facelist.size() ; ++kr )
       {
@@ -1095,7 +1136,8 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
 
           faceDofIndex[kr] = trilinosIndexFace[r];
 
-//          realT area_r = domain.m_feFaceManager.SurfaceArea( domain.m_feNodeManager, r, false );
+//          realT area_r = domain.m_feFaceManager.SurfaceArea(
+// domain.m_feNodeManager, r, false );
 
           for( unsigned int ks=kr+1 ; ks<facelist.size() ; ++ks )
           {
@@ -1108,18 +1150,18 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
               localIndex s_eff = s;
 
               /*
-              if( m_negPressAperFix == 1 )
-              {
-                if( pressure_n[r] < 0 && apertures_n[s] > apertures_n[r] )
-                {
+                 if( m_negPressAperFix == 1 )
+                 {
+                 if( pressure_n[r] < 0 && apertures_n[s] > apertures_n[r] )
+                 {
                   r_eff = s;
-                }
-                if( pressure_n[s] < 0 && apertures_n[r] > apertures_n[s] )
-                {
+                 }
+                 if( pressure_n[s] < 0 && apertures_n[r] > apertures_n[s] )
+                 {
                   s_eff = r;
-                }
-              }
-              */
+                 }
+                 }
+               */
 
               if( edgeLengths_n[eg] == 0.0 )
               {
@@ -1179,10 +1221,11 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
               const realT rho_n = 0.5 * (density_n[r] + density_n[s]);
               const realT rho_np1 =  0.5 * (density_n[r] + density_n[s]);
 
-              const realT drho_dm_r = 0.5 / volume_np1[r] ;
-              const realT drho_dm_s = 0.5 / volume_np1[s] ;
+              const realT drho_dm_r = 0.5 / volume_np1[r];
+              const realT drho_dm_s = 0.5 / volume_np1[s];
 
-              // while adding contributions, we are doing this for a face pair (s,r) on the residual for r.s
+              // while adding contributions, we are doing this for a face pair
+              // (s,r) on the residual for r.s
               // add the contributions to the residual
               realT R_sr = ( ( 1.0 - m_phi ) * kappa * rho_n * dp_n + m_phi * kappa * rho_np1 * dp_np1 ) * dt;
               flowRHS[kr] -=  R_sr;
@@ -1203,14 +1246,14 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
                 // calculate displacement DOF for these two faces
                 const localIndex rnodes = domain.m_feFaceManager.m_toNodesRelation[r].size();
                 const localIndex snodes = domain.m_feFaceManager.m_toNodesRelation[s].size();
-                rArray1d drhoRdu = m_dwdu(r);
+                array<real64> drhoRdu = m_dwdu(r);
                 drhoRdu *= -0.5 * density_np1[r]/volume_np1[r]*faceArea[r] * m_dwdw(r);
-                rArray1d drhoSdu = m_dwdu(s);
+                array<real64> drhoSdu = m_dwdu(s);
                 drhoSdu *= -0.5 * density_np1[s]/volume_np1[s]*faceArea[s] * m_dwdw(s);
 
 
-                const realT dPdrho_r = dPdM[r] * volume_np1[r] ;
-                const realT dPdrho_s = dPdM[s] * volume_np1[s] ;
+                const realT dPdrho_r = dPdM[r] * volume_np1[r];
+                const realT dPdrho_s = dPdM[s] * volume_np1[s];
 
                 Epetra_IntSerialDenseVector  dispSubFaceDofIndex(2);
                 dispSubFaceDofIndex(0) = trilinosIndexFace[r];
@@ -1221,10 +1264,10 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
                 matrix_10.Scale(0.0);
 
 
-                  // loop over the nodes on the r-face
+                // loop over the nodes on the r-face
                 for( localIndex a=0 ; a<rnodes ; ++a )
                 {
-                  int rnodeDofIndex[2] ;
+                  int rnodeDofIndex[2];
                   faceNodePairIndexing( a, dim, rnodeDofIndex);
                   for( int i=0 ; i<dim ; ++i )
                   {
@@ -1235,11 +1278,11 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
 
                       // r-face residual derivative
                       realT dRrdu = m_phi * ( rho_np1*dp_np1*dKappa_du_rterm(ai)
-                                            + kappa*rho_np1*(-dPdrho_r*drhoRdu(ai) )
-                                            + kappa*drhoRdu(ai) * dp_np1 ) * dt;
+                                              + kappa*rho_np1*(-dPdrho_r*drhoRdu(ai) )
+                                              + kappa*drhoRdu(ai) * dp_np1 ) * dt;
 
                       // s-face residual derivative
-                      realT dRsdu = - dRrdu;
+                      realT dRsdu = -dRrdu;
 
                       matrix_10(0,ai) += dRrdu;
                       matrix_10(1,ai) += dRsdu;
@@ -1251,7 +1294,7 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
                 // loop over the nodes on the s-face
                 for( localIndex a=0 ; a<snodes ; ++a )
                 {
-                  int snodeDofIndex[2] ;
+                  int snodeDofIndex[2];
                   faceNodePairIndexing( a, dim, snodeDofIndex);
                   for( int i=0 ; i<dim ; ++i )
                   {
@@ -1263,11 +1306,11 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
 
                       // r-face residual derivative
                       realT dRrdu = m_phi * ( rho_np1*dp_np1*dKappa_du_sterm(ai)
-                                            + kappa*rho_np1*(dPdrho_s*drhoSdu(ai) )
-                                            + kappa*drhoSdu(ai) * dp_np1 ) * dt;
+                                              + kappa*rho_np1*(dPdrho_s*drhoSdu(ai) )
+                                              + kappa*drhoSdu(ai) * dp_np1 ) * dt;
 
                       // s-face residual derivative
-                      realT dRsdu = - dRrdu;
+                      realT dRsdu = -dRrdu;
 
                       matrix_10(0,aiOffset) += dRrdu;
                       matrix_10(1,aiOffset) += dRsdu;
@@ -1275,7 +1318,8 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
                     }
                   }
                 }
-                epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock )->SumIntoGlobalValues(dispSubFaceDofIndex, displacementDofIndex, matrix_10);
+                epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock )->SumIntoGlobalValues(dispSubFaceDofIndex, displacementDofIndex,
+                                                                                                                matrix_10);
               }
             }
           }
@@ -1291,8 +1335,10 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
 
 
   // boundary conditions
-//  ApplyBoundaryCondition<realT>(this, &ParallelPlateFlowSolverFV::PressureBoundaryCondition,
-//                                domain, domain.m_feEdgeManager, std::string(Field<FieldInfo::pressure>::Name()),
+//  ApplyBoundaryCondition<realT>(this,
+// &ParallelPlateFlowSolverFV::PressureBoundaryCondition,
+//                                domain, domain.m_feEdgeManager,
+// std::string(Field<FieldInfo::pressure>::Name()),
 //                                time, dt, flowDofOffset );
 
   ApplyBoundaryCondition<R1Tensor>(this, &ParallelPlateFlowSolverFV::MassRateBC,
@@ -1308,32 +1354,37 @@ realT ParallelPlateFlowSolverFV :: AssembleCD ( PhysicalDomainT&  domain,
 
 
   if( epetraSystem.GetBlockID(EpetraBlock::solidBlock) != -1 )
-  if( epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock ) )
-  {
-//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement )->Print(std::cout);
+    if( epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock ) )
+    {
+//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement
+// )->Print(std::cout);
 
 #if USECPP11==1
-    const std::shared_ptr<Epetra_Map> dispRowMap = epetraSystem.GetRowMap(EpetraBlock::solidBlock);
-    const std::shared_ptr<Epetra_Map> flowRowMap = epetraSystem.GetRowMap(EpetraBlock::fluidBlock);
+      const std::shared_ptr<Epetra_Map> dispRowMap = epetraSystem.GetRowMap(EpetraBlock::solidBlock);
+      const std::shared_ptr<Epetra_Map> flowRowMap = epetraSystem.GetRowMap(EpetraBlock::fluidBlock);
 #else
-    const Epetra_Map* const dispRowMap = epetraSystem.GetRowMap(EpetraBlock::solidBlock);
-    const Epetra_Map* const flowRowMap = epetraSystem.GetRowMap(EpetraBlock::fluidBlock);
+      const Epetra_Map* const dispRowMap = epetraSystem.GetRowMap(EpetraBlock::solidBlock);
+      const Epetra_Map* const flowRowMap = epetraSystem.GetRowMap(EpetraBlock::fluidBlock);
 #endif
-//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement )->Print(std::cout);
-    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock )->GlobalAssemble(*dispRowMap,*flowRowMap);
-//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement )->Print(std::cout);
-  }
+//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement
+// )->Print(std::cout);
+      epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::solidBlock )->GlobalAssemble(*dispRowMap,*flowRowMap);
+//    epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::displacement
+// )->Print(std::cout);
+    }
 
 
 //  m_rhs->Print(std::cout);
 //  m_matrix->Print( std::cout);
 //  std::cout << m_matrix->NormInf() << std::endl;
 //  EpetraExt::RowMatrixToMatlabFile("system-matrix.dat",*(m_matrix.get()));
-  //exit(0);
+//exit(0);
 
   {
-//    std::shared_ptr<Epetra_FECrsMatrix> scratch = epetraSystem.GetScratch( EpetraBlock::fluidBlock, EpetraBlock::fluidBlock );
-//    scratch = std::make_shared<Epetra_FECrsMatrix>( epetraSystem.GetMatrix( EpetraBlock::fluidBlock, EpetraBlock::fluidBlock ) );
+//    std::shared_ptr<Epetra_FECrsMatrix> scratch = epetraSystem.GetScratch(
+// EpetraBlock::fluidBlock, EpetraBlock::fluidBlock );
+//    scratch = std::make_shared<Epetra_FECrsMatrix>( epetraSystem.GetMatrix(
+// EpetraBlock::fluidBlock, EpetraBlock::fluidBlock ) );
 
   }
 
@@ -1351,12 +1402,12 @@ void ParallelPlateFlowSolverFV::MassBC( PhysicalDomainT& domain,
                                         realT time)
 {
 
-  realT LARGE ;
+  realT LARGE;
 
-  iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& faceGhostRank  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  const rArray1d& mass_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& faceGhostRank  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  const array<real64>& mass_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
 
 
   Epetra_IntSerialDenseVector  face_dof(1);
@@ -1395,9 +1446,9 @@ void ParallelPlateFlowSolverFV::MassRateBC( PhysicalDomainT& domain,
 {
 
 
-  iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& faceGhostRank  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& faceGhostRank  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
 
 
   Epetra_IntSerialDenseVector  face_dof(1);
@@ -1410,7 +1461,7 @@ void ParallelPlateFlowSolverFV::MassRateBC( PhysicalDomainT& domain,
     if( faceGhostRank[*faceID] < 0 && flowFaceType[*faceID]== 1 )
     {
 
-      const realT massRate = bc->GetValue(domain.m_feFaceManager,faceID,time) ;
+      const realT massRate = bc->GetValue(domain.m_feFaceManager,faceID,time);
       face_rhs(0) = -massRate * dt;
       m_rhs->SumIntoGlobalValues(face_dof, face_rhs);
 
@@ -1428,10 +1479,10 @@ void ParallelPlateFlowSolverFV::VolumeRateBC( PhysicalDomainT& domain,
 {
 
 
-  iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
-  iArray1d& faceGhostRank  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  const rArray1d& density   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
+  array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& faceGhostRank  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  const array<real64>& density   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
 
   Epetra_IntSerialDenseVector  face_dof(1);
   Epetra_SerialDenseVector     face_rhs(1);
@@ -1443,8 +1494,8 @@ void ParallelPlateFlowSolverFV::VolumeRateBC( PhysicalDomainT& domain,
     if( faceGhostRank[*faceID] < 0 && flowFaceType[*faceID]== 1 )
     {
 
-      const realT volumeRate = bc->GetValue(domain.m_feFaceManager,faceID,time) ;
-      const realT massRate = volumeRate * density[*faceID] ;
+      const realT volumeRate = bc->GetValue(domain.m_feFaceManager,faceID,time);
+      const realT massRate = volumeRate * density[*faceID];
       face_rhs(0) = -massRate * dt;
       m_rhs->SumIntoGlobalValues(face_dof, face_rhs);
 
@@ -1453,16 +1504,16 @@ void ParallelPlateFlowSolverFV::VolumeRateBC( PhysicalDomainT& domain,
 }
 
 
-realT ParallelPlateFlowSolverFV::TwoFacePermeability_FV(const Array1dT<R1Tensor>& edgeCenters,
-                                                           const rArray1d& edgeLengths,
-                                                           const Array1dT<R1Tensor>& faceCenters,
-                                                           const rArray1d& apertures,
-                                                           const localIndex eg,
-                                                           const localIndex r,
-                                                           const localIndex s,
-                                                           const Array1dT<rArray1d>* const dwdu,
-                                                           rArray1d* const dkdu_r,
-                                                           rArray1d* const dkdu_s)
+realT ParallelPlateFlowSolverFV::TwoFacePermeability_FV(const array<R1Tensor>& edgeCenters,
+                                                        const array<real64>& edgeLengths,
+                                                        const array<R1Tensor>& faceCenters,
+                                                        const array<real64>& apertures,
+                                                        const localIndex eg,
+                                                        const localIndex r,
+                                                        const localIndex s,
+                                                        const array<array<real64> >* const dwdu,
+                                                        array<real64>* const dkdu_r,
+                                                        array<real64>* const dkdu_s)
 {
 
   R1Tensor edgeCenter = edgeCenters[eg];
@@ -1488,10 +1539,10 @@ realT ParallelPlateFlowSolverFV::TwoFacePermeability_FV(const Array1dT<R1Tensor>
     {
       const realT denom = lr.L2_Norm()*ws*ws*ws+ls.L2_Norm()*wr*wr*wr;
 
-      *dkdu_r  = (*dwdu)[r] ;
+      *dkdu_r  = (*dwdu)[r];
       *dkdu_r *= lr.L2_Norm()*ws*ws*ws/wr;
 
-      *dkdu_s  = (*dwdu)[s] ;
+      *dkdu_s  = (*dwdu)[s];
       *dkdu_s *= ls.L2_Norm()*wr*wr*wr/ws;
 
       *dkdu_r *= 3 * kappa / denom  * BoundedApertureDerivative(apertures[r]);
@@ -1505,73 +1556,79 @@ realT ParallelPlateFlowSolverFV::TwoFacePermeability_FV(const Array1dT<R1Tensor>
 
 /// Apply a pressure boundary condition to a given set of edges
 void ParallelPlateFlowSolverFV::PressureBoundaryCondition( PhysicalDomainT& domain,
-                                                           ObjectDataStructureBaseT& object ,
+                                                           ObjectDataStructureBaseT& object,
                                                            BoundaryConditionBase* const bc,
                                                            const lSet& set,
                                                            const realT time,
                                                            const realT dt,
                                                            const int dofOffset )
 {
- 
-
-  iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
-
-  iArray1d& edge_is_ghost = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
-  
-  const Array1dT<R1Tensor>& faceCenters_n  = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr+std::string("_n") );
-  const Array1dT<R1Tensor>& faceCenters_np1  = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-
-//  const rArray1d& faceFluidVolume_n  = domain.m_feFaceManager.GetFieldData<realT>( "FluidVolume_n" );
-  const rArray1d& faceFluidVolume_np1  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
-
-  const Array1dT<R1Tensor>& edgeCenters_n  = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr+std::string("_n") );
-  const Array1dT<R1Tensor>& edgeCenters_np1  = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
-
-  const rArray1d& edgeLengths_n  = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr+std::string("_n") );
-  const rArray1d& edgeLengths_np1  = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
-
-  const rArray1d& apertures_n  = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
-  const rArray1d& apertures_np1  = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
-
-//  const rArray1d& boundedApertures_n  = domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture_n" );
-//  const rArray1d& boundedApertures_np1  = domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture" );
-
-//  const rArray1d& faceFluidMass_np1  = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
 
 
-  const rArray1d& faceFluidPressure_n   = domain.m_feFaceManager.GetFieldData<realT>("Pressure_n");
-  const rArray1d& faceFluidPressure_np1  = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
 
-  const rArray1d& faceDensity_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
-  const rArray1d& faceDensity_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  array<integer>& edge_is_ghost = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
 
-  const rArray1d& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
+  const array<R1Tensor>& faceCenters_n  = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr+std::string("_n") );
+  const array<R1Tensor>& faceCenters_np1  = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
 
-  rArray1d& edgePermeability = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
+//  const array<real64>& faceFluidVolume_n  =
+// domain.m_feFaceManager.GetFieldData<realT>( "FluidVolume_n" );
+  const array<real64>& faceFluidVolume_np1  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 
-//  rArray1d& edgePermeabilities = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
- 
+  const array<R1Tensor>& edgeCenters_n  = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr+std::string("_n") );
+  const array<R1Tensor>& edgeCenters_np1  = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
+
+  const array<real64>& edgeLengths_n  = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr+std::string("_n") );
+  const array<real64>& edgeLengths_np1  = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
+
+  const array<real64>& apertures_n  = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
+  const array<real64>& apertures_np1  = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
+
+//  const array<real64>& boundedApertures_n  =
+// domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture_n" );
+//  const array<real64>& boundedApertures_np1  =
+// domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture" );
+
+//  const array<real64>& faceFluidMass_np1  =
+// domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+
+
+  const array<real64>& faceFluidPressure_n   = domain.m_feFaceManager.GetFieldData<realT>("Pressure_n");
+  const array<real64>& faceFluidPressure_np1  = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+
+  const array<real64>& faceDensity_n   = domain.m_feFaceManager.GetFieldData<realT>("FluidDensity_n");
+  const array<real64>& faceDensity_np1 = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+
+  const array<real64>& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
+
+  array<real64>& edgePermeability = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
+
+//  array<real64>& edgePermeabilities =
+// domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
+
 
   Epetra_IntSerialDenseVector  face_dof(1);
   Epetra_SerialDenseVector     edge_rhs(1);
   Epetra_SerialDenseMatrix     edge_matrix(1,1);
-    
+
   Epetra_IntSerialDenseVector  displacementDofIndex;
   Epetra_IntSerialDenseVector  dispSubFaceDofIndex(1);
   Epetra_SerialDenseMatrix     edge_matrix_dispDOF;
 
   // loop over edges, find permeabilities and apply boundary conditions.
 
-  lSet::const_iterator eg=set.begin() ;
+  lSet::const_iterator eg=set.begin();
 
-  for( localIndex iset=0; iset < set.size() ; ++iset, ++eg ){
+  for( localIndex iset=0 ; iset < set.size() ; ++iset, ++eg )
+  {
 
     std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.find(*eg);
     if( ( itr != m_edgesToFaces.end() ) && ( edge_is_ghost[*eg] < 0 ) )
     {
 
-      lArray1d& faces = itr->second; 
-      
+      lArray1d& faces = itr->second;
+
       realT bc_pressure_n = bc->GetValue(domain.m_feEdgeManager,eg,time);
       realT bc_pressure_np1 = bc->GetValue(domain.m_feEdgeManager,eg,time+dt);
 
@@ -1579,9 +1636,9 @@ void ParallelPlateFlowSolverFV::PressureBoundaryCondition( PhysicalDomainT& doma
       realT rhoP_n = rho_EOS(bc_pressure_n,m_bulk_modulus,m_rho_o);
       realT rhoP_np1 = rho_EOS(bc_pressure_np1,m_bulk_modulus,m_rho_o);
 
-      for(size_t kf = 0; kf < faces.size(); ++kf)
+      for(size_t kf = 0 ; kf < faces.size() ; ++kf)
       {
-        
+
         const localIndex r = faces[kf];
 
 
@@ -1614,7 +1671,7 @@ void ParallelPlateFlowSolverFV::PressureBoundaryCondition( PhysicalDomainT& doma
 
         realT kappa_n = CalculatePermeability( la_old.L2_Norm(), BoundedAperture(apertures_n[r]), edgeLengths_n[*eg], m_mu, m_SHP_FCT);
         realT kappa_np1 = CalculatePermeability( la_new.L2_Norm(), BoundedAperture(apertures_np1[r]), edgeLengths_np1[*eg], m_mu, m_SHP_FCT);
-        rArray1d dKappa_du_rterm = m_dwdu(r);
+        array<real64> dKappa_du_rterm = m_dwdu(r);
         dKappa_du_rterm *= 3 * kappa_np1 / BoundedAperture(apertures_np1[r]) * BoundedApertureDerivative(apertures_np1[r]);
 
         edgePermeability[*eg] = kappa_np1;
@@ -1633,41 +1690,37 @@ void ParallelPlateFlowSolverFV::PressureBoundaryCondition( PhysicalDomainT& doma
         realT rho_sr = faceDensity_np1[r] + rhoP_np1;
 
         if( bc_pressure_np1 > faceFluidPressure_np1[r] )
-        {
-
-        }
+        {}
         else
-        {
-
-        }
+        {}
 
 
         edge_matrix(0,0) = 0.5 * m_phi * kappa_np1 * ( dp_sr / faceFluidVolume_np1[r] - rho_sr * dPdM_r );
 
         // rhs
         edge_rhs(0) = -(  0.5 * ( 1.0 - m_phi ) * kappa_n * ( rhoP_n + faceDensity_n[r] ) * ( bc_pressure_n - faceFluidPressure_n[r] )
-                        + 0.5 * m_phi * kappa_np1 * rho_sr * dp_sr );
+                          + 0.5 * m_phi * kappa_np1 * rho_sr * dp_sr );
 
 
         face_dof(0) =  dofOffset + trilinos_index[r];
         m_matrix->SumIntoGlobalValues(face_dof, edge_matrix);
-    
+
         m_rhs->SumIntoGlobalValues(face_dof, edge_rhs);
 
 
         realT area_r = domain.m_feFaceManager.SurfaceArea( domain.m_feNodeManager, r, false );
-        const realT dPdV_r = - dPdM_r * faceDensity_np1[r] ;
+        const realT dPdV_r = -dPdM_r * faceDensity_np1[r];
         for( unsigned int i=0 ; i<dim*2*rnodes ; ++i )
         {
           edge_matrix_dispDOF(0,i) = 0.5 * m_phi * ( rho_sr*dp_sr*dKappa_du_rterm(i)
-                                                    - kappa_np1*( faceDensity_np1[r]/faceFluidVolume_np1[r]*area_r * dp_sr
-                                                                  + rho_sr*dPdV_r*area_r ) * m_dwdu(r)(i) * m_dwdw(r) );
+                                                     - kappa_np1*( faceDensity_np1[r]/faceFluidVolume_np1[r]*area_r * dp_sr
+                                                                   + rho_sr*dPdV_r*area_r ) * m_dwdu(r)(i) * m_dwdw(r) );
         }
 
         m_matrix->SumIntoGlobalValues(dispSubFaceDofIndex, displacementDofIndex, edge_matrix_dispDOF);
 
 
-    
+
       }
     }
   }
@@ -1683,9 +1736,9 @@ realT ParallelPlateFlowSolverFV::CheckSolution( const realT* const local_solutio
 
 #if 0
   // face fields
-  const iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
-  const iArray1d& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  const rArray1d& mass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  const array<integer>& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<real64>& mass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
 
   for( lSet::const_iterator kf=m_faceSet.begin() ; kf!=m_faceSet.end() ; ++kf )
   {
@@ -1724,11 +1777,11 @@ void ParallelPlateFlowSolverFV::PropagateSolution( const realT* const local_solu
                                                    const localIndex dofOffset  )
 {
   // face fields
-  const iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
-  const iArray1d& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  rArray1d& mass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  const array<integer>& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  array<real64>& mass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
 
-  rArray1d& massIncrement = domain.m_feFaceManager.GetFieldData<realT>("massIncrement");
+  array<real64>& massIncrement = domain.m_feFaceManager.GetFieldData<realT>("massIncrement");
 
   realT maxinc = 0.0;
   realT maxmass = 0.0;
@@ -1744,7 +1797,8 @@ void ParallelPlateFlowSolverFV::PropagateSolution( const realT* const local_solu
       maxmass = std::max( maxmass, mass[*kf] );
     }
   }
-//  std::cout<<"Maximum DeltaMass, Mass = "<<maxinc<<", "<<maxmass<<", "<<maxinc/maxmass<<std::endl;
+//  std::cout<<"Maximum DeltaMass, Mass = "<<maxinc<<", "<<maxmass<<",
+// "<<maxinc/maxmass<<std::endl;
   m_maxDofVal = maxmass;
 
 
@@ -1757,7 +1811,6 @@ void ParallelPlateFlowSolverFV::PostSyncConsistency( PhysicalDomainT& domain,
   partition.SynchronizeFields(syncedFields, CommRegistry::steadyStateParallelPlateFlowSolver);
 
 }
-
 
 
 
@@ -1775,12 +1828,12 @@ void ParallelPlateFlowSolverFV::InitializeCommunications( PartitionBase& partiti
 
 
 double ParallelPlateFlowSolverFV::TimeStep( const realT& time,
-                                                        const realT& dt,
-                                                        const int cycleNumber,
-                                                        PhysicalDomainT& domain,
-                                                        const sArray1d& namesOfSolverRegions ,
-                                                        SpatialPartition& partition,
-                                                        FractunatorBase* const fractunator )
+                                            const realT& dt,
+                                            const int cycleNumber,
+                                            PhysicalDomainT& domain,
+                                            const array<string>& namesOfSolverRegions,
+                                            SpatialPartition& partition,
+                                            FractunatorBase* const fractunator )
 {
   realT dt_return = dt;
 
@@ -1854,9 +1907,9 @@ double ParallelPlateFlowSolverFV::TimeStepExecute( const realT& time,
     m_rhs->Norm2( &localResidual);
     realT residual = 0;
 
-    MPI_Allreduce (&localResidual,&residual,1,MPI_DOUBLE,MPI_SUM ,MPI_COMM_WORLD);
+    MPI_Allreduce (&localResidual,&residual,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
-    MPI_Allreduce (&localMassScale,&massScale,1,MPI_DOUBLE,MPI_MAX ,MPI_COMM_WORLD);
+    MPI_Allreduce (&localMassScale,&massScale,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
 
 
     if( residual / massScale < this->m_numerics.newton_tol )
@@ -1885,48 +1938,47 @@ void ParallelPlateFlowSolverFV::DefineFlowSets( PhysicalDomainT& domain )
 {
   if( m_flowFaceSetName.empty() )
   {
-  FaceManagerT& faceManager = domain.m_feFaceManager;
-  EdgeManagerT& edgeManager = domain.m_feEdgeManager;
+    FaceManagerT& faceManager = domain.m_feFaceManager;
+    EdgeManagerT& edgeManager = domain.m_feEdgeManager;
 
-  const iArray1d& flowFaceType = faceManager.GetFieldData<int>("flowFaceType");
-  const iArray1d& flowEdgeType = edgeManager.GetFieldData<int>("flowEdgeType");
-  const Array1dT<lSet>& edgeToFlowFaces = edgeManager.GetUnorderedVariableOneToManyMap("edgeToFlowFaces");
-
-
+    const array<integer>& flowFaceType = faceManager.GetFieldData<int>("flowFaceType");
+    const array<integer>& flowEdgeType = edgeManager.GetFieldData<int>("flowEdgeType");
+    const array<lSet>& edgeToFlowFaces = edgeManager.GetUnorderedVariableOneToManyMap("edgeToFlowFaces");
 
 
 
-  m_faceSet.clear();
-  m_edgesToFaces.clear();
+    m_faceSet.clear();
+    m_edgesToFaces.clear();
 
-  for( localIndex kf=0 ; kf<faceManager.DataLengths() ; ++kf )
-  {
-    if( flowFaceType[kf] == 1 )
+    for( localIndex kf=0 ; kf<faceManager.DataLengths() ; ++kf )
     {
-      m_faceSet.insert( kf );
+      if( flowFaceType[kf] == 1 )
+      {
+        m_faceSet.insert( kf );
+      }
     }
-  }
 
-  m_numFaces = m_faceSet.size();
+    m_numFaces = m_faceSet.size();
 
-  m_faceDofMap.clear();
-  lSet::const_iterator si=m_faceSet.begin();
-  for(localIndex i =0; i < m_numFaces; ++i, ++si){
-    localIndex f = *si;
-    m_faceDofMap[f] = i;
-  }
-
-  iArray1d& ffCount = edgeManager.GetFieldData<int>("FlowFaceCount"); // debug
-
-  for( localIndex ke=0 ; ke < edgeManager.DataLengths() ; ++ke )
-  {
-    if( flowEdgeType[ke] == 1 && !(edgeToFlowFaces[ke].empty()) )
+    m_faceDofMap.clear();
+    lSet::const_iterator si=m_faceSet.begin();
+    for(localIndex i =0 ; i < m_numFaces ; ++i, ++si)
     {
-      m_edgesToFaces[ke].assign( edgeToFlowFaces[ke].begin(), edgeToFlowFaces[ke].end() ) ;
-      ffCount[ke] = m_edgesToFaces[ke].size();
-
+      localIndex f = *si;
+      m_faceDofMap[f] = i;
     }
-  }
+
+    array<integer>& ffCount = edgeManager.GetFieldData<int>("FlowFaceCount"); // debug
+
+    for( localIndex ke=0 ; ke < edgeManager.DataLengths() ; ++ke )
+    {
+      if( flowEdgeType[ke] == 1 && !(edgeToFlowFaces[ke].empty()) )
+      {
+        m_edgesToFaces[ke].assign( edgeToFlowFaces[ke].begin(), edgeToFlowFaces[ke].end() );
+        ffCount[ke] = m_edgesToFaces[ke].size();
+
+      }
+    }
   }
 
 }
@@ -1934,18 +1986,22 @@ void ParallelPlateFlowSolverFV::DefineFlowSets( PhysicalDomainT& domain )
 void ParallelPlateFlowSolverFV::GenerateParallelPlateGeometricQuantities( PhysicalDomainT& domain,realT time,realT dt )
 {
 
-//  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  Array1dT<R1Tensor>& faceCenter  = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-  rArray1d& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
-  rArray1d& faceArea = domain.m_feFaceManager.GetFieldData<realT>("faceArea");
-  rArray1d& aperture = domain.m_feFaceManager.GetFieldData<realT>(ApertureStr );
-//  const rArray1d& apertures_n   = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
+//  const array<integer>& flowFaceType =
+// domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  array<R1Tensor>& faceCenter  = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+  array<real64>& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+  array<real64>& faceArea = domain.m_feFaceManager.GetFieldData<realT>("faceArea");
+  array<real64>& aperture = domain.m_feFaceManager.GetFieldData<realT>(ApertureStr );
+//  const array<real64>& apertures_n   =
+// domain.m_feFaceManager.GetFieldData<realT>( ApertureStr+std::string("_n") );
 
-  rArray1d& mass     = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-//  rArray1d& boundedAperture = domain.m_feFaceManager.GetFieldData<realT>( "BoundedAperture" );
+  array<real64>& mass     = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+//  array<real64>& boundedAperture = domain.m_feFaceManager.GetFieldData<realT>(
+// "BoundedAperture" );
 
   const OrderedVariableOneToManyRelation& childFaceIndex = domain.m_feFaceManager.GetVariableOneToManyMap( "childIndices" );
-//  Array1dT<R1Tensor>& nodalDisp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+//  array<R1Tensor>& nodalDisp =
+// domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
 
   if (m_updateFaceArea)
   {
@@ -1994,17 +2050,17 @@ void ParallelPlateFlowSolverFV::GenerateParallelPlateGeometricQuantities( Physic
   }
 
   // update edge properties
-  iArray1d& edge_is_ghost            = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
-  Array1dT<R1Tensor>& edgeCenter_new = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
-  Array1dT<realT>& edgeLength_new = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
+  array<integer>& edge_is_ghost            = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
+  array<R1Tensor>& edgeCenter_new = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
+  array<realT>& edgeLength_new = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
 
   std::map<localIndex,lArray1d>::iterator itrEnd = m_edgesToFaces.end();
-  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin(); itr!=itrEnd  ; ++itr )
+  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin() ; itr!=itrEnd ; ++itr )
   {
     localIndex eg = itr->first;
     if( edge_is_ghost[eg] < 0 )
     {
-      domain.m_feEdgeManager.EdgeCenter( domain.m_feNodeManager, eg , edgeCenter_new[eg] );
+      domain.m_feEdgeManager.EdgeCenter( domain.m_feNodeManager, eg, edgeCenter_new[eg] );
       edgeLength_new[eg] = domain.m_feEdgeManager.EdgeLength( domain.m_feNodeManager, eg);
     }
   }
@@ -2016,19 +2072,18 @@ void ParallelPlateFlowSolverFV::GenerateParallelPlateGeometricQuantities( Physic
 void ParallelPlateFlowSolverFV::CalculateMassRate( PhysicalDomainT& domain,
                                                    SpatialPartition& partition,
                                                    realT time, realT dt )
-{
-
-}
+{}
 
 // set initial fluid density based on known pressure;
 void ParallelPlateFlowSolverFV::InitializeDensity( PhysicalDomainT& domain)
 {
-  rArray1d& mass     = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  rArray1d& density  = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  const rArray1d& pressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  const rArray1d& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+  array<real64>& mass     = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  array<real64>& density  = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  const array<real64>& pressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  const array<real64>& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 
-  for( lSet::const_iterator fc=m_faceSet.begin() ; fc!=m_faceSet.end() ; ++fc ) {
+  for( lSet::const_iterator fc=m_faceSet.begin() ; fc!=m_faceSet.end() ; ++fc )
+  {
     density[*fc] = rho_EOS(pressure[*fc],m_bulk_modulus,m_rho_o );
     mass[*fc] = density[*fc]*fluidVolume[*fc];
   }
@@ -2037,19 +2092,21 @@ void ParallelPlateFlowSolverFV::InitializeDensity( PhysicalDomainT& domain)
 
 void ParallelPlateFlowSolverFV::UpdateEOS( const realT time, const realT dt, PhysicalDomainT& domain )
 {
-  rArray1d& mass     = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  rArray1d& density  = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  rArray1d& pressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  array<real64>& mass     = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  array<real64>& density  = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  array<real64>& pressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
 
-  rArray1d& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
+  array<real64>& dPdM = domain.m_feFaceManager.GetFieldData<realT>("dPdM");
 
-//  rArray1d& pressureSecantMaxPos = domain.m_feFaceManager.GetFieldData<realT>("pressureSecantMaxPos");
-//  rArray1d& rhoSecantMaxPos = domain.m_feFaceManager.GetFieldData<realT>("rhoSecantMaxPos");
+//  array<real64>& pressureSecantMaxPos =
+// domain.m_feFaceManager.GetFieldData<realT>("pressureSecantMaxPos");
+//  array<real64>& rhoSecantMaxPos =
+// domain.m_feFaceManager.GetFieldData<realT>("rhoSecantMaxPos");
 
-  int rank ;
+  int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  const rArray1d& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+  const array<real64>& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 
   for( lSet::const_iterator fc=m_faceSet.begin() ; fc!=m_faceSet.end() ; ++fc )
   {
@@ -2061,14 +2118,15 @@ void ParallelPlateFlowSolverFV::UpdateEOS( const realT time, const realT dt, Phy
 
     if  ( P < 0.0 )
     {
-      dPdM[*fc] *= m_negativePressureSlope ;
+      dPdM[*fc] *= m_negativePressureSlope;
       P *= m_negativePressureSlope;
     }
 
     pressure[*fc] = P;
     // propagate pressure to children
     lArray1d& childFaces = domain.m_feFaceManager.m_childIndices[*fc];
-    for(unsigned i =0; i < childFaces.size(); ++i){
+    for(unsigned i =0 ; i < childFaces.size() ; ++i)
+    {
       pressure[childFaces[i]] = P;
     }
   }
@@ -2080,36 +2138,37 @@ void ParallelPlateFlowSolverFV::UpdateFlux( const realT time,
                                             PhysicalDomainT& domain,
                                             SpatialPartition& partition  )
 {
-  
-  const rArray1d& edgePermeabilities = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
-  Array1dT<realT>& volFlux =domain.m_feEdgeManager.GetFieldData<realT>(VolumetricFluxStr);
+
+  const array<real64>& edgePermeabilities = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
+  array<realT>& volFlux =domain.m_feEdgeManager.GetFieldData<realT>(VolumetricFluxStr);
   volFlux = 0.0;
-  
-  const rArray1d& pressures    = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  
-  Array1dT<R1Tensor>& flowVelocity = domain.m_feFaceManager.GetFieldData<R1Tensor>( FluidVelocityStr );
+
+  const array<real64>& pressures    = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+
+  array<R1Tensor>& flowVelocity = domain.m_feFaceManager.GetFieldData<R1Tensor>( FluidVelocityStr );
   flowVelocity = 0.0;
-  
-  const Array1dT<R1Tensor>& faceCenters = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-  
-  iArray1d& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  
+
+  const array<R1Tensor>& faceCenters = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+
+  array<integer>& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+
   // loop over edges
   std::map<localIndex,lArray1d>::iterator itrEnd = m_edgesToFaces.end();
-  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin(); itr!=itrEnd  ; ++itr )
+  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin() ; itr!=itrEnd ; ++itr )
   {
     const int numFaces = itr->second.size();
-    if( numFaces > 1) {
+    if( numFaces > 1)
+    {
       localIndex eg = itr->first;
       localIndex kfa = itr->second[0];
       localIndex kfb = itr->second[1];
-            
+
       realT Pa = pressures[kfa];
       realT Pb = pressures[kfb];
-  
+
       // will be incorrect at junctions of 3 or more faces
       volFlux[eg] =  edgePermeabilities[eg]*(Pa-Pb); // flux A -> B
-      
+
       R1Tensor vecFlux;
 
       vecFlux = faceCenters[kfb];
@@ -2118,61 +2177,64 @@ void ParallelPlateFlowSolverFV::UpdateFlux( const realT time,
       vecFlux.Normalize();
       vecFlux *= volFlux[eg];
 
-      if(is_ghost[kfa] < 0) flowVelocity[kfa] += vecFlux;
-      if(is_ghost[kfb] < 0) flowVelocity[kfb] += vecFlux;
-      
-    }  
+      if(is_ghost[kfa] < 0)
+        flowVelocity[kfa] += vecFlux;
+      if(is_ghost[kfb] < 0)
+        flowVelocity[kfb] += vecFlux;
+
+    }
   }
-  
+
   ApplyBoundaryCondition<realT>(this, &ParallelPlateFlowSolverFV::PressureBoundaryCondition_VelocityUpdate,
                                 domain, domain.m_feEdgeManager, std::string(Field<FieldInfo::pressure>::Name()), time, dt );
 
   flowVelocity *= 0.5;
-    
-}
 
+}
 
 
 
 /// Update the velocity fluxes on the boundary faces
 void ParallelPlateFlowSolverFV::
-       PressureBoundaryCondition_VelocityUpdate( PhysicalDomainT& domain,
-                                                 ObjectDataStructureBaseT& object ,
-                                                 BoundaryConditionBase* const bc,
-                                                 const lSet& set,
-                                                 const realT time,
-                                                 const realT dt )
+PressureBoundaryCondition_VelocityUpdate( PhysicalDomainT& domain,
+                                          ObjectDataStructureBaseT& object,
+                                          BoundaryConditionBase* const bc,
+                                          const lSet& set,
+                                          const realT time,
+                                          const realT dt )
 {
-  
-  rArray1d& edgePermeabilities = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
-  
-  const rArray1d& pressures    = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  
-  Array1dT<realT>& volFlux =domain.m_feEdgeManager.GetFieldData<realT>(VolumetricFluxStr);
-  
-  Array1dT<R1Tensor>& flowVelocity = domain.m_feFaceManager.GetFieldData<R1Tensor>(FluidVelocityStr);
-  const Array1dT<R1Tensor>& faceCenters = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-    
-  iArray1d& is_ghost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  
-  for( lSet::const_iterator eg=set.begin() ; eg!=set.end() ; ++eg ) {
-     
+
+  array<real64>& edgePermeabilities = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
+
+  const array<real64>& pressures    = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+
+  array<realT>& volFlux =domain.m_feEdgeManager.GetFieldData<realT>(VolumetricFluxStr);
+
+  array<R1Tensor>& flowVelocity = domain.m_feFaceManager.GetFieldData<R1Tensor>(FluidVelocityStr);
+  const array<R1Tensor>& faceCenters = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+
+  array<integer>& is_ghost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+
+  for( lSet::const_iterator eg=set.begin() ; eg!=set.end() ; ++eg )
+  {
+
     std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.find(*eg);
-    if(itr != m_edgesToFaces.end() ){
-      
-      lArray1d& faces = itr->second; 
-      
+    if(itr != m_edgesToFaces.end() )
+    {
+
+      lArray1d& faces = itr->second;
+
       R1Tensor edgeCenter;
-      domain.m_feEdgeManager.EdgeCenter( domain.m_feNodeManager, *eg , edgeCenter );
-      
+      domain.m_feEdgeManager.EdgeCenter( domain.m_feNodeManager, *eg, edgeCenter );
+
       // nb only uses first face to calculate volume flux
       // flux will be incorrect for other edges if at junction.
-      {            
+      {
         localIndex fc = faces[0];
-                
+
         const realT Pa = pressures[fc];
         const realT Pb = bc->GetValue(domain.m_feEdgeManager,eg,time);
-      
+
         volFlux[*eg] =  edgePermeabilities[*eg]*(Pa-Pb); // flux out of a into b
 
         R1Tensor vecFlux;
@@ -2183,10 +2245,11 @@ void ParallelPlateFlowSolverFV::
         vecFlux.Normalize();
         vecFlux *= volFlux[*eg];
 
-        if(is_ghost[fc] < 0) flowVelocity[fc] += vecFlux;
+        if(is_ghost[fc] < 0)
+          flowVelocity[fc] += vecFlux;
 
       }
-    }  
+    }
   }
 }
 
@@ -2194,31 +2257,33 @@ void ParallelPlateFlowSolverFV::
 void ParallelPlateFlowSolverFV::CalculateAndApplyMassFlux( const realT dt, PhysicalDomainT& domain )
 {
 
-  const rArray1d& aperture = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
-  const Array1dT<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+  const array<real64>& aperture = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
+  const array<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
 
-  rArray1d& edgePermeability = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
-  rArray1d& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  rArray1d& faceFluidDensity = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  rArray1d& facefluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  rArray1d& flowRate = domain.m_feFaceManager.GetFieldData<realT>("flowRate");
-//  iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-
-
-  iArray1d& tracer = domain.m_feFaceManager.GetFieldData<int>( "tracer" );
+  array<real64>& edgePermeability = domain.m_feEdgeManager.GetFieldData<realT>(PermeabilityStr);
+  array<real64>& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  array<real64>& faceFluidDensity = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  array<real64>& facefluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  array<real64>& flowRate = domain.m_feFaceManager.GetFieldData<realT>("flowRate");
+//  array<integer>& flowFaceType =
+// domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
 
 
-  rArray1d& massRate = domain.m_feEdgeManager.GetFieldData<realT>("massRate");
+  array<integer>& tracer = domain.m_feFaceManager.GetFieldData<int>( "tracer" );
 
 
-  const rArray1d& edgeLength = domain.m_feEdgeManager.GetFieldData<realT>("length");
-  const Array1dT<R1Tensor>& edgeCenter = domain.m_feEdgeManager.GetFieldData<R1Tensor>("center");
-
-  //  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  const iArray1d& flowEdgeType = domain.m_feEdgeManager.GetFieldData<int>("flowEdgeType");
+  array<real64>& massRate = domain.m_feEdgeManager.GetFieldData<realT>("massRate");
 
 
-  const Array1dT<lSet>& edgeToFlowFaces = domain.m_feEdgeManager.GetUnorderedVariableOneToManyMap("edgeToFlowFaces");
+  const array<real64>& edgeLength = domain.m_feEdgeManager.GetFieldData<realT>("length");
+  const array<R1Tensor>& edgeCenter = domain.m_feEdgeManager.GetFieldData<R1Tensor>("center");
+
+  //  const array<integer>& flowFaceType =
+  // domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  const array<integer>& flowEdgeType = domain.m_feEdgeManager.GetFieldData<int>("flowEdgeType");
+
+
+  const array<lSet>& edgeToFlowFaces = domain.m_feEdgeManager.GetUnorderedVariableOneToManyMap("edgeToFlowFaces");
 
   R1Tensor la, lb;
 
@@ -2242,7 +2307,8 @@ void ParallelPlateFlowSolverFV::CalculateAndApplyMassFlux( const realT dt, Physi
       realT w = edgeLength[ke];
 
 
-      // we have two different ways of calculating the flow. One for edges attached to only 2
+      // we have two different ways of calculating the flow. One for edges
+      // attached to only 2
       // faces, and one for more than two faces.
       const unsigned int numFlowFaces = edgeToFlowFaces[ke].size();
 
@@ -2265,12 +2331,12 @@ void ParallelPlateFlowSolverFV::CalculateAndApplyMassFlux( const realT dt, Physi
         realT permeabilityAperture0 = std::min(aperture[faceIndex0], m_max_aperture);
         realT permeabilityAperture1 = std::min(aperture[faceIndex1], m_max_aperture);
 
-        edgePermeability[ke] = PPFS::CalculatePermeability( norm_la , norm_lb,
-                                                      permeabilityAperture0, permeabilityAperture1,
-                                                      w,m_mu,m_SHP_FCT);
+        edgePermeability[ke] = PPFS::CalculatePermeability( norm_la, norm_lb,
+                                                            permeabilityAperture0, permeabilityAperture1,
+                                                            w,m_mu,m_SHP_FCT);
         // determine the mass flux across edge at t_n+1/2
         massRate[ke] = edgePermeability[ke] * ( -( faceFluidDensity[faceIndex0] * faceFluidPressure[faceIndex0])
-            + ( faceFluidDensity[faceIndex1] * faceFluidPressure[faceIndex1] ) );
+                                                + ( faceFluidDensity[faceIndex1] * faceFluidPressure[faceIndex1] ) );
 
         if (domain.m_feFaceManager.m_toEdgesRelation[faceIndex0].size() == 2 )
         {//2D
@@ -2313,7 +2379,7 @@ void ParallelPlateFlowSolverFV::CalculateAndApplyMassFlux( const realT dt, Physi
 
 
         realT thisdt = 6 * m_mu *( norm_la + norm_lb ) * ( norm_la + norm_lb )
-                     / ( m_bulk_modulus * 0.25 * (permeabilityAperture0+permeabilityAperture1)* (permeabilityAperture0+permeabilityAperture1) ) ;
+                       / ( m_bulk_modulus * 0.25 * (permeabilityAperture0+permeabilityAperture1)* (permeabilityAperture0+permeabilityAperture1) );
 
         if( thisdt < m_stabledt.m_maxdt )
           m_stabledt.m_maxdt = thisdt;
@@ -2325,10 +2391,10 @@ void ParallelPlateFlowSolverFV::CalculateAndApplyMassFlux( const realT dt, Physi
       {
         realT rhoP = 0.0;
         realT sumK = 0.0;
-        Array1dT<R1Tensor> length(numFlowFaces);
-        rArray1d k(numFlowFaces);
-        rArray1d q(numFlowFaces);
-        rArray1d kRhoP(numFlowFaces);
+        array<R1Tensor> length(numFlowFaces);
+        array<real64> k(numFlowFaces);
+        array<real64> q(numFlowFaces);
+        array<real64> kRhoP(numFlowFaces);
 
         lSet::const_iterator faceIndex=edgeToFlowFaces[ke].begin();
 
@@ -2341,8 +2407,8 @@ void ParallelPlateFlowSolverFV::CalculateAndApplyMassFlux( const realT dt, Physi
           realT permeabilityAperture = std::min(aperture[*faceIndex], m_max_aperture);
 
           k[kf] = PPFS::CalculatePermeability( length[kf].L2_Norm(),
-                                         permeabilityAperture,
-                                         w, m_mu, m_SHP_FCT );
+                                               permeabilityAperture,
+                                               w, m_mu, m_SHP_FCT );
 
           sumK += k[kf];
 
@@ -2352,14 +2418,14 @@ void ParallelPlateFlowSolverFV::CalculateAndApplyMassFlux( const realT dt, Physi
 
 
           realT thisdt = 6 * m_mu * 4 * Dot(length[kf],length[kf])
-          / ( m_bulk_modulus * permeabilityAperture * permeabilityAperture ) ;
+                         / ( m_bulk_modulus * permeabilityAperture * permeabilityAperture );
 
           if( thisdt < m_stabledt.m_maxdt )
             m_stabledt.m_maxdt = thisdt;
         }
 
 
-        rhoP /= sumK ;
+        rhoP /= sumK;
         faceIndex=edgeToFlowFaces[ke].begin();
 
         int tracerActive = 0;
@@ -2384,7 +2450,6 @@ void ParallelPlateFlowSolverFV::CalculateAndApplyMassFlux( const realT dt, Physi
           {
             flowRate[*faceIndex] += 0.5* fabs(q[kf]) / m_rho_o;
           }
-
 
 
 
@@ -2416,14 +2481,14 @@ void ParallelPlateFlowSolverFV::CalculateAndApplyMassFlux( const realT dt, Physi
 }
 
 void ParallelPlateFlowSolverFV::CalculateCarterLeakOff( const realT time,
-                                                      const realT dt,
-                                                      PhysicalDomainT& domain )
+                                                        const realT dt,
+                                                        PhysicalDomainT& domain )
 {
-  rArray1d* initialSaturatedTime = domain.m_feFaceManager.GetFieldDataPointer<realT>("initialSaturatedTime");
-  rArray1d* totalLeakedVolume = domain.m_feFaceManager.GetFieldDataPointer<realT>("totalLeakedVolume");
-  iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  rArray1d& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  rArray1d& facefluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  array<real64>* initialSaturatedTime = domain.m_feFaceManager.GetFieldDataPointer<realT>("initialSaturatedTime");
+  array<real64>* totalLeakedVolume = domain.m_feFaceManager.GetFieldDataPointer<realT>("totalLeakedVolume");
+  array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  array<real64>& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  array<real64>& facefluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
 
 
 
@@ -2455,8 +2520,8 @@ void ParallelPlateFlowSolverFV::CalculateCarterLeakOff( const realT time,
         if (leakOffMassInc < facefluidMass[kf])
         {
           facefluidMass[kf] -= leakOffMassInc;
-          (*totalLeakedVolume)[face0] += leakOffVelocity * dt ;
-          (*totalLeakedVolume)[face1] += leakOffVelocity * dt ;
+          (*totalLeakedVolume)[face0] += leakOffVelocity * dt;
+          (*totalLeakedVolume)[face1] += leakOffVelocity * dt;
         }
         else
         {
@@ -2474,33 +2539,36 @@ void ParallelPlateFlowSolverFV::CalculateCarterLeakOff( const realT time,
 }
 
 
-// We know the combined flow rate and have to distribute the given flow rate among the faces in the set.
+// We know the combined flow rate and have to distribute the given flow rate
+// among the faces in the set.
 void ParallelPlateFlowSolverFV::ApplyFluxBoundaryCondition( const realT time,
-                                                          const realT dt,
-                                                          const int cycleNumber,
-                                                          const int rank,
-                                                          PhysicalDomainT& domain )
+                                                            const realT dt,
+                                                            const int cycleNumber,
+                                                            const int rank,
+                                                            PhysicalDomainT& domain )
 {
   m_dT = dt;
 
-  rArray1d& facefluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  //const rArray1d& edgeLength = domain.m_feEdgeManager.GetFieldData<realT>("length");
-  const Array1dT<R1Tensor>& edgeCenter = domain.m_feEdgeManager.GetFieldData<R1Tensor>("center");
-  const Array1dT<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-  const rArray1d& aperture = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
-  const rArray1d& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-  const rArray1d& faceFluidDensity = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  const iArray1d& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  array<real64>& facefluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  //const array<real64>& edgeLength =
+  // domain.m_feEdgeManager.GetFieldData<realT>("length");
+  const array<R1Tensor>& edgeCenter = domain.m_feEdgeManager.GetFieldData<R1Tensor>("center");
+  const array<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+  const array<real64>& aperture = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
+  const array<real64>& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  const array<real64>& faceFluidDensity = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  const array<integer>& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
 
 
-  for( Array1dT<BoundaryConditionBase*>::const_iterator bcItr=domain.m_feFaceManager.m_bcData.begin() ; bcItr!=domain.m_feFaceManager.m_bcData.end() ; ++ bcItr )
+  for( array<BoundaryConditionBase*>::const_iterator bcItr=domain.m_feFaceManager.m_bcData.begin() ; bcItr!=domain.m_feFaceManager.m_bcData.end() ; ++bcItr )
   {
-    // check to see if the requested field has a boundary condition applied to it.
+    // check to see if the requested field has a boundary condition applied to
+    // it.
     BoundaryConditionBase* bc = *bcItr;
     if( streq( bc->GetFieldName(time), "combinedFlowRate") )
     {
-      for(localIndex i =0; i < bc->m_setNames.size(); ++i)
+      for(localIndex i =0 ; i < bc->m_setNames.size() ; ++i)
       {
         std::map< std::string, lSet >::iterator setMap = domain.m_feFaceManager.m_Sets.find( bc->m_setNames[i] );
         if( setMap != domain.m_feFaceManager.m_Sets.end() )
@@ -2508,13 +2576,20 @@ void ParallelPlateFlowSolverFV::ApplyFluxBoundaryCondition( const realT time,
           lSet& set = setMap->second;
 
           lSet::const_iterator b=set.begin();
-          realT qTotal = bc->GetValue(domain.m_feFaceManager,b,time); // The iterator b in this function is not doing anything.
+          realT qTotal = bc->GetValue(domain.m_feFaceManager,b,time); // The
+                                                                      // iterator
+                                                                      // b in
+                                                                      // this
+                                                                      // function
+                                                                      // is not
+                                                                      // doing
+                                                                      // anything.
           int nInlets = set.size();
 
           realT sumKP = 0.0;
           realT sumK = 0.0;
           R1Tensor length;
-          rArray1d k(nInlets);
+          array<real64> k(nInlets);
           realT kP;
 
           nInlets = 0;
@@ -2530,8 +2605,8 @@ void ParallelPlateFlowSolverFV::ApplyFluxBoundaryCondition( const realT time,
               realT w = 1.0;
               realT permeabilityAperture = std::min(aperture[*a], m_max_aperture);
               k[kf] = PPFS::CalculatePermeability( length.L2_Norm(),
-                                             permeabilityAperture,
-                                             w, m_mu, m_SHP_FCT );
+                                                   permeabilityAperture,
+                                                   w, m_mu, m_SHP_FCT );
               sumK += k[kf];
 
               kP = k[kf] * faceFluidPressure[*a];
@@ -2549,7 +2624,8 @@ void ParallelPlateFlowSolverFV::ApplyFluxBoundaryCondition( const realT time,
           MPI_Allreduce(&mySumK, &sumK, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
           MPI_Allreduce(&mySumKP, &sumKP, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-          if (cycleNumber%100 == 0) MPI_Allreduce(&myRank0, &rank0, 1, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD);
+          if (cycleNumber%100 == 0)
+            MPI_Allreduce(&myRank0, &rank0, 1, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD);
 
           if (myNInlets >=1)
           {
@@ -2580,32 +2656,38 @@ void ParallelPlateFlowSolverFV::ApplyFluxBoundaryCondition( const realT time,
 
 
   // Edge fluxes
-//  BoundaryConditionFunctions::ApplyBoundaryCondition<realT>(this, &ParallelPlateFlowSolver::FlowControlledBoundaryCondition,
-//                                domain, domain.m_feEdgeManager, "FixedFlowRate", time );
+//  BoundaryConditionFunctions::ApplyBoundaryCondition<realT>(this,
+// &ParallelPlateFlowSolver::FlowControlledBoundaryCondition,
+//                                domain, domain.m_feEdgeManager,
+// "FixedFlowRate", time );
 
 }
 
 // constant flow into faces
 void ParallelPlateFlowSolverFV::FlowControlledBoundaryCondition( PhysicalDomainT& domain,
-                                                               ObjectDataStructureBaseT& object ,
-                                                               BoundaryConditionBase* bc ,
-                                                               const lSet& set,
-                                                               realT time ){
+                                                                 ObjectDataStructureBaseT& object,
+                                                                 BoundaryConditionBase* bc,
+                                                                 const lSet& set,
+                                                                 realT time ){
 
 
-  //iArray1d& edge_is_ghost = domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
+  //array<integer>& edge_is_ghost =
+  // domain.m_feEdgeManager.GetFieldData<FieldInfo::ghostRank>();
 
 
-  rArray1d& facefluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-  const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  const rArray1d& edgeLengths = domain.m_feEdgeManager.GetFieldData<realT>("length");
-  //const Array1dT<R1Tensor>& edgeCenter = domain.m_feEdgeManager.GetFieldData<R1Tensor>("center");
-  //const Array1dT<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-  const rArray1d& apertures = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
-  const rArray1d& faceFluidDensity = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  //const iArray1d& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  array<real64>& facefluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  const array<real64>& edgeLengths = domain.m_feEdgeManager.GetFieldData<realT>("length");
+  //const array<R1Tensor>& edgeCenter =
+  // domain.m_feEdgeManager.GetFieldData<R1Tensor>("center");
+  //const array<R1Tensor>& faceCenter =
+  // domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+  const array<real64>& apertures = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
+  const array<real64>& faceFluidDensity = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  //const array<integer>& isGhost =
+  // domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
 
-  const Array1dT<lSet>& edgeToFlowFaces = domain.m_feEdgeManager.GetUnorderedVariableOneToManyMap("edgeToFlowFaces");
+  const array<lSet>& edgeToFlowFaces = domain.m_feEdgeManager.GetUnorderedVariableOneToManyMap("edgeToFlowFaces");
 
   Epetra_IntSerialDenseVector  face_dof(1);
   Epetra_SerialDenseVector     face_rhs(1);
@@ -2613,26 +2695,29 @@ void ParallelPlateFlowSolverFV::FlowControlledBoundaryCondition( PhysicalDomainT
 
   // loop over edges, apply flux to faces
 
-  for( lSet::const_iterator eg=set.begin(); eg != set.end(); ++eg  ){
+  for( lSet::const_iterator eg=set.begin() ; eg != set.end() ; ++eg  )
+  {
 
     realT qdt = bc->GetValue(domain.m_feEdgeManager,eg,time)*m_dT;
 
     for( lSet::const_iterator fc=edgeToFlowFaces[*eg].begin() ; fc!=edgeToFlowFaces[*eg].end() ; ++fc )
     {
-        if(flowFaceType[*fc] == 1){
-          const realT area = edgeLengths[*eg]*apertures[*fc];
+      if(flowFaceType[*fc] == 1)
+      {
+        const realT area = edgeLengths[*eg]*apertures[*fc];
 
-          const realT massFlux = qdt*area*std::max(faceFluidDensity[*fc], m_rho_o);
-          facefluidMass[*fc] += massFlux;
-        }
+        const realT massFlux = qdt*area*std::max(faceFluidDensity[*fc], m_rho_o);
+        facefluidMass[*fc] += massFlux;
+      }
     }
   }
 }
 
 
-// We know the combined flow rate and have to distribute the given flow rate among the faces in the set.
+// We know the combined flow rate and have to distribute the given flow rate
+// among the faces in the set.
 void ParallelPlateFlowSolverFV::FaceFluxBoundaryCondition( PhysicalDomainT& domain,ObjectDataStructureBaseT& object,
-    BoundaryConditionBase* const bc, const lSet& aset, const realT time, const realT dt )
+                                                           BoundaryConditionBase* const bc, const lSet& aset, const realT time, const realT dt )
 {
   (void)aset;
   m_dT = dt;
@@ -2641,264 +2726,294 @@ void ParallelPlateFlowSolverFV::FaceFluxBoundaryCondition( PhysicalDomainT& doma
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-//    rArray1d& faceFluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-    const iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-    //const rArray1d& edgeLength = domain.m_feEdgeManager.GetFieldData<realT>("length");
-    const Array1dT<R1Tensor>& edgeCenter = domain.m_feEdgeManager.GetFieldData<R1Tensor>("center");
-    const Array1dT<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
-    const rArray1d& aperture = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
-    const rArray1d& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-    const rArray1d& faceFluidVolume = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
-//    const rArray1d& faceFluidDensity = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-    const iArray1d& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-    //rArray1d& flowRate = domain.m_feFaceManager.GetFieldData<realT>("elementFlowRate"); // needed?
-    rArray1d& flowRateBC = domain.m_feFaceManager.GetFieldData<realT>("flowRateBC");
+//    array<real64>& faceFluidMass =
+// domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  //const array<real64>& edgeLength =
+  // domain.m_feEdgeManager.GetFieldData<realT>("length");
+  const array<R1Tensor>& edgeCenter = domain.m_feEdgeManager.GetFieldData<R1Tensor>("center");
+  const array<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
+  const array<real64>& aperture = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr );
+  const array<real64>& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  const array<real64>& faceFluidVolume = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+//    const array<real64>& faceFluidDensity =
+// domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+  const array<integer>& isGhost = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  //array<real64>& flowRate =
+  // domain.m_feFaceManager.GetFieldData<realT>("elementFlowRate"); // needed?
+  array<real64>& flowRateBC = domain.m_feFaceManager.GetFieldData<realT>("flowRateBC");
 //    flowRateBC = 0.0;
 
 
-    iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
 
-    Epetra_IntSerialDenseVector  face_dof(1);
-    Epetra_SerialDenseVector     face_rhs(1);
-    Epetra_SerialDenseMatrix     face_matrix(1,1);
+  Epetra_IntSerialDenseVector  face_dof(1);
+  Epetra_SerialDenseVector     face_rhs(1);
+  Epetra_SerialDenseMatrix     face_matrix(1,1);
 
 #ifdef SRC_EXTERNAL
-    if( streq( bc->GetBoundaryConditionName(), PerforatedCasedWellboreBoundaryCondition::BoundaryConditionName()) )
+  if( streq( bc->GetBoundaryConditionName(), PerforatedCasedWellboreBoundaryCondition::BoundaryConditionName()) )
+  {
+    PerforatedCasedWellboreBoundaryCondition *pcwbc = static_cast<PerforatedCasedWellboreBoundaryCondition *>(bc);
+    if(pcwbc)
     {
-        PerforatedCasedWellboreBoundaryCondition *pcwbc = static_cast<PerforatedCasedWellboreBoundaryCondition *>(bc);
-        if(pcwbc)
+      if( time > pcwbc->GetLastUpdateTime() + pcwbc->GetUpdateInterval() )
+      {
+        indexedFluxes = pcwbc->GetFaceFluxes(domain, time, dt);
+        bc->SetUpdateTime(time);
+
+      }
+      localIndex numFaces = indexedFluxes.size();
+      for(localIndex i =0 ; i < numFaces ; ++i)
+      {
+        localIndex kf =  indexedFluxes[i].GetIndex();
+        if (flowFaceType[kf] == 1 && isGhost[kf]<0)
         {
-          if( time > pcwbc->GetLastUpdateTime() + pcwbc->GetUpdateInterval() )
+          realT qq = indexedFluxes[i].GetValue();     // volume flux into face
+          flowRateBC[kf] = qq;
+          face_rhs(0) = -qq*m_rho_o*dt;
+          face_dof(0) = trilinos_index[kf];
+          //matrix->SumIntoGlobalValues(face_dof, face_matrix);
+          m_rhs->SumIntoGlobalValues(face_dof, face_rhs);
+        }
+      }
+    }
+  }
+  else if( streq( bc->GetBoundaryConditionName(), CavityPressureBoundaryCondition::BoundaryConditionName()) )
+  {
+
+    // need to apply the boundary condition once to all sets not just
+    // individually
+    // so check if we are applying to the first set and if so apply to all,
+    // otherwise return
+
+
+    CavityPressureBoundaryCondition *cpbc = static_cast<CavityPressureBoundaryCondition *>(bc);
+
+
+    if (time >= cpbc->GetLastHydraulicUpdateTime())
+      return;
+
+    realT dmass = 0., dmassAll;
+    realT dmassc = 0;
+
+    const realT pressure = cpbc->GetPressure();
+    for(array<string>::const_iterator its=cpbc->m_setNamesHydro.begin() ; its!=cpbc->m_setNamesHydro.end() ; ++its)
+    {
+      std::map< std::string, lSet >::const_iterator setMap = domain.m_feFaceManager.m_Sets.find( *its );
+      if( setMap != domain.m_feFaceManager.m_Sets.end() )
+      {
+        const lSet& set = setMap->second;
+        for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a)
+        {
+          const localIndex aa = *a;
+          if (flowFaceType[aa] == 1 && isGhost[aa]<0)
           {
-            indexedFluxes = pcwbc->GetFaceFluxes(domain, time, dt);
-            bc->SetUpdateTime(time);
-
-          }
-          localIndex numFaces = indexedFluxes.size();
-          for(localIndex i =0; i < numFaces; ++i){
-            localIndex kf =  indexedFluxes[i].GetIndex();
-            if (flowFaceType[kf] == 1 && isGhost[kf]<0)
+            /**
+               if (0)
+               {
+               // Assume pressure drop between cavity and fracture
+               realT k = 0;
+               {
+               const localIndex ke =
+                  domain.m_feFaceManager.m_toEdgesRelation[aa][0];
+               R1Tensor length(edgeCenter[ke]);
+               length -= faceCenter[aa];
+               const realT w = 1.0;
+               const realT permeabilityAperture = std::min(aperture[aa],
+                  m_max_aperture);
+               k = CalculatePermeability( length.L2_Norm(),
+                                 permeabilityAperture,
+                                 w, m_mu, m_SHP_FCT );
+               }
+               const realT q = k * (pressure - faceFluidPressure[aa]);
+               dmassc = q * dt * std::max(faceFluidDensity[aa], m_rho_o);
+               }
+               else**/
             {
-              realT qq = indexedFluxes[i].GetValue(); // volume flux into face
-              flowRateBC[kf] = qq;
-              face_rhs(0) = -qq*m_rho_o*dt;
-              face_dof(0) = trilinos_index[kf];
-              //matrix->SumIntoGlobalValues(face_dof, face_matrix);
-              m_rhs->SumIntoGlobalValues(face_dof, face_rhs);
-            }
-          }
-        }
-    }
-    else if( streq( bc->GetBoundaryConditionName(), CavityPressureBoundaryCondition::BoundaryConditionName()) )
-    {
-
-      // need to apply the boundary condition once to all sets not just individually
-      // so check if we are applying to the first set and if so apply to all, otherwise return
-
-
-        CavityPressureBoundaryCondition *cpbc = static_cast<CavityPressureBoundaryCondition *>(bc);
-
-
-        if (time >= cpbc->GetLastHydraulicUpdateTime())  return;
-
-        realT dmass = 0., dmassAll;
-        realT dmassc = 0;
-
-        const realT pressure = cpbc->GetPressure();
-        for(sArray1d::const_iterator its=cpbc->m_setNamesHydro.begin(); its!=cpbc->m_setNamesHydro.end(); ++its)
-        {
-            std::map< std::string, lSet >::const_iterator setMap = domain.m_feFaceManager.m_Sets.find( *its );
-            if( setMap != domain.m_feFaceManager.m_Sets.end() )
-            {
-                const lSet& set = setMap->second;
-                for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a)
-                {
-                    const localIndex aa = *a;
-                    if (flowFaceType[aa] == 1 && isGhost[aa]<0)
-                    {
-                        /**
-              if (0)
+              // No pressure drop between cavity and fracture
+              if(dt > 0)
               {
-                // Assume pressure drop between cavity and fracture
-                realT k = 0;
-                {
-                  const localIndex ke = domain.m_feFaceManager.m_toEdgesRelation[aa][0];
-                  R1Tensor length(edgeCenter[ke]);
-                  length -= faceCenter[aa];
-                  const realT w = 1.0;
-                  const realT permeabilityAperture = std::min(aperture[aa], m_max_aperture);
-                  k = CalculatePermeability( length.L2_Norm(),
-                                             permeabilityAperture,
-                                             w, m_mu, m_SHP_FCT );
-                }
-                const realT q = k * (pressure - faceFluidPressure[aa]);
-                dmassc = q * dt * std::max(faceFluidDensity[aa], m_rho_o);
+                dmassc = faceFluidVolume[aa]*m_rho_o*(pressure - faceFluidPressure[aa])/m_bulk_modulus;
+
+                const realT massFlux = dmassc/dt;
+
+                // rhs
+                face_rhs(0) = massFlux;
+                face_dof(0) = trilinos_index[aa];
+                //matrix->SumIntoGlobalValues(face_dof, face_matrix);
+                m_rhs->SumIntoGlobalValues(face_dof, face_rhs);
               }
-              else**/
-                        {
-                            // No pressure drop between cavity and fracture
-                            if(dt > 0){
-                                dmassc = faceFluidVolume[aa]*m_rho_o*(pressure - faceFluidPressure[aa])/m_bulk_modulus;
+              else
+              {
+                dmassc = 0;
+              }
 
-                                const realT massFlux = dmassc/dt;
-
-                                // rhs
-                                face_rhs(0) = massFlux;
-                                face_dof(0) = trilinos_index[aa];
-                                //matrix->SumIntoGlobalValues(face_dof, face_matrix);
-                                m_rhs->SumIntoGlobalValues(face_dof, face_rhs);
-                            }else{
-                                dmassc = 0;
-                            }
-
-                        }
-                        dmass += dmassc;
-                    }
-                }
             }
+            dmass += dmassc;
+          }
         }
-        MPI_Allreduce(&dmass, &dmassAll, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        cpbc->UpdateMass(dmassAll, dt, time);
-        //std::cout <<"Cavity BC: dmassAll=" << dmassAll << ", t=" << time << ", P_inj=" << pressure <<" mass=" << ret[0] << " volume=" << ret[1] << " Kf=" << ret[2] << " rho0=" << ret[3] << std::endl;
-
-        cpbc->SetHydraulicUpdateTime(time);
+      }
     }
-    else
+    MPI_Allreduce(&dmass, &dmassAll, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    cpbc->UpdateMass(dmassAll, dt, time);
+    //std::cout <<"Cavity BC: dmassAll=" << dmassAll << ", t=" << time << ",
+    // P_inj=" << pressure <<" mass=" << ret[0] << " volume=" << ret[1] << "
+    // Kf=" << ret[2] << " rho0=" << ret[3] << std::endl;
+
+    cpbc->SetHydraulicUpdateTime(time);
+  }
+  else
 #endif
 
-    if( streq( bc->GetFieldName(time), "combinedFlowRate") && time > bc->GetLastUpdateTime()  )
+  if( streq( bc->GetFieldName(time), "combinedFlowRate") && time > bc->GetLastUpdateTime()  )
+  {
+
+    // need to apply the boundary condition once to all sets not just
+    // individually
+    // so check if we have already applied - if so break
+
+    realT qTotal = 0.0;
+    realT sumK_KP[] = {0.0, 0.0};
+    array<real64> k;
+    //This actually should be a map, since the same face can be in different
+    // facesets.  But I am being lazy...
+    int nInlets = 0;
+    realT pInj;
+
+    localIndex kf=0;
+
+    for(localIndex i =0 ; i < bc->m_setNames.size() ; ++i)
     {
+      std::map< std::string, lSet >::iterator setMap = domain.m_feFaceManager.m_Sets.find( bc->m_setNames[i] );
+      if( setMap != domain.m_feFaceManager.m_Sets.end() )
+      {
+        lSet& set = setMap->second;
 
-      // need to apply the boundary condition once to all sets not just individually
-      // so check if we have already applied - if so break
+        lSet::const_iterator b=set.begin();
 
-        realT qTotal = 0.0;
-        realT sumK_KP[] = {0.0, 0.0};
-        rArray1d k;
-        //This actually should be a map, since the same face can be in different facesets.  But I am being lazy...
-        int nInlets = 0;
-        realT pInj;
+        qTotal = bc->GetValue(domain.m_feFaceManager, b, time);         // The
+                                                                        // iterator
+                                                                        // b in
+                                                                        // this
+                                                                        // function
+                                                                        // is
+                                                                        // not
+                                                                        // doing
+                                                                        // anything.
 
-        localIndex kf=0;
 
-        for(localIndex i =0; i < bc->m_setNames.size(); ++i)
+        R1Tensor length;
+        realT kP;
+
+        for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a)
         {
-            std::map< std::string, lSet >::iterator setMap = domain.m_feFaceManager.m_Sets.find( bc->m_setNames[i] );
-            if( setMap != domain.m_feFaceManager.m_Sets.end() )
+          if (flowFaceType[*a] == 1 && isGhost[*a] < 0)
+          {
+            localIndex ke = domain.m_feFaceManager.m_toEdgesRelation[*a][0];
+            length = edgeCenter[ke];
+            length -= faceCenter[*a];
+            realT w = length.L2_Norm() * 2;
+            realT permeabilityAperture = std::min(aperture[*a], m_max_aperture);
+
+            // edgeVfs[ke] = edgeVf;
+
+
+            k.push_back( CalculatePermeability( length.L2_Norm(),
+                                                permeabilityAperture,
+                                                w, m_mu, m_SHP_FCT ));
+
+            /**
+               std::cout << "length "  << length << std::endl;
+               std::cout << "w "  << w << std::endl;
+               std::cout << "mu "  << m_mu << std::endl;
+               std::cout << "m_SHP_FCT "  << m_SHP_FCT << std::endl;
+               std::cout << "k "  << k[0] << std::endl;**/
+
+            if (isGhost[*a]<0)
             {
-                lSet& set = setMap->second;
+              nInlets++;
+              sumK_KP[0] += k[kf];
 
-                lSet::const_iterator b=set.begin();
-
-                qTotal = bc->GetValue(domain.m_feFaceManager, b, time); // The iterator b in this function is not doing anything.
-
-
-                R1Tensor length;
-                realT kP;
-
-                for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a)
-                {
-                    if (flowFaceType[*a] == 1 && isGhost[*a] < 0)
-                    {
-                        localIndex ke = domain.m_feFaceManager.m_toEdgesRelation[*a][0];
-                        length = edgeCenter[ke];
-                        length -= faceCenter[*a];
-                        realT w = length.L2_Norm() * 2;
-                        realT permeabilityAperture = std::min(aperture[*a], m_max_aperture);
-
-                        // edgeVfs[ke] = edgeVf;
-
-
-                        k.push_back( CalculatePermeability( length.L2_Norm(),
-                                permeabilityAperture,
-                                w, m_mu, m_SHP_FCT ));
-
-                         /**
-                        std::cout << "length "  << length << std::endl;
-                        std::cout << "w "  << w << std::endl;
-                        std::cout << "mu "  << m_mu << std::endl;
-                        std::cout << "m_SHP_FCT "  << m_SHP_FCT << std::endl;
-                        std::cout << "k "  << k[0] << std::endl;**/
-
-                        if (isGhost[*a]<0)
-                        {
-                            nInlets++;
-                            sumK_KP[0] += k[kf];
-
-                            kP = k[kf] * faceFluidPressure[*a];
-                            sumK_KP[1] += kP;
-                        }
-                        ++kf;
-                    }
-                }
+              kP = k[kf] * faceFluidPressure[*a];
+              sumK_KP[1] += kP;
             }
+            ++kf;
+          }
         }
+      }
+    }
 
-        int myNInlets = nInlets;
-        realT mySumK_KP[] = {sumK_KP[0], sumK_KP[1]};
+    int myNInlets = nInlets;
+    realT mySumK_KP[] = {sumK_KP[0], sumK_KP[1]};
 //        int rank0;
 
-        MPI_Allreduce(&myNInlets, &nInlets, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
-        MPI_Allreduce(&mySumK_KP, &sumK_KP, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&myNInlets, &nInlets, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&mySumK_KP, &sumK_KP, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-        if (nInlets > 0 && sumK_KP[0] > 0)
+    if (nInlets > 0 && sumK_KP[0] > 0)
+    {
+      sumK_KP[1] += qTotal;
+      pInj = sumK_KP[1] / sumK_KP[0];
+
+      kf = 0;
+
+      for(localIndex i =0 ; i < bc->m_setNames.size() ; ++i)
+      {
+        std::map< std::string, lSet >::iterator setMap = domain.m_feFaceManager.m_Sets.find( bc->m_setNames[i] );
+        if( setMap != domain.m_feFaceManager.m_Sets.end() )
         {
-            sumK_KP[1] += qTotal;
-            pInj = sumK_KP[1] / sumK_KP[0];
+          lSet& set = setMap->second;
 
-            kf = 0;
+          lSet::const_iterator b=set.begin();
 
-            for(localIndex i =0; i < bc->m_setNames.size(); ++i)
+          for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a)
+          {
+            if (flowFaceType[*a] == 1 && isGhost[*a] < 0 )
             {
-                std::map< std::string, lSet >::iterator setMap = domain.m_feFaceManager.m_Sets.find( bc->m_setNames[i] );
-                if( setMap != domain.m_feFaceManager.m_Sets.end() )
-                {
-                    lSet& set = setMap->second;
+              realT q = k[kf] * (pInj - faceFluidPressure[*a]);
 
-                    lSet::const_iterator b=set.begin();
+              // faceFluidMass[*a] += q * dt * std::max(faceFluidDensity[*a],
+              // m_rho_o);  // explicit
+              // const realT massFlux = q * std::max(faceFluidDensity[*a],
+              // m_rho_o); // not sure face density is correct here
 
-                    for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a)
-                    {
-                        if (flowFaceType[*a] == 1 && isGhost[*a] < 0 )
-                        {
-                            realT q = k[kf] * (pInj - faceFluidPressure[*a]);
+              // damping face injection rate in cases where there are large
+              // changes in flux (usually due to large aperture changes)
 
-                            // faceFluidMass[*a] += q * dt * std::max(faceFluidDensity[*a], m_rho_o);  // explicit
-                           // const realT massFlux = q * std::max(faceFluidDensity[*a], m_rho_o); // not sure face density is correct here
+              if( bc->GetTimeFactor() > dt )
+              {
+                flowRateBC[*a] += (q - flowRateBC[*a])*dt/bc->GetTimeFactor();
+              }
+              else
+              {
+                flowRateBC[*a] = q;
+              }
 
-                            // damping face injection rate in cases where there are large changes in flux (usually due to large aperture changes)
+              std::cout<<"q, flowRateBC["<<*a<<"] = "<<q<<", "<<flowRateBC[*a]<<std::endl;
 
-                            if( bc->GetTimeFactor() > dt )
-                            {
-                              flowRateBC[*a] += (q - flowRateBC[*a])*dt/bc->GetTimeFactor();
-                            }
-                            else
-                            {
-                              flowRateBC[*a] = q;
-                            }
-
-                            std::cout<<"q, flowRateBC["<<*a<<"] = "<<q<<", "<<flowRateBC[*a]<<std::endl;
-
-                            const realT massFlux = flowRateBC[*a]  * m_rho_o; // constant density input
+              const realT massFlux = flowRateBC[*a]  * m_rho_o;               // constant
+                                                                              // density
+                                                                              // input
 
 
-                            // rhs
-                            face_rhs(0) = -massFlux * dt;
-                            face_dof(0) = trilinos_index[*a];
-                            //matrix->SumIntoGlobalValues(face_dof, face_matrix);
-                            m_rhs->SumIntoGlobalValues(face_dof, face_rhs);
+              // rhs
+              face_rhs(0) = -massFlux * dt;
+              face_dof(0) = trilinos_index[*a];
+              //matrix->SumIntoGlobalValues(face_dof, face_matrix);
+              m_rhs->SumIntoGlobalValues(face_dof, face_rhs);
 
-                            // flowRate[*a] += 0.5* fabs(q) ; // needed??
-                            ++kf;
-                        }
-                    }
-                }
+              // flowRate[*a] += 0.5* fabs(q) ; // needed??
+              ++kf;
             }
-
+          }
         }
+      }
 
-      bc->SetUpdateTime(time);
     }
+
+    bc->SetUpdateTime(time);
+  }
 
 }
 
@@ -2906,7 +3021,7 @@ void ParallelPlateFlowSolverFV::FaceFluxBoundaryCondition( PhysicalDomainT& doma
 void ParallelPlateFlowSolverFV::CalculateApertureDerivatives( const FaceManagerT& faceManager,
                                                               const NodeManager& nodeManager )
 {
-  const iArray1d* const trilinosIndexNode = nodeManager.GetFieldDataPointer<int>("IMS_0_GlobalDof");
+  const array<integer>* const trilinosIndexNode = nodeManager.GetFieldDataPointer<int>("IMS_0_GlobalDof");
 
   if( trilinosIndexNode!=NULL )
   {
@@ -2917,8 +3032,8 @@ void ParallelPlateFlowSolverFV::CalculateApertureDerivatives( const FaceManagerT
 
     const int dim=3;
 
-    const iArray1d& flowFaceType = faceManager.GetFieldData<int>("flowFaceType");
-    const rArray1d& apertures_np1 = faceManager.GetFieldData<realT>( ApertureStr );
+    const array<integer>& flowFaceType = faceManager.GetFieldData<int>("flowFaceType");
+    const array<real64>& apertures_np1 = faceManager.GetFieldData<realT>( ApertureStr );
     const OrderedVariableOneToManyRelation& childFaceIndex = faceManager.GetVariableOneToManyMap( "childIndices" );
 
 
@@ -2944,7 +3059,7 @@ void ParallelPlateFlowSolverFV::CalculateApertureDerivatives( const FaceManagerT
                                   faceManager.FaceNormal( nodeManager, faceIndex[1] )};
 
 //          const R1Tensor N[2] = { faceNormal[faceIndex[0]],
- //                                 faceNormal[faceIndex[1]] };
+//                                 faceNormal[faceIndex[1]] };
 
           R1Tensor Nbar = N[0];
           Nbar -= N[1];
@@ -2955,13 +3070,13 @@ void ParallelPlateFlowSolverFV::CalculateApertureDerivatives( const FaceManagerT
           const localIndex node1 = faceManager.m_toNodesRelation[faceIndex[1]][aa];
 
 
-          int nodeDofIndex[2] ;
+          int nodeDofIndex[2];
           faceNodePairIndexing( a, dim, nodeDofIndex);
 
           for( int i=0 ; i<dim ; ++i )
           {
-            m_dwdu(r)(nodeDofIndex[0]+i) = -Nbar[i]/faceManager.m_toNodesRelation[r].size() ;
-            m_dwdu(r)(nodeDofIndex[1]+i) =  Nbar[i]/faceManager.m_toNodesRelation[r].size() ;
+            m_dwdu(r)(nodeDofIndex[0]+i) = -Nbar[i]/faceManager.m_toNodesRelation[r].size();
+            m_dwdu(r)(nodeDofIndex[1]+i) =  Nbar[i]/faceManager.m_toNodesRelation[r].size();
 
             m_dwdu_dof(r)(nodeDofIndex[0]+i) = dim*(*trilinosIndexNode)[node0]+i;
             m_dwdu_dof(r)(nodeDofIndex[1]+i) = dim*(*trilinosIndexNode)[node1]+i;
@@ -2976,9 +3091,9 @@ void ParallelPlateFlowSolverFV::SetInitialGuess( const PhysicalDomainT& domain,
                                                  realT* const local_solution )
 {
 
-  const iArray1d& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
-  const iArray1d& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  const rArray1d& massIncrement = domain.m_feFaceManager.GetFieldData<realT>("massIncrement");
+  const array<integer>& trilinos_index = domain.m_feFaceManager.GetFieldData<int>(m_trilinosIndexStr);
+  const array<integer>& is_ghost       = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<real64>& massIncrement = domain.m_feFaceManager.GetFieldData<realT>("massIncrement");
 
 
 //  std::cout<<"ParallelPlateFlowSolverFV::SetInitialGuess"<<std::endl;
@@ -2988,8 +3103,8 @@ void ParallelPlateFlowSolverFV::SetInitialGuess( const PhysicalDomainT& domain,
     if(is_ghost[*kf] < 0)
     {
 //      const int intDofOffset = dofOffset;
-      int lid = m_rowMap->LID( /*intDofOffset+*/trilinos_index[*kf]);
-      local_solution[lid] = massIncrement[*kf] ;
+      int lid = m_rowMap->LID( /*intDofOffset+*/ trilinos_index[*kf]);
+      local_solution[lid] = massIncrement[*kf];
 //      std::cout<<local_solution[lid]<<std::endl;
     }
   }

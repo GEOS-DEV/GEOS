@@ -37,9 +37,9 @@ public:
                             integer const systemAssembleFlag ) const override;
 
   R2SymTensor  StateUpdatePoint( R2SymTensor const & D,
-                                         R2Tensor const & Rot,
-                                         integer const i,
-                                         integer const systemAssembleFlag ) override;
+                                 R2Tensor const & Rot,
+                                 localIndex const i,
+                                 integer const systemAssembleFlag ) override;
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
 
@@ -57,13 +57,13 @@ public:
 
     dataRepository::ViewKey deviatorStress = { "DeviatorStress" };
     dataRepository::ViewKey meanStress = { "MeanStress" };
-  }viewKeys;
+  } viewKeys;
 
   struct GroupKeyStruct : public ConstitutiveBase::GroupKeyStruct
   {
     dataRepository::GroupKey StateData      = { "StateData" };
     dataRepository::GroupKey ParameterData  = { "ParameterData" };
-  }groupKeys;
+  } groupKeys;
 
 
   dataRepository::view_rtype<real64>       youngsModulus()       { return GetParameterData()->getData<real64>(viewKeys.youngsModulus); }
@@ -90,8 +90,6 @@ public:
 private:
 
 };
-
-
 
 
 

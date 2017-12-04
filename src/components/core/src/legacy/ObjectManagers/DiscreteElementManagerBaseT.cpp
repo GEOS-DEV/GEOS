@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -46,10 +64,11 @@
 #include "DiscreteElementManagerBaseT.h"
 
 /**
- * @brief Constructor to set internal pointers to the external node and face managers
+ * @brief Constructor to set internal pointers to the external node and face
+ * managers
  * @author Scott Johnson
  */
-DiscreteElementManagerBaseT::DiscreteElementManagerBaseT() : 
+DiscreteElementManagerBaseT::DiscreteElementManagerBaseT():
   ObjectDataStructureBaseT(ObjectDataStructureBaseT::DiscreteElementManager),
   writeVTK(true),
 #if USECPP11==1
@@ -66,7 +85,7 @@ DiscreteElementManagerBaseT::DiscreteElementManagerBaseT() :
   m_mat->resize(0,1);
 }
 
-DiscreteElementManagerBaseT::DiscreteElementManagerBaseT( const ObjectType objectType ) :
+DiscreteElementManagerBaseT::DiscreteElementManagerBaseT( const ObjectType objectType ):
   ObjectDataStructureBaseT(objectType),
   writeVTK(true),
   #if USECPP11==1
@@ -74,7 +93,7 @@ DiscreteElementManagerBaseT::DiscreteElementManagerBaseT( const ObjectType objec
 #else
   m_mat(NULL)
 #endif
-  
+
 {
   m_mat = MaterialFactory::NewMaterial("LinearElasticDEMMaterial");
   m_mat->resize(0,1);
@@ -113,8 +132,12 @@ globalIndex DiscreteElementManagerBaseT::resize( const localIndex size, const bo
  */
 void DiscreteElementManagerBaseT::AddBaseFields()
 {
-  this->AddKeyedDataField<FieldInfo::incrementalDisplacement>();//-> specified in NodeManagerT constructor
-  this->AddKeyedDataField<FieldInfo::displacement>();//-> specified in NodeManagerT constructor
+  this->AddKeyedDataField<FieldInfo::incrementalDisplacement>();//-> specified
+                                                                // in
+                                                                // NodeManagerT
+                                                                // constructor
+  this->AddKeyedDataField<FieldInfo::displacement>();//-> specified in
+                                                     // NodeManagerT constructor
   this->AddKeyedDataField<FieldInfo::referencePosition>();
   this->AddKeyedDataField<FieldInfo::currentPosition>();
   this->AddKeyedDataField<FieldInfo::rotationAxis>();
@@ -142,7 +165,8 @@ unsigned int DiscreteElementManagerBaseT::Unpack( const char*& buffer, lArray1d&
   const localIndex oldSize = this->m_DataLengths;
   elementReceiveLocalIndices.resize( numReceivedElements );
 
-  // local variable to store global indices of new elements so that they can be used to fill the localToGlobalMap
+  // local variable to store global indices of new elements so that they can be
+  // used to fill the localToGlobalMap
   gArray1d newGlobalIndices;
 
   int numNewElements = 0;
@@ -152,28 +176,32 @@ unsigned int DiscreteElementManagerBaseT::Unpack( const char*& buffer, lArray1d&
     globalIndex gElementIndex;
     sizeOfUnpacked += bufvector::Unpack( buffer, gElementIndex );
 
-    // check to see if the object already exists by checking for the global index in m_globalToLocalMap. If it doesn't,
+    // check to see if the object already exists by checking for the global
+    // index in m_globalToLocalMap. If it doesn't,
     // then add the element to the maps, and increment numNewElements.
     std::map<globalIndex,localIndex>::iterator iterG2L = m_globalToLocalMap.find(gElementIndex);
     if( iterG2L == m_globalToLocalMap.end() )
     {
-      // the global index is not contained in this object, so we should add the element.
+      // the global index is not contained in this object, so we should add the
+      // element.
 
       // add to the element information to the globalToLocalMap
       m_globalToLocalMap[gElementIndex] = this->DataLengths() + numNewElements;
 
-      // add the local index of the element do the elementReceiveLocalIndices array
+      // add the local index of the element do the elementReceiveLocalIndices
+      // array
       elementReceiveLocalIndices(a) = oldSize + numNewElements;
 
       // add entry to newGlobalIndices
       newGlobalIndices.push_back( gElementIndex );
 
-          // increment the number of new elements
+      // increment the number of new elements
       ++numNewElements;
     }
     else
     {
-      // the global index is contained in this object, so we should point everything at the existing element
+      // the global index is contained in this object, so we should point
+      // everything at the existing element
 
       // get the local index of the element
       localIndex b = iterG2L->second;
@@ -207,15 +235,18 @@ unsigned int DiscreteElementManagerBaseT::Unpack( const char*& buffer, lArray1d&
  * @param buffer the buffer to pack the elements into
  * @return size of characters packed into the buffer.
  *
- * This function packs complete elements into a buffer. this should include all information needed to reconstruct the element
- * on a remote process domain. This does not include maps to other objects, as those are locally indexed relations and
+ * This function packs complete elements into a buffer. this should include all
+ * information needed to reconstruct the element
+ * on a remote process domain. This does not include maps to other objects, as
+ * those are locally indexed relations and
  * must be constructed on the receiving domain.
  */
 unsigned int DiscreteElementManagerBaseT::Pack( const lArray1d& sendElements, bufvector& buffer ) const
 {
   unsigned int sizeOfPacked = 0;
 
-  // the number of elements that will be packed is the size of the sendElements array
+  // the number of elements that will be packed is the size of the sendElements
+  // array
   int numElements = sendElements.size();
 
   // pack the number of elements
@@ -259,7 +290,7 @@ void DiscreteElementManagerBaseT::WriteVTK(const int cycleNum, ContactManagerBas
         sprintf(buffer, "demall_%06d.visit", cycleNum);
         std::ofstream outAll(buffer);
         outAll << "!NBLOCKS " << size << std::endl;
-        for (int i = 0; i < size; i++)
+        for (int i = 0 ; i < size ; i++)
         {
           sprintf(buffer, "dem_%06d_%06d.vtk", i, cycleNum);
           outAll << buffer << std::endl;
@@ -284,15 +315,16 @@ void DiscreteElementManagerBaseT::WriteVTK(const int cycleNum, ContactManagerBas
   //write points
   out << "POINTS " << m_DataLengths << " double" << std::endl;
   {
-    const Array1dT<R1Tensor>& deCurrentPosition         = GetFieldData<FieldInfo::currentPosition> ();
-    for(Array1dT<R1Tensor>::const_iterator it = deCurrentPosition.begin(); it != deCurrentPosition.end(); ++it)
+    const array<R1Tensor>& deCurrentPosition         = GetFieldData<FieldInfo::currentPosition> ();
+    for(array<R1Tensor>::const_iterator it = deCurrentPosition.begin() ; it != deCurrentPosition.end() ; ++it)
     {
       out << (*it)(0) << " " << (*it)(1) << " " << (*it)(2) << std::endl;
     }
   }
 
 //  //write vertices
-//  out << std::endl << "VERTICES " << m_DataLengths << " " << (2*m_DataLengths) << std::endl;
+//  out << std::endl << "VERTICES " << m_DataLengths << " " << (2*m_DataLengths)
+// << std::endl;
 //  for(localIndex i = 0; i < this->m_DataLengths; i++)
 //  {
 //    out << "1 " << i << std::endl;
@@ -303,7 +335,7 @@ void DiscreteElementManagerBaseT::WriteVTK(const int cycleNum, ContactManagerBas
   {
     const lArray1d& v0 = contacts.GetFieldData<localIndex>( "face1");
     const lArray1d& v1 = contacts.GetFieldData<localIndex>( "face2");
-    for(localIndex i = 0; i < contacts.DataLengths(); i++)
+    for(localIndex i = 0 ; i < contacts.DataLengths() ; i++)
     {
       out << "2 " << v0(i) << " " << v1(i) << std::endl;
     }
@@ -323,33 +355,33 @@ void DiscreteElementManagerBaseT::WriteVTK(const int cycleNum, ContactManagerBas
 
 void DiscreteElementManagerBaseT::WriteVTKPointData(std::ofstream& out)
 {
-  for( std::map<std::string, rArray1d>::const_iterator itn=m_realData.begin() ; itn!=m_realData.end() ; ++itn )
+  for( std::map<std::string, array<real64> >::const_iterator itn=m_realData.begin() ; itn!=m_realData.end() ; ++itn )
   {
     out << "SCALARS pt" << itn->first << " double" << std::endl << "LOOKUP_TABLE default" << std::endl;
-    const rArray1d& scalar = itn->second;
-    for(rArray1d::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    const array<real64>& scalar = itn->second;
+    for(array<real64>::const_iterator it = scalar.begin() ; it != scalar.end() ; ++it)
     {
       out << (*it) << " ";
     }
     out << std::endl;
   }
 
-  for( std::map<std::string, Array1dT<R1Tensor> >::const_iterator itn=m_R1TensorData.begin() ; itn!=m_R1TensorData.end() ; ++itn )
+  for( std::map<std::string, array<R1Tensor> >::const_iterator itn=m_R1TensorData.begin() ; itn!=m_R1TensorData.end() ; ++itn )
   {
     out << "SCALARS pt" << itn->first << "_Magnitude double" << std::endl << "LOOKUP_TABLE default" << std::endl;
-    const Array1dT<R1Tensor>& scalar = itn->second;
-    for(Array1dT<R1Tensor>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    const array<R1Tensor>& scalar = itn->second;
+    for(array<R1Tensor>::const_iterator it = scalar.begin() ; it != scalar.end() ; ++it)
     {
       out << it->L2_Norm() << " ";
     }
     out << std::endl;
   }
 
-  for( std::map<std::string, iArray1d>::const_iterator itn=m_IntegerData.begin() ; itn!=m_IntegerData.end() ; ++itn )
+  for( std::map<std::string, array<integer> >::const_iterator itn=m_IntegerData.begin() ; itn!=m_IntegerData.end() ; ++itn )
   {
     out << "SCALARS pt" << itn->first << " integer" << std::endl << "LOOKUP_TABLE default" << std::endl;
-    const iArray1d& scalar = itn->second;
-    for(iArray1d::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    const array<integer>& scalar = itn->second;
+    for(array<integer>::const_iterator it = scalar.begin() ; it != scalar.end() ; ++it)
     {
       out << (*it) << " ";
     }

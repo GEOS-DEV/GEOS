@@ -11,7 +11,7 @@
 #include "PMPIOBase.h"
 #include "BinStream.h"
 
-class RestartFile: public PMPIOBase<BinStream>
+class RestartFile : public PMPIOBase<BinStream>
 {
 public:
   RestartFile();

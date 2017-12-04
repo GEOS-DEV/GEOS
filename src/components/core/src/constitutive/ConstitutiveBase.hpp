@@ -45,9 +45,9 @@ public:
                             integer const systemAssembleFlag ) const = 0;
 
   virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
-                                                R2Tensor const & Rot,
-                                                integer const i,
-                                                integer const systemAssembleFlag ) = 0;
+                                        R2Tensor const & Rot,
+                                        localIndex const i,
+                                        integer const systemAssembleFlag ) = 0;
 
 
   virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override = 0;
@@ -63,14 +63,13 @@ public:
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   struct ViewKeyStruct
-  {
-  }viewKeys;
+  {} viewKeys;
 
   struct GroupKeyStruct
   {
     dataRepository::GroupKey StateData      = { "StateData" };
     dataRepository::GroupKey ParameterData  = { "ParameterData" };
-  }groupKeys;
+  } groupKeys;
 
   ManagedGroup * GetParameterData()             { return this->GetGroup(groupKeys.ParameterData); }
   ManagedGroup const * GetParameterData() const { return this->GetGroup(groupKeys.ParameterData); }
@@ -79,7 +78,6 @@ public:
   ManagedGroup const * GetStateData() const { return this->GetGroup(groupKeys.StateData); }
 
 };
-
 
 
 

@@ -17,7 +17,8 @@ namespace geosx
 
 void ConvertDocumentationToSchema(std::string const & fname, cxx_utilities::DocumentationNode const & inputDocumentationHead, integer verbosityLevel);
 void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot);
-void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWrapper::xmlNode schemaNode, xmlWrapper::xmlNode schemaRoot, integer verbosityLevel);
+void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWrapper::xmlNode schemaNode, xmlWrapper::xmlNode schemaRoot,
+                        integer verbosityLevel);
 
 }
 

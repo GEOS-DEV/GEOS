@@ -13,23 +13,25 @@
  * @author Scott Johnson
  */
 FractalVolume::FractalVolume():
-m_lower(std::numeric_limits<realT>::max()),
-m_upper(-std::numeric_limits<realT>::max()),
-m_n2(0),
-m_values(),
-m_kernels()
-{
-}
+  m_lower(std::numeric_limits<realT>::max()),
+  m_upper(-std::numeric_limits<realT>::max()),
+  m_n2(0),
+  m_values(),
+  m_kernels()
+{}
 
 /**
- * @brief Creates an oct-tree estimate of a fractally self-similar distribution of volumetric parameters
+ * @brief Creates an oct-tree estimate of a fractally self-similar distribution
+ * of volumetric parameters
  * @author Scott Johnson
  * @param mean Mean of the parameter distribution
  * @param stdev Standard deviation of the parameter distribution
- * @hurst hurst Hurst exponent for the fractal distribution $1<H<2$ where $D=3-H$
+ * @hurst hurst Hurst exponent for the fractal distribution $1<H<2$ where
+ *$D=3-H$
  * @param lower Lower bound of the point values to be queried
  * @param upper Upper bound of the point values to be queried
- * @param nlevels Number of oct-tree levels to use to represent the multi-scale distribution
+ * @param nlevels Number of oct-tree levels to use to represent the multi-scale
+ * distribution
  * @param n0 Number of oct-tree elements in the x-direction at level 0
  * @param n1 Number of oct-tree elements in the y-direction at level 0
  * @param n2 Number of oct-tree elements in the z-direction at level 0
@@ -74,12 +76,13 @@ unsigned FractalVolume::Initialize(const Array2dT<realT>& parameters,
   const int ioffset = (int)(hfct * 2) + 1;
   const localIndex nlevels = parameters.Dimension(0);
 
-  //resize the kernels array to its final size, so we can reference the memory without worrying!
+  //resize the kernels array to its final size, so we can reference the memory
+  // without worrying!
   {
     size_t sz = 0;
 
     int aa = 1;
-    for(localIndex i = 0; i < nlevels; i++, aa *= 2)
+    for(localIndex i = 0 ; i < nlevels ; i++, aa *= 2)
     {
       const int nj = 2*ioffset + n0 * aa;
       const int nk = 2*ioffset + n1 * aa;
@@ -90,7 +93,7 @@ unsigned FractalVolume::Initialize(const Array2dT<realT>& parameters,
   }
 
   //fill the intermediate value hierarchical grid
-  Array1dT< Array3dT<VolumeKernel*>* > vals;
+  array< Array3dT<VolumeKernel*>* > vals;
   vals.resize(nlevels);
   {
     realT dx0 = 1.0 / n0;
@@ -99,7 +102,7 @@ unsigned FractalVolume::Initialize(const Array2dT<realT>& parameters,
 
     int aa = 1;
     localIndex icurr = 0;
-    for(localIndex i = 0; i < nlevels; i++, aa *= 2, dx0 *= 0.5, dx1 *= 0.5, dx2 *= 0.5)
+    for(localIndex i = 0 ; i < nlevels ; i++, aa *= 2, dx0 *= 0.5, dx1 *= 0.5, dx2 *= 0.5)
     {
       vals[i] = new Array3dT<VolumeKernel*>();
       const int nj = 2*ioffset + n0 * aa;
@@ -126,7 +129,7 @@ unsigned FractalVolume::Initialize(const Array2dT<realT>& parameters,
   //fill the final list for each cell
   FillValues(ioffset, nlevels, vals);
 
-  for(localIndex i = 0; i < nlevels; i++)
+  for(localIndex i = 0 ; i < nlevels ; i++)
   {
     delete vals[i];
   }
@@ -142,13 +145,13 @@ void FractalVolume::InitializeLevel(const int nj, const int nk, const int nl, co
   //calculate initial values and set position
   {
     R1Tensor xx(0.0);
-    for(int j = 0; j < nj; j++)
+    for(int j = 0 ; j < nj ; j++)
     {
       xx(0) = dx0 * ((j - ioffset) + 0.5);
-      for(int k = 0; k < nk; k++)
+      for(int k = 0 ; k < nk ; k++)
       {
         xx(1) = dx1 * ((k - ioffset) + 0.5);
-        for(int l = 0; l < nl; l++)
+        for(int l = 0 ; l < nl ; l++)
         {
           xx(2) = dx2 * ((l - ioffset) + 0.5);
           m_kernels[icurr].Initialize(xx, h, mean, stdev);
@@ -168,18 +171,18 @@ void FractalVolume::InitializeSumMW(const int nj, const int nk, const int nl, co
 {
   //calculate sum_mW ... only need to do this once, since it's a regular grid
   R1Tensor dx(0.0);
-  for(int j = 0; j < nj; j++)
+  for(int j = 0 ; j < nj ; j++)
   {
-    for(int k = 0; k < nk; k++)
+    for(int k = 0 ; k < nk ; k++)
     {
-      for(int l = 0; l < nl; l++)
+      for(int l = 0 ; l < nl ; l++)
       {
         R1Tensor& xjkl = curr(j, k, l)->m_x;
-        for(int jj = j-ioffset; jj <= j+ioffset; jj++)
+        for(int jj = j-ioffset ; jj <= j+ioffset ; jj++)
         {
-          for(int kk = k-ioffset; kk <= k+ioffset; kk++)
+          for(int kk = k-ioffset ; kk <= k+ioffset ; kk++)
           {
-            for(int ll = l-ioffset; ll <= l+ioffset; ll++)
+            for(int ll = l-ioffset ; ll <= l+ioffset ; ll++)
             {
               if(jj < 0 || jj >= nj || kk < 0 || kk >= nk || ll < 0 || ll >= nl)
                 continue;
@@ -190,7 +193,9 @@ void FractalVolume::InitializeSumMW(const int nj, const int nk, const int nl, co
             }
           }
         }
-        //std::cout << "kernel " << curr(j,k)->m_x[0] << " " << curr(j,k)->m_x[1] << " " << ilevel << " " << curr(j,k)->IncrementSum(0) << std::endl;
+        //std::cout << "kernel " << curr(j,k)->m_x[0] << " " <<
+        // curr(j,k)->m_x[1] << " " << ilevel << " " <<
+        // curr(j,k)->IncrementSum(0) << std::endl;
       }
     }
   }
@@ -198,7 +203,7 @@ void FractalVolume::InitializeSumMW(const int nj, const int nk, const int nl, co
 
 
 void FractalVolume::FillValues(const int ioffset, const localIndex nlevels,
-                               Array1dT< Array3dT<VolumeKernel*>* >& vals)
+                               array< Array3dT<VolumeKernel*>* >& vals)
 {
   //note: values will only hold cells away from the compact support
   //informed boundary, so make sure to remove the indices of
@@ -213,27 +218,32 @@ void FractalVolume::FillValues(const int ioffset, const localIndex nlevels,
     nAll *= (nAll * nAll);
     m_values.clear();
     m_values.Allocate(nj, nk, nl);
-    for(localIndex i = 0; i < m_values.size(); i++)
+    for(localIndex i = 0 ; i < m_values.size() ; i++)
     {
       m_values[i].resize(nlevels);
-      for(localIndex j = 0; j < nlevels; j++)
+      for(localIndex j = 0 ; j < nlevels ; j++)
       {
-          m_values[i][j].reserve(nAll);
+        m_values[i][j].reserve(nAll);
       }
     }
   }
 
-  for( int j = 0; j < nj; j++)  //for each cell at the finest level - j
+  for( int j = 0 ; j < nj ; j++)  //for each cell at the finest level - j
   {
-    for( int k = 0; k < nk; k++)  //for each cell at the finest level - k
+    for( int k = 0 ; k < nk ; k++)  //for each cell at the finest level - k
     {
-      for( int l = 0; l < nl; l++)  //for each cell at the finest level - l
+      for( int l = 0 ; l < nl ; l++)  //for each cell at the finest level - l
       {
-        Array1dT<Array1dT<VolumeKernel*> >& currentVal = m_values(j, k, l); // get the list of kernels for each level
+        array<array<VolumeKernel*> >& currentVal = m_values(j, k, l); // get the
+                                                                      // list of
+                                                                      // kernels
+                                                                      // for
+                                                                      // each
+                                                                      // level
         int nper = 1;
-        for (localIndex i = 1; i < nlevels; i++)
+        for (localIndex i = 1 ; i < nlevels ; i++)
           nper *= 2;
-        for (localIndex i = 0; i < nlevels; i++, nper /= 2)
+        for (localIndex i = 0 ; i < nlevels ; i++, nper /= 2)
         {
           Array3dT<VolumeKernel*>& curr = *vals[i];
           //get the coordinates of the parent cell at level i
@@ -243,9 +253,12 @@ void FractalVolume::FillValues(const int ioffset, const localIndex nlevels,
           int kk1 = kk0 + 2 * ioffset;
           int ll0 = l / nper;
           int ll1 = ll0 + 2 * ioffset;
-          for (int jj = jj0; jj <= jj1; jj++) {
-            for (int kk = kk0; kk <= kk1; kk++) {
-              for (int ll = ll0; ll <= ll1; ll++) {
+          for (int jj = jj0 ; jj <= jj1 ; jj++)
+          {
+            for (int kk = kk0 ; kk <= kk1 ; kk++)
+            {
+              for (int ll = ll0 ; ll <= ll1 ; ll++)
+              {
                 currentVal[i].push_back(curr(jj, kk, ll));
               }
             }
@@ -263,7 +276,7 @@ realT FractalVolume::Value(const R1Tensor& position) const
   {
     R1Tensor tmp2(m_upper);
     tmp2 -= m_lower;
-    for (localIndex i=0; i<nsdof; ++i)
+    for (localIndex i=0 ; i<nsdof ; ++i)
     {
       if (isEqual(tmp2[i],0.0))
       {
@@ -277,22 +290,25 @@ realT FractalVolume::Value(const R1Tensor& position) const
     }
   }
 
-  //get the bin of the normalized position and then evaluate the position for the kernels applicable at each level
+  //get the bin of the normalized position and then evaluate the position for
+  // the kernels applicable at each level
   int coords[nsdof];
-  for(localIndex i = 0; i < nsdof; i++)
+  for(localIndex i = 0 ; i < nsdof ; i++)
     coords[i] = (int)(m_values.Dimension(i) * (xt(i) >= 1 ? (1.0-1.0e-10) : xt(i)) );
-  const Array1dT<Array1dT<VolumeKernel*> >& valArray = m_values(coords[0], coords[1], coords[2]);
+  const array<array<VolumeKernel*> >& valArray = m_values(coords[0], coords[1], coords[2]);
 
-  //for each refinement level and then for each applicable kernel at that refinement level add the contribution
+  //for each refinement level and then for each applicable kernel at that
+  // refinement level add the contribution
   {
     realT sum = 0.0;
-    for(localIndex i = 0; i < valArray.size(); i++)
+    for(localIndex i = 0 ; i < valArray.size() ; i++)
     {
       realT fmW = 0.0;
       realT mW = 0.0;
-      for(localIndex j = 0; j < valArray[i].size(); j++)
+      for(localIndex j = 0 ; j < valArray[i].size() ; j++)
       {
-        valArray[i][j]->Evaluate(xt, fmW, mW); //add kernel contribution to total
+        valArray[i][j] -> Evaluate(xt, fmW, mW); //add kernel contribution to
+                                                 // total
       }
       sum += fmW / mW;
     }
@@ -301,8 +317,8 @@ realT FractalVolume::Value(const R1Tensor& position) const
 }
 
 localIndex FractalVolume::Positions(const realT dx,
-                                 Array1dT<R1Tensor>& positions,
-                                 const realT weight) const
+                                    array<R1Tensor>& positions,
+                                    const realT weight) const
 {
   return Positions(m_lower, m_upper, dx, positions, weight);
 }
@@ -310,7 +326,7 @@ localIndex FractalVolume::Positions(const realT dx,
 localIndex FractalVolume::Positions(const R1Tensor& min,
                                     const R1Tensor& max,
                                     const realT dx,
-                                    Array1dT<R1Tensor>& positions,
+                                    array<R1Tensor>& positions,
                                     const realT weight) const
 {
   //------GET INCREMENTAL DISTANCE ALONG EACH DIRECTION
@@ -321,7 +337,7 @@ localIndex FractalVolume::Positions(const R1Tensor& min,
     dxv -= m_lower;
     dxc = dxv;
     dxc /= dx;
-    for(localIndex i = 0; i < nsdof; ++i)
+    for(localIndex i = 0 ; i < nsdof ; ++i)
     {
       nn(i) = (localIndex)dxc(i);
       if(nn(i) == 0)
@@ -337,13 +353,13 @@ localIndex FractalVolume::Positions(const R1Tensor& min,
 
   //------GET DISTRIBUTION
   R1Tensor x;
-  for(localIndex ii = 0; ii < nn(0); ii++)
+  for(localIndex ii = 0 ; ii < nn(0) ; ii ++)
   {
     x(0) = m_lower(0) + dxc(0) * (ii + 0.5);
-    for(localIndex jj = 0; jj < nn(1); jj++)
+    for(localIndex jj = 0 ; jj < nn(1) ; jj ++)
     {
       x(1) = m_lower(1) + dxc(1) * (jj + 0.5);
-      for(localIndex kk = 0; kk < nn(2); kk++)
+      for(localIndex kk = 0 ; kk < nn(2) ; kk ++)
       {
         x(2) = m_lower(2) + dxc(2) * (kk + 0.5);
         const realT val = weight * dV * Value(x);
@@ -355,10 +371,10 @@ localIndex FractalVolume::Positions(const R1Tensor& min,
         R1Tensor xmin(x);
         xmin -= dxch;
 
-        for(localIndex k = 0; k < njoints; k++)
+        for(localIndex k = 0 ; k < njoints ; k ++)
         {
           R1Tensor xx;
-          for(localIndex iii = 0; iii < nsdof; ++iii)
+          for(localIndex iii = 0 ; iii < nsdof ; ++iii)
             xx(iii) = StatisticalDistributionBaseT::UniformSample(xmin(iii), xmax(iii));
           positions.push_back(xx);
         }

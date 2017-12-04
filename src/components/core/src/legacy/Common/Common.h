@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -86,7 +104,8 @@ const int one = 1;
 /**
  * @author Randolph Settgast
  * @brief base class for the field structures
- * This class serves as the base class for all the field structures which hold attribute information
+ * This class serves as the base class for all the field structures which hold
+ * attribute information
  * for a field.
  *
  */
@@ -97,11 +116,12 @@ public:
    * @author Randolph Settgast
    * @param key the key of the field
    * @param name the name of the field
-   * @param WriteToRestart flag to see if the field gets written to restart files
+   * @param WriteToRestart flag to see if the field gets written to restart
+   * files
    * @param WriteToPlot flag to see if the field gets written to plot files
    */
   FieldBase( const size_t key, const std::string& name, const bool WriteToRestart, const bool WriteToPlot )
-  :m_key(key), m_name(name), m_WriteToRestart(WriteToRestart), m_WriteToPlot(WriteToPlot)
+    : m_key(key), m_name(name), m_WriteToRestart(WriteToRestart), m_WriteToPlot(WriteToPlot)
   {}
 
   ~FieldBase(){}
@@ -130,72 +150,72 @@ private:
 
 namespace FieldInfo
 {
-  enum FieldEnum
-  {
-    noKey,
-    isDomainBoundary,
-    isExternal,
-    processColor,
-    ownedByRank,
-    ghostRank,
-    referencePosition,
-    currentPosition,
-    displacement,
-    incrementalDisplacement,
-    relativePosition,
-    velocity,
-    acceleration,
-    force,
-    contactForce,
-    hgforce,
-    mass,
-    rotationAxis,
-    rotationMagnitude,
-    rotationalAxisIncrement,
-    rotationalMagnitudeIncrement,
-    rotationalVelocity,
-    rotationalAcceleration,
-    moment,
-    rotationalInertia,
-    pressure,
-    fluidPressure,
-    deviatorStress,
-    totalStress,
-    volume,
-    density,
-    fluidDensity,
-    massFlux,
-    demIndex,
-    seismicBeginTime,
-    seismicRiseTime,
-    slip,
-    area,
-    seismicMagnitude,
-    seismicMoment,
-    damageIndicator,
-    numFieldEnums
-  };
+enum FieldEnum
+{
+  noKey,
+  isDomainBoundary,
+  isExternal,
+  processColor,
+  ownedByRank,
+  ghostRank,
+  referencePosition,
+  currentPosition,
+  displacement,
+  incrementalDisplacement,
+  relativePosition,
+  velocity,
+  acceleration,
+  force,
+  contactForce,
+  hgforce,
+  mass,
+  rotationAxis,
+  rotationMagnitude,
+  rotationalAxisIncrement,
+  rotationalMagnitudeIncrement,
+  rotationalVelocity,
+  rotationalAcceleration,
+  moment,
+  rotationalInertia,
+  pressure,
+  fluidPressure,
+  deviatorStress,
+  totalStress,
+  volume,
+  density,
+  fluidDensity,
+  massFlux,
+  demIndex,
+  seismicBeginTime,
+  seismicRiseTime,
+  slip,
+  area,
+  seismicMagnitude,
+  seismicMoment,
+  damageIndicator,
+  numFieldEnums
+};
 
-  enum FieldType
-  {
-    integerField = 0,
-    localIndexField = 1,
-    globalIndexField = 2,
-    realField = 3,
-    R1TensorField = 4,
-    R2TensorField = 5,
-    R2SymTensorField = 6,
-    integerParameter = 7,
-    realParameter = 8,
-    numFieldTypes = 9
-  };
+enum FieldType
+{
+  integerField = 0,
+  localIndexField = 1,
+  globalIndexField = 2,
+  realField = 3,
+  R1TensorField = 4,
+  R2TensorField = 5,
+  R2SymTensorField = 6,
+  integerParameter = 7,
+  realParameter = 8,
+  numFieldTypes = 9
+};
 
-  extern std::vector<FieldBase*> AttributesByKey;
-  extern std::map<std::string, FieldBase*> AttributesByName;
+extern std::vector<FieldBase*> AttributesByKey;
+extern std::map<std::string, FieldBase*> AttributesByName;
 
-  inline size_t FieldSize(FieldType ft)
-  {
-    /*size_t rval;
+inline size_t FieldSize(FieldType ft)
+{
+  /*size_t rval;
      if( i == integerField )
      rval = 1;
      else if( i == realField )
@@ -208,97 +228,97 @@ namespace FieldInfo
      rval = 6;
      else
      throw GPException("Common.h::FieldSize() invalid\n");*/
-    switch (ft)
-    {
-      case integerField:
-        return 1;
-        break;
-      case localIndexField:
-        return 1;
-        break;
-      case globalIndexField:
-        return 1;
-        break;
-      case realField:
-        return 1;
-        break;
-      case R1TensorField:
-        return 3;
-        break;
-      case R2TensorField:
-        return 9;
-        break;
-      case R2SymTensorField:
-        return 6;
-        break;
-      case integerParameter:
-        return 1;
-        break;
-      case realParameter:
-        return 1;
-        break;
-      case numFieldTypes:
-      default:
-        throw GPException("Common.h::FieldSize() invalid\n");
-    }
-    /*Should not get here*/
-    throw GPException("Common.h::FieldSize() invalid\n");
-    return 0;
-  }
-
-  // Type strings
-  static const std::string IntegerStr = "Integer";
-  static const std::string LocalIndexStr = "LocalIndex";
-  static const std::string GlobalIndexStr = "GlobalIndex";
-  static const std::string RealStr = "Scalar";
-  static const std::string R1TensorStr = "Vector";
-  static const std::string R2TensorStr = "Tensor";
-  static const std::string R2SymTensorStr = "SymmetricTensor";
-  static const std::string IntegerParameterStr = "IntegerParameter";
-  static const std::string RealParameterStr = "ScalarParameter";
-
-  inline const std::string& FieldTypeName(FieldType ft)
+  switch (ft)
   {
-    switch (ft)
-    {
-      case integerField:
-        return IntegerStr;
-        break;
-      case localIndexField:
-        return LocalIndexStr;
-        break;
-      case globalIndexField:
-        return GlobalIndexStr;
-        break;
-      case realField:
-        return RealStr;
-        break;
-      case R1TensorField:
-        return R1TensorStr;
-        break;
-      case R2TensorField:
-        return R2TensorStr;
-        break;
-      case R2SymTensorField:
-        return R2SymTensorStr;
-        break;
-      case integerParameter:
-        return IntegerParameterStr;
-        break;
-      case realParameter:
-        return RealParameterStr;
-        break;
-      case numFieldTypes:
-      default:
-        throw GPException("FieldTypeName: Unrecognized field type");
-    }
-    /*Should not get here*/
-    throw GPException("FieldTypeName: Unrecognized field type");
-    return RealStr;
+  case integerField:
+    return 1;
+    break;
+  case localIndexField:
+    return 1;
+    break;
+  case globalIndexField:
+    return 1;
+    break;
+  case realField:
+    return 1;
+    break;
+  case R1TensorField:
+    return 3;
+    break;
+  case R2TensorField:
+    return 9;
+    break;
+  case R2SymTensorField:
+    return 6;
+    break;
+  case integerParameter:
+    return 1;
+    break;
+  case realParameter:
+    return 1;
+    break;
+  case numFieldTypes:
+  default:
+    throw GPException("Common.h::FieldSize() invalid\n");
   }
+  /*Should not get here*/
+  throw GPException("Common.h::FieldSize() invalid\n");
+  return 0;
+}
 
-  void AllocateAttributes();
-  void DeleteAttributes();
+// Type strings
+static const std::string IntegerStr = "Integer";
+static const std::string LocalIndexStr = "LocalIndex";
+static const std::string GlobalIndexStr = "GlobalIndex";
+static const std::string RealStr = "Scalar";
+static const std::string R1TensorStr = "Vector";
+static const std::string R2TensorStr = "Tensor";
+static const std::string R2SymTensorStr = "SymmetricTensor";
+static const std::string IntegerParameterStr = "IntegerParameter";
+static const std::string RealParameterStr = "ScalarParameter";
+
+inline const std::string& FieldTypeName(FieldType ft)
+{
+  switch (ft)
+  {
+  case integerField:
+    return IntegerStr;
+    break;
+  case localIndexField:
+    return LocalIndexStr;
+    break;
+  case globalIndexField:
+    return GlobalIndexStr;
+    break;
+  case realField:
+    return RealStr;
+    break;
+  case R1TensorField:
+    return R1TensorStr;
+    break;
+  case R2TensorField:
+    return R2TensorStr;
+    break;
+  case R2SymTensorField:
+    return R2SymTensorStr;
+    break;
+  case integerParameter:
+    return IntegerParameterStr;
+    break;
+  case realParameter:
+    return RealParameterStr;
+    break;
+  case numFieldTypes:
+  default:
+    throw GPException("FieldTypeName: Unrecognized field type");
+  }
+  /*Should not get here*/
+  throw GPException("FieldTypeName: Unrecognized field type");
+  return RealStr;
+}
+
+void AllocateAttributes();
+void DeleteAttributes();
 
 } // Field Info
 
@@ -307,11 +327,9 @@ typedef FieldInfo::FieldType FieldType;
 
 
 
-
 template <FieldKey FIELDKEY>
 struct FieldStructWrapper
 {};
-
 
 
 
@@ -408,14 +426,6 @@ struct demIndex : public FieldBase
 };
 template<> struct FieldStructWrapper<FieldInfo::demIndex>
 {  typedef demIndex FieldStruct; };
-
-
-
-
-
-
-
-
 
 
 
@@ -562,10 +572,6 @@ template<> struct FieldStructWrapper<FieldInfo::contactForce>
 
 
 
-
-
-
-
 //*************************************************************************************************
 struct rotationAxis : public FieldBase
 {
@@ -623,7 +629,6 @@ struct rotationalMagnitudeIncrement : public FieldBase
 };
 template<> struct FieldStructWrapper<FieldInfo::rotationalMagnitudeIncrement>
 {  typedef rotationalMagnitudeIncrement FieldStruct; };
-
 
 
 
@@ -715,7 +720,7 @@ template<> struct FieldStructWrapper<FieldInfo::mass>
 
 
 //*************************************************************************************************
-struct Pressure: public FieldBase
+struct Pressure : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::pressure; }
@@ -729,7 +734,7 @@ template<> struct FieldStructWrapper<FieldInfo::pressure>
 
 
 //*************************************************************************************************
-struct FluidPressure: public FieldBase
+struct FluidPressure : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::fluidPressure; }
@@ -743,7 +748,7 @@ template<> struct FieldStructWrapper<FieldInfo::fluidPressure>
 
 
 //*************************************************************************************************
-struct Density: public FieldBase
+struct Density : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::density; }
@@ -757,7 +762,7 @@ template<> struct FieldStructWrapper<FieldInfo::density>
 
 
 //*************************************************************************************************
-struct FluidDensity: public FieldBase
+struct FluidDensity : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::fluidDensity; }
@@ -772,7 +777,7 @@ template<> struct FieldStructWrapper<FieldInfo::fluidDensity>
 
 
 //*************************************************************************************************
-struct massFlux: public FieldBase
+struct massFlux : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::massFlux; }
@@ -786,7 +791,7 @@ template<> struct FieldStructWrapper<FieldInfo::massFlux>
 
 
 //*************************************************************************************************
-struct damageIndicator: public FieldBase
+struct damageIndicator : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::damageIndicator; }
@@ -800,7 +805,7 @@ template<> struct FieldStructWrapper<FieldInfo::damageIndicator>
 
 
 //*************************************************************************************************
-struct DeviatorStress: public FieldBase
+struct DeviatorStress : public FieldBase
 {
   typedef R2SymTensor Type;
   static size_t key() { return FieldInfo::deviatorStress; }
@@ -814,7 +819,7 @@ template<> struct FieldStructWrapper<FieldInfo::deviatorStress>
 
 
 //*************************************************************************************************
-struct SeismicBeginTime: public FieldBase
+struct SeismicBeginTime : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::seismicBeginTime; }
@@ -828,7 +833,7 @@ template<> struct FieldStructWrapper<FieldInfo::seismicBeginTime>
 
 
 //*************************************************************************************************
-struct SeismicRiseTime: public FieldBase
+struct SeismicRiseTime : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::seismicRiseTime; }
@@ -842,7 +847,7 @@ template<> struct FieldStructWrapper<FieldInfo::seismicRiseTime>
 
 
 //*************************************************************************************************
-struct Slip: public FieldBase
+struct Slip : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::slip; }
@@ -856,7 +861,7 @@ template<> struct FieldStructWrapper<FieldInfo::slip>
 
 
 //*************************************************************************************************
-struct Area: public FieldBase
+struct Area : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::area; }
@@ -870,7 +875,7 @@ template<> struct FieldStructWrapper<FieldInfo::area>
 
 
 //*************************************************************************************************
-struct SeismicMagnitude: public FieldBase
+struct SeismicMagnitude : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::seismicMagnitude; }
@@ -884,7 +889,7 @@ template<> struct FieldStructWrapper<FieldInfo::seismicMagnitude>
 
 
 //*************************************************************************************************
-struct SeismicMoment: public FieldBase
+struct SeismicMoment : public FieldBase
 {
   typedef realT Type;
   static size_t key() { return FieldInfo::seismicMoment; }

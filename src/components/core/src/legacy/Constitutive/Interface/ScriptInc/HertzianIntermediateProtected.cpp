@@ -1,6 +1,6 @@
 //FUNCTION_BEGIN_PARSE
 virtual_realT
-HertzianIntermediate::NormalStiffness(const InterfaceBaseParameterData& ,
+HertzianIntermediate::NormalStiffness(const InterfaceBaseParameterData&,
                                       InterfaceBaseStateData& matStateBase,
                                       const realT normalApproach,
                                       const bool setForces) const
@@ -26,7 +26,7 @@ HertzianIntermediate::UpdateFriction( const InterfaceBaseParameterData& matParam
 
 //FUNCTION_BEGIN_PARSE
 virtual_realT
-HertzianIntermediate::ShearStrength(const InterfaceBaseParameterData& ,
+HertzianIntermediate::ShearStrength(const InterfaceBaseParameterData&,
                                     InterfaceBaseStateData& matStateBase) const
 {
   //get temporary references

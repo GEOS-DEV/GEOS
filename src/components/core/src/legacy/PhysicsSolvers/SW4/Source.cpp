@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "GridPointSource.h"
@@ -55,16 +73,19 @@
 using namespace std;
 
 //-----------------------------------------------------------------------
-// Constructor, 
+// Constructor,
 //
 //
 //    pars is only used in the 'Discrete' time function
-//        when pars[1],..pars[npts] should contain the discrete function on a uniform
-//        grid with spacing dt=1/freq, and pars[0] is the first time, thus the grid is
+//        when pars[1],..pars[npts] should contain the discrete function on a
+// uniform
+//        grid with spacing dt=1/freq, and pars[0] is the first time, thus the
+// grid is
 //            t_k = pars[0] + dt*k, k=0,1,..,npts-1
 //    ipar should have size 1, with ipar[0] containing npts.
 //
-//    When the source time function is not 'Discrete', the input pars and ipars will
+//    When the source time function is not 'Discrete', the input pars and ipars
+// will
 //    not be used.
 //
 //namespace SW4
@@ -76,26 +97,26 @@ Source::Source( double frequency, double t0, double x0, double y0, double z0,
                 timeDep tDep,
                 const char *name, bool topodepth, int ncyc,
                 double* pars,
-                int npar, int* ipars, int nipar ) :
-    mName( name ),
-    mForces(),
-    mIsMomentSource( true ),
-    mFreq( frequency ),
-    mT0( t0 ),
-    m_myPoint( false ),
-    m_zRelativeToTopography( topodepth ),
-    mX0( x0 ),
-    mY0( y0 ),
-    mZ0( z0 ),
-    mPar( nullptr ),
-    mIpar( nullptr ),
-    mNpar( npar ),
-    mNipar( nipar ),
-    mNcyc( ncyc ),
-    mTimeDependence( tDep ),
-    m_is_filtered( false ),
-    m_zTopo( -1e38 ),
-    mIgnore( false )
+                int npar, int* ipars, int nipar ):
+  mName( name ),
+  mForces(),
+  mIsMomentSource( true ),
+  mFreq( frequency ),
+  mT0( t0 ),
+  m_myPoint( false ),
+  m_zRelativeToTopography( topodepth ),
+  mX0( x0 ),
+  mY0( y0 ),
+  mZ0( z0 ),
+  mPar( nullptr ),
+  mIpar( nullptr ),
+  mNpar( npar ),
+  mNipar( nipar ),
+  mNcyc( ncyc ),
+  mTimeDependence( tDep ),
+  m_is_filtered( false ),
+  m_zTopo( -1e38 ),
+  mIgnore( false )
 {
   mForces.resize( 6 );
   mForces[0] = Mxx;
@@ -138,7 +159,8 @@ Source::Source( double frequency, double t0, double x0, double y0, double z0,
   }
 
 // Correct source location for discrepancy between raw and smoothed topography
-  correct_Z_level(); // also sets the ignore flag for sources that are above the topography
+  correct_Z_level(); // also sets the ignore flag for sources that are above the
+                     // topography
 
 }
 
@@ -149,25 +171,25 @@ Source::Source( double frequency, double t0, double x0, double y0, double z0,
                 timeDep tDep,
                 const char *name, bool topodepth, int ncyc,
                 double* pars,
-                int npar, int* ipars, int nipar ) :
-    mName( name ),
-    mForces(),
-    mIsMomentSource( false ),
-    mFreq( frequency ),
-    mT0( t0 ),
-    m_myPoint( false ),
-    m_zRelativeToTopography( topodepth ),
-    mX0( x0 ),
-    mY0( y0 ),
-    mZ0( z0 ),
+                int npar, int* ipars, int nipar ):
+  mName( name ),
+  mForces(),
+  mIsMomentSource( false ),
+  mFreq( frequency ),
+  mT0( t0 ),
+  m_myPoint( false ),
+  m_zRelativeToTopography( topodepth ),
+  mX0( x0 ),
+  mY0( y0 ),
+  mZ0( z0 ),
 //  mGridPointSet(false),
-    mNcyc( ncyc ),
-    mTimeDependence( tDep ),
-    //  m_derivative(-1),
-    m_is_filtered( false ),
-    //  mShearModulusFactor(correctForMu),
-    m_zTopo( -1e38 ),
-    mIgnore( false )
+  mNcyc( ncyc ),
+  mTimeDependence( tDep ),
+  //  m_derivative(-1),
+  m_is_filtered( false ),
+  //  mShearModulusFactor(correctForMu),
+  m_zTopo( -1e38 ),
+  mIgnore( false )
 {
   mForces.resize( 3 );
   mForces[0] = Fx;
@@ -208,15 +230,14 @@ Source::Source( double frequency, double t0, double x0, double y0, double z0,
   }
 
 // Correct source location for discrepancy between raw and smoothed topography
-  correct_Z_level(); // also sets the ignore flag for sources that are above the topography
+  correct_Z_level(); // also sets the ignore flag for sources that are above the
+                     // topography
 
 }
 
 //-----------------------------------------------------------------------
 Source::Source()
-{
-
-}
+{}
 
 //-----------------------------------------------------------------------
 Source::~Source()
@@ -276,7 +297,7 @@ bool Source::isMomentSource() const
 
 //-----------------------------------------------------------------------
 void Source::getForces( double& fx, double& fy, double& fz ) const
-                        {
+{
   if( !mIsMomentSource )
   {
     fx = mForces[0];
@@ -289,7 +310,7 @@ void Source::getForces( double& fx, double& fy, double& fz ) const
 
 //-----------------------------------------------------------------------
 void Source::getMoments( double& mxx, double& mxy, double& mxz, double& myy, double& myz, double& mzz ) const
-                         {
+{
   if( mIsMomentSource )
   {
     mxx = mForces[0];
@@ -360,7 +381,7 @@ ostream& operator<<( ostream& output, const Source& s )
   if( s.mIsMomentSource )
   {
     output << " Mxx Mxy Myy Mxz Myz Mzz = " << s.mForces[0] << " " << s.mForces[1] << " " << s.mForces[3] <<
-           " "
+      " "
            << s.mForces[2] << " " << s.mForces[4] << " " << s.mForces[5] << endl;
   }
   else
@@ -392,10 +413,11 @@ void Source::limit_frequency( int ppw, double minvsoh )
 
 //-----------------------------------------------------------------------
 double Source::compute_t0_increase( double t0_min ) const
-                                    {
+{
 // Gaussian, GaussianInt=Erf, Ricker and RickerInt are all centered around mT0
   if( mTimeDependence == iGaussian || mTimeDependence == iErf )
-    return t0_min + 6.0 / mFreq - mT0; // translating these by at least 6*sigma = 6/freq
+    return t0_min + 6.0 / mFreq - mT0; // translating these by at least 6*sigma
+                                       // = 6/freq
   else if( mTimeDependence == iRicker || mTimeDependence == iRickerInt )
     return t0_min + 1.9 / mFreq - mT0; // 1.9 ?
   else
@@ -411,7 +433,7 @@ void Source::adjust_t0( double dt0 )
 
 //-----------------------------------------------------------------------
 double Source::dt_to_resolve( int ppw ) const
-                              {
+{
   double dt_resolved = 0;
   if( mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed || mTimeDependence == iDBrune )
   {
@@ -419,15 +441,13 @@ double Source::dt_to_resolve( int ppw ) const
     dt_resolved = t95 / ppw;
   }
   else
-  {
-
-  }
+  {}
   return dt_resolved;
 }
 
 //-----------------------------------------------------------------------
 int Source::ppw_to_resolve( double dt ) const
-                            {
+{
   int ppw = 1;
   if( mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed || mTimeDependence == iDBrune )
   {
@@ -435,9 +455,7 @@ int Source::ppw_to_resolve( double dt ) const
     ppw = static_cast<int>( t95 / dt );
   }
   else
-  {
-
-  }
+  {}
   return ppw;
 }
 
@@ -450,10 +468,12 @@ void Source::setFrequency( double freq )
 //-----------------------------------------------------------------------
 void Source::correct_Z_level()
 {
-// this routine 
-// 1. calculates the z-coordinate of the topography right above the source and saves it in m_zTopo
+// this routine
+// 1. calculates the z-coordinate of the topography right above the source and
+// saves it in m_zTopo
 // 2. if m_relativeToTopography == true, it adds m_zTopo to mZ0
-// 3. checks if the source is inside the computational domain. If not, set mIgnore=true
+// 3. checks if the source is inside the computational domain. If not, set
+// mIgnore=true
 
 //   right now, only Cartesian grid supported
 //  if( !a_ew->topographyExists() ) // this is the easy case w/o topography
@@ -464,7 +484,7 @@ void Source::correct_Z_level()
     {
       mIgnore = true;
       cout << "Ignoring Source at X= " << mX0 << " Y= " << mY0 << "  Z= " << mZ0 <<
-           ", because it is above the topography z= "
+        ", because it is above the topography z= "
            << m_zTopo << endl;
     }
     return; // done with the flat case
@@ -473,7 +493,7 @@ void Source::correct_Z_level()
 
 //-----------------------------------------------------------------------
 void Source::getsourcewgh( double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const
-                           {
+{
   // Moments k=0,1,2,3,4 exact, two cont. derivatives wrt. position
   double p5 = ai * ai * ai * ai * ai * ( 5.0 / 3 - 7.0 / 24 * ai - 17 / 12.0 * ai * ai + 1.125 * ai * ai * ai - 0.25 * ai * ai * ai * ai );
   wgh[0] = 1.0 / 24 * ( 2 * ai - ai * ai - 2 * ai * ai * ai - 19 * ai * ai * ai * ai ) + p5;
@@ -485,7 +505,7 @@ void Source::getsourcewgh( double ai, double wgh[6], double dwghda[6], double dd
 
   // Derivatives of wgh wrt. ai:
   p5 = 5 * ai * ai * ai * ai * ( 5.0 / 3 - 7.0 / 24 * ai - 17 / 12.0 * ai * ai + 1.125 * ai * ai * ai - 0.25 * ai * ai * ai * ai ) +
-      ai * ai * ai * ai * ai * ( -7.0 / 24 - 17 / 6.0 * ai + 3 * 1.125 * ai * ai - ai * ai * ai );
+       ai * ai * ai * ai * ai * ( -7.0 / 24 - 17 / 6.0 * ai + 3 * 1.125 * ai * ai - ai * ai * ai );
   dwghda[0] = 1.0 / 24 * ( 2 - 2 * ai - 6 * ai * ai - 19 * 4 * ai * ai * ai ) + p5;
   dwghda[1] = 1.0 / 6 * ( -4 + 8 * ai + 3 * ai * ai ) + 16 * ai * ai * ai - 5 * p5;
   dwghda[2] = -2.5 * ai - 97.0 / 3 * ai * ai * ai + 10 * p5;
@@ -507,7 +527,7 @@ void Source::getsourcewgh( double ai, double wgh[6], double dwghda[6], double dd
 
 //-----------------------------------------------------------------------
 void Source::getsourcedwgh( double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const
-                            {
+{
   // Moments k=0,1,2,3,4 exact, two cont. derivatives wrt. position
   double p5 = ai * ai * ai * ai * ( -25.0 / 12 - 0.75 * ai + 59.0 / 12 * ai * ai - 4 * ai * ai * ai + ai * ai * ai * ai );
   wgh[0] = 1.0 / 12 * ( -1 + ai + 3 * ai * ai + 8 * ai * ai * ai ) + p5;
@@ -519,7 +539,7 @@ void Source::getsourcedwgh( double ai, double wgh[6], double dwghda[6], double d
 
   // Derivatives of wgh wrt. ai:
   p5 = 4 * ai * ai * ai * ( -25.0 / 12 - 0.75 * ai + 59.0 / 12 * ai * ai - 4 * ai * ai * ai + ai * ai * ai * ai ) +
-      ai * ai * ai * ai * ( -0.75 + 59.0 / 6 * ai - 12 * ai * ai + 4 * ai * ai * ai );
+       ai * ai * ai * ai * ( -0.75 + 59.0 / 6 * ai - 12 * ai * ai + 4 * ai * ai * ai );
   dwghda[0] = 1.0 / 12 * ( 1 + 6 * ai + 24 * ai * ai ) + p5;
   dwghda[1] = 2.0 / 3 * ( -2 ) - ai - 3 * 3.5 * ai * ai - 5 * p5;
   dwghda[2] = 2.5 + 22.0 * ai * ai + 10 * p5;
@@ -541,7 +561,7 @@ void Source::getsourcedwgh( double ai, double wgh[6], double dwghda[6], double d
 
 //-----------------------------------------------------------------------
 void Source::getsourcewghlow( double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const
-                              {
+{
   // Lower component stencil, to use at lower boundaries
   // Moments k=0,1,2,3,4 exact, two cont. derivatives wrt. position
 
@@ -571,8 +591,9 @@ void Source::getsourcewghlow( double ai, double wgh[6], double dwghda[6], double
 
 //-----------------------------------------------------------------------
 void Source::getsourcedwghlow( double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const
-                               {
-  // Lower component stencil, to use at lower boundaries, dirac derivative weights.
+{
+  // Lower component stencil, to use at lower boundaries, dirac derivative
+  // weights.
   // Moments k=0,1,2,3,4 exact, two cont. derivatives wrt. position
 
   // same as derivatives of dirac weights.
@@ -604,42 +625,42 @@ void Source::getsourcedwghlow( double ai, double wgh[6], double dwghda[6], doubl
 void Source::getmetwgh( double ai, double wgh[8], double dwgh[8],
                         double ddwgh[8],
                         double dddwgh[8] ) const
-                        {
+{
   double pol = ai * ai * ai * ai * ai * ai * ai * ( -251 + 135 * ai + 25 * ai * ai -
-      33 * ai * ai * ai + 6 * ai * ai * ai * ai ) / 720;
+                                                    33 * ai * ai * ai + 6 * ai * ai * ai * ai ) / 720;
 
   wgh[0] = -1.0 / 60 * ai + 1.0 / 180 * ai * ai + 1.0 / 48 * ai * ai * ai + 23.0 / 144 * ai * ai * ai * ai
-      - ( 17.0 * ai + 223.0 ) * ai * ai * ai * ai * ai / 720 - pol;
+           - ( 17.0 * ai + 223.0 ) * ai * ai * ai * ai * ai / 720 - pol;
   wgh[1] = 3.0 / 20 * ai - 3.0 / 40 * ai * ai - 1.0 / 6 * ai * ai * ai - 13.0 / 12 * ai * ai * ai * ai +
-      97.0 / 45 * ai * ai * ai * ai * ai + 1.0 / 6 * ai * ai * ai * ai * ai * ai + 7 * pol;
+           97.0 / 45 * ai * ai * ai * ai * ai + 1.0 / 6 * ai * ai * ai * ai * ai * ai + 7 * pol;
   wgh[2] = -0.75 * ai + 0.75 * ai * ai + ( 13.0 + 155 * ai ) * ai * ai * ai / 48 - 103.0 / 16 * ai * ai * ai * ai * ai
-      - 121.0 / 240 * ai * ai * ai * ai * ai * ai - 21 * pol;
+           - 121.0 / 240 * ai * ai * ai * ai * ai * ai - 21 * pol;
   wgh[3] = 1 - 49.0 / 36 * ai * ai - 49.0 / 9 * ai * ai * ai * ai + 385.0 / 36 * ai * ai * ai * ai * ai +
-      61.0 / 72 * ai * ai * ai * ai * ai * ai + 35 * pol;
+           61.0 / 72 * ai * ai * ai * ai * ai * ai + 35 * pol;
   wgh[4] = 0.75 * ai + 0.75 * ai * ai - 13.0 / 48 * ai * ai * ai + 89.0 / 16 * ai * ai * ai * ai -
-      1537.0 / 144 * ai * ai * ai * ai * ai - 41.0 / 48 * ai * ai * ai * ai * ai * ai - 35 * pol;
+           1537.0 / 144 * ai * ai * ai * ai * ai - 41.0 / 48 * ai * ai * ai * ai * ai * ai - 35 * pol;
   wgh[5] = -3.0 / 20 * ai - 3.0 / 40 * ai * ai + 1.0 / 6 * ai * ai * ai - 41.0 / 12 * ai * ai * ai * ai
-      + 6.4 * ai * ai * ai * ai * ai + 31.0 / 60 * ai * ai * ai * ai * ai * ai + 21 * pol;
+           + 6.4 * ai * ai * ai * ai * ai + 31.0 / 60 * ai * ai * ai * ai * ai * ai + 21 * pol;
   wgh[6] = 1.0 / 60 * ai + 1.0 / 180 * ai * ai - 1.0 / 48 * ai * ai * ai + 167.0 / 144 * ai * ai * ai * ai -
-      1537.0 / 720 * ai * ai * ai * ai * ai - 25.0 / 144 * ai * ai * ai * ai * ai * ai - 7 * pol;
+           1537.0 / 720 * ai * ai * ai * ai * ai - 25.0 / 144 * ai * ai * ai * ai * ai * ai - 7 * pol;
   wgh[7] = -1.0 / 6 * ai * ai * ai * ai + 11.0 / 36 * ai * ai * ai * ai * ai + 1.0 / 40 * ai * ai * ai * ai * ai * ai + pol;
 
   // Derivative wrt. ai
   pol = ai * ai * ai * ai * ai * ai * ( -1757.0 / 720 + 1.5 * ai + 0.31250 * ai * ai - ( 1.375 * ai * ai * ai - 0.275 * ai * ai * ai * ai ) / 3 );
   dwgh[0] = -1.0 / 60 + 1.0 / 90 * ai + ai * ai / 16 + 23.0 / 36 * ai * ai * ai - 223.0 / 144 * ai * ai * ai * ai -
-      17.0 / 120 * ai * ai * ai * ai * ai - pol;
+            17.0 / 120 * ai * ai * ai * ai * ai - pol;
   dwgh[1] = 3.0 / 20 - 3.0 / 20 * ai - 0.5 * ai * ai - 13.0 / 3 * ai * ai * ai + 97.0 / 9 * ai * ai * ai * ai +
-      ai * ai * ai * ai * ai + 7 * pol;
+            ai * ai * ai * ai * ai + 7 * pol;
   dwgh[2] = -0.75 + 1.5 * ai + 13.0 / 16 * ai * ai + 155.0 * ai * ai * ai / 12 - 103.0 * 5.0 / 16 * ai * ai * ai * ai
-      - 121.0 / 40 * ai * ai * ai * ai * ai - 21 * pol;
+            - 121.0 / 40 * ai * ai * ai * ai * ai - 21 * pol;
   dwgh[3] = -49.0 / 18 * ai - 4 * 49.0 / 9.0 * ai * ai * ai + 385.0 * 5.0 / 36 * ai * ai * ai * ai +
-      61.0 / 12 * ai * ai * ai * ai * ai + 35 * pol;
+            61.0 / 12 * ai * ai * ai * ai * ai + 35 * pol;
   dwgh[4] = 0.75 + 1.5 * ai - 13.0 / 16 * ai * ai + 89.0 / 4 * ai * ai * ai - 1537.0 * 5 / 144.0 * ai * ai * ai * ai -
-      41.0 / 8 * ai * ai * ai * ai * ai - 35 * pol;
+            41.0 / 8 * ai * ai * ai * ai * ai - 35 * pol;
   dwgh[5] = -3.0 / 20 - 3.0 / 20 * ai + 0.5 * ai * ai - 41.0 / 3 * ai * ai * ai + 32 * ai * ai * ai * ai +
-      3.1 * ai * ai * ai * ai * ai + 21 * pol;
+            3.1 * ai * ai * ai * ai * ai + 21 * pol;
   dwgh[6] = 1.0 / 60 + 1.0 / 90 * ai - 1.0 / 16 * ai * ai + 167.0 / 36 * ai * ai * ai - 1537.0 / 144 * ai * ai * ai * ai -
-      25.0 / 24 * ai * ai * ai * ai * ai - 7 * pol;
+            25.0 / 24 * ai * ai * ai * ai * ai - 7 * pol;
   dwgh[7] = -2.0 / 3 * ai * ai * ai + 55.0 / 36 * ai * ai * ai * ai + 3.0 / 20 * ai * ai * ai * ai * ai + pol;
 
   // Second derivative wrt. ai
@@ -667,61 +688,61 @@ void Source::getmetwgh( double ai, double wgh[8], double dwgh[8],
 
 //-----------------------------------------------------------------------
 void Source::getmetdwgh( double ai, double wgh[8] ) const
-                         {
+{
   double pol = ai * ai * ai * ai * ai * ai * ( -827 + 420 * ai + 165 * ai * ai - 180 * ai * ai * ai
-      + 36 * ai * ai * ai * ai ) / 720;
+                                               + 36 * ai * ai * ai * ai ) / 720;
 
   wgh[0] = -1.0 / 60 + 1.0 / 90 * ai + 1.0 / 16 * ai * ai + 5.0 / 36 * ai * ai * ai -
-      55.0 / 144 * ai * ai * ai * ai - 7.0 / 20 * ai * ai * ai * ai * ai - pol;
+           55.0 / 144 * ai * ai * ai * ai - 7.0 / 20 * ai * ai * ai * ai * ai - pol;
   wgh[1] = 3.0 / 20 * ( 1 - ai ) - 0.5 * ai * ai - 5.0 / 6 * ai * ai * ai + 47.0 / 18 * ai * ai * ai * ai
-      + 59.0 / 24 * ai * ai * ai * ai * ai + 7 * pol;
+           + 59.0 / 24 * ai * ai * ai * ai * ai + 7 * pol;
   wgh[2] = -0.75 + 1.5 * ai + 13.0 / 16 * ai * ai + 29.0 / 12 * ai * ai * ai - 123.0 / 16 * ai * ai * ai * ai -
-      7.4 * ai * ai * ai * ai * ai - 21 * pol;
+           7.4 * ai * ai * ai * ai * ai - 21 * pol;
   wgh[3] = ( -49.0 * ai - 77.0 * ai * ai * ai ) / 18 + 455.0 / 36 * ai * ai * ai * ai + 99.0 / 8 * ai * ai * ai * ai * ai
-      + 35 * pol;
+           + 35 * pol;
   wgh[4] = 0.75 + 1.5 * ai - 13.0 / 16 * ai * ai + 4.75 * ai * ai * ai - 1805.0 / 144 * ai * ai * ai * ai -
-      149.0 / 12 * ai * ai * ai * ai * ai - 35 * pol;
+           149.0 / 12 * ai * ai * ai * ai * ai - 35 * pol;
   wgh[5] = -3.0 / 20 * ( 1 + ai ) + 0.5 * ai * ai - 19.0 / 6 * ai * ai * ai + 7.5 * ai * ai * ai * ai +
-      299.0 / 40 * ai * ai * ai * ai * ai + 21 * pol;
+           299.0 / 40 * ai * ai * ai * ai * ai + 21 * pol;
   wgh[6] = 1.0 / 60 + 1.0 / 90 * ai - 1.0 / 16 * ai * ai + 41.0 / 36 * ai * ai * ai - 361.0 / 144 * ai * ai * ai * ai -
-      2.5 * ai * ai * ai * ai * ai - 7 * pol;
+           2.5 * ai * ai * ai * ai * ai - 7 * pol;
   wgh[7] = -1.0 / 6 * ai * ai * ai + 13.0 / 36 * ai * ai * ai * ai + 43.0 / 120 * ai * ai * ai * ai * ai + pol;
 }
 //-----------------------------------------------------------------------
 void Source::getmetwgh7( double ai, double wgh[7] ) const
-                         {
+{
   wgh[0] = ai * ai / 180.0 - ai * ai * ai * ai / 144.0 + ai * ai * ai * ai * ai * ai / 720.0 - ai / 60.0 +
-      ai * ai * ai / 48.0 - ai * ai * ai * ai * ai / 240.0;
+           ai * ai * ai / 48.0 - ai * ai * ai * ai * ai / 240.0;
   wgh[1] = -3.0 / 40.0 * ai * ai + ai * ai * ai * ai / 12.0 - ai * ai * ai * ai * ai * ai / 120.0 +
-      3.0 / 20.0 * ai - ai * ai * ai / 6.0 + ai * ai * ai * ai * ai / 60.0;
+           3.0 / 20.0 * ai - ai * ai * ai / 6.0 + ai * ai * ai * ai * ai / 60.0;
   wgh[2] = 3.0 / 4.0 * ai * ai - 13.0 / 48.0 * ai * ai * ai * ai + ai * ai * ai * ai * ai * ai / 48.0 -
-      3.0 / 4.0 * ai + 13.0 / 48.0 * ai * ai * ai - ai * ai * ai * ai * ai / 48.0;
+           3.0 / 4.0 * ai + 13.0 / 48.0 * ai * ai * ai - ai * ai * ai * ai * ai / 48.0;
   wgh[3] = 1.0 - 49.0 / 36.0 * ai * ai + 7.0 / 18.0 * ai * ai * ai * ai - ai * ai * ai * ai * ai * ai / 36.0;
   wgh[4] = 3.0 / 4.0 * ai * ai - 13.0 / 48.0 * ai * ai * ai * ai + 3.0 / 4.0 * ai - 13.0 / 48.0 * ai * ai * ai +
-      ai * ai * ai * ai * ai / 48.0 + ai * ai * ai * ai * ai * ai / 48.0;
+           ai * ai * ai * ai * ai / 48.0 + ai * ai * ai * ai * ai * ai / 48.0;
   wgh[5] = -3.0 / 40.0 * ai * ai + ai * ai * ai * ai / 12.0 - 3.0 / 20.0 * ai + ai * ai * ai / 6.0 -
-      ai * ai * ai * ai * ai / 60.0 - ai * ai * ai * ai * ai * ai / 120.0;
+           ai * ai * ai * ai * ai / 60.0 - ai * ai * ai * ai * ai * ai / 120.0;
   wgh[6] = ai * ai / 180.0 - ai * ai * ai * ai / 144.0 + ai * ai * ai * ai * ai * ai / 720.0 + ai / 60.0 +
-      ai * ai * ai * ai * ai / 240.0 - ai * ai * ai / 48.0;
+           ai * ai * ai * ai * ai / 240.0 - ai * ai * ai / 48.0;
 
 }
 
 //-----------------------------------------------------------------------
 void Source::getmetdwgh7( double ai, double wgh[7] ) const
-                          {
+{
   wgh[0] = -1.0 / 60.0 + ai * ai / 16.0 - ai * ai * ai * ai / 48.0 + ai / 90.0 -
-      ai * ai * ai / 36.0 + ai * ai * ai * ai * ai / 120.0;
+           ai * ai * ai / 36.0 + ai * ai * ai * ai * ai / 120.0;
   wgh[1] = 3.0 / 20.0 - ai * ai / 2.0 + ai * ai * ai * ai / 12.0 - 3.0 / 20.0 * ai +
-      ai * ai * ai / 3.0 - ai * ai * ai * ai * ai / 20.0;
+           ai * ai * ai / 3.0 - ai * ai * ai * ai * ai / 20.0;
   wgh[2] = -3.0 / 4.0 + 13.0 / 16.0 * ai * ai - 5.0 / 48.0 * ai * ai * ai * ai +
-      3.0 / 2.0 * ai - 13.0 / 12.0 * ai * ai * ai + ai * ai * ai * ai * ai / 8.0;
+           3.0 / 2.0 * ai - 13.0 / 12.0 * ai * ai * ai + ai * ai * ai * ai * ai / 8.0;
   wgh[3] = -49.0 / 18.0 * ai + 14.0 / 9.0 * ai * ai * ai - ai * ai * ai * ai * ai / 6.0;
   wgh[4] = 3.0 / 4.0 - 13.0 / 16.0 * ai * ai + 3.0 / 2.0 * ai - 13.0 / 12.0 * ai * ai * ai +
-      5.0 / 48.0 * ai * ai * ai * ai + ai * ai * ai * ai * ai / 8.0;
+           5.0 / 48.0 * ai * ai * ai * ai + ai * ai * ai * ai * ai / 8.0;
   wgh[5] = -3.0 / 20.0 + ai * ai / 2.0 - ai * ai * ai * ai / 12.0 - 3.0 / 20.0 * ai +
-      ai * ai * ai / 3.0 - ai * ai * ai * ai * ai / 20.0;
+           ai * ai * ai / 3.0 - ai * ai * ai * ai * ai / 20.0;
   wgh[6] = 1.0 / 60.0 - ai * ai / 16.0 + ai * ai * ai * ai / 48.0 + ai / 90.0 -
-      ai * ai * ai / 36.0 + ai * ai * ai * ai * ai / 120.0;
+           ai * ai * ai / 36.0 + ai * ai * ai * ai * ai / 120.0;
 }
 
 //-----------------------------------------------------------------------
@@ -731,8 +752,8 @@ void Source::set_grid_point_sources4( double h, double xmin, double ymin,
                                       int Nz,
                                       vector<GridPointSource*>& point_sources,
                                       int interior[6] ) const
-                                      {
-// note that this routine is called from all processors, for each input source 
+{
+// note that this routine is called from all processors, for each input source
 //   int i,j,k,g;
   double q, r, s;
   //   double h = a_EW->mGridSize[g];
@@ -798,12 +819,15 @@ void Source::set_grid_point_sources4( double h, double xmin, double ymin,
     //upperbndry = (kc == 1    || kc == 2    || kc == 3  );
     //lowerbndry = (kc == Nz-1 || kc == Nz-2 || kc == Nz-3 );
 
-// ccbndry=true if at the interface between the curvilinear grid and the cartesian grid. 
+// ccbndry=true if at the interface between the curvilinear grid and the
+// cartesian grid.
 // Defined as the six point stencil uses values from both grids.
-//      ccbndry = a_EW->topographyExists() &&  ( (upperbndry && g == a_EW->mNumberOfGrids-2) ||
+//      ccbndry = a_EW->topographyExists() &&  ( (upperbndry && g ==
+// a_EW->mNumberOfGrids-2) ||
 //					       (lowerbndry && g == a_EW->mNumberOfGrids-1)    );
     ccbndry = false;
-// If not at the interface between curvilinear and Cartesian grids, bias stencil away 
+// If not at the interface between curvilinear and Cartesian grids, bias stencil
+// away
 // from the boundary.
     if( !ccbndry )
     {
@@ -831,7 +855,8 @@ void Source::set_grid_point_sources4( double h, double xmin, double ymin,
       getsourcedwghlow( ci, dwghk, dwghkz, dwghkzz );
     }
 
-// Boundary correction, at upper boundary, but only if SBP operators are used there
+// Boundary correction, at upper boundary, but only if SBP operators are used
+// there
 //
 //CHANGE      if( (g == a_EW->mNumberOfGrids-1) && a_EW->is_onesided(g,4)  )
 // can do without the if-statement, since there is only one grid, and we
@@ -860,7 +885,8 @@ void Source::set_grid_point_sources4( double h, double xmin, double ymin,
           double wF = wghi[i - ic + 2] * wghj[j - jc + 2] * wghk[k - kc + 2];
           if( ( wF != 0 ) && ( mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0 ) && is_inside( i, j, k,
                                                                                                      interior ) )
-          //		   && a_EW->interior_point_in_proc(i,j,g) ) // checks if (i,j) belongs to this processor
+          //		   && a_EW->interior_point_in_proc(i,j,g) ) // checks if (i,j)
+          // belongs to this processor
           {
             //		  if( curvilinear )
             //		     wF /= a_EW->mJ(i,j,k);
@@ -911,7 +937,8 @@ void Source::set_grid_point_sources4( double h, double xmin, double ymin,
             //CHANGE		  if( a_EW->interior_point_in_proc(i,j,g) )
             if( is_inside( i, j, k, interior ) )
             {
-              //                     cout << " src at " << i << " " << j << " " << k << endl;
+              //                     cout << " src at " << i << " " << j << " "
+              // << k << endl;
               wFx += qX0[0] * dwghi[i - ic + 2] * wghj[j - jc + 2] * wghk[k - kc + 2];
               //		  wFy += qX0[1]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
               //		  wFz += qX0[2]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
@@ -920,9 +947,11 @@ void Source::set_grid_point_sources4( double h, double xmin, double ymin,
               wFy += wghi[i - ic + 2] * rX0[1] * dwghj[j - jc + 2] * wghk[k - kc + 2];
               //		  wFz +=  wghi[i-ic+2]*rX0[2]*dwghj[j-jc+2]* wghk[k-kc+2];
 
-              //		     wFx +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[0]*dwghk[k-kc+2];
+              //		     wFx +=  wghi[i-ic+2]*
+              // wghj[j-jc+2]*sX0[0]*dwghk[k-kc+2];
               //		     wFx +=  sX0[0];
-              //		     wFy +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[1]*dwghk[k-kc+2];
+              //		     wFy +=  wghi[i-ic+2]*
+              // wghj[j-jc+2]*sX0[1]*dwghk[k-kc+2];
               wFz += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[2] * dwghk[k - kc + 2];
 
               double jaci = 1.0 / ( h * h * h );
@@ -952,7 +981,8 @@ void Source::set_grid_point_sources4( double h, double xmin, double ymin,
 //-----------------------------------------------------------------------
 void Source::exact_testmoments( int kx[3], int ky[3], int kz[3], double momex[3] )
 {
-  // Integrals over the domain of a polynomial of degree (kx,ky,kz) times the source
+  // Integrals over the domain of a polynomial of degree (kx,ky,kz) times the
+  // source
   if( !mIsMomentSource )
   {
     double x1, y1, z1;
@@ -1028,60 +1058,61 @@ void Source::filter_timefunc( Filter* filter_ptr, double tstart, double dt, int 
     double (*timeFunc)( double f, double t, double* par, int npar, int* ipar, int nipar );
     switch( mTimeDependence )
     {
-      case iRicker:
-        timeFunc = RickerWavelet;
-        break;
-      case iGaussian:
-        timeFunc = Gaussian;
-        break;
-      case iRamp:
-        timeFunc = Ramp;
-        break;
-      case iTriangle:
-        timeFunc = Triangle;
-        break;
-      case iSawtooth:
-        timeFunc = Sawtooth;
-        break;
-      case iSmoothWave:
-        timeFunc = SmoothWave;
-        break;
-      case iErf:
-        timeFunc = Erf;
-        break;
-      case iVerySmoothBump:
-        timeFunc = VerySmoothBump;
-        break;
-      case iC6SmoothBump:
-        timeFunc = C6SmoothBump;
-        break;
-      case iRickerInt:
-        timeFunc = RickerInt;
-        break;
-      case iBrune:
-        timeFunc = Brune;
-        break;
-      case iBruneSmoothed:
-        timeFunc = BruneSmoothed;
-        break;
-      case iDBrune:
-        timeFunc = DBrune;
-        break;
-      case iGaussianWindow:
-        timeFunc = GaussianWindow;
-        break;
-      case iLiu:
-        timeFunc = Liu;
-        break;
-      case iDirac:
-        timeFunc = Dirac;
-        break;
-      case iDiscrete:
-        timeFunc = Discrete;
-        break;
-      default:
-//        cout << "ERROR in Source::filter_timefunc, source type not recoginzed" << endl;
-        throw GPException("ERROR in Source::filter_timefunc, source type not recoginzed");
+    case iRicker:
+      timeFunc = RickerWavelet;
+      break;
+    case iGaussian:
+      timeFunc = Gaussian;
+      break;
+    case iRamp:
+      timeFunc = Ramp;
+      break;
+    case iTriangle:
+      timeFunc = Triangle;
+      break;
+    case iSawtooth:
+      timeFunc = Sawtooth;
+      break;
+    case iSmoothWave:
+      timeFunc = SmoothWave;
+      break;
+    case iErf:
+      timeFunc = Erf;
+      break;
+    case iVerySmoothBump:
+      timeFunc = VerySmoothBump;
+      break;
+    case iC6SmoothBump:
+      timeFunc = C6SmoothBump;
+      break;
+    case iRickerInt:
+      timeFunc = RickerInt;
+      break;
+    case iBrune:
+      timeFunc = Brune;
+      break;
+    case iBruneSmoothed:
+      timeFunc = BruneSmoothed;
+      break;
+    case iDBrune:
+      timeFunc = DBrune;
+      break;
+    case iGaussianWindow:
+      timeFunc = GaussianWindow;
+      break;
+    case iLiu:
+      timeFunc = Liu;
+      break;
+    case iDirac:
+      timeFunc = Dirac;
+      break;
+    case iDiscrete:
+      timeFunc = Discrete;
+      break;
+    default:
+//        cout << "ERROR in Source::filter_timefunc, source type not recoginzed"
+// << endl;
+      throw GPException("ERROR in Source::filter_timefunc, source type not recoginzed");
     }
 
     // Convert to discrete representation
@@ -1090,14 +1121,16 @@ void Source::filter_timefunc( Filter* filter_ptr, double tstart, double dt, int 
       discfunc[k] = timeFunc( mFreq, tstart + k * dt - mT0, mPar, mNpar, mIpar, mNipar );
     mTimeDependence = iDiscrete;
 
-// Filter the discretized function 
+// Filter the discretized function
     filter_ptr->evaluate( nsteps, &discfunc[0], &discfunc[0] );
 
-// Give the source time function a smooth start if this is a 2-pass (forward + backward) bandpass filter
+// Give the source time function a smooth start if this is a 2-pass (forward +
+// backward) bandpass filter
     if( filter_ptr->get_passes() == 2 && filter_ptr->get_type() == bandPass )
     {
       double wghv, xi;
-      int p0 = 3, p = 20; // First non-zero time level, and number of points in ramp;
+      int p0 = 3, p = 20; // First non-zero time level, and number of points in
+                          // ramp;
 
       for( int i = 1 ; i <= p0 - 1 ; i++ )
       {
@@ -1140,7 +1173,8 @@ int Source::spline_interpolation()
   // Assume mPar[1], to mPar[npts] contain the function
   // Assume mIpar[0] contains npts
   // Assume mFreq contains 1/dt, and mPar[0] is tstart.
-  // Compute the six spline coefficients for each interval and return in mPar[1],to mPar[6*(npts-1)]
+  // Compute the six spline coefficients for each interval and return in
+  // mPar[1],to mPar[6*(npts-1)]
   if( mTimeDependence == iDiscrete )
   {
     int npts = mIpar[0];
@@ -1169,7 +1203,7 @@ double Source::find_min_exponent() const
 
 //-----------------------------------------------------------------------
 bool Source::is_inside( int i, int j, int k, int dims[6] ) const
-                        {
+{
   return dims[0] <= i && i <= dims[1] && dims[2] <= j && j <= dims[3]
-      && dims[4] <= k && k <= dims[5];
+         && dims[4] <= k && k <= dims[5];
 }

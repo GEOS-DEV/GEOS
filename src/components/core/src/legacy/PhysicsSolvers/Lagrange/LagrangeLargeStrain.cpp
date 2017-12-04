@@ -17,8 +17,8 @@
 
 
 LagrangeLargeStrain::LagrangeLargeStrain(  const std::string& name,
-                                                ProblemManagerT* const pm ):
-LagrangeSolverBase(name,pm)
+                                           ProblemManagerT* const pm ):
+  LagrangeSolverBase(name,pm)
 {
   // TODO Auto-generated constructor stub
 
@@ -32,10 +32,9 @@ LagrangeLargeStrain::~LagrangeLargeStrain()
 
 
 
-
 void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
-                                                     ElementRegionT& elemRegion,
-                                                     const realT dt )
+                                                ElementRegionT& elemRegion,
+                                                const realT dt )
 {
 
   R2Tensor A;
@@ -47,14 +46,14 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
   R2Tensor Rot;
 
 
-  static Array1dT< R1Tensor > u_local;
-  static Array1dT< R1Tensor > uhat_local;
-  static Array1dT<R1Tensor> f_local;
-  static Array1dT< R1Tensor > x;
-  static Array1dT< R1Tensor > v;
-  static Array1dT<R1Tensor> s_dNdx;
-  static Array1dT<R1Tensor> f_zemc;
-  static Array1dT<R1Tensor> Q;
+  static array< R1Tensor > u_local;
+  static array< R1Tensor > uhat_local;
+  static array<R1Tensor> f_local;
+  static array< R1Tensor > x;
+  static array< R1Tensor > v;
+  static array<R1Tensor> s_dNdx;
+  static array<R1Tensor> f_zemc;
+  static array<R1Tensor> Q;
 
 
   rArray2d& detJ = elemRegion.m_detJ;
@@ -64,7 +63,8 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
   Array2dT< R2Tensor >&  dUdX = elemRegion.m_dUdX;
   FiniteElementBase*& finiteElement = elemRegion.m_finiteElement;
 
-  //  MaterialBaseT*& m_materialComputations = elemRegion.m_materialComputations;
+  //  MaterialBaseT*& m_materialComputations =
+  // elemRegion.m_materialComputations;
 
   const unsigned int numNodesPerElem = elemRegion.m_numNodesPerElem;
 
@@ -81,32 +81,28 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
   }
 
 
-  const Array1dT<R1Tensor>& incrementalDisplacement = nodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
-  const Array1dT<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& incrementalDisplacement = nodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+  const array<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
 
-//  const iArray1d& attachedToSendingGhostNode = GetFieldData<int>("attachedToSendingGhostNode");
+//  const array<integer>& attachedToSendingGhostNode =
+// GetFieldData<int>("attachedToSendingGhostNode");
 
 
-  rArray1d& volume = elemRegion.GetFieldData<FieldInfo::volume>();
-  rArray1d& volume_n = elemRegion.GetFieldData<realT>("volume_n");
+  array<real64>& volume = elemRegion.GetFieldData<FieldInfo::volume>();
+  array<real64>& volume_n = elemRegion.GetFieldData<realT>("volume_n");
 
   volume_n = volume;
   detJ_n = detJ_np1;
 
 
 
-
-
-
-
-
-  const Array1dT<R1Tensor>& referencePosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
-  const Array1dT<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
-  Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
-  Array1dT<R1Tensor>& hgforce = nodeManager.GetFieldData<FieldInfo::hgforce> ();
+  const array<R1Tensor>& referencePosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const array<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
+  array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& hgforce = nodeManager.GetFieldData<FieldInfo::hgforce> ();
 
 //  hgforce = 0.0;
-  Array1dT<Array1dT<R1Tensor>*> Qstiffness(elemRegion.m_finiteElement->zero_energy_modes(),NULL);
+  array<array<R1Tensor>*> Qstiffness(elemRegion.m_finiteElement->zero_energy_modes(),NULL);
   if( elemRegion.m_finiteElement->zero_energy_modes() >= 1 )
   {
     Qstiffness[0] = &(elemRegion.GetFieldData<R1Tensor>("Qhg1"));
@@ -124,12 +120,12 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
     Qstiffness[3] = &(elemRegion.GetFieldData<R1Tensor>("Qhg4"));
   }
 
-//  const iArray1d& ghostRank = elemRegion.GetFieldData<FieldInfo::ghostRank>();
+//  const array<integer>& ghostRank =
+// elemRegion.GetFieldData<FieldInfo::ghostRank>();
 
 
 
   elemRegion.m_energy.Zero();
-
 
 
 
@@ -163,7 +159,7 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
 
 //      if(0)
 
-      const localIndex paramIndex = elemRegion.m_mat->NumParameterIndex0() > 1 ? k : 0 ;
+      const localIndex paramIndex = elemRegion.m_mat->NumParameterIndex0() > 1 ? k : 0;
       const MaterialBaseParameterData& param = *( elemRegion.m_mat->ParameterData(paramIndex) );
       s_dNdx = 0.0;
       realT initVolume = 0.0;
@@ -176,11 +172,11 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
         // Velocity Gradient
 
         // calculate dUhat/dX at beginning of step
-        CalculateGradient( dUhatdX ,uhat_local, dNdX );
+        CalculateGradient( dUhatdX,uhat_local, dNdX );
 
         // calculate velocity gradient (mid-step)
         R2Tensor L;
-	if(dt > 0)
+        if(dt > 0)
         {
           // calculate dv/dX
           R2Tensor dvdX = dUhatdX;
@@ -219,21 +215,24 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
         const realT rho = param.init_density / fabs(detF);
 
         // update state before exercising material model
-        if(elemRegion.m_mat->NeedsDensity() ){
+        if(elemRegion.m_mat->NeedsDensity() )
+        {
           state.SetDensity(rho);
         }
-        if(elemRegion.m_mat->NeedsSpecificInternalEnergy() ){
+        if(elemRegion.m_mat->NeedsSpecificInternalEnergy() )
+        {
 
           state.TotalStress(totalStress);
           realT ie = state.GetSpecificInternalEnergy();
           realT die = L(0,0) * totalStress(0,0)
-                    + (L(0,1) + L(1,0)) * totalStress(0,1)
-                    + (L(0,2) + L(2,0)) * totalStress(0,2)
-                    + L(1,1)*totalStress(1,1)
-                    + (L(1,2) + L(2,1)) * totalStress(1,2)
-                    + L(2,2)*totalStress(2,2);
-           die *= -dt/(rho+1e-64); // negative because stress is +ve in compression
-           ie += die;
+                      + (L(0,1) + L(1,0)) * totalStress(0,1)
+                      + (L(0,2) + L(2,0)) * totalStress(0,2)
+                      + L(1,1)*totalStress(1,1)
+                      + (L(1,2) + L(2,1)) * totalStress(1,2)
+                      + L(2,2)*totalStress(2,2);
+          die *= -dt/(rho+1e-64);  // negative because stress is +ve in
+                                   // compression
+          ie += die;
           state.SetSpecificInternalEnergy(ie);
         }
 
@@ -254,11 +253,11 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
 
 
         realT bulkQ = LagrangeHelperFunctions::BulkQ( rho,
-                                                soundSpeed,
-                                                this->m_bulkQLinear,
-                                                this->m_bulkQQuadratic,
-                                                trD,
-                                                cbrt( volume[k] ) );
+                                                      soundSpeed,
+                                                      this->m_bulkQLinear,
+                                                      this->m_bulkQQuadratic,
+                                                      trD,
+                                                      cbrt( volume[k] ) );
 
         totalStress.PlusIdentity( bulkQ );
         FiniteElementUtilities::Integrate( totalStress,
@@ -281,12 +280,12 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
       realT BB = 0.0;
       for( unsigned int b=0 ; b<numNodesPerElem ; ++b )
       {
-        BB += Dot( s_dNdx(b), s_dNdx(b) ) ;
+        BB += Dot( s_dNdx(b), s_dNdx(b) );
       }
 
       realT thisdt =  LagrangeHelperFunctions::CalculateMaxStableExplicitTimestep( param.init_density / ( volume[k]/initVolume ),
-                                                                                  param.Lame + 2*param.init_shearModulus,
-                                                                                  BB );
+                                                                                   param.Lame + 2*param.init_shearModulus,
+                                                                                   BB );
 
       if( elemRegion.m_ElementDimension == 3 )
       {
@@ -310,11 +309,11 @@ void LagrangeLargeStrain::ProcessElementRegion( NodeManager& nodeManager,
         }
 
         finiteElement->zero_energy_mode_control( s_dNdx, volume[k], x, v,
-                                                   elemRegion.m_hgDamp,
-                                                   elemRegion.m_hgStiff*dt,
-                                                   param.init_density,
-                                                   param.Lame + 2*param.init_shearModulus ,
-                                                   dt, Q, f_zemc );
+                                                 elemRegion.m_hgDamp,
+                                                 elemRegion.m_hgStiff*dt,
+                                                 param.init_density,
+                                                 param.Lame + 2*param.init_shearModulus,
+                                                 dt, Q, f_zemc );
         for( int m=0 ; m<finiteElement->zero_energy_modes() ; ++m )
         {
           (*(Qstiffness[m]))[k] = Q[m];
@@ -340,17 +339,17 @@ void LagrangeLargeStrain::ApplyThermalStress( ElementRegionT& elemRegion,
                                               Epetra_SerialDenseVector * rhs)
 {
 
-  rArray1d& temperature = elemRegion.GetFieldData<realT>("temperature");
-  rArray1d& CTE = elemRegion.GetFieldData<realT>("linearCTE");
-  rArray1d& antiThermalStress = elemRegion.GetFieldData<realT>("antiThermalStress");
-  rArray1d* refTemperature = elemRegion.GetFieldDataPointer<realT>("refTemperature");
+  array<real64>& temperature = elemRegion.GetFieldData<realT>("temperature");
+  array<real64>& CTE = elemRegion.GetFieldData<realT>("linearCTE");
+  array<real64>& antiThermalStress = elemRegion.GetFieldData<realT>("antiThermalStress");
+  array<real64>* refTemperature = elemRegion.GetFieldDataPointer<realT>("refTemperature");
 
 
   if (m_useNodalTemperature > 0)
   {
-    const rArray1d& nodalTemp = nodeManager.GetFieldData<realT>("Temperature");
+    const array<real64>& nodalTemp = nodeManager.GetFieldData<realT>("Temperature");
     temperature[elementID] = 0.0;
-    for (localIndex i = 0; i<elemRegion.m_toNodesRelation.Dimension(1); ++i)
+    for (localIndex i = 0 ; i<elemRegion.m_toNodesRelation.Dimension(1) ; ++i)
     {
       temperature[elementID] += nodalTemp[elemRegion.m_toNodesRelation[elementID][i]];
     }
@@ -358,7 +357,7 @@ void LagrangeLargeStrain::ApplyThermalStress( ElementRegionT& elemRegion,
   }
 
   {
-    const localIndex paramIndex = elemRegion.m_mat->NumParameterIndex0() > 1 ? elementID : 0 ;
+    const localIndex paramIndex = elemRegion.m_mat->NumParameterIndex0() > 1 ? elementID : 0;
 
     const MaterialBaseParameterData& matParams = *(elemRegion.m_mat->ParameterData(paramIndex));
 
@@ -369,11 +368,31 @@ void LagrangeLargeStrain::ApplyThermalStress( ElementRegionT& elemRegion,
 
     if (!refTemperature)
     {
-      for (int i = 0; i < dim; ++i) thermalStress(i,i) = -(temperature[elementID] - m_refTemperature) * CTE [elementID] * K * 3;  //The factor 3 is because CTE is the linear CTE
+      for (int i = 0 ; i < dim ; ++i)
+        thermalStress(i,i) = -(temperature[elementID] - m_refTemperature) * CTE [elementID] * K * 3;                              //The
+                                                                                                                                  // factor
+                                                                                                                                  // 3
+                                                                                                                                  // is
+                                                                                                                                  // because
+                                                                                                                                  // CTE
+                                                                                                                                  // is
+                                                                                                                                  // the
+                                                                                                                                  // linear
+                                                                                                                                  // CTE
     }
     else
     {
-      for (int i = 0; i < dim; ++i) thermalStress(i,i) = -(temperature[elementID] - (*refTemperature)[elementID]) * CTE [elementID] * K * 3;  //The factor 3 is because CTE is the linear CTE
+      for (int i = 0 ; i < dim ; ++i)
+        thermalStress(i,i) = -(temperature[elementID] - (*refTemperature)[elementID]) * CTE [elementID] * K * 3;                              //The
+                                                                                                                                              // factor
+                                                                                                                                              // 3
+                                                                                                                                              // is
+                                                                                                                                              // because
+                                                                                                                                              // CTE
+                                                                                                                                              // is
+                                                                                                                                              // the
+                                                                                                                                              // linear
+                                                                                                                                              // CTE
     }
     antiThermalStress[elementID] = -thermalStress(0,0);
 
@@ -393,9 +412,9 @@ void LagrangeLargeStrain::CalculateNodalForceFromStress( NodeManager& nodeManage
   R2Tensor dUhatdX;
 
 
-  static Array1dT< R1Tensor > u_local;
-  static Array1dT< R1Tensor > uhat_local;
-  static Array1dT<R1Tensor> f_local;
+  static array< R1Tensor > u_local;
+  static array< R1Tensor > uhat_local;
+  static array<R1Tensor> f_local;
 
   rArray2d& detJ = elemRegion.m_detJ;
 
@@ -411,11 +430,11 @@ void LagrangeLargeStrain::CalculateNodalForceFromStress( NodeManager& nodeManage
   }
 
 
-  const Array1dT<R1Tensor>& incrementalDisplacement = nodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
-  const Array1dT<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& incrementalDisplacement = nodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+  const array<R1Tensor>& totalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
 
 
-  Array1dT<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
 
   const localIndex* const elemToNodeMap = elemRegion.m_toNodesRelation[elementID];
 
@@ -434,7 +453,7 @@ void LagrangeLargeStrain::CalculateNodalForceFromStress( NodeManager& nodeManage
     // Velocity Gradient
 
     // calculate dUhat/dX at beginning of step
-    CalculateGradient( dUhatdX ,uhat_local, dNdX );
+    CalculateGradient( dUhatdX,uhat_local, dNdX );
 
 
     // calculate gradient (end of step)

@@ -91,7 +91,7 @@ public:
 
   enum
   {
-   numVars = 6
+    numVars = 6
   };
 
 

@@ -60,7 +60,7 @@ public:
   const ObjectDataStructureBaseT* RelatedObject() const
   { return m_relatedObject; }
 
-  const gArray1d& RelatedObjectLocalToGlobal() const
+  globalIndex_array const & RelatedObjectLocalToGlobal() const
   {
     return this->m_relatedObject->m_localToGlobalMap;
   }
@@ -79,29 +79,27 @@ private:
 
 template < typename BASETYPE >
 InterObjectRelation<BASETYPE>::InterObjectRelation( ):
-m_relatedObject(NULL)
+  m_relatedObject(NULL)
 {}
 
 
 template < typename BASETYPE >
 InterObjectRelation<BASETYPE>::InterObjectRelation( const InterObjectRelation& copiedRelationship ):
-BASETYPE(copiedRelationship),
-m_relatedObject(copiedRelationship.m_relatedObject)
-{
-
-}
+  BASETYPE( static_cast<BASETYPE const&>(copiedRelationship)),
+  m_relatedObject(copiedRelationship.m_relatedObject)
+{}
 
 
 
-typedef InterObjectRelation<lArray1d> OneToOneRelation;
+typedef InterObjectRelation<localIndex_array> OneToOneRelation;
 typedef InterObjectRelation<lArray2d> FixedOneToManyRelation;
-typedef InterObjectRelation<Array1dT<lArray1d> > OrderedVariableOneToManyRelation;
-typedef InterObjectRelation<Array1dT<lSet> > UnorderedVariableOneToManyRelation;
+typedef InterObjectRelation<array<localIndex_array> > OrderedVariableOneToManyRelation;
+typedef InterObjectRelation<array<lSet> > UnorderedVariableOneToManyRelation;
 
-typedef InterObjectRelation<Array1dT<Array1dT<lArray1d> > > OrderedVariableOneToManyToManyRelation;
+typedef InterObjectRelation<array<array<localIndex_array> > > OrderedVariableOneToManyToManyRelation;
 
-typedef InterObjectRelation<Array1dT< pArray1d > > OrderedVariableOneToManyPairRelation;
-typedef InterObjectRelation<Array1dT< pSet > > UnorderedVariableOneToManyPairRelation;
+typedef InterObjectRelation<array< pArray1d > > OrderedVariableOneToManyPairRelation;
+typedef InterObjectRelation<array< pSet > > UnorderedVariableOneToManyPairRelation;
 }
 
 

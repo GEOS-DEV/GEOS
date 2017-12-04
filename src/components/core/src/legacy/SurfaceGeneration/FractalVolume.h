@@ -41,13 +41,13 @@ public:
   realT Value(const R1Tensor& position) const;
 
   localIndex Positions(const realT dx,
-                       Array1dT<R1Tensor>& positions,
+                       array<R1Tensor>& positions,
                        const realT weight = 1.0) const;
 
   localIndex Positions(const R1Tensor& min,
                        const R1Tensor& max,
                        const realT dx,
-                       Array1dT<R1Tensor>& positions,
+                       array<R1Tensor>& positions,
                        const realT weight = 1.0) const;
 
 private:
@@ -60,7 +60,7 @@ private:
                        Array3dT<VolumeKernel*>& curr, localIndex& icurr);
 
   void FillValues(const int ioffset, const localIndex nlevels,
-                  Array1dT< Array3dT<VolumeKernel*>* >& vals);
+                  array< Array3dT<VolumeKernel*>* >& vals);
 
   ///lower 3D coordinates of the points that will be queried
   R1Tensor m_lower;
@@ -71,11 +71,12 @@ private:
   ///Initial value of n2
   localIndex m_n2;
 
-  ///For each cell at the finest level, holds, for each level, the kernels applicable to the cell
-  Array3dT<Array1dT<Array1dT<VolumeKernel*> > > m_values;
+  ///For each cell at the finest level, holds, for each level, the kernels
+  // applicable to the cell
+  Array3dT<array<array<VolumeKernel*> > > m_values;
 
   ///Kernels referenced in values
-  Array1dT<VolumeKernel> m_kernels;
+  array<VolumeKernel> m_kernels;
 };
 
 #endif /* FRACTALVOLUME_H_ */

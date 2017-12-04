@@ -13,14 +13,14 @@
 
 /**
  * @author Scott Johnson
- * @brief VolumetricInterpolant holds the definition of a 3D interpolation kernel with compact support
+ * @brief VolumetricInterpolant holds the definition of a 3D interpolation
+ * kernel with compact support
  */
 class VolumeKernel : public InterpolantBaseT
 {
 public:
   VolumeKernel(): m_x(0.0)
-  {
-  };
+  {};
 
   void Initialize(const R1Tensor& x, const realT h, const realT mean, const realT stdev);
 

@@ -22,6 +22,7 @@ set(ENABLE_MPI ON CACHE BOOL "" FORCE)
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 
 
+set( GEOSX_TPL_ROOT_DIR "/usr/gapps/GEOS/geosx/thirdPartyLibs/" CACHE PATH "" )
 
 
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)

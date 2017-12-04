@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -70,11 +88,11 @@ bool ieq(std::string strA,std::string strB){ toLower(strA); toLower(strB); retur
 // Allows for unit conversion
 template<>
 realT fromString<realT>(std::string theVar)
-{  
-  	Trim(theVar);
-	UnitManager& um = UnitManager::Instance();
-	//std::cout  << theVar << " " << um.Convert(theVar) <<std::endl; 
-	return um.Convert(theVar);
+{
+  Trim(theVar);
+  UnitManager& um = UnitManager::Instance();
+  //std::cout  << theVar << " " << um.Convert(theVar) <<std::endl;
+  return um.Convert(theVar);
 }
 
 template<>
@@ -85,7 +103,7 @@ R2SymTensor fromString<R2SymTensor>(std::string theVar)
   R2SymTensor var;
   //std::cout  << theVar << " " << um.Convert(theVar) <<std::endl;
 
-  sArray1d svalues = Tokenize(theVar,",");
+  array<string> svalues = Tokenize(theVar,",");
 
   for( int i=0 ; i<R2SymTensor::Length() ; ++i )
   {
@@ -96,15 +114,18 @@ R2SymTensor fromString<R2SymTensor>(std::string theVar)
 
 /**
  * String tokenizing function
-**/
-sArray1d Tokenize(const std::string& str, const std::string& delimiters)
+ **/
+array<string> Tokenize(const std::string& str, const std::string& delimiters)
 {
-  sArray1d tokens;
+  array<string> tokens;
 
-  if ( str.length() == 0 ) {
+  if ( str.length() == 0 )
+  {
     tokens.push_back(str);
-  } else {
-  	
+  }
+  else
+  {
+
     bool usesNonWhitespaceDelimiters = false;
     int i =0;
     while(delimiters[i] && !usesNonWhitespaceDelimiters)
@@ -112,30 +133,36 @@ sArray1d Tokenize(const std::string& str, const std::string& delimiters)
       usesNonWhitespaceDelimiters |= !isspace( int(delimiters[i]) );
       ++i;
     }
-    
-    if(usesNonWhitespaceDelimiters){
+
+    if(usesNonWhitespaceDelimiters)
+    {
       // do not skip multiple adjacent delimiters - indicates empty strings
       size_t lastPos = 0;
 
       size_t newPos = lastPos;
-      while ( (newPos=str.find_first_of(delimiters, lastPos)) != std::string::npos ) {
+      while ( (newPos=str.find_first_of(delimiters, lastPos)) != std::string::npos )
+      {
         tokens.push_back(str.substr(lastPos, newPos-lastPos));
         lastPos = newPos + 1;
       }
       tokens.push_back(str.substr(lastPos, str.length()-lastPos));
-    } else {
+    }
+    else
+    {
       // whitespace delimiters
       // skip multiple adjacent delimiters
       size_t lastPos = str.find_first_not_of(delimiters,0);
-      lastPos = (lastPos == std::string::npos)? 0:lastPos;
+      lastPos = (lastPos == std::string::npos) ? 0 : lastPos;
 
       size_t newPos = lastPos;
-      while ( (newPos=str.find_first_of(delimiters, lastPos)) != std::string::npos ) {
+      while ( (newPos=str.find_first_of(delimiters, lastPos)) != std::string::npos )
+      {
         tokens.push_back(str.substr(lastPos, newPos-lastPos));
         lastPos = str.find_first_not_of(delimiters,newPos);
       }
-      if(lastPos!= std::string::npos) tokens.push_back(str.substr(lastPos, str.length()-lastPos));
-      
+      if(lastPos!= std::string::npos)
+        tokens.push_back(str.substr(lastPos, str.length()-lastPos));
+
     }
   }
   return tokens;
@@ -143,20 +170,25 @@ sArray1d Tokenize(const std::string& str, const std::string& delimiters)
 
 /**
  * String tokenizing function using a character sequence,
- * ie. Tokenize "1.0000 HPO4-- +1.0000 Cu++" with " +" gives {"1.0000 HPO4--","1.0000 Cu++"}
-**/
-sArray1d TokenizeSeq(const std::string& str, const std::string& seq)
+ * ie. Tokenize "1.0000 HPO4-- +1.0000 Cu++" with " +" gives {"1.0000
+ * HPO4--","1.0000 Cu++"}
+ **/
+array<string> TokenizeSeq(const std::string& str, const std::string& seq)
 {
-  sArray1d tokens;
-  
-  if ( str.length() == 0 ) {
+  array<string> tokens;
+
+  if ( str.length() == 0 )
+  {
     tokens.push_back(str);
-  } else {
+  }
+  else
+  {
 
     size_t lastPos = 0;
 
     size_t newPos = lastPos;
-    while ( (newPos=str.find(seq, lastPos)) != std::string::npos ) {
+    while ( (newPos=str.find(seq, lastPos)) != std::string::npos )
+    {
       tokens.push_back(str.substr(lastPos, newPos-lastPos));
       lastPos = newPos + seq.size();
     }
@@ -167,27 +199,31 @@ sArray1d TokenizeSeq(const std::string& str, const std::string& seq)
 
 /**
  * Split string at deliminator
-**/
-sArray1d Split(const std::string& str, const std::string& delimiters)
+ **/
+array<string> Split(const std::string& str, const std::string& delimiters)
 {
-  sArray1d tokens;
+  array<string> tokens;
 
-  if ( str.length() == 0 ) {
+  if ( str.length() == 0 )
+  {
     tokens.push_back(str);
-  } else {
+  }
+  else
+  {
 
     size_t pos = str.find_first_of(delimiters,0);
-    
+
     tokens.push_back(str.substr(0, pos));
     pos++;
-    if(pos < str.size()) tokens.push_back(str.substr(pos));
+    if(pos < str.size())
+      tokens.push_back(str.substr(pos));
   }
   return tokens;
 }
 
 /**
-  Remove everything in a string after a comment character (eg '%')
-**/
+   Remove everything in a string after a comment character (eg '%')
+ **/
 void RemoveComments(std::string& str, char d)
 {
   size_t indx = str.find(d);
@@ -195,29 +231,31 @@ void RemoveComments(std::string& str, char d)
 }
 
 /**
-  Remove white space from left of string
-**/
+   Remove white space from left of string
+ **/
 void TrimLeft(std::string& str, const std::string& trimChars)
 {
   str.erase(0,str.find_first_not_of(trimChars));
 }
 
 /**
-  Remove white space from right of string
-**/
-void TrimRight(std::string& str, const std::string& trimChars) { 
-	str.erase(str.find_last_not_of(trimChars)+1); 
+   Remove white space from right of string
+ **/
+void TrimRight(std::string& str, const std::string& trimChars) {
+  str.erase(str.find_last_not_of(trimChars)+1);
 }
 
 /**
-  Remove white space around string
-**/
+   Remove white space around string
+ **/
 void Trim(std::string& str, const std::string& trimChars) { TrimLeft(str,trimChars);  TrimRight(str,trimChars); }
 
-/// Replace parameters of form "$:NAME" in a string, returns true if a parameter is detected
+/// Replace parameters of form "$:NAME" in a string, returns true if a parameter
+// is detected
 /// @param lineStr The string containing the parameters.
 /// @param parameterMap Map of parameter names and replacement strings.
-/// @param prefix Character sequence used to signal start of parameter ("$:" by default).
+/// @param prefix Character sequence used to signal start of parameter ("$:" by
+// default).
 bool ReplaceParameters(std::string& lineStr, const std::map<std::string,std::string>& parameterMap,const std::string& prefix){
 
   bool rv = false;
@@ -231,30 +269,33 @@ bool ReplaceParameters(std::string& lineStr, const std::map<std::string,std::str
   size_t startIndx = lineStr.find(prefix);
 //  size_t endIndx =0;
 
-  while(startIndx < lineStr.size()){
-  	rv = true;
+  while(startIndx < lineStr.size())
+  {
+    rv = true;
     size_t startIndxB = startIndx+pSize;
     size_t endIndx = lineStr.find_first_not_of(validParamChars,startIndxB);
 
     std::string paramName = lineStr.substr(startIndxB, endIndx-startIndxB);
 
     std::map<std::string,std::string>::const_iterator itr = parameterMap.find(paramName);
-    if(itr == endMap){
-      // throw GPException("Error: Undefined model parameter: " + paramName + ".");
+    if(itr == endMap)
+    {
+      // throw GPException("Error: Undefined model parameter: " + paramName +
+      // ".");
       std::map<std::string,std::string>::const_iterator itrB  = parameterMap.begin();
-      while(itrB != parameterMap.end()){
-      	std::cout  << itrB->first << std::endl;
-      	++itrB;
+      while(itrB != parameterMap.end())
+      {
+        std::cout << itrB->first << std::endl;
+        ++itrB;
       }
       std::cout << "Error: Undefined model parameter: " + paramName + "." << std::endl; exit(1);
     }
-    
+
     const std::string& replaceStr = itr->second;
     lineStr.replace(startIndx,endIndx-startIndx,replaceStr);
 
     startIndx = lineStr.find(prefix);
   }
-  
+
   return rv;
 }
-

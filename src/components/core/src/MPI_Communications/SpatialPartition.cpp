@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -54,29 +72,28 @@
 
 
 
+namespace
+{
 
-namespace{
-
-  // Modulo
-  // returns a positive value regardless of the sign of numerator
-  realT Mod(realT num, realT denom)
+// Modulo
+// returns a positive value regardless of the sign of numerator
+realT Mod(realT num, realT denom)
+{
+  if( fabs(denom)<fabs(num)*1.0e-14 )
   {
-    if( fabs(denom)<fabs(num)*1.0e-14 )
-    {
-      return num;
-    }
-
-    return num - denom * std::floor(num/denom);
+    return num;
   }
 
+  return num - denom * std::floor(num/denom);
+}
 
-  // MapValueToRange
-  // returns a periodic value in the range [min, max)
-  realT MapValueToRange(realT value, realT min, realT max)
-  {
-    return Mod(value-min, max-min)+min;
-  }
 
+// MapValueToRange
+// returns a periodic value in the range [min, max)
+realT MapValueToRange(realT value, realT min, realT max)
+{
+  return Mod(value-min, max-min)+min;
+}
 
 
 
@@ -87,25 +104,24 @@ namespace geosx
 using namespace dataRepository;
 
 SpatialPartition::SpatialPartition():
-    PartitionBase(),
-m_Partitions(),
-m_Periodic(nsdof),
-m_coords(nsdof),
-m_min(0.0),
-m_max(0.0),
-m_blockSize(1),
-m_gridSize(0.0),
-m_gridMin(0.0),
-m_gridMax(0.0)
+  PartitionBase(),
+  m_Partitions(),
+  m_Periodic(nsdof),
+  m_coords(nsdof),
+  m_min(0.0),
+  m_max(0.0),
+  m_blockSize(1),
+  m_gridSize(0.0),
+  m_gridMin(0.0),
+  m_gridMax(0.0)
 {
-	m_size = 0;
-	m_rank = 0;
-	setPartitions(1,1,1);
+  m_size = 0;
+  m_rank = 0;
+  setPartitions(1,1,1);
 }
 
 SpatialPartition::~SpatialPartition()
-{
-}
+{}
 
 //void SpatialPartition::ReadXML( xmlWrapper::xmlNode const & targetNode )
 //{
@@ -122,7 +138,7 @@ void SpatialPartition::InitializePostSubGroups( ManagedGroup * const  )
   //check to make sure our dimensions agree
   {
     int check = 1;
-    for (unsigned int i = 0; i < nsdof; i++)
+    for (unsigned int i = 0 ; i < nsdof ; i++)
     {
       check *= this->m_Partitions(i);
     }
@@ -158,15 +174,15 @@ void SpatialPartition::InitializePostSubGroups( ManagedGroup * const  )
 void SpatialPartition::InitializeMetis()
 {
   //get size of problem and decomposition
-    MPI_Comm_size(MPI_COMM_WORLD, &m_size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &m_rank);
-    //check to make sure our dimensions agree
-    {
-      assert(m_sizeMetis == m_size);
-    }
-    //initialize cached requests and status
-    m_mpiRequest.resize( 100 );
-    m_mpiStatus.resize( 100 );
+  MPI_Comm_size(MPI_COMM_WORLD, &m_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &m_rank);
+  //check to make sure our dimensions agree
+  {
+    assert(m_sizeMetis == m_size);
+  }
+  //initialize cached requests and status
+  m_mpiRequest.resize( 100 );
+  m_mpiStatus.resize( 100 );
 
 }
 
@@ -198,17 +214,20 @@ int SpatialPartition::GetColor()
 /*
  * @author walsh24
  *
- * corrects the global ids for the nodes on periodic boundaries, and marks periodic boundaries as domain boundaries
+ * corrects the global ids for the nodes on periodic boundaries, and marks
+ * periodic boundaries as domain boundaries
  *
  */
-//void SpatialPartition::SetPeriodicDomainBoundaryObjects(DomainPartition& domain ){
+//void SpatialPartition::SetPeriodicDomainBoundaryObjects(DomainPartition&
+// domain ){
 //
 //   gArray1d& nodeGlobalIds = domain.m_feNodeManager.m_localToGlobalMap;
 ////   gArray1d& faceGlobalIds = domain.m_feFaceManager.m_localToGlobalMap;
 ////   gArray1d& edgeGlobalIds = domain.m_feEdgeManager.m_localToGlobalMap;
 //
-//   std::map<globalIndex,localIndex>& nodeGlobalToLocalMap = domain.m_feNodeManager.m_globalToLocalMap;
-//   Array1dT< R1Tensor >& refPositions = *(domain.m_feNodeManager.m_refposition);
+//   std::map<globalIndex,localIndex>& nodeGlobalToLocalMap =
+// domain.m_feNodeManager.m_globalToLocalMap;
+//   array< R1Tensor >& refPositions = *(domain.m_feNodeManager.m_refposition);
 //
 //   for(unsigned int i =0; i < m_periodicSets.size();++i){
 //     int dimension = m_periodicSets[i].m_dimension;
@@ -220,7 +239,7 @@ int SpatialPartition::GetColor()
 //       // Reset global id numbers
 //       ///////////////////////////
 //
-//       sArray1d& setnames = m_periodicSets[i].m_setNames;
+//       array<string>& setnames = m_periodicSets[i].m_setNames;
 //       lSet* theSets[2];
 //       theSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //       theSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
@@ -232,7 +251,7 @@ int SpatialPartition::GetColor()
 //         // Multiple partitions
 //         //--------------------
 //
-//         Array1dT<int> nbr_coords = m_coords;
+//         array<int> nbr_coords = m_coords;
 //         if(m_coords[dimension] == 0){
 //           nbr_coords[dimension] = m_Partitions[dimension]-1;
 //         } else {
@@ -244,7 +263,8 @@ int SpatialPartition::GetColor()
 //         if(theSets[nbrSetId]->size() > 0)
 //         {
 //#ifdef USE_ATK
-//           SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: " + setnames[0] + " and " + setnames[1] + " present on same partition\n");
+//           SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: " +
+// setnames[0] + " and " + setnames[1] + " present on same partition\n");
 //#endif
 //         }
 //         lSet& mySet =  *(theSets[mySetId]);
@@ -255,11 +275,13 @@ int SpatialPartition::GetColor()
 //         for( lSet::iterator itr=mySet.begin() ; itr!=mySet.end() ; ++itr )
 //         {
 //           localIndex globalId = nodeGlobalIds[*itr];
-//           myLocalAndGlobalIds.push_back(std::pair<localIndex , localIndex>( *itr,globalId) );
+//           myLocalAndGlobalIds.push_back(std::pair<localIndex , localIndex>(
+// *itr,globalId) );
 //         }
 //
 //         // Sort local/global ids by position in plane
-//         std::vector<localIndex> mySortedGlobalIds(myLocalAndGlobalIds.size());
+//         std::vector<localIndex>
+// mySortedGlobalIds(myLocalAndGlobalIds.size());
 //         std::vector<localIndex> nbrSortedGlobalIds;
 //
 //         std::sort(myLocalAndGlobalIds.begin(),myLocalAndGlobalIds.end(),planarSorter);
@@ -268,22 +290,28 @@ int SpatialPartition::GetColor()
 //         }
 //
 //         // Communicate global ids between periodic domains
-//         NeighborCommunication& neighbor = m_neighbors[ neighborCommPtrIndx[nbr_coords] ];
+//         NeighborCommunication& neighbor = m_neighbors[
+// neighborCommPtrIndx[nbr_coords] ];
 //
 //         MPI_Request mpiRequest[2];
 //         MPI_Status mpiStatus;
 //
 //         int receiveSize; int sendSize = mySortedGlobalIds.size();
 //
-//         neighbor.SendReceive( reinterpret_cast<char*>(&receiveSize), sizeof(int),
-//                               reinterpret_cast<char*>(&sendSize), sizeof(int),
+//         neighbor.SendReceive( reinterpret_cast<char*>(&receiveSize),
+// sizeof(int),
+//                               reinterpret_cast<char*>(&sendSize),
+// sizeof(int),
 //                               mpiRequest[0], mpiRequest[1] );
 //
 //         MPI_Waitall( 2, mpiRequest, &mpiStatus );
 //
 //         nbrSortedGlobalIds.resize(receiveSize);
-//         neighbor.SendReceive( reinterpret_cast<char*>(&nbrSortedGlobalIds[0]), receiveSize*sizeof(localIndex),
-//                               reinterpret_cast<char*>(&mySortedGlobalIds[0]), sendSize*sizeof(localIndex),
+//         neighbor.SendReceive(
+// reinterpret_cast<char*>(&nbrSortedGlobalIds[0]),
+// receiveSize*sizeof(localIndex),
+//                               reinterpret_cast<char*>(&mySortedGlobalIds[0]),
+// sendSize*sizeof(localIndex),
 //                               mpiRequest[0], mpiRequest[1] );
 //
 //         MPI_Waitall( 2, mpiRequest, &mpiStatus );
@@ -294,7 +322,9 @@ int SpatialPartition::GetColor()
 //         if(nbrSortedGlobalIds.size() !=  mySortedGlobalIds.size() )
 //         {
 //#ifdef USE_ATK
-//           SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: Size of " + setnames[mySetId] + " does not match size of " + setnames[nbrSetId] + " on neighboring partition\n");
+//           SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects:
+// Size of " + setnames[mySetId] + " does not match size of " +
+// setnames[nbrSetId] + " on neighboring partition\n");
 //#endif
 //         }
 //
@@ -302,7 +332,8 @@ int SpatialPartition::GetColor()
 //         // assign new global ids
 //         for(unsigned int ii = 0 ; ii <myLocalAndGlobalIds.size() ; ++ii ){
 //           localIndex& nd =  myLocalAndGlobalIds[ii].first;
-//           nodeGlobalIds[nd] = std::min(mySortedGlobalIds[ii],nbrSortedGlobalIds[ii]);
+//           nodeGlobalIds[nd] =
+// std::min(mySortedGlobalIds[ii],nbrSortedGlobalIds[ii]);
 //         }
 //
 //       } else {
@@ -312,43 +343,56 @@ int SpatialPartition::GetColor()
 //
 //         // Nodes
 //         {
-//           std::vector< std::vector<std::pair<localIndex, localIndex>  >  > setLocalAndGlobalIds(2);
+//           std::vector< std::vector<std::pair<localIndex, localIndex>  >  >
+// setLocalAndGlobalIds(2);
 //           for(int a =0; a<2; ++a){
 //             // Gather local/global ids
-//             for( lSet::iterator itr=theSets[a]->begin() ; itr!=theSets[a]->end() ; ++itr )
+//             for( lSet::iterator itr=theSets[a]->begin() ;
+// itr!=theSets[a]->end() ; ++itr )
 //             {
 //               localIndex globalId = nodeGlobalIds[*itr];
-//               setLocalAndGlobalIds[a].push_back(std::pair<localIndex , localIndex>( *itr,globalId) );
+//               setLocalAndGlobalIds[a].push_back(std::pair<localIndex ,
+// localIndex>( *itr,globalId) );
 //             }
 //             // Sort local/global ids by position in plane
 //             std::sort(setLocalAndGlobalIds[a].begin(),setLocalAndGlobalIds[a].end(),planarSorter);
 //           }
 //
 //           // should have same number of nodes in both sets
-//           if(setLocalAndGlobalIds[0].size() !=  setLocalAndGlobalIds[1].size() )
+//           if(setLocalAndGlobalIds[0].size() !=
+//  setLocalAndGlobalIds[1].size() )
 //           {
 //#ifdef USE_ATK
-//             SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: Size of " + setnames[0] + " does not match size of " + setnames[1] + " on process " +toString(m_rank) +  "\n");
+//             SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects:
+// Size of " + setnames[0] + " does not match size of " + setnames[1] + " on
+// process " +toString(m_rank) +  "\n");
 //#endif
 //           }
 //
-//           // assign new global ids and make global to local map point to nodes on min boundary
-//           for(unsigned int ii = 0 ; ii <setLocalAndGlobalIds[0].size() ; ++ii ){
+//           // assign new global ids and make global to local map point to
+// nodes on min boundary
+//           for(unsigned int ii = 0 ; ii <setLocalAndGlobalIds[0].size() ; ++ii
+// ){
 //             localIndex& nd0 =  setLocalAndGlobalIds[0][ii].first;
 //             localIndex& nd1 =  setLocalAndGlobalIds[1][ii].first;
 //
-//             // this could be done once (all nodes in the same set should lie on the one boundary)
+//             // this could be done once (all nodes in the same set should lie
+// on the one boundary)
 //             int minBoundarySetIndx = 0;
-//             if(  (*domain.m_feNodeManager.m_refposition)[nd1][dimension] < (*domain.m_feNodeManager.m_refposition)[nd0][dimension] ){
+//             if(  (*domain.m_feNodeManager.m_refposition)[nd1][dimension] <
+// (*domain.m_feNodeManager.m_refposition)[nd0][dimension] ){
 //               minBoundarySetIndx = 1;
 //             }
 //             int maxBoundarySetIndx = 1 - minBoundarySetIndx;
 //             localIndex localTarget = (minBoundarySetIndx == 0)? nd0 : nd1;
-////             localIndex notThelocalTarget = (minBoundarySetIndx == 0)? nd1 : nd0;
+////             localIndex notThelocalTarget = (minBoundarySetIndx == 0)? nd1 :
+// nd0;
 //
 //             // fix up local to global map
-//             localIndex minBoundGlobalId = setLocalAndGlobalIds[minBoundarySetIndx][ii].second;
-//             localIndex maxBoundGlobalId = setLocalAndGlobalIds[maxBoundarySetIndx][ii].second;
+//             localIndex minBoundGlobalId =
+// setLocalAndGlobalIds[minBoundarySetIndx][ii].second;
+//             localIndex maxBoundGlobalId =
+// setLocalAndGlobalIds[maxBoundarySetIndx][ii].second;
 //
 //             nodeGlobalIds[nd0] = minBoundGlobalId;
 //             nodeGlobalIds[nd1] = minBoundGlobalId;
@@ -356,7 +400,8 @@ int SpatialPartition::GetColor()
 //             // fix up global to local map
 //             nodeGlobalToLocalMap[minBoundGlobalId] = localTarget;
 //
-//             // not used? in any case make old Global id point to same local target
+//             // not used? in any case make old Global id point to same local
+// target
 //             nodeGlobalToLocalMap[maxBoundGlobalId] = localTarget;
 //           }
 //         }
@@ -384,10 +429,12 @@ int SpatialPartition::GetColor()
 /*
  * @author walsh24
  *
- * resets the global to local node map, so global ids map to local nodes that lie on minimum boundary 
+ * resets the global to local node map, so global ids map to local nodes that
+ * lie on minimum boundary
  *
  */
-//void SpatialPartition::ResetSinglePartitionGlobalToLocalMap(PhysicalDomainT& domain ){
+//void SpatialPartition::ResetSinglePartitionGlobalToLocalMap(PhysicalDomainT&
+// domain ){
 //
 //  // loop over matched sets
 //  for(unsigned int ps =0; ps < m_periodicSets.size();++ps){
@@ -397,7 +444,7 @@ int SpatialPartition::GetColor()
 //    // single partition
 //    if(m_Partitions[dimension]==1){
 //
-//      sArray1d& setnames = m_periodicSets[ps].m_setNames;
+//      array<string>& setnames = m_periodicSets[ps].m_setNames;
 //      lSet* theNodeSets[2];
 //      theNodeSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //      theNodeSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
@@ -408,13 +455,19 @@ int SpatialPartition::GetColor()
 //      theEdgeSets[0] = &(domain.m_feEdgeManager.m_Sets[setnames[0]]);
 //      theEdgeSets[1] = &(domain.m_feEdgeManager.m_Sets[setnames[1]]);
 //
-//      gArray1d& nodeLocalToGlobalMap = domain.m_feNodeManager.m_localToGlobalMap;
-//      gArray1d& faceLocalToGlobalMap = domain.m_feFaceManager.m_localToGlobalMap;
-//      gArray1d& edgeLocalToGlobalMap = domain.m_feEdgeManager.m_localToGlobalMap;
+//      gArray1d& nodeLocalToGlobalMap =
+// domain.m_feNodeManager.m_localToGlobalMap;
+//      gArray1d& faceLocalToGlobalMap =
+// domain.m_feFaceManager.m_localToGlobalMap;
+//      gArray1d& edgeLocalToGlobalMap =
+// domain.m_feEdgeManager.m_localToGlobalMap;
 //
-//      std::map<globalIndex,localIndex>& nodeGlobalToLocalMap = domain.m_feNodeManager.m_globalToLocalMap;
-//      std::map<globalIndex,localIndex>& faceGlobalToLocalMap = domain.m_feFaceManager.m_globalToLocalMap;
-//      std::map<globalIndex,localIndex>& edgeGlobalToLocalMap = domain.m_feEdgeManager.m_globalToLocalMap;
+//      std::map<globalIndex,localIndex>& nodeGlobalToLocalMap =
+// domain.m_feNodeManager.m_globalToLocalMap;
+//      std::map<globalIndex,localIndex>& faceGlobalToLocalMap =
+// domain.m_feFaceManager.m_globalToLocalMap;
+//      std::map<globalIndex,localIndex>& edgeGlobalToLocalMap =
+// domain.m_feEdgeManager.m_globalToLocalMap;
 //
 //      // identify sets on min and max boundaries
 //      int minBoundarySetIndx = 0;
@@ -422,7 +475,8 @@ int SpatialPartition::GetColor()
 //        localIndex nd0 = *(theNodeSets[0]->begin());
 //        localIndex nd1 = *(theNodeSets[1]->begin());
 //
-//        if(  (*domain.m_feNodeManager.m_refposition)[nd1][dimension] < (*domain.m_feNodeManager.m_refposition)[nd0][dimension] ){
+//        if(  (*domain.m_feNodeManager.m_refposition)[nd1][dimension] <
+// (*domain.m_feNodeManager.m_refposition)[nd0][dimension] ){
 //          minBoundarySetIndx = 1;
 //        }
 //      }
@@ -441,7 +495,8 @@ int SpatialPartition::GetColor()
 //      // set local to global map for faces and edges
 //      //////////////////////////////////////////////
 //      // Faces
-//      // make local to global maps for boundary faces point to same global index
+//      // make local to global maps for boundary faces point to same global
+// index
 //      // requires nodeLocalToGlobalMap to be set
 //      {
 //        std::map<lSet,localIndex> nodeToFaceGlobalMap;
@@ -450,9 +505,11 @@ int SpatialPartition::GetColor()
 //        theFaceSets[1] = &(domain.m_feFaceManager.m_Sets[setnames[1]]);
 //
 //
-//        for( lSet::iterator itr = theFaceSets[0]->begin(); itr != theFaceSets[0]->end(); ++itr){
+//        for( lSet::iterator itr = theFaceSets[0]->begin(); itr !=
+// theFaceSets[0]->end(); ++itr){
 //          localIndex faceLocal = *itr;
-//          lArray1d& faceNodes = domain.m_feFaceManager.m_toNodesRelation[faceLocal];
+//          lArray1d& faceNodes =
+// domain.m_feFaceManager.m_toNodesRelation[faceLocal];
 //
 //          lSet gnodes;
 //          for(unsigned ii = 0; ii < faceNodes.size(); ++ii){
@@ -463,9 +520,11 @@ int SpatialPartition::GetColor()
 //          faceGlobalToLocalMap[gf] = faceLocal;
 //        }
 //
-//        for( lSet::iterator itr = theFaceSets[1]->begin(); itr != theFaceSets[1]->end(); ++itr){
+//        for( lSet::iterator itr = theFaceSets[1]->begin(); itr !=
+// theFaceSets[1]->end(); ++itr){
 //          localIndex faceLocal = *itr;
-//          lArray1d& faceNodes = domain.m_feFaceManager.m_toNodesRelation[faceLocal];
+//          lArray1d& faceNodes =
+// domain.m_feFaceManager.m_toNodesRelation[faceLocal];
 //
 //          lSet gnodes;
 //          for(unsigned ii = 0; ii < faceNodes.size(); ++ii){
@@ -476,7 +535,8 @@ int SpatialPartition::GetColor()
 //      }
 //
 //      // Edges
-//      // make local to global maps for boundary edges point to same global index
+//      // make local to global maps for boundary edges point to same global
+// index
 //      // requires nodeLocalToGlobalMap to be set
 //      {
 //        std::map<lSet,localIndex> nodeToEdgeGlobalMap;
@@ -484,7 +544,8 @@ int SpatialPartition::GetColor()
 //        theEdgeSets[0] = &(domain.m_feEdgeManager.m_Sets[setnames[0]]);
 //        theEdgeSets[1] = &(domain.m_feEdgeManager.m_Sets[setnames[1]]);
 //
-//        for( lSet::iterator itr = theEdgeSets[0]->begin(); itr != theEdgeSets[0]->end(); ++itr){
+//        for( lSet::iterator itr = theEdgeSets[0]->begin(); itr !=
+// theEdgeSets[0]->end(); ++itr){
 //          localIndex edgeLocal = *itr;
 //          lArray2d& edgeNodes = domain.m_feEdgeManager.m_toNodesRelation;
 //
@@ -499,7 +560,8 @@ int SpatialPartition::GetColor()
 //        }
 //
 //
-//        for( lSet::iterator itr = theEdgeSets[1]->begin(); itr != theEdgeSets[1]->end(); ++itr){
+//        for( lSet::iterator itr = theEdgeSets[1]->begin(); itr !=
+// theEdgeSets[1]->end(); ++itr){
 //          localIndex edgeLocal = *itr;
 //          lArray2d& edgeNodes = domain.m_feEdgeManager.m_toNodesRelation;
 //
@@ -544,13 +606,16 @@ int SpatialPartition::GetColor()
  *
  * Creates ghosts objects when required on the same partition
  *
-**/
-//void SpatialPartition::CreateSinglePartitionGhostObjects(PhysicalDomainT& domain,
-//                                                         const bool contactActive,
-//                                                         const int elementGhostingDepth )
+ **/
+//void SpatialPartition::CreateSinglePartitionGhostObjects(PhysicalDomainT&
+// domain,
+//                                                         const bool
+// contactActive,
+//                                                         const int
+// elementGhostingDepth )
 //{
 //
-//  Array1dT<PhysicalDomainT::ObjectDataStructureKeys> objectNames;
+//  array<PhysicalDomainT::ObjectDataStructureKeys> objectNames;
 //  NeighborCommunication::SyncNames(objectNames);
 //
 //
@@ -562,7 +627,8 @@ int SpatialPartition::GetColor()
 //    // single partition
 //    if(m_Partitions[dimension]==1){
 //
-//      if (m_rank  == 0)  std::cout << "Setting ghost objects for single periodic partitions." << std::endl;
+//      if (m_rank  == 0)  std::cout << "Setting ghost objects for single
+// periodic partitions." << std::endl;
 //
 //      m_hasLocalGhosts = true;
 //
@@ -571,7 +637,7 @@ int SpatialPartition::GetColor()
 //      realT myMid = 0.5*(myMax+myMin);
 //      realT gridLength = m_gridSize[dimension];
 //
-//      sArray1d& setnames = m_periodicSets[ps].m_setNames;
+//      array<string>& setnames = m_periodicSets[ps].m_setNames;
 //      lSet* theNodeSets[2];
 //      theNodeSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //      theNodeSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
@@ -582,42 +648,55 @@ int SpatialPartition::GetColor()
 //      theEdgeSets[0] = &(domain.m_feEdgeManager.m_Sets[setnames[0]]);
 //      theEdgeSets[1] = &(domain.m_feEdgeManager.m_Sets[setnames[1]]);
 //
-//      gArray1d& nodeLocalToGlobalMap = domain.m_feNodeManager.m_localToGlobalMap;
-//      gArray1d& faceLocalToGlobalMap = domain.m_feFaceManager.m_localToGlobalMap;
-//      gArray1d& edgeLocalToGlobalMap = domain.m_feEdgeManager.m_localToGlobalMap;
+//      gArray1d& nodeLocalToGlobalMap =
+// domain.m_feNodeManager.m_localToGlobalMap;
+//      gArray1d& faceLocalToGlobalMap =
+// domain.m_feFaceManager.m_localToGlobalMap;
+//      gArray1d& edgeLocalToGlobalMap =
+// domain.m_feEdgeManager.m_localToGlobalMap;
 //
-//      std::map<globalIndex,localIndex>& nodeGlobalToLocalMap = domain.m_feNodeManager.m_globalToLocalMap;
-//      std::map<globalIndex,localIndex>& faceGlobalToLocalMap = domain.m_feFaceManager.m_globalToLocalMap;
-//      std::map<globalIndex,localIndex>& edgeGlobalToLocalMap = domain.m_feEdgeManager.m_globalToLocalMap;
+//      std::map<globalIndex,localIndex>& nodeGlobalToLocalMap =
+// domain.m_feNodeManager.m_globalToLocalMap;
+//      std::map<globalIndex,localIndex>& faceGlobalToLocalMap =
+// domain.m_feFaceManager.m_globalToLocalMap;
+//      std::map<globalIndex,localIndex>& edgeGlobalToLocalMap =
+// domain.m_feEdgeManager.m_globalToLocalMap;
 //
 //
 //      // pack ghost objects
 //      /////////////////////
 //
-//      // must perform two self communications - one to lower boundary and one to upper
-//      // need to pack both before unpacking - otherwise newly created boundary will be sent also
-//      // also need to make sure that globaltolocal index points to the correct boundary when unpacking
+//      // must perform two self communications - one to lower boundary and one
+// to upper
+//      // need to pack both before unpacking - otherwise newly created boundary
+// will be sent also
+//      // also need to make sure that globaltolocal index points to the correct
+// boundary when unpacking
 //      // otherwise will unpack but link to lower boundary.
 //      NeighborCommunication selfCommunication[2];
 //
 //      for(int a =0; a < 2; ++a){
 //        selfCommunication[a].SetDomain(domain);
 //        selfCommunication[a].Initialize(m_rank,m_rank,-1);
-//        lArray1d& setNodes = selfCommunication[a].tempNeighborData.matchedIndices[PhysicalDomainT::FiniteElementNodeManager];
+//        lArray1d& setNodes =
+// selfCommunication[a].tempNeighborData.matchedIndices[PhysicalDomainT::FiniteElementNodeManager];
 //        // gather boundary nodes and point global to local map to the same set
-//        for( lSet::iterator itr=theNodeSets[a]->begin() ; itr!=theNodeSets[a]->end() ; ++itr )
+//        for( lSet::iterator itr=theNodeSets[a]->begin() ;
+// itr!=theNodeSets[a]->end() ; ++itr )
 //        {
 //          globalIndex g = nodeLocalToGlobalMap[*itr];
 //          nodeGlobalToLocalMap[g] = *itr;
 //
 //          setNodes.push_back(*itr );
 //        }
-//        for( lSet::iterator itr=theFaceSets[a]->begin() ; itr!=theFaceSets[a]->end() ; ++itr )
+//        for( lSet::iterator itr=theFaceSets[a]->begin() ;
+// itr!=theFaceSets[a]->end() ; ++itr )
 //        {
 //          globalIndex g = faceLocalToGlobalMap[*itr];
 //          faceGlobalToLocalMap[g] = *itr;
 //        }
-//        for( lSet::iterator itr=theEdgeSets[a]->begin() ; itr!=theEdgeSets[a]->end() ; ++itr )
+//        for( lSet::iterator itr=theEdgeSets[a]->begin() ;
+// itr!=theEdgeSets[a]->end() ; ++itr )
 //        {
 //          globalIndex g = edgeLocalToGlobalMap[*itr];
 //          edgeGlobalToLocalMap[g] = *itr;
@@ -625,9 +704,11 @@ int SpatialPartition::GetColor()
 //
 //        // pack ghosts
 //        //TODO Stuart, does this need to also communicate the FE?
-//        selfCommunication[a].FindPackGhostsDiscreteElement( contactActive, elementGhostingDepth);
+//        selfCommunication[a].FindPackGhostsDiscreteElement( contactActive,
+// elementGhostingDepth);
 //#ifdef SRC_EXTERNAL
-//        selfCommunication[a].FindPackGhostsFaultElement( elementGhostingDepth );
+//        selfCommunication[a].FindPackGhostsFaultElement( elementGhostingDepth
+// );
 //#endif
 //      }
 //
@@ -640,17 +721,20 @@ int SpatialPartition::GetColor()
 //
 //        // change global to local map to point to receiving set
 //        int nota = 1-a;
-//        for( lSet::iterator itr=theNodeSets[nota]->begin() ; itr!=theNodeSets[nota]->end() ; ++itr )
+//        for( lSet::iterator itr=theNodeSets[nota]->begin() ;
+// itr!=theNodeSets[nota]->end() ; ++itr )
 //        {
 //          globalIndex g = nodeLocalToGlobalMap[*itr];
 //          nodeGlobalToLocalMap[g] = *itr;
 //        }
-//        for( lSet::iterator itr=theFaceSets[nota]->begin() ; itr!=theFaceSets[nota]->end() ; ++itr )
+//        for( lSet::iterator itr=theFaceSets[nota]->begin() ;
+// itr!=theFaceSets[nota]->end() ; ++itr )
 //        {
 //          globalIndex g = faceLocalToGlobalMap[*itr];
 //          faceGlobalToLocalMap[g] = *itr;
 //        }
-//        for( lSet::iterator itr=theEdgeSets[nota]->begin() ; itr!=theEdgeSets[nota]->end() ; ++itr )
+//        for( lSet::iterator itr=theEdgeSets[nota]->begin() ;
+// itr!=theEdgeSets[nota]->end() ; ++itr )
 //        {
 //          globalIndex g = edgeLocalToGlobalMap[*itr];
 //          edgeGlobalToLocalMap[g] = *itr;
@@ -660,12 +744,16 @@ int SpatialPartition::GetColor()
 //        localIndex firstFaceIndex = m_domain->m_feFaceManager.DataLengths();
 //        localIndex firstEdgeIndex = m_domain->m_feEdgeManager.DataLengths();
 //
-//        const lArray1d& nodeList = selfCommunication[a].GetSendLocalIndices(PhysicalDomainT::FiniteElementNodeManager);
-//        const lArray1d& edgeList = selfCommunication[a].GetSendLocalIndices(PhysicalDomainT::FiniteElementEdgeManager);
-//        const lArray1d& faceList = selfCommunication[a].GetSendLocalIndices(PhysicalDomainT::FiniteElementFaceManager);
+//        const lArray1d& nodeList =
+// selfCommunication[a].GetSendLocalIndices(PhysicalDomainT::FiniteElementNodeManager);
+//        const lArray1d& edgeList =
+// selfCommunication[a].GetSendLocalIndices(PhysicalDomainT::FiniteElementEdgeManager);
+//        const lArray1d& faceList =
+// selfCommunication[a].GetSendLocalIndices(PhysicalDomainT::FiniteElementFaceManager);
 //
 //        // copy element Lists - is updated later
-//        std::map<std::string,lArray1d> elementLists = selfCommunication[a].GetElementRegionSendLocalIndices();
+//        std::map<std::string,lArray1d> elementLists =
+// selfCommunication[a].GetElementRegionSendLocalIndices();
 //
 //        // map old local indicies to new local indices
 //        ///////////////////////////////////////////////
@@ -724,13 +812,16 @@ int SpatialPartition::GetColor()
 //        // create new nodes
 //        ///////////////////
 //        m_domain->m_feNodeManager.resize(firstNodeIndex+numNewNodes);
-//        Array1dT<R1Tensor>& referencePosition = m_domain->m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
+//        array<R1Tensor>& referencePosition =
+// m_domain->m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
 //
-//        for(unsigned  kn = firstNodeIndex; kn < m_domain->m_feNodeManager.DataLengths();++kn){
+//        for(unsigned  kn = firstNodeIndex; kn <
+// m_domain->m_feNodeManager.DataLengths();++kn){
 //            localIndex oldNode = oldNodeMap[kn];
 //            nodeLocalToGlobalMap[kn] = nodeLocalToGlobalMap[oldNode];
 //
-//            m_domain->m_feNodeManager.CopyObjectWithExcludedSets( oldNode, kn, setnames );
+//            m_domain->m_feNodeManager.CopyObjectWithExcludedSets( oldNode, kn,
+// setnames );
 //
 //            if( referencePosition[kn][dimension] >  myMid){
 //              referencePosition[kn][dimension] -= gridLength;
@@ -742,13 +833,16 @@ int SpatialPartition::GetColor()
 //        // create new edges
 //        ////////////////////
 //        m_domain->m_feEdgeManager.resize(firstEdgeIndex+numNewEdges);
-//        for(unsigned  ke = firstEdgeIndex; ke < m_domain->m_feEdgeManager.DataLengths();++ke){
+//        for(unsigned  ke = firstEdgeIndex; ke <
+// m_domain->m_feEdgeManager.DataLengths();++ke){
 //            localIndex oldEdge = oldEdgeMap[ke];
 //            edgeLocalToGlobalMap[ke] = edgeLocalToGlobalMap[oldEdge];
 //
-//            m_domain->m_feEdgeManager.CopyObjectWithExcludedSets( oldEdge, ke, setnames );
+//            m_domain->m_feEdgeManager.CopyObjectWithExcludedSets( oldEdge, ke,
+// setnames );
 //
-//            lArray2d& edgesToNodes = m_domain->m_feEdgeManager.m_toNodesRelation;
+//            lArray2d& edgesToNodes =
+// m_domain->m_feEdgeManager.m_toNodesRelation;
 //            for(unsigned jj = 0; jj < 2;++jj){
 //              edgesToNodes(ke,jj) = newNodeMap[ edgesToNodes(oldEdge,jj) ];
 //            }
@@ -758,20 +852,26 @@ int SpatialPartition::GetColor()
 //        ///////////////////
 //        m_domain->m_feFaceManager.resize(firstFaceIndex+numNewFaces);
 //
-//        for(unsigned kf = firstFaceIndex; kf < m_domain->m_feFaceManager.m_numFaces;++kf){
+//        for(unsigned kf = firstFaceIndex; kf <
+// m_domain->m_feFaceManager.m_numFaces;++kf){
 //            localIndex oldFace = oldFaceMap[kf];
 //
 //            faceLocalToGlobalMap[kf] = faceLocalToGlobalMap[oldFace];
 //
-//            m_domain->m_feFaceManager.CopyObjectWithExcludedSets( oldFace, kf,setnames );
+//            m_domain->m_feFaceManager.CopyObjectWithExcludedSets( oldFace,
+// kf,setnames );
 //
-//            lArray1d& faceToEdges = m_domain->m_feFaceManager.m_toEdgesRelation[kf];
-//            faceToEdges = m_domain->m_feFaceManager.m_toEdgesRelation(oldFace);
+//            lArray1d& faceToEdges =
+// m_domain->m_feFaceManager.m_toEdgesRelation[kf];
+//            faceToEdges =
+// m_domain->m_feFaceManager.m_toEdgesRelation(oldFace);
 //            for(unsigned jj = 0; jj < faceToEdges.size();++jj){
 //              faceToEdges[jj] = newEdgeMap[ faceToEdges[jj] ];
 //            }
-//            lArray1d& faceToNodes = m_domain->m_feFaceManager.m_toNodesRelation[kf];
-//            faceToNodes = m_domain->m_feFaceManager.m_toNodesRelation(oldFace);
+//            lArray1d& faceToNodes =
+// m_domain->m_feFaceManager.m_toNodesRelation[kf];
+//            faceToNodes =
+// m_domain->m_feFaceManager.m_toNodesRelation(oldFace);
 //            for(unsigned jj = 0; jj < faceToNodes.size();++jj){
 //              faceToNodes[jj] = newNodeMap[ faceToNodes[jj] ];
 //            }
@@ -780,16 +880,19 @@ int SpatialPartition::GetColor()
 //        // create new elements
 //        //////////////////////
 //        localIndex totalNumElements = 0;
-//        for( std::map<std::string,lArray1d>::iterator itr=elementLists.begin() ;
+//        for( std::map<std::string,lArray1d>::iterator itr=elementLists.begin()
+// ;
 //              itr!=elementLists.end() ; ++itr ){
 //
-//          ElementRegionT& elementRegion =  m_domain->m_feElementManager.m_ElementRegions[itr->first];
+//          ElementRegionT& elementRegion =
+//  m_domain->m_feElementManager.m_ElementRegions[itr->first];
 //          lArray1d& oldElems = itr->second;
 //
 //          localIndex firstIndex = elementRegion.DataLengths();
 //          localIndex newSize = firstIndex + oldElems.size();
 //          elementRegion.resize(newSize);
-//          //std::cout << "elems sizes "<< firstIndex << " " << newSize << " " << elementRegion.m_numElems << std::endl;
+//          //std::cout << "elems sizes "<< firstIndex << " " << newSize << " "
+// << elementRegion.m_numElems << std::endl;
 //
 //          lArray2d& elemToNodeMap = elementRegion.m_toNodesRelation;
 //          lArray2d& elemToFaceMap = elementRegion.m_toFacesRelation;
@@ -801,7 +904,8 @@ int SpatialPartition::GetColor()
 //            localIndex oldElem = oldElems[jj];
 //            localIndex newElem = firstIndex + jj;
 //
-//            elementRegion.CopyObjectWithExcludedSets( oldElem, newElem , setnames);
+//            elementRegion.CopyObjectWithExcludedSets( oldElem, newElem ,
+// setnames);
 //
 //            for(unsigned kk =0; kk < elementRegion.m_numNodesPerElem; ++kk){
 //              elemToNodeMap(newElem,kk)
@@ -827,30 +931,38 @@ int SpatialPartition::GetColor()
 //
 //
 //        // (6d) update maps in the anti-dependency direction
-//        //      must update the "upward" pointing maps, as the unpacking only updated "downward" pointing maps
-//        domain.m_feNodeManager.AddToNodeToElementMap( domain.m_feElementManager, elementLists );
-//        domain.m_feFaceManager.AddToFaceToElementMap( domain.m_feElementManager, elementLists );
+//        //      must update the "upward" pointing maps, as the unpacking only
+// updated "downward" pointing maps
+//        domain.m_feNodeManager.AddToNodeToElementMap(
+// domain.m_feElementManager, elementLists );
+//        domain.m_feFaceManager.AddToFaceToElementMap(
+// domain.m_feElementManager, elementLists );
 //
 //
 //        //Faces
 //        {
 //          lArray1d newFaceIndices(numNewFaces);
-//          for(unsigned kf(firstFaceIndex), ii(0); kf < m_domain->m_feFaceManager.m_numFaces;++kf,++ii){
+//          for(unsigned kf(firstFaceIndex), ii(0); kf <
+// m_domain->m_feFaceManager.m_numFaces;++kf,++ii){
 //            newFaceIndices[ii] = kf;
 //          }
 //
-//          domain.m_feNodeManager.AddToVariableOneToManyFromInverse( "nodeToFaceMap", domain.m_feFaceManager.m_toNodesRelation,  newFaceIndices);
-//          domain.m_feEdgeManager.AddToVariableOneToManyFromInverse( "edgesToFaces", domain.m_feFaceManager.m_toEdgesRelation, newFaceIndices);
+//          domain.m_feNodeManager.AddToVariableOneToManyFromInverse(
+// "nodeToFaceMap", domain.m_feFaceManager.m_toNodesRelation,  newFaceIndices);
+//          domain.m_feEdgeManager.AddToVariableOneToManyFromInverse(
+// "edgesToFaces", domain.m_feFaceManager.m_toEdgesRelation, newFaceIndices);
 //        }
 //
 //        //Edges
 //        {
 //          lArray1d newEdgeIndices(numNewEdges);
-//          for(unsigned ke(firstEdgeIndex), ii(0); ke < m_domain->m_feEdgeManager.DataLengths();++ke,++ii){
+//          for(unsigned ke(firstEdgeIndex), ii(0); ke <
+// m_domain->m_feEdgeManager.DataLengths();++ke,++ii){
 //            newEdgeIndices[ii] = ke;
 //          }
 //
-//          domain.m_feNodeManager.AddToNodeToEdgeMap( domain.m_feEdgeManager, newEdgeIndices );
+//          domain.m_feNodeManager.AddToNodeToEdgeMap( domain.m_feEdgeManager,
+// newEdgeIndices );
 //        }
 //
 //      }
@@ -866,7 +978,7 @@ int SpatialPartition::GetColor()
  * @author walsh24
  * Labels ghostRank of objects on the same partition
  *
-**/
+ **/
 //void SpatialPartition::SetSinglePartitionGhostArrays(PhysicalDomainT& domain )
 //{
 //  // check for single partition
@@ -881,25 +993,28 @@ int SpatialPartition::GetColor()
 //  if(isSinglePartition){
 //
 //    const localIndex n = NeighborCommunication::NumberOfSyncNames();
-//    Array1dT<PhysicalDomainT::ObjectDataStructureKeys> objectNames;
+//    array<PhysicalDomainT::ObjectDataStructureKeys> objectNames;
 //    NeighborCommunication::SyncNames(objectNames);
 //
 //    for(localIndex i = 0; i < n; ++i){
 //
 //      if(objectNames[i] != PhysicalDomainT::FiniteElementElementManager)
 //      {
-//        Array1dT<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr
+//        array<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr
 //            = domain.GetObjectDataStructure(objectNames[i]).GetFieldData<FieldInfo::ghostRank>();
-//        ObjectDataStructureBaseT& object =  domain.GetObjectDataStructure(objectNames[i]);
+//        ObjectDataStructureBaseT& object =
+//  domain.GetObjectDataStructure(objectNames[i]);
 //
 //        gArray1d& localToGlobalMap = object.m_localToGlobalMap;
-//        std::map<globalIndex,localIndex>& globalToLocalMap = object.m_globalToLocalMap;
+//        std::map<globalIndex,localIndex>& globalToLocalMap =
+// object.m_globalToLocalMap;
 //
 //        for( localIndex l=0 ; l!= localToGlobalMap.size() ; ++l )
 //        {
 //          globalIndex g = localToGlobalMap[l];
 //          localIndex lb = globalToLocalMap[g];
-//          // if map from local -> global -> local does not return the same object, it is a ghost.
+//          // if map from local -> global -> local does not return the same
+// object, it is a ghost.
 //          if(lb != l){
 //            ghostRankCurr[l] = m_rank;
 //            ghostRankCurr[lb] = -1;
@@ -912,22 +1027,27 @@ int SpatialPartition::GetColor()
 //      else
 //      {
 //        //--per usual: elements are treated as a special case
-//        for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator iregion=domain.m_feElementManager.m_ElementRegions.begin() ;
-//            iregion!=domain.m_feElementManager.m_ElementRegions.end() ; ++iregion )
+//        for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator
+// iregion=domain.m_feElementManager.m_ElementRegions.begin() ;
+//            iregion!=domain.m_feElementManager.m_ElementRegions.end() ;
+// ++iregion )
 //        {
 //          const std::string& elemRegionName = iregion->first;
 //          ElementRegionT& elemRegion = iregion->second;
-//          Array1dT<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr = elemRegion.GetFieldData<FieldInfo::ghostRank>();
+//          array<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr =
+// elemRegion.GetFieldData<FieldInfo::ghostRank>();
 //
 //
 //          gArray1d& localToGlobalMap = elemRegion.m_localToGlobalMap;
-//          std::map<globalIndex,localIndex>&  globalToLocalMap = elemRegion.m_globalToLocalMap;
+//          std::map<globalIndex,localIndex>&  globalToLocalMap =
+// elemRegion.m_globalToLocalMap;
 //
 //          for( localIndex l=0 ; l!= ghostRankCurr.size() ; ++l )
 //          {
 //            globalIndex g = localToGlobalMap[l];
 //            localIndex lb = globalToLocalMap[g];
-//            // if map from local -> global -> local does not return the same object, it is a ghost.
+//            // if map from local -> global -> local does not return the same
+// object, it is a ghost.
 //            if(lb != l){
 //              ghostRankCurr[l] = m_rank;
 //              ghostRankCurr[lb] = -1;
@@ -948,8 +1068,10 @@ int SpatialPartition::GetColor()
 // *
 // *
 //**/
-//void SpatialPartition::CorrectReferencePositionsForPeriodicBoundaries(PhysicalDomainT& domain){
-//  Array1dT< R1Tensor >& refPositions = *(domain.m_feNodeManager.m_refposition);
+//void
+// SpatialPartition::CorrectReferencePositionsForPeriodicBoundaries(PhysicalDomainT&
+// domain){
+//  array< R1Tensor >& refPositions = *(domain.m_feNodeManager.m_refposition);
 //
 //  for(unsigned int i =0; i < m_periodicSets.size();++i){
 //
@@ -984,10 +1106,13 @@ int SpatialPartition::GetColor()
 //              realT newPos = oldPos - gridLength;
 //
 //              // This is a bit of a hack
-//              // The periodic boundary conditions are enforced if shifting the ghost node will bring it closer to the
+//              // The periodic boundary conditions are enforced if shifting the
+// ghost node will bring it closer to the
 //              // minimum edge of the partition than it is to the maximum edge.
-//              // Needed if there are two partitions along one axis to distinguish ghost nodes on maximum and minimum borders.
-//              if( oldPos-myMax > myMin-newPos) refPositions[ii][dimension] = newPos;
+//              // Needed if there are two partitions along one axis to
+// distinguish ghost nodes on maximum and minimum borders.
+//              if( oldPos-myMax > myMin-newPos) refPositions[ii][dimension] =
+// newPos;
 //            }
 //          }
 //         } else { // upper boundary
@@ -1000,17 +1125,21 @@ int SpatialPartition::GetColor()
 //              realT newPos = oldPos + gridLength;
 //
 //              // This is a bit of a hack
-//              // The periodic boundary conditions are enforced if shifting the ghost node will bring it closer to the
+//              // The periodic boundary conditions are enforced if shifting the
+// ghost node will bring it closer to the
 //              // maximum edge of the partition than it is to the minimum edge.
-//              // Needed if there are two partitions along one axis to distinguish ghost nodes on maximum and minimum borders.
-//              if(myMin-oldPos > newPos-myMax) refPositions[ii][dimension] = newPos;
+//              // Needed if there are two partitions along one axis to
+// distinguish ghost nodes on maximum and minimum borders.
+//              if(myMin-oldPos > newPos-myMax) refPositions[ii][dimension] =
+// newPos;
 //
 //            }
 //          }
 //        }
 //
 //      } else {
-//        // Empty - Single partition node reference positions are modified on creation
+//        // Empty - Single partition node reference positions are modified on
+// creation
 //      }
 //
 //    } // is boundary partition
@@ -1025,7 +1154,7 @@ void SpatialPartition::AddNeighbors(const unsigned int idim,
   if (idim == nsdof)
   {
     bool me = true;
-    for ( unsigned int i = 0; i < nsdof; i++)
+    for ( unsigned int i = 0 ; i < nsdof ; i++)
     {
       if (ncoords[i] != this->m_coords(i))
       {
@@ -1040,16 +1169,16 @@ void SpatialPartition::AddNeighbors(const unsigned int idim,
       MPI_Cart_rank(cartcomm, ncoords, &rank);
       m_neighbors.back().Initialize( rank, this->m_rank, this->m_size );
 
-      Array1dT<int> nbrcoords(nsdof);
-      for(unsigned int i =0; i < nsdof; ++i) nbrcoords[i] = ncoords[i];
-      neighborCommPtrIndx[nbrcoords] = m_neighbors.size()-1;
+//      array<int> nbrcoords(nsdof);
+//      for(unsigned int i =0; i < nsdof; ++i) nbrcoords[i] = ncoords[i];
+//      neighborCommPtrIndx[nbrcoords] = m_neighbors.size()-1;
     }
   }
   else
   {
     const int dim = this->m_Partitions(idim);
     const bool periodic = this->m_Periodic(idim);
-    for (int i = -1; i < 2; i++)
+    for (int i = -1 ; i < 2 ; i++)
     {
       ncoords[idim] = this->m_coords(idim) + i;
       bool ok = true;
@@ -1075,10 +1204,10 @@ void SpatialPartition::AddNeighbors(const unsigned int idim,
 void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 {
   gSet::iterator itNeighbor = neighborList.begin();
-  for (; itNeighbor != neighborList.end(); itNeighbor++)
+  for ( ; itNeighbor != neighborList.end() ; itNeighbor++)
   {
     m_neighbors.push_back(NeighborCommunication());
-    m_neighbors.back().Initialize( *itNeighbor, this->m_rank, this->m_size );
+    m_neighbors.back().Initialize( integer_conversion<int>(*itNeighbor), this->m_rank, this->m_size );
   }
 }
 
@@ -1089,14 +1218,15 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
  *      <PeriodicSet setnames="Ymax Ymin" dimension="1" />
  *   </PeriodicSets>
  *  </SpatialPartition>
-**/
+ **/
 //void SpatialPartition::ReadXMLInput(TICPP::HierarchicalDataNode& hdn)
 //{
 //
 //  m_ghostDepth = hdn.GetAttributeOrDefault<unsigned int>("ghostDepth",1);
 //  //R.W. Read Metis partitioning information
 //  //Currently implemented as an alternative to the Cartesian system
-//  //if <SpatialPartition Metispar=numofpar> is given, will use Metis instead of Cartesian
+//  //if <SpatialPartition Metispar=numofpar> is given, will use Metis instead
+// of Cartesian
 //  //Should not effect the use of previous implementations
 //  if (hdn.HasAttribute("Metispar"))
 //  {
@@ -1107,13 +1237,15 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 //  else
 //  {
 //
-//  if(m_Partitions(0) * m_Partitions(1) * m_Partitions(2) == 0){ // i.e. has not previously been set
+//  if(m_Partitions(0) * m_Partitions(1) * m_Partitions(2) == 0){ // i.e. has
+// not previously been set
 //    m_Partitions(0) = hdn.GetAttributeOrDefault<unsigned int>("xpar",1);
 //    m_Partitions(1) = hdn.GetAttributeOrDefault<unsigned int>("ypar",1);
 //    m_Partitions(2) = hdn.GetAttributeOrDefault<unsigned int>("zpar",1);
 //    m_size = m_Partitions(0) * m_Partitions(1) * m_Partitions(2);
 //  } else {
-//	// add partition data to hdn (to allow xml to be written to file after overridden from commandline)
+//	// add partition data to hdn (to allow xml to be written to file after
+// overridden from commandline)
 //	hdn.AddAttributePair("xpar", toString( m_Partitions(0)) );
 //	hdn.AddAttributePair("ypar", toString( m_Partitions(1)) );
 //	hdn.AddAttributePair("zpar", toString( m_Partitions(2)) );
@@ -1122,45 +1254,56 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 //    if( m_Partitions(0) > 1 )
 //    {
 //      m_PartitionLocations[0] = hdn.GetAttributeVector<realT>("xloc",",");
-//      if( !(m_PartitionLocations[0].empty()) && (m_Partitions(0)-1) != static_cast<int>( m_PartitionLocations[0].size() ) )
+//      if( !(m_PartitionLocations[0].empty()) && (m_Partitions(0)-1) !=
+// static_cast<int>( m_PartitionLocations[0].size() ) )
 //      {
 //#ifdef USE_ATK
-//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of x-partition locations does not equal number of partitions - 1\n");
+//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of x-partition
+// locations does not equal number of partitions - 1\n");
 //#endif
 //      }
 //    }
 //    if( m_Partitions(1) > 1 )
 //    {
 //      m_PartitionLocations[1] = hdn.GetAttributeVector<realT>("yloc",",");
-//      if( !(m_PartitionLocations[1].empty()) && (m_Partitions(1)-1) != static_cast<int>( m_PartitionLocations[1].size() ) )
+//      if( !(m_PartitionLocations[1].empty()) && (m_Partitions(1)-1) !=
+// static_cast<int>( m_PartitionLocations[1].size() ) )
 //      {
 //#ifdef USE_ATK
-//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of y-partition locations does not equal number of partitions - 1\n");
+//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of y-partition
+// locations does not equal number of partitions - 1\n");
 //#endif
 //      }
 //    }
 //    if( m_Partitions(2) > 1 )
 //    {
 //      m_PartitionLocations[2] = hdn.GetAttributeVector<realT>("zloc",",");
-//      if( !(m_PartitionLocations[2].empty()) && (m_Partitions(2)-1) != static_cast<int>( m_PartitionLocations[2].size() ) )
+//      if( !(m_PartitionLocations[2].empty()) && (m_Partitions(2)-1) !=
+// static_cast<int>( m_PartitionLocations[2].size() ) )
 //      {
 //#ifdef USE_ATK
-//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of z-partition locations does not equal number of partitions - 1\n");
+//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of z-partition
+// locations does not equal number of partitions - 1\n");
 //#endif
 //      }
 //    }
 //
 //
 //    // periodic boundaries
-//    m_Periodic(0) = hdn.GetAttributeOrDefault<unsigned int>("periodic_x_axis",0);
-//    m_Periodic(1) = hdn.GetAttributeOrDefault<unsigned int>("periodic_y_axis",0);
-//    m_Periodic(2) = hdn.GetAttributeOrDefault<unsigned int>("periodic_z_axis",0);
+//    m_Periodic(0) = hdn.GetAttributeOrDefault<unsigned
+// int>("periodic_x_axis",0);
+//    m_Periodic(1) = hdn.GetAttributeOrDefault<unsigned
+// int>("periodic_y_axis",0);
+//    m_Periodic(2) = hdn.GetAttributeOrDefault<unsigned
+// int>("periodic_z_axis",0);
 //
-//    TICPP::HierarchicalDataNode* periodicSetsNode = hdn.GetChild("PeriodicSets");
+//    TICPP::HierarchicalDataNode* periodicSetsNode =
+// hdn.GetChild("PeriodicSets");
 //    if (periodicSetsNode != NULL)
 //    {
 //      if (m_rank  == 0) std::cout << "Reading PeriodicSets:" << std::endl;
-//      for (TICPP::HierarchicalDataNode* psNode = periodicSetsNode->Next(true); psNode; psNode
+//      for (TICPP::HierarchicalDataNode* psNode = periodicSetsNode->Next(true);
+// psNode; psNode
 //      = periodicSetsNode->Next())
 //      {
 //        PeriodicSet periodicSet;
@@ -1169,14 +1312,17 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 //
 //        if( m_Periodic( periodicSet.m_dimension ) != 1 ){
 //#ifdef USE_ATK
-//          SLIC_ERROR( "SpatialPartition::ReadXMLInput(): Periodic set requested for non-periodic dimension " + toString(periodicSet.m_dimension) + " \n");
+//          SLIC_ERROR( "SpatialPartition::ReadXMLInput(): Periodic set
+// requested for non-periodic dimension " + toString(periodicSet.m_dimension) +
+// " \n");
 //#endif
 //        }
 //      }
 //    }
 //  }
 //
-//  const realT bufferSize = hdn.GetAttributeOrDefault<realT>("contactGhostBuffer",0.0);
+//  const realT bufferSize =
+// hdn.GetAttributeOrDefault<realT>("contactGhostBuffer",0.0);
 //  SetContactGhostRange( bufferSize );
 //}
 //
@@ -1190,7 +1336,8 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 //  min = m_min;
 //  max = m_max;
 //}
-//void SpatialPartition::getPartitionGeometricalBoundary(R1Tensor& min, R1Tensor& max) const
+//void SpatialPartition::getPartitionGeometricalBoundary(R1Tensor& min,
+// R1Tensor& max) const
 //{
 //  min = m_min;
 //  max = m_max;
@@ -1198,7 +1345,8 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
 //
 //void SpatialPartition::UpdatePartitionBoundingBox(NodeManager& nodeManager)
 //{
-//  const iArray1d& isGhost = nodeManager.GetFieldData<FieldInfo::ghostRank>();
+//  const array<integer>& isGhost =
+// nodeManager.GetFieldData<FieldInfo::ghostRank>();
 //  m_xBoundingBoxMin = (*nodeManager.m_refposition)[0];
 //  m_xBoundingBoxMin += (*nodeManager.m_displacement)[0];
 //  m_xBoundingBoxMax = m_xBoundingBoxMin;
@@ -1238,7 +1386,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     //check to make sure our dimensions agree
     {
       int check = 1;
-      for (unsigned int i = 0; i < nsdof; i++)
+      for (unsigned int i = 0 ; i < nsdof ; i++)
       {
         check *= this->m_Partitions(i);
       }
@@ -1293,7 +1441,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
 
       m_PartitionLocations[i].resize(nlocl);
       localIndex j = 0;
-      for(rArray1d::iterator it = m_PartitionLocations[i].begin(); it != m_PartitionLocations[i].end(); ++it, ++j)
+      for(array<real64>::iterator it = m_PartitionLocations[i].begin() ; it != m_PartitionLocations[i].end() ; ++it, ++j)
       {
         *it = (j+1) * m_blockSize(i);
       }
@@ -1329,7 +1477,8 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
 void SpatialPartition::setGlobalDomainSizes( const R1Tensor& min, const R1Tensor& max )
 {
   // global values
-  // without updating partition sizes.  We need this in mesh generator when we have extension zones.
+  // without updating partition sizes.  We need this in mesh generator when we
+  // have extension zones.
   m_gridMin = min;
   m_gridMax = max;
   m_gridSize = max;
@@ -1368,15 +1517,20 @@ bool SpatialPartition::IsCoordInPartition( const realT& coord, const int dir )
 bool SpatialPartition::IsCoordInPartition( const R1Tensor& elemCenter )
 {
   bool rval = true;
-  for(unsigned int i = 0; i < nsdof; i++){
-    if(m_Periodic(i)){
+  for(unsigned int i = 0 ; i < nsdof ; i++)
+  {
+    if(m_Periodic(i))
+    {
 
-      if(m_Partitions(i) != 1 ){
+      if(m_Partitions(i) != 1 )
+      {
         realT localCenter = MapValueToRange(elemCenter(i),m_gridMin(i),m_gridMax(i));
         rval = rval && localCenter >= m_min(i) && localCenter < m_max(i);
       }
 
-    } else {
+    }
+    else
+    {
       rval = rval && (m_Partitions(i)==1 || (elemCenter(i) >= m_min(i) && elemCenter(i) < m_max(i)));
     }
   }
@@ -1387,20 +1541,26 @@ bool SpatialPartition::IsCoordInPartition( const R1Tensor& elemCenter, const int
 {
   bool rval = true;
   R1Tensor m_xBoundingBoxMinTemp, m_xBoundingBoxMaxTemp;
-  for(unsigned int i = 0; i < nsdof; i++){
+  for(unsigned int i = 0 ; i < nsdof ; i++)
+  {
     m_xBoundingBoxMinTemp(i) = m_min(i) - numDistPartition*m_blockSize(i);
     m_xBoundingBoxMaxTemp(i) = m_max(i) + numDistPartition*m_blockSize(i);
   }
 
-  for(unsigned int i = 0; i < nsdof; i++){
-    if(m_Periodic(i)){
+  for(unsigned int i = 0 ; i < nsdof ; i++)
+  {
+    if(m_Periodic(i))
+    {
 
-      if(m_Partitions(i) != 1 ){
+      if(m_Partitions(i) != 1 )
+      {
         realT localCenter = MapValueToRange(elemCenter(i),m_gridMin(i),m_gridMax(i));
         rval = rval && localCenter >= m_xBoundingBoxMinTemp(i) && localCenter <= m_xBoundingBoxMaxTemp(i);
       }
 
-    } else {
+    }
+    else
+    {
 
       rval = rval && (m_Partitions(i)==1 || (elemCenter(i) >= m_xBoundingBoxMinTemp(i) && elemCenter(i) <= m_xBoundingBoxMaxTemp(i)));
     }
@@ -1412,15 +1572,20 @@ bool SpatialPartition::IsCoordInPartitionClosed( const R1Tensor& elemCenter )
 // A variant with intervals closed at both ends
 {
   bool rval = true;
-  for(unsigned int i = 0; i < nsdof; i++){
-    if(m_Periodic(i)){
+  for(unsigned int i = 0 ; i < nsdof ; i++)
+  {
+    if(m_Periodic(i))
+    {
 
-      if(m_Partitions(i) != 1 ){
+      if(m_Partitions(i) != 1 )
+      {
         realT localCenter = MapValueToRange(elemCenter(i),m_gridMin(i),m_gridMax(i));
         rval = rval && localCenter >= m_min(i) && localCenter < m_max(i);
       }
 
-    } else {
+    }
+    else
+    {
       rval = rval && (m_Partitions(i)==1 || (elemCenter(i) >= m_min(i) && elemCenter(i) <= m_max(i)));
     }
   }
@@ -1431,15 +1596,20 @@ bool SpatialPartition::IsCoordInPartitionBoundingBox( const R1Tensor& elemCenter
 
 {
   bool rval = true;
-  for(unsigned int i = 0; i < nsdof; i++){
-    if(m_Periodic(i)){
+  for(unsigned int i = 0 ; i < nsdof ; i++)
+  {
+    if(m_Periodic(i))
+    {
 
-      if(m_Partitions(i) != 1 ){
+      if(m_Partitions(i) != 1 )
+      {
         realT localCenter = MapValueToRange(elemCenter(i),m_gridMin(i),m_gridMax(i));
         rval = rval && localCenter >= m_xBoundingBoxMin(i) && localCenter <= m_xBoundingBoxMax(i);
       }
 
-    } else {
+    }
+    else
+    {
       rval = rval && (m_Partitions(i)==1 || (elemCenter(i) >= m_xBoundingBoxMin(i) && elemCenter(i) <= m_xBoundingBoxMax(i)));
     }
   }
@@ -1460,9 +1630,12 @@ void SpatialPartition::SetContactGhostRange( const realT bufferSize )
 bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor& elemCenter )
 {
   bool rval = true;
-  for(unsigned int i = 0; i < nsdof; i++){
-    if(m_Periodic(i)){
-      if(m_Partitions(i) != 1 ){
+  for(unsigned int i = 0 ; i < nsdof ; i++)
+  {
+    if(m_Periodic(i))
+    {
+      if(m_Partitions(i) != 1 )
+      {
 
         realT minBuffer = m_min(i)-m_contactGhostMin(i);
         realT maxBuffer = m_contactGhostMax(i)-m_max(i);
@@ -1471,7 +1644,9 @@ bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor& elemCenter )
 
         rval = rval && (m_Partitions(i)==1 || (localCenterA >= m_contactGhostMin(i) && localCenterB < m_contactGhostMax(i)));
       }
-    } else {
+    }
+    else
+    {
       rval = rval && (m_Partitions(i)==1 || (elemCenter(i) >= m_contactGhostMin(i) && elemCenter(i) < m_contactGhostMax(i)));
     }
   }

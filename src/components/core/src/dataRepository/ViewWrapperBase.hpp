@@ -76,8 +76,9 @@ public:
 #endif
 
 
-  void resize() ;
-//  virtual void serialize( char * dataPointer, int64 & length, string & typeName ) const = 0;
+  void resize();
+//  virtual void serialize( char * dataPointer, int64 & length, string &
+// typeName ) const = 0;
 
 
   int sizedFromParent() const

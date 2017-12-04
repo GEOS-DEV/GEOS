@@ -16,7 +16,7 @@ using namespace constitutive;
 CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * const parent ):
   CellBlock( name, parent )
 {
-  auto constitutiveGrouping = this->RegisterViewWrapper< map< string, integer_array > >(keys::constitutiveGrouping);
+  auto constitutiveGrouping = this->RegisterViewWrapper< map< string, localIndex_array > >(keys::constitutiveGrouping);
   constitutiveGrouping->setSizedFromParent(0);
 }
 
@@ -24,8 +24,6 @@ CellBlockSubRegion::~CellBlockSubRegion()
 {
   // TODO Auto-generated destructor stub
 }
-
-
 
 
 
@@ -67,7 +65,6 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
 
 
 
-
 //  docNode->AllocateChildNode( keys::constitutiveMap,
 //                              keys::constitutiveMap,
 //                              -1,
@@ -93,7 +90,6 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
 //                              1,
 //                              0,
 //                              0 );
-
 
 
 
@@ -108,7 +104,8 @@ void CellBlockSubRegion::ReadXML_PostProcess()
 
 void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
 {
-//  auto const & elementRegion = static_cast<ElementRegion const&>( *(this->getParent()) );
+//  auto const & elementRegion = static_cast<ElementRegion const&>(
+// *(this->getParent()) );
 //  auto const & numMethod = elementRegion.getNumericalMethod();
 
 }
@@ -129,9 +126,7 @@ void CellBlockSubRegion::MaterialPassThru( string const & matName,
                                            string const & setName,
                                            lSet & materialSet,
                                            ManagedGroup * material )
-{
-
-}
+{}
 
 
 } /* namespace geosx */

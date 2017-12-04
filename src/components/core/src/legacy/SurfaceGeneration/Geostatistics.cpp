@@ -17,4 +17,3 @@ Geostatistics::~Geostatistics()
 {
   // TODO Auto-generated destructor stub
 }
-

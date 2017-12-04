@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -49,11 +67,10 @@
 
 LagrangeDynamicsParallelPlateFlowExplicit::LagrangeDynamicsParallelPlateFlowExplicit( const std::string& name,
                                                                                       ProblemManagerT* const pm ):
-SolverBase(name,pm),
-m_ldSolve(name,pm),
-m_ppSolve(name,pm)
-{
-}
+  SolverBase(name,pm),
+  m_ldSolve(name,pm),
+  m_ppSolve(name,pm)
+{}
 
 LagrangeDynamicsParallelPlateFlowExplicit::~LagrangeDynamicsParallelPlateFlowExplicit()
 {
@@ -110,9 +127,9 @@ void LagrangeDynamicsParallelPlateFlowExplicit::Initialize(PhysicalDomainT& doma
   m_ppSolve.Initialize(domain,partition);
   m_ldSolve.Initialize(domain,partition);
 
-  rArray1d& initialContactStress = domain.m_feFaceManager.GetFieldData<realT>("initialContactStress");
-  rArray1d& faceContactStiffness = domain.m_feFaceManager.GetFieldData<realT>("faceContactStiffness");
-  rArray1d* faceStrengthRandomFactor = domain.m_feFaceManager.GetFieldDataPointer<realT>("faceStrengthRandomFactor");
+  array<real64>& initialContactStress = domain.m_feFaceManager.GetFieldData<realT>("initialContactStress");
+  array<real64>& faceContactStiffness = domain.m_feFaceManager.GetFieldData<realT>("faceContactStiffness");
+  array<real64>* faceStrengthRandomFactor = domain.m_feFaceManager.GetFieldDataPointer<realT>("faceStrengthRandomFactor");
   faceContactStiffness = m_kJn;
 
   for( localIndex kf=0 ; kf<domain.m_feFaceManager.m_numFaces ; ++kf )
@@ -145,7 +162,8 @@ void LagrangeDynamicsParallelPlateFlowExplicit::Initialize(PhysicalDomainT& doma
       realT t0n = Dot(t0,fn);
       realT t1n = Dot(t1,fn);
 
-      // TODO: Add normal stress initialization routine for interfaces and call here
+      // TODO: Add normal stress initialization routine for interfaces and call
+      // here
       //////////////////////////////////////////////////////////////////
       //////////////////////////////////////////////////////////////////
       initialContactStress[kf] = 0.5 * fabs( t0n + t1n );
@@ -166,9 +184,9 @@ void LagrangeDynamicsParallelPlateFlowExplicit::Initialize(PhysicalDomainT& doma
 
   if (m_ppSolve.m_leakoffCoef > 0.0)
   {
-    rArray1d& totalLeakedVolume = domain.m_feFaceManager.GetFieldData<realT>("totalLeakedVolume");
+    array<real64>& totalLeakedVolume = domain.m_feFaceManager.GetFieldData<realT>("totalLeakedVolume");
     totalLeakedVolume = 0.0;
-    rArray1d& initialSaturatedTime = domain.m_feFaceManager.GetFieldData<realT>("initialSaturatedTime");
+    array<real64>& initialSaturatedTime = domain.m_feFaceManager.GetFieldData<realT>("initialSaturatedTime");
     initialSaturatedTime = std::numeric_limits<realT>::max();
   }
 
@@ -178,7 +196,7 @@ void LagrangeDynamicsParallelPlateFlowExplicit::Initialize(PhysicalDomainT& doma
 void LagrangeDynamicsParallelPlateFlowExplicit::InitializeCommunications( PartitionBase& partition )
 {
 
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+  std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string> > syncedFields;
   syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::acceleration>::Name());
   syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::velocity>::Name());
   syncedFields[PhysicalDomainT::FiniteElementFaceManager].push_back(Field<FieldInfo::mass>::Name());
@@ -195,13 +213,15 @@ void LagrangeDynamicsParallelPlateFlowExplicit::ApplyForcesFromContact(PhysicalD
   //external faces
   //-----------------------------
   {
-    Array1dT<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
+    array<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
     contactForce = 0.0;
-    Array1dT<R1Tensor>& decontactForce = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::contactForce>();
+    array<R1Tensor>& decontactForce = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::contactForce>();
     decontactForce = 0.0;
 
-    //update nodal positions, velocities, and accelerations before updating face geometry
-    //also, reset rotational and translational accelerations as well as forces and moments
+    //update nodal positions, velocities, and accelerations before updating face
+    // geometry
+    //also, reset rotational and translational accelerations as well as forces
+    // and moments
     domain.m_discreteElementManager.UpdateNodalStatesZeroForcesAndAccelerations();
 
     //update face geometry and sort faces if necessary
@@ -210,12 +230,13 @@ void LagrangeDynamicsParallelPlateFlowExplicit::ApplyForcesFromContact(PhysicalD
                                                                        domain.m_discreteElementManager,
                                                                        dt);
 
-    //if a resort has been triggered, then you also need to update the contact manager
+    //if a resort has been triggered, then you also need to update the contact
+    // manager
     if (resort)
       domain.m_contactManager.Update(domain.m_externalFaces.m_neighborList);
 
     {
-      Array1dT<Array1dT<R1Tensor> > xs;
+      array<array<R1Tensor> > xs;
       xs.resize(domain.m_externalFaces.DataLengths());
       domain.m_externalFaces.UpdateGeometricContactProperties(dt, domain, xs);
 #ifdef STATES_ON_CONTACTS
@@ -225,8 +246,10 @@ void LagrangeDynamicsParallelPlateFlowExplicit::ApplyForcesFromContact(PhysicalD
 #endif
     }
 
-    //for parallel: do NOT need to synchronize nodal force fields across processes for DE nodes
-    //before moving to centroid, since each process will do that calculation (redundantly) itself
+    //for parallel: do NOT need to synchronize nodal force fields across
+    // processes for DE nodes
+    //before moving to centroid, since each process will do that calculation
+    // (redundantly) itself
     // ... there's therefore no need for explicit synchrony
     //as long as nodal states remain synchronous, everything will be fine!
 #ifndef DEEFC
@@ -239,12 +262,12 @@ void LagrangeDynamicsParallelPlateFlowExplicit::ApplyForcesFromContact(PhysicalD
 
 
 double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
-                                                          const realT& dt,
-                                                          const int cycleNumber,
-                                                          PhysicalDomainT& domain,
-                                                          const sArray1d& namesOfSolverRegions ,
-                                                          SpatialPartition& partition ,
-                                                          FractunatorBase* const fractunator )
+                                                            const realT& dt,
+                                                            const int cycleNumber,
+                                                            PhysicalDomainT& domain,
+                                                            const array<string>& namesOfSolverRegions,
+                                                            SpatialPartition& partition,
+                                                            FractunatorBase* const fractunator )
 {
   realT dt_return = dt;
 
@@ -257,24 +280,26 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
                                      domain.m_feFaceManager,
                                      domain.m_externalFaces,
                                      domain.m_feElementManager,
-                                     partition, false , time);
+                                     partition, false, time);
     }
   }
 
   m_stabledt.m_maxdt = std::numeric_limits<double>::max();
-  Array1dT<R1Tensor>& hgforce = domain.m_feNodeManager.GetFieldData<FieldInfo::hgforce> ();
+  array<R1Tensor>& hgforce = domain.m_feNodeManager.GetFieldData<FieldInfo::hgforce> ();
   hgforce = 0.0;
 
-  iArray1d& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-//  Array1dT<lArray1d>& edgeToFlowFaces = domain.m_edgeManager.GetVariableOneToManyMap("edgeToFlowFaces");
+  array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+//  array<lArray1d>& edgeToFlowFaces =
+// domain.m_edgeManager.GetVariableOneToManyMap("edgeToFlowFaces");
 
-  Array1dT<R1Tensor>* u0 = domain.m_feNodeManager.GetFieldDataPointer<R1Tensor>("displacement0");
-  Array1dT<R1Tensor>* unet = domain.m_feNodeManager.GetFieldDataPointer<R1Tensor>("netDisplacement");
+  array<R1Tensor>* u0 = domain.m_feNodeManager.GetFieldDataPointer<R1Tensor>("displacement0");
+  array<R1Tensor>* unet = domain.m_feNodeManager.GetFieldDataPointer<R1Tensor>("netDisplacement");
 
   m_ppSolve.GenerateParallelPlateGeometricQuantities( domain,time,dt );
 
   m_ppSolve.CalculateAndApplyMassFlux( dt, domain );
-  if (m_ppSolve.m_leakoffCoef > 0.0) m_ppSolve.CalculateCarterLeakOff(time, dt, domain);
+  if (m_ppSolve.m_leakoffCoef > 0.0)
+    m_ppSolve.CalculateCarterLeakOff(time, dt, domain);
   m_ppSolve.ApplyFluxBoundaryCondition(time, dt, cycleNumber, partition.m_rank, domain);
 
 
@@ -296,7 +321,7 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
   }
 
 
-  BoundaryConditionFunctions::ApplyTractionBoundaryCondition( domain ,time);
+  BoundaryConditionFunctions::ApplyTractionBoundaryCondition( domain,time);
 
   // -- CONTACT --
   if (domain.m_externalFaces.m_contactActive)
@@ -306,7 +331,7 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
 
   if (cycleNumber%10000 == 0)
   {
-    int rank ;
+    int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     std::cout << "t=" << time << "rank: " << rank << "Solid dt: " << m_stabledt.m_maxdt<<", Flow dt: "<<m_ppSolve.m_stabledt.m_maxdt << std::endl;
   }
@@ -326,7 +351,7 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
 
 
   {
-    std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+    std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string> > syncedFields;
 
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::acceleration>::Name());
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::velocity>::Name());
@@ -340,16 +365,19 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
 
   // apply fluid pressure to faces
   const OrderedVariableOneToManyRelation& childFaceIndex = domain.m_feFaceManager.GetVariableOneToManyMap( "childIndices" );
-  const rArray1d& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-//  const rArray1d& initialContactStress = domain.m_feFaceManager.GetFieldData<realT>("initialContactStress");
-  Array1dT<R1Tensor>& nodalForce = domain.m_feNodeManager.GetFieldData<FieldInfo::force>();
-  Array1dT<R1Tensor>& hydroForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("hydroForce");
-  Array1dT<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
-  Array1dT<R1Tensor>& contactStress = domain.m_feFaceManager.GetFieldData<R1Tensor>("contactStress");
+  const array<real64>& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+//  const array<real64>& initialContactStress =
+// domain.m_feFaceManager.GetFieldData<realT>("initialContactStress");
+  array<R1Tensor>& nodalForce = domain.m_feNodeManager.GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& hydroForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("hydroForce");
+  array<R1Tensor>& contactForce = domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
+  array<R1Tensor>& contactStress = domain.m_feFaceManager.GetFieldData<R1Tensor>("contactStress");
 
-//  Array1dT<R1Tensor>& cohesiveForce = domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
+//  array<R1Tensor>& cohesiveForce =
+// domain.m_feNodeManager.GetFieldData<R1Tensor>("cohesiveForce");
 
-//  const Array1dT<R1Tensor>& cohesiveTraction = domain.m_feFaceManager.GetFieldData<R1Tensor>("cohesiveTraction");
+//  const array<R1Tensor>& cohesiveTraction =
+// domain.m_feFaceManager.GetFieldData<R1Tensor>("cohesiveTraction");
 
   hydroForce = 0.0;
   contactForce = 0.0;
@@ -399,7 +427,8 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
         R1Tensor pForce = N[side];
         R1Tensor cForce, sForce;
         int direction = -1;
-        if(side==0) direction = 1;
+        if(side==0)
+          direction = 1;
 
         hForce *= -area * pressure / domain.m_feFaceManager.m_toNodesRelation[faceID].size();
         pForce *= -area * stressPen / domain.m_feFaceManager.m_toNodesRelation[faceID].size();
@@ -413,7 +442,7 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
 
 
         for( lArray1d::const_iterator nodeID=domain.m_feFaceManager.m_toNodesRelation[faceID].begin() ;
-            nodeID!=domain.m_feFaceManager.m_toNodesRelation[faceID].end() ; ++nodeID )
+             nodeID!=domain.m_feFaceManager.m_toNodesRelation[faceID].end() ; ++nodeID )
         {
           nodalForce[*nodeID] += hForce;
           nodalForce[*nodeID] += pForce;
@@ -433,11 +462,7 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
   }
 
 //  m_ldSolve.ApplyGapDamping( domain.m_nodeManager,
- //                            domain.m_faceManager, dt );
-
-
-
-
+//                            domain.m_faceManager, dt );
 
 
 
@@ -445,7 +470,7 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
 
   if (unet != NULL && u0 != NULL)
   {
-    for (localIndex i = 0; i < domain.m_feNodeManager.DataLengths(); ++i)
+    for (localIndex i = 0 ; i < domain.m_feNodeManager.DataLengths() ; ++i)
     {
       (*unet)[i] = (*domain.m_feNodeManager.m_displacement)[i];
       (*unet)[i] -= (*u0)[i];
@@ -453,14 +478,14 @@ double LagrangeDynamicsParallelPlateFlowExplicit::TimeStep( const realT& time,
   }
 
   {
-    std::map<PhysicalDomainT::ObjectDataStructureKeys, sArray1d> syncedFields;
+    std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string> > syncedFields;
 
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::acceleration>::Name());
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back(Field<FieldInfo::velocity>::Name());
     syncedFields[PhysicalDomainT::FiniteElementFaceManager].push_back(Field<FieldInfo::mass>::Name());
     syncedFields[PhysicalDomainT::FiniteElementFaceManager].push_back("tracer");
     {
-      rArray1d* initialSaturatedTime = domain.m_feFaceManager.GetFieldDataPointer<realT>("initialSaturatedTime");
+      array<real64>* initialSaturatedTime = domain.m_feFaceManager.GetFieldDataPointer<realT>("initialSaturatedTime");
       if (initialSaturatedTime != NULL )
         syncedFields[PhysicalDomainT::FiniteElementFaceManager].push_back("initialSaturatedTime");
     }
@@ -482,10 +507,10 @@ void LagrangeDynamicsParallelPlateFlowExplicit::CalculateContactStress(PhysicalD
 {
   stressPen = 0;
   stressShear = 0;
-  rArray1d& delta0N = domain.m_feFaceManager.GetFieldData<realT>("delta0N");
-  Array1dT<R1Tensor>& gapShear0 = domain.m_feFaceManager.GetFieldData<R1Tensor>("gapShear0");
-  Array1dT<R1Tensor>& stressShear0 = domain.m_feFaceManager.GetFieldData<R1Tensor>("stressShear0");
-  rArray1d& effectiveStressN = domain.m_feFaceManager.GetFieldData<realT>("effectiveStressN");
+  array<real64>& delta0N = domain.m_feFaceManager.GetFieldData<realT>("delta0N");
+  array<R1Tensor>& gapShear0 = domain.m_feFaceManager.GetFieldData<R1Tensor>("gapShear0");
+  array<R1Tensor>& stressShear0 = domain.m_feFaceManager.GetFieldData<R1Tensor>("stressShear0");
+  array<real64>& effectiveStressN = domain.m_feFaceManager.GetFieldData<realT>("effectiveStressN");
 
 
   const R1Tensor N[2] = { domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, faceIndex[0] ),
@@ -504,7 +529,7 @@ void LagrangeDynamicsParallelPlateFlowExplicit::CalculateContactStress(PhysicalD
   gapShearInc -= gapShear0[kf];
 
 
-  realT deltaN ;
+  realT deltaN;
   realT tBuffer = dt * 500;
   if (time == 0)
   {
@@ -514,7 +539,8 @@ void LagrangeDynamicsParallelPlateFlowExplicit::CalculateContactStress(PhysicalD
   {
     deltaN = delta0N[kf] * (1.0 - time / tBuffer * m_fLockedInSIF);
   }
-  else deltaN = (1-m_fLockedInSIF) * delta0N[kf];
+  else
+    deltaN = (1-m_fLockedInSIF) * delta0N[kf];
 
   if( -gapNormal + deltaN <= 0.0 )
   {
@@ -523,7 +549,7 @@ void LagrangeDynamicsParallelPlateFlowExplicit::CalculateContactStress(PhysicalD
   }
   else
   {
-    stressPen = (-gapNormal + deltaN) * m_kJn ;
+    stressPen = (-gapNormal + deltaN) * m_kJn;
 
     R1Tensor stressShearPrj = stressShear0[kf];
     stressShearPrj += gapShearInc * m_kJs;
@@ -542,7 +568,8 @@ void LagrangeDynamicsParallelPlateFlowExplicit::CalculateContactStress(PhysicalD
 
       realT a, b, c;
       a = pow(t[0],2) + pow(t[1],2);
-      if (a == 0) a = pow( t[0]+du[0]*m_kJs ,2) + pow(t[1]+ du[1]*m_kJs,2);
+      if (a == 0)
+        a = pow( t[0]+du[0]*m_kJs,2) + pow(t[1]+ du[1]*m_kJs,2);
 
       b = -2 * ( t[0]*(t[0] + m_kJs * du[0]) + t[1]*(t[1] + m_kJs * du[1]));
       c = pow(t[0] + m_kJs * du[0], 2) + pow(t[1] + m_kJs * du[1], 2) - pow(stressPen*m_COFJ, 2);
@@ -559,7 +586,8 @@ void LagrangeDynamicsParallelPlateFlowExplicit::CalculateContactStress(PhysicalD
         x[0] = (-b - pow(b2_4ac, 0.5))/2/a;
         x[1] = (-b + pow(b2_4ac, 0.5))/2/a;
 
-        if (fabs(x[0]) > fabs(x[1])) x[0] = x[1];
+        if (fabs(x[0]) > fabs(x[1]))
+          x[0] = x[1];
 
         t[0] += m_kJs * du[0] - x[0] * t[0];
         t[1] += m_kJs * du[1] - x[0] * t[1];
@@ -577,7 +605,7 @@ void LagrangeDynamicsParallelPlateFlowExplicit::CalculateContactStress(PhysicalD
 
 void LagrangeDynamicsParallelPlateFlowExplicit::PostProcess (PhysicalDomainT& domain,
                                                              SpatialPartition& partition,
-                                                             const sArray1d& namesOfSolverRegions)
+                                                             const array<string>& namesOfSolverRegions)
 {
   m_ppSolve.PostProcess(domain, partition, namesOfSolverRegions);
   m_ldSolve.PostProcess(domain, partition, namesOfSolverRegions);
@@ -585,4 +613,3 @@ void LagrangeDynamicsParallelPlateFlowExplicit::PostProcess (PhysicalDomainT& do
 
 /// Register solver in the solver factory
 REGISTER_SOLVER( LagrangeDynamicsParallelPlateFlowExplicit )
-

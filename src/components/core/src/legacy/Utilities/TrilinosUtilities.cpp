@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "TrilinosUtilities.h"
@@ -44,10 +62,10 @@
 #include "Teuchos_SerialDenseVector.hpp"
 
 /// Convert row column value format to epetra FECrs Matrix
-void RCVToEpetraFECrsMatrix(const Array1dT<rcv>& K, Epetra_FECrsMatrix& A)
+void RCVToEpetraFECrsMatrix(const array<rcv>& K, Epetra_FECrsMatrix& A)
 {
 
-  for (size_t i = 0; i < K.size(); ++i)
+  for (size_t i = 0 ; i < K.size() ; ++i)
   {
     int row = K[i].r;
     int col = K[i].c;
@@ -60,35 +78,35 @@ void RCVToEpetraFECrsMatrix(const Array1dT<rcv>& K, Epetra_FECrsMatrix& A)
 }
 
 /// Convert array to epetra finite element vector
-void ArrayToEpetraFEVector(const rArray1d& a, Epetra_FEVector& v)
+void ArrayToEpetraFEVector(const array<real64>& a, Epetra_FEVector& v)
 {
   if (a.size() >= INT_MAX)
     throw GPException(
-        "TrilinosUtilities:ArrayToEpetraFEVector: invalid conversion from unsigned int to int");
-  for (unsigned int i = 0; i < a.size(); ++i)
+            "TrilinosUtilities:ArrayToEpetraFEVector: invalid conversion from unsigned int to int");
+  for (unsigned int i = 0 ; i < a.size() ; ++i)
   {
     int ii = i;
     v.ReplaceGlobalValues(1, &ii, &(a[i]));
   }
 }
 
-/// Convert epetra finite element vector to real array. 	
-void EpetraFEVectorToArray(Epetra_FEVector& v, rArray1d& a)
+/// Convert epetra finite element vector to real array.
+void EpetraFEVectorToArray(Epetra_FEVector& v, array<real64>& a)
 {
   a.resize(v.MyLength());
   double ** vp;
   v.ExtractView(&vp);
-  for (size_t i = 0; i < a.size(); ++i)
+  for (size_t i = 0 ; i < a.size() ; ++i)
     a[i] = vp[0][i]; // first vector only
 }
 
-/// 
+///
 void WriteEpetraFECrsMatrixToMatlabFile(std::string filename, Epetra_FECrsMatrix& A)
 {
   EpetraExt::RowMatrixToMatlabFile(filename.c_str(), A);
 }
 
-/// 
+///
 void WriteEpetraFEVectorToMatlabFile(const std::string& filename, const Epetra_FEVector& X,
                                      const std::string& descr1, const std::string& descr2)
 {
@@ -97,7 +115,7 @@ void WriteEpetraFEVectorToMatlabFile(const std::string& filename, const Epetra_F
 }
 
 /// Solve Ax = b with a conjugate gradient solver and jacobi precoditioning
-void LinSolve_CG(const Array1dT<rcv>& A, rArray1d& x, const rArray1d& b, const Epetra_Comm* commPtr,
+void LinSolve_CG(const array<rcv>& A, array<real64>& x, const array<real64>& b, const Epetra_Comm* commPtr,
                  realT tol, int maxNumIters, bool verboseFlag, bool doDataWrite)
 {
 
@@ -117,7 +135,9 @@ void LinSolve_CG(const Array1dT<rcv>& A, rArray1d& x, const rArray1d& b, const E
   Epetra_FEVector ex(epMap);
   Epetra_FEVector eb(epMap);
 
-  Epetra_FEVector ex0(epTargetMap); // fixme -> ex0 = used to communicate x between processor 0 and other pids (redundant)
+  Epetra_FEVector ex0(epTargetMap); // fixme -> ex0 = used to communicate x
+                                    // between processor 0 and other pids
+                                    // (redundant)
 
   if (myPID == 0)
   {
@@ -158,15 +178,17 @@ void LinSolve_CG(const Array1dT<rcv>& A, rArray1d& x, const rArray1d& b, const E
     exit(0);
   }
 
-  // collect result on PID 0  < ----- fixme should keep on individual processors once parallel version in place
+  // collect result on PID 0  < ----- fixme should keep on individual processors
+  // once parallel version in place
   ex0.Export(ex, gatherer, Add);
   if (myPID == 0)
     EpetraFEVectorToArray(ex0, x);
 
 }
 
-/// Solve Ax = b with a biconjugate gradient stabilized solver and jacobi precoditioning
-void LinSolve_BICGSTAB(const Array1dT<rcv>& A, rArray1d& x, const rArray1d& b,
+/// Solve Ax = b with a biconjugate gradient stabilized solver and jacobi
+// precoditioning
+void LinSolve_BICGSTAB(const array<rcv>& A, array<real64>& x, const array<real64>& b,
                        const Epetra_Comm* commPtr, realT tol, int maxNumIters, bool verboseFlag,
                        bool doDataWrite)
 {
@@ -187,7 +209,9 @@ void LinSolve_BICGSTAB(const Array1dT<rcv>& A, rArray1d& x, const rArray1d& b,
   Epetra_FEVector ex(epMap);
   Epetra_FEVector eb(epMap);
 
-  Epetra_FEVector ex0(epTargetMap); // fixme -> ex0 = used to communicate x between processor 0 and other pids (redundant)
+  Epetra_FEVector ex0(epTargetMap); // fixme -> ex0 = used to communicate x
+                                    // between processor 0 and other pids
+                                    // (redundant)
 
   if (myPID == 0)
   {
@@ -228,22 +252,24 @@ void LinSolve_BICGSTAB(const Array1dT<rcv>& A, rArray1d& x, const rArray1d& b,
     exit(0);
   }
 
-  // collect result on PID 0  < ----- fixme should keep on individual processors once parallel version in place
+  // collect result on PID 0  < ----- fixme should keep on individual processors
+  // once parallel version in place
   ex0.Export(ex, gatherer, Add);
   if (myPID == 0)
     EpetraFEVectorToArray(ex0, x);
 
 }
 
-/// FIXME - the following won't work on settgast's machine - some problem with Teuchos and compiler
+/// FIXME - the following won't work on settgast's machine - some problem with
+// Teuchos and compiler
 //#ifdef WALSH24
 #if 1
-int LinSolve_Local(rArray2d& A, rArray1d& x, rArray1d& b)
+int LinSolve_Local(rArray2d& A, array<real64>& x, array<real64>& b)
 {
 
   bool doEquilibrate = false;
 
-  rArray1d::size_type n = x.size();
+  array<real64>::size_type n = x.size();
 
   Teuchos::SerialDenseMatrix<int, realT> A_Teuch(Teuchos::Copy, A.data(), n, n, n);
 
@@ -274,24 +300,24 @@ int LinSolve_Local(rArray2d& A, rArray1d& x, rArray1d& b)
   //if(doEquilibrate) Solver.unequilibrateLHS(); // not working? needed?
 
   // copy back, not required if using view?
-  for (rArray2d::size_type i = 0; i < n; ++i)
+  for (rArray2d::size_type i = 0 ; i < n ; ++i)
     x[i] = x_Teuch[i];
 
-  //if ( Solver.shouldEquilibrate()){ 
+  //if ( Solver.shouldEquilibrate()){
   if (false)
   {
-    for (rArray2d::size_type i = 0; i < A.Dimension(0); ++i)
+    for (rArray2d::size_type i = 0 ; i < A.Dimension(0) ; ++i)
     {
-      for (rArray2d::size_type j = 0; j < A.Dimension(1); ++j)
+      for (rArray2d::size_type j = 0 ; j < A.Dimension(1) ; ++j)
         std::cout << A(i, j) << " ";
       std::cout << std::endl;
     }
     std::cout << "x" << std::endl;
-    for (rArray1d::size_type i = 0; i < x.size(); ++i)
+    for (array<real64>::size_type i = 0 ; i < x.size() ; ++i)
       std::cout << x(i) << " ";
     std::cout << std::endl;
     std::cout << "b" << std::endl;
-    for (rArray1d::size_type i = 0; i < b.size(); ++i)
+    for (array<real64>::size_type i = 0 ; i < b.size() ; ++i)
       std::cout << b(i) << " ";
     std::cout << std::endl;
     exit(0);
@@ -299,7 +325,7 @@ int LinSolve_Local(rArray2d& A, rArray1d& x, rArray1d& b)
   return info;
 }
 #else
-int LinSolve_Local(rArray2d& A, rArray1d& x,rArray1d& b)
+int LinSolve_Local(rArray2d& A, array<real64>& x,array<real64>& b)
 {
   throw GPException("LinSolve_Local - FIXME - problem with Teuchos compilation.");
   return 1;
@@ -341,8 +367,9 @@ void NonlinearSolve(Epetra_Vector& x, NOX::Epetra::Interface::Required& iReq,
   if (verbose)
   {
     printParams.set(
-        "Output Information",
-        NOX::Utils::OuterIteration + NOX::Utils::OuterIterationStatusTest + NOX::Utils::InnerIteration + NOX::Utils::Parameters + NOX::Utils::Details + NOX::Utils::Warning);
+      "Output Information",
+      NOX::Utils::OuterIteration + NOX::Utils::OuterIterationStatusTest + NOX::Utils::InnerIteration + NOX::Utils::Parameters + NOX::Utils::Details +
+      NOX::Utils::Warning);
   }
   else
   {
@@ -392,12 +419,12 @@ void NonlinearSolve(Epetra_Vector& x, NOX::Epetra::Interface::Required& iReq,
   RCP < NOX::Epetra::Interface::Jacobian > rcp_iJac(&iJac);
 
   RCP < NOX::Epetra::LinearSystemAztecOO > linSys = rcp(
-      new NOX::Epetra::LinearSystemAztecOO(printParams, lsParams, rcp_iReq, rcp_iJac, J0, x));
+    new NOX::Epetra::LinearSystemAztecOO(printParams, lsParams, rcp_iReq, rcp_iJac, J0, x));
 
   // Need a NOX::Epetra::Vector for constructor.
   NOX::Epetra::Vector noxInitGuess(x, NOX::DeepCopy);
   RCP < NOX::Epetra::Group > group = rcp(
-      new NOX::Epetra::Group(printParams, rcp_iReq, noxInitGuess, linSys));
+    new NOX::Epetra::Group(printParams, rcp_iReq, noxInitGuess, linSys));
 
   //
   // Set up NOX's iteration stopping criteria ("status tests").
@@ -419,7 +446,7 @@ void NonlinearSolve(Epetra_Vector& x, NOX::Epetra::Interface::Required& iReq,
   // The result tells NOX to stop if at least one of them is
   // satisfied.
   RCP < NOX::StatusTest::Combo > combo = rcp(
-      new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR, testNormF, testMaxIters));
+    new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR, testNormF, testMaxIters));
 
   // Create the NOX nonlinear solver.
   RCP < NOX::Solver::Generic > solver = NOX::Solver::buildSolver(group, combo, params);
@@ -443,37 +470,46 @@ int RowSum( const Epetra_CrsMatrix& A, Epetra_Vector& x)
   // Put inverse of the sum of absolute values of the ith row of A in x[i].
   //
 
-  if (!A.Filled()) EPETRA_CHK_ERR(-1); // Matrix must be filled.
+  if (!A.Filled())
+    EPETRA_CHK_ERR(-1);                // Matrix must be filled.
   int ierr = 0;
   int i, j;
   x.PutScalar(0.0); // Make sure we sum into a vector of zeros.
   double * xp = (double*)x.Values();
-  if (A.Graph().RangeMap().SameAs(x.Map()) && A.Exporter() != 0) {
+  if (A.Graph().RangeMap().SameAs(x.Map()) && A.Exporter() != 0)
+  {
     Epetra_Vector x_tmp(A.RowMap());
     x_tmp.PutScalar(0.0);
     double * x_tmp_p = (double*)x_tmp.Values();
-    for (i=0; i < A.NumMyRows(); i++) {
+    for (i=0 ; i < A.NumMyRows() ; i++)
+    {
       int      NumEntries = A.NumMyEntries(i);
       double * RowValues  = NULL;
       int junk;
       A.ExtractMyRowView(i,junk, RowValues );
-      for (j=0; j < NumEntries; j++)  x_tmp_p[i] += std::abs(RowValues[j]);
+      for (j=0 ; j < NumEntries ; j++)
+        x_tmp_p[i] += std::abs(RowValues[j]);
     }
-    EPETRA_CHK_ERR(x.Export(x_tmp, *A.Exporter(), Add)); //Export partial row sums to x.
+    EPETRA_CHK_ERR(x.Export(x_tmp, *A.Exporter(), Add)); //Export partial row
+                                                         // sums to x.
   }
-  else if (A.Graph().RowMap().SameAs(x.Map())) {
-    for (i=0; i < A.NumMyRows(); i++) {
+  else if (A.Graph().RowMap().SameAs(x.Map()))
+  {
+    for (i=0 ; i < A.NumMyRows() ; i++)
+    {
       int      NumEntries = A.NumMyEntries(i);
 //      double * RowValues  = A.Values(i);
       double * RowValues  = NULL;
       int junk;
       A.ExtractMyRowView(i,junk, RowValues );
       double scale = 0.0;
-      for (j=0; j < NumEntries; j++) scale += std::abs(RowValues[j]);
+      for (j=0 ; j < NumEntries ; j++)
+        scale += std::abs(RowValues[j]);
       xp[i] = scale;
     }
   }
-  else { // x.Map different than both Graph().RowMap() and Graph().RangeMap()
+  else   // x.Map different than both Graph().RowMap() and Graph().RangeMap()
+  {
     EPETRA_CHK_ERR(-2); // The map of x must be the RowMap or RangeMap of A.
   }
   A.UpdateFlops(A.NumGlobalNonzeros64());
@@ -491,13 +527,15 @@ int RowSum( const Epetra_CrsMatrix& A, const Epetra_CrsMatrix& B, Epetra_Vector&
   double * xp = (double*)x.Values();
 
   if (A.Graph().RangeMap().SameAs(x.Map()) && A.Exporter() != 0 &&
-      B.Graph().RangeMap().SameAs(x.Map()) && B.Exporter() != 0 ) {
+      B.Graph().RangeMap().SameAs(x.Map()) && B.Exporter() != 0 )
+  {
 
     Epetra_Vector x_tmp(A.RowMap());
     x_tmp.PutScalar(0.0);
     double * x_tmp_p = (double*)x_tmp.Values();
 
-    for (i=0; i < A.NumMyRows(); i++) {
+    for (i=0 ; i < A.NumMyRows() ; i++)
+    {
       int      NumEntriesA = A.NumMyEntries(i);
       int      NumEntriesB = B.NumMyEntries(i);
       double * RowValuesA  = NULL;
@@ -505,15 +543,20 @@ int RowSum( const Epetra_CrsMatrix& A, const Epetra_CrsMatrix& B, Epetra_Vector&
       int junk;
       A.ExtractMyRowView(i,junk, RowValuesA );
       B.ExtractMyRowView(i,junk, RowValuesB );
-      for (j=0; j < NumEntriesA; j++)  x_tmp_p[i] += std::abs(RowValuesA[j]);
-      for (j=0; j < NumEntriesB; j++)  x_tmp_p[i] += std::abs(RowValuesB[j]);
+      for (j=0 ; j < NumEntriesA ; j++)
+        x_tmp_p[i] += std::abs(RowValuesA[j]);
+      for (j=0 ; j < NumEntriesB ; j++)
+        x_tmp_p[i] += std::abs(RowValuesB[j]);
 
     }
-    EPETRA_CHK_ERR(x.Export(x_tmp, *A.Exporter(), Add)); //Export partial row sums to x.
+    EPETRA_CHK_ERR(x.Export(x_tmp, *A.Exporter(), Add)); //Export partial row
+                                                         // sums to x.
   }
   else if ( A.Graph().RowMap().SameAs(x.Map()) &&
-            B.Graph().RowMap().SameAs(x.Map()) ) {
-    for (i=0; i < A.NumMyRows(); i++) {
+            B.Graph().RowMap().SameAs(x.Map()) )
+  {
+    for (i=0 ; i < A.NumMyRows() ; i++)
+    {
       int      NumEntriesA = A.NumMyEntries(i);
       int      NumEntriesB = B.NumMyEntries(i);
       double * RowValuesA  = NULL;
@@ -522,12 +565,15 @@ int RowSum( const Epetra_CrsMatrix& A, const Epetra_CrsMatrix& B, Epetra_Vector&
       A.ExtractMyRowView(i,junk, RowValuesA );
       B.ExtractMyRowView(i,junk, RowValuesB );
       double scale = 0.0;
-      for (j=0; j < NumEntriesA; j++) scale += std::abs(RowValuesA[j]);
-      for (j=0; j < NumEntriesB; j++) scale += std::abs(RowValuesB[j]);
+      for (j=0 ; j < NumEntriesA ; j++)
+        scale += std::abs(RowValuesA[j]);
+      for (j=0 ; j < NumEntriesB ; j++)
+        scale += std::abs(RowValuesB[j]);
       xp[i] = scale;
     }
   }
-  else { // x.Map different than both Graph().RowMap() and Graph().RangeMap()
+  else   // x.Map different than both Graph().RowMap() and Graph().RangeMap()
+  {
     EPETRA_CHK_ERR(-2); // The map of x must be the RowMap or RangeMap of A.
   }
   A.UpdateFlops(A.NumGlobalNonzeros64());

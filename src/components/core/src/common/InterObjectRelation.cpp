@@ -16,10 +16,10 @@ const gArray1d& InterObjectRelation<BASETYPE>::RelatedObjectLocalToGlobal() cons
 }
 template const gArray1d& InterObjectRelation<lArray1d>::RelatedObjectLocalToGlobal() const;
 template const gArray1d& InterObjectRelation<lArray2d>::RelatedObjectLocalToGlobal() const;
-template const gArray1d& InterObjectRelation<Array1dT<lArray1d> >::RelatedObjectLocalToGlobal() const;
-template const gArray1d& InterObjectRelation<Array1dT<lSet> >::RelatedObjectLocalToGlobal() const;
-template const gArray1d& InterObjectRelation<Array1dT<pArray1d> >::RelatedObjectLocalToGlobal() const;
-template const gArray1d& InterObjectRelation<Array1dT<pSet> >::RelatedObjectLocalToGlobal() const;
+template const gArray1d& InterObjectRelation<array<lArray1d> >::RelatedObjectLocalToGlobal() const;
+template const gArray1d& InterObjectRelation<array<lSet> >::RelatedObjectLocalToGlobal() const;
+template const gArray1d& InterObjectRelation<array<pArray1d> >::RelatedObjectLocalToGlobal() const;
+template const gArray1d& InterObjectRelation<array<pSet> >::RelatedObjectLocalToGlobal() const;
 
 
 template < typename BASETYPE >
@@ -29,5 +29,5 @@ const std::map<globalIndex,localIndex>& InterObjectRelation<BASETYPE>::RelatedOb
 }
 template const std::map<globalIndex,localIndex>& InterObjectRelation<lArray1d>::RelatedObjectGlobalToLocal() const;
 template const std::map<globalIndex,localIndex>& InterObjectRelation<lArray2d>::RelatedObjectGlobalToLocal() const;
-template const std::map<globalIndex,localIndex>& InterObjectRelation<Array1dT<lArray1d> >::RelatedObjectGlobalToLocal() const;
-template const std::map<globalIndex,localIndex>& InterObjectRelation<Array1dT<lSet> >::RelatedObjectGlobalToLocal() const;
+template const std::map<globalIndex,localIndex>& InterObjectRelation<array<lArray1d> >::RelatedObjectGlobalToLocal() const;
+template const std::map<globalIndex,localIndex>& InterObjectRelation<array<lSet> >::RelatedObjectGlobalToLocal() const;

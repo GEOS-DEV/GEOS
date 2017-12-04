@@ -36,18 +36,18 @@ int main( int argc, char *argv[] )
 #ifdef USE_ATK
   slic::initialize();
   std::string format =  std::string( "***********************************\n" )+
-                        std::string( "* <TIMESTAMP>\n\n" ) +
-                        std::string( "* LEVEL=<LEVEL>\n" ) +
-                        std::string( "* MESSAGE=<MESSAGE>\n" ) +
-                        std::string( "* FILE=<FILE>\n" ) +
-                        std::string( "* LINE=<LINE>\n" ) +
-                        std::string( "***********************************\n" );
+                       std::string( "* <TIMESTAMP>\n\n" ) +
+                       std::string( "* LEVEL=<LEVEL>\n" ) +
+                       std::string( "* MESSAGE=<MESSAGE>\n" ) +
+                       std::string( "* FILE=<FILE>\n" ) +
+                       std::string( "* LINE=<LINE>\n" ) +
+                       std::string( "***********************************\n" );
   slic::setLoggingMsgLevel( slic::message::Debug );
-//  slic::addStreamToAllMsgLevels( new slic::GenericOutputStream( &std::cout, format ) );
+//  slic::addStreamToAllMsgLevels( new slic::GenericOutputStream( &std::cout,
+// format ) );
 
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 #endif
-
+  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
 
   // Mark begin of "initialization" phase
@@ -61,7 +61,7 @@ int main( int argc, char *argv[] )
   problemManager.ParseInputFile();
 
 
-  
+
   problemManager.Initialize( &problemManager );
 
   GEOS_MARK_END("Initialization");
@@ -83,7 +83,7 @@ int main( int argc, char *argv[] )
 #ifdef USE_ATK
   axom::slic::finalize();
 #endif
-  
+
   gettimeofday(&tim, NULL);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
@@ -93,6 +93,6 @@ int main( int argc, char *argv[] )
   MPI_Finalize();
 #endif
 
-  
+
   return 0;
 }

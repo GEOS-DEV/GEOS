@@ -46,11 +46,10 @@ include("${CMAKE_CURRENT_LIST_DIR}/geosxOptions.cmake")
 ################################
 #include(cmake/SetupShroud.cmake)
 
-################################
-# ATK's Third party library setup
-################################
 include("${CMAKE_CURRENT_LIST_DIR}/thirdparty/SetupGeosxThirdParty.cmake")
 #include(components/cmake/thirdparty/SetupGeosxThirdParty.cmake)
+
+include(cmake/GeosxMacros.cmake)
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
     ######################################################

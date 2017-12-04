@@ -17,7 +17,7 @@ namespace constitutive
 
 
 ConstitutiveManager::ConstitutiveManager( std::string const & name,
-                                          ManagedGroup * const parent ) :
+                                          ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {}
 
@@ -37,7 +37,8 @@ void ConstitutiveManager::CreateChild( string const & childKey, string const & c
   ConstitutiveBase * newMaterial = this->RegisterGroup<ConstitutiveBase>( childName, std::move(material) );
 }
 
-//ConstitutiveManager::constitutiveMaps & ConstitutiveManager::GetMaps( integer const reinit ) const
+//ConstitutiveManager::constitutiveMaps & ConstitutiveManager::GetMaps( integer
+// const reinit ) const
 //{
 //  static constitutiveMaps rval;
 //  auto & map0 = rval.first;

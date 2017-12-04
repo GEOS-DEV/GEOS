@@ -11,7 +11,8 @@ int main(int argc, char** argv)
   {
     std::ifstream input;
     input.open(argv[1]);
-    if(!input){
+    if(!input)
+    {
       std::cout << "Error 1" << std::endl;
       return 1;
     }
@@ -21,7 +22,7 @@ int main(int argc, char** argv)
     localIndex nlevels, n0, n1;
     realT hfct;
     input >> lower(0) >> lower(1) >> upper(0) >> upper(1)
-        >> n0 >> n1 >> hfct >> nlevels;
+    >> n0 >> n1 >> hfct >> nlevels;
 
     if(nlevels == 0)
     {
@@ -33,7 +34,7 @@ int main(int argc, char** argv)
     {
       Array2dT<realT> parameters;
       parameters.resize2(nlevels, 2);
-      for(localIndex i = 0; i < nlevels; i++)
+      for(localIndex i = 0 ; i < nlevels ; i++)
         input >> parameters(i,0) >> parameters(i,1);
       fs.Initialize(parameters, lower, upper, n0, n1, hfct);
     }
@@ -45,7 +46,8 @@ int main(int argc, char** argv)
   {
     std::ifstream input;
     input.open(argv[2]);
-    if(!input){
+    if(!input)
+    {
       std::cout << "Error 2" << std::endl;
       return 1;
     }
@@ -54,7 +56,8 @@ int main(int argc, char** argv)
     input >> num;
 
     R1TensorT<2> x(0.0);
-    for(int i = 0; i < num; i++) {
+    for(int i = 0 ; i < num ; i++)
+    {
       input >> x(0) >> x(1);
       realT aa = fs.Value(x);
       std::cout << x(0) << " " << x(1) << " 0 " << aa << "\n";

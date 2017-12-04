@@ -22,10 +22,10 @@ public:
   NewFunctionManager( const std::string& name,
                       dataRepository::ManagedGroup * const parent );
   virtual ~NewFunctionManager();
-  
+
   static NewFunctionManager * Instance()
   {
-      static NewFunctionManager theFunctionManager("LastFunctionManagerOnEarth", nullptr);
+    static NewFunctionManager theFunctionManager("LastFunctionManagerOnEarth", nullptr);
 
     return &theFunctionManager;
   }

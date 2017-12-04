@@ -10,14 +10,14 @@
 #ifndef CRACKSURFACEVERTEX_H_
 #define CRACKSURFACEVERTEX_H_
 
-class CrackSurfaceVertex: public ObjectDataStructureBaseT
+class CrackSurfaceVertex : public ObjectDataStructureBaseT
 {
 public:
   CrackSurfaceVertex();
   virtual ~CrackSurfaceVertex();
 
   virtual void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-                                                                 Array1dT<gArray1d>& objectToCompositionObject )
+                                                                 array<gArray1d>& objectToCompositionObject )
   {
     (void)compositionObjectManager;
     (void)objectToCompositionObject;
@@ -30,7 +30,7 @@ public:
 
   virtual void Initialize(  ) {}
 
-  Array1dT<R1Tensor> Vertices;
+  array<R1Tensor> Vertices;
 
 };
 

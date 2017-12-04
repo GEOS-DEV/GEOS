@@ -82,9 +82,9 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
                                                   EpetraBlockSystem::BlockIDs const blockID)
 {
 
-    // initial guess for solver
-    int dummy;
-    double* local_solution = nullptr;
+  // initial guess for solver
+  int dummy;
+  double* local_solution = nullptr;
 
   //  if(m_numerics.m_verbose)
   //  {
@@ -92,91 +92,93 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
   //    EpetraExt::MultiVectorToMatlabFile("urhs.dat",*m_rhs);
   //  }
 
-    Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( blockID,
-                                                                blockID );
-    Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
-    Epetra_FEVector * const solution = blockSystem->GetSolutionVector( blockID );
+  Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( blockID,
+                                                              blockID );
+  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
+  Epetra_FEVector * const solution = blockSystem->GetSolutionVector( blockID );
 
 
-    solution->ExtractView(&local_solution,&dummy);
+  solution->ExtractView(&local_solution,&dummy);
 
 //    SetInitialGuess( domain, local_solution  );
 
-    if(params->scalingOption())
-    {
-  //      printf("Scaling matrix/rhs in place\n");
-        Epetra_Vector scaling(matrix->RowMap());
-        matrix->InvRowSums(scaling);
-        matrix->LeftScale(scaling);
+  if(params->scalingOption())
+  {
+    //      printf("Scaling matrix/rhs in place\n");
+    Epetra_Vector scaling(matrix->RowMap());
+    matrix->InvRowSums(scaling);
+    matrix->LeftScale(scaling);
 
-        Epetra_MultiVector tmp (*rhs);
-        rhs->Multiply(1.0,scaling,tmp,0.0);
+    Epetra_MultiVector tmp (*rhs);
+    rhs->Multiply(1.0,scaling,tmp,0.0);
+  }
+
+  Epetra_LinearProblem problem( matrix,
+                                solution,
+                                rhs );
+
+
+  // @annavarapusr1: Needed to use direct solver without changing it for
+  // everyone else
+  if(params->useDirectSolver())   // If Chandra's test problems, use direct
+                                  // solver
+  {
+    Amesos_BaseSolver* Solver;
+    Amesos Factory;
+
+    std::string SolverType = "Klu";
+
+    if( !(params->solverType().compare("Slu")) )
+    {
+      SolverType = "Amesos_Superludist";
     }
+    Solver = Factory.Create(SolverType, problem);
 
-    Epetra_LinearProblem problem( matrix,
-                                  solution,
-                                  rhs );
+    int ierr = Solver->SymbolicFactorization();
+    if (ierr > 0)
+      std::cerr << "ERROR!" << std::endl;
 
+    ierr = Solver->NumericFactorization();
+    if (ierr > 0)
+      std::cerr << "ERROR!" << std::endl;
 
-    // @annavarapusr1: Needed to use direct solver without changing it for everyone else
-    if(params->useDirectSolver()) // If Chandra's test problems, use direct solver
-    {
-      Amesos_BaseSolver* Solver;
-      Amesos Factory;
+    Solver->Solve();
 
-      std::string SolverType = "Klu";
-
-      if( !(params->solverType().compare("Slu")) )
-      {
-        SolverType = "Amesos_Superludist";
-      }
-      Solver = Factory.Create(SolverType, problem);
-
-      int ierr = Solver->SymbolicFactorization();
-      if (ierr > 0)
-        std::cerr << "ERROR!" << std::endl;
-
-      ierr = Solver->NumericFactorization();
-      if (ierr > 0)
-        std::cerr << "ERROR!" << std::endl;
-
-      Solver->Solve();
-
-      if( Solver!=nullptr )
-        delete Solver;
-    }
-    else
-    {
-      AztecOO solver(problem);
+    if( Solver!=nullptr )
+      delete Solver;
+  }
+  else
+  {
+    AztecOO solver(problem);
 
 //      SetLinearSolverParameters( solver );
-      std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec;
+    std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec;
 
-      if( params->useMLPrecond() )
-      {
-        Teuchos::ParameterList MLList;
-        ML_Epetra::SetDefaults("SA",MLList);
-        //MLList.set("aggregation: type", "Uncoupled");
-        //MLList.set("aggregation: type", "MIS");
-        MLList.set("prec type", "MGW");
-        MLList.set("smoother: type","ILU");
-        MLList.set("ML output",1);
-        MLList.set("PDE equations",3);
-        MLPrec = std::move(std::make_unique<ML_Epetra::MultiLevelPreconditioner>(*matrix, MLList));
-        solver.SetPrecOperator(MLPrec.get());
-      }
-      else // use ILUT preconditioner with domain decomp
-      {
-        solver.SetAztecOption(AZ_precond,AZ_dom_decomp);
-        solver.SetAztecOption(AZ_subdomain_solve,AZ_ilut);
-        solver.SetAztecParam(AZ_ilut_fill,params->ilut_fill());
-        solver.SetAztecParam(AZ_drop,params->ilut_drop());
-      }
-
-      solver.Iterate(params->numKrylovIter(),
-                     params->krylovTol() );
-
+    if( params->useMLPrecond() )
+    {
+      Teuchos::ParameterList MLList;
+      ML_Epetra::SetDefaults("SA",MLList);
+      //MLList.set("aggregation: type", "Uncoupled");
+      //MLList.set("aggregation: type", "MIS");
+      MLList.set("prec type", "MGW");
+      MLList.set("smoother: type","ILU");
+      MLList.set("ML output",1);
+      MLList.set("PDE equations",3);
+      MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>(*matrix, MLList);
+      solver.SetPrecOperator(MLPrec.get());
     }
+    else   // use ILUT preconditioner with domain decomp
+    {
+      solver.SetAztecOption(AZ_precond,AZ_dom_decomp);
+      solver.SetAztecOption(AZ_subdomain_solve,AZ_ilut);
+      solver.SetAztecParam(AZ_ilut_fill,params->ilut_fill());
+      solver.SetAztecParam(AZ_drop,params->ilut_drop());
+    }
+
+    solver.Iterate(params->numKrylovIter(),
+                   params->krylovTol() );
+
+  }
 
 //    // copy vector solution into geos data structures
 //
@@ -185,7 +187,8 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
 //
 //    // re-sync ghost nodes
 //
-//    partition.SynchronizeFields(m_syncedFields, CommRegistry::lagrangeSolver02);
+//    partition.SynchronizeFields(m_syncedFields,
+// CommRegistry::lagrangeSolver02);
 //
 //    // copy vector solution into geos data structures
 //
@@ -195,8 +198,5 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
 
 
 
-
-
 }
 } /* namespace geosx */
-

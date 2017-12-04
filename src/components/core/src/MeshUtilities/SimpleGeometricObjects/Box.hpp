@@ -28,7 +28,6 @@ public:
   virtual void ReadXML_PostProcess() override final;
 
   bool IsCoordInObject( const R1Tensor& coord ) const override final;
-  
 private:
   R1Tensor m_min;
   R1Tensor m_max;
@@ -46,4 +45,5 @@ private:
 };
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOX_HPP_ */
+#endif /* SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOX_HPP_
+        */

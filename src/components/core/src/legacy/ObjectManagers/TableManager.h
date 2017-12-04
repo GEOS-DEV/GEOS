@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -82,7 +100,9 @@ public:
 
   //ADD
   template < unsigned int dim, class ARRAY, class ARRAY2>
-  inline void NewTable(const std::string& name, const ARRAY2& x, const ARRAY& values, TableInterpolation::Order interp) { throw GPException("Cannot call base specialization"); }
+  inline void NewTable(const std::string& name, const ARRAY2& x, const ARRAY& values, TableInterpolation::Order interp) {
+    throw GPException("Cannot call base specialization");
+  }
 
   template <unsigned int dim, class ARRAY>
   inline Table<dim,realT> * GetTable( const std::string& tableName )
@@ -101,7 +121,7 @@ public:
                            TableInterpolation::Order interpolate = TableInterpolation::linear) const
   {
     typename std::map<std::string, Table<dim, realT> >::const_iterator table =
-        Tables<dim>().find(tableName);
+      Tables<dim>().find(tableName);
     if (table == Tables<dim>().end())
       throw GPException("Table name " + tableName + " not found.\n");
     return table->second.Lookup(key, interpolate);
@@ -125,11 +145,11 @@ public:
   //LOOKUP
   template <unsigned int dim, class ARRAY>
   inline R1Tensor LookupVectorField(const std::string& tableName,
-                                 const ARRAY& key,
-                                 const bool interpolate = true) const
+                                    const ARRAY& key,
+                                    const bool interpolate = true) const
   {
     typename std::map<std::string, Table<dim, R1Tensor> >::const_iterator table =
-        VectorFields<dim>().find(tableName);
+      VectorFields<dim>().find(tableName);
     if (table == Tables<dim>().end())
       throw GPException("VectorField name " + tableName + " not found.\n");
     return table->second.Lookup(key, interpolate);
@@ -149,17 +169,16 @@ private:
   std::map<std::string, VectorField3D > m_vectorFields3;
   std::map<std::string, VectorField4D > m_vectorFields4;
 
-  TableManager() :
-      m_tables1(),
-      m_tables2(),
-      m_tables3(),
-      m_tables4(),
-      m_vectorFields1(),
-      m_vectorFields2(),
-      m_vectorFields3(),
-      m_vectorFields4()
-  {
-  }
+  TableManager():
+    m_tables1(),
+    m_tables2(),
+    m_tables3(),
+    m_tables4(),
+    m_vectorFields1(),
+    m_vectorFields2(),
+    m_vectorFields3(),
+    m_vectorFields4()
+  {}
 
   virtual ~TableManager() {}
 
@@ -195,7 +214,6 @@ inline const std::map<std::string,  Table4D >& TableManager::Tables<4>() const {
 
 
 
-
 template <>
 inline std::map<std::string,  Table1D >& TableManager::Tables<1>() { return m_tables1; }
 
@@ -210,10 +228,8 @@ inline std::map<std::string,  Table4D >& TableManager::Tables<4>() { return m_ta
 
 
 
-
-
 template <>
-inline void TableManager::NewTable<1>(const std::string& name, const Array1dT<rArray1d>& x, const rArray1d& values, TableInterpolation::Order interp)
+inline void TableManager::NewTable<1>(const std::string& name, const array<array<real64> >& x, const array<real64>& values, TableInterpolation::Order interp)
 {
   m_tables1.insert(std::make_pair(name, Table1D()));
   Table1D& table = m_tables1[name];
@@ -225,7 +241,7 @@ inline void TableManager::NewTable<1>(const std::string& name, const Array1dT<rA
 }
 
 template <>
-inline void TableManager::NewTable<2>(const std::string& name, const Array1dT<rArray1d>& x, const rArray1d& values,TableInterpolation::Order interp)
+inline void TableManager::NewTable<2>(const std::string& name, const array<array<real64> >& x, const array<real64>& values,TableInterpolation::Order interp)
 {
   m_tables2.insert(std::make_pair(name, Table2D()));
   Table2D& table = m_tables2[name];
@@ -237,7 +253,7 @@ inline void TableManager::NewTable<2>(const std::string& name, const Array1dT<rA
 }
 
 template <>
-inline void TableManager::NewTable<3>(const std::string& name, const Array1dT<rArray1d>& x, const rArray1d& values,TableInterpolation::Order interp)
+inline void TableManager::NewTable<3>(const std::string& name, const array<array<real64> >& x, const array<real64>& values,TableInterpolation::Order interp)
 {
   m_tables3.insert(std::make_pair(name, Table3D()));
   Table3D& table = m_tables3[name];
@@ -249,7 +265,7 @@ inline void TableManager::NewTable<3>(const std::string& name, const Array1dT<rA
 }
 
 template <>
-inline void TableManager::NewTable<4>(const std::string& name, const Array1dT<rArray1d>& x, const rArray1d& values,TableInterpolation::Order interp)
+inline void TableManager::NewTable<4>(const std::string& name, const array<array<real64> >& x, const array<real64>& values,TableInterpolation::Order interp)
 {
   m_tables4.insert(std::make_pair(name, Table4D()));
   Table4D& table = m_tables4[name];
@@ -259,12 +275,6 @@ inline void TableManager::NewTable<4>(const std::string& name, const Array1dT<rA
   Function* tableFuncPtr = new ::Lookup4DTable(name, &table);
   FunctionManager::Instance().AddFunction(name, tableFuncPtr);
 }
-
-
-
-
-
-
 
 
 
@@ -282,7 +292,6 @@ inline const std::map<std::string,  VectorField4D >& TableManager::VectorFields<
 
 
 
-
 template <>
 inline std::map<std::string,  VectorField1D >& TableManager::VectorFields<1>() { return m_vectorFields1; }
 
@@ -297,56 +306,49 @@ inline std::map<std::string,  VectorField4D >& TableManager::VectorFields<4>() {
 
 
 
-
-
 template <>
-inline void TableManager::NewVectorField<1>(const std::string& name, const Array1dT<rArray1d>& x, const Array1dT<R1Tensor>& values)
+inline void TableManager::NewVectorField<1>(const std::string& name, const array<array<real64> >& x, const array<R1Tensor>& values)
 {
   m_vectorFields1.insert(std::make_pair(name, VectorField1D()));
   VectorField1D& table = m_vectorFields1[name];
   table.SetGrid(x);
   table.SetValues(values);
-  //TODO: should add automatic function addition once functions can return non-scalars
+  //TODO: should add automatic function addition once functions can return
+  // non-scalars
 }
 
 template <>
-inline void TableManager::NewVectorField<2>(const std::string& name, const Array1dT<rArray1d>& x, const Array1dT<R1Tensor>& values)
+inline void TableManager::NewVectorField<2>(const std::string& name, const array<array<real64> >& x, const array<R1Tensor>& values)
 {
   m_vectorFields2.insert(std::make_pair(name, VectorField2D()));
   VectorField2D& table = m_vectorFields2[name];
   table.SetGrid(x);
   table.SetValues(values);
-  //TODO: should add automatic function addition once functions can return non-scalars
+  //TODO: should add automatic function addition once functions can return
+  // non-scalars
 }
 
 template <>
-inline void TableManager::NewVectorField<3>(const std::string& name, const Array1dT<rArray1d>& x, const Array1dT<R1Tensor>& values)
+inline void TableManager::NewVectorField<3>(const std::string& name, const array<array<real64> >& x, const array<R1Tensor>& values)
 {
   m_vectorFields3.insert(std::make_pair(name, VectorField3D()));
   VectorField3D& table = m_vectorFields3[name];
   table.SetGrid(x);
   table.SetValues(values);
-  //TODO: should add automatic function addition once functions can return non-scalars
+  //TODO: should add automatic function addition once functions can return
+  // non-scalars
 }
 
 template <>
-inline void TableManager::NewVectorField<4>(const std::string& name, const Array1dT<rArray1d>& x, const Array1dT<R1Tensor>& values)
+inline void TableManager::NewVectorField<4>(const std::string& name, const array<array<real64> >& x, const array<R1Tensor>& values)
 {
   m_vectorFields4.insert(std::make_pair(name, VectorField4D()));
   VectorField4D& table = m_vectorFields4[name];
   table.SetGrid(x);
   table.SetValues(values);
-  //TODO: should add automatic function addition once functions can return non-scalars
+  //TODO: should add automatic function addition once functions can return
+  // non-scalars
 }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -364,10 +366,10 @@ void TableManager::ReadVoxelFile(const std::string& filename, localIndex nCompon
     inputStream >> nX >> nY >> nZ;
     values.resize(nX * nY * nZ * nComponents);
 
-    for (localIndex k = 0; k < nZ; ++k)
-      for (localIndex j = 0; j < nY; ++j)
-        for (localIndex i = 0; i < nX; ++i)
-          for(localIndex a = 0; a < nComponents; ++a, ++ii)
+    for (localIndex k = 0 ; k < nZ ; ++k)
+      for (localIndex j = 0 ; j < nY ; ++j)
+        for (localIndex i = 0 ; i < nX ; ++i)
+          for(localIndex a = 0 ; a < nComponents ; ++a, ++ii)
             inputStream >> values[ii];
     inputStream.close();
   }
@@ -391,11 +393,11 @@ void TableManager::ReadTimeVoxelFile(const std::string& filename, localIndex nCo
     inputStream >> nX >> nY >> nZ >> nT;
     values.resize(nX * nY * nZ * nT * nComponents);
 
-    for (localIndex l = 0; l < nT; ++l)
-      for (localIndex k = 0; k < nZ; ++k)
-        for (localIndex j = 0; j < nY; ++j)
-          for (localIndex i = 0; i < nX; ++i)
-            for(localIndex a = 0; a < nComponents; ++a, ++ii)
+    for (localIndex l = 0 ; l < nT ; ++l)
+      for (localIndex k = 0 ; k < nZ ; ++k)
+        for (localIndex j = 0 ; j < nY ; ++j)
+          for (localIndex i = 0 ; i < nX ; ++i)
+            for(localIndex a = 0 ; a < nComponents ; ++a, ++ii)
               inputStream >> values[ii];
     inputStream.close();
   }
@@ -440,10 +442,10 @@ void TableManager::ReadNUFTFile(const std::string& filename,
       inputStream >> ss >> ss1 >> ss2 >> ss3 >> ss4 >> ss5 >> ss6;
 
       std::set<realT> xs, ys, zs;
-      for (int i = 0; i < nlines; i++)
+      for (int i = 0 ; i < nlines ; i++)
       {
         inputStream >> icurr[0] >> icurr[1] >> icurr[2] >> xcurr[0] >> xcurr[1] >> xcurr[2] >> rr;
-        for (int j = 0; j < 3; j++)
+        for (int j = 0 ; j < 3 ; j++)
         {
           if (imin[j] > icurr[j])
             imin[j] = icurr[j];
@@ -466,7 +468,7 @@ void TableManager::ReadNUFTFile(const std::string& filename,
         x[3].push_back(rr);
 
         inputStream >> ss >> ss1 >> ss2 >> ss3 >> ss4 >> ss5 >> ss6;
-        for (int i = 0; i < nlines; i++)
+        for (int i = 0 ; i < nlines ; i++)
         {
           inputStream >> icurr[0] >> icurr[1] >> icurr[2] >> xcurr[0] >> xcurr[1] >> xcurr[2] >> rr;
         }
@@ -497,7 +499,7 @@ void TableManager::ReadNUFTFile(const std::string& filename,
     {
       inputStream >> rr >> ss >> nlines >> ss1;
       inputStream >> ss >> ss1 >> ss2 >> ss3 >> ss4 >> ss5 >> ss6;
-      for (int i = 0; i < nlines; i++)
+      for (int i = 0 ; i < nlines ; i++)
       {
         inputStream >> icurr[0] >> icurr[1] >> icurr[2] >> xcurr[0] >> xcurr[1] >> xcurr[2] >> rr;
         ii[0] = icurr[0] - imin[0];
@@ -505,10 +507,10 @@ void TableManager::ReadNUFTFile(const std::string& filename,
         ii[2] = icurr[2] - imin[2];
         ii[3] = it;
         unsigned int itable = 0;
-        for (unsigned int idim = 0; idim < dims.size(); idim++)
+        for (unsigned int idim = 0 ; idim < dims.size() ; idim++)
         {
           unsigned int ictable = ii[idim];
-          for (unsigned int jdim = 0; jdim < idim; jdim++)
+          for (unsigned int jdim = 0 ; jdim < idim ; jdim++)
             ictable *= dims[jdim];
           itable += ictable;
         }

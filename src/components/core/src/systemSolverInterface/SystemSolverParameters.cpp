@@ -143,7 +143,8 @@ void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup
                               0 );
 //  real64 m_krylovTol;          // Solver convergence criteria
 //  integer  m_numKrylovIter;
-//  integer  m_kspace;             // Number of krylov vectors before GMRES restart
+//  integer  m_kspace;             // Number of krylov vectors before GMRES
+// restart
 //  real64 m_ilut_fill;          // Fill factor for ILUT preconditioner
 //  real64 m_ilut_drop;          // Drop tolerance for ILUT preconditioner
 //  bool   m_useMLPrecond;       // Use ML preconditioner

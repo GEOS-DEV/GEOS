@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -65,11 +83,14 @@
 
 
 
-/// typedef my callback function for use with WriteMultiXXXX. This function is essentially a placeholder
+/// typedef my callback function for use with WriteMultiXXXX. This function is
+// essentially a placeholder
 /// for DB,PutMultimesh, DBPutMultivar, etc.
 typedef struct _PMPIO_baton_t PMPIO_baton_t;
-//typedef int (*DBPutMultimeshType)(DBfile *, char DB_CONSTARR1, int, char DB_CONSTARR2, int DB_CONSTARR1, DBoptlist const *);
-//typedef int (*DBPutMultivarType)(DBfile *, const char *, int, char **, int *, DBoptlist *);
+//typedef int (*DBPutMultimeshType)(DBfile *, char DB_CONSTARR1, int, char
+// DB_CONSTARR2, int DB_CONSTARR1, DBoptlist const *);
+//typedef int (*DBPutMultivarType)(DBfile *, const char *, int, char **, int *,
+// DBoptlist *);
 
 
 namespace geosx
@@ -85,7 +106,8 @@ class ConstitutiveManager;
 // *********************************************************************************************************************
 /**
  * @author settgast
- * This class serves as a wrapper to isolate the code from the specifics of SILO output/input. Its members contain all
+ * This class serves as a wrapper to isolate the code from the specifics of SILO
+ * output/input. Its members contain all
  * the necessary information for reading/writing a group of SILO files.
  */
 class SiloFile
@@ -143,45 +165,45 @@ public:
 
   /// Write out a polygon mesh object
   void WritePolygonMeshObject(const std::string& meshName,
-                       const localIndex nnodes,
-                       realT* coords[3],
-                       const globalIndex*,
-                       const int numRegions,
-                       const int* shapecnt,
-                       const localIndex* const * const meshConnectivity,
-                       const globalIndex* const * const globalElementNum,
-                       const int* const * const,
-                       const int* const shapetype,
-                       const int* const shapesize,
-                       const int cycleNumber,
-                       const realT problemTime,
-                       const int lnodelist);
+                              const localIndex nnodes,
+                              realT* coords[3],
+                              const globalIndex*,
+                              const int numRegions,
+                              const int* shapecnt,
+                              const localIndex* const * const meshConnectivity,
+                              const globalIndex* const * const globalElementNum,
+                              const int* const * const,
+                              const int* const shapetype,
+                              const int* const shapesize,
+                              const int cycleNumber,
+                              const realT problemTime,
+                              const int lnodelist);
 
   /**
    * @brief Write out a single discrete element mesh object
    * @author Scott Johnson
    */
   void WriteDiscreteElementMeshObject(const std::string& meshName,
-				      const localIndex nnodes,
-				      realT* coords[3],
-				      const globalIndex* globalNodeNum,
-				      const int nDiscreteElements,
-				      const int nfaces,
-				      int* nodecnts,
-				      const int sumnodecnts,
-				      int* nodelist,
-				      int* facecnts,
-				      const int sumfacecnts,
-				      int* facelist,
-				      const globalIndex* const * const globalElementNum,
-				      const int* ghostFlag,
-				      const int cycleNumber,
-				      const realT problemTime);
-  
+                                      const localIndex nnodes,
+                                      realT* coords[3],
+                                      const globalIndex* globalNodeNum,
+                                      const int nDiscreteElements,
+                                      const int nfaces,
+                                      int* nodecnts,
+                                      const int sumnodecnts,
+                                      int* nodelist,
+                                      int* facecnts,
+                                      const int sumfacecnts,
+                                      int* facelist,
+                                      const globalIndex* const * const globalElementNum,
+                                      const int* ghostFlag,
+                                      const int cycleNumber,
+                                      const realT problemTime);
+
   void TestPolyhedralCells();
-  void XFEMMesh(dvector xcoords,
-                dvector ycoords,
-                dvector zcoords,
+  void XFEMMesh(std::vector<double> xcoords,
+                std::vector<double> ycoords,
+                std::vector<double> zcoords,
                 std::vector<int> nodelist,
                 int lnodelist,
                 std::vector<int> shapesize,
@@ -199,9 +221,9 @@ public:
    * @author Scott Johnson
    */
   void WriteDiscreteElementCSGObject(const std::string& meshName,
-                                     const Array1dT<R1Tensor>& x,
-                                     const Array1dT<R1Tensor>& r,
-                                     const Array1dT<R2Tensor>& R,
+                                     const array<R1Tensor>& x,
+                                     const array<R1Tensor>& r,
+                                     const array<R2Tensor>& R,
                                      const int cycleNumber,
                                      const realT problemTime);
 
@@ -214,8 +236,8 @@ public:
   void WriteBeamMesh(const std::string& meshName,
                      const localIndex nnodes,
                      realT* coords[3],
-                     const lArray1d& node1,
-                     const lArray1d& node2,
+                     const localIndex_array& node1,
+                     const localIndex_array& node2,
                      const int cycleNumber,
                      const realT problemTime);
 
@@ -229,21 +251,22 @@ public:
   void WriteBeamMesh(const std::string& meshName,
                      const localIndex nnodes,
                      realT* coords[3],
-                     iArray1d& nodelist,
+                     integer_array& nodelist,
                      const int cycleNumber,
                      const realT problemTime);
 
   /**
-   * @brief Write out a single "quad" (i.e. hex) mesh object, and record the mesh dimensions for subsequent write data field calls.
+   * @brief Write out a single "quad" (i.e. hex) mesh object, and record the
+   * mesh dimensions for subsequent write data field calls.
    * @author walsh24
    */
   int  WriteQuadMeshObject(const std::string& meshName,
-                            const localIndex nX,
-                            const localIndex nY,
-                            const localIndex nZ,
-                            realT* coords[3],
-                            const int cycleNumber,
-                            const realT problemTime);
+                           const localIndex nX,
+                           const localIndex nY,
+                           const localIndex nZ,
+                           realT* coords[3],
+                           const int cycleNumber,
+                           const realT problemTime);
 
 //  void TestWriteDiscreteElementMeshObject();
 
@@ -261,7 +284,7 @@ public:
                               const int cycleNum,
                               const realT problemTime,
                               const bool isRestart,
-                              const lArray1d& mask );
+                              const localIndex_array& mask );
 
 
 
@@ -272,7 +295,7 @@ public:
                               const realT problemTime,
                               const bool isRestart,
                               const std::string& multiRoot,
-                              const lArray1d& mask );
+                              const localIndex_array& mask );
 
   /// writes out fields in a data member map
   template< typename OUTPUTTYPE >
@@ -284,17 +307,17 @@ public:
                                 const bool isRestart,
                                 const std::string& multiRoot,
                                 const std::string& regionName,
-                                const lArray1d& mask );
+                                const localIndex_array& mask );
 
   template< typename INPUTTYPE, typename TYPE >
-  void ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& member,
+  void ReadFieldMapFromSilo( std::map< std::string, array<TYPE> >& member,
                              const std::string& meshname,
                              const int centering,
                              const int cycleNum,
                              const realT problemTime,
                              const bool isRestart,
                              const std::string& regionName,
-                             const lArray1d& mask ) const;
+                             const localIndex_array& mask ) const;
 
   /// Write out a data field
   template<typename OUTTYPE, typename TYPE>
@@ -310,7 +333,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( const std::string& meshName,
                        const std::string& fieldName,
-                       const Array1dT<TYPE>& field,
+                       const array<TYPE>& field,
                        const int centering,
                        const int cycleNumber,
                        const realT problemTime,
@@ -319,7 +342,7 @@ public:
 
   /// Write out a data field
   template< typename INPUTTYPE, typename TYPE>
-  void ReadDataField( Array1dT<TYPE>& field,
+  void ReadDataField( array<TYPE>& field,
                       const std::string& meshName,
                       const std::string& fieldName,
                       const int centering,
@@ -331,7 +354,8 @@ public:
   {
     int meshType = -1;
     {
-      // in order to get mesh type, we might have to go up a few levels in the silo directory structure
+      // in order to get mesh type, we might have to go up a few levels in the
+      // silo directory structure
       // before we can find the mesh.
       char pwd[256];
       DBGetDir(m_dbFilePtr, pwd);
@@ -351,7 +375,7 @@ public:
   template <typename TYPE>
   void** GetDataVar( const std::string& fieldName,
                      const std::string& meshName,
-                     const typename Array1dT<TYPE>::size_type nels,
+                     const typename array<TYPE>::size_type nels,
                      const int centering,
                      const int cycleNumber,
                      const realT problemTime,
@@ -367,8 +391,11 @@ public:
   template<typename TYPE>
   void DBWriteWrapper( const std::string& name, const TYPE& data );
 
+  void DBWriteWrapper( const std::string& name, const string_array& data );
+
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<TYPE>& data );
+  void DBWriteWrapper( const std::string& name, const array<TYPE>& data );
+
 
   template<typename TYPE>
   void DBWriteWrapper( const std::string& name, const std::set<TYPE>& data );
@@ -377,16 +404,16 @@ public:
   void DBWriteWrapper( const std::string& name, const Array2dT<TYPE>& data );
 
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<Array1dT<TYPE> >& data );
+  void DBWriteWrapper( const std::string& name, const array<array<TYPE> >& data );
 
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<Array2dT<TYPE> >& data );
+  void DBWriteWrapper( const std::string& name, const array<Array2dT<TYPE> >& data );
 
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<Array1dT<Array1dT<TYPE> > >& data );
+  void DBWriteWrapper( const std::string& name, const array<array<array<TYPE> > >& data );
 
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<std::set<TYPE> >& data );
+  void DBWriteWrapper( const std::string& name, const array<std::set<TYPE> >& data );
 
   template< typename T1, typename T2 >
   void DBWriteWrapper( const std::string& name, const std::map< T1, T2 >& datamap );
@@ -402,13 +429,11 @@ public:
 
 
 
-
-
   template<typename TYPE>
   void DBReadWrapper( const std::string& name, TYPE& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<TYPE>& data ) const;
+  void DBReadWrapper( const std::string& name, array<TYPE>& data ) const;
 
   template<typename TYPE>
   void DBReadWrapper( const std::string& name, std::set<TYPE>& data ) const;
@@ -417,16 +442,16 @@ public:
   void DBReadWrapper( const std::string& name, Array2dT<TYPE>& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<Array1dT<TYPE> >& data ) const;
+  void DBReadWrapper( const std::string& name, array<array<TYPE> >& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<Array2dT<TYPE> >& data ) const;
+  void DBReadWrapper( const std::string& name, array<Array2dT<TYPE> >& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<Array1dT<Array1dT<TYPE> > >& data ) const;
+  void DBReadWrapper( const std::string& name, array<array<array<TYPE> > >& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<std::set<TYPE> >& data ) const;
+  void DBReadWrapper( const std::string& name, array<std::set<TYPE> >& data ) const;
 
   template< typename T1, typename T2 >
   void DBReadWrapper( const std::string& name, std::map< T1, T2 >& datamap ) const;
@@ -442,12 +467,8 @@ public:
 
 
 
-
-
-
-
-
-  /// dummy function to get rid of compiler warnings about unused functions from PMPIO's use of static function
+  /// dummy function to get rid of compiler warnings about unused functions from
+  // PMPIO's use of static function
   /// definitions in the header. This should go away as we fully utilize PMPIO.
   void StopSiloCompilerWarnings();
 
@@ -480,10 +501,10 @@ public:
 
   bool m_markGhosts;
 
-  sArray1d m_emptyMeshes;
-  sArray1d m_emptyVariables;
+  array<string> m_emptyMeshes;
+  array<string> m_emptyVariables;
 
-  iArray1d SiloNodeOrdering();
+  integer_array SiloNodeOrdering();
 
 
 private:
@@ -499,96 +520,101 @@ private:
  */
 namespace SiloFileUtilities
 {
-  /**
-   * @author settgast
-   * @tparam OUTTYPE the type of data to write out (int,float,realT)
-   * @return the integer identifier associated with the enum DBdatatype defined in
-   * the silo.h file.
-   *
-   * This templated function is a "specialization only" definition. There is no general
-   * definition, only specializations for predetermined data types.
-   */
-  template<typename OUTTYPE>
-  int DB_TYPE();
+/**
+ * @author settgast
+ * @tparam OUTTYPE the type of data to write out (int,float,realT)
+ * @return the integer identifier associated with the enum DBdatatype defined in
+ * the silo.h file.
+ *
+ * This templated function is a "specialization only" definition. There is no
+ * general
+ * definition, only specializations for predetermined data types.
+ */
+template<typename OUTTYPE>
+int DB_TYPE();
 
-  /**
-   * @author settgast
-   * @tparam TYPE the data type in question
-   * @return the number of "variables" in a data field. For instance, 1 for a int, float or realT.
-   * 3 for a R1Tensor...etc.
-   */
-  template<typename TYPE>
-  int GetNumberOfVariablesInField();
+/**
+ * @author settgast
+ * @tparam TYPE the data type in question
+ * @return the number of "variables" in a data field. For instance, 1 for a int,
+ * float or realT.
+ * 3 for a R1Tensor...etc.
+ */
+template<typename TYPE>
+int GetNumberOfVariablesInField();
 
-  template<typename TYPE>
-  int GetTensorRank();
+template<typename TYPE>
+int GetTensorRank();
 
-  template<typename OUTTYPE, typename TYPE>
-    OUTTYPE CastField(const TYPE& field, const int i = 0); // avoids compiler warning
+template<typename OUTTYPE, typename TYPE>
+OUTTYPE CastField(const TYPE& field, const int i = 0);     // avoids compiler
+                                                           // warning
 
-  template<typename OUTTYPE, typename TYPE>
-  OUTTYPE CastField(const TYPE& field, const int i)
-  {
-    return static_cast<OUTTYPE>(field.Data()[i]);
+template<typename OUTTYPE, typename TYPE>
+OUTTYPE CastField(const TYPE& field, const int i)
+{
+  return static_cast<OUTTYPE>(field.Data()[i]);
 //    return field;
-  }
+}
 
-  template<> inline int CastField<int, int> (const int& field, const int )
-  {
-    return field;
-  }
+template<> inline int CastField<int, int> (const int& field, const int )
+{
+  return field;
+}
 
 
-//  template<> inline int CastField<int, localIndex> (const localIndex& field, const int )
+//  template<> inline int CastField<int, localIndex> (const localIndex& field,
+// const int )
 //  {
 //    return static_cast<int>(field);
 //  }
 
-//  template<> inline localIndex CastField<localIndex, localIndex> (const localIndex& field, const int )
+//  template<> inline localIndex CastField<localIndex, localIndex> (const
+// localIndex& field, const int )
 //  {
 //    return field;
 //  }
 
 
-  template<> inline globalIndex CastField<globalIndex, globalIndex> (const globalIndex& field, const int )
-  {
-    return field;
-  }
+template<> inline globalIndex CastField<globalIndex, globalIndex> (const globalIndex& field, const int )
+{
+  return field;
+}
 
-  template<> inline int CastField<int, long long unsigned int > (const long long unsigned int& field, const int )
-  {
-    return static_cast<int>(field);
-  }
-
-
-  template<> inline realT CastField<realT, realT> (const realT& field, const int )
-  {
-    return field;
-  }
-  template<> inline float CastField<float, realT> (const realT& field, const int )
-  {
-    return static_cast<float> (field);
-  }
+template<> inline int CastField<int, long long unsigned int > (const long long unsigned int& field, const int )
+{
+  return static_cast<int>(field);
+}
 
 
-  template< typename TYPE, typename PTR_TYPE> inline PTR_TYPE* DataPtr( TYPE& data)
-  {
-    return static_cast<PTR_TYPE*>(&data);
-  }
+template<> inline realT CastField<realT, realT> (const realT& field, const int )
+{
+  return field;
+}
+template<> inline float CastField<float, realT> (const realT& field, const int )
+{
+  return static_cast<float> (field);
+}
 
-  template<> inline realT* DataPtr( R1Tensor& data)        {    return data.begin();  }
-  template<> inline realT* DataPtr( R2Tensor& data)        {    return data.begin();  }
-  template<> inline realT* DataPtr( R2SymTensor& data)  {    return data.begin();  }
+
+template< typename TYPE, typename PTR_TYPE> inline PTR_TYPE* DataPtr( TYPE& data)
+{
+  return static_cast<PTR_TYPE*>(&data);
+}
+
+template<> inline realT* DataPtr( R1Tensor& data)        {    return data.begin();  }
+template<> inline realT* DataPtr( R2Tensor& data)        {    return data.begin();  }
+template<> inline realT* DataPtr( R2SymTensor& data)  {    return data.begin();  }
 
 
 
-  template<typename TYPE>
-  void SetVariableNames(const std::string& fieldName, sArray1d& varnamestring, char* varnames[]);
+template<typename TYPE>
+void SetVariableNames(const std::string& fieldName, array<string>& varnamestring, char* varnames[]);
 
-  template<typename OBJECT_TYPE>
-  int FieldCentering();
+template<typename OBJECT_TYPE>
+int FieldCentering();
 
-  void SetCenteringSubdir(const int centering, std::string& subdir);
+void SetCenteringSubdir(const int centering, std::string& subdir);
 
 }
 
@@ -601,7 +627,8 @@ namespace SiloFileUtilities
  * @tparam T native type of data being output
  * @param[in] siloFile file handle
  * @param[in] member member that we are writing
- * @param[in] centering the centering location of the data (i.e. Node, Element, Face)
+ * @param[in] centering the centering location of the data (i.e. Node, Element,
+ * Face)
  * @param[in] cycleNum the the cycle number
  * @param[in] problemTime the problem time
  * @param[in] mask list of indices of entries to plot
@@ -610,14 +637,14 @@ namespace SiloFileUtilities
  */
 template< typename OUTPUTTYPE >
 void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
-                                    const dataRepository::ManagedGroup::viewWrapperMap & wrappers,
-                                    const int centering,
-                                    const int cycleNum,
-                                    const realT problemTime,
-                                    const bool isRestart,
-                                    const std::string& multiRoot,
-                                    const std::string& regionName,
-                                    const lArray1d& mask )
+                                        const dataRepository::ManagedGroup::viewWrapperMap & wrappers,
+                                        const int centering,
+                                        const int cycleNum,
+                                        const realT problemTime,
+                                        const bool isRestart,
+                                        const std::string& multiRoot,
+                                        const std::string& regionName,
+                                        const localIndex_array& mask )
 {
 
   // iterate over all entries in the member map
@@ -632,17 +659,17 @@ void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
     // TODO This is wrong. problem with uniqueness
     if( typeID==typeid(real64_array) )
     {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<real64_array> const & >( *wrapper ) ;
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<real64_array> const & >( *wrapper );
       this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
     }
     if( typeID==typeid(r1_array) )
     {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper ) ;
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper );
       this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
     }
     if( typeID==typeid(integer_array) )
     {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper ) ;
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper );
       this->WriteDataField<integer>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
     }
 
@@ -669,14 +696,12 @@ void SiloFile::WriteDataField( const std::string& meshName,
                                const realT problemTime,
                                const std::string& multiRoot,
                                const std::string& regionName )
-{
-
-}
+{}
 
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( const std::string& meshName,
                                const std::string& fieldName,
-                               const Array1dT<TYPE>& field,
+                               const array<TYPE>& field,
                                const int centering,
                                const int cycleNumber,
                                const realT problemTime,
@@ -698,7 +723,6 @@ void SiloFile::WriteDataField( const std::string& meshName,
 
 
 
-
   if (regionName != "none")
   {
     regionpnames[0] = const_cast<char*> (regionName.c_str());
@@ -706,7 +730,8 @@ void SiloFile::WriteDataField( const std::string& meshName,
     DBAddOption(optlist, DBOPT_REGION_PNAMES, &regionpnames);
   }
 
-  // if the number of elements is zero, then record the path to the var. This will be used later to delete the entry
+  // if the number of elements is zero, then record the path to the var. This
+  // will be used later to delete the entry
   // from the multivar.
   if (nels == 0)
   {
@@ -718,20 +743,20 @@ void SiloFile::WriteDataField( const std::string& meshName,
   }
   else
   {
-    Array1dT<char*> varnames(nvars);
-    Array1dT<void*> vars(nvars);
+    array<char*> varnames(nvars);
+    array<void*> vars(nvars);
 
 
-    sArray1d varnamestring(nvars);
+    array<string> varnamestring(nvars);
     std::vector<std::vector<OUTTYPE> > castedField(nvars);
 
     SiloFileUtilities::SetVariableNames<TYPE>(fieldName, varnamestring, varnames.data() );
 
-    for (int i = 0; i < nvars; ++i)
+    for (int i = 0 ; i < nvars ; ++i)
     {
       castedField[i].resize(nels);
       vars[i] = static_cast<void*> (&(castedField[i][0]));
-      for (int k = 0; k < nels; ++k)
+      for (int k = 0 ; k < nels ; ++k)
       {
         castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[k], i);
       }
@@ -751,7 +776,7 @@ void SiloFile::WriteDataField( const std::string& meshName,
     else if( meshType == DB_QUADCURV )
     {
       err = DBPutQuadvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, varnames.data(), reinterpret_cast<float**>(vars.data()),
-                          m_quadMeshDims,m_quadMeshNDims,NULL, 0,  SiloFileUtilities::DB_TYPE<OUTTYPE>() ,centering, optlist);
+                          m_quadMeshDims,m_quadMeshNDims,NULL, 0,  SiloFileUtilities::DB_TYPE<OUTTYPE>(),centering, optlist);
     }
     if(err < 0)
     {
@@ -806,17 +831,17 @@ void SiloFile::WriteDataField( const std::string& meshName,
 }
 
 template< typename INPUTTYPE, typename TYPE >
-void SiloFile::ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& member,
+void SiloFile::ReadFieldMapFromSilo( std::map< std::string, array<TYPE> >& member,
                                      const std::string& meshname,
                                      const int centering,
                                      const int cycleNum,
                                      const realT problemTime,
                                      const bool isRestart,
                                      const std::string& regionName,
-                                     const lArray1d& mask ) const
+                                     const localIndex_array& mask ) const
 {
   // iterate over all entries in the member map
-  for( typename std::map< std::string, Array1dT<TYPE> >::iterator iter = member.begin() ; iter!=member.end() ; ++iter )
+  for( typename std::map< std::string, array<TYPE> >::iterator iter = member.begin() ; iter!=member.end() ; ++iter )
   {
     // the field name is the key to the map
     const std::string fieldName = iter->first;
@@ -828,15 +853,15 @@ void SiloFile::ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& me
           ( !isRestart && FieldInfo::AttributesByName[fieldName]->m_WriteToPlot ) )
       {
         // the field data is mapped value
-        Array1dT<TYPE> & fieldData = iter->second;
+        array<TYPE> & fieldData = iter->second;
 
         if( !(mask.empty()) && !isRestart )
         {
-          Array1dT<TYPE> dataToRead( mask.size() );
+          array<TYPE> dataToRead( mask.size() );
           // write the data field
           ReadDataField<INPUTTYPE>( dataToRead, meshname.c_str(), fieldName, centering, cycleNum, problemTime, regionName );
 
-          for( lArray1d::size_type i = 0; i < mask.size(); ++i)
+          for( localIndex_array::size_type i = 0 ; i < mask.size() ; ++i)
           {
             fieldData[mask[i]] = dataToRead[i];
           }
@@ -852,7 +877,7 @@ void SiloFile::ReadFieldMapFromSilo( std::map< std::string, Array1dT<TYPE> >& me
 }
 
 template< typename INPUTTYPE, typename TYPE>
-void SiloFile::ReadDataField( Array1dT<TYPE>& field,
+void SiloFile::ReadDataField( array<TYPE>& field,
                               const std::string& meshName,
                               const std::string& fieldName,
                               const int centering,
@@ -863,7 +888,7 @@ void SiloFile::ReadDataField( Array1dT<TYPE>& field,
 
   INPUTTYPE** var = static_cast<INPUTTYPE**>( GetDataVar<TYPE>( fieldName, meshName, field.size(), centering, cycleNumber, problemTime, regionName ) );
 
-  for( typename Array1dT<TYPE>::size_type a=0 ; a<field.size() ; ++a )
+  for( typename array<TYPE>::size_type a=0 ; a<field.size() ; ++a )
   {
     TYPE temp;
     INPUTTYPE* ptemp = SiloFileUtilities::DataPtr<TYPE,INPUTTYPE>( temp );
@@ -889,7 +914,7 @@ void SiloFile::ReadDataField( Array1dT<TYPE>& field,
 template< typename CBF >
 void SiloFile::WriteMultiXXXX( const DBObjectType type,
                                CBF DBPutMultiCB,
-                               const int centering ,
+                               const int centering,
                                const std::string name,
                                const int,
                                const std::string& multiRoot,
@@ -902,9 +927,9 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-  sArray1d vBlockNames(size);
+  array<string> vBlockNames(size);
   std::vector<char*> BlockNames(size);
-  ivector blockTypes(size);
+  std::vector<int> blockTypes(size);
   char tempBuffer[1024];
   char currentDirectory[256];
 
@@ -918,7 +943,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
     multiRootString.clear();
   }
 
-  for (int i = 0; i < size; ++i)
+  for (int i = 0 ; i < size ; ++i)
   {
     int groupRank = PMPIO_GroupRank(m_baton, i);
 
@@ -926,7 +951,8 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
     {
 
       sprintf(tempBuffer, "/domain_%04d%s/%s", i, multiRootString.c_str(), name.c_str());
-      //      sprintf(tempBuffer, "%s_%04d:/domain_%04d%s/%s", m_fileRoot.c_str(),
+      //      sprintf(tempBuffer, "%s_%04d:/domain_%04d%s/%s",
+      // m_fileRoot.c_str(),
       //              cycleNumber, i, multiRoot.c_str(), name.c_str() );
 
     }
@@ -957,6 +983,23 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   DBSetDir(m_dbFilePtr, currentDirectory);
 
 }
+
+
+template<typename TYPE>
+void SiloFile::DBWriteWrapper( const std::string& name, const array<TYPE>& data )
+{
+  if( !data.empty() )
+  {
+    int dims[2];
+    dims[0] = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
+    dims[1] = data.size();
+
+    DBWrite( m_dbFilePtr, name.c_str(), const_cast<TYPE*>(data.data()), dims,
+             2, SiloFileUtilities::DB_TYPE<TYPE>() );
+  }
+
+}
+
 
 }
 #endif /* SILOFILE_H_ */

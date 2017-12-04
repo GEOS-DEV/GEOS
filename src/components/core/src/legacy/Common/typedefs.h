@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -47,7 +65,7 @@
 #define _TYPEDEFS_H_
 
 #include "intrinsic_typedefs.h"
-#include "legacy/ArrayT/Array1dT.h"
+#include "legacy/ArrayT/array.h"
 #include "legacy/ArrayT/Array2dT.h"
 #include <set>
 #include "math/TensorT/TensorT.h"
@@ -65,11 +83,11 @@ typedef R2SymTensorT<nsdof> R2SymTensor;
 typedef R1TensorT<nsdof>    R1Tensor;
 
 
-typedef Array1dT<int> iArray1d;
-typedef Array1dT<realT> rArray1d;
-typedef Array1dT<std::string> sArray1d;
-typedef Array1dT<iArray1d*> iArrayPtrs;
-typedef Array1dT<rArray1d*> rArrayPtrs;
+typedef array<int> array<integer>;
+typedef array<realT> array<real64>;
+typedef array<std::string> array<string>;
+typedef array<array<integer>*> iArrayPtrs;
+typedef array<array<real64>*> rArrayPtrs;
 
 typedef Array2dT<int> iArray2d;
 typedef Array2dT<localIndex> lArray2d;
@@ -77,9 +95,9 @@ typedef Array2dT<globalIndex> gArray2d;
 typedef Array2dT<realT> rArray2d;
 typedef Array2dT<std::pair<int,localIndex> > pArray2d;
 
-typedef Array1dT<localIndex> lArray1d;
-typedef Array1dT<globalIndex> gArray1d;
-typedef Array1dT<std::pair<int,localIndex> > pArray1d;
+typedef array<localIndex> lArray1d;
+typedef array<globalIndex> gArray1d;
+typedef array<std::pair<int,localIndex> > pArray1d;
 
 
 typedef std::set<int> iSet;
@@ -90,15 +108,22 @@ typedef std::set<std::string> sSet;
 
 template<typename T> struct type_name
 {
-    static const char* name();// { static_assert(false, "You are missing a DECL_TYPE_NAME"); }
+  static const char* name();  // { static_assert(false, "You are missing a
+                              // DECL_TYPE_NAME"); }
 };
 
-template<> struct type_name<int>                { static const char* name() {return "int";} };
-template<> struct type_name<unsigned int>       { static const char* name() {return "unsigned int";} };
-template<> struct type_name<long long>          { static const char* name() {return "long long";} };
-template<> struct type_name<unsigned long long> { static const char* name() {return "unsigned long long";} };
-template<> struct type_name<float>              { static const char* name() {return "float";} };
-template<> struct type_name<double>             { static const char* name() {return "double";} };
+template<> struct type_name<int>                { static const char* name() {return "int";}
+};
+template<> struct type_name<unsigned int>       { static const char* name() {return "unsigned int";}
+};
+template<> struct type_name<long long>          { static const char* name() {return "long long";}
+};
+template<> struct type_name<unsigned long long> { static const char* name() {return "unsigned long long";}
+};
+template<> struct type_name<float>              { static const char* name() {return "float";}
+};
+template<> struct type_name<double>             { static const char* name() {return "double";}
+};
 
 /// stores pointer to elemenRegion and localIndex of element
 //class ElementRegionT;
@@ -111,7 +136,8 @@ struct locallyIndexedType
   Type m_x;
 
 public:
-  locallyIndexedType(localIndex indx, Type x):m_index(indx),m_x(x){ /** empty **/}
+  locallyIndexedType(localIndex indx, Type x): m_index(indx),m_x(x){ /** empty
+                                                                     **/}
   virtual localIndex GetIndex(){return m_index;}
   virtual Type GetValue(){return m_x;}
 };

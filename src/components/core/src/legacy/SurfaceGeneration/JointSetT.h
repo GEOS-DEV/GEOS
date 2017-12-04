@@ -27,26 +27,26 @@ public:
                            R1Tensor& normalVector);
 
   realT NextStrikeLengthPowerLaw() {
-	  return m_strikeDimensionDistribution.PowerLawSample();
+    return m_strikeDimensionDistribution.PowerLawSample();
   }
 
   realT NextAspectRatioGaussian() { return m_faultAspectRatioDistribution.NormalSample(); }
 
-  void SamplePositionsFractal(const Array1dT<R1Tensor>& ref,
-                              const Array1dT<R1Tensor>& disp,
+  void SamplePositionsFractal(const array<R1Tensor>& ref,
+                              const array<R1Tensor>& disp,
                               const R1Tensor& min,
                               const R1Tensor& max,
-                              Array1dT<R1Tensor>& positions,
-                              Array1dT<R1Tensor>& normals,
-                              Array1dT<R1Tensor>& strikes,
-                              Array1dT<R1Tensor>& dips,
+                              array<R1Tensor>& positions,
+                              array<R1Tensor>& normals,
+                              array<R1Tensor>& strikes,
+                              array<R1Tensor>& dips,
                               const realT weight = 1.0);
 
-  void SampleFrequenciesFractal(const Array1dT<R1Tensor>& centroids,
+  void SampleFrequenciesFractal(const array<R1Tensor>& centroids,
                                 const gArray1d& localToGlobal,
                                 const R1Tensor& min,
                                 const R1Tensor& max,
-                                rArray1d& frequencies);
+                                array<real64>& frequencies);
 
 private:
   StatisticalDistributionBaseT m_strikeAngleDistribution;

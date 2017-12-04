@@ -24,7 +24,7 @@ using namespace dataRepository;
 
 
 
-FiniteElementSpace::FiniteElementSpace( std::string const & name, ManagedGroup * const parent ) :
+FiniteElementSpace::FiniteElementSpace( std::string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {}
 
@@ -72,35 +72,37 @@ void FiniteElementSpace::FillDocumentationNode( dataRepository::ManagedGroup * c
 void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup * const cellBlock ) const
 {
 
-  // TODO THis crap needs to get cleaned up and worked out in the data structure much better than this.
-  // Need to provide some mechanism to set the sizedFromParent during the registration, or only allow documentation node
+  // TODO THis crap needs to get cleaned up and worked out in the data structure
+  // much better than this.
+  // Need to provide some mechanism to set the sizedFromParent during the
+  // registration, or only allow documentation node
   // registration.
 
 
-  auto dNdXView        = cellBlock->RegisterViewWrapper< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX);
+  auto dNdXView        = cellBlock->RegisterViewWrapper< array< Array2dT<R1Tensor> > >(keys::dNdX);
   dNdXView->setSizedFromParent(1);
   dNdXView->resize();
   auto & dNdX            = dNdXView->reference();
-  
+
   for( auto & entry : dNdX )
   {
-    entry.resize2( m_finiteElement->dofs_per_element(), m_quadrature->size() );
+    entry.resize( m_finiteElement->dofs_per_element(), m_quadrature->size() );
   }
 
 
 
-  auto & constitutiveMapView = *(cellBlock->RegisterViewWrapper< std::pair< Array2dT< integer >, Array2dT< integer > > >(keys::constitutiveMap) );
+  auto & constitutiveMapView = *(cellBlock->RegisterViewWrapper< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(keys::constitutiveMap) );
   constitutiveMapView.setSizedFromParent(1);
   auto & constitutiveMap = constitutiveMapView.reference();
-  constitutiveMap.first.resize2(cellBlock->size(), m_quadrature->size() );
-  constitutiveMap.second.resize2(cellBlock->size(), m_quadrature->size() );
+  constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
+  constitutiveMap.second.resize(cellBlock->size(), m_quadrature->size() );
 
 
-  
+
   auto & detJView = *(cellBlock->RegisterViewWrapper< Array2dT< real64 > >(keys::detJ));
   detJView.setSizedFromParent(1);
   auto & detJ = detJView.reference();
-  detJ.resize2(cellBlock->size(), m_quadrature->size() );
+  detJ.resize(cellBlock->size(), m_quadrature->size() );
 
 
 }
@@ -108,11 +110,11 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
                                                           dataRepository::ManagedGroup * const cellBlock ) const
 {
-  auto & dNdX            = cellBlock->getReference< Array1dT< Array2dT<R1Tensor> > >(keys::dNdX);
+  auto & dNdX            = cellBlock->getReference< array< Array2dT<R1Tensor> > >(keys::dNdX);
   auto & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ);
   lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(std::string("nodeList"))->reference();// getData<lArray2d>(keys::nodeList);
 
-  Array1dT<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
+  array<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
 
 
   for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
@@ -127,11 +129,12 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
     {
 
       detJ(k, q) = m_finiteElement->JxW(q);
-      for (localIndex b = 0; b < m_finiteElement->dofs_per_element() ; ++b)
+      for (localIndex b = 0 ; b < m_finiteElement->dofs_per_element() ; ++b)
       {
         dNdX(k)(q, b) = m_finiteElement->gradient(b, q);
       }
-      //std::cout<<"Element, ip, dNdX :"<<k<<", "<<a<<", "<<m_dNdX(k)(a)[0]<<std::endl;
+      //std::cout<<"Element, ip, dNdX :"<<k<<", "<<a<<",
+      // "<<m_dNdX(k)(a)[0]<<std::endl;
 
     }
   }
@@ -139,10 +142,11 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
 
 void FiniteElementSpace::ReadXML_PostProcess()
 {
-  auto const & basisName = this->getData<string>(keys::basis) ;
-  auto const & quadratureName = this->getData<string>(keys::quadrature) ;
+  auto const & basisName = this->getData<string>(keys::basis);
+  auto const & quadratureName = this->getData<string>(keys::quadrature);
 
-  // TODO find a better way to do this that doesn't involve getParent(). We shouldn't really use that unless there is no
+  // TODO find a better way to do this that doesn't involve getParent(). We
+  // shouldn't really use that unless there is no
   // other choice.
   m_basis = this->getParent()->GetGroup(keys::basisFunctions)->getData<BasisBase>(basisName);
   m_quadrature = this->getParent()->GetGroup(keys::quadratureRules)->getData<QuadratureBase>(quadratureName);
@@ -155,10 +159,13 @@ void FiniteElementSpace::InitializePreSubGroups( ManagedGroup * const group )
 //  auto const & basisName = this->getData<string>(keys::basis) ;
 //  auto const & quadratureName = this->getData<string>(keys::quadrature) ;
 //
-//  // TODO find a better way to do this that doesn't involve getParent(). We shouldn't really use that unless there is no
+//  // TODO find a better way to do this that doesn't involve getParent(). We
+// shouldn't really use that unless there is no
 //  // other choice.
-//  m_basis = this->getParent()->GetGroup(keys::basisFunctions)->getData<BasisBase>(basisName);
-//  m_quadrature = this->getParent()->GetGroup(keys::quadratureRules)->getData<QuadratureBase>(quadratureName);
+//  m_basis =
+// this->getParent()->GetGroup(keys::basisFunctions)->getData<BasisBase>(basisName);
+//  m_quadrature =
+// this->getParent()->GetGroup(keys::quadratureRules)->getData<QuadratureBase>(quadratureName);
 //  m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
 }
 

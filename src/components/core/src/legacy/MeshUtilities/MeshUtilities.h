@@ -26,7 +26,6 @@ public:
 
 
 
-
   static void GenerateNodesets( TICPP::HierarchicalDataNode& hdn,
                                 NodeManager& nodeManager );
 

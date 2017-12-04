@@ -53,22 +53,21 @@ void RestartFile::Initialize( const PMPIO_iomode_t readwrite )
 static void* PMPIO_ReadRestartCreate(const char *fname, const char *nsname, void *userData)
 {
   /*
-    iBinStream restartFile;
-    restartFile.open( fname );
+     iBinStream restartFile;
+     restartFile.open( fname );
 
-    return (void *) &restartFile;
-    */
+     return (void *) &restartFile;
+   */
   throw GPException("RestartFile::PMPIO_ReadRestartCreate. this shouldn't be called");
 }
 
 static void* PMPIO_WriteRestartCreate(const char *fname, const char *nsname, void *userData)
 {
-    oBinStream* const restartFile = new oBinStream;
-    restartFile->open( fname, true );
+  oBinStream* const restartFile = new oBinStream;
+  restartFile->open( fname, true );
 
-    return (void *) restartFile;
+  return (void *) restartFile;
 }
-
 
 
 

@@ -92,7 +92,8 @@ real64 fromString<real64>(std::string theVar);
 //  } else if(theString==FieldInfo::R2SymTensorStr){
 //    return R2SymTensorField;
 //  }else {
-//    throw GPException("Error fromString: unrecognized field type: " + theString +".");
+//    throw GPException("Error fromString: unrecognized field type: " +
+// theString +".");
 //  }
 //}
 
@@ -168,7 +169,7 @@ inline void ExpandMultipleTokens(string_array& sVector, const std::string& multi
     }
 
   }
-  sVector.swap(newVec);
+  sVector = newVec;
 }
 
 /// Trim whitespace from string
@@ -181,12 +182,13 @@ inline void Trim(string_array& strVect, const std::string& d=" \t\n\r"){
     Trim(strVect[i],d);
 }
 
-/// Replace parameters of form "$:NAME" in a string, returns true if a parameter is detected
+/// Replace parameters of form "$:NAME" in a string, returns true if a parameter
+// is detected
 /// @param lineStr - the string containing the parameters
 /// @param parameterMap - map of parameter names and replacement strings,
-/// @param prefix - Character sequence used to signal start of parameter ("$:" by default),
+/// @param prefix - Character sequence used to signal start of parameter ("$:"
+// by default),
 bool ReplaceParameters(std::string& lineStr, const std::map<std::string,std::string>& parameterMap,const std::string& prefix= "$:");
-
 
 
 

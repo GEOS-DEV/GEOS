@@ -23,6 +23,38 @@ include(ExternalProject)
 
 set( dependency_list "" )
 ################################
+# UNCRUSTIFY
+################################
+if (UNCRUSTIFY_DIR)
+#  include(../src/cmake/thirdparty/FindHDF5.cmake)
+#  blt_register_library(NAME hdf5
+#                       INCLUDES ${HDF5_INCLUDE_DIRS}
+#                       LIBRARIES ${HDF5_LIBRARY} 
+#                       TREAT_INCLUDES_AS_SYSTEM ON )
+else()
+    message(INFO ": Using uncrustify found at github")
+    set(UNCRUSTIFY_ROOT "${CMAKE_INSTALL_PREFIX}/uncrustify")
+    set(uncrustify_install_dir ${CMAKE_INSTALL_PREFIX}/uncrustify)
+
+    ExternalProject_Add( uncrustify
+                          URL ${CMAKE_SOURCE_DIR}/tpl_mirror/uncrustify-master.zip
+                          PREFIX ${PROJECT_BINARY_DIR}/uncrustify
+                          BUILD_COMMAND make -j8
+                          INSTALL_COMMAND make install
+                          INSTALL_DIR ${uncrustify_install_dir}
+                          CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+    set( dependency_list "${dependency_list};uncrustify" )
+
+endif()
+
+
+
+
+
+################################
 # HDF5
 ################################
 if (HDF5_DIR)
@@ -42,7 +74,6 @@ else()
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/hdf5-1.10.1.tar.gz
 #                          URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz
                           PREFIX ${PROJECT_BINARY_DIR}/hdf5
-                          INSTALL_DIR ${silo_install_dir}
                           CONFIGURE_COMMAND ../hdf5/configure CC=${CMAKE_C_COMPILER}
                                                CXX=${CMAKE_CXX_COMPILER}
                                                --enable-build-mode=production
@@ -387,10 +418,46 @@ ExternalProject_Add( trilinos
 
 set( dependency_list "${dependency_list};trilinos" )
 
+################################
+# HYPRE
+################################
+if( ENABLE_HYPRE )
+message( INFO ": setting up HYPRE" )
+set(HYPRE_LOCAL_DIR ${PROJECT_BINARY_DIR}/hypre)
+set(HYPRE_DIR ${HYPRE_LOCAL_DIR})
+set(HYPRE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/hypre)
 
+message( INFO ": HYPRE_DIR = ${HYPRE_DIR}" )
+message( INFO ": HYPRE_LOCAL_DIR = ${HYPRE_LOCAL_DIR}" )
+message( INFO ": HYPRE_INSTALL_DIR = ${HYPRE_INSTALL_DIR}" )
+
+ExternalProject_Add( hypre
+                     GIT_REPOSITORY git@github.com:LLNL/hypre.git
+                     GIT_TAG master
+                     PREFIX ${HYPRE_LOCAL_DIR}
+                     BUILD_COMMAND make -j8
+#                     SOURCE_DIR ${HYPRE_LOCAL_DIR}
+                     SOURCE_SUBDIR src
+                     INSTALL_DIR ${HYPRE_INSTALL_DIR}
+                     INSTALL_COMMAND make install && 
+                                     cp -rfp ${HYPRE_LOCAL_DIR}/src/hypre/src/hypre/include ${HYPRE_INSTALL_DIR} &&
+                                     cp -rfp ${HYPRE_LOCAL_DIR}/src/hypre/src/hypre/lib ${HYPRE_INSTALL_DIR}
+                     CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                                -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                -DMPI_C_COMPILER=${MPI_C_COMPILER}
+                                -DMPI_CXX_COMPILER=${MPI_CXX_COMPILER}
+                                -DBUILD_SHARED_LIBS:BOOL=OFF
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+
+    set( dependency_list "${dependency_list};hypre" )
+
+endif()
+
+
+message("dependency_list=${dependency_list}")
 
 blt_add_executable( NAME             tpl
                     SOURCES          tpl.cpp )
-
+                    
 add_dependencies( tpl ${dependency_list} )
 

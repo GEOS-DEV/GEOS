@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -49,6 +67,7 @@
 
 #include "common/DataTypes.hpp"
 //#include "legacy/Common/typedefs.h"
+#include <limits>
 #include <sys/resource.h>
 #include <map>
 #include <set>
@@ -67,13 +86,13 @@ namespace geosx
 {
 template< class T >
 void PushFieldForwardInTime( const realT& dt,
-                             const Array1dT< T >& dfield,
-                             Array1dT< T >& field );
+                             const array< T >& dfield,
+                             array< T >& field );
 
 template< class T >
 void IntegrateFieldInTime( const realT& dt,
-                           const Array1dT< T >& field,
-                           Array1dT< T >& Ifield );
+                           const array< T >& field,
+                           array< T >& Ifield );
 
 template< class T >
 inline void IntegrateField( const realT& dt,
@@ -103,21 +122,35 @@ template< typename T1, typename T2 >
 T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& message="" );
 
 
-rArray1d logspace(realT start, realT stop, int count=100);
-rArray1d linspace(realT start, realT stop, int count=100);
+real64_array logspace(realT start, realT stop, int count=100);
+real64_array linspace(realT start, realT stop, int count=100);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+template< typename RTYPE, typename T >
+RTYPE integer_conversion( T input )
+{
+  static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
+  static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
+
+  if( input > std::numeric_limits<RTYPE>::max() ||
+      input < std::numeric_limits<RTYPE>::lowest() )
+  {
+    abort();
+  }
+  return static_cast<RTYPE>(input);
+}
+#pragma GCC diagnostic pop
 
 
 /////////////////////////////////////////////////
 
 
 
-
-
 template< class T >
 inline void PushFieldForwardInTime( const realT& dt,
-                                    const Array1dT< T >& dfield,
-                                    Array1dT< T >& field )
+                                    const array< T >& dfield,
+                                    array< T >& field )
 {
   T dfieldDt;
 
@@ -127,20 +160,20 @@ inline void PushFieldForwardInTime( const realT& dt,
     dfieldDt = dfield(a);
     dfieldDt *= dt;
 
-    field(a) += dfieldDt ;
+    field(a) += dfieldDt;
   }
 }
 
 
 template< class T >
 inline void IntegrateFieldInTime( const realT& dt,
-                                  const Array1dT< T >& field,
-                                  Array1dT< T >& Ifield )
+                                  const array< T >& field,
+                                  array< T >& Ifield )
 {
   const int N = field.size();
   for( int a=0 ; a<N ; ++a )
   {
-    Ifield(a) = field(a) ;
+    Ifield(a) = field(a);
     Ifield(a) *= dt;
   }
 }
@@ -158,13 +191,13 @@ inline void IntegrateField( const realT& dt,
 
 
 template< typename T >
-inline void CopyGlobalToLocal(const lArray1d& globalToLocalRelation,
-                              const Array1dT< T >& globalField,
-                              Array1dT< T >& localField)
+inline void CopyGlobalToLocal(const localIndex_array& globalToLocalRelation,
+                              const array< T >& globalField,
+                              array< T >& localField)
 {
-  const typename Array1dT<T>::size_type N = globalToLocalRelation.size() ;
+  const typename array<T>::size_type N = globalToLocalRelation.size();
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     localField[a] = globalField[ globalToLocalRelation[a] ];
   }
@@ -174,12 +207,12 @@ inline void CopyGlobalToLocal(const lArray1d& globalToLocalRelation,
 
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& globalField,
-                              Array1dT< T >& localField)
+                              const array< T >& globalField,
+                              array< T >& localField)
 {
-  const typename Array1dT<T>::size_type N = localField.size() ;
+  const typename array<T>::size_type N = localField.size();
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     localField[a] = globalField[ globalToLocalRelation[a] ];
   }
@@ -187,14 +220,14 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& globalField1,
-                              const Array1dT< T >& globalField2,
-                              Array1dT< T >& localField1,
-                              Array1dT< T >& localField2 )
+                              const array< T >& globalField1,
+                              const array< T >& globalField2,
+                              array< T >& localField1,
+                              array< T >& localField2 )
 {
-  const typename Array1dT<T>::size_type N = localField1.size() ;
+  const typename array<T>::size_type N = localField1.size();
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
     localField2[a] = globalField2[ globalToLocalRelation[a] ];
@@ -203,13 +236,13 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& globalField1,
-                              const Array1dT< T >& globalField2,
+                              const array< T >& globalField1,
+                              const array< T >& globalField2,
                               T * __restrict__ const localField1,
                               T * __restrict__ const localField2,
                               localIndex N)
 {
-//  const typename Array1dT<T>::size_type N = localField1.size() ;
+//  const typename array<T>::size_type N = localField1.size() ;
 
   for( localIndex a=0 ; a<N ; ++a )
   {
@@ -226,7 +259,7 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               T * __restrict__ const localField2,
                               localIndex N)
 {
-//  const typename Array1dT<T>::size_type N = localField1.size() ;
+//  const typename array<T>::size_type N = localField1.size() ;
 
   for( localIndex a=0 ; a<N ; ++a )
   {
@@ -238,16 +271,16 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& globalField1,
-                              const Array1dT< T >& globalField2,
-                              const Array1dT< T >& globalField3,
-                              Array1dT< T >& localField1,
-                              Array1dT< T >& localField2,
-                              Array1dT< T >& localField3 )
+                              const array< T >& globalField1,
+                              const array< T >& globalField2,
+                              const array< T >& globalField3,
+                              array< T >& localField1,
+                              array< T >& localField2,
+                              array< T >& localField3 )
 {
-  const typename Array1dT<T>::size_type N = localField1.size() ;
+  const typename array<T>::size_type N = localField1.size();
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
     localField2[a] = globalField2[ globalToLocalRelation[a] ];
@@ -257,18 +290,18 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& globalField1,
-                              const Array1dT< T >& globalField2,
-                              const Array1dT< T >& globalField3,
-                              const Array1dT< T >& globalField4,
-                              Array1dT< T >& localField1,
-                              Array1dT< T >& localField2,
-                              Array1dT< T >& localField3 ,
-                              Array1dT< T >& localField4 )
+                              const array< T >& globalField1,
+                              const array< T >& globalField2,
+                              const array< T >& globalField3,
+                              const array< T >& globalField4,
+                              array< T >& localField1,
+                              array< T >& localField2,
+                              array< T >& localField3,
+                              array< T >& localField4 )
 {
-  const typename Array1dT<T>::size_type N = localField1.size() ;
+  const typename array<T>::size_type N = localField1.size();
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
     localField2[a] = globalField2[ globalToLocalRelation[a] ];
@@ -290,7 +323,7 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               T * __restrict__ const localField4,
                               localIndex N)
 {
-//  const typename Array1dT<T>::size_type N = localField1.size() ;
+//  const typename array<T>::size_type N = localField1.size() ;
 
   for( localIndex a=0 ; a<N ; ++a )
   {
@@ -303,12 +336,12 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& localField,
-                              Array1dT< T >& globalField)
+                              const array< T >& localField,
+                              array< T >& globalField)
 {
-  const typename Array1dT<T>::size_type N = localField.size() ;
+  const typename array<T>::size_type N = localField.size();
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     globalField[ globalToLocalRelation[a] ] += localField[a];
   }
@@ -317,7 +350,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                               T const * __restrict__ const localField,
-                              Array1dT< T >& globalField,
+                              array< T >& globalField,
                               localIndex const N )
 {
   for( localIndex a=0 ; a<N ; ++a )
@@ -340,14 +373,14 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
-                              const Array1dT< T >& localField1,
-                              const Array1dT< T >& localField2,
-                              Array1dT< T >& globalField1,
-                              Array1dT< T >& globalField2 )
+                              const array< T >& localField1,
+                              const array< T >& localField2,
+                              array< T >& globalField1,
+                              array< T >& globalField2 )
 {
-  const typename Array1dT<T>::size_type  N = localField1.size() ;
+  const typename array<T>::size_type  N = localField1.size();
 
-  for( typename Array1dT<T>::size_type a=0 ; a<N ; ++a )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
     globalField1[ globalToLocalRelation[a] ] += localField1[a];
     globalField2[ globalToLocalRelation[a] ] += localField2[a];
@@ -390,7 +423,7 @@ inline bool isOdd(int x) {
 /// find if object is member of vector
 template <class ElementClass>
 bool isMember(const ElementClass& x, const std::vector<ElementClass>& aVec) {return ( std::find(aVec.begin(), aVec.end(), x) !=  aVec.end() );}
-inline bool isMember(localIndex x, const lArray1d& aVec) {return ( std::find(aVec.begin(), aVec.end(), x) !=  aVec.end() );}
+inline bool isMember(localIndex x, const localIndex_array& aVec) {return ( std::find(aVec.begin(), aVec.end(), x) !=  aVec.end() );}
 
 
 /// find if object is member of set or map
@@ -400,15 +433,15 @@ bool isMember(const ElementClass& x, const SetClass& aSetOrMap) {return ( aSetOr
 
 
 /// permutation tensor
-inline int eijk(int i,int j,int k){ 
-  return ((i-j)*(j-k)*(k-i))/2; 
+inline int eijk(int i,int j,int k){
+  return ((i-j)*(j-k)*(k-i))/2;
 }
 
 
 template< typename T >
 void SetConstPointer( T* const& pointer,  T*  newpointer )
 {
-   T** temp = const_cast< T**>(&pointer);
+  T** temp = const_cast< T**>(&pointer);
   *temp = newpointer;
 
   return;
@@ -481,17 +514,17 @@ template <typename K, typename V>
 class CreateStlMap
 {
 private:
-    std::map<K, V> m_map;
+  std::map<K, V> m_map;
 public:
-    CreateStlMap(const K& key, const V& value){ m_map[key] = value; }
+  CreateStlMap(const K& key, const V& value){ m_map[key] = value; }
 
-    CreateStlMap<K, V>& operator()(const K& key, const V& value)
-    {
-        m_map[key] = value;
-        return *this;
-    }
+  CreateStlMap<K, V>& operator()(const K& key, const V& value)
+  {
+    m_map[key] = value;
+    return *this;
+  }
 
-    operator std::map<K, V>() { return m_map; }
+  operator std::map<K, V>() { return m_map; }
 };
 
 
@@ -510,16 +543,17 @@ void ClearStlMapValues( std::map<T1,T2>& Map )
  *   std::vector<int> aVect;
  *   aVect += 1,1,2,3,4;
  */
-template <class T> class vector_inserter{
+template <class T> class vector_inserter
+{
 public:
-    std::vector<T>& v;
-    vector_inserter(std::vector<T>& vv):v(vv){}
-    vector_inserter& operator,(const T& val){v.push_back(val);return *this;}
+  std::vector<T>& v;
+  vector_inserter(std::vector<T>& vv): v(vv){}
+  vector_inserter& operator,(const T& val){v.push_back(val); return *this;}
 };
 template <class T> vector_inserter<T>& operator+=(std::vector<T>& v,const T& x);
 
 template <class T> vector_inserter<T>& operator+=(std::vector<T>& v,const T& x){
-    return vector_inserter<T>(v),x;
+  return vector_inserter<T>(v),x;
 }
 
 
@@ -527,20 +561,21 @@ template <class T> vector_inserter<T>& operator+=(std::vector<T>& v,const T& x){
 /*
  * Initialize string vector values with chars
  * Usage:
- *   sArray1d aVect;
+ *   string_array aVect;
  *   aVect += "The","quick","brown","fox";
  */
-class svector_inserter{
+class svector_inserter
+{
 public:
-    sArray1d& v;
-    svector_inserter(sArray1d& vv):v(vv){}
-    svector_inserter& operator,(const char* val){v.push_back(std::string(val));return *this;}
+  string_array& v;
+  svector_inserter(string_array& vv): v(vv){}
+  svector_inserter& operator,(const char* val){v.push_back(std::string(val)); return *this;}
 };
-svector_inserter& operator+=(sArray1d& v,const std::string& x);
+svector_inserter& operator+=(string_array& v,const std::string& x);
 
 inline
-svector_inserter& operator+=(sArray1d& v,const char* x){
-    return svector_inserter(v),x;
+svector_inserter& operator+=(string_array& v,const char* x){
+  return svector_inserter(v),x;
 }
 
 
@@ -548,7 +583,7 @@ svector_inserter& operator+=(sArray1d& v,const char* x){
 /// Static Assert
 /// Check satement at compile time
 template <bool b>
-struct gp_static_assert{};
+struct gp_static_assert {};
 // Specialization with member function
 template <>
 struct gp_static_assert<true>
@@ -561,8 +596,6 @@ struct gp_static_assert<true>
 
 inline bool isGTE0( const int i )
 { return (i>=0); }
-
-
 
 
 
@@ -610,21 +643,22 @@ inline realT Power(const realT val, const realT exponent)
  * @author Randy Settgast
  * @return cpu usage
  *
- * This function uses the rusage structure to query elapsed system time and user time, and returns
+ * This function uses the rusage structure to query elapsed system time and user
+ * time, and returns
  * the result.
  */
-inline realT getcputime(void)        
-{ 
-  struct timeval tim;        
-  struct rusage ru;        
-  getrusage(RUSAGE_SELF, &ru);        
+inline realT getcputime(void)
+{
+  struct timeval tim;
+  struct rusage ru;
+  getrusage(RUSAGE_SELF, &ru);
 
-  tim=ru.ru_utime;        
+  tim=ru.ru_utime;
   realT t= tim.tv_sec + tim.tv_usec / 1.0e6;
 
-  tim=ru.ru_stime;        
+  tim=ru.ru_stime;
   t+= tim.tv_sec + tim.tv_usec / 1.0e6;
-  return t; 
+  return t;
 }
 
 template< typename TYPE >
@@ -654,11 +688,11 @@ inline void Intersection( const std::set<TYPE>& set1, const std::set<TYPE>& set2
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set, const Array1dT<TYPE>& array, std::set<TYPE>& intersection )
+inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& arr, std::set<TYPE>& intersection )
 {
   intersection.clear();
 
-  for( typename Array1dT<TYPE>::const_iterator iter_arr=array.begin() ; iter_arr!=array.end() ; ++iter_arr )
+  for( typename array<TYPE>::const_iterator iter_arr=arr.begin() ; iter_arr!=arr.end() ; ++iter_arr )
   {
     if( set.count( *iter_arr ) == 1 )
     {
@@ -668,11 +702,11 @@ inline void Intersection( const std::set<TYPE>& set, const Array1dT<TYPE>& array
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set, const Array1dT<TYPE>& array, Array1dT<TYPE>& intersection )
+inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& arr, array<TYPE>& intersection )
 {
   intersection.clear();
 
-  for( typename std::set<TYPE>::const_iterator iter_arr=array.begin() ; iter_arr!=array.end() ; ++iter_arr )
+  for( typename std::set<TYPE>::const_iterator iter_arr=arr.begin() ; iter_arr!=arr.end() ; ++iter_arr )
   {
     if( set.count( *iter_arr ) == 1 )
     {
@@ -682,14 +716,17 @@ inline void Intersection( const std::set<TYPE>& set, const Array1dT<TYPE>& array
 }
 
 inline
-rArray1d linspace(realT start, realT stop, int count){
-  rArray1d rv(count,start);
+real64_array linspace(realT start, realT stop, int count){
+  real64_array rv(count);
+  rv = start;
 
-  if(count > 1){
+  if(count > 1)
+  {
 
     realT dL = (stop-start)/double(count-1);
     realT sum = start;
-    for(int i = 1;i < count-1; ++i){
+    for(int i = 1 ; i < count-1 ; ++i)
+    {
       sum += dL;
       rv[i] =  sum;
     }
@@ -701,14 +738,17 @@ rArray1d linspace(realT start, realT stop, int count){
 
 
 inline
-rArray1d logspace(realT start, realT stop, int count){
-  rArray1d rv(count,start);
+real64_array logspace(realT start, realT stop, int count){
+  real64_array rv(count);
+  rv = start;
 
-  if(count > 1){
+  if(count > 1)
+  {
 
     realT dL = std::pow(stop/start,1.0/double(count-1));
     realT prod = start;
-    for(int i = 1;i < count-1; ++i){
+    for(int i = 1 ; i < count-1 ; ++i)
+    {
       prod *= dL;
       rv[i] =  prod;
     }
@@ -726,7 +766,7 @@ inline double GetOrder( double number, const unsigned int digits = 1 )
   const int exp = static_cast<int>(std::log10(number));
   const double magnitude = std::pow(10,exp);
 
-  return ( digits>0 ? round( ( number / magnitude ) * std::pow(10,digits-1) ) / std::pow(10,digits-1) : 1 ) * magnitude ;
+  return ( digits>0 ? round( ( number / magnitude ) * std::pow(10,digits-1) ) / std::pow(10,digits-1) : 1 ) * magnitude;
 }
 }
 

@@ -59,7 +59,10 @@ public:
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
-  virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) override;
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
+
+  void GenerateMesh( //SpatialPartition& partition,
+     DomainPartition * domain );
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
@@ -72,27 +75,26 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
-  virtual void ReadXML_PostProcess() override final;
-  
+  void ReadXML_PostProcess() override final;
   int m_delayMeshDeformation;
 
 private:
 
 
   int m_dim;
-  rArray1d m_vertices[3];
-  iArray1d m_nElems[3];
-  rArray1d m_nElemScaling[3];
-  rArray1d m_nElemBias[3];
+  array<real64> m_vertices[3];
+  integer_array m_nElems[3];
+  array<real64> m_nElemScaling[3];
+  array<real64> m_nElemBias[3];
 
-  sArray1d m_regionNames;
+  array<string> m_regionNames;
 
   realT m_min[3]; // Minimum extent of mesh dimensions
   realT m_max[3]; // Maximum extent of mesh dimensions
 
   //int m_numElems[3];
-  iArray1d m_firstElemIndexForBlock[3];
-  iArray1d m_lastElemIndexForBlock[3];
+  integer_array m_firstElemIndexForBlock[3];
+  integer_array m_lastElemIndexForBlock[3];
 
 
 
@@ -101,18 +103,22 @@ private:
 //  int m_nExtensionLayersMin[3];
 //  int m_nExtensionLayersMax[3];
 //  realT m_extendedMin[3];
-//  realT m_extendedMax[3]; // This is the domain size after we apply n layers of elements which are of the same size as the core elements.  We will move these nodes to where they should be later when we finish the meshing.
+//  realT m_extendedMax[3]; // This is the domain size after we apply n layers
+// of elements which are of the same size as the core elements.  We will move
+// these nodes to where they should be later when we finish the meshing.
   int m_numElemsTotal[3];
 //  realT m_commonRatioMin[3];
 //  realT m_commonRatioMax[3];
 
 
 
-  sArray1d m_elementType;
+  array<string> m_elementType;
 
-  iArray1d m_numElePerBox;
+  array<integer> m_numElePerBox;
 
-  int m_trianglePattern  ; // In pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
+  int m_trianglePattern;   // In pattern 0, half nodes have 4 edges and the
+                           // other half have 8; for Pattern 1, every node has
+                           // 6.
 
   realT m_fPerturb;
   int m_randSeed;
@@ -182,9 +188,9 @@ private:
       realT min = m_vertices[i][block];
       realT max = m_vertices[i][block+1];
 
-      
+
       X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
-      
+
       if (( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
       {
         if (fabs(m_nElemBias[i][block]) >= 1)
@@ -201,7 +207,7 @@ private:
         realT dx = -x0*chi + x0*x0*chi/len;
         X[i] += dx;
       }
-      
+
       // This is for creating regular triangle pattern
       if (i==0) xInterval = (max-min) / m_nElems[i][block];
       if (trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex)

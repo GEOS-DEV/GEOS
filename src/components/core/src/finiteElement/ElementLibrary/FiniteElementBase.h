@@ -25,32 +25,32 @@ public:
 
 
 
-  virtual void reinit( const std::vector<R1TensorT<3> > &mapped_support_points) = 0;
+  virtual void reinit( const array<R1TensorT<3> > &mapped_support_points) = 0;
 
 
-//  virtual void zero_energy_mode_control( const Array1dT<R1Tensor>& dNdx,
+//  virtual void zero_energy_mode_control( const array<R1Tensor>& dNdx,
 //                                         const realT& volume,
-//                                         const Array1dT<R1Tensor>& x,
-//                                         const Array1dT<R1Tensor>& vel,
+//                                         const array<R1Tensor>& x,
+//                                         const array<R1Tensor>& vel,
 //                                         const realT& dampcoef,
 //                                         const realT& stiffcoef,
 //                                         const realT& rho,
 //                                         const realT& modulus,
 //                                         const realT& dt,
-//                                         Array1dT<R1Tensor>& Qstiffness,
-//                                         Array1dT<R1Tensor>& force ) {}
+//                                         array<R1Tensor>& Qstiffness,
+//                                         array<R1Tensor>& force ) {}
 
-  virtual void zero_energy_mode_control( const Array1dT<R1Tensor>& ,
-                                         const realT& ,
-                                         const Array1dT<R1Tensor>& ,
-                                         const Array1dT<R1Tensor>& ,
-                                         const realT& ,
-                                         const realT& ,
-                                         const realT& ,
-                                         const realT& ,
-                                         const realT& ,
-                                         Array1dT<R1Tensor>& ,
-                                         Array1dT<R1Tensor>&  ) {}
+  virtual void zero_energy_mode_control( const array<R1Tensor>&,
+                                         const realT&,
+                                         const array<R1Tensor>&,
+                                         const array<R1Tensor>&,
+                                         const realT&,
+                                         const realT&,
+                                         const realT&,
+                                         const realT&,
+                                         const realT&,
+                                         array<R1Tensor>&,
+                                         array<R1Tensor>&  ) {}
 
 
   double value(const int shape_index,
@@ -67,15 +67,15 @@ public:
     return data[q_index].parent_values;
   }
 
-  R1Tensor gradient( const int shape_index,
-                 const int q_index ) const
+  R1Tensor gradient( const localIndex shape_index,
+                     const localIndex q_index ) const
   {
     assert(q_index < n_q_points);
     assert(shape_index < n_dofs);
     return data[q_index].mapped_gradients[shape_index];
   }
 
-  double JxW(const int q_index) const
+  double JxW(const localIndex q_index) const
   {
     assert(q_index < n_q_points);
     return data[q_index].jacobian_determinant *
@@ -91,7 +91,7 @@ public:
   std::string m_type;
 
 protected:
-  iArray1d m_nodeOrdering;
+  array<integer> m_nodeOrdering;
   int n_q_points;
   int n_dofs;
   int m_zero_energy_modes;

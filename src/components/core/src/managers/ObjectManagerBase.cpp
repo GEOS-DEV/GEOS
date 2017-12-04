@@ -13,23 +13,25 @@ using namespace dataRepository;
 
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ManagedGroup * const parent ):
-    ManagedGroup(name,parent),
-    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal")->reference() ),
-    m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
+  ManagedGroup(name,parent),
+  m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() ),
+  m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
 {
   this->RegisterGroup<ManagedGroup>(keys::sets);
-  this->RegisterViewWrapper< iArray1d >("isExternal");
+  this->RegisterViewWrapper< array<integer> >("isExternal");
 }
 //ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //                                      ManagedGroup * const parent,
-//                                      cxx_utilities::DocumentationNode * docNode ):
+//                                      cxx_utilities::DocumentationNode *
+// docNode ):
 //    ManagedGroup(name,parent,docNode),
-//    m_localToGlobalMap( RegisterViewWrapper< gArray1d >("localToGlobal")->reference() )
+//    m_localToGlobalMap( RegisterViewWrapper< globalIndex_array
+// >("localToGlobal")->reference() )
 //{
 //
 //
 //  this->RegisterGroup<ManagedGroup>("Sets");
-//  this->RegisterViewWrapper< iArray1d >("isExternal");
+//  this->RegisterViewWrapper< array<integer> >("isExternal");
 //}
 
 
@@ -46,15 +48,15 @@ ObjectManagerBase::CatalogInterface::CatalogType& ObjectManagerBase::GetCatalog(
 
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
-                                                          const lArray2d& map,
-                                                          const std::string& newSetName )
+                                                   const lArray2d& map,
+                                                   const std::string& newSetName )
 {
 
   ManagedGroup * sets = GetGroup(std::string("Sets"));
   lSet& newset = sets->RegisterViewWrapper<lSet>(newSetName)->reference();
   newset.clear();
 
-  int mapSize = map.Dimension(1);
+  localIndex mapSize = map.size(1);
   for( localIndex ka=0 ; ka<size() ; ++ka )
   {
     const localIndex* const sublist = map[ka];
@@ -74,8 +76,8 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
 }
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
-                                                          const Array1dT<lArray1d>& map,
-                                                          const std::string& newSetName )
+                                                   const array<localIndex_array>& map,
+                                                   const std::string& newSetName )
 {
 
   ManagedGroup * sets = GetGroup(std::string("Sets"));
@@ -100,9 +102,9 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   }
 }
 
-void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( lArray1d& objectList ) const
+void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& objectList ) const
 {
-  const iArray1d& isDomainBoundary = this->getReference<int>(string("isDomainBoundary"));
+  const array<integer>& isDomainBoundary = this->getReference<integer_array>(string("isDomainBoundary"));
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -112,9 +114,9 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( lArray1d& objectLis
   }
 }
 
-void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( gArray1d& objectList ) const
+void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array& objectList ) const
 {
-  const iArray1d& isDomainBoundary = this->getReference<int>(string("isDomainBoundary"));
+  const array<integer>& isDomainBoundary = this->getReference<integer_array>(string("isDomainBoundary"));
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )

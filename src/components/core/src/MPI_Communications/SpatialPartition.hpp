@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -54,16 +72,18 @@ constexpr int nsdof = 3;
 namespace geosx
 {
 //// Planar Sorter
-//// Sorts pairs of local and global indexes by the positions of their corresponding node points in a plane.
+//// Sorts pairs of local and global indexes by the positions of their
+// corresponding node points in a plane.
 //class PlanarSorter {
 //
 //public:
-//	PlanarSorter(const Array1dT<R1Tensor>& refPos, int dim) :
+//	PlanarSorter(const array<R1Tensor>& refPos, int dim) :
 //			dimension(dim), refPositions(refPos) {
 //	}
 //	;
 //
-//	// sort operator for pairs containing local indexes (sort based on 1st element in pair)
+//	// sort operator for pairs containing local indexes (sort based on 1st
+// element in pair)
 //	bool operator()(const std::pair<localIndex, localIndex>& lhs,
 //	const std::pair<localIndex, localIndex>& rhs) {
 //		bool rv = false;
@@ -114,10 +134,11 @@ namespace geosx
 //
 //private:
 //	int dimension;
-//	const Array1dT<R1Tensor>& refPositions;
+//	const array<R1Tensor>& refPositions;
 //};
 
-class SpatialPartition: public PartitionBase {
+class SpatialPartition : public PartitionBase
+{
 public:
   SpatialPartition();
   virtual ~SpatialPartition();
@@ -130,7 +151,7 @@ public:
   virtual bool IsCoordInPartition(const realT& coord, const int dir);
   virtual bool IsCoordInPartition(const R1Tensor& elemCenter);
   virtual bool IsCoordInPartition(const R1Tensor& elemCenter,
-      const int numDistPartition);
+                                  const int numDistPartition);
   virtual bool IsCoordInPartitionClosed(const R1Tensor& elemCenter);
   virtual bool IsCoordInPartitionBoundingBox(const R1Tensor& elemCenter);
 
@@ -146,19 +167,19 @@ public:
   void SetPartitionGeometricalBoundary(R1Tensor& min, R1Tensor& max);
 
   void setPartitions(unsigned int xPartitions, unsigned int yPartitions,
-      unsigned int zPartitions) {
+                     unsigned int zPartitions) {
     m_Partitions.resize(3);
     m_Partitions(0) = xPartitions;
     m_Partitions(1) = yPartitions;
     m_Partitions(2) = zPartitions;
     m_size = 1;
-    for (unsigned int i = 0; i < nsdof; i++)
+    for (unsigned int i = 0 ; i < nsdof ; i++)
       m_size *= m_Partitions(i);
     SetContactGhostRange(0.0);
   }
 
   void setPeriodic(unsigned int xPeriodic, unsigned int yPeriodic,
-      unsigned int zPeriodic) {
+                   unsigned int zPeriodic) {
     m_Periodic(0) = xPeriodic;
     m_Periodic(1) = yPeriodic;
     m_Periodic(2) = zPeriodic;
@@ -185,11 +206,11 @@ public:
 
   int GetColor();
 
-  const iArray1d& GetPartitions() const {
+  const array<integer>& GetPartitions() const {
     return m_Partitions;
   }
 
-  const iArray1d& GetCoords() const {
+  const array<integer>& GetCoords() const {
     return m_coords;
   }
 
@@ -208,26 +229,32 @@ public:
   }
 
 private:
-	Array1dT<int> m_Partitions; // number of partitions
-	Array1dT<int> m_Periodic; // 1 = periodic
-	Array1dT<int> m_coords; // ijk partition indexes
+  array<int> m_Partitions; // number of partitions
+  array<int> m_Periodic; // 1 = periodic
+  array<int> m_coords; // ijk partition indexes
 
-	R1Tensor m_min; // Minimum extent of partition dimensions (excluding ghost objects)
-	R1Tensor m_max; // Maximum extent of partition dimensions (excluding ghost objects)
+  R1Tensor m_min; // Minimum extent of partition dimensions (excluding ghost
+                  // objects)
+  R1Tensor m_max; // Maximum extent of partition dimensions (excluding ghost
+                  // objects)
 
-	R1Tensor m_xBoundingBoxMin, m_xBoundingBoxMax;
+  R1Tensor m_xBoundingBoxMin, m_xBoundingBoxMax;
 
-	rArray1d m_PartitionLocations[3]; // locations of partition boundaries
+  array<real64> m_PartitionLocations[3]; // locations of partition boundaries
 
-	R1Tensor m_blockSize; // Length of partition dimensions (excluding ghost objects)
+  R1Tensor m_blockSize; // Length of partition dimensions (excluding ghost
+                        // objects)
 
-	R1Tensor m_gridSize; // Total length of problem dimensions (excluding ghost objects)
-	R1Tensor m_gridMin; // Minimum extent of problem dimensions (excluding ghost objects)
-	R1Tensor m_gridMax; // Maximum extent of problem dimensions (excluding ghost objects)
+  R1Tensor m_gridSize; // Total length of problem dimensions (excluding ghost
+                       // objects)
+  R1Tensor m_gridMin; // Minimum extent of problem dimensions (excluding ghost
+                      // objects)
+  R1Tensor m_gridMax; // Maximum extent of problem dimensions (excluding ghost
+                      // objects)
 
 //	struct PeriodicSet {
 //		int m_dimension;
-//		sArray1d m_setNames;
+//		array<string> m_setNames;
 //		void ReadXML(TICPP::HierarchicalDataNode& hdn) {
 //			m_dimension = hdn.GetAttributeValue<int>("dimension");
 //			m_setNames = hdn.GetStringVector("setnames");
@@ -235,10 +262,10 @@ private:
 //	};
 //	std::vector<PeriodicSet> m_periodicSets;
 
-	void AddNeighbors(const unsigned int idim, MPI_Comm& cartcomm,
-			int* ncoords);
+  void AddNeighbors(const unsigned int idim, MPI_Comm& cartcomm,
+                    int* ncoords);
 
-	std::map<Array1dT<int>, unsigned int> neighborCommPtrIndx;
+//	std::map<array<int>, unsigned int> neighborCommPtrIndx;
 
 //	virtual void WriteSiloDerived(SiloFile& siloFile);
 //

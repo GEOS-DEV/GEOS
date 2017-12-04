@@ -17,4 +17,3 @@ Communication::~Communication()
 {
   // TODO Auto-generated destructor stub
 }
-

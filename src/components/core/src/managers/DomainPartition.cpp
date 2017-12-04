@@ -18,7 +18,7 @@ namespace geosx
 using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
-                                  ManagedGroup * const parent ) :
+                                  ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager);
@@ -29,9 +29,7 @@ DomainPartition::DomainPartition( std::string const & name,
 }
 
 DomainPartition::~DomainPartition()
-{
-
-}
+{}
 
 
 void DomainPartition::BuildDataStructure( ManagedGroup * const )
@@ -79,17 +77,22 @@ void DomainPartition::InitializationOrder( string_array & order )
 void DomainPartition::SetMaps(  )
 {
   // ManagedGroup * nodeManager = this->GetGroup(keys::FEM_Nodes);
-  // ElementRegionManager * elementRegionManager = this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
+  // ElementRegionManager * elementRegionManager =
+  // this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
 
   // {
-  //  integer_array & elementRegionMap = nodeManager->getReference(keys::elementRegionMap);
-  //  integer_array & elementSubRegionMap = nodeManager->getReference(keys::elementSubRegionMap);
+  //  integer_array & elementRegionMap =
+  // nodeManager->getReference(keys::elementRegionMap);
+  //  integer_array & elementSubRegionMap =
+  // nodeManager->getReference(keys::elementSubRegionMap);
   //  integer_array & elementMap = nodeManager->getReference(keys::elementMap);
 
-  //  ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+  //  ManagedGroup * elementRegions =
+  // this->GetGroup(dataRepository::keys::elementRegions);
 
   //  integer elementRegionIndex = 0;
-  //  elementRegionManager->forElementRegions( [&](ElementRegion& elementRegion)-> void
+  //  elementRegionManager->forElementRegions( [&](ElementRegion&
+  // elementRegion)-> void
   //  {
   //    elementRegion.forCellBlocks( [&]( CellBlockSubRegion & subRegion )->void
   //    {
@@ -131,7 +134,8 @@ void DomainPartition::GenerateSets(  )
   ElementRegionManager * elementRegionManager = mesh->getElemManager();
 
   for( auto & subGroup : elementRegionManager->GetGroup( dataRepository::keys::elementRegions )->GetSubGroups() )
-//  elementRegionManager->forElementRegions( [&]( ElementRegion * elementRegion )
+//  elementRegionManager->forElementRegions( [&]( ElementRegion * elementRegion
+// )
   {
     ElementRegion * elementRegion = subGroup.second->group_cast<ElementRegion *>();
 //    elementRegion->forCellBlocks( [&]( CellBlockSubRegion * subRegion )->void
@@ -150,14 +154,14 @@ void DomainPartition::GenerateSets(  )
         {
           localIndex const * nodelist = elemsToNodes[k];
           integer count = 0;
-          for( localIndex a = 0 ; a<elemsToNodes.Dimension(1) ; ++a )
+          for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
           {
             if( nodeInSet[setName][nodelist[a]] == 1 )
             {
               ++count;
             }
           }
-          if( count == elemsToNodes.Dimension(1) )
+          if( count == elemsToNodes.size(1) )
           {
             set.insert(k);
           }
@@ -195,7 +199,8 @@ void DomainPartition::WriteSilo(SiloFile& siloFile,
 //  WriteCommonPlanes( siloFile, cycleNum, problemTime, isRestart, writeCP );
 
 //  WriteCartesianGrid( siloFile, cycleNum, problemTime, isRestart, writeCG );
-//  m_wellboreManager.WriteWellboreSilo( siloFile, cycleNum, problemTime, isRestart );
+//  m_wellboreManager.WriteWellboreSilo( siloFile, cycleNum, problemTime,
+// isRestart );
 
   if( isRestart )
   {
@@ -235,7 +240,8 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     MeshLevel const * const mesh = this->getMeshBody(0)->getMeshLevel(0);
     NodeManager const * const nodeManager = mesh->getNodeManager();
 
-//    NodeManager const * nodeManager = this->GetGroup<NodeManager>(keys::FEM_Nodes);
+//    NodeManager const * nodeManager =
+// this->GetGroup<NodeManager>(keys::FEM_Nodes);
     localIndex numNodes = nodeManager->size();
 
     r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::ReferencePosition);
@@ -249,7 +255,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     dvector xcoords(numNodes);
     dvector ycoords(numNodes);
     dvector zcoords(numNodes);
-    for (localIndex a = 0; a < numNodes; ++a)
+    for (localIndex a = 0 ; a < numNodes ; ++a)
     {
       R1Tensor nodePosition;
       nodePosition = referencePosition[a];
@@ -268,44 +274,48 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     coords[2] = zcoords.data();
 
     ElementRegionManager const * const elementManager = mesh->getElemManager();
-    const int numElementRegions = elementManager->GetGroup(keys::elementRegions)->GetSubGroups().size();
-    Array1dT<localIndex*> meshConnectivity(numElementRegions);
-    Array1dT<int*> isGhostElement(numElementRegions);
-    Array1dT<globalIndex*> globalElementNumbers(numElementRegions);
+    const localIndex numElementRegions = elementManager->GetGroup(keys::elementRegions)->GetSubGroups().size();
+    array<localIndex*> meshConnectivity(numElementRegions);
+    array<int*> isGhostElement(numElementRegions);
+    array<globalIndex*> globalElementNumbers(numElementRegions);
     ivector shapecnt(numElementRegions);
     ivector shapetype(numElementRegions);
     ivector shapesize(numElementRegions);
 
-    Array1dT<FixedOneToManyRelation> elementToNodeMap( numElementRegions );
+    array<FixedOneToManyRelation> elementToNodeMap;
+    elementToNodeMap.resize( numElementRegions );
 
     int count = 0;
     elementManager->forCellBlocks([&]( CellBlockSubRegion const * cellBlock ) -> void
-    {
-      lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(cellBlock->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
-
-      // The following line seems to be redundant. It's actual function is to size this temp array.(pfu)
-      elementToNodeMap[count].resize2(elemsToNodes.Dimension(0),elemsToNodes.Dimension(1));
-
-      for (localIndex k = 0; k < cellBlock->size(); ++k)
       {
-        const localIndex* const elemToNodeMap = elemsToNodes[k];
+        lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(cellBlock->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
 
-        const iArray1d nodeOrdering = siloFile.SiloNodeOrdering();
-        integer numNodesPerElement = elemsToNodes.Dimension(1);
-        for (localIndex a = 0; a < numNodesPerElement; ++a)
+        // The following line seems to be redundant. It's actual function is to
+        // size this temp array.(pfu)
+        elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
+
+        for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
         {
-          elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
+          const localIndex* const elemToNodeMap = elemsToNodes[k];
+
+          const integer_array nodeOrdering = siloFile.SiloNodeOrdering();
+          integer numNodesPerElement = elemsToNodes.size<int>(1);
+          for (localIndex a = 0 ; a < numNodesPerElement ; ++a)
+          {
+            elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
+          }
+
         }
 
-      }
+        //      meshConnectivity[count] =
+        // elementRegion.m_ElementToNodeMap.data();
+        meshConnectivity[count] = elementToNodeMap[count].data();
 
-      //      meshConnectivity[count] = elementRegion.m_ElementToNodeMap.data();
-      meshConnectivity[count] = elementToNodeMap[count].data();
-
-//      isGhostElement[count] = (cellBlock->GetFieldData<FieldInfo::ghostRank>()).data();
+//      isGhostElement[count] =
+// (cellBlock->GetFieldData<FieldInfo::ghostRank>()).data();
 
 //      globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
-      shapecnt[count] = cellBlock->size();
+        shapecnt[count] = static_cast<int>(cellBlock->size());
 
 //      if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D8") )
 //      {
@@ -320,11 +330,14 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 //      {
 //        shapetype[count] = DB_ZONETYPE_TET;
 //      }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") || !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
+//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
+// !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
 //      {
 //        shapetype[count] = DB_ZONETYPE_QUAD;
 //      }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "STRI") || !elementRegion.m_elementGeometryID.compare(0, 4, "TRSH") || !elementRegion.m_elementGeometryID.compare(0, 4, "CPE3"))
+//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "STRI") ||
+// !elementRegion.m_elementGeometryID.compare(0, 4, "TRSH") ||
+// !elementRegion.m_elementGeometryID.compare(0, 4, "CPE3"))
 //      {
 //        shapetype[count] = DB_ZONETYPE_TRIANGLE;
 //      }
@@ -334,30 +347,31 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 //      }
 //      else
 //      {
-//        GEOS_ERROR("PhysicalDomainT::WriteFiniteElementMesh: Do not recognize geometry type " + elementRegion.m_elementGeometryID + " \n");
+//        GEOS_ERROR("PhysicalDomainT::WriteFiniteElementMesh: Do not recognize
+// geometry type " + elementRegion.m_elementGeometryID + " \n");
 //      }
 
-      shapesize[count] = elemsToNodes.Dimension(1);
-      count++;
-    });
+        shapesize[count] = integer_conversion<int>(elemsToNodes.size(1));
+        count++;
+      });
 
     siloFile.WriteMeshObject(meshName, numNodes, coords,
-                             nullptr, numElementRegions,
-                             shapecnt.data(), meshConnectivity.data(), nullptr/*globalElementNumbers.data()*/,
+                             nullptr, integer_conversion<int>(numElementRegions),
+                             shapecnt.data(), meshConnectivity.data(), nullptr /*globalElementNumbers.data()*/,
                              isGhostElement.data(), shapetype.data(), shapesize.data(), cycleNum, problemTime);
 
 
-    // write node fields in silo mesh, and all restart data as unassociated variables.
+    // write node fields in silo mesh, and all restart data as unassociated
+    // variables.
 
 
 
-    siloFile.WriteManagedGroupSilo( nodeManager, "NodalFields", meshName, DB_NODECENT, cycleNum, problemTime, isRestart, lArray1d());
+    siloFile.WriteManagedGroupSilo( nodeManager, "NodalFields", meshName, DB_NODECENT, cycleNum, problemTime, isRestart, localIndex_array());
 
 
 
-
-
-//    m_feElementManager->WriteSilo( siloFile, meshName, cycleNum, problemTime, isRestart );
+//    m_feElementManager->WriteSilo( siloFile, meshName, cycleNum, problemTime,
+// isRestart );
 
 
   }//end FE write
@@ -371,9 +385,11 @@ void DomainPartition::ReadFiniteElementMesh( const SiloFile& siloFile,
 
 
 //  int err = m_feNodeManager->ReadSilo( siloFile, "NodalFields", "volume_mesh",
-//                                      DB_NODECENT, cycleNum, problemTime, isRestart );
+//                                      DB_NODECENT, cycleNum, problemTime,
+// isRestart );
 ////  err = m_feNodeManager->ReadSilo( siloFile, "NodalFieldsB", "face_mesh",
-////                                      DB_NODECENT, cycleNum, problemTime, isRestart );
+////                                      DB_NODECENT, cycleNum, problemTime,
+// isRestart );
 //  if(err)
 //    return;
 //
@@ -383,7 +399,6 @@ void DomainPartition::ReadFiniteElementMesh( const SiloFile& siloFile,
 //  m_feNodeManager->ConstructNodeToElementMap( m_feElementManager );
 
 }
-
 
 
 

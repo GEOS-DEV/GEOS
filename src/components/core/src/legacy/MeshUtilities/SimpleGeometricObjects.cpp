@@ -20,9 +20,15 @@ const std::string SimpleGeometricObjectBase::CylinderBy2EndsStr = "CylinderBy2En
 const std::string SimpleGeometricObjectBase::NotStr = "Not";
 const std::string SimpleGeometricObjectBase::IntersectionStr = "Intersection";
 const std::string SimpleGeometricObjectBase::UnionStr = "Union";
-const std::string SimpleGeometricObjectBase::AndStr = "And"; // another way to specify intersection
-const std::string SimpleGeometricObjectBase::OrStr = "Or"; // another way to specify union
-const std::string SimpleGeometricObjectBase::InvertStr = "Invert"; // another way to specify not
+const std::string SimpleGeometricObjectBase::AndStr = "And"; // another way to
+                                                             // specify
+                                                             // intersection
+const std::string SimpleGeometricObjectBase::OrStr = "Or"; // another way to
+                                                           // specify union
+const std::string SimpleGeometricObjectBase::InvertStr = "Invert"; // another
+                                                                   // way to
+                                                                   // specify
+                                                                   // not
 
 const std::string SimpleGeometricObjectBase::TransformStr = "Transform";
 const std::string SimpleGeometricObjectBase::GeometryFunctionStr = "GeometryFunction";
@@ -31,7 +37,7 @@ const std::string SimpleGeometricObjectBase::GeometryFunctionStr = "GeometryFunc
 
 SimpleGeometricObjectBase* SimpleGeometricObjectBase::Allocate( const Types type )
 {
-	// need to replace this with a proper factory
+  // need to replace this with a proper factory
   SimpleGeometricObjectBase* object = NULL;
   if( type==box )
     object = new Box;
@@ -60,11 +66,11 @@ SimpleGeometricObjectBase* SimpleGeometricObjectBase::Allocate( const Types type
 
 
 SimpleGeometricObjectBase* SimpleGeometricObjectBase::Allocate( TICPP::HierarchicalDataNode* hdn){
-	std::string geomTypeStr = hdn->Heading();
-	SimpleGeometricObjectBase::Types type = fromString<Types>(geomTypeStr);
-	SimpleGeometricObjectBase* object = SimpleGeometricObjectBase::Allocate( type );
-	object->ReadXML(*hdn);
-	return object;
+  std::string geomTypeStr = hdn->Heading();
+  SimpleGeometricObjectBase::Types type = fromString<Types>(geomTypeStr);
+  SimpleGeometricObjectBase* object = SimpleGeometricObjectBase::Allocate( type );
+  object->ReadXML(*hdn);
+  return object;
 }
 
 void SimpleGeometricObjectBase::Deallocate( SimpleGeometricObjectBase* object )
@@ -74,19 +80,18 @@ void SimpleGeometricObjectBase::Deallocate( SimpleGeometricObjectBase* object )
 
 
 
-
-
-
 void Box::ReadXML( TICPP::HierarchicalDataNode& hdn )
 {
   m_min = hdn.GetAttributeTensor("xmin");
   m_max = hdn.GetAttributeTensor("xmax");
-  m_strikeAngle = hdn.GetAttributeOrDefault<realT>("strikeAngle", -90.0); // from North
+  m_strikeAngle = hdn.GetAttributeOrDefault<realT>("strikeAngle", -90.0); // from
+                                                                          // North
   m_strikeAngle += 90; // Counterclockwise from x-axis
   if (std::fabs(m_strikeAngle) > 1e-20)
   {
     if ((m_max[0]-m_min[0]) < (m_max[1]-m_min[1]))
-      throw GPException("Error: When a strike angle is specified, the box is supposed to represent a plane normal to the y direction. This box seems to be too thick.");
+      throw GPException(
+              "Error: When a strike angle is specified, the box is supposed to represent a plane normal to the y direction. This box seems to be too thick.");
 
     m_cosStrike = std::cos(m_strikeAngle / 180 *3.1415926535);
     m_sinStrike = std::sin(m_strikeAngle / 180 *3.1415926535);
@@ -125,9 +130,6 @@ bool Box::IsCoordInObject( const R1Tensor& coord )
 
 
 
-
-
-
 void Cylinder::ReadXML( TICPP::HierarchicalDataNode& hdn )
 {
 
@@ -149,7 +151,9 @@ bool Cylinder::IsCoordInObject( const R1Tensor& coord )
 
   R1Tensor projection;
   projection  = m_axis;
-  projection *= Dot( m_axis, coord_minus_ref );  //Fu:  Used to be *= -Dot...  I didn't understand and I thought it's wrong.
+  projection *= Dot( m_axis, coord_minus_ref );  //Fu:  Used to be *= -Dot...  I
+                                                 // didn't understand and I
+                                                 // thought it's wrong.
 
   R1Tensor distance;
   distance  = coord_minus_ref;
@@ -218,7 +222,7 @@ bool Sphere::IsCoordInObject( const R1Tensor& coord )
   coord_minus_ref = coord;
   coord_minus_ref -= m_refPoint;
 
-  realT distanceSqrd = Dot( coord_minus_ref, coord_minus_ref );  
+  realT distanceSqrd = Dot( coord_minus_ref, coord_minus_ref );
 
   if( distanceSqrd<m_radiusSqrd )
   {
@@ -250,7 +254,7 @@ bool Ellipsoid::IsCoordInObject( const R1Tensor& coord )
   coord_minus_ref[1] /= m_ry;
   coord_minus_ref[2] /= m_rz;
 
-  realT distanceSqrd = Dot( coord_minus_ref, coord_minus_ref );  
+  realT distanceSqrd = Dot( coord_minus_ref, coord_minus_ref );
 
   if( distanceSqrd<1 )
   {
@@ -295,7 +299,8 @@ void GeometryFunction::ReadXML( TICPP::HierarchicalDataNode& hdn )
   m_functionName      = hdn.GetAttributeString("function");
 
   // get function
-  if(!(m_functionName.empty())){
+  if(!(m_functionName.empty()))
+  {
     FunctionManager& fm = FunctionManager::Instance();
     m_function = &(fm.GetFunction(m_functionName));
   }

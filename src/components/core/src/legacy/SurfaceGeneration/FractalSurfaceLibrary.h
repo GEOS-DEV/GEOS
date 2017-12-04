@@ -11,10 +11,10 @@
 #include "FractalSurface.h"
 
 int GenerateFractalSurface(double loweru, double lowerv,
-                            double upperu, double upperv,
-                            double hurst, double hfct,
-                            double mean, double stdev,
-                            int nlevels, int n0, int n1);
+                           double upperu, double upperv,
+                           double hurst, double hfct,
+                           double mean, double stdev,
+                           int nlevels, int n0, int n1);
 
 double ValueFractalSurface(double u, double v);
 

@@ -18,12 +18,12 @@ namespace dataRepository
 {
 namespace keys
 {
-  std::string const tableCoordinates = "coordinates";
-  std::string const tableValues = "values";
-  std::string const tableInterpolation = "interpolation";
-  std::string const coordinateFiles = "coordinateFiles";
-  std::string const voxelFile = "voxelFile";
-  std::string const valueType = "valueType";
+std::string const tableCoordinates = "coordinates";
+std::string const tableValues = "values";
+std::string const tableInterpolation = "interpolation";
+std::string const coordinateFiles = "coordinateFiles";
+std::string const voxelFile = "voxelFile";
+std::string const valueType = "valueType";
 }
 }
 
@@ -31,7 +31,7 @@ using namespace dataRepository;
 
 
 TableFunction::TableFunction( const std::string& name,
-                              ManagedGroup * const parent ) :
+                              ManagedGroup * const parent ):
   FunctionBase( name, parent ),
   m_coordinates(),
   m_values(),
@@ -52,11 +52,11 @@ void TableFunction::FillDocumentationNode( dataRepository::ManagedGroup * const 
 {
   FunctionBase::FillDocumentationNode(domain);
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  
+
   docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Table function");
-  
+
   docNode->AllocateChildNode( keys::tableCoordinates,
                               keys::tableCoordinates,
                               -1,
@@ -167,7 +167,7 @@ void TableFunction::InitializeFunction()
     // TODO: Read these files on rank 0, then broadcast
     view_rtype<string> voxelFile = getData<string>(keys::voxelFile);
     IOUtilities::parse_file( m_values, voxelFile, ',' );
-    for (localIndex ii=0; ii<m_dimensions; ++ii)
+    for (localIndex ii=0 ; ii<m_dimensions ; ++ii)
     {
       IOUtilities::parse_file( m_coordinates[ii], coordinateFiles[ii], ',' );
       m_size.push_back(m_coordinates[ii].size());
@@ -176,7 +176,7 @@ void TableFunction::InitializeFunction()
 
   // Setup index increment (assume data is in Fortran array order)
   localIndex increment = 1;
-  for (localIndex ii=0; ii<m_dimensions; ++ii)
+  for (localIndex ii=0 ; ii<m_dimensions ; ++ii)
   {
     m_indexIncrement.push_back(increment);
     increment *= m_size[ii];
@@ -189,10 +189,10 @@ void TableFunction::InitializeFunction()
   }
 
   // Build a quick map to help with linear interpolation
-  m_numCorners = pow(2, m_dimensions);
-  for (localIndex ii=0; ii<m_numCorners; ++ii)
+  m_numCorners = static_cast<localIndex>(pow(2, m_dimensions));
+  for (localIndex ii=0 ; ii<m_numCorners ; ++ii)
   {
-    for (localIndex jj=0; jj<m_dimensions; ++jj)
+    for (localIndex jj=0 ; jj<m_dimensions ; ++jj)
     {
       m_corners[jj][ii] = int(ii / pow(2, jj)) % 2;
     }
@@ -213,7 +213,7 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
   real64 weights[m_maxDimensions][2];
 
   // Determine position, weights
-  for (localIndex ii=0; ii<m_dimensions; ++ii)
+  for (localIndex ii=0 ; ii<m_dimensions ; ++ii)
   {
     if (input[ii] <= m_coordinates[ii][0])
     {
@@ -235,7 +235,8 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
     {
       // Find the coordinate index
       ///TODO make this fast
-      // Note: lower_bound uses a binary search...  If we assume coordinates are evenly spaced, we can speed things up considerably
+      // Note: lower_bound uses a binary search...  If we assume coordinates are
+      // evenly spaced, we can speed things up considerably
       auto lower = std::lower_bound(m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii]);
       bounds[ii][1] = std::distance(m_coordinates[ii].begin(), lower);
       bounds[ii][0] = bounds[ii][1] - 1;
@@ -248,24 +249,24 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
 
   // Linear interpolation
   real64 weightedValue = 0.0;
-  for (localIndex ii=0; ii<m_numCorners; ++ii)
+  for (localIndex ii=0 ; ii<m_numCorners ; ++ii)
   {
     // Find array index
     localIndex tableIndex = 0;
-    for (localIndex jj=0; jj<m_dimensions; ++jj)
+    for (localIndex jj=0 ; jj<m_dimensions ; ++jj)
     {
       tableIndex += bounds[jj][m_corners[jj][ii]] * m_indexIncrement[jj];
     }
 
     // Determine weighted value
     real64 cornerValue = m_values[tableIndex];
-    for (localIndex jj=0; jj<m_dimensions; ++jj)
+    for (localIndex jj=0 ; jj<m_dimensions ; ++jj)
     {
       cornerValue *= weights[jj][m_corners[jj][ii]];
     }
     weightedValue += cornerValue;
   }
-  
+
   return weightedValue;
 }
 

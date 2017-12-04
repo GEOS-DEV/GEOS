@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -44,7 +62,8 @@
  */
 
 //-------------------------
-//NOTE: there was a major trimming of this class after r590; revert to r590 to see the previous methods
+//NOTE: there was a major trimming of this class after r590; revert to r590 to
+// see the previous methods
 //-------------------------
 
 #include "FaceManagerT.h"
@@ -69,25 +88,26 @@
 #include "Constitutive/Interface/InterfaceFactory.h"
 
 /**
- * @brief Constructor to set internal pointers to the external node and face managers
+ * @brief Constructor to set internal pointers to the external node and face
+ * managers
  * @author Scott Johnson
  * @param fm External face manager pointer
  */
-ExternalFaceManagerT::ExternalFaceManagerT(FaceManagerT* fm = 0, FaceManagerT* fmDiscreteElement = 0) :
-ObjectDataStructureBaseT(ObjectDataStructureBaseT::ExternalFaceManager),
-m_faceManager(NULL),
-m_discreteElementFaceManager(NULL),
-m_neighborList(m_VariableOneToManyMaps["neighborList"]),
-m_neighborListInverse(m_UnorderedVariableOneToManyMaps["neighborListInverse"]),
-m_contactActive(false),
-m_contactSelf(false),
-m_autoContact(true),
-m_contact(NULL),
-m_externalFaceToFaceMap(m_OneToOneMaps["externalFaceToFaceMap"]),
-nfe(0),
-nde(0),
-m_sorted(false),
-m_sorter(NULL)
+ExternalFaceManagerT::ExternalFaceManagerT(FaceManagerT* fm = 0, FaceManagerT* fmDiscreteElement = 0):
+  ObjectDataStructureBaseT(ObjectDataStructureBaseT::ExternalFaceManager),
+  m_faceManager(NULL),
+  m_discreteElementFaceManager(NULL),
+  m_neighborList(m_VariableOneToManyMaps["neighborList"]),
+  m_neighborListInverse(m_UnorderedVariableOneToManyMaps["neighborListInverse"]),
+  m_contactActive(false),
+  m_contactSelf(false),
+  m_autoContact(true),
+  m_contact(NULL),
+  m_externalFaceToFaceMap(m_OneToOneMaps["externalFaceToFaceMap"]),
+  nfe(0),
+  nde(0),
+  m_sorted(false),
+  m_sorter(NULL)
 {
   this->m_tol.maximumSeparation = 0.0;
   this->m_tol.searchRadiusFactor = 0.0;
@@ -111,23 +131,24 @@ m_sorter(NULL)
   this->AddKeylessDataField<realT> ( "area", true, true);
   this->AddKeylessDataField<R1Tensor>( "shearSlip", true, true);
 
-  this->AddKeylessDataField<realT> ( "boundingRadiusLastSort" , true, false );
-  this->AddKeylessDataField<R1Tensor> ( "faceCenterLastSort" , true, false );
-  this->AddKeylessDataField<realT> ( "boundingRadius" , true, true );
-  this->AddKeylessDataField<R1Tensor> ( "faceCenter" , true, true );
-  this->AddKeylessDataField<R1Tensor> ( "faceNormal" , true, true );
-  this->AddKeylessDataField<R1Tensor> ( "faceVelocity" , true, true );
+  this->AddKeylessDataField<realT> ( "boundingRadiusLastSort", true, false );
+  this->AddKeylessDataField<R1Tensor> ( "faceCenterLastSort", true, false );
+  this->AddKeylessDataField<realT> ( "boundingRadius", true, true );
+  this->AddKeylessDataField<R1Tensor> ( "faceCenter", true, true );
+  this->AddKeylessDataField<R1Tensor> ( "faceNormal", true, true );
+  this->AddKeylessDataField<R1Tensor> ( "faceVelocity", true, true );
 
-  this->AddKeylessDataField<localIndex>( "parentElement" , true, false );
-  this->AddKeylessDataField<int>( "parentElementRegion" , true, false );
+  this->AddKeylessDataField<localIndex>( "parentElement", true, false );
+  this->AddKeylessDataField<int>( "parentElementRegion", true, false );
 
-  this->AddKeylessDataField<int>( "excludeFromContact" , true, true );
+  this->AddKeylessDataField<int>( "excludeFromContact", true, true );
 
-  //@annavarapusr1: Adding stabilization and weighting fields for Nitsche's method
-  this->AddKeylessDataField<realT> ( "nitscheStab_n" , false, false );
-  this->AddKeylessDataField<realT> ( "nitscheStab_t1" , false, false );
-  this->AddKeylessDataField<realT> ( "nitscheStab_t2" , false, false );
-  this->AddKeylessDataField<realT> ( "nitscheGamma" , false, false );
+  //@annavarapusr1: Adding stabilization and weighting fields for Nitsche's
+  // method
+  this->AddKeylessDataField<realT> ( "nitscheStab_n", false, false );
+  this->AddKeylessDataField<realT> ( "nitscheStab_t1", false, false );
+  this->AddKeylessDataField<realT> ( "nitscheStab_t2", false, false );
+  this->AddKeylessDataField<realT> ( "nitscheGamma", false, false );
 
   m_sorter = SpatialSorting::SpatialSorterFactory::NewSpatialSorter("N2");
 }
@@ -161,10 +182,14 @@ void ExternalFaceManagerT::SplitFace(const localIndex parentIndex,
   externalFaceIndex[parentIndex] = nfe;
   externalFaceIndex[newFaceIndex] = nfe1;
 
-  //(4) Update DE indices to reflect change in face index offset (due to change in face manager size)
-  for(localIndex i = nfe+2; i < m_DataLengths; ++i)
-    ++m_externalFaceToFaceMap[i]; //i.e., one _new_ face has been added to the face manager, so the face index offset is increased by 1
-  // FIXME: Fu note: This is a bug.  In 2D, two new faces are added.  Need to take care of this.
+  //(4) Update DE indices to reflect change in face index offset (due to change
+  // in face manager size)
+  for(localIndex i = nfe+2 ; i < m_DataLengths ; ++i)
+    ++m_externalFaceToFaceMap[i]; //i.e., one _new_ face has been added to the
+                                  // face manager, so the face index offset is
+                                  // increased by 1
+  // FIXME: Fu note: This is a bug.  In 2D, two new faces are added.  Need to
+  // take care of this.
 
   //(5) Update neighbor list and inverse
   SpatialSorting::SpatialSorterBase::Add(nfe, nfe1, m_neighborList, m_neighborListInverse);
@@ -202,11 +227,15 @@ void ExternalFaceManagerT::SplitFace(const localIndex parentIndex,
   externalFaceIndex[newFaceIndex1] = nfe1;
   externalFaceIndex[newFaceIndex2] = nfe2;
 
-  //(4) Update DE indices to reflect change in face index offset (due to change in face manager size)
-  for(localIndex i = nfe+3; i < m_DataLengths; ++i)
+  //(4) Update DE indices to reflect change in face index offset (due to change
+  // in face manager size)
+  for(localIndex i = nfe+3 ; i < m_DataLengths ; ++i)
   {
-    m_externalFaceToFaceMap[i] += 2; //i.e., one _new_ face has been added to the face manager, so the face index offset is increased by 1
-  // FIXME: Fu note: This is a bug.  In 2D, two new faces are added.  Need to take care of this.
+    m_externalFaceToFaceMap[i] += 2; //i.e., one _new_ face has been added to
+                                     // the face manager, so the face index
+                                     // offset is increased by 1
+    // FIXME: Fu note: This is a bug.  In 2D, two new faces are added.  Need to
+    // take care of this.
   }
   //(5) Update neighbor list and inverse
   SpatialSorting::SpatialSorterBase::Add(nfe, nfe1, m_neighborList, m_neighborListInverse);
@@ -238,14 +267,14 @@ globalIndex ExternalFaceManagerT::resize( const localIndex size, const bool assi
   return gi;
 }
 
-void ExternalFaceManagerT::DeserializeObjectField(const std::string& name, const rArray1d& field)
+void ExternalFaceManagerT::DeserializeObjectField(const std::string& name, const array<real64>& field)
 {
   if(m_DataLengths == 0)
     return;
   m_contact->SetValues(name, field);
 }
 
-void ExternalFaceManagerT::DeserializeObjectFields(const sArray1d& names, const Array1dT<rArray1d>& fields)
+void ExternalFaceManagerT::DeserializeObjectFields(const array<string>& names, const array<array<real64> >& fields)
 {
   if(m_DataLengths == 0)
     return;
@@ -263,32 +292,42 @@ void ExternalFaceManagerT::ReadXML(TICPP::HierarchicalDataNode* ContactNode)
   m_autoContact = ContactNode->GetAttributeOrDefault<bool> ("auto", true);
 
   m_tol.maximumSeparation =
-      ContactNode->GetAttributeOrDefault<realT> ("maximumSeparation", 0);
+    ContactNode->GetAttributeOrDefault<realT> ("maximumSeparation", 0);
   m_tol.searchRadiusFactor =
-      ContactNode->GetAttributeOrDefault<realT> ("searchRadiusFactor", 0);
+    ContactNode->GetAttributeOrDefault<realT> ("searchRadiusFactor", 0);
   m_tol.searchRadiusVelocityFactor =
-      ContactNode->GetAttributeOrDefault<realT> ("searchRadiusVelocityFactor", 0);
+    ContactNode->GetAttributeOrDefault<realT> ("searchRadiusVelocityFactor", 0);
   m_tol.feParentSolution =
-      ContactNode->GetAttributeOrDefault<realT> ("feParentSolnTol", 1e-12);
+    ContactNode->GetAttributeOrDefault<realT> ("feParentSolnTol", 1e-12);
 
   //Contact parameters
   this->m_contact->ReadXML(*ContactNode->Next(true));
 
   //Tolerances
-  //    apertureFactor(0.0)  = % of face radius by which to increase the radial search distance
-  //                           (i.e., the greater this value the larger the atomic search cost but the less frequent)
-  //    cosMin(0.2)          = minimum cos of the angle between two opposing faces below which contact is rejected
-  //                           (i.e., if faces are too far away from parallel, contact is no longer assessed; 0 is orthogonal)
-  //    spatial(1e-12)       = ratio of distance to minimum dimension of the face used as a threshold for several values
+  //    apertureFactor(0.0)  = % of face radius by which to increase the radial
+  // search distance
+  //                           (i.e., the greater this value the larger the
+  // atomic search cost but the less frequent)
+  //    cosMin(0.2)          = minimum cos of the angle between two opposing
+  // faces below which contact is rejected
+  //                           (i.e., if faces are too far away from parallel,
+  // contact is no longer assessed; 0 is orthogonal)
+  //    spatial(1e-12)       = ratio of distance to minimum dimension of the
+  // face used as a threshold for several values
   //                           (i.e., very small distances are neglected)
-  //    area(1e-6)           = ratio of common plane area to face area, below which contact is rejected
+  //    area(1e-6)           = ratio of common plane area to face area, below
+  // which contact is rejected
   //                           (i.e., very small contact areas are rejected)
-  //    penetration(0.7)     = ratio of penetration distance to face minimum dimension, above which contact is rejected
+  //    penetration(0.7)     = ratio of penetration distance to face minimum
+  // dimension, above which contact is rejected
   //                           (i.e., overpenetration causes loss of contact)
-  //                           the penetration distance is relative to the common plane, so if you have a cube
-  //                           you can assure that you avoid opposing sides "seeing" each other with a value < 0.5/sqrt(2)
+  //                           the penetration distance is relative to the
+  // common plane, so if you have a cube
+  //                           you can assure that you avoid opposing sides
+  // "seeing" each other with a value < 0.5/sqrt(2)
   //    maximumAperture(0.0) = additional search distance in the "negative"
-  //                           (i.e., out-of-contact normal) direction to use to assess contact
+  //                           (i.e., out-of-contact normal) direction to use to
+  // assess contact
   //
   //    NOTE:
   //    radius_of_search = (1 + apertureFactor) * radius + maximumAperture
@@ -302,14 +341,14 @@ void ExternalFaceManagerT::BuildExternalFaces()
 {
   this->nfe = 0;
 
-  const iArray1d& isExternal = m_faceManager->m_isExternal;
+  const array<integer>& isExternal = m_faceManager->m_isExternal;
 
   // get number of faces from FEM
   //set the external face index for those faces that are external
   {
     lArray1d& externalFaceIndex = m_faceManager->GetFieldData<localIndex>("externalFaceIndex");
     localIndex a = 0;
-    for( iArray1d::const_iterator i=isExternal.begin() ; i!=isExternal.end() ; ++i, ++a)
+    for( array<integer>::const_iterator i=isExternal.begin() ; i!=isExternal.end() ; ++i, ++a)
     {
       externalFaceIndex[a] = (*i == 1) ? (this->nfe++) : std::numeric_limits<localIndex>::max();
     }
@@ -320,14 +359,15 @@ void ExternalFaceManagerT::BuildExternalFaces()
 
   const localIndex numExternalFaces = this->nfe + this->nde;
 
-  // assign the external face manager size to be that of all external faces (i.e., DE and FE)
+  // assign the external face manager size to be that of all external faces
+  // (i.e., DE and FE)
   this->resize( numExternalFaces );
 
   // assign FE face values to first nfe entries of m_externalFaceToFaceMap
   // assign values of m_externalFaceToFaceMap
   lArray1d::iterator iter_xfc=this->m_externalFaceToFaceMap.begin();
   {
-    iArray1d::const_iterator iter_fcfe=isExternal.begin() ;
+    array<integer>::const_iterator iter_fcfe=isExternal.begin();
     for(localIndex ifcfe = 0 ; iter_fcfe!=isExternal.end() ; ++iter_fcfe, ++ifcfe )
     {
       if( *iter_fcfe == 1 )
@@ -338,8 +378,10 @@ void ExternalFaceManagerT::BuildExternalFaces()
     }
   }
 
-  // externalFaceToFaceMap now contains indices of the FE faces in the first part
-  // and DE face indices offset by the TOTAL number of FE faces (m_faceManager->DataLengths()) in the second part
+  // externalFaceToFaceMap now contains indices of the FE faces in the first
+  // part
+  // and DE face indices offset by the TOTAL number of FE faces
+  // (m_faceManager->DataLengths()) in the second part
   // see FaceIndex function for the back conversion call
   localIndex ixfc = this->DiscreteElementFaceIndexOffset();
   for( ; iter_xfc!=this->m_externalFaceToFaceMap.end() ; ++iter_xfc, ++ixfc)
@@ -359,11 +401,12 @@ void ExternalFaceManagerT::BuildExternalFacesDiscreteElements()
 
   const localIndex numExternalFaces = this->nfe + this->nde;
 
-  // assign the external face manager size to be that of all external faces (i.e., DE and FE)
+  // assign the external face manager size to be that of all external faces
+  // (i.e., DE and FE)
   this->resize( numExternalFaces );
 
   localIndex ixfc = this->DiscreteElementFaceIndexOffset();
-  for(localIndex i = this->nfe; i < numExternalFaces; ++i, ++ixfc)
+  for(localIndex i = this->nfe ; i < numExternalFaces ; ++i, ++ixfc)
   {
     m_externalFaceToFaceMap[i] = ixfc;
   }
@@ -372,18 +415,21 @@ void ExternalFaceManagerT::BuildExternalFacesDiscreteElements()
 /**
  * @brief Form a list of faces associated with each face in the list
  * @author Scott Johnson
- * Populates the m_neighborList structure and flags whether a repopulation was performed
- * Note: lastSort fields and current bounding sphere fields (and face velocity) are all filled by the end of the call
+ * Populates the m_neighborList structure and flags whether a repopulation was
+ * performed
+ * Note: lastSort fields and current bounding sphere fields (and face velocity)
+ * are all filled by the end of the call
  * @param[in] nodeManager Node collection
- * @param[in] discreteElementNodeManager Node collection for the discrete elements
+ * @param[in] discreteElementNodeManager Node collection for the discrete
+ * elements
  * @param[in] m_discreteElementManager Collection of discrete elements
  * @param[in] dt Timestep
  */
 bool ExternalFaceManagerT::RecalculateNeighborList(
-    const NodeManager& nodeManager,
-    const NodeManager& discreteElementNodeManager,
-    const DiscreteElementManagerT& m_discreteElementManager,
-    const realT dt, const bool forceRecalculate, const bool useReferencePosition)
+  const NodeManager& nodeManager,
+  const NodeManager& discreteElementNodeManager,
+  const DiscreteElementManagerT& m_discreteElementManager,
+  const realT dt, const bool forceRecalculate, const bool useReferencePosition)
 {
   bool sort = false;
   if(!this->m_faceManager && !this->m_discreteElementFaceManager)
@@ -398,12 +444,12 @@ bool ExternalFaceManagerT::RecalculateNeighborList(
   localIndex faceIndex = 0;
   bool is_fe = false;
 
-  rArray1d& radii = this->GetFieldData<realT>("boundingRadius");
-  Array1dT<R1Tensor>& centers = this->GetFieldData<R1Tensor>("faceCenter");
-  Array1dT<R1Tensor>& normals = this->GetFieldData<R1Tensor>("faceNormal");
-  Array1dT<R1Tensor>& vel = this->GetFieldData<R1Tensor>("faceVelocity");
+  array<real64>& radii = this->GetFieldData<realT>("boundingRadius");
+  array<R1Tensor>& centers = this->GetFieldData<R1Tensor>("faceCenter");
+  array<R1Tensor>& normals = this->GetFieldData<R1Tensor>("faceNormal");
+  array<R1Tensor>& vel = this->GetFieldData<R1Tensor>("faceVelocity");
 
-  const iArray1d& excludeFromContact = this->GetFieldData<int>("excludeFromContact");
+  const array<integer>& excludeFromContact = this->GetFieldData<int>("excludeFromContact");
 
   //-----------------------------------------------------------------------
   // DETERMINE WHETHER ANYTHING NEEDS TO BE RESORTED
@@ -413,12 +459,12 @@ bool ExternalFaceManagerT::RecalculateNeighborList(
   {
     SetExcludeFromContact( nodeManager, false );
 
-    const rArray1d& lradii = this->GetFieldData<realT>("boundingRadiusLastSort");
-    const Array1dT<R1Tensor>& lcenters = this->GetFieldData<R1Tensor>("faceCenterLastSort");
+    const array<real64>& lradii = this->GetFieldData<realT>("boundingRadiusLastSort");
+    const array<R1Tensor>& lcenters = this->GetFieldData<R1Tensor>("faceCenterLastSort");
     R1Tensor dx;
 
     //iterate through external faces
-    for (localIndex ixfc1 = 0; ixfc1 < this->DataLengths(); ++ixfc1)
+    for (localIndex ixfc1 = 0 ; ixfc1 < this->DataLengths() ; ++ixfc1)
     {
       if(excludeFromContact[ixfc1]>0)
         continue;
@@ -446,7 +492,8 @@ bool ExternalFaceManagerT::RecalculateNeighborList(
                                                                useReferencePosition);
       }
 
-      //determine whether my bounding sphere is at or crossing the last radius boundary
+      //determine whether my bounding sphere is at or crossing the last radius
+      // boundary
       {
         const realT lradius = lradii[ixfc1] - 2.0*radii[ixfc1];
         if(!SpatialSorting::SpatialSorterBase::Close(radii[ixfc1],
@@ -468,17 +515,17 @@ bool ExternalFaceManagerT::RecalculateNeighborList(
     this->m_sorted = true;
 
     //iterate through
-    const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = this->m_faceManager->m_toElementsRelation;
-    const Array1dT<lArray1d>& fton = this->m_discreteElementFaceManager->m_toNodesRelation;
+    const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = this->m_faceManager->m_toElementsRelation;
+    const array<lArray1d>& fton = this->m_discreteElementFaceManager->m_toNodesRelation;
     const lArray1d& ntod = discreteElementNodeManager.GetFieldData<FieldInfo::demIndex>();//s.m_nodeToDiscreteElementMap;
 
-    iArray1d faceAttachedToALocalNode;
+    array<integer> faceAttachedToALocalNode;
     SetGhostRank(nodeManager, discreteElementNodeManager, excludeFromContact, faceAttachedToALocalNode);
 
     lArray1d& parentElement = this->GetFieldData<localIndex>("parentElement");
-    iArray1d& parentElementRegion = this->GetFieldData<int>("parentElementRegion");
+    array<integer>& parentElementRegion = this->GetFieldData<int>("parentElementRegion");
 
-    for (localIndex ixfc1 = 0; ixfc1 < this->DataLengths(); ++ixfc1)
+    for (localIndex ixfc1 = 0 ; ixfc1 < this->DataLengths() ; ++ixfc1)
     {
       if(excludeFromContact[ixfc1]>0)
         continue;
@@ -504,7 +551,7 @@ bool ExternalFaceManagerT::RecalculateNeighborList(
       else
       {
         parentElement[ixfc1] = faceAttachedToALocalNode[ixfc1]==0 ? std::numeric_limits<localIndex>::max() :
-            ntod[fton[faceIndex][0]];
+                               ntod[fton[faceIndex][0]];
 
         parentElementRegion[ixfc1] = faceAttachedToALocalNode[ixfc1]==0 ? std::numeric_limits<int>::max() : 0;
 
@@ -526,8 +573,8 @@ bool ExternalFaceManagerT::RecalculateNeighborList(
 
   //update the last radii and last centers
   {
-    rArray1d& lradii = this->GetFieldData<realT>("boundingRadiusLastSort");
-    Array1dT<R1Tensor>& lcenters = this->GetFieldData<R1Tensor>("faceCenterLastSort");
+    array<real64>& lradii = this->GetFieldData<realT>("boundingRadiusLastSort");
+    array<R1Tensor>& lcenters = this->GetFieldData<R1Tensor>("faceCenterLastSort");
 
     const realT rvelFct = 0.5 * dt * this->m_tol.searchRadiusVelocityFactor;
 
@@ -542,7 +589,7 @@ bool ExternalFaceManagerT::RecalculateNeighborList(
       std::copy(radii.begin(), radii.end(), lradii.begin());
 
       //now, increment the search radius by the adjustments
-      for (localIndex ixfc1 = 0; ixfc1 < this->DataLengths(); ++ixfc1)
+      for (localIndex ixfc1 = 0 ; ixfc1 < this->DataLengths() ; ++ixfc1)
       {
         R1Tensor rvelTmp(vel[ixfc1]);
         rvelTmp *= rvelFct;
@@ -559,8 +606,8 @@ bool ExternalFaceManagerT::RecalculateNeighborList(
       //-----------------------------------------------------------------------
       // PARTIAL RESORT
       //-----------------------------------------------------------------------
-      for (std::set<localIndex>::const_iterator it = toResort.begin();
-          it != toResort.end(); ++it)
+      for (std::set<localIndex>::const_iterator it = toResort.begin() ;
+           it != toResort.end() ; ++it)
       {
         R1Tensor rvelTmp(vel[*it]);
         rvelTmp *= rvelFct;
@@ -589,8 +636,8 @@ void ExternalFaceManagerT::PostSortUpdate( const NodeManager& nodeManager,
   //-----------------------------------------------------------------------
   // DEAL WITH GHOSTS AND SELF-CONTACT
   //-----------------------------------------------------------------------
-  const iArray1d& excludeFromContact = this->GetFieldData<int>("excludeFromContact");
-  iArray1d faceAttachedToALocalNode;
+  const array<integer>& excludeFromContact = this->GetFieldData<int>("excludeFromContact");
+  array<integer> faceAttachedToALocalNode;
   SetGhostRank(nodeManager, discreteElementNodeManager, excludeFromContact,
                faceAttachedToALocalNode);
   RemoveInvalidPairsFromNeighborList(faceAttachedToALocalNode, toResort);
@@ -602,8 +649,8 @@ void ExternalFaceManagerT::PostSortUpdate( const NodeManager& nodeManager)
   // DEAL WITH GHOSTS AND SELF-CONTACT
   //-----------------------------------------------------------------------
   lSet toResort;
-  const iArray1d& excludeFromContact = this->GetFieldData<int>("excludeFromContact");
-  iArray1d faceAttachedToALocalNode;
+  const array<integer>& excludeFromContact = this->GetFieldData<int>("excludeFromContact");
+  array<integer> faceAttachedToALocalNode;
   SetGhostRank(nodeManager, excludeFromContact,
                faceAttachedToALocalNode);
   RemoveInvalidPairsFromNeighborList(faceAttachedToALocalNode, toResort);
@@ -611,23 +658,24 @@ void ExternalFaceManagerT::PostSortUpdate( const NodeManager& nodeManager)
 
 void ExternalFaceManagerT::SetGhostRank(    const NodeManager& nodeManager,
                                             const NodeManager& discreteElementNodeManager,
-                                            const iArray1d& excludeFromContact,
-                                            iArray1d& faceAttachedToALocalNode)
+                                            const array<integer>& excludeFromContact,
+                                            array<integer>& faceAttachedToALocalNode)
 {
   faceAttachedToALocalNode.resize(this->DataLengths());
 
-  //create a temporary ghost flag array and an array to cache whether a face is attached to a local node
-  iArray1d& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
+  //create a temporary ghost flag array and an array to cache whether a face is
+  // attached to a local node
+  array<integer>& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
   {
-    const Array1dT<lArray1d>& faceToNodesFE = this->m_faceManager->m_toNodesRelation;
-    const Array1dT<lArray1d>& faceToNodesDE = this->m_discreteElementFaceManager->m_toNodesRelation;
-    const iArray1d& nodeGhostFE = nodeManager.GetFieldData<FieldInfo::ghostRank>();
-    const iArray1d& nodeGhostDE = discreteElementNodeManager.GetFieldData<FieldInfo::ghostRank>();
-    const iArray1d& ghostRankFE = this->m_faceManager->GetFieldData<FieldInfo::ghostRank>();
-    const iArray1d& ghostRankDE = this->m_discreteElementFaceManager->GetFieldData<FieldInfo::ghostRank>();
+    const array<lArray1d>& faceToNodesFE = this->m_faceManager->m_toNodesRelation;
+    const array<lArray1d>& faceToNodesDE = this->m_discreteElementFaceManager->m_toNodesRelation;
+    const array<integer>& nodeGhostFE = nodeManager.GetFieldData<FieldInfo::ghostRank>();
+    const array<integer>& nodeGhostDE = discreteElementNodeManager.GetFieldData<FieldInfo::ghostRank>();
+    const array<integer>& ghostRankFE = this->m_faceManager->GetFieldData<FieldInfo::ghostRank>();
+    const array<integer>& ghostRankDE = this->m_discreteElementFaceManager->GetFieldData<FieldInfo::ghostRank>();
 
 
-    for (localIndex ixfc1 = 0; ixfc1 < this->DataLengths(); ++ixfc1)
+    for (localIndex ixfc1 = 0 ; ixfc1 < this->DataLengths() ; ++ixfc1)
     {
       faceAttachedToALocalNode[ixfc1] = 0;
       if(excludeFromContact[ixfc1]>0)
@@ -636,9 +684,9 @@ void ExternalFaceManagerT::SetGhostRank(    const NodeManager& nodeManager,
       bool is_fe;
       const localIndex faceIndex = this->FaceIndex(ixfc1, is_fe);
       const lArray1d& faceToNodes = is_fe ? faceToNodesFE[faceIndex] : faceToNodesDE[faceIndex];
-      const iArray1d& nodeGhost = is_fe ? nodeGhostFE : nodeGhostDE;
-      const iArray1d& ghostRankT = is_fe ? ghostRankFE : ghostRankDE;
-      for(lArray1d::const_iterator it = faceToNodes.begin(); it != faceToNodes.end(); ++it)
+      const array<integer>& nodeGhost = is_fe ? nodeGhostFE : nodeGhostDE;
+      const array<integer>& ghostRankT = is_fe ? ghostRankFE : ghostRankDE;
+      for(lArray1d::const_iterator it = faceToNodes.begin() ; it != faceToNodes.end() ; ++it)
       {
         if(nodeGhost[*it] < 0)
         {
@@ -653,18 +701,19 @@ void ExternalFaceManagerT::SetGhostRank(    const NodeManager& nodeManager,
 
 
 void ExternalFaceManagerT::SetGhostRank(    const NodeManager& nodeManager,
-                                            const iArray1d& excludeFromContact,
-                                            iArray1d& faceAttachedToALocalNode)
+                                            const array<integer>& excludeFromContact,
+                                            array<integer>& faceAttachedToALocalNode)
 {
   faceAttachedToALocalNode.resize(this->DataLengths());
 
-  //create a temporary ghost flag array and an array to cache whether a face is attached to a local node
-  iArray1d& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
+  //create a temporary ghost flag array and an array to cache whether a face is
+  // attached to a local node
+  array<integer>& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
   {
-    const Array1dT<lArray1d>& faceToNodesFE = this->m_faceManager->m_toNodesRelation;
-    const iArray1d& nodeGhostFE = nodeManager.GetFieldData<FieldInfo::ghostRank>();
-    const iArray1d& ghostRankFE = this->m_faceManager->GetFieldData<FieldInfo::ghostRank>();
-    for (localIndex ixfc1 = 0; ixfc1 < nfe; ++ixfc1)
+    const array<lArray1d>& faceToNodesFE = this->m_faceManager->m_toNodesRelation;
+    const array<integer>& nodeGhostFE = nodeManager.GetFieldData<FieldInfo::ghostRank>();
+    const array<integer>& ghostRankFE = this->m_faceManager->GetFieldData<FieldInfo::ghostRank>();
+    for (localIndex ixfc1 = 0 ; ixfc1 < nfe ; ++ixfc1)
     {
       faceAttachedToALocalNode[ixfc1] = 0;
       if(excludeFromContact[ixfc1]>0)
@@ -672,7 +721,7 @@ void ExternalFaceManagerT::SetGhostRank(    const NodeManager& nodeManager,
       bool is_fe = true;
       const localIndex faceIndex = this->FaceIndex(ixfc1, is_fe);
       const lArray1d& faceToNodes = faceToNodesFE[faceIndex];
-      for(lArray1d::const_iterator it = faceToNodes.begin(); it != faceToNodes.end(); ++it)
+      for(lArray1d::const_iterator it = faceToNodes.begin() ; it != faceToNodes.end() ; ++it)
       {
         if(nodeGhostFE[*it] < 0)
         {
@@ -687,8 +736,8 @@ void ExternalFaceManagerT::SetGhostRank(    const NodeManager& nodeManager,
 
 
 void ExternalFaceManagerT::RemoveInvalidPairsFromNeighborListSub(const lArray1d& parentElement,
-                                                                 const iArray1d& parentElementRegion,
-                                                                 const iArray1d& faceAttachedToALocalNode,
+                                                                 const array<integer>& parentElementRegion,
+                                                                 const array<integer>& faceAttachedToALocalNode,
                                                                  const localIndex a,
                                                                  lArray1d& current)
 {
@@ -699,14 +748,16 @@ void ExternalFaceManagerT::RemoveInvalidPairsFromNeighborListSub(const lArray1d&
     const localIndex b = *it1;
     const bool is_fe1 = IsFiniteElement(b);
 
-    //remove if (1) neither face is attached to a local node and, hence, both are ghosts
-    //          (2) they are part of the same element, are not mixed contacts (DEM-FEM), and do not allow self contact
+    //remove if (1) neither face is attached to a local node and, hence, both
+    // are ghosts
+    //          (2) they are part of the same element, are not mixed contacts
+    // (DEM-FEM), and do not allow self contact
     //              (either by flag for FE or by nature of the element for DE)
     const bool remove = (faceAttachedToALocalNode[a] == 0 && faceAttachedToALocalNode[b] == 0) ||
-        ((parentElement[a] == parentElement[b]) &&
-            (parentElementRegion[a] == parentElementRegion[b]) &&
-            (is_fe0 == is_fe1) &&
-            (!this->m_contactSelf || is_fe0==false));
+                        ((parentElement[a] == parentElement[b]) &&
+                         (parentElementRegion[a] == parentElementRegion[b]) &&
+                         (is_fe0 == is_fe1) &&
+                         (!this->m_contactSelf || is_fe0==false));
     if(remove)
     {
       lSet::iterator itset = this->m_neighborListInverse[b].find(a);
@@ -724,19 +775,20 @@ void ExternalFaceManagerT::RemoveInvalidPairsFromNeighborListSub(const lArray1d&
 }
 
 /**
- * @brief Remove any ghost-on-ghost pairs or invalid self-contact from the neighbor list
+ * @brief Remove any ghost-on-ghost pairs or invalid self-contact from the
+ * neighbor list
  * @author Scott Johnson
  */
-void ExternalFaceManagerT::RemoveInvalidPairsFromNeighborList(const iArray1d& faceAttachedToALocalNode,
+void ExternalFaceManagerT::RemoveInvalidPairsFromNeighborList(const array<integer>& faceAttachedToALocalNode,
                                                               const lSet& toResort)
 {
   const lArray1d& parentElement = this->GetFieldData<localIndex>("parentElement");
-  const iArray1d& parentElementRegion = this->GetFieldData<int>("parentElementRegion");
+  const array<integer>& parentElementRegion = this->GetFieldData<int>("parentElementRegion");
   localIndex a = 0;
   if(toResort.size() == 0)
   {
     //go through the entire neighbor list ... this is a total sort
-    for(Array1dT<lArray1d>::iterator it0 = this->m_neighborList.begin(); it0 != this->m_neighborList.end(); ++it0, ++a)
+    for(array<lArray1d>::iterator it0 = this->m_neighborList.begin() ; it0 != this->m_neighborList.end() ; ++it0, ++a)
     {
       lArray1d& current = *it0;
       RemoveInvalidPairsFromNeighborListSub(parentElement, parentElementRegion, faceAttachedToALocalNode, a, current);
@@ -747,17 +799,17 @@ void ExternalFaceManagerT::RemoveInvalidPairsFromNeighborList(const iArray1d& fa
     //for everything in the resort list, you need to also check anything
     //that is proximate, so both the neighbor list and the inverse list
     lSet check(toResort);
-    for(lSet::const_iterator it0 = toResort.begin(); it0 != toResort.end(); ++it0)
+    for(lSet::const_iterator it0 = toResort.begin() ; it0 != toResort.end() ; ++it0)
     {
       const lArray1d& current = this->m_neighborList[*it0];
-      for(lArray1d::const_iterator it = current.begin(); it != current.end(); ++it)
+      for(lArray1d::const_iterator it = current.begin() ; it != current.end() ; ++it)
         check.insert(*it);
       const lSet& currentSet = this->m_neighborListInverse[*it0];
-      for(lSet::const_iterator it = currentSet.begin(); it != currentSet.end(); ++it)
+      for(lSet::const_iterator it = currentSet.begin() ; it != currentSet.end() ; ++it)
         check.insert(*it);
     }
 
-    for(lSet::const_iterator it0 = check.begin(); it0 != check.end(); ++it0)
+    for(lSet::const_iterator it0 = check.begin() ; it0 != check.end() ; ++it0)
     {
       lArray1d& current = this->m_neighborList[*it0];
       RemoveInvalidPairsFromNeighborListSub(parentElement, parentElementRegion, faceAttachedToALocalNode, *it0, current);
@@ -768,8 +820,10 @@ void ExternalFaceManagerT::RemoveInvalidPairsFromNeighborList(const iArray1d& fa
 /**
  * @brief Update the geometric properties of each contact
  * @author Scott Johnson
- * This updates the contact geometry without updating any material states or stresses
- * In addition to the variables below, this also fills the common plane points as well as
+ * This updates the contact geometry without updating any material states or
+ * stresses
+ * In addition to the variables below, this also fills the common plane points
+ * as well as
  * the default polygon's dimensions
  * @param[in] dt Timestep duration
  * @param[in,out] domain Domain
@@ -779,7 +833,7 @@ void ExternalFaceManagerT::RemoveInvalidPairsFromNeighborList(const iArray1d& fa
  */
 void ExternalFaceManagerT::UpdateGeometricContactPropertiesSub(const realT dt,
                                                                PhysicalDomainT& domain,
-                                                               const Array1dT<Array1dT<R1Tensor> >& xs  )
+                                                               const array<array<R1Tensor> >& xs  )
 {
   //check the tolerance for cosMin ... important!
   if(this->m_tol.cosMin <= 0)
@@ -788,21 +842,32 @@ void ExternalFaceManagerT::UpdateGeometricContactPropertiesSub(const realT dt,
   //-----------------------------
   //TO SET -->
   //-----------------------------
-  iArray1d& activeC = domain.m_contactManager.GetFieldData<int>( "active");// activeC = 0.0;
-  rArray1d& areaC = domain.m_contactManager.GetFieldData<realT>( "area"); areaC = 0.0;
-  rArray1d& area = this->GetFieldData<realT>("area"); area = 0.0; //area of a face that also belongs to a common plane
-  Array1dT<R1Tensor>& xpolyPts = domain.m_contactManager.m_intersectionPolygonPoints;   xpolyPts.clear();
-  Array1dT<lArray1d>& contactToXPoly = domain.m_contactManager.m_contactToIntersectionPolygonPointsMap;
-  Array1dT<R1Tensor>& normalC   = domain.m_contactManager.GetFieldData<R1Tensor>( "normal"); normalC = 0.0;
-  Array1dT<R1Tensor>& applicationPointC = domain.m_contactManager.GetFieldData<R1Tensor>( "applicationPoint");
-  //  std::unique_ptr<InterfaceBase>& contactC   = domain.m_contactManager.m_contact;
+  array<integer>& activeC = domain.m_contactManager.GetFieldData<int>( "active");// activeC
+                                                                                 // =
+                                                                                 // 0.0;
+  array<real64>& areaC = domain.m_contactManager.GetFieldData<realT>( "area"); areaC = 0.0;
+  array<real64>& area = this->GetFieldData<realT>("area"); area = 0.0; //area of
+                                                                       // a face
+                                                                       // that
+                                                                       // also
+                                                                       // belongs
+                                                                       // to a
+                                                                       // common
+                                                                       // plane
+  array<R1Tensor>& xpolyPts = domain.m_contactManager.m_intersectionPolygonPoints;   xpolyPts.clear();
+  array<lArray1d>& contactToXPoly = domain.m_contactManager.m_contactToIntersectionPolygonPointsMap;
+  array<R1Tensor>& normalC   = domain.m_contactManager.GetFieldData<R1Tensor>( "normal"); normalC = 0.0;
+  array<R1Tensor>& applicationPointC = domain.m_contactManager.GetFieldData<R1Tensor>( "applicationPoint");
+  //  std::unique_ptr<InterfaceBase>& contactC   =
+  // domain.m_contactManager.m_contact;
 
   //-----------------------------
   //ALREADY SET -->
   //-----------------------------
-  const Array1dT<R1Tensor>& xfc     = this->GetFieldData<R1Tensor> ( "faceCenter");
-  //  const Array1dT<R1Tensor>& dxfc    = this->GetFieldData<R1Tensor> ( "faceVelocity");
-  const Array1dT<R1Tensor>& nfc     = this->GetFieldData<R1Tensor> ( "faceNormal");
+  const array<R1Tensor>& xfc     = this->GetFieldData<R1Tensor> ( "faceCenter");
+  //  const array<R1Tensor>& dxfc    = this->GetFieldData<R1Tensor> (
+  // "faceVelocity");
+  const array<R1Tensor>& nfc     = this->GetFieldData<R1Tensor> ( "faceNormal");
 
   //-----------------------------
   //-----------------------------
@@ -821,19 +886,21 @@ void ExternalFaceManagerT::UpdateGeometricContactPropertiesSub(const realT dt,
 
   //Common plane properties
   R1Tensor centerCommonPlane, normalCommonPlane;
-  Array1dT<R1Tensor> pointsCommonPlane;
+  array<R1Tensor> pointsCommonPlane;
 
   if(m_tol.cosMin <= 0)
     throw GPException("Cannot handle non-convex contact with the common plane");
 
-  //  const realT big = std::numeric_limits<realT>::max(); //big Suitably large number used for initializing mins and maxes
+  //  const realT big = std::numeric_limits<realT>::max(); //big Suitably large
+  // number used for initializing mins and maxes
   //  const realT small = 1e-6; //small Small number for tolerance
 
   //-------ITERATE THROUGH POSSIBLE CONTACTS---------
 
   localIndex index = 0;
 
-  for(Array1dT<lArray1d>::size_type ixfc1 = 0; ixfc1 < this->m_neighborList.size(); ++ixfc1) {
+  for(array<lArray1d>::size_type ixfc1 = 0 ; ixfc1 < this->m_neighborList.size() ; ++ixfc1)
+  {
 
     ExternalFaceStruct efs1;
 
@@ -848,7 +915,8 @@ void ExternalFaceManagerT::UpdateGeometricContactPropertiesSub(const realT dt,
     xmin.SetMin(efs1.xmin);
 
     //Iterate through secondary faces
-    for(lArray1d::size_type it = 0; it < this->m_neighborList[ixfc1].size(); ++it, ++index) {
+    for(lArray1d::size_type it = 0 ; it < this->m_neighborList[ixfc1].size() ; ++it, ++index)
+    {
 
       const localIndex ixfc2 = this->m_neighborList[ixfc1][it];
 
@@ -908,7 +976,7 @@ void ExternalFaceManagerT::UpdateGeometricContactPropertiesSub(const realT dt,
 
         //set polygon points for future visualization
         contactToXPoly[index].reserve(pointsCommonPlane.size());
-        for(Array1dT<R1Tensor>::size_type ii = 0; ii < pointsCommonPlane.size(); ++ii)
+        for(array<R1Tensor>::size_type ii = 0 ; ii < pointsCommonPlane.size() ; ++ii)
         {
           contactToXPoly[index].push_back(xpolyPts.size());
           xpolyPts.push_back(pointsCommonPlane[ii]);
@@ -917,7 +985,8 @@ void ExternalFaceManagerT::UpdateGeometricContactPropertiesSub(const realT dt,
     }//ixfc2
   }//ixfc1
 
-  //FOR DEFAULT VISUALIZATION: SET POLYGON EXTENTS; POLYGON APPENDED IN THE WRITESILO FUNCTION (IF NECESSARY)
+  //FOR DEFAULT VISUALIZATION: SET POLYGON EXTENTS; POLYGON APPENDED IN THE
+  // WRITESILO FUNCTION (IF NECESSARY)
   domain.m_contactManager.SetDefaultPolygonDimensions(xmin, xmax);
 }
 
@@ -929,15 +998,17 @@ void ExternalFaceManagerT::UpdateGeometricContactPropertiesSub(const realT dt,
  * @param[in] applicationPoint point to query
  * @param[in] xs list of nodal positions
  * @param[in] vs list of nodal velocities
- * @param[in] is_fe flag indicating whether this is a finite element face with 4-nodes
- * @param[out] faceParentSolution parent solution to cache in the case of finite elements
+ * @param[in] is_fe flag indicating whether this is a finite element face with
+ * 4-nodes
+ * @param[out] faceParentSolution parent solution to cache in the case of finite
+ * elements
  * @param[out] point position of the face
  * @param[out] velocity velocity of the face
  */
 void ExternalFaceManagerT::FacePositionAndVelocityFE(const R1Tensor& normal,
                                                      const R1Tensor& applicationPoint,
-                                                     const Array1dT<R1Tensor>& xs,
-                                                     const Array1dT<R1Tensor>& vs,
+                                                     const array<R1Tensor>& xs,
+                                                     const array<R1Tensor>& vs,
                                                      const realT tolParentSolution,
                                                      R1Tensor& faceParentSolution,
                                                      R1Tensor& point,
@@ -949,7 +1020,7 @@ void ExternalFaceManagerT::FacePositionAndVelocityFE(const R1Tensor& normal,
   realT N[4];
   GeometryUtilities::FindProjectionInParentSpace(applicationPoint, normal, xs, faceParentSolution,
                                                  N, true, tolParentSolution);
-  for (localIndex a = 0; a < 4; ++a)
+  for (localIndex a = 0 ; a < 4 ; ++a)
   {
     R1Tensor temp(xs[a]);
     temp *= N[a];
@@ -963,8 +1034,8 @@ void ExternalFaceManagerT::FacePositionAndVelocityFE(const R1Tensor& normal,
 
 void ExternalFaceManagerT::FacePositionAndVelocityFE(const R1Tensor& normal,
                                                      const R1Tensor& applicationPoint,
-                                                     const Array1dT<R1Tensor>& xs,
-                                                     const Array1dT<R1Tensor>& vs,
+                                                     const array<R1Tensor>& xs,
+                                                     const array<R1Tensor>& vs,
                                                      R1Tensor& point,
                                                      R1Tensor& velocity)
 {
@@ -986,7 +1057,7 @@ void ExternalFaceManagerT::FacePositionAndVelocityFE(const R1Tensor& normal,
     N[1] = 1.0 - N[0];
   }
 
-  for (localIndex a = 0; a < 2; ++a)
+  for (localIndex a = 0 ; a < 2 ; ++a)
   {
     R1Tensor temp(xs[a]);
     temp *= N[a];
@@ -998,17 +1069,17 @@ void ExternalFaceManagerT::FacePositionAndVelocityFE(const R1Tensor& normal,
   }
 }
 
-void ExternalFaceManagerT::FacePositionAndVelocityFE(const Array1dT<R1Tensor>& xs,
-                                                     const Array1dT<R1Tensor>& vs,
+void ExternalFaceManagerT::FacePositionAndVelocityFE(const array<R1Tensor>& xs,
+                                                     const array<R1Tensor>& vs,
                                                      R1Tensor& point,
                                                      R1Tensor& velocity)
 {
   point = 0.0;
   velocity = 0.0;
-  Array1dT<R1Tensor>::const_iterator itx = xs.begin();
-  Array1dT<R1Tensor>::const_iterator itv = vs.begin();
+  array<R1Tensor>::const_iterator itx = xs.begin();
+  array<R1Tensor>::const_iterator itv = vs.begin();
   const realT fct = xs.size() > 0 ? 1.0/xs.size() : 0.0;
-  for (;itx != xs.end(); ++itx, ++itv)
+  for ( ; itx != xs.end() ; ++itx, ++itv)
   {
     point += *itx;
     velocity += *itv;
@@ -1019,17 +1090,17 @@ void ExternalFaceManagerT::FacePositionAndVelocityFE(const Array1dT<R1Tensor>& x
 
 realT ExternalFaceManagerT::ApplyStress(const R1Tensor& normal,
                                         const R1Tensor& applicationPoint,
-                                        const Array1dT<R1Tensor>& xs,
+                                        const array<R1Tensor>& xs,
                                         const lArray1d& faceToNodes,
-                                        const Array1dT<lSet>&  nodeToFaces,
-                                        const rArray1d& masses,
+                                        const array<lSet>&  nodeToFaces,
+                                        const array<real64>& masses,
                                         const bool is_fe,
                                         const R1Tensor& stress,
                                         const realT area,
                                         const realT tolParentSolution,
                                         R1Tensor& faceParentSolution,
-                                        Array1dT<R1Tensor>& forces,
-                                        Array1dT<R1Tensor>& contactForces)
+                                        array<R1Tensor>& forces,
+                                        array<R1Tensor>& contactForces)
 {
   realT massFace = 0.0;
   if (is_fe)
@@ -1038,7 +1109,7 @@ realT ExternalFaceManagerT::ApplyStress(const R1Tensor& normal,
     GeometryUtilities::FindProjectionInParentSpace(applicationPoint, normal, xs, faceParentSolution,
                                                    N, true, tolParentSolution);
     R1Tensor temp1;
-    for (lArray1d::size_type a = 0; a < faceToNodes.size(); ++a)
+    for (lArray1d::size_type a = 0 ; a < faceToNodes.size() ; ++a)
     {
       const localIndex inode = faceToNodes[a];
       temp1 = stress;
@@ -1052,7 +1123,7 @@ realT ExternalFaceManagerT::ApplyStress(const R1Tensor& normal,
   else
   {
     R1Tensor temp1;
-    for (lArray1d::size_type a = 0; a < faceToNodes.size(); ++a)
+    for (lArray1d::size_type a = 0 ; a < faceToNodes.size() ; ++a)
     {
       const localIndex inode = faceToNodes[a];
       temp1 = stress;
@@ -1074,45 +1145,46 @@ realT ExternalFaceManagerT::ApplyStress(const R1Tensor& normal,
  */
 void ExternalFaceManagerT::UpdateAndApplyContactStresses(StableTimeStep& maxdt, const realT dt,
                                                          PhysicalDomainT& domain,
-                                                         const Array1dT<Array1dT<R1Tensor> >& xs)
+                                                         const array<array<R1Tensor> >& xs)
 {
   //-----------------------------
   //TO SET -->
   //-----------------------------
-  Array1dT<R1Tensor>& forcesFE = domain.m_feNodeManager.GetFieldData<FieldInfo::force>();
-  Array1dT<R1Tensor>& contactForcesFE =
-      domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
+  array<R1Tensor>& forcesFE = domain.m_feNodeManager.GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& contactForcesFE =
+    domain.m_feNodeManager.GetFieldData<FieldInfo::contactForce>();
 
-  Array1dT<R1Tensor>& forcesDE =
-      domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::force>();
-  Array1dT<R1Tensor>& contactForcesDE = domain.m_discreteElementSurfaceNodes.GetFieldData<
-      FieldInfo::contactForce>();
+  array<R1Tensor>& forcesDE =
+    domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::force>();
+  array<R1Tensor>& contactForcesDE = domain.m_discreteElementSurfaceNodes.GetFieldData<
+    FieldInfo::contactForce>();
 
-  const rArray1d& massDE = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::mass>();
-  const rArray1d& massFE = domain.m_feNodeManager.GetFieldData<FieldInfo::mass>();
+  const array<real64>& massDE = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::mass>();
+  const array<real64>& massFE = domain.m_feNodeManager.GetFieldData<FieldInfo::mass>();
 
   //-----------------------------
   //SET BY UPDATEGEOMETRICPROPERTIES -->
   //-----------------------------
-  const Array1dT<R1Tensor>& normalC = domain.m_contactManager.GetFieldData<R1Tensor>("normal");
-  const Array1dT<R1Tensor>& velocityC = domain.m_contactManager.GetFieldData<R1Tensor>("velocity");
-  const iArray1d& activeC = domain.m_contactManager.GetFieldData<int>("active");
-  const rArray1d& areaC = domain.m_contactManager.GetFieldData<realT>("area");
-  const rArray1d& normalApproachC = domain.m_contactManager.GetFieldData<realT>("normalApproach");
-  //const rArray1d& normalApproachMaxC = domain.m_contactManager.GetFieldData<realT>("normalApproachMax");
-  const Array1dT<R1Tensor>& applicationPointC = domain.m_contactManager.GetFieldData<R1Tensor>(
-      "applicationPoint");
-  Array1dT<R1Tensor>& shearSlipC = domain.m_contactManager.GetFieldData<R1Tensor>("shearSlip");
-  Array1dT<R1Tensor>& face1ParentSoln = domain.m_contactManager.GetFieldData<R1Tensor>(
-      "face1ParentSoln"); //set before, but overwritten by ApplyStress
-  Array1dT<R1Tensor>& face2ParentSoln = domain.m_contactManager.GetFieldData<R1Tensor>(
-      "face2ParentSoln"); //set before, but overwritten by ApplyStress
+  const array<R1Tensor>& normalC = domain.m_contactManager.GetFieldData<R1Tensor>("normal");
+  const array<R1Tensor>& velocityC = domain.m_contactManager.GetFieldData<R1Tensor>("velocity");
+  const array<integer>& activeC = domain.m_contactManager.GetFieldData<int>("active");
+  const array<real64>& areaC = domain.m_contactManager.GetFieldData<realT>("area");
+  const array<real64>& normalApproachC = domain.m_contactManager.GetFieldData<realT>("normalApproach");
+  //const array<real64>& normalApproachMaxC =
+  // domain.m_contactManager.GetFieldData<realT>("normalApproachMax");
+  const array<R1Tensor>& applicationPointC = domain.m_contactManager.GetFieldData<R1Tensor>(
+    "applicationPoint");
+  array<R1Tensor>& shearSlipC = domain.m_contactManager.GetFieldData<R1Tensor>("shearSlip");
+  array<R1Tensor>& face1ParentSoln = domain.m_contactManager.GetFieldData<R1Tensor>(
+    "face1ParentSoln");   //set before, but overwritten by ApplyStress
+  array<R1Tensor>& face2ParentSoln = domain.m_contactManager.GetFieldData<R1Tensor>(
+    "face2ParentSoln");   //set before, but overwritten by ApplyStress
 
   InterfaceBase*& contactC = domain.m_contactManager.m_contact;
 
-  Array1dT<R1Tensor>& shearSlip = this->GetFieldData<R1Tensor>(
-      "shearSlip");
-  const rArray1d& area = this->GetFieldData<realT>("area");
+  array<R1Tensor>& shearSlip = this->GetFieldData<R1Tensor>(
+    "shearSlip");
+  const array<real64>& area = this->GetFieldData<realT>("area");
 
   const bool is2D = domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension==2;
 
@@ -1124,11 +1196,11 @@ void ExternalFaceManagerT::UpdateAndApplyContactStresses(StableTimeStep& maxdt, 
   //-----ITERATE NEIGHBORLIST AND UPDATE FORCES AND STRESSES-----
   const OrderedVariableOneToManyRelation& deFaceToNodes = domain.m_discreteElementSurfaceFaces.m_toNodesRelation;
   localIndex index = 0;
-  for (Array1dT<lArray1d>::size_type ixfc1 = 0; ixfc1 < this->m_neighborList.size(); ++ixfc1)
+  for (array<lArray1d>::size_type ixfc1 = 0 ; ixfc1 < this->m_neighborList.size() ; ++ixfc1)
   {
     bool is_fe1;
     localIndex faceIndex1 = this->FaceIndex(ixfc1, is_fe1);
-    for (lArray1d::size_type it = 0; it < this->m_neighborList[ixfc1].size(); ++it, ++index)
+    for (lArray1d::size_type it = 0 ; it < this->m_neighborList[ixfc1].size() ; ++it, ++index)
     {
       bool is_fe2;
       const localIndex ixfc2 = this->m_neighborList[ixfc1][it];
@@ -1143,7 +1215,8 @@ void ExternalFaceManagerT::UpdateAndApplyContactStresses(StableTimeStep& maxdt, 
       //-----------------------------------------------------------
       //CONTACT 1: ONLY FOR NON-MECHANICAL CONTACT
       //           zero stresses and states
-      if (!IsMechanicalContact(iactiveC)) //this is NOT a new or old mechanical contact
+      if (!IsMechanicalContact(iactiveC)) //this is NOT a new or old mechanical
+                                          // contact
       {
         //zero out the stress
         contactStateC *= 0.0;
@@ -1162,28 +1235,28 @@ void ExternalFaceManagerT::UpdateAndApplyContactStresses(StableTimeStep& maxdt, 
           realT massFace1 = 0.0;
           {
             const lArray1d& faceToNodes = is_fe1 ? domain.m_feFaceManager.m_toNodesRelation(faceIndex1) :
-                deFaceToNodes(faceIndex1);
-            const rArray1d& mass = is_fe1 ? massFE : massDE;
-            const Array1dT<lSet>&  nodeToFaces = is_fe1 ? domain.m_feNodeManager.m_nodeToFaceMap :
-                domain.m_discreteElementSurfaceNodes.m_nodeToFaceMap;
-            for(localIndex a = 0; a < faceToNodes.size(); ++a)
+                                          deFaceToNodes(faceIndex1);
+            const array<real64>& mass = is_fe1 ? massFE : massDE;
+            const array<lSet>&  nodeToFaces = is_fe1 ? domain.m_feNodeManager.m_nodeToFaceMap :
+                                              domain.m_discreteElementSurfaceNodes.m_nodeToFaceMap;
+            for(localIndex a = 0 ; a < faceToNodes.size() ; ++a)
               massFace1 += mass[faceToNodes[a]] / nodeToFaces[faceToNodes[a]].size();
           }
           realT massFace2 = 0.0;
           {
             const lArray1d& faceToNodes = is_fe2 ? domain.m_feFaceManager.m_toNodesRelation(faceIndex2) :
-                deFaceToNodes(faceIndex2);
-            const rArray1d& mass = is_fe2 ? massFE : massDE;
-            const Array1dT<lSet>&  nodeToFaces = is_fe2 ? domain.m_feNodeManager.m_nodeToFaceMap :
-                domain.m_discreteElementSurfaceNodes.m_nodeToFaceMap;
-            for(localIndex a = 0; a < faceToNodes.size(); ++a)
+                                          deFaceToNodes(faceIndex2);
+            const array<real64>& mass = is_fe2 ? massFE : massDE;
+            const array<lSet>&  nodeToFaces = is_fe2 ? domain.m_feNodeManager.m_nodeToFaceMap :
+                                              domain.m_discreteElementSurfaceNodes.m_nodeToFaceMap;
+            for(localIndex a = 0 ; a < faceToNodes.size() ; ++a)
               massFace2 += mass[faceToNodes[a]] / nodeToFaces[faceToNodes[a]].size();
           }
 
           //----GET THE STABLE TIMESTEP ESTIMATE ----
           maxdt.SetIfSmaller(StableTimestep(massFace1, massFace2, areaC[index],
                                             contactC->StiffnessProjected(
-                                                index)));
+                                              index)));
           //-----------------------------------------
         }
 
@@ -1193,13 +1266,16 @@ void ExternalFaceManagerT::UpdateAndApplyContactStresses(StableTimeStep& maxdt, 
       //-----------------------------------------------------------
       //CONTACT 2: ONLY FOR MECHANICAL CONTACT
       //           increment stresses
-      //           note: convention is state1-state0 (stress returned is that on face 1)
+      //           note: convention is state1-state0 (stress returned is that on
+      // face 1)
       //           e.g., Dot(ncp, normal0) > 0 etc
 
       //IF THIS IS NEW, POPULATE FROM FACE STATES
       if (IsNewMechanicalContact(iactiveC))
       {
-        //TODO: need to make sure "index" applies to the same one as previously, since a neighbor list update can invalidate the mapping; if fixed do NOT set activeC = 0.0 above
+        //TODO: need to make sure "index" applies to the same one as previously,
+        // since a neighbor list update can invalidate the mapping; if fixed do
+        // NOT set activeC = 0.0 above
 
         //this is a new contact, so get initial state from constituent faces!
         //also set the accumulated plasticEnergy from the faces
@@ -1232,17 +1308,17 @@ void ExternalFaceManagerT::UpdateAndApplyContactStresses(StableTimeStep& maxdt, 
                                       applicationPointC[index],
                                       xs[ixfc1],
                                       is_fe1 ? domain.m_feFaceManager.m_toNodesRelation(faceIndex1) :
-                                          deFaceToNodes(faceIndex1),
+                                      deFaceToNodes(faceIndex1),
                                       is_fe1 ? domain.m_feNodeManager.m_nodeToFaceMap :
-                                          domain.m_discreteElementSurfaceNodes.m_nodeToFaceMap,
-                                       is_fe1 ? massFE : massDE,
-                                       is_fe1 && !is2D,
-                                       stress,
-                                       areaC[index],
-                                       this->m_tol.feParentSolution,
-                                       face1ParentSoln[index],
-                                       is_fe1 ? forcesFE : forcesDE,
-                                       is_fe1 ? contactForcesFE : contactForcesDE);
+                                      domain.m_discreteElementSurfaceNodes.m_nodeToFaceMap,
+                                      is_fe1 ? massFE : massDE,
+                                      is_fe1 && !is2D,
+                                      stress,
+                                      areaC[index],
+                                      this->m_tol.feParentSolution,
+                                      face1ParentSoln[index],
+                                      is_fe1 ? forcesFE : forcesDE,
+                                      is_fe1 ? contactForcesFE : contactForcesDE);
 
       R1Tensor tstress = stress;
       tstress *= -1.0;
@@ -1251,9 +1327,9 @@ void ExternalFaceManagerT::UpdateAndApplyContactStresses(StableTimeStep& maxdt, 
                                       applicationPointC[index],
                                       xs[ixfc2],
                                       is_fe2 ? domain.m_feFaceManager.m_toNodesRelation(faceIndex2) :
-                                          deFaceToNodes(faceIndex2),
+                                      deFaceToNodes(faceIndex2),
                                       is_fe2 ? domain.m_feNodeManager.m_nodeToFaceMap :
-                                          domain.m_discreteElementSurfaceNodes.m_nodeToFaceMap,
+                                      domain.m_discreteElementSurfaceNodes.m_nodeToFaceMap,
                                       is_fe2 ? massFE : massDE,
                                       is_fe2 && !is2D,
                                       tstress,
@@ -1274,14 +1350,15 @@ void ExternalFaceManagerT::UpdateAndApplyContactStresses(StableTimeStep& maxdt, 
   } //end foreach ixfc1
 
   //-----------------------------------------------------------
-  //CONTACT 5: redistribute the common plane states to the faces for evolution to the next step
+  //CONTACT 5: redistribute the common plane states to the faces for evolution
+  // to the next step
   m_contact->ZeroStates();
   shearSlip = 0.0;
 
   index = 0;
-  for (Array1dT<lArray1d>::size_type ixfc1 = 0; ixfc1 < this->m_neighborList.size(); ++ixfc1)
+  for (array<lArray1d>::size_type ixfc1 = 0 ; ixfc1 < this->m_neighborList.size() ; ++ixfc1)
   {
-    for (lArray1d::size_type it = 0; it < this->m_neighborList[ixfc1].size(); ++it, ++index)
+    for (lArray1d::size_type it = 0 ; it < this->m_neighborList[ixfc1].size() ; ++it, ++index)
     {
       const localIndex ixfc2 = this->m_neighborList[ixfc1][it];
       if (index >= domain.m_contactManager.DataLengths())
@@ -1313,49 +1390,62 @@ void ExternalFaceManagerT::UpdateAndApplyContactStresses(StableTimeStep& maxdt, 
  */
 void ExternalFaceManagerT::UpdateGeometricContactProperties(const realT dt,
                                                             PhysicalDomainT& domain,
-                                                            Array1dT<Array1dT<R1Tensor> >& xs,
+                                                            array<array<R1Tensor> >& xs,
                                                             const bool updateFESoln)
 {
   //-----------------------------
   // TO SET -->
   //-----------------------------
   //set by UpdateGeometricContactProperties sub function
-  const rArray1d& area = this->GetFieldData<realT>("area");
-  const rArray1d& areaC = domain.m_contactManager.GetFieldData<realT>("area");
-  iArray1d& activeC = domain.m_contactManager.GetFieldData<int>("active"); //may be reset for DE-DE contact ... only reason it's not const
-  const Array1dT<R1Tensor>& xpolyPts = domain.m_contactManager.m_intersectionPolygonPoints;
-  const Array1dT<lArray1d>& contactToXPoly = domain.m_contactManager.m_contactToIntersectionPolygonPointsMap;
-  const Array1dT<R1Tensor>& normalC = domain.m_contactManager.GetFieldData<R1Tensor>("normal");
+  const array<real64>& area = this->GetFieldData<realT>("area");
+  const array<real64>& areaC = domain.m_contactManager.GetFieldData<realT>("area");
+  array<integer>& activeC = domain.m_contactManager.GetFieldData<int>("active"); //may
+                                                                                 // be
+                                                                                 // reset
+                                                                                 // for
+                                                                                 // DE-DE
+                                                                                 // contact
+                                                                                 // ...
+                                                                                 // only
+                                                                                 // reason
+                                                                                 // it's
+                                                                                 // not
+                                                                                 // const
+  const array<R1Tensor>& xpolyPts = domain.m_contactManager.m_intersectionPolygonPoints;
+  const array<lArray1d>& contactToXPoly = domain.m_contactManager.m_contactToIntersectionPolygonPointsMap;
+  const array<R1Tensor>& normalC = domain.m_contactManager.GetFieldData<R1Tensor>("normal");
 
   //set in this function
-  rArray1d& normalApproach = this->GetFieldData<realT>("normalApproach");
-  rArray1d& normalApproachMax = this->GetFieldData<realT>("normalApproachMax");
-  rArray1d& normalApproachC = domain.m_contactManager.GetFieldData<realT>("normalApproach");
-  rArray1d& normalApproachMaxC = domain.m_contactManager.GetFieldData<realT>("normalApproachMax");
-  Array1dT<R1Tensor>& applicationPointC = domain.m_contactManager.GetFieldData<R1Tensor>("applicationPoint");
-  Array1dT<R1Tensor>& face1ParentSoln = domain.m_contactManager.GetFieldData<R1Tensor>("face1ParentSoln");
-  Array1dT<R1Tensor>& face2ParentSoln = domain.m_contactManager.GetFieldData<R1Tensor>("face2ParentSoln");
-  Array1dT<R1Tensor>& velocityC = domain.m_contactManager.GetFieldData<R1Tensor>("velocity"); //velocityC = 0.0;
+  array<real64>& normalApproach = this->GetFieldData<realT>("normalApproach");
+  array<real64>& normalApproachMax = this->GetFieldData<realT>("normalApproachMax");
+  array<real64>& normalApproachC = domain.m_contactManager.GetFieldData<realT>("normalApproach");
+  array<real64>& normalApproachMaxC = domain.m_contactManager.GetFieldData<realT>("normalApproachMax");
+  array<R1Tensor>& applicationPointC = domain.m_contactManager.GetFieldData<R1Tensor>("applicationPoint");
+  array<R1Tensor>& face1ParentSoln = domain.m_contactManager.GetFieldData<R1Tensor>("face1ParentSoln");
+  array<R1Tensor>& face2ParentSoln = domain.m_contactManager.GetFieldData<R1Tensor>("face2ParentSoln");
+  array<R1Tensor>& velocityC = domain.m_contactManager.GetFieldData<R1Tensor>("velocity"); //velocityC
+                                                                                           // =
+                                                                                           // 0.0;
 
   //-----------------------------
   // ALREADY SET -->
   //-----------------------------
-  const Array1dT<R1Tensor>& pos_de = domain.m_discreteElementManager.GetFieldData<
-      FieldInfo::currentPosition>();
+  const array<R1Tensor>& pos_de = domain.m_discreteElementManager.GetFieldData<
+    FieldInfo::currentPosition>();
   const OrderedVariableOneToManyRelation& deFaceToNodes = domain.m_discreteElementSurfaceFaces.m_toNodesRelation;
 
   //-----------------------------
   //-----------------------------
   //-----------------------------
 
-  Array1dT<Array1dT<R1Tensor> > nodalVelocities;
-  const Array1dT<R1Tensor>& vel_fe = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
-  const Array1dT<R1Tensor>& vel_de = domain.m_discreteElementSurfaceNodes.GetFieldData<
-      FieldInfo::velocity>();
+  array<array<R1Tensor> > nodalVelocities;
+  const array<R1Tensor>& vel_fe = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
+  const array<R1Tensor>& vel_de = domain.m_discreteElementSurfaceNodes.GetFieldData<
+    FieldInfo::velocity>();
   {
     nodalVelocities.resize(this->DataLengths());
     bool is_fe;
-    for (localIndex i = 0; i < this->DataLengths(); ++i)
+    for (localIndex i = 0 ; i < this->DataLengths() ; ++i)
     {
       const localIndex faceIndex = this->FaceIndex(i, is_fe);
       if (is_fe)
@@ -1365,8 +1455,8 @@ void ExternalFaceManagerT::UpdateGeometricContactProperties(const realT dt,
                                                             faceIndex, xs[i]);
 
       const lArray1d& faceToNodeMap =
-          is_fe ? domain.m_feFaceManager.m_toNodesRelation[faceIndex] :
-              deFaceToNodes[faceIndex];
+        is_fe ? domain.m_feFaceManager.m_toNodesRelation[faceIndex] :
+        deFaceToNodes[faceIndex];
       nodalVelocities[i].resize(faceToNodeMap.size());
       CopyGlobalToLocal(faceToNodeMap, is_fe ? vel_fe : vel_de, nodalVelocities[i]);
     }
@@ -1379,16 +1469,16 @@ void ExternalFaceManagerT::UpdateGeometricContactProperties(const realT dt,
   bool is_fe1 = false, is_fe2 = false;
 
   //-----ITERATE NEIGHBORLIST AND UPDATE-----
-  const Array1dT<R1Tensor>& nfc     = this->GetFieldData<R1Tensor> ( "faceNormal");
+  const array<R1Tensor>& nfc     = this->GetFieldData<R1Tensor> ( "faceNormal");
   localIndex index = 0;
 
   domain.m_discreteElementManager.m_discreteElementToDiscreteElementContactsMap.clear();
 
   const lArray1d& nodeToDE = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::demIndex>();
-  for (Array1dT<lArray1d>::size_type ixfc1 = 0; ixfc1 < this->m_neighborList.size(); ++ixfc1)
+  for (array<lArray1d>::size_type ixfc1 = 0 ; ixfc1 < this->m_neighborList.size() ; ++ixfc1)
   {
     const localIndex faceIndex1 = this->FaceIndex(ixfc1, is_fe1);
-    for (lArray1d::size_type it = 0; it < this->m_neighborList[ixfc1].size(); ++it, ++index)
+    for (lArray1d::size_type it = 0 ; it < this->m_neighborList[ixfc1].size() ; ++it, ++index)
     {
       const localIndex ixfc2 = this->m_neighborList[ixfc1][it];
       const localIndex faceIndex2 = this->FaceIndex(ixfc2, is_fe2);
@@ -1399,14 +1489,16 @@ void ExternalFaceManagerT::UpdateGeometricContactProperties(const realT dt,
         //-----------------------------------------------------------
         //CONTACT 1: get the geometry for either mechanical or flow contact
 
-        //REMOVED TO ACCOMMODATE DISTRIBUTED CONTACT ... SEE CommonPlaneInterferenceGeometry FOR DEFINITION
+        //REMOVED TO ACCOMMODATE DISTRIBUTED CONTACT ... SEE
+        // CommonPlaneInterferenceGeometry FOR DEFINITION
         if(!this->m_smoothedContact)
           GeometryUtilities::Centroid_3DPolygon(contactToXPoly[index], xpolyPts, applicationPointC[index]);
 #if 0
         R1Tensor tmpPt;
         static int tmpIndex = 0;
         GeometryUtilities::Centroid_3DPolygon(contactToXPoly[index], xpolyPts, tmpPt);
-        std::cout << (tmpIndex++) << "\napp_pt: " << applicationPointC[index](0) << " " << applicationPointC[index](1) << " " << applicationPointC[index](2) << "\n";
+        std::cout << (tmpIndex++) << "\napp_pt: " << applicationPointC[index](0) << " " << applicationPointC[index](1) << " " << applicationPointC[index](2) <<
+          "\n";
         std::cout << "tmp_pt: " << tmpPt(0) << " " << tmpPt(1) << " " << tmpPt(2) << "\n\n";
 #endif
 
@@ -1439,7 +1531,7 @@ void ExternalFaceManagerT::UpdateGeometricContactProperties(const realT dt,
         else
         {
           localIndex ide1 =
-              nodeToDE[deFaceToNodes[faceIndex1][0]];
+            nodeToDE[deFaceToNodes[faceIndex1][0]];
           GeometryUtilities::ProjectPointToPlaneAlongUnitVector(applicationPointC[index], xs[ixfc1][0], nfc[ixfc1],
                                                                 normalC[index], cpFacePosition1);
           domain.m_discreteElementManager.VelocityAtPoint(ide1, applicationPointC[index], cpFaceVelocity1);
@@ -1462,9 +1554,9 @@ void ExternalFaceManagerT::UpdateGeometricContactProperties(const realT dt,
             else
             {
               FacePositionAndVelocityFE(normalC[index], applicationPointC[index], xs[ixfc2],
-                                      nodalVelocities[ixfc2], this->m_tol.feParentSolution,
-                                      face2ParentSoln[index], cpFacePosition2,
-                                      cpFaceVelocity2);
+                                        nodalVelocities[ixfc2], this->m_tol.feParentSolution,
+                                        face2ParentSoln[index], cpFacePosition2,
+                                        cpFaceVelocity2);
             }
           }
           else
@@ -1473,7 +1565,7 @@ void ExternalFaceManagerT::UpdateGeometricContactProperties(const realT dt,
         else
         {
           localIndex ide2 =
-              nodeToDE[deFaceToNodes[faceIndex2][0]];
+            nodeToDE[deFaceToNodes[faceIndex2][0]];
           GeometryUtilities::ProjectPointToPlaneAlongUnitVector(applicationPointC[index], xs[ixfc2][0], nfc[ixfc2],
                                                                 normalC[index], cpFacePosition2);
           domain.m_discreteElementManager.VelocityAtPoint(ide2, applicationPointC[index], cpFaceVelocity2);
@@ -1498,14 +1590,15 @@ void ExternalFaceManagerT::UpdateGeometricContactProperties(const realT dt,
 
 #ifndef DEEFC
         //-----------------------------------------------------------
-        //CONTACT 3: ONLY FOR DE-DE CONTACT (activeC[index] == 1 or 2 && !is_fe1 && !is_fe2):
+        //CONTACT 3: ONLY FOR DE-DE CONTACT (activeC[index] == 1 or 2 && !is_fe1
+        // && !is_fe2):
         //           try using Hertzian contact for DE-DE contact
         if (!is_fe1 && !is_fe2)
         {
           localIndex ide1 =
-              nodeToDE[deFaceToNodes[faceIndex1][0]];
+            nodeToDE[deFaceToNodes[faceIndex1][0]];
           localIndex ide2 =
-              nodeToDE[deFaceToNodes[faceIndex2][0]];
+            nodeToDE[deFaceToNodes[faceIndex2][0]];
           if (ide1 > ide2)
           {
             localIndex tmp = ide1;
@@ -1525,11 +1618,11 @@ void ExternalFaceManagerT::UpdateGeometricContactProperties(const realT dt,
 
             //add the contribution to the contact
             domain.m_discreteElementManager.m_discreteElementToDiscreteElementContactsMap[ide1][ide2].AddContribution(
-                areaC[index],
-                normalApproachC[index],
-                r0, r1,
-                applicationPointC[index],
-                normalC[index]);
+              areaC[index],
+              normalApproachC[index],
+              r0, r1,
+              applicationPointC[index],
+              normalC[index]);
 
             activeC[index] = demcontact;
           }
@@ -1541,16 +1634,17 @@ void ExternalFaceManagerT::UpdateGeometricContactProperties(const realT dt,
   } //end foreach ixfc1
 
   //-----------------------------------------------------------
-  //CONTACT 5: redistribute the common plane states to the faces for evolution to the next step
+  //CONTACT 5: redistribute the common plane states to the faces for evolution
+  // to the next step
   {
     normalApproach = 0;
     normalApproachMax = 0;
   }
 
   index = 0;
-  for (Array1dT<lArray1d>::size_type ixfc1 = 0; ixfc1 < this->m_neighborList.size(); ++ixfc1)
+  for (array<lArray1d>::size_type ixfc1 = 0 ; ixfc1 < this->m_neighborList.size() ; ++ixfc1)
   {
-    for (lArray1d::size_type it = 0; it < this->m_neighborList[ixfc1].size(); ++it, ++index)
+    for (lArray1d::size_type it = 0 ; it < this->m_neighborList[ixfc1].size() ; ++it, ++index)
     {
       const localIndex ixfc2 = this->m_neighborList[ixfc1][it];
 
@@ -1578,36 +1672,37 @@ void ExternalFaceManagerT::SetCommonPlaneGeometryAsOverlap(const localIndex inde
                                                            const localIndex ixfc1,
                                                            const localIndex ixfc2,
                                                            PhysicalDomainT& domain,
-                                                           const Array1dT<Array1dT<R1Tensor> >& xs)
+                                                           const array<array<R1Tensor> >& xs)
 {
-  //TODO: FOR NOW WE LEAVE ALL IN xpolyPts, BUT WE SHOULD REMOVE THE DISCARDED POINTS AT SOME POINT
+  //TODO: FOR NOW WE LEAVE ALL IN xpolyPts, BUT WE SHOULD REMOVE THE DISCARDED
+  // POINTS AT SOME POINT
 
   //------------------------
   // TO RESET -->
   //------------------------
-  Array1dT<R1Tensor>& xpolyPts = domain.m_contactManager.m_intersectionPolygonPoints;
-  Array1dT<lArray1d>& contactToXPoly =
-      domain.m_contactManager.m_contactToIntersectionPolygonPointsMap;
+  array<R1Tensor>& xpolyPts = domain.m_contactManager.m_intersectionPolygonPoints;
+  array<lArray1d>& contactToXPoly =
+    domain.m_contactManager.m_contactToIntersectionPolygonPointsMap;
   contactToXPoly[index].clear();
-  rArray1d& areaC = domain.m_contactManager.GetFieldData<realT>("area");
-  rArray1d& area = this->GetFieldData<realT>("area");
-  iArray1d& activeC = domain.m_contactManager.GetFieldData<int>("active");
+  array<real64>& areaC = domain.m_contactManager.GetFieldData<realT>("area");
+  array<real64>& area = this->GetFieldData<realT>("area");
+  array<integer>& activeC = domain.m_contactManager.GetFieldData<int>("active");
 
   //------------------------
   //------------------------
   //------------------------
-  const Array1dT<R1Tensor>& applicationPointC = domain.m_contactManager.GetFieldData<R1Tensor>("applicationPoint");
-  const Array1dT<R1Tensor>& normalC = domain.m_contactManager.GetFieldData<R1Tensor>("normal");
+  const array<R1Tensor>& applicationPointC = domain.m_contactManager.GetFieldData<R1Tensor>("applicationPoint");
+  const array<R1Tensor>& normalC = domain.m_contactManager.GetFieldData<R1Tensor>("normal");
 
-  Array1dT<R1TensorT<2> > inPoints;
+  array<R1TensorT<2> > inPoints;
   R1Tensor e1, e2;
   {
     R1TensorT<2> min, max, tmin, tmax;
-    Array1dT<R1TensorT<2> > xsl1, xsl2;
-    Array1dT<R1Tensor> xs1(xs[ixfc1]), xs2(xs[ixfc2]);
-    for(Array1dT<R1Tensor>::size_type i = 0; i < xs1.size(); i++)
+    array<R1TensorT<2> > xsl1, xsl2;
+    array<R1Tensor> xs1(xs[ixfc1]), xs2(xs[ixfc2]);
+    for(array<R1Tensor>::size_type i = 0 ; i < xs1.size() ; i++)
       xs1[i] -= applicationPointC[index];
-    for(Array1dT<R1Tensor>::size_type i = 0; i < xs2.size(); i++)
+    for(array<R1Tensor>::size_type i = 0 ; i < xs2.size() ; i++)
       xs2[i] -= applicationPointC[index];
 
     GeometryUtilities::VectorsInPlane(normalC[index], e1, e2);
@@ -1618,8 +1713,8 @@ void ExternalFaceManagerT::SetCommonPlaneGeometryAsOverlap(const localIndex inde
     max.SetMax(tmax);
 
     const realT minDim = (max(0) - min(0)) < (max(1) - min(1)) ?
-        (max(0) - min(0)) :
-        (max(1) - min(1));
+                         (max(0) - min(0)) :
+                         (max(1) - min(1));
     const realT positionTolerance = this->m_tol.spatial * minDim;
     //    const realT penetrationTolerance = this->tol.penetration * minDim;
     //    const realT areaTolerance = this->tol.area * minDim * minDim;
@@ -1637,7 +1732,7 @@ void ExternalFaceManagerT::SetCommonPlaneGeometryAsOverlap(const localIndex inde
 
   //set polygon points for future visualization
   contactToXPoly[index].reserve(inPoints.size());
-  for(Array1dT<R1Tensor>::size_type ii = 0; ii < inPoints.size(); ++ii)
+  for(array<R1Tensor>::size_type ii = 0 ; ii < inPoints.size() ; ++ii)
   {
     R1Tensor newPoint = e1;
     newPoint *= inPoints[ii](0);
@@ -1659,40 +1754,40 @@ bool ExternalFaceManagerT::Criterion1(  const R1Tensor& nx1,
 
 bool ExternalFaceManagerT::Criterion2(const R1Tensor& e1,
                                       const R1Tensor& e2,
-                                      const Array1dT<R1Tensor>& xs1,
-                                      const Array1dT<R1Tensor>& xs2,
-                                      Array1dT<R1TensorT<2> >& xsl1,
-                                      Array1dT<R1TensorT<2> >& xsl2,
+                                      const array<R1Tensor>& xs1,
+                                      const array<R1Tensor>& xs2,
+                                      array<R1TensorT<2> >& xsl1,
+                                      array<R1TensorT<2> >& xsl2,
                                       realT& minDim)
 {
   R1TensorT<2> min1, min2, max1, max2;
   GeometryUtilities::CartesianPointsProjectedToPlanarPoints( xs1, e1, e2, xsl1, min1, max1);
   GeometryUtilities::CartesianPointsProjectedToPlanarPoints( xs2, e1, e2, xsl2, min2, max2);
-  for(localIndex i = 0; i < 2; ++i)
+  for(localIndex i = 0 ; i < 2 ; ++i)
     if(min1(i) > max2(i) || max1(i) < min2(i))
       return false;
 
   //Get the minimum dimension
   {
-      minDim = max1(0) - min1(0);
-      realT m = max1(1) - min1(1);
-      if(m < minDim)
-        minDim = m;
-      m = max2(0) - min2(0);
-      if(m < minDim)
-        minDim = m;
-      m = max2(1) - min2(1);
-      if(m < minDim)
-        minDim = m;
-      if(isZero(minDim))
-        return false;
+    minDim = max1(0) - min1(0);
+    realT m = max1(1) - min1(1);
+    if(m < minDim)
+      minDim = m;
+    m = max2(0) - min2(0);
+    if(m < minDim)
+      minDim = m;
+    m = max2(1) - min2(1);
+    if(m < minDim)
+      minDim = m;
+    if(isZero(minDim))
+      return false;
   }
   return true;
 }
 
-bool ExternalFaceManagerT::Criterion3(const Array1dT<R1TensorT<2> >& xsl1,
-                                      const Array1dT<R1TensorT<2> >& xsl2,
-                                      Array1dT<R1TensorT<2> >& xsl,
+bool ExternalFaceManagerT::Criterion3(const array<R1TensorT<2> >& xsl1,
+                                      const array<R1TensorT<2> >& xsl2,
+                                      array<R1TensorT<2> >& xsl,
                                       realT& area,
                                       const realT positionTolerance,
                                       const realT areaTolerance)
@@ -1706,7 +1801,8 @@ bool ExternalFaceManagerT::Criterion3(const Array1dT<R1TensorT<2> >& xsl1,
 
 
 /**
- * @brief Determine the geometry (if it exists) for the interference of two faces on their common plane
+ * @brief Determine the geometry (if it exists) for the interference of two
+ * faces on their common plane
  * @author Scott Johnson
  *
  *
@@ -1721,10 +1817,16 @@ bool ExternalFaceManagerT::Criterion3(const Array1dT<R1TensorT<2> >& xsl1,
  * @param[in] nx2 Face normal
  * @param[in] efs2 Structure to hold miscellaneous face properties for face 2
  * @param[in] tol Structure to hold tolerance values for contact
- * @param[out] centerCommonPlane Center of the shared common plane if in contact or the center of the geometry for flow contact
- * @param[out] normalCommonPlane Normal to the common plane or the geometry for flow contact
- * @param[out] areaCommonPlane Area of the common plane or the geometry for flow contact
- * @param[out] pointsCommonPlane Points in clockwise order formed by the interference of the faces on the common plane of for the interference geometry of the flow contact
+ * @param[out] centerCommonPlane Center of the shared common plane if in contact
+ * or the center of the geometry for flow contact
+ * @param[out] normalCommonPlane Normal to the common plane or the geometry for
+ * flow contact
+ * @param[out] areaCommonPlane Area of the common plane or the geometry for flow
+ * contact
+ * @param[out] pointsCommonPlane Points in clockwise order formed by the
+ * interference of the faces on the common plane of for the interference
+ *geometry
+ * of the flow contact
  * @return 0 if no contact, 1 if mechanical contact, 2 if flow contact
  */
 int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
@@ -1741,7 +1843,7 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
                                                           R1Tensor& applicationPoint,
                                                           R1Tensor& normalCommonPlane,
                                                           realT& areaCommonPlane,
-                                                          Array1dT<R1Tensor>& pointsCommonPlane)
+                                                          array<R1Tensor>& pointsCommonPlane)
 {
 
   const int verbose = 0;
@@ -1750,7 +1852,8 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
   // CHECK FACE PAIR
   //--------------------------------------------------------
 
-  //At this point, we only assure that the loose bounding spheres of the faces are contacting
+  //At this point, we only assure that the loose bounding spheres of the faces
+  // are contacting
   //Let's first make sure that the normals are opposite (within a tolerance) ...
 
   //+++++++++++++++++++++++++++++++
@@ -1791,7 +1894,8 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
   // faces projected onto common plane should have overlapping
   // Plane-Aligned Bounding Boxes (PABB's) ... check that this is the case
 
-  Array1dT<R1TensorT<2> > xsl1, xsl2, xsl;//hold the points projected onto the common plane
+  array<R1TensorT<2> > xsl1, xsl2, xsl;//hold the points projected onto the
+                                       // common plane
   realT minDim=0;
   if(!Criterion2(e1, e2, efs1.xs, efs2.xs, xsl1, xsl2, minDim))
   {
@@ -1829,8 +1933,10 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
 
 
 //  @ annavarapusr1: HACK FOR TETS TO WORK
-//   When every face between two planes was fractured, the routines were predicting erroneous contact
-//   This hack checks if the common plane area is equal to the face area - if not, it returns no contact
+//   When every face between two planes was fractured, the routines were
+// predicting erroneous contact
+//   This hack checks if the common plane area is equal to the face area - if
+// not, it returns no contact
 //  if(std::fabs(efs1.area - xslArea)>1e-14)
 //  {
 //    return nocontact;
@@ -1838,16 +1944,22 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
 
 
   //Now, things get interesting; we need both the negative and positive overlaps
-  //the negative is used for the flow solver, while the positive is for the mechanics solver
-  //go through each point, and if it penetrates the common plane, it is part of the positive volume
+  //the negative is used for the flow solver, while the positive is for the
+  // mechanics solver
+  //go through each point, and if it penetrates the common plane, it is part of
+  // the positive volume
   //otherwise the negative volume; identify intersection points
   //
-  //To do any of this, we need the common plane center and the penetration distances
-  //We are going to do the punishing operation of finding the overlap region's centroid
+  //To do any of this, we need the common plane center and the penetration
+  // distances
+  //We are going to do the punishing operation of finding the overlap region's
+  // centroid
   //as the starting point of determining the actual common plane's center
   //
-  // (note: if the faces are relatively close in size and location, we could replace this
-  //        with an average of the face centers, but we may have significant size and
+  // (note: if the faces are relatively close in size and location, we could
+  // replace this
+  //        with an average of the face centers, but we may have significant
+  // size and
   //        location distribution, which precludes such an approach)
   R1TensorT<2> xcpl;
   {
@@ -1871,8 +1983,8 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
     }
   }
 
-  rArray1d penetration1(xsl1.size(),0.0); //positive into the common plane
-  rArray1d penetration2(xsl2.size(),0.0); //positive into the common plane
+  array<real64> penetration1(xsl1.size(),0.0); //positive into the common plane
+  array<real64> penetration2(xsl2.size(),0.0); //positive into the common plane
   realT penetrationSummation1 = 0.0, penetrationSummation2 = 0.0;
   bool allOutOfRange = true;
   bool allOutOfContact = true;
@@ -1881,16 +1993,19 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
     //    R1TensorT<2> xcpl;
     //    xcpl(0) = Dot(centerCommonPlane, e1);
     //    xcpl(1) = Dot(centerCommonPlane, e2);
-    for(Array1dT<R1TensorT<2> >::size_type a = 0; a < xsl1.size(); ++a) {
+    for(array<R1TensorT<2> >::size_type a = 0 ; a < xsl1.size() ; ++a)
+    {
       xsl1[a] -= xcpl;
       penetration1[a] = GeometryUtilities::DistanceToPlane(normalCommonPlane, centerCommonPlane, efs1.xs[a]);
-      if(penetration1[a] > 0) {
+      if(penetration1[a] > 0)
+      {
         penetrationSummation1 += penetration1[a];
         allOutOfContact = false;
         if(penetration1[a] <= penetrationTolerance)
           allOutOfRange = false;
       }
-      else if(penetration1[a] >= -tol.maximumSeparation) {
+      else if(penetration1[a] >= -tol.maximumSeparation)
+      {
         allOutOfRange = false;
         allInContact = false;
       }
@@ -1900,16 +2015,19 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
       }
     }
 
-    for(Array1dT<R1TensorT<2> >::size_type a = 0; a < xsl2.size(); ++a) {
+    for(array<R1TensorT<2> >::size_type a = 0 ; a < xsl2.size() ; ++a)
+    {
       xsl2[a] -= xcpl;
       penetration2[a] = -GeometryUtilities::DistanceToPlane(normalCommonPlane, centerCommonPlane, efs2.xs[a]);
-      if(penetration2[a] > 0) {
+      if(penetration2[a] > 0)
+      {
         penetrationSummation2 += penetration2[a];
         allOutOfContact = false;
         if(penetration2[a] <= penetrationTolerance)
           allOutOfRange = false;
       }
-      else if(penetration2[a] >= -tol.maximumSeparation) {
+      else if(penetration2[a] >= -tol.maximumSeparation)
+      {
         allOutOfRange = false;
         allInContact = false;
       }
@@ -1921,7 +2039,8 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
   }
 
   //+++++++++++++++++++++++++++++++
-  //CRITERION 4: MAKE SURE AT LEAST SOME OF THE NODES ARE CLOSE ENOUGH TO THE COMMON PLANE
+  //CRITERION 4: MAKE SURE AT LEAST SOME OF THE NODES ARE CLOSE ENOUGH TO THE
+  // COMMON PLANE
   if(allOutOfRange)
   {
     if( verbose == 2 )
@@ -1937,17 +2056,22 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
 
   //Faces are now oppositely oriented and quite "close"
   //We also have lists of the nodes projected to the common plane
-  //coordinates where the 2D coordinates are relative to the candidate common plane center
+  //coordinates where the 2D coordinates are relative to the candidate common
+  // plane center
   //We also know that the projection onto the common plane has finite area
-  //for both faces, and we have just established the normal penetration distances on each face
-  //and at least one of these normal distances is within contact range of the common plane
-  //so ... we know we will either have opencontact or mechanicalcontact ... resolve which
+  //for both faces, and we have just established the normal penetration
+  // distances on each face
+  //and at least one of these normal distances is within contact range of the
+  // common plane
+  //so ... we know we will either have opencontact or mechanicalcontact ...
+  // resolve which
   {
     //get detailed in and out of common plane geometry
 
-    Array1dT<R1TensorT<2> > inContact1, inContact2;
+    array<R1TensorT<2> > inContact1, inContact2;
 
-    //if all of the nodes are in contact, there is no need to go through the expense of clipping
+    //if all of the nodes are in contact, there is no need to go through the
+    // expense of clipping
     //...there's nothing to be clipped, so just copy the old points to the new
     if(allInContact)
     {
@@ -1958,10 +2082,11 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
     }
     else if(!allOutOfContact)
     {
-      //here we have the case where some are in contact and some are not, so we need to do the clipping
+      //here we have the case where some are in contact and some are not, so we
+      // need to do the clipping
       {
-        Array1dT<R1TensorT<2> > outContact1;
-        rArray1d inDistance1, outDistance1;
+        array<R1TensorT<2> > outContact1;
+        array<real64> inDistance1, outDistance1;
         GeometryUtilities::ClipByPlane_3DPolygon(normalCommonPlane,
                                                  centerCommonPlane,
                                                  efs1.xs, e1, e2,
@@ -1972,8 +2097,8 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
         GeometryUtilities::RemoveCoincidentOrderedPoints(inContact1, positionTolerance);
       }
       {
-        Array1dT<R1TensorT<2> > outContact2;
-        rArray1d inDistance2, outDistance2;
+        array<R1TensorT<2> > outContact2;
+        array<real64> inDistance2, outDistance2;
         GeometryUtilities::ClipByPlane_3DPolygon(normalCommonPlane,
                                                  centerCommonPlane,
                                                  efs2.xs, e1, e2,
@@ -1986,11 +2111,12 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
     }
 
     //get detailed intersection and difference
-    Array1dT<R1TensorT<2> > inPoints;
+    array<R1TensorT<2> > inPoints;
     areaCommonPlane = 0.0;
     if(inContact1.size() > 2 && inContact2.size() > 2)
     {
-      //only look for the intersection of the polygons if they have enough points
+      //only look for the intersection of the polygons if they have enough
+      // points
       areaCommonPlane = GeometryUtilities::Intersection_2DPolygons(inContact1,
                                                                    inContact2,
                                                                    positionTolerance,
@@ -2004,11 +2130,14 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
     //--NOW, DO THE FINAL DETERMINATION OF WHETHER THIS IS MECHANICAL OR OPEN--
     if(areaCommonPlane < areaTolerance || inPoints.size() < 3)
     {
-      //THIS _MUST_ BE AN OPEN CONTACT, SO LET'S JUST USE THE OVERLAP REGION CALCULATED
+      //THIS _MUST_ BE AN OPEN CONTACT, SO LET'S JUST USE THE OVERLAP REGION
+      // CALCULATED
       //FOR CRITERION 3: xsl, xcpl, etc.
       R1Tensor pt;
-      for(Array1dT<R1TensorT<2> >::size_type i = 0; i < xsl.size(); ++i) {
-        xsl[i] -= xcpl;//note: xsl now contains the 2D coordinates relative to the center of the region
+      for(array<R1TensorT<2> >::size_type i = 0 ; i < xsl.size() ; ++i)
+      {
+        xsl[i] -= xcpl;//note: xsl now contains the 2D coordinates relative to
+                       // the center of the region
         GeometryUtilities::PlanarPointProjectedToCartesianCoordinates(xsl[i], e1, e2, pt);
         pt += centerCommonPlane;
         pointsCommonPlane.push_back(pt);
@@ -2017,19 +2146,23 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
     }
     else
     {
-      //You've now graduated ... contact is assured, so just resolve the common plane geometry
+      //You've now graduated ... contact is assured, so just resolve the common
+      // plane geometry
       R1TensorT<2> xcpNew;
       GeometryUtilities::Centroid_2DPolygon(inPoints, xcpNew);
 
-      //note: since inPoints is relative to the old common plane center estimate, this is just an offset
+      //note: since inPoints is relative to the old common plane center
+      // estimate, this is just an offset
       R1Tensor pt;
       GeometryUtilities::PlanarPointProjectedToCartesianCoordinates(xcpNew, e1, e2, pt);
       centerCommonPlane += pt;
 
-      for(Array1dT<R1TensorT<2> >::size_type i = 0; i < inPoints.size(); ++i) {
+      for(array<R1TensorT<2> >::size_type i = 0 ; i < inPoints.size() ; ++i)
+      {
         //translate the points to the newly determined common plane center
         inPoints[i] -= xcpNew;
-        //transform to the planar coordinate system rotationally relative to the global frame
+        //transform to the planar coordinate system rotationally relative to the
+        // global frame
         GeometryUtilities::PlanarPointProjectedToCartesianCoordinates(inPoints[i], e1, e2, pt);
         //translate to the global frame
         pt += centerCommonPlane;
@@ -2042,7 +2175,8 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
 }
 
 /**
- * @brief Determine the geometry (if it exists) for the interference of two 2D edges on their common edge
+ * @brief Determine the geometry (if it exists) for the interference of two 2D
+ * edges on their common edge
  * @author Scott Johnson
  *
  *
@@ -2057,9 +2191,12 @@ int ExternalFaceManagerT::CommonPlaneInterferenceGeometry(const R1Tensor& xfc1,
  * @param[in] nx2 Face normal
  * @param[in] efs2 Structure to hold miscellaneous face properties for edge 2
  * @param[in] tol Structure to hold tolerance values for contact
- * @param[out] centerCommonEdge Center of the shared common plane if in contact or the center of the geometry for flow contact
- * @param[out] normalCommonEdge Normal to the common plane or the geometry for flow contact
- * @param[out] lengthCommonEdge Area of the common plane or the geometry for flow contact
+ * @param[out] centerCommonEdge Center of the shared common plane if in contact
+ * or the center of the geometry for flow contact
+ * @param[out] normalCommonEdge Normal to the common plane or the geometry for
+ * flow contact
+ * @param[out] lengthCommonEdge Area of the common plane or the geometry for
+ * flow contact
  * @param[out] pointCommonEdge1 Terminus of common edge
  * @param[out] pointCommonEdge2 Terminus of common edge
  * @return 0 if no contact, 1 if mechanical contact, 2 if flow contact
@@ -2077,7 +2214,7 @@ int ExternalFaceManagerT::CommonEdgeInterferenceGeometry(  const R1Tensor& xfc1,
                                                            R1Tensor& centerCommonEdge,
                                                            R1Tensor& normalCommonEdge,
                                                            realT& lengthCommonEdge,
-                                                           Array1dT<R1Tensor>& pointsCommonEdge)
+                                                           array<R1Tensor>& pointsCommonEdge)
 {
   pointsCommonEdge.clear();
   pointsCommonEdge.resize(2);
@@ -2089,7 +2226,8 @@ int ExternalFaceManagerT::CommonEdgeInterferenceGeometry(  const R1Tensor& xfc1,
   // CHECK EDGE PAIR
   //--------------------------------------------------------
 
-  //At this point, we only assure that the loose bounding circles of the edges are contacting
+  //At this point, we only assure that the loose bounding circles of the edges
+  // are contacting
   //Let's first make sure that the normals are opposite (within a tolerance) ...
 
   //+++++++++++++++++++++++++++++++
@@ -2154,7 +2292,8 @@ int ExternalFaceManagerT::CommonEdgeInterferenceGeometry(  const R1Tensor& xfc1,
     return ret;
 
   const bool isSmallerThanMachinePrecision =  (fabs(ndist[0])<1e-16 && fabs(ndist[1])<1e-16) || (fabs(ndist[2])<1e-16 && fabs(ndist[3])<1e-16);
-  //The line segments do not both penetrate the common plane, so find the overlap
+  //The line segments do not both penetrate the common plane, so find the
+  // overlap
   const bool isOpen = (ndist[0] >= 0 && ndist[1] >=0) || (ndist[2] >= 0 && ndist[3] >=0) || isSmallerThanMachinePrecision;
 
   if(isOpen)
@@ -2198,7 +2337,7 @@ int ExternalFaceManagerT::CommonEdgeInterferenceGeometry(  const R1Tensor& xfc1,
         ndist[2] = 0;
       }
     }
-    for(localIndex i = 0; i < 4; i++)
+    for(localIndex i = 0 ; i < 4 ; i++)
       dot[i] = Dot(t[i], tmp);
 
     //put the edge points in order
@@ -2244,7 +2383,8 @@ int ExternalFaceManagerT::CommonEdgeInterferenceGeometry(  const R1Tensor& xfc1,
   //TODO: check signs rather than fabs'ing it
   //May be able to move these checks up to save computational expense
   //SJ 1/15/14
-  const realT minDim = fabs(dot[order[1]] - dot[order[0]]) < fabs(dot[order[3]] - dot[order[2]]) ? fabs(dot[order[1]] - dot[order[0]]) : fabs(dot[order[3]] - dot[order[2]]);
+  const realT minDim = fabs(dot[order[1]] - dot[order[0]]) < fabs(dot[order[3]] - dot[order[2]]) ? fabs(dot[order[1]] - dot[order[0]]) : fabs(
+    dot[order[3]] - dot[order[2]]);
   const realT penetrationTolerance = tol.penetration * minDim;
   if(0.5*fabs(ndist[i1] + ndist[i0]) > penetrationTolerance)
     return nocontact;
@@ -2258,23 +2398,23 @@ int ExternalFaceManagerT::CommonEdgeInterferenceGeometry(  const R1Tensor& xfc1,
 
 
 
-
 /**
  * @author settgast
  * @param nodeManager
  *
- * function to set "excludeFromContact" field based on the "NodeManagerT::nodeKCBC" field.
+ * function to set "excludeFromContact" field based on the
+ *"NodeManagerT::nodeKCBC" field.
  */
 void ExternalFaceManagerT::SetExcludeFromContact( const NodeManager& nodeManager, bool reset )
 {
 
   if( nodeManager.HasField<int>("KCBC") )
   {
-    iArray1d& excludeFromContact = this->GetFieldData<int>("excludeFromContact");
+    array<integer>& excludeFromContact = this->GetFieldData<int>("excludeFromContact");
     if( reset )
       excludeFromContact = 1;
 
-    const iArray1d& nodeKCBC = nodeManager.GetFieldData<int>("KCBC");
+    const array<integer>& nodeKCBC = nodeManager.GetFieldData<int>("KCBC");
 
     for( localIndex ixfc=0 ; ixfc<this->DataLengths() ; ++ixfc )
     {
@@ -2316,17 +2456,17 @@ void ExternalFaceManagerT::WriteSiloExternalFaces( SiloFile& siloFile,
 
   //-----------------------------------------------------
   //HANDLE THE VARIABLES ASSOCIATED WITH THE JOINT STATE
-  sArray1d intVarNames;
-  sArray1d realVarNames;
-  sArray1d R1TensorVarNames;
-  sArray1d R2TensorVarNames;
-  sArray1d R2SymTensorVarNames;
+  array<string> intVarNames;
+  array<string> realVarNames;
+  array<string> R1TensorVarNames;
+  array<string> R2TensorVarNames;
+  array<string> R2SymTensorVarNames;
 
-  Array1dT<iArray1d*> intVars;
-  Array1dT<rArray1d*> realVars;
-  Array1dT<Array1dT<R1Tensor>*> R1Vars;
-  Array1dT<Array1dT<R2Tensor>*> R2Vars;
-  Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+  array<array<integer>*> intVars;
+  array<array<real64>*> realVars;
+  array<array<R1Tensor>*> R1Vars;
+  array<array<R2Tensor>*> R2Vars;
+  array<array<R2SymTensor>*> R2SymVars;
 
   m_contact->GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -2358,23 +2498,23 @@ void ExternalFaceManagerT::ReadSiloExternalFaces( const SiloFile& siloFile,
                                                   const int cycleNum,
                                                   const realT problemTime,
                                                   const bool isRestart,
-                                                  const std::string& ,
+                                                  const std::string&,
                                                   const lArray1d& mask)
 
 {
   if( DBSetDir(siloFile.m_dbFilePtr, siloDirName.c_str()) != -1 )
   {
-    sArray1d intVarNames;
-    sArray1d realVarNames;
-    sArray1d R1TensorVarNames;
-    sArray1d R2TensorVarNames;
-    sArray1d R2SymTensorVarNames;
+    array<string> intVarNames;
+    array<string> realVarNames;
+    array<string> R1TensorVarNames;
+    array<string> R2TensorVarNames;
+    array<string> R2SymTensorVarNames;
 
-    Array1dT<iArray1d*> intVars;
-    Array1dT<rArray1d*> realVars;
-    Array1dT<Array1dT<R1Tensor>*> R1Vars;
-    Array1dT<Array1dT<R2Tensor>*> R2Vars;
-    Array1dT<Array1dT<R2SymTensor>*> R2SymVars;
+    array<array<integer>*> intVars;
+    array<array<real64>*> realVars;
+    array<array<R1Tensor>*> R1Vars;
+    array<array<R2Tensor>*> R2Vars;
+    array<array<R2SymTensor>*> R2SymVars;
 
     m_contact->GetVariableNames( intVarNames, realVarNames, R1TensorVarNames, R2TensorVarNames, R2SymTensorVarNames );
 
@@ -2401,14 +2541,14 @@ void ExternalFaceManagerT::ReadSiloExternalFaces( const SiloFile& siloFile,
 }
 
 void ExternalFaceManagerT::WriteNonManagedDataMembersToSilo( SiloFile& siloFile,
-                                                             const std::string& ,
-                                                             const std::string& ,
-                                                             const int ,
-                                                             const int ,
-                                                             const realT ,
-                                                             const bool ,
-                                                             const std::string& ,
-                                                             const std::string& ,
+                                                             const std::string&,
+                                                             const std::string&,
+                                                             const int,
+                                                             const int,
+                                                             const realT,
+                                                             const bool,
+                                                             const std::string&,
+                                                             const std::string&,
                                                              const lArray1d& )
 {
   siloFile.DBWriteWrapper("nfe",nfe);
@@ -2419,13 +2559,13 @@ void ExternalFaceManagerT::WriteNonManagedDataMembersToSilo( SiloFile& siloFile,
 }
 
 void ExternalFaceManagerT::ReadNonManagedDataMembersFromSilo( const SiloFile& siloFile,
-                                                              const std::string& ,
-                                                              const std::string& ,
-                                                              const int ,
-                                                              const int ,
-                                                              const realT ,
-                                                              const bool ,
-                                                              const std::string& ,
+                                                              const std::string&,
+                                                              const std::string&,
+                                                              const int,
+                                                              const int,
+                                                              const realT,
+                                                              const bool,
+                                                              const std::string&,
                                                               const lArray1d& )
 {
   siloFile.DBReadWrapper("nfe",nfe);
@@ -2439,14 +2579,16 @@ void ExternalFaceManagerT::ReadNonManagedDataMembersFromSilo( const SiloFile& si
 #ifdef SRC_INTERNAL
 void ExternalFaceManagerT::GeodynCoupling( NodeManager& nodeManager )
 {
-  if (!doBackgroundAMR) return;
-  if (!p_stepbamr) throw GPException("stepbamr pointer is not set...");
+  if (!doBackgroundAMR)
+    return;
+  if (!p_stepbamr)
+    throw GPException("stepbamr pointer is not set...");
   A2Gtype A2G;
 
-  const Array1dT<R1Tensor>& nodalReferencePosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
-  const Array1dT<R1Tensor>& nodalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
-  const Array1dT<R1Tensor>& nodalVelocity = nodeManager.GetFieldData<FieldInfo::velocity>();
-  Array1dT<R1Tensor>& nodalForce = nodeManager.GetFieldData<FieldInfo::force>();
+  const array<R1Tensor>& nodalReferencePosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const array<R1Tensor>& nodalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& nodalVelocity = nodeManager.GetFieldData<FieldInfo::velocity>();
+  array<R1Tensor>& nodalForce = nodeManager.GetFieldData<FieldInfo::force>();
 
   std::map<localIndex,localIndex> face,mirror;
   typedef std::map<localIndex,localIndex>::iterator faceit;
@@ -2456,7 +2598,8 @@ void ExternalFaceManagerT::GeodynCoupling( NodeManager& nodeManager )
   {
     bool isFE = false;
     const localIndex faceIndex = FaceIndex(ixfc,isFE);
-    if( !isFE ) continue;
+    if( !isFE )
+      continue;
 
     lArray1d& nodelist = m_faceManager->m_toNodesRelation[faceIndex];
 
@@ -2470,18 +2613,21 @@ void ExternalFaceManagerT::GeodynCoupling( NodeManager& nodeManager )
       xmax.SetMax(nodalReferencePosition[nodelist[a]]);
     }
     R1Tensor xdif=xmax-xmin;
-    if(xdif[2]<std::numeric_limits<realT>::epsilon()) continue;
+    if(xdif[2]<std::numeric_limits<realT>::epsilon())
+      continue;
     localIndex n2n[2];
     int n=0;
     for( localIndex a=0 ; a<nodelist.size() ; ++a,++numPackedNodes )
     {
-      if (nodalReferencePosition[nodelist[a]][2]<0) continue;
+      if (nodalReferencePosition[nodelist[a]][2]<0)
+        continue;
       n2n[n++]=a;
     }
     int ndif=n2n[1]-n2n[0];
     for( localIndex a=0 ; a<nodelist.size() ; ++a,++numPackedNodes )
     {
-      if (nodalReferencePosition[nodelist[a]][2]<0) continue;
+      if (nodalReferencePosition[nodelist[a]][2]<0)
+        continue;
       n2n[n++]=a;
       localIndex ap=(a+1)%nodelist.size(), am=(a+nodelist.size()-1)%nodelist.size();
       if (nodalReferencePosition[nodelist[ap]][2]<0)
@@ -2489,8 +2635,10 @@ void ExternalFaceManagerT::GeodynCoupling( NodeManager& nodeManager )
       else
         mirror[nodelist[a]]=nodelist[am];
     }
-    if (ndif==1) face[nodelist[n2n[1]]]=nodelist[n2n[0]];
-    else         face[nodelist[n2n[0]]]=nodelist[n2n[1]];
+    if (ndif==1)
+      face[nodelist[n2n[1]]]=nodelist[n2n[0]];
+    else
+      face[nodelist[n2n[0]]]=nodelist[n2n[1]];
   }
 
   A2G.reserve(face.size());
@@ -2516,12 +2664,13 @@ void ExternalFaceManagerT::GeodynCoupling( NodeManager& nodeManager )
     faceit fit=face.find(f);
     f=fit->second;
     face.erase(fit);
-  } while (f!=f0);
+  }
+  while (f!=f0);
   dump_shape=0;
   G2Atype G2A;
   //  int res=p_stepbamr(A2G,G2A);
   assert ( G2A.size()==A2G.size() );
-  for (G2Atype::iterator a(G2A.begin()),ae(G2A.end());a!=ae;++a)
+  for (G2Atype::iterator a(G2A.begin()),ae(G2A.end()) ; a!=ae ; ++a)
   {
     localIndex li=a->first;
     R1Tensor nf(.5*a->second.fx,.5*a->second.fy,realT(0));
@@ -2539,11 +2688,12 @@ void ExternalFaceManagerT::GeodynCouplingParallel( NodeManager& nodeManager )
     throw GPException("stepbamr pointer is not set...");
 
   //Define temporary field arrays
-  const Array1dT<R1Tensor>& nodalReferencePosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
-  const Array1dT<R1Tensor>& nodalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
-  const Array1dT<R1Tensor>& nodalVelocity = nodeManager.GetFieldData<FieldInfo::velocity>();
-  const Array1dT<R1Tensor>& faceNormals = this->GetFieldData<R1Tensor>("faceNormal");
-  //  Array1dT<R1Tensor>& nodalForces = nodeManager.GetFieldData<FieldInfo::force>();
+  const array<R1Tensor>& nodalReferencePosition = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const array<R1Tensor>& nodalDisplacement = nodeManager.GetFieldData<FieldInfo::displacement>();
+  const array<R1Tensor>& nodalVelocity = nodeManager.GetFieldData<FieldInfo::velocity>();
+  const array<R1Tensor>& faceNormals = this->GetFieldData<R1Tensor>("faceNormal");
+  //  array<R1Tensor>& nodalForces =
+  // nodeManager.GetFieldData<FieldInfo::force>();
 
   //Define Bifroest
   GeodynBifroest share;
@@ -2551,9 +2701,9 @@ void ExternalFaceManagerT::GeodynCouplingParallel( NodeManager& nodeManager )
 
   //Start filling A2G type structures
   TempBifroestNodeSendData sendNode;
-  Array1dT<TempBifroestNodeSendData> keepNodes;
+  array<TempBifroestNodeSendData> keepNodes;
   TempBifroestFaceSendData sendFace;
-  Array1dT<TempBifroestFaceSendData> keepFaces;
+  array<TempBifroestFaceSendData> keepFaces;
   {
     std::map<int, lSet> partitionNodes;
     std::map<int, lSet> partitionFaces;
@@ -2577,12 +2727,13 @@ void ExternalFaceManagerT::GeodynCouplingParallel( NodeManager& nodeManager )
             throw GPException("Cannot yet handle faces with more than 4 nodes!");
           sendFace.nodeIndices[a] = nodeManager.m_localToGlobalMap[nodelist[a]];
           R1Tensor x(nodalReferencePosition[nodelist[a]]);
-          //FIXME: add in GEODYN function to determine which partition the node belongs to
+          //FIXME: add in GEODYN function to determine which partition the node
+          // belongs to
           partitions.insert(GeodynPartition(x));
         }
       }
 
-      for(iSet::const_iterator iter = partitions.begin(); iter != partitions.end(); ++iter)
+      for(iSet::const_iterator iter = partitions.begin() ; iter != partitions.end() ; ++iter)
       {
         if(*iter == share.Rank())
           keepFaces.push_back(sendFace);
@@ -2596,12 +2747,12 @@ void ExternalFaceManagerT::GeodynCouplingParallel( NodeManager& nodeManager )
     }
 
     //add partition nodes
-    for(std::map<int, lSet>::const_iterator iter = partitionNodes.begin(); iter != partitionNodes.end(); ++iter)
+    for(std::map<int, lSet>::const_iterator iter = partitionNodes.begin() ; iter != partitionNodes.end() ; ++iter)
     {
       const int irank = iter->first;
       if(irank == share.Rank())
       {
-        for(lSet::const_iterator iter1 = iter->second.begin(); iter1 != iter->second.end(); ++iter1)
+        for(lSet::const_iterator iter1 = iter->second.begin() ; iter1 != iter->second.end() ; ++iter1)
         {
           sendNode.nodeIndex = nodeManager.m_localToGlobalMap[*iter1];
           sendNode.x = nodalReferencePosition[*iter1];
@@ -2612,7 +2763,7 @@ void ExternalFaceManagerT::GeodynCouplingParallel( NodeManager& nodeManager )
       }
       else
       {
-        for(lSet::const_iterator iter1 = iter->second.begin(); iter1 != iter->second.end(); ++iter1)
+        for(lSet::const_iterator iter1 = iter->second.begin() ; iter1 != iter->second.end() ; ++iter1)
         {
           sendNode.nodeIndex = nodeManager.m_localToGlobalMap[*iter1];
           sendNode.x = nodalReferencePosition[*iter1];
@@ -2626,13 +2777,17 @@ void ExternalFaceManagerT::GeodynCouplingParallel( NodeManager& nodeManager )
 
   //Create communication topology for A2G and vice versa
   share.CoordinateShares();
-  //FIXME: add logic here to deal with those nodes and faces not sent to other processes
-  //SEE GEODYNBIFROEST.CPP AND CHANGE PROCESSPACKAGE AS APPROPRIATE TO DEAL WITH SLAVED OBJECTS
+  //FIXME: add logic here to deal with those nodes and faces not sent to other
+  // processes
+  //SEE GEODYNBIFROEST.CPP AND CHANGE PROCESSPACKAGE AS APPROPRIATE TO DEAL WITH
+  // SLAVED OBJECTS
 
-  //Communicate, process nodes, and deal with received information (i.e., G2A ...)
-  //SEE GEODYNBIFROEST.CPP AND CHANGE SYNCHRONIZE AS APPROPRIATE TO DEAL WITH SLAVED OBJECTS
+  //Communicate, process nodes, and deal with received information (i.e., G2A
+  // ...)
+  //SEE GEODYNBIFROEST.CPP AND CHANGE SYNCHRONIZE AS APPROPRIATE TO DEAL WITH
+  // SLAVED OBJECTS
   share.Synchronize();
-  for (Array1dT<TempBifroestFaceSendData>::const_iterator iter = keepFaces.begin(); iter != keepFaces.end(); ++iter)
+  for (array<TempBifroestFaceSendData>::const_iterator iter = keepFaces.begin() ; iter != keepFaces.end() ; ++iter)
   {
     //FIXME: add logic to update forces for the given keepFaces and keepNodes
     //globalIndex gi = iter->nodeIndices[0];
@@ -2643,18 +2798,20 @@ void ExternalFaceManagerT::GeodynCouplingParallel( NodeManager& nodeManager )
 #endif
 
 /*@annavarapusr1:
- * Get Weighting and stabilization parameters for Nitsche's method. Currently uses only analytical estimates
- * Not rigorous for quads and hexes - do an eigenvalue estimate if performance is poor. */
+ * Get Weighting and stabilization parameters for Nitsche's method. Currently
+ * uses only analytical estimates
+ * Not rigorous for quads and hexes - do an eigenvalue estimate if performance
+ * is poor. */
 void ExternalFaceManagerT::GetProjectionTensorAndWeightingAndStabilizationParameters(const int dim,
                                                                                      const bool planeStress,
                                                                                      PhysicalDomainT& domain)
 {
   const lArray1d& faceToExternalFaceMap = domain.m_feFaceManager.GetFieldData<localIndex>("externalFaceIndex");
 
-  rArray1d& nitscheStab_n  = this->GetFieldData<realT>("nitscheStab_n");
-  rArray1d& nitscheStab_t1 = this->GetFieldData<realT>("nitscheStab_t1");
-  rArray1d& nitscheStab_t2 = this->GetFieldData<realT>("nitscheStab_t2");
-  rArray1d& nitscheGamma = this->GetFieldData<realT>("nitscheGamma");
+  array<real64>& nitscheStab_n  = this->GetFieldData<realT>("nitscheStab_n");
+  array<real64>& nitscheStab_t1 = this->GetFieldData<realT>("nitscheStab_t1");
+  array<real64>& nitscheStab_t2 = this->GetFieldData<realT>("nitscheStab_t2");
+  array<real64>& nitscheGamma = this->GetFieldData<realT>("nitscheGamma");
 
   unsigned int totContFaces;
 //  if(dim==2 or dim==3)
@@ -2672,14 +2829,15 @@ void ExternalFaceManagerT::GetProjectionTensorAndWeightingAndStabilizationParame
 
 //  unsigned int totContFaces = domain.m_contactManager.DataLengths();
 
-  for (localIndex iContFace =  0; iContFace < totContFaces; iContFace++)
+  for (localIndex iContFace =  0 ; iContFace < totContFaces ; iContFace++)
   {
     bool contActiv = false;
     localIndex kf1, kf2;
 
 //    if(dim==2 or dim==3)
 //    {
-//      const OrderedVariableOneToManyRelation& childFaceIndex = domain.m_feFaceManager.GetVariableOneToManyMap("childIndices");
+//      const OrderedVariableOneToManyRelation& childFaceIndex =
+// domain.m_feFaceManager.GetVariableOneToManyMap("childIndices");
 //
 //      if (!(childFaceIndex[iContFace].empty()))
 //      {
@@ -2712,7 +2870,7 @@ void ExternalFaceManagerT::GetProjectionTensorAndWeightingAndStabilizationParame
     }
     else
     {
-      const iArray1d& active = domain.m_contactManager.GetFieldData<int>("activeInit");
+      const array<integer>& active = domain.m_contactManager.GetFieldData<int>("activeInit");
       const lArray1d& f1 = domain.m_contactManager.GetFieldData<localIndex>("face1");
       const lArray1d& f2 = domain.m_contactManager.GetFieldData<localIndex>("face2");
 
@@ -2725,9 +2883,12 @@ void ExternalFaceManagerT::GetProjectionTensorAndWeightingAndStabilizationParame
       }
     }
 
-//    const iArray1d& active = domain.m_contactManager.GetFieldData<int>("active");
-//    const lArray1d& f1 = domain.m_contactManager.GetFieldData<localIndex>("face1");
-//    const lArray1d& f2 = domain.m_contactManager.GetFieldData<localIndex>("face2");
+//    const array<integer>& active =
+// domain.m_contactManager.GetFieldData<int>("active");
+//    const lArray1d& f1 =
+// domain.m_contactManager.GetFieldData<localIndex>("face1");
+//    const lArray1d& f2 =
+// domain.m_contactManager.GetFieldData<localIndex>("face2");
 //
 //    if(active[iContFace]!=0)
 //    {
@@ -2758,7 +2919,8 @@ void ExternalFaceManagerT::GetProjectionTensorAndWeightingAndStabilizationParame
       }
 
       // Analytical estimate might underestimate the parameter for quads/hexes.
-      // Consequently multiply this estimate by a magnifying factor specified in the xml file.
+      // Consequently multiply this estimate by a magnifying factor specified in
+      // the xml file.
       // Default value for this factor is unity.
       stabAnalytical = domain.m_contactManager.m_stab_magnifying_factor*stabAnalytical;
 
@@ -2777,8 +2939,10 @@ void ExternalFaceManagerT::GetProjectionTensorAndWeightingAndStabilizationParame
   }
 }
 //@author: annavarapusr1
-//@brief: Function to calculate quantities required for the analytical estimate for the stabilization parameter
-//        || D ||_2 is evaluated analytically to avoid calculating the maximum eigenvalue
+//@brief: Function to calculate quantities required for the analytical estimate
+// for the stabilization parameter
+//        || D ||_2 is evaluated analytically to avoid calculating the maximum
+// eigenvalue
 void ExternalFaceManagerT::GetMeasOmgAndNormD(const int dim,
                                               const localIndex FaceID,
                                               const PhysicalDomainT& domain,
@@ -2786,14 +2950,14 @@ void ExternalFaceManagerT::GetMeasOmgAndNormD(const int dim,
                                               realT& measOmg,
                                               realT& NormD)
 {
-  const Array1dT< Array1dT< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
+  const array< array< std::pair< ElementRegionT*, localIndex > > >& ftoe = domain.m_feFaceManager.m_toElementsRelation;
   const ElementRegionT* elemRegion = ftoe[FaceID][0].first;
 
-  const rArray1d& elemVol = elemRegion->GetFieldData<FieldInfo::volume>();
+  const array<real64>& elemVol = elemRegion->GetFieldData<FieldInfo::volume>();
   const localIndex EleID = domain.m_feFaceManager.m_toElementsRelation[FaceID][0].second;
   measOmg = elemVol(EleID);
 
-  const localIndex paramIndex = elemRegion->m_mat->NumParameterIndex0() > 1 ? EleID : 0 ;
+  const localIndex paramIndex = elemRegion->m_mat->NumParameterIndex0() > 1 ? EleID : 0;
   const MaterialBaseParameterData& matParams = *(elemRegion->m_mat->ParameterData(paramIndex));
 
   const realT G = matParams.init_shearModulus;

@@ -13,7 +13,7 @@ namespace geosx
 using namespace dataRepository;
 
 MeshBody::MeshBody( string const & name,
-                      ManagedGroup * const parent ):
+                    ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
   RegisterViewWrapper<integer>( viewKeys.meshLevels );

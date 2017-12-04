@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -52,51 +70,58 @@
 
 
 PhysicalDomainT::PhysicalDomainT():
-m_globalDomainNumber(),
-m_ellipsoidalDiscreteElementManager(),
-m_ellipsoidalContactManager(),
-m_discreteElementSurfaceFaces(),
-m_discreteElementSurfaceNodes(),
-m_discreteElementManager(&m_discreteElementSurfaceNodes, &m_discreteElementSurfaceFaces),
-m_contactManager(),
-m_feNodeManager(),
-m_feElementManager(),
-m_feFaceManager(),
-m_crackManager(NULL),
-m_crackSurfaceVertex(NULL),
-m_externalFaces(&m_feFaceManager, &m_discreteElementSurfaceFaces),
-m_cartesianGridManager()
+  m_globalDomainNumber(),
+  m_ellipsoidalDiscreteElementManager(),
+  m_ellipsoidalContactManager(),
+  m_discreteElementSurfaceFaces(),
+  m_discreteElementSurfaceNodes(),
+  m_discreteElementManager(&m_discreteElementSurfaceNodes, &m_discreteElementSurfaceFaces),
+  m_contactManager(),
+  m_feNodeManager(),
+  m_feElementManager(),
+  m_feFaceManager(),
+  m_crackManager(NULL),
+  m_crackSurfaceVertex(NULL),
+  m_externalFaces(&m_feFaceManager, &m_discreteElementSurfaceFaces),
+  m_cartesianGridManager()
 #ifdef SRC_EXTERNAL
-,
-m_faultPatchFaces(),
-m_faultPatchNodes(),
-m_faultPorePressure(),
-m_faultElementManager(&m_faultPatchNodes, &m_faultPatchFaces),
-m_wellboreManager()
+  ,
+  m_faultPatchFaces(),
+  m_faultPatchNodes(),
+  m_faultPorePressure(),
+  m_faultElementManager(&m_faultPatchNodes, &m_faultPatchFaces),
+  m_wellboreManager()
 #endif
 #ifdef SRC_INTERNAL2
-,
-m_microseismicElementManager(),
-m_jointSets2(),
-m_xfemManager(NULL)
+  ,
+  m_microseismicElementManager(),
+  m_jointSets2(),
+  m_xfemManager(NULL)
 #endif
 {
   /*
-  m_managedObjectDataStructures.resize(Last_ObjectDataStructureNames_Index + 1);
-  m_managedObjectDataStructures[EllipsoidalDiscreteElementManager] = &m_ellipsoidalDiscreteElementManager;
-  m_managedObjectDataStructures[EllipsoidalContactManager] = &m_ellipsoidalContactManager;
-  m_managedObjectDataStructures[DiscreteElementFaceManager] = &m_discreteElementSurfaceFaces;
-  m_managedObjectDataStructures[DiscreteElementNodeManager] = &m_discreteElementSurfaceNodes;
-  m_managedObjectDataStructures[DiscreteElementManager] = &m_discreteElementManager;
-  m_managedObjectDataStructures[ContactManager] = &m_contactManager;
-  m_managedObjectDataStructures[FiniteElementNodeManager] = &m_feNodeManager;
-  m_managedObjectDataStructures[FiniteElementElementManager] = &m_feElementManager;
-  m_managedObjectDataStructures[FiniteElementFaceManager] = &m_feFaceManager;
-  m_managedObjectDataStructures[FiniteElementEdgeManager] = &m_feEdgeManager;
-  m_managedObjectDataStructures[ExternalFaceManager] = &m_externalFaces;
-  m_managedObjectDataStructures[VirtualFaceManager] = &m_virtualFaceManager;
-  m_managedObjectDataStructures[VirtualEdgeManager] = &m_virtualEdgeManager;
-  */
+     m_managedObjectDataStructures.resize(Last_ObjectDataStructureNames_Index +
+        1);
+     m_managedObjectDataStructures[EllipsoidalDiscreteElementManager] =
+        &m_ellipsoidalDiscreteElementManager;
+     m_managedObjectDataStructures[EllipsoidalContactManager] =
+        &m_ellipsoidalContactManager;
+     m_managedObjectDataStructures[DiscreteElementFaceManager] =
+        &m_discreteElementSurfaceFaces;
+     m_managedObjectDataStructures[DiscreteElementNodeManager] =
+        &m_discreteElementSurfaceNodes;
+     m_managedObjectDataStructures[DiscreteElementManager] =
+        &m_discreteElementManager;
+     m_managedObjectDataStructures[ContactManager] = &m_contactManager;
+     m_managedObjectDataStructures[FiniteElementNodeManager] = &m_feNodeManager;
+     m_managedObjectDataStructures[FiniteElementElementManager] =
+        &m_feElementManager;
+     m_managedObjectDataStructures[FiniteElementFaceManager] = &m_feFaceManager;
+     m_managedObjectDataStructures[FiniteElementEdgeManager] = &m_feEdgeManager;
+     m_managedObjectDataStructures[ExternalFaceManager] = &m_externalFaces;
+     m_managedObjectDataStructures[VirtualFaceManager] = &m_virtualFaceManager;
+     m_managedObjectDataStructures[VirtualEdgeManager] = &m_virtualEdgeManager;
+   */
 
   m_feNodeManager.m_nodeToEdgeMap.SetRelatedObject( &m_feEdgeManager );
 
@@ -104,8 +129,7 @@ m_xfemManager(NULL)
 }
 
 PhysicalDomainT::~PhysicalDomainT()
-{
-}
+{}
 
 int PhysicalDomainT::Initialize()
 {
@@ -115,36 +139,39 @@ int PhysicalDomainT::Initialize()
 #endif
 
   for (std::map<ElementManagerT::RegKeyType, ElementRegionT>::iterator elementRegionIter =
-      m_feElementManager.m_ElementRegions.begin(); elementRegionIter
-      != m_feElementManager.m_ElementRegions.end(); ++elementRegionIter)
+         m_feElementManager.m_ElementRegions.begin() ; elementRegionIter
+       != m_feElementManager.m_ElementRegions.end() ; ++elementRegionIter)
   {
     const std::string& RegionKey = elementRegionIter->first;
     ElementRegionT& elementRegion = elementRegionIter->second;
 
     std::cout << "Rank, Region Key, NumElems: " << rank << ", " << RegionKey << ", "
-        << elementRegion.m_numElems << std::endl;
+              << elementRegion.m_numElems << std::endl;
 
-    //TODO: change this to be determined based on solver type.  We only use these arrays for small def solvers.
+    //TODO: change this to be determined based on solver type.  We only use
+    // these arrays for small def solvers.
 //    if ( !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
 //    {
-//      //Do nothing, since we don't use any mechanical solver for this shell element.
+//      //Do nothing, since we don't use any mechanical solver for this shell
+// element.
 //    }
     /*
-    else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "TRSH") )
-    {
-      //Do nothing, since we don't use any mechanical solver for this shell element.
-    }
-    */
+       else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "TRSH") )
+       {
+       //Do nothing, since we don't use any mechanical solver for this shell
+          element.
+       }
+     */
 //    else
 //    {
-      elementRegion.CalculateShapeFunctionDerivatives(m_feNodeManager);
+    elementRegion.CalculateShapeFunctionDerivatives(m_feNodeManager);
 //    }
 
     elementRegion.Initialize();
 
     // make sets from nodesets
-    for (std::map<std::string, lSet>::const_iterator i = m_feNodeManager.m_Sets.begin(); i
-        != m_feNodeManager.m_Sets.end(); ++i)
+    for (std::map<std::string, lSet>::const_iterator i = m_feNodeManager.m_Sets.begin() ; i
+         != m_feNodeManager.m_Sets.end() ; ++i)
     {
       const std::string& setname = i->first;
       const lSet& set = i->second;
@@ -173,8 +200,8 @@ void PhysicalDomainT::SetInterObjectRelations()
 
   m_discreteElementSurfaceFaces.m_toNodesRelation.SetRelatedObject( &m_discreteElementSurfaceNodes );
   m_discreteElementSurfaceNodes.m_nodeToFaceMap.SetRelatedObject( &m_discreteElementSurfaceFaces );
-  m_discreteElementManager.m_discreteElementToExternalFacesMap.SetRelatedObject( &m_discreteElementSurfaceFaces ) ;
-  m_discreteElementManager.m_discreteElementToExternalNodesMap.SetRelatedObject( &m_discreteElementSurfaceNodes ) ;
+  m_discreteElementManager.m_discreteElementToExternalFacesMap.SetRelatedObject( &m_discreteElementSurfaceFaces );
+  m_discreteElementManager.m_discreteElementToExternalNodesMap.SetRelatedObject( &m_discreteElementSurfaceNodes );
 
   m_contactManager.m_contactToIntersectionPolygonPointsMap.SetRelatedObject( &m_externalFaces );
 
@@ -189,27 +216,30 @@ void PhysicalDomainT::SetInterObjectRelations()
   m_feFaceManager.m_toEdgesRelation.SetRelatedObject( &m_feEdgeManager );
   m_feFaceManager.m_toNodesRelation.SetRelatedObject( &m_feNodeManager );
 
-  m_feEdgeManager.m_toNodesRelation.SetRelatedObject( &m_feNodeManager ) ;
-  m_feEdgeManager.m_toFacesRelation.SetRelatedObject( &m_feFaceManager ) ;
+  m_feEdgeManager.m_toNodesRelation.SetRelatedObject( &m_feNodeManager );
+  m_feEdgeManager.m_toFacesRelation.SetRelatedObject( &m_feFaceManager );
 
-  for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator elementRegion=m_feElementManager.m_ElementRegions.begin() ; elementRegion!=m_feElementManager.m_ElementRegions.end(); ++elementRegion )
+  for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator elementRegion=m_feElementManager.m_ElementRegions.begin() ;
+       elementRegion!=m_feElementManager.m_ElementRegions.end() ; ++elementRegion )
   {
     elementRegion->second.m_toNodesRelation.SetRelatedObject( &m_feNodeManager );
-    //elementRegion->second.m_toEdgesRelation.SetRelatedObject( &m_feEdgeManager );
+    //elementRegion->second.m_toEdgesRelation.SetRelatedObject( &m_feEdgeManager
+    // );
     elementRegion->second.m_toFacesRelation.SetRelatedObject( &m_feFaceManager );
   }
 }
 
 
 /**
- * @brief Get the map of all enumerated and managed ObjectDataStructureBase managers
+ * @brief Get the map of all enumerated and managed ObjectDataStructureBase
+ * managers
  * @author Scott Johnson
  */
-/*const Array1dT<ObjectDataStructureBaseT*>& PhysicalDomainT::GetObjectDataStructures()
-{
-  return m_managedObjectDataStructures;
-}*/
-
+/*const array<ObjectDataStructureBaseT*>&
+   PhysicalDomainT::GetObjectDataStructures()
+   {
+   return m_managedObjectDataStructures;
+   }*/
 
 
 
@@ -224,82 +254,83 @@ void PhysicalDomainT::Pack( const ObjectDataStructureKeys key,
 {
   switch (key)
   {
-    case PhysicalDomainT::FiniteElementNodeManager:
-      m_feNodeManager.PackNodes( sendIndices, m_feFaceManager, buffer, packConnectivityToGlobal, packFields, packMaps, packSets );
-      break;
-    case PhysicalDomainT::FiniteElementEdgeManager:
-      m_feEdgeManager.PackEdges( sendIndices,
-                                 m_feNodeManager,
-                                 m_feFaceManager,
-                                 buffer,
-                                 packConnectivityToGlobal,
-                                 packFields, packMaps, packSets );
-      break;
-    case PhysicalDomainT::FiniteElementFaceManager:
-      m_feFaceManager.PackFaces( sendIndices,
-                                 m_feNodeManager,
-                                 &m_feEdgeManager,
-                                 buffer,
-                                 packConnectivityToGlobal,
-                                 packFields, packMaps, packSets );
-      break;
-    case PhysicalDomainT::EllipsoidalDiscreteElementManager:
-      //m_ellipsoidalDiscreteElementManager.Pack( sendIndices, buffer );
-      //break;
-    case PhysicalDomainT::DiscreteElementManager:
-      //m_discreteElementManager.Pack( sendIndices, buffer );
-      //break;
-    case PhysicalDomainT::DiscreteElementFaceManager:
-      //m_discreteElementSurfaceFaces.PackFaces( sendIndices,
-      //                                         m_feNodeManager,
-      //                                         &m_feEdgeManager,
-      //                                         buffer,
-      //                                         packConnectivityToGlobal,
-      //                                         packFields, packMaps, packSets );
-      //break;
-    case PhysicalDomainT::DiscreteElementNodeManager:
-      //m_discreteElementSurfaceNodes.PackNodes( sendIndices,
-      //                                         m_discreteElementSurfaceFaces,
-      //                                         buffer,
-      //                                         packConnectivityToGlobal,
-      //                                         packFields, packMaps, packSets );
-      //break;
-    case PhysicalDomainT::FaultPatchNodeManager:
-      //m_faultPatchNodes.PackNodes( sendIndices, m_faultPatchFaces, buffer, packConnectivityToGlobal, packFields, packMaps, packSets );
-      //break;
-    case PhysicalDomainT::FaultPatchFaceManager:
-      //m_faultPatchFaces.PackFaces( sendIndices,
-      //                             m_faultPatchNodes,
-      //                             &m_feEdgeManager,
-      //                             buffer,
-      //                             packConnectivityToGlobal,
-      //                             packFields );
-      //break;
-    case PhysicalDomainT::FaultPatchElementManager:
-    case PhysicalDomainT::EllipsoidalContactManager:
-    case PhysicalDomainT::ContactManager:
-    case PhysicalDomainT::FiniteElementElementManager:
-    case PhysicalDomainT::FiniteElementElementRegion:
-    case PhysicalDomainT::ExternalFaceManager:
-    case PhysicalDomainT::CartesianGridManager:
-    case PhysicalDomainT::VirtualFaceManager:
-    case PhysicalDomainT::VirtualEdgeManager:
-    case PhysicalDomainT::numObjectDataStructureNames:
-    default:
-      throw GPException("PhysicalDomainT::GetObjectDataStructure: inappropriate type for PhysicalDomainT::Pack "+ toString<int>(key));
-      break;
+  case PhysicalDomainT::FiniteElementNodeManager:
+    m_feNodeManager.PackNodes( sendIndices, m_feFaceManager, buffer, packConnectivityToGlobal, packFields, packMaps, packSets );
+    break;
+  case PhysicalDomainT::FiniteElementEdgeManager:
+    m_feEdgeManager.PackEdges( sendIndices,
+                               m_feNodeManager,
+                               m_feFaceManager,
+                               buffer,
+                               packConnectivityToGlobal,
+                               packFields, packMaps, packSets );
+    break;
+  case PhysicalDomainT::FiniteElementFaceManager:
+    m_feFaceManager.PackFaces( sendIndices,
+                               m_feNodeManager,
+                               &m_feEdgeManager,
+                               buffer,
+                               packConnectivityToGlobal,
+                               packFields, packMaps, packSets );
+    break;
+  case PhysicalDomainT::EllipsoidalDiscreteElementManager:
+  //m_ellipsoidalDiscreteElementManager.Pack( sendIndices, buffer );
+  //break;
+  case PhysicalDomainT::DiscreteElementManager:
+  //m_discreteElementManager.Pack( sendIndices, buffer );
+  //break;
+  case PhysicalDomainT::DiscreteElementFaceManager:
+  //m_discreteElementSurfaceFaces.PackFaces( sendIndices,
+  //                                         m_feNodeManager,
+  //                                         &m_feEdgeManager,
+  //                                         buffer,
+  //                                         packConnectivityToGlobal,
+  //                                         packFields, packMaps, packSets );
+  //break;
+  case PhysicalDomainT::DiscreteElementNodeManager:
+  //m_discreteElementSurfaceNodes.PackNodes( sendIndices,
+  //                                         m_discreteElementSurfaceFaces,
+  //                                         buffer,
+  //                                         packConnectivityToGlobal,
+  //                                         packFields, packMaps, packSets );
+  //break;
+  case PhysicalDomainT::FaultPatchNodeManager:
+  //m_faultPatchNodes.PackNodes( sendIndices, m_faultPatchFaces, buffer,
+  // packConnectivityToGlobal, packFields, packMaps, packSets );
+  //break;
+  case PhysicalDomainT::FaultPatchFaceManager:
+  //m_faultPatchFaces.PackFaces( sendIndices,
+  //                             m_faultPatchNodes,
+  //                             &m_feEdgeManager,
+  //                             buffer,
+  //                             packConnectivityToGlobal,
+  //                             packFields );
+  //break;
+  case PhysicalDomainT::FaultPatchElementManager:
+  case PhysicalDomainT::EllipsoidalContactManager:
+  case PhysicalDomainT::ContactManager:
+  case PhysicalDomainT::FiniteElementElementManager:
+  case PhysicalDomainT::FiniteElementElementRegion:
+  case PhysicalDomainT::ExternalFaceManager:
+  case PhysicalDomainT::CartesianGridManager:
+  case PhysicalDomainT::VirtualFaceManager:
+  case PhysicalDomainT::VirtualEdgeManager:
+  case PhysicalDomainT::numObjectDataStructureNames:
+  default:
+    throw GPException("PhysicalDomainT::GetObjectDataStructure: inappropriate type for PhysicalDomainT::Pack "+ toString<int>(key));
+    break;
 
   }
 }
-template void PhysicalDomainT::Pack( const ObjectDataStructureKeys, const lArray1d& , bufvector& , const bool, const bool, const bool, const bool );
-template void PhysicalDomainT::Pack( const ObjectDataStructureKeys, const lSet& , bufvector& , const bool, const bool,const bool, const bool );
+template void PhysicalDomainT::Pack( const ObjectDataStructureKeys, const lArray1d&, bufvector&, const bool, const bool, const bool, const bool );
+template void PhysicalDomainT::Pack( const ObjectDataStructureKeys, const lSet&, bufvector&, const bool, const bool,const bool, const bool );
 template<> void PhysicalDomainT::Pack( const ObjectDataStructureKeys key,
-                                     const std::map<std::string,lArray1d>& sendIndices,
-                                     bufvector& buffer,
-                                     const bool packConnectivityToGlobal,
-                                     const bool packFields,
-                                     const bool packMaps,
-                                     const bool packSets )
+                                       const std::map<std::string,lArray1d>& sendIndices,
+                                       bufvector& buffer,
+                                       const bool packConnectivityToGlobal,
+                                       const bool packFields,
+                                       const bool packMaps,
+                                       const bool packSets )
 {
   if( key == PhysicalDomainT::FiniteElementElementManager )
   {
@@ -341,83 +372,83 @@ void PhysicalDomainT::Unpack(const ObjectDataStructureKeys name,
 {
   switch (name)
   {
-    case PhysicalDomainT::EllipsoidalDiscreteElementManager:
-      m_ellipsoidalDiscreteElementManager.Unpack( pbuffer, indices );
-      break;
-    case PhysicalDomainT::DiscreteElementManager:
-      m_discreteElementManager.Unpack( pbuffer, indices );
-      break;
-    case PhysicalDomainT::DiscreteElementFaceManager:
-      m_discreteElementSurfaceFaces.UnpackFaces( pbuffer,
-                                                 m_discreteElementSurfaceNodes,
-                                                 NULL,
-                                                 NULL,
-                                                 indices,
-                                                 unpackConnectivityToLocal,
-                                                 unpackFields, unpackMaps, unpackSets );
-      break;
-    case PhysicalDomainT::DiscreteElementNodeManager:
-      m_discreteElementSurfaceNodes.UnpackNodes( pbuffer,
-                                                 m_discreteElementSurfaceFaces,
-                                                 indices,
-                                                 unpackConnectivityToLocal,
-                                                 unpackFields, unpackMaps, unpackSets );
-      break;
-    case PhysicalDomainT::FiniteElementNodeManager:
-      m_feNodeManager.UnpackNodes( pbuffer,
-                                   m_feFaceManager,
-                                   indices,
-                                   unpackConnectivityToLocal,
-                                   unpackFields, unpackMaps, unpackSets );
-      break;
-    case PhysicalDomainT::FiniteElementFaceManager:
-      m_feFaceManager.UnpackFaces( pbuffer,
+  case PhysicalDomainT::EllipsoidalDiscreteElementManager:
+    m_ellipsoidalDiscreteElementManager.Unpack( pbuffer, indices );
+    break;
+  case PhysicalDomainT::DiscreteElementManager:
+    m_discreteElementManager.Unpack( pbuffer, indices );
+    break;
+  case PhysicalDomainT::DiscreteElementFaceManager:
+    m_discreteElementSurfaceFaces.UnpackFaces( pbuffer,
+                                               m_discreteElementSurfaceNodes,
+                                               NULL,
+                                               NULL,
+                                               indices,
+                                               unpackConnectivityToLocal,
+                                               unpackFields, unpackMaps, unpackSets );
+    break;
+  case PhysicalDomainT::DiscreteElementNodeManager:
+    m_discreteElementSurfaceNodes.UnpackNodes( pbuffer,
+                                               m_discreteElementSurfaceFaces,
+                                               indices,
+                                               unpackConnectivityToLocal,
+                                               unpackFields, unpackMaps, unpackSets );
+    break;
+  case PhysicalDomainT::FiniteElementNodeManager:
+    m_feNodeManager.UnpackNodes( pbuffer,
+                                 m_feFaceManager,
+                                 indices,
+                                 unpackConnectivityToLocal,
+                                 unpackFields, unpackMaps, unpackSets );
+    break;
+  case PhysicalDomainT::FiniteElementFaceManager:
+    m_feFaceManager.UnpackFaces( pbuffer,
                                  m_feNodeManager,
                                  &m_feEdgeManager,
                                  &m_externalFaces,
                                  indices,
                                  unpackConnectivityToLocal,
                                  unpackFields, unpackMaps, unpackSets );
-      break;
-    case PhysicalDomainT::FiniteElementEdgeManager:
-      m_feEdgeManager.UnpackEdges( pbuffer,
+    break;
+  case PhysicalDomainT::FiniteElementEdgeManager:
+    m_feEdgeManager.UnpackEdges( pbuffer,
                                  m_feNodeManager,
                                  m_feFaceManager,
                                  indices,
                                  unpackConnectivityToLocal,
                                  unpackFields, unpackMaps, unpackSets );
-      break;
+    break;
 #ifdef SRC_EXTERNAL
-    case PhysicalDomainT::FaultPatchFaceManager:
-      m_faultPatchFaces.UnpackFaces( pbuffer,
-                                     m_faultPatchNodes,
-                                     NULL,
-                                     NULL,
-                                     indices,
-                                     unpackConnectivityToLocal,
-                                     unpackFields, unpackMaps, unpackSets );
-      break;
-    case PhysicalDomainT::FaultPatchNodeManager:
-      m_faultPatchNodes.UnpackNodes( pbuffer,
-                                     m_faultPatchFaces,
-                                     indices,
-                                     unpackConnectivityToLocal,
-                                     unpackFields, unpackMaps, unpackSets );
-      break;
-    case PhysicalDomainT::FaultPatchElementManager:
+  case PhysicalDomainT::FaultPatchFaceManager:
+    m_faultPatchFaces.UnpackFaces( pbuffer,
+                                   m_faultPatchNodes,
+                                   NULL,
+                                   NULL,
+                                   indices,
+                                   unpackConnectivityToLocal,
+                                   unpackFields, unpackMaps, unpackSets );
+    break;
+  case PhysicalDomainT::FaultPatchNodeManager:
+    m_faultPatchNodes.UnpackNodes( pbuffer,
+                                   m_faultPatchFaces,
+                                   indices,
+                                   unpackConnectivityToLocal,
+                                   unpackFields, unpackMaps, unpackSets );
+    break;
+  case PhysicalDomainT::FaultPatchElementManager:
 #endif
-    case PhysicalDomainT::FiniteElementElementManager:
-    case PhysicalDomainT::EllipsoidalContactManager:
-    case PhysicalDomainT::ContactManager:
-    case PhysicalDomainT::FiniteElementElementRegion:
-    case PhysicalDomainT::ExternalFaceManager:
-    case PhysicalDomainT::CartesianGridManager:
-    case PhysicalDomainT::VirtualFaceManager:
-    case PhysicalDomainT::VirtualEdgeManager:
-    case PhysicalDomainT::numObjectDataStructureNames:
-    default:
-      throw GPException("PhysicalDomainT::GetObjectDataStructure: Unrecognized object type "
-      + toString<int>(name));
+  case PhysicalDomainT::FiniteElementElementManager:
+  case PhysicalDomainT::EllipsoidalContactManager:
+  case PhysicalDomainT::ContactManager:
+  case PhysicalDomainT::FiniteElementElementRegion:
+  case PhysicalDomainT::ExternalFaceManager:
+  case PhysicalDomainT::CartesianGridManager:
+  case PhysicalDomainT::VirtualFaceManager:
+  case PhysicalDomainT::VirtualEdgeManager:
+  case PhysicalDomainT::numObjectDataStructureNames:
+  default:
+    throw GPException("PhysicalDomainT::GetObjectDataStructure: Unrecognized object type "
+                      + toString<int>(name));
   }
 }
 template void PhysicalDomainT::Unpack( const ObjectDataStructureKeys, const char*&, lArray1d&, const bool, const bool, const bool, const bool );
@@ -429,28 +460,28 @@ template<> void PhysicalDomainT::Unpack( const ObjectDataStructureKeys name,
                                          const bool unpackMaps,
                                          const bool unpackSets  )
 {
-    if( name == PhysicalDomainT::FiniteElementElementManager )
-    {
-      std::map< std::string, lArray1d> elementRegionReceiveLocalIndices;
-      m_feElementManager.UnpackElements( pbuffer,
-                                         m_feNodeManager,
-                                         m_feFaceManager,
-                                         elementRegionReceiveLocalIndices,
-                                         unpackConnectivityToLocal,
-                                         unpackFields, unpackMaps, unpackSets );
+  if( name == PhysicalDomainT::FiniteElementElementManager )
+  {
+    std::map< std::string, lArray1d> elementRegionReceiveLocalIndices;
+    m_feElementManager.UnpackElements( pbuffer,
+                                       m_feNodeManager,
+                                       m_feFaceManager,
+                                       elementRegionReceiveLocalIndices,
+                                       unpackConnectivityToLocal,
+                                       unpackFields, unpackMaps, unpackSets );
 
-      for( std::map< std::string, lArray1d>::iterator i =elementRegionReceiveLocalIndices.begin();
-                                                      i!=elementRegionReceiveLocalIndices.end() ; ++i )
-      {
-        indices[i->first].insert( indices[i->first].end(), i->second.begin(), i->second.end() );
-      }
-    }
-    else
+    for( std::map< std::string, lArray1d>::iterator i =elementRegionReceiveLocalIndices.begin() ;
+         i!=elementRegionReceiveLocalIndices.end() ; ++i )
     {
-      throw GPException("PhysicalDomainT::GetObjectDataStructure: inappropriate type for PhysicalDomainT::Unpack "
-      + toString<int>(name));
-
+      indices[i->first].insert( indices[i->first].end(), i->second.begin(), i->second.end() );
     }
+  }
+  else
+  {
+    throw GPException("PhysicalDomainT::GetObjectDataStructure: inappropriate type for PhysicalDomainT::Unpack "
+                      + toString<int>(name));
+
+  }
 
 }
 
@@ -459,54 +490,55 @@ template<> void PhysicalDomainT::Unpack( const ObjectDataStructureKeys name,
  * @brief Get the associated data structure for a particular enumerated name
  * @author Scott Johnson
  * @param[in] name Enumerated name
- * @return ObjectDataStructureBase manager associated with the given enumerated name
+ * @return ObjectDataStructureBase manager associated with the given enumerated
+ * name
  */
 ObjectDataStructureBaseT& PhysicalDomainT::GetObjectDataStructure( PhysicalDomainT::ObjectDataStructureKeys key,
                                                                    const std::string& regionName )
 {
   switch (key)
   {
-    case EllipsoidalDiscreteElementManager:
-      return m_ellipsoidalDiscreteElementManager;
-    case EllipsoidalContactManager:
-      return m_ellipsoidalContactManager;
-    case DiscreteElementNodeManager:
-      return m_discreteElementSurfaceNodes;
-    case DiscreteElementFaceManager:
-      return m_discreteElementSurfaceFaces;
-    case DiscreteElementManager:
-      return m_discreteElementManager;
-    case ContactManager:
-      return m_contactManager;
-    case FiniteElementNodeManager:
-      return m_feNodeManager;
-    case FiniteElementEdgeManager:
-      return m_feEdgeManager;
-    case FiniteElementFaceManager:
-      return m_feFaceManager;
-    case FiniteElementElementManager:
-      return m_feElementManager;
-    case FiniteElementElementRegion:
-      return m_feElementManager.m_ElementRegions[regionName];
-    case ExternalFaceManager:
-      return m_externalFaces;
-    case CartesianGridManager:
-      return m_cartesianGridManager;
+  case EllipsoidalDiscreteElementManager:
+    return m_ellipsoidalDiscreteElementManager;
+  case EllipsoidalContactManager:
+    return m_ellipsoidalContactManager;
+  case DiscreteElementNodeManager:
+    return m_discreteElementSurfaceNodes;
+  case DiscreteElementFaceManager:
+    return m_discreteElementSurfaceFaces;
+  case DiscreteElementManager:
+    return m_discreteElementManager;
+  case ContactManager:
+    return m_contactManager;
+  case FiniteElementNodeManager:
+    return m_feNodeManager;
+  case FiniteElementEdgeManager:
+    return m_feEdgeManager;
+  case FiniteElementFaceManager:
+    return m_feFaceManager;
+  case FiniteElementElementManager:
+    return m_feElementManager;
+  case FiniteElementElementRegion:
+    return m_feElementManager.m_ElementRegions[regionName];
+  case ExternalFaceManager:
+    return m_externalFaces;
+  case CartesianGridManager:
+    return m_cartesianGridManager;
 #ifdef SRC_EXTERNAL
-    case FaultPatchNodeManager:
-      return m_faultPatchNodes;
-    case FaultPatchFaceManager:
-      return m_faultPatchFaces;
-    case FaultPatchElementManager:
-      return m_faultElementManager;
+  case FaultPatchNodeManager:
+    return m_faultPatchNodes;
+  case FaultPatchFaceManager:
+    return m_faultPatchFaces;
+  case FaultPatchElementManager:
+    return m_faultElementManager;
 #endif
-    case VirtualEdgeManager:
-    case VirtualFaceManager:
-    case numObjectDataStructureNames:
-    case WellboreElementManager:
-      return m_wellboreManager;
-    default:
-      throw GPException("PhysicalDomainT::GetObjectManager: Unrecognized object type "+ toString<int> (key));
+  case VirtualEdgeManager:
+  case VirtualFaceManager:
+  case numObjectDataStructureNames:
+  case WellboreElementManager:
+    return m_wellboreManager;
+  default:
+    throw GPException("PhysicalDomainT::GetObjectManager: Unrecognized object type "+ toString<int> (key));
   }
 
 }
@@ -536,14 +568,14 @@ PhysicalDomainT::ObjectDataStructureKeys PhysicalDomainT::GetObjectDataStructure
   else if(name.compare( PhysicalDomainT::FaultElementConditionStr() ) == 0)
     return PhysicalDomainT::FaultPatchElementManager;
   else if(name.compare( PhysicalDomainT::FaultFaceManagerStr() ) == 0)
-      return PhysicalDomainT::FaultPatchFaceManager;
+    return PhysicalDomainT::FaultPatchFaceManager;
   else if(name.compare( PhysicalDomainT::CartesianGridManagerStr() ) == 0)
-      return PhysicalDomainT::CartesianGridManager;
+    return PhysicalDomainT::CartesianGridManager;
   else if(name.compare( PhysicalDomainT::WellboreElementManagerStr() ) == 0)
     return PhysicalDomainT::WellboreElementManager;
   else
     throw GPException("PhysicalDomainT::GetObjectDataStructureConditionKey: Unrecognized object type "
-    + name);
+                      + name);
 }
 
 
@@ -595,7 +627,7 @@ PhysicalDomainT::ObjectDataStructureKeys PhysicalDomainT::GetObjectDataStructure
     return PhysicalDomainT::WellboreElementManager;
   else
     throw GPException("PhysicalDomainT::GetObjectDataStructureKey: Unrecognized object type "
-    + name);
+                      + name);
 }
 
 std::string PhysicalDomainT::GetObjectDataStructureName(const PhysicalDomainT::ObjectDataStructureKeys key)
@@ -623,23 +655,29 @@ std::string PhysicalDomainT::GetObjectDataStructureName(const PhysicalDomainT::O
 }
 /*
  * @author S. Walsh
- * 
+ *
  * Get an unknown (at compile time) object manager at runtime.
- * If the desired object manager is known ahead of time the object itself should be used instead. 
- * 
- * Returns the object data structure corresponding to the requested type (and region for element regions).
- * Should only be used when object type is not known at compile time (eg. initilization).
+ * If the desired object manager is known ahead of time the object itself should
+ * be used instead.
+ *
+ * Returns the object data structure corresponding to the requested type (and
+ * region for element regions).
+ * Should only be used when object type is not known at compile time (eg.
+ * initilization).
  *
  * @param objectType - type of manager to return
- * @param regionName - used to get named element region - otherwise ignored 
- * 
+ * @param regionName - used to get named element region - otherwise ignored
  *
-ObjectDataStructureBaseT& PhysicalDomainT::GetObjectManager(const ObjectManagerType objectType,
-                                                            const std::string& regionName)
-{
-  //TODO: this should all be switched out for the logic above; ObjectManagerType is ambiguous for this purpose!
-  switch (objectType)
-  {
+ *
+   ObjectDataStructureBaseT& PhysicalDomainT::GetObjectManager(const
+ * ObjectManagerType objectType,
+                                                            const std::string&
+ * regionName)
+   {
+   //TODO: this should all be switched out for the logic above;
+ * ObjectManagerType is ambiguous for this purpose!
+   switch (objectType)
+   {
     case ObjectDataStructureBaseT::FiniteElementElementManager:
       return m_feElementManager;
     case ObjectDataStructureBaseT::FiniteElementElementRegion:
@@ -659,13 +697,14 @@ ObjectDataStructureBaseT& PhysicalDomainT::GetObjectManager(const ObjectManagerT
     case ObjectDataStructureBaseT::EllipsoidalContactManager:
       return m_ellipsoidalContactManager;
     default:
-      throw GPException("PhysicalDomainT::GetObjectManager: Unrecognized object type "+ toString<int> (objectType));
+      throw GPException("PhysicalDomainT::GetObjectManager: Unrecognized object
+ * type "+ toString<int> (objectType));
 
-  }
+   }
 
-  return m_feElementManager;
-}
-*/
+   return m_feElementManager;
+   }
+ */
 /**
  * @brief Write to SILO
  * @author R Settgast
@@ -707,11 +746,12 @@ void PhysicalDomainT::WriteSilo(SiloFile& siloFile,
   WriteEllipsoidalDiscreteElements( siloFile, cycleNum, problemTime, isRestart, writeDE );
 
 #ifdef SRC_EXTERNAL
-  // WriteMicroseismicSources( siloFile, cycleNum, problemTime, isRestart, writeMicroseismicSources );
+  // WriteMicroseismicSources( siloFile, cycleNum, problemTime, isRestart,
+  // writeMicroseismicSources );
   WriteFaultElementMesh( siloFile, cycleNum, problemTime, isRestart, writeFaultElements);
 #endif
 #ifdef SRC_INTERNAL2
- m_microseismicElementManager.WriteMicroseismicSilo(siloFile, cycleNum, problemTime, isRestart, writeMicroseismicSources);
+  m_microseismicElementManager.WriteMicroseismicSilo(siloFile, cycleNum, problemTime, isRestart, writeMicroseismicSources);
 #endif
   WriteCommonPlanes( siloFile, cycleNum, problemTime, isRestart, writeCP );
 
@@ -756,8 +796,8 @@ void PhysicalDomainT::ReadSilo( const SiloFile& siloFile,
 #endif
 
 #ifdef SRC_INTERNAL2
- m_microseismicElementManager.m_elemManagerHACK = &m_feElementManager;
- m_microseismicElementManager.ReadMicroseismicSilo(siloFile, cycleNum, problemTime, isRestart);
+  m_microseismicElementManager.m_elemManagerHACK = &m_feElementManager;
+  m_microseismicElementManager.ReadMicroseismicSilo(siloFile, cycleNum, problemTime, isRestart);
 #endif
 
   ReadCommonPlanes( siloFile, cycleNum, problemTime, isRestart );
@@ -791,10 +831,10 @@ void PhysicalDomainT::WriteFaultElementMesh(SiloFile& siloFile,
     dvector ycoords(m_faultPatchNodes.m_numNodes);
     dvector zcoords(m_faultPatchNodes.m_numNodes);
 
-    const Array1dT<R1Tensor>& refpos = m_faultPatchNodes.GetFieldData<FieldInfo::referencePosition>();
-    const Array1dT<R1Tensor>& disp = m_faultPatchNodes.GetFieldData<FieldInfo::displacement>();
+    const array<R1Tensor>& refpos = m_faultPatchNodes.GetFieldData<FieldInfo::referencePosition>();
+    const array<R1Tensor>& disp = m_faultPatchNodes.GetFieldData<FieldInfo::displacement>();
 
-    for (localIndex a = 0; a < m_faultPatchNodes.m_numNodes; ++a)
+    for (localIndex a = 0 ; a < m_faultPatchNodes.m_numNodes ; ++a)
     {
       R1Tensor nodePosition;
       nodePosition = refpos[a];
@@ -813,21 +853,21 @@ void PhysicalDomainT::WriteFaultElementMesh(SiloFile& siloFile,
     // face mesh
 
     const int numFaceTypes = 1;
-    Array1dT<localIndex*> faceConnectivity(numFaceTypes);
-    Array1dT<globalIndex*> globalFaceNumbers(numFaceTypes);
+    array<localIndex*> faceConnectivity(numFaceTypes);
+    array<globalIndex*> globalFaceNumbers(numFaceTypes);
     ivector fshapecnt(numFaceTypes);
     ivector fshapetype(numFaceTypes);
     ivector fshapesize(numFaceTypes);
 
-    Array1dT<lArray2d> faceToNodeMap(numFaceTypes);
+    array<lArray2d> faceToNodeMap(numFaceTypes);
 
-    for (int faceType = 0; faceType < numFaceTypes; ++faceType)
+    for (int faceType = 0 ; faceType < numFaceTypes ; ++faceType)
     {
       faceToNodeMap[faceType].resize2(m_faultPatchFaces.m_numFaces, 4);
 
-      for (localIndex k = 0; k < m_faultPatchFaces.m_numFaces; ++k)
+      for (localIndex k = 0 ; k < m_faultPatchFaces.m_numFaces ; ++k)
       {
-        for (int a = 0; a < 4; ++a)
+        for (int a = 0 ; a < 4 ; ++a)
         {
           faceToNodeMap[faceType][k][a] = m_faultPatchFaces.m_toNodesRelation[k][a];
         }
@@ -874,7 +914,7 @@ void PhysicalDomainT::WriteFaultElementMesh(SiloFile& siloFile,
     std::vector<realT> x0[3];
     localIndex nXYZ = 1;
     lArray1d nX(3);
-    for(localIndex i = 0; i < 3; i++)
+    for(localIndex i = 0 ; i < 3 ; i++)
     {
       x0[i] = ppptr->AxisValues(i);
       nX[i] = x0[i].size();
@@ -888,7 +928,7 @@ void PhysicalDomainT::WriteFaultElementMesh(SiloFile& siloFile,
     i1 *= nXYZ;
     {
       const std::string meshName("pore_pressure_grid");
-      std::map< std::string, rArray1d> realData;
+      std::map< std::string, array<real64> > realData;
 
       //-----------------------------
       //Write grid mesh
@@ -899,17 +939,17 @@ void PhysicalDomainT::WriteFaultElementMesh(SiloFile& siloFile,
         dvector zcoords(nXYZ);
 
         realData["Pressure"].resize(nXYZ);
-        rArray1d& pp = realData["Pressure"];
+        array<real64>& pp = realData["Pressure"];
         const std::vector<realT>& ppAll = ppptr->Values();
 
         localIndex a = 0;
-        for(localIndex k = 0;k < nX[2]; ++k)
+        for(localIndex k = 0 ; k < nX[2] ; ++k)
         {
           const realT z = x0[2][k];
-          for(localIndex j = 0;j < nX[1]; ++j)
+          for(localIndex j = 0 ; j < nX[1] ; ++j)
           {
             const realT y = x0[1][j];
-            for(localIndex i = 0;i < nX[0]; ++i, ++a)
+            for(localIndex i = 0 ; i < nX[0] ; ++i, ++a)
             {
               const realT x = x0[0][i];
               xcoords[a] = x;
@@ -995,7 +1035,7 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
     dvector xcoords(m_feNodeManager.m_numNodes);
     dvector ycoords(m_feNodeManager.m_numNodes);
     dvector zcoords(m_feNodeManager.m_numNodes);
-    for (localIndex a = 0; a < m_feNodeManager.m_numNodes; ++a)
+    for (localIndex a = 0 ; a < m_feNodeManager.m_numNodes ; ++a)
     {
       R1Tensor nodePosition;
       nodePosition = (*m_feNodeManager.m_refposition)[a];
@@ -1011,32 +1051,33 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
     coords[2] = zcoords.data();
 
     const int numElementRegions = m_feElementManager.m_ElementRegions.size();
-    Array1dT<localIndex*> meshConnectivity(numElementRegions);
-    Array1dT<int*> isGhostElement(numElementRegions);
-    Array1dT<globalIndex*> globalElementNumbers(numElementRegions);
+    array<localIndex*> meshConnectivity(numElementRegions);
+    array<int*> isGhostElement(numElementRegions);
+    array<globalIndex*> globalElementNumbers(numElementRegions);
     ivector shapecnt(numElementRegions);
     ivector shapetype(numElementRegions);
     ivector shapesize(numElementRegions);
 
-    Array1dT<FixedOneToManyRelation> elementToNodeMap(m_feElementManager.m_ElementRegions.size());
+    array<FixedOneToManyRelation> elementToNodeMap(m_feElementManager.m_ElementRegions.size());
 
     int count = 0;
     for (std::map<ElementManagerT::RegKeyType, ElementRegionT>::iterator elementRegionIter =
-        m_feElementManager.m_ElementRegions.begin(); elementRegionIter
-        != m_feElementManager.m_ElementRegions.end(); ++elementRegionIter)
+           m_feElementManager.m_ElementRegions.begin() ; elementRegionIter
+         != m_feElementManager.m_ElementRegions.end() ; ++elementRegionIter)
     {
       ElementRegionT& elementRegion = elementRegionIter->second;
 
-      // The following line seems to be redundant. It's actual function is to size this temp array.(pfu)
+      // The following line seems to be redundant. It's actual function is to
+      // size this temp array.(pfu)
       elementToNodeMap[count] = elementRegion.m_toNodesRelation;
 
-      for (localIndex k = 0; k < elementRegion.m_numElems; ++k)
+      for (localIndex k = 0 ; k < elementRegion.m_numElems ; ++k)
       {
         const localIndex* const elemToNodeMap =
-            elementRegion.m_toNodesRelation[k];
+          elementRegion.m_toNodesRelation[k];
 
-        const iArray1d nodeOrdering = elementRegion.SiloNodeOrdering();
-        for (localIndex a = 0; a < elementRegion.m_numNodesPerElem; ++a)
+        const array<integer> nodeOrdering = elementRegion.SiloNodeOrdering();
+        for (localIndex a = 0 ; a < elementRegion.m_numNodesPerElem ; ++a)
           elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
 
       }
@@ -1061,19 +1102,21 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
       else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D4") )
       {
         shapetype[count] = DB_ZONETYPE_TET;
-      } 
+      }
       else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") || !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
       {
         shapetype[count] = DB_ZONETYPE_QUAD;
       }
-      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "STRI") || !elementRegion.m_elementGeometryID.compare(0, 4, "TRSH") || !elementRegion.m_elementGeometryID.compare(0, 4, "CPE3"))
+      else if ( !elementRegion.m_elementGeometryID.compare(0, 4,
+                                                           "STRI") ||
+                !elementRegion.m_elementGeometryID.compare(0, 4, "TRSH") || !elementRegion.m_elementGeometryID.compare(0, 4, "CPE3"))
       {
         shapetype[count] = DB_ZONETYPE_TRIANGLE;
-      } 
+      }
       else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE2") )
       {
         shapetype[count] = DB_ZONETYPE_TRIANGLE;
-      } 
+      }
       else
       {
         throw GPException("PhysicalDomainT::WriteFiniteElementMesh: Do not recognize geometry type " + elementRegion.m_elementGeometryID + " \n");
@@ -1089,18 +1132,15 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
                              isGhostElement.data(), shapetype.data(), shapesize.data(), cycleNum, problemTime);
 
 
-    // write node fields in silo mesh, and all restart data as unassociated variables.
+    // write node fields in silo mesh, and all restart data as unassociated
+    // variables.
 
 
     m_feNodeManager.WriteSilo(siloFile, "NodalFields", meshName, DB_NODECENT, cycleNum, problemTime, isRestart);
 
 
 
-
-
     m_feElementManager.WriteSilo( siloFile, meshName, cycleNum, problemTime, isRestart );
-
-
 
 
 
@@ -1117,18 +1157,18 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
         // See a discussion of silo's arbitrary polygon implementation at
         // https://visitbugs.ornl.gov/projects/7/wiki/Arbitrary_Polygons_and_Polyhedra_in_Silo
         // It is not documented in silo manual.
-        Array1dT<localIndex*> faceConnectivity(numFaceTypes);
-        Array1dT<globalIndex*> globalFaceNumbers(numFaceTypes);
+        array<localIndex*> faceConnectivity(numFaceTypes);
+        array<globalIndex*> globalFaceNumbers(numFaceTypes);
         ivector fshapecnt(numFaceTypes);
         ivector fshapetype(numFaceTypes);
         ivector fshapesize(numFaceTypes);
 
-        Array1dT<lArray1d> faceToNodeMap(numFaceTypes);
+        array<lArray1d> faceToNodeMap(numFaceTypes);
         {
-          for (localIndex k = 0; k < m_feFaceManager.m_numFaces; ++k)
+          for (localIndex k = 0 ; k < m_feFaceManager.m_numFaces ; ++k)
           {
             faceToNodeMap[0].push_back(m_feFaceManager.m_toNodesRelation[k].size());
-            for (localIndex a = 0; a < m_feFaceManager.m_toNodesRelation[k].size(); ++a)
+            for (localIndex a = 0 ; a < m_feFaceManager.m_toNodesRelation[k].size() ; ++a)
             {
               faceToNodeMap[0].push_back(m_feFaceManager.m_toNodesRelation[k][a]);
             }
@@ -1144,41 +1184,54 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
         int lnodelist = faceToNodeMap[0].size();
 
         siloFile.WritePolygonMeshObject(facemeshName, m_feNodeManager.m_numNodes, coords,
-                                 m_feNodeManager.m_localToGlobalMap.data(), numFaceTypes,
-                                 fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
-                                 NULL, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist);
+                                        m_feNodeManager.m_localToGlobalMap.data(), numFaceTypes,
+                                        fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
+                                        NULL, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist);
 
 
       }
       else  //The old way
       {
         const int numFaceTypes = 1;
-        int numNodesPerFace = m_feFaceManager.m_toNodesRelation[0].size(); // TODO assumes all faces have same number of nodes
+        int numNodesPerFace = m_feFaceManager.m_toNodesRelation[0].size(); // TODO
+                                                                           // assumes
+                                                                           // all
+                                                                           // faces
+                                                                           // have
+                                                                           // same
+                                                                           // number
+                                                                           // of
+                                                                           // nodes
         int dbZoneType = DB_ZONETYPE_POLYGON;
-        if(numNodesPerFace == 3) {
+        if(numNodesPerFace == 3)
+        {
           dbZoneType = DB_ZONETYPE_TRIANGLE;
-        }else if(numNodesPerFace == 4){
+        }
+        else if(numNodesPerFace == 4)
+        {
           dbZoneType = DB_ZONETYPE_QUAD;
-        }else if(numNodesPerFace == 2){
+        }
+        else if(numNodesPerFace == 2)
+        {
           dbZoneType = DB_ZONETYPE_BEAM;
         }
 
-        Array1dT<localIndex*> faceConnectivity(numFaceTypes);
-        Array1dT<globalIndex*> globalFaceNumbers(numFaceTypes);
+        array<localIndex*> faceConnectivity(numFaceTypes);
+        array<globalIndex*> globalFaceNumbers(numFaceTypes);
         ivector fshapecnt(numFaceTypes);
         ivector fshapetype(numFaceTypes);
         ivector fshapesize(numFaceTypes);
 
-        Array1dT<lArray2d> faceToNodeMap(numFaceTypes);
+        array<lArray2d> faceToNodeMap(numFaceTypes);
 
 
-        for (int faceType = 0; faceType < numFaceTypes; ++faceType)
+        for (int faceType = 0 ; faceType < numFaceTypes ; ++faceType)
         {
           faceToNodeMap[faceType].resize2(m_feFaceManager.m_numFaces, numNodesPerFace);
 
-          for (localIndex k = 0; k < m_feFaceManager.m_numFaces; ++k)
+          for (localIndex k = 0 ; k < m_feFaceManager.m_numFaces ; ++k)
           {
-            for (int a = 0; a < numNodesPerFace; ++a)
+            for (int a = 0 ; a < numNodesPerFace ; ++a)
             {
               faceToNodeMap[faceType][k][a] = m_feFaceManager.m_toNodesRelation[k][a];
             }
@@ -1202,7 +1255,8 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
       m_feFaceManager.WriteSilo( siloFile, "FaceFields",facemeshName, DB_ZONECENT, cycleNum, problemTime, isRestart );
 
 #if WRITE_FACENODE
-      if (!isRestart) m_feNodeManager.WriteSilo(siloFile, "FaceNodeFields", facemeshName, DB_NODECENT, cycleNum, problemTime, isRestart);
+      if (!isRestart)
+        m_feNodeManager.WriteSilo(siloFile, "FaceNodeFields", facemeshName, DB_NODECENT, cycleNum, problemTime, isRestart);
 #endif
 
     }
@@ -1217,21 +1271,21 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
       {
         const int numFaceTypes = 1;
         int dbZoneType = DB_ZONETYPE_POLYGON;
-        Array1dT<localIndex*> faceConnectivity(numFaceTypes);
-        Array1dT<globalIndex*> globalFaceNumbers(numFaceTypes);
+        array<localIndex*> faceConnectivity(numFaceTypes);
+        array<globalIndex*> globalFaceNumbers(numFaceTypes);
         ivector fshapecnt(numFaceTypes);
         ivector fshapetype(numFaceTypes);
         ivector fshapesize(numFaceTypes);
 
-        Array1dT<lArray1d> faceToNodeMap(numFaceTypes);
+        array<lArray1d> faceToNodeMap(numFaceTypes);
         {
-          for (localIndex k = 0;  k < m_externalFaces.DataLengths(); ++k)
+          for (localIndex k = 0 ; k < m_externalFaces.DataLengths() ; ++k)
           {
             bool is_fe;
             const localIndex faceIndex = m_externalFaces.FaceIndex(k, is_fe);
 
             faceToNodeMap[0].push_back(m_feFaceManager.m_toNodesRelation[faceIndex].size());
-            for (localIndex a = 0; a < m_feFaceManager.m_toNodesRelation[faceIndex].size(); ++a)
+            for (localIndex a = 0 ; a < m_feFaceManager.m_toNodesRelation[faceIndex].size() ; ++a)
             {
               faceToNodeMap[0].push_back(m_feFaceManager.m_toNodesRelation[faceIndex][a]);
             }
@@ -1247,38 +1301,49 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
         int lnodelist = faceToNodeMap[0].size();
 
         siloFile.WritePolygonMeshObject(facemeshName, m_feNodeManager.m_numNodes, coords,
-                                 m_feNodeManager.m_localToGlobalMap.data(), numFaceTypes,
-                                 fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
-                                 NULL, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist);
+                                        m_feNodeManager.m_localToGlobalMap.data(), numFaceTypes,
+                                        fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
+                                        NULL, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist);
       }
       else
       {
         const int numFaceTypes = 1;
-        int numNodesPerFace = m_feFaceManager.m_toNodesRelation[0].size(); //TODO assumes all faces have same number of nodes
+        int numNodesPerFace = m_feFaceManager.m_toNodesRelation[0].size(); //TODO
+                                                                           // assumes
+                                                                           // all
+                                                                           // faces
+                                                                           // have
+                                                                           // same
+                                                                           // number
+                                                                           // of
+                                                                           // nodes
         int dbZoneType = DB_ZONETYPE_POLYGON;
-        if(numNodesPerFace == 3) {
+        if(numNodesPerFace == 3)
+        {
           dbZoneType = DB_ZONETYPE_TRIANGLE;
-        }else if(numNodesPerFace == 4){
+        }
+        else if(numNodesPerFace == 4)
+        {
           dbZoneType = DB_ZONETYPE_QUAD;
         }
 
-        Array1dT<localIndex*> faceConnectivity(numFaceTypes);
-        Array1dT<globalIndex*> globalFaceNumbers(numFaceTypes);
+        array<localIndex*> faceConnectivity(numFaceTypes);
+        array<globalIndex*> globalFaceNumbers(numFaceTypes);
         ivector fshapecnt(numFaceTypes);
         ivector fshapetype(numFaceTypes);
         ivector fshapesize(numFaceTypes);
 
-        Array1dT<lArray2d> faceToNodeMap(numFaceTypes);
+        array<lArray2d> faceToNodeMap(numFaceTypes);
 
-        for (int faceType = 0; faceType < numFaceTypes; ++faceType)
+        for (int faceType = 0 ; faceType < numFaceTypes ; ++faceType)
         {
           faceToNodeMap[faceType].resize2(m_externalFaces.DataLengths(), numNodesPerFace);
 
-          for (localIndex k = 0; k < m_externalFaces.DataLengths(); ++k)
+          for (localIndex k = 0 ; k < m_externalFaces.DataLengths() ; ++k)
           {
             bool is_fe;
             const localIndex faceIndex = m_externalFaces.FaceIndex(k, is_fe);
-            for (int a = 0; a < numNodesPerFace; ++a)
+            for (int a = 0 ; a < numNodesPerFace ; ++a)
             {
               faceToNodeMap[faceType][k][a] = m_feFaceManager.m_toNodesRelation[faceIndex][a];
             }
@@ -1312,22 +1377,22 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
       const int numNodesPerEdge = 2;
       int dbZoneType = DB_ZONETYPE_BEAM;
 
-      Array1dT<localIndex*> edgeConnectivity(numEdgeTypes);
-      Array1dT<globalIndex*> globalEdgeNumbers(numEdgeTypes);
+      array<localIndex*> edgeConnectivity(numEdgeTypes);
+      array<globalIndex*> globalEdgeNumbers(numEdgeTypes);
       ivector eshapecnt(numEdgeTypes);
       ivector eshapetype(numEdgeTypes);
       ivector eshapesize(numEdgeTypes);
 
-      Array1dT<lArray2d> edgeToNodeMap(numEdgeTypes);
+      array<lArray2d> edgeToNodeMap(numEdgeTypes);
 
 
-      for (int edgeType = 0; edgeType < numEdgeTypes; ++edgeType)
+      for (int edgeType = 0 ; edgeType < numEdgeTypes ; ++edgeType)
       {
         edgeToNodeMap[edgeType].resize2(m_feEdgeManager.DataLengths(), numNodesPerEdge);
 
-        for (localIndex k = 0; k < m_feEdgeManager.DataLengths(); ++k)
+        for (localIndex k = 0 ; k < m_feEdgeManager.DataLengths() ; ++k)
         {
-          for (int a = 0; a < numNodesPerEdge; ++a)
+          for (int a = 0 ; a < numNodesPerEdge ; ++a)
           {
             if ( m_feFaceManager.m_toNodesRelation[0].size() == 2 && a > 0)
             {
@@ -1365,33 +1430,39 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
 //      const std::string edgeMeshName("edge_mesh");
 //      const localIndex numEdges = m_feEdgeManager.DataLengths();
 //
-//      Array1dT<lArray1d> edgeToNodes(1);
+//      array<lArray1d> edgeToNodes(1);
 //
 //      count = 0;
 //
-//      for (localIndex k = 0; k < m_feEdgeManager.m_toNodesRelation.Dimension(0); ++k)
+//      for (localIndex k = 0; k <
+// m_feEdgeManager.m_toNodesRelation.Dimension(0); ++k)
 //      {
 //        if ( m_feEdgeManager.m_toNodesRelation.Dimension(1) == 1 )
 //        {
 //          // This is for 2D only.
-//          // Silo polygon does not work if we only have one node for each element.
-//          edgeToNodes[count].push_back( m_feEdgeManager.m_toNodesRelation.Dimension(1)+1 );
+//          // Silo polygon does not work if we only have one node for each
+// element.
+//          edgeToNodes[count].push_back(
+// m_feEdgeManager.m_toNodesRelation.Dimension(1)+1 );
 //        }
 //        else
 //        {
 //          edgeToNodes[count].push_back(m_feEdgeManager.m_toNodesRelation.Dimension(1));
 //        }
-//        for (localIndex a = 0; a < m_feEdgeManager.m_toNodesRelation.Dimension(1); ++a)
+//        for (localIndex a = 0; a <
+// m_feEdgeManager.m_toNodesRelation.Dimension(1); ++a)
 //        {
-//          edgeToNodes[count].push_back(m_feEdgeManager.m_toNodesRelation(k, a));
+//          edgeToNodes[count].push_back(m_feEdgeManager.m_toNodesRelation(k,
+// a));
 //          if ( m_feEdgeManager.m_toNodesRelation.Dimension(1) == 1 )
 //          {
-//            edgeToNodes[count].push_back(m_feEdgeManager.m_toNodesRelation(k, a));
+//            edgeToNodes[count].push_back(m_feEdgeManager.m_toNodesRelation(k,
+// a));
 //          }
 //        }
 //      }
 //
-//      Array1dT<localIndex*> edgeMeshConnectivity(1);
+//      array<localIndex*> edgeMeshConnectivity(1);
 //      ivector eshapecnt(1);
 //      ivector eshapetype(1);
 //      ivector eshapesize(1);
@@ -1403,11 +1474,15 @@ void PhysicalDomainT::WriteFiniteElementMesh( SiloFile& siloFile,
 //      eshapesize[count] = -edgeToNodes[count].size();
 //      ++count;
 //
-//      siloFile.WriteMeshObject(edgeMeshName, m_feNodeManager.m_numNodes, coords, NULL, 1,
-//                               eshapecnt.data(), edgeMeshConnectivity.data(), NULL, NULL,
-//                               eshapetype.data(), eshapesize.data(), cycleNum, problemTime);
+//      siloFile.WriteMeshObject(edgeMeshName, m_feNodeManager.m_numNodes,
+// coords, NULL, 1,
+//                               eshapecnt.data(), edgeMeshConnectivity.data(),
+// NULL, NULL,
+//                               eshapetype.data(), eshapesize.data(), cycleNum,
+// problemTime);
 //
-//      this->m_feEdgeManager.WriteSilo(siloFile, "EdgeFields", edgeMeshName.c_str(), DB_ZONECENT, cycleNum, problemTime, isRestart );
+//      this->m_feEdgeManager.WriteSilo(siloFile, "EdgeFields",
+// edgeMeshName.c_str(), DB_ZONECENT, cycleNum, problemTime, isRestart );
 
     }
 
@@ -1424,7 +1499,8 @@ void PhysicalDomainT::ReadFiniteElementMesh( const SiloFile& siloFile,
   int err = m_feNodeManager.ReadSilo( siloFile, "NodalFields", "volume_mesh",
                                       DB_NODECENT, cycleNum, problemTime, isRestart );
 //  err = m_feNodeManager.ReadSilo( siloFile, "NodalFieldsB", "face_mesh",
-//                                      DB_NODECENT, cycleNum, problemTime, isRestart );
+//                                      DB_NODECENT, cycleNum, problemTime,
+// isRestart );
   if(err)
     return;
 
@@ -1440,7 +1516,9 @@ void PhysicalDomainT::ReadFiniteElementMesh( const SiloFile& siloFile,
 
   m_externalFaces.ReadSiloExternalFaces(siloFile, "ExternalFaceFields", "external_face_mesh", DB_ZONECENT, cycleNum, problemTime, isRestart );
 
-  // TODO This is a temporary fix to correct the size of edge to node map.  Later we need to redefine edge to nodes map as OrderedVariableOneToManyRelation
+  // TODO This is a temporary fix to correct the size of edge to node map.
+  //  Later we need to redefine edge to nodes map as
+  // OrderedVariableOneToManyRelation
   if (m_feFaceManager.m_toNodesRelation.size() == 0)
   {
     throw GPException("PhysicalDomainT::ReadFiniteElementMesh: No m_feFaceManager.m_toNodesRelation members during FE mesh silo read");
@@ -1467,8 +1545,10 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
 
   //--------------WRITE DISCRETE ELEMENT DATA-----------------
   //NOTE: CURRENTLY VISIT DELETES EDGES ON SINGLE ELEMENTS, BUT IF
-  //THAT IS FIXED WE CAN SWITCH BACK TO ELEMENT RENDERING ... UNTIL THEN, USE POLYGONS
-  //ALSO CHANGE LAGRANGEEXPLICITDYNAMICSSOLVERT.CPP TO _NOT_ DUPLICATE DE FIELDS IN EXTERNAL FACES
+  //THAT IS FIXED WE CAN SWITCH BACK TO ELEMENT RENDERING ... UNTIL THEN, USE
+  // POLYGONS
+  //ALSO CHANGE LAGRANGEEXPLICITDYNAMICSSOLVERT.CPP TO _NOT_ DUPLICATE DE FIELDS
+  // IN EXTERNAL FACES
   if (writeDE && m_discreteElementManager.DataLengths() > 0)
   {
     const std::string meshName = "de_mesh";
@@ -1478,9 +1558,9 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
     dvector xcoords(m_discreteElementSurfaceNodes.m_numNodes);
     dvector ycoords(m_discreteElementSurfaceNodes.m_numNodes);
     dvector zcoords(m_discreteElementSurfaceNodes.m_numNodes);
-    Array1dT<R1Tensor>& cpos =
-        m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::currentPosition>();
-    for (localIndex a = 0; a < m_discreteElementSurfaceNodes.m_numNodes; ++a)
+    array<R1Tensor>& cpos =
+      m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::currentPosition>();
+    for (localIndex a = 0 ; a < m_discreteElementSurfaceNodes.m_numNodes ; ++a)
     {
       xcoords[a] = cpos[a](0);
       ycoords[a] = cpos[a](1);
@@ -1499,12 +1579,12 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
       int sumnodecnts = 0, ntmp;
       std::vector<int> nodecnts, nodelist;
       int numfaces = this->m_discreteElementSurfaceFaces.m_toNodesRelation.size();
-      for (int i = 0; i < numfaces; i++)
+      for (int i = 0 ; i < numfaces ; i++)
       {
         ntmp = this->m_discreteElementSurfaceFaces.m_toNodesRelation[i].size();
         sumnodecnts += ntmp;
         nodecnts.push_back(ntmp);
-        for (int j = 0; j < ntmp; j++)
+        for (int j = 0 ; j < ntmp ; j++)
           nodelist.push_back(this->m_discreteElementSurfaceFaces.m_toNodesRelation[i][j]);
       }
 
@@ -1513,33 +1593,34 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
       //facelist List of face ids associated with DE (size sumfacecnts)
       std::vector<int> facecnts, facelist;
       int sumfacecnts = 0;
-      for (localIndex i = 0; i < this->m_discreteElementManager.DataLengths(); i++)
+      for (localIndex i = 0 ; i < this->m_discreteElementManager.DataLengths() ; i++)
       {
         size_t nfcs = this->m_discreteElementManager.m_discreteElementToExternalFacesMap[i].size();
         sumfacecnts += nfcs;
         facecnts.push_back(nfcs);
-        for (localIndex j = 0; j < nfcs; j++)
+        for (localIndex j = 0 ; j < nfcs ; j++)
           facelist.push_back(
-              this->m_discreteElementManager.m_discreteElementToExternalFacesMap[i][j]);
+            this->m_discreteElementManager.m_discreteElementToExternalFacesMap[i][j]);
       }
 
       siloFile.WriteDiscreteElementMeshObject(
-          meshName.c_str(), m_discreteElementSurfaceNodes.m_numNodes, coords,
-          m_discreteElementSurfaceNodes.m_localToGlobalMap.data(),
-          m_discreteElementManager.DataLengths(), numfaces, nodecnts.data(), sumnodecnts,
-          nodelist.data(), facecnts.data(), sumfacecnts, facelist.data(), 0, //(int*)this->m_discreteElementSurfaceNodes.m_localToGlobalMap.data(),
-          NULL, cycleNum, problemTime);
+        meshName.c_str(), m_discreteElementSurfaceNodes.m_numNodes, coords,
+        m_discreteElementSurfaceNodes.m_localToGlobalMap.data(),
+        m_discreteElementManager.DataLengths(), numfaces, nodecnts.data(), sumnodecnts,
+        nodelist.data(), facecnts.data(), sumfacecnts, facelist.data(), 0,   //(int*)this->m_discreteElementSurfaceNodes.m_localToGlobalMap.data(),
+        NULL, cycleNum, problemTime);
 
       if(m_discreteElementManager.m_discreteElementToDiscreteElementContactsMap.size() > 0)
       {
-        iArray1d tnodelist;
-        std::map<std::string, rArray1d> realFields;
-        std::map<std::string, Array1dT<R1Tensor> > R1Fields;
+        array<integer> tnodelist;
+        std::map<std::string, array<real64> > realFields;
+        std::map<std::string, array<R1Tensor> > R1Fields;
         int i = 0;
-        for(std::map<localIndex, std::map<localIndex, DiscreteElementContact> >::const_iterator it = m_discreteElementManager.m_discreteElementToDiscreteElementContactsMap.begin();
-            it != m_discreteElementManager.m_discreteElementToDiscreteElementContactsMap.end(); ++it, ++i)
+        for(std::map<localIndex, std::map<localIndex, DiscreteElementContact> >::const_iterator it =
+              m_discreteElementManager.m_discreteElementToDiscreteElementContactsMap.begin() ;
+            it != m_discreteElementManager.m_discreteElementToDiscreteElementContactsMap.end() ; ++it, ++i)
         {
-          for(std::map<localIndex, DiscreteElementContact>::const_iterator it1 = it->second.begin(); it1 != it->second.end(); ++it1)
+          for(std::map<localIndex, DiscreteElementContact>::const_iterator it1 = it->second.begin() ; it1 != it->second.end() ; ++it1)
           {
             const int j = static_cast<int>(it1->first);
             tnodelist.push_back(i);
@@ -1554,9 +1635,9 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
           dvector txcoords(m_discreteElementManager.DataLengths());
           dvector tycoords(m_discreteElementManager.DataLengths());
           dvector tzcoords(m_discreteElementManager.DataLengths());
-          Array1dT<R1Tensor>& tcpos =
-              m_discreteElementManager.GetFieldData<FieldInfo::currentPosition>();
-          for (localIndex a = 0; a < m_discreteElementManager.DataLengths(); ++a)
+          array<R1Tensor>& tcpos =
+            m_discreteElementManager.GetFieldData<FieldInfo::currentPosition>();
+          for (localIndex a = 0 ; a < m_discreteElementManager.DataLengths() ; ++a)
           {
             txcoords[a] = tcpos[a](0);
             tycoords[a] = tcpos[a](1);
@@ -1584,16 +1665,16 @@ void PhysicalDomainT::WriteDiscreteElements( SiloFile& siloFile,
       // face mesh
       const std::string facemeshName("de_face_mesh");
 
-      Array1dT<lArray1d> elementToNodeMap(1);
-      for (Array1dT<lArray1d>::const_iterator it = m_discreteElementManager.m_discreteElementToExternalNodesMap.begin();
-          it != m_discreteElementManager.m_discreteElementToExternalNodesMap.end(); ++it)
+      array<lArray1d> elementToNodeMap(1);
+      for (array<lArray1d>::const_iterator it = m_discreteElementManager.m_discreteElementToExternalNodesMap.begin() ;
+           it != m_discreteElementManager.m_discreteElementToExternalNodesMap.end() ; ++it)
       {
         elementToNodeMap.begin()->push_back(it->size());
-        for(lArray1d::const_iterator it1 = it->begin(); it1 != it->end(); ++it1)
+        for(lArray1d::const_iterator it1 = it->begin() ; it1 != it->end() ; ++it1)
           elementToNodeMap.begin()->push_back(*it1);
       }
 
-      Array1dT<localIndex*> meshConnectivity(1);
+      array<localIndex*> meshConnectivity(1);
       ivector shapecnt(1);
       ivector shapetype(1);
       ivector shapesize(1);
@@ -1634,8 +1715,10 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
 
   //--------------WRITE DISCRETE ELEMENT DATA-----------------
   //NOTE: CURRENTLY VISIT DELETES EDGES ON SINGLE ELEMENTS, BUT IF
-  //THAT IS FIXED WE CAN SWITCH BACK TO ELEMENT RENDERING ... UNTIL THEN, USE POLYGONS
-  //ALSO CHANGE LAGRANGEEXPLICITDYNAMICSSOLVERT.CPP TO _NOT_ DUPLICATE DE FIELDS IN EXTERNAL FACES
+  //THAT IS FIXED WE CAN SWITCH BACK TO ELEMENT RENDERING ... UNTIL THEN, USE
+  // POLYGONS
+  //ALSO CHANGE LAGRANGEEXPLICITDYNAMICSSOLVERT.CPP TO _NOT_ DUPLICATE DE FIELDS
+  // IN EXTERNAL FACES
   const std::string meshName = "xfem_mesh";
 
   //set the nodal coordinate data structure
@@ -1644,7 +1727,7 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
   dvector ycoords;
   dvector zcoords;
 
-  for (localIndex a = 0; a < m_feNodeManager.m_numNodes; ++a)
+  for (localIndex a = 0 ; a < m_feNodeManager.m_numNodes ; ++a)
   {
     R1Tensor nodePosition = (*m_feNodeManager.m_refposition)[a];
     nodePosition += (*m_feNodeManager.m_displacement)[a];
@@ -1664,7 +1747,9 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
   int ndims = 2;
 
   for (std::map<ElementManagerT::RegKeyType, ElementRegionT>::iterator elementRegionIter =
-      m_feElementManager.m_ElementRegions.begin(); elementRegionIter != m_feElementManager.m_ElementRegions.end(); ++elementRegionIter) //Loop over regions
+         m_feElementManager.m_ElementRegions.begin() ; elementRegionIter != m_feElementManager.m_ElementRegions.end() ; ++elementRegionIter) //Loop
+                                                                                                                                             // over
+                                                                                                                                             // regions
   {
     ElementRegionT& elemRegion = elementRegionIter->second;
     localIndex numEle = elemRegion.DataLengths();
@@ -1683,7 +1768,7 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
         {
           if(numTri==0)
             nshapetypes = nshapetypes+1;
-          for (localIndex j = 0; j < 3; j++)
+          for (localIndex j = 0 ; j < 3 ; j++)
           {
             if(elementToPhysicalNodes[iElm][j] == 0)
               std::cout<<"This seems like a problem"<<std::endl;
@@ -1712,7 +1797,7 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
         {
           if(numQuad==0)
             nshapetypes = nshapetypes+1;
-          for (localIndex j = 0; j < 4; j++)
+          for (localIndex j = 0 ; j < 4 ; j++)
           {
             if(elementToPhysicalNodes[iElm][j] == 0)
               std::cout<<"This seems like a problem"<<std::endl;
@@ -1741,7 +1826,7 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
         {
           if(numPent==0)
             nshapetypes = nshapetypes+1;
-          for (localIndex j = 0; j < 5; j++)
+          for (localIndex j = 0 ; j < 5 ; j++)
           {
             if(elementToPhysicalNodes[iElm][j] == 0)
               std::cout<<"This seems like a problem"<<std::endl;
@@ -1764,24 +1849,25 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
 
   int lnodelist = nodelist.size();
 
-  siloFile.XFEMMesh(xcoords, ycoords, zcoords, nodelist, lnodelist, shapesize, shapecounts, shapetype, nshapetypes, nnodes, nzones, ndims, cycleNum, problemTime);
+  siloFile.XFEMMesh(xcoords, ycoords, zcoords, nodelist, lnodelist, shapesize, shapecounts, shapetype, nshapetypes, nnodes, nzones, ndims, cycleNum,
+                    problemTime);
   m_feNodeManager.WriteSilo(siloFile, "NodalFieldsXFEM", meshName, DB_NODECENT, cycleNum, problemTime, isRestart);
 
   /*
-  if (1)
-  {
-    const std::string meshName = "xfem_mesh";
+     if (1)
+     {
+     const std::string meshName = "xfem_mesh";
 
-    //set the nodal coordinate data structure
-    realT* coords[3];
-    dvector xcoords;
-    dvector ycoords;
-    dvector zcoords;
+     //set the nodal coordinate data structure
+     realT* coords[3];
+     dvector xcoords;
+     dvector ycoords;
+     dvector zcoords;
 
-    auto& isNodePhysical = m_feNodeManager.GetFieldData<int>("isPhysical");
-    int numPhyNodes = 0;
-    for (localIndex a = 0; a < m_feNodeManager.m_numNodes; ++a)
-    {
+     auto& isNodePhysical = m_feNodeManager.GetFieldData<int>("isPhysical");
+     int numPhyNodes = 0;
+     for (localIndex a = 0; a < m_feNodeManager.m_numNodes; ++a)
+     {
       if(isNodePhysical(a))
       {
         R1Tensor nodePosition, disp; disp(0) = 0; disp(1) = 1.0; disp(2) = 0;
@@ -1820,12 +1906,12 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
         zcoords.push_back(nodePosition(2));
         numPhyNodes = numPhyNodes + 1;
       }
-    }
-    coords[0] = xcoords.data();
-    coords[1] = ycoords.data();
-    coords[2] = zcoords.data();
+     }
+     coords[0] = xcoords.data();
+     coords[1] = ycoords.data();
+     coords[2] = zcoords.data();
 
-    {
+     {
       //fill arrays
       //nfaces Total number of unique faces
       //nodecnts Number of nodes per face (size nfaces)
@@ -1834,13 +1920,15 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
       auto& isFacePhysical = m_feFaceManager.GetFieldData<int>("isPhysical");
       int sumnodecnts = 0, ntmp;
       std::vector<int> nodecnts, nodelist;
-      int numfaces = 0; //this->m_discreteElementSurfaceFaces.m_toNodesRelation.size();
+      int numfaces = 0;
+         //this->m_discreteElementSurfaceFaces.m_toNodesRelation.size();
       for (localIndex iFace = 0; iFace < m_feFaceManager.DataLengths(); iFace++)
       {
         if(isFacePhysical(iFace))
         {
           numfaces = numfaces + 1;
-          ntmp = m_feFaceManager.m_toNodesRelation[iFace].size(); //this->m_discreteElementSurfaceFaces.m_toNodesRelation[i].size();
+          ntmp = m_feFaceManager.m_toNodesRelation[iFace].size();
+             //this->m_discreteElementSurfaceFaces.m_toNodesRelation[i].size();
           sumnodecnts += ntmp;
           nodecnts.push_back(ntmp);
           for (int jNod = 0; jNod < ntmp; jNod++)
@@ -1855,21 +1943,26 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
       int sumfacecnts = 0;
       int numXFEMElements = 0;
 
-      for (std::map<ElementManagerT::RegKeyType, ElementRegionT>::iterator elementRegionIter =
-          m_feElementManager.m_ElementRegions.begin(); elementRegionIter != m_feElementManager.m_ElementRegions.end(); ++elementRegionIter) //Loop over regions
+      for (std::map<ElementManagerT::RegKeyType, ElementRegionT>::iterator
+         elementRegionIter =
+          m_feElementManager.m_ElementRegions.begin(); elementRegionIter !=
+             m_feElementManager.m_ElementRegions.end(); ++elementRegionIter)
+             //Loop over regions
       {
         ElementRegionT& elemRegion = elementRegionIter->second;
         localIndex numEle = elemRegion.DataLengths();
 
         auto& isPhysical = elemRegion.GetFieldData<int>("isPhysical");
         auto& plotElement = elemRegion.GetFieldData<int>("plotElement");
-        auto& elementToPhysicalFaces = elemRegion.GetVariableOneToManyMap("ElementToPhysicalFaces");
+        auto& elementToPhysicalFaces =
+           elemRegion.GetVariableOneToManyMap("ElementToPhysicalFaces");
 
         for (localIndex iElm=0 ; iElm<numEle ; ++iElm)
         {
           if(isPhysical(iElm) == 1 && plotElement(iElm) == 0)
           {
-            //        size_t nfcs = this->m_discreteElementManager.m_discreteElementToExternalFacesMap[i].size();
+            //        size_t nfcs =
+               this->m_discreteElementManager.m_discreteElementToExternalFacesMap[i].size();
             size_t nfcs = elementToPhysicalFaces[iElm].size();
             sumfacecnts += nfcs;
             facecnts.push_back(nfcs);
@@ -1886,14 +1979,15 @@ void PhysicalDomainT::WriteXFEMElements( SiloFile& siloFile,
           meshName.c_str(), numPhyNodes, coords,
           0,
           numXFEMElements, numfaces, nodecnts.data(), sumnodecnts,
-          nodelist.data(), facecnts.data(), sumfacecnts, facelist.data(), 0, //(int*)this->m_discreteElementSurfaceNodes.m_localToGlobalMap.data(),
+          nodelist.data(), facecnts.data(), sumfacecnts, facelist.data(), 0,
+             //(int*)this->m_discreteElementSurfaceNodes.m_localToGlobalMap.data(),
           NULL, cycleNum, problemTime);
 
-//      siloFile.TestPolyhedralCells();
+     //      siloFile.TestPolyhedralCells();
 
-    } //end DE write
-  }
-*/
+     } //end DE write
+     }
+   */
 }
 
 void PhysicalDomainT::ReadDiscreteElements( const SiloFile& siloFile,
@@ -1953,8 +2047,8 @@ void PhysicalDomainT::WriteEllipsoidalDiscreteElements( SiloFile& siloFile,
     dvector xcoords(numPoints);
     dvector ycoords(numPoints);
     dvector zcoords(numPoints);
-    Array1dT<R1Tensor>& cpos = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::currentPosition> ();
-    for (localIndex a = 0; a < numPoints; ++a)
+    array<R1Tensor>& cpos = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::currentPosition> ();
+    for (localIndex a = 0 ; a < numPoints ; ++a)
     {
       xcoords[a] = cpos[a](0);
       ycoords[a] = cpos[a](1);
@@ -1967,13 +2061,12 @@ void PhysicalDomainT::WriteEllipsoidalDiscreteElements( SiloFile& siloFile,
 
 
 
+    const array<real64>& q = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationMagnitude>();
+    const array<R1Tensor>& xyz = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationAxis>();
+    const array<R1Tensor>& r = m_ellipsoidalDiscreteElementManager.GetFieldData<R1Tensor>("principalRadii");
 
-    const rArray1d& q = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationMagnitude>();
-    const Array1dT<R1Tensor>& xyz = m_ellipsoidalDiscreteElementManager.GetFieldData<FieldInfo::rotationAxis>();
-    const Array1dT<R1Tensor>& r = m_ellipsoidalDiscreteElementManager.GetFieldData<R1Tensor>("principalRadii");
-
-    Array1dT<R2Tensor> R(m_ellipsoidalDiscreteElementManager.DataLengths());
-    Array1dT<rArray1d> RComponents(9);
+    array<R2Tensor> R(m_ellipsoidalDiscreteElementManager.DataLengths());
+    array<array<real64> > RComponents(9);
 
 
     for( int a=0 ; a<9 ; ++a )
@@ -1982,7 +2075,7 @@ void PhysicalDomainT::WriteEllipsoidalDiscreteElements( SiloFile& siloFile,
     }
 
 
-    for (localIndex a = 0; a < m_ellipsoidalDiscreteElementManager.DataLengths(); ++a)
+    for (localIndex a = 0 ; a < m_ellipsoidalDiscreteElementManager.DataLengths() ; ++a)
     {
       DiscreteElementManagerBaseT::QuaternionToRotation(q[a], xyz[a], R[a]);
 
@@ -2018,7 +2111,7 @@ void PhysicalDomainT::WriteEllipsoidalDiscreteElements( SiloFile& siloFile,
     std::string rootDirectory = "/EllipsoidDiscreteElementFields";
     DBSetDir(siloFile.m_dbFilePtr, subDirectory.c_str());
 
-    sArray1d RNames(9);
+    array<string> RNames(9);
     RNames[0] = "R_11";
     RNames[1] = "R_12";
     RNames[2] = "R_13";
@@ -2046,24 +2139,24 @@ void PhysicalDomainT::WriteEllipsoidalDiscreteElements( SiloFile& siloFile,
       const char name[] = "DefVars";
       const int ndefs = 1;
 
-      sArray1d vnames;
+      array<string> vnames;
       vnames.push_back("RotationTensor");
 
-      sArray1d vdefns;
+      array<string> vdefns;
       vdefns.push_back("{{</EllipsoidDiscreteElementFields/R_11>,</EllipsoidDiscreteElementFields/R_12>,</EllipsoidDiscreteElementFields/R_13>}, "
-                        "{</EllipsoidDiscreteElementFields/R_21>,</EllipsoidDiscreteElementFields/R_22>,</EllipsoidDiscreteElementFields/R_23>},"
-                        "{</EllipsoidDiscreteElementFields/R_31>,</EllipsoidDiscreteElementFields/R_32>,</EllipsoidDiscreteElementFields/R_33>}}");
+                       "{</EllipsoidDiscreteElementFields/R_21>,</EllipsoidDiscreteElementFields/R_22>,</EllipsoidDiscreteElementFields/R_23>},"
+                       "{</EllipsoidDiscreteElementFields/R_31>,</EllipsoidDiscreteElementFields/R_32>,</EllipsoidDiscreteElementFields/R_33>}}");
 
       int types[ndefs] = { DB_VARTYPE_TENSOR };
 
       const char *names[ndefs];
-      const char *defns[ndefs]  ;
-      DBoptlist *optlist[ndefs] ;
+      const char *defns[ndefs];
+      DBoptlist *optlist[ndefs];
 
       for( int i=0 ; i<ndefs ; ++i )
       {
-        names[i] = vnames[i].c_str() ;
-        defns[i] = vdefns[i].c_str() ;
+        names[i] = vnames[i].c_str();
+        defns[i] = vdefns[i].c_str();
 
         optlist[i] = DBMakeOptlist(2);
         DBAddOption(optlist[i], DBOPT_CYCLE, const_cast<int*> (&cycleNum));
@@ -2078,7 +2171,8 @@ void PhysicalDomainT::WriteEllipsoidalDiscreteElements( SiloFile& siloFile,
       DBSetDir(siloFile.m_dbFilePtr,pwd);
     }
 
-    //m_ellipsoidalDiscreteElementManager.WriteVTK(cycleNum, m_ellipsoidalContactManager);
+    //m_ellipsoidalDiscreteElementManager.WriteVTK(cycleNum,
+    // m_ellipsoidalContactManager);
 
     if(m_ellipsoidalContactManager.DataLengths() > 0)
     {
@@ -2130,20 +2224,20 @@ void PhysicalDomainT::WriteCommonPlanes( SiloFile& siloFile,
   //  std::cout << "number of contacts: " << numContacts;
   if (writeCP && m_contactManager.m_contact)
   {
-    Array1dT<lArray1d> elementToNodeMap(1);
-    Array1dT<localIndex> mask;
+    array<lArray1d> elementToNodeMap(1);
+    array<localIndex> mask;
 
     const int count = 0;
     int numCommonPlanes = 0;
 
-    for (localIndex k = 0; k < numContacts; ++k)
+    for (localIndex k = 0 ; k < numContacts ; ++k)
     {
       const lArray1d::size_type numPointsInCP = m_contactManager.m_contactToIntersectionPolygonPointsMap[k].size();
       if (numPointsInCP > 0)
       {
         mask.push_back(k);
         elementToNodeMap[count].push_back(numPointsInCP);
-        for (lArray1d::size_type a = 0; a < numPointsInCP; ++a)
+        for (lArray1d::size_type a = 0 ; a < numPointsInCP ; ++a)
         {
           elementToNodeMap[count].push_back( m_contactManager.m_contactToIntersectionPolygonPointsMap[k][a]);
         }
@@ -2160,14 +2254,19 @@ void PhysicalDomainT::WriteCommonPlanes( SiloFile& siloFile,
         return;
       mask.push_back(m_contactManager.DataLengths());
       elementToNodeMap[count].push_back(3);
-      for (lArray1d::size_type a = 0; a < 3; ++a)
+      for (lArray1d::size_type a = 0 ; a < 3 ; ++a)
       {
         elementToNodeMap[count].push_back(m_contactManager.m_intersectionPolygonPoints.size());
         m_contactManager.m_intersectionPolygonPoints.push_back(m_contactManager.DefaultPolygonCenter());
         m_contactManager.m_intersectionPolygonPoints.back()(a) += m_contactManager.DefaultPolygonDimension();
       }
       ++numCommonPlanes;
-      m_contactManager.resize(m_contactManager.DataLengths() + 1); //see line 1639 for the reversal of this operation
+      m_contactManager.resize(m_contactManager.DataLengths() + 1); //see line
+                                                                   // 1639 for
+                                                                   // the
+                                                                   // reversal
+                                                                   // of this
+                                                                   // operation
     }
 
     // FOR DEFAULT VISUALIZATION : NUMBER OF COMMON PLANES ALWAYS AT LEAST 1
@@ -2180,8 +2279,8 @@ void PhysicalDomainT::WriteCommonPlanes( SiloFile& siloFile,
       dvector xcoords(numCommonPlanePoints);
       dvector ycoords(numCommonPlanePoints);
       dvector zcoords(numCommonPlanePoints);
-      Array1dT<R1Tensor>& cpos = m_contactManager.m_intersectionPolygonPoints;
-      for (localIndex a = 0; a < numCommonPlanePoints; ++a)
+      array<R1Tensor>& cpos = m_contactManager.m_intersectionPolygonPoints;
+      for (localIndex a = 0 ; a < numCommonPlanePoints ; ++a)
       {
         xcoords[a] = cpos[a](0);
         ycoords[a] = cpos[a](1);
@@ -2191,7 +2290,7 @@ void PhysicalDomainT::WriteCommonPlanes( SiloFile& siloFile,
       coords[1] = ycoords.data();
       coords[2] = zcoords.data();
 
-      Array1dT<localIndex*> meshConnectivity(1);
+      array<localIndex*> meshConnectivity(1);
       ivector shapecnt(1);
       ivector shapetype(1);
       ivector shapesize(1);
@@ -2217,9 +2316,17 @@ void PhysicalDomainT::WriteCommonPlanes( SiloFile& siloFile,
     // FOR DEFAULT VISUALIZATION : UNDO THE DEFAULT VISUALIZATION
     if(defaultPlane)
     {
-      for (lArray1d::size_type a = 0; a < 3; ++a)
+      for (lArray1d::size_type a = 0 ; a < 3 ; ++a)
         m_contactManager.m_intersectionPolygonPoints.pop_back();
-      m_contactManager.resize(((int)m_contactManager.DataLengths()) + 1); //see line 1587 for the initiation of this operation
+      m_contactManager.resize(((int)m_contactManager.DataLengths()) + 1); //see
+                                                                          // line
+                                                                          // 1587
+                                                                          // for
+                                                                          // the
+                                                                          // initiation
+                                                                          // of
+                                                                          // this
+                                                                          // operation
     }
   }
 }
@@ -2236,10 +2343,10 @@ void PhysicalDomainT::ReadCommonPlanes( const SiloFile& siloFile,
 }
 
 void PhysicalDomainT::WriteCartesianGrid( SiloFile& siloFile,
-                                         const int cycleNum,
-                                         const realT problemTime,
-                                         const bool isRestart,
-                                         const bool writeCG )
+                                          const int cycleNum,
+                                          const realT problemTime,
+                                          const bool isRestart,
+                                          const bool writeCG )
 {
   int rank = 0;
 #if GPAC_MPI
@@ -2260,7 +2367,7 @@ void PhysicalDomainT::WriteCartesianGrid( SiloFile& siloFile,
     localIndex nY = m_cartesianGridManager.m_nY;
     localIndex nZ = m_cartesianGridManager.m_nZ;
 
-    for (localIndex a = 0; a < m_cartesianGridManager.m_nXYZ; ++a)
+    for (localIndex a = 0 ; a < m_cartesianGridManager.m_nXYZ ; ++a)
     {
       R1Tensor& refPosition = (*m_cartesianGridManager.m_refposition)[a];
 
@@ -2300,17 +2407,17 @@ void PhysicalDomainT::ReadCartesianGrid( const SiloFile& siloFile,
 //////////////////////////////////////////////////////////////////
 
 void PhysicalDomainT::RegisterBCFields(){
-	RegisterBCFields(m_ellipsoidalDiscreteElementManager);
-	RegisterBCFields(m_ellipsoidalContactManager);
-	RegisterBCFields(m_discreteElementSurfaceFaces);
-	RegisterBCFields(m_discreteElementSurfaceNodes);
-	RegisterBCFields(m_discreteElementManager);
-	RegisterBCFields(m_contactManager);
-	RegisterBCFields(m_feNodeManager);
-	RegisterBCFields(m_feElementManager);
-	RegisterBCFields(m_feFaceManager);
-	RegisterBCFields(m_feEdgeManager);
-	RegisterBCFields(m_externalFaces);
+  RegisterBCFields(m_ellipsoidalDiscreteElementManager);
+  RegisterBCFields(m_ellipsoidalContactManager);
+  RegisterBCFields(m_discreteElementSurfaceFaces);
+  RegisterBCFields(m_discreteElementSurfaceNodes);
+  RegisterBCFields(m_discreteElementManager);
+  RegisterBCFields(m_contactManager);
+  RegisterBCFields(m_feNodeManager);
+  RegisterBCFields(m_feElementManager);
+  RegisterBCFields(m_feFaceManager);
+  RegisterBCFields(m_feEdgeManager);
+  RegisterBCFields(m_externalFaces);
 #ifdef SRC_EXTERNAL
   RegisterBCFields(m_faultPatchNodes);
   RegisterBCFields(m_faultPatchFaces);
@@ -2318,23 +2425,23 @@ void PhysicalDomainT::RegisterBCFields(){
 }
 
 void PhysicalDomainT::RegisterBCFields(ObjectDataStructureBaseT& object){
-	
-  for (std::vector<BoundaryConditionBase*>::iterator it_ic = object.m_bcData.begin(); 
-       it_ic != object.m_bcData.end(); ++it_ic)
+
+  for (std::vector<BoundaryConditionBase*>::iterator it_ic = object.m_bcData.begin() ;
+       it_ic != object.m_bcData.end() ; ++it_ic)
   {
     (*it_ic)->RegisterFields(*this);
   }
-	
+
 }
 
 
 void PhysicalDomainT::UpdateEnergy()
 {
-  const rArray1d& nodalMass = m_feNodeManager.GetFieldData<FieldInfo::mass>();
-  const Array1dT<R1Tensor>& velocity = m_feNodeManager.GetFieldData<FieldInfo::velocity>();
-  const iArray1d& ghostRank = m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+  const array<real64>& nodalMass = m_feNodeManager.GetFieldData<FieldInfo::mass>();
+  const array<R1Tensor>& velocity = m_feNodeManager.GetFieldData<FieldInfo::velocity>();
+  const array<integer>& ghostRank = m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
 
-  const rArray1d& work = m_feNodeManager.GetFieldData<realT>("work");
+  const array<real64>& work = m_feNodeManager.GetFieldData<realT>("work");
 
   this->m_energy.Zero();
 

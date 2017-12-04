@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -52,13 +70,14 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
   int numtasks, rank;
 
   MPI_Initialized(&initialized);
-  if (!initialized) MPI_Init(NULL, NULL);
+  if (!initialized)
+    MPI_Init(NULL, NULL);
 //  MPI_Status Stat;
   MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  for (TICPP::HierarchicalDataNode* TableNode = TablesNode->Next(true); TableNode;
-      TableNode = TablesNode->Next())
+  for (TICPP::HierarchicalDataNode* TableNode = TablesNode->Next(true) ; TableNode ;
+       TableNode = TablesNode->Next())
   {
     const std::string label(TableNode->Heading());
 
@@ -113,13 +132,13 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
       throw GPException("Table specified without a name");
 
     //read grid data
-    Array1dT<rArray1d> x(dim);
-    Array1dT<rArray1d> bufX(dim);
+    array<array<real64> > x(dim);
+    array<array<real64> > bufX(dim);
     gArray1d bufXLength(dim);
 
     if (rank == 0)
     {
-      for(localIndex i = 0; i < dim; i++)
+      for(localIndex i = 0 ; i < dim ; i++)
       {
         //read values
         {
@@ -141,7 +160,7 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
                 x(i) = TableNode->GetAttributeVector<realT>("zcoord", ",");
             }
           }
-       }
+        }
 
         //read units
         {
@@ -169,14 +188,14 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
     }
 
     //Update
-    for (localIndex i = 0; i < dim; i++)
+    for (localIndex i = 0 ; i < dim ; i++)
       bufX[i].resize(bufXLength[i]);
 
     //Pack up
     if (rank == 0)
     {
-      for (localIndex i = 0; i < dim; i++)
-        for (globalIndex j = 0; j < bufX[i].size(); j++)
+      for (localIndex i = 0 ; i < dim ; i++)
+        for (globalIndex j = 0 ; j < bufX[i].size() ; j++)
           bufX[i][j] = x(i)[j];
     }
 
@@ -184,27 +203,27 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
     {
       //bufX
       MPI_Barrier(MPI_COMM_WORLD);
-      for (localIndex i = 0; i < dim; i++)
+      for (localIndex i = 0 ; i < dim ; i++)
         MPI_Bcast(bufX[i].data(), bufX[i].size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
 
     //Update
     if (rank != 0)
     {
-      for (localIndex i = 0; i < dim; i++)
-        for (globalIndex j = 0; j < bufX[i].size(); j++)
+      for (localIndex i = 0 ; i < dim ; i++)
+        for (globalIndex j = 0 ; j < bufX[i].size() ; j++)
           x(i).push_back(bufX[i][j]);
     }
 
     //read value data
-    rArray1d values;
-    rArray1d bufValues;
+    array<real64> values;
+    array<real64> bufValues;
     globalIndex bufValuesLength = 0;
 
     if (rank == 0)
     {
       std::cout << tableName << std::endl;
-      
+
       //read values
       {
         std::string ticksFile = TableNode->GetAttributeStringOrDefault("value_file", "");
@@ -264,7 +283,7 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
     //Pack up
     if (rank == 0)
     {
-      for (globalIndex i = 0; i < bufValues.size(); i++)
+      for (globalIndex i = 0 ; i < bufValues.size() ; i++)
         bufValues[i] = values[i];
     }
 
@@ -278,7 +297,7 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
     //Update
     if (rank != 0)
     {
-      for (globalIndex i = 0; i < bufValues.size(); i++)
+      for (globalIndex i = 0 ; i < bufValues.size() ; i++)
         values.push_back(bufValues[i]);
     }
 
@@ -291,17 +310,20 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
     // set interpolation order
     TableInterpolation::Order interpOrder;
     {
-      const int interp = TableNode->GetAttributeOrDefault<int>("interpolation", 1); // linear interpolation by default
+      const int interp = TableNode->GetAttributeOrDefault<int>("interpolation", 1); // linear
+                                                                                    // interpolation
+                                                                                    // by
+                                                                                    // default
       switch(interp)
       {
-        case 0:
-        	interpOrder = TableInterpolation::zeroth;
-            break;
-        case 1:
-        	interpOrder = TableInterpolation::linear;
-            break;
-        default:
-            throw GPException("TableManager::ReadXML : only 0th and 1st order table interpolation currently supported.");
+      case 0:
+        interpOrder = TableInterpolation::zeroth;
+        break;
+      case 1:
+        interpOrder = TableInterpolation::linear;
+        break;
+      default:
+        throw GPException("TableManager::ReadXML : only 0th and 1st order table interpolation currently supported.");
 
       }
     }
@@ -312,29 +334,30 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
     {
       switch(dim)
       {
-        case 1:
-          NewTable<1>(tableName, x, values,interpOrder);
-          break;
-        case 2:
-          NewTable<2>(tableName, x, values,interpOrder);
-          break;
-        case 3:
-          NewTable<3>(tableName, x, values,interpOrder);
-          break;
-        case 4:
-          NewTable<4>(tableName, x, values,interpOrder);
-          break;
+      case 1:
+        NewTable<1>(tableName, x, values,interpOrder);
+        break;
+      case 2:
+        NewTable<2>(tableName, x, values,interpOrder);
+        break;
+      case 3:
+        NewTable<3>(tableName, x, values,interpOrder);
+        break;
+      case 4:
+        NewTable<4>(tableName, x, values,interpOrder);
+        break;
       }
     }
     else if(nComponents == 3)
     {
-      Array1dT<R1Tensor> values1(values.size() / 3);
+      array<R1Tensor> values1(values.size() / 3);
       {
         localIndex i= 0, j = 0;
-        for(rArray1d::const_iterator it = values.begin(); it != values.end(); ++it)
+        for(array<real64>::const_iterator it = values.begin() ; it != values.end() ; ++it)
         {
           values1[i][j++] = *it;
-          if(j==4) {
+          if(j==4)
+          {
             ++i;
             j = 0;
           }
@@ -342,18 +365,18 @@ void TableManager::ReadXML(TICPP::HierarchicalDataNode* TablesNode)
       }
       switch(dim)
       {
-        case 1:
-          NewVectorField<1>(tableName, x, values1);
-          break;
-        case 2:
-          NewVectorField<2>(tableName, x, values1);
-          break;
-        case 3:
-          NewVectorField<3>(tableName, x, values1);
-          break;
-        case 4:
-          NewVectorField<4>(tableName, x, values1);
-          break;
+      case 1:
+        NewVectorField<1>(tableName, x, values1);
+        break;
+      case 2:
+        NewVectorField<2>(tableName, x, values1);
+        break;
+      case 3:
+        NewVectorField<3>(tableName, x, values1);
+        break;
+      case 4:
+        NewVectorField<4>(tableName, x, values1);
+        break;
       }
     }
     else

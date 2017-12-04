@@ -31,22 +31,23 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup 
     MeshGeneratorBase( name, parent ),
 //    m_vertices({this->RegisterViewWrapper<real64_array>(keys::xCoords).reference(),
 //                this->RegisterViewWrapper<real64_array>(keys::yCoords).reference(),
-//                this->RegisterViewWrapper<real64_array>(keys::zCoords).reference() }),
-    m_dim( 0 ),
-    m_min(),
-    m_max()
+//                this->RegisterViewWrapper<real64_array>(keys::zCoords).reference()
+// }),
+  m_dim( 0 ),
+  m_min(),
+  m_max()
 {
 
   /*
-   for( int i=0 ; i<3 ; ++i )
-   {
-   m_wExtensionMin[i] = 0;
-   m_wExtensionMax[i] = 0;
-   m_nExtensionLayersMin[i] = 0;
-   m_nExtensionLayersMax[i] = 0;
-   m_commonRatioMin[i] = 1.5;
-   m_commonRatioMax[i] = 1.5;
-   }
+     for( int i=0 ; i<3 ; ++i )
+     {
+     m_wExtensionMin[i] = 0;
+     m_wExtensionMax[i] = 0;
+     m_nExtensionLayersMin[i] = 0;
+     m_nExtensionLayersMax[i] = 0;
+     m_commonRatioMin[i] = 1.5;
+     m_commonRatioMax[i] = 1.5;
+     }
    */
   m_dim = 3;
 }
@@ -58,9 +59,11 @@ InternalMeshGenerator::~InternalMeshGenerator()
 
 void InternalMeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
-  //MeshLevel * const mesh = domain->group_cast<DomainPartition*>()->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  //MeshLevel * const mesh =
+  // domain->group_cast<DomainPartition*>()->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   //NodeManager * const nodes    = mesh->getNodeManager();
-  // CellBlockManager * elems = domain->GetGroup<CellBlockManager>(keys::cellManager);
+  // CellBlockManager * elems =
+  // domain->GetGroup<CellBlockManager>(keys::cellManager);
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -74,8 +77,10 @@ void InternalMeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup 
 //                                                   -1,
 //                                                   "r1_array",
 //                                                   "r1_array",
-//                                                   "Reference position of mesh vertex points",
-//                                                   "Reference position of mesh vertex points",
+//                                                   "Reference position of mesh
+// vertex points",
+//                                                   "Reference position of mesh
+// vertex points",
 //                                                   "1",
 //                                                   "",
 //                                                   1,
@@ -249,12 +254,13 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {
   //  lvector numElements;
   //
-  //  for( sArray1d::size_type r=0 ; r<m_regionNames.size() ; ++r )
+  //  for( array<string>::size_type r=0 ; r<m_regionNames.size() ; ++r )
   //  {
   //    numElements.push_back( 0 );
   //  }
   //
-  //  domain.m_feElementManager->resize( numElements, m_regionNames, m_elementType );
+  //  domain.m_feElementManager->resize( numElements, m_regionNames,
+  // m_elementType );
 
 }
 
@@ -301,115 +307,116 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 #if ATK_FOUND
       SLIC_ERROR("InternalMeshGenerator: incorrect element type!");
 #endif
-    }
+  }
 
+  {
+    bool failFlag = false;
+    for( int i=0 ; i<m_dim ; ++i )
     {
-      bool failFlag = false;
-      for( int i=0 ; i<m_dim ; ++i )
-      {
-        failFlag += ( m_nElems[i].size() != m_vertices[i].size()-1 );
-      }
-      if( failFlag )
-      {
-#if ATK_FOUND
-        SLIC_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
+      failFlag += ( m_nElems[i].size() != m_vertices[i].size()-1 );
+    }
+    if( failFlag )
+    {
+#ifdef USE_ATK
+      SLIC_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
 #endif
-      }
     }
+  }
 
-    m_numElePerBox.resize(m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
+  m_numElePerBox.resize(m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-    if (m_elementType.size() != m_numElePerBox.size())
+  if (m_elementType.size() != m_numElePerBox.size())
+  {
+    if (m_elementType.size() == 1)
     {
-      if (m_elementType.size() == 1)
-      {
-        m_elementType.resize(m_numElePerBox.size());
-        m_elementType = m_elementType[0];
-      }
-      else
-      {
-#if ATK_FOUND
-        SLIC_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
+      m_elementType.resize(m_numElePerBox.size());
+      m_elementType = m_elementType[0];
+    }
+    else
+    {
+#ifdef USE_ATK
+      SLIC_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
 #endif
-      }
     }
+  }
 
 
-    for (localIndex i = 0; i < static_cast<localIndex>( m_elementType.size() ); ++i)
+  for (localIndex i = 0 ; i < static_cast<localIndex>( m_elementType.size() ) ; ++i)
+  {
+    if (m_elementType[i] == "C3D8")
     {
-      if (m_elementType[i] == "C3D8")
-      {
-        m_numElePerBox[i] = 1;
-        m_dim = 3;
-      }
-      else if (m_elementType[i] == "C3D4")
-      {
-        m_numElePerBox[i] = 6;
-        m_dim = 3;
-      }
-      else if (m_elementType[i] == "C3D6")
-      {
-        m_numElePerBox[i] = 2;
-        m_dim = 3;
-      }
-      else if ( m_elementType[i] == "CPE4")
-      {
-        m_numElePerBox[i] = 1;
-        m_dim = 2;
-      }
-      else if (m_elementType[i] == "STRI")
-      {
-        m_numElePerBox[i] = 2;
-        m_dim = 2;
-      }
+      m_numElePerBox[i] = 1;
+      m_dim = 3;
     }
+    else if (m_elementType[i] == "C3D4")
+    {
+      m_numElePerBox[i] = 6;
+      m_dim = 3;
+    }
+    else if (m_elementType[i] == "C3D6")
+    {
+      m_numElePerBox[i] = 2;
+      m_dim = 3;
+    }
+    else if ( m_elementType[i] == "CPE4")
+    {
+      m_numElePerBox[i] = 1;
+      m_dim = 2;
+    }
+    else if (m_elementType[i] == "STRI")
+    {
+      m_numElePerBox[i] = 2;
+      m_dim = 2;
+    }
+  }
 
 
 //    ExpandMultipleTokens(m_regionNames);
+  {
+    int numBlocks = 1;
+    for( int i=0 ; i<m_dim ; ++i )
     {
-      int numBlocks = 1;
-      for( int i=0 ; i<m_dim ; ++i )
+      numBlocks *= m_nElems[i].size();
+    }
+    if( numBlocks != m_regionNames.size() )
+    {
+      if (m_regionNames.size() == 1)
       {
-        numBlocks *= m_nElems[i].size();
+        m_regionNames.resize(numBlocks);
+        m_regionNames = m_regionNames[0];
       }
-      if( numBlocks != m_regionNames.size() )
+      else
       {
-        if (m_regionNames.size() == 1)
-        {
-          m_regionNames.resize(numBlocks);
-          m_regionNames = m_regionNames[0];
-        }
-        else
-        {
-#if ATK_FOUND
-          SLIC_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
+#ifdef USE_ATK
+        SLIC_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
 #endif
-        }
       }
     }
+  }
 
-    for( int i=0 ; i<3 ; ++i )
-    {
-      m_min[i] = m_vertices[i].front();
-      m_max[i] = m_vertices[i].back();
-    }
+  for( int i=0 ; i<3 ; ++i )
+  {
+    m_min[i] = m_vertices[i].front();
+    m_max[i] = m_vertices[i].back();
+  }
 
-    for( int dir=0 ; dir<3 ; ++dir )
+  for( int dir=0 ; dir<3 ; ++dir )
+  {
+    m_firstElemIndexForBlock[dir].resize( m_nElems[dir].size() );
+    m_lastElemIndexForBlock[dir].resize( m_nElems[dir].size() );
+    m_firstElemIndexForBlock[dir][0] = 0;
+    m_lastElemIndexForBlock[dir][0] = m_nElems[dir][0]-1;
+    for( int block=1 ; block<m_nElems[dir].size() ; ++block )
     {
-      m_firstElemIndexForBlock[dir].resize( m_nElems[dir].size() );
-      m_lastElemIndexForBlock[dir].resize( m_nElems[dir].size() );
-      m_firstElemIndexForBlock[dir][0] = 0;
-      m_lastElemIndexForBlock[dir][0] = m_nElems[dir][0]-1;
-      for( int block=1 ; block<m_nElems[dir].size() ; ++block )
-      {
-        m_firstElemIndexForBlock[dir][block] = m_lastElemIndexForBlock[dir][block-1] + 1;
-        m_lastElemIndexForBlock[dir][block] = m_firstElemIndexForBlock[dir][block] + m_nElems[dir][block]-1;
-      }
+      m_firstElemIndexForBlock[dir][block] = m_lastElemIndexForBlock[dir][block-1] + 1;
+      m_lastElemIndexForBlock[dir][block] = m_firstElemIndexForBlock[dir][block] + m_nElems[dir][block]-1;
     }
+  }
 
 
 //    m_fPerturb = hdn.GetAttributeOrDefault<realT>("perturbationFactor", 0.0);
-//    m_randSeed = hdn.GetAttributeOrDefault<int>("perturbationSeed", time(NULL));
+//    m_randSeed = hdn.GetAttributeOrDefault<int>("perturbationSeed",
+// time(NULL));
 //    srand(m_randSeed);
 //
 //    m_mapToRadial = hdn.GetAttributeOrDefault<int>("mapToRadial", 0);
@@ -418,15 +425,25 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 //    m_skewAngle *= 3.14159265/180;
 //    R1Tensor zeroVector;
 //    zeroVector *= 0.0;
-//    m_skewCenter = hdn.GetAttributeOrDefault<R1Tensor>("skewCenter", zeroVector);
+//    m_skewCenter = hdn.GetAttributeOrDefault<R1Tensor>("skewCenter",
+// zeroVector);
 //
 //
 //    // Mesh deformation
-//    m_delayMeshDeformation = hdn.GetAttributeOrDefault<int>("delayMeshDeformation", 0);
+//    m_delayMeshDeformation =
+// hdn.GetAttributeOrDefault<int>("delayMeshDeformation", 0);
 //    m_meshDx = hdn.GetAttributeString("dxTable");
 //    m_meshDy = hdn.GetAttributeString("dyTable");
 //    m_meshDz = hdn.GetAttributeString("dzTable");
 
+}
+
+
+
+
+void InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
+{
+  this->RegisterGroup<CellBlock>( childName );
 }
 
 
@@ -443,6 +460,10 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
 
+  // special case
+  //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) &&
+  // (partition.GetPartitions()[1]==1);
+
   NodeManager * nodeManager = meshLevel0->getNodeManager();
 
   CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
@@ -451,21 +472,6 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
 
   bool isRadialWithOneThetaPartition = false;
-
-
-
-  // Where should this be read? :
-  // for( auto & cellBlockName : m_regionNames )
-  // {
-  //   CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
-  //   cellBlock->SetDocumentationNodes(nullptr);
-  //   cellBlock->RegisterDocumentationNodes();
-  //   cellBlock->ReadXML_PostProcess();
-  // }
-
-
-
-
 
   localIndex_set & xnegNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("xneg") )->reference();
   localIndex_set & xposNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("xpos") )->reference();
@@ -493,7 +499,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   // find elemCenters for even uniform element sizes
-  Array1dT<rArray1d> elemCenterCoords( 3 );
+  array<array<real64> > elemCenterCoords( 3 );
   for( int i = 0 ; i < 3 ; ++i )
   {
     m_numElemsTotal[i] = 0;
@@ -503,7 +509,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
     }
 
     elemCenterCoords[i].resize( m_numElemsTotal[i] );
-    rArray1d elemCenterCoordsLocal( m_numElemsTotal[i] );
+    array<real64> elemCenterCoordsLocal( m_numElemsTotal[i] );
     for( int k = 0 ; k < m_numElemsTotal[i] ; ++k )
     {
       elemCenterCoordsLocal[k] = m_min[i] + ( m_max[i] - m_min[i] ) * ( k + 0.5 ) / m_numElemsTotal[i];
@@ -520,9 +526,9 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
   // get the first and last indices in this partition each direction
   int firstElemIndexInPartition[3] =
-      { -1, -1, -1 };
+  { -1, -1, -1 };
   int lastElemIndexInPartition[3] =
-      { -2, -2, -2 };
+  { -2, -2, -2 };
 
   for( int i = 0 ; i < 3 ; ++i )
   {
@@ -549,13 +555,14 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
     }
   }
 
-  // calculate number of elements in this partition from each region, and the total number of nodes
+  // calculate number of elements in this partition from each region, and the
+  // total number of nodes
 
   std::map<std::string, int> numElemsInRegions;
   std::map<std::string, std::string> elemTypeInRegions;
 
-  iArray1d firstElemIndexForBlockInPartition[3];
-  iArray1d lastElemIndexForBlockInPartition[3];
+  integer_array firstElemIndexForBlockInPartition[3];
+  integer_array lastElemIndexForBlockInPartition[3];
 
   for( int dir = 0 ; dir < 3 ; ++dir )
   {
@@ -585,7 +592,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   // TODO This needs to be rewritten for dimensions lower than 3.
-  sArray1d::const_iterator iterRegion = m_regionNames.begin();
+  array<string>::const_iterator iterRegion = m_regionNames.begin();
   for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
   {
     for( int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
@@ -631,12 +638,13 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   localIndex numNodes = 1;
 
   //  int numElemsInDir[3] = {1,1,1};
-  int numNodesInDir[3] =
-      { 1, 1, 1 };
+  localIndex numNodesInDir[3] =
+  { 1, 1, 1 };
 
   for( int i = 0 ; i < m_dim ; ++i )
   {
-    //    numElemsInDir[i] = lastElemIndexInPartition[i] - firstElemIndexInPartition[i] + 1;
+    //    numElemsInDir[i] = lastElemIndexInPartition[i] -
+    // firstElemIndexInPartition[i] + 1;
     numNodesInDir[i] = lastElemIndexInPartition[i] - firstElemIndexInPartition[i] + 2;
     if( isRadialWithOneThetaPartition && i == 1 )
     {
@@ -657,7 +665,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
         for( int k = 0 ; k < numNodesInDir[2] ; ++k )
         {
           int index[3] =
-              { i, j, k };
+          { i, j, k };
           for( int a = 0 ; a < m_dim ; ++a )
           {
             index[a] += firstElemIndexInPartition[a];
@@ -729,12 +737,12 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
   {
     integer_array numElements;
-    sArray1d elementRegionNames;
-    sArray1d elementTypes;
+    array<string> elementRegionNames;
+    array<string> elementTypes;
     std::map<std::string, localIndex> localElemIndexInRegion;
 
     for( std::map<std::string, int>::iterator iterNumElemsInRegion = numElemsInRegions.begin() ;
-        iterNumElemsInRegion != numElemsInRegions.end() ; ++iterNumElemsInRegion )
+         iterNumElemsInRegion != numElemsInRegions.end() ; ++iterNumElemsInRegion )
     {
 
       numElements.push_back( iterNumElemsInRegion->second );
@@ -757,15 +765,16 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
       {
         for( int kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion, ++iR )
         {
-//          ElementRegionT& elemRegion = domain->m_feElementManager->m_ElementRegions[*iterRegion];
+//          ElementRegionT& elemRegion =
+// domain->m_feElementManager->m_ElementRegions[*iterRegion];
 
           CellBlock * elemRegion =  elementManager->GetRegion(*iterRegion);
           integer const numNodesPerElem = elemRegion->numNodesPerElement();
 
           int numElemsInDirForRegion[3] =
-              { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
-                lastElemIndexForBlockInPartition[1][jblock] - firstElemIndexForBlockInPartition[1][jblock] + 1,
-                lastElemIndexForBlockInPartition[2][kblock] - firstElemIndexForBlockInPartition[2][kblock] + 1 };
+          { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
+            lastElemIndexForBlockInPartition[1][jblock] - firstElemIndexForBlockInPartition[1][jblock] + 1,
+            lastElemIndexForBlockInPartition[2][kblock] - firstElemIndexForBlockInPartition[2][kblock] + 1 };
 
           for( int i = 0 ; i < numElemsInDirForRegion[0] ; ++i )
           {
@@ -774,14 +783,14 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
               for( int k = 0 ; k < numElemsInDirForRegion[2] ; ++k )
               {
                 int index[3] =
-                    { i + firstElemIndexForBlockInPartition[0][iblock],
-                      j + firstElemIndexForBlockInPartition[1][jblock],
-                      k + firstElemIndexForBlockInPartition[2][kblock] };
+                { i + firstElemIndexForBlockInPartition[0][iblock],
+                  j + firstElemIndexForBlockInPartition[1][jblock],
+                  k + firstElemIndexForBlockInPartition[2][kblock] };
 
                 const localIndex firstNodeIndex = numNodesInDir[1] * numNodesInDir[2] * ( index[0] - firstElemIndexInPartition[0] )
-                    + numNodesInDir[2] * ( index[1] - firstElemIndexInPartition[1] )
-                    + ( index[2] - firstElemIndexInPartition[2] );
-                int nodeOfBox[8];
+                                                  + numNodesInDir[2] * ( index[1] - firstElemIndexInPartition[1] )
+                                                  + ( index[2] - firstElemIndexInPartition[2] );
+                localIndex nodeOfBox[8];
 
                 if( m_elementType[iR] == "CPE4" || m_elementType[iR] == "STRI" )
                 {
@@ -821,15 +830,16 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
                   //            0                   1             |/____ x
 
                 }
-                // fix local connectivity for single theta (y) partition (radial meshes only)
+                // fix local connectivity for single theta (y) partition (radial
+                // meshes only)
                 if( isRadialWithOneThetaPartition )
                 {
                   if( j == numElemsInDirForRegion[1] - 1 && jblock == m_nElems[1].size() - 1 )
                   { // last set of elements
                     index[1] = -1;
                     const localIndex firstNodeIndexR = numNodesInDir[1] * numNodesInDir[2] * ( index[0] - firstElemIndexInPartition[0] )
-                        + numNodesInDir[2] * ( index[1] - firstElemIndexInPartition[1] )
-                        + ( index[2] - firstElemIndexInPartition[2] );
+                                                       + numNodesInDir[2] * ( index[1] - firstElemIndexInPartition[1] )
+                                                       + ( index[2] - firstElemIndexInPartition[2] );
                     nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR;
                     nodeOfBox[3] = numNodesInDir[2] + firstNodeIndexR;
                     nodeOfBox[6] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR + 1;
@@ -842,7 +852,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
                   localIndex& localElemIndex = localElemIndexInRegion[*iterRegion];
                   elemRegion->m_localToGlobalMap[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
 
-                  iArray1d nodeIDInBox( numNodesPerElem );
+                  integer_array nodeIDInBox( numNodesPerElem );
 
                   GetElemToNodesRelationInBox( m_elementType[iR], index, iEle, nodeIDInBox.data(),
                                                numNodesPerElem );
@@ -877,12 +887,12 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
       localIndex iBlockMin( 0 ), iBlockMax( 0 );
       while( ( xMinByNumElems < m_firstElemIndexForBlock[i][iBlockMin] * 1.0 || xMinByNumElems > m_lastElemIndexForBlock[i][iBlockMin] * 1.0 + 1.0 )
-          && iBlockMin < m_nElems[i].size() - 1 )
+             && iBlockMin < m_nElems[i].size() - 1 )
       {
         ++iBlockMin;
       }
       while( ( xMaxByNumElems < m_firstElemIndexForBlock[i][iBlockMax] * 1.0 || xMaxByNumElems > m_lastElemIndexForBlock[i][iBlockMax] * 1.0 + 1.0 )
-          && iBlockMax < m_nElems[i].size() - 1 )
+             && iBlockMax < m_nElems[i].size() - 1 )
       {
         ++iBlockMax;
       }
@@ -893,20 +903,22 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
           iBlockMin >= m_nElems[i].size() )
       {
         std::cout
-        << "WARNING: Had some trouble in correcting partition geometric boundaries.  If this affects the results, contact a developer"
-        << std::endl;
+          << "WARNING: Had some trouble in correcting partition geometric boundaries.  If this affects the results, contact a developer"
+          << std::endl;
       }
       if( xMaxByNumElems < m_firstElemIndexForBlock[i][iBlockMax] * 1.0 ||
           xMaxByNumElems > m_lastElemIndexForBlock[i][iBlockMax] * 1.0 + 1.0 ||
           iBlockMax >= m_nElems[i].size() )
       {
         std::cout
-        << "WARNING: Had some trouble in correcting partition geometric boundaries.  If this affects the results, contact a developer"
-        << std::endl;
+          << "WARNING: Had some trouble in correcting partition geometric boundaries.  If this affects the results, contact a developer"
+          << std::endl;
       }
 
-      pMin[i] = m_vertices[i][iBlockMin] + ( xMinByNumElems - m_firstElemIndexForBlock[i][iBlockMin] ) * ( m_vertices[i][iBlockMin + 1] - m_vertices[i][iBlockMin] ) / m_nElems[i][iBlockMin];
-      pMax[i] = m_vertices[i][iBlockMax] + ( xMaxByNumElems - m_firstElemIndexForBlock[i][iBlockMax] ) * ( m_vertices[i][iBlockMax + 1] - m_vertices[i][iBlockMax] ) / m_nElems[i][iBlockMax];
+      pMin[i] = m_vertices[i][iBlockMin] + ( xMinByNumElems - m_firstElemIndexForBlock[i][iBlockMin] ) *
+                ( m_vertices[i][iBlockMin + 1] - m_vertices[i][iBlockMin] ) / m_nElems[i][iBlockMin];
+      pMax[i] = m_vertices[i][iBlockMax] + ( xMaxByNumElems - m_firstElemIndexForBlock[i][iBlockMax] ) *
+                ( m_vertices[i][iBlockMax + 1] - m_vertices[i][iBlockMax] ) / m_nElems[i][iBlockMax];
     }
 
     partition.SetPartitionGeometricalBoundary( pMin, pMax );
@@ -915,26 +927,32 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 #endif
 
   /*
-   {// Move nodes in the extension layers.
+     {// Move nodes in the extension layers.
 
-   for (localIndex iN = 0; iN != nodeManager->DataLengths(); ++iN)
-   {
-   for (int i=0; i<m_dim; ++i)
-   {
-   if ( X[iN][i] < m_min[i])
-   {
-   int eLayer = (int) ((m_min[i] -X[iN][i]) / ((m_max[i] - m_min[i]) / m_numElems[i]) + 0.5);
-   X[iN][i] = m_min[i] - ((m_max[i] - m_min[i]) / m_numElems[i]) * m_commonRatioMin[i] * (1- pow(m_commonRatioMin[i], eLayer)) / (1 - m_commonRatioMin[i]);
-   }
-   else if (X[iN][i] > m_max[i])
-   {
-   int eLayer = (int) ((X[iN][i] - m_max[i] ) / ((m_max[i] - m_min[i]) / m_numElems[i]) + 0.5);
-   X[iN][i] = m_max[i] + ((m_max[i] - m_min[i]) / m_numElems[i]) * m_commonRatioMax[i] * (1- pow(m_commonRatioMax[i], eLayer)) / (1 - m_commonRatioMax[i]);
-   }
+     for (localIndex iN = 0; iN != nodeManager->DataLengths(); ++iN)
+     {
+     for (int i=0; i<m_dim; ++i)
+     {
+     if ( X[iN][i] < m_min[i])
+     {
+     int eLayer = (int) ((m_min[i] -X[iN][i]) / ((m_max[i] - m_min[i]) /
+        m_numElems[i]) + 0.5);
+     X[iN][i] = m_min[i] - ((m_max[i] - m_min[i]) / m_numElems[i]) *
+        m_commonRatioMin[i] * (1- pow(m_commonRatioMin[i], eLayer)) / (1 -
+        m_commonRatioMin[i]);
+     }
+     else if (X[iN][i] > m_max[i])
+     {
+     int eLayer = (int) ((X[iN][i] - m_max[i] ) / ((m_max[i] - m_min[i]) /
+        m_numElems[i]) + 0.5);
+     X[iN][i] = m_max[i] + ((m_max[i] - m_min[i]) / m_numElems[i]) *
+        m_commonRatioMax[i] * (1- pow(m_commonRatioMax[i], eLayer)) / (1 -
+        m_commonRatioMax[i]);
+     }
 
-   }
-   }
-   }
+     }
+     }
+     }
    */
 
   // Node perturbation
@@ -947,7 +965,17 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
       {
         if( X[iN][i] > m_min[i] && X[iN][i] < m_max[i] )
         {
-          srand( nodeManager->m_localToGlobalMap[iN] + m_randSeed + i ); // This ensures that the perturbation pattern is unaffected by domain partitioning.
+          srand( integer_conversion<int>(nodeManager->m_localToGlobalMap[iN]) + m_randSeed + i ); // This
+                                                                                                  // ensures
+                                                                                                  // that
+                                                                                                  // the
+                                                                                                  // perturbation
+                                                                                                  // pattern
+                                                                                                  // is
+                                                                                                  // unaffected
+                                                                                                  // by
+                                                                                                  // domain
+                                                                                                  // partitioning.
           X[iN][i] += ( ( m_max[i] - m_min[i] ) / m_numElemsTotal[i] ) * ( ( rand() * 1.0 ) / RAND_MAX - 0.5 ) * 2 * m_fPerturb;
         }
       }
@@ -1224,64 +1252,72 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elem
   else if( elementType == "C3D4" )
   {
     int mapBoxTet[8][6][4] =
-        {
-          {
-            { 0, 3, 7, 6 },
-            { 0, 7, 4, 6 },
-            { 0, 5, 1, 6 },
-            { 0, 4, 5, 6 },
-            { 0, 1, 2, 6 },
-            { 0, 2, 3, 6 } },
-          {
-            { 1, 5, 6, 7 },
-            { 1, 6, 2, 7 },
-            { 0, 4, 1, 7 },
-            { 1, 4, 5, 7 },
-            { 0, 1, 3, 7 },
-            { 1, 2, 3, 7 } },
-          {
-            { 0, 3, 4, 2 },
-            { 3, 7, 4, 2 },
-            { 0, 4, 1, 2 },
-            { 1, 4, 5, 2 },
-            { 4, 7, 6, 2 },
-            { 4, 6, 5, 2 } },
-          {
-            { 1, 5, 2, 3 },
-            { 2, 5, 6, 3 },
-            { 0, 5, 1, 3 },
-            { 0, 4, 5, 3 },
-            { 4, 7, 5, 3 },
-            { 5, 7, 6, 3 } },
-          {
-            { 0, 3, 4, 5 },
-            { 3, 7, 4, 5 },
-            { 3, 6, 7, 5 },
-            { 3, 2, 6, 5 },
-            { 3, 0, 1, 5 },
-            { 1, 2, 3, 5 } },
-          {
-            { 1, 5, 2, 4 },
-            { 2, 5, 6, 4 },
-            { 2, 6, 7, 4 },
-            { 2, 7, 3, 4 },
-            { 0, 2, 3, 4 },
-            { 0, 1, 2, 4 } },
-          {
-            { 0, 7, 4, 1 },
-            { 0, 3, 7, 1 },
-            { 2, 7, 3, 1 },
-            { 2, 6, 7, 1 },
-            { 4, 7, 5, 1 },
-            { 5, 7, 6, 1 } },
-          {
-            { 1, 5, 6, 0 },
-            { 1, 6, 2, 0 },
-            { 2, 6, 3, 0 },
-            { 3, 6, 7, 0 },
-            { 4, 6, 5, 0 },
-            { 4, 7, 6, 0 } }
-        };
+    {
+      {
+        { 0, 3, 7, 6 },
+        { 0, 7, 4, 6 },
+        { 0, 5, 1, 6 },
+        { 0, 4, 5, 6 },
+        { 0, 1, 2, 6 },
+        { 0, 2, 3, 6 }
+      },
+      {
+        { 1, 5, 6, 7 },
+        { 1, 6, 2, 7 },
+        { 0, 4, 1, 7 },
+        { 1, 4, 5, 7 },
+        { 0, 1, 3, 7 },
+        { 1, 2, 3, 7 }
+      },
+      {
+        { 0, 3, 4, 2 },
+        { 3, 7, 4, 2 },
+        { 0, 4, 1, 2 },
+        { 1, 4, 5, 2 },
+        { 4, 7, 6, 2 },
+        { 4, 6, 5, 2 }
+      },
+      {
+        { 1, 5, 2, 3 },
+        { 2, 5, 6, 3 },
+        { 0, 5, 1, 3 },
+        { 0, 4, 5, 3 },
+        { 4, 7, 5, 3 },
+        { 5, 7, 6, 3 }
+      },
+      {
+        { 0, 3, 4, 5 },
+        { 3, 7, 4, 5 },
+        { 3, 6, 7, 5 },
+        { 3, 2, 6, 5 },
+        { 3, 0, 1, 5 },
+        { 1, 2, 3, 5 }
+      },
+      {
+        { 1, 5, 2, 4 },
+        { 2, 5, 6, 4 },
+        { 2, 6, 7, 4 },
+        { 2, 7, 3, 4 },
+        { 0, 2, 3, 4 },
+        { 0, 1, 2, 4 }
+      },
+      {
+        { 0, 7, 4, 1 },
+        { 0, 3, 7, 1 },
+        { 2, 7, 3, 1 },
+        { 2, 6, 7, 1 },
+        { 4, 7, 5, 1 },
+        { 5, 7, 6, 1 }
+      },
+      {
+        { 1, 5, 6, 0 },
+        { 1, 6, 2, 0 },
+        { 2, 6, 3, 0 },
+        { 3, 6, 7, 0 },
+        { 4, 6, 5, 0 },
+        { 4, 7, 6, 0 }
+      }
+    };
 
     int mapBoxType[2][2][2];
     mapBoxType[0][0][0] = 0;
@@ -1307,7 +1343,8 @@ void InternalMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const doma
   //  // Node mapping
   //  if (!m_meshDx.empty())
   //  {
-  //    const Table3D* tableDx = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDx);
+  //    const Table3D* tableDx =
+  // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDx);
   //
   //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
   //    {
@@ -1318,7 +1355,8 @@ void InternalMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const doma
   //
   //  if (!m_meshDy.empty())
   //  {
-  //    const Table3D* tableDy = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDy);
+  //    const Table3D* tableDy =
+  // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDy);
   //
   //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
   //    {
@@ -1329,7 +1367,8 @@ void InternalMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const doma
   //
   //  if (!m_meshDz.empty())
   //  {
-  //    const Table3D* tableDz = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDz);
+  //    const Table3D* tableDz =
+  // stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDz);
   //
   //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
   //    {

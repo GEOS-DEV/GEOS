@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -50,7 +68,7 @@
 //#include "../Utilities/Utilities.h"
 #include "Communication.h"
 #include "legacy/ArrayT/bufvector.h"
-
+#include "codingUtilities/Utilities.hpp"
 #ifdef USE_ATK
 #include "slic/slic.hpp"
 #endif
@@ -73,35 +91,33 @@ struct TempNeighborData
 {
 //
   //sizes to receive
-  Array1dT<gArray1d::size_type> neighborBoundaryObjectsSizes;
-  Array1dT<bufvector::size_type> receiveSizes;
-  Array1dT<bufvector::size_type> sendSizes;
+  array<globalIndex_array::size_type> neighborBoundaryObjectsSizes;
+  array<bufvector::size_type> receiveSizes;
+  array<bufvector::size_type> sendSizes;
 
   //node, edge, face (3)
-  std::map<string, gArray1d> neighborNumbers;
-  std::map<string, gArray1d> matchedNumbers;
-  std::map<string, lArray1d> matchedIndices;
+  std::map<string, globalIndex_array> neighborNumbers;
+  std::map<string, globalIndex_array> matchedNumbers;
+  std::map<string, localIndex_array> matchedIndices;
 
   //node, face (2)
   std::map<string, lSet> indicesInRange;
 
-  map< string, lSet > objectLocalIndicesToSend ;
-  map< string, gArray1d > objectGlobalIndicesToSend ;
-  map< string, gArray1d > objectGlobalIndicesToRecieve ;
+  map< string, lSet > objectLocalIndicesToSend;
+  map< string, globalIndex_array > objectGlobalIndicesToSend;
+  map< string, globalIndex_array > objectGlobalIndicesToRecieve;
 
   //node, edge, face, element (4)
   std::map<string, bufvector> objectsToSend;
   std::map<string, bufvector> objectsToReceive;
 
-  std::map<string, lArray1d > objectWithNewGlobalIndex;
-  std::map<string, lArray1d > objectWithUnassignedGlobal;
+  std::map<string, localIndex_array > objectWithNewGlobalIndex;
+  std::map<string, localIndex_array > objectWithUnassignedGlobal;
 
-  gArray1d::size_type sendGlobalIndexRequests[3];
-  gArray1d::size_type recvGlobalIndexRequests[3];
+  globalIndex_array::size_type sendGlobalIndexRequests[3];
+  globalIndex_array::size_type recvGlobalIndexRequests[3];
   globalIndex sendFirstNewGlobalIndices[3];
   globalIndex recvFirstNewGlobalIndices[3];
-
-
 
 
 
@@ -180,11 +196,11 @@ public:
 
 //  void SetDomain( DomainPartition& domain );
 
-  bufvector::size_type PackBuffer( const std::map<string, sArray1d>& fieldNames,
+  bufvector::size_type PackBuffer( const std::map<string, array<string> >& fieldNames,
                                    const CommRegistry::commID commID,
                                    const bool doBufferPacking = 1 );
 
-  bufvector::size_type GetPackedBufferSize( const std::map<string, sArray1d>& fieldNames,
+  bufvector::size_type GetPackedBufferSize( const std::map<string, array<string> >& fieldNames,
                                             const CommRegistry::commID commID )
   {
 
@@ -194,10 +210,10 @@ public:
     return bufferSize;
   }
 
-  void UnpackBuffer( const std::map<string, sArray1d>& fieldNames);
+  void UnpackBuffer( const std::map<string, array<string> >& fieldNames);
 
-  void UnpackGhostElements( std::map<std::string,lArray1d>& newElementIndices );
-  int UnpackGhosts(const string name, lArray1d& newIndices );
+  void UnpackGhostElements( std::map<std::string,localIndex_array>& newElementIndices );
+  int UnpackGhosts(const string name, localIndex_array& newIndices );
 
   void SendReceiveSizes(const CommRegistry::commID commID = CommRegistry::genericComm01  );
 
@@ -223,7 +239,7 @@ public:
 
   void DetermineMatchedBoundaryObject( const ObjectDataStructureBaseT& object,
                                        const string name,
-                                       const gArray1d& localObjectNumbers);
+                                       const globalIndex_array& localObjectNumbers);
 
   void FindPackGhostsDiscreteElement( const bool contactActive, const int depth = 1 );
 
@@ -238,19 +254,17 @@ public:
 
 
 
-
-  const lArray1d& GetSendLocalIndices(const string key){
+  const localIndex_array& GetSendLocalIndices(const string key){
     return m_sendLocalIndices[key];
   }
 
-  const lArray1d& GetElementRegionSendLocalIndices(const std::string& regionName){
-    return  m_elementRegionsSendLocalIndices[regionName];
+  const localIndex_array& GetElementRegionSendLocalIndices(const std::string& regionName){
+    return m_elementRegionsSendLocalIndices[regionName];
   }
 
-  const std::map< std::string, lArray1d>& GetElementRegionSendLocalIndices(){
-    return  m_elementRegionsSendLocalIndices;
+  const std::map< std::string, localIndex_array>& GetElementRegionSendLocalIndices(){
+    return m_elementRegionsSendLocalIndices;
   }
-
 
 
 
@@ -263,16 +277,15 @@ public:
 
 
 
-
   void UnpackTopologyModifications( const string key,
                                     const char*& pbuffer,
-                                    lArray1d& newIndices,
-                                    lArray1d& modifiedIndices,
+                                    localIndex_array& newIndices,
+                                    localIndex_array& modifiedIndices,
                                     const bool reverseOp  );
 
   void UnpackTopologyModifications( const string key,
                                     const char*& pbuffer,
-                                    std::map< std::string, lArray1d>& modifiedIndices );
+                                    std::map< std::string, localIndex_array>& modifiedIndices );
 
 
   void PackNewGlobalIndexRequests( const ModifiedObjectLists& modifiedObjects );
@@ -303,8 +316,8 @@ public:
                     MPI_Request& recvReq,
                     const CommRegistry::commID commID = CommRegistry::genericComm01 )
   {
-    SendReceive( reinterpret_cast<char*>(recvBuffer.data()), recvBuffer.size()*sizeof(bufvector::size_type),
-                 reinterpret_cast<char*>(sendBuffer.data()), sendBuffer.size()*sizeof(bufvector::size_type),
+    SendReceive( reinterpret_cast<char*>(recvBuffer.data()), integer_conversion<int>(recvBuffer.size())*sizeof(bufvector::size_type),
+                 reinterpret_cast<char*>(sendBuffer.data()), integer_conversion<int>(sendBuffer.size())*sizeof(bufvector::size_type),
                  recvReq, sendReq, commID );
   }
 
@@ -329,14 +342,12 @@ public:
 
 
 
-
-
 private:
 
   int m_neighborRank;
-  std::map<string, lArray1d> m_receiveLocalIndices;
+  std::map<string, localIndex_array> m_receiveLocalIndices;
 
-  void SetAllOwned(const gArray1d& localToGlobal, lArray1d& indices) const;
+  void SetAllOwned(const globalIndex_array& localToGlobal, localIndex_array& indices) const;
 
   int UnpackGhosts(const string name);
 
@@ -344,12 +355,13 @@ private:
   int m_size;
   integer_set m_rankOfNeighborNeighbors;
 
-  //NOTE: element regions are currently being dealt with using a special structure ... everything else with general one
+  //NOTE: element regions are currently being dealt with using a special
+  // structure ... everything else with general one
 
-  std::map<string, lArray1d> m_sendLocalIndices;
-  std::map< std::string, lArray1d> m_elementRegionsSendLocalIndices;
+  std::map<string, localIndex_array> m_sendLocalIndices;
+  std::map< std::string, localIndex_array> m_elementRegionsSendLocalIndices;
 
-  std::map< std::string, lArray1d> m_elementRegionsReceiveLocalIndices;
+  std::map< std::string, localIndex_array> m_elementRegionsReceiveLocalIndices;
 
   bufvector m_sendBuffer;
   int m_sendSize[CommRegistry::maxComm];
@@ -382,7 +394,7 @@ public:
   bool MPI_Test_SendBufferRequest( const CommRegistry::commID commID );
   bool MPI_Test_RecvBufferRequest( const CommRegistry::commID commID );
 
-  void SetRankOfNeighborNeighbors( const iArray1d& ranks )
+  void SetRankOfNeighborNeighbors( const array<integer>& ranks )
   {
 
     m_rankOfNeighborNeighbors.clear();
@@ -417,7 +429,7 @@ public:
 //        throw GPException("Unrecognized index for SyncName");
 //    }
 //  }
-//  inline static void SyncNames(Array1dT<string>& syncNames)
+//  inline static void SyncNames(array<string>& syncNames)
 //  {
 //    syncNames.resize(8);
 //    syncNames[0] = PhysicalDomainT::FiniteElementNodeManager;
@@ -430,15 +442,17 @@ public:
 //    syncNames[7] = PhysicalDomainT::EllipsoidalDiscreteElementManager;
 //  }
 
-  const lArray1d& ElementRegionsReceiveLocalIndices( const std::string& name ) const  {return stlMapLookup( m_elementRegionsReceiveLocalIndices, name );}
-  const std::map< std::string, lArray1d>& ElementRegionsReceiveLocalIndices() const  {return m_elementRegionsReceiveLocalIndices;}
+  const localIndex_array& ElementRegionsReceiveLocalIndices( const std::string& name ) const  {
+    return stlMapLookup( m_elementRegionsReceiveLocalIndices, name );
+  }
+  const std::map< std::string, localIndex_array>& ElementRegionsReceiveLocalIndices() const  {return m_elementRegionsReceiveLocalIndices;}
 
-  const lArray1d& ElementRegionsSendLocalIndices( const std::string& name ) const  {return stlMapLookup( m_elementRegionsSendLocalIndices, name );}
-  const std::map< std::string, lArray1d>& ElementRegionsSendLocalIndices() const  {return m_elementRegionsSendLocalIndices;}
+  const localIndex_array& ElementRegionsSendLocalIndices( const std::string& name ) const  {return stlMapLookup( m_elementRegionsSendLocalIndices, name );}
+  const std::map< std::string, localIndex_array>& ElementRegionsSendLocalIndices() const  {return m_elementRegionsSendLocalIndices;}
 
-  const lArray1d& ReceiveLocalIndices( const string name) const
+  const localIndex_array& ReceiveLocalIndices( const string name) const
   {
-    std::map<string, lArray1d>::const_iterator it = this->m_receiveLocalIndices.find(name);
+    std::map<string, localIndex_array>::const_iterator it = this->m_receiveLocalIndices.find(name);
     if(it == this->m_receiveLocalIndices.end())
     {
 #ifdef USE_ATK
@@ -448,9 +462,9 @@ public:
     return it->second;
   }
 
-  const lArray1d& SendLocalIndices( const string name) const
+  const localIndex_array& SendLocalIndices( const string name) const
   {
-    std::map<string, lArray1d>::const_iterator it = this->m_sendLocalIndices.find(name);
+    std::map<string, localIndex_array>::const_iterator it = this->m_sendLocalIndices.find(name);
     if(it == this->m_sendLocalIndices.end())
     {
 #ifdef USE_ATK

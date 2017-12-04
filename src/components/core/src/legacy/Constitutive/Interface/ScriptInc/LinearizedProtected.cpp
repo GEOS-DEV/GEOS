@@ -1,6 +1,6 @@
 //FUNCTION_BEGIN_PARSE
 virtual_realT
-Linearized::NormalStiffness(const InterfaceBaseParameterData& ,
+Linearized::NormalStiffness(const InterfaceBaseParameterData&,
                             InterfaceBaseStateData& matStateBase,
                             const realT normalApproach,
                             const bool setForces) const
@@ -22,11 +22,11 @@ Linearized::NormalStiffness(const InterfaceBaseParameterData& ,
     {
       //cohesive stiffness
       coh_stiffness = matState.at <= matState.ac ?
-          matState.linearStiffnessElastic :
-          PlasticUnloadingSlope(matState.youngs, youngs2,
-                                matState.mass, matState.vark2,
-                                matState.linearStiffnessElastic,
-                                matState.at, matState.ac, matState.halfRestVel);
+                      matState.linearStiffnessElastic :
+                      PlasticUnloadingSlope(matState.youngs, youngs2,
+                                            matState.mass, matState.vark2,
+                                            matState.linearStiffnessElastic,
+                                            matState.at, matState.ac, matState.halfRestVel);
       //get the cohesion distance
       if (setForces)
       {
@@ -43,7 +43,8 @@ Linearized::NormalStiffness(const InterfaceBaseParameterData& ,
   }
 
   //------GRAIN LOADING/UNLOADING------
-  //otherwise, contact is in a different regime ... note dcoh0 = 0 for !is_cohesive
+  //otherwise, contact is in a different regime ... note dcoh0 = 0 for
+  // !is_cohesive
   realT at; //at >= ac ... if > ac, then it is yielding
   if(setForces)
   {
@@ -73,7 +74,8 @@ Linearized::NormalStiffness(const InterfaceBaseParameterData& ,
       fnmag_mat = k2 * (normalApproach - matState.a0);
       matState.ElasticStrainEnergy += 0.5 * fnmag_mat * fnmag_mat / k2;
       //why was I adding in a cohesive force during post-yield loading????
-      //fnmag_coh = matState.pullOffForce; //just a constant value here ... could alter this in the future
+      //fnmag_coh = matState.pullOffForce; //just a constant value here ...
+      // could alter this in the future
       matState.stress += fnmag_mat;//+fnmag_coh
     }
     return k2;
@@ -123,7 +125,8 @@ Linearized::PlasticUnloadingSlope(const realT Eeff, const realT Eeff2, const rea
     //Calculate k2 with saturation at e = 0.1
     realT k2 = at > ac ? linearStiffnessElastic + slope * linearStiffnessElastic * (at - ac) : linearStiffnessElastic;
 
-    if (k2 > 100.0 * linearStiffnessElastic) //saturate at 100*K1, e = sqrt(K1/K2) = 0.1
+    if (k2 > 100.0 * linearStiffnessElastic) //saturate at 100*K1, e =
+                                             // sqrt(K1/K2) = 0.1
       k2 = 100.0 * linearStiffnessElastic;
     return k2;
   }

@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -42,12 +60,13 @@
  * @author Randolph Settgast
  * @date created on Sep 13, 2010
  */
- 
+
 
 #ifndef OBJECTDATASTUCTUREBASET_H_
 #define OBJECTDATASTUCTUREBASET_H_
 
-// keep this flag for time being - ultimately will replace with static flag in object manager
+// keep this flag for time being - ultimately will replace with static flag in
+// object manager
 #define PACK_FIELD_NAMES_IN_MPI_BUFFER
 
 #include "Common/Common.h"
@@ -81,8 +100,10 @@ class EncapsulatedObjectManagerBase;
  * @brief base class that manages the object data
  * The ObjectDataStructureBaseT class manages the object data by providing
  * members that are std::maps<key,array<TYPE> >, where the key is a std::string.
- * Because std::map is used there can only be unique combinations of key and TYPE.
- * It is possible to have identical keys with different TYPES, so be aware of this
+ * Because std::map is used there can only be unique combinations of key and
+ * TYPE.
+ * It is possible to have identical keys with different TYPES, so be aware of
+ * this
  * when asking for data from the manager.
  *
  */
@@ -95,7 +116,8 @@ public:
   // Basic class functionality
   //********************************************************************************************************************
 
-  /// this is to specify the type of derived object that can be used for checking base objects passed into a
+  /// this is to specify the type of derived object that can be used for
+  // checking base objects passed into a
   /// function
   enum ObjectType
   {
@@ -130,7 +152,7 @@ public:
   virtual ~ObjectDataStructureBaseT();
 
   /// to initialize the data object
-  virtual void Initialize(  ) = 0 ;
+  virtual void Initialize(  ) = 0;
 
   //********************************************************************************************************************
   // Allocation, resize, insertion, etc
@@ -142,16 +164,16 @@ public:
   virtual void erase( const localIndex i );
 
   /// function to allocate all data arrays to given size.
-  virtual globalIndex resize( const localIndex size, const bool assignGlobals = false ) ;
+  virtual globalIndex resize( const localIndex size, const bool assignGlobals = false );
 
 protected:
   virtual globalIndex insert( const localIndex i, const bool assignGlobals = false );
 
   template< typename T >
-  void AllocateTemporaryFields( const sArray1d& names, Array1dT<Array1dT<T>* >& vars );
+  void AllocateTemporaryFields( const array<string>& names, array<array<T>* >& vars );
 
   template< typename T >
-  void DeallocateTemporaryFields( const sArray1d& names );
+  void DeallocateTemporaryFields( const array<string>& names );
 
 private:
   virtual void insertBase( const localIndex i );
@@ -162,17 +184,17 @@ private:
 
   /// templated insert function for fields
   template< typename T >
-  void insert( std::map< std::string, Array1dT<T> >& member, const localIndex i );
+  void insert( std::map< std::string, array<T> >& member, const localIndex i );
 
   /// insert in map to hold fixed size one-to-many maps
   void insert( std::map< std::string, FixedOneToManyRelation >& member, const localIndex i);
 
   template< typename T >
-  void insert( std::map< std::string, InterObjectRelation<Array1dT<T> > >& member, const localIndex i );
+  void insert( std::map< std::string, InterObjectRelation<array<T> > >& member, const localIndex i );
 
 
   template< typename T >
-  void erase( std::map< std::string, Array1dT<T> >& member, const localIndex i );
+  void erase( std::map< std::string, array<T> >& member, const localIndex i );
 
   template< typename T >
   void erase( std::map< std::string, InterObjectRelation<T> >& member, const localIndex i );
@@ -182,7 +204,6 @@ private:
   void erase( std::map< std::string, Array2dT<T> >& member, const localIndex i);
 
 public:
-
 
 
 
@@ -197,7 +218,7 @@ public:
   /// add a data field to a member
   template< typename T >
   int AddKeylessDataField( const std::string& name, const bool restart = false, const bool plot = false );
-  
+
   int AddKeylessDataField( FieldType type, const std::string& name, const bool restart = false, const bool plot = false );
 
   template< typename T >
@@ -213,51 +234,51 @@ public:
 
   /// returns reference to specified field
   template< FieldKey FIELDKEY>
-  Array1dT<typename Field<FIELDKEY>::Type>& GetFieldData( )
-  { return const_cast<Array1dT<typename Field<FIELDKEY>::Type>&>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldData<FIELDKEY>()); }
+  array<typename Field<FIELDKEY>::Type>& GetFieldData( )
+  { return const_cast<array<typename Field<FIELDKEY>::Type>&>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldData<FIELDKEY>()); }
 
 
   /// returns const reference to specified field
   template< FieldKey FIELDKEY>
-  const Array1dT<typename Field<FIELDKEY>::Type>& GetFieldData( ) const;
+  const array<typename Field<FIELDKEY>::Type>& GetFieldData( ) const;
 
 
   /// returns reference to specified field
   template< FieldKey FIELDKEY>
-  Array1dT<typename Field<FIELDKEY>::Type>* GetFieldDataPointer( )
-  { return const_cast<Array1dT<typename Field<FIELDKEY>::Type>*>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldDataPointer<FIELDKEY>()); }
+  array<typename Field<FIELDKEY>::Type>* GetFieldDataPointer( )
+  { return const_cast<array<typename Field<FIELDKEY>::Type>*>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldDataPointer<FIELDKEY>()); }
 
 
   /// returns const reference to specified field
   template< FieldKey FIELDKEY>
-  const Array1dT<typename Field<FIELDKEY>::Type>* GetFieldDataPointer( ) const;
+  const array<typename Field<FIELDKEY>::Type>* GetFieldDataPointer( ) const;
 
 
   /// returns reference to specified field
   template< typename TYPE >
-  Array1dT<TYPE>& GetFieldData( const std::string& fieldName )
-  { return const_cast<Array1dT<TYPE>&>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldData<TYPE>(fieldName)); }
+  array<TYPE>& GetFieldData( const std::string& fieldName )
+  { return const_cast<array<TYPE>&>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldData<TYPE>(fieldName)); }
 
   /// returns const reference to specified field
   template< typename TYPE >
-  const Array1dT<TYPE>& GetFieldData( const std::string& name ) const;
+  const array<TYPE>& GetFieldData( const std::string& name ) const;
 
   /// returns reference to specified field
   template< typename TYPE >
-  Array1dT<TYPE>* GetFieldDataPointer( const std::string& fieldName )
-  { return const_cast<Array1dT<TYPE>*>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldDataPointer<TYPE>(fieldName)); }
+  array<TYPE>* GetFieldDataPointer( const std::string& fieldName )
+  { return const_cast<array<TYPE>*>( static_cast<const ObjectDataStructureBaseT&>(*this).GetFieldDataPointer<TYPE>(fieldName)); }
 
   /// returns const reference to specified field
   template< typename TYPE >
-  const Array1dT<TYPE>* GetFieldDataPointer( const std::string& name ) const;
+  const array<TYPE>* GetFieldDataPointer( const std::string& name ) const;
 
-  
+
   /// returns reference to specified set
   lSet& GetSet( const std::string& name );
 
   /// returns const reference to specified set
   const lSet& GetSet( const std::string& name ) const;
-  
+
   template<typename TYPE>
   void SetSubsetValue(const std::string& fieldName, const std::string& subsetname, const TYPE& value);
 
@@ -265,49 +286,51 @@ public:
   template< typename TYPE >
   bool HasField( const std::string& name ) const;
 
-  /// returns the type of a named field 
-  /// (nb. does not return multiple types if fields of different type have the same name)
-  FieldType GetFieldType(const std::string& fieldName) const{
+  /// returns the type of a named field
+  /// (nb. does not return multiple types if fields of different type have the
+  // same name)
+  FieldType GetFieldType(const std::string& fieldName) const {
     FieldType rv = FieldInfo::numFieldTypes;
     //if( m_LocalIndexData.count(fieldName) == 1 ){ rv = FieldInfo::longField;}
     //else
-    if( m_IntegerData.count(fieldName) == 1 ){ rv = FieldInfo::integerField;}
-    else if( m_LocalIndexData.count(fieldName) == 1 ){ rv = FieldInfo::localIndexField; }
-    else if( m_GlobalIndexData.count(fieldName) == 1 ){ rv = FieldInfo::globalIndexField; }
-    else if( m_realData.count(fieldName) == 1 ){ rv = FieldInfo::realField;}
-    else if( m_R1TensorData.count(fieldName) == 1 ){ rv = FieldInfo::R1TensorField;}
-    else if( m_R2TensorData.count(fieldName) == 1 ){ rv = FieldInfo::R2TensorField;}
-    else if( m_R2SymTensorData.count(fieldName) == 1 ){ rv = FieldInfo::R2SymTensorField;}
+    if( m_IntegerData.count(fieldName) == 1 ) { rv = FieldInfo::integerField;}
+    else if( m_LocalIndexData.count(fieldName) == 1 ) { rv = FieldInfo::localIndexField; }
+    else if( m_GlobalIndexData.count(fieldName) == 1 ) { rv = FieldInfo::globalIndexField; }
+    else if( m_realData.count(fieldName) == 1 ) { rv = FieldInfo::realField;}
+    else if( m_R1TensorData.count(fieldName) == 1 ) { rv = FieldInfo::R1TensorField;}
+    else if( m_R2TensorData.count(fieldName) == 1 ) { rv = FieldInfo::R2TensorField;}
+    else if( m_R2SymTensorData.count(fieldName) == 1 ) { rv = FieldInfo::R2SymTensorField;}
 
     return rv;
   };
 
   /// Checks if the field has only one type on the same object
-  bool FieldHasSingleType(const std::string& fieldName) const{
+  bool FieldHasSingleType(const std::string& fieldName) const {
     int count = 0;
     bool rv = false;
 
-    if( m_LocalIndexData.count(fieldName) == 1 ){ ++count; }
-    if( m_GlobalIndexData.count(fieldName) == 1 ){ ++count; }
-    if( m_IntegerData.count(fieldName) == 1 ){ ++count; }
-    if( m_realData.count(fieldName) == 1 ){ ++count;}
-    if( m_R1TensorData.count(fieldName) == 1 ){ ++count;}
-    if( m_R2TensorData.count(fieldName) == 1 ){ ++count;}
-    if( m_R2SymTensorData.count(fieldName) == 1 ){ ++count;}
-    if( m_ArrayR1TensorData.count(fieldName) == 1 ){ ++count;}
+    if( m_LocalIndexData.count(fieldName) == 1 ) { ++count; }
+    if( m_GlobalIndexData.count(fieldName) == 1 ) { ++count; }
+    if( m_IntegerData.count(fieldName) == 1 ) { ++count; }
+    if( m_realData.count(fieldName) == 1 ) { ++count;}
+    if( m_R1TensorData.count(fieldName) == 1 ) { ++count;}
+    if( m_R2TensorData.count(fieldName) == 1 ) { ++count;}
+    if( m_R2SymTensorData.count(fieldName) == 1 ) { ++count;}
+    if( m_ArrayR1TensorData.count(fieldName) == 1 ) { ++count;}
 
     if(count == 1) rv = true;
 
     return rv;
   };
-  
+
 
   /**
    * @author Randolph Settgast
    * @tparam T the type of data in the map
    * @return a reference to the map
    *
-   * This templated function returns a member map based on type. This is achieved through
+   * This templated function returns a member map based on type. This is
+   * achieved through
    * explicit template specialization.
    */
   template< typename T >
@@ -320,7 +343,8 @@ public:
    * @tparam T the type of data in the map
    * @return a reference to the map
    *
-   * This templated function returns a const member map based on type. This is achieved through
+   * This templated function returns a const member map based on type. This is
+   * achieved through
    * explicit template specialization.
    */
   template< typename T >
@@ -328,7 +352,7 @@ public:
 
   // sets the value of a const pointer to a keyed field location
   template< FieldKey FIELDKEY >
-  void SetConstPointer( Array1dT<typename Field<FIELDKEY>::Type>* const& pointer );
+  void SetConstPointer( array<typename Field<FIELDKEY>::Type>* const& pointer );
 
 
 
@@ -393,9 +417,9 @@ protected:
 
 public:
   template< typename T >
-  void AllocateDummyFields( const sArray1d& names, const bool plotFlag  )
+  void AllocateDummyFields( const array<string>& names, const bool plotFlag  )
   {
-    for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+    for( array<string>::size_type i=0 ; i<names.size() ; ++i )
     {
       this->AddKeylessDataField<T>(names[i],true,plotFlag);
     }
@@ -403,10 +427,10 @@ public:
 
 
   template< typename T >
-  void AllocateDummyFields( const sArray1d& names, Array1dT<Array1dT<T>* >& vars, const bool plotFlag  )
+  void AllocateDummyFields( const array<string>& names, array<array<T>* >& vars, const bool plotFlag  )
   {
     vars.resize( names.size() );
-    for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+    for( array<string>::size_type i=0 ; i<names.size() ; ++i )
     {
       this->AddKeylessDataField<T>(names[i],true,plotFlag);
       vars[i] = &this->GetFieldData<T>(names[i]);
@@ -414,19 +438,19 @@ public:
   }
 
   template< typename T >
-  void SetDummyFieldPointers( const sArray1d& names, Array1dT<Array1dT<T>* >& vars )
+  void SetDummyFieldPointers( const array<string>& names, array<array<T>* >& vars )
   {
     vars.resize( names.size() );
-    for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+    for( array<string>::size_type i=0 ; i<names.size() ; ++i )
     {
       vars[i] = &this->GetFieldData<T>(names[i]);
     }
   }
 
   template< typename T >
-  void DeallocateDummyFields( const sArray1d& names )
+  void DeallocateDummyFields( const array<string>& names )
   {
-    for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+    for( array<string>::size_type i=0 ; i<names.size() ; ++i )
       this->RemoveDataField<T>(names[i]);
   }
 
@@ -434,24 +458,24 @@ public:
 protected:
 
 
-  virtual void WriteNonManagedDataMembersToSilo( SiloFile& ,
-                                                 const std::string& ,
-                                                 const std::string& ,
-                                                 const int ,
-                                                 const int ,
-                                                 const realT ,
-                                                 const bool ,
-                                                 const std::string& ,
+  virtual void WriteNonManagedDataMembersToSilo( SiloFile&,
+                                                 const std::string&,
+                                                 const std::string&,
+                                                 const int,
+                                                 const int,
+                                                 const realT,
+                                                 const bool,
+                                                 const std::string&,
                                                  const std::string& regionName = "none",
                                                  const lArray1d& mask = lArray1d() ) {}
 
-  virtual void ReadNonManagedDataMembersFromSilo( const SiloFile& ,
-                                                  const std::string& ,
-                                                  const std::string& ,
-                                                  const int ,
-                                                  const int ,
-                                                  const realT ,
-                                                  const bool ,
+  virtual void ReadNonManagedDataMembersFromSilo( const SiloFile&,
+                                                  const std::string&,
+                                                  const std::string&,
+                                                  const int,
+                                                  const int,
+                                                  const realT,
+                                                  const bool,
                                                   const std::string& regionName = "none",
                                                   const lArray1d& mask = lArray1d() ){}
 
@@ -467,199 +491,206 @@ public:
 
 
 
-
-
   /// reads field from file
   template< typename T >
   void ReadAsciiFieldData(const std::string& fieldName, const std::string& fileName );
-  
+
   void ReadAsciiFieldData( FieldType type, const std::string& fieldName, const std::string& fileName ){
-  	switch( type ){
-      case FieldInfo::integerField:     ReadAsciiFieldData<int>( fieldName, fileName);  break;
-      case FieldInfo::localIndexField:  ReadAsciiFieldData<localIndex>( fieldName, fileName);  break;
-      case FieldInfo::globalIndexField: ReadAsciiFieldData<globalIndex>( fieldName, fileName);  break;
-      case FieldInfo::realField:        ReadAsciiFieldData<realT>( fieldName, fileName);       break;
-      case FieldInfo::R1TensorField:    ReadAsciiFieldData<R1Tensor>( fieldName, fileName);    break;
-      case FieldInfo::R2TensorField:    ReadAsciiFieldData<R2Tensor>( fieldName, fileName);    break;
-      case FieldInfo::R2SymTensorField: ReadAsciiFieldData<R2SymTensor>( fieldName, fileName); break; 
-      case FieldInfo::integerParameter:
-      case FieldInfo::realParameter:
-      case FieldInfo::numFieldTypes:
-      default:
-        throw GPException("ReadAsciiFieldData: Unrecognized field type "+ type);
+    switch( type )
+    {
+    case FieldInfo::integerField:     ReadAsciiFieldData<int>( fieldName, fileName);  break;
+    case FieldInfo::localIndexField:  ReadAsciiFieldData<localIndex>( fieldName, fileName);  break;
+    case FieldInfo::globalIndexField: ReadAsciiFieldData<globalIndex>( fieldName, fileName);  break;
+    case FieldInfo::realField:        ReadAsciiFieldData<realT>( fieldName, fileName);       break;
+    case FieldInfo::R1TensorField:    ReadAsciiFieldData<R1Tensor>( fieldName, fileName);    break;
+    case FieldInfo::R2TensorField:    ReadAsciiFieldData<R2Tensor>( fieldName, fileName);    break;
+    case FieldInfo::R2SymTensorField: ReadAsciiFieldData<R2SymTensor>( fieldName, fileName); break;
+    case FieldInfo::integerParameter:
+    case FieldInfo::realParameter:
+    case FieldInfo::numFieldTypes:
+    default:
+      throw GPException("ReadAsciiFieldData: Unrecognized field type "+ type);
     }
   };
-  
+
   /// reads subset of field from file
   template< typename T >
   void ReadAsciiFieldData(const std::string& fieldName, const std::string& fileName, const lSet& subset);
-  
+
   void ReadAsciiFieldData( FieldType type, const std::string& fieldName, const std::string& fileName, const lSet& subset){
-  	switch( type ){
-      case FieldInfo::integerField:     ReadAsciiFieldData<int>( fieldName, fileName, subset);  break;
-      case FieldInfo::localIndexField:  ReadAsciiFieldData<localIndex>( fieldName, fileName, subset);  break;
-      case FieldInfo::globalIndexField: ReadAsciiFieldData<globalIndex>( fieldName, fileName, subset);  break;
-      case FieldInfo::realField:        ReadAsciiFieldData<realT>( fieldName, fileName, subset);       break;
-      case FieldInfo::R1TensorField:    ReadAsciiFieldData<R1Tensor>( fieldName, fileName, subset);    break;
-      case FieldInfo::R2TensorField:    ReadAsciiFieldData<R2Tensor>( fieldName, fileName, subset);    break;
-      case FieldInfo::R2SymTensorField: ReadAsciiFieldData<R2SymTensor>( fieldName, fileName, subset); break; 
-      case FieldInfo::integerParameter:
-      case FieldInfo::realParameter:
-      case FieldInfo::numFieldTypes:
-      default:
-        throw GPException("ReadAsciiFieldData: Unrecognized field type "+ type);
+    switch( type )
+    {
+    case FieldInfo::integerField:     ReadAsciiFieldData<int>( fieldName, fileName, subset);  break;
+    case FieldInfo::localIndexField:  ReadAsciiFieldData<localIndex>( fieldName, fileName, subset);  break;
+    case FieldInfo::globalIndexField: ReadAsciiFieldData<globalIndex>( fieldName, fileName, subset);  break;
+    case FieldInfo::realField:        ReadAsciiFieldData<realT>( fieldName, fileName, subset);       break;
+    case FieldInfo::R1TensorField:    ReadAsciiFieldData<R1Tensor>( fieldName, fileName, subset);    break;
+    case FieldInfo::R2TensorField:    ReadAsciiFieldData<R2Tensor>( fieldName, fileName, subset);    break;
+    case FieldInfo::R2SymTensorField: ReadAsciiFieldData<R2SymTensor>( fieldName, fileName, subset); break;
+    case FieldInfo::integerParameter:
+    case FieldInfo::realParameter:
+    case FieldInfo::numFieldTypes:
+    default:
+      throw GPException("ReadAsciiFieldData: Unrecognized field type "+ type);
     }
   };
 
   /* reads field from file where data is referenced by global index
-   eg.
-   0 1.232
-   10002 3.14
-   20003 4.51
-  */
+     eg.
+     0 1.232
+     10002 3.14
+     20003 4.51
+   */
   template< typename T >
   void ReadIndexedAsciiFieldData(const std::string& fieldName, const std::string& fileName );
 
   void ReadIndexedAsciiFieldData( FieldType type, const std::string& fieldName, const std::string& fileName ){
-  	switch( type ){
-      case FieldInfo::integerField:     ReadIndexedAsciiFieldData<int>( fieldName, fileName);  break;
-      case FieldInfo::localIndexField:  ReadIndexedAsciiFieldData<localIndex>( fieldName, fileName);  break;
-      case FieldInfo::globalIndexField: ReadIndexedAsciiFieldData<globalIndex>( fieldName, fileName);  break;
-      case FieldInfo::realField:        ReadIndexedAsciiFieldData<realT>( fieldName, fileName);       break;
-      case FieldInfo::R1TensorField:    ReadIndexedAsciiFieldData<R1Tensor>( fieldName, fileName);    break;
-      case FieldInfo::R2TensorField:    ReadIndexedAsciiFieldData<R2Tensor>( fieldName, fileName);    break;
-      case FieldInfo::R2SymTensorField: ReadIndexedAsciiFieldData<R2SymTensor>( fieldName, fileName); break;
-      case FieldInfo::integerParameter:
-      case FieldInfo::realParameter:
-      case FieldInfo::numFieldTypes:
-      default:
-        throw GPException("ReadAsciiFieldData: Unrecognized field type "+ type);
+    switch( type )
+    {
+    case FieldInfo::integerField:     ReadIndexedAsciiFieldData<int>( fieldName, fileName);  break;
+    case FieldInfo::localIndexField:  ReadIndexedAsciiFieldData<localIndex>( fieldName, fileName);  break;
+    case FieldInfo::globalIndexField: ReadIndexedAsciiFieldData<globalIndex>( fieldName, fileName);  break;
+    case FieldInfo::realField:        ReadIndexedAsciiFieldData<realT>( fieldName, fileName);       break;
+    case FieldInfo::R1TensorField:    ReadIndexedAsciiFieldData<R1Tensor>( fieldName, fileName);    break;
+    case FieldInfo::R2TensorField:    ReadIndexedAsciiFieldData<R2Tensor>( fieldName, fileName);    break;
+    case FieldInfo::R2SymTensorField: ReadIndexedAsciiFieldData<R2SymTensor>( fieldName, fileName); break;
+    case FieldInfo::integerParameter:
+    case FieldInfo::realParameter:
+    case FieldInfo::numFieldTypes:
+    default:
+      throw GPException("ReadAsciiFieldData: Unrecognized field type "+ type);
     }
   };
 
 /// write a single field to a file
   template< typename T >
   void WriteAsciiFieldData(const std::string& fieldName, const std::string& fileName, bool append = false);
-  
+
   void WriteAsciiFieldData( FieldType type, const std::string& fieldName, const std::string& fileName, bool append ){
-  	switch( type ){
-      case FieldInfo::integerField:     WriteAsciiFieldData<int>( fieldName, fileName, append);  break;
-      case FieldInfo::localIndexField:  WriteAsciiFieldData<localIndex>( fieldName, fileName, append);  break;
-      case FieldInfo::globalIndexField: WriteAsciiFieldData<globalIndex>( fieldName, fileName, append);  break;
-      case FieldInfo::realField:        WriteAsciiFieldData<realT>( fieldName, fileName, append);    break;
-      case FieldInfo::R1TensorField:    WriteAsciiFieldData<R1Tensor>( fieldName, fileName, append);    break;
-      case FieldInfo::R2TensorField:    WriteAsciiFieldData<R2Tensor>( fieldName, fileName, append);    break;
-      case FieldInfo::R2SymTensorField: WriteAsciiFieldData<R2SymTensor>( fieldName, fileName, append); break; 
-      case FieldInfo::integerParameter:
-      case FieldInfo::realParameter:
-      case FieldInfo::numFieldTypes:
-      default:
-        throw GPException("WriteAsciiFieldData: Unrecognized field type "+ type);
+    switch( type )
+    {
+    case FieldInfo::integerField:     WriteAsciiFieldData<int>( fieldName, fileName, append);  break;
+    case FieldInfo::localIndexField:  WriteAsciiFieldData<localIndex>( fieldName, fileName, append);  break;
+    case FieldInfo::globalIndexField: WriteAsciiFieldData<globalIndex>( fieldName, fileName, append);  break;
+    case FieldInfo::realField:        WriteAsciiFieldData<realT>( fieldName, fileName, append);    break;
+    case FieldInfo::R1TensorField:    WriteAsciiFieldData<R1Tensor>( fieldName, fileName, append);    break;
+    case FieldInfo::R2TensorField:    WriteAsciiFieldData<R2Tensor>( fieldName, fileName, append);    break;
+    case FieldInfo::R2SymTensorField: WriteAsciiFieldData<R2SymTensor>( fieldName, fileName, append); break;
+    case FieldInfo::integerParameter:
+    case FieldInfo::realParameter:
+    case FieldInfo::numFieldTypes:
+    default:
+      throw GPException("WriteAsciiFieldData: Unrecognized field type "+ type);
     }
   };
-  
+
   /// reads subset of field from file
   template< typename T >
   void WriteAsciiFieldData(const std::string& fieldName, const std::string& fileName, const lSet& subset,bool append);
-  
+
   void WriteAsciiFieldData( FieldType type, const std::string& fieldName, const std::string& fileName, const lSet& subset,bool append = false)
   {
-    switch( type ){
-      case FieldInfo::integerField:     WriteAsciiFieldData<int>( fieldName, fileName, subset, append);  break;
-      case FieldInfo::localIndexField:  WriteAsciiFieldData<localIndex>( fieldName, fileName, subset, append);  break;
-      case FieldInfo::globalIndexField: WriteAsciiFieldData<globalIndex>( fieldName, fileName, subset, append); break;
-      case FieldInfo::realField:        WriteAsciiFieldData<realT>( fieldName, fileName, subset, append);       break;
-      case FieldInfo::R1TensorField:    WriteAsciiFieldData<R1Tensor>( fieldName, fileName, subset, append);    break;
-      case FieldInfo::R2TensorField:    WriteAsciiFieldData<R2Tensor>( fieldName, fileName, subset, append);    break;
-      case FieldInfo::R2SymTensorField: WriteAsciiFieldData<R2SymTensor>( fieldName, fileName, subset, append); break; 
-      case FieldInfo::integerParameter:
-      case FieldInfo::realParameter:
-      case FieldInfo::numFieldTypes:
-      default:
-        throw GPException("WriteAsciiFieldData: Unrecognized field type "+ type);
+    switch( type )
+    {
+    case FieldInfo::integerField:     WriteAsciiFieldData<int>( fieldName, fileName, subset, append);  break;
+    case FieldInfo::localIndexField:  WriteAsciiFieldData<localIndex>( fieldName, fileName, subset, append);  break;
+    case FieldInfo::globalIndexField: WriteAsciiFieldData<globalIndex>( fieldName, fileName, subset, append); break;
+    case FieldInfo::realField:        WriteAsciiFieldData<realT>( fieldName, fileName, subset, append);       break;
+    case FieldInfo::R1TensorField:    WriteAsciiFieldData<R1Tensor>( fieldName, fileName, subset, append);    break;
+    case FieldInfo::R2TensorField:    WriteAsciiFieldData<R2Tensor>( fieldName, fileName, subset, append);    break;
+    case FieldInfo::R2SymTensorField: WriteAsciiFieldData<R2SymTensor>( fieldName, fileName, subset, append); break;
+    case FieldInfo::integerParameter:
+    case FieldInfo::realParameter:
+    case FieldInfo::numFieldTypes:
+    default:
+      throw GPException("WriteAsciiFieldData: Unrecognized field type "+ type);
     }
   };
 
 
-  void WriteAsciiFieldData( const std::vector<FieldType>& types, const sArray1d& fieldNames, const std::string& fileName, bool append);
+  void WriteAsciiFieldData( const std::vector<FieldType>& types, const array<string>& fieldNames, const std::string& fileName, bool append);
 
-  void WriteAsciiFieldData( const std::vector<FieldType>& types, const sArray1d& fieldNames, const std::string& fileName, const lSet& subset, bool append );
-  
-  /// sets field to constant value 
+  void WriteAsciiFieldData( const std::vector<FieldType>& types, const array<string>& fieldNames, const std::string& fileName, const lSet& subset,
+                            bool append );
+
+  /// sets field to constant value
   template< typename T >
   void SetFieldToConstantFromString(const std::string& fieldName, const std::string& value, const bool& additive);
-  
+
   void SetFieldToConstantFromString( FieldType type, const std::string& fieldName, const std::string& value, const bool& additive ){
-  	switch(type){
-      case FieldInfo::integerField:     SetFieldToConstantFromString<int>( fieldName, value, additive);  break;
-      case FieldInfo::localIndexField:  SetFieldToConstantFromString<localIndex>( fieldName, value, additive);       break;
-      case FieldInfo::globalIndexField: SetFieldToConstantFromString<globalIndex>( fieldName, value, additive);       break;
-      case FieldInfo::realField:        SetFieldToConstantFromString<realT>( fieldName, value, additive);       break;
-      case FieldInfo::R1TensorField:    SetFieldToConstantFromString<R1Tensor>( fieldName, value, additive);    break;
-      case FieldInfo::R2TensorField:    SetFieldToConstantFromString<R2Tensor>( fieldName, value, additive);    break;
-      case FieldInfo::R2SymTensorField: SetFieldToConstantFromString<R2SymTensor>( fieldName, value, additive); break;
-      case FieldInfo::integerParameter:
-      case FieldInfo::realParameter:
-      case FieldInfo::numFieldTypes:
-      default:
-        throw GPException("SetConstantFieldFromString: Unrecognized field type "+ type);
+    switch(type)
+    {
+    case FieldInfo::integerField:     SetFieldToConstantFromString<int>( fieldName, value, additive);  break;
+    case FieldInfo::localIndexField:  SetFieldToConstantFromString<localIndex>( fieldName, value, additive);       break;
+    case FieldInfo::globalIndexField: SetFieldToConstantFromString<globalIndex>( fieldName, value, additive);       break;
+    case FieldInfo::realField:        SetFieldToConstantFromString<realT>( fieldName, value, additive);       break;
+    case FieldInfo::R1TensorField:    SetFieldToConstantFromString<R1Tensor>( fieldName, value, additive);    break;
+    case FieldInfo::R2TensorField:    SetFieldToConstantFromString<R2Tensor>( fieldName, value, additive);    break;
+    case FieldInfo::R2SymTensorField: SetFieldToConstantFromString<R2SymTensor>( fieldName, value, additive); break;
+    case FieldInfo::integerParameter:
+    case FieldInfo::realParameter:
+    case FieldInfo::numFieldTypes:
+    default:
+      throw GPException("SetConstantFieldFromString: Unrecognized field type "+ type);
     }
   };
-  
-  /// sets subset of field to constant value 
+
+  /// sets subset of field to constant value
   template< typename T >
   void SetFieldToConstantFromString(const std::string& fieldName, const std::string& value, const lSet& subset, const bool& additive);
-  
+
   void SetFieldToConstantFromString( FieldType type, const std::string& fieldName, const std::string& value, const lSet& subset, const bool& additive){
-  	switch(type){
-      case FieldInfo::integerField:     SetFieldToConstantFromString<int>( fieldName, value,subset, additive);  break;
-      case FieldInfo::localIndexField:  SetFieldToConstantFromString<localIndex>( fieldName, value,subset, additive);       break;
-      case FieldInfo::globalIndexField:  SetFieldToConstantFromString<globalIndex>( fieldName, value,subset, additive);       break;
-      case FieldInfo::realField:        SetFieldToConstantFromString<realT>( fieldName, value,subset, additive);       break;
-      case FieldInfo::R1TensorField:    SetFieldToConstantFromString<R1Tensor>( fieldName, value,subset, additive);    break;
-      case FieldInfo::R2TensorField:    SetFieldToConstantFromString<R2Tensor>( fieldName, value,subset, additive);    break;
-      case FieldInfo::R2SymTensorField: SetFieldToConstantFromString<R2SymTensor>( fieldName, value,subset, additive); break;
-      case FieldInfo::integerParameter:
-      case FieldInfo::realParameter:
-      case FieldInfo::numFieldTypes:
-      default:
-        throw GPException("SetConstantFieldFromString: Unrecognized field type "+ type);
+    switch(type)
+    {
+    case FieldInfo::integerField:     SetFieldToConstantFromString<int>( fieldName, value,subset, additive);  break;
+    case FieldInfo::localIndexField:  SetFieldToConstantFromString<localIndex>( fieldName, value,subset, additive);       break;
+    case FieldInfo::globalIndexField:  SetFieldToConstantFromString<globalIndex>( fieldName, value,subset, additive);       break;
+    case FieldInfo::realField:        SetFieldToConstantFromString<realT>( fieldName, value,subset, additive);       break;
+    case FieldInfo::R1TensorField:    SetFieldToConstantFromString<R1Tensor>( fieldName, value,subset, additive);    break;
+    case FieldInfo::R2TensorField:    SetFieldToConstantFromString<R2Tensor>( fieldName, value,subset, additive);    break;
+    case FieldInfo::R2SymTensorField: SetFieldToConstantFromString<R2SymTensor>( fieldName, value,subset, additive); break;
+    case FieldInfo::integerParameter:
+    case FieldInfo::realParameter:
+    case FieldInfo::numFieldTypes:
+    default:
+      throw GPException("SetConstantFieldFromString: Unrecognized field type "+ type);
     }
   };
-    
+
   /// Set the value of a field using a named function
-  void SetFieldEqualToFunction(FieldType fieldType, const std::string& fieldName, 
+  void SetFieldEqualToFunction(FieldType fieldType, const std::string& fieldName,
                                const std::string& functionName,
-                               const sArray1d& variables, 
-                               const Array1dT<FieldType>& variable_types,
+                               const array<string>& variables,
+                               const array<FieldType>& variable_types,
                                int component=0, realT time=0.0, realT dt=0.0);
   /// Set the value of a subset of a Yuliyafield using a named function
-  void SetFieldEqualToFunction(FieldType fieldType, const std::string& fieldName, 
+  void SetFieldEqualToFunction(FieldType fieldType, const std::string& fieldName,
                                const std::string& functionName,
-                               const sArray1d& variables, 
-                               const Array1dT<FieldType>& variable_types,
+                               const array<string>& variables,
+                               const array<FieldType>& variable_types,
                                const lSet& aSet,
                                int component=0, realT time=0.0, realT dt=0.0);
 
 
-/// sets subset of field to constant value 
+/// sets subset of field to constant value
   template< typename T >
   void CopyFieldSubset(const std::string& fieldName, const lArray1d& source, const lArray1d& target);
-  
+
   void CopyFieldSubset( FieldType type, const std::string& fieldName,  const lArray1d& source, const lArray1d& target){
-  	switch(type){
-      case FieldInfo::integerField:     CopyFieldSubset<int>( fieldName, source, target);  break;
-      case FieldInfo::localIndexField:  CopyFieldSubset<localIndex>( fieldName,  source, target);       break;
-      case FieldInfo::globalIndexField:  CopyFieldSubset<globalIndex>( fieldName,  source, target);       break;
-      case FieldInfo::realField:        CopyFieldSubset<realT>( fieldName, source, target);       break;
-      case FieldInfo::R1TensorField:    CopyFieldSubset<R1Tensor>( fieldName, source, target);    break;
-      case FieldInfo::R2TensorField:    CopyFieldSubset<R2Tensor>( fieldName, source, target);    break;
-      case FieldInfo::R2SymTensorField: CopyFieldSubset<R2SymTensor>( fieldName, source, target); break; 
-      case FieldInfo::integerParameter:
-      case FieldInfo::realParameter:
-      case FieldInfo::numFieldTypes:
-      default:
-        throw GPException("SetConstantFieldFromString: Unrecognized field type "+ type);
+    switch(type)
+    {
+    case FieldInfo::integerField:     CopyFieldSubset<int>( fieldName, source, target);  break;
+    case FieldInfo::localIndexField:  CopyFieldSubset<localIndex>( fieldName,  source, target);       break;
+    case FieldInfo::globalIndexField:  CopyFieldSubset<globalIndex>( fieldName,  source, target);       break;
+    case FieldInfo::realField:        CopyFieldSubset<realT>( fieldName, source, target);       break;
+    case FieldInfo::R1TensorField:    CopyFieldSubset<R1Tensor>( fieldName, source, target);    break;
+    case FieldInfo::R2TensorField:    CopyFieldSubset<R2Tensor>( fieldName, source, target);    break;
+    case FieldInfo::R2SymTensorField: CopyFieldSubset<R2SymTensor>( fieldName, source, target); break;
+    case FieldInfo::integerParameter:
+    case FieldInfo::realParameter:
+    case FieldInfo::numFieldTypes:
+    default:
+      throw GPException("SetConstantFieldFromString: Unrecognized field type "+ type);
     }
   };
 
@@ -669,13 +700,14 @@ public:
   //********************************************************************************************************************
 
   virtual void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-                                                                 Array1dT<gArray1d>& objectToCompositionObject ) = 0;
+                                                                 array<gArray1d>& objectToCompositionObject ) = 0;
 
-  /// pure virtual function that sets what objects are on the boundary of the domain
-  virtual void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = nullptr) = 0 ;
+  /// pure virtual function that sets what objects are on the boundary of the
+  // domain
+  virtual void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = nullptr) = 0;
 
   /// pure virtual function that sets what objects are external
-  virtual void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = nullptr) = 0 ;
+  virtual void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = nullptr) = 0;
 
   /// function to reset m_globalToLocalMap based on m_localToGlobalMap
   virtual void ResetGlobalToLocalMap();
@@ -686,7 +718,7 @@ public:
   localIndex GetNumGhosts() const
   {
 
-    const iArray1d& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
+    const array<integer>& ghostRank = this->GetFieldData<FieldInfo::ghostRank>();
 
 
     return ( std::count_if( ghostRank.begin(), ghostRank.end(), isGTE0 ) );
@@ -700,10 +732,13 @@ public:
     while( !IsParent( parentIndex ) )
     {
       localIndex newParentIndex = m_parentIndex[parentIndex];
-      if(newParentIndex == parentIndex){
+      if(newParentIndex == parentIndex)
+      {
         throw GPException("ObjectDataStructureT::GetParentIndex: Self referential parent index \n ");
         break;
-      } else{
+      }
+      else
+      {
         parentIndex = newParentIndex;
       }
     }
@@ -711,34 +746,36 @@ public:
   }
 
   // This should be called "DontHaveParent" instead
-  inline bool IsParent( const localIndex index )const {
+  inline bool IsParent( const localIndex index ) const {
     return m_parentIndex[index] == LOCALINDEX_MAX;
   }
 
   // Yeah, let's make a "DontHaveParent" and use it hereafter
-  inline bool DontHaveParent( const localIndex index )const {
+  inline bool DontHaveParent( const localIndex index ) const {
     return m_parentIndex[index] == LOCALINDEX_MAX;
   }
 
 
   /// generate vector containing all field names
-  void GetAllFieldNames( sArray1d& fieldNames ) const;
+  void GetAllFieldNames( array<string>& fieldNames ) const;
 
   /// get list of objects on the boundary of a computational domain
-  virtual void ConstructListOfBoundaryObjects( lArray1d& objectList ) const ;
+  virtual void ConstructListOfBoundaryObjects( lArray1d& objectList ) const;
 
   /// get list of objects on the boundary of a computational domain
-  virtual void ConstructListOfBoundaryObjects( gArray1d& objectList ) const ;
+  virtual void ConstructListOfBoundaryObjects( gArray1d& objectList ) const;
 
 
-  /// builds a new set on this object given another objects set and the map between them
+  /// builds a new set on this object given another objects set and the map
+  // between them
   void ConstructSetFromSetAndMap( const lSet& inputSet,
                                   const lArray2d& map,
                                   const std::string& newSetName );
 
-  /// builds a new set on this object given another objects set and the map between them
+  /// builds a new set on this object given another objects set and the map
+  // between them
   void ConstructSetFromSetAndMap( const lSet& inputSet,
-                                  const Array1dT<lArray1d>& map,
+                                  const array<lArray1d>& map,
                                   const std::string& newSetName );
 
   bool SplitObject( const localIndex indexToSplit,
@@ -761,23 +798,23 @@ public:
 
   void CopyObject( const localIndex source, const localIndex destination0, const localIndex destination1 );
 
-  void CopyObjectWithExcludedSets( const localIndex source, const localIndex destination, const sArray1d& excludeSets );
+  void CopyObjectWithExcludedSets( const localIndex source, const localIndex destination, const array<string>& excludeSets );
 
   void CopyObjectFields( const localIndex source, const localIndex destination );
 
   template< typename T >
-  void CopyMemberFields( const localIndex source, const localIndex destination, std::map< std::string, Array1dT<T> >& member );
+  void CopyMemberFields( const localIndex source, const localIndex destination, std::map< std::string, array<T> >& member );
 
   template< typename T >
-  void CopyMemberFields( const localIndex source, const localIndex destination0, const localIndex destination1, std::map< std::string, Array1dT<T> >& member );
+  void CopyMemberFields( const localIndex source, const localIndex destination0, const localIndex destination1, std::map< std::string, array<T> >& member );
 
   template< typename T >
-  void CopyMemberFields( const localIndex source, const lArray1d& destination, std::map< std::string, Array1dT<T> >& member );
+  void CopyMemberFields( const localIndex source, const lArray1d& destination, std::map< std::string, array<T> >& member );
 
 
   void UpdateMaximumGlobalNumber();
 
-  virtual void DeserializeObjectField(const std::string& name, const rArray1d& field)
+  virtual void DeserializeObjectField(const std::string& name, const array<real64>& field)
   {
     (void)name;
     (void)field;
@@ -785,11 +822,11 @@ public:
     throw GPException("DeserializeObjectField - undefined in base");
   }
 
-  virtual void DeserializeObjectFields(const sArray1d& names, const Array1dT<rArray1d>& fields)
+  virtual void DeserializeObjectFields(const array<string>& names, const array<array<real64> >& fields)
   {
     if(names.size() != fields.size())
       throw GPException("DeserializeObjectFields - input array sizes do not match");
-    for(localIndex i = 0; i < names.size(); i++)
+    for(localIndex i = 0 ; i < names.size() ; i++)
       DeserializeObjectField(names[i], fields[i]);
   }
 
@@ -801,14 +838,14 @@ public:
   /// packs a list of fields into a bufvector
   template< typename T_indices, typename T_buffer >
   unsigned int PackFieldsIntoBuffer( T_buffer& buffer,
-                                     const sArray1d& fieldNames,
+                                     const array<string>& fieldNames,
                                      const T_indices& localIndices,
                                      const bool doBufferPacking=true ) const;
 
   /// unpacks a list of fields from a buffer pointer. Changes the pointer!
   template< typename T_indices >
   unsigned int UnpackFieldsFromBuffer( const char*& buffer,
-                                       const sArray1d& fieldNames,
+                                       const array<string>& fieldNames,
                                        const T_indices& localIndices );
 
   /// a wrapper of PackFieldsIntoBuffer to pack ALL fields.
@@ -816,7 +853,8 @@ public:
   unsigned int PackAllFieldsIntoBuffer( T_buffer& buffer,
                                         const T_indices& localIndices ) const;
 
-  /// a wrapper of UnpackFieldsFromBuffer to unpack ALL fields. Changes the pointer!
+  /// a wrapper of UnpackFieldsFromBuffer to unpack ALL fields. Changes the
+  // pointer!
   template< typename T_indices >
   unsigned int UnpackAllFieldsFromBuffer( const char*& buffer,
                                           const T_indices& localIndices );
@@ -839,7 +877,7 @@ public:
   unsigned int PackSets( const T_indices& sendlist,
                          bufvector& buffer ) const;
 
-  unsigned int UnpackSets( const char*& buffer ) ;
+  unsigned int UnpackSets( const char*& buffer );
 
   ObjectType GetObjectType() const
   {
@@ -857,12 +895,12 @@ public:
 
 
 
-
-
-
-//  virtual unsigned int PackObjectData( bufvector& buffer, const lArray1d& indices ) = 0;
-//  virtual unsigned int PackObjectData( bufvector& buffer, const lSet& indices ) = 0;
-//  virtual unsigned int UnpackObjectData( const char*& buffer, lArray1d& unpackedLocalIndices ) = 0;
+//  virtual unsigned int PackObjectData( bufvector& buffer, const lArray1d&
+// indices ) = 0;
+//  virtual unsigned int PackObjectData( bufvector& buffer, const lSet& indices
+// ) = 0;
+//  virtual unsigned int UnpackObjectData( const char*& buffer, lArray1d&
+// unpackedLocalIndices ) = 0;
   template< typename T_indices >
   unsigned int PackBaseObjectData( bufvector& buffer,
                                    const T_indices& indices,
@@ -887,15 +925,15 @@ private:
 
   template< typename T, typename T_indices, typename T_buffer >
   unsigned int PackMemberFieldsIntoBuffer( T_buffer& buffer,
-                                           const std::map< std::string, Array1dT<T> >& member,
+                                           const std::map< std::string, array<T> >& member,
                                            const T_indices& localIndices,
                                            const bool doBufferPacking ) const;
 
   /// pack the fields of member into the bufvector
   template< typename T, typename T_indices, typename T_buffer >
   unsigned int PackMemberFieldsIntoBuffer( T_buffer& buffer,
-                                           const sArray1d& fieldNames,
-                                           const std::map< std::string, Array1dT<T> >& member,
+                                           const array<string>& fieldNames,
+                                           const std::map< std::string, array<T> >& member,
                                            const T_indices& localIndices,
                                            const bool doBufferPacking ) const;
 
@@ -903,21 +941,21 @@ private:
   /// unpack the fields of member from a buffer
   template< typename T, typename T_indices >
   unsigned int UnpackMemberFieldsFromBuffer( const char*& buffer,
-                                             std::map< std::string, Array1dT<T> >& member,
+                                             std::map< std::string, array<T> >& member,
                                              const T_indices& localIndices );
 
   /// unpack the fields of member from a buffer
   template< typename T, typename T_indices >
   unsigned int UnpackMemberFieldsFromBuffer( const char*& buffer,
-                                             const sArray1d& fieldNames,
-                                             std::map< std::string, Array1dT<T> >& member,
+                                             const array<string>& fieldNames,
+                                             std::map< std::string, array<T> >& member,
                                              const T_indices& localIndices );
 
   /// pack a single field into a bufvector
   template< typename T, typename T_indices >
   unsigned int PackFieldIntoBuffer( bufvector& buffer,
                                     const std::string& fieldName,
-                                    const Array1dT<T>& field,
+                                    const array<T>& field,
                                     const T_indices& localIndices,
                                     const bool doBufferPacking ) const;
 
@@ -925,7 +963,7 @@ private:
   template< typename T, typename T_indices >
   unsigned int PackFieldIntoBuffer( char*& buffer,
                                     const std::string& fieldName,
-                                    const Array1dT<T>& field,
+                                    const array<T>& field,
                                     const T_indices& localIndices,
                                     const bool doBufferPacking ) const;
 
@@ -933,7 +971,7 @@ private:
   template< typename T, typename T_indices >
   unsigned int UnpackFieldFromBuffer( const char*& buffer,
                                       const std::string& fieldName,
-                                      Array1dT<T>& field,
+                                      array<T>& field,
                                       const T_indices& localIndices );
 
 
@@ -955,7 +993,8 @@ private:
   // data members
   //********************************************************************************************************************
 
-  // these public members should be protected...or private...but I am lazy, and really no need yet.
+  // these public members should be protected...or private...but I am lazy, and
+  // really no need yet.
 public:
 
   /// lookup of global index from local indexes
@@ -971,9 +1010,7 @@ public:
   std::map< std::string, lSet >             m_Sets;
 
   /// boundary conditions on this object
-  Array1dT<BoundaryConditionBase*>  m_bcData;
-
-  
+  array<BoundaryConditionBase*>  m_bcData;
 
 
 
@@ -993,22 +1030,22 @@ protected:
   std::map< std::string, gArray1d >             m_GlobalIndexData;
 
   /// map to hold arrays of integers
-  std::map< std::string, iArray1d >             m_IntegerData;
+  std::map< std::string, array<integer> >             m_IntegerData;
 
   /// map to hold arrays of reals
-  std::map< std::string, rArray1d >             m_realData;
+  std::map< std::string, array<real64> >             m_realData;
 
   /// map to hold arrays of R1Tensors
-  std::map< std::string, Array1dT<R1Tensor> >    m_R1TensorData;
+  std::map< std::string, array<R1Tensor> >    m_R1TensorData;
 
   /// map to hold arrays of R2Tensors
-  std::map< std::string, Array1dT<R2Tensor> >    m_R2TensorData;
+  std::map< std::string, array<R2Tensor> >    m_R2TensorData;
 
   /// map to hold arrays of R2SymTensors
-  std::map< std::string, Array1dT<R2SymTensor> > m_R2SymTensorData;
+  std::map< std::string, array<R2SymTensor> > m_R2SymTensorData;
 
   /// map to hold arrays of arrays of R1Tensors
-  std::map< std::string, Array1dT<Array1dT<R1Tensor>>>  m_ArrayR1TensorData;
+  std::map< std::string, array<array<R1Tensor> > >  m_ArrayR1TensorData;
 
   /// map to hold one-to-one maps
   std::map< std::string, OneToOneRelation >             m_OneToOneMaps;
@@ -1028,8 +1065,8 @@ protected:
 
 public:
 
-  iArray1d& m_isExternal;
-  iArray1d& m_processColor;
+  array<integer>& m_isExternal;
+  array<integer>& m_processColor;
   localIndex m_processColorPad;
 
   OrderedVariableOneToManyRelation& m_childIndices;
@@ -1037,10 +1074,10 @@ public:
   int m_rank = -1;
 
   template< typename TYPE >
-  void ConstructVariableOneToManyFromInverse( const std::string& mapname, const Array1dT<TYPE>& inverse );
+  void ConstructVariableOneToManyFromInverse( const std::string& mapname, const array<TYPE>& inverse );
 
   template< typename TYPE, typename TYPE2 >
-  void AddToVariableOneToManyFromInverse( const std::string& mapname, const Array1dT<TYPE>& inverseMap, const TYPE2& newIndices );
+  void AddToVariableOneToManyFromInverse( const std::string& mapname, const array<TYPE>& inverseMap, const TYPE2& newIndices );
 
 
   const OneToOneRelation& GetOneToOneMap( const std::string& name ) const { return stlMapLookup(m_OneToOneMaps,name); }
@@ -1053,15 +1090,23 @@ public:
   const OrderedVariableOneToManyRelation& GetVariableOneToManyMap( const std::string& name ) const { return stlMapLookup(m_VariableOneToManyMaps,name); }
   OrderedVariableOneToManyRelation& GetVariableOneToManyMap( const std::string& name ) { return stlMapLookup(m_VariableOneToManyMaps,name); }
 
-  const OrderedVariableOneToManyToManyRelation& GetVariableOneToManyToManyMap( const std::string& name ) const { return stlMapLookup(m_VariableOneToManyToManyMaps,name); }
+  const OrderedVariableOneToManyToManyRelation& GetVariableOneToManyToManyMap( const std::string& name ) const {
+    return stlMapLookup(m_VariableOneToManyToManyMaps,name);
+  }
   OrderedVariableOneToManyToManyRelation& GetVariableOneToManyToManyMap( const std::string& name ) { return stlMapLookup(m_VariableOneToManyToManyMaps,name); }
 
-  const UnorderedVariableOneToManyRelation& GetUnorderedVariableOneToManyMap( const std::string& name ) const { return stlMapLookup(m_UnorderedVariableOneToManyMaps,name); }
-  UnorderedVariableOneToManyRelation& GetUnorderedVariableOneToManyMap( const std::string& name ) { return stlMapLookup(m_UnorderedVariableOneToManyMaps,name); }
+  const UnorderedVariableOneToManyRelation& GetUnorderedVariableOneToManyMap( const std::string& name ) const {
+    return stlMapLookup(m_UnorderedVariableOneToManyMaps,name);
+  }
+  UnorderedVariableOneToManyRelation& GetUnorderedVariableOneToManyMap( const std::string& name ) {
+    return stlMapLookup(m_UnorderedVariableOneToManyMaps,name);
+  }
 
 
-  const Array1dT<lSet>* GetUnorderedVariableOneToManyMapPointer( const std::string& name ) const { return stlMapLookupPointer(m_UnorderedVariableOneToManyMaps,name); }
-  Array1dT<lSet>* GetUnorderedVariableOneToManyMapPointer( const std::string& name ) { return stlMapLookupPointer(m_UnorderedVariableOneToManyMaps,name); }
+  const array<lSet>* GetUnorderedVariableOneToManyMapPointer( const std::string& name ) const {
+    return stlMapLookupPointer(m_UnorderedVariableOneToManyMaps,name);
+  }
+  array<lSet>* GetUnorderedVariableOneToManyMapPointer( const std::string& name ) { return stlMapLookupPointer(m_UnorderedVariableOneToManyMaps,name); }
 
   //const lSet* GetNodeMapPointer(localIndex indx){return 0;};
 
@@ -1085,7 +1130,7 @@ int ObjectDataStructureBaseT::AddKeyedDataField()
 
 
   // get data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& DataArrayMember = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& DataArrayMember = GetDataMemberMap<array<T> >();
 
   std::string name = Field<FIELDKEY>::Name();
 
@@ -1100,19 +1145,6 @@ int ObjectDataStructureBaseT::AddKeyedDataField()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 // *********************************************************************************************************************
 /**
  * @author R. Settgast
@@ -1123,19 +1155,21 @@ int ObjectDataStructureBaseT::AddKeyedDataField()
  *
  */
 template< FieldKey FIELDKEY>
-inline const Array1dT<typename Field<FIELDKEY>::Type>& ObjectDataStructureBaseT::GetFieldData( ) const
+inline const array<typename Field<FIELDKEY>::Type>& ObjectDataStructureBaseT::GetFieldData( ) const
 {
   // define a typedef of the "type" corresponding to FIELDKEY for easier reading
   typedef typename Field<FIELDKEY>::Type T;
 
   // get the data member map corresponding to the type
-  const std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  const std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
-  // get an iterator to the map entry that corresponds with the field name and return it.
-  const typename std::map< std::string, Array1dT<T> >::const_iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
+  // get an iterator to the map entry that corresponds with the field name and
+  // return it.
+  const typename std::map< std::string, array<T> >::const_iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
 
-  if( iobjectmap == objectmap.end() ){
-  	std::string errStr = Field<FIELDKEY>::Name();
+  if( iobjectmap == objectmap.end() )
+  {
+    std::string errStr = Field<FIELDKEY>::Name();
     throw GPException("didn't find() requested field '" + errStr + "' in ObjectDataStructureBaseT /n");
   }
   return(iobjectmap->second);
@@ -1144,19 +1178,20 @@ inline const Array1dT<typename Field<FIELDKEY>::Type>& ObjectDataStructureBaseT:
 
 
 template< FieldKey FIELDKEY>
-inline const Array1dT<typename Field<FIELDKEY>::Type>* ObjectDataStructureBaseT::GetFieldDataPointer( ) const
+inline const array<typename Field<FIELDKEY>::Type>* ObjectDataStructureBaseT::GetFieldDataPointer( ) const
 {
   // define a typedef of the "type" corresponding to FIELDKEY for easier reading
   typedef typename Field<FIELDKEY>::Type T;
 
   // get the data member map corresponding to the type
-  const std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  const std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
-  // get an iterator to the map entry that corresponds with the field name and return it.
-  const typename std::map< std::string, Array1dT<T> >::const_iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
+  // get an iterator to the map entry that corresponds with the field name and
+  // return it.
+  const typename std::map< std::string, array<T> >::const_iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
 
 
-  const Array1dT<typename Field<FIELDKEY>::Type>* rval = nullptr;
+  const array<typename Field<FIELDKEY>::Type>* rval = nullptr;
   if( iobjectmap != objectmap.end() )
   {
     rval = &(iobjectmap->second);
@@ -1177,13 +1212,14 @@ inline const Array1dT<typename Field<FIELDKEY>::Type>* ObjectDataStructureBaseT:
  *
  */
 template< typename T >
-inline const Array1dT<T>& ObjectDataStructureBaseT::GetFieldData( const std::string& fieldName ) const
+inline const array<T>& ObjectDataStructureBaseT::GetFieldData( const std::string& fieldName ) const
 {
   // get the data member map corresponding to the type
-  const std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  const std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
-  // get an iterator to the map entry that corresponds with the field name and return it.
-  const typename std::map< std::string, Array1dT<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
+  // get an iterator to the map entry that corresponds with the field name and
+  // return it.
+  const typename std::map< std::string, array<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field '" + fieldName + "' in ObjectDataStructureBaseT /n");
 
@@ -1192,15 +1228,16 @@ inline const Array1dT<T>& ObjectDataStructureBaseT::GetFieldData( const std::str
 }
 
 template< typename T >
-inline const Array1dT<T>* ObjectDataStructureBaseT::GetFieldDataPointer( const std::string& fieldName ) const
+inline const array<T>* ObjectDataStructureBaseT::GetFieldDataPointer( const std::string& fieldName ) const
 {
   // get the data member map corresponding to the type
-  const std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  const std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
-  // get an iterator to the map entry that corresponds with the field name and return it.
-  const typename std::map< std::string, Array1dT<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
+  // get an iterator to the map entry that corresponds with the field name and
+  // return it.
+  const typename std::map< std::string, array<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
 
-  const Array1dT<T>* rval = nullptr;
+  const array<T>* rval = nullptr;
   if( iobjectmap != objectmap.end() )
   {
     rval = &(iobjectmap->second);
@@ -1221,7 +1258,8 @@ inline const Array1dT<T>* ObjectDataStructureBaseT::GetFieldDataPointer( const s
 inline
 lSet& ObjectDataStructureBaseT::GetSet( const std::string& setName )
 {
-  // get an iterator to the map entry that corresponds with the field name and return it.
+  // get an iterator to the map entry that corresponds with the field name and
+  // return it.
   std::map< std::string, lSet >::iterator itr = m_Sets.find(setName);
   if( itr == m_Sets.end() )
     throw GPException("GetSet: didn't find() requested set '" + setName + "' in ObjectDataStructureBaseT /n");
@@ -1239,7 +1277,8 @@ lSet& ObjectDataStructureBaseT::GetSet( const std::string& setName )
 inline
 const lSet& ObjectDataStructureBaseT::GetSet( const std::string& setName ) const
 {
-  // get an iterator to the map entry that corresponds with the field name and return it.
+  // get an iterator to the map entry that corresponds with the field name and
+  // return it.
   const std::map< std::string, lSet >::const_iterator itr = m_Sets.find(setName);
   if( itr == m_Sets.end() )
     throw GPException("GetSet: didn't find() requested set '" + setName + "' in ObjectDataStructureBaseT /n");
@@ -1251,14 +1290,15 @@ template< typename T >
 void ObjectDataStructureBaseT::SetSubsetValue(const std::string& fieldName,
                                               const std::string& setName,
                                               const T& value){
-    lSet& theSet = GetSet(setName);
-   std::set<localIndex>::iterator itr = theSet.begin();
-   std::set<localIndex>::iterator iend = theSet.end();
+  lSet& theSet = GetSet(setName);
+  std::set<localIndex>::iterator itr = theSet.begin();
+  std::set<localIndex>::iterator iend = theSet.end();
 
-   Array1dT<T>& field = GetFieldData<T>(fieldName);
-   for(; itr != iend;++itr){
-     field[*itr] = value;
-   }
+  array<T>& field = GetFieldData<T>(fieldName);
+  for( ; itr != iend ; ++itr)
+  {
+    field[*itr] = value;
+  }
 }
 
 /**
@@ -1270,10 +1310,10 @@ template< typename T >
 bool ObjectDataStructureBaseT::HasField( const std::string& fieldName ) const
 {
   // get the data member map corresponding to the type
-  const std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  const std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  const typename std::map< std::string, Array1dT<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
+  const typename std::map< std::string, array<T> >::const_iterator iobjectmap = objectmap.find(fieldName);
 
   return(iobjectmap != objectmap.end());
 }
@@ -1284,17 +1324,17 @@ bool ObjectDataStructureBaseT::HasField( const std::string& fieldName ) const
  * this function sets the value of a const* to the location of a field array
  */
 template< FieldKey FIELDKEY >
-void ObjectDataStructureBaseT::SetConstPointer( Array1dT<typename Field<FIELDKEY>::Type>* const& pointer )
+void ObjectDataStructureBaseT::SetConstPointer( array<typename Field<FIELDKEY>::Type>* const& pointer )
 {
   // define a typedef of the "type" corresponding to FIELDKEY for easier reading
   typedef typename Field<FIELDKEY>::Type T;
 
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
-  const typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
+  const typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(Field<FIELDKEY>::Name());
 
-  Array1dT<T>** temp = const_cast< Array1dT<T>**>(&pointer);
+  array<T>** temp = const_cast< array<T>**>(&pointer);
 
   if( iobjectmap == objectmap.end() )
     *temp = nullptr;
@@ -1306,19 +1346,19 @@ void ObjectDataStructureBaseT::SetConstPointer( Array1dT<typename Field<FIELDKEY
 
 
 
-
 //**********************************************************************************************************************
 /**
  * @author R. Settgast
  *
  * @param[out] buffer the bufvector that is used as the packing buffer
- * @param[in] fieldNames the list of field names that are to be packed into buffer
+ * @param[in] fieldNames the list of field names that are to be packed into
+ * buffer
  * @param[in] localIndices the list of local indices to pack into the buffer
  * @return the total number of characters packed into buffer by this function
  */
 template< typename T_indices, typename T_buffer >
 unsigned int ObjectDataStructureBaseT::PackFieldsIntoBuffer( T_buffer& buffer,
-                                                             const sArray1d& fieldNames,
+                                                             const array<string>& fieldNames,
                                                              const T_indices& localIndices,
                                                              const bool doBufferPacking ) const
 {
@@ -1334,7 +1374,6 @@ unsigned int ObjectDataStructureBaseT::PackFieldsIntoBuffer( T_buffer& buffer,
 
   return packedSize;
 }
-
 
 
 
@@ -1363,22 +1402,24 @@ unsigned int ObjectDataStructureBaseT::PackAllFieldsIntoBuffer( T_buffer& buffer
 
 /**
  * @author R. Settgast
- * @param[in,out] buffer character pointer that holds the data to be unpacked. It is incremented
- * @param[in] fieldNames the list of field names that are to be packed into buffer
+ * @param[in,out] buffer character pointer that holds the data to be unpacked.
+ * It is incremented
+ * @param[in] fieldNames the list of field names that are to be packed into
+ * buffer
  * @param[in] localIndices the list of local indices unpack the data to
  * @return total number of characters unpacked by the function
  */
 template< typename T_indices >
 unsigned int ObjectDataStructureBaseT::UnpackFieldsFromBuffer( const char*& buffer,
-                                                              const sArray1d& fieldNames,
-                                                              const T_indices& localIndices )
+                                                               const array<string>& fieldNames,
+                                                               const T_indices& localIndices )
 {
   unsigned int sizeOfUnpackedChars = 0;
 
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, fieldNames, m_IntegerData, localIndices );
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, fieldNames, m_LocalIndexData, localIndices );
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, fieldNames, m_GlobalIndexData, localIndices );
-  sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, fieldNames, m_realData, localIndices ) ;
+  sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, fieldNames, m_realData, localIndices );
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, fieldNames, m_R1TensorData, localIndices );
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, fieldNames, m_R2TensorData, localIndices );
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, fieldNames, m_R2SymTensorData, localIndices );
@@ -1388,7 +1429,8 @@ unsigned int ObjectDataStructureBaseT::UnpackFieldsFromBuffer( const char*& buff
 
 /**
  * @author R. Settgast
- * @param[in,out] buffer character pointer that holds the data to be unpacked. It is incremented
+ * @param[in,out] buffer character pointer that holds the data to be unpacked.
+ * It is incremented
  * @param[in] localIndices the list of local indices unpack the data to
  * @return total number of characters unpacked by the function
  */
@@ -1401,7 +1443,7 @@ unsigned int ObjectDataStructureBaseT::UnpackAllFieldsFromBuffer( const char*& b
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, m_IntegerData, localIndices );
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, m_LocalIndexData, localIndices );
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, m_GlobalIndexData, localIndices );
-  sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, m_realData, localIndices ) ;
+  sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, m_realData, localIndices );
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, m_R1TensorData, localIndices );
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, m_R2TensorData, localIndices );
   sizeOfUnpackedChars += UnpackMemberFieldsFromBuffer( buffer, m_R2SymTensorData, localIndices );
@@ -1413,19 +1455,19 @@ unsigned int ObjectDataStructureBaseT::UnpackAllFieldsFromBuffer( const char*& b
 
 template< typename T, typename T_indices, typename T_buffer >
 unsigned int ObjectDataStructureBaseT::PackMemberFieldsIntoBuffer( T_buffer& buffer,
-                                                                   const std::map< std::string, Array1dT<T> >& member,
+                                                                   const std::map< std::string, array<T> >& member,
                                                                    const T_indices& localIndices,
                                                                    const bool doBufferPacking ) const
 {
   unsigned int sizeOfPackedChars = 0;
 
-  for( typename std::map< std::string, Array1dT<T> >::const_iterator i = member.begin() ; i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::const_iterator i = member.begin() ; i!=member.end() ; ++i )
   {
     const std::string fieldName = i->first;
-    const Array1dT<T>& field = i->second;
+    const array<T>& field = i->second;
     sizeOfPackedChars += PackFieldIntoBuffer( buffer, fieldName, field, localIndices, doBufferPacking );
   }
-  return sizeOfPackedChars ;
+  return sizeOfPackedChars;
 }
 
 
@@ -1434,45 +1476,47 @@ unsigned int ObjectDataStructureBaseT::PackMemberFieldsIntoBuffer( T_buffer& buf
  * @author R. Settgast
  * @tparam T the type of data that the member holds.
  * @param[out] buffer the bufvector that is used as the packing buffer
- * @param[in] fieldNames the list of field names that are to be packed into buffer
- * @param[in] member the data member that should hold fields that are keyed on fieldNames
+ * @param[in] fieldNames the list of field names that are to be packed into
+ * buffer
+ * @param[in] member the data member that should hold fields that are keyed on
+ * fieldNames
  * @param[in] localIndices the list of local indices to pack into the buffer
  * @return the total number of characters packed into buffer by this function
  */
 template< typename T, typename T_indices, typename T_buffer  >
 unsigned int ObjectDataStructureBaseT::PackMemberFieldsIntoBuffer( T_buffer& buffer,
-                                                                   const sArray1d& fieldNames,
-                                                                   const std::map< std::string, Array1dT<T> >& member,
+                                                                   const array<string>& fieldNames,
+                                                                   const std::map< std::string, array<T> >& member,
                                                                    const T_indices& localIndices,
                                                                    const bool doBufferPacking ) const
 {
   unsigned int sizeOfPackedChars = 0;
 
-  sArray1d::const_iterator fieldName=fieldNames.begin() ;
+  array<string>::const_iterator fieldName=fieldNames.begin();
 
-  for(  ; fieldName!=fieldNames.end(); ++fieldName )
+  for( ; fieldName!=fieldNames.end() ; ++fieldName )
   {
-    const typename std::map< std::string, Array1dT<T> >::const_iterator i = member.find(*fieldName);
+    const typename std::map< std::string, array<T> >::const_iterator i = member.find(*fieldName);
     if( i != member.end() )
     {
-      const Array1dT<T>& field = i->second;
+      const array<T>& field = i->second;
       sizeOfPackedChars += PackFieldIntoBuffer( buffer, *fieldName, field, localIndices, doBufferPacking );
     }
   }
-  return sizeOfPackedChars ;
+  return sizeOfPackedChars;
 }
 
 template< typename T, typename T_indices >
 unsigned int ObjectDataStructureBaseT::UnpackMemberFieldsFromBuffer( const char*& buffer,
-                                                                     std::map< std::string, Array1dT<T> >& member,
+                                                                     std::map< std::string, array<T> >& member,
                                                                      const T_indices& localIndices )
 {
   unsigned int sizeOfUnpackedChars = 0;
 
-  for( typename std::map< std::string, Array1dT<T> >::iterator i = member.begin() ; i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::iterator i = member.begin() ; i!=member.end() ; ++i )
   {
     const std::string fieldName = i->first;
-    Array1dT<T>& field = i->second;
+    array<T>& field = i->second;
 
     sizeOfUnpackedChars += UnpackFieldFromBuffer(  buffer, fieldName, field, localIndices );
   }
@@ -1484,28 +1528,31 @@ unsigned int ObjectDataStructureBaseT::UnpackMemberFieldsFromBuffer( const char*
 /**
  * @author R. Settgast
  * @tparam T the type of data that the member holds.
- * @param[in,out] buffer character pointer that holds the data to be unpacked. It is incremented
- * @param[in] fieldNames the list of field names that are to be packed into buffer
- * @param[in] member the data member that should hold fields that are keyed on fieldNames
+ * @param[in,out] buffer character pointer that holds the data to be unpacked.
+ * It is incremented
+ * @param[in] fieldNames the list of field names that are to be packed into
+ * buffer
+ * @param[in] member the data member that should hold fields that are keyed on
+ * fieldNames
  * @param[in] localIndices the list of local indices unpack the data to
  * @return total number of characters unpacked by the function.
  */
 template< typename T, typename T_indices >
 unsigned int ObjectDataStructureBaseT::UnpackMemberFieldsFromBuffer( const char*& buffer,
-                                                            const sArray1d& fieldNames,
-                                                            std::map< std::string, Array1dT<T> >& member,
-                                                            const T_indices& localIndices )
+                                                                     const array<string>& fieldNames,
+                                                                     std::map< std::string, array<T> >& member,
+                                                                     const T_indices& localIndices )
 {
   unsigned int sizeOfUnpackedChars = 0;
 
-  sArray1d::const_iterator fieldName=fieldNames.begin() ;
+  array<string>::const_iterator fieldName=fieldNames.begin();
 
-  for(  ; fieldName!=fieldNames.end(); ++fieldName )
+  for( ; fieldName!=fieldNames.end() ; ++fieldName )
   {
-    const typename std::map< std::string, Array1dT<T> >::iterator i = member.find(*fieldName);
+    const typename std::map< std::string, array<T> >::iterator i = member.find(*fieldName);
     if( i != member.end() )
     {
-      Array1dT<T>& field = i->second;
+      array<T>& field = i->second;
       sizeOfUnpackedChars += UnpackFieldFromBuffer(  buffer, *fieldName, field, localIndices );
     }
   }
@@ -1524,8 +1571,8 @@ unsigned int ObjectDataStructureBaseT::UnpackMemberFieldsFromBuffer( const char*
  */
 template< typename T, typename T_indices >
 unsigned int ObjectDataStructureBaseT::PackFieldIntoBuffer( bufvector& buffer,
-                                                            const std::string& fieldName ,
-                                                            const Array1dT<T>& field,
+                                                            const std::string& fieldName,
+                                                            const array<T>& field,
                                                             const T_indices& localIndices,
                                                             const bool doBufferPacking ) const
 {
@@ -1535,11 +1582,11 @@ unsigned int ObjectDataStructureBaseT::PackFieldIntoBuffer( bufvector& buffer,
   {
 
 #ifdef PACK_FIELD_NAMES_IN_MPI_BUFFER
-  sizeOfPackedChars += buffer.PackFieldname(fieldName);
+    sizeOfPackedChars += buffer.PackFieldname(fieldName);
 #endif
 
     for( typename T_indices::const_iterator i = localIndices.begin() ;
-        i != localIndices.end() ; ++i )
+         i != localIndices.end() ; ++i )
     {
       sizeOfPackedChars += buffer.Pack( field[*i] );
     }
@@ -1560,8 +1607,8 @@ unsigned int ObjectDataStructureBaseT::PackFieldIntoBuffer( bufvector& buffer,
 
 template< typename T, typename T_indices >
 unsigned int ObjectDataStructureBaseT::PackFieldIntoBuffer( char*& buffer,
-                                                            const std::string& fieldName ,
-                                                            const Array1dT<T>& field,
+                                                            const std::string& fieldName,
+                                                            const array<T>& field,
                                                             const T_indices& localIndices,
                                                             const bool doBufferPacking ) const
 {
@@ -1601,7 +1648,8 @@ unsigned int ObjectDataStructureBaseT::PackFieldIntoBuffer( char*& buffer,
 /**
  * @author R. Settgast
  * @tparam T the type of data that the member holds.
- * @param[in,out] buffer character pointer that holds the data to be unpacked. It is incremented
+ * @param[in,out] buffer character pointer that holds the data to be unpacked.
+ * It is incremented
  * @param[in] fieldName the name of the field to be unpacked
  * @param field[in] the individual field data to be unpacked
  * @param[in] localIndices the list of local indices to pack into the buffer
@@ -1609,8 +1657,8 @@ unsigned int ObjectDataStructureBaseT::PackFieldIntoBuffer( char*& buffer,
  */
 template< typename T, typename T_indices >
 unsigned int ObjectDataStructureBaseT::UnpackFieldFromBuffer( const char*& buffer,
-                                                              const std::string& fieldName ,
-                                                              Array1dT<T>& field,
+                                                              const std::string& fieldName,
+                                                              array<T>& field,
                                                               const T_indices& localIndices )
 {
   unsigned int sizeOfUnpackedChars = 0;
@@ -1625,7 +1673,7 @@ unsigned int ObjectDataStructureBaseT::UnpackFieldFromBuffer( const char*& buffe
 
 #if 0
   for( lArray1d::const_iterator localIndex = localIndices.begin() ;
-      localIndex != localIndices.end() ; ++localIndex )
+       localIndex != localIndices.end() ; ++localIndex )
   {
     sizeOfUnpackedChars += bufvector::Unpack( buffer, field[*localIndex] );
   }
@@ -1633,7 +1681,7 @@ unsigned int ObjectDataStructureBaseT::UnpackFieldFromBuffer( const char*& buffe
 
   const T* tbuffer = reinterpret_cast<const T*>(buffer);
   for( typename T_indices::const_iterator i = localIndices.begin() ;
-      i != localIndices.end() ; ++i )
+       i != localIndices.end() ; ++i )
   {
     sizeOfUnpackedChars += sizeof(T);
     field[*i] = *tbuffer;
@@ -1648,9 +1696,6 @@ unsigned int ObjectDataStructureBaseT::UnpackFieldFromBuffer( const char*& buffe
 
 
 
-
-
-
 // *********************************************************************************************************************
 /**
  * @author S. Walsh
@@ -1662,21 +1707,27 @@ template< typename T >
 void ObjectDataStructureBaseT::ReadAsciiFieldData(const std::string& fieldName, const std::string& fileName)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
   std::ifstream fStream(fileName.c_str());
-  Array1dT<T>& field = iobjectmap->second;
+  array<T>& field = iobjectmap->second;
 
   // read data
-  for( size_t i =0; i < field.size(); ++i){
-  	if(fStream.good()){ fStream >> field[i];}
-  	else {
-      throw GPException("Error ReadAsciiFieldData: Data vector in "+ fileName +" (size " +toString(i+1) + ") is shorter than field " + fieldName + "(size " +toString(field.size()+1) + ") /n");
+  for( size_t i =0 ; i < field.size() ; ++i)
+  {
+    if(fStream.good())
+    {
+      fStream >> field[i];
+    }
+    else
+    {
+      throw GPException("Error ReadAsciiFieldData: Data vector in "+ fileName +" (size " +toString(
+                          i+1) + ") is shorter than field " + fieldName + "(size " +toString(field.size()+1) + ") /n");
     }
   }
 
@@ -1690,30 +1741,34 @@ template< typename T >
 void ObjectDataStructureBaseT::ReadIndexedAsciiFieldData(const std::string& fieldName, const std::string& fileName)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
   std::ifstream fStream(fileName.c_str());
-  Array1dT<T>& field = iobjectmap->second;
+  array<T>& field = iobjectmap->second;
 
   // read data
   std::string lineStr;
   localIndex aLocalIndex;
   globalIndex aGlobalIndex;
   T datum;
-  while( std::getline(fStream,lineStr) ){ //fStream.good()
-	std::istringstream iss(lineStr);
-	iss >> aGlobalIndex >> datum;
-    if( !iss.fail() ){ // not comment line
-  		if( isMember(aGlobalIndex,m_globalToLocalMap) ){  // could be on another processor
-  		  aLocalIndex = m_globalToLocalMap[aGlobalIndex];
-  		  field[aLocalIndex] = datum;
-  		}
-  	}
+  while( std::getline(fStream,lineStr) )  //fStream.good()
+  {
+    std::istringstream iss(lineStr);
+    iss >> aGlobalIndex >> datum;
+    if( !iss.fail() )  // not comment line
+    {
+      if( isMember(aGlobalIndex,m_globalToLocalMap) )   // could be on another
+                                                        // processor
+      {
+        aLocalIndex = m_globalToLocalMap[aGlobalIndex];
+        field[aLocalIndex] = datum;
+      }
+    }
   }
 
   fStream.close();
@@ -1724,23 +1779,29 @@ void ObjectDataStructureBaseT::ReadAsciiFieldData(const std::string& fieldName, 
                                                   const lSet& subset)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
   std::ifstream fStream(fileName.c_str());
-  Array1dT<T>& field = iobjectmap->second;
+  array<T>& field = iobjectmap->second;
 
   // read data
 
   lSet::const_iterator isubset=subset.begin();
-  for( size_t i =0; i < subset.size(); ++i, ++isubset){
-  	if(fStream.good()){ fStream >> field[*isubset];}
-  	else {
-      throw GPException("Error ReadAsciiFieldData: Data vector in "+ fileName +" (size " +toString(i+1) + ") is shorter than field " + fieldName + " set (size " +toString(subset.size()+1) + ") /n");
+  for( size_t i =0 ; i < subset.size() ; ++i, ++isubset)
+  {
+    if(fStream.good())
+    {
+      fStream >> field[*isubset];
+    }
+    else
+    {
+      throw GPException("Error ReadAsciiFieldData: Data vector in "+ fileName +" (size " +toString(
+                          i+1) + ") is shorter than field " + fieldName + " set (size " +toString(subset.size()+1) + ") /n");
     }
   }
 
@@ -1758,29 +1819,33 @@ template< typename T >
 void ObjectDataStructureBaseT::WriteAsciiFieldData(const std::string& fieldName, const std::string& fileName, bool append)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
   std::ofstream fStream;
 
-  if(append){
+  if(append)
+  {
     fStream.open(fileName.c_str(), std::ios::out | std::ios::app );
-  } else {
+  }
+  else
+  {
     fStream.open(fileName.c_str(), std::ios::out );
   }
 
   fStream.precision(std::numeric_limits<realT>::digits10 + 2);
 
-  Array1dT<T>& field = iobjectmap->second;
+  array<T>& field = iobjectmap->second;
 
   // write data
-  for( size_t i =0; i < field.size(); ++i){
-  	 fStream << field[i];
-  	 fStream << "\n";
+  for( size_t i =0 ; i < field.size() ; ++i)
+  {
+    fStream << field[i];
+    fStream << "\n";
   }
 
   fStream.close();
@@ -1788,39 +1853,41 @@ void ObjectDataStructureBaseT::WriteAsciiFieldData(const std::string& fieldName,
 
 template< typename T >
 void ObjectDataStructureBaseT::WriteAsciiFieldData(const std::string& fieldName, const std::string& fileName,
-                                                  const lSet& subset, bool append)
+                                                   const lSet& subset, bool append)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // get an iterator to the map entry that corresponds with the field name
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
   std::ofstream fStream;
 
-  if(append){
+  if(append)
+  {
     fStream.open(fileName.c_str(), std::ios::out | std::ios::app );
-  } else {
+  }
+  else
+  {
     fStream.open(fileName.c_str(), std::ios::out );
   }
 
   fStream.precision(std::numeric_limits<realT>::digits10 + 2);
 
-  Array1dT<T>& field = iobjectmap->second;
+  array<T>& field = iobjectmap->second;
 
   // write data
   lSet::const_iterator isubset=subset.begin();
-  for( size_t i =0; i < subset.size(); ++i, ++isubset){
-  	 fStream << field[*isubset];;
-  	 fStream << "\n";
+  for( size_t i =0 ; i < subset.size() ; ++i, ++isubset)
+  {
+    fStream << field[*isubset];;
+    fStream << "\n";
   }
 
   fStream.close();
 }
-
-
 
 
 
@@ -1837,10 +1904,10 @@ void ObjectDataStructureBaseT::SetFieldToConstantFromString(const std::string& f
                                                             const bool& additive)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // check if field exisits
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
@@ -1863,10 +1930,10 @@ void ObjectDataStructureBaseT::SetFieldToConstantFromString(const std::string& f
                                                             const bool& additive)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // check if field exisits
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
@@ -1890,24 +1957,24 @@ void ObjectDataStructureBaseT::SetFieldToConstantFromString(const std::string& f
 
 template< typename T >
 void ObjectDataStructureBaseT::CopyFieldSubset(const std::string& fieldName,
-                                                            const lArray1d& source,
-                                                            const lArray1d& target)
+                                               const lArray1d& source,
+                                               const lArray1d& target)
 {
   // get the data member map corresponding to the type
-  std::map< std::string, Array1dT<T> >& objectmap = GetDataMemberMap<Array1dT<T> >();
+  std::map< std::string, array<T> >& objectmap = GetDataMemberMap<array<T> >();
 
   // check if field exisits
-  typename std::map< std::string, Array1dT<T> >::iterator iobjectmap = objectmap.find(fieldName);
+  typename std::map< std::string, array<T> >::iterator iobjectmap = objectmap.find(fieldName);
   if( iobjectmap == objectmap.end() )
     throw GPException("didn't find() requested field "+ fieldName +" in ObjectDataStructureBaseT /n");
 
 
   if( source.size() != target.size() )
     throw GPException("ObjectDataStructureBaseT::CopyFieldSubset source and target should be the same size. /n");
-  
+
   for(lArray1d::const_iterator si=source.begin(), ti=target.begin() ; si!=source.end() ; ++si,++ti )
     iobjectmap->second[ *ti ] = iobjectmap->second[ *si ];
-  
+
 }
 
 // *********************************************************************************************************************
@@ -1915,12 +1982,12 @@ void ObjectDataStructureBaseT::CopyFieldSubset(const std::string& fieldName,
 
 
 template< typename TYPE >
-void ObjectDataStructureBaseT::ConstructVariableOneToManyFromInverse( const std::string& mapname, const Array1dT<TYPE>& inverseMap )
+void ObjectDataStructureBaseT::ConstructVariableOneToManyFromInverse( const std::string& mapname, const array<TYPE>& inverseMap )
 {
-  Array1dT<lSet>& map = this->m_UnorderedVariableOneToManyMaps[mapname];
+  array<lSet>& map = this->m_UnorderedVariableOneToManyMaps[mapname];
 
   map.resize(this->m_DataLengths);
-  for( typename Array1dT<TYPE>::const_iterator i=inverseMap.begin() ; i!=inverseMap.end() ; ++i )
+  for( typename array<TYPE>::const_iterator i=inverseMap.begin() ; i!=inverseMap.end() ; ++i )
   {
     for( typename TYPE::const_iterator j=i->begin() ; j!=i->end() ; ++j  )
     {
@@ -1931,9 +1998,9 @@ void ObjectDataStructureBaseT::ConstructVariableOneToManyFromInverse( const std:
 
 
 template< typename TYPE, typename TYPE2 >
-void ObjectDataStructureBaseT::AddToVariableOneToManyFromInverse( const std::string& mapname, const Array1dT<TYPE>& inverseMap, const TYPE2& newIndices )
+void ObjectDataStructureBaseT::AddToVariableOneToManyFromInverse( const std::string& mapname, const array<TYPE>& inverseMap, const TYPE2& newIndices )
 {
-  Array1dT<lSet>& map = this->m_UnorderedVariableOneToManyMaps[mapname];
+  array<lSet>& map = this->m_UnorderedVariableOneToManyMaps[mapname];
 
   for( typename TYPE2::const_iterator i=newIndices.begin() ; i!=newIndices.end() ; ++i )
   {
@@ -1947,11 +2014,11 @@ void ObjectDataStructureBaseT::AddToVariableOneToManyFromInverse( const std::str
 
 
 template< typename T >
-void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source, const localIndex destination, std::map< std::string, Array1dT<T> >& member )
+void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source, const localIndex destination, std::map< std::string, array<T> >& member )
 {
-  for( typename std::map< std::string, Array1dT<T> >::iterator i=member.begin() ; i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::iterator i=member.begin() ; i!=member.end() ; ++i )
   {
-    Array1dT<T>& field = i->second;
+    array<T>& field = i->second;
     field[destination] = field[source];
 
   }
@@ -1961,11 +2028,11 @@ template< typename T >
 void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source,
                                                  const localIndex destination0,
                                                  const localIndex destination1,
-                                                 std::map< std::string, Array1dT<T> >& member )
+                                                 std::map< std::string, array<T> >& member )
 {
-  for( typename std::map< std::string, Array1dT<T> >::iterator i=member.begin() ; i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::iterator i=member.begin() ; i!=member.end() ; ++i )
   {
-    Array1dT<T>& field = i->second;
+    array<T>& field = i->second;
     field[destination0] = field[source];
     field[destination1] = field[source];
 
@@ -1973,12 +2040,12 @@ void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source,
 }
 
 template< typename T >
-void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source, const lArray1d& destination, std::map< std::string, Array1dT<T> >& member )
+void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source, const lArray1d& destination, std::map< std::string, array<T> >& member )
 {
 
-  for( typename std::map< std::string, Array1dT<T> >::iterator i=member.begin(); i!=member.end() ; ++i )
+  for( typename std::map< std::string, array<T> >::iterator i=member.begin() ; i!=member.end() ; ++i )
   {
-    Array1dT<T>& field = i->second;
+    array<T>& field = i->second;
     for( lArray1d::const_iterator iterDest=destination.begin() ; iterDest!=destination.end() ; ++iterDest )
     {
       field[*iterDest] = field[source];
@@ -1988,10 +2055,10 @@ void ObjectDataStructureBaseT::CopyMemberFields( const localIndex source, const 
 }
 
 template< typename T >
-void ObjectDataStructureBaseT::AllocateTemporaryFields( const sArray1d& names, Array1dT<Array1dT<T>* >& vars )
+void ObjectDataStructureBaseT::AllocateTemporaryFields( const array<string>& names, array<array<T>* >& vars )
 {
   vars.resize( names.size() );
-  for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+  for( array<string>::size_type i=0 ; i<names.size() ; ++i )
   {
     this->AddKeylessDataField<T>(names[i],true,true);
     vars[i] = &(this->GetFieldData<T>(names[i]));
@@ -1999,11 +2066,11 @@ void ObjectDataStructureBaseT::AllocateTemporaryFields( const sArray1d& names, A
 }
 
 template< typename T >
-void ObjectDataStructureBaseT::DeallocateTemporaryFields( const sArray1d& names )
+void ObjectDataStructureBaseT::DeallocateTemporaryFields( const array<string>& names )
 {
-  for( sArray1d::size_type i=0 ; i<names.size() ; ++i )
+  for( array<string>::size_type i=0 ; i<names.size() ; ++i )
   {
-      this->RemoveDataField<T>(names[i]);
+    this->RemoveDataField<T>(names[i]);
   }
 }
 
@@ -2027,45 +2094,45 @@ inline const std::map< std::string, gArray1d>& ObjectDataStructureBaseT::GetData
 { return m_GlobalIndexData; }
 
 template<>
-inline std::map< std::string, Array1dT<int> >& ObjectDataStructureBaseT::GetDataMemberMap<iArray1d>()
+inline std::map< std::string, array<int> >& ObjectDataStructureBaseT::GetDataMemberMap<array<integer> >()
 { return m_IntegerData; }
 template<>
-inline const std::map< std::string, Array1dT<int> >& ObjectDataStructureBaseT::GetDataMemberMap<iArray1d>() const
+inline const std::map< std::string, array<int> >& ObjectDataStructureBaseT::GetDataMemberMap<array<integer> >() const
 { return m_IntegerData; }
 
 template<>
-inline std::map< std::string, Array1dT<realT> >& ObjectDataStructureBaseT::GetDataMemberMap<rArray1d>()
+inline std::map< std::string, array<realT> >& ObjectDataStructureBaseT::GetDataMemberMap<array<real64> >()
 { return m_realData; }
 template<>
-inline const std::map< std::string, Array1dT<realT> >& ObjectDataStructureBaseT::GetDataMemberMap<rArray1d>() const
+inline const std::map< std::string, array<realT> >& ObjectDataStructureBaseT::GetDataMemberMap<array<real64> >() const
 { return m_realData; }
 
 template<>
-inline std::map< std::string, Array1dT<R1Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R1Tensor> >()
+inline std::map< std::string, array<R1Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R1Tensor> >()
 { return m_R1TensorData; }
 template<>
-inline const std::map< std::string, Array1dT<R1Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R1Tensor> >() const
+inline const std::map< std::string, array<R1Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R1Tensor> >() const
 { return m_R1TensorData; }
 
 template<>
-inline std::map< std::string, Array1dT<R2Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R2Tensor> >()
+inline std::map< std::string, array<R2Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R2Tensor> >()
 { return m_R2TensorData; }
 template<>
-inline const std::map< std::string, Array1dT<R2Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R2Tensor> >() const
+inline const std::map< std::string, array<R2Tensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R2Tensor> >() const
 { return m_R2TensorData; }
 
 template<>
-inline std::map< std::string, Array1dT<R2SymTensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R2SymTensor> >()
+inline std::map< std::string, array<R2SymTensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R2SymTensor> >()
 { return m_R2SymTensorData; }
 template<>
-inline const std::map< std::string, Array1dT<R2SymTensor> >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<R2SymTensor> >() const
+inline const std::map< std::string, array<R2SymTensor> >& ObjectDataStructureBaseT::GetDataMemberMap<array<R2SymTensor> >() const
 { return m_R2SymTensorData; }
 
 template<>
-inline std::map< std::string, Array1dT<Array1dT<R1Tensor> > >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<Array1dT<R1Tensor> > >()
+inline std::map< std::string, array<array<R1Tensor> > >& ObjectDataStructureBaseT::GetDataMemberMap<array<array<R1Tensor> > >()
 { return m_ArrayR1TensorData; }
 template<>
-inline const std::map< std::string, Array1dT<Array1dT<R1Tensor> > >& ObjectDataStructureBaseT::GetDataMemberMap<Array1dT<Array1dT<R1Tensor> > >() const
+inline const std::map< std::string, array<array<R1Tensor> > >& ObjectDataStructureBaseT::GetDataMemberMap<array<array<R1Tensor> > >() const
 { return m_ArrayR1TensorData; }
 
 

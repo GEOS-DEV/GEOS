@@ -51,7 +51,7 @@ protected:
                        Array2dT<SurfaceKernel*>& curr, localIndex& icurr);
 
   void FillValues(const int ioffset, const localIndex nlevels,
-                  Array1dT< Array2dT<SurfaceKernel*> >& vals);
+                  array< Array2dT<SurfaceKernel*> >& vals);
 
   ///lower 3D coordinates of the points that will be queried
   R1TensorT<2> m_lower;
@@ -59,11 +59,12 @@ protected:
   ///upper 3D coordinates of the points that will be queried
   R1TensorT<2> m_upper;
 
-  ///For each cell at the finest level, holds, for each level, the kernels applicable to the cell
-  Array2dT<Array1dT<Array1dT<SurfaceKernel*> > > m_values;
+  ///For each cell at the finest level, holds, for each level, the kernels
+  // applicable to the cell
+  Array2dT<array<array<SurfaceKernel*> > > m_values;
 
   ///Kernels referenced in values
-  Array1dT<SurfaceKernel> m_kernels;
+  array<SurfaceKernel> m_kernels;
 };
 
 #endif /* FRACTALSURFACE_H_ */

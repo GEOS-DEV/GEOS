@@ -10,7 +10,7 @@
 
 namespace TICPP
 {
-  class HierarchicalDataNode;
+class HierarchicalDataNode;
 }
 
 #include "Common/Common.h"
@@ -27,24 +27,24 @@ public:
 
   virtual void ReadXML( const TICPP::HierarchicalDataNode& node ) = 0;
 
-  virtual void GetVariableNames( sArray1d& intVars,
-                                 sArray1d& realVars,
-                                 sArray1d& R1TensorVars,
-                                 sArray1d& R2TensorVars,
-                                 sArray1d& R2SymTensorVars ) const = 0;
+  virtual void GetVariableNames( array<string>& intVars,
+                                 array<string>& realVars,
+                                 array<string>& R1TensorVars,
+                                 array<string>& R2TensorVars,
+                                 array<string>& R2SymTensorVars ) const = 0;
 
 
-  virtual void Serialize( Array1dT<iArray1d*>& intVars,
-                          Array1dT<rArray1d*>& realVars,
-                          Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                          Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                          Array1dT<Array1dT<R2SymTensor>*>& R2SymVars ) const = 0;
+  virtual void Serialize( array<array<integer>*>& intVars,
+                          array<array<real64>*>& realVars,
+                          array<array<R1Tensor>*>& R1Vars,
+                          array<array<R2Tensor>*>& R2Vars,
+                          array<array<R2SymTensor>*>& R2SymVars ) const = 0;
 
-  virtual void Deserialize( const Array1dT<iArray1d*>& intVars,
-                            const Array1dT<rArray1d*>& realVars,
-                            const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                            const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                            const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars  ) = 0;
+  virtual void Deserialize( const array<array<integer>*>& intVars,
+                            const array<array<real64>*>& realVars,
+                            const array<array<R1Tensor>*>& R1Vars,
+                            const array<array<R2Tensor>*>& R2Vars,
+                            const array<array<R2SymTensor>*>& R2SymVars  ) = 0;
 
   virtual unsigned int Pack( const lArray1d& localIndices, bufvector& buffer, const bool doBufferPacking ) = 0;
   virtual unsigned int Pack( const lSet& localIndices, bufvector& buffer, const bool doBufferPacking ) = 0;
@@ -58,25 +58,25 @@ protected:
                           const bool variableParams );
 
   template< typename LeafClass >
-  void GetVariableNamesFromDerived( sArray1d& intVars,
-                                    sArray1d& realVars,
-                                    sArray1d& R1TensorVars,
-                                    sArray1d& R2TensorVars,
-                                    sArray1d& R2SymTensorVars ) const;
+  void GetVariableNamesFromDerived( array<string>& intVars,
+                                    array<string>& realVars,
+                                    array<string>& R1TensorVars,
+                                    array<string>& R2TensorVars,
+                                    array<string>& R2SymTensorVars ) const;
 
   template< typename LeafClass >
-  void SerializeFromDerived( Array1dT<iArray1d*>& intVars,
-                             Array1dT<rArray1d*>& realVars,
-                             Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                             Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                             Array1dT<Array1dT<R2SymTensor>*>& R2SymVars ) const;
+  void SerializeFromDerived( array<array<integer>*>& intVars,
+                             array<array<real64>*>& realVars,
+                             array<array<R1Tensor>*>& R1Vars,
+                             array<array<R2Tensor>*>& R2Vars,
+                             array<array<R2SymTensor>*>& R2SymVars ) const;
 
   template< typename LeafClass >
-  void DeserializeFromDerived( const Array1dT<iArray1d*>& intVars,
-                               const Array1dT<rArray1d*>& realVars,
-                               const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                               const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                               const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars  );
+  void DeserializeFromDerived( const array<array<integer>*>& intVars,
+                               const array<array<real64>*>& realVars,
+                               const array<array<R1Tensor>*>& R1Vars,
+                               const array<array<R2Tensor>*>& R2Vars,
+                               const array<array<R2SymTensor>*>& R2SymVars  );
 
   template< typename LeafClass, typename T_indices >
   unsigned int PackFromDerived( const T_indices& localIndices,
@@ -94,10 +94,6 @@ private:
 
 
 
-
-
-
-
 template< typename LeafClass >
 void EncapsulatedObjectManagerBase::ResizeFromDerived( const localIndex num,
                                                        const bool variableParams )
@@ -112,11 +108,11 @@ void EncapsulatedObjectManagerBase::ResizeFromDerived( const localIndex num,
 }
 
 template< typename LeafClass >
-void EncapsulatedObjectManagerBase::GetVariableNamesFromDerived( sArray1d& intVars,
-                                                                 sArray1d& realVars,
-                                                                 sArray1d& R1TensorVars,
-                                                                 sArray1d& R2TensorVars,
-                                                                 sArray1d& R2SymTensorVars ) const
+void EncapsulatedObjectManagerBase::GetVariableNamesFromDerived( array<string>& intVars,
+                                                                 array<string>& realVars,
+                                                                 array<string>& R1TensorVars,
+                                                                 array<string>& R2TensorVars,
+                                                                 array<string>& R2SymTensorVars ) const
 {
   const LeafClass& dthis = static_cast<const LeafClass&>(*this);
   if( dthis.m_parameterData.size() > 1 )
@@ -129,11 +125,11 @@ void EncapsulatedObjectManagerBase::GetVariableNamesFromDerived( sArray1d& intVa
 }
 
 template< typename LeafClass >
-void EncapsulatedObjectManagerBase::SerializeFromDerived( Array1dT<iArray1d*>& intVars,
-                                                          Array1dT<rArray1d*>& realVars,
-                                                          Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                                                          Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                                                          Array1dT<Array1dT<R2SymTensor>*>& R2SymVars ) const
+void EncapsulatedObjectManagerBase::SerializeFromDerived( array<array<integer>*>& intVars,
+                                                          array<array<real64>*>& realVars,
+                                                          array<array<R1Tensor>*>& R1Vars,
+                                                          array<array<R2Tensor>*>& R2Vars,
+                                                          array<array<R2SymTensor>*>& R2SymVars ) const
 {
   const LeafClass& dthis = static_cast<const LeafClass&>(*this);
 
@@ -160,15 +156,15 @@ void EncapsulatedObjectManagerBase::SerializeFromDerived( Array1dT<iArray1d*>& i
         ++istate;
       }
     }
-}
+  }
 }
 
 template< typename LeafClass >
-void EncapsulatedObjectManagerBase::DeserializeFromDerived( const Array1dT<iArray1d*>& intVars,
-                                                            const Array1dT<rArray1d*>& realVars,
-                                                            const Array1dT<Array1dT<R1Tensor>*>& R1Vars,
-                                                            const Array1dT<Array1dT<R2Tensor>*>& R2Vars,
-                                                            const Array1dT<Array1dT<R2SymTensor>*>& R2SymVars  )
+void EncapsulatedObjectManagerBase::DeserializeFromDerived( const array<array<integer>*>& intVars,
+                                                            const array<array<real64>*>& realVars,
+                                                            const array<array<R1Tensor>*>& R1Vars,
+                                                            const array<array<R2Tensor>*>& R2Vars,
+                                                            const array<array<R2SymTensor>*>& R2SymVars  )
 {
   LeafClass& dthis = static_cast<LeafClass&>(*this);
 
@@ -198,7 +194,6 @@ void EncapsulatedObjectManagerBase::DeserializeFromDerived( const Array1dT<iArra
   }
 
 }
-
 
 
 
@@ -240,7 +235,8 @@ unsigned int EncapsulatedObjectManagerBase::UnpackFromDerived( const T_indices& 
   {
     for( typename T_indices::const_iterator index=localIndices.begin() ; index!=localIndices.end() ; ++index )
     {
-//      unpackedSize += bufvector::Unpack( buffer, dthis.m_parameterData[*index] );
+//      unpackedSize += bufvector::Unpack( buffer, dthis.m_parameterData[*index]
+// );
     }
   }
   return unpackedSize;

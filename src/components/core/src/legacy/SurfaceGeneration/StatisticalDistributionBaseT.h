@@ -61,7 +61,8 @@ public:
 //
 //    //A&S formula 7.1.26
 //    const realT t = 1.0 / (1.0 + p * x);
-//    const realT y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * exp(-x * x);
+//    const realT y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t
+// * exp(-x * x);
 //    return sign * y; //std::erf(-x) = -std::erf(x)
 //  }
 
@@ -180,7 +181,8 @@ public:
 
   static inline realT FrequencyToNumber(const realT frequency)
   {
-    //floor operation on frequency + probability of one more given by the modulus
+    //floor operation on frequency + probability of one more given by the
+    // modulus
     return ((int) frequency) + (UniformSample(0.0, 1.0) < fmod(frequency, 1.0) ? 1 : 0);
   };
 
@@ -256,14 +258,14 @@ public:
   inline const realT* GetParameter(const StatisticalDistributionParameters type) const
   {
     return parameters[(int)type] < std::numeric_limits<realT>::max() ?
-        &parameters[(int)type] : 0;
+           &parameters[(int)type] : 0;
     //return stlMapLookupPointer( this->parameters, (int)type);
   }
 
   inline localIndex NumberOfParameters() const
   {
     int n = 0;
-    for(int i = 0; i < N_PARAMS; i++, n+= ((parameters[i] < std::numeric_limits<realT>::max()) ? 1 : 0)){}
+    for(int i = 0 ; i < N_PARAMS ; i++, n+= ((parameters[i] < std::numeric_limits<realT>::max()) ? 1 : 0)) {}
     return n;
     //return this->parameters.size();
   }
@@ -284,13 +286,15 @@ private:
   static inline realT
   WeibullShapeFunction(const realT shape, const realT* const params)
   {
-    //note: for Weibull, the scaling and shape parameters are related to the mean and standard deviation by the following:
+    //note: for Weibull, the scaling and shape parameters are related to the
+    // mean and standard deviation by the following:
     //mean = scaling * gamma(1+1/shape)
     //scaling = mean / gamma(1+1/shape)
     //stdev^2 = scaling * scaling * gamma(1+2/shape) - mean * mean
     //Therefore,
     //We need to iterate to evaluate gamma, so find the zero of ...
-    //mean * mean * gamma(1+2/shape) / (gamma(1+1/shape) * gamma(1+1/shape)) - mean*mean - stdev*stdev = 0
+    //mean * mean * gamma(1+2/shape) / (gamma(1+1/shape) * gamma(1+1/shape)) -
+    // mean*mean - stdev*stdev = 0
     //what should we use for an initial value of "shape"?
 
     const realT mean = params[0];
@@ -309,7 +313,8 @@ private:
   }
 
   /**
-   * @brief Scales an unscaled, normally distributed sample to the given mean and stdev
+   * @brief Scales an unscaled, normally distributed sample to the given mean
+   * and stdev
    * @author Scott Johnson
    * @param z Unscaled sample
    * @param mean Mean of the normal distribution
@@ -318,8 +323,8 @@ private:
    */
   static inline realT ScaleSample(const realT z, const realT mean, const realT stdev)
   {
-      realT x = stdev * z + mean;
-      return x;
+    realT x = stdev * z + mean;
+    return x;
   };
 
   /**
@@ -338,7 +343,7 @@ private:
       u = (float)rand()/(float)RAND_MAX;
       v = (float)rand()/(float)RAND_MAX;
     }
-    
+
     u = log(u);
     u *= -2.0;
     u = sqrt(u);
@@ -390,7 +395,7 @@ private:
       if (x > 0.0)
       {
         ga = 1.0; // use factorial
-        for (i = 2; i < x; i++)
+        for (i = 2 ; i < x ; i++)
         {
           ga *= i;
         }
@@ -405,7 +410,7 @@ private:
         z = fabs(x);
         m = (int) z;
         r = 1.0;
-        for (k = 1; k <= m; k++)
+        for (k = 1 ; k <= m ; k++)
         {
           r *= (z - k);
         }
@@ -414,7 +419,7 @@ private:
       else
         z = x;
       gr = g[24];
-      for (k = 23; k >= 0; k--)
+      for (k = 23 ; k >= 0 ; k--)
       {
         gr = gr * z + g[k];
       }

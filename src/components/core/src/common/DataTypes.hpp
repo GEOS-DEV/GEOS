@@ -23,8 +23,9 @@
 
 #include "Macros.hpp"
 
+#include "ManagedArray.hpp"
 
-#include "legacy/ArrayT/ArrayT.h"
+//#include "legacy/ArrayT/ArrayT.h"
 #include "math/TensorT/TensorT.h"
 
 #ifndef CONTAINERARRAY_RETURN_PTR
@@ -36,10 +37,10 @@ namespace geosx
 {
 
 // underlying types not for general use!!
-using int32 = std::int32_t;
-using int64 = std::int64_t;
-using uint32 = std::uint32_t;
-using uint64 = std::uint64_t;
+//using int32 = std::int32_t;
+//using int64 = std::int64_t;
+//using uint32 = std::uint32_t;
+//using uint64 = std::uint64_t;
 
 using integer     = std::int32_t;
 using localIndex  = std::int_fast32_t;
@@ -63,15 +64,6 @@ using c_ptr = T const *;
 using integer_ptr        = ptr<integer>;
 using integer_const_ptr  = c_ptr<integer>;
 
-//using uint32_ptr        = ptr<uint32>;
-//using uint32_const_ptr  = c_ptr<uint32>;
-//
-//using int64_ptr        = ptr<int64>;
-//using int64_const_ptr  = c_ptr<int64>;
-//
-//using uint64_ptr        = ptr<uint64>;
-//using uint64_const_ptr  = c_ptr<uint64>;
-
 using localIndex_ptr         = ptr<localIndex>;
 using localIndex_const_ptr   = c_ptr<localIndex>;
 
@@ -88,7 +80,9 @@ using realT    = double;
 
 template< typename T >
 //using array = std::vector<T>;
-using array = Array1dT<T>;
+//using array = array<T>;
+using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
+
 
 template< typename T >
 using set = std::set<T>;
@@ -106,15 +100,6 @@ using unordered_map = std::unordered_map<TKEY,TVAL>;
 
 using integer_array        = array<integer>;
 using integer_const_array  = array<integer const>;
-
-//using uint32_array        = array<uint32>;
-//using uint32_const_array  = array<uint32 const>;
-//
-//using int64_array        = array<int64>;
-//using int64_const_array  = array<int64 const>;
-//
-//using uint64_array        = array<uint64>;
-//using uint64_const_array  = array<uint64 const>;
 
 using real32_array        = array<real32>;
 using real32_const_array  = array<real32 const>;
@@ -136,15 +121,6 @@ using globalIndex_const_array  = array<globalIndex const>;
 using integer_set        = set<integer>;
 using integer_const_set  = set<integer const>;
 
-//using uint32_set        = set<uint32>;
-//using uint32_const_set  = set<uint32 const>;
-//
-//using int64_set        = set<int64>;
-//using int64_const_set  = set<int64 const>;
-//
-//using uint64_set        = set<uint64>;
-//using uint64_const_set  = set<uint64 const>;
-
 using real32_set        = set<real32>;
 using real32_const_set  = set<real32 const>;
 
@@ -163,20 +139,18 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 
 //***** BEGIN LEGACY TYPEDEFS *****
-using rArray1d = Array1dT<real64>;
-using iArray1d = Array1dT<integer>;
-using lArray1d = Array1dT<localIndex>;
-using gArray1d = Array1dT<globalIndex>;
-
-typedef Array1dT<std::string> sArray1d;
 
 typedef std::set<localIndex> lSet;
 typedef std::set<globalIndex> gSet;
 
 typedef int FieldKey;
 
-typedef Array2dT<localIndex> lArray2d;
-typedef Array1dT<std::pair<int,localIndex> > pArray1d;
+
+template< typename T >
+using Array2dT = multidimensionalArray::ManagedArray<T,2,localIndex>;
+
+typedef multidimensionalArray::ManagedArray<localIndex,2,localIndex> lArray2d;
+typedef array<std::pair<int,localIndex> > pArray1d;
 typedef std::set<std::pair<int,localIndex> > pSet;
 
 using r1_array = array<R1Tensor>;
@@ -184,7 +158,11 @@ using r2_array = array<R2Tensor>;
 using r2Sym_array = array<R2SymTensor>;
 
 //using mapPair = std::pair<integer, localIndex>;
-using mapPair_array = std::pair<integer_array, integer_array>;
+using mapPair_array = std::pair<localIndex_array, localIndex_array>;
+
+
+constexpr static auto GLOBALINDEX_MAX = std::numeric_limits<globalIndex>::max();
+
 //***** END LEGACY TYPEDEFS *****
 
 class rtTypes
@@ -305,16 +283,16 @@ public:
   // Matching regex for data types in xml
   class typeRegex
   {
-  private:
+private:
     std::string ru = "[0-9]*";
-    std::string ri = "[+-]?[0-9]*";    
+    std::string ri = "[+-]?[0-9]*";
     std::string rr = "[0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?";
     std::string rs = "[a-zA-Z0-9_,\\(\\)+-/\\*]*";
     std::string r1 = rr + ",? " + rr + ",? " + rr;
     std::string r2 = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
     std::string r2s = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
-    
-    std::unordered_map<std::string, std::string> regexMap = 
+
+    std::unordered_map<std::string, std::string> regexMap =
     {
       {"integer", ri},
       {"real32", rr},
@@ -335,7 +313,7 @@ public:
       {"mapPair_array", "((" + rs + ",? )*)?" + rs}
     };
 
-  public:
+public:
     std::unordered_map<std::string, std::string>::iterator begin(){return regexMap.begin();}
     std::unordered_map<std::string, std::string>::iterator end(){return regexMap.end();}
     std::unordered_map<std::string, std::string>::const_iterator begin() const {return regexMap.begin();}
@@ -412,7 +390,7 @@ public:
 
   template< typename LAMBDA >
   static auto ApplyArrayTypeLambda1( const TypeIDs type,
-                                         LAMBDA lambda )
+                                     LAMBDA lambda )
   {
     switch( type )
     {
@@ -469,7 +447,7 @@ public:
 
   template< typename LAMBDA >
   static auto ApplyArrayTypeLambda2( const TypeIDs type,
-                                         LAMBDA lambda )
+                                     LAMBDA lambda )
   {
     switch( type )
     {
@@ -524,7 +502,7 @@ public:
 
   template< typename LAMBDA >
   static auto ApplyTypeLambda1( const TypeIDs type,
-                               LAMBDA lambda )
+                                LAMBDA lambda )
   {
     switch( type )
     {
@@ -610,7 +588,7 @@ public:
     }
     case ( TypeIDs::mapPair_array_id ):
     {
-      return lambda( mapPair_array({1,1}) );
+      return lambda( mapPair_array() );
       break;
     }
     default:
@@ -624,7 +602,7 @@ public:
 
   template< typename LAMBDA >
   static auto ApplyTypeLambda2( const TypeIDs type,
-                               LAMBDA lambda )
+                                LAMBDA lambda )
   {
     switch( type )
     {
@@ -800,10 +778,6 @@ public:
 
 
 
-
-
-
-
   inline static void equate( R1Tensor & lhs, integer const component, real64 const & rhs )
   {
     lhs[component] = rhs;
@@ -867,7 +841,7 @@ public:
     template< typename TLHS, typename TRHS >
     inline static void f( TLHS & lhs, integer const component, TRHS const & rhs )
     {
-      lhs = rhs;
+      lhs = static_cast<TLHS>(rhs);
     }
 
   };

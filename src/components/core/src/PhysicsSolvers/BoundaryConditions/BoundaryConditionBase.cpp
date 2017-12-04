@@ -173,9 +173,10 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //  real64 rval = m_scale;
 //  if (!(m_functionName.empty()))
 //  {
-//    rArray1d t(1);
+//    array<real64> t(1);
 //    t[0] = time;
-//    real64 const tableval = TableManager::Instance().LookupTable<1>(m_functionName, t);
+//    real64 const tableval =
+// TableManager::Instance().LookupTable<1>(m_functionName, t);
 //    rval = m_scale * tableval;
 //  }
 ////  else if (!(m_spaceFunctionName.empty()))
@@ -185,17 +186,23 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //  return rval;
 //}
 //
-//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
-//                                                                real64 const time,
-//                                                                array<R1Tensor> const & X,
-//                                                                array<R1Tensor> & field )
+//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const &
+// set,
+//                                                                real64 const
+// time,
+//                                                                array<R1Tensor>
+// const & X,
+//                                                                array<R1Tensor>
+// & field )
 //{
 //
 //  integer const component = GetComponent();
-//  string const functionName = getData<string>(dataRepository::keys::functionName);
+//  string const functionName =
+// getData<string>(dataRepository::keys::functionName);
 //  NewFunctionManager * functionManager = NewFunctionManager::Instance();
 //
-//  FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+//  FunctionBase const * const function  =
+// functionManager->GetGroup<FunctionBase>(functionName);
 //
 //  if( function!=nullptr )
 //  {
@@ -214,23 +221,30 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //  }
 //}
 //
-//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
-//                                                                real64 const time,
-//                                                                ManagedGroup * dataGroup,
-//                                                                string const & fieldName ) const
+//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const &
+// set,
+//                                                                real64 const
+// time,
+//                                                                ManagedGroup *
+// dataGroup,
+//                                                                string const &
+// fieldName ) const
 //{
 //
 //  integer const component = GetComponent();
-//  string const functionName = getData<string>(dataRepository::keys::functionName);
+//  string const functionName =
+// getData<string>(dataRepository::keys::functionName);
 //  NewFunctionManager * functionManager = NewFunctionManager::Instance();
 //
 //  ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
 //  std::type_index typeIndex = std::type_index(vw->get_typeid());
 //
-//  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
+//  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type
+// ) -> void
 //  {
 //    using fieldType = decltype(type);
-//    ViewWrapper<fieldType> & view = dynamic_cast< ViewWrapper<fieldType> & >(*vw);
+//    ViewWrapper<fieldType> & view = dynamic_cast< ViewWrapper<fieldType> &
+// >(*vw);
 //    view_rtype<fieldType> field = view.data();
 //    if( functionName.empty() )
 //    {
@@ -241,7 +255,8 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //    }
 //    else
 //    {
-//      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+//      FunctionBase const * const function  =
+// functionManager->GetGroup<FunctionBase>(functionName);
 //      if( function!=nullptr)
 //      {
 //        if( function->isFunctionOfTime()==2 )
@@ -267,8 +282,6 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //    }
 //  });
 //}
-
-
 
 
 

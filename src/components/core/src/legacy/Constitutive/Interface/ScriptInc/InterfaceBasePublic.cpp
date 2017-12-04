@@ -9,9 +9,8 @@ InterfaceBase::Initialize( const localIndex index,
 
 //FUNCTION_BEGIN_PARSE
 virtual_void
-InterfaceBase::UpdateProperties(const localIndex , std::map<std::string, realT>&, std::map<std::string, realT>& )
-{
-}
+InterfaceBase::UpdateProperties(const localIndex, std::map<std::string, realT>&, std::map<std::string, realT>& )
+{}
 
 //FUNCTION_BEGIN_PARSE
 virtual_realT
@@ -27,8 +26,9 @@ InterfaceBase::SetPermeabilityTerm(const localIndex index)
   else
   {
     matState.kappa = matParams.kappa0 +
-        matParams.dkappadnFct * (isEqual(matParams.dkappadnExp, 1.0) ? matState.normalApproach : pow(matState.normalApproach, matParams.dkappadnExp)) +
-        matParams.dkappadsFct * (isEqual(matParams.dkappadsExp, 1.0) ? matState.xs : pow(matState.xs, matParams.dkappadsExp));
+                     matParams.dkappadnFct *
+                     (isEqual(matParams.dkappadnExp, 1.0) ? matState.normalApproach : pow(matState.normalApproach, matParams.dkappadnExp)) +
+                     matParams.dkappadsFct * (isEqual(matParams.dkappadsExp, 1.0) ? matState.xs : pow(matState.xs, matParams.dkappadsExp));
   }
   return matState.kappa;
 }
@@ -41,7 +41,7 @@ InterfaceBase::StiffnessProjected( const localIndex index )
   const InterfaceBaseParameterData& matParams = *this->ParameterData(index);
 
   const realT normalApproachEstimate = matState.normalApproach +
-      (matState.dxndt > 0 ? matState.dxndt * matState.dt : 0.0);
+                                       (matState.dxndt > 0 ? matState.dxndt * matState.dt : 0.0);
 
   return NormalStiffness(matParams, matState, normalApproachEstimate, false);
 }
@@ -53,7 +53,8 @@ InterfaceBase::StrainDrivenUpdate( const localIndex index )
   InterfaceBaseStateData& matState = *this->StateData(index, 0);
   const InterfaceBaseParameterData& matParams = *this->ParameterData(index);
 
-  //evolve the normal force ("stress" ... bad terminology, but I like the inheritance)
+  //evolve the normal force ("stress" ... bad terminology, but I like the
+  // inheritance)
   const realT stiffness = NormalStiffness(matParams, matState, matState.normalApproach, true);
 
   //evolve the friction
@@ -65,11 +66,13 @@ InterfaceBase::StrainDrivenUpdate( const localIndex index )
     matState.xs += matState.dxsdt * matState.dt;
   }
 
-  //determine whether strength exceeded and return to failure surface if necessary
+  //determine whether strength exceeded and return to failure surface if
+  // necessary
   ThresholdToFailureSurface(matParams, matState, matState.dxsdt * matState.dt);
 
   //update vector representation of shear stress
-  //NOTE: JointBaseStateData::UpdateOrientation sets the direction as -(shear slip direction)
+  //NOTE: JointBaseStateData::UpdateOrientation sets the direction as -(shear
+  // slip direction)
   matState.stressShearVector.Normalize();
   matState.stressShearVector *= matState.stressShear;
 

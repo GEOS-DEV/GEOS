@@ -13,22 +13,22 @@
 
 
 MeshGenerator::MeshGenerator():
-m_dim(0),
-m_min(),
-m_max()
+  m_dim(0),
+  m_min(),
+  m_max()
 {
 
 /*
-  for( int i=0 ; i<3 ; ++i )
-  {
+   for( int i=0 ; i<3 ; ++i )
+   {
     m_wExtensionMin[i] = 0;
     m_wExtensionMax[i] = 0;
     m_nExtensionLayersMin[i] = 0;
     m_nExtensionLayersMax[i] = 0;
     m_commonRatioMin[i] = 1.5;
     m_commonRatioMax[i] = 1.5;
-  }
-  */
+   }
+ */
   m_dim = 3;
 }
 
@@ -124,7 +124,7 @@ void MeshGenerator::ReadXML( TICPP::HierarchicalDataNode& hdn )
   }
 
 
-  for (localIndex i = 0; i < m_elementType.size(); ++i)
+  for (localIndex i = 0 ; i < m_elementType.size() ; ++i)
   {
     if (m_elementType[i] == "C3D8")
     {
@@ -196,12 +196,12 @@ void MeshGenerator::ReadXML( TICPP::HierarchicalDataNode& hdn )
       m_lastElemIndexForBlock[dir][block] = m_firstElemIndexForBlock[dir][block] + m_nElems[dir][block]-1;
     }
   }
-  
-  
+
+
   m_fPerturb = hdn.GetAttributeOrDefault<realT>("perturbationFactor", 0.0);
   m_randSeed = hdn.GetAttributeOrDefault<int>("perturbationSeed", time(NULL));
   srand(m_randSeed);
-  
+
   m_mapToRadial = hdn.GetAttributeOrDefault<int>("mapToRadial", 0);
 
   m_skewAngle = hdn.GetAttributeOrDefault<realT>("skewAngle", 0.0);
@@ -227,7 +227,7 @@ void MeshGenerator::GenerateElementRegions( PhysicalDomainT * domain )
 {
   lvector numElements;
 
-  for( sArray1d::size_type r=0 ; r<m_regionNames.size() ; ++r )
+  for( array<string>::size_type r=0 ; r<m_regionNames.size() ; ++r )
   {
     numElements.push_back( 0 );
   }
@@ -245,7 +245,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
                                   PhysicalDomainT * domain )
 {
   // special case
-  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1); 
+  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) && (partition.GetPartitions()[1]==1);
 
 
   // partition based on even spacing to get load balance
@@ -257,7 +257,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
   }
 
   // find elemCenters for even uniform element sizes
-  Array1dT<rArray1d> elemCenterCoords(3);
+  array<array<real64> > elemCenterCoords(3);
   for( int i=0 ; i<3 ; ++i )
   {
     m_numElemsTotal[i] = 0;
@@ -267,7 +267,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
     }
 
     elemCenterCoords[i].resize(m_numElemsTotal[i]);
-    rArray1d elemCenterCoordsLocal(m_numElemsTotal[i]);
+    array<real64> elemCenterCoordsLocal(m_numElemsTotal[i]);
     for( int k=0 ; k<m_numElemsTotal[i] ; ++k )
     {
       elemCenterCoordsLocal[k] = m_min[i] + ( m_max[i] - m_min[i] ) * (k+0.5) / m_numElemsTotal[i];
@@ -313,7 +313,8 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
 
 
-  // calculate number of elements in this partition from each region, and the total number of nodes
+  // calculate number of elements in this partition from each region, and the
+  // total number of nodes
 
 
   std::map< std::string, int > numElemsInRegions;
@@ -321,9 +322,8 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
 
 
-
-  iArray1d firstElemIndexForBlockInPartition[3];
-  iArray1d lastElemIndexForBlockInPartition[3];
+  array<integer> firstElemIndexForBlockInPartition[3];
+  array<integer> lastElemIndexForBlockInPartition[3];
 
   for( int dir=0 ; dir<3 ; ++dir )
   {
@@ -354,7 +354,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
 
   // TODO This needs to be rewritten for dimensions lower than 3.
-  sArray1d::const_iterator iterRegion=m_regionNames.begin();
+  array<string>::const_iterator iterRegion=m_regionNames.begin();
   for( unsigned int iblock=0 ; iblock<m_nElems[0].size() ; ++iblock )
   {
     for( unsigned int jblock=0 ; jblock<m_nElems[1].size() ; ++jblock )
@@ -401,16 +401,18 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
   localIndex numNodes = 1;
 
-  
+
 
 //  int numElemsInDir[3] = {1,1,1};
   int numNodesInDir[3] = {1,1,1};
 
   for( int i=0 ; i<m_dim ; ++i )
   {
-//    numElemsInDir[i] = lastElemIndexInPartition[i] - firstElemIndexInPartition[i] + 1;
+//    numElemsInDir[i] = lastElemIndexInPartition[i] -
+// firstElemIndexInPartition[i] + 1;
     numNodesInDir[i] = lastElemIndexInPartition[i] - firstElemIndexInPartition[i] + 2;
-    if(isRadialWithOneThetaPartition && i==1){
+    if(isRadialWithOneThetaPartition && i==1)
+    {
       numNodesInDir[1] -= 1;
     }
     numNodes *= numNodesInDir[i];
@@ -440,13 +442,14 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
             {
               index[1] = 0;
             }
-          }   
+          }
 
           domain->m_feNodeManager.m_localToGlobalMap[localNodeIndex] = NodeGlobalIndex( index );
 
           // cartesian-specific nodesets
-          if (m_mapToRadial == 0){
-              if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][0], m_min[0], 1e-10 ) )
+          if (m_mapToRadial == 0)
+          {
+            if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][0], m_min[0], 1e-10 ) )
             {
               domain->m_feNodeManager.m_Sets["xneg"].insert(localNodeIndex);
             }
@@ -463,10 +466,11 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
               domain->m_feNodeManager.m_Sets["ypos"].insert(localNodeIndex);
             }
           }
-          else{
+          else
+          {
             // radial-specific nodesets
-        	domain->m_feNodeManager.m_Sets["rin"];  // generate the empty sets
-        	domain->m_feNodeManager.m_Sets["rout"];
+            domain->m_feNodeManager.m_Sets["rin"]; // generate the empty sets
+            domain->m_feNodeManager.m_Sets["rout"];
             if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][0], m_min[0], 1e-10 ) )
             {
               domain->m_feNodeManager.m_Sets["rin"].insert(localNodeIndex);
@@ -476,8 +480,8 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
               domain->m_feNodeManager.m_Sets["rout"].insert(localNodeIndex);
             }
           }
-          
-          // general nodesets  
+
+          // general nodesets
           if( isEqual( (*domain->m_feNodeManager.m_refposition)[localNodeIndex][2], m_min[2], 1e-10 ) )
           {
             domain->m_feNodeManager.m_Sets["zneg"].insert(localNodeIndex);
@@ -487,7 +491,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
             domain->m_feNodeManager.m_Sets["zpos"].insert(localNodeIndex);
           }
           domain->m_feNodeManager.m_Sets["all"].insert(localNodeIndex);
-          
+
 
           ++localNodeIndex;
 
@@ -499,8 +503,8 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
   {
     lvector numElements;
-    sArray1d elementRegionNames;
-    sArray1d elementTypes;
+    array<string> elementRegionNames;
+    array<string> elementTypes;
     std::map<std::string,localIndex> localElemIndexInRegion;
 
     for( std::map< std::string, int >::iterator iterNumElemsInRegion=numElemsInRegions.begin() ;
@@ -545,8 +549,8 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
                                 k + firstElemIndexForBlockInPartition[2][kblock]};
 
                 const localIndex firstNodeIndex = numNodesInDir[1]*numNodesInDir[2]* ( index[0] - firstElemIndexInPartition[0] )
-                                                + numNodesInDir[2]* ( index[1] - firstElemIndexInPartition[1] )
-                                                + ( index[2] - firstElemIndexInPartition[2] ) ;
+                                                  + numNodesInDir[2]* ( index[1] - firstElemIndexInPartition[1] )
+                                                  + ( index[2] - firstElemIndexInPartition[2] );
                 int nodeOfBox[8];
 
 
@@ -588,31 +592,37 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
                   //            0                   1             |/____ x
 
                 }
-                // fix local connectivity for single theta (y) partition (radial meshes only)
-                if( isRadialWithOneThetaPartition ){ 
-                  if(j == numElemsInDirForRegion[1]-1 && jblock == m_nElems[1].size()-1 ){ // last set of elements
-                      index[1] = -1;
-                      const localIndex firstNodeIndexR = numNodesInDir[1]*numNodesInDir[2]* ( index[0] - firstElemIndexInPartition[0] )
-                                                        + numNodesInDir[2]* ( index[1] - firstElemIndexInPartition[1] )
-                                                        + ( index[2] - firstElemIndexInPartition[2] ) ;
-                      nodeOfBox[2] = numNodesInDir[1]*numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR;
-                      nodeOfBox[3] = numNodesInDir[2] + firstNodeIndexR;
-                      nodeOfBox[6] = numNodesInDir[1]*numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR+1;
-                      nodeOfBox[7] = numNodesInDir[2] + firstNodeIndexR+1;
-                  }     
+                // fix local connectivity for single theta (y) partition (radial
+                // meshes only)
+                if( isRadialWithOneThetaPartition )
+                {
+                  if(j == numElemsInDirForRegion[1]-1 && jblock == m_nElems[1].size()-1 )  // last
+                                                                                           // set
+                                                                                           // of
+                                                                                           // elements
+                  {
+                    index[1] = -1;
+                    const localIndex firstNodeIndexR = numNodesInDir[1]*numNodesInDir[2]* ( index[0] - firstElemIndexInPartition[0] )
+                                                       + numNodesInDir[2]* ( index[1] - firstElemIndexInPartition[1] )
+                                                       + ( index[2] - firstElemIndexInPartition[2] );
+                    nodeOfBox[2] = numNodesInDir[1]*numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR;
+                    nodeOfBox[3] = numNodesInDir[2] + firstNodeIndexR;
+                    nodeOfBox[6] = numNodesInDir[1]*numNodesInDir[2] + numNodesInDir[2] + firstNodeIndexR+1;
+                    nodeOfBox[7] = numNodesInDir[2] + firstNodeIndexR+1;
+                  }
                 }
 
 
-                for ( int iEle=0; iEle<m_numElePerBox[iR]; ++iEle)
+                for ( int iEle=0 ; iEle<m_numElePerBox[iR] ; ++iEle)
                 {
                   localIndex& localElemIndex = localElemIndexInRegion[*iterRegion];
                   elemRegion.m_localToGlobalMap[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
 
-                  iArray1d nodeIDInBox(elemRegion.m_numNodesPerElem);
+                  array<integer> nodeIDInBox(elemRegion.m_numNodesPerElem);
 
                   GetElemToNodesRelationInBox ( m_elementType[iR], index, iEle, nodeIDInBox.data(), elemRegion.m_numNodesPerElem);
 
-                  for ( localIndex iN = 0; iN < elemRegion.m_numNodesPerElem; ++iN)
+                  for ( localIndex iN = 0 ; iN < elemRegion.m_numNodesPerElem ; ++iN)
                   {
                     elemRegion.m_toNodesRelation[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
@@ -639,16 +649,16 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
       localIndex iBlockMin(0), iBlockMax(0);
       while ( (xMinByNumElems < m_firstElemIndexForBlock[i][iBlockMin] * 1.0 || xMinByNumElems > m_lastElemIndexForBlock[i][iBlockMin] * 1.0 +1.0)
-          && iBlockMin < m_nElems[i].size() - 1)
+              && iBlockMin < m_nElems[i].size() - 1)
       {
         ++iBlockMin;
       }
       while ( (xMaxByNumElems < m_firstElemIndexForBlock[i][iBlockMax] * 1.0 || xMaxByNumElems > m_lastElemIndexForBlock[i][iBlockMax] * 1.0 +1.0)
-          && iBlockMax < m_nElems[i].size() - 1)
+              && iBlockMax < m_nElems[i].size() - 1)
       {
         ++iBlockMax;
       }
-       //sanity check
+      //sanity check
 
 
       if (xMinByNumElems < m_firstElemIndexForBlock[i][iBlockMin] * 1.0 ||
@@ -664,8 +674,10 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
         std::cout << "WARNING: Had some trouble in correcting partition geometric boundaries.  If this affects the results, contact a developer" << std::endl;
       }
 
-      pMin[i] = m_vertices[i][iBlockMin] + (xMinByNumElems - m_firstElemIndexForBlock[i][iBlockMin]) * (m_vertices[i][iBlockMin+1] - m_vertices[i][iBlockMin]) / m_nElems[i][iBlockMin];
-      pMax[i] = m_vertices[i][iBlockMax] + (xMaxByNumElems - m_firstElemIndexForBlock[i][iBlockMax]) * (m_vertices[i][iBlockMax+1] - m_vertices[i][iBlockMax]) / m_nElems[i][iBlockMax];
+      pMin[i] = m_vertices[i][iBlockMin] + (xMinByNumElems - m_firstElemIndexForBlock[i][iBlockMin]) * (m_vertices[i][iBlockMin+1] - m_vertices[i][iBlockMin]) /
+                m_nElems[i][iBlockMin];
+      pMax[i] = m_vertices[i][iBlockMax] + (xMaxByNumElems - m_firstElemIndexForBlock[i][iBlockMax]) * (m_vertices[i][iBlockMax+1] - m_vertices[i][iBlockMax]) /
+                m_nElems[i][iBlockMax];
     }
 
     partition.SetPartitionGeometricalBoundary(pMin, pMax);
@@ -674,40 +686,57 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
 
   /*
-  {// Move nodes in the extension layers.
+     {// Move nodes in the extension layers.
 
-    for (localIndex iN = 0; iN != domain->m_feNodeManager.DataLengths(); ++iN)
-    {
+     for (localIndex iN = 0; iN != domain->m_feNodeManager.DataLengths(); ++iN)
+     {
       for (int i=0; i<m_dim; ++i)
       {
         if ( (*domain->m_feNodeManager.m_refposition)[iN][i] < m_min[i])
         {
-          int eLayer = (int) ((m_min[i] -(*domain->m_feNodeManager.m_refposition)[iN][i]) / ((m_max[i] - m_min[i]) / m_numElems[i]) + 0.5);
-          (*domain->m_feNodeManager.m_refposition)[iN][i] = m_min[i] - ((m_max[i] - m_min[i]) / m_numElems[i]) * m_commonRatioMin[i] * (1- pow(m_commonRatioMin[i], eLayer)) / (1 - m_commonRatioMin[i]);
+          int eLayer = (int) ((m_min[i]
+             -(*domain->m_feNodeManager.m_refposition)[iN][i]) / ((m_max[i] -
+             m_min[i]) / m_numElems[i]) + 0.5);
+          (*domain->m_feNodeManager.m_refposition)[iN][i] = m_min[i] -
+             ((m_max[i] - m_min[i]) / m_numElems[i]) * m_commonRatioMin[i] * (1-
+             pow(m_commonRatioMin[i], eLayer)) / (1 - m_commonRatioMin[i]);
         }
         else if ((*domain->m_feNodeManager.m_refposition)[iN][i] > m_max[i])
         {
-          int eLayer = (int) (((*domain->m_feNodeManager.m_refposition)[iN][i] - m_max[i] ) / ((m_max[i] - m_min[i]) / m_numElems[i]) + 0.5);
-          (*domain->m_feNodeManager.m_refposition)[iN][i] = m_max[i] + ((m_max[i] - m_min[i]) / m_numElems[i]) * m_commonRatioMax[i] * (1- pow(m_commonRatioMax[i], eLayer)) / (1 - m_commonRatioMax[i]);
+          int eLayer = (int) (((*domain->m_feNodeManager.m_refposition)[iN][i] -
+             m_max[i] ) / ((m_max[i] - m_min[i]) / m_numElems[i]) + 0.5);
+          (*domain->m_feNodeManager.m_refposition)[iN][i] = m_max[i] +
+             ((m_max[i] - m_min[i]) / m_numElems[i]) * m_commonRatioMax[i] * (1-
+             pow(m_commonRatioMax[i], eLayer)) / (1 - m_commonRatioMax[i]);
         }
 
       }
-    }
-  }
-*/
+     }
+     }
+   */
 
 
   // Node perturbation
   if (m_fPerturb > 0)
   {
-    for (localIndex iN = 0; iN != domain->m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN = 0 ; iN != domain->m_feNodeManager.DataLengths() ; ++iN)
     {
 
-      for (int i=0; i<m_dim; ++i)
+      for (int i=0 ; i<m_dim ; ++i)
       {
         if ( (*domain->m_feNodeManager.m_refposition)[iN][i] > m_min[i] && (*domain->m_feNodeManager.m_refposition)[iN][i] < m_max[i] )
         {
-          srand(domain->m_feNodeManager.m_localToGlobalMap[iN] + m_randSeed + i); // This ensures that the perturbation pattern is unaffected by domain partitioning.
+          srand(domain->m_feNodeManager.m_localToGlobalMap[iN] + m_randSeed + i); // This
+                                                                                  // ensures
+                                                                                  // that
+                                                                                  // the
+                                                                                  // perturbation
+                                                                                  // pattern
+                                                                                  // is
+                                                                                  // unaffected
+                                                                                  // by
+                                                                                  // domain
+                                                                                  // partitioning.
           (*domain->m_feNodeManager.m_refposition)[iN][i] += ((m_max[i] - m_min[i]) / m_numElemsTotal[i]) * ( (rand()*1.0) / RAND_MAX - 0.5) * 2 * m_fPerturb;
         }
       }
@@ -716,7 +745,7 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
 
   if (std::fabs(m_skewAngle) > 0.0)
   {
-    for (localIndex iN = 0; iN != domain->m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN = 0 ; iN != domain->m_feNodeManager.DataLengths() ; ++iN)
     {
       (*domain->m_feNodeManager.m_refposition)[iN][0] -= ((*domain->m_feNodeManager.m_refposition)[iN][1] - m_skewCenter[1]) * std::tan(m_skewAngle);
     }
@@ -725,13 +754,13 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
   if (m_mapToRadial > 0)
   {
     // Map to radial mesh
-    for (localIndex iN = 0; iN != domain->m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN = 0 ; iN != domain->m_feNodeManager.DataLengths() ; ++iN)
     {
       meshTheta = (*domain->m_feNodeManager.m_refposition)[iN][1]*3.141592654/180.0;
       meshAxis = round(meshTheta*2.0/3.141592654);
       meshPhi = fabs(meshTheta - meshAxis*3.141592654/2.0);
       meshRout = m_max[0]/cos(meshPhi);
-      
+
       if (m_mapToRadial > 1)
       {
         meshRact = ((meshRout - m_min[0])/(m_max[0] - m_min[0]))*((*domain->m_feNodeManager.m_refposition)[iN][0]-m_min[0]) + m_min[0];
@@ -740,12 +769,13 @@ void MeshGenerator::GenerateMesh( SpatialPartition& partition,
       {
         meshRact = (*domain->m_feNodeManager.m_refposition)[iN][0];
       }
-      
+
       (*domain->m_feNodeManager.m_refposition)[iN][0] = meshRact * cos(meshTheta);
       (*domain->m_feNodeManager.m_refposition)[iN][1] = meshRact * sin(meshTheta);
 
       // add mapped values to nodesets
-      if (m_mapToRadial > 1){
+      if (m_mapToRadial > 1)
+      {
         if( isEqual( (*domain->m_feNodeManager.m_refposition)[iN][0], -1*m_max[0], 1e-6 ) )
         {
           domain->m_feNodeManager.m_Sets["xneg"].insert(iN);
@@ -985,14 +1015,30 @@ void MeshGenerator::GetElemToNodesRelationInBox ( const std::string& elementType
   {
     int mapBoxTet[8][6][4] =
     {
-     { { 0, 3, 7, 6 }, { 0, 7, 4, 6 }, { 0, 5, 1, 6 }, { 0, 4, 5, 6 }, { 0, 1, 2, 6 }, { 0, 2, 3, 6 } },
-     { { 1, 5, 6, 7 }, { 1, 6, 2, 7 }, { 0, 4, 1, 7 }, { 1, 4, 5, 7 }, { 0, 1, 3, 7 }, { 1, 2, 3, 7 } },
-     { { 0, 3, 4, 2 }, { 3, 7, 4, 2 }, { 0, 4, 1, 2 }, { 1, 4, 5, 2 }, { 4, 7, 6, 2 }, { 4, 6, 5, 2 } },
-     { { 1, 5, 2, 3 }, { 2, 5, 6, 3 }, { 0, 5, 1, 3 }, { 0, 4, 5, 3 }, { 4, 7, 5, 3 }, { 5, 7, 6, 3 } },
-     { { 0, 3, 4, 5 }, { 3, 7, 4, 5 }, { 3, 6, 7, 5 }, { 3, 2, 6, 5 }, { 3, 0, 1, 5 }, { 1, 2, 3, 5 } },
-     { { 1, 5, 2, 4 }, { 2, 5, 6, 4 }, { 2, 6, 7, 4 }, { 2, 7, 3, 4 }, { 0, 2, 3, 4 }, { 0, 1, 2, 4 } },
-     { { 0, 7, 4, 1 }, { 0, 3, 7, 1 }, { 2, 7, 3, 1 }, { 2, 6, 7, 1 }, { 4, 7, 5, 1 }, { 5, 7, 6, 1 } },
-     { { 1, 5, 6, 0 }, { 1, 6, 2, 0 }, { 2, 6, 3, 0 }, { 3, 6, 7, 0 }, { 4, 6, 5, 0 }, { 4, 7, 6, 0 } }
+      {
+        { 0, 3, 7, 6 }, { 0, 7, 4, 6 }, { 0, 5, 1, 6 }, { 0, 4, 5, 6 }, { 0, 1, 2, 6 }, { 0, 2, 3, 6 }
+      },
+      {
+        { 1, 5, 6, 7 }, { 1, 6, 2, 7 }, { 0, 4, 1, 7 }, { 1, 4, 5, 7 }, { 0, 1, 3, 7 }, { 1, 2, 3, 7 }
+      },
+      {
+        { 0, 3, 4, 2 }, { 3, 7, 4, 2 }, { 0, 4, 1, 2 }, { 1, 4, 5, 2 }, { 4, 7, 6, 2 }, { 4, 6, 5, 2 }
+      },
+      {
+        { 1, 5, 2, 3 }, { 2, 5, 6, 3 }, { 0, 5, 1, 3 }, { 0, 4, 5, 3 }, { 4, 7, 5, 3 }, { 5, 7, 6, 3 }
+      },
+      {
+        { 0, 3, 4, 5 }, { 3, 7, 4, 5 }, { 3, 6, 7, 5 }, { 3, 2, 6, 5 }, { 3, 0, 1, 5 }, { 1, 2, 3, 5 }
+      },
+      {
+        { 1, 5, 2, 4 }, { 2, 5, 6, 4 }, { 2, 6, 7, 4 }, { 2, 7, 3, 4 }, { 0, 2, 3, 4 }, { 0, 1, 2, 4 }
+      },
+      {
+        { 0, 7, 4, 1 }, { 0, 3, 7, 1 }, { 2, 7, 3, 1 }, { 2, 6, 7, 1 }, { 4, 7, 5, 1 }, { 5, 7, 6, 1 }
+      },
+      {
+        { 1, 5, 6, 0 }, { 1, 6, 2, 0 }, { 2, 6, 3, 0 }, { 3, 6, 7, 0 }, { 4, 6, 5, 0 }, { 4, 7, 6, 0 }
+      }
     };
 
 
@@ -1007,7 +1053,7 @@ void MeshGenerator::GetElemToNodesRelationInBox ( const std::string& elementType
     mapBoxType[1][1][1]=7;
 
     int boxType = mapBoxType[index[0]%2][index[1]%2][index[2]%2];
-    for (int i=0; i<size; ++i)
+    for (int i=0 ; i<size ; ++i)
     {
       nodeIDInBox[i] = mapBoxTet[boxType][iEle][i];
     }
@@ -1023,7 +1069,7 @@ void MeshGenerator::RemapMesh ( PhysicalDomainT * domain )
   {
     const Table3D* tableDx = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDx);
 
-    for (localIndex iN=0; iN!=domain->m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN=0 ; iN!=domain->m_feNodeManager.DataLengths() ; ++iN)
     {
       realT dx=tableDx->Lookup((*domain->m_feNodeManager.m_refposition)[iN]);
       (*domain->m_feNodeManager.m_refposition)[iN][0] += dx;
@@ -1034,7 +1080,7 @@ void MeshGenerator::RemapMesh ( PhysicalDomainT * domain )
   {
     const Table3D* tableDy = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDy);
 
-    for (localIndex iN=0; iN!=domain->m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN=0 ; iN!=domain->m_feNodeManager.DataLengths() ; ++iN)
     {
       realT dy=tableDy->Lookup((*domain->m_feNodeManager.m_refposition)[iN]);
       (*domain->m_feNodeManager.m_refposition)[iN][1] += dy;
@@ -1045,7 +1091,7 @@ void MeshGenerator::RemapMesh ( PhysicalDomainT * domain )
   {
     const Table3D* tableDz = stlMapLookupPointer(TableManager::Instance().Tables<3>(), m_meshDz);
 
-    for (localIndex iN=0; iN!=domain->m_feNodeManager.DataLengths(); ++iN)
+    for (localIndex iN=0 ; iN!=domain->m_feNodeManager.DataLengths() ; ++iN)
     {
       realT dz=tableDz->Lookup((*domain->m_feNodeManager.m_refposition)[iN]);
       (*domain->m_feNodeManager.m_refposition)[iN][2] += dz;

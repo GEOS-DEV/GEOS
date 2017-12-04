@@ -59,6 +59,11 @@ string(REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
 set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR2}" )
 message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
+
+
+set(UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" FORCE )
+
+
 ################################
 # HDF5
 ################################
@@ -354,6 +359,24 @@ set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
 include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
 
 blt_register_library( NAME trilinos
+                      INCLUDES ${Trilinos_INCLUDE_DIRS} 
+                      LIBRARIES ${Trilinos_LIBRARIES}
+                      TREAT_INCLUDES_AS_SYSTEM ON )
+
+set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
+
+#endif()
+
+################################
+# HYPRE
+################################
+#if( ENABLE_HYPRE )
+message( INFO ": setting up HYPRE" )
+
+set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre)
+include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+
+blt_register_library( NAME hypre
                       INCLUDES ${Trilinos_INCLUDE_DIRS} 
                       LIBRARIES ${Trilinos_LIBRARIES}
                       TREAT_INCLUDES_AS_SYSTEM ON )

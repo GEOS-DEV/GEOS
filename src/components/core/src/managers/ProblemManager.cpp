@@ -33,7 +33,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 ProblemManager::ProblemManager( const std::string& name,
-                                ManagedGroup * const parent ) :
+                                ManagedGroup * const parent ):
   ObjectManagerBase(name, parent),
   m_physicsSolverManager(nullptr),
   m_eventManager(nullptr),
@@ -60,8 +60,7 @@ ProblemManager::ProblemManager( const std::string& name,
 
 
 ProblemManager::~ProblemManager()
-{
-}
+{}
 
 
 void ProblemManager::CreateChild( string const & childKey, string const & childName )
@@ -84,17 +83,17 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
   commandDocNode->setVerbosity(2);
 
   commandDocNode->AllocateChildNode( viewKeys.inputFileName.Key(),
-                                    viewKeys.inputFileName.Key(),
-                                    -1,
-                                    "string",
-                                    "",
-                                    "Name of the input xml file.",
-                                    "Name of the input xml file.",
-                                    "input.xml",
-                                    "CommandLine",
-                                    0,
-                                    0,
-                                    0 );
+                                     viewKeys.inputFileName.Key(),
+                                     -1,
+                                     "string",
+                                     "",
+                                     "Name of the input xml file.",
+                                     "Name of the input xml file.",
+                                     "input.xml",
+                                     "CommandLine",
+                                     0,
+                                     0,
+                                     0 );
 
   commandDocNode->AllocateChildNode( viewKeys.restartFileName.Key(),
                                      viewKeys.restartFileName.Key(),
@@ -211,7 +210,7 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
 {
   dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->RegisterDocumentationNodes();
-  
+
   ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
   ViewWrapper<std::string>::rtype  restartFileName = commandLine->getData<std::string>(viewKeys.restartFileName);
   integer&        beginFromRestart = *(commandLine->getData<integer>(viewKeys.beginFromRestart));
@@ -225,7 +224,7 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
 
   // Set the options structs and parse
   enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL};
-  const option::Descriptor usage[] = 
+  const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
     {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
@@ -239,14 +238,14 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
     { 0, 0, 0, 0, 0, 0}
   };
 
-  argc -= (argc>0); 
+  argc -= (argc>0);
   argv += (argc>0);
   option::Stats stats(usage, argc, argv);
   option::Option options[100];//stats.options_max];
   option::Option buffer[100];//stats.buffer_max];
   option::Parser parse(usage, argc, argv, options, buffer);
 
-  
+
   // Handle special cases
   if (parse.error())
   {
@@ -268,42 +267,42 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
 
 
   // Iterate over the remaining inputs
-  for (int ii=0; ii<parse.optionsCount(); ++ii)
+  for (int ii=0 ; ii<parse.optionsCount() ; ++ii)
   {
     option::Option& opt = buffer[ii];
     switch (opt.index())
     {
-      case UNKNOWN:
-        // This should have thrown an error
-        break;
-      case HELP:
-        // This is already handled above
-        break;
-      case INPUT:
-        inputFileName = opt.arg;
-        break;
-      case RESTART:
-        restartFileName = opt.arg;
-        beginFromRestart = 1;
-        break;
-      case XPAR:
-        xPartitionsOverride = std::stoi(opt.arg);
-        overridePartitionNumbers = 1;
-        break;
-      case YPAR:
-        yPartitionsOverride = std::stoi(opt.arg);
-        overridePartitionNumbers = 1;
-        break;
-      case ZPAR:
-        zPartitionsOverride = std::stoi(opt.arg);
-        overridePartitionNumbers = 1;
-        break;
-      case SCHEMA:
-        schemaName = opt.arg;
-        break;
-      case SCHEMALEVEL:
-        schemaLevel = std::stoi(opt.arg);
-        break;
+    case UNKNOWN:
+      // This should have thrown an error
+      break;
+    case HELP:
+      // This is already handled above
+      break;
+    case INPUT:
+      inputFileName = opt.arg;
+      break;
+    case RESTART:
+      restartFileName = opt.arg;
+      beginFromRestart = 1;
+      break;
+    case XPAR:
+      xPartitionsOverride = std::stoi(opt.arg);
+      overridePartitionNumbers = 1;
+      break;
+    case YPAR:
+      yPartitionsOverride = std::stoi(opt.arg);
+      overridePartitionNumbers = 1;
+      break;
+    case ZPAR:
+      zPartitionsOverride = std::stoi(opt.arg);
+      overridePartitionNumbers = 1;
+      break;
+    case SCHEMA:
+      schemaName = opt.arg;
+      break;
+    case SCHEMALEVEL:
+      schemaLevel = std::stoi(opt.arg);
+      break;
     }
   }
 }
@@ -370,7 +369,7 @@ void ProblemManager::ParseInputFile()
   PyObject *pKeywordDict = Py_BuildValue("{s:s}", "schema", getenv("GPAC_SCHEMA"));
   PyObject *pPreprocessorResult = PyObject_Call(pPreprocessorFunction, pPreprocessorInputStr, pKeywordDict);
   inputFileName = PyString_AsString(pPreprocessorResult);
-  
+
   // Cleanup
   Py_DECREF(pPreprocessorResult);
   Py_DECREF(pKeywordDict);
@@ -450,7 +449,6 @@ void ProblemManager::InitializationOrder( string_array & order )
 
 
 
-
 void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 {
   DomainPartition * domain  = getDomainPartition();
@@ -521,7 +519,8 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 void ProblemManager::RunSimulation()
 {
 #ifdef USE_CALIPER
-//  cali::Annotation runSimulationAnnotation = cali::Annotation("RunSimulation").begin();
+//  cali::Annotation runSimulationAnnotation =
+// cali::Annotation("RunSimulation").begin();
 #endif
   DomainPartition * domain  = getDomainPartition();
 
@@ -531,47 +530,49 @@ void ProblemManager::RunSimulation()
 
 
 
-//  cxx_utilities::DocumentationNode * const eventDocNode = m_eventManager->getDocumentationNode();
+//  cxx_utilities::DocumentationNode * const eventDocNode =
+// m_eventManager->getDocumentationNode();
 //  for( auto const & subEventDocNode : eventDocNode->m_child )
 //  {
-//    if (strcmp(subEventDocNode.second.getDataType().c_str(), "ManagedGroup") == 0)
+//    if (strcmp(subEventDocNode.second.getDataType().c_str(), "ManagedGroup")
+// == 0)
 
   for( auto& application : this->m_eventManager->GetSubGroups() )
   {
 
-      dataRepository::ManagedGroup& currentApplication = *(application.second);
+    dataRepository::ManagedGroup& currentApplication = *(application.second);
 
-      string_array const & solverList = currentApplication.getReference<string_array>(keys::solvers);
-      real64& appDt = *(currentApplication.getData<real64>(keys::dt));
-      real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
+    string_array const & solverList = currentApplication.getReference<string_array>(keys::solvers);
+    real64& appDt = *(currentApplication.getData<real64>(keys::dt));
+    real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
 
 
-      integer lockDt = (appDt > 0.0);
-      if (lockDt)
+    integer lockDt = (appDt > 0.0);
+    if (lockDt)
+    {
+      dt = appDt;
+    }
+
+    while( time < endTime )
+    {
+      std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+      WriteSilo( cycle, time );
+      real64 nextDt = std::numeric_limits<real64>::max();
+
+      for ( auto jj=0 ; jj<solverList.size() ; ++jj)
       {
-        dt = appDt;
+        SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
+        currentSolver->TimeStep( time, dt, cycle, domain );
+        nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
       }
 
-      while( time < endTime )
-      {
-        std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-        WriteSilo( cycle, time );
-        real64 nextDt = std::numeric_limits<real64>::max();
-
-        for ( auto jj=0; jj<solverList.size(); ++jj)
-        {
-          SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
-          currentSolver->TimeStep( time, dt, cycle, domain );
-          nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
-        }
-
-        // Update time, cycle, timestep
-        time += dt;
-        cycle ++;
-        dt = (lockDt)? dt : nextDt;
-        dt = (endTime - time < dt)? endTime-time : dt;
-      } 
+      // Update time, cycle, timestep
+      time += dt;
+      cycle++;
+      dt = (lockDt) ? dt : nextDt;
+      dt = (endTime - time < dt) ? endTime-time : dt;
     }
+  }
 //  }
 
 //  WriteSilo( cycle, time );

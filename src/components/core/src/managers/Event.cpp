@@ -12,12 +12,9 @@ namespace geosx
 
 Event::Event( string & name, ManagedGroup * parent ):
   ManagedGroup(name,parent)
-{
-
-}
+{}
 
 Event::~Event()
-{
-}
+{}
 
 } /* namespace geosx */

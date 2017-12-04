@@ -15,7 +15,7 @@ template< typename T, typename T_PTR=T*, typename KEY_TYPE=std::string, typename
 class MappedVector
 {
 public:
-  using key_type      = KEY_TYPE ;
+  using key_type      = KEY_TYPE;
   using mapped_type   = T_PTR;
 
   using container              = std::vector<T_PTR>;
@@ -38,7 +38,7 @@ public:
 
   MappedVector() = default;
   ~MappedVector() = default;
-  MappedVector( MappedVector const & source ) = default ;
+  MappedVector( MappedVector const & source ) = default;
   MappedVector & operator=( MappedVector const & source ) = default;
 
   MappedVector( MappedVector && source ) = default;
@@ -61,7 +61,7 @@ public:
    */
   T const * operator[]( INDEX_TYPE index ) const
   {
-    return ( index>-1 && index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>(&(*m_values[index])) : nullptr ;
+    return ( index>-1 && index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>(&(*m_values[index])) : nullptr;
   }
 
   /**
@@ -201,7 +201,7 @@ private:
 };
 
 template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE >
-T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName , T_PTR source )
+T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName, T_PTR source )
 {
   typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
 
@@ -237,7 +237,7 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName 
     }
   }
 
-return m_values[key].get();
+  return m_values[key].get();
 }
 
 #endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPVECTORCONTAINER_HPP_ */

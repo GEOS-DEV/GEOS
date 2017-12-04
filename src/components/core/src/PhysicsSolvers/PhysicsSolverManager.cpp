@@ -19,12 +19,10 @@ using namespace cxx_utilities;
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
                                             ManagedGroup * const parent ):
   ManagedGroup( name, parent)
-{
-}
+{}
 
 PhysicsSolverManager::~PhysicsSolverManager()
-{
-}
+{}
 
 
 void PhysicsSolverManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )

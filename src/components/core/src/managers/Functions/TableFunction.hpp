@@ -18,7 +18,7 @@ class TableFunction : public FunctionBase
 {
 public:
   TableFunction( const std::string& name,
-                    dataRepository::ManagedGroup * const parent );
+                 dataRepository::ManagedGroup * const parent );
 
   virtual ~TableFunction();
   static string CatalogName() { return "TableFunction"; }
@@ -35,12 +35,12 @@ public:
   virtual real64 Evaluate( real64 const * const input) const override final;
 
 private:
-  Array1dT<real64_array> m_coordinates;
+  array<real64_array> m_coordinates;
   real64_array m_values;
   static localIndex constexpr m_maxDimensions = 4;
   localIndex m_dimensions;
-  lArray1d m_size;
-  lArray1d m_indexIncrement;
+  localIndex_array m_size;
+  localIndex_array m_indexIncrement;
 
   // m_corners should be of size m_maxDimensions x (2^m_maxDimensions)
   localIndex m_corners[m_maxDimensions][16];

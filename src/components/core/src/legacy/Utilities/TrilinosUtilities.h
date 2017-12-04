@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef TRILINOSUTILITIES_H_
@@ -56,7 +74,7 @@
 #include "Epetra_FEVector.h"
 #include "Epetra_LinearProblem.h"
 
-#include "EpetraExt_RowMatrixOut.h"	
+#include "EpetraExt_RowMatrixOut.h"
 #include "EpetraExt_MultiVectorOut.h"
 
 #include "AztecOO.h"
@@ -69,7 +87,7 @@
 #include "Common/Common.h"
 #include "IO/ticpp/TinyXMLParser.h"
 #include "RCVSparse.h"
-#include "ArrayT/Array1dT.h"
+#include "ArrayT/array.h"
 #include "ArrayT/Array2dT.h"
 
 #include <string>
@@ -81,37 +99,37 @@
 #include "NOX_Epetra_Group.H"
 
 /// Convert row column value format to epetra FECrs Matrix
-void RCVToEpetraFECrsMatrix(const Array1dT<rcv>& K, Epetra_FECrsMatrix& A);
+void RCVToEpetraFECrsMatrix(const array<rcv>& K, Epetra_FECrsMatrix& A);
 
 /// Convert array to epetra finite element vector
-void ArrayToEpetraFEVector(const rArray1d& a, Epetra_FEVector& v);
+void ArrayToEpetraFEVector(const array<real64>& a, Epetra_FEVector& v);
 
-/// Convert epetra finite element vector to real array. 	
-void EpetraFEVectorToArray(Epetra_FEVector& v, rArray1d& a);
+/// Convert epetra finite element vector to real array.
+void EpetraFEVectorToArray(Epetra_FEVector& v, array<real64>& a);
 
-/// 
+///
 void WriteEpetraFECrsMatrixToMatlabFile(std::string filename, Epetra_FECrsMatrix& A);
-/// 
+///
 void WriteEpetraFEVectorToMatlabFile(const std::string& filename, const Epetra_FEVector& X,const std::string&  descr1="", const std::string& descr2="");
 
 /// Conjugate gradient linear solver
-void LinSolve_CG(const Array1dT<rcv>& A,
-                 rArray1d& x,
-                 const rArray1d& b, 
+void LinSolve_CG(const array<rcv>& A,
+                 array<real64>& x,
+                 const array<real64>& b,
                  const Epetra_Comm* commPtr,
-                 realT tol=1e-10, int maxNumIters=1000, 
+                 realT tol=1e-10, int maxNumIters=1000,
                  bool verboseFlag=false, bool doDataWrite=false);
 
-/// Biconjugate gradient linear solver      
-void LinSolve_BICGSTAB(const Array1dT<rcv>& A,
-                   rArray1d& x,
-                   const rArray1d& b, 
-                   const Epetra_Comm* commPtr,
-                   realT tol=1e-10, int maxNumIters=1000, 
-                   bool verboseFlag=false, bool doDataWrite=false);
+/// Biconjugate gradient linear solver
+void LinSolve_BICGSTAB(const array<rcv>& A,
+                       array<real64>& x,
+                       const array<real64>& b,
+                       const Epetra_Comm* commPtr,
+                       realT tol=1e-10, int maxNumIters=1000,
+                       bool verboseFlag=false, bool doDataWrite=false);
 
-/// Dense local linear solver.                   
-int LinSolve_Local(rArray2d& A, rArray1d& x,rArray1d& b);
+/// Dense local linear solver.
+int LinSolve_Local(rArray2d& A, array<real64>& x,array<real64>& b);
 
 void NonlinearSolve( Epetra_Vector& x,
                      NOX::Epetra::Interface::Required& iReq,
@@ -168,90 +186,115 @@ public:
              Teuchos::RCP<Epetra_FEVector>&    solution,
              Teuchos::RCP<Epetra_FEVector>& rhs){
 
-      Epetra_LinearProblem problem(&(*matrix),
-                                   &(*solution),
-                                   &(*rhs));
+    Epetra_LinearProblem problem(&(*matrix),
+                                 &(*solution),
+                                 &(*rhs));
 
-      // ML preconditioner
-      //////////////////////
+    // ML preconditioner
+    //////////////////////
 
-      ML_Epetra::MultiLevelPreconditioner* MLPrec;
-      if(m_useMLPrecond){
+    ML_Epetra::MultiLevelPreconditioner* MLPrec;
+    if(m_useMLPrecond)
+    {
 
-        // create a parameter list for ML options
-        Teuchos::ParameterList MLList;
+      // create a parameter list for ML options
+      Teuchos::ParameterList MLList;
 
-        ML_Epetra::SetDefaults("SA",MLList);
+      ML_Epetra::SetDefaults("SA",MLList);
 
-        MLPrec = new ML_Epetra::MultiLevelPreconditioner(*matrix, MLList);
-      }
+      MLPrec = new ML_Epetra::MultiLevelPreconditioner(*matrix, MLList);
+    }
 
-      // Aztec solver
-      /////////////////
-      AztecOO solver(problem);
-       
-         // TODO - use parameterlist interface?
-              // Multi level preconditioner
-              if(m_useMLPrecond) solver.SetPrecOperator(MLPrec);
+    // Aztec solver
+    /////////////////
+    AztecOO solver(problem);
 
-              // set solver 
-              if(m_solver == "bicgstab"){
-                solver.SetAztecOption(AZ_solver,AZ_bicgstab);
-              } else if(m_solver == "cg"){
-                solver.SetAztecOption(AZ_solver,AZ_cg);
-              } else if(m_solver == "gmres"){
-                solver.SetAztecOption(AZ_solver,AZ_gmres);
-              } else {
-                throw GPException("Error TrilinosLinearSolver: Unknown solver " + m_solver );
-              }
+    // TODO - use parameterlist interface?
+    // Multi level preconditioner
+    if(m_useMLPrecond) solver.SetPrecOperator(MLPrec);
 
-              // set preconditioner
-              if(m_precond == "dom_decomp"){
-                solver.SetAztecOption(AZ_precond,AZ_dom_decomp);
-              } 
+    // set solver
+    if(m_solver == "bicgstab")
+    {
+      solver.SetAztecOption(AZ_solver,AZ_bicgstab);
+    }
+    else if(m_solver == "cg")
+    {
+      solver.SetAztecOption(AZ_solver,AZ_cg);
+    }
+    else if(m_solver == "gmres")
+    {
+      solver.SetAztecOption(AZ_solver,AZ_gmres);
+    }
+    else
+    {
+      throw GPException("Error TrilinosLinearSolver: Unknown solver " + m_solver );
+    }
 
-              // set subdomain solver
-              if(m_subdomain_solve == "ilu"){
-                solver.SetAztecOption(AZ_subdomain_solve,AZ_ilu);  
-              } else if (m_subdomain_solve == "icc"){
-                solver.SetAztecOption(AZ_subdomain_solve,AZ_icc);  
-              } else if (m_subdomain_solve == "ilut"){
-                solver.SetAztecOption(AZ_subdomain_solve,AZ_ilut);  
-              } else {
-                throw GPException("Error TrilinosLinearSolver: Unknown subdomain solver " + m_subdomain_solve );
-              }     
+    // set preconditioner
+    if(m_precond == "dom_decomp")
+    {
+      solver.SetAztecOption(AZ_precond,AZ_dom_decomp);
+    }
 
-              // set convergence criteria
-              if(m_conv == "rhs"){
-                solver.SetAztecOption(AZ_conv,AZ_rhs);
-              } else if(m_conv == "r0"){
-                solver.SetAztecOption(AZ_conv,AZ_r0);
-              } else if(m_conv == "Anorm"){
-                solver.SetAztecOption(AZ_conv,AZ_Anorm);
-              } else if(m_conv == "noscaled"){
-                solver.SetAztecOption(AZ_conv,AZ_noscaled);
-              } else {
-                throw GPException("Error TrilinosLinearSolver: Unknown convergence criteria " + m_conv );
-              }  
+    // set subdomain solver
+    if(m_subdomain_solve == "ilu")
+    {
+      solver.SetAztecOption(AZ_subdomain_solve,AZ_ilu);
+    }
+    else if (m_subdomain_solve == "icc")
+    {
+      solver.SetAztecOption(AZ_subdomain_solve,AZ_icc);
+    }
+    else if (m_subdomain_solve == "ilut")
+    {
+      solver.SetAztecOption(AZ_subdomain_solve,AZ_ilut);
+    }
+    else
+    {
+      throw GPException("Error TrilinosLinearSolver: Unknown subdomain solver " + m_subdomain_solve );
+    }
 
-              // verbosity
-              if(!m_verboseFlag) solver.SetAztecOption(AZ_output,AZ_none);
+    // set convergence criteria
+    if(m_conv == "rhs")
+    {
+      solver.SetAztecOption(AZ_conv,AZ_rhs);
+    }
+    else if(m_conv == "r0")
+    {
+      solver.SetAztecOption(AZ_conv,AZ_r0);
+    }
+    else if(m_conv == "Anorm")
+    {
+      solver.SetAztecOption(AZ_conv,AZ_Anorm);
+    }
+    else if(m_conv == "noscaled")
+    {
+      solver.SetAztecOption(AZ_conv,AZ_noscaled);
+    }
+    else
+    {
+      throw GPException("Error TrilinosLinearSolver: Unknown convergence criteria " + m_conv );
+    }
 
-      solver.Iterate(m_maxIters,m_tol);
+    // verbosity
+    if(!m_verboseFlag) solver.SetAztecOption(AZ_output,AZ_none);
 
-      // destroy the preconditioner
-      if(m_useMLPrecond){
-        delete MLPrec;
-      }
+    solver.Iterate(m_maxIters,m_tol);
+
+    // destroy the preconditioner
+    if(m_useMLPrecond)
+    {
+      delete MLPrec;
+    }
   }
 };
 
 
 namespace TrilinosUtilities
 {
-  int RowSum( const Epetra_CrsMatrix& A, Epetra_Vector& x) ;
-  int RowSum( const Epetra_CrsMatrix& A, const Epetra_CrsMatrix& B, Epetra_Vector& x) ;
+int RowSum( const Epetra_CrsMatrix& A, Epetra_Vector& x);
+int RowSum( const Epetra_CrsMatrix& A, const Epetra_CrsMatrix& B, Epetra_Vector& x);
 }
-               
+
 #endif
-	

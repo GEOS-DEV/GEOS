@@ -15,16 +15,12 @@
 
 #else
 
-#define GEOS_CXX_MARK_LOOP_BEGIN(loop, loopName) 
+#define GEOS_CXX_MARK_LOOP_BEGIN(loop, loopName)
 #define GEOS_CXX_MARK_LOOP_END(loop)
-#define GEOS_MARK_BEGIN(name) 
+#define GEOS_MARK_BEGIN(name)
 #define GEOS_MARK_END(name)
 #endif
 
 
 
-
-
 #endif
-
-

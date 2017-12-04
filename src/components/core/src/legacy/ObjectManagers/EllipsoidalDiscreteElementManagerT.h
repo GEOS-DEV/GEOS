@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -148,7 +166,8 @@ struct DiscreteElementCylindricalBoundary
       contactPointAxial *= -heightCylinderNow;
     }
 
-    //here we will just do a simple procedure to homogenize the contact with a concave body
+    //here we will just do a simple procedure to homogenize the contact with a
+    // concave body
     normalRadial *= overlapRadial;
     normalAxial *= overlapAxial;
     normal1 = normalRadial;
@@ -197,7 +216,7 @@ struct DiscreteElementCylindricalBoundary
  * @author Scott Johnson
  * @brief Class to manager the collection of ellipsoidal DEM elements
  */
-class EllipsoidalDiscreteElementManagerT: public DiscreteElementManagerBaseT
+class EllipsoidalDiscreteElementManagerT : public DiscreteElementManagerBaseT
 {
 public:
   EllipsoidalDiscreteElementManagerT();
@@ -259,8 +278,8 @@ protected:
   {
     const realT mass = mass2 > mass1 ? mass1 : mass2;
     const realT dttmp = isZero(stiffness, 10*std::numeric_limits<realT>::min()) ?
-        std::numeric_limits<realT>::max() :
-        0.3 * sqrt(mass/stiffness);
+                        std::numeric_limits<realT>::max() :
+                        0.3 * sqrt(mass/stiffness);
     return dttmp;
   }
 
@@ -289,14 +308,14 @@ private:
                  R1Tensor& contactPoint);
 
   static bool InContact(const R1Tensor& radii0,
-                         const R1Tensor& center0,
-                         const R2Tensor& rotation0,
-                         const R1Tensor& radii1,
-                         const R1Tensor& center1,
-                         const R2Tensor& rotation1,
-                         realT& overlap,
-                         R1Tensor& normal1,
-                         R1Tensor& contactPoint);
+                        const R1Tensor& center0,
+                        const R2Tensor& rotation0,
+                        const R1Tensor& radii1,
+                        const R1Tensor& center1,
+                        const R2Tensor& rotation1,
+                        realT& overlap,
+                        R1Tensor& normal1,
+                        R1Tensor& contactPoint);
 
   static realT Iterate(const R1Tensor& radii0,
                        const R1Tensor& center0,
@@ -336,10 +355,10 @@ private:
                               R1Tensor& normal);
 
   static void PointAtNormalCartesian(const R1Tensor& radii,
-                              const R1Tensor& center,
-                              const R2Tensor& rotation,
-                              const R1Tensor& normal,
-                              R1Tensor& point);
+                                     const R1Tensor& center,
+                                     const R2Tensor& rotation,
+                                     const R1Tensor& normal,
+                                     R1Tensor& point);
 
   static void PointAtNormalCartesian(const R1Tensor& radii,
                                      const R1Tensor& normalLocal,

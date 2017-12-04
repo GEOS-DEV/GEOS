@@ -1,7 +1,7 @@
 //FUNCTION_BEGIN_PARSE
 virtual_void
 LinearizedStateData::Update(const realT curvature1,
-                             const realT curvature2)
+                            const realT curvature2)
 {
   HertzianIntermediateStateData::Update(curvature1, curvature2);
 
@@ -45,14 +45,14 @@ LinearizedStateData::Update(const realT curvature1,
 //FUNCTION_BEGIN_PARSE
 virtual_void
 LinearizedStateData::Initialize(const realT curvature1, const realT curvature2,
-                                 const realT poissons1, const realT poissons2,
-                                 const realT youngs1, const realT youngs2,
-                                 const realT mass1, const realT mass2,
-                                 const realT rest1, const realT rest2,
-                                 const realT yield1, const realT yield2,
-                                 const realT velHalf1, const realT velHalf2,
-                                 const realT surfaceEnergy1, const realT surfaceEnergy2,
-                                 const realT cement1, const realT cement2)
+                                const realT poissons1, const realT poissons2,
+                                const realT youngs1, const realT youngs2,
+                                const realT mass1, const realT mass2,
+                                const realT rest1, const realT rest2,
+                                const realT yield1, const realT yield2,
+                                const realT velHalf1, const realT velHalf2,
+                                const realT surfaceEnergy1, const realT surfaceEnergy2,
+                                const realT cement1, const realT cement2)
 {
   youngs = EffectiveYoungsModulus(poissons1, poissons2, youngs1, youngs2);
   mass = EffectiveMass(mass1, mass2);
@@ -73,16 +73,19 @@ LinearizedStateData::Initialize(const realT curvature1, const realT curvature2,
     if(isCohesive > 0)
     {
       dupre = surfaceEnergy1 + surfaceEnergy2
-          - 0.0;
+              - 0.0;
       //0.0 should be replaced with interface energy
       //the following assumes a JKR model
       {
         //The following is the direct calculation using JKR
         //  REAL w2K2_two_thirds = dupre*dupre/(Eeff*Eeff);
         //  w2K2_two_thirds = pow(w2K2_two_thirds,2.0/3.0);
-        //  dcoh0 = w2K2_two_thirds * pow(reff,2.0/3.0) * (7.08273 - 22.2956*w2K2_two_thirds);
-        //...however, we would like to linearize the relationship while still dissipating the correct amount of energy
-        //looking at the functional form of the JKR model, the energy in the hysteretic part of the force displacement
+        //  dcoh0 = w2K2_two_thirds * pow(reff,2.0/3.0) * (7.08273 -
+        // 22.2956*w2K2_two_thirds);
+        //...however, we would like to linearize the relationship while still
+        // dissipating the correct amount of energy
+        //looking at the functional form of the JKR model, the energy in the
+        // hysteretic part of the force displacement
         //curve is ...
         dcoh0 = 0.0;
       }
@@ -120,7 +123,7 @@ LinearizedStateData::EffectiveCoefficientOfRestitutionSquared(const realT Eeff,
 {
   realT ret = Eeff;
   ret *= rest1 * rest1 * (1 - poissons1 * poissons1) / youngs1
-      + rest2 * rest2 * (1 - poissons2 * poissons2) / youngs2;
+         + rest2 * rest2 * (1 - poissons2 * poissons2) / youngs2;
   return ret;
 }
 
@@ -130,7 +133,8 @@ LinearizedStateData::EffectiveYieldStrength(const realT yield1,
                                             const realT yield2) const
 {
   return 2.0 / (1.0 / yield1 + 1.0 / yield2);
-  //note that for similar yield strengths this would yield the same yield strength
+  //note that for similar yield strengths this would yield the same yield
+  // strength
 }
 
 //FUNCTION_BEGIN_PARSE
@@ -141,8 +145,8 @@ LinearizedStateData::HalfCoefficientOfRestitutionVelocity(const realT Eeff,
                                                           const realT youngs1, const realT youngs2) const
 {
   return Eeff
-      * (velHalf1 * velHalf1 * (1 - poissons1 * poissons1) / youngs1
-          + velHalf2 * velHalf2 * (1 - poissons2 * poissons2) / youngs2);
+         * (velHalf1 * velHalf1 * (1 - poissons1 * poissons1) / youngs1
+            + velHalf2 * velHalf2 * (1 - poissons2 * poissons2) / youngs2);
 }
 
 
@@ -192,20 +196,20 @@ LinearizedStateData::ThetaK(const realT Tk_old,
   realT tmp = tangentialForces.L2_Norm();
   switch (k)
   {
-    case 0:
-      tmp += mu_ * dfn_mag / fn_mag;
-      break;
-    case 1:
-      tmp -= Tk_;
-      tmp *= -1.0;
-      tmp += 2.0 * mu_ * dfn_mag;
-      tmp /= 2.0 * mu_;
-      break;
-    default:
-      tmp -= Tk_;
-      tmp += 2.0 * mu_ * dfn_mag;
-      tmp /= 2.0 * mu_;
-      break;
+  case 0:
+    tmp += mu_ * dfn_mag / fn_mag;
+    break;
+  case 1:
+    tmp -= Tk_;
+    tmp *= -1.0;
+    tmp += 2.0 * mu_ * dfn_mag;
+    tmp /= 2.0 * mu_;
+    break;
+  default:
+    tmp -= Tk_;
+    tmp += 2.0 * mu_ * dfn_mag;
+    tmp /= 2.0 * mu_;
+    break;
   }
   tmp = pow(1 - tmp, (1.0 / 3.0));
   return tmp;
