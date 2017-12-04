@@ -25,10 +25,13 @@ set(CONFIG_NAME "quartz-toss_3_x86_64_ib-gcc@7.1.0_noAXOM" CACHE PATH "")
 #set(CMAKE_C_COMPILER "/opt/gcc/7.1.0/bin/gcc" CACHE PATH "")
 #set(CMAKE_CXX_COMPILER "/opt/gcc/7.1.0/bin/g++" CACHE PATH "")
 
-set(CMAKE_CXX_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icpc" CACHE PATH "")
-set(CMAKE_C_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icc" CACHE PATH "")
+#set(CMAKE_CXX_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icpc" CACHE PATH "")
+#set(CMAKE_C_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icc" CACHE PATH "")
+
+set(CMAKE_CXX_COMPILER "/opt/cray/pe/craype/2.5.12/bin/CC" CACHE PATH "")
+set(CMAKE_C_COMPILER "/opt/cray/pe/craype/2.5.12/bin/cc" CACHE PATH "")
 #set(CMAKE_CXX_FLAG "-std=c++11")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 
 
