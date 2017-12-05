@@ -27,7 +27,7 @@ public:
                            R1Tensor& normalVector);
 
   realT NextStrikeLengthPowerLaw() {
-	  return m_strikeDimensionDistribution.PowerLawSample();
+    return m_strikeDimensionDistribution.PowerLawSample();
   }
 
   realT NextAspectRatioGaussian() { return m_faultAspectRatioDistribution.NormalSample(); }

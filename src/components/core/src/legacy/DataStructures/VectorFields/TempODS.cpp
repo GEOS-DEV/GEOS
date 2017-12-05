@@ -8,7 +8,7 @@
 #include "TempODS.h"
 
 TempODS::TempODS():
-ObjectDataStructureBaseT(ObjectDataStructureBaseT::Temp)
+  ObjectDataStructureBaseT(ObjectDataStructureBaseT::Temp)
 {
   // TODO Auto-generated constructor stub
 
@@ -18,4 +18,3 @@ TempODS::~TempODS()
 {
   // TODO Auto-generated destructor stub
 }
-

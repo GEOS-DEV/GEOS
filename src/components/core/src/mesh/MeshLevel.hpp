@@ -26,7 +26,7 @@ public:
   struct viewStructKeys
   {
     dataRepository::ViewKey meshLevel                = { "meshLevel" };
-  }viewKeys;
+  } viewKeys;
 
   struct groupStructKeys
   {
@@ -42,7 +42,7 @@ public:
     dataRepository::GroupKey edgeManager = {edgeManagerString};
     dataRepository::GroupKey faceManager = {faceManagerString};
     dataRepository::GroupKey elemManager = {elemManagerString};
-  }groupKeys;
+  } groupKeys;
 
   NodeManager const * getNodeManager() const { return this->GetGroup<NodeManager>(groupKeys.nodeManager); }
   NodeManager * getNodeManager()             { return this->GetGroup<NodeManager>(groupKeys.nodeManager); }

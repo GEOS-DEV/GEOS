@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -51,12 +69,14 @@
  * @brief Constructor for the contacts / neighbor pairs
  * @author Scott Johnson
  * @date Jul 14, 2011
- * We are currently assuming that "contact" is the union of all "neighbor pairs" and "inactive + active physical contacts"
- * Note that neighbor pairs that are also contacts would be the intersection of these two sets
+ * We are currently assuming that "contact" is the union of all "neighbor pairs"
+ * and "inactive + active physical contacts"
+ * Note that neighbor pairs that are also contacts would be the intersection of
+ * these two sets
  * This data structure could be split into different structures later if it is
  * found that these are too cumbersome
  */
-ContactManagerBaseT::ContactManagerBaseT() :
+ContactManagerBaseT::ContactManagerBaseT():
   ObjectDataStructureBaseT(ObjectDataStructureBaseT::ContactBaseManager),
   m_contact(NULL),
   m_sliding_law(0),
@@ -92,7 +112,7 @@ ContactManagerBaseT::ContactManagerBaseT() :
   this->AddKeylessDataField<R1Tensor>( "velocity", true, true);
 }
 
-ContactManagerBaseT::ContactManagerBaseT( const ObjectType objectType ) :
+ContactManagerBaseT::ContactManagerBaseT( const ObjectType objectType ):
   ObjectDataStructureBaseT(objectType),
   m_contact(NULL),
   m_sliding_law(0),
@@ -195,7 +215,8 @@ void ContactManagerBaseT::ReadXML(TICPP::HierarchicalDataNode* hdn)
         std::cout<<"          Penalty stiffness in tau^2 direction: "<<m_glob_penalty_t2<<"                   "<<std::endl;
       std::cout<<"*****************************************************************************"<<std::endl;
 
-      // If Nitsche's method is not used all Nitsche-specific flags MUST be zero. This line overrides an oversight in the xml file.
+      // If Nitsche's method is not used all Nitsche-specific flags MUST be
+      // zero. This line overrides an oversight in the xml file.
       m_nitsche_symmetry_active = 0.0;
       m_weighted_nitsche_active = 0.0;
       m_nitsche_normal_active = 0.0;
@@ -311,7 +332,7 @@ void ContactManagerBaseT::WriteVTKCellData(std::ofstream& out)
   {
     out << "SCALARS ln" << (*itn) << " double" << std::endl << "LOOKUP_TABLE default" << std::endl;
     const array<real64>& scalar = *(realVars[i]);
-    for(array<real64>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    for(array<real64>::const_iterator it = scalar.begin() ; it != scalar.end() ; ++it)
     {
       out << (*it) << " ";
     }
@@ -322,7 +343,7 @@ void ContactManagerBaseT::WriteVTKCellData(std::ofstream& out)
   {
     out << "SCALARS ln" << (*itn) << "_Magnitude double" << std::endl << "LOOKUP_TABLE default" << std::endl;
     const array<R1Tensor>& scalar = *(R1Vars[i]);
-    for(array<R1Tensor>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    for(array<R1Tensor>::const_iterator it = scalar.begin() ; it != scalar.end() ; ++it)
     {
       out << it->L2_Norm() << " ";
     }
@@ -333,7 +354,7 @@ void ContactManagerBaseT::WriteVTKCellData(std::ofstream& out)
   {
     out << "SCALARS ln" << (*itn) << " integer" << std::endl << "LOOKUP_TABLE default" << std::endl;
     const array<integer>& scalar = *(intVars[i]);
-    for(array<integer>::const_iterator it = scalar.begin(); it != scalar.end(); ++it)
+    for(array<integer>::const_iterator it = scalar.begin() ; it != scalar.end() ; ++it)
     {
       out << (*it) << " ";
     }
@@ -346,14 +367,14 @@ void ContactManagerBaseT::WriteVTKCellData(std::ofstream& out)
 }
 
 void ContactManagerBaseT::WriteSilo( SiloFile& siloFile,
-                                             const std::string& siloDirName,
-                                             const std::string& meshname,
-                                             const int centering,
-                                             const int cycleNum,
-                                             const realT problemTime,
-                                             const bool isRestart,
-                                             const std::string& regionName,
-                                             const lArray1d& mask )
+                                     const std::string& siloDirName,
+                                     const std::string& meshname,
+                                     const int centering,
+                                     const int cycleNum,
+                                     const realT problemTime,
+                                     const bool isRestart,
+                                     const std::string& regionName,
+                                     const lArray1d& mask )
 {
   std::string subDirectory = siloDirName;
   std::string rootDirectory = "/" + siloDirName;
@@ -405,14 +426,14 @@ void ContactManagerBaseT::WriteSilo( SiloFile& siloFile,
 }
 
 void ContactManagerBaseT::ReadSilo( const SiloFile& siloFile,
-                                            const std::string& siloDirName,
-                                            const std::string& meshname,
-                                            const int centering,
-                                            const int cycleNum,
-                                            const realT problemTime,
-                                            const bool isRestart,
-                                            const std::string& regionName,
-                                            const lArray1d& mask )
+                                    const std::string& siloDirName,
+                                    const std::string& meshname,
+                                    const int centering,
+                                    const int cycleNum,
+                                    const realT problemTime,
+                                    const bool isRestart,
+                                    const std::string& regionName,
+                                    const lArray1d& mask )
 {
   if( DBSetDir(siloFile.m_dbFilePtr, siloDirName.c_str()) != -1 )
   {
@@ -463,7 +484,8 @@ void ContactManagerBaseT::ReadSilo( const SiloFile& siloFile,
 
 
 
-/** @brief Get the index in the list associated with the two body or face indices; -1 if not found
+/** @brief Get the index in the list associated with the two body or face
+   indices; -1 if not found
  * @param body1 Index of body 1 or face 1
  * @param body2 Index of body 2 or face 2
  * @return Index of the common plane
@@ -473,7 +495,7 @@ int ContactManagerBaseT::GetIndex(const localIndex body1, const localIndex body2
   const lArray1d& s1 = this->GetFieldData<localIndex> ("face1");
   const lArray1d& s2 = this->GetFieldData<localIndex> ("face2");
   int imin = -1;
-  for (localIndex i = 0; i < this->DataLengths(); ++i)
+  for (localIndex i = 0 ; i < this->DataLengths() ; ++i)
   {
     if (imin < 0)
     {
@@ -504,14 +526,15 @@ int ContactManagerBaseT::GetIndex(const localIndex body1, const localIndex body2
  * @author Scott Johnson
  * Sets contacts not in the neighbor list to "inactive" and adds in
  * any new entries from the given neighbor list
- * @param[in] neighborList List of external face indices associated with a particular external face
+ * @param[in] neighborList List of external face indices associated with a
+ * particular external face
  */
 size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
 {
   lArray1d& face1 = this->GetFieldData<localIndex>("face1");
   lArray1d& face2 = this->GetFieldData<localIndex>("face2");
   array<integer>& activeC = this->GetFieldData<int>("active");
-    
+
   //-------------------------------------------------
   //case A: neighbor list is empty, so remove all contacts
   if( neighborList.empty() )
@@ -525,7 +548,8 @@ size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
   //case B: common plane list is empty, so populate with neighbor list entries
   if( this->DataLengths() == 0 )
   {
-    // contact manager contains no common planes, so copy the neighbor list completely
+    // contact manager contains no common planes, so copy the neighbor list
+    // completely
 
     // B.1: allocate space for the new common planes
     localIndex newsize = 0;
@@ -533,7 +557,8 @@ size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
       newsize += i->size();
     this->resize( newsize );
 
-    // B.2: now iterate over the neighborList and fill the common plane face entries
+    // B.2: now iterate over the neighborList and fill the common plane face
+    // entries
     localIndex icount = 0, ii = 0;
     for( array<lArray1d>::const_iterator i=neighborList.begin() ; i!=neighborList.end() ; ++i, ++icount)
     {
@@ -556,10 +581,11 @@ size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
 
   // get the number of face pairs contained in the neighborList
   size_t numFacePairs = 0;
-  for(size_t nl_indexf1 = 0; nl_indexf1<neighborList.size() ; ++nl_indexf1 )
+  for(size_t nl_indexf1 = 0 ; nl_indexf1<neighborList.size() ; ++nl_indexf1 )
     numFacePairs += neighborList[nl_indexf1].size();
 
-  // check to see whether there are any face pairs in the neighbor list; return if there are none.
+  // check to see whether there are any face pairs in the neighbor list; return
+  // if there are none.
   if( numFacePairs == 0 )
   {
     // no face pairs..so no common planes
@@ -567,11 +593,12 @@ size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
     return this->DataLengths();
   }
 
-  // there are face pairs defined in the neighbor list, so we have to check them against existing common planes.
+  // there are face pairs defined in the neighbor list, so we have to check them
+  // against existing common planes.
   // common plane index (the index of the data in *this)
   {
     lArray1d::size_type cp_index = 0;
-    for(array<lArray1d>::size_type nl_indexf1 = 0; nl_indexf1<neighborList.size() ; ++nl_indexf1 )
+    for(array<lArray1d>::size_type nl_indexf1 = 0 ; nl_indexf1<neighborList.size() ; ++nl_indexf1 )
     {
       lArray1d::size_type i2=0;
       while(i2<neighborList[nl_indexf1].size())
@@ -579,10 +606,12 @@ size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
         lArray1d::size_type nl_indexf2 = neighborList[nl_indexf1][i2];
 
         //-------------------------------------------------
-        //case C.0: **APPEND NEW** to end of current list's faces with remaining new entry's faces
+        //case C.0: **APPEND NEW** to end of current list's faces with remaining
+        // new entry's faces
         if( cp_index==this->DataLengths() )
         {
-          // we got to the end of the list of existing common planes, so everything else in the neighborList needs to be
+          // we got to the end of the list of existing common planes, so
+          // everything else in the neighborList needs to be
           // tacked on to the end....boy...a push_back() function would be nice.
           this->resize( cp_index+1 );
           face1[cp_index] = nl_indexf1;
@@ -595,20 +624,21 @@ size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
 //          }
           activeC[cp_index] = 0;
         }
-
         //-------------------------------------------------
-        // case C.1: **UPDATE CURRENT** new face pair = current face pair, so just update
+        // case C.1: **UPDATE CURRENT** new face pair = current face pair, so
+        // just update
         else if( face1[cp_index]==nl_indexf1 && face2[cp_index]==nl_indexf2 )
         {
           //just go to the next ... nothing to do
         }
-
         //-------------------------------------------------
         // case C.2: **INSERT NEW** current lists's faces > new faces
         else if( face1[cp_index]>nl_indexf1 || ( face1[cp_index]==nl_indexf1 && face2[cp_index]>nl_indexf2 ) )
         {
-          // the current list of common planes do not contain face pair specified in neighborList,
-          // so we should INSERT the face pair from neighborList at the location of cp_index
+          // the current list of common planes do not contain face pair
+          // specified in neighborList,
+          // so we should INSERT the face pair from neighborList at the location
+          // of cp_index
           this->insert(cp_index);
           face1[cp_index] = nl_indexf1;
           face2[cp_index] = nl_indexf2;
@@ -620,21 +650,22 @@ size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
 //          }
           activeC[cp_index] = 0;
         }
-
         //-------------------------------------------------
         //case C.3: **REMOVE OLD** current list's faces < new entry's faces
         else if( face1[cp_index] < nl_indexf1 || (face1[cp_index]==nl_indexf1 && face2[cp_index] < nl_indexf2 ))
         {
           //the entry in the current list is not in the new list
           //so in the future ... (1) set the current list's entry to inactive
-          //                 and (2) increment the current list to the next entry
+          //                 and (2) increment the current list to the next
+          // entry
           // ... for now ...
-          //let's just take any "inactive" contact out ... this can be changed later
+          //let's just take any "inactive" contact out ... this can be changed
+          // later
           this->erase( cp_index );
-          //NOTE: we need to keep the neighbor list entry constant ... don't march on yet!!!
+          //NOTE: we need to keep the neighbor list entry constant ... don't
+          // march on yet!!!
           continue;//necessary to prevent marching on in "i2"
         }
-
         //-------------------------------------------------
         // case C.default: something unanticipated happened
         else
@@ -662,7 +693,8 @@ size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
       {
         if(neighbor_index >= this->DataLengths())
           throw GPException("Failure in determining contact pairs: number in neighbor list does not equal number of contact!");
-        std::cout << "index: " << neighbor_index << " face1: " << face1[neighbor_index] << " " << nl_indexf1 << " face2: " << face2[neighbor_index] << " " << neighborList[nl_indexf1][i2] << "\n";
+        std::cout << "index: " << neighbor_index << " face1: " << face1[neighbor_index] << " " << nl_indexf1 << " face2: " << face2[neighbor_index] << " " <<
+          neighborList[nl_indexf1][i2] << "\n";
         std::cout.flush();
       }
     }
@@ -670,4 +702,3 @@ size_t ContactManagerBaseT::Update(const array< lArray1d >& neighborList)
 
   return this->DataLengths();
 }
-

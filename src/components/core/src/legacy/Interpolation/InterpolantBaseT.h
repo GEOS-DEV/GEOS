@@ -15,14 +15,14 @@
 
 /**
  * @author Scott Johnson
- * @brief InterpolantBaseT holds the definition of a generic interpolation kernel with compact support
+ * @brief InterpolantBaseT holds the definition of a generic interpolation
+ * kernel with compact support
  */
 class InterpolantBaseT
 {
 public:
-  InterpolantBaseT() : m_value(0.0), m_sum_mW(0.0), m_invhd(0.0), m_invh2(0.0)
-  {
-  }
+  InterpolantBaseT(): m_value(0.0), m_sum_mW(0.0), m_invhd(0.0), m_invh2(0.0)
+  {}
 
   inline realT Value() const
   {

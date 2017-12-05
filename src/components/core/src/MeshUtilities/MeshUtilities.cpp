@@ -56,21 +56,29 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
   }
 }
 //
-//void MeshUtilities::GenerateFasesetsAndAssociatedNodesets( TICPP::HierarchicalDataNode& hdn,
-//                                                           FaceManagerT * faceManager,
-//                                                           NodeManager * nodeManager )
+//void MeshUtilities::GenerateFasesetsAndAssociatedNodesets(
+// TICPP::HierarchicalDataNode& hdn,
+//                                                           FaceManagerT *
+// faceManager,
+//                                                           NodeManager *
+// nodeManager )
 //{
 //
 ////  std::map< std::string, lSet >& nodeSets = nodeManager->m_Sets;
 //  std::map< std::string, lSet >& faceSets = faceManager->m_Sets;
 ////  array<R1Tensor>& X = *(nodeManager->m_refposition);
 //
-//  //We calculate face centers here. This is cheaper than calculating it when we loop through faces.
+//  //We calculate face centers here. This is cheaper than calculating it when
+// we loop through faces.
 //
-//  faceManager->AddKeylessDataField( FieldInfo::R1TensorField, "FaceCenter", true, true );
-//  faceManager->AddKeylessDataField( FieldInfo::R1TensorField, "FaceNormal", true, true );
-//  array<R1Tensor>& faceCenter = faceManager->GetFieldData<R1Tensor>( "FaceCenter" );
-//  array<R1Tensor>& faceNormal = faceManager->GetFieldData<R1Tensor>( "FaceNormal" );
+//  faceManager->AddKeylessDataField( FieldInfo::R1TensorField, "FaceCenter",
+// true, true );
+//  faceManager->AddKeylessDataField( FieldInfo::R1TensorField, "FaceNormal",
+// true, true );
+//  array<R1Tensor>& faceCenter = faceManager->GetFieldData<R1Tensor>(
+// "FaceCenter" );
+//  array<R1Tensor>& faceNormal = faceManager->GetFieldData<R1Tensor>(
+// "FaceNormal" );
 //
 //  for( localIndex kf=0 ; kf<faceManager->DataLengths() ; ++kf )
 //  {
@@ -78,13 +86,16 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //    faceManager->FaceNormal( nodeManager, kf, faceNormal[kf] );
 //  }
 //
-//  for(TICPP::HierarchicalDataNode* hdnNode = hdn.Next(true); hdnNode; hdnNode = hdn.Next() )
+//  for(TICPP::HierarchicalDataNode* hdnNode = hdn.Next(true); hdnNode; hdnNode
+// = hdn.Next() )
 //  {
 //    std::string header = "Faceset";
 //    if( !( header.compare(hdnNode->Heading() ) ) )
 //    {
 //      /*
-//      SimpleGeometricObjectBase::Types type = SimpleGeometricObjectBase::IntToType(hdnNode->GetAttributeValue<int>("type") );
+//      SimpleGeometricObjectBase::Types type =
+// SimpleGeometricObjectBase::IntToType(hdnNode->GetAttributeValue<int>("type")
+// );
 //      */
 //
 //      std::string name = hdnNode->GetAttributeString("name");
@@ -94,9 +105,11 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //      SimpleGeometricObjectBase* object;
 //
 //      // new allocation method
-//      TICPP::HierarchicalDataNode* geometryNode = hdnNode->GetChild("Geometry");
+//      TICPP::HierarchicalDataNode* geometryNode =
+// hdnNode->GetChild("Geometry");
 //      if(geometryNode){
-//      // treating geometry node as a union boolean geometry allows multiple objects to be defined within it:
+//      // treating geometry node as a union boolean geometry allows multiple
+// objects to be defined within it:
 //        /**
 //          <Geometry>
 //              <Box  ... />
@@ -109,12 +122,15 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //              </Intersection>
 //          <Geometry>
 //          **/
-//        object = SimpleGeometricObjectBase::Allocate(SimpleGeometricObjectBase::unionGeometry);
+//        object =
+// SimpleGeometricObjectBase::Allocate(SimpleGeometricObjectBase::unionGeometry);
 //        object->ReadXML( *geometryNode );
 //      } else {
 //        // old allocation method for backwards compatability
-//        std::string geometricObjectTypeStr = hdnNode->GetAttributeStringOrDefault("type", "Box");
-//        SimpleGeometricObjectBase::Types type = fromString<SimpleGeometricObjectBase::Types>(geometricObjectTypeStr);
+//        std::string geometricObjectTypeStr =
+// hdnNode->GetAttributeStringOrDefault("type", "Box");
+//        SimpleGeometricObjectBase::Types type =
+// fromString<SimpleGeometricObjectBase::Types>(geometricObjectTypeStr);
 //        object = SimpleGeometricObjectBase::Allocate( type );
 //
 //        object->ReadXML( *hdnNode );
@@ -122,19 +138,24 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //
 //      R1Tensor zeroVector;
 //      zeroVector *= 0.0;
-//      R1Tensor normalVector = hdnNode->GetAttributeOrDefault<R1Tensor>("normalVector", zeroVector);
+//      R1Tensor normalVector =
+// hdnNode->GetAttributeOrDefault<R1Tensor>("normalVector", zeroVector);
 //      if (normalVector.Normalize() == 0.0)
-//        throw GPException("A normal vector must be given to define face sets");
+//        throw GPException("A normal vector must be given to define face
+// sets");
 //
-//      realT withinAngle = hdnNode->GetAttributeOrDefault<realT>("withinAngle", 1.0);
+//      realT withinAngle = hdnNode->GetAttributeOrDefault<realT>("withinAngle",
+// 1.0);
 //      realT tol = std::cos(withinAngle / 180.0 * 3.14159265);
 //
 //      for( localIndex kf=0 ; kf<faceManager->DataLengths() ; ++kf )
 //      {
-//        if( object->IsCoordInObject( faceCenter[kf] ) && std::fabs(Dot(faceNormal[kf], normalVector)) > tol)
+//        if( object->IsCoordInObject( faceCenter[kf] ) &&
+// std::fabs(Dot(faceNormal[kf], normalVector)) > tol)
 //        {
 //          currentFaceset.insert(kf);
-////          for( localIndex a=0 ; a<faceManager->m_toNodesRelation[kf].size() ; ++a )
+////          for( localIndex a=0 ; a<faceManager->m_toNodesRelation[kf].size()
+// ; ++a )
 ////            currentNodeset.insert(faceManager->m_toNodesRelation[kf][a]);
 //        }
 //      }
@@ -148,7 +169,8 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //                                         const NodeManager& nodeManager,
 //                                      ElementManagerT& elementManager )
 //{
-//  for(TICPP::HierarchicalDataNode* hdnNode = hdn.Next(true); hdnNode; hdnNode = hdn.Next() )
+//  for(TICPP::HierarchicalDataNode* hdnNode = hdn.Next(true); hdnNode; hdnNode
+// = hdn.Next() )
 //  {
 //    std::string header = "Elementset";
 //    if( !( header.compare(hdnNode->Heading() ) ) )
@@ -156,9 +178,11 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //      SimpleGeometricObjectBase* object;
 //
 //      // new allocation method
-//      TICPP::HierarchicalDataNode* geometryNode = hdnNode->GetChild("Geometry");
+//      TICPP::HierarchicalDataNode* geometryNode =
+// hdnNode->GetChild("Geometry");
 //      if(geometryNode){
-//      // treating geometry node as a union boolean geometry allows multiple objects to be defined within it:
+//      // treating geometry node as a union boolean geometry allows multiple
+// objects to be defined within it:
 //        /**
 //          <Geometry>
 //              <Box  ... />
@@ -171,20 +195,26 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //              </Intersection>
 //          <Geometry>
 //          **/
-//        object = SimpleGeometricObjectBase::Allocate(SimpleGeometricObjectBase::unionGeometry);
+//        object =
+// SimpleGeometricObjectBase::Allocate(SimpleGeometricObjectBase::unionGeometry);
 //        object->ReadXML( *geometryNode );
 //      }
 //      else
 //      {
-//        std::string geometricObjectTypeStr = hdnNode->GetAttributeStringOrDefault("type", "Box");
-//        SimpleGeometricObjectBase::Types type = fromString<SimpleGeometricObjectBase::Types>(geometricObjectTypeStr);
+//        std::string geometricObjectTypeStr =
+// hdnNode->GetAttributeStringOrDefault("type", "Box");
+//        SimpleGeometricObjectBase::Types type =
+// fromString<SimpleGeometricObjectBase::Types>(geometricObjectTypeStr);
 //        object = SimpleGeometricObjectBase::Allocate( type );
 //
 //        object->ReadXML( *hdnNode );
 //      }
 //
-//      for (std::map<ElementManagerT::RegKeyType, ElementRegionT>::iterator elementRegionIter =
-//          elementManager.m_ElementRegions.begin(); elementRegionIter != elementManager.m_ElementRegions.end(); ++elementRegionIter) //Loop over regions
+//      for (std::map<ElementManagerT::RegKeyType, ElementRegionT>::iterator
+// elementRegionIter =
+//          elementManager.m_ElementRegions.begin(); elementRegionIter !=
+// elementManager.m_ElementRegions.end(); ++elementRegionIter) //Loop over
+// regions
 //      {
 //        ElementRegionT& elemRegion = elementRegionIter->second;
 //        localIndex numEle = elemRegion.DataLengths();

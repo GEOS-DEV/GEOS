@@ -283,16 +283,16 @@ public:
   // Matching regex for data types in xml
   class typeRegex
   {
-  private:
+private:
     std::string ru = "[0-9]*";
-    std::string ri = "[+-]?[0-9]*";    
+    std::string ri = "[+-]?[0-9]*";
     std::string rr = "[0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?";
     std::string rs = "[a-zA-Z0-9_,\\(\\)+-/\\*]*";
     std::string r1 = rr + ",? " + rr + ",? " + rr;
     std::string r2 = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
     std::string r2s = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
-    
-    std::unordered_map<std::string, std::string> regexMap = 
+
+    std::unordered_map<std::string, std::string> regexMap =
     {
       {"integer", ri},
       {"real32", rr},
@@ -313,7 +313,7 @@ public:
       {"mapPair_array", "((" + rs + ",? )*)?" + rs}
     };
 
-  public:
+public:
     std::unordered_map<std::string, std::string>::iterator begin(){return regexMap.begin();}
     std::unordered_map<std::string, std::string>::iterator end(){return regexMap.end();}
     std::unordered_map<std::string, std::string>::const_iterator begin() const {return regexMap.begin();}
@@ -390,7 +390,7 @@ public:
 
   template< typename LAMBDA >
   static auto ApplyArrayTypeLambda1( const TypeIDs type,
-                                         LAMBDA lambda )
+                                     LAMBDA lambda )
   {
     switch( type )
     {
@@ -447,7 +447,7 @@ public:
 
   template< typename LAMBDA >
   static auto ApplyArrayTypeLambda2( const TypeIDs type,
-                                         LAMBDA lambda )
+                                     LAMBDA lambda )
   {
     switch( type )
     {
@@ -502,7 +502,7 @@ public:
 
   template< typename LAMBDA >
   static auto ApplyTypeLambda1( const TypeIDs type,
-                               LAMBDA lambda )
+                                LAMBDA lambda )
   {
     switch( type )
     {
@@ -602,7 +602,7 @@ public:
 
   template< typename LAMBDA >
   static auto ApplyTypeLambda2( const TypeIDs type,
-                               LAMBDA lambda )
+                                LAMBDA lambda )
   {
     switch( type )
     {
@@ -775,10 +775,6 @@ public:
     }
     }
   }
-
-
-
-
 
 
 

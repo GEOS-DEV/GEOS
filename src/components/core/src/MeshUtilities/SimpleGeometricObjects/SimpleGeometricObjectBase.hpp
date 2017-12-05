@@ -44,13 +44,10 @@ public:
   ///@}
 
   SimpleGeometricObjectBase(  )
-  {
-
-  }
+  {}
 
   virtual ~SimpleGeometricObjectBase()
-  {
-  }
+  {}
 
 //  virtual void ReadXML( pugi::xml_node& hdn ) = 0;
 

@@ -7,12 +7,12 @@
 
 #include "EnergyT.h"
 EnergyT::EnergyT():
-m_strainEnergy(0.0),
-m_strainEnergyMax(0.0),
-m_stressPower(0.0),
-m_dissipatedEnergy(0.0),
-m_kineticEnergy(0.0),
-m_workDoneOnNodes(0.0)
+  m_strainEnergy(0.0),
+  m_strainEnergyMax(0.0),
+  m_stressPower(0.0),
+  m_dissipatedEnergy(0.0),
+  m_kineticEnergy(0.0),
+  m_workDoneOnNodes(0.0)
 {
   // TODO Auto-generated constructor stub
 }

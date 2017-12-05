@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security,
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -60,7 +78,8 @@ template< int T_dim > class R6minSymTensorT;
  * @tparam T_dim length of tensor index
  *
  * R2TensorT derives from TensorBaseT, and defines basic operations that can be
- * done on a rank-2 tensor, as well as operations that result in a rank-2 tensor.
+ * done on a rank-2 tensor, as well as operations that result in a rank-2
+ * tensor.
  */
 template< int T_dim >
 class R2TensorT : public TensorBaseT< T_dim*T_dim >
@@ -74,17 +93,23 @@ public:
    * @author Randolph Settgast
    * @param[in] data use for initialization of t_data
    */
-  explicit R2TensorT( const realT data ) : TensorBaseT< T_dim*T_dim >(data) {}
+  explicit R2TensorT( const realT data ): TensorBaseT< T_dim*T_dim >(data) {}
 
   /// copy constructor
   R2TensorT(const R2TensorT<T_dim>& rhs);
 
   /// constructor initialized by raw data
-  explicit R2TensorT( const realT data[T_dim*T_dim] ) : TensorBaseT< T_dim*T_dim >(data){}
+  explicit R2TensorT( const realT data[T_dim*T_dim] ): TensorBaseT< T_dim*T_dim >(data){}
 
   /// explicit constructors
-  R2TensorT(realT Txx,realT Txy,realT Tyx,realT Tyy);  //2D only - throws error otherwise
-  R2TensorT(realT Txx,realT Txy,realT Txz,realT Tyx,realT Tyy,realT Tyz,realT Tzx,realT Tzy,realT Tzz); //3D only - throws error otherwise
+  R2TensorT(realT Txx,realT Txy,realT Tyx,realT Tyy);  //2D only - throws error
+                                                       // otherwise
+  R2TensorT(realT Txx,realT Txy,realT Txz,realT Tyx,realT Tyy,realT Tyz,realT Tzx,realT Tzy,realT Tzz); //3D
+                                                                                                        // only
+                                                                                                        // -
+                                                                                                        // throws
+                                                                                                        // error
+                                                                                                        // otherwise
 
   /// non-virtual destructor
   ~R2TensorT(void);
@@ -258,7 +283,7 @@ void R2TensorT<T_dim>::print( std::ostream& os ) const
  * @return none
  */
 template< int T_dim >
-R2TensorT<T_dim>::R2TensorT(void) :
+R2TensorT<T_dim>::R2TensorT(void):
   TensorBaseT< T_dim*T_dim >()
 {}
 
@@ -268,7 +293,7 @@ R2TensorT<T_dim>::R2TensorT(void) :
  * @return none
  */
 template<int T_dim>
-R2TensorT< T_dim >::R2TensorT( const R2TensorT< T_dim >& rhs ) :
+R2TensorT< T_dim >::R2TensorT( const R2TensorT< T_dim >& rhs ):
   TensorBaseT< T_dim*T_dim > ()
 {
   TensorBaseT< T_dim*T_dim >::operator=( rhs );
@@ -276,10 +301,11 @@ R2TensorT< T_dim >::R2TensorT( const R2TensorT< T_dim >& rhs ) :
 
 /// Explicit 2D constructor
 ///
-/// Template specialisation - if templated on another dimension constructor will throw a compile time error.
+/// Template specialisation - if templated on another dimension constructor will
+// throw a compile time error.
 template<>
 inline R2TensorT<2>::R2TensorT(realT Txx,realT Txy,
-                               realT Tyx,realT Tyy) :
+                               realT Tyx,realT Tyy):
   TensorBaseT< 2*2 >()
 {
   this->t_data[0] = Txx;
@@ -291,11 +317,12 @@ inline R2TensorT<2>::R2TensorT(realT Txx,realT Txy,
 
 /// Explicit 3D constructor
 ///
-/// Template specialisation - if templated on another dimension constructor will throw a compile time error.
+/// Template specialisation - if templated on another dimension constructor will
+// throw a compile time error.
 template<>
 inline R2TensorT<3>::R2TensorT(realT Txx,realT Txy,realT Txz,
                                realT Tyx,realT Tyy,realT Tyz,
-                               realT Tzx,realT Tzy,realT Tzz) :
+                               realT Tzx,realT Tzy,realT Tzz):
   TensorBaseT< 3*3 >()
 {
   this->t_data[0] = Txx;
@@ -455,7 +482,8 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2SymTensorT<T_dim>
  * @param[in] B rank-2 tensor
  * @return none
  *
- * This function performs matrix multiplication \f$\mathbf {AB}\f$ -or- \f$A_{ij} B_{jk}\f$
+ * This function performs matrix multiplication \f$\mathbf {AB}\f$ -or-
+ *\f$A_{ij} B_{jk}\f$
  */
 template< int T_dim >
 inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
@@ -510,7 +538,8 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT
  * @param[in] B rank-2 tensor
  * @return none
  *
- * This function performs matrix multiplication \f$\mathbf {AB^T}\f$ -or- \f$A_{ij} B_{kj}\f$
+ * This function performs matrix multiplication \f$\mathbf {AB^T}\f$ -or-
+ *\f$A_{ij} B_{kj}\f$
  */
 template< int T_dim >
 inline void R2TensorT<T_dim>::AijBkj( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
@@ -564,7 +593,8 @@ inline void R2TensorT<T_dim>::AijBkj( const R2TensorT<T_dim>& A, const R2TensorT
  * @param[in] B rank-2 tensor
  * @return none
  *
- * This function performs matrix multiplication \f$\mathbf {A^TB}\f$ -or- \f$A_{ji} B_{jk}\f$
+ * This function performs matrix multiplication \f$\mathbf {A^TB}\f$ -or-
+ *\f$A_{ji} B_{jk}\f$
  */
 template< int T_dim >
 inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
@@ -618,7 +648,8 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2TensorT
  * @param[in] B rank-2 tensor
  * @return none
  *
- * This function performs matrix multiplication \f$\mathbf {A^TB^T}\f$ -or- \f$A_{ji} B_{kj}\f$
+ * This function performs matrix multiplication \f$\mathbf {A^TB^T}\f$ -or-
+ *\f$A_{ji} B_{kj}\f$
  */
 template< int T_dim >
 inline void R2TensorT<T_dim>::AjiBkj( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
@@ -673,7 +704,8 @@ inline void R2TensorT<T_dim>::AjiBkj( const R2TensorT<T_dim>& A, const R2TensorT
  * @param[in] B rank-2 tensor
  * @return none
  *
- * This function performs matrix multiplication \f$\mathbf {AB}\f$ -or- \f$A_{ij} B_{jk}\f$
+ * This function performs matrix multiplication \f$\mathbf {AB}\f$ -or-
+ *\f$A_{ij} B_{jk}\f$
  */
 template< int T_dim >
 inline void R2TensorT<T_dim>::AijBjk( const R2SymTensorT<T_dim>& A, const R2TensorT<T_dim>& B )
@@ -713,7 +745,8 @@ inline void R2TensorT<T_dim>::AijBjk( const R2SymTensorT<T_dim>& A, const R2Tens
  * @param[in] B rank-2 tensor
  * @return none
  *
- * This function performs matrix multiplication \f$\mathbf {AB^T}\f$ -or- \f$A_{ij} B_{kj}\f$
+ * This function performs matrix multiplication \f$\mathbf {AB^T}\f$ -or-
+ *\f$A_{ij} B_{kj}\f$
  */
 template< int T_dim >
 inline void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2TensorT<T_dim>& B )
@@ -756,7 +789,8 @@ inline void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2Tens
  * @param[in] B symmetric rank-2 tensor
  * @return none
  *
- * This function performs matrix multiplication \f$\mathbf {AB}\f$ -or- \f$A_{ij} B_{jk}\f$
+ * This function performs matrix multiplication \f$\mathbf {AB}\f$ -or-
+ *\f$A_{ij} B_{jk}\f$
  */
 template< int T_dim >
 inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2SymTensorT<T_dim>& B )
@@ -796,7 +830,8 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2SymTens
  * @param[in] B symmetric rank-2 tensor
  * @return none
  *
- * This function performs matrix multiplication \f$\mathbf {A^TB}\f$ -or- \f$A_{ji} B_{jk}\f$
+ * This function performs matrix multiplication \f$\mathbf {A^TB}\f$ -or-
+ *\f$A_{ji} B_{jk}\f$
  */
 template< int T_dim >
 inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTensorT<T_dim>& B )
@@ -836,7 +871,8 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTens
  * @param[in] b rank-1 tensor
  * @return none
  *
- * This function performs a dyadic product of two rank-1 tensors \f$\mathbf {a \otimes b}\f$ -or- \f$a_i b_j\f$
+ * This function performs a dyadic product of two rank-1 tensors \f$\mathbf {a
+ *\otimes b}\f$ -or- \f$a_i b_j\f$
  */
 template< int T_dim >
 inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
@@ -1041,8 +1077,10 @@ inline realT R2TensorT<T_dim>::Inner(void) const
  * @author Randolph Settgast
  * @return 1-Det(*this)
  *
- * This function returns 1 - det(F) assuming that (*this) = F-I where I is the identity. This
- * is useful when you have a tensor \f$\mathbf{F}\f$ close to the identity that you are storing as
+ * This function returns 1 - det(F) assuming that (*this) = F-I where I is the
+ * identity. This
+ * is useful when you have a tensor \f$\mathbf{F}\f$ close to the identity that
+ * you are storing as
  * \f$\mathbf{F-I}\f$.
  */
 template< int T_dim >

@@ -10,7 +10,7 @@
 
 #include "ObjectDataStructureBaseT.h"
 
-class TempODS: public ObjectDataStructureBaseT
+class TempODS : public ObjectDataStructureBaseT
 {
 public:
   TempODS();
@@ -19,14 +19,15 @@ public:
   void Initialize(  ) {}
 
 
-   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-                                                                 array<gArray1d>& objectToCompositionObject ){}
+  void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
+                                                         array<gArray1d>& objectToCompositionObject ){}
 
-  /// pure virtual function that sets what objects are on the boundary of the domain
-   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL){}
+  /// pure virtual function that sets what objects are on the boundary of the
+  // domain
+  void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = NULL){}
 
   /// pure virtual function that sets what objects are external
-   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = NULL){}
+  void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = NULL){}
 
 };
 

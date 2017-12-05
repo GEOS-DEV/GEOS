@@ -16,7 +16,7 @@ namespace constitutive
 {
 
 
-template< typename T , bool HASPOINTERTYPE = std::is_pointer<T>::value >
+template< typename T, bool HASPOINTERTYPE = std::is_pointer<T>::value >
 struct ConstitutiveWrapper
 {
   T m_object;
@@ -27,7 +27,6 @@ struct ConstitutiveWrapper<T,false>
 {
   T & m_object;
 };
-
 
 
 
@@ -44,7 +43,8 @@ public:
 
   ~ConstitutiveManager();
 
-//  using constitutiveMaps = std::pair< array<ManagedGroup const *> , map<string,integer> > ;
+//  using constitutiveMaps = std::pair< array<ManagedGroup const *> ,
+// map<string,integer> > ;
 //  constitutiveMaps & GetMaps( integer const reinit ) const;
 
 
@@ -67,9 +67,11 @@ array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > ConstitutiveManage
 {
   array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > rval;
 //  string key = dataRepository::keys::parameterData;
-//  this->forSubGroups( [this,&name, &rval, &key]( ManagedGroup * material ) -> void
+//  this->forSubGroups( [this,&name, &rval, &key]( ManagedGroup * material ) ->
+// void
 //  {
-//    dataRepository::view_rtype<T> temp0 = material->GetGroup(key)->getData<T>(name);
+//    dataRepository::view_rtype<T> temp0 =
+// material->GetGroup(key)->getData<T>(name);
 //    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp( temp0 );
 //    rval.push_back( std::move(temp) );
 //  });
@@ -87,9 +89,9 @@ array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > ConstitutiveManage
 {
   array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > rval;
   this->forSubGroups( [this,&name, &rval]( ManagedGroup & material ) -> void
-  {
-    rval.push_back( material.getData<T>(name) );
-  });
+      {
+        rval.push_back( material.getData<T>(name) );
+      });
   return rval;
 }
 

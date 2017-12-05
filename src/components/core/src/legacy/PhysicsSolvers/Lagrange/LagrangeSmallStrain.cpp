@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -61,7 +79,6 @@
 
 
 
-
 #include "Epetra_Map.h"
 #include "Epetra_FECrsGraph.h"
 #include "Epetra_FECrsMatrix.h"
@@ -79,12 +96,12 @@
 
 
 LagrangeSmallStrain::LagrangeSmallStrain(  const std::string& name,
-                                                ProblemManagerT* const pm ):
-LagrangeSolverBase(name,pm),
-m_staticKMatrix(false),
-m_nonContactModulus(0.0),
-m_recordIncrementalDisplacement(false),
-m_hasReferenceStress(false)
+                                           ProblemManagerT* const pm ):
+  LagrangeSolverBase(name,pm),
+  m_staticKMatrix(false),
+  m_nonContactModulus(0.0),
+  m_recordIncrementalDisplacement(false),
+  m_hasReferenceStress(false)
 {}
 
 
@@ -98,17 +115,20 @@ LagrangeSmallStrain::~LagrangeSmallStrain()
 void LagrangeSmallStrain::ReadXML( TICPP::HierarchicalDataNode* const hdn )
 {
   LagrangeSolverBase::ReadXML(hdn);
-  m_nonContactModulus = hdn->GetAttributeOrDefault("NonContactModulus","2.2 GPa"); // fixme incorrect units
-  m_recordIncrementalDisplacement = hdn->GetAttributeOrDefault("RecordIncrementalDisplacement",false); 
-  m_doApertureUpdate = hdn->GetAttributeOrDefault("UpdateAperture",false); 
+  m_nonContactModulus = hdn->GetAttributeOrDefault("NonContactModulus","2.2 GPa"); // fixme
+                                                                                   // incorrect
+                                                                                   // units
+  m_recordIncrementalDisplacement = hdn->GetAttributeOrDefault("RecordIncrementalDisplacement",false);
+  m_doApertureUpdate = hdn->GetAttributeOrDefault("UpdateAperture",false);
   m_hasReferenceStress = hdn->GetAttributeOrDefault("hasReferenceStress",false);
   m_staticKMatrix =  hdn->GetAttributeOrDefault("staticKMatrix",false);
-  // If a model has reference stress defined, this is the stress state in its reference configuration.
-  // In the end, the stress in VisIt is the total stress and the displacement is the displacement relative to the reference configuration.
-  
+  // If a model has reference stress defined, this is the stress state in its
+  // reference configuration.
+  // In the end, the stress in VisIt is the total stress and the displacement is
+  // the displacement relative to the reference configuration.
+
   ++m_instances;
 }
-
 
 
 
@@ -117,11 +137,12 @@ void LagrangeSmallStrain::RegisterFields( PhysicalDomainT& domain )
   LagrangeSolverBase::RegisterFields(domain);
   // register nodal fields
   domain.m_feNodeManager.AddKeyedDataField<FieldInfo::displacement>();
-  
-  if(m_recordIncrementalDisplacement){
+
+  if(m_recordIncrementalDisplacement)
+  {
     domain.m_feNodeManager.AddKeyedDataField<FieldInfo::incrementalDisplacement>();
   }
-  
+
   domain.m_feNodeManager.AddKeylessDataField<int>("inContact",true,true);
 
   domain.m_feNodeManager.AddKeylessDataField<int>(m_trilinosIndexStr,true,true);
@@ -133,14 +154,14 @@ void LagrangeSmallStrain::RegisterFields( PhysicalDomainT& domain )
     domain.m_feFaceManager.AddKeylessDataField<R1Tensor>("contactStress", true, true);
     if(domain.m_contactManager.m_sliding_law != 0)
     {
-      for (localIndex iLoad=0; iLoad<2; ++iLoad)
+      for (localIndex iLoad=0 ; iLoad<2 ; ++iLoad)
       {
         std::string s_base, s_gpNum;
         if(iLoad==0)
           s_base = "uJumpPl_Previous_gp";
         else
           s_base = "uJumpPl_Current_gp";
-        for (localIndex iGp = 0; iGp < 4; ++iGp)
+        for (localIndex iGp = 0 ; iGp < 4 ; ++iGp)
         {
           std::stringstream ss;
           ss << iGp;
@@ -155,32 +176,36 @@ void LagrangeSmallStrain::RegisterFields( PhysicalDomainT& domain )
   if (m_hasReferenceStress)
   {
     for( std::map< ElementManagerT::RegKeyType, ElementRegionT >::iterator i = domain.m_feElementManager.m_ElementRegions.begin() ;
-        i != domain.m_feElementManager.m_ElementRegions.end(); ++i )
+         i != domain.m_feElementManager.m_ElementRegions.end() ; ++i )
     {
       ElementRegionT& elementRegion = i->second;
       elementRegion.AddKeylessDataField<R2SymTensor>("referenceStress", true, true);
     }
   }
-  for(localIndex i = 0; i < m_thermalRegionNames.size(); ++i)
+  for(localIndex i = 0 ; i < m_thermalRegionNames.size() ; ++i)
   {
     std::map<std::string, ElementRegionT>::iterator it = domain.m_feElementManager.m_ElementRegions.find(m_thermalRegionNames[i]);
     if (it == domain.m_feElementManager.m_ElementRegions.end() )
       throw GPException("Cannot find the thermal region specified!");
 
-    ElementRegionT& elemRegion = it -> second;
+    ElementRegionT& elemRegion = it->second;
 
     elemRegion.AddKeylessDataField<realT>("temperature", true, true);
     elemRegion.AddKeylessDataField<realT>("linearCTE", true, false);
-    // This is the linear coefficient of thermal expansion, not the volumetric one.
+    // This is the linear coefficient of thermal expansion, not the volumetric
+    // one.
     elemRegion.AddKeylessDataField<realT>("antiThermalStress", false, false);
-    // This is the hydrostatic stress that would cause the same amount of volumetric strain as the thermal expantion/contraction would
+    // This is the hydrostatic stress that would cause the same amount of
+    // volumetric strain as the thermal expantion/contraction would
 
     array<real64>& temperature = elemRegion.GetFieldData<realT>("temperature");
     array<real64>& CTE = elemRegion.GetFieldData<realT>("linearCTE");
     temperature = m_refTemperature;
     CTE = m_defaultCTE;
 
-    //We don't register a fied for reference temperature.  If the user needs varying ref temp in the domain, he/she will initialize the field in initial conditions, which will automatically create the field.
+    //We don't register a fied for reference temperature.  If the user needs
+    // varying ref temp in the domain, he/she will initialize the field in
+    // initial conditions, which will automatically create the field.
 
   }
 }
@@ -238,47 +263,47 @@ void LagrangeSmallStrain::InitializeCommunications( PartitionBase& partition )
 
 
 
-
-
-
-
 void LagrangeSmallStrain::SetInitialGuess( const PhysicalDomainT& domain,
-                                                realT* const local_solution )
+                                           realT* const local_solution )
 {
 /*
-  const array<integer>& trilinos_index     = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-  const array<R1Tensor>& incdisp  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
-  const array<integer>& is_ghost           = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+   const array<integer>& trilinos_index     =
+      domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+   const array<R1Tensor>& incdisp  =
+      domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
+   const array<integer>& is_ghost           =
+      domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
 
-//  std::cout<<"LagrangeSmallStrain::SetInitialGuess"<<std::endl;
+   //  std::cout<<"LagrangeSmallStrain::SetInitialGuess"<<std::endl;
 
-  for(unsigned r=0; r<incdisp.size(); ++r)
-  {
+   for(unsigned r=0; r<incdisp.size(); ++r)
+   {
     if(is_ghost[r] < 0)
     {
       for( int d=0 ; d<dim ; ++d )
       {
         int lid = m_rowMap->LID(dim*trilinos_index[r]+d);
-//        local_solution[lid] = incdisp[r][d];
-//        std::cout<<local_solution[lid]<<std::endl;
-//        local_solution[lid] = 0.0;
+   //        local_solution[lid] = incdisp[r][d];
+   //        std::cout<<local_solution[lid]<<std::endl;
+   //        local_solution[lid] = 0.0;
       }
     }
-  }
-  */
+   }
+ */
 }
 
 
 void LagrangeSmallStrain::PropagateSolution( const realT* const local_solution,
-                                                  const realT scalingFactor,
-                                                  PhysicalDomainT& domain,
-                                                  const localIndex dofOffset )
+                                             const realT scalingFactor,
+                                             PhysicalDomainT& domain,
+                                             const localIndex dofOffset )
 {
   const array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
   const array<integer>& is_ghost       = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
   array<R1Tensor>& X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
   array<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
-//  array<R1Tensor>& velocity = domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
+//  array<R1Tensor>& velocity =
+// domain.m_feNodeManager.GetFieldData<FieldInfo::velocity>();
   array<R1Tensor>& incdisp  = domain.m_feNodeManager.GetFieldData<FieldInfo::incrementalDisplacement>();
 
   realT maxpos = 0.0;
@@ -374,7 +399,7 @@ void LagrangeSmallStrain::PropagateSolution( const realT* const local_solution,
 
 #endif
 
-  for(unsigned r=0; r<disp.size(); ++r)
+  for(unsigned r=0 ; r<disp.size() ; ++r)
   {
     if(is_ghost[r] < 0)
     {
@@ -391,28 +416,10 @@ void LagrangeSmallStrain::PropagateSolution( const realT* const local_solution,
     }
   }
   m_maxDofVal = maxpos;
-//  std::cout<<"Maximum DeltaDisplacement, Position = "<<maxinc<<", "<<maxpos<<", "<<maxinc/maxpos<<std::endl;
+//  std::cout<<"Maximum DeltaDisplacement, Position = "<<maxinc<<",
+// "<<maxpos<<", "<<maxinc/maxpos<<std::endl;
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -423,55 +430,63 @@ void LagrangeSmallStrain::PropagateSolution( const realT* const local_solution,
 /**
  * @author walsh24
  * @brief Apply traction boundary condition to a given face set
- * 
+ *
  */
 
 void LagrangeSmallStrain::TractionBC( PhysicalDomainT& domain,
-                                           ObjectDataStructureBaseT& object ,
-                                           BoundaryConditionBase* bc,
-                                           const lSet& set, realT time )
+                                      ObjectDataStructureBaseT& object,
+                                      BoundaryConditionBase* bc,
+                                      const lSet& set, realT time )
 {
-   
-  TractionBoundaryCondition* trbc = bc->UpcastActiveBCPointer<TractionBoundaryCondition>(time); //   = dynamic_cast<TractionBoundaryCondition*> ( bc);
+
+  TractionBoundaryCondition* trbc = bc->UpcastActiveBCPointer<TractionBoundaryCondition>(time); //   =
+                                                                                                // dynamic_cast<TractionBoundaryCondition*>
+                                                                                                // (
+                                                                                                // bc);
   if( trbc )
   {
     array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
-//    array<integer>& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
+//    array<integer>& face_is_ghost  =
+// domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
     array<integer>& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-   
+
     Epetra_IntSerialDenseVector  node_dof(1);
     Epetra_SerialDenseVector     node_rhs(1);
-    
+
 //    const R1Tensor& n = trbc->GetDirection(time); // old way
-  
+
     for( lSet::const_iterator fc=set.begin() ; fc!=set.end() ; ++fc )
     {
       if( domain.m_feFaceManager.m_toElementsRelation[*fc].size() > 0)
       {
 
         const realT area = domain.m_feFaceManager.SurfaceArea( domain.m_feNodeManager, *fc, true );
-        
+
 /*  Old way
         realT value = trbc->GetValue(domain.m_feFaceManager,fc,time);
         R1Tensor traction = n;
         if( trbc->IsNormalTraction() )
         {
-          traction = domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, *fc );
+          traction = domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager,
+ * fc );
           traction *= -1;
         }
-        traction *= value * area / domain.m_feFaceManager.m_toNodesRelation[*fc].size();
-*/
+        traction *= value * area /
+           domain.m_feFaceManager.m_toNodesRelation[*fc].size();
+ */
         R1Tensor traction = trbc->GetTractionOnFace(domain,fc,time) * area / domain.m_feFaceManager.m_toNodesRelation[*fc].size();
-   
- /*       R1Tensor traction = trbc->GetTractionOnFace(domain,fc,time); // new way
-        traction *= area / domain.m_feFaceManager.m_toNodesRelation[*fc].size();*/
+
+        /*       R1Tensor traction = trbc->GetTractionOnFace(domain,fc,time); //
+           new way
+               traction *= area /
+                  domain.m_feFaceManager.m_toNodesRelation[*fc].size();*/
 
         for( lArray1d::const_iterator nd=domain.m_feFaceManager.m_toNodesRelation[*fc].begin() ;
              nd!=domain.m_feFaceManager.m_toNodesRelation[*fc].end() ; ++nd )
         {
           if (node_is_ghost[*nd] < 0)
           {
-            for(int ii =0; ii < dim;++ii)
+            for(int ii =0 ; ii < dim ; ++ii)
             {
               node_dof(0) = dim*trilinos_index[*nd]+ii;
               node_rhs(0) = traction(ii);
@@ -481,7 +496,7 @@ void LagrangeSmallStrain::TractionBC( PhysicalDomainT& domain,
           }
 
         }
-      } 
+      }
     }
   }
 }
@@ -493,9 +508,9 @@ void LagrangeSmallStrain::TractionBC( PhysicalDomainT& domain,
  */
 
 void LagrangeSmallStrain::PressureBC( PhysicalDomainT& domain,
-                                               ObjectDataStructureBaseT& ,
-                                               BoundaryConditionBase*,
-                                               const lSet& set, realT )
+                                      ObjectDataStructureBaseT&,
+                                      BoundaryConditionBase*,
+                                      const lSet& set, realT )
 {
 
   array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
@@ -508,17 +523,22 @@ void LagrangeSmallStrain::PressureBC( PhysicalDomainT& domain,
 
   // If aperture is defined and is <= 0, the pressure BC is not enforced.
   bool isApertureControlled = false;
-  if( domain.m_feFaceManager.HasField<realT>(PS_STR::ApertureStr) ){
+  if( domain.m_feFaceManager.HasField<realT>(PS_STR::ApertureStr) )
+  {
     isApertureControlled = true;
     apertures = &(domain.m_feFaceManager.GetFieldData<realT>(PS_STR::ApertureStr));
   }
 
-  for( lSet::const_iterator fc=set.begin() ; fc!=set.end() ; ++fc ) {
-    if( face_is_ghost[*fc] < 0 ){
+  for( lSet::const_iterator fc=set.begin() ; fc!=set.end() ; ++fc )
+  {
+    if( face_is_ghost[*fc] < 0 )
+    {
       realT pressure = pressures[*fc];
 
-      if(isApertureControlled){
-        if ( (*apertures)[*fc] <= 0.0) break;
+      if(isApertureControlled)
+      {
+        if ( (*apertures)[*fc] <= 0.0)
+          break;
       }
 
       const realT area = domain.m_feFaceManager.SurfaceArea( domain.m_feNodeManager, *fc );
@@ -527,10 +547,11 @@ void LagrangeSmallStrain::PressureBC( PhysicalDomainT& domain,
       traction *= (-pressure * area * 0.25); // TODO hardcoded for 4 node face
 
       for( lArray1d::const_iterator nd=domain.m_feFaceManager.m_toNodesRelation[*fc].begin() ;
-          nd!=domain.m_feFaceManager.m_toNodesRelation[*fc].end() ; ++nd )
+           nd!=domain.m_feFaceManager.m_toNodesRelation[*fc].end() ; ++nd )
       {
 
-        for(int ii =0; ii < dim;++ii){
+        for(int ii =0 ; ii < dim ; ++ii)
+        {
           node_dof(0) = dim*trilinos_index[*nd]+ii;
           node_rhs(0) = traction(ii);
           m_rhs->SumIntoGlobalValues(node_dof, node_rhs);
@@ -545,15 +566,15 @@ void LagrangeSmallStrain::PressureBC( PhysicalDomainT& domain,
 /**
  * @author walsh24
  * @brief  Apply displacement boundary condition to a node set.
- * 
+ *
  */
 
 void LagrangeSmallStrain ::
-DisplacementBC(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
+DisplacementBC(PhysicalDomainT& domain, ObjectDataStructureBaseT& object,
                BoundaryConditionBase* bc, const lSet& set, realT time)
 {
 
-  realT LARGE ;
+  realT LARGE;
 
   array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
   array<integer>& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
@@ -598,224 +619,250 @@ DisplacementBC(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
 
 /**
  * @author walsh24
- * @brief  Update neighbors for non-penetrating boundary condition. 
- * 
+ * @brief  Update neighbors for non-penetrating boundary condition.
+ *
  */
 
 void LagrangeSmallStrain ::
-NonpenetratingBC_NeighborUpdate(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
+NonpenetratingBC_NeighborUpdate(PhysicalDomainT& domain, ObjectDataStructureBaseT& object,
                                 BoundaryConditionBase* bc, realT time  ){
-               	
-  NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   	
-  if(npbc) npbc->UpdateNearestNeighborMaps(domain);         	
-               	
+
+  NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);
+  if(npbc)
+    npbc->UpdateNearestNeighborMaps(domain);
+
 }
 
 /**
  * @author walsh24
- * @brief  Fix displacements of penetrating neighbors - caution - assumes nodes are in close proximity at contact. 
- * 
+ * @brief  Fix displacements of penetrating neighbors - caution - assumes nodes
+ * are in close proximity at contact.
+ *
  */
 
 void LagrangeSmallStrain ::
-NonpenetratingBC_DetectContact(PhysicalDomainT& domain, ObjectDataStructureBaseT& object, 
+NonpenetratingBC_DetectContact(PhysicalDomainT& domain, ObjectDataStructureBaseT& object,
                                BoundaryConditionBase* bc, realT time  ){
-  NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
-  if(npbc){     
-  
-  	array<integer>& inContact = domain.m_feNodeManager.GetFieldData<int>("inContact");
-  	
+  NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);
+  if(npbc)
+  {
+
+    array<integer>& inContact = domain.m_feNodeManager.GetFieldData<int>("inContact");
+
     array<R1Tensor>& disp = object.GetFieldData<FieldInfo::displacement> ();
     const array<R1Tensor>& X = object.GetFieldData<FieldInfo::referencePosition> ();
-    
-//    array<integer>& face_is_ghost  = domain.m_faceManager.GetFieldData<FieldInfo::ghostRank>();
-    
-  	lSet&  contactingNodes = npbc->m_contactingNodes;
-  	std::map<localIndex,localIndex>&  nearestNodeNeighborMap = npbc->m_nearestNodeNeighborMap;
-  	
-  	std::map<localIndex,localIndex>::iterator itr = npbc->m_nearestFaceNeighborMap.begin();
-  	std::map<localIndex,localIndex>::iterator iend = npbc->m_nearestFaceNeighborMap.end();
-  	for(; itr != iend; ++itr){
-  	  localIndex fc  = itr->first;
-//  	  localIndex fc_nbr = itr->second;
-  	 
-  	  // loop over nodes in face
-  	  lArray1d& nodeList = domain.m_feFaceManager.m_toNodesRelation[fc];
-  	  R1Tensor n = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc);
-  	  for(lArray1d::size_type i =0 ; i< nodeList.size(); ++i){
-  	 	
-  	    localIndex nd = nodeList[i];
-  	    localIndex nbr = nearestNodeNeighborMap[nd];
-  	   
-  	    R1Tensor pa = disp[nd] + X[nd];
-  	    R1Tensor l = disp[nbr] + X[nbr] - pa;  // branch vector
-  	       	 
-  	    if(Dot(n,l) <=  0.0  && (nearestNodeNeighborMap[nbr] == nd) ){
-  	 	  contactingNodes.insert(nd);
-  	 	  contactingNodes.insert(nbr);
-  	 	    
-  	 	  l*=0.5;
-  	 	  disp[nd] += l;
-  	 	  disp[nbr] -= l;
-  	 	    
-   	      inContact[nd] = nbr;
-   	      inContact[nbr] = nd;
-   	    }
-  	  }
+
+//    array<integer>& face_is_ghost  =
+// domain.m_faceManager.GetFieldData<FieldInfo::ghostRank>();
+
+    lSet&  contactingNodes = npbc->m_contactingNodes;
+    std::map<localIndex,localIndex>&  nearestNodeNeighborMap = npbc->m_nearestNodeNeighborMap;
+
+    std::map<localIndex,localIndex>::iterator itr = npbc->m_nearestFaceNeighborMap.begin();
+    std::map<localIndex,localIndex>::iterator iend = npbc->m_nearestFaceNeighborMap.end();
+    for( ; itr != iend ; ++itr)
+    {
+      localIndex fc  = itr->first;
+//      localIndex fc_nbr = itr->second;
+
+      // loop over nodes in face
+      lArray1d& nodeList = domain.m_feFaceManager.m_toNodesRelation[fc];
+      R1Tensor n = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc);
+      for(lArray1d::size_type i =0 ; i< nodeList.size() ; ++i)
+      {
+
+        localIndex nd = nodeList[i];
+        localIndex nbr = nearestNodeNeighborMap[nd];
+
+        R1Tensor pa = disp[nd] + X[nd];
+        R1Tensor l = disp[nbr] + X[nbr] - pa;  // branch vector
+
+        if(Dot(n,l) <=  0.0  && (nearestNodeNeighborMap[nbr] == nd) )
+        {
+          contactingNodes.insert(nd);
+          contactingNodes.insert(nbr);
+
+          l*=0.5;
+          disp[nd] += l;
+          disp[nbr] -= l;
+
+          inContact[nd] = nbr;
+          inContact[nbr] = nd;
+        }
+      }
     }
-  }                     	
+  }
 }
 
 
 void LagrangeSmallStrain ::
-NonpenetratingBC_UpdateAperture(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
-                               BoundaryConditionBase* bc, realT time  ){
-  NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
-  if(npbc){     
-  
-  	array<real64>& aperture = domain.m_feFaceManager.GetFieldData<realT>("Aperture");
-  	
-  	
-  	std::map<localIndex,localIndex>::iterator itr = npbc->m_nearestFaceNeighborMap.begin();
-  	std::map<localIndex,localIndex>::iterator iend = npbc->m_nearestFaceNeighborMap.end();
-  	for(; itr != iend; ++itr){
-  	  localIndex fc  = itr->first;
-  	  localIndex fc_nbr = itr->second;
-  	  
-  	  //if(npbc->m_nearestFaceNeighborMap[fc_nbr] == fc){
-  	  	
-        R1Tensor norm  = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc);
-        R1Tensor normB = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc_nbr);
-        R1Tensor center; domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager, fc,center);
-        R1Tensor centerB; domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager, fc_nbr,centerB);
-        norm -= normB;
-        norm.Normalize();
-        
-  	    aperture[fc] = std::max((centerB-center)*norm,0.0);
-  	  //}
+NonpenetratingBC_UpdateAperture(PhysicalDomainT& domain, ObjectDataStructureBaseT& object,
+                                BoundaryConditionBase* bc, realT time  ){
+  NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);
+  if(npbc)
+  {
+
+    array<real64>& aperture = domain.m_feFaceManager.GetFieldData<realT>("Aperture");
+
+
+    std::map<localIndex,localIndex>::iterator itr = npbc->m_nearestFaceNeighborMap.begin();
+    std::map<localIndex,localIndex>::iterator iend = npbc->m_nearestFaceNeighborMap.end();
+    for( ; itr != iend ; ++itr)
+    {
+      localIndex fc  = itr->first;
+      localIndex fc_nbr = itr->second;
+
+      //if(npbc->m_nearestFaceNeighborMap[fc_nbr] == fc){
+
+      R1Tensor norm  = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc);
+      R1Tensor normB = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc_nbr);
+      R1Tensor center; domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager, fc,center);
+      R1Tensor centerB; domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager, fc_nbr,centerB);
+      norm -= normB;
+      norm.Normalize();
+
+      aperture[fc] = std::max((centerB-center)*norm,0.0);
+      //}
     }
-  }                     	
+  }
 }
 
 /**
  * @author walsh24
- * @brief  Fix displacements of penetrating neighbors - caution - assumes nodes are in close proximity. 
- * 
+ * @brief  Fix displacements of penetrating neighbors - caution - assumes nodes
+ * are in close proximity.
+ *
  */
 
 void LagrangeSmallStrain ::
-NonpenetratingBC_Sparsity(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
+NonpenetratingBC_Sparsity(PhysicalDomainT& domain, ObjectDataStructureBaseT& object,
                           BoundaryConditionBase* bc, realT time  ){
-  
 
-  NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
-  if(npbc){
-  	
-    array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);	
+
+  NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);
+  if(npbc)
+  {
+
+    array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
     array<integer>& node_is_ghost  = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
-    
+
     std::map<localIndex,localIndex>&  nearestNodeNeighborMap = npbc->m_nearestNodeNeighborMap;
-    
+
     std::vector<int>  node_row_dof(1);
     std::vector<int>  node_row_dofB(dim);
     std::vector<int>  node_col_dofB(2*dim);
-    
-    // give contacting nodes the same trilinos index, 
+
+    // give contacting nodes the same trilinos index,
     // add other index to dummy trilinos indicies.
     lSet&  contactingNodes = npbc->m_contactingNodes;
     lSet::iterator iend = contactingNodes.end();
-    for( lSet::iterator itr = contactingNodes.begin(); itr != iend; ++itr ) {	
+    for( lSet::iterator itr = contactingNodes.begin() ; itr != iend ; ++itr )
+    {
       localIndex nd =  *itr;
       localIndex nbr = nearestNodeNeighborMap[nd];
-      
-      if(trilinos_index[nbr] > trilinos_index[nd]){
-          
+
+      if(trilinos_index[nbr] > trilinos_index[nd])
+      {
+
         int triNbr = trilinos_index[nbr];
         trilinos_index[nbr] = trilinos_index[nd];
 
-        for(int component =0; component < dim; ++component){
+        for(int component =0 ; component < dim ; ++component)
+        {
           node_row_dof[0] = dim*triNbr+component;
           dummyDof.push_back(node_row_dof[0]);
           m_sparsity->InsertGlobalIndices(node_row_dof.size(),
-                                        &node_row_dof.front(),
-                                        node_row_dof.size(),
-                                        &node_row_dof.front());
-      	}
-     }
-     
+                                          &node_row_dof.front(),
+                                          node_row_dof.size(),
+                                          &node_row_dof.front());
+        }
+      }
+
     }
-    //std::cout << "Number of Contacting Nodes: " <<  contactingNodes.size() <<std::endl;
-    
+    //std::cout << "Number of Contacting Nodes: " <<  contactingNodes.size()
+    // <<std::endl;
+
     // add resistance between non contacting nodes.
 
     std::map<localIndex,localIndex>::iterator iendB = nearestNodeNeighborMap.end();
-    for( std::map<localIndex,localIndex>::iterator itr = nearestNodeNeighborMap.begin();
-         itr != iendB; ++itr ) {	
+    for( std::map<localIndex,localIndex>::iterator itr = nearestNodeNeighborMap.begin() ;
+         itr != iendB ; ++itr )
+    {
       localIndex nd =  itr->first;
-      if(node_is_ghost[nd] < 0){
+      if(node_is_ghost[nd] < 0)
+      {
         localIndex nbr = nearestNodeNeighborMap[nd];
         int tri = trilinos_index[nd];
         int triNbr = trilinos_index[nbr];
-        if(tri != triNbr){  // ie not in contact
-          for(int component =0; component < dim; ++component){
+        if(tri != triNbr)   // ie not in contact
+        {
+          for(int component =0 ; component < dim ; ++component)
+          {
             node_row_dofB[component] = dim*tri+component;
             node_col_dofB[component] = node_row_dofB[component];
             node_col_dofB[dim+component] = dim*triNbr+component;
           }
           m_sparsity->InsertGlobalIndices(node_row_dofB.size(),
-                                        &node_row_dofB.front(),
-                                        node_col_dofB.size(),
-                                        &node_col_dofB.front());
+                                          &node_row_dofB.front(),
+                                          node_col_dofB.size(),
+                                          &node_col_dofB.front());
 
         }
       }
     }
-    	         	
-  }             	
+
+  }
 }
 
 /**
  * @author walsh24
- * @brief  Fix displacements of penetrating neighbors - caution - assumes neighbors in close proximity. 
- * 
+ * @brief  Fix displacements of penetrating neighbors - caution - assumes
+ * neighbors in close proximity.
+ *
  */
 
 void LagrangeSmallStrain ::
-NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object ,
-               BoundaryConditionBase* bc, realT time  ){
+NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object,
+                       BoundaryConditionBase* bc, realT time  ){
 
 
-  NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);   
-  if(npbc){
-//    const array<R1Tensor>& disp = object.GetFieldData<FieldInfo::displacement> ();
-  	
-    array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);	
-//    array<integer>& node_is_ghost  = domain.m_nodeManager.GetFieldData<FieldInfo::ghostRank>();
+  NonPenetratingBoundaryCondition* npbc = dynamic_cast<NonPenetratingBoundaryCondition*> (bc);
+  if(npbc)
+  {
+//    const array<R1Tensor>& disp = object.GetFieldData<FieldInfo::displacement>
+// ();
+
+    array<integer>& trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+//    array<integer>& node_is_ghost  =
+// domain.m_nodeManager.GetFieldData<FieldInfo::ghostRank>();
     array<integer>& face_is_ghost  = domain.m_feFaceManager.GetFieldData<FieldInfo::ghostRank>();
-  	
+
     Epetra_IntSerialDenseVector  node_row_dof(1);
     Epetra_IntSerialDenseVector  node_row_dofB(dim);
     Epetra_IntSerialDenseVector  node_col_dofB(2*dim);
     Epetra_SerialDenseVector     node_rhsB(dim);
     Epetra_SerialDenseMatrix     node_matrix  (1,1);
     Epetra_SerialDenseMatrix     node_matrixB  (dim,2*dim);
-  	
+
     // Set diagonal of dummy dofs to 1
     node_matrix(0,0) = 1.0;
-    for( array<integer>::size_type i=0; i < dummyDof.size() ; ++i ) {
-      node_row_dof(0) = dummyDof[i];	
+    for( array<integer>::size_type i=0 ; i < dummyDof.size() ; ++i )
+    {
+      node_row_dof(0) = dummyDof[i];
       m_matrix->ReplaceGlobalValues(node_row_dof,node_matrix);
-    }       	
+    }
 
     // add entries to represent springs between non contacting nodes.
     std::map<localIndex,localIndex>&  nearestFaceNeighborMap = npbc->m_nearestFaceNeighborMap;
     std::map<localIndex,localIndex>&  nearestNodeNeighborMap = npbc->m_nearestNodeNeighborMap;
     std::map<localIndex,localIndex>::iterator iendB = nearestFaceNeighborMap.end();
-    for( std::map<localIndex,localIndex>::iterator itr = nearestFaceNeighborMap.begin();
-         itr != iendB; ++itr ) {	
-      localIndex fc =  itr->first;	
-      
-      if(face_is_ghost[fc] < 0){
+    for( std::map<localIndex,localIndex>::iterator itr = nearestFaceNeighborMap.begin() ;
+         itr != iendB ; ++itr )
+    {
+      localIndex fc =  itr->first;
+
+      if(face_is_ghost[fc] < 0)
+      {
         localIndex fcb =  itr->second;
         R1Tensor norm  = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fc);
         R1Tensor normB = domain.m_feFaceManager.FaceNormal(domain.m_feNodeManager, fcb);
@@ -825,56 +872,62 @@ NonpenetratingBC_Apply(PhysicalDomainT& domain, ObjectDataStructureBaseT& object
         norm.Normalize();
 
         R1Tensor dl = centerB-center;
- 
+
 //        realT l = sqrt(Dot(dl,dl));
         realT a = 0.5*(domain.m_feFaceManager.SurfaceArea(domain.m_feNodeManager, fc)
                        + domain.m_feFaceManager.SurfaceArea(domain.m_feNodeManager, fcb));
 
-        realT k =  0.25*a*m_nonContactModulus; // FIXME /l;    // spring stiffness
-   
-  	    lArray1d& nodeList = domain.m_feFaceManager.m_toNodesRelation[fc];
-  	    for( lArray1d::size_type nn =0 ; nn< nodeList.size(); ++nn){
+        realT k =  0.25*a*m_nonContactModulus; // FIXME /l;    // spring
+                                               // stiffness
+
+        lArray1d& nodeList = domain.m_feFaceManager.m_toNodesRelation[fc];
+        for( lArray1d::size_type nn =0 ; nn< nodeList.size() ; ++nn)
+        {
           localIndex nd = nodeList[nn];
           localIndex nbr = nearestNodeNeighborMap[nd];
-          
+
           int tri = trilinos_index[nd];
           int triNbr = trilinos_index[nbr];
-          if(tri != triNbr){  // not in contact
-
-           // R1Tensor du = disp[nd] - disp[nbr];
+          if(tri != triNbr)   // not in contact
+          {// R1Tensor du = disp[nd] - disp[nbr];
            // R1Tensor f_rhs = norm; f_rhs *= k*Dot(norm,du);
 
-            for(int i =0; i < dim; ++i){
+            for(int i =0 ; i < dim ; ++i)
+            {
               node_row_dofB(i) = dim*tri+i;
               node_col_dofB(i) = node_row_dofB(i);
               node_col_dofB(dim+i) = dim*triNbr+i;
-              for(int j =0; j < dim; ++j){
+              for(int j =0 ; j < dim ; ++j)
+              {
                 realT val = k*(0.1+0.9*norm[i]*norm[j]);
                 node_matrixB(i,j) = val;
                 node_matrixB(i,j+dim) = -val;
               }
-             // node_rhsB(i) = f_rhs[i];
+              // node_rhsB(i) = f_rhs[i];
             }
             m_matrix->SumIntoGlobalValues(node_row_dofB,node_col_dofB,node_matrixB);
-           // m_rhs->SumIntoGlobalValues(node_row_dofB,node_rhsB);
+            // m_rhs->SumIntoGlobalValues(node_row_dofB,node_rhsB);
           }
         }
       }
     }
 
-    if(npbc->m_updatePressure){
+    if(npbc->m_updatePressure)
+    {
 
-      // loop over second set - update pressure based on nearest neighbor from first
+      // loop over second set - update pressure based on nearest neighbor from
+      // first
       array<real64>& pressures = domain.m_feFaceManager.GetFieldData<realT>(PS_STR::PressureStr);
 
       const lSet& setB = domain.m_feFaceManager.m_Sets[npbc->m_setNames[1] ];
-      for( lSet::const_iterator fcB=setB.begin(); fcB!=setB.end() ; ++fcB ) {
+      for( lSet::const_iterator fcB=setB.begin() ; fcB!=setB.end() ; ++fcB )
+      {
         localIndex nbr = nearestFaceNeighborMap[*fcB];
         pressures[*fcB] = pressures[nbr];
       }
     }
 
-  }             	
+  }
 }
 
 
@@ -891,7 +944,8 @@ void LagrangeSmallStrain::FixNodesBC( NodeManager const& nodeManager, const lSet
   {
     if( ghostRank[*nd] < 0 )
     {
-//      std::cout<<"fixing node "<<*nd<<" dof "<<dim*trilinos_index[*nd]<<std::endl;
+//      std::cout<<"fixing node "<<*nd<<" dof
+// "<<dim*trilinos_index[*nd]<<std::endl;
       for( int d=0 ; d<dim ; ++d )
       {
         node_dof(0) = dim*trilinos_index[*nd]+d;
@@ -926,6 +980,3 @@ void LagrangeSmallStrain::FixNodesBC( NodeManager const& nodeManager, const lSet
 
 //SolverRegistrator<LagrangeSmallStrain<2> >
 //  reg_ImplicitLaplaceSolver2D;
-
-
-

@@ -16,10 +16,13 @@ struct StableTimeStep
 
   inline bool SetIfSmaller(const realT dt)
   {
-    if(dt < m_maxdt) {
+    if(dt < m_maxdt)
+    {
       this->m_maxdt = dt;
       return true;
-    } else {
+    }
+    else
+    {
       return false;
     }
   }

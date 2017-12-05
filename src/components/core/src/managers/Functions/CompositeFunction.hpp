@@ -19,7 +19,7 @@ class CompositeFunction : public FunctionBase
 {
 public:
   CompositeFunction( const std::string& name,
-                    dataRepository::ManagedGroup * const parent );
+                     dataRepository::ManagedGroup * const parent );
 
   virtual ~CompositeFunction();
   static string CatalogName() { return "CompositeFunction"; }
@@ -34,7 +34,7 @@ public:
                          real64_array & result ) const override final;
 
   virtual real64 Evaluate( real64 const * const input) const override final;
-  
+
 private:
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;

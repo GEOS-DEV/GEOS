@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -65,7 +83,8 @@
 
 /**
  * @author Scott Johnson
- * @brief Class to manager the collection of external faces as references in a face manager collection
+ * @brief Class to manager the collection of external faces as references in a
+ * face manager collection
  */
 class ExternalFaceManagerT : public ObjectDataStructureBaseT
 {
@@ -79,14 +98,14 @@ public:
   void Initialize(  ) {}
 
   virtual void DeserializeObjectField(const std::string& name, const array<real64>& field);
-  virtual void DeserializeObjectFields(const array<string>& names, const array<array<real64>>& fields);
+  virtual void DeserializeObjectFields(const array<string>& names, const array<array<real64> >& fields);
 
   void erase( const localIndex i );
   globalIndex resize( const localIndex size, const bool assignGlobals = false );
 
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject  = NULL) {}
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  = NULL) {}
-  void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager ,
+  void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
                                                          array<gArray1d>& objectToCompositionObject  )
   {
     (void)compositionObjectManager;
@@ -169,9 +188,9 @@ public:
     fe = IsFiniteElement(kf);
     return this->m_externalFaceToFaceMap[kf] - (fe ? 0 : this->DiscreteElementFaceIndexOffset());
   }
-  
+
   void UpdateGeometricContactProperties(const realT dt,
-                                          PhysicalDomainT& domain)
+                                        PhysicalDomainT& domain)
   {
     array<array<R1Tensor> > xs;
     xs.resize(this->size());
@@ -192,8 +211,10 @@ public:
 
   inline bool AutoContact() const { return m_autoContact; }
 
-  //@annavarapusr1: Functions to evaluate weighting and stabilization parameter for Nitsche's method
-  //                Also evaluate projection tensor to transform between xyz and n-tau1-tau2 planes
+  //@annavarapusr1: Functions to evaluate weighting and stabilization parameter
+  // for Nitsche's method
+  //                Also evaluate projection tensor to transform between xyz and
+  // n-tau1-tau2 planes
   void GetProjectionTensorAndWeightingAndStabilizationParameters( const int dim,
                                                                   const bool planeStress,
                                                                   PhysicalDomainT& domain);
@@ -228,8 +249,8 @@ protected:
 private:
 
   void UpdateGeometricContactPropertiesSub(const realT dt,
-                                        PhysicalDomainT& domain,
-                                        const array<array<R1Tensor> >& xs);
+                                           PhysicalDomainT& domain,
+                                           const array<array<R1Tensor> >& xs);
 
   void SetCommonPlaneGeometryAsOverlap(const localIndex index,
                                        const localIndex kf1,
@@ -257,7 +278,9 @@ private:
   inline bool IsAnyContact(const int activeC){return activeC != nocontact;}
   inline bool IsDEMContact(const int activeC){return activeC == demcontact;}
 
-  inline int  UpdateContactFlag(const int previousActiveC, const int newActiveC) { return (IsMechanicalContact(previousActiveC) && IsMechanicalContact(newActiveC)) ? persistentmechanicalcontact : newActiveC;}
+  inline int  UpdateContactFlag(const int previousActiveC, const int newActiveC) {
+    return (IsMechanicalContact(previousActiveC) && IsMechanicalContact(newActiveC)) ? persistentmechanicalcontact : newActiveC;
+  }
 
   inline bool IsMechanicalContact(const int activeC){return activeC == mechanicalcontact || activeC == persistentmechanicalcontact;}
   inline bool IsNewMechanicalContact(const int activeC){return activeC == mechanicalcontact;}
@@ -265,7 +288,8 @@ private:
   inline bool IsOpenContact(const int activeC){return activeC == opencontact;}
 
   /**
-   * @brief In parallel, it is advantageous to prevent the ghost faces from contacting each other and to avoid self-contact
+   * @brief In parallel, it is advantageous to prevent the ghost faces from
+   * contacting each other and to avoid self-contact
    * @author Scott Johnson
    */
   void RemoveInvalidPairsFromNeighborList(const array<integer>& faceAttachedToALocalNode,
@@ -344,11 +368,14 @@ private:
                                         R1Tensor& velocity);
 
 //  static realT CalculateStress(const R1Tensor& normal, const R1Tensor& dx,
-//                               const realT normalApproach, realT& stressNormal,
-//                               realT& stressDilation, R1Tensor& stressShear, R1Tensor& stress,
+//                               const realT normalApproach, realT&
+// stressNormal,
+//                               realT& stressDilation, R1Tensor& stressShear,
+// R1Tensor& stress,
 //                               R1Tensor& relativeShear,
 //                               const realT normalApproachAtDilationInitiation,
-//                               const realT normalApproachNormalYield, realT& normalGap,
+//                               const realT normalApproachNormalYield, realT&
+// normalGap,
 //                               const realT porePressure, int& ifail,
 //                               const realT relativeShearAtDilationInitiation,
 //                               const realT relativeShearAtResidualStrength,
@@ -357,24 +384,27 @@ private:
 //                               const realT tangentOfDilationAngleAtZeroStress,
 //                               realT& tanFrictionCoefficientInitial,
 //                               const realT& tanFrictionCoefficientResidual,
-//                               const realT knCoefficientElastic, const realT knPlasticLoading,
-//                               const realT knPlasticUnloading, const realT knDilation,
-//                               const realT kShear, const realT cohesion, const realT dt);
+//                               const realT knCoefficientElastic, const realT
+// knPlasticLoading,
+//                               const realT knPlasticUnloading, const realT
+// knDilation,
+//                               const realT kShear, const realT cohesion, const
+// realT dt);
 
   static bool Criterion1(const R1Tensor& nx1, const R1Tensor& nx2, const realT tolCosMin);
   static bool Criterion2(const R1Tensor& e1,
-                                const R1Tensor& e2,
-                                const array<R1Tensor>& xs1,
-                                const array<R1Tensor>& xs2,
-                                array<R1TensorT<2> >& xsl1,
-                                array<R1TensorT<2> >& xsl2,
-                                realT& minDim);
+                         const R1Tensor& e2,
+                         const array<R1Tensor>& xs1,
+                         const array<R1Tensor>& xs2,
+                         array<R1TensorT<2> >& xsl1,
+                         array<R1TensorT<2> >& xsl2,
+                         realT& minDim);
   static bool Criterion3(const array<R1TensorT<2> >& xsl1,
-                                const array<R1TensorT<2> >& xsl2,
-                                array<R1TensorT<2> >& xsl,
-                                realT& area,
-                                const realT positionTolerance,
-                                const realT areaTolerance);
+                         const array<R1TensorT<2> >& xsl2,
+                         array<R1TensorT<2> >& xsl,
+                         realT& area,
+                         const realT positionTolerance,
+                         const realT areaTolerance);
 
   void RemoveFromNeighborLists(const localIndex ilocal);
   void RemoveFromNeighborListInverse(const localIndex i0,
@@ -386,8 +416,8 @@ private:
     const realT mass = massFace2 > massFace1 ? massFace1 : massFace2;
     const realT stiffness = area * arealStiffness;
     const realT dttmp = isZero(stiffness, 10*std::numeric_limits<realT>::min()) ?
-        std::numeric_limits<realT>::max() :
-        0.3 * sqrt(mass/stiffness);
+                        std::numeric_limits<realT>::max() :
+                        0.3 * sqrt(mass/stiffness);
     return dttmp;
   }
 

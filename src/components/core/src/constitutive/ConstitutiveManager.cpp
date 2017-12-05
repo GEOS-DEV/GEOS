@@ -17,7 +17,7 @@ namespace constitutive
 
 
 ConstitutiveManager::ConstitutiveManager( std::string const & name,
-                                          ManagedGroup * const parent ) :
+                                          ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {}
 
@@ -33,16 +33,16 @@ void ConstitutiveManager::FillDocumentationNode( dataRepository::ManagedGroup * 
 
 void ConstitutiveManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
-      std::string materialName = childNode.attribute("name").value();
-      std::string materialKey = childNode.name();
+    std::string materialName = childNode.attribute("name").value();
+    std::string materialKey = childNode.name();
 //      std::cout<<materialName<<std::endl;
-      std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( materialKey, materialName, this );
-      ConstitutiveBase * newMaterial = this->RegisterGroup<ConstitutiveBase>( materialName, std::move(material) );
-      newMaterial->SetDocumentationNodes( nullptr );
+    std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( materialKey, materialName, this );
+    ConstitutiveBase * newMaterial = this->RegisterGroup<ConstitutiveBase>( materialName, std::move(material) );
+    newMaterial->SetDocumentationNodes( nullptr );
 //      newMaterial->RegisterDocumentationNodes();
-      newMaterial->ReadXML( childNode );
+    newMaterial->ReadXML( childNode );
   }
 //  std::cout<<this->GetSubGroups().size()<<std::endl;
 //  for( auto const & material : this->GetSubGroups() )
@@ -51,7 +51,8 @@ void ConstitutiveManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 //  }
 }
 
-//ConstitutiveManager::constitutiveMaps & ConstitutiveManager::GetMaps( integer const reinit ) const
+//ConstitutiveManager::constitutiveMaps & ConstitutiveManager::GetMaps( integer
+// const reinit ) const
 //{
 //  static constitutiveMaps rval;
 //  auto & map0 = rval.first;

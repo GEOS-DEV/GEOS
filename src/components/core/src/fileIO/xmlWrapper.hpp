@@ -41,7 +41,8 @@ public:
   static void as_type( std::vector<T> & target, std::string value, std::string defValue );
 
 //  template< typename T >
-//  static T as_type( xmlNode const & node, std::string const name, T defValue );
+//  static T as_type( xmlNode const & node, std::string const name, T defValue
+// );
 
   static R1Tensor as_type( xmlNode const & node, std::string const name, R1Tensor defValue );
 
@@ -76,7 +77,8 @@ void xmlWrapper::as_type( std::vector<T> & target, std::string inputValue, std::
 
 //
 //template< typename T >
-//T xmlWrapper::as_type( xmlNode const & node, std::string const name, T defValue )
+//T xmlWrapper::as_type( xmlNode const & node, std::string const name, T
+// defValue )
 //{
 //  T rval = defValue;
 //  pugi::xml_attribute att = node.attribute( name.c_str() );
@@ -88,8 +90,6 @@ void xmlWrapper::as_type( std::vector<T> & target, std::string inputValue, std::
 //
 //  return rval;
 //}
-
-
 
 
 

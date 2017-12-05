@@ -10,15 +10,13 @@
 #include "DataStructures/Tables/Table.h"
 #include "DataStructures/VectorFields/ElementRegionT.h"
 
-ConstitutivePropertiesTable::ConstitutivePropertiesTable() :
-m_fieldNames(), m_tableNames(), m_scalars(), m_managerFields(),
-m_feNodeManager(0), m_feElementManagerIndices()
-{
-}
+ConstitutivePropertiesTable::ConstitutivePropertiesTable():
+  m_fieldNames(), m_tableNames(), m_scalars(), m_managerFields(),
+  m_feNodeManager(0), m_feElementManagerIndices()
+{}
 
 ConstitutivePropertiesTable::~ConstitutivePropertiesTable()
-{
-}
+{}
 
 void
 ConstitutivePropertiesTable::Add(const std::string& fieldName,
@@ -61,12 +59,12 @@ void ConstitutivePropertiesTable::Apply(const realT time)
   const TableManager& tableManager = TableManager::Instance();
 
   //foreach name and manager pair
-  for(std::map<ObjectDataStructureBaseT*, lArray1d>::iterator im = m_managerFields.begin(); im != m_managerFields.end(); ++im)
+  for(std::map<ObjectDataStructureBaseT*, lArray1d>::iterator im = m_managerFields.begin() ; im != m_managerFields.end() ; ++im)
   {
-    array<array<real64>> fields;
+    array<array<real64> > fields;
     array<string> names;
     ObjectDataStructureBaseT& ods = *(im->first);
-    for(lArray1d::const_iterator it = im->second.begin(); it != im->second.end(); ++it)
+    for(lArray1d::const_iterator it = im->second.begin() ; it != im->second.end() ; ++it)
     {
       names.push_back(m_fieldNames[*it]);
       const std::string& tableName = m_tableNames[*it];
@@ -81,11 +79,11 @@ void ConstitutivePropertiesTable::Apply(const realT time)
         const Table3D* t3dp = stlMapLookupPointer(tableManager.Tables<3>(), tableName);
         if(!t3dp)
           throw GPException(
-              "ConstitutivePropertiesTable::Apply : Cannot find requested table in the table manager: " + tableName);
+                  "ConstitutivePropertiesTable::Apply : Cannot find requested table in the table manager: " + tableName);
 
         if (m_feElementManagerIndices.find(*it) != m_feElementManagerIndices.end() )
         {
-          for (localIndex i = 0; i < ods.DataLengths(); ++i)
+          for (localIndex i = 0 ; i < ods.DataLengths() ; ++i)
           {
             R1Tensor cpos(((ElementRegionT&) ods).GetElementCenter(i, *m_feNodeManager));
             field[i] = t3dp->Lookup(cpos); // , TableInterpolation::linear
@@ -95,7 +93,7 @@ void ConstitutivePropertiesTable::Apply(const realT time)
         {
           localIndex i = 0;
           const array<R1Tensor>& pos = ods.GetFieldData<FieldInfo::referencePosition>();
-          for (array<R1Tensor>::const_iterator it4 = pos.begin(); it4 != pos.end(); ++it4, ++i)
+          for (array<R1Tensor>::const_iterator it4 = pos.begin() ; it4 != pos.end() ; ++it4, ++i)
             field[i] = t3dp->Lookup(*it4); // , TableInterpolation::linear
         }
       }
@@ -111,4 +109,3 @@ void ConstitutivePropertiesTable::Apply(const realT time)
     ods.DeserializeObjectFields(names, fields);
   }
 }
-

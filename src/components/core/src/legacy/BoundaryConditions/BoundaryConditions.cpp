@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -66,12 +84,12 @@
 /**
  * @author walsh24
  * @brief Boundary condition base class - should not be instantiated directly.
- * 
+ *
  **/
 BoundaryConditionBase::BoundaryConditionBase( TICPP::HierarchicalDataNode* hdn,
                                               const ProblemManagerT* const pm  )
 {
-  ReadXML(hdn); 
+  ReadXML(hdn);
 }
 
 BoundaryConditionBase::~BoundaryConditionBase()
@@ -83,18 +101,21 @@ BoundaryConditionBase::~BoundaryConditionBase()
 /**
  * @author walsh24
  * @brief Records object and field data.
- * 
- * <GENERIC_BOUNDARY_CONDITION  ... 
- *      object="Element"               * Object type, Node,Face,Element etc (Default = Node)
- *      regionname="Region1"           * Apply to all elements in Region1 (for Element fields only - no effect otherwise)
- *      setname="someFieldSubset"      * Subset to apply initial condition to - leave out or empty to apply to whole field 
+ *
+ * <GENERIC_BOUNDARY_CONDITION  ...
+ *      object="Element"               * Object type, Node,Face,Element etc
+ *(Default = Node)
+ *      regionname="Region1"           * Apply to all elements in Region1 (for
+ * Element fields only - no effect otherwise)
+ *      setname="someFieldSubset"      * Subset to apply initial condition to -
+ * leave out or empty to apply to whole field
  *      fieldname="Concentration"      * Name of field
  *      fieldtype="Scalar"/>           * Type of field (Default = Scalar)
- * 
- * 
+ *
+ *
  **/
 void BoundaryConditionBase::ReadXML(TICPP::HierarchicalDataNode* hdn){
-  
+
   m_fieldName = hdn->GetAttributeStringOrDefault("fieldname","");
   {
     array<string> tempSetName;
@@ -155,11 +176,11 @@ void BoundaryConditionBase::ReadXML(TICPP::HierarchicalDataNode* hdn){
 
 ////////////////////////////
 //
-/// Simple Boundary condition 
+/// Simple Boundary condition
 /**
  * @author walsh24
  * @brief Basic boundary condition.
- * 
+ *
  **/
 
 SimpleBoundaryCondition::SimpleBoundaryCondition( TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm):
@@ -179,7 +200,8 @@ void SimpleBoundaryCondition::ReadXML( TICPP::HierarchicalDataNode* BCNode)
   m_value = m_scale;
 
   // get function
-  if(!(m_functionName.empty())){
+  if(!(m_functionName.empty()))
+  {
     FunctionManager& fm = FunctionManager::Instance();
     m_function = &(fm.GetFunction(m_functionName));
   }
@@ -220,7 +242,8 @@ REGISTER_BoundaryCondition( SimpleBoundaryCondition )
 /// Boundary condition function
 /**
  * @author walsh24
- * @brief Boundary condition as a function of the fields on the object where the boundary condition is defined (and time).
+ * @brief Boundary condition as a function of the fields on the object where the
+ * boundary condition is defined (and time).
  *
  **/
 
@@ -237,23 +260,30 @@ void BoundaryConditionFunction::ReadXML( TICPP::HierarchicalDataNode* hdn)
   m_functionName      = hdn->GetAttributeString("function");
 
   // get function
-  if(!(m_functionName.empty())){
+  if(!(m_functionName.empty()))
+  {
     FunctionManager& fm = FunctionManager::Instance();
     m_function = &(fm.GetFunction(m_functionName));
   }
 
   std::string varsStr = hdn->GetAttributeStringOrDefault("variables","");
-  if(varsStr.empty()){
-	 m_variableNames.resize(0);
-  } else {
-	 m_variableNames = Tokenize(varsStr," ");
+  if(varsStr.empty())
+  {
+    m_variableNames.resize(0);
+  }
+  else
+  {
+    m_variableNames = Tokenize(varsStr," ");
   }
 
   std::string varTypesStr = hdn->GetAttributeStringOrDefault("variableTypes","");
-  if( varTypesStr.empty() ){
-	  // assume all variables are scalars by default
-	  m_variableTypes = array<FieldType>(m_variableNames.size(),FieldInfo::realField);
-  } else {
+  if( varTypesStr.empty() )
+  {
+    // assume all variables are scalars by default
+    m_variableTypes = array<FieldType>(m_variableNames.size(),FieldInfo::realField);
+  }
+  else
+  {
     array<string> vTypesVect = Tokenize(varTypesStr," ");
     m_variableTypes.resize(vTypesVect.size());
 
@@ -261,69 +291,90 @@ void BoundaryConditionFunction::ReadXML( TICPP::HierarchicalDataNode* hdn)
       throw GPException("Error InitialConditionFunction: Number of variable types not equal to number of variables.");
 
     for( array<string>::size_type i=0 ; i < vTypesVect.size() ; ++i )
-    	m_variableTypes[i] = fromString<FieldType>(vTypesVect[i]);
+      m_variableTypes[i] = fromString<FieldType>(vTypesVect[i]);
 
   }
   m_nVars = m_variableNames.size();
   m_fieldPtrs = std::vector<FieldTypeMultiPtr>(m_nVars );
 
-  m_isConstantInTime = hdn->GetAttributeOrDefault<bool>("constantInTime",false);  // very likely not
-  m_isConstantInSpace =  hdn->GetAttributeOrDefault<bool>("constantInSpace",false);  // very likely not
+  m_isConstantInTime = hdn->GetAttributeOrDefault<bool>("constantInTime",false);  // very
+                                                                                  // likely
+                                                                                  // not
+  m_isConstantInSpace =  hdn->GetAttributeOrDefault<bool>("constantInSpace",false);  // very
+                                                                                     // likely
+                                                                                     // not
   m_scale =  hdn->GetAttributeOrDefault<realT>("scale", 1.0);
   m_offset =  hdn->GetAttributeOrDefault<realT>("offset", 0.0);
 
   // x vector for function
   int xLength = 0;
-  for(unsigned j =0; j < m_nVars; ++j){
-    if(streq(m_variableNames[j],"time")){
+  for(unsigned j =0 ; j < m_nVars ; ++j)
+  {
+    if(streq(m_variableNames[j],"time"))
+    {
       xLength += 1;
-   //   m_fieldPtrs[j].SetFieldPtr(&m_time); // must be pointer to m_time (otherwise not preserved) ***
-    } else {
+      //   m_fieldPtrs[j].SetFieldPtr(&m_time); // must be pointer to m_time
+      // (otherwise not preserved) ***
+    }
+    else
+    {
       xLength += FieldSize( m_variableTypes[j] );
-  //    m_fieldPtrs[j].SetFieldPtr(object, m_variableTypes[j], m_variableNames[j]); ***
+      //    m_fieldPtrs[j].SetFieldPtr(object, m_variableTypes[j],
+      // m_variableNames[j]); ***
     }
   }
   m_x = std::vector<realT>(xLength );
   m_time = -1e-64;
 
-  // *** this may be possible if pointers are preserved - but suspect that fields are not registered
+  // *** this may be possible if pointers are preserved - but suspect that
+  // fields are not registered
 }
 
 realT BoundaryConditionFunction::GetValue(const ObjectDataStructureBaseT& object,
-                                        const lSet::const_iterator& si,
-                                        realT time )
+                                          const lSet::const_iterator& si,
+                                          realT time )
 {
 
   if (!isEqual(m_time, time))
   {
-	    m_time = time; // will need to keep this even if pointers init moved to read xml
+    m_time = time;   // will need to keep this even if pointers init moved to
+                     // read xml
 
-	    // only need to do this once (in reality may only need to do this once per run
-	    // but not sure if object pointer addresses are preserved or if objects have been initiated.
+    // only need to do this once (in reality may only need to do this once per
+    // run
+    // but not sure if object pointer addresses are preserved or if objects have
+    // been initiated.
 
-	    ObjectDataStructureBaseT* ObjPtr = const_cast< ObjectDataStructureBaseT * >( &object ); // forgive me father
+    ObjectDataStructureBaseT* ObjPtr = const_cast< ObjectDataStructureBaseT * >( &object );   // forgive
+                                                                                              // me
+                                                                                              // father
 
-        // initialize field pointers
-	    for(unsigned j =0; j < m_nVars; ++j){
-	      if(streq(m_variableNames[j],"time")){
-	        m_fieldPtrs[j].SetFieldPtr(&m_time); // must be pointer to m_time (otherwise not preserved)
-	      } else {
-	        m_fieldPtrs[j].SetFieldPtr(*ObjPtr, m_variableTypes[j], m_variableNames[j]);
-	      }
-	    }
+    // initialize field pointers
+    for(unsigned j =0 ; j < m_nVars ; ++j)
+    {
+      if(streq(m_variableNames[j],"time"))
+      {
+        m_fieldPtrs[j].SetFieldPtr(&m_time);   // must be pointer to m_time
+                                               // (otherwise not preserved)
+      }
+      else
+      {
+        m_fieldPtrs[j].SetFieldPtr(*ObjPtr, m_variableTypes[j], m_variableNames[j]);
+      }
+    }
 
   }
 
 
 /*
-  int nVars = m_variableNames.size();
-  std::vector<FieldTypeMultiPtr> fieldPtr(nVars );
+   int nVars = m_variableNames.size();
+   std::vector<FieldTypeMultiPtr> fieldPtr(nVars );
 
-  /FieldTypeMultiPtr theFieldPtr;
-  theFieldPtr.SetFieldPtr(object , fieldType, m_fieldName);
+   /FieldTypeMultiPtr theFieldPtr;
+   theFieldPtr.SetFieldPtr(object , fieldType, m_fieldName);
 
-  int xLength = 0;
-  for(int j =0; j < nVars; ++j){
+   int xLength = 0;
+   for(int j =0; j < nVars; ++j){
     if(streq(variables[j],"time")){
       xLength += 1;
       fieldPtr[j].SetFieldPtr(&time);
@@ -331,16 +382,18 @@ realT BoundaryConditionFunction::GetValue(const ObjectDataStructureBaseT& object
       xLength += FieldSize( m_variable_types[j] );
       fieldPtr[j].SetFieldPtr(*this, m_variable_types[j], m_variableNames[j]);
     }
-  }
-  */
+   }
+ */
 
 
   // pack field values into x
   std::vector<realT>::iterator xItr = m_x.begin();
-  for(unsigned j =0; j < m_nVars; ++j) xItr = m_fieldPtrs[j].CopyValues(*si, xItr);
+  for(unsigned j =0 ; j < m_nVars ; ++j)
+    xItr = m_fieldPtrs[j].CopyValues(*si, xItr);
 
   // calculate value
-  m_value =  (*m_function)(m_x[0]); // nb needs to be stored (in case constant in space)
+  m_value =  (*m_function)(m_x[0]); // nb needs to be stored (in case constant
+                                    // in space)
   m_value *= m_scale;
   m_value += m_offset;
 
@@ -354,13 +407,13 @@ REGISTER_BoundaryCondition( BoundaryConditionFunction )
 ///////////////////////////////////////////
 
 /**
-  
-   varname="Pressure Temperature"    
+
+   varname="Pressure Temperature"
    allocated="true"
 
-**/
+ **/
 
-MultiVarBoundaryConditionBase::MultiVarBoundaryConditionBase(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm) :  
+MultiVarBoundaryConditionBase::MultiVarBoundaryConditionBase(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm):
   BoundaryConditionBase(hdn,pm)
 {
   ReadXML(hdn);
@@ -373,7 +426,7 @@ void MultiVarBoundaryConditionBase::ReadXML(TICPP::HierarchicalDataNode* hdn)
   m_varName = hdn->GetStringVector("varName");
 
   if(m_varName.empty())
-      throw GPException("ERROR: varName is not set for MultiVarBoundaryCondition!");
+    throw GPException("ERROR: varName is not set for MultiVarBoundaryCondition!");
 
   m_time = -1e64; // unlikely value
 
@@ -383,13 +436,13 @@ void MultiVarBoundaryConditionBase::ReadXML(TICPP::HierarchicalDataNode* hdn)
 
 /**
 
-  isClamped="1"
-  timetables="P1Table T1Table" 
+   isClamped="1"
+   timetables="P1Table T1Table"
 
-**/
+ **/
 
 
-MultiVarDirichletBoundaryCondition::MultiVarDirichletBoundaryCondition(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm) :  
+MultiVarDirichletBoundaryCondition::MultiVarDirichletBoundaryCondition(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm):
   MultiVarBoundaryConditionBase(hdn,pm)
 {
   ReadXML(hdn);
@@ -399,7 +452,7 @@ MultiVarDirichletBoundaryCondition::MultiVarDirichletBoundaryCondition(TICPP::Hi
 void MultiVarDirichletBoundaryCondition::ReadXML(TICPP::HierarchicalDataNode* hdn)
 {
   m_isClamped = hdn->GetAttributeOrDefault<bool>("isClamped",true);
-  
+
   if(!m_isClamped)
   {
     m_tables = hdn->GetStringVector("timeTables");
@@ -410,24 +463,24 @@ void MultiVarDirichletBoundaryCondition::ReadXML(TICPP::HierarchicalDataNode* hd
 
 void MultiVarDirichletBoundaryCondition::CheckVars(const array<string> &varName)
 {
-  if(!m_isClamped) 
+  if(!m_isClamped)
   {
     array<string> tmp;
-    for(array<string>::const_iterator it = varName.begin(); it != varName.end(); ++it)
+    for(array<string>::const_iterator it = varName.begin() ; it != varName.end() ; ++it)
     {
       bool notFound = true;
       array<string>::const_iterator itt = m_tables.begin();
-      for(array<string>::const_iterator itm = m_varName.begin(); itm != m_varName.end(); ++itm, ++itt)
+      for(array<string>::const_iterator itm = m_varName.begin() ; itm != m_varName.end() ; ++itm, ++itt)
       {
-	if(streq(*it, *itm))
-	{
-	  tmp.push_back(*itt);
-	  notFound = false;
-	  break;
-	}
+        if(streq(*it, *itm))
+        {
+          tmp.push_back(*itt);
+          notFound = false;
+          break;
+        }
       }
       if(notFound)
-	throw GPException("ERROR: " + *it + "is not found for MultiVarDirichletBoundaryCondition!");
+        throw GPException("ERROR: " + *it + "is not found for MultiVarDirichletBoundaryCondition!");
     }
 
     m_tables.resize(tmp.size());
@@ -438,17 +491,17 @@ void MultiVarDirichletBoundaryCondition::CheckVars(const array<string> &varName)
 
 const array<real64>& MultiVarDirichletBoundaryCondition::GetValues(realT time)
 {
-    if(!m_isClamped && !isEqual(m_time,time) )
-    {
-      m_value.resize(m_tables.size());
+  if(!m_isClamped && !isEqual(m_time,time) )
+  {
+    m_value.resize(m_tables.size());
 
-      array<real64> t(1, time);
-      array<real64>::iterator itv = m_value.begin();
-      for(array<string>::const_iterator it = m_tables.begin(); it != m_tables.end(); ++it, ++itv)
-	*itv = TableManager::Instance().LookupTable<1>(*it, t);
-      m_time = time;
-    }
-    return m_value;
+    array<real64> t(1, time);
+    array<real64>::iterator itv = m_value.begin();
+    for(array<string>::const_iterator it = m_tables.begin() ; it != m_tables.end() ; ++it, ++itv)
+      *itv = TableManager::Instance().LookupTable<1>(*it, t);
+    m_time = time;
+  }
+  return m_value;
 }
 
 REGISTER_BoundaryCondition( MultiVarDirichletBoundaryCondition )
@@ -456,13 +509,13 @@ REGISTER_BoundaryCondition( MultiVarDirichletBoundaryCondition )
 
 /**
 
-  allocedByWeight="1"
-  timetables="P1Table T1Table" 
+   allocedByWeight="1"
+   timetables="P1Table T1Table"
 
-**/
+ **/
 
 
-MultiVarSrcFluxBoundaryCondition::MultiVarSrcFluxBoundaryCondition(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm) :  
+MultiVarSrcFluxBoundaryCondition::MultiVarSrcFluxBoundaryCondition(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm):
   MultiVarBoundaryConditionBase(hdn,pm)
 {
   ReadXML(hdn);
@@ -483,11 +536,11 @@ void MultiVarSrcFluxBoundaryCondition::ReadXML(TICPP::HierarchicalDataNode* hdn)
 void MultiVarSrcFluxBoundaryCondition::CheckVars(const array<string> &varName)
 {
   array<string> tmp;
-  for(array<string>::const_iterator it = varName.begin(); it != varName.end(); ++it)
+  for(array<string>::const_iterator it = varName.begin() ; it != varName.end() ; ++it)
   {
     bool notFound = true;
     array<string>::const_iterator itt = m_tables.begin();
-    for(array<string>::const_iterator itm = m_varName.begin(); itm != m_varName.end(); ++itm, ++itt)
+    for(array<string>::const_iterator itm = m_varName.begin() ; itm != m_varName.end() ; ++itm, ++itt)
     {
       if(streq(*it, *itm))
       {
@@ -507,15 +560,15 @@ void MultiVarSrcFluxBoundaryCondition::CheckVars(const array<string> &varName)
 
 const array<real64>& MultiVarSrcFluxBoundaryCondition::GetValues(realT time)
 {
-    if(!isEqual(m_time,time) )
-    {
-      array<real64> t(1, time);
-      array<real64>::iterator itv = m_value.begin();
-      for(array<string>::const_iterator it = m_tables.begin(); it != m_tables.end(); ++it, ++itv)
-	*itv = TableManager::Instance().LookupTable<1>(*it, t);
-      m_time = time;
-    }
-    return m_value;
+  if(!isEqual(m_time,time) )
+  {
+    array<real64> t(1, time);
+    array<real64>::iterator itv = m_value.begin();
+    for(array<string>::const_iterator it = m_tables.begin() ; it != m_tables.end() ; ++it, ++itv)
+      *itv = TableManager::Instance().LookupTable<1>(*it, t);
+    m_time = time;
+  }
+  return m_value;
 }
 
 REGISTER_BoundaryCondition( MultiVarSrcFluxBoundaryCondition )
@@ -523,11 +576,11 @@ REGISTER_BoundaryCondition( MultiVarSrcFluxBoundaryCondition )
 
 ////////////////////////////
 //
-/// Traction Boundary condition 
+/// Traction Boundary condition
 /**
  * @author walsh24
  * @brief Traction boundary condition
- * 
+ *
  **/
 
 TractionBoundaryCondition::TractionBoundaryCondition( TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm):
@@ -540,13 +593,16 @@ TractionBoundaryCondition::TractionBoundaryCondition( TICPP::HierarchicalDataNod
   m_useNormalFlag = hdn->GetAttributeOrDefault<bool>("applyNormalTraction",false);
 
   m_isConstantInSpace = true;
-  if(m_useNormalFlag){
-	  m_isConstantInSpace = false;
+  if(m_useNormalFlag)
+  {
+    m_isConstantInSpace = false;
   }
 }
 
-// Individual solvers should use this function rather than calculate the traction directly in the solver. 
-// This allows the traction bc to be developed separately from the individual solvers 
+// Individual solvers should use this function rather than calculate the
+// traction directly in the solver.
+// This allows the traction bc to be developed separately from the individual
+// solvers
 R1Tensor TractionBoundaryCondition::GetTractionOnFace(PhysicalDomainT& domain, const lSet::const_iterator& fc,  realT& time){
   realT value = this->GetValue(domain.m_feFaceManager,fc,time);
 
@@ -555,10 +611,12 @@ R1Tensor TractionBoundaryCondition::GetTractionOnFace(PhysicalDomainT& domain, c
   {
     traction = domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, *fc );
     traction *= -1;
-  } else {
+  }
+  else
+  {
     traction = this->GetDirection(time);
   }
-  traction *= value; 
+  traction *= value;
   return traction;
 }
 
@@ -592,23 +650,30 @@ void TractionBoundaryConditionFunction::ReadXML( TICPP::HierarchicalDataNode* hd
   m_functionName      = hdn->GetAttributeString("function");
 
   // get function
-  if(!(m_functionName.empty())){
+  if(!(m_functionName.empty()))
+  {
     FunctionManager& fm = FunctionManager::Instance();
     m_function = &(fm.GetFunction(m_functionName));
   }
 
   std::string varsStr = hdn->GetAttributeStringOrDefault("variables","");
-  if(varsStr.empty()){
-   m_variableNames.resize(0);
-  } else {
-   m_variableNames = Tokenize(varsStr," ");
+  if(varsStr.empty())
+  {
+    m_variableNames.resize(0);
+  }
+  else
+  {
+    m_variableNames = Tokenize(varsStr," ");
   }
 
   std::string varTypesStr = hdn->GetAttributeStringOrDefault("variableTypes","");
-  if( varTypesStr.empty() ){
+  if( varTypesStr.empty() )
+  {
     // assume all variables are scalars by default
     m_variableTypes = array<FieldType>(m_variableNames.size(),FieldInfo::realField);
-  } else {
+  }
+  else
+  {
     array<string> vTypesVect = Tokenize(varTypesStr," ");
     m_variableTypes.resize(vTypesVect.size());
 
@@ -622,26 +687,37 @@ void TractionBoundaryConditionFunction::ReadXML( TICPP::HierarchicalDataNode* hd
   m_nVars = m_variableNames.size();
   m_fieldPtrs = std::vector<FieldTypeMultiPtr>(m_nVars );
 
-  m_isConstantInTime = hdn->GetAttributeOrDefault<bool>("constantInTime",false);  // very likely not
-  m_isConstantInSpace =  hdn->GetAttributeOrDefault<bool>("constantInSpace",false);  // very likely not
+  m_isConstantInTime = hdn->GetAttributeOrDefault<bool>("constantInTime",false);  // very
+                                                                                  // likely
+                                                                                  // not
+  m_isConstantInSpace =  hdn->GetAttributeOrDefault<bool>("constantInSpace",false);  // very
+                                                                                     // likely
+                                                                                     // not
   m_scale =  hdn->GetAttributeOrDefault<realT>("scale", 1.0);
   m_offset =  hdn->GetAttributeOrDefault<realT>("offset", 0.0);
 
   // x vector for function
   int xLength = 0;
-  for(unsigned j =0; j < m_nVars; ++j){
-    if(streq(m_variableNames[j],"time")){
+  for(unsigned j =0 ; j < m_nVars ; ++j)
+  {
+    if(streq(m_variableNames[j],"time"))
+    {
       xLength += 1;
-   //   m_fieldPtrs[j].SetFieldPtr(&m_time); // must be pointer to m_time (otherwise not preserved) ***
-    } else {
+      //   m_fieldPtrs[j].SetFieldPtr(&m_time); // must be pointer to m_time
+      // (otherwise not preserved) ***
+    }
+    else
+    {
       xLength += FieldSize( m_variableTypes[j] );
-  //    m_fieldPtrs[j].SetFieldPtr(object, m_variableTypes[j], m_variableNames[j]); ***
+      //    m_fieldPtrs[j].SetFieldPtr(object, m_variableTypes[j],
+      // m_variableNames[j]); ***
     }
   }
   m_x = std::vector<realT>(xLength );
   m_time = -1e-64;
 
-  // *** this may be possible if pointers are preserved - but suspect that fields are not registered
+  // *** this may be possible if pointers are preserved - but suspect that
+  // fields are not registered
 }
 
 
@@ -653,7 +729,9 @@ R1Tensor TractionBoundaryConditionFunction::GetTractionOnFace(PhysicalDomainT& d
   {
     traction = domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, *fc );
     traction *= -1;
-  } else {
+  }
+  else
+  {
     traction = this->GetDirection(time);
   }
 
@@ -661,29 +739,39 @@ R1Tensor TractionBoundaryConditionFunction::GetTractionOnFace(PhysicalDomainT& d
 
   if (!isEqual(m_time, time))
   {
-      m_time = time; // will need to keep this even if pointers init moved to read xml
+    m_time = time;   // will need to keep this even if pointers init moved to
+                     // read xml
 
-      // only need to do this once (in reality may only need to do this once per run
-      // but not sure if object pointer addresses are preserved or if objects have been initiated.
+    // only need to do this once (in reality may only need to do this once per
+    // run
+    // but not sure if object pointer addresses are preserved or if objects have
+    // been initiated.
 
 
-        // initialize field pointers
-      for(unsigned j =0; j < m_nVars; ++j){
-        if(streq(m_variableNames[j],"time")){
-          m_fieldPtrs[j].SetFieldPtr(&m_time); // must be pointer to m_time (otherwise not preserved)
-        } else {
-          m_fieldPtrs[j].SetFieldPtr(domain.m_feFaceManager, m_variableTypes[j], m_variableNames[j]);
-        }
+    // initialize field pointers
+    for(unsigned j =0 ; j < m_nVars ; ++j)
+    {
+      if(streq(m_variableNames[j],"time"))
+      {
+        m_fieldPtrs[j].SetFieldPtr(&m_time);   // must be pointer to m_time
+                                               // (otherwise not preserved)
       }
+      else
+      {
+        m_fieldPtrs[j].SetFieldPtr(domain.m_feFaceManager, m_variableTypes[j], m_variableNames[j]);
+      }
+    }
 
   }
 
   // pack field values into x
   std::vector<realT>::iterator xItr = m_x.begin();
-  for(unsigned j =0; j < m_nVars; ++j) xItr = m_fieldPtrs[j].CopyValues(*fc, xItr);
+  for(unsigned j =0 ; j < m_nVars ; ++j)
+    xItr = m_fieldPtrs[j].CopyValues(*fc, xItr);
 
   // calculate value
-  m_value =  (*m_function)(m_x[0]); // nb needs to be stored (in case constant in space)
+  m_value =  (*m_function)(m_x[0]); // nb needs to be stored (in case constant
+                                    // in space)
   m_value *= m_scale;
   m_value += m_offset;
 
@@ -703,7 +791,8 @@ REGISTER_BoundaryCondition( TractionBoundaryConditionFunction )
 /// Hydraulic Pressure Boundary condition
 /**
  * @author walsh24
- * @brief Traction boundary condition, returns traction calculated from pressure defined on face and normal direction.
+ * @brief Traction boundary condition, returns traction calculated from pressure
+ * defined on face and normal direction.
  *
  **/
 
@@ -718,8 +807,10 @@ HydraulicPressureBoundaryCondition::HydraulicPressureBoundaryCondition( TICPP::H
   m_isConstantInSpace = false;
 }
 
-// Individual solvers should use this function rather than calculate the traction directly in the solver.
-// This allows the traction bc to be developed separately from the individual solvers
+// Individual solvers should use this function rather than calculate the
+// traction directly in the solver.
+// This allows the traction bc to be developed separately from the individual
+// solvers
 R1Tensor HydraulicPressureBoundaryCondition::GetTractionOnFace(PhysicalDomainT& domain, const lSet::const_iterator& fc,  realT& time){
 
 
@@ -737,8 +828,10 @@ REGISTER_BoundaryCondition( HydraulicPressureBoundaryCondition )
 /// Uniform Pressure Boundary condition
 /**
  * @author walsh24
- * @brief Traction boundary condition - applies uniform pressure based on bc value and normal direction for all external faces
- * that are 1. not on the domain boundary or 2. flow faces on the domain boundary
+ * @brief Traction boundary condition - applies uniform pressure based on bc
+ * value and normal direction for all external faces
+ * that are 1. not on the domain boundary or 2. flow faces on the domain
+ * boundary
  *
  **/
 
@@ -753,8 +846,10 @@ UniformPressureBoundaryCondition::UniformPressureBoundaryCondition( TICPP::Hiera
   m_isConstantInSpace = false;
 }
 
-// Individual solvers should use this function rather than calculate the traction directly in the solver.
-// This allows the traction bc to be developed separately from the individual solvers
+// Individual solvers should use this function rather than calculate the
+// traction directly in the solver.
+// This allows the traction bc to be developed separately from the individual
+// solvers
 R1Tensor UniformPressureBoundaryCondition::GetTractionOnFace(PhysicalDomainT& domain,
                                                              const lSet::const_iterator& fc,
                                                              realT& time)
@@ -777,12 +872,16 @@ R1Tensor UniformPressureBoundaryCondition::GetTractionOnFace(PhysicalDomainT& do
       traction *= -value;
 
       /*
-       array<real64>& facePressures = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure> ();
-       facePressures[*fc] = value;
+         array<real64>& facePressures =
+            domain.m_feFaceManager.GetFieldData<FieldInfo::pressure> ();
+         facePressures[*fc] = value;
 
-       const array<real64>& fluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
-       array<real64>& faceFluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-       array<real64>& faceFluidDensity = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
+         const array<real64>& fluidVolume  =
+            domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+         array<real64>& faceFluidMass =
+            domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+         array<real64>& faceFluidDensity =
+            domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
        */
 
     }
@@ -794,11 +893,11 @@ REGISTER_BoundaryCondition( UniformPressureBoundaryCondition )
 
 ////////////////////////////
 //
-/// Wall Boundary condition 
+/// Wall Boundary condition
 /**
  * @author walsh24
  * @brief Wall boundary condition
- * 
+ *
  **/
 
 WallBoundaryCondition::WallBoundaryCondition( TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm):
@@ -813,7 +912,6 @@ WallBoundaryCondition::WallBoundaryCondition( TICPP::HierarchicalDataNode* hdn, 
   }
   m_objectKey = PhysicalDomainT::FiniteElementNodeManager;
 }
-
 
 
 
@@ -857,7 +955,7 @@ REGISTER_BoundaryCondition( InflowBoundaryCondition )
 
 ////////////////////////////
 //
-/// Non-penetrating Boundary condition 
+/// Non-penetrating Boundary condition
 /**
  * @author walsh24
  * @brief Prevent two surfaces from interpenetrating
@@ -877,7 +975,8 @@ void NonPenetratingBoundaryCondition::ReadXML( TICPP::HierarchicalDataNode* hdn)
   if(m_setNames.size() != 2)
   {
     throw GPException("Error - non penetrating boundary condition requires two sets.");
-  };
+  }
+  ;
 
   m_fieldName = NonPenetratingBoundaryCondition::BoundaryConditionName();
   m_objectKey = PhysicalDomainT::FiniteElementNodeManager;
@@ -888,13 +987,13 @@ void NonPenetratingBoundaryCondition::RegisterFields(PhysicalDomainT& domain )
   domain.m_feNodeManager.AddKeyedDataField<FieldInfo::displacement>();
   domain.m_feFaceManager.AddKeylessDataField<R1Tensor>("FaceCenter");
 }
-realT NonPenetratingBoundaryCondition::GetValue(const ObjectDataStructureBaseT& object ,
-                                        const lSet::const_iterator& si ,
-                                        realT time )
+realT NonPenetratingBoundaryCondition::GetValue(const ObjectDataStructureBaseT& object,
+                                                const lSet::const_iterator& si,
+                                                realT time )
 {
 
-    throw GPException("Error - non penetrating boundary condition queried for value.");
-    return 0.0;
+  throw GPException("Error - non penetrating boundary condition queried for value.");
+  return 0.0;
 }
 
 void NonPenetratingBoundaryCondition::UpdateNearestNeighborMaps(PhysicalDomainT& domain ){
@@ -909,42 +1008,51 @@ void NonPenetratingBoundaryCondition::UpdateNearestNeighborMaps(PhysicalDomainT&
     std::map< std::string, lSet >::const_iterator setMapA = domain.m_feNodeManager.m_Sets.find( m_setNames[0] );
     std::map< std::string, lSet >::const_iterator setMapB = domain.m_feNodeManager.m_Sets.find( m_setNames[1] );
 
-    if( setMapA != domain.m_feNodeManager.m_Sets.end() &&  setMapB != domain.m_feNodeManager.m_Sets.end() ){
+    if( setMapA != domain.m_feNodeManager.m_Sets.end() &&  setMapB != domain.m_feNodeManager.m_Sets.end() )
+    {
 
       const lSet& setA = setMapA->second;
       const lSet& setB = setMapB->second;
 
       // fixme - brute force search for nearest neighbors.
-      for( lSet::const_iterator ndA=setA.begin() ; ndA!=setA.end() ; ++ndA ) {
+      for( lSet::const_iterator ndA=setA.begin() ; ndA!=setA.end() ; ++ndA )
+      {
         realT minSqrdDist = std::numeric_limits<realT>::max();
         localIndex nbr = 0;
-        R1Tensor posA =  u[*ndA] ;
+        R1Tensor posA =  u[*ndA];
         posA += X[*ndA];
-        for( lSet::const_iterator ndB=setB.begin(); ndB!=setB.end() ; ++ndB ) {
+        for( lSet::const_iterator ndB=setB.begin() ; ndB!=setB.end() ; ++ndB )
+        {
           R1Tensor l =  u[*ndB];
           l += X[*ndB];
           l -= posA;
 
           realT ll = Dot(l,l);
-          if(ll < minSqrdDist){
+          if(ll < minSqrdDist)
+          {
             minSqrdDist = ll;
             nbr = *ndB;
           }
         }
 
-        if(minSqrdDist < std::numeric_limits<realT>::max()){
+        if(minSqrdDist < std::numeric_limits<realT>::max())
+        {
           m_nearestNodeNeighborMap[*ndA] = nbr;
 
-          if(isMember(nbr,m_nearestNodeNeighborMap) ){
+          if(isMember(nbr,m_nearestNodeNeighborMap) )
+          {
             localIndex oldNdA = m_nearestNodeNeighborMap[nbr];
-            R1Tensor lb =  u[nbr] ;
+            R1Tensor lb =  u[nbr];
             lb += X[nbr];
             lb -= u[oldNdA];
             lb -= X[oldNdA];
-            if(minSqrdDist < Dot(lb,lb) ){
+            if(minSqrdDist < Dot(lb,lb) )
+            {
               m_nearestNodeNeighborMap[nbr] = *ndA;
             }
-          }else {
+          }
+          else
+          {
 
             m_nearestNodeNeighborMap[nbr] = *ndA;
           }
@@ -960,39 +1068,46 @@ void NonPenetratingBoundaryCondition::UpdateNearestNeighborMaps(PhysicalDomainT&
     std::map< std::string, lSet >::const_iterator setMapA = domain.m_feFaceManager.m_Sets.find( m_setNames[0] );
     std::map< std::string, lSet >::const_iterator setMapB = domain.m_feFaceManager.m_Sets.find( m_setNames[1] );
 
-    if( setMapA != domain.m_feFaceManager.m_Sets.end() &&  setMapB != domain.m_feFaceManager.m_Sets.end() ){
+    if( setMapA != domain.m_feFaceManager.m_Sets.end() &&  setMapB != domain.m_feFaceManager.m_Sets.end() )
+    {
 
       const lSet& setA = setMapA->second;
       const lSet& setB = setMapB->second;
 
       // update face centers
-      for( lSet::const_iterator fcA=setA.begin() ; fcA!=setA.end() ; ++fcA ) {
+      for( lSet::const_iterator fcA=setA.begin() ; fcA!=setA.end() ; ++fcA )
+      {
         domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager,*fcA, faceCenter(*fcA));
       }
-      for( lSet::const_iterator fcB=setB.begin() ; fcB!=setB.end() ; ++fcB ) {
+      for( lSet::const_iterator fcB=setB.begin() ; fcB!=setB.end() ; ++fcB )
+      {
         domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager,*fcB, faceCenter(*fcB));
       }
 
       // brute force search for nearest neighbors.
-      for( lSet::const_iterator fcA=setA.begin() ; fcA!=setA.end() ; ++fcA ) {
+      for( lSet::const_iterator fcA=setA.begin() ; fcA!=setA.end() ; ++fcA )
+      {
         realT minSqrdDist = std::numeric_limits<realT>::max();
         localIndex nbr = 0;
         R1Tensor posA =  faceCenter(*fcA);
-        for( lSet::const_iterator fcB=setB.begin(); fcB!=setB.end() ; ++fcB ) {
+        for( lSet::const_iterator fcB=setB.begin() ; fcB!=setB.end() ; ++fcB )
+        {
           R1Tensor l =  faceCenter(*fcB);
           l -= posA;
 
           realT ll = Dot(l,l);
-          if(ll < minSqrdDist){
+          if(ll < minSqrdDist)
+          {
             minSqrdDist = ll;
             nbr = *fcB;
           }
         }
 
-        if(minSqrdDist < std::numeric_limits<realT>::max()){
-            m_nearestFaceNeighborMap[*fcA] = nbr;
-            m_nearestFaceNeighborMap[nbr] = *fcA;
-      }
+        if(minSqrdDist < std::numeric_limits<realT>::max())
+        {
+          m_nearestFaceNeighborMap[*fcA] = nbr;
+          m_nearestFaceNeighborMap[nbr] = *fcA;
+        }
 
       }
 
@@ -1008,7 +1123,7 @@ REGISTER_BoundaryCondition( NonPenetratingBoundaryCondition )
 /**
  * @author walsh24
  * @brief Single partition periodic boundary condition
- * 
+ *
  **/
 
 SinglePartitionPeriodicBoundaryCondition::SinglePartitionPeriodicBoundaryCondition( TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm):
@@ -1017,37 +1132,39 @@ SinglePartitionPeriodicBoundaryCondition::SinglePartitionPeriodicBoundaryConditi
   ReadXML(hdn);
 }
 
- 
+
 void SinglePartitionPeriodicBoundaryCondition::ReadXML( TICPP::HierarchicalDataNode* hdn)
 {
-  
-  if(m_setNames.size() != 2){
+
+  if(m_setNames.size() != 2)
+  {
     throw GPException("Error - periodic boundary condition requires two sets.");
-  };
+  }
+  ;
 
   m_dimension = hdn->GetAttributeValue<int>("dimension");
 
   m_fieldName = SinglePartitionPeriodicBoundaryCondition::BoundaryConditionName();
- // m_objectKey = PhysicalDomainT::NodeManager;
+  // m_objectKey = PhysicalDomainT::NodeManager;
 }
 void SinglePartitionPeriodicBoundaryCondition::RegisterFields(PhysicalDomainT& domain ){
-  
+
   domain.m_feNodeManager.AddKeyedDataField<FieldInfo::displacement>();
   domain.m_feFaceManager.AddKeylessDataField<R1Tensor>("FaceCenter");
   domain.m_feEdgeManager.AddKeylessDataField<R1Tensor>("EdgeCenter");
 }
-realT SinglePartitionPeriodicBoundaryCondition::GetValue(const ObjectDataStructureBaseT& object ,
-                                        const lSet::const_iterator& si ,
-                                        realT time )
+realT SinglePartitionPeriodicBoundaryCondition::GetValue(const ObjectDataStructureBaseT& object,
+                                                         const lSet::const_iterator& si,
+                                                         realT time )
 {
-    
-    throw GPException("Error - periodic boundary condition queried for value.");
-    
-    return 0.0;
+
+  throw GPException("Error - periodic boundary condition queried for value.");
+
+  return 0.0;
 }
 
 void SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps(PhysicalDomainT& domain ){
-  
+
   const array<R1Tensor>& refPositions = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition> ();
   array<R1Tensor>& faceCenters = domain.m_feFaceManager.GetFieldData<R1Tensor>("FaceCenter");
   array<R1Tensor>& edgeCenters = domain.m_feEdgeManager.GetFieldData<R1Tensor>("EdgeCenter");
@@ -1055,16 +1172,18 @@ void SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps(PhysicalDomainT& 
   PlanarSorter planarSorterNodes(refPositions,m_dimension);
   PlanarSorter planarSorterFaces(faceCenters,m_dimension);
   PlanarSorter planarSorterEdges(edgeCenters,m_dimension);
-  
-  
+
+
   //nodes
   {
     std::vector< std::vector<localIndex> > sortedIndexes(2);
 
-    for(int a =0; a < 2; ++a){
+    for(int a =0 ; a < 2 ; ++a)
+    {
 
       std::map< std::string, lSet >::const_iterator setMap = domain.m_feNodeManager.m_Sets.find( m_setNames[a] );
-      if( setMap != domain.m_feNodeManager.m_Sets.end() ){
+      if( setMap != domain.m_feNodeManager.m_Sets.end() )
+      {
         const lSet& set = setMap->second;
         sortedIndexes[a].assign(set.begin(),set.end() );
         std::sort(sortedIndexes[a].begin(),sortedIndexes[a].end(),planarSorterNodes);
@@ -1072,26 +1191,32 @@ void SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps(PhysicalDomainT& 
 
     }
 
-    if(sortedIndexes[0].size() != sortedIndexes[1].size()){
+    if(sortedIndexes[0].size() != sortedIndexes[1].size())
+    {
       throw GPException("SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps: Size of " + m_setNames[0]
-                         + " does not match size of " + m_setNames[1] + "\n");
-    } else {
+                        + " does not match size of " + m_setNames[1] + "\n");
+    }
+    else
+    {
       // make maps
-      for(unsigned int i =0; i < sortedIndexes[0].size(); ++i){
+      for(unsigned int i =0 ; i < sortedIndexes[0].size() ; ++i)
+      {
         m_nodeNeighborMapA[sortedIndexes[0][i]] = sortedIndexes[1][i];
         m_nodeNeighborMapB[sortedIndexes[1][i]] = sortedIndexes[0][i];
       }
     }
   }
-  
+
   //faces
   {
     std::vector< std::vector<localIndex> > sortedIndexes(2);
 
-    for(int a =0; a < 2; ++a){
+    for(int a =0 ; a < 2 ; ++a)
+    {
 
       std::map< std::string, lSet >::const_iterator setMap = domain.m_feFaceManager.m_Sets.find( m_setNames[a] );
-      if( setMap != domain.m_feFaceManager.m_Sets.end() ){
+      if( setMap != domain.m_feFaceManager.m_Sets.end() )
+      {
         const lSet& set = setMap->second;
 
         // update face centers
@@ -1105,12 +1230,16 @@ void SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps(PhysicalDomainT& 
 
     }
 
-    if(sortedIndexes[0].size() != sortedIndexes[1].size()){
+    if(sortedIndexes[0].size() != sortedIndexes[1].size())
+    {
       throw GPException("SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps: Size of " + m_setNames[0]
-                         + " face set does not match size of " + m_setNames[1] + "\n");
-    } else {
+                        + " face set does not match size of " + m_setNames[1] + "\n");
+    }
+    else
+    {
       // make maps
-      for(unsigned int i =0; i < sortedIndexes[0].size(); ++i){
+      for(unsigned int i =0 ; i < sortedIndexes[0].size() ; ++i)
+      {
         m_faceNeighborMapA[sortedIndexes[0][i]] = sortedIndexes[1][i];
         m_faceNeighborMapB[sortedIndexes[1][i]] = sortedIndexes[0][i];
       }
@@ -1121,10 +1250,12 @@ void SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps(PhysicalDomainT& 
   {
     std::vector< std::vector<localIndex> > sortedIndexes(2);
 
-    for(int a =0; a < 2; ++a){
+    for(int a =0 ; a < 2 ; ++a)
+    {
 
       std::map< std::string, lSet >::const_iterator setMap = domain.m_feEdgeManager.m_Sets.find( m_setNames[a] );
-      if( setMap != domain.m_feEdgeManager.m_Sets.end() ){
+      if( setMap != domain.m_feEdgeManager.m_Sets.end() )
+      {
         const lSet& set = setMap->second;
 
         // update edge centers
@@ -1137,12 +1268,16 @@ void SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps(PhysicalDomainT& 
 
     }
 
-    if(sortedIndexes[0].size() != sortedIndexes[1].size()){
+    if(sortedIndexes[0].size() != sortedIndexes[1].size())
+    {
       throw GPException("SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps: Size of " + m_setNames[0]
-                         + " edge set does not match size of " + m_setNames[1] + "\n");
-    } else {
+                        + " edge set does not match size of " + m_setNames[1] + "\n");
+    }
+    else
+    {
       // make maps
-      for(unsigned int i =0; i < sortedIndexes[0].size(); ++i){
+      for(unsigned int i =0 ; i < sortedIndexes[0].size() ; ++i)
+      {
         m_edgeNeighborMapA[sortedIndexes[0][i]] = sortedIndexes[1][i];
         m_edgeNeighborMapB[sortedIndexes[1][i]] = sortedIndexes[0][i];
       }
@@ -1173,11 +1308,12 @@ SwitchBoundaryConditions::SwitchBoundaryConditions( TICPP::HierarchicalDataNode*
 
 
 /**
- *  <SwitchBoundaryConditions function="timeSwitch"   * 0 for pressure bc, 1 for dummy
+ *  <SwitchBoundaryConditions function="timeSwitch"   * 0 for pressure bc, 1 for
+ * dummy
  *                            setname="Zmax">
- *      <BoundaryCondition    fieldname="Pressure" 
+ *      <BoundaryCondition    fieldname="Pressure"
  *                            scale="1 GPa" />
- *      <BoundaryCondition    fieldname="Dummy" 
+ *      <BoundaryCondition    fieldname="Dummy"
  *                            scale="0.0" />
  *  </SwitchBoundaryConditions>
  *
@@ -1187,71 +1323,78 @@ void SwitchBoundaryConditions::ReadXML( TICPP::HierarchicalDataNode* hdn)
 
   m_functionName = hdn->GetAttributeString("function");
   m_default_index = 0;
-  
+
   // get function
   FunctionManager& fm = FunctionManager::Instance();
   m_function = &(fm.GetFunction(m_functionName));
 
   m_isConstantInSpace = true;
-  for (TICPP::HierarchicalDataNode* bcNode = hdn->Next(true); bcNode; bcNode = hdn->Next())
+  for (TICPP::HierarchicalDataNode* bcNode = hdn->Next(true) ; bcNode ; bcNode = hdn->Next())
   {
     std::string bcType = bcNode->Heading();
 
-    BoundaryConditionBase* bcPtr = newBoundaryCondition(bcType, bcNode, m_pmPtr);   
+    BoundaryConditionBase* bcPtr = newBoundaryCondition(bcType, bcNode, m_pmPtr);
     m_children.push_back(bcPtr);
     m_isConstantInSpace = m_isConstantInSpace && bcPtr->m_isConstantInSpace;
   }
 
   m_isConstantInTime = false;
- 
+
 }
 
 
 realT SwitchBoundaryConditions::GetValue(const ObjectDataStructureBaseT& object,
-                 const lSet::const_iterator& si,realT time){
-    unsigned indx = (*m_function)(time);
-    if(indx >= m_children.size()) indx = m_default_index;
-  
-    return m_children[indx]->GetValue(object,si,time);      
+                                         const lSet::const_iterator& si,realT time){
+  unsigned indx = (*m_function)(time);
+  if(indx >= m_children.size())
+    indx = m_default_index;
+
+  return m_children[indx]->GetValue(object,si,time);
 }
 
 
 // provide pointer to underlying boundary conditions
-// enables upcasting of switch boundary condition to underlying boundary condition type
+// enables upcasting of switch boundary condition to underlying boundary
+// condition type
 BoundaryConditionBase* SwitchBoundaryConditions::GetActiveBCPointer(realT time){
-    unsigned indx = (*m_function)(time);
-    if(indx >= m_children.size()) indx = m_default_index;
+  unsigned indx = (*m_function)(time);
+  if(indx >= m_children.size())
+    indx = m_default_index;
 
-    return m_children[indx]->GetActiveBCPointer(time);
+  return m_children[indx]->GetActiveBCPointer(time);
 }
-  
+
 const std::string& SwitchBoundaryConditions::GetFieldName(realT time)
 {
-    unsigned indx = (*m_function)(time);
-    if(indx > m_children.size()) indx = m_default_index;
+  unsigned indx = (*m_function)(time);
+  if(indx > m_children.size())
+    indx = m_default_index;
 
-    return m_children[indx]->GetFieldName(time);  
+  return m_children[indx]->GetFieldName(time);
 }
-  
+
 const FieldType& SwitchBoundaryConditions::GetFieldType(realT time)
 {
-    unsigned indx = (*m_function)(time);
-    if(indx > m_children.size()) indx = m_default_index;
+  unsigned indx = (*m_function)(time);
+  if(indx > m_children.size())
+    indx = m_default_index;
 
-    return m_children[indx]->GetFieldType(time);                   
+  return m_children[indx]->GetFieldType(time);
 }
 
 
 int SwitchBoundaryConditions::GetComponent(realT time){
-    unsigned indx = (*m_function)(time);
-    if(indx > m_children.size()) indx = m_default_index;
-    return m_children[indx]->GetComponent(time);  
+  unsigned indx = (*m_function)(time);
+  if(indx > m_children.size())
+    indx = m_default_index;
+  return m_children[indx]->GetComponent(time);
 }
 
 const R1Tensor& SwitchBoundaryConditions::GetDirection(realT time){
-    unsigned indx = (*m_function)(time);
-    if(indx > m_children.size()) indx = m_default_index;
-    return m_children[indx]->GetDirection(time);  
+  unsigned indx = (*m_function)(time);
+  if(indx > m_children.size())
+    indx = m_default_index;
+  return m_children[indx]->GetDirection(time);
 }
 
 REGISTER_BoundaryCondition( SwitchBoundaryConditions )
@@ -1264,7 +1407,7 @@ REGISTER_BoundaryCondition( SwitchBoundaryConditions )
 //
 // Boundary condition factory
 
-typedef std::map<std::string, BoundaryConditionInitializer*> BoundaryConditionCatalogueType; 
+typedef std::map<std::string, BoundaryConditionInitializer*> BoundaryConditionCatalogueType;
 
 BoundaryConditionCatalogueType & getBoundaryConditionCatalogue(){
   static BoundaryConditionCatalogueType theCatalogue;
@@ -1272,22 +1415,24 @@ BoundaryConditionCatalogueType & getBoundaryConditionCatalogue(){
 }
 
 void getBoundaryConditionNames( std::vector<std::string>& nameList){
-  for(BoundaryConditionCatalogueType::const_iterator it = getBoundaryConditionCatalogue().begin(); 
-      it != getBoundaryConditionCatalogue().end(); ++it){
-        nameList.push_back(it->first);
-  };
+  for(BoundaryConditionCatalogueType::const_iterator it = getBoundaryConditionCatalogue().begin() ;
+      it != getBoundaryConditionCatalogue().end() ; ++it)
+  {
+    nameList.push_back(it->first);
+  }
+  ;
 }
 
-BoundaryConditionBase* newBoundaryCondition(const std::string& BoundaryConditionName , TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm) 
+BoundaryConditionBase* newBoundaryCondition(const std::string& BoundaryConditionName, TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm)
 {
-  
+
   BoundaryConditionInitializer* BoundaryConditionInitializer = getBoundaryConditionCatalogue()[BoundaryConditionName];
   BoundaryConditionBase *theNewBoundaryCondition = NULL;
-  
+
   if(!BoundaryConditionInitializer)
-      throw GPException("Could not create unrecognized BoundaryCondition "+ BoundaryConditionName);
+    throw GPException("Could not create unrecognized BoundaryCondition "+ BoundaryConditionName);
 
   theNewBoundaryCondition = BoundaryConditionInitializer->initializeBoundaryCondition( hdn,pm );
-  
+
   return theNewBoundaryCondition;
 }

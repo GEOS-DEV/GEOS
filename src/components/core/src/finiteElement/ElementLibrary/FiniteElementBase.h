@@ -40,16 +40,16 @@ public:
 //                                         array<R1Tensor>& Qstiffness,
 //                                         array<R1Tensor>& force ) {}
 
-  virtual void zero_energy_mode_control( const array<R1Tensor>& ,
-                                         const realT& ,
-                                         const array<R1Tensor>& ,
-                                         const array<R1Tensor>& ,
-                                         const realT& ,
-                                         const realT& ,
-                                         const realT& ,
-                                         const realT& ,
-                                         const realT& ,
-                                         array<R1Tensor>& ,
+  virtual void zero_energy_mode_control( const array<R1Tensor>&,
+                                         const realT&,
+                                         const array<R1Tensor>&,
+                                         const array<R1Tensor>&,
+                                         const realT&,
+                                         const realT&,
+                                         const realT&,
+                                         const realT&,
+                                         const realT&,
+                                         array<R1Tensor>&,
                                          array<R1Tensor>&  ) {}
 
 

@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -54,9 +72,8 @@
 
 LagrangeExplicitDynamicsSolver::LagrangeExplicitDynamicsSolver( const std::string& name,
                                                                 ProblemManagerT* const pm ):
-SolverBase(name,pm)
-{
-}
+  SolverBase(name,pm)
+{}
 
 LagrangeExplicitDynamicsSolver::~LagrangeExplicitDynamicsSolver()
 {
@@ -105,7 +122,8 @@ void LagrangeExplicitDynamicsSolver::RegisterFields( PhysicalDomainT& domain )
   domain.m_feNodeManager.AddKeylessDataField<realT>("nsigma_zx", false, true);
 
 
-  // register discrete element fields - all of the nodal fields + currentPosition + rotation
+  // register discrete element fields - all of the nodal fields +
+  // currentPosition + rotation
   domain.m_discreteElementManager.AddKeyedDataField<FieldInfo::displacement>();
   domain.m_discreteElementManager.AddKeyedDataField<FieldInfo::incrementalDisplacement>();
   domain.m_discreteElementManager.AddKeyedDataField<FieldInfo::velocity>();
@@ -151,9 +169,9 @@ void LagrangeExplicitDynamicsSolver::RegisterFields( PhysicalDomainT& domain )
 void LagrangeExplicitDynamicsSolver::Initialize(PhysicalDomainT& domain, SpatialPartition& partition )
 {
   for( std::map< std::string, ElementRegionT >::iterator i=domain.m_feElementManager.m_ElementRegions.begin() ;
-      i != domain.m_feElementManager.m_ElementRegions.end() ; ++i )
+       i != domain.m_feElementManager.m_ElementRegions.end() ; ++i )
   {
-    i->second.CalculateNodalMasses( domain.m_feNodeManager ) ;
+    i->second.CalculateNodalMasses( domain.m_feNodeManager );
   }
 
   if( m_tiedNodesFlag )
@@ -210,8 +228,10 @@ void LagrangeExplicitDynamicsSolver::ApplyForcesFromContact(PhysicalDomainT& dom
     array<R1Tensor>& decontactForce = domain.m_discreteElementSurfaceNodes.GetFieldData<FieldInfo::contactForce>();
     decontactForce = 0.0;
 
-    //update nodal positions, velocities, and accelerations before updating face geometry
-    //also, reset rotational and translational accelerations as well as forces and moments
+    //update nodal positions, velocities, and accelerations before updating face
+    // geometry
+    //also, reset rotational and translational accelerations as well as forces
+    // and moments
     domain.m_discreteElementManager.UpdateNodalStatesZeroForcesAndAccelerations();
 
     //update face geometry and sort faces if necessary
@@ -220,7 +240,8 @@ void LagrangeExplicitDynamicsSolver::ApplyForcesFromContact(PhysicalDomainT& dom
                                                                        domain.m_discreteElementManager,
                                                                        dt);
 
-    //if a resort has been triggered, then you also need to update the contact manager
+    //if a resort has been triggered, then you also need to update the contact
+    // manager
     if (resort)
       domain.m_contactManager.Update(domain.m_externalFaces.m_neighborList);
 
@@ -235,8 +256,10 @@ void LagrangeExplicitDynamicsSolver::ApplyForcesFromContact(PhysicalDomainT& dom
 #endif
     }
 
-    //for parallel: do NOT need to synchronize nodal force fields across processes for DE nodes
-    //before moving to centroid, since each process will do that calculation (redundantly) itself
+    //for parallel: do NOT need to synchronize nodal force fields across
+    // processes for DE nodes
+    //before moving to centroid, since each process will do that calculation
+    // (redundantly) itself
     // ... there's therefore no need for explicit synchrony
     //as long as nodal states remain synchronous, everything will be fine!
 #ifndef DEEFC
@@ -251,14 +274,17 @@ void LagrangeExplicitDynamicsSolver::ApplyForcesFromContact(PhysicalDomainT& dom
   //ellipsoidal discrete elements
   //-----------------------------
   {
-    //update nodal positions, velocities, and accelerations before updating face geometry
-    //also, reset rotational and translational accelerations as well as forces and moments
+    //update nodal positions, velocities, and accelerations before updating face
+    // geometry
+    //also, reset rotational and translational accelerations as well as forces
+    // and moments
     domain.m_ellipsoidalDiscreteElementManager.UpdateNodalStatesZeroForcesAndAccelerations();
 
     //update ellipsoidal discrete elements
     bool resort = domain.m_ellipsoidalDiscreteElementManager.RecalculateNeighborList(dt);
 
-    //if a resort has been triggered, then you also need to update the contact manager
+    //if a resort has been triggered, then you also need to update the contact
+    // manager
     if(resort)
       domain.m_ellipsoidalContactManager.Update(domain.m_ellipsoidalDiscreteElementManager.m_neighborList);
 
@@ -269,12 +295,12 @@ void LagrangeExplicitDynamicsSolver::ApplyForcesFromContact(PhysicalDomainT& dom
 }
 
 double LagrangeExplicitDynamicsSolver::TimeStep( const realT& time,
-                                               const realT& dt,
-                                               const int cycleNumber,
-                                               PhysicalDomainT& domain,
-                                               const array<string>& namesOfSolverRegions,
-                                               SpatialPartition& partition,
-                                               FractunatorBase* const fractunator )
+                                                 const realT& dt,
+                                                 const int cycleNumber,
+                                                 PhysicalDomainT& domain,
+                                                 const array<string>& namesOfSolverRegions,
+                                                 SpatialPartition& partition,
+                                                 FractunatorBase* const fractunator )
 {
   using namespace BoundaryConditionFunctions;
 
@@ -314,23 +340,27 @@ double LagrangeExplicitDynamicsSolver::TimeStep( const realT& time,
   LagrangeExplicitDynamicsFunctions::RotationalPointUpdatePart1( domain.m_ellipsoidalDiscreteElementManager, time, dt );
 
   for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
-      regionName != namesOfSolverRegions.end() ; ++regionName )
+       regionName != namesOfSolverRegions.end() ; ++regionName )
   {
-    //this conditional supports DE, since an element region in DE may not exist in FE; this case should not
+    //this conditional supports DE, since an element region in DE may not exist
+    // in FE; this case should not
     //throw an exception, which occurs in the absence of the following block
     std::map<std::string, ElementRegionT>::iterator iter = domain.m_feElementManager.m_ElementRegions.find(*regionName);
     if(iter == domain.m_feElementManager.m_ElementRegions.end())
       continue;
 
-    ElementRegionT& elementRegion = iter->second; // stlMapLookup( domain.m_elementManager.m_ElementRegions, *regionName );
+    ElementRegionT& elementRegion = iter->second; // stlMapLookup(
+                                                  // domain.m_elementManager.m_ElementRegions,
+                                                  // *regionName );
     elementRegion.CalculateVelocityGradients(domain.m_feNodeManager);
     elementRegion.MaterialUpdate(dt);
   }
 
   for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
-      regionName != namesOfSolverRegions.end() ; ++regionName )
+       regionName != namesOfSolverRegions.end() ; ++regionName )
   {
-    //this conditional supports DE, since an element region in DE may not exist in FE; this case should not
+    //this conditional supports DE, since an element region in DE may not exist
+    // in FE; this case should not
     //throw an exception, which occurs in the absence of the following block
     std::map<std::string, ElementRegionT>::iterator iter = domain.m_feElementManager.m_ElementRegions.find(*regionName);
     if(iter == domain.m_feElementManager.m_ElementRegions.end())
@@ -406,7 +436,7 @@ double LagrangeExplicitDynamicsSolver::TimeStep( const realT& time,
 
 
           for( lArray1d::const_iterator nodeID=domain.m_feFaceManager.m_toNodesRelation[faceID].begin() ;
-              nodeID!=domain.m_feFaceManager.m_toNodesRelation[faceID].end() ; ++nodeID )
+               nodeID!=domain.m_feFaceManager.m_toNodesRelation[faceID].end() ; ++nodeID )
           {
             nodalForce[*nodeID] += cForce;
             cohesiveForce[*nodeID] += cForce;
@@ -419,7 +449,8 @@ double LagrangeExplicitDynamicsSolver::TimeStep( const realT& time,
 
 
 #ifdef SRC_INTERNAL
-  //FIXME: replace the following call with domain.m_externalFaces.GeodynCouplingParallel( domain.m_feNodeManager );
+  //FIXME: replace the following call with
+  // domain.m_externalFaces.GeodynCouplingParallel( domain.m_feNodeManager );
   domain.m_externalFaces.GeodynCoupling( domain.m_feNodeManager );
 #endif
   LagrangeExplicitDynamicsFunctions::LinearPointUpdatePart2( domain.m_feNodeManager, time, dt, m_dampingM );
@@ -459,7 +490,7 @@ void LagrangeExplicitDynamicsSolver::PostProcess (PhysicalDomainT& domain,
   sigma_zx = 0.0;
 
   for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
-      regionName != namesOfSolverRegions.end() ; ++regionName )
+       regionName != namesOfSolverRegions.end() ; ++regionName )
   {
     std::map<std::string, ElementRegionT>::iterator iter = domain.m_feElementManager.m_ElementRegions.find(*regionName);
     if(iter == domain.m_feElementManager.m_ElementRegions.end())
@@ -488,7 +519,7 @@ void LagrangeExplicitDynamicsSolver::PostProcess (PhysicalDomainT& domain,
       eyz =  s(1,2);
       ezx =  s(0,2);
 
-      for (localIndex j = 0; j < elementRegion.m_toNodesRelation.Dimension(1); ++j)
+      for (localIndex j = 0 ; j < elementRegion.m_toNodesRelation.Dimension(1) ; ++j)
       {
         localIndex ind = elementRegion.m_toNodesRelation[k][j];
         sigma_x[ind] +=ex;
@@ -501,7 +532,7 @@ void LagrangeExplicitDynamicsSolver::PostProcess (PhysicalDomainT& domain,
     }
   }
 
-  for (localIndex i=0; i<domain.m_feNodeManager.DataLengths(); ++i)
+  for (localIndex i=0 ; i<domain.m_feNodeManager.DataLengths() ; ++i)
   {
     if (domain.m_feNodeManager.m_toElementsRelation[i].size() > 0)
     {
@@ -515,7 +546,7 @@ void LagrangeExplicitDynamicsSolver::PostProcess (PhysicalDomainT& domain,
   }
 
   {
-    std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> syncedFields;
+    std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string> > syncedFields;
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back("nsigma_x");
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back("nsigma_y");
     syncedFields[PhysicalDomainT::FiniteElementNodeManager].push_back("nsigma_z");
@@ -551,7 +582,7 @@ void LagrangeExplicitDynamicsSolver::ApplyGapDamping( NodeManager& nodeManager,
       if( !(childFaces[k].empty()) )
       {
         const localIndex faceIndex[2] = { childFaces[k][0],
-                                          childFaces[k][1] } ;
+                                          childFaces[k][1] };
 
         for( int i=0 ; i<2 ; ++i )
         {
@@ -561,8 +592,8 @@ void LagrangeExplicitDynamicsSolver::ApplyGapDamping( NodeManager& nodeManager,
         realT faceMass = 0.0;
         localIndex numNodesInFace = faceManager.m_toNodesRelation[k].size();
 
-        const lArray1d& nodeIndices0 = faceManager.m_toNodesRelation[faceIndex[0]] ;
-        const lArray1d& nodeIndices1 = faceManager.m_toNodesRelation[faceIndex[1]] ;
+        const lArray1d& nodeIndices0 = faceManager.m_toNodesRelation[faceIndex[0]];
+        const lArray1d& nodeIndices1 = faceManager.m_toNodesRelation[faceIndex[1]];
 
         for( localIndex a=0 ; a<numNodesInFace ; ++a )
         {
@@ -581,7 +612,7 @@ void LagrangeExplicitDynamicsSolver::ApplyGapDamping( NodeManager& nodeManager,
         gapVelocity -= faceVelocity[0];
 
         dampForce = gapVelocity;
-        dampForce *= - this->m_gapdamping * faceMass / dt * 0.25;
+        dampForce *= -this->m_gapdamping * faceMass / dt * 0.25;
 
         for( localIndex a=0 ; a<numNodesInFace ; ++a )
         {
@@ -606,15 +637,18 @@ void LagrangeExplicitDynamicsSolver::SetMaxStableTimeStep( const realT& time,
   incrementalDisplacement = 0.0;
 
   for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
-      regionName != namesOfSolverRegions.end() ; ++regionName )
+       regionName != namesOfSolverRegions.end() ; ++regionName )
   {
-    //this conditional supports DE, since an element region in DE may not exist in FE; this case should not
+    //this conditional supports DE, since an element region in DE may not exist
+    // in FE; this case should not
     //throw an exception, which occurs in the absence of the following block
     std::map<std::string, ElementRegionT>::iterator iter = domain.m_feElementManager.m_ElementRegions.find(*regionName);
     if(iter == domain.m_feElementManager.m_ElementRegions.end())
       continue;
 
-    ElementRegionT& elementRegion = iter->second; // stlMapLookup( domain.m_elementManager.m_ElementRegions, *regionName );
+    ElementRegionT& elementRegion = iter->second; // stlMapLookup(
+                                                  // domain.m_elementManager.m_ElementRegions,
+                                                  // *regionName );
     elementRegion.CalculateVelocityGradients(domain.m_feNodeManager);
     elementRegion.CalculateNodalForces(domain.m_feNodeManager, m_stabledt, 0.0);
   }
@@ -626,142 +660,163 @@ void LagrangeExplicitDynamicsSolver::SetMaxStableTimeStep( const realT& time,
 
 
 void LagrangeExplicitDynamicsSolver::WriteSiloDerived( SiloFile& siloFile ) const
-{
-
-}
+{}
 
 void LagrangeExplicitDynamicsSolver::ReadSiloDerived( const SiloFile& siloFile )
-{
-
-}
+{}
 
 
 namespace LagrangeExplicitDynamicsFunctions
 {
-  // *********************************************************************************************************************
-  /**
-   * @author R. Settgast
-   * @param dt time increment of current time step
-   *
-   * This function is an aggregate operation that multiplies that performs the following
-   * operations for each node:
-   *
-   * push nodal velocity to half step
-   * \f[ v_{a}^{n+1/2} = v_{a}^{n} + a_a^{n} * (dt/2) \f]
-   *
-   * calculate incremental displacement over the step
-   * \f[ uhat_{a}^{n+1/2} = v_{a}^{n+1/2} * dt \f]
-   *
-   * calculate total displacement at end of step
-   * \f[ u_{a}^{n+1} = u_{a}^{n} + uhat_{a}^{n+1/2} \f]
-   *
-   * zero nodal forces
-   * \f[ f_{a}^{n+1} = 0 \f]
-   *
-   *
-   */
-  void LinearPointUpdatePart1( ObjectDataStructureBaseT& objectManager,
-                               const realT& time,
-                               const realT& dt,
-                               const bool clearForces)
+// *********************************************************************************************************************
+/**
+ * @author R. Settgast
+ * @param dt time increment of current time step
+ *
+ * This function is an aggregate operation that multiplies that performs the
+ * following
+ * operations for each node:
+ *
+ * push nodal velocity to half step
+ * \f[ v_{a}^{n+1/2} = v_{a}^{n} + a_a^{n} * (dt/2) \f]
+ *
+ * calculate incremental displacement over the step
+ * \f[ uhat_{a}^{n+1/2} = v_{a}^{n+1/2} * dt \f]
+ *
+ * calculate total displacement at end of step
+ * \f[ u_{a}^{n+1} = u_{a}^{n} + uhat_{a}^{n+1/2} \f]
+ *
+ * zero nodal forces
+ * \f[ f_{a}^{n+1} = 0 \f]
+ *
+ *
+ */
+void LinearPointUpdatePart1( ObjectDataStructureBaseT& objectManager,
+                             const realT& time,
+                             const realT& dt,
+                             const bool clearForces)
+{
+  if( objectManager.DataLengths() > 0 )
   {
-    if( objectManager.DataLengths() > 0 )
+    array<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
+    const array<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
+    array<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
+    array<R1Tensor>& displacement = objectManager.GetFieldData<FieldInfo::displacement> ();
+    array<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
+
+    array<real64>& work = objectManager.GetFieldData<realT>("work");
+
+
+    const realT dtdiv2 = 0.5 * dt;
+
+    for (localIndex a = 0 ; a < objectManager.DataLengths() ; ++a)
     {
-      array<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
-      const array<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
-      array<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
-      array<R1Tensor>& displacement = objectManager.GetFieldData<FieldInfo::displacement> ();
-      array<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
+      // push nodal velocity forward to the half-step
+      velocity[a].plus_cA(dtdiv2, acceleration[a]);
+    }
 
-      array<real64>& work = objectManager.GetFieldData<realT>("work");
-
-
-      const realT dtdiv2 = 0.5 * dt;
-
-      for (localIndex a = 0; a < objectManager.DataLengths(); ++a)
-      {
-        // push nodal velocity forward to the half-step
-        velocity[a].plus_cA(dtdiv2, acceleration[a]);
-      }
-
-      BoundaryConditionFunctions::ApplyDirichletBoundaryCondition<R1Tensor>(objectManager,
-                                                                            Field<FieldInfo::velocity>::Name(),time+0.5*dt);
+    BoundaryConditionFunctions::ApplyDirichletBoundaryCondition<R1Tensor>(objectManager,
+                                                                          Field<FieldInfo::velocity>::Name(),time+0.5*dt);
 
 
-      BoundaryConditionFunctions::ApplyRigidWallBoundaryCondition( objectManager, dt );
+    BoundaryConditionFunctions::ApplyRigidWallBoundaryCondition( objectManager, dt );
 
-      for (localIndex a = 0; a < objectManager.DataLengths(); ++a)
-      {
-        // calculate incremental displacements over the step
-        incrementalDisplacement[a].cA(dt, velocity[a]);
+    for (localIndex a = 0 ; a < objectManager.DataLengths() ; ++a)
+    {
+      // calculate incremental displacements over the step
+      incrementalDisplacement[a].cA(dt, velocity[a]);
 
-        work[a] += 0.5 * Dot(force[a],incrementalDisplacement[a]);
+      work[a] += 0.5 * Dot(force[a],incrementalDisplacement[a]);
 
-        // add incremental displacements to total displacements to bring to end of step
-        displacement[a] += incrementalDisplacement[a];
+      // add incremental displacements to total displacements to bring to end of
+      // step
+      displacement[a] += incrementalDisplacement[a];
 
-      }
+    }
 
 
-      /*
-      const array<lArray1d>& childIndices = objectManager.GetVariableOneToManyMap( "childIndices" );
-      for (localIndex a = 0; a < objectManager.DataLengths(); ++a)
-      {
-        if( !(childIndices[a].empty()) )
-        {
-          incrementalDisplacement[a] = 0.5*( incrementalDisplacement[childIndices[a][0]] + incrementalDisplacement[childIndices[a][1]] );
-          displacement[a] = 0.5*( displacement[childIndices[a][0]] + displacement[childIndices[a][1]] );
-        }
-      }*/
+    /*
+       const array<lArray1d>& childIndices =
+          objectManager.GetVariableOneToManyMap( "childIndices" );
+       for (localIndex a = 0; a < objectManager.DataLengths(); ++a)
+       {
+       if( !(childIndices[a].empty()) )
+       {
+        incrementalDisplacement[a] = 0.5*(
+           incrementalDisplacement[childIndices[a][0]] +
+           incrementalDisplacement[childIndices[a][1]] );
+        displacement[a] = 0.5*( displacement[childIndices[a][0]] +
+           displacement[childIndices[a][1]] );
+       }
+       }*/
 
-      // set forces to zero
-      if(clearForces)
-      {
-        force = 0.0;
-      }
+    // set forces to zero
+    if(clearForces)
+    {
+      force = 0.0;
     }
   }
+}
 
-  // *********************************************************************************************************************
-  /**
-   * @author R. Settgast
-   * @param dt time increment of current time step
-   *
-   * This function is an aggregate operation that multiplies that performs the following
-   * operations for each node:
-   *
-   * calculate nodal acceleration at end of step
-   * \f[ a_{a}^{n+1} = f_{a}^{n+1} / m_a^{n+1} \f]
-   *
-   * push nodal velocity to end of step
-   * \f[ v_{a}^{n+1} = v_{a}^{n+1/2} + a_a^{n+1} * (dt/2) \f]
-   *
-   */
-  void LinearPointUpdatePart2( ObjectDataStructureBaseT& objectManager,
-                               const realT& time,
-                               const realT& dt,
-                               const realT& damping )
+// *********************************************************************************************************************
+/**
+ * @author R. Settgast
+ * @param dt time increment of current time step
+ *
+ * This function is an aggregate operation that multiplies that performs the
+ * following
+ * operations for each node:
+ *
+ * calculate nodal acceleration at end of step
+ * \f[ a_{a}^{n+1} = f_{a}^{n+1} / m_a^{n+1} \f]
+ *
+ * push nodal velocity to end of step
+ * \f[ v_{a}^{n+1} = v_{a}^{n+1/2} + a_a^{n+1} * (dt/2) \f]
+ *
+ */
+void LinearPointUpdatePart2( ObjectDataStructureBaseT& objectManager,
+                             const realT& time,
+                             const realT& dt,
+                             const realT& damping )
+{
+  if( objectManager.DataLengths() > 0 )
   {
-    if( objectManager.DataLengths() > 0 )
+    array<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
+    array<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
+    array<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
+    array<realT>& mass = objectManager.GetFieldData<FieldInfo::mass> ();
+    array<real64>& work = objectManager.GetFieldData<realT>("work");
+
+    const array<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
+    const array<int>* isDetachedFromSolidMesh = objectManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
+
+    const realT dtdiv2 = 0.5 * dt;
+    realT dampedMass;
+    R1Tensor dampedForce;
+    for (localIndex a = 0 ; a < objectManager.DataLengths() ; ++a)
     {
-      array<R1Tensor>& velocity = objectManager.GetFieldData<FieldInfo::velocity> ();
-      array<R1Tensor>& acceleration = objectManager.GetFieldData<FieldInfo::acceleration> ();
-      array<R1Tensor>& force = objectManager.GetFieldData<FieldInfo::force> ();
-      array<realT>& mass = objectManager.GetFieldData<FieldInfo::mass> ();
-      array<real64>& work = objectManager.GetFieldData<realT>("work");
 
-      const array<R1Tensor>& incrementalDisplacement = objectManager.GetFieldData<FieldInfo::incrementalDisplacement> ();
-      const array<int>* isDetachedFromSolidMesh = objectManager.GetFieldDataPointer<int> ("isDetachedFromSolidMesh");
-
-      const realT dtdiv2 = 0.5 * dt;
-      realT dampedMass;
-      R1Tensor dampedForce;
-      for (localIndex a = 0; a < objectManager.DataLengths(); ++a)
+      if ( isDetachedFromSolidMesh == NULL )
       {
-
-        if ( isDetachedFromSolidMesh == NULL )
+        // calculate acceleration
+        if( damping > 0.0 )
         {
-          // calculate acceleration
+          dampedMass = mass[a] * ( 1 + 0.5 * dt * damping );
+          dampedForce.cA( -damping * mass[a], velocity[a] );
+          dampedForce += force[a];
+          acceleration[a].Adivc(dampedMass, dampedForce );
+        }
+        else
+        {
+          acceleration[a].Adivc(mass[a], force[a]);
+        }
+
+        work[a] += 0.5 * Dot(force[a],incrementalDisplacement[a]);
+      }
+      else
+      {
+        if ( (*isDetachedFromSolidMesh)[a] == 0 )
+        {
           if( damping > 0.0 )
           {
             dampedMass = mass[a] * ( 1 + 0.5 * dt * damping );
@@ -775,230 +830,226 @@ namespace LagrangeExplicitDynamicsFunctions
           }
 
           work[a] += 0.5 * Dot(force[a],incrementalDisplacement[a]);
+
         }
         else
         {
-          if ( (*isDetachedFromSolidMesh)[a] == 0 )
-          {
-            if( damping > 0.0 )
-            {
-              dampedMass = mass[a] * ( 1 + 0.5 * dt * damping );
-              dampedForce.cA( -damping * mass[a], velocity[a] );
-              dampedForce += force[a];
-              acceleration[a].Adivc(dampedMass, dampedForce );
-            }
-            else
-            {
-              acceleration[a].Adivc(mass[a], force[a]);
-            }
-
-            work[a] += 0.5 * Dot(force[a],incrementalDisplacement[a]);
-
-          }
-          else
-          {
-            acceleration[a] = 0;
-          }
+          acceleration[a] = 0;
         }
       }
-
-      BoundaryConditionFunctions::ApplyDirichletBoundaryCondition<R1Tensor>(objectManager,
-                                                                            Field<FieldInfo::acceleration>::Name(),time);
-
-      for (localIndex a = 0; a < objectManager.DataLengths(); ++a)
-      {
-        // push velocity forward to end of step
-        velocity[a].plus_cA(dtdiv2, acceleration[a]);
-
-        if (mass[a] <= 0) velocity[a] = 0;
-      }
-
-      BoundaryConditionFunctions::ApplyDirichletBoundaryCondition<R1Tensor>(objectManager,
-                                                                            Field<FieldInfo::velocity>::Name(),time);//+dt);
     }
-  }
 
-  /**
-   * @brief First part of the rotation update (also updates current positions of de's and nodes)
-   * @author Scott Johnson
-   *
-   * This function is an aggregate operation that multiplies that performs the following
-   * operations for each node (after Omelyan, 1998). Note that this interpretation of the
-   * quaternion can be parameterized using the rotation, \f[\theta\f], about a unit axis, n:
-   * \f[ q[0] = cos(0.5 * \theta) \f]
-   * \f[ q[1..3] = sin(0.5 * \theta) * n\f]
-   *
-   * calculate quaternion time derivative at the step
-   * \f[ \dot{q}_{a}^{n} = \frac{1}{2}Q\left(q_{a}^{n}\right)\omega_{a}^{n} \f]
-   * \f[ Q\left(q_{a}^{n}\right)=\left[\begin{array}{ccc}-q_{a}^{n}[1] & -q_{a}^{n}[2] & -q_{a}^{n}[3] \\ q_{a}^{n}[0] & -q_{a}^{n}[3] & q_{a}^{n}[2] \\ q_{a}^{n}[3] & q_{a}^{n}[0] & -q_{a}^{n}[1] \\ -q_{a}^{n}[2] & q_{a}^{n}[1] & q_{a}^{n}[0]\end{array}\right]\f]
-   *
-   * push quaternion to the half step
-   * \f[ q_{a}^{n+1/2} = q_{a}^{n} + \dot{q}_{a}^{n} * (dt/2) \f]
-   *
-   * push body frame nodal rotational velocity to half step
-   * \f[ \omega_{a}^{n+1/2} = \omega_{a}^{n} + \alpha_a^{n} * (dt/2) \f]
-   *
-   * calculate quaternion time derivative at the half step
-   * \f[ \dot{q}_{a}^{n+1/2} = \frac{1}{2}Q\left(q_{a}^{n+1/2}\right)\omega_{a}^{n+1/2} \f]
-   * \f[ Q\left(q_{a}^{n+1/2}\right)=\left[\begin{array}{ccc}-q_{a}^{n+1/2}[1] & -q_{a}^{n+1/2}[2] & -q_{a}^{n+1/2}[3] \\ q_{a}^{n+1/2}[0] & -q_{a}^{n+1/2}[3] & q_{a}^{n+1/2}[2] \\ q_{a}^{n+1/2}[3] & q_{a}^{n+1/2}[0] & -q_{a}^{n+1/2}[1] \\ -q_{a}^{n+1/2}[2] & q_{a}^{n+1/2}[1] & q_{a}^{n+1/2}[0]\end{array}\right]\f]
-   *
-   * calculate incremental quaternion over the step
-   * \f[ {dq}_{a}^{n+1/2} = \dot{q}_{a}^{n+1/2} * dt \f]
-   *
-   * calculate quaternion at end of step
-   * \f[ q_{a}^{n+1} = q_{a}^{n} + {dq}_{a}^{n+1/2} \f]
-   *
-   * renormalize quaternion
-   * \f[ |q| = 1 \f]
-   *
-   * @param discreteElementManager manager of the discrete elements to update
-   * @param time current simulation time
-   * @param dt current timestep length
-   */
-  void RotationalPointUpdatePart1(DiscreteElementManagerBaseT& discreteElementManager,
-                                  const realT& time, const realT& dt)
+    BoundaryConditionFunctions::ApplyDirichletBoundaryCondition<R1Tensor>(objectManager,
+                                                                          Field<FieldInfo::acceleration>::Name(),time);
+
+    for (localIndex a = 0 ; a < objectManager.DataLengths() ; ++a)
+    {
+      // push velocity forward to end of step
+      velocity[a].plus_cA(dtdiv2, acceleration[a]);
+
+      if (mass[a] <= 0)
+        velocity[a] = 0;
+    }
+
+    BoundaryConditionFunctions::ApplyDirichletBoundaryCondition<R1Tensor>(objectManager,
+                                                                          Field<FieldInfo::velocity>::Name(),time);  //+dt);
+  }
+}
+
+/**
+ * @brief First part of the rotation update (also updates current positions of
+ * de's and nodes)
+ * @author Scott Johnson
+ *
+ * This function is an aggregate operation that multiplies that performs the
+ * following
+ * operations for each node (after Omelyan, 1998). Note that this interpretation
+ * of the
+ * quaternion can be parameterized using the rotation, \f[\theta\f], about a
+ * unit axis, n:
+ * \f[ q[0] = cos(0.5 * \theta) \f]
+ * \f[ q[1..3] = sin(0.5 * \theta) * n\f]
+ *
+ * calculate quaternion time derivative at the step
+ * \f[ \dot{q}_{a}^{n} = \frac{1}{2}Q\left(q_{a}^{n}\right)\omega_{a}^{n} \f]
+ * \f[ Q\left(q_{a}^{n}\right)=\left[\begin{array}{ccc}-q_{a}^{n}[1] &
+ *-q_{a}^{n}[2] & -q_{a}^{n}[3] \\ q_{a}^{n}[0] & -q_{a}^{n}[3] & q_{a}^{n}[2]
+ *\\ q_{a}^{n}[3] & q_{a}^{n}[0] & -q_{a}^{n}[1] \\ -q_{a}^{n}[2] & q_{a}^{n}[1]
+ *& q_{a}^{n}[0]\end{array}\right]\f]
+ *
+ * push quaternion to the half step
+ * \f[ q_{a}^{n+1/2} = q_{a}^{n} + \dot{q}_{a}^{n} * (dt/2) \f]
+ *
+ * push body frame nodal rotational velocity to half step
+ * \f[ \omega_{a}^{n+1/2} = \omega_{a}^{n} + \alpha_a^{n} * (dt/2) \f]
+ *
+ * calculate quaternion time derivative at the half step
+ * \f[ \dot{q}_{a}^{n+1/2} =
+ *\frac{1}{2}Q\left(q_{a}^{n+1/2}\right)\omega_{a}^{n+1/2} \f]
+ * \f[ Q\left(q_{a}^{n+1/2}\right)=\left[\begin{array}{ccc}-q_{a}^{n+1/2}[1] &
+ *-q_{a}^{n+1/2}[2] & -q_{a}^{n+1/2}[3] \\ q_{a}^{n+1/2}[0] & -q_{a}^{n+1/2}[3]
+ *& q_{a}^{n+1/2}[2] \\ q_{a}^{n+1/2}[3] & q_{a}^{n+1/2}[0] & -q_{a}^{n+1/2}[1]
+ *\\ -q_{a}^{n+1/2}[2] & q_{a}^{n+1/2}[1] &
+ * q_{a}^{n+1/2}[0]\end{array}\right]\f]
+ *
+ * calculate incremental quaternion over the step
+ * \f[ {dq}_{a}^{n+1/2} = \dot{q}_{a}^{n+1/2} * dt \f]
+ *
+ * calculate quaternion at end of step
+ * \f[ q_{a}^{n+1} = q_{a}^{n} + {dq}_{a}^{n+1/2} \f]
+ *
+ * renormalize quaternion
+ * \f[ |q| = 1 \f]
+ *
+ * @param discreteElementManager manager of the discrete elements to update
+ * @param time current simulation time
+ * @param dt current timestep length
+ */
+void RotationalPointUpdatePart1(DiscreteElementManagerBaseT& discreteElementManager,
+                                const realT& time, const realT& dt)
+{
+
+  if( discreteElementManager.DataLengths() > 0 )
   {
 
-    if( discreteElementManager.DataLengths() > 0 )
+    array<R1Tensor>& rotationalVelocity        = discreteElementManager.GetFieldData<FieldInfo::rotationalVelocity> ();
+    array<R1Tensor>& rotationalAcceleration    = discreteElementManager.GetFieldData<FieldInfo::rotationalAcceleration> ();
+    array<R1Tensor>& rotationalAxisIncrement   = discreteElementManager.GetFieldData<FieldInfo::rotationalAxisIncrement> ();
+    array<realT>& rotationalMagnitudeIncrement = discreteElementManager.GetFieldData<FieldInfo::rotationalMagnitudeIncrement> ();
+    array<R1Tensor>& rotationAxis              = discreteElementManager.GetFieldData<FieldInfo::rotationAxis> ();
+    array<realT>& rotationMagnitude            = discreteElementManager.GetFieldData<FieldInfo::rotationMagnitude> ();
+
+    const realT dtdiv2 = 0.5 * dt;
+
+    //note: all quantities are in body frame
+    for (localIndex a = 0 ; a < discreteElementManager.DataLengths() ; ++a)
     {
+      //push the quaternion to the half step
+      realT qh[] = {rotationMagnitude[a], rotationAxis[a][0], rotationAxis[a][1], rotationAxis[a][2]};
+      realT dqdt[nsdof + 1];
+      discreteElementManager.Calculate_dqdt(a, qh, dqdt);
+      qh[0] = rotationMagnitude[a] + dtdiv2 * dqdt[0];
+      for (unsigned int i = 0 ; i < nsdof ; i++)
+        qh[i + 1] = rotationAxis[a][i] + dtdiv2 * dqdt[i + 1];
 
-      array<R1Tensor>& rotationalVelocity        = discreteElementManager.GetFieldData<FieldInfo::rotationalVelocity> ();
-      array<R1Tensor>& rotationalAcceleration    = discreteElementManager.GetFieldData<FieldInfo::rotationalAcceleration> ();
-      array<R1Tensor>& rotationalAxisIncrement   = discreteElementManager.GetFieldData<FieldInfo::rotationalAxisIncrement> ();
-      array<realT>& rotationalMagnitudeIncrement = discreteElementManager.GetFieldData<FieldInfo::rotationalMagnitudeIncrement> ();
-      array<R1Tensor>& rotationAxis              = discreteElementManager.GetFieldData<FieldInfo::rotationAxis> ();
-      array<realT>& rotationMagnitude            = discreteElementManager.GetFieldData<FieldInfo::rotationMagnitude> ();
+      // push rotational velocity forward to the half-step
+      rotationalVelocity[a].plus_cA(dtdiv2, rotationalAcceleration[a]);
 
-      const realT dtdiv2 = 0.5 * dt;
+      // calculate dq based on the half step
+      discreteElementManager.Calculate_dqdt(a, qh, dqdt);
+      rotationalMagnitudeIncrement[a] = dqdt[0] * dt;
+      rotationalAxisIncrement[a][0] = dqdt[1] * dt;
+      rotationalAxisIncrement[a][1] = dqdt[2] * dt;
+      rotationalAxisIncrement[a][2] = dqdt[3] * dt;
 
-      //note: all quantities are in body frame
-      for (localIndex a = 0; a < discreteElementManager.DataLengths(); ++a)
+      // add incremental rotational displacements to total displacements to
+      // bring to end of step
+      rotationMagnitude[a] += rotationalMagnitudeIncrement[a];
+      rotationAxis[a] += rotationalAxisIncrement[a];
+
+      // renormalize quaternion if necessary
       {
-        //push the quaternion to the half step
-        realT qh[] = {rotationMagnitude[a], rotationAxis[a][0], rotationAxis[a][1], rotationAxis[a][2]};
-        realT dqdt[nsdof + 1];
-        discreteElementManager.Calculate_dqdt(a, qh, dqdt);
-        qh[0] = rotationMagnitude[a] + dtdiv2 * dqdt[0];
-        for (unsigned int i = 0; i < nsdof; i++)
-          qh[i + 1] = rotationAxis[a][i] + dtdiv2 * dqdt[i + 1];
-
-        // push rotational velocity forward to the half-step
-        rotationalVelocity[a].plus_cA(dtdiv2, rotationalAcceleration[a]);
-
-        // calculate dq based on the half step
-        discreteElementManager.Calculate_dqdt(a, qh, dqdt);
-        rotationalMagnitudeIncrement[a] = dqdt[0] * dt;
-        rotationalAxisIncrement[a][0] = dqdt[1] * dt;
-        rotationalAxisIncrement[a][1] = dqdt[2] * dt;
-        rotationalAxisIncrement[a][2] = dqdt[3] * dt;
-
-        // add incremental rotational displacements to total displacements to bring to end of step
-        rotationMagnitude[a] += rotationalMagnitudeIncrement[a];
-        rotationAxis[a] += rotationalAxisIncrement[a];
-
-        // renormalize quaternion if necessary
+        realT fct = rotationMagnitude[a] * rotationMagnitude[a];
+        for (unsigned int i = 0 ; i < nsdof ; i++)
+          fct += rotationAxis[a][i] * rotationAxis[a][i];
+        if (fct > 0 && !isEqual(fct,1.0) )
         {
-          realT fct = rotationMagnitude[a] * rotationMagnitude[a];
-          for (unsigned int i = 0; i < nsdof; i++)
-            fct += rotationAxis[a][i] * rotationAxis[a][i];
-          if (fct > 0 && !isEqual(fct,1.0) )
-          {
-            fct = 1. / sqrt(fct);
-            rotationMagnitude[a] *= fct;
-            for (unsigned int i = 0; i < nsdof; i++)
-              rotationAxis[a][i] *= fct;
-          }
-        }
-      }
-
-    }
-  }
-
-  void RotationalPointUpdatePart1b(DiscreteElementManagerT& discreteElementManager)
-  {
-    if( discreteElementManager.DataLengths() > 0 )
-    {
-      //discrete element positions
-      array<R1Tensor>& deCurrentPosition         = discreteElementManager.GetFieldData<FieldInfo::currentPosition> ();
-      array<R1Tensor>& deReferencePosition       = discreteElementManager.GetFieldData<FieldInfo::referencePosition> ();
-      array<R1Tensor>& deDisplacement            = discreteElementManager.GetFieldData<FieldInfo::displacement> ();
-
-      //nodal positions
-      array<R1Tensor>& nodeRelativePosition      = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::relativePosition> ();
-      array<R1Tensor>& nodeCurrentPosition       = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::currentPosition> ();
-
-      //update nodal and discrete element current positions
-      //note: all quantities are in body frame
-      for (localIndex a = 0; a < discreteElementManager.DataLengths(); ++a)
-      {
-        R2Tensor rotation;
-        discreteElementManager.RotationTensor(a, rotation);
-
-        //--APPLY THE ROTATION TENSOR--
-        deCurrentPosition[a] = deReferencePosition[a];
-        deCurrentPosition[a] += deDisplacement[a];
-        for(localIndex b=0; b<discreteElementManager.m_discreteElementToExternalNodesMap[a].size(); b++)
-        {
-          int nn = discreteElementManager.m_discreteElementToExternalNodesMap[a][b];
-          //****local to global direction transform (see DiscreteElementManagerBaseT.h)
-          //    R2Tensor Rt;
-          //    RotationTensorTranspose(a, Rt);
-          //    global.AijBj(Rt, local);
-          nodeCurrentPosition[nn].AijBi(rotation, nodeRelativePosition[nn]);
-          nodeCurrentPosition[nn] += deCurrentPosition[a];
+          fct = 1. / sqrt(fct);
+          rotationMagnitude[a] *= fct;
+          for (unsigned int i = 0 ; i < nsdof ; i++)
+            rotationAxis[a][i] *= fct;
         }
       }
     }
+
   }
+}
 
-  // *********************************************************************************************************************
-  /**
-   * @author Scott Johnson
-   * @param objectManager manager of objects to operate on
-   * @param time current simulation time
-   * @param dt time increment of current time step
-   *
-   * This function is an aggregate operation that multiplies that performs the following
-   * operations for each node:
-   *
-   * calculate body frame nodal rotational acceleration at end of step
-   * \f[ \alpha_{a}^{n+1} = \tau_{a}^{n+1} / I_a^{n+1} \f]
-   *
-   * push body frame nodal rotational velocity to end of step
-   * \f[ \omega_{a}^{n+1} = \omega_{a}^{n+1/2} + \alpha_a^{n+1} * (dt/2) \f]
-   *
-   * zero body frame moments
-   * \f[ m_{a}^{n+1} = 0 \f]
-   *
-   */
-  void RotationalPointUpdatePart2(ObjectDataStructureBaseT& objectManager,
-                                  const realT& time, const realT& dt)
+void RotationalPointUpdatePart1b(DiscreteElementManagerT& discreteElementManager)
+{
+  if( discreteElementManager.DataLengths() > 0 )
   {
-    if( objectManager.DataLengths() > 0 )
+    //discrete element positions
+    array<R1Tensor>& deCurrentPosition         = discreteElementManager.GetFieldData<FieldInfo::currentPosition> ();
+    array<R1Tensor>& deReferencePosition       = discreteElementManager.GetFieldData<FieldInfo::referencePosition> ();
+    array<R1Tensor>& deDisplacement            = discreteElementManager.GetFieldData<FieldInfo::displacement> ();
+
+    //nodal positions
+    array<R1Tensor>& nodeRelativePosition      = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::relativePosition> ();
+    array<R1Tensor>& nodeCurrentPosition       = discreteElementManager.m_nodeManager->GetFieldData<FieldInfo::currentPosition> ();
+
+    //update nodal and discrete element current positions
+    //note: all quantities are in body frame
+    for (localIndex a = 0 ; a < discreteElementManager.DataLengths() ; ++a)
     {
-      array<R1Tensor>& rotationalVelocity = objectManager.GetFieldData< FieldInfo::rotationalVelocity> ();
-      array<R1Tensor>& rotationalAcceleration = objectManager.GetFieldData< FieldInfo::rotationalAcceleration> ();
-      array<R1Tensor>& moment = objectManager.GetFieldData<FieldInfo::moment> ();
-      array<R1Tensor>& rotationalInertia = objectManager.GetFieldData<FieldInfo::rotationalInertia> ();
+      R2Tensor rotation;
+      discreteElementManager.RotationTensor(a, rotation);
 
-      const realT dtdiv2 = 0.5 * dt;
-      for (localIndex a = 0; a < objectManager.DataLengths(); ++a)
+      //--APPLY THE ROTATION TENSOR--
+      deCurrentPosition[a] = deReferencePosition[a];
+      deCurrentPosition[a] += deDisplacement[a];
+      for(localIndex b=0 ; b<discreteElementManager.m_discreteElementToExternalNodesMap[a].size() ; b++)
       {
-        // calculate rotational acceleration
-        rotationalAcceleration[a] = moment[a];
-        rotationalAcceleration[a] /= rotationalInertia[a];
-
-        // push rotational velocity forward to end of step
-        rotationalVelocity[a].plus_cA(dtdiv2, rotationalAcceleration[a]);
+        int nn = discreteElementManager.m_discreteElementToExternalNodesMap[a][b];
+        //****local to global direction transform (see
+        // DiscreteElementManagerBaseT.h)
+        //    R2Tensor Rt;
+        //    RotationTensorTranspose(a, Rt);
+        //    global.AijBj(Rt, local);
+        nodeCurrentPosition[nn].AijBi(rotation, nodeRelativePosition[nn]);
+        nodeCurrentPosition[nn] += deCurrentPosition[a];
       }
-
-      // set moments to zero
-      moment = 0.0;
     }
   }
 }
 
+// *********************************************************************************************************************
+/**
+ * @author Scott Johnson
+ * @param objectManager manager of objects to operate on
+ * @param time current simulation time
+ * @param dt time increment of current time step
+ *
+ * This function is an aggregate operation that multiplies that performs the
+ * following
+ * operations for each node:
+ *
+ * calculate body frame nodal rotational acceleration at end of step
+ * \f[ \alpha_{a}^{n+1} = \tau_{a}^{n+1} / I_a^{n+1} \f]
+ *
+ * push body frame nodal rotational velocity to end of step
+ * \f[ \omega_{a}^{n+1} = \omega_{a}^{n+1/2} + \alpha_a^{n+1} * (dt/2) \f]
+ *
+ * zero body frame moments
+ * \f[ m_{a}^{n+1} = 0 \f]
+ *
+ */
+void RotationalPointUpdatePart2(ObjectDataStructureBaseT& objectManager,
+                                const realT& time, const realT& dt)
+{
+  if( objectManager.DataLengths() > 0 )
+  {
+    array<R1Tensor>& rotationalVelocity = objectManager.GetFieldData< FieldInfo::rotationalVelocity> ();
+    array<R1Tensor>& rotationalAcceleration = objectManager.GetFieldData< FieldInfo::rotationalAcceleration> ();
+    array<R1Tensor>& moment = objectManager.GetFieldData<FieldInfo::moment> ();
+    array<R1Tensor>& rotationalInertia = objectManager.GetFieldData<FieldInfo::rotationalInertia> ();
 
+    const realT dtdiv2 = 0.5 * dt;
+    for (localIndex a = 0 ; a < objectManager.DataLengths() ; ++a)
+    {
+      // calculate rotational acceleration
+      rotationalAcceleration[a] = moment[a];
+      rotationalAcceleration[a] /= rotationalInertia[a];
+
+      // push rotational velocity forward to end of step
+      rotationalVelocity[a].plus_cA(dtdiv2, rotationalAcceleration[a]);
+    }
+
+    // set moments to zero
+    moment = 0.0;
+  }
+}
+}
 
 
 

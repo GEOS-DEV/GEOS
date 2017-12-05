@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -55,20 +73,19 @@ using namespace PS_STR;
 
 ParallelPlateFlowSolverBase::ParallelPlateFlowSolverBase( const std::string& name,
                                                           ProblemManagerT* const pm ):
-SolverBase(name,pm),
-m_ApertureTable(nullptr),
-m_syncedFieldsB(),
-m_tracerNames(),
-m_tracerNamesMass(),
-m_tracerNamesDMDT(),
-m_tracerNamesVolumeFraction(),
-m_tracerMassPtrs(),
-m_tracerDMDTPtrs(),
-m_volumeFractionPtrs(),
-m_edgesToFaces(),
-m_gravityVector(0.0)
-{
-}
+  SolverBase(name,pm),
+  m_ApertureTable(nullptr),
+  m_syncedFieldsB(),
+  m_tracerNames(),
+  m_tracerNamesMass(),
+  m_tracerNamesDMDT(),
+  m_tracerNamesVolumeFraction(),
+  m_tracerMassPtrs(),
+  m_tracerDMDTPtrs(),
+  m_volumeFractionPtrs(),
+  m_edgesToFaces(),
+  m_gravityVector(0.0)
+{}
 
 ParallelPlateFlowSolverBase::~ParallelPlateFlowSolverBase()
 {
@@ -105,15 +122,15 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
   m_contactOffsetCutoff = hdn->GetAttributeOrDefault<realT>("contactOffsetCutoff", -1.0e99);
   // Fluid EOS
   /*
-  m_bulk_modulus = hdn->GetAttributeOrDefault(BulkModulusStr,"2.0e9 Pa");
-  m_rho_o = hdn->GetAttributeOrDefault("rho_o","1 kg/L");
-  m_press_o = hdn->GetAttributeOrDefault("press_o","0.0 Pa");
-  m_pressureCap = hdn->GetAttributeOrDefault("pressurecap","1.0e8 Pa");
-  if (m_pressureCap > m_bulk_modulus)
-  {
-    throw GPException("The pressure cap is higher than the bulk modulus!");
-  }
-  */
+     m_bulk_modulus = hdn->GetAttributeOrDefault(BulkModulusStr,"2.0e9 Pa");
+     m_rho_o = hdn->GetAttributeOrDefault("rho_o","1 kg/L");
+     m_press_o = hdn->GetAttributeOrDefault("press_o","0.0 Pa");
+     m_pressureCap = hdn->GetAttributeOrDefault("pressurecap","1.0e8 Pa");
+     if (m_pressureCap > m_bulk_modulus)
+     {
+     throw GPException("The pressure cap is higher than the bulk modulus!");
+     }
+   */
 
   m_maxLeakOffRatio = hdn->GetAttributeOrDefault("maxLeakOffRatio","0.3");
 
@@ -127,7 +144,9 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
     m_leakoffModel.ReadXML(leakoffNode);
     m_leakoffCoef = m_leakoffModel.GetLeakoffCoefficient();
 
-  } else {
+  }
+  else
+  {
     std::cout << "No leakoff model specified." <<std::endl;
     m_leakoffCoef = 0.0;
   }
@@ -143,7 +162,8 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
   if( !ApertureTableName.empty() )
   {
     Table<1,realT>* table = TableManager::Instance().GetTable<1,realT>(ApertureTableName);
-    //m_zeroAperture = m_ApertureTable->Lookup(realT(0.0),TableInterpolation::linear);
+    //m_zeroAperture =
+    // m_ApertureTable->Lookup(realT(0.0),TableInterpolation::linear);
     std::vector<realT> xvals = table->AxisValues(0);
     std::vector<realT> yvals = table->Values();
 
@@ -156,7 +176,7 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
       throw GPException("Invalid aperture table. Must have more than two points specified!!");
     }
     int n=xvals.size()-1;
-    realT slope = (yvals[n]-yvals[n-1]) / (xvals[n]-xvals[n-1]) ;
+    realT slope = (yvals[n]-yvals[n-1]) / (xvals[n]-xvals[n-1]);
 
     if( slope >= 1.0 )
     {
@@ -184,14 +204,14 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
   // Multiphase tracers
   m_tracerNames = hdn->GetStringVector("inputFluidNames");
   m_multiphaseFlow = (m_tracerNames.size() >= 1);
- 
+
   TICPP::HierarchicalDataNode* fluidEOShdn = hdn->GetChild("FluidEOS");
   if(fluidEOShdn)
   {
     std::string fluidEOSname = fluidEOShdn->GetAttributeString("name");
     m_fluidEOS = PPFS::newFluidEOS(fluidEOSname,fluidEOShdn);
-  } 
-  else 
+  }
+  else
   {
     // build pressure cap model
     m_bulk_modulus = hdn->GetAttributeOrDefault(BulkModulusStr,"2.0e9 Pa");
@@ -206,9 +226,9 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
     {
 //      throw GPException("The pressure cap is higher than the bulk modulus!");
     }
-    
+
     if (m_multiphaseFlow)
-    {      
+    {
       m_multiphaseDensity = hdn->GetAttributeVector<realT>("multiphaseDensity", ",");
       m_multiphaseBulkModulus = hdn->GetAttributeVector<realT>("multiphaseBulkModulus", ",");
       m_multiphaseViscosity = hdn->GetAttributeVector<realT>("multiphaseViscosity", ",");
@@ -224,7 +244,8 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
 
       std::cout << "Using MultiphasePressureEOS" << std::endl;
       m_fluidEOS = new PPFS::MultiphasePressureEOS(m_multiphaseDensity, m_multiphaseBulkModulus, m_multiphaseViscosity);
-      // m_fluidEOS = new PPFS::MultiphasePressureCapEOS(m_multiphaseDensity, m_multiphaseBulkModulus, m_multiphaseViscosity, m_pressureCap);
+      // m_fluidEOS = new PPFS::MultiphasePressureCapEOS(m_multiphaseDensity,
+      // m_multiphaseBulkModulus, m_multiphaseViscosity, m_pressureCap);
     }
     else if (disablePressureCap)
     {
@@ -236,7 +257,7 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
       std::cout << "Using PressureCapEOS" << std::endl;
       m_fluidEOS = new PPFS::PressureCapEOS(m_rho_o, m_bulk_modulus, m_pressureCap);
     }
-    
+
 
   }
 
@@ -245,7 +266,8 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
 
   m_usePowerlawFluid = false;
   TICPP::HierarchicalDataNode* powerLawFluidNode = hdn->GetChild("PowerlawFluid");
-  if(powerLawFluidNode){
+  if(powerLawFluidNode)
+  {
     //m_powerlawFluid.ReadXML(powerLawFluidNode);
     m_usePowerlawFluid = true;
     m_fluidModelPtr = new PowerlawFluidModel();
@@ -253,13 +275,15 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
   }
 
   TICPP::HierarchicalDataNode* hbFluidNode = hdn->GetChild("HerschelBulkleyFluid");
-  if(hbFluidNode){
+  if(hbFluidNode)
+  {
     m_usePowerlawFluid = true;
     m_fluidModelPtr = new HerschelBulkleyParallelPlateFluidModel();
     m_fluidModelPtr->ReadXML(hbFluidNode);
 
   }
-  if(!m_usePowerlawFluid){
+  if(!m_usePowerlawFluid)
+  {
     m_fluidModelPtr = new PowerlawFluidModel();
   }
 
@@ -271,7 +295,8 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
 
   // Faceset
   m_flowFaceSetName = hdn->GetAttributeString("flowFaceSet");
-  if(m_flowFaceSetName.empty()) m_flowFaceSetName = hdn->GetAttributeString("faceset");
+  if(m_flowFaceSetName.empty())
+    m_flowFaceSetName = hdn->GetAttributeString("faceset");
 
 
 
@@ -283,35 +308,44 @@ void ParallelPlateFlowSolverBase::ReadXML( TICPP::HierarchicalDataNode* const hd
 
 
   // Barton Joint Parameters
-  std::string temp = hdn->GetAttributeString("BartonJointParameters"); // aperture at zero effective stress; reference stress; aperture at ref stress
-    if( !temp.empty() )
+  std::string temp = hdn->GetAttributeString("BartonJointParameters"); // aperture
+                                                                       // at
+                                                                       // zero
+                                                                       // effective
+                                                                       // stress;
+                                                                       // reference
+                                                                       // stress;
+                                                                       // aperture
+                                                                       // at ref
+                                                                       // stress
+  if( !temp.empty() )
+  {
+    R1Tensor tempArray;
+    tempArray.StrVal( temp );
+    m_wZeroStress = tempArray[0];
+    realT stressRef = tempArray[1];
+    realT wRef = tempArray[2];
+
+    if (wRef < 0.99 * m_wZeroStress)
     {
-      R1Tensor tempArray;
-      tempArray.StrVal( temp );
-      m_wZeroStress = tempArray[0];
-      realT stressRef = tempArray[1];
-      realT wRef = tempArray[2];
-
-      if (wRef < 0.99 * m_wZeroStress)
-      {
-        m_bBarton = (m_wZeroStress - wRef) / stressRef / wRef;
-        m_aBarton = m_wZeroStress * (m_wZeroStress - wRef) / stressRef / wRef;
-      }
-      else
-      {
-        m_bBarton = 0;
-        m_aBarton = 0;
-        m_min_aperture = m_wZeroStress;
-      }
-
-      m_kContact = hdn->GetAttributeOrDefault<realT>("contactK",0.0);
-
+      m_bBarton = (m_wZeroStress - wRef) / stressRef / wRef;
+      m_aBarton = m_wZeroStress * (m_wZeroStress - wRef) / stressRef / wRef;
     }
     else
     {
       m_bBarton = 0;
       m_aBarton = 0;
+      m_min_aperture = m_wZeroStress;
     }
+
+    m_kContact = hdn->GetAttributeOrDefault<realT>("contactK",0.0);
+
+  }
+  else
+  {
+    m_bBarton = 0;
+    m_aBarton = 0;
+  }
 }
 
 
@@ -364,7 +398,7 @@ void ParallelPlateFlowSolverBase::RegisterFields( FaceManagerT& faceManager, Edg
     m_tracerDMDTPtrs.resize(n_fluids);
     m_volumeFractionPtrs.resize(n_fluids);
 
-    for(localIndex ii=0; ii<n_fluids; ii++)
+    for(localIndex ii=0 ; ii<n_fluids ; ii++)
     {
       // Mass
       char sbuffer0 [100];
@@ -406,7 +440,7 @@ void ParallelPlateFlowSolverBase::RegisterFields( FaceManagerT& faceManager, Edg
 
   if (m_multiphaseFlow)
   {
-    for(localIndex ii=0; ii<m_tracerNamesVolumeFraction.size(); ii++)
+    for(localIndex ii=0 ; ii<m_tracerNamesVolumeFraction.size() ; ii++)
     {
       m_commonFields.push_back(m_tracerNamesVolumeFraction[ii]);
     }
@@ -424,12 +458,12 @@ void ParallelPlateFlowSolverBase::InitializeCommunications( PartitionBase& parti
   // Multiphase fields
   if (m_multiphaseFlow)
   {
-    for (localIndex ii=0; ii<m_tracerNames.size(); ii++)
+    for (localIndex ii=0 ; ii<m_tracerNames.size() ; ii++)
     {
       m_syncedFieldsB[PhysicalDomainT::FiniteElementFaceManager].push_back(m_tracerNamesVolumeFraction[ii]);
     }
   }
-    
+
   partition.SetBufferSizes(m_syncedFields, CommRegistry::steadyStateParallelPlateFlowSolver);
   partition.SetBufferSizes(m_syncedFieldsB, CommRegistry::steadyStateParallelPlateFlowSolverB);
 }
@@ -437,12 +471,14 @@ void ParallelPlateFlowSolverBase::InitializeCommunications( PartitionBase& parti
 
 void ParallelPlateFlowSolverBase::Initialize( PhysicalDomainT& domain, SpatialPartition& partition )
 {
-  // array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  // array<integer>& flowEdgeType = domain.m_feEdgeManager.GetFieldData<int>("flowEdgeType");
+  // array<integer>& flowFaceType =
+  // domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  // array<integer>& flowEdgeType =
+  // domain.m_feEdgeManager.GetFieldData<int>("flowEdgeType");
 
   // flowFaceType = -1;
   // flowEdgeType = -1;
-  
+
 
   // Viscosity fields
   array<real64>& viscosity = domain.m_feEdgeManager.GetFieldData<realT>(ViscosityStr);
@@ -453,7 +489,7 @@ void ParallelPlateFlowSolverBase::Initialize( PhysicalDomainT& domain, SpatialPa
   array<real64>& refDensity = domain.m_feFaceManager.GetFieldData<realT>("referenceDensity");
   array<real64>& faceMu = domain.m_feFaceManager.GetFieldData<realT>("faceMu");
   refDensity = m_rho_o;
-  faceMu = m_mu;  
+  faceMu = m_mu;
 
   // Multiphase tracers
   if (m_multiphaseFlow)
@@ -461,9 +497,9 @@ void ParallelPlateFlowSolverBase::Initialize( PhysicalDomainT& domain, SpatialPa
     const array<real64>& faceFluidVolume = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 
 
-    for(localIndex ii=0; ii<m_tracerNames.size(); ii++)
+    for(localIndex ii=0 ; ii<m_tracerNames.size() ; ii++)
     {
-      
+
       array<real64>& fluidTracerVolume = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesMass[ii]);
       array<real64>& fluidTracerDVDT = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesDMDT[ii]);
       array<real64>& fluidTracerVolumeFraction = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
@@ -473,7 +509,7 @@ void ParallelPlateFlowSolverBase::Initialize( PhysicalDomainT& domain, SpatialPa
       {
         fluidTracerVolume = faceFluidVolume;
         fluidTracerVolumeFraction = 1.0;
-      }  
+      }
       else
       {
         fluidTracerVolumeFraction = 0.0;
@@ -492,43 +528,46 @@ void ParallelPlateFlowSolverBase::Initialize( PhysicalDomainT& domain, SpatialPa
 
 void ParallelPlateFlowSolverBase::AdvectMultiphaseFields(PhysicalDomainT& domain, SpatialPartition& partition, realT time, realT dt)
 {
- 
+
   const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
   const array<real64>& faceFluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
   const array<real64>& faceFluidVolume_old  = domain.m_feFaceManager.GetFieldData<realT>("Volume_old");
   const array<real64>& faceFluidMass  = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
   const array<real64>& faceFluidDensity  = domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
-  // const array<real64>& faceArea = domain.m_feFaceManager.GetFieldData<realT>( PS_STR::FaceAreaStr );
+  // const array<real64>& faceArea = domain.m_feFaceManager.GetFieldData<realT>(
+  // PS_STR::FaceAreaStr );
   const array<R1Tensor>& edgeCenters = domain.m_feEdgeManager.GetFieldData<R1Tensor>( EdgeCenterStr );
   const array<R1Tensor>& faceCenters = domain.m_feFaceManager.GetFieldData<R1Tensor>( FaceCenterStr );
   const array<real64>& edgeLengths = domain.m_feEdgeManager.GetFieldData<realT>( EdgeLengthStr );
   const array<real64>& apertures = domain.m_feFaceManager.GetFieldData<realT>( ApertureStr  );
-  // const array<real64>& faceFluidMass = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+  // const array<real64>& faceFluidMass =
+  // domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
   const array<real64>& faceFluidPressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
   const array<R1Tensor>& faceVelocities = domain.m_feFaceManager.GetFieldData<R1Tensor>( FluidVelocityStr );
   const array<real64>& facePackVfs = domain.m_feFaceManager.GetFieldData<realT>(ProppantPackVolumeFractionStr);
   const array<real64>& edgeMus = domain.m_feEdgeManager.GetFieldData<realT>(ViscosityStr);
   const array<real64>& edgeDeltaP = domain.m_feEdgeManager.GetFieldData<realT>("DeltaP");
   std::vector<multiphaseSort> mpsort(m_tracerNames.size());
-  
+
   // Apply volume fractions to given setnames (or to flow BC's if not defined)
   if (m_multiphaseSetnames.size() > 0)
   {
     BoundaryTracerValuesToSet( domain, time );
   }
-  
+
   // Set initial values:
-  // Strictly speaking, we should use old density (beginning-of-step density) here, but it might not be worthwhile to register a new field.
-  for(localIndex ii=0; ii<faceFluidVolume.size(); ii++)
+  // Strictly speaking, we should use old density (beginning-of-step density)
+  // here, but it might not be worthwhile to register a new field.
+  for(localIndex ii=0 ; ii<faceFluidVolume.size() ; ii++)
   {
-    for (localIndex jj=0; jj<m_tracerNames.size(); jj++)
+    for (localIndex jj=0 ; jj<m_tracerNames.size() ; jj++)
     {
       (*m_tracerMassPtrs[jj])[ii] = (*m_volumeFractionPtrs[jj])[ii]*faceFluidVolume_old[ii]*faceFluidDensity[ii];
     }
   }
 
   // Set dV/dT values to zero
-  for(localIndex ii=0; ii<m_tracerNames.size(); ii++)
+  for(localIndex ii=0 ; ii<m_tracerNames.size() ; ii++)
   {
     (*m_tracerDMDTPtrs[ii]) = 0.0;
   }
@@ -536,126 +575,132 @@ void ParallelPlateFlowSolverBase::AdvectMultiphaseFields(PhysicalDomainT& domain
 
   // Estimate fluid flow between faces
   // This has to be done in exactly the same way as how it's done in Assemble.
-  // A small consistency under normal circumstances might get magnified under certain conditions and may yield great error in results.
+  // A small consistency under normal circumstances might get magnified under
+  // certain conditions and may yield great error in results.
   std::map<localIndex,lArray1d>::iterator itrEnd = m_edgesToFaces.end();
-  localIndex source, receiver;  
-  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin(); itr!=itrEnd  ; ++itr )
+  localIndex source, receiver;
+  for( std::map<localIndex,lArray1d>::iterator itr = m_edgesToFaces.begin() ; itr!=itrEnd ; ++itr )
   {
     localIndex eg = itr->first;
     int numFaces = itr->second.size();
-         
-    for (int ia = 0; ia < numFaces-1; ++ia)
+
+    for (int ia = 0 ; ia < numFaces-1 ; ++ia)
     {
       localIndex kf = itr->second[ia];
 
-        for (int ib = ia+1; ib < numFaces; ++ib)
+      for (int ib = ia+1 ; ib < numFaces ; ++ib)
+      {
+        localIndex kfb = itr->second[ib];
+
+        // I am calling Pxrho a "potential"
+        realT deltaPotential = (faceFluidPressure[kf] + edgeDeltaP[eg] * 0.5) * faceFluidDensity[kf]
+                               -(faceFluidPressure[kfb] - edgeDeltaP[eg] * 0.5) * faceFluidDensity[kfb];
+        if ( deltaPotential > 0)
         {
-          localIndex kfb = itr->second[ib];
-          
-          // I am calling Pxrho a "potential"
-          realT deltaPotential = (faceFluidPressure[kf] + edgeDeltaP[eg] * 0.5) * faceFluidDensity[kf]
-                                -(faceFluidPressure[kfb] - edgeDeltaP[eg] * 0.5) * faceFluidDensity[kfb] ;
-          if ( deltaPotential > 0)
+          source = kf;
+          receiver = kfb;
+        }
+        else
+        {
+          source = kfb;
+          receiver = kf;
+          deltaPotential *= -1.0;
+        }
+
+        // Estimate flow rate between faces
+        realT kappa = 0.0;
+        if(m_usePowerlawFluid)
+        {
+          kappa = TwoFacePermeability_PowerLaw(edgeCenters, edgeLengths, faceCenters,
+                                               apertures, faceVelocities, facePackVfs, edgeMus[eg],
+                                               eg, kf, kfb);
+        }
+        else
+        {
+          kappa = TwoFacePermeability(edgeCenters, edgeLengths, faceCenters,
+                                      apertures, facePackVfs, edgeMus[eg],
+                                      eg, kf, kfb);
+        }
+
+        realT estimatedMassFluxRate = kappa*deltaPotential;
+
+        // Estimate change in fluid fraction mass
+        if( kappa > 0.0 )
+        {
+          bool seriesFlow=FALSE;
+
+          if (m_multiphaseMixingMode == 1)
           {
-            source = kf;
-            receiver = kfb;
+            // Test for series flow in between the faces
+
+            // Sort phases by mass
+            for(localIndex jj=0 ; jj<m_tracerNames.size() ; jj++)
+            {
+              mpsort[jj].mass = (*m_tracerMassPtrs[jj])[source] + (*m_tracerMassPtrs[jj])[receiver];
+              mpsort[jj].phase = jj;
+            }
+            std::sort(mpsort.begin(), mpsort.end(), by_mass());
+
+            localIndex primary = mpsort[0].phase;
+            bool isSerial = ((*m_volumeFractionPtrs[primary])[receiver] >= m_multiphaseMixingThreshold_serialFlow);
+            bool isSinglePhase =
+              (((*m_volumeFractionPtrs[primary])[source]*faceFluidVolume[source] + (*m_volumeFractionPtrs[primary])[receiver]*faceFluidVolume[receiver]) /
+               (faceFluidVolume[source] + faceFluidVolume[receiver]) >= m_multiphaseMixingThreshold_singlePhase);
+
+            if (isSerial && !isSinglePhase)
+            {
+              seriesFlow = TRUE;
+            }
+          }
+
+          if (seriesFlow)
+          {
+            realT seriesDMDT = 0.0;
+            for(localIndex jj=0 ; jj<m_tracerNames.size() ; jj++)
+            {
+              realT maxPhaseDMDT = (*m_tracerMassPtrs[jj])[source]/dt;
+              realT dmdt = std::min(estimatedMassFluxRate-seriesDMDT, maxPhaseDMDT);
+
+              (*m_tracerDMDTPtrs[mpsort[jj].phase])[source] -= dmdt;
+              (*m_tracerDMDTPtrs[mpsort[jj].phase])[receiver] += dmdt;
+
+              seriesDMDT += dmdt;
+              if ((estimatedMassFluxRate - seriesDMDT) <= 0.0)
+              {
+                break;
+              }
+            }
           }
           else
           {
-            source = kfb;
-            receiver = kf;
-            deltaPotential *= -1.0;
-          }
-
-          // Estimate flow rate between faces
-          realT kappa = 0.0;
-          if(m_usePowerlawFluid)
-          {
-            kappa = TwoFacePermeability_PowerLaw(edgeCenters, edgeLengths, faceCenters, 
-                                                 apertures, faceVelocities, facePackVfs, edgeMus[eg],
-                                                 eg, kf, kfb);
-          }
-          else
-          {
-            kappa = TwoFacePermeability(edgeCenters, edgeLengths, faceCenters, 
-                                        apertures, facePackVfs, edgeMus[eg],
-                                        eg, kf, kfb);
-          }
-          
-          realT estimatedMassFluxRate = kappa*deltaPotential;
-
-          // Estimate change in fluid fraction mass
-          if( kappa > 0.0 )
-          {
-            bool seriesFlow=FALSE;  
-
-            if (m_multiphaseMixingMode == 1)
+            for(localIndex jj=0 ; jj<m_tracerNames.size() ; jj++)
             {
-              // Test for series flow in between the faces
-              
-              // Sort phases by mass
-              for(localIndex jj=0; jj<m_tracerNames.size(); jj++)
-              {
-                mpsort[jj].mass = (*m_tracerMassPtrs[jj])[source] + (*m_tracerMassPtrs[jj])[receiver];
-                mpsort[jj].phase = jj;
-              }
-              std::sort(mpsort.begin(), mpsort.end(), by_mass());
-
-              localIndex primary = mpsort[0].phase;
-              bool isSerial = ((*m_volumeFractionPtrs[primary])[receiver] >= m_multiphaseMixingThreshold_serialFlow);
-              bool isSinglePhase = (((*m_volumeFractionPtrs[primary])[source]*faceFluidVolume[source] + (*m_volumeFractionPtrs[primary])[receiver]*faceFluidVolume[receiver]) / (faceFluidVolume[source] + faceFluidVolume[receiver]) >= m_multiphaseMixingThreshold_singlePhase);
-
-              if (isSerial && !isSinglePhase)
-              {
-                seriesFlow = TRUE;
-              }
+              realT qm = estimatedMassFluxRate * (*m_volumeFractionPtrs[jj])[source];
+              (*m_tracerDMDTPtrs[jj])[source] -= qm;
+              (*m_tracerDMDTPtrs[jj])[receiver] += qm;
             }
-
-            if (seriesFlow)
-            {
-              realT seriesDMDT = 0.0;
-              for(localIndex jj=0; jj<m_tracerNames.size(); jj++)
-              {
-                realT maxPhaseDMDT = (*m_tracerMassPtrs[jj])[source]/dt;
-                realT dmdt = std::min(estimatedMassFluxRate-seriesDMDT, maxPhaseDMDT);
-
-                (*m_tracerDMDTPtrs[mpsort[jj].phase])[source] -= dmdt;
-                (*m_tracerDMDTPtrs[mpsort[jj].phase])[receiver] += dmdt;
-
-                seriesDMDT += dmdt;
-                if ((estimatedMassFluxRate - seriesDMDT) <= 0.0)
-                {
-                  break;
-                }
-              }
-            }
-            else
-            {
-              for(localIndex jj=0; jj<m_tracerNames.size(); jj++)
-              {
-                realT qm = estimatedMassFluxRate * (*m_volumeFractionPtrs[jj])[source];
-                (*m_tracerDMDTPtrs[jj])[source] -= qm;
-                (*m_tracerDMDTPtrs[jj])[receiver] += qm;
-              }
-            }
-
           }
+
         }
       }
     }
-    
+  }
+
 
   // Set volume fraction values
-  for (localIndex ii=0; ii<faceFluidVolume.size(); ii++)
+  for (localIndex ii=0 ; ii<faceFluidVolume.size() ; ii++)
   {
     if ((flowFaceType[ii] == 1) && (faceFluidVolume[ii] > 0.0))
     {
       // Update fluid volumes
       realT totalFluidMass = 0.0;
-      for(localIndex jj=0; jj<m_tracerNames.size(); jj++)
+      for(localIndex jj=0 ; jj<m_tracerNames.size() ; jj++)
       {
         realT newFluidMass = (*m_tracerMassPtrs[jj])[ii] + (*m_tracerDMDTPtrs[jj])[ii]*dt;
-        // newFluidMass = std::max(newFluidMass, 0.0); //Commenting this out following Randy's suggestion as this line would add mass.  Having negative fluid mass will not break the flow solver.  It can be a signal of bigger problems.
+        // newFluidMass = std::max(newFluidMass, 0.0); //Commenting this out
+        // following Randy's suggestion as this line would add mass.  Having
+        // negative fluid mass will not break the flow solver.  It can be a
+        // signal of bigger problems.
 
         (*m_tracerMassPtrs[jj])[ii] = newFluidMass;
         totalFluidMass += newFluidMass;
@@ -664,7 +709,7 @@ void ParallelPlateFlowSolverBase::AdvectMultiphaseFields(PhysicalDomainT& domain
       // Update fluid volume fractions, correct volume to match actual value
       if (totalFluidMass > 0.0)
       {
-        for(localIndex jj=0; jj<m_tracerNames.size(); jj++)
+        for(localIndex jj=0 ; jj<m_tracerNames.size() ; jj++)
         {
           (*m_volumeFractionPtrs[jj])[ii] = (*m_tracerMassPtrs[jj])[ii]/totalFluidMass;
           (*m_tracerMassPtrs[jj])[ii] = (*m_volumeFractionPtrs[jj])[ii]*faceFluidMass[ii];
@@ -674,149 +719,159 @@ void ParallelPlateFlowSolverBase::AdvectMultiphaseFields(PhysicalDomainT& domain
   }
 
   // Sync fields
-  partition.SynchronizeFields(m_syncedFieldsB, CommRegistry::steadyStateParallelPlateFlowSolverB);           
+  partition.SynchronizeFields(m_syncedFieldsB, CommRegistry::steadyStateParallelPlateFlowSolverB);
 }
 
 void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& domain)
+{
+  for (localIndex ii=0 ; ii<m_tracerNames.size() ; ii++)
   {
-    for (localIndex ii=0; ii<m_tracerNames.size(); ii++)
-    {
-      m_volumeFractionPtrs[ii] = &(domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]));
-      m_tracerMassPtrs[ii] = &(domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesMass[ii]));
-      m_tracerDMDTPtrs[ii] = &(domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesDMDT[ii]));
-    }
-  }   
-
-  void ParallelPlateFlowSolverBase::GenerateMultiphaseArray(rArrayPtrs& multiphasePtrs, localIndex kf, array<real64>& multiphaseVolumeFraction)
-  {
-    realT scale = 0.0;
-    for (localIndex ii=0; ii<m_tracerNames.size(); ii++)
-    {
-      multiphaseVolumeFraction[ii] = (*multiphasePtrs[ii])[kf];
-      scale += multiphaseVolumeFraction[ii];
-    }
-    multiphaseVolumeFraction /= scale;
+    m_volumeFractionPtrs[ii] = &(domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]));
+    m_tracerMassPtrs[ii] = &(domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesMass[ii]));
+    m_tracerDMDTPtrs[ii] = &(domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesDMDT[ii]));
   }
+}
 
-  void ParallelPlateFlowSolverBase::GenerateMultiphaseBCArray(array<real64>& multiphaseVolumeFraction, realT time)
+void ParallelPlateFlowSolverBase::GenerateMultiphaseArray(rArrayPtrs& multiphasePtrs, localIndex kf, array<real64>& multiphaseVolumeFraction)
+{
+  realT scale = 0.0;
+  for (localIndex ii=0 ; ii<m_tracerNames.size() ; ii++)
   {
-    realT scale = 0.0;
-    array<real64> t(1);
-    t[0] = time;
-
-    for(localIndex ii=0; ii<m_tracerNames.size(); ii++)
-    {
-      const realT val = TableManager::Instance().LookupTable<1>(m_tracerNames[ii], t);
-      multiphaseVolumeFraction[ii] = val;
-      scale += multiphaseVolumeFraction[ii];
-    }
-    multiphaseVolumeFraction /= scale;
+    multiphaseVolumeFraction[ii] = (*multiphasePtrs[ii])[kf];
+    scale += multiphaseVolumeFraction[ii];
   }
+  multiphaseVolumeFraction /= scale;
+}
 
-  // void ParallelPlateFlowSolverBase::BoundaryTracerValues( PhysicalDomainT& domain,ObjectDataStructureBaseT& object,
-  //                                                         BoundaryConditionBase* const bc, const lSet& aset, const realT time, const realT dt )
-  // {
-  //   const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-  //   const array<real64>& faceFluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+void ParallelPlateFlowSolverBase::GenerateMultiphaseBCArray(array<real64>& multiphaseVolumeFraction, realT time)
+{
+  realT scale = 0.0;
+  array<real64> t(1);
+  t[0] = time;
 
-  //   // Read input tables
-  //   array<real64> faceVolumeFraction(m_tracerNames.size());
-  //   GenerateMultiphaseBCArray(faceVolumeFraction, time);
-
-  //   // Set values at BC locations
-  //   for(localIndex i =0; i < bc->m_setNames.size(); ++i)
-  //   {
-  //     std::map< std::string, lSet >::iterator setMap = domain.m_feFaceManager.m_Sets.find( bc->m_setNames[i] );
-      
-  //     if( setMap != domain.m_feFaceManager.m_Sets.end() )
-  //     {
-  //       lSet& set = setMap->second;
-  //       lSet::const_iterator b=set.begin();
-
-  //       for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a)
-  //       {
-  //         if (flowFaceType[*a]==1)
-  //         {
-  //           for(localIndex jj=0; jj<m_tracerNames.size(); jj++)
-  //           {
-  //             (*m_volumeFractionPtrs[jj])[*a] = faceVolumeFraction[jj];
-  //             (*m_tracerMassPtrs[jj])[*a] = faceVolumeFraction[jj]*faceFluidVolume[*a];
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-
-
-  void ParallelPlateFlowSolverBase::BoundaryTracerValuesToSet( PhysicalDomainT& domain, const realT time )
+  for(localIndex ii=0 ; ii<m_tracerNames.size() ; ii++)
   {
-    const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-    const array<real64>& faceFluidMass  = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();    
+    const realT val = TableManager::Instance().LookupTable<1>(m_tracerNames[ii], t);
+    multiphaseVolumeFraction[ii] = val;
+    scale += multiphaseVolumeFraction[ii];
+  }
+  multiphaseVolumeFraction /= scale;
+}
 
-    // Read input tables
-    array<real64> faceVolumeFraction(m_tracerNames.size());
-    GenerateMultiphaseBCArray(faceVolumeFraction, time);
+// void ParallelPlateFlowSolverBase::BoundaryTracerValues( PhysicalDomainT&
+// domain,ObjectDataStructureBaseT& object,
+//                                                         BoundaryConditionBase*
+// const bc, const lSet& aset, const realT time, const realT dt )
+// {
+//   const array<integer>& flowFaceType =
+// domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+//   const array<real64>& faceFluidVolume  =
+// domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 
-    // Set values at BC locations
-    for(localIndex ii=0; ii<m_multiphaseSetnames.size(); ii++)
+//   // Read input tables
+//   array<real64> faceVolumeFraction(m_tracerNames.size());
+//   GenerateMultiphaseBCArray(faceVolumeFraction, time);
+
+//   // Set values at BC locations
+//   for(localIndex i =0; i < bc->m_setNames.size(); ++i)
+//   {
+//     std::map< std::string, lSet >::iterator setMap =
+// domain.m_feFaceManager.m_Sets.find( bc->m_setNames[i] );
+
+//     if( setMap != domain.m_feFaceManager.m_Sets.end() )
+//     {
+//       lSet& set = setMap->second;
+//       lSet::const_iterator b=set.begin();
+
+//       for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a)
+//       {
+//         if (flowFaceType[*a]==1)
+//         {
+//           for(localIndex jj=0; jj<m_tracerNames.size(); jj++)
+//           {
+//             (*m_volumeFractionPtrs[jj])[*a] = faceVolumeFraction[jj];
+//             (*m_tracerMassPtrs[jj])[*a] =
+// faceVolumeFraction[jj]*faceFluidVolume[*a];
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+
+
+void ParallelPlateFlowSolverBase::BoundaryTracerValuesToSet( PhysicalDomainT& domain, const realT time )
+{
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  const array<real64>& faceFluidMass  = domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
+
+  // Read input tables
+  array<real64> faceVolumeFraction(m_tracerNames.size());
+  GenerateMultiphaseBCArray(faceVolumeFraction, time);
+
+  // Set values at BC locations
+  for(localIndex ii=0 ; ii<m_multiphaseSetnames.size() ; ii++)
+  {
+    std::map< std::string, lSet >::iterator setMap = domain.m_feFaceManager.m_Sets.find( m_multiphaseSetnames[ii] );
+
+    if( setMap != domain.m_feFaceManager.m_Sets.end() )
     {
-      std::map< std::string, lSet >::iterator setMap = domain.m_feFaceManager.m_Sets.find( m_multiphaseSetnames[ii] );
-      
-      if( setMap != domain.m_feFaceManager.m_Sets.end() )
+      lSet& set = setMap->second;
+      lSet::const_iterator b=set.begin();
+
+      for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a)
       {
-        lSet& set = setMap->second;
-        lSet::const_iterator b=set.begin();
-
-        for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a)
+        if (flowFaceType[*a]==1)
         {
-          if (flowFaceType[*a]==1)
+          for(localIndex jj=0 ; jj<m_tracerNames.size() ; jj++)
           {
-            for(localIndex jj=0; jj<m_tracerNames.size(); jj++)
-            {
-              (*m_volumeFractionPtrs[jj])[*a] = faceVolumeFraction[jj];
-              (*m_tracerMassPtrs[jj])[*a] = faceVolumeFraction[jj]*faceFluidMass[*a];
-            }
+            (*m_volumeFractionPtrs[jj])[*a] = faceVolumeFraction[jj];
+            (*m_tracerMassPtrs[jj])[*a] = faceVolumeFraction[jj]*faceFluidMass[*a];
           }
         }
       }
     }
   }
+}
 
-  void ParallelPlateFlowSolverBase::MarkFaceSaturationTime( PhysicalDomainT& domain, const realT time,const realT dt )
+void ParallelPlateFlowSolverBase::MarkFaceSaturationTime( PhysicalDomainT& domain, const realT time,const realT dt )
+{
+  array<real64>& pressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
+  const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+  array<real64>& initialSaturatedTime = domain.m_feFaceManager.GetFieldData<realT>("initialSaturatedTime");
+
+  for( localIndex kf = 0 ; kf < domain.m_feFaceManager.DataLengths() ; ++kf )
   {
-    array<real64>& pressure = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure>();
-    const array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
-    array<real64>& initialSaturatedTime = domain.m_feFaceManager.GetFieldData<realT>("initialSaturatedTime");
-
-      for( localIndex kf = 0; kf < domain.m_feFaceManager.DataLengths(); ++kf )
+    if (flowFaceType[kf] == 1)
+    {
+      if (pressure[kf] > 0.0 && initialSaturatedTime[kf] == std::numeric_limits<realT>::max())
       {
-        if (flowFaceType[kf] == 1)
-        {
-          if (pressure[kf] > 0.0 && initialSaturatedTime[kf] == std::numeric_limits<realT>::max())
-          {
-            initialSaturatedTime[kf] = std::max(time - dt/2, 0.0);
-          }
-        }
-
+        initialSaturatedTime[kf] = std::max(time - dt/2, 0.0);
       }
+    }
+
   }
+}
 
 
 
-// realT ParallelPlateFlowSolverBase::CalculateMultiphaseViscosity(PhysicalDomainT& domain, lArray1d& faces)
+// realT
+// ParallelPlateFlowSolverBase::CalculateMultiphaseViscosity(PhysicalDomainT&
+// domain, lArray1d& faces)
 // {
 //   if (m_multiphaseFlow)
 //   {
-//     const array<real64>& faceFluidVolume  = domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
+//     const array<real64>& faceFluidVolume  =
+// domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
 //     localIndex numFlowFaces = itr->second.size();
 //     realT viscosity = 0.0;
 //     realT volume = 0.0;
 
 //     for(localIndex ii=0; ii<m_tracerNamesVolumeFraction.size(); ii++)
 //     {
-//       const array<real64>& fluidTracerVolumeFraction = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
-      
+//       const array<real64>& fluidTracerVolumeFraction =
+// domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
+
 //       for( localIndex jj=0; jj<numFlowFaces; jj++)
 //       {
 //         tmpVolume = fluidTracerVolumeFraction[jj]*faceFluidVolume[jj];
@@ -824,17 +879,19 @@ void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& doma
 //         viscosity += m_multiphaseViscosity[ii]*tmpVolume;
 //       }
 //     }
-    
+
 //     // Weight by total volume of fluid in connected elements
-//     return viscosity/volume;    
+//     return viscosity/volume;
 //   }
-//   else 
-//   {      
+//   else
+//   {
 //     return m_mu;
 //   }
 // }
 
-// void ParallelPlateFlowSolverBase::CalculateMultiphaseDensityAndBulkModulus(PhysicalDomainT& domain, localIndex kf)
+// void
+// ParallelPlateFlowSolverBase::CalculateMultiphaseDensityAndBulkModulus(PhysicalDomainT&
+// domain, localIndex kf)
 // {
 //   if (m_multiphaseFlow)
 //   {
@@ -844,12 +901,14 @@ void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& doma
 
 //     for(localIndex ii=0; ii<m_tracerNamesVolumeFraction.size(); ii++)
 //     {
-//       const array<real64>& fluidTracerVolumeFraction = domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
-        
+//       const array<real64>& fluidTracerVolumeFraction =
+// domain.m_feFaceManager.GetFieldData<realT>(m_tracerNamesVolumeFraction[ii]);
+
 //       if (m_multiphaseMixingMode == 0)
 //       {
 //         density += m_multiphaseDensity[ii]*fluidTracerVolumeFraction[kf];
-//         bulkModulus += m_multiphaseBulkModulus[ii]*fluidTracerVolumeFraction[kf];
+//         bulkModulus +=
+// m_multiphaseBulkModulus[ii]*fluidTracerVolumeFraction[kf];
 //       }
 //       else
 //       {
@@ -864,7 +923,7 @@ void ParallelPlateFlowSolverBase::UpdateMultiphasePointers(PhysicalDomainT& doma
 
 //     this->m_rho_o = density;
 //     this->m_bulk_modulus = bulkModulus;
-     
+
 //   }
 // }
 
@@ -883,14 +942,14 @@ realT PowerlawFluidModel::CalculatePermeability(const realT la, const realT lb,
                                                 const realT apa, const realT apb,
                                                 const realT w, const realT qMag,
                                                 const realT SHP_FCT){
-    return PPFS::CalculatePermeability_PowerLawFluid(la,lb,apa,apb, w, qMag, m_phiM, m_n, SHP_FCT);
+  return PPFS::CalculatePermeability_PowerLawFluid(la,lb,apa,apb, w, qMag, m_phiM, m_n, SHP_FCT);
 }
 
 // one sided permeability
 realT PowerlawFluidModel::CalculatePermeability(const realT l, const realT ap,
                                                 const realT w, const realT qMag,
                                                 const realT SHP_FCT){
-    return PPFS::CalculatePermeability_PowerLawFluid(l,ap, w, qMag, m_phiM, m_n, SHP_FCT);
+  return PPFS::CalculatePermeability_PowerLawFluid(l,ap, w, qMag, m_phiM, m_n, SHP_FCT);
 }
 
 
@@ -909,7 +968,7 @@ void HerschelBulkleyParallelPlateFluidModel::ReadXML( TICPP::HierarchicalDataNod
   array<real64> values;
   xs.resize(16);
   values.resize(16);
-  for(int i =0 ; i < 16; i++)
+  for(int i =0 ; i < 16 ; i++)
   {
     realT x = -3 + 0.2*i;
     xs[i] = x;
@@ -919,13 +978,14 @@ void HerschelBulkleyParallelPlateFluidModel::ReadXML( TICPP::HierarchicalDataNod
   m_zp_kappaLookup.SetAxisValues(0,xs);
   m_zp_kappaLookup.SetValues(values);
 
-  for(int i =0 ; i < 16; i++)
+  for(int i =0 ; i < 16 ; i++)
   {
     std::cout <<  "k: " <<  pow(10,xs[i]) << " v: " <<  values[i] << "\n";
   }
 }
 
-// analytical solution relating dimensionless parameter V to zp (dimensionless plug thickness)
+// analytical solution relating dimensionless parameter V to zp (dimensionless
+// plug thickness)
 realT HerschelBulkleyParallelPlateFluidModel::analyticalVFunc(realT zp, realT n){
   realT V = pow(1-zp,n+1)*pow(n/(n+1)*zp + 1,n);
   return V;
@@ -933,9 +993,9 @@ realT HerschelBulkleyParallelPlateFluidModel::analyticalVFunc(realT zp, realT n)
 // derivative of analyticalVFunc wrt zp
 realT HerschelBulkleyParallelPlateFluidModel::dVdz(realT zp, realT n){
 
-    realT deriv = -(n+1)*pow(1-zp,n) *pow(n/(n+1)*zp + 1,n) +
-            pow(1-zp,n+1)*(n*n/(n+1))*pow(n/(n+1)*zp + 1,n-1);
-    return deriv;
+  realT deriv = -(n+1)*pow(1-zp,n) *pow(n/(n+1)*zp + 1,n) +
+                pow(1-zp,n+1)*(n*n/(n+1))*pow(n/(n+1)*zp + 1,n-1);
+  return deriv;
 }
 
 // calculate Zp as a function of kappa = Kq^n
@@ -946,12 +1006,13 @@ realT HerschelBulkleyParallelPlateFluidModel::CalculateZp(realT Kqn, realT n){
   int numIters = 0;
   realT tol = 1e-8;
   // newton's method
-  while(fabs(dzp) > tol*zp && numIters < 500){
+  while(fabs(dzp) > tol*zp && numIters < 500)
+  {
     realT f = Kqn*zp - analyticalVFunc(zp,n);
-  realT dfdz = Kqn - dVdz(zp,n);
-  dzp = -f/dfdz;
-  zp += dzp;
-  numIters += 1;
+    realT dfdz = Kqn - dVdz(zp,n);
+    dzp = -f/dfdz;
+    zp += dzp;
+    numIters += 1;
   }
   if(numIters == 500)
     throw GPException("HerschelBulkleyParallelPlateFluidModel: Zp calculation failed to converge");
@@ -959,19 +1020,25 @@ realT HerschelBulkleyParallelPlateFluidModel::CalculateZp(realT Kqn, realT n){
 }
 
 realT HerschelBulkleyParallelPlateFluidModel::CalculatePermeability(const realT la, const realT lb,
-                                                const realT apa, const realT apb,
-                                                const realT w, const realT qMag,
-                                                const realT SHP_FCT){
+                                                                    const realT apa, const realT apb,
+                                                                    const realT w, const realT qMag,
+                                                                    const realT SHP_FCT){
 
   realT zp(0.0);
-  if(m_tau_y > 0.0){
+  if(m_tau_y > 0.0)
+  {
     realT kappa = pow( (2*m_n+1)/(2*m_n),m_n)*pow( 4*qMag/w,m_n)* m_M/m_tau_y;
-    if(kappa > 1000.0){
+    if(kappa > 1000.0)
+    {
       zp = 1.0/kappa;
-    } else if(kappa < 1e-3){
+    }
+    else if(kappa < 1e-3)
+    {
       realT denom = pow(1 + m_n/(m_n+1),m_n);
-      zp = 1 - pow(kappa/denom , 1.0/(m_n+1));
-    } else {
+      zp = 1 - pow(kappa/denom, 1.0/(m_n+1));
+    }
+    else
+    {
       realT xx[1];
       xx[0] = log10(kappa);
       zp = m_zp_kappaLookup.Lookup(xx);
@@ -982,18 +1049,24 @@ realT HerschelBulkleyParallelPlateFluidModel::CalculatePermeability(const realT 
 
 // one sided permeability
 realT HerschelBulkleyParallelPlateFluidModel::CalculatePermeability(const realT l, const realT ap,
-                                                const realT w, const realT qMag,
-                                                const realT SHP_FCT){
+                                                                    const realT w, const realT qMag,
+                                                                    const realT SHP_FCT){
 
   realT zp(0.0);
-  if(m_tau_y > 0.0){
+  if(m_tau_y > 0.0)
+  {
     realT kappa = pow( (2*m_n+1)/(2*m_n),m_n)*pow( 4*qMag/w,m_n)* m_M/m_tau_y;
-    if(kappa > 1000.0){
+    if(kappa > 1000.0)
+    {
       zp = 1.0/kappa;
-    } else if(kappa < 1e-3){
+    }
+    else if(kappa < 1e-3)
+    {
       realT denom = pow(1 + m_n/(m_n+1),m_n);
-      zp = 1 - pow(kappa/denom , 1.0/(m_n+1));
-    } else {
+      zp = 1 - pow(kappa/denom, 1.0/(m_n+1));
+    }
+    else
+    {
       realT xx[1];
       xx[0] = log10(kappa);
       zp = m_zp_kappaLookup.Lookup(xx);
@@ -1015,9 +1088,9 @@ void PPFS::FluidEOSBase::ReadXML( TICPP::HierarchicalDataNode* const hdn  ){
 //// Linear EOS
 
 PPFS::LinearEOS::LinearEOS(TICPP::HierarchicalDataNode* hdn):
-FluidEOSBase(hdn),
-m_K_o(){
-    ReadXML(hdn);
+  FluidEOSBase(hdn),
+  m_K_o(){
+  ReadXML(hdn);
 }
 
 void PPFS::LinearEOS::ReadXML( TICPP::HierarchicalDataNode* const hdn  ){
@@ -1032,9 +1105,9 @@ REGISTER_FLUID_EOS( LinearEOS )
 //// Pressure cap
 
 PPFS::PressureCapEOS::PressureCapEOS(TICPP::HierarchicalDataNode* hdn):
-    LinearEOS(hdn),
-        m_pressureCap(){
-    ReadXML(hdn);
+  LinearEOS(hdn),
+  m_pressureCap(){
+  ReadXML(hdn);
 
 }
 
@@ -1044,7 +1117,7 @@ void PPFS::PressureCapEOS::ReadXML( TICPP::HierarchicalDataNode* const hdn  ){
 
   if (m_pressureCap > m_K_o)
   {
-      throw GPException("PressureCapEOS: The pressure cap is higher than the bulk modulus!");
+    throw GPException("PressureCapEOS: The pressure cap is higher than the bulk modulus!");
   }
 }
 REGISTER_FLUID_EOS( PressureCapEOS )
@@ -1052,7 +1125,7 @@ REGISTER_FLUID_EOS( PressureCapEOS )
 
 ////  Multiphase pressure cap eos
 PPFS::PressureEOS::PressureEOS(TICPP::HierarchicalDataNode* hdn):
-    LinearEOS(hdn){}
+  LinearEOS(hdn){}
 void PPFS::PressureEOS::ReadXML( TICPP::HierarchicalDataNode* const hdn  ){
   LinearEOS::ReadXML(hdn);
 }
@@ -1061,7 +1134,7 @@ REGISTER_FLUID_EOS( PressureEOS )
 
 ////  Multiphase pressure cap eos
 PPFS::BiLinearEOS::BiLinearEOS(TICPP::HierarchicalDataNode* hdn):
-    LinearEOS(hdn)
+  LinearEOS(hdn)
 {}
 
 void PPFS::BiLinearEOS::ReadXML( TICPP::HierarchicalDataNode* const hdn  )
@@ -1076,7 +1149,7 @@ REGISTER_FLUID_EOS( BiLinearEOS )
 
 ////  Multiphase pressure cap eos
 PPFS::MultiphasePressureEOS::MultiphasePressureEOS(TICPP::HierarchicalDataNode* hdn):
-    LinearEOS(hdn){}
+  LinearEOS(hdn){}
 void PPFS::MultiphasePressureEOS::ReadXML( TICPP::HierarchicalDataNode* const hdn  ){
   LinearEOS::ReadXML(hdn);
 }
@@ -1086,19 +1159,22 @@ REGISTER_FLUID_EOS( MultiphasePressureEOS )
 //// Adiabatic eos
 
 PPFS::AdiabaticEOS::AdiabaticEOS(TICPP::HierarchicalDataNode* hdn):
-    FluidEOSBase(hdn),
-    m_P_o(),
-    m_gamma(),
-    m_P_ref()
+  FluidEOSBase(hdn),
+  m_P_o(),
+  m_gamma(),
+  m_P_ref()
 {
-    ReadXML(hdn);
+  ReadXML(hdn);
 }
 
 void PPFS::AdiabaticEOS::ReadXML( TICPP::HierarchicalDataNode* const hdn  ){
   FluidEOSBase::ReadXML(hdn);
   m_P_o = hdn->GetAttributeOrDefault("P_o","1e5 Pa");
   m_P_ref = hdn->GetAttributeOrDefault("P_ref","0");
-  m_rho_o = hdn->GetAttributeOrDefault("rho_o","1.204 kg/m^3");  // reset default rho_o to reflect gas
+  m_rho_o = hdn->GetAttributeOrDefault("rho_o","1.204 kg/m^3");  // reset
+                                                                 // default
+                                                                 // rho_o to
+                                                                 // reflect gas
   m_gamma = hdn->GetAttributeOrDefault("gamma","7.0/5.0"); // diatomic gas
 }
 
@@ -1115,20 +1191,21 @@ REGISTER_FLUID_EOS( AdiabaticEOS )
 typedef std::map<std::string, PPFS::FluidEOSInitializer*> FluidEOSCatalogueType;
 
 FluidEOSCatalogueType & PPFS::getFluidEOSCatalogue(){
-  static FluidEOSCatalogueType theCatalogue ;
+  static FluidEOSCatalogueType theCatalogue;
   return theCatalogue;
 }
 
 void PPFS::getFluidEOSNames( std::vector<std::string>& nameList){
 
   using namespace PPFS;
-  for(FluidEOSCatalogueType::const_iterator it = getFluidEOSCatalogue().begin();
-      it != getFluidEOSCatalogue().end(); ++it){
-        nameList.push_back(it->first);
+  for(FluidEOSCatalogueType::const_iterator it = getFluidEOSCatalogue().begin() ;
+      it != getFluidEOSCatalogue().end() ; ++it)
+  {
+    nameList.push_back(it->first);
   }
 }
 
-PPFS::FluidEOSBase* PPFS::newFluidEOS(const std::string& FluidEOSName , TICPP::HierarchicalDataNode* hdn)
+PPFS::FluidEOSBase* PPFS::newFluidEOS(const std::string& FluidEOSName, TICPP::HierarchicalDataNode* hdn)
 {
   using namespace PPFS;
 
@@ -1136,10 +1213,9 @@ PPFS::FluidEOSBase* PPFS::newFluidEOS(const std::string& FluidEOSName , TICPP::H
   FluidEOSBase *theNewFluidEOS = NULL;
 
   if(!FluidEOSInitializer)
-      throw GPException("Could not create unrecognized FluidEOS: "+ FluidEOSName);
+    throw GPException("Could not create unrecognized FluidEOS: "+ FluidEOSName);
 
   theNewFluidEOS = FluidEOSInitializer->initializeFluidEOS( hdn );
 
   return theNewFluidEOS;
 }
-

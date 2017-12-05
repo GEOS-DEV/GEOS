@@ -11,8 +11,8 @@
 #include <mpi.h>
 #endif
 
-JointSetT::JointSetT() : m_strikeAngleDistribution(), m_dipAngleDistribution(), m_strikeDimensionDistribution(),
-                         m_faultAspectRatioDistribution(), m_hypocenterDistribution(), m_up(0.0), m_north(0.0), m_seed(0)
+JointSetT::JointSetT(): m_strikeAngleDistribution(), m_dipAngleDistribution(), m_strikeDimensionDistribution(),
+  m_faultAspectRatioDistribution(), m_hypocenterDistribution(), m_up(0.0), m_north(0.0), m_seed(0)
 
 {
   // TODO Auto-generated constructor stub
@@ -32,42 +32,49 @@ void JointSetT::ReadXML( TICPP::HierarchicalDataNode* hdn )
 
   //Orientation
   {
-	  /**
-    ///Up vector
-    R1Tensor upDef(0.0);
-    upDef(2) = 1.0;
-    m_up = hdn->GetAttributeTensorOrDefault("upVector", upDef);
-    if (isEqual(Dot(m_up, m_up), 0))
-      m_up = upDef;
-    else
-      m_up.Normalize();
+    /**
+       ///Up vector
+       R1Tensor upDef(0.0);
+       upDef(2) = 1.0;
+       m_up = hdn->GetAttributeTensorOrDefault("upVector", upDef);
+       if (isEqual(Dot(m_up, m_up), 0))
+       m_up = upDef;
+       else
+       m_up.Normalize();
 
-    ///North vector
-    R1Tensor northDef(0.0);
-    northDef(1) = 1.0;
-    m_north = hdn->GetAttributeTensorOrDefault("northVector", northDef);
-    if (isEqual(Dot(m_north, m_north), 0))
-      m_north = northDef;
-    else
-      m_north.Normalize();
-      **/
+       ///North vector
+       R1Tensor northDef(0.0);
+       northDef(1) = 1.0;
+       m_north = hdn->GetAttributeTensorOrDefault("northVector", northDef);
+       if (isEqual(Dot(m_north, m_north), 0))
+       m_north = northDef;
+       else
+       m_north.Normalize();
+     **/
 
     ///Up vector
-    if (isEqual(Dot(m_up, m_up), 0)){ // i.e. m_up not defined
+    if (isEqual(Dot(m_up, m_up), 0))  // i.e. m_up not defined
+    {
       m_up  = R1Tensor(0,0,1); // set default
     }
-    m_up = hdn->GetAttributeTensorOrDefault("upVector", m_up); // local override of m_up
+    m_up = hdn->GetAttributeTensorOrDefault("upVector", m_up); // local override
+                                                               // of m_up
     m_up.Normalize();
 
     ///North vector
-    if (isEqual(Dot(m_north, m_north), 0)){ // i.e. m_up not defined
-    	m_north  = R1Tensor(0,1,0); // set default
+    if (isEqual(Dot(m_north, m_north), 0))  // i.e. m_up not defined
+    {
+      m_north  = R1Tensor(0,1,0); // set default
     }
-    m_north = hdn->GetAttributeTensorOrDefault("northVector", m_north); // local override of m_up
+    m_north = hdn->GetAttributeTensorOrDefault("northVector", m_north); // local
+                                                                        // override
+                                                                        // of
+                                                                        // m_up
     m_north.Normalize();
 
-    if( fabs( Dot(m_up,m_north) ) > 1e-8 ) {
-        throw GPException("Error JointSetT: Up vector and North vector are not orthogonal.");
+    if( fabs( Dot(m_up,m_north) ) > 1e-8 )
+    {
+      throw GPException("Error JointSetT: Up vector and North vector are not orthogonal.");
     }
   }
 
@@ -173,7 +180,7 @@ void JointSetT::SamplePositionsFractal(const array<R1Tensor>& ref,
   {
     //GET PARAMETERS
     const realT* hurst = this->m_hypocenterDistribution.GetParameter(
-        StatisticalDistributionBaseT::HURST_EXPONENT);
+      StatisticalDistributionBaseT::HURST_EXPONENT);
     if (!hurst)
       throw GPException("Cannot initialize fractal distribution without Hurst exponent");
 
@@ -182,15 +189,15 @@ void JointSetT::SamplePositionsFractal(const array<R1Tensor>& ref,
       throw GPException("Cannot initialize fractal distribution without mean");
 
     const realT* stdev = this->m_hypocenterDistribution.GetParameter(
-        StatisticalDistributionBaseT::STANDARD_DEVIATION);
+      StatisticalDistributionBaseT::STANDARD_DEVIATION);
     if (!stdev)
       throw GPException("Cannot initialize fractal distribution without standard deviation");
 
-  unsigned seed;
-  MPI_Allreduce(&m_seed, &seed, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-  spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5, 5, 1.2, seed);
-  dxv = max;
-  dxv -= min;
+    unsigned seed;
+    MPI_Allreduce(&m_seed, &seed, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5, 5, 1.2, seed);
+    dxv = max;
+    dxv -= min;
 
 // #if GPAC_MPI
 //     int mpirank;
@@ -201,7 +208,8 @@ void JointSetT::SamplePositionsFractal(const array<R1Tensor>& ref,
 //     const bool serial = mpisize < 2;
 //     if(serial)
 //     {
-//       spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5, 5, 1.2, this->m_seed);
+//       spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5, 5,
+// 1.2, this->m_seed);
 //       dxv = max;
 //       dxv -= min;
 //     }
@@ -211,25 +219,31 @@ void JointSetT::SamplePositionsFractal(const array<R1Tensor>& ref,
 //       {
 //         if(root)
 //         {
-//           m_seed = spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5, 5, 1.2);
-//           MPI_Bcast((char*)&m_seed, sizeof(unsigned), MPI_CHAR, 0, MPI_COMM_WORLD);
+//           m_seed = spatial.InitializeFractal(*mean, *stdev, min, max, *hurst,
+// 3, 5, 5, 5, 1.2);
+//           MPI_Bcast((char*)&m_seed, sizeof(unsigned), MPI_CHAR, 0,
+// MPI_COMM_WORLD);
 //         }
 //         else
 //         {
-//           MPI_Bcast((char*)&m_seed, sizeof(unsigned), MPI_CHAR, 0, MPI_COMM_WORLD);
-//           spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5, 5, 1.2, m_seed);
+//           MPI_Bcast((char*)&m_seed, sizeof(unsigned), MPI_CHAR, 0,
+// MPI_COMM_WORLD);
+//           spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5,
+// 5, 1.2, m_seed);
 //         }
 //       }
 //       else
 //       {
-//         spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5, 5, 1.2, m_seed);
+//         spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5,
+// 5, 1.2, m_seed);
 //       }
 
 //       dxv = max;
 //       dxv -= min;
 //     }
 // #else
-//     spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5, 5, 1.2);
+//     spatial.InitializeFractal(*mean, *stdev, min, max, *hurst, 3, 5, 5, 5,
+// 1.2);
 //     dxv = max;
 //     dxv -= min;
 // #endif
@@ -240,7 +254,7 @@ void JointSetT::SamplePositionsFractal(const array<R1Tensor>& ref,
   {
     array<R1Tensor> tpos;
     spatial.Positions(0.05 * dxv.MinVal(), tpos, weight);
-    for(localIndex a = 0; a < tpos.size(); ++a)
+    for(localIndex a = 0 ; a < tpos.size() ; ++a)
     {
       R1Tensor nrm, dstrike, ddip;
       NextStrikeDipNormal(dstrike, ddip, nrm);
@@ -270,14 +284,14 @@ void JointSetT::SampleFrequenciesFractal(const array<R1Tensor>& centroids,
 {
   //GET PARAMETERS
   const realT* hurst = this->m_hypocenterDistribution.GetParameter(
-      StatisticalDistributionBaseT::HURST_EXPONENT);
+    StatisticalDistributionBaseT::HURST_EXPONENT);
   if (!hurst)
     throw GPException("Cannot initialize fractal distribution without Hurst exponent");
   const realT* mean = this->m_hypocenterDistribution.GetParameter(StatisticalDistributionBaseT::MEAN);
   if (!mean)
     throw GPException("Cannot initialize fractal distribution without mean");
   const realT* stdev = this->m_hypocenterDistribution.GetParameter(
-      StatisticalDistributionBaseT::STANDARD_DEVIATION);
+    StatisticalDistributionBaseT::STANDARD_DEVIATION);
   if (!stdev)
     throw GPException("Cannot initialize fractal distribution without standard deviation");
 
@@ -290,7 +304,7 @@ void JointSetT::SampleFrequenciesFractal(const array<R1Tensor>& centroids,
   //SAMPLE
   {
     array<real64>::iterator itf = frequencies.begin();
-    for (array<R1Tensor>::const_iterator itc = centroids.begin(); itc != centroids.end(); ++itc, ++itf)
+    for (array<R1Tensor>::const_iterator itc = centroids.begin() ; itc != centroids.end() ; ++itc, ++itf)
     {
 #if 0
       *itf = spatial.Value(*itc);
@@ -318,7 +332,8 @@ void JointSetT::SampleFrequenciesFractal(const array<R1Tensor>& centroids,
 //  if (serial)
 //  {
 //    localIndex i = 0;
-//    for (gArray1d::const_iterator iter = localToGlobal.begin(); iter != localToGlobal.end();
+//    for (gArray1d::const_iterator iter = localToGlobal.begin(); iter !=
+// localToGlobal.end();
 //        ++iter, ++i)
 //    {
 //      R1Tensor xneighbor;
@@ -330,7 +345,8 @@ void JointSetT::SampleFrequenciesFractal(const array<R1Tensor>& centroids,
 //#if GPAC_MPI
 //  else
 //  {
-//    for (globalIndex global1 = minGlobalNumber; global1 <= maxGlobalNumber; global1++) /* loop over receiver patches */
+//    for (globalIndex global1 = minGlobalNumber; global1 <= maxGlobalNumber;
+// global1++) /* loop over receiver patches */
 //    {
 //      R1Tensor xneighbor;
 //      for (localIndex a = 0; a < nsdof; a++)
@@ -338,7 +354,8 @@ void JointSetT::SampleFrequenciesFractal(const array<R1Tensor>& centroids,
 //      frequencies[global1] = this->m_hypocenterDistribution.NormalSample();
 //    }
 //
-//    MPI_Bcast(frequencies.data(), frequencies.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+//    MPI_Bcast(frequencies.data(), frequencies.size(), MPI_DOUBLE, 0,
+// MPI_COMM_WORLD);
 //  }
 //#else
 //  else

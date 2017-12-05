@@ -13,7 +13,8 @@
 
 /**
  * @author Scott Johnson
- * @brief SurfaceInterpolant holds the definition of a 2D interpolation kernel with compact support
+ * @brief SurfaceInterpolant holds the definition of a 2D interpolation kernel
+ * with compact support
  */
 class SurfaceKernel : public InterpolantBaseT
 {

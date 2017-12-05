@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -59,8 +77,10 @@
  * @author Randolph Settgast
  * @tparam TYPE type of data that is contained.
  *
- * VectorT is a class to add some operators to std::vector. It derives from std::vector, which is a big "no-no" if
- * you plan on using VectorT as a derived class....so don't EVER use a std::vector* to allocate a VectorT object!
+ * VectorT is a class to add some operators to std::vector. It derives from
+ * std::vector, which is a big "no-no" if
+ * you plan on using VectorT as a derived class....so don't EVER use a
+ * std::vector* to allocate a VectorT object!
  */
 template<typename TYPE>
 class VectorT : public std::vector<TYPE>
@@ -68,7 +88,8 @@ class VectorT : public std::vector<TYPE>
 public:
   typedef long size_type;
 
-  //***** Constructors & Destructors ********************************************
+  //***** Constructors & Destructors
+  // ********************************************
   /// default constructor
   VectorT(void):
     std::vector<TYPE>() {}
@@ -81,13 +102,14 @@ public:
   VectorT( const VectorT& source ):
     std::vector<TYPE>( static_cast< std::vector<TYPE> >(source)) {}
 
-  /// repetitive sequence constructor creates a vector with num_elem copies of value
+  /// repetitive sequence constructor creates a vector with num_elem copies of
+  // value
   VectorT(const size_type num_elem, const TYPE value):
     std::vector<TYPE>(num_elem,value) {}
 
   /// default destructor
   virtual ~VectorT(void) {}
-  
+
 
 
   //***** Assignment Operators ************************************************
@@ -152,15 +174,15 @@ public:
 
   /// divide equals operator for individual value of any type
   template<class rTYPE> VectorT& operator/=( const rTYPE& rhs );
-  
+
   void SetValue( const TYPE* const rhs, const size_type n );
 
   /*
-  void Trim()
-  {
-    std::vector<TYPE>( this->begin(), this->end()).swap(*this);
+     void Trim()
+     {
+     std::vector<TYPE>( this->begin(), this->end()).swap(*this);
 
-  }*/
+     }*/
 
   long int size() const { return std::vector<TYPE>::size(); }
 
@@ -186,8 +208,10 @@ public:
  * @param[in] rhs VectorT to set *this equal to
  * @return reference to *this
  *
- * Templated operator+=() to add the values contained in rhs to those of *this on an element
- * by element basis. If there is no valid cast from rTYPE to TYPE, then compilation should fail.
+ * Templated operator+=() to add the values contained in rhs to those of *this
+ * on an element
+ * by element basis. If there is no valid cast from rTYPE to TYPE, then
+ * compilation should fail.
  */
 template<class TYPE>
 template<class rTYPE>
@@ -195,15 +219,16 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator+=( const VectorT<rTYPE>& rhs )
 {
   if( this->size() == rhs.size() && !this->empty() )
   {
-    TYPE* ptr = this->data() ;
+    TYPE* ptr = this->data();
     const rTYPE* rhs_ptr = &(rhs[0]);
     for( unsigned int a=0 ; a<(*this).size() ; ++a )
       *(ptr++) += *(rhs_ptr++);
   }
   else
-//    std::__throw_length_error(__N("VectorT<TYPE>& VectorT<TYPE>::operator+=()"));
+//    std::__throw_length_error(__N("VectorT<TYPE>&
+// VectorT<TYPE>::operator+=()"));
     throw std::exception();
-return (*this);
+  return (*this);
 }
 
 
@@ -213,8 +238,10 @@ return (*this);
  * @param[in] rhs VectorT to set *this equal to
  * @return reference to *this
  *
- * Templated operator-=() to subtract the values contained in rhs from those of *this on an element
- * by element basis. If there is no valid cast from rTYPE to TYPE, then compilation should fail.
+ * Templated operator-=() to subtract the values contained in rhs from those of
+ **this on an element
+ * by element basis. If there is no valid cast from rTYPE to TYPE, then
+ * compilation should fail.
  */
 template<class TYPE>
 template<class rTYPE>
@@ -228,10 +255,11 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator-=( const VectorT<rTYPE>& rhs )
       *(ptr++) -= *(rhs_ptr++);
   }
   else
-//    std::__throw_length_error(__N("VectorT<TYPE>& VectorT<TYPE>::operator+=()"));
+//    std::__throw_length_error(__N("VectorT<TYPE>&
+// VectorT<TYPE>::operator+=()"));
     throw std::exception();
 
-return (*this);
+  return (*this);
 }
 
 /**
@@ -240,8 +268,10 @@ return (*this);
  * @param[in] rhs VectorT to set *this equal to
  * @return reference to *this
  *
- * Templated operator*=() to multiply the values contained in *this by those of rhs on an element
- * by element basis. If there is no valid cast from rTYPE to TYPE, then compilation should fail.
+ * Templated operator*=() to multiply the values contained in *this by those of
+ * rhs on an element
+ * by element basis. If there is no valid cast from rTYPE to TYPE, then
+ * compilation should fail.
  */
 template<class TYPE>
 template<class rTYPE>
@@ -257,8 +287,9 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator*=( const VectorT<rTYPE>& rhs )
   else
     throw std::exception();
 
-//    std::__throw_length_error(__N("VectorT<TYPE>& VectorT<TYPE>::operator+=()"));
-return (*this);
+//    std::__throw_length_error(__N("VectorT<TYPE>&
+// VectorT<TYPE>::operator+=()"));
+  return (*this);
 }
 
 
@@ -268,8 +299,10 @@ return (*this);
  * @param[in] rhs VectorT to set *this equal to
  * @return reference to *this
  *
- * Templated operator/=() to divide the values contained in *this by those of rhs on an element
- * by element basis. If there is no valid cast from rTYPE to TYPE, then compilation should fail.
+ * Templated operator/=() to divide the values contained in *this by those of
+ * rhs on an element
+ * by element basis. If there is no valid cast from rTYPE to TYPE, then
+ * compilation should fail.
  */
 template<class TYPE>
 template<class rTYPE>
@@ -285,8 +318,9 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator/=( const VectorT<rTYPE>& rhs )
   else
     throw std::exception();
 
-//    std::__throw_length_error(__N("VectorT<TYPE>& VectorT<TYPE>::operator+=()"));
-return (*this);
+//    std::__throw_length_error(__N("VectorT<TYPE>&
+// VectorT<TYPE>::operator+=()"));
+  return (*this);
 }
 
 
@@ -305,11 +339,11 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator+=( const rTYPE& rhs )
 {
   if( !this->empty() )
   {
-  TYPE* ptr = this->data();
-  for( unsigned int a=0 ; a<this->size() ; ++a )
-    *(ptr++) += rhs;
+    TYPE* ptr = this->data();
+    for( unsigned int a=0 ; a<this->size() ; ++a )
+      *(ptr++) += rhs;
   }
-return (*this);
+  return (*this);
 }
 
 /**
@@ -327,11 +361,11 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator-=( const rTYPE& rhs )
 {
   if( !this->empty() )
   {
-  TYPE* ptr = this->data();
-  for( unsigned int a=0 ; a<this->size() ; ++a )
-    *(ptr++) -= rhs;
+    TYPE* ptr = this->data();
+    for( unsigned int a=0 ; a<this->size() ; ++a )
+      *(ptr++) -= rhs;
   }
-return (*this);
+  return (*this);
 }
 
 /**
@@ -349,11 +383,11 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator*=( const rTYPE& rhs )
 {
   if( !this->empty() )
   {
-  TYPE* ptr = this->data();
-  for( unsigned int a=0 ; a<this->size() ; ++a )
-    *(ptr++) *= rhs;
+    TYPE* ptr = this->data();
+    for( unsigned int a=0 ; a<this->size() ; ++a )
+      *(ptr++) *= rhs;
   }
-return (*this);
+  return (*this);
 }
 
 /**
@@ -371,11 +405,11 @@ inline VectorT<TYPE>& VectorT<TYPE>::operator/=( const rTYPE& rhs )
 {
   if( !this->empty() )
   {
-  TYPE* ptr = this->data();
-  for( unsigned int a=0 ; a<this->size() ; ++a )
-    *(ptr++) /= rhs;
+    TYPE* ptr = this->data();
+    for( unsigned int a=0 ; a<this->size() ; ++a )
+      *(ptr++) /= rhs;
   }
-return (*this);
+  return (*this);
 }
 
 template<class TYPE>
@@ -388,4 +422,3 @@ inline void VectorT<TYPE>::SetValue( const TYPE* const rhs, const size_type n )
 
 
 #endif
-

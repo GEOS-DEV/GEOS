@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -50,7 +68,7 @@
  *  Created on: Tue Jan  7 22:46:45 PST 2014
  *      Author: johnson346, settgast
  */
- 
+
 
 
 //**********************************************************************************************************************
@@ -101,34 +119,34 @@ public:
   }
 
   virtual void GetVariableOffsets( std::map<std::string, size_t>& intOffsets,
-                                std::map<std::string, size_t>& realOffsets,
-                                std::map<std::string, size_t>& R1TensorOffsets,
-                                std::map<std::string, size_t>& R2TensorOffsets,
-                                std::map<std::string, size_t>& R2SymTensorOffsets ) const
+                                   std::map<std::string, size_t>& realOffsets,
+                                   std::map<std::string, size_t>& R1TensorOffsets,
+                                   std::map<std::string, size_t>& R2TensorOffsets,
+                                   std::map<std::string, size_t>& R2SymTensorOffsets ) const
   {
     base::GetVariableOffsets( intOffsets, realOffsets, R1TensorOffsets, R2TensorOffsets, R2SymTensorOffsets);
   }
 
   virtual void GetVariableValues( std::map<std::string, int>& intValues,
-                                std::map<std::string, realT>& realValues,
-                                std::map<std::string, R1Tensor>& R1TensorValues,
-                                std::map<std::string, R2Tensor>& R2TensorValues,
-                                std::map<std::string, R2SymTensor>& R2SymTensorValues )
+                                  std::map<std::string, realT>& realValues,
+                                  std::map<std::string, R1Tensor>& R1TensorValues,
+                                  std::map<std::string, R2Tensor>& R2TensorValues,
+                                  std::map<std::string, R2SymTensor>& R2SymTensorValues )
   {
     base::GetVariableValues( intValues, realValues, R1TensorValues, R2TensorValues, R2SymTensorValues);
   }
 
   void Serialize(const localIndex index,
-                  array<array<integer>*>& intVars,
-                  array<array<real64>*>& realVars,
-                  array<array<R1Tensor>*>& R1Vars,
-                  array<array<R2Tensor>*>& R2Vars,
-                  array<array<R2SymTensor>*>& R2SymVars,
-                  localIndex& intVarCounts,
-                  localIndex& realVarCounts,
-                  localIndex& R1TensorVarCounts,
-                  localIndex& R2TensorVarCounts,
-                  localIndex& R2SymTensorVarCounts  ) const
+                 array<array<integer>*>& intVars,
+                 array<array<real64>*>& realVars,
+                 array<array<R1Tensor>*>& R1Vars,
+                 array<array<R2Tensor>*>& R2Vars,
+                 array<array<R2SymTensor>*>& R2SymVars,
+                 localIndex& intVarCounts,
+                 localIndex& realVarCounts,
+                 localIndex& R1TensorVarCounts,
+                 localIndex& R2TensorVarCounts,
+                 localIndex& R2SymTensorVarCounts  ) const
   {
     base::Serialize(index, intVars, realVars, R1Vars, R2Vars, R2SymVars,
                     intVarCounts, realVarCounts, R1TensorVarCounts, R2TensorVarCounts, R2SymTensorVarCounts );
@@ -141,14 +159,14 @@ public:
                      const array<array<R1Tensor>*>& R1Vars,
                      const array<array<R2Tensor>*>& R2Vars,
                      const array<array<R2SymTensor>*>& R2SymVars,
-                  localIndex& intVarCounts,
-                  localIndex& realVarCounts,
-                  localIndex& R1TensorVarCounts,
-                  localIndex& R2TensorVarCounts,
-                  localIndex& R2SymTensorVarCounts )
+                     localIndex& intVarCounts,
+                     localIndex& realVarCounts,
+                     localIndex& R1TensorVarCounts,
+                     localIndex& R2TensorVarCounts,
+                     localIndex& R2SymTensorVarCounts )
   {
     base::Deserialize(index, intVars, realVars, R1Vars, R2Vars, R2SymVars,
-                    intVarCounts, realVarCounts, R1TensorVarCounts, R2TensorVarCounts, R2SymTensorVarCounts );
+                      intVarCounts, realVarCounts, R1TensorVarCounts, R2TensorVarCounts, R2SymTensorVarCounts );
   }
   inline LinearElasticParameterData&
   operator*=(const realT factor)
@@ -246,36 +264,36 @@ public:
   }
 
   virtual void GetVariableOffsets( std::map<std::string, size_t>& intOffsets,
-                                std::map<std::string, size_t>& realOffsets,
-                                std::map<std::string, size_t>& R1TensorOffsets,
-                                std::map<std::string, size_t>& R2TensorOffsets,
-                                std::map<std::string, size_t>& R2SymTensorOffsets ) const
+                                   std::map<std::string, size_t>& realOffsets,
+                                   std::map<std::string, size_t>& R1TensorOffsets,
+                                   std::map<std::string, size_t>& R2TensorOffsets,
+                                   std::map<std::string, size_t>& R2SymTensorOffsets ) const
   {
     base::GetVariableOffsets( intOffsets, realOffsets, R1TensorOffsets, R2TensorOffsets, R2SymTensorOffsets);
   }
 
   virtual void GetVariableValues( std::map<std::string, int>& intValues,
-                                std::map<std::string, realT>& realValues,
-                                std::map<std::string, R1Tensor>& R1TensorValues,
-                                std::map<std::string, R2Tensor>& R2TensorValues,
-                                std::map<std::string, R2SymTensor>& R2SymTensorValues )
+                                  std::map<std::string, realT>& realValues,
+                                  std::map<std::string, R1Tensor>& R1TensorValues,
+                                  std::map<std::string, R2Tensor>& R2TensorValues,
+                                  std::map<std::string, R2SymTensor>& R2SymTensorValues )
   {
     base::GetVariableValues( intValues, realValues, R1TensorValues, R2TensorValues, R2SymTensorValues);
   }
 
   void Serialize(const localIndex index,
-                  const unsigned int stride,
-                  const localIndex elemNum,
-                  array<array<integer>*>& intVars,
-                  array<array<real64>*>& realVars,
-                  array<array<R1Tensor>*>& R1Vars,
-                  array<array<R2Tensor>*>& R2Vars,
-                  array<array<R2SymTensor>*>& R2SymVars,
-                  localIndex& intVarCounts,
-                  localIndex& realVarCounts,
-                  localIndex& R1TensorVarCounts,
-                  localIndex& R2TensorVarCounts,
-                  localIndex& R2SymTensorVarCounts  ) const
+                 const unsigned int stride,
+                 const localIndex elemNum,
+                 array<array<integer>*>& intVars,
+                 array<array<real64>*>& realVars,
+                 array<array<R1Tensor>*>& R1Vars,
+                 array<array<R2Tensor>*>& R2Vars,
+                 array<array<R2SymTensor>*>& R2SymVars,
+                 localIndex& intVarCounts,
+                 localIndex& realVarCounts,
+                 localIndex& R1TensorVarCounts,
+                 localIndex& R2TensorVarCounts,
+                 localIndex& R2SymTensorVarCounts  ) const
   {
     base::Serialize(index, stride, elemNum, intVars, realVars, R1Vars, R2Vars, R2SymVars,
                     intVarCounts, realVarCounts, R1TensorVarCounts, R2TensorVarCounts, R2SymTensorVarCounts );
@@ -283,21 +301,21 @@ public:
 
 
   void  Deserialize( const localIndex index,
-                  const unsigned int stride,
-                  const localIndex elemNum,
+                     const unsigned int stride,
+                     const localIndex elemNum,
                      const array<array<integer>*>& intVars,
                      const array<array<real64>*>& realVars,
                      const array<array<R1Tensor>*>& R1Vars,
                      const array<array<R2Tensor>*>& R2Vars,
                      const array<array<R2SymTensor>*>& R2SymVars,
-                  localIndex& intVarCounts,
-                  localIndex& realVarCounts,
-                  localIndex& R1TensorVarCounts,
-                  localIndex& R2TensorVarCounts,
-                  localIndex& R2SymTensorVarCounts )
+                     localIndex& intVarCounts,
+                     localIndex& realVarCounts,
+                     localIndex& R1TensorVarCounts,
+                     localIndex& R2TensorVarCounts,
+                     localIndex& R2SymTensorVarCounts )
   {
     base::Deserialize(index, stride, elemNum, intVars, realVars, R1Vars, R2Vars, R2SymVars,
-                    intVarCounts, realVarCounts, R1TensorVarCounts, R2TensorVarCounts, R2SymTensorVarCounts );
+                      intVarCounts, realVarCounts, R1TensorVarCounts, R2TensorVarCounts, R2SymTensorVarCounts );
   }
   inline LinearElasticStateData&
   operator*=(const realT factor)
@@ -339,7 +357,7 @@ public:
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************
-class LinearElastic: public LinearElasticIntermediate
+class LinearElastic : public LinearElasticIntermediate
 {
 public:
 
@@ -364,7 +382,7 @@ public:
   LinearElastic();
   virtual ~LinearElastic();
 
-  inline void MapToRegion(const realT fctNormal, const realT fct0, const realT fct1, 
+  inline void MapToRegion(const realT fctNormal, const realT fct0, const realT fct1,
                           const localIndex from0, const localIndex from1,
                           StateClass& s0, StateClass& s1)
   {
@@ -372,15 +390,15 @@ public:
     //ParameterData(from)->MapToRegion(fctNormal, fct0, fct1, p0, p1);
   }
 
-  inline void MapFromRegion(const realT fct0, const realT fct1, 
-                          const StateClass& s0, const StateClass& s1, 
-                          const localIndex to0, const localIndex to1)
+  inline void MapFromRegion(const realT fct0, const realT fct1,
+                            const StateClass& s0, const StateClass& s1,
+                            const localIndex to0, const localIndex to1)
   {
     StateData(to0, to1)->MapFromRegion(s0, s1, fct0, fct1);
     //ParameterData(to)->MapFromRegion(p0, p1, fct0, fct1);
   }
- 
-  inline void MapToRegion(const realT fctNormal, const realT fct0, const realT fct1, 
+
+  inline void MapToRegion(const realT fctNormal, const realT fct0, const realT fct1,
                           const localIndex from,
                           ParameterClass& p0, ParameterClass& p1)
   {
@@ -388,26 +406,26 @@ public:
     ParameterData(from)->MapToRegion(fctNormal, fct0, fct1, p0, p1);
   }
 
-  inline void MapFromRegion(const realT fct0, const realT fct1, 
-                          const ParameterClass& p0, const ParameterClass& p1, 
-                          const localIndex to)
+  inline void MapFromRegion(const realT fct0, const realT fct1,
+                            const ParameterClass& p0, const ParameterClass& p1,
+                            const localIndex to)
   {
     //StateData(to0, to1)->MapFromRegion(s0, s1, fct0, fct1);
     ParameterData(to)->MapFromRegion(p0, p1, fct0, fct1);
   }
-  
-  
+
+
   virtual void ZeroStates()
   {
-    for(localIndex j = 0; j < m_stateData.Dimension(1); j++)
+    for(localIndex j = 0 ; j < m_stateData.Dimension(1) ; j++)
     {
-      for(localIndex i = 0; i < m_stateData.Dimension(0); i++)
+      for(localIndex i = 0 ; i < m_stateData.Dimension(0) ; i++)
       {
         m_stateData(i,j) *= 0.0;
       }
     }
   }
-  
+
   virtual void SetVariableParameters(const bool varParams, const localIndex newSize = 0)
   { SetVariableParametersFromDerived<LinearElastic>(varParams, newSize); }
 
@@ -422,22 +440,23 @@ public:
     m_stateData.resize2(num0, num1);
     ResizeFromDerived<LinearElastic>( num0 );
   }
-  
+
   virtual void insert( const localIndex num )
   { InsertFromDerived<LinearElastic>( num ); }
 
   virtual void erase( const localIndex num )
   { EraseFromDerived<LinearElastic>( num ); }
- 
-  void GetVariableNames( array<string>& intVars, array<string>& realVars, array<string>& R1TensorVars, array<string>& R2TensorVars, array<string>& R2SymTensorVars ) const
+
+  void GetVariableNames( array<string>& intVars, array<string>& realVars, array<string>& R1TensorVars, array<string>& R2TensorVars,
+                         array<string>& R2SymTensorVars ) const
   { GetVariableNamesFromDerived<LinearElastic>(intVars, realVars, R1TensorVars, R2TensorVars, R2SymTensorVars ); }
 
   size_t GetStateOffset( const std::string& name, const int type ) const
   { return GetStateOffsetFromDerived<LinearElastic>(name, type); }
-  
+
   size_t GetParameterOffset( const std::string& name, const int type ) const
   { return GetParameterOffsetFromDerived<LinearElastic>(name, type ); }
-  
+
   bool GetStateValues( const std::string& name, array<real64>& values ) const
   { return GetStateValuesFromDerived<LinearElastic>(name, values); }
 
@@ -450,10 +469,12 @@ public:
   bool SetParameterValues( const std::string& name, const array<real64>& values )
   { return SetParameterValuesFromDerived<LinearElastic>(name, values); }
 
-  virtual void Serialize( array<array<integer>*>& intVars, array<array<real64>*>& realVars, array<array<R1Tensor>*>& R1Vars, array<array<R2Tensor>*>& R2Vars, array<array<R2SymTensor>*>& R2SymVars ) const
+  virtual void Serialize( array<array<integer>*>& intVars, array<array<real64>*>& realVars, array<array<R1Tensor>*>& R1Vars, array<array<R2Tensor>*>& R2Vars,
+                          array<array<R2SymTensor>*>& R2SymVars ) const
   { SerializeFromDerived<LinearElastic>( intVars, realVars, R1Vars, R2Vars, R2SymVars ); }
 
-  virtual void Deserialize( const array<array<integer>*>& intVars, const array<array<real64>*>& realVars, const array<array<R1Tensor>*>& R1Vars, const array<array<R2Tensor>*>& R2Vars, const array<array<R2SymTensor>*>& R2SymVars  )
+  virtual void Deserialize( const array<array<integer>*>& intVars, const array<array<real64>*>& realVars, const array<array<R1Tensor>*>& R1Vars,
+                            const array<array<R2Tensor>*>& R2Vars, const array<array<R2SymTensor>*>& R2SymVars  )
   { DeserializeFromDerived<LinearElastic>( intVars, realVars, R1Vars, R2Vars, R2SymVars ); }
 
   virtual unsigned int Pack( const lArray1d& localIndices, bufvector& buffer, const bool doBufferPacking )
@@ -481,7 +502,7 @@ public:
   { return &( m_parameterData(hasVariableParams ? index : 0) ); }
   ParameterClass* ParameterData( const localIndex index )
   { return &( m_parameterData(hasVariableParams ? index : 0) ); }
-  
+
   void InitializeStates(const localIndex index);
 
   virtual void
@@ -503,7 +524,7 @@ public:
                            const realT dt);
 
   void MeanPressureDevStress(const localIndex index, realT& pressure,
-                                            R2SymTensor& devStress) const;
+                             R2SymTensor& devStress) const;
 
 
 protected:
@@ -517,7 +538,7 @@ protected:
 private:
   LinearElastic(const LinearElastic&);
   LinearElastic& operator=(const LinearElastic&);
-  
+
 
 };
 #endif /* LINEARELASTIC_H_ */

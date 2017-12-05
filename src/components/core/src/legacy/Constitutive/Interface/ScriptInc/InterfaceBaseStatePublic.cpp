@@ -35,7 +35,8 @@ InterfaceBaseStateData::UpdateOrientation(const realT normalApproachIn,
   //update the contact velocity
   GeometryUtilities::OrthogonalVectorComponent(velocity, normal, dShearSlip);
 
-  //next statement assumes ever-increasing slip ... should handle reversal of slip, too!
+  //next statement assumes ever-increasing slip ... should handle reversal of
+  // slip, too!
   dxsdt = dShearSlip.L2_Norm();
   dShearSlip *= dt;
 

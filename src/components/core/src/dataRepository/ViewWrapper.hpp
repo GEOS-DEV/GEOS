@@ -41,11 +41,10 @@ public:
    * @param parent parent group which owns the ViewWrapper
    */
   explicit ViewWrapper( std::string const & name,
-                        ManagedGroup * const parent ) :
+                        ManagedGroup * const parent ):
     ViewWrapperBase(name,parent),
     m_data( std::make_unique<T>() )
-  { 
-  }
+  {}
 
   /**
    * @param name name of the object
@@ -57,8 +56,7 @@ public:
                         std::unique_ptr<T> object ):
     ViewWrapperBase(name,parent),
     m_data( std::move( object ) )
-  {
-  }
+  {}
 
   /**
    * @param name name of the object
@@ -70,8 +68,7 @@ public:
                         T * object ):
     ViewWrapperBase(name,parent),
     m_data( std::move( std::unique_ptr<T>(object) ) )
-  {
-  }
+  {}
 
   /**
    * default destructor
@@ -82,21 +79,19 @@ public:
    * Copy Constructor
    * @param source source for the copy
    */
-  ViewWrapper( ViewWrapper const & source ) :
+  ViewWrapper( ViewWrapper const & source ):
     ViewWrapperBase("test", nullptr),
     m_data(source.m_data)
-  {
-  }
+  {}
 
   /**
    * Move Constructor
    * @param source source to be moved
    */
-  ViewWrapper( ViewWrapper&& source ) :
+  ViewWrapper( ViewWrapper&& source ):
     ViewWrapperBase("test", nullptr),
     m_data( std::move(source.m_data) )
-  {
-  }
+  {}
 
   /**
    * Copy Assignment Operator
@@ -122,11 +117,13 @@ public:
 
 
   /**
-   * Factory Method to make a new ViewWrapper<T>, allocating a new T. Only is going to work if T has a default constructor.
+   * Factory Method to make a new ViewWrapper<T>, allocating a new T. Only is
+   * going to work if T has a default constructor.
    * Perhaps this is worthless in the general case.
    * @param name name of the object
    * @param parent group that owns the ViewWrapper
-   * @return A std::unique_ptr<ViewWrapperBase> that holds the newly allocated ViewWrapper.
+   * @return A std::unique_ptr<ViewWrapperBase> that holds the newly allocated
+   * ViewWrapper.
    */
   template<typename TNEW>
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
@@ -138,7 +135,8 @@ public:
 
 
   /**
-   * Virtual function to return the typeid of T. Not so sure this does what we want?? TODO
+   * Virtual function to return the typeid of T. Not so sure this does what we
+   * want?? TODO
    * @return typeid(T)
    */
   virtual const std::type_info& get_typeid() const noexcept override final
@@ -167,12 +165,14 @@ public:
   {
     HAS_MEMBER_FUNCTION(empty,bool,const,,)
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_empty<U>::value, bool>::type empty(ViewWrapper const * parent)
+    static typename std::enable_if<has_memberfunction_empty<U>::value, bool>::type
+    empty(ViewWrapper const * parent)
     {
       return parent->m_data->empty();
     }
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_empty<U>::value, bool>::type empty(ViewWrapper const * parent)
+    static typename std::enable_if<!has_memberfunction_empty<U>::value, bool>::type
+    empty(ViewWrapper const * parent)
     {
       return parent;
     }
@@ -186,12 +186,14 @@ public:
   {
     HAS_MEMBER_FUNCTION_VARIANT(size,0,localIndex,const,,)
     template<class U = T>
-    static typename std::enable_if< has_memberfunction_v0_size<U>::value,localIndex >::type size(ViewWrapper const * parent)
+    static typename std::enable_if< has_memberfunction_v0_size<U>::value,localIndex >::type
+    size(ViewWrapper const * parent)
     {
       return static_cast<localIndex>(parent->m_data->size());
     }
     template<class U = T>
-    static typename std::enable_if< !(has_memberfunction_v0_size<U>::value), localIndex>::type size(ViewWrapper const * )
+    static typename std::enable_if< !(has_memberfunction_v0_size<U>::value), localIndex>::type
+    size(ViewWrapper const * )
     {
       return 1;//parent->m_data;
     }
@@ -206,12 +208,14 @@ public:
   {
     HAS_MEMBER_FUNCTION(reserve, void, ,VA_LIST(std::size_t),VA_LIST(std::size_t(1)) )
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_reserve<U>::value, void>::type reserve(ViewWrapper * const parent, std::size_t new_cap)
+    static typename std::enable_if<has_memberfunction_reserve<U>::value, void>::type
+    reserve(ViewWrapper * const parent, std::size_t new_cap)
     {
       return parent->m_data->reserve(new_cap);
     }
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_reserve<U>::value, void>::type reserve(ViewWrapper * const, std::size_t )
+    static typename std::enable_if<!has_memberfunction_reserve<U>::value, void>::type
+    reserve(ViewWrapper * const, std::size_t )
     {
       return; //parent->m_data;
     }
@@ -220,7 +224,8 @@ public:
   {
     reserve_wrapper::reserve(this, new_cap);
   }
-//  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,reserve , void,, VA_LIST(std::size_t a), VA_LIST(a) )
+//  CONDITIONAL_VIRTUAL_FUNCTION( Wrapper<T>,reserve , void,,
+// VA_LIST(std::size_t a), VA_LIST(a) )
 
 
   HAS_MEMBER_FUNCTION(capacity,std::size_t,const,,)
@@ -257,7 +262,7 @@ public:
       return parent->m_data->resize(new_size);
     }
 
-    
+
     template<class U = T>
     static typename std::enable_if<!(has_memberfunction_v0_resize<U>::value)&&
                                    !(has_memberfunction_v1_resize<U>::value)&&
@@ -280,12 +285,14 @@ public:
    */
   ///@{
 
-  /// Invoke macro to generate test to see if type has an alias named "pointer". This will be used to determine if the
+  /// Invoke macro to generate test to see if type has an alias named "pointer".
+  /// This will be used to determine if the
   /// type is to be treated as an "array" or a single object.
   HAS_ALIAS(pointer)
 
   /**
-   * SFINAE specialized structure to control return type based on properties of T.
+   * SFINAE specialized structure to control return type based on properties of
+   * T.
    * The default template returns a pointer for all calls to data().
    */
   template< class U=T,
@@ -301,10 +308,14 @@ public:
   };
 
   /**
-   *  Specialization for case when T has a pointer alias, and it is NOT a string.
-   *  In this case, we assume that we are storing an array type. The return type is then a reference, unless the
-   *  compilation flag is set such that we require a pointer back (good for speed, but no array class convenience).
-   *  The resulting types can both be dereferenced with operator[], so no code changes required
+   *  Specialization for case when T has a pointer alias, and it is NOT a
+   * string.
+   *  In this case, we assume that we are storing an array type. The return type
+   * is then a reference, unless the
+   *  compilation flag is set such that we require a pointer back (good for
+   * speed, but no array class convenience).
+   *  The resulting types can both be dereferenced with operator[], so no code
+   * changes required
    *  unless array member functions have been called.
    */
   template<class U>
@@ -345,7 +356,8 @@ public:
   HAS_MEMBER_FUNCTION(data,pointer,,,)
   HAS_MEMBER_FUNCTION_VARIANT(data,_const, pointer,const,,)
 
-  /// Case for if m_data has a member function called "data()", and is not a string
+  /// Case for if m_data has a member function called "data()", and is not a
+  // string
   template<class U = T>
   typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
   data()
@@ -378,7 +390,7 @@ public:
     /// return the object...or a reference to the object
     return *m_data;
   }
-  
+
 
   template<class U = T>
   typename std::enable_if<std::is_same<U,std::string>::value, rtype_const>::type
@@ -388,7 +400,8 @@ public:
   }
 
 
-  /// case for if m_data does NOT have a member function "data()", and is not a string
+  /// case for if m_data does NOT have a member function "data()", and is not a
+  // string
   template<class U = T>
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
   data()
@@ -416,14 +429,16 @@ public:
 
   /// Case for if m_data has a member function called "data()"
   template<class U = T>
-  typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) && has_alias_pointer<U>::value && !std::is_same<U,string>::value, typename U::pointer >::type
+  typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) &&
+                           has_alias_pointer<U>::value && !std::is_same<U,string>::value,typename U::pointer >::type
   dataPtr()
   {
     return m_data->data();
   }
 
   template<class U = T>
-  typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) && has_alias_pointer<U>::value && !std::is_same<U,string>::value, typename U::const_pointer >::type
+  typename std::enable_if< ( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value ) &&
+                           has_alias_pointer<U>::value && !std::is_same<U,string>::value,typename U::const_pointer >::type
   dataPtr() const
   {
     return m_data->data();
@@ -448,14 +463,16 @@ public:
 
   /// case for if m_data does NOT have a member function "data()"
   template<class U = T>
-  typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&& !std::is_same<U,string>::value, U * >::type
+  typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&&
+                          !std::is_same<U,string>::value, U * >::type
   dataPtr()
   {
     return m_data.get();
   }
 
   template<class U = T>
-  typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&& !std::is_same<U,string>::value, U const *>::type
+  typename std::enable_if<!( has_memberfunction_data<U>::value || has_memberfunction_v_const_data<U>::value )&&
+                          !std::is_same<U,string>::value, U const *>::type
   dataPtr() const
   {
     return m_data.get();
@@ -482,7 +499,8 @@ public:
   }
 
 
-  /// case for if U::value_type exists. Returns the number of elements given a byte size
+  /// case for if U::value_type exists. Returns the number of elements given a
+  // byte size
   template<class U = T>
   typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
   numElementsFromDataSize(localIndex d_size) const
@@ -491,7 +509,8 @@ public:
   }
 
 
-  /// case for if U::value_type doesn't exists. Returns the number of elements given a byte size
+  /// case for if U::value_type doesn't exists. Returns the number of elements
+  // given a byte size
   template<class U = T>
   typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
   numElementsFromDataSize(localIndex d_size) const
@@ -504,7 +523,7 @@ public:
   virtual void registerDataPtr() override final
   {
     localIndex d_size = dataSize();
-    if (d_size > 0) 
+    if (d_size > 0)
     {
       void * ptr = const_cast<void*>( static_cast<void const *>( dataPtr() ) );
       getSidreView()->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, d_size, ptr);
@@ -533,13 +552,13 @@ public:
 
   virtual void resizeFromSidre() override final
   {
-      if (getSidreView()->isExternal()) 
-      {
-        localIndex d_size = getSidreView()->getTotalBytes();
-        localIndex numElements = numElementsFromDataSize(d_size);
-        resize(numElements);
-      }
-      
+    if (getSidreView()->isExternal())
+    {
+      localIndex d_size = getSidreView()->getTotalBytes();
+      localIndex numElements = numElementsFromDataSize(d_size);
+      resize(numElements);
+    }
+
   }
   #endif /* ATK_FOUND */
 

@@ -41,7 +41,7 @@ public:
   {
     return parserExpression.evaluate( reinterpret_cast<void*>( const_cast<real64*>(input) ) );
   }
-  
+
 private:
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;

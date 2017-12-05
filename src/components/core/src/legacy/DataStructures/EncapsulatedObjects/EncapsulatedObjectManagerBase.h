@@ -10,7 +10,7 @@
 
 namespace TICPP
 {
-  class HierarchicalDataNode;
+class HierarchicalDataNode;
 }
 
 #include "Common/Common.h"
@@ -94,10 +94,6 @@ private:
 
 
 
-
-
-
-
 template< typename LeafClass >
 void EncapsulatedObjectManagerBase::ResizeFromDerived( const localIndex num,
                                                        const bool variableParams )
@@ -160,7 +156,7 @@ void EncapsulatedObjectManagerBase::SerializeFromDerived( array<array<integer>*>
         ++istate;
       }
     }
-}
+  }
 }
 
 template< typename LeafClass >
@@ -198,7 +194,6 @@ void EncapsulatedObjectManagerBase::DeserializeFromDerived( const array<array<in
   }
 
 }
-
 
 
 
@@ -240,7 +235,8 @@ unsigned int EncapsulatedObjectManagerBase::UnpackFromDerived( const T_indices& 
   {
     for( typename T_indices::const_iterator index=localIndices.begin() ; index!=localIndices.end() ; ++index )
     {
-//      unpackedSize += bufvector::Unpack( buffer, dthis.m_parameterData[*index] );
+//      unpackedSize += bufvector::Unpack( buffer, dthis.m_parameterData[*index]
+// );
     }
   }
   return unpackedSize;

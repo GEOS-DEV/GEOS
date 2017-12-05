@@ -14,13 +14,13 @@
 
 namespace FiniteElementUtilities
 {
-  void Integrate( const R2SymTensor& fieldvar,
-                  const R1Tensor* const dNdX,
-                  const realT& detJ,
-                  const realT& detF,
-                  const R2Tensor& Finv,
-                  const int numPoints,
-                  R1Tensor* const result);
+void Integrate( const R2SymTensor& fieldvar,
+                const R1Tensor* const dNdX,
+                const realT& detJ,
+                const realT& detF,
+                const R2Tensor& Finv,
+                const int numPoints,
+                R1Tensor* const result);
 
 
 //  void Interp(const R1Tensor &globalCoord,

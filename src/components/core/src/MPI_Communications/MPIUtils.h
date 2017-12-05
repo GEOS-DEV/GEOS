@@ -10,7 +10,7 @@
 
 namespace MPIUtils
 {
-  SendRecieveBuffer( )
+SendRecieveBuffer( )
 }
 
 #endif /* MPIUTILS_H_ */

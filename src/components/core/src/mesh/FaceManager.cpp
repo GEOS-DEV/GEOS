@@ -15,8 +15,8 @@ using namespace dataRepository;
  *
  * @return
  */
-FaceManager::FaceManager( string const & , ManagedGroup * const parent ):
-ObjectManagerBase("FaceManager",parent)
+FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
+  ObjectManagerBase("FaceManager",parent)
 {
 
   this->RegisterViewWrapper< array< localIndex_array > >(viewKeys.nodeList.Key());
@@ -37,8 +37,7 @@ ObjectManagerBase("FaceManager",parent)
  * @return
  */
 FaceManager::~FaceManager()
-{
-}
+{}
 
 
 
@@ -56,8 +55,10 @@ void FaceManager::FillDocumentationNode( dataRepository::ManagedGroup * const  )
 //                              -1,
 //                              "integer_array",
 //                              "integer_array",
-//                              "List containing the element regions of the faces",
-//                              "List containing the element regions of the faces",
+//                              "List containing the element regions of the
+// faces",
+//                              "List containing the element regions of the
+// faces",
 //                              "1",
 //                              "",
 //                              1,
@@ -99,112 +100,126 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
+      {
+        // kelf = k'th element local face index
+        for( localIndex kelf=0 ; kelf<subRegion->numFacesPerElement() ; ++kelf )
+        {
+          // get the nodes associated with the local face
+          subRegion->GetFaceNodes( ke, kelf, tempNodeList );
+
+          //Special treatment for the triangle faces of prisms.
+          if (tempNodeList[tempNodeList.size()-1] == std::numeric_limits<localIndex>::max())
+            tempNodeList.pop_back();
+
+          // sort the nodes
+          std::sort(tempNodeList.begin(), tempNodeList.end() );
+
+          // get the lowest node index from the list for simplicity
+          const localIndex& lowNode = tempNodeList[0];
+
+          // now check to see if the lowest node index has an entry in the
+          // facesByLowestNode vector
+          if( facesByLowestNode.size() < (lowNode+1) )
           {
-            // kelf = k'th element local face index
-            for( localIndex kelf=0 ; kelf<subRegion->numFacesPerElement() ; ++kelf )
+            // the node has not been entered, so add it.
+            facesByLowestNode.resize(lowNode+1);
+
+            // this a new face, so add it,
+            AddNewFace( kReg, kSubReg, ke, kelf, numFaces, facesByLowestNode, tempNodeList, tempFaceToNodeMap, *subRegion );
+          }
+          else
+          {
+            // does the node have an entry? If not, then this has to be a new
+            // face.
+            if( facesByLowestNode[lowNode].empty() )
             {
-              // get the nodes associated with the local face
-              subRegion->GetFaceNodes( ke, kelf, tempNodeList );
+              // this a new face, so add it,
+              AddNewFace( kReg, kSubReg, ke, kelf, numFaces, facesByLowestNode, tempNodeList, tempFaceToNodeMap, *subRegion );
+            }
+            else
+            {
+              // the node does have an entry, so it is possible that the facet
+              // has already be assigned a number
 
-              //Special treatment for the triangle faces of prisms.
-              if (tempNodeList[tempNodeList.size()-1] == std::numeric_limits<localIndex>::max()) tempNodeList.pop_back();
+              // make a flag to indicate whether the face is a
+              // duplicate...assume that it isn't unless this is disproved.
+              bool duplicate = false;
 
-              // sort the nodes
-              std::sort(tempNodeList.begin(), tempNodeList.end() );
 
-              // get the lowest node index from the list for simplicity
-              const localIndex& lowNode = tempNodeList[0];
-
-              // now check to see if the lowest node index has an entry in the facesByLowestNode vector
-              if( facesByLowestNode.size() < (lowNode+1) )
+              // there are faces in facesByLowestNode, so lets loop over them
+              // and check for duplicates
+              for( localIndex_array::iterator existingFaceIndex = facesByLowestNode[lowNode].begin() ;
+                   existingFaceIndex != facesByLowestNode[lowNode].end() ; ++existingFaceIndex )
               {
-                // the node has not been entered, so add it.
-                facesByLowestNode.resize(lowNode+1);
+                // this is the nodelist of the face that we are testing agains
+                const localIndex_array& existingFaceNodelist = tempFaceToNodeMap[*existingFaceIndex];
 
-                // this a new face, so add it,
-                AddNewFace( kReg, kSubReg, ke, kelf, numFaces, facesByLowestNode, tempNodeList, tempFaceToNodeMap, *subRegion );
-              }
-              else
-              {
-                // does the node have an entry? If not, then this has to be a new face.
-                if( facesByLowestNode[lowNode].empty() )
+                // test to see if the size of the nodelists are the same....
+                if( existingFaceNodelist.size() == tempNodeList.size() )
                 {
-                  // this a new face, so add it,
-                  AddNewFace( kReg, kSubReg, ke, kelf, numFaces, facesByLowestNode, tempNodeList, tempFaceToNodeMap, *subRegion );
-                }
-                else
-                {
-                  // the node does have an entry, so it is possible that the facet has already be assigned a number
-
-                  // make a flag to indicate whether the face is a duplicate...assume that it isn't unless this is disproved.
-                  bool duplicate = false;
-
-
-                  // there are faces in facesByLowestNode, so lets loop over them and check for duplicates
-                  for( localIndex_array::iterator existingFaceIndex = facesByLowestNode[lowNode].begin() ;
-                      existingFaceIndex != facesByLowestNode[lowNode].end() ; ++existingFaceIndex )
+                  // since the size is the same, then we should test the
+                  // nodes...they are sorted, so
+                  // the std::equal() algorithm will work for this.
+                  if( std::equal( existingFaceNodelist.begin(), existingFaceNodelist.end(), tempNodeList.begin() ) )
                   {
-                    // this is the nodelist of the face that we are testing agains
-                    const localIndex_array& existingFaceNodelist = tempFaceToNodeMap[*existingFaceIndex];
+                    // they are equal!
+                    duplicate = true;
 
-                    // test to see if the size of the nodelists are the same....
-                    if( existingFaceNodelist.size() == tempNodeList.size() )
+                    // add the element to the faceToElement map
+//                        m_toElementsRelation[*existingFaceIndex].push_back(
+// std::pair<ElementRegionT*, localIndex>(
+// const_cast<ElementRegionT*>(&elementRegion), ke) );
+
+
+                    if( elemRegionList[*existingFaceIndex][0] == -1 )
                     {
-                      // since the size is the same, then we should test the nodes...they are sorted, so
-                      // the std::equal() algorithm will work for this.
-                      if( std::equal( existingFaceNodelist.begin(), existingFaceNodelist.end(), tempNodeList.begin() ) )
-                      {
-                        // they are equal!
-                        duplicate = true;
-
-                        // add the element to the faceToElement map
-//                        m_toElementsRelation[*existingFaceIndex].push_back( std::pair<ElementRegionT*, localIndex>( const_cast<ElementRegionT*>(&elementRegion), ke) );
-
-                        
-                        if( elemRegionList[*existingFaceIndex][0] == -1 )
-                        {
-                          elemRegionList[*existingFaceIndex][0]    = kReg;
-                          elemSubRegionList[*existingFaceIndex][0] = kSubReg;
-                          elemList[*existingFaceIndex][0]          = ke;
-                        }
-                        else
-                        {
-                          elemRegionList[*existingFaceIndex][1]    = kReg;
-                          elemSubRegionList[*existingFaceIndex][1] = kSubReg;
-                          elemList[*existingFaceIndex][1]          = ke;
-                        }
-
-
-                        // add the face to the elementToFaceMap for the element region.
-                        subRegion->m_toFacesRelation(ke,kelf) = *existingFaceIndex;
-
-                        // now remove the entry from the face that we were checking against from the facesByLowestNode list...
-                        // because it is no longer possible that it will have another element that has this face.
-                        facesByLowestNode[lowNode].erase( existingFaceIndex );
-
-                        // break the loop
-                        break;
-                      }
+                      elemRegionList[*existingFaceIndex][0]    = kReg;
+                      elemSubRegionList[*existingFaceIndex][0] = kSubReg;
+                      elemList[*existingFaceIndex][0]          = ke;
                     }
-                  }
-                  if( !duplicate )
-                  {
-                    // the face is not a duplicate of any in the facesByLowestNode list, so we need to add a new face.
-                    AddNewFace( kReg, kSubReg, ke, kelf, numFaces, facesByLowestNode, tempNodeList, tempFaceToNodeMap, *subRegion );
+                    else
+                    {
+                      elemRegionList[*existingFaceIndex][1]    = kReg;
+                      elemSubRegionList[*existingFaceIndex][1] = kSubReg;
+                      elemList[*existingFaceIndex][1]          = ke;
+                    }
+
+
+                    // add the face to the elementToFaceMap for the element
+                    // region.
+                    subRegion->m_toFacesRelation(ke,kelf) = *existingFaceIndex;
+
+                    // now remove the entry from the face that we were checking
+                    // against from the facesByLowestNode list...
+                    // because it is no longer possible that it will have
+                    // another element that has this face.
+                    facesByLowestNode[lowNode].erase( existingFaceIndex );
+
+                    // break the loop
+                    break;
                   }
                 }
+              }
+              if( !duplicate )
+              {
+                // the face is not a duplicate of any in the facesByLowestNode
+                // list, so we need to add a new face.
+                AddNewFace( kReg, kSubReg, ke, kelf, numFaces, facesByLowestNode, tempNodeList, tempFaceToNodeMap, *subRegion );
               }
             }
           }
+        }
+      }
     }
 
   }
 
-  // resize the data vectors according to the number of faces indicated by the size of tempFaceToNodeMap
+  // resize the data vectors according to the number of faces indicated by the
+  // size of tempFaceToNodeMap
   this->resize(tempFaceToNodeMap.size());
 
   // set m_FaceToNodeMap
-  array< localIndex_array > & faceToNodes = this->getReference< array< localIndex_array > >( viewKeys.nodeList ) ;
+  array< localIndex_array > & faceToNodes = this->getReference< array< localIndex_array > >( viewKeys.nodeList );
   faceToNodes = tempFaceToNodeMap;
 
   auto const & nodeSets = nodeManager->GetGroup(string("Sets"))->wrappers();
@@ -213,7 +228,7 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
   for( auto const & setWrapper : nodeSets )
   {
     std::string const & setName = setWrapper.second->getName();
-    const lSet& set = nodeManager->GetGroup(keys::sets)->getReference<lSet>( setName ) ;
+    const lSet& set = nodeManager->GetGroup(keys::sets)->getReference<lSet>( setName );
     this->ConstructSetFromSetAndMap( set, faceToNodes, setName );
   }
 
@@ -230,18 +245,23 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
 //  }
 //
 //
-//  // Figure out if we need to write arbitrary polygons to silo.  Have to do this here because cannot do allreduce in the write silo file.
-//  int maxNodePerFace(-100), minNodePerFace(1000), writeArbitraryPolygonLocal(0);
+//  // Figure out if we need to write arbitrary polygons to silo.  Have to do
+// this here because cannot do allreduce in the write silo file.
+//  int maxNodePerFace(-100), minNodePerFace(1000),
+// writeArbitraryPolygonLocal(0);
 //  for (localIndex kf = 0; kf < DataLengths(); ++kf)
 //  {
-//    maxNodePerFace = std::max(maxNodePerFace, int(m_toNodesRelation[kf].size()));
-//    minNodePerFace = std::min(minNodePerFace, int(m_toNodesRelation[kf].size()));
+//    maxNodePerFace = std::max(maxNodePerFace,
+// int(m_toNodesRelation[kf].size()));
+//    minNodePerFace = std::min(minNodePerFace,
+// int(m_toNodesRelation[kf].size()));
 //  }
-//  if (maxNodePerFace != minNodePerFace || maxNodePerFace > 4) writeArbitraryPolygonLocal = 1;
-//  MPI_Allreduce(&writeArbitraryPolygonLocal, &m_writeArbitraryPolygon, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+//  if (maxNodePerFace != minNodePerFace || maxNodePerFace > 4)
+// writeArbitraryPolygonLocal = 1;
+//  MPI_Allreduce(&writeArbitraryPolygonLocal, &m_writeArbitraryPolygon, 1,
+// MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
 }
-
 
 
 
@@ -266,7 +286,8 @@ void FaceManager::AddNewFace( localIndex const & kReg,
 
 
   // add to the element information to the faceToElementMap
-//  tempFaceToElemEntry.push_back( std::pair<ElementRegionT*, localIndex>( const_cast<ElementRegionT*>(&elementRegion), ke) );
+//  tempFaceToElemEntry.push_back( std::pair<ElementRegionT*, localIndex>(
+// const_cast<ElementRegionT*>(&elementRegion), ke) );
 //  m_toElementsRelation.push_back(tempFaceToElemEntry);
 
 
@@ -284,11 +305,11 @@ void FaceManager::AddNewFace( localIndex const & kReg,
     elementList()[numFaces][1]          = ke;
   }
 
-  // now increment numFaces to reflect the number of faces rather than the index of the new face
+  // now increment numFaces to reflect the number of faces rather than the index
+  // of the new face
   ++numFaces;
 
 }
-
 
 
 
@@ -299,7 +320,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const & nodeManager,
   Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
   Array2dT<localIndex> & elemList = this->elementList();
 
-  for(localIndex kf =0; kf < size(); ++kf )
+  for(localIndex kf =0 ; kf < size() ; ++kf )
   {
     ElementRegion const * const elemRegion     = elemManager.GetRegion( elemRegionList[kf][0] );
     CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion( elemSubRegionList[kf][0] );
@@ -324,9 +345,10 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   // get face center (average vertex location) and store node coordinates
   array<R1Tensor> faceCoords(numFaceNodes);
   R1Tensor fc;
-  for( unsigned int n =0; n < numFaceNodes; ++n){
+  for( unsigned int n =0 ; n < numFaceNodes ; ++n)
+  {
     localIndex nd = faceNodes[n];
-    faceCoords[n] = X[nd] ;
+    faceCoords[n] = X[nd];
     fc += faceCoords[n];
   }
   fc /= realT(numFaceNodes);
@@ -350,9 +372,12 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   }
 //  else if (eid.first->m_numFacesPerElement == 1)
 //  {
-//    //  The original/default algorithm does not work for shell elements where the face is the element itself
-//    //  In the new algorithm, we construct ez based on two vectors ex and ey in the plane.
-//    //Because ex and ey are generally not perpendicular to each other, we have to replace ey after we get ez.
+//    //  The original/default algorithm does not work for shell elements where
+// the face is the element itself
+//    //  In the new algorithm, we construct ez based on two vectors ex and ey
+// in the plane.
+//    //Because ex and ey are generally not perpendicular to each other, we have
+// to replace ey after we get ez.
 //
 //      ex = faceCoords[0];
 //      ex -= fc;
@@ -362,7 +387,8 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
 //      ey -= fc;
 //      ey /= ey.L2_Norm();
 //      ez.Cross(ex, ey);
-//      if (ez.L2_Norm() < 0.01)  // Node 0, 1, and face center are roughly along one straight line.  We use another node to construct the vectors.
+//      if (ez.L2_Norm() < 0.01)  // Node 0, 1, and face center are roughly
+// along one straight line.  We use another node to construct the vectors.
 //      {
 //        ey = faceCoords[2];
 //        ey -= fc;
@@ -374,15 +400,15 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
 //  }
   else
   {
-     ez = fc;
-     ez -=elementCenter;
+    ez = fc;
+    ez -=elementCenter;
 
     /// Approximate in-plane axis
-     ex = faceCoords[0];
-     ex -= fc;
-     ex /= ex.L2_Norm();
-     ey.Cross(ez,ex);
-     ey /= ey.L2_Norm();
+    ex = faceCoords[0];
+    ex -= fc;
+    ex /= ex.L2_Norm();
+    ey.Cross(ez,ex);
+    ey /= ey.L2_Norm();
   }
 
 
@@ -390,7 +416,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   {
     /// Sort nodes counterclockwise around face center
     array< std::pair<realT,int> > thetaOrder(numFaceNodes);
-    for( unsigned int n =0; n < numFaceNodes; ++n)
+    for( unsigned int n =0 ; n < numFaceNodes ; ++n)
     {
       R1Tensor v = faceCoords[n];
       v -= fc;
@@ -400,14 +426,14 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
     sort(thetaOrder.begin(), thetaOrder.end());
 
     // Reorder nodes on face
-    for( unsigned int n =0; n < numFaceNodes; ++n)
+    for( unsigned int n =0 ; n < numFaceNodes ; ++n)
     {
       faceNodes[n] = thetaOrder[n].second;
     }
 
     localIndex_array tempFaceNodes(numFaceNodes);
     localIndex firstIndexIndex = 0;
-    for( unsigned int n =0; n < numFaceNodes; ++n)
+    for( unsigned int n =0 ; n < numFaceNodes ; ++n)
     {
       tempFaceNodes[n] = thetaOrder[n].second;
       if( tempFaceNodes[n] == firstNodeIndex )
@@ -415,7 +441,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
         firstIndexIndex = n;
       }
     }
-    for( unsigned int n=0; n < numFaceNodes; ++n)
+    for( unsigned int n=0 ; n < numFaceNodes ; ++n)
     {
       const localIndex index = firstIndexIndex+n < numFaceNodes ? firstIndexIndex+n : firstIndexIndex+n-numFaceNodes;
       faceNodes[n] = tempFaceNodes[index];
@@ -425,8 +451,10 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   else
   {
     ez.Cross(ex, ey);
-    // The element should be on the right hand side of the vector from node 0 to node 1.
-    // This ensure that the normal vector of an external face points to outside the element.
+    // The element should be on the right hand side of the vector from node 0 to
+    // node 1.
+    // This ensure that the normal vector of an external face points to outside
+    // the element.
     if (ez[2] > 0)
     {
       localIndex itemp = faceNodes[0];
@@ -441,4 +469,3 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ManagedGroup * const )
 
 }
-

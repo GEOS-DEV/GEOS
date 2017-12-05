@@ -13,18 +13,20 @@ using namespace dataRepository;
 
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ManagedGroup * const parent ):
-    ManagedGroup(name,parent),
-    m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() ),
-    m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
+  ManagedGroup(name,parent),
+  m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() ),
+  m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
 {
   this->RegisterGroup<ManagedGroup>(keys::sets);
   this->RegisterViewWrapper< array<integer> >("isExternal");
 }
 //ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //                                      ManagedGroup * const parent,
-//                                      cxx_utilities::DocumentationNode * docNode ):
+//                                      cxx_utilities::DocumentationNode *
+// docNode ):
 //    ManagedGroup(name,parent,docNode),
-//    m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() )
+//    m_localToGlobalMap( RegisterViewWrapper< globalIndex_array
+// >("localToGlobal")->reference() )
 //{
 //
 //
@@ -46,8 +48,8 @@ ObjectManagerBase::CatalogInterface::CatalogType& ObjectManagerBase::GetCatalog(
 
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
-                                                          const lArray2d& map,
-                                                          const std::string& newSetName )
+                                                   const lArray2d& map,
+                                                   const std::string& newSetName )
 {
 
   ManagedGroup * sets = GetGroup(std::string("Sets"));

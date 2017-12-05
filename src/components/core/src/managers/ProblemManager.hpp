@@ -13,7 +13,8 @@
 #endif
 
 #if USE_PYTHON==1
-// Note: the python header must be included first to avoid conflicting definitions of _posix_c_source
+// Note: the python header must be included first to avoid conflicting
+// definitions of _posix_c_source
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include <numpy/arrayobject.h>
@@ -62,7 +63,7 @@ struct Arg : public option::Arg
   static option::ArgStatus Numeric(const option::Option& option, bool /*error*/)
   {
     char* endptr = 0;
-    if ((option.arg != 0) && strtol(option.arg, &endptr, 10)){};
+    if ((option.arg != 0) && strtol(option.arg, &endptr, 10)) {};
     if ((endptr != option.arg) && (*endptr == 0))
     {
       return option::ARG_OK;
@@ -71,7 +72,7 @@ struct Arg : public option::Arg
     std::cout << "Error: " << option.name << " requires a long-int argument!" << std::endl;
     return option::ARG_ILLEGAL;
   }
-  
+
 };
 
 
@@ -145,13 +146,13 @@ public:
     dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};
     dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"};
     dataRepository::ViewKey schemaLevel              = {"schemaLevel"};
-  }viewKeys;
+  } viewKeys;
 
   struct groupKeysStruct
   {
     dataRepository::GroupKey commandLine    = { "commandLine" };
     dataRepository::GroupKey meshGenerators = { "meshGenerators" };
-  }groupKeys;
+  } groupKeys;
 
 
 

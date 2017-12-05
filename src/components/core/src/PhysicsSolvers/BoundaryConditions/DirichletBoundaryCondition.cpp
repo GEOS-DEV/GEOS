@@ -25,10 +25,6 @@ DirichletBoundaryCondition::~DirichletBoundaryCondition()
 
 
 
-
-
-
-
 REGISTER_CATALOG_ENTRY( BoundaryConditionBase, DirichletBoundaryCondition, string const &, ManagedGroup * const )
 
 } /* namespace geosx */

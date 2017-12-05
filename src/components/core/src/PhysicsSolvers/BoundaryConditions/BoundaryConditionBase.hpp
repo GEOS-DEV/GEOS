@@ -51,7 +51,6 @@ public:
 
 
 
-
 //  real64 GetValue( realT time ) const;
 
 
@@ -74,12 +73,12 @@ public:
 
   template< int OPERATION >
   void ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
-                                           real64 const time,
-                                           dataRepository::ManagedGroup * dataGroup,
-                                           string const & fieldName,
-                                           string const & dofMapName,
-                                           systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                           systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const;
+                                                    real64 const time,
+                                                    dataRepository::ManagedGroup * dataGroup,
+                                                    string const & fieldName,
+                                                    string const & dofMapName,
+                                                    systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                                    systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const;
 
   template< int OPERATION >
   inline void ApplyBounaryConditionDefaultMethodPoint( integer const dof,
@@ -87,7 +86,7 @@ public:
                                                        systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
                                                        real64 & rhs,
                                                        real64 const & bcValue,
-                                                       real64 const fieldValue ) const ;
+                                                       real64 const fieldValue ) const;
 
   string const & GetFunctionName() const
   {
@@ -140,13 +139,16 @@ protected:
 
   string m_elementRegionName;
 
-  string m_fieldName;    // the name of the field the boundary condition is applied to or a description of the boundary condition.
+  string m_fieldName;    // the name of the field the boundary condition is
+                         // applied to or a description of the boundary
+                         // condition.
 
 
   string m_dataType;
   // TODO get rid of components. Replace with direction only.
 
-  int m_component;       // the component the boundary condition acts on (-ve indicates that direction should be used).
+  int m_component;       // the component the boundary condition acts on (-ve
+                         // indicates that direction should be used).
   R1Tensor m_direction;  // the direction the boundary condition acts in.
 
   int m_initialCondition;
@@ -174,57 +176,58 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index(vw->get_typeid());
 
-  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeIndex) , [&]( auto type, auto baseType ) -> void
-  {
-    using fieldType = decltype(type);
-    dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
-    dataRepository::view_rtype<fieldType> field = view.data();
-    if( functionName.empty() )
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto type, auto baseType ) -> void
     {
-      for( auto a : set )
+      using fieldType = decltype(type);
+      dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
+      dataRepository::view_rtype<fieldType> field = view.data();
+      if( functionName.empty() )
       {
-        OPERATION::f( field[a], component, (m_scale) );
-//        OPERATION::f( field[a], component, static_cast<decltype(baseType)>(m_scale) );
-      }
-    }
-    else
-    {
-      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
-      if( function!=nullptr)
-      {
-        if( function->isFunctionOfTime()==2 )
+        for( auto a : set )
         {
-          real64 value = m_scale * function->Evaluate( &time );
-          for( auto a : set )
-          {
-            OPERATION::f( field[a], component, (value) );
-          }
-        }
-        else
-        {
-          real64_array result(static_cast<localIndex>(set.size()));
-          function->Evaluate( dataGroup, time, set, result );
-          integer count=0;
-          for( auto a : set )
-          {
-            OPERATION::f( field[a], component, (result[count]) );
-            ++count;
-          }
+          OPERATION::f( field[a], component, (m_scale) );
+//        OPERATION::f( field[a], component,
+// static_cast<decltype(baseType)>(m_scale) );
         }
       }
-    }
-  });
+      else
+      {
+        FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+        if( function!=nullptr)
+        {
+          if( function->isFunctionOfTime()==2 )
+          {
+            real64 value = m_scale * function->Evaluate( &time );
+            for( auto a : set )
+            {
+              OPERATION::f( field[a], component, (value) );
+            }
+          }
+          else
+          {
+            real64_array result(static_cast<localIndex>(set.size()));
+            function->Evaluate( dataGroup, time, set, result );
+            integer count=0;
+            for( auto a : set )
+            {
+              OPERATION::f( field[a], component, (result[count]) );
+              ++count;
+            }
+          }
+        }
+      }
+    });
 }
 
 
 
 template<>
 inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( integer const dof,
-                                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                        systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
-                                                        real64 & rhs,
-                                                        real64 const & bcValue,
-                                                        real64 const fieldValue ) const
+                                                                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                                                               systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                                                               real64 & rhs,
+                                                                               real64 const & bcValue,
+                                                                               real64 const fieldValue ) const
 {
 
   if( true )//node_is_ghost[*nd] < 0 )
@@ -242,11 +245,11 @@ inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( i
 
 template<>
 inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( integer const dof,
-                                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                        systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
-                                                        real64 & rhs,
-                                                        real64 const & bcValue,
-                                                        real64 const fieldValue ) const
+                                                                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                                                               systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                                                               real64 & rhs,
+                                                                               real64 const & bcValue,
+                                                                               real64 const fieldValue ) const
 {
   if( true )//node_is_ghost[*nd] < 0 )
   {
@@ -257,12 +260,12 @@ inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( i
 
 template< int OPERATION >
 void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
-                                                                real64 const time,
-                                                                dataRepository::ManagedGroup * dataGroup,
-                                                                string const & fieldName,
-                                                                string const & dofMapName,
-                                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                                systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const
+                                                                         real64 const time,
+                                                                         dataRepository::ManagedGroup * dataGroup,
+                                                                         string const & fieldName,
+                                                                         string const & dofMapName,
+                                                                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                                                         systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const
 {
   int dim = 3;
   integer const component = GetComponent();
@@ -279,96 +282,96 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
   Epetra_SerialDenseVector     node_rhs( integer_conversion<int>( set.size() ) );
 
 
-  dataRepository::view_rtype_const<integer_array> dofMap = dataGroup->getData<integer_array>(dofMapName);
+  dataRepository::view_rtype_const<localIndex_array> dofMap = dataGroup->getData<localIndex_array>(dofMapName);
 
 
-  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex) , [&]( auto type ) -> void
-  {
-    using fieldType = decltype(type);
-    dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
-    dataRepository::view_rtype<fieldType> field = view.data();
-    if( functionName.empty() )
+  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex), [&]( auto type ) -> void
     {
+      using fieldType = decltype(type);
+      dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
+      dataRepository::view_rtype<fieldType> field = view.data();
+      if( functionName.empty() )
+      {
 
-      integer counter=0;
-      for( auto a : set )
-      {
-        node_dof(counter) = dim*dofMap[a]+component;
-        this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
-                                                 blockSystem,
-                                                 blockID,
-                                                 node_rhs(counter),
-                                                 m_scale,
-                                                 static_cast<real64>(rtTypes::value(field[a],component)));
-        ++counter;
-      }
-      if( OPERATION==0 )
-      {
-        rhs->ReplaceGlobalValues(node_dof, node_rhs);
-      }
-      else if( OPERATION==1 )
-      {
-        rhs->SumIntoGlobalValues(node_dof, node_rhs);
-      }
-    }
-    else
-    {
-      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
-      if( function!=nullptr)
-      {
-        if( function->isFunctionOfTime()==2 )
+        integer counter=0;
+        for( auto a : set )
         {
-          real64 value = m_scale * function->Evaluate( &time );
-          integer counter=0;
-          for( auto a : set )
-          {
-            node_dof(counter) = dim*dofMap[a]+component;
-            this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
-                                                     blockSystem,
-                                                     blockID,
-                                                     node_rhs(counter),
-                                                     value,
-                                                     rtTypes::value(field[a],component));
-            ++counter;
-          }
-          if( OPERATION==0 )
-          {
-            rhs->ReplaceGlobalValues(node_dof, node_rhs);
-          }
-          else if( OPERATION==1 )
-          {
-            rhs->SumIntoGlobalValues(node_dof, node_rhs);
-          }
+          node_dof(counter) = dim*dofMap[a]+component;
+          this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
+                                                                    blockSystem,
+                                                                    blockID,
+                                                                    node_rhs(counter),
+                                                                    m_scale,
+                                                                    static_cast<real64>(rtTypes::value(field[a],component)));
+          ++counter;
         }
-        else
+        if( OPERATION==0 )
         {
-          real64_array result(set.size());
-          function->Evaluate( dataGroup, time, set, result );
-          integer counter=0;
-          for( auto a : set )
-          {
-            node_dof(counter) = dim*dofMap[a]+component;
-            this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
-                                                     blockSystem,
-                                                     blockID,
-                                                     node_rhs(counter),
-                                                     result[counter],
-                                                     rtTypes::value(field[a],component));
-            ++counter;
-          }
-          if( OPERATION==0 )
-          {
-            rhs->ReplaceGlobalValues(node_dof, node_rhs);
-          }
-          else if( OPERATION==1 )
-          {
-            rhs->SumIntoGlobalValues(node_dof, node_rhs);
-          }
-
+          rhs->ReplaceGlobalValues(node_dof, node_rhs);
+        }
+        else if( OPERATION==1 )
+        {
+          rhs->SumIntoGlobalValues(node_dof, node_rhs);
         }
       }
-    }
-  });
+      else
+      {
+        FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+        if( function!=nullptr)
+        {
+          if( function->isFunctionOfTime()==2 )
+          {
+            real64 value = m_scale * function->Evaluate( &time );
+            integer counter=0;
+            for( auto a : set )
+            {
+              node_dof(counter) = dim*dofMap[a]+component;
+              this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
+                                                                        blockSystem,
+                                                                        blockID,
+                                                                        node_rhs(counter),
+                                                                        value,
+                                                                        rtTypes::value(field[a],component));
+              ++counter;
+            }
+            if( OPERATION==0 )
+            {
+              rhs->ReplaceGlobalValues(node_dof, node_rhs);
+            }
+            else if( OPERATION==1 )
+            {
+              rhs->SumIntoGlobalValues(node_dof, node_rhs);
+            }
+          }
+          else
+          {
+            real64_array result(set.size());
+            function->Evaluate( dataGroup, time, set, result );
+            integer counter=0;
+            for( auto a : set )
+            {
+              node_dof(counter) = dim*dofMap[a]+component;
+              this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
+                                                                        blockSystem,
+                                                                        blockID,
+                                                                        node_rhs(counter),
+                                                                        result[counter],
+                                                                        rtTypes::value(field[a],component));
+              ++counter;
+            }
+            if( OPERATION==0 )
+            {
+              rhs->ReplaceGlobalValues(node_dof, node_rhs);
+            }
+            else if( OPERATION==1 )
+            {
+              rhs->SumIntoGlobalValues(node_dof, node_rhs);
+            }
+
+          }
+        }
+      }
+    });
 }
 
 

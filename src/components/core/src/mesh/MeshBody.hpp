@@ -22,7 +22,7 @@ class MeshBody : public dataRepository::ManagedGroup
 {
 public:
   MeshBody( string const & name,
-             ManagedGroup * const parent );
+            ManagedGroup * const parent );
   virtual ~MeshBody();
 
   MeshLevel * CreateMeshLevel( integer const newLevel );
@@ -35,11 +35,10 @@ public:
 
 
     dataRepository::ViewKey meshLevels                = { "meshLevels" };
-  }viewKeys;
+  } viewKeys;
 
   struct groupStructKeys
-  {
-  }groupKeys;
+  {} groupKeys;
 
 
 };

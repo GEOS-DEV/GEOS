@@ -39,3 +39,4 @@ set(ENABLE_CUDA ON CACHE BOOL "")
 
 set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda-8.0" CACHE PATH "")
 set(CUDA_BIN_DIR "/usr/local/cuda-8.0/bin" CACHE PATH "")
+

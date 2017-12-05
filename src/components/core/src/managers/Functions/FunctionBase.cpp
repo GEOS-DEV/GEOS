@@ -16,7 +16,7 @@ using namespace dataRepository;
 
 
 FunctionBase::FunctionBase( const std::string& name,
-                            ManagedGroup * const parent ) :
+                            ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {}
 
@@ -29,7 +29,7 @@ FunctionBase::~FunctionBase()
 void FunctionBase::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  
+
   docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Function Base");
@@ -92,6 +92,7 @@ integer FunctionBase::isFunctionOfTime() const
 
 
 
-//REGISTER_CATALOG_ENTRY( FunctionBase, FunctionBase, std::string const &, ManagedGroup * const )
+//REGISTER_CATALOG_ENTRY( FunctionBase, FunctionBase, std::string const &,
+// ManagedGroup * const )
 
 } /* namespace ANST */

@@ -10,7 +10,7 @@
 #ifndef CRACKSURFACEVERTEX_H_
 #define CRACKSURFACEVERTEX_H_
 
-class CrackSurfaceVertex: public ObjectDataStructureBaseT
+class CrackSurfaceVertex : public ObjectDataStructureBaseT
 {
 public:
   CrackSurfaceVertex();

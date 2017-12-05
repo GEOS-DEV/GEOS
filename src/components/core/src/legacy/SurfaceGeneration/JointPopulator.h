@@ -30,7 +30,7 @@ public:
                 const array<R1Tensor>& nodesDisp,
                 const R1Tensor& min,
                 const R1Tensor& max,
-                array<array<real64>>& frequencies);
+                array<array<real64> >& frequencies);
 
   bool Populate(const std::map< std::string, ElementRegionT >& m_ElementRegions,
                 const R1Tensor& min,

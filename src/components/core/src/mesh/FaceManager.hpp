@@ -15,7 +15,7 @@ class NodeManager;
 class ElementRegionManager;
 class CellBlockSubRegion;
 
-class FaceManager: public ObjectManagerBase
+class FaceManager : public ObjectManagerBase
 {
 public:
 
@@ -40,7 +40,7 @@ public:
   ///
   ///
   ///
-  FaceManager( string const & , ManagedGroup * const parent );
+  FaceManager( string const &, ManagedGroup * const parent );
   virtual ~FaceManager();
 
 //  void Initialize(  ){}
@@ -75,11 +75,10 @@ public:
     dataRepository::ViewKey elementRegionList     = { "elemRegionList" };
     dataRepository::ViewKey elementSubRegionList  = { "elemSubRegionList" };
     dataRepository::ViewKey elementList           = { "elemList" };
-  }viewKeys;
+  } viewKeys;
 
   struct groupKeysStruct
-  {
-  }groupKeys;
+  {} groupKeys;
 
   array< localIndex_array > const & nodeList() const        { return this->getReference< array< localIndex_array > >(viewKeys.nodeList); }
   array< localIndex_array > & nodeList()                    { return this->getReference< array< localIndex_array > >(viewKeys.nodeList); }
@@ -89,7 +88,6 @@ public:
   Array2dT<localIndex> & elementSubRegionList()             { return this->getReference< Array2dT<localIndex> >(viewKeys.elementSubRegionList); }
   Array2dT<localIndex> const & elementList() const          { return this->getReference< Array2dT<localIndex> >(viewKeys.elementList); }
   Array2dT<localIndex> & elementList()                      { return this->getReference< Array2dT<localIndex> >(viewKeys.elementList); }
-
 
 
 

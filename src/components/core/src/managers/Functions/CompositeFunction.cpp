@@ -17,9 +17,9 @@ namespace dataRepository
 {
 namespace keys
 {
-  std::string const functionNames = "functionNames";
-  std::string const variableNames = "variableNames";
-  std::string const expression = "expression";
+std::string const functionNames = "functionNames";
+std::string const variableNames = "variableNames";
+std::string const expression = "expression";
 }
 }
 
@@ -28,7 +28,7 @@ using namespace dataRepository;
 
 
 CompositeFunction::CompositeFunction( const std::string& name,
-                                    ManagedGroup * const parent ) :
+                                      ManagedGroup * const parent ):
   FunctionBase( name, parent ),
   parserContext(),
   parserExpression(),
@@ -46,7 +46,7 @@ void CompositeFunction::FillDocumentationNode( dataRepository::ManagedGroup * co
 {
   FunctionBase::FillDocumentationNode(domain);
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  
+
   docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Composite function");
@@ -101,16 +101,17 @@ void CompositeFunction::InitializeFunction()
 {
   // Register variables
   string_array const & variables = getReference<string_array>(keys::variableNames);
-  for (int ii=0; ii<variables.size(); ++ii)
+  for (int ii=0 ; ii<variables.size() ; ++ii)
   {
     parserContext.addVariable(variables[ii].c_str(), ii * sizeof(double));
   }
 
-  // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.), compile
+  // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
+  // compile
   parserContext.addBuiltIns();
   std::string expression = getData<std::string>(keys::expression);
   mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
-  if (err != mathpresso::kErrorOk) 
+  if (err != mathpresso::kErrorOk)
   {
     throw std::invalid_argument("JIT Compiler Error");
   }
@@ -119,7 +120,7 @@ void CompositeFunction::InitializeFunction()
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
   string_array const & functionNames = getReference<string_array>(keys::functionNames);
   m_numSubFunctions = functionNames.size();
-  for (localIndex ii=0; ii<m_numSubFunctions; ++ii)
+  for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
   {
     m_subFunctions.push_back(functionManager->GetGroup<FunctionBase>(functionNames[ii]));
   }
@@ -131,9 +132,10 @@ void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const gro
                                   lSet const & set,
                                   real64_array & result ) const
 {
-  // Evaluate each of the subFunctions independently and place the results into a temporary field
+  // Evaluate each of the subFunctions independently and place the results into
+  // a temporary field
   array<real64_array> subFunctionResults;
-  for (localIndex ii=0; ii<m_numSubFunctions; ++ii)
+  for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
   {
     real64_array tmp(result.size());
     m_subFunctions[ii]->Evaluate(group, time, set, tmp);
@@ -144,7 +146,7 @@ void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const gro
   real64 functionResults[m_maxNumSubFunctions];
   for( auto const & ii : set )
   {
-    for (localIndex jj=0; jj<m_numSubFunctions; ++jj)
+    for (localIndex jj=0 ; jj<m_numSubFunctions ; ++jj)
     {
       functionResults[jj] = subFunctionResults[jj][ii];
     }
@@ -157,7 +159,7 @@ real64 CompositeFunction::Evaluate( real64 const * const input ) const
 {
   real64 functionResults[m_maxNumSubFunctions];
 
-  for (localIndex ii=0; ii<m_numSubFunctions; ++ii)
+  for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
   {
     functionResults[ii] = m_subFunctions[ii]->Evaluate(input);
   }

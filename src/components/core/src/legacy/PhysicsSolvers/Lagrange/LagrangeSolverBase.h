@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -56,32 +74,32 @@
 #include "Contact/CommonPlaneContact.h"
 #endif
 /*
-#if GPAC_MPI
-  #include "Epetra_MpiComm.h"
-#else
-  #include "Epetra_SerialComm.h"
-#endif
+ #if GPAC_MPI
+ #include "Epetra_MpiComm.h"
+ #else
+ #include "Epetra_SerialComm.h"
+ #endif
 
-#include "Epetra_Map.h"
-#include "Epetra_FECrsGraph.h"
-#include "Epetra_FECrsMatrix.h"
-#include "Epetra_FEVector.h"
-#include "Epetra_SerialDenseMatrix.h"
-#include "Epetra_SerialDenseVector.h"
-#include "Epetra_IntSerialDenseVector.h"
-#include "Epetra_LinearProblem.h"
+ #include "Epetra_Map.h"
+ #include "Epetra_FECrsGraph.h"
+ #include "Epetra_FECrsMatrix.h"
+ #include "Epetra_FEVector.h"
+ #include "Epetra_SerialDenseMatrix.h"
+ #include "Epetra_SerialDenseVector.h"
+ #include "Epetra_IntSerialDenseVector.h"
+ #include "Epetra_LinearProblem.h"
 
-#include "EpetraExt_RowMatrixOut.h"
-#include "Teuchos_RCP.hpp"
-#include "AztecOO.h"
-#include "ml_MultiLevelPreconditioner.h"
-*/
+ #include "EpetraExt_RowMatrixOut.h"
+ #include "Teuchos_RCP.hpp"
+ #include "AztecOO.h"
+ #include "ml_MultiLevelPreconditioner.h"
+ */
 
 class MaterialBaseParameterData;
 //class XfemManager;
 
 
-class LagrangeSolverBase: public SolverBase
+class LagrangeSolverBase : public SolverBase
 {
 public:
   LagrangeSolverBase(  const std::string& name,
@@ -89,12 +107,12 @@ public:
   virtual ~LagrangeSolverBase();
 
   double TimeStep(const realT& time,
-                const realT& dt,
-                const int cycleNumber,
-                PhysicalDomainT& domain,
-                const array<string>& namesOfSolverRegions,
-                SpatialPartition& partition,
-                FractunatorBase* const fractunator);
+                  const realT& dt,
+                  const int cycleNumber,
+                  PhysicalDomainT& domain,
+                  const array<string>& namesOfSolverRegions,
+                  SpatialPartition& partition,
+                  FractunatorBase* const fractunator);
 
   void TimeStepXFEM (const realT& time,
                      const realT& dt,
@@ -152,12 +170,12 @@ public:
   {
     switch( ival )
     {
-      case 0:
-        return QuasiStatic;
-      case 1:
-        return ImplicitDynamic;
-      case 2:
-        return ExplicitDynamic;
+    case 0:
+      return QuasiStatic;
+    case 1:
+      return ImplicitDynamic;
+    case 2:
+      return ExplicitDynamic;
     }
     throw GPException("Invalid value input into LagrangeSolverBase::IntToTimeIntegration()");
     return numTimeIntegrationEnums;
@@ -167,12 +185,12 @@ public:
   {
     switch( ival )
     {
-      case 0:
-        return PlaneStrain;
-      case 1:
-        return PlaneStress;
-      case 2:
-        return Axisym;
+    case 0:
+      return PlaneStrain;
+    case 1:
+      return PlaneStress;
+    case 2:
+      return Axisym;
     }
     throw GPException("Invalid value input into LagrangeSolverBase::IntToTwoDOptions()");
     return num2dOptions;
@@ -194,9 +212,9 @@ public:
 
 
   virtual realT Assemble    ( PhysicalDomainT& domain,
-                             const SpatialPartition& partition,
-                             const realT time,
-                             realT const dt );
+                              const SpatialPartition& partition,
+                              const realT time,
+                              realT const dt );
 
   void EvaluateDispAtVertex(PhysicalDomainT&  domain,
                             const SpatialPartition& partition,
@@ -230,13 +248,15 @@ public:
 
 
   /*
-  realT AssembleFluidPressureContributions( PhysicalDomainT& domain,
-                                           const array<integer>& deformationTrilinosIndex,
-                                           const array<integer>& flowTrilinosIndex,
+     realT AssembleFluidPressureContributions( PhysicalDomainT& domain,
+                                           const array<integer>&
+                                              deformationTrilinosIndex,
+                                           const array<integer>&
+                                              flowTrilinosIndex,
                                            const array< array<real64> >& dwdu,
                                            const array<real64>& dwdw,
                                            const int flowDofOffset );
-*/
+   */
 
 
 //  std::string m_trilinosIndexStr;
@@ -282,8 +302,11 @@ public:
 
 
   realT m_timeToSnapshotDisp;
-  // Fu: If we specify an initial stress field, the stress field itself might not be balanced.
-  // We need to store the displacement after the model has settled.  We use the difference between the total disp and this ref disp for the Displace transformation in VisIt.
+  // Fu: If we specify an initial stress field, the stress field itself might
+  // not be balanced.
+  // We need to store the displacement after the model has settled.  We use the
+  // difference between the total disp and this ref disp for the Displace
+  // transformation in VisIt.
   bool m_writeNodalStress;
 
   realT m_refTemperature;
@@ -295,11 +318,11 @@ public:
 //  array< std::tuple< localIndex,localIndex,realT > > m_originalMatrixValues;
 
   virtual void TimeStepImplicitSetup( const realT& time,
-                                       const realT& dt ,
-                                       PhysicalDomainT& domain );
+                                      const realT& dt,
+                                      PhysicalDomainT& domain );
 
   virtual void TimeStepImplicitComplete( const realT& time,
-                                         const realT& dt ,
+                                         const realT& dt,
                                          PhysicalDomainT& domain );
 
   void CalculateAllNodalMassAndVolume( PhysicalDomainT& domain, SpatialPartition& partition );
@@ -312,7 +335,7 @@ protected:
   realT m_tiedNodeTolerance;
 
   array<integer> dummyDof;
-  
+
 
   realT m_cfl;
 
@@ -324,7 +347,7 @@ protected:
 
 public:
   R1Tensor m_gravityVector;
-  
+
   int m_useVelocityQS = 0;
   realT m_displacementPenalty = 0.0;
 
@@ -332,7 +355,7 @@ private:
   virtual void SetupSystem ( PhysicalDomainT& domain, SpatialPartition& partition );
 
   virtual void TimeStepExplicitDynamic( const realT& time,
-                                        const realT& dt ,
+                                        const realT& dt,
                                         PhysicalDomainT& domain,
                                         const array<string>& namesOfSolverRegions,
                                         SpatialPartition& partition );
@@ -340,13 +363,14 @@ private:
 
 
   virtual realT TimeStepImplicit( const realT& time,
-                                  const realT& dt ,
+                                  const realT& dt,
                                   PhysicalDomainT& domain,
                                   const array<string>& namesOfSolverRegions,
                                   SpatialPartition& partition,
                                   FractunatorBase* const fractunator );
 
-public:  // Fu note: We need to access this from the new hydrofrac solver, which is not a derived class.
+public:  // Fu note: We need to access this from the new hydrofrac solver, which
+         // is not a derived class.
   void ApplyForcesFromContact(PhysicalDomainT& domain,
                               StableTimeStep& timeStep,
                               const realT dt );
@@ -367,9 +391,9 @@ public:  // Fu note: We need to access this from the new hydrofrac solver, which
   virtual void ProcessElementRegions( NodeManager& nodeManager,
                                       ElementManagerT& elemManager,
                                       const array<string>& namesOfSolverRegions,
-                                      const realT dt  ) ;
+                                      const realT dt  );
 
-  void SnapshotNodalDisplacement( NodeManager& nodeManager) ;
+  void SnapshotNodalDisplacement( NodeManager& nodeManager);
 
   void ApplyDisplacementPenalty( NodeManager& nodeManager );
 
@@ -384,8 +408,8 @@ private:
                                      ElementRegionT& elemRegion,
                                      const realT dt ) = 0;
   virtual void ApplyGravity( NodeManager& nodeManager,
-                                     ElementRegionT& elemRegion,
-                                     const realT dt ) ;
+                             ElementRegionT& elemRegion,
+                             const realT dt );
 
   virtual void ProcessCohesiveZones( NodeManager& nodeManager,
                                      FaceManagerT& faceManager,
@@ -396,24 +420,24 @@ private:
 
 
   virtual realT CalculateElementResidualAndDerivative( const MaterialBaseParameterData& matParams,
-                                                      const FiniteElementBase& fe,
-                                                      const Array2dT<R1Tensor>& dNdX,
-                                                      const realT* const detJ,
-                                                      R2SymTensor const * const refStress,
-                                                      array<R1Tensor> const & u,
-                                                      array<R1Tensor> const & uhat,
-                                                      array<R1Tensor> const & uhattilde,
-                                                      array<R1Tensor> const & vtilde,
-                                                      realT const dt,
-                                                      Epetra_SerialDenseMatrix& dRdU,
-                                                      Epetra_SerialDenseVector& R) = 0;
+                                                       const FiniteElementBase& fe,
+                                                       const Array2dT<R1Tensor>& dNdX,
+                                                       const realT* const detJ,
+                                                       R2SymTensor const * const refStress,
+                                                       array<R1Tensor> const & u,
+                                                       array<R1Tensor> const & uhat,
+                                                       array<R1Tensor> const & uhattilde,
+                                                       array<R1Tensor> const & vtilde,
+                                                       realT const dt,
+                                                       Epetra_SerialDenseMatrix& dRdU,
+                                                       Epetra_SerialDenseVector& R) = 0;
 
   virtual void IntegrateCohesiveZoneContributions( const int numNodesInFace,
                                                    const realT area,
                                                    const R1Tensor& traction,
                                                    const R2Tensor& stiffness,
                                                    Epetra_SerialDenseMatrix& face_matrix,
-                                                   Epetra_SerialDenseVector& face_rhs ) ;
+                                                   Epetra_SerialDenseVector& face_rhs );
 
 
 

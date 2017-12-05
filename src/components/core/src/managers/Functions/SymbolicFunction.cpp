@@ -16,8 +16,8 @@ namespace dataRepository
 {
 namespace keys
 {
-  std::string const variableNames = "variableNames";
-  std::string const expression = "expression";
+std::string const variableNames = "variableNames";
+std::string const expression = "expression";
 }
 }
 
@@ -26,7 +26,7 @@ using namespace dataRepository;
 
 
 SymbolicFunction::SymbolicFunction( const std::string& name,
-                                    ManagedGroup * const parent ) :
+                                    ManagedGroup * const parent ):
   FunctionBase( name, parent ),
   parserContext(),
   parserExpression()
@@ -42,7 +42,7 @@ void SymbolicFunction::FillDocumentationNode( dataRepository::ManagedGroup * con
 {
   FunctionBase::FillDocumentationNode(domain);
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  
+
   docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
   docNode->setShortDescription("JIT function");
@@ -84,16 +84,17 @@ void SymbolicFunction::InitializeFunction()
 {
   // Register variables
   string_array & variables = getReference<string_array>(keys::variableNames);
-  for (int ii=0; ii<variables.size(); ++ii)
+  for (int ii=0 ; ii<variables.size() ; ++ii)
   {
     parserContext.addVariable(variables[ii].c_str(), ii * sizeof(double));
   }
 
-  // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.), compile
+  // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
+  // compile
   parserContext.addBuiltIns();
   std::string expression = getData<std::string>(keys::expression);
   mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
-  if (err != mathpresso::kErrorOk) 
+  if (err != mathpresso::kErrorOk)
   {
     throw std::invalid_argument("JIT Compiler Error");
   }

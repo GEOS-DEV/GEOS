@@ -15,7 +15,7 @@ namespace geosx
 using namespace dataRepository;
 
 SolverBase::SolverBase( std::string const & name,
-                        ManagedGroup * const parent ) :
+                        ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {}
 
@@ -39,7 +39,9 @@ void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const  )
 
 
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  docNode->setName(this->CatalogName());    // If this method lived in Managed groups, this could be done automatically
+  docNode->setName(this->CatalogName());    // If this method lived in Managed
+                                            // groups, this could be done
+                                            // automatically
   docNode->setSchemaType("Node");
 
   docNode->AllocateChildNode( keys::courant,
@@ -75,7 +77,8 @@ void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const  )
 
 //void SolverBase::Initialize( dataRepository::ManagedGroup& /*domain*/ )
 //{
-//  *(this->getData<real64>(keys::courant)) = std::numeric_limits<real64>::max();
+//  *(this->getData<real64>(keys::courant)) =
+// std::numeric_limits<real64>::max();
 //}
 
 } /* namespace ANST */

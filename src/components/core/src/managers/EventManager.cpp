@@ -24,13 +24,12 @@ EventManager::EventManager( std::string const & name,
 }
 
 EventManager::~EventManager()
-{
-}
+{}
 
 void EventManager::FillDocumentationNode( dataRepository::ManagedGroup * const )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  
+
   // Set the name to SolverApplications for now
   docNode->setName("SolverApplications");
   docNode->setSchemaType("Node");
@@ -48,7 +47,7 @@ void EventManager::ReadXMLsub( xmlWrapper::xmlNode const & problemNode )
   else
   {
     // Allow other event types here?
-    for (xmlWrapper::xmlNode applicationNode=topLevelNode.first_child(); applicationNode; applicationNode=applicationNode.next_sibling())
+    for (xmlWrapper::xmlNode applicationNode=topLevelNode.first_child() ; applicationNode ; applicationNode=applicationNode.next_sibling())
     {
       std::string applicationName = applicationNode.attribute("name").value();
       SolverApplication * newApplication = RegisterGroup<SolverApplication>(applicationName);
@@ -64,7 +63,7 @@ void EventManager::CheckEventTiming()
 {
   cxx_utilities::DocumentationNode * const docNode = getDocumentationNode();
 
-  for (std::map<std::string,DocumentationNode>::iterator eit=docNode->m_child.begin(); eit!=docNode->m_child.end(); ++eit)
+  for (std::map<std::string,DocumentationNode>::iterator eit=docNode->m_child.begin() ; eit!=docNode->m_child.end() ; ++eit)
   {
     dataRepository::ManagedGroup * applicationA = GetGroup(eit->first);
     ViewWrapper<real64>::rtype endTime = applicationA->getData<real64>(keys::endTime);
@@ -87,21 +86,18 @@ void EventManager::CheckEventTiming()
 
 
 
-
 SolverApplication::SolverApplication( std::string const & name,
-                            ManagedGroup * const parent ):
+                                      ManagedGroup * const parent ):
   ManagedGroup( name, parent)
-{
-}
+{}
 
 SolverApplication::~SolverApplication()
-{
-}
+{}
 
 void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * const )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  
+
   // docNode->setName(this->CatalogName());
   docNode->setName("Application");
   docNode->setSchemaType("Node");

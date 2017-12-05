@@ -10,7 +10,7 @@
 
 StatisticalDistributionBaseT::StatisticalDistributionBaseT()//: parameters()
 {
-  for(int i = 0; i < N_PARAMS; i++)
+  for(int i = 0 ; i < N_PARAMS ; i++)
   {
     parameters[i] = std::numeric_limits<realT>::max();
   }
@@ -65,5 +65,3 @@ StatisticalDistributionBaseT::ErrorFunctionInverse(const realT erf_value,
   const realT params[] = {erf_value};
   return FindRoots::FindRoot(ErfZero, params, zlower, zupper, tol);
 }
-
-

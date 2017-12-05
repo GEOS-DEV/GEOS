@@ -32,9 +32,11 @@ public:
     geometryFunction = 9,
     numGeometricObjectTypes = 10
   };
-  // The default cylinder object use point1 as the center and point2 as a point on one face.  The new type uses the centers of the two faces.
+  // The default cylinder object use point1 as the center and point2 as a point
+  // on one face.  The new type uses the centers of the two faces.
 
-  // The default cylinder object use point1 as the center and point2 as a point on one face.  The new type uses the centers of the two faces.
+  // The default cylinder object use point1 as the center and point2 as a point
+  // on one face.  The new type uses the centers of the two faces.
 
   // Type strings
   static const std::string BoxStr;
@@ -52,8 +54,7 @@ public:
   static const std::string GeometryFunctionStr;
 
   virtual ~SimpleGeometricObjectBase()
-  {
-  }
+  {}
 
   virtual void ReadXML( TICPP::HierarchicalDataNode& hdn ) = 0;
 
@@ -73,10 +74,10 @@ public:
       rval = (Types) input;
     }
     /*
-     if( input == box )
-     rval = box;
-     if( input == cylinder )
-     rval = cylinder;
+       if( input == box )
+       rval = box;
+       if( input == cylinder )
+       rval = cylinder;
      */
 
     return rval;
@@ -145,7 +146,7 @@ public:
   void ReadXML( TICPP::HierarchicalDataNode& hdn );
 
   bool IsCoordInObject( const R1Tensor& coord );
-  private:
+private:
   R1Tensor m_min;
   R1Tensor m_max;
   realT m_strikeAngle;
@@ -161,7 +162,7 @@ public:
   void ReadXML( TICPP::HierarchicalDataNode& hdn );
 
   bool IsCoordInObject( const R1Tensor& coord );
-  private:
+private:
   R1Tensor m_refPoint;
   R1Tensor m_axis;
   realT m_radius;
@@ -175,7 +176,7 @@ public:
   void ReadXML( TICPP::HierarchicalDataNode& hdn );
 
   bool IsCoordInObject( const R1Tensor& coord );
-  private:
+private:
   R1Tensor m_refPoint;
   R1Tensor m_axis;
   realT m_radius;
@@ -190,7 +191,7 @@ public:
   void ReadXML( TICPP::HierarchicalDataNode& hdn );
 
   bool IsCoordInObject( const R1Tensor& coord );
-  private:
+private:
   R1Tensor m_refPoint;
   realT m_radius;
   realT m_radiusSqrd;
@@ -204,7 +205,7 @@ public:
   void ReadXML( TICPP::HierarchicalDataNode& hdn );
 
   bool IsCoordInObject( const R1Tensor& coord );
-  private:
+private:
   R1Tensor m_refPoint;
   realT m_rx;
   realT m_ry;
@@ -226,14 +227,14 @@ public:
   {
     objectPointers.clear();
     for( TICPP::HierarchicalDataNode* childNode = hdn.Next( true ) ; childNode ;
-        childNode = hdn.Next() )
+         childNode = hdn.Next() )
     {
       SimpleGeometricObjectBase* objectPtr = Allocate( childNode );
       objectPointers.push_back( objectPtr );
     }
   }
   virtual bool IsCoordInObject( const R1Tensor& coord )=0;
-  protected:
+protected:
   std::vector<SimpleGeometricObjectBase*> objectPointers;
 
 };
@@ -244,7 +245,8 @@ class IntersectionGeometry : public BooleanGeometry
 public:
   virtual bool IsCoordInObject( const R1Tensor& coord )
   {
-    bool rv = objectPointers.size() > 0; // returns false if empty - prob should just throw an error
+    bool rv = objectPointers.size() > 0; // returns false if empty - prob should
+                                         // just throw an error
 
     for( unsigned i = 0 ; i < objectPointers.size() ; ++i )
     {
@@ -312,7 +314,7 @@ class TransformGeometry : public UnionGeometry
 public:
   virtual void ReadXML( TICPP::HierarchicalDataNode& hdn );
   virtual bool IsCoordInObject( const R1Tensor& coord );
-  protected:
+protected:
   R2Tensor m_U;
   R2Tensor m_Uinv;
   R1Tensor m_R;
@@ -330,7 +332,7 @@ class GeometryFunction : public SimpleGeometricObjectBase
 public:
   virtual void ReadXML( TICPP::HierarchicalDataNode& hdn );
   virtual bool IsCoordInObject( const R1Tensor& coord );
-  protected:
+protected:
 
   Function* m_function;
   std::string m_functionName;

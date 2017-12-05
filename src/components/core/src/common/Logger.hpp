@@ -8,7 +8,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_COMMON_LOGGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_COMMON_LOGGER_HPP_
 
-#include<string>
+#include <string>
 
 #ifdef USE_ATK
 #include "slic.hpp"

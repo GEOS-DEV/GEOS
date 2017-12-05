@@ -17,24 +17,42 @@
 //
 //  All rights reserved.
 //
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
+// SECURITY,
+//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 //
-//  1. This notice is required to be provided under our contract with the U.S. Department of Energy (DOE). This work was produced at Lawrence Livermore 
+//  1. This notice is required to be provided under our contract with the U.S.
+// Department of Energy (DOE). This work was produced at Lawrence Livermore
 //     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National Security, LLC nor any of their employees, makes any warranty, express or 
-//     implied, or assumes any liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or 
-//     process disclosed, or represents that its use would not infringe privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or services by trade name, trademark, manufacturer or otherwise does not 
-//     necessarily constitute or imply its endorsement, recommendation, or favoring by the United States Government or Lawrence Livermore National Security, 
-//     LLC. The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or Lawrence 
-//     Livermore National Security, LLC, and shall not be used for advertising or product endorsement purposes.
+//  2. Neither the United States Government nor Lawrence Livermore National
+// Security, LLC nor any of their employees, makes any warranty, express or
+//     implied, or assumes any liability or responsibility for the accuracy,
+// completeness, or usefulness of any information, apparatus, product, or
+//     process disclosed, or represents that its use would not infringe
+// privately-owned rights.
+//  3. Also, reference herein to any specific commercial products, process, or
+// services by trade name, trademark, manufacturer or otherwise does not
+//     necessarily constitute or imply its endorsement, recommendation, or
+// favoring by the United States Government or Lawrence Livermore National
+// Security,
+//     LLC. The views and opinions of authors expressed herein do not
+// necessarily state or reflect those of the United States Government or
+// Lawrence
+//     Livermore National Security, LLC, and shall not be used for advertising
+// or product endorsement purposes.
 //
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The BSD  License statment is included in this distribution in src/bsd_notice.txt.
+//  This Software derives from a BSD open source release LLNL-CODE-656616. The
+// BSD  License statment is included in this distribution in src/bsd_notice.txt.
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -54,7 +72,7 @@
 //#include "ObjectManagers/ProblemManagerT.h"
 
 #if GPAC_MPI
-  class Epetra_MpiComm;
+class Epetra_MpiComm;
 #else
 class Epetra_SerialComm;
 #endif
@@ -118,12 +136,12 @@ class FractunatorBase;
 
 namespace EpetraBlock
 {
-  enum ID
-  {
-    solidBlock,
-    fluidBlock,
-    numBlockDof
-  };
+enum ID
+{
+  solidBlock,
+  fluidBlock,
+  numBlockDof
+};
 }
 
 /**
@@ -217,7 +235,8 @@ public:
     }
     else
     {
-      throw GPException("error in Epetra_System::SetBlockID(). EpetraBlock::ID ("+toString(id)+") has already been used to register block "+ toString(block)+ ". Ya betta check yoself befo ya wreck yoself.\n" );
+      throw GPException("error in Epetra_System::SetBlockID(). EpetraBlock::ID ("+toString(id)+") has already been used to register block "+ toString(
+                          block)+ ". Ya betta check yoself befo ya wreck yoself.\n" );
     }
 
     if( m_solverNames[id].empty() )
@@ -226,7 +245,8 @@ public:
     }
     else
     {
-      throw GPException("error in Epetra_System::SetBlockID(). EpetraBlock::ID ("+toString(id)+") has already been used to register solvername "+ m_solverNames[id]+ ". Ya betta check yoself befo ya wreck yoself.\n" );
+      throw GPException("error in Epetra_System::SetBlockID(). EpetraBlock::ID ("+toString(id)+") has already been used to register solvername "+
+                        m_solverNames[id]+ ". Ya betta check yoself befo ya wreck yoself.\n" );
     }
 
     std::map<std::string, int>::iterator iterSolverNameMap = m_solverNameMap.find(name);
@@ -236,7 +256,8 @@ public:
     }
     else
     {
-      throw GPException("error in Epetra_System::SetBlockID(). Solver Name ("+name+") has already been used to register block "+ toString(block)+ ". Ya betta check yoself befo ya wreck yoself.\n" );
+      throw GPException("error in Epetra_System::SetBlockID(). Solver Name ("+name+") has already been used to register block "+ toString(
+                          block)+ ". Ya betta check yoself befo ya wreck yoself.\n" );
     }
   }
 
@@ -305,7 +326,7 @@ public:
     {
       throw GPException("SolverBase.h:Epetra_System::GetSparsity():m_blockID isn't set \n");
     }
-    return m_sparsity[ m_blockID[rowDofID] ][ m_blockID[colDofID] ] ;
+    return m_sparsity[ m_blockID[rowDofID] ][ m_blockID[colDofID] ];
   }
 
 #if USECPP11==1
@@ -320,7 +341,7 @@ public:
     {
       throw GPException("SolverBase.h:Epetra_System::GetMatrix():m_blockID isn't set \n");
     }
-    return m_matrix[ m_blockID[rowDofID] ][ m_blockID[colDofID] ] ;
+    return m_matrix[ m_blockID[rowDofID] ][ m_blockID[colDofID] ];
   }
 
   bool HasMatrixBlock( const EpetraBlock::ID rowDofID,
@@ -331,24 +352,25 @@ public:
     {
       rval = true;
     }
-    return rval ;
+    return rval;
   }
 
 /*
-#if USECPP11==1
-  std::shared_ptr<Epetra_FECrsMatrix>
-#else
-  Epetra_FECrsMatrix*&
-#endif
-  GetScratch( const EpetraBlock::ID rowDofID, const EpetraBlock::ID colDofID )
-  {
+ #if USECPP11==1
+   std::shared_ptr<Epetra_FECrsMatrix>
+ #else
+   Epetra_FECrsMatrix*&
+ #endif
+   GetScratch( const EpetraBlock::ID rowDofID, const EpetraBlock::ID colDofID )
+   {
     if( m_blockID[rowDofID]==-1 && m_blockID[colDofID]==-1 )
     {
-      throw GPException("SolverBase.h:Epetra_System::GetScratch():m_blockID isn't set \n");
+      throw GPException("SolverBase.h:Epetra_System::GetScratch():m_blockID
+         isn't set \n");
     }
     return m_scratch[ m_blockID[rowDofID] ][ m_blockID[colDofID] ] ;
-  }
-*/
+   }
+ */
 #if USECPP11==1
   array<std::shared_ptr<Epetra_Map> >         m_rowMap;
   array<std::shared_ptr<Epetra_FEVector> >    m_solution;
@@ -399,9 +421,9 @@ public:
   }
 
   virtual double TimeStepExecute( const realT& time,
-                              const realT& dt,
-                              PhysicalDomainT& domain,
-                              SpatialPartition& partition )
+                                  const realT& dt,
+                                  PhysicalDomainT& domain,
+                                  SpatialPartition& partition )
   {
     (void)time;
     (void)dt;
@@ -417,15 +439,15 @@ public:
   }
 
   virtual double TimeStep( const realT& time,
-                         const realT& dt,
-                         const int cycleNumber,
-                         PhysicalDomainT& domain,
-                         const array<string>& namesOfSolverRegions,
-                         SpatialPartition& partition,
-                         FractunatorBase* const fractunator ) = 0;
+                           const realT& dt,
+                           const int cycleNumber,
+                           PhysicalDomainT& domain,
+                           const array<string>& namesOfSolverRegions,
+                           SpatialPartition& partition,
+                           FractunatorBase* const fractunator ) = 0;
 
   virtual realT UpdateTimeStepMid(realT dt) { return dt; }
-  
+
   virtual void PostProcess( PhysicalDomainT& domain,
                             SpatialPartition& partition,
                             const array<string>& namesOfSolverRegions);
@@ -452,7 +474,7 @@ public:
     (void)numLocalRows;
     (void)numGlobalRows;
     (void)localIndices;
-  throw GPException("SolverBase::SetNumRowsAndTrilinosIndices() not overridden");
+    throw GPException("SolverBase::SetNumRowsAndTrilinosIndices() not overridden");
   }
 
 
@@ -475,7 +497,7 @@ public:
 
   virtual void RegisterFields( PhysicalDomainT& domain ) = 0;
 
-  virtual void ReadXML( TICPP::HierarchicalDataNode* const hdn ) ;
+  virtual void ReadXML( TICPP::HierarchicalDataNode* const hdn );
 
   virtual void WriteSilo( SiloFile& siloFile ) const;
 
@@ -486,7 +508,7 @@ public:
   bool m_solverErrorFlag;
 
 
-  std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string>> m_syncedFields;
+  std::map<PhysicalDomainT::ObjectDataStructureKeys, array<string> > m_syncedFields;
 
   std::string m_name;
 
@@ -650,10 +672,10 @@ private:
   virtual void SetTimeIntegrationFlag( )  {}
 
   virtual void TimeStepDerived( const realT& time,
-                                 const realT& dt,
-                                 PhysicalDomainT& domain,
-                                 const array<string>& namesOfSolverRegions,
-                                 SpatialPartition& partition ) {};
+                                const realT& dt,
+                                PhysicalDomainT& domain,
+                                const array<string>& namesOfSolverRegions,
+                                SpatialPartition& partition ) {};
 
 
   virtual void WriteSiloDerived( SiloFile& siloFile ) const {}

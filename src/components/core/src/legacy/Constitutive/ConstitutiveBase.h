@@ -15,44 +15,44 @@
 
 namespace TICPP
 {
-  class HierarchicalDataNode;
+class HierarchicalDataNode;
 }
 
 namespace ConstitutiveValueResolution
 {
-  template<typename T>
-  inline int ValueType(){ throw GPException("Unrecognized type"); }
-  template<>
-  inline int ValueType<int>(){return 0;}
-  template<>
-  inline int ValueType<realT>(){return 1;}
-  template<>
-  inline int ValueType<R1Tensor>(){return 2;}
-  template<>
-  inline int ValueType<R2Tensor>(){return 3;}
-  template<>
-  inline int ValueType<R2SymTensor>(){return 4;}
+template<typename T>
+inline int ValueType(){ throw GPException("Unrecognized type"); }
+template<>
+inline int ValueType<int>(){return 0;}
+template<>
+inline int ValueType<realT>(){return 1;}
+template<>
+inline int ValueType<R1Tensor>(){return 2;}
+template<>
+inline int ValueType<R2Tensor>(){return 3;}
+template<>
+inline int ValueType<R2SymTensor>(){return 4;}
 
-  template<typename T>
-  inline const char* PointerConversion(const T& object, const size_t offset)
-  {
-    const char* ptr = (char*)(&object) + offset;
-    return ptr;
-  }
+template<typename T>
+inline const char* PointerConversion(const T& object, const size_t offset)
+{
+  const char* ptr = (char*)(&object) + offset;
+  return ptr;
+}
 
-  template<typename T>
-  inline char* PointerConversion(T& object, const size_t offset)
-  {
-    char* ptr = (char*)(&object) + offset;
-    return ptr;
-  }
+template<typename T>
+inline char* PointerConversion(T& object, const size_t offset)
+{
+  char* ptr = (char*)(&object) + offset;
+  return ptr;
+}
 }
 
 class ConstitutiveBase
 {
 
 public:
-  ConstitutiveBase() : hasVariableParams(false) {}
+  ConstitutiveBase(): hasVariableParams(false) {}
   virtual ~ConstitutiveBase() {}
 
   inline bool VariableParameters() const { return hasVariableParams; }
@@ -115,19 +115,19 @@ public:
 
   template< typename LeafClass, typename ARRAY >
   bool GetStateValuesFromDerived( const std::string& name,
-                              ARRAY& values) const;
-
-  template< typename LeafClass, typename ARRAY >
-  bool GetParameterValuesFromDerived( const std::string& name,
                                   ARRAY& values) const;
 
   template< typename LeafClass, typename ARRAY >
+  bool GetParameterValuesFromDerived( const std::string& name,
+                                      ARRAY& values) const;
+
+  template< typename LeafClass, typename ARRAY >
   bool SetStateValuesFromDerived( const std::string& name,
-                              const ARRAY& values);
+                                  const ARRAY& values);
 
   template< typename LeafClass, typename ARRAY >
   bool SetParameterValuesFromDerived( const std::string& name,
-                                  const ARRAY& values);
+                                      const ARRAY& values);
 
 
 protected:
@@ -212,12 +212,12 @@ public:
     }
   }
 
-  void SetValues( const array<string>& names, const array<array<real64>>& values )
+  void SetValues( const array<string>& names, const array<array<real64> >& values )
   {
     if(names.size() != values.size())
       throw GPException("Attempt to SetValues with arrays of different lengths");
     PreSetValues(names);
-    for( auto i = 0u; i < names.size(); i++)
+    for( auto i = 0u ; i < names.size() ; i++)
       SetValues(names[i], values[i]);
     PostSetValues(names);
   }
@@ -332,21 +332,21 @@ size_t ConstitutiveBase::GetParameterOffsetFromDerived( const std::string& name,
   size_t ret = std::numeric_limits<size_t>::max();
   switch(type)
   {
-    case 0:
-      ret = GetOffset(name, intOffsets);
-      break;
-    case 1:
-      ret = GetOffset(name, realOffsets);
-      break;
-    case 2:
-      ret = GetOffset(name, R1TensorOffsets);
-      break;
-    case 3:
-      ret = GetOffset(name, R2TensorOffsets);
-      break;
-    case 4:
-      ret = GetOffset(name, R2SymTensorOffsets);
-      break;
+  case 0:
+    ret = GetOffset(name, intOffsets);
+    break;
+  case 1:
+    ret = GetOffset(name, realOffsets);
+    break;
+  case 2:
+    ret = GetOffset(name, R1TensorOffsets);
+    break;
+  case 3:
+    ret = GetOffset(name, R2TensorOffsets);
+    break;
+  case 4:
+    ret = GetOffset(name, R2SymTensorOffsets);
+    break;
   }
   return ret;
 }
@@ -365,21 +365,21 @@ size_t ConstitutiveBase::GetStateOffsetFromDerived( const std::string& name, con
   size_t ret = std::numeric_limits<size_t>::max();
   switch(type)
   {
-    case 0:
-      ret = GetOffset(name, intOffsets);
-      break;
-    case 1:
-      ret = GetOffset(name, realOffsets);
-      break;
-    case 2:
-      ret = GetOffset(name, R1TensorOffsets);
-      break;
-    case 3:
-      ret = GetOffset(name, R2TensorOffsets);
-      break;
-    case 4:
-      ret = GetOffset(name, R2SymTensorOffsets);
-      break;
+  case 0:
+    ret = GetOffset(name, intOffsets);
+    break;
+  case 1:
+    ret = GetOffset(name, realOffsets);
+    break;
+  case 2:
+    ret = GetOffset(name, R1TensorOffsets);
+    break;
+  case 3:
+    ret = GetOffset(name, R2TensorOffsets);
+    break;
+  case 4:
+    ret = GetOffset(name, R2SymTensorOffsets);
+    break;
   }
   return ret;
 }
@@ -397,14 +397,14 @@ bool ConstitutiveBase::GetParameterValuesFromDerived( const std::string& name, A
   {
     const localIndex i = 0;
     values.resize(dthis.m_stateData.Dimension(0), *((const typename ARRAY::value_type*)
-        ConstitutiveValueResolution::PointerConversion(dthis.m_parameterData[i], offset)));
+                                                    ConstitutiveValueResolution::PointerConversion(dthis.m_parameterData[i], offset)));
   }
   else
   {
     values.resize(dthis.m_stateData.Dimension(0));
-    for(localIndex i = 0; i < dthis.m_stateData.Dimension(0); i++)
+    for(localIndex i = 0 ; i < dthis.m_stateData.Dimension(0) ; i++)
       values[i] = *((const typename ARRAY::value_type*)(
-          ConstitutiveValueResolution::PointerConversion(dthis.m_parameterData[i], offset)));
+                      ConstitutiveValueResolution::PointerConversion(dthis.m_parameterData[i], offset)));
   }
   return true;
 }
@@ -419,16 +419,16 @@ bool ConstitutiveBase::GetStateValuesFromDerived( const std::string& name, ARRAY
     return false;
   if (dthis.m_stateData.Dimension(1) < 1)
     throw GPException(
-        "ConstitutiveBase::GetStateValuesFromDerived - Cannot get state values when the 1 dimension is zero!");
+            "ConstitutiveBase::GetStateValuesFromDerived - Cannot get state values when the 1 dimension is zero!");
 
   values.resize(dthis.m_stateData.Dimension(0));
-  for (localIndex i = 0; i < dthis.m_stateData.Dimension(0); i++)
+  for (localIndex i = 0 ; i < dthis.m_stateData.Dimension(0) ; i++)
   {
-    values[i] = *((const typename ARRAY::value_type*) (ConstitutiveValueResolution::PointerConversion(
-        dthis.m_stateData(i, 0), offset)));
-    for (localIndex j = 1; j < dthis.m_stateData.Dimension(1); j++)
-      values[i] += *((const typename ARRAY::value_type*) (ConstitutiveValueResolution::PointerConversion(
-          dthis.m_stateData(i, j), offset)));
+    values[i] = *((const typename ARRAY::value_type*)(ConstitutiveValueResolution::PointerConversion(
+                                                        dthis.m_stateData(i, 0), offset)));
+    for (localIndex j = 1 ; j < dthis.m_stateData.Dimension(1) ; j++)
+      values[i] += *((const typename ARRAY::value_type*)(ConstitutiveValueResolution::PointerConversion(
+                                                           dthis.m_stateData(i, j), offset)));
     values[i] *= 1.0 / dthis.m_stateData.Dimension(1);
   }
   return true;
@@ -454,15 +454,15 @@ bool ConstitutiveBase::SetParameterValuesFromDerived( const std::string& name, c
   {
     const localIndex i = 0;
     typename ARRAY::value_type& value = *((typename ARRAY::value_type *)
-        ConstitutiveValueResolution::PointerConversion(dthis.m_parameterData[i], offset));
+                                          ConstitutiveValueResolution::PointerConversion(dthis.m_parameterData[i], offset));
     value = values[0];
   }
   else
   {
-    for(localIndex i = 0; i < dthis.m_stateData.Dimension(0); i++)
+    for(localIndex i = 0 ; i < dthis.m_stateData.Dimension(0) ; i++)
     {
       typename ARRAY::value_type& value = *((typename ARRAY::value_type *)
-          ConstitutiveValueResolution::PointerConversion(dthis.m_parameterData[i], offset));
+                                            ConstitutiveValueResolution::PointerConversion(dthis.m_parameterData[i], offset));
       value = values[i];
     }
   }
@@ -480,16 +480,16 @@ bool ConstitutiveBase::SetStateValuesFromDerived( const std::string& name, const
 
   if (values.size() != dthis.NumStateIndex0())
     throw GPException(
-        "ConstitutiveBase::SetStateValuesFromDerived - Value array not the same size as the state array");
+            "ConstitutiveBase::SetStateValuesFromDerived - Value array not the same size as the state array");
   if (values.size() == 0)
     return true;
 
-  for (localIndex i = 0; i < dthis.m_stateData.Dimension(0); i++)
+  for (localIndex i = 0 ; i < dthis.m_stateData.Dimension(0) ; i++)
   {
-    for (localIndex j = 0; j < dthis.m_stateData.Dimension(1); j++)
+    for (localIndex j = 0 ; j < dthis.m_stateData.Dimension(1) ; j++)
     {
-      typename ARRAY::value_type& tmp = *((typename ARRAY::value_type *) ConstitutiveValueResolution::PointerConversion(
-          dthis.m_stateData(i, j), offset));
+      typename ARRAY::value_type& tmp = *((typename ARRAY::value_type *)ConstitutiveValueResolution::PointerConversion(
+                                            dthis.m_stateData(i, j), offset));
       tmp = values[i];
     }
   }
@@ -509,7 +509,7 @@ void ConstitutiveBase::SetVariableParametersFromDerived(const bool varParams, co
         return;
 
       dthis.m_parameterData.resize(newSize);
-      for(localIndex a = 1; a < newSize; a++)
+      for(localIndex a = 1 ; a < newSize ; a++)
         memcpy(&dthis.m_parameterData[a], &dthis.m_parameterData[0], sizeof(typename LeafClass::ParameterClass));
     }
     else
@@ -622,7 +622,6 @@ void ConstitutiveBase::DeserializeFromDerived( const array<array<integer>*>& int
 
 
 
-
 template< typename LeafClass, typename T_indices >
 unsigned int ConstitutiveBase::PackFromDerived( const T_indices& localIndices, bufvector& buffer, const bool doBufferPacking ) const
 {
@@ -730,11 +729,6 @@ unsigned int ConstitutiveBase::UnpackFromDerived( const T_indices& localIndices,
   }
   return unpackedSize;
 }
-
-
-
-
-
 
 
 

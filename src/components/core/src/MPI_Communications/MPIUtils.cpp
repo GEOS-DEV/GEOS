@@ -8,6 +8,4 @@
 #include "MPIUtils.h"
 
 namespace MPIUtils
-{
-
-}
+{}

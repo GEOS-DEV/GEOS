@@ -15,7 +15,7 @@ namespace constitutive
 
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     ManagedGroup * const parent ):
-    ManagedGroup(name,parent)
+  ManagedGroup(name,parent)
 {
   this->RegisterGroup<ManagedGroup>(groupKeys.ParameterData);
   this->RegisterGroup<ManagedGroup>(groupKeys.StateData);
@@ -23,7 +23,6 @@ ConstitutiveBase::ConstitutiveBase( std::string const & name,
 
 ConstitutiveBase::~ConstitutiveBase()
 {}
-
 
 
 

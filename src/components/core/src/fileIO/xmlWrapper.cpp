@@ -44,39 +44,39 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
   rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
   rtTypes::ApplyIntrinsicTypeLambda2 ( typeID,
                                        [&]( auto a, auto b ) -> void
-  {
-    string defVal = subDocNode.getDefault();
-
-    pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
-    ViewWrapper<decltype(a)>& dataView = *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
-    std::vector<decltype(b)> xmlVal;
-
-    if( !xmlatt.empty() )
     {
-      as_type( xmlVal, xmlatt.value(), defVal );
-    }
-    else
-    {
-      if( defVal == "REQUIRED")
+      string defVal = subDocNode.getDefault();
+
+      pugi::xml_attribute xmlatt = targetNode.attribute(subDocNode.getStringKey().c_str());
+      ViewWrapper<decltype(a)>& dataView = *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
+      std::vector<decltype(b)> xmlVal;
+
+      if( !xmlatt.empty() )
       {
-        string message = "variable " + subDocNode.getName() + " is required in " + targetNode.path();
-#ifdef USE_ATK
-        SLIC_ERROR( message );
-#endif
+        as_type( xmlVal, xmlatt.value(), defVal );
       }
       else
       {
-        stringutilities::StringToType( xmlVal, defVal );
+        if( defVal == "REQUIRED")
+        {
+          string message = "variable " + subDocNode.getName() + " is required in " + targetNode.path();
+#ifdef USE_ATK
+          SLIC_ERROR( message );
+#endif
+        }
+        else
+        {
+          stringutilities::StringToType( xmlVal, defVal );
+        }
+
+
       }
-
-
-    }
-    localIndex const size = xmlVal.size();
-    dataView.resize( size );
-    typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
+      localIndex const size = xmlVal.size();
+      dataView.resize( size );
+      typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
 //        decltype(a) * data = dataView.pointer();
-    cxx_utilities::equateStlVector(data,xmlVal);
-  });
+      cxx_utilities::equateStlVector(data,xmlVal);
+    });
 
 
 }
