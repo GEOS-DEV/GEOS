@@ -41,9 +41,14 @@ set(ENABLE_MPI ON CACHE BOOL "" FORCE)
 #set(MPI_HOME             "/usr/tce/packages/mvapich2/mvapich2-2.2-gcc-7.1.0" CACHE PATH "")
 set(MPI_HOME             "/opt/intel/compilers_and_libraries_2018.0.128/linux/mpi/intel64" CACHE PATH "")
 
-set(MPI_C_COMPILER       "${MPI_HOME}/bin/mpiicc"   CACHE PATH "")
-set(MPI_CXX_COMPILER     "${MPI_HOME}/bin/mpiicpc"  CACHE PATH "")
+#set(MPI_C_COMPILER       "${MPI_HOME}/bin/mpiicc"   CACHE PATH "")
+#set(MPI_CXX_COMPILER     "${MPI_HOME}/bin/mpiicpc"  CACHE PATH "")
+
 #set(MPI_Fortran_COMPILER "${MPI_HOME}/bin/mpifort" CACHE PATH "")
+
+
+set(MPI_CXX_COMPILER "/opt/cray/pe/craype/2.5.12/bin/CC" CACHE PATH "")
+set(MPI_C_COMPILER "/opt/cray/pe/craype/2.5.12/bin/cc" CACHE PATH "")
 
 #set(MPI_C_COMPILER       "${MPI_HOME}/bin/mpicc"   CACHE PATH "")
 #set(MPI_CXX_COMPILER     "${MPI_HOME}/bin/mpicxx"  CACHE PATH "")

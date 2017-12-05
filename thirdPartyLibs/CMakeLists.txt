@@ -269,7 +269,9 @@ ExternalProject_Add( asmjit
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DBUILD_SHARED_LIBS:BOOL=OFF
                                 -DCMAKE_BUILD_TYPE=Release
-                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+				-DCMAKE_CXX_STANDARD=17
+ )
 
 message( INFO ": setting up MathPresso" )
 set(MATHPRESSO_LOCAL_DIR ${PROJECT_BINARY_DIR}/mathpresso)
@@ -300,6 +302,7 @@ ExternalProject_Add( mathpresso
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
 				-DCMAKE_CXX_STANDARD=11
+				-DCMAKE_CXX_FLAGS=-std=c++11
 				 )
 
 #set( dependency_list "${dependency_list};mathpresso" )
