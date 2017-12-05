@@ -28,7 +28,7 @@ public:
   CellBlockSubRegion( string const & name, ManagedGroup * const parent );
   virtual ~CellBlockSubRegion();
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  void FillDocumentationNode() override;
 
   void ReadXML_PostProcess() override;
 

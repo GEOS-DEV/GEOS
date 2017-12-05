@@ -25,7 +25,7 @@ PhysicsSolverManager::~PhysicsSolverManager()
 {}
 
 
-void PhysicsSolverManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
+void PhysicsSolverManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setName("Solvers");

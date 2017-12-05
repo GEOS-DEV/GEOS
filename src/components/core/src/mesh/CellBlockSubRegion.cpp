@@ -27,7 +27,7 @@ CellBlockSubRegion::~CellBlockSubRegion()
 
 
 
-void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
+void CellBlockSubRegion::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -35,7 +35,7 @@ void CellBlockSubRegion::FillDocumentationNode( ManagedGroup * const group )
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "an element region" );
 
-  CellBlock::FillDocumentationNode(group);
+  CellBlock::FillDocumentationNode();
 
   docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
                               viewKeys.numNodesPerElement.Key(),

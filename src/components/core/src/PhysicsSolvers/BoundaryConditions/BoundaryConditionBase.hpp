@@ -45,7 +45,7 @@ public:
 
 
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * UNUSED ) override;
+  void FillDocumentationNode() override;
 
   void ReadXML_PostProcess() override final;
 

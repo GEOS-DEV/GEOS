@@ -52,7 +52,7 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const parent ) override;
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  void FillDocumentationNode() override;
 
   void ApplySpaceToTargetCells( dataRepository::ManagedGroup * const group ) const;
 

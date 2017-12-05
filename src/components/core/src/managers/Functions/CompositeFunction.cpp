@@ -42,9 +42,9 @@ CompositeFunction::~CompositeFunction()
 }
 
 
-void CompositeFunction::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void CompositeFunction::FillDocumentationNode()
 {
-  FunctionBase::FillDocumentationNode(domain);
+  FunctionBase::FillDocumentationNode();
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   docNode->setName(this->CatalogName());

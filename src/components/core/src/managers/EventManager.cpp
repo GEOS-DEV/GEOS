@@ -26,7 +26,7 @@ EventManager::EventManager( std::string const & name,
 EventManager::~EventManager()
 {}
 
-void EventManager::FillDocumentationNode( dataRepository::ManagedGroup * const )
+void EventManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -79,7 +79,7 @@ SolverApplication::SolverApplication( std::string const & name,
 SolverApplication::~SolverApplication()
 {}
 
-void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * const )
+void SolverApplication::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 

@@ -7,7 +7,6 @@
 
 #include "SolverBase.hpp"
 
-#include "mesh/MeshBody.hpp"
 
 namespace geosx
 {
@@ -31,7 +30,7 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
 void SolverBase::BuildDataStructure( dataRepository::ManagedGroup * const /*domain*/ )
 {}
 
-void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const  )
+void SolverBase::FillDocumentationNode()
 {
 
 

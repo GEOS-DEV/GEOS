@@ -35,7 +35,7 @@ FiniteElementSpace::~FiniteElementSpace()
 void FiniteElementSpace::BuildDataStructure( dataRepository::ManagedGroup * const parent )
 {}
 
-void FiniteElementSpace::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void FiniteElementSpace::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 

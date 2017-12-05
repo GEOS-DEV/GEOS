@@ -25,7 +25,7 @@ MeshManager::~MeshManager()
 {}
 
 
-void MeshManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
+void MeshManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setName("Mesh");

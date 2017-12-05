@@ -20,7 +20,7 @@ Box::~Box()
   // TODO Auto-generated destructor stub
 }
 
-void Box::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void Box::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 

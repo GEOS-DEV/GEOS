@@ -26,7 +26,7 @@ NewFunctionManager::~NewFunctionManager()
   // TODO Auto-generated destructor stub
 }
 
-void NewFunctionManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
+void NewFunctionManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 

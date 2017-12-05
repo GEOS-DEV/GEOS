@@ -55,7 +55,7 @@ public:
   static string CatalogName() { return "InternalMesh"; }
 
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const domain ) override;
+  virtual void FillDocumentationNode() override;
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 

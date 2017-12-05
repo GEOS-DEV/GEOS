@@ -25,7 +25,7 @@ GeometricObjectManager::~GeometricObjectManager()
 {}
 
 
-void GeometricObjectManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
+void GeometricObjectManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setName("Geometry");

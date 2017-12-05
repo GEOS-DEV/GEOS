@@ -23,7 +23,7 @@ public:
 
   virtual ~MeshManager();
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  virtual void FillDocumentationNode() override;
 
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 

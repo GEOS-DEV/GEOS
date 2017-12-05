@@ -121,7 +121,7 @@ public:
   { return NodeManager::CatalogName(); }
 
 
-  void FillDocumentationNode( ManagedGroup * const group ) override final;
+  void FillDocumentationNode() override final;
 
 
 //  void Initialize();

@@ -48,9 +48,9 @@ TableFunction::~TableFunction()
 }
 
 
-void TableFunction::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void TableFunction::FillDocumentationNode()
 {
-  FunctionBase::FillDocumentationNode(domain);
+  FunctionBase::FillDocumentationNode();
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   docNode->setName(this->CatalogName());

@@ -18,7 +18,7 @@ BoundaryConditionBase::CatalogInterface::CatalogType& BoundaryConditionBase::Get
   return catalog;
 }
 
-void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup * UNUSED )
+void BoundaryConditionBase::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 

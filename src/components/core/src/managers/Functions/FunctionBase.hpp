@@ -31,7 +31,7 @@ public:
 
   virtual ~FunctionBase();
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  virtual void FillDocumentationNode() override;
 
   static string CatalogName() { return "FunctionBase"; }
   virtual void InitializeFunction(){}

@@ -24,7 +24,7 @@ ConstitutiveManager::ConstitutiveManager( std::string const & name,
 ConstitutiveManager::~ConstitutiveManager()
 {}
 
-void ConstitutiveManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void ConstitutiveManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setName("Constitutive");

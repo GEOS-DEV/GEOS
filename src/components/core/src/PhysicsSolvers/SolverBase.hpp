@@ -16,6 +16,7 @@
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
+#include "mesh/MeshBody.hpp"
 
 
 namespace geosx
@@ -58,7 +59,7 @@ public:
                          int const cycleNumber,
                          dataRepository::ManagedGroup * domain ) = 0;
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  virtual void FillDocumentationNode() override;
 
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;

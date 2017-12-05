@@ -125,7 +125,7 @@ NodeManager::~NodeManager()
 
 
 
-void NodeManager::FillDocumentationNode( ManagedGroup * const group )
+void NodeManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 

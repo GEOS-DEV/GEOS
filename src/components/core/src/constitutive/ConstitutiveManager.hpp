@@ -38,7 +38,7 @@ public:
   ConstitutiveManager( std::string const & name,
                        ManagedGroup * const parent );
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+  void FillDocumentationNode();
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   ~ConstitutiveManager();

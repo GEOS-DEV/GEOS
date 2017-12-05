@@ -41,7 +41,7 @@ FaceManager::~FaceManager()
 
 
 
-void FaceManager::FillDocumentationNode( dataRepository::ManagedGroup * const  )
+void FaceManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 

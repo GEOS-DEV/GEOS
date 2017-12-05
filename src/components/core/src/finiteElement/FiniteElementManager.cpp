@@ -27,7 +27,7 @@ FiniteElementManager::~FiniteElementManager()
   // TODO Auto-generated destructor stub
 }
 
-void FiniteElementManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void FiniteElementManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setName("NumericalMethods");

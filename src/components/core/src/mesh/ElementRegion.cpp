@@ -93,7 +93,7 @@ ElementRegion::~ElementRegion()
 {}
 
 
-void ElementRegion::FillDocumentationNode( ManagedGroup * const group )
+void ElementRegion::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -256,7 +256,7 @@ void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager 
   for( auto const & cellBlockName : this->getReference<string_array>(keys::cellBlockSubRegionNames) )
   {
     CellBlockSubRegion * cellBlock = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(cellBlockName);
-    cellBlock->FillDocumentationNode(nullptr);
+    cellBlock->FillDocumentationNode();
     cellBlock->RegisterDocumentationNodes();
   }
 

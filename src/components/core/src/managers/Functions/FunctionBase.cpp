@@ -26,7 +26,7 @@ FunctionBase::~FunctionBase()
 }
 
 
-void FunctionBase::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void FunctionBase::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 

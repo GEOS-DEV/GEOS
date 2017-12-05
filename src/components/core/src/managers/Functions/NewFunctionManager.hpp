@@ -32,7 +32,7 @@ public:
 
 
   static string CatalogName() { return "NewFunctionManager"; }
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  virtual void FillDocumentationNode() override;
 
   using dataRepository::ManagedGroup::ReadXML;
   void ReadXML( dataRepository::ManagedGroup * domain, xmlWrapper::xmlNode const & problemNode );

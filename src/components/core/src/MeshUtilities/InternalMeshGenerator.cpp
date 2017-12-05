@@ -57,7 +57,7 @@ InternalMeshGenerator::~InternalMeshGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void InternalMeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void InternalMeshGenerator::FillDocumentationNode()
 {
   //MeshLevel * const mesh =
   // domain->group_cast<DomainPartition*>()->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);

@@ -194,13 +194,15 @@ void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const root
   }
 }
 
-void ManagedGroup::FillDocumentationNode( dataRepository::ManagedGroup * const  )
+void ManagedGroup::FillDocumentationNode()
 {}
 
+void ManagedGroup::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const )
+{}
 
 void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const group )
 {
-  FillDocumentationNode(group);
+  FillDocumentationNode();
   RegisterDocumentationNodes();
   for( auto&& subGroup : m_subGroups )
   {
@@ -254,6 +256,7 @@ void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
   }
 
   ReadXMLsub(targetNode);
+  ReadXML_PostProcess();
 }
 
 

@@ -68,11 +68,11 @@ void ProblemManager::CreateChild( string const & childKey, string const & childN
 {}
 
 
-void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void ProblemManager::FillDocumentationNode()
 {
   // Problem node documentation
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  ObjectManagerBase::FillDocumentationNode( group );
+  ObjectManagerBase::FillDocumentationNode();
   docNode->setName("Problem");
   docNode->setSchemaType("RootNode");
 
