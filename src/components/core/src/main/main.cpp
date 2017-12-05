@@ -54,7 +54,7 @@ int main( int argc, char *argv[] )
   GEOS_MARK_BEGIN("Initialization");
 
   ProblemManager problemManager( "ProblemManager", nullptr );
-  problemManager.SetDocumentationNodes( &problemManager );
+  problemManager.SetDocumentationNodes();
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );

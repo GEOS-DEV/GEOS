@@ -30,14 +30,9 @@ public:
     return &theFunctionManager;
   }
 
-
   static string CatalogName() { return "NewFunctionManager"; }
   virtual void FillDocumentationNode() override;
-
-  using dataRepository::ManagedGroup::ReadXML;
-  void ReadXML( dataRepository::ManagedGroup * domain, xmlWrapper::xmlNode const & problemNode );
-
-  FunctionBase * CreateFunction( string const & functionCatalogKey, string const & functionName );
+  virtual void CreateChild( string const & functionCatalogKey, string const & functionName ) override;
 };
 
 

@@ -323,7 +323,7 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
 
-  void SetDocumentationNodes( dataRepository::ManagedGroup * const group );
+  void SetDocumentationNodes();
 
 
 

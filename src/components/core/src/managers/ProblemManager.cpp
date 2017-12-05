@@ -397,7 +397,7 @@ void ProblemManager::ParseInputFile()
 
   // Call manager readXML methods:
   this->AddChildren(xmlProblemNode);
-  this->SetDocumentationNodes( domain );
+  this->SetDocumentationNodes();
   this->ReadXML( xmlProblemNode );
 
 
@@ -405,7 +405,7 @@ void ProblemManager::ParseInputFile()
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Functions");
     this->m_functionManager->AddChildren( topLevelNode );
-    this->m_functionManager->SetDocumentationNodes( domain );
+    this->m_functionManager->SetDocumentationNodes();
     this->m_functionManager->ReadXML( topLevelNode );
   }
 

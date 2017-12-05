@@ -466,6 +466,9 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
   NodeManager * nodeManager = meshLevel0->getNodeManager();
 
+  // Make sure that the node manager fields are initialized
+  nodeManager->SetDocumentationNodes();
+
   CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
   ManagedGroup * nodeSets = nodeManager->GetGroup( std::string( "Sets" ) );
 

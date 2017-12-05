@@ -50,7 +50,7 @@ TEST(testXML,testXML)
   ProblemManager problemManager("ProblemManager",nullptr);
 
   problemManager.BuildDataStructure(nullptr);
-  problemManager.SetDocumentationNodes( &problemManager );
+  problemManager.SetDocumentationNodes();
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( global_argc, global_argv );

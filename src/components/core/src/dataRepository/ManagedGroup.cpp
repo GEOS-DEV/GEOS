@@ -179,10 +179,11 @@ void ManagedGroup::RegisterDocumentationNodes()
     }
   }
 
-  for( auto& subGroupIter : m_subGroups )
-  {
-    subGroupIter.second->RegisterDocumentationNodes();
-  }
+  // This is redundant
+  // for( auto& subGroupIter : m_subGroups )
+  // {
+  //   subGroupIter.second->RegisterDocumentationNodes();
+  // }
 
 }
 
@@ -200,13 +201,13 @@ void ManagedGroup::FillDocumentationNode()
 void ManagedGroup::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const )
 {}
 
-void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const group )
+void ManagedGroup::SetDocumentationNodes()
 {
   FillDocumentationNode();
   RegisterDocumentationNodes();
   for( auto&& subGroup : m_subGroups )
   {
-    subGroup.second->SetDocumentationNodes(group);
+    subGroup.second->SetDocumentationNodes();
   }
 }
 
