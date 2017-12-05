@@ -17,10 +17,10 @@ namespace dataRepository
 {
 namespace keys
 {
-string const finiteElementManager = "finiteElementManager";
+string const finiteElementManager = "NumericalMethods";
 string const basisFunctions = "BasisFunctions";
 string const quadratureRules = "QuadratureRules";
-string const finiteElements = "FiniteElements";
+string const finiteElementSpaces = "FiniteElements";
 }
 }
 

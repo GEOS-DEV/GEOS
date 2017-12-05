@@ -18,9 +18,9 @@ using namespace dataRepository;
 FiniteElementManager::FiniteElementManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
-  this->RegisterGroup<ManagedGroup>(keys::basisFunctions);
-  this->RegisterGroup<ManagedGroup>(keys::quadratureRules);
-  this->RegisterGroup<ManagedGroup>(keys::finiteElementSpace);
+  this->RegisterGroup<BasisFunctionManager>(keys::basisFunctions);
+  this->RegisterGroup<QuadratureRuleManager>(keys::quadratureRules);
+  this->RegisterGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 }
 
 FiniteElementManager::~FiniteElementManager()

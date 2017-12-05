@@ -67,6 +67,7 @@
 #include "CellBlockSubRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
+#include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"
 
@@ -260,10 +261,11 @@ void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager 
     cellBlock->RegisterDocumentationNodes();
   }
 
-
-  auto const & numMethodName = this->getData<string>(keys::numericalMethod);
+  auto const & numMethodName = this->getData<string>(keys::numericalMethod); 
   FiniteElementManager const * numericalMethodManager = problemManager->GetGroup<FiniteElementManager>(keys::finiteElementManager);
-  FiniteElementSpace const * feSpace = numericalMethodManager->GetGroup<FiniteElementSpace>(numMethodName);
+  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
   auto const & basisName = feSpace->getData<string>(keys::basis);
   auto const & quadratureName = feSpace->getData<string>(keys::quadrature);
   BasisBase const & basis = numericalMethodManager->GetGroup(keys::basisFunctions)->getReference<BasisBase>( basisName );
