@@ -90,6 +90,9 @@ void CompositeFunction::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->getChildNode(keys::inputVarNames)->setDefault("");
+  docNode->getChildNode(keys::inputVarTypes)->setDefault("");
+
 }
 
 void CompositeFunction::BuildDataStructure( ManagedGroup * const domain )

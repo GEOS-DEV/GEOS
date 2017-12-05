@@ -50,8 +50,7 @@ ProblemManager::ProblemManager( const std::string& name,
   RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
   RegisterGroup<FiniteElementManager>(groupKeys.finiteElementManager);
-  RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);     // Add
-                                                                               // this
+  RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
   RegisterGroup<MeshManager>(groupKeys.meshManager);
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
 
@@ -426,18 +425,18 @@ void ProblemManager::InitializationOrder( string_array & order )
 
 
   {
-    order.push_back(keys::finiteElementManager);
-    usedNames.insert(keys::finiteElementManager);
+    order.push_back(groupKeys.finiteElementManager.Key());
+    usedNames.insert(groupKeys.finiteElementManager.Key());
   }
 
   {
-    order.push_back(keys::domain);
-    usedNames.insert(keys::domain);
+    order.push_back(groupKeys.domain.Key());
+    usedNames.insert(groupKeys.domain.Key());
   }
 
   {
-    order.push_back(keys::eventManager);
-    usedNames.insert(keys::eventManager);
+    order.push_back(groupKeys.eventManager.Key());
+    usedNames.insert(groupKeys.eventManager.Key());
   }
 
   for( auto const & subGroup : this->GetSubGroups() )

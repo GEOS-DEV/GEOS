@@ -442,7 +442,6 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
 void InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
-  this->RegisterGroup<CellBlock>( childName );
 }
 
 
@@ -454,8 +453,7 @@ void InternalMeshGenerator::CreateChild( string const & childKey, string const &
 void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
   // This cannot find groupkeys:
-  // ManagedGroup * const meshBodies =
-  // domain->GetGroup(domain->groupKeys.meshBodies);
+  // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
   ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
@@ -475,6 +473,17 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
 
   bool isRadialWithOneThetaPartition = false;
+
+
+  // This should probably handled elsewhere:
+  for( auto & cellBlockName : m_regionNames )
+  {
+    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
+    cellBlock->SetDocumentationNodes();
+    cellBlock->RegisterDocumentationNodes();
+    cellBlock->ReadXML_PostProcess();
+  }
+
 
   localIndex_set & xnegNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("xneg") )->reference();
   localIndex_set & xposNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("xpos") )->reference();

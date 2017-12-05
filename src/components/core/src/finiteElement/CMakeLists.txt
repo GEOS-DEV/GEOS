@@ -13,6 +13,9 @@ set(geosx_core_sources
     finiteElement/basis/Polynomial.hpp    
     finiteElement/quadrature/QuadratureBase.hpp
     finiteElement/quadrature/GaussQuadrature.hpp
+    finiteElement/FiniteElementSpaceManager.hpp
+    finiteElement/basis/BasisFunctionManager.hpp
+    finiteElement/quadrature/QuadratureRuleManager.hpp
     PARENT_SCOPE )
 #
 # Specify all sources
@@ -29,4 +32,7 @@ set(geosx_core_sources
     finiteElement/basis/Polynomial.cpp    
     finiteElement/quadrature/QuadratureBase.cpp
     finiteElement/quadrature/GaussQuadrature.cpp
+    finiteElement/FiniteElementSpaceManager.cpp
+    finiteElement/basis/BasisFunctionManager.cpp
+    finiteElement/quadrature/QuadratureRuleManager.cpp
     PARENT_SCOPE )
