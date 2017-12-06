@@ -52,7 +52,8 @@ ProblemManager::ProblemManager( const std::string& name,
   RegisterGroup<FiniteElementManager>(groupKeys.finiteElementManager);
   RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
   RegisterGroup<MeshManager>(groupKeys.meshManager);
-  m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
+  // m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
+  m_physicsSolverManager = RegisterGroup<SolverBase>(groupKeys.physicsSolverManager);
 
   // The function manager is handled separately
   m_functionManager = NewFunctionManager::Instance();

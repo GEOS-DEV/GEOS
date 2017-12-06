@@ -71,6 +71,23 @@ void SolverBase::FillDocumentationNode()
 }
 
 
+
+void SolverBase::TimeStep( real64 const& time_n,
+                           real64 const& dt,
+                           const int cycleNumber,
+                           ManagedGroup * domain )
+{
+}
+
+
+
+void SolverBase::CreateChild( string const & childKey, string const & childName )
+{
+  std::cout << "Adding Solver: " << childKey << ", " << childName << std::endl;
+  this->RegisterGroup( childName, std::move(CatalogInterface::Factory( childKey, childName, this )) );
+}
+
+
 //void SolverBase::Initialize( dataRepository::ManagedGroup& /*domain*/ )
 //{
 //  *(this->getData<real64>(keys::courant)) =

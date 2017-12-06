@@ -22,7 +22,8 @@
 #include "optionparser.h"
 
 #include "ObjectManagerBase.hpp"
-#include "PhysicsSolvers/PhysicsSolverManager.hpp"
+// #include "PhysicsSolvers/PhysicsSolverManager.hpp"
+#include "PhysicsSolvers/SolverBase.hpp"
 #include "EventManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "schema/SchemaUtilities.hpp"
@@ -165,7 +166,8 @@ public:
 
 
 private:
-  PhysicsSolverManager * m_physicsSolverManager;
+  // PhysicsSolverManager * m_physicsSolverManager;
+  SolverBase * m_physicsSolverManager;
   EventManager * m_eventManager;
   NewFunctionManager * m_functionManager;
 };
