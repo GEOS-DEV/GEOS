@@ -109,16 +109,16 @@ public:
   }
 
 
-  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T * RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject );
+  template< typename T = ManagedGroup >
+  T * RegisterGroup( std::string const & name, std::unique_ptr<ManagedGroup> newObject );
 
-  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
+  template< typename T = ManagedGroup >
   T * RegisterGroup( std::string const & name )
   {
     return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
   }
 
-  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
+  template< typename T = ManagedGroup >
   T * RegisterGroup( subGroupMap::KeyIndex & keyIndex )
   {
     T * rval = RegisterGroup<T>( keyIndex.Key(), std::move(std::make_unique< T >( keyIndex.Key(), this )) );
@@ -655,8 +655,8 @@ using ViewKey = ManagedGroup::viewWrapperMap::KeyIndex;
 
 
 
-template < typename T, typename TBASE >
-T * ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
+template < typename T >
+T * ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<ManagedGroup> newObject )
 {
   #ifdef USE_DYNAMIC_CASTING
   return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
