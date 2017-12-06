@@ -148,10 +148,12 @@ void FiniteElementSpace::ReadXML_PostProcess()
   // TODO find a better way to do this that doesn't involve getParent(). We
   // shouldn't really use that unless there is no
   // other choice.
-  m_basis = this->getParent()->getParent()->GetGroup(keys::basisFunctions)->getData<BasisBase>(basisName);
-  m_quadrature = this->getParent()->getParent()->GetGroup(keys::quadratureRules)->getData<QuadratureBase>(quadratureName);
+  ManagedGroup const *  numericalMethods = this->getParent()->getParent();
+  ManagedGroup const *  basisManager = numericalMethods->GetGroup(keys::basisFunctions);
+  ManagedGroup const *  quadratureManager = numericalMethods->GetGroup(keys::quadratureRules);
+  m_basis = basisManager->getData<BasisBase>(basisName);
+  m_quadrature = quadratureManager->getData<QuadratureBase>(quadratureName);
   m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
-
 }
 
 void FiniteElementSpace::InitializePreSubGroups( ManagedGroup * const group )
