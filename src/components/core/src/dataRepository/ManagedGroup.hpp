@@ -319,13 +319,14 @@ public:
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
 
-  virtual void FillDocumentationNode();
-
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
-
   void SetDocumentationNodes();
 
+  virtual void FillDocumentationNode();
 
+  void SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup);
+
+  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
+  
 
   //***********************************************************************************************
 

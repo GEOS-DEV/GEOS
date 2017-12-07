@@ -489,6 +489,10 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshes(domain);
 
+  // Once the mesh is generated, fill and register other fields
+  this->SetOtherDocumentationNodes(this);
+  this->RegisterDocumentationNodes();
+
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     NodeManager * const nodeManager = ManagedGroup::group_cast<MeshBody*>(mesh.second.get())->getMeshLevel(0)->getNodeManager();

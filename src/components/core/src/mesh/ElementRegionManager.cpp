@@ -120,6 +120,9 @@ void ElementRegionManager::resize( integer_array const & numElements,
 
 void ElementRegionManager::CreateChild( string const & childKey, string const & childName )
 {
+
+  std::cout << this->getName() << std::endl;
+
   this->RegisterGroup<ElementRegion>( childName );
 }
 

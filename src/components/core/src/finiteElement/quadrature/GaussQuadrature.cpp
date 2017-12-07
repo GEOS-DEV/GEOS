@@ -124,10 +124,6 @@ void GaussQuadrature<dim>::ReadXML( xmlWrapper::xmlNode const & xmlNode )
   m_degree = xmlNode.attribute( "degree" ).as_int( 1 );
   m_n_gauss_points = StructuredGrid::dimpower<dim>( m_degree );
 
-    
-  std::cout << "-------DEBUG------- (d=" << m_degree << ")" << std::endl;
-
-
   assert( m_degree > 0 );
 
   m_points_1d.resize( m_degree );

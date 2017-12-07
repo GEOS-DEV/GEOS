@@ -179,11 +179,10 @@ void ManagedGroup::RegisterDocumentationNodes()
     }
   }
 
-  // This is redundant
-  // for( auto& subGroupIter : m_subGroups )
-  // {
-  //   subGroupIter.second->RegisterDocumentationNodes();
-  // }
+  for( auto& subGroupIter : m_subGroups )
+  {
+    subGroupIter.second->RegisterDocumentationNodes();
+  }
 
 }
 
@@ -195,10 +194,8 @@ void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const root
   }
 }
 
+// These fill the documentation and initialize fields on this:
 void ManagedGroup::FillDocumentationNode()
-{}
-
-void ManagedGroup::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const )
 {}
 
 void ManagedGroup::SetDocumentationNodes()
@@ -210,6 +207,21 @@ void ManagedGroup::SetDocumentationNodes()
     subGroup.second->SetDocumentationNodes();
   }
 }
+
+// These fill the documentation and initialize fields on other objects:
+void ManagedGroup::SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup)
+{
+  FillOtherDocumentationNodes(rootGroup);
+  for( auto&& subGroup : m_subGroups )
+  {
+    subGroup.second->SetOtherDocumentationNodes(rootGroup);
+  }
+}
+
+void ManagedGroup::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const )
+{
+}
+
 
 
 void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )

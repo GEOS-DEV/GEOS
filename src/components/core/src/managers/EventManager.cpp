@@ -31,7 +31,7 @@ void EventManager::FillDocumentationNode()
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   // Set the name to SolverApplications for now
-  docNode->setName("SolverApplications");
+  docNode->setName("Events");
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Contains the set of solver applications");
 }
