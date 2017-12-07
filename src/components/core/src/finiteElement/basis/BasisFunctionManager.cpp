@@ -30,8 +30,24 @@ void BasisFunctionManager::FillDocumentationNode()
 
 void BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
 {
+  std::cout << "Basis Function: " << childKey << ", " << childName << std::endl;
   std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey );
   this->RegisterViewWrapper( childName, std::move(basis) );
+}
+
+// Basis Base is not derived from ManagedGroup, so we need to do this manually:
+void BasisFunctionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+{
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    std::string childName = childNode.attribute("name").value();
+    BasisBase * basis = this->getData<BasisBase>(childName);
+
+    if (basis != nullptr)
+    {
+      basis->ReadXML(childNode);
+    }
+  }
 }
 
 

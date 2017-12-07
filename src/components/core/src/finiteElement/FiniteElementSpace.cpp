@@ -151,6 +151,7 @@ void FiniteElementSpace::ReadXML_PostProcess()
   ManagedGroup const *  numericalMethods = this->getParent()->getParent();
   ManagedGroup const *  basisManager = numericalMethods->GetGroup(keys::basisFunctions);
   ManagedGroup const *  quadratureManager = numericalMethods->GetGroup(keys::quadratureRules);
+  
   m_basis = basisManager->getData<BasisBase>(basisName);
   m_quadrature = quadratureManager->getData<QuadratureBase>(quadratureName);
   m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);

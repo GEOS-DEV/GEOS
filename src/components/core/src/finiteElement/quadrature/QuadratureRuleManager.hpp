@@ -9,7 +9,7 @@
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_QUADRATURERULEMANAGER_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-
+#include "fileIO/xmlWrapper.hpp"
 
 namespace geosx
 {
@@ -30,7 +30,7 @@ public:
 
   virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & childKey, string const & childName ) override;
-
+  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
 };
 
