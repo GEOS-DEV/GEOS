@@ -345,7 +345,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   // get face center (average vertex location) and store node coordinates
   array<R1Tensor> faceCoords(numFaceNodes);
   R1Tensor fc;
-  for( unsigned int n =0 ; n < numFaceNodes ; ++n)
+  for( localIndex n =0 ; n < numFaceNodes ; ++n)
   {
     localIndex nd = faceNodes[n];
     faceCoords[n] = X[nd];
@@ -416,7 +416,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   {
     /// Sort nodes counterclockwise around face center
     array< std::pair<realT,int> > thetaOrder(numFaceNodes);
-    for( unsigned int n =0 ; n < numFaceNodes ; ++n)
+    for( localIndex n =0 ; n < numFaceNodes ; ++n)
     {
       R1Tensor v = faceCoords[n];
       v -= fc;
@@ -426,14 +426,14 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
     sort(thetaOrder.begin(), thetaOrder.end());
 
     // Reorder nodes on face
-    for( unsigned int n =0 ; n < numFaceNodes ; ++n)
+    for( localIndex n =0 ; n < numFaceNodes ; ++n)
     {
       faceNodes[n] = thetaOrder[n].second;
     }
 
     localIndex_array tempFaceNodes(numFaceNodes);
     localIndex firstIndexIndex = 0;
-    for( unsigned int n =0 ; n < numFaceNodes ; ++n)
+    for( localIndex n =0 ; n < numFaceNodes ; ++n)
     {
       tempFaceNodes[n] = thetaOrder[n].second;
       if( tempFaceNodes[n] == firstNodeIndex )
@@ -441,7 +441,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
         firstIndexIndex = n;
       }
     }
-    for( unsigned int n=0 ; n < numFaceNodes ; ++n)
+    for( localIndex n=0 ; n < numFaceNodes ; ++n)
     {
       const localIndex index = firstIndexIndex+n < numFaceNodes ? firstIndexIndex+n : firstIndexIndex+n-numFaceNodes;
       faceNodes[n] = tempFaceNodes[index];

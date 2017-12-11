@@ -412,7 +412,7 @@ private:
 
     localIndex sizeOfPackedChars = 0;
 
-    const localIndex length = var.size();
+    const localIndex length = integer_conversion<localIndex>(var.size());
 
     sizeOfPackedChars += Pack( length );
 
@@ -591,7 +591,7 @@ inline localIndex bufvector::Unpack( const char*& buffer, array<string>& array )
 template< typename T>
 localIndex bufvector::PrivatePackGlobal( const T& container, globalIndex_array const& localToGlobal )
 {
-  const localIndex length = container.size();
+  const localIndex length = integer_conversion<localIndex>(container.size());
   localIndex sizeOfPackedChars = 0;
 
 //  std::cout<<"container.size() = "<<length<<std::endl;
@@ -865,40 +865,40 @@ inline localIndex bufvector::Unpack( const char*& buffer, UnorderedVariableOneTo
 //**********************************************************************************************************************
 inline localIndex bufvector::Pack( const std::string& var )
 {
-  localIndex sizeOfPackedChars = var.size();
+  string::size_type sizeOfPackedChars = var.size();
 
   this->PrivatePack( sizeOfPackedChars );
 
   const char* cvar = var.data();
-  for( localIndex i=0 ; i<sizeOfPackedChars ; ++i )
+  for( string::size_type i=0 ; i<sizeOfPackedChars ; ++i )
   {
     this->push_back(*(cvar++));
   }
 
   sizeOfPackedChars += sizeof( localIndex );
-  return sizeOfPackedChars;
+  return integer_conversion<localIndex>(sizeOfPackedChars);
 }
 
 inline localIndex bufvector::Pack(char*& buffer,  const std::string& var )
 {
-  localIndex sizeOfPackedChars = var.size();
+  string::size_type sizeOfPackedChars = var.size();
 
   PrivatePack(buffer,  sizeOfPackedChars );
 
-  for( localIndex i=0 ; i<sizeOfPackedChars ; ++i )
+  for( string::size_type i=0 ; i<sizeOfPackedChars ; ++i )
   {
     *buffer = var[i];
     buffer++;
   }
 
   sizeOfPackedChars += sizeof( localIndex );
-  return sizeOfPackedChars;
+  return integer_conversion<localIndex>(sizeOfPackedChars);
 }
 
 inline localIndex bufvector::Unpack( const char*& buffer, std::string& var )
 {
   localIndex sizeOfUnpackedChars = 0;
-  localIndex stringsize = 0;
+  string::size_type stringsize = 0;
 
   sizeOfUnpackedChars += PrivateUnpack( buffer, stringsize );
 

@@ -239,7 +239,7 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
       // Note: lower_bound uses a binary search...  If we assume coordinates are
       // evenly spaced, we can speed things up considerably
       auto lower = std::lower_bound(m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii]);
-      bounds[ii][1] = std::distance(m_coordinates[ii].begin(), lower);
+      bounds[ii][1] = multidimensionalArray::integer_conversion<localIndex>(std::distance(m_coordinates[ii].begin(), lower));
       bounds[ii][0] = bounds[ii][1] - 1;
 
       real64 dx = m_coordinates[ii][bounds[ii][1]] - m_coordinates[ii][bounds[ii][0]];
