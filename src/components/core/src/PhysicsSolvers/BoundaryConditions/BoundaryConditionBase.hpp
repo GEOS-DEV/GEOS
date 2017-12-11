@@ -345,7 +345,8 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
           }
           else
           {
-            real64_array result(set.size());
+            real64_array result;
+            result.resize( integer_conversion<localIndex>(set.size()));
             function->Evaluate( dataGroup, time, set, result );
             integer counter=0;
             for( auto a : set )

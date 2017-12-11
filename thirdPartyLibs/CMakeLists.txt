@@ -63,6 +63,7 @@ if (HDF5_DIR)
                        INCLUDES ${HDF5_INCLUDE_DIRS}
                        LIBRARIES ${HDF5_LIBRARY} 
                        TREAT_INCLUDES_AS_SYSTEM ON )
+  message(INFO ": Using HDF5 found at ${HDF5_DIR}")
 
 else()
     message(INFO ": Using HDF5 found at https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz")
@@ -106,7 +107,7 @@ else()
 #                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/silo-4.10.2-bsd.tar.gz
                           PREFIX ${PROJECT_BINARY_DIR}/silo
-#                          DEPENDS hdf5
+                          DEPENDS hdf5
                           INSTALL_DIR ${silo_install_dir}
                           CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
                                                CXX=${CMAKE_CXX_COMPILER}
