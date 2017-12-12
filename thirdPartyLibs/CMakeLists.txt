@@ -25,6 +25,8 @@ set( dependency_list "" )
 ################################
 # UNCRUSTIFY
 ################################
+message( "ENABLE_UNCRUSTIFY = ${ENABLE_UNCRUSTIFY}")
+if( ENABLE_UNCRUSTIFY )
 if (UNCRUSTIFY_DIR)
 #  include(../src/cmake/thirdparty/FindHDF5.cmake)
 #  blt_register_library(NAME hdf5
@@ -39,17 +41,18 @@ else()
     ExternalProject_Add( uncrustify
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/uncrustify-master.zip
                           PREFIX ${PROJECT_BINARY_DIR}/uncrustify
-                          BUILD_COMMAND make -j8
+                          BUILD_COMMAND make -j1
                           INSTALL_COMMAND make install
                           INSTALL_DIR ${uncrustify_install_dir}
                           CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-                                    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                     -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+                                     -DCMAKE_CXX_FLAGS="-g1 -O2 -std=c++11" )
 
     set( dependency_list "${dependency_list};uncrustify" )
 
 endif()
-
+endif()
 
 
 
@@ -74,10 +77,9 @@ else()
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/hdf5-1.10.1.tar.gz
 #                          URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz
                           PREFIX ${PROJECT_BINARY_DIR}/hdf5
-                          CONFIGURE_COMMAND ../hdf5/configure CC=${CMAKE_C_COMPILER}
-                                               CXX=${CMAKE_CXX_COMPILER}
+                          CONFIGURE_COMMAND ../hdf5/configure CC=${SERIAL_C_COMPILER}
+                                               CXX=${SERIAL_CXX_COMPILER}
                                                --enable-build-mode=production
-                                               --enable-cxx
                                                --prefix=${HDF5_ROOT}
                                                BUILD_COMMAND make -j8
                                                INSTALL_COMMAND make install )
@@ -108,8 +110,8 @@ else()
                           PREFIX ${PROJECT_BINARY_DIR}/silo
 #                          DEPENDS hdf5
                           INSTALL_DIR ${silo_install_dir}
-                          CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
-                                               CXX=${CMAKE_CXX_COMPILER}
+                          CONFIGURE_COMMAND ../silo/configure CC=${SERIAL_C_COMPILER}
+                                               CXX=${SERIAL_CXX_COMPILER}
                                                --prefix=${silo_install_dir}
                                                --disable-fortran
                                                --enable-optimization

@@ -55,5 +55,6 @@ blt_add_library( NAME                  geosx_core
                  
 #                 DEPENDS_ON            optionparser cxx-utilities  pugixml  silo hdf5 trilinos  ${extraComponentsListLink} ${thirdPartyLibs} )
                  
-                 
+if( ENABLE_UNCRUSTIFY )
 geosx_add_code_checks(PREFIX core)
+endif()

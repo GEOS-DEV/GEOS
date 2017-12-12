@@ -8,7 +8,7 @@
 
 
 
-set(CONFIG_NAME "quartz-toss_3_x86_64_ib-gcc@7.1.0_noAXOM" CACHE PATH "") 
+#set(CONFIG_NAME "quartz-toss_3_x86_64_ib-gcc@7.1.0_noAXOM" CACHE PATH "") 
 
 #set(TPL_DIR "/usr/gapps/GEOS/geosx/2017_10_04_13_56_50" CACHE PATH "" )
 #include("${TPL_DIR}/${CONFIG_NAME}.cmake")
@@ -19,14 +19,8 @@ set(CONFIG_NAME "quartz-toss_3_x86_64_ib-gcc@7.1.0_noAXOM" CACHE PATH "")
 
 
 # c compiler used by spack
-#set(CMAKE_C_COMPILER "/usr/tce/packages/gcc/gcc-7.1.0/bin/gcc" CACHE PATH "")
-#set(CMAKE_CXX_COMPILER "/usr/tce/packages/gcc/gcc-7.1.0/bin/g++" CACHE PATH "")
-
-#set(CMAKE_C_COMPILER "/opt/gcc/7.1.0/bin/gcc" CACHE PATH "")
-#set(CMAKE_CXX_COMPILER "/opt/gcc/7.1.0/bin/g++" CACHE PATH "")
-
-#set(CMAKE_CXX_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icpc" CACHE PATH "")
-#set(CMAKE_C_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icc" CACHE PATH "")
+set(SERIAL_CXX_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icpc" CACHE PATH "")
+set(SERIAL_C_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icc" CACHE PATH "")
 
 set(CMAKE_CXX_COMPILER "/opt/cray/pe/craype/2.5.12/bin/CC" CACHE PATH "")
 set(CMAKE_C_COMPILER "/opt/cray/pe/craype/2.5.12/bin/cc" CACHE PATH "")
@@ -39,7 +33,7 @@ set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MPI ON CACHE BOOL "" FORCE)
 
 #set(MPI_HOME             "/usr/tce/packages/mvapich2/mvapich2-2.2-gcc-7.1.0" CACHE PATH "")
-set(MPI_HOME             "/opt/intel/compilers_and_libraries_2018.0.128/linux/mpi/intel64" CACHE PATH "")
+#set(MPI_HOME             "/opt/intel/compilers_and_libraries_2018.0.128/linux/mpi/intel64" CACHE PATH "")
 
 #set(MPI_C_COMPILER       "${MPI_HOME}/bin/mpiicc"   CACHE PATH "")
 #set(MPI_CXX_COMPILER     "${MPI_HOME}/bin/mpiicpc"  CACHE PATH "")
@@ -62,8 +56,8 @@ set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 
 
-#set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
-set( GEOSX_TPL_ROOT_DIR "~/Git-Repos/geosx/thirdPartyLibs/" CACHE PATH "" )
+set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
+#set( GEOSX_TPL_ROOT_DIR "~/Git-Repos/geosx/thirdPartyLibs/" CACHE PATH "" )
 
 
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
@@ -71,23 +65,25 @@ set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
 
 set(ENABLE_MATHPRESSO ON CACHE BOOL  "Enables mathpresso Plugin")
 
+set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "Enables uncrusitfy")
+
 #######################################
 # RAJA/CHAI SETUP
 #######################################
 #set(RAJA_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/raja/" CACHE PATH "" FORCE )
 #set(CHAI_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/chai/" CACHE PATH "" FORCE )
 
-set(RAJA_DIR "~/Git-Repos/RAJA/myInstall" CACHE PATH "" FORCE )
-set(CHAI_DIR "~/Git-Repos/CHAI/install" CACHE PATH "" FORCE )
+#set(RAJA_DIR "~/Git-Repos/RAJA/myInstall" CACHE PATH "" FORCE )
+#set(CHAI_DIR "~/Git-Repos/CHAI/install" CACHE PATH "" FORCE )
 
 #set(HDF5_DIR "/opt/cray/pe/modulefiles/cray-hdf5-parallel/1.10.0.3" CACHE PATH "" FORCE)
 #set(HDF5_DIR "/opt/cray/pe/modulefiles/cray-hdf5/1.8.14" CACHE PATH "" FORCE)
 #set(HDF5_DIR "/usr/common/software/modulefiles/hdf5-parallel/1.10.1" CACHE PATH "" FORCE)
  
-set(HDF5_DIR "/global/homes/v/vargas45/Git-Repos/axom/uberenv_libs/spack/opt/spack/linux-x86_64/gcc-7.1.0/hdf5-1.8.16-bptv6mmuhama7dgqbc2zfrye7sk5nirs" CACHE PATH "" FORCE)
+#set(HDF5_DIR "/global/homes/v/vargas45/Git-Repos/axom/uberenv_libs/spack/opt/spack/linux-x86_64/gcc-7.1.0/hdf5-1.8.16-bptv6mmuhama7dgqbc2zfrye7sk5nirs" CACHE PATH "" FORCE)
 
 #set(RAJA_INCLUDE_DIR "~/Git-Repos/RAJA/myInstall/include" CACHE PATH "" FORCE )
-set(CHAI_INCLUDE_DIRS "~/Git-Repos/CHAI/install/include" CACHE PATH "" FORCE )
+#set(CHAI_INCLUDE_DIRS "~/Git-Repos/CHAI/install/include" CACHE PATH "" FORCE )
 
 #set(TRILINOS_DIR "~/opt/cray/pe/modulefiles/cray-trilinos/12.10.1.1" CACHE PATH "" FORCE)
 #set(TRILINOS_DIR "/opt/cray/pe/trilinos/12.10.1.1" CACHE PATH "" FORCE)

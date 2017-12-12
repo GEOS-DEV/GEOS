@@ -11,6 +11,18 @@
 #include <string>
 #include <memory>
 #include "common/DataTypes.hpp"
+#ifdef __INTEL_COMPILER                                                                                                                                               
+namespace std                                                                                                                                                         
+{                                                                                                                                                                     
+  template<typename T, typename... Args>                                                                                                                                
+  std::unique_ptr<T> make_unique(Args&&... args)                                                                                                                        
+  {                                                                                                                                                                     
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));                                                                                                      
+  }                                                                                                                                                                     
+}                                                                                                                                                                     
+                                                                                                                                                                      
+#endif   
+
 
 #ifdef USE_ATK
 namespace axom
