@@ -429,10 +429,10 @@ else()
                                 -D Trilinos_ENABLE_Boost=OFF
                                 -D Trilinos_ENABLE_STK=OFF
                                 -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON 
-#				-D TPL_BLAS_LIBRARIES='/opt/cray/pe/libsci/17.09.1/GNU/6.1/x86_64/include;' 
-#				-D TPL_LAPACK_LIBRARIES='/opt/cray/pe/libsci/17.09.1/GNU/6.1/x86_64/include;')
-				-D TPL_BLAS_LIBRARIES='/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/include;' 
-				-D TPL_LAPACK_LIBRARIES='/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/include;')
+				-D TPL_BLAS_LIBRARIES=/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel.a;/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/sci_intel_mpi;/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel_mp.a;/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel_mpi_mp.a
+				-D TPL_BLAS_INCLUDE_DIRS=/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/include
+				-D TPL_LAPACK_LIBRARIES=/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel.a;/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel_mpi.a;/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel_mp.a;/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel_mpi_mp.a
+				-D TPL_LAPACK_INCLUDE_DIRS=/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/include)
 				#set( dependency_list "${dependency_list};trilinos" )
 set( dependency_list "${dependency_list};trilinos" )
 endif()
