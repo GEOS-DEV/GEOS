@@ -9,6 +9,7 @@ set(geosx_headers
     PhysicsSolvers/BoundaryConditions/BoundaryConditionBase.hpp
     PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp
     PhysicsSolvers/BoundaryConditions/DirichletBoundaryCondition.hpp
+    PhysicsSolvers/SimpleSolvers/LaplaceFEM.hpp
     PARENT_SCOPE )
 
 #
@@ -21,4 +22,5 @@ set(geosx_core_sources
     PhysicsSolvers/BoundaryConditions/BoundaryConditionBase.cpp
     PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.cpp
     PhysicsSolvers/BoundaryConditions/DirichletBoundaryCondition.cpp
+    PhysicsSolvers/SimpleSolvers/LaplaceFEM.cpp
     PARENT_SCOPE )

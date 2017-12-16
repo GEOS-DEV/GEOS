@@ -721,7 +721,7 @@ void ProblemManager::RunSimulation()
   }
 //  }
 
-//  WriteSilo( cycle, time );
+  WriteSilo( cycle, time );
 
 
 #ifdef USE_CALIPER

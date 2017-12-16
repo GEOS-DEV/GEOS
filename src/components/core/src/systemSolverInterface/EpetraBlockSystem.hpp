@@ -76,6 +76,7 @@ public:
   constexpr static int invalidIndex=-1;
   enum class BlockIDs
   {
+    dummyScalarBlock,
     displacementBlock,
     fluidPressureBlock,
     temperatureBlock,
@@ -87,9 +88,12 @@ public:
     string rval;
     switch( id )
     {
-    case BlockIDs::displacementBlock:
-      rval = "displacementBlock";
-      break;
+      case BlockIDs::dummyScalarBlock:
+        rval = "dummyScalarBlock";
+        break;
+      case BlockIDs::displacementBlock:
+        rval = "displacementBlock";
+        break;
     case BlockIDs::fluidPressureBlock:
       rval = "fluidPressureBlock";
       break;

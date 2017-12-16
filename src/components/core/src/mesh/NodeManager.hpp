@@ -150,7 +150,7 @@ public:
   {
     static constexpr auto referencePositionString = "ReferencePosition";
     dataRepository::ViewKey referencePosition = { referencePositionString };
-    dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
+//    dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
     dataRepository::ViewKey nodeList           = { "nodeList" };
     dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
     dataRepository::ViewKey faceList           = { "faceList" };
@@ -163,8 +163,8 @@ public:
 
   view_rtype_const<r1_array> referencePosition() const { return this->getData<r1_array>(viewKeys.referencePosition); }
   view_rtype<r1_array>       referencePosition()       { return this->getData<r1_array>(viewKeys.referencePosition); }
-  view_rtype_const<r1_array> totalDisplacement() const { return this->getData<r1_array>(viewKeys.totalDisplacement); }
-  view_rtype<r1_array>       totalDisplacement()       { return this->getData<r1_array>(viewKeys.totalDisplacement); }
+//  view_rtype_const<r1_array> totalDisplacement() const { return this->getData<r1_array>(viewKeys.totalDisplacement); }
+//  view_rtype<r1_array>       totalDisplacement()       { return this->getData<r1_array>(viewKeys.totalDisplacement); }
 protected:
 
 private:

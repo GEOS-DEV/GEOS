@@ -95,7 +95,7 @@ void BoundaryConditionBase::FillDocumentationNode( dataRepository::ManagedGroup 
                               "integer",
                               "Component of field (if tensor) to apply boundary condition to",
                               "",
-                              "-1",
+                              "0",
                               "",
                               0,
                               1,

@@ -112,6 +112,8 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
     Epetra_MultiVector tmp (*rhs);
     rhs->Multiply(1.0,scaling,tmp,0.0);
   }
+  matrix->Print(std::cout);
+  rhs->Print(std::cout);
 
   Epetra_LinearProblem problem( matrix,
                                 solution,

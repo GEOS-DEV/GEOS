@@ -77,6 +77,7 @@ public:
                                                     dataRepository::ManagedGroup * dataGroup,
                                                     string const & fieldName,
                                                     string const & dofMapName,
+                                                    integer const & dofDim,
                                                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                     systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const;
 
@@ -264,10 +265,10 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
                                                                          dataRepository::ManagedGroup * dataGroup,
                                                                          string const & fieldName,
                                                                          string const & dofMapName,
+                                                                         integer const & dofDim,
                                                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                                          systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const
 {
-  int dim = 3;
   integer const component = GetComponent();
   string const functionName = getData<string>(dataRepository::keys::functionName);
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
@@ -296,7 +297,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
         integer counter=0;
         for( auto a : set )
         {
-          node_dof(counter) = dim*integer_conversion<int>(dofMap[a])+component;
+          node_dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
           this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
                                                                     blockSystem,
                                                                     blockID,
@@ -325,7 +326,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
             integer counter=0;
             for( auto a : set )
             {
-              node_dof(counter) = dim*integer_conversion<int>(dofMap[a])+component;
+              node_dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
               this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
                                                                         blockSystem,
                                                                         blockID,
@@ -351,7 +352,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
             integer counter=0;
             for( auto a : set )
             {
-              node_dof(counter) = dim*integer_conversion<int>(dofMap[a])+component;
+              node_dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
               this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
                                                                         blockSystem,
                                                                         blockID,

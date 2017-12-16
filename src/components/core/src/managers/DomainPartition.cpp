@@ -246,7 +246,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 
     r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::ReferencePosition);
 
-    r1_array const * const displacement = nodeManager->GetFieldDataPointer<r1_array>(keys::TotalDisplacement);
+//    r1_array const * const displacement = nodeManager->GetFieldDataPointer<r1_array>(keys::TotalDisplacement);
 
     bool writeArbitraryPolygon(false);
     const std::string meshName("volume_mesh");
@@ -259,10 +259,10 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     {
       R1Tensor nodePosition;
       nodePosition = referencePosition[a];
-      if( displacement!=nullptr )
-      {
-        nodePosition += (*displacement)[a];
-      }
+//      if( displacement!=nullptr )
+//      {
+//        nodePosition += (*displacement)[a];
+//      }
 
       xcoords[a] = nodePosition(0);
       ycoords[a] = nodePosition(1);
