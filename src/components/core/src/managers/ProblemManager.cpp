@@ -701,8 +701,9 @@ void ProblemManager::RunSimulation()
 
     while( time < endTime )
     {
-      std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-      WriteSilo( cycle, time );
+
+      //std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+      //WriteSilo( cycle, time );
       real64 nextDt = std::numeric_limits<real64>::max();
 
       for ( auto jj=0 ; jj<solverList.size() ; ++jj)
