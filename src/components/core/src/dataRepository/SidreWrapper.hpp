@@ -7,9 +7,8 @@
 
 #ifndef COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
 #define COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
+
 #include "common/GeosxConfig.hpp"
-
-
 #include <string>
 
 #ifdef USE_ATK

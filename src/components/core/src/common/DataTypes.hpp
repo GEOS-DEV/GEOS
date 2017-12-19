@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "common/GeosxConfig.hpp"
-#if ATK_FOUND
+#ifdef USE_ATK
 #include "sidre/SidreTypes.hpp"
 #endif
 
@@ -256,7 +256,7 @@ public:
   {
     const std::unordered_map<std::type_index,TypeIDs> type_names =
     {
-      { std::type_index(typeid(integer)),        TypeIDs::integer_id },
+      { std::type_index(typeid(integer)),      TypeIDs::integer_id },
       { std::type_index(typeid(localIndex)),   TypeIDs::real32_id },
       { std::type_index(typeid(globalIndex)),  TypeIDs::real64_id },
       { std::type_index(typeid(real32)),       TypeIDs::real32_id },
@@ -285,16 +285,15 @@ public:
   {
     const std::unordered_map<std::type_index, axom::sidre::TypeID> sidre_types =
     {
-      { std::type_index(typeid(int32)),         axom::sidre::TypeID::INT32_ID },
-      { std::type_index(typeid(uint32)),        axom::sidre::TypeID::UINT32_ID },
-      { std::type_index(typeid(int64)),         axom::sidre::TypeID::INT64_ID },
-      { std::type_index(typeid(uint64)),        axom::sidre::TypeID::UINT64_ID },
-      { std::type_index(typeid(real32)),        axom::sidre::TypeID::FLOAT32_ID },   
-      { std::type_index(typeid(real64)),        axom::sidre::TypeID::FLOAT64_ID },
-      { std::type_index(typeid(R1Tensor)),      axom::sidre::TypeID::FLOAT64_ID },
-      { std::type_index(typeid(R2Tensor)),      axom::sidre::TypeID::FLOAT64_ID },
-      { std::type_index(typeid(R2SymTensor)),   axom::sidre::TypeID::FLOAT64_ID },
-      { std::type_index(typeid(char)),          axom::sidre::TypeID::UINT8_ID }
+      { std::type_index(typeid(integer)),       axom::sidre::detail::SidreTT<integer>::id },
+      { std::type_index(typeid(localIndex)),    axom::sidre::detail::SidreTT<localIndex>::id },
+      { std::type_index(typeid(globalIndex)),   axom::sidre::detail::SidreTT<globalIndex>::id },
+      { std::type_index(typeid(real32)),        axom::sidre::detail::SidreTT<real32>::id },   
+      { std::type_index(typeid(real64)),        axom::sidre::detail::SidreTT<real64>::id },
+      { std::type_index(typeid(R1Tensor)),      axom::sidre::detail::SidreTT<real64>::id },
+      { std::type_index(typeid(R2Tensor)),      axom::sidre::detail::SidreTT<real64>::id },
+      { std::type_index(typeid(R2SymTensor)),   axom::sidre::detail::SidreTT<real64>::id },
+      { std::type_index(typeid(char)),          axom::sidre::detail::SidreTT<char>::id }
     };
 
     auto it = sidre_types.find(typeIndex); 
@@ -305,15 +304,13 @@ public:
     return it->second;
   }
 
-
   static localIndex getSidreSize( std::type_index typeIndex )
   {
     const std::unordered_map<std::type_index, localIndex> sidre_sizes =
     {
-      { std::type_index(typeid(int32)),         sizeof(int32) },
-      { std::type_index(typeid(uint32)),        sizeof(uint32) },
-      { std::type_index(typeid(int64)),         sizeof(int64) },
-      { std::type_index(typeid(uint64)),        sizeof(uint64) },
+      { std::type_index(typeid(integer)),       sizeof(integer) },
+      { std::type_index(typeid(localIndex)),    sizeof(localIndex) },
+      { std::type_index(typeid(globalIndex)),   sizeof(globalIndex) },
       { std::type_index(typeid(real32)),        sizeof(real32) },   
       { std::type_index(typeid(real64)),        sizeof(real64) },
       { std::type_index(typeid(R1Tensor)),      sizeof(real64) },
@@ -330,7 +327,7 @@ public:
     return it->second;
   }
 
-#endif /* ATK_FOUND */
+#endif /* USE_ATK */
 
 
   // Matching regex for data types in xml

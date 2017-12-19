@@ -663,50 +663,6 @@ public:
   }
 
 
-
-  void registerDataPtr(axom::sidre::View * view) const override
-  {
-#if ATK_FOUND
-    view = (view != nullptr) ? view : getSidreView();
-
-    localIndex num_elements = size();
-    if (num_elements > 0)
-    {
-      std::type_index type_index = std::type_index(elementTypeID());
-      axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
-      if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
-      {
-        return;
-      }
-
-      localIndex sidre_size = rtTypes::getSidreSize(type_index);
-      localIndex byte_size = byteSize();
-      localIndex element_size = elementSize();
-
-      int ndims = numDimensions();
-      axom::sidre::SidreLength dims[ndims + 1];
-      for (localIndex dim = 0; dim < ndims; ++dim)
-      {
-        dims[dim] = dimension(dim);
-      }
-
-      if ( byte_size > num_elements * sidre_size )
-      {
-        dims[ndims++] = element_size / sidre_size;
-      }
-      
-      void * ptr = const_cast<void*>((void const *) dataPtr());
-      view->setExternalDataPtr(sidre_type_id, ndims, dims, ptr);
-    }
-    else
-    {
-      unregisterDataPtr(view);
-    }
-#endif
-  }
-
-
-
   struct register_to_write_wrapper
   {
     template<class U = T>
