@@ -129,7 +129,7 @@ public:
   void WriteSilo( integer const cycleNumber, real64 const problemTime );
 
   // function to create and dump the restart file
-  void WriteRestart( int32 const cycleNumber );
+  void WriteRestart( integer const cycleNumber );
 
   void ReadRestartOverwrite( const std::string& restartFileName );
 

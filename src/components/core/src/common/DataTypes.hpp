@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "common/GeosxConfig.hpp"
+
 #ifdef USE_ATK
 #include "sidre/SidreTypes.hpp"
 #endif
@@ -31,6 +32,10 @@
 
 //#include "legacy/ArrayT/ArrayT.h"
 #include "math/TensorT/TensorT.h"
+
+#ifdef USE_ATK
+#include "sidre/SidreTypes.hpp"
+#endif
 
 #ifndef CONTAINERARRAY_RETURN_PTR
 #define CONTAINERARRAY_RETURN_PTR 1
@@ -293,7 +298,7 @@ public:
       { std::type_index(typeid(R1Tensor)),      axom::sidre::detail::SidreTT<real64>::id },
       { std::type_index(typeid(R2Tensor)),      axom::sidre::detail::SidreTT<real64>::id },
       { std::type_index(typeid(R2SymTensor)),   axom::sidre::detail::SidreTT<real64>::id },
-      { std::type_index(typeid(char)),          axom::sidre::detail::SidreTT<char>::id }
+      { std::type_index(typeid(char)),          axom::sidre::TypeID::UINT8_ID }
     };
 
     auto it = sidre_types.find(typeIndex); 

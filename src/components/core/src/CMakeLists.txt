@@ -39,7 +39,7 @@ if( ENABLE_MPI )
 endif()
 
 if( USE_ATK )
-  set( extraComponentsListLink ${extraComponentsListLink}  )
+  set( extraComponentsListLink ${extraComponentsListLink} )
 endif()
 
 #message( "extraComponentsListLink = ${extraComponentsListLink}" )

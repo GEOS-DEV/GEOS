@@ -362,7 +362,7 @@ public:
     const localIndex * buff = reinterpret_cast<const localIndex *>(buffer);
     const localIndex dim0 = buff[0];
     const localIndex dim1 = buff[1];
-    arr.resize2(dim0, dim1);
+    arr.resize(dim0, dim1);
 
     localIndex bytes_recorded = 2 * sizeof(localIndex);
     bytes_recorded += dim0 * dim1 * sizeof(T);

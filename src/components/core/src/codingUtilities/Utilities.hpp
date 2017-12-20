@@ -724,7 +724,7 @@ inline void Intersection( const set<TYPE>& set1, const set<TYPE>& set2, set<TYPE
 }
 
 template< typename TYPE >
-inline void Intersection( const set<TYPE>& input, const Array1dT<TYPE>& array, set<TYPE>& intersection )
+inline void Intersection( const set<TYPE>& input, const array<TYPE>& arr, set<TYPE>& intersection )
 {
   intersection.clear();
 
@@ -738,7 +738,7 @@ inline void Intersection( const set<TYPE>& input, const Array1dT<TYPE>& array, s
 }
 
 template< typename TYPE >
-inline void Intersection( const set<TYPE>& input, const Array1dT<TYPE>& array, Array1dT<TYPE>& intersection )
+inline void Intersection( const set<TYPE>& input, const array<TYPE>& arr, array<TYPE>& intersection )
 {
   intersection.clear();
 

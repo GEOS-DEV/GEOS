@@ -1,3 +1,5 @@
+#include "common/GeosxConfig.hpp"
+
 #include "Blueprint.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
@@ -48,6 +50,7 @@ Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManage
 
 void Blueprint::write(int cycle) const
 {
+#ifdef USE_ATK
   const string mesh_name = "bp_mesh";
   
   DataStore ds;
@@ -100,11 +103,13 @@ void Blueprint::write(int cycle) const
 
   conduit::relay::io::save(root_node, root_output_path, "hdf5");
   conduit::relay::io::save(mesh_node, output_path);
+#endif /* USE_ATK */
 }
 
 
 void Blueprint::addNodes(Group* coords, Group* fields) const
 {
+#ifdef USE_ATK
   coords->createView("type")->setString("explicit");
 
   localIndex n_nodes = m_node_manager.getWrapperBase(m_node_manager.viewKeys.referencePosition)->size();
@@ -140,11 +145,13 @@ void Blueprint::addNodes(Group* coords, Group* fields) const
       view->registerDataPtr(data);
     }
   }
+#endif /* USE_ATK */
 }
 
 
 void Blueprint::addCells(Group* topo, Group* fields) const
 {
+#ifdef USE_ATK
   std::unordered_map<std::string, int> numberOfNodesOfType = 
   {
     { "point", 0 },
@@ -159,7 +166,7 @@ void Blueprint::addCells(Group* topo, Group* fields) const
     numberOfNodesOfType[elem_name] += cell_block->m_toNodesRelation.size();
   });
 
-  std::unordered_map<std::string, std::pair<int32*, int32>> elementsToNodes;
+  std::unordered_map<std::string, std::pair<localIndex*, localIndex>> elementsToNodes;
 
   topo->createView("coordset")->setString(m_coord_name);
   topo->createView("type")->setString("unstructured");
@@ -168,29 +175,30 @@ void Blueprint::addCells(Group* topo, Group* fields) const
   for (std::pair<const std::string, int>& value : numberOfNodesOfType)
   {
     const std::string& elem_type = value.first;
-    const int32 num_nodes = value.second;
+    const localIndex num_nodes = value.second;
     if (num_nodes > 0)
     {
       Group* elem_group = elements->createGroup(elem_type);
       elem_group->createView("shape")->setString(elem_type);
-      View* coordinates = elem_group->createView("connectivity", INT32_ID, num_nodes);
+      View* coordinates = elem_group->createView("connectivity", detail::SidreTT<localIndex>::id, num_nodes);
       coordinates->allocate();
-      elementsToNodes[elem_type] = std::pair<int32*, int32>(coordinates->getArray(), 0);
+      elementsToNodes[elem_type] = std::pair<localIndex*, localIndex>(coordinates->getArray(), 0);
     }
   }
 
   m_elem_reg_manager.forCellBlocks([this, &elementsToNodes](const CellBlock* cell_block) 
   {
     const std::string& elem_name = this->numNodesToElemName.at(cell_block->numNodesPerElement());
-    std::pair<int32*, int32>& pair = elementsToNodes[elem_name];
-    int32* to = pair.first + pair.second;
-    const int32* from = cell_block->m_toNodesRelation[0];
-    const int32 num_nodes = cell_block->m_toNodesRelation.size();
-    const localIndex byte_size = num_nodes * sizeof(int32);
+    std::pair<localIndex*, localIndex>& pair = elementsToNodes[elem_name];
+    localIndex* to = pair.first + pair.second;
+    const localIndex* from = cell_block->m_toNodesRelation[0];
+    const localIndex num_nodes = cell_block->m_toNodesRelation.size();
+    const localIndex byte_size = num_nodes * sizeof(localIndex);
     std::memcpy(to, from, byte_size);
     pair.second += num_nodes;
   });
+#endif /* USE_ATK */
 }
 
 
-} /* end namespace geosx */ 
+} /* end namespace geosx */

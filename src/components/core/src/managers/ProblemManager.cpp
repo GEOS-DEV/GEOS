@@ -659,9 +659,9 @@ void ProblemManager::RunSimulation()
     real64& appDt = *(currentApplication.getData<real64>(keys::dt));
     real64& time = *(currentApplication.getData<real64>(keys::time));
     real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
-    int32& cycle = *(currentApplication.getData<int32>(keys::cycle));
+    integer& cycle = *(currentApplication.getData<integer>(keys::cycle));
 
-    int32 lockDt = (appDt > 0.0);
+    integer lockDt = (appDt > 0.0);
     if (lockDt)
     {
       dt = appDt;
@@ -750,7 +750,7 @@ void ProblemManager::ApplyInitialConditions()
 
 }
 
-void ProblemManager::WriteRestart( int32 const cycleNumber )
+void ProblemManager::WriteRestart( integer const cycleNumber )
 {
 #if ATK_FOUND
   char fileName[200] = {0};

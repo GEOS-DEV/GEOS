@@ -407,7 +407,7 @@ private:
 
   //********************************************************************************************************************
   template< typename T >
-  unsigned int PrivatePackSet( const set<T>& var )
+  localIndex PrivatePackSet( const set<T>& var )
   {
 
     localIndex sizeOfPackedChars = 0;
@@ -427,7 +427,7 @@ private:
 
 
   template< typename T>
-  static unsigned int PrivateUnpackSet( const char*& buffer, set<T>& setToRead )
+  static localIndex PrivateUnpackSet( const char*& buffer, set<T>& setToRead )
   {
     setToRead.clear();
 
