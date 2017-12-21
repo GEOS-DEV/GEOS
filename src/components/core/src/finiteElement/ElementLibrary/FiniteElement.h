@@ -163,7 +163,7 @@ FiniteElement<dim> :: FiniteElement(BasisBase const &basis,
 template <int dim>
 void FiniteElement<dim> :: reinit(const array<R1TensorT<3> > &mapped_support_points)
 {
-  assert(mapped_support_points.size() == static_cast<unsigned>(n_dofs));
+  assert(mapped_support_points.size() == n_dofs);
 
   R2TensorT<3> jacobian;
   R2TensorT<3> inv_jacobian;

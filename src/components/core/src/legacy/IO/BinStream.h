@@ -305,7 +305,7 @@ public:
     this->read( length );
 
     array<char> readstring;
-    readstring.resize(length);
+    readstring.resize( integer_conversion<localIndex>(length));
     this->read( readstring.data(), readstring.size() );
 
     str.assign( readstring.begin(),readstring.end() );

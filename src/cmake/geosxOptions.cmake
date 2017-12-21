@@ -104,7 +104,7 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
 	
 	
 #	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "-Wl,-export-dynamic")
-  set(CMAKE_EXE_LINKER_FLAGS "-Wl,-export-dynamic")
+#  set(CMAKE_EXE_LINKER_FLAGS "-Wl,-export-dynamic")
 
 	# FLAGS TO SUPRESS RAJA WARNINGS
 #	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-shorten-64-to-32)

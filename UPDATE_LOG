@@ -1,5 +1,13 @@
 
 
+Mon Dec 11 08:00:39 2017 Randolph R. Settgast
+v0.0.21
+
+Updated build for darwin.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/11
+
+
 Mon Dec  4 10:37:46 2017 Randolph R. Settgast
 v0.0.20
 

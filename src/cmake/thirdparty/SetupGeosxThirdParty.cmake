@@ -390,6 +390,21 @@ set( thirdPartyLibs ${thirdPartyLibs} trilinos )
 if (UNCRUSTIFY_EXECUTABLE)
   include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
 endif()
+message("UNCRUSTIFY_FOUND = ${UNCRUSTIFY_FOUND}")
+if(UNCRUSTIFY_FOUND)
+    # targets for verifying formatting
+    if( NOT TARGET uncrustify_check )
+        add_custom_target(uncrustify_check)
+        add_dependencies(check uncrustify_check)
+    endif()
+
+    # targets for modifying formatting
+    if( NOT TARGET uncrustify_style )
+        add_custom_target(uncrustify_style)
+        add_dependencies(style uncrustify_style)
+    endif()
+    
+endif()
 
 message("Leaving SetupGeosxThirdParty.cmake\n")
 

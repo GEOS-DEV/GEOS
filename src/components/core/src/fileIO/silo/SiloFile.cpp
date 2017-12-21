@@ -1908,7 +1908,7 @@ void SiloFile::DBWriteWrapper( const std::string& name, const std::set<TYPE>& da
   if( !data.empty() )
   {
     array<TYPE> dataArray;
-    dataArray.resize(data.size() );
+    dataArray.resize( integer_conversion<localIndex>(data.size()) );
     std::copy( data.begin(), data.end(), dataArray.begin() );
     DBWriteWrapper(name,dataArray);
   }
@@ -2554,7 +2554,7 @@ void SiloFile::DBReadWrapper( const std::string& name, std::map< T1, T2 >& datam
     datamap.clear();
 
 
-    for( typename array<T1>::size_type i=0 ; i<size ; ++i  )
+    for( unsigned int i=0 ; i<size ; ++i  )
     {
       datamap[keyArray[i]] = mapArray[i];
     }

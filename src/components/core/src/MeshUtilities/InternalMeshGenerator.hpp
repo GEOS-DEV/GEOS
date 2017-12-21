@@ -119,7 +119,7 @@ private:
                            // other half have 8; for Pattern 1, every node has
                            // 6.
 
-  realT m_fPerturb;
+  realT m_fPerturb=0.0;
   int m_randSeed;
 
   int m_mapToRadial = 0;
@@ -129,8 +129,8 @@ private:
   realT m_meshRout;
   realT m_meshRact;
 
-  realT m_skewAngle;
-  R1Tensor m_skewCenter;
+  realT m_skewAngle = 0;
+  R1Tensor m_skewCenter = {0,0,0};
 
   std::string m_meshDx, m_meshDy, m_meshDz;
 

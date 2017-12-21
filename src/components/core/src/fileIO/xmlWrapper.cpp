@@ -71,7 +71,7 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
 
 
       }
-      localIndex const size = xmlVal.size();
+      localIndex const size = multidimensionalArray::integer_conversion<localIndex>(xmlVal.size());
       dataView.resize( size );
       typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
 //        decltype(a) * data = dataView.pointer();

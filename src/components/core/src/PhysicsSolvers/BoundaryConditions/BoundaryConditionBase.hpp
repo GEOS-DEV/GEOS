@@ -296,7 +296,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
         integer counter=0;
         for( auto a : set )
         {
-          node_dof(counter) = dim*dofMap[a]+component;
+          node_dof(counter) = dim*integer_conversion<int>(dofMap[a])+component;
           this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
                                                                     blockSystem,
                                                                     blockID,
@@ -325,7 +325,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
             integer counter=0;
             for( auto a : set )
             {
-              node_dof(counter) = dim*dofMap[a]+component;
+              node_dof(counter) = dim*integer_conversion<int>(dofMap[a])+component;
               this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
                                                                         blockSystem,
                                                                         blockID,
@@ -345,12 +345,13 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
           }
           else
           {
-            real64_array result(set.size());
+            real64_array result;
+            result.resize( integer_conversion<localIndex>(set.size()));
             function->Evaluate( dataGroup, time, set, result );
             integer counter=0;
             for( auto a : set )
             {
-              node_dof(counter) = dim*dofMap[a]+component;
+              node_dof(counter) = dim*integer_conversion<int>(dofMap[a])+component;
               this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
                                                                         blockSystem,
                                                                         blockID,
