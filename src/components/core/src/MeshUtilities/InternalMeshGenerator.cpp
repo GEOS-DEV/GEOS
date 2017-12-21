@@ -413,6 +413,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
     }
   }
 
+  m_fPerturb = 0.0;
 
 //    m_fPerturb = hdn.GetAttributeOrDefault<realT>("perturbationFactor", 0.0);
 //    m_randSeed = hdn.GetAttributeOrDefault<int>("perturbationSeed",
@@ -987,7 +988,6 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
                                                                                                   // unaffected
                                                                                                   // by
                                                                                                   // domain
-                                                                                                  // partitioning.
           X[iN][i] += ( ( m_max[i] - m_min[i] ) / m_numElemsTotal[i] ) * ( ( rand() * 1.0 ) / RAND_MAX - 0.5 ) * 2 * m_fPerturb;
         }
       }
