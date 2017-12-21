@@ -19,9 +19,14 @@ if (CONDUIT_DIR)
                         LIBRARIES  conduit
                         TREAT_INCLUDES_AS_SYSTEM ON )
 
-  blt_register_library( NAME conduit_io
+  blt_register_library( NAME conduit_blueprint
                         INCLUDES ${CONDUIT_INCLUDE_DIRS}
-                        LIBRARIES  conduit_io
+                        LIBRARIES conduit_blueprint
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+  blt_register_library( NAME conduit_relay
+                        INCLUDES ${CONDUIT_INCLUDE_DIRS}
+                        LIBRARIES conduit_relay
                         TREAT_INCLUDES_AS_SYSTEM ON )
                         
   set( thirdPartyLibs ${thirdPartyLibs} conduit conduit_blueprint conduit_relay )
