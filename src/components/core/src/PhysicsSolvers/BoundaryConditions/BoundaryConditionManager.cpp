@@ -12,6 +12,7 @@
 #include "mesh/MeshBody.hpp"
 
 #include "finiteElement/FiniteElementManager.hpp"
+#include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "codingUtilities/StringUtilities.hpp"
 
@@ -130,6 +131,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
 
         FiniteElementManager const * numericalMethodManager = domain->getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+        FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 
         // Get element Region
         string const elementRegionName = bc->GetElementRegion();
@@ -142,7 +144,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
 
         auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
-        FiniteElementSpace const * feSpace = numericalMethodManager->GetGroup<FiniteElementSpace>(numMethodName);
+        FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
         string_array setNames = bc->GetSetNames();
 

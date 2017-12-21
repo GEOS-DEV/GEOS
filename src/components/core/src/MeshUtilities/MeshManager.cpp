@@ -52,5 +52,14 @@ void MeshManager::GenerateMeshes( dataRepository::ManagedGroup * const domain )
 }
 
 
+void MeshManager::GenerateMeshLevels( DomainPartition * const domain )
+{
+  this->forSubGroups<MeshGeneratorBase>([this, domain]( MeshGeneratorBase * meshGen ) -> void
+  {
+    string meshName = meshGen->getName();
+    domain->getMeshBodies()->RegisterGroup<MeshBody>(meshName)->CreateMeshLevel(0)->SetDocumentationNodes();
+  });
+}
+
 
 } /* namespace geosx */

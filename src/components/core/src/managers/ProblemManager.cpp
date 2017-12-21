@@ -46,8 +46,8 @@ ProblemManager::ProblemManager( const std::string& name,
 
   // Mandatory groups that read from the xml
   RegisterGroup<BoundaryConditionManager>(groupKeys.boundaryConditionManager);
-  RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
-  RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
+  // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
+  // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
   RegisterGroup<FiniteElementManager>(groupKeys.finiteElementManager);
   RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
@@ -409,6 +409,22 @@ void ProblemManager::ParseInputFile()
     this->m_functionManager->ReadXML( topLevelNode );
   }
 
+  // The objects in domain are handled separately for now
+  {
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
+    ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+    constitutiveManager->AddChildren( topLevelNode );
+    constitutiveManager->SetDocumentationNodes();
+    constitutiveManager->ReadXML( topLevelNode );
+
+    // Open mesh levels
+    MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+    meshManager->GenerateMeshLevels(domain);
+
+    topLevelNode = xmlProblemNode.child("ElementRegions");
+    ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
+    elementManager->ReadXML(topLevelNode);
+  }
 
   // Documentation output
   ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);

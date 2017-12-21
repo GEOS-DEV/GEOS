@@ -9,7 +9,7 @@
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_MESHMANAGER_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-
+#include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -28,6 +28,7 @@ public:
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   void GenerateMeshes( dataRepository::ManagedGroup * const domain );
+  void GenerateMeshLevels( DomainPartition * const domain );
 
 private:
   MeshManager() = delete;

@@ -118,12 +118,26 @@ void ElementRegionManager::resize( integer_array const & numElements,
 ////  elemRegion->resize(numElements);
 //}
 
-void ElementRegionManager::CreateChild( string const & childKey, string const & childName )
+// void ElementRegionManager::CreateChild( string const & childKey, string const & childName )
+// {
+// }
+
+
+void ElementRegionManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
+  ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    if( childNode.name() == string("ElementRegion") )
+    {
+      std::string regionName = childNode.attribute("name").value();
+      std::cout<<regionName<<std::endl;
 
-  std::cout << this->getName() << std::endl;
-
-  this->RegisterGroup<ElementRegion>( childName );
+      ElementRegion * elemRegion = elementRegions->RegisterGroup<ElementRegion>( regionName );
+      elemRegion->SetDocumentationNodes();
+      elemRegion->ReadXML(childNode);
+    }
+  }
 }
 
 
