@@ -53,9 +53,13 @@ using indexType = localIndex;
 class ManagedGroup
 {
 public:
-//  using subGroupMap = map< string, std::unique_ptr<ManagedGroup> >;
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
   using subGroupMap = MappedVector< ManagedGroup, std::unique_ptr<ManagedGroup>, keyType, indexType  >;
   using viewWrapperMap = MappedVector< ViewWrapperBase, std::unique_ptr<ViewWrapperBase>, keyType, indexType  >;
+#else
+  using subGroupMap = MappedVector< ManagedGroup, ManagedGroup*, keyType, indexType  >;
+  using viewWrapperMap = MappedVector< ViewWrapperBase, ViewWrapperBase*, keyType, indexType  >;
+#endif
   /**
    * @name constructors, destructor, copy, move, assignments
    */
@@ -240,10 +244,18 @@ public:
   {
     for( auto& subGroupIter : m_subGroups )
     {
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
 #ifdef USE_DYNAMIC_CASTING
       T * subGroup = dynamic_cast<T *>( subGroupIter.second.get() );
 #else
       T * subGroup = static_cast<T *>( subGroupIter.second.get() );
+#endif
+#else
+#ifdef USE_DYNAMIC_CASTING
+      T * subGroup = dynamic_cast<T *>( subGroupIter.second );
+#else
+      T * subGroup = static_cast<T *>( subGroupIter.second );
+#endif
 #endif
       lambda( subGroup );
     }
@@ -658,11 +670,19 @@ using ViewKey = ManagedGroup::viewWrapperMap::KeyIndex;
 template < typename T >
 T * ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<ManagedGroup> newObject )
 {
-  #ifdef USE_DYNAMIC_CASTING
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
+#ifdef USE_DYNAMIC_CASTING
   return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
-  #else
+#else
   return static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
-  #endif
+#endif
+#else
+#ifdef USE_DYNAMIC_CASTING
+  return dynamic_cast<T*>( m_subGroups.insert( name, newObject.release(), true ) );
+#else
+  return static_cast<T*>( m_subGroups.insert( name, newObject.release(), true ) );
+#endif
+#endif
 }
 
 
@@ -670,7 +690,12 @@ T * ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<Manag
 template< typename T, typename TBASE >
 ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name, ViewKey::index_type * const rkey )
 {
-  m_wrappers.insert( name, std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ) );
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
+  m_wrappers.insert( name, std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ), true );
+#else
+  m_wrappers.insert( name, (ViewWrapper<TBASE>::template Factory<T>(name,this) ).release(), true );
+#endif
+
   if( rkey != nullptr )
   {
     *rkey = m_wrappers.getIndex(name);
@@ -697,8 +722,12 @@ ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( ViewKey & viewKey )
 template < typename T >
 ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject )
 {
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
   m_wrappers.insert( name, std::make_unique< ViewWrapper<T> >( name, this, std::move(newObject) ) );
+#else
+  m_wrappers.insert( name, new ViewWrapper<T>( name, this, newObject.release() ), true );
 
+#endif
   ViewWrapper<T> * const rval = getWrapper<T>(name);
   if( rval->sizedFromParent() == 1 )
   {

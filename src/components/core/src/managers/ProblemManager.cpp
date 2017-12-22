@@ -519,7 +519,7 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    NodeManager * const nodeManager = ManagedGroup::group_cast<MeshBody*>(mesh.second.get())->getMeshLevel(0)->getNodeManager();
+    NodeManager * const nodeManager = (*mesh.second).group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
     GeometricObjectManager * geometricObjects = this->GetGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
 
