@@ -285,16 +285,26 @@ public:
 
 
   template< typename T, typename TBASE=T >
-  ViewWrapper<TBASE> * RegisterViewWrapper( std::string const & name, viewWrapperMap::KeyIndex::index_type * const rkey = nullptr );
+  ViewWrapper<TBASE> *
+  RegisterViewWrapper( std::string const & name,
+                       viewWrapperMap::KeyIndex::index_type * const rkey = nullptr );
 
   template< typename T, typename TBASE=T >
-  ViewWrapper<TBASE> * RegisterViewWrapper( ManagedGroup::viewWrapperMap::KeyIndex & viewKey );
+  ViewWrapper<TBASE> *
+  RegisterViewWrapper( ManagedGroup::viewWrapperMap::KeyIndex & viewKey );
 
 
-  ViewWrapperBase * RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type );
+  ViewWrapperBase * RegisterViewWrapper( std::string const & name,
+                                         rtTypes::TypeIDs const & type );
 
   template< typename T >
-  ViewWrapper<T> * RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject );
+  ViewWrapper<T> * RegisterViewWrapper( std::string const & name,
+                                        std::unique_ptr<T> newObject );
+
+  template< typename T >
+  ViewWrapper<T> * RegisterViewWrapper( std::string const & name,
+                                        T * newObject,
+                                        bool takeOwnership );
 
 
   ///@}
@@ -668,7 +678,8 @@ using ViewKey = ManagedGroup::viewWrapperMap::KeyIndex;
 
 
 template < typename T >
-T * ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<ManagedGroup> newObject )
+T * ManagedGroup::RegisterGroup( std::string const & name,
+                                 std::unique_ptr<ManagedGroup> newObject )
 {
 #ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
 #ifdef USE_DYNAMIC_CASTING
@@ -688,12 +699,17 @@ T * ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<Manag
 
 
 template< typename T, typename TBASE >
-ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name, ViewKey::index_type * const rkey )
+ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name,
+                                                        ViewKey::index_type * const rkey )
 {
 #ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-  m_wrappers.insert( name, std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ), true );
+  m_wrappers.insert( name,
+                     std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ),
+                     true );
 #else
-  m_wrappers.insert( name, (ViewWrapper<TBASE>::template Factory<T>(name,this) ).release(), true );
+  m_wrappers.insert( name,
+                     (ViewWrapper<TBASE>::template Factory<T>(name,this) ).release(),
+                     true );
 #endif
 
   if( rkey != nullptr )
@@ -720,12 +736,48 @@ ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( ViewKey & viewKey )
 
 
 template < typename T >
-ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject )
+ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
+                                                    std::unique_ptr<T> newObject )
 {
 #ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-  m_wrappers.insert( name, std::make_unique< ViewWrapper<T> >( name, this, std::move(newObject) ) );
+  m_wrappers.insert( name,
+                     std::make_unique< ViewWrapper<T> >( name, this, std::move(newObject) ),
+                     true);
 #else
-  m_wrappers.insert( name, new ViewWrapper<T>( name, this, newObject.release() ), true );
+  m_wrappers.insert( name,
+                     new ViewWrapper<T>( name, this, newObject.release() ),
+                     true );
+
+#endif
+  ViewWrapper<T> * const rval = getWrapper<T>(name);
+  if( rval->sizedFromParent() == 1 )
+  {
+    rval->resize(this->size());
+  }
+  return rval;
+}
+
+
+
+template< typename T >
+ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
+                                                    T * newObject,
+                                                    bool takeOwnership )
+{
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
+  if( takeOwnership==false )
+  {
+    GEOS_ERROR( "Cannot insert pointer into a unique_ptr without taking ownership of memory" );
+  }
+
+
+  m_wrappers.insert( name,
+                     std::make_unique< ViewWrapper<T> >( name, this, std::move(std::unique_ptr(newObject)) ),
+                     true);
+#else
+  m_wrappers.insert( name,
+                     new ViewWrapper<T>( name, this, newObject ),
+                     takeOwnership );
 
 #endif
   ViewWrapper<T> * const rval = getWrapper<T>(name);
