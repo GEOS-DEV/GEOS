@@ -244,6 +244,10 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
     {
       newChild->AddChildren(childNode);
     }
+    else
+    {
+      GEOS_ERROR("group not found");
+    }
   }
 }
 

@@ -45,7 +45,7 @@ ProblemManager::ProblemManager( const std::string& name,
   RegisterGroup<ManagedGroup>(groupKeys.commandLine);
 
   // Mandatory groups that read from the xml
-  RegisterGroup<BoundaryConditionManager>(groupKeys.boundaryConditionManager);
+  //RegisterGroup<BoundaryConditionManager>(groupKeys.boundaryConditionManager);
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
   // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
@@ -407,6 +407,14 @@ void ProblemManager::ParseInputFile()
     this->m_functionManager->AddChildren( topLevelNode );
     this->m_functionManager->SetDocumentationNodes();
     this->m_functionManager->ReadXML( topLevelNode );
+  }
+
+  {
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
+    BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
+    bcManager->AddChildren( topLevelNode );
+    bcManager->SetDocumentationNodes();
+    bcManager->ReadXML( topLevelNode );
   }
 
   // The objects in domain are handled separately for now
