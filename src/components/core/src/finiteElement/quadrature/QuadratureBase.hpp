@@ -80,7 +80,13 @@ class QuadratureBase
 public:
 
   using CatalogInterface = cxx_utilities::CatalogInterface< QuadratureBase >;
-  static CatalogInterface::CatalogType& GetCatalog();
+
+  static CatalogInterface::CatalogType& GetCatalog()
+  {
+    static QuadratureBase::CatalogInterface::CatalogType catalog;
+    return catalog;
+  }
+
 
   QuadratureBase() = default;
   virtual ~QuadratureBase()
