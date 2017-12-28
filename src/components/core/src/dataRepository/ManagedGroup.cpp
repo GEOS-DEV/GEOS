@@ -246,7 +246,10 @@ void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
     }
     else
     {
-      GEOS_ERROR("group not found");
+      if( !this->hasView(childName) )
+      {
+        //GEOS_ERROR("group with name " + childName + " not found in " + this->getName());
+      }
     }
   }
 }

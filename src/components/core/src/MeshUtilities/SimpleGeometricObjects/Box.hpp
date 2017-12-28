@@ -37,8 +37,8 @@ private:
 
   struct viewKeyStruct
   {
-    dataRepository::ViewKey xmin = { "xmin" };
-    dataRepository::ViewKey xmax = { "xmax" };
+    dataRepository::ViewKey xmin = { "xMin" };
+    dataRepository::ViewKey xmax = { "xMax" };
   } viewKeys;
 
 

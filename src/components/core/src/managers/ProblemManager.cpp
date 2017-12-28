@@ -49,7 +49,7 @@ ProblemManager::ProblemManager( const std::string& name,
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
   // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
-  RegisterGroup<FiniteElementManager>(groupKeys.finiteElementManager);
+  RegisterGroup<FiniteElementManager>(groupKeys.numericalMethodsManager);
   RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
   RegisterGroup<MeshManager>(groupKeys.meshManager);
   // m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
@@ -450,8 +450,8 @@ void ProblemManager::InitializationOrder( string_array & order )
 
 
   {
-    order.push_back(groupKeys.finiteElementManager.Key());
-    usedNames.insert(groupKeys.finiteElementManager.Key());
+    order.push_back(groupKeys.numericalMethodsManager.Key());
+    usedNames.insert(groupKeys.numericalMethodsManager.Key());
   }
 
   {

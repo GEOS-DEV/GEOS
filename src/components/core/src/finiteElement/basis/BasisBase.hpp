@@ -82,7 +82,11 @@ class BasisBase
 public:
 
   using CatalogInterface = cxx_utilities::CatalogInterface< BasisBase >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType& GetCatalog()
+  {
+    static BasisBase::CatalogInterface::CatalogType catalog;
+    return catalog;
+  }
 
 
   BasisBase() = default;

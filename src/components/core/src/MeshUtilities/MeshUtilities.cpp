@@ -37,22 +37,36 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
   array<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::ReferencePosition);
   ManagedGroup * sets = nodeManager->GetGroup(keys::sets);
 
-  for (int i = 0 ; i < geometries->wrappers().size() ; ++i)
+  for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
   {
-    ViewWrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getWrapper<SimpleGeometricObjectBase>(i);
-    if (wrapper!=nullptr)
-    {
-      SimpleGeometricObjectBase const & object = wrapper->reference();
-      string name = wrapper->getName();
-      lSet & set = sets->RegisterViewWrapper<lSet>(name)->reference();
-      for (localIndex a=0 ; a<X.size() ; ++a)
-      {
-        if (object.IsCoordInObject(X[a]))
+//    ViewWrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getGroup<SimpleGeometricObjectBase>(i);
+//    if (wrapper!=nullptr)
+//    {
+//      SimpleGeometricObjectBase const & object = wrapper->reference();
+//      string name = wrapper->getName();
+//      lSet & set = sets->RegisterViewWrapper<lSet>(name)->reference();
+//      for (localIndex a=0 ; a<X.size() ; ++a)
+//      {
+//        if (object.IsCoordInObject(X[a]))
+//        {
+//          set.insert(a);
+//        }
+//      }
+//    }
+        SimpleGeometricObjectBase const * const object = geometries->GetGroup<SimpleGeometricObjectBase>(i);
+        if (object!=nullptr)
         {
-          set.insert(a);
+          string name = object->getName();
+          lSet & set = sets->RegisterViewWrapper<lSet>(name)->reference();
+          for (localIndex a=0 ; a<X.size() ; ++a)
+          {
+            if (object->IsCoordInObject(X[a]))
+            {
+              set.insert(a);
+            }
+          }
         }
-      }
-    }
+
   }
 }
 //

@@ -157,7 +157,7 @@ public:
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };
     dataRepository::GroupKey elementRegionManager = { "ElementRegions" };
     dataRepository::GroupKey eventManager = { "Events" };
-    dataRepository::GroupKey finiteElementManager = { "NumericalMethods" };
+    dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };
     dataRepository::GroupKey meshManager = { "Mesh" };
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };
