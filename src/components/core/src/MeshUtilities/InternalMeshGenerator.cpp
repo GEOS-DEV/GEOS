@@ -304,9 +304,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
   }
   else
   {
-#if ATK_FOUND
-    SLIC_ERROR("InternalMeshGenerator: incorrect element type!");
-#endif
+    GEOS_ERROR("InternalMeshGenerator: incorrect element type!");
   }
 
   {
@@ -317,9 +315,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
     }
     if( failFlag )
     {
-#ifdef USE_ATK
-      SLIC_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
-#endif
+      GEOS_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
     }
   }
 
@@ -667,7 +663,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   nodeManager->resize( numNodes );
-  view_rtype<r1_array> X = nodeManager->getData<r1_array>( keys::ReferencePosition );
+  view_rtype<r1_array> X = nodeManager->getData<r1_array>( keys::referencePositionString );
 
   {
     localIndex localNodeIndex = 0;

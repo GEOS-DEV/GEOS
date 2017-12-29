@@ -148,8 +148,8 @@ public:
 
   struct viewKeysStruct
   {
-    static constexpr auto referencePositionString = "ReferencePosition";
-    dataRepository::ViewKey referencePosition = { referencePositionString };
+//    static constexpr auto referencePositionString = "ReferencePosition";
+    dataRepository::ViewKey referencePosition = { dataRepository::keys::referencePositionString };
     dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
     dataRepository::ViewKey nodeList           = { "nodeList" };
     dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };

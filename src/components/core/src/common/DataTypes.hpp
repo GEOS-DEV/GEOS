@@ -784,19 +784,25 @@ public:
   }
 
   template< typename TLHS, typename TRHS >
-  inline static void equate( TLHS & lhs, integer const component, TRHS const & rhs )
+  inline static void equate( TLHS & lhs,
+                             integer const,//component,
+                             TRHS const & rhs )
   {
     lhs = rhs;
   }
 
 
-  inline static void add( R1Tensor & lhs, integer const component, real64 const & rhs )
+  inline static void add( R1Tensor & lhs,
+                          integer const component,
+                          real64 const & rhs )
   {
     lhs[component] += rhs;
   }
 
   template< typename TLHS, typename TRHS >
-  inline static void add( TLHS & lhs, integer const component, TRHS const & rhs )
+  inline static void add( TLHS & lhs,
+                          integer const,// component,
+                          TRHS const & rhs )
   {
     lhs += rhs;
   }
@@ -819,7 +825,7 @@ public:
   }
 
   template< typename TLHS >
-  inline static TLHS value( TLHS & lhs, integer const component )
+  inline static TLHS value( TLHS & lhs, integer const )
   {
     return lhs;
   }
@@ -864,7 +870,9 @@ public:
     }
 
     template< typename TLHS, typename TRHS >
-    inline static void f( TLHS & lhs, integer const component, TRHS const & rhs )
+    inline static void f( TLHS & lhs,
+                          integer const,// component,
+                          TRHS const & rhs )
     {
       lhs += rhs;
     }

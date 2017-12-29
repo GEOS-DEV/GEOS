@@ -273,7 +273,7 @@ void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager 
   QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
 
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
-  r1_array const & X = mesh->getNodeManager()->getReference<r1_array>(keys::ReferencePosition);
+  r1_array const & X = mesh->getNodeManager()->getReference<r1_array>(keys::referencePositionString);
 
   forCellBlocks([&]( CellBlockSubRegion * subRegion )
     {

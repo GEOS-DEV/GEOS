@@ -83,8 +83,8 @@ namespace geosx
 class bufvector : public VectorT<char>
 {
 public:
-  bufvector(){}
-  virtual ~bufvector(){}
+  bufvector() = default;
+  ~bufvector() = default;
 
   bufvector( bufvector const & ) = default;
 

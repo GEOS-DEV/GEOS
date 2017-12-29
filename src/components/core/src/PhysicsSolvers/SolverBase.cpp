@@ -84,7 +84,7 @@ void SolverBase::TimeStep( real64 const& time_n,
 void SolverBase::CreateChild( string const & childKey, string const & childName )
 {
   std::cout << "Adding Solver: " << childKey << ", " << childName << std::endl;
-  this->RegisterGroup( childName, std::move(CatalogInterface::Factory( childKey, childName, this )) );
+  this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
 }
 
 

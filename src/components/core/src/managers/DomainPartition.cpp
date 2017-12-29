@@ -244,7 +244,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 // this->GetGroup<NodeManager>(keys::FEM_Nodes);
     localIndex numNodes = nodeManager->size();
 
-    r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::ReferencePosition);
+    r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::referencePositionString);
 
     r1_array const * const displacement = nodeManager->GetFieldDataPointer<r1_array>(keys::TotalDisplacement);
 

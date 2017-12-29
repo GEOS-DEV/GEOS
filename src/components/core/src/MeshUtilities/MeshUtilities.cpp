@@ -34,7 +34,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
                                       dataRepository::ManagedGroup * nodeManager )
 {
 
-  array<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::ReferencePosition);
+  array<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
   ManagedGroup * sets = nodeManager->GetGroup(keys::sets);
 
   for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)

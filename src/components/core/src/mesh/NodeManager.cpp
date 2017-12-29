@@ -172,8 +172,8 @@ void NodeManager::FillDocumentationNode()
                               0,
                               0 );
 
-  docNode->AllocateChildNode( viewKeysStruct::referencePositionString,
-                              viewKeysStruct::referencePositionString,
+  docNode->AllocateChildNode( keys::referencePositionString,
+                              keys::referencePositionString,
                               -1,
                               "r1_array",
                               "r1_array",

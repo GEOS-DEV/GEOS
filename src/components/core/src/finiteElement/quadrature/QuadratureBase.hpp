@@ -81,16 +81,11 @@ public:
 
   using CatalogInterface = cxx_utilities::CatalogInterface< QuadratureBase >;
 
-  static CatalogInterface::CatalogType& GetCatalog()
-  {
-    static QuadratureBase::CatalogInterface::CatalogType catalog;
-    return catalog;
-  }
+  static CatalogInterface::CatalogType& GetCatalog();
 
 
   QuadratureBase() = default;
-  virtual ~QuadratureBase()
-  {}
+  virtual ~QuadratureBase();
 
   virtual int size() const = 0;
   virtual R1Tensor integration_point( const int index ) const = 0;
