@@ -22,7 +22,8 @@
 #include "optionparser.h"
 
 #include "ObjectManagerBase.hpp"
-#include "PhysicsSolvers/PhysicsSolverManager.hpp"
+// #include "PhysicsSolvers/PhysicsSolverManager.hpp"
+#include "PhysicsSolvers/SolverBase.hpp"
 #include "EventManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "schema/SchemaUtilities.hpp"
@@ -102,9 +103,9 @@ public:
 
 
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  virtual void FillDocumentationNode() override;
 
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const ) override;
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   void ParseCommandLineInput( int & argc, char* argv[]);
 
@@ -150,14 +151,23 @@ public:
 
   struct groupKeysStruct
   {
+    dataRepository::GroupKey domain    = { "domain" };
     dataRepository::GroupKey commandLine    = { "commandLine" };
-    dataRepository::GroupKey meshGenerators = { "meshGenerators" };
+    dataRepository::GroupKey boundaryConditionManager = { "BoundaryConditions" };
+    dataRepository::GroupKey constitutiveManager = { "Constitutive" };
+    dataRepository::GroupKey elementRegionManager = { "ElementRegions" };
+    dataRepository::GroupKey eventManager = { "Events" };
+    dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
+    dataRepository::GroupKey geometricObjectManager = { "Geometry" };
+    dataRepository::GroupKey meshManager = { "Mesh" };
+    dataRepository::GroupKey physicsSolverManager = { "Solvers" };
   } groupKeys;
 
 
 
 private:
-  PhysicsSolverManager * m_physicsSolverManager;
+  // PhysicsSolverManager * m_physicsSolverManager;
+  SolverBase * m_physicsSolverManager;
   EventManager * m_eventManager;
   NewFunctionManager * m_functionManager;
 };

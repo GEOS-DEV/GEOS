@@ -27,12 +27,9 @@ public:
 
   virtual ~PhysicsSolverManager();
 
-  SolverBase * CreateSolver( string const & solverCatalogKey, string const & solverName );
+  virtual void FillDocumentationNode() override;
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
-
-  using dataRepository::ManagedGroup::ReadXML;
-  void ReadXML( dataRepository::ManagedGroup * domain, xmlWrapper::xmlNode const & problemNode );
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
 private:
   PhysicsSolverManager() = delete;

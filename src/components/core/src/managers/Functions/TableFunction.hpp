@@ -22,7 +22,7 @@ public:
 
   virtual ~TableFunction();
   static string CatalogName() { return "TableFunction"; }
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override final;
+  virtual void FillDocumentationNode() override final;
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override final;
 
   virtual void InitializeFunction() override;

@@ -42,9 +42,9 @@ CompositeFunction::~CompositeFunction()
 }
 
 
-void CompositeFunction::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void CompositeFunction::FillDocumentationNode()
 {
-  FunctionBase::FillDocumentationNode(domain);
+  FunctionBase::FillDocumentationNode();
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   docNode->setName(this->CatalogName());
@@ -90,12 +90,13 @@ void CompositeFunction::FillDocumentationNode( dataRepository::ManagedGroup * co
                               1,
                               0 );
 
+  docNode->getChildNode(keys::inputVarNames)->setDefault("");
+  docNode->getChildNode(keys::inputVarTypes)->setDefault("");
+
 }
 
 void CompositeFunction::BuildDataStructure( ManagedGroup * const domain )
-{
-  RegisterDocumentationNodes();
-}
+{}
 
 void CompositeFunction::InitializeFunction()
 {

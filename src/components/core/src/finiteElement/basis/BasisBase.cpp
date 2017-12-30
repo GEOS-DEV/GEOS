@@ -59,10 +59,16 @@
 
 namespace geosx
 {
+
+BasisBase::~BasisBase()
+{
+
+}
+
 BasisBase::CatalogInterface::CatalogType& BasisBase::GetCatalog()
 {
   static BasisBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
+
 }
-// ... no implementation required ...

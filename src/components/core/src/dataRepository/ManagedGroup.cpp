@@ -167,30 +167,15 @@ void ManagedGroup::resize( indexType const newsize )
 
 void ManagedGroup::RegisterDocumentationNodes()
 {
-//  std::cout<<std::string(m_docNode->m_level*2, ' ')<<"Registering
-// Documentation Nodes for Group "<<this->getName()<<std::endl;
   for( auto&& subNode : m_docNode->getChildNodes() )
   {
-//    std::cout<<subNode.first<<", "<<subNode.second.getName()<<std::endl;
-    if( ( subNode.second.getSchemaType() != "DocumentationNode" ) &&
-        ( subNode.second.getSchemaType() != "Node" ) &&
+    if( ( subNode.second.getSchemaType().find("Node") == std::string::npos ) &&
         ( subNode.second.m_isRegistered == 0 ) )
     {
-//      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register
-// "<<subNode.second.getStringKey()<<" of type
-// "<<subNode.second.getDataType()<<std::endl;
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                           rtTypes::typeID(subNode.second.getDataType() ) );
       view->setSizedFromParent( subNode.second.m_managedByParent);
       subNode.second.m_isRegistered = 1;
-//      rtTypes::ApplyArrayTypeLambda1(
-// rtTypes::typeID(subNode.second.getDataType()) , [&](auto a)->void
-//      {
-//        ViewWrapper<decltype(a)>& dataView =
-// *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
-//        typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
-//
-//      });
     }
   }
 
@@ -209,33 +194,74 @@ void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const root
   }
 }
 
-void ManagedGroup::FillDocumentationNode( dataRepository::ManagedGroup * const  )
+// These fill the documentation and initialize fields on this:
+void ManagedGroup::FillDocumentationNode()
 {}
 
-
-void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const group )
+void ManagedGroup::SetDocumentationNodes()
 {
-  FillDocumentationNode(group);
+  FillDocumentationNode();
   RegisterDocumentationNodes();
   for( auto&& subGroup : m_subGroups )
   {
-    subGroup.second->SetDocumentationNodes(group);
+    subGroup.second->SetDocumentationNodes();
+  }
+}
+
+// These fill the documentation and initialize fields on other objects:
+void ManagedGroup::SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup)
+{
+  FillOtherDocumentationNodes(rootGroup);
+  for( auto&& subGroup : m_subGroups )
+  {
+    subGroup.second->SetOtherDocumentationNodes(rootGroup);
+  }
+}
+
+void ManagedGroup::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const )
+{
+}
+
+
+
+void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
+{
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    // Get the child tag and name
+    std::string childName = childNode.attribute("name").value();
+    if (childName.empty())
+    {
+      childName = childNode.name();
+    }
+
+    // Create children
+    CreateChild(childNode.name(), childName);
+
+    // Add grandchildren
+    ManagedGroup * newChild = this->GetGroup<ManagedGroup>(childName);
+    if (newChild != nullptr)
+    {
+      newChild->AddChildren(childNode);
+    }
+    else
+    {
+      if( !this->hasView(childName) )
+      {
+        //GEOS_ERROR("group with name " + childName + " not found in " + this->getName());
+      }
+    }
   }
 }
 
 
-void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
+void ManagedGroup::CreateChild( string const & childKey, string const & childName )
 {
-
-
-  ReadXML_Group( targetNode );
-
-  ReadXMLsub( targetNode );
-
-  ReadXML_PostProcess();
+  std::cout << "Child not recognized: " << childKey << ", " << childName << std::endl;
 }
 
-void ManagedGroup::ReadXML_Group( xmlWrapper::xmlNode const & targetNode )
+
+void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -249,18 +275,31 @@ void ManagedGroup::ReadXML_Group( xmlWrapper::xmlNode const & targetNode )
     }
   }
 
+  ReadXMLsub(targetNode);
+  ReadXML_PostProcess();
 }
 
 
 
 void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
-  this->forSubGroups( [this,&targetNode]( ManagedGroup * subGroup ) -> void
-      {
-        subGroup->ReadXML( targetNode );
-      });
-}
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    // Get the child tag and name
+    std::string childName = childNode.attribute("name").value();
+    if (childName.empty())
+    {
+      childName = childNode.name();
+    }
 
+    // Read the xml on children
+    ManagedGroup * child = this->GetGroup<ManagedGroup>(childName);
+    if (child != nullptr)
+    {
+      child->ReadXML(childNode);
+    }
+  }
+}
 
 void ManagedGroup::PrintDataHierarchy()
 {

@@ -31,7 +31,7 @@ LinearElasticIsotropic::~LinearElasticIsotropic()
   // TODO Auto-generated destructor stub
 }
 
-void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
+void LinearElasticIsotropic::FillDocumentationNode()
 {
 
   DocumentationNode * const docNode = this->getDocumentationNode();

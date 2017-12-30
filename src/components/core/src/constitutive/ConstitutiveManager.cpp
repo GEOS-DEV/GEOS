@@ -24,31 +24,17 @@ ConstitutiveManager::ConstitutiveManager( std::string const & name,
 ConstitutiveManager::~ConstitutiveManager()
 {}
 
-void ConstitutiveManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void ConstitutiveManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setName("Constitutive");
   docNode->setSchemaType("Node");
 }
 
-void ConstitutiveManager::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
+void ConstitutiveManager::CreateChild( string const & childKey, string const & childName )
 {
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-  {
-    std::string materialName = childNode.attribute("name").value();
-    std::string materialKey = childNode.name();
-//      std::cout<<materialName<<std::endl;
-    std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( materialKey, materialName, this );
-    ConstitutiveBase * newMaterial = this->RegisterGroup<ConstitutiveBase>( materialName, std::move(material) );
-    newMaterial->SetDocumentationNodes( nullptr );
-//      newMaterial->RegisterDocumentationNodes();
-    newMaterial->ReadXML( childNode );
-  }
-//  std::cout<<this->GetSubGroups().size()<<std::endl;
-//  for( auto const & material : this->GetSubGroups() )
-//  {
-//    std::cout<<material.first<<std::endl;
-//  }
+  std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( childKey, childName, this );
+  ConstitutiveBase * newMaterial = this->RegisterGroup<ConstitutiveBase>( childName, std::move(material) );
 }
 
 //ConstitutiveManager::constitutiveMaps & ConstitutiveManager::GetMaps( integer

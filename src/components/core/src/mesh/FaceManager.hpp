@@ -45,7 +45,7 @@ public:
 
 //  void Initialize(  ){}
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const  ) override final;
+  void FillDocumentationNode() override final;
 
 
   void BuildFaces( NodeManager const * const nodeManager, ElementRegionManager * const elemManager );

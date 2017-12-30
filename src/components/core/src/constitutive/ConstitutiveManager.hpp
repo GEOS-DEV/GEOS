@@ -38,8 +38,8 @@ public:
   ConstitutiveManager( std::string const & name,
                        ManagedGroup * const parent );
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group );
-  void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
+  void FillDocumentationNode() override final;
+  virtual void CreateChild( string const & childKey, string const & childName ) override final;
 
   ~ConstitutiveManager();
 

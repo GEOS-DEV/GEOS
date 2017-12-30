@@ -27,7 +27,7 @@
 #endif
 
 #ifndef NOCHARTOSTRING_KEYLOOKUP
-#define NOCHARTOSTRING_KEYLOOKUP 1
+#define NOCHARTOSTRING_KEYLOOKUP 0
 #endif
 
 /**
@@ -307,21 +307,26 @@ public:
 
   void PrintDataHierarchy();
 
-  void ReadXML( xmlWrapper::xmlNode const & targetNode );
+  virtual void AddChildren( xmlWrapper::xmlNode const & targetNode );
 
-  virtual void ReadXMLsub( xmlWrapper::xmlNode const & );
+  virtual void CreateChild( string const & childKey, string const & childName );
 
-  virtual void ReadXML_Group( xmlWrapper::xmlNode const & );
+  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode );
+
+  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
 
   virtual void ReadXML_PostProcess() {}
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group );
+  void SetDocumentationNodes();
 
-  void SetDocumentationNodes( dataRepository::ManagedGroup * const group );
+  virtual void FillDocumentationNode();
 
+  void SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup);
 
+  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
+  
 
   //***********************************************************************************************
 

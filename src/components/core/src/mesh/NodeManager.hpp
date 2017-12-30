@@ -121,7 +121,7 @@ public:
   { return NodeManager::CatalogName(); }
 
 
-  void FillDocumentationNode( ManagedGroup * const group ) override final;
+  void FillDocumentationNode() override final;
 
 
 //  void Initialize();
@@ -148,8 +148,8 @@ public:
 
   struct viewKeysStruct
   {
-    static constexpr auto referencePositionString = "ReferencePosition";
-    dataRepository::ViewKey referencePosition = { referencePositionString };
+//    static constexpr auto referencePositionString = "ReferencePosition";
+    dataRepository::ViewKey referencePosition = { dataRepository::keys::referencePositionString };
 //    dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
     dataRepository::ViewKey nodeList           = { "nodeList" };
     dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };

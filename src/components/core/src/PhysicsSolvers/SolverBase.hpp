@@ -16,6 +16,7 @@
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
+#include "mesh/MeshBody.hpp"
 
 
 namespace geosx
@@ -56,10 +57,16 @@ public:
   virtual void TimeStep( real64 const & time_n,
                          real64 const & dt,
                          int const cycleNumber,
-                         dataRepository::ManagedGroup * domain ) = 0;
+                         dataRepository::ManagedGroup * domain );
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  // virtual void TimeStep( real64 const & time_n,
+  //                        real64 const & dt,
+  //                        int const cycleNumber,
+  //                        dataRepository::ManagedGroup * domain ) = 0;
 
+  virtual void FillDocumentationNode() override;
+
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();

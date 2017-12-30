@@ -11,39 +11,23 @@
 //#include "caliper/Annotation.h"
 #endif
 
+#include <stdexcept>
 #include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
-#include "MeshUtilities/MeshGenerator.hpp"
-#include "MeshUtilities/MeshUtilities.hpp"
-#include <stdexcept>
+#include "MeshUtilities/MeshManager.hpp"
+#include "MeshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
-#include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 
 #include "mesh/MeshBody.hpp"
+#include "MeshUtilities/MeshUtilities.hpp"
+// #include "managers/MeshLevel.hpp"
 namespace geosx
 {
-
-//namespace dataRepository
-//{
-//  namespace keys
-//  {
-//    std::string const commandLine = "commandLine";
-//    std::string const meshGenerators = "meshGenerators";
-//    std::string const inputFileName = "inputFileName";
-//    std::string const restartFileName = "restartFileName";
-//    std::string const beginFromRestart = "beginFromRestart";
-//    std::string const xPartitionsOverride = "xPartitionsOverride";
-//    std::string const yPartitionsOverride = "yPartitionsOverride";
-//    std::string const zPartitionsOverride = "zPartitionsOverride";
-//    std::string const overridePartitionNumbers = "overridePartitionNumbers";
-//    std::string const schemaLevel = "schemaLevel";
-//  }
-//}
 
 using namespace dataRepository;
 using namespace constitutive;
@@ -55,48 +39,42 @@ ProblemManager::ProblemManager( const std::string& name,
   m_eventManager(nullptr),
   m_functionManager(nullptr)
 {
-  m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager");
-  m_eventManager = RegisterGroup<EventManager>(keys::eventManager);
-//  m_functionManager =
-// RegisterGroup<NewFunctionManager>(keys::functionManager);
+  // Groups that do not read from the xml
+  // RegisterGroup<DomainPartition>(groupKeys.domain)->BuildDataStructure(nullptr);
+  RegisterGroup<DomainPartition>(groupKeys.domain);
+  RegisterGroup<ManagedGroup>(groupKeys.commandLine);
+
+  // Mandatory groups that read from the xml
+  //RegisterGroup<BoundaryConditionManager>(groupKeys.boundaryConditionManager);
+  // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
+  // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
+  m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
+  RegisterGroup<FiniteElementManager>(groupKeys.numericalMethodsManager);
+  RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
+  RegisterGroup<MeshManager>(groupKeys.meshManager);
+  // m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
+  m_physicsSolverManager = RegisterGroup<SolverBase>(groupKeys.physicsSolverManager);
+
+  // The function manager is handled separately
   m_functionManager = NewFunctionManager::Instance();
 }
 
-//ProblemManager::ProblemManager( const std::string& name,
-//                                ManagedGroup * const parent,
-//                                cxx_utilities::DocumentationNode * docNode ) :
-//  ObjectManagerBase( name, parent, docNode ),
-//  m_physicsSolverManager(nullptr)
-//{
-//  m_physicsSolverManager =
-// RegisterGroup<PhysicsSolverManager>("PhysicsSolverManager");
-//  m_eventManager = RegisterGroup<EventManager>("EventManager");
-//}
 
 ProblemManager::~ProblemManager()
 {}
 
 
-
-void ProblemManager::BuildDataStructure( dataRepository::ManagedGroup * const )
-{
-  RegisterGroup<DomainPartition>(keys::domain)->BuildDataStructure(nullptr);
-  RegisterGroup<ManagedGroup>(groupKeys.commandLine);
-  RegisterGroup<ManagedGroup>(groupKeys.meshGenerators);
-  RegisterGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-  RegisterGroup<FiniteElementManager>(keys::finiteElementManager);
-//  RegisterGroup<BoundaryConditionManager>(keys::boundaryConditionMananger);
-}
+void ProblemManager::CreateChild( string const & childKey, string const & childName )
+{}
 
 
-void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void ProblemManager::FillDocumentationNode()
 {
   // Problem node documentation
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  ObjectManagerBase::FillDocumentationNode( group );
+  ObjectManagerBase::FillDocumentationNode();
   docNode->setName("Problem");
   docNode->setSchemaType("RootNode");
-//  docNode->getChildNode("name")->setVerbosity(2);
 
   // Command line documentation
   dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
@@ -221,12 +199,13 @@ void ProblemManager::FillDocumentationNode( dataRepository::ManagedGroup * const
                                      0,
                                      0 );
 
-  // Mesh node documentation
-  dataRepository::ManagedGroup * meshGenerators = GetGroup<ManagedGroup>(groupKeys.meshGenerators);
-  cxx_utilities::DocumentationNode * const meshDocNode = meshGenerators->getDocumentationNode();
-  meshDocNode->setName("Mesh");
-  meshDocNode->setShortDescription("Mesh Generators");
-//  meshDocNode->getChildNode("name")->setVerbosity(2);
+  // // Mesh node documentation
+  // dataRepository::ManagedGroup * meshGenerators =
+  // GetGroup<ManagedGroup>(groupKeys.meshGenerators);
+  // cxx_utilities::DocumentationNode * const meshDocNode =
+  // meshGenerators->getDocumentationNode();
+  // meshDocNode->setName("Mesh");
+  // meshDocNode->setShortDescription("Mesh Generators");
 }
 
 void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
@@ -414,135 +393,53 @@ void ProblemManager::ParseInputFile()
     std::cout << "Error offset: " << xmlResult.offset << std::endl;
   }
   xmlProblemNode = xmlDocument.child("Problem");
-//  xmlWrapper::xmlNode topLevelNode;
+
 
   // Call manager readXML methods:
+  this->AddChildren(xmlProblemNode);
+  this->SetDocumentationNodes();
+  this->ReadXML( xmlProblemNode );
 
+
+  // The function manager is handled separately
   {
-    ManagedGroup * meshGenerators = this->GetGroup(groupKeys.meshGenerators);
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Mesh");
-    std::cout << "Reading Mesh Block:" << std::endl;
-    if (topLevelNode == NULL)
-    {
-      throw std::invalid_argument("Mesh block not present in input xml file!");
-    }
-    else
-    {
-      for (xmlWrapper::xmlNode childNode=topLevelNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-      {
-        std::cout << "   " << childNode.name() << std::endl;
-
-        // Register the new mesh generator
-        std::string meshID = childNode.attribute("name").value();
-
-        MeshGenerator * meshGenerator = meshGenerators->RegisterGroup<MeshGenerator>(meshID);
-
-        // Set the documentation node
-        meshGenerator->SetDocumentationNodes(domain);
-
-        meshGenerator->RegisterDocumentationNodes();
-        meshGenerator->ReadXML(childNode );
-
-        domain->getMeshBodies()->RegisterGroup<MeshBody>(meshID)->CreateMeshLevel(0)->SetDocumentationNodes(nullptr);
-      }
-    }
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Functions");
+    this->m_functionManager->AddChildren( topLevelNode );
+    this->m_functionManager->SetDocumentationNodes();
+    this->m_functionManager->ReadXML( topLevelNode );
   }
 
+  {
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("BoundaryConditions");
+    BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
+    bcManager->AddChildren( topLevelNode );
+    bcManager->SetDocumentationNodes();
+    bcManager->ReadXML( topLevelNode );
+  }
 
-
+  // The objects in domain are handled separately for now
   {
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Constitutive");
-    ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-    constitutiveManager->ReadXML(topLevelNode);
+    ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+    constitutiveManager->AddChildren( topLevelNode );
+    constitutiveManager->SetDocumentationNodes();
+    constitutiveManager->ReadXML( topLevelNode );
 
+    // Open mesh levels
+    MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+    meshManager->GenerateMeshLevels(domain);
 
     topLevelNode = xmlProblemNode.child("ElementRegions");
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
     elementManager->ReadXML(topLevelNode);
-
-
-//    map<string,integer> constitutiveSizes;
-//
-//    elementManager->forElementRegions([ this, domain, &constitutiveSizes ](
-// ElementRegion& elementRegion ) -> void
-//    {
-//      map<string,integer> sizes = elementRegion.SetConstitutiveMap(domain);
-//      for( auto& entry : sizes )
-//      {
-//        constitutiveSizes[entry.first] += entry.second;
-//      }
-//    });
-//
-//    for( auto & material : constitutiveManager->GetSubGroups() )
-//    {
-//      string name = material.first;
-//      if( constitutiveSizes.count(name) > 0 )
-//      {
-//        material.second->resize( constitutiveSizes.at(name) );
-//      }
-//    }
   }
-
-
-
-  this->m_physicsSolverManager->ReadXML(domain, xmlProblemNode );
-  this->m_eventManager->ReadXML(xmlProblemNode);
-  this->m_functionManager->ReadXML(domain, xmlProblemNode);
-
 
   // Documentation output
   ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
-  integer& schemaLevel = *(commandLine->getData<integer>(viewKeys.schemaLevel));
-
-//  std::cout << schemaName << ", " << schemaName.empty() << ", " <<
-// schemaName.size() << std::endl;
-
   if (schemaName.empty() == 0)
   {
-    // m_inputDocumentationHead.Write("test_output.xml");
+    integer& schemaLevel = *(commandLine->getData<integer>(viewKeys.schemaLevel));
     ConvertDocumentationToSchema(schemaName.c_str(), *(getDocumentationNode()), schemaLevel);
-    // getDocumentationNode()->Print();
-  }
-
-
-  {
-    FiniteElementManager * finiteElementManager = this->GetGroup<FiniteElementManager>(keys::finiteElementManager);
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("NumericalMethods");
-    finiteElementManager->ReadXML(topLevelNode);
-  }
-
-  {
-    BoundaryConditionManager * boundaryConditionManager = BoundaryConditionManager::get();//this->GetGroup<BoundaryConditionManager>(keys::boundaryConditionMananger);
-
-    xmlWrapper::xmlNode bcNode = xmlProblemNode.child("BoundaryConditions");
-    boundaryConditionManager->ReadXML(bcNode);
-    xmlWrapper::xmlNode icNode = xmlProblemNode.child("InitialConditions");
-    boundaryConditionManager->ReadXML(icNode);
-
-  }
-
-  {
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child("Nodesets");
-//    MeshUtilities::GenerateNodesets( topLevelNode,
-// dataRepository::ManagedGroup& nodeManager );
-    ManagedGroup * geometricObjects = this->RegisterGroup(keys::geometricObjects);
-
-    for (xmlWrapper::xmlNode childNode=topLevelNode.first_child() ; childNode ; childNode=childNode.next_sibling())
-    {
-//      if( childNode.name() == string("Nodeset") )
-      {
-        string type = childNode.name();
-        std::string name = childNode.attribute("name").value();
-        std::unique_ptr<SimpleGeometricObjectBase> object;
-
-        // old allocation method for backwards compatibility
-//        std::string geometricObjectTypeStr =
-// childNode.attribute("type").value();
-        object = SimpleGeometricObjectBase::CatalogInterface::Factory( type );
-        object->ReadXML( childNode );
-        geometricObjects->RegisterViewWrapper<SimpleGeometricObjectBase>(name,std::move(object));
-      }
-    }
   }
 }
 
@@ -553,18 +450,18 @@ void ProblemManager::InitializationOrder( string_array & order )
 
 
   {
-    order.push_back(keys::finiteElementManager);
-    usedNames.insert(keys::finiteElementManager);
+    order.push_back(groupKeys.numericalMethodsManager.Key());
+    usedNames.insert(groupKeys.numericalMethodsManager.Key());
   }
 
   {
-    order.push_back(keys::domain);
-    usedNames.insert(keys::domain);
+    order.push_back(groupKeys.domain.Key());
+    usedNames.insert(groupKeys.domain.Key());
   }
 
   {
-    order.push_back(keys::eventManager);
-    usedNames.insert(keys::eventManager);
+    order.push_back(groupKeys.eventManager.Key());
+    usedNames.insert(groupKeys.eventManager.Key());
   }
 
   for( auto const & subGroup : this->GetSubGroups() )
@@ -613,35 +510,22 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
     partition.setPartitions( xpar,  ypar, zpar );
   }
 
-  // Generate Meshes
-  ManagedGroup * meshGenerators = this->GetGroup(groupKeys.meshGenerators);
-  meshGenerators->forSubGroups<MeshGenerator>([this, domain]( MeshGenerator * meshGen ) -> void
-    {
-      meshGen->GenerateMesh( domain );
-    });
+  MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+  meshManager->GenerateMeshes(domain);
 
+  // Once the mesh is generated, fill and register other fields
+  this->SetOtherDocumentationNodes(this);
+  this->RegisterDocumentationNodes();
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     NodeManager * const nodeManager = ManagedGroup::group_cast<MeshBody*>(mesh.second.get())->getMeshLevel(0)->getNodeManager();
 
-    ManagedGroup * geometricObjects = this->GetGroup(keys::geometricObjects);
+    GeometricObjectManager * geometricObjects = this->GetGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
 
     MeshUtilities::GenerateNodesets( geometricObjects,
                                      nodeManager );
-
   }
-
-
-
-//  domain->GenerateSets();
-
-//  // Initialize solvers
-//  m_physicsSolverManager->forSubGroups<SolverBase>( [this, domain]( SolverBase
-// & solver ) -> void
-//  {
-//    solver.Initialize( domain );
-//  });
 }
 
 

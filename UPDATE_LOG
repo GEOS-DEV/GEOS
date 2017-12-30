@@ -1,5 +1,21 @@
 
 
+Fri Dec 29 00:37:54 2017 Randolph R. Settgast
+v0.0.23
+
+This pull request fixes problems with reading of input xml that were introduced by the last merged pull request. In addition, some compiler warnings were reinstated on clang and cleaned.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/13
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/21
+
+
+Thu Dec 21 15:39:01 2017 Christopher Sherman
+v0.0.22
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/19
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/12
+
+
 Mon Dec 11 08:00:39 2017 Randolph R. Settgast
 v0.0.21
 

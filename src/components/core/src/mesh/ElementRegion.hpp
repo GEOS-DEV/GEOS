@@ -130,7 +130,7 @@ public:
 //  ElementRegion( ElementRegion&& init);
 
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 

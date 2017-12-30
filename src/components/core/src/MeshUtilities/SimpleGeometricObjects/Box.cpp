@@ -9,28 +9,67 @@
 
 namespace geosx
 {
+using namespace dataRepository;
 
-Box::Box():
-  SimpleGeometricObjectBase()
-{
-  // TODO Auto-generated constructor stub
-
-}
+Box::Box( const std::string& name, ManagedGroup * const parent ):
+  SimpleGeometricObjectBase( name, parent )
+{}
 
 Box::~Box()
 {
   // TODO Auto-generated destructor stub
 }
 
-void Box::ReadXML( xmlWrapper::xmlNode const & xmlNode )
+void Box::FillDocumentationNode()
 {
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+
+  docNode->setName(this->CatalogName());
+  docNode->setSchemaType("Node");
+  docNode->setShortDescription("A simple box object");
+
+  docNode->AllocateChildNode( viewKeys.xmin.Key(),
+                              viewKeys.xmin.Key(),
+                              -1,
+                              "R1Tensor",
+                              "R1Tensor",
+                              "Lower corner of box",
+                              "Lower corner of box",
+                              "-1e99,-1e99,-1e99",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.xmax.Key(),
+                              viewKeys.xmax.Key(),
+                              -1,
+                              "R1Tensor",
+                              "R1Tensor",
+                              "Upper corner of box",
+                              "Upper corner of box",
+                              "1e99,1e99,1e99",
+                              "",
+                              0,
+                              1,
+                              0 );
+}
+
+void Box::ReadXML_PostProcess()
+{
+  m_min = *(this->getData<R1Tensor>(viewKeys.xmin));
+  m_max = *(this->getData<R1Tensor>(viewKeys.xmax));
+}
+
+//void Box::ReadXML( xmlWrapper::xmlNode const & xmlNode )
+//{
 //  pugi::xml_attribute xmlatt =
 // targetNode.attribute(subDocNode.getStringKey().c_str());
 //  m_degree = targetNode.attribute("degree").as_int(1);
 //  as_type( xmlVal, xmlatt.value(), defVal );
-
-  m_min = xmlWrapper::as_type( xmlNode, "xMin", {-1e99,-1e99,-1e99});
-  m_max = xmlWrapper::as_type( xmlNode, "xMax", { 1e99, 1e99, 1e99});
+//
+//  m_min = xmlWrapper::as_type( xmlNode, "xMin", {-1e99,-1e99,-1e99});
+//  m_max = xmlWrapper::as_type( xmlNode, "xMax", { 1e99, 1e99, 1e99});
 //  m_strikeAngle = hdn.GetAttributeOrDefault<realT>("strikeAngle", -90.0); //
 // from North
 //  m_strikeAngle += 90; // Counterclockwise from x-axis
@@ -47,8 +86,8 @@ void Box::ReadXML( xmlWrapper::xmlNode const & xmlNode )
 //    m_boxCenter += m_max;
 //    m_boxCenter *= 0.5;
 //  }
-
-}
+//
+// }
 
 bool Box::IsCoordInObject( const R1Tensor& coord ) const
 {
@@ -82,6 +121,6 @@ bool Box::IsCoordInObject( const R1Tensor& coord ) const
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY0( SimpleGeometricObjectBase, Box )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, std::string const &, ManagedGroup * const )
 
 } /* namespace geosx */

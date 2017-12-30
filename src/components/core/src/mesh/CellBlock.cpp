@@ -92,7 +92,7 @@ CellBlock::~CellBlock()
 {}
 
 
-void CellBlock::FillDocumentationNode( ManagedGroup * const group )
+void CellBlock::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 

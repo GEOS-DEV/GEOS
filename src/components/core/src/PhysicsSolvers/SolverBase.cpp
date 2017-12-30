@@ -7,7 +7,6 @@
 
 #include "SolverBase.hpp"
 
-#include "mesh/MeshBody.hpp"
 
 namespace geosx
 {
@@ -29,12 +28,9 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
 }
 
 void SolverBase::BuildDataStructure( dataRepository::ManagedGroup * const /*domain*/ )
-{
-  this->RegisterViewWrapper<real64>(keys::maxDt);
-  this->RegisterViewWrapper<real64>(keys::courant);
-}
+{}
 
-void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const  )
+void SolverBase::FillDocumentationNode()
 {
 
 
@@ -72,6 +68,23 @@ void SolverBase::FillDocumentationNode( dataRepository::ManagedGroup * const  )
 
 
 
+}
+
+
+
+void SolverBase::TimeStep( real64 const& time_n,
+                           real64 const& dt,
+                           const int cycleNumber,
+                           ManagedGroup * domain )
+{
+}
+
+
+
+void SolverBase::CreateChild( string const & childKey, string const & childName )
+{
+  std::cout << "Adding Solver: " << childKey << ", " << childName << std::endl;
+  this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
 }
 
 

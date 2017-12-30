@@ -38,9 +38,9 @@ SymbolicFunction::~SymbolicFunction()
 }
 
 
-void SymbolicFunction::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void SymbolicFunction::FillDocumentationNode()
 {
-  FunctionBase::FillDocumentationNode(domain);
+  FunctionBase::FillDocumentationNode();
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   docNode->setName(this->CatalogName());
@@ -76,9 +76,7 @@ void SymbolicFunction::FillDocumentationNode( dataRepository::ManagedGroup * con
 }
 
 void SymbolicFunction::BuildDataStructure( ManagedGroup * const domain )
-{
-  RegisterDocumentationNodes();
-}
+{}
 
 void SymbolicFunction::InitializeFunction()
 {

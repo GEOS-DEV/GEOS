@@ -8,6 +8,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTMANAGER_HPP_
 
+#include "dataRepository/ManagedGroup.hpp"
 #include "FiniteElementSpace.hpp"
 
 namespace geosx
@@ -16,10 +17,10 @@ namespace dataRepository
 {
 namespace keys
 {
-string const finiteElementManager = "finiteElementManager";
+string const finiteElementManager = "NumericalMethods";
 string const basisFunctions = "BasisFunctions";
 string const quadratureRules = "QuadratureRules";
-string const finiteElements = "FiniteElements";
+string const finiteElementSpaces = "FiniteElements";
 }
 }
 
@@ -31,9 +32,8 @@ public:
   FiniteElementManager(string const & name, ManagedGroup * const parent);
   virtual ~FiniteElementManager();
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override final;
-
-  void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override final;
+  virtual void FillDocumentationNode() override;
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
 
 };

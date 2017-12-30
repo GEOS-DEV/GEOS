@@ -29,9 +29,9 @@ public:
 
   virtual ~EventManager();
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  virtual void FillDocumentationNode() override;
 
-  void ReadXMLsub( xmlWrapper::xmlNode const & problemNode ) override;
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   void CheckEventTiming();
 
@@ -47,7 +47,7 @@ public:
 
   static string CatalogName() { return "EventManager"; }
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  virtual void FillDocumentationNode() override;
 };
 
 } /* namespace geosx */

@@ -41,7 +41,7 @@ public:
                                  localIndex const i,
                                  integer const systemAssembleFlag ) override;
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  virtual void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 

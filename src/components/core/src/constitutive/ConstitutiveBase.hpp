@@ -50,7 +50,7 @@ public:
                                         integer const systemAssembleFlag ) = 0;
 
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override = 0;
+  virtual void FillDocumentationNode() override = 0;
 
   virtual void resize( localIndex ) override;
 
