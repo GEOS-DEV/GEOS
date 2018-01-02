@@ -138,7 +138,7 @@ void ElementRegion::FillDocumentationNode()
                               "mapPair_array",
                               "Number of Nodes Per Element",
                               "Number of Nodes Per Element",
-                              "1",
+                              "NONE",
                               "",
                               1,
                               0,

@@ -20,6 +20,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
+#include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
 //#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
@@ -63,13 +64,10 @@ LaplaceFEM::~LaplaceFEM()
 }
 
 
-void LaplaceFEM::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void LaplaceFEM::FillDocumentationNode(  )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-  SolverBase::FillDocumentationNode( domain );
-
-  MeshBody * const meshBody = domain->GetGroup(DomainPartition::groupKeysStruct::meshBodiesString)->GetGroup<MeshBody>(0);
-  NodeManager * nodes    = meshBody->getMeshLevel(0)->getNodeManager();
+  SolverBase::FillDocumentationNode();
 
   docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
@@ -102,49 +100,59 @@ void LaplaceFEM::FillDocumentationNode( dataRepository::ManagedGroup * const dom
                               0,
                               1,
                               0 );
-
-
-
-  nodes->getDocumentationNode()->AllocateChildNode( viewKeys.trilinosIndex.Key(),
-                                                    viewKeys.trilinosIndex.Key(),
-                                                    -1,
-                                                    "localIndex_array",
-                                                    "localIndex_array",
-                                                    "",
-                                                    "",
-                                                    "",
-                                                    keys::nodeManager,
-                                                    1,
-                                                    0,
-                                                    0 );
-
-  nodes->getDocumentationNode()->AllocateChildNode( viewKeys.ghostRank.Key(),
-                                                    viewKeys.ghostRank.Key(),
-                                                    -1,
-                                                    "integer_array",
-                                                    "integer_array",
-                                                    "",
-                                                    "",
-                                                    "",
-                                                    keys::nodeManager,
-                                                    1,
-                                                    0,
-                                                    0 );
-
-  nodes->getDocumentationNode()->AllocateChildNode( "Temperature",
-                                                    "Temperature",
-                                                    -1,
-                                                    "real64_array",
-                                                    "real64_array",
-                                                    "",
-                                                    "",
-                                                    "",
-                                                    keys::nodeManager,
-                                                    1,
-                                                    0,
-                                                    0 );
-
 }
+
+void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
+{
+  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
+
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    NodeManager * const nodes = ManagedGroup::group_cast<MeshBody*>(mesh.second.get())->getMeshLevel(0)->getNodeManager();
+    cxx_utilities::DocumentationNode * const docNode = nodes->getDocumentationNode();
+
+
+    docNode->AllocateChildNode( viewKeys.trilinosIndex.Key(),
+                                viewKeys.trilinosIndex.Key(),
+                                -1,
+                                "localIndex_array",
+                                "localIndex_array",
+                                "",
+                                "",
+                                "",
+                                keys::nodeManager,
+                                1,
+                                0,
+                                0 );
+
+    docNode->AllocateChildNode( viewKeys.ghostRank.Key(),
+                                viewKeys.ghostRank.Key(),
+                                -1,
+                                "integer_array",
+                                "integer_array",
+                                "",
+                                "",
+                                "",
+                                keys::nodeManager,
+                                1,
+                                0,
+                                0 );
+
+    docNode->AllocateChildNode( "Temperature",
+                                "Temperature",
+                                -1,
+                                "real64_array",
+                                "real64_array",
+                                "",
+                                "",
+                                "",
+                                keys::nodeManager,
+                                1,
+                                0,
+                                0 );
+  }
+}
+
 
 void LaplaceFEM::ReadXML_PostProcess()
 {
@@ -168,14 +176,14 @@ void LaplaceFEM::ReadXML_PostProcess()
   }
 }
 
-void LaplaceFEM::BuildDataStructure( ManagedGroup * const domain )
-{
-  SolverBase::BuildDataStructure( domain );
-
-  // Test auto-registration:
-  RegisterDocumentationNodes();
-
-}
+//void LaplaceFEM::BuildDataStructure( ManagedGroup * const domain )
+//{
+//  SolverBase::BuildDataStructure( domain );
+//
+//  // Test auto-registration:
+//  RegisterDocumentationNodes();
+//
+//}
 
 
 void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
@@ -482,6 +490,7 @@ real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   FiniteElementManager const * numericalMethodManager = domain->getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( EpetraBlockSystem::BlockIDs::displacementBlock,
@@ -495,7 +504,7 @@ real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
   {
     ElementRegion * const elementRegion = ManagedGroup::group_cast<ElementRegion *>(region.second.get());
     auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
-    FiniteElementSpace const * feSpace = numericalMethodManager->GetGroup<FiniteElementSpace>(numMethodName);
+    FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
     for( auto & cellBlock : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {

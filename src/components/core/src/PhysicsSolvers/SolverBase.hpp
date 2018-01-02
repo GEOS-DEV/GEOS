@@ -51,8 +51,6 @@ public:
 
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
-
 
   virtual void TimeStep( real64 const & time_n,
                          real64 const & dt,

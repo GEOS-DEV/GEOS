@@ -172,10 +172,31 @@ void ManagedGroup::RegisterDocumentationNodes()
     if( ( subNode.second.getSchemaType().find("Node") == std::string::npos ) &&
         ( subNode.second.m_isRegistered == 0 ) )
     {
+      std::string childType = subNode.second.getDataType();
+      rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
+
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
-                                                          rtTypes::typeID(subNode.second.getDataType() ) );
+                                                          typeID );
       view->setSizedFromParent( subNode.second.m_managedByParent);
       subNode.second.m_isRegistered = 1;
+
+      string defVal = subNode.second.getDefault();
+
+      if( subNode.second.getIsInput() && defVal != "NONE" )
+      {
+        rtTypes::ApplyTypeLambda2 ( typeID,
+                                    [&]( auto a, auto b ) -> void
+        {
+
+          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
+          std::vector<decltype(b)> values;
+          stringutilities::StringToType( values, defVal );
+          localIndex const size = multidimensionalArray::integer_conversion<localIndex>(values.size());
+          dataView.resize( size );
+          typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
+          cxx_utilities::equateStlVector(data,values);
+        });
+      }
     }
   }
 
@@ -201,11 +222,12 @@ void ManagedGroup::FillDocumentationNode()
 void ManagedGroup::SetDocumentationNodes()
 {
   FillDocumentationNode();
-  RegisterDocumentationNodes();
   for( auto&& subGroup : m_subGroups )
   {
     subGroup.second->SetDocumentationNodes();
   }
+  RegisterDocumentationNodes();
+
 }
 
 // These fill the documentation and initialize fields on other objects:

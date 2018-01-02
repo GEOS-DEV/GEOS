@@ -177,6 +177,9 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
       solver.SetAztecParam(AZ_drop,params->ilut_drop());
     }
 
+    std::cout<<params->numKrylovIter()<<std::endl;
+    std::cout<<params->krylovTol()<<std::endl;
+
     solver.Iterate(params->numKrylovIter(),
                    params->krylovTol() );
 
