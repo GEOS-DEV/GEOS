@@ -51,6 +51,7 @@ namespace geosx
 //using uint32 = std::uint32_t;
 //using uint64 = std::uint64_t;
 
+using size_t      = std::size_t;
 using integer     = std::int32_t;
 using localIndex  = std::int_fast32_t;
 using globalIndex = std::int64_t;
@@ -288,17 +289,24 @@ public:
 
   static axom::sidre::TypeID toSidreType( std::type_index typeIndex )
   {
+    const axom::sidre::TypeID integer_id = axom::sidre::detail::SidreTT<integer>::id;
+    const axom::sidre::TypeID localIndex_id = axom::sidre::detail::SidreTT<localIndex>::id;
+    const axom::sidre::TypeID globalIndex_id = axom::sidre::detail::SidreTT<globalIndex>::id;
+    const axom::sidre::TypeID real32_id = axom::sidre::detail::SidreTT<real32>::id;
+    const axom::sidre::TypeID real64_id = axom::sidre::detail::SidreTT<real64>::id;
+    const axom::sidre::TypeID char_id = axom::sidre::TypeID::UINT8_ID;
+
     const std::unordered_map<std::type_index, axom::sidre::TypeID> sidre_types =
     {
-      { std::type_index(typeid(integer)),       axom::sidre::detail::SidreTT<integer>::id },
-      { std::type_index(typeid(localIndex)),    axom::sidre::detail::SidreTT<localIndex>::id },
-      { std::type_index(typeid(globalIndex)),   axom::sidre::detail::SidreTT<globalIndex>::id },
-      { std::type_index(typeid(real32)),        axom::sidre::detail::SidreTT<real32>::id },   
-      { std::type_index(typeid(real64)),        axom::sidre::detail::SidreTT<real64>::id },
-      { std::type_index(typeid(R1Tensor)),      axom::sidre::detail::SidreTT<real64>::id },
-      { std::type_index(typeid(R2Tensor)),      axom::sidre::detail::SidreTT<real64>::id },
-      { std::type_index(typeid(R2SymTensor)),   axom::sidre::detail::SidreTT<real64>::id },
-      { std::type_index(typeid(char)),          axom::sidre::TypeID::UINT8_ID }
+      { std::type_index(typeid(integer)),       integer_id },
+      { std::type_index(typeid(localIndex)),    localIndex_id },
+      { std::type_index(typeid(globalIndex)),   globalIndex_id },
+      { std::type_index(typeid(real32)),        real32_id },   
+      { std::type_index(typeid(real64)),        real64_id },
+      { std::type_index(typeid(R1Tensor)),      real64_id },
+      { std::type_index(typeid(R2Tensor)),      real64_id },
+      { std::type_index(typeid(R2SymTensor)),   real64_id },
+      { std::type_index(typeid(char)),          char_id }
     };
 
     auto it = sidre_types.find(typeIndex); 

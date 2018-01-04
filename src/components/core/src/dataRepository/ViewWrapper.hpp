@@ -198,19 +198,18 @@ public:
   struct size_wrapper
   {
     HAS_MEMBER_FUNCTION_VARIANT(size,0,localIndex,const,,)
+    HAS_MEMBER_FUNCTION_VARIANT(size,1,size_t,const,,)
     template<class U = T>
-    static typename std::enable_if< has_memberfunction_v0_size<U>::value ||
-                                    has_memberfunction_v1_size<U>::value ||
-                                    has_memberfunction_v2_size<U>::value ||
-                                    has_memberfunction_v3_size<U>::value, localIndex>::type size(ViewWrapper<T> const * parent)
+    static typename std::enable_if< (has_memberfunction_v0_size<U>::value ||
+                                     has_memberfunction_v1_size<U>::value),localIndex >::type
+    size(ViewWrapper const * parent)
     {
       return static_cast<localIndex>(parent->m_data->size());
     }
     template<class U = T>
     static typename std::enable_if< !(has_memberfunction_v0_size<U>::value ||
-                                      has_memberfunction_v1_size<U>::value ||
-                                      has_memberfunction_v2_size<U>::value ||
-                                      has_memberfunction_v3_size<U>::value ), localIndex>::type size(ViewWrapper<T> const * )
+                                     has_memberfunction_v1_size<U>::value), localIndex>::type
+    size(ViewWrapper const * )
     {
       return 1;//parent->m_data;
     }

@@ -80,7 +80,7 @@ ViewWrapper<Array2dT<T>> * createArray2dView(ManagedGroup * parent, const string
   }
 
   /* Check that the ViewWrapper dataPtr points to the right thing */
-  EXPECT_EQ(view->dataPtr(), &view_data[0][0]);
+  EXPECT_TRUE(view->dataPtr() == &view_data[0][0]);
 
   return view;
 }
