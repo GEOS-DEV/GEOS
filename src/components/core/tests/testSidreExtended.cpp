@@ -490,7 +490,8 @@ TEST(testSidreExtended, testSidreExtended) {
   delete root;
   MPI_Finalize();
 }
-#endif /* ATK_FOUND */
+
+#endif /* USE_ATK */
 
 int main(int argc, char* argv[]) {
   int result = 0;
