@@ -48,6 +48,28 @@ public:
   void GenerateSets();
 
 
+  /**
+   * @name MPI functionality
+   */
+  ///@{
+
+  void FindMatchedPartitionBoundaryObjects();
+
+  void SetMpiComm( MPI_Comm comm )
+  {
+    MPI_Comm_dup( comm, &m_mpiComm );
+  }
+
+  int reserveCommID();
+  void releaseCommID( int ID );
+
+  void SetupCommunications();
+
+  void AddNeighbors(const unsigned int idim,
+                    MPI_Comm& cartcomm,
+                    int* ncoords);
+  ///@}
+
   // THIS STUFF NEEDS TO GO SOMEWHERE ELSE
   void WriteSilo( SiloFile& siloFile,
                   const int cycleNum,
@@ -71,7 +93,7 @@ public:
 
   struct viewKeysStruct
   {
-    dataRepository::ViewKey partitionManager    = { "partitionManager" };
+    dataRepository::ViewKey neighbors = { "Neighbors" };
   } viewKeys;
 
   struct groupKeysStruct
@@ -81,6 +103,7 @@ public:
 
     dataRepository::GroupKey meshBodies           = { meshBodiesString };
     dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
+    dataRepository::GroupKey communicationManager    = { "communicationManager" };
   } groupKeys;
 
 
@@ -108,6 +131,8 @@ public:
 
 
 private:
+  MPI_Comm m_mpiComm;
+  std::set<int> m_freeCommID;
 
 
 };

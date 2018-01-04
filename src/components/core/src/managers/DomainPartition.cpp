@@ -12,6 +12,7 @@
 
 #include "fileIO/silo/SiloFile.hpp"
 #include "common/Logger.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
 
 namespace geosx
 {
@@ -19,8 +20,18 @@ using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
+  ManagedGroup( name, parent ),
+  m_mpiComm(),
+  m_freeCommID()
 {
+
+  for( int a = 0 ; a < NeighborCommunicator::maxComm ; ++a )
+  {
+    m_freeCommID.insert( a );
+  }
+
+  this->RegisterViewWrapper< array<NeighborCommunicator> >(viewKeys.neighbors);
+  MPI_Comm_dup( MPI_COMM_WORLD, &m_mpiComm );
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager);
 
   RegisterGroup( groupKeys.meshBodies );
@@ -171,8 +182,170 @@ void DomainPartition::GenerateSets(  )
   }
 }
 
+void
+DomainPartition::
+FindMatchedPartitionBoundaryObjects()
+{
+  integer_array const & isDomainBoundary = getReference<integer_array>("isDomainBoundary");
+  globalIndex_array const & localToGlobal = getReference<globalIndex_array>( "localToGlobal" );
+
+  array<localIndex> localPartitionBoundaryObjectsIndices;
+  array<globalIndex> globalPartitionBoundaryObjectsIndices;
+  for( localIndex k=0 ; k<size() ; ++k )
+  {
+    if( isDomainBoundary[k] == 1 )
+    {
+      globalPartitionBoundaryObjectsIndices.push_back( localToGlobal[k] );
+    }
+  }
+  std::sort( globalPartitionBoundaryObjectsIndices.begin(), globalPartitionBoundaryObjectsIndices.end() );
 
 
+
+  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
+
+  // send the size of the partitionBoundaryObjects to neighbors
+  {
+    array< array<globalIndex> > neighborPartitionBoundaryObjects( allNeighbors.size() );
+    array< array<localIndex> > matchedPartitionBoundaryObjects( allNeighbors.size() );
+
+    int const commID = reserveCommID();
+
+    for( int i=0 ; i<allNeighbors.size() ; ++i )
+    {
+      allNeighbors[i].MPI_iSendReceive( globalPartitionBoundaryObjectsIndices,
+                                        neighborPartitionBoundaryObjects[i],
+                                        commID, MPI_COMM_WORLD );
+    }
+
+    for( int i=0 ; i<allNeighbors.size() ; ++i )
+    {
+      allNeighbors[i].MPI_WaitAll(commID);
+      localIndex localCounter = 0;
+      localIndex neighborCounter = 0;
+      while( localCounter < globalPartitionBoundaryObjectsIndices.size() &&
+             neighborCounter < neighborPartitionBoundaryObjects[i].size() )
+      {
+        if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
+        {
+          matchedPartitionBoundaryObjects[i].push_back( localPartitionBoundaryObjectsIndices[localCounter] );
+          ++localCounter;
+          ++neighborCounter;
+        }
+        else if( globalPartitionBoundaryObjectsIndices[localCounter] > neighborPartitionBoundaryObjects[i][neighborCounter] )
+        {
+          ++neighborCounter;
+        }
+        else
+        {
+          ++localCounter;
+        }
+      }
+    }
+  }
+
+}
+
+
+int DomainPartition::reserveCommID()
+{
+  int rval = *( m_freeCommID.begin() );
+  m_freeCommID.erase( rval );
+  return rval;
+}
+
+void DomainPartition::releaseCommID( int ID )
+{
+  if( m_freeCommID.count(ID) > 0 )
+  {
+    GEOS_ERROR("Attempting to release commID that is already free");
+  }
+  m_freeCommID.insert( ID );
+}
+
+void DomainPartition::SetupCommunications()
+{
+  PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
+  SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
+  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
+
+  //get communicator, rank, and coordinates
+  MPI_Comm cartcomm;
+  {
+    int reorder = 0;
+    MPI_Cart_create(MPI_COMM_WORLD, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
+  }
+  int rank = -1;
+  int nsdof = 3;
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+  MPI_Comm_rank(cartcomm, &rank);
+  MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());
+
+  int ncoords[3];
+  AddNeighbors(0, cartcomm, ncoords);
+
+  MPI_Comm_free(&cartcomm);
+
+}
+
+void DomainPartition::AddNeighbors(const unsigned int idim,
+                                   MPI_Comm& cartcomm,
+                                   int* ncoords)
+{
+  PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
+  SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
+  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
+
+  if (idim == nsdof)
+  {
+    bool me = true;
+    for ( unsigned int i = 0 ; i < nsdof ; i++)
+    {
+      if (ncoords[i] != partition.m_coords(i))
+      {
+        me = false;
+        break;
+      }
+    }
+    if (!me)
+    {
+      allNeighbors.push_back(NeighborCommunicator());
+      int rank;
+      MPI_Cart_rank(cartcomm, ncoords, &rank);
+//      allNeighbors.back().Initialize( rank, this->m_rank, this->m_size );
+
+//      array<int> nbrcoords(nsdof);
+//      for(unsigned int i =0; i < nsdof; ++i) nbrcoords[i] = ncoords[i];
+//      neighborCommPtrIndx[nbrcoords] = m_neighbors.size()-1;
+    }
+  }
+  else
+  {
+    const int dim = partition.m_Partitions(idim);
+    const bool periodic = partition.m_Periodic(idim);
+    for (int i = -1 ; i < 2 ; i++)
+    {
+      ncoords[idim] = partition.m_coords(idim) + i;
+      bool ok = true;
+      if (periodic)
+      {
+        if (ncoords[idim] < 0)
+          ncoords[idim] = dim - 1;
+        else if (ncoords[idim] >= dim)
+          ncoords[idim] = 0;
+      }
+      else
+      {
+        ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
+      }
+      if (ok)
+      {
+        AddNeighbors(idim + 1, cartcomm, ncoords);
+      }
+    }
+  }
+}
 /**
  * @brief Write to SILO
  * @author R Settgast
@@ -399,6 +572,8 @@ void DomainPartition::ReadFiniteElementMesh( const SiloFile& siloFile,
 //  m_feNodeManager->ConstructNodeToElementMap( m_feElementManager );
 
 }
+
+
 
 
 
