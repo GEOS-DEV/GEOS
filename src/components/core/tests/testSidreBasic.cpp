@@ -85,7 +85,8 @@ TEST(testSidreBasic, testSidreBasic) {
   delete root;
   MPI_Finalize();
 }
-#endif /* ATK_FOUND */
+
+#endif /* USE_ATK */
 
 
 int main(int argc, char* argv[]) {

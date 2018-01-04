@@ -684,9 +684,14 @@ void ProblemManager::RunSimulation()
 
       // Update time, cycle, timestep
       time += dt;
-      cycle ++;
+      cycle++;
       dt = (lockDt)? dt : nextDt;
       dt = (endTime - time < dt)? endTime-time : dt;
+
+      if (cycle % 10 == 0)
+      {
+        WriteRestart(cycle);
+      }
     }
   }
 
@@ -752,7 +757,7 @@ void ProblemManager::ApplyInitialConditions()
 
 void ProblemManager::WriteRestart( integer const cycleNumber )
 {
-#if ATK_FOUND
+#ifdef USE_ATK
   char fileName[200] = {0};
   sprintf(fileName, "%s_%09d", "restart", cycleNumber);
 
@@ -768,7 +773,7 @@ void ProblemManager::WriteRestart( integer const cycleNumber )
 
 void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 {
-#if ATK_FOUND
+#ifdef USE_ATK
   this->prepareToRead();
   m_functionManager->prepareToRead();
   BoundaryConditionManager::get()->prepareToRead();

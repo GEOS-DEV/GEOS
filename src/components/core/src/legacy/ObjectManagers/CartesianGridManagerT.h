@@ -147,7 +147,7 @@ public:
   };
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject  = NULL){
 
-    geosx::dataRepository::ViewWrapper<int32_array>::rtype m_isExternal = getData<int32_array>("IsExternal");
+    geosx::dataRepository::ViewWrapper<integer_array>::rtype m_isExternal = getData<integer_array>("IsExternal");
 
     // get the "isExternal" field from for *this, and set it to zero
     m_isExternal = 0;

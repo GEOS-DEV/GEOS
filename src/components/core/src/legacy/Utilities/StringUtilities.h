@@ -70,7 +70,7 @@
 
 #include "legacy/Common/Common.h"
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include <slic/slic.hpp>
 #endif
 
@@ -157,7 +157,7 @@ inline FieldType fromString<FieldType>(std::string theString){
   }
   else
   {
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("Error fromString: unrecognized field type: " + theString +".");
 #endif
   }

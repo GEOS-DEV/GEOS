@@ -58,7 +58,7 @@
 #include <map>
 #include "../codingUtilities/IOUtilities.hpp"
 
-#if ATK_FOUND
+#ifdef USE_ATK
 #include <slic/slic.hpp>
 #endif
 
@@ -79,7 +79,7 @@ public:
   //CONST
   template < unsigned int dim>
   inline const std::map<std::string,  Table<dim, realT> >& Tables() const { 
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("Cannot call base specialization");
 #endif
   }
@@ -87,7 +87,7 @@ public:
   //NON-CONST
   template < unsigned int dim>
   inline std::map<std::string,  Table<dim, realT> >& Tables() { 
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("Cannot call base specialization"); 
 #endif
   }
@@ -95,7 +95,7 @@ public:
   //ADD
   template < unsigned int dim, class ARRAY, class ARRAY2>
   inline void NewTable(const std::string& name, const ARRAY2& x, const ARRAY& values, TableInterpolation::Order interp) { 
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("Cannot call base specialization"); 
 #endif
   }
@@ -105,7 +105,7 @@ public:
   {
     typename std::map<std::string, Table<dim, realT> >::iterator table = Tables<dim>().find(tableName);
     if (table == Tables<dim>().end()) {
-#if ATK_FOUND
+#ifdef USE_ATK
       SLIC_ERROR("Table name " + tableName + " not found.\n");
 #endif
     }
@@ -122,7 +122,7 @@ public:
     typename std::map<std::string, Table<dim, realT> >::const_iterator table =
         Tables<dim>().find(tableName);
     if (table == Tables<dim>().end()) {
-#if ATK_FOUND
+#ifdef USE_ATK
       SLIC_ERROR("Table name " + tableName + " not found.\n");
 #endif
     }
@@ -135,7 +135,7 @@ public:
   //CONST
   template < unsigned int dim>
   inline const std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() const { 
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("Cannot call base specialization"); 
 #endif
   }
@@ -143,7 +143,7 @@ public:
   //NON-CONST
   template < unsigned int dim>
   inline std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() { 
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("Cannot call base specialization"); 
 #endif
   }
@@ -151,7 +151,7 @@ public:
   //ADD
   template < unsigned int dim, class ARRAY, class ARRAY2>
   inline void NewVectorField(const std::string& name, const ARRAY2& x, const ARRAY& values) { 
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("Cannot call base specialization"); 
 #endif
   }
@@ -165,7 +165,7 @@ public:
     typename std::map<std::string, Table<dim, R1Tensor> >::const_iterator table =
         VectorFields<dim>().find(tableName);
     if (table == Tables<dim>().end()) {
-#if ATK_FOUND
+#ifdef USE_ATK
       SLIC_ERROR("VectorField name " + tableName + " not found.\n");
 #endif
     }
@@ -397,7 +397,7 @@ void TableManager::ReadVoxelFile(const std::string& filename, localIndex nCompon
   }
   else
   {
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("ReadVoxelFile: Failed to load file:" + filename + " \n");
 #endif
   }
@@ -427,7 +427,7 @@ void TableManager::ReadTimeVoxelFile(const std::string& filename, localIndex nCo
   }
   else
   {
-#if ATK_FOUND
+#ifdef USE_ATK
     SLIC_ERROR("ReadTimeVoxelFile: Failed to load file:" + filename + " \n");
 #endif
   }
@@ -510,7 +510,7 @@ void TableManager::ReadNUFTFile(const std::string& filename,
     }
     else
     {
-#if ATK_FOUND
+#ifdef USE_ATK
       SLIC_ERROR("readTimeVoxelFile: Failed to load file:" + filename + " \n");
 #endif
     }
