@@ -65,7 +65,6 @@
 #define BIN_STREAM_H
 
 // ***** Included Headers *****************************************************
-#include "legacy/Common/Common.h"
 #include "common/DataTypes.hpp"
 #include <map>
 #include <fstream>
@@ -172,13 +171,13 @@ public:
 
 
   template< typename TYPE >
-  void write( const Array1dT<geosx::set<TYPE> >& array )
+  void write( const array<set<TYPE> >& arr )
   {
 
-    const typename Array1dT<geosx::set<TYPE> >::size_type length0 = array.size();
-    this->write( reinterpret_cast<const char*>(&length0), sizeof(typename Array1dT<geosx::set<TYPE> >::size_type) );
+    const typename array<geosx::set<TYPE> >::size_type length0 = arr.size();
+    this->write( reinterpret_cast<const char*>(&length0), sizeof(typename array<set<TYPE> >::size_type) );
 
-    for( typename Array1dT<geosx::set<TYPE> >::const_iterator i=array.begin() ; i!=array.end() ; ++i )
+    for( typename array<set<TYPE> >::const_iterator i=arr.begin() ; i!=arr.end() ; ++i )
     {
       this->write( *i );
     }
@@ -422,10 +421,10 @@ public:
 
 
   template< typename TYPE >
-  void read( Array1dT<geosx::set<TYPE> >& array, const bool realloc = true )
+  void read( array<set<TYPE> >& arr, const bool realloc = true )
   {
-    const typename Array1dT<geosx::set<TYPE> >::size_type length = array.size();
-    typename Array1dT<geosx::set<TYPE> >::size_type readLength;
+    const typename array<set<TYPE> >::size_type length = arr.size();
+    typename array<set<TYPE> >::size_type readLength;
     this->read( readLength );
 
     if( readLength != length )
@@ -437,11 +436,11 @@ public:
       else
       {
 #ifdef USE_ATK
-        SLIC_ERROR( "BinStream::read(Array1dT<set<TYPE> >& array): length mismatch\n");
+        SLIC_ERROR( "BinStream::read(array<set<TYPE> >& arr): length mismatch\n");
 #endif
       }
     }
-    for( typename Array1dT<geosx::set<TYPE> >::iterator i=array.begin() ; i!=array.end() ; ++i )
+    for( typename array<set<TYPE> >::iterator i=arr.begin() ; i!=arr.end() ; ++i )
     {
       this->read( *i, realloc );
     }

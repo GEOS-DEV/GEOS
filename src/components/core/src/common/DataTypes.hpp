@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "common/GeosxConfig.hpp"
+#include "common/Logger.hpp"
 
 #ifdef USE_ATK
 #include "sidre/SidreTypes.hpp"
@@ -89,8 +90,6 @@ using realT    = double;
 
 
 template< typename T >
-//using array = std::vector<T>;
-//using array = array<T>;
 using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
 
 template< typename T >

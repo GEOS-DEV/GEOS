@@ -413,7 +413,7 @@ public:
   void DBWriteWrapper( const std::string& name, const array<array<array<TYPE> > >& data );
 
   template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array1dT<set<TYPE> >& data );
+  void DBWriteWrapper( const std::string& name, const array<set<TYPE> >& data );
 
   template< typename T1, typename T2 >
   void DBWriteWrapper( const std::string& name, const std::map< T1, T2 >& datamap );
@@ -449,7 +449,7 @@ public:
   void DBReadWrapper( const std::string& name, array<array<array<TYPE> > >& data ) const;
 
   template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array1dT<set<TYPE> >& data ) const;
+  void DBReadWrapper( const std::string& name, array<set<TYPE> >& data ) const;
 
   template< typename T1, typename T2 >
   void DBReadWrapper( const std::string& name, std::map< T1, T2 >& datamap ) const;

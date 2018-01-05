@@ -20,6 +20,7 @@ namespace sidre
 class View;
 }
 }
+#endif
 
 namespace geosx
 {

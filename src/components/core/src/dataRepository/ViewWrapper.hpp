@@ -338,29 +338,24 @@ public:
 
 
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_v0_resize<U>::value, void>::type
-    resize(ViewWrapper<T> * const parent, int32 const new_size)
+    static typename std::enable_if< has_memberfunction_v0_resize<U>::value ||
+                                    has_memberfunction_v1_resize<U>::value ||
+                                    has_memberfunction_v2_resize<U>::value ||
+                                    has_memberfunction_v3_resize<U>::value ||
+                                    has_memberfunction_v4_resize<U>::value, void>::type
+    resize(ViewWrapper * const parent, localIndex const new_size)
     {
       return parent->m_data->resize(new_size);
     }
 
-    template<class U = T>
-    static typename std::enable_if<has_memberfunction_v1_resize<U>::value, void>::type
-    resize(ViewWrapper<T> * const parent, uint32 const new_size)
-    {
-      return parent->m_data->resize(new_size);
-    }
 
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_v2_resize<U>::value, void>::type
-    resize(ViewWrapper<T> * const parent, int64 const new_size)
-    {
-      return parent->m_data->resize(new_size);
-    }
-
-    template<class U = T>
-    static typename std::enable_if<has_memberfunction_v3_resize<U>::value, void>::type
-    resize(ViewWrapper<T> * const parent, uint64 const new_size)
+    static typename std::enable_if<!(has_memberfunction_v0_resize<U>::value)&&
+                                   !(has_memberfunction_v1_resize<U>::value)&&
+                                   !(has_memberfunction_v2_resize<U>::value)&&
+                                   !(has_memberfunction_v3_resize<U>::value)&&
+                                   !(has_memberfunction_v4_resize<U>::value), void>::type
+    resize(ViewWrapper * const, localIndex )
     {
       return;
     }
@@ -929,7 +924,7 @@ public:
 
   void unregisterDataPtr(axom::sidre::View* view = nullptr) const
   {
-#if ATK_FOUND
+#ifdef ATK_FOUND
     view = (view != nullptr) ? view : getSidreView();
     view->setExternalDataPtr(AXOM_NULLPTR);
 #endif

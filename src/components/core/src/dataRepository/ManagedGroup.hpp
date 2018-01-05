@@ -571,7 +571,9 @@ private:
   viewWrapperMap m_wrappers;
   subGroupMap m_subGroups;
 
+#ifdef USE_ATK
   axom::sidre::Group* m_sidreGroup;
+#endif
 
   indexType m_size;
 

@@ -98,8 +98,8 @@ public:
 
 
   //***** Memory Allocation and Release ***************************************
-	void setDimensions(const long numDims, const long * dims);
-  void resize2( const long dim1 , const long dim2 );
+	void setDimensions(const size_type numDims, const size_type * dims);
+  void resize2( const size_type dim1 , const size_type dim2 );
   void resize(const size_type num_elem)
   { resize2( num_elem, dimension[1] );  }
 
@@ -125,7 +125,7 @@ public:
   inline int numDimensions() const
   { return 2; }
 
-  inline long Dimension( const long dimnum ) const ;
+  inline size_type Dimension( const size_type dimnum ) const ;
 
   inline const TYPE* operator[]( const size_type index ) const
   {
@@ -185,7 +185,7 @@ void Array2dT<TYPE>::setDimensions( long numDims, const long * dims)
 }
 
 template <class TYPE> 
-void Array2dT<TYPE>::resize2( const long dim1 , const long dim2)
+void Array2dT<TYPE>::resize2( const size_type dim1 , const size_type dim2)
 {
   dimension[0] = dim1;
   dimension[1] = dim2;

@@ -2031,7 +2031,7 @@ template void SiloFile::DBWriteWrapper( const std::string& name, const array<arr
 
 
 template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const Array1dT<set<TYPE> >& data )
+void SiloFile::DBWriteWrapper( const std::string& name, const array<set<TYPE> >& data )
 {
   const std::string sizeName = name+"_sizes";
   const std::string dataName = name+"_data";
@@ -2040,7 +2040,7 @@ void SiloFile::DBWriteWrapper( const std::string& name, const Array1dT<set<TYPE>
   array<typename array<TYPE>::size_type> dataSizes;
   array<TYPE> dataSerial;
 
-  for( typename Array1dT<set<TYPE> >::const_iterator i=data.begin() ; i!=data.end() ; ++i )
+  for( typename array<set<TYPE> >::const_iterator i=data.begin() ; i!=data.end() ; ++i )
   {
     dataSizes.push_back(i->size());
     dataSerial.insert( dataSerial.end(), i->begin(), i->end() );
@@ -2516,7 +2516,7 @@ void SiloFile::DBReadWrapper( const std::string& name, array<array<array<TYPE> >
 template void SiloFile::DBReadWrapper( const std::string& name, array<array<array<R1Tensor> > >& data ) const;
 
 template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, Array1dT<set<TYPE> >& data ) const
+void SiloFile::DBReadWrapper( const std::string& name, array<set<TYPE> >& data ) const
 {
 
   array<array<TYPE> > vdata(data.size());
