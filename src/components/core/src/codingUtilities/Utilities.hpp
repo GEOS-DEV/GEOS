@@ -66,7 +66,6 @@
 #define UTILITIES_H_
 
 #include "common/DataTypes.hpp"
-//#include "legacy/Common/typedefs.h"
 #include <limits>
 #include <sys/resource.h>
 #include <map>
@@ -742,7 +741,7 @@ inline void Intersection( const set<TYPE>& input, const array<TYPE>& arr, array<
 {
   intersection.clear();
 
-  for( typename set<TYPE>::const_iterator iter_arr=array.begin() ; iter_arr!=array.end() ; ++iter_arr )
+  for( typename set<TYPE>::const_iterator iter_arr=arr.begin() ; iter_arr!=arr.end() ; ++iter_arr )
   {
     if( input.count( *iter_arr ) == 1 )
     {
