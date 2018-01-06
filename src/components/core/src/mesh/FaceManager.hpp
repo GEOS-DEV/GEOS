@@ -69,12 +69,17 @@ public:
                       R1Tensor const & elementCenter,
                       const localIndex faceIndex );
 
+  void SetDomainBoundaryObjects();
+
+  void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
+
   struct viewKeysStruct
   {
     dataRepository::ViewKey nodeList              = { "nodeList" };
     dataRepository::ViewKey elementRegionList     = { "elemRegionList" };
     dataRepository::ViewKey elementSubRegionList  = { "elemSubRegionList" };
     dataRepository::ViewKey elementList           = { "elemList" };
+    dataRepository::ViewKey isDomainBoundary      = { "isDomainBoundary" };
   } viewKeys;
 
   struct groupKeysStruct

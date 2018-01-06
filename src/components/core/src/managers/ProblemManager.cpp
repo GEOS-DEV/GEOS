@@ -544,6 +544,8 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   NodeManager * nodeManager = meshLevel->getNodeManager();
   faceManager->BuildFaces( nodeManager, elementManager );
 
+  domain->SetupCommunications();
+
 }
 
 void ProblemManager::RunSimulation()

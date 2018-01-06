@@ -184,14 +184,14 @@ void DomainPartition::GenerateSets(  )
 
 void
 DomainPartition::
-FindMatchedPartitionBoundaryObjects()
+FindMatchedPartitionBoundaryObjects( ManagedGroup * const group )
 {
-  integer_array const & isDomainBoundary = getReference<integer_array>("isDomainBoundary");
-  globalIndex_array const & localToGlobal = getReference<globalIndex_array>( "localToGlobal" );
+  integer_array const & isDomainBoundary = group->getReference<integer_array>("isDomainBoundary");
+  globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( "localToGlobal" );
 
   array<localIndex> localPartitionBoundaryObjectsIndices;
   array<globalIndex> globalPartitionBoundaryObjectsIndices;
-  for( localIndex k=0 ; k<size() ; ++k )
+  for( localIndex k=0 ; k<group->size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
     {
@@ -287,6 +287,12 @@ void DomainPartition::SetupCommunications()
 
   MPI_Comm_free(&cartcomm);
 
+  ManagedGroup * const meshBodies = getMeshBodies();
+  MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
+  MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
+
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+  FindMatchedPartitionBoundaryObjects( faceManager );
 }
 
 void DomainPartition::AddNeighbors(const unsigned int idim,
@@ -311,13 +317,9 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
     if (!me)
     {
       allNeighbors.push_back(NeighborCommunicator());
-      int rank;
-      MPI_Cart_rank(cartcomm, ncoords, &rank);
-//      allNeighbors.back().Initialize( rank, this->m_rank, this->m_size );
-
-//      array<int> nbrcoords(nsdof);
-//      for(unsigned int i =0; i < nsdof; ++i) nbrcoords[i] = ncoords[i];
-//      neighborCommPtrIndx[nbrcoords] = m_neighbors.size()-1;
+      int neighborRank;
+      MPI_Cart_rank(cartcomm, ncoords, &neighborRank);
+      allNeighbors.back().SetNeighborRank(neighborRank);
     }
   }
   else

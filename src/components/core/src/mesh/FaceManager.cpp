@@ -55,16 +55,27 @@ void FaceManager::FillDocumentationNode()
 //                              -1,
 //                              "integer_array",
 //                              "integer_array",
-//                              "List containing the element regions of the
-// faces",
-//                              "List containing the element regions of the
-// faces",
+//                              "List containing the element regions of the faces",
+//                              "List containing the element regions of the faces",
 //                              "1",
 //                              "",
 //                              1,
 //                              0,
 //                              0 );
-//
+
+    docNode->AllocateChildNode( viewKeys.isDomainBoundary.Key(),
+                                viewKeys.isDomainBoundary.Key(),
+                                -1,
+                                "integer_array",
+                                "integer_array",
+                                "List containing the element regions of the faces",
+                                "List containing the element regions of the faces",
+                                "0",
+                                "",
+                                1,
+                                0,
+                                0 );
+
 
 }
 
@@ -236,7 +247,7 @@ void FaceManager::BuildFaces( NodeManager const * const nodeManager, ElementRegi
   // sort the face node lists
   SortAllFaceNodes(*nodeManager,*elementManager);
 
-
+  SetDomainBoundaryObjects();
 //  array<R1Tensor>& faceCenter = this->GetFieldData<R1Tensor>( "FaceCenter" );
 //  for( localIndex k=0 ; k<DataLengths() ; ++k )
 //  {
@@ -311,6 +322,60 @@ void FaceManager::AddNewFace( localIndex const & kReg,
 
 }
 
+
+void FaceManager::SetDomainBoundaryObjects()
+{
+  // assume that all faces will be on a domain boundary. Set it to zero if it is found to have two elements that it
+  // is connected to.
+  integer_array & isDomainBoundary = this->getReference<integer_array>(viewKeys.isDomainBoundary);
+  isDomainBoundary = 0;
+
+  Array2dT<localIndex> const & elemRegionList = this->elementRegionList();
+  Array2dT<localIndex> const & elemSubRegionList = this->elementSubRegionList();
+  Array2dT<localIndex> const & elemList = this->elementList();
+
+  for( localIndex kf=0 ; kf<size() ; ++kf )
+  {
+    if( elemRegionList[kf][1] == -1 )
+    {
+      isDomainBoundary(kf) = 1;
+    }
+  }
+
+}
+
+//
+//void FaceManager::SetIsExternal()
+//{
+//  integer_array const & isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
+//  m_isExternal = 0;
+//  for( localIndex k=0 ; k<m_numFaces ; ++k )
+//  {
+//    if( isDomainBoundary[k]==1 && ( m_matchedBoundaryFaces.find(k)==m_matchedBoundaryFaces.end() ) )
+//    {
+//      m_isExternal[k] = 1;
+//      m_externalFaces.insert(k);
+//    }
+//  }
+//}
+
+void
+FaceManager::
+SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject )
+{
+  array< localIndex_array > const & faceToNodes = this->getReference< array< localIndex_array > >( viewKeys.nodeList );
+  globalIndex_array const & nodalGlobalIndex = compositionalObject->m_localToGlobalMap;
+
+//  globalIndexArray
+//
+//  for( localIndex k=0 ; k<size() ; ++k )
+//  {
+//    if( isDomainBoundary[kf] == 1 )
+//    {
+//
+//    }
+//  }
+}
 
 
 void FaceManager::SortAllFaceNodes( NodeManager const & nodeManager,
@@ -465,6 +530,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   }
 
 }
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ManagedGroup * const )
 

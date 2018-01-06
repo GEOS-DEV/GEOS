@@ -53,7 +53,7 @@ public:
    */
   ///@{
 
-  void FindMatchedPartitionBoundaryObjects();
+  void FindMatchedPartitionBoundaryObjects( ManagedGroup * const group );
 
   void SetMpiComm( MPI_Comm comm )
   {

@@ -51,7 +51,6 @@ void MeshManager::GenerateMeshes( DomainPartition * const domain )
     meshGen->GenerateMesh( domain );
   });
 
-  domain->SetupCommunications();
 }
 
 

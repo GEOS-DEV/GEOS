@@ -64,7 +64,7 @@
 #ifndef EDGEMANAGERT_H_
 #define EDGEMANAGERT_H_
 
-#include "legacy/ArrayT/bufvector.h"
+#include "../MPI_Communications/CommBufferOps.hpp"
 #include "managers/ObjectManagerBase.hpp"
 
 
@@ -95,7 +95,7 @@ public:
   unsigned int PackEdges( const T_indices& sendedges,
                           const NodeManager& nodeManager,
                           const FaceManager& faceManager,
-                          bufvector& buffer,
+//                          bufvector& buffer,
                           const bool packConnectivityToGlobal,
                           const bool packFields,
                           const bool packMaps,
