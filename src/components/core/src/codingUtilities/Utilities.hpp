@@ -13,6 +13,7 @@
 //  Chandrasekhar Annavarapu Srinivas
 //  Eric Herbold
 //  Michael Homel
+//  Arturo Vargas
 //
 //
 //  All rights reserved.
@@ -294,11 +295,8 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               T * __restrict__ const localField2,
                               localIndex N)
 {
-//  const typename array<T>::size_type N = localField1.size() ;
-
   for( localIndex a=0 ; a<N ; ++a )
   {
-//    std::cout<<globalToLocalRelation[a]<<std::endl;
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
     localField2[a] = globalField2[ globalToLocalRelation[a] ];
   }
@@ -358,8 +356,6 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               T * __restrict__ const localField4,
                               localIndex N)
 {
-//  const typename array<T>::size_type N = localField1.size() ;
-
   for( localIndex a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
@@ -405,6 +401,24 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
     globalField[ globalToLocalRelation[a] ] += localField[a];
   }
 }
+
+
+template< typename T >
+inline void AtomicAddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
+                                    T const * __restrict__ const localField,
+                                    T * __restrict__ const globalField,
+                                    localIndex const N )
+{
+
+  double * const lhs = globalField[ globalToLocalRelation[a] ].Data();
+  double const * const rhs = localField[a].Data();
+  for( int i=0; i<3; ++i )
+    {
+#pragma omp atomic
+      lhs[i] += rhs[i];
+    }
+}
+
 
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
