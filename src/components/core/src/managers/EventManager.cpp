@@ -56,7 +56,7 @@ void EventManager::CheckEventTiming()
     if (++eit != docNode->m_child.end())
     {
       dataRepository::ManagedGroup * applicationB = GetGroup(eit->first);
-      ViewWrapper<real64>::rtype beginTime = applicationB->getData<real64>(keys::time);
+      ViewWrapper<real64>::rtype beginTime = applicationB->getData<real64>(keys::beginTime);
 
       if (fabs(*(beginTime) - *(endTime)) > 1e-6)
       {
@@ -93,8 +93,21 @@ void SolverApplication::FillDocumentationNode()
                               -1,
                               "real64",
                               "real64",
-                              "application start/current time",
-                              "application start/current time",
+                              "application current time",
+                              "application current time",
+                              "0.0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( keys::beginTime,
+                              keys::beginTime,
+                              -1,
+                              "real64",
+                              "real64",
+                              "application start time",
+                              "application start time",
                               "0.0",
                               "",
                               0,

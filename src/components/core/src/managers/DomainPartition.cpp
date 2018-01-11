@@ -24,7 +24,7 @@ DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager);
+  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setWriteOut( false );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
@@ -302,7 +302,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
           const localIndex* const elemToNodeMap = elemsToNodes[k];
 
           const integer_array nodeOrdering = siloFile.SiloNodeOrdering();
-          integer numNodesPerElement = elemsToNodes.size<int>(1);
+          integer numNodesPerElement = elemsToNodes.size(1);
           for (localIndex a = 0 ; a < numNodesPerElement ; ++a)
           {
             elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];

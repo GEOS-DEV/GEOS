@@ -16,6 +16,13 @@
 
 namespace geosx
 {
+
+/* Forward declarations */
+class BasisBase;
+class QuadratureBase;
+class SimpleGeometricObjectBase;
+class PartitionBase;
+
 namespace dataRepository
 {
 
@@ -347,8 +354,8 @@ public:
       buff = allocBuffer<localIndex>(byte_size);
     }
 
-    buff[0] = arr.Dimension(0);
-    buff[1] = arr.Dimension(1);
+    buff[0] = arr.size(0);
+    buff[1] = arr.size(1);
 
     std::memcpy(buff + 2, arr.data(), arr.size() * sizeof(T));
     return buff;
@@ -552,6 +559,43 @@ public:
   static localIndex unpack(std::unique_ptr<T> & ptr, const void * buffer, localIndex byte_size=-1)
   { 
     GEOS_ERROR("You shouldn't be unpacking a unique pointer!");
+    return 0;
+  }
+
+
+  template <typename T>
+  static typename std::enable_if<std::is_same<T, BasisBase>::value ||
+                                 std::is_same<T, QuadratureBase>::value ||
+                                 std::is_same<T, SimpleGeometricObjectBase>::value ||
+                                 std::is_same<T, PartitionBase>::value, localIndex>::type
+  packed_size(const T & data)
+  {
+    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, or PartitionBase!"); 
+    return 0;
+  }
+
+
+  template <typename T>
+  static typename std::enable_if<std::is_same<T, BasisBase>::value ||
+                                 std::is_same<T, QuadratureBase>::value ||
+                                 std::is_same<T, SimpleGeometricObjectBase>::value ||
+                                 std::is_same<T, PartitionBase>::value, void *>::type
+  pack(const T & data, localIndex & byte_size, void * buffer=nullptr)
+  {
+    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, or PartitionBase!"); 
+    byte_size = 0;
+    return nullptr;
+  }
+
+
+  template <typename T>
+  static typename std::enable_if<std::is_same<T, BasisBase>::value ||
+                                 std::is_same<T, QuadratureBase>::value ||
+                                 std::is_same<T, SimpleGeometricObjectBase>::value ||
+                                 std::is_same<T, PartitionBase>::value, localIndex>::type
+  unpack(T & data, const void * buffer, localIndex byte_size=-1)
+  { 
+    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, or PartitionBase!"); 
     return 0;
   }
 
