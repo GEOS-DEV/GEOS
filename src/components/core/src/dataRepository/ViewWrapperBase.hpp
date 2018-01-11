@@ -44,7 +44,7 @@ public:
    * \brief constructor
    */
   explicit ViewWrapperBase( std::string const & name,
-                            ManagedGroup * const parent );
+                            ManagedGroup * const parent, bool write_out );
 
 
   ViewWrapperBase( ViewWrapperBase&& source );
@@ -60,8 +60,8 @@ public:
   virtual bool empty() const = 0;
   virtual localIndex size() const = 0;
   virtual localIndex numDimensions() const = 0;
-  virtual localIndex dimension(localIndex i) const = 0;
-  virtual void setDimensions(long num_dims, const long * dims) = 0;
+  virtual localIndex size(localIndex i) const = 0;
+  virtual void resize(int num_dims, const long * dims) = 0;
   virtual void reserve(std::size_t new_cap) = 0;
   virtual std::size_t capacity() const = 0;
   virtual std::size_t max_size() const = 0;
@@ -78,9 +78,6 @@ public:
 
 
   void resize();
-//  virtual void serialize( char * dataPointer, int64 & length, string &
-// typeName ) const = 0;
-
 
   int sizedFromParent() const
   {
@@ -90,6 +87,16 @@ public:
   void setSizedFromParent( int val )
   {
     m_sizedFromParent = val;
+  }
+
+  bool getWriteOut() const
+  { 
+    return m_write_out;
+  }
+
+  void setWriteOut( bool write_out )
+  {
+    m_write_out = write_out;
   }
 
 #ifdef USE_ATK
@@ -109,6 +116,7 @@ private:
   std::string m_name;
   ManagedGroup* m_parent;
   int m_sizedFromParent;
+  bool m_write_out;
 
 #ifdef USE_ATK
   axom::sidre::View* m_sidreView;

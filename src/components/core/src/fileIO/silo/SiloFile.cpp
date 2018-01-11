@@ -1924,8 +1924,8 @@ void SiloFile::DBWriteWrapper( const std::string& name, const Array2dT<TYPE>& da
   {
     int dims[3];
     dims[0] = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
-    dims[1] = data.template size<int>(1);
-    dims[2] = data.template size<int>(0);
+    dims[1] = static_cast<int>(data.size(1));
+    dims[2] = static_cast<int>(data.size(0));
 
     DBWrite( m_dbFilePtr, name.c_str(), const_cast<TYPE*>(data.data()), dims,
              3, SiloFileUtilities::DB_TYPE<TYPE>() );
@@ -2440,11 +2440,11 @@ void SiloFile::DBReadWrapper( const std::string& name, array<Array2dT<TYPE> >& d
 
     typename array<TYPE>::const_iterator idataSerial = dataSerial.begin();
 
-    for( integer i=0 ; i<data.template size<integer>() ; ++i )
+    for( integer i=0 ; i< static_cast<integer>(data.size()) ; ++i )
     {
-      for( integer j=0 ; j<data[i].template size<integer>(0) ; ++j )
+      for( integer j=0 ; j< static_cast<integer>(data[i].size(0)) ; ++j )
       {
-        for( integer k=0 ; k<data[i].template size<integer>(1) ; ++k )
+        for( integer k=0 ; k< static_cast<integer>(data[i].size(1)); ++k )
         {
           data[i][j][k] = *idataSerial;
           ++idataSerial;

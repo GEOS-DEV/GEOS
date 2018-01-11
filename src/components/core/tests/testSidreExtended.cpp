@@ -59,13 +59,13 @@ ViewWrapper<Array2dT<T>> * createArray2dView(ManagedGroup * parent, const string
   /* Resize the array */
   localIndex expected_size = data.size() * sizeof(T);
   long dims[2];
-  dims[0] = data.Dimension(0);
-  dims[1] = data.Dimension(1);
-  view->setDimensions(2, dims);
+  dims[0] = data.size(0);
+  dims[1] = data.size(1);
+  view->resize(2, dims);
 
   /* Check that the ViewWrapper size and byteSize return the proper values */
-  EXPECT_EQ(view->dimension(0), data.Dimension(0));
-  EXPECT_EQ(view->dimension(1), data.Dimension(1));
+  EXPECT_EQ(view->size(0), data.size(0));
+  EXPECT_EQ(view->size(1), data.size(1));
   EXPECT_EQ(view->size(), data.size());
   EXPECT_EQ(view->byteSize(), expected_size);
 
@@ -91,13 +91,13 @@ void checkArray2dView(const ViewWrapper<Array2dT<T>> * view, int sfp, const Arra
 {
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->size(), data.size());
-  EXPECT_EQ(view->dimension(0), data.Dimension(0));
-  EXPECT_EQ(view->dimension(1), data.Dimension(1));
+  EXPECT_EQ(view->size(0), data.size(0));
+  EXPECT_EQ(view->size(1), data.size(1));
   
   const Array2dT<T> & view_data = view->reference();
-  for (int i = 0; i < data.Dimension(0); i++) 
+  for (int i = 0; i < data.size(0); i++) 
   {
-    for (int j = 0; j < data.Dimension(1); j++) 
+    for (int j = 0; j < data.size(1); j++) 
     {
       EXPECT_EQ(view_data[i][j], data[i][j]);
     }

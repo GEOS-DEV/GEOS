@@ -20,10 +20,11 @@ namespace dataRepository
 
 
 ViewWrapperBase::ViewWrapperBase( std::string const & name,
-                                  ManagedGroup * const parent ):
+                                  ManagedGroup * const parent, bool write_out ):
   m_name(name),
   m_parent(parent),
-  m_sizedFromParent(1)
+  m_sizedFromParent(1),
+  m_write_out(write_out)
 #ifdef USE_ATK
   ,m_sidreView(nullptr)
 #endif
@@ -50,7 +51,8 @@ ViewWrapperBase::~ViewWrapperBase()
 ViewWrapperBase::ViewWrapperBase( ViewWrapperBase&& source ):
   m_name( std::move(source.m_name) ),
   m_parent( source.m_parent),
-  m_sizedFromParent( source.m_sizedFromParent)
+  m_sizedFromParent( source.m_sizedFromParent),
+  m_write_out( source.m_write_out )
 #ifdef USE_ATK
   ,m_sidreView( source.m_sidreView )
 #endif
