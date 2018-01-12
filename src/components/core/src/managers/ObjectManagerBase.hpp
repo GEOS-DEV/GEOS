@@ -49,6 +49,7 @@ public:
   virtual string getCatalogName() const = 0;
   ///@}
 
+  virtual void FillDocumentationNode() override;
 
 private:
 //  cxx_utilities::DocumentationNode * m_docNode;
@@ -74,6 +75,30 @@ public:
 //    localIndex m_DataLengths;
 //
 //    localIndex DataLengths() const { return size(); }
+
+  struct viewKeyStruct
+  {
+    static constexpr auto ghostRankString = "ghostRank";
+    static constexpr auto localToGlobalMapString = "localToGlobalMap";
+    static constexpr auto globalToLocalMapString = "globalToLocalMap";
+    dataRepository::ViewKey ghostRank = { ghostRankString };
+    dataRepository::ViewKey globalToLocalMap = { localToGlobalMapString };
+    dataRepository::ViewKey localToGlobalMap = { globalToLocalMapString };
+
+  } viewKeys;
+
+  struct groupKeyStruct
+  {
+//    dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
+  } groupKeys;
+
+
+  dataRepository::view_rtype<integer_array> GhostRank()
+  { return this->getData<integer_array>(viewKeys.ghostRank); }
+
+  dataRepository::view_rtype_const<integer_array> GhostRank() const
+  { return this->getData<integer_array>(viewKeys.ghostRank); }
+
 
   void WriteSilo( SiloFile& siloFile,
                   const std::string& meshname,
@@ -197,10 +222,16 @@ public:
                                   const array<localIndex_array>& map,
                                   const std::string& newSetName );
 
-
+  void ConstructGlobalToLocalMap();
 
   void ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
   void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
+
+  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & ,
+                                                                array<globalIndex_array>&  )
+  {
+
+  }
 
   //**********************************************************************************************************************
 

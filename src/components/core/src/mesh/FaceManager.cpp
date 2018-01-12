@@ -43,6 +43,7 @@ FaceManager::~FaceManager()
 
 void FaceManager::FillDocumentationNode()
 {
+  ObjectManagerBase::FillDocumentationNode();
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   docNode->setName( "InternalMesh" );
@@ -359,23 +360,31 @@ void FaceManager::SetDomainBoundaryObjects()
 //  }
 //}
 
-void
-FaceManager::
-SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject )
-{
-  array< localIndex_array > const & faceToNodes = this->getReference< array< localIndex_array > >( viewKeys.nodeList );
-  globalIndex_array const & nodalGlobalIndex = compositionalObject->m_localToGlobalMap;
-
-//  globalIndexArray
+//void
+//FaceManager::
+//SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject )
+//{
+//  array< localIndex_array > const & faceToNodes = this->getReference< array< localIndex_array > >( viewKeys.nodeList );
+//  globalIndex_array const & nodalGlobalIndex = compositionalObject->m_localToGlobalMap;
+//  integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.isDomainBoundary);
 //
+//  mpiBuffer buffer;
+//
+//  localIndex numFaces;
 //  for( localIndex k=0 ; k<size() ; ++k )
 //  {
-//    if( isDomainBoundary[kf] == 1 )
+//    if( isDomainBoundary[k] == 1 )
 //    {
-//
 //    }
 //  }
-}
+//  for( localIndex k=0 ; k<size() ; ++k )
+//  {
+//    if( isDomainBoundary[k] == 1 )
+//    {
+//      CommBufferOps::Pack( buffer, )
+//    }
+//  }
+//}
 
 
 void FaceManager::SortAllFaceNodes( NodeManager const & nodeManager,
@@ -531,6 +540,36 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
 
 }
 
+
+void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
+                                                                   array<globalIndex_array>& faceToNodes )
+{
+
+  array<localIndex_array> const & faceNodes = this->nodeList();
+  integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.isDomainBoundary);
+
+  nodeManager.CheckTypeID( typeid( NodeManager ) );
+
+
+  faceToNodes.clear();
+  for( localIndex kf=0 ; kf<size() ; ++kf )
+  {
+
+    if( isDomainBoundary(kf) != 0 )
+    {
+      globalIndex_array temp;
+
+      for( localIndex a=0 ; a<faceNodes[kf].size() ; ++a )
+      {
+        const globalIndex gnode = nodeManager.m_localToGlobalMap( faceNodes[kf][a] );
+        temp.push_back( gnode );
+      }
+      std::sort( temp.begin(), temp.end() );
+//      temp.insert( temp.begin(), this->m_localToGlobalMap[kf] );
+      faceToNodes.push_back(temp);
+    }
+  }
+}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ManagedGroup * const )
 

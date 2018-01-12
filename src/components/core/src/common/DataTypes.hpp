@@ -116,7 +116,7 @@ using localIndex_const_array  = array<localIndex const>;
 using globalIndex_array        = array<globalIndex>;
 using globalIndex_const_array  = array<globalIndex const>;
 
-
+using mpiBuffer = array<char>;
 
 using integer_set        = set<integer>;
 using integer_const_set  = set<integer const>;

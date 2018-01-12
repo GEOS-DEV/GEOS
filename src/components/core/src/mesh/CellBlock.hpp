@@ -124,7 +124,7 @@ public:
 //  ElementRegion( ElementRegion&& init);
 
 
-  void FillDocumentationNode() override;
+  virtual void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 
@@ -140,7 +140,7 @@ public:
   R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
 
 
-  struct viewKeysStruct
+  struct viewKeysStruct : ObjectManagerBase::viewKeyStruct
   {
     dataRepository::ViewKey numNodesPerElement = { "numNodesPerElement" };
     dataRepository::ViewKey nodeList           = { "nodeList" };

@@ -45,7 +45,7 @@ public:
 
 //  void Initialize(  ){}
 
-  void FillDocumentationNode() override final;
+  virtual void FillDocumentationNode() override final;
 
 
   void BuildFaces( NodeManager const * const nodeManager, ElementRegionManager * const elemManager );
@@ -71,9 +71,12 @@ public:
 
   void SetDomainBoundaryObjects();
 
-  void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
+  //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 
-  struct viewKeysStruct
+  virtual void
+  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
+                                                   array<globalIndex_array>& faceToNodes ) override final;
+  struct viewKeysStruct : ObjectManagerBase::viewKeyStruct
   {
     dataRepository::ViewKey nodeList              = { "nodeList" };
     dataRepository::ViewKey elementRegionList     = { "elemRegionList" };

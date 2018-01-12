@@ -146,7 +146,7 @@ public:
   ///@}
 
 
-  struct viewKeysStruct
+  struct viewKeysStruct : ObjectManagerBase::viewKeyStruct
   {
 //    static constexpr auto referencePositionString = "ReferencePosition";
     dataRepository::ViewKey referencePosition = { dataRepository::keys::referencePositionString };

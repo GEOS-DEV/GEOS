@@ -108,6 +108,11 @@ public:
     return typeid(*this);
   }
 
+  bool CheckTypeID( std::type_info const & typeToCheck ) const
+  {
+    return typeToCheck == get_typeid() ? true : false;
+  }
+
 
   template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
   T * RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject );

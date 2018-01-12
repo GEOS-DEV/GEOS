@@ -14,8 +14,8 @@ using namespace dataRepository;
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ManagedGroup * const parent ):
   ManagedGroup(name,parent),
-  m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() ),
-  m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
+  m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >(viewKeys.localToGlobalMapString)->reference() ),
+  m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >(viewKeys.globalToLocalMapString)->reference() )
 {
   this->RegisterGroup<ManagedGroup>(keys::sets);
   this->RegisterViewWrapper< array<integer> >("isExternal");
@@ -44,6 +44,54 @@ ObjectManagerBase::CatalogInterface::CatalogType& ObjectManagerBase::GetCatalog(
 {
   static ObjectManagerBase::CatalogInterface::CatalogType catalog;
   return catalog;
+}
+
+void ObjectManagerBase::FillDocumentationNode()
+{
+  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+
+  docNode->AllocateChildNode( viewKeys.ghostRank.Key(),
+                              viewKeys.ghostRank.Key(),
+                              -1,
+                              "integer_array",
+                              "integer_array",
+                              "Array that indicates whether or not an index is a ghost. ",
+                              "Array that indicates whether or not an index is a ghost. "
+                              "If it is not a ghost the value will be -1. If it "
+                              "is a ghost, then the value will be the owning rank.",
+                              "",
+                              "",
+                              1,
+                              0,
+                              0 );
+
+//  docNode->AllocateChildNode( viewKeys.globalToLocalMap.Key(),
+//                              viewKeys.globalToLocalMap.Key(),
+//                              -1,
+//                              "localIndex_map",
+//                              "localIndex_map",
+//                              "Map from globalIndex to localIndex. ",
+//                              "Map from globalIndex to localIndex. ",
+//                              "",
+//                              "",
+//                              1,
+//                              0,
+//                              0 );
+
+//
+//  docNode->AllocateChildNode( viewKeys.localToGlobalMap.Key(),
+//                              viewKeys.localToGlobalMap.Key(),
+//                              -1,
+//                              "globalIndex_array",
+//                              "globalIndex_array",
+//                              "Array that maps from localIndex to globalIndex. ",
+//                              "Array that maps from localIndex to globalIndex. ",
+//                              "",
+//                              "",
+//                              1,
+//                              0,
+//                              0 );
+
 }
 
 
@@ -127,6 +175,14 @@ void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array&
   std::sort( objectList.begin(), objectList.end() );
 }
 
+void ObjectManagerBase::ConstructGlobalToLocalMap()
+{
+  m_globalToLocalMap.clear();
+  for( localIndex k=0 ; k<size() ; ++k )
+  {
+    m_globalToLocalMap[m_localToGlobalMap[k]] = k;
+  }
 
+}
 
 } /* namespace geosx */

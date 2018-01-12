@@ -13,7 +13,8 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "common/Logger.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
-
+#include "MPI_Communications/CommunicationTools.hpp"
+#include "managers/ObjectManagerBase.hpp"
 namespace geosx
 {
 using namespace dataRepository;
@@ -21,14 +22,9 @@ using namespace dataRepository;
 DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
   ManagedGroup( name, parent ),
-  m_mpiComm(),
-  m_freeCommID()
+  m_mpiComm()
 {
 
-  for( int a = 0 ; a < NeighborCommunicator::maxComm ; ++a )
-  {
-    m_freeCommID.insert( a );
-  }
 
   this->RegisterViewWrapper< array<NeighborCommunicator> >(viewKeys.neighbors);
   MPI_Comm_dup( MPI_COMM_WORLD, &m_mpiComm );
@@ -184,12 +180,12 @@ void DomainPartition::GenerateSets(  )
 
 void
 DomainPartition::
-FindMatchedPartitionBoundaryObjects( ManagedGroup * const group )
+FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+                                     array< array<localIndex> > & matchedPartitionBoundaryObjects )
 {
   integer_array const & isDomainBoundary = group->getReference<integer_array>("isDomainBoundary");
   globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( "localToGlobal" );
 
-  array<localIndex> localPartitionBoundaryObjectsIndices;
   array<globalIndex> globalPartitionBoundaryObjectsIndices;
   for( localIndex k=0 ; k<group->size() ; ++k )
   {
@@ -207,9 +203,9 @@ FindMatchedPartitionBoundaryObjects( ManagedGroup * const group )
   // send the size of the partitionBoundaryObjects to neighbors
   {
     array< array<globalIndex> > neighborPartitionBoundaryObjects( allNeighbors.size() );
-    array< array<localIndex> > matchedPartitionBoundaryObjects( allNeighbors.size() );
+    matchedPartitionBoundaryObjects( allNeighbors.size() );
 
-    int const commID = reserveCommID();
+    int commID = reserveCommID();
 
     for( int i=0 ; i<allNeighbors.size() ; ++i )
     {
@@ -228,7 +224,7 @@ FindMatchedPartitionBoundaryObjects( ManagedGroup * const group )
       {
         if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
         {
-          matchedPartitionBoundaryObjects[i].push_back( localPartitionBoundaryObjectsIndices[localCounter] );
+          matchedPartitionBoundaryObjects[i].push_back( group->m_globalToLocalMap.at(globalPartitionBoundaryObjectsIndices[localCounter]) );
           ++localCounter;
           ++neighborCounter;
         }
@@ -242,25 +238,47 @@ FindMatchedPartitionBoundaryObjects( ManagedGroup * const group )
         }
       }
     }
+    releaseCommID(commID);
+  }
+}
+
+set<int> & DomainPartition::getFreeCommIDs()
+{
+  static set<int> commIDs;
+  static bool isInitialized = false;
+
+  if( !isInitialized )
+  {
+    for( int a = 0 ; a < NeighborCommunicator::maxComm ; ++a )
+    {
+      commIDs.insert( a );
+    }
+    isInitialized = true;
   }
 
+  return commIDs;
 }
 
 
 int DomainPartition::reserveCommID()
 {
-  int rval = *( m_freeCommID.begin() );
-  m_freeCommID.erase( rval );
+  set<int> & commIDs = getFreeCommIDs();
+
+  int rval = *( commIDs.begin() );
+  commIDs.erase( rval );
   return rval;
 }
 
-void DomainPartition::releaseCommID( int ID )
+void DomainPartition::releaseCommID( int & ID )
 {
-  if( m_freeCommID.count(ID) > 0 )
+  set<int> & commIDs = getFreeCommIDs();
+
+  if( commIDs.count(ID) > 0 )
   {
     GEOS_ERROR("Attempting to release commID that is already free");
   }
-  m_freeCommID.insert( ID );
+  commIDs.insert( ID );
+  ID = -1;
 }
 
 void DomainPartition::SetupCommunications()
@@ -291,8 +309,13 @@ void DomainPartition::SetupCommunications()
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
+  NodeManager * nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
-  FindMatchedPartitionBoundaryObjects( faceManager );
+
+  CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
+
+  array< localIndex_array > matchedFaces;
+  FindMatchedPartitionBoundaryObjects( faceManager, matchedFaces );
 }
 
 void DomainPartition::AddNeighbors(const unsigned int idim,

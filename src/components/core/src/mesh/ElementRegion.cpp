@@ -96,6 +96,7 @@ ElementRegion::~ElementRegion()
 
 void ElementRegion::FillDocumentationNode()
 {
+  ObjectManagerBase::FillDocumentationNode();
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   docNode->setName( this->getCatalogName() );

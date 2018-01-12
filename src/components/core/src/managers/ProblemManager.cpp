@@ -546,6 +546,8 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 
   domain->SetupCommunications();
 
+
+
 }
 
 void ProblemManager::RunSimulation()

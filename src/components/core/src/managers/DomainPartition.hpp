@@ -23,6 +23,7 @@ string const partitionManager("partitionManager");
 }
 }
 
+class ObjectManagerBase;
 class PartitionBase;
 
 class DomainPartition : public dataRepository::ManagedGroup
@@ -53,15 +54,17 @@ public:
    */
   ///@{
 
-  void FindMatchedPartitionBoundaryObjects( ManagedGroup * const group );
+  void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+                                            array< array<localIndex> > & matchedPartitionBoundaryObjects );
 
   void SetMpiComm( MPI_Comm comm )
   {
     MPI_Comm_dup( comm, &m_mpiComm );
   }
 
-  int reserveCommID();
-  void releaseCommID( int ID );
+  static std::set<int> & getFreeCommIDs();
+  static int reserveCommID();
+  static void releaseCommID( int & ID );
 
   void SetupCommunications();
 
@@ -132,7 +135,7 @@ public:
 
 private:
   MPI_Comm m_mpiComm;
-  std::set<int> m_freeCommID;
+//  std::set<int> m_freeCommID;
 
 
 };

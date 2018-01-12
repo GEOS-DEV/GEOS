@@ -25,6 +25,8 @@ inline int CommTag( int const senderRank, int const receiverRank, int const comm
 class NeighborCommunicator
 {
 public:
+  using buffer_type = std::vector<char>;
+
   NeighborCommunicator();
   ~NeighborCommunicator();
 
@@ -118,6 +120,10 @@ public:
   }
 
 
+  void MPI_iSendReceive( char const * const sendBuffer,
+                         int const sendSize,
+                         int const commID,
+                         MPI_Comm mpiComm  );
 
   void MPI_WaitAll( int const commID,
                     MPI_Request& mpiSendRequest,
@@ -133,7 +139,27 @@ public:
   void SetNeighborRank( int const rank ) { m_neighborRank = rank; }
   int NeighborRank(){ return m_neighborRank; }
 
+  void Clear();
+
   static int constexpr maxComm = 100;
+
+  buffer_type const & RecieveBuffer( int commID ) const
+  {
+    return m_receiveBuffer[commID];
+  }
+  buffer_type & RecieveBuffer( int commID )
+  {
+    return m_receiveBuffer[commID];
+  }
+
+  buffer_type const & SendBuffer( int commID ) const
+  {
+    return m_sendBuffer[commID];
+  }
+  buffer_type & SendBuffer( int commID )
+  {
+    return m_sendBuffer[commID];
+  }
 
 private:
   int m_neighborRank;
@@ -141,8 +167,8 @@ private:
   int m_sendBufferSize[maxComm];
   int m_receiveBufferSize[maxComm];
 
-  std::vector<char> m_sendBuffer[maxComm];
-  std::vector<char> m_receiveBuffer[maxComm];
+  buffer_type m_sendBuffer[maxComm];
+  buffer_type m_receiveBuffer[maxComm];
 
   MPI_Request m_mpiSendBufferRequest[maxComm];
   MPI_Request m_mpiRecvBufferRequest[maxComm];

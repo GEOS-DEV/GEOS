@@ -90,6 +90,11 @@ public:
   /// default destructor
   ~NodeManager();
 
+  virtual const std::type_info& get_typeid() const override final
+  {
+    return typeid(*this);
+  }
+
   /// reads nodal input from the preliminary geometry file format
   void ReadAsciiNodeInput( std::ifstream& geometryStream );
 

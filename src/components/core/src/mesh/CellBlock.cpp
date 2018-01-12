@@ -96,6 +96,8 @@ void CellBlock::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
+  ObjectManagerBase::FillDocumentationNode();
+
   docNode->setName( this->getCatalogName() );
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "an element region" );

@@ -29,6 +29,8 @@ CellBlockSubRegion::~CellBlockSubRegion()
 
 void CellBlockSubRegion::FillDocumentationNode()
 {
+  CellBlock::FillDocumentationNode();
+
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   docNode->setName( this->getCatalogName() );

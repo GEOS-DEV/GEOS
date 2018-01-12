@@ -1,0 +1,258 @@
+/*
+ * CommunicationTools.cpp
+ *
+ *  Created on: Jan 6, 2018
+ *      Author: settgast
+ */
+
+#include "CommunicationTools.hpp"
+#include "managers/ObjectManagerBase.hpp"
+#include "NeighborCommunicator.hpp"
+#include "managers/DomainPartition.hpp"
+
+namespace geosx
+{
+
+using namespace dataRepository;
+
+CommunicationTools::CommunicationTools()
+{
+  // TODO Auto-generated constructor stub
+
+}
+
+CommunicationTools::~CommunicationTools()
+{
+  // TODO Auto-generated destructor stub
+}
+
+int CommunicationTools::MPI_Size( MPI_Comm const & comm )
+{
+  int size;
+  MPI_Comm_size( comm, &size );
+  return size;
+}
+
+int CommunicationTools::MPI_Rank( MPI_Comm const & comm )
+{
+  int rank;
+  MPI_Comm_rank( comm, &rank );
+  return rank;
+}
+
+void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
+                                              ObjectManagerBase const & compositionObject,
+                                              array<NeighborCommunicator> & neighbors )
+{
+  int const commSize = MPI_Size( MPI_COMM_WORLD );
+  localIndex numberOfObjectsHere = object.size();
+  localIndex_array numberOfObjects( commSize );
+  localIndex_array glocalIndexOffset( commSize );
+  MPI_Allgather( reinterpret_cast<char*>( &numberOfObjectsHere ),
+                 sizeof(localIndex),
+                 MPI_CHAR,
+                 reinterpret_cast<char*>( numberOfObjects.data() ),
+                 sizeof(localIndex),
+                 MPI_CHAR,
+                 MPI_COMM_WORLD );
+
+  int const commRank = MPI_Rank( MPI_COMM_WORLD );
+
+  glocalIndexOffset[0] = 0;
+  for( int rank = 1 ; rank < commSize ; ++rank )
+  {
+    glocalIndexOffset[rank] = glocalIndexOffset[rank - 1] + numberOfObjects[rank - 1];
+  }
+
+  // set the global indices as if they were all local to this process
+  for( localIndex a = 0 ; a < object.size() ; ++a )
+  {
+    object.m_localToGlobalMap[a] = glocalIndexOffset[commRank] + a;
+  }
+
+  // get the relation to the composition object used that will be used to identify the main object. For example,
+  // a face can be identified by its nodes.
+  array<globalIndex_array> objectToCompositionObject;
+  object.ExtractMapFromObjectForAssignGlobalIndexNumbers( compositionObject, objectToCompositionObject );
+
+  // now arrange the data from objectToCompositionObject into a map "indexByFirstCompositionIndex", such that the key
+  // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with the
+  // array being the remaining composition object global indices, and the second being the global index of the object
+  // itself.
+  map<globalIndex, array<std::pair<globalIndex_array, localIndex> > > indexByFirstCompositionIndex;
+
+//  for( array<globalIndex_array>::const_iterator a = objectToCompositionObject.begin() ;
+//      a != objectToCompositionObject.end() ;
+//      ++a )
+
+  localIndex bufferSize = 0;
+  for( localIndex a = 0 ; a < objectToCompositionObject.size() ; ++a )
+  {
+    // set nodelist array
+    globalIndex_array const & nodeList = objectToCompositionObject[a];
+
+    // grab the first global index of the composition objects
+    const globalIndex firstCompositionIndex = nodeList[0];
+
+    // create a temporary to hold the pair
+    std::pair<globalIndex_array, globalIndex> tempComp;
+
+    // fill the array with the remaining composition object global indices
+    tempComp.first.insert( tempComp.first.begin(), nodeList.begin() + 1, nodeList.end() );
+
+    // set the second value of the pair to the localIndex of the object.
+    tempComp.second = a;
+
+    // push the tempComp onto the map.
+    indexByFirstCompositionIndex[firstCompositionIndex].push_back( tempComp );
+    bufferSize += 2 + nodeList.size();
+  }
+
+  globalIndex_array objectToCompositionObjectSendBuffer;
+  objectToCompositionObjectSendBuffer.reserve( bufferSize );
+
+  // put the map into a buffer
+  for( localIndex a = 0 ; a < objectToCompositionObject.size() ; ++a )
+  {
+    globalIndex_array const & nodeList = objectToCompositionObject[a];
+    objectToCompositionObjectSendBuffer.push_back( nodeList.size() );
+    objectToCompositionObjectSendBuffer.push_back( object.m_localToGlobalMap[a] );
+    for( localIndex b = 0 ; b < nodeList.size() ; ++b )
+    {
+      objectToCompositionObjectSendBuffer.push_back( nodeList[b] );
+    }
+  }
+
+  int commID = DomainPartition::reserveCommID();
+
+  // send the composition buffers
+  {
+    localIndex const sendSize = objectToCompositionObjectSendBuffer.size() * sizeof(globalIndex);
+
+    for( localIndex in = 0 ; in < neighbors.size() ; ++in )
+    {
+      NeighborCommunicator & neighbor = neighbors[in];
+
+      neighbor.MPI_iSendReceive( reinterpret_cast<const char*>( objectToCompositionObjectSendBuffer.data() ),
+                                 sendSize,
+                                 commID,
+                                 MPI_COMM_WORLD );
+    }
+    for( localIndex in = 0 ; in < neighbors.size() ; ++in )
+    {
+      neighbors[in].MPI_WaitAll( commID );
+    }
+  }
+
+  // unpack the data from neighbor->tempNeighborData.neighborNumbers[DomainPartition::FiniteElementNodeManager] to
+  // the local arrays
+
+  // object to receive the neighbor data
+  // this baby is and Array (for each neighbor) of maps, with the key of lowest composition index, and a value containing
+  // an array containing the std::pairs of the remaining composition indices, and the globalIndex of the object.
+  array<map<globalIndex, array<std::pair<globalIndex_array, globalIndex> > > >
+  neighborCompositionObjects( neighbors.size() );
+
+  {
+    for( localIndex neighborIndex = 0 ; neighborIndex < neighbors.size() ; ++neighborIndex )
+    {
+      NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
+      globalIndex const * recBuffer = reinterpret_cast<globalIndex const *>( neighbor.RecieveBuffer( commID ).data() );
+      localIndex recBufferSize = neighbor.RecieveBuffer( commID ).size() / sizeof(globalIndex);
+      globalIndex const * endBuffer = recBuffer + recBufferSize;
+      // iterate over data that was just received
+      while( recBuffer < endBuffer )
+      {
+        // the first thing packed was the data size for a given object
+        localIndex dataSize = *( recBuffer++ );
+
+        // the second thing packed was the globalIndex of that object
+        const globalIndex neighborGlobalIndex = *( recBuffer++ );
+
+        // the global indices of the composition objects were next. they are ordered, so the lowest one is first.
+        const globalIndex firstCompositionIndex = *( recBuffer++ );
+
+        // the remaining composition object indices.
+        globalIndex_array temp;
+        for( localIndex b = 1 ; b < dataSize ; ++b )
+        {
+          temp.push_back( *( recBuffer++ ) );
+        }
+
+        // fill neighborCompositionObjects
+        std::pair<globalIndex_array, globalIndex> tempComp( std::make_pair( temp, neighborGlobalIndex ) );
+        neighborCompositionObjects[neighborIndex][firstCompositionIndex].push_back( tempComp );
+      }
+    }
+  }
+  DomainPartition::releaseCommID(commID);
+
+  // now check to see if the global index is valid. We do this by checking the contents of neighborCompositionObjects
+  // with indexByFirstCompositionIndex
+  for( localIndex neighborIndex = 0 ; neighborIndex < neighbors.size() ; ++neighborIndex )
+  {
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
+    // it only matters if the neighbor rank is lower than this rank
+    if( neighbor.NeighborRank() < commRank )
+    {
+      // Set iterators to the beginning of each indexByFirstCompositionIndex,
+      // and neighborCompositionObjects[neighborNum].
+      map<globalIndex, array<std::pair<globalIndex_array, localIndex> > >::const_iterator
+      iter_local = indexByFirstCompositionIndex.begin();
+      map<globalIndex, array<std::pair<globalIndex_array, globalIndex> > >::const_iterator
+      iter_neighbor = neighborCompositionObjects[neighborIndex].begin();
+
+      // now we continue the while loop as long as both of our iterators are in range.
+      while( iter_local != indexByFirstCompositionIndex.end() &&
+             iter_neighbor != neighborCompositionObjects[neighborIndex].end() )
+      {
+        // check to see if the map keys (first composition index) are the same.
+        if( iter_local->first == iter_neighbor->first )
+        {
+          // first we loop over all local composition arrays (objects with the matched key)
+          for( array<std::pair<globalIndex_array, localIndex> >::const_iterator
+               iter_local2 = iter_local->second.begin() ;
+               iter_local2 != iter_local->second.end() ; ++iter_local2 )
+          {
+            // and loop over all of the neighbor composition arrays (objects with the matched key)
+            for( array<std::pair<globalIndex_array, globalIndex> >::const_iterator
+            iter_neighbor2 = iter_neighbor->second.begin() ;
+                iter_neighbor2 != iter_neighbor->second.end() ;
+                ++iter_neighbor2 )
+            {
+              // now compare the composition arrays
+              if( iter_local2->first.size() == iter_neighbor2->first.size() &&
+                  std::equal( iter_local2->first.begin(), iter_local2->first.end(), iter_neighbor2->first.begin() ) )
+              {
+                // they are equal, so we need to overwrite the global index for the object
+                if( iter_neighbor2->second < object.m_localToGlobalMap[iter_local2->second] )
+                {
+                  object.m_localToGlobalMap[iter_local2->second] = iter_neighbor2->second;
+                }
+
+                // we should break out of the iter_local2 loop since we aren't going to find another match.
+                break;
+              }
+            }
+          }
+          ++iter_local;
+          ++iter_neighbor;
+        }
+        else if( iter_local->first < iter_neighbor->first )
+        {
+          ++iter_local;
+        }
+        else if( iter_local->first > iter_neighbor->first )
+        {
+          ++iter_neighbor;
+        }
+      }
+    }
+  }
+
+  object.ConstructGlobalToLocalMap();
+}
+
+} /* namespace geosx */

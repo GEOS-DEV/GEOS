@@ -128,6 +128,37 @@ void NeighborCommunicator::MPI_iSendReceive( int const commID,
                     mpiComm );
 }
 
+
+void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
+                                             int const sendSize,
+                                             int const commID,
+                                             MPI_Comm mpiComm  )
+{
+  MPI_iSendReceive( &sendSize,
+                    1,
+                    m_mpiSendBufferRequest[commID],
+                    &m_receiveBufferSize[commID],
+                    1,
+                    m_mpiRecvBufferRequest[commID],
+                    commID,
+                    mpiComm );
+
+  MPI_Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
+  MPI_Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+
+  m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
+
+  MPI_iSendReceive( sendBuffer,
+                    sendSize,
+                    m_mpiSendBufferRequest[commID],
+                    m_receiveBuffer[commID].data(),
+                    m_receiveBufferSize[commID],
+                    m_mpiRecvBufferRequest[commID],
+                    commID,
+                    mpiComm );
+}
+
+
 void NeighborCommunicator::MPI_WaitAll( int const commID,
                                         MPI_Request& mpiSendRequest,
                                         MPI_Status& mpiSendStatus,
@@ -151,6 +182,15 @@ int NeighborCommunicator::Rank()
   int rank = -1;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
   return rank;
+}
+
+void NeighborCommunicator::Clear()
+{
+  for( int i=0 ; i<maxComm ; ++i )
+  {
+    m_sendBuffer[i].clear();
+    m_receiveBuffer[i].clear();
+  }
 }
 
 } /* namespace geosx */
