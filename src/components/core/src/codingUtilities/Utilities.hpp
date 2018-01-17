@@ -278,8 +278,6 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               T * __restrict__ const localField2,
                               localIndex N)
 {
-//  const typename array<T>::size_type N = localField1.size() ;
-
   for( localIndex a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
@@ -390,7 +388,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
   }
 }
 
-template< typename T >
+template<typename T>
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                               T const * __restrict__ const localField,
                               T * __restrict__ const globalField,
@@ -403,19 +401,22 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 }
 
 
-template< typename T >
+template<typename T >
 inline void AtomicAddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                                     T const * __restrict__ const localField,
                                     T * __restrict__ const globalField,
                                     localIndex const N )
 {
 
-  double * const lhs = globalField[ globalToLocalRelation[a] ].Data();
-  double const * const rhs = localField[a].Data();
-  for( int i=0; i<3; ++i )
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
     {
+      double * const lhs = globalField[ globalToLocalRelation[a] ].Data();
+      double const * const rhs = localField[a].Data();
+      for( int i=0; i<3; ++i )
+        {
 #pragma omp atomic
-      lhs[i] += rhs[i];
+          lhs[i] += rhs[i];
+        }
     }
 }
 
