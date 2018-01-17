@@ -34,6 +34,10 @@ set( extraComponentsListLink "")
 #  set( extraComponentsListLink ${extraComponentsListLink} python_interp )
 #endif()
 
+if( ENABLE_OPENMP)
+  set( extraComponentsListLink ${extraComponentsListLink} openmp )
+endif()
+
 if( ENABLE_MPI )
   set( extraComponentsListLink ${extraComponentsListLink} mpi )
 endif()
@@ -63,3 +67,4 @@ target_include_directories(geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/components/core
 if( ENABLE_UNCRUSTIFY )
 geosx_add_code_checks(PREFIX core)
 endif()
+

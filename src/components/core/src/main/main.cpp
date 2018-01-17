@@ -11,6 +11,9 @@
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
 
+
+#include <omp.h>
+
 using namespace geosx;
 
 #ifdef USE_ATK
@@ -30,8 +33,16 @@ int main( int argc, char *argv[] )
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 
-
   std::cout<<"starting main"<<std::endl;
+
+  {
+    int noThreads = omp_get_max_threads();
+    std::cout<<"No of threads: "<<noThreads<<std::endl;
+  }
+  
+
+
+
 
 #ifdef USE_ATK
   slic::initialize();
@@ -68,15 +79,16 @@ int main( int argc, char *argv[] )
 
   GEOS_MARK_END("Initialization");
 
+  problemManager.ApplyInitialConditions();
+  //std::cout << std::endl << "Running simulation:" << std::endl;
+
+  GEOS_MARK_BEGIN("RunSimulation");
   gettimeofday(&tim, NULL);
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-  problemManager.ApplyInitialConditions();
-  std::cout << std::endl << "Running simulation:" << std::endl;
-
-  GEOS_MARK_BEGIN("RunSimulation");
-
   problemManager.RunSimulation();
+  gettimeofday(&tim, NULL);
+  t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   GEOS_MARK_END("RunSimulation");
 
@@ -85,9 +97,6 @@ int main( int argc, char *argv[] )
 #ifdef USE_ATK
   axom::slic::finalize();
 #endif
-
-  gettimeofday(&tim, NULL);
-  t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   printf("Done!\n\nScaling Data: initTime = %1.2fs, runTime = %1.2fs\n", t_initialize - t_start,  t_run - t_initialize );
 
