@@ -687,8 +687,6 @@ void ProblemManager::RunSimulation()
       cycle++;
       dt = (lockDt)? dt : nextDt;
       dt = (endTime - time < dt)? endTime-time : dt;
-
-      if (cycle == 10) WriteRestart(cycle);
     }
 
     bpWriter.write(cycle);  
