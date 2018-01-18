@@ -58,7 +58,7 @@ ViewWrapper<Array2dT<T>> * createArray2dView(ManagedGroup * parent, const string
 
   /* Resize the array */
   localIndex expected_size = data.size() * sizeof(T);
-  long dims[2];
+  long long dims[2];
   dims[0] = data.size(0);
   dims[1] = data.size(1);
   view->resize(2, dims);
