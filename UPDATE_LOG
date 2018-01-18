@@ -1,5 +1,24 @@
 
 
+Wed Jan 17 16:15:33 2018 Benjamin Curtice Corbett
+v0.0.24
+
+* after merge
+* after merging in master
+* conduit issue
+* removed conduit_io
+* before merge
+* after merge
+* restart working but output all 000
+* restart working
+* remove test_restart
+* removed hdf5-dif.py
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/23
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/14
+This pull request is related to the branch at: https://rzlc.llnl.gov/bitbucket/projects/geosx/repos/physicssolverpackage1/browse?at=refs%2Fheads%2Frestart-cherry-pick
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/15
+
+
 Fri Dec 29 00:37:54 2017 Randolph R. Settgast
 v0.0.23
 
