@@ -290,16 +290,16 @@ public:
 
   struct resize_dimension_wrapper
   {
-    HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(int, const long *), VA_LIST(int(1), nullptr))
+    HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(int, long long const * const), VA_LIST(int(1), nullptr))
 
     template<class U=T>
     static typename std::enable_if<has_memberfunction_resize<U>::value, void>::type
-    resize(ViewWrapper<T> * parent, int num_dims, const long * dims)
+    resize(ViewWrapper<T> * parent, int num_dims, long long const * const dims)
     { parent->m_data->resize(num_dims, dims); }
 
     template<class U=T>
     static typename std::enable_if<!has_memberfunction_resize<U>::value, void>::type
-    resize(ViewWrapper<T> * parent, int num_dims, const long * dims)
+    resize(ViewWrapper<T> * parent, int num_dims, long long const * const dims)
     {
       if (num_dims != 1)
       {
@@ -309,7 +309,7 @@ public:
       parent->resize(dims[0]);
     }
   };
-  virtual void resize(int num_dims, const long * dims) override final
+  virtual void resize(int num_dims, long long const *  const dims) override final
   { resize_dimension_wrapper::resize(this, num_dims, dims); }
 
 
@@ -931,7 +931,13 @@ public:
                    num_elems_recorded << " " << num_elements);
       }
 
-      resize(ndims, dims);
+      long long l_dims[ndims];
+      for (localIndex i = 0; i < ndims; ++i)
+      {
+        l_dims[i] = dims[i];
+      }
+
+      resize(ndims, l_dims);
     }
 #endif
   }
