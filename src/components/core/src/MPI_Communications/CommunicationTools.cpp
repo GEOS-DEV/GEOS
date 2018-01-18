@@ -40,10 +40,54 @@ int CommunicationTools::MPI_Rank( MPI_Comm const & comm )
   return rank;
 }
 
+
+set<int> & CommunicationTools::getFreeCommIDs()
+{
+  static set<int> commIDs;
+  static bool isInitialized = false;
+
+  if( !isInitialized )
+  {
+    for( int a = 0 ; a < NeighborCommunicator::maxComm ; ++a )
+    {
+      commIDs.insert( a );
+    }
+    isInitialized = true;
+  }
+
+  return commIDs;
+}
+
+
+int CommunicationTools::reserveCommID()
+{
+  set<int> & commIDs = getFreeCommIDs();
+
+  int rval = *( commIDs.begin() );
+  commIDs.erase( rval );
+  return rval;
+}
+
+void CommunicationTools::releaseCommID( int & ID )
+{
+  set<int> & commIDs = getFreeCommIDs();
+
+  if( commIDs.count(ID) > 0 )
+  {
+    GEOS_ERROR("Attempting to release commID that is already free");
+  }
+  commIDs.insert( ID );
+  ID = -1;
+}
+
 void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               ObjectManagerBase const & compositionObject,
                                               array<NeighborCommunicator> & neighbors )
 {
+
+  integer_array & ghostRank = object.getReference<integer_array>(object.viewKeys.ghostRank);
+  ghostRank = -2;
+
   int const commSize = MPI_Size( MPI_COMM_WORLD );
   localIndex numberOfObjectsHere = object.size();
   localIndex_array numberOfObjects( commSize );
@@ -123,7 +167,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     }
   }
 
-  int commID = DomainPartition::reserveCommID();
+  int commID = reserveCommID();
 
   // send the composition buffers
   {
@@ -186,7 +230,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       }
     }
   }
-  DomainPartition::releaseCommID(commID);
+  releaseCommID(commID);
 
   // now check to see if the global index is valid. We do this by checking the contents of neighborCompositionObjects
   // with indexByFirstCompositionIndex
@@ -195,7 +239,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
     // it only matters if the neighbor rank is lower than this rank
-    if( neighbor.NeighborRank() < commRank )
+//    if( neighbor.NeighborRank() < commRank )
     {
       // Set iterators to the beginning of each indexByFirstCompositionIndex,
       // and neighborCompositionObjects[neighborNum].
@@ -229,7 +273,16 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                 // they are equal, so we need to overwrite the global index for the object
                 if( iter_neighbor2->second < object.m_localToGlobalMap[iter_local2->second] )
                 {
-                  object.m_localToGlobalMap[iter_local2->second] = iter_neighbor2->second;
+                  if( neighbor.NeighborRank() < commRank )
+                  {
+                    object.m_localToGlobalMap[iter_local2->second] = iter_neighbor2->second;
+                    ghostRank[iter_local2->second] = neighbor.NeighborRank();
+                  }
+                  else
+                  {
+                    ghostRank[iter_local2->second] = -1;
+                  }
+
                 }
 
                 // we should break out of the iter_local2 loop since we aren't going to find another match.
@@ -254,5 +307,76 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   object.ConstructGlobalToLocalMap();
 }
+
+void
+CommunicationTools::
+FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+                                     array<NeighborCommunicator> & allNeighbors )//,
+                                     //array< array<localIndex> > & matchedPartitionBoundaryObjects )
+{
+  integer_array const & ghostRank = group->getReference<integer_array>( group->viewKeys.ghostRank );
+  integer_array & domainBoundaryIndicator = group->getReference<integer_array>(group->viewKeys.domainBoundaryIndicator);
+  globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( group->viewKeys.localToGlobalMap );
+
+  array<globalIndex> globalPartitionBoundaryObjectsIndices;
+  group->ConstructGlobalListOfBoundaryObjects(globalPartitionBoundaryObjectsIndices);
+
+
+//  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
+
+  // send the size of the partitionBoundaryObjects to neighbors
+  {
+    array< array<globalIndex> > neighborPartitionBoundaryObjects( allNeighbors.size() );
+//    matchedPartitionBoundaryObjects.resize( allNeighbors.size() );
+
+    int commID = reserveCommID();
+
+    for( int i=0 ; i<allNeighbors.size() ; ++i )
+    {
+      allNeighbors[i].MPI_iSendReceive( globalPartitionBoundaryObjectsIndices,
+                                        neighborPartitionBoundaryObjects[i],
+                                        commID, MPI_COMM_WORLD );
+    }
+
+    for( int i=0 ; i<allNeighbors.size() ; ++i )
+    {
+      localIndex_array & matchedPartitionBoundaryObjects = group->getReference<localIndex_array>("matchedPartitionBoundaryObjects");
+      allNeighbors[i].MPI_WaitAll(commID);
+      localIndex localCounter = 0;
+      localIndex neighborCounter = 0;
+      while( localCounter < globalPartitionBoundaryObjectsIndices.size() &&
+             neighborCounter < neighborPartitionBoundaryObjects[i].size() )
+      {
+        if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
+        {
+          localIndex const localMatchedIndex = group->m_globalToLocalMap.at(globalPartitionBoundaryObjectsIndices[localCounter]);
+          matchedPartitionBoundaryObjects.push_back( localMatchedIndex );
+          domainBoundaryIndicator[ localMatchedIndex ] = 2;
+          ++localCounter;
+          ++neighborCounter;
+        }
+        else if( globalPartitionBoundaryObjectsIndices[localCounter] > neighborPartitionBoundaryObjects[i][neighborCounter] )
+        {
+          ++neighborCounter;
+        }
+        else
+        {
+          ++localCounter;
+        }
+      }
+    }
+    releaseCommID(commID);
+  }
+}
+
+
+
+
+void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
+                                     array<NeighborCommunicator> & neighbors )
+{
+
+}
+
 
 } /* namespace geosx */

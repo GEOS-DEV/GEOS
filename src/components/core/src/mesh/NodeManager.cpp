@@ -127,6 +127,7 @@ NodeManager::~NodeManager()
 
 void NodeManager::FillDocumentationNode()
 {
+  ObjectManagerBase::FillDocumentationNode();
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   docNode->setName( this->getCatalogName() );

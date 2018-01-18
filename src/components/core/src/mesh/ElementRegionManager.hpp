@@ -157,6 +157,8 @@ public:
     return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups().size();
   }
 
+  localIndex numCellBlocks() const;
+
 
   template< typename LAMBDA >
   void forElementRegions( LAMBDA lambda )

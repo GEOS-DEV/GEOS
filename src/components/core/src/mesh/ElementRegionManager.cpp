@@ -96,6 +96,16 @@ localIndex ElementRegionManager::getNumberOfElements() const
   return numElem;
 }
 
+localIndex ElementRegionManager::numCellBlocks() const
+{
+  localIndex numCellBlocks = 0;
+  this->forCellBlocks([&]( ManagedGroup const * cellBlock ) -> void
+    {
+    numCellBlocks += 1;
+    });
+  return numCellBlocks;
+}
+
 void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & regionNames,
                                    string_array const & elementTypes )

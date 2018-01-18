@@ -6,6 +6,7 @@
  */
 
 #include "NeighborCommunicator.hpp"
+#include "mesh/MeshLevel.hpp"
 
 namespace geosx
 {
@@ -98,7 +99,7 @@ void NeighborCommunicator::MPI_iSendReceiveBuffers( int const commID,
 }
 
 void NeighborCommunicator::MPI_iSendReceive( int const commID,
-                                             MPI_Comm mpiComm  )
+                                             MPI_Comm mpiComm )
 {
   MPI_iSendReceive( commID,
                     m_mpiSendBufferRequest[commID],
@@ -128,11 +129,10 @@ void NeighborCommunicator::MPI_iSendReceive( int const commID,
                     mpiComm );
 }
 
-
 void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
                                              int const sendSize,
                                              int const commID,
-                                             MPI_Comm mpiComm  )
+                                             MPI_Comm mpiComm )
 {
   MPI_iSendReceive( &sendSize,
                     1,
@@ -158,7 +158,6 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
                     mpiComm );
 }
 
-
 void NeighborCommunicator::MPI_WaitAll( int const commID,
                                         MPI_Request& mpiSendRequest,
                                         MPI_Status& mpiSendStatus,
@@ -169,7 +168,6 @@ void NeighborCommunicator::MPI_WaitAll( int const commID,
   MPI_Waitall( 1, &mpiRecvRequest, &mpiReceiveStatus );
   MPI_Waitall( 1, &mpiSendRequest, &mpiSendStatus );
 }
-
 
 void NeighborCommunicator::MPI_WaitAll( int const commID )
 {
@@ -186,11 +184,174 @@ int NeighborCommunicator::Rank()
 
 void NeighborCommunicator::Clear()
 {
-  for( int i=0 ; i<maxComm ; ++i )
+  for( int i = 0 ; i < maxComm ; ++i )
   {
     m_sendBuffer[i].clear();
     m_receiveBuffer[i].clear();
   }
+}
+
+void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) const
+{
+  ObjectManagerBase * const nodeManager = mesh->getNodeManager();
+  ManagedGroup * const nodeNeighborGroup = nodeManager->
+      GetGroup(nodeManager->groupKeys.neighborData)->
+      RegisterGroup( std::to_string( this->m_neighborRank ));
+
+  ObjectManagerBase * const faceManager = mesh->getFaceManager();
+  ManagedGroup * const faceNeighborGroup = faceManager->
+      GetGroup(faceManager->groupKeys.neighborData)->
+      RegisterGroup( std::to_string( this->m_neighborRank ));
+
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ManagedGroup * elementNeighborGroups[100];
+  localIndex numElementNeighborGroups = 0;
+  elemManager->forCellBlocks( [&]( ManagedGroup * const cellBlock ) -> void
+  {
+    elementNeighborGroups[numElementNeighborGroups++] = cellBlock->
+        GetGroup(faceManager->groupKeys.neighborData)->
+        RegisterGroup( std::to_string( this->m_neighborRank ));
+  });
+
+
+  for( localIndex a=0 ; a<numElementNeighborGroups ; ++a )
+  {
+    elementNeighborGroups[a]->RegisterViewWrapper<localIndex_array>("matchedPartitionBoundaryObjects");
+  }
+
+
+
+}
+
+void NeighborCommunicator::FindGhosts( bool const contactActive,
+                                       integer const depth,
+                                       MeshLevel * const meshLevel )
+{
+//
+//  lSet & facesToSend;
+//
+//
+//
+//  //Currently, this MUST fill the objectsToSend associated with the following
+//  //(see NeighborCommunication::SyncNames for the current list)
+//  // 0: NodeManager -> PackNodes
+//  // 1: EdgeManager -> PackEdges
+//  // 2: FaceManager -> PackFaces
+//  // 3: FiniteElementElementManager -> PackElements
+//  // 4: DiscreteElementManager ->
+//  // 5: DiscreteElementNodeManager ->
+//  // 6: DiscreteElementFaceManager ->
+//  // 7: EllipsoidalDiscreteElementManager ->
+//
+//  // so now we know which nodes are "shared" between the neighbors. what we do now is to collect all the objects
+//  // attached to these nodes. These will be "ghost" objects on the neighbor.
+//
+//  lSet& allNodes = tempNeighborData.objectLocalIndicesToSend[PhysicalDomainT::FiniteElementNodeManager];
+//  lSet& allEdges = tempNeighborData.objectLocalIndicesToSend[PhysicalDomainT::FiniteElementEdgeManager];
+//  lSet& allFaces = tempNeighborData.objectLocalIndicesToSend[PhysicalDomainT::FiniteElementFaceManager];
+//
+//  // get list of elements connected to the matched nodes into "m_elementRegionsSendLocalIndices"
+//  this->m_elementRegionsSendLocalIndices.clear();
+//  m_domain->m_feElementManager.ConstructListOfIndexesFromMap( this->m_domain->m_feNodeManager.m_toElementsRelation,
+//                                                              this->tempNeighborData.matchedIndices[PhysicalDomainT::FiniteElementNodeManager],
+//                                                              this->m_elementRegionsSendLocalIndices,
+//                                                              depth );
+//
+//  // now pack up the elements that are going over to the neighbor...also get the node that we are going to
+//  // need to send.
+//  m_domain
+//          ->m_feElementManager.PackElements(
+//      this->tempNeighborData.objectsToSend[PhysicalDomainT::FiniteElementElementManager],
+//      allNodes,
+//      allFaces,
+//      this->m_elementRegionsSendLocalIndices,
+//      this->m_domain->m_feNodeManager,
+//      this->m_domain->m_feFaceManager,
+//      true, true, true, true );
+//
+//  // add the "external" faces if the contact is on
+//  if( contactActive )
+//  {
+//    const array<integer>& isExternalFace =
+//        m_domain->m_feFaceManager.m_isExternal;
+//
+//    for( array<integer>::size_type a = 0 ;
+//        a < m_domain->m_feFaceManager.m_numFaces ; ++a )
+//    {
+//      if( isExternalFace[a] == 1 )
+//      {
+//        bool allValidNodes = true;
+//        for( localIndex_array::const_iterator
+//        i = m_domain->m_feFaceManager.m_toNodesRelation[a].begin() ;
+//            i != m_domain->m_feFaceManager.m_toNodesRelation[a].end() ; ++i )
+//        {
+//          const globalIndex gnode = m_domain->m_feNodeManager.m_localToGlobalMap[*i];
+//          const int owningRank = GlobalIndexManager::OwningRank( gnode );
+//          if( !( m_rankOfNeighborNeighbors.count( owningRank ) ) )
+//          {
+//            allValidNodes = false;
+//          }
+//        }
+//        if( allValidNodes )
+//        {
+//          allFaces.insert( a );
+//        }
+//      }
+//    }
+//  }
+//
+//  for( lSet::const_iterator faceIndex = allFaces.begin() ;
+//      faceIndex != allFaces.end() ; ++faceIndex )
+//  {
+//    for( localIndex_array::const_iterator
+//    edgeIndex = m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].begin() ;
+//        edgeIndex != m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].end()
+//        ; ++edgeIndex )
+//    {
+//      const globalIndex gi =
+//          m_domain->m_feEdgeManager.m_localToGlobalMap[*edgeIndex];
+//      if( m_rankOfNeighborNeighbors.count( GlobalIndexManager::OwningRank( gi )
+//                                                                           ) )
+//      {
+//        allEdges.insert( *edgeIndex );
+//      }
+//    }
+//
+//    for( localIndex_array::const_iterator
+//    i = m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].begin() ;
+//        i != m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].end() ;
+//        ++i )
+//    {
+//      allNodes.insert( *i );
+//    }
+//  }
+//
+//  const PhysicalDomainT::ObjectDataStructureKeys keys[3] =
+//      {
+//        PhysicalDomainT::FiniteElementNodeManager,
+//        PhysicalDomainT::FiniteElementEdgeManager,
+//        PhysicalDomainT::FiniteElementFaceManager
+//      };
+//
+//  for( int i = 0 ; i < 3 ; ++i )
+//  {
+//    const lSet& localSends =
+//        tempNeighborData.objectLocalIndicesToSend[keys[i]];
+//    globalIndex_array& globalSends =
+//        tempNeighborData.objectGlobalIndicesToSend[keys[i]];
+//
+//    for( lSet::const_iterator a = localSends.begin() ; a != localSends.end() ; ++a
+//        )
+//    {
+//      const globalIndex gIndex =
+//          m_domain->GetObjectDataStructure( keys[i] ).m_localToGlobalMap[*a];
+//      if( GlobalIndexManager::OwningRank( gIndex ) != m_rank &&
+//          GlobalIndexManager::OwningRank( gIndex ) != m_neighborRank )
+//      {
+//        globalSends.push_back( gIndex );
+//      }
+//    }
+//  }
 }
 
 } /* namespace geosx */

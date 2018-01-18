@@ -16,6 +16,7 @@ namespace geosx
 
 class ObjectManagerBase;
 class NeighborCommunicator;
+class MeshLevel;
 
 class CommunicationTools
 {
@@ -27,8 +28,19 @@ public:
                                    ObjectManagerBase const & compositionObject,
                                    array<NeighborCommunicator> & neighbors );
 
+  static void FindGhosts( MeshLevel & meshLevel,
+                          array<NeighborCommunicator> & neighbors );
+
   static int MPI_Size( MPI_Comm const & comm );
   static int MPI_Rank( MPI_Comm const & comm );
+
+  static std::set<int> & getFreeCommIDs();
+  static int reserveCommID();
+  static void releaseCommID( int & ID );
+
+  static void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+                                            array<NeighborCommunicator> & allNeighbors );
+
 };
 
 } /* namespace geosx */

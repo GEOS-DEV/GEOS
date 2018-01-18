@@ -289,6 +289,11 @@ public:
   template< typename T >
   ViewWrapper<T> * RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject );
 
+//  template< typename T >
+//  void RegisterViewWrapperRecursive( string const & name );
+//
+//  template< typename T >
+//  void RegisterViewWrapperRecursive( string const & name, string const & targetGroupName );
 
   ///@}
 
@@ -711,6 +716,35 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name, st
   }
   return rval;
 }
+
+//template< typename T >
+//void ManagedGroup::RegisterViewWrapperRecursive( string const & name )
+//{
+//  this->RegisterViewWrapper<T>(name);
+//  forSubGroups( [&] ( ManagedGroup & group ) -> void
+//  {
+//    group.RegisterViewWrapperRecursive<T>(name);
+//  });
+//}
+//
+//template< typename T >
+//void ManagedGroup::RegisterViewWrapperRecursive( string const & name, string const & targetGroupName )
+//{
+//  if( this->m_name == targetGroupName )
+//  {
+//    forSubGroups( [&] ( ManagedGroup & group ) -> void
+//    {
+//      this->RegisterViewWrapperRecursive<T>(name);
+//    });
+//  }
+//  else
+//  {
+//    forSubGroups( [&] ( ManagedGroup & group ) -> void
+//    {
+//      group.RegisterViewWrapperRecursive<T>(name, targetGroupName);
+//    });
+//  }
+//}
 
 
 } /* end namespace dataRepository */

@@ -48,7 +48,7 @@ public:
   virtual void FillDocumentationNode() override final;
 
 
-  void BuildFaces( NodeManager const * const nodeManager, ElementRegionManager * const elemManager );
+  void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
   void  AddNewFace( localIndex const & kReg,
                     localIndex const & kSubReg,
@@ -69,7 +69,7 @@ public:
                       R1Tensor const & elementCenter,
                       const localIndex faceIndex );
 
-  void SetDomainBoundaryObjects();
+  void SetDomainBoundaryObjects( NodeManager * const nodeManager );
 
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 
@@ -82,7 +82,6 @@ public:
     dataRepository::ViewKey elementRegionList     = { "elemRegionList" };
     dataRepository::ViewKey elementSubRegionList  = { "elemSubRegionList" };
     dataRepository::ViewKey elementList           = { "elemList" };
-    dataRepository::ViewKey isDomainBoundary      = { "isDomainBoundary" };
   } viewKeys;
 
   struct groupKeysStruct

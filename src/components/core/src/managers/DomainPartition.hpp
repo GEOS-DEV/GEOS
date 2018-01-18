@@ -54,17 +54,17 @@ public:
    */
   ///@{
 
-  void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                            array< array<localIndex> > & matchedPartitionBoundaryObjects );
+//  void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+//                                            array< array<localIndex> > & matchedPartitionBoundaryObjects );
 
   void SetMpiComm( MPI_Comm comm )
   {
     MPI_Comm_dup( comm, &m_mpiComm );
   }
 
-  static std::set<int> & getFreeCommIDs();
-  static int reserveCommID();
-  static void releaseCommID( int & ID );
+//  static std::set<int> & getFreeCommIDs();
+//  static int reserveCommID();
+//  static void releaseCommID( int & ID );
 
   void SetupCommunications();
 

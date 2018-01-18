@@ -81,15 +81,20 @@ public:
     static constexpr auto ghostRankString = "ghostRank";
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
     static constexpr auto globalToLocalMapString = "globalToLocalMap";
+    static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
+
     dataRepository::ViewKey ghostRank = { ghostRankString };
-    dataRepository::ViewKey globalToLocalMap = { localToGlobalMapString };
-    dataRepository::ViewKey localToGlobalMap = { globalToLocalMapString };
+    dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
+    dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
+    dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
+
 
   } viewKeys;
 
   struct groupKeyStruct
   {
-//    dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
+    static constexpr auto neighborDataString = "neighborData";
+    dataRepository::GroupKey neighborData = { neighborDataString };
   } groupKeys;
 
 

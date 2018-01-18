@@ -22,6 +22,9 @@ inline int CommTag( int const senderRank, int const receiverRank, int const comm
   return senderRank * m_size + receiverRank + m_size * m_size * comm;
 }
 
+class MeshLevel;
+
+
 class NeighborCommunicator
 {
 public:
@@ -133,6 +136,9 @@ public:
 
   void MPI_WaitAll( int const commID );
 
+  void FindGhosts( bool const contactActive,
+                   integer const depth,
+                   MeshLevel * const meshLevel );
 
   int Rank();
 
@@ -160,6 +166,8 @@ public:
   {
     return m_sendBuffer[commID];
   }
+
+  void AddNeighborGroupToMesh( MeshLevel * const mesh ) const;
 
 private:
   int m_neighborRank;

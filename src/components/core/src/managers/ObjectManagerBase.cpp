@@ -14,11 +14,13 @@ using namespace dataRepository;
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ManagedGroup * const parent ):
   ManagedGroup(name,parent),
-  m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >(viewKeys.localToGlobalMapString)->reference() ),
-  m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >(viewKeys.globalToLocalMapString)->reference() )
+  m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >(viewKeys.localToGlobalMap)->reference() ),
+  m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >(viewKeys.globalToLocalMap)->reference() )
 {
   this->RegisterGroup<ManagedGroup>(keys::sets);
   this->RegisterViewWrapper< array<integer> >("isExternal");
+
+  this->RegisterGroup(groupKeys.neighborData);
 }
 //ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //                                      ManagedGroup * const parent,
@@ -59,7 +61,20 @@ void ObjectManagerBase::FillDocumentationNode()
                               "Array that indicates whether or not an index is a ghost. "
                               "If it is not a ghost the value will be -1. If it "
                               "is a ghost, then the value will be the owning rank.",
+                              "-1",
                               "",
+                              1,
+                              0,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.domainBoundaryIndicator.Key(),
+                              viewKeys.domainBoundaryIndicator.Key(),
+                              -1,
+                              "integer_array",
+                              "integer_array",
+                              "List containing the element regions of the faces",
+                              "List containing the element regions of the faces",
+                              "0",
                               "",
                               1,
                               0,
@@ -152,7 +167,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
 
 void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& objectList ) const
 {
-  const array<integer>& isDomainBoundary = this->getReference<integer_array>(string("isDomainBoundary"));
+  const array<integer>& isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -164,7 +179,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& o
 
 void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array& objectList ) const
 {
-  const array<integer>& isDomainBoundary = this->getReference<integer_array>(string("isDomainBoundary"));
+  const array<integer>& isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )

@@ -525,6 +525,7 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
     MeshUtilities::GenerateNodesets( geometricObjects,
                                      nodeManager );
+    nodeManager->ConstructGlobalToLocalMap();
   }
 }
 

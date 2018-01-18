@@ -158,7 +158,7 @@ public:
   } viewKeys;
 
 
-  struct groupKeysStruct
+  struct groupKeysStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
   view_rtype_const<r1_array> referencePosition() const { return this->getData<r1_array>(viewKeys.referencePosition); }
