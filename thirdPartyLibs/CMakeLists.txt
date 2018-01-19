@@ -159,7 +159,7 @@ else()
                                     -DRAJA_ENABLE_TESTS=${RAJA_ENABLE_TESTS}
                                     -DRAJA_ENABLE_TBB=${RAJA_ENABLE_TBB}
                                     -DENABLE_OPENMP=${ENABLE_OPENMP}
-                                    -DRAJA_ENABLE_OPENMP=${ENABLE_OPENMP}
+                 		    -DRAJA_ENABLE_OPENMP=${ENABLE_OPENMP}
                                     -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
 
     set( dependency_list "${dependency_list};raja" )
