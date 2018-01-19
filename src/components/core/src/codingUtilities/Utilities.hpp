@@ -13,7 +13,6 @@
 //  Chandrasekhar Annavarapu Srinivas
 //  Eric Herbold
 //  Michael Homel
-//  Arturo Vargas
 //
 //
 //  All rights reserved.
@@ -71,6 +70,9 @@
 #include <sys/resource.h>
 #include <map>
 #include <algorithm>
+#include "RAJA/RAJA.hpp"
+#include "RAJA/util/defines.hpp"
+
 
 #ifdef USE_ATK
 #include "slic/slic.hpp"
@@ -401,7 +403,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 }
 
 
-template<typename T >
+template<typename atomicPol, typename T>
 inline void AtomicAddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                                     T const * __restrict__ const localField,
                                     T * __restrict__ const globalField,
@@ -414,8 +416,7 @@ inline void AtomicAddLocalToGlobal( const localIndex* __restrict__ const globalT
       double const * const rhs = localField[a].Data();
       for( int i=0; i<3; ++i )
         {
-#pragma omp atomic
-          lhs[i] += rhs[i];
+          RAJA::atomic::atomicAdd<atomicPol>(&lhs[i],rhs[i]);
         }
     }
 }
