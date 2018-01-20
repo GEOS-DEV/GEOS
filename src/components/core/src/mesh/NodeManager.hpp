@@ -80,6 +80,7 @@ namespace geosx
 class CellBlock;
 class FaceManager;
 class EdgeManager;
+class ElementRegionManager;
 
 namespace dataRepository
 {
@@ -124,6 +125,8 @@ public:
   void FillDocumentationNode() override final;
 
 
+  void SetElementMaps( ElementRegionManager const * const elementRegionManager );
+
 //  void Initialize();
 
 
@@ -149,11 +152,15 @@ public:
   struct viewKeysStruct : ObjectManagerBase::viewKeyStruct
   {
 //    static constexpr auto referencePositionString = "ReferencePosition";
+
     dataRepository::ViewKey referencePosition = { dataRepository::keys::referencePositionString };
 //    dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
     dataRepository::ViewKey nodeList           = { "nodeList" };
     dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
     dataRepository::ViewKey faceList           = { "faceList" };
+    dataRepository::ViewKey elementRegionList     = { "elemRegionList" };
+    dataRepository::ViewKey elementSubRegionList  = { "elemSubRegionList" };
+    dataRepository::ViewKey elementList           = { "elemList" };
 
   } viewKeys;
 

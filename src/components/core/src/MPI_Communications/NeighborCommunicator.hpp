@@ -143,7 +143,7 @@ public:
   int Rank();
 
   void SetNeighborRank( int const rank ) { m_neighborRank = rank; }
-  int NeighborRank(){ return m_neighborRank; }
+  int NeighborRank() const { return m_neighborRank; }
 
   void Clear();
 

@@ -84,7 +84,7 @@ public:
     dataRepository::ViewKey elementList           = { "elemList" };
   } viewKeys;
 
-  struct groupKeysStruct
+  struct groupKeysStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
   array< localIndex_array > const & nodeList() const        { return this->getReference< array< localIndex_array > >(viewKeys.nodeList); }

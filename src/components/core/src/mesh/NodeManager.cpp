@@ -70,9 +70,12 @@
 //#include "Utilities/Utilities.h"
 //#include <fstream>
 //#include "ElementRegionT.hpp"
+#include "ElementRegionManager.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
+using namespace multidimensionalArray;
 
 // *********************************************************************************************************************
 /**
@@ -82,7 +85,12 @@ using namespace dataRepository;
 NodeManager::NodeManager( std::string const & name,
                           ManagedGroup * const parent ):
   ObjectManagerBase( name, parent )
-{}
+{
+  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementRegionList.Key());
+  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementSubRegionList.Key());
+  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementList.Key());
+
+}
 
 
 
@@ -134,44 +142,44 @@ void NodeManager::FillDocumentationNode()
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "a node manager" );
 
-  docNode->AllocateChildNode( keys::elementRegionMap,
-                              keys::elementRegionMap,
-                              -1,
-                              "integer_array",
-                              "integer_array",
-                              "map to element region",
-                              "map to element region",
-                              "",
-                              "",
-                              1,
-                              0,
-                              0 );
-
-  docNode->AllocateChildNode( keys::elementSubRegionMap,
-                              keys::elementSubRegionMap,
-                              -1,
-                              "integer_array",
-                              "integer_array",
-                              "map to element sub regions",
-                              "map to element sub regions",
-                              "",
-                              "",
-                              1,
-                              0,
-                              0 );
-
-  docNode->AllocateChildNode( keys::elementMap,
-                              keys::elementMap,
-                              -1,
-                              "localIndex_array",
-                              "localIndex_array",
-                              "map to element in a subregion",
-                              "map to element in a subregion",
-                              "",
-                              "",
-                              1,
-                              0,
-                              0 );
+//  docNode->AllocateChildNode( keys::elementRegionMap,
+//                              keys::elementRegionMap,
+//                              -1,
+//                              "integer_array",
+//                              "integer_array",
+//                              "map to element region",
+//                              "map to element region",
+//                              "",
+//                              "",
+//                              1,
+//                              0,
+//                              0 );
+//
+//  docNode->AllocateChildNode( keys::elementSubRegionMap,
+//                              keys::elementSubRegionMap,
+//                              -1,
+//                              "integer_array",
+//                              "integer_array",
+//                              "map to element sub regions",
+//                              "map to element sub regions",
+//                              "",
+//                              "",
+//                              1,
+//                              0,
+//                              0 );
+//
+//  docNode->AllocateChildNode( keys::elementMap,
+//                              keys::elementMap,
+//                              -1,
+//                              "localIndex_array",
+//                              "localIndex_array",
+//                              "map to element in a subregion",
+//                              "map to element in a subregion",
+//                              "",
+//                              "",
+//                              1,
+//                              0,
+//                              0 );
 
   docNode->AllocateChildNode( keys::referencePositionString,
                               keys::referencePositionString,
@@ -187,6 +195,43 @@ void NodeManager::FillDocumentationNode()
                               0 );
 }
 
+void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
+{
+  array<localIndex_array> & elementRegionList = this->getReference< array<localIndex_array> >(viewKeys.elementRegionList.Key());
+  array<localIndex_array> & elementSubRegionList = this->getReference< array<localIndex_array> >(viewKeys.elementSubRegionList.Key());
+  array<localIndex_array> & elementList = this->getReference< array<localIndex_array> >(viewKeys.elementList.Key());
+
+  for( localIndex a=0 ; a<size() ; ++a )
+  {
+    elementRegionList[a].clear();
+    elementSubRegionList[a].clear();
+    elementList[a].clear();
+  }
+
+  for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = elementRegionManager->GetRegion(kReg);
+
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+
+      lArray2d const & elemsToNodes = subRegion->getReference<lArray2d>(subRegion->viewKeys.nodeList);
+
+      for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
+      {
+        localIndex const * const nodeList = elemsToNodes[ke];
+        for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
+        {
+          localIndex nodeIndex = nodeList[a];
+          elementRegionList[nodeIndex].push_back( kReg );
+          elementSubRegionList[nodeIndex].push_back( kSubReg );
+          elementList[nodeIndex].push_back( ke );
+        }
+      }
+    }
+  }
+}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ManagedGroup * const )
 

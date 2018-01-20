@@ -91,6 +91,10 @@ string const elementRegions = "elementRegions";
 class ElementRegionManager : public ObjectManagerBase
 {
 public:
+
+  template< typename VIEWTYPE >
+  using ElementViewAccessor = array< array< VIEWTYPE * > > ;
+
   /**
    * @name Static Factory Catalog Functions
    */
@@ -206,11 +210,49 @@ public:
       }
     }
   }
+
+  template< typename VIEWTYPE >
+  void ConstructViewAccessor( string const & name,
+                              string const & neighborName,
+                              ElementViewAccessor<VIEWTYPE> & viewAccessor );
 private:
   ElementRegionManager( const ElementRegionManager& );
   ElementRegionManager& operator=( const ElementRegionManager&);
 
 
 };
+
+
+
+template< typename VIEWTYPE >
+void ElementRegionManager::
+ConstructViewAccessor( string const & viewName,
+                       string const & neighborName,
+                       ElementRegionManager::ElementViewAccessor<VIEWTYPE> & viewAccessor )
+{
+  viewAccessor.resize( numRegions() );
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion * const elemRegion = GetRegion(kReg);
+    viewAccessor[kReg].resize( elemRegion->numSubRegions() );
+
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
+
+      if( neighborName.empty() )
+      {
+        viewAccessor[kReg][kSubReg] = &(subRegion->getReference<VIEWTYPE>(viewName));
+      }
+      else
+      {
+        viewAccessor[kReg][kSubReg] = &(subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
+                                      GetGroup(neighborName)->getReference<VIEWTYPE>(viewName));
+      }
+    }
+  }
+
+}
+
 }
 #endif /* ZONEMANAGER_H */

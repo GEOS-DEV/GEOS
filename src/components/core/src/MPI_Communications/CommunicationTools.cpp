@@ -340,7 +340,12 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 
     for( int i=0 ; i<allNeighbors.size() ; ++i )
     {
-      localIndex_array & matchedPartitionBoundaryObjects = group->getReference<localIndex_array>("matchedPartitionBoundaryObjects");
+      NeighborCommunicator const & neighbor = allNeighbors[i];
+      localIndex_array &
+      matchedPartitionBoundaryObjects = group->GetGroup(group->groupKeys.neighborData)->
+                                        GetGroup(std::to_string(neighbor.NeighborRank()))->
+                                        getReference<localIndex_array>( group->viewKeys.matchedPartitionBoundaryObjects );
+
       allNeighbors[i].MPI_WaitAll(commID);
       localIndex localCounter = 0;
       localIndex neighborCounter = 0;

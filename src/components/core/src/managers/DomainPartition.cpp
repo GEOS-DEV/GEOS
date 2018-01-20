@@ -315,9 +315,6 @@ void DomainPartition::SetupCommunications()
   NodeManager * nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
-//  meshLevel->RegisterViewWrapperRecursive()
-
-
   CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
 
   CommunicationTools::FindMatchedPartitionBoundaryObjects( faceManager,
@@ -326,7 +323,11 @@ void DomainPartition::SetupCommunications()
   CommunicationTools::FindMatchedPartitionBoundaryObjects( nodeManager,
                                                            allNeighbors );
 
- // array<localIndex_array> matchedElements()
+  for( auto & neighbor : allNeighbors )
+  {
+    neighbor.FindGhosts(false,2,meshLevel);
+  }
+
 }
 
 void DomainPartition::AddNeighbors(const unsigned int idim,

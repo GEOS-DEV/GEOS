@@ -86,6 +86,7 @@ class ManagedGroup;
 }
 
 class DomainPartition;
+class MeshLevel;
 
 struct TempNeighborData
 {
@@ -247,7 +248,8 @@ public:
   void FindPackGhostsFaultElement( const int depth = 1 );
 #endif
 
-  void FindGhosts( const bool contactActive,
+  void FindGhosts( MeshLevel * const mesh,
+                   const bool contactActive,
                    const int depth = 1 );
 
   void FindPackGhosts_Step2();

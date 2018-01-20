@@ -15,10 +15,10 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 2"
+                  xCoords="0, 1"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="2"
+                  nx="6"
                   ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>

@@ -202,5 +202,6 @@ void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problem
   }
 }
 
+
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, ManagedGroup * const )
 }

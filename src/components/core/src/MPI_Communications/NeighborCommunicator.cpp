@@ -193,30 +193,37 @@ void NeighborCommunicator::Clear()
 
 void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) const
 {
+  ManagedGroup * neighborGroups[100];
+  localIndex numNeighborGroups = 0;
+
   ObjectManagerBase * const nodeManager = mesh->getNodeManager();
-  ManagedGroup * const nodeNeighborGroup = nodeManager->
+  neighborGroups[numNeighborGroups++] = nodeManager->
       GetGroup(nodeManager->groupKeys.neighborData)->
       RegisterGroup( std::to_string( this->m_neighborRank ));
 
   ObjectManagerBase * const faceManager = mesh->getFaceManager();
-  ManagedGroup * const faceNeighborGroup = faceManager->
+  neighborGroups[numNeighborGroups++] = faceManager->
       GetGroup(faceManager->groupKeys.neighborData)->
       RegisterGroup( std::to_string( this->m_neighborRank ));
 
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  ManagedGroup * elementNeighborGroups[100];
-  localIndex numElementNeighborGroups = 0;
   elemManager->forCellBlocks( [&]( ManagedGroup * const cellBlock ) -> void
   {
-    elementNeighborGroups[numElementNeighborGroups++] = cellBlock->
+    neighborGroups[numNeighborGroups++] = cellBlock->
         GetGroup(faceManager->groupKeys.neighborData)->
         RegisterGroup( std::to_string( this->m_neighborRank ));
   });
 
 
-  for( localIndex a=0 ; a<numElementNeighborGroups ; ++a )
+  for( localIndex a=0 ; a<numNeighborGroups ; ++a )
   {
-    elementNeighborGroups[a]->RegisterViewWrapper<localIndex_array>("matchedPartitionBoundaryObjects");
+    neighborGroups[a]->
+    RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::matchedPartitionBoundaryObjectsString)->
+    setSizedFromParent(0);
+
+    neighborGroups[a]->
+    RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::ghostsToSendString)->
+    setSizedFromParent(0);
   }
 
 
@@ -225,8 +232,36 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) cons
 
 void NeighborCommunicator::FindGhosts( bool const contactActive,
                                        integer const depth,
-                                       MeshLevel * const meshLevel )
+                                       MeshLevel * const mesh )
 {
+  NodeManager & nodeManager = *(mesh->getNodeManager());
+  FaceManager & faceManager = *(mesh->getFaceManager());
+  ElementRegionManager & elemManager = *(mesh->getElemManager());
+
+  ManagedGroup * const nodeNeighborData = nodeManager.
+                                          GetGroup(nodeManager.groupKeys.neighborData)->
+                                          GetGroup( std::to_string( this->m_neighborRank ) );
+
+  ManagedGroup * const faceNeighborData = faceManager.
+                                          GetGroup( faceManager.groupKeys.neighborData )->
+                                          GetGroup( std::to_string( this->m_neighborRank ) );
+
+  localIndex_array & nodeAdjacencyList = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToSend );
+  localIndex_array  edgeAdjacencyList ;//= edgeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToSend );;
+  localIndex_array & faceAdjacencyList = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToSend );
+  ElementRegionManager::ElementViewAccessor<localIndex_array> elementAdjacencyList;
+  elemManager.ConstructViewAccessor( ObjectManagerBase::viewKeyStruct::ghostsToSendString,
+                                     std::to_string( this->m_neighborRank ),
+                                     elementAdjacencyList );
+
+  mesh->GenerateAdjacencyLists( nodeNeighborData->getReference<localIndex_array>(nodeManager.viewKeys.matchedPartitionBoundaryObjects),
+                                nodeAdjacencyList,
+                                edgeAdjacencyList,
+                                faceAdjacencyList,
+                                elementAdjacencyList,
+                                2 );
+
+
 //
 //  lSet & facesToSend;
 //

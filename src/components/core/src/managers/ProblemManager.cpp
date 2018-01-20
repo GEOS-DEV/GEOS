@@ -526,6 +526,7 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
     MeshUtilities::GenerateNodesets( geometricObjects,
                                      nodeManager );
     nodeManager->ConstructGlobalToLocalMap();
+
   }
 }
 
@@ -545,7 +546,10 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   NodeManager * nodeManager = meshLevel->getNodeManager();
   faceManager->BuildFaces( nodeManager, elementManager );
 
+  nodeManager->SetElementMaps( meshLevel->getElemManager() );
+
   domain->SetupCommunications();
+
 
 
 

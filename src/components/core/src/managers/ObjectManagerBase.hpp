@@ -82,11 +82,16 @@ public:
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
     static constexpr auto globalToLocalMapString = "globalToLocalMap";
     static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
+    static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
+    static constexpr auto ghostsToSendString = "ghostsToSend";
 
     dataRepository::ViewKey ghostRank = { ghostRankString };
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
     dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
     dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
+    dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
+    dataRepository::ViewKey ghostsToSend = { ghostsToSendString };
+
 
 
   } viewKeys;

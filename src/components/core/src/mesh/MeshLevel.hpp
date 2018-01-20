@@ -15,6 +15,7 @@
 
 namespace geosx
 {
+class ElementRegionManager;
 
 class MeshLevel : public dataRepository::ManagedGroup
 {
@@ -22,6 +23,13 @@ public:
   MeshLevel( string const & name,
              ManagedGroup * const parent );
   virtual ~MeshLevel();
+
+  void GenerateAdjacencyLists( localIndex_array & seedNodeList,
+                               localIndex_array & nodeAdjacencyList,
+                               localIndex_array & edgeAdjacencyList,
+                               localIndex_array & faceAdjacencyList,
+                               ElementRegionManager::ElementViewAccessor<localIndex_array> & elementAdjacencyList,
+                               integer const depth );
 
   struct viewStructKeys
   {
