@@ -390,33 +390,36 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
   }
 }
 
-template<typename T>
+
+template<typename T, typename atomicPol=RAJA::atomic::omp_atomic>
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
-                              T const * __restrict__ const localField,
-                              T * __restrict__ const globalField,
-                              localIndex const N )
-{
-  for( localIndex a=0 ; a<N ; ++a )
-  {
-    globalField[ globalToLocalRelation[a] ] += localField[a];
-  }
-}
-
-
-template<typename atomicPol, typename T>
-inline void AtomicAddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                                     T const * __restrict__ const localField,
                                     T * __restrict__ const globalField,
                                     localIndex const N )
 {
 
   for( typename array<T>::size_type a=0 ; a<N ; ++a )
+  {
+
+    RAJA::atomic::atomicAdd<atomicPol>(&globalField[a],localField[a]);
+  }
+}
+
+//01-22-2018 - Hack, we will have to fix. 
+template<>
+inline void AddLocalToGlobal<R1Tensor,RAJA::atomic::omp_atomic>( const localIndex* __restrict__ const globalToLocalRelation,
+                                         R1Tensor const * __restrict__ const localField,
+                                         R1Tensor * __restrict__ const globalField,
+                                         localIndex const N )
+{
+
+  for( typename array<R1Tensor>::size_type a=0 ; a<N ; ++a )
     {
       double * const lhs = globalField[ globalToLocalRelation[a] ].Data();
       double const * const rhs = localField[a].Data();
       for( int i=0; i<3; ++i )
         {
-          RAJA::atomic::atomicAdd<atomicPol>(&lhs[i],rhs[i]);
+          RAJA::atomic::atomicAdd<RAJA::atomic::omp_atomic>(&lhs[i],rhs[i]);
         }
     }
 }
