@@ -19,6 +19,30 @@ namespace constitutive
 {
 
 
+static inline void UpdateStatePoint( R2SymTensor const & D,
+                                     R2Tensor const & Rot,
+                                     localIndex const i,
+                                     void * dataPtrs,
+                                     integer const systemAssembleFlag )
+{
+
+  LinearElasticIsotropic::dataPointers * castedDataPtrs = reinterpret_cast<LinearElasticIsotropic::dataPointers *>(dataPtrs);
+  real64 volumeStrain = D.Trace();
+  castedDataPtrs->m_meanStress[i] += volumeStrain * castedDataPtrs->m_bulkModulus[0];
+
+  R2SymTensor temp = D;
+  temp.PlusIdentity(-volumeStrain / 3.0);
+  temp *= 2.0 * castedDataPtrs->m_shearModulus[0];
+  castedDataPtrs->m_deviatorStress[i] += temp;
+
+
+  temp.QijAjkQlk(castedDataPtrs->m_deviatorStress[i],Rot);
+  castedDataPtrs->m_deviatorStress[i] = temp;
+
+  temp.PlusIdentity(castedDataPtrs->m_meanStress[i]);
+}
+
+
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
   ConstitutiveBase(name, parent )
 {
@@ -197,6 +221,24 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
 #endif
   }
 }
+
+void LinearElasticIsotropic::SetParamStatePointers( void *& data )
+{
+
+  this->m_dataPointers.m_bulkModulus = this->bulkModulus();
+  this->m_dataPointers.m_shearModulus = this->shearModulus();
+  this->m_dataPointers.m_meanStress = this->meanStress();
+  this->m_dataPointers.m_deviatorStress = this->deviatorStress();
+
+  data = reinterpret_cast<void*>(&m_dataPointers);
+}
+
+ConstitutiveBase::UpdateFunctionPointer
+LinearElasticIsotropic::GetStateUpdateFunctionPointer()
+{
+  return UpdateStatePoint;
+}
+
 
 void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * const input,
                                           dataRepository::ManagedGroup const * const parameters,

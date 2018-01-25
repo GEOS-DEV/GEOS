@@ -31,15 +31,22 @@ public:
 
   static std::string CatalogName() { return dataRepository::keys::linearElasticIsotropic; }
 
+
+  virtual void SetParamStatePointers( void *& ) override final;
+
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const override;
 
+  virtual UpdateFunctionPointer GetStateUpdateFunctionPointer() override final;
+
   R2SymTensor  StateUpdatePoint( R2SymTensor const & D,
                                  R2Tensor const & Rot,
                                  localIndex const i,
+
                                  integer const systemAssembleFlag ) override;
+
 
   virtual void FillDocumentationNode() override;
 
@@ -87,7 +94,16 @@ public:
   dataRepository::view_rtype<real64_array>       meanStress()       { return GetStateData()->getData<real64_array>(viewKeys.meanStress); }
   dataRepository::view_rtype_const<real64_array> meanStress() const { return GetStateData()->getData<real64_array>(viewKeys.meanStress); }
 
+  struct dataPointers
+  {
+    real64 * m_bulkModulus = nullptr;
+    real64 * m_shearModulus = nullptr;
+    R2SymTensor * m_deviatorStress = nullptr;
+    real64 * m_meanStress = nullptr;
+  } m_dataPointers;
+
 private:
+
 
 };
 
