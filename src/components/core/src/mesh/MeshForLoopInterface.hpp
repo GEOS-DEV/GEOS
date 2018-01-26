@@ -69,40 +69,41 @@ void forall_in_set(const localIndex *indexList, localIndex len, LAMBDA && body)
 //}
 
 //-------------
-//Here we want to unpack data and use one of the 
-//macros above. 
+//Here we want to unpack data and 
+//use one of the templated loops above
 //------------
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_nodes( MeshLevel const * const mesh, LAMBDA && body)
 {  
-  NodeManager const * const nodeManager = mesh->getNodeManager();
-  FORALL_NODES(a, 0, nodeManager->size()){
-    body;
-  });
+  NodeManager const * const nodeManager = mesh->getNodeManager();  
+  forall_in_range<POLICY> (0, nodeManager->size(), body); 
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_nodes_in_set( MeshLevel const * const mesh, LAMBDA && body);
+void for_nodes_in_set( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body){
+  forall_in_set<POLICY> (setList, listLen, body);
+}
 
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_faces( MeshLevel const * const mesh, LAMBDA && body)
 {
   NodeManager const * const faceManager = mesh->getFaceManager();
-  //forall_in_range<POLICY>( faceManager, body );
-  FORALL(a,0,faceManager->size()){
-    body(a);
-  });
+  forall_in_range<POLICY> (0, faceManager->size(), body);
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_faces_in_set( MeshLevel const * const mesh, LAMBDA && body);
+void for_faces_in_set( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body){
+  forall_in_set<POLICY> (setList, listLen, body);
+}
 
+//How to unpack these?
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_edges( MeshLevel const * const mesh, LAMBDA && body);
  
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_edges_in_set( MeshLevel const * const mesh, LAMBDA && body);
+
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
@@ -116,18 +117,14 @@ void for_elems( MeshLevel const * const mesh, LAMBDA && body)
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+      
+      forall_in_range<POLICY>(0,cellBlock->size(), body);
 
-      //forall_in_range<POLICY>( cellBlock, body );
-      FORALL(a, 0, cellBlock->size()){
-        body(a);
-      });
-    
     }
   }
 }
-
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_elems_in_set( MeshLevel const * const mesh, LAMBDA && body)
+void for_elems_in_set( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body)
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -139,7 +136,8 @@ void for_elems_in_set( MeshLevel const * const mesh, LAMBDA && body)
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-      //FORALL_IN_SET();
+
+      forall_in_set<POLICY>(setList, listLen, body);
     }
   }
 }
@@ -195,23 +193,25 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
         ///Local copies --------
         array_view<real64,1> meanStress    = constitutiveModel->GetGroup(std::string("StateData"))->getReference<real64_array>(std::string("MeanStress")).View();
         array_view<R2SymTensor,1> devStress    = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress")).View();
+        //------------------------
 
-        //----------------------
-        FORALL_IN_SET(index, elementList.data(), elementList.size())
-        {
-          body(index,
-               numNodesPerElement,
-               elemsToNodes,
-               feSpace->m_finiteElement->n_quadrature_points(),
-               dNdX,
-               constitutiveMapView,
-               detJ,
-               devStress,
-               meanStress,
-               constitutiveUpdate,
-               constitutiveModelData
-               );
-        });
+        //Element loop is packed with parameters... 
+        auto ebody = [=](localIndex index) -> void          
+          {body(index,
+                numNodesPerElement,
+                elemsToNodes,
+                feSpace->m_finiteElement->n_quadrature_points(),
+                dNdX,
+                constitutiveMapView,
+                detJ,
+                devStress,
+                meanStress,
+                constitutiveUpdate,
+                constitutiveModelData
+                ); };
+        
+        
+        forall_in_set<POLICY>(elementList.data(), elementList.size(), ebody);
 
       }
     }
