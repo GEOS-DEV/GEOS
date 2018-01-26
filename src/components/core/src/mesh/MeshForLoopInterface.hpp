@@ -16,9 +16,9 @@
 namespace geosx{
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void forall(localIndex st, localIndex fin, LAMBDA && body)
+void forall_in_range(localIndex begin, localIndex end, LAMBDA && body)
 {
-  RAJA::RangeSegment seg(st, fin);
+  RAJA::RangeSegment seg(begin, end);
   RAJA::forall<POLICY>( seg , [=] (localIndex index) -> void
   {
     body(index);
@@ -26,46 +26,83 @@ void forall(localIndex st, localIndex fin, LAMBDA && body)
 }
 
 
-#define FORALL( INDEX, st, fin )  \
-  forall(st, fin,                 \
+template<class POLICY=elemPolicy,typename LAMBDA=void>
+void forall_in_set(const localIndex *indexList, localIndex len, LAMBDA && body)
+{
+  RAJA::TypedListSegment<localIndex> listSeg(indexList, len);
+  RAJA::forall<POLICY>( listSeg , [=] (localIndex index) -> void
+  {
+    body(index);
+  } );
+}
+
+//================
+//Hevy Computation
+//================
+#define FORALL( INDEX, begin, end )  \
+  forall_in_range<RAJA::omp_parallel_for_exec>(begin, end,   \
     GEOSX_LAMBDA ( localIndex const INDEX ) -> void
 
-
-#define FORALL_NODES(INDEX, st, fin) \
-  forall<RAJA::loop_exec>(st, fin,   \
+#define FORALL_IN_SET(INDEX, arr, arrLen)                 \
+  forall_in_set<RAJA::omp_parallel_for_exec> (arr, arrLen, \
   GEOSX_LAMBDA ( localIndex const INDEX ) -> void
+
+//======================
+//Streaming Computations
+//======================
+#define FORALL_NODES(INDEX, begin, end) \
+  forall_in_range<RAJA::loop_exec>(begin, end,   \
+  GEOSX_LAMBDA ( localIndex const INDEX ) -> void
+
+#define FORALL_NODES_IN_SET(INDEX, arr, arrLen) \
+  forall_in_set<RAJA::loop_exec> (arr, arrLen,  \
+  GEOSX_LAMBDA ( localIndex const INDEX ) -> void
+
   
+//Randy's code
+//template<class POLICY=elemPolicy,typename LAMBDA=void>
+//void forall_in_range( dataRepository::ManagedGroup const * const group, LAMBDA && body)
+//{
+//FORALL(a, 0, group->size()){
+//body(a);
+//});
+//}
 
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_group( dataRepository::ManagedGroup const * const group, LAMBDA && body)
-{
-  RAJA::TypedRangeSegment<localIndex> indexSet(0,group->size());
-  RAJA::forall<POLICY>(indexSet, [=] (localIndex index) -> void { body(index); } ) ;
-}
-
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_group( array_view<localIndex,1> indexList,
-                LAMBDA && body)
-{
-  RAJA::TypedListSegment<localIndex> listSeg(indexList.data(),indexList.size());
-  RAJA::forall<POLICY>(listSeg, [=] (localIndex index) -> void { body(index); } ) ;
-}
-
+//-------------
+//Here we want to unpack data and use one of the 
+//macros above. 
+//------------
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_nodes( MeshLevel const * const mesh, LAMBDA && body)
-{
+{  
   NodeManager const * const nodeManager = mesh->getNodeManager();
-  for_group<POLICY>( nodeManager, body );
+  FORALL_NODES(a, 0, nodeManager->size()){
+    body;
+  });
 }
+
+template<class POLICY=elemPolicy,typename LAMBDA=void>
+void for_nodes_in_set( MeshLevel const * const mesh, LAMBDA && body);
 
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_faces( MeshLevel const * const mesh, LAMBDA && body)
 {
   NodeManager const * const faceManager = mesh->getFaceManager();
-  for_group<POLICY>( faceManager, body );
+  //forall_in_range<POLICY>( faceManager, body );
+  FORALL(a,0,faceManager->size()){
+    body(a);
+  });
 }
 
+template<class POLICY=elemPolicy,typename LAMBDA=void>
+void for_faces_in_set( MeshLevel const * const mesh, LAMBDA && body);
+
+template<class POLICY=elemPolicy,typename LAMBDA=void>
+void for_edges( MeshLevel const * const mesh, LAMBDA && body);
+ 
+template<class POLICY=elemPolicy,typename LAMBDA=void>
+void for_edges_in_set( MeshLevel const * const mesh, LAMBDA && body);
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
@@ -79,11 +116,33 @@ void for_elems( MeshLevel const * const mesh, LAMBDA && body)
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-      for_group<POLICY>( cellBlock, body );
+
+      //forall_in_range<POLICY>( cellBlock, body );
+      FORALL(a, 0, cellBlock->size()){
+        body(a);
+      });
+    
     }
   }
 }
 
+template<class POLICY=elemPolicy,typename LAMBDA=void>
+void for_elems_in_set( MeshLevel const * const mesh, LAMBDA && body)
+{
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  
+  for( auto & region : elementRegions->GetSubGroups() )
+    {
+    ManagedGroup * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+    {
+      CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+      //FORALL_IN_SET();
+    }
+  }
+}
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems_by_constitutive( MeshLevel const * const mesh,
@@ -138,10 +197,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
         array_view<R2SymTensor,1> devStress    = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress")).View();
 
         //----------------------
-
-        GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
-        RAJA::TypedListSegment<localIndex> listSeg(elementList.data(),elementList.size());
-        RAJA::forall<POLICY>(listSeg, [=] (localIndex index) -> void
+        FORALL_IN_SET(index, elementList.data(), elementList.size())
         {
           body(index,
                numNodesPerElement,
