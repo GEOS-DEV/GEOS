@@ -16,17 +16,25 @@
 namespace geosx{
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void forall( localIndex N, LAMBDA && body)
+void forall(localIndex st, localIndex fin, LAMBDA && body)
 {
-  RAJA::forall<POLICY>( RAJA::RangeSegment(0,N), [=] (localIndex index) -> void
+  RAJA::RangeSegment seg(st, fin);
+  RAJA::forall<POLICY>( seg , [=] (localIndex index) -> void
   {
     body(index);
-  } ) ;
+  } );
 }
 
-#define FORALL( INDEX, N )\
-    forall( N,\
+
+#define FORALL( INDEX, st, fin )  \
+  forall(st, fin,                 \
     GEOSX_LAMBDA ( localIndex const INDEX ) -> void
+
+
+#define FORALL_NODES(INDEX, st, fin) \
+  forall<RAJA::loop_exec>(st, fin,   \
+  GEOSX_LAMBDA ( localIndex const INDEX ) -> void
+  
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_group( dataRepository::ManagedGroup const * const group, LAMBDA && body)
@@ -39,8 +47,8 @@ template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_group( array_view<localIndex,1> indexList,
                 LAMBDA && body)
 {
-  RAJA::TypedListSegment<localIndex> indexSet(indexList.data(),indexList.size());
-  RAJA::forall<POLICY>(indexSet, [=] (localIndex index) -> void { body(index); } ) ;
+  RAJA::TypedListSegment<localIndex> listSeg(indexList.data(),indexList.size());
+  RAJA::forall<POLICY>(listSeg, [=] (localIndex index) -> void { body(index); } ) ;
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
@@ -114,7 +122,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
       for( auto const & constitutiveGroup : constitutiveGrouping )
       {
         string const constitutiveName = constitutiveGroup.first;
-//        localIndex_array const & elementList = constitutiveGroup.second;
+//      localIndex_array const & elementList = constitutiveGroup.second;
         array_view<localIndex,1> const elementList = constitutiveGroup.second.View();
 
         constitutive::ConstitutiveBase * constitutiveModel = constitutiveManager->GetGroup<constitutive::ConstitutiveBase>( constitutiveName );
@@ -132,8 +140,8 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
         //----------------------
 
         GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
-        RAJA::TypedListSegment<localIndex> indexSet(elementList.data(),elementList.size());
-        RAJA::forall<POLICY>(indexSet, [=] (localIndex index) -> void
+        RAJA::TypedListSegment<localIndex> listSeg(elementList.data(),elementList.size());
+        RAJA::forall<POLICY>(listSeg, [=] (localIndex index) -> void
         {
           body(index,
                numNodesPerElement,
