@@ -80,7 +80,7 @@ void for_nodes( MeshLevel const * const mesh, LAMBDA && body)
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_nodes_in_set( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body){
+void for_nodes( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body){
   forall_in_set<POLICY> (setList, listLen, body);
 }
 
@@ -93,7 +93,7 @@ void for_faces( MeshLevel const * const mesh, LAMBDA && body)
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_faces_in_set( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body){
+void for_faces( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body){
   forall_in_set<POLICY> (setList, listLen, body);
 }
 
@@ -102,7 +102,7 @@ template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_edges( MeshLevel const * const mesh, LAMBDA && body);
  
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_edges_in_set( MeshLevel const * const mesh, LAMBDA && body);
+void for_edges( MeshLevel const * const mesh, LAMBDA && body);
 
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
@@ -124,7 +124,7 @@ void for_elems( MeshLevel const * const mesh, LAMBDA && body)
   }
 }
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_elems_in_set( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body)
+void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body)
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
