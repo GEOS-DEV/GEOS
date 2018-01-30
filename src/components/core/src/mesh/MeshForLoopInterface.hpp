@@ -16,7 +16,7 @@
 namespace geosx{
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void forall_in_range(localIndex begin, localIndex end, LAMBDA && body)
+void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body)
 {
   RAJA::RangeSegment seg(begin, end);
   RAJA::forall<POLICY>( seg , [=] (localIndex index) -> void
@@ -27,7 +27,7 @@ void forall_in_range(localIndex begin, localIndex end, LAMBDA && body)
 
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void forall_in_set(const localIndex *indexList, localIndex len, LAMBDA && body)
+void forall_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
   RAJA::TypedListSegment<localIndex> listSeg(indexList, len);
   RAJA::forall<POLICY>( listSeg , [=] (localIndex index) -> void
