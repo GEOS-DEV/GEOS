@@ -372,6 +372,107 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
+localIndex ManagedGroup::PackSizePerIndex( array<string> const & wrapperNames,
+                                           integer const recursive ) const
+{
+  localIndex size = 0;
+  if( wrapperNames.size()==0 )
+  {
+    for( auto const & wrapperPair : this->m_wrappers )
+    {
+      size += wrapperPair.second->sizeOfType();
+    }
+  }
+  else
+  {
+    for( auto const & wrapperName : wrapperNames )
+    {
+      ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
+      size += wrapper->sizeOfType();
+    }
+  }
+  if( recursive > 0 )
+  {
+    for( auto const & keyGroupPair : this->m_subGroups )
+    {
+      size += keyGroupPair.second->PackSizePerIndex( wrapperNames, recursive - 1 );
+    }
+  }
+
+  return size;
+}
+
+localIndex ManagedGroup::PackSizeFixed( array<string> const & wrapperNames,
+                                        integer const recursive ) const
+{
+  localIndex size = 0;
+
+  size += this->getName().size();
+  if( wrapperNames.size()==0 )
+  {
+    for( auto const & wrapper : this->m_wrappers )
+    {
+      size += sizeof(localIndex);
+      size += wrapper.first.size();
+      size += sizeof(localIndex);
+    }
+  }
+  else
+  {
+    for( auto const & wrapperName : wrapperNames )
+    {
+      ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
+      size += sizeof(localIndex);
+      size += wrapperName.size();
+      size += sizeof(localIndex);
+    }
+  }
+
+  if( recursive > 0 )
+  {
+    for( auto const & keyGroupPair : this->m_subGroups )
+    {
+      size += keyGroupPair.second->PackSizeFixed( wrapperNames, recursive - 1 );
+    }
+  }
+
+  return size;
+}
+
+void ManagedGroup::Pack( buffer_unit_type * & buffer,
+                         localIndex_array const & packList,
+                         array<string> const & wrapperNames,
+                         integer const recursive )
+{
+
+  CommBufferOps::Pack(buffer, this->getName());
+  if( wrapperNames.size()==0 )
+  {
+    for( auto const & wrapperPair : this->m_wrappers )
+    {
+      keyType const & wrapperName = wrapperPair.first;
+      ViewWrapperBase const & vwb = *wrapperPair.second;
+    }
+  }
+  else
+  {
+    for( auto const & wrapperName : wrapperNames )
+    {
+//      ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
+//      size += wrapper->sizeOfType();
+    }
+  }
+  if( recursive > 0 )
+  {
+    for( auto const & keyGroupPair : this->m_subGroups )
+    {
+//      size += keyGroupPair.second->PackSizePerIndex( wrapperNames, recursive - 1 );
+    }
+  }
+
+}
+
+
 #ifdef USE_ATK
 /* Add pointers to ViewWrapper data to the sidre tree. */
 void ManagedGroup::registerSubViews()

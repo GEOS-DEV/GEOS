@@ -323,10 +323,7 @@ void DomainPartition::SetupCommunications()
   CommunicationTools::FindMatchedPartitionBoundaryObjects( nodeManager,
                                                            allNeighbors );
 
-  for( auto & neighbor : allNeighbors )
-  {
-    neighbor.FindGhosts(false,2,meshLevel);
-  }
+  CommunicationTools::FindGhosts( meshLevel, allNeighbors );
 
 }
 

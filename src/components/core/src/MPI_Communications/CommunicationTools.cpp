@@ -377,10 +377,17 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 
 
 
-void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
+void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
                                      array<NeighborCommunicator> & neighbors )
 {
+  int commID = CommunicationTools::reserveCommID();
 
+  for( auto & neighbor : neighbors )
+  {
+    neighbor.FindGhosts(false,2,meshLevel,commID);
+  }
+
+  CommunicationTools::releaseCommID(commID);
 }
 
 

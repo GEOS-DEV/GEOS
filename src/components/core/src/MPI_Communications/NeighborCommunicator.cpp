@@ -232,7 +232,8 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) cons
 
 void NeighborCommunicator::FindGhosts( bool const contactActive,
                                        integer const depth,
-                                       MeshLevel * const mesh )
+                                       MeshLevel * const mesh,
+                                       int const commID )
 {
   NodeManager & nodeManager = *(mesh->getNodeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
@@ -262,131 +263,119 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
                                 2 );
 
 
-//
-//  lSet & facesToSend;
-//
-//
-//
-//  //Currently, this MUST fill the objectsToSend associated with the following
-//  //(see NeighborCommunication::SyncNames for the current list)
-//  // 0: NodeManager -> PackNodes
-//  // 1: EdgeManager -> PackEdges
-//  // 2: FaceManager -> PackFaces
-//  // 3: FiniteElementElementManager -> PackElements
-//  // 4: DiscreteElementManager ->
-//  // 5: DiscreteElementNodeManager ->
-//  // 6: DiscreteElementFaceManager ->
-//  // 7: EllipsoidalDiscreteElementManager ->
-//
-//  // so now we know which nodes are "shared" between the neighbors. what we do now is to collect all the objects
-//  // attached to these nodes. These will be "ghost" objects on the neighbor.
-//
-//  lSet& allNodes = tempNeighborData.objectLocalIndicesToSend[PhysicalDomainT::FiniteElementNodeManager];
-//  lSet& allEdges = tempNeighborData.objectLocalIndicesToSend[PhysicalDomainT::FiniteElementEdgeManager];
-//  lSet& allFaces = tempNeighborData.objectLocalIndicesToSend[PhysicalDomainT::FiniteElementFaceManager];
-//
-//  // get list of elements connected to the matched nodes into "m_elementRegionsSendLocalIndices"
-//  this->m_elementRegionsSendLocalIndices.clear();
-//  m_domain->m_feElementManager.ConstructListOfIndexesFromMap( this->m_domain->m_feNodeManager.m_toElementsRelation,
-//                                                              this->tempNeighborData.matchedIndices[PhysicalDomainT::FiniteElementNodeManager],
-//                                                              this->m_elementRegionsSendLocalIndices,
-//                                                              depth );
-//
-//  // now pack up the elements that are going over to the neighbor...also get the node that we are going to
-//  // need to send.
-//  m_domain
-//          ->m_feElementManager.PackElements(
-//      this->tempNeighborData.objectsToSend[PhysicalDomainT::FiniteElementElementManager],
-//      allNodes,
-//      allFaces,
-//      this->m_elementRegionsSendLocalIndices,
-//      this->m_domain->m_feNodeManager,
-//      this->m_domain->m_feFaceManager,
-//      true, true, true, true );
-//
-//  // add the "external" faces if the contact is on
-//  if( contactActive )
-//  {
-//    const array<integer>& isExternalFace =
-//        m_domain->m_feFaceManager.m_isExternal;
-//
-//    for( array<integer>::size_type a = 0 ;
-//        a < m_domain->m_feFaceManager.m_numFaces ; ++a )
-//    {
-//      if( isExternalFace[a] == 1 )
-//      {
-//        bool allValidNodes = true;
-//        for( localIndex_array::const_iterator
-//        i = m_domain->m_feFaceManager.m_toNodesRelation[a].begin() ;
-//            i != m_domain->m_feFaceManager.m_toNodesRelation[a].end() ; ++i )
-//        {
-//          const globalIndex gnode = m_domain->m_feNodeManager.m_localToGlobalMap[*i];
-//          const int owningRank = GlobalIndexManager::OwningRank( gnode );
-//          if( !( m_rankOfNeighborNeighbors.count( owningRank ) ) )
-//          {
-//            allValidNodes = false;
-//          }
-//        }
-//        if( allValidNodes )
-//        {
-//          allFaces.insert( a );
-//        }
-//      }
-//    }
-//  }
-//
-//  for( lSet::const_iterator faceIndex = allFaces.begin() ;
-//      faceIndex != allFaces.end() ; ++faceIndex )
-//  {
-//    for( localIndex_array::const_iterator
-//    edgeIndex = m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].begin() ;
-//        edgeIndex != m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].end()
-//        ; ++edgeIndex )
-//    {
-//      const globalIndex gi =
-//          m_domain->m_feEdgeManager.m_localToGlobalMap[*edgeIndex];
-//      if( m_rankOfNeighborNeighbors.count( GlobalIndexManager::OwningRank( gi )
-//                                                                           ) )
-//      {
-//        allEdges.insert( *edgeIndex );
-//      }
-//    }
-//
-//    for( localIndex_array::const_iterator
-//    i = m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].begin() ;
-//        i != m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].end() ;
-//        ++i )
-//    {
-//      allNodes.insert( *i );
-//    }
-//  }
-//
-//  const PhysicalDomainT::ObjectDataStructureKeys keys[3] =
-//      {
-//        PhysicalDomainT::FiniteElementNodeManager,
-//        PhysicalDomainT::FiniteElementEdgeManager,
-//        PhysicalDomainT::FiniteElementFaceManager
-//      };
-//
-//  for( int i = 0 ; i < 3 ; ++i )
-//  {
-//    const lSet& localSends =
-//        tempNeighborData.objectLocalIndicesToSend[keys[i]];
-//    globalIndex_array& globalSends =
-//        tempNeighborData.objectGlobalIndicesToSend[keys[i]];
-//
-//    for( lSet::const_iterator a = localSends.begin() ; a != localSends.end() ; ++a
-//        )
-//    {
-//      const globalIndex gIndex =
-//          m_domain->GetObjectDataStructure( keys[i] ).m_localToGlobalMap[*a];
-//      if( GlobalIndexManager::OwningRank( gIndex ) != m_rank &&
-//          GlobalIndexManager::OwningRank( gIndex ) != m_neighborRank )
-//      {
-//        globalSends.push_back( gIndex );
-//      }
-//    }
-//  }
+  int bufferSize = 0;
+  bufferSize += nodeManager.PackSizeFixed( {}, 0 );
+  bufferSize += nodeAdjacencyList.size() * nodeManager.PackSizePerIndex( {}, 0 );
+
+  bufferSize += faceManager.PackSizeFixed( {}, 0 );
+  bufferSize += faceAdjacencyList.size() * faceManager.PackSizePerIndex( {}, 0 );
+
+  // TODO THIS IS WRONG!!! FIX IT.
+  bufferSize += elemManager.PackSizeFixed( {}, 0 );
+  bufferSize += elementAdjacencyList.size() * elemManager.PackSizePerIndex( {}, 0 );
+
+  buffer_type & sendBuffer = SendBuffer(commID);
+  sendBuffer.resize(bufferSize);
+
+  buffer_unit_type * sendBufferPtr = sendBuffer.data();
+
+  nodeManager.Pack( sendBufferPtr, nodeAdjacencyList );
+
+
+  // now pack up the elements that are going over to the neighbor...also get the node that we are going to
+  // need to send.
+  m_domain->m_feElementManager.PackEleements(
+      this->tempNeighborData.objectsToSend[PhysicalDomainT::FiniteElementElementManager],
+      allNodes,
+      allFaces,
+      this->m_elementRegionsSendLocalIndices,
+      this->m_domain->m_feNodeManager,
+      this->m_domain->m_feFaceManager,
+      true, true, true, true );
+
+  // add the "external" faces if the contact is on
+  if( contactActive )
+  {
+    const array<integer>& isExternalFace =
+        m_domain->m_feFaceManager.m_isExternal;
+
+    for( array<integer>::size_type a = 0 ;
+        a < m_domain->m_feFaceManager.m_numFaces ; ++a )
+    {
+      if( isExternalFace[a] == 1 )
+      {
+        bool allValidNodes = true;
+        for( localIndex_array::const_iterator
+        i = m_domain->m_feFaceManager.m_toNodesRelation[a].begin() ;
+            i != m_domain->m_feFaceManager.m_toNodesRelation[a].end() ; ++i )
+        {
+          const globalIndex gnode = m_domain->m_feNodeManager.m_localToGlobalMap[*i];
+          const int owningRank = GlobalIndexManager::OwningRank( gnode );
+          if( !( m_rankOfNeighborNeighbors.count( owningRank ) ) )
+          {
+            allValidNodes = false;
+          }
+        }
+        if( allValidNodes )
+        {
+          allFaces.insert( a );
+        }
+      }
+    }
+  }
+
+  for( lSet::const_iterator faceIndex = allFaces.begin() ;
+      faceIndex != allFaces.end() ; ++faceIndex )
+  {
+    for( localIndex_array::const_iterator
+    edgeIndex = m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].begin() ;
+        edgeIndex != m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].end()
+        ; ++edgeIndex )
+    {
+      const globalIndex gi =
+          m_domain->m_feEdgeManager.m_localToGlobalMap[*edgeIndex];
+      if( m_rankOfNeighborNeighbors.count( GlobalIndexManager::OwningRank( gi )
+                                                                           ) )
+      {
+        allEdges.insert( *edgeIndex );
+      }
+    }
+
+    for( localIndex_array::const_iterator
+    i = m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].begin() ;
+        i != m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].end() ;
+        ++i )
+    {
+      allNodes.insert( *i );
+    }
+  }
+
+  const PhysicalDomainT::ObjectDataStructureKeys keys[3] =
+      {
+        PhysicalDomainT::FiniteElementNodeManager,
+        PhysicalDomainT::FiniteElementEdgeManager,
+        PhysicalDomainT::FiniteElementFaceManager
+      };
+
+  for( int i = 0 ; i < 3 ; ++i )
+  {
+    const lSet& localSends =
+        tempNeighborData.objectLocalIndicesToSend[keys[i]];
+    globalIndex_array& globalSends =
+        tempNeighborData.objectGlobalIndicesToSend[keys[i]];
+
+    for( lSet::const_iterator a = localSends.begin() ; a != localSends.end() ; ++a
+        )
+    {
+      const globalIndex gIndex =
+          m_domain->GetObjectDataStructure( keys[i] ).m_localToGlobalMap[*a];
+      if( GlobalIndexManager::OwningRank( gIndex ) != m_rank &&
+          GlobalIndexManager::OwningRank( gIndex ) != m_neighborRank )
+      {
+        globalSends.push_back( gIndex );
+      }
+    }
+  }
 }
 
 } /* namespace geosx */

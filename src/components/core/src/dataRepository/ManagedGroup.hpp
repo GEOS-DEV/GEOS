@@ -338,6 +338,17 @@ public:
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
 
+  virtual localIndex PackSizePerIndex( array<string> const & wrapperNames,
+                                       integer const recursive ) const;
+
+  virtual localIndex PackSizeFixed( array<string> const & wrapperNames,
+                                    integer const recursive ) const;
+
+  virtual void Pack( buffer_unit_type * & buffer,
+                     localIndex_array const & packList,
+                     array<string> const & wrapperNames,
+                     integer const recursive );
+
   //***********************************************************************************************
 
   // user defined conversion doesn't work. can't infer template argument

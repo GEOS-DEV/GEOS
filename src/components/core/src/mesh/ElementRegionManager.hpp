@@ -215,6 +215,9 @@ public:
   void ConstructViewAccessor( string const & name,
                               string const & neighborName,
                               ElementViewAccessor<VIEWTYPE> & viewAccessor );
+
+
+
 private:
   ElementRegionManager( const ElementRegionManager& );
   ElementRegionManager& operator=( const ElementRegionManager&);

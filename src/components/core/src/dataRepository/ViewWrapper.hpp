@@ -16,6 +16,9 @@
 #include "StringUtilities.hpp"
 #include "Macros.hpp"
 
+#include "MPI_Communications/CommBufferOps.hpp"
+
+
 #ifdef USE_ATK
 #include "sidre/sidre.hpp"
 #include "sidre/SidreTypes.hpp"
@@ -160,6 +163,32 @@ public:
     return static_cast< ViewWrapper<T>& >(base);
   }
 
+
+  struct pack_wrapper
+  {
+    HAS_ALIAS(pointer)
+
+  template<class U = T>
+  static typename std::enable_if< !has_alias_pointer<U>::value ||
+                                  std::is_same<U,string>::value ,void >::type
+  PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+  {
+    CommBufferOps::Pack( buffer, m_data );
+  }
+
+  template<class U = T>
+  static typename std::enable_if< !(!has_alias_pointer<U>::value ||
+                                    std::is_same<U,string>::value ), void >::type
+  PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+  {
+    CommBufferOps::Pack( buffer, m_data, packList );
+  }
+
+  };
+  virtual void Pack( char *& buffer, localIndex_array const & packList ) override final
+  {
+    pack_wrapper::PackT( buffer, *m_data, packList);
+  }
 
   struct empty_wrapper
   {
@@ -478,8 +507,28 @@ public:
     return m_data.get();
   }
 
-
   HAS_ALIAS(value_type)
+
+
+  template<class U = T>
+  typename std::enable_if<has_alias_value_type<U>::value, size_t>::type
+  sizeOfValueType() const
+  {
+    return sizeof(typename T::value_type);
+  }
+
+  template<class U = T>
+  typename std::enable_if<!has_alias_value_type<U>::value, size_t>::type
+  sizeOfValueType() const
+  {
+    return sizeof(T);
+  }
+
+  virtual size_t sizeOfType() const override final
+  {
+    return sizeOfValueType();
+  }
+
 
   /// case for if U::value_type exists. Returns the size of dataPtr
   template<class U = T>

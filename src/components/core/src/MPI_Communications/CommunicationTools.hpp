@@ -28,7 +28,7 @@ public:
                                    ObjectManagerBase const & compositionObject,
                                    array<NeighborCommunicator> & neighbors );
 
-  static void FindGhosts( MeshLevel & meshLevel,
+  static void FindGhosts( MeshLevel * const meshLevel,
                           array<NeighborCommunicator> & neighbors );
 
   static int MPI_Size( MPI_Comm const & comm );

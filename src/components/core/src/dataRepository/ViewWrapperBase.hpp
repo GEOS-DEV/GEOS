@@ -66,6 +66,8 @@ public:
   virtual void insert() = 0;
   virtual void resize( localIndex newsize ) = 0;
 
+  virtual size_t sizeOfType() const = 0;
+
 
 #ifdef USE_ATK
   virtual void registerDataPtr() = 0;
@@ -80,6 +82,8 @@ public:
 //  virtual void serialize( char * dataPointer, int64 & length, string &
 // typeName ) const = 0;
 
+
+  virtual void Pack( char *& buffer, localIndex_array const & packList ) = 0;
 
   int sizedFromParent() const
   {

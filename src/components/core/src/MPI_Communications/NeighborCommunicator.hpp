@@ -28,7 +28,6 @@ class MeshLevel;
 class NeighborCommunicator
 {
 public:
-  using buffer_type = std::vector<char>;
 
   NeighborCommunicator();
   ~NeighborCommunicator();
@@ -138,7 +137,8 @@ public:
 
   void FindGhosts( bool const contactActive,
                    integer const depth,
-                   MeshLevel * const meshLevel );
+                   MeshLevel * const meshLevel,
+                   int const commID );
 
   int Rank();
 

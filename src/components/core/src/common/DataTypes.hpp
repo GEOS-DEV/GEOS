@@ -73,6 +73,10 @@ using real32_const_ptr  = c_ptr<real32>;
 using real64_ptr        = ptr<real64>;
 using real64_const_ptr  = c_ptr<real64>;
 
+
+using buffer_unit_type = char;
+using buffer_type = std::vector<buffer_unit_type>;
+
 //***** BEGIN LEGACY TYPEDEFS *****
 
 using realT    = double;
