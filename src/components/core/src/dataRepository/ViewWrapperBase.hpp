@@ -59,7 +59,7 @@ public:
 
   virtual bool empty() const = 0;
   virtual localIndex size() const = 0;
-  virtual localIndex numDimensions() const = 0;
+  virtual int numDimensions() const = 0;
   virtual localIndex size(localIndex i) const = 0;
   virtual void resize(int num_dims, long long const * const dims) = 0;
   virtual void reserve(std::size_t new_cap) = 0;

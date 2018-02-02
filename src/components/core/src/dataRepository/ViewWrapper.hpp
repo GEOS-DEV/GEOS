@@ -231,16 +231,16 @@ public:
     HAS_MEMBER_FUNCTION(numDimensions,int,const,,)
 
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_numDimensions<U>::value, localIndex>::type
+    static typename std::enable_if<has_memberfunction_numDimensions<U>::value, int>::type
     numDimensions(ViewWrapper<T> const * parent)
-    { return static_cast<localIndex>(parent->m_data->numDimensions()); }
+    { return static_cast<int>(parent->m_data->numDimensions()); }
     
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_numDimensions<U>::value, localIndex>::type
+    static typename std::enable_if<!has_memberfunction_numDimensions<U>::value, int>::type
     numDimensions(ViewWrapper<T> const * parent)
     { return 1; }
   };
-  virtual localIndex numDimensions() const override final
+  virtual int numDimensions() const override final
   {
     return num_dimensions_wrapper::numDimensions(this);
   }
@@ -697,7 +697,8 @@ public:
       localIndex element_size = elementSize();
 
       int ndims = numDimensions();
-      axom::sidre::SidreLength dims[ndims + 1];
+//      axom::sidre::SidreLength dims[ndims + 1];
+      axom::sidre::SidreLength dims[10];
       for (localIndex dim = 0; dim < ndims; ++dim)
       {
         dims[dim] = size(dim);
@@ -708,7 +709,7 @@ public:
         dims[ndims++] = element_size / sidre_size;
       }
       
-      void * ptr = const_cast<void*>((void const *) dataPtr());
+      void * ptr = const_cast<void*>( static_cast<void const *>( dataPtr() ) );
       view->setExternalDataPtr(sidre_type_id, ndims, dims, ptr);
     }
     else
@@ -751,7 +752,8 @@ public:
       localIndex element_size = elementSize();
 
       int ndims = numDimensions();
-      axom::sidre::SidreLength dims[ndims + 1];
+//      axom::sidre::SidreLength dims[ndims + 1];
+      axom::sidre::SidreLength dims[10];
       for (localIndex dim = 0; dim < ndims; ++dim)
       {
         dims[dim] = size(dim);
@@ -762,7 +764,7 @@ public:
         dims[ndims++] = element_size / sidre_size;
       }
       
-      void * ptr = const_cast<void*>((void const *) dataPtr());
+      void * ptr = const_cast<void*>(static_cast<void const *>( dataPtr() ) );
       view->setExternalDataPtr(sidre_type_id, ndims, dims, ptr);
     }
     else
@@ -831,7 +833,7 @@ public:
     }
 
     resizeFromSidre(view);
-    void * ptr = const_cast<void*>((void const *) dataPtr());
+    void * ptr = const_cast<void*>( static_cast<void const *>( dataPtr() ) );
     localIndex sidre_size = rtTypes::getSidreSize(type_index);
     view->setExternalDataPtr(sidre_type_id, byteSize() / sidre_size, ptr);
 #endif
@@ -911,7 +913,8 @@ public:
       localIndex num_elements = numElementsFromByteSize(byte_size);
 
       int ndims = view->getNumDimensions();
-      axom::sidre::SidreLength dims[ndims];
+//      axom::sidre::SidreLength dims[ndims];
+      axom::sidre::SidreLength dims[10];
       view->getShape(ndims, dims);
 
       if ( byte_size > num_elements * sidre_size )
@@ -931,7 +934,8 @@ public:
                    num_elems_recorded << " " << num_elements);
       }
 
-      long long l_dims[ndims];
+//      long long l_dims[ndims];
+      long long l_dims[10];
       for (localIndex i = 0; i < ndims; ++i)
       {
         l_dims[i] = dims[i];
