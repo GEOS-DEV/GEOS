@@ -16,10 +16,10 @@
 namespace geosx{
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
-void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body)
+void forall_in_range( localIndex const begin, const localIndex end, LAMBDA && body)
 {
   RAJA::RangeSegment seg(begin, end);
-  RAJA::forall<POLICY>( seg , [=] (localIndex index) -> void
+  RAJA::forall<POLICY>( seg , [=] (localIndex index) mutable -> void
   {
     body(index);
   } );
@@ -30,7 +30,7 @@ template<class POLICY=elemPolicy,typename LAMBDA=void>
 void forall_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
   RAJA::TypedListSegment<localIndex> listSeg(indexList, len);
-  RAJA::forall<POLICY>( listSeg , [=] (localIndex index) -> void
+  RAJA::forall<POLICY>( listSeg , [=] (localIndex index) mutable -> void
   {
     body(index);
   } );
@@ -41,22 +41,22 @@ void forall_in_set(localIndex const * const indexList, const localIndex len, LAM
 //================
 #define FORALL( INDEX, begin, end )  \
   forall_in_range<RAJA::omp_parallel_for_exec>(begin, end,   \
-    GEOSX_LAMBDA ( localIndex const INDEX ) -> void
+    GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
 #define FORALL_IN_SET(INDEX, arr, arrLen)                 \
   forall_in_set<RAJA::omp_parallel_for_exec> (arr, arrLen, \
-  GEOSX_LAMBDA ( localIndex const INDEX ) -> void
+  GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
 //======================
 //Streaming Computations
 //======================
 #define FORALL_NODES(INDEX, begin, end) \
   forall_in_range<RAJA::loop_exec>(begin, end,   \
-  GEOSX_LAMBDA ( localIndex const INDEX ) -> void
+  GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
 #define FORALL_NODES_IN_SET(INDEX, arr, arrLen) \
   forall_in_set<RAJA::loop_exec> (arr, arrLen,  \
-  GEOSX_LAMBDA ( localIndex const INDEX ) -> void
+  GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
   
 //Randy's code
@@ -88,7 +88,7 @@ void for_nodes( MeshLevel const * const mesh, const localIndex *setList, localIn
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_faces( MeshLevel const * const mesh, LAMBDA && body)
 {
-  NodeManager const * const faceManager = mesh->getFaceManager();
+  FaceManager const * const faceManager = mesh->getFaceManager();
   forall_in_range<POLICY> (0, faceManager->size(), body);
 }
 
@@ -98,12 +98,9 @@ void for_faces( MeshLevel const * const mesh, const localIndex *setList, localIn
 }
 
 //How to unpack these?
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_edges( MeshLevel const * const mesh, LAMBDA && body);
+//template<class POLICY=elemPolicy,typename LAMBDA=void>
+//void for_edges( MeshLevel const * const mesh, LAMBDA && body);
  
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_edges( MeshLevel const * const mesh, LAMBDA && body);
-
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
@@ -113,10 +110,10 @@ void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    ManagedGroup * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
-    for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+    ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
-      CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+      CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
       
       forall_in_range<POLICY>(0,cellBlock->size(), body);
 
@@ -130,12 +127,12 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
   
-  for( auto & region : elementRegions->GetSubGroups() )
+  for( auto const & region : elementRegions->GetSubGroups() )
     {
-    ManagedGroup * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
-      CellBlockSubRegion * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+      CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
 
       forall_in_set<POLICY>(setList, listLen, body);
     }
@@ -196,7 +193,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
         //------------------------
 
         //Element loop is packed with parameters... 
-        auto ebody = [=](localIndex index) -> void          
+        auto ebody = [=](localIndex index) mutable -> void
           {body(index,
                 numNodesPerElement,
                 elemsToNodes,
@@ -233,7 +230,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     array_view<real64,1> meanStress,\
     constitutive::ConstitutiveBase::UpdateFunctionPointer constitutiveUpdate,\
     void * constitutiveModelData\
-    ) -> void
+    ) mutable -> void
 }
 
 
