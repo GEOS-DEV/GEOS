@@ -10,6 +10,7 @@
 
 #include "ViewWrapperBase.hpp"
 #include "KeyNames.hpp"
+#include "common/integer_conversion.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
@@ -17,6 +18,8 @@
 #include "StringUtilities.hpp"
 #include "Macros.hpp"
 #include "Buffer.hpp"
+
+#include "codingUtilities/Utilities.hpp"
 
 
 
@@ -262,8 +265,8 @@ public:
                                     has_memberfunction_v3_size<U>::value ||
                                     has_memberfunction_v4_size<U>::value ||
                                     has_memberfunction_v5_size<U>::value, localIndex>::type
-    size(ViewWrapper<T> const * parent, localIndex i)
-    { return static_cast<localIndex>(parent->m_data->size(i)); }
+    size(ViewWrapper<T> const * const parent, int const i)
+    { return integer_conversion<localIndex>(parent->m_data->size(i)); }
     
     template<class U = T>
     static typename std::enable_if< !(has_memberfunction_v0_size<U>::value ||
@@ -272,7 +275,7 @@ public:
                                       has_memberfunction_v3_size<U>::value ||
                                       has_memberfunction_v4_size<U>::value ||
                                       has_memberfunction_v5_size<U>::value), localIndex>::type
-    size(ViewWrapper<T> const * parent, localIndex i)
+    size(ViewWrapper<T> const * const parent, int const i)
     { 
       if (i != 0) 
       {
@@ -282,7 +285,7 @@ public:
       return parent->size(); 
     }
   };
-  virtual localIndex size(localIndex i) const override final
+  virtual localIndex size( int const i) const override final
   {
     return dimension_size_wrapper::size(this, i);
   }
@@ -699,7 +702,7 @@ public:
       int ndims = numDimensions();
 //      axom::sidre::SidreLength dims[ndims + 1];
       axom::sidre::SidreLength dims[10];
-      for (localIndex dim = 0; dim < ndims; ++dim)
+      for (int dim = 0; dim < ndims; ++dim)
       {
         dims[dim] = size(dim);
       }
@@ -754,7 +757,7 @@ public:
       int ndims = numDimensions();
 //      axom::sidre::SidreLength dims[ndims + 1];
       axom::sidre::SidreLength dims[10];
-      for (localIndex dim = 0; dim < ndims; ++dim)
+      for (int dim = 0; dim < ndims; ++dim)
       {
         dims[dim] = size(dim);
       }

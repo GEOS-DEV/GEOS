@@ -27,8 +27,8 @@ public:
   { insert(first, last); }
 
 
-  ~SortedArray()
-  {}
+//  ~SortedArray()
+//  {}
 
 
   T * data()
