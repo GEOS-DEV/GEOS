@@ -58,8 +58,20 @@ public:
 
   static localIndex Unpack( char const *& buffer, array<string> & var );
 
+
+
+
   template< typename T, int NDIM, typename INDEX_TYPE=std::int_fast32_t >
-  static localIndex Pack( char*& buffer, ManagedArray<T> const & var );
+  static localIndex Pack( char*& buffer,
+                          multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var );
+
+  template< typename T, int NDIM, typename INDEX_TYPE=std::int_fast32_t >
+  static localIndex Unpack( char const *& buffer,
+                            multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var );
+
+
+
+
 
 
   template< typename T >

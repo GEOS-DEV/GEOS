@@ -127,6 +127,77 @@ localIndex CommBufferOps::Unpack( char const *& buffer, array<T>& array )
 
 
 
+template< typename T, int NDIM, typename INDEX_TYPE >
+localIndex CommBufferOps::Pack( char*& buffer,
+                                multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var )
+{
+  localIndex sizeOfPackedChars = 0;
+
+  sizeOfPackedChars += sizeof(int);
+  int const ndim = NDIM;
+  memcpy( buffer, &ndim, sizeof(int) );
+  buffer += sizeof(int);
+
+  sizeOfPackedChars += NDIM*sizeof(INDEX_TYPE);
+  memcpy( buffer, var.dims(), NDIM*sizeof(INDEX_TYPE) );
+  buffer += NDIM*sizeof(INDEX_TYPE);
+
+  sizeOfPackedChars += NDIM*sizeof(INDEX_TYPE);
+  memcpy( buffer, var.strides(), NDIM*sizeof(INDEX_TYPE) );
+  buffer += NDIM*sizeof(INDEX_TYPE);
+
+
+  const localIndex length = var.size();
+  localIndex sizeOfPackedArrayChars = length*sizeof(T);
+
+  sizeOfPackedChars += Pack( buffer, length );
+
+  memcpy( buffer, var.data(), sizeOfPackedArrayChars );
+  sizeOfPackedChars += sizeOfPackedArrayChars;
+  buffer += sizeOfPackedArrayChars;
+
+  return sizeOfPackedChars;
+}
+
+template< typename T, int NDIM, typename INDEX_TYPE >
+localIndex CommBufferOps::Unpack( char const *& buffer,
+                                  multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var )
+{
+  localIndex sizeOfUnpackedChars = 0;
+
+  sizeOfUnpackedChars += sizeof(int);
+  int ndim;
+  memcpy( &ndim, buffer, sizeof(int) );
+  buffer += sizeof(int);
+
+  if( ndim != NDIM )
+  {
+    GEOS_ERROR( "error reading dim");
+  }
+
+  sizeOfUnpackedChars += NDIM*sizeof(INDEX_TYPE);
+  memcpy( buffer, var.dims(), NDIM*sizeof(INDEX_TYPE) );
+  buffer += NDIM*sizeof(INDEX_TYPE);
+
+  sizeOfUnpackedChars += NDIM*sizeof(INDEX_TYPE);
+  memcpy( buffer, var.strides(), NDIM*sizeof(INDEX_TYPE) );
+  buffer += NDIM*sizeof(INDEX_TYPE);
+
+
+  localIndex array_length;
+  sizeOfUnpackedChars += Unpack( buffer, array_length );
+  var.resize(array_length);
+  localIndex length = array_length * sizeof(T);
+
+  memcpy( var.data(), buffer, length );
+  buffer += length;
+  sizeOfUnpackedChars += length;
+
+  return sizeOfUnpackedChars;
+
+}
+
+
 
 template< typename T >
 localIndex CommBufferOps::Pack( array<char> & buffer, const std::set<T>& var )
