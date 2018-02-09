@@ -372,15 +372,25 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
-localIndex ManagedGroup::PackSizePerIndex( array<string> const & wrapperNames,
-                                           integer const recursive ) const
+int ManagedGroup::PackSize( array<string> const & wrapperNames,
+                            localIndex_array const & packList,
+                            integer const recursive ) const
 {
-  localIndex size = 0;
+  int packedSize = 0;
+  packedSize += CommBufferOps::PackSize(this->getName());
+
   if( wrapperNames.size()==0 )
   {
     for( auto const & wrapperPair : this->m_wrappers )
     {
-      size += wrapperPair.second->sizeOfType();
+      if( packList.empty() )
+      {
+        packedSize += wrapperPair.second->PackSize();
+      }
+      else
+      {
+        packedSize += wrapperPair.second->PackSize(packList);
+      }
     }
   }
   else
@@ -388,33 +398,56 @@ localIndex ManagedGroup::PackSizePerIndex( array<string> const & wrapperNames,
     for( auto const & wrapperName : wrapperNames )
     {
       ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-      size += wrapper->sizeOfType();
+      if( packList.empty() )
+      {
+        packedSize += wrapper->PackSize();
+      }
+      else
+      {
+        packedSize += wrapper->PackSize(packList);
+      }
     }
   }
   if( recursive > 0 )
   {
     for( auto const & keyGroupPair : this->m_subGroups )
     {
-      size += keyGroupPair.second->PackSizePerIndex( wrapperNames, recursive - 1 );
+      packedSize += keyGroupPair.second->PackSize( wrapperNames, packList, recursive );
     }
   }
 
-  return size;
+  return packedSize;
 }
 
-localIndex ManagedGroup::PackSizeFixed( array<string> const & wrapperNames,
-                                        integer const recursive ) const
-{
-  localIndex size = 0;
 
-  size += this->getName().size();
+int ManagedGroup::PackSize( array<string> const & wrapperNames,
+                            integer const recursive ) const
+{
+  localIndex_array nullArray;
+  return PackSize(wrapperNames,nullArray,recursive);
+}
+
+
+localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
+                               array<string> const & wrapperNames,
+                               localIndex_array const & packList,
+                               integer const recursive ) const
+{
+  int packedSize = 0;
+  packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
+
   if( wrapperNames.size()==0 )
   {
-    for( auto const & wrapper : this->m_wrappers )
+    for( auto const & wrapperPair : this->m_wrappers )
     {
-      size += sizeof(localIndex);
-      size += wrapper.first.size();
-      size += sizeof(localIndex);
+      if( packList.empty() )
+      {
+        packedSize += wrapperPair.second->Pack( buffer );
+      }
+      else
+      {
+        packedSize += wrapperPair.second->Pack( buffer, packList );
+      }
     }
   }
   else
@@ -422,55 +455,35 @@ localIndex ManagedGroup::PackSizeFixed( array<string> const & wrapperNames,
     for( auto const & wrapperName : wrapperNames )
     {
       ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-      size += sizeof(localIndex);
-      size += wrapperName.size();
-      size += sizeof(localIndex);
+      if( packList.empty() )
+      {
+        packedSize += wrapper->Pack( buffer );
+      }
+      else
+      {
+        packedSize += wrapper->Pack( buffer, packList );
+      }
     }
   }
-
   if( recursive > 0 )
   {
     for( auto const & keyGroupPair : this->m_subGroups )
     {
-      size += keyGroupPair.second->PackSizeFixed( wrapperNames, recursive - 1 );
+      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
     }
   }
 
-  return size;
+  return packedSize;
 }
 
-void ManagedGroup::Pack( buffer_unit_type * & buffer,
-                         localIndex_array const & packList,
-                         array<string> const & wrapperNames,
-                         integer const recursive )
+int ManagedGroup::Pack( buffer_unit_type * & buffer,
+                            array<string> const & wrapperNames,
+                            integer const recursive ) const
 {
-
-  CommBufferOps::Pack(buffer, this->getName());
-  if( wrapperNames.size()==0 )
-  {
-    for( auto const & wrapperPair : this->m_wrappers )
-    {
-      keyType const & wrapperName = wrapperPair.first;
-      ViewWrapperBase const & vwb = *wrapperPair.second;
-    }
-  }
-  else
-  {
-    for( auto const & wrapperName : wrapperNames )
-    {
-//      ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-//      size += wrapper->sizeOfType();
-    }
-  }
-  if( recursive > 0 )
-  {
-    for( auto const & keyGroupPair : this->m_subGroups )
-    {
-//      size += keyGroupPair.second->PackSizePerIndex( wrapperNames, recursive - 1 );
-    }
-  }
-
+  localIndex_array nullArray;
+  return Pack( buffer, wrapperNames, nullArray, recursive );
 }
+
 
 
 #ifdef USE_ATK

@@ -338,16 +338,21 @@ public:
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
 
-  virtual localIndex PackSizePerIndex( array<string> const & wrapperNames,
-                                       integer const recursive ) const;
+  virtual int PackSize( array<string> const & wrapperNames,
+                        integer const recursive ) const;
 
-  virtual localIndex PackSizeFixed( array<string> const & wrapperNames,
-                                    integer const recursive ) const;
+  virtual int PackSize( array<string> const & wrapperNames,
+                        localIndex_array const & packList,
+                        integer const recursive ) const;
 
-  virtual void Pack( buffer_unit_type * & buffer,
-                     localIndex_array const & packList,
-                     array<string> const & wrapperNames,
-                     integer const recursive );
+  virtual int Pack( buffer_unit_type * & buffer,
+                    array<string> const & wrapperNames,
+                    integer const recursive ) const;
+
+  virtual int Pack( buffer_unit_type * & buffer,
+                    array<string> const & wrapperNames,
+                    localIndex_array const & packList,
+                    integer const recursive ) const;
 
   //***********************************************************************************************
 

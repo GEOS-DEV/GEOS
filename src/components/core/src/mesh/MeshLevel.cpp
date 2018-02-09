@@ -114,17 +114,17 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
       }
     }
     nodeAdjacencyList.clear();
-    nodeAdjacencyList.resize(nodeAdjacencySet.size());
+    nodeAdjacencyList.resize( integer_conversion<localIndex>(nodeAdjacencySet.size()));
     std::copy(nodeAdjacencySet.begin(), nodeAdjacencySet.end(), nodeAdjacencyList.begin() );
 
   }
 
   nodeAdjacencyList.clear();
-  nodeAdjacencyList.resize(nodeAdjacencySet.size());
+  nodeAdjacencyList.resize(integer_conversion<localIndex>(nodeAdjacencySet.size()));
   std::copy(nodeAdjacencySet.begin(), nodeAdjacencySet.end(), nodeAdjacencyList.begin() );
 
   faceAdjacencyList.clear();
-  faceAdjacencyList.resize(faceAdjacencySet.size());
+  faceAdjacencyList.resize(integer_conversion<localIndex>(faceAdjacencySet.size()));
   std::copy(faceAdjacencySet.begin(), faceAdjacencySet.end(), faceAdjacencyList.begin() );
 
 
@@ -135,7 +135,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
       elementAdjacencyList[kReg][kSubReg]->clear();
-      elementAdjacencyList[kReg][kSubReg]->resize( elementAdjacencySet[kReg][kSubReg].size() );
+      elementAdjacencyList[kReg][kSubReg]->resize( integer_conversion<localIndex>(elementAdjacencySet[kReg][kSubReg].size()) );
       std::copy( elementAdjacencySet[kReg][kSubReg].begin(),
                  elementAdjacencySet[kReg][kSubReg].end(),
                  elementAdjacencyList[kReg][kSubReg]->begin() );

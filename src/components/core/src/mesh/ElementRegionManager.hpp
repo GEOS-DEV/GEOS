@@ -216,6 +216,12 @@ public:
                               string const & neighborName,
                               ElementViewAccessor<VIEWTYPE> & viewAccessor );
 
+  virtual int PackSize( array<string> const & wrapperNames,
+                        integer const ) const override;
+
+  virtual int Pack( buffer_unit_type * & buffer,
+                    array<string> const & wrapperNames,
+                    integer const ) const override;
 
 
 private:
@@ -231,7 +237,7 @@ template< typename VIEWTYPE >
 void ElementRegionManager::
 ConstructViewAccessor( string const & viewName,
                        string const & neighborName,
-                       ElementRegionManager::ElementViewAccessor<VIEWTYPE> & viewAccessor )
+                       ElementViewAccessor<VIEWTYPE> & viewAccessor )
 {
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )

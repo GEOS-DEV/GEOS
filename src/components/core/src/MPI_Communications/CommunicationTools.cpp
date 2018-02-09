@@ -203,13 +203,13 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
       globalIndex const * recBuffer = reinterpret_cast<globalIndex const *>( neighbor.RecieveBuffer( commID ).data() );
-      localIndex recBufferSize = neighbor.RecieveBuffer( commID ).size() / sizeof(globalIndex);
+      localIndex recBufferSize = integer_conversion<localIndex>(neighbor.RecieveBuffer( commID ).size() / sizeof(globalIndex));
       globalIndex const * endBuffer = recBuffer + recBufferSize;
       // iterate over data that was just received
       while( recBuffer < endBuffer )
       {
         // the first thing packed was the data size for a given object
-        localIndex dataSize = *( recBuffer++ );
+        localIndex dataSize = integer_conversion<localIndex>( *recBuffer++ );
 
         // the second thing packed was the globalIndex of that object
         const globalIndex neighborGlobalIndex = *( recBuffer++ );

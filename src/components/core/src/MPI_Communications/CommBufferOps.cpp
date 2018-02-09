@@ -2,37 +2,18 @@
 
 namespace geosx
 {
-localIndex CommBufferOps::Pack( array<char> & buffer, string const & var )
-{
-  string::size_type sizeOfPackedChars = var.size();
 
-  Pack( buffer, sizeOfPackedChars );
+//localIndex CommBufferOps::PackSize( string const & var )
+//{
+//  string::size_type sizeOfPackedChars = 0;
+//
+//  sizeOfPackedChars += PackSize( sizeOfPackedChars );
+//  sizeOfPackedChars += var.size();
+//
+//  return integer_conversion<localIndex>(sizeOfPackedChars);
+//}
 
-  const char* cvar = var.data();
-  for( string::size_type i=0 ; i<sizeOfPackedChars ; ++i )
-  {
-    buffer.push_back(*(cvar++));
-  }
 
-  sizeOfPackedChars += sizeof( localIndex );
-  return integer_conversion<localIndex>(sizeOfPackedChars);
-}
-
-localIndex CommBufferOps::Pack( char*& buffer,  const std::string& var )
-{
-  string::size_type sizeOfPackedChars = var.size();
-
-  Pack( buffer, sizeOfPackedChars );
-
-  for( string::size_type i=0 ; i<sizeOfPackedChars ; ++i )
-  {
-    *buffer = var[i];
-    buffer++;
-  }
-
-  sizeOfPackedChars += sizeof( localIndex );
-  return integer_conversion<localIndex>(sizeOfPackedChars);
-}
 
 localIndex CommBufferOps::Unpack( char const *& buffer, string& var )
 {
@@ -49,52 +30,40 @@ localIndex CommBufferOps::Unpack( char const *& buffer, string& var )
 }
 
 
-localIndex CommBufferOps::Pack( array<char> & buffer,
-                                const array<string>& container )
-{
-  localIndex sizeOfPackedChars = 0;
-  const localIndex arrayLength = container.size();
 
-  sizeOfPackedChars += Pack( buffer, arrayLength );
-  for( array<string>::const_iterator i=container.begin() ; i!=container.end() ; ++i )
-  {
-    sizeOfPackedChars += Pack(buffer,*i);
-  }
+//localIndex CommBufferOps::PackSize( const array<string>& container )
+//{
+//  localIndex sizeOfPackedChars = 0;
+//  const localIndex arrayLength = container.size();
+//
+//  sizeOfPackedChars += PackSize( arrayLength );
+//  for( array<string>::const_iterator i=container.begin() ; i!=container.end() ; ++i )
+//  {
+//    sizeOfPackedChars += PackSize(*i);
+//  }
+//
+//  return sizeOfPackedChars;
+//}
 
-  return sizeOfPackedChars;
-}
 
-localIndex CommBufferOps::Pack( char*& buffer,
-                                const array<string>& container )
-{
-  localIndex sizeOfPackedChars = 0;
-  const localIndex arrayLength = container.size();
 
-  sizeOfPackedChars += Pack( buffer, arrayLength );
-  for( array<string>::const_iterator i=container.begin() ; i!=container.end() ; ++i )
-  {
-    sizeOfPackedChars += Pack(buffer,*i);
-  }
 
-  return sizeOfPackedChars;
-}
-
-localIndex CommBufferOps::Unpack( const char*& buffer,
-                               array<string>& array )
-{
-  array.clear();
-  localIndex sizeOfUnpackedChars = 0;
-
-  localIndex arrayLength;
-  sizeOfUnpackedChars += Unpack( buffer, arrayLength );
-  array.resize(arrayLength);
-
-  for( auto i=0 ; i<arrayLength ; ++i )
-  {
-    sizeOfUnpackedChars += Unpack( buffer, array[i] );
-  }
-
-  return sizeOfUnpackedChars;
-}
+//localIndex CommBufferOps::Unpack( const char*& buffer,
+//                               array<string>& array )
+//{
+//  array.clear();
+//  localIndex sizeOfUnpackedChars = 0;
+//
+//  localIndex arrayLength;
+//  sizeOfUnpackedChars += Unpack( buffer, arrayLength );
+//  array.resize(arrayLength);
+//
+//  for( auto i=0 ; i<arrayLength ; ++i )
+//  {
+//    sizeOfUnpackedChars += Unpack( buffer, array[i] );
+//  }
+//
+//  return sizeOfUnpackedChars;
+//}
 
 }

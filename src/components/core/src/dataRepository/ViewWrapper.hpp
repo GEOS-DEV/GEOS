@@ -163,32 +163,105 @@ public:
     return static_cast< ViewWrapper<T>& >(base);
   }
 
-
+  template< bool DO_PACKING >
   struct pack_wrapper
   {
     HAS_ALIAS(pointer)
 
-  template<class U = T>
-  static typename std::enable_if< !has_alias_pointer<U>::value ||
-                                  std::is_same<U,string>::value ,void >::type
-  PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
-  {
-    CommBufferOps::Pack( buffer, m_data );
-  }
 
-  template<class U = T>
-  static typename std::enable_if< !(!has_alias_pointer<U>::value ||
-                                    std::is_same<U,string>::value ), void >::type
-  PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
-  {
-    CommBufferOps::Pack( buffer, m_data, packList );
-  }
+    template<class U = T>
+    static typename std::enable_if< has_alias_pointer<U>::value  ||
+                                    std::is_pod<U>::value, int >::type
+    PackT( char *& buffer, U const & m_data )
+    {
+      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data );
+    }
+
+    template<class U = T>
+    static typename std::enable_if< !has_alias_pointer<U>::value &&
+                                    !std::is_pod<U>::value, int >::type
+    PackT( char *& buffer, U const & m_data )
+    {
+      return 0;
+    }
+
+
+
+
+    template<class U = T>
+    static typename std::enable_if< has_alias_pointer<U>::value  &&
+                                    !std::is_pod<U>::value &&
+                                    !std::is_same<U,string>::value, int >::type
+    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+    {
+      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data, packList );
+    }
+
+    template<class U = T>
+    static typename std::enable_if< ( std::is_pod<U>::value ||
+                                      std::is_same<U,string>::value ),int >::type
+    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+    {
+      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data );
+    }
+
+    template<class U = T>
+    static typename std::enable_if< !has_alias_pointer<U>::value &&
+                                    !std::is_pod<U>::value &&
+                                    !std::is_same<U,string>::value, int >::type
+    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+    {
+      return 0;
+    }
+
 
   };
-  virtual void Pack( char *& buffer, localIndex_array const & packList ) override final
+
+  virtual int Pack( char *& buffer ) const override final
   {
-    pack_wrapper::PackT( buffer, *m_data, packList);
+    int packedSize = 0;
+
+    packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
+    packedSize += pack_wrapper<true>::PackT( buffer, *m_data);
+
+    return packedSize;
   }
+
+  virtual int Pack( char *& buffer, localIndex_array const & packList ) const override final
+  {
+    int packedSize = 0;
+
+    packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
+    packedSize += pack_wrapper<true>::PackT( buffer, *m_data, packList);
+
+    return packedSize;
+  }
+
+  virtual int PackSize( ) const override final
+  {
+    char * buffer = nullptr;
+    int packedSize = 0;
+
+    packedSize += CommBufferOps::Pack<false>( buffer, this->getName() );
+    packedSize += pack_wrapper<false>::PackT( buffer, *m_data);
+
+    return packedSize;
+  }
+
+  virtual int PackSize( localIndex_array const & packList ) const override final
+  {
+
+    char * buffer = nullptr;
+    int packedSize = 0;
+
+    packedSize += CommBufferOps::Pack<false>( buffer, this->getName() );
+    packedSize += pack_wrapper<false>::PackT( buffer, *m_data, packList);
+
+    return packedSize;
+  }
+
+
+
 
   struct empty_wrapper
   {

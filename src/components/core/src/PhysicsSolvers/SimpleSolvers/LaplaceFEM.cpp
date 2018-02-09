@@ -597,7 +597,7 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
 
-  for(unsigned r=0 ; r<fieldVar.size() ; ++r)
+  for( localIndex r=0 ; r<fieldVar.size() ; ++r)
   {
 //    if(is_ghost[r] < 0)
     {

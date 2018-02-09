@@ -203,5 +203,39 @@ void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problem
 }
 
 
+
+
+
+int
+ElementRegionManager::PackSize( array<string> const & wrapperNames,
+                                integer const ) const
+{
+  int packedSize = 0;
+
+  packedSize += ManagedGroup::PackSize( wrapperNames, 0);
+
+  ManagedGroup const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+  packedSize += CommBufferOps::PackSize( elementRegions->getName() );
+  for( auto const & region : elementRegions->GetSubGroups() )
+  {
+    packedSize += CommBufferOps::PackSize( region.second->getName() );
+
+  }
+
+  return packedSize;
+}
+
+int
+ElementRegionManager::Pack( buffer_unit_type * & buffer,
+                            array<string> const & wrapperNames,
+                            integer const recursive ) const
+{
+  int packedSize = 0;
+
+  return packedSize;
+}
+
+
+
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, ManagedGroup * const )
 }

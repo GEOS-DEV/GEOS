@@ -30,7 +30,7 @@ class NeighborCommunicator
 public:
 
   NeighborCommunicator();
-  ~NeighborCommunicator();
+//  ~NeighborCommunicator();
 
 
   void MPI_iSendReceive( char const * const sendBuffer,

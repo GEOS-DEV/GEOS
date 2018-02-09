@@ -15,9 +15,9 @@ NeighborCommunicator::NeighborCommunicator()
 {
 }
 
-NeighborCommunicator::~NeighborCommunicator()
-{
-}
+//NeighborCommunicator::~NeighborCommunicator()
+//{
+//}
 
 void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
                                              int const sendSize,
@@ -63,7 +63,7 @@ void NeighborCommunicator::MPI_iSendReceiveBufferSizes( int const commID,
                                                         MPI_Request& mpiRecvRequest,
                                                         MPI_Comm mpiComm )
 {
-  m_sendBufferSize[commID] = m_sendBuffer[commID].size();
+  m_sendBufferSize[commID] = integer_conversion<int>(m_sendBuffer[commID].size());
   MPI_iSendReceive( &m_sendBufferSize[commID], 1, mpiSendRequest,
                     &m_receiveBufferSize[commID],
                     1, mpiRecvRequest,
@@ -88,10 +88,10 @@ void NeighborCommunicator::MPI_iSendReceiveBuffers( int const commID,
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
 
   MPI_iSendReceive( m_sendBuffer[commID].data(),
-                    m_sendBuffer[commID].size(),
+                    integer_conversion<int>(m_sendBuffer[commID].size()),
                     mpiSendRequest,
                     m_receiveBuffer[commID].data(),
-                    m_receiveBuffer[commID].size(),
+                    integer_conversion<int>(m_receiveBuffer[commID].size()),
                     mpiRecvRequest,
                     commID,
                     mpiComm );
@@ -251,6 +251,7 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
   localIndex_array  edgeAdjacencyList ;//= edgeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToSend );;
   localIndex_array & faceAdjacencyList = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToSend );
   ElementRegionManager::ElementViewAccessor<localIndex_array> elementAdjacencyList;
+
   elemManager.ConstructViewAccessor( ObjectManagerBase::viewKeyStruct::ghostsToSendString,
                                      std::to_string( this->m_neighborRank ),
                                      elementAdjacencyList );
@@ -264,118 +265,22 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
 
 
   int bufferSize = 0;
-  bufferSize += nodeManager.PackSizeFixed( {}, 0 );
-  bufferSize += nodeAdjacencyList.size() * nodeManager.PackSizePerIndex( {}, 0 );
+  bufferSize += nodeManager.PackSize( {}, nodeAdjacencyList, 0 );
+  bufferSize += faceManager.PackSize( {}, faceAdjacencyList, 0 );
 
-  bufferSize += faceManager.PackSizeFixed( {}, 0 );
-  bufferSize += faceAdjacencyList.size() * faceManager.PackSizePerIndex( {}, 0 );
 
-  // TODO THIS IS WRONG!!! FIX IT.
-  bufferSize += elemManager.PackSizeFixed( {}, 0 );
-  bufferSize += elementAdjacencyList.size() * elemManager.PackSizePerIndex( {}, 0 );
-
+//  // TODO THIS IS WRONG!!! FIX IT.
+//  bufferSize += elemManager.PackSizeFixed( {}, 0 );
+//  bufferSize += elementAdjacencyList.size() * elemManager.PackSizePerIndex( {}, 0 );
+//
   buffer_type & sendBuffer = SendBuffer(commID);
   sendBuffer.resize(bufferSize);
 
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
-  nodeManager.Pack( sendBufferPtr, nodeAdjacencyList );
+  nodeManager.Pack( sendBufferPtr, array<string>() ,nodeAdjacencyList, 0 );
 
 
-  // now pack up the elements that are going over to the neighbor...also get the node that we are going to
-  // need to send.
-  m_domain->m_feElementManager.PackEleements(
-      this->tempNeighborData.objectsToSend[PhysicalDomainT::FiniteElementElementManager],
-      allNodes,
-      allFaces,
-      this->m_elementRegionsSendLocalIndices,
-      this->m_domain->m_feNodeManager,
-      this->m_domain->m_feFaceManager,
-      true, true, true, true );
-
-  // add the "external" faces if the contact is on
-  if( contactActive )
-  {
-    const array<integer>& isExternalFace =
-        m_domain->m_feFaceManager.m_isExternal;
-
-    for( array<integer>::size_type a = 0 ;
-        a < m_domain->m_feFaceManager.m_numFaces ; ++a )
-    {
-      if( isExternalFace[a] == 1 )
-      {
-        bool allValidNodes = true;
-        for( localIndex_array::const_iterator
-        i = m_domain->m_feFaceManager.m_toNodesRelation[a].begin() ;
-            i != m_domain->m_feFaceManager.m_toNodesRelation[a].end() ; ++i )
-        {
-          const globalIndex gnode = m_domain->m_feNodeManager.m_localToGlobalMap[*i];
-          const int owningRank = GlobalIndexManager::OwningRank( gnode );
-          if( !( m_rankOfNeighborNeighbors.count( owningRank ) ) )
-          {
-            allValidNodes = false;
-          }
-        }
-        if( allValidNodes )
-        {
-          allFaces.insert( a );
-        }
-      }
-    }
-  }
-
-  for( lSet::const_iterator faceIndex = allFaces.begin() ;
-      faceIndex != allFaces.end() ; ++faceIndex )
-  {
-    for( localIndex_array::const_iterator
-    edgeIndex = m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].begin() ;
-        edgeIndex != m_domain->m_feFaceManager.m_toEdgesRelation[*faceIndex].end()
-        ; ++edgeIndex )
-    {
-      const globalIndex gi =
-          m_domain->m_feEdgeManager.m_localToGlobalMap[*edgeIndex];
-      if( m_rankOfNeighborNeighbors.count( GlobalIndexManager::OwningRank( gi )
-                                                                           ) )
-      {
-        allEdges.insert( *edgeIndex );
-      }
-    }
-
-    for( localIndex_array::const_iterator
-    i = m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].begin() ;
-        i != m_domain->m_feFaceManager.m_toNodesRelation[*faceIndex].end() ;
-        ++i )
-    {
-      allNodes.insert( *i );
-    }
-  }
-
-  const PhysicalDomainT::ObjectDataStructureKeys keys[3] =
-      {
-        PhysicalDomainT::FiniteElementNodeManager,
-        PhysicalDomainT::FiniteElementEdgeManager,
-        PhysicalDomainT::FiniteElementFaceManager
-      };
-
-  for( int i = 0 ; i < 3 ; ++i )
-  {
-    const lSet& localSends =
-        tempNeighborData.objectLocalIndicesToSend[keys[i]];
-    globalIndex_array& globalSends =
-        tempNeighborData.objectGlobalIndicesToSend[keys[i]];
-
-    for( lSet::const_iterator a = localSends.begin() ; a != localSends.end() ; ++a
-        )
-    {
-      const globalIndex gIndex =
-          m_domain->GetObjectDataStructure( keys[i] ).m_localToGlobalMap[*a];
-      if( GlobalIndexManager::OwningRank( gIndex ) != m_rank &&
-          GlobalIndexManager::OwningRank( gIndex ) != m_neighborRank )
-      {
-        globalSends.push_back( gIndex );
-      }
-    }
-  }
 }
 
 } /* namespace geosx */

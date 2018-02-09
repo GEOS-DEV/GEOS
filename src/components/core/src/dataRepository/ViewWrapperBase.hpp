@@ -83,7 +83,12 @@ public:
 // typeName ) const = 0;
 
 
-  virtual void Pack( char *& buffer, localIndex_array const & packList ) = 0;
+  virtual int Pack( char *& buffer ) const = 0;
+  virtual int Pack( char *& buffer, localIndex_array const & packList ) const = 0;
+  virtual int PackSize( ) const = 0;
+  virtual int PackSize( localIndex_array const & packList ) const = 0;
+
+//  virtual int PackingSize( char *& buffer, localIndex_array const & packList ) = 0;
 
   int sizedFromParent() const
   {

@@ -11,6 +11,11 @@
 namespace geosx
 {
 
+//template< typename T >
+//localIndex CommBufferOps::PackSize( T const & var )
+//{
+//  return sizeof(T);
+//}
 
 
 //******************************************************************************
@@ -20,13 +25,17 @@ namespace geosx
  * @param var data to pack
  * @return size (in bytes) of packed data
  */
-template< typename T >
+template< bool DO_PACKING,
+          typename T >
 localIndex CommBufferOps::Pack( array<char> & buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
-  buffer.resize(buffer.size() + sizeOfPackedChars);
-  char* p_buffer = &(buffer.back()) - sizeOfPackedChars + 1;
-  memcpy( p_buffer, &var, sizeOfPackedChars );
+  static_if( DO_PACKING )
+  {
+    buffer.resize(buffer.size() + sizeOfPackedChars);
+    char* p_buffer = &(buffer.back()) - sizeOfPackedChars + 1;
+    memcpy( p_buffer, &var, sizeOfPackedChars );
+  });
   return sizeOfPackedChars;
 }
 
@@ -36,12 +45,16 @@ localIndex CommBufferOps::Pack( array<char> & buffer, T const & var )
  * @param var
  * @return
  */
-template< typename T>
+template< bool DO_PACKING,
+          typename T >
 localIndex CommBufferOps::Pack( char*&  buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
-  memcpy( buffer, &var, sizeOfPackedChars );
-  buffer += sizeOfPackedChars;
+  static_if( DO_PACKING )
+  {
+    memcpy( buffer, &var, sizeOfPackedChars );
+    buffer += sizeOfPackedChars;
+  });
   return sizeOfPackedChars;
 }
 
@@ -61,82 +74,436 @@ localIndex CommBufferOps::Unpack( char const *& buffer, T & var )
   return sizeOfUnpackedChars;
 }
 
+
+
+//template< typename T >
+//localIndex CommBufferOps::PackSize( array<T> const & var )
+//{
+//  localIndex sizeOfPackedChars = 0;
+//
+//  const localIndex length = var.size();
+//  localIndex sizeOfPackedArrayChars = length*sizeof(T);
+//
+//  sizeOfPackedChars += PackSize( length );
+//
+//  sizeOfPackedChars += sizeOfPackedArrayChars;
+//
+//  return sizeOfPackedChars;
+//}
+
+
+template< bool DO_PACKING >
+localIndex CommBufferOps::Pack( array<char> & buffer, string const & var )
+{
+  string::size_type sizeOfPackedChars = 0;
+
+  Pack<DO_PACKING>( buffer, sizeOfPackedChars );
+
+  const char* cvar = var.data();
+  for( string::size_type i=0 ; i<var.size() ; ++i )
+  {
+    buffer.push_back(*(cvar++));
+  }
+  sizeOfPackedChars += var.size();
+
+  return integer_conversion<localIndex>(sizeOfPackedChars);
+}
+
+template< bool DO_PACKING >
+localIndex CommBufferOps::Pack( char*& buffer,  const std::string& var )
+{
+  string::size_type sizeOfPackedChars = var.size();
+
+  Pack<DO_PACKING>( buffer, sizeOfPackedChars );
+
+  static_if( DO_PACKING )
+  {
+    for( string::size_type i=0 ; i<sizeOfPackedChars ; ++i )
+    {
+      *buffer = var[i];
+      buffer++;
+    }
+  });
+
+  sizeOfPackedChars += sizeof( localIndex );
+  return integer_conversion<localIndex>(sizeOfPackedChars);
+}
+
+
+//template< bool DO_PACKING >
+//localIndex CommBufferOps::Pack( array<char> & buffer,
+//                                const array<string>& container )
+//{
+//  localIndex sizeOfPackedChars = 0;
+//  const localIndex arrayLength = container.size();
+//
+//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, arrayLength );
+//  for( array<string>::const_iterator i=container.begin() ; i!=container.end() ; ++i )
+//  {
+//    sizeOfPackedChars += Pack<DO_PACKING>(buffer,*i);
+//  }
+//
+//  return sizeOfPackedChars;
+//}
+//
+//template< bool DO_PACKING >
+//localIndex CommBufferOps::Pack( char*& buffer,
+//                                const array<string>& container )
+//{
+//  localIndex sizeOfPackedChars = 0;
+//  const localIndex arrayLength = container.size();
+//
+//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, arrayLength );
+//  for( array<string>::const_iterator i=container.begin() ; i!=container.end() ; ++i )
+//  {
+//    sizeOfPackedChars += Pack<DO_PACKING>(buffer,*i);
+//  }
+//
+//  return sizeOfPackedChars;
+//}
+//
+
+
+
+
+
+
 //******************************************************************************
 /**
  * @author settgast
  * @param container
  * @return
  */
-template< typename T >
-localIndex CommBufferOps::Pack( array<char> & buffer, array<T> const & var )
+//template< bool DO_PACKING,
+//          typename T >
+//localIndex CommBufferOps::Pack( array<char> & buffer, array<T> const & var )
+//{
+//  localIndex sizeOfPackedChars = 0;
+//
+//  const localIndex length = var.size();
+//  localIndex sizeOfPackedArrayChars = length*sizeof(T);
+//
+//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
+//
+//  static_if( DO_PACKING )
+//  {
+//    buffer.resize( buffer.size() + sizeOfPackedArrayChars );
+//    char* p_buffer = &(buffer.back()) - sizeOfPackedArrayChars + 1;
+//    memcpy( p_buffer, var.data(), sizeOfPackedArrayChars );
+//  });
+//  sizeOfPackedChars += sizeOfPackedArrayChars;
+//
+//  return sizeOfPackedChars;
+//}
+
+//template< typename T,
+//          bool DO_PACKING >
+//localIndex CommBufferOps::Pack( char *& buffer, array<T> const & var )
+//{
+//  localIndex sizeOfPackedChars = 0;
+//
+//  const localIndex length = var.size();
+//  localIndex sizeOfPackedArrayChars = length*sizeof(T);
+//
+//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
+//
+//  static_if( DO_PACKING )
+//  {
+//    memcpy( buffer, var.data(), sizeOfPackedArrayChars );
+//    buffer += sizeOfPackedArrayChars;
+//  });
+//  sizeOfPackedChars += sizeOfPackedArrayChars;
+//
+//  return sizeOfPackedChars;
+//}
+
+
+
+
+//template< typename T>
+//localIndex CommBufferOps::Unpack( char const *& buffer, array<T>& array )
+//{
+//
+//  localIndex sizeOfUnpackedChars = 0;
+//
+//  localIndex array_length;
+//  sizeOfUnpackedChars += Unpack( buffer, array_length );
+//  array.resize(array_length);
+//  localIndex length = array_length * sizeof(T);
+//
+//  memcpy( array.data(), buffer, length );
+//  buffer += length;
+//  sizeOfUnpackedChars += length;
+//
+//  return sizeOfUnpackedChars;
+//}
+
+
+
+
+
+//
+//template< typename T >
+//localIndex CommBufferOps::PackSize( const std::set<T>& var )
+//{
+//
+//  localIndex sizeOfPackedChars = 0;
+//
+//  const localIndex length = integer_conversion<localIndex>(var.size());
+//
+//  sizeOfPackedChars += PackSize( length );
+//
+//  for( typename std::set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+//  {
+//    sizeOfPackedChars += PackSize( *i);
+//  }
+//
+//  return sizeOfPackedChars;
+//}
+
+
+//template< bool DO_PACKING,
+//          typename T >
+//localIndex CommBufferOps::Pack( array<char> & buffer, const std::set<T>& var )
+//{
+//
+//  localIndex sizeOfPackedChars = 0;
+//
+//  const localIndex length = integer_conversion<localIndex>(var.size());
+//
+//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
+//
+//  for( typename std::set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+//  {
+//    sizeOfPackedChars += Pack<DO_PACKING>( buffer, *i);
+//  }
+//
+//  return sizeOfPackedChars;
+//}
+
+template< bool DO_PACKING,
+          typename T >
+localIndex CommBufferOps::Pack( char *& buffer, std::set<T> const & var )
 {
+
   localIndex sizeOfPackedChars = 0;
 
-  const localIndex length = var.size();
-  localIndex sizeOfPackedArrayChars = length*sizeof(T);
+  const localIndex length = integer_conversion<localIndex>(var.size());
 
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
 
-  sizeOfPackedChars += Pack( buffer, length );
-
-  buffer.resize( buffer.size() + sizeOfPackedArrayChars );
-
-  char* p_buffer = &(buffer.back()) - sizeOfPackedArrayChars + 1;
-  memcpy( p_buffer, var.data(), sizeOfPackedArrayChars );
-  sizeOfPackedChars += sizeOfPackedArrayChars;
+  for( typename std::set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  {
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, *i);
+  }
 
   return sizeOfPackedChars;
 }
-
-template< typename T >
-localIndex CommBufferOps::Pack( char *& buffer, array<T> const & var )
-{
-  localIndex sizeOfPackedChars = 0;
-
-  const localIndex length = var.size();
-  localIndex sizeOfPackedArrayChars = length*sizeof(T);
-
-  sizeOfPackedChars += Pack( buffer, length );
-
-  memcpy( buffer, var.data(), sizeOfPackedArrayChars );
-  sizeOfPackedChars += sizeOfPackedArrayChars;
-  buffer += sizeOfPackedArrayChars;
-
-  return sizeOfPackedChars;
-}
-
-
 
 
 template< typename T>
-localIndex CommBufferOps::Unpack( char const *& buffer, array<T>& array )
+localIndex CommBufferOps::Unpack( char const *& buffer, std::set<T> & setToRead )
 {
+  setToRead.clear();
 
   localIndex sizeOfUnpackedChars = 0;
 
-  localIndex array_length;
-  sizeOfUnpackedChars += Unpack( buffer, array_length );
-  array.resize(array_length);
-  localIndex length = array_length * sizeof(T);
+  localIndex set_length;
+  sizeOfUnpackedChars += Unpack( buffer, set_length );
 
-  memcpy( array.data(), buffer, length );
-  buffer += length;
-  sizeOfUnpackedChars += length;
+
+  for( localIndex a=0 ; a<set_length ; ++a )
+  {
+    T temp;
+    sizeOfUnpackedChars += Unpack( buffer, temp );
+    setToRead.insert( temp );
+  }
 
   return sizeOfUnpackedChars;
 }
 
 
 
-template< typename T, int NDIM, typename INDEX_TYPE >
+//********************************************************************************************************************
+template< bool DO_PACKING , typename T_KEY, typename T_VAL >
+localIndex CommBufferOps::Pack( char*& buffer,
+                                std::map<T_KEY,T_VAL> const & var )
+{
+
+  localIndex sizeOfPackedChars = 0;
+
+  const typename std::map<T_KEY,T_VAL>::size_type length = var.size();
+
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
+
+  for( typename std::map<T_KEY,T_VAL>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  {
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, i->first );
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, i->second );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+
+template< bool DO_PACKING, typename T_KEY, typename T_VAL >
+localIndex Unpack( char const *& buffer, std::map<T_KEY,T_VAL>& map )
+{
+  map.clear();
+
+  localIndex sizeOfUnpackedChars = 0;
+
+  typename std::map<T_KEY,T_VAL>::size_type map_length;
+  sizeOfUnpackedChars += Unpack( buffer, map_length );
+
+
+  for( typename std::map<T_KEY,T_VAL>::size_type a=0 ; a<map_length ; ++a )
+  {
+    T_KEY key;
+    T_VAL value;
+    sizeOfUnpackedChars += Unpack( buffer, key );
+    sizeOfUnpackedChars += Unpack( buffer, value );
+
+    map[key] = value;
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+
+//********************************************************************************************************************
+
+//template< typename T, typename T_indices >
+//localIndex CommBufferOps::PackSize( const array<T>& container,
+//                                    const T_indices& indices )
+//{
+//  localIndex sizeOfPackedChars = 0;
+//
+//  const typename T_indices::size_type length = indices.size();
+//  localIndex sizeOfPackedArrayChars = length*sizeof(T);
+//
+//  sizeOfPackedChars += PackSize( length );
+//  sizeOfPackedChars += sizeOfPackedArrayChars;
+//
+//  return sizeOfPackedChars;
+//}
+
+
+//template< typename T,
+//          typename T_indices,
+//          bool DO_PACKING >
+//localIndex CommBufferOps::Pack( array<char> & buffer,
+//                                   const array<T>& container,
+//                                   const T_indices& indices )
+//{
+//  localIndex sizeOfPackedChars = 0;
+//
+//  const typename T_indices::size_type length = indices.size();
+//  localIndex sizeOfPackedArrayChars = length*sizeof(T);
+//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
+//
+//
+//  static_if( DO_PACKING )
+//  {
+//    buffer.resize( buffer.size() + sizeOfPackedArrayChars );
+//  });
+//
+//
+//  char* p_buffer = &(buffer.back()) - sizeOfPackedArrayChars + 1;
+//  for( typename T_indices::const_iterator i=indices.begin() ; i!=indices.end() ; ++i )
+//  {
+//    sizeOfPackedChars += Pack<DO_PACKING>( p_buffer, container[*i] );
+//  }
+//
+//  return sizeOfPackedChars;
+//}
+//
+
+//template< typename T,
+//          typename T_indices,
+//          bool DO_PACKING >
+//localIndex CommBufferOps::Pack( char *& buffer,
+//                                   const array<T>& container,
+//                                   const T_indices& indices )
+//{
+//  localIndex sizeOfPackedChars = 0;
+//
+//  const typename T_indices::size_type length = indices.size();
+//  localIndex sizeOfPackedArrayChars = length*sizeof(T);
+//
+//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
+//
+//  for( typename T_indices::const_iterator i=indices.begin() ; i!=indices.end() ; ++i )
+//  {
+//    sizeOfPackedChars += Pack<DO_PACKING>( buffer, container[*i] );
+//  }
+//
+//  return sizeOfPackedChars;
+//}
+
+//template< typename T, typename T_indices >
+//localIndex CommBufferOps::Unpack( char const *& buffer,
+//                                  array<T>& array,
+//                                  const T_indices& indices )
+//{
+//
+//  localIndex sizeOfUnpackedChars = 0;
+//
+//  typename T_indices::size_type array_length;
+//
+//  sizeOfUnpackedChars += Unpack( buffer, array_length );
+//
+//  if( array_length != indices.size() )
+//  {
+//    GEOS_ERROR("CommBuffer::PrivateUnpackArray(): incorrect number of data");
+//  }
+//
+//
+//  for( typename T_indices::const_iterator i=indices.begin() ; i!=indices.end() ; ++i )
+//  {
+//    const T* const tbuffer = static_cast<const T*>(buffer);
+//    array[*i] = *tbuffer;
+//    buffer += sizeof(T);
+//  }
+//  sizeOfUnpackedChars += array_length * sizeof(T);
+//
+//  return sizeOfUnpackedChars;
+//}
+//
+//
+
+
+
+//template< typename T, int NDIM, typename INDEX_TYPE >
+//localIndex CommBufferOps::PackSize( multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var )
+//{
+//  localIndex sizeOfPackedChars = 0;
+//
+//  sizeOfPackedChars += sizeof(int);
+//  int const ndim = NDIM;
+//
+//  sizeOfPackedChars += NDIM*sizeof(INDEX_TYPE);
+//  sizeOfPackedChars += NDIM*sizeof(INDEX_TYPE);
+//
+//  const localIndex length = var.size();
+//  localIndex sizeOfPackedArrayChars = length*sizeof(T);
+//
+//  sizeOfPackedChars += PackSize( length );
+//
+//  sizeOfPackedChars += sizeOfPackedArrayChars;
+//
+//  return sizeOfPackedChars;
+//}
+
+template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >
 localIndex CommBufferOps::Pack( char*& buffer,
                                 multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var )
 {
   localIndex sizeOfPackedChars = 0;
 
-  sizeOfPackedChars += sizeof(int);
-  int const ndim = NDIM;
-  memcpy( buffer, &ndim, sizeof(int) );
-  buffer += sizeof(int);
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, NDIM );
 
   sizeOfPackedChars += NDIM*sizeof(INDEX_TYPE);
   memcpy( buffer, var.dims(), NDIM*sizeof(INDEX_TYPE) );
@@ -150,7 +517,7 @@ localIndex CommBufferOps::Pack( char*& buffer,
   const localIndex length = var.size();
   localIndex sizeOfPackedArrayChars = length*sizeof(T);
 
-  sizeOfPackedChars += Pack( buffer, length );
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
 
   memcpy( buffer, var.data(), sizeOfPackedArrayChars );
   sizeOfPackedChars += sizeOfPackedArrayChars;
@@ -158,6 +525,7 @@ localIndex CommBufferOps::Pack( char*& buffer,
 
   return sizeOfPackedChars;
 }
+
 
 template< typename T, int NDIM, typename INDEX_TYPE >
 localIndex CommBufferOps::Unpack( char const *& buffer,
@@ -197,190 +565,79 @@ localIndex CommBufferOps::Unpack( char const *& buffer,
 
 }
 
+//template< int NDIM, typename T, typename LAMBDA, int DIM=NDIM >
+//struct nestedFor
+//{
+//  static void operator()( T const * const data,
+//                          localIndex const * const dims,
+//                          localIndex const filteredIndex,
+//                          LAMBDA && lambda )
+//  {
+//    for( localIndex i=0 ; i<dims[NDIM-DIM] ; ++i )
+//    {
+//      nestedFor<NDIM,LAMBDA,DIM-1>( dims, lambda );
+//    }
+//  }
+//};
+//
+//template< typename LAMBDA >
+//struct nestedFor<NDIM,LAMBDA,DIM>
+//{
+//  static void operator()( T const * const data,
+//                          localIndex const * const dims,
+//                          localIndex const filteredIndex,
+//                          LAMBDA && lambda )
+//  {
+//    lambda(data);
+//  }
+//};
+//
+//template
 
-
-template< typename T >
-localIndex CommBufferOps::Pack( array<char> & buffer, const std::set<T>& var )
-{
-
-  localIndex sizeOfPackedChars = 0;
-
-  const localIndex length = integer_conversion<localIndex>(var.size());
-
-  sizeOfPackedChars += Pack( buffer, length );
-
-  for( typename std::set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
-  {
-    sizeOfPackedChars += Pack( buffer, *i);
-  }
-
-  return sizeOfPackedChars;
-}
-
-template< typename T >
-localIndex CommBufferOps::Pack( char *& buffer, std::set<T> const & var )
-{
-
-  localIndex sizeOfPackedChars = 0;
-
-  const localIndex length = integer_conversion<localIndex>(var.size());
-
-  sizeOfPackedChars += Pack( buffer, length );
-
-  for( typename std::set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
-  {
-    sizeOfPackedChars += Pack( buffer, *i);
-  }
-
-  return sizeOfPackedChars;
-}
-
-
-template< typename T>
-localIndex CommBufferOps::Unpack( char const *& buffer, std::set<T> & setToRead )
-{
-  setToRead.clear();
-
-  localIndex sizeOfUnpackedChars = 0;
-
-  localIndex set_length;
-  sizeOfUnpackedChars += Unpack( buffer, set_length );
-
-
-  for( localIndex a=0 ; a<set_length ; ++a )
-  {
-    T temp;
-    sizeOfUnpackedChars += Unpack( buffer, temp );
-    setToRead.insert( temp );
-  }
-
-  return sizeOfUnpackedChars;
-}
-
-
-
-  //********************************************************************************************************************
-  template< typename T_KEY, typename T_VAL >
-  localIndex Pack( array<char> & buffer,
-                   std::map<T_KEY,T_VAL> const & var )
-  {
-
-    localIndex sizeOfPackedChars = 0;
-
-    const typename std::map<T_KEY,T_VAL>::size_type length = var.size();
-
-    sizeOfPackedChars += Pack( buffer, length );
-
-
-
-    for( typename std::map<T_KEY,T_VAL>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
-    {
-      sizeOfPackedChars += Pack( buffer, i->first );
-      sizeOfPackedChars += Pack( buffer, i->second );
-    }
-
-    return sizeOfPackedChars;
-  }
-
-
-
-  template< typename T_KEY, typename T_VAL >
-  static localIndex Unpack( char const *& buffer, std::map<T_KEY,T_VAL>& map )
-  {
-    map.clear();
-
-    localIndex sizeOfUnpackedChars = 0;
-
-    typename std::map<T_KEY,T_VAL>::size_type map_length;
-    sizeOfUnpackedChars += Unpack( buffer, map_length );
-
-
-    for( typename std::map<T_KEY,T_VAL>::size_type a=0 ; a<map_length ; ++a )
-    {
-      T_KEY key;
-      T_VAL value;
-      sizeOfUnpackedChars += Unpack( buffer, key );
-      sizeOfUnpackedChars += Unpack( buffer, value );
-
-      map[key] = value;
-    }
-
-    return sizeOfUnpackedChars;
-  }
-
-//********************************************************************************************************************
-template< typename T, typename T_indices >
-localIndex CommBufferOps::Pack( array<char> & buffer,
-                                   const array<T>& container,
-                                   const T_indices& indices )
+template< bool DO_PACKING,
+          typename T,
+          int NDIM,
+          typename T_indices,
+          typename INDEX_TYPE >
+localIndex CommBufferOps::Pack( char*& buffer,
+                                multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var,
+                                const T_indices& indices )
 {
   localIndex sizeOfPackedChars = 0;
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, NDIM );
 
-  const typename T_indices::size_type length = indices.size();
-  localIndex sizeOfPackedArrayChars = length*sizeof(T);
-  buffer.resize( buffer.size() + sizeOfPackedArrayChars );
-
-  sizeOfPackedChars += Pack( buffer, length );
-
-  char* p_buffer = &(buffer.back()) - sizeOfPackedArrayChars + 1;
-  for( typename T_indices::const_iterator i=indices.begin() ; i!=indices.end() ; ++i )
+  static_if( DO_PACKING )
   {
-    Pack( p_buffer, container[*i] );
-  }
-  sizeOfPackedChars += sizeOfPackedArrayChars;
+  memcpy( buffer, var.dims(), NDIM*sizeof(INDEX_TYPE) );
+  buffer += NDIM*sizeof(INDEX_TYPE);
 
-  return sizeOfPackedChars;
-}
+  memcpy( buffer, var.strides(), NDIM*sizeof(INDEX_TYPE) );
+  buffer += NDIM*sizeof(INDEX_TYPE);
+  });
+  sizeOfPackedChars += NDIM*sizeof(INDEX_TYPE);
+  sizeOfPackedChars += NDIM*sizeof(INDEX_TYPE);
 
-
-template< typename T, typename T_indices >
-localIndex CommBufferOps::Pack( char *& buffer,
-                                   const array<T>& container,
-                                   const T_indices& indices )
-{
-  localIndex sizeOfPackedChars = 0;
-
-  const typename T_indices::size_type length = indices.size();
+  const localIndex length = indices.size();
   localIndex sizeOfPackedArrayChars = length*sizeof(T);
 
-  sizeOfPackedChars += Pack( buffer, length );
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
+
+  int const iterationIndex = var.getSingleParameterResizeIndex();
+  localIndex const * const strides = var.strides();
+  localIndex const * const dims = var.dims();
+  T const * const ptrVar = nullptr;
+
+//  for( int i=0 ; i<NDIM ; ++i )
+//  {
+//    for( )
+//  }
 
   for( typename T_indices::const_iterator i=indices.begin() ; i!=indices.end() ; ++i )
   {
-    Pack( buffer, container[*i] );
+//    sizeOfPackedChars += Pack<T,DO_PACKING>( buffer, var[*i] );
   }
-  sizeOfPackedChars += sizeOfPackedArrayChars;
 
   return sizeOfPackedChars;
-}
-
-template< typename T, typename T_indices >
-localIndex CommBufferOps::Unpack( char const *& buffer,
-                                  array<T>& array,
-                                  const T_indices& indices )
-{
-
-  localIndex sizeOfUnpackedChars = 0;
-
-  typename T_indices::size_type array_length;
-
-  sizeOfUnpackedChars += Unpack( buffer, array_length );
-
-  if( array_length != indices.size() )
-  {
-    GEOS_ERROR("CommBuffer::PrivateUnpackArray(): incorrect number of data");
-  }
-
-
-  for( typename T_indices::const_iterator i=indices.begin() ; i!=indices.end() ; ++i )
-  {
-    const T* const tbuffer = static_cast<const T*>(buffer);
-    array[*i] = *tbuffer;
-    buffer += sizeof(T);
-  }
-  sizeOfUnpackedChars += array_length * sizeof(T);
-
-  return sizeOfUnpackedChars;
 }
 
 
