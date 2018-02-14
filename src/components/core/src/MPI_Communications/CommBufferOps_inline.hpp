@@ -533,10 +533,10 @@ localIndex CommBufferOps::Unpack( char const *& buffer,
 {
   localIndex sizeOfUnpackedChars = 0;
 
-  sizeOfUnpackedChars += sizeof(int);
   int ndim;
   memcpy( &ndim, buffer, sizeof(int) );
   buffer += sizeof(int);
+  sizeOfUnpackedChars += sizeof(int);
 
   if( ndim != NDIM )
   {
