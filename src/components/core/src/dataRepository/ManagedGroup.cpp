@@ -428,7 +428,7 @@ int ManagedGroup::PackSize( array<string> const & wrapperNames,
 }
 
 
-localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
+int ManagedGroup::Pack( buffer_unit_type * & buffer,
                                array<string> const & wrapperNames,
                                localIndex_array const & packList,
                                integer const recursive ) const
