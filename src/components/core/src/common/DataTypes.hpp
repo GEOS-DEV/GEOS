@@ -660,6 +660,7 @@ public:
     {
       std::cout<<LOCATION<<std::endl;
       assert( false );
+      return lambda( double(1) );
     }
     }
   }

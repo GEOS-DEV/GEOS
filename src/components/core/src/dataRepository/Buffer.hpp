@@ -108,7 +108,7 @@ public:
       buff = allocBuffer<realT>(byte_size);
     }
 
-    std::memcpy(buffer, t.Data(), byte_size);
+    std::memcpy(buff, t.Data(), byte_size);
     return buff;
   }
   

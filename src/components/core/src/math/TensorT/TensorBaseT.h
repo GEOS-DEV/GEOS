@@ -222,7 +222,7 @@ public:
   {
     for (int i = 0; i < T_length; ++i)
     {
-      if (t_data[i] != rhs.t_data[i])
+      if( (t_data[i] > rhs.t_data[i]) || (t_data[i] < rhs.t_data[i]) )
       {
         return false;
       }
