@@ -208,19 +208,27 @@ void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problem
 
 int
 ElementRegionManager::PackSize( array<string> const & wrapperNames,
-                                integer const ) const
+                                ElementViewAccessor<localIndex_array> const & viewAccessor ) const
 {
   int packedSize = 0;
 
   packedSize += ManagedGroup::PackSize( wrapperNames, 0);
 
-  ManagedGroup const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
-  packedSize += CommBufferOps::PackSize( elementRegions->getName() );
-  for( auto const & region : elementRegions->GetSubGroups() )
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
-    packedSize += CommBufferOps::PackSize( region.second->getName() );
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    packedSize += CommBufferOps::PackSize( elemRegion->getName() );
 
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      packedSize += CommBufferOps::PackSize( subRegion->getName() );
+
+      localIndex_array const & elemList = *(viewAccessor[kReg][kSubReg]);
+      subRegion->PackSize(wrapperNames, elemList, 0 );
+    }
   }
+
 
   return packedSize;
 }
@@ -228,9 +236,27 @@ ElementRegionManager::PackSize( array<string> const & wrapperNames,
 int
 ElementRegionManager::Pack( buffer_unit_type * & buffer,
                             array<string> const & wrapperNames,
-                            integer const recursive ) const
+                            ElementViewAccessor<localIndex_array> const & viewAccessor ) const
 {
   int packedSize = 0;
+
+  packedSize += ManagedGroup::Pack( buffer, wrapperNames, 0);
+
+
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    packedSize += CommBufferOps::Pack<true>( buffer, elemRegion->getName() );
+
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      packedSize += CommBufferOps::Pack<true>( buffer, subRegion->getName() );
+
+      localIndex_array const & elemList = *(viewAccessor[kReg][kSubReg]);
+      subRegion->Pack(buffer, wrapperNames, elemList, 0 );
+    }
+  }
 
   return packedSize;
 }

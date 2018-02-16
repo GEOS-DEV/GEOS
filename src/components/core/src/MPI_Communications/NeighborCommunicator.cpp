@@ -267,18 +267,17 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
   int bufferSize = 0;
   bufferSize += nodeManager.PackSize( {}, nodeAdjacencyList, 0 );
   bufferSize += faceManager.PackSize( {}, faceAdjacencyList, 0 );
+  bufferSize += elemManager.PackSize( {}, elementAdjacencyList );
 
-
-//  // TODO THIS IS WRONG!!! FIX IT.
-//  bufferSize += elemManager.PackSizeFixed( {}, 0 );
-//  bufferSize += elementAdjacencyList.size() * elemManager.PackSizePerIndex( {}, 0 );
-//
   buffer_type & sendBuffer = SendBuffer(commID);
   sendBuffer.resize(bufferSize);
 
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
-  nodeManager.Pack( sendBufferPtr, array<string>() ,nodeAdjacencyList, 0 );
+  int packedSize = 0;
+  packedSize += nodeManager.Pack( sendBufferPtr, {} ,nodeAdjacencyList, 0 );
+  packedSize += faceManager.Pack( sendBufferPtr, {}, faceAdjacencyList, 0 );
+  packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
 
 
 }

@@ -216,12 +216,13 @@ public:
                               string const & neighborName,
                               ElementViewAccessor<VIEWTYPE> & viewAccessor );
 
-  virtual int PackSize( array<string> const & wrapperNames,
-                        integer const ) const override;
 
-  virtual int Pack( buffer_unit_type * & buffer,
-                    array<string> const & wrapperNames,
-                    integer const ) const override;
+  int PackSize( array<string> const & wrapperNames,
+                ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
+
+  int Pack( buffer_unit_type * & buffer,
+            array<string> const & wrapperNames,
+            ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
 
 
 private:
