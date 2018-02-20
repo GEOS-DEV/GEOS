@@ -379,10 +379,13 @@ int ManagedGroup::PackSize( array<string> const & wrapperNames,
   int packedSize = 0;
   packedSize += CommBufferOps::PackSize(this->getName());
 
+  packedSize += CommBufferOps::PackSize( string("Wrappers"));
   if( wrapperNames.size()==0 )
   {
+    packedSize += CommBufferOps::PackSize( m_wrappers.size() );
     for( auto const & wrapperPair : this->m_wrappers )
     {
+      packedSize += CommBufferOps::PackSize( wrapperPair.first );
       if( packList.empty() )
       {
         packedSize += wrapperPair.second->PackSize();
@@ -395,9 +398,11 @@ int ManagedGroup::PackSize( array<string> const & wrapperNames,
   }
   else
   {
+    packedSize += CommBufferOps::PackSize( wrapperNames.size() );
     for( auto const & wrapperName : wrapperNames )
     {
       ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
+      packedSize += CommBufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
         packedSize += wrapper->PackSize();
@@ -410,8 +415,11 @@ int ManagedGroup::PackSize( array<string> const & wrapperNames,
   }
   if( recursive > 0 )
   {
+    packedSize += CommBufferOps::PackSize( string("SubGroups"));
+    packedSize += CommBufferOps::PackSize( m_subGroups.size() );
     for( auto const & keyGroupPair : this->m_subGroups )
     {
+      packedSize += CommBufferOps::PackSize( keyGroupPair.first );
       packedSize += keyGroupPair.second->PackSize( wrapperNames, packList, recursive );
     }
   }
@@ -436,10 +444,13 @@ int ManagedGroup::Pack( buffer_unit_type * & buffer,
   int packedSize = 0;
   packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
 
+  packedSize += CommBufferOps::Pack<true>( buffer, string("Wrappers") );
   if( wrapperNames.size()==0 )
   {
+    packedSize += CommBufferOps::Pack<true>( buffer, m_wrappers.size() );
     for( auto const & wrapperPair : this->m_wrappers )
     {
+      packedSize += CommBufferOps::Pack<true>( buffer, wrapperPair.first );
       if( packList.empty() )
       {
         packedSize += wrapperPair.second->Pack( buffer );
@@ -452,9 +463,11 @@ int ManagedGroup::Pack( buffer_unit_type * & buffer,
   }
   else
   {
+    packedSize += CommBufferOps::Pack<true>( buffer, wrapperNames.size() );
     for( auto const & wrapperName : wrapperNames )
     {
       ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
+      packedSize += CommBufferOps::Pack<true>( buffer, wrapperName );
       if( packList.empty() )
       {
         packedSize += wrapper->Pack( buffer );
@@ -465,10 +478,15 @@ int ManagedGroup::Pack( buffer_unit_type * & buffer,
       }
     }
   }
+
+
   if( recursive > 0 )
   {
+    packedSize += CommBufferOps::Pack<true>( buffer, string("SubGroups") );
+    packedSize += CommBufferOps::Pack<true>( buffer, m_subGroups.size() );
     for( auto const & keyGroupPair : this->m_subGroups )
     {
+      packedSize += CommBufferOps::Pack<true>( buffer, keyGroupPair.first );
       packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
     }
   }
@@ -484,6 +502,40 @@ int ManagedGroup::Pack( buffer_unit_type * & buffer,
   return Pack( buffer, wrapperNames, nullArray, recursive );
 }
 
+int ManagedGroup::Unpack( buffer_unit_type const *& buffer,
+                          localIndex_array const & packList,
+                          integer const recursive )
+{
+  int unpackedSize = 0;
+  string groupName;
+  unpackedSize += CommBufferOps::Unpack( buffer, groupName );
+  GEOS_ERROR_IF( groupName!=this->getName(), "ManagedGroup::Unpack(): group names do not match")
+
+  string wrappersLabel;
+  unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
+  GEOS_ERROR_IF( wrappersLabel!="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
+
+  localIndex numWrappers;
+  unpackedSize += CommBufferOps::Unpack( buffer, numWrappers);
+  for( localIndex a=0 ; a<numWrappers ; ++a )
+  {
+    string wrapperName;
+    unpackedSize += CommBufferOps::Unpack( buffer, wrapperName );
+    ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
+    wrapper->Unpack(buffer);
+  }
+
+
+//  if( recursive > 0 )
+//  {
+//    for( auto const & keyGroupPair : this->m_subGroups )
+//    {
+//      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
+//    }
+//  }
+
+  return unpackedSize;
+}
 
 
 #ifdef USE_ATK

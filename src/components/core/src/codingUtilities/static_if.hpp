@@ -25,7 +25,7 @@ struct static_if_wrapper<true>
   template<typename LAMBDA_BODY>
   constexpr inline static void if_function(LAMBDA_BODY&& lambda)
   {
-    //lambda();
+    lambda();
   }
 };
 

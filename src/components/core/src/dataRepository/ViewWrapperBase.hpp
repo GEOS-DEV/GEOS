@@ -83,10 +83,13 @@ public:
 // typeName ) const = 0;
 
 
-  virtual int Pack( char *& buffer ) const = 0;
-  virtual int Pack( char *& buffer, localIndex_array const & packList ) const = 0;
-  virtual int PackSize( ) const = 0;
-  virtual int PackSize( localIndex_array const & packList ) const = 0;
+  virtual localIndex Pack( char *& buffer ) const = 0;
+  virtual localIndex Pack( char *& buffer, localIndex_array const & packList ) const = 0;
+  virtual localIndex PackSize( ) const = 0;
+  virtual localIndex PackSize( localIndex_array const & packList ) const = 0;
+
+  virtual localIndex Unpack( char const *& buffer ) = 0;
+  virtual localIndex Unpack( char const *& buffer, localIndex_array const & unpackIndices ) = 0;
 
 //  virtual int PackingSize( char *& buffer, localIndex_array const & packList ) = 0;
 

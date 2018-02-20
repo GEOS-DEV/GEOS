@@ -20,6 +20,42 @@ public:
    */
   ///@{
 
+  template< bool DO_PACKING,
+            typename T,
+            typename INDEX_TYPE >
+  static typename std::enable_if< std::is_arithmetic<T>::value, localIndex >::type
+  Pack( char*&  buffer,
+                          T const * const var,
+                          INDEX_TYPE const length );
+
+
+  template< bool DO_PACKING,
+            typename T,
+            typename INDEX_TYPE >
+  static typename std::enable_if< !std::is_arithmetic<T>::value, localIndex >::type
+  Pack( char*&  buffer,
+                          T const * const var,
+                          INDEX_TYPE const length );
+
+
+  template< typename T, typename INDEX_TYPE >
+  static localIndex Unpack( char const *& buffer, T * const var, INDEX_TYPE & length );
+
+
+  template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+  static localIndex Pack( char*&  buffer,
+                          T const * const var,
+                          INDEX_TYPE const * const indices,
+                          INDEX_TYPE const length  );
+
+  template< typename T, typename INDEX_TYPE >
+  static localIndex Unpack( char const *& buffer,
+                            T * const var,
+                            INDEX_TYPE const * const indices,
+                            INDEX_TYPE & length );
+
+
+
 
   template< bool DO_PACKING, typename T >
   static localIndex Pack( array<char> & buffer, T const & var );
@@ -69,12 +105,19 @@ public:
   static localIndex Pack( char*& buffer,
                           std::map<T_KEY,T_VAL> const & var );
 
-  template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename T_INDICES >
-  static localIndex Pack( char*& buffer, const std::map<T_KEY,T_VAL>& var, T_INDICES const & )
-  {
-    return Pack<DO_PACKING,T_KEY,T_VAL>(buffer, var);
-  }
+  template< typename T_KEY, typename T_VAL >
+  static localIndex Unpack( char const *& buffer,
+                            std::map<T_KEY,T_VAL>& map );
 
+  template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename T_INDICES >
+  static localIndex Pack( char*& buffer,
+                          const std::map<T_KEY,T_VAL>& var,
+                          T_INDICES const & packIndices );
+
+  template< typename T_KEY, typename T_VAL, typename T_INDICES >
+  static localIndex Unpack( char const *& buffer,
+                            std::map<T_KEY,T_VAL>& map,
+                            T_INDICES const & unpackIndices );
 
 
   ///@}
@@ -120,22 +163,19 @@ public:
   ///@}
 
 
-  template< typename T>
-  static int PackSize( T const & object )
+  template< typename... VARPACK >
+  static localIndex PackSize( VARPACK const &&...  pack )
   {
     char* junk = nullptr;
-    return Pack<false>( junk, object );
+    return Pack<false>( junk, pack... );
   }
 
-
-  template< typename T, typename T_indices >
-  static int PackSize( T const & object, T_indices const & filter )
+  template< typename... VARPACK >
+  static localIndex PackSize( VARPACK &&...  pack )
   {
     char* junk = nullptr;
-    return Pack<false>( junk, object, filter );
+    return Pack<false>( junk, pack... );
   }
-
-
 
 
 };

@@ -217,6 +217,10 @@ public:
                               ElementViewAccessor<VIEWTYPE> & viewAccessor );
 
 
+  using ManagedGroup::PackSize;
+  using ManagedGroup::Pack;
+
+
   int PackSize( array<string> const & wrapperNames,
                 ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
 

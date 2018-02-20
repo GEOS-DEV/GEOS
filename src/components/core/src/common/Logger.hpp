@@ -28,6 +28,12 @@ void geos_abort( std::string message );
   geos_abort(msg)
 //#endif
 
+#define GEOS_ERROR_IF( CONDITION, msg) \
+  if( CONDITION )\
+  {\
+    geos_abort(msg);\
+  }
+
 }
 
 #endif /* SRC_COMPONENTS_CORE_SRC_COMMON_LOGGER_HPP_ */

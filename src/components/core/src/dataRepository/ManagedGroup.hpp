@@ -354,6 +354,11 @@ public:
                     localIndex_array const & packList,
                     integer const recursive ) const;
 
+  virtual int Unpack( buffer_unit_type const *& buffer,
+                      localIndex_array const & packList,
+                      integer const recursive );
+
+
   //***********************************************************************************************
 
   // user defined conversion doesn't work. can't infer template argument

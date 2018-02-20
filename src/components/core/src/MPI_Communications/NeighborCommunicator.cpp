@@ -11,7 +11,16 @@
 namespace geosx
 {
 
-NeighborCommunicator::NeighborCommunicator()
+NeighborCommunicator::NeighborCommunicator():
+  m_neighborRank(-1),
+  m_sendBufferSize(),
+  m_receiveBufferSize(),
+  m_sendBuffer(),
+  m_receiveBuffer(),
+  m_mpiSendBufferRequest(),
+  m_mpiRecvBufferRequest(),
+  m_mpiSendBufferStatus(),
+  m_mpiRecvBufferStatus()
 {
 }
 
@@ -30,7 +39,7 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
 {
   int const sendTag = CommTag( Rank(), m_neighborRank, commID );
   //m_rank * m_size + m_neighborRank + m_size*m_size*commID;
-  MPI_Isend( sendBuffer,
+  MPI_Isend( const_cast<char*>(sendBuffer),
              sendSize,
              MPI_CHAR,
              m_neighborRank,
@@ -278,6 +287,12 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
   packedSize += nodeManager.Pack( sendBufferPtr, {} ,nodeAdjacencyList, 0 );
   packedSize += faceManager.Pack( sendBufferPtr, {}, faceAdjacencyList, 0 );
   packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
+
+
+  this->MPI_iSendReceive( commID, MPI_COMM_WORLD );
+  MPI_WaitAll( commID );
+
+  std::cout<<"herro"<<std::endl;
 
 
 }
