@@ -205,9 +205,7 @@ bool Fractunator::FindFracturePlanes( const localIndex nodeID,
   const lSet& nodeToFaces = nodeManager.GetUnorderedVariableOneToManyMap( "nodeToFaceMap" )[nodeID];
   const lSet& nodeToEdges = nodeManager.GetUnorderedVariableOneToManyMap( "nodeToEdgeMap" )[nodeID];
 
-
-  const std::set< std::pair<ElementRegionT*,localIndex> >& nodesToElements = nodeManager.m_toElementsRelation[nodeID];
-
+  const set< std::pair<ElementRegionT*,localIndex> >& nodesToElements = nodeManager.m_toElementsRelation[nodeID] ;
 
   const array<lArray1d>& edgesToRupturedFaces = edgeManager.GetVariableOneToManyMap( "edgesToRupturedFaces" );
   const array<integer>& isEdgeExternal = edgeManager.m_isExternal;
@@ -218,7 +216,7 @@ bool Fractunator::FindFracturePlanes( const localIndex nodeID,
   // **** local working arrays ****
 
   // array to hold the faces ready for rupture
-  std::set<localIndex> nodeToRuptureReadyFaces;
+  set<localIndex> nodeToRuptureReadyFaces;
   for( lArray1d::const_iterator i=nodeToRupturedFaces.begin() ;
        i!=nodeToRupturedFaces.end() ; ++i )
   {
@@ -233,7 +231,7 @@ bool Fractunator::FindFracturePlanes( const localIndex nodeID,
 
 
   //
-  std::map< localIndex, std::set<localIndex> > edgesToRuptureReadyFaces;
+  std::map< localIndex, set<localIndex> > edgesToRuptureReadyFaces;
   for( lSet::const_iterator edgeIndex=nodeToEdges.begin() ; edgeIndex!=nodeToEdges.end() ; ++edgeIndex )
   {
     if( !(edgesToRupturedFaces[*edgeIndex].empty()) )
@@ -387,7 +385,7 @@ bool Fractunator::FindFracturePlanes( const localIndex nodeID,
   // all edges that are attached to a ruptured
   // node.
 
-  for( std::map< localIndex, std::set<localIndex> >::const_iterator ke=edgesToRuptureReadyFaces.begin() ;
+  for( std::map< localIndex, set<localIndex> >::const_iterator ke=edgesToRuptureReadyFaces.begin() ;
        ke!=edgesToRuptureReadyFaces.end() ; ++ke )
   {
 
@@ -471,7 +469,7 @@ bool Fractunator::FindFracturePlanes( const localIndex nodeID,
     {
       // we need to pick another face attached to the "next edge"
       // increment the face and edge, and add to the separationPathFaces
-      std::set<localIndex>::const_iterator iter_edgeToFace = edgesToRuptureReadyFaces[nextEdge].begin();
+      set<localIndex>::const_iterator iter_edgeToFace = edgesToRuptureReadyFaces[nextEdge].begin();
       if( *iter_edgeToFace == thisFace )
       {
         thisFace=*(++iter_edgeToFace);
@@ -529,7 +527,7 @@ bool Fractunator::FindFracturePlanes( const localIndex nodeID,
   }
 
 
-  for( std::set< std::pair<ElementRegionT*,localIndex> >::const_iterator k=nodesToElements.begin() ; k!=nodesToElements.end() ; ++k )
+  for( set< std::pair<ElementRegionT*,localIndex> >::const_iterator k=nodesToElements.begin() ; k!=nodesToElements.end() ; ++k )
   {
     elemLocations[*k] = INT_MIN;
   }
@@ -646,7 +644,7 @@ bool Fractunator::FindFracturePlanes( const localIndex nodeID,
 bool Fractunator::SetLocations( const int location,
                                 const lSet& separationPathFaces,
                                 const FaceManagerT& faceManager,
-                                const std::set< std::pair<ElementRegionT*,localIndex> >& nodesToElements,
+                                const set< std::pair<ElementRegionT*,localIndex> >& nodesToElements,
                                 std::map< localIndex, std::pair<localIndex,localIndex> >& localFacesToEdges,
                                 std::map<localIndex,int>& edgeLocations,
                                 std::map<localIndex,int>& faceLocations,
@@ -654,8 +652,8 @@ bool Fractunator::SetLocations( const int location,
 {
   bool rval = true;
   const localIndex separationFace = *(separationPathFaces.begin());
-  std::set< std::pair<ElementRegionT*,localIndex> > elem0;
-  std::set< std::pair<ElementRegionT*,localIndex> > processedElements;
+  set< std::pair<ElementRegionT*,localIndex> > elem0 ;
+  set< std::pair<ElementRegionT*,localIndex> > processedElements ;
   const OneToOneRelation& parentFaceIndex = faceManager.GetOneToOneMap("parentIndex");
 
   // insert an element attached to the separation face
@@ -671,7 +669,7 @@ bool Fractunator::SetLocations( const int location,
   do
   {
     addedElem = false;
-    for( std::set< std::pair<ElementRegionT*,localIndex> >::iterator k=elem0.begin() ; k!=elem0.end() ; ++k )
+    for( set< std::pair<ElementRegionT*,localIndex> >::iterator k=elem0.begin() ; k!=elem0.end() ; ++k )
     {
       // make sure that we have not already processed the element
       if( processedElements.count(*k)==0 )
@@ -770,7 +768,7 @@ bool Fractunator::SetLocations( const int location,
   while(addedElem==true);
 
 
-  for( std::set< std::pair<ElementRegionT*,localIndex> >::const_iterator k=elem0.begin() ; k!=elem0.end() ; ++k  )
+  for( set< std::pair<ElementRegionT*,localIndex> >::const_iterator k=elem0.begin() ; k!=elem0.end() ; ++k  )
   {
     if( m_verbose )
       std::cout<<"  Setting Element "<<k->second<<" to location "<<location<<std::endl;
@@ -992,9 +990,8 @@ void Fractunator::PerformFracture( const localIndex nodeID,
         {
           for( localIndex a=0 ; a<elemRegion.m_toNodesRelation.Dimension(1) ; ++a )
           {
-            if( m_verbose )
-              std::cout<<"    nodeToElemMaps["<<nodelist[a]<<"] = ( ";
-            for( std::set< std::pair<ElementRegionT*,localIndex> >::const_iterator k=nodeManager.m_toElementsRelation[nodelist[a]].begin() ;
+            if( m_verbose ) std::cout<<"    nodeToElemMaps["<<nodelist[a]<<"] = ( ";
+            for( set< std::pair<ElementRegionT*,localIndex> >::const_iterator k=nodeManager.m_toElementsRelation[nodelist[a]].begin() ;
                  k!=nodeManager.m_toElementsRelation[nodelist[a]].end() ; ++k )
             {
               std::cout<<k->second<<", ";
@@ -1450,9 +1447,8 @@ void Fractunator::PerformFracture( const localIndex nodeID,
     if( m_verbose == 2 )
     {
 
-
       // nodeToElement
-      array<std::set<std::pair< ElementRegionT*, localIndex > > > tempNodesToElems( nodeManager.m_numNodes );
+      array<set<std::pair< ElementRegionT*, localIndex > > > tempNodesToElems( nodeManager.m_numNodes );
       for( std::map< std::string, ElementRegionT >::iterator ielem=elementManager.m_ElementRegions.begin() ;
            ielem!=elementManager.m_ElementRegions.end() ; ++ielem )
       {
@@ -1471,7 +1467,7 @@ void Fractunator::PerformFracture( const localIndex nodeID,
       for( localIndex a=0 ; a<nodeManager.m_numNodes ; ++a )
       {
         std::cout<<"m_NodeToElementMap["<<a<<"] = ( ";
-        for( std::set<std::pair< ElementRegionT*, localIndex > >::const_iterator ielem=nodeManager.m_toElementsRelation[a].begin() ;
+        for( set<std::pair< ElementRegionT*, localIndex > >::const_iterator ielem=nodeManager.m_toElementsRelation[a].begin() ;
              ielem!=nodeManager.m_toElementsRelation[a].end() ; ++ielem )
         {
           if( tempNodesToElems[a].count(*ielem) == 0 )
@@ -1481,12 +1477,11 @@ void Fractunator::PerformFracture( const localIndex nodeID,
         }
         std::cout<<")    (";
 
-        for( std::set<std::pair< ElementRegionT*, localIndex > >::const_iterator ielem=tempNodesToElems[a].begin() ;
+        for( set<std::pair< ElementRegionT*, localIndex > >::const_iterator ielem=tempNodesToElems[a].begin() ;
              ielem!=tempNodesToElems[a].end() ; ++ielem )
         {
           if( nodeManager.m_toElementsRelation[a].count(*ielem) == 0 )
             std::cout<<"*";
-
           std::cout<<ielem->second<<", ";
         }
         std::cout<<")"<<std::endl;
@@ -1530,7 +1525,7 @@ void Fractunator::PerformFracture( const localIndex nodeID,
 
       // faceToElement
       OneToOneRelation& parentFaceIndex = faceManager.GetOneToOneMap("parentIndex");
-      array<std::set<std::pair< ElementRegionT*, localIndex > > > tempFacesToElems( faceManager.m_numFaces );
+      array<set<std::pair< ElementRegionT*, localIndex > > > tempFacesToElems( faceManager.m_numFaces );
       for( std::map< std::string, ElementRegionT >::iterator ielem=elementManager.m_ElementRegions.begin() ;
            ielem!=elementManager.m_ElementRegions.end() ; ++ielem )
       {
@@ -1566,7 +1561,7 @@ void Fractunator::PerformFracture( const localIndex nodeID,
         }
         std::cout<<")    (";
 
-        for( std::set<std::pair< ElementRegionT*, localIndex > >::const_iterator ielem=tempFacesToElems[a].begin() ;
+        for( set<std::pair< ElementRegionT*, localIndex > >::const_iterator ielem=tempFacesToElems[a].begin() ;
              ielem!=tempFacesToElems[a].end() ; ++ielem )
         {
 

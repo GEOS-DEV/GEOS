@@ -74,7 +74,6 @@
 #include "Common/intrinsic_typedefs.h"
 #include <fstream>
 #include <map>
-#include <set>
 #include <string>
 #include "IO/silo/SiloFile.h"
 //#include "BoundaryConditions/BoundaryConditions.h"
@@ -1291,13 +1290,12 @@ void ObjectDataStructureBaseT::SetSubsetValue(const std::string& fieldName,
                                               const std::string& setName,
                                               const T& value){
   lSet& theSet = GetSet(setName);
-  std::set<localIndex>::iterator itr = theSet.begin();
-  std::set<localIndex>::iterator iend = theSet.end();
+  set<localIndex>::iterator itr = theSet.begin();
+  set<localIndex>::iterator iend = theSet.end();
 
-  array<T>& field = GetFieldData<T>(fieldName);
-  for( ; itr != iend ; ++itr)
-  {
-    field[*itr] = value;
+  Array1dT<T>& field = GetFieldData<T>(fieldName);
+    for(; itr != iend;++itr){
+      field[*itr] = value;
   }
 }
 

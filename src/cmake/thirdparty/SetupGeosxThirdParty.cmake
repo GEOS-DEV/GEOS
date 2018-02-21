@@ -18,16 +18,25 @@ if (CONDUIT_DIR)
                         INCLUDES ${CONDUIT_INCLUDE_DIRS} 
                         LIBRARIES  conduit
                         TREAT_INCLUDES_AS_SYSTEM ON )
-  blt_register_library( NAME conduit_io
+
+  blt_register_library( NAME conduit_blueprint
                         INCLUDES ${CONDUIT_INCLUDE_DIRS}
-                        LIBRARIES  conduit_io
+                        LIBRARIES conduit_blueprint
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+  blt_register_library( NAME conduit_relay
+                        INCLUDES ${CONDUIT_INCLUDE_DIRS}
+                        LIBRARIES conduit_relay
                         TREAT_INCLUDES_AS_SYSTEM ON )
                         
-  set( thirdPartyLibs ${thirdPartyLibs} conduit  )
+  set( thirdPartyLibs ${thirdPartyLibs} conduit conduit_blueprint conduit_relay )
   
 endif()
 
 
+################################
+# AXOM
+################################
 if (ATK_DIR)
   message( "ATK_DIR = ${ATK_DIR}" )
   include(cmake/thirdparty/FindATK.cmake)
@@ -46,11 +55,8 @@ if (ATK_DIR)
                         LIBRARIES  slic
                         TREAT_INCLUDES_AS_SYSTEM ON)
                         
-    set( thirdPartyLibs ${thirdPartyLibs} sidre spio slic )  
+  set( thirdPartyLibs ${thirdPartyLibs} sidre spio slic )  
 endif()
-
-
-
 
 
 
@@ -407,5 +413,4 @@ if(UNCRUSTIFY_FOUND)
 endif()
 
 message("Leaving SetupGeosxThirdParty.cmake\n")
-
 

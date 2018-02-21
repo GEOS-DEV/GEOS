@@ -407,7 +407,7 @@ private:
 
   //********************************************************************************************************************
   template< typename T >
-  localIndex PrivatePackSet( const std::set<T>& var )
+  localIndex PrivatePackSet( const set<T>& var )
   {
 
     localIndex sizeOfPackedChars = 0;
@@ -416,7 +416,7 @@ private:
 
     sizeOfPackedChars += Pack( length );
 
-    for( typename std::set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+    for( typename set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
     {
       sizeOfPackedChars += this->Pack(*i);
     }
@@ -427,7 +427,7 @@ private:
 
 
   template< typename T>
-  static localIndex PrivateUnpackSet( const char*& buffer, std::set<T>& setToRead )
+  static localIndex PrivateUnpackSet( const char*& buffer, set<T>& setToRead )
   {
     setToRead.clear();
 
@@ -435,7 +435,6 @@ private:
 
     localIndex set_length;
     sizeOfUnpackedChars += Unpack( buffer, set_length );
-
 
     for( localIndex a=0 ; a<set_length ; ++a )
     {

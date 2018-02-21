@@ -247,7 +247,7 @@ void ElementManagerT::HACKInitialConditions(  )
  * connected to those nodes.
  *
  */
-void ElementManagerT::ConstructListOfIndexesFromMap( const array< std::set< std::pair<ElementRegionT*,localIndex> > >& toElementMap,
+void ElementManagerT::ConstructListOfIndexesFromMap( const array< set< std::pair<ElementRegionT*,localIndex> > >& toElementMap,
                                                      const lArray1d& nodeList,
                                                      std::map< std::string, lArray1d>& localIndexes,
                                                      const int depth )
@@ -273,9 +273,9 @@ void ElementManagerT::ConstructListOfIndexesFromMap( const array< std::set< std:
     {
 
       // now that we have the node, we look for every element attached to it
-      for( std::set< std::pair<ElementRegionT*,localIndex> >::const_iterator elementPair=toElementMap[*nodeIndex].begin() ;
-           elementPair!=toElementMap[*nodeIndex].end() ;
-           ++elementPair )
+      for( set< std::pair<ElementRegionT*,localIndex> >::const_iterator elementPair=toElementMap[*nodeIndex].begin() ;
+          elementPair!=toElementMap[*nodeIndex].end() ;
+          ++elementPair )
       {
         const ElementRegionT& elemRegion = *(elementPair->first);
         const localIndex elemIndex = elementPair->second;
@@ -301,9 +301,9 @@ void ElementManagerT::ConstructListOfIndexesFromMap( const array< std::set< std:
   {
 
     // now that we have the node, we look for every element attached to it
-    for( std::set< std::pair<ElementRegionT*,localIndex> >::const_iterator elementPair=toElementMap[*nodeIndex].begin() ;
-         elementPair!=toElementMap[*nodeIndex].end() ;
-         ++elementPair )
+    for( set< std::pair<ElementRegionT*,localIndex> >::const_iterator elementPair=toElementMap[*nodeIndex].begin() ;
+        elementPair!=toElementMap[*nodeIndex].end() ;
+        ++elementPair )
     {
       const ElementRegionT& elemRegion = *(elementPair->first);
       const localIndex elemIndex = elementPair->second;

@@ -223,41 +223,41 @@ localIndex CommBufferOps::Pack( char*& buffer,  const std::string& var )
 
 template< bool DO_PACKING,
           typename T >
-localIndex CommBufferOps::Pack( char *& buffer, std::set<T> const & var )
+localIndex CommBufferOps::Pack( char *& buffer, set<T> const & var )
 {
 
   localIndex sizeOfPackedChars = 0;
 
-  const localIndex length = integer_conversion<localIndex>(var.size());
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
-
-  for( typename std::set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
-  {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, *i);
-  }
+//  const localIndex length = integer_conversion<localIndex>(var.size());
+//
+//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
+//
+//  for( typename std::set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+//  {
+//    sizeOfPackedChars += Pack<DO_PACKING>( buffer, *i);
+//  }
 
   return sizeOfPackedChars;
 }
 
 
 template< typename T>
-localIndex CommBufferOps::Unpack( char const *& buffer, std::set<T> & setToRead )
+localIndex CommBufferOps::Unpack( char const *& buffer, set<T> & setToRead )
 {
   setToRead.clear();
 
   localIndex sizeOfUnpackedChars = 0;
-
-  localIndex set_length;
-  sizeOfUnpackedChars += Unpack( buffer, set_length );
-
-
-  for( localIndex a=0 ; a<set_length ; ++a )
-  {
-    T temp;
-    sizeOfUnpackedChars += Unpack( buffer, temp );
-    setToRead.insert( temp );
-  }
+//
+//  localIndex set_length;
+//  sizeOfUnpackedChars += Unpack( buffer, set_length );
+//
+//
+//  for( localIndex a=0 ; a<set_length ; ++a )
+//  {
+//    T temp;
+//    sizeOfUnpackedChars += Unpack( buffer, temp );
+//    setToRead.insert( temp );
+//  }
 
   return sizeOfUnpackedChars;
 }

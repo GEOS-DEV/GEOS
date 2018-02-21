@@ -81,7 +81,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 
   auto dNdXView        = cellBlock->RegisterViewWrapper< array< Array2dT<R1Tensor> > >(keys::dNdX);
   dNdXView->setSizedFromParent(1);
-  dNdXView->resize();
+  static_cast< ViewWrapperBase * >(dNdXView)->resize();
   auto & dNdX            = dNdXView->reference();
 
   for( auto & entry : dNdX )

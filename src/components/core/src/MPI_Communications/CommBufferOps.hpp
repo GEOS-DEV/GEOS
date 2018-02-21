@@ -98,7 +98,7 @@ public:
   { return 0; }
 
   template< typename T>
-  static localIndex Unpack( char const *& buffer, std::set<T> & setToRead );
+  static localIndex Unpack( char const *& buffer, set<T> & setToRead );
 
 
   template< bool DO_PACKING, typename T_KEY, typename T_VAL >

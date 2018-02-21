@@ -88,6 +88,19 @@ void SolverApplication::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Describes the timing of the solver application");
 
+  docNode->AllocateChildNode( keys::time,
+                              keys::time,
+                              -1,
+                              "real64",
+                              "real64",
+                              "application current time",
+                              "application current time",
+                              "0.0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
   docNode->AllocateChildNode( keys::beginTime,
                               keys::beginTime,
                               -1,
@@ -122,6 +135,19 @@ void SolverApplication::FillDocumentationNode()
                               "application dt",
                               "application dt",
                               "-1.0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( keys::cycle,
+                              keys::cycle,
+                              -1,
+                              "integer",
+                              "integer",
+                              "application current cycle",
+                              "application current cycle",
+                              "0.0",
                               "",
                               0,
                               1,

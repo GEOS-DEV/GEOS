@@ -4,9 +4,7 @@
 #
 set(geosx_headers
   ${geosx_headers}
-  fileIO/xmlWrapper.hpp
-  fileIO/silo/SiloFile.hpp
-  fileIO/blueprint/Blueprint.hpp
+  rajaInterface/GEOS_RAJA_POLICIES.hpp
     PARENT_SCOPE )
 
 #
@@ -14,7 +12,4 @@ set(geosx_headers
 #
 set(geosx_core_sources
   ${geosx_core_sources}
-  fileIO/xmlWrapper.cpp
-  fileIO/silo/SiloFile.cpp
-  fileIO/blueprint/Blueprint.cpp
     PARENT_SCOPE )

@@ -6,7 +6,7 @@
 #include <mpi.h>
 #include <iostream>
 #include <sys/time.h>
-#include "../dataRepository/ManagedGroup.hpp"
+#include "../dataRepository/SidreWrapper.hpp"
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
@@ -30,7 +30,6 @@ int main( int argc, char *argv[] )
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 
-
   std::cout<<"starting main"<<std::endl;
 
 #ifdef USE_ATK
@@ -52,42 +51,53 @@ int main( int argc, char *argv[] )
   // Mark begin of "initialization" phase
   GEOS_MARK_BEGIN("Initialization");
 
+  std::string restartFileName;
+  bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
+  if (restart) {
+    dataRepository::SidreWrapper::reconstructTree( restartFileName + ".root", "sidre_hdf5", MPI_COMM_WORLD );
+  }
+
   ProblemManager problemManager( "ProblemManager", nullptr );
   problemManager.SetDocumentationNodes();
-  problemManager.RegisterDocumentationNodes();
+  problemManager.RegisterDocumentationNodes();  
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( argc, argv );
-  problemManager.ParseInputFile();
 
+  problemManager.ParseInputFile();
 
 
   problemManager.Initialize( &problemManager );
 
   GEOS_MARK_END("Initialization");
 
-  gettimeofday(&tim, NULL);
-  t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
-
   problemManager.ApplyInitialConditions();
+
+  if (restart) {
+    problemManager.ReadRestartOverwrite( restartFileName );
+  }
+
   std::cout << std::endl << "Running simulation:" << std::endl;
 
   GEOS_MARK_BEGIN("RunSimulation");
+  gettimeofday(&tim, NULL);
+  t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   problemManager.RunSimulation();
 
   GEOS_MARK_END("RunSimulation");
 
-  problemManager.ClosePythonInterpreter();
-
-#ifdef USE_ATK
-  axom::slic::finalize();
-#endif
-
   gettimeofday(&tim, NULL);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   printf("Done!\n\nScaling Data: initTime = %1.2fs, runTime = %1.2fs\n", t_initialize - t_start,  t_run - t_initialize );
+
+  problemManager.ClosePythonInterpreter();
+
+#ifdef USE_ATK
+  slic::finalize();
+#endif
+
 
 #ifdef USE_MPI
   MPI_Finalize();

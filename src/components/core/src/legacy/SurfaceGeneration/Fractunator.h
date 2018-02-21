@@ -57,7 +57,6 @@ private:
                            std::map< std::pair< ElementRegionT*, localIndex >, int>& elemLocations  );
 
 
-
   void PerformFracture( const localIndex nodeID,
                         NodeManager& nodeManager,
                         EdgeManagerT& edgeManager,
@@ -71,7 +70,7 @@ private:
   bool SetLocations( const int side,
                      const lSet& separationPathFaces,
                      const FaceManagerT& faceManager,
-                     const std::set< std::pair<ElementRegionT*,localIndex> >& nodesToElements,
+                     const set< std::pair<ElementRegionT*,localIndex> >& nodesToElements,
                      std::map< localIndex, std::pair<localIndex,localIndex> >& localFacesToEdges,
                      std::map<localIndex,int>& edgeLocations,
                      std::map<localIndex,int>& faceLocations,

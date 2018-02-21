@@ -10,11 +10,18 @@
 
 #include "ViewWrapperBase.hpp"
 #include "KeyNames.hpp"
+#include "common/integer_conversion.hpp"
 #include "common/DataTypes.hpp"
+#include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
 #include <type_traits>
 #include "StringUtilities.hpp"
 #include "Macros.hpp"
+#include "Buffer.hpp"
+
+#include "codingUtilities/Utilities.hpp"
+
+
 
 #include "MPI_Communications/CommBufferOps.hpp"
 
@@ -22,11 +29,15 @@
 #ifdef USE_ATK
 #include "sidre/sidre.hpp"
 #include "sidre/SidreTypes.hpp"
+#include "SidreWrapper.hpp"
 #endif
+
+#include <cstdlib>
 
 
 namespace geosx
 {
+
 namespace dataRepository
 {
 
@@ -44,8 +55,8 @@ public:
    * @param parent parent group which owns the ViewWrapper
    */
   explicit ViewWrapper( std::string const & name,
-                        ManagedGroup * const parent ):
-    ViewWrapperBase(name,parent),
+                        ManagedGroup * const parent, bool write_out=true ):
+    ViewWrapperBase(name, parent, write_out),
     m_data( std::make_unique<T>() )
   {}
 
@@ -56,8 +67,9 @@ public:
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
-                        std::unique_ptr<T> object ):
-    ViewWrapperBase(name,parent),
+                        std::unique_ptr<T> object,
+                        bool write_out=true ):
+    ViewWrapperBase(name, parent, write_out),
     m_data( std::move( object ) )
   {}
 
@@ -68,8 +80,8 @@ public:
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
-                        T * object ):
-    ViewWrapperBase(name,parent),
+                        T * object, bool write_out=true ):
+    ViewWrapperBase(name,parent, write_out),
     m_data( std::move( std::unique_ptr<T>(object) ) )
   {}
 
@@ -83,7 +95,7 @@ public:
    * @param source source for the copy
    */
   ViewWrapper( ViewWrapper const & source ):
-    ViewWrapperBase("test", nullptr),
+    ViewWrapperBase("test", nullptr, source->getWriteOut()),
     m_data(source.m_data)
   {}
 
@@ -92,7 +104,7 @@ public:
    * @param source source to be moved
    */
   ViewWrapper( ViewWrapper&& source ):
-    ViewWrapperBase("test", nullptr),
+    ViewWrapperBase("test", nullptr, source->getWriteOut()),
     m_data( std::move(source.m_data) )
   {}
 
@@ -130,10 +142,10 @@ public:
    */
   template<typename TNEW>
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
-                                                   ManagedGroup * const parent )
+                                                   ManagedGroup * const parent, bool write_out=true )
   {
     std::unique_ptr<TNEW> newObject = std::move( std::make_unique<TNEW>() );
-    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject) ) );
+    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject), write_out ) );
   }
 
 
@@ -157,7 +169,7 @@ public:
     if( base.get_typeid() != typeid(T) )
     {
 #ifdef USE_ATK
-      SLIC_ERROR("invalid cast attempt");
+      GEOS_ERROR("invalid cast attempt");
 #endif
     }
     return static_cast< ViewWrapper<T>& >(base);
@@ -347,13 +359,13 @@ public:
     HAS_MEMBER_FUNCTION(empty,bool,const,,)
     template<class U = T>
     static typename std::enable_if<has_memberfunction_empty<U>::value, bool>::type
-    empty(ViewWrapper const * parent)
+    empty(ViewWrapper<T> const * parent)
     {
       return parent->m_data->empty();
     }
     template<class U = T>
     static typename std::enable_if<!has_memberfunction_empty<U>::value, bool>::type
-    empty(ViewWrapper const * parent)
+    empty(ViewWrapper<T> const * parent)
     {
       return parent;
     }
@@ -365,19 +377,32 @@ public:
 
   struct size_wrapper
   {
-    HAS_MEMBER_FUNCTION_VARIANT(size,0,localIndex,const,,)
+    HAS_MEMBER_FUNCTION_VARIANT(size, 0, int, const, , )
+    HAS_MEMBER_FUNCTION_VARIANT(size, 1, unsigned int, const, , )
+    HAS_MEMBER_FUNCTION_VARIANT(size, 2, long int, const, , )
+    HAS_MEMBER_FUNCTION_VARIANT(size, 3, unsigned long int, const, , )
+    HAS_MEMBER_FUNCTION_VARIANT(size, 4, long long, const, , )
+    HAS_MEMBER_FUNCTION_VARIANT(size, 5, unsigned long long, const, , )
+
     template<class U = T>
-    static typename std::enable_if< has_memberfunction_v0_size<U>::value,localIndex >::type
-    size(ViewWrapper const * parent)
-    {
-      return static_cast<localIndex>(parent->m_data->size());
-    }
+    static typename std::enable_if< has_memberfunction_v0_size<U>::value ||
+                                    has_memberfunction_v1_size<U>::value ||
+                                    has_memberfunction_v2_size<U>::value ||
+                                    has_memberfunction_v3_size<U>::value ||
+                                    has_memberfunction_v4_size<U>::value ||
+                                    has_memberfunction_v5_size<U>::value, localIndex>::type
+    size(ViewWrapper<T> const * parent)
+    { return static_cast<localIndex>(parent->m_data->size()); }
+    
     template<class U = T>
-    static typename std::enable_if< !(has_memberfunction_v0_size<U>::value), localIndex>::type
-    size(ViewWrapper const * )
-    {
-      return 1;//parent->m_data;
-    }
+    static typename std::enable_if< !(has_memberfunction_v0_size<U>::value ||
+                                      has_memberfunction_v1_size<U>::value ||
+                                      has_memberfunction_v2_size<U>::value ||
+                                      has_memberfunction_v3_size<U>::value ||
+                                      has_memberfunction_v4_size<U>::value ||
+                                      has_memberfunction_v5_size<U>::value), localIndex>::type
+    size(ViewWrapper<T> const * parent)
+    { return 1; }
   };
   virtual localIndex size() const override final
   {
@@ -385,18 +410,103 @@ public:
   }
 
 
+  struct num_dimensions_wrapper
+  {
+    HAS_MEMBER_FUNCTION(numDimensions,int,const,,)
+
+    template<class U = T>
+    static typename std::enable_if<has_memberfunction_numDimensions<U>::value, int>::type
+    numDimensions(ViewWrapper<T> const * parent)
+    { return static_cast<int>(parent->m_data->numDimensions()); }
+    
+    template<class U = T>
+    static typename std::enable_if<!has_memberfunction_numDimensions<U>::value, int>::type
+    numDimensions(ViewWrapper<T> const * parent)
+    { return 1; }
+  };
+  virtual int numDimensions() const override final
+  {
+    return num_dimensions_wrapper::numDimensions(this);
+  }
+
+
+  struct dimension_size_wrapper
+  {
+    HAS_MEMBER_FUNCTION_VARIANT(size, 0, int, const, VA_LIST(int), VA_LIST(int(1)) )
+    HAS_MEMBER_FUNCTION_VARIANT(size, 1, unsigned int, const, VA_LIST(int), VA_LIST(int(1)) )
+    HAS_MEMBER_FUNCTION_VARIANT(size, 2, long int, const, VA_LIST(int), VA_LIST(int(1)) )
+    HAS_MEMBER_FUNCTION_VARIANT(size, 3, unsigned long int, , VA_LIST(int), VA_LIST(int(1)) )
+    HAS_MEMBER_FUNCTION_VARIANT(size, 4, long long, const, VA_LIST(int), VA_LIST(int(1)) )
+    HAS_MEMBER_FUNCTION_VARIANT(size, 5, unsigned long long, const, VA_LIST(int), VA_LIST(int(1)) )
+
+    template<class U = T>
+    static typename std::enable_if< has_memberfunction_v0_size<U>::value ||
+                                    has_memberfunction_v1_size<U>::value ||
+                                    has_memberfunction_v2_size<U>::value ||
+                                    has_memberfunction_v3_size<U>::value ||
+                                    has_memberfunction_v4_size<U>::value ||
+                                    has_memberfunction_v5_size<U>::value, localIndex>::type
+    size(ViewWrapper<T> const * const parent, int const i)
+    { return integer_conversion<localIndex>(parent->m_data->size(i)); }
+    
+    template<class U = T>
+    static typename std::enable_if< !(has_memberfunction_v0_size<U>::value ||
+                                      has_memberfunction_v1_size<U>::value ||
+                                      has_memberfunction_v2_size<U>::value ||
+                                      has_memberfunction_v3_size<U>::value ||
+                                      has_memberfunction_v4_size<U>::value ||
+                                      has_memberfunction_v5_size<U>::value), localIndex>::type
+    size(ViewWrapper<T> const * const parent, int const i)
+    { 
+      if (i != 0) 
+      {
+        GEOS_ERROR("Data is only 1D");
+        return 0;
+      }
+      return parent->size(); 
+    }
+  };
+  virtual localIndex size( int const i) const override final
+  {
+    return dimension_size_wrapper::size(this, i);
+  }
+
+
+  struct resize_dimension_wrapper
+  {
+    HAS_MEMBER_FUNCTION(resize, void, , VA_LIST(int, long long const * const), VA_LIST(int(1), nullptr))
+
+    template<class U=T>
+    static typename std::enable_if<has_memberfunction_resize<U>::value, void>::type
+    resize(ViewWrapper<T> * parent, int num_dims, long long const * const dims)
+    { parent->m_data->resize(num_dims, dims); }
+
+    template<class U=T>
+    static typename std::enable_if<!has_memberfunction_resize<U>::value, void>::type
+    resize(ViewWrapper<T> * parent, int num_dims, long long const * const dims)
+    {
+      if (num_dims != 1)
+      {
+        GEOS_ERROR("Data is only 1D");
+        return;
+      }
+      parent->resize(dims[0]);
+    }
+  };
+  virtual void resize(int num_dims, long long const *  const dims) override final
+  { resize_dimension_wrapper::resize(this, num_dims, dims); }
+
+
   struct reserve_wrapper
   {
     HAS_MEMBER_FUNCTION(reserve, void, ,VA_LIST(std::size_t),VA_LIST(std::size_t(1)) )
     template<class U = T>
-    static typename std::enable_if<has_memberfunction_reserve<U>::value, void>::type
-    reserve(ViewWrapper * const parent, std::size_t new_cap)
+    static typename std::enable_if<has_memberfunction_reserve<U>::value, void>::type reserve(ViewWrapper<T> * const parent, std::size_t new_cap)
     {
       return parent->m_data->reserve(new_cap);
     }
     template<class U = T>
-    static typename std::enable_if<!has_memberfunction_reserve<U>::value, void>::type
-    reserve(ViewWrapper * const, std::size_t )
+    static typename std::enable_if<!has_memberfunction_reserve<U>::value, void>::type reserve(ViewWrapper<T> * const, std::size_t )
     {
       return; //parent->m_data;
     }
@@ -437,7 +547,8 @@ public:
                                     has_memberfunction_v1_resize<U>::value ||
                                     has_memberfunction_v2_resize<U>::value ||
                                     has_memberfunction_v3_resize<U>::value ||
-                                    has_memberfunction_v4_resize<U>::value, void>::type
+                                    has_memberfunction_v4_resize<U>::value ||
+                                    has_memberfunction_v5_resize<U>::value, void>::type
     resize(ViewWrapper * const parent, localIndex const new_size)
     {
       return parent->m_data->resize(new_size);
@@ -445,20 +556,37 @@ public:
 
 
     template<class U = T>
-    static typename std::enable_if<!(has_memberfunction_v0_resize<U>::value)&&
-                                   !(has_memberfunction_v1_resize<U>::value)&&
-                                   !(has_memberfunction_v2_resize<U>::value)&&
-                                   !(has_memberfunction_v3_resize<U>::value)&&
-                                   !(has_memberfunction_v4_resize<U>::value), void>::type
+    static typename std::enable_if< !(has_memberfunction_v0_resize<U>::value ||
+                                      has_memberfunction_v1_resize<U>::value ||
+                                      has_memberfunction_v2_resize<U>::value ||
+                                      has_memberfunction_v3_resize<U>::value ||
+                                      has_memberfunction_v4_resize<U>::value ||
+                                      has_memberfunction_v5_resize<U>::value), void>::type
     resize(ViewWrapper * const, localIndex )
     {
       return;
     }
   };
-  using ViewWrapperBase::resize;
-  void resize( localIndex new_size ) override final
+  virtual void resize( localIndex new_size ) override final
   {
     resize_wrapper::resize(this, new_size);
+  }
+
+
+  struct should_resize_wrapper
+  {
+    HAS_MEMBER_FUNCTION(isSorted,bool,const,,)
+    template<class U = T>
+    static typename std::enable_if<has_memberfunction_isSorted<U>::value, bool>::type shouldResize()
+    { return false;  }
+
+    template<class U = T>
+    static typename std::enable_if<!has_memberfunction_isSorted<U>::value, bool>::type shouldResize()
+    { return true; }
+  };
+  virtual bool shouldResize() const override final
+  {
+    return should_resize_wrapper::shouldResize();
   }
 
   /**
@@ -685,7 +813,7 @@ public:
   /// case for if U::value_type exists. Returns the size of dataPtr
   template<class U = T>
   typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
-  dataSize() const
+  byteSize() const
   {
     return size() * sizeof(typename T::value_type);
   }
@@ -694,17 +822,52 @@ public:
   /// case for if U::value_type doesn't exists. Returns the size of dataPtr
   template<class U = T>
   typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
-  dataSize() const
+  byteSize() const
   {
     return size() * sizeof(T);
   }
 
 
-  /// case for if U::value_type exists. Returns the number of elements given a
-  // byte size
+  /// case for if U::value_type exists. Returns the size of an element of dataPtr
   template<class U = T>
   typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
-  numElementsFromDataSize(localIndex d_size) const
+  elementSize() const
+  {
+    return sizeof(typename T::value_type);
+  }
+
+
+  /// case for if U::value_type doesn't exists. Returns the size of an element of dataPtr
+  template<class U = T>
+  typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
+  elementSize() const
+  {
+    return sizeof(T);
+  }
+
+
+  /// case for if U::value_type exists. Returns the typeid of an element of dataPtr
+  template<class U = T>
+  typename std::enable_if<has_alias_value_type<U>::value, const std::type_info&>::type
+  elementTypeID() const
+  {
+    return typeid(typename T::value_type);
+  }
+
+
+  /// case for if U::value_type doesn't exists. Returns the typeid of an element of dataPtr
+  template<class U = T>
+  typename std::enable_if<!has_alias_value_type<U>::value, const std::type_info&>::type
+  elementTypeID() const
+  {
+    return typeid(T);
+  }
+
+
+  /// case for if U::value_type exists. Returns the number of elements given a byte size
+  template<class U = T>
+  typename std::enable_if<has_alias_value_type<U>::value, localIndex>::type
+  numElementsFromByteSize(localIndex d_size) const
   {
     return d_size / sizeof(typename T::value_type);
   }
@@ -714,54 +877,279 @@ public:
   // given a byte size
   template<class U = T>
   typename std::enable_if<!has_alias_value_type<U>::value, localIndex>::type
-  numElementsFromDataSize(localIndex d_size) const
+  numElementsFromByteSize(localIndex d_size) const
   {
     return d_size / sizeof(T);
   }
 
+  
+  void registerDataPtr(axom::sidre::View * view) const override
+  {
 #ifdef USE_ATK
-  /* Register the pointer to data with the associated sidre::View. */
-  virtual void registerDataPtr() override final
-  {
-    localIndex d_size = dataSize();
-    if (d_size > 0)
+    view = (view != nullptr) ? view : getSidreView();
+
+    localIndex num_elements = size();
+    if (num_elements > 0)
     {
+      std::type_index type_index = std::type_index(elementTypeID());
+      axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
+      if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
+      { return; }
+
+      localIndex sidre_size = rtTypes::getSidreSize(type_index);
+      localIndex byte_size = byteSize();
+      localIndex element_size = elementSize();
+
+      int ndims = numDimensions();
+//      axom::sidre::SidreLength dims[ndims + 1];
+      axom::sidre::SidreLength dims[10];
+      for (int dim = 0; dim < ndims; ++dim)
+      {
+        dims[dim] = size(dim);
+      }
+
+      if ( byte_size > num_elements * sidre_size )
+      {
+        dims[ndims++] = element_size / sidre_size;
+      }
+      
       void * ptr = const_cast<void*>( static_cast<void const *>( dataPtr() ) );
-      getSidreView()->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, d_size, ptr);
+      view->setExternalDataPtr(sidre_type_id, ndims, dims, ptr);
     }
-  }
-
-
-  virtual void storeSizedFromParent() override final
-  {
-    getSidreView()->setAttributeScalar("__sizedFromParent__", sizedFromParent());
-  }
-
-
-  virtual void loadSizedFromParent() override final
-  {
-    setSizedFromParent(getSidreView()->getAttributeScalar("__sizedFromParent__"));
-    getSidreView()->setAttributeToDefault("__sizedFromParent__");
-  }
-
-
-  virtual void unregisterDataPtr() override final
-  {
-    getSidreView()->setExternalDataPtr(AXOM_NULLPTR);
-  }
-
-
-  virtual void resizeFromSidre() override final
-  {
-    if (getSidreView()->isExternal())
+    else
     {
-      localIndex d_size = getSidreView()->getTotalBytes();
-      localIndex numElements = numElementsFromDataSize(d_size);
-      resize(numElements);
+      unregisterDataPtr(view);
+    }
+#endif
+  }  
+
+  /* Register the pointer to data with the associated sidre::View. */
+  void registerToWrite(axom::sidre::View * view=nullptr) const override
+  {
+#ifdef USE_ATK
+    if (!getWriteOut())
+    {
+      view = (view != nullptr) ? view : getSidreView();
+      storeSizedFromParent(view);
+      unregisterDataPtr(view);
+      return;
     }
 
+    view = (view != nullptr) ? view : getSidreView();
+    storeSizedFromParent(view);
+
+    localIndex num_elements = size();
+    if (num_elements > 0) 
+    {
+      std::type_index type_index = std::type_index(elementTypeID());
+      axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
+      if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
+      {
+        localIndex byte_size;
+        void * ptr = Buffer::pack(reference(), byte_size);
+        view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, ptr);
+        return;
+      }
+
+      localIndex sidre_size = rtTypes::getSidreSize(type_index);
+      localIndex byte_size = byteSize();
+      localIndex element_size = elementSize();
+
+      int ndims = numDimensions();
+//      axom::sidre::SidreLength dims[ndims + 1];
+      axom::sidre::SidreLength dims[10];
+      for (int dim = 0; dim < ndims; ++dim)
+      {
+        dims[dim] = size(dim);
+      }
+
+      if ( byte_size > num_elements * sidre_size )
+      {
+        dims[ndims++] = element_size / sidre_size;
+      }
+      
+      void * ptr = const_cast<void*>(static_cast<void const *>( dataPtr() ) );
+      view->setExternalDataPtr(sidre_type_id, ndims, dims, ptr);
+    }
+    else
+    {
+      unregisterDataPtr(view);
+    }
+#endif
   }
-  #endif /* ATK_FOUND */
+
+  /* Register the pointer to data with the associated sidre::View. */
+  void finishWriting(axom::sidre::View * view=nullptr) const override
+  {
+#ifdef USE_ATK
+    if (!getWriteOut())
+    {
+      view = (view != nullptr) ? view : getSidreView();
+      view->setAttributeToDefault("__sizedFromParent__");
+      unregisterDataPtr(view);
+      return;
+    }
+
+    view = (view != nullptr) ? view : getSidreView();
+    view->setAttributeToDefault("__sizedFromParent__");
+
+    if (!view->isExternal() || view->getTotalBytes() == 0)
+    {
+      return;
+    }
+    
+    std::type_index type_index = std::type_index(elementTypeID());
+    axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
+    if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
+    {
+      std::free(view->getVoidPtr());
+    }
+
+    unregisterDataPtr(view);
+#endif
+  }
+
+  void registerToRead(axom::sidre::View * view=nullptr) override
+  {
+#ifdef USE_ATK
+    if (!getWriteOut())
+    {
+      loadSizedFromParent(view);
+      unregisterDataPtr(view);
+      return;
+    }
+
+    view = (view != nullptr) ? view : getSidreView();
+    loadSizedFromParent(view);
+    if (!view->isExternal() || view->getTotalBytes() == 0)
+    {
+      return;
+    }
+    
+    std::type_index type_index = std::type_index(elementTypeID());
+    axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
+    if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
+    {
+      localIndex byte_size = view->getTotalBytes();
+      void * ptr = std::malloc(byte_size);
+      view->setExternalDataPtr(axom::sidre::TypeID::INT8_ID, byte_size, ptr);
+      return;
+    }
+
+    resizeFromSidre(view);
+    void * ptr = const_cast<void*>( static_cast<void const *>( dataPtr() ) );
+    localIndex sidre_size = rtTypes::getSidreSize(type_index);
+    view->setExternalDataPtr(sidre_type_id, byteSize() / sidre_size, ptr);
+#endif
+  }
+
+
+  void finishReading(axom::sidre::View * view) override
+  {
+#ifdef USE_ATK
+    if (!getWriteOut())
+    {
+      view = (view != nullptr) ? view : getSidreView();
+      unregisterDataPtr(view);
+      return;
+    }
+    view = (view != nullptr) ? view : getSidreView();
+    if (!view->isExternal() || view->getTotalBytes() == 0)
+    {
+      return;
+    }
+    
+    std::type_index type_index = std::type_index(elementTypeID());
+    axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
+    if (sidre_type_id == axom::sidre::TypeID::NO_TYPE_ID)
+    {
+      localIndex byte_size = view->getTotalBytes();
+      void * ptr = view->getVoidPtr();
+      Buffer::unpack(reference(), ptr, byte_size);
+      std::free(ptr);
+    }
+
+    unregisterDataPtr(view);
+#endif
+  }
+
+  void unregisterDataPtr(axom::sidre::View* view = nullptr) const
+  {
+#ifdef ATK_FOUND
+    view = (view != nullptr) ? view : getSidreView();
+    view->setExternalDataPtr(AXOM_NULLPTR);
+#endif
+  }
+
+  void storeSizedFromParent(axom::sidre::View* view = nullptr) const
+  {
+#ifdef USE_ATK
+    if (SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
+    {
+      view = (view != nullptr) ? view : getSidreView();
+      view->setAttributeScalar("__sizedFromParent__", sizedFromParent());
+    }
+#endif
+  }
+
+  void loadSizedFromParent(axom::sidre::View* view = nullptr)
+  {
+#ifdef USE_ATK
+    if (SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
+    {
+      view = (view != nullptr) ? view : getSidreView();
+      setSizedFromParent(view->getAttributeScalar("__sizedFromParent__"));
+      view->setAttributeToDefault("__sizedFromParent__");
+    }
+#endif
+  }
+
+  void resizeFromSidre(axom::sidre::View* view = nullptr)
+  {
+#ifdef USE_ATK
+    view = (view != nullptr) ? view : getSidreView();
+    if (view->isExternal()) 
+    { 
+      std::type_index type_index = std::type_index(elementTypeID());
+      localIndex sidre_size = rtTypes::getSidreSize(type_index);
+
+      localIndex byte_size = view->getTotalBytes();
+      localIndex num_elements = numElementsFromByteSize(byte_size);
+
+      int ndims = view->getNumDimensions();
+//      axom::sidre::SidreLength dims[ndims];
+      axom::sidre::SidreLength dims[10];
+      view->getShape(ndims, dims);
+
+      if ( byte_size > num_elements * sidre_size )
+      {
+        ndims--;
+      }
+
+      localIndex num_elems_recorded = 1;
+      for (localIndex i = 0; i < ndims; ++i)
+      {
+        num_elems_recorded *= dims[i];
+      }
+
+      if (num_elems_recorded != num_elements)
+      {
+        GEOS_ERROR("Number of elements recorded not equal to the calculated number: " << 
+                   num_elems_recorded << " " << num_elements);
+      }
+
+//      long long l_dims[ndims];
+      long long l_dims[10];
+      for (localIndex i = 0; i < ndims; ++i)
+      {
+        l_dims[i] = dims[i];
+      }
+
+      resize(ndims, l_dims);
+    }
+#endif
+  }
+
 
   std::unique_ptr<T> m_data;
 
