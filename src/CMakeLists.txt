@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4)
 
 ################################
-# ASCTK ToolKit
+# GEOSX
 ################################
 project(geosx LANGUAGES C CXX)
 
