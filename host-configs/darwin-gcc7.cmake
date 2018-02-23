@@ -31,6 +31,8 @@ set(MPI_CXX_COMPILER "/opt/local/bin/mpicxx-mpich-gcc7" CACHE PATH "")
 set(MPI_Fortran_COMPILER "/opt/local/bin/mpifort-mpich-gcc7" CACHE PATH "")
 set(MPIEXEC "mpirun-mpich-gcc7" CACHE PATH "")
 
+
+
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 
 set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE PATH "" FORCE)
