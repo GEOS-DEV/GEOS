@@ -148,7 +148,7 @@ else()
 #                         GIT_TAG develop
 #                         PATCH_COMMAND git submodule init && git submodule update                         
                          URL ${CMAKE_SOURCE_DIR}/tpl_mirror/RAJA-develop.zip
-                         PATCH_COMMAND pwd && cp -r ../../../../../master/src/cmake/blt .
+                         PATCH_COMMAND pwd && cp -r ../../../../../geosx/src/cmake/blt .
                          PREFIX ${PROJECT_BINARY_DIR}/raja
                          BUILD_COMMAND make -j8
                          INSTALL_COMMAND make install
@@ -160,7 +160,10 @@ else()
                                     -DRAJA_ENABLE_TBB=${RAJA_ENABLE_TBB}
                                     -DENABLE_OPENMP=${ENABLE_OPENMP}
                  		    -DRAJA_ENABLE_OPENMP=${ENABLE_OPENMP}
-                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> 
+				    -DCMAKE_CXX_STANDARD=11
+				    -DCMAKE_CXX_FLAGS=-std=c++11
+)
 
     set( dependency_list "${dependency_list};raja" )
 endif()
@@ -188,7 +191,7 @@ else()
 #                         GIT_TAG develop
 #                         PATCH_COMMAND git submodule init && git submodule update                         
                          URL ${CMAKE_SOURCE_DIR}/tpl_mirror/CHAI-develop.zip
-                         PATCH_COMMAND pwd && cp -r ../../../../../master/src/cmake/blt .
+                         PATCH_COMMAND pwd && cp -r ../../../../../geosx/src/cmake/blt .
                          BUILD_COMMAND make -j8
                          INSTALL_DIR ${chai_install_dir}
                          INSTALL_COMMAND make install && cp -r ${PROJECT_BINARY_DIR}/chai/src/chai-build/include ${chai_install_dir}
@@ -196,7 +199,10 @@ else()
                                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                     -DENABLE_CUDA=${CUDA_ENABLED}
                                     -DENABLE_OPENMP=${ENABLE_OPENMP}
-                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> 
+				    -DCMAKE_CXX_STANDARD=11
+				    -DCMAKE_CXX_FLAGS=-std=c++11
+)
 
     set( dependency_list "${dependency_list};chai" )
 
@@ -303,7 +309,8 @@ ExternalProject_Add( asmjit
                                 -DBUILD_SHARED_LIBS:BOOL=OFF
                                 -DCMAKE_BUILD_TYPE=Release
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-				-DCMAKE_CXX_STANDARD=17
+				-DCMAKE_CXX_STANDARD=11
+				-DCMAKE_CXX_FLAGS=-std=c++11
  )
 
 message( INFO ": setting up MathPresso" )
