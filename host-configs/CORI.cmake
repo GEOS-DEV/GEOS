@@ -29,6 +29,9 @@ set(CMAKE_C_COMPILER "/opt/cray/pe/craype/2.5.12/bin/cc" CACHE PATH "")
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopenmp" CACHE STRING "")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" CACHE STRING "")
+
 
 
 
