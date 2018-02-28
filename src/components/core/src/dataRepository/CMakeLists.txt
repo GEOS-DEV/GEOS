@@ -10,6 +10,7 @@ set(geosx_headers
     dataRepository/SidreWrapper.hpp
     dataRepository/ViewWrapper.hpp
     dataRepository/ViewWrapperBase.hpp
+    dataRepository/Buffer.hpp
     PARENT_SCOPE )
 
 #

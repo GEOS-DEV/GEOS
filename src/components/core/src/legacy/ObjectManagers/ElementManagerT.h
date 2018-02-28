@@ -118,7 +118,7 @@ public:
 
   int AddElementToRegion( const int regionNumber, const int* const elemsToNodes );
 
-  void ConstructListOfIndexesFromMap( const array< std::set< std::pair<ElementRegionT*,localIndex> > >& toElementMap,
+  void ConstructListOfIndexesFromMap( const array< set< std::pair<ElementRegionT*,localIndex> > >& toElementMap,
                                       const lArray1d& nodeList,
                                       std::map< std::string, lArray1d>& localIndexes,
                                       const int depth );

@@ -66,12 +66,13 @@
 #define UTILITIES_H_
 
 #include "common/DataTypes.hpp"
-//#include "legacy/Common/typedefs.h"
 #include <limits>
 #include <sys/resource.h>
 #include <map>
-#include <set>
 #include <algorithm>
+#include "RAJA/RAJA.hpp"
+#include "RAJA/util/defines.hpp"
+
 
 #ifdef USE_ATK
 #include "slic/slic.hpp"
@@ -125,59 +126,59 @@ T2& stlMapLookup( std::map<T1,T2>& Map, const T1& key, const std::string& messag
 real64_array logspace(realT start, realT stop, int count=100);
 real64_array linspace(realT start, realT stop, int count=100);
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-compare"
-
-
-template< typename RTYPE, typename T >
-typename std::enable_if< std::is_unsigned<T>::value && std::is_signed<RTYPE>::value, RTYPE >::type
-integer_conversion( T input )
-{
-  static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
-  static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
-
-  if( input > std::numeric_limits<RTYPE>::max()  )
-  {
-    abort();
-  }
-  return static_cast<RTYPE>(input);
-}
-
-template< typename RTYPE, typename T >
-typename std::enable_if< std::is_signed<T>::value && std::is_unsigned<RTYPE>::value, RTYPE >::type
-integer_conversion( T input )
-{
-  static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
-  static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
-
-  if( input > std::numeric_limits<RTYPE>::max() ||
-      input < 0 )
-  {
-    abort();
-  }
-  return static_cast<RTYPE>(input);
-}
-
-
-template< typename RTYPE, typename T >
-typename std::enable_if< ( std::is_signed<T>::value && std::is_signed<RTYPE>::value ) ||
-                         ( std::is_unsigned<T>::value && std::is_unsigned<RTYPE>::value ), RTYPE >::type
-integer_conversion( T input )
-{
-  static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
-  static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
-
-  if( input > std::numeric_limits<RTYPE>::max() ||
-      input < std::numeric_limits<RTYPE>::lowest() )
-  {
-    abort();
-  }
-  return static_cast<RTYPE>(input);
-}
-
-
-
-#pragma GCC diagnostic pop
+//#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Wsign-compare"
+//
+//
+//template< typename RTYPE, typename T >
+//typename std::enable_if< std::is_unsigned<T>::value && std::is_signed<RTYPE>::value, RTYPE >::type
+//integer_conversion( T input )
+//{
+//  static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
+//  static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
+//
+//  if( input > std::numeric_limits<RTYPE>::max()  )
+//  {
+//    abort();
+//  }
+//  return static_cast<RTYPE>(input);
+//}
+//
+//template< typename RTYPE, typename T >
+//typename std::enable_if< std::is_signed<T>::value && std::is_unsigned<RTYPE>::value, RTYPE >::type
+//integer_conversion( T input )
+//{
+//  static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
+//  static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
+//
+//  if( input > std::numeric_limits<RTYPE>::max() ||
+//      input < 0 )
+//  {
+//    abort();
+//  }
+//  return static_cast<RTYPE>(input);
+//}
+//
+//
+//template< typename RTYPE, typename T >
+//typename std::enable_if< ( std::is_signed<T>::value && std::is_signed<RTYPE>::value ) ||
+//                         ( std::is_unsigned<T>::value && std::is_unsigned<RTYPE>::value ), RTYPE >::type
+//integer_conversion( T input )
+//{
+//  static_assert( std::numeric_limits<T>::is_integer, "input is not an integer type" );
+//  static_assert( std::numeric_limits<RTYPE>::is_integer, "requested conversion is not an integer type" );
+//
+//  if( input > std::numeric_limits<RTYPE>::max() ||
+//      input < std::numeric_limits<RTYPE>::lowest() )
+//  {
+//    abort();
+//  }
+//  return static_cast<RTYPE>(input);
+//}
+//
+//
+//
+//#pragma GCC diagnostic pop
 
 
 /////////////////////////////////////////////////
@@ -279,8 +280,6 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               T * __restrict__ const localField2,
                               localIndex N)
 {
-//  const typename array<T>::size_type N = localField1.size() ;
-
   for( localIndex a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
@@ -296,11 +295,8 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               T * __restrict__ const localField2,
                               localIndex N)
 {
-//  const typename array<T>::size_type N = localField1.size() ;
-
   for( localIndex a=0 ; a<N ; ++a )
   {
-//    std::cout<<globalToLocalRelation[a]<<std::endl;
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
     localField2[a] = globalField2[ globalToLocalRelation[a] ];
   }
@@ -360,8 +356,6 @@ inline void CopyGlobalToLocal(const localIndex* __restrict__ const globalToLocal
                               T * __restrict__ const localField4,
                               localIndex N)
 {
-//  const typename array<T>::size_type N = localField1.size() ;
-
   for( localIndex a=0 ; a<N ; ++a )
   {
     localField1[a] = globalField1[ globalToLocalRelation[a] ];
@@ -396,36 +390,40 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
   }
 }
 
-template< typename T >
+
+template<typename T, typename atomicPol=RAJA::atomic::omp_atomic>
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
-                              T const * __restrict__ const localField,
-                              T * __restrict__ const globalField,
-                              localIndex const N )
+                                    T const * __restrict__ const localField,
+                                    T * __restrict__ const globalField,
+                                    localIndex const N )
 {
-  for( localIndex a=0 ; a<N ; ++a )
+
+  for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
-    globalField[ globalToLocalRelation[a] ] += localField[a];
+
+    RAJA::atomic::atomicAdd<atomicPol>(&globalField[a],localField[a]);
   }
 }
 
-template<typename T >
-inline void AtomicAddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
-				    T const * __restrict__ const localField,
-				    T * __restrict__ const globalField,
-				    localIndex const N )
+//01-22-2018 - Hack, we will have to fix. 
+template<>
+inline void AddLocalToGlobal<R1Tensor,RAJA::atomic::omp_atomic>( const localIndex* __restrict__ const globalToLocalRelation,
+                                         R1Tensor const * __restrict__ const localField,
+                                         R1Tensor * __restrict__ const globalField,
+                                         localIndex const N )
 {
-  
-  for( typename array<T>::size_type a=0 ; a<N ; ++a )
+
+  for( typename array<R1Tensor>::size_type a=0 ; a<N ; ++a )
     {
       double * const lhs = globalField[ globalToLocalRelation[a] ].Data();
       double const * const rhs = localField[a].Data();
       for( int i=0; i<3; ++i )
-	{
-#pragma omp atomic
-	  lhs[i] += rhs[i];
-	}
+        {
+          RAJA::atomic::atomicAdd<RAJA::atomic::omp_atomic>(&lhs[i],rhs[i]);
+        }
     }
 }
+
 
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
@@ -718,11 +716,11 @@ inline realT getcputime(void)
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set1, const std::set<TYPE>& set2, std::set<TYPE>& intersection )
+inline void Intersection( const set<TYPE>& set1, const set<TYPE>& set2, set<TYPE>& intersection )
 {
   intersection.clear();
-  typename std::set<TYPE>::const_iterator iter_1 = set1.begin();
-  typename std::set<TYPE>::const_iterator iter_2 = set2.begin();
+  typename set<TYPE>::const_iterator iter_1 = set1.begin();
+  typename set<TYPE>::const_iterator iter_2 = set2.begin();
 
   while( iter_1!=set1.end() && iter_2!=set2.end() )
   {
@@ -744,13 +742,13 @@ inline void Intersection( const std::set<TYPE>& set1, const std::set<TYPE>& set2
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& arr, std::set<TYPE>& intersection )
+inline void Intersection( const set<TYPE>& input, const array<TYPE>& arr, set<TYPE>& intersection )
 {
   intersection.clear();
 
   for( typename array<TYPE>::const_iterator iter_arr=arr.begin() ; iter_arr!=arr.end() ; ++iter_arr )
   {
-    if( set.count( *iter_arr ) == 1 )
+    if( input.count( *iter_arr ) == 1 )
     {
       intersection.insert(*iter_arr);
     }
@@ -758,13 +756,13 @@ inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& arr, std
 }
 
 template< typename TYPE >
-inline void Intersection( const std::set<TYPE>& set, const array<TYPE>& arr, array<TYPE>& intersection )
+inline void Intersection( const set<TYPE>& input, const array<TYPE>& arr, array<TYPE>& intersection )
 {
   intersection.clear();
 
-  for( typename std::set<TYPE>::const_iterator iter_arr=arr.begin() ; iter_arr!=arr.end() ; ++iter_arr )
+  for( typename set<TYPE>::const_iterator iter_arr=arr.begin() ; iter_arr!=arr.end() ; ++iter_arr )
   {
-    if( set.count( *iter_arr ) == 1 )
+    if( input.count( *iter_arr ) == 1 )
     {
       intersection.push_back(*iter_arr);
     }

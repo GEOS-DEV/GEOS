@@ -39,10 +39,23 @@ public:
 
   virtual ~ConstitutiveBase();
 
+
+  virtual void SetParamStatePointers( void *& ) = 0;
+
+
+  typedef void (*UpdateFunctionPointer)( R2SymTensor const & D,
+                                        R2Tensor const & Rot,
+                                        localIndex const i,
+                                        void * dataPtrs,
+                                        integer const systemAssembleFlag);
+
+  virtual UpdateFunctionPointer GetStateUpdateFunctionPointer( ) = 0;
+
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
                             dataRepository::ManagedGroup * const stateVariables,
                             integer const systemAssembleFlag ) const = 0;
+
 
   virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
                                         R2Tensor const & Rot,
@@ -50,7 +63,7 @@ public:
                                         integer const systemAssembleFlag ) = 0;
 
 
-  virtual void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override = 0;
+  virtual void FillDocumentationNode() override = 0;
 
   virtual void resize( localIndex ) override;
 

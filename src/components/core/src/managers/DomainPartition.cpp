@@ -11,6 +11,9 @@
 #include "constitutive/ConstitutiveManager.hpp"
 
 #include "fileIO/silo/SiloFile.hpp"
+
+#include "common/SortedArray.hpp"
+
 #include "common/Logger.hpp"
 
 namespace geosx
@@ -21,11 +24,11 @@ DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager);
+  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setWriteOut( false );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
-
+  RegisterGroup<CellBlockManager>( keys::cellManager );
 }
 
 DomainPartition::~DomainPartition()
@@ -37,12 +40,12 @@ void DomainPartition::BuildDataStructure( ManagedGroup * const )
 
 //  this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
 //  this->RegisterGroup<ElementRegionManager>(keys::FEM_Elements);
-  this->RegisterGroup<CellBlockManager>(keys::cellManager);
+//  this->RegisterGroup<CellBlockManager>(keys::cellManager);
 //  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
 }
 
 
-void DomainPartition::FillDocumentationNode( dataRepository::ManagedGroup * const group )
+void DomainPartition::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setName("Domain");
@@ -244,7 +247,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 // this->GetGroup<NodeManager>(keys::FEM_Nodes);
     localIndex numNodes = nodeManager->size();
 
-    r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::ReferencePosition);
+    r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::referencePositionString);
 
     r1_array const * const displacement = nodeManager->GetFieldDataPointer<r1_array>(keys::TotalDisplacement);
 
@@ -299,7 +302,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
           const localIndex* const elemToNodeMap = elemsToNodes[k];
 
           const integer_array nodeOrdering = siloFile.SiloNodeOrdering();
-          integer numNodesPerElement = elemsToNodes.size<int>(1);
+          integer numNodesPerElement = elemsToNodes.size(1);
           for (localIndex a = 0 ; a < numNodesPerElement ; ++a)
           {
             elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];

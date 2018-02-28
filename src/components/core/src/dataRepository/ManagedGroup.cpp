@@ -20,10 +20,10 @@ namespace geosx
 namespace dataRepository
 {
 
-#ifdef USE_ATK
 axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
                                                   ManagedGroup * const parent )
 {
+#ifdef USE_ATK
   axom::sidre::Group * sidreParent = nullptr;
   axom::sidre::Group * sidreGroup  = nullptr;
 
@@ -45,8 +45,8 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
     sidreGroup = sidreParent->createGroup(name);
   }
   return sidreGroup;
+#endif
 }
-#endif /* ATK_FOUND */
 
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ):
@@ -167,30 +167,15 @@ void ManagedGroup::resize( indexType const newsize )
 
 void ManagedGroup::RegisterDocumentationNodes()
 {
-//  std::cout<<std::string(m_docNode->m_level*2, ' ')<<"Registering
-// Documentation Nodes for Group "<<this->getName()<<std::endl;
   for( auto&& subNode : m_docNode->getChildNodes() )
   {
-//    std::cout<<subNode.first<<", "<<subNode.second.getName()<<std::endl;
-    if( ( subNode.second.getSchemaType() != "DocumentationNode" ) &&
-        ( subNode.second.getSchemaType() != "Node" ) &&
+    if( ( subNode.second.getSchemaType().find("Node") == std::string::npos ) &&
         ( subNode.second.m_isRegistered == 0 ) )
     {
-//      std::cout<<std::string(subNode.second.m_level*2, ' ')<<"Register
-// "<<subNode.second.getStringKey()<<" of type
-// "<<subNode.second.getDataType()<<std::endl;
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                           rtTypes::typeID(subNode.second.getDataType() ) );
       view->setSizedFromParent( subNode.second.m_managedByParent);
       subNode.second.m_isRegistered = 1;
-//      rtTypes::ApplyArrayTypeLambda1(
-// rtTypes::typeID(subNode.second.getDataType()) , [&](auto a)->void
-//      {
-//        ViewWrapper<decltype(a)>& dataView =
-// *(group.getWrapper<decltype(a)>(subDocNode.getStringKey()));
-//        typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
-//
-//      });
     }
   }
 
@@ -209,33 +194,74 @@ void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const root
   }
 }
 
-void ManagedGroup::FillDocumentationNode( dataRepository::ManagedGroup * const  )
+// These fill the documentation and initialize fields on this:
+void ManagedGroup::FillDocumentationNode()
 {}
 
-
-void ManagedGroup::SetDocumentationNodes( dataRepository::ManagedGroup * const group )
+void ManagedGroup::SetDocumentationNodes()
 {
-  FillDocumentationNode(group);
+  FillDocumentationNode();
   RegisterDocumentationNodes();
   for( auto&& subGroup : m_subGroups )
   {
-    subGroup.second->SetDocumentationNodes(group);
+    subGroup.second->SetDocumentationNodes();
+  }
+}
+
+// These fill the documentation and initialize fields on other objects:
+void ManagedGroup::SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup)
+{
+  FillOtherDocumentationNodes(rootGroup);
+  for( auto&& subGroup : m_subGroups )
+  {
+    subGroup.second->SetOtherDocumentationNodes(rootGroup);
+  }
+}
+
+void ManagedGroup::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const )
+{
+}
+
+
+
+void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
+{
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    // Get the child tag and name
+    std::string childName = childNode.attribute("name").value();
+    if (childName.empty())
+    {
+      childName = childNode.name();
+    }
+
+    // Create children
+    CreateChild(childNode.name(), childName);
+
+    // Add grandchildren
+    ManagedGroup * newChild = this->GetGroup<ManagedGroup>(childName);
+    if (newChild != nullptr)
+    {
+      newChild->AddChildren(childNode);
+    }
+    else
+    {
+      if( !this->hasView(childName) )
+      {
+        //GEOS_ERROR("group with name " + childName + " not found in " + this->getName());
+      }
+    }
   }
 }
 
 
-void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
+void ManagedGroup::CreateChild( string const & childKey, string const & childName )
 {
-
-
-  ReadXML_Group( targetNode );
-
-  ReadXMLsub( targetNode );
-
-  ReadXML_PostProcess();
+  std::cout << "Child not recognized: " << childKey << ", " << childName << std::endl;
 }
 
-void ManagedGroup::ReadXML_Group( xmlWrapper::xmlNode const & targetNode )
+
+void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -249,18 +275,31 @@ void ManagedGroup::ReadXML_Group( xmlWrapper::xmlNode const & targetNode )
     }
   }
 
+  ReadXMLsub(targetNode);
+  ReadXML_PostProcess();
 }
 
 
 
 void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
 {
-  this->forSubGroups( [this,&targetNode]( ManagedGroup * subGroup ) -> void
-      {
-        subGroup->ReadXML( targetNode );
-      });
-}
+  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  {
+    // Get the child tag and name
+    std::string childName = childNode.attribute("name").value();
+    if (childName.empty())
+    {
+      childName = childNode.name();
+    }
 
+    // Read the xml on children
+    ManagedGroup * child = this->GetGroup<ManagedGroup>(childName);
+    if (child != nullptr)
+    {
+      child->ReadXML(childNode);
+    }
+  }
+}
 
 void ManagedGroup::PrintDataHierarchy()
 {
@@ -311,139 +350,88 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
+
+void ManagedGroup::prepareToWrite() const
+{
 #ifdef USE_ATK
-/* Add pointers to ViewWrapper data to the sidre tree. */
-void ManagedGroup::registerSubViews()
-{
-  for (auto & wrapper : m_wrappers)
+  if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
   {
-    wrapper.second->registerDataPtr();
+    SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
   }
 
-  forSubGroups([](ManagedGroup * subGroup) -> void
-      {
-        subGroup->registerSubViews();
-      });
-}
-
-/* Remove pointers to ViewWrapper data from the sidre tree. */
-void ManagedGroup::unregisterSubViews()
-{
-  for ( auto & wrapper : m_wrappers )
+  for (auto & pair : m_wrappers)
   {
-    wrapper.second->unregisterDataPtr();
+    pair.second->registerToWrite();
   }
 
-  forSubGroups([](ManagedGroup * subGroup) -> void
-      {
-        subGroup->unregisterSubViews();
-      });
+  if ( m_sidreGroup->hasView("__size__") ) {
+    m_sidreGroup->getView("__size__")->setScalar(m_size);
+  } else {
+    m_sidreGroup->createView("__size__")->setScalar(m_size);  
+  }
+
+  forSubGroups([](const ManagedGroup * subGroup) -> void 
+  {
+    subGroup->prepareToWrite();
+  });
+#endif
 }
 
-/* Save m_size to sidre views. */
-void ManagedGroup::createSizeViews()
-{
-  m_sidreGroup->createView("__size__")->setScalar(m_size);
 
-  forSubGroups([](ManagedGroup * subGroup) -> void
-      {
-        subGroup->createSizeViews();
-      });
-}
-
-/* Load m_size data from sidre views. */
-void ManagedGroup::loadSizeViews()
+void ManagedGroup::finishWriting() const
 {
-  m_size = m_sidreGroup->getView("__size__")->getScalar();
+#ifdef USE_ATK
+  axom::sidre::View* temp = m_sidreGroup->getView("__size__");
   m_sidreGroup->destroyView("__size__");
 
-  forSubGroups([](ManagedGroup * subGroup) -> void
-      {
-        subGroup->loadSizeViews();
-      });
-}
-
-/* Resize views to hold data from sidre. */
-void ManagedGroup::resizeSubViews()
-{
-  for ( auto & wrapper : m_wrappers )
+  for (auto & pair : m_wrappers)
   {
-    wrapper.second->resizeFromSidre();
+    pair.second->finishWriting();
   }
 
-  forSubGroups([](ManagedGroup * subGroup) -> void
-      {
-        subGroup->resizeSubViews();
-      });
+  forSubGroups([](const ManagedGroup * subGroup) -> void 
+  {
+    subGroup->finishWriting();
+  });
+#endif
 }
 
 
-void ManagedGroup::storeSizedFromParent()
+void ManagedGroup::prepareToRead()
 {
-  for ( auto & wrapper : m_wrappers )
+#ifdef USE_ATK
+  axom::sidre::View* temp = m_sidreGroup->getView("__size__");
+  m_size = temp->getScalar();
+  m_sidreGroup->destroyView("__size__");
+
+  for (auto & pair : m_wrappers)
   {
-    wrapper.second->storeSizedFromParent();
+    pair.second->registerToRead();
   }
 
-  forSubGroups([](ManagedGroup * subGroup) -> void
-      {
-        subGroup->storeSizedFromParent();
-      });
+  forSubGroups([](ManagedGroup * subGroup) -> void 
+  {
+    subGroup->prepareToRead();
+  });  
+#endif
 }
 
-void ManagedGroup::loadSizedFromParent()
+
+void ManagedGroup::finishReading()
 {
-  for ( auto & wrapper : m_wrappers )
+#ifdef USE_ATK
+  for (auto & pair : m_wrappers)
   {
-    wrapper.second->loadSizedFromParent();
+    pair.second->finishReading();
   }
 
-
-  forSubGroups([](ManagedGroup * subGroup) -> void
-      {
-        subGroup->loadSizedFromParent();
-      });
-}
-
-/* Write out a restart file. */
-void ManagedGroup::writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm)
-{
-  if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
+  forSubGroups([](ManagedGroup * subGroup) -> void 
   {
-    SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
-  }
-
-  storeSizedFromParent();
-  registerSubViews();
-  createSizeViews();
-  axom::spio::IOManager ioManager(comm);
-  ioManager.write(m_sidreGroup, num_files, path, protocol);
+    subGroup->finishReading();
+  });
+#endif
 }
 
-/* Read in a restart file and reconstruct the sidre tree. */
-void ManagedGroup::reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm)
-{
-  if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
-  {
-    SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
-  }
-
-  axom::spio::IOManager ioManager(comm);
-  ioManager.read(m_sidreGroup, root_path, protocol);
-}
-
-/* Load sidre external data. */
-void ManagedGroup::loadSidreExternalData(const string & root_path, MPI_Comm comm)
-{
-  loadSizedFromParent();
-  loadSizeViews();
-  resizeSubViews();
-  registerSubViews();
-  axom::spio::IOManager ioManager(comm);
-  ioManager.loadExternalData(m_sidreGroup, root_path);
-  unregisterSubViews();
-}
-#endif /* ATK_FOUND */
 
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

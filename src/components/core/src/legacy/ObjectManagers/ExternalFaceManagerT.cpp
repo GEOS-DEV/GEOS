@@ -606,8 +606,8 @@ bool ExternalFaceManagerT::RecalculateNeighborList(
       //-----------------------------------------------------------------------
       // PARTIAL RESORT
       //-----------------------------------------------------------------------
-      for (std::set<localIndex>::const_iterator it = toResort.begin() ;
-           it != toResort.end() ; ++it)
+      for (set<localIndex>::const_iterator it = toResort.begin();
+          it != toResort.end(); ++it)
       {
         R1Tensor rvelTmp(vel[*it]);
         rvelTmp *= rvelFct;

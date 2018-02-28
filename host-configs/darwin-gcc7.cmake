@@ -13,6 +13,8 @@ message( "CONFIG_NAME = ${CONFIG_NAME}" )
 #set(ATK_DIR "${CMAKE_SOURCE_DIR}/../../axom/install-${CONFIG_NAME}-debug" CACHE PATH "")
 #set(ATK_CMAKE "${ATK_DIR}/lib/cmake" CACHE PATH "")
 
+set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
+
 
 
 set(CMAKE_C_COMPILER "/opt/local/bin/gcc-mp-7" CACHE PATH "")

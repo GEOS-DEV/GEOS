@@ -67,7 +67,6 @@
 // ***** Included Headers *****************************************************
 #include "common/DataTypes.hpp"
 #include <map>
-#include <set>
 #include <fstream>
 #include <iostream>
 
@@ -135,11 +134,11 @@ public:
   }
 
   template< typename TYPE >
-  void write( const std::set<TYPE>& set )
+  void write( const geosx::set<TYPE>& s )
   {
-    const typename std::set<TYPE>::size_type length = set.size();
+    const typename geosx::set<TYPE>::size_type length = s.size();
     this->write( length );
-    for( typename std::set<TYPE>::const_iterator i=set.begin() ; i!=set.end() ; ++i )
+    for( typename geosx::set<TYPE>::const_iterator i=s.begin() ; i!=s.end() ; ++i )
     {
       this->write( *i );
     }
@@ -172,13 +171,13 @@ public:
 
 
   template< typename TYPE >
-  void write( const array<std::set<TYPE> >& arr )
+  void write( const array<set<TYPE> >& arr )
   {
 
-    const typename array<std::set<TYPE> >::size_type length0 = arr.size();
-    this->write( reinterpret_cast<const char*>(&length0), sizeof(typename array<std::set<TYPE> >::size_type) );
+    const typename array<geosx::set<TYPE> >::size_type length0 = arr.size();
+    this->write( reinterpret_cast<const char*>(&length0), sizeof(typename array<set<TYPE> >::size_type) );
 
-    for( typename array<std::set<TYPE> >::const_iterator i=arr.begin() ; i!=arr.end() ; ++i )
+    for( typename array<set<TYPE> >::const_iterator i=arr.begin() ; i!=arr.end() ; ++i )
     {
       this->write( *i );
     }
@@ -305,7 +304,7 @@ public:
     this->read( length );
 
     array<char> readstring;
-    readstring.resize(length);
+    readstring.resize( integer_conversion<localIndex>(length));
     this->read( readstring.data(), readstring.size() );
 
     str.assign( readstring.begin(),readstring.end() );
@@ -338,23 +337,23 @@ public:
 
 
   template< typename TYPE >
-  void read( std::set<TYPE>& set, const bool realloc = true )
+  void read( geosx::set<TYPE>& s, const bool realloc = true )
   {
-    typename std::set<TYPE>::size_type readLength;
+    typename geosx::set<TYPE>::size_type readLength;
     this->read( readLength );
 
-    if( readLength != set.size() && !realloc )
+    if( readLength != s.size() && !realloc )
     {
 #ifdef USE_ATK
-      SLIC_ERROR( "BinStream::read(std::set<TYPE>& set): length mismatch\n");
+      SLIC_ERROR( "BinStream::read(std::geosx::set<TYPE>& s): length mismatch\n");
 #endif
     }
 
-    for( typename std::set<TYPE>::size_type i=0 ; i<readLength ; ++i )
+    for( typename geosx::set<TYPE>::size_type i=0 ; i<readLength ; ++i )
     {
       TYPE readVal;
       this->read( readVal );
-      set.insert(readVal);
+      s.insert(readVal);
     }
   }
 
@@ -422,10 +421,10 @@ public:
 
 
   template< typename TYPE >
-  void read( array<std::set<TYPE> >& arr, const bool realloc = true )
+  void read( array<set<TYPE> >& arr, const bool realloc = true )
   {
-    const typename array<std::set<TYPE> >::size_type length = arr.size();
-    typename array<std::set<TYPE> >::size_type readLength;
+    const typename array<set<TYPE> >::size_type length = arr.size();
+    typename array<set<TYPE> >::size_type readLength;
     this->read( readLength );
 
     if( readLength != length )
@@ -437,11 +436,11 @@ public:
       else
       {
 #ifdef USE_ATK
-        SLIC_ERROR( "BinStream::read(array<std::set<TYPE> >& arr): length mismatch\n");
+        SLIC_ERROR( "BinStream::read(array<set<TYPE> >& arr): length mismatch\n");
 #endif
       }
     }
-    for( typename array<std::set<TYPE> >::iterator i=arr.begin() ; i!=arr.end() ; ++i )
+    for( typename array<set<TYPE> >::iterator i=arr.begin() ; i!=arr.end() ; ++i )
     {
       this->read( *i, realloc );
     }

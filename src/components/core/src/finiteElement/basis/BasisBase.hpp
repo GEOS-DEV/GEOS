@@ -87,8 +87,7 @@ public:
 
   BasisBase() = default;
 
-  virtual ~BasisBase()
-  {}
+  virtual ~BasisBase();
 
   virtual int size() const = 0;
 

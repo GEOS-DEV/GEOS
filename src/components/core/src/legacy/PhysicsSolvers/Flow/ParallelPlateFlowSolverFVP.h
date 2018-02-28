@@ -71,8 +71,6 @@
 
 #include "../PhysicsSolverStrings.h"
 
-#include <set>
-
 class FractureMatrixFlowSolverFV;
 
 class ParallelPlateFlowSolverFVP : public ParallelPlateFlowSolverBase

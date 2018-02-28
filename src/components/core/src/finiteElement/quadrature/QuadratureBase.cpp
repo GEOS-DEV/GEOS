@@ -2,6 +2,9 @@
 
 namespace geosx
 {
+QuadratureBase::~QuadratureBase()
+{}
+
 
 QuadratureBase::CatalogInterface::CatalogType& QuadratureBase::GetCatalog()
 {

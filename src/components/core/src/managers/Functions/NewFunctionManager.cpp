@@ -26,7 +26,7 @@ NewFunctionManager::~NewFunctionManager()
   // TODO Auto-generated destructor stub
 }
 
-void NewFunctionManager::FillDocumentationNode( dataRepository::ManagedGroup * const /*group*/ )
+void NewFunctionManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -35,36 +35,13 @@ void NewFunctionManager::FillDocumentationNode( dataRepository::ManagedGroup * c
   docNode->setShortDescription("Function manager");
 }
 
-void NewFunctionManager::ReadXML( dataRepository::ManagedGroup * domain,
-                                  xmlWrapper::xmlNode const & problemNode )
-{
-  xmlWrapper::xmlNode topLevelNode = problemNode.child("Functions");
-  if (topLevelNode != NULL)
-  {
-    std::cout << "Functions:" << std::endl;
 
-    for (xmlWrapper::xmlNode functionNode=topLevelNode.first_child() ; functionNode ; functionNode=functionNode.next_sibling())
-    {
-      // Register the new function
-      FunctionBase * newFunction = CreateFunction(functionNode.name(), functionNode.attribute("name").value());
-
-      // Set the documentation node, register, and read xml
-      newFunction->SetDocumentationNodes( this );
-      newFunction->BuildDataStructure( this );
-      newFunction->ReadXML(functionNode );
-      newFunction->InitializeFunction();
-    }
-  }
-}
-
-FunctionBase * NewFunctionManager::CreateFunction( string const & functionCatalogKey,
-                                                   string const & functionName )
+void NewFunctionManager::CreateChild( string const & functionCatalogKey,
+                                      string const & functionName )
 {
   std::cout << "   " << functionCatalogKey << ": " << functionName << std::endl;
   std::unique_ptr<FunctionBase> function = FunctionBase::CatalogInterface::Factory( functionCatalogKey, functionName, this );
-  FunctionBase * rval = this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
-
-  return rval;
+  this->RegisterGroup<FunctionBase>( functionName, std::move(function) );
 }
 
 } /* namespace ANST */

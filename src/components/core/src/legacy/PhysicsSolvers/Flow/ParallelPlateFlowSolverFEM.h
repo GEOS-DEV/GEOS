@@ -74,8 +74,6 @@
 
 #include "PhysicsSolvers/PhysicsSolverStrings.h"
 
-#include <set>
-
 #if GPAC_MPI
   #include "Epetra_MpiComm.h"
 #else

@@ -1242,8 +1242,7 @@ void LagrangeSolverBase::ProcessElementRegions( NodeManager& nodeManager,
                                                 const array<string>& namesOfSolverRegions,
                                                 const realT dt )
 {
-
-  std::set<std::string> usedRegionNames;
+  set<std::string> usedRegionNames;
   for( array<string>::const_iterator regionName = namesOfSolverRegions.begin() ;
        regionName != namesOfSolverRegions.end() ; ++regionName )
   {

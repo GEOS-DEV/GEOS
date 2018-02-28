@@ -96,15 +96,11 @@ public:
    */
   ///@{
 
-  static string CatalogName()
-  {
-    return "ZoneManager";
-  }
+  static const string CatalogName()
+  { return "ZoneManager"; }
 
-  string getCatalogName() const override final
-  {
-    return ElementRegionManager::CatalogName();
-  }
+  virtual const string getCatalogName() const override final
+  { return ElementRegionManager::CatalogName(); }
 
 
 
@@ -120,7 +116,9 @@ public:
   void InitializePreSubGroups( ManagedGroup * const ) override final;
   void InitializePostSubGroups( ManagedGroup * const ) override final;
 
+  // virtual void CreateChild( string const & childKey, string const & childName ) override;
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
+
 
   using ManagedGroup::resize;
 
@@ -205,8 +203,6 @@ public:
 private:
   ElementRegionManager( const ElementRegionManager& );
   ElementRegionManager& operator=( const ElementRegionManager&);
-
-
 };
 }
 #endif /* ZONEMANAGER_H */

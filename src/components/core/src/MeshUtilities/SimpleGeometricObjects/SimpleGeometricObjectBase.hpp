@@ -26,34 +26,28 @@ string const geometricObjects("GeometricObjects");
 }
 
 
-class SimpleGeometricObjectBase// : public dataRepository::ManagedGroup
+class SimpleGeometricObjectBase : public dataRepository::ManagedGroup
 {
 public:
 
-  /**
-   * @name Static Factory Catalog Functions
-   */
-  ///@{
-  using CatalogInterface = cxx_utilities::CatalogInterface< SimpleGeometricObjectBase >;
+  explicit SimpleGeometricObjectBase( std::string const & name,
+                                      ManagedGroup * const parent );
 
-  static typename CatalogInterface::CatalogType& GetCatalog()
-  {
-    static SimpleGeometricObjectBase::CatalogInterface::CatalogType catalog;
-    return catalog;
-  }
-  ///@}
+  virtual ~SimpleGeometricObjectBase();
 
-  SimpleGeometricObjectBase(  )
-  {}
+  static string CatalogName() { return "SimpleGeometricObjectBase"; }
 
-  virtual ~SimpleGeometricObjectBase()
-  {}
-
-//  virtual void ReadXML( pugi::xml_node& hdn ) = 0;
+  SimpleGeometricObjectBase() = default;
+  SimpleGeometricObjectBase( SimpleGeometricObjectBase const & ) = default;
+  SimpleGeometricObjectBase( SimpleGeometricObjectBase &&) = default;
+  SimpleGeometricObjectBase& operator=( SimpleGeometricObjectBase const & ) = default;
+  SimpleGeometricObjectBase& operator=( SimpleGeometricObjectBase&& ) = default;
 
   virtual bool IsCoordInObject( const R1Tensor& coord ) const = 0;
 
-  virtual void ReadXML( xmlWrapper::xmlNode const & xmlNode ) = 0;
+  using CatalogInterface = cxx_utilities::CatalogInterface< SimpleGeometricObjectBase, std::string const &, ManagedGroup * const >;
+  static CatalogInterface::CatalogType& GetCatalog();
+
 };
 
 

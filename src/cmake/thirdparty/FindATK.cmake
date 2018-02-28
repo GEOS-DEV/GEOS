@@ -88,7 +88,8 @@ if(ATK_DIR)
     include("${ATK_CMAKE}/slam-targets.cmake")
     include("${ATK_CMAKE}/spio-targets.cmake")
 
-    set(ATK_FOUND TRUE)
+    set(ATK_FOUND TRUE)    
+    
     set(ATK_INCLUDE_DIRS ${ATK_DIR}/include)
 else()
     set(ATK_FOUND FALSE)

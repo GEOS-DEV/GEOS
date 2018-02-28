@@ -257,10 +257,10 @@ public:
                      const localIndex localFaceIndex,
                      lArray1d& nodeIndicies ) const;
 
-  void GetElementNeighbors(localIndex el,
-                           const FaceManagerT& faceManager,
-                           std::set<localIndex>& neighbors) const;
-
+  void GetElementNeighbors(localIndex el, 
+                           const FaceManagerT& faceManager, 
+                           set<localIndex>& neighbors) const;
+                     
   R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = false) const;
 
 

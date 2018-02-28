@@ -64,7 +64,7 @@ void xmlWrapper::as_type( std::vector<T> & target, std::string inputValue, std::
   {
     ss.ignore();
   }
-  while( ss>>value )
+  while( !((ss>>value).fail()) )
   {
     target.push_back( value );
     while(ss.peek() == ',' || ss.peek() == ' ')

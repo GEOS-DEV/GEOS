@@ -21,7 +21,6 @@ using std::auto_ptr;
 // Libraries for sorting
 #include <algorithm>
 #include <vector>
-#include <set>
 #include <utility>
 //#include <iostream>
 

@@ -107,15 +107,11 @@ public:
    */
   ///@{
 
-  static string CatalogName()
-  {
-    return "ElementRegion";
-  }
+  static const string CatalogName()
+  { return "ElementRegion"; }
 
-  string getCatalogName() const override final
-  {
-    return ElementRegion::CatalogName();
-  }
+  virtual const string getCatalogName() const override final
+  { return ElementRegion::CatalogName(); }
 
 
   ///@}
@@ -130,7 +126,7 @@ public:
 //  ElementRegion( ElementRegion&& init);
 
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 
@@ -222,7 +218,6 @@ public:
 
 private:
   ElementRegion& operator=(const ElementRegion& rhs);
-
 //  string & m_elementType;
 
 };

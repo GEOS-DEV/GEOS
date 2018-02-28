@@ -1,11 +1,11 @@
 /*
- * MeshGenerator.cpp
+ * InternalMeshGenerator.cpp
  *
  *  Created on: Nov 19, 2012
  *      Author: settgast1
  */
 
-#include "MeshGenerator.hpp"
+#include "InternalMeshGenerator.hpp"
 
 #include "managers/DomainPartition.hpp"
 
@@ -27,8 +27,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-MeshGenerator::MeshGenerator( string const & name, ManagedGroup * const parent ):
-  ManagedGroup( name, parent ),
+InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup * const parent ):
+  MeshGeneratorBase( name, parent ),
 //    m_vertices({this->RegisterViewWrapper<real64_array>(keys::xCoords).reference(),
 //                this->RegisterViewWrapper<real64_array>(keys::yCoords).reference(),
 //                this->RegisterViewWrapper<real64_array>(keys::zCoords).reference()
@@ -52,12 +52,12 @@ MeshGenerator::MeshGenerator( string const & name, ManagedGroup * const parent )
   m_dim = 3;
 }
 
-MeshGenerator::~MeshGenerator()
+InternalMeshGenerator::~InternalMeshGenerator()
 {
   // TODO Auto-generated destructor stub
 }
 
-void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const domain )
+void InternalMeshGenerator::FillDocumentationNode()
 {
   //MeshLevel * const mesh =
   // domain->group_cast<DomainPartition*>()->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -250,7 +250,7 @@ void MeshGenerator::FillDocumentationNode( dataRepository::ManagedGroup * const 
  * @author settgast
  * @param domain
  */
-void MeshGenerator::GenerateElementRegions( DomainPartition& domain )
+void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {
   //  lvector numElements;
   //
@@ -264,7 +264,7 @@ void MeshGenerator::GenerateElementRegions( DomainPartition& domain )
 
 }
 
-void MeshGenerator::ReadXML_PostProcess()
+void InternalMeshGenerator::ReadXML_PostProcess()
 {
 
   real64_array const &  xCoords = this->getReference<real64_array>(keys::xCoords);
@@ -304,9 +304,7 @@ void MeshGenerator::ReadXML_PostProcess()
   }
   else
   {
-#ifdef USE_ATK
-    SLIC_ERROR("MeshGenerator: incorrect element type!");
-#endif
+    GEOS_ERROR("InternalMeshGenerator: incorrect element type!");
   }
 
   {
@@ -317,9 +315,7 @@ void MeshGenerator::ReadXML_PostProcess()
     }
     if( failFlag )
     {
-#ifdef USE_ATK
-      SLIC_ERROR("vertex/element mismatch MeshGenerator::ReadXMLPost()");
-#endif
+      GEOS_ERROR("vertex/element mismatch InternalMeshGenerator::ReadXMLPost()");
     }
   }
 
@@ -335,7 +331,7 @@ void MeshGenerator::ReadXML_PostProcess()
     else
     {
 #ifdef USE_ATK
-      SLIC_ERROR("MeshGenerator: The number of element types is inconsistent with the number of total block.");
+      SLIC_ERROR("InternalMeshGenerator: The number of element types is inconsistent with the number of total block.");
 #endif
     }
   }
@@ -388,7 +384,7 @@ void MeshGenerator::ReadXML_PostProcess()
       else
       {
 #ifdef USE_ATK
-        SLIC_ERROR("Incorrect number of regionLayout entries specified in MeshGenerator::ReadXML()");
+        SLIC_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
 #endif
       }
     }
@@ -413,6 +409,7 @@ void MeshGenerator::ReadXML_PostProcess()
     }
   }
 
+  m_fPerturb = 0.0;
 
 //    m_fPerturb = hdn.GetAttributeOrDefault<realT>("perturbationFactor", 0.0);
 //    m_randSeed = hdn.GetAttributeOrDefault<int>("perturbationSeed",
@@ -439,15 +436,22 @@ void MeshGenerator::ReadXML_PostProcess()
 }
 
 
+
+void InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
+{
+}
+
+
 /**
  * @author settgast, fu, sherman
  * @param partition
  * @param domain
  */
-void MeshGenerator::GenerateMesh( DomainPartition * domain )
+void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
-
-  ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  // This cannot find groupkeys:
+  // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
 
@@ -457,6 +461,9 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 
   NodeManager * nodeManager = meshLevel0->getNodeManager();
 
+  // Make sure that the node manager fields are initialized
+  nodeManager->SetDocumentationNodes();
+
   CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
   ManagedGroup * nodeSets = nodeManager->GetGroup( std::string( "Sets" ) );
 
@@ -465,15 +472,14 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
   bool isRadialWithOneThetaPartition = false;
 
 
-
+  // This should probably handled elsewhere:
   for( auto & cellBlockName : m_regionNames )
   {
     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
-    cellBlock->SetDocumentationNodes(nullptr);
+    cellBlock->SetDocumentationNodes();
     cellBlock->RegisterDocumentationNodes();
     cellBlock->ReadXML_PostProcess();
   }
-
 
 
   localIndex_set & xnegNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("xneg") )->reference();
@@ -657,7 +663,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
   }
 
   nodeManager->resize( numNodes );
-  view_rtype<r1_array> X = nodeManager->getData<r1_array>( keys::ReferencePosition );
+  view_rtype<r1_array> X = nodeManager->getData<r1_array>( keys::referencePositionString );
 
   {
     localIndex localNodeIndex = 0;
@@ -759,7 +765,7 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
 
     // assign global numbers to elements
     iterRegion = m_regionNames.begin();
-    std::set<std::string> processedRegionNames;
+    set<std::string> processedRegionNames;
     localIndex iR = 0;
 
     for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
@@ -978,7 +984,6 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
                                                                                                   // unaffected
                                                                                                   // by
                                                                                                   // domain
-                                                                                                  // partitioning.
           X[iN][i] += ( ( m_max[i] - m_min[i] ) / m_numElemsTotal[i] ) * ( ( rand() * 1.0 ) / RAND_MAX - 0.5 ) * 2 * m_fPerturb;
         }
       }
@@ -1052,11 +1057,11 @@ void MeshGenerator::GenerateMesh( DomainPartition * domain )
  * @param nodeIDInBox
  * @param node_size
  */
-void MeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
-                                                 const int index[],
-                                                 const int& iEle,
-                                                 int nodeIDInBox[],
-                                                 const int node_size )
+void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
+                                                         const int index[],
+                                                         const int& iEle,
+                                                         int nodeIDInBox[],
+                                                         const int node_size )
 
 {
   if( elementType == "C3D8" )
@@ -1341,7 +1346,7 @@ void MeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
   }
 }
 
-void MeshGenerator::RemapMesh( DomainPartition * domain )
+void InternalMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const domain )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())
@@ -1381,4 +1386,6 @@ void MeshGenerator::RemapMesh( DomainPartition * domain )
   //  }
 
 }
+
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, std::string const &, ManagedGroup * const )
 }

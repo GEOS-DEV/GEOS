@@ -101,15 +101,11 @@ public:
    */
   ///@{
 
-  static string CatalogName()
-  {
-    return "CellBlock";
-  }
+  static const string CatalogName()
+  { return "CellBlock"; }
 
-  string getCatalogName() const override final
-  {
-    return CellBlock::CatalogName();
-  }
+  virtual const string getCatalogName() const override final
+  { return CellBlock::CatalogName(); }
 
 
   ///@}
@@ -124,7 +120,7 @@ public:
 //  ElementRegion( ElementRegion&& init);
 
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const group ) override;
+  void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 
@@ -165,7 +161,6 @@ public:
 
 private:
   CellBlock& operator=(const CellBlock& rhs);
-
 //  string & m_elementType;
 
 };

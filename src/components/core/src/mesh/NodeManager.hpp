@@ -117,11 +117,11 @@ public:
   ~NodeManager();
 
   static string CatalogName() { return dataRepository::keys::nodeManager; }
-  string getCatalogName() const override final
+  const string getCatalogName() const override final
   { return NodeManager::CatalogName(); }
 
 
-  void FillDocumentationNode( ManagedGroup * const group ) override final;
+  void FillDocumentationNode() override final;
 
 
 //  void Initialize();
@@ -129,7 +129,6 @@ public:
 
 
 public:
-
 
 
   /** @name Maps
@@ -148,12 +147,12 @@ public:
 
   struct viewKeysStruct
   {
-    static constexpr auto referencePositionString = "ReferencePosition";
-    dataRepository::ViewKey referencePosition = { referencePositionString };
+//    static constexpr auto referencePositionString = "ReferencePosition";
+    dataRepository::ViewKey referencePosition = { dataRepository::keys::referencePositionString };
     dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
-    dataRepository::ViewKey nodeList           = { "nodeList" };
-    dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
-    dataRepository::ViewKey faceList           = { "faceList" };
+    // dataRepository::ViewKey nodeList           = { "nodeList" };
+    // dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
+    // dataRepository::ViewKey faceList           = { "faceList" };
 
   } viewKeys;
 

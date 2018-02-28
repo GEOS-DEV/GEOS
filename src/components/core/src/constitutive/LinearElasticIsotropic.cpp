@@ -19,6 +19,30 @@ namespace constitutive
 {
 
 
+static inline void UpdateStatePoint( R2SymTensor const & D,
+                                     R2Tensor const & Rot,
+                                     localIndex const i,
+                                     void * dataPtrs,
+                                     integer const systemAssembleFlag )
+{
+
+  LinearElasticIsotropic::dataPointers * castedDataPtrs = reinterpret_cast<LinearElasticIsotropic::dataPointers *>(dataPtrs);
+  real64 volumeStrain = D.Trace();
+  castedDataPtrs->m_meanStress[i] += volumeStrain * castedDataPtrs->m_bulkModulus[0];
+
+  R2SymTensor temp = D;
+  temp.PlusIdentity(-volumeStrain / 3.0);
+  temp *= 2.0 * castedDataPtrs->m_shearModulus[0];
+  castedDataPtrs->m_deviatorStress[i] += temp;
+
+
+  temp.QijAjkQlk(castedDataPtrs->m_deviatorStress[i],Rot);
+  castedDataPtrs->m_deviatorStress[i] = temp;
+
+  temp.PlusIdentity(castedDataPtrs->m_meanStress[i]);
+}
+
+
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
   ConstitutiveBase(name, parent )
 {
@@ -31,7 +55,7 @@ LinearElasticIsotropic::~LinearElasticIsotropic()
   // TODO Auto-generated destructor stub
 }
 
-void LinearElasticIsotropic::FillDocumentationNode( ManagedGroup * const group )
+void LinearElasticIsotropic::FillDocumentationNode()
 {
 
   DocumentationNode * const docNode = this->getDocumentationNode();
@@ -198,6 +222,24 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
   }
 }
 
+void LinearElasticIsotropic::SetParamStatePointers( void *& data )
+{
+
+  this->m_dataPointers.m_bulkModulus = this->bulkModulus();
+  this->m_dataPointers.m_shearModulus = this->shearModulus();
+  this->m_dataPointers.m_meanStress = this->meanStress();
+  this->m_dataPointers.m_deviatorStress = this->deviatorStress();
+
+  data = reinterpret_cast<void*>(&m_dataPointers);
+}
+
+ConstitutiveBase::UpdateFunctionPointer
+LinearElasticIsotropic::GetStateUpdateFunctionPointer()
+{
+  return UpdateStatePoint;
+}
+
+
 void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * const input,
                                           dataRepository::ManagedGroup const * const parameters,
                                           dataRepository::ManagedGroup * const stateVariables,
@@ -208,7 +250,7 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
   ViewWrapper<real64_array>::rtype_const K = parameters->getData<real64_array>(std::string("BulkModulus"));
   ViewWrapper<real64_array>::rtype_const G = parameters->getData<real64_array>(std::string("ShearModulus"));
 
-  ViewWrapper<real64_array>::rtype meanStress = stateVariables->getData<real64_array>(std::string("MeanStress"));
+  ViewWrapper<real64_array>::rtype mean_stress = stateVariables->getData<real64_array>(std::string("MeanStress"));
   ViewWrapper<real64_array>::rtype S11 = stateVariables->getData<real64_array>(std::string("S11"));
   ViewWrapper<real64_array>::rtype S22 = stateVariables->getData<real64_array>(std::string("S22"));
   ViewWrapper<real64_array>::rtype S33 = stateVariables->getData<real64_array>(std::string("S33"));
@@ -226,7 +268,7 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
   for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
   {
     real volumeStrain = ( D11[i] + D22[i] + D33[i] );
-    meanStress[i] += volumeStrain * K[i];
+    mean_stress[i] += volumeStrain * K[i];
 
     S11[i] += ( D11[i] - volumeStrain/3.0 ) * 2.0 * G[i];
     S22[i] += ( D22[i] - volumeStrain/3.0 ) * 2.0 * G[i];

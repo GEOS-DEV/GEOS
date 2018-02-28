@@ -67,6 +67,7 @@
 #include "CellBlockSubRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
+#include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"
 
@@ -93,7 +94,7 @@ ElementRegion::~ElementRegion()
 {}
 
 
-void ElementRegion::FillDocumentationNode( ManagedGroup * const group )
+void ElementRegion::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -207,7 +208,8 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
 
   auto const & numMethodName = this->getData<string>(keys::numericalMethod);
   FiniteElementManager const * numericalMethodManager = problemManager->GetGroup<FiniteElementManager>(keys::finiteElementManager);
-  FiniteElementSpace const * feSpace = numericalMethodManager->GetGroup<FiniteElementSpace>(numMethodName);
+  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
   auto const & quadratureName = feSpace->getData<string>(keys::quadrature);
   QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
 
@@ -256,21 +258,22 @@ void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager 
   for( auto const & cellBlockName : this->getReference<string_array>(keys::cellBlockSubRegionNames) )
   {
     CellBlockSubRegion * cellBlock = cellBlockSubRegions->RegisterGroup<CellBlockSubRegion>(cellBlockName);
-    cellBlock->FillDocumentationNode(nullptr);
+    cellBlock->FillDocumentationNode();
     cellBlock->RegisterDocumentationNodes();
   }
 
-
-  auto const & numMethodName = this->getData<string>(keys::numericalMethod);
+  auto const & numMethodName = this->getData<string>(keys::numericalMethod); 
   FiniteElementManager const * numericalMethodManager = problemManager->GetGroup<FiniteElementManager>(keys::finiteElementManager);
-  FiniteElementSpace const * feSpace = numericalMethodManager->GetGroup<FiniteElementSpace>(numMethodName);
+  FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
   auto const & basisName = feSpace->getData<string>(keys::basis);
   auto const & quadratureName = feSpace->getData<string>(keys::quadrature);
   BasisBase const & basis = numericalMethodManager->GetGroup(keys::basisFunctions)->getReference<BasisBase>( basisName );
   QuadratureBase const & quadrature = numericalMethodManager->GetGroup(keys::quadratureRules)->getReference<QuadratureBase>( quadratureName );
 
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
-  r1_array const & X = mesh->getNodeManager()->getReference<r1_array>(keys::ReferencePosition);
+  r1_array const & X = mesh->getNodeManager()->getReference<r1_array>(keys::referencePositionString);
 
   forCellBlocks([&]( CellBlockSubRegion * subRegion )
     {

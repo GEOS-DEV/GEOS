@@ -17,37 +17,41 @@ namespace dataRepository
 namespace keys
 {
 
-std::string const ReferencePosition = "ReferencePosition";
-std::string const TotalDisplacement = "TotalDisplacement";
-std::string const IncrementalDisplacement = "IncrementalDisplacement";
-std::string const Velocity = "Velocity";
-std::string const Acceleration = "Acceleration";
-std::string const Mass = "Mass";
-std::string const Force = "Force";
-std::string const Strain = "Strain";
-std::string const Name = "name";
-std::string const Size = "size";
-std::string const ProblemManager = "ProblemManager";
-std::string const ConstitutiveManager = "ConstitutiveManager";
-std::string const ConstitutiveBase = "ConstitutiveBase";
-std::string const solverNames = "solverNames";
+//static constexpr auto ReferencePosition = "ReferencePosition";
+static constexpr auto referencePositionString = "ReferencePosition";
 
-std::string const schema = "schema";
-std::string const beginTime = "beginTime";
-std::string const endTime = "endTime";
-std::string const dt = "dt";
+static constexpr auto TotalDisplacement = "TotalDisplacement";
+static constexpr auto IncrementalDisplacement = "IncrementalDisplacement";
+static constexpr auto Velocity = "Velocity";
+static constexpr auto Acceleration = "Acceleration";
+static constexpr auto Mass = "Mass";
+static constexpr auto Force = "Force";
+static constexpr auto Strain = "Strain";
+static constexpr auto Name = "name";
+static constexpr auto Size = "size";
+static constexpr auto ProblemManager = "ProblemManager";
+static constexpr auto ConstitutiveManager = "ConstitutiveManager";
+static constexpr auto ConstitutiveBase = "ConstitutiveBase";
+static constexpr auto solverNames = "solverNames";
 
-std::string const domain  = "domain";
-std::string const solvers = "solvers";
-std::string const simulationParameterMap = "simulationParameterMap";
-std::string const FE_Space    = "FE_Space";
-//std::string const FEM_Nodes    = "FEM_Nodes";
-//std::string const FEM_Edges    = "FEM_Edges";
-//std::string const FEM_Faces    = "FEM_Faces";
-//std::string const FEM_Elements = "FEM_Elements";
-std::string const cellManager = "cellMananger";
-std::string const functionManager = "FunctionManager";
+static constexpr auto schema = "schema";
 
+static constexpr auto time = "time";
+static constexpr auto cycle = "cycle";
+static constexpr auto beginTime = "beginTime";
+static constexpr auto endTime = "endTime";
+static constexpr auto dt = "dt";
+
+static constexpr auto domain  = "domain";
+static constexpr auto solvers = "solvers";
+static constexpr auto simulationParameterMap = "simulationParameterMap";
+static constexpr auto FE_Space    = "FE_Space";
+//static constexpr auto FEM_Nodes    = "FEM_Nodes";
+//static constexpr auto FEM_Edges    = "FEM_Edges";
+//static constexpr auto FEM_Faces    = "FEM_Faces";
+//static constexpr auto FEM_Elements = "FEM_Elements";
+static constexpr auto cellManager = "cellMananger";
+static constexpr auto functionManager = "FunctionManager";
 
 }
 }

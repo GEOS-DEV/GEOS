@@ -88,7 +88,16 @@ class TensorBaseT
     realT *tp = t.Data();
     for(int ii = 0 ; ii < T_length ; ++ii)
     {
+      while(in.peek() == ',' || in.peek() == ' ')
+      {
+        in.ignore();
+      }
+
       in >> tp[ii];
+
+//      char junk[100];
+//      in.getline( junk, 100 );
+//      std::cout<<junk<<std::endl;
 //      std::cout<<tp[ii]<<std::endl;
     }
     return in;
@@ -206,6 +215,19 @@ public:
       }
     }
     return rval;
+  }
+
+
+  bool operator==( const TensorBaseT< T_length >& rhs ) const
+  {
+    for (int i = 0; i < T_length; ++i)
+    {
+      if( (t_data[i] > rhs.t_data[i]) || (t_data[i] < rhs.t_data[i]) )
+      {
+        return false;
+      }
+    }
+    return true;
   }
 
 

@@ -1,5 +1,61 @@
 
 
+Wed Feb  7 13:14:04 2018 Arturo Vargas
+v0.0.26
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/25
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/16
+
+
+Thu Jan 25 12:02:16 2018 Arturo Vargas
+v0.0.25
+
+Added a new atomic localtoglobal function
+
+
+Wed Jan 17 16:15:33 2018 Benjamin Curtice Corbett
+v0.0.24
+
+* after merge
+* after merging in master
+* conduit issue
+* removed conduit_io
+* before merge
+* after merge
+* restart working but output all 000
+* restart working
+* remove test_restart
+* removed hdf5-dif.py
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/23
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/14
+This pull request is related to the branch at: https://rzlc.llnl.gov/bitbucket/projects/geosx/repos/physicssolverpackage1/browse?at=refs%2Fheads%2Frestart-cherry-pick
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/15
+
+
+Fri Dec 29 00:37:54 2017 Randolph R. Settgast
+v0.0.23
+
+This pull request fixes problems with reading of input xml that were introduced by the last merged pull request. In addition, some compiler warnings were reinstated on clang and cleaned.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/13
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/21
+
+
+Thu Dec 21 15:39:01 2017 Christopher Sherman
+v0.0.22
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/19
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/12
+
+
+Mon Dec 11 08:00:39 2017 Randolph R. Settgast
+v0.0.21
+
+Updated build for darwin.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/11
+
+
 Mon Dec  4 10:37:46 2017 Randolph R. Settgast
 v0.0.20
 

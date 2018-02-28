@@ -353,7 +353,8 @@ public:
   {
     for( typename valueContainer::size_type a=0 ; a<m_values.size() ; ++a )
     {
-      erase(a);
+      //TODO this needs to be a safe conversion
+      erase(static_cast<INDEX_TYPE>(a));
     }
     m_keyLookup.clear();
     m_values.clear();
@@ -364,7 +365,10 @@ public:
 
 
   inline INDEX_TYPE size() const
-  { return m_values.size(); }
+  {
+    //TODO this needs to be a safe conversion
+    return static_cast<INDEX_TYPE>(m_values.size());
+  }
 
   inline valueContainer const & values()
   { return this->m_values; }
@@ -396,7 +400,8 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const 
   {
     value_type newEntry = std::make_pair( keyName, std::move( source ) );
     m_values.push_back( std::move( newEntry ) );
-    index = m_values.size() - 1;
+    //TODO this needs to be a safe conversion
+    index = static_cast<INDEX_TYPE>(m_values.size()) - 1;
 
     m_keyLookup.insert( std::make_pair(keyName,index) );
     m_constValues.push_back( std::make_pair( keyName, &(*(m_values[index].second)) ) );

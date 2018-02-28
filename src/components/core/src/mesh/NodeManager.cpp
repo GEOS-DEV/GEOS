@@ -125,7 +125,7 @@ NodeManager::~NodeManager()
 
 
 
-void NodeManager::FillDocumentationNode( ManagedGroup * const group )
+void NodeManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -172,8 +172,8 @@ void NodeManager::FillDocumentationNode( ManagedGroup * const group )
                               0,
                               0 );
 
-  docNode->AllocateChildNode( viewKeysStruct::referencePositionString,
-                              viewKeysStruct::referencePositionString,
+  docNode->AllocateChildNode( keys::referencePositionString,
+                              keys::referencePositionString,
                               -1,
                               "r1_array",
                               "r1_array",

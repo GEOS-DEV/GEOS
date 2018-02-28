@@ -26,36 +26,21 @@ EventManager::EventManager( std::string const & name,
 EventManager::~EventManager()
 {}
 
-void EventManager::FillDocumentationNode( dataRepository::ManagedGroup * const )
+void EventManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   // Set the name to SolverApplications for now
-  docNode->setName("SolverApplications");
+  docNode->setName("Events");
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Contains the set of solver applications");
 }
 
 
-void EventManager::ReadXMLsub( xmlWrapper::xmlNode const & problemNode )
+void EventManager::CreateChild( string const & childKey, string const & childName )
 {
-  xmlWrapper::xmlNode topLevelNode = problemNode.child("SolverApplications");
-  if (topLevelNode == NULL)
-  {
-    throw std::invalid_argument("SolverApplications block not present in input xml file!");
-  }
-  else
-  {
-    // Allow other event types here?
-    for (xmlWrapper::xmlNode applicationNode=topLevelNode.first_child() ; applicationNode ; applicationNode=applicationNode.next_sibling())
-    {
-      std::string applicationName = applicationNode.attribute("name").value();
-      SolverApplication * newApplication = RegisterGroup<SolverApplication>(applicationName);
-      newApplication->SetDocumentationNodes(this);
-      newApplication->RegisterDocumentationNodes();
-      newApplication->ReadXML(applicationNode);
-    }
-  }
+  std::cout << "Adding Event: " << childKey << ", " << childName << std::endl;
+  this->RegisterGroup<SolverApplication>( childName );
 }
 
 
@@ -94,7 +79,7 @@ SolverApplication::SolverApplication( std::string const & name,
 SolverApplication::~SolverApplication()
 {}
 
-void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * const )
+void SolverApplication::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
@@ -102,6 +87,19 @@ void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * co
   docNode->setName("Application");
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Describes the timing of the solver application");
+
+  docNode->AllocateChildNode( keys::time,
+                              keys::time,
+                              -1,
+                              "real64",
+                              "real64",
+                              "application current time",
+                              "application current time",
+                              "0.0",
+                              "",
+                              0,
+                              1,
+                              0 );
 
   docNode->AllocateChildNode( keys::beginTime,
                               keys::beginTime,
@@ -137,6 +135,19 @@ void SolverApplication::FillDocumentationNode( dataRepository::ManagedGroup * co
                               "application dt",
                               "application dt",
                               "-1.0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( keys::cycle,
+                              keys::cycle,
+                              -1,
+                              "integer",
+                              "integer",
+                              "application current cycle",
+                              "application current cycle",
+                              "0.0",
                               "",
                               0,
                               1,

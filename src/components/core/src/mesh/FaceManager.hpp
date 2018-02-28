@@ -24,15 +24,11 @@ public:
    */
   ///@{
 
-  static string CatalogName()
-  {
-    return "FaceManager";
-  }
+  static const string CatalogName() 
+  { return "FaceManager"; }
 
-  string getCatalogName() const override final
-  {
-    return FaceManager::CatalogName();
-  }
+  virtual const string getCatalogName() const override final
+  { return FaceManager::CatalogName(); }
 
 
   ///@}
@@ -45,7 +41,7 @@ public:
 
 //  void Initialize(  ){}
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const  ) override final;
+  void FillDocumentationNode() override final;
 
 
   void BuildFaces( NodeManager const * const nodeManager, ElementRegionManager * const elemManager );

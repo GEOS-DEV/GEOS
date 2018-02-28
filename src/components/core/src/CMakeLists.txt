@@ -43,7 +43,7 @@ if( ENABLE_MPI )
 endif()
 
 if( USE_ATK )
-  set( extraComponentsListLink ${extraComponentsListLink}  )
+  set( extraComponentsListLink ${extraComponentsListLink} )
 endif()
 
 #message( "extraComponentsListLink = ${extraComponentsListLink}" )
@@ -59,12 +59,5 @@ blt_add_library( NAME                  geosx_core
                  
 #                 DEPENDS_ON            optionparser cxx-utilities  pugixml  silo hdf5 trilinos  ${extraComponentsListLink} ${thirdPartyLibs} )
                  
-
-target_include_directories(geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
-#target_include_directories(geosx_core PUBLIC ${PROJECT_BINARY_DIR}/include)
-
-
-if( ENABLE_UNCRUSTIFY )
 geosx_add_code_checks(PREFIX core)
-endif()
 

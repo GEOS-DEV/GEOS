@@ -39,7 +39,7 @@ SystemSolverParameters::~SystemSolverParameters()
 
 
 
-void SystemSolverParameters::FillDocumentationNode( dataRepository::ManagedGroup * const  )
+void SystemSolverParameters::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 

@@ -22,7 +22,7 @@ public:
                           ManagedGroup * const parent );
   virtual ~SystemSolverParameters();
 
-  void FillDocumentationNode( dataRepository::ManagedGroup * const  );
+  void FillDocumentationNode();
 
   struct viewKeysStruct
   {

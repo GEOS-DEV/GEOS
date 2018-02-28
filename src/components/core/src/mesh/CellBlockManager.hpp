@@ -99,10 +99,8 @@ public:
     return "CellBlockManager";
   }
 
-  string getCatalogName() const override final
-  {
-    return CellBlockManager::CatalogName();
-  }
+  virtual const string getCatalogName() const override final
+  { return CellBlockManager::CatalogName(); }
 
 
 
@@ -114,8 +112,7 @@ public:
 
 //  void Initialize(  ){}
 
-//  virtual void ReadXML_Group( xmlWrapper::xmlNode const & targetNode )
-// override ;
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   using ManagedGroup::resize;
 

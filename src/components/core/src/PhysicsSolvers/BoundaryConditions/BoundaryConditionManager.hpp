@@ -30,7 +30,7 @@ public:
 
   static BoundaryConditionManager * get();
 
-  void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
+  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   void ApplyInitialConditions( dataRepository::ManagedGroup * domain ) const;
 
