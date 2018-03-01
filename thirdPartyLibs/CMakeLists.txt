@@ -109,7 +109,6 @@ else()
 #                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/silo-4.10.2-bsd.tar.gz
                           PREFIX ${PROJECT_BINARY_DIR}/silo
-                          DEPENDS hdf5
                           INSTALL_DIR ${silo_install_dir}
                           CONFIGURE_COMMAND ../silo/configure CC=${SERIAL_C_COMPILER}
                                                CXX=${SERIAL_CXX_COMPILER}
