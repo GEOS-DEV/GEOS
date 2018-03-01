@@ -45,6 +45,9 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
     sidreGroup = sidreParent->createGroup(name);
   }
   return sidreGroup;
+#else
+  return nullptr;
+
 #endif
 }
 

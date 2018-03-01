@@ -63,10 +63,10 @@ void SidreWrapper::reconstructTree(const std::string & root_path, const std::str
 #endif
 }
 
-
+#ifdef USE_ATK
 bool checkSidreTree(Group * group) 
 {
-#ifdef USE_ATK
+
   bool valid = true;
   for (int i = group->getFirstValidViewIndex(); i != InvalidIndex; i = group->getNextValidViewIndex(i)) 
   {
@@ -84,11 +84,8 @@ bool checkSidreTree(Group * group)
   }
 
   return valid;
-
-#else
-  return false;
-#endif
 }
+#endif
 
 /* Load sidre external data. */
 void SidreWrapper::loadExternalData(const std::string & root_path, MPI_Comm comm)

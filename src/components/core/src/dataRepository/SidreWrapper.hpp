@@ -13,9 +13,9 @@
 
 #ifdef USE_ATK
 #include "sidre/DataStore.hpp"
-#include <mpi.h>
 #include "spio/IOManager.hpp"
 #endif
+#include <mpi.h>
 
 namespace geosx
 {

@@ -3,6 +3,7 @@
 
 #include <vector>             /* for std::vector */
 #include <algorithm>          /* for std::binary_search, std::lower_bound */
+//#include <cmath>
 
 template< typename T >
 class SortedArray

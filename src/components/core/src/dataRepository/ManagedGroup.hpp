@@ -31,6 +31,15 @@
 #define NOCHARTOSTRING_KEYLOOKUP 0
 #endif
 
+/* Forward declaration of axom::sidre::Group */
+namespace axom
+{
+namespace sidre
+{
+class Group;
+}
+}
+
 /*
 #ifdef __INTEL_COMPILER
 namespace std
@@ -535,14 +544,26 @@ public:
     return m_size;
   }
 
-
+  axom::sidre::Group * getSidreGroup()              
+  { 
 #ifdef USE_ATK
-  axom::sidre::Group * getSidreGroup()              { return m_sidreGroup; }
-  axom::sidre::Group const * getSidreGroup() const  { return m_sidreGroup; }
+    return m_sidreGroup;
+#else
+    return nullptr;
+#endif
+  }
+
+  axom::sidre::Group const * getSidreGroup() const  
+  { 
+#ifdef USE_ATK
+    return m_sidreGroup;
+#else
+    return nullptr;
+#endif
+  }
 
   static axom::sidre::Group * setSidreGroup( string const& name,
                                              ManagedGroup * const parent );
-#endif
 
   ManagedGroup * getParent()             { return m_parent; }
   ManagedGroup const * getParent() const { return m_parent; }

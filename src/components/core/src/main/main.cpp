@@ -2,7 +2,7 @@
 
 #include "common/Logger.hpp"
 #include "common/TimingMacros.hpp"
-
+#include <cmath>
 #include <mpi.h>
 #include <iostream>
 #include <sys/time.h>
