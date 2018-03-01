@@ -10,6 +10,7 @@
 
 #include "common/DataTypes.hpp"
 #include "mpi.h"
+#include<set>
 namespace geosx
 {
 

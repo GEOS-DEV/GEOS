@@ -382,7 +382,7 @@ int ManagedGroup::PackSize( array<string> const & wrapperNames,
   packedSize += CommBufferOps::PackSize( string("Wrappers"));
   if( wrapperNames.size()==0 )
   {
-    packedSize += CommBufferOps::PackSize( m_wrappers.size() );
+    packedSize += CommBufferOps::PackSize( static_cast<int>(m_wrappers.size()) );
     for( auto const & wrapperPair : this->m_wrappers )
     {
       packedSize += CommBufferOps::PackSize( wrapperPair.first );
@@ -398,7 +398,7 @@ int ManagedGroup::PackSize( array<string> const & wrapperNames,
   }
   else
   {
-    packedSize += CommBufferOps::PackSize( wrapperNames.size() );
+    packedSize += CommBufferOps::PackSize( static_cast<int>(wrapperNames.size()) );
     for( auto const & wrapperName : wrapperNames )
     {
       ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
@@ -447,7 +447,7 @@ int ManagedGroup::Pack( buffer_unit_type * & buffer,
   packedSize += CommBufferOps::Pack<true>( buffer, string("Wrappers") );
   if( wrapperNames.size()==0 )
   {
-    packedSize += CommBufferOps::Pack<true>( buffer, m_wrappers.size() );
+    packedSize += CommBufferOps::Pack<true,int>( buffer, m_wrappers.size() );
     for( auto const & wrapperPair : this->m_wrappers )
     {
       packedSize += CommBufferOps::Pack<true>( buffer, wrapperPair.first );
@@ -463,7 +463,7 @@ int ManagedGroup::Pack( buffer_unit_type * & buffer,
   }
   else
   {
-    packedSize += CommBufferOps::Pack<true>( buffer, wrapperNames.size() );
+    packedSize += CommBufferOps::Pack<true,int>( buffer, wrapperNames.size() );
     for( auto const & wrapperName : wrapperNames )
     {
       ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
@@ -509,30 +509,40 @@ int ManagedGroup::Unpack( buffer_unit_type const *& buffer,
   int unpackedSize = 0;
   string groupName;
   unpackedSize += CommBufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName!=this->getName(), "ManagedGroup::Unpack(): group names do not match")
+  GEOS_ASSERT( groupName!=this->getName(), "ManagedGroup::Unpack(): group names do not match")
 
   string wrappersLabel;
   unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
-  GEOS_ERROR_IF( wrappersLabel!="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
+  GEOS_ASSERT( wrappersLabel!="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
 
-  localIndex numWrappers;
+  int numWrappers;
   unpackedSize += CommBufferOps::Unpack( buffer, numWrappers);
   for( localIndex a=0 ; a<numWrappers ; ++a )
   {
     string wrapperName;
     unpackedSize += CommBufferOps::Unpack( buffer, wrapperName );
     ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-    wrapper->Unpack(buffer);
+    wrapper->Unpack(buffer,packList);
   }
 
 
-//  if( recursive > 0 )
-//  {
-//    for( auto const & keyGroupPair : this->m_subGroups )
-//    {
-//      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
-//    }
-//  }
+  if( recursive > 0 )
+  {
+    string subGroups;
+    unpackedSize += CommBufferOps::Unpack( buffer, subGroups );
+    GEOS_ASSERT( subGroups!="SubGroups", "ManagedGroup::Unpack(): group names do not match")
+
+    decltype( m_subGroups.size()) numSubGroups;
+    unpackedSize += CommBufferOps::Unpack( buffer, numSubGroups );
+    GEOS_ASSERT( numSubGroups!=m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
+
+    for( auto const & index : this->m_subGroups )
+    {
+      string subGroupName;
+      unpackedSize += CommBufferOps::Unpack( buffer, subGroupName );
+      unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive);
+    }
+  }
 
   return unpackedSize;
 }

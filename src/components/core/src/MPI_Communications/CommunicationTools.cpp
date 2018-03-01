@@ -41,9 +41,9 @@ int CommunicationTools::MPI_Rank( MPI_Comm const & comm )
 }
 
 
-set<int> & CommunicationTools::getFreeCommIDs()
+std::set<int> & CommunicationTools::getFreeCommIDs()
 {
-  static set<int> commIDs;
+  static std::set<int> commIDs;
   static bool isInitialized = false;
 
   if( !isInitialized )
@@ -61,7 +61,7 @@ set<int> & CommunicationTools::getFreeCommIDs()
 
 int CommunicationTools::reserveCommID()
 {
-  set<int> & commIDs = getFreeCommIDs();
+  std::set<int> & commIDs = getFreeCommIDs();
 
   int rval = *( commIDs.begin() );
   commIDs.erase( rval );
@@ -70,7 +70,7 @@ int CommunicationTools::reserveCommID()
 
 void CommunicationTools::releaseCommID( int & ID )
 {
-  set<int> & commIDs = getFreeCommIDs();
+  std::set<int> & commIDs = getFreeCommIDs();
 
   if( commIDs.count(ID) > 0 )
   {
@@ -202,8 +202,8 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     {
       NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
-      globalIndex const * recBuffer = reinterpret_cast<globalIndex const *>( neighbor.RecieveBuffer( commID ).data() );
-      localIndex recBufferSize = integer_conversion<localIndex>(neighbor.RecieveBuffer( commID ).size() / sizeof(globalIndex));
+      globalIndex const * recBuffer = reinterpret_cast<globalIndex const *>( neighbor.ReceiveBuffer( commID ).data() );
+      localIndex recBufferSize = integer_conversion<localIndex>(neighbor.ReceiveBuffer( commID ).size() / sizeof(globalIndex));
       globalIndex const * endBuffer = recBuffer + recBufferSize;
       // iterate over data that was just received
       while( recBuffer < endBuffer )

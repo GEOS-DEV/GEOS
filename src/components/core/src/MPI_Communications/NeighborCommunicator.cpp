@@ -292,6 +292,13 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
   this->MPI_iSendReceive( commID, MPI_COMM_WORLD );
   MPI_WaitAll( commID );
 
+
+  buffer_type const & receiveBuffer = ReceiveBuffer(commID);
+  buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
+
+  int unpackedSize = 0;
+  unpackedSize += nodeManager.Unpack( receiveBufferPtr, {}, 0);
+
   std::cout<<"herro"<<std::endl;
 
 

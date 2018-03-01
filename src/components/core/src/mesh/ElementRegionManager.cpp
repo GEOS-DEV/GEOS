@@ -225,7 +225,7 @@ ElementRegionManager::PackSize( array<string> const & wrapperNames,
       packedSize += CommBufferOps::PackSize( subRegion->getName() );
 
       localIndex_array const & elemList = *(viewAccessor[kReg][kSubReg]);
-      subRegion->PackSize(wrapperNames, elemList, 0 );
+      packedSize += subRegion->PackSize(wrapperNames, elemList, 0 );
     }
   }
 
@@ -254,7 +254,7 @@ ElementRegionManager::Pack( buffer_unit_type * & buffer,
       packedSize += CommBufferOps::Pack<true>( buffer, subRegion->getName() );
 
       localIndex_array const & elemList = *(viewAccessor[kReg][kSubReg]);
-      subRegion->Pack(buffer, wrapperNames, elemList, 0 );
+      packedSize += subRegion->Pack(buffer, wrapperNames, elemList, 0 );
     }
   }
 

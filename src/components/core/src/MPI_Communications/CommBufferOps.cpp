@@ -14,14 +14,16 @@ namespace geosx
 //}
 
 
-
-localIndex CommBufferOps::Unpack( char const *& buffer, string& var )
+namespace CommBufferOps
+{
+localIndex Unpack( char const *& buffer, string& var )
 {
   localIndex sizeOfUnpackedChars = 0;
   string::size_type stringsize = 0;
 
   sizeOfUnpackedChars += Unpack( buffer, stringsize );
 
+  var.resize(stringsize);
   var.assign( buffer, stringsize );
   buffer += stringsize;
   sizeOfUnpackedChars += stringsize;
@@ -29,7 +31,7 @@ localIndex CommBufferOps::Unpack( char const *& buffer, string& var )
   return sizeOfUnpackedChars;
 }
 
-
+}
 
 //localIndex CommBufferOps::PackSize( const array<string>& container )
 //{

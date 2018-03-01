@@ -5,6 +5,7 @@
 set(geosx_headers
   ${geosx_headers}
     MPI_Communications/CommBufferOps.hpp
+    MPI_Communications/CommBufferOps_inline.hpp
     MPI_Communications/CommunicationTools.hpp
     MPI_Communications/NeighborCommunicator.hpp
     MPI_Communications/NeighborCommunication.hpp

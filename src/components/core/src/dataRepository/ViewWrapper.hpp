@@ -20,6 +20,7 @@
 #include "Buffer.hpp"
 
 #include "codingUtilities/Utilities.hpp"
+#include "codingUtilities/GeosxTraits.hpp"
 
 
 
@@ -175,126 +176,125 @@ public:
     return static_cast< ViewWrapper<T>& >(base);
   }
 
-  template< bool DO_PACKING >
-  struct pack_wrapper
-  {
-
-//    template<typename TT >
-//      struct has_square_bracket_operator
-//      {
-//    private:
-//        template<typename U> static constexpr auto test(int)->decltype( std::is_member_function_pointer<decltype(&U::operator[])>::value, bool() )
-//        {
-//          return std::is_member_function_pointer<decltype(&U::operator[])>::value;
-//        }
-//        template<typename U> static constexpr auto test(...)->bool
-//        {
-//          return false;
-//        }
-//    public:
-//        static constexpr bool value = test<TT>(0);
-//      };
-
-
-
-    HAS_ALIAS(pointer)
-
-
-    template<class U = T>
-    static typename std::enable_if< has_alias_pointer<U>::value  ||
-                                    std::is_pod<U>::value, localIndex >::type
-    PackT( char *& buffer, U const & m_data )
-    {
-      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data );
-    }
-
-    template<class U = T>
-    static typename std::enable_if< !has_alias_pointer<U>::value &&
-                                    !std::is_pod<U>::value, localIndex >::type
-    PackT( char *& buffer, U const & m_data )
-    {
-      return 0;
-    }
-
-    template<class U = T>
-    static typename std::enable_if< has_alias_pointer<U>::value  ||
-                                    std::is_pod<U>::value, localIndex >::type
-    UnpackT( char const *& buffer, U & m_data )
-    {
-      return CommBufferOps::Unpack( buffer, m_data );
-    }
-
-    template<class U = T>
-    static typename std::enable_if< !has_alias_pointer<U>::value &&
-                                    !std::is_pod<U>::value, localIndex >::type
-    UnpackT( char const *& buffer, U & m_data )
-    {
-      return 0;
-    }
-
-
-    template<class U = T>
-    static typename std::enable_if< has_alias_pointer<U>::value  &&
-                                    !std::is_pod<U>::value &&
-                                    !std::is_same<U,string>::value, localIndex >::type
-    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
-    {
-      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data, packList );
-    }
-
-    template<class U = T>
-    static typename std::enable_if< ( std::is_pod<U>::value ||
-                                      std::is_same<U,string>::value ),localIndex >::type
-    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
-    {
-      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data );
-    }
-
-    template<class U = T>
-    static typename std::enable_if< !has_alias_pointer<U>::value &&
-                                    !std::is_pod<U>::value &&
-                                    !std::is_same<U,string>::value, localIndex >::type
-    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
-    {
-      return 0;
-    }
-
-
-    template<class U = T>
-    static typename std::enable_if< has_alias_pointer<U>::value  &&
-                                    !std::is_pod<U>::value &&
-                                    !std::is_same<U,string>::value, localIndex >::type
-    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
-    {
-      return CommBufferOps::Unpack( buffer, m_data, packList );
-    }
-
-    template<class U = T>
-    static typename std::enable_if< ( std::is_pod<U>::value ||
-                                      std::is_same<U,string>::value ),localIndex >::type
-    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
-    {
-      return CommBufferOps::Unpack( buffer, m_data );
-    }
-
-    template<class U = T>
-    static typename std::enable_if< !has_alias_pointer<U>::value &&
-                                    !std::is_pod<U>::value &&
-                                    !std::is_same<U,string>::value, localIndex >::type
-    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
-    {
-      return 0;
-    }
-
-
-  };
+//  template< bool DO_PACKING >
+//  struct pack_wrapper
+//  {
+//
+////    template<typename TT >
+////      struct has_square_bracket_operator
+////      {
+////    private:
+////        template<typename U> static constexpr auto test(int)->decltype( std::is_member_function_pointer<decltype(&U::operator[])>::value, bool() )
+////        {
+////          return std::is_member_function_pointer<decltype(&U::operator[])>::value;
+////        }
+////        template<typename U> static constexpr auto test(...)->bool
+////        {
+////          return false;
+////        }
+////    public:
+////        static constexpr bool value = test<TT>(0);
+////      };
+//
+//
+//
+//    HAS_ALIAS(pointer)
+//    HAS_ALIAS(iterator)
+//    HAS_MEMBER_FUNCTION(begin,typename U::iterator,,,)
+//    HAS_MEMBER_FUNCTION(end,typename U::iterator,,,)
+//
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value, localIndex >::type
+//    PackT( char *& buffer, U const & m_data )
+//    {
+//      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value, localIndex >::type
+//    PackT( char *& buffer, U const & m_data )
+//    {
+//      return 0;
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value, localIndex >::type
+//    UnpackT( char const *& buffer, U & m_data )
+//    {
+//      return CommBufferOps::Unpack( buffer, m_data );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value, localIndex >::type
+//    UnpackT( char const *& buffer, U & m_data )
+//    {
+//      return 0;
+//    }
+//
+//
+//
+//
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
+//                                    !std::is_same<U,string>::value, localIndex >::type
+//    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+//    {
+//      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data, packList );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
+//                                    std::is_same<U,string>::value, localIndex >::type
+//    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+//    {
+//      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value , localIndex >::type
+//    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+//    {
+//      return 0;
+//    }
+//
+//
+//
+//
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
+//                                    !std::is_same<U,string>::value, localIndex >::type
+//    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
+//    {
+//      return CommBufferOps::Unpack( buffer, m_data, packList );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
+//                                    std::is_same<U,string>::value, localIndex >::type
+//    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
+//    {
+//      return CommBufferOps::Unpack( buffer, m_data );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value , localIndex >::type
+//    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
+//    {
+//      return 0;
+//    }
+//
+//
+//  };
 
   virtual localIndex Pack( char *& buffer ) const override final
   {
     localIndex packedSize = 0;
 
     packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
-    packedSize += pack_wrapper<true>::PackT( buffer, *m_data);
+    packedSize += CommBufferOps::Pack<true>( buffer, *m_data);
 
     return packedSize;
   }
@@ -303,9 +303,11 @@ public:
   {
     localIndex packedSize = 0;
 
-    packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
-    packedSize += pack_wrapper<true>::PackT( buffer, *m_data, packList);
-
+    static_if( CommBufferOps::is_packable_by_index<T>::value )
+    {
+      packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
+      packedSize += CommBufferOps::Pack<true>( buffer, *m_data, packList);
+    });
     return packedSize;
   }
 
@@ -315,7 +317,7 @@ public:
     localIndex packedSize = 0;
 
     packedSize += CommBufferOps::Pack<false>( buffer, this->getName() );
-    packedSize += pack_wrapper<false>::PackT( buffer, *m_data);
+    packedSize += CommBufferOps::Pack<false>( buffer, *m_data);
 
     return packedSize;
   }
@@ -326,8 +328,11 @@ public:
     char * buffer = nullptr;
     localIndex packedSize = 0;
 
-    packedSize += CommBufferOps::Pack<false>( buffer, this->getName() );
-    packedSize += pack_wrapper<false>::PackT( buffer, *m_data, packList);
+    static_if( CommBufferOps::is_packable_by_index<T>::value )
+    {
+      packedSize += CommBufferOps::Pack<false>( buffer, this->getName() );
+      packedSize += CommBufferOps::Pack<false>( buffer, *m_data, packList);
+    });
 
     return packedSize;
   }
@@ -337,17 +342,20 @@ public:
     localIndex unpackedSize = 0;
     string name;
     unpackedSize += CommBufferOps::Unpack( buffer, name );
-    GEOS_ERROR_IF( name != this->getName(),"buffer unpack leads to viewWrapper names that don't match" )
-    unpackedSize += pack_wrapper<true>::UnpackT( buffer, *m_data );
+    GEOS_ASSERT( name != this->getName(),"buffer unpack leads to viewWrapper names that don't match" )
+    unpackedSize += CommBufferOps::Unpack( buffer, *m_data );
     return unpackedSize;
   }
   virtual localIndex Unpack( char const *& buffer, localIndex_array const & unpackIndices ) override final
   {
     localIndex unpackedSize = 0;
-    string name;
-    unpackedSize += CommBufferOps::Unpack( buffer, name );
-    GEOS_ERROR_IF( name != this->getName(),"buffer unpack leads to viewWrapper names that don't match" )
-    unpackedSize += pack_wrapper<true>::UnpackT( buffer, *m_data, unpackIndices );
+    static_if( CommBufferOps::is_packable_by_index<T>::value )
+    {
+      string name;
+      unpackedSize += CommBufferOps::Unpack( buffer, name );
+      GEOS_ASSERT( name != this->getName(),"buffer unpack leads to viewWrapper names that don't match" )
+      unpackedSize += CommBufferOps::Unpack( buffer, *m_data, unpackIndices );
+    });
     return unpackedSize;
   }
 

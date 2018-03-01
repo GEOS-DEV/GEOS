@@ -149,11 +149,11 @@ public:
 
   static int constexpr maxComm = 100;
 
-  buffer_type const & RecieveBuffer( int commID ) const
+  buffer_type const & ReceiveBuffer( int commID ) const
   {
     return m_receiveBuffer[commID];
   }
-  buffer_type & RecieveBuffer( int commID )
+  buffer_type & ReceiveBuffer( int commID )
   {
     return m_receiveBuffer[commID];
   }

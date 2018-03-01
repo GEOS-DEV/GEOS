@@ -7,117 +7,167 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/Logger.hpp"
 #include "codingUtilities/static_if.hpp"
-
+#include "codingUtilities/GeosxTraits.hpp"
+#include <type_traits>
 namespace geosx
 {
 
 
-class CommBufferOps
-{
-public:
 
-  /** @name Packing functions for data objects
+namespace CommBufferOps
+{
+
+
+  /** @name Packing/Unpacking functions for pointer arrays of arbitrary types
    */
   ///@{
 
-  template< bool DO_PACKING,
-            typename T,
-            typename INDEX_TYPE >
-  static typename std::enable_if< std::is_arithmetic<T>::value, localIndex >::type
-  Pack( char*&  buffer,
-                          T const * const var,
-                          INDEX_TYPE const length );
 
 
   template< bool DO_PACKING,
             typename T,
             typename INDEX_TYPE >
-  static typename std::enable_if< !std::is_arithmetic<T>::value, localIndex >::type
+  typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
   Pack( char*&  buffer,
-                          T const * const var,
-                          INDEX_TYPE const length );
+        T const * const var,
+        INDEX_TYPE const length );
+
+
+  template< bool DO_PACKING,
+            typename T,
+            typename INDEX_TYPE >
+  typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
+  Pack( char*&  buffer,
+        T const * const var,
+        INDEX_TYPE const length );
 
 
   template< typename T, typename INDEX_TYPE >
-  static localIndex Unpack( char const *& buffer, T * const var, INDEX_TYPE & length );
+  typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
+  Unpack( char const *& buffer, T * const var, INDEX_TYPE & length );
+
+  template< typename T, typename INDEX_TYPE >
+  typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
+  Unpack( char const *& buffer, T * const var, INDEX_TYPE & length );
 
 
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-  static localIndex Pack( char*&  buffer,
-                          T const * const var,
-                          INDEX_TYPE const * const indices,
-                          INDEX_TYPE const length  );
+  localIndex Pack( char*&  buffer,
+                   T const * const var,
+                   INDEX_TYPE const * const indices,
+                   INDEX_TYPE const length  );
 
   template< typename T, typename INDEX_TYPE >
-  static localIndex Unpack( char const *& buffer,
-                            T * const var,
-                            INDEX_TYPE const * const indices,
-                            INDEX_TYPE & length );
+  localIndex Unpack( char const *& buffer,
+                     T * const var,
+                     INDEX_TYPE const * const indices,
+                     INDEX_TYPE & length );
 
-
-
-
-  template< bool DO_PACKING, typename T >
-  static localIndex Pack( array<char> & buffer, T const & var );
-
-  template< bool DO_PACKING, typename T >
-  static localIndex Pack( char*&  buffer, T const & var );
-
-  template< typename T >
-  static localIndex Unpack( char const *& buffer, T & var );
-
-
-
-  template< bool DO_PACKING >
-  static localIndex Pack( array<char> & buffer, string const & var );
-
-  template< bool DO_PACKING >
-  static localIndex Pack( char*& buffer, string const & var );
-
-  template< bool DO_PACKING, typename T_INDICES >
-  static localIndex Pack( char*& buffer, string const & var, T_INDICES const& )
-  {
-    return Pack<DO_PACKING>(buffer,var);
-  }
-
-  static localIndex Unpack( char const *& buffer, string& var );
 
   ///@}
 
+
+
+
+
+
+
+
+  /** @name Packing/Unpacking functions for arbitrary types
+   */
+  ///@{
+
+
+  template< bool DO_PACKING, typename T >
+  typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
+  Pack( char*&  buffer, T const & var );
+
+  template< typename T >
+  typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
+  Unpack( char const *& buffer, T & var );
+
+
+
+
+  ///@}
+
+
+
+
+  /** @name Packing/Unpacking functions for strings
+   */
+  ///@{
+
+  template< bool DO_PACKING >
+  localIndex Pack( char*& buffer, string const & var );
+
+  localIndex Unpack( char const *& buffer, string& var );
+
+  ///@}
+
+
+  /** @name Packing/Unpacking functions for single point tensor objects
+   */
+  ///@{
+  template< bool DO_PACKING, typename T >
+  typename std::enable_if< traits::is_tensorT<T>::value, localIndex >::type
+  Pack( char*& buffer, T const & var );
+
+  template< typename T >
+  typename std::enable_if< traits::is_tensorT<T>::value, localIndex >::type
+  Unpack( char const *& buffer, T & var );
+  ///@}
 
 
   /** @name Packing functions for entire collections of data
    */
   ///@{
 
-  template< bool DO_PACKING, typename T   >
-  static localIndex Pack( char*& buffer, set<T> const & var );
 
-  template< bool DO_PACKING, typename T, typename T_INDICES >
-  static localIndex Pack( char*& buffer, set<T> const & var, T_INDICES const & )
-  { return 0; }
+  template< bool DO_PACKING,
+            typename T,
+            int NDIM,
+            typename INDEX_TYPE=std::int_fast32_t >
+  typename std::enable_if<
+  is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
+  localIndex >::type
+  Pack( char*& buffer,
+        multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var );
+
+  template< typename T,
+            int NDIM,
+            typename INDEX_TYPE=std::int_fast32_t >
+  typename std::enable_if<
+  is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
+  localIndex >::type
+  Unpack( char const *& buffer,
+          multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var );
+
+
+
+  template< bool DO_PACKING, typename T   >
+  localIndex Pack( char*& buffer, set<T> const & var );
+
 
   template< typename T>
-  static localIndex Unpack( char const *& buffer, set<T> & setToRead );
+  localIndex Unpack( char const *& buffer, set<T> & setToRead );
+
+
 
 
   template< bool DO_PACKING, typename T_KEY, typename T_VAL >
-  static localIndex Pack( char*& buffer,
-                          std::map<T_KEY,T_VAL> const & var );
+  typename std::enable_if<
+  is_packable_map< map<T_KEY,T_VAL> >::value,
+  localIndex >::type
+  Pack( char*& buffer,
+        std::map<T_KEY,T_VAL> const & var );
 
   template< typename T_KEY, typename T_VAL >
-  static localIndex Unpack( char const *& buffer,
-                            std::map<T_KEY,T_VAL>& map );
-
-  template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename T_INDICES >
-  static localIndex Pack( char*& buffer,
-                          const std::map<T_KEY,T_VAL>& var,
-                          T_INDICES const & packIndices );
-
-  template< typename T_KEY, typename T_VAL, typename T_INDICES >
-  static localIndex Unpack( char const *& buffer,
-                            std::map<T_KEY,T_VAL>& map,
-                            T_INDICES const & unpackIndices );
+  typename std::enable_if<
+  is_packable_map< map<T_KEY,T_VAL> >::value,
+  localIndex >::type
+  Unpack( char const *& buffer,
+          std::map<T_KEY,T_VAL>& map );
 
 
   ///@}
@@ -128,57 +178,98 @@ public:
 
 
 
-  template< bool DO_PACKING,
-            typename T,
-            int NDIM,
-            typename INDEX_TYPE=std::int_fast32_t >
-  static localIndex Pack( char*& buffer,
-                          multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var );
-
-  template< typename T,
-            int NDIM,
-            typename INDEX_TYPE=std::int_fast32_t >
-  static localIndex Unpack( char const *& buffer,
-                            multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var );
 
   template< bool DO_PACKING,
             typename T,
             int NDIM,
             typename T_indices,
             typename INDEX_TYPE=std::int_fast32_t >
-  static localIndex Pack( char*& buffer,
-                          multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var,
-                          const T_indices& indices );
+  typename std::enable_if<
+  is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
+  localIndex >::type
+  Pack( char*& buffer,
+        multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var,
+        const T_indices& indices );
 
   template< typename T,
             int NDIM,
             typename T_indices,
             typename INDEX_TYPE=std::int_fast32_t >
-  static localIndex Unpack( char const *& buffer,
+  localIndex Unpack( char const *& buffer,
                             multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var,
                             const T_indices& indices );
 
 
+  template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename T_INDICES >
+  typename std::enable_if<
+  is_packable_map< map<T_KEY,T_VAL> >::value && is_packable_by_index<T_VAL>::value,
+  localIndex >::type
+  Pack( char*& buffer,
+        const std::map<T_KEY,T_VAL>& var,
+        T_INDICES const & packIndices );
+
+  template< typename T_KEY, typename T_VAL, typename T_INDICES >
+  typename std::enable_if<
+  is_packable_map< map<T_KEY,T_VAL> >::value && is_packable_by_index<T_VAL>::value,
+  localIndex >::type
+  Unpack( char const *& buffer,
+          std::map<T_KEY,T_VAL>& map,
+          T_INDICES const & unpackIndices );
 
   ///@}
 
 
   template< typename... VARPACK >
-  static localIndex PackSize( VARPACK const &&...  pack )
+  localIndex PackSize( VARPACK const &&...  pack )
   {
     char* junk = nullptr;
     return Pack<false>( junk, pack... );
   }
 
   template< typename... VARPACK >
-  static localIndex PackSize( VARPACK &&...  pack )
+  localIndex PackSize( VARPACK &&...  pack )
   {
     char* junk = nullptr;
     return Pack<false>( junk, pack... );
   }
 
 
-};
+
+  template< bool DO_PACKING, typename T >
+  typename std::enable_if< !is_packable<T>::value, localIndex >::type
+  Pack( char*&  buffer, T const & var )
+  {
+    GEOS_ERROR("Trying to unpack data type by index list, but type is not packable by index ");
+    return 0;
+  }
+
+
+  template< typename T >
+  typename std::enable_if< !is_packable<T>::value, localIndex >::type
+  Unpack( char const *& buffer, T & var )
+  {
+    GEOS_ERROR("Trying to unpack data type ("<<typeid(T).name()<<"), but type does not have packable functionality ");
+    return 0;
+  }
+
+  template< bool DO_PACKING, typename T, typename T_INDICES >
+  typename std::enable_if< !is_packable_by_index<T>::value, localIndex >::type
+  Pack( char*&  buffer, T const & var, T_INDICES const& )
+  {
+    GEOS_ERROR("Trying to pack data type by index list, but type is not packable by index ");
+    return 0;
+  }
+
+  template< typename T, typename T_INDICES >
+  typename std::enable_if< !is_packable_by_index<T>::value, localIndex >::type
+  Unpack( char const *& buffer, T & var, T_INDICES const& )
+  {
+    GEOS_ERROR("Trying to unpack data type by index list, but type is not packable by index ");
+    return 0;
+  }
+
+
+}
 
 
 
