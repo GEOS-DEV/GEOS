@@ -6,7 +6,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-#ifdef ATK
+#ifdef USE_ATK
 #include "sidre/sidre.hpp"
 #include "sidre/DataStore.hpp"
 #include "sidre/SidreTypes.hpp"
