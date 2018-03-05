@@ -20,6 +20,7 @@
 #include "Buffer.hpp"
 
 #include "codingUtilities/Utilities.hpp"
+#include "common/GeosxConfig.hpp"
 
 
 
