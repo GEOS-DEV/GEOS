@@ -149,7 +149,7 @@ else()
 #                         GIT_TAG develop
 #                         PATCH_COMMAND git submodule init && git submodule update                         
                          URL ${CMAKE_SOURCE_DIR}/tpl_mirror/RAJA-develop.zip
-                         PATCH_COMMAND pwd && cp -r ../../../../../geosx/src/cmake/blt .
+                         PATCH_COMMAND pwd && cp -r ../../../../../master/src/cmake/blt .
                          PREFIX ${PROJECT_BINARY_DIR}/raja
                          BUILD_COMMAND make -j8
                          INSTALL_COMMAND make install
@@ -190,7 +190,7 @@ else()
 #                         GIT_TAG develop
 #                         PATCH_COMMAND git submodule init && git submodule update                         
                          URL ${CMAKE_SOURCE_DIR}/tpl_mirror/CHAI-develop.zip
-                         PATCH_COMMAND pwd && cp -r ../../../../../geosx/src/cmake/blt .
+                         PATCH_COMMAND pwd && cp -r ../../../../../master/src/cmake/blt .
                          BUILD_COMMAND make -j8
                          INSTALL_DIR ${chai_install_dir}
                          INSTALL_COMMAND make install && cp -r ${PROJECT_BINARY_DIR}/chai/src/chai-build/include ${chai_install_dir}
