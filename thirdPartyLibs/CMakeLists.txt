@@ -47,7 +47,8 @@ else()
                           CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                                      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                      -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-                                     -DCMAKE_CXX_FLAGS="-g1 -O2 -std=c++11" )
+                                     -DCMAKE_CXX_FLAGS=${TPL_CXX_STANDARD}
+                                      )                                      
 
     set( dependency_list "${dependency_list};uncrustify" )
 
@@ -159,10 +160,8 @@ else()
                                     -DRAJA_ENABLE_TESTS=${RAJA_ENABLE_TESTS}
                                     -DRAJA_ENABLE_TBB=${RAJA_ENABLE_TBB}
                                     -DENABLE_OPENMP=${ENABLE_OPENMP}
-                 		    -DRAJA_ENABLE_OPENMP=${ENABLE_OPENMP}
-                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> 
-				    -DCMAKE_CXX_STANDARD=11
-				    -DCMAKE_CXX_FLAGS=-std=c++11
+                 		                -DRAJA_ENABLE_OPENMP=${ENABLE_OPENMP} 
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
 )
 
     set( dependency_list "${dependency_list};raja" )
@@ -199,9 +198,8 @@ else()
                                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                     -DENABLE_CUDA=${CUDA_ENABLED}
                                     -DENABLE_OPENMP=${ENABLE_OPENMP}
-                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> 
-				    -DCMAKE_CXX_STANDARD=11
-				    -DCMAKE_CXX_FLAGS=-std=c++11
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+                                    -DCMAKE_CXX_FLAGS=${TPL_CXX_STANDARD}
 )
 
     set( dependency_list "${dependency_list};chai" )
@@ -309,8 +307,7 @@ ExternalProject_Add( asmjit
                                 -DBUILD_SHARED_LIBS:BOOL=OFF
                                 -DCMAKE_BUILD_TYPE=Release
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-				-DCMAKE_CXX_STANDARD=11
-				-DCMAKE_CXX_FLAGS=-std=c++11
+                                -DCMAKE_CXX_FLAGS=${TPL_CXX_STANDARD}
  )
 
 message( INFO ": setting up MathPresso" )
@@ -341,8 +338,7 @@ ExternalProject_Add( mathpresso
                                 -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-				-DCMAKE_CXX_STANDARD=11
-				-DCMAKE_CXX_FLAGS=-std=c++11
+                                -DCMAKE_CXX_FLAGS=${TPL_CXX_STANDARD}
 				 )
 
 set( dependency_list "${dependency_list};mathpresso" )

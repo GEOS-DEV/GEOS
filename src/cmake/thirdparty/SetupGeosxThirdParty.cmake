@@ -66,7 +66,6 @@ set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR}" )
 message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
 
-
 set(UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" FORCE )
 
 
@@ -100,8 +99,6 @@ else()
     message(INFO ": Using SILO from thirdPartyLibs")
     set(SILO_DIR ${GEOSX_TPL_DIR}/silo)
 endif()
-
-   message(INFO ":${SILO_DIR}")
 
 include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindSilo.cmake)
 if (NOT SILO_FOUND)
@@ -370,7 +367,6 @@ else()
     set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
 endif()
 
-#include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
 include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
 
 

@@ -101,6 +101,8 @@ set(TRILINOS_TPL_BLAS_INCLUDE_DIRS "/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_6
 set(TRILINOS_TPL_LAPACK_LIBRARIES "/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel.a;/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel_mpi.a;/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel_mp.a;/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/lib/libsci_intel_mpi_mp.a" CACHE PATH "" FORCE)
 set(TRILIOS_TPL_LAPACK_INCLUDE_DIRS "/opt/cray/pe/libsci/17.09.1/INTEL/16.0/x86_64/include" CACHE PATH "" FORCE )
 
+set(TPL_CXX_STANDARD "-std=c++11" CACHE PATH "" FORCE)
+
 
 
 #set(CORI_BUILD  CACHE PATH "" FORCE)
