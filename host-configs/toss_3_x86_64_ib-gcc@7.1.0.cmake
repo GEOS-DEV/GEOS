@@ -21,7 +21,8 @@ set(ENABLE_MPI ON CACHE BOOL "" FORCE)
 
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 
-set( GEOSX_TPL_ROOT_DIR "/usr/gapps/GEOS/geosx/thirdPartyLibs/" CACHE PATH "" )
+#set( GEOSX_TPL_ROOT_DIR "/usr/gapps/GEOS/geosx/thirdPartyLibs/" CACHE PATH "" )
+set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" FORCE )
 
 
 
@@ -30,11 +31,14 @@ set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
 
 set(ENABLE_MATHPRESSO ON CACHE BOOL  "Enables mathpresso Plugin")
 
+set(ENABLE_SHARED_LIBS ON CACHE BOOL "" FORCE)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
+
 #######################################
 # RAJA/CHAI SETUP
 #######################################
 #set(RAJA_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/raja/" CACHE PATH "" FORCE )
-set(CHAI_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/chai/" CACHE PATH "" FORCE )
+#set(CHAI_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/chai/" CACHE PATH "" FORCE )
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
 
