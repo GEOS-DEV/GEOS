@@ -23,10 +23,10 @@ namespace dataRepository
 axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
                                                   ManagedGroup * const parent )
 {
-#ifdef USE_ATK
+
   axom::sidre::Group * sidreParent = nullptr;
   axom::sidre::Group * sidreGroup  = nullptr;
-
+#ifdef USE_ATK
   if( parent==nullptr )
   {
     sidreParent = SidreWrapper::dataStore().getRoot();
@@ -45,6 +45,9 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
     sidreGroup = sidreParent->createGroup(name);
   }
   return sidreGroup;
+#else
+  return nullptr;
+
 #endif
 }
 

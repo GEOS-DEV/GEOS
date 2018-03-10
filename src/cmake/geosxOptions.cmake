@@ -26,7 +26,10 @@ message("CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
 
 if( (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")  AND (CMAKE_CXX_STANDARD EQUAL 14) )
     blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -std=c++14)
+    blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -qopenmp)
+    blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -xMIC-AVX512)
 endif()
+
 
 if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
 	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}")
@@ -98,7 +101,7 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
     
 #  endif()
 	
-	
+
 #	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "-Wl,-export-dynamic")
 #  set(CMAKE_EXE_LINKER_FLAGS "-Wl,-export-dynamic")
 
@@ -106,6 +109,7 @@ elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
 #	blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -Wno-shorten-64-to-32)
 
 endif()
+
 
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 

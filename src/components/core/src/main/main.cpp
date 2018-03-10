@@ -2,7 +2,7 @@
 
 #include "common/Logger.hpp"
 #include "common/TimingMacros.hpp"
-
+#include <cmath>
 #include <mpi.h>
 #include <iostream>
 #include <sys/time.h>
@@ -10,6 +10,9 @@
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
+
+
+#include <omp.h>
 
 using namespace geosx;
 
@@ -31,6 +34,15 @@ int main( int argc, char *argv[] )
 #endif
 
   std::cout<<"starting main"<<std::endl;
+
+  {
+    int noThreads = omp_get_max_threads();
+    std::cout<<"No of threads: "<<noThreads<<std::endl;
+  }
+  
+
+
+
 
 #ifdef USE_ATK
   slic::initialize();
@@ -85,6 +97,8 @@ int main( int argc, char *argv[] )
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   problemManager.RunSimulation();
+  gettimeofday(&tim, NULL);
+  t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   GEOS_MARK_END("RunSimulation");
 

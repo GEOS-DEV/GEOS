@@ -47,6 +47,10 @@ endforeach()
 message("componentlistlink = ${componentlistlink}")
 message("thirdPartyLibs = ${thirdPartyLibs}")
 
+if( ENABLE_OPENMP)
+  set( extraComponentsListLink ${extraComponentsListLink} openmp )
+endif()
+
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
                    DEPENDS_ON ${componentlistlink} 

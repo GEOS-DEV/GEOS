@@ -6,6 +6,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
+#ifdef USE_ATK
 #include "sidre/sidre.hpp"
 #include "sidre/DataStore.hpp"
 #include "sidre/SidreTypes.hpp"
@@ -13,6 +14,7 @@
 
 #include "conduit_blueprint.hpp"
 #include "conduit_relay.hpp"
+#endif
 
 #include <cstring>
 #include <unordered_map>
@@ -41,7 +43,7 @@ Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManage
   m_node_manager(node_manager),
   m_elem_reg_manager(elem_reg_manager),
   m_output_path(output_path),
-//  m_comm(comm),
+  m_comm(comm),
   m_coord_name(coord_name),
   m_topo_name(topo_name)
 {}

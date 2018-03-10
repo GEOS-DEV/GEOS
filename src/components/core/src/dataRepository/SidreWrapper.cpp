@@ -50,6 +50,7 @@ void SidreWrapper::writeTree(int num_files, const std::string & path, const std:
 #endif
 }
 
+
 void SidreWrapper::reconstructTree(const std::string & root_path, const std::string & protocol, MPI_Comm comm) 
 {
 #ifdef USE_ATK

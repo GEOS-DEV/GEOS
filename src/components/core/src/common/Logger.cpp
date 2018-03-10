@@ -9,6 +9,7 @@
 #include <mpi.h>
 #include <stdlib.h>
 #include "stackTrace.hpp"
+#include<iostream>
 
 namespace geosx
 {

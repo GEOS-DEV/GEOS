@@ -61,10 +61,9 @@ endif()
 
 
 get_filename_component( TEMP_DIR "${CMAKE_INSTALL_PREFIX}" NAME)
-string(REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
-set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR2}" )
+string(REGEX REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
+set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR}" )
 message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
-
 
 
 set(UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" FORCE )
@@ -359,17 +358,23 @@ set( thirdPartyLibs ${thirdPartyLibs} pugixml )
 # TRILINOS
 ################################
 #if( ENABLE_TRILINOS )
-message( INFO ": setting up TRILINOS" )
 
-set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
+
+if(EXISTS ${TRILINOS_DIR})
+
+else()
+    message( INFO ": setting up TRILINOS" )
+    set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
+endif()
+
 include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
 
+
 blt_register_library( NAME trilinos
-                      INCLUDES ${Trilinos_INCLUDE_DIRS} 
+    		      INCLUDES ${Trilinos_INCLUDE_DIRS} 
                       LIBRARIES ${Trilinos_LIBRARIES}
                       TREAT_INCLUDES_AS_SYSTEM ON )
-
-set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
+		      set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
 
 #endif()
 
