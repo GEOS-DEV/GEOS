@@ -58,6 +58,8 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
 #endif
   m_size(0),
+  m_write_to_restart(true),
+  m_read_from_restart(true),
   m_name(name)
 {
 
@@ -131,6 +133,8 @@ ManagedGroup::ManagedGroup( ManagedGroup&& source ):
   m_sidreGroup( std::move(source.m_sidreGroup) ),
 #endif
   m_size( source.m_size ),
+  m_write_to_restart( source.m_write_to_restart ),
+  m_read_from_restart( source.m_write_to_restart ),
   m_name( source.m_name )
 {}
 
@@ -175,6 +179,8 @@ void ManagedGroup::RegisterDocumentationNodes()
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                           rtTypes::typeID(subNode.second.getDataType() ) );
       view->setSizedFromParent( subNode.second.m_managedByParent);
+      view->setWriteToRestart( subNode.second.getWriteToRestart() );
+      view->setReadFromRestart( subNode.second.getReadFromRestart() );
       subNode.second.m_isRegistered = 1;
     }
   }
@@ -354,6 +360,11 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
 void ManagedGroup::prepareToWrite() const
 {
 #ifdef USE_ATK
+  if (!getWriteToRestart())
+  {
+    return;
+  }
+
   if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
   {
     SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
@@ -381,6 +392,11 @@ void ManagedGroup::prepareToWrite() const
 void ManagedGroup::finishWriting() const
 {
 #ifdef USE_ATK
+  if (!getWriteToRestart())
+  {
+    return;
+  }
+
   axom::sidre::View* temp = m_sidreGroup->getView("__size__");
   m_sidreGroup->destroyView("__size__");
 
@@ -400,6 +416,11 @@ void ManagedGroup::finishWriting() const
 void ManagedGroup::prepareToRead()
 {
 #ifdef USE_ATK
+  if (!getReadFromRestart())
+  {
+    return;
+  }
+
   axom::sidre::View* temp = m_sidreGroup->getView("__size__");
   m_size = temp->getScalar();
   m_sidreGroup->destroyView("__size__");
@@ -420,6 +441,11 @@ void ManagedGroup::prepareToRead()
 void ManagedGroup::finishReading()
 {
 #ifdef USE_ATK
+  if (!getReadFromRestart())
+  {
+    return;
+  }
+
   for (auto & pair : m_wrappers)
   {
     pair.second->finishReading();

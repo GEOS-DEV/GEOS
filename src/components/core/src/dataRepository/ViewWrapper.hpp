@@ -52,8 +52,8 @@ public:
    * @param parent parent group which owns the ViewWrapper
    */
   explicit ViewWrapper( std::string const & name,
-                        ManagedGroup * const parent, bool write_out=true ):
-    ViewWrapperBase(name, parent, write_out),
+                        ManagedGroup * const parent):
+    ViewWrapperBase(name, parent),
     m_data( std::make_unique<T>() )
   {}
 
@@ -64,9 +64,8 @@ public:
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
-                        std::unique_ptr<T> object,
-                        bool write_out=true ):
-    ViewWrapperBase(name, parent, write_out),
+                        std::unique_ptr<T> object):
+    ViewWrapperBase(name, parent),
     m_data( std::move( object ) )
   {}
 
@@ -77,8 +76,8 @@ public:
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
-                        T * object, bool write_out=true ):
-    ViewWrapperBase(name,parent, write_out),
+                        T * object):
+    ViewWrapperBase(name,parent),
     m_data( std::move( std::unique_ptr<T>(object) ) )
   {}
 
@@ -92,7 +91,7 @@ public:
    * @param source source for the copy
    */
   ViewWrapper( ViewWrapper const & source ):
-    ViewWrapperBase("test", nullptr, source->getWriteOut()),
+    ViewWrapperBase("copy_constructor_test", nullptr),
     m_data(source.m_data)
   {}
 
@@ -101,7 +100,7 @@ public:
    * @param source source to be moved
    */
   ViewWrapper( ViewWrapper&& source ):
-    ViewWrapperBase("test", nullptr, source->getWriteOut()),
+    ViewWrapperBase(source),
     m_data( std::move(source.m_data) )
   {}
 
@@ -139,10 +138,10 @@ public:
    */
   template<typename TNEW>
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
-                                                   ManagedGroup * const parent, bool write_out=true )
+                                                   ManagedGroup * const parent)
   {
     std::unique_ptr<TNEW> newObject = std::move( std::make_unique<TNEW>() );
-    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject), write_out ) );
+    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject)) );
   }
 
 
@@ -726,10 +725,9 @@ public:
   void registerToWrite(axom::sidre::View * view=nullptr) const override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (!getWriteToRestart())
     {
       view = (view != nullptr) ? view : getSidreView();
-      storeSizedFromParent(view);
       unregisterDataPtr(view);
       return;
     }
@@ -781,10 +779,9 @@ public:
   void finishWriting(axom::sidre::View * view=nullptr) const override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (!getWriteToRestart())
     {
       view = (view != nullptr) ? view : getSidreView();
-      view->setAttributeToDefault("__sizedFromParent__");
       unregisterDataPtr(view);
       return;
     }
@@ -811,9 +808,8 @@ public:
   void registerToRead(axom::sidre::View * view=nullptr) override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (!getReadFromRestart())
     {
-      loadSizedFromParent(view);
       unregisterDataPtr(view);
       return;
     }
@@ -846,7 +842,7 @@ public:
   void finishReading(axom::sidre::View * view) override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (!getReadFromRestart())
     {
       view = (view != nullptr) ? view : getSidreView();
       unregisterDataPtr(view);

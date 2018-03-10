@@ -24,7 +24,7 @@ DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setWriteOut( false );
+  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setWriteToRestart( false );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );

@@ -12,6 +12,13 @@
 #endif
 
 #include <stdexcept>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <vector>
+#include <regex>
+
 #include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
@@ -35,6 +42,63 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
+
+/* Taken from http://www.martinbroadhurst.com/list-the-files-in-a-directory-in-c.html */
+void readDirectory(const std::string& name, std::vector<std::string>& v)
+{
+    DIR* dirp = opendir(name.c_str());
+    struct dirent * dp;
+    while ((dp = readdir(dirp)) != NULL) {
+        v.push_back(dp->d_name);
+    }
+    closedir(dirp);
+}
+
+
+void getAbsolutePath(const std::string & path, std::string & absolute_path )
+{
+  char abs_file_path[PATH_MAX + 1];
+  if (realpath(path.data(), abs_file_path))
+  {
+    absolute_path = abs_file_path;
+  }
+  else
+  {
+    getcwd(abs_file_path, PATH_MAX + 1);
+    GEOS_ERROR("Could not get the absolute path for " << path << " from "  << abs_file_path);
+  }
+}
+
+
+void splitPath(const std::string& path, std::string& dirname, std::string& basename)
+{
+  size_t pos = path.find_last_of('/');
+  if (pos == string::npos)
+  {
+    dirname = std::string(".");
+    basename = path;
+  }
+
+  if (pos == 0)
+  {
+    dirname = std::string("/");
+    basename = path.substr(1);
+  }
+
+  dirname = path.substr(0, pos);
+  basename = path.substr(pos + 1);
+}
+
+
+template <typename REGEX>
+bool regexMatch(const std::string & str, REGEX regex)
+{
+  return std::regex_match(str, regex);
+}
+
+
+
+
 ProblemManager::ProblemManager( const std::string& name,
                                 ManagedGroup * const parent ):
   ObjectManagerBase(name, parent),
@@ -45,7 +109,8 @@ ProblemManager::ProblemManager( const std::string& name,
   // Groups that do not read from the xml
   // RegisterGroup<DomainPartition>(groupKeys.domain)->BuildDataStructure(nullptr);
   RegisterGroup<DomainPartition>(groupKeys.domain);
-  RegisterGroup<ManagedGroup>(groupKeys.commandLine);
+  ManagedGroup * commandLine = RegisterGroup<ManagedGroup>(groupKeys.commandLine);
+  commandLine->setReadFromRestart(false);
 
   // Mandatory groups that read from the xml
   //RegisterGroup<BoundaryConditionManager>(groupKeys.boundaryConditionManager);
@@ -80,7 +145,7 @@ void ProblemManager::FillDocumentationNode()
   docNode->setSchemaType("RootNode");
 
   // Command line documentation
-  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   cxx_utilities::DocumentationNode * const commandDocNode = commandLine->getDocumentationNode();
   commandDocNode->setShortDescription("Command line input parameters");
   commandDocNode->setVerbosity(2);
@@ -119,6 +184,31 @@ void ProblemManager::FillDocumentationNode()
                                      "Flag to indicate restart run",
                                      "Flag to indicate restart run",
                                      "0",
+                                     "CommandLine",
+                                     0,
+                                     0,
+                                     0 );
+  commandDocNode->AllocateChildNode( viewKeys.problemName.Key(),
+                                     viewKeys.problemName.Key(),
+                                     -1,
+                                     "string",
+                                     "",
+                                     "Problem name.",
+                                     "Used in writing the output files, if not specified defaults to the name of the input file.",
+                                     "",
+                                     "CommandLine",
+                                     0,
+                                     0,
+                                     0 );
+
+  commandDocNode->AllocateChildNode( viewKeys.outputDirectory.Key(),
+                                     viewKeys.outputDirectory.Key(),
+                                     -1,
+                                     "string",
+                                     "",
+                                     "Output directory.",
+                                     "Directory in which to put the output files, if not specified defaults to the current directory.",
+                                     "",
                                      "CommandLine",
                                      0,
                                      0,
@@ -203,7 +293,7 @@ void ProblemManager::FillDocumentationNode()
                                      0 );
 
   // // Mesh node documentation
-  // dataRepository::ManagedGroup * meshGenerators =
+  // ManagedGroup * meshGenerators =
   // GetGroup<ManagedGroup>(groupKeys.meshGenerators);
   // cxx_utilities::DocumentationNode * const meshDocNode =
   // meshGenerators->getDocumentationNode();
@@ -211,24 +301,29 @@ void ProblemManager::FillDocumentationNode()
   // meshDocNode->setShortDescription("Mesh Generators");
 }
 
-void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
+void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
 {
-  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   commandLine->RegisterDocumentationNodes();
 
-  ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
-  ViewWrapper<std::string>::rtype  restartFileName = commandLine->getData<std::string>(viewKeys.restartFileName);
-  integer&        beginFromRestart = *(commandLine->getData<integer>(viewKeys.beginFromRestart));
-  integer&        xPartitionsOverride = *(commandLine->getData<integer>(viewKeys.xPartitionsOverride));
-  integer&        yPartitionsOverride = *(commandLine->getData<integer>(viewKeys.yPartitionsOverride));
-  integer&        zPartitionsOverride = *(commandLine->getData<integer>(viewKeys.zPartitionsOverride));
-  integer&        overridePartitionNumbers = *(commandLine->getData<integer>(viewKeys.overridePartitionNumbers));
+  ViewWrapper<std::string>::rtype inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
+  ViewWrapper<std::string>::rtype restartFileName = commandLine->getData<std::string>(viewKeys.restartFileName);
+  integer& beginFromRestart = *(commandLine->getData<integer>(viewKeys.beginFromRestart));
+  integer& xPartitionsOverride = *(commandLine->getData<integer>(viewKeys.xPartitionsOverride));
+  integer& yPartitionsOverride = *(commandLine->getData<integer>(viewKeys.yPartitionsOverride));
+  integer& zPartitionsOverride = *(commandLine->getData<integer>(viewKeys.zPartitionsOverride));
+  integer& overridePartitionNumbers = *(commandLine->getData<integer>(viewKeys.overridePartitionNumbers));
   ViewWrapper<std::string>::rtype  schemaName = commandLine->getData<std::string>(keys::schema);
-  integer&        schemaLevel = *(commandLine->getData<integer>(viewKeys.schemaLevel));
+  integer& schemaLevel = *(commandLine->getData<integer>(viewKeys.schemaLevel));
   schemaLevel = 0;
+  ViewWrapper<std::string>::rtype problemName = commandLine->getData<std::string>(viewKeys.problemName);
+  ViewWrapper<std::string>::rtype outputDirectory = commandLine->getData<std::string>(viewKeys.outputDirectory);
+  outputDirectory = ".";
+  problemName = "";
+
 
   // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL};
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL, PROBLEMNAME, OUTPUTDIR};
   const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
@@ -240,6 +335,8 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
     {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
+    {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
+    {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, 0, 0, 0, 0}
   };
 
@@ -308,16 +405,49 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
     case SCHEMALEVEL:
       schemaLevel = std::stoi(opt.arg);
       break;
+    case PROBLEMNAME:
+      problemName = opt.arg;
+      break;
+    case OUTPUTDIR:
+      outputDirectory = opt.arg;
+      break;
+    }
+  }
+
+  getAbsolutePath(inputFileName, inputFileName);
+
+  if (problemName == "") 
+  {
+    if (inputFileName.length() > 4 && inputFileName.substr(inputFileName.length() - 4, 4) == ".xml")
+    {
+      string::size_type start = inputFileName.find_last_of('/') + 1;
+      if (start >= inputFileName.length())
+      {
+        start = 0;
+      }
+      problemName.assign(inputFileName, start, inputFileName.length() - 4 - start);
+    }
+    else {
+      problemName.assign(inputFileName);
+    }
+  }
+
+  if (outputDirectory != ".")
+  {
+    mkdir(outputDirectory.data(), 0755);
+    if (chdir(outputDirectory.data()) != 0)
+    {
+      GEOS_ERROR("Could not change to the ouput directory: " + outputDirectory);
     }
   }
 }
 
+
 bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartFileName )
 {
   // Set the options structs and parse
-  // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL};
-  const option::Descriptor usage[] = 
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL, PROBLEMNAME, OUTPUTDIR};
+  const option::Descriptor usage[] =
   {
     {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
     {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
@@ -328,6 +458,8 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
     {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
     {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
     {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
+    {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
+    {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
     { 0, 0, 0, 0, 0, 0}
   };
 
@@ -385,8 +517,49 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
         break;
       case SCHEMALEVEL:
         break;
+      case PROBLEMNAME:
+        break;
+      case OUTPUTDIR:
+        break;
     }
   }
+
+  if (beginFromRestart == 1)
+  {
+    std::string dirname;
+    std::string basename;
+    splitPath(restartFileName, dirname, basename);
+
+    std::vector<std::string> dir_contents;
+    readDirectory(dirname, dir_contents);
+
+    if (dir_contents.size() == 0)
+    {
+      GEOS_ERROR("Directory gotten from " << restartFileName << " " << dirname << " is empty.");
+    }
+
+    std::regex basename_regex(basename);
+
+    std::string min_str("");
+    std::string & max_match = min_str;
+    bool match_found = false;
+    for (std::string & s : dir_contents)
+    {
+      if (std::regex_match(s, basename_regex))
+      {
+        match_found = true;
+        max_match = (s > max_match)? s : max_match;
+      }
+    }
+
+    if (!match_found) {
+      GEOS_ERROR("No matches found for pattern " << basename << " in directory " << dirname << ".");
+    }
+
+    restartFileName = dirname + "/" + max_match;
+    getAbsolutePath(restartFileName, restartFileName);
+  }
+
   return beginFromRestart;
 }
 
@@ -433,7 +606,7 @@ void ProblemManager::ParseInputFile()
 {
   DomainPartition * domain  = getDomainPartition();
 
-  dataRepository::ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
   ViewWrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(viewKeys.inputFileName);
 
 
@@ -637,11 +810,15 @@ void ProblemManager::RunSimulation()
 
   real64 dt = 0.0;
 
+  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  ViewWrapper<std::string>::rtype problemName = commandLine->getData<std::string>(viewKeys.problemName);
+
+
   const MeshLevel * meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
   Blueprint bpWriter(*meshLevel->getNodeManager(),
                      *meshLevel->getElemManager(),
-                     "bp_plot", MPI_COMM_WORLD);
-
+                     problemName + "_bp",
+                     MPI_COMM_WORLD);
 
 //  cxx_utilities::DocumentationNode * const eventDocNode =
 // m_eventManager->getDocumentationNode();
@@ -653,7 +830,7 @@ void ProblemManager::RunSimulation()
   for( auto& application : this->m_eventManager->GetSubGroups() )
   {
 
-    dataRepository::ManagedGroup& currentApplication = *(application.second);
+    ManagedGroup& currentApplication = *(application.second);
 
     string_array const & solverList = currentApplication.getReference<string_array>(keys::solvers);
     real64& appDt = *(currentApplication.getData<real64>(keys::dt));
@@ -718,9 +895,7 @@ void ProblemManager::WriteSilo( integer const cycleNumber,
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);
   silo.Finish();
-
 }
-
 
 
 void ProblemManager::ApplySchedulerEvent()
@@ -751,8 +926,10 @@ void ProblemManager::ApplyInitialConditions()
 void ProblemManager::WriteRestart( integer const cycleNumber )
 {
 #ifdef USE_ATK
+  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  ViewWrapper<std::string>::rtype problemName = commandLine->getData<std::string>(viewKeys.problemName);
   char fileName[200] = {0};
-  sprintf(fileName, "%s_%09d", "restart", cycleNumber);
+  sprintf(fileName, "%s_%s_%09d", problemName.data(), "restart", cycleNumber);
 
   this->prepareToWrite();
   m_functionManager->prepareToWrite();
@@ -770,7 +947,7 @@ void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
   this->prepareToRead();
   m_functionManager->prepareToRead();
   BoundaryConditionManager::get()->prepareToRead();
-  SidreWrapper::loadExternalData(restartFileName + ".root", MPI_COMM_WORLD);
+  SidreWrapper::loadExternalData(restartFileName, MPI_COMM_WORLD);
   this->finishReading();
   m_functionManager->finishReading();
   BoundaryConditionManager::get()->finishReading();

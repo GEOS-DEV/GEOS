@@ -44,7 +44,7 @@ public:
    * \brief constructor
    */
   explicit ViewWrapperBase( std::string const & name,
-                            ManagedGroup * const parent, bool write_out );
+                            ManagedGroup * const parent);
 
 
   ViewWrapperBase( ViewWrapperBase&& source );
@@ -89,14 +89,24 @@ public:
     m_sizedFromParent = val;
   }
 
-  bool getWriteOut() const
+  bool getWriteToRestart() const
   { 
-    return m_write_out;
+    return m_write_to_restart;
   }
 
-  void setWriteOut( bool write_out )
+  void setWriteToRestart( bool write_to_restart )
   {
-    m_write_out = write_out;
+    m_write_to_restart = write_to_restart;
+  }
+
+  bool getReadFromRestart() const
+  { 
+    return m_read_from_restart;
+  }
+
+  void setReadFromRestart( bool read_from_restart )
+  {
+    m_read_from_restart = read_from_restart;
   }
 
 #ifdef USE_ATK
@@ -116,7 +126,8 @@ private:
   std::string m_name;
   ManagedGroup* m_parent;
   int m_sizedFromParent;
-  bool m_write_out;
+  bool m_write_to_restart;
+  bool m_read_from_restart;
 
 #ifdef USE_ATK
   axom::sidre::View* m_sidreView;

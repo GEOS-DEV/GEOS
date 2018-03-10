@@ -32,7 +32,7 @@ void BasisFunctionManager::CreateChild( string const & childKey, string const & 
 {
   std::cout << "Basis Function: " << childKey << ", " << childName << std::endl;
   std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey );
-  this->RegisterViewWrapper( childName, std::move(basis) )->setWriteOut( false );
+  this->RegisterViewWrapper( childName, std::move(basis) )->setWriteToRestart(false);
 }
 
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:

@@ -32,7 +32,7 @@ void QuadratureRuleManager::CreateChild( string const & childKey, string const &
 {
   std::cout << "Quadrature Rule: " << childKey << ", " << childName << std::endl;
   std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey );
-  this->RegisterViewWrapper( childName, std::move(quadrature) )->setWriteOut( false );
+  this->RegisterViewWrapper( childName, std::move(quadrature) )->setWriteToRestart( false );
 }
 
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:

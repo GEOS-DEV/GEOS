@@ -125,7 +125,9 @@ void SolverApplication::FillDocumentationNode()
                               "",
                               0,
                               1,
-                              0 );
+                              0,
+                              true,
+                              false);
 
   docNode->AllocateChildNode( keys::dt,
                               keys::dt,
@@ -138,7 +140,9 @@ void SolverApplication::FillDocumentationNode()
                               "",
                               0,
                               1,
-                              0 );
+                              0,
+                              true,
+                              false );
 
   docNode->AllocateChildNode( keys::cycle,
                               keys::cycle,
@@ -164,7 +168,9 @@ void SolverApplication::FillDocumentationNode()
                               "",
                               0,
                               1,
-                              0 );
+                              0,
+                              true,
+                              false );
 
 }
 

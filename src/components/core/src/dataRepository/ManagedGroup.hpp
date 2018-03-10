@@ -553,13 +553,21 @@ public:
     return m_wrappers;
   }
 
-void prepareToWrite() const;
+  bool getWriteToRestart() const { return m_write_to_restart; }
+  
+  void setWriteToRestart(bool write_to_restart) { m_write_to_restart = write_to_restart; }
 
-void finishWriting() const;
+  bool getReadFromRestart() const { return m_read_from_restart; }
 
-void prepareToRead();
+  void setReadFromRestart(bool read_from_restart) { m_read_from_restart = read_from_restart; }
 
-void finishReading();
+  void prepareToWrite() const;
+
+  void finishWriting() const;
+
+  void prepareToRead();
+
+  void finishReading();
 
 
 protected:
@@ -576,7 +584,8 @@ private:
 #endif
 
   indexType m_size;
-
+  bool m_write_to_restart;
+  bool m_read_from_restart;
   string m_name;
 
 

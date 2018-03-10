@@ -54,7 +54,8 @@ int main( int argc, char *argv[] )
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
   if (restart) {
-    dataRepository::SidreWrapper::reconstructTree( restartFileName + ".root", "sidre_hdf5", MPI_COMM_WORLD );
+    std::cout << "Loading restart file " << restartFileName << std::endl;
+    dataRepository::SidreWrapper::reconstructTree( restartFileName, "sidre_hdf5", MPI_COMM_WORLD );
   }
 
   ProblemManager problemManager( "ProblemManager", nullptr );
