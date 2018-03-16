@@ -131,7 +131,7 @@ public:
    */
   static localIndex packed_size(const string & s)
   {
-    return (s.length() + 1) * sizeof(char);
+    return ( static_cast<localIndex>(s.length()) + 1) * sizeof(char);
   }
   
 
@@ -153,7 +153,7 @@ public:
   static localIndex unpack(string & s, const void * buffer, localIndex byte_size=-1)
   {
     s = string(reinterpret_cast<const char *>(buffer));
-    return s.length() + 1;
+    return static_cast<localIndex>(s.length()) + 1;
   }
 
 

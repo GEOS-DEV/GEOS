@@ -46,7 +46,8 @@ Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManage
   m_comm(comm),
   m_coord_name(coord_name),
   m_topo_name(topo_name)
-{}
+{
+}
 
 
 

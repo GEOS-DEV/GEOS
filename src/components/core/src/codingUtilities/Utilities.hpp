@@ -72,6 +72,7 @@
 #include <algorithm>
 #include "RAJA/RAJA.hpp"
 #include "RAJA/util/defines.hpp"
+#include "rajaInterface/GEOS_RAJA_Policies.hpp"
 
 
 #ifdef USE_ATK
@@ -391,21 +392,38 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 }
 
 
-template<typename T, typename atomicPol=RAJA::atomic::omp_atomic>
+template<typename T, typename atomicPol=atomicPolicy>
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
                                     T const * __restrict__ const localField,
                                     T * __restrict__ const globalField,
                                     localIndex const N )
 {
-
   for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
-
     RAJA::atomic::atomicAdd<atomicPol>(&globalField[a],localField[a]);
   }
 }
 
+template<typename atomicPol=atomicPolicy>
+inline void AddLocalToGlobal( const localIndex * __restrict__ const globalToLocalRelation,
+                                    R1Tensor const * __restrict__ const localField,
+                                    R1Tensor * __restrict__ const globalField,
+                                    localIndex const N )
+{
+
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    real64 * __restrict__ const gData = globalField[a].Data();
+    real64 const * __restrict__ const lData = localField[a].Data();
+    for( localIndex i=0 ; i<3 ; ++i )
+    {
+      RAJA::atomic::atomicAdd<atomicPol>( &gData[i], lData[i] );
+    }
+  }
+}
+
 //01-22-2018 - Hack, we will have to fix. 
+#ifdef USE_OPENMP
 template<>
 inline void AddLocalToGlobal<R1Tensor,RAJA::atomic::omp_atomic>( const localIndex* __restrict__ const globalToLocalRelation,
                                          R1Tensor const * __restrict__ const localField,
@@ -423,7 +441,7 @@ inline void AddLocalToGlobal<R1Tensor,RAJA::atomic::omp_atomic>( const localInde
         }
     }
 }
-
+#endif
 
 template< typename T >
 inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocalRelation,
