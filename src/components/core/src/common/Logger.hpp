@@ -10,7 +10,7 @@
 
 #include <string>
 #include "common/GeosxConfig.hpp"
-
+#include <sstream>
 #ifdef USE_ATK
 #include "slic/slic.hpp"
 #include "slic/GenericOutputStream.hpp"

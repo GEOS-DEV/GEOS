@@ -21,6 +21,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
+#include "common/GeosxConfig.hpp"
 
 
 
@@ -498,7 +499,7 @@ public:
         GEOS_ERROR("Data is only 1D");
         return;
       }
-      parent->resize(dims[0]);
+      parent->resize( integer_conversion<localIndex>(dims[0]));
     }
   };
   virtual void resize(int num_dims, long long const *  const dims) override final

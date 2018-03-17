@@ -12,7 +12,6 @@
 #include <memory>
 #include "common/DataTypes.hpp"
 
-#ifdef USE_ATK
 namespace axom
 {
 namespace sidre
@@ -20,7 +19,7 @@ namespace sidre
 class View;
 }
 }
-#endif
+
 
 namespace geosx
 {

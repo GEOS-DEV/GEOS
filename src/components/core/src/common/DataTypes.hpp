@@ -17,6 +17,7 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
+#include <cmath>
 
 #include "common/GeosxConfig.hpp"
 #include "common/Logger.hpp"
@@ -40,6 +41,21 @@
 
 #ifndef CONTAINERARRAY_RETURN_PTR
 #define CONTAINERARRAY_RETURN_PTR 1
+#endif
+
+#include <iostream>
+#include <memory>
+
+#ifdef __INTEL_COMPILER
+namespace std
+{
+  template<typename T, typename... Args>
+  std::unique_ptr<T> make_unique(Args&&... args)
+  {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+  }
+
+}
 #endif
 
 
