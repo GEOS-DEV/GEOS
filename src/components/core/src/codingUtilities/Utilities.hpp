@@ -400,7 +400,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 {
   for( typename array<T>::size_type a=0 ; a<N ; ++a )
   {
-    RAJA::atomic::atomicAdd<atomicPol>(&globalField[a],localField[a]);
+    RAJA::atomic::atomicAdd<atomicPol>(&globalField[globalToLocalRelation[a]],localField[a]);
   }
 }
 
@@ -413,7 +413,7 @@ inline void AddLocalToGlobal( const localIndex * __restrict__ const globalToLoca
 
   for( localIndex a=0 ; a<N ; ++a )
   {
-    real64 * __restrict__ const gData = globalField[a].Data();
+    real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
     real64 const * __restrict__ const lData = localField[a].Data();
     for( localIndex i=0 ; i<3 ; ++i )
     {
