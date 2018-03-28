@@ -284,7 +284,7 @@ public:
   typename std::enable_if< std::is_same< U, T * >::value, void >::type
   erase( INDEX_TYPE index )
   {
-    if( m_ownsValues )
+    if( m_ownsValues[index] )
     {
       delete m_values[index].second;
     }
@@ -385,7 +385,7 @@ private:
 
   LookupMapType m_keyLookup;
 
-  bool m_ownsValues = true;
+  std::vector<int> m_ownsValues;
 };
 
 template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE >
@@ -397,10 +397,6 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
   INDEX_TYPE index = KeyIndex::invalid_index;
   typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
 
-  if( takeOwnership )
-  {
-    m_ownsValues = true;
-  }
 
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
@@ -409,6 +405,11 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
     m_values.push_back( std::move( newEntry ) );
     //TODO this needs to be a safe conversion
     index = static_cast<INDEX_TYPE>(m_values.size()) - 1;
+    m_ownsValues.resize( index + 1 );
+    if( takeOwnership )
+    {
+      m_ownsValues[index] = true;
+    }
 
     m_keyLookup.insert( std::make_pair(keyName,index) );
     m_constValues.push_back( std::make_pair( keyName, &(*(m_values[index].second)) ) );
@@ -418,6 +419,11 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
   else
   {
     index = iterKeyLookup->second;
+
+    if( takeOwnership )
+    {
+      m_ownsValues[index] = true;
+    }
 
     // if value is empty, then move source into value slot
     if( m_values[index].second==nullptr )

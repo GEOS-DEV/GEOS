@@ -17,6 +17,10 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() ),
   m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
 {
+
+//  RegisterViewWrapper("localToGlobal", &m_localToGlobalMap, false );
+//  RegisterViewWrapper("globalToLocal", &m_globalToLocalMap, false );
+
   this->RegisterGroup<ManagedGroup>(keys::sets);
   this->RegisterViewWrapper< array<integer> >("isExternal");
 }

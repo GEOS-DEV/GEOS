@@ -57,6 +57,12 @@ public:
 
   ElementRegionManager const * getElemManager() const { return this->GetGroup<ElementRegionManager>(groupKeys.elemManager); }
   ElementRegionManager * getElemManager()             { return this->GetGroup<ElementRegionManager>(groupKeys.elemManager); }
+//private:
+
+//  NodeManager m_nodeManager;
+//  EdgeManager m_edgeManager;
+//  FaceManager m_faceManager;
+//  ElementRegionManager m_elementManager;
 
 };
 

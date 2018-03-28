@@ -17,7 +17,8 @@ using namespace dataRepository;
 
 MeshLevel::MeshLevel( string const & name,
                       ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+  ManagedGroup(name,parent)//,
+//  m_nodeManager( groupStructKeys::nodeManagerString,this)
 {
 //  RegisterGroup<NodeManager>( groupKeys.vertexManager );
 //  RegisterGroup<EdgeManager>( groupKeys.cellManager );
@@ -27,6 +28,12 @@ MeshLevel::MeshLevel( string const & name,
 //  RegisterGroup<EdgeManager>( groupKeys.edgeManager );
   RegisterGroup<FaceManager>( groupKeys.faceManager );
   RegisterGroup<ElementRegionManager>( groupKeys.elemManager );
+
+//  RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager, false );
+//  RegisterGroup<EdgeManager>( groupKeys.edgeManager );
+//  RegisterGroup<FaceManager>( groupKeys.faceManager );
+//  RegisterGroup<ElementRegionManager>( groupKeys.elemManager );
+
 
   RegisterViewWrapper<integer>( viewKeys.meshLevel );
 }

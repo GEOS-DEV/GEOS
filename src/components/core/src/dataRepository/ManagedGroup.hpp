@@ -127,6 +127,11 @@ public:
   T * RegisterGroup( std::string const & name, std::unique_ptr<ManagedGroup> newObject );
 
   template< typename T = ManagedGroup >
+  T * RegisterGroup( std::string const & name,
+                     T * newObject,
+                     bool const takeOwnership );
+
+  template< typename T = ManagedGroup >
   T * RegisterGroup( std::string const & name )
   {
     return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
@@ -687,6 +692,26 @@ T * ManagedGroup::RegisterGroup( std::string const & name,
 }
 
 
+template< typename T >
+T * ManagedGroup::RegisterGroup( std::string const & name,
+                                 T * newObject,
+                                 bool const takeOwnership )
+{
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
+#ifdef USE_DYNAMIC_CASTING
+  return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
+#else
+  return static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
+#endif
+#else
+#ifdef USE_DYNAMIC_CASTING
+  return dynamic_cast<T*>( m_subGroups.insert( name, newObject, takeOwnership ) );
+#else
+  return static_cast<T*>( m_subGroups.insert( name, newObject, takeOwnership ) );
+#endif
+#endif
+}
+
 
 template< typename T, typename TBASE >
 ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name,
@@ -735,7 +760,7 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
                      true);
 #else
   m_wrappers.insert( name,
-                     new ViewWrapper<T>( name, this, newObject.release() ),
+                     new ViewWrapper<T>( name, this, newObject.release(), true ),
                      true );
 
 #endif
@@ -766,7 +791,7 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
                      true);
 #else
   m_wrappers.insert( name,
-                     new ViewWrapper<T>( name, this, newObject ),
+                     new ViewWrapper<T>( name, this, newObject, takeOwnership ),
                      takeOwnership );
 
 #endif
@@ -777,6 +802,10 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
   }
   return rval;
 }
+
+
+
+
 
 
 } /* end namespace dataRepository */
