@@ -200,4 +200,90 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 }
 
+
+
+
+
+
+int ObjectManagerBase::PackSize( array<string> const & wrapperNames,
+                            localIndex_array const & packList,
+                            integer const recursive ) const
+{
+  int packedSize = 0;
+  char * junk;
+  packedSize += this->PackPrivate<false>( junk,
+                                          wrapperNames,
+                                          packList,
+                                          recursive );
+
+  return packedSize;
+}
+
+
+
+
+int ObjectManagerBase::Pack( buffer_unit_type * & buffer,
+                             array<string> const & wrapperNames,
+                             localIndex_array const & packList,
+                             integer const recursive ) const
+{
+  int packedSize = 0;
+
+  packedSize += this->PackPrivate<true>( buffer,
+                                          wrapperNames,
+                                          packList,
+                                          recursive );
+
+  return packedSize;
+}
+
+
+int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
+                               localIndex_array const & packList,
+                               integer const recursive )
+{
+  int unpackedSize = 0;
+  string groupName;
+  unpackedSize += CommBufferOps::Unpack( buffer, groupName );
+  GEOS_ASSERT( groupName!=this->getName(), "ManagedGroup::Unpack(): group names do not match")
+
+  string wrappersLabel;
+  unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
+  GEOS_ASSERT( wrappersLabel!="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
+
+  int numWrappers;
+  unpackedSize += CommBufferOps::Unpack( buffer, numWrappers);
+  for( localIndex a=0 ; a<numWrappers ; ++a )
+  {
+    string wrapperName;
+    unpackedSize += CommBufferOps::Unpack( buffer, wrapperName );
+    ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
+    wrapper->Unpack(buffer,packList);
+  }
+
+
+  if( recursive > 0 )
+  {
+    string subGroups;
+    unpackedSize += CommBufferOps::Unpack( buffer, subGroups );
+    GEOS_ASSERT( subGroups!="SubGroups", "ManagedGroup::Unpack(): group names do not match")
+
+    decltype( this->GetSubGroups().size()) numSubGroups;
+    unpackedSize += CommBufferOps::Unpack( buffer, numSubGroups );
+    GEOS_ASSERT( numSubGroups!=this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
+
+    for( auto const & index : this->GetSubGroups() )
+    {
+      string subGroupName;
+      unpackedSize += CommBufferOps::Unpack( buffer, subGroupName );
+      unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive);
+    }
+  }
+
+  return unpackedSize;
+}
+
+
+
+
 } /* namespace geosx */

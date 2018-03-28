@@ -51,7 +51,39 @@ public:
 
   virtual void FillDocumentationNode() override;
 
+
+
+
+  virtual int PackSize( array<string> const & wrapperNames,
+                        localIndex_array const & packList,
+                        integer const recursive ) const  override;
+
+
+  virtual int Pack( buffer_unit_type * & buffer,
+                    array<string> const & wrapperNames,
+                    localIndex_array const & packList,
+                    integer const recursive ) const  override;
+
+//  virtual int Unpack( buffer_unit_type const *& buffer,
+//                      integer const recursive )  override;
+
+  virtual int Unpack( buffer_unit_type const *& buffer,
+                      localIndex_array const & packList,
+                      integer const recursive )  override;
+
+
 private:
+  template< bool DOPACK >
+  int PackPrivate( buffer_unit_type * & buffer,
+                   array<string> const & wrapperNames,
+                   localIndex_array const & packList,
+                   integer const recursive ) const;
+
+  template< bool DOPACK >
+  int UnpackPrivate( buffer_unit_type const *& buffer,
+                     localIndex_array const & packList,
+                     integer const recursive );
+
 //  cxx_utilities::DocumentationNode * m_docNode;
 
 
@@ -247,6 +279,115 @@ public:
 
 
 };
+
+
+template< bool DOPACK >
+int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
+                                    array<string> const & wrapperNames,
+                                    localIndex_array const & packList,
+                                    integer const recursive ) const
+{
+  int packedSize = 0;
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->getName() );
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->size() );
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
+
+
+
+  array<string> wrapperNamesForPacking;
+  if(  wrapperNames.size()==0 )
+  {
+    wrapperNamesForPacking.resize( this->wrappers().size() );
+    localIndex count = 1;
+    for( auto const & wrapperPair : this->wrappers() )
+    {
+      if( wrapperPair.first==this->viewKeys.localToGlobalMapString )
+      {
+        wrapperNamesForPacking[0] = this->viewKeys.localToGlobalMapString;
+      }
+      else
+      {
+        wrapperNamesForPacking[count++] = wrapperPair.first;
+      }
+    }
+  }
+  else
+  {
+    wrapperNamesForPacking.resize( wrapperNames.size() + 1 );
+    wrapperNamesForPacking[0] = this->viewKeys.localToGlobalMapString;
+    for( localIndex count=0 ; count<wrapperNames.size() ; ++count )
+    {
+      wrapperNamesForPacking[count+1] = wrapperNames[count];
+    }
+  }
+
+  packedSize += CommBufferOps::Pack<DOPACK,int>( buffer, wrapperNames.size() );
+  for( auto const & wrapperName : wrapperNamesForPacking )
+  {
+    dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, wrapperName );
+    if( packList.empty() )
+    {
+      if(DOPACK)
+      {
+        packedSize += wrapper->Pack( buffer );
+      }
+      else
+      {
+        packedSize += wrapper->PackSize();
+      }
+    }
+    else
+    {
+      if(DOPACK)
+      {
+        packedSize += wrapper->Pack( buffer, packList );
+      }
+      else
+      {
+        packedSize += wrapper->PackSize( packList );
+      }
+    }
+  }
+
+
+  if( recursive > 0 )
+  {
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->GetSubGroups().size() );
+    for( auto const & keyGroupPair : this->GetSubGroups() )
+    {
+      packedSize += CommBufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
+      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
+    }
+  }
+
+  return packedSize;
+}
+
+
+template< bool DOPACK >
+int ObjectManagerBase::UnpackPrivate( buffer_unit_type const *& buffer,
+                                      localIndex_array const & packList,
+                                      integer const recursive )
+{
+  int unpackedSize=0;
+
+  string groupName;
+  unpackedSize += CommBufferOps::Unpack( buffer, groupName );
+  GEOS_ASSERT( groupName!=this->getName(), "ManagedGroup::Unpack(): group names do not match")
+
+  string wrappersLabel;
+  unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
+  GEOS_ASSERT( wrappersLabel!="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
+
+
+  globalIndex_array globalIndices;
+
+  return unpackedSize;
+}
 
 } /* namespace geosx */
 
