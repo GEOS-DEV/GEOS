@@ -11,6 +11,7 @@
 #include <iostream>
 #include <mpi.h>
 
+
 #include "ObjectCatalog.hpp"
 #include "ViewWrapper.hpp"
 
@@ -29,6 +30,15 @@
 #ifndef NOCHARTOSTRING_KEYLOOKUP
 #define NOCHARTOSTRING_KEYLOOKUP 0
 #endif
+
+/* Forward declaration of axom::sidre::Group */
+namespace axom
+{
+namespace sidre
+{
+class Group;
+}
+}
 
 /**
  * namespace to encapsulate functions in simulation tools
@@ -388,10 +398,10 @@ public:
   ViewWrapperBase * getWrapperBase( std::string const & name )
   { return m_wrappers[name]; }
 
-  ViewWrapperBase const * getWrapperBase( viewWrapperMap::KeyIndex & keyIndex ) const
+  ViewWrapperBase const * getWrapperBase( viewWrapperMap::KeyIndex const & keyIndex ) const
   { return m_wrappers[keyIndex]; }
 
-  ViewWrapperBase * getWrapperBase( viewWrapperMap::KeyIndex & keyIndex )
+  ViewWrapperBase * getWrapperBase( viewWrapperMap::KeyIndex const & keyIndex )
   { return m_wrappers[keyIndex]; }
 
 
@@ -422,21 +432,6 @@ public:
   template< typename T >
   ViewWrapper<T> * getWrapper( std::string const & name )
   { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapper<T>( name ) ); }
-
-
-  template< typename T >
-  ViewWrapper<T> const * getWrapper( viewWrapperMap::KeyIndex & keyIndex ) const
-  {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< ViewWrapper<T> const * >( (m_wrappers[keyIndex]) );
-#else
-    return static_cast< ViewWrapper<T> const * >( (m_wrappers[keyIndex]) );
-#endif
-  }
-
-  template< typename T >
-  ViewWrapper<T> * getWrapper( viewWrapperMap::KeyIndex & keyIndex )
-  { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapper<T>( keyIndex ) ); }
 
 
   template< typename T >
@@ -558,14 +553,26 @@ public:
     return m_size;
   }
 
-
+  axom::sidre::Group * getSidreGroup()              
+  { 
 #ifdef USE_ATK
-  axom::sidre::Group * getSidreGroup()              { return m_sidreGroup; }
-  axom::sidre::Group const * getSidreGroup() const  { return m_sidreGroup; }
+    return m_sidreGroup;
+#else
+    return nullptr;
+#endif
+  }
+
+  axom::sidre::Group const * getSidreGroup() const  
+  { 
+#ifdef USE_ATK
+    return m_sidreGroup;
+#else
+    return nullptr;
+#endif
+  }
 
   static axom::sidre::Group * setSidreGroup( string const& name,
                                              ManagedGroup * const parent );
-#endif
 
   ManagedGroup * getParent()             { return m_parent; }
   ManagedGroup const * getParent() const { return m_parent; }
@@ -590,36 +597,19 @@ public:
     return m_wrappers;
   }
 
+void prepareToWrite() const;
 
-  void writeRestart(int num_files, const string & path, const string & protocol, MPI_Comm comm);
+void finishWriting() const;
 
-#ifdef USE_ATK
-  void reconstructSidreTree(const string & root_path, const string & protocol, MPI_Comm comm);
+void prepareToRead();
 
-  void loadSidreExternalData(const string & root_path, MPI_Comm comm);
-#endif
+void finishReading();
+
 
 protected:
   cxx_utilities::DocumentationNode * m_docNode = nullptr;
 
-private:
-
-#ifdef USE_ATK
-  void registerSubViews();
-
-  void createSizeViews();
-
-  void loadSizeViews();
-
-  void unregisterSubViews();
-
-  void resizeSubViews();
-
-  void storeSizedFromParent();
-
-  void loadSizedFromParent();
-#endif
-
+private:  
 
   ManagedGroup* m_parent = nullptr;
   viewWrapperMap m_wrappers;
@@ -717,7 +707,7 @@ ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name
     *rkey = m_wrappers.getIndex(name);
   }
   ViewWrapper<TBASE> * const rval = getWrapper<TBASE>(name);
-  if( rval->sizedFromParent() == 1 )
+  if( rval->sizedFromParent() == 1 && rval->shouldResize())
   {
     rval->resize(this->size());
   }
@@ -781,7 +771,7 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
 
 #endif
   ViewWrapper<T> * const rval = getWrapper<T>(name);
-  if( rval->sizedFromParent() == 1 )
+  if( rval->sizedFromParent() == 1 && rval->shouldResize())
   {
     rval->resize(this->size());
   }

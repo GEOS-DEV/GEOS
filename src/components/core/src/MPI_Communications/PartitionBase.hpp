@@ -82,6 +82,7 @@ class ManagedGroup;
 }
 
 class DomainPartition;
+class ObjectManagerBase;
 
 class PartitionBase
 {

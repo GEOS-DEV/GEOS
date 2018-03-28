@@ -20,8 +20,11 @@
 #include "MeshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
+#include "fileIO/blueprint/Blueprint.hpp"
 #include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
+#include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
+#include "dataRepository/SidreWrapper.hpp"
 
 #include "mesh/MeshBody.hpp"
 #include "MeshUtilities/MeshUtilities.hpp"
@@ -309,6 +312,84 @@ void ProblemManager::ParseCommandLineInput( int & argc, char* argv[])
   }
 }
 
+bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartFileName )
+{
+  // Set the options structs and parse
+  // Set the options structs and parse
+  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, SCHEMALEVEL};
+  const option::Descriptor usage[] = 
+  {
+    {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
+    {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
+    {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t Input xml filename (required)"},
+    {RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t Target restart filename"},
+    {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-x, --x-partitions, \t Number of partitions in the x-direction"},
+    {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
+    {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
+    {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
+    {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
+    { 0, 0, 0, 0, 0, 0}
+  };
+
+  argc -= (argc>0); 
+  argv += (argc>0);
+  option::Stats stats(usage, argc, argv);
+  option::Option options[100];//stats.options_max];
+  option::Option buffer[100];//stats.buffer_max];
+  option::Parser parse(usage, argc, argv, options, buffer);
+
+  
+  // Handle special cases
+  if (parse.error())
+  {
+    throw std::invalid_argument("Bad input arguments");
+  }
+
+  if (options[HELP] || (argc == 0))
+  {
+    int columns = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
+    option::printUsage(fwrite, stdout, usage, columns);
+    exit(0);
+  }
+
+  if (options[INPUT] == 0)
+  {
+    std::cout << "An input xml must be specified!  Exiting..." << std::endl;
+    exit(1);
+  }
+
+  // Iterate over the remaining inputs
+  bool beginFromRestart = false;
+  for (int ii=0; ii<parse.optionsCount(); ++ii)
+  {
+    option::Option& opt = buffer[ii];
+    switch (opt.index())
+    {
+      case UNKNOWN:
+        break;
+      case HELP:
+        break;
+      case INPUT:
+        break;
+      case RESTART:
+        restartFileName = opt.arg;
+        beginFromRestart = 1;
+        break;
+      case XPAR:
+        break;
+      case YPAR:
+        break;
+      case ZPAR:
+        break;
+      case SCHEMA:
+        break;
+      case SCHEMALEVEL:
+        break;
+    }
+  }
+  return beginFromRestart;
+}
+
 
 void ProblemManager::InitializePythonInterpreter()
 {
@@ -554,10 +635,12 @@ void ProblemManager::RunSimulation()
 #endif
   DomainPartition * domain  = getDomainPartition();
 
-  double time = 0.0;
-  int cycle = 0;
   real64 dt = 0.0;
 
+  const MeshLevel * meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
+  Blueprint bpWriter(*meshLevel->getNodeManager(),
+                     *meshLevel->getElemManager(),
+                     "bp_plot", MPI_COMM_WORLD);
 
 
 //  cxx_utilities::DocumentationNode * const eventDocNode =
@@ -574,8 +657,9 @@ void ProblemManager::RunSimulation()
 
     string_array const & solverList = currentApplication.getReference<string_array>(keys::solvers);
     real64& appDt = *(currentApplication.getData<real64>(keys::dt));
+    real64& time = *(currentApplication.getData<real64>(keys::time));
     real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
-
+    integer& cycle = *(currentApplication.getData<integer>(keys::cycle));
 
     integer lockDt = (appDt > 0.0);
     if (lockDt)
@@ -586,10 +670,13 @@ void ProblemManager::RunSimulation()
     while( time < endTime )
     {
       std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
+
+      bpWriter.write( cycle );
       WriteSilo( cycle, time );
+
       real64 nextDt = std::numeric_limits<real64>::max();
 
-      for ( auto jj=0 ; jj<solverList.size() ; ++jj)
+      for ( auto jj=0; jj<solverList.size(); ++jj)
       {
         SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
         currentSolver->TimeStep( time, dt, cycle, domain );
@@ -599,13 +686,17 @@ void ProblemManager::RunSimulation()
       // Update time, cycle, timestep
       time += dt;
       cycle++;
-      dt = (lockDt) ? dt : nextDt;
-      dt = (endTime - time < dt) ? endTime-time : dt;
+      dt = (lockDt)? dt : nextDt;
+      dt = (endTime - time < dt)? endTime-time : dt;
     }
-  }
-//  }
 
-//  WriteSilo( cycle, time );
+    bpWriter.write(cycle);  
+    WriteSilo(cycle, time);
+    WriteRestart(cycle);
+
+  }
+
+
 
 
 #ifdef USE_CALIPER
@@ -659,6 +750,36 @@ void ProblemManager::ApplyInitialConditions()
   boundaryConditionManager->ApplyInitialConditions( domain );
 
 }
+
+void ProblemManager::WriteRestart( integer const cycleNumber )
+{
+#ifdef USE_ATK
+  char fileName[200] = {0};
+  sprintf(fileName, "%s_%09d", "restart", cycleNumber);
+
+  this->prepareToWrite();
+  m_functionManager->prepareToWrite();
+  BoundaryConditionManager::get()->prepareToWrite();
+  SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
+  this->finishWriting();
+  m_functionManager->finishWriting();
+  BoundaryConditionManager::get()->finishWriting();
+#endif
+}
+
+void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
+{
+#ifdef USE_ATK
+  this->prepareToRead();
+  m_functionManager->prepareToRead();
+  BoundaryConditionManager::get()->prepareToRead();
+  SidreWrapper::loadExternalData(restartFileName + ".root", MPI_COMM_WORLD);
+  this->finishReading();
+  m_functionManager->finishReading();
+  BoundaryConditionManager::get()->finishReading();
+#endif
+}
+
 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, ManagedGroup * const )

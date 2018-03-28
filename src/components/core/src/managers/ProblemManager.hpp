@@ -94,11 +94,10 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  static std::string CatalogName() { return "ProblemManager"; }
-  string getCatalogName() const override final
-  {
-    return ProblemManager::CatalogName();
-  }
+  const static string CatalogName() 
+  { return "ProblemManager"; }
+  virtual const string getCatalogName() const override final
+  { return ProblemManager::CatalogName(); }
   ///@}
 
 
@@ -108,6 +107,8 @@ public:
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   void ParseCommandLineInput( int & argc, char* argv[]);
+
+  static bool ParseRestart( int argc, char* argv[], std::string& restartFileName );
 
   void InitializePythonInterpreter();
 
@@ -126,6 +127,11 @@ public:
   void ApplySchedulerEvent();
 
   void WriteSilo( integer const cycleNumber, real64 const problemTime );
+
+  // function to create and dump the restart file
+  void WriteRestart( integer const cycleNumber );
+
+  void ReadRestartOverwrite( const std::string& restartFileName );
 
   void ApplyInitialConditions();
 

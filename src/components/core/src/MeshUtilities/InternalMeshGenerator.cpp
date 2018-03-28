@@ -765,7 +765,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
     // assign global numbers to elements
     iterRegion = m_regionNames.begin();
-    std::set<std::string> processedRegionNames;
+    set<std::string> processedRegionNames;
     localIndex iR = 0;
 
     for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )

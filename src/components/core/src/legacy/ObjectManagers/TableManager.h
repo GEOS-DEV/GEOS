@@ -441,8 +441,8 @@ void TableManager::ReadNUFTFile(const std::string& filename,
       //GET HEADERS ... IGNORE
       inputStream >> ss >> ss1 >> ss2 >> ss3 >> ss4 >> ss5 >> ss6;
 
-      std::set<realT> xs, ys, zs;
-      for (int i = 0 ; i < nlines ; i++)
+      set<realT> xs, ys, zs;
+      for (int i = 0; i < nlines; i++)
       {
         inputStream >> icurr[0] >> icurr[1] >> icurr[2] >> xcurr[0] >> xcurr[1] >> xcurr[2] >> rr;
         for (int j = 0 ; j < 3 ; j++)

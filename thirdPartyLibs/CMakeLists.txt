@@ -25,6 +25,8 @@ set( dependency_list "" )
 ################################
 # UNCRUSTIFY
 ################################
+message( "ENABLE_UNCRUSTIFY = ${ENABLE_UNCRUSTIFY}")
+if( ENABLE_UNCRUSTIFY )
 if (UNCRUSTIFY_DIR)
 #  include(../src/cmake/thirdparty/FindHDF5.cmake)
 #  blt_register_library(NAME hdf5
@@ -39,17 +41,19 @@ else()
     ExternalProject_Add( uncrustify
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/uncrustify-master.zip
                           PREFIX ${PROJECT_BINARY_DIR}/uncrustify
-                          BUILD_COMMAND make -j8
+                          BUILD_COMMAND make -j1
                           INSTALL_COMMAND make install
                           INSTALL_DIR ${uncrustify_install_dir}
                           CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-                                    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                                     -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+                                     -DCMAKE_CXX_FLAGS=${TPL_CXX_STANDARD}
+                                      )                                      
 
     set( dependency_list "${dependency_list};uncrustify" )
 
 endif()
-
+endif()
 
 
 
@@ -75,10 +79,9 @@ else()
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/hdf5-1.10.1.tar.gz
 #                          URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.1/src/hdf5-1.10.1.tar.gz
                           PREFIX ${PROJECT_BINARY_DIR}/hdf5
-                          CONFIGURE_COMMAND ../hdf5/configure CC=${CMAKE_C_COMPILER}
-                                               CXX=${CMAKE_CXX_COMPILER}
+                          CONFIGURE_COMMAND ../hdf5/configure CC=${SERIAL_C_COMPILER}
+                                               CXX=${SERIAL_CXX_COMPILER}
                                                --enable-build-mode=production
-                                               --enable-cxx
                                                --prefix=${HDF5_ROOT}
                                                BUILD_COMMAND make -j8
                                                INSTALL_COMMAND make install )
@@ -107,10 +110,9 @@ else()
 #                         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/mirror
                           URL ${CMAKE_SOURCE_DIR}/tpl_mirror/silo-4.10.2-bsd.tar.gz
                           PREFIX ${PROJECT_BINARY_DIR}/silo
-                          DEPENDS hdf5
                           INSTALL_DIR ${silo_install_dir}
-                          CONFIGURE_COMMAND ../silo/configure CC=${CMAKE_C_COMPILER}
-                                               CXX=${CMAKE_CXX_COMPILER}
+                          CONFIGURE_COMMAND ../silo/configure CC=${SERIAL_C_COMPILER}
+                                               CXX=${SERIAL_CXX_COMPILER}
                                                --prefix=${silo_install_dir}
                                                --disable-fortran
                                                --enable-optimization
@@ -158,8 +160,9 @@ else()
                                     -DRAJA_ENABLE_TESTS=${RAJA_ENABLE_TESTS}
                                     -DRAJA_ENABLE_TBB=${RAJA_ENABLE_TBB}
                                     -DENABLE_OPENMP=${ENABLE_OPENMP}
-                                    -DRAJA_ENABLE_OPENMP=${ENABLE_OPENMP}
-                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                 		                -DRAJA_ENABLE_OPENMP=${ENABLE_OPENMP} 
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+)
 
     set( dependency_list "${dependency_list};raja" )
 endif()
@@ -195,7 +198,9 @@ else()
                                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                     -DENABLE_CUDA=${CUDA_ENABLED}
                                     -DENABLE_OPENMP=${ENABLE_OPENMP}
-                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                                    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+                                    -DCMAKE_CXX_FLAGS=${TPL_CXX_STANDARD}
+)
 
     set( dependency_list "${dependency_list};chai" )
 
@@ -301,7 +306,9 @@ ExternalProject_Add( asmjit
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                                 -DBUILD_SHARED_LIBS:BOOL=OFF
                                 -DCMAKE_BUILD_TYPE=Release
-                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+                                -DCMAKE_CXX_FLAGS=${TPL_CXX_STANDARD}
+ )
 
 message( INFO ": setting up MathPresso" )
 set(MATHPRESSO_LOCAL_DIR ${PROJECT_BINARY_DIR}/mathpresso)
@@ -330,7 +337,9 @@ ExternalProject_Add( mathpresso
                                 -DASMJIT_DIR=${ASMJIT_LOCAL_DIR}
                                 -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> )
+                                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+                                -DCMAKE_CXX_FLAGS=${TPL_CXX_STANDARD}
+				 )
 
 set( dependency_list "${dependency_list};mathpresso" )
 
@@ -372,14 +381,21 @@ set( dependency_list "${dependency_list};pugixml" )
 ################################
 # TRILINOS
 ################################
-message( INFO ": setting up TRILINOS" )
-set(TRILINOS_LOCAL_DIR ${PROJECT_BINARY_DIR}/trilinos)
-set(TRILINOS_DIR ${TRILINOS_LOCAL_DIR})
-set(TRILINOS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/trilinos)
 
-ExternalProject_Add( trilinos
-                     PREFIX ${PROJECT_BINARY_DIR}/trilinos
-                     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/trilinos-12.10.1-Source.tar.gz
+
+message( INFO ": TRILINOS_DIR ${TRILINOS_DIR}" ) 
+
+if (EXISTS "${TRILINOS_DIR}")
+
+else()
+
+    message( INFO ": setting up TRILINOS (thirparty/CmakeList.txt)" )
+    set(TRILINOS_LOCAL_DIR ${PROJECT_BINARY_DIR}/trilinos)
+    set(TRILINOS_DIR ${TRILINOS_LOCAL_DIR})
+    set(TRILINOS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/trilinos)
+    ExternalProject_Add( trilinos
+    	             PREFIX ${PROJECT_BINARY_DIR}/trilinos
+		     URL ${CMAKE_SOURCE_DIR}/tpl_mirror/trilinos-12.10.1-Source.tar.gz
                      BUILD_COMMAND make -j16
                      INSTALL_DIR ${TRILINOS_INSTALL_DIR}
                      INSTALL_COMMAND make install
@@ -415,9 +431,16 @@ ExternalProject_Add( trilinos
                                 -D Trilinos_ENABLE_Thyra:BOOL=ON 
                                 -D Trilinos_ENABLE_Boost=OFF
                                 -D Trilinos_ENABLE_STK=OFF
-                                -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON  )
+                                -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON 
+				-D TPL_BLAS_LIBRARIES=${TRILINOS_TPL_BLAS_LIBRARIES}
+				-D TPL_BLAS_INCLUDE_DIRS=${TRILINOS_TPL_BLAS_INCLUDE_DIRS}
+				-D TPL_LAPACK_LIBRARIES=${TRILINOS_TPL_LAPACK_LIBRARIES}
+				-D TPL_LAPACK_INCLUDE_DIRS=${TRILINOS_TPL_LAPACK_INCLUDE_DIRS}
+				#set( dependency_list "${dependency_list};trilinos" 
 
+)
 set( dependency_list "${dependency_list};trilinos" )
+endif()
 
 ################################
 # HYPRE

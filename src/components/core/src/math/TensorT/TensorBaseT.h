@@ -218,6 +218,19 @@ public:
   }
 
 
+  bool operator==( const TensorBaseT< T_length >& rhs ) const
+  {
+    for (int i = 0; i < T_length; ++i)
+    {
+      if( (t_data[i] > rhs.t_data[i]) || (t_data[i] < rhs.t_data[i]) )
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+
   /// function to add the product of a scalar and tensor
   inline void plus_cA( const realT& c, const TensorBaseT< T_length >& A )
   {

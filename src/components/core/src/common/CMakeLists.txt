@@ -4,9 +4,11 @@
 #
 set(geosx_headers
   ${geosx_headers}
-  	common/DataTypes.hpp
+    common/integer_conversion.hpp
+    common/DataTypes.hpp
   	common/InterObjectRelation.hpp
     common/Logger.hpp
+    common/SortedArray.hpp
     PARENT_SCOPE )
 
 #

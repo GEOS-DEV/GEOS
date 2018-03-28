@@ -11,15 +11,22 @@
 #include <cassert>
 #include <cstdint>
 #include <iostream>
-#include <set>
 #include <string>
 #include <typeindex>
 #include <typeinfo>
 #include <map>
 #include <unordered_map>
 #include <vector>
+#include <cmath>
 
 #include "common/GeosxConfig.hpp"
+#include "common/Logger.hpp"
+
+#ifdef USE_ATK
+#include "sidre/SidreTypes.hpp"
+#endif
+
+#include "common/SortedArray.hpp"
 
 #include "Macros.hpp"
 
@@ -28,8 +35,27 @@
 //#include "legacy/ArrayT/ArrayT.h"
 #include "math/TensorT/TensorT.h"
 
+#ifdef USE_ATK
+#include "sidre/SidreTypes.hpp"
+#endif
+
 #ifndef CONTAINERARRAY_RETURN_PTR
 #define CONTAINERARRAY_RETURN_PTR 1
+#endif
+
+#include <iostream>
+#include <memory>
+
+#ifdef __INTEL_COMPILER
+namespace std
+{
+  template<typename T, typename... Args>
+  std::unique_ptr<T> make_unique(Args&&... args)
+  {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+  }
+
+}
 #endif
 
 
@@ -42,6 +68,7 @@ namespace geosx
 //using uint32 = std::uint32_t;
 //using uint64 = std::uint64_t;
 
+using size_t      = std::size_t;
 using integer     = std::int32_t;
 using localIndex  = std::int_fast32_t;
 using globalIndex = std::int64_t;
@@ -79,13 +106,14 @@ using realT    = double;
 
 
 template< typename T >
-//using array = std::vector<T>;
-//using array = array<T>;
 using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
+
+template< typename T, int NDIM >
+using array_view = multidimensionalArray::ArrayView<T,NDIM,localIndex>;
 
 
 template< typename T >
-using set = std::set<T>;
+using set = SortedArray<T>;
 
 template< typename TKEY, typename TVAL >
 using map = std::map<TKEY,TVAL>;
@@ -140,18 +168,18 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 //***** BEGIN LEGACY TYPEDEFS *****
 
-typedef std::set<localIndex> lSet;
-typedef std::set<globalIndex> gSet;
+typedef set<localIndex> lSet;
+typedef set<globalIndex> gSet;
 
 typedef int FieldKey;
-
 
 template< typename T >
 using Array2dT = multidimensionalArray::ManagedArray<T,2,localIndex>;
 
 typedef multidimensionalArray::ManagedArray<localIndex,2,localIndex> lArray2d;
 typedef array<std::pair<int,localIndex> > pArray1d;
-typedef std::set<std::pair<int,localIndex> > pSet;
+typedef set<std::pair<int,localIndex> > pSet;
+
 
 using r1_array = array<R1Tensor>;
 using r2_array = array<R2Tensor>;
@@ -215,7 +243,6 @@ public:
     r1_array_id,
     r2_array_id,
     r2Sym_array_id,
-    std_size_t_id,
     string_id,
     string_array_id,
     mapPair_array_id,
@@ -242,7 +269,6 @@ public:
       { "r1_array",     TypeIDs::r1_array_id },
       { "r2_array",     TypeIDs::r2_array_id },
       { "r2Sym_array",  TypeIDs::r2Sym_array_id },
-      { "std_size_t",   TypeIDs::std_size_t_id },
       { "string",       TypeIDs::string_id },
       { "string_array", TypeIDs::string_array_id },
       { "mapPair_array",      TypeIDs::mapPair_array_id },
@@ -255,7 +281,7 @@ public:
   {
     const std::unordered_map<std::type_index,TypeIDs> type_names =
     {
-      { std::type_index(typeid(integer)),        TypeIDs::integer_id },
+      { std::type_index(typeid(integer)),      TypeIDs::integer_id },
       { std::type_index(typeid(localIndex)),   TypeIDs::real32_id },
       { std::type_index(typeid(globalIndex)),  TypeIDs::real64_id },
       { std::type_index(typeid(real32)),       TypeIDs::real32_id },
@@ -278,6 +304,62 @@ public:
     return type_names.at(typeIndex);
   }
 
+#ifdef USE_ATK
+
+  static axom::sidre::TypeID toSidreType( std::type_index typeIndex )
+  {
+    const axom::sidre::TypeID integer_id = axom::sidre::detail::SidreTT<integer>::id;
+    const axom::sidre::TypeID localIndex_id = axom::sidre::detail::SidreTT<localIndex>::id;
+    const axom::sidre::TypeID globalIndex_id = axom::sidre::detail::SidreTT<globalIndex>::id;
+    const axom::sidre::TypeID real32_id = axom::sidre::detail::SidreTT<real32>::id;
+    const axom::sidre::TypeID real64_id = axom::sidre::detail::SidreTT<real64>::id;
+    const axom::sidre::TypeID char_id = axom::sidre::TypeID::UINT8_ID;
+
+    const std::unordered_map<std::type_index, axom::sidre::TypeID> sidre_types =
+    {
+      { std::type_index(typeid(integer)),       integer_id },
+      { std::type_index(typeid(localIndex)),    localIndex_id },
+      { std::type_index(typeid(globalIndex)),   globalIndex_id },
+      { std::type_index(typeid(real32)),        real32_id },   
+      { std::type_index(typeid(real64)),        real64_id },
+      { std::type_index(typeid(R1Tensor)),      real64_id },
+      { std::type_index(typeid(R2Tensor)),      real64_id },
+      { std::type_index(typeid(R2SymTensor)),   real64_id },
+      { std::type_index(typeid(char)),          char_id }
+    };
+
+    auto it = sidre_types.find(typeIndex); 
+    if (it == sidre_types.end())
+    {
+      return axom::sidre::TypeID::NO_TYPE_ID;
+    }
+    return it->second;
+  }
+
+  static localIndex getSidreSize( std::type_index typeIndex )
+  {
+    const std::unordered_map<std::type_index, localIndex> sidre_sizes =
+    {
+      { std::type_index(typeid(integer)),       sizeof(integer) },
+      { std::type_index(typeid(localIndex)),    sizeof(localIndex) },
+      { std::type_index(typeid(globalIndex)),   sizeof(globalIndex) },
+      { std::type_index(typeid(real32)),        sizeof(real32) },   
+      { std::type_index(typeid(real64)),        sizeof(real64) },
+      { std::type_index(typeid(R1Tensor)),      sizeof(real64) },
+      { std::type_index(typeid(R2Tensor)),      sizeof(real64) },
+      { std::type_index(typeid(R2SymTensor)),   sizeof(real64) },
+      { std::type_index(typeid(char)),          sizeof(char) }
+    };
+
+    auto it = sidre_sizes.find(typeIndex); 
+    if (it == sidre_sizes.end())
+    {
+      GEOS_ERROR("Unsupported type of with type index name: "  << typeIndex.name());
+    }
+    return it->second;
+  }
+
+#endif /* USE_ATK */
 
 
   // Matching regex for data types in xml
@@ -306,7 +388,6 @@ private:
       {"r1_array", "((" + r1 + "; )*)?" + r1},
       {"r2_array", "((" + r2 + "; )*)?" + r2},
       {"r2Sym_array", "((" + r2s + "; )*)?" + r2s},
-      {"std_size_t", ru},
       {"string", rs},
       {"string_array", "((" + rs + ",? )*)?" + rs},
       {"mapPair", rs},
@@ -595,6 +676,7 @@ public:
     {
       std::cout<<LOCATION<<std::endl;
       assert( false );
+      return lambda( double(1) );
     }
     }
   }

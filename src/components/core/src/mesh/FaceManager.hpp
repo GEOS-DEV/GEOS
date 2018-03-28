@@ -24,15 +24,11 @@ public:
    */
   ///@{
 
-  static string CatalogName()
-  {
-    return "FaceManager";
-  }
+  static const string CatalogName() 
+  { return "FaceManager"; }
 
-  string getCatalogName() const override final
-  {
-    return FaceManager::CatalogName();
-  }
+  virtual const string getCatalogName() const override final
+  { return FaceManager::CatalogName(); }
 
 
   ///@}

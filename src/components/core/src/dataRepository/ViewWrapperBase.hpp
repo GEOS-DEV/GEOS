@@ -12,7 +12,6 @@
 #include <memory>
 #include "common/DataTypes.hpp"
 
-#ifdef USE_ATK
 namespace axom
 {
 namespace sidre
@@ -20,7 +19,7 @@ namespace sidre
 class View;
 }
 }
-#endif
+
 
 namespace geosx
 {
@@ -44,7 +43,7 @@ public:
    * \brief constructor
    */
   explicit ViewWrapperBase( std::string const & name,
-                            ManagedGroup * const parent );
+                            ManagedGroup * const parent, bool write_out );
 
 
   ViewWrapperBase( ViewWrapperBase&& source );
@@ -58,28 +57,26 @@ public:
 
 
   virtual bool empty() const = 0;
-  virtual localIndex size( ) const = 0;
-  virtual void reserve( std::size_t new_cap ) = 0;
+  virtual localIndex size() const = 0;
+  virtual int numDimensions() const = 0;
+  virtual localIndex size(int i) const = 0;
+  virtual void resize(int num_dims, long long const * const dims) = 0;
+  virtual void reserve(std::size_t new_cap) = 0;
   virtual std::size_t capacity() const = 0;
   virtual std::size_t max_size() const = 0;
   virtual void clear() = 0;
   virtual void insert() = 0;
-  virtual void resize( localIndex newsize ) = 0;
+  virtual void resize(localIndex newsize) = 0;
+  virtual bool shouldResize() const = 0;
 
-
-#ifdef USE_ATK
-  virtual void registerDataPtr() = 0;
-  virtual void unregisterDataPtr() = 0;
-  virtual void resizeFromSidre() = 0;
-  virtual void storeSizedFromParent() = 0;
-  virtual void loadSizedFromParent() = 0;
-#endif
+  virtual void registerDataPtr(axom::sidre::View * view=nullptr) const = 0; 
+  virtual void registerToWrite(axom::sidre::View * view=nullptr) const = 0;
+  virtual void finishWriting(axom::sidre::View * view=nullptr) const = 0;
+  virtual void registerToRead(axom::sidre::View * view=nullptr) = 0;
+  virtual void finishReading(axom::sidre::View * view=nullptr) = 0;
 
 
   void resize();
-//  virtual void serialize( char * dataPointer, int64 & length, string &
-// typeName ) const = 0;
-
 
   int sizedFromParent() const
   {
@@ -91,12 +88,18 @@ public:
     m_sizedFromParent = val;
   }
 
-#ifdef USE_ATK
-  axom::sidre::View const * getSidreView() const
-  {
-    return m_sidreView;
+  bool getWriteOut() const
+  { 
+    return m_write_out;
   }
-  axom::sidre::View * getSidreView()
+
+  void setWriteOut( bool write_out )
+  {
+    m_write_out = write_out;
+  }
+
+#ifdef USE_ATK
+  axom::sidre::View * getSidreView() const
   {
     return m_sidreView;
   }
@@ -107,10 +110,13 @@ public:
     return m_name;
   }
 
+
 private:
   std::string m_name;
   ManagedGroup* m_parent;
   int m_sizedFromParent;
+  bool m_write_out;
+
 #ifdef USE_ATK
   axom::sidre::View* m_sidreView;
 #endif

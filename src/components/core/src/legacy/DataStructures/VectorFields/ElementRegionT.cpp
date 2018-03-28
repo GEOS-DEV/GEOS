@@ -1288,7 +1288,7 @@ void AddElementResidual(const R2SymTensor& cauchyStress, const R1Tensor* const d
 
 /// Get element neighbors within the element region
 void ElementRegionT::GetElementNeighbors(localIndex el, const FaceManagerT& faceManager,
-                                         std::set<localIndex>& neighbors) const
+                                         set<localIndex>& neighbors) const
 {
 
   localIndex* const facelist = m_toFacesRelation[el];

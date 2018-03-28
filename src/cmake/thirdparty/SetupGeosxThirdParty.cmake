@@ -18,16 +18,25 @@ if (CONDUIT_DIR)
                         INCLUDES ${CONDUIT_INCLUDE_DIRS} 
                         LIBRARIES  conduit
                         TREAT_INCLUDES_AS_SYSTEM ON )
-  blt_register_library( NAME conduit_io
+
+  blt_register_library( NAME conduit_blueprint
                         INCLUDES ${CONDUIT_INCLUDE_DIRS}
-                        LIBRARIES  conduit_io
+                        LIBRARIES conduit_blueprint
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+  blt_register_library( NAME conduit_relay
+                        INCLUDES ${CONDUIT_INCLUDE_DIRS}
+                        LIBRARIES conduit_relay
                         TREAT_INCLUDES_AS_SYSTEM ON )
                         
-  set( thirdPartyLibs ${thirdPartyLibs} conduit  )
+  set( thirdPartyLibs ${thirdPartyLibs} conduit conduit_blueprint conduit_relay )
   
 endif()
 
 
+################################
+# AXOM
+################################
 if (ATK_DIR)
   message( "ATK_DIR = ${ATK_DIR}" )
   include(cmake/thirdparty/FindATK.cmake)
@@ -46,19 +55,15 @@ if (ATK_DIR)
                         LIBRARIES  slic
                         TREAT_INCLUDES_AS_SYSTEM ON)
                         
-    set( thirdPartyLibs ${thirdPartyLibs} sidre spio slic )  
+  set( thirdPartyLibs ${thirdPartyLibs} sidre spio slic )  
 endif()
 
 
 
-
-
-
 get_filename_component( TEMP_DIR "${CMAKE_INSTALL_PREFIX}" NAME)
-string(REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
+string(REGEX REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
 set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR2}" )
 message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
-
 
 
 set(UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" FORCE )
@@ -353,17 +358,23 @@ set( thirdPartyLibs ${thirdPartyLibs} pugixml )
 # TRILINOS
 ################################
 #if( ENABLE_TRILINOS )
-message( INFO ": setting up TRILINOS" )
 
-set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
+
+if(EXISTS ${TRILINOS_DIR})
+
+else()
+    message( INFO ": setting up TRILINOS" )
+    set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
+endif()
+
 include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
 
+
 blt_register_library( NAME trilinos
-                      INCLUDES ${Trilinos_INCLUDE_DIRS} 
+    		      INCLUDES ${Trilinos_INCLUDE_DIRS} 
                       LIBRARIES ${Trilinos_LIBRARIES}
                       TREAT_INCLUDES_AS_SYSTEM ON )
-
-set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
+		      set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
 
 #endif()
 
@@ -407,5 +418,4 @@ if(UNCRUSTIFY_FOUND)
 endif()
 
 message("Leaving SetupGeosxThirdParty.cmake\n")
-
 

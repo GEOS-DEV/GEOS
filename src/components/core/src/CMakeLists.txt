@@ -34,12 +34,16 @@ set( extraComponentsListLink "")
 #  set( extraComponentsListLink ${extraComponentsListLink} python_interp )
 #endif()
 
+if( ENABLE_OPENMP)
+  set( extraComponentsListLink ${extraComponentsListLink} openmp )
+endif()
+
 if( ENABLE_MPI )
   set( extraComponentsListLink ${extraComponentsListLink} mpi )
 endif()
 
 if( USE_ATK )
-  set( extraComponentsListLink ${extraComponentsListLink}  )
+  set( extraComponentsListLink ${extraComponentsListLink} )
 endif()
 
 #message( "extraComponentsListLink = ${extraComponentsListLink}" )
@@ -55,5 +59,5 @@ blt_add_library( NAME                  geosx_core
                  
 #                 DEPENDS_ON            optionparser cxx-utilities  pugixml  silo hdf5 trilinos  ${extraComponentsListLink} ${thirdPartyLibs} )
                  
-                 
 geosx_add_code_checks(PREFIX core)
+

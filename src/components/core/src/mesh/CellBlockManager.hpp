@@ -99,10 +99,8 @@ public:
     return "CellBlockManager";
   }
 
-  string getCatalogName() const override final
-  {
-    return CellBlockManager::CatalogName();
-  }
+  virtual const string getCatalogName() const override final
+  { return CellBlockManager::CatalogName(); }
 
 
 

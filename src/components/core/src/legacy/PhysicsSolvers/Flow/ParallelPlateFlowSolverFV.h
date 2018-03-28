@@ -75,8 +75,6 @@
 
 #include "../PhysicsSolverStrings.h"
 
-#include <set>
-
 
 #ifdef SRC_EXTERNAL
 #include "BoundaryConditions/PerforatedCasedWellboreBoundaryCondition.h"
