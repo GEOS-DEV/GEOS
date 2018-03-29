@@ -181,8 +181,8 @@ public:
   }
 
 
-  globalIndex_array & m_localToGlobalMap;
-  map<globalIndex,localIndex> & m_globalToLocalMap;
+  globalIndex_array  m_localToGlobalMap;
+  map<globalIndex,localIndex>  m_globalToLocalMap;
 
 
   /// builds a new set on this object given another objects set and the map
