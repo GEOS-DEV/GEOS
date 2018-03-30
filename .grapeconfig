@@ -75,7 +75,7 @@ tagversion = true
 
 [project]
 stashurl = https://lc.llnl.gov/bitbucket
-verifyssl = True
+verifyssl = False
 name = geosx
 
 [versioning]
