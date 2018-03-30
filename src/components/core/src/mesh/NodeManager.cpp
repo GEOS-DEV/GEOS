@@ -81,8 +81,12 @@ using namespace dataRepository;
  */
 NodeManager::NodeManager( std::string const & name,
                           ManagedGroup * const parent ):
-  ObjectManagerBase( name, parent )
-{}
+  ObjectManagerBase( name, parent ),
+  m_referencePosition()
+{
+  RegisterViewWrapper(viewKeysStruct::referencePositionString, &m_referencePosition, false );
+
+}
 
 
 

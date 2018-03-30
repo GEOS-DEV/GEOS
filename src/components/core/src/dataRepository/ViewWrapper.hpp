@@ -56,6 +56,7 @@ public:
                         ManagedGroup * const parent,
                         bool write_out=true ):
     ViewWrapperBase(name, parent, write_out),
+    m_ownsData( true ),
     m_data( std::make_unique<T>() )
   {}
 
@@ -72,6 +73,7 @@ public:
 #ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
     m_data( std::move( object ) )
 #else
+  m_ownsData( true ),
   m_data( object.release() )
 #endif
   {}
