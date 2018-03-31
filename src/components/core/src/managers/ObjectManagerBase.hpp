@@ -108,38 +108,7 @@ public:
 //
 //    localIndex DataLengths() const { return size(); }
 
-  struct viewKeyStruct
-  {
-    static constexpr auto ghostRankString = "ghostRank";
-    static constexpr auto localToGlobalMapString = "localToGlobalMap";
-    static constexpr auto globalToLocalMapString = "globalToLocalMap";
-    static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
-    static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
-    static constexpr auto ghostsToSendString = "ghostsToSend";
 
-    dataRepository::ViewKey ghostRank = { ghostRankString };
-    dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
-    dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
-    dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
-    dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
-    dataRepository::ViewKey ghostsToSend = { ghostsToSendString };
-
-
-
-  } viewKeys;
-
-  struct groupKeyStruct
-  {
-    static constexpr auto neighborDataString = "neighborData";
-    dataRepository::GroupKey neighborData = { neighborDataString };
-  } groupKeys;
-
-
-  dataRepository::view_rtype<integer_array> GhostRank()
-  { return this->getData<integer_array>(viewKeys.ghostRank); }
-
-  dataRepository::view_rtype_const<integer_array> GhostRank() const
-  { return this->getData<integer_array>(viewKeys.ghostRank); }
 
 
   void WriteSilo( SiloFile& siloFile,
@@ -248,8 +217,7 @@ public:
   }
 
 
-  globalIndex_array & m_localToGlobalMap;
-  map<globalIndex,localIndex> & m_globalToLocalMap;
+
 
 
   /// builds a new set on this object given another objects set and the map
@@ -277,6 +245,51 @@ public:
 
   //**********************************************************************************************************************
 
+  struct viewKeyStruct
+  {
+    static constexpr auto setsString = "sets";
+    dataRepository::GroupKey sets = { setsString };
+    static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
+    static constexpr auto ghostRankString = "ghostRank";
+    static constexpr auto ghostsToSendString = "ghostsToSend";
+    static constexpr auto globalToLocalMapString = "globalToLocalMap";
+    static constexpr auto isExternalString = "isExternal";
+    static constexpr auto localToGlobalMapString = "localToGlobalMap";
+    static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
+
+    dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
+    dataRepository::ViewKey ghostRank = { ghostRankString };
+    dataRepository::ViewKey ghostsToSend = { ghostsToSendString };
+    dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
+    dataRepository::ViewKey isExternal = { isExternalString };
+    dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
+    dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
+
+
+
+  } viewKeys;
+
+  struct groupKeyStruct
+  {
+    static constexpr auto neighborDataString = "neighborData";
+    dataRepository::GroupKey neighborData = { neighborDataString };
+  } groupKeys;
+
+
+  dataRepository::view_rtype<integer_array> GhostRank()
+  { return this->getData<integer_array>(viewKeys.ghostRank); }
+
+  dataRepository::view_rtype_const<integer_array> GhostRank() const
+  { return this->getData<integer_array>(viewKeys.ghostRank); }
+
+
+
+  ManagedGroup m_sets;
+
+  globalIndex_array  m_localToGlobalMap;
+  map<globalIndex,localIndex>  m_globalToLocalMap;
+  integer_array m_isExternal;
+  integer_array m_ghostRank;
 
 };
 

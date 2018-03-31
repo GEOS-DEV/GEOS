@@ -84,8 +84,10 @@ using namespace multidimensionalArray;
  */
 NodeManager::NodeManager( std::string const & name,
                           ManagedGroup * const parent ):
-  ObjectManagerBase( name, parent )
+  ObjectManagerBase( name, parent ),
+  m_referencePosition()
 {
+  RegisterViewWrapper(viewKeysStruct::referencePositionString, &m_referencePosition, false );
   this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementRegionList.Key());
   this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementSubRegionList.Key());
   this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementList.Key());

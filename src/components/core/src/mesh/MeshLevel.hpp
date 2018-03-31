@@ -54,17 +54,24 @@ public:
     dataRepository::GroupKey elemManager = {elemManagerString};
   } groupKeys;
 
-  NodeManager const * getNodeManager() const { return this->GetGroup<NodeManager>(groupKeys.nodeManager); }
-  NodeManager * getNodeManager()             { return this->GetGroup<NodeManager>(groupKeys.nodeManager); }
+  NodeManager const * getNodeManager() const { return &m_nodeManager; }
+  NodeManager * getNodeManager()             { return &m_nodeManager; }
 
   EdgeManager const * getEdgeManager() const { return this->GetGroup<EdgeManager>(groupKeys.edgeManager); }
   EdgeManager * getEdgeManager()             { return this->GetGroup<EdgeManager>(groupKeys.edgeManager); }
 
-  FaceManager const * getFaceManager() const { return this->GetGroup<FaceManager>(groupKeys.faceManager); }
-  FaceManager * getFaceManager()             { return this->GetGroup<FaceManager>(groupKeys.faceManager); }
+  FaceManager const * getFaceManager() const { return &m_faceManager; }
+  FaceManager * getFaceManager()             { return &m_faceManager; }
 
-  ElementRegionManager const * getElemManager() const { return this->GetGroup<ElementRegionManager>(groupKeys.elemManager); }
-  ElementRegionManager * getElemManager()             { return this->GetGroup<ElementRegionManager>(groupKeys.elemManager); }
+  ElementRegionManager const * getElemManager() const { return &m_elementManager; }
+  ElementRegionManager * getElemManager()             { return &m_elementManager; }
+
+private:
+
+  NodeManager m_nodeManager;
+//  EdgeManager m_edgeManager;
+  FaceManager m_faceManager;
+  ElementRegionManager m_elementManager;
 
 };
 

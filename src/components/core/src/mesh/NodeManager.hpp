@@ -150,8 +150,7 @@ public:
 
   struct viewKeysStruct : ObjectManagerBase::viewKeyStruct
   {
-//    static constexpr auto referencePositionString = "ReferencePosition";
-
+    static constexpr auto referencePositionString = "ReferencePosition";
     dataRepository::ViewKey referencePosition = { dataRepository::keys::referencePositionString };
     dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
     dataRepository::ViewKey nodeList           = { "nodeList" };
@@ -178,6 +177,8 @@ private:
   NodeManager() = delete;
   NodeManager( const NodeManager& init ) = delete;
   NodeManager& operator=( const NodeManager&) = delete;
+
+  r1_array m_referencePosition;
 
 
 };

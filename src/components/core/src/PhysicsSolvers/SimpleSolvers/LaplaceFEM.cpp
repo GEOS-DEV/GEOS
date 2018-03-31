@@ -108,7 +108,7 @@ void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    NodeManager * const nodes = ManagedGroup::group_cast<MeshBody*>(mesh.second.get())->getMeshLevel(0)->getNodeManager();
+    NodeManager * const nodes = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0)->getNodeManager();
     cxx_utilities::DocumentationNode * const docNode = nodes->getDocumentationNode();
 
 
@@ -502,13 +502,13 @@ real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
 
   for( auto & region : elemManager->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups() )
   {
-    ElementRegion * const elementRegion = ManagedGroup::group_cast<ElementRegion *>(region.second.get());
+    ElementRegion * const elementRegion = ManagedGroup::group_cast<ElementRegion *>(region.second);
     auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
     FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
     for( auto & cellBlock : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
-      CellBlockSubRegion * const cellBlockSubRegion = ManagedGroup::group_cast<CellBlockSubRegion*>(cellBlock.second.get() );
+      CellBlockSubRegion * const cellBlockSubRegion = ManagedGroup::group_cast<CellBlockSubRegion*>(cellBlock.second );
 
       array< Array2dT<R1Tensor> > const & dNdX = cellBlockSubRegion->getReference< array< Array2dT<R1Tensor> > >(keys::dNdX);
       Array2dT<real64> const & detJ            = cellBlockSubRegion->getReference< Array2dT<real64> >(keys::detJ);

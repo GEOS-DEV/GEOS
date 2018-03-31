@@ -1,5 +1,11 @@
 
 
+Thu Mar 29 21:41:06 2018 Randolph R. Settgast
+v0.0.28
+
+Fixes an error in the global nodal scatter.
+
+
 Fri Mar 16 07:30:47 2018 Randolph R. Settgast
 v0.0.27
 

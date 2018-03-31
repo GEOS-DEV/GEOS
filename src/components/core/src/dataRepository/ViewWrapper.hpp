@@ -57,8 +57,10 @@ public:
    * @param parent parent group which owns the ViewWrapper
    */
   explicit ViewWrapper( std::string const & name,
-                        ManagedGroup * const parent, bool write_out=true ):
+                        ManagedGroup * const parent,
+                        bool write_out=true ):
     ViewWrapperBase(name, parent, write_out),
+    m_ownsData( true ),
     m_data( std::make_unique<T>() )
   {}
 
@@ -72,7 +74,12 @@ public:
                         std::unique_ptr<T> object,
                         bool write_out=true ):
     ViewWrapperBase(name, parent, write_out),
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
     m_data( std::move( object ) )
+#else
+  m_ownsData( true ),
+  m_data( object.release() )
+#endif
   {}
 
   /**
@@ -82,15 +89,30 @@ public:
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
-                        T * object, bool write_out=true ):
+                        T * object,
+                        bool takeOwnership,
+                        bool write_out=true ):
     ViewWrapperBase(name,parent, write_out),
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
     m_data( std::move( std::unique_ptr<T>(object) ) )
+#else
+  m_ownsData( takeOwnership ),
+  m_data( object )
+#endif
   {}
 
   /**
    * default destructor
    */
-  virtual ~ViewWrapper() noexcept override final {}
+  virtual ~ViewWrapper() noexcept override final
+  {
+#ifndef USE_UNIQUEPTR_IN_DATAREPOSITORY
+    if( m_ownsData )
+    {
+      delete m_data;
+    }
+#endif
+  }
 
   /**
    * Copy Constructor
@@ -725,7 +747,11 @@ public:
   data()
   {
     /// return a c-pointer to the object
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
     return m_data.get();
+#else
+    return m_data;
+#endif
   }
 
 
@@ -733,7 +759,11 @@ public:
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
   data() const
   {
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
     return m_data.get();
+#else
+    return m_data;
+#endif
   }
 
 
@@ -785,7 +815,11 @@ public:
                           !std::is_same<U,string>::value, U * >::type
   dataPtr()
   {
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
     return m_data.get();
+#else
+    return m_data;
+#endif
   }
 
   template<class U = T>
@@ -793,7 +827,11 @@ public:
                           !std::is_same<U,string>::value, U const *>::type
   dataPtr() const
   {
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
     return m_data.get();
+#else
+    return m_data;
+#endif
   }
 
   HAS_ALIAS(value_type)
@@ -1160,8 +1198,12 @@ public:
   }
 
 
+#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
   std::unique_ptr<T> m_data;
-
+#else
+  bool m_ownsData;
+  T * m_data;
+#endif
   ViewWrapper() = delete;
 };
 

@@ -17,16 +17,17 @@ using namespace dataRepository;
 
 MeshLevel::MeshLevel( string const & name,
                       ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+  ManagedGroup(name,parent),
+  m_nodeManager( groupStructKeys::nodeManagerString,this),
+  m_faceManager( groupStructKeys::faceManagerString,this),
+  m_elementManager( groupStructKeys::elemManagerString,this)
 {
-//  RegisterGroup<NodeManager>( groupKeys.vertexManager );
-//  RegisterGroup<EdgeManager>( groupKeys.cellManager );
 
-
-  RegisterGroup<NodeManager>( groupKeys.nodeManager );
+  RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager, false );
 //  RegisterGroup<EdgeManager>( groupKeys.edgeManager );
-  RegisterGroup<FaceManager>( groupKeys.faceManager );
-  RegisterGroup<ElementRegionManager>( groupKeys.elemManager );
+  RegisterGroup<FaceManager>( groupStructKeys::faceManagerString, &m_faceManager, false );
+  RegisterGroup<ElementRegionManager>( groupStructKeys::elemManagerString, &m_elementManager, false );
+
 
   RegisterViewWrapper<integer>( viewKeys.meshLevel );
 }
