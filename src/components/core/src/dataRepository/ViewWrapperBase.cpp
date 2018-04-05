@@ -8,6 +8,7 @@
 #include "ViewWrapperBase.hpp"
 
 #include "ManagedGroup.hpp"
+#include "RestartFlags.hpp"
 
 #ifdef USE_ATK
 #include "slic/slic.hpp"
@@ -24,8 +25,7 @@ ViewWrapperBase::ViewWrapperBase( std::string const & name,
   m_name(name),
   m_parent(parent),
   m_sizedFromParent(1),
-  m_write_to_restart(true),
-  m_read_from_restart(true)
+  m_restart_flags(RestartFlags::WRITE_AND_READ)
 #ifdef USE_ATK
   ,m_sidreView(nullptr)
 #endif
@@ -53,8 +53,7 @@ ViewWrapperBase::ViewWrapperBase( ViewWrapperBase&& source ):
   m_name( std::move(source.m_name) ),
   m_parent( source.m_parent),
   m_sizedFromParent( source.m_sizedFromParent),
-  m_write_to_restart( source.m_write_to_restart),
-  m_read_from_restart( source.m_read_from_restart)
+  m_restart_flags(RestartFlags::WRITE_AND_READ)
 #ifdef USE_ATK
   ,m_sidreView( source.m_sidreView )
 #endif

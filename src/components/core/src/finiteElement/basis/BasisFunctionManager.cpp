@@ -7,6 +7,7 @@
 
 #include "BasisFunctionManager.hpp"
 #include "BasisBase.hpp"
+#include "dataRepository/RestartFlags.hpp"
 
 namespace geosx
 {
@@ -32,7 +33,7 @@ void BasisFunctionManager::CreateChild( string const & childKey, string const & 
 {
   std::cout << "Basis Function: " << childKey << ", " << childName << std::endl;
   std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey );
-  this->RegisterViewWrapper( childName, std::move(basis) )->setWriteToRestart(false);
+  this->RegisterViewWrapper( childName, std::move(basis) )->setRestartFlags(RestartFlags::NO_WRITE);
 }
 
 // Basis Base is not derived from ManagedGroup, so we need to do this manually:

@@ -10,6 +10,8 @@
 
 #include "DocumentationNode.hpp"
 
+#include "dataRepository/RestartFlags.hpp"
+
 namespace geosx
 {
 
@@ -126,8 +128,7 @@ void SolverApplication::FillDocumentationNode()
                               0,
                               1,
                               0,
-                              true,
-                              false);
+                              RestartFlags::WRITE );
 
   docNode->AllocateChildNode( keys::dt,
                               keys::dt,
@@ -141,8 +142,7 @@ void SolverApplication::FillDocumentationNode()
                               0,
                               1,
                               0,
-                              true,
-                              false );
+                              RestartFlags::WRITE );
 
   docNode->AllocateChildNode( keys::cycle,
                               keys::cycle,
@@ -169,8 +169,7 @@ void SolverApplication::FillDocumentationNode()
                               0,
                               1,
                               0,
-                              true,
-                              false );
+                              RestartFlags::WRITE );
 
 }
 

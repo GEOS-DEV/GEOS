@@ -61,8 +61,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
 #endif
   m_size(0),
-  m_write_to_restart(true),
-  m_read_from_restart(true),
+  m_restart_flags(RestartFlags::WRITE_AND_READ),
   m_name(name)
 {
 
@@ -136,8 +135,7 @@ ManagedGroup::ManagedGroup( ManagedGroup&& source ):
   m_sidreGroup( std::move(source.m_sidreGroup) ),
 #endif
   m_size( source.m_size ),
-  m_write_to_restart( source.m_write_to_restart ),
-  m_read_from_restart( source.m_write_to_restart ),
+  m_restart_flags( source.m_restart_flags ),
   m_name( source.m_name )
 {}
 
@@ -182,8 +180,7 @@ void ManagedGroup::RegisterDocumentationNodes()
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                           rtTypes::typeID(subNode.second.getDataType() ) );
       view->setSizedFromParent( subNode.second.m_managedByParent);
-      view->setWriteToRestart( subNode.second.getWriteToRestart() );
-      view->setReadFromRestart( subNode.second.getReadFromRestart() );
+      view->setRestartFlags( subNode.second.getRestartFlags() );
       subNode.second.m_isRegistered = 1;
     }
   }
@@ -363,7 +360,7 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
 void ManagedGroup::prepareToWrite() const
 {
 #ifdef USE_ATK
-  if (!getWriteToRestart())
+  if (getRestartFlags() == RestartFlags::NO_WRITE)
   {
     return;
   }
@@ -395,7 +392,7 @@ void ManagedGroup::prepareToWrite() const
 void ManagedGroup::finishWriting() const
 {
 #ifdef USE_ATK
-  if (!getWriteToRestart())
+  if (getRestartFlags() == RestartFlags::NO_WRITE)
   {
     return;
   }
@@ -419,7 +416,7 @@ void ManagedGroup::finishWriting() const
 void ManagedGroup::prepareToRead()
 {
 #ifdef USE_ATK
-  if (!getReadFromRestart())
+  if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
   {
     return;
   }
@@ -444,7 +441,7 @@ void ManagedGroup::prepareToRead()
 void ManagedGroup::finishReading()
 {
 #ifdef USE_ATK
-  if (!getReadFromRestart())
+  if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
   {
     return;
   }

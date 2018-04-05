@@ -32,6 +32,7 @@
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/SidreWrapper.hpp"
+#include "dataRepository/RestartFlags.hpp"
 
 #include "mesh/MeshBody.hpp"
 #include "MeshUtilities/MeshUtilities.hpp"
@@ -110,7 +111,7 @@ ProblemManager::ProblemManager( const std::string& name,
   // RegisterGroup<DomainPartition>(groupKeys.domain)->BuildDataStructure(nullptr);
   RegisterGroup<DomainPartition>(groupKeys.domain);
   ManagedGroup * commandLine = RegisterGroup<ManagedGroup>(groupKeys.commandLine);
-  commandLine->setReadFromRestart(false);
+  commandLine->setRestartFlags(RestartFlags::WRITE);
 
   // Mandatory groups that read from the xml
   //RegisterGroup<BoundaryConditionManager>(groupKeys.boundaryConditionManager);

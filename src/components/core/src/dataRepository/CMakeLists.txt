@@ -11,6 +11,7 @@ set(geosx_headers
     dataRepository/ViewWrapper.hpp
     dataRepository/ViewWrapperBase.hpp
     dataRepository/Buffer.hpp
+    dataRepository/RestartFlags.hpp
     PARENT_SCOPE )
 
 #

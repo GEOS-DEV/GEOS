@@ -14,6 +14,7 @@
 
 #include "ObjectCatalog.hpp"
 #include "ViewWrapper.hpp"
+#include "RestartFlags.hpp"
 
 #include "depricated/Common.h"
 #include "DocumentationNode.hpp"
@@ -575,13 +576,9 @@ public:
     return m_wrappers;
   }
 
-  bool getWriteToRestart() const { return m_write_to_restart; }
-  
-  void setWriteToRestart(bool write_to_restart) { m_write_to_restart = write_to_restart; }
+  RestartFlags getRestartFlags() const { return m_restart_flags; }
 
-  bool getReadFromRestart() const { return m_read_from_restart; }
-
-  void setReadFromRestart(bool read_from_restart) { m_read_from_restart = read_from_restart; }
+  void setRestartFlags( RestartFlags flags ) { m_restart_flags = flags; } 
 
   void prepareToWrite() const;
 
@@ -606,8 +603,7 @@ private:
 #endif
 
   indexType m_size;
-  bool m_write_to_restart;
-  bool m_read_from_restart;
+  RestartFlags m_restart_flags;
   string m_name;
 
 

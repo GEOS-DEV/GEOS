@@ -18,6 +18,7 @@
 #include "StringUtilities.hpp"
 #include "Macros.hpp"
 #include "Buffer.hpp"
+#include "RestartFlags.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/GeosxConfig.hpp"
@@ -726,7 +727,7 @@ public:
   void registerToWrite(axom::sidre::View * view=nullptr) const override
   {
 #ifdef USE_ATK
-    if (!getWriteToRestart())
+    if (getRestartFlags() == RestartFlags::NO_WRITE)
     {
       view = (view != nullptr) ? view : getSidreView();
       unregisterDataPtr(view);
@@ -780,7 +781,7 @@ public:
   void finishWriting(axom::sidre::View * view=nullptr) const override
   {
 #ifdef USE_ATK
-    if (!getWriteToRestart())
+    if (getRestartFlags() == RestartFlags::NO_WRITE)
     {
       view = (view != nullptr) ? view : getSidreView();
       unregisterDataPtr(view);
@@ -809,7 +810,7 @@ public:
   void registerToRead(axom::sidre::View * view=nullptr) override
   {
 #ifdef USE_ATK
-    if (!getReadFromRestart())
+    if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
     {
       unregisterDataPtr(view);
       return;
@@ -843,7 +844,7 @@ public:
   void finishReading(axom::sidre::View * view) override
   {
 #ifdef USE_ATK
-    if (!getReadFromRestart())
+    if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
     {
       view = (view != nullptr) ? view : getSidreView();
       unregisterDataPtr(view);
