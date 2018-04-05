@@ -12,7 +12,9 @@
 #include "managers/ProblemManager.hpp"
 
 
+#ifdef USE_OPENMP
 #include <omp.h>
+#endif
 
 using namespace geosx;
 
@@ -35,11 +37,12 @@ int main( int argc, char *argv[] )
 
   std::cout<<"starting main"<<std::endl;
 
+#ifdef USE_OPENMP
   {
     int noThreads = omp_get_max_threads();
     std::cout<<"No of threads: "<<noThreads<<std::endl;
   }
-  
+#endif
 
 
 

@@ -15,7 +15,11 @@ typedef RAJA::loop_exec computeForcePolicy;
 
 typedef RAJA::seq_exec quadraturePolicy;
 
+#ifdef USE_OPENMP
 typedef RAJA::atomic::omp_atomic atomicPolicy;
+#else
+typedef RAJA::atomic::loop_atomic atomicPolicy;
 
+#endif
 
 #endif

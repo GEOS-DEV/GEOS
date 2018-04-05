@@ -1,5 +1,20 @@
 
 
+Thu Mar 29 21:41:06 2018 Randolph R. Settgast
+v0.0.28
+
+Fixes an error in the global nodal scatter.
+
+
+Fri Mar 16 07:30:47 2018 Randolph R. Settgast
+v0.0.27
+
+Changes to enable nonATK build on darwin, and compile out OPENMP on darwin/clang.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/20
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/29
+
+
 Wed Feb  7 13:14:04 2018 Arturo Vargas
 v0.0.26
 
