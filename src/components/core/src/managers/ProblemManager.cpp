@@ -12,12 +12,8 @@
 #endif
 
 #include <stdexcept>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
 #include <vector>
-#include <regex>
+
 
 #include "DomainPartition.hpp"
 #include "PhysicsSolvers/SolverBase.hpp"
@@ -28,6 +24,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "fileIO/blueprint/Blueprint.hpp"
+#include "fileIO/utils/utils.hpp"
 #include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
@@ -42,62 +39,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-
-
-/* Taken from http://www.martinbroadhurst.com/list-the-files-in-a-directory-in-c.html */
-void readDirectory(const std::string& name, std::vector<std::string>& v)
-{
-    DIR* dirp = opendir(name.c_str());
-    struct dirent * dp;
-    while ((dp = readdir(dirp)) != NULL) {
-        v.push_back(dp->d_name);
-    }
-    closedir(dirp);
-}
-
-
-void getAbsolutePath(const std::string & path, std::string & absolute_path )
-{
-  char abs_file_path[PATH_MAX + 1];
-  if (realpath(path.data(), abs_file_path))
-  {
-    absolute_path = abs_file_path;
-  }
-  else
-  {
-    getcwd(abs_file_path, PATH_MAX + 1);
-    GEOS_ERROR("Could not get the absolute path for " << path << " from "  << abs_file_path);
-  }
-}
-
-
-void splitPath(const std::string& path, std::string& dirname, std::string& basename)
-{
-  size_t pos = path.find_last_of('/');
-  if (pos == string::npos)
-  {
-    dirname = std::string(".");
-    basename = path;
-  }
-
-  if (pos == 0)
-  {
-    dirname = std::string("/");
-    basename = path.substr(1);
-  }
-
-  dirname = path.substr(0, pos);
-  basename = path.substr(pos + 1);
-}
-
-
-template <typename REGEX>
-bool regexMatch(const std::string & str, REGEX regex)
-{
-  return std::regex_match(str, regex);
-}
-
-
 
 
 ProblemManager::ProblemManager( const std::string& name,
