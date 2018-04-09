@@ -214,6 +214,7 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 int ObjectManagerBase::PackSize( array<string> const & wrapperNames,
                             localIndex_array const & packList,
+                            integer const includeGlobalIndices,
                             integer const recursive ) const
 {
   int packedSize = 0;
@@ -221,6 +222,7 @@ int ObjectManagerBase::PackSize( array<string> const & wrapperNames,
   packedSize += this->PackPrivate<false>( junk,
                                           wrapperNames,
                                           packList,
+                                          includeGlobalIndices,
                                           recursive );
 
   return packedSize;
@@ -232,6 +234,7 @@ int ObjectManagerBase::PackSize( array<string> const & wrapperNames,
 int ObjectManagerBase::Pack( buffer_unit_type * & buffer,
                              array<string> const & wrapperNames,
                              localIndex_array const & packList,
+                             integer const includeGlobalIndices,
                              integer const recursive ) const
 {
   int packedSize = 0;
@@ -239,6 +242,7 @@ int ObjectManagerBase::Pack( buffer_unit_type * & buffer,
   packedSize += this->PackPrivate<true>( buffer,
                                           wrapperNames,
                                           packList,
+                                          includeGlobalIndices,
                                           recursive );
 
   return packedSize;
@@ -252,11 +256,76 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   int unpackedSize = 0;
   string groupName;
   unpackedSize += CommBufferOps::Unpack( buffer, groupName );
-  GEOS_ASSERT( groupName!=this->getName(), "ManagedGroup::Unpack(): group names do not match")
+  GEOS_ASSERT( groupName==this->getName(), "ObjectManagerBase::Unpack(): group names do not match")
+
+  int numUnpackedIndices;
+  unpackedSize += CommBufferOps::Unpack( buffer, numUnpackedIndices );
+
+  integer readIncludeGlobalIndices;
+  unpackedSize += CommBufferOps::Unpack( buffer, readIncludeGlobalIndices);
 
   string wrappersLabel;
   unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
-  GEOS_ASSERT( wrappersLabel!="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
+  GEOS_ASSERT( wrappersLabel=="Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect")
+
+
+  localIndex_array unpackedLocalIndices;
+  unpackedLocalIndices.resize(numUnpackedIndices);
+  if( readIncludeGlobalIndices )
+  {
+    globalIndex_array globalIndices;
+    unpackedSize += CommBufferOps::Unpack( buffer, globalIndices );
+    localIndex numNewIndices = 0;
+    globalIndex_array newGlobalIndices(globalIndices.size());
+    localIndex const oldSize = this->size();
+    for( localIndex a=0 ; a<numUnpackedIndices ; ++a )
+    {
+      // check to see if the object already exists by checking for the global
+      // index in m_globalToLocalMap. If it doesn't, then add the object
+      map<globalIndex,localIndex>::iterator iterG2L = m_globalToLocalMap.find(globalIndices[a]);
+      if( iterG2L == m_globalToLocalMap.end() )
+      {
+        // object does not exist on this domain
+        const localIndex newLocalIndex = oldSize + numNewIndices;
+
+        // add the global index of the new object to the globalToLocal map
+        m_globalToLocalMap[globalIndices[a]] = newLocalIndex;
+
+        unpackedLocalIndices(a) = newLocalIndex;
+
+        newGlobalIndices.push_back( globalIndices[a] );
+
+        ++numNewIndices;
+
+        GEOS_ASSERT( packList.size()==0,
+                     "ObjectManagerBase::Unpack(): packList specified, "
+                     "but a new globalIndex is unpacked")
+      }
+      else
+      {
+        // object already exists on this domain
+        // get the local index of the node
+        localIndex b = iterG2L->second;
+        unpackedLocalIndices(a) = b;
+      }
+    }
+    newGlobalIndices.resize(numNewIndices);
+
+    // figure out new size of object container, and resize object
+    const localIndex newSize = oldSize + numNewIndices;
+    this->resize( newSize );
+
+    // add the new indices to the maps.
+    for( int a=0 ; a<numNewIndices ; ++a )
+    {
+      localIndex b = oldSize + a;
+      m_localToGlobalMap[b] = newGlobalIndices(a);
+    }
+  }
+  else
+  {
+    unpackedLocalIndices = packList;
+  }
 
   int numWrappers;
   unpackedSize += CommBufferOps::Unpack( buffer, numWrappers);
@@ -265,7 +334,7 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
     string wrapperName;
     unpackedSize += CommBufferOps::Unpack( buffer, wrapperName );
     ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-    wrapper->Unpack(buffer,packList);
+    wrapper->Unpack(buffer,unpackedLocalIndices);
   }
 
 
@@ -273,11 +342,11 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += CommBufferOps::Unpack( buffer, subGroups );
-    GEOS_ASSERT( subGroups!="SubGroups", "ManagedGroup::Unpack(): group names do not match")
+    GEOS_ASSERT( subGroups=="SubGroups", "ManagedGroup::Unpack(): group names do not match")
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += CommBufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ASSERT( numSubGroups!=this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
+    GEOS_ASSERT( numSubGroups==this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
 
     for( auto const & index : this->GetSubGroups() )
     {

@@ -197,7 +197,7 @@ namespace CommBufferOps
             typename INDEX_TYPE=std::int_fast32_t >
   localIndex Unpack( char const *& buffer,
                             multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var,
-                            const T_indices& indices );
+                            const array<T_indices>& indices );
 
 
   template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename T_INDICES >

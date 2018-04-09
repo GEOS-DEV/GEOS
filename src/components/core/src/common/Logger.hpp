@@ -34,7 +34,7 @@ void geos_abort( std::string message );
 #endif
 
 #define GEOS_ASSERT( CONDITION, msg) \
-  if( CONDITION )\
+  if( !(CONDITION) )\
   {\
     std::cerr<<"***** GEOS_ASSERT "<<std::endl;\
     std::cerr<<"***** FILE: "<<__FILE__<<std::endl;\

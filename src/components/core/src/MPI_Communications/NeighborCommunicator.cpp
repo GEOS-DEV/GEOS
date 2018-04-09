@@ -274,8 +274,8 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
 
 
   int bufferSize = 0;
-  bufferSize += nodeManager.PackSize( {}, nodeAdjacencyList, 0 );
-  bufferSize += faceManager.PackSize( {}, faceAdjacencyList, 0 );
+  bufferSize += nodeManager.PackSize( {}, nodeAdjacencyList, 1, 0 );
+  bufferSize += faceManager.PackSize( {}, faceAdjacencyList, 1, 0 );
   bufferSize += elemManager.PackSize( {}, elementAdjacencyList );
 
   buffer_type & sendBuffer = SendBuffer(commID);
@@ -284,8 +284,8 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
   int packedSize = 0;
-  packedSize += nodeManager.Pack( sendBufferPtr, {} ,nodeAdjacencyList, 0 );
-  packedSize += faceManager.Pack( sendBufferPtr, {}, faceAdjacencyList, 0 );
+  packedSize += nodeManager.Pack( sendBufferPtr, {} ,nodeAdjacencyList, 1, 0 );
+  packedSize += faceManager.Pack( sendBufferPtr, {}, faceAdjacencyList, 1, 0 );
   packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
 
 
@@ -298,6 +298,11 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
 
   int unpackedSize = 0;
   unpackedSize += nodeManager.Unpack( receiveBufferPtr, {}, 0);
+  unpackedSize += faceManager.Unpack( receiveBufferPtr, {}, 0);
+
+  ElementRegionManager::ElementViewAccessor<localIndex_array> elementAdjacencyList2;
+
+  unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyList2);
 
   std::cout<<"herro"<<std::endl;
 

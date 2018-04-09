@@ -61,8 +61,8 @@ template< typename T,
           typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
 Unpack( char const *& buffer,
-                       T * const var,
-                       INDEX_TYPE & length )
+        T * const var,
+        INDEX_TYPE & length )
 {
   localIndex sizeOfUnpackedChars = 0;
 
@@ -79,8 +79,8 @@ template< typename T,
           typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
 Unpack( char const *& buffer,
-                       T * const var,
-                       INDEX_TYPE & length )
+        T * const var,
+        INDEX_TYPE & length )
 {
   localIndex sizeOfUnpackedChars = 0;
 
@@ -101,9 +101,9 @@ template< bool DO_PACKING,
           typename INDEX_TYPE >
 localIndex
 Pack( char*&  buffer,
-                     T const * const var,
-                     INDEX_TYPE const * const indices,
-                     INDEX_TYPE const length )
+      T const * const var,
+      INDEX_TYPE const * const indices,
+      INDEX_TYPE const length )
 {
   localIndex sizeOfPackedChars = 0;
 
@@ -121,9 +121,9 @@ template< typename T,
           typename INDEX_TYPE >
 localIndex
 Unpack( char const *& buffer,
-                       T * const var,
-                       INDEX_TYPE const * const indices,
-                       INDEX_TYPE & length )
+        T * const var,
+        INDEX_TYPE const * const indices,
+        INDEX_TYPE & length )
 {
   localIndex sizeOfUnpackedChars = 0;
 
@@ -429,7 +429,11 @@ Unpack( char const *& buffer,
   }
   else
   {
-    var.resize( NDIM, strides );
+    INDEX_TYPE const * const existingStrides = var.strides();
+    for( int i=0 ; i<NDIM ; ++i )
+    {
+      GEOS_ASSERT( strides[i]==existingStrides[i], "CommBufferOps::Unpack(): strides are inconsistent." )
+    }
   }
 
   localIndex numValuesRead;
@@ -465,10 +469,15 @@ Pack( char*& buffer,
 
   sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.strides(), NDIM );
 
-  const localIndex length = indices.size();
-  localIndex sizeOfPackedArrayChars = length*sizeof(T);
 
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(), indices.data(), length );
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[indices[a]], var.strides()[0] );
+  }
+//  const localIndex length = indices.size();
+//  localIndex sizeOfPackedArrayChars = length*sizeof(T);
+//
+//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(), indices.data(), length );
 
   return sizeOfPackedChars;
 }
@@ -480,8 +489,8 @@ template< typename T,
           typename T_indices,
           typename INDEX_TYPE >
 localIndex Unpack( char const *& buffer,
-                                  multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var,
-                                  const T_indices& indices )
+                   multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var,
+                   const T_indices& indices )
 {
   localIndex sizeOfUnpackedChars = 0;
 
@@ -508,15 +517,26 @@ localIndex Unpack( char const *& buffer,
   }
   else
   {
-    var.resize( NDIM, strides );
+    INDEX_TYPE const * const existingStrides = var.strides();
+    for( int i=0 ; i<NDIM ; ++i )
+    {
+      GEOS_ASSERT( strides[i]==existingStrides[i], "CommBufferOps::Unpack(): strides are inconsistent." )
+    }
   }
 
-  localIndex numValuesRead;
-  sizeOfUnpackedChars += Unpack( buffer, var.data(), indices.data(), numValuesRead );
-  if( numValuesRead != var.size() )
+  for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-    GEOS_ERROR( "error reading data");
+    sizeOfUnpackedChars += Unpack( buffer, var[indices[a]], var.strides()[0] );
   }
+
+//  localIndex numValuesRead;
+//  sizeOfUnpackedChars += Unpack( buffer, var.data(), indices.data(), numValuesRead );
+//  if( numValuesRead != var.size() )
+//  {
+//
+//    GEOS_ERROR( "error reading data: numValuesRead != var.size() ==> "
+//        + std::to_string(numValuesRead)+"!="+std::to_string(var.size()));
+//  }
 
 
   return sizeOfUnpackedChars;

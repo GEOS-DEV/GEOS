@@ -52,17 +52,20 @@ public:
   virtual void FillDocumentationNode() override;
 
 
-
+  using dataRepository::ManagedGroup::PackSize;
+  using dataRepository::ManagedGroup::Pack;
 
   virtual int PackSize( array<string> const & wrapperNames,
                         localIndex_array const & packList,
-                        integer const recursive ) const  override;
+                        integer const includeGlobalIndices,
+                        integer const recursive ) const;
 
 
   virtual int Pack( buffer_unit_type * & buffer,
                     array<string> const & wrapperNames,
                     localIndex_array const & packList,
-                    integer const recursive ) const  override;
+                    integer const includeGlobalIndices,
+                    integer const recursive ) const;
 
 //  virtual int Unpack( buffer_unit_type const *& buffer,
 //                      integer const recursive )  override;
@@ -77,6 +80,7 @@ private:
   int PackPrivate( buffer_unit_type * & buffer,
                    array<string> const & wrapperNames,
                    localIndex_array const & packList,
+                   integer const includeGlobalIndices,
                    integer const recursive ) const;
 
   template< bool DOPACK >
@@ -298,19 +302,43 @@ template< bool DOPACK >
 int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
                                     array<string> const & wrapperNames,
                                     localIndex_array const & packList,
+                                    integer const includeGlobalIndices,
                                     integer const recursive ) const
 {
   int packedSize = 0;
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->getName() );
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->size() );
+  int const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, numPackedIndices );
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, includeGlobalIndices );
 
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
 
 
+  if( includeGlobalIndices )
+  {
+    globalIndex_array globalIndices;
+    globalIndices.resize(numPackedIndices);
+    if( packList.size()==0 )
+    {
+      for( localIndex a=0 ; a<numPackedIndices ; ++a )
+      {
+        globalIndices[a] = this->m_localToGlobalMap[a];
+      }
+    }
+    else
+    {
+      for( localIndex a=0 ; a<numPackedIndices ; ++a )
+      {
+        globalIndices[a] = this->m_localToGlobalMap[packList[a]];
+      }
+    }
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, globalIndices );
+  }
 
   array<string> wrapperNamesForPacking;
-  if(  wrapperNames.size()==0 )
+  if( wrapperNames.size()==0 )
   {
     wrapperNamesForPacking.resize( this->wrappers().size() );
     localIndex count = 1;
@@ -336,7 +364,7 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     }
   }
 
-  packedSize += CommBufferOps::Pack<DOPACK,int>( buffer, wrapperNames.size() );
+  packedSize += CommBufferOps::Pack<DOPACK,int>( buffer, wrapperNamesForPacking.size() );
   for( auto const & wrapperName : wrapperNamesForPacking )
   {
     dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
@@ -390,11 +418,11 @@ int ObjectManagerBase::UnpackPrivate( buffer_unit_type const *& buffer,
 
   string groupName;
   unpackedSize += CommBufferOps::Unpack( buffer, groupName );
-  GEOS_ASSERT( groupName!=this->getName(), "ManagedGroup::Unpack(): group names do not match")
+  GEOS_ASSERT( groupName==this->getName(), "ManagedGroup::Unpack(): group names do not match")
 
   string wrappersLabel;
   unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
-  GEOS_ASSERT( wrappersLabel!="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
+  GEOS_ASSERT( wrappersLabel=="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
 
 
   globalIndex_array globalIndices;

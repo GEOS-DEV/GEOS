@@ -516,11 +516,11 @@ int ManagedGroup::Unpack( buffer_unit_type const *& buffer,
   int unpackedSize = 0;
   string groupName;
   unpackedSize += CommBufferOps::Unpack( buffer, groupName );
-  GEOS_ASSERT( groupName!=this->getName(), "ManagedGroup::Unpack(): group names do not match")
+  GEOS_ASSERT( groupName==this->getName(), "ManagedGroup::Unpack(): group names do not match")
 
   string wrappersLabel;
   unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
-  GEOS_ASSERT( wrappersLabel!="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
+  GEOS_ASSERT( wrappersLabel=="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
 
   int numWrappers;
   unpackedSize += CommBufferOps::Unpack( buffer, numWrappers);
@@ -537,11 +537,11 @@ int ManagedGroup::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += CommBufferOps::Unpack( buffer, subGroups );
-    GEOS_ASSERT( subGroups!="SubGroups", "ManagedGroup::Unpack(): group names do not match")
+    GEOS_ASSERT( subGroups=="SubGroups", "ManagedGroup::Unpack(): group names do not match")
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += CommBufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ASSERT( numSubGroups!=m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
+    GEOS_ASSERT( numSubGroups==m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
 
     for( auto const & index : this->m_subGroups )
     {

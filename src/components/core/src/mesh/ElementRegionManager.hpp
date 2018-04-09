@@ -218,14 +218,29 @@ public:
 
 
   int PackSize( array<string> const & wrapperNames,
-                ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
+                ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    buffer_unit_type * junk = nullptr;
+    return PackPrivate<false>( junk, wrapperNames, packList );
+  }
 
   int Pack( buffer_unit_type * & buffer,
             array<string> const & wrapperNames,
-            ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
+            ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    return PackPrivate<true>( buffer, wrapperNames, packList );
+  }
+
+  int Unpack( buffer_unit_type const * & buffer,
+              ElementViewAccessor<localIndex_array> const & packList );
 
 
 private:
+  template< bool DOPACK >
+  int PackPrivate( buffer_unit_type * & buffer,
+                   array<string> const & wrapperNames,
+                   ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
+
   ElementRegionManager( const ElementRegionManager& );
   ElementRegionManager& operator=( const ElementRegionManager&);
 };
@@ -261,6 +276,47 @@ ConstructViewAccessor( string const & viewName,
   }
 
 }
+
+
+template< bool DOPACK >
+int
+ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
+                                   array<string> const & wrapperNames,
+                                   ElementViewAccessor<localIndex_array> const & packList ) const
+{
+  int packedSize = 0;
+
+//  packedSize += ManagedGroup::Pack( buffer, wrapperNames, {}, 0, 0);
+
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, numRegions() );
+
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
+
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      packedSize += CommBufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
+
+      localIndex_array const & elemList = *(packList[kReg][kSubReg]);
+      if( DOPACK )
+      {
+        packedSize += subRegion->Pack( buffer, wrapperNames, elemList, 1, 0 );
+      }
+      else
+      {
+        packedSize += subRegion->PackSize( wrapperNames, elemList, 1, 0 );
+      }
+    }
+  }
+
+  return packedSize;
+}
+
 
 }
 #endif /* ZONEMANAGER_H */
