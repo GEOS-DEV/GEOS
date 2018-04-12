@@ -472,7 +472,7 @@ Pack( char*& buffer,
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[indices[a]], var.strides()[0] );
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(indices[a]), var.strides()[0] );
   }
 //  const localIndex length = indices.size();
 //  localIndex sizeOfPackedArrayChars = length*sizeof(T);
@@ -526,7 +526,10 @@ localIndex Unpack( char const *& buffer,
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-    sizeOfUnpackedChars += Unpack( buffer, var[indices[a]], var.strides()[0] );
+
+//    var.linearIndex( indices[a] )
+    localIndex temp;
+    sizeOfUnpackedChars += Unpack( buffer, var.data( indices[a] ), temp );
   }
 
 //  localIndex numValuesRead;

@@ -96,7 +96,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
         lArray2d const & elemsToNodes = subRegion->getReference<lArray2d>(subRegion->viewKeys.nodeList);
         for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
         {
-          localIndex const * const nodeList = elemsToNodes[elementIndex];
+          arrayView1d<localIndex const> const nodeList = elemsToNodes[elementIndex];
           for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
           {
             nodeAdjacencySet.insert(nodeList[a]);
@@ -106,7 +106,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
         lArray2d const & elemsToFaces = subRegion->getReference<lArray2d>(subRegion->viewKeys.faceList);
         for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
         {
-          localIndex const * const faceList = elemsToFaces[elementIndex];
+          arrayView1d<localIndex const> const faceList = elemsToFaces[elementIndex];
           for( localIndex a=0 ; a<elemsToFaces.size(1) ; ++a )
           {
             faceAdjacencySet.insert(faceList[a]);

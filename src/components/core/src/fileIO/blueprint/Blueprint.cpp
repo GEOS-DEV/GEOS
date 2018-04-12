@@ -194,7 +194,7 @@ void Blueprint::addCells(Group* topo, Group* fields) const
     const std::string& elem_name = this->numNodesToElemName.at(cell_block->numNodesPerElement());
     std::pair<localIndex*, localIndex>& pair = elementsToNodes[elem_name];
     localIndex* to = pair.first + pair.second;
-    const localIndex* from = cell_block->m_toNodesRelation[0];
+    localIndex const * const from = cell_block->m_toNodesRelation.data();
     const localIndex num_nodes = cell_block->m_toNodesRelation.size();
     const localIndex byte_size = num_nodes * sizeof(localIndex);
     std::memcpy(to, from, byte_size);

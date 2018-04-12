@@ -273,6 +273,11 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
                                 2 );
 
 
+  nodeManager.m_ghostRank = -1;
+  faceManager.m_ghostRank = -1;
+
+
+
   int bufferSize = 0;
   bufferSize += nodeManager.PackSize( {}, nodeAdjacencyList, 1, 0 );
   bufferSize += faceManager.PackSize( {}, faceAdjacencyList, 1, 0 );

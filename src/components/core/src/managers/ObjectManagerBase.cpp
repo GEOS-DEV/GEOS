@@ -129,7 +129,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   localIndex mapSize = map.size(1);
   for( localIndex ka=0 ; ka<size() ; ++ka )
   {
-    const localIndex* const sublist = map[ka];
+    arrayView1d<localIndex const> const sublist = map[ka];
     int addToSet = 0;
     for( int a=0 ; a<mapSize ; ++a )
     {
@@ -258,6 +258,11 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   unpackedSize += CommBufferOps::Unpack( buffer, groupName );
   GEOS_ASSERT( groupName==this->getName(), "ObjectManagerBase::Unpack(): group names do not match")
 
+  int rank=0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank );
+  int sendingRank;
+  unpackedSize += CommBufferOps::Unpack( buffer, sendingRank );
+
   int numUnpackedIndices;
   unpackedSize += CommBufferOps::Unpack( buffer, numUnpackedIndices );
 
@@ -276,7 +281,7 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
     globalIndex_array globalIndices;
     unpackedSize += CommBufferOps::Unpack( buffer, globalIndices );
     localIndex numNewIndices = 0;
-    globalIndex_array newGlobalIndices(globalIndices.size());
+    globalIndex_array newGlobalIndices;
     localIndex const oldSize = this->size();
     for( localIndex a=0 ; a<numUnpackedIndices ; ++a )
     {
@@ -307,6 +312,10 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
         // get the local index of the node
         localIndex b = iterG2L->second;
         unpackedLocalIndices(a) = b;
+        if( sendingRank < rank )
+        {
+          m_ghostRank[b] = sendingRank;
+        }
       }
     }
     newGlobalIndices.resize(numNewIndices);
@@ -320,7 +329,9 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
     {
       localIndex b = oldSize + a;
       m_localToGlobalMap[b] = newGlobalIndices(a);
+      m_ghostRank[b] = sendingRank;
     }
+
   }
   else
   {
@@ -359,6 +370,12 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   return unpackedSize;
 }
 
+void ObjectManagerBase::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+{
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.localToGlobalMapString));
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.globalToLocalMapString));
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.ghostRankString));
+}
 
 
 

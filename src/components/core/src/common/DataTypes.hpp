@@ -115,6 +115,11 @@ using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
 template< typename T, int NDIM >
 using array_view = multidimensionalArray::ArrayView<T,NDIM,localIndex>;
 
+template< typename T >
+using arrayView1d = multidimensionalArray::arrayView1d<T,localIndex>;
+
+//template< typename T >
+//using arrayView1d_const = multidimensionalArray::arrayView1d<T const,localIndex>;
 
 template< typename T >
 using set = SortedArray<T>;

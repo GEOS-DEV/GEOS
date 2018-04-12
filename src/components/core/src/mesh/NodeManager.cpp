@@ -88,9 +88,9 @@ NodeManager::NodeManager( std::string const & name,
   m_referencePosition()
 {
   RegisterViewWrapper(viewKeysStruct::referencePositionString, &m_referencePosition, false );
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementRegionList.Key());
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementSubRegionList.Key());
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementList.Key());
+  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementRegionListString);
+  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementSubRegionListString);
+  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementListString);
 
 }
 
@@ -199,9 +199,9 @@ void NodeManager::FillDocumentationNode()
 
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
-  array<localIndex_array> & elementRegionList = this->getReference< array<localIndex_array> >(viewKeys.elementRegionList.Key());
-  array<localIndex_array> & elementSubRegionList = this->getReference< array<localIndex_array> >(viewKeys.elementSubRegionList.Key());
-  array<localIndex_array> & elementList = this->getReference< array<localIndex_array> >(viewKeys.elementList.Key());
+  array<localIndex_array> & elementRegionList = this->getReference< array<localIndex_array> >(viewKeys.elementRegionListString);
+  array<localIndex_array> & elementSubRegionList = this->getReference< array<localIndex_array> >(viewKeys.elementSubRegionListString);
+  array<localIndex_array> & elementList = this->getReference< array<localIndex_array> >(viewKeys.elementListString);
 
   for( localIndex a=0 ; a<size() ; ++a )
   {
@@ -222,7 +222,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
-        localIndex const * const nodeList = elemsToNodes[ke];
+        arrayView1d<localIndex const> const nodeList = elemsToNodes[ke];
         for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
         {
           localIndex nodeIndex = nodeList[a];
@@ -233,6 +233,16 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
       }
     }
   }
+}
+
+
+void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+{
+  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.faceListString));
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementRegionListString));
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementSubRegionListString));
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementListString));
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ManagedGroup * const )

@@ -74,6 +74,8 @@ public:
                       localIndex_array const & packList,
                       integer const recursive )  override;
 
+  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const;
+
 
 private:
   template< bool DOPACK >
@@ -83,10 +85,11 @@ private:
                    integer const includeGlobalIndices,
                    integer const recursive ) const;
 
-  template< bool DOPACK >
-  int UnpackPrivate( buffer_unit_type const *& buffer,
-                     localIndex_array const & packList,
-                     integer const recursive );
+//  template< bool DOPACK >
+//  int UnpackPrivate( buffer_unit_type const *& buffer,
+//                     localIndex_array const & packList,
+//                     integer const recursive );
+
 
 //  cxx_utilities::DocumentationNode * m_docNode;
 
@@ -251,8 +254,7 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr auto setsString = "sets";
-    dataRepository::GroupKey sets = { setsString };
+
     static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
     static constexpr auto ghostRankString = "ghostRank";
     static constexpr auto ghostsToSendString = "ghostsToSend";
@@ -275,7 +277,9 @@ public:
 
   struct groupKeyStruct
   {
+    static constexpr auto setsString = "sets";
     static constexpr auto neighborDataString = "neighborData";
+    dataRepository::GroupKey sets = { setsString };
     dataRepository::GroupKey neighborData = { neighborDataString };
   } groupKeys;
 
@@ -307,6 +311,11 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 {
   int packedSize = 0;
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->getName() );
+
+  int rank=0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank );
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, rank );
+
 
   int const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, numPackedIndices );
@@ -340,24 +349,23 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   array<string> wrapperNamesForPacking;
   if( wrapperNames.size()==0 )
   {
+    set<localIndex> exclusionList;
+    ViewPackingExclusionList(exclusionList);
     wrapperNamesForPacking.resize( this->wrappers().size() );
-    localIndex count = 1;
-    for( auto const & wrapperPair : this->wrappers() )
+    localIndex count = 0;
+    for( localIndex k=0 ; k<this->wrappers().size() ; ++k )
     {
-      if( wrapperPair.first==this->viewKeys.localToGlobalMapString )
+      if( exclusionList.count(k) == 0)
       {
-        wrapperNamesForPacking[0] = this->viewKeys.localToGlobalMapString;
-      }
-      else
-      {
-        wrapperNamesForPacking[count++] = wrapperPair.first;
+        string junk  = wrappers().values()[k].first;
+        wrapperNamesForPacking[count++] = wrappers().values()[k].first;
       }
     }
+    wrapperNamesForPacking.resize(count);
   }
   else
   {
-    wrapperNamesForPacking.resize( wrapperNames.size() + 1 );
-    wrapperNamesForPacking[0] = this->viewKeys.localToGlobalMapString;
+    wrapperNamesForPacking.resize( wrapperNames.size() );
     for( localIndex count=0 ; count<wrapperNames.size() ; ++count )
     {
       wrapperNamesForPacking[count+1] = wrapperNames[count];
@@ -409,26 +417,26 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 }
 
 
-template< bool DOPACK >
-int ObjectManagerBase::UnpackPrivate( buffer_unit_type const *& buffer,
-                                      localIndex_array const & packList,
-                                      integer const recursive )
-{
-  int unpackedSize=0;
-
-  string groupName;
-  unpackedSize += CommBufferOps::Unpack( buffer, groupName );
-  GEOS_ASSERT( groupName==this->getName(), "ManagedGroup::Unpack(): group names do not match")
-
-  string wrappersLabel;
-  unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
-  GEOS_ASSERT( wrappersLabel=="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
-
-
-  globalIndex_array globalIndices;
-
-  return unpackedSize;
-}
+//template< bool DOPACK >
+//int ObjectManagerBase::UnpackPrivate( buffer_unit_type const *& buffer,
+//                                      localIndex_array const & packList,
+//                                      integer const recursive )
+//{
+//  int unpackedSize=0;
+//
+//  string groupName;
+//  unpackedSize += CommBufferOps::Unpack( buffer, groupName );
+//  GEOS_ASSERT( groupName==this->getName(), "ManagedGroup::Unpack(): group names do not match")
+//
+//  string wrappersLabel;
+//  unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
+//  GEOS_ASSERT( wrappersLabel=="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
+//
+//
+//  globalIndex_array globalIndices;
+//
+//  return unpackedSize;
+//}
 
 } /* namespace geosx */
 

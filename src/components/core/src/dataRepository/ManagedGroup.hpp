@@ -486,6 +486,16 @@ public:
 
 
 
+  indexType getWrapperIndex( std::string const & name ) const
+  {
+    return m_wrappers.getIndex(name);
+  }
+
+
+
+
+
+
   template< typename T >
   view_rtype_const<T> getData( indexType const index ) const
   { return getWrapper<T>(index)->data(); }

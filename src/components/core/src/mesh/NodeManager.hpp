@@ -129,6 +129,7 @@ public:
 
 //  void Initialize();
 
+  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
 
 public:
@@ -150,15 +151,19 @@ public:
 
   struct viewKeysStruct : ObjectManagerBase::viewKeyStruct
   {
-    static constexpr auto referencePositionString = "ReferencePosition";
-    dataRepository::ViewKey referencePosition = { dataRepository::keys::referencePositionString };
-    dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
-    dataRepository::ViewKey nodeList           = { "nodeList" };
-    dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
-    dataRepository::ViewKey faceList           = { "faceList" };
-    dataRepository::ViewKey elementRegionList     = { "elemRegionList" };
-    dataRepository::ViewKey elementSubRegionList  = { "elemSubRegionList" };
-    dataRepository::ViewKey elementList           = { "elemList" };
+    static constexpr auto referencePositionString     = "ReferencePosition";
+    static constexpr auto totalDisplacementString     = "TotalDisplacement";
+    static constexpr auto faceListString              = "faceList";
+    static constexpr auto elementRegionListString     = "elemRegionList";
+    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
+    static constexpr auto elementListString           = "elemList";
+
+    dataRepository::ViewKey referencePosition = { referencePositionString };
+    dataRepository::ViewKey totalDisplacement = { totalDisplacementString };
+    dataRepository::ViewKey faceList           = { faceListString };
+    dataRepository::ViewKey elementRegionList     = { elementRegionListString };
+    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
+    dataRepository::ViewKey elementList           = { elementListString };
 
   } viewKeys;
 

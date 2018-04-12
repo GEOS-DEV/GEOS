@@ -213,7 +213,7 @@ ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
   localIndex numRegionsRead;
   unpackedSize += CommBufferOps::Unpack( buffer, numRegionsRead );
 
-  for( localIndex kReg=0 ; numRegionsRead ; ++kReg  )
+  for( localIndex kReg=0 ; kReg<numRegionsRead ; ++kReg  )
   {
     string regionName;
     unpackedSize += CommBufferOps::Unpack( buffer, regionName );
@@ -222,7 +222,7 @@ ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
 
     localIndex numSubRegionsRead;
     unpackedSize += CommBufferOps::Unpack( buffer, numSubRegionsRead );
-    for( localIndex kSubReg=0 ; numSubRegionsRead ; ++kSubReg  )
+    for( localIndex kSubReg=0 ; kSubReg<numSubRegionsRead ; ++kSubReg  )
     {
       string subRegionName;
       unpackedSize += CommBufferOps::Unpack( buffer, subRegionName );
@@ -230,7 +230,7 @@ ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
 
       /// THIS IS WRONG
-      localIndex_array const & elemList = *(packList[kReg][kSubReg]);
+      localIndex_array  elemList;
 
       unpackedSize += subRegion->Unpack( buffer, elemList, 0 );
     }

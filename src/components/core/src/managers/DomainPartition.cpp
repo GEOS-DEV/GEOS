@@ -163,7 +163,7 @@ void DomainPartition::GenerateSets(  )
         lSet & set = elementSets->RegisterViewWrapper<lSet>(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
-          localIndex const * nodelist = elemsToNodes[k];
+          arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
           integer count = 0;
           for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
           {
@@ -497,8 +497,17 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     elementToNodeMap.resize( numElementRegions );
 
     int count = 0;
-    elementManager->forCellBlocks([&]( CellBlockSubRegion const * cellBlock ) -> void
+//    elementManager->forCellBlocks([&]( CellBlockSubRegion const * cellBlock ) -> void
+    ManagedGroup const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegions);
+
+    for( auto const & region : elementRegions->GetSubGroups() )
+    {
+      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+      for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
       {
+        CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+
+    {
         lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(cellBlock->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
 
         // The following line seems to be redundant. It's actual function is to
@@ -507,7 +516,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 
         for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
         {
-          const localIndex* const elemToNodeMap = elemsToNodes[k];
+          arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
 
           const integer_array nodeOrdering = siloFile.SiloNodeOrdering();
           integer numNodesPerElement = elemsToNodes.size(1);
@@ -517,6 +526,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
           }
 
         }
+
 
         //      meshConnectivity[count] =
         // elementRegion.m_ElementToNodeMap.data();
@@ -564,7 +574,9 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 
         shapesize[count] = integer_conversion<int>(elemsToNodes.size(1));
         count++;
-      });
+      }
+      }
+    }
 
     siloFile.WriteMeshObject(meshName, numNodes, coords,
                              nullptr, integer_conversion<int>(numElementRegions),
