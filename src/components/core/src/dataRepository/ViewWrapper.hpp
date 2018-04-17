@@ -54,9 +54,10 @@ public:
    * @param parent parent group which owns the ViewWrapper
    */
   explicit ViewWrapper( std::string const & name,
-                        ManagedGroup * const parent):
+                        ManagedGroup * const parent ):
     ViewWrapperBase(name, parent),
-    m_data( std::make_unique<T>() )
+    m_ownsData( true ),
+    m_data( new T() )
   {}
 
   /**
@@ -66,9 +67,10 @@ public:
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
-                        std::unique_ptr<T> object):
+                        std::unique_ptr<T> object ):
     ViewWrapperBase(name, parent),
-    m_data( std::move( object ) )
+  m_ownsData( true ),
+  m_data( object.release() )
   {}
 
   /**
@@ -78,15 +80,23 @@ public:
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
-                        T * object):
+                        T * object,
+                        bool takeOwnership):
     ViewWrapperBase(name,parent),
-    m_data( std::move( std::unique_ptr<T>(object) ) )
+    m_ownsData( takeOwnership ),
+    m_data( object )
   {}
 
   /**
    * default destructor
    */
-  virtual ~ViewWrapper() noexcept override final {}
+  virtual ~ViewWrapper() noexcept override final
+  {
+    if( m_ownsData )
+    {
+      delete m_data;
+    }
+  }
 
   /**
    * Copy Constructor
@@ -536,7 +546,7 @@ public:
   data()
   {
     /// return a c-pointer to the object
-    return m_data.get();
+    return m_data;
   }
 
 
@@ -544,7 +554,7 @@ public:
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
   data() const
   {
-    return m_data.get();
+    return m_data;
   }
 
 
@@ -596,7 +606,7 @@ public:
                           !std::is_same<U,string>::value, U * >::type
   dataPtr()
   {
-    return m_data.get();
+    return m_data;
   }
 
   template<class U = T>
@@ -604,7 +614,7 @@ public:
                           !std::is_same<U,string>::value, U const *>::type
   dataPtr() const
   {
-    return m_data.get();
+    return m_data;
   }
 
 
@@ -948,7 +958,8 @@ public:
   }
 
 
-  std::unique_ptr<T> m_data;
+  bool m_ownsData;
+  T * m_data;
 
   ViewWrapper() = delete;
 };

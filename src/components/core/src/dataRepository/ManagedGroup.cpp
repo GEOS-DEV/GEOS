@@ -122,6 +122,10 @@ ManagedGroup::ManagedGroup( std::string const & name,
                                                       nullptr );
   }
 
+//  RegisterViewWrapper( "size", &(this->m_size), false );
+//  RegisterViewWrapper( "name", &(this->m_name), false );
+
+
   RegisterDocumentationNodes();
 }
 

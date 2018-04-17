@@ -27,16 +27,13 @@ namespace geosx
 template< typename T,
           typename T_PTR=T*,
           typename KEY_TYPE=std::string,
-          typename INDEX_TYPE = int,
-          bool OWNS_DATA = true >
+          typename INDEX_TYPE = int >
 class MappedVector
 {
 public:
   static_assert( std::is_same< T_PTR, T * >::value || std::is_same< T_PTR, std::unique_ptr<T> >::value,
                  "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
 
-  static_assert( ( std::is_same< T_PTR, std::unique_ptr<T> >::value && OWNS_DATA ) || std::is_same< T_PTR, T * >::value,
-                 "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
 
   using key_type      = KEY_TYPE;
   using mapped_type   = T_PTR;
@@ -267,7 +264,9 @@ public:
    * @param overwrite
    * @return
    */
-  T * insert( KEY_TYPE const & keyName, T_PTR source, bool overwrite = false );
+  T * insert( KEY_TYPE const & keyName, T_PTR source,
+              bool takeOwnership,
+              bool overwrite = false );
 
 
 
@@ -285,7 +284,7 @@ public:
   typename std::enable_if< std::is_same< U, T * >::value, void >::type
   erase( INDEX_TYPE index )
   {
-    if( OWNS_DATA )
+    if( m_ownsValues[index] )
     {
       delete m_values[index].second;
     }
@@ -304,7 +303,7 @@ public:
    *  This function will the pointer at given index and set it to nullptr.
    */
   template< typename U = T_PTR >
-  typename std::enable_if< std::is_same< T_PTR, std::unique_ptr<T> >::value, void >::type
+  typename std::enable_if< std::is_same< U, std::unique_ptr<T> >::value, void >::type
   erase( INDEX_TYPE index )
   {
     m_values[index].second = nullptr;
@@ -386,15 +385,19 @@ private:
 
   LookupMapType m_keyLookup;
 
-  bool m_ownsValues = true;
+  std::vector<int> m_ownsValues;
 };
 
-template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE, bool OWNS_DATA >
-T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const & keyName, T_PTR source, bool overwrite )
+template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE >
+T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
+                                                                 T_PTR source,
+                                                                 bool takeOwnership,
+                                                                 bool overwrite )
 {
+  INDEX_TYPE index = KeyIndex::invalid_index;
   typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
 
-  INDEX_TYPE index = KeyIndex::invalid_index;
+
   // if the key was not found, make DataObject<T> and insert
   if( iterKeyLookup == m_keyLookup.end() )
   {
@@ -402,6 +405,11 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const 
     m_values.push_back( std::move( newEntry ) );
     //TODO this needs to be a safe conversion
     index = static_cast<INDEX_TYPE>(m_values.size()) - 1;
+    m_ownsValues.resize( index + 1 );
+    if( takeOwnership )
+    {
+      m_ownsValues[index] = true;
+    }
 
     m_keyLookup.insert( std::make_pair(keyName,index) );
     m_constValues.push_back( std::make_pair( keyName, &(*(m_values[index].second)) ) );
@@ -411,6 +419,11 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE,OWNS_DATA>::insert( KEY_TYPE const 
   else
   {
     index = iterKeyLookup->second;
+
+    if( takeOwnership )
+    {
+      m_ownsValues[index] = true;
+    }
 
     // if value is empty, then move source into value slot
     if( m_values[index].second==nullptr )

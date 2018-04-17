@@ -14,11 +14,19 @@ using namespace dataRepository;
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       ManagedGroup * const parent ):
   ManagedGroup(name,parent),
-  m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() ),
-  m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
+  m_sets(keys::sets,this),
+  m_localToGlobalMap(),
+  m_globalToLocalMap()
+//  m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() ),
+//  m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
 {
-  this->RegisterGroup<ManagedGroup>(keys::sets);
-  this->RegisterViewWrapper< array<integer> >("isExternal");
+
+  RegisterViewWrapper("localToGlobal", &m_localToGlobalMap, false );
+  RegisterViewWrapper("globalToLocal", &m_globalToLocalMap, false );
+
+  RegisterGroup( keys::sets, &m_sets, false );
+  RegisterViewWrapper("isExternal", &m_isExternal, false );
+  RegisterViewWrapper("ghostRank", &m_ghostRank, false );
 }
 //ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //                                      ManagedGroup * const parent,

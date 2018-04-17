@@ -64,9 +64,8 @@ using indexType = localIndex;
 class ManagedGroup
 {
 public:
-//  using subGroupMap = map< string, std::unique_ptr<ManagedGroup> >;
-  using subGroupMap = MappedVector< ManagedGroup, std::unique_ptr<ManagedGroup>, keyType, indexType  >;
-  using viewWrapperMap = MappedVector< ViewWrapperBase, std::unique_ptr<ViewWrapperBase>, keyType, indexType  >;
+  using subGroupMap = MappedVector< ManagedGroup, ManagedGroup*, keyType, indexType  >;
+  using viewWrapperMap = MappedVector< ViewWrapperBase, ViewWrapperBase*, keyType, indexType  >;
   /**
    * @name constructors, destructor, copy, move, assignments
    */
@@ -120,16 +119,21 @@ public:
   }
 
 
-  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
-  T * RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject );
+  template< typename T = ManagedGroup >
+  T * RegisterGroup( std::string const & name, std::unique_ptr<ManagedGroup> newObject );
 
-  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
+  template< typename T = ManagedGroup >
+  T * RegisterGroup( std::string const & name,
+                     T * newObject,
+                     bool const takeOwnership );
+
+  template< typename T = ManagedGroup >
   T * RegisterGroup( std::string const & name )
   {
     return RegisterGroup<T>( name, std::move(std::make_unique< T >( name, this )) );
   }
 
-  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
+  template< typename T = ManagedGroup >
   T * RegisterGroup( subGroupMap::KeyIndex & keyIndex )
   {
     T * rval = RegisterGroup<T>( keyIndex.Key(), std::move(std::make_unique< T >( keyIndex.Key(), this )) );
@@ -252,9 +256,9 @@ public:
     for( auto& subGroupIter : m_subGroups )
     {
 #ifdef USE_DYNAMIC_CASTING
-      T * subGroup = dynamic_cast<T *>( subGroupIter.second.get() );
+      T * subGroup = dynamic_cast<T *>( subGroupIter.second );
 #else
-      T * subGroup = static_cast<T *>( subGroupIter.second.get() );
+      T * subGroup = static_cast<T *>( subGroupIter.second );
 #endif
       lambda( subGroup );
     }
@@ -284,16 +288,26 @@ public:
 
 
   template< typename T, typename TBASE=T >
-  ViewWrapper<TBASE> * RegisterViewWrapper( std::string const & name, viewWrapperMap::KeyIndex::index_type * const rkey = nullptr );
+  ViewWrapper<TBASE> *
+  RegisterViewWrapper( std::string const & name,
+                       viewWrapperMap::KeyIndex::index_type * const rkey = nullptr );
 
   template< typename T, typename TBASE=T >
-  ViewWrapper<TBASE> * RegisterViewWrapper( ManagedGroup::viewWrapperMap::KeyIndex & viewKey );
+  ViewWrapper<TBASE> *
+  RegisterViewWrapper( ManagedGroup::viewWrapperMap::KeyIndex & viewKey );
 
 
-  ViewWrapperBase * RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type );
+  ViewWrapperBase * RegisterViewWrapper( std::string const & name,
+                                         rtTypes::TypeIDs const & type );
 
   template< typename T >
-  ViewWrapper<T> * RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject );
+  ViewWrapper<T> * RegisterViewWrapper( std::string const & name,
+                                        std::unique_ptr<T> newObject );
+
+  template< typename T >
+  ViewWrapper<T> * RegisterViewWrapper( std::string const & name,
+                                        T * newObject,
+                                        bool takeOwnership );
 
 
   ///@}
@@ -650,22 +664,39 @@ using ViewKey = ManagedGroup::viewWrapperMap::KeyIndex;
 
 
 
-template < typename T, typename TBASE >
-T * ManagedGroup::RegisterGroup( std::string const & name, std::unique_ptr<TBASE> newObject )
+template < typename T >
+T * ManagedGroup::RegisterGroup( std::string const & name,
+                                 std::unique_ptr<ManagedGroup> newObject )
 {
-  #ifdef USE_DYNAMIC_CASTING
-  return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
-  #else
-  return static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
-  #endif
+#ifdef USE_DYNAMIC_CASTING
+  return dynamic_cast<T*>( m_subGroups.insert( name, newObject.release(), true ) );
+#else
+  return static_cast<T*>( m_subGroups.insert( name, newObject.release(), true ) );
+#endif
 }
 
 
+template< typename T >
+T * ManagedGroup::RegisterGroup( std::string const & name,
+                                 T * newObject,
+                                 bool const takeOwnership )
+{
+#ifdef USE_DYNAMIC_CASTING
+  return dynamic_cast<T*>( m_subGroups.insert( name, newObject, takeOwnership ) );
+#else
+  return static_cast<T*>( m_subGroups.insert( name, newObject, takeOwnership ) );
+#endif
+}
+
 
 template< typename T, typename TBASE >
-ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name, ViewKey::index_type * const rkey )
+ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name,
+                                                        ViewKey::index_type * const rkey )
 {
-  m_wrappers.insert( name, std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ) );
+  m_wrappers.insert( name,
+                     (ViewWrapper<TBASE>::template Factory<T>(name,this) ).release(),
+                     true );
+
   if( rkey != nullptr )
   {
     *rkey = m_wrappers.getIndex(name);
@@ -690,9 +721,31 @@ ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( ViewKey & viewKey )
 
 
 template < typename T >
-ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name, std::unique_ptr<T> newObject )
+ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
+                                                    std::unique_ptr<T> newObject )
 {
-  m_wrappers.insert( name, std::make_unique< ViewWrapper<T> >( name, this, std::move(newObject) ) );
+  m_wrappers.insert( name,
+                     new ViewWrapper<T>( name, this, newObject.release(), true ),
+                     true );
+
+  ViewWrapper<T> * const rval = getWrapper<T>(name);
+  if( rval->sizedFromParent() == 1 )
+  {
+    rval->resize(this->size());
+  }
+  return rval;
+}
+
+
+
+template< typename T >
+ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
+                                                    T * newObject,
+                                                    bool takeOwnership )
+{
+  m_wrappers.insert( name,
+                     new ViewWrapper<T>( name, this, newObject, takeOwnership ),
+                     takeOwnership );
 
   ViewWrapper<T> * const rval = getWrapper<T>(name);
   if( rval->sizedFromParent() == 1 && rval->shouldResize())
@@ -701,6 +754,10 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name, st
   }
   return rval;
 }
+
+
+
+
 
 
 } /* end namespace dataRepository */
