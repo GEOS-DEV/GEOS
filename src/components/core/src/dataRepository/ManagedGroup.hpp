@@ -392,7 +392,7 @@ public:
                     integer const recursive ) const;
 
   virtual int Unpack( buffer_unit_type const *& buffer,
-                      localIndex_array const & packList,
+                      localIndex_array & packList,
                       integer const recursive );
 
 

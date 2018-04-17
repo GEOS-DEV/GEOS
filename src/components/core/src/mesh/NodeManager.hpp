@@ -131,6 +131,13 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
+  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const override;
+
+  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+                              localIndex_array const & packList ) const override;
+
+  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                localIndex_array const & packList ) override;
 
 public:
 
@@ -153,6 +160,7 @@ public:
   {
     static constexpr auto referencePositionString     = "ReferencePosition";
     static constexpr auto totalDisplacementString     = "TotalDisplacement";
+    static constexpr auto edgeListString              = "edgeList";
     static constexpr auto faceListString              = "faceList";
     static constexpr auto elementRegionListString     = "elemRegionList";
     static constexpr auto elementSubRegionListString  = "elemSubRegionList";
@@ -160,6 +168,7 @@ public:
 
     dataRepository::ViewKey referencePosition = { referencePositionString };
     dataRepository::ViewKey totalDisplacement = { totalDisplacementString };
+    dataRepository::ViewKey edgeList           = { edgeListString };
     dataRepository::ViewKey faceList           = { faceListString };
     dataRepository::ViewKey elementRegionList     = { elementRegionListString };
     dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };

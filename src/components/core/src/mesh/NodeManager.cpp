@@ -239,11 +239,39 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
   exclusionList.insert(this->getWrapperIndex(this->viewKeys.faceListString));
   exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementRegionListString));
   exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementSubRegionListString));
   exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementListString));
 }
+
+
+int NodeManager::PackUpDownMapsSize( localIndex_array const & packList ) const
+{
+  int packedSize = 0;
+
+
+  return packedSize;
+}
+
+int NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
+                             localIndex_array const & packList ) const
+{
+  int packedSize = 0;
+
+
+  return packedSize;
+}
+
+int NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                               localIndex_array const & packList )
+{
+  int unPackedSize = 0;
+
+  return unPackedSize;
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ManagedGroup * const )
 

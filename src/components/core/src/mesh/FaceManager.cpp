@@ -19,8 +19,8 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
   ObjectManagerBase("FaceManager",parent)
 {
 
-  this->RegisterViewWrapper< array< localIndex_array > >(viewKeys.nodeList.Key());
-
+  this->RegisterViewWrapper(viewKeys.nodeList.Key(), &m_nodeList, false );
+//  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
   this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementRegionList.Key())->reference().resize(0,2);
   this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementSubRegionList.Key())->reference().resize(0,2);
@@ -219,7 +219,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   this->resize(tempFaceToNodeMap.size());
 
   // set m_FaceToNodeMap
-  array< localIndex_array > & faceToNodes = this->getReference< array< localIndex_array > >( viewKeys.nodeList );
+  array< localIndex_array > & faceToNodes = m_nodeList;
   faceToNodes = tempFaceToNodeMap;
 
   auto const & nodeSets = nodeManager->GetGroup(string("Sets"))->wrappers();
@@ -334,13 +334,13 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   integer_array & nodeDomainBoundaryIndicator = nodeManager->getReference<integer_array>(nodeManager->viewKeys.domainBoundaryIndicator);
   nodeDomainBoundaryIndicator = 0;
 
-  array< localIndex_array > const & faceToNodesMap = this->nodeList();
+  OrderedVariableOneToManyRelation const & faceToNodesMap = this->nodeList();
 
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( faceDomainBoundaryIndicator[k] == 1 )
     {
-      localIndex_array const & nodelist = faceToNodesMap[k];
+      arrayView1d<localIndex const> nodelist = faceToNodesMap[k];
       for( localIndex a=0 ; a<nodelist.size() ; ++a )
       {
         nodeDomainBoundaryIndicator[nodelist[a]] = 1;
@@ -415,7 +415,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
                                  const localIndex faceIndex )
 {
 
-  array<localIndex>& faceNodes = nodeList()[faceIndex];
+  arrayView1d<localIndex> faceNodes = nodeList()[faceIndex];
   const localIndex firstNodeIndex = faceNodes[0];
   const localIndex numFaceNodes = faceNodes.size();
 
@@ -550,7 +550,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
                                                                    array<globalIndex_array>& faceToNodes )
 {
 
-  array<localIndex_array> const & faceNodes = this->nodeList();
+  OrderedVariableOneToManyRelation const & faceNodes = this->nodeList();
   integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
 
   nodeManager.CheckTypeID( typeid( NodeManager ) );
@@ -575,6 +575,64 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
     }
   }
 }
+
+
+
+void FaceManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+{
+  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.nodeListString));
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementRegionListString));
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementSubRegionListString));
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementListString));
+}
+
+
+int FaceManager::PackUpDownMapsSize( localIndex_array const & packList ) const
+{
+  int packedSize = 0;
+  buffer_unit_type * junk = nullptr;
+  packedSize += CommBufferOps::Pack<false>( junk,
+                                           m_nodeList,
+                                           packList,
+                                           this->m_localToGlobalMap,
+                                           m_nodeList.RelatedObjectLocalToGlobal() );
+  return packedSize;
+
+}
+
+
+int FaceManager::PackUpDownMaps( buffer_unit_type * & buffer,
+                               localIndex_array const & packList ) const
+{
+  int packedSize = 0;
+
+  packedSize += CommBufferOps::Pack<true>( buffer,
+                                           m_nodeList,
+                                           packList,
+                                           this->m_localToGlobalMap,
+                                           m_nodeList.RelatedObjectLocalToGlobal() );
+
+  return packedSize;
+}
+
+
+int FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                 localIndex_array const & packList )
+{
+  int unPackedSize = 0;
+
+  unPackedSize += CommBufferOps::Unpack( buffer,
+                                         m_nodeList,
+                                         packList,
+                                         this->m_globalToLocalMap,
+                                         m_nodeList.RelatedObjectGlobalToLocal() );
+
+  return unPackedSize;
+}
+
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ManagedGroup * const )
 

@@ -25,7 +25,12 @@ MeshLevel::MeshLevel( string const & name,
 
   RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager, false );
 //  RegisterGroup<EdgeManager>( groupKeys.edgeManager );
+
+
   RegisterGroup<FaceManager>( groupStructKeys::faceManagerString, &m_faceManager, false );
+  m_faceManager.nodeList().SetRelatedObject( &m_nodeManager );
+
+
   RegisterGroup<ElementRegionManager>( groupStructKeys::elemManagerString, &m_elementManager, false );
 
 

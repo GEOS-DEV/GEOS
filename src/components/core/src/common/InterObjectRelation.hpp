@@ -28,6 +28,15 @@ public:
 
   InterObjectRelation( const InterObjectRelation& copiedRelationship );
 
+
+  operator BASETYPE() const
+  {
+    return static_cast<BASETYPE>(this);
+  }
+
+
+
+
   // equals operator should not be called
   InterObjectRelation& operator=( const InterObjectRelation& rhs )
   {
@@ -54,7 +63,7 @@ public:
   const BASETYPE& Base() const { return static_cast<const BASETYPE&>(*this); }
   BASETYPE& Base() { return dynamic_cast<BASETYPE&>(*this); }
 
-  void SetRelatedObject( const ObjectDataStructureBaseT* const relatedObject )
+  void SetRelatedObject( ObjectManagerBase const * const relatedObject )
   { m_relatedObject = relatedObject; }
 
   const ObjectDataStructureBaseT* RelatedObject() const
@@ -71,7 +80,7 @@ public:
   }
 
 private:
-  const ObjectDataStructureBaseT* m_relatedObject;
+  ObjectDataStructureBaseT const * m_relatedObject = nullptr;
 
 
 };

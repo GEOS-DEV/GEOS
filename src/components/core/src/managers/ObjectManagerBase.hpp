@@ -71,10 +71,23 @@ public:
 //                      integer const recursive )  override;
 
   virtual int Unpack( buffer_unit_type const *& buffer,
-                      localIndex_array const & packList,
+                      localIndex_array & packList,
                       integer const recursive )  override;
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const;
+
+
+  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const
+  { return 0; }
+
+  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+                              localIndex_array const & packList ) const
+  { return 0;}
+
+
+  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                localIndex_array const & packList )
+  { return 0;}
 
 
 private:
@@ -325,6 +338,7 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
 
 
+
   if( includeGlobalIndices )
   {
     globalIndex_array globalIndices;
@@ -344,6 +358,7 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
       }
     }
     packedSize += CommBufferOps::Pack<DOPACK>( buffer, globalIndices );
+
   }
 
   array<string> wrapperNamesForPacking;
@@ -415,28 +430,6 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-
-
-//template< bool DOPACK >
-//int ObjectManagerBase::UnpackPrivate( buffer_unit_type const *& buffer,
-//                                      localIndex_array const & packList,
-//                                      integer const recursive )
-//{
-//  int unpackedSize=0;
-//
-//  string groupName;
-//  unpackedSize += CommBufferOps::Unpack( buffer, groupName );
-//  GEOS_ASSERT( groupName==this->getName(), "ManagedGroup::Unpack(): group names do not match")
-//
-//  string wrappersLabel;
-//  unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
-//  GEOS_ASSERT( wrappersLabel=="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
-//
-//
-//  globalIndex_array globalIndices;
-//
-//  return unpackedSize;
-//}
 
 } /* namespace geosx */
 

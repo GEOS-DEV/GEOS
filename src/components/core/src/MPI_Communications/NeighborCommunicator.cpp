@@ -283,6 +283,12 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
   bufferSize += faceManager.PackSize( {}, faceAdjacencyList, 1, 0 );
   bufferSize += elemManager.PackSize( {}, elementAdjacencyList );
 
+  bufferSize += nodeManager.PackUpDownMapsSize( nodeAdjacencyList );
+  bufferSize += faceManager.PackUpDownMapsSize( faceAdjacencyList );
+//  bufferSize += elemManager.PackUpDownMapsSize( elementAdjacencyList );
+
+
+
   buffer_type & sendBuffer = SendBuffer(commID);
   sendBuffer.resize(bufferSize);
 
@@ -293,21 +299,34 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
   packedSize += faceManager.Pack( sendBufferPtr, {}, faceAdjacencyList, 1, 0 );
   packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
 
+  bufferSize += nodeManager.PackUpDownMaps( sendBufferPtr, nodeAdjacencyList );
+  bufferSize += faceManager.PackUpDownMaps( sendBufferPtr, faceAdjacencyList );
+//  bufferSize += elemManager.PackUpDownMaps( sendBufferPtr, elementAdjacencyList );
+
+
+
 
   this->MPI_iSendReceive( commID, MPI_COMM_WORLD );
   MPI_WaitAll( commID );
-
 
   buffer_type const & receiveBuffer = ReceiveBuffer(commID);
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
 
   int unpackedSize = 0;
-  unpackedSize += nodeManager.Unpack( receiveBufferPtr, {}, 0);
-  unpackedSize += faceManager.Unpack( receiveBufferPtr, {}, 0);
+  localIndex_array nodeUpackList;
+  unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeUpackList, 0);
 
-  ElementRegionManager::ElementViewAccessor<localIndex_array> elementAdjacencyList2;
+  localIndex_array faceUnpackList;
+  unpackedSize += faceManager.Unpack( receiveBufferPtr, faceUnpackList, 0);
 
-  unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyList2);
+  ElementRegionManager::ElementViewAccessor<localIndex_array> elementAdjacencyUnpackList;
+
+  unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyUnpackList);
+
+  unpackedSize += nodeManager.UnpackUpDownMaps( receiveBufferPtr, nodeUpackList);
+  unpackedSize += faceManager.UnpackUpDownMaps( receiveBufferPtr, faceUnpackList);
+
+
 
   std::cout<<"herro"<<std::endl;
 

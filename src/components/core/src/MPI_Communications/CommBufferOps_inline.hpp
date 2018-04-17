@@ -547,6 +547,198 @@ localIndex Unpack( char const *& buffer,
 }
 
 
+template< bool DO_PACKING >
+int Pack( char*& buffer,
+          localIndex const * const var,
+          localIndex const length,
+          globalIndex_array const & localToGlobalMap )
+{
+  localIndex sizeOfPackedChars = 0;
+
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
+
+  sizeOfPackedChars += length*sizeof(globalIndex);
+  static_if( DO_PACKING )
+  {
+    for( localIndex a=0 ; a<length ; ++a )
+    {
+      memcpy( buffer, &(localToGlobalMap[var[a]]), sizeof(globalIndex) );
+      buffer += sizeof(globalIndex);
+    }
+  });
+
+  return sizeOfPackedChars;
+}
+
+inline
+int Unpack( char const *& buffer,
+            localIndex_array & var,
+            map<globalIndex,localIndex> const & globalToLocalMap )
+{
+  localIndex sizeOfUnpackedChars = 0;
+
+  localIndex length;
+  sizeOfUnpackedChars += Unpack( buffer, length );
+  var.resize(length);
+
+  for( localIndex a=0 ; a<length ; ++a )
+  {
+    globalIndex unpackedGlobalIndex;
+    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
+    var[a] = globalToLocalMap.at(unpackedGlobalIndex);
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+
+inline
+int Unpack( char const *& buffer,
+            localIndex * const var,
+            localIndex const length,
+            map<globalIndex,localIndex> const & globalToLocalMap )
+{
+  localIndex sizeOfUnpackedChars = 0;
+
+  localIndex lengthUnpacked;
+  sizeOfUnpackedChars += Unpack( buffer, lengthUnpacked );
+
+  GEOS_ASSERT( length==lengthUnpacked, "CommBufferOps::Unpack(): length incorrect." )
+
+  for( localIndex a=0 ; a<length ; ++a )
+  {
+    globalIndex unpackedGlobalIndex;
+    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
+    var[a] = globalToLocalMap.at(unpackedGlobalIndex);
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+
+
+//
+//template< bool DO_PACKING >
+//int Pack( char*& buffer,
+//          multidimensionalArray::ManagedArray<localIndex,2,localIndex> const & var,
+//          localIndex_array const & indices,
+//          globalIndex_array const & localToGlobalMap )
+//{
+//  int sizeOfPackedChars;
+//
+//  return sizeOfPackedChars;
+//}
+//
+//inline
+//int Unpack( char const *& buffer,
+//            multidimensionalArray::ManagedArray<localIndex,2,localIndex> & var,
+//            localIndex_array const & indices,
+//            globalIndex_array const & globalToLocalMap )
+//{
+//  int sizeOfUnpackedChars;
+//
+//  return sizeOfUnpackedChars;
+//}
+
+
+template< bool DO_PACKING >
+int Pack( char*& buffer,
+          array< localIndex_array > const & var,
+          localIndex_array const & indices,
+          globalIndex_array const & localToGlobalMap,
+          globalIndex_array const & relatedObjectLocalToGlobalMap )
+{
+  int sizeOfPackedChars=0;
+
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex li = indices[a];
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li].data(), var[li].size(), relatedObjectLocalToGlobalMap );
+  }
+
+  return sizeOfPackedChars;
+}
+
+inline
+int Unpack( char const *& buffer,
+            array< localIndex_array > & var,
+            localIndex_array const & indices,
+            map<globalIndex,localIndex> const & globalToLocalMap,
+            map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
+{
+  int sizeOfUnpackedChars=0;
+
+  localIndex numIndicesUnpacked;
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex li = indices[a];
+
+    globalIndex gi;
+    sizeOfUnpackedChars += Unpack( buffer, gi );
+    // do a check here on the global Index??
+
+    sizeOfUnpackedChars += Unpack( buffer, var[li], relatedObjectGlobalToLocalMap );
+  }
+
+
+  return sizeOfUnpackedChars;
+}
+
+template< bool DO_PACKING >
+int Pack( char*& buffer,
+          Array2dT<localIndex> const & var,
+          localIndex_array const & indices,
+          globalIndex_array const & localToGlobalMap,
+          globalIndex_array const & relatedObjectLocalToGlobalMap )
+{
+  int sizeOfPackedChars = 0;
+
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex li = indices[a];
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li].data(), var[li].size(), relatedObjectLocalToGlobalMap );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+inline
+int Unpack( char const *& buffer,
+            Array2dT<localIndex> & var,
+            localIndex_array const & indices,
+            map<globalIndex,localIndex> const & globalToLocalMap,
+            map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
+{
+  int sizeOfUnpackedChars = 0;
+
+  localIndex numIndicesUnpacked;
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+  GEOS_ASSERT( numIndicesUnpacked==indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." )
+
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex li = indices[a];
+
+    globalIndex gi;
+    sizeOfUnpackedChars += Unpack( buffer, gi );
+    // do a check here on the global Index??
+
+    sizeOfUnpackedChars += Unpack( buffer, var[li].data(), var[li].size(), relatedObjectGlobalToLocalMap );
+  }
+
+
+  return sizeOfUnpackedChars;
+}
+
 
 }
 }

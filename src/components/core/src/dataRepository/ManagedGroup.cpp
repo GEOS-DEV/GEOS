@@ -510,7 +510,7 @@ int ManagedGroup::Pack( buffer_unit_type * & buffer,
 }
 
 int ManagedGroup::Unpack( buffer_unit_type const *& buffer,
-                          localIndex_array const & packList,
+                          localIndex_array & packList,
                           integer const recursive )
 {
   int unpackedSize = 0;

@@ -250,7 +250,7 @@ int ObjectManagerBase::Pack( buffer_unit_type * & buffer,
 
 
 int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
-                               localIndex_array const & packList,
+                               localIndex_array & packList,
                                integer const recursive )
 {
   int unpackedSize = 0;
@@ -332,10 +332,7 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
       m_ghostRank[b] = sendingRank;
     }
 
-  }
-  else
-  {
-    unpackedLocalIndices = packList;
+    packList = unpackedLocalIndices;
   }
 
   int numWrappers;
@@ -345,7 +342,7 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
     string wrapperName;
     unpackedSize += CommBufferOps::Unpack( buffer, wrapperName );
     ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-    wrapper->Unpack(buffer,unpackedLocalIndices);
+    wrapper->Unpack(buffer,packList);
   }
 
 
