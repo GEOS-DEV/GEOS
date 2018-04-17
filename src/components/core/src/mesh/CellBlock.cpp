@@ -76,10 +76,16 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   ObjectManagerBase( name, parent ),
   viewKeys(),
   groupKeys(),
-  m_toNodesRelation(this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.nodeList.Key())->reference()),
-  m_toFacesRelation(this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.faceList.Key())->reference())
-
+  m_toNodesRelation(),
+  m_toFacesRelation(),
+  m_numNodesPerElement(),
+  m_numFacesPerElement()
 {
+  RegisterViewWrapper(viewKeysStruct::nodeListString, &m_toNodesRelation, 0 );
+  RegisterViewWrapper(viewKeysStruct::faceListString, &m_toFacesRelation, 0 );
+  RegisterViewWrapper(viewKeysStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
+  RegisterViewWrapper(viewKeysStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
+
 
   m_toNodesRelation.resize(0,8);
   m_toFacesRelation.resize(0,6);
@@ -102,18 +108,18 @@ void CellBlock::FillDocumentationNode()
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "an element region" );
 
-  docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
-                              viewKeys.numNodesPerElement.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "Number of Nodes Per Element",
-                              "Number of Nodes Per Element",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
+//  docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
+//                              viewKeys.numNodesPerElement.Key(),
+//                              -1,
+//                              "integer",
+//                              "integer",
+//                              "Number of Nodes Per Element",
+//                              "Number of Nodes Per Element",
+//                              "1",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
 
 //  docNode->AllocateChildNode( viewKeys.nodeList.Key(),
 //                              viewKeys.nodeList.Key(),
@@ -128,18 +134,18 @@ void CellBlock::FillDocumentationNode()
 //                              1,
 //                              0 );
 
-  docNode->AllocateChildNode( viewKeys.numFacesPerElement.Key(),
-                              viewKeys.numFacesPerElement.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "Number of Faces Per Element",
-                              "Number of Faces Per Element",
-                              "6",
-                              "",
-                              0,
-                              1,
-                              0 );
+//  docNode->AllocateChildNode( viewKeys.numFacesPerElement.Key(),
+//                              viewKeys.numFacesPerElement.Key(),
+//                              -1,
+//                              "integer",
+//                              "integer",
+//                              "Number of Faces Per Element",
+//                              "Number of Faces Per Element",
+//                              "6",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
 
 //  docNode->AllocateChildNode( keys::defaultMaterial,
 //                              keys::defaultMaterial,
