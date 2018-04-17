@@ -465,8 +465,6 @@ Pack( char*& buffer,
 
   localIndex sizeOfPackedChars = 0;
 
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.dims(), NDIM );
-
   sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.strides(), NDIM );
 
 
@@ -494,18 +492,6 @@ localIndex Unpack( char const *& buffer,
 {
   localIndex sizeOfUnpackedChars = 0;
 
-  int numDimsRead = 0;
-  INDEX_TYPE dims[NDIM];
-  sizeOfUnpackedChars += Unpack( buffer, dims, numDimsRead );
-
-  if( numDimsRead != NDIM )
-  {
-    GEOS_ERROR( "error reading dims");
-  }
-  else
-  {
-    var.resize( NDIM, dims );
-  }
 
   int numStrideRead = 0;
   INDEX_TYPE strides[NDIM];
@@ -515,32 +501,12 @@ localIndex Unpack( char const *& buffer,
   {
     GEOS_ERROR( "error reading strides");
   }
-  else
-  {
-    INDEX_TYPE const * const existingStrides = var.strides();
-    for( int i=0 ; i<NDIM ; ++i )
-    {
-      GEOS_ASSERT( strides[i]==existingStrides[i], "CommBufferOps::Unpack(): strides are inconsistent." )
-    }
-  }
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-
-//    var.linearIndex( indices[a] )
-    localIndex temp;
+    localIndex temp = strides[var.getSingleParameterResizeIndex()];
     sizeOfUnpackedChars += Unpack( buffer, var.data( indices[a] ), temp );
   }
-
-//  localIndex numValuesRead;
-//  sizeOfUnpackedChars += Unpack( buffer, var.data(), indices.data(), numValuesRead );
-//  if( numValuesRead != var.size() )
-//  {
-//
-//    GEOS_ERROR( "error reading data: numValuesRead != var.size() ==> "
-//        + std::to_string(numValuesRead)+"!="+std::to_string(var.size()));
-//  }
-
 
   return sizeOfUnpackedChars;
 

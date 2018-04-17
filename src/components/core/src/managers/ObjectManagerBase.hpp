@@ -77,6 +77,22 @@ public:
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const;
 
 
+  virtual int PackGlobalMapsSize( localIndex_array const & packList,
+                                  integer const recursive ) const
+  {
+    buffer_unit_type * junk = nullptr;
+    return PackGlobalMapsPrivate<false>( junk, packList, recursive);
+  }
+
+  virtual int PackGlobalMaps( buffer_unit_type * & buffer,
+                              localIndex_array const & packList,
+                              integer const recursive ) const
+  {
+    return PackGlobalMapsPrivate<true>( buffer, packList, recursive);
+  }
+
+
+
   virtual int PackUpDownMapsSize( localIndex_array const & packList ) const
   { return 0; }
 
@@ -89,6 +105,9 @@ public:
                                 localIndex_array const & packList )
   { return 0;}
 
+  virtual int UnpackGlobalMaps( buffer_unit_type const * & buffer,
+                                localIndex_array & packList,
+                                integer const recursive );
 
 private:
   template< bool DOPACK >
@@ -97,6 +116,11 @@ private:
                    localIndex_array const & packList,
                    integer const includeGlobalIndices,
                    integer const recursive ) const;
+
+  template< bool DOPACK >
+  int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+                             localIndex_array const & packList,
+                             integer const recursive ) const;
 
 //  template< bool DOPACK >
 //  int UnpackPrivate( buffer_unit_type const *& buffer,
@@ -283,9 +307,6 @@ public:
     dataRepository::ViewKey isExternal = { isExternalString };
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
     dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
-
-
-
   } viewKeys;
 
   struct groupKeyStruct
@@ -315,121 +336,6 @@ public:
 };
 
 
-template< bool DOPACK >
-int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
-                                    array<string> const & wrapperNames,
-                                    localIndex_array const & packList,
-                                    integer const includeGlobalIndices,
-                                    integer const recursive ) const
-{
-  int packedSize = 0;
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->getName() );
-
-  int rank=0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank );
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, rank );
-
-
-  int const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, numPackedIndices );
-
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, includeGlobalIndices );
-
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
-
-
-
-  if( includeGlobalIndices )
-  {
-    globalIndex_array globalIndices;
-    globalIndices.resize(numPackedIndices);
-    if( packList.size()==0 )
-    {
-      for( localIndex a=0 ; a<numPackedIndices ; ++a )
-      {
-        globalIndices[a] = this->m_localToGlobalMap[a];
-      }
-    }
-    else
-    {
-      for( localIndex a=0 ; a<numPackedIndices ; ++a )
-      {
-        globalIndices[a] = this->m_localToGlobalMap[packList[a]];
-      }
-    }
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, globalIndices );
-
-  }
-
-  array<string> wrapperNamesForPacking;
-  if( wrapperNames.size()==0 )
-  {
-    set<localIndex> exclusionList;
-    ViewPackingExclusionList(exclusionList);
-    wrapperNamesForPacking.resize( this->wrappers().size() );
-    localIndex count = 0;
-    for( localIndex k=0 ; k<this->wrappers().size() ; ++k )
-    {
-      if( exclusionList.count(k) == 0)
-      {
-        string junk  = wrappers().values()[k].first;
-        wrapperNamesForPacking[count++] = wrappers().values()[k].first;
-      }
-    }
-    wrapperNamesForPacking.resize(count);
-  }
-  else
-  {
-    wrapperNamesForPacking.resize( wrapperNames.size() );
-    for( localIndex count=0 ; count<wrapperNames.size() ; ++count )
-    {
-      wrapperNamesForPacking[count+1] = wrapperNames[count];
-    }
-  }
-
-  packedSize += CommBufferOps::Pack<DOPACK,int>( buffer, wrapperNamesForPacking.size() );
-  for( auto const & wrapperName : wrapperNamesForPacking )
-  {
-    dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, wrapperName );
-    if( packList.empty() )
-    {
-      if(DOPACK)
-      {
-        packedSize += wrapper->Pack( buffer );
-      }
-      else
-      {
-        packedSize += wrapper->PackSize();
-      }
-    }
-    else
-    {
-      if(DOPACK)
-      {
-        packedSize += wrapper->Pack( buffer, packList );
-      }
-      else
-      {
-        packedSize += wrapper->PackSize( packList );
-      }
-    }
-  }
-
-
-  if( recursive > 0 )
-  {
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->GetSubGroups().size() );
-    for( auto const & keyGroupPair : this->GetSubGroups() )
-    {
-      packedSize += CommBufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
-    }
-  }
-
-  return packedSize;
-}
 
 } /* namespace geosx */
 

@@ -463,6 +463,64 @@ R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManage
   return elementCenter;
 }
 
+
+//
+//void CellBlock::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+//{
+//  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.nodeListString));
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementRegionListString));
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementSubRegionListString));
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementListString));
+//}
+//
+//
+//
+//
+//int CellBlock::PackUpDownMapsSize( localIndex_array const & packList ) const
+//{
+//  int packedSize = 0;
+//  buffer_unit_type * junk = nullptr;
+//  packedSize += CommBufferOps::Pack<false>( junk,
+//                                           m_nodeList,
+//                                           packList,
+//                                           this->m_localToGlobalMap,
+//                                           m_nodeList.RelatedObjectLocalToGlobal() );
+//  return packedSize;
+//
+//}
+//
+//
+//int CellBlock::PackUpDownMaps( buffer_unit_type * & buffer,
+//                               localIndex_array const & packList ) const
+//{
+//  int packedSize = 0;
+//
+//  packedSize += CommBufferOps::Pack<true>( buffer,
+//                                           m_nodeList,
+//                                           packList,
+//                                           this->m_localToGlobalMap,
+//                                           m_nodeList.RelatedObjectLocalToGlobal() );
+//
+//  return packedSize;
+//}
+//
+//
+//int CellBlock::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+//                                 localIndex_array const & packList )
+//{
+//  int unPackedSize = 0;
+//
+//  unPackedSize += CommBufferOps::Unpack( buffer,
+//                                         m_nodeList,
+//                                         packList,
+//                                         this->m_globalToLocalMap,
+//                                         m_nodeList.RelatedObjectGlobalToLocal() );
+//
+//  return unPackedSize;
+//}
+
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )
 
 }

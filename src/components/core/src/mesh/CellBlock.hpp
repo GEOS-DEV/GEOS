@@ -136,6 +136,17 @@ public:
   R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
 
 
+
+//  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+//
+//  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const override;
+//
+//  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+//                              localIndex_array const & packList ) const override;
+//
+//  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+//                                localIndex_array const & packList ) override;
+
   struct viewKeysStruct : ObjectManagerBase::viewKeyStruct
   {
     dataRepository::ViewKey numNodesPerElement = { "numNodesPerElement" };
