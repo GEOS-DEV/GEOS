@@ -147,7 +147,7 @@ public:
 //  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
 //                                localIndex_array const & packList ) override;
 
-  struct viewKeysStruct : ObjectManagerBase::viewKeyStruct
+  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
 
     static constexpr auto numNodesPerElementString     = "numNodesPerElement";
@@ -161,7 +161,7 @@ public:
     dataRepository::ViewKey faceList           = { faceListString };
   } viewKeys;
 
-  class groupKeysStruct
+  class groupKeyStruct
   {
 public:
   } groupKeys;

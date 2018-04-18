@@ -162,13 +162,13 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
       auto const & dNdX            = cellBlock->getData< array< Array2dT<R1Tensor> > >(keys::dNdX);
       array_view<real64,2> const & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ).View();
 
-      auto const & constitutiveMap = cellBlock->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(keys::constitutiveMap);
+      auto const & constitutiveMap = cellBlock->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
 //      RAJA::View< localIndex const, RAJA::Layout<2> > constitutiveMapView( reinterpret_cast<localIndex const*>(constitutiveMap.second.data()),
 //                                                                           constitutiveMap.second.size(0),
 //                                                                           constitutiveMap.second.size(1) );
       array_view<localIndex,2> constitutiveMapView = constitutiveMap.second.View();
 
-      auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(dataRepository::keys::constitutiveGrouping);
+      auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
       array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<lArray2d>(cellBlock->viewKeys.nodeList)->reference().View();// getData<lArray2d>(keys::nodeList);
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);

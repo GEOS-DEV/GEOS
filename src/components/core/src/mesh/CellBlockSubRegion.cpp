@@ -16,8 +16,15 @@ using namespace constitutive;
 CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * const parent ):
   CellBlock( name, parent )
 {
-  auto constitutiveGrouping = this->RegisterViewWrapper< map< string, localIndex_array > >(keys::constitutiveGrouping);
-  constitutiveGrouping->setSizedFromParent(0);
+  RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
+      setSizedFromParent(0);
+
+  RegisterViewWrapper( viewKeyStruct::constitutiveMapString, &m_constitutiveMapView, 0);
+
+  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
+
+
+
 }
 
 CellBlockSubRegion::~CellBlockSubRegion()

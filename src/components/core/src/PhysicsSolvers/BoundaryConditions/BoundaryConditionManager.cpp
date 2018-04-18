@@ -154,7 +154,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 //        elementRegion->forCellBlocks( [&] ( CellBlockSubRegion * subRegion )
 // -> void
 //        {
-          auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(keys::constitutiveMap);
+          auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
           ManagedGroup const * sets = subRegion->GetGroup(keys::sets);
 
           for( auto & setName : setNames )

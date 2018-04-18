@@ -81,10 +81,10 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   m_numNodesPerElement(),
   m_numFacesPerElement()
 {
-  RegisterViewWrapper(viewKeysStruct::nodeListString, &m_toNodesRelation, 0 );
-  RegisterViewWrapper(viewKeysStruct::faceListString, &m_toFacesRelation, 0 );
-  RegisterViewWrapper(viewKeysStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
-  RegisterViewWrapper(viewKeysStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
+  RegisterViewWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
+  RegisterViewWrapper(viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
+  RegisterViewWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
+  RegisterViewWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
 
 
   m_toNodesRelation.resize(0,8);

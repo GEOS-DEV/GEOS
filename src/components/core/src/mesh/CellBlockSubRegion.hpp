@@ -13,15 +13,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-string const constitutiveMap = "constitutiveMap";
-string const constitutiveGrouping = "ConstitutiveGrouping";
-}
-}
-
 class CellBlockSubRegion : public CellBlock
 {
 public:
@@ -41,9 +32,8 @@ public:
   template< typename LAMBDA >
   void forMaterials( LAMBDA lambda )
   {
-    auto const & constitutiveGrouping = this->getReference< map< string, localIndex_array > >(dataRepository::keys::constitutiveGrouping);
 
-    for( auto & constitutiveGroup : constitutiveGrouping )
+    for( auto & constitutiveGroup : m_constitutiveGrouping )
     {
       lambda( constitutiveGroup );
     }
@@ -55,11 +45,22 @@ public:
                          ManagedGroup * material );
 
 
-  struct viewKeysStruct : public CellBlock::viewKeysStruct
-  {} viewKeys;
+  struct viewKeyStruct : public CellBlock::viewKeyStruct
+  {
+    static constexpr auto constitutiveGroupingString = "ConstitutiveGrouping";
+    static constexpr auto constitutiveMapString = "ConstitutiveMap";
+    static constexpr auto dNdXString = "dNdX";
+
+    dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString };
+    dataRepository::ViewKey constitutiveMap       = { constitutiveMapString };
+    dataRepository::ViewKey dNdX                  = { dNdXString };
+
+  } viewKeys;
 
 
-
+  map< string, localIndex_array > m_constitutiveGrouping;
+  std::pair< Array2dT< localIndex >, Array2dT< localIndex > > m_constitutiveMapView;
+  array< Array2dT<R1Tensor> > m_dNdX;
 
 };
 
