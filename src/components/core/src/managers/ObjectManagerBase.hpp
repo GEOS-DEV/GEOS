@@ -295,6 +295,7 @@ public:
     static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
     static constexpr auto ghostRankString = "ghostRank";
     static constexpr auto ghostsToSendString = "ghostsToSend";
+    static constexpr auto ghostsToReceiveString = "ghostsToReceive";
     static constexpr auto globalToLocalMapString = "globalToLocalMap";
     static constexpr auto isExternalString = "isExternal";
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
@@ -303,6 +304,7 @@ public:
     dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
     dataRepository::ViewKey ghostRank = { ghostRankString };
     dataRepository::ViewKey ghostsToSend = { ghostsToSendString };
+    dataRepository::ViewKey ghostsToReceive = { ghostsToReceiveString };
     dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
     dataRepository::ViewKey isExternal = { isExternalString };
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
@@ -332,6 +334,9 @@ public:
   map<globalIndex,localIndex>  m_globalToLocalMap;
   integer_array m_isExternal;
   integer_array m_ghostRank;
+//  localIndex_array m_ghostToSend;
+ // localIndex_array m_ghostToReceive;
+
 
 };
 

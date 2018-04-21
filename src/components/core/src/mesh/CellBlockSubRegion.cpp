@@ -138,4 +138,78 @@ void CellBlockSubRegion::MaterialPassThru( string const & matName,
 {}
 
 
+
+
+
+void CellBlockSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+{
+  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.nodeListString));
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
+  exclusionList.insert(this->getWrapperIndex(this->viewKeys.faceListString));
+}
+
+
+int CellBlockSubRegion::PackUpDownMapsSize( localIndex_array const & packList ) const
+{
+  int packedSize = 0;
+  buffer_unit_type * junk = nullptr;
+  packedSize += CommBufferOps::Pack<false>( junk,
+                                            m_toNodesRelation,
+                                            packList,
+                                            this->m_localToGlobalMap,
+                                            m_toNodesRelation.RelatedObjectLocalToGlobal() );
+
+  packedSize += CommBufferOps::Pack<false>( junk,
+                                            m_toFacesRelation,
+                                            packList,
+                                            this->m_localToGlobalMap,
+                                            m_toFacesRelation.RelatedObjectLocalToGlobal() );
+  return packedSize;
+
+}
+
+
+int CellBlockSubRegion::PackUpDownMaps( buffer_unit_type * & buffer,
+                               localIndex_array const & packList ) const
+{
+  int packedSize = 0;
+
+  packedSize += CommBufferOps::Pack<true>( buffer,
+                                           m_toNodesRelation,
+                                           packList,
+                                           this->m_localToGlobalMap,
+                                           m_toNodesRelation.RelatedObjectLocalToGlobal() );
+
+  packedSize += CommBufferOps::Pack<true>( buffer,
+                                           m_toFacesRelation,
+                                           packList,
+                                           this->m_localToGlobalMap,
+                                           m_toFacesRelation.RelatedObjectLocalToGlobal() );
+
+  return packedSize;
+}
+
+
+int CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                 localIndex_array const & packList )
+{
+  int unPackedSize = 0;
+
+  unPackedSize += CommBufferOps::Unpack( buffer,
+                                         m_toNodesRelation,
+                                         packList,
+                                         this->m_globalToLocalMap,
+                                         m_toNodesRelation.RelatedObjectGlobalToLocal() );
+
+  unPackedSize += CommBufferOps::Unpack( buffer,
+                                         m_toFacesRelation,
+                                         packList,
+                                         this->m_globalToLocalMap,
+                                         m_toFacesRelation.RelatedObjectGlobalToLocal() );
+
+  return unPackedSize;
+}
+
+
 } /* namespace geosx */

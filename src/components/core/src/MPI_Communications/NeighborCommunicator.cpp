@@ -233,6 +233,10 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) cons
     neighborGroups[a]->
     RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::ghostsToSendString)->
     setSizedFromParent(0);
+
+    neighborGroups[a]->
+    RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::ghostsToReceiveString)->
+    setSizedFromParent(0);
   }
 
 
@@ -282,7 +286,7 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
 
   bufferSize += nodeManager.PackGlobalMapsSize( nodeAdjacencyList, 0 );
   bufferSize += faceManager.PackGlobalMapsSize( faceAdjacencyList, 0 );
-//  bufferSize += elemManager.PackGlobalMapsSize( elementAdjacencyList );
+  bufferSize += elemManager.PackGlobalMapsSize( elementAdjacencyList );
 
   bufferSize += nodeManager.PackUpDownMapsSize( nodeAdjacencyList );
   bufferSize += faceManager.PackUpDownMapsSize( faceAdjacencyList );
@@ -304,7 +308,7 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
 
   bufferSize += nodeManager.PackGlobalMaps( sendBufferPtr, nodeAdjacencyList, 0 );
   bufferSize += faceManager.PackGlobalMaps( sendBufferPtr, faceAdjacencyList, 0 );
-//  bufferSize += elemManager.PackGlobalMaps( sendBufferPtr, elementAdjacencyList );
+  bufferSize += elemManager.PackGlobalMaps( sendBufferPtr, elementAdjacencyList );
 
   bufferSize += nodeManager.PackUpDownMaps( sendBufferPtr, nodeAdjacencyList );
   bufferSize += faceManager.PackUpDownMaps( sendBufferPtr, faceAdjacencyList );
@@ -324,6 +328,12 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
   buffer_type const & receiveBuffer = ReceiveBuffer(commID);
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
 
+
+  ElementRegionManager::ElementViewAccessor<localIndex_array> elementAdjacencyReceiveList;
+
+  elemManager.ConstructViewAccessor( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
+                                     std::to_string( this->m_neighborRank ),
+                                     elementAdjacencyReceiveList );
   int unpackedSize = 0;
 
   localIndex_array nodeUpackList;
@@ -332,8 +342,7 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
   localIndex_array faceUnpackList;
   unpackedSize += faceManager.UnpackGlobalMaps( receiveBufferPtr, faceUnpackList, 0);
 
-  ElementRegionManager::ElementViewAccessor<localIndex_array> elementAdjacencyUnpackList;
-//  unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, elementAdjacencyUnpackList);
+  unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, elementAdjacencyReceiveList);
 
 
   unpackedSize += nodeManager.UnpackUpDownMaps( receiveBufferPtr, nodeUpackList);

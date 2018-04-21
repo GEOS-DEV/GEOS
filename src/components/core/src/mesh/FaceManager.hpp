@@ -84,7 +84,7 @@ public:
   virtual void
   ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
                                                    array<globalIndex_array>& faceToNodes ) override final;
-  struct viewKeysStruct : ObjectManagerBase::viewKeyStruct
+  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto nodeListString              = "nodeList";
     static constexpr auto edgeListString              = "edgeList";
@@ -99,7 +99,7 @@ public:
     dataRepository::ViewKey elementList           = { elementListString };
   } viewKeys;
 
-  struct groupKeysStruct : ObjectManagerBase::groupKeyStruct
+  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
   OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }

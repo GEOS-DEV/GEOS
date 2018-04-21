@@ -513,7 +513,7 @@ real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
       array< Array2dT<R1Tensor> > const & dNdX = cellBlockSubRegion->getReference< array< Array2dT<R1Tensor> > >(keys::dNdX);
       Array2dT<real64> const & detJ            = cellBlockSubRegion->getReference< Array2dT<real64> >(keys::detJ);
 
-      lArray2d const & elemsToNodes = cellBlockSubRegion->getWrapper<lArray2d>(cellBlockSubRegion->viewKeys.nodeList)->reference();
+      lArray2d const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys.nodeList)->reference();
       int const numNodesPerElement = elemsToNodes.size(1);
 
       Epetra_IntSerialDenseVector  element_index   (numNodesPerElement);

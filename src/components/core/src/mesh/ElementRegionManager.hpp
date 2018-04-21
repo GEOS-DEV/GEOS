@@ -215,6 +215,13 @@ public:
 
   using ManagedGroup::PackSize;
   using ManagedGroup::Pack;
+  using ObjectManagerBase::PackGlobalMapsSize;
+  using ObjectManagerBase::PackGlobalMaps;
+  using ObjectManagerBase::UnpackGlobalMaps;
+  using ObjectManagerBase::PackUpDownMapsSize;
+  using ObjectManagerBase::PackUpDownMaps;
+  using ObjectManagerBase::UnpackUpDownMaps;
+
 
 
   int PackSize( array<string> const & wrapperNames,
@@ -232,7 +239,43 @@ public:
   }
 
   int Unpack( buffer_unit_type const * & buffer,
-              ElementViewAccessor<localIndex_array> const & packList );
+              ElementViewAccessor<localIndex_array> & packList );
+
+
+
+  virtual int PackGlobalMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    buffer_unit_type * junk = nullptr;
+    return PackGlobalMapsPrivate<false>( junk, packList);
+  }
+
+  virtual int PackGlobalMaps( buffer_unit_type * & buffer,
+                              ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    return PackGlobalMapsPrivate<true>( buffer, packList);
+  }
+
+
+  int UnpackGlobalMaps( buffer_unit_type const * & buffer,
+                                ElementViewAccessor<localIndex_array> & packList );
+
+  int PackUpDownMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    buffer_unit_type * junk = nullptr;
+    return PackUpDownMapsPrivate<false>( junk, packList);
+  }
+
+  int PackUpDownMaps( buffer_unit_type * & buffer,
+                      ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    return PackUpDownMapsPrivate<true>( buffer, packList);
+  }
+
+
+  int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                        ElementViewAccessor<localIndex_array> const & packList );
+
+
 
 
 private:
@@ -240,6 +283,15 @@ private:
   int PackPrivate( buffer_unit_type * & buffer,
                    array<string> const & wrapperNames,
                    ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
+
+  template< bool DOPACK >
+  int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+                             ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
+
+  template< bool DOPACK >
+  int
+  PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                         ElementViewAccessor<localIndex_array> const & packList ) const;
 
   ElementRegionManager( const ElementRegionManager& );
   ElementRegionManager& operator=( const ElementRegionManager&);
@@ -278,44 +330,7 @@ ConstructViewAccessor( string const & viewName,
 }
 
 
-template< bool DOPACK >
-int
-ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
-                                   array<string> const & wrapperNames,
-                                   ElementViewAccessor<localIndex_array> const & packList ) const
-{
-  int packedSize = 0;
 
-//  packedSize += ManagedGroup::Pack( buffer, wrapperNames, {}, 0, 0);
-
-
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, numRegions() );
-
-  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
-  {
-    ElementRegion const * const elemRegion = GetRegion(kReg);
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
-
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
-    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
-    {
-      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
-      packedSize += CommBufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
-
-      localIndex_array const & elemList = *(packList[kReg][kSubReg]);
-      if( DOPACK )
-      {
-        packedSize += subRegion->Pack( buffer, wrapperNames, elemList, 1, 0 );
-      }
-      else
-      {
-        packedSize += subRegion->PackSize( wrapperNames, elemList, 1, 0 );
-      }
-    }
-  }
-
-  return packedSize;
-}
 
 
 }

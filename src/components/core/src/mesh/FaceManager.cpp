@@ -608,6 +608,7 @@ int FaceManager::PackUpDownMaps( buffer_unit_type * & buffer,
 {
   int packedSize = 0;
 
+  packedSize += CommBufferOps::Pack<true>( buffer, string(viewKeyStruct::nodeListString) );
   packedSize += CommBufferOps::Pack<true>( buffer,
                                            m_nodeList,
                                            packList,
@@ -622,6 +623,10 @@ int FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                  localIndex_array const & packList )
 {
   int unPackedSize = 0;
+
+  string nodeListString;
+  unPackedSize += CommBufferOps::Unpack( buffer, nodeListString );
+  GEOS_ASSERT( nodeListString==viewKeyStruct::nodeListString, "")
 
   unPackedSize += CommBufferOps::Unpack( buffer,
                                          m_nodeList,

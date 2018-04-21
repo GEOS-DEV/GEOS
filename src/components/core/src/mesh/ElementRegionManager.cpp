@@ -203,10 +203,54 @@ void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problem
 }
 
 
+template< bool DOPACK >
+int
+ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
+                                   array<string> const & wrapperNames,
+                                   ElementViewAccessor<localIndex_array> const & packList ) const
+{
+  int packedSize = 0;
+
+//  packedSize += ManagedGroup::Pack( buffer, wrapperNames, {}, 0, 0);
+
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, numRegions() );
+
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
+
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      packedSize += CommBufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
+
+      localIndex_array const & elemList = *(packList[kReg][kSubReg]);
+      if( DOPACK )
+      {
+        packedSize += subRegion->Pack( buffer, wrapperNames, elemList, 1, 0 );
+      }
+      else
+      {
+        packedSize += subRegion->PackSize( wrapperNames, elemList, 1, 0 );
+      }
+    }
+  }
+
+  return packedSize;
+}
+template int ElementRegionManager::PackPrivate<true>( buffer_unit_type * &,
+                                                      array<string> const &,
+                                                      ElementViewAccessor<localIndex_array> const & ) const;
+template int ElementRegionManager::PackPrivate<false>( buffer_unit_type * &,
+                                                      array<string> const &,
+                                                      ElementViewAccessor<localIndex_array> const & ) const;
 
 int
 ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
-                              ElementViewAccessor<localIndex_array> const & packList )
+                              ElementViewAccessor<localIndex_array> & packList )
 {
   int unpackedSize = 0;
 
@@ -229,8 +273,8 @@ ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
 
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
 
-      /// THIS IS WRONG
-      localIndex_array  elemList;
+      /// THIS IS WRONG??
+      localIndex_array & elemList = *(packList[kReg][kSubReg]);
 
       unpackedSize += subRegion->Unpack( buffer, elemList, 0 );
     }
@@ -238,6 +282,136 @@ ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
 
   return unpackedSize;
 }
+
+
+template< bool DOPACK >
+int
+ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+                                             ElementViewAccessor<localIndex_array> const & packList ) const
+{
+  int packedSize = 0;
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, numRegions() );
+
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
+
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      packedSize += CommBufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
+
+      localIndex_array const & elemList = *(packList[kReg][kSubReg]);
+      if( DOPACK )
+      {
+        packedSize += subRegion->PackGlobalMaps( buffer, elemList, 0 );
+      }
+      else
+      {
+        packedSize += subRegion->PackGlobalMapsSize( elemList, 0 );
+      }
+    }
+  }
+
+  return packedSize;
+}
+template int
+ElementRegionManager::PackGlobalMapsPrivate<true>( buffer_unit_type * & buffer,
+                                                   ElementViewAccessor<localIndex_array> const & packList ) const;
+template int
+ElementRegionManager::PackGlobalMapsPrivate<false>( buffer_unit_type * & buffer,
+                                                   ElementViewAccessor<localIndex_array> const & packList ) const;
+
+
+
+
+
+int
+ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
+                                        ElementViewAccessor<localIndex_array> & packList )
+{
+  int unpackedSize = 0;
+
+  localIndex numRegionsRead;
+  unpackedSize += CommBufferOps::Unpack( buffer, numRegionsRead );
+
+  packList.resize(numRegionsRead);
+  for( localIndex kReg=0 ; kReg<numRegionsRead ; ++kReg  )
+  {
+    string regionName;
+    unpackedSize += CommBufferOps::Unpack( buffer, regionName );
+
+    ElementRegion * const elemRegion = GetRegion(regionName);
+
+    localIndex numSubRegionsRead;
+    unpackedSize += CommBufferOps::Unpack( buffer, numSubRegionsRead );
+    packList[kReg].resize(numSubRegionsRead);
+    for( localIndex kSubReg=0 ; kSubReg<numSubRegionsRead ; ++kSubReg  )
+    {
+      string subRegionName;
+      unpackedSize += CommBufferOps::Unpack( buffer, subRegionName );
+
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
+
+      /// THIS IS WRONG
+      localIndex_array & elemList = *(packList[kReg][kSubReg]);
+
+      unpackedSize += subRegion->UnpackGlobalMaps( buffer, elemList, 0 );
+    }
+  }
+
+  return unpackedSize;
+}
+
+
+
+
+
+template< bool DOPACK >
+int
+ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                             ElementViewAccessor<localIndex_array> const & packList ) const
+{
+  int packedSize = 0;
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, numRegions() );
+
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
+
+    packedSize += CommBufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      packedSize += CommBufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
+
+      localIndex_array const & elemList = *(packList[kReg][kSubReg]);
+      if( DOPACK )
+      {
+        packedSize += subRegion->PackGlobalMaps( buffer, elemList, 0 );
+      }
+      else
+      {
+        packedSize += subRegion->PackGlobalMapsSize( elemList, 0 );
+      }
+    }
+  }
+
+  return packedSize;
+}
+template int
+ElementRegionManager::
+PackUpDownMapsPrivate<true>( buffer_unit_type * & buffer,
+                             ElementViewAccessor<localIndex_array> const & packList ) const;
+template int
+ElementRegionManager::
+PackUpDownMapsPrivate<false>( buffer_unit_type * & buffer,
+                             ElementViewAccessor<localIndex_array> const & packList ) const;
 
 
 

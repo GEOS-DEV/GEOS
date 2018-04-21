@@ -550,6 +550,7 @@ int ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, globalIndices );
 
 
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer, recursive );
   if( recursive > 0 )
   {
     packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("SubGroups") );

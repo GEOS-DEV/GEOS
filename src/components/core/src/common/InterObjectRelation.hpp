@@ -37,19 +37,19 @@ public:
 
 
 
-  // equals operator should not be called
-  InterObjectRelation& operator=( const InterObjectRelation& rhs )
-  {
-    BASETYPE::operator=( static_cast<BASETYPE>(rhs));
-    m_relatedObject = rhs.m_relatedObject;
-    return *this;
-  }
-
-  InterObjectRelation& operator=( const BASETYPE& rhs )
-  {
-    BASETYPE::operator=( rhs );
-    return *this;
-  }
+//  // equals operator should not be called
+//  InterObjectRelation& operator=( const InterObjectRelation& rhs )
+//  {
+//    BASETYPE::operator=( static_cast<BASETYPE>(rhs));
+//    m_relatedObject = rhs.m_relatedObject;
+//    return *this;
+//  }
+//
+//  InterObjectRelation& operator=( const BASETYPE& rhs )
+//  {
+//    BASETYPE::operator=( rhs );
+//    return *this;
+//  }
 
 
   /// equals operator that sets *this to a single value of any type

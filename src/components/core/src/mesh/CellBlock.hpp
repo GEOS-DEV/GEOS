@@ -177,8 +177,8 @@ public:
 
 //protected:
 
-  Array2dT<localIndex>  m_toNodesRelation;
-  Array2dT<localIndex>  m_toFacesRelation;
+  FixedOneToManyRelation  m_toNodesRelation;
+  FixedOneToManyRelation  m_toFacesRelation;
   localIndex m_numNodesPerElement;
   localIndex m_numFacesPerElement;
 
