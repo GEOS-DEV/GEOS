@@ -786,7 +786,7 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
 {
   m_wrappers.insert( name,
                      new ViewWrapper<T>( name, this, newObject, takeOwnership ),
-                     takeOwnership );
+                     true );
 
   ViewWrapper<T> * const rval = getWrapper<T>(name);
   if( rval->sizedFromParent() == 1 && rval->shouldResize())

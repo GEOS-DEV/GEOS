@@ -29,7 +29,9 @@ FiniteElementSpace::FiniteElementSpace( std::string const & name, ManagedGroup *
 {}
 
 FiniteElementSpace::~FiniteElementSpace()
-{}
+{
+  delete m_finiteElement;
+}
 
 
 void FiniteElementSpace::BuildDataStructure( dataRepository::ManagedGroup * const parent )

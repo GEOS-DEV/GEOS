@@ -156,8 +156,8 @@ public:
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
                                                    ManagedGroup * const parent)
   {
-    std::unique_ptr<TNEW> newObject = std::move( std::make_unique<TNEW>() );
-    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject)) );
+    std::unique_ptr<TNEW> newObject = std::make_unique<TNEW>();
+    return std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject));
   }
 
 

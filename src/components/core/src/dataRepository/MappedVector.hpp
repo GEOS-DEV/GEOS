@@ -444,6 +444,10 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
         string const message = "MappedVector::insert(): Tried to insert existing key that was not empty without overwrite flag\n";
         GEOS_ERROR(message);
       }
+      else
+      {
+        delete source;
+      }
     }
   }
 

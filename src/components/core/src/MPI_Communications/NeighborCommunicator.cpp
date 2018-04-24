@@ -285,16 +285,25 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
   int bufferSize = 0;
 
   bufferSize += nodeManager.PackGlobalMapsSize( nodeAdjacencyList, 0 );
+  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
   bufferSize += faceManager.PackGlobalMapsSize( faceAdjacencyList, 0 );
+  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
   bufferSize += elemManager.PackGlobalMapsSize( elementAdjacencyList );
+  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
 
   bufferSize += nodeManager.PackUpDownMapsSize( nodeAdjacencyList );
+  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
   bufferSize += faceManager.PackUpDownMapsSize( faceAdjacencyList );
+  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
   bufferSize += elemManager.PackUpDownMapsSize( elementAdjacencyList );
+  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
 
   bufferSize += nodeManager.PackSize( {}, nodeAdjacencyList, 1, 0 );
+  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
   bufferSize += faceManager.PackSize( {}, faceAdjacencyList, 1, 0 );
+  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
   bufferSize += elemManager.PackSize( {}, elementAdjacencyList );
+  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
 
 
 
@@ -306,20 +315,29 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
 
   int packedSize = 0;
 
-  bufferSize += nodeManager.PackGlobalMaps( sendBufferPtr, nodeAdjacencyList, 0 );
-  bufferSize += faceManager.PackGlobalMaps( sendBufferPtr, faceAdjacencyList, 0 );
-  bufferSize += elemManager.PackGlobalMaps( sendBufferPtr, elementAdjacencyList );
+  packedSize += nodeManager.PackGlobalMaps( sendBufferPtr, nodeAdjacencyList, 0 );
+  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
+  packedSize += faceManager.PackGlobalMaps( sendBufferPtr, faceAdjacencyList, 0 );
+  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
+  packedSize += elemManager.PackGlobalMaps( sendBufferPtr, elementAdjacencyList );
+  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
 
-  bufferSize += nodeManager.PackUpDownMaps( sendBufferPtr, nodeAdjacencyList );
-  bufferSize += faceManager.PackUpDownMaps( sendBufferPtr, faceAdjacencyList );
-  bufferSize += elemManager.PackUpDownMaps( sendBufferPtr, elementAdjacencyList );
+  packedSize += nodeManager.PackUpDownMaps( sendBufferPtr, nodeAdjacencyList );
+  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
+  packedSize += faceManager.PackUpDownMaps( sendBufferPtr, faceAdjacencyList );
+  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
+  packedSize += elemManager.PackUpDownMaps( sendBufferPtr, elementAdjacencyList );
+  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
 
   packedSize += nodeManager.Pack( sendBufferPtr, {} ,nodeAdjacencyList, 1, 0 );
+  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
   packedSize += faceManager.Pack( sendBufferPtr, {}, faceAdjacencyList, 1, 0 );
+  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
   packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
+  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
 
 
-
+  GEOS_ASSERT( bufferSize == packedSize, "Allocated Buffer Size is not equal to packed buffer size")
 
 
   this->MPI_iSendReceive( commID, MPI_COMM_WORLD );

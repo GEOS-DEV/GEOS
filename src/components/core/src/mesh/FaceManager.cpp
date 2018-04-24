@@ -593,6 +593,7 @@ int FaceManager::PackUpDownMapsSize( localIndex_array const & packList ) const
 {
   int packedSize = 0;
   buffer_unit_type * junk = nullptr;
+  packedSize += CommBufferOps::Pack<false>( junk, string(viewKeyStruct::nodeListString) );
   packedSize += CommBufferOps::Pack<false>( junk,
                                            m_nodeList,
                                            packList,
