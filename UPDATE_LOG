@@ -1,5 +1,19 @@
 
 
+Tue Apr 17 10:40:07 2018 Benjamin Curtice Corbett
+v0.0.30
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/cxx-utilities/pull-requests/19
+
+
+Wed Apr 11 11:22:02 2018 Randolph R. Settgast
+v0.0.29
+
+This pull request removes unique_ptr<T> as the primary object store mechanism and replaces it with a (T*). This allows the repository to hold pointers to objects that it doesn't own, which in turn allows objects to have concrete members that are registered with the repo.
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/20
+
+
 Thu Mar 29 21:41:06 2018 Randolph R. Settgast
 v0.0.28
 

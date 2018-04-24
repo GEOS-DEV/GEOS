@@ -27,12 +27,16 @@ DomainPartition::DomainPartition( std::string const & name,
   ManagedGroup( name, parent ),
   m_mpiComm()
 {
+//<<<<<<< HEAD
 
 
   this->RegisterViewWrapper< array<NeighborCommunicator> >(viewKeys.neighbors);
   MPI_Comm_dup( MPI_COMM_WORLD, &m_mpiComm );
 //  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager);
-  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setWriteOut( false );
+  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
+//=======
+//  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags(RestartFlags::NO_WRITE);
+//>>>>>>> master
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );

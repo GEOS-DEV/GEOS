@@ -106,7 +106,7 @@ public:
 
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
-  void ParseCommandLineInput( int & argc, char* argv[]);
+  void ParseCommandLineInput( int argc, char* argv[]);
 
   static bool ParseRestart( int argc, char* argv[], std::string& restartFileName );
 
@@ -153,6 +153,8 @@ public:
     dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};
     dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"};
     dataRepository::ViewKey schemaLevel              = {"schemaLevel"};
+    dataRepository::ViewKey problemName              = {"problemName"};
+    dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
   } viewKeys;
 
   struct groupKeysStruct

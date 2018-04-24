@@ -11,6 +11,7 @@
 #include <string>
 #include <memory>
 #include "common/DataTypes.hpp"
+#include "RestartFlags.hpp"
 
 namespace axom
 {
@@ -43,7 +44,7 @@ public:
    * \brief constructor
    */
   explicit ViewWrapperBase( std::string const & name,
-                            ManagedGroup * const parent, bool write_out );
+                            ManagedGroup * const parent);
 
 
   ViewWrapperBase( ViewWrapperBase&& source );
@@ -100,15 +101,9 @@ public:
     m_sizedFromParent = val;
   }
 
-  bool getWriteOut() const
-  { 
-    return m_write_out;
-  }
+  RestartFlags getRestartFlags() const { return m_restart_flags; }
 
-  void setWriteOut( bool write_out )
-  {
-    m_write_out = write_out;
-  }
+  void setRestartFlags( RestartFlags flags) { m_restart_flags = flags; } 
 
 #ifdef USE_ATK
   axom::sidre::View * getSidreView() const
@@ -127,8 +122,7 @@ private:
   std::string m_name;
   ManagedGroup* m_parent;
   int m_sizedFromParent;
-  bool m_write_out;
-
+  RestartFlags m_restart_flags;
 #ifdef USE_ATK
   axom::sidre::View* m_sidreView;
 #endif

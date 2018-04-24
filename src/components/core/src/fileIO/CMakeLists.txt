@@ -7,6 +7,7 @@ set(geosx_headers
   fileIO/xmlWrapper.hpp
   fileIO/silo/SiloFile.hpp
   fileIO/blueprint/Blueprint.hpp
+  fileIO/utils/utils.hpp
     PARENT_SCOPE )
 
 #

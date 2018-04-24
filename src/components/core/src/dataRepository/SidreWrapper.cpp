@@ -50,6 +50,7 @@ void SidreWrapper::writeTree(int num_files, const std::string & path, const std:
 #endif
 }
 
+
 void SidreWrapper::reconstructTree(const std::string & root_path, const std::string & protocol, MPI_Comm comm) 
 {
 #ifdef USE_ATK
@@ -63,38 +64,11 @@ void SidreWrapper::reconstructTree(const std::string & root_path, const std::str
 #endif
 }
 
-#ifdef USE_ATK
-bool checkSidreTree(Group * group) 
-{
-
-  bool valid = true;
-  for (int i = group->getFirstValidViewIndex(); i != InvalidIndex; i = group->getNextValidViewIndex(i)) 
-  {
-    View * view = group->getView(i);
-    if (view->isExternal() && view->getVoidPtr() == nullptr) {
-      SLIC_WARNING("Pointer should be valid: " << view->getPathName() << std::endl);
-      valid = false;
-    }
-  }
-
-  for (int i = group->getFirstValidGroupIndex(); i != InvalidIndex; i = group->getNextValidGroupIndex(i)) 
-  {
-    Group * childGroup = group->getGroup(i);
-    valid &= checkSidreTree(childGroup);
-  }
-
-  return valid;
-}
-#endif
 
 /* Load sidre external data. */
 void SidreWrapper::loadExternalData(const std::string & root_path, MPI_Comm comm)
 {
 #ifdef USE_ATK
-  if (!checkSidreTree(SidreWrapper::dataStore().getRoot())) {
-    SLIC_ERROR("Tree not valid");
-  }
-
   axom::spio::IOManager ioManager(comm);
   ioManager.loadExternalData(SidreWrapper::dataStore().getRoot(), root_path);
 #endif

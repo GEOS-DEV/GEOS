@@ -14,6 +14,7 @@
 
 #include "ObjectCatalog.hpp"
 #include "ViewWrapper.hpp"
+#include "RestartFlags.hpp"
 
 #include "depricated/Common.h"
 #include "DocumentationNode.hpp"
@@ -63,13 +64,8 @@ using indexType = localIndex;
 class ManagedGroup
 {
 public:
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-  using subGroupMap = MappedVector< ManagedGroup, std::unique_ptr<ManagedGroup>, keyType, indexType  >;
-  using viewWrapperMap = MappedVector< ViewWrapperBase, std::unique_ptr<ViewWrapperBase>, keyType, indexType  >;
-#else
   using subGroupMap = MappedVector< ManagedGroup, ManagedGroup*, keyType, indexType  >;
   using viewWrapperMap = MappedVector< ViewWrapperBase, ViewWrapperBase*, keyType, indexType  >;
-#endif
   /**
    * @name constructors, destructor, copy, move, assignments
    */
@@ -264,18 +260,10 @@ public:
   {
     for( auto& subGroupIter : m_subGroups )
     {
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-#ifdef USE_DYNAMIC_CASTING
-      T * subGroup = dynamic_cast<T *>( subGroupIter.second.get() );
-#else
-      T * subGroup = static_cast<T *>( subGroupIter.second.get() );
-#endif
-#else
 #ifdef USE_DYNAMIC_CASTING
       T * subGroup = dynamic_cast<T *>( subGroupIter.second );
 #else
       T * subGroup = static_cast<T *>( subGroupIter.second );
-#endif
 #endif
       lambda( subGroup );
     }
@@ -643,13 +631,17 @@ public:
     return m_wrappers;
   }
 
-void prepareToWrite() const;
+  RestartFlags getRestartFlags() const { return m_restart_flags; }
 
-void finishWriting() const;
+  void setRestartFlags( RestartFlags flags ) { m_restart_flags = flags; } 
 
-void prepareToRead();
+  void prepareToWrite() const;
 
-void finishReading();
+  void finishWriting() const;
+
+  void prepareToRead();
+
+  void finishReading();
 
 
 protected:
@@ -666,7 +658,7 @@ private:
 #endif
 
   indexType m_size;
-
+  RestartFlags m_restart_flags;
   string m_name;
 
 
@@ -717,18 +709,10 @@ template < typename T >
 T * ManagedGroup::RegisterGroup( std::string const & name,
                                  std::unique_ptr<ManagedGroup> newObject )
 {
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-#ifdef USE_DYNAMIC_CASTING
-  return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
-#else
-  return static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
-#endif
-#else
 #ifdef USE_DYNAMIC_CASTING
   return dynamic_cast<T*>( m_subGroups.insert( name, newObject.release(), true ) );
 #else
   return static_cast<T*>( m_subGroups.insert( name, newObject.release(), true ) );
-#endif
 #endif
 }
 
@@ -738,18 +722,10 @@ T * ManagedGroup::RegisterGroup( std::string const & name,
                                  T * newObject,
                                  bool const takeOwnership )
 {
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-#ifdef USE_DYNAMIC_CASTING
-  return dynamic_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
-#else
-  return static_cast<T*>( m_subGroups.insert( name, std::move(newObject) ) );
-#endif
-#else
 #ifdef USE_DYNAMIC_CASTING
   return dynamic_cast<T*>( m_subGroups.insert( name, newObject, takeOwnership ) );
 #else
   return static_cast<T*>( m_subGroups.insert( name, newObject, takeOwnership ) );
-#endif
 #endif
 }
 
@@ -758,15 +734,9 @@ template< typename T, typename TBASE >
 ViewWrapper<TBASE> * ManagedGroup::RegisterViewWrapper( std::string const & name,
                                                         ViewKey::index_type * const rkey )
 {
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-  m_wrappers.insert( name,
-                     std::move(ViewWrapper<TBASE>::template Factory<T>(name,this) ),
-                     true );
-#else
   m_wrappers.insert( name,
                      (ViewWrapper<TBASE>::template Factory<T>(name,this) ).release(),
                      true );
-#endif
 
   if( rkey != nullptr )
   {
@@ -795,16 +765,10 @@ template < typename T >
 ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
                                                     std::unique_ptr<T> newObject )
 {
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-  m_wrappers.insert( name,
-                     std::make_unique< ViewWrapper<T> >( name, this, std::move(newObject) ),
-                     true);
-#else
   m_wrappers.insert( name,
                      new ViewWrapper<T>( name, this, newObject.release(), true ),
                      true );
 
-#endif
   ViewWrapper<T> * const rval = getWrapper<T>(name);
   if( rval->sizedFromParent() == 1 )
   {
@@ -820,22 +784,10 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
                                                     T * newObject,
                                                     bool takeOwnership )
 {
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-  if( takeOwnership==false )
-  {
-    GEOS_ERROR( "Cannot insert pointer into a unique_ptr without taking ownership of memory" );
-  }
-
-
-  m_wrappers.insert( name,
-                     std::make_unique< ViewWrapper<T> >( name, this, std::move(std::unique_ptr(newObject)) ),
-                     true);
-#else
   m_wrappers.insert( name,
                      new ViewWrapper<T>( name, this, newObject, takeOwnership ),
                      takeOwnership );
 
-#endif
   ViewWrapper<T> * const rval = getWrapper<T>(name);
   if( rval->sizedFromParent() == 1 && rval->shouldResize())
   {

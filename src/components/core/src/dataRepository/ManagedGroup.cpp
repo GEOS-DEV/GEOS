@@ -61,6 +61,7 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
 #endif
   m_size(0),
+  m_restart_flags(RestartFlags::WRITE_AND_READ),
   m_name(name)
 {
 
@@ -138,6 +139,7 @@ ManagedGroup::ManagedGroup( ManagedGroup&& source ):
   m_sidreGroup( std::move(source.m_sidreGroup) ),
 #endif
   m_size( source.m_size ),
+  m_restart_flags( source.m_restart_flags ),
   m_name( source.m_name )
 {}
 
@@ -185,6 +187,7 @@ void ManagedGroup::RegisterDocumentationNodes()
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                           typeID );
       view->setSizedFromParent( subNode.second.m_managedByParent);
+      view->setRestartFlags( subNode.second.getRestartFlags() );
       subNode.second.m_isRegistered = 1;
 
       string defVal = subNode.second.getDefault();
@@ -558,6 +561,11 @@ int ManagedGroup::Unpack( buffer_unit_type const *& buffer,
 void ManagedGroup::prepareToWrite() const
 {
 #ifdef USE_ATK
+  if (getRestartFlags() == RestartFlags::NO_WRITE)
+  {
+    return;
+  }
+
   if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
   {
     SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
@@ -585,6 +593,11 @@ void ManagedGroup::prepareToWrite() const
 void ManagedGroup::finishWriting() const
 {
 #ifdef USE_ATK
+  if (getRestartFlags() == RestartFlags::NO_WRITE)
+  {
+    return;
+  }
+
   axom::sidre::View* temp = m_sidreGroup->getView("__size__");
   m_sidreGroup->destroyView("__size__");
 
@@ -604,6 +617,11 @@ void ManagedGroup::finishWriting() const
 void ManagedGroup::prepareToRead()
 {
 #ifdef USE_ATK
+  if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
+  {
+    return;
+  }
+
   axom::sidre::View* temp = m_sidreGroup->getView("__size__");
   m_size = temp->getScalar();
   m_sidreGroup->destroyView("__size__");
@@ -624,6 +642,11 @@ void ManagedGroup::prepareToRead()
 void ManagedGroup::finishReading()
 {
 #ifdef USE_ATK
+  if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
+  {
+    return;
+  }
+
   for (auto & pair : m_wrappers)
   {
     pair.second->finishReading();

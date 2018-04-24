@@ -18,6 +18,7 @@
 #include "StringUtilities.hpp"
 #include "Macros.hpp"
 #include "Buffer.hpp"
+#include "RestartFlags.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
@@ -57,11 +58,10 @@ public:
    * @param parent parent group which owns the ViewWrapper
    */
   explicit ViewWrapper( std::string const & name,
-                        ManagedGroup * const parent,
-                        bool write_out=true ):
-    ViewWrapperBase(name, parent, write_out),
+                        ManagedGroup * const parent ):
+    ViewWrapperBase(name, parent),
     m_ownsData( true ),
-    m_data( std::make_unique<T>() )
+    m_data( new T() )
   {}
 
   /**
@@ -71,15 +71,10 @@ public:
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
-                        std::unique_ptr<T> object,
-                        bool write_out=true ):
-    ViewWrapperBase(name, parent, write_out),
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-    m_data( std::move( object ) )
-#else
+                        std::unique_ptr<T> object ):
+    ViewWrapperBase(name, parent),
   m_ownsData( true ),
   m_data( object.release() )
-#endif
   {}
 
   /**
@@ -90,15 +85,10 @@ public:
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
                         T * object,
-                        bool takeOwnership,
-                        bool write_out=true ):
-    ViewWrapperBase(name,parent, write_out),
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-    m_data( std::move( std::unique_ptr<T>(object) ) )
-#else
-  m_ownsData( takeOwnership ),
-  m_data( object )
-#endif
+                        bool takeOwnership):
+    ViewWrapperBase(name,parent),
+    m_ownsData( takeOwnership ),
+    m_data( object )
   {}
 
   /**
@@ -106,12 +96,10 @@ public:
    */
   virtual ~ViewWrapper() noexcept override final
   {
-#ifndef USE_UNIQUEPTR_IN_DATAREPOSITORY
     if( m_ownsData )
     {
       delete m_data;
     }
-#endif
   }
 
   /**
@@ -119,7 +107,7 @@ public:
    * @param source source for the copy
    */
   ViewWrapper( ViewWrapper const & source ):
-    ViewWrapperBase("test", nullptr, source->getWriteOut()),
+    ViewWrapperBase("copy_constructor_test", nullptr),
     m_data(source.m_data)
   {}
 
@@ -128,7 +116,7 @@ public:
    * @param source source to be moved
    */
   ViewWrapper( ViewWrapper&& source ):
-    ViewWrapperBase("test", nullptr, source->getWriteOut()),
+    ViewWrapperBase(source),
     m_data( std::move(source.m_data) )
   {}
 
@@ -166,10 +154,10 @@ public:
    */
   template<typename TNEW>
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
-                                                   ManagedGroup * const parent, bool write_out=true )
+                                                   ManagedGroup * const parent)
   {
     std::unique_ptr<TNEW> newObject = std::move( std::make_unique<TNEW>() );
-    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject), write_out ) );
+    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject)) );
   }
 
 
@@ -747,11 +735,7 @@ public:
   data()
   {
     /// return a c-pointer to the object
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-    return m_data.get();
-#else
     return m_data;
-#endif
   }
 
 
@@ -759,11 +743,7 @@ public:
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
   data() const
   {
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-    return m_data.get();
-#else
     return m_data;
-#endif
   }
 
 
@@ -815,11 +795,7 @@ public:
                           !std::is_same<U,string>::value, U * >::type
   dataPtr()
   {
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-    return m_data.get();
-#else
     return m_data;
-#endif
   }
 
   template<class U = T>
@@ -827,11 +803,7 @@ public:
                           !std::is_same<U,string>::value, U const *>::type
   dataPtr() const
   {
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-    return m_data.get();
-#else
     return m_data;
-#endif
   }
 
   HAS_ALIAS(value_type)
@@ -974,10 +946,9 @@ public:
   void registerToWrite(axom::sidre::View * view=nullptr) const override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (getRestartFlags() == RestartFlags::NO_WRITE)
     {
       view = (view != nullptr) ? view : getSidreView();
-      storeSizedFromParent(view);
       unregisterDataPtr(view);
       return;
     }
@@ -1029,10 +1000,9 @@ public:
   void finishWriting(axom::sidre::View * view=nullptr) const override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (getRestartFlags() == RestartFlags::NO_WRITE)
     {
       view = (view != nullptr) ? view : getSidreView();
-      view->setAttributeToDefault("__sizedFromParent__");
       unregisterDataPtr(view);
       return;
     }
@@ -1059,9 +1029,8 @@ public:
   void registerToRead(axom::sidre::View * view=nullptr) override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
     {
-      loadSizedFromParent(view);
       unregisterDataPtr(view);
       return;
     }
@@ -1094,7 +1063,7 @@ public:
   void finishReading(axom::sidre::View * view) override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
     {
       view = (view != nullptr) ? view : getSidreView();
       unregisterDataPtr(view);
@@ -1198,12 +1167,9 @@ public:
   }
 
 
-#ifdef USE_UNIQUEPTR_IN_DATAREPOSITORY
-  std::unique_ptr<T> m_data;
-#else
   bool m_ownsData;
   T * m_data;
-#endif
+
   ViewWrapper() = delete;
 };
 
