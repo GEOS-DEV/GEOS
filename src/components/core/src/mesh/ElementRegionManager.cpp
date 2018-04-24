@@ -393,11 +393,11 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
       localIndex_array const & elemList = *(packList[kReg][kSubReg]);
       if( DOPACK )
       {
-        packedSize += subRegion->PackGlobalMaps( buffer, elemList, 0 );
+        packedSize += subRegion->PackUpDownMaps( buffer, elemList );
       }
       else
       {
-        packedSize += subRegion->PackGlobalMapsSize( elemList, 0 );
+        packedSize += subRegion->PackUpDownMapsSize( elemList );
       }
     }
   }
@@ -414,6 +414,42 @@ PackUpDownMapsPrivate<false>( buffer_unit_type * & buffer,
                              ElementViewAccessor<localIndex_array> const & packList ) const;
 
 
+int
+ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                        ElementViewAccessor<localIndex_array> const & packList )
+{
+  int unpackedSize = 0;
+
+  localIndex numRegionsRead;
+  unpackedSize += CommBufferOps::Unpack( buffer, numRegionsRead );
+
+//  packList.resize(numRegionsRead);
+  for( localIndex kReg=0 ; kReg<numRegionsRead ; ++kReg  )
+  {
+    string regionName;
+    unpackedSize += CommBufferOps::Unpack( buffer, regionName );
+
+    ElementRegion * const elemRegion = GetRegion(regionName);
+
+    localIndex numSubRegionsRead;
+    unpackedSize += CommBufferOps::Unpack( buffer, numSubRegionsRead );
+//    packList[kReg].resize(numSubRegionsRead);
+    for( localIndex kSubReg=0 ; kSubReg<numSubRegionsRead ; ++kSubReg  )
+    {
+      string subRegionName;
+      unpackedSize += CommBufferOps::Unpack( buffer, subRegionName );
+
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
+
+      /// THIS IS WRONG
+      localIndex_array & elemList = *(packList[kReg][kSubReg]);
+
+      unpackedSize += subRegion->UnpackUpDownMaps( buffer, elemList );
+    }
+  }
+
+  return unpackedSize;
+}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, ManagedGroup * const )
 }

@@ -290,11 +290,11 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
 
   bufferSize += nodeManager.PackUpDownMapsSize( nodeAdjacencyList );
   bufferSize += faceManager.PackUpDownMapsSize( faceAdjacencyList );
-//  bufferSize += elemManager.PackUpDownMapsSize( elementAdjacencyList );
+  bufferSize += elemManager.PackUpDownMapsSize( elementAdjacencyList );
 
   bufferSize += nodeManager.PackSize( {}, nodeAdjacencyList, 1, 0 );
   bufferSize += faceManager.PackSize( {}, faceAdjacencyList, 1, 0 );
-//  bufferSize += elemManager.PackSize( {}, elementAdjacencyList );
+  bufferSize += elemManager.PackSize( {}, elementAdjacencyList );
 
 
 
@@ -312,11 +312,11 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
 
   bufferSize += nodeManager.PackUpDownMaps( sendBufferPtr, nodeAdjacencyList );
   bufferSize += faceManager.PackUpDownMaps( sendBufferPtr, faceAdjacencyList );
-//  bufferSize += elemManager.PackUpDownMaps( sendBufferPtr, elementAdjacencyList );
+  bufferSize += elemManager.PackUpDownMaps( sendBufferPtr, elementAdjacencyList );
 
   packedSize += nodeManager.Pack( sendBufferPtr, {} ,nodeAdjacencyList, 1, 0 );
   packedSize += faceManager.Pack( sendBufferPtr, {}, faceAdjacencyList, 1, 0 );
-//  packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
+  packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
 
 
 
@@ -347,11 +347,12 @@ void NeighborCommunicator::FindGhosts( bool const contactActive,
 
   unpackedSize += nodeManager.UnpackUpDownMaps( receiveBufferPtr, nodeUpackList);
   unpackedSize += faceManager.UnpackUpDownMaps( receiveBufferPtr, faceUnpackList);
+  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, elementAdjacencyReceiveList);
 
 
   unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeUpackList, 0);
   unpackedSize += faceManager.Unpack( receiveBufferPtr, faceUnpackList, 0);
-//  unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyUnpackList);
+  unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyReceiveList);
 
   std::cout<<"herro"<<std::endl;
 

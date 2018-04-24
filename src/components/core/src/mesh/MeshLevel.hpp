@@ -24,6 +24,8 @@ public:
              ManagedGroup * const parent );
   virtual ~MeshLevel();
 
+  void InitializePostSubGroups( ManagedGroup * const ) override;
+
   void GenerateAdjacencyLists( localIndex_array & seedNodeList,
                                localIndex_array & nodeAdjacencyList,
                                localIndex_array & edgeAdjacencyList,
