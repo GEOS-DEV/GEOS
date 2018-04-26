@@ -179,6 +179,8 @@ void ElementRegionManager::InitializePreSubGroups( ManagedGroup * const )
 
 void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problemManager )
 {
+  ObjectManagerBase::InitializePostSubGroups(nullptr);
+
   map<string,localIndex> constitutiveSizes;
   ManagedGroup * domain = problemManager->GetGroup(keys::domain);
   forElementRegions([&]( ElementRegion * elementRegion ) -> void
@@ -230,11 +232,11 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
       localIndex_array const & elemList = *(packList[kReg][kSubReg]);
       if( DOPACK )
       {
-        packedSize += subRegion->Pack( buffer, wrapperNames, elemList, 1, 0 );
+        packedSize += subRegion->Pack( buffer, wrapperNames, elemList, 0 );
       }
       else
       {
-        packedSize += subRegion->PackSize( wrapperNames, elemList, 1, 0 );
+        packedSize += subRegion->PackSize( wrapperNames, elemList, 0 );
       }
     }
   }

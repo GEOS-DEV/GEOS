@@ -87,7 +87,7 @@ NodeManager::NodeManager( std::string const & name,
   ObjectManagerBase( name, parent ),
   m_referencePosition()
 {
-  RegisterViewWrapper(viewKeysStruct::referencePositionString, &m_referencePosition, false );
+  RegisterViewWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
   this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementRegionListString);
   this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementSubRegionListString);
   this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementListString);

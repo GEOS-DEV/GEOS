@@ -321,17 +321,22 @@ real64 LaplaceFEM::TimeStepImplicit( real64 const & time_n,
 
 
 void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
-                                                                 localIndex & numLocalRows,
-                                                                 localIndex & numGlobalRows,
-                                                                 localIndex_array& localIndices,
-                                                                 localIndex offset )
+                                               localIndex & numLocalRows,
+                                               localIndex & numGlobalRows,
+                                               localIndex_array& localIndices,
+                                               localIndex offset )
 {
 //  dim =
 // domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension;
   int dim = 1;
 
-  int n_mpi_processes = 1;
+
+  int n_mpi_processes;
+  MPI_Comm_size( MPI_COMM_WORLD, &n_mpi_processes );
+
   int this_mpi_process = 0;
+  MPI_Comm_rank( MPI_COMM_WORLD, &this_mpi_process );
+
   std::vector<int> gather(n_mpi_processes);
 
   int intNumLocalRows = static_cast<int>(numLocalRows);
@@ -353,11 +358,10 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
   // create trilinos dof indexing
 
   localIndex_array& trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.trilinosIndex);
-  integer_array& is_ghost       = nodeManager->getReference<integer_array>(viewKeys.ghostRank);
+  integer_array const & is_ghost       = nodeManager->getReference<integer_array>(viewKeys.ghostRank);
 
 
   trilinos_index = -1;
-  is_ghost = -2;
 
   integer local_count = 0;
   for(integer r=0 ; r<trilinos_index.size() ; ++r )
@@ -385,10 +389,10 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
                                                    EpetraBlockSystem * const blockSystem )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  NodeManager * const nodeManager = mesh->getNodeManager();
 
   localIndex dim = 1;//domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension;
-  localIndex n_ghost_rows  = 0;//domain.m_feNodeManager.GetNumGhosts();
+  localIndex n_ghost_rows  = nodeManager->GetNumberOfGhosts();
   localIndex n_local_rows  = nodeManager->size()-n_ghost_rows;
   localIndex n_global_rows = 0;
 
@@ -403,6 +407,10 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
 
   // create epetra map
 
+  Epetra_Map * junk =  new Epetra_Map( static_cast<int>(dim*n_global_rows),
+                                       static_cast<int>(dim*n_local_rows),
+                                       0,
+                                       m_linearSolverWrapper.m_epetraComm );
 
   Epetra_Map * const rowMap = blockSystem->SetRowMap( EpetraBlockSystem::BlockIDs::displacementBlock,
                                                       std::make_unique<Epetra_Map>( static_cast<int>(dim*n_global_rows),
@@ -443,39 +451,47 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
   localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.trilinosIndex);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-
-  elemManager->forElementRegions([&](ElementRegion const * const elementRegion)
-    {
+  for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
+//  elemManager->forElementRegions([&](ElementRegion const * const elementRegion)
+  {
+    ElementRegion const * const elementRegion = elemManager->GetRegion( elemRegIndex );
       auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
 
-      elementRegion->forCellBlocks([&](CellBlockSubRegion const * const cellBlock)
+      for( localIndex subRegionIndex=0 ; subRegionIndex<elementRegion->numSubRegions() ; ++subRegionIndex )
+//      elementRegion->forCellBlocks([&](CellBlockSubRegion const * const cellBlock)
       {
+        CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(subRegionIndex);
         localIndex const numElems = cellBlock->size();
-        lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(cellBlock->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+        lArray2d const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
         integer_array elementLocalDofIndex (numNodesPerElement);
 
+//        array<integer> const & elemGhostRank = cellBlock->m_ghostRank;
+
         for( localIndex k=0 ; k<numElems ; ++k )
         {
-          arrayView1d<localIndex const> const localNodeIndices = elemsToNodes[k];
-
-          for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+//          if( elemGhostRank[k] < 0 )
           {
-            for(localIndex i=0 ; i<numNodesPerElement ; ++i)
-            {
-              elementLocalDofIndex[i] = integer_conversion<int>(trilinos_index[localNodeIndices[i]]);
-            }
+            arrayView1d<localIndex const> const localNodeIndices = elemsToNodes[k];
 
-            sparsity->InsertGlobalIndices(integer_conversion<int>(elementLocalDofIndex.size()),
-                                          elementLocalDofIndex.data(),
-                                          integer_conversion<int>(elementLocalDofIndex.size()),
-                                          elementLocalDofIndex.data());
+            for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+            {
+              for(localIndex i=0 ; i<numNodesPerElement ; ++i)
+              {
+                elementLocalDofIndex[i] = integer_conversion<int>(trilinos_index[localNodeIndices[i]]);
+              }
+
+              sparsity->InsertGlobalIndices(integer_conversion<int>(elementLocalDofIndex.size()),
+                                            elementLocalDofIndex.data(),
+                                            integer_conversion<int>(elementLocalDofIndex.size()),
+                                            elementLocalDofIndex.data());
+            }
           }
 
         }
-      });
-    });
+      }
+    }
 }
 
 
@@ -521,13 +537,13 @@ real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
       Epetra_SerialDenseMatrix     element_matrix  (numNodesPerElement,
                                                     numNodesPerElement);
 
-//      array<integer>& elem_is_ghost = cellBlockSubRegion->second.GetFieldData<FieldInfo::ghostRank>();
+      array<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
       const int n_q_points = feSpace->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements
       for( localIndex k=0 ; k<cellBlockSubRegion->size() ; ++k )
       {
-//        if(elem_is_ghost[element] < 0)
+        if(elemGhostRank[k] < 0)
         {
           arrayView1d<localIndex const> const local_index = elemsToNodes[k];
 
@@ -593,13 +609,15 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   string const & fieldName = getReference<string>(viewKeys.fieldVarName);
   real64_array & fieldVar = nodeManager->getReference<real64_array>(string("Temperature"));
 
+//  integer_array & ghostRank = nodeManager->getReference<integer_array>(NodeManager::viewKeyStruct::ghostRankString);
+
   int dummy;
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
 
   for( localIndex r=0 ; r<fieldVar.size() ; ++r)
   {
-//    if(is_ghost[r] < 0)
+//    if(ghostRank[r] < 0)
     {
       int lid = rowMap->LID(integer_conversion<int>(trilinos_index[r]));
       fieldVar[r] = local_solution[lid];

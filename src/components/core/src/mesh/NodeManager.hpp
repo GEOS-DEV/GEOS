@@ -156,7 +156,7 @@ public:
   ///@}
 
 
-  struct viewKeysStruct : ObjectManagerBase::viewKeyStruct
+  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto referencePositionString     = "ReferencePosition";
     static constexpr auto totalDisplacementString     = "TotalDisplacement";
@@ -177,7 +177,7 @@ public:
   } viewKeys;
 
 
-  struct groupKeysStruct : ObjectManagerBase::groupKeyStruct
+  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
   view_rtype_const<r1_array> referencePosition() const { return this->getData<r1_array>(viewKeys.referencePosition); }

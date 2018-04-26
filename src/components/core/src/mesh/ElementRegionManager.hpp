@@ -208,9 +208,8 @@ public:
   }
 
   template< typename VIEWTYPE >
-  void ConstructViewAccessor( string const & name,
-                              string const & neighborName,
-                              ElementViewAccessor<VIEWTYPE> & viewAccessor );
+  ElementViewAccessor<VIEWTYPE> ConstructViewAccessor( string const & name,
+                                                       string const & neighborName );
 
 
   using ManagedGroup::PackSize;
@@ -300,11 +299,12 @@ private:
 
 
 template< typename VIEWTYPE >
-void ElementRegionManager::
+ElementRegionManager::ElementViewAccessor<VIEWTYPE>
+ElementRegionManager::
 ConstructViewAccessor( string const & viewName,
-                       string const & neighborName,
-                       ElementViewAccessor<VIEWTYPE> & viewAccessor )
+                       string const & neighborName )
 {
+  ElementViewAccessor<VIEWTYPE> viewAccessor;
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
@@ -326,6 +326,8 @@ ConstructViewAccessor( string const & viewName,
       }
     }
   }
+
+  return viewAccessor;
 
 }
 

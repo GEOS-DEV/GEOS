@@ -42,6 +42,10 @@ public:
   static void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                             array<NeighborCommunicator> & allNeighbors );
 
+  void SynchronizeFields( const std::map<string, array<string> >& fieldNames,
+                          array<NeighborCommunicator> & allNeighbors,
+                          int const commID  );
+
 };
 
 } /* namespace geosx */

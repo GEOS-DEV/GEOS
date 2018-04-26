@@ -135,10 +135,16 @@ public:
 
   void MPI_WaitAll( int const commID );
 
-  void FindGhosts( bool const contactActive,
-                   integer const depth,
-                   MeshLevel * const meshLevel,
-                   int const commID );
+  void FindAndPackGhosts( bool const contactActive,
+                          integer const depth,
+                          MeshLevel * const meshLevel,
+                          int const commID );
+
+  void UnpackGhosts( MeshLevel * const meshLevel,
+                     int const commID );
+
+  void PackBufferForSync( MeshLevel * const meshLevel,
+                          int const commID );
 
   int Rank();
 

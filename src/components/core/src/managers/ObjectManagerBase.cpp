@@ -116,6 +116,11 @@ void ObjectManagerBase::FillDocumentationNode()
 
 }
 
+void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
+{
+  m_ghostRank=-1;
+}
+
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
                                                    const lArray2d& map,
@@ -214,7 +219,6 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 int ObjectManagerBase::PackSize( array<string> const & wrapperNames,
                             localIndex_array const & packList,
-                            integer const includeGlobalIndices,
                             integer const recursive ) const
 {
   int packedSize = 0;
@@ -222,7 +226,6 @@ int ObjectManagerBase::PackSize( array<string> const & wrapperNames,
   packedSize += this->PackPrivate<false>( junk,
                                           wrapperNames,
                                           packList,
-                                          includeGlobalIndices,
                                           recursive );
 
   return packedSize;
@@ -234,7 +237,6 @@ int ObjectManagerBase::PackSize( array<string> const & wrapperNames,
 int ObjectManagerBase::Pack( buffer_unit_type * & buffer,
                              array<string> const & wrapperNames,
                              localIndex_array const & packList,
-                             integer const includeGlobalIndices,
                              integer const recursive ) const
 {
   int packedSize = 0;
@@ -242,7 +244,6 @@ int ObjectManagerBase::Pack( buffer_unit_type * & buffer,
   packedSize += this->PackPrivate<true>( buffer,
                                           wrapperNames,
                                           packList,
-                                          includeGlobalIndices,
                                           recursive );
 
   return packedSize;
@@ -307,7 +308,7 @@ int ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer,
         // get the local index of the node
         localIndex b = iterG2L->second;
         unpackedLocalIndices(a) = b;
-        if( sendingRank < rank )
+        if( ( sendingRank < rank && m_ghostRank[b] == -1) || ( sendingRank < m_ghostRank[b] ) )
         {
           m_ghostRank[b] = sendingRank;
         }
@@ -315,17 +316,39 @@ int ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer,
     }
     newGlobalIndices.resize(numNewIndices);
 
-    // figure out new size of object container, and resize object
+    // figure out new size of object container, and resize it
     const localIndex newSize = oldSize + numNewIndices;
     this->resize( newSize );
 
     // add the new indices to the maps.
     for( int a=0 ; a<numNewIndices ; ++a )
     {
-      localIndex b = oldSize + a;
+      localIndex const b = oldSize + a;
       m_localToGlobalMap[b] = newGlobalIndices(a);
       m_ghostRank[b] = sendingRank;
     }
+
+
+
+//    for( localIndex a=0 ; a<numUnpackedIndices ; ++a )
+//    {
+//      localIndex const b = m_globalToLocalMap.at(globalIndices[a]);
+//      if( m_ghostRank[b]==-1 )
+//      {
+//        if( sendingRank < rank )
+//        {
+//          m_ghostRank[b] = sendingRank;
+//        }
+//      }
+//      else
+//      {
+//        if( sendingRank < m_ghostRank[b] )
+//        {
+//          m_ghostRank[b] = sendingRank;
+//        }
+//
+//      }
+//    }
 
     packList = unpackedLocalIndices;
 
@@ -368,20 +391,20 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   int numUnpackedIndices;
   unpackedSize += CommBufferOps::Unpack( buffer, numUnpackedIndices );
 
-  integer readIncludeGlobalIndices;
-  unpackedSize += CommBufferOps::Unpack( buffer, readIncludeGlobalIndices);
+//  integer readIncludeGlobalIndices;
+//  unpackedSize += CommBufferOps::Unpack( buffer, readIncludeGlobalIndices);
 
   string wrappersLabel;
   unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
   GEOS_ASSERT( wrappersLabel=="Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect")
 
 
-  if( readIncludeGlobalIndices )
-  {
-    localIndex_array unpackedLocalIndices;
-    unpackedLocalIndices.resize(numUnpackedIndices);
-
-  }
+//  if( readIncludeGlobalIndices )
+//  {
+//    localIndex_array unpackedLocalIndices;
+//    unpackedLocalIndices.resize(numUnpackedIndices);
+//
+//  }
 
   int numWrappers;
   unpackedSize += CommBufferOps::Unpack( buffer, numWrappers);
@@ -419,7 +442,6 @@ template< bool DOPACK >
 int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
                                     array<string> const & wrapperNames,
                                     localIndex_array const & packList,
-                                    integer const includeGlobalIndices,
                                     integer const recursive ) const
 {
   int packedSize = 0;
@@ -432,8 +454,6 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
   int const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, numPackedIndices );
-
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, includeGlobalIndices );
 
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
 
@@ -507,8 +527,8 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-template int ObjectManagerBase::PackPrivate<true>( buffer_unit_type * & ,array<string> const & , localIndex_array const & , integer const, integer const ) const;
-template int ObjectManagerBase::PackPrivate<false>( buffer_unit_type * & ,array<string> const & , localIndex_array const & , integer const, integer const ) const;
+template int ObjectManagerBase::PackPrivate<true>( buffer_unit_type * & ,array<string> const & , localIndex_array const &, integer const ) const;
+template int ObjectManagerBase::PackPrivate<false>( buffer_unit_type * & ,array<string> const & , localIndex_array const &, integer const ) const;
 
 template< bool DOPACK >
 int ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
@@ -578,6 +598,16 @@ void ObjectManagerBase::ViewPackingExclusionList( set<localIndex> & exclusionLis
   exclusionList.insert(this->getWrapperIndex(this->viewKeys.ghostRankString));
 }
 
+
+localIndex ObjectManagerBase::GetNumberOfGhosts() const
+{
+  return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i>-1;} );
+}
+
+localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
+{
+  return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i==-1;} );
+}
 
 
 } /* namespace geosx */

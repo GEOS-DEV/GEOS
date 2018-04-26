@@ -51,20 +51,19 @@ public:
 
   virtual void FillDocumentationNode() override;
 
+  virtual void InitializePostSubGroups( ManagedGroup * const ) override;
 
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;
 
   virtual int PackSize( array<string> const & wrapperNames,
                         localIndex_array const & packList,
-                        integer const includeGlobalIndices,
                         integer const recursive ) const;
 
 
   virtual int Pack( buffer_unit_type * & buffer,
                     array<string> const & wrapperNames,
                     localIndex_array const & packList,
-                    integer const includeGlobalIndices,
                     integer const recursive ) const;
 
 //  virtual int Unpack( buffer_unit_type const *& buffer,
@@ -114,7 +113,6 @@ private:
   int PackPrivate( buffer_unit_type * & buffer,
                    array<string> const & wrapperNames,
                    localIndex_array const & packList,
-                   integer const includeGlobalIndices,
                    integer const recursive ) const;
 
   template< bool DOPACK >
@@ -287,11 +285,17 @@ public:
 
   }
 
+  localIndex GetNumberOfGhosts() const;
+
+  localIndex GetNumberOfLocalIndices() const;
+
+
   //**********************************************************************************************************************
 
   struct viewKeyStruct
   {
 
+    static constexpr auto adjacencyListString = "adjacencyList";
     static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
     static constexpr auto ghostRankString = "ghostRank";
     static constexpr auto ghostsToSendString = "ghostsToSend";
@@ -301,6 +305,7 @@ public:
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
     static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
 
+    dataRepository::ViewKey adjacencyList = { adjacencyListString };
     dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
     dataRepository::ViewKey ghostRank = { ghostRankString };
     dataRepository::ViewKey ghostsToSend = { ghostsToSendString };

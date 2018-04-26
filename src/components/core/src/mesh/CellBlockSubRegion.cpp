@@ -121,6 +121,7 @@ void CellBlockSubRegion::InitializePreSubGroups( ManagedGroup * const )
 
 void CellBlockSubRegion::InitializePostSubGroups( ManagedGroup * const )
 {
+  ObjectManagerBase::InitializePostSubGroups(nullptr);
   this->numNodesPerElement() = 8;
   this->numFacesPerElement() = 6;
 }
@@ -129,6 +130,8 @@ void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
   this->resize(source->size());
   this->m_toNodesRelation = source->m_toNodesRelation;
+  this->m_localToGlobalMap = source->m_localToGlobalMap;
+  this->ConstructGlobalToLocalMap();
 }
 
 void CellBlockSubRegion::MaterialPassThru( string const & matName,

@@ -729,6 +729,8 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
+  ObjectManagerBase::InitializePostSubGroups(nullptr);
+
   DomainPartition * domain  = getDomainPartition();
 
   ManagedGroup * const meshBodies = domain->getMeshBodies();
