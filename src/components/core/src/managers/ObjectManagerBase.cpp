@@ -477,11 +477,7 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   }
   else
   {
-    wrapperNamesForPacking.resize( wrapperNames.size() );
-    for( localIndex count=0 ; count<wrapperNames.size() ; ++count )
-    {
-      wrapperNamesForPacking[count+1] = wrapperNames[count];
-    }
+    wrapperNamesForPacking = wrapperNames;
   }
 
   packedSize += CommBufferOps::Pack<DOPACK,int>( buffer, wrapperNamesForPacking.size() );
@@ -607,6 +603,28 @@ localIndex ObjectManagerBase::GetNumberOfGhosts() const
 localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
 {
   return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i==-1;} );
+}
+
+void ObjectManagerBase::SetReceiveLists(  )
+{
+
+  map<int,localIndex_array>  receiveIndices;
+  for( localIndex a=0 ; a<size() ; ++a )
+  {
+    if( m_ghostRank[a] > -1 )
+    {
+      receiveIndices[m_ghostRank[a]].push_back(a);
+    }
+  }
+
+  for( map<int,localIndex_array>::const_iterator iter=receiveIndices.begin() ; iter!=receiveIndices.end() ; ++iter )
+  {
+    ManagedGroup * const neighborData = GetGroup(groupKeys.neighborData)->GetGroup( std::to_string( iter->first ) );
+
+    localIndex_array & nodeAdjacencyList = neighborData->getReference<localIndex_array>( viewKeys.ghostsToReceive );
+    nodeAdjacencyList = iter->second;
+  }
+
 }
 
 

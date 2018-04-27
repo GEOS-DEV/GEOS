@@ -42,9 +42,9 @@ public:
   static void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                             array<NeighborCommunicator> & allNeighbors );
 
-  void SynchronizeFields( const std::map<string, array<string> >& fieldNames,
-                          array<NeighborCommunicator> & allNeighbors,
-                          int const commID  );
+  static void SynchronizeFields( const std::map<string, array<string> >& fieldNames,
+                                 MeshLevel * const mesh,
+                                 array<NeighborCommunicator> & allNeighbors );
 
 };
 

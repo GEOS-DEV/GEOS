@@ -29,7 +29,7 @@
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
-
+#include "MPI_Communications/CommunicationTools.hpp"
 #define verbose 1
 
 #define local_dim 3 //number of local dimensions
@@ -380,7 +380,6 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
 
   assert(local_count == numLocalRows );
 
-//  partition.SynchronizeFields(m_syncedFields, CommRegistry::lagrangeSolver02);
 
 }
 
@@ -402,6 +401,13 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
                                 n_global_rows,
                                 displacementIndices,
                                 0 );
+
+  std::map<string, array<string> > fieldNames;
+  fieldNames["node"].push_back("trilinosIndex_LaplaceFEM");
+
+  CommunicationTools::SynchronizeFields(fieldNames,
+                              mesh,
+                              domain->getReference< array<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
 
 
@@ -444,7 +450,6 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
 void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
                                                        Epetra_FECrsGraph * const sparsity )
 {
-  int dim=3;
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup const * const nodeManager = mesh->getNodeManager();
 
@@ -452,13 +457,11 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
-//  elemManager->forElementRegions([&](ElementRegion const * const elementRegion)
   {
     ElementRegion const * const elementRegion = elemManager->GetRegion( elemRegIndex );
       auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
 
       for( localIndex subRegionIndex=0 ; subRegionIndex<elementRegion->numSubRegions() ; ++subRegionIndex )
-//      elementRegion->forCellBlocks([&](CellBlockSubRegion const * const cellBlock)
       {
         CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(subRegionIndex);
         localIndex const numElems = cellBlock->size();

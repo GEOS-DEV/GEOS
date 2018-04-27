@@ -390,13 +390,15 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
   for( auto & neighbor : neighbors )
   {
     neighbor.MPI_WaitAll( commID );
+    neighbor.UnpackGhosts(meshLevel,commID);
   }
+  meshLevel->getNodeManager()->SetReceiveLists();
+  meshLevel->getFaceManager()->SetReceiveLists();
 
   for( auto & neighbor : neighbors )
   {
-    neighbor.UnpackGhosts(meshLevel,commID);
+    neighbor.RebuildSyncLists( meshLevel, commID );
   }
-
 
   CommunicationTools::releaseCommID(commID);
 }
@@ -404,16 +406,25 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
 
 
 void CommunicationTools::SynchronizeFields( const std::map<string, array<string> >& fieldNames,
-                                            array<NeighborCommunicator> & neighbors,
-                                            int const commID  )
+                                            MeshLevel * const mesh,
+                                            array<NeighborCommunicator> & neighbors )
 {
 
-//  int const commID = reserveCommID();
-//
-//  for( auto & neighbor : neighbors )
-//  {
-//
-//  }
+  int commID = CommunicationTools::reserveCommID();
+
+  for( auto & neighbor : neighbors )
+  {
+    neighbor.PackBufferForSync( fieldNames, mesh, commID );
+  }
+
+
+  for( auto & neighbor : neighbors )
+  {
+    neighbor.MPI_WaitAll( commID );
+    neighbor.UnpackBufferForSync(mesh,commID);
+  }
+  CommunicationTools::releaseCommID(commID);
+
 //
 //  // send and receive buffers
 //  for( int neighborIndex=0 ; neighborIndex<m_neighbors.size() ; ++neighborIndex )
@@ -437,7 +448,6 @@ void CommunicationTools::SynchronizeFields( const std::map<string, array<string>
 //
 //  MPI_Waitall( mpiSendBufferRequest.size(), mpiSendBufferRequest.data(), mpiSendBufferStatus.data() );
 //
-//  releaseCommID(commID);
 
 }
 

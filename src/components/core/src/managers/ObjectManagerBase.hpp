@@ -90,6 +90,8 @@ public:
     return PackGlobalMapsPrivate<true>( buffer, packList, recursive);
   }
 
+  void SetReceiveLists(  );
+
 
 
   virtual int PackUpDownMapsSize( localIndex_array const & packList ) const

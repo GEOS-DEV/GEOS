@@ -143,8 +143,16 @@ public:
   void UnpackGhosts( MeshLevel * const meshLevel,
                      int const commID );
 
-  void PackBufferForSync( MeshLevel * const meshLevel,
+
+  void RebuildSyncLists( MeshLevel * const meshLevel,
+                         int const commID );
+
+  void PackBufferForSync( std::map<string, array<string> > const & fieldNames,
+                          MeshLevel * const meshLevel,
                           int const commID );
+
+  void UnpackBufferForSync( MeshLevel * const meshLevel,
+                            int const commID );
 
   int Rank();
 

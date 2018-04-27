@@ -406,91 +406,150 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel * const mesh,
 
 }
 
+void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
+                                             int const commID )
+{
+  NodeManager & nodeManager = *(mesh->getNodeManager());
+  FaceManager & faceManager = *(mesh->getFaceManager());
+  ElementRegionManager & elemManager = *(mesh->getElemManager());
+  ManagedGroup * const nodeNeighborData = nodeManager.GetGroup(nodeManager.groupKeys.neighborData)->
+                                                      GetGroup( std::to_string( this->m_neighborRank ) );
+
+  ManagedGroup * const faceNeighborData = faceManager.
+                                            GetGroup( faceManager.groupKeys.neighborData )->
+                                            GetGroup( std::to_string( this->m_neighborRank ) );
 
 
-void NeighborCommunicator::PackBufferForSync( MeshLevel * const mesh,
+  localIndex_array & nodeGhostsToSend = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToSend );
+  localIndex_array & faceGhostsToSend = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToSend );
+
+  localIndex_array const & nodeGhostsToReceive = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToReceive );
+  localIndex_array const & faceGhostsToReceive = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToReceive );
+
+
+  buffer_type & sendBuffer = SendBuffer(commID);
+  buffer_unit_type * sendBufferPtr = sendBuffer.data();
+
+  int bufferSize = 0;
+  bufferSize += CommBufferOps::Pack<false>( sendBufferPtr,
+                                            nodeGhostsToReceive.data(),
+                                            nodeGhostsToReceive.size(),
+                                            nodeManager.m_localToGlobalMap );
+
+  bufferSize += CommBufferOps::Pack<false>( sendBufferPtr,
+                                            faceGhostsToReceive.data(),
+                                            faceGhostsToReceive.size(),
+                                            faceManager.m_localToGlobalMap );
+
+  sendBuffer.resize(bufferSize);
+
+  int packedSize = 0;
+  packedSize += CommBufferOps::Pack<true>( sendBufferPtr,
+                                            nodeGhostsToReceive.data(),
+                                            nodeGhostsToReceive.size(),
+                                            nodeManager.m_localToGlobalMap );
+
+  packedSize += CommBufferOps::Pack<true>( sendBufferPtr,
+                                            faceGhostsToReceive.data(),
+                                            faceGhostsToReceive.size(),
+                                            faceManager.m_localToGlobalMap );
+
+  GEOS_ASSERT( bufferSize == packedSize, "Allocated Buffer Size is not equal to packed buffer size")
+
+  this->MPI_iSendReceive( commID, MPI_COMM_WORLD );
+  this->MPI_WaitAll(commID);
+
+  buffer_type const & receiveBuffer = ReceiveBuffer(commID);
+  buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
+
+  int unpackedSize = 0;
+  unpackedSize += CommBufferOps::Unpack( receiveBufferPtr,
+                                         nodeGhostsToSend,
+                                         nodeManager.m_globalToLocalMap );
+  unpackedSize += CommBufferOps::Unpack( receiveBufferPtr,
+                                         faceGhostsToSend,
+                                         faceManager.m_globalToLocalMap );
+
+
+}
+
+
+void NeighborCommunicator::PackBufferForSync( std::map<string, array<string> > const & fieldNames,
+                                              MeshLevel * const mesh,
                                               int const commID )
 {
-//  NodeManager & nodeManager = *(mesh->getNodeManager());
-//  FaceManager & faceManager = *(mesh->getFaceManager());
-//  ElementRegionManager & elemManager = *(mesh->getElemManager());
-//
-//  ManagedGroup * const nodeNeighborData = nodeManager.
-//                                          GetGroup(nodeManager.groupKeys.neighborData)->
-//                                          GetGroup( std::to_string( this->m_neighborRank ) );
-//
-//  ManagedGroup * const faceNeighborData = faceManager.
-//                                          GetGroup( faceManager.groupKeys.neighborData )->
-//                                          GetGroup( std::to_string( this->m_neighborRank ) );
-//
-//  localIndex_array const & nodeAdjacencyList = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToSend );
-////  localIndex_array  edgeAdjacencyList ;//= edgeNeighborData->getReference<localIndex_array>( edgeManager.viewKeys.ghostsToSend );
-//  localIndex_array const & faceAdjacencyList = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToSend );
-//  ElementRegionManager::ElementViewAccessor<localIndex_array> const
-//  elementAdjacencyList = elemManager.ConstructViewAccessor<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToSendString,
-//                                                                              std::to_string( this->m_neighborRank ) );
-//
-//
-//  int bufferSize = 0;
-//
-//
-//  bufferSize += nodeManager.PackSize( {}, nodeAdjacencyList, 1, 0 );
-//  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
-//  bufferSize += faceManager.PackSize( {}, faceAdjacencyList, 1, 0 );
-//  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
+  NodeManager & nodeManager = *(mesh->getNodeManager());
+  FaceManager & faceManager = *(mesh->getFaceManager());
+  ElementRegionManager & elemManager = *(mesh->getElemManager());
+  ManagedGroup * const nodeNeighborData = nodeManager.GetGroup(nodeManager.groupKeys.neighborData)->
+                                                      GetGroup( std::to_string( this->m_neighborRank ) );
+
+  ManagedGroup * const faceNeighborData = faceManager.
+                                            GetGroup( faceManager.groupKeys.neighborData )->
+                                            GetGroup( std::to_string( this->m_neighborRank ) );
+
+
+  localIndex_array const & nodeGhostsToSend = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToSend );
+  localIndex_array const & faceGhostsToSend = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToSend );
+
+
+
+  int bufferSize = 0;
+
+  bufferSize += nodeManager.PackSize( fieldNames.at("node"), nodeGhostsToSend, 0 );
+//  bufferSize += faceManager.PackSize( {}, nodeGhostsToSend, 1, 0 );
 //  bufferSize += elemManager.PackSize( {}, elementAdjacencyList );
-//  if( this->Rank()==0 ) std::cout<<bufferSize<<std::endl;
 //
 //
-//  buffer_type & sendBuffer = SendBuffer(commID);
-//  sendBuffer.resize(bufferSize);
-//
-//  buffer_unit_type * sendBufferPtr = sendBuffer.data();
-//
-//  int packedSize = 0;
-//
-//
-//  packedSize += nodeManager.Pack( sendBufferPtr, {} ,nodeAdjacencyList, 1, 0 );
-//  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
+  buffer_type & sendBuffer = SendBuffer(commID);
+  sendBuffer.resize(bufferSize);
+
+  buffer_unit_type * sendBufferPtr = sendBuffer.data();
+
+  int packedSize = 0;
+  packedSize += nodeManager.Pack( sendBufferPtr, fieldNames.at("node"), nodeGhostsToSend, 0 );
 //  packedSize += faceManager.Pack( sendBufferPtr, {}, faceAdjacencyList, 1, 0 );
-//  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
 //  packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
-//  if( this->Rank()==0 ) std::cout<<packedSize<<std::endl;
-//
-//
-//  GEOS_ASSERT( bufferSize == packedSize, "Allocated Buffer Size is not equal to packed buffer size")
-//
-//
-//  this->MPI_iSendReceive( commID, MPI_COMM_WORLD );
+
+  GEOS_ASSERT( bufferSize == packedSize, "Allocated Buffer Size is not equal to packed buffer size")
+  this->MPI_iSendReceive( commID, MPI_COMM_WORLD );
+
+
 //  MPI_WaitAll( commID );
-//
-//  buffer_type const & receiveBuffer = ReceiveBuffer(commID);
-//  buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
-//
+}
+
+void NeighborCommunicator::UnpackBufferForSync( MeshLevel * const mesh,
+                                                int const commID )
+{
+
+  buffer_type const & receiveBuffer = ReceiveBuffer(commID);
+  buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
+
+  NodeManager & nodeManager = *(mesh->getNodeManager());
+  FaceManager & faceManager = *(mesh->getFaceManager());
+  ElementRegionManager & elemManager = *(mesh->getElemManager());
+
+  ManagedGroup * const nodeNeighborData = nodeManager.GetGroup(nodeManager.groupKeys.neighborData)->
+                                                      GetGroup( std::to_string( this->m_neighborRank ) );
+
+  ManagedGroup * const faceNeighborData = faceManager.
+                                            GetGroup( faceManager.groupKeys.neighborData )->
+                                            GetGroup( std::to_string( this->m_neighborRank ) );
+
+  localIndex_array & nodeGhostsToReceive = nodeNeighborData->getReference<localIndex_array>( nodeManager.viewKeys.ghostsToReceive );
+  localIndex_array & faceGhostsToReceive = faceNeighborData->getReference<localIndex_array>( faceManager.viewKeys.ghostsToReceive );
+
+  //
 //
 //  ElementRegionManager::ElementViewAccessor<localIndex_array> elementAdjacencyReceiveList;
 //
 //  elemManager.ConstructViewAccessor( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
 //                                     std::to_string( this->m_neighborRank ),
 //                                     elementAdjacencyReceiveList );
-//  int unpackedSize = 0;
-//
-//  localIndex_array nodeUpackList;
-//  unpackedSize += nodeManager.UnpackGlobalMaps( receiveBufferPtr, nodeUpackList, 0);
-//
-//  localIndex_array faceUnpackList;
-//  unpackedSize += faceManager.UnpackGlobalMaps( receiveBufferPtr, faceUnpackList, 0);
-//
-//  unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, elementAdjacencyReceiveList);
-//
-//
-//  unpackedSize += nodeManager.UnpackUpDownMaps( receiveBufferPtr, nodeUpackList);
-//  unpackedSize += faceManager.UnpackUpDownMaps( receiveBufferPtr, faceUnpackList);
-//  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, elementAdjacencyReceiveList);
-//
-//
-//  unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeUpackList, 0);
-//  unpackedSize += faceManager.Unpack( receiveBufferPtr, faceUnpackList, 0);
+  int unpackedSize = 0;
+
+  unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeGhostsToReceive, 0);
+//  unpackedSize += faceManager.Unpack( receiveBufferPtr, faceGhostsToReceive, 0);
 //  unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyReceiveList);
 //
 //  std::cout<<"herro"<<std::endl;
