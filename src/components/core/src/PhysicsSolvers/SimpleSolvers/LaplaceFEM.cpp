@@ -470,11 +470,11 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
 
         integer_array elementLocalDofIndex (numNodesPerElement);
 
-//        array<integer> const & elemGhostRank = cellBlock->m_ghostRank;
+        array<integer> const & elemGhostRank = cellBlock->m_ghostRank;
 
         for( localIndex k=0 ; k<numElems ; ++k )
         {
-//          if( elemGhostRank[k] < 0 )
+          if( elemGhostRank[k] < 0 )
           {
             arrayView1d<localIndex const> const localNodeIndices = elemsToNodes[k];
 

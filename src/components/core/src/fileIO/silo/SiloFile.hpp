@@ -613,23 +613,7 @@ void SetCenteringSubdir(const int centering, std::string& subdir);
 
 }
 
-// *********************************************************************************************************************
-// *********************************************************************************************************************
 
-/**
- * @author Randy Settgast, Scott Johnson
- * @tparam OUTPUTTYPE type of data write to the output file
- * @tparam T native type of data being output
- * @param[in] siloFile file handle
- * @param[in] member member that we are writing
- * @param[in] centering the centering location of the data (i.e. Node, Element,
- * Face)
- * @param[in] cycleNum the the cycle number
- * @param[in] problemTime the problem time
- * @param[in] mask list of indices of entries to plot
- *
- * This function writes all fields in a member map to a silo file.
- */
 template< typename OUTPUTTYPE >
 void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
                                         const dataRepository::ManagedGroup::viewWrapperMap & wrappers,
@@ -666,6 +650,11 @@ void SiloFile::WriteViewWrappersToSilo( const std::string& meshname,
     {
       auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper );
       this->WriteDataField<integer>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
+    }
+    if( typeID==typeid(localIndex_array) )
+    {
+      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<localIndex_array> const & >( *wrapper );
+      this->WriteDataField<localIndex>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
     }
 
   }

@@ -112,8 +112,8 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
     Epetra_MultiVector tmp (*rhs);
     rhs->Multiply(1.0,scaling,tmp,0.0);
   }
-  matrix->Print(std::cout);
-  rhs->Print(std::cout);
+//  matrix->Print(std::cout);
+//  rhs->Print(std::cout);
 
   Epetra_LinearProblem problem( matrix,
                                 solution,
@@ -166,6 +166,7 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
       MLList.set("smoother: type","ILU");
       MLList.set("ML output",1);
       MLList.set("PDE equations",3);
+      MLList.set("ML output", 0);
       MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>(*matrix, MLList);
       solver.SetPrecOperator(MLPrec.get());
     }
@@ -175,10 +176,11 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
       solver.SetAztecOption(AZ_subdomain_solve,AZ_ilut);
       solver.SetAztecParam(AZ_ilut_fill,params->ilut_fill());
       solver.SetAztecParam(AZ_drop,params->ilut_drop());
+      solver.SetAztecParam(AZ_output,0);
     }
 
-    std::cout<<params->numKrylovIter()<<std::endl;
-    std::cout<<params->krylovTol()<<std::endl;
+//    std::cout<<params->numKrylovIter()<<std::endl;
+//    std::cout<<params->krylovTol()<<std::endl;
 
     solver.Iterate(params->numKrylovIter(),
                    params->krylovTol() );
