@@ -18,8 +18,10 @@
 #include "StringUtilities.hpp"
 #include "Macros.hpp"
 #include "Buffer.hpp"
+#include "RestartFlags.hpp"
 
 #include "codingUtilities/Utilities.hpp"
+#include "common/GeosxConfig.hpp"
 
 
 
@@ -52,9 +54,10 @@ public:
    * @param parent parent group which owns the ViewWrapper
    */
   explicit ViewWrapper( std::string const & name,
-                        ManagedGroup * const parent, bool write_out=true ):
-    ViewWrapperBase(name, parent, write_out),
-    m_data( std::make_unique<T>() )
+                        ManagedGroup * const parent ):
+    ViewWrapperBase(name, parent),
+    m_ownsData( true ),
+    m_data( new T() )
   {}
 
   /**
@@ -64,10 +67,10 @@ public:
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
-                        std::unique_ptr<T> object,
-                        bool write_out=true ):
-    ViewWrapperBase(name, parent, write_out),
-    m_data( std::move( object ) )
+                        std::unique_ptr<T> object ):
+    ViewWrapperBase(name, parent),
+  m_ownsData( true ),
+  m_data( object.release() )
   {}
 
   /**
@@ -77,22 +80,30 @@ public:
    */
   explicit ViewWrapper( std::string const & name,
                         ManagedGroup * const parent,
-                        T * object, bool write_out=true ):
-    ViewWrapperBase(name,parent, write_out),
-    m_data( std::move( std::unique_ptr<T>(object) ) )
+                        T * object,
+                        bool takeOwnership):
+    ViewWrapperBase(name,parent),
+    m_ownsData( takeOwnership ),
+    m_data( object )
   {}
 
   /**
    * default destructor
    */
-  virtual ~ViewWrapper() noexcept override final {}
+  virtual ~ViewWrapper() noexcept override final
+  {
+    if( m_ownsData )
+    {
+      delete m_data;
+    }
+  }
 
   /**
    * Copy Constructor
    * @param source source for the copy
    */
   ViewWrapper( ViewWrapper const & source ):
-    ViewWrapperBase("test", nullptr, source->getWriteOut()),
+    ViewWrapperBase("copy_constructor_test", nullptr),
     m_data(source.m_data)
   {}
 
@@ -101,7 +112,7 @@ public:
    * @param source source to be moved
    */
   ViewWrapper( ViewWrapper&& source ):
-    ViewWrapperBase("test", nullptr, source->getWriteOut()),
+    ViewWrapperBase(source),
     m_data( std::move(source.m_data) )
   {}
 
@@ -139,10 +150,10 @@ public:
    */
   template<typename TNEW>
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
-                                                   ManagedGroup * const parent, bool write_out=true )
+                                                   ManagedGroup * const parent)
   {
     std::unique_ptr<TNEW> newObject = std::move( std::make_unique<TNEW>() );
-    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject), write_out ) );
+    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject)) );
   }
 
 
@@ -309,7 +320,7 @@ public:
         GEOS_ERROR("Data is only 1D");
         return;
       }
-      parent->resize(dims[0]);
+      parent->resize( integer_conversion<localIndex>(dims[0]));
     }
   };
   virtual void resize(int num_dims, long long const *  const dims) override final
@@ -535,7 +546,7 @@ public:
   data()
   {
     /// return a c-pointer to the object
-    return m_data.get();
+    return m_data;
   }
 
 
@@ -543,7 +554,7 @@ public:
   typename std::enable_if<!has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype_const>::type
   data() const
   {
-    return m_data.get();
+    return m_data;
   }
 
 
@@ -595,7 +606,7 @@ public:
                           !std::is_same<U,string>::value, U * >::type
   dataPtr()
   {
-    return m_data.get();
+    return m_data;
   }
 
   template<class U = T>
@@ -603,7 +614,7 @@ public:
                           !std::is_same<U,string>::value, U const *>::type
   dataPtr() const
   {
-    return m_data.get();
+    return m_data;
   }
 
 
@@ -726,10 +737,9 @@ public:
   void registerToWrite(axom::sidre::View * view=nullptr) const override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (getRestartFlags() == RestartFlags::NO_WRITE)
     {
       view = (view != nullptr) ? view : getSidreView();
-      storeSizedFromParent(view);
       unregisterDataPtr(view);
       return;
     }
@@ -781,10 +791,9 @@ public:
   void finishWriting(axom::sidre::View * view=nullptr) const override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (getRestartFlags() == RestartFlags::NO_WRITE)
     {
       view = (view != nullptr) ? view : getSidreView();
-      view->setAttributeToDefault("__sizedFromParent__");
       unregisterDataPtr(view);
       return;
     }
@@ -811,9 +820,8 @@ public:
   void registerToRead(axom::sidre::View * view=nullptr) override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
     {
-      loadSizedFromParent(view);
       unregisterDataPtr(view);
       return;
     }
@@ -846,7 +854,7 @@ public:
   void finishReading(axom::sidre::View * view) override
   {
 #ifdef USE_ATK
-    if (!getWriteOut())
+    if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
     {
       view = (view != nullptr) ? view : getSidreView();
       unregisterDataPtr(view);
@@ -950,7 +958,8 @@ public:
   }
 
 
-  std::unique_ptr<T> m_data;
+  bool m_ownsData;
+  T * m_data;
 
   ViewWrapper() = delete;
 };

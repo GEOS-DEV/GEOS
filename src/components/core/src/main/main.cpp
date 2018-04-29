@@ -2,7 +2,7 @@
 
 #include "common/Logger.hpp"
 #include "common/TimingMacros.hpp"
-
+#include <cmath>
 #include <mpi.h>
 #include <iostream>
 #include <sys/time.h>
@@ -10,6 +10,11 @@
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
+
+
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
 
 using namespace geosx;
 
@@ -31,6 +36,16 @@ int main( int argc, char *argv[] )
 #endif
 
   std::cout<<"starting main"<<std::endl;
+
+#ifdef USE_OPENMP
+  {
+    int noThreads = omp_get_max_threads();
+    std::cout<<"No of threads: "<<noThreads<<std::endl;
+  }
+#endif
+
+
+
 
 #ifdef USE_ATK
   slic::initialize();
@@ -54,7 +69,8 @@ int main( int argc, char *argv[] )
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
   if (restart) {
-    dataRepository::SidreWrapper::reconstructTree( restartFileName + ".root", "sidre_hdf5", MPI_COMM_WORLD );
+    std::cout << "Loading restart file " << restartFileName << std::endl;
+    dataRepository::SidreWrapper::reconstructTree( restartFileName, "sidre_hdf5", MPI_COMM_WORLD );
   }
 
   ProblemManager problemManager( "ProblemManager", nullptr );
@@ -84,6 +100,8 @@ int main( int argc, char *argv[] )
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   problemManager.RunSimulation();
+  gettimeofday(&tim, NULL);
+  t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   GEOS_MARK_END("RunSimulation");
 

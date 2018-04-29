@@ -46,7 +46,7 @@ option( RAJA_ENABLE_TBB "" OFF)
 
 option( ENABLE_CALIPER "Enables CALIPER" OFF )
 
-option( ENABLE_HYPRE "Enables HYPRE" ON )
+option( ENABLE_HYPRE "Enables HYPRE" OFF )
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)

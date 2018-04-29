@@ -181,8 +181,7 @@ public:
   }
 
 
-  globalIndex_array & m_localToGlobalMap;
-  map<globalIndex,localIndex> & m_globalToLocalMap;
+
 
 
   /// builds a new set on this object given another objects set and the map
@@ -204,6 +203,27 @@ public:
 
   //**********************************************************************************************************************
 
+  struct groupKeysStruct
+  {
+    static constexpr auto setsString = "sets";
+    dataRepository::GroupKey sets = { setsString };
+  } groupKeys;
+
+  struct viewKeysStruct
+  {
+
+  } viewKeys;
+
+
+
+
+
+  ManagedGroup m_sets;
+
+  globalIndex_array  m_localToGlobalMap;
+  map<globalIndex,localIndex>  m_globalToLocalMap;
+  integer_array m_isExternal;
+  integer_array m_ghostRank;
 
 };
 
