@@ -49,8 +49,87 @@ public:
   virtual const string getCatalogName() const = 0;
   ///@}
 
+  virtual void FillDocumentationNode() override;
+
+  virtual void InitializePostSubGroups( ManagedGroup * const ) override;
+
+  using dataRepository::ManagedGroup::PackSize;
+  using dataRepository::ManagedGroup::Pack;
+
+  virtual int PackSize( array<string> const & wrapperNames,
+                        localIndex_array const & packList,
+                        integer const recursive ) const;
+
+
+  virtual int Pack( buffer_unit_type * & buffer,
+                    array<string> const & wrapperNames,
+                    localIndex_array const & packList,
+                    integer const recursive ) const;
+
+//  virtual int Unpack( buffer_unit_type const *& buffer,
+//                      integer const recursive )  override;
+
+  virtual int Unpack( buffer_unit_type const *& buffer,
+                      localIndex_array & packList,
+                      integer const recursive )  override;
+
+  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const;
+
+
+  virtual int PackGlobalMapsSize( localIndex_array const & packList,
+                                  integer const recursive ) const
+  {
+    buffer_unit_type * junk = nullptr;
+    return PackGlobalMapsPrivate<false>( junk, packList, recursive);
+  }
+
+  virtual int PackGlobalMaps( buffer_unit_type * & buffer,
+                              localIndex_array const & packList,
+                              integer const recursive ) const
+  {
+    return PackGlobalMapsPrivate<true>( buffer, packList, recursive);
+  }
+
+  void SetReceiveLists(  );
+
+
+
+  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const
+  { return 0; }
+
+  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+                              localIndex_array const & packList ) const
+  { return 0;}
+
+
+  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                localIndex_array const & packList )
+  { return 0;}
+
+
+
+  virtual int UnpackGlobalMaps( buffer_unit_type const * & buffer,
+                                localIndex_array & packList,
+                                integer const recursive );
 
 private:
+  template< bool DOPACK >
+  int PackPrivate( buffer_unit_type * & buffer,
+                   array<string> const & wrapperNames,
+                   localIndex_array const & packList,
+                   integer const recursive ) const;
+
+  template< bool DOPACK >
+  int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+                             localIndex_array const & packList,
+                             integer const recursive ) const;
+
+//  template< bool DOPACK >
+//  int UnpackPrivate( buffer_unit_type const *& buffer,
+//                     localIndex_array const & packList,
+//                     integer const recursive );
+
+
 //  cxx_utilities::DocumentationNode * m_docNode;
 
 
@@ -74,6 +153,9 @@ public:
 //    localIndex m_DataLengths;
 //
 //    localIndex DataLengths() const { return size(); }
+
+
+
 
   void WriteSilo( SiloFile& siloFile,
                   const std::string& meshname,
@@ -196,25 +278,62 @@ public:
                                   const array<localIndex_array>& map,
                                   const std::string& newSetName );
 
-
+  void ConstructGlobalToLocalMap();
 
   void ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
   void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
 
+  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & ,
+                                                                array<globalIndex_array>&  )
+  {
+
+  }
+
+  localIndex GetNumberOfGhosts() const;
+
+  localIndex GetNumberOfLocalIndices() const;
+
+
   //**********************************************************************************************************************
 
-  struct groupKeysStruct
-  {
-    static constexpr auto setsString = "sets";
-    dataRepository::GroupKey sets = { setsString };
-  } groupKeys;
-
-  struct viewKeysStruct
+  struct viewKeyStruct
   {
 
+    static constexpr auto adjacencyListString = "adjacencyList";
+    static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
+    static constexpr auto ghostRankString = "ghostRank";
+    static constexpr auto ghostsToSendString = "ghostsToSend";
+    static constexpr auto ghostsToReceiveString = "ghostsToReceive";
+    static constexpr auto globalToLocalMapString = "globalToLocalMap";
+    static constexpr auto isExternalString = "isExternal";
+    static constexpr auto localToGlobalMapString = "localToGlobalMap";
+    static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
+
+    dataRepository::ViewKey adjacencyList = { adjacencyListString };
+    dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
+    dataRepository::ViewKey ghostRank = { ghostRankString };
+    dataRepository::ViewKey ghostsToSend = { ghostsToSendString };
+    dataRepository::ViewKey ghostsToReceive = { ghostsToReceiveString };
+    dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
+    dataRepository::ViewKey isExternal = { isExternalString };
+    dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
+    dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
   } viewKeys;
 
+  struct groupKeyStruct
+  {
+    static constexpr auto setsString = "sets";
+    static constexpr auto neighborDataString = "neighborData";
+    dataRepository::GroupKey sets = { setsString };
+    dataRepository::GroupKey neighborData = { neighborDataString };
+  } groupKeys;
 
+
+  dataRepository::view_rtype<integer_array> GhostRank()
+  { return this->getData<integer_array>(viewKeys.ghostRank); }
+
+  dataRepository::view_rtype_const<integer_array> GhostRank() const
+  { return this->getData<integer_array>(viewKeys.ghostRank); }
 
 
 
@@ -224,8 +343,13 @@ public:
   map<globalIndex,localIndex>  m_globalToLocalMap;
   integer_array m_isExternal;
   integer_array m_ghostRank;
+//  localIndex_array m_ghostToSend;
+ // localIndex_array m_ghostToReceive;
+
 
 };
+
+
 
 } /* namespace geosx */
 

@@ -23,6 +23,7 @@ string const partitionManager("partitionManager");
 }
 }
 
+class ObjectManagerBase;
 class PartitionBase;
 
 class DomainPartition : public dataRepository::ManagedGroup
@@ -39,7 +40,6 @@ public:
   DomainPartition& operator=( DomainPartition const & ) = delete;
   DomainPartition& operator=( DomainPartition && ) = delete;
 
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const ) override;
   virtual void FillDocumentationNode() override;
 
   void InitializationOrder( string_array & order ) override final;
@@ -47,6 +47,30 @@ public:
   void SetMaps();
   void GenerateSets();
 
+
+  /**
+   * @name MPI functionality
+   */
+  ///@{
+
+//  void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+//                                            array< array<localIndex> > & matchedPartitionBoundaryObjects );
+
+  void SetMpiComm( MPI_Comm comm )
+  {
+    MPI_Comm_dup( comm, &m_mpiComm );
+  }
+
+//  static std::set<int> & getFreeCommIDs();
+//  static int reserveCommID();
+//  static void releaseCommID( int & ID );
+
+  void SetupCommunications();
+
+  void AddNeighbors(const unsigned int idim,
+                    MPI_Comm& cartcomm,
+                    int* ncoords);
+  ///@}
 
   // THIS STUFF NEEDS TO GO SOMEWHERE ELSE
   void WriteSilo( SiloFile& siloFile,
@@ -71,7 +95,7 @@ public:
 
   struct viewKeysStruct
   {
-    dataRepository::ViewKey partitionManager    = { "partitionManager" };
+    dataRepository::ViewKey neighbors = { "Neighbors" };
   } viewKeys;
 
   struct groupKeysStruct
@@ -81,6 +105,7 @@ public:
 
     dataRepository::GroupKey meshBodies           = { meshBodiesString };
     dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
+    dataRepository::GroupKey communicationManager    = { "communicationManager" };
   } groupKeys;
 
 
@@ -108,6 +133,8 @@ public:
 
 
 private:
+  MPI_Comm m_mpiComm;
+//  std::set<int> m_freeCommID;
 
 
 };

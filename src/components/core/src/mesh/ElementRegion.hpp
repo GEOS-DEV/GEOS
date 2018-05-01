@@ -126,7 +126,7 @@ public:
 //  ElementRegion( ElementRegion&& init);
 
 
-  void FillDocumentationNode() override;
+  virtual void FillDocumentationNode() override final;
 
   virtual void ReadXML_PostProcess() override;
 

@@ -27,7 +27,7 @@ public:
 
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
-  void GenerateMeshes( dataRepository::ManagedGroup * const domain );
+  void GenerateMeshes( DomainPartition * const domain );
   void GenerateMeshLevels( DomainPartition * const domain );
 
 private:

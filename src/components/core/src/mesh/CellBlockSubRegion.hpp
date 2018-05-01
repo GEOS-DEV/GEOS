@@ -13,22 +13,13 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-string const constitutiveMap = "constitutiveMap";
-string const constitutiveGrouping = "ConstitutiveGrouping";
-}
-}
-
 class CellBlockSubRegion : public CellBlock
 {
 public:
   CellBlockSubRegion( string const & name, ManagedGroup * const parent );
   virtual ~CellBlockSubRegion();
 
-  void FillDocumentationNode() override;
+  void FillDocumentationNode() override final;
 
   void ReadXML_PostProcess() override;
 
@@ -41,9 +32,8 @@ public:
   template< typename LAMBDA >
   void forMaterials( LAMBDA lambda )
   {
-    auto const & constitutiveGrouping = this->getReference< map< string, localIndex_array > >(dataRepository::keys::constitutiveGrouping);
 
-    for( auto & constitutiveGroup : constitutiveGrouping )
+    for( auto & constitutiveGroup : m_constitutiveGrouping )
     {
       lambda( constitutiveGroup );
     }
@@ -54,8 +44,39 @@ public:
                          lSet & materialSet,
                          ManagedGroup * material );
 
-  struct viewKeysStruct : public CellBlock::viewKeysStruct
-  {} viewKeys;
+
+  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+
+  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const override;
+
+  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+                              localIndex_array const & packList ) const override;
+
+  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                localIndex_array const & packList ) override;
+
+
+  struct viewKeyStruct : public CellBlock::viewKeyStruct
+  {
+    static constexpr auto constitutiveGroupingString = "ConstitutiveGrouping";
+    static constexpr auto constitutiveMapString = "ConstitutiveMap";
+    static constexpr auto dNdXString = "dNdX";
+
+    dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString };
+    dataRepository::ViewKey constitutiveMap       = { constitutiveMapString };
+    dataRepository::ViewKey dNdX                  = { dNdXString };
+
+  } viewKeys;
+
+
+  map< string, localIndex_array > m_constitutiveGrouping;
+  std::pair< Array2dT< localIndex >, Array2dT< localIndex > > m_constitutiveMapView;
+  array< Array2dT<R1Tensor> > m_dNdX;
+
+private:
+  template< bool DOPACK >
+  int PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                             localIndex_array const & packList ) const;
 
 
 };

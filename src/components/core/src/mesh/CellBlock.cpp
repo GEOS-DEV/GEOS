@@ -76,10 +76,16 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   ObjectManagerBase( name, parent ),
   viewKeys(),
   groupKeys(),
-  m_toNodesRelation(this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.nodeList.Key())->reference()),
-  m_toFacesRelation(this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.faceList.Key())->reference())
-
+  m_toNodesRelation(),
+  m_toFacesRelation(),
+  m_numNodesPerElement(),
+  m_numFacesPerElement()
 {
+  RegisterViewWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
+  RegisterViewWrapper(viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
+  RegisterViewWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
+  RegisterViewWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
+
 
   m_toNodesRelation.resize(0,8);
   m_toFacesRelation.resize(0,6);
@@ -96,22 +102,24 @@ void CellBlock::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
+  ObjectManagerBase::FillDocumentationNode();
+
   docNode->setName( this->getCatalogName() );
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "an element region" );
 
-  docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
-                              viewKeys.numNodesPerElement.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "Number of Nodes Per Element",
-                              "Number of Nodes Per Element",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
+//  docNode->AllocateChildNode( viewKeys.numNodesPerElement.Key(),
+//                              viewKeys.numNodesPerElement.Key(),
+//                              -1,
+//                              "integer",
+//                              "integer",
+//                              "Number of Nodes Per Element",
+//                              "Number of Nodes Per Element",
+//                              "1",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
 
 //  docNode->AllocateChildNode( viewKeys.nodeList.Key(),
 //                              viewKeys.nodeList.Key(),
@@ -126,18 +134,18 @@ void CellBlock::FillDocumentationNode()
 //                              1,
 //                              0 );
 
-  docNode->AllocateChildNode( viewKeys.numFacesPerElement.Key(),
-                              viewKeys.numFacesPerElement.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "Number of Faces Per Element",
-                              "Number of Faces Per Element",
-                              "6",
-                              "",
-                              0,
-                              1,
-                              0 );
+//  docNode->AllocateChildNode( viewKeys.numFacesPerElement.Key(),
+//                              viewKeys.numFacesPerElement.Key(),
+//                              -1,
+//                              "integer",
+//                              "integer",
+//                              "Number of Faces Per Element",
+//                              "Number of Faces Per Element",
+//                              "6",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
 
 //  docNode->AllocateChildNode( keys::defaultMaterial,
 //                              keys::defaultMaterial,
@@ -223,7 +231,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
                               localIndex_array& nodeIndicies) const
 {
   // get nodelist for this element
-  const localIndex* const elemToNodeMap = m_toNodesRelation[elementIndex];
+  arrayView1d<localIndex const> const elemToNodeMap = m_toNodesRelation[elementIndex];
 
   // resize the nodeIndicies based on element type (this is wrong for some types
   // of elements)
@@ -446,8 +454,8 @@ R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManage
 {
 
   view_rtype_const<r1_array> X = nodeManager.referencePosition();
-  view_rtype_const<r1_array> u = nodeManager.totalDisplacement();
-  const localIndex* const nodelist = m_toNodesRelation[k];
+//  view_rtype_const<r1_array> u = nodeManager.totalDisplacement();
+  arrayView1d<localIndex const> nodelist = m_toNodesRelation[k];
   R1Tensor elementCenter(0.0);
   for ( localIndex a = 0 ; a < numNodesPerElement() ; ++a)
   {
@@ -460,6 +468,64 @@ R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManage
 
   return elementCenter;
 }
+
+
+//
+//void CellBlock::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+//{
+//  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.nodeListString));
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementRegionListString));
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementSubRegionListString));
+//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementListString));
+//}
+//
+//
+//
+//
+//int CellBlock::PackUpDownMapsSize( localIndex_array const & packList ) const
+//{
+//  int packedSize = 0;
+//  buffer_unit_type * junk = nullptr;
+//  packedSize += CommBufferOps::Pack<false>( junk,
+//                                           m_nodeList,
+//                                           packList,
+//                                           this->m_localToGlobalMap,
+//                                           m_nodeList.RelatedObjectLocalToGlobal() );
+//  return packedSize;
+//
+//}
+//
+//
+//int CellBlock::PackUpDownMaps( buffer_unit_type * & buffer,
+//                               localIndex_array const & packList ) const
+//{
+//  int packedSize = 0;
+//
+//  packedSize += CommBufferOps::Pack<true>( buffer,
+//                                           m_nodeList,
+//                                           packList,
+//                                           this->m_localToGlobalMap,
+//                                           m_nodeList.RelatedObjectLocalToGlobal() );
+//
+//  return packedSize;
+//}
+//
+//
+//int CellBlock::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+//                                 localIndex_array const & packList )
+//{
+//  int unPackedSize = 0;
+//
+//  unPackedSize += CommBufferOps::Unpack( buffer,
+//                                         m_nodeList,
+//                                         packList,
+//                                         this->m_globalToLocalMap,
+//                                         m_nodeList.RelatedObjectGlobalToLocal() );
+//
+//  return unPackedSize;
+//}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )
 

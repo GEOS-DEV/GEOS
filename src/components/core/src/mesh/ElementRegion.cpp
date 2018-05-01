@@ -96,6 +96,7 @@ ElementRegion::~ElementRegion()
 
 void ElementRegion::FillDocumentationNode()
 {
+  ObjectManagerBase::FillDocumentationNode();
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
   docNode->setName( this->getCatalogName() );
@@ -131,18 +132,18 @@ void ElementRegion::FillDocumentationNode()
                               0 );
 
 
-  docNode->AllocateChildNode( keys::constitutiveMap,
-                              keys::constitutiveMap,
-                              -1,
-                              "mapPair_array",
-                              "mapPair_array",
-                              "Number of Nodes Per Element",
-                              "Number of Nodes Per Element",
-                              "1",
-                              "",
-                              1,
-                              0,
-                              0 );
+//  docNode->AllocateChildNode( keys::constitutiveMap,
+//                              keys::constitutiveMap,
+//                              -1,
+//                              "mapPair_array",
+//                              "mapPair_array",
+//                              "Number of Nodes Per Element",
+//                              "Number of Nodes Per Element",
+//                              "NONE",
+//                              "",
+//                              1,
+//                              0,
+//                              0 );
 
   docNode->AllocateChildNode( keys::cellBlockSubRegionNames,
                               keys::cellBlockSubRegionNames,
@@ -217,8 +218,8 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
   ManagedGroup * cellBlockSubRegions = this->GetGroup(keys::cellBlockSubRegions);
   for( auto & cellSubBlock : cellBlockSubRegions->GetSubGroups() )
   {
-    auto & cellToConstitutiveMap = cellSubBlock.second->getReference< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(keys::constitutiveMap);
-    auto & constitutiveGrouping = cellSubBlock.second->getReference< map< string, localIndex_array > >(keys::constitutiveGrouping);
+    auto & cellToConstitutiveMap = cellSubBlock.second->getReference< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+    auto & constitutiveGrouping = cellSubBlock.second->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
 //    constitutiveGrouping.resize( constitutiveMapPair.second.size() );
 //    constitutiveGrouping["mix"];
 

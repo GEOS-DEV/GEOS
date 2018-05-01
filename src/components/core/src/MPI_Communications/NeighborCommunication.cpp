@@ -66,7 +66,10 @@
 #include "legacy/IO/BinStream.h"
 //#include "../ObjectManagers/PhysicalDomainT.h"
 #include "codingUtilities/Utilities.hpp"
-
+#include "mesh/MeshLevel.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/FaceManager.hpp"
+#include "mesh/NodeManager.hpp"
 
 #ifdef USE_ATK
 #include <slic/slic.hpp>
@@ -398,9 +401,16 @@ void NeighborCommunication::DetermineMatchedBoundaryObject( const ObjectDataStru
   // is the same on both processes
 }
 
-void NeighborCommunication::FindGhosts( const bool contactActive,
+void NeighborCommunication::FindGhosts( MeshLevel * const mesh,
+                                        const bool contactActive,
                                         const int depth )
 {
+
+  NodeManager & nodeManager = *(mesh->getNodeManager());
+  FaceManager & faceManager = *(mesh->getFaceManager());
+  ElementRegionManager & elemManager = *(mesh->getElemManager());
+
+
 //  //Currently, this MUST fill the objectsToSend associated with the following
 //  //(see NeighborCommunication::SyncNames for the current list)
 //  // 0: NodeManager -> PackNodes

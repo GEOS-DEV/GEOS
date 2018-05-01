@@ -21,12 +21,15 @@ set(CMAKE_C_COMPILER "/opt/local/bin/gcc-mp-7" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "/opt/local/bin/g++-mp-7" CACHE PATH "")
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MPI ON CACHE PATH "")
+#set(MPI_C_COMPILER "/opt/local/bin/mpicc-openmpi-gcc7" CACHE PATH "")
+#set(MPI_CXX_COMPILER "/opt/local/bin/mpicxx-openmpi-gcc7" CACHE PATH "")
+#set(MPI_Fortran_COMPILER "/opt/local/bin/mpifort-openmpi-gcc7" CACHE PATH "")
+#set(MPIEXEC "mpirun-openmpi-gcc7" CACHE PATH "")
+
 set(MPI_C_COMPILER "/opt/local/bin/mpicc-mpich-gcc7" CACHE PATH "")
 set(MPI_CXX_COMPILER "/opt/local/bin/mpicxx-mpich-gcc7" CACHE PATH "")
 set(MPI_Fortran_COMPILER "/opt/local/bin/mpifort-mpich-gcc7" CACHE PATH "")
 set(MPIEXEC "mpirun-mpich-gcc7" CACHE PATH "")
-
-
 
 include("${CMAKE_CURRENT_LIST_DIR}/hc-defaults.cmake")
 

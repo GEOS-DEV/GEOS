@@ -120,7 +120,7 @@ public:
 //  ElementRegion( ElementRegion&& init);
 
 
-  void FillDocumentationNode() override;
+  virtual void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 
@@ -136,30 +136,52 @@ public:
   R1Tensor GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos = true) const;
 
 
-  struct viewKeysStruct
+
+//  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+//
+//  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const override;
+//
+//  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+//                              localIndex_array const & packList ) const override;
+//
+//  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+//                                localIndex_array const & packList ) override;
+
+  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    dataRepository::ViewKey numNodesPerElement = { "numNodesPerElement" };
-    dataRepository::ViewKey nodeList           = { "nodeList" };
-    dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
-    dataRepository::ViewKey faceList           = { "faceList" };
+
+    static constexpr auto numNodesPerElementString     = "numNodesPerElement";
+    static constexpr auto nodeListString               = "nodeList";
+    static constexpr auto numFacesPerElementString     = "numFacesPerElement";
+    static constexpr auto faceListString               = "faceList";
+
+    dataRepository::ViewKey numNodesPerElement = { numNodesPerElementString };
+    dataRepository::ViewKey nodeList           = { nodeListString };
+    dataRepository::ViewKey numFacesPerElement = { numFacesPerElementString };
+    dataRepository::ViewKey faceList           = { faceListString };
   } viewKeys;
 
-  class groupKeysStruct
+  class groupKeyStruct
   {
 public:
   } groupKeys;
 
 
-  Array2dT<localIndex> & m_toNodesRelation;
-  Array2dT<localIndex> & m_toFacesRelation;
 
 
-  integer const & numNodesPerElement() const { return this->getReference<integer>( viewKeys.numNodesPerElement ); }
-  integer       & numNodesPerElement()       { return this->getReference<integer>( viewKeys.numNodesPerElement ); }
-  integer const & numFacesPerElement() const { return this->getReference<integer>( viewKeys.numFacesPerElement ); }
-  integer       & numFacesPerElement()       { return this->getReference<integer>( viewKeys.numFacesPerElement ); }
 
-private:
+  localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
+  localIndex       & numNodesPerElement()       { return m_numNodesPerElement; }
+  localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
+  localIndex       & numFacesPerElement()       { return m_numFacesPerElement; }
+
+//protected:
+
+  FixedOneToManyRelation  m_toNodesRelation;
+  FixedOneToManyRelation  m_toFacesRelation;
+  localIndex m_numNodesPerElement;
+  localIndex m_numFacesPerElement;
+
   CellBlock& operator=(const CellBlock& rhs);
 //  string & m_elementType;
 

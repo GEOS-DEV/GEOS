@@ -80,6 +80,7 @@ namespace geosx
 class CellBlock;
 class FaceManager;
 class EdgeManager;
+class ElementRegionManager;
 
 namespace dataRepository
 {
@@ -124,9 +125,19 @@ public:
   void FillDocumentationNode() override final;
 
 
+  void SetElementMaps( ElementRegionManager const * const elementRegionManager );
+
 //  void Initialize();
 
+  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
+  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const override;
+
+  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+                              localIndex_array const & packList ) const override;
+
+  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                localIndex_array const & packList ) override;
 
 public:
 
@@ -145,28 +156,42 @@ public:
   ///@}
 
 
-  struct viewKeysStruct
+  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    static constexpr auto referencePositionString = "ReferencePosition";
-    dataRepository::ViewKey referencePosition = { dataRepository::keys::referencePositionString };
-    dataRepository::ViewKey totalDisplacement = { "TotalDisplacement" };
-    // dataRepository::ViewKey nodeList           = { "nodeList" };
-    // dataRepository::ViewKey numFacesPerElement = { "numFacesPerElement" };
-    // dataRepository::ViewKey faceList           = { "faceList" };
+    static constexpr auto referencePositionString     = "ReferencePosition";
+    static constexpr auto totalDisplacementString     = "TotalDisplacement";
+    static constexpr auto edgeListString              = "edgeList";
+    static constexpr auto faceListString              = "faceList";
+    static constexpr auto elementRegionListString     = "elemRegionList";
+    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
+    static constexpr auto elementListString           = "elemList";
+
+    dataRepository::ViewKey referencePosition = { referencePositionString };
+    dataRepository::ViewKey totalDisplacement = { totalDisplacementString };
+    dataRepository::ViewKey edgeList           = { edgeListString };
+    dataRepository::ViewKey faceList           = { faceListString };
+    dataRepository::ViewKey elementRegionList     = { elementRegionListString };
+    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
+    dataRepository::ViewKey elementList           = { elementListString };
 
   } viewKeys;
 
 
-  struct groupKeysStruct
+  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
   view_rtype_const<r1_array> referencePosition() const { return this->getData<r1_array>(viewKeys.referencePosition); }
   view_rtype<r1_array>       referencePosition()       { return this->getData<r1_array>(viewKeys.referencePosition); }
-  view_rtype_const<r1_array> totalDisplacement() const { return this->getData<r1_array>(viewKeys.totalDisplacement); }
-  view_rtype<r1_array>       totalDisplacement()       { return this->getData<r1_array>(viewKeys.totalDisplacement); }
+//  view_rtype_const<r1_array> totalDisplacement() const { return this->getData<r1_array>(viewKeys.totalDisplacement); }
+//  view_rtype<r1_array>       totalDisplacement()       { return this->getData<r1_array>(viewKeys.totalDisplacement); }
 protected:
 
 private:
+  template< bool DOPACK >
+  int PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                             localIndex_array const & packList ) const;
+
+
   /// copy constructor
   NodeManager() = delete;
   NodeManager( const NodeManager& init ) = delete;

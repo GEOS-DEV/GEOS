@@ -27,9 +27,6 @@ SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
   return catalog;
 }
 
-void SolverBase::BuildDataStructure( dataRepository::ManagedGroup * const /*domain*/ )
-{}
-
 void SolverBase::FillDocumentationNode()
 {
 
@@ -83,8 +80,11 @@ void SolverBase::TimeStep( real64 const& time_n,
 
 void SolverBase::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Adding Solver: " << childKey << ", " << childName << std::endl;
-  this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
+  if( CatalogInterface::hasKeyName(childKey) )
+  {
+    std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
+    this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
+  }
 }
 
 

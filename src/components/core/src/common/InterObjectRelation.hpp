@@ -28,19 +28,28 @@ public:
 
   InterObjectRelation( const InterObjectRelation& copiedRelationship );
 
-  // equals operator should not be called
-  InterObjectRelation& operator=( const InterObjectRelation& rhs )
+
+  operator BASETYPE() const
   {
-    BASETYPE::operator=( static_cast<BASETYPE>(rhs));
-    m_relatedObject = rhs.m_relatedObject;
-    return *this;
+    return static_cast<BASETYPE>(this);
   }
 
-  InterObjectRelation& operator=( const BASETYPE& rhs )
-  {
-    BASETYPE::operator=( rhs );
-    return *this;
-  }
+
+
+
+//  // equals operator should not be called
+//  InterObjectRelation& operator=( const InterObjectRelation& rhs )
+//  {
+//    BASETYPE::operator=( static_cast<BASETYPE>(rhs));
+//    m_relatedObject = rhs.m_relatedObject;
+//    return *this;
+//  }
+//
+//  InterObjectRelation& operator=( const BASETYPE& rhs )
+//  {
+//    BASETYPE::operator=( rhs );
+//    return *this;
+//  }
 
 
   /// equals operator that sets *this to a single value of any type
@@ -54,7 +63,7 @@ public:
   const BASETYPE& Base() const { return static_cast<const BASETYPE&>(*this); }
   BASETYPE& Base() { return dynamic_cast<BASETYPE&>(*this); }
 
-  void SetRelatedObject( const ObjectDataStructureBaseT* const relatedObject )
+  void SetRelatedObject( ObjectManagerBase const * const relatedObject )
   { m_relatedObject = relatedObject; }
 
   const ObjectDataStructureBaseT* RelatedObject() const
@@ -71,7 +80,7 @@ public:
   }
 
 private:
-  const ObjectDataStructureBaseT* m_relatedObject;
+  ObjectDataStructureBaseT const * m_relatedObject = nullptr;
 
 
 };

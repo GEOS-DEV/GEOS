@@ -15,16 +15,23 @@
 #include "common/SortedArray.hpp"
 
 #include "common/Logger.hpp"
-
+#include "MPI_Communications/NeighborCommunicator.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
+#include "managers/ObjectManagerBase.hpp"
 namespace geosx
 {
 using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
+  ManagedGroup( name, parent ),
+  m_mpiComm()
 {
-  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags(RestartFlags::NO_WRITE);
+
+
+  this->RegisterViewWrapper< array<NeighborCommunicator> >(viewKeys.neighbors);
+  MPI_Comm_dup( MPI_COMM_WORLD, &m_mpiComm );
+  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
@@ -34,15 +41,6 @@ DomainPartition::DomainPartition( std::string const & name,
 DomainPartition::~DomainPartition()
 {}
 
-
-void DomainPartition::BuildDataStructure( ManagedGroup * const )
-{
-
-//  this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
-//  this->RegisterGroup<ElementRegionManager>(keys::FEM_Elements);
-//  this->RegisterGroup<CellBlockManager>(keys::cellManager);
-//  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
-}
 
 
 void DomainPartition::FillDocumentationNode()
@@ -145,7 +143,7 @@ void DomainPartition::GenerateSets(  )
     for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
       CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
-      lArray2d const & elemsToNodes = subRegion->getWrapper<lArray2d>(subRegion->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+      lArray2d const & elemsToNodes = subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
       dataRepository::ManagedGroup * elementSets = subRegion->GetGroup(dataRepository::keys::sets);
       std::map< string, integer_array > numNodesInSet;
 
@@ -155,7 +153,7 @@ void DomainPartition::GenerateSets(  )
         lSet & set = elementSets->RegisterViewWrapper<lSet>(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
-          localIndex const * nodelist = elemsToNodes[k];
+          arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
           integer count = 0;
           for( localIndex a = 0 ; a<elemsToNodes.size(1) ; ++a )
           {
@@ -175,7 +173,110 @@ void DomainPartition::GenerateSets(  )
 }
 
 
+void DomainPartition::SetupCommunications()
+{
+  PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
+  SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
+  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
 
+  //get communicator, rank, and coordinates
+  MPI_Comm cartcomm;
+  {
+    int reorder = 0;
+    MPI_Cart_create(MPI_COMM_WORLD, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
+  }
+  int rank = -1;
+  int nsdof = 3;
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+  MPI_Comm_rank(cartcomm, &rank);
+  MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());
+
+  int ncoords[3];
+  AddNeighbors(0, cartcomm, ncoords);
+
+  MPI_Comm_free(&cartcomm);
+
+
+  ManagedGroup * const meshBodies = getMeshBodies();
+  MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
+  MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
+
+  for( auto const & neighbor : allNeighbors )
+  {
+    neighbor.AddNeighborGroupToMesh(meshLevel);
+  }
+
+
+
+  NodeManager * nodeManager = meshLevel->getNodeManager();
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+
+  CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
+
+  CommunicationTools::FindMatchedPartitionBoundaryObjects( faceManager,
+                                                           allNeighbors );
+
+  CommunicationTools::FindMatchedPartitionBoundaryObjects( nodeManager,
+                                                           allNeighbors );
+
+  CommunicationTools::FindGhosts( meshLevel, allNeighbors );
+
+}
+
+void DomainPartition::AddNeighbors(const unsigned int idim,
+                                   MPI_Comm& cartcomm,
+                                   int* ncoords)
+{
+  PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
+  SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
+  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
+
+  if (idim == nsdof)
+  {
+    bool me = true;
+    for ( unsigned int i = 0 ; i < nsdof ; i++)
+    {
+      if (ncoords[i] != partition.m_coords(i))
+      {
+        me = false;
+        break;
+      }
+    }
+    if (!me)
+    {
+      allNeighbors.push_back(NeighborCommunicator());
+      int neighborRank;
+      MPI_Cart_rank(cartcomm, ncoords, &neighborRank);
+      allNeighbors.back().SetNeighborRank(neighborRank);
+    }
+  }
+  else
+  {
+    const int dim = partition.m_Partitions(idim);
+    const bool periodic = partition.m_Periodic(idim);
+    for (int i = -1 ; i < 2 ; i++)
+    {
+      ncoords[idim] = partition.m_coords(idim) + i;
+      bool ok = true;
+      if (periodic)
+      {
+        if (ncoords[idim] < 0)
+          ncoords[idim] = dim - 1;
+        else if (ncoords[idim] >= dim)
+          ncoords[idim] = 0;
+      }
+      else
+      {
+        ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
+      }
+      if (ok)
+      {
+        AddNeighbors(idim + 1, cartcomm, ncoords);
+      }
+    }
+  }
+}
 /**
  * @brief Write to SILO
  * @author R Settgast
@@ -249,7 +350,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 
     r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::referencePositionString);
 
-    r1_array const * const displacement = nodeManager->GetFieldDataPointer<r1_array>(keys::TotalDisplacement);
+//    r1_array const * const displacement = nodeManager->GetFieldDataPointer<r1_array>(keys::TotalDisplacement);
 
     bool writeArbitraryPolygon(false);
     const std::string meshName("volume_mesh");
@@ -262,10 +363,10 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     {
       R1Tensor nodePosition;
       nodePosition = referencePosition[a];
-      if( displacement!=nullptr )
-      {
-        nodePosition += (*displacement)[a];
-      }
+//      if( displacement!=nullptr )
+//      {
+//        nodePosition += (*displacement)[a];
+//      }
 
       xcoords[a] = nodePosition(0);
       ycoords[a] = nodePosition(1);
@@ -289,9 +390,18 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     elementToNodeMap.resize( numElementRegions );
 
     int count = 0;
-    elementManager->forCellBlocks([&]( CellBlockSubRegion const * cellBlock ) -> void
+//    elementManager->forCellBlocks([&]( CellBlockSubRegion const * cellBlock ) -> void
+    ManagedGroup const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegions);
+
+    for( auto const & region : elementRegions->GetSubGroups() )
+    {
+      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+      for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
       {
-        lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(cellBlock->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+        CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+
+    {
+        lArray2d const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys.nodeList)->reference();// getData<lArray2d>(keys::nodeList);
 
         // The following line seems to be redundant. It's actual function is to
         // size this temp array.(pfu)
@@ -299,7 +409,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 
         for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
         {
-          const localIndex* const elemToNodeMap = elemsToNodes[k];
+          arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
 
           const integer_array nodeOrdering = siloFile.SiloNodeOrdering();
           integer numNodesPerElement = elemsToNodes.size(1);
@@ -309,6 +419,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
           }
 
         }
+
 
         //      meshConnectivity[count] =
         // elementRegion.m_ElementToNodeMap.data();
@@ -356,7 +467,9 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
 
         shapesize[count] = integer_conversion<int>(elemsToNodes.size(1));
         count++;
-      });
+      }
+      }
+    }
 
     siloFile.WriteMeshObject(meshName, numNodes, coords,
                              nullptr, integer_conversion<int>(numElementRegions),
@@ -402,6 +515,8 @@ void DomainPartition::ReadFiniteElementMesh( const SiloFile& siloFile,
 //  m_feNodeManager->ConstructNodeToElementMap( m_feElementManager );
 
 }
+
+
 
 
 

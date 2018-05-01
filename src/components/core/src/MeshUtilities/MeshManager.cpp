@@ -9,6 +9,7 @@
 
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "MeshGeneratorBase.hpp"
+#include "MPI_Communications/SpatialPartition.hpp"
 
 namespace geosx
 {
@@ -43,12 +44,13 @@ void MeshManager::CreateChild( string const & childKey, string const & childName
 }
 
 
-void MeshManager::GenerateMeshes( dataRepository::ManagedGroup * const domain )
+void MeshManager::GenerateMeshes( DomainPartition * const domain )
 {
-  this->forSubGroups<MeshGeneratorBase>([this, domain]( MeshGeneratorBase * meshGen ) -> void
-    {
-      meshGen->GenerateMesh( domain );
-    });
+  forSubGroups<MeshGeneratorBase>([this, domain]( MeshGeneratorBase * meshGen ) -> void
+  {
+    meshGen->GenerateMesh( domain );
+  });
+
 }
 
 

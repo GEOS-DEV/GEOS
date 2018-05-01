@@ -118,6 +118,11 @@ public:
     return typeid(*this);
   }
 
+  bool CheckTypeID( std::type_info const & typeToCheck ) const
+  {
+    return typeToCheck == get_typeid() ? true : false;
+  }
+
 
   template< typename T = ManagedGroup >
   T * RegisterGroup( std::string const & name, std::unique_ptr<ManagedGroup> newObject );
@@ -309,6 +314,11 @@ public:
                                         T * newObject,
                                         bool takeOwnership );
 
+//  template< typename T >
+//  void RegisterViewWrapperRecursive( string const & name );
+//
+//  template< typename T >
+//  void RegisterViewWrapperRecursive( string const & name, string const & targetGroupName );
 
   ///@}
 
@@ -352,6 +362,27 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
+
+  virtual int PackSize( array<string> const & wrapperNames,
+                        integer const recursive ) const;
+
+  virtual int PackSize( array<string> const & wrapperNames,
+                        localIndex_array const & packList,
+                        integer const recursive ) const;
+
+  virtual int Pack( buffer_unit_type * & buffer,
+                    array<string> const & wrapperNames,
+                    integer const recursive ) const;
+
+  virtual int Pack( buffer_unit_type * & buffer,
+                    array<string> const & wrapperNames,
+                    localIndex_array const & packList,
+                    integer const recursive ) const;
+
+  virtual int Unpack( buffer_unit_type const *& buffer,
+                      localIndex_array & packList,
+                      integer const recursive );
+
 
   //***********************************************************************************************
 
@@ -440,6 +471,16 @@ public:
   template< typename T >
   ViewWrapper<T> * getWrapper( viewWrapperMap::KeyIndex const & keyIndex )
   { return const_cast<ViewWrapper<T> *>( const_cast<const ManagedGroup*>(this)->getWrapper<T>( keyIndex ) ); }
+
+
+
+  indexType getWrapperIndex( std::string const & name ) const
+  {
+    return m_wrappers.getIndex(name);
+  }
+
+
+
 
 
 
@@ -745,7 +786,7 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
 {
   m_wrappers.insert( name,
                      new ViewWrapper<T>( name, this, newObject, takeOwnership ),
-                     takeOwnership );
+                     true );
 
   ViewWrapper<T> * const rval = getWrapper<T>(name);
   if( rval->sizedFromParent() == 1 && rval->shouldResize())
@@ -754,6 +795,35 @@ ViewWrapper<T> * ManagedGroup::RegisterViewWrapper( std::string const & name,
   }
   return rval;
 }
+
+//template< typename T >
+//void ManagedGroup::RegisterViewWrapperRecursive( string const & name )
+//{
+//  this->RegisterViewWrapper<T>(name);
+//  forSubGroups( [&] ( ManagedGroup & group ) -> void
+//  {
+//    group.RegisterViewWrapperRecursive<T>(name);
+//  });
+//}
+//
+//template< typename T >
+//void ManagedGroup::RegisterViewWrapperRecursive( string const & name, string const & targetGroupName )
+//{
+//  if( this->m_name == targetGroupName )
+//  {
+//    forSubGroups( [&] ( ManagedGroup & group ) -> void
+//    {
+//      this->RegisterViewWrapperRecursive<T>(name);
+//    });
+//  }
+//  else
+//  {
+//    forSubGroups( [&] ( ManagedGroup & group ) -> void
+//    {
+//      group.RegisterViewWrapperRecursive<T>(name, targetGroupName);
+//    });
+//  }
+//}
 
 
 

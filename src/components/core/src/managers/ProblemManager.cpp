@@ -721,12 +721,16 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
     MeshUtilities::GenerateNodesets( geometricObjects,
                                      nodeManager );
+    nodeManager->ConstructGlobalToLocalMap();
+
   }
 }
 
 
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
+  ObjectManagerBase::InitializePostSubGroups(nullptr);
+
   DomainPartition * domain  = getDomainPartition();
 
   ManagedGroup * const meshBodies = domain->getMeshBodies();
@@ -739,6 +743,13 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 
   NodeManager * nodeManager = meshLevel->getNodeManager();
   faceManager->BuildFaces( nodeManager, elementManager );
+
+  nodeManager->SetElementMaps( meshLevel->getElemManager() );
+
+  domain->SetupCommunications();
+
+
+
 
 }
 
@@ -789,10 +800,8 @@ void ProblemManager::RunSimulation()
     while( time < endTime )
     {
       std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-
-      bpWriter.write( cycle );
+//      bpWriter.write( cycle );
       WriteSilo( cycle, time );
-
       real64 nextDt = std::numeric_limits<real64>::max();
 
       for ( auto jj=0; jj<solverList.size(); ++jj)
@@ -809,9 +818,9 @@ void ProblemManager::RunSimulation()
       dt = (endTime - time < dt)? endTime-time : dt;
     }
 
-    bpWriter.write(cycle);  
+//    bpWriter.write(cycle);
     WriteSilo(cycle, time);
-    WriteRestart(cycle);
+//    WriteRestart(cycle);
 
   }
 

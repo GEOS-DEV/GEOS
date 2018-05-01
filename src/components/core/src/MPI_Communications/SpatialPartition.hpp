@@ -228,7 +228,7 @@ public:
     return m_max[i];
   }
 
-private:
+public:
   array<int> m_Partitions; // number of partitions
   array<int> m_Periodic; // 1 = periodic
   array<int> m_coords; // ijk partition indexes

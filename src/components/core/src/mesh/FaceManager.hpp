@@ -6,6 +6,7 @@
 #ifndef FACEMANAGER_H_
 #define FACEMANAGER_H_
 
+#include "common/InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
 
 namespace geosx
@@ -41,10 +42,10 @@ public:
 
 //  void Initialize(  ){}
 
-  void FillDocumentationNode() override final;
+  virtual void FillDocumentationNode() override final;
 
 
-  void BuildFaces( NodeManager const * const nodeManager, ElementRegionManager * const elemManager );
+  void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
   void  AddNewFace( localIndex const & kReg,
                     localIndex const & kSubReg,
@@ -65,19 +66,43 @@ public:
                       R1Tensor const & elementCenter,
                       const localIndex faceIndex );
 
-  struct viewKeysStruct
+  void SetDomainBoundaryObjects( NodeManager * const nodeManager );
+
+  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+
+  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+                              localIndex_array const & packList ) const override;
+
+  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                localIndex_array const & packList ) override;
+
+
+  //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
+
+  virtual void
+  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
+                                                   array<globalIndex_array>& faceToNodes ) override final;
+  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    dataRepository::ViewKey nodeList              = { "nodeList" };
-    dataRepository::ViewKey elementRegionList     = { "elemRegionList" };
-    dataRepository::ViewKey elementSubRegionList  = { "elemSubRegionList" };
-    dataRepository::ViewKey elementList           = { "elemList" };
+    static constexpr auto nodeListString              = "nodeList";
+    static constexpr auto edgeListString              = "edgeList";
+    static constexpr auto elementRegionListString     = "elemRegionList";
+    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
+    static constexpr auto elementListString           = "elemList";
+
+    dataRepository::ViewKey nodeList              = { nodeListString };
+    dataRepository::ViewKey edgeList              = { edgeListString };
+    dataRepository::ViewKey elementRegionList     = { elementRegionListString };
+    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
+    dataRepository::ViewKey elementList           = { elementListString };
   } viewKeys;
 
-  struct groupKeysStruct
+  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
-  array< localIndex_array > const & nodeList() const        { return this->getReference< array< localIndex_array > >(viewKeys.nodeList); }
-  array< localIndex_array > & nodeList()                    { return this->getReference< array< localIndex_array > >(viewKeys.nodeList); }
+  OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
+  OrderedVariableOneToManyRelation & nodeList()                    { return m_nodeList; }
   Array2dT<localIndex> const & elementRegionList() const    { return this->getReference< Array2dT<localIndex> >(viewKeys.elementRegionList); }
   Array2dT<localIndex> & elementRegionList()                { return this->getReference< Array2dT<localIndex> >(viewKeys.elementRegionList); }
   Array2dT<localIndex> const & elementSubRegionList() const { return this->getReference< Array2dT<localIndex> >(viewKeys.elementSubRegionList); }
@@ -88,6 +113,13 @@ public:
 
 
 private:
+
+  template<bool DOPACK>
+  int PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                             localIndex_array const & packList ) const;
+
+
+  OrderedVariableOneToManyRelation m_nodeList;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;

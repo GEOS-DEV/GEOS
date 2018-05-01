@@ -70,6 +70,8 @@ public:
   virtual void resize(localIndex newsize) = 0;
   virtual bool shouldResize() const = 0;
 
+  virtual size_t sizeOfType() const = 0;
+
   virtual void registerDataPtr(axom::sidre::View * view=nullptr) const = 0; 
   virtual void registerToWrite(axom::sidre::View * view=nullptr) const = 0;
   virtual void finishWriting(axom::sidre::View * view=nullptr) const = 0;
@@ -78,6 +80,16 @@ public:
 
 
   void resize();
+
+  virtual localIndex Pack( char *& buffer ) const = 0;
+  virtual localIndex Pack( char *& buffer, localIndex_array const & packList ) const = 0;
+  virtual localIndex PackSize( ) const = 0;
+  virtual localIndex PackSize( localIndex_array const & packList ) const = 0;
+
+  virtual localIndex Unpack( char const *& buffer ) = 0;
+  virtual localIndex Unpack( char const *& buffer, localIndex_array const & unpackIndices ) = 0;
+
+//  virtual int PackingSize( char *& buffer, localIndex_array const & packList ) = 0;
 
   int sizedFromParent() const
   {

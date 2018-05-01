@@ -100,6 +100,10 @@ using real32_const_ptr  = c_ptr<real32>;
 using real64_ptr        = ptr<real64>;
 using real64_const_ptr  = c_ptr<real64>;
 
+
+using buffer_unit_type = char;
+using buffer_type = std::vector<buffer_unit_type>;
+
 //***** BEGIN LEGACY TYPEDEFS *****
 
 using realT    = double;
@@ -111,6 +115,11 @@ using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
 template< typename T, int NDIM >
 using array_view = multidimensionalArray::ArrayView<T,NDIM,localIndex>;
 
+template< typename T >
+using arrayView1d = multidimensionalArray::arrayView1d<T,localIndex>;
+
+//template< typename T >
+//using arrayView1d_const = multidimensionalArray::arrayView1d<T const,localIndex>;
 
 template< typename T >
 using set = SortedArray<T>;
@@ -144,7 +153,7 @@ using localIndex_const_array  = array<localIndex const>;
 using globalIndex_array        = array<globalIndex>;
 using globalIndex_const_array  = array<globalIndex const>;
 
-
+using mpiBuffer = array<char>;
 
 using integer_set        = set<integer>;
 using integer_const_set  = set<integer const>;

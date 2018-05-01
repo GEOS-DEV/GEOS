@@ -21,8 +21,12 @@
 #include "RestartFlags.hpp"
 
 #include "codingUtilities/Utilities.hpp"
+#include "codingUtilities/GeosxTraits.hpp"
 #include "common/GeosxConfig.hpp"
 
+
+
+#include "MPI_Communications/CommBufferOps.hpp"
 
 
 #ifdef USE_ATK
@@ -152,8 +156,8 @@ public:
   static std::unique_ptr<ViewWrapperBase> Factory( std::string const & name,
                                                    ManagedGroup * const parent)
   {
-    std::unique_ptr<TNEW> newObject = std::move( std::make_unique<TNEW>() );
-    return std::move(std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject)) );
+    std::unique_ptr<TNEW> newObject = std::make_unique<TNEW>();
+    return std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject));
   }
 
 
@@ -182,6 +186,191 @@ public:
     }
     return static_cast< ViewWrapper<T>& >(base);
   }
+
+//  template< bool DO_PACKING >
+//  struct pack_wrapper
+//  {
+//
+////    template<typename TT >
+////      struct has_square_bracket_operator
+////      {
+////    private:
+////        template<typename U> static constexpr auto test(int)->decltype( std::is_member_function_pointer<decltype(&U::operator[])>::value, bool() )
+////        {
+////          return std::is_member_function_pointer<decltype(&U::operator[])>::value;
+////        }
+////        template<typename U> static constexpr auto test(...)->bool
+////        {
+////          return false;
+////        }
+////    public:
+////        static constexpr bool value = test<TT>(0);
+////      };
+//
+//
+//
+//    HAS_ALIAS(pointer)
+//    HAS_ALIAS(iterator)
+//    HAS_MEMBER_FUNCTION(begin,typename U::iterator,,,)
+//    HAS_MEMBER_FUNCTION(end,typename U::iterator,,,)
+//
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value, localIndex >::type
+//    PackT( char *& buffer, U const & m_data )
+//    {
+//      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value, localIndex >::type
+//    PackT( char *& buffer, U const & m_data )
+//    {
+//      return 0;
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value, localIndex >::type
+//    UnpackT( char const *& buffer, U & m_data )
+//    {
+//      return CommBufferOps::Unpack( buffer, m_data );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value, localIndex >::type
+//    UnpackT( char const *& buffer, U & m_data )
+//    {
+//      return 0;
+//    }
+//
+//
+//
+//
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
+//                                    !std::is_same<U,string>::value, localIndex >::type
+//    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+//    {
+//      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data, packList );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
+//                                    std::is_same<U,string>::value, localIndex >::type
+//    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+//    {
+//      return CommBufferOps::Pack<DO_PACKING>( buffer, m_data );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value , localIndex >::type
+//    PackT( char *& buffer, U const & m_data, localIndex_array const & packList )
+//    {
+//      return 0;
+//    }
+//
+//
+//
+//
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
+//                                    !std::is_same<U,string>::value, localIndex >::type
+//    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
+//    {
+//      return CommBufferOps::Unpack( buffer, m_data, packList );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< CommBufferOps::is_packable<U>::value &&
+//                                    std::is_same<U,string>::value, localIndex >::type
+//    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
+//    {
+//      return CommBufferOps::Unpack( buffer, m_data );
+//    }
+//
+//    template<class U = T>
+//    static typename std::enable_if< !CommBufferOps::is_packable<U>::value , localIndex >::type
+//    UnpackT( char const *& buffer, U & m_data, localIndex_array const & packList )
+//    {
+//      return 0;
+//    }
+//
+//
+//  };
+
+  virtual localIndex Pack( char *& buffer ) const override final
+  {
+    localIndex packedSize = 0;
+
+    packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
+    packedSize += CommBufferOps::Pack<true>( buffer, *m_data);
+
+    return packedSize;
+  }
+
+  virtual localIndex Pack( char *& buffer, localIndex_array const & packList ) const override final
+  {
+    localIndex packedSize = 0;
+
+    static_if( CommBufferOps::is_packable_by_index<T>::value )
+    {
+      packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
+      packedSize += CommBufferOps::Pack<true>( buffer, *m_data, packList);
+    });
+    return packedSize;
+  }
+
+  virtual localIndex PackSize( ) const override final
+  {
+    char * buffer = nullptr;
+    localIndex packedSize = 0;
+
+    packedSize += CommBufferOps::Pack<false>( buffer, this->getName() );
+    packedSize += CommBufferOps::Pack<false>( buffer, *m_data);
+
+    return packedSize;
+  }
+
+  virtual localIndex PackSize( localIndex_array const & packList ) const override final
+  {
+
+    char * buffer = nullptr;
+    localIndex packedSize = 0;
+
+    static_if( CommBufferOps::is_packable_by_index<T>::value )
+    {
+      packedSize += CommBufferOps::Pack<false>( buffer, this->getName() );
+      packedSize += CommBufferOps::Pack<false>( buffer, *m_data, packList);
+    });
+
+    return packedSize;
+  }
+
+  virtual localIndex Unpack( char const *& buffer ) override final
+  {
+    localIndex unpackedSize = 0;
+    string name;
+    unpackedSize += CommBufferOps::Unpack( buffer, name );
+    GEOS_ASSERT( name == this->getName(),"buffer unpack leads to viewWrapper names that don't match" )
+    unpackedSize += CommBufferOps::Unpack( buffer, *m_data );
+    return unpackedSize;
+  }
+  virtual localIndex Unpack( char const *& buffer, localIndex_array const & unpackIndices ) override final
+  {
+    localIndex unpackedSize = 0;
+    static_if( CommBufferOps::is_packable_by_index<T>::value )
+    {
+      string name;
+      unpackedSize += CommBufferOps::Unpack( buffer, name );
+      GEOS_ASSERT( name == this->getName(),"buffer unpack leads to viewWrapper names that don't match" )
+      unpackedSize += CommBufferOps::Unpack( buffer, *m_data, unpackIndices );
+    });
+    return unpackedSize;
+  }
+
+
 
 
   struct empty_wrapper
@@ -617,8 +806,28 @@ public:
     return m_data;
   }
 
-
   HAS_ALIAS(value_type)
+
+
+  template<class U = T>
+  typename std::enable_if<has_alias_value_type<U>::value, size_t>::type
+  sizeOfValueType() const
+  {
+    return sizeof(typename T::value_type);
+  }
+
+  template<class U = T>
+  typename std::enable_if<!has_alias_value_type<U>::value, size_t>::type
+  sizeOfValueType() const
+  {
+    return sizeof(T);
+  }
+
+  virtual size_t sizeOfType() const override final
+  {
+    return sizeOfValueType();
+  }
+
 
   /// case for if U::value_type exists. Returns the size of dataPtr
   template<class U = T>

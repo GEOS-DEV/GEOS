@@ -29,7 +29,9 @@ FiniteElementSpace::FiniteElementSpace( std::string const & name, ManagedGroup *
 {}
 
 FiniteElementSpace::~FiniteElementSpace()
-{}
+{
+  delete m_finiteElement;
+}
 
 
 void FiniteElementSpace::BuildDataStructure( dataRepository::ManagedGroup * const parent )
@@ -91,7 +93,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 
 
 
-  auto & constitutiveMapView = *(cellBlock->RegisterViewWrapper< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(keys::constitutiveMap) );
+  auto & constitutiveMapView = *(cellBlock->getWrapper< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString));
   constitutiveMapView.setSizedFromParent(1);
   auto & constitutiveMap = constitutiveMapView.reference();
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
@@ -112,14 +114,14 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
 {
   auto & dNdX            = cellBlock->getReference< array< Array2dT<R1Tensor> > >(keys::dNdX);
   auto & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ);
-  lArray2d const & elemsToNodes = cellBlock->getWrapper<lArray2d>(std::string("nodeList"))->reference();// getData<lArray2d>(keys::nodeList);
+  FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();// getData<lArray2d>(keys::nodeList);
 
   array<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
 
 
   for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
   {
-    const localIndex* const elemToNodeMap = elemsToNodes[k];
+    arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
 
     CopyGlobalToLocal(elemToNodeMap, X, X_elemLocal);
 
@@ -132,9 +134,8 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
       for (localIndex b = 0 ; b < m_finiteElement->dofs_per_element() ; ++b)
       {
         dNdX(k)(q, b) = m_finiteElement->gradient(b, q);
+//        std::cout<<"dNdX["<<k<<"]["<<q<<"]["<<b<<"] :"<<dNdX[k][q][b]<<std::endl;
       }
-      //std::cout<<"Element, ip, dNdX :"<<k<<", "<<a<<",
-      // "<<m_dNdX(k)(a)[0]<<std::endl;
 
     }
   }

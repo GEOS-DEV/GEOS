@@ -8,6 +8,7 @@ set(gtest_geosx_tests
    testStackTrace.cpp
    testSidreBasic.cpp
    testSidreExtended.cpp
+   testGeosxTraits.cpp
    )
 
 #

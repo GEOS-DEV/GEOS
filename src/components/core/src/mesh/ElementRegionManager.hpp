@@ -91,6 +91,10 @@ string const elementRegions = "elementRegions";
 class ElementRegionManager : public ObjectManagerBase
 {
 public:
+
+  template< typename VIEWTYPE >
+  using ElementViewAccessor = array< array< VIEWTYPE * > > ;
+
   /**
    * @name Static Factory Catalog Functions
    */
@@ -153,6 +157,8 @@ public:
     return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups().size();
   }
 
+  localIndex numCellBlocks() const;
+
 
   template< typename LAMBDA >
   void forElementRegions( LAMBDA lambda )
@@ -200,9 +206,134 @@ public:
       }
     }
   }
+
+  template< typename VIEWTYPE >
+  ElementViewAccessor<VIEWTYPE> ConstructViewAccessor( string const & name,
+                                                       string const & neighborName );
+
+
+  using ManagedGroup::PackSize;
+  using ManagedGroup::Pack;
+  using ObjectManagerBase::PackGlobalMapsSize;
+  using ObjectManagerBase::PackGlobalMaps;
+  using ObjectManagerBase::UnpackGlobalMaps;
+  using ObjectManagerBase::PackUpDownMapsSize;
+  using ObjectManagerBase::PackUpDownMaps;
+  using ObjectManagerBase::UnpackUpDownMaps;
+
+
+
+  int PackSize( array<string> const & wrapperNames,
+                ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    buffer_unit_type * junk = nullptr;
+    return PackPrivate<false>( junk, wrapperNames, packList );
+  }
+
+  int Pack( buffer_unit_type * & buffer,
+            array<string> const & wrapperNames,
+            ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    return PackPrivate<true>( buffer, wrapperNames, packList );
+  }
+
+  int Unpack( buffer_unit_type const * & buffer,
+              ElementViewAccessor<localIndex_array> & packList );
+
+
+
+  virtual int PackGlobalMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    buffer_unit_type * junk = nullptr;
+    return PackGlobalMapsPrivate<false>( junk, packList);
+  }
+
+  virtual int PackGlobalMaps( buffer_unit_type * & buffer,
+                              ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    return PackGlobalMapsPrivate<true>( buffer, packList);
+  }
+
+
+  int UnpackGlobalMaps( buffer_unit_type const * & buffer,
+                                ElementViewAccessor<localIndex_array> & packList );
+
+  int PackUpDownMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    buffer_unit_type * junk = nullptr;
+    return PackUpDownMapsPrivate<false>( junk, packList);
+  }
+
+  int PackUpDownMaps( buffer_unit_type * & buffer,
+                      ElementViewAccessor<localIndex_array> const & packList ) const
+  {
+    return PackUpDownMapsPrivate<true>( buffer, packList);
+  }
+
+
+  int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                        ElementViewAccessor<localIndex_array> const & packList );
+
+
+
+
 private:
+  template< bool DOPACK >
+  int PackPrivate( buffer_unit_type * & buffer,
+                   array<string> const & wrapperNames,
+                   ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
+
+  template< bool DOPACK >
+  int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+                             ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
+
+  template< bool DOPACK >
+  int
+  PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                         ElementViewAccessor<localIndex_array> const & packList ) const;
+
   ElementRegionManager( const ElementRegionManager& );
   ElementRegionManager& operator=( const ElementRegionManager&);
 };
+
+
+
+template< typename VIEWTYPE >
+ElementRegionManager::ElementViewAccessor<VIEWTYPE>
+ElementRegionManager::
+ConstructViewAccessor( string const & viewName,
+                       string const & neighborName )
+{
+  ElementViewAccessor<VIEWTYPE> viewAccessor;
+  viewAccessor.resize( numRegions() );
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion * const elemRegion = GetRegion(kReg);
+    viewAccessor[kReg].resize( elemRegion->numSubRegions() );
+
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(kSubReg);
+
+      if( neighborName.empty() )
+      {
+        viewAccessor[kReg][kSubReg] = &(subRegion->getReference<VIEWTYPE>(viewName));
+      }
+      else
+      {
+        viewAccessor[kReg][kSubReg] = &(subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
+                                      GetGroup(neighborName)->getReference<VIEWTYPE>(viewName));
+      }
+    }
+  }
+
+  return viewAccessor;
+
+}
+
+
+
+
+
 }
 #endif /* ZONEMANAGER_H */
