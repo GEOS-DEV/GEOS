@@ -249,20 +249,26 @@ void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
 
 int NodeManager::PackUpDownMapsSize( localIndex_array const & packList ) const
 {
-  int packedSize = 0;
-
-
-  return packedSize;
+  buffer_unit_type * junk = nullptr;
+  return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
 int NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
                              localIndex_array const & packList ) const
+{
+  return PackUpDownMapsPrivate<true>( buffer, packList );
+}
+
+template< bool DOPACK >
+int NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                        localIndex_array const & packList ) const
 {
   int packedSize = 0;
 
 
   return packedSize;
 }
+
 
 int NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                localIndex_array const & packList )

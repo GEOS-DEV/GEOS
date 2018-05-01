@@ -314,7 +314,7 @@ void FaceManager::AddNewFace( localIndex const & kReg,
 
 void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 {
-  // assume that all faces will be on a domain boundary. Set it to zero if it is found to have two elements that it
+  // Set value of domainBounaryIndicator to one if it is found to have only one elements that it
   // is connected to.
   integer_array & faceDomainBoundaryIndicator = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
   faceDomainBoundaryIndicator = 0;
@@ -591,26 +591,24 @@ void FaceManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
 
 int FaceManager::PackUpDownMapsSize( localIndex_array const & packList ) const
 {
-  int packedSize = 0;
   buffer_unit_type * junk = nullptr;
-  packedSize += CommBufferOps::Pack<false>( junk, string(viewKeyStruct::nodeListString) );
-  packedSize += CommBufferOps::Pack<false>( junk,
-                                           m_nodeList,
-                                           packList,
-                                           this->m_localToGlobalMap,
-                                           m_nodeList.RelatedObjectLocalToGlobal() );
-  return packedSize;
-
+  return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
-
 int FaceManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                               localIndex_array const & packList ) const
+                                 localIndex_array const & packList ) const
+{
+  return PackUpDownMapsPrivate<true>( buffer, packList );
+}
+
+template<bool DOPACK>
+int FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                        localIndex_array const & packList ) const
 {
   int packedSize = 0;
 
-  packedSize += CommBufferOps::Pack<true>( buffer, string(viewKeyStruct::nodeListString) );
-  packedSize += CommBufferOps::Pack<true>( buffer,
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
                                            m_nodeList,
                                            packList,
                                            this->m_localToGlobalMap,
@@ -618,6 +616,7 @@ int FaceManager::PackUpDownMaps( buffer_unit_type * & buffer,
 
   return packedSize;
 }
+
 
 
 int FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,

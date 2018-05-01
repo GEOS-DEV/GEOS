@@ -27,16 +27,11 @@ DomainPartition::DomainPartition( std::string const & name,
   ManagedGroup( name, parent ),
   m_mpiComm()
 {
-//<<<<<<< HEAD
 
 
   this->RegisterViewWrapper< array<NeighborCommunicator> >(viewKeys.neighbors);
   MPI_Comm_dup( MPI_COMM_WORLD, &m_mpiComm );
-//  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager);
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
-//=======
-//  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags(RestartFlags::NO_WRITE);
-//>>>>>>> master
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
@@ -46,15 +41,6 @@ DomainPartition::DomainPartition( std::string const & name,
 DomainPartition::~DomainPartition()
 {}
 
-
-void DomainPartition::BuildDataStructure( ManagedGroup * const )
-{
-
-//  this->RegisterGroup<NodeManager>(keys::FEM_Nodes);
-//  this->RegisterGroup<ElementRegionManager>(keys::FEM_Elements);
-//  this->RegisterGroup<CellBlockManager>(keys::cellManager);
-//  this->RegisterGroup<FaceManager,ObjectManagerBase>(keys::FEM_Faces);
-}
 
 
 void DomainPartition::FillDocumentationNode()
@@ -186,103 +172,6 @@ void DomainPartition::GenerateSets(  )
   }
 }
 
-//void
-//DomainPartition::
-//FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-//                                     array< array<localIndex> > & matchedPartitionBoundaryObjects )
-//{
-//  integer_array const & ghostRank = group->getReference<integer_array>( group->viewKeys.ghostRank );
-//  integer_array & domainBoundaryIndicator = group->getReference<integer_array>(group->viewKeys.domainBoundaryIndicator);
-//  globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( group->viewKeys.localToGlobalMap );
-//
-//  array<globalIndex> globalPartitionBoundaryObjectsIndices;
-//  group->ConstructGlobalListOfBoundaryObjects(globalPartitionBoundaryObjectsIndices);
-//
-//
-//  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
-//
-//  // send the size of the partitionBoundaryObjects to neighbors
-//  {
-//    array< array<globalIndex> > neighborPartitionBoundaryObjects( allNeighbors.size() );
-//    matchedPartitionBoundaryObjects.resize( allNeighbors.size() );
-//
-//    int commID = reserveCommID();
-//
-//    for( int i=0 ; i<allNeighbors.size() ; ++i )
-//    {
-//      allNeighbors[i].MPI_iSendReceive( globalPartitionBoundaryObjectsIndices,
-//                                        neighborPartitionBoundaryObjects[i],
-//                                        commID, MPI_COMM_WORLD );
-//    }
-//
-//    for( int i=0 ; i<allNeighbors.size() ; ++i )
-//    {
-//      allNeighbors[i].MPI_WaitAll(commID);
-//      localIndex localCounter = 0;
-//      localIndex neighborCounter = 0;
-//      while( localCounter < globalPartitionBoundaryObjectsIndices.size() &&
-//             neighborCounter < neighborPartitionBoundaryObjects[i].size() )
-//      {
-//        if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
-//        {
-//          localIndex const localMatchedIndex = group->m_globalToLocalMap.at(globalPartitionBoundaryObjectsIndices[localCounter]);
-//          matchedPartitionBoundaryObjects[i].push_back( localMatchedIndex );
-//          domainBoundaryIndicator[ localMatchedIndex ] = 2;
-//          ++localCounter;
-//          ++neighborCounter;
-//        }
-//        else if( globalPartitionBoundaryObjectsIndices[localCounter] > neighborPartitionBoundaryObjects[i][neighborCounter] )
-//        {
-//          ++neighborCounter;
-//        }
-//        else
-//        {
-//          ++localCounter;
-//        }
-//      }
-//    }
-//    releaseCommID(commID);
-//  }
-//}
-//
-//set<int> & DomainPartition::getFreeCommIDs()
-//{
-//  static set<int> commIDs;
-//  static bool isInitialized = false;
-//
-//  if( !isInitialized )
-//  {
-//    for( int a = 0 ; a < NeighborCommunicator::maxComm ; ++a )
-//    {
-//      commIDs.insert( a );
-//    }
-//    isInitialized = true;
-//  }
-//
-//  return commIDs;
-//}
-//
-//
-//int DomainPartition::reserveCommID()
-//{
-//  set<int> & commIDs = getFreeCommIDs();
-//
-//  int rval = *( commIDs.begin() );
-//  commIDs.erase( rval );
-//  return rval;
-//}
-//
-//void DomainPartition::releaseCommID( int & ID )
-//{
-//  set<int> & commIDs = getFreeCommIDs();
-//
-//  if( commIDs.count(ID) > 0 )
-//  {
-//    GEOS_ERROR("Attempting to release commID that is already free");
-//  }
-//  commIDs.insert( ID );
-//  ID = -1;
-//}
 
 void DomainPartition::SetupCommunications()
 {

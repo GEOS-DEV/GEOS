@@ -187,6 +187,11 @@ public:
 protected:
 
 private:
+  template< bool DOPACK >
+  int PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                             localIndex_array const & packList ) const;
+
+
   /// copy constructor
   NodeManager() = delete;
   NodeManager( const NodeManager& init ) = delete;

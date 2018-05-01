@@ -71,7 +71,6 @@ public:
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
   virtual int PackUpDownMapsSize( localIndex_array const & packList ) const override;
-
   virtual int PackUpDownMaps( buffer_unit_type * & buffer,
                               localIndex_array const & packList ) const override;
 
@@ -114,6 +113,11 @@ public:
 
 
 private:
+
+  template<bool DOPACK>
+  int PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                             localIndex_array const & packList ) const;
+
 
   OrderedVariableOneToManyRelation m_nodeList;
 

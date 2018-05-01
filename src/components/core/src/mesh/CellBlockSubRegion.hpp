@@ -73,6 +73,12 @@ public:
   std::pair< Array2dT< localIndex >, Array2dT< localIndex > > m_constitutiveMapView;
   array< Array2dT<R1Tensor> > m_dNdX;
 
+private:
+  template< bool DOPACK >
+  int PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                             localIndex_array const & packList ) const;
+
+
 };
 
 } /* namespace geosx */
