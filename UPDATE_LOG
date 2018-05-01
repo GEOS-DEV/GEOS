@@ -1,5 +1,13 @@
 
 
+Tue May  1 13:44:18 2018 Randolph R. Settgast
+v0.0.31
+
+This PR re-implements some basic MPI functionality into the code. Moved all top level comm interface to CommunicationsTools class. Re-implemented buffer packing/unpacking and created NeighborCommunicator class to managed comm between neighbors. 
+
+This pull request is related to the pull request at: https://lc.llnl.gov/bitbucket/projects/GEOSX/repos/physicssolverpackage1/pull-requests/22
+
+
 Tue Apr 17 10:40:07 2018 Benjamin Curtice Corbett
 v0.0.30
 
