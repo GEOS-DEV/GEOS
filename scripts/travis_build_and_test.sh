@@ -24,8 +24,8 @@ else
     export CXX=c++
     export MPICC=mpicc
     export MPICXX=mpicxx
-#    source ~/.bashrc
-    cd ${TRAVIS_BUILD_DIR}
+    #    source ~/.bashrc
+    cd /home/geosx/geosx_repo
 #    [[ -d /opt/intel ]] && . /opt/intel/bin/compilervars.sh intel64
 fi
 
@@ -42,6 +42,7 @@ if [[ "$DO_BUILD" == "yes" ]] ; then
 	   -DENABLE_MPI=ON -DMPI_C_COMPILER=${MPICC} -DMPI_CXX_COMPILER=${MPICXX} -DMPI_EXEC=mpirun \
 	   -DGEOSX_LINK_PREPEND_FLAG=-Wl,--whole-archive -DGEOSX_LINK_POSTPEND_FLAG=-Wl,--no-whole-archive \
 	   -DGEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release \
+	   -DENABLE_CONTAINERARRAY_RETURN_PTR=ON \
 	   ${CMAKE_EXTRA_FLAGS} ../src
 #    if [[ ${CMAKE_EXTRA_FLAGS} == *COVERAGE* ]] ; then
 #      or_die make -j 1
