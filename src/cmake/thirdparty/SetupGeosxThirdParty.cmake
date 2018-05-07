@@ -332,7 +332,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 else()
     find_library( PUGIXML_LIBRARY NAMES pugixml
-                  PATHS ${PUGIXML_DIR}/lib64
+                  PATHS ${PUGIXML_DIR}/lib64 ${PUGIXML_DIR}/lib
                   NO_DEFAULT_PATH
                   NO_CMAKE_ENVIRONMENT_PATH
                   NO_CMAKE_PATH
