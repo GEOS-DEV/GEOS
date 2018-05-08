@@ -12,12 +12,12 @@ matrix:
   include:
   - compiler: gcc7
     env:
-    - C_COMPILER=g++
-    - CXX_COMPILER=gcc
-    - MPI_C_COMPILER=mpicc
-    - MPI_CXX_COMPILER=mpic++
     - IMG=gcc7
     - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
+  - compiler: clang5
+    env:
+    - IMG=clang5
+    - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14"
 script: 
-- docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG chown -R geosx /home/geosx
-- docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo -e COMPILER -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS geosx/compiler:$IMG /home/geosx/geosx_repo/scripts/travis_build_and_test.sh
+- docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx
+- docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh
