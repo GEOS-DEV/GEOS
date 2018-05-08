@@ -20,10 +20,6 @@ if [ "${1:-0}" = "1" ] ; then
     export MPICXX=/opt/local/bin/mpicxx-mpich-gcc7
     rm -rf travis-build
 else
-    export CC=cc
-    export CXX=c++
-    export MPICC=mpicc
-    export MPICXX=mpicxx
     #    source ~/.bashrc
     cd /home/geosx/geosx_repo
 #    [[ -d /opt/intel ]] && . /opt/intel/bin/compilervars.sh intel64
