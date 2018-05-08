@@ -21,4 +21,4 @@ make hdf5
 make
 cd ..
 git submodule deinit .
-rm rf build-default-release
+rm -rf build-default-release
