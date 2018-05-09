@@ -130,7 +130,7 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWra
     if (docNode.getSchemaType().find("Root") == std::string::npos)
     {
       targetNode = schemaNode.child("xsd:choice");
-      if (targetNode == nullptr)
+      if (targetNode.empty() )
       {
         targetNode = schemaNode.prepend_child("xsd:choice");
         targetNode.append_attribute("maxOccurs") = "unbounded";
@@ -138,7 +138,7 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWra
     }
 
     // Insert the schema node if not present, then iterate over children
-    if (targetNode.find_child_by_attribute("xsd:element", "name", docNode.m_name.c_str()) == nullptr)
+    if (targetNode.find_child_by_attribute("xsd:element", "name", docNode.m_name.c_str()).empty())
     {
       // Add the entries to the current and root nodes
       xmlWrapper::xmlNode newNode = targetNode.append_child("xsd:element");
@@ -157,7 +157,7 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWra
 
       // Insert a new type into the root node if not present
       newNode = schemaRoot.find_child_by_attribute("xsd:complexType", "name", (docNode.m_name+"Type").c_str());
-      if (newNode == nullptr)
+      if (newNode.empty())
       {
         newNode = schemaRoot.append_child("xsd:complexType");
         newNode.append_attribute("name") = (docNode.m_name+"Type").c_str();
@@ -173,7 +173,7 @@ void SchemaConstruction(cxx_utilities::DocumentationNode const & docNode, xmlWra
   else if (docNode.getSchemaType().empty() == 0)
   {
     // Insert a new attribute if not present
-    if (schemaNode.find_child_by_attribute("xsd:attribute", "name", docNode.m_name.c_str()) == nullptr)
+    if (schemaNode.find_child_by_attribute("xsd:attribute", "name", docNode.m_name.c_str()).empty())
     {
       xmlWrapper::xmlNode newNode = schemaNode.append_child("xsd:attribute");
       newNode.append_attribute("name") = docNode.m_name.c_str();
