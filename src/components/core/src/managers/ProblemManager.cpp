@@ -279,7 +279,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
     {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
-    { 0, 0, 0, 0, 0, 0}
+    { 0, 0, nullptr, nullptr, nullptr, nullptr}
   };
 
   argc -= (argc>0);
@@ -303,7 +303,7 @@ void ProblemManager::ParseCommandLineInput( int argc, char* argv[])
     exit(0);
   }
 
-  if (options[INPUT] == 0)
+  if (options[INPUT].count() == 0)
   {
     std::cout << "An input xml must be specified!  Exiting..." << std::endl;
     exit(1);
@@ -402,7 +402,7 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
     {SCHEMALEVEL, 0, "s", "schema_level", Arg::NonEmpty, "\t-s, --schema_level, \t Verbosity level of output schema (default=0)"},
     {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
     {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
-    { 0, 0, 0, 0, 0, 0}
+    { 0, 0, nullptr, nullptr, nullptr, nullptr}
   };
 
   argc -= (argc>0); 
@@ -426,7 +426,7 @@ bool ProblemManager::ParseRestart( int argc, char* argv[], std::string& restartF
     exit(0);
   }
 
-  if (options[INPUT] == 0)
+  if (options[INPUT].count() == 0)
   {
     std::cout << "An input xml must be specified!  Exiting..." << std::endl;
     exit(1);

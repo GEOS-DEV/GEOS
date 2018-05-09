@@ -32,7 +32,6 @@
 #include "MPI_Communications/CommunicationTools.hpp"
 #define verbose 1
 
-#define local_dim 3 //number of local dimensions
 
 namespace geosx
 {

@@ -26,7 +26,7 @@ class BoundaryConditionManager : public dataRepository::ManagedGroup
 {
 public:
   BoundaryConditionManager( string const & name, dataRepository::ManagedGroup * const parent );
-  virtual ~BoundaryConditionManager();
+  virtual ~BoundaryConditionManager() override;
 
   static BoundaryConditionManager * get();
 

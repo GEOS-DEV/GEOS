@@ -147,9 +147,9 @@ void CellBlockSubRegion::MaterialPassThru( string const & matName,
 void CellBlockSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.nodeListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
 //  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.faceListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceListString));
 }
 
 

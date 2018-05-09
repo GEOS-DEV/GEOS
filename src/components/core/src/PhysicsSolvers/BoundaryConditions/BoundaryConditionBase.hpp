@@ -41,7 +41,7 @@ public:
 
   BoundaryConditionBase( string const & name, dataRepository::ManagedGroup * parent );
 
-  virtual ~BoundaryConditionBase();
+  virtual ~BoundaryConditionBase() override;
 
 
 

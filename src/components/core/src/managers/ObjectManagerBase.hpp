@@ -36,7 +36,7 @@ public:
 //                              dataRepository::ManagedGroup * const parent,
 //                              cxx_utilities::DocumentationNode * docNode );
 
-  ~ObjectManagerBase();
+  ~ObjectManagerBase() override;
 
   /**
    * @name Static Factory Catalog Functions
@@ -58,13 +58,13 @@ public:
 
   virtual int PackSize( array<string> const & wrapperNames,
                         localIndex_array const & packList,
-                        integer const recursive ) const;
+                        integer const recursive ) const override;
 
 
   virtual int Pack( buffer_unit_type * & buffer,
                     array<string> const & wrapperNames,
                     localIndex_array const & packList,
-                    integer const recursive ) const;
+                    integer const recursive )  const override;
 
 //  virtual int Unpack( buffer_unit_type const *& buffer,
 //                      integer const recursive )  override;
@@ -77,18 +77,11 @@ public:
 
 
   virtual int PackGlobalMapsSize( localIndex_array const & packList,
-                                  integer const recursive ) const
-  {
-    buffer_unit_type * junk = nullptr;
-    return PackGlobalMapsPrivate<false>( junk, packList, recursive);
-  }
+                                  integer const recursive ) const;
 
   virtual int PackGlobalMaps( buffer_unit_type * & buffer,
                               localIndex_array const & packList,
-                              integer const recursive ) const
-  {
-    return PackGlobalMapsPrivate<true>( buffer, packList, recursive);
-  }
+                              integer const recursive ) const;
 
   void SetReceiveLists(  );
 

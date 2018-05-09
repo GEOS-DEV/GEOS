@@ -107,7 +107,7 @@ public:
   ///@}
 
   CellBlockManager( string const &, ManagedGroup * const parent );
-  virtual ~CellBlockManager();
+  virtual ~CellBlockManager() override;
 
 
 //  void Initialize(  ){}

@@ -127,7 +127,7 @@ public:
 //  map<string,integer> SetConstitutiveMap( dataRepository::ManagedGroup const &
 // domain );
 
-  virtual ~CellBlock();
+  virtual ~CellBlock() override;
 
   void GetFaceNodes( const localIndex elementIndex,
                      const localIndex localFaceIndex,

@@ -50,7 +50,7 @@ public:
   InternalMeshGenerator( const std::string& name,
                          ManagedGroup * const parent );
 
-  virtual ~InternalMeshGenerator();
+  virtual ~InternalMeshGenerator() override;
 
   static string CatalogName() { return "InternalMesh"; }
 

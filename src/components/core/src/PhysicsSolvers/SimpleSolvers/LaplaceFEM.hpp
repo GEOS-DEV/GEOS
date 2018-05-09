@@ -37,7 +37,7 @@ public:
                                 ManagedGroup * const parent );
 
 
-  virtual ~LaplaceFEM();
+  virtual ~LaplaceFEM() override;
 
   static string CatalogName() { return "LaplaceFEM"; }
 

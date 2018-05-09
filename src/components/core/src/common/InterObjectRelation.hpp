@@ -88,7 +88,7 @@ private:
 
 template < typename BASETYPE >
 InterObjectRelation<BASETYPE>::InterObjectRelation( ):
-  m_relatedObject(NULL)
+  m_relatedObject(nullptr)
 {}
 
 

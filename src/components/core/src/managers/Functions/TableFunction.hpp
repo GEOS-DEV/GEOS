@@ -20,7 +20,7 @@ public:
   TableFunction( const std::string& name,
                  dataRepository::ManagedGroup * const parent );
 
-  virtual ~TableFunction();
+  virtual ~TableFunction() override;
   static string CatalogName() { return "TableFunction"; }
   virtual void FillDocumentationNode() override final;
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override final;

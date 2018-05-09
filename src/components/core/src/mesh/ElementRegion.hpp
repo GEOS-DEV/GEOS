@@ -133,7 +133,7 @@ public:
   void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
                            map<string,localIndex> & counts );
 
-  virtual ~ElementRegion();
+  virtual ~ElementRegion() override;
 
 //  Array2dT<integer> & m_toNodesRelation;
 
