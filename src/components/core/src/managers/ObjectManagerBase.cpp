@@ -27,7 +27,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   RegisterGroup( keys::sets, &m_sets, false );
   RegisterViewWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
   RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false );
-  this->RegisterGroup(groupKeys.neighborData);
+  this->RegisterGroup(m_ObjectManagerBaseGroupKeys.neighborData);
 }
 //ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //                                      ManagedGroup * const parent,
@@ -59,8 +59,8 @@ void ObjectManagerBase::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->AllocateChildNode( viewKeys.ghostRank.Key(),
-                              viewKeys.ghostRank.Key(),
+  docNode->AllocateChildNode( m_ObjectManagerBaseViewKeys.ghostRank.Key(),
+                              m_ObjectManagerBaseViewKeys.ghostRank.Key(),
                               -1,
                               "integer_array",
                               "integer_array",
@@ -74,8 +74,8 @@ void ObjectManagerBase::FillDocumentationNode()
                               0,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.domainBoundaryIndicator.Key(),
-                              viewKeys.domainBoundaryIndicator.Key(),
+  docNode->AllocateChildNode( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator.Key(),
+                              m_ObjectManagerBaseViewKeys.domainBoundaryIndicator.Key(),
                               -1,
                               "integer_array",
                               "integer_array",
@@ -179,7 +179,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
 
 void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& objectList ) const
 {
-  const array<integer>& isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
+  const array<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -191,7 +191,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& o
 
 void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array& objectList ) const
 {
-  const array<integer>& isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
+  const array<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -614,12 +614,30 @@ void ObjectManagerBase::ViewPackingExclusionList( set<localIndex> & exclusionLis
 
 localIndex ObjectManagerBase::GetNumberOfGhosts() const
 {
-  return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i>-1;} );
+  localIndex rval = 0;
+  for( localIndex i=0 ; i<size() ; ++i )
+  {
+    if( m_ghostRank[i] > -1 )
+    {
+      ++rval;
+    }
+  }
+  return rval;
+//  return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i>-1;} );
 }
 
 localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
 {
-  return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i==-1;} );
+  localIndex rval = 0;
+  for( localIndex i=0 ; i<size() ; ++i )
+  {
+    if( m_ghostRank[i] <= -1 )
+    {
+      ++rval;
+    }
+  }
+  return rval;
+  //return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i==-1;} );
 }
 
 void ObjectManagerBase::SetReceiveLists(  )
@@ -636,9 +654,9 @@ void ObjectManagerBase::SetReceiveLists(  )
 
   for( map<int,localIndex_array>::const_iterator iter=receiveIndices.begin() ; iter!=receiveIndices.end() ; ++iter )
   {
-    ManagedGroup * const neighborData = GetGroup(groupKeys.neighborData)->GetGroup( std::to_string( iter->first ) );
+    ManagedGroup * const neighborData = GetGroup(m_ObjectManagerBaseGroupKeys.neighborData)->GetGroup( std::to_string( iter->first ) );
 
-    localIndex_array & nodeAdjacencyList = neighborData->getReference<localIndex_array>( viewKeys.ghostsToReceive );
+    localIndex_array & nodeAdjacencyList = neighborData->getReference<localIndex_array>( m_ObjectManagerBaseViewKeys.ghostsToReceive );
     nodeAdjacencyList = iter->second;
   }
 

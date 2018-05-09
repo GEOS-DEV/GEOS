@@ -311,7 +311,8 @@ public:
     dataRepository::ViewKey isExternal = { isExternalString };
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
     dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
-  } viewKeys;
+  } m_ObjectManagerBaseViewKeys;
+
 
   struct groupKeyStruct
   {
@@ -319,14 +320,21 @@ public:
     static constexpr auto neighborDataString = "neighborData";
     dataRepository::GroupKey sets = { setsString };
     dataRepository::GroupKey neighborData = { neighborDataString };
-  } groupKeys;
+  } m_ObjectManagerBaseGroupKeys;
+
+
+  virtual viewKeyStruct & viewKeys() { return m_ObjectManagerBaseViewKeys; }
+  virtual viewKeyStruct const & viewKeys() const { return m_ObjectManagerBaseViewKeys; }
+
+  virtual groupKeyStruct & groupKeys() { return m_ObjectManagerBaseGroupKeys; }
+  virtual groupKeyStruct const & groupKeys() const { return m_ObjectManagerBaseGroupKeys; }
 
 
   dataRepository::view_rtype<integer_array> GhostRank()
-  { return this->getData<integer_array>(viewKeys.ghostRank); }
+  { return this->getData<integer_array>(m_ObjectManagerBaseViewKeys.ghostRank); }
 
   dataRepository::view_rtype_const<integer_array> GhostRank() const
-  { return this->getData<integer_array>(viewKeys.ghostRank); }
+  { return this->getData<integer_array>(m_ObjectManagerBaseViewKeys.ghostRank); }
 
 
 
