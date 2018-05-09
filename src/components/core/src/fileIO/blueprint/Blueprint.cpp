@@ -40,10 +40,12 @@ const std::unordered_map<int, const std::string> Blueprint::numNodesToElemName =
 Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManager& elem_reg_manager, 
                       const std::string& output_path, MPI_Comm comm, const std::string& coord_name,
                       const std::string& topo_name):
+#ifdef USE_ATK
   m_node_manager(node_manager),
   m_elem_reg_manager(elem_reg_manager),
-  m_output_path(output_path),
   m_comm(comm),
+#endif
+  m_output_path(output_path),
   m_coord_name(coord_name),
   m_topo_name(topo_name)
 {

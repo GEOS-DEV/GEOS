@@ -18,6 +18,7 @@
 
 #ifdef __clang__
 #pragma clang diagnostic push
+#define __null nullptr
 #endif
 
 #include "managers/ProblemManager.hpp"
@@ -44,6 +45,7 @@ int main(int argc, char** argv)
 
   return RUN_ALL_TESTS();
 }
+
 
 TEST(testXML,testXML)
 {

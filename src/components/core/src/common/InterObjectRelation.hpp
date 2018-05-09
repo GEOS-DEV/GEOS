@@ -24,10 +24,11 @@ public:
 
   //InterObjectRelation( const ObjectDataStructureBaseT& relatedObject );
 
-  ~InterObjectRelation() {}
+//  ~InterObjectRelation() {}
 
   InterObjectRelation( const InterObjectRelation& copiedRelationship );
 
+  InterObjectRelation & operator=(const InterObjectRelation& copiedRelationship);
 
   operator BASETYPE() const
   {
@@ -88,7 +89,7 @@ private:
 
 template < typename BASETYPE >
 InterObjectRelation<BASETYPE>::InterObjectRelation( ):
-  m_relatedObject(NULL)
+  m_relatedObject(nullptr)
 {}
 
 
@@ -97,6 +98,14 @@ InterObjectRelation<BASETYPE>::InterObjectRelation( const InterObjectRelation& c
   BASETYPE( static_cast<BASETYPE const&>(copiedRelationship)),
   m_relatedObject(copiedRelationship.m_relatedObject)
 {}
+template < typename BASETYPE >
+InterObjectRelation<BASETYPE> & InterObjectRelation<BASETYPE>::operator=(const InterObjectRelation& copiedRelationship)
+{
+  BASETYPE::operator=( static_cast<BASETYPE const&>(copiedRelationship) );
+  m_relatedObject = copiedRelationship.m_relatedObject;
+  return *this;
+}
+
 
 
 

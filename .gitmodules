@@ -5,23 +5,4 @@
 	path = src/components/PhysicsSolverPackage1
 	url = ../physicssolverpackage1.git
 	branch = master
-[submodule "src/components/PhysicsSolverPackage2"]
-	path = src/components/PhysicsSolverPackage2
-	url = ../physicssolverpackage2.git
-	branch = master
-[submodule "src/components/MeshRefinementPackage"]
-	path = src/components/MeshRefinementPackage
-	url = ../meshrefinementpackage.git
-	branch = master
-[submodule "src/components/ConstitutivePackage"]
-	path = src/components/ConstitutivePackage
-	url = ../constitutivepackage1.git
-	branch = master
-[submodule "src/components/ReservoirSimulationPackage"]
-	path = src/components/ReservoirSimulationPackage
-	url = ../reservoirsimulationpackage.git
-	branch = master
-[submodule "thirdPartyLibs/tpl_mirror"]
-	path = thirdPartyLibs/tpl_mirror
-	url = ../tpl_mirror.git
-	branch = master
+

@@ -43,10 +43,12 @@ private:
 
   const static std::unordered_map<int, const std::string> numNodesToElemName;
 
+#ifdef USE_ATK
   const NodeManager& m_node_manager;
   const ElementRegionManager& m_elem_reg_manager;
-  const std::string m_output_path;
   const MPI_Comm m_comm;
+#endif
+  const std::string m_output_path;
   const std::string m_coord_name;
   const std::string m_topo_name;
 };

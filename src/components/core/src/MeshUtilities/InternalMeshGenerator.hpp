@@ -50,7 +50,7 @@ public:
   InternalMeshGenerator( const std::string& name,
                          ManagedGroup * const parent );
 
-  virtual ~InternalMeshGenerator();
+  virtual ~InternalMeshGenerator() override;
 
   static string CatalogName() { return "InternalMesh"; }
 
@@ -75,7 +75,7 @@ public:
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
 
   void ReadXML_PostProcess() override final;
-  int m_delayMeshDeformation;
+//  int m_delayMeshDeformation;
 
 private:
 

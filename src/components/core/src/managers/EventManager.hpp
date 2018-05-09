@@ -27,7 +27,7 @@ public:
   EventManager( std::string const & name,
                 ManagedGroup * const parent );
 
-  virtual ~EventManager();
+  virtual ~EventManager() override;
 
   virtual void FillDocumentationNode() override;
 
@@ -43,7 +43,7 @@ public:
   SolverApplication( std::string const & name,
                      ManagedGroup * const parent );
 
-  virtual ~SolverApplication();
+  virtual ~SolverApplication() override;
 
   static string CatalogName() { return "EventManager"; }
 

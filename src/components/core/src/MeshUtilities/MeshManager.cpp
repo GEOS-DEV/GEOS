@@ -46,7 +46,7 @@ void MeshManager::CreateChild( string const & childKey, string const & childName
 
 void MeshManager::GenerateMeshes( DomainPartition * const domain )
 {
-  forSubGroups<MeshGeneratorBase>([this, domain]( MeshGeneratorBase * meshGen ) -> void
+  forSubGroups<MeshGeneratorBase>([&]( MeshGeneratorBase * meshGen ) -> void
   {
     meshGen->GenerateMesh( domain );
   });
@@ -56,7 +56,7 @@ void MeshManager::GenerateMeshes( DomainPartition * const domain )
 
 void MeshManager::GenerateMeshLevels( DomainPartition * const domain )
 {
-  this->forSubGroups<MeshGeneratorBase>([this, domain]( MeshGeneratorBase * meshGen ) -> void
+  this->forSubGroups<MeshGeneratorBase>([&]( MeshGeneratorBase * meshGen ) -> void
   {
     string meshName = meshGen->getName();
     domain->getMeshBodies()->RegisterGroup<MeshBody>(meshName)->CreateMeshLevel(0)->SetDocumentationNodes();

@@ -19,6 +19,7 @@
 
 #ifdef __clang__
 #pragma clang diagnostic push
+#define __null nullptr
 #endif
 
 #include <cstring>
@@ -80,7 +81,7 @@ void my_terminate()
 
   char ** messages = backtrace_symbols( array, size );
 
-  for( int i = 0 ; i < size && messages != NULL ; ++i )
+  for( int i = 0 ; i < size && messages != nullptr ; ++i )
   {
     std::cerr << "[bt]: (" << i << ") " << messages[i] << std::endl;
   }

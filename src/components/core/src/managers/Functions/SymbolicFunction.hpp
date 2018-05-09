@@ -21,7 +21,7 @@ public:
   SymbolicFunction( const std::string& name,
                     dataRepository::ManagedGroup * const parent );
 
-  virtual ~SymbolicFunction();
+  virtual ~SymbolicFunction() override;
   static string CatalogName() { return "SymbolicFunction"; }
   virtual void FillDocumentationNode() override;
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;

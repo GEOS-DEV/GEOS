@@ -74,8 +74,8 @@ using namespace dataRepository;
 
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   ObjectManagerBase( name, parent ),
-  viewKeys(),
-  groupKeys(),
+  m_CellBlockViewKeys(),
+//  groupKeys(),
   m_toNodesRelation(),
   m_toFacesRelation(),
   m_numNodesPerElement(),

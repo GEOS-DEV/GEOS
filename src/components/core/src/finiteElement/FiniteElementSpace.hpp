@@ -40,7 +40,7 @@ public:
 
   explicit FiniteElementSpace( std::string const & name, ManagedGroup * const parent );
 
-  ~FiniteElementSpace();
+  ~FiniteElementSpace() override;
 
   /**
    * @name Static Factory Catalog Functions
