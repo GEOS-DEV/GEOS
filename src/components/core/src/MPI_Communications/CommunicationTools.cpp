@@ -85,7 +85,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               array<NeighborCommunicator> & neighbors )
 {
 
-  integer_array & ghostRank = object.getReference<integer_array>(object.viewKeys.ghostRank);
+  integer_array & ghostRank = object.getReference<integer_array>(object.m_ObjectManagerBaseViewKeys.ghostRank);
   ghostRank = -2;
 
   int const commSize = MPI_Size( MPI_COMM_WORLD );
@@ -314,9 +314,9 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                      array<NeighborCommunicator> & allNeighbors )//,
                                      //array< array<localIndex> > & matchedPartitionBoundaryObjects )
 {
-  integer_array const & ghostRank = group->getReference<integer_array>( group->viewKeys.ghostRank );
-  integer_array & domainBoundaryIndicator = group->getReference<integer_array>(group->viewKeys.domainBoundaryIndicator);
-  globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( group->viewKeys.localToGlobalMap );
+  integer_array const & ghostRank = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.ghostRank );
+  integer_array & domainBoundaryIndicator = group->getReference<integer_array>(group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
+  globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( group->m_ObjectManagerBaseViewKeys.localToGlobalMap );
 
   array<globalIndex> globalPartitionBoundaryObjectsIndices;
   group->ConstructGlobalListOfBoundaryObjects(globalPartitionBoundaryObjectsIndices);
@@ -342,9 +342,9 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
     {
       NeighborCommunicator const & neighbor = allNeighbors[i];
       localIndex_array &
-      matchedPartitionBoundaryObjects = group->GetGroup(group->groupKeys.neighborData)->
+      matchedPartitionBoundaryObjects = group->GetGroup(group->m_ObjectManagerBaseGroupKeys.neighborData)->
                                         GetGroup(std::to_string(neighbor.NeighborRank()))->
-                                        getReference<localIndex_array>( group->viewKeys.matchedPartitionBoundaryObjects );
+                                        getReference<localIndex_array>( group->m_ObjectManagerBaseViewKeys.matchedPartitionBoundaryObjects );
 
       allNeighbors[i].MPI_WaitAll(commID);
       localIndex localCounter = 0;

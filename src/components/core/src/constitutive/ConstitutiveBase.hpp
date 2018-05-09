@@ -75,20 +75,26 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
-  struct ViewKeyStruct
-  {} viewKeys;
+  struct viewKeyStruct
+  {} m_ConstitutiveBaseViewKeys;
 
-  struct GroupKeyStruct
+  struct groupKeyStruct
   {
     dataRepository::GroupKey StateData      = { "StateData" };
     dataRepository::GroupKey ParameterData  = { "ParameterData" };
-  } groupKeys;
+  } m_ConstitutiveBaseGroupKeys;
 
-  ManagedGroup * GetParameterData()             { return this->GetGroup(groupKeys.ParameterData); }
-  ManagedGroup const * GetParameterData() const { return this->GetGroup(groupKeys.ParameterData); }
+  virtual viewKeyStruct       & viewKeys()        { return m_ConstitutiveBaseViewKeys; }
+  virtual viewKeyStruct const & viewKeys() const  { return m_ConstitutiveBaseViewKeys; }
 
-  ManagedGroup * GetStateData()             { return this->GetGroup(groupKeys.StateData); }
-  ManagedGroup const * GetStateData() const { return this->GetGroup(groupKeys.StateData); }
+  virtual groupKeyStruct       & groupKeys()       { return m_ConstitutiveBaseGroupKeys; }
+  virtual groupKeyStruct const & groupKeys() const { return m_ConstitutiveBaseGroupKeys; }
+
+  ManagedGroup * GetParameterData()             { return this->GetGroup(m_ConstitutiveBaseGroupKeys.ParameterData); }
+  ManagedGroup const * GetParameterData() const { return this->GetGroup(m_ConstitutiveBaseGroupKeys.ParameterData); }
+
+  ManagedGroup * GetStateData()             { return this->GetGroup(m_ConstitutiveBaseGroupKeys.StateData); }
+  ManagedGroup const * GetStateData() const { return this->GetGroup(m_ConstitutiveBaseGroupKeys.StateData); }
 
 };
 
