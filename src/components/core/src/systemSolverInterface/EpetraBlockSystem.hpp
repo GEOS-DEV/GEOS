@@ -39,14 +39,14 @@ static double ClearRow ( Epetra_FECrsMatrix * matrix,
 
   if (local_row >= 0)
   {
-    double *values = NULL;
-    int *col_indices = NULL;
+    double *values = nullptr;
+    int *col_indices = nullptr;
     int num_entries;
 
     matrix->ExtractMyRowView( local_row, num_entries, values, col_indices);
 
 
-    if( values!=NULL && col_indices!=NULL && num_entries>0 )
+    if( values!=nullptr && col_indices!=nullptr && num_entries>0 )
     {
       int* diag_find = std::find(col_indices,col_indices+num_entries-1, local_row);
       long int diag_index = (diag_find - col_indices);

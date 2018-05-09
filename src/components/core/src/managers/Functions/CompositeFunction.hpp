@@ -21,7 +21,7 @@ public:
   CompositeFunction( const std::string& name,
                      dataRepository::ManagedGroup * const parent );
 
-  virtual ~CompositeFunction();
+  virtual ~CompositeFunction() override;
   static string CatalogName() { return "CompositeFunction"; }
   virtual void FillDocumentationNode() override;
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;

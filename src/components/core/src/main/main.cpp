@@ -25,7 +25,7 @@ using namespace axom;
 int main( int argc, char *argv[] )
 {
   timeval tim;
-  gettimeofday(&tim, NULL);
+  gettimeofday(&tim, nullptr);
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
   real64 t_initialize, t_run;
 
@@ -96,16 +96,16 @@ int main( int argc, char *argv[] )
   std::cout << std::endl << "Running simulation:" << std::endl;
 
   GEOS_MARK_BEGIN("RunSimulation");
-  gettimeofday(&tim, NULL);
+  gettimeofday(&tim, nullptr);
   t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   problemManager.RunSimulation();
-  gettimeofday(&tim, NULL);
+  gettimeofday(&tim, nullptr);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   GEOS_MARK_END("RunSimulation");
 
-  gettimeofday(&tim, NULL);
+  gettimeofday(&tim, nullptr);
   t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   printf("Done!\n\nScaling Data: initTime = %1.2fs, runTime = %1.2fs\n", t_initialize - t_start,  t_run - t_initialize );

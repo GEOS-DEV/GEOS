@@ -38,7 +38,7 @@ public:
   explicit SolverBase( std::string const & name,
                        ManagedGroup * const parent );
 
-  virtual ~SolverBase();
+  virtual ~SolverBase() override;
 
   static string CatalogName() { return "SolverBase"; }
 

@@ -26,7 +26,7 @@ class QuadratureRuleManager : public dataRepository::ManagedGroup
 public:
   QuadratureRuleManager() = delete;
   QuadratureRuleManager(string const & name, ManagedGroup * const parent);
-  virtual ~QuadratureRuleManager();
+  virtual ~QuadratureRuleManager() override;
 
   virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & childKey, string const & childName ) override;

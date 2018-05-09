@@ -26,7 +26,7 @@ class BasisFunctionManager : public dataRepository::ManagedGroup
 public:
   BasisFunctionManager() = delete;
   BasisFunctionManager(string const & name, ManagedGroup * const parent);
-  virtual ~BasisFunctionManager();
+  virtual ~BasisFunctionManager() override final;
 
   virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & childKey, string const & childName ) override;

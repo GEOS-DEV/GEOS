@@ -29,7 +29,7 @@ public:
   FunctionBase( const std::string& name,
                 dataRepository::ManagedGroup * const parent );
 
-  virtual ~FunctionBase();
+  virtual ~FunctionBase() override;
 
   virtual void FillDocumentationNode() override;
 

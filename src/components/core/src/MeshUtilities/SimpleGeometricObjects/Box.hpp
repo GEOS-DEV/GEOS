@@ -19,7 +19,7 @@ public:
   Box( const std::string& name,
        ManagedGroup * const parent );
 
-  virtual ~Box();
+  virtual ~Box() override;
 
   static string CatalogName() { return "Box"; }
 

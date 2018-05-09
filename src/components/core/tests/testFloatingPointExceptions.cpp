@@ -19,6 +19,7 @@
 
 #ifdef __clang__
 #pragma clang diagnostic push
+#define __null nullptr
 #endif
 
 #include "SetSignalHandling.hpp"

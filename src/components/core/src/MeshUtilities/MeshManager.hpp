@@ -21,7 +21,7 @@ public:
   MeshManager( std::string const & name,
                ManagedGroup * const parent );
 
-  virtual ~MeshManager();
+  virtual ~MeshManager() override;
 
   virtual void FillDocumentationNode() override;
 

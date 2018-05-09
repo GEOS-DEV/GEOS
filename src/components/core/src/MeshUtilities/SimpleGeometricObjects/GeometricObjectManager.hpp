@@ -20,7 +20,7 @@ public:
   GeometricObjectManager( std::string const & name,
                           ManagedGroup * const parent );
 
-  virtual ~GeometricObjectManager();
+  virtual ~GeometricObjectManager() override;
 
   virtual void FillDocumentationNode() override;
 

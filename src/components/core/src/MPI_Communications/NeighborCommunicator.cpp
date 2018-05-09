@@ -207,19 +207,19 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) cons
 
   ObjectManagerBase * const nodeManager = mesh->getNodeManager();
   neighborGroups[numNeighborGroups++] = nodeManager->
-      GetGroup(nodeManager->groupKeys.neighborData)->
+      GetGroup(nodeManager->m_ObjectManagerBaseGroupKeys.neighborData)->
       RegisterGroup( std::to_string( this->m_neighborRank ));
 
   ObjectManagerBase * const faceManager = mesh->getFaceManager();
   neighborGroups[numNeighborGroups++] = faceManager->
-      GetGroup(faceManager->groupKeys.neighborData)->
+      GetGroup(faceManager->m_ObjectManagerBaseGroupKeys.neighborData)->
       RegisterGroup( std::to_string( this->m_neighborRank ));
 
   ElementRegionManager * const elemManager = mesh->getElemManager();
   elemManager->forCellBlocks( [&]( ManagedGroup * const cellBlock ) -> void
   {
     neighborGroups[numNeighborGroups++] = cellBlock->
-        GetGroup(faceManager->groupKeys.neighborData)->
+        GetGroup(faceManager->m_ObjectManagerBaseGroupKeys.neighborData)->
         RegisterGroup( std::to_string( this->m_neighborRank ));
   });
 

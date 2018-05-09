@@ -25,7 +25,7 @@ public:
   PhysicsSolverManager( std::string const & name,
                         ManagedGroup * const parent );
 
-  virtual ~PhysicsSolverManager();
+  virtual ~PhysicsSolverManager() override;
 
   virtual void FillDocumentationNode() override;
 

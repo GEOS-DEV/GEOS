@@ -385,7 +385,7 @@ public:
   template< typename CBF >
   void WriteMultiXXXX(const DBObjectType type, CBF DBPutMultiCB,
                       const int centering, const std::string name, const int cycleNumber,
-                      const std::string& multiRoot, const DBoptlist* optlist = NULL);
+                      const std::string& multiRoot, const DBoptlist* optlist = nullptr);
 
 
   template<typename TYPE>
@@ -703,14 +703,14 @@ void SiloFile::WriteDataField( const std::string& meshName,
   DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
 
   char *regionpnames[2] =
-  { NULL, NULL };
+  { nullptr, nullptr };
 
 
 
   if (regionName != "none")
   {
     regionpnames[0] = const_cast<char*> (regionName.c_str());
-    regionpnames[1] = NULL;
+    regionpnames[1] = nullptr;
     DBAddOption(optlist, DBOPT_REGION_PNAMES, &regionpnames);
   }
 
@@ -750,7 +750,7 @@ void SiloFile::WriteDataField( const std::string& meshName,
     if( meshType == DB_UCDMESH )
     {
       err = DBPutUcdvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, varnames.data(), reinterpret_cast<float**>(vars.data()),
-                         nels, NULL, 0, SiloFileUtilities::DB_TYPE<OUTTYPE>(), centering, optlist);
+                         nels, nullptr, 0, SiloFileUtilities::DB_TYPE<OUTTYPE>(), centering, optlist);
     }
     else if( meshType == DB_POINTMESH )
     {
@@ -760,7 +760,7 @@ void SiloFile::WriteDataField( const std::string& meshName,
     else if( meshType == DB_QUADCURV )
     {
       err = DBPutQuadvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, varnames.data(), reinterpret_cast<float**>(vars.data()),
-                          m_quadMeshDims,m_quadMeshNDims,NULL, 0,  SiloFileUtilities::DB_TYPE<OUTTYPE>(),centering, optlist);
+                          m_quadMeshDims,m_quadMeshNDims,nullptr, 0,  SiloFileUtilities::DB_TYPE<OUTTYPE>(),centering, optlist);
     }
     if(err < 0)
     {

@@ -169,7 +169,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
       array_view<localIndex,2> constitutiveMapView = constitutiveMap.second.View();
 
       auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
-      array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys.nodeList)->reference().View();// getData<lArray2d>(keys::nodeList);
+      array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<lArray2d>(keys::nodeList);
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
