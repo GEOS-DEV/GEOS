@@ -79,7 +79,7 @@ public:
   }
 
   GaussQuadrature() = default;
-  ~GaussQuadrature();
+  ~GaussQuadrature() override;
 
   int size() const override final;
   R1Tensor integration_point( const int index ) const override final;

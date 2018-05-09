@@ -21,7 +21,7 @@ class NewFunctionManager : public dataRepository::ManagedGroup
 public:
   NewFunctionManager( const std::string& name,
                       dataRepository::ManagedGroup * const parent );
-  virtual ~NewFunctionManager();
+  virtual ~NewFunctionManager() override;
 
   static NewFunctionManager * Instance()
   {

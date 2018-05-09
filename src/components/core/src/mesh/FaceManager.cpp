@@ -581,11 +581,11 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 void FaceManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.nodeListString));
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementRegionListString));
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementSubRegionListString));
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::edgeListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementRegionListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementSubRegionListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementListString));
 }
 
 

@@ -16,7 +16,7 @@ inline void readDirectory(const std::string& name, std::vector<std::string>& v)
 {
     DIR* dirp = opendir(name.c_str());
     struct dirent * dp;
-    while ((dp = readdir(dirp)) != NULL) {
+    while ((dp = readdir(dirp)) != nullptr) {
         v.push_back(dp->d_name);
     }
     closedir(dirp);

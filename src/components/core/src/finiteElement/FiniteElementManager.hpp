@@ -30,7 +30,7 @@ class FiniteElementManager : public dataRepository::ManagedGroup
 public:
   FiniteElementManager() = delete;
   FiniteElementManager(string const & name, ManagedGroup * const parent);
-  virtual ~FiniteElementManager();
+  virtual ~FiniteElementManager() override;
 
   virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & childKey, string const & childName ) override;

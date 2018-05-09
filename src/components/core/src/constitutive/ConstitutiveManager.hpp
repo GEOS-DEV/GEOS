@@ -41,7 +41,7 @@ public:
   void FillDocumentationNode() override final;
   virtual void CreateChild( string const & childKey, string const & childName ) override final;
 
-  ~ConstitutiveManager();
+  ~ConstitutiveManager() override;
 
 //  using constitutiveMaps = std::pair< array<ManagedGroup const *> ,
 // map<string,integer> > ;

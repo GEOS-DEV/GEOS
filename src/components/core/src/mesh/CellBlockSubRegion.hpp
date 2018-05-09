@@ -17,7 +17,7 @@ class CellBlockSubRegion : public CellBlock
 {
 public:
   CellBlockSubRegion( string const & name, ManagedGroup * const parent );
-  virtual ~CellBlockSubRegion();
+  virtual ~CellBlockSubRegion() override;
 
   void FillDocumentationNode() override final;
 
@@ -66,7 +66,13 @@ public:
     dataRepository::ViewKey constitutiveMap       = { constitutiveMapString };
     dataRepository::ViewKey dNdX                  = { dNdXString };
 
-  } viewKeys;
+  } m_CellBlockSubRegionViewKeys;
+
+  virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
+  virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
+
+//  virtual groupKeyStruct & groupKeys() { return m_ObjectManagerBaseGroupKeys; }
+//  virtual groupKeyStruct const & groupKeys() const { return m_ObjectManagerBaseGroupKeys; }
 
 
   map< string, localIndex_array > m_constitutiveGrouping;

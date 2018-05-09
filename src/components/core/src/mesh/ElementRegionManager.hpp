@@ -111,7 +111,7 @@ public:
   ///@}
 
   ElementRegionManager( string const &, ManagedGroup * const parent );
-  virtual ~ElementRegionManager();
+  virtual ~ElementRegionManager() override;
 
   localIndex getNumberOfElements() const;
 
@@ -224,51 +224,31 @@ public:
 
 
   int PackSize( array<string> const & wrapperNames,
-                ElementViewAccessor<localIndex_array> const & packList ) const
-  {
-    buffer_unit_type * junk = nullptr;
-    return PackPrivate<false>( junk, wrapperNames, packList );
-  }
+                ElementViewAccessor<localIndex_array> const & packList ) const;
 
   int Pack( buffer_unit_type * & buffer,
             array<string> const & wrapperNames,
-            ElementViewAccessor<localIndex_array> const & packList ) const
-  {
-    return PackPrivate<true>( buffer, wrapperNames, packList );
-  }
+            ElementViewAccessor<localIndex_array> const & packList ) const;
 
+  using ObjectManagerBase::Unpack;
   int Unpack( buffer_unit_type const * & buffer,
               ElementViewAccessor<localIndex_array> & packList );
 
 
 
-  virtual int PackGlobalMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const
-  {
-    buffer_unit_type * junk = nullptr;
-    return PackGlobalMapsPrivate<false>( junk, packList);
-  }
+  int PackGlobalMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const;
 
-  virtual int PackGlobalMaps( buffer_unit_type * & buffer,
-                              ElementViewAccessor<localIndex_array> const & packList ) const
-  {
-    return PackGlobalMapsPrivate<true>( buffer, packList);
-  }
+  int PackGlobalMaps( buffer_unit_type * & buffer,
+                              ElementViewAccessor<localIndex_array> const & packList ) const;
 
 
   int UnpackGlobalMaps( buffer_unit_type const * & buffer,
                                 ElementViewAccessor<localIndex_array> & packList );
 
-  int PackUpDownMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const
-  {
-    buffer_unit_type * junk = nullptr;
-    return PackUpDownMapsPrivate<false>( junk, packList);
-  }
+  int PackUpDownMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const;
 
   int PackUpDownMaps( buffer_unit_type * & buffer,
-                      ElementViewAccessor<localIndex_array> const & packList ) const
-  {
-    return PackUpDownMapsPrivate<true>( buffer, packList);
-  }
+                      ElementViewAccessor<localIndex_array> const & packList ) const;
 
 
   int UnpackUpDownMaps( buffer_unit_type const * & buffer,

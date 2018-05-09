@@ -204,6 +204,19 @@ void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problem
   }
 }
 
+int ElementRegionManager::PackSize( array<string> const & wrapperNames,
+              ElementViewAccessor<localIndex_array> const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return PackPrivate<false>( junk, wrapperNames, packList );
+}
+
+int ElementRegionManager::Pack( buffer_unit_type * & buffer,
+          array<string> const & wrapperNames,
+          ElementViewAccessor<localIndex_array> const & packList ) const
+{
+  return PackPrivate<true>( buffer, wrapperNames, packList );
+}
 
 template< bool DOPACK >
 int
@@ -243,12 +256,12 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-template int ElementRegionManager::PackPrivate<true>( buffer_unit_type * &,
-                                                      array<string> const &,
-                                                      ElementViewAccessor<localIndex_array> const & ) const;
-template int ElementRegionManager::PackPrivate<false>( buffer_unit_type * &,
-                                                      array<string> const &,
-                                                      ElementViewAccessor<localIndex_array> const & ) const;
+//template int ElementRegionManager::PackPrivate<true>( buffer_unit_type * &,
+//                                                      array<string> const &,
+//                                                      ElementViewAccessor<localIndex_array> const & ) const;
+//template int ElementRegionManager::PackPrivate<false>( buffer_unit_type * &,
+//                                                      array<string> const &,
+//                                                      ElementViewAccessor<localIndex_array> const & ) const;
 
 int
 ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
@@ -286,6 +299,17 @@ ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
 }
 
 
+ int ElementRegionManager::PackGlobalMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return PackGlobalMapsPrivate<false>( junk, packList);
+}
+
+ int ElementRegionManager::PackGlobalMaps( buffer_unit_type * & buffer,
+                                           ElementViewAccessor<localIndex_array> const & packList ) const
+{
+  return PackGlobalMapsPrivate<true>( buffer, packList);
+}
 template< bool DOPACK >
 int
 ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
@@ -320,13 +344,6 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-template int
-ElementRegionManager::PackGlobalMapsPrivate<true>( buffer_unit_type * & buffer,
-                                                   ElementViewAccessor<localIndex_array> const & packList ) const;
-template int
-ElementRegionManager::PackGlobalMapsPrivate<false>( buffer_unit_type * & buffer,
-                                                   ElementViewAccessor<localIndex_array> const & packList ) const;
-
 
 
 
@@ -371,6 +388,17 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
 
 
 
+int ElementRegionManager::PackUpDownMapsSize( ElementViewAccessor<localIndex_array> const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return PackUpDownMapsPrivate<false>( junk, packList);
+}
+
+int ElementRegionManager::PackUpDownMaps( buffer_unit_type * & buffer,
+                                          ElementViewAccessor<localIndex_array> const & packList ) const
+{
+  return PackUpDownMapsPrivate<true>( buffer, packList);
+}
 
 template< bool DOPACK >
 int
@@ -406,14 +434,14 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-template int
-ElementRegionManager::
-PackUpDownMapsPrivate<true>( buffer_unit_type * & buffer,
-                             ElementViewAccessor<localIndex_array> const & packList ) const;
-template int
-ElementRegionManager::
-PackUpDownMapsPrivate<false>( buffer_unit_type * & buffer,
-                             ElementViewAccessor<localIndex_array> const & packList ) const;
+//template int
+//ElementRegionManager::
+//PackUpDownMapsPrivate<true>( buffer_unit_type * & buffer,
+//                             ElementViewAccessor<localIndex_array> const & packList ) const;
+//template int
+//ElementRegionManager::
+//PackUpDownMapsPrivate<false>( buffer_unit_type * & buffer,
+//                             ElementViewAccessor<localIndex_array> const & packList ) const;
 
 
 int

@@ -127,7 +127,7 @@ public:
 //  map<string,integer> SetConstitutiveMap( dataRepository::ManagedGroup const &
 // domain );
 
-  virtual ~CellBlock();
+  virtual ~CellBlock() override;
 
   void GetFaceNodes( const localIndex elementIndex,
                      const localIndex localFaceIndex,
@@ -159,12 +159,17 @@ public:
     dataRepository::ViewKey nodeList           = { nodeListString };
     dataRepository::ViewKey numFacesPerElement = { numFacesPerElementString };
     dataRepository::ViewKey faceList           = { faceListString };
-  } viewKeys;
+  } m_CellBlockViewKeys;
 
-  class groupKeyStruct
-  {
-public:
-  } groupKeys;
+//  class groupKeyStruct
+//  {
+//  } groupKeys;
+
+  virtual viewKeyStruct & viewKeys() override { return m_CellBlockViewKeys; }
+  virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockViewKeys; }
+
+//  virtual groupKeyStruct & groupKeys() { return m_ObjectManagerBaseGroupKeys; }
+//  virtual groupKeyStruct const & groupKeys() const { return m_ObjectManagerBaseGroupKeys; }
 
 
 
