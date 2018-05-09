@@ -25,7 +25,7 @@ class FiniteElementSpaceManager : public dataRepository::ManagedGroup
 public:
   FiniteElementSpaceManager() = delete;
   FiniteElementSpaceManager(string const & name, ManagedGroup * const parent);
-  virtual ~FiniteElementSpaceManager();
+  virtual ~FiniteElementSpaceManager() override;
 
   virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & childKey, string const & childName ) override;

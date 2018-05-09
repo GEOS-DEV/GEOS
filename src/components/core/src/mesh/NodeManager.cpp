@@ -88,9 +88,9 @@ NodeManager::NodeManager( std::string const & name,
   m_referencePosition()
 {
   RegisterViewWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementRegionListString);
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementSubRegionListString);
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeys.elementListString);
+  this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementRegionListString);
+  this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementSubRegionListString);
+  this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementListString);
 
 }
 
@@ -199,9 +199,9 @@ void NodeManager::FillDocumentationNode()
 
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
-  array<localIndex_array> & elementRegionList = this->getReference< array<localIndex_array> >(viewKeys.elementRegionListString);
-  array<localIndex_array> & elementSubRegionList = this->getReference< array<localIndex_array> >(viewKeys.elementSubRegionListString);
-  array<localIndex_array> & elementList = this->getReference< array<localIndex_array> >(viewKeys.elementListString);
+  array<localIndex_array> & elementRegionList = this->getReference< array<localIndex_array> >(viewKeyStruct::elementRegionListString);
+  array<localIndex_array> & elementSubRegionList = this->getReference< array<localIndex_array> >(viewKeyStruct::elementSubRegionListString);
+  array<localIndex_array> & elementList = this->getReference< array<localIndex_array> >(viewKeyStruct::elementListString);
 
   for( localIndex a=0 ; a<size() ; ++a )
   {
@@ -239,11 +239,11 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.faceListString));
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementRegionListString));
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementSubRegionListString));
-  exclusionList.insert(this->getWrapperIndex(this->viewKeys.elementListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::edgeListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementRegionListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementSubRegionListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementListString));
 }
 
 

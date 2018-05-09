@@ -37,7 +37,7 @@ public:
   ConstitutiveBase( std::string const & name,
                     ManagedGroup * const parent  );
 
-  virtual ~ConstitutiveBase();
+  virtual ~ConstitutiveBase() override;
 
 
   virtual void SetParamStatePointers( void *& ) = 0;

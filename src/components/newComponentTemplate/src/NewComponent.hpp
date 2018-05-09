@@ -22,7 +22,7 @@ class NewComponent : public SolverBase
 public:
   NewComponent( std::string const & name,
                 ManagedGroup * const parent);
-  virtual ~NewComponent();
+  virtual ~NewComponent() override;
 
   static std::string CatalogName() { return "NewComponent"; }
 

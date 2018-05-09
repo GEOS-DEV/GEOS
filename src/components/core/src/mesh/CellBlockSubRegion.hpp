@@ -17,7 +17,7 @@ class CellBlockSubRegion : public CellBlock
 {
 public:
   CellBlockSubRegion( string const & name, ManagedGroup * const parent );
-  virtual ~CellBlockSubRegion();
+  virtual ~CellBlockSubRegion() override;
 
   void FillDocumentationNode() override final;
 

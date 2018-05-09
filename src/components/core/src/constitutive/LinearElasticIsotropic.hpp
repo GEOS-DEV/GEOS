@@ -27,7 +27,7 @@ class LinearElasticIsotropic : public ConstitutiveBase
 public:
   LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent );
 
-  virtual ~LinearElasticIsotropic();
+  virtual ~LinearElasticIsotropic() override;
 
   static std::string CatalogName() { return dataRepository::keys::linearElasticIsotropic; }
 

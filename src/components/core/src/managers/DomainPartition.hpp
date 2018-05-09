@@ -32,7 +32,7 @@ public:
   DomainPartition( std::string const & name,
                    ManagedGroup * const parent );
 
-  ~DomainPartition();
+  ~DomainPartition() override;
 
   DomainPartition() = delete;
   DomainPartition( DomainPartition const &) = delete;

@@ -79,7 +79,7 @@ namespace geosx
 using namespace dataRepository;
 
 PartitionBase::PartitionBase( ):
-  m_domain(NULL),
+  m_domain(nullptr),
   m_hasLocalGhosts(false)
 {
   //maxComm
@@ -91,7 +91,7 @@ PartitionBase::PartitionBase( const unsigned int numPartitions, const unsigned i
   m_rank(thisPartiton),
   m_color(0),
   m_numColors(1),
-  m_domain(NULL),
+  m_domain(nullptr),
   m_t1(0.0),
   m_t2(0.0),
   m_t3(0.0),

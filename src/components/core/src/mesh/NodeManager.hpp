@@ -115,7 +115,7 @@ public:
 
 
   /// default destructor
-  ~NodeManager();
+  ~NodeManager() override;
 
   static string CatalogName() { return dataRepository::keys::nodeManager; }
   const string getCatalogName() const override final

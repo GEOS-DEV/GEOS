@@ -22,7 +22,7 @@ class MeshLevel : public dataRepository::ManagedGroup
 public:
   MeshLevel( string const & name,
              ManagedGroup * const parent );
-  virtual ~MeshLevel();
+  virtual ~MeshLevel() override;
 
   void InitializePostSubGroups( ManagedGroup * const ) override;
 
