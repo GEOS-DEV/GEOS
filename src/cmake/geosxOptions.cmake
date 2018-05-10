@@ -1,6 +1,19 @@
 message("\nProcessing geosxOptions.cmake")
 
 
+
+option( ENABLE_CALIPER "" OFF )
+option( ENABLE_UNCRUSTIFY "" ON )
+option( ENABLE_MATHPRESSO "" ON )
+option( RAJA_ENABLE_TBB "" OFF)
+
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
+
+#blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
+#set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
+
 if( BLT_CXX_STD STREQUAL c++11)
     MESSAGE(FATAL_ERROR "c++11 is enabled. GEOSX requires c++14")
 endif(BLT_CXX_STD STREQUAL c++11)
@@ -24,8 +37,6 @@ endif()
 
 message("CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
 
-set(ENABLE_SHARED_LIBS ON CACHE BOOL "" FORCE)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}")
@@ -34,8 +45,7 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                  CLANG "-Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-missing-prototypes -Wno-covered-switch-default -Wno-double-promotion -Wno-documentation -Wno-switch-enum -Wno-sign-conversion -Wno-unused-parameter -Wno-unused-variable -Wno-reserved-id-macro" 
                                )
 
-blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
-set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
+
     
     
 
