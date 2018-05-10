@@ -58,6 +58,5 @@ blt_add_library( NAME                  geosx_core
                  
 #                 DEPENDS_ON            optionparser cxx-utilities  pugixml  silo hdf5 trilinos  ${extraComponentsListLink} ${thirdPartyLibs} )
                  
-geosx_add_code_checks(PREFIX core
-                      EXCLUDES /Users/settgast1/Codes/geosx/GEOSX_github/src/components/core/src/legacy/Common/VersionHistory.temp.h)
+geosx_add_code_checks(PREFIX core )
 
