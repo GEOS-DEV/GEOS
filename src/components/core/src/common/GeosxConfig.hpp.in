@@ -16,6 +16,8 @@
 #cmakedefine USE_PYTHON
 #cmakedefine USE_RAJA
 
+#cmakedefine USE_CONTAINERARRAY_RETURN_PTR
+
 
 #endif  /* GEOSX_CONFIG_HPP */
 
