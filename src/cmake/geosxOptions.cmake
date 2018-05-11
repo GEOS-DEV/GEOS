@@ -5,12 +5,29 @@ message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 
+
+
+
+# OPTIONS
+
 option( ENABLE_CALIPER "" OFF )
+set( CALIPER_INSTALL "" CACHE PATH "")
+
 option( ENABLE_MATHPRESSO "" ON )
+
 option( ENABLE_CHAI "Enables CHAI" ON )
+option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
+
 option( ENABLE_RAJA "Enables RAJA" ON )
+option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
 option( RAJA_ENABLE_TBB "" OFF)
+option( RAJA_ENABLE_OPENMP "" OFF )
+option( RAJA_ENABLE_CUDA "" OFF )
+option( RAJA_ENABLE_TESTS "" OFF )
+
+
 option( ENABLE_FPARSER "Enables FPARSER" OFF )
+
 option( ENABLE_UNCRUSTIFY "" ON )
 
 option( ENABLE_FORTRAN "Enables Fortran support" OFF)
@@ -18,6 +35,17 @@ option( ENABLE_FORTRAN "Enables Fortran support" OFF)
 
 option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables ViewWrapper to return pointers instead of references" ON )
 
+option( ENABLE_HYPRE "Enables HYPRE" OFF )
+
+option( ENABLE_MPI "" ON )
+
+option(CUDA_ENABLED "" OFF)
+
+if( CMAKE_HOST_APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
+  option(ENABLE_OPENMP     "Enables OpenMP compiler support" OFF)  
+else()
+  option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
+endif()
 
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
@@ -26,11 +54,15 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
 
 
-if( CMAKE_HOST_APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
-  option(ENABLE_OPENMP     "Enables OpenMP compiler support" OFF)  
-else()
-  option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
-endif()
+
+set(ATK_CMAKE "${ATK_DIR}/lib/cmake" CACHE PATH "")
+
+set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
+
+
+
+
+
 
 
 
