@@ -52,12 +52,11 @@ message("adding geosx_core library")
 blt_add_library( NAME                  geosx_core
                  SOURCES               ${geosx_core_sources}
                  HEADERS               ${geosx_headers}
-                 HEADERS_OUTPUT_SUBDIR geosx_core
                  DEPENDS_ON            optionparser cxx-utilities pugixml 
                                        ${extraComponentsListLink} 
                                        ${thirdPartyLibs} )
                  
 #                 DEPENDS_ON            optionparser cxx-utilities  pugixml  silo hdf5 trilinos  ${extraComponentsListLink} ${thirdPartyLibs} )
                  
-geosx_add_code_checks(PREFIX core)
+geosx_add_code_checks(PREFIX core )
 
