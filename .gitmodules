@@ -6,3 +6,6 @@
 	url = ../physicssolverpackage1.git
 	branch = master
 
+[submodule "src/cmake/blt"]
+	path = src/cmake/blt
+	url = git@github.com:LLNL/blt.git
