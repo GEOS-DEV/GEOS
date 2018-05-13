@@ -54,9 +54,9 @@ blt_add_library( NAME                  geosx_core
                  HEADERS               ${geosx_headers}
                  DEPENDS_ON            optionparser cxx-utilities pugixml 
                                        ${extraComponentsListLink} 
-                                       ${thirdPartyLibs} )
-                 
-#                 DEPENDS_ON            optionparser cxx-utilities  pugixml  silo hdf5 trilinos  ${extraComponentsListLink} ${thirdPartyLibs} )
+                                       ${thirdPartyLibs}
+                 SHARED TRUE
+               )
                  
 geosx_add_code_checks(PREFIX core )
 

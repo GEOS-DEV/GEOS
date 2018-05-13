@@ -47,9 +47,10 @@ else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
 endif()
 
+#option( BUILD_SHARED_LIBS "" ON )
+#option( ENABLE_SHARED_LIBS "" ON )
 
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
+#set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
 #set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
 
