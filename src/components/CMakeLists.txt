@@ -23,7 +23,6 @@ add_subdirectory(core)
 add_subdirectory(cxx-utilities/src)
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
-set(componentlist geosx_core cxx-utilities)
 foreach(child ${children})
   if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${child})
     if( NOT ( ${child} STREQUAL "core" OR 
@@ -38,6 +37,7 @@ foreach(child ${children})
     endif()
   endif()
 endforeach()
+list( APPEND componentlist geosx_core )
 
 set(componentlistlink "")
 
