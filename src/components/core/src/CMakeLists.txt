@@ -52,7 +52,7 @@ message("adding geosx_core library")
 blt_add_library( NAME                  geosx_core
                  SOURCES               ${geosx_core_sources}
                  HEADERS               ${geosx_headers}
-                 DEPENDS_ON            optionparser cxx-utilities pugixml 
+                 DEPENDS_ON            managers dataRepository optionparser cxx-utilities pugixml 
                                        ${extraComponentsListLink} 
                                        ${thirdPartyLibs}
                  SHARED TRUE

@@ -2,20 +2,24 @@
 #
 # Specify all headers
 #
-set(geosx_headers
-  ${geosx_headers}
-  fileIO/xmlWrapper.hpp
-  fileIO/silo/SiloFile.hpp
-  fileIO/blueprint/Blueprint.hpp
-  fileIO/utils/utils.hpp
-    PARENT_SCOPE )
+set(fileIO_headers
+  xmlWrapper.hpp
+  silo/SiloFile.hpp
+  blueprint/Blueprint.hpp
+  utils/utils.hpp )
 
 #
 # Specify all sources
 #
-set(geosx_core_sources
-  ${geosx_core_sources}
-  fileIO/xmlWrapper.cpp
-  fileIO/silo/SiloFile.cpp
-  fileIO/blueprint/Blueprint.cpp
-    PARENT_SCOPE )
+set(fileIO_sources
+  xmlWrapper.cpp
+  silo/SiloFile.cpp
+  blueprint/Blueprint.cpp )
+
+    
+blt_add_library( NAME                  fileIO
+                 SOURCES               ${fileIO_sources}
+                 HEADERS               ${fileIO_headers}
+                 DEPENDS_ON            common silo hdf5 mpi pugixml RAJA
+                 SHARED FALSE
+               )

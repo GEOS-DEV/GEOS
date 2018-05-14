@@ -9,24 +9,21 @@
 #define GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
 
 #include "ViewWrapperBase.hpp"
+
+#include "CommBufferOps.hpp"
 #include "KeyNames.hpp"
 #include "common/integer_conversion.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
 #include <type_traits>
-#include "StringUtilities.hpp"
+
 #include "Macros.hpp"
 #include "Buffer.hpp"
 #include "RestartFlags.hpp"
 
-#include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "common/GeosxConfig.hpp"
-
-
-
-#include "MPI_Communications/CommBufferOps.hpp"
 
 
 #ifdef USE_ATK
