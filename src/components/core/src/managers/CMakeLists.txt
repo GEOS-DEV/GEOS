@@ -34,6 +34,6 @@ set(managers_sources
 blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
-                 DEPENDS_ON            dataRepository fileIO silo optionparser mathpresso RAJA trilinos
+                 DEPENDS_ON            dataRepository fileIO optionparser mathpresso RAJA trilinos
                  SHARED FALSE
                )

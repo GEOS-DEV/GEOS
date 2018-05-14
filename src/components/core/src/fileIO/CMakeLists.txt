@@ -17,9 +17,9 @@ set(fileIO_sources
   blueprint/Blueprint.cpp )
 
     
-blt_add_library( NAME                  filoIO
+blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
                  HEADERS               ${fileIO_headers}
-                 DEPENDS_ON            silo hdf5 conduit mpi
+                 DEPENDS_ON            common silo hdf5 mpi pugixml RAJA
                  SHARED FALSE
                )
