@@ -2,32 +2,48 @@
 #
 # Specify all headers
 #
-set(geosx_headers
-  ${geosx_headers}
-    mesh/CellBlockManager.hpp
-    mesh/CellBlock.hpp
-    mesh/CellBlockSubRegion.hpp
-    mesh/FaceManager.hpp
-    mesh/NodeManager.hpp
-    mesh/ElementRegion.hpp
-    mesh/ElementRegionManager.hpp
-    mesh/MeshBody.hpp
-    mesh/MeshLevel.hpp    
-    PARENT_SCOPE )
+set(mesh_headers
+    CellBlockManager.hpp
+    CellBlock.hpp
+    CellBlockSubRegion.hpp
+    FaceManager.hpp
+    NodeManager.hpp
+    ElementRegion.hpp
+    ElementRegionManager.hpp
+    MeshBody.hpp
+    MeshLevel.hpp    
+  )
 
 
 #
 # Specify all sources
 #
-set(geosx_core_sources
-  ${geosx_core_sources}
-    mesh/CellBlockManager.cpp
-    mesh/CellBlock.cpp
-    mesh/CellBlockSubRegion.cpp
-    mesh/FaceManager.cpp
-    mesh/NodeManager.cpp
-    mesh/ElementRegion.cpp
-    mesh/ElementRegionManager.cpp
-    mesh/MeshBody.cpp
-    mesh/MeshLevel.cpp    
-    PARENT_SCOPE )
+set(mesh_sources
+    CellBlockManager.cpp
+    CellBlock.cpp
+    CellBlockSubRegion.cpp
+    FaceManager.cpp
+    NodeManager.cpp
+    ElementRegion.cpp
+    ElementRegionManager.cpp
+    MeshBody.cpp
+    MeshLevel.cpp    
+   )
+    
+
+set( dependencyList managers  )
+set( dependencyList2 "" )
+foreach( lib ${dependencyList} )
+    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+endforeach()
+message( "dependencyList2 = ${dependencyList2}" )
+
+blt_add_library( NAME                  mesh
+                 SOURCES               ${mesh_sources}
+                 HEADERS               ${mesh_headers}
+                 DEPENDS_ON            ${dependencyList2}
+                 SHARED FALSE
+               )
+               
+target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+geosx_add_code_checks(PREFIX mesh )

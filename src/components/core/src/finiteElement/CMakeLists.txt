@@ -1,38 +1,53 @@
 #
 # Specify all headers
 #
-set(geosx_core_sources
-  ${geosx_core_sources}
-    finiteElement/FiniteElementSpace.hpp
-    finiteElement/FiniteElementManager.hpp
-    finiteElement/ElementLibrary/FiniteElement.h
-    finiteElement/ElementLibrary/FiniteElementBase.h
-    finiteElement/Kinematics.h
-    finiteElement/basis/BasisBase.hpp
-    finiteElement/basis/LagrangeBasis.hpp
-    finiteElement/basis/Polynomial.hpp    
-    finiteElement/quadrature/QuadratureBase.hpp
-    finiteElement/quadrature/GaussQuadrature.hpp
-    finiteElement/FiniteElementSpaceManager.hpp
-    finiteElement/basis/BasisFunctionManager.hpp
-    finiteElement/quadrature/QuadratureRuleManager.hpp
-    PARENT_SCOPE )
+set( finiteElement_sources
+     FiniteElementSpace.hpp
+     FiniteElementManager.hpp
+     ElementLibrary/FiniteElement.h
+     ElementLibrary/FiniteElementBase.h
+     Kinematics.h
+     basis/BasisBase.hpp
+     basis/LagrangeBasis.hpp
+     basis/Polynomial.hpp    
+     quadrature/QuadratureBase.hpp
+     quadrature/GaussQuadrature.hpp
+     FiniteElementSpaceManager.hpp
+     basis/BasisFunctionManager.hpp
+     quadrature/QuadratureRuleManager.hpp
+   )
 #
 # Specify all sources
 #
-set(geosx_core_sources
-  ${geosx_core_sources}
-    finiteElement/FiniteElementSpace.cpp
-    finiteElement/FiniteElementManager.cpp
-    finiteElement/ElementLibrary/FiniteElement.cpp
-    finiteElement/ElementLibrary/FiniteElementBase.cpp
-    finiteElement/Kinematics.cpp
-    finiteElement/basis/BasisBase.cpp
-    finiteElement/basis/LagrangeBasis.cpp
-    finiteElement/basis/Polynomial.cpp    
-    finiteElement/quadrature/QuadratureBase.cpp
-    finiteElement/quadrature/GaussQuadrature.cpp
-    finiteElement/FiniteElementSpaceManager.cpp
-    finiteElement/basis/BasisFunctionManager.cpp
-    finiteElement/quadrature/QuadratureRuleManager.cpp
-    PARENT_SCOPE )
+set( finiteElement_sources
+     FiniteElementSpace.cpp
+     FiniteElementManager.cpp
+     ElementLibrary/FiniteElement.cpp
+     ElementLibrary/FiniteElementBase.cpp
+     Kinematics.cpp
+     basis/BasisBase.cpp
+     basis/LagrangeBasis.cpp
+     basis/Polynomial.cpp    
+     quadrature/QuadratureBase.cpp
+     quadrature/GaussQuadrature.cpp
+     FiniteElementSpaceManager.cpp
+     basis/BasisFunctionManager.cpp
+     quadrature/QuadratureRuleManager.cpp
+   )
+
+set( dependencyList dataRepository codingUtilities )
+set( dependencyList2 "" )
+foreach( lib ${dependencyList} )
+    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+endforeach()
+message( "dependencyList2 = ${dependencyList2}" )
+
+blt_add_library( NAME                  finiteElement
+                 SOURCES               ${finiteElement_sources}
+                 HEADERS               ${finiteElement_headers}
+                 DEPENDS_ON            ${dependencyList2}
+                 SHARED FALSE
+               )
+               
+target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+geosx_add_code_checks(PREFIX finiteElement )
