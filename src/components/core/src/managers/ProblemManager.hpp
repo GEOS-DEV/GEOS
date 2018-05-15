@@ -26,7 +26,7 @@
 #include "PhysicsSolvers/SolverBase.hpp"
 #include "EventManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
-#include "schema/SchemaUtilities.hpp"
+#include "fileIO/schema/SchemaUtilities.hpp"
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 
 namespace geosx

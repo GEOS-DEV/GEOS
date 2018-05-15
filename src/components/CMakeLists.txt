@@ -1,6 +1,4 @@
 message( "Entering /src/components/CMakeLists.txt")
-blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_SOURCE_DIR}/components/core/src)
-#blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${PROJECT_BINARY_DIR}/include )
 
 
 # Python config

@@ -9,23 +9,36 @@ set(geosx_headers "" )
 #
 
 set(geosx_core_sources "" )
-    
-add_subdirectory(codingUtilities)
-add_subdirectory(common)
-add_subdirectory(constitutive)
-add_subdirectory(dataRepository)
-add_subdirectory(fileIO)
-add_subdirectory(finiteElement)
-#add_subdirectory(legacy)
-add_subdirectory(math)
-add_subdirectory(mesh)
-add_subdirectory(schema)
-add_subdirectory(managers)
-add_subdirectory(MeshUtilities)
-add_subdirectory(MPI_Communications)
-add_subdirectory(PhysicsSolvers)
-add_subdirectory(python)
-add_subdirectory(systemSolverInterface)
+
+
+
+
+set( coreLibs 
+     codingUtilities
+     common
+     constitutive
+     dataRepository
+     fileIO
+     finiteElement
+     math
+     mesh
+     managers
+     meshUtilities
+     MPI_Communications
+     physicsSolvers
+     python
+     systemSolverInterface
+     )
+
+
+set( coreLibLinkLine "")
+foreach( lib ${coreLibs} )
+    add_subdirectory(${lib})
+    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
+        set( coreLibLinkLine ${coreLibLinkLine} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+    endif()
+endforeach()
+
 
 
 # Python config
@@ -49,14 +62,19 @@ endif()
 #message( "extraComponentsListLink = ${extraComponentsListLink}" )
 message("adding geosx_core library")
 
-blt_add_library( NAME                  geosx_core
-                 SOURCES               ${geosx_core_sources}
-                 HEADERS               ${geosx_headers}
-                 DEPENDS_ON            managers dataRepository optionparser cxx-utilities pugixml 
-                                       ${extraComponentsListLink} 
-                                       ${thirdPartyLibs}
-                 SHARED TRUE
-               )
-                 
+#blt_add_library( NAME                  geosx_core
+#                 SOURCES               ${geosx_core_sources}
+#                 HEADERS               ${geosx_headers}
+#                 DEPENDS_ON            ${coreLibs}
+#                                       ${extraComponentsListLink} 
+#                                       ${thirdPartyLibs}
+#                 SHARED TRUE
+#               )
+
+
+message( "coreLibLinkLine = ${coreLibLinkLine}" )
+add_library ( geosx_core SHARED ${coreLibs} )
+target_link_libraries(geosx_core ${coreLibLinkLine})
+
 geosx_add_code_checks(PREFIX core )
 
