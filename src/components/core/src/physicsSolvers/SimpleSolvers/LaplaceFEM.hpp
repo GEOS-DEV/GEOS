@@ -8,7 +8,7 @@
 #ifndef SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 #define SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 
-#include "PhysicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 
 
