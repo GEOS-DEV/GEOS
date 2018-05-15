@@ -56,7 +56,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "finiteElement/quadrature/GaussQuadrature.hpp"
-#include "MeshUtilities/StructuredGridUtilities.hpp"
+#include "meshUtilities/StructuredGridUtilities.hpp"
 /*
  * Constructor. Compute weights and unit integration points
  * for a Gauss-Legendre quadrature rule of degree p > 0, where
