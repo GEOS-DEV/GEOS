@@ -22,8 +22,7 @@
 #include "optionparser.h"
 
 #include "ObjectManagerBase.hpp"
-// #include "PhysicsSolvers/PhysicsSolverManager.hpp"
-#include "PhysicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 #include "EventManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
