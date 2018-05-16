@@ -64,7 +64,6 @@
 #ifndef EDGEMANAGERT_H_
 #define EDGEMANAGERT_H_
 
-#include "../MPI_Communications/CommBufferOps.hpp"
 #include "managers/ObjectManagerBase.hpp"
 
 

@@ -16,23 +16,23 @@
 
 
 #include "DomainPartition.hpp"
-#include "PhysicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
-#include "MeshUtilities/MeshManager.hpp"
-#include "MeshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
+#include "meshUtilities/MeshManager.hpp"
+#include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "fileIO/blueprint/Blueprint.hpp"
 #include "fileIO/utils/utils.hpp"
-#include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
-#include "MeshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
+#include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/SidreWrapper.hpp"
 #include "dataRepository/RestartFlags.hpp"
 
 #include "mesh/MeshBody.hpp"
-#include "MeshUtilities/MeshUtilities.hpp"
+#include "meshUtilities/MeshUtilities.hpp"
 // #include "managers/MeshLevel.hpp"
 namespace geosx
 {

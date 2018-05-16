@@ -2,19 +2,35 @@
 #
 # Specify all headers
 #
-set(geosx_headers
-  ${geosx_headers}
-    systemSolverInterface/EpetraBlockSystem.hpp
-    systemSolverInterface/LinearSolverWrapper.hpp
-    systemSolverInterface/SystemSolverParameters.hpp
-    PARENT_SCOPE )
+set(systemSolverInterface_headers
+    EpetraBlockSystem.hpp
+    LinearSolverWrapper.hpp
+    SystemSolverParameters.hpp
+    )
 
 #
 # Specify all sources
 #
-set(geosx_core_sources
-  ${geosx_core_sources}
-    systemSolverInterface/EpetraBlockSystem.cpp
-    systemSolverInterface/SystemSolverParameters.cpp
-    systemSolverInterface/LinearSolverWrapper.cpp
-    PARENT_SCOPE )
+set(systemSolverInterface_sources
+    EpetraBlockSystem.cpp
+    SystemSolverParameters.cpp
+    LinearSolverWrapper.cpp
+   )
+
+
+set( dependencyList fileIO common )
+set( dependencyList2 trilinos )
+foreach( lib ${dependencyList} )
+    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+endforeach()
+message( "dependencyList2 = ${dependencyList2}" )
+
+blt_add_library( NAME                  systemSolverInterface
+                 SOURCES               ${systemSolverInterface_sources}
+                 HEADERS               ${systemSolverInterface_headers}
+                 DEPENDS_ON            ${dependencyList2}
+                 SHARED FALSE
+               )
+               
+target_include_directories( systemSolverInterface PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+geosx_add_code_checks(PREFIX systemSolverInterface )
