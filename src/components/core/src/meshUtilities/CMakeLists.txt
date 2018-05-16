@@ -26,18 +26,18 @@ set(meshUtilities_sources
     SimpleGeometricObjects/Box.cpp
    )
     
-    
-set( dependencyList fileIO common  )
-set( dependencyList2 trilinos )
-foreach( lib ${dependencyList} )
-    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-endforeach()
-message( "dependencyList2 = ${dependencyList2}" )
+#    
+#set( dependencyList fileIO common  )
+#set( dependencyList2 trilinos )
+#foreach( lib ${dependencyList} )
+#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+#endforeach()
+#message( "dependencyList2 = ${dependencyList2}" )
 
 blt_add_library( NAME                  meshUtilities
                  SOURCES               ${meshUtilities_sources}
                  HEADERS               ${meshUtilities_headers}
-                 DEPENDS_ON            ${dependencyList2}
+                 DEPENDS_ON            fileIO common trilinos
                  SHARED FALSE
                )
                

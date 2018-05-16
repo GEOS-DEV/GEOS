@@ -31,17 +31,17 @@ set(mesh_sources
    )
     
 
-set( dependencyList managers  )
-set( dependencyList2 "" )
-foreach( lib ${dependencyList} )
-    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-endforeach()
-message( "dependencyList2 = ${dependencyList2}" )
+#set( dependencyList managers  )
+#set( dependencyList2 "" )
+#foreach( lib ${dependencyList} )
+#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+#endforeach()
+#message( "dependencyList2 = ${dependencyList2}" )
 
 blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
-                 DEPENDS_ON            ${dependencyList2}
+                 DEPENDS_ON            managers
                  SHARED FALSE
                )
                

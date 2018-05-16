@@ -17,7 +17,7 @@ include(cmake/blt/SetupBLT.cmake)
 # Include standard build system logic and options
 ################################
 include(cmake/CMakeBasics.cmake)
-
+set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "" FORCE)
 
 ################################
 # Add components

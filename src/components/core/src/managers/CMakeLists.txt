@@ -28,18 +28,18 @@ set(managers_sources
     ObjectManagerBase.cpp
     ProblemManager.cpp )
 
-set( dependencyList dataRepository fileIO  )
-set( dependencyList2 optionparser mathpresso RAJA trilinos )
-foreach( lib ${dependencyList} )
-    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-endforeach()
-message( "dependencyList2 = ${dependencyList2}" )
+#set( dependencyList dataRepository fileIO  )
+#set( dependencyList2 optionparser mathpresso RAJA trilinos )
+#foreach( lib ${dependencyList} )
+#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+#endforeach()
+#message( "dependencyList2 = ${dependencyList2}" )
 
 
 blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
-                 DEPENDS_ON            ${dependencyList2}
+                 DEPENDS_ON            dataRepository fileIO optionparser mathpresso RAJA trilinos
                  SHARED FALSE
                )
                

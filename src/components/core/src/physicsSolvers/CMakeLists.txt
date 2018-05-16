@@ -20,19 +20,19 @@ set(physicsSolvers_sources
     BoundaryConditions/BoundaryConditionManager.cpp
     BoundaryConditions/DirichletBoundaryCondition.cpp
     SimpleSolvers/LaplaceFEM.cpp  )
-
-set( dependencyList dataRepository systemSolverInterface  )
-set( dependencyList2 "" )
-foreach( lib ${dependencyList} )
-    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-endforeach()
-message( "dependencyList2 = ${dependencyList2}" )
+#
+#set( dependencyList dataRepository systemSolverInterface  )
+#set( dependencyList2 "" )
+#foreach( lib ${dependencyList} )
+#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+#endforeach()
+#message( "dependencyList2 = ${dependencyList2}" )
 
 
 blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
-                 DEPENDS_ON            ${dependencyList2}
+                 DEPENDS_ON            dataRepository systemSolverInterface
                  SHARED FALSE
                )
                
