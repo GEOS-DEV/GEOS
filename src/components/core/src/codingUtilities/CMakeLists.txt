@@ -28,5 +28,7 @@ blt_add_library( NAME                  codingUtilities
                  SHARED FALSE
                )
                
+               
+               
 target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
 geosx_add_code_checks(PREFIX codingUtilities )
