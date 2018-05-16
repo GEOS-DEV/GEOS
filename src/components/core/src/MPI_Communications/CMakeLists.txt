@@ -21,18 +21,18 @@ set(MPI_Communications_sources
     PartitionBase.cpp
     SpatialPartition.cpp
    )
-    
-set( dependencyList fileIO common  )
-set( dependencyList2 trilinos )
-foreach( lib ${dependencyList} )
-    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-endforeach()
-message( "dependencyList2 = ${dependencyList2}" )
+#    
+#set( dependencyList fileIO common  )
+#set( dependencyList2 trilinos )
+#foreach( lib ${dependencyList} )
+#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+#endforeach()
+#message( "dependencyList2 = ${dependencyList2}" )
 
 blt_add_library( NAME                  MPI_Communications
                  SOURCES               ${MPI_Communications_sources}
                  HEADERS               ${MPI_Communications_headers}
-                 DEPENDS_ON            ${dependencyList2}
+                 DEPENDS_ON            fileIO common trilinos
                  SHARED FALSE
                )
                

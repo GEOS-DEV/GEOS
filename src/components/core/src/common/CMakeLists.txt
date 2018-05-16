@@ -16,18 +16,18 @@ set(common_sources
     Logger.cpp )
 
     
-set( dependencyList cxx-utilities )
-set( dependencyList2 mpi )
-foreach( lib ${dependencyList} )
-    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-endforeach()
-message( "dependencyList2 = ${dependencyList2}" )
+#set( dependencyList cxx-utilities )
+#set( dependencyList2 mpi )
+#foreach( lib ${dependencyList} )
+#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+#endforeach()
+#message( "dependencyList2 = ${dependencyList2}" )
 
 
 blt_add_library( NAME                  common
                  SOURCES               ${common_sources}
                  HEADERS               ${common_headers}
-                 DEPENDS_ON            ${dependencyList2}
+                 DEPENDS_ON            cxx-utilities mpi
                  SHARED FALSE
                )
                
