@@ -40,21 +40,29 @@ endif()
 #message( "extraComponentsListLink = ${extraComponentsListLink}" )
 message("adding geosx_core library")
 
-set( dependencyList common cxx-utilities  )
-set( dependencyList2 pugixml )
-foreach( lib ${dependencyList} )
-    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-endforeach()
-message( "dependencyList2 = ${dependencyList2}" )
+#set( dependencyList common cxx-utilities  )
+#set( dependencyList2 pugixml )
+#foreach( lib ${dependencyList} )
+#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+#endforeach()
+#message( "dependencyList2 = ${dependencyList2}" )
+#
+#blt_add_library( NAME                  dataRepository
+#                 SOURCES               ${dataRepository_sources}
+#                 HEADERS               ${dataRepository_headers}
+#                 DEPENDS_ON            
+#                                       ${dependencyList2} 
+#                 SHARED FALSE
+#               )
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
-                 DEPENDS_ON            
-                                       ${dependencyList2} 
+                 DEPENDS_ON            $<TARGET_OBJECTS:common> cxx-utilities pugixml
                  SHARED FALSE
+                 OBJECT TRUE
                )
-
+               
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
 
 geosx_add_code_checks(PREFIX dataRepository )

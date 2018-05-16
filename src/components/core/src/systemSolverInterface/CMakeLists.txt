@@ -18,19 +18,27 @@ set(systemSolverInterface_sources
    )
 
 
-set( dependencyList fileIO common )
-set( dependencyList2 trilinos )
-foreach( lib ${dependencyList} )
-    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-endforeach()
-message( "dependencyList2 = ${dependencyList2}" )
+#set( dependencyList fileIO common )
+#set( dependencyList2 trilinos )
+#foreach( lib ${dependencyList} )
+#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+#endforeach()
+#message( "dependencyList2 = ${dependencyList2}" )
+#
+#blt_add_library( NAME                  systemSolverInterface
+#                 SOURCES               ${systemSolverInterface_sources}
+#                 HEADERS               ${systemSolverInterface_headers}
+#                 DEPENDS_ON            ${dependencyList2}
+#                 SHARED FALSE
+#               )
 
 blt_add_library( NAME                  systemSolverInterface
                  SOURCES               ${systemSolverInterface_sources}
                  HEADERS               ${systemSolverInterface_headers}
-                 DEPENDS_ON            ${dependencyList2}
+                 DEPENDS_ON            fileIO common trilinos mpi
                  SHARED FALSE
+                 OBJECT TRUE
                )
-               
+
 target_include_directories( systemSolverInterface PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
 geosx_add_code_checks(PREFIX systemSolverInterface )

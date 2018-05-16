@@ -12,6 +12,7 @@ set(BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard")
 # Include blt
 ################################
 include(cmake/blt/SetupBLT.cmake)
+set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "" FORCE)
 
 ################################
 # Include standard build system logic and options

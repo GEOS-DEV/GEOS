@@ -35,7 +35,7 @@ set( coreLibLinkLine "")
 foreach( lib ${coreLibs} )
     add_subdirectory(${lib})
     if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
-        set( coreLibLinkLine ${coreLibLinkLine} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+        set( coreLibLinkLine ${coreLibLinkLine} $<TARGET_OBJECTS:${lib}> )
     endif()
 endforeach()
 
@@ -73,7 +73,7 @@ message("adding geosx_core library")
 
 
 message( "coreLibLinkLine = ${coreLibLinkLine}" )
-add_library ( geosx_core SHARED ${coreLibs} )
+add_library ( geosx_core SHARED ${coreLibLinkLine} )
 target_link_libraries(geosx_core ${coreLibLinkLine})
 
 geosx_add_code_checks(PREFIX core )
