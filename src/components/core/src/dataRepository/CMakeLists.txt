@@ -60,6 +60,7 @@ blt_add_library( NAME                  dataRepository
                  HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            $<TARGET_OBJECTS:common> cxx-utilities pugixml
                  SHARED FALSE
+                 OBJECT TRUE
                )
                
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)

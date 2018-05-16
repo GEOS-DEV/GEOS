@@ -15,18 +15,25 @@ set( constitutive_sources
      LinearElasticIsotropic.cpp
    )
 
-set( dependencyList dataRepository )
-set( dependencyList2 "" )
-foreach( lib ${dependencyList} )
-    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-endforeach()
-message( "dependencyList2 = ${dependencyList2}" )
-
+#set( dependencyList dataRepository )
+#set( dependencyList2 "" )
+#foreach( lib ${dependencyList} )
+#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+#endforeach()
+#message( "dependencyList2 = ${dependencyList2}" )
+#
+#blt_add_library( NAME                  constitutive
+#                 SOURCES               ${constitutive_sources}
+#                 HEADERS               ${constitutive_headers}
+#                 DEPENDS_ON            ${dependencyList2}
+#                 SHARED FALSE
+#               )
 blt_add_library( NAME                  constitutive
                  SOURCES               ${constitutive_sources}
                  HEADERS               ${constitutive_headers}
-                 DEPENDS_ON            ${dependencyList2}
+                 DEPENDS_ON            dataRepository
                  SHARED FALSE
+                 OBJECT TRUE
                )
                
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
