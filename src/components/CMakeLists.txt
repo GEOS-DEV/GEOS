@@ -56,7 +56,7 @@ blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
                    DEPENDS_ON 
                               ${componentlistlink} 
-                              ${geosx_core}
+                              ${geosx_core_libs}
                               ${extraComponentsListLink}
                   ) 
 
