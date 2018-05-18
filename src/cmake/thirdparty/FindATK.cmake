@@ -74,6 +74,10 @@ if(ATK_DIR)
     if(NOT EXISTS ${ATK_DIR}/lib/cmake/sidre-targets.cmake)
         MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_DIR}/lib/cmake/sidre-targets.cmake)")
     endif()
+
+
+    include("${ATK_CMAKE}/fmt-targets.cmake")
+    include("${ATK_CMAKE}/sparsehash-targets.cmake")
     include(${ATK_DIR}/lib/cmake/sidre-targets.cmake)
 
 
@@ -81,12 +85,10 @@ if(ATK_DIR)
     #include("${ATK_CMAKE}/sidre-targets.cmake")
     #include("${ATK_CMAKE}/slic-targets.cmake")
     include("${ATK_CMAKE}/mint-targets.cmake")
-    include("${ATK_CMAKE}/fmt-targets.cmake")
     include("${ATK_CMAKE}/primal-targets.cmake")
     include("${ATK_CMAKE}/slam-targets.cmake")
     include("${ATK_CMAKE}/quest-targets.cmake")
     include("${ATK_CMAKE}/slam-targets.cmake")
-    include("${ATK_CMAKE}/spio-targets.cmake")
 
     set(ATK_FOUND TRUE)    
     

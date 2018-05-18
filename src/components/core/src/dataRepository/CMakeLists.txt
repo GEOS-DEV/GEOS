@@ -37,6 +37,7 @@ if( USE_ATK )
   set( extraComponentsListLink ${extraComponentsListLink} )
 endif()
 
+
 #message( "extraComponentsListLink = ${extraComponentsListLink}" )
 #message("adding geosx_core library")
 #
@@ -47,10 +48,20 @@ endif()
 #endforeach()
 #message( "dependencyList2 = ${dependencyList2}" )
 
+
+set( dependencyList common cxx-utilities pugixml )
+if( CONDUIT_FOUND )
+  set( dependencyList ${dependencyList} conduit )
+endif()
+
+if( ATK_FOUND )
+  set( dependencyList ${dependencyList} sidre )
+endif()
+
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
-                 DEPENDS_ON            common cxx-utilities pugixml
+                 DEPENDS_ON            ${dependencyList}
                  SHARED FALSE
                )
 

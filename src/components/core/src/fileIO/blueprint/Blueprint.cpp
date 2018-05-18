@@ -10,7 +10,7 @@
 #include "sidre/sidre.hpp"
 #include "sidre/DataStore.hpp"
 #include "sidre/SidreTypes.hpp"
-#include "spio/IOManager.hpp"
+#include "sidre/IOManager.hpp"
 
 #include "conduit_blueprint.hpp"
 #include "conduit_relay.hpp"

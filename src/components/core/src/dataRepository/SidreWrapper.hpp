@@ -13,7 +13,7 @@
 
 #ifdef USE_ATK
 #include "sidre/DataStore.hpp"
-#include "spio/IOManager.hpp"
+#include "sidre/IOManager.hpp"
 #endif
 #include <mpi.h>
 

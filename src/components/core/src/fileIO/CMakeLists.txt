@@ -25,10 +25,15 @@ set(fileIO_sources
 #endforeach()
 #message( "dependencyList2 = ${dependencyList2}" )
 
+set( dependencyList common silo hdf5 mpi pugixml RAJA )
+if( CONDUIT_FOUND )
+  set( dependencyList ${dependencyList} conduit )
+endif()
+
 blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
                  HEADERS               ${fileIO_headers}
-                 DEPENDS_ON            common silo hdf5 mpi pugixml RAJA
+                 DEPENDS_ON            ${dependencyList}
                  SHARED FALSE
                )
                

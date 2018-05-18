@@ -15,8 +15,13 @@ set(common_headers
 set(common_sources
     Logger.cpp )
 
-    
-#set( dependencyList cxx-utilities )
+
+set( dependencyList cxx-utilities mpi )
+
+if( ATK_FOUND )
+  set( dependencyList ${dependencyList} slic )
+endif()
+
 #set( dependencyList2 mpi )
 #foreach( lib ${dependencyList} )
 #    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
@@ -27,7 +32,7 @@ set(common_sources
 blt_add_library( NAME                  common
                  SOURCES               ${common_sources}
                  HEADERS               ${common_headers}
-                 DEPENDS_ON            cxx-utilities mpi
+                 DEPENDS_ON            ${dependencyList}
                  SHARED FALSE
                )
                
