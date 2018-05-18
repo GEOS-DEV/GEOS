@@ -40,7 +40,7 @@ blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
                  DEPENDS_ON            dataRepository fileIO optionparser mathpresso RAJA trilinos
-                 SHARED FALSE
+#                 SHARED FALSE
                )
                
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)

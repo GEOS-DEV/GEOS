@@ -29,20 +29,11 @@ set(mesh_sources
     MeshBody.cpp
     MeshLevel.cpp    
    )
-    
-
-#set( dependencyList managers  )
-#set( dependencyList2 "" )
-#foreach( lib ${dependencyList} )
-#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-#endforeach()
-#message( "dependencyList2 = ${dependencyList2}" )
 
 blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
                  DEPENDS_ON            managers
-                 SHARED FALSE
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)

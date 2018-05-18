@@ -35,18 +35,10 @@ set( finiteElement_sources
      quadrature/QuadratureRuleManager.cpp
    )
 
-#set( dependencyList dataRepository codingUtilities )
-#set( dependencyList2 "" )
-#foreach( lib ${dependencyList} )
-#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-#endforeach()
-#message( "dependencyList2 = ${dependencyList2}" )
-
 blt_add_library( NAME                  finiteElement
                  SOURCES               ${finiteElement_sources}
                  HEADERS               ${finiteElement_headers}
                  DEPENDS_ON            dataRepository codingUtilities
-                 SHARED FALSE
                )
                
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)

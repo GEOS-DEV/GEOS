@@ -18,6 +18,7 @@ endif()
 
 
 add_subdirectory(core)
+
 add_subdirectory(cxx-utilities/src)
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
@@ -35,23 +36,23 @@ foreach(child ${children})
     endif()
   endif()
 endforeach()
-list( APPEND componentlist geosx_core )
 
-set(componentlistlink "")
-
-foreach(component ${componentlist})
-  set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
-endforeach()
+#set(componentlistlink "")
+#foreach(component ${componentlist})
+#  set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
+#endforeach()
+set( componentlistlink ${componentlist} )
 
 if( ENABLE_OPENMP)
   set( extraComponentsListLink ${extraComponentsListLink} openmp )
 endif()
 
-message("componentlistlink = ${componentlistlink}")
-message("componentlistlink = ${extraComponentsListLink}")
+#message("componentlistlink = ${componentlistlink}")
+#message("componentlistlink = ${extraComponentsListLink}")
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
-                   DEPENDS_ON ${componentlistlink} 
+                   DEPENDS_ON ${geosx_core}
+                              ${componentlistlink} 
                               ${extraComponentsListLink}
                   ) 
 
