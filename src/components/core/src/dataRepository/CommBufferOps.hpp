@@ -225,23 +225,23 @@ namespace CommBufferOps
 
 
   template< bool DO_PACKING >
-  int Pack( char*& buffer,
+  localIndex Pack( char*& buffer,
             localIndex const * const var,
             localIndex const length,
             globalIndex_array const & localToGlobalMap );
 
-  int Unpack( char const *& buffer,
+  localIndex Unpack( char const *& buffer,
               localIndex_array & var,
               map<globalIndex,localIndex> const & globalToLocalMap );
 
 
   template< bool DO_PACKING >
-  int Pack( char*& buffer,
+  localIndex Pack( char*& buffer,
             multidimensionalArray::ManagedArray<localIndex,2,localIndex> const & var,
             localIndex_array const & indices,
             globalIndex_array const & localToGlobalMap );
 
-  int Unpack( char const *& buffer,
+  localIndex Unpack( char const *& buffer,
               multidimensionalArray::ManagedArray<localIndex,2,localIndex> & var,
               localIndex_array const & indices,
               globalIndex_array const & globalToLocalMap );

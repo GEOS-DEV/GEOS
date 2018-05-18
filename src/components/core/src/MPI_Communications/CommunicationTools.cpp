@@ -171,7 +171,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   // send the composition buffers
   {
-    localIndex const sendSize = objectToCompositionObjectSendBuffer.size() * sizeof(globalIndex);
+    int const sendSize = integer_conversion<int const>(objectToCompositionObjectSendBuffer.size() * sizeof(globalIndex));
 
     for( localIndex in = 0 ; in < neighbors.size() ; ++in )
     {
