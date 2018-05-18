@@ -2,26 +2,55 @@
 #
 # Specify all headers
 #
-set(geosx_headers
-  ${geosx_headers}
-    dataRepository/KeyIndexT.hpp
-    dataRepository/ManagedGroup.hpp
-    dataRepository/MappedVector.hpp    
-    dataRepository/SidreWrapper.hpp
-    dataRepository/ViewWrapper.hpp
-    dataRepository/ViewWrapperBase.hpp
-    dataRepository/Buffer.hpp
-    dataRepository/RestartFlags.hpp
-    PARENT_SCOPE )
+set(dataRepository_headers
+    CommBufferOps.hpp
+    CommBufferOps_inline.hpp
+    KeyIndexT.hpp
+    ManagedGroup.hpp
+    MappedVector.hpp    
+    SidreWrapper.hpp
+    ViewWrapper.hpp
+    ViewWrapperBase.hpp
+    Buffer.hpp
+    RestartFlags.hpp )
 
 #
 # Specify all sources
 #
-set(geosx_core_sources
-  ${geosx_core_sources}
-    dataRepository/ManagedGroup.cpp
-    dataRepository/SidreWrapper.cpp
-    dataRepository/ViewWrapper.cpp
-    dataRepository/ViewWrapperBase.cpp
-    PARENT_SCOPE )
+set(dataRepository_sources
+    CommBufferOps.cpp
+    ManagedGroup.cpp
+    SidreWrapper.cpp
+    ViewWrapper.cpp
+    ViewWrapperBase.cpp )
+    
 
+
+set( extraComponentsListLink "")
+
+
+if( ENABLE_MPI )
+  set( extraComponentsListLink ${extraComponentsListLink} mpi )
+endif()
+
+
+
+
+set( dependencyList common cxx-utilities pugixml )
+if( CONDUIT_FOUND )
+  set( dependencyList ${dependencyList} conduit )
+endif()
+
+if( ATK_FOUND )
+  set( dependencyList ${dependencyList} sidre )
+endif()
+
+blt_add_library( NAME                  dataRepository
+                 SOURCES               ${dataRepository_sources}
+                 HEADERS               ${dataRepository_headers}
+                 DEPENDS_ON            ${dependencyList}
+               )
+
+target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+
+geosx_add_code_checks(PREFIX dataRepository )

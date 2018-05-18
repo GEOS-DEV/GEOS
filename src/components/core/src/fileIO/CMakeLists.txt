@@ -2,20 +2,33 @@
 #
 # Specify all headers
 #
-set(geosx_headers
-  ${geosx_headers}
-  fileIO/xmlWrapper.hpp
-  fileIO/silo/SiloFile.hpp
-  fileIO/blueprint/Blueprint.hpp
-  fileIO/utils/utils.hpp
-    PARENT_SCOPE )
+set(fileIO_headers
+  xmlWrapper.hpp
+  silo/SiloFile.hpp
+  blueprint/Blueprint.hpp
+  schema/SchemaUtilities.hpp
+  utils/utils.hpp )
 
 #
 # Specify all sources
 #
-set(geosx_core_sources
-  ${geosx_core_sources}
-  fileIO/xmlWrapper.cpp
-  fileIO/silo/SiloFile.cpp
-  fileIO/blueprint/Blueprint.cpp
-    PARENT_SCOPE )
+set(fileIO_sources
+  xmlWrapper.cpp
+  silo/SiloFile.cpp
+  schema/SchemaUtilities.cpp
+  blueprint/Blueprint.cpp )
+
+set( dependencyList common silo hdf5 mpi pugixml RAJA )
+if( CONDUIT_FOUND )
+  set( dependencyList ${dependencyList} conduit )
+endif()
+
+blt_add_library( NAME                  fileIO
+                 SOURCES               ${fileIO_sources}
+                 HEADERS               ${fileIO_headers}
+                 DEPENDS_ON            ${dependencyList}
+               )
+               
+target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+
+geosx_add_code_checks(PREFIX fileIO )

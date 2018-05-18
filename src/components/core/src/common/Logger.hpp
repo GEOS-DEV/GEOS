@@ -9,7 +9,7 @@
 #define SRC_COMPONENTS_CORE_SRC_COMMON_LOGGER_HPP_
 
 #include <string>
-#include "common/GeosxConfig.hpp"
+#include "GeosxConfig.hpp"
 #include <sstream>
 #ifdef USE_ATK
 #include "slic/slic.hpp"

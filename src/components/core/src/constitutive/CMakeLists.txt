@@ -1,18 +1,26 @@
 #
 # Specify all headers
 #
-set(geosx_core_sources
-  ${geosx_core_sources}
-    constitutive/ConstitutiveManager.hpp
-    constitutive/ConstitutiveBase.hpp
-    constitutive/LinearElasticIsotropic.hpp
-    PARENT_SCOPE )
+set( constitutive_headers
+     ConstitutiveManager.hpp
+     ConstitutiveBase.hpp
+     LinearElasticIsotropic.hpp
+   )
 #
 # Specify all sources
 #
-set(geosx_core_sources
-  ${geosx_core_sources}
-    constitutive/ConstitutiveManager.cpp
-    constitutive/ConstitutiveBase.cpp
-    constitutive/LinearElasticIsotropic.cpp
-    PARENT_SCOPE )
+set( constitutive_sources
+     ConstitutiveManager.cpp
+     ConstitutiveBase.cpp
+     LinearElasticIsotropic.cpp
+   )
+
+
+blt_add_library( NAME                  constitutive
+                 SOURCES               ${constitutive_sources}
+                 HEADERS               ${constitutive_headers}
+                 DEPENDS_ON            dataRepository
+               )
+               
+target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+geosx_add_code_checks(PREFIX constitutive )
