@@ -153,24 +153,24 @@ void CellBlockSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionLi
 }
 
 
-int CellBlockSubRegion::PackUpDownMapsSize( localIndex_array const & packList ) const
+localIndex CellBlockSubRegion::PackUpDownMapsSize( localIndex_array const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
 
-int CellBlockSubRegion::PackUpDownMaps( buffer_unit_type * & buffer,
+localIndex CellBlockSubRegion::PackUpDownMaps( buffer_unit_type * & buffer,
                                localIndex_array const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template< bool DOPACK >
-int CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+localIndex CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                localIndex_array const & packList ) const
 {
-  int packedSize = 0;
+  localIndex packedSize = 0;
 
   packedSize += CommBufferOps::Pack<DOPACK>( buffer,
                                              m_toNodesRelation,
@@ -188,10 +188,10 @@ int CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 }
 
 
-int CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+localIndex CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                  localIndex_array const & packList )
 {
-  int unPackedSize = 0;
+  localIndex unPackedSize = 0;
 
   unPackedSize += CommBufferOps::Unpack( buffer,
                                          m_toNodesRelation,
