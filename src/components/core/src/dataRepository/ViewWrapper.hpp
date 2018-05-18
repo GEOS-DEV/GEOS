@@ -9,24 +9,21 @@
 #define GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
 
 #include "ViewWrapperBase.hpp"
+
+#include "CommBufferOps.hpp"
 #include "KeyNames.hpp"
 #include "common/integer_conversion.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
 #include <type_traits>
-#include "StringUtilities.hpp"
+
 #include "Macros.hpp"
 #include "Buffer.hpp"
 #include "RestartFlags.hpp"
 
-#include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "common/GeosxConfig.hpp"
-
-
-
-#include "MPI_Communications/CommBufferOps.hpp"
 
 
 #ifdef USE_ATK
@@ -650,7 +647,7 @@ public:
   struct Get_Type<U, true, false>
   {
 
-#if CONTAINERARRAY_RETURN_PTR == 1
+#ifdef USE_CONTAINERARRAY_RETURN_PTR
     typedef typename U::pointer       type;
     typedef typename U::const_pointer const_type;
 #else
@@ -690,7 +687,7 @@ public:
   typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,std::string>::value, rtype>::type
   data()
   {
-#if CONTAINERARRAY_RETURN_PTR == 1
+#ifdef USE_CONTAINERARRAY_RETURN_PTR
     return m_data->data();
 #else
     return *m_data;
@@ -702,7 +699,7 @@ public:
   typename std::enable_if<has_memberfunction_data<U>::value && !std::is_same<U,string>::value, rtype_const>::type
   data() const
   {
-#if CONTAINERARRAY_RETURN_PTR == 1
+#ifdef USE_CONTAINERARRAY_RETURN_PTR
     return m_data->data();
 #else
     return *m_data;

@@ -8,7 +8,6 @@
 #include "dataRepository/Buffer.hpp"
 
 #ifdef USE_ATK
-#include "spio/IOManager.hpp"
 #include "slic/slic.hpp"
 #endif
 
@@ -45,7 +44,7 @@ DataStore& SidreWrapper::dataStore()
 void SidreWrapper::writeTree(int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm) 
 {
 #ifdef USE_ATK
-  axom::spio::IOManager ioManager(comm);
+  axom::sidre::IOManager ioManager(comm);
   ioManager.write(SidreWrapper::dataStore().getRoot(), num_files, path, protocol);
 #endif
 }
@@ -59,7 +58,7 @@ void SidreWrapper::reconstructTree(const std::string & root_path, const std::str
     SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
   }
   
-  axom::spio::IOManager ioManager(comm);
+  axom::sidre::IOManager ioManager(comm);
   ioManager.read(SidreWrapper::dataStore().getRoot(), root_path, protocol);
 #endif
 }
@@ -69,7 +68,7 @@ void SidreWrapper::reconstructTree(const std::string & root_path, const std::str
 void SidreWrapper::loadExternalData(const std::string & root_path, MPI_Comm comm)
 {
 #ifdef USE_ATK
-  axom::spio::IOManager ioManager(comm);
+  axom::sidre::IOManager ioManager(comm);
   ioManager.loadExternalData(SidreWrapper::dataStore().getRoot(), root_path);
 #endif
 }

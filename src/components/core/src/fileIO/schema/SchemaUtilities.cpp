@@ -60,7 +60,7 @@
  * @author sherman
  */
 
-#include "schema/SchemaUtilities.hpp"
+#include "SchemaUtilities.hpp"
 
 namespace geosx
 {

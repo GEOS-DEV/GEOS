@@ -1,6 +1,4 @@
 message( "Entering /src/components/CMakeLists.txt")
-blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_SOURCE_DIR}/components/core/src)
-blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${PROJECT_BINARY_DIR}/include )
 
 
 # Python config
@@ -20,10 +18,10 @@ endif()
 
 
 add_subdirectory(core)
+
 add_subdirectory(cxx-utilities/src)
 
 file(GLOB children RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
-set(componentlist geosx_core cxx-utilities)
 foreach(child ${children})
   if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${child})
     if( NOT ( ${child} STREQUAL "core" OR 
@@ -39,21 +37,26 @@ foreach(child ${children})
   endif()
 endforeach()
 
-set(componentlistlink "")
-
-foreach(component ${componentlist})
-  set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
-endforeach()
-message("componentlistlink = ${componentlistlink}")
-message("thirdPartyLibs = ${thirdPartyLibs}")
+if( ${BUILD_SHARED_LIBS} OR ${ENABLE_SHARED_LIBS} )
+  set( componentlistlink ${componentlist} )
+else()
+  set(componentlistlink "")
+  foreach(component ${componentlist})
+    set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
+  endforeach()
+endif()
 
 if( ENABLE_OPENMP)
   set( extraComponentsListLink ${extraComponentsListLink} openmp )
 endif()
 
+#message("componentlistlink = ${componentlistlink}")
+#message("componentlistlink = ${extraComponentsListLink}")
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
-                   DEPENDS_ON ${componentlistlink} 
+                   DEPENDS_ON 
+                              ${componentlistlink} 
+                              ${geosx_core}
                               ${extraComponentsListLink}
                   ) 
 

@@ -39,9 +39,9 @@
 #include "sidre/SidreTypes.hpp"
 #endif
 
-#ifndef CONTAINERARRAY_RETURN_PTR
-#define CONTAINERARRAY_RETURN_PTR 1
-#endif
+//#ifndef USE_CONTAINERARRAY_RETURN_PTR
+//#define USE_CONTAINERARRAY_RETURN_PTR
+//#endif
 
 #include <iostream>
 #include <memory>
