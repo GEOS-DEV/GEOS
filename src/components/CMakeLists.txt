@@ -37,11 +37,14 @@ foreach(child ${children})
   endif()
 endforeach()
 
-#set(componentlistlink "")
-#foreach(component ${componentlist})
-#  set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
-#endforeach()
-set( componentlistlink ${componentlist} )
+if( ${BUILD_SHARED_LIBS} OR ${ENABLE_SHARED_LIBS} )
+  set( componentlistlink ${componentlist} )
+else()
+  set(componentlistlink "")
+  foreach(component ${componentlist})
+    set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
+  endforeach()
+endif()
 
 if( ENABLE_OPENMP)
   set( extraComponentsListLink ${extraComponentsListLink} openmp )
@@ -51,8 +54,9 @@ endif()
 #message("componentlistlink = ${extraComponentsListLink}")
 blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
-                   DEPENDS_ON ${geosx_core}
+                   DEPENDS_ON 
                               ${componentlistlink} 
+                              ${geosx_core}
                               ${extraComponentsListLink}
                   ) 
 
