@@ -10,6 +10,3 @@ set(geosx_headers
 #
 # Specify all sources
 #
-set(geosx_core_sources
-  ${geosx_core_sources}
-    PARENT_SCOPE )

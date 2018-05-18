@@ -1,17 +1,4 @@
 
-#
-# Specify all headers
-#
-set(geosx_headers "" )
-
-#
-# Specify all sources
-#
-
-set(geosx_core_sources "" )
-
-
-
 
 set( coreLibs 
      codingUtilities
@@ -35,8 +22,8 @@ set( coreLibLinkLine "" PARENT_SCOPE)
 foreach( lib ${coreLibs} )
     add_subdirectory(${lib})
     if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
-        set( coreLibLinkLine ${coreLibLinkLine} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-#        set( coreLibLinkLine ${coreLibLinkLine} ${lib} )
+#        set( coreLibLinkLine ${coreLibLinkLine} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+        set( coreLibLinkLine ${coreLibLinkLine} ${lib} )
     endif()
 endforeach()
 
@@ -60,6 +47,8 @@ if( USE_ATK )
   set( extraComponentsListLink ${extraComponentsListLink} )
 endif()
 
+
+set( geosx_core ${coreLibLinkLine} ${extraComponentsListLink} CACHE PATH "" FORCE)
 #message( "extraComponentsListLink = ${extraComponentsListLink}" )
 message("adding geosx_core library")
 
@@ -72,9 +61,9 @@ message("adding geosx_core library")
 #                 SHARED TRUE
 #               )
 
-message( "coreLibLinkLine = ${coreLibLinkLine}" )
-add_library ( geosx_core SHARED )
-target_link_libraries(geosx_core ${coreLibLinkLine})
+#message( "coreLibLinkLine = ${coreLibLinkLine}" )
+#add_library ( geosx_core SHARED )
+#target_link_libraries(geosx_core ${coreLibLinkLine})
 
 #execute_process(COMMAND ${CMAKE_AR} rcs ${TARGET_LOCATION} ${all_object_locations}
 #                WORKING_DIRECTORY ${scratch_dir} RESULT_VARIABLE exe_result)

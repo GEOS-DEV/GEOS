@@ -15,15 +15,8 @@ set( codingUtilities_sources
    )
 
 
-set( geosxDependencyList common )
 
-#set( dependencyList "" )
-foreach( lib ${geosxDependencyList} )
-#    set( dependencyList ${dependencyList} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-    set( dependencyList ${dependencyList}  ${lib} )
-endforeach()
-
-set( dependencyList ${dependencyList} RAJA )
+set( dependencyList common RAJA )
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
@@ -33,7 +26,7 @@ blt_add_library( NAME                  codingUtilities
                  SOURCES               ${codingUtilities_sources}
                  HEADERS               ${codingUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
-                 SHARED FALSE
+#                 SHARED TRUE
                )
                
 target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
