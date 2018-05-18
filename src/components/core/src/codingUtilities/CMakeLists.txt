@@ -14,17 +14,25 @@ set( codingUtilities_sources
      StringUtilities.cpp
    )
 
-#set( dependencyList common )
-#set( dependencyList2 RAJA )
-#foreach( lib ${dependencyList} )
-#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-#endforeach()
-#message( "dependencyList2 = ${dependencyList2}" )
-    
+
+set( geosxDependencyList common )
+
+#set( dependencyList "" )
+foreach( lib ${geosxDependencyList} )
+#    set( dependencyList ${dependencyList} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
+    set( dependencyList ${dependencyList}  ${lib} )
+endforeach()
+
+set( dependencyList ${dependencyList} RAJA )
+
+if( CONDUIT_FOUND )
+  set( dependencyList ${dependencyList} conduit )
+endif()
+
 blt_add_library( NAME                  codingUtilities
                  SOURCES               ${codingUtilities_sources}
                  HEADERS               ${codingUtilities_headers}
-                 DEPENDS_ON            common RAJA
+                 DEPENDS_ON            ${dependencyList}
                  SHARED FALSE
                )
                

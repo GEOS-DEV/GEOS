@@ -12,7 +12,7 @@
 
 #ifdef USE_ATK
 #include "dataRepository/SidreWrapper.hpp"
-#include "spio/IOManager.hpp"
+#include "sidre/IOManager.hpp"
 #endif
 
 namespace geosx
