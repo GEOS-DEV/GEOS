@@ -356,7 +356,7 @@ void ManagedGroup::InitializationOrder( string_array & order )
 
 void ManagedGroup::Initialize( ManagedGroup * const group )
 {
-  static int indent = 0;
+  static localIndex indent = 0;
 //  std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on
 // "<<this->getName()<<" of type
 // "<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
@@ -382,11 +382,11 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
-int ManagedGroup::PackSize( array<string> const & wrapperNames,
+localIndex ManagedGroup::PackSize( array<string> const & wrapperNames,
                             localIndex_array const & packList,
                             integer const recursive ) const
 {
-  int packedSize = 0;
+  localIndex packedSize = 0;
   packedSize += CommBufferOps::PackSize(this->getName());
 
   packedSize += CommBufferOps::PackSize( string("Wrappers"));
@@ -438,7 +438,7 @@ int ManagedGroup::PackSize( array<string> const & wrapperNames,
 }
 
 
-int ManagedGroup::PackSize( array<string> const & wrapperNames,
+localIndex ManagedGroup::PackSize( array<string> const & wrapperNames,
                             integer const recursive ) const
 {
   localIndex_array nullArray;
@@ -446,12 +446,12 @@ int ManagedGroup::PackSize( array<string> const & wrapperNames,
 }
 
 
-int ManagedGroup::Pack( buffer_unit_type * & buffer,
+localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
                                array<string> const & wrapperNames,
                                localIndex_array const & packList,
                                integer const recursive ) const
 {
-  int packedSize = 0;
+  localIndex packedSize = 0;
   packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
 
   packedSize += CommBufferOps::Pack<true>( buffer, string("Wrappers") );
@@ -504,7 +504,7 @@ int ManagedGroup::Pack( buffer_unit_type * & buffer,
   return packedSize;
 }
 
-int ManagedGroup::Pack( buffer_unit_type * & buffer,
+localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
                             array<string> const & wrapperNames,
                             integer const recursive ) const
 {
@@ -512,11 +512,11 @@ int ManagedGroup::Pack( buffer_unit_type * & buffer,
   return Pack( buffer, wrapperNames, nullArray, recursive );
 }
 
-int ManagedGroup::Unpack( buffer_unit_type const *& buffer,
+localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
                           localIndex_array & packList,
                           integer const recursive )
 {
-  int unpackedSize = 0;
+  localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += CommBufferOps::Unpack( buffer, groupName );
   GEOS_ASSERT( groupName==this->getName(), "ManagedGroup::Unpack(): group names do not match")
@@ -525,7 +525,7 @@ int ManagedGroup::Unpack( buffer_unit_type const *& buffer,
   unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
   GEOS_ASSERT( wrappersLabel=="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
 
-  int numWrappers;
+  localIndex numWrappers;
   unpackedSize += CommBufferOps::Unpack( buffer, numWrappers);
   for( localIndex a=0 ; a<numWrappers ; ++a )
   {

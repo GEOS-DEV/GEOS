@@ -215,7 +215,7 @@ Unpack( char const *& buffer, T & var )
 {
   localIndex sizeOfUnpackedChars = 0;
   real64 * const pVar = var.Data();
-  int length = var.Length();
+  localIndex length = var.Length();
   sizeOfUnpackedChars += Unpack( buffer, pVar, length );
   return sizeOfUnpackedChars;
 }
@@ -514,7 +514,7 @@ localIndex Unpack( char const *& buffer,
 
 
 template< bool DO_PACKING >
-int Pack( char*& buffer,
+localIndex Pack( char*& buffer,
           localIndex const * const var,
           localIndex const length,
           globalIndex_array const & localToGlobalMap )
@@ -537,7 +537,7 @@ int Pack( char*& buffer,
 }
 
 inline
-int Unpack( char const *& buffer,
+localIndex Unpack( char const *& buffer,
             localIndex_array & var,
             map<globalIndex,localIndex> const & globalToLocalMap )
 {
@@ -560,7 +560,7 @@ int Unpack( char const *& buffer,
 
 
 inline
-int Unpack( char const *& buffer,
+localIndex Unpack( char const *& buffer,
             localIndex * const var,
             localIndex const length,
             map<globalIndex,localIndex> const & globalToLocalMap )
@@ -610,13 +610,13 @@ int Unpack( char const *& buffer,
 
 
 template< bool DO_PACKING >
-int Pack( char*& buffer,
+localIndex Pack( char*& buffer,
           array< localIndex_array > const & var,
           localIndex_array const & indices,
           globalIndex_array const & localToGlobalMap,
           globalIndex_array const & relatedObjectLocalToGlobalMap )
 {
-  int sizeOfPackedChars=0;
+  localIndex sizeOfPackedChars=0;
 
   sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
   for( localIndex a=0 ; a<indices.size() ; ++a )
@@ -630,13 +630,13 @@ int Pack( char*& buffer,
 }
 
 inline
-int Unpack( char const *& buffer,
+localIndex Unpack( char const *& buffer,
             array< localIndex_array > & var,
             localIndex_array const & indices,
             map<globalIndex,localIndex> const & globalToLocalMap,
             map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
 {
-  int sizeOfUnpackedChars=0;
+  localIndex sizeOfUnpackedChars=0;
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
@@ -657,13 +657,13 @@ int Unpack( char const *& buffer,
 }
 
 template< bool DO_PACKING >
-int Pack( char*& buffer,
+localIndex Pack( char*& buffer,
           Array2dT<localIndex> const & var,
           localIndex_array const & indices,
           globalIndex_array const & localToGlobalMap,
           globalIndex_array const & relatedObjectLocalToGlobalMap )
 {
-  int sizeOfPackedChars = 0;
+  localIndex sizeOfPackedChars = 0;
 
   sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
   for( localIndex a=0 ; a<indices.size() ; ++a )
@@ -678,13 +678,13 @@ int Pack( char*& buffer,
 
 
 inline
-int Unpack( char const *& buffer,
+localIndex Unpack( char const *& buffer,
             Array2dT<localIndex> & var,
             localIndex_array const & indices,
             map<globalIndex,localIndex> const & globalToLocalMap,
             map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
 {
-  int sizeOfUnpackedChars = 0;
+  localIndex sizeOfUnpackedChars = 0;
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
