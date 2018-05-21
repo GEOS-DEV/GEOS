@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = u'GEOSX'
-copyright = u'2018, Randolph Settgast'
+copyright = u'2018, Lawrence Livermore National Laboratory'
 author = u'Randolph Settgast'
 
 # The short X.Y version
