@@ -11,6 +11,7 @@ set(MPI_C_COMPILER "/opt/local/bin/mpicc-openmpi-gcc7" CACHE PATH "")
 set(MPI_CXX_COMPILER "/opt/local/bin/mpicxx-openmpi-gcc7" CACHE PATH "")
 set(MPI_Fortran_COMPILER "/opt/local/bin/mpifort-openmpi-gcc7" CACHE PATH "")
 set(MPIEXEC "mpirun-openmpi-gcc7" CACHE PATH "")
+set(SPHINX_EXECUTABLE "/opt/local/bin/sphinx-build-2.7" CACHE PATH "" FORCE)
 
 #######################################
 # RAJA/CHAI SETUP
