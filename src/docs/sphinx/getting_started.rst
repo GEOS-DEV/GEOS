@@ -1,11 +1,12 @@
 ###############################################################################
-GEOSX Getting Started Guide
+Getting Started with GEOSX
 ###############################################################################
 
 Getting Ready
 =================================
 GEOSX resides in a git repository hosted at https://github.com/GEOSX/GEOSX.
-It is suggested that you setup ssh keys, and use ssh for your clones as discussed `here <https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/>`_.
+It is suggested that you setup ssh keys, and use ssh for your clones as discussed 
+`here <https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/>`__.
 It is suggested that a directory be created to host the various clones that one may require for an effective development workflow, so the first step is to make a directory
 
 1. mkdir geosx; cd geosx
@@ -66,3 +67,15 @@ Again, the config-build sets up cmake for you.
    cd build-your-platform-release
    
    make -j4
+
+   
+Running the Code
+=================================
+
+GEOSX executables read in a XML input file. A simple example XML is located
+`here <https://github.com/GEOSX/GEOSX/blob/develop/src/components/core/tests/PhysicsSolvers/LaplaceFEM.xml/>`__. 
+To execute a serial run enter the following command from a working directory:
+
+    path-to-geosx-bin/geosx -i path-to-xml/LaplaceFEM.xml
+
+
