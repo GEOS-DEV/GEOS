@@ -25,12 +25,13 @@ set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "" FORCE)
 add_subdirectory(components)
 
 
+
 ################################
 # Add docs
 ################################
-#if (ENABLE_DOCS)
-#  add_subdirectory(docs)
-#endif()
+if (ENABLE_DOCS)
+  add_subdirectory(docs)
+endif()
 
 
 #add_code_check_targets(uncrustify.cfg)

@@ -9,7 +9,7 @@ wget "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x60C317803A41BA51845
 echo deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu xenial main >> /etc/apt/sources.list
 echo deb-src http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu xenial main >> /etc/apt/sources.list
 apt-get -qq update
-apt-get -qq install -y --no-install-recommends python-dev build-essential sudo git dh-autoreconf ninja-build ca-certificates libtbb-dev zlib1g-dev libblas-dev liblapack-dev
+apt-get -qq install -y --no-install-recommends python-dev build-essential sudo git dh-autoreconf ninja-build ca-certificates libtbb-dev zlib1g-dev libblas-dev liblapack-dev python-sphinx
 
 #wget -q --no-check-certificate https://cmake.org/files/v3.11/cmake-3.11.1-Linux-x86_64.tar.gz
 #tar -xzf cmake-3.11.1-Linux-x86_64.tar.gz
