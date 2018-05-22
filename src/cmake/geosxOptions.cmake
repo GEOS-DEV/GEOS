@@ -47,6 +47,10 @@ else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
 endif()
 
+
+set(SPHINX_EXECUTABLE "sphinx-build" CACHE PATH "")
+
+
 #set( BUILD_SHARED_LIBS ON CACHE PATH "" FORCE)
 #set( ENABLE_SHARED_LIBS ON CACHE PATH "" FORCE )
 
