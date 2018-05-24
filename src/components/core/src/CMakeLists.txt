@@ -51,6 +51,7 @@ endif()
 
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
+                                LIB_TYPE SHARED
                                 LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG} 
                                 LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
                               )
