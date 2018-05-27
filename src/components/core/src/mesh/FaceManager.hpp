@@ -120,6 +120,9 @@ private:
 
 
   OrderedVariableOneToManyRelation m_nodeList;
+  Array2dT<localIndex>  m_elementRegionList;
+  Array2dT<localIndex> m_elementSubRegionList;
+  Array2dT<localIndex> m_elementList;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;
