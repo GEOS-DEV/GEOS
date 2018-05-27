@@ -140,6 +140,12 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
+void for_elems_in_subRegion( CellBlockSubRegion const * const subRegion, LAMBDA && body)
+{
+  forall_in_range<POLICY>(0,subRegion->size(), body);
+}
+
+template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems_by_constitutive( MeshLevel const * const mesh,
                                constitutive::ConstitutiveManager * const constitutiveManager,
                                FiniteElementSpaceManager const * const feSpaceManager,
@@ -234,4 +240,8 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
 }
 
 
+#define FOR_ELEMS_IN_SUBREGION( SUBREGION, INDEX )  \
+    for_elems_in_subRegion( SUBREGION, GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 #endif
+
+#define END_FOR );

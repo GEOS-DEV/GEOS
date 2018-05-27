@@ -25,6 +25,24 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
   this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementRegionList.Key())->reference().resize(0,2);
   this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementSubRegionList.Key())->reference().resize(0,2);
   this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementList.Key())->reference().resize(0,2);
+
+
+  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
+                             &m_elementRegionList,
+                             0 );
+  m_elementRegionList.resize(0,2);
+  this->RegisterViewWrapper(viewKeyStruct::elementSubRegionListString,
+                            &m_elementSubRegionList,
+                            0 );
+  m_elementSubRegionList.resize(0,2);
+
+  this->RegisterViewWrapper( viewKeyStruct::elementListString,
+                             &m_elementList,
+                             0 ) ;
+  m_elementList.resize(0,2);
+
+
+
   //0-based; note that the following field is ALSO 0
   //for faces that are not external faces, so check isExternal before using
 //  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
