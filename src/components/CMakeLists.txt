@@ -37,7 +37,7 @@ foreach(child ${children})
   endif()
 endforeach()
 
-if( ${BUILD_SHARED_LIBS} OR ${ENABLE_SHARED_LIBS} )
+if( ${BUILD_SHARED_LIBS} )
   set( componentlistlink ${componentlist} )
 else()
   set(componentlistlink "")
@@ -56,7 +56,7 @@ blt_add_executable(NAME geosx
                    SOURCES core/src/main/main.cpp
                    DEPENDS_ON 
                               ${componentlistlink} 
-                              ${geosx_core}
+                              ${geosx_core_libs}
                               ${extraComponentsListLink}
                   ) 
 
