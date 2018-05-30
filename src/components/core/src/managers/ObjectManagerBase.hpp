@@ -56,12 +56,12 @@ public:
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;
 
-  virtual int PackSize( array<string> const & wrapperNames,
+  virtual localIndex PackSize( array<string> const & wrapperNames,
                         localIndex_array const & packList,
                         integer const recursive ) const override;
 
 
-  virtual int Pack( buffer_unit_type * & buffer,
+  virtual localIndex Pack( buffer_unit_type * & buffer,
                     array<string> const & wrapperNames,
                     localIndex_array const & packList,
                     integer const recursive )  const override;
@@ -69,17 +69,17 @@ public:
 //  virtual int Unpack( buffer_unit_type const *& buffer,
 //                      integer const recursive )  override;
 
-  virtual int Unpack( buffer_unit_type const *& buffer,
+  virtual localIndex Unpack( buffer_unit_type const *& buffer,
                       localIndex_array & packList,
                       integer const recursive )  override;
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const;
 
 
-  virtual int PackGlobalMapsSize( localIndex_array const & packList,
+  virtual localIndex PackGlobalMapsSize( localIndex_array const & packList,
                                   integer const recursive ) const;
 
-  virtual int PackGlobalMaps( buffer_unit_type * & buffer,
+  virtual localIndex PackGlobalMaps( buffer_unit_type * & buffer,
                               localIndex_array const & packList,
                               integer const recursive ) const;
 
@@ -87,33 +87,33 @@ public:
 
 
 
-  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const
+  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const
   { return 0; }
 
-  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                               localIndex_array const & packList ) const
   { return 0;}
 
 
-  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                 localIndex_array const & packList )
   { return 0;}
 
 
 
-  virtual int UnpackGlobalMaps( buffer_unit_type const * & buffer,
+  virtual localIndex UnpackGlobalMaps( buffer_unit_type const * & buffer,
                                 localIndex_array & packList,
                                 integer const recursive );
 
 private:
   template< bool DOPACK >
-  int PackPrivate( buffer_unit_type * & buffer,
+  localIndex PackPrivate( buffer_unit_type * & buffer,
                    array<string> const & wrapperNames,
                    localIndex_array const & packList,
                    integer const recursive ) const;
 
   template< bool DOPACK >
-  int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+  localIndex PackGlobalMapsPrivate( buffer_unit_type * & buffer,
                              localIndex_array const & packList,
                              integer const recursive ) const;
 
