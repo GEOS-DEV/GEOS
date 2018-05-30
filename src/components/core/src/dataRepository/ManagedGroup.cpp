@@ -457,7 +457,7 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
   packedSize += CommBufferOps::Pack<true>( buffer, string("Wrappers") );
   if( wrapperNames.size()==0 )
   {
-    packedSize += CommBufferOps::Pack<true,int>( buffer, m_wrappers.size() );
+    packedSize += CommBufferOps::Pack<true>( buffer, m_wrappers.size() );
     for( auto const & wrapperPair : this->m_wrappers )
     {
       packedSize += CommBufferOps::Pack<true>( buffer, wrapperPair.first );
@@ -473,7 +473,7 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
   }
   else
   {
-    packedSize += CommBufferOps::Pack<true,int>( buffer, wrapperNames.size() );
+    packedSize += CommBufferOps::Pack<true>( buffer, wrapperNames.size() );
     for( auto const & wrapperName : wrapperNames )
     {
       ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);

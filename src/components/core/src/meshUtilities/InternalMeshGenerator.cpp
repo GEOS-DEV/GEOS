@@ -778,7 +778,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 // domain->m_feElementManager->m_ElementRegions[*iterRegion];
 
           CellBlock * elemRegion =  elementManager->GetRegion(*iterRegion);
-          integer const numNodesPerElem = elemRegion->numNodesPerElement();
+          int const numNodesPerElem = integer_conversion<int>(elemRegion->numNodesPerElement());
 
           int numElemsInDirForRegion[3] =
           { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
