@@ -12,6 +12,7 @@
 #include<mpi.h>
 #include<vector>
 #include "common/DataTypes.hpp"
+#include "common/integer_conversion.hpp"
 
 namespace geosx
 {
@@ -210,7 +211,7 @@ void NeighborCommunicator::MPI_iSendReceive( array<T> const & sendBuffer,
                                              int const commID,
                                              MPI_Comm mpiComm  )
 {
-  m_sendBufferSize[commID] = sendBuffer.size();
+  m_sendBufferSize[commID] = integer_conversion<int>(sendBuffer.size());
 
   MPI_iSendReceive( &m_sendBufferSize[commID],
                     1,

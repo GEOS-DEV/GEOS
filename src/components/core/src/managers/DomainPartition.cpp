@@ -412,7 +412,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
           arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
 
           const integer_array nodeOrdering = siloFile.SiloNodeOrdering();
-          integer numNodesPerElement = elemsToNodes.size(1);
+          integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
           for (localIndex a = 0 ; a < numNodesPerElement ; ++a)
           {
             elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
