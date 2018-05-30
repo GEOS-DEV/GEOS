@@ -13,3 +13,6 @@
 [submodule "src/externalComponents/PAMELA"]
 	path = src/externalComponents/PAMELA
 	url = ../PAMELA.git
+[submodule "src/coreComponents/fileIO/coupling/hdf5_interface"]
+	path = src/coreComponents/fileIO/coupling/hdf5_interface
+	url = ../hdf5_interface.git
