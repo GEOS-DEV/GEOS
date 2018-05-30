@@ -135,8 +135,8 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   for( localIndex ka=0 ; ka<size() ; ++ka )
   {
     arrayView1d<localIndex const> const sublist = map[ka];
-    int addToSet = 0;
-    for( int a=0 ; a<mapSize ; ++a )
+    localIndex addToSet = 0;
+    for( localIndex a=0 ; a<mapSize ; ++a )
     {
       if( inputSet.count( sublist[a] ) == 1 )
       {
@@ -163,7 +163,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   {
     localIndex addToSet = 0;
     localIndex mapSize = map[ka].size();
-    for( int a=0 ; a<mapSize ; ++a )
+    for( localIndex a=0 ; a<mapSize ; ++a )
     {
       if( inputSet.count( map[ka][a] ) == 1 )
       {
@@ -217,11 +217,11 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 
 
-int ObjectManagerBase::PackSize( array<string> const & wrapperNames,
+localIndex ObjectManagerBase::PackSize( array<string> const & wrapperNames,
                             localIndex_array const & packList,
                             integer const recursive ) const
 {
-  int packedSize = 0;
+  localIndex packedSize = 0;
   buffer_unit_type * junk;
   packedSize += this->PackPrivate<false>( junk,
                                           wrapperNames,
@@ -234,12 +234,12 @@ int ObjectManagerBase::PackSize( array<string> const & wrapperNames,
 
 
 
-int ObjectManagerBase::Pack( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
                              array<string> const & wrapperNames,
                              localIndex_array const & packList,
                              integer const recursive ) const
 {
-  int packedSize = 0;
+  localIndex packedSize = 0;
 
   packedSize += this->PackPrivate<true>( buffer,
                                           wrapperNames,
@@ -250,12 +250,12 @@ int ObjectManagerBase::Pack( buffer_unit_type * & buffer,
 }
 
 template< bool DOPACK >
-int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
                                     array<string> const & wrapperNames,
                                     localIndex_array const & packList,
                                     integer const recursive ) const
 {
-  int packedSize = 0;
+  localIndex packedSize = 0;
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->getName() );
 
   int rank=0;
@@ -263,7 +263,7 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, rank );
 
 
-  int const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
+  localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, numPackedIndices );
 
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
@@ -290,7 +290,7 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     wrapperNamesForPacking = wrapperNames;
   }
 
-  packedSize += CommBufferOps::Pack<DOPACK,int>( buffer, wrapperNamesForPacking.size() );
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, wrapperNamesForPacking.size() );
   for( auto const & wrapperName : wrapperNamesForPacking )
   {
     dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
@@ -338,11 +338,11 @@ int ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
 
 
-int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
+localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
                                localIndex_array & packList,
                                integer const recursive )
 {
-  int unpackedSize = 0;
+  localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += CommBufferOps::Unpack( buffer, groupName );
   GEOS_ASSERT( groupName==this->getName(), "ObjectManagerBase::Unpack(): group names do not match")
@@ -352,7 +352,7 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   int sendingRank;
   unpackedSize += CommBufferOps::Unpack( buffer, sendingRank );
 
-  int numUnpackedIndices;
+  localIndex numUnpackedIndices;
   unpackedSize += CommBufferOps::Unpack( buffer, numUnpackedIndices );
 
 //  integer readIncludeGlobalIndices;
@@ -370,7 +370,7 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
 //
 //  }
 
-  int numWrappers;
+  localIndex numWrappers;
   unpackedSize += CommBufferOps::Unpack( buffer, numWrappers);
   for( localIndex a=0 ; a<numWrappers ; ++a )
   {
@@ -403,14 +403,14 @@ int ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
 }
 
 
-int ObjectManagerBase::PackGlobalMapsSize( localIndex_array const & packList,
+localIndex ObjectManagerBase::PackGlobalMapsSize( localIndex_array const & packList,
                                 integer const recursive ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackGlobalMapsPrivate<false>( junk, packList, recursive);
 }
 
-int ObjectManagerBase::PackGlobalMaps( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::PackGlobalMaps( buffer_unit_type * & buffer,
                             localIndex_array const & packList,
                             integer const recursive ) const
 {
@@ -418,11 +418,11 @@ int ObjectManagerBase::PackGlobalMaps( buffer_unit_type * & buffer,
 }
 
 template< bool DOPACK >
-int ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
                                               localIndex_array const & packList,
                                               integer const recursive ) const
 {
-  int packedSize = 0;
+  localIndex packedSize = 0;
 
 
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->getName() );
@@ -434,7 +434,7 @@ int ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
   MPI_Comm_rank(MPI_COMM_WORLD, &rank );
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, rank );
 
-  int const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
+  localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, numPackedIndices );
 
 
@@ -478,11 +478,11 @@ int ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 //template int ObjectManagerBase::PackGlobalMapsPrivate<true>( buffer_unit_type * &, localIndex_array const &, integer const ) const;
 //template int ObjectManagerBase::PackGlobalMapsPrivate<false>( buffer_unit_type * &, localIndex_array const &, integer const ) const;
 
-int ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer,
+localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer,
                                          localIndex_array & packList,
                                          integer const recursive )
 {
-  int unpackedSize = 0;
+  localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += CommBufferOps::Unpack( buffer, groupName );
   GEOS_ASSERT( groupName==this->getName(), "ObjectManagerBase::Unpack(): group names do not match")
@@ -496,7 +496,7 @@ int ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer,
   int sendingRank;
   unpackedSize += CommBufferOps::Unpack( buffer, sendingRank );
 
-  int numUnpackedIndices;
+  localIndex numUnpackedIndices;
   unpackedSize += CommBufferOps::Unpack( buffer, numUnpackedIndices );
 
   localIndex_array unpackedLocalIndices;

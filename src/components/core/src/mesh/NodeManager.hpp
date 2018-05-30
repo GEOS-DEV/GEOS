@@ -131,12 +131,12 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;
 
-  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                               localIndex_array const & packList ) const override;
 
-  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                 localIndex_array const & packList ) override;
 
 public:
@@ -188,7 +188,7 @@ protected:
 
 private:
   template< bool DOPACK >
-  int PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                              localIndex_array const & packList ) const;
 
 

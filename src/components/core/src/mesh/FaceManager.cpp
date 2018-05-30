@@ -589,23 +589,23 @@ void FaceManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
 }
 
 
-int FaceManager::PackUpDownMapsSize( localIndex_array const & packList ) const
+localIndex FaceManager::PackUpDownMapsSize( localIndex_array const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
-int FaceManager::PackUpDownMaps( buffer_unit_type * & buffer,
+localIndex FaceManager::PackUpDownMaps( buffer_unit_type * & buffer,
                                  localIndex_array const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template<bool DOPACK>
-int FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                         localIndex_array const & packList ) const
 {
-  int packedSize = 0;
+  localIndex packedSize = 0;
 
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
   packedSize += CommBufferOps::Pack<DOPACK>( buffer,
@@ -619,10 +619,10 @@ int FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 
-int FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                  localIndex_array const & packList )
 {
-  int unPackedSize = 0;
+  localIndex unPackedSize = 0;
 
   string nodeListString;
   unPackedSize += CommBufferOps::Unpack( buffer, nodeListString );

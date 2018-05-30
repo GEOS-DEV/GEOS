@@ -363,23 +363,23 @@ public:
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
 
-  virtual int PackSize( array<string> const & wrapperNames,
+  virtual localIndex PackSize( array<string> const & wrapperNames,
                         integer const recursive ) const;
 
-  virtual int PackSize( array<string> const & wrapperNames,
+  virtual localIndex PackSize( array<string> const & wrapperNames,
                         localIndex_array const & packList,
                         integer const recursive ) const;
 
-  virtual int Pack( buffer_unit_type * & buffer,
+  virtual localIndex Pack( buffer_unit_type * & buffer,
                     array<string> const & wrapperNames,
                     integer const recursive ) const;
 
-  virtual int Pack( buffer_unit_type * & buffer,
+  virtual localIndex Pack( buffer_unit_type * & buffer,
                     array<string> const & wrapperNames,
                     localIndex_array const & packList,
                     integer const recursive ) const;
 
-  virtual int Unpack( buffer_unit_type const *& buffer,
+  virtual localIndex Unpack( buffer_unit_type const *& buffer,
                       localIndex_array & packList,
                       integer const recursive );
 
