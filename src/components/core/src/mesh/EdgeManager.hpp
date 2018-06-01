@@ -17,6 +17,7 @@
 #ifndef EDGEMANAGERT_H_
 #define EDGEMANAGERT_H_
 
+#include "common/InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
 
 
@@ -41,7 +42,7 @@ public:
                                                          array<globalIndex_array>& objectToCompositionObject );
 
 
-  void BuildEdges( const FaceManager * const faceManager, const NodeManager * const nodeManager );
+  void BuildEdges( FaceManager * const faceManager, const NodeManager * const nodeManager );
 
   template< typename T_indices >
   unsigned int PackEdges( const T_indices& sendedges,
@@ -76,7 +77,7 @@ public:
 // vector)const;
 //  realT EdgeLength(const NodeManager& nodeManager, localIndex edge) const;
 
-  void AddToEdgeToFaceMap( const FaceManager& faceManager,
+  void AddToEdgeToFaceMap( const FaceManager * faceManager,
                            const localIndex_array& newFaceIndices );
 
   void SplitEdge( const localIndex indexToSplit,
@@ -89,11 +90,35 @@ public:
 //  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
 // nodeB, const NodeManager& nodeManager);
 
-  void SetLayersFromDomainBoundary(const NodeManager& nodeManager);
+//  void SetLayersFromDomainBoundary(const NodeManager * const nodeManager);
 
 
 //  FixedOneToManyRelation& m_toNodesRelation;
 //  UnorderedVariableOneToManyRelation& m_toFacesRelation;
+
+  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
+  {
+    static constexpr auto nodeListString              = "nodeList";
+    static constexpr auto faceListString              = "faceList";
+    static constexpr auto elementRegionListString     = "elemRegionList";
+    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
+    static constexpr auto elementListString           = "elemList";
+
+    dataRepository::ViewKey nodesList             = { nodeListString };
+    dataRepository::ViewKey faceList              = { faceListString };
+    dataRepository::ViewKey elementRegionList     = { elementRegionListString };
+    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
+    dataRepository::ViewKey elementList           = { elementListString };
+
+  } viewKeys;
+
+
+  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
+  {} groupKeys;
+
+private:
+  FixedOneToManyRelation m_toNodesRelation;
+  UnorderedVariableOneToManyRelation m_toFacesRelation;
 
 };
 }
