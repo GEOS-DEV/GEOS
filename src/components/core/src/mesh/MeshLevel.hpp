@@ -59,8 +59,8 @@ public:
   NodeManager const * getNodeManager() const { return &m_nodeManager; }
   NodeManager * getNodeManager()             { return &m_nodeManager; }
 
-  EdgeManager const * getEdgeManager() const { return this->GetGroup<EdgeManager>(groupKeys.edgeManager); }
-  EdgeManager * getEdgeManager()             { return this->GetGroup<EdgeManager>(groupKeys.edgeManager); }
+  EdgeManager const * getEdgeManager() const { return &m_edgeManager; }
+  EdgeManager * getEdgeManager()             { return &m_edgeManager; }
 
   FaceManager const * getFaceManager() const { return &m_faceManager; }
   FaceManager * getFaceManager()             { return &m_faceManager; }
@@ -71,7 +71,7 @@ public:
 private:
 
   NodeManager m_nodeManager;
-//  EdgeManager m_edgeManager;
+  EdgeManager m_edgeManager;
   FaceManager m_faceManager;
   ElementRegionManager m_elementManager;
 
