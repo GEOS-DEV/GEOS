@@ -29,12 +29,14 @@ MeshLevel::MeshLevel( string const & name,
                       ManagedGroup * const parent ):
   ManagedGroup(name,parent),
   m_nodeManager( groupStructKeys::nodeManagerString,this),
+  m_edgeManager( groupStructKeys::edgeManagerString,this),
   m_faceManager( groupStructKeys::faceManagerString,this),
   m_elementManager( groupStructKeys::elemManagerString,this)
 {
 
   RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager, false );
-//  RegisterGroup<EdgeManager>( groupKeys.edgeManager );
+
+  RegisterGroup( groupStructKeys::edgeManagerString, &m_edgeManager, false );
 
 
   RegisterGroup<FaceManager>( groupStructKeys::faceManagerString, &m_faceManager, false );

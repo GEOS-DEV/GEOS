@@ -42,6 +42,9 @@ NodeManager::NodeManager( std::string const & name,
 {
   RegisterViewWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
 
+
+  this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
+
   this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementRegionListString);
   this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementSubRegionListString);
   this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementListString);
