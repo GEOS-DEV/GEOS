@@ -6,12 +6,13 @@ set(mesh_headers
     CellBlockManager.hpp
     CellBlock.hpp
     CellBlockSubRegion.hpp
-    FaceManager.hpp
-    NodeManager.hpp
+    EdgeManager.hpp
     ElementRegion.hpp
     ElementRegionManager.hpp
+    FaceManager.hpp
     MeshBody.hpp
     MeshLevel.hpp    
+    NodeManager.hpp
   )
 
 
@@ -22,12 +23,13 @@ set(mesh_sources
     CellBlockManager.cpp
     CellBlock.cpp
     CellBlockSubRegion.cpp
-    FaceManager.cpp
-    NodeManager.cpp
+    EdgeManager.cpp
     ElementRegion.cpp
     ElementRegionManager.cpp
+    FaceManager.cpp
     MeshBody.cpp
     MeshLevel.cpp    
+    NodeManager.cpp
    )
 
 blt_add_library( NAME                  mesh

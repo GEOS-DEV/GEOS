@@ -103,6 +103,8 @@ public:
 
   OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
   OrderedVariableOneToManyRelation & nodeList()                    { return m_nodeList; }
+  OrderedVariableOneToManyRelation const & edgeList() const        { return m_edgeList; }
+  OrderedVariableOneToManyRelation & edgeList()                    { return m_edgeList; }
   Array2dT<localIndex> const & elementRegionList() const    { return this->getReference< Array2dT<localIndex> >(viewKeys.elementRegionList); }
   Array2dT<localIndex> & elementRegionList()                { return this->getReference< Array2dT<localIndex> >(viewKeys.elementRegionList); }
   Array2dT<localIndex> const & elementSubRegionList() const { return this->getReference< Array2dT<localIndex> >(viewKeys.elementSubRegionList); }
@@ -120,6 +122,7 @@ private:
 
 
   OrderedVariableOneToManyRelation m_nodeList;
+  OrderedVariableOneToManyRelation m_edgeList;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;
