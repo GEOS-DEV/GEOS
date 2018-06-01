@@ -744,6 +744,9 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
   NodeManager * nodeManager = meshLevel->getNodeManager();
   faceManager->BuildFaces( nodeManager, elementManager );
 
+  EdgeManager * edgeManager = meshLevel->getEdgeManager();
+  edgeManager->BuildEdges(faceManager, nodeManager );
+
   nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
   domain->SetupCommunications();
