@@ -51,8 +51,8 @@ void MeshLevel::InitializePostSubGroups( ManagedGroup * const )
 
   m_elementManager.forCellBlocks([&]( CellBlockSubRegion * subRegion ) -> void
   {
-    subRegion->m_toNodesRelation.SetRelatedObject(&m_nodeManager);
-    subRegion->m_toFacesRelation.SetRelatedObject(&m_faceManager);
+    subRegion->nodeList().SetRelatedObject(&m_nodeManager);
+    subRegion->faceList().SetRelatedObject(&m_faceManager);
   });
 
 }

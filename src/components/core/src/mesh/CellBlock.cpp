@@ -75,19 +75,23 @@ using namespace dataRepository;
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   ObjectManagerBase( name, parent ),
   m_CellBlockViewKeys(),
-//  groupKeys(),
-  m_toNodesRelation(),
-  m_toFacesRelation(),
   m_numNodesPerElement(),
-  m_numFacesPerElement()
+  m_numEdgesPerElement(),
+  m_numFacesPerElement(),
+  m_toNodesRelation(),
+  m_toEdgesRelation(),
+  m_toFacesRelation()
 {
   RegisterViewWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
+  RegisterViewWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
   RegisterViewWrapper(viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
   RegisterViewWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
+  RegisterViewWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
   RegisterViewWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
 
 
   m_toNodesRelation.resize(0,8);
+  m_toEdgesRelation.resize(0,12);
   m_toFacesRelation.resize(0,6);
 //  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap).setSizedFromParent(1);
 

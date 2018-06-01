@@ -92,9 +92,17 @@ NodeManager::NodeManager( std::string const & name,
 
   this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
 
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementRegionListString);
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementSubRegionListString);
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementListString);
+  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
+                             &m_toElementRegionList,
+                             false );
+
+  this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
+                             &m_toElementSubRegionList,
+                             false );
+
+  this->RegisterViewWrapper( viewKeyStruct::elementListString,
+                             &m_toElementList,
+                             false );
 
 }
 
@@ -203,15 +211,12 @@ void NodeManager::FillDocumentationNode()
 
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
-  array<localIndex_array> & elementRegionList = this->getReference< array<localIndex_array> >(viewKeyStruct::elementRegionListString);
-  array<localIndex_array> & elementSubRegionList = this->getReference< array<localIndex_array> >(viewKeyStruct::elementSubRegionListString);
-  array<localIndex_array> & elementList = this->getReference< array<localIndex_array> >(viewKeyStruct::elementListString);
 
   for( localIndex a=0 ; a<size() ; ++a )
   {
-    elementRegionList[a].clear();
-    elementSubRegionList[a].clear();
-    elementList[a].clear();
+    m_toElementRegionList[a].clear();
+    m_toElementSubRegionList[a].clear();
+    m_toElementList[a].clear();
   }
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg  )
@@ -230,9 +235,9 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
         for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
         {
           localIndex nodeIndex = nodeList[a];
-          elementRegionList[nodeIndex].push_back( kReg );
-          elementSubRegionList[nodeIndex].push_back( kSubReg );
-          elementList[nodeIndex].push_back( ke );
+          m_toElementRegionList[nodeIndex].push_back( kReg );
+          m_toElementSubRegionList[nodeIndex].push_back( kSubReg );
+          m_toElementList[nodeIndex].push_back( ke );
         }
       }
     }

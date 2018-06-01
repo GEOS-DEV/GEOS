@@ -779,6 +779,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
           CellBlock * elemRegion =  elementManager->GetRegion(*iterRegion);
           int const numNodesPerElem = integer_conversion<int>(elemRegion->numNodesPerElement());
+          FixedOneToManyRelation & elemsToNodes = elemRegion->nodeList();
 
           int numElemsInDirForRegion[3] =
           { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
@@ -871,7 +872,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 // #ifdef USE_ATK
 //                    SLIC_ERROR("not implemented");
 // #endif
-                    elemRegion->m_toNodesRelation[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
+                    elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;
 

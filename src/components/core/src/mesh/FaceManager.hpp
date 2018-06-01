@@ -101,17 +101,20 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
-  OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
   OrderedVariableOneToManyRelation & nodeList()                    { return m_nodeList; }
-  OrderedVariableOneToManyRelation const & edgeList() const        { return m_edgeList; }
-  OrderedVariableOneToManyRelation & edgeList()                    { return m_edgeList; }
-  Array2dT<localIndex> const & elementRegionList() const    { return this->getReference< Array2dT<localIndex> >(viewKeys.elementRegionList); }
-  Array2dT<localIndex> & elementRegionList()                { return this->getReference< Array2dT<localIndex> >(viewKeys.elementRegionList); }
-  Array2dT<localIndex> const & elementSubRegionList() const { return this->getReference< Array2dT<localIndex> >(viewKeys.elementSubRegionList); }
-  Array2dT<localIndex> & elementSubRegionList()             { return this->getReference< Array2dT<localIndex> >(viewKeys.elementSubRegionList); }
-  Array2dT<localIndex> const & elementList() const          { return this->getReference< Array2dT<localIndex> >(viewKeys.elementList); }
-  Array2dT<localIndex> & elementList()                      { return this->getReference< Array2dT<localIndex> >(viewKeys.elementList); }
+  OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
 
+  OrderedVariableOneToManyRelation       & edgeList()       { return m_edgeList; }
+  OrderedVariableOneToManyRelation const & edgeList() const { return m_edgeList; }
+
+  Array2dT<localIndex>       & elementRegionList()       { return m_toElementRegionList; }
+  Array2dT<localIndex> const & elementRegionList() const { return m_toElementRegionList; }
+
+  Array2dT<localIndex>       & elementSubRegionList()       { return m_toElementSubRegionList; }
+  Array2dT<localIndex> const & elementSubRegionList() const { return m_toElementSubRegionList; }
+
+  Array2dT<localIndex>       & elementList()       { return m_toElementList; }
+  Array2dT<localIndex> const & elementList() const { return m_toElementList; }
 
 
 private:
@@ -123,6 +126,10 @@ private:
 
   OrderedVariableOneToManyRelation m_nodeList;
   OrderedVariableOneToManyRelation m_edgeList;
+
+  Array2dT<localIndex> m_toElementRegionList ;
+  Array2dT<localIndex> m_toElementSubRegionList ;
+  Array2dT<localIndex> m_toElementList ;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;
