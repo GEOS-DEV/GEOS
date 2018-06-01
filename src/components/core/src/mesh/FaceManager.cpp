@@ -19,7 +19,8 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
   ObjectManagerBase("FaceManager",parent)
 {
 
-  this->RegisterViewWrapper(viewKeys.nodeList.Key(), &m_nodeList, false );
+  this->RegisterViewWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
+  this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
 //  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
   this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementRegionList.Key())->reference().resize(0,2);
