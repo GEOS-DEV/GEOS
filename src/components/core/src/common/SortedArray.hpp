@@ -3,15 +3,16 @@
 
 #include <vector>             /* for std::vector */
 #include <algorithm>          /* for std::binary_search, std::lower_bound */
+//#include <stdint.h>
 
-template< typename T >
+template< typename T, typename INDEX_TYPE=std::int_fast32_t >
 class SortedArray
 {
 
 public:
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
-  using size_type = typename std::vector<T>::size_type;
+  using size_type = INDEX_TYPE;
   using value_type = typename std::vector<T>::value_type;
   using pointer = typename std::vector<T>::pointer;
   using const_pointer = typename std::vector<T>::const_pointer;
