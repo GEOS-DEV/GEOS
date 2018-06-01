@@ -33,9 +33,18 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
   this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
 //  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
-  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementRegionList.Key())->reference().resize(0,2);
-  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementSubRegionList.Key())->reference().resize(0,2);
-  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementList.Key())->reference().resize(0,2);
+  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
+                             &m_toElementRegionList,
+                             false );
+
+  this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
+                             &m_toElementSubRegionList,
+                             false );
+
+  this->RegisterViewWrapper( viewKeyStruct::elementListString,
+                             &m_toElementList,
+                             false );
+
   //0-based; note that the following field is ALSO 0
   //for faces that are not external faces, so check isExternal before using
 //  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
@@ -117,6 +126,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
         {
           // get the nodes associated with the local face
           subRegion->GetFaceNodes( ke, kelf, tempNodeList );
+          FixedOneToManyRelation & elemsToFaces = subRegion->faceList();
 
           //Special treatment for the triangle faces of prisms.
           if (tempNodeList[tempNodeList.size()-1] == std::numeric_limits<localIndex>::max())
@@ -198,7 +208,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
                     // add the face to the elementToFaceMap for the element
                     // region.
-                    subRegion->m_toFacesRelation(ke,kelf) = *existingFaceIndex;
+                    elemsToFaces(ke,kelf) = *existingFaceIndex;
 
                     // now remove the entry from the face that we were checking
                     // against from the facesByLowestNode list...
@@ -290,7 +300,7 @@ void FaceManager::AddNewFace( localIndex const & kReg,
   facesByLowestNode[tempNodeList[0]].push_back(numFaces);
 
   // add the face to the elementToFaceMap
-  elementRegion.m_toFacesRelation(ke,kelf) = numFaces;
+  elementRegion.faceList()(ke,kelf) = numFaces;
 
   // add the nodes to the faceToNodeMap
   tempFaceToNodeMap.push_back(tempNodeList);
