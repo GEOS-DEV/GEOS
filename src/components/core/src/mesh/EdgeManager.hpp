@@ -30,6 +30,22 @@ class CellBlockManager;
 class EdgeManager : public ObjectManagerBase
 {
 public:
+
+  /**
+    * @name Static Factory Catalog Functions
+    */
+   ///@{
+
+   static const string CatalogName()
+   { return "EdgeManager"; }
+
+   virtual const string getCatalogName() const override final
+   { return EdgeManager::CatalogName(); }
+
+
+   ///@}
+
+
   EdgeManager( std::string const & name,
                ManagedGroup * const parent );
   ~EdgeManager();
