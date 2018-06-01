@@ -137,6 +137,13 @@ public:
   view_rtype<r1_array>       referencePosition()       { return this->getData<r1_array>(viewKeys.referencePosition); }
 //  view_rtype_const<r1_array> totalDisplacement() const { return this->getData<r1_array>(viewKeys.totalDisplacement); }
 //  view_rtype<r1_array>       totalDisplacement()       { return this->getData<r1_array>(viewKeys.totalDisplacement); }
+
+  UnorderedVariableOneToManyRelation       & edgeList()       { return m_toEdgesRelation; }
+  UnorderedVariableOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
+
+  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+
 protected:
 
 private:
@@ -151,6 +158,8 @@ private:
   NodeManager& operator=( const NodeManager&) = delete;
 
   r1_array m_referencePosition;
+  UnorderedVariableOneToManyRelation m_toEdgesRelation;
+  UnorderedVariableOneToManyRelation m_toFacesRelation;
 
 
 };

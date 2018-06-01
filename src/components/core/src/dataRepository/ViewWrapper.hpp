@@ -194,6 +194,17 @@ public:
     return static_cast< ViewWrapper<T>& >(base);
   }
 
+  static ViewWrapper<T> const & cast( ViewWrapperBase const & base )
+  {
+    if( base.get_typeid() != typeid(T) )
+    {
+#ifdef USE_ATK
+      GEOS_ERROR("invalid cast attempt");
+#endif
+    }
+    return static_cast< ViewWrapper<T> const & >(base);
+  }
+
 //  template< bool DO_PACKING >
 //  struct pack_wrapper
 //  {
