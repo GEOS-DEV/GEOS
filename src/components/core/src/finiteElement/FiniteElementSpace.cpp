@@ -25,10 +25,11 @@
 #include "ElementLibrary/FiniteElement.h"
 #include "codingUtilities/Utilities.hpp"
 
-#include "../../../PhysicsSolverPackage1/src/SolidMechanicsLagrangianFEM-MiniApp/Layout.hpp"
-
 // TODO make this not dependent on this header...need better key implementation
 #include "mesh/CellBlockSubRegion.hpp"
+
+//location of macros
+#include "../../../PhysicsSolverPackage1/src/SolidMechanicsLagrangianFEM-MiniApp/Layout.hpp" 
 
 namespace geosx
 {
@@ -176,8 +177,8 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
       detJ(k, q) = m_finiteElement->JxW(q);
       for (localIndex b = 0 ; b < m_finiteElement->dofs_per_element() ; ++b)
       {
-        R1Tensor temp = m_finiteElement->gradient(b, q);
         
+        R1Tensor temp = m_finiteElement->gradient(b, q);        
         dNdX(k)(q, b) = temp;
         
 #if !defined(EXTERNAL_KERNELS) || defined(ARRAY_OBJECTS_LAYOUT)        
