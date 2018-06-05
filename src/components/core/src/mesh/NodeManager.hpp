@@ -150,8 +150,8 @@ public:
   array<localIndex_array>       & elementSubRegionList()       { return m_toElementSubRegionList; }
   array<localIndex_array> const & elementSubRegionList() const { return m_toElementSubRegionList; }
 
-  array<localIndex_array>       & elementList()       { return m_toElementList; }
-  array<localIndex_array> const & elementList() const { return m_toElementList; }
+  UnorderedVariableOneToManyRelation       & elementList()       { return m_toElementList; }
+  UnorderedVariableOneToManyRelation const & elementList() const { return m_toElementList; }
 
 
 protected:
@@ -173,7 +173,7 @@ private:
 
   array<localIndex_array> m_toElementRegionList ;
   array<localIndex_array> m_toElementSubRegionList ;
-  array<localIndex_array> m_toElementList ;
+  UnorderedVariableOneToManyRelation m_toElementList ;
 
 
 
