@@ -102,8 +102,6 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
   constitutiveMap.second.resize(cellBlock->size(), m_quadrature->size() );
 
-
-
   auto & detJView = *(cellBlock->RegisterViewWrapper< Array2dT< real64 > >(keys::detJ));
   detJView.setSizedFromParent(1);
   auto & detJ = detJView.reference();
@@ -137,7 +135,6 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
       for (localIndex b = 0 ; b < m_finiteElement->dofs_per_element() ; ++b)
       {
         dNdX[k][q][b] =  m_finiteElement->gradient(b, q);
-        //dNdX(k)(q, b) = m_finiteElement->gradient(b, q);
 //        std::cout<<"dNdX["<<k<<"]["<<q<<"]["<<b<<"] :"<<dNdX[k][q][b]<<std::endl;
       }
 
