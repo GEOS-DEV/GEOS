@@ -147,7 +147,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
 {
   auto & dNdX            = cellBlock->getReference< array< Array2dT<R1Tensor> > >(keys::dNdX);
 
-#if !defined(EXTERNAL_KERNELS) || defined(ARRAY_OBJECTS_LAYOUT)  
+#if !defined(EXTERNAL_KERNELS) || defined(ARRAY_OF_OBJECTS_LAYOUT)  
   auto & dNdX_all          = cellBlock->getReference< multidimensionalArray::ManagedArray<real64, 4> >("dNdX_all");
 #endif  
 
@@ -181,7 +181,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
         R1Tensor temp = m_finiteElement->gradient(b, q);        
         dNdX(k)(q, b) = temp;
         
-#if !defined(EXTERNAL_KERNELS) || defined(ARRAY_OBJECTS_LAYOUT)        
+#if !defined(EXTERNAL_KERNELS) || defined(ARRAY_OF_OBJECTS_LAYOUT)
         dNdX_all[k][q][b][0] = temp[0];
         dNdX_all[k][q][b][1] = temp[1];
         dNdX_all[k][q][b][2] = temp[2];
