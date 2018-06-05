@@ -620,10 +620,34 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
   packedSize += CommBufferOps::Pack<DOPACK>( buffer,
-                                           m_nodeList,
-                                           packList,
-                                           this->m_localToGlobalMap,
-                                           m_nodeList.RelatedObjectLocalToGlobal() );
+                                             m_nodeList,
+                                             packList,
+                                             this->m_localToGlobalMap,
+                                             m_nodeList.RelatedObjectLocalToGlobal() );
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+                                             m_edgeList,
+                                             packList,
+                                             this->m_localToGlobalMap,
+                                             m_edgeList.RelatedObjectLocalToGlobal() );
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementRegionListString) );
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+                                             m_toElementRegionList,
+                                             packList );
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementSubRegionListString) );
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+                                             m_toElementSubRegionList,
+                                             packList );
+
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
+  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+                                             m_toElementList,
+                                             packList,
+                                             m_toElementList.RelatedObjectLocalToGlobal() );
+
 
   return packedSize;
 }
@@ -644,6 +668,44 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                          packList,
                                          this->m_globalToLocalMap,
                                          m_nodeList.RelatedObjectGlobalToLocal() );
+
+  string edgeListString;
+  unPackedSize += CommBufferOps::Unpack( buffer, edgeListString );
+  GEOS_ASSERT( edgeListString==viewKeyStruct::edgeListString, "")
+
+  unPackedSize += CommBufferOps::Unpack( buffer,
+                                         m_edgeList,
+                                         packList,
+                                         this->m_globalToLocalMap,
+                                         m_edgeList.RelatedObjectGlobalToLocal() );
+
+  string elementRegionListString;
+  unPackedSize += CommBufferOps::Unpack( buffer, elementRegionListString );
+  GEOS_ASSERT( elementRegionListString==viewKeyStruct::elementRegionListString, "")
+
+  unPackedSize += CommBufferOps::Unpack( buffer,
+                                         m_toElementRegionList,
+                                         packList );
+
+  string elementSubRegionListString;
+  unPackedSize += CommBufferOps::Unpack( buffer, elementSubRegionListString );
+  GEOS_ASSERT( elementSubRegionListString==viewKeyStruct::elementSubRegionListString, "")
+
+  unPackedSize += CommBufferOps::Unpack( buffer,
+                                         m_toElementSubRegionList,
+                                         packList );
+
+
+  string elementListString;
+  unPackedSize += CommBufferOps::Unpack( buffer, elementListString );
+  GEOS_ASSERT( elementListString==viewKeyStruct::elementListString, "")
+
+  unPackedSize += CommBufferOps::Unpack( buffer,
+                                         m_toElementList,
+                                         packList,
+                                         this->m_globalToLocalMap );
+
+
 
   return unPackedSize;
 }
