@@ -227,6 +227,37 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 {
   localIndex packedSize = 0;
 
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+//                                             m_toEdgesRelation,
+//                                             packList,
+//                                             this->m_localToGlobalMap,
+//                                             m_toEdgesRelation.RelatedObjectLocalToGlobal() );
+//
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+//                                             m_toFacesRelation,
+//                                             packList,
+//                                             this->m_localToGlobalMap,
+//                                             m_toFacesRelation.RelatedObjectLocalToGlobal() );
+//
+//
+//
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementRegionListString) );
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+//                                             m_toElementRegionList,
+//                                             packList );
+//
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementSubRegionListString) );
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+//                                             m_toElementSubRegionList,
+//                                             packList );
+//
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
+//  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+//                                             m_toElementList,
+//                                             packList,
+//                                             m_toElementList.RelatedObjectLocalToGlobal() );
 
   return packedSize;
 }
