@@ -113,8 +113,8 @@ public:
   Array2dT<localIndex>       & elementSubRegionList()       { return m_toElementSubRegionList; }
   Array2dT<localIndex> const & elementSubRegionList() const { return m_toElementSubRegionList; }
 
-  Array2dT<localIndex>       & elementList()       { return m_toElementList; }
-  Array2dT<localIndex> const & elementList() const { return m_toElementList; }
+  FixedOneToManyRelation       & elementList()       { return m_toElementList; }
+  FixedOneToManyRelation const & elementList() const { return m_toElementList; }
 
 
 private:
@@ -129,7 +129,7 @@ private:
 
   Array2dT<localIndex> m_toElementRegionList ;
   Array2dT<localIndex> m_toElementSubRegionList ;
-  Array2dT<localIndex> m_toElementList ;
+  FixedOneToManyRelation m_toElementList ;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;
