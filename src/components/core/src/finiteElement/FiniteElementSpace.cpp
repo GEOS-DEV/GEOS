@@ -28,9 +28,6 @@
 // TODO make this not dependent on this header...need better key implementation
 #include "mesh/CellBlockSubRegion.hpp"
 
-//location of macros
-#include "../../../PhysicsSolverPackage1/src/SolidMechanicsLagrangianFEM-MiniApp/Layout.hpp" 
-
 namespace geosx
 {
 using namespace dataRepository;
@@ -93,15 +90,11 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   // registration, or only allow documentation node
   // registration.
 
-  auto dNdXView        = cellBlock->RegisterViewWrapper< array< Array2dT<R1Tensor> > >(keys::dNdX);
+  //Ensure data is contiguous
+  auto dNdXView       = cellBlock->RegisterViewWrapper< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
   dNdXView->setSizedFromParent(1);
-  static_cast< ViewWrapperBase * >(dNdXView)->resize();
-  auto & dNdX            = dNdXView->reference();
-
-  for( auto & entry : dNdX )
-  {
-    entry.resize( m_finiteElement->dofs_per_element(), m_quadrature->size() );
-  }
+  multidimensionalArray::ManagedArray< R1Tensor, 3 > &  dNdX = dNdXView->reference();
+  dNdX.resize( cellBlock->size(), m_quadrature->size(), m_finiteElement->dofs_per_element() );
 
   auto & constitutiveMapView = *(cellBlock->getWrapper< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString));
   constitutiveMapView.setSizedFromParent(1);
@@ -109,31 +102,8 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
   constitutiveMap.second.resize(cellBlock->size(), m_quadrature->size() );
 
-#if !defined(EXTERNAL_KERNELS) || defined(ARRAY_OF_OBJECTS_LAYOUT)
-  auto dNdXView_all       = cellBlock->RegisterViewWrapper< multidimensionalArray::ManagedArray< real64, 4 > >("dNdX_all");  
-  dNdXView_all->setSizedFromParent(1);
-  multidimensionalArray::ManagedArray< real64, 4 > &  dNdX_all = dNdXView_all->reference();
-  dNdX_all.resize( cellBlock->size(), m_quadrature->size(), m_finiteElement->dofs_per_element(), 3);
-#endif  
-  
-#if defined(EXTERNAL_KERNELS) && defined(OBJECT_OF_ARRAYS_LAYOUT)
-  auto dNdXView_x        = cellBlock->RegisterViewWrapper< multidimensionalArray::ManagedArray< real64, 3 > >("dNdX_x");
-  auto dNdXView_y        = cellBlock->RegisterViewWrapper< multidimensionalArray::ManagedArray< real64, 3 > >("dNdX_y");
-  auto dNdXView_z        = cellBlock->RegisterViewWrapper<multidimensionalArray:: ManagedArray< real64, 3 > >("dNdX_z");
-  
-  dNdXView_x->setSizedFromParent(1);
-  dNdXView_y->setSizedFromParent(1);
-  dNdXView_z->setSizedFromParent(1);
-  
-  multidimensionalArray::ManagedArray< real64, 3 > &  dNdX_x = dNdXView_x->reference();
-  multidimensionalArray::ManagedArray< real64, 3 > &  dNdX_y = dNdXView_y->reference();
-  multidimensionalArray::ManagedArray< real64, 3 > &  dNdX_z = dNdXView_z->reference();
 
-  dNdX_x.resize( cellBlock->size(), m_quadrature->size(), m_finiteElement->dofs_per_element() );
-  dNdX_y.resize( cellBlock->size(), m_quadrature->size(), m_finiteElement->dofs_per_element() );
-  dNdX_z.resize( cellBlock->size(), m_quadrature->size(), m_finiteElement->dofs_per_element() );
-#endif
-  
+
   auto & detJView = *(cellBlock->RegisterViewWrapper< Array2dT< real64 > >(keys::detJ));
   detJView.setSizedFromParent(1);
   auto & detJ = detJView.reference();
@@ -145,18 +115,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
                                                           dataRepository::ManagedGroup * const cellBlock ) const
 {
-  auto & dNdX            = cellBlock->getReference< array< Array2dT<R1Tensor> > >(keys::dNdX);
-
-#if !defined(EXTERNAL_KERNELS) || defined(ARRAY_OF_OBJECTS_LAYOUT)  
-  auto & dNdX_all          = cellBlock->getReference< multidimensionalArray::ManagedArray<real64, 4> >("dNdX_all");
-#endif  
-
-#if defined(EXTERNAL_KERNELS) && defined(OBJECT_OF_ARRAYS_LAYOUT)
-  auto & dNdX_x          = cellBlock->getReference< multidimensionalArray::ManagedArray<real64, 3> >("dNdX_x");
-  auto & dNdX_y          = cellBlock->getReference< multidimensionalArray::ManagedArray<real64, 3> >("dNdX_y");
-  auto & dNdX_z          = cellBlock->getReference< multidimensionalArray::ManagedArray<real64, 3> >("dNdX_z");
-#endif  
-  
+  auto & dNdX            = cellBlock->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
   auto & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ);
   FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();// getData<lArray2d>(keys::nodeList);
 
@@ -177,22 +136,8 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
       detJ(k, q) = m_finiteElement->JxW(q);
       for (localIndex b = 0 ; b < m_finiteElement->dofs_per_element() ; ++b)
       {
-        
-        R1Tensor temp = m_finiteElement->gradient(b, q);        
-        dNdX(k)(q, b) = temp;
-        
-#if !defined(EXTERNAL_KERNELS) || defined(ARRAY_OF_OBJECTS_LAYOUT)
-        dNdX_all[k][q][b][0] = temp[0];
-        dNdX_all[k][q][b][1] = temp[1];
-        dNdX_all[k][q][b][2] = temp[2];
-#endif        
-
-#if defined(EXTERNAL_KERNELS) && defined(OBJECT_OF_ARRAYS_LAYOUT)        
-        dNdX_x[k][q][b] = temp[0];
-        dNdX_y[k][q][b] = temp[1];
-        dNdX_z[k][q][b] = temp[2];
-#endif        
-
+        dNdX[k][q][b] =  m_finiteElement->gradient(b, q);
+        //dNdX(k)(q, b) = m_finiteElement->gradient(b, q);
 //        std::cout<<"dNdX["<<k<<"]["<<q<<"]["<<b<<"] :"<<dNdX[k][q][b]<<std::endl;
       }
 
