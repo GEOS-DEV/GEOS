@@ -176,6 +176,7 @@ private:
   OrderedVariableOneToManyRelation m_toElementList ;
 
 
+  UnorderedVariableToManyElementRelation m_toElements;
 
 };
 // *********************************************************************************************************************

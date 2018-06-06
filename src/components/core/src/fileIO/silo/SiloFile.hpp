@@ -32,7 +32,7 @@
 /////////////////////////////////////////////////
 
 
-#include "common/InterObjectRelation.hpp"
+#include "mesh/InterObjectRelation.hpp"
 
 
 
