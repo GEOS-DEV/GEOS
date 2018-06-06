@@ -35,6 +35,9 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
                              &m_toElementList,
                              false );
 
+  m_toElementRegionList.resize(0,2);
+  m_toElementSubRegionList.resize(0,2);
+  m_toElementList.resize(0,2);
   //0-based; note that the following field is ALSO 0
   //for faces that are not external faces, so check isExternal before using
 //  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
@@ -303,17 +306,17 @@ void FaceManager::AddNewFace( localIndex const & kReg,
 
 
 
-  if( elementRegionList()[numFaces][0] == -1 )
+  if( m_toElementRegionList[numFaces][0] == -1 )
   {
-    elementRegionList()[numFaces][0]    = kReg;
-    elementSubRegionList()[numFaces][0] = kSubReg;
-    elementList()[numFaces][0]          = ke;
+    m_toElementRegionList[numFaces][0]    = kReg;
+    m_toElementSubRegionList[numFaces][0] = kSubReg;
+    m_toElementList[numFaces][0]          = ke;
   }
   else
   {
-    elementRegionList()[numFaces][1]    = kReg;
-    elementSubRegionList()[numFaces][1] = kSubReg;
-    elementList()[numFaces][1]          = ke;
+    m_toElementRegionList[numFaces][1]    = kReg;
+    m_toElementSubRegionList[numFaces][1] = kSubReg;
+    m_toElementList[numFaces][1]          = ke;
   }
 
   // now increment numFaces to reflect the number of faces rather than the index
@@ -645,8 +648,9 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
   packedSize += CommBufferOps::Pack<DOPACK>( buffer,
                                              m_toElementList,
-                                             packList,
-                                             m_toElementList.RelatedObjectLocalToGlobal() );
+                                             packList );
+  //TODO THIS IS WRONG. MUST generate to_element map structure that holds all the element objects
+//                                             m_toElementList.RelatedObjectLocalToGlobal() );
 
 
   return packedSize;
