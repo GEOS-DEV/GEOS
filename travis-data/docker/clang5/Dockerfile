@@ -2,7 +2,7 @@ FROM geosx/compiler:ubuntu-clang-base
 
 LABEL maintainer="Randolph Settgast <settgast1@llnl.gov>"
 
-ENV llvmtar=clang+llvm-5.0.1-x86_64-linux-gnu-ubuntu-16.04
+ENV llvmtar=clang+llvm-5.0.2-x86_64-linux-gnu-ubuntu-16.04
 ENV tarext=.tar.xz
 ENV CC=clang
 ENV CXX=clang++

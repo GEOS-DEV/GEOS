@@ -3,6 +3,9 @@
 Documentation
 ---------------------
 
+https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/getting_started.rst
+
+https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/developer_guidelines.rst
 
 
 Authors

@@ -61,14 +61,10 @@ set(ATK_CMAKE "${ATK_DIR}/lib/cmake" CACHE PATH "")
 
 set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
 
-
-
-
-
-
-
-
-
+set(SPHINX_EXECUTABLE "sphinx-build" CACHE PATH "")
+include(cmake/blt/cmake/thirdparty/FindSphinx.cmake)
+message( "SPHINX_FOUND = ${SPHINX_FOUND}" )
+message( "SPHINX_EXECUTABLE = ${SPHINX_EXECUTABLE}" )
 
 if(NOT BLT_CXX_STD STREQUAL c++14)
     MESSAGE(FATAL_ERROR "c++14 is NOT enabled. GEOSX requires c++14")
