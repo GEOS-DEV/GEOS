@@ -29,12 +29,14 @@ MeshLevel::MeshLevel( string const & name,
                       ManagedGroup * const parent ):
   ManagedGroup(name,parent),
   m_nodeManager( groupStructKeys::nodeManagerString,this),
+  m_edgeManager( groupStructKeys::edgeManagerString,this),
   m_faceManager( groupStructKeys::faceManagerString,this),
   m_elementManager( groupStructKeys::elemManagerString,this)
 {
 
   RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager, false );
-//  RegisterGroup<EdgeManager>( groupKeys.edgeManager );
+
+  RegisterGroup( groupStructKeys::edgeManagerString, &m_edgeManager, false );
 
 
   RegisterGroup<FaceManager>( groupStructKeys::faceManagerString, &m_faceManager, false );
@@ -59,8 +61,8 @@ void MeshLevel::InitializePostSubGroups( ManagedGroup * const )
 
   m_elementManager.forCellBlocks([&]( CellBlockSubRegion * subRegion ) -> void
   {
-    subRegion->m_toNodesRelation.SetRelatedObject(&m_nodeManager);
-    subRegion->m_toFacesRelation.SetRelatedObject(&m_faceManager);
+    subRegion->nodeList().SetRelatedObject(&m_nodeManager);
+    subRegion->faceList().SetRelatedObject(&m_faceManager);
   });
 
 }
@@ -82,7 +84,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
       getReference< array<localIndex_array> >(nodeManager->viewKeys.elementSubRegionList.Key());
 
   array<localIndex_array> const & nodeToElementList = nodeManager->
-      getReference< array<localIndex_array> >(nodeManager->viewKeys.elementList.Key());
+      getReference< OrderedVariableOneToManyRelation >(nodeManager->viewKeys.elementList.Key());
 
 
   FaceManager * const faceManager = this->getFaceManager();
