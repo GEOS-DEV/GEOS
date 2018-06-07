@@ -21,6 +21,7 @@
 #include "managers/ObjectManagerBase.hpp"
 #include <string.h>
 #include "CellBlockManager.hpp"
+#include "ToElementRelation.hpp"
 
 
 // *********************************************************************************************************************
@@ -176,6 +177,7 @@ private:
   OrderedVariableOneToManyRelation m_toElementList ;
 
 
+  UnorderedVariableToManyElementRelation m_toElements;
 
 };
 // *********************************************************************************************************************
