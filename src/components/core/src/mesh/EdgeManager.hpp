@@ -17,7 +17,7 @@
 #ifndef EDGEMANAGERT_H_
 #define EDGEMANAGERT_H_
 
-#include "common/InterObjectRelation.hpp"
+#include "InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
 
 
