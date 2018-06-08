@@ -538,7 +538,8 @@ real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
     {
       CellBlockSubRegion * const cellBlockSubRegion = ManagedGroup::group_cast<CellBlockSubRegion*>(cellBlock.second );
 
-      array< Array2dT<R1Tensor> > const & dNdX = cellBlockSubRegion->getReference< array< Array2dT<R1Tensor> > >(keys::dNdX);
+      multidimensionalArray::ManagedArray< R1Tensor, 3 > & dNdX = cellBlockSubRegion->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
+
       Array2dT<real64> const & detJ            = cellBlockSubRegion->getReference< Array2dT<real64> >(keys::detJ);
 
       lArray2d const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
@@ -581,7 +582,7 @@ real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
               {
                 element_matrix(a,b) += detJ[k][q] *
                                        diffusion *
-                                       Dot( dNdX[k][q][a], dNdX[k][q][b] );
+                                     + Dot( dNdX[k][q][a], dNdX[k][q][b] );
               }
 
             }

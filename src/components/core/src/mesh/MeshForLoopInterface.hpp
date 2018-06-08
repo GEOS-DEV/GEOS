@@ -169,7 +169,9 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-      auto const & dNdX            = cellBlock->getData< array< Array2dT<R1Tensor> > >(keys::dNdX);
+      //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
+       multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
+      
       array_view<real64,2> const & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ).View();
 
       auto const & constitutiveMap = cellBlock->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
@@ -202,7 +204,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
         array_view<R2SymTensor,1> devStress    = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress")).View();
         //------------------------
 
-        //Element loop is packed with parameters... 
+        //Element loop is packed with parameters...
         auto ebody = [=](localIndex index) mutable -> void
           {body(index,
                 numNodesPerElement,
@@ -216,7 +218,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
                 constitutiveUpdate,
                 constitutiveModelData
                 ); };
-        
+
         
         forall_in_set<POLICY>(elementList.data(), elementList.size(), ebody);
 
@@ -233,7 +235,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     localIndex const numNodesPerElement,\
     array_view<localIndex,2> const elemsToNodes,\
     localIndex const numQuadraturePoints,\
-    Array2dT<R1Tensor> const * dNdX,\
+    multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX,\
     array_view<localIndex,2> const constitutiveMapView,\
     array_view<real64,2> const detJ,\
     array_view<R2SymTensor,1> devStress,\
@@ -241,6 +243,8 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     constitutive::ConstitutiveBase::UpdateFunctionPointer constitutiveUpdate,\
     void * constitutiveModelData\
     ) mutable -> void
+
+  
 }
 
 
