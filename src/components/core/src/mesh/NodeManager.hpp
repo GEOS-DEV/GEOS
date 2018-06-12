@@ -145,14 +145,14 @@ public:
   UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
-  array<localIndex_array>       & elementRegionList()       { return m_toElementRegionList; }
-  array<localIndex_array> const & elementRegionList() const { return m_toElementRegionList; }
+  array<lSet>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array<lSet> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  array<localIndex_array>       & elementSubRegionList()       { return m_toElementSubRegionList; }
-  array<localIndex_array> const & elementSubRegionList() const { return m_toElementSubRegionList; }
+  array<lSet>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array<lSet> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
-  OrderedVariableOneToManyRelation       & elementList()       { return m_toElementList; }
-  OrderedVariableOneToManyRelation const & elementList() const { return m_toElementList; }
+  array<lSet>        & elementList()       { return m_toElements.m_toElementIndex; }
+  array<lSet>  const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
 protected:
@@ -172,9 +172,9 @@ private:
   UnorderedVariableOneToManyRelation m_toEdgesRelation;
   UnorderedVariableOneToManyRelation m_toFacesRelation;
 
-  array<localIndex_array> m_toElementRegionList ;
-  array<localIndex_array> m_toElementSubRegionList ;
-  OrderedVariableOneToManyRelation m_toElementList ;
+//  array<localIndex_array> m_toElementRegionList ;
+//  array<localIndex_array> m_toElementSubRegionList ;
+//  OrderedVariableOneToManyRelation m_toElementList ;
 
 
   UnorderedVariableToManyElementRelation m_toElements;
