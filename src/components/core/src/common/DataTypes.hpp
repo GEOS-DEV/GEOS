@@ -26,7 +26,6 @@
 #include <typeinfo>
 #include <map>
 #include <unordered_map>
-#include <vector>
 #include <cmath>
 
 #include "common/GeosxConfig.hpp"

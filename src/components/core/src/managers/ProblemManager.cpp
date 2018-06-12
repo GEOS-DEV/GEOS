@@ -814,7 +814,7 @@ void ProblemManager::RunSimulation()
       WriteSilo( cycle, time );
       real64 nextDt = std::numeric_limits<real64>::max();
 
-      for ( auto jj=0; jj<solverList.size(); ++jj)
+      for ( int jj=0; jj<static_cast<int>(solverList.size()); ++jj)
       {
         SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
         currentSolver->TimeStep( time, dt, cycle, domain );
@@ -828,14 +828,11 @@ void ProblemManager::RunSimulation()
       dt = (endTime - time < dt)? endTime-time : dt;
     }
 
-//    bpWriter.write(cycle);
+    // bpWriter.write(cycle);
     WriteSilo(cycle, time);
-//    WriteRestart(cycle);
+    // WriteRestart(cycle);
 
   }
-
-
-
 
 #ifdef USE_CALIPER
 //  runSimulationAnnotation.end();
