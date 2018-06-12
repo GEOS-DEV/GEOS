@@ -21,6 +21,7 @@
 
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
+#include <algorithm>
 //#include "managers/TableManager.hpp"
 //#include "SimpleGeometricObjects.hpp"
 
@@ -264,7 +265,7 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {
   //  lvector numElements;
   //
-  //  for( array<string>::size_type r=0 ; r<m_regionNames.size() ; ++r )
+  //  for( string_array::size_type r=0 ; r<m_regionNames.size() ; ++r )
   //  {
   //    numElements.push_back( 0 );
   //  }
@@ -331,12 +332,12 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
   m_numElePerBox.resize(m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if (m_elementType.size() != m_numElePerBox.size())
+  if (static_cast<long>(m_elementType.size()) != m_numElePerBox.size())
   {
     if (m_elementType.size() == 1)
     {
       m_elementType.resize(m_numElePerBox.size());
-      m_elementType = m_elementType[0];
+      std::fill(m_elementType.begin(), m_elementType.end(), m_elementType[0]);
     }
     else
     {
@@ -384,12 +385,12 @@ void InternalMeshGenerator::ReadXML_PostProcess()
     {
       numBlocks *= m_nElems[i].size();
     }
-    if( numBlocks != m_regionNames.size() )
+    if( numBlocks != static_cast<int>(m_regionNames.size()) )
     {
       if (m_regionNames.size() == 1)
       {
         m_regionNames.resize(numBlocks);
-        m_regionNames = m_regionNames[0];
+        std::fill(m_regionNames.begin(), m_regionNames.end(), m_regionNames[0]);
       }
       else
       {
@@ -611,7 +612,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   // TODO This needs to be rewritten for dimensions lower than 3.
-  array<string>::const_iterator iterRegion = m_regionNames.begin();
+  string_array::const_iterator iterRegion = m_regionNames.begin();
   for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
   {
     for( int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
@@ -756,8 +757,8 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
   {
     integer_array numElements;
-    array<string> elementRegionNames;
-    array<string> elementTypes;
+    string_array elementRegionNames;
+    string_array elementTypes;
     std::map<std::string, localIndex> localElemIndexInRegion;
 
     for( std::map<std::string, int>::iterator iterNumElemsInRegion = numElemsInRegions.begin() ;

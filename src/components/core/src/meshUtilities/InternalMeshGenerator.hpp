@@ -96,7 +96,7 @@ private:
   array<real64> m_nElemScaling[3];
   array<real64> m_nElemBias[3];
 
-  array<string> m_regionNames;
+  string_array m_regionNames;
 
   realT m_min[3]; // Minimum extent of mesh dimensions
   realT m_max[3]; // Maximum extent of mesh dimensions
@@ -121,7 +121,7 @@ private:
 
 
 
-  array<string> m_elementType;
+  string_array m_elementType;
 
   array<integer> m_numElePerBox;
 

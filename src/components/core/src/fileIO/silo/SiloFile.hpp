@@ -449,8 +449,8 @@ public:
 
   bool m_markGhosts;
 
-  array<string> m_emptyMeshes;
-  array<string> m_emptyVariables;
+  string_array m_emptyMeshes;
+  string_array m_emptyVariables;
 
   integer_array SiloNodeOrdering();
 
@@ -557,7 +557,7 @@ template<> inline realT* DataPtr( R2SymTensor& data)  {    return data.begin(); 
 
 
 template<typename TYPE>
-void SetVariableNames(const std::string& fieldName, array<string>& varnamestring, char* varnames[]);
+void SetVariableNames(const std::string& fieldName, string_array& varnamestring, char* varnames[]);
 
 template<typename OBJECT_TYPE>
 int FieldCentering();
@@ -684,7 +684,7 @@ void SiloFile::WriteDataField( const std::string& meshName,
     array<void*> vars(nvars);
 
 
-    array<string> varnamestring(nvars);
+    string_array varnamestring(nvars);
     std::vector<std::vector<OUTTYPE> > castedField(nvars);
 
     SiloFileUtilities::SetVariableNames<TYPE>(fieldName, varnamestring, varnames.data() );
@@ -864,7 +864,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-  array<string> vBlockNames(size);
+  string_array vBlockNames(size);
   std::vector<char*> BlockNames(size);
   std::vector<int> blockTypes(size);
   char tempBuffer[1024];

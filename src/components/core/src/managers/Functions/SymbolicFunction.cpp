@@ -92,7 +92,7 @@ void SymbolicFunction::InitializeFunction()
 {
   // Register variables
   string_array & variables = getReference<string_array>(keys::variableNames);
-  for (int ii=0 ; ii<variables.size() ; ++ii)
+  for (int ii=0 ; ii<static_cast<int>(variables.size()); ++ii)
   {
     parserContext.addVariable(variables[ii].c_str(), ii * sizeof(double));
   }

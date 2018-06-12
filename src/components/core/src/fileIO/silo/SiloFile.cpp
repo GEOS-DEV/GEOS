@@ -150,29 +150,29 @@ template<> int GetNumberOfVariablesInField<string> ()
 }
 
 template<typename TYPE>
-void SetVariableNames(const std::string& fieldName, array<string>& varnamestring, char* varnames[])
+void SetVariableNames(const std::string& fieldName, string_array& varnamestring, char* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<TYPE> ());
   int count = 0;
-  for (array<string>::iterator i = varnamestring.begin() ; i != varnamestring.end() ; ++i)
+  for (string_array::iterator i = varnamestring.begin() ; i != varnamestring.end() ; ++i)
   {
     *i = fieldName;
     varnames[count++] =  const_cast<char*>((*i).c_str());
   }
 }
-template void SetVariableNames<int> (const std::string& fieldName, array<string>& varnamestring,
+template void SetVariableNames<int> (const std::string& fieldName, string_array& varnamestring,
                                      char* varnames[]);
-template void SetVariableNames<unsigned long> (const std::string& fieldName, array<string>& varnamestring,
+template void SetVariableNames<unsigned long> (const std::string& fieldName, string_array& varnamestring,
                                                char* varnames[]);
-template void SetVariableNames<realT> (const std::string& fieldName, array<string>& varnamestring,
+template void SetVariableNames<realT> (const std::string& fieldName, string_array& varnamestring,
                                        char* varnames[]);
-template void SetVariableNames<long long unsigned int> (const std::string& fieldName, array<string>& varnamestring,
+template void SetVariableNames<long long unsigned int> (const std::string& fieldName, string_array& varnamestring,
                                                         char* varnames[]);
 
 
 
 template<>
-void SetVariableNames<R1Tensor> (const std::string& fieldName, array<string>& varnamestring,
+void SetVariableNames<R1Tensor> (const std::string& fieldName, string_array& varnamestring,
                                  char* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R1Tensor> ());
@@ -185,7 +185,7 @@ void SetVariableNames<R1Tensor> (const std::string& fieldName, array<string>& va
 }
 
 template<>
-void SetVariableNames<R2Tensor> (const std::string& fieldName, array<string>& varnamestring,
+void SetVariableNames<R2Tensor> (const std::string& fieldName, string_array& varnamestring,
                                  char* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
@@ -210,7 +210,7 @@ void SetVariableNames<R2Tensor> (const std::string& fieldName, array<string>& va
 }
 
 template<>
-void SetVariableNames<R2SymTensor> (const std::string& fieldName, array<string>& varnamestring,
+void SetVariableNames<R2SymTensor> (const std::string& fieldName, string_array& varnamestring,
                                     char* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
@@ -1570,7 +1570,7 @@ void SiloFile::WriteRegionSpecifications( const ElementRegionManager * elementMa
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-    array<string> vBlockNames(size);
+    string_array vBlockNames(size);
     std::vector<char*> BlockNames(size);
     char tempBuffer[1024];
     char currentDirectory[256];
@@ -1643,13 +1643,13 @@ void SiloFile::ClearEmptiesFromMultiObjects(const int cycleNum)
 
   if( rank != 0 )
   {
-    for( array<string>::const_iterator emptyObject=m_emptyVariables.begin() ;
+    for( string_array::const_iterator emptyObject=m_emptyVariables.begin() ;
          emptyObject!=m_emptyVariables.end() ; ++emptyObject )
     {
       sendbufferVars += *emptyObject + ' ';
     }
 
-    for( array<string>::const_iterator emptyObject=m_emptyMeshes.begin() ;
+    for( string_array::const_iterator emptyObject=m_emptyMeshes.begin() ;
          emptyObject!=m_emptyMeshes.end() ; ++emptyObject )
     {
       sendbufferMesh += *emptyObject + ' ';
@@ -1700,12 +1700,12 @@ void SiloFile::ClearEmptiesFromMultiObjects(const int cycleNum)
     std::istringstream iss(receiveBufferVars);
     copy(std::istream_iterator<std::string>(iss),
          std::istream_iterator<std::string>(),
-         std::back_inserter< array<string> >(m_emptyVariables));
+         std::back_inserter< string_array >(m_emptyVariables));
 
     std::istringstream issm(receiveBufferMesh);
     copy(std::istream_iterator<std::string>(issm),
          std::istream_iterator<std::string>(),
-         std::back_inserter< array<string> >(m_emptyMeshes));
+         std::back_inserter< string_array >(m_emptyMeshes));
   }
 
   if (rank == 0)
@@ -1713,7 +1713,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(const int cycleNum)
     DBfile *siloFile = DBOpen(m_baseFileName.c_str(), DB_UNKNOWN, DB_APPEND);
     std::string empty("EMPTY");
 
-    for (array<string>::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
+    for (string_array::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
          != m_emptyVariables.end() ; ++emptyObject)
     {
       size_t pathBegin = emptyObject->find_first_of('/', 1);
@@ -1759,7 +1759,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(const int cycleNum)
     }
 
 
-    for (array<string>::iterator emptyObject = m_emptyMeshes.begin() ; emptyObject
+    for (string_array::iterator emptyObject = m_emptyMeshes.begin() ; emptyObject
          != m_emptyMeshes.end() ; ++emptyObject)
     {
       size_t pathBegin = emptyObject->find_first_of('/', 1);
@@ -1836,14 +1836,14 @@ void SiloFile::DBWriteWrapper( const std::string& name, const std::string& data 
 }
 
 
-void SiloFile::DBWriteWrapper( const std::string& name, const array<std::string>& data )
+void SiloFile::DBWriteWrapper( const std::string& name, const string_array& data )
 {
 
   if( !data.empty() )
   {
     std::string temp;
 
-    for( array<std::string>::const_iterator i=data.begin() ; i!=data.end() ; ++i )
+    for( string_array::const_iterator i=data.begin() ; i!=data.end() ; ++i )
     {
       temp += *i + ' ';
 
@@ -2040,7 +2040,7 @@ void SiloFile::DBWriteWrapper( const std::string& subdir, const std::map< std::s
   DBMkDir( m_dbFilePtr, subdir.c_str() );
   DBSetDir( m_dbFilePtr, subdir.c_str() );
 
-  array<string> memberNames;
+  string_array memberNames;
 
 
   // iterate over all entries in the member map
@@ -2085,7 +2085,7 @@ template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std:
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, lArray2d>& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<localIndex_array> >& );
 template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, lSet>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<string> >& );
+template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, string_array >& );
 
 
 
@@ -2228,7 +2228,7 @@ template void SiloFile::DBReadWrapper( const std::string&, array<R2Tensor>& ) co
 template void SiloFile::DBReadWrapper( const std::string&, array<R2SymTensor>& ) const;
 
 template<>
-void SiloFile::DBReadWrapper( const std::string& name, array<std::string>& data ) const
+void SiloFile::DBReadWrapper( const std::string& name, string_array& data ) const
 {
 
   if( DBInqVarExists( m_dbFilePtr, name.c_str() ) )
@@ -2524,11 +2524,11 @@ void SiloFile::DBReadWrapper( const std::string& subdir, std::map< std::string, 
 
   DBSetDir( m_dbFilePtr, subdir.c_str() );
 
-  array<string> memberNames;
+  string_array memberNames;
 
   DBReadWrapper( "memberNames", memberNames );
 
-  for( array<string>::const_iterator i=memberNames.begin() ; i!=memberNames.end() ; ++i )
+  for( string_array::const_iterator i=memberNames.begin() ; i!=memberNames.end() ; ++i )
   {
     const std::string fieldName = *i;
     // check to see if the field should be written
@@ -2595,7 +2595,7 @@ template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, lArray2d>& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<localIndex_array> >& ) const;
 template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, lSet>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<string> >& ) const;
+template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, string_array >& ) const;
 
 
 
@@ -2888,7 +2888,7 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
 //    siloFile.DBWriteWrapper("m_VariableOneToManyMaps",m_VariableOneToManyMaps);
 //    siloFile.DBWriteWrapper("m_UnorderedVariableOneToManyMaps",m_UnorderedVariableOneToManyMaps);
 //
-//    array<string> setNames;
+//    string_array setNames;
 //    for( std::map<std::string,lSet>::const_iterator i=m_Sets.begin() ;
 // i!=m_Sets.end() ; ++i )
 //    {
