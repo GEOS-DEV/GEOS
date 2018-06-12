@@ -3,6 +3,7 @@
 # Specify all headers
 #
 set(mesh_headers
+    BufferOps.hpp
     CellBlockManager.hpp
     CellBlock.hpp
     CellBlockSubRegion.hpp
@@ -22,6 +23,7 @@ set(mesh_headers
 # Specify all sources
 #
 set(mesh_sources
+    BufferOps.cpp
     CellBlockManager.cpp
     CellBlock.cpp
     CellBlockSubRegion.cpp

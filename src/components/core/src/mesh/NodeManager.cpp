@@ -25,6 +25,7 @@
 //#include "ElementRegionT.hpp"
 #include "ElementRegionManager.hpp"
 #include "ToElementRelation.hpp"
+#include "BufferOps.hpp"
 
 namespace geosx
 {
@@ -276,10 +277,10 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 //                                             m_toElementList.RelatedObjectLocalToGlobal() );
 
 
-  packedSize += PackE<DOPACK>( buffer,
-                               this->m_toElements,
-                               packList,
-                               nullptr );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                         this->m_toElements,
+                                         packList,
+                                         nullptr );
   return packedSize;
 }
 

@@ -631,32 +631,32 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 {
   localIndex packedSize = 0;
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
                                              m_nodeList,
                                              packList,
                                              this->m_localToGlobalMap,
                                              m_nodeList.RelatedObjectLocalToGlobal() );
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
                                              m_edgeList,
                                              packList,
                                              this->m_localToGlobalMap,
                                              m_edgeList.RelatedObjectLocalToGlobal() );
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementRegionListString) );
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementRegionListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
                                              m_toElementRegionList,
                                              packList );
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementSubRegionListString) );
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementSubRegionListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
                                              m_toElementSubRegionList,
                                              packList );
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
                                              m_toElementList,
                                              packList );
   //TODO THIS IS WRONG. MUST generate to_element map structure that holds all the element objects
@@ -674,47 +674,47 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   localIndex unPackedSize = 0;
 
   string nodeListString;
-  unPackedSize += CommBufferOps::Unpack( buffer, nodeListString );
+  unPackedSize += bufferOps::Unpack( buffer, nodeListString );
   GEOS_ASSERT( nodeListString==viewKeyStruct::nodeListString, "")
 
-  unPackedSize += CommBufferOps::Unpack( buffer,
+  unPackedSize += bufferOps::Unpack( buffer,
                                          m_nodeList,
                                          packList,
                                          this->m_globalToLocalMap,
                                          m_nodeList.RelatedObjectGlobalToLocal() );
 
   string edgeListString;
-  unPackedSize += CommBufferOps::Unpack( buffer, edgeListString );
+  unPackedSize += bufferOps::Unpack( buffer, edgeListString );
   GEOS_ASSERT( edgeListString==viewKeyStruct::edgeListString, "")
 
-  unPackedSize += CommBufferOps::Unpack( buffer,
+  unPackedSize += bufferOps::Unpack( buffer,
                                          m_edgeList,
                                          packList,
                                          this->m_globalToLocalMap,
                                          m_edgeList.RelatedObjectGlobalToLocal() );
 
   string elementRegionListString;
-  unPackedSize += CommBufferOps::Unpack( buffer, elementRegionListString );
+  unPackedSize += bufferOps::Unpack( buffer, elementRegionListString );
   GEOS_ASSERT( elementRegionListString==viewKeyStruct::elementRegionListString, "")
 
-  unPackedSize += CommBufferOps::Unpack( buffer,
+  unPackedSize += bufferOps::Unpack( buffer,
                                          m_toElementRegionList,
                                          packList );
 
   string elementSubRegionListString;
-  unPackedSize += CommBufferOps::Unpack( buffer, elementSubRegionListString );
+  unPackedSize += bufferOps::Unpack( buffer, elementSubRegionListString );
   GEOS_ASSERT( elementSubRegionListString==viewKeyStruct::elementSubRegionListString, "")
 
-  unPackedSize += CommBufferOps::Unpack( buffer,
+  unPackedSize += bufferOps::Unpack( buffer,
                                          m_toElementSubRegionList,
                                          packList );
 
 
   string elementListString;
-  unPackedSize += CommBufferOps::Unpack( buffer, elementListString );
+  unPackedSize += bufferOps::Unpack( buffer, elementListString );
   GEOS_ASSERT( elementListString==viewKeyStruct::elementListString, "")
 
-  unPackedSize += CommBufferOps::Unpack( buffer,
+  unPackedSize += bufferOps::Unpack( buffer,
                                          m_toElementList,
                                          packList,
                                          this->m_globalToLocalMap );

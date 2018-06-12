@@ -85,7 +85,7 @@ struct is_tensorT< R2SymTensorT<3> > : std::true_type{};
 
 
 
-namespace CommBufferOps
+namespace bufferOps
 {
 
 

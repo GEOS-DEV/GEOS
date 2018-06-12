@@ -37,7 +37,7 @@
 
 using namespace geosx;
 using namespace geosx::traits;
-using namespace CommBufferOps;
+using namespace bufferOps;
 
 TEST(testGeosxTraits,test_is_tensorT)
 {

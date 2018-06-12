@@ -10,8 +10,8 @@
 // Software Foundation) version 2.1 dated February 1999.
 
 
-#ifndef COMMBUFFEROPS_H_
-#define COMMBUFFEROPS_H_
+#ifndef DATAREPOSITORY_BUFFEROPS_H_
+#define DATAREPOSITORY_BUFFEROPS_H_
 
 #include "common/DataTypes.hpp"
 //#include "codingUtilities/Utilities.hpp"
@@ -24,7 +24,7 @@ namespace geosx
 
 
 
-namespace CommBufferOps
+namespace bufferOps
 {
 
 
@@ -347,7 +347,7 @@ namespace CommBufferOps
 
 }
 
-#include "CommBufferOps_inline.hpp"
+#include "BufferOps_inline.hpp"
 
 
 #endif /* BUFVECTOR_H_ */
