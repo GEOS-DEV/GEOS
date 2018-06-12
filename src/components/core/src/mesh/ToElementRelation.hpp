@@ -73,15 +73,6 @@ typedef ToElementRelation<lArray2d> FixedToManyElementRelation;
 typedef ToElementRelation<array<localIndex_array> > OrderedVariableToManyElementRelation;
 typedef ToElementRelation<array<lSet> > UnorderedVariableToManyElementRelation;
 
-
-class ElementRegionManager;
-template< bool DO_PACKING >
-localIndex PackE( char*& buffer,
-                 UnorderedVariableToManyElementRelation const & var,
-                 array<localIndex> const & packList,
-                 ElementRegionManager const * const elementRegionManager );
-
-
 } /* namespace geosx */
 
 #endif /* SRC_COMPONENTS_CORE_SRC_MESH_TOELEMENTRELATION_HPP_ */

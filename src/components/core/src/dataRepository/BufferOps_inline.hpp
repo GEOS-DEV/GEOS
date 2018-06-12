@@ -21,7 +21,7 @@
 #include "common/integer_conversion.hpp"
 namespace geosx
 {
-namespace CommBufferOps
+namespace bufferOps
 {
 
 template< bool DO_PACKING,

@@ -413,12 +413,12 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
   int bufferSize = 0;
-  bufferSize += CommBufferOps::Pack<false>( sendBufferPtr,
+  bufferSize += bufferOps::Pack<false>( sendBufferPtr,
                                             nodeGhostsToReceive.data(),
                                             nodeGhostsToReceive.size(),
                                             nodeManager.m_localToGlobalMap );
 
-  bufferSize += CommBufferOps::Pack<false>( sendBufferPtr,
+  bufferSize += bufferOps::Pack<false>( sendBufferPtr,
                                             faceGhostsToReceive.data(),
                                             faceGhostsToReceive.size(),
                                             faceManager.m_localToGlobalMap );
@@ -426,12 +426,12 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   sendBuffer.resize(bufferSize);
 
   int packedSize = 0;
-  packedSize += CommBufferOps::Pack<true>( sendBufferPtr,
+  packedSize += bufferOps::Pack<true>( sendBufferPtr,
                                             nodeGhostsToReceive.data(),
                                             nodeGhostsToReceive.size(),
                                             nodeManager.m_localToGlobalMap );
 
-  packedSize += CommBufferOps::Pack<true>( sendBufferPtr,
+  packedSize += bufferOps::Pack<true>( sendBufferPtr,
                                             faceGhostsToReceive.data(),
                                             faceGhostsToReceive.size(),
                                             faceManager.m_localToGlobalMap );
@@ -445,10 +445,10 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
 
   int unpackedSize = 0;
-  unpackedSize += CommBufferOps::Unpack( receiveBufferPtr,
+  unpackedSize += bufferOps::Unpack( receiveBufferPtr,
                                          nodeGhostsToSend,
                                          nodeManager.m_globalToLocalMap );
-  unpackedSize += CommBufferOps::Unpack( receiveBufferPtr,
+  unpackedSize += bufferOps::Unpack( receiveBufferPtr,
                                          faceGhostsToSend,
                                          faceManager.m_globalToLocalMap );
 
