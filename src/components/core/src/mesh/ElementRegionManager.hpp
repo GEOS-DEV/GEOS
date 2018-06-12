@@ -46,6 +46,7 @@ class ElementRegionManager : public ObjectManagerBase
 public:
 
   template< typename VIEWTYPE >
+//  using ElementViewAccessor = array< array< typename VIEWTYPE::view_type > > ;
   using ElementViewAccessor = array< array< VIEWTYPE * > > ;
 
   /**
@@ -250,12 +251,14 @@ ConstructViewAccessor( string const & viewName,
 
       if( neighborName.empty() )
       {
+        //        viewAccessor[kReg].push_back( subRegion->getReference<VIEWTYPE>(viewName)) ;
         viewAccessor[kReg][kSubReg] = &(subRegion->getReference<VIEWTYPE>(viewName));
       }
       else
       {
+//        viewAccessor[kReg].push_back( subRegion->
         viewAccessor[kReg][kSubReg] = &(subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
-                                      GetGroup(neighborName)->getReference<VIEWTYPE>(viewName));
+                                        GetGroup(neighborName)->getReference<VIEWTYPE>(viewName));
       }
     }
   }

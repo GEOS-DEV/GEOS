@@ -76,8 +76,9 @@ typedef ToElementRelation<array<lSet> > UnorderedVariableToManyElementRelation;
 
 class ElementRegionManager;
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
+localIndex PackE( char*& buffer,
                  UnorderedVariableToManyElementRelation const & var,
+                 array<localIndex> const & packList,
                  ElementRegionManager const * const elementRegionManager );
 
 

@@ -24,6 +24,7 @@
 //#include <fstream>
 //#include "ElementRegionT.hpp"
 #include "ElementRegionManager.hpp"
+#include "ToElementRelation.hpp"
 
 namespace geosx
 {
@@ -45,16 +46,28 @@ NodeManager::NodeManager( std::string const & name,
 
   this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
 
+//  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
+//                             &m_toElementRegionList,
+//                             false );
+//
+//  this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
+//                             &m_toElementSubRegionList,
+//                             false );
+//
+//  this->RegisterViewWrapper( viewKeyStruct::elementListString,
+//                             &m_toElementList,
+//                             false );
+
   this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
-                             &m_toElementRegionList,
+                             &(elementRegionList()),
                              false );
 
   this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
-                             &m_toElementSubRegionList,
+                             &(elementSubRegionList()),
                              false );
 
   this->RegisterViewWrapper( viewKeyStruct::elementListString,
-                             &m_toElementList,
+                             &(elementList()),
                              false );
 
 }
@@ -164,12 +177,15 @@ void NodeManager::FillDocumentationNode()
 
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
+  array<lSet> & toElementRegionList = elementRegionList();
+  array<lSet> & toElementSubRegionList = elementSubRegionList();
+  array<lSet> & toElementList = elementList();
 
   for( localIndex a=0 ; a<size() ; ++a )
   {
-    m_toElementRegionList[a].clear();
-    m_toElementSubRegionList[a].clear();
-    m_toElementList[a].clear();
+    toElementRegionList[a].clear();
+    toElementSubRegionList[a].clear();
+    toElementList[a].clear();
   }
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg  )
@@ -188,9 +204,9 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
         for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
         {
           localIndex nodeIndex = nodeList[a];
-          m_toElementRegionList[nodeIndex].push_back( kReg );
-          m_toElementSubRegionList[nodeIndex].push_back( kSubReg );
-          m_toElementList[nodeIndex].push_back( ke );
+          toElementRegionList[nodeIndex].insert( kReg );
+          toElementSubRegionList[nodeIndex].insert( kSubReg );
+          toElementList[nodeIndex].insert( ke );
         }
       }
     }
@@ -223,7 +239,7 @@ localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
 
 template< bool DOPACK >
 localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                        localIndex_array const & packList ) const
+                                               localIndex_array const & packList ) const
 {
   localIndex packedSize = 0;
 
@@ -259,6 +275,11 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 //                                             packList,
 //                                             m_toElementList.RelatedObjectLocalToGlobal() );
 
+
+  packedSize += PackE<DOPACK>( buffer,
+                               this->m_toElements,
+                               packList,
+                               nullptr );
   return packedSize;
 }
 

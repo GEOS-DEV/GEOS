@@ -13,7 +13,7 @@ namespace geosx
 {
 
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
+localIndex PackE( char*& buffer,
                  UnorderedVariableToManyElementRelation const & var,
                  array<localIndex> const & packList,
                  ElementRegionManager const * const elementRegionManager )
@@ -42,11 +42,11 @@ localIndex Pack( char*& buffer,
 
   return sizeOfPackedChars;
 }
-template localIndex Pack<true>( char*&,
+template localIndex PackE<true>( char*&,
                                 UnorderedVariableToManyElementRelation const &,
                                 array<localIndex> const &,
                                 ElementRegionManager const * const );
-template localIndex Pack<false>( char*&,
+template localIndex PackE<false>( char*&,
                                  UnorderedVariableToManyElementRelation const &,
                                  array<localIndex> const &,
                                  ElementRegionManager const * const );
