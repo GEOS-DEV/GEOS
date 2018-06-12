@@ -31,7 +31,7 @@ set(SPHINX_EXECUTABLE "/usr/bin/sphinx-build" CACHE PATH "" FORCE)
 # RAJA/CHAI SETUP
 #######################################
 #set(RAJA_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/raja/" CACHE PATH "" FORCE )
-#set(CHAI_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/chai/" CACHE PATH "" FORCE )
+set(CHAI_DIR "/g/g14/corbett5/geosx/chai/install-clang-4-0-0" CACHE PATH "" FORCE )
 
 option( RAJA_ENABLE_TBB "" OFF)
 
@@ -42,4 +42,4 @@ set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
 set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
 
 set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)
-set(RAJA_ENABLE_OPENMP "ON"        CACHE PATH "" FORCE)
+set(RAJA_ENABLE_OPENMP "ON"       CACHE PATH "" FORCE)

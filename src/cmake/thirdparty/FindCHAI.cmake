@@ -31,6 +31,10 @@ find_library( CHAI_LIBRARY NAMES chai libchai
 
 
 include(FindPackageHandleStandardArgs)
+
+include("${CHAI_DIR}/share/umpire/cmake/umpire-targets.cmake")
+include("${CHAI_DIR}/share/chai/cmake/chai-targets.cmake")
+
 # handle the QUIETLY and REQUIRED arguments and set CHAI_FOUND to TRUE
 # if all listed variables are TRUE
 set(CHAI_FOUND TRUE)
