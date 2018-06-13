@@ -140,6 +140,12 @@ FiniteElement<dim> :: FiniteElement(BasisBase const &basis,
     data[q].parent_gradients.resize(n_dofs);
     data[q].mapped_gradients.resize(n_dofs);
 
+    double qPt_x = quadrature.integration_point(q)[0];
+    double qPt_y = quadrature.integration_point(q)[1];
+    double qPt_z = quadrature.integration_point(q)[2];
+    
+    printf("integration_point(%d) = %.15f, %.15f, %.15f \n", q, qPt_x, qPt_y, qPt_z);
+    
     for(auto i=0 ; i<n_dofs ; ++i)
     {
       data[q].parent_values[i]    = basis.value(i,data[q].parent_q_point);
