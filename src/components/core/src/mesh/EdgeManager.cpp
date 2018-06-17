@@ -41,7 +41,7 @@ EdgeManager::~EdgeManager()
 
 
 
-void EdgeManager::BuildEdges( FaceManager * const faceManager, const NodeManager * const nodeManager )
+void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager )
 {
 
 
@@ -49,11 +49,12 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, const NodeManager
     return;
 
   localIndex numMultiNodeEdges = 0;
-  array<localIndex_array>& faceToEdgeMap = faceManager->edgeList();
+  OrderedVariableOneToManyRelation& faceToEdgeMap = faceManager->edgeList();
+  faceToEdgeMap.SetRelatedObject( this );
   array<localIndex_array>& faceToNodeMap = faceManager->nodeList();
 
-  UnorderedVariableOneToManyRelation const & nodeToEdgeMap = nodeManager->edgeList();
 
+  UnorderedVariableOneToManyRelation & nodeToEdgeMap = nodeManager->edgeList();
   // this will be used to hold a list pairs that store the 2nd node in the edge,
   // and the edge number.
   // they are keyed the edges lowest node.
@@ -334,7 +335,7 @@ void EdgeManager::SetDomainBoundaryObjects( const ObjectDataStructureBaseT * con
     // check to see if the face is on a domain boundary
     if( isFaceOnDomainBoundary[kf] == 1 )
     {
-      localIndex_array& faceToEdges = faceManager->edgeList()(kf);
+      localIndex_array const & faceToEdges = faceManager->edgeList()(kf);
 
       // loop over all nodes connected to face, and set isNodeDomainBoundary
       for( localIndex_array::const_iterator a=faceToEdges.begin() ; a!=faceToEdges.end() ; ++a )
@@ -394,7 +395,7 @@ void EdgeManager::SetIsExternal( const ObjectDataStructureBaseT * const referenc
     // check to see if the face is on a domain boundary
     if( isExternalFace[kf] == 1 )
     {
-      localIndex_array& faceToEdges = faceManager->edgeList()(kf);
+      localIndex_array const & faceToEdges = faceManager->edgeList()(kf);
 
       // loop over all nodes connected to face, and set isNodeDomainBoundary
       for( localIndex_array::const_iterator a=faceToEdges.begin() ; a!=faceToEdges.end() ; ++a )

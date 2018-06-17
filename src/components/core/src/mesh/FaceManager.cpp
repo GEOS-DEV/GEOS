@@ -16,6 +16,7 @@
 #include "FaceManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "NodeManager.hpp"
+#include "BufferOps.hpp"
 
 namespace geosx
 {
@@ -34,20 +35,18 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
 //  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
   this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
-                             &m_toElementRegionList,
+                             &(elementRegionList()),
                              false );
 
   this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
-                             &m_toElementSubRegionList,
+                             &(elementSubRegionList()),
                              false );
 
   this->RegisterViewWrapper( viewKeyStruct::elementListString,
-                             &m_toElementList,
+                             &(elementList()),
                              false );
 
-  m_toElementRegionList.resize(0,2);
-  m_toElementSubRegionList.resize(0,2);
-  m_toElementList.resize(0,2);
+  m_toElements.resize(0,2);
   //0-based; note that the following field is ALSO 0
   //for faces that are not external faces, so check isExternal before using
 //  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
@@ -105,6 +104,8 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   Array2dT<localIndex> & elemRegionList = this->elementRegionList();
   Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
   Array2dT<localIndex> & elemList = this->elementList();
+
+  m_toElements.setElementRegionManager( elementManager );
 
   elemRegionList.resize( 4*nodeManager->size() );
   elemSubRegionList.resize( 4*nodeManager->size() );
@@ -297,7 +298,7 @@ void FaceManager::AddNewFace( localIndex const & kReg,
                               array<localIndex_array>& facesByLowestNode,
                               localIndex_array& tempNodeList,
                               array<localIndex_array>& tempFaceToNodeMap,
-                              CellBlockSubRegion const & elementRegion )
+                              CellBlockSubRegion & elementRegion )
 {
   // and add the face to facesByLowestNode[]
   facesByLowestNode[tempNodeList[0]].push_back(numFaces);
@@ -313,20 +314,21 @@ void FaceManager::AddNewFace( localIndex const & kReg,
 //  tempFaceToElemEntry.push_back( std::pair<ElementRegionT*, localIndex>(
 // const_cast<ElementRegionT*>(&elementRegion), ke) );
 //  m_toElementsRelation.push_back(tempFaceToElemEntry);
+  auto & toElementRegionList = elementRegionList();
+  auto & toElementSubRegionList = elementSubRegionList();
+  auto & toElementList = elementList();
 
-
-
-  if( m_toElementRegionList[numFaces][0] == -1 )
+  if( toElementRegionList[numFaces][0] == -1 )
   {
-    m_toElementRegionList[numFaces][0]    = kReg;
-    m_toElementSubRegionList[numFaces][0] = kSubReg;
-    m_toElementList[numFaces][0]          = ke;
+    toElementRegionList[numFaces][0]    = kReg;
+    toElementSubRegionList[numFaces][0] = kSubReg;
+    toElementList[numFaces][0]          = ke;
   }
   else
   {
-    m_toElementRegionList[numFaces][1]    = kReg;
-    m_toElementSubRegionList[numFaces][1] = kSubReg;
-    m_toElementList[numFaces][1]          = ke;
+    toElementRegionList[numFaces][1]    = kReg;
+    toElementSubRegionList[numFaces][1] = kSubReg;
+    toElementList[numFaces][1]          = ke;
   }
 
   // now increment numFaces to reflect the number of faces rather than the index
@@ -645,22 +647,11 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                              this->m_localToGlobalMap,
                                              m_edgeList.RelatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementRegionListString) );
-  packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                             m_toElementRegionList,
-                                             packList );
-
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementSubRegionListString) );
-  packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                             m_toElementSubRegionList,
-                                             packList );
-
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                             m_toElementList,
-                                             packList );
-  //TODO THIS IS WRONG. MUST generate to_element map structure that holds all the element objects
-//                                             m_toElementList.RelatedObjectLocalToGlobal() );
+                                         this->m_toElements,
+                                         packList,
+                                         m_toElements.getElementRegionManager() );
 
 
   return packedSize;
@@ -693,31 +684,15 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                          this->m_globalToLocalMap,
                                          m_edgeList.RelatedObjectGlobalToLocal() );
 
-  string elementRegionListString;
-  unPackedSize += bufferOps::Unpack( buffer, elementRegionListString );
-  GEOS_ASSERT( elementRegionListString==viewKeyStruct::elementRegionListString, "")
-
-  unPackedSize += bufferOps::Unpack( buffer,
-                                         m_toElementRegionList,
-                                         packList );
-
-  string elementSubRegionListString;
-  unPackedSize += bufferOps::Unpack( buffer, elementSubRegionListString );
-  GEOS_ASSERT( elementSubRegionListString==viewKeyStruct::elementSubRegionListString, "")
-
-  unPackedSize += bufferOps::Unpack( buffer,
-                                         m_toElementSubRegionList,
-                                         packList );
-
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
   GEOS_ASSERT( elementListString==viewKeyStruct::elementListString, "")
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                         m_toElementList,
-                                         packList,
-                                         this->m_globalToLocalMap );
+                                     m_toElements,
+                                     packList,
+                                     m_toElements.getElementRegionManager() );
 
 
 

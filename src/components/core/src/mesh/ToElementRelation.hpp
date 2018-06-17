@@ -30,6 +30,17 @@ public:
     return m_toElementRegion.size();
   }
 
+  void setElementRegionManager( ElementRegionManager const * const input )
+  {
+    m_elemRegionManager = input;
+  }
+
+  ElementRegionManager const * getElementRegionManager() const
+  {
+    return m_elemRegionManager;
+  }
+
+
 //  template< bool DOPACK >
 //  friend localIndex Pack( char *& buffer,
 //                   localIndex_array const & packList,
@@ -40,13 +51,15 @@ public:
   BASETYPE m_toElementSubRegion;
   BASETYPE m_toElementIndex;
 
+  ElementRegionManager const * m_elemRegionManager;
 };
 
 template< typename BASETYPE >
 ToElementRelation<BASETYPE>::ToElementRelation():
   m_toElementRegion(),
   m_toElementSubRegion(),
-  m_toElementIndex()
+  m_toElementIndex(),
+  m_elemRegionManager(nullptr)
 {
 
 }

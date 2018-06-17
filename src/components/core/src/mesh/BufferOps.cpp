@@ -18,9 +18,11 @@ localIndex Pack( char*& buffer,
 {
   localIndex sizeOfPackedChars = 0;
 
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, packList.size() );
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
     localIndex index = packList[a];
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.m_toElementRegion[index].size() );
     for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
     {
       localIndex elemRegionIndex             = var.m_toElementRegion[index][b];
@@ -29,7 +31,7 @@ localIndex Pack( char*& buffer,
       localIndex elemSubRegionIndex                  = var.m_toElementSubRegion[index][b];
       CellBlockSubRegion const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
 
-      localIndex elemIndex = var.m_toElementRegion[index][b];
+      localIndex elemIndex = var.m_toElementIndex[index][b];
 
       sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemRegionIndex );
       sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegionIndex );
@@ -48,5 +50,164 @@ template localIndex Pack<false>( char*&,
                                  UnorderedVariableToManyElementRelation const &,
                                  array<localIndex> const &,
                                  ElementRegionManager const * const );
+
+
+localIndex Unpack( char const * & buffer,
+                   UnorderedVariableToManyElementRelation & var,
+                   array<localIndex> const & packList,
+                   ElementRegionManager const * const elementRegionManager )
+{
+  localIndex sizeOfUnpackedChars = 0;
+
+  localIndex numIndicesUnpacked;
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+  GEOS_ASSERT( numIndicesUnpacked==packList.size(), "")
+
+  for( localIndex a=0 ; a<packList.size() ; ++a )
+  {
+    localIndex index = packList[a];
+    sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+    GEOS_ASSERT( numIndicesUnpacked==var.m_toElementRegion[index].size(), "")
+
+    for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
+    {
+      localIndex elemRegionIndex             = var.m_toElementRegion[index][b];
+      ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
+
+      localIndex elemSubRegionIndex                  = var.m_toElementSubRegion[index][b];
+      CellBlockSubRegion const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
+
+
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, var.m_toElementRegion[index][b] );
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, var.m_toElementSubRegion[index][b] );
+
+      globalIndex globalElementIndex;
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
+      var.m_toElementIndex[index][b] = elemSubRegion->m_globalToLocalMap.at(globalElementIndex);
+
+
+    }
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+template< bool DO_PACKING >
+localIndex Pack( char*& buffer,
+                 FixedToManyElementRelation const & var,
+                 array<localIndex> const & packList,
+                 ElementRegionManager const * const elementRegionManager )
+{
+  localIndex sizeOfPackedChars = 0;
+
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, packList.size() );
+  for( localIndex a=0 ; a<packList.size() ; ++a )
+  {
+    localIndex index = packList[a];
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.m_toElementRegion[index].size() );
+    for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
+    {
+      localIndex elemRegionIndex             = var.m_toElementRegion[index][b];
+
+      if( elemRegionIndex == -1 )
+      {
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, -1 );
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, -1 );
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, -1 );
+      }
+      else
+      {
+        ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
+
+        localIndex elemSubRegionIndex                  = var.m_toElementSubRegion[index][b];
+        CellBlockSubRegion const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
+
+        localIndex elemIndex = var.m_toElementIndex[index][b];
+
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemRegionIndex );
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegionIndex );
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegion->m_localToGlobalMap[elemIndex] );
+      }
+    }
+  }
+
+  return sizeOfPackedChars;
+}
+template localIndex Pack<true>( char*&,
+                                FixedToManyElementRelation const &,
+                                array<localIndex> const &,
+                                ElementRegionManager const * const );
+template localIndex Pack<false>( char*&,
+                                 FixedToManyElementRelation const &,
+                                 array<localIndex> const &,
+                                 ElementRegionManager const * const );
+
+
+localIndex Unpack( char const * & buffer,
+                   FixedToManyElementRelation & var,
+                   array<localIndex> const & packList,
+                   ElementRegionManager const * const elementRegionManager )
+{
+  localIndex sizeOfUnpackedChars = 0;
+
+  localIndex numIndicesUnpacked;
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+  GEOS_ASSERT( numIndicesUnpacked==packList.size(), "")
+
+  for( localIndex a=0 ; a<packList.size() ; ++a )
+  {
+    localIndex index = packList[a];
+    sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+    GEOS_ASSERT( numIndicesUnpacked==var.m_toElementRegion[index].size(), "")
+
+    for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
+    {
+      localIndex & elemRegionIndex = var.m_toElementRegion[index][b];
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemRegionIndex );
+
+      if( elemRegionIndex==-1 )
+      {
+        sizeOfUnpackedChars += bufferOps::Unpack( buffer, var.m_toElementSubRegion[index][b] );
+        sizeOfUnpackedChars += bufferOps::Unpack( buffer, var.m_toElementIndex[index][b] );
+      }
+      else
+      {
+        ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
+
+        localIndex & elemSubRegionIndex = var.m_toElementSubRegion[index][b];
+        sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemSubRegionIndex );
+
+        CellBlockSubRegion const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
+
+        globalIndex globalElementIndex;
+        sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
+        var.m_toElementIndex[index][b] = elemSubRegion->m_globalToLocalMap.at(globalElementIndex);
+      }
+
+
+    }
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+
+
+
+
+
 }
 }
