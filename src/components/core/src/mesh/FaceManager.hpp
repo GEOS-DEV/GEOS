@@ -16,7 +16,7 @@
 #ifndef FACEMANAGER_H_
 #define FACEMANAGER_H_
 
-#include "InterObjectRelation.hpp"
+#include "ToElementRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
 
 namespace geosx
@@ -65,7 +65,7 @@ public:
                     array<localIndex_array>& facesByLowestNode,
                     localIndex_array& tempNodeList,
                     array<localIndex_array>& tempFaceToNodeMap,
-                    CellBlockSubRegion const & elementRegion );
+                    CellBlockSubRegion & elementRegion );
 
 
 
@@ -117,14 +117,14 @@ public:
   OrderedVariableOneToManyRelation       & edgeList()       { return m_edgeList; }
   OrderedVariableOneToManyRelation const & edgeList() const { return m_edgeList; }
 
-  Array2dT<localIndex>       & elementRegionList()       { return m_toElementRegionList; }
-  Array2dT<localIndex> const & elementRegionList() const { return m_toElementRegionList; }
+  Array2dT<localIndex>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  Array2dT<localIndex> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  Array2dT<localIndex>       & elementSubRegionList()       { return m_toElementSubRegionList; }
-  Array2dT<localIndex> const & elementSubRegionList() const { return m_toElementSubRegionList; }
+  Array2dT<localIndex>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  Array2dT<localIndex> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
-  FixedOneToManyRelation       & elementList()       { return m_toElementList; }
-  FixedOneToManyRelation const & elementList() const { return m_toElementList; }
+  Array2dT<localIndex>       & elementList()       { return m_toElements.m_toElementIndex; }
+  Array2dT<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
 private:
@@ -137,9 +137,11 @@ private:
   OrderedVariableOneToManyRelation m_nodeList;
   OrderedVariableOneToManyRelation m_edgeList;
 
-  Array2dT<localIndex> m_toElementRegionList ;
-  Array2dT<localIndex> m_toElementSubRegionList ;
-  FixedOneToManyRelation m_toElementList ;
+//  Array2dT<localIndex> m_toElementRegionList ;
+//  Array2dT<localIndex> m_toElementSubRegionList ;
+//  FixedOneToManyRelation m_toElementList ;
+
+  FixedToManyElementRelation m_toElements;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;

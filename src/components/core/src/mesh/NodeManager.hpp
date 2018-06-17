@@ -79,6 +79,10 @@ public:
   void FillDocumentationNode() override final;
 
 
+  void SetEdgeMaps( EdgeManager const * const edgeManager );
+
+  void SetFaceMaps( FaceManager const * const faceManager );
+
   void SetElementMaps( ElementRegionManager const * const elementRegionManager );
 
 //  void Initialize();

@@ -58,7 +58,7 @@ public:
                                                          array<globalIndex_array>& objectToCompositionObject );
 
 
-  void BuildEdges( FaceManager * const faceManager, const NodeManager * const nodeManager );
+  void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
   template< typename T_indices >
   unsigned int PackEdges( const T_indices& sendedges,
@@ -131,6 +131,14 @@ public:
 
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
+
+
+  FixedOneToManyRelation       & nodeList()       { return m_toNodesRelation; }
+  FixedOneToManyRelation const & nodeList() const { return m_toNodesRelation; }
+
+  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+
 
 private:
   FixedOneToManyRelation m_toNodesRelation;
