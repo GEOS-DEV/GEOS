@@ -1140,7 +1140,6 @@ public:
       localIndex num_elements = numElementsFromByteSize(byte_size);
 
       int ndims = view->getNumDimensions();
-//      axom::sidre::SidreLength dims[ndims];
       axom::sidre::SidreLength dims[10];
       view->getShape(ndims, dims);
 
