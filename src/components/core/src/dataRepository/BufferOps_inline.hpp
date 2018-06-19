@@ -19,6 +19,7 @@
 #define SRC_COMPONENTS_CORE_SRC_MPI_COMMUNICATIONS_COMMBUFFEROPS_INLINE_HPP_
 
 #include "common/integer_conversion.hpp"
+#include "codingUtilities/Utilities.hpp"
 namespace geosx
 {
 namespace bufferOps
@@ -101,7 +102,9 @@ Unpack( char const *& buffer,
   INDEX_TYPE length;
   sizeOfUnpackedChars += Unpack( buffer, length );
 
-  GEOS_ASSERT( length==expectedLength, "CommBufferOps::Unpack(): expected length != length" )
+  GEOS_ASSERT( length==expectedLength,
+               "CommBufferOps::Unpack(): expected length != length ("
+               <<expectedLength<<"!="<<length<<")"<<std::endl; )
 
   for( INDEX_TYPE a=0 ; a<length ; ++a )
   {
@@ -232,7 +235,7 @@ Unpack( char const *& buffer, T & var )
 {
   localIndex sizeOfUnpackedChars = 0;
   real64 * const pVar = var.Data();
-  localIndex length = var.Length();
+  int length = var.Length();
   sizeOfUnpackedChars += Unpack( buffer, pVar, length );
   return sizeOfUnpackedChars;
 }
@@ -315,9 +318,17 @@ localIndex Unpack( char const *& buffer,
 
   for( localIndex a=0 ; a<set_length ; ++a )
   {
-    localIndex temp;
+    globalIndex temp;
     sizeOfUnpackedChars += Unpack( buffer, temp );
-    setToRead.insert( globalToLocalMap.at(temp) );
+    map<globalIndex,localIndex>::const_iterator iter = globalToLocalMap.find(temp);
+    if( iter==globalToLocalMap.end() )
+    {
+      setToRead.insert(-1);
+    }
+    else
+    {
+      setToRead.insert( globalToLocalMap.at(temp) );
+    }
   }
 
   return sizeOfUnpackedChars;
@@ -508,6 +519,7 @@ Pack( char*& buffer,
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
+    sizeOfPackedChars += Pack<DO_PACKING>( buffer, string("test") );
     sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(indices[a]), var.strides()[0] );
   }
 //  const localIndex length = indices.size();
@@ -531,17 +543,13 @@ localIndex Unpack( char const *& buffer,
   localIndex sizeOfUnpackedChars = 0;
 
 
-  int numStrideRead = 0;
   INDEX_TYPE strides[NDIM];
-  sizeOfUnpackedChars += Unpack( buffer, strides, numStrideRead );
-
-  if( numStrideRead != NDIM )
-  {
-    GEOS_ERROR( "error reading strides");
-  }
+  sizeOfUnpackedChars += Unpack( buffer, strides, NDIM );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
+    string test;
+    sizeOfUnpackedChars += Unpack( buffer, test );
     localIndex temp = strides[var.getSingleParameterResizeIndex()];
     sizeOfUnpackedChars += Unpack( buffer, var.data( indices[a] ), temp );
   }
@@ -589,7 +597,10 @@ localIndex Unpack( char const *& buffer,
   {
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
-    var[a] = globalToLocalMap.at(unpackedGlobalIndex);
+//    var[a] = globalToLocalMap.at(unpackedGlobalIndex);
+    var[a] = softMapLookup( globalToLocalMap,
+                            unpackedGlobalIndex,
+                            localIndex(-1) );
   }
 
   return sizeOfUnpackedChars;

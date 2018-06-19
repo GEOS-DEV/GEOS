@@ -3,6 +3,7 @@
 #include "dataRepository/BufferOps.hpp"
 #include "ToElementRelation.hpp"
 #include "ElementRegionManager.hpp"
+#include "codingUtilities/Utilities.hpp"
 
 namespace geosx
 {
@@ -67,7 +68,10 @@ localIndex Unpack( char const * & buffer,
   {
     localIndex index = packList[a];
     sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-    GEOS_ASSERT( numIndicesUnpacked==var.m_toElementRegion[index].size(), "")
+    var.m_toElementRegion[index].resize( numIndicesUnpacked );
+    var.m_toElementSubRegion[index].resize( numIndicesUnpacked );
+    var.m_toElementIndex[index].resize( numIndicesUnpacked );
+//    GEOS_ASSERT( numIndicesUnpacked==var.m_toElementRegion[index].size(), "")
 
     for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
     {
@@ -83,9 +87,10 @@ localIndex Unpack( char const * & buffer,
 
       globalIndex globalElementIndex;
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
-      var.m_toElementIndex[index][b] = elemSubRegion->m_globalToLocalMap.at(globalElementIndex);
 
-
+      var.m_toElementIndex[index][b] = softMapLookup( elemSubRegion->m_globalToLocalMap,
+                                                      globalElementIndex,
+                                                      localIndex(-1) );
     }
   }
 
@@ -123,9 +128,9 @@ localIndex Pack( char*& buffer,
 
       if( elemRegionIndex == -1 )
       {
-        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, -1 );
-        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, -1 );
-        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, -1 );
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, localIndex(-1) );
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, localIndex(-1) );
+        sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, localIndex(-1) );
       }
       else
       {
@@ -193,7 +198,10 @@ localIndex Unpack( char const * & buffer,
 
         globalIndex globalElementIndex;
         sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
-        var.m_toElementIndex[index][b] = elemSubRegion->m_globalToLocalMap.at(globalElementIndex);
+        var.m_toElementIndex[index][b] = softMapLookup( elemSubRegion->m_globalToLocalMap,
+                                                        globalElementIndex,
+                                                        localIndex(-1) );
+
       }
 
 

@@ -403,6 +403,7 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
     neighbor.UnpackGhosts(meshLevel,commID);
   }
   meshLevel->getNodeManager()->SetReceiveLists();
+  meshLevel->getEdgeManager()->SetReceiveLists();
   meshLevel->getFaceManager()->SetReceiveLists();
 
   for( auto & neighbor : neighbors )

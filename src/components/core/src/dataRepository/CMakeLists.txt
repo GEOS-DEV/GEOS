@@ -36,7 +36,7 @@ endif()
 
 
 
-set( dependencyList common cxx-utilities pugixml )
+set( dependencyList common cxx-utilities codingUtilities pugixml )
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
 endif()
