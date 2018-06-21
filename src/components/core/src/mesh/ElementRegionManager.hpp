@@ -136,7 +136,6 @@ public:
   {
     ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
     elementRegions->forSubGroups<ElementRegion>( lambda );
-
   }
 
   template< typename LAMBDA >
