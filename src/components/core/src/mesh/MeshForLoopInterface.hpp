@@ -1,3 +1,13 @@
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
+//
+// This file is part of the GEOSX Simulation Framework.
+
+//
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 #ifndef __GEOS_RAJA_WRAPPER__HPP
 #define __GEOS_RAJA_WRAPPER__HPP
 
@@ -165,7 +175,9 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-      auto const & dNdX            = cellBlock->getData< array< Array2dT<R1Tensor> > >(keys::dNdX);
+      //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
+       multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
+      
       array_view<real64,2> const & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ).View();
 
       auto const & constitutiveMap = cellBlock->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
@@ -198,7 +210,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
         array_view<R2SymTensor,1> devStress    = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress")).View();
         //------------------------
 
-        //Element loop is packed with parameters... 
+        //Element loop is packed with parameters...
         auto ebody = [=](localIndex index) mutable -> void
           {body(index,
                 numNodesPerElement,
@@ -212,7 +224,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
                 constitutiveUpdate,
                 constitutiveModelData
                 ); };
-        
+
         
         forall_in_set<POLICY>(elementList.data(), elementList.size(), ebody);
 
@@ -229,7 +241,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     localIndex const numNodesPerElement,\
     array_view<localIndex,2> const elemsToNodes,\
     localIndex const numQuadraturePoints,\
-    Array2dT<R1Tensor> const * dNdX,\
+    multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX,\
     array_view<localIndex,2> const constitutiveMapView,\
     array_view<real64,2> const detJ,\
     array_view<R2SymTensor,1> devStress,\
@@ -237,6 +249,8 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     constitutive::ConstitutiveBase::UpdateFunctionPointer constitutiveUpdate,\
     void * constitutiveModelData\
     ) mutable -> void
+
+  
 }
 
 

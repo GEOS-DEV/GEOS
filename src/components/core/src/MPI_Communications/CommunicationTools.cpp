@@ -1,3 +1,13 @@
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
+//
+// This file is part of the GEOSX Simulation Framework.
+
+//
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 /*
  * CommunicationTools.cpp
  *
@@ -171,7 +181,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   // send the composition buffers
   {
-    localIndex const sendSize = objectToCompositionObjectSendBuffer.size() * sizeof(globalIndex);
+    int const sendSize = integer_conversion<int const>(objectToCompositionObjectSendBuffer.size() * sizeof(globalIndex));
 
     for( localIndex in = 0 ; in < neighbors.size() ; ++in )
     {
@@ -393,6 +403,7 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
     neighbor.UnpackGhosts(meshLevel,commID);
   }
   meshLevel->getNodeManager()->SetReceiveLists();
+  meshLevel->getEdgeManager()->SetReceiveLists();
   meshLevel->getFaceManager()->SetReceiveLists();
 
   for( auto & neighbor : neighbors )

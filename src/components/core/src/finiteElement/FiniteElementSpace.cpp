@@ -1,3 +1,13 @@
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
+//
+// This file is part of the GEOSX Simulation Framework.
+
+//
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 /*
  * FiniteElementSpace.cpp
  *
@@ -80,26 +90,17 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   // registration, or only allow documentation node
   // registration.
 
-
-  auto dNdXView        = cellBlock->RegisterViewWrapper< array< Array2dT<R1Tensor> > >(keys::dNdX);
+  //Ensure data is contiguous
+  auto dNdXView       = cellBlock->RegisterViewWrapper< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
   dNdXView->setSizedFromParent(1);
-  static_cast< ViewWrapperBase * >(dNdXView)->resize();
-  auto & dNdX            = dNdXView->reference();
-
-  for( auto & entry : dNdX )
-  {
-    entry.resize( m_finiteElement->dofs_per_element(), m_quadrature->size() );
-  }
-
-
+  multidimensionalArray::ManagedArray< R1Tensor, 3 > &  dNdX = dNdXView->reference();
+  dNdX.resize( cellBlock->size(), m_quadrature->size(), m_finiteElement->dofs_per_element() );
 
   auto & constitutiveMapView = *(cellBlock->getWrapper< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString));
   constitutiveMapView.setSizedFromParent(1);
   auto & constitutiveMap = constitutiveMapView.reference();
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
   constitutiveMap.second.resize(cellBlock->size(), m_quadrature->size() );
-
-
 
   auto & detJView = *(cellBlock->RegisterViewWrapper< Array2dT< real64 > >(keys::detJ));
   detJView.setSizedFromParent(1);
@@ -112,7 +113,7 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
 void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
                                                           dataRepository::ManagedGroup * const cellBlock ) const
 {
-  auto & dNdX            = cellBlock->getReference< array< Array2dT<R1Tensor> > >(keys::dNdX);
+  auto & dNdX            = cellBlock->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
   auto & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ);
   FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();// getData<lArray2d>(keys::nodeList);
 
@@ -133,7 +134,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
       detJ(k, q) = m_finiteElement->JxW(q);
       for (localIndex b = 0 ; b < m_finiteElement->dofs_per_element() ; ++b)
       {
-        dNdX(k)(q, b) = m_finiteElement->gradient(b, q);
+        dNdX[k][q][b] =  m_finiteElement->gradient(b, q);
 //        std::cout<<"dNdX["<<k<<"]["<<q<<"]["<<b<<"] :"<<dNdX[k][q][b]<<std::endl;
       }
 

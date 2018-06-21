@@ -35,21 +35,21 @@ defined in "Foo_impl.hpp, with the source implmenetaion contained in Foo.cpp.
 
 Function Names
 --------------
-Function and member function names should be `PascalCase <https://en.wikipedia.org/wiki/Camel_case/>`__ 
-or `snake_case <https://en.wikipedia.org/wiki/Snake_case/>`__.
+Function and member function names should be `PascalCase <https://en.wikipedia.org/wiki/Camel_case>`__ 
+or `snake_case <https://en.wikipedia.org/wiki/Snake_case>`__.
 Please be consistent with your choice within your files.
 
 Variable Names
 --------------
-Variables should be either `camelCase <https://en.wikipedia.org/wiki/Camel_case/>`__, or 
-`snake_case <https://en.wikipedia.org/wiki/Snake_case/>`__."
+Variables should be either `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__, or 
+`snake_case <https://en.wikipedia.org/wiki/Snake_case>`__."
 Whatever you choose, please be consistent with your choice in the functional scope you are working in.
 
-Member data should be `camelCase <https://en.wikipedia.org/wiki/Camel_case/>`__ prefix with 'm\_' (i.e. double m_dataVariable;)
+Member data should be `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__ prefix with 'm\_' (i.e. double m_dataVariable;)
 
 Type Names
 --------------
-Please use `PascalCase <https://en.wikipedia.org/wiki/Camel_case/>`__ for typenames (i.e. classes)
+Please use `PascalCase <https://en.wikipedia.org/wiki/Camel_case>`__ for typenames (i.e. classes)
 
    .. code-block:: c
    
@@ -67,7 +67,7 @@ Please use `PascalCase <https://en.wikipedia.org/wiki/Camel_case/>`__ for typena
 
 Namespace Names
 ----------------
-Namespaces names are all lower `camel case <https://en.wikipedia.org/wiki/Camel_case/>`__.
+Namespaces names are all lower `camel case <https://en.wikipedia.org/wiki/Camel_case>`__.
 
 Example
 -------
@@ -110,7 +110,7 @@ and a source file named "Foo.cpp"
 Code Format
 =================================
 GEOSX applies a variant of the 
-`BSD/Allman Style <https://en.wikipedia.org/wiki/Indentation_style#Allman_style/>`__.
+`BSD/Allman Style <https://en.wikipedia.org/wiki/Indentation_style#Allman_style>`__.
 Key points to the GEOSX style are:
 
 #. Opening braces ( i.e. { ) go on the next line of any control statment, and are not indented from the control statement .

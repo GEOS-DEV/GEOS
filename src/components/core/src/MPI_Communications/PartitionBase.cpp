@@ -1,60 +1,13 @@
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
 //
-//  Copyright (c) 2015, Lawrence Livermore National Security, LLC.
-//  Produced at the Lawrence Livermore National Laboratory
+// This file is part of the GEOSX Simulation Framework.
+
 //
-//  GEOS Computational Framework - Core Package, Version 3.0.0
-//
-//  Written by:
-//  Randolph Settgast (settgast1@llnl.gov)
-//  Stuart Walsh(walsh24@llnl.gov)
-//  Pengcheng Fu (fu4@llnl.gov)
-//  Joshua White (white230@llnl.gov)
-//  Chandrasekhar Annavarapu Srinivas
-//  Eric Herbold
-//  Michael Homel
-//
-//
-//  All rights reserved.
-//
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
-// SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//
-//  1. This notice is required to be provided under our contract with the U.S.
-// Department of Energy (DOE). This work was produced at Lawrence Livermore
-//     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National
-// Security, LLC nor any of their employees, makes any warranty, express or
-//     implied, or assumes any liability or responsibility for the accuracy,
-// completeness, or usefulness of any information, apparatus, product, or
-//     process disclosed, or represents that its use would not infringe
-// privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or
-// services by trade name, trademark, manufacturer or otherwise does not
-//     necessarily constitute or imply its endorsement, recommendation, or
-// favoring by the United States Government or Lawrence Livermore National
-// Security,
-//     LLC. The views and opinions of authors expressed herein do not
-// necessarily state or reflect those of the United States Government or
-// Lawrence
-//     Livermore National Security, LLC, and shall not be used for advertising
-// or product endorsement purposes.
-//
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The
-// BSD  License statment is included in this distribution in src/bsd_notice.txt.
-//
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 /**
  * @file PartitionBase.cpp
  * @author settgast1
@@ -644,8 +597,12 @@ void PartitionBase::SendReceive( const array<array<T> >& sendArray, array<array<
 
   }
 
-  MPI_Waitall( mpiSendRequest.size(), mpiSendRequest.data(), mpiSendStatus.data() );
-  MPI_Waitall( mpiRecvRequest.size(), mpiRecvRequest.data(), mpiRecvStatus.data() );
+  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()),
+               mpiSendRequest.data(),
+               mpiSendStatus.data() );
+  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()),
+               mpiRecvRequest.data(),
+               mpiRecvStatus.data() );
 
   for( localIndex i=0 ; i<m_neighbors.size() ; ++i )
   {
@@ -656,8 +613,12 @@ void PartitionBase::SendReceive( const array<array<T> >& sendArray, array<array<
                           recvArray[i].data(), recvArray[i].size(), mpiRecvRequest[i] );
 
   }
-  MPI_Waitall( mpiSendRequest.size(), mpiSendRequest.data(), mpiSendStatus.data() );
-  MPI_Waitall( mpiRecvRequest.size(), mpiRecvRequest.data(), mpiRecvStatus.data() );
+  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()),
+               mpiSendRequest.data(),
+               mpiSendStatus.data() );
+  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()),
+               mpiRecvRequest.data(),
+               mpiRecvStatus.data() );
 
 }
 
@@ -3018,13 +2979,15 @@ void PartitionBase::SynchronizeFields( const std::map<string, array<string> >& f
   for( int count=0 ; count<m_neighbors.size() ; ++count )
   {
     int neighborIndex;
-    MPI_Waitany( mpiRecvBufferRequest.size(), mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data() );
+    MPI_Waitany( integer_conversion<int>(mpiRecvBufferRequest.size()),
+                 mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data() );
 
     NeighborCommunication& neighbor = this->m_neighbors[neighborIndex];
     neighbor.UnpackBuffer( fieldNames );
   }
 
-  MPI_Waitall( mpiSendBufferRequest.size(), mpiSendBufferRequest.data(), mpiSendBufferStatus.data() );
+  MPI_Waitall( integer_conversion<int>(mpiSendBufferRequest.size()),
+               mpiSendBufferRequest.data(), mpiSendBufferStatus.data() );
 
 
 #endif
@@ -3179,19 +3142,19 @@ void PartitionBase::SetRankOfNeighborNeighbors()
     neighbor.SendReceive( &sendSize, 1, mpiSendRequest[i],
                           &(recvSize[i]), 1, mpiRecvRequest[i] );
   }
-  MPI_Waitall( mpiSendRequest.size(), mpiSendRequest.data(), mpiSendStatus.data() );
-  MPI_Waitall( mpiRecvRequest.size(), mpiRecvRequest.data(), mpiRecvStatus.data() );
+  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()), mpiSendRequest.data(), mpiSendStatus.data() );
+  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()), mpiRecvRequest.data(), mpiRecvStatus.data() );
 
   for( int i=0 ; i<m_neighbors.size() ; ++i )
   {
     NeighborCommunication& neighbor = m_neighbors[i];
     neighborRanks[i].resize( recvSize[i] );
 
-    neighbor.SendReceive( ranks.data(), ranks.size(), mpiSendRequest[i],
-                          neighborRanks[i].data(), neighborRanks[i].size(), mpiRecvRequest[i] );
+    neighbor.SendReceive( ranks.data(), integer_conversion<int>(ranks.size()), mpiSendRequest[i],
+                          neighborRanks[i].data(), integer_conversion<int>(neighborRanks[i].size()), mpiRecvRequest[i] );
   }
-  MPI_Waitall( mpiSendRequest.size(), mpiSendRequest.data(), mpiSendStatus.data() );
-  MPI_Waitall( mpiRecvRequest.size(), mpiRecvRequest.data(), mpiRecvStatus.data() );
+  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()), mpiSendRequest.data(), mpiSendStatus.data() );
+  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()), mpiRecvRequest.data(), mpiRecvStatus.data() );
 
   for( int i=0 ; i<m_neighbors.size() ; ++i )
   {
@@ -3316,9 +3279,9 @@ void PartitionBase::GraphBasedColoring()
   }
   // localNeighborList.insert(localNeighborList.begin(),
   // localNeighborList.size());
-  localNeighborList[0] = localNeighborList.size() - 1;
+  localNeighborList[0] = integer_conversion<int>(localNeighborList.size()) - 1;
 
-  int localNumNeighbors = localNeighborList.size();
+  int localNumNeighbors = integer_conversion<int>(localNeighborList.size());
   int maxLocalNumNeighbors = 0;
   MPI_Allreduce(&localNumNeighbors, &maxLocalNumNeighbors, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 

@@ -1,60 +1,13 @@
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
 //
-//  Copyright (c) 2015, Lawrence Livermore National Security, LLC.
-//  Produced at the Lawrence Livermore National Laboratory
+// This file is part of the GEOSX Simulation Framework.
+
 //
-//  GEOS Computational Framework - Core Package, Version 3.0.0
-//
-//  Written by:
-//  Randolph Settgast (settgast1@llnl.gov)
-//  Stuart Walsh(walsh24@llnl.gov)
-//  Pengcheng Fu (fu4@llnl.gov)
-//  Joshua White (white230@llnl.gov)
-//  Chandrasekhar Annavarapu Srinivas
-//  Eric Herbold
-//  Michael Homel
-//
-//
-//  All rights reserved.
-//
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
-// SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//
-//  1. This notice is required to be provided under our contract with the U.S.
-// Department of Energy (DOE). This work was produced at Lawrence Livermore
-//     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National
-// Security, LLC nor any of their employees, makes any warranty, express or
-//     implied, or assumes any liability or responsibility for the accuracy,
-// completeness, or usefulness of any information, apparatus, product, or
-//     process disclosed, or represents that its use would not infringe
-// privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or
-// services by trade name, trademark, manufacturer or otherwise does not
-//     necessarily constitute or imply its endorsement, recommendation, or
-// favoring by the United States Government or Lawrence Livermore National
-// Security,
-//     LLC. The views and opinions of authors expressed herein do not
-// necessarily state or reflect those of the United States Government or
-// Lawrence
-//     Livermore National Security, LLC, and shall not be used for advertising
-// or product endorsement purposes.
-//
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The
-// BSD  License statment is included in this distribution in src/bsd_notice.txt.
-//
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 /*
  * NodeManagerT.cpp
  *
@@ -64,13 +17,15 @@
 
 #include "NodeManager.hpp"
 //#include "managers/DomainPartition.hpp"
-//#include "ObjectManagers/FaceManagerT.h"
-//#include "ObjectManagers/EdgeManagerT.h"
+#include "FaceManager.hpp"
+#include "EdgeManager.hpp"
 //#include "ObjectManagers/ElementManagerT.h"
 //#include "Utilities/Utilities.h"
 //#include <fstream>
 //#include "ElementRegionT.hpp"
 #include "ElementRegionManager.hpp"
+#include "ToElementRelation.hpp"
+#include "BufferOps.hpp"
 
 namespace geosx
 {
@@ -88,9 +43,35 @@ NodeManager::NodeManager( std::string const & name,
   m_referencePosition()
 {
   RegisterViewWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementRegionListString);
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementSubRegionListString);
-  this->RegisterViewWrapper< array<localIndex_array> >(viewKeyStruct::elementListString);
+
+
+  this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
+
+  this->RegisterViewWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false );
+
+//  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
+//                             &m_toElementRegionList,
+//                             false );
+//
+//  this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
+//                             &m_toElementSubRegionList,
+//                             false );
+//
+//  this->RegisterViewWrapper( viewKeyStruct::elementListString,
+//                             &m_toElementList,
+//                             false );
+
+  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
+                             &(elementRegionList()),
+                             false );
+
+  this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
+                             &(elementSubRegionList()),
+                             false );
+
+  this->RegisterViewWrapper( viewKeyStruct::elementListString,
+                             &(elementList()),
+                             false );
 
 }
 
@@ -197,17 +178,53 @@ void NodeManager::FillDocumentationNode()
                               0 );
 }
 
+
+void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
+{
+
+  FixedOneToManyRelation const & edgeToNodes = edgeManager->nodeList();
+  localIndex const numEdges = edgeManager->size();
+  for( localIndex ke=0 ; ke<numEdges ; ++ke )
+  {
+    localIndex const numNodes = edgeToNodes[ke].size();
+    for( localIndex a=0 ; a<numNodes ; ++a )
+    {
+      m_toEdgesRelation[a].insert(ke);
+    }
+  }
+  m_toEdgesRelation.SetRelatedObject( edgeManager );
+}
+
+void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
+{
+
+  OrderedVariableOneToManyRelation const & faceToNodes = faceManager->nodeList();
+  localIndex const numFaces = faceManager->size();
+  for( localIndex ke=0 ; ke<numFaces ; ++ke )
+  {
+    localIndex const numNodes = faceToNodes[ke].size();
+    for( localIndex a=0 ; a<numNodes ; ++a )
+    {
+      m_toFacesRelation[a].insert(ke);
+    }
+  }
+  m_toFacesRelation.SetRelatedObject( faceManager );
+}
+
+
+
+
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
-  array<localIndex_array> & elementRegionList = this->getReference< array<localIndex_array> >(viewKeyStruct::elementRegionListString);
-  array<localIndex_array> & elementSubRegionList = this->getReference< array<localIndex_array> >(viewKeyStruct::elementSubRegionListString);
-  array<localIndex_array> & elementList = this->getReference< array<localIndex_array> >(viewKeyStruct::elementListString);
+  array<lSet> & toElementRegionList = elementRegionList();
+  array<lSet> & toElementSubRegionList = elementSubRegionList();
+  array<lSet> & toElementList = elementList();
 
   for( localIndex a=0 ; a<size() ; ++a )
   {
-    elementRegionList[a].clear();
-    elementSubRegionList[a].clear();
-    elementList[a].clear();
+    toElementRegionList[a].clear();
+    toElementSubRegionList[a].clear();
+    toElementList[a].clear();
   }
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg  )
@@ -226,13 +243,15 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
         for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
         {
           localIndex nodeIndex = nodeList[a];
-          elementRegionList[nodeIndex].push_back( kReg );
-          elementSubRegionList[nodeIndex].push_back( kSubReg );
-          elementList[nodeIndex].push_back( ke );
+          toElementRegionList[nodeIndex].insert( kReg );
+          toElementSubRegionList[nodeIndex].insert( kSubReg );
+          toElementList[nodeIndex].insert( ke );
         }
       }
     }
   }
+
+  this->m_toElements.setElementRegionManager( elementRegionManager );
 }
 
 
@@ -247,33 +266,75 @@ void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
 }
 
 
-int NodeManager::PackUpDownMapsSize( localIndex_array const & packList ) const
+localIndex NodeManager::PackUpDownMapsSize( localIndex_array const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
-int NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
+localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
                              localIndex_array const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template< bool DOPACK >
-int NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                        localIndex_array const & packList ) const
+localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                               localIndex_array const & packList ) const
 {
-  int packedSize = 0;
+  localIndex packedSize = 0;
 
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                         m_toEdgesRelation,
+                                         packList,
+                                         this->m_localToGlobalMap,
+                                         m_toEdgesRelation.RelatedObjectLocalToGlobal() );
 
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                         m_toFacesRelation,
+                                         packList,
+                                         this->m_localToGlobalMap,
+                                         m_toFacesRelation.RelatedObjectLocalToGlobal() );
+
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                         this->m_toElements,
+                                         packList,
+                                         m_toElements.getElementRegionManager() );
   return packedSize;
 }
 
 
-int NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                localIndex_array const & packList )
 {
-  int unPackedSize = 0;
+  localIndex unPackedSize = 0;
+
+  string temp;
+  unPackedSize += bufferOps::Unpack( buffer, temp );
+  GEOS_ASSERT( temp==viewKeyStruct::edgeListString, "")
+  unPackedSize += bufferOps::Unpack( buffer,
+                                     m_toEdgesRelation,
+                                     packList,
+                                     this->m_globalToLocalMap,
+                                     m_toEdgesRelation.RelatedObjectGlobalToLocal() );
+
+  unPackedSize += bufferOps::Unpack( buffer, temp );
+  GEOS_ASSERT( temp==viewKeyStruct::faceListString, "")
+  unPackedSize += bufferOps::Unpack( buffer,
+                                     m_toFacesRelation,
+                                     packList,
+                                     this->m_globalToLocalMap,
+                                     m_toFacesRelation.RelatedObjectGlobalToLocal() );
+
+  unPackedSize += bufferOps::Unpack( buffer, temp );
+  GEOS_ASSERT( temp==viewKeyStruct::elementListString, "")
+  unPackedSize += bufferOps::Unpack( buffer,
+                                     this->m_toElements,
+                                     packList,
+                                     m_toElements.getElementRegionManager() );
 
   return unPackedSize;
 }

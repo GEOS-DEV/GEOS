@@ -1,3 +1,13 @@
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
+//
+// This file is part of the GEOSX Simulation Framework.
+
+//
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 /*
  * MeshLevel.hpp
  *
@@ -59,8 +69,8 @@ public:
   NodeManager const * getNodeManager() const { return &m_nodeManager; }
   NodeManager * getNodeManager()             { return &m_nodeManager; }
 
-  EdgeManager const * getEdgeManager() const { return this->GetGroup<EdgeManager>(groupKeys.edgeManager); }
-  EdgeManager * getEdgeManager()             { return this->GetGroup<EdgeManager>(groupKeys.edgeManager); }
+  EdgeManager const * getEdgeManager() const { return &m_edgeManager; }
+  EdgeManager * getEdgeManager()             { return &m_edgeManager; }
 
   FaceManager const * getFaceManager() const { return &m_faceManager; }
   FaceManager * getFaceManager()             { return &m_faceManager; }
@@ -71,7 +81,7 @@ public:
 private:
 
   NodeManager m_nodeManager;
-//  EdgeManager m_edgeManager;
+  EdgeManager m_edgeManager;
   FaceManager m_faceManager;
   ElementRegionManager m_elementManager;
 

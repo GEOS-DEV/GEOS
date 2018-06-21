@@ -1,3 +1,13 @@
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
+//
+// This file is part of the GEOSX Simulation Framework.
+
+//
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 /*
  * CellBlockSubRegion.hpp
  *
@@ -47,12 +57,12 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;
 
-  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                               localIndex_array const & packList ) const override;
 
-  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                 localIndex_array const & packList ) override;
 
 
@@ -77,11 +87,11 @@ public:
 
   map< string, localIndex_array > m_constitutiveGrouping;
   std::pair< Array2dT< localIndex >, Array2dT< localIndex > > m_constitutiveMapView;
-  array< Array2dT<R1Tensor> > m_dNdX;
+  multidimensionalArray::ManagedArray< R1Tensor, 3 > m_dNdX;
 
 private:
   template< bool DOPACK >
-  int PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                              localIndex_array const & packList ) const;
 
 
