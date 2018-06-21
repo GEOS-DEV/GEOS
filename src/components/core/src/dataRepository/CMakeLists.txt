@@ -3,8 +3,8 @@
 # Specify all headers
 #
 set(dataRepository_headers
-    CommBufferOps.hpp
-    CommBufferOps_inline.hpp
+    BufferOps.hpp
+    BufferOps_inline.hpp
     KeyIndexT.hpp
     ManagedGroup.hpp
     MappedVector.hpp    
@@ -18,7 +18,7 @@ set(dataRepository_headers
 # Specify all sources
 #
 set(dataRepository_sources
-    CommBufferOps.cpp
+    BufferOps.cpp
     ManagedGroup.cpp
     SidreWrapper.cpp
     ViewWrapper.cpp
@@ -36,7 +36,7 @@ endif()
 
 
 
-set( dependencyList common cxx-utilities pugixml )
+set( dependencyList common cxx-utilities codingUtilities pugixml )
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
 endif()

@@ -10,8 +10,8 @@
 // Software Foundation) version 2.1 dated February 1999.
 
 
-#ifndef COMMBUFFEROPS_H_
-#define COMMBUFFEROPS_H_
+#ifndef DATAREPOSITORY_BUFFEROPS_H_
+#define DATAREPOSITORY_BUFFEROPS_H_
 
 #include "common/DataTypes.hpp"
 //#include "codingUtilities/Utilities.hpp"
@@ -24,7 +24,7 @@ namespace geosx
 
 
 
-namespace CommBufferOps
+namespace bufferOps
 {
 
 
@@ -54,11 +54,11 @@ namespace CommBufferOps
 
   template< typename T, typename INDEX_TYPE >
   typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-  Unpack( char const *& buffer, T * const var, INDEX_TYPE & length );
+  Unpack( char const *& buffer, T * const var, INDEX_TYPE const length );
 
   template< typename T, typename INDEX_TYPE >
   typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
-  Unpack( char const *& buffer, T * const var, INDEX_TYPE & length );
+  Unpack( char const *& buffer, T * const var, INDEX_TYPE const length );
 
 
   template< bool DO_PACKING, typename T, typename INDEX_TYPE >
@@ -234,27 +234,27 @@ namespace CommBufferOps
 
 
 
-  template< bool DO_PACKING >
-  localIndex Pack( char*& buffer,
-            localIndex const * const var,
-            localIndex const length,
-            globalIndex_array const & localToGlobalMap );
+//  template< bool DO_PACKING >
+//  localIndex Pack( char*& buffer,
+//            localIndex const * const var,
+//            localIndex const length,
+//            globalIndex_array const & localToGlobalMap );
 
-  localIndex Unpack( char const *& buffer,
-              localIndex_array & var,
-              map<globalIndex,localIndex> const & globalToLocalMap );
+//  localIndex Unpack( char const *& buffer,
+//              localIndex_array & var,
+//              map<globalIndex,localIndex> const & globalToLocalMap );
 
 
-  template< bool DO_PACKING >
-  localIndex Pack( char*& buffer,
-            multidimensionalArray::ManagedArray<localIndex,2,localIndex> const & var,
-            localIndex_array const & indices,
-            globalIndex_array const & localToGlobalMap );
-
-  localIndex Unpack( char const *& buffer,
-              multidimensionalArray::ManagedArray<localIndex,2,localIndex> & var,
-              localIndex_array const & indices,
-              globalIndex_array const & globalToLocalMap );
+//  template< bool DO_PACKING >
+//  localIndex Pack( char*& buffer,
+//            multidimensionalArray::ManagedArray<localIndex,2,localIndex> const & var,
+//            localIndex_array const & indices,
+//            globalIndex_array const & localToGlobalMap );
+//
+//  localIndex Unpack( char const *& buffer,
+//              multidimensionalArray::ManagedArray<localIndex,2,localIndex> & var,
+//              localIndex_array const & indices,
+//              globalIndex_array const & globalToLocalMap );
 
 //
 //  template< bool DO_PACKING >
@@ -347,7 +347,7 @@ namespace CommBufferOps
 
 }
 
-#include "CommBufferOps_inline.hpp"
+#include "BufferOps_inline.hpp"
 
 
 #endif /* BUFVECTOR_H_ */
