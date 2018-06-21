@@ -266,17 +266,17 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
                                     integer const recursive ) const
 {
   localIndex packedSize = 0;
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->getName() );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
 
   int rank=0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank );
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, rank );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
 
   localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, numPackedIndices );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, numPackedIndices );
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
 
 
   array<string> wrapperNamesForPacking;
@@ -300,11 +300,11 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     wrapperNamesForPacking = wrapperNames;
   }
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, wrapperNamesForPacking.size() );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperNamesForPacking.size() );
   for( auto const & wrapperName : wrapperNamesForPacking )
   {
     dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, wrapperName );
+    packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
     if( packList.empty() )
     {
       if(DOPACK)
@@ -332,11 +332,11 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
   if( recursive > 0 )
   {
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->GetSubGroups().size() );
+    packedSize += bufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
+    packedSize += bufferOps::Pack<DOPACK>( buffer, this->GetSubGroups().size() );
     for( auto const & keyGroupPair : this->GetSubGroups() )
     {
-      packedSize += CommBufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
+      packedSize += bufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
       packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
     }
   }
@@ -354,22 +354,22 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
 {
   localIndex unpackedSize = 0;
   string groupName;
-  unpackedSize += CommBufferOps::Unpack( buffer, groupName );
+  unpackedSize += bufferOps::Unpack( buffer, groupName );
   GEOS_ASSERT( groupName==this->getName(), "ObjectManagerBase::Unpack(): group names do not match")
 
   int rank=0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank );
   int sendingRank;
-  unpackedSize += CommBufferOps::Unpack( buffer, sendingRank );
+  unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 
   localIndex numUnpackedIndices;
-  unpackedSize += CommBufferOps::Unpack( buffer, numUnpackedIndices );
+  unpackedSize += bufferOps::Unpack( buffer, numUnpackedIndices );
 
 //  integer readIncludeGlobalIndices;
 //  unpackedSize += CommBufferOps::Unpack( buffer, readIncludeGlobalIndices);
 
   string wrappersLabel;
-  unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
+  unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
   GEOS_ASSERT( wrappersLabel=="Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect")
 
 
@@ -381,11 +381,11 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
 //  }
 
   localIndex numWrappers;
-  unpackedSize += CommBufferOps::Unpack( buffer, numWrappers);
+  unpackedSize += bufferOps::Unpack( buffer, numWrappers);
   for( localIndex a=0 ; a<numWrappers ; ++a )
   {
     string wrapperName;
-    unpackedSize += CommBufferOps::Unpack( buffer, wrapperName );
+    unpackedSize += bufferOps::Unpack( buffer, wrapperName );
     ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
     wrapper->Unpack(buffer,packList);
   }
@@ -394,17 +394,17 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   if( recursive > 0 )
   {
     string subGroups;
-    unpackedSize += CommBufferOps::Unpack( buffer, subGroups );
+    unpackedSize += bufferOps::Unpack( buffer, subGroups );
     GEOS_ASSERT( subGroups=="SubGroups", "ManagedGroup::Unpack(): group names do not match")
 
     decltype( this->GetSubGroups().size()) numSubGroups;
-    unpackedSize += CommBufferOps::Unpack( buffer, numSubGroups );
+    unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
     GEOS_ASSERT( numSubGroups==this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
 
     for( auto const & index : this->GetSubGroups() )
     {
       string subGroupName;
-      unpackedSize += CommBufferOps::Unpack( buffer, subGroupName );
+      unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive);
     }
   }
@@ -435,17 +435,17 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
   localIndex packedSize = 0;
 
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->getName() );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
 
   // this doesn't link without the string()...no idea why.
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::localToGlobalMapString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::localToGlobalMapString) );
 
   int rank=0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank );
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, rank );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
   localIndex const numPackedIndices = packList.size()==0 ? this->size() : packList.size();
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, numPackedIndices );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, numPackedIndices );
 
 
   globalIndex_array globalIndices;
@@ -464,17 +464,17 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
       globalIndices[a] = this->m_localToGlobalMap[packList[a]];
     }
   }
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, globalIndices );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, globalIndices );
 
 
 //  packedSize += CommBufferOps::Pack<DOPACK>( buffer, recursive );
   if( recursive > 0 )
   {
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
-    packedSize += CommBufferOps::Pack<DOPACK>( buffer, this->GetSubGroups().size() );
+    packedSize += bufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
+    packedSize += bufferOps::Pack<DOPACK>( buffer, this->GetSubGroups().size() );
     for( auto const & keyGroupPair : this->GetSubGroups() )
     {
-      packedSize += CommBufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
+      packedSize += bufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
       ObjectManagerBase const * const subObjectManager = ManagedGroup::group_cast<ObjectManagerBase const *>(keyGroupPair.second);
       if( subObjectManager )
       {
@@ -494,26 +494,26 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 {
   localIndex unpackedSize = 0;
   string groupName;
-  unpackedSize += CommBufferOps::Unpack( buffer, groupName );
+  unpackedSize += bufferOps::Unpack( buffer, groupName );
   GEOS_ASSERT( groupName==this->getName(), "ObjectManagerBase::Unpack(): group names do not match")
 
   string localToGlobalString;
-  unpackedSize += CommBufferOps::Unpack( buffer, localToGlobalString);
+  unpackedSize += bufferOps::Unpack( buffer, localToGlobalString);
   GEOS_ASSERT( localToGlobalString==viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect")
 
   int rank=0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank );
   int sendingRank;
-  unpackedSize += CommBufferOps::Unpack( buffer, sendingRank );
+  unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 
   localIndex numUnpackedIndices;
-  unpackedSize += CommBufferOps::Unpack( buffer, numUnpackedIndices );
+  unpackedSize += bufferOps::Unpack( buffer, numUnpackedIndices );
 
   localIndex_array unpackedLocalIndices;
   unpackedLocalIndices.resize(numUnpackedIndices);
 
   globalIndex_array globalIndices;
-  unpackedSize += CommBufferOps::Unpack( buffer, globalIndices );
+  unpackedSize += bufferOps::Unpack( buffer, globalIndices );
   localIndex numNewIndices = 0;
   globalIndex_array newGlobalIndices;
   localIndex const oldSize = this->size();
@@ -594,17 +594,17 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   if( recursive > 0 )
   {
     string subGroups;
-    unpackedSize += CommBufferOps::Unpack( buffer, subGroups );
+    unpackedSize += bufferOps::Unpack( buffer, subGroups );
     GEOS_ASSERT( subGroups=="SubGroups", "ManagedGroup::Unpack(): group names do not match")
 
     decltype( this->GetSubGroups().size()) numSubGroups;
-    unpackedSize += CommBufferOps::Unpack( buffer, numSubGroups );
+    unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
     GEOS_ASSERT( numSubGroups==this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
 
     for( auto const & index : this->GetSubGroups() )
     {
       string subGroupName;
-      unpackedSize += CommBufferOps::Unpack( buffer, subGroupName );
+      unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += this->GetGroup<ObjectManagerBase>(subGroupName)->UnpackGlobalMaps(buffer,packList,recursive);
     }
   }

@@ -222,7 +222,11 @@ void DomainPartition::SetupCommunications()
   NodeManager * nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
+  EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+
   CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
+
+  CommunicationTools::AssignGlobalIndices( *edgeManager, *nodeManager, allNeighbors );
 
   CommunicationTools::FindMatchedPartitionBoundaryObjects( faceManager,
                                                            allNeighbors );

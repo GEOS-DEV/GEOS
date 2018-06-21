@@ -139,7 +139,7 @@ void CellBlockSubRegion::InitializePostSubGroups( ManagedGroup * const )
 void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
   this->resize(source->size());
-  this->m_toNodesRelation = source->m_toNodesRelation;
+  this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
 }
@@ -182,17 +182,17 @@ localIndex CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffe
 {
   localIndex packedSize = 0;
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
-                                             m_toNodesRelation,
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                             nodeList(),
                                              packList,
                                              this->m_localToGlobalMap,
-                                             m_toNodesRelation.RelatedObjectLocalToGlobal() );
+                                             nodeList().RelatedObjectLocalToGlobal() );
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
-                                             m_toFacesRelation,
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                             faceList(),
                                              packList,
                                              this->m_localToGlobalMap,
-                                             m_toFacesRelation.RelatedObjectLocalToGlobal() );
+                                             faceList().RelatedObjectLocalToGlobal() );
 
   return packedSize;
 }
@@ -203,17 +203,17 @@ localIndex CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buff
 {
   localIndex unPackedSize = 0;
 
-  unPackedSize += CommBufferOps::Unpack( buffer,
-                                         m_toNodesRelation,
+  unPackedSize += bufferOps::Unpack( buffer,
+                                         nodeList(),
                                          packList,
                                          this->m_globalToLocalMap,
-                                         m_toNodesRelation.RelatedObjectGlobalToLocal() );
+                                         nodeList().RelatedObjectGlobalToLocal() );
 
-  unPackedSize += CommBufferOps::Unpack( buffer,
-                                         m_toFacesRelation,
+  unPackedSize += bufferOps::Unpack( buffer,
+                                         faceList(),
                                          packList,
                                          this->m_globalToLocalMap,
-                                         m_toFacesRelation.RelatedObjectGlobalToLocal() );
+                                         faceList().RelatedObjectGlobalToLocal() );
 
   return unPackedSize;
 }

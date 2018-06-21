@@ -793,7 +793,26 @@ inline double GetOrder( double number, const unsigned int digits = 1 )
 
   return ( digits>0 ? round( ( number / magnitude ) * std::pow(10,digits-1) ) / std::pow(10,digits-1) : 1 ) * magnitude;
 }
+
+
+template< typename T_KEY, typename T_VALUE >
+T_VALUE softMapLookup( map<T_KEY,T_VALUE> const & theMap,
+                       T_KEY const & key,
+                       T_VALUE const failValue )
+{
+  T_VALUE rvalue;
+  typename map<T_KEY,T_VALUE>::const_iterator iter = theMap.find(key);
+  if( iter==theMap.end() )
+  {
+    rvalue = failValue;
+  }
+  else
+  {
+    rvalue = iter->second;
+  }
+  return rvalue;
 }
 
+}
 
 #endif /* UTILITIES_H_ */

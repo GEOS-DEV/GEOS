@@ -21,6 +21,7 @@
 #include "managers/ObjectManagerBase.hpp"
 #include <string.h>
 #include "CellBlockManager.hpp"
+#include "ToElementRelation.hpp"
 
 
 // *********************************************************************************************************************
@@ -77,6 +78,10 @@ public:
 
   void FillDocumentationNode() override final;
 
+
+  void SetEdgeMaps( EdgeManager const * const edgeManager );
+
+  void SetFaceMaps( FaceManager const * const faceManager );
 
   void SetElementMaps( ElementRegionManager const * const elementRegionManager );
 
@@ -137,6 +142,23 @@ public:
   view_rtype<r1_array>       referencePosition()       { return this->getData<r1_array>(viewKeys.referencePosition); }
 //  view_rtype_const<r1_array> totalDisplacement() const { return this->getData<r1_array>(viewKeys.totalDisplacement); }
 //  view_rtype<r1_array>       totalDisplacement()       { return this->getData<r1_array>(viewKeys.totalDisplacement); }
+
+  UnorderedVariableOneToManyRelation       & edgeList()       { return m_toEdgesRelation; }
+  UnorderedVariableOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
+
+  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+
+  array<lSet>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array<lSet> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+
+  array<lSet>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array<lSet> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+
+  array<lSet>        & elementList()       { return m_toElements.m_toElementIndex; }
+  array<lSet>  const & elementList() const { return m_toElements.m_toElementIndex; }
+
+
 protected:
 
 private:
@@ -151,7 +173,15 @@ private:
   NodeManager& operator=( const NodeManager&) = delete;
 
   r1_array m_referencePosition;
+  UnorderedVariableOneToManyRelation m_toEdgesRelation;
+  UnorderedVariableOneToManyRelation m_toFacesRelation;
 
+//  array<localIndex_array> m_toElementRegionList ;
+//  array<localIndex_array> m_toElementSubRegionList ;
+//  OrderedVariableOneToManyRelation m_toElementList ;
+
+
+  UnorderedVariableToManyElementRelation m_toElements;
 
 };
 // *********************************************************************************************************************

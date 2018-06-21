@@ -28,7 +28,7 @@ void geos_abort( std::string message )
 {
   std::cerr<<message<<std::endl;
   cxx_utilities::handler1(EXIT_FAILURE);
-#if USE_MPI == 1
+#ifdef USE_MPI
   int mpi = 0;
   MPI_Initialized( &mpi );
   if ( mpi )
