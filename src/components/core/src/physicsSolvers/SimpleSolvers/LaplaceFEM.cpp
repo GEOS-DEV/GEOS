@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NewtonianMechanics.cpp
+/**
+ * @file LaplaceFEM.cpp
  *
- *  Created on: Dec 4, 2014
- *      Author: rrsettgast
  */
 
 #include "LaplaceFEM.hpp"
@@ -48,6 +46,7 @@
 
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
+#define verbose 1
 
 
 namespace geosx
@@ -155,6 +154,18 @@ void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
                                 0,
                                 0 );
 
+    docNode->AllocateChildNode( "Temperature",
+                                "Temperature",
+                                -1,
+                                "real64_array",
+                                "real64_array",
+                                "",
+                                "",
+                                "",
+                                NodeManager::CatalogName(),
+                                1,
+                                0,
+                                0 );
   }
 }
 
@@ -180,6 +191,16 @@ void LaplaceFEM::ReadXML_PostProcess()
     GEOS_ERROR("invalid time integration option");
   }
 }
+
+//void LaplaceFEM::BuildDataStructure( ManagedGroup * const domain )
+//{
+//  SolverBase::BuildDataStructure( domain );
+//
+//  // Test auto-registration:
+//  RegisterDocumentationNodes();
+//
+//}
+
 
 void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
@@ -215,6 +236,21 @@ return dt;
 }
 
 
+void LaplaceFEM::ApplyDirichletBC_implicit( ManagedGroup * object,
+                                            BoundaryConditionBase const * const bc,
+                                            lSet const & set,
+                                            real64 const time_n,
+                                            EpetraBlockSystem & blockSystem )
+{
+  bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
+                                                      time_n,
+                                                      object,
+                                                      "Temperature",
+                                                      viewKeys.trilinosIndex.Key(),
+                                                      1,
+                                                      &blockSystem,
+                                                      EpetraBlockSystem::BlockIDs::displacementBlock );
+}
 
 
 void LaplaceFEM::ImplicitStepSetup( real64 const& time_n,
@@ -231,6 +267,77 @@ void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
 {
 }
 
+
+real64 LaplaceFEM::TimeStepImplicit( real64 const & time_n,
+                                                       real64 const & dt,
+                                                       integer const cycleNumber,
+                                                       DomainPartition * const domain )
+{
+  real64 dt_return = dt;
+////  view_rtype<r1_array> uhat  =
+// domain.m_feNodeManager.getData<r1_array>(keys::IncrementalDisplacement);
+
+#if 1
+  TimeStepImplicitSetup( time_n, dt, domain );
+
+
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+
+      SetupSystem( domain, &m_linearSystem );
+
+      Epetra_FECrsMatrix * matrix = m_linearSystem.GetMatrix( EpetraBlockSystem::BlockIDs::displacementBlock,
+                                                              EpetraBlockSystem::BlockIDs::displacementBlock );
+      matrix->Scale(0.0);
+
+      Epetra_FEVector * rhs = m_linearSystem.GetResidualVector( EpetraBlockSystem::BlockIDs::displacementBlock );
+      rhs->Scale(0.0);
+
+      Epetra_FEVector * solution = m_linearSystem.GetSolutionVector( EpetraBlockSystem::BlockIDs::displacementBlock );
+      solution->Scale(0.0);
+
+      Assemble( domain, &m_linearSystem, time_n+dt, dt );
+
+//      matrix->Print(std::cout);
+//      rhs->Print(std::cout);
+
+      MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+      ManagedGroup * const nodeManager = mesh->getNodeManager();
+
+      BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+
+      bcManager->ApplyBoundaryCondition( this,
+                                         &LaplaceFEM::ApplyDirichletBC_implicit,
+                                         nodeManager,
+                                         "Temperature",
+                                         time_n + dt,
+                                         m_linearSystem );
+
+      matrix->Print(std::cout);
+      rhs->Print(std::cout);
+
+      rhs->Scale(-1.0);
+
+      if(verbose)
+        std::cout<<"Solving system"<<std::endl;
+
+
+
+
+      this->m_linearSolverWrapper.SolveSingleBlockSystem( &m_linearSystem,
+                                                          getSystemSolverParameters(),
+                                                          systemSolverInterface::EpetraBlockSystem::BlockIDs::displacementBlock );
+
+      solution->Print(std::cout);
+
+      ApplySystemSolution( &m_linearSystem, 1.0, 0, nodeManager );
+
+  TimeStepImplicitComplete( time_n, dt,  domain );
+#endif
+
+  return dt_return;
+}
 
 
 void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
@@ -270,8 +377,8 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
 
   // create trilinos dof indexing
 
-  localIndex_array& trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
-  integer_array const & is_ghost       = nodeManager->getReference<integer_array>(NodeManager::viewKeyStruct::ghostRankString);
+  localIndex_array& trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.trilinosIndex);
+  integer_array const & is_ghost       = nodeManager->getReference<integer_array>(viewKeys.ghostRank);
 
 
   trilinos_index = -1;
@@ -316,7 +423,7 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
                                 0 );
 
   std::map<string, array<string> > fieldNames;
-  fieldNames["node"].push_back("blockLocalDofNumber_LaplaceFEM");
+  fieldNames["node"].push_back("trilinosIndex_LaplaceFEM");
 
   CommunicationTools::SynchronizeFields(fieldNames,
                               mesh,
