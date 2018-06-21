@@ -1,3 +1,13 @@
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
+//
+// This file is part of the GEOSX Simulation Framework.
+
+//
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 /*
  * CellBlockSubRegion.cpp
  *
@@ -129,7 +139,7 @@ void CellBlockSubRegion::InitializePostSubGroups( ManagedGroup * const )
 void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
   this->resize(source->size());
-  this->m_toNodesRelation = source->m_toNodesRelation;
+  this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
 }
@@ -153,57 +163,57 @@ void CellBlockSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionLi
 }
 
 
-int CellBlockSubRegion::PackUpDownMapsSize( localIndex_array const & packList ) const
+localIndex CellBlockSubRegion::PackUpDownMapsSize( localIndex_array const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
 
-int CellBlockSubRegion::PackUpDownMaps( buffer_unit_type * & buffer,
+localIndex CellBlockSubRegion::PackUpDownMaps( buffer_unit_type * & buffer,
                                localIndex_array const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template< bool DOPACK >
-int CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+localIndex CellBlockSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                localIndex_array const & packList ) const
 {
-  int packedSize = 0;
+  localIndex packedSize = 0;
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
-                                             m_toNodesRelation,
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                             nodeList(),
                                              packList,
                                              this->m_localToGlobalMap,
-                                             m_toNodesRelation.RelatedObjectLocalToGlobal() );
+                                             nodeList().RelatedObjectLocalToGlobal() );
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
-                                             m_toFacesRelation,
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                             faceList(),
                                              packList,
                                              this->m_localToGlobalMap,
-                                             m_toFacesRelation.RelatedObjectLocalToGlobal() );
+                                             faceList().RelatedObjectLocalToGlobal() );
 
   return packedSize;
 }
 
 
-int CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+localIndex CellBlockSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                  localIndex_array const & packList )
 {
-  int unPackedSize = 0;
+  localIndex unPackedSize = 0;
 
-  unPackedSize += CommBufferOps::Unpack( buffer,
-                                         m_toNodesRelation,
+  unPackedSize += bufferOps::Unpack( buffer,
+                                         nodeList(),
                                          packList,
                                          this->m_globalToLocalMap,
-                                         m_toNodesRelation.RelatedObjectGlobalToLocal() );
+                                         nodeList().RelatedObjectGlobalToLocal() );
 
-  unPackedSize += CommBufferOps::Unpack( buffer,
-                                         m_toFacesRelation,
+  unPackedSize += bufferOps::Unpack( buffer,
+                                         faceList(),
                                          packList,
                                          this->m_globalToLocalMap,
-                                         m_toFacesRelation.RelatedObjectGlobalToLocal() );
+                                         faceList().RelatedObjectGlobalToLocal() );
 
   return unPackedSize;
 }

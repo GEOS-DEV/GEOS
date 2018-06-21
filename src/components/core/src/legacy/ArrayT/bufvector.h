@@ -70,7 +70,7 @@
 #include "common/DataTypes.hpp"
 #include <map>
 #include "codingUtilities/Utilities.hpp"
-#include "common/InterObjectRelation.hpp"
+#include "mesh/InterObjectRelation.hpp"
 //#include "legacy/DataStructures/EncapsulatedObjects/EncapsulatedObjectBase.h"
 #include "VectorT_derived.h"
 

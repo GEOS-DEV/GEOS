@@ -10,40 +10,28 @@
 #include <vector>
 #include <math.h>
 
-#include "RAJA/RAJA.hpp"
-#include "RAJA/util/defines.hpp"
-
 #include "common/TimingMacros.hpp"
 
 #include "dataRepository/ManagedGroup.hpp"
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-//#include "constitutive/LinearElasticIsotropic.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
 #include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
-//#include "finiteElement/Kinematics.h"
-//#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
-#include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
-
-#include "codingUtilities/Utilities.hpp"
-
 #include "managers/DomainPartition.hpp"
-
-
 #include "mesh/MeshForLoopInterface.hpp"
+#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+
+
+
+
 #define verbose 1
 
 #define local_dim 3 //number of local dimensions
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-namespace keys
-{}
-}
 
 using namespace dataRepository;
 using namespace constitutive;
@@ -162,16 +150,6 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
 //{
 //
 //}
-
-//void SinglePhaseFlow_TPFA::BuildDataStructure( ManagedGroup * const domain )
-//{
-//  SolverBase::BuildDataStructure( domain );
-//
-//  // Test auto-registration:
-//  RegisterDocumentationNodes();
-//
-//}
-
 
 void SinglePhaseFlow_TPFA::InitializePreSubGroups( ManagedGroup * const problemManager )
 {

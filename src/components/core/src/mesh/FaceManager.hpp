@@ -1,3 +1,13 @@
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
+//
+// This file is part of the GEOSX Simulation Framework.
+
+//
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 /**
  * @file FaceManager.h
  * @author settgast1
@@ -6,7 +16,7 @@
 #ifndef FACEMANAGER_H_
 #define FACEMANAGER_H_
 
-#include "common/InterObjectRelation.hpp"
+#include "ToElementRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
 
 namespace geosx
@@ -55,7 +65,7 @@ public:
                     array<localIndex_array>& facesByLowestNode,
                     localIndex_array& tempNodeList,
                     array<localIndex_array>& tempFaceToNodeMap,
-                    CellBlockSubRegion const & elementRegion );
+                    CellBlockSubRegion & elementRegion );
 
 
 
@@ -70,11 +80,11 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-  virtual int PackUpDownMapsSize( localIndex_array const & packList ) const override;
-  virtual int PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                               localIndex_array const & packList ) const override;
 
-  virtual int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                 localIndex_array const & packList ) override;
 
 
@@ -101,28 +111,32 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
-  OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
   OrderedVariableOneToManyRelation & nodeList()                    { return m_nodeList; }
-  Array2dT<localIndex> const & elementRegionList() const    { return this->getReference< Array2dT<localIndex> >(viewKeys.elementRegionList); }
-  Array2dT<localIndex> & elementRegionList()                { return this->getReference< Array2dT<localIndex> >(viewKeys.elementRegionList); }
-  Array2dT<localIndex> const & elementSubRegionList() const { return this->getReference< Array2dT<localIndex> >(viewKeys.elementSubRegionList); }
-  Array2dT<localIndex> & elementSubRegionList()             { return this->getReference< Array2dT<localIndex> >(viewKeys.elementSubRegionList); }
-  Array2dT<localIndex> const & elementList() const          { return this->getReference< Array2dT<localIndex> >(viewKeys.elementList); }
-  Array2dT<localIndex> & elementList()                      { return this->getReference< Array2dT<localIndex> >(viewKeys.elementList); }
+  OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
 
+  OrderedVariableOneToManyRelation       & edgeList()       { return m_edgeList; }
+  OrderedVariableOneToManyRelation const & edgeList() const { return m_edgeList; }
+
+  Array2dT<localIndex>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  Array2dT<localIndex> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+
+  Array2dT<localIndex>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  Array2dT<localIndex> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+
+  Array2dT<localIndex>       & elementList()       { return m_toElements.m_toElementIndex; }
+  Array2dT<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
 private:
 
   template<bool DOPACK>
-  int PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                              localIndex_array const & packList ) const;
 
 
   OrderedVariableOneToManyRelation m_nodeList;
-  Array2dT<localIndex>  m_elementRegionList;
-  Array2dT<localIndex> m_elementSubRegionList;
-  Array2dT<localIndex> m_elementList;
+  OrderedVariableOneToManyRelation m_edgeList;
+  FixedToManyElementRelation m_toElements;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;

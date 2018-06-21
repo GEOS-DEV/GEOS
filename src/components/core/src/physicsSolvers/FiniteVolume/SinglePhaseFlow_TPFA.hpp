@@ -8,7 +8,7 @@
 #ifndef SINGLE_PHASE_FLOW_TPFA_HPP_
 #define SINGLE_PHASE_FLOW_TPFA_HPP_
 
-#include "PhysicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 
 

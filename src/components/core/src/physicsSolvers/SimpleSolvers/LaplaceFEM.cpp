@@ -1,3 +1,13 @@
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
+//
+// This file is part of the GEOSX Simulation Framework.
+
+//
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 /*
  * NewtonianMechanics.cpp
  *
@@ -528,11 +538,12 @@ real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
     {
       CellBlockSubRegion * const cellBlockSubRegion = ManagedGroup::group_cast<CellBlockSubRegion*>(cellBlock.second );
 
-      array< Array2dT<R1Tensor> > const & dNdX = cellBlockSubRegion->getReference< array< Array2dT<R1Tensor> > >(keys::dNdX);
+      multidimensionalArray::ManagedArray< R1Tensor, 3 > & dNdX = cellBlockSubRegion->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
+
       Array2dT<real64> const & detJ            = cellBlockSubRegion->getReference< Array2dT<real64> >(keys::detJ);
 
       lArray2d const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
-      int const numNodesPerElement = elemsToNodes.size(1);
+      const integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
 
       Epetra_IntSerialDenseVector  element_index   (numNodesPerElement);
       Epetra_SerialDenseVector     element_rhs     (numNodesPerElement);
@@ -571,7 +582,7 @@ real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
               {
                 element_matrix(a,b) += detJ[k][q] *
                                        diffusion *
-                                       Dot( dNdX[k][q][a], dNdX[k][q][b] );
+                                     + Dot( dNdX[k][q][a], dNdX[k][q][b] );
               }
 
             }

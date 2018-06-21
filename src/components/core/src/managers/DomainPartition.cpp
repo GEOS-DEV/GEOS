@@ -1,3 +1,13 @@
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
+//
+// This file is part of the GEOSX Simulation Framework.
+
+//
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
 /*
  * DomainPartition.cpp
  *
@@ -212,7 +222,11 @@ void DomainPartition::SetupCommunications()
   NodeManager * nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
+  EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+
   CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, allNeighbors );
+
+  CommunicationTools::AssignGlobalIndices( *edgeManager, *nodeManager, allNeighbors );
 
   CommunicationTools::FindMatchedPartitionBoundaryObjects( faceManager,
                                                            allNeighbors );
@@ -412,7 +426,7 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
           arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
 
           const integer_array nodeOrdering = siloFile.SiloNodeOrdering();
-          integer numNodesPerElement = elemsToNodes.size(1);
+          integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
           for (localIndex a = 0 ; a < numNodesPerElement ; ++a)
           {
             elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];

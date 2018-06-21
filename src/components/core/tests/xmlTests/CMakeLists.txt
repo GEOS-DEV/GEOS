@@ -9,7 +9,7 @@ set(gtest_geosx_tests
 #
 # Add gtest C++ based tests
 #
-set(componentlist PhysicsSolverPackage1 ${geosx_core} )
+set(componentlist PhysicsSolverPackage1 ${geosx_core_libs} )
 set(componentlistlink "")
 foreach(component ${componentlist})
   set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
