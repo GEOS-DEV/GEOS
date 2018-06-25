@@ -26,17 +26,17 @@ namespace constitutive
 {
 
 
-template< typename T, bool HASPOINTERTYPE = std::is_pointer<T>::value >
-struct ConstitutiveWrapper
-{
-  T m_object;
-};
-
-template< typename T >
-struct ConstitutiveWrapper<T,false>
-{
-  T & m_object;
-};
+//template< typename T, bool HASPOINTERTYPE = std::is_pointer<T>::value >
+//struct ConstitutiveWrapper
+//{
+//  T m_object;
+//};
+//
+//template< typename T >
+//struct ConstitutiveWrapper<T,false>
+//{
+//  T & m_object;
+//};
 
 
 
@@ -59,13 +59,13 @@ public:
 
 
   template< typename T >
-  array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > GetParameterData( string const & name );
+  array< T * > GetParameterData( string const & name );
 
   template< typename T >
-  array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > GetData( string const & name );
+  array< T * > GetData( string const & name );
 
   template< typename T >
-  array< ConstitutiveWrapper< dataRepository::view_rtype_const<T> > > GetData( string const & name ) const;
+  array< T const * > GetData( string const & name ) const;
 
 
 };
@@ -73,9 +73,9 @@ public:
 
 
 template< typename T >
-array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > ConstitutiveManager::GetParameterData( string const & name )
+array< T * > ConstitutiveManager::GetParameterData( string const & name )
 {
-  array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > rval;
+  array< T * > rval;
 //  string key = dataRepository::keys::parameterData;
 //  this->forSubGroups( [this,&name, &rval, &key]( ManagedGroup * material ) ->
 // void
@@ -88,23 +88,53 @@ array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > ConstitutiveManage
 
   for( auto& subGroupIter : this->GetSubGroups() )
   {
-    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp{subGroupIter.second->GetGroup(dataRepository::keys::parameterData)->getData<T>(name)};
+    T * temp{subGroupIter.second->GetGroup(dataRepository::keys::parameterData)->getData<T>(name)};
     rval.push_back( std::move(temp) );
   }
   return rval;
 }
 
 template< typename T >
-array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > ConstitutiveManager::GetData( string const & name )
+array< T * >
+ConstitutiveManager::GetData( string const & name )
 {
-  array< ConstitutiveWrapper< dataRepository::view_rtype<T> > > rval;
-  this->forSubGroups( [this,&name, &rval]( ManagedGroup & material ) -> void
-      {
-        rval.push_back( material.getData<T>(name) );
-      });
+  array< T * > rval;
+  rval.resize( this->GetSubGroups().size() );
+  for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
+  {
+    ConstitutiveBase * const material = GetGroup<ConstitutiveBase>(a);
+    if( material->GetStateData()->hasView(name) )
+    {
+      rval[a] = &(material->GetStateData()->getReference<T>(name));
+    }
+    else
+    {
+      rval[a] = nullptr;
+    }
+  }
   return rval;
 }
 
+template< typename T >
+array< T const * >
+ConstitutiveManager::GetData( string const & name ) const
+{
+  array< T const * > rval;
+  rval.resize( this->GetSubGroups().size() );
+  for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
+  {
+    ConstitutiveBase const * const material = GetGroup<ConstitutiveBase>(a);
+    if( material->GetStateData()->hasView(name) )
+    {
+      rval[a] = &(material->GetStateData()->getReference<T>(name));
+    }
+    else
+    {
+      rval[a] = nullptr;
+    }
+  }
+  return rval;
+}
 
 }
 } /* namespace geosx */

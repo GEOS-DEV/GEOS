@@ -165,6 +165,10 @@ public:
   ElementViewAccessor<VIEWTYPE> ConstructViewAccessor( string const & name,
                                                        string const & neighborName );
 
+  template< typename VIEWTYPE >
+  ElementViewAccessor<VIEWTYPE const> ConstructViewAccessor( string const & name,
+                                                             string const & neighborName ) const;
+
 
   using ManagedGroup::PackSize;
   using ManagedGroup::Pack;
@@ -233,6 +237,40 @@ private:
 
 
 template< typename VIEWTYPE >
+ElementRegionManager::ElementViewAccessor<VIEWTYPE const>
+ElementRegionManager::
+ConstructViewAccessor( string const & viewName,
+                       string const & neighborName ) const
+{
+  ElementViewAccessor<VIEWTYPE const> viewAccessor;
+  viewAccessor.resize( numRegions() );
+  for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    viewAccessor[kReg].resize( elemRegion->numSubRegions() );
+
+    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+
+      if( neighborName.empty() )
+      {
+        //        viewAccessor[kReg].push_back( subRegion->getReference<VIEWTYPE>(viewName)) ;
+        viewAccessor[kReg][kSubReg] = &(subRegion->getReference<VIEWTYPE>(viewName));
+      }
+      else
+      {
+//        viewAccessor[kReg].push_back( subRegion->
+        viewAccessor[kReg][kSubReg] = &(subRegion->GetGroup(ObjectManagerBase::groupKeyStruct::neighborDataString)->
+                                        GetGroup(neighborName)->getReference<VIEWTYPE>(viewName));
+      }
+    }
+  }
+  return viewAccessor;
+}
+
+
+template< typename VIEWTYPE >
 ElementRegionManager::ElementViewAccessor<VIEWTYPE>
 ElementRegionManager::
 ConstructViewAccessor( string const & viewName,
@@ -262,13 +300,8 @@ ConstructViewAccessor( string const & viewName,
       }
     }
   }
-
   return viewAccessor;
-
 }
-
-
-
 
 
 }

@@ -5,10 +5,10 @@
 
   
   <Solvers>
-    <LaplaceFEM name="SinglePhaseFlow_TPFA"
+    <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
                 timeIntegrationOption="SteadyState"
                 fieldName="Temperature">
-    </LaplaceFEM>
+    </SinglePhaseFlow_TPFA>
   </Solvers>
 
   
@@ -30,7 +30,7 @@
                  beginTime="0.0" 
                  endTime="1.0" 
                  dt="1.0"
-                 solvers="laplace" />
+                 solvers="SinglePhaseFlow_TPFA" />
   </Events>
 
 
@@ -50,7 +50,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" />
   </ElementRegions>
 
   <Constitutive>
@@ -64,10 +64,10 @@
                        BulkModulus="5.5556e9"
                        ShearModulus="4.16667e9"/>
       </LinearElasticIsotropic>
-      <LinearElasticIsotropic name="water">
-        <ParameterData Density="1000"
-                              BulkModulus="2.0e9"
-                              ShearModulus="0.0"/>
+      <LinearEOS name="water">
+        <ParameterData referenceDensity="1000"
+                       BulkModulus="2.0e9"
+                       referencePressure="0.0"/>
       </LinearElasticIsotropic>
   </Constitutive>
 

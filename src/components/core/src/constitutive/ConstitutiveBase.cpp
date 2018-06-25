@@ -25,10 +25,12 @@ namespace constitutive
 
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+  ManagedGroup(name,parent),
+  m_parameterData(groupKeys().ParameterData.Key(),this),
+  m_stateData(groupKeys().StateData.Key(),this)
 {
-  this->RegisterGroup<ManagedGroup>(groupKeys().ParameterData);
-  this->RegisterGroup<ManagedGroup>(groupKeys().StateData);
+  RegisterGroup(groupKeys().ParameterData.Key(), &m_parameterData, 0 );
+  RegisterGroup(groupKeys().StateData.Key(), &m_stateData, 0);
 }
 
 ConstitutiveBase::~ConstitutiveBase()

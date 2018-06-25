@@ -83,7 +83,7 @@ public:
   void SetSparsityPattern( DomainPartition const * const domain,
                            Epetra_FECrsGraph * const sparsity );
 
-  void SetNumRowsAndTrilinosIndices( ManagedGroup * const domain,
+  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                      localIndex & numLocalRows,
                                      localIndex & numGlobalRows,
                                      localIndex_array& localIndices,
@@ -134,10 +134,17 @@ public:
     ExplicitTransient
   };
 
-  struct viewKeyStruct
+  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    dataRepository::ViewKey trilinosIndex = { "trilinosIndex_SinglePhaseFlow_TPFA" };
-    dataRepository::ViewKey ghostRank = { "ghostRank" };
+    constexpr static auto trilinosIndexString = "trilinosIndex_SinglePhaseFlow_TPFA";
+    constexpr static auto fluidPressureString = "fluidPressure";
+    constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
+    constexpr static auto volumeString = "volume";
+    constexpr static auto deltaVolumeString = "deltaVolume";
+    constexpr static auto porosityString = "Porosity";
+    constexpr static auto deltaPorosityString = "deltaPorosity";
+    constexpr static auto permeabilityString = "permeablity";
+    dataRepository::ViewKey trilinosIndex = { trilinosIndexString };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
@@ -160,6 +167,9 @@ private:
   timeIntegrationOption m_timeIntegrationOption;
   SinglePhaseFlow_TPFA();
   Array2dT<real64> m_faceToElemLOverA;
+
+  constexpr static int m_dim = 1;
+  localIndex_array m_faceConnectors;
 
 };
 

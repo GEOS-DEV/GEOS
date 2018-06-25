@@ -15,7 +15,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const lineaerEOS = "LinearEOS";
+string const linearEOS = "LinearEOS";
 }
 }
 
@@ -29,7 +29,7 @@ public:
 
   virtual ~LinearEOS();
 
-  static std::string CatalogName() { return dataRepository::keys::lineaerEOS; }
+  static std::string CatalogName() { return dataRepository::keys::linearEOS; }
 
 
   virtual void SetParamStatePointers( void *& ) override final;
@@ -44,9 +44,17 @@ public:
   R2SymTensor  StateUpdatePoint( R2SymTensor const & D,
                                  R2Tensor const & Rot,
                                  localIndex const i,
-
                                  integer const systemAssembleFlag ) override;
 
+  void EquationOfStatePressureUpdate( real64 const & dRho,
+                         localIndex const i,
+                         real64 & P,
+                         real64 & dPdRho ) override;
+
+  void EquationOfStateDensityUpdate( real64 const & dP,
+                                     localIndex const i,
+                                     real64 & dRho,
+                                     real64 & dRho_dP ) override;
 
   virtual void FillDocumentationNode() override;
 
@@ -54,13 +62,15 @@ public:
 
   void GetStiffness( realT c[6][6]) const override;
 
-  struct ViewKeyStruct : public ConstitutiveBase::ViewKeyStruct
+  struct ViewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     dataRepository::ViewKey bulkModulus = { "BulkModulus" };
     dataRepository::ViewKey referenceDensity = { "referenceDensity" };
+    dataRepository::ViewKey referencePressure = { "referencePressure" };
+    dataRepository::ViewKey fluidViscosity = { "fluidViscosity" };
 
-    dataRepository::ViewKey meanStress = { "Pressure" };
-    dataRepository::ViewKey density = { "Density" };
+    dataRepository::ViewKey fluidPressure = { "fluidPressure" };
+    dataRepository::ViewKey fluidDensity = { "fluidDensity" };
   } viewKeys;
 
 
@@ -73,14 +83,14 @@ public:
   dataRepository::view_rtype_const<real64> density() const { return GetParameterData()->getData<real64>(viewKeys.referenceDensity); }
 
 
-  struct dataPointers
-  {
-    real64 * m_bulkModulus = nullptr;
-  } m_dataPointers;
-
 private:
 
-
+  real64 m_bulkModulus;
+  real64 m_referencePressure;
+  real64 m_referenceDensity;
+  real64 m_fluidViscosity;
+  array<real64> m_fluidPressure;
+  array<real64> m_fluidDensity;
 };
 
 

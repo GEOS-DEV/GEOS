@@ -54,8 +54,12 @@ public:
   R2SymTensor  StateUpdatePoint( R2SymTensor const & D,
                                  R2Tensor const & Rot,
                                  localIndex const i,
-
                                  integer const systemAssembleFlag ) override;
+
+  void EquationOfStatePressureUpdate( real64 const & dRho,
+                         localIndex const i,
+                         real64 & P,
+                         real64 & dPdRho ) override{}
 
 
   virtual void FillDocumentationNode() override;
