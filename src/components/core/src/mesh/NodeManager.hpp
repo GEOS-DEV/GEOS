@@ -105,9 +105,6 @@ public:
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                 localIndex_array const & packList ) override;
 
-  /**
-   * @struct
-   */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto referencePositionString     = "ReferencePosition";

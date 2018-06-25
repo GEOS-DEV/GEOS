@@ -308,6 +308,11 @@ public:
 
   //**********************************************************************************************************************
 
+  /**
+   * @brief struct to serve as a container for variable strings and keys
+   * @struct viewKeyStruct
+   *
+   */
   struct viewKeyStruct
   {
 
@@ -333,6 +338,11 @@ public:
   } m_ObjectManagerBaseViewKeys;
 
 
+  /**
+   * @brief struct to serve as a container for group strings and keys
+   * @struct viewKeyStruct
+   *
+   */
   struct groupKeyStruct
   {
     static constexpr auto setsString = "sets";
