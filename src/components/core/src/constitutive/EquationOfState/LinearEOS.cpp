@@ -29,8 +29,12 @@ static inline void UpdateStatePoint( R2SymTensor const & D,
 LinearEOS::LinearEOS( std::string const & name, ManagedGroup * const parent ):
   ConstitutiveBase(name, parent )
 {
-  // TODO Auto-generated constructor stub
-
+  m_parameterData.RegisterViewWrapper( viewKeys.bulkModulus.Key(), &m_bulkModulus, 0 );
+  m_parameterData.RegisterViewWrapper( viewKeys.referenceDensity.Key(), &m_referenceDensity, 0 );
+  m_parameterData.RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, 0 );
+  m_parameterData.RegisterViewWrapper( viewKeys.fluidViscosity.Key(), &m_fluidViscosity, 0 );
+  m_stateData.RegisterViewWrapper( viewKeys.fluidDensity.Key(), &m_fluidDensity, 0 );
+  m_stateData.RegisterViewWrapper( viewKeys.fluidPressure.Key(), &m_fluidPressure, 0 );
 }
 
 LinearEOS::~LinearEOS()
@@ -47,7 +51,7 @@ void LinearEOS::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Linear Elastic Isotropic Constitutive Relation");
 
-  ManagedGroup * parameterData = this->GetGroup( groupKeys.ParameterData.Key() );
+  ManagedGroup * parameterData = this->GetGroup( groupKeys().ParameterData.Key() );
   DocumentationNode * const parameterDocNode = parameterData->getDocumentationNode();
   parameterDocNode->setSchemaType("Node");
   parameterDocNode->setShortDescription("Parameters for Linear Elastic Isotropic Constitutive Relation");
@@ -81,48 +85,74 @@ void LinearEOS::FillDocumentationNode()
                                        1,
                                        0 );
 
+  parameterDocNode->AllocateChildNode( viewKeys.referencePressure.Key(),
+                                       viewKeys.referencePressure.Key(),
+                                       -1,
+                                       "real64",
+                                       "real64",
+                                       "referencePressure",
+                                       "referencePressure",
+                                       "-1",
+                                       "",
+                                       1,
+                                       1,
+                                       0 );
 
-  ManagedGroup * stateData     = this->GetGroup( groupKeys.StateData.Key() );
+  ManagedGroup * stateData     = this->GetGroup( groupKeys().StateData.Key() );
   DocumentationNode * const stateDocNode = stateData->getDocumentationNode();
   stateDocNode->setSchemaType("Node");
   stateDocNode->setShortDescription("State for Linear Elastic Isotropic Constitutive Relation");
 
-  stateDocNode->AllocateChildNode( viewKeys.meanStress.Key(),
-                                   viewKeys.meanStress.Key(),
+  stateDocNode->AllocateChildNode( viewKeys.fluidPressure.Key(),
+                                   viewKeys.fluidPressure.Key(),
                                    -1,
                                    "real64_array",
                                    "real64_array",
-                                   "Stress",
-                                   "Stress",
+                                   "pressure",
+                                   "pressure",
                                    "0",
                                    "",
                                    1,
                                    0,
                                    0 );
+
+  stateDocNode->AllocateChildNode( viewKeys.fluidDensity.Key(),
+                                   viewKeys.fluidDensity.Key(),
+                                   -1,
+                                   "real64_array",
+                                   "real64_array",
+                                   "density",
+                                   "density",
+                                   "0",
+                                   "",
+                                   1,
+                                   0,
+                                   0 );
+
 }
 
 void LinearEOS::ReadXML_PostProcess()
 {
-  ManagedGroup * parameterData = this->GetParameterData();
-  real64 & K  = *( parameterData->getData<real64>(viewKeys.bulkModulus) );
-
-  if( K >= 0.0 )
+  if( m_bulkModulus <= 0.0 )
   {
-    ++numConstantsSpecified;
-  }
-  if( K <= 0.0 )
-  {
-    string const message = "An invalid value of K ("+std::to_string(K)+") is specified";
+    string const message = "An invalid value of bulk modulus ("+std::to_string(m_bulkModulus)+") is specified";
     GEOS_ERROR(message);
   }
+
+  if( m_referenceDensity <= 0.0 )
+   {
+     string const message = "An invalid value of reference density ("+std::to_string(m_referenceDensity)+") is specified";
+     GEOS_ERROR(message);
+   }
 }
+
 
 void LinearEOS::SetParamStatePointers( void *& data )
 {
-
-  this->m_dataPointers.m_bulkModulus = this->bulkModulus();
-
-  data = reinterpret_cast<void*>(&m_dataPointers);
+//
+//  this->m_dataPointers.m_bulkModulus = this->bulkModulus();
+//
+//  data = reinterpret_cast<void*>(&m_dataPointers);
 }
 
 ConstitutiveBase::UpdateFunctionPointer
@@ -190,47 +220,69 @@ void LinearEOS::StateUpdate( dataRepository::ManagedGroup const * const input,
 }
 
 R2SymTensor LinearEOS::StateUpdatePoint( R2SymTensor const & D,
-                                         R2Tensor const & Rot,
-                                         localIndex const i,
-                                         integer const systemAssembleFlag )
+                                                      R2Tensor const & Rot,
+                                                      localIndex const i,
+                                                      integer const systemAssembleFlag )
 {
-  real64 volumeStrain = D.Trace();
-  meanStress()[i] += volumeStrain * bulkModulus()[0];
+//  real64 volumeStrain = D.Trace();
+//  meanStress()[i] += volumeStrain * bulkModulus()[0];
+//
+//  R2SymTensor temp = D;
+//  temp.PlusIdentity(-volumeStrain / 3.0);
+//  temp *= 2.0 * shearModulus()[0];
+//  deviatorStress()[i] += temp;
+//
+//
+//  temp.QijAjkQlk(deviatorStress()[i],Rot);
+//  deviatorStress()[i] = temp;
+//
+//  temp.PlusIdentity(meanStress()[i]);
+//  return temp;
+}
 
-  R2SymTensor temp = D;
-  temp.PlusIdentity(-volumeStrain / 3.0);
-  temp *= 2.0 * shearModulus()[0];
-  deviatorStress()[i] += temp;
+void LinearEOS::EquationOfStatePressureUpdate( real64 const & dRho,
+                                               localIndex const i,
+                                               real64 & P,
+                                               real64 & dPdRho )
+{
+  m_fluidDensity[i] += dRho;
+//  m_fluidPressure[i] =
+}
 
+void LinearEOS::EquationOfStateDensityUpdate( real64 const & dP,
+                                              localIndex const i,
+                                              real64 & dRho,
+                                              real64 & dRho_dP )
+{
+  m_fluidPressure[i] += dP;
 
-  temp.QijAjkQlk(deviatorStress()[i],Rot);
-  deviatorStress()[i] = temp;
+  //dRho = m_fluidDensity[i] * ( exp(dP / m_bulkModulus) - 1) ;
+  // use taylor expansion to avoid loss of precision
+  dRho = m_fluidDensity[i] * ( dP / m_bulkModulus) ;//* ( 1 + 0.5 * dP / m_bulkModulus );
 
-  temp.PlusIdentity(meanStress()[i]);
-  return temp;
+  m_fluidDensity[i] = m_referenceDensity * exp( ( m_fluidPressure[i] - m_referencePressure ) / m_bulkModulus );
+  dRho_dP = m_fluidDensity[i] / m_bulkModulus;
 }
 
 void LinearEOS::GetStiffness( realT c[6][6]) const
 {
-  real64 G = *shearModulus();
-  real64 Lame = *bulkModulus() - 2.0/3.0 * G;
-  c[0][0] = Lame + 2 * G;
-  c[0][1] = Lame;
-  c[0][2] = Lame;
+  c[0][0] = m_bulkModulus;
+  c[0][1] = 0.0;
+  c[0][2] = 0.0;
   c[0][3] = 0.0;
   c[0][4] = 0.0;
   c[0][5] = 0.0;
 
-  c[1][0] = Lame;
-  c[1][1] = Lame + 2 * G;
-  c[1][2] = Lame;
+  c[1][0] = 0.0;
+  c[1][1] = m_bulkModulus;
+  c[1][2] = 0.0;
   c[1][3] = 0.0;
   c[1][4] = 0.0;
   c[1][5] = 0.0;
 
-  c[2][0] = Lame;
-  c[2][1] = Lame;
-  c[2][2] = Lame + 2 * G;
+  c[2][0] = 0.0;
+  c[2][1] = 0.0;
+  c[2][2] = m_bulkModulus;
   c[2][3] = 0.0;
   c[2][4] = 0.0;
   c[2][5] = 0.0;
@@ -238,7 +290,7 @@ void LinearEOS::GetStiffness( realT c[6][6]) const
   c[3][0] = 0.0;
   c[3][1] = 0.0;
   c[3][2] = 0.0;
-  c[3][3] = G;
+  c[3][3] = 0.0;
   c[3][4] = 0.0;
   c[3][5] = 0.0;
 
@@ -246,7 +298,7 @@ void LinearEOS::GetStiffness( realT c[6][6]) const
   c[4][1] = 0.0;
   c[4][2] = 0.0;
   c[4][3] = 0.0;
-  c[4][4] = G;
+  c[4][4] = 0.0;
   c[4][5] = 0.0;
 
   c[5][0] = 0.0;
@@ -254,7 +306,7 @@ void LinearEOS::GetStiffness( realT c[6][6]) const
   c[5][2] = 0.0;
   c[5][3] = 0.0;
   c[5][4] = 0.0;
-  c[5][5] = G;
+  c[5][5] = 0.0;
 }
 
 

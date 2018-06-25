@@ -72,6 +72,16 @@ public:
                                         localIndex const i,
                                         integer const systemAssembleFlag ) = 0;
 
+  virtual void EquationOfStatePressureUpdate( real64 const & dRho,
+                                              localIndex const i,
+                                              real64 & P,
+                                              real64 & dPdRho ) = 0;
+
+  virtual void EquationOfStateDensityUpdate( real64 const & dP,
+                                             localIndex const i,
+                                             real64 & dRho,
+                                             real64 & dRho_dP ){}
+
 
   virtual void FillDocumentationNode() override = 0;
 
@@ -106,6 +116,9 @@ public:
   ManagedGroup * GetStateData()             { return this->GetGroup(m_ConstitutiveBaseGroupKeys.StateData); }
   ManagedGroup const * GetStateData() const { return this->GetGroup(m_ConstitutiveBaseGroupKeys.StateData); }
 
+protected:
+  ManagedGroup m_parameterData;
+  ManagedGroup m_stateData;
 };
 
 

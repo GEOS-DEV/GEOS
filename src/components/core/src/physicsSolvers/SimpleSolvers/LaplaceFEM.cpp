@@ -348,7 +348,7 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
 
   std::vector<int> gather(n_mpi_processes);
 
-  int intNumLocalRows = static_cast<int>(numLocalRows);
+  int intNumLocalRows = integer_conversion<int>(numLocalRows);
   m_linearSolverWrapper.m_epetraComm.GatherAll( &intNumLocalRows,
                                                 &gather.front(),
                                                 1 );
