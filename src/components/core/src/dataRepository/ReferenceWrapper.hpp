@@ -179,7 +179,7 @@ public:
   inline typename std::result_of<T&(ARGS&&...)>::type
   operator()(ARGS&&... args)
   {
-    return std::__invoke(get(), std::forward<ARGS>(args)...);
+    return m_ref->operator()( std::forward<ARGS>(args)...) ;
   }
 
   /**
@@ -192,7 +192,7 @@ public:
   inline typename std::result_of<T const&(ARGS&&...)>::type
   operator()(ARGS&&... args) const
   {
-    return std::__invoke(get(), std::forward<ARGS>(args)...);
+    return m_ref->operator()( std::forward<ARGS>(args)...) ;
   }
 
 
