@@ -21,6 +21,7 @@
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 
@@ -83,6 +84,40 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
     MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
+
+    {
+    FaceManager * const faceManager = meshLevel->getFaceManager();
+    cxx_utilities::DocumentationNode * const docNode = faceManager->getDocumentationNode();
+
+    docNode->AllocateChildNode( viewKeyStruct::faceAreaString,
+                                viewKeyStruct::faceAreaString,
+                                -1,
+                                "real64_array",
+                                "real64_array",
+                                "",
+                                "",
+                                "",
+                                faceManager->getName(),
+                                1,
+                                0,
+                                0 );
+
+    docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
+                                viewKeyStruct::faceCenterString,
+                                -1,
+                                "r1_array",
+                                "r1_array",
+                                "",
+                                "",
+                                "",
+                                faceManager->getName(),
+                                1,
+                                0,
+                                0 );
+    }
+
+
+
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 //    cxx_utilities::DocumentationNode * const docNode = elemManager->getDocumentationNode();
 
@@ -257,6 +292,9 @@ real64 SinglePhaseFlow_TPFA::TimeStepImplicit( real64 const & time_n,
 // domain.m_feNodeManager.getData<r1_array>(keys::IncrementalDisplacement);
 
 #if 1
+
+  MakeGeometryParameters( domain );
+
   TimeStepImplicitSetup( time_n, dt, domain );
 
 
@@ -736,62 +774,56 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
 
   array<R1Tensor> faceCenter(faceManager->size());
 
-  // matrix elements
-  //const iArray1d& face_is_ghost = faceManager.GetFieldData<FieldInfo::ghostRank>();
+  arrayView1d<integer> faceGhostRank = faceManager->GhostRank();
+  arrayView1d<R1Tensor> nodePos = nodeManager->referencePosition();
 
-  view_rtype_const<r1_array> nodePos = nodeManager->getData<r1_array>(nodeManager->viewKeys.referencePosition);
 //  rArray1d * gdz = faceManager.GetFieldDataPointer<realT>("gdz");
-
 //  if (m_applyGravity) (*gdz) = 0.0;
+
 
   Array2dT<localIndex> const & elemRegionList     = faceManager->elementRegionList();
   Array2dT<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
   Array2dT<localIndex> const & elemList           = faceManager->elementList();
+  r1_array const & X = nodeManager->referencePosition();
 
 
-  CellBlockSubRegion * const activeCellBlock = elemManager->GetRegion( elemRegionList[0][0] )->GetGroup<CellBlockSubRegion>(elemSubRegionList[0][0]);
 
+  array< array< array< R1Tensor > > > elemCenter;
 
-  localIndex faceIndex, nnodes;
-  R1Tensor dummy;
-
-//  ElementRegionManager::ElementViewAccessor<real64_array> volume =
-//      elemManager->ConstructViewAccessor<real64_array>( "Volume", "" );
-
-  view_rtype<real64_array> volume     = activeCellBlock->getData<real64_array>("Volume");
-  view_rtype_const<r1_array> elemCenter = activeCellBlock->getData<r1_array>("ElementCenter");
-  view_rtype_const<lArray2d>   elemsToNodes = activeCellBlock->getData<lArray2d>(activeCellBlock->viewKeys().nodeList);
-  view_rtype_const<r1_array>  X = nodeManager->getData<r1_array>(nodeManager->viewKeys.referencePosition);
-
-  FOR_ELEMS_IN_SUBREGION( activeCellBlock, k )
+  elemCenter.resize(elemManager->numRegions());
+  for( localIndex regIndex=0 ; regIndex<elemManager->numRegions() ; ++regIndex )
   {
-//    elemCenter[k] = 0.0;
-//    for( localIndex a=0 ; a<activeCellBlock->numNodesPerElement() ; ++a )
-//    {
-//      elemCenter[k] += X[ elemsToNodes[a] ];
-//    }
-//    elemCenter[k] /= activeCellBlock->numNodesPerElement();
+    ElementRegion * const elemRegion = elemManager->GetRegion(regIndex);
+    elemCenter[regIndex].resize(elemRegion->numSubRegions());
+    for( localIndex subRegIndex=0 ; subRegIndex<elemRegion->numSubRegions() ; ++subRegIndex )
+    {
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegIndex);
+      elemCenter[regIndex][subRegIndex].resize(subRegion->size());
 
+      lArray2d const &elemsToNodes = subRegion->nodeList();
+      real64_array & volume        = subRegion->getReference<real64_array>( viewKeyStruct::volumeString );
 
-//    R1Tensor X7_X1  = X[elemsToNodes[7]];
-//             X7_X1 -= X[elemsToNodes[1]];
-//
-//    R1Tensor temp;
-//    volume[k] = 1.0;//1.0/12.0 * ( temp.Cross(X7_X1,));
+      for( localIndex k=0 ; k<subRegion->size() ; ++k )
+      {
+        elemCenter[regIndex][subRegIndex][k] = subRegion->GetElementCenter( k, *nodeManager, true );
 
-
-  } END_FOR
-
-  // loop over faces
-  view_rtype<real64_array> faceArea = faceManager->getData<real64_array>("faceArea");
-
-  for (localIndex kf = 0; kf < faceManager->size(); ++kf )
-  {
-    faceArea[kf] = 1.0;
+        volume[k] += 1;
+      }
+    }
   }
 
-  view_rtype< array<R1Tensor> > faceConnectionVector = faceManager->getData<R1Tensor>("faceConnectionVector");
-//  faceConnectionVector = 0.0;
+  // loop over faces
+  real64_array & faceArea = faceManager->getReference<real64_array>("faceArea");
+  array< array<localIndex> > const & faceToNodes = faceManager->nodeList();
+  for (localIndex kf = 0; kf < faceManager->size(); ++kf )
+  {
+    //TODO fix this
+    faceArea[kf] = 1.0;
+
+  }
+
+  array<R1Tensor> faceConnectionVector( faceManager->size() );
+  faceConnectionVector = R1Tensor( 0.0, 0.0, 0.0 );
 
 
   R1Tensor fCenter, fNormal;
@@ -800,37 +832,44 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
   m_faceToElemLOverA.resize( faceManager->size(), 2);
   for(localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
+//    arrayView1d<localIndex> elemReg    = elemRegionList[kf] ;
+//    arrayView1d<localIndex> elemSubReg = elemSubRegionList[kf] ;
+//    arrayView1d<localIndex> elemIndex  = elemList[kf] ;
 
-//    index = faceManager.GetParentIndex(kf);
+//    for( localIndex a=0 ; a<faceToNodes[kf].size() ; ++a )
+//    {
+//      fCenter += X[ faceToNodes[kf][a] ];
+//    }
+//    fCenter /= faceToNodes[kf].size();
 
-    //if(face_is_ghost[kf] < 0) //Need ghost values for postprocessing
+    computationalGeometry::Centroid_3DPolygon( faceToNodes[kf],
+                                               X,
+                                               fCenter,
+                                               fNormal );
+
+    localIndex numElems = 2;
+
+    for (localIndex k = 0; k < numElems; ++k)
     {
-
-      localIndex numElems = elemRegionList.size(0);
-//      faceManager.FaceCenterAndNormal(nodeManager, kf, fCenter, fNormal);
-
-      assert(numElems <= 2);
-
-      for (localIndex k = 0; k < numElems; ++numElems)
+      if( elemRegionList[kf][k] != -1 )
       {
-        m = elemRegionList(k,1);
-        n = elemSubRegionList(k,1);
-
-        R1Tensor la = elemCenter[ k ];
-                 la -= fCenter;
+        R1Tensor la = elemCenter[ elemRegionList[kf][k] ]
+                                [ elemSubRegionList[kf][k] ]
+                                [ elemList[kf][k] ];
+        la -= fCenter;
 
         m_faceToElemLOverA( kf, k) = ( fabs(Dot(la, fNormal)) / faceArea[kf] );
 
-//        if (m_applyGravity)
-//        {
-//          R1Tensor dz(la);
-//          if (ele == 1) dz *= -1.0;
-//          (*gdz)[index] += Dot(dz, m_gravityVector);
-//        }
-//        faceConnectionVector[index] += (0.5- ele) * 2 * la;
+  //        if (m_applyGravity)
+  //        {
+  //          R1Tensor dz(la);
+  //          if (ele == 1) dz *= -1.0;
+  //          (*gdz)[index] += Dot(dz, m_gravityVector);
+  //        }
+  //        faceConnectionVector[index] += (0.5- ele) * 2 * la;
       }
-//      faceConnectionVector[index].Normalize();
     }
+//      faceConnectionVector[index].Normalize();
   }
 }
 

@@ -144,6 +144,9 @@ public:
     constexpr static auto porosityString = "Porosity";
     constexpr static auto deltaPorosityString = "deltaPorosity";
     constexpr static auto permeabilityString = "permeablity";
+    constexpr static auto faceAreaString = "faceArea";
+    constexpr static auto faceCenterString = "faceCenter";
+
     dataRepository::ViewKey trilinosIndex = { trilinosIndexString };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };

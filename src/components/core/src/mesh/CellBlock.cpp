@@ -410,7 +410,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos) const
 {
 
-  view_rtype_const<r1_array> X = nodeManager.referencePosition();
+  r1_array const & X = nodeManager.referencePosition();
 //  view_rtype_const<r1_array> u = nodeManager.totalDisplacement();
   arrayView1d<localIndex const> nodelist = m_toNodesRelation[k];
   R1Tensor elementCenter(0.0);

@@ -446,7 +446,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   const localIndex firstNodeIndex = faceNodes[0];
   const localIndex numFaceNodes = faceNodes.size();
 
-  view_rtype_const<r1_array> const & X = nodeManager.referencePosition();
+  r1_array const & X = nodeManager.referencePosition();
 
   // get face center (average vertex location) and store node coordinates
   array<R1Tensor> faceCoords(numFaceNodes);
