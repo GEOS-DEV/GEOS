@@ -19,6 +19,7 @@
 #include "SimpleGeometricObjects.h"
 #include "Utilities/StringUtilities.h"
 #include <math.h>
+#include <algorithm>                        /* For std::fill */
 #include "ObjectManagers/TableManager.h"
 
 
@@ -179,7 +180,7 @@ void MeshGenerator::ReadXML( TICPP::HierarchicalDataNode& hdn )
       if (m_regionNames.size() == 1)
       {
         m_regionNames.resize(numBlocks);
-        m_regionNames = m_regionNames[0];
+        std::fill(m_regionNames.begin(), m_regionNames.end(), m_regionNames[0]);
       }
       else
       {

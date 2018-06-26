@@ -188,46 +188,44 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
   std::type_index typeIndex = std::type_index(vw->get_typeid());
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto type, auto baseType ) -> void
+  {
+    using fieldType = decltype(type);
+    dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
+    dataRepository::view_rtype<fieldType> field = view.data();
+    if( functionName.empty() )
     {
-      using fieldType = decltype(type);
-      dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
-      dataRepository::view_rtype<fieldType> field = view.data();
-      if( functionName.empty() )
+      for( auto a : set )
       {
-        for( auto a : set )
-        {
-          OPERATION::f( field[a], component, (m_scale) );
-//        OPERATION::f( field[a], component,
-// static_cast<decltype(baseType)>(m_scale) );
-        }
+        OPERATION::f( field[a], component, (m_scale) );
       }
-      else
+    }
+    else
+    {
+      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+      if( function!=nullptr)
       {
-        FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
-        if( function!=nullptr)
+        if( function->isFunctionOfTime()==2 )
         {
-          if( function->isFunctionOfTime()==2 )
+          real64 value = m_scale * function->Evaluate( &time );
+          for( auto a : set )
           {
-            real64 value = m_scale * function->Evaluate( &time );
-            for( auto a : set )
-            {
-              OPERATION::f( field[a], component, (value) );
-            }
+            OPERATION::f( field[a], component, (value) );
           }
-          else
+        }
+        else
+        {
+          real64_array result(static_cast<localIndex>(set.size()));
+          function->Evaluate( dataGroup, time, set, result );
+          integer count=0;
+          for( auto a : set )
           {
-            real64_array result(static_cast<localIndex>(set.size()));
-            function->Evaluate( dataGroup, time, set, result );
-            integer count=0;
-            for( auto a : set )
-            {
-              OPERATION::f( field[a], component, (result[count]) );
-              ++count;
-            }
+            OPERATION::f( field[a], component, (result[count]) );
+            ++count;
           }
         }
       }
-    });
+    }
+  });
 }
 
 
