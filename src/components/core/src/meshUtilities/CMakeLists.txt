@@ -3,6 +3,7 @@
 # Specify all headers
 #
 set(meshUtilities_headers
+    ComputationalGeometry.hpp
     MeshManager.hpp
     MeshGeneratorBase.hpp
     InternalMeshGenerator.hpp
@@ -17,6 +18,7 @@ set(meshUtilities_headers
 # Specify all sources
 #
 set(meshUtilities_sources
+    ComputationalGeometry.cpp
     MeshManager.cpp
     MeshGeneratorBase.cpp
     InternalMeshGenerator.cpp
