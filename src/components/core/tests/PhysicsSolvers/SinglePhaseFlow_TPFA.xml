@@ -77,6 +77,14 @@
   </InitialConditions>
 
   <BoundaryConditions>
+    <Dirichlet name="source"  
+               initialCondition="1"  
+               elementRegionName="cb1" 
+               setNames="all"
+               fieldName="permeablity"
+               dataType="real64" 
+               scale="1.0e-18"/>
+  
     <Dirichlet name="sourceTerm" fieldName="Temperature" dataType="Scalar" object="Node" scale="1000.0" setNames="source"/>
     <Dirichlet name="sinkTerm"   fieldName="Temperature" dataType="Scalar" object="Node" scale="0.0"    setNames="sink"/>
   </BoundaryConditions>

@@ -88,6 +88,16 @@ public:
 //                               string const & elementType,
 //                               integer const & numElements );
 
+
+  subGroupMap const & GetRegions() const
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups();
+  }
+  subGroupMap & GetRegions()
+  {
+    return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups();
+  }
+
   ElementRegion const * GetRegion( string const & regionName ) const
   {
     return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<ElementRegion>(regionName);
