@@ -66,21 +66,21 @@ void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGr
 
   // iterate over all boundary conditions.
   forSubGroups<BoundaryConditionBase>( [&]( BoundaryConditionBase * bc ) -> void
+  {
+    if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
     {
-      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
+      string_array setNames = bc->GetSetNames();
+      for( auto & setName : setNames )
       {
-        string_array setNames = bc->GetSetNames();
-        for( auto & setName : setNames )
+        dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+        if( setWrapper != nullptr )
         {
-          dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
-          if( setWrapper != nullptr )
-          {
-            lSet const & set = setWrapper->reference();
-            bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>(set,time, object, fieldName);
-          }
+          lSet const & set = setWrapper->reference();
+          bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>(set,time, object, fieldName);
         }
       }
-    });
+    }
+  });
 }
 
 void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) const

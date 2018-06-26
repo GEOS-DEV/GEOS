@@ -390,7 +390,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
       if (m_regionNames.size() == 1)
       {
         m_regionNames.resize(numBlocks);
-        m_regionNames = m_regionNames[0];
+        std::fill(m_regionNames.begin(), m_regionNames.end(), m_regionNames[0]);
       }
       else
       {
