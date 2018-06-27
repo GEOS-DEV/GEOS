@@ -78,6 +78,11 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                  CLANG "-Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-missing-prototypes -Wno-covered-switch-default -Wno-double-promotion -Wno-documentation -Wno-switch-enum -Wno-sign-conversion -Wno-unused-parameter -Wno-unused-variable -Wno-reserved-id-macro -Wno-weak-vtables -Wno-undefined-func-template" 
                                )
 
+blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
+                                 GNU "" 
+                                 CLANG "-fstandalone-debug" 
+                                )
+
 if( CMAKE_HOST_APPLE )
     set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE PATH "" FORCE)
     set(GEOSX_LINK_POSTPEND_FLAG "" CACHE PATH "" FORCE)
