@@ -68,6 +68,34 @@ public:
                                std::string const & fieldName,
                                real64 const time,
                                ARGS & ... args );
+
+
+  template< typename LAMBDA >
+  void ApplyBoundaryCondition( real64 const time,
+                               dataRepository::ManagedGroup * object,
+                               string const & fieldName,
+                               LAMBDA && lambda )
+  {
+    dataRepository::ManagedGroup const * sets = object->GetGroup(dataRepository::keys::sets);
+
+    // iterate over all boundary conditions.
+    forSubGroups<BoundaryConditionBase>([&](BoundaryConditionBase * bc) -> void
+    {
+      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
+      {
+        string_array setNames = bc->GetSetNames();
+        for( auto & setName : setNames )
+        {
+          dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+          if( setWrapper != nullptr )
+          {
+            lSet const & set = setWrapper->reference();
+            lambda( bc, set );
+          }
+        }
+      }
+    });
+  }
 };
 
 

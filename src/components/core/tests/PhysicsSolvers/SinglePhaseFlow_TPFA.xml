@@ -15,14 +15,19 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 1"
+                  xCoords="0, 10"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="2"
-                  ny="2"
-                  nz="2"
+                  nx="10"
+                  ny="1"
+                  nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
+
+  <Geometry>
+    <Box name="source" type="0" xMin="-1.00, -1.00, -1.00" xMax="1.01, 1.01, 1.01"/>
+    <Box name="sink"   type="0" xMin=" 8.99, -0.99, -0.99" xMax="10.1, 1.10, 1.10"/>
+  </Geometry>
 
 
   <Events>
@@ -68,7 +73,7 @@
         <ParameterData referenceDensity="1000"
                        BulkModulus="2.0e9"
                        referencePressure="0.0"/>
-      </LinearElasticIsotropic>
+      </LinearEOS>
   </Constitutive>
 
 
@@ -77,16 +82,16 @@
   </InitialConditions>
 
   <BoundaryConditions>
-    <Dirichlet name="source"  
+    <!--Dirichlet name="perm"  
                initialCondition="1"  
                elementRegionName="cb1" 
                setNames="all"
                fieldName="permeablity"
                dataType="real64" 
-               scale="1.0e-18"/>
+               scale="1.0e-18"/-->
   
-    <Dirichlet name="sourceTerm" fieldName="Temperature" dataType="Scalar" object="Node" scale="1000.0" setNames="source"/>
-    <Dirichlet name="sinkTerm"   fieldName="Temperature" dataType="Scalar" object="Node" scale="0.0"    setNames="sink"/>
+    <Dirichlet name="sourceTerm" fieldName="fluidPressure" dataType="Scalar" scale="1000.0" setNames="source"/>
+    <Dirichlet name="sinkTerm"   fieldName="fluidPressure" dataType="Scalar" scale="0.0"    setNames="sink"/>
   </BoundaryConditions>
 
 
@@ -104,10 +109,6 @@
   <Output parallelThreads="32" plotInterval="20.0" plotFileRoot="plot" restartInterval="1e6" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="1" maxWallTime="{60*60*15.925}"/>
   
 
-  <Geometry>
-    <Box name="source" type="0" xMin="-1.000, -1.000, -1.000" xMax="0.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 0.999,  -0.999,  -0.999" xMax="1.10, 1.10, 1.10"/>
-  </Geometry>
 
 
   <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>

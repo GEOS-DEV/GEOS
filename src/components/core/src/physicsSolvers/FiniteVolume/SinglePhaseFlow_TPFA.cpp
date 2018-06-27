@@ -1,8 +1,16 @@
-/*
- * NewtonianMechanics.cpp
- *
- *  Created on: Dec 4, 2014
- *      Author: rrsettgast
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
+// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
+// reserved. See file COPYRIGHT for details.
+//
+// This file is part of the GEOSX Simulation Framework.
+
+//
+// GEOSX is free software; you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License (as published by the Free
+// Software Foundation) version 2.1 dated February 1999.
+
+/**
+ * @file SinglePhaseFlow_TPFA.cpp
  */
 
 #include "SinglePhaseFlow_TPFA.hpp"
@@ -258,14 +266,18 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
                                             real64 const time_n,
                                             EpetraBlockSystem & blockSystem )
 {
-//  bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
-//                                                      time_n,
-//                                                      object,
-//                                                      "Temperature",
-//                                                      viewKeys.trilinosIndex.Key(),
-//                                                      1,
-//                                                      &blockSystem,
-//                                                      EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  ElementRegionManager * elemManager = object->group_cast<ElementRegionManager *>();
+  elemManager->forCellBlocks([&]( CellBlockSubRegion * subRegion )->void
+  {
+    bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
+                                                        time_n,
+                                                        subRegion,
+                                                        viewKeyStruct::fluidPressureString,
+                                                        viewKeys.trilinosIndex.Key(),
+                                                        1,
+                                                        &blockSystem,
+                                                        EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  });
 }
 
 
@@ -324,12 +336,34 @@ real64 SinglePhaseFlow_TPFA::TimeStepImplicit( real64 const & time_n,
 
       BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
 
-      bcManager->ApplyBoundaryCondition( this,
-                                         &SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit,
-                                         nodeManager,
-                                         "Temperature",
-                                         time_n + dt,
-                                         m_linearSystem );
+//      bcManager->ApplyBoundaryCondition( this,
+//                                         &SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit,
+//                                         mesh->getElemManager(),
+//                                         viewKeyStruct::fluidPressureString,
+//                                         time_n + dt,
+//                                         m_linearSystem );
+
+
+      ElementRegionManager * elemManager = mesh->getElemManager();
+      elemManager->forCellBlocks([&]( CellBlockSubRegion * subRegion )->void
+      {
+        bcManager->ApplyBoundaryCondition( time_n + dt,
+                                           subRegion,
+                                           viewKeyStruct::fluidPressureString,
+                                           [&]( BoundaryConditionBase const * const bc,
+                                                lSet const & set )->void
+        {
+          bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
+                                                              time_n + dt,
+                                                              subRegion,
+                                                              viewKeyStruct::fluidPressureString,
+                                                              viewKeys.trilinosIndex.Key(),
+                                                              1,
+                                                              &m_linearSystem,
+                                                              EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+
+        });
+      });
 
       matrix->Print(std::cout);
       rhs->Print(std::cout);
@@ -348,7 +382,7 @@ real64 SinglePhaseFlow_TPFA::TimeStepImplicit( real64 const & time_n,
 
       solution->Print(std::cout);
 
-      ApplySystemSolution( &m_linearSystem, 1.0, 0, nodeManager );
+      ApplySystemSolution( &m_linearSystem, 1.0, 0, elemManager );
 
   TimeStepImplicitComplete( time_n, dt,  domain );
 #endif
@@ -552,7 +586,7 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
   ElementRegionManager * const elemManager = mesh->getElemManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
 
-  view_rtype_const<integer_array> faceGhostRank = faceManager->getData<integer_array>(viewKeys.ghostRank);
+  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(viewKeys.ghostRank);
 
 
 
@@ -612,7 +646,7 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
       real64 dRho ;
       real64 dRho_dP;
       ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
-      EOS->EquationOfStateDensityUpdate( dP[k], k, dRho, dRho_dP );
+      EOS->EquationOfStateDensityUpdate( dP[k], matIndex2, dRho, dRho_dP );
 
       elem_matrix(0, 0) = 1.0 / fluidBulkModulus[matIndex1][0] * (*rho[matIndex1])[matIndex2] * volume[k] * porosity[k];
       elem_index(0) = trilinos_index[k];
@@ -668,10 +702,10 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 
       if( er1 >= 0 && er2 >= 0 )
       {
-      localIndex const consitutiveModelIndex1      = constitutiveMap[er1][esr1]->first[0][ei1];
-      localIndex const consitutiveModelIndex2      = constitutiveMap[er2][esr2]->first[0][ei2];
-      localIndex const consitutiveModelArrayIndex1 = constitutiveMap[er1][esr1]->second[0][ei1];
-      localIndex const consitutiveModelArrayIndex2 = constitutiveMap[er2][esr2]->second[0][ei2];
+      localIndex const consitutiveModelIndex1      = constitutiveMap[er1][esr1]->first[ei1][0];
+      localIndex const consitutiveModelIndex2      = constitutiveMap[er2][esr2]->first[ei2][0];
+      localIndex const consitutiveModelArrayIndex1 = constitutiveMap[er1][esr1]->second[ei1][0];
+      localIndex const consitutiveModelArrayIndex2 = constitutiveMap[er2][esr2]->second[ei2][0];
 
       real64 const rho1 = (*(rho[consitutiveModelIndex1]))[consitutiveModelArrayIndex1];
       real64 const rho2 = (*(rho[consitutiveModelIndex2]))[consitutiveModelArrayIndex2];
@@ -679,8 +713,11 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
       real64 const face_weight = m_faceToElemLOverA[kf][0] / ( m_faceToElemLOverA[kf][0]
                                                              + m_faceToElemLOverA[kf][1] );
 
-      real64 const face_trans = 1.0 / ( m_faceToElemLOverA[kf][0] / (*(permeability[er1][esr1]))[ei1]
-                                      + m_faceToElemLOverA[kf][1] / (*(permeability[er2][esr2]))[ei2] );
+      real64 perm = 1.0e-18;
+      real64 const face_trans = 1.0 / ( m_faceToElemLOverA[kf][0] / perm
+                                      + m_faceToElemLOverA[kf][1] / perm );
+//      real64 const face_trans = 1.0 / ( m_faceToElemLOverA[kf][0] / (*(permeability[er1][esr1]))[ei1]
+//                                      + m_faceToElemLOverA[kf][1] / (*(permeability[er2][esr2]))[ei2] );
 
       real64 const rhoav = face_weight * rho1
                          + (1.0 - face_weight) * rho2;
@@ -688,7 +725,7 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
       real64 const dP = (*pressure[er1][esr1])[ei1] - (*pressure[er2][esr2])[ei2];
 //      if (m_applyGravity) dP -= (*gdz)[kf] * rhoav;
 
-      real64 const mu = *(fluidViscosity[consitutiveModelIndex1]);
+      real64 const mu = 0.001;//*(fluidViscosity[consitutiveModelIndex1]);
       real64 const rhoTrans = rhoav * face_trans / mu * dt;
 
       real64 const poreCompress = 0.0;
@@ -734,32 +771,44 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
                                       real64 const scalingFactor,
                                       localIndex const dofOffset,
-                                      dataRepository::ManagedGroup * const nodeManager )
+                                      ManagedGroup * const objectManager )
 {
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.trilinosIndex);
 
-  string const & fieldName = getReference<string>(viewKeys.fieldVarName);
-  real64_array & fieldVar = nodeManager->getReference<real64_array>(string("Temperature"));
+//  string const & fieldName = getReference<string>(viewKeys.fieldVarName);
+
+
+
 
   int dummy;
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
 
-  for( localIndex r=0 ; r<fieldVar.size() ; ++r)
+  ElementRegionManager * const elementRegionManager = objectManager->group_cast<ElementRegionManager * const>();
+
+  ElementRegionManager::ElementViewAccessor<localIndex_array>
+  trilinosIndex = elementRegionManager->
+                  ConstructViewAccessor<localIndex_array>( viewKeys.trilinosIndex.Key(),
+                                                           string() );
+
+  ElementRegionManager::ElementViewAccessor<real64_array>
+  fieldVar = elementRegionManager->
+             ConstructViewAccessor<real64_array>( viewKeyStruct::fluidPressureString,
+                                                  string() );
+
+  int count=0;
+  for( localIndex er=0 ; er<trilinosIndex.size() ; ++er )
   {
-//    if(is_ghost[r] < 0)
+    for( localIndex esr=0 ; esr<trilinosIndex[er].size() ; ++esr )
     {
-      int lid = rowMap->LID(integer_conversion<int>(trilinos_index[r]));
-      fieldVar[r] = local_solution[lid];
+      for( localIndex k=0 ; k<trilinosIndex[er][esr]->size() ; ++k )
+      {
+        int const lid = rowMap->LID(integer_conversion<int>((*(trilinosIndex[er][esr]))[k]));
+        (*(fieldVar[er][esr]))[k] = local_solution[lid];
+      }
     }
   }
-
-
-
-
-
 }
 
 

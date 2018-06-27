@@ -95,6 +95,8 @@ int main( int argc, char *argv[] )
 
   problemManager.Initialize( &problemManager );
 
+  problemManager.InitializeFinal( &problemManager );
+
   GEOS_MARK_END("Initialization");
 
   problemManager.ApplyInitialConditions();
