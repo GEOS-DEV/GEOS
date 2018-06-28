@@ -319,7 +319,7 @@ void SiloFile::MakeSiloDirectories()
 {
 
   int rank=0;
-#if USE_MPI
+#ifdef USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 
@@ -346,7 +346,7 @@ void SiloFile::MakeSiloDirectories()
  */
 void SiloFile::Initialize( const PMPIO_iomode_t readwrite )
 {
-#if USE_MPI
+#ifdef USE_MPI
   // Ensure all procs agree on numGroups, driver and file_ext
   m_numGroups = 2;
 
@@ -394,7 +394,7 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
 {
 
   int rank = 0;
-#if USE_MPI
+#ifdef USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   int const groupRank = PMPIO_GroupRank(m_baton, rank);
@@ -441,7 +441,7 @@ void SiloFile::WaitForBaton( int const domainNumber, string const & restartFileN
 {
 
   int rank = 0;
-#if USE_MPI
+#ifdef USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   int const groupRank = PMPIO_GroupRank(m_baton, rank);
@@ -481,7 +481,7 @@ void SiloFile::HandOffBaton()
   PMPIO_HandOffBaton(m_baton, m_dbFilePtr);
 
   int rank = 0;
-#if USE_MPI
+#ifdef USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   if( rank==0 )
@@ -631,7 +631,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
 
   // write multimesh object
   int rank = 0;
-#if USE_MPI
+#ifdef USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   if( rank == 0 )
@@ -710,7 +710,7 @@ void SiloFile::WriteBeamMesh(string const & meshName,
   //----write multimesh object
   {
     int rank = 0;
-  #if USE_MPI
+  #ifdef USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
     if( rank == 0 )
@@ -743,7 +743,7 @@ void SiloFile::WritePointMesh( string const & meshName,
   //----write multimesh object
   {
     int rank = 0;
-  #if USE_MPI
+  #ifdef USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
     if( rank == 0 )
@@ -840,14 +840,14 @@ void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementMana
   }
   // write multimesh object
   int rank = 0;
-#if USE_MPI
+#ifdef USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   if( rank == 0 )
   {
 
     int size = 1;
-#if USE_MPI
+#ifdef USE_MPI
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
