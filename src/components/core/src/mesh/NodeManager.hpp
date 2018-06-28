@@ -145,15 +145,20 @@ public:
   array<R1Tensor> const & referencePosition() const
   { return m_referencePosition; }
 
-  array<lSet>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  array<lSet> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
-
   /**
    * @brief accessor to the reference position array
    * @return reference to reference position
    */
   array<R1Tensor> & referencePosition()
   { return m_referencePosition; }
+
+
+  array<lSet>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array<lSet> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+
+  array<lSet>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array<lSet> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+
 
   array<lSet>        & elementList()       { return m_toElements.m_toElementIndex; }
   array<lSet>  const & elementList() const { return m_toElements.m_toElementIndex; }
@@ -163,6 +168,9 @@ public:
    * @return const reference to relation
    */
   UnorderedVariableOneToManyRelation const & edgeList() const
+  { return m_toEdgesRelation; }
+
+  UnorderedVariableOneToManyRelation & edgeList()
   { return m_toEdgesRelation; }
 
 protected:
