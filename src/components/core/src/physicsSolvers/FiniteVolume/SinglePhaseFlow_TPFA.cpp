@@ -18,12 +18,12 @@
 #include <vector>
 #include <math.h>
 
-#include "common/TimingMacros.hpp"
 
-#include "dataRepository/ManagedGroup.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "dataRepository/ManagedGroup.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
 #include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
@@ -32,13 +32,9 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 
-
-
-
-#define verbose 1
-
-#define local_dim 3 //number of local dimensions
-
+/**
+ * @namespace the geosx namespace that encapsulates the majority of the code
+ */
 namespace geosx
 {
 
@@ -54,11 +50,6 @@ SinglePhaseFlow_TPFA::SinglePhaseFlow_TPFA( const std::string& name,
   this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
   m_linearSystem.SetBlockID( EpetraBlockSystem::BlockIDs::fluidPressureBlock, this->getName() );
 }
-
-
-
-SinglePhaseFlow_TPFA::~SinglePhaseFlow_TPFA()
-{}
 
 
 void SinglePhaseFlow_TPFA::FillDocumentationNode(  )
@@ -127,8 +118,6 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
 
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-//    cxx_utilities::DocumentationNode * const docNode = elemManager->getDocumentationNode();
-
 
     elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock )->void
     {
@@ -261,22 +250,29 @@ void SinglePhaseFlow_TPFA::TimeStep( real64 const& time_n,
 
 
 void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
-                                            BoundaryConditionBase const * const bc,
-                                            lSet const & set,
-                                            real64 const time_n,
-                                            EpetraBlockSystem & blockSystem )
+                                                      real64 const time,
+                                                      EpetraBlockSystem & blockSystem )
 {
+  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
   ElementRegionManager * elemManager = object->group_cast<ElementRegionManager *>();
   elemManager->forCellBlocks([&]( CellBlockSubRegion * subRegion )->void
   {
-    bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
-                                                        time_n,
-                                                        subRegion,
-                                                        viewKeyStruct::fluidPressureString,
-                                                        viewKeys.trilinosIndex.Key(),
-                                                        1,
-                                                        &blockSystem,
-                                                        EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+    bcManager->ApplyBoundaryCondition( time,
+                                       subRegion,
+                                       viewKeyStruct::fluidPressureString,
+                                       [&]( BoundaryConditionBase const * const bc,
+                                            lSet const & set )->void
+    {
+      bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
+                                                          time,
+                                                          subRegion,
+                                                          viewKeyStruct::fluidPressureString,
+                                                          viewKeys.trilinosIndex.Key(),
+                                                          1,
+                                                          &m_linearSystem,
+                                                          EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+
+    });
   });
 }
 
@@ -300,10 +296,6 @@ real64 SinglePhaseFlow_TPFA::TimeStepImplicit( real64 const & time_n,
                                                        DomainPartition * const domain )
 {
   real64 dt_return = dt;
-////  view_rtype<r1_array> uhat  =
-// domain.m_feNodeManager.getData<r1_array>(keys::IncrementalDisplacement);
-
-#if 1
 
   MakeGeometryParameters( domain );
 
@@ -314,78 +306,55 @@ real64 SinglePhaseFlow_TPFA::TimeStepImplicit( real64 const & time_n,
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 
-      SetupSystem( domain, &m_linearSystem );
+  SetupSystem( domain, &m_linearSystem );
 
-      Epetra_FECrsMatrix * matrix = m_linearSystem.GetMatrix( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
-                                                              EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-      matrix->Scale(0.0);
+  Epetra_FECrsMatrix * matrix = m_linearSystem.GetMatrix( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
+                                                          EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  matrix->Scale(0.0);
 
-      Epetra_FEVector * rhs = m_linearSystem.GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-      rhs->Scale(0.0);
+  Epetra_FEVector * rhs = m_linearSystem.GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  rhs->Scale(0.0);
 
-      Epetra_FEVector * solution = m_linearSystem.GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-      solution->Scale(0.0);
+  Epetra_FEVector * solution = m_linearSystem.GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  solution->Scale(0.0);
 
-      Assemble( domain, &m_linearSystem, time_n+dt, dt );
+  Assemble( domain, &m_linearSystem, time_n+dt, dt );
 
-//      matrix->Print(std::cout);
-//      rhs->Print(std::cout);
-
-      MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-      ManagedGroup * const nodeManager = mesh->getNodeManager();
-
-      BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-
-//      bcManager->ApplyBoundaryCondition( this,
-//                                         &SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit,
-//                                         mesh->getElemManager(),
-//                                         viewKeyStruct::fluidPressureString,
-//                                         time_n + dt,
-//                                         m_linearSystem );
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ManagedGroup * const nodeManager = mesh->getNodeManager();
 
 
-      ElementRegionManager * elemManager = mesh->getElemManager();
-      elemManager->forCellBlocks([&]( CellBlockSubRegion * subRegion )->void
-      {
-        bcManager->ApplyBoundaryCondition( time_n + dt,
-                                           subRegion,
-                                           viewKeyStruct::fluidPressureString,
-                                           [&]( BoundaryConditionBase const * const bc,
-                                                lSet const & set )->void
-        {
-          bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
-                                                              time_n + dt,
-                                                              subRegion,
-                                                              viewKeyStruct::fluidPressureString,
-                                                              viewKeys.trilinosIndex.Key(),
-                                                              1,
-                                                              &m_linearSystem,
-                                                              EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  ApplyDirichletBC_implicit( mesh->getElemManager(),
+                             time_n + dt,
+                             m_linearSystem );
 
-        });
-      });
+  if( verboseLevel() >= 2 )
+  {
+    matrix->Print(std::cout);
+    rhs->Print(std::cout);
+  }
 
-      matrix->Print(std::cout);
-      rhs->Print(std::cout);
+  rhs->Scale(-1.0);
 
-      rhs->Scale(-1.0);
-
-      if(verbose)
-        std::cout<<"Solving system"<<std::endl;
+  if( verboseLevel() >= 1 )
+  {
+    std::cout<<"Solving system"<<std::endl;
+  }
 
 
 
+  this->m_linearSolverWrapper.SolveSingleBlockSystem( &m_linearSystem,
+                                                      getSystemSolverParameters(),
+                                                      systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock );
 
-      this->m_linearSolverWrapper.SolveSingleBlockSystem( &m_linearSystem,
-                                                          getSystemSolverParameters(),
-                                                          systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  if( verboseLevel() >= 2 )
+  {
+    solution->Print(std::cout);
+  }
 
-      solution->Print(std::cout);
-
-      ApplySystemSolution( &m_linearSystem, 1.0, 0, elemManager );
+  ApplySystemSolution( &m_linearSystem, 1.0, 0, mesh->getElemManager() );
 
   TimeStepImplicitComplete( time_n, dt,  domain );
-#endif
 
   return dt_return;
 }
@@ -540,7 +509,7 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
 
   ElementRegionManager::ElementViewAccessor< integer_array const >
   ghostRank = elementRegionManager->
-                  ConstructViewAccessor<integer_array>( viewKeys.ghostRank.Key(),
+                  ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString,
                                                         string() );
 
 
@@ -586,7 +555,7 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
   ElementRegionManager * const elemManager = mesh->getElemManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
 
-  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(viewKeys.ghostRank);
+  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::viewKeyStruct::ghostRankString);
 
 
 
