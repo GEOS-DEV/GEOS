@@ -412,7 +412,7 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
   {
     for( localIndex esr=0 ; esr<ghostRank[er].size() ; ++esr )
     {
-      *(trilinosIndex[er][esr]) = -1;
+      trilinosIndex[er][esr] = -1;
     }
   }
 
@@ -421,16 +421,16 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
   {
     for( localIndex esr=0 ; esr<ghostRank[er].size() ; ++esr )
     {
-      for( localIndex k=0 ; k<ghostRank[er][esr]->size() ; ++k )
+      for( localIndex k=0 ; k<ghostRank[er][esr].get().size() ; ++k )
       {
-        if( (*(ghostRank[er][esr]))[k] < 0 )
+        if( ghostRank[er][esr][k] < 0 )
         {
-          (*(trilinosIndex[er][esr]))[k] = firstLocalRow+localCount+offset;
+          trilinosIndex[er][esr][k] = firstLocalRow+localCount+offset;
           ++localCount;
         }
         else
         {
-          (*(trilinosIndex[er][esr]))[k] = -1;
+          trilinosIndex[er][esr][k] = -1;
         }
       }
     }
@@ -535,11 +535,11 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
   m_faceConnectors.resize(faceManager->size());
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
   {
-    if( (*(ghostRank[elementRegionList[kf][0]][elementSubRegionList[kf][0]]))[elementIndexList[kf][0]] < 0 )
+    if( ghostRank[elementRegionList[kf][0]][elementSubRegionList[kf][0]][elementIndexList[kf][0]] < 0 )
       if( elementRegionList[kf][0] >= 0 && elementRegionList[kf][1] >= 0 )
       {
-        elementLocalDofIndex[0] = (*(trilinosIndex[elementRegionList[kf][0]][elementSubRegionList[kf][0]]))[elementIndexList[kf][0]];
-        elementLocalDofIndex[1] = (*(trilinosIndex[elementRegionList[kf][1]][elementSubRegionList[kf][1]]))[elementIndexList[kf][1]];
+        elementLocalDofIndex[0] = trilinosIndex[elementRegionList[kf][0]][elementSubRegionList[kf][0]][elementIndexList[kf][0]];
+        elementLocalDofIndex[1] = trilinosIndex[elementRegionList[kf][1]][elementSubRegionList[kf][1]][elementIndexList[kf][1]];
 
         sparsity->InsertGlobalIndices( 2,
                                        elementLocalDofIndex.data(),
@@ -670,10 +670,10 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 
       if( er1 >= 0 && er2 >= 0 )
       {
-        localIndex const consitutiveModelIndex1      = constitutiveMap[er1][esr1]->first[ei1][0];
-        localIndex const consitutiveModelIndex2      = constitutiveMap[er2][esr2]->first[ei2][0];
-        localIndex const consitutiveModelArrayIndex1 = constitutiveMap[er1][esr1]->second[ei1][0];
-        localIndex const consitutiveModelArrayIndex2 = constitutiveMap[er2][esr2]->second[ei2][0];
+        localIndex const consitutiveModelIndex1      = constitutiveMap[er1][esr1].get().first[ei1][0];
+        localIndex const consitutiveModelIndex2      = constitutiveMap[er2][esr2].get().first[ei2][0];
+        localIndex const consitutiveModelArrayIndex1 = constitutiveMap[er1][esr1].get().second[ei1][0];
+        localIndex const consitutiveModelArrayIndex2 = constitutiveMap[er2][esr2].get().second[ei2][0];
 
         real64 const rho1 = (*(rho[consitutiveModelIndex1]))[consitutiveModelArrayIndex1];
         real64 const rho2 = (*(rho[consitutiveModelIndex2]))[consitutiveModelArrayIndex2];
@@ -690,7 +690,7 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
         real64 const rhoav = face_weight * rho1
                              + (1.0 - face_weight) * rho2;
 
-        real64 const dP = (*pressure[er1][esr1])[ei1] - (*pressure[er2][esr2])[ei2];
+        real64 const dP = pressure[er1][esr1][ei1] - pressure[er2][esr2][ei2];
 //      if (m_applyGravity) dP -= (*gdz)[kf] * rhoav;
 
         real64 const mu = 0.001;//*(fluidViscosity[consitutiveModelIndex1]);
@@ -718,8 +718,8 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
         face_matrix(0, 1) = -rhoTrans + dRdP2 - rhoTrans * dRgdP2;
         face_matrix(1, 0) = -rhoTrans - dRdP1 + rhoTrans * dRgdP1;
 
-        face_index[0] = (*(trilinosIndex[er1][esr1]))[ei1];
-        face_index[1] = (*(trilinosIndex[er2][esr2]))[ei2];
+        face_index[0] = trilinosIndex[er1][esr1][ei1];
+        face_index[1] = trilinosIndex[er2][esr2][ei2];
 
         matrix->SumIntoGlobalValues(face_index, face_matrix);
 
@@ -767,10 +767,10 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
   {
     for( localIndex esr=0 ; esr<trilinosIndex[er].size() ; ++esr )
     {
-      for( localIndex k=0 ; k<trilinosIndex[er][esr]->size() ; ++k )
+      for( localIndex k=0 ; k<trilinosIndex[er][esr].get().size() ; ++k )
       {
-        int const lid = rowMap->LID(integer_conversion<int>((*(trilinosIndex[er][esr]))[k]));
-        (*(fieldVar[er][esr]))[k] = local_solution[lid];
+        int const lid = rowMap->LID(integer_conversion<int>(trilinosIndex[er][esr][k]));
+        fieldVar[er][esr][k] = local_solution[lid];
       }
     }
   }
