@@ -587,7 +587,7 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
   constitutive::ViewAccessor<real64> fluidBulkModulus = constitutiveManager->GetParameterData< real64 >("BulkModulus");
 
   constitutive::ViewAccessor< array<real64> >
-  rho = constitutiveManager->GetData< array<real64> >("fluidDensity");
+  rho = constitutiveManager->GetStateData< array<real64> >("fluidDensity");
 
   elemManager->forCellBlocks( [&]( CellBlockSubRegion * const activeCellBlock) -> void
     {
@@ -653,7 +653,7 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 
 
   constitutive::ViewAccessor< real64 >
-  fluidViscosity = constitutiveManager->GetData< real64 >("fluidViscocity");
+  fluidViscosity = constitutiveManager->GetStateData< real64 >("fluidViscocity");
 
   Epetra_IntSerialDenseVector face_index(2);
   Epetra_SerialDenseVector face_rhs(2);

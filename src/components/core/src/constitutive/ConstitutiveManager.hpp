@@ -56,10 +56,10 @@ public:
   ViewAccessor< T const > GetParameterData( string const & name ) const;
 
   template< typename T >
-  ViewAccessor< T > GetData( string const & name );
+  ViewAccessor< T > GetStateData( string const & name );
 
   template< typename T >
-  ViewAccessor< T const > GetData( string const & name ) const;
+  ViewAccessor< T const > GetStateData( string const & name ) const;
 
 
 };
@@ -111,7 +111,7 @@ ViewAccessor< T const > ConstitutiveManager::GetParameterData( string const & na
 
 template< typename T >
 ViewAccessor< T >
-ConstitutiveManager::GetData( string const & name )
+ConstitutiveManager::GetStateData( string const & name )
 {
   ViewAccessor< T > rval;
   rval.resize( this->GetSubGroups().size() );
@@ -132,7 +132,7 @@ ConstitutiveManager::GetData( string const & name )
 
 template< typename T >
 ViewAccessor< T const >
-ConstitutiveManager::GetData( string const & name ) const
+ConstitutiveManager::GetStateData( string const & name ) const
 {
   ViewAccessor< T const > rval;
   rval.resize( this->GetSubGroups().size() );
