@@ -30,6 +30,7 @@
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 #include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 /**
@@ -235,8 +236,13 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
 //
 //}
 
-void SinglePhaseFlow_TPFA::InitializePreSubGroups( ManagedGroup * const problemManager )
-{}
+void SinglePhaseFlow_TPFA::InitializeFinalLeaf( ManagedGroup * const problemManager )
+{
+  DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
+
+  // Call function to fill geometry parameters for use forming system
+  MakeGeometryParameters( domain );
+}
 
 void SinglePhaseFlow_TPFA::TimeStep( real64 const& time_n,
                                      real64 const& dt,
@@ -247,12 +253,18 @@ void SinglePhaseFlow_TPFA::TimeStep( real64 const& time_n,
 }
 
 
+/**
+ * This function currently applies Dirichlet boundary conditions on the elements/zones as they
+ * hold the DOF. Futher work will need to be done to apply a Dirichlet bc to the connectors (faces)
+ */
 void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
                                                       real64 const time,
                                                       EpetraBlockSystem & blockSystem )
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
   ElementRegionManager * elemManager = object->group_cast<ElementRegionManager *>();
+
+  // loop through cell block sub-regions
   elemManager->forCellBlocks([&]( CellBlockSubRegion * subRegion ) -> void
     {
       bcManager->ApplyBoundaryCondition( time,
@@ -293,10 +305,7 @@ real64 SinglePhaseFlow_TPFA::TimeStepImplicit( real64 const & time_n,
 {
   real64 dt_return = dt;
 
-  MakeGeometryParameters( domain );
-
   TimeStepImplicitSetup( time_n, dt, domain );
-
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -459,6 +468,12 @@ void SinglePhaseFlow_TPFA :: SetupSystem ( DomainPartition * const domain,
                                 displacementIndices,
                                 0 );
 
+  std::map<string, array<string> > fieldNames;
+  fieldNames["node"].push_back(viewKeys.trilinosIndex.Key());
+
+  CommunicationTools::SynchronizeFields(fieldNames,
+                                        mesh,
+                                        domain->getReference< array<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
 
   // create epetra map
@@ -573,9 +588,6 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 
   elemManager->forCellBlocks( [&]( CellBlockSubRegion * const activeCellBlock) -> void
     {
-//    CellBlockSubRegion * const
-//    activeCellBlock = elemManager->GetRegion( faceToElemRegionList[0][0] )->
-//                      GetSubRegion(faceToElemSubRegionList[0][0]);
 
       auto const & constitutiveMap =
         activeCellBlock->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(activeCellBlock->viewKeys().constitutiveMap);
@@ -587,21 +599,10 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
       view_rtype_const<real64_array> dVolume = activeCellBlock->getData<real64_array>(viewKeyStruct::deltaVolumeString);
       view_rtype_const<real64_array> dPorosity = activeCellBlock->getData<real64_array>(viewKeyStruct::deltaPorosityString);
 
-      //  view_rtype_const<real64_array> permeability =
-      // activeCellBlock->getData<real64_array>(viewKeyStruct::permeabilityString);
-
       view_rtype_const<localIndex_array> trilinos_index = activeCellBlock->getData<localIndex_array>(viewKeys.trilinosIndex);
-
-
-      //  void * constitutiveModelData;
-      //  constitutiveModel->SetParamStatePointers(constitutiveModelData);
-      //  constitutive::ConstitutiveBase::UpdateFunctionPointer
-      //  constitutiveUpdate = constitutiveModel->GetStateUpdateFunctionPointer();
 
       Array2dT<localIndex> const & consitutiveModelIndex      = constitutiveMap.first;
       Array2dT<localIndex> const & consitutiveModelArrayIndex = constitutiveMap.second;
-
-
 
       array< array<real64> * > rho = constitutiveManager->GetData< array<real64> >("fluidDensity");
 
@@ -745,10 +746,6 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
 
-//  string const & fieldName = getReference<string>(viewKeys.fieldVarName);
-
-
-
   int dummy;
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
@@ -791,19 +788,13 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
 
   array<R1Tensor> faceCenter(faceManager->size());
 
-  arrayView1d<integer> faceGhostRank = faceManager->GhostRank();
-  arrayView1d<R1Tensor> nodePos = nodeManager->referencePosition();
-
 //  rArray1d * gdz = faceManager.GetFieldDataPointer<realT>("gdz");
 //  if (m_applyGravity) (*gdz) = 0.0;
-
 
   Array2dT<localIndex> const & elemRegionList     = faceManager->elementRegionList();
   Array2dT<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
   Array2dT<localIndex> const & elemList           = faceManager->elementList();
   r1_array const & X = nodeManager->referencePosition();
-
-
 
   array< array< array< R1Tensor > > > elemCenter;
 
@@ -840,7 +831,6 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
   }
 
   array<R1Tensor> faceConnectionVector( faceManager->size() );
-  faceConnectionVector = R1Tensor( 0.0, 0.0, 0.0 );
 
 
   R1Tensor fCenter, fNormal;
@@ -849,16 +839,6 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
   m_faceToElemLOverA.resize( faceManager->size(), 2);
   for(localIndex kf = 0 ; kf < faceManager->size() ; ++kf)
   {
-//    arrayView1d<localIndex> elemReg    = elemRegionList[kf] ;
-//    arrayView1d<localIndex> elemSubReg = elemSubRegionList[kf] ;
-//    arrayView1d<localIndex> elemIndex  = elemList[kf] ;
-
-//    for( localIndex a=0 ; a<faceToNodes[kf].size() ; ++a )
-//    {
-//      fCenter += X[ faceToNodes[kf][a] ];
-//    }
-//    fCenter /= faceToNodes[kf].size();
-
     computationalGeometry::Centroid_3DPolygon( faceToNodes[kf],
                                                X,
                                                fCenter,
@@ -883,10 +863,8 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
         //          if (ele == 1) dz *= -1.0;
         //          (*gdz)[index] += Dot(dz, m_gravityVector);
         //        }
-        //        faceConnectionVector[index] += (0.5- ele) * 2 * la;
       }
     }
-//      faceConnectionVector[index].Normalize();
   }
 }
 

@@ -20,14 +20,6 @@
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 
 
-struct stabledt
-{
-  double m_maxdt;
-};
-
-namespace ML_Epetra
-{ class MultiLevelPreconditioner; }
-
 namespace geosx
 {
 namespace dataRepository
@@ -55,6 +47,21 @@ public:
                         ManagedGroup * const parent );
 
 
+  /// deleted default constructor
+  SinglePhaseFlow_TPFA() = delete;
+
+  /// deleted copy constructor
+  SinglePhaseFlow_TPFA( SinglePhaseFlow_TPFA const & ) = delete;
+
+  /// default move constructor
+  SinglePhaseFlow_TPFA( SinglePhaseFlow_TPFA && ) = default;
+
+  /// deleted assignment operator
+  SinglePhaseFlow_TPFA & operator=( SinglePhaseFlow_TPFA const & ) = delete;
+
+  /// deleted move operator
+  SinglePhaseFlow_TPFA & operator=( SinglePhaseFlow_TPFA && ) = delete;
+
   /**
    * @brief default destructor
    */
@@ -71,7 +78,7 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
 
-  virtual void InitializePreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void InitializeFinalLeaf( dataRepository::ManagedGroup * const problemManager ) override final;
 
   virtual void TimeStep( real64 const& time_n,
                          real64 const& dt,
@@ -263,15 +270,19 @@ public:
   }
 
 private:
-
-  stabledt m_stabledt;
+  /// the currently selected time integration option
   timeIntegrationOption m_timeIntegrationOption;
+
+  /// temp variable containing distance between the face and element centers divided by the area of
+  /// the face
   Array2dT<real64> m_faceToElemLOverA;
 
+  /// the number of degrees of freedom per element. should be removed.
   constexpr static int m_dim = 1;
+
+  /// temp array that holds the list of aces that connect two elements.
   localIndex_array m_faceConnectors;
 
-  SinglePhaseFlow_TPFA() = delete;
 
 };
 
