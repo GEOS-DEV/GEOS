@@ -25,8 +25,11 @@ using namespace dataRepository;
 
 SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
-{}
+  ManagedGroup( name, parent ),
+  m_verboseLevel(0)
+{
+  this->RegisterViewWrapper( "verbosity", &m_verboseLevel, 0 );
+}
 
 SolverBase::~SolverBase()
 {}
@@ -73,6 +76,18 @@ void SolverBase::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeyStruct::verboseLevelString,
+                              viewKeyStruct::verboseLevelString,
+                              -1,
+                              "integer",
+                              "integer",
+                              "verbosity level",
+                              "verbosity level",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
 
 
 }

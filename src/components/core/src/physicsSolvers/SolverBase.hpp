@@ -79,7 +79,21 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
+
+  struct viewKeyStruct
+  {
+    constexpr static auto verboseLevelString = "verboseLevel";
+
+  } viewKeys;
+
+  struct groupKeyStruct
+  {
+  } groupKeys;
+
+
+  integer verboseLevel() const { return m_verboseLevel; }
 private:
+  integer m_verboseLevel = 0;
 
 };
 
