@@ -28,7 +28,7 @@ SolverBase::SolverBase( std::string const & name,
   ManagedGroup( name, parent ),
   m_verboseLevel(0)
 {
-  this->RegisterViewWrapper( "verbosity", &m_verboseLevel, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
 }
 
 SolverBase::~SolverBase()
