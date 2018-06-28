@@ -17,7 +17,9 @@
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
+
 #include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/ReferenceWrapper.hpp"
 #include "ConstitutiveBase.hpp"
 
 namespace geosx
@@ -25,19 +27,8 @@ namespace geosx
 namespace constitutive
 {
 
-
-//template< typename T, bool HASPOINTERTYPE = std::is_pointer<T>::value >
-//struct ConstitutiveWrapper
-//{
-//  T m_object;
-//};
-//
-//template< typename T >
-//struct ConstitutiveWrapper<T,false>
-//{
-//  T & m_object;
-//};
-
+template< typename VIEWTYPE >
+using ViewAccessor = array < ReferenceWrapper< VIEWTYPE > > ;
 
 
 class ConstitutiveManager : public dataRepository::ManagedGroup
@@ -59,13 +50,16 @@ public:
 
 
   template< typename T >
-  array< T * > GetParameterData( string const & name );
+  ViewAccessor< T > GetParameterData( string const & name );
 
   template< typename T >
-  array< T * > GetData( string const & name );
+  ViewAccessor< T const > GetParameterData( string const & name ) const;
 
   template< typename T >
-  array< T const * > GetData( string const & name ) const;
+  ViewAccessor< T > GetData( string const & name );
+
+  template< typename T >
+  ViewAccessor< T const > GetData( string const & name ) const;
 
 
 };
@@ -73,64 +67,85 @@ public:
 
 
 template< typename T >
-array< T * > ConstitutiveManager::GetParameterData( string const & name )
+ViewAccessor< T > ConstitutiveManager::GetParameterData( string const & name )
 {
-  array< T * > rval;
-//  string key = dataRepository::keys::parameterData;
-//  this->forSubGroups( [this,&name, &rval, &key]( ManagedGroup * material ) ->
-// void
-//  {
-//    dataRepository::view_rtype<T> temp0 =
-// material->GetGroup(key)->getData<T>(name);
-//    ConstitutiveWrapper< dataRepository::view_rtype<T> > temp( temp0 );
-//    rval.push_back( std::move(temp) );
-//  });
+  ViewAccessor< T > rval;
 
-  for( auto& subGroupIter : this->GetSubGroups() )
+  rval.resize( this->GetSubGroups().size() );
+  for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
   {
-    T * temp{subGroupIter.second->GetGroup(dataRepository::keys::parameterData)->getData<T>(name)};
-    rval.push_back( std::move(temp) );
+    ConstitutiveBase * const material = GetGroup<ConstitutiveBase>(a);
+    if( material->GetParameterData()->hasView(name) )
+    {
+      rval[a].set(material->GetParameterData()->getReference<T>(name));
+    }
+    else
+    {
+      rval[a].set(nullptr);
+    }
   }
   return rval;
 }
 
 template< typename T >
-array< T * >
+ViewAccessor< T const > ConstitutiveManager::GetParameterData( string const & name ) const
+{
+  ViewAccessor< T const > rval;
+
+  rval.resize( this->GetSubGroups().size() );
+  for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
+  {
+    ConstitutiveBase const * const material = GetGroup<ConstitutiveBase>(a);
+    if( material->GetParameterData()->hasView(name) )
+    {
+      rval[a].set(material->GetParameterData()->getReference<T>(name));
+    }
+    else
+    {
+      rval[a].set(nullptr);
+    }
+  }
+  return rval;
+}
+
+
+template< typename T >
+ViewAccessor< T >
 ConstitutiveManager::GetData( string const & name )
 {
-  array< T * > rval;
+  ViewAccessor< T > rval;
   rval.resize( this->GetSubGroups().size() );
   for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
   {
     ConstitutiveBase * const material = GetGroup<ConstitutiveBase>(a);
     if( material->GetStateData()->hasView(name) )
     {
-      rval[a] = &(material->GetStateData()->getReference<T>(name));
+      rval[a].set(material->GetStateData()->getReference<T>(name));
     }
     else
     {
-      rval[a] = nullptr;
+      rval[a].set(nullptr);
     }
   }
   return rval;
 }
 
 template< typename T >
-array< T const * >
+ViewAccessor< T const >
 ConstitutiveManager::GetData( string const & name ) const
 {
-  array< T const * > rval;
+  ViewAccessor< T const > rval;
   rval.resize( this->GetSubGroups().size() );
   for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
   {
     ConstitutiveBase const * const material = GetGroup<ConstitutiveBase>(a);
     if( material->GetStateData()->hasView(name) )
     {
-      rval[a] = &(material->GetStateData()->getReference<T>(name));
+      rval[a].set(material->GetStateData()->getReference<T>(name));
     }
     else
     {
-      rval[a] = nullptr;
+      rval[a].set(nullptr);
     }
   }
   return rval;
