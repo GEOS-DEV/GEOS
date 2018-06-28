@@ -584,7 +584,10 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
   Epetra_SerialDenseVector elem_rhs(1);
   Epetra_SerialDenseMatrix elem_matrix(1, 1);
 
-  array<real64 *> fluidBulkModulus = constitutiveManager->GetParameterData< real64 >("BulkModulus");
+  constitutive::ViewAccessor<real64> fluidBulkModulus = constitutiveManager->GetParameterData< real64 >("BulkModulus");
+
+  constitutive::ViewAccessor< array<real64> >
+  rho = constitutiveManager->GetData< array<real64> >("fluidDensity");
 
   elemManager->forCellBlocks( [&]( CellBlockSubRegion * const activeCellBlock) -> void
     {
@@ -604,7 +607,6 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
       Array2dT<localIndex> const & consitutiveModelIndex      = constitutiveMap.first;
       Array2dT<localIndex> const & consitutiveModelArrayIndex = constitutiveMap.second;
 
-      array< array<real64> * > rho = constitutiveManager->GetData< array<real64> >("fluidDensity");
 
       FOR_ELEMS_IN_SUBREGION( activeCellBlock, k )
       {
@@ -616,12 +618,12 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
         ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
         EOS->EquationOfStateDensityUpdate( dP[k], matIndex2, dRho, dRho_dP );
 
-        elem_matrix(0, 0) = 1.0 / fluidBulkModulus[matIndex1][0] * (*rho[matIndex1])[matIndex2] * volume[k] * porosity[k];
+        elem_matrix(0, 0) = 1.0 / fluidBulkModulus[matIndex1] * rho[matIndex1][matIndex2] * volume[k] * porosity[k];
         elem_index(0) = trilinos_index[k];
         matrix->SumIntoGlobalValues(elem_index, elem_matrix);
 
-        elem_rhs(0) = ( (dPorosity[k] + porosity[k]) * (dRho + (*(rho[matIndex1]))[matIndex2]) ) * dVolume[k]
-                      + (dPorosity[k] * (dRho + (*(rho[matIndex1]))[matIndex2]) + porosity[k] * dRho ) * volume[k];
+        elem_rhs(0) = ( (dPorosity[k] + porosity[k]) * (dRho + rho[matIndex1][matIndex2]) ) * dVolume[k]
+                      + (dPorosity[k] * (dRho + rho[matIndex1][matIndex2]) + porosity[k] * dRho ) * volume[k];
         //
         rhs->SumIntoGlobalValues(elem_index, elem_rhs);
       } END_FOR
@@ -637,7 +639,6 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
   constitutiveMap = elemManager->
                     ConstructViewAccessor< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString,
                                                                                                      string() );
-  array< array<real64> * > rho = constitutiveManager->GetData< array<real64> >("fluidDensity");
 
   ElementRegionManager::ElementViewAccessor< real64_array >
   pressure = elemManager->
@@ -651,7 +652,8 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
                                                            string() );
 
 
-  array< real64 * > fluidViscosity = constitutiveManager->GetData< real64 >("fluidViscocity");
+  constitutive::ViewAccessor< real64 >
+  fluidViscosity = constitutiveManager->GetData< real64 >("fluidViscocity");
 
   Epetra_IntSerialDenseVector face_index(2);
   Epetra_SerialDenseVector face_rhs(2);
@@ -675,8 +677,8 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
         localIndex const consitutiveModelArrayIndex1 = constitutiveMap[er1][esr1].get().second[ei1][0];
         localIndex const consitutiveModelArrayIndex2 = constitutiveMap[er2][esr2].get().second[ei2][0];
 
-        real64 const rho1 = (*(rho[consitutiveModelIndex1]))[consitutiveModelArrayIndex1];
-        real64 const rho2 = (*(rho[consitutiveModelIndex2]))[consitutiveModelArrayIndex2];
+        real64 const rho1 = rho[consitutiveModelIndex1][consitutiveModelArrayIndex1];
+        real64 const rho2 = rho[consitutiveModelIndex2][consitutiveModelArrayIndex2];
 
         real64 const face_weight = m_faceToElemLOverA[kf][0] / ( m_faceToElemLOverA[kf][0]
                                                                  + m_faceToElemLOverA[kf][1] );
@@ -698,7 +700,7 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 
         real64 const poreCompress = 0.0;
 
-        real64 const fluidCompressibility = 1.0 / fluidBulkModulus[consitutiveModelIndex1][0];
+        real64 const fluidCompressibility = 1.0 / fluidBulkModulus[consitutiveModelIndex1];
 
         real64 const dRdP1 = dP * face_weight * rho1 * ( fluidCompressibility + poreCompress ) * face_trans / mu * dt;
 

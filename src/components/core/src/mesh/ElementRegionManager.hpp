@@ -46,8 +46,6 @@ class ElementRegionManager : public ObjectManagerBase
 public:
 
   template< typename VIEWTYPE >
-//  using ElementViewAccessor = array< array< typename VIEWTYPE::view_type > > ;
-//  using ElementViewAccessor = array< array< VIEWTYPE * > > ;
   using ElementViewAccessor = array < array< ReferenceWrapper< VIEWTYPE > > > ;
 
   /**
