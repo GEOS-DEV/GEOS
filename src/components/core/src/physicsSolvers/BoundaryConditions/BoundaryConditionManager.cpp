@@ -35,8 +35,6 @@ using namespace constitutive;
 BoundaryConditionManager::BoundaryConditionManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
-  // TODO Auto-generated constructor stub
-
 }
 
 
@@ -94,19 +92,179 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
     BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
     if( bc->initialCondition() )
     {
+      string_array const objectPath = stringutilities::Tokenize( bc->GetObjectPath(), "/");
+      localIndex const targetPathLength = objectPath.size();
+      ManagedGroup * targetGroup = domain;
 
-      if( bc->GetElementRegion().empty() )
+      if( objectPath[0]=="ElementRegion" )
       {
-        string_array objectPath = stringutilities::Tokenize( bc->GetFieldName(), "/");
-        localIndex const pathLength = objectPath.size();
-        ManagedGroup * currentGroup = domain;
-        for( integer a=0 ; a<(pathLength-1) ; ++a )
-        {
-          currentGroup = currentGroup->GetGroup(objectPath[a]);
-        }
-        string const fieldName = objectPath[pathLength-1];
+        ElementRegionManager * const
+        elementRegionManager = domain->group_cast<DomainPartition*>()->
+                               getMeshBody(0)->getMeshLevel(0)->getElemManager();
+        ElementRegion * const elementRegion = elementRegionManager->GetRegion(objectPath[1]);
 
-        dataRepository::ManagedGroup const * setGroup = currentGroup->GetGroup(dataRepository::keys::sets);
+        CellBlockSubRegion * specifiedSubRegion = nullptr;
+        if( objectPath.size() > 2 )
+        {
+          specifiedSubRegion = elementRegion->GetSubRegion(objectPath[2]);
+        }
+
+        if( bc->GetConstitutivePath().empty() )
+        {
+
+          string fieldName = bc->GetFieldName();
+
+          if( objectPath.size()>3 )
+          {
+            GEOS_ASSERT( !( !bc->GetFieldName().empty() && !objectPath[3].empty() ) ,
+                         "fieldName specified in both fieldName entry ("<<bc->GetFieldName()
+                         <<") and objectPath ("<<objectPath[3]<<")");
+
+            GEOS_ASSERT( !( bc->GetFieldName().empty() && objectPath[3].empty() ),
+                         "fieldName not specified in either fieldName entry or objectPath");
+
+            if( !objectPath[3].empty() )
+            {
+              fieldName = objectPath[3];
+            }
+          }
+          else
+          {
+            GEOS_ASSERT( !bc->GetFieldName().empty(),
+                         "fieldName not specified in either fieldName entry or objectPath" );
+          }
+
+          for( auto & subRegionIter : elementRegion->GetSubRegions() )
+          {
+            CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
+
+            if( specifiedSubRegion==nullptr || specifiedSubRegion == subRegion)
+            {
+              targetGroup = subRegion;
+
+              dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup(dataRepository::keys::sets);
+              string_array setNames = bc->GetSetNames();
+              for( auto & setName : setNames )
+              {
+                dataRepository::ViewWrapper<lSet> const * const setWrapper = setGroup->getWrapper<lSet>(setName);
+                if( setWrapper != nullptr )
+                {
+                  lSet const & set = setWrapper->reference();
+                  bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( set, 0.0, targetGroup, fieldName );
+                }
+              }
+            }
+          }
+        } // if( bc->GetConstitutivePath().empty() )
+        else
+        {
+          string_array const constitutivePath = stringutilities::Tokenize( bc->GetConstitutivePath(), "/");
+          ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+
+          typename ManagedGroup::subGroupMap::LookupMapType const & constitutiveIndexLookup = constitutiveManager->GetSubGroups().keys();
+
+          string const materialName = constitutivePath[0];
+          string const paramOrState = constitutivePath[1];
+          targetGroup = constitutiveManager->GetGroup<ConstitutiveBase>(materialName)
+                                           ->GetGroup(paramOrState);
+
+          string fieldName = bc->GetFieldName();
+
+          if( constitutivePath.size()>2 )
+          {
+            GEOS_ASSERT( !( !bc->GetFieldName().empty() && !constitutivePath[2].empty() ) ,
+                         "fieldName specified in both fieldName entry ("<<bc->GetFieldName()
+                         <<") and constitutivePath ("<<constitutivePath[2]<<")");
+
+            GEOS_ASSERT( !( bc->GetFieldName().empty() && constitutivePath[2].empty() ),
+                         "fieldName not specified in either fieldName entry or constitutivePath");
+
+            if( !objectPath[2].empty() )
+            {
+              fieldName = objectPath[2];
+            }
+          }
+          else
+          {
+            GEOS_ASSERT( !bc->GetFieldName().empty(),
+                         "fieldName not specified in either fieldName entry or objectPath" );
+          }
+
+          lSet targetSet;
+
+
+          FiniteElementManager const * numericalMethodManager = domain->getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+          FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+
+
+          auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+          FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
+
+          string_array setNames = bc->GetSetNames();
+
+          for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
+          {
+            CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
+
+            if( specifiedSubRegion==nullptr || specifiedSubRegion == subRegion)
+            {
+              auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+              ManagedGroup const * sets = subRegion->GetGroup(keys::sets);
+
+              for( auto & setName : setNames )
+              {
+                dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+                if( setWrapper != nullptr )
+                {
+                  lSet const & set = setWrapper->reference();
+                  localIndex materialIndex = constitutiveIndexLookup.at(materialName);
+                  for( auto const & k : set )
+                  {
+                    if( constitutiveMap.first(k,0) == materialIndex )
+                    {
+                      for( auto q=0 ; q < feSpace->m_finiteElement->n_quadrature_points() ; ++q )
+                      {
+                        targetSet.insert(constitutiveMap.second(k,q));
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( targetSet, 0.0, targetGroup, fieldName );
+        }
+      } // if( objectPath[0]=="ElementRegion" )
+      else
+      {
+
+        targetGroup = domain->group_cast<DomainPartition*>()->
+                      getMeshBody(0)->getMeshLevel(0)->GetGroup(objectPath[0]);
+
+        string fieldName = bc->GetFieldName();
+
+        if( objectPath.size()>1 )
+        {
+          GEOS_ASSERT( !( !bc->GetFieldName().empty() && !objectPath[1].empty() ) ,
+                       "fieldName specified in both fieldName entry ("<<bc->GetFieldName()
+                       <<") and objectPath ("<<objectPath[1]<<")");
+
+          GEOS_ASSERT( !( bc->GetFieldName().empty() && objectPath[1].empty() ),
+                       "fieldName not specified in either fieldName entry or objectPath");
+
+          if( !objectPath[1].empty() )
+          {
+            fieldName = objectPath[1];
+          }
+        }
+        else
+        {
+          GEOS_ASSERT( !bc->GetFieldName().empty(),
+                       "fieldName not specified in either fieldName entry or objectPath" );
+        }
+
+
+        dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup(dataRepository::keys::sets);
         string_array setNames = bc->GetSetNames();
         for( auto & setName : setNames )
         {
@@ -114,87 +272,11 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
           if( setWrapper != nullptr )
           {
             lSet const & set = setWrapper->reference();
-            bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( set, 0.0, currentGroup, fieldName );
+            bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( set, 0.0, targetGroup, fieldName );
           }
         }
       }
-      else
-      {
-        ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-//        ConstitutiveManager::constitutiveMaps const & constitutiveMaps =
-// constitutiveManager->GetMaps(0);
-        typename ManagedGroup::subGroupMap::LookupMapType const & constitutiveIndexLookup = constitutiveManager->GetSubGroups().keys();
 
-        lSet targetSet;
-
-
-
-        string_array targetPath = stringutilities::Tokenize( bc->GetFieldName(), "/");
-        localIndex const targetPathLength = targetPath.size();
-        ManagedGroup * targetGroup = domain;
-        for( integer a=0 ; a<(targetPathLength-1) ; ++a )
-        {
-          targetGroup = targetGroup->GetGroup(targetPath[a]);
-        }
-        string const materialName = targetPath[targetPathLength-3];
-        string const fieldName = targetPath[targetPathLength-1];
-
-
-        FiniteElementManager const * numericalMethodManager = domain->getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
-        FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
-
-        // Get element Region
-        string const elementRegionName = bc->GetElementRegion();
-        ManagedGroup * ElementRegionManager = ManagedGroup::group_cast<DomainPartition*>(domain)->getMeshBody(0)->getMeshLevel(0)->getElemManager();
-        ManagedGroup * ElementRegions = ElementRegionManager->GetGroup(keys::elementRegions);
-        ElementRegion * elementRegion = ElementRegions->GetGroup<ElementRegion>(elementRegionName);
-        // ManagedGroup * elementSubRegions =
-        // elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
-
-
-
-        auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
-        FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
-
-        string_array setNames = bc->GetSetNames();
-
-        for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
-        {
-          CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
-//        elementRegion->forCellBlocks( [&] ( CellBlockSubRegion * subRegion )
-// -> void
-//        {
-          auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
-          ManagedGroup const * sets = subRegion->GetGroup(keys::sets);
-
-          for( auto & setName : setNames )
-          {
-            dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
-            if( setWrapper != nullptr )
-            {
-              lSet const & set = setWrapper->reference();
-              localIndex materialIndex = constitutiveIndexLookup.at(materialName);
-              for( auto const & k : set )
-              {
-                if( constitutiveMap.first(k,0) == materialIndex )
-                {
-                  for( auto q=0 ; q < feSpace->m_finiteElement->n_quadrature_points() ; ++q )
-                  {
-                    targetSet.insert(constitutiveMap.second(k,q));
-                  }
-                }
-              }
-            }
-          }
-
-        }
-
-        // ManagedGroup const * elementSets =
-        // elementRegion->GetGroup(dataRepository::keys::sets);
-
-
-        bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( targetSet, 0.0, targetGroup, fieldName );
-      }
     }
   }
 }
