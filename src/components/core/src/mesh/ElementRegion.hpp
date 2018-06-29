@@ -93,6 +93,15 @@ public:
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;
 
+  subGroupMap & GetSubRegions()
+  {
+    return GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups();
+  }
+
+  subGroupMap const & GetSubRegions() const
+  {
+    return GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups();
+  }
 
   CellBlockSubRegion const * GetSubRegion( string const & regionName ) const
   {
