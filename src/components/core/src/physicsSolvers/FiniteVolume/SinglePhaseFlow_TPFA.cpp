@@ -683,11 +683,8 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
         real64 const face_weight = m_faceToElemLOverA[kf][0] / ( m_faceToElemLOverA[kf][0]
                                                                  + m_faceToElemLOverA[kf][1] );
 
-        real64 perm = 1.0e-18;
-        real64 const face_trans = 1.0 / ( m_faceToElemLOverA[kf][0] / perm
-                                          + m_faceToElemLOverA[kf][1] / perm );
-//      real64 const face_trans = 1.0 / ( m_faceToElemLOverA[kf][0] / (*(permeability[er1][esr1]))[ei1]
-//                                      + m_faceToElemLOverA[kf][1] / (*(permeability[er2][esr2]))[ei2] );
+      real64 const face_trans = 1.0 / ( m_faceToElemLOverA[kf][0] / permeability[er1][esr1][ei1]
+                                      + m_faceToElemLOverA[kf][1] / permeability[er2][esr2][ei2] );
 
         real64 const rhoav = face_weight * rho1
                              + (1.0 - face_weight) * rho2;
@@ -772,7 +769,7 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
       for( localIndex k=0 ; k<trilinosIndex[er][esr].get().size() ; ++k )
       {
         int const lid = rowMap->LID(integer_conversion<int>(trilinosIndex[er][esr][k]));
-        fieldVar[er][esr][k] = local_solution[lid];
+        fieldVar[er][esr][k] += local_solution[lid];
       }
     }
   }

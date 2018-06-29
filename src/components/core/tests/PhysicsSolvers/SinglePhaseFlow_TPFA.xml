@@ -33,8 +33,8 @@
   <Events>
     <Application name="1"
                  beginTime="0.0" 
-                 endTime="1.0" 
-                 dt="1.0"
+                 endTime="100.0" 
+                 dt="10.0"
                  solvers="SinglePhaseFlow_TPFA" />
   </Events>
 
@@ -82,13 +82,20 @@
   </InitialConditions>
 
   <BoundaryConditions>
-    <!--Dirichlet name="perm"  
+    <Dirichlet name="perm"
                initialCondition="1"  
-               elementRegionName="cb1" 
                setNames="all"
+               objectPath="ElementRegion/Region2/cb1"
                fieldName="permeablity"
                dataType="real64" 
-               scale="1.0e-18"/-->
+               scale="1.0e-16"/>
+
+    <Dirichlet name="porosity"
+               initialCondition="1"  
+               setNames="all"
+               objectPath="ElementRegion/Region2/cb1/porosity"
+               dataType="real64" 
+               scale="0.05"/>
   
     <Dirichlet name="sourceTerm" fieldName="fluidPressure" dataType="Scalar" scale="1000.0" setNames="source"/>
     <Dirichlet name="sinkTerm"   fieldName="fluidPressure" dataType="Scalar" scale="0.0"    setNames="sink"/>

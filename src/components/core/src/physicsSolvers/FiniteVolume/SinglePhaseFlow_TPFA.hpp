@@ -236,7 +236,7 @@ public:
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
     constexpr static auto volumeString = "volume";
     constexpr static auto deltaVolumeString = "deltaVolume";
-    constexpr static auto porosityString = "Porosity";
+    constexpr static auto porosityString = "porosity";
     constexpr static auto deltaPorosityString = "deltaPorosity";
     constexpr static auto permeabilityString = "permeablity";
     constexpr static auto faceAreaString = "faceArea";
@@ -246,6 +246,7 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
+    dataRepository::ViewKey permeability = { permeabilityString };
   } viewKeys;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
