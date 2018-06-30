@@ -267,13 +267,16 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
   // loop through cell block sub-regions
   elemManager->forCellBlocks([&]( CellBlockSubRegion * subRegion ) -> void
     {
-      bcManager->ApplyBoundaryCondition( time,
-                                         subRegion,
-                                         viewKeyStruct::fluidPressureString,
-                                         [&]( BoundaryConditionBase const * const bc,
-                                              lSet const & set ) -> void
+    // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
+    // if the boundary condition should be applied to this subregion
+    bcManager->ApplyBoundaryCondition( time,
+                                       subRegion,
+                                       viewKeyStruct::fluidPressureString,
+                                       [&]( BoundaryConditionBase const * const bc,
+                                           lSet const & set ) -> void
       {
-        bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
+      // call the application of the boundray condition to alter the matrix and rhs
+      bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
                                                             time,
                                                             subRegion,
                                                             viewKeyStruct::fluidPressureString,
@@ -446,18 +449,21 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
 void SinglePhaseFlow_TPFA :: SetupSystem ( DomainPartition * const domain,
                                            EpetraBlockSystem * const blockSystem )
 {
+  // assume that there is only a single MeshLevel for now
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
 
+  // for this solver, the dof are on the cell center, and the row corrosponds to an element
   localIndex numGhostRows  = 0;
   localIndex numLocalRows  = 0;
   localIndex numGlobalRows = 0;
 
+  // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
   elementRegionManager->forCellBlocks( [&]( CellBlockSubRegion * const subRegion )
     {
-      localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
-      numGhostRows += subRegionGhosts;
-      numLocalRows += subRegion->size() - subRegionGhosts;
+    localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
+    numGhostRows += subRegionGhosts;
+    numLocalRows += subRegion->size() - subRegionGhosts;
     });
 
 
@@ -589,71 +595,59 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
   constitutive::ViewAccessor< array<real64> >
   rho = constitutiveManager->GetStateData< array<real64> >("fluidDensity");
 
-  elemManager->forCellBlocks( [&]( CellBlockSubRegion * const activeCellBlock) -> void
-    {
-
-      auto const & constitutiveMap =
-        activeCellBlock->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(activeCellBlock->viewKeys().constitutiveMap);
-
-      view_rtype_const<real64_array> volume = activeCellBlock->getData<real64_array>(viewKeyStruct::volumeString);
-      view_rtype_const<real64_array> porosity = activeCellBlock->getData<real64_array>(viewKeyStruct::porosityString);
-
-      view_rtype_const<real64_array> dP = activeCellBlock->getData<real64_array>(viewKeyStruct::deltaFluidPressureString);
-      view_rtype_const<real64_array> dVolume = activeCellBlock->getData<real64_array>(viewKeyStruct::deltaVolumeString);
-      view_rtype_const<real64_array> dPorosity = activeCellBlock->getData<real64_array>(viewKeyStruct::deltaPorosityString);
-
-      view_rtype_const<localIndex_array> trilinos_index = activeCellBlock->getData<localIndex_array>(viewKeys.trilinosIndex);
-
-      Array2dT<localIndex> const & consitutiveModelIndex      = constitutiveMap.first;
-      Array2dT<localIndex> const & consitutiveModelArrayIndex = constitutiveMap.second;
 
 
-      FOR_ELEMS_IN_SUBREGION( activeCellBlock, k )
-      {
-        localIndex const matIndex1 = consitutiveModelIndex[k][0];
-        localIndex const matIndex2 = consitutiveModelArrayIndex[k][0];
+  auto permeability = elemManager->
+                      ConstructViewAccessor<real64_array>( viewKeyStruct::permeabilityString );
 
-        real64 dRho;
-        real64 dRho_dP;
-        ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
-        EOS->EquationOfStateDensityUpdate( dP[k], matIndex2, dRho, dRho_dP );
+  auto constitutiveMap = elemManager->
+                         ConstructViewAccessor< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString,                                                                                                          string() );
 
-        elem_matrix(0, 0) = 1.0 / fluidBulkModulus[matIndex1] * rho[matIndex1][matIndex2] * volume[k] * porosity[k];
-        elem_index(0) = trilinos_index[k];
-        matrix->SumIntoGlobalValues(elem_index, elem_matrix);
-
-        elem_rhs(0) = ( (dPorosity[k] + porosity[k]) * (dRho + rho[matIndex1][matIndex2]) ) * dVolume[k]
-                      + (dPorosity[k] * (dRho + rho[matIndex1][matIndex2]) + porosity[k] * dRho ) * volume[k];
-        //
-        rhs->SumIntoGlobalValues(elem_index, elem_rhs);
-      } END_FOR
-    });
+  auto pressure = elemManager->
+                  ConstructViewAccessor<real64_array>( viewKeyStruct::fluidPressureString );
 
 
-  ElementRegionManager::ElementViewAccessor< real64_array >
-  permeability = elemManager->
-                 ConstructViewAccessor<real64_array>( viewKeyStruct::permeabilityString,
-                                                      string() );
-
-  ElementRegionManager::ElementViewAccessor< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >
-  constitutiveMap = elemManager->
-                    ConstructViewAccessor< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString,
-                                                                                                     string() );
-
-  ElementRegionManager::ElementViewAccessor< real64_array >
-  pressure = elemManager->
-             ConstructViewAccessor<real64_array>( viewKeyStruct::fluidPressureString,
-                                                  string() );
+  auto trilinosIndex = elemManager->
+                       ConstructViewAccessor<localIndex_array>( viewKeyStruct::trilinosIndexString );
 
 
-  ElementRegionManager::ElementViewAccessor< localIndex_array >
-  trilinosIndex = elemManager->
-                  ConstructViewAccessor<localIndex_array>( viewKeyStruct::trilinosIndexString,
-                                                           string() );
 
+  auto volume = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::volumeString);
+  auto porosity = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::porosityString);
+  auto dP = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
+  auto dVolume = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaVolumeString);
+  auto dPorosity = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaPorosityString);
 
   constitutive::ViewAccessor< real64 >
   fluidViscosity = constitutiveManager->GetStateData< real64 >("fluidViscocity");
+
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const k)->void
+  {
+    localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+    localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
+
+    real64 dRho;
+    real64 dRho_dP;
+    ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
+    EOS->EquationOfStateDensityUpdate( dP[er][esr][k], matIndex2, dRho, dRho_dP );
+
+    elem_matrix(0, 0) = dRho_dP * volume[er][esr][k] * porosity[er][esr][k];
+    elem_index(0) = trilinosIndex[er][esr][k];
+    matrix->SumIntoGlobalValues(elem_index, elem_matrix);
+
+    //
+    elem_rhs(0) = ( (dPorosity[er][esr][k] + porosity[er][esr][k])
+                  * (dRho + rho[matIndex1][matIndex2])
+                  * (volume[er][esr][k] + dVolume[er][esr][k] ) )
+                - porosity[er][esr][k] * rho[matIndex1][matIndex2] * volume[er][esr][k] ;
+
+    //
+    rhs->SumIntoGlobalValues(elem_index, elem_rhs);
+  });
+
+
 
   Epetra_IntSerialDenseVector face_index(2);
   Epetra_SerialDenseVector face_rhs(2);
@@ -689,7 +683,8 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
         real64 const rhoav = face_weight * rho1
                              + (1.0 - face_weight) * rho2;
 
-        real64 const dP = pressure[er1][esr1][ei1] - pressure[er2][esr2][ei2];
+        real64 const deltaP = pressure[er1][esr1][ei1] - pressure[er2][esr2][ei2]
+                            + dP[er1][esr1][ei1] - dP[er2][esr2][ei2];
 //      if (m_applyGravity) dP -= (*gdz)[kf] * rhoav;
 
         real64 const mu = 0.001;//*(fluidViscosity[consitutiveModelIndex1]);
@@ -699,9 +694,9 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 
         real64 const fluidCompressibility = 1.0 / fluidBulkModulus[consitutiveModelIndex1];
 
-        real64 const dRdP1 = dP * face_weight * rho1 * ( fluidCompressibility + poreCompress ) * face_trans / mu * dt;
+        real64 const dRdP1 = deltaP * face_weight * rho1 * ( fluidCompressibility + poreCompress ) * face_trans / mu * dt;
 
-        real64 const dRdP2 = dP * (1.0 - face_weight) * rho2 * ( fluidCompressibility + poreCompress ) * face_trans / mu * dt;
+        real64 const dRdP2 = deltaP * (1.0 - face_weight) * rho2 * ( fluidCompressibility + poreCompress ) * face_trans / mu * dt;
 
         real64 dRgdP1 = 0.0;
         real64 dRgdP2 = 0.0;
@@ -722,8 +717,8 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 
         matrix->SumIntoGlobalValues(face_index, face_matrix);
 
-        face_rhs(0) = rhoTrans * dP;
-        face_rhs(1) = -rhoTrans * dP;
+        face_rhs(0) = rhoTrans * deltaP;
+        face_rhs(1) = -rhoTrans * deltaP;
         rhs->SumIntoGlobalValues(face_index, face_rhs);
       }
     }
@@ -812,9 +807,18 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
 
       for( localIndex k=0 ; k<subRegion->size() ; ++k )
       {
-        elemCenter[regIndex][subRegIndex][k] = subRegion->GetElementCenter( k, *nodeManager, true );
+        arrayView1d<localIndex> nodeList = elemsToNodes[k];
+        array< R1Tensor > Xlocal;
+        Xlocal.resize(nodeList.size());
+        elemCenter[regIndex][subRegIndex][k] = 0.0;
+        for( localIndex a=0 ; a<nodeList.size() ; ++a )
+        {
+          Xlocal[a] = X[ nodeList[a] ];
+          elemCenter[regIndex][subRegIndex][k] += Xlocal[a];
+        }
+        elemCenter[regIndex][subRegIndex][k] /= nodeList.size();
 
-        volume[k] += 1;
+        volume[k] = computationalGeometry::HexVolume( X );
       }
     }
   }
@@ -822,13 +826,6 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
   // loop over faces
   real64_array & faceArea = faceManager->getReference<real64_array>("faceArea");
   array< array<localIndex> > const & faceToNodes = faceManager->nodeList();
-  for (localIndex kf = 0 ; kf < faceManager->size() ; ++kf )
-  {
-    //TODO fix this
-    faceArea[kf] = 1.0;
-
-  }
-
   array<R1Tensor> faceConnectionVector( faceManager->size() );
 
 
@@ -838,10 +835,10 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
   m_faceToElemLOverA.resize( faceManager->size(), 2);
   for(localIndex kf = 0 ; kf < faceManager->size() ; ++kf)
   {
-    computationalGeometry::Centroid_3DPolygon( faceToNodes[kf],
-                                               X,
-                                               fCenter,
-                                               fNormal );
+    faceArea[kf] = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf],
+                                                              X,
+                                                              fCenter,
+                                                              fNormal );
 
     localIndex numElems = 2;
 

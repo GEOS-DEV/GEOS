@@ -250,7 +250,33 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     void * constitutiveModelData\
     ) mutable -> void
 
-  
+
+
+
+template<class POLICY=elemPolicy,typename LAMBDA=void>
+void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> void
+      {
+        lambdaBody(er,esr,index);
+      };
+
+      forall_in_range<POLICY>(0, cellBlockSubRegion->size(), ebody);
+    }
+  }
+}
+
+
 }
 
 
@@ -259,3 +285,6 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
 #endif
 
 #define END_FOR );
+
+
+
