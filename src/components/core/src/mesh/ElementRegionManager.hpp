@@ -172,11 +172,11 @@ public:
 
   template< typename VIEWTYPE >
   ElementViewAccessor<VIEWTYPE> ConstructViewAccessor( string const & name,
-                                                       string const & neighborName );
+                                                       string const & neighborName = string() );
 
   template< typename VIEWTYPE >
   ElementViewAccessor<VIEWTYPE const> ConstructViewAccessor( string const & name,
-                                                             string const & neighborName ) const;
+                                                             string const & neighborName = string() ) const;
 
 
   using ManagedGroup::PackSize;

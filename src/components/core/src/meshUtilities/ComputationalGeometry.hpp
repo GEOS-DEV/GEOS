@@ -48,6 +48,9 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
                          R1Tensor& normal );
 
 
+real64 HexVolume( array<R1Tensor> const & points );
+
+
 }
 } /* namespace geosx */
 
