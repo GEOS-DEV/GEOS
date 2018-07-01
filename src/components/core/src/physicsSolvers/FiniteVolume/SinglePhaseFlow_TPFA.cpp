@@ -50,6 +50,9 @@ SinglePhaseFlow_TPFA::SinglePhaseFlow_TPFA( const std::string& name,
 {
   this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
   m_linearSystem.SetBlockID( EpetraBlockSystem::BlockIDs::fluidPressureBlock, this->getName() );
+
+  this->RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::gravityForceString, &m_gravityForce, 0 );
 }
 
 
@@ -71,6 +74,19 @@ void SinglePhaseFlow_TPFA::FillDocumentationNode(  )
                               "name of field variable",
                               "name of field variable",
                               "Pressure",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeyStruct::gravityFlagString,
+                              viewKeyStruct::gravityFlagString,
+                              -1,
+                              "integer",
+                              "integer",
+                              "name of field variable",
+                              "name of field variable",
+                              "0",
                               "",
                               0,
                               1,
@@ -677,15 +693,18 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
         real64 const face_weight = m_faceToElemLOverA[kf][0] / ( m_faceToElemLOverA[kf][0]
                                                                  + m_faceToElemLOverA[kf][1] );
 
-      real64 const face_trans = 1.0 / ( m_faceToElemLOverA[kf][0] / permeability[er1][esr1][ei1]
-                                      + m_faceToElemLOverA[kf][1] / permeability[er2][esr2][ei2] );
+        real64 const face_trans = 1.0 / ( m_faceToElemLOverA[kf][0] / permeability[er1][esr1][ei1]
+                                        + m_faceToElemLOverA[kf][1] / permeability[er2][esr2][ei2] );
 
         real64 const rhoav = face_weight * rho1
                              + (1.0 - face_weight) * rho2;
 
-        real64 const deltaP = pressure[er1][esr1][ei1] - pressure[er2][esr2][ei2]
+        real64 deltaP = pressure[er1][esr1][ei1] - pressure[er2][esr2][ei2]
                             + dP[er1][esr1][ei1] - dP[er2][esr2][ei2];
-//      if (m_applyGravity) dP -= (*gdz)[kf] * rhoav;
+        if( m_gravityFlag )
+        {
+          deltaP -= m_gravityForce[kf] * rhoav;
+        }
 
         real64 const mu = 0.001;//*(fluidViscosity[consitutiveModelIndex1]);
         real64 const rhoTrans = rhoav * face_trans / mu * dt;
@@ -700,12 +719,13 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 
         real64 dRgdP1 = 0.0;
         real64 dRgdP2 = 0.0;
-//
-//      dRgdP1 = (*gdz)[kf] * face_weight * (*m_densityPtr[reg0])[k0] * ( m_fluidRockProperty.m_compress +
-// (*m_poreCompressPtr[reg0])[k0]);
-//      dRgdP2 = (*gdz)[kf] * ( 1 - face_weight ) * (*m_densityPtr[reg1])[k1] * ( m_fluidRockProperty.m_compress +
-// (*m_poreCompressPtr[reg1])[k1]);
-//
+
+        if( m_gravityFlag )
+        {
+          dRgdP1 = m_gravityForce[kf] * face_weight * rho1 * ( fluidCompressibility + poreCompress );
+          dRgdP2 = m_gravityForce[kf] * ( 1 - face_weight ) * rho2 * ( fluidCompressibility +poreCompress );
+        }
+
         face_matrix(0, 0) = rhoTrans + dRdP1 - rhoTrans * dRgdP1;
         face_matrix(1, 1) = rhoTrans - dRdP2 + rhoTrans * dRgdP2;
 
@@ -775,61 +795,51 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
 {
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-
   NodeManager * const nodeManager = mesh->getNodeManager();
   FaceManager * const faceManager = mesh->getFaceManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  array<R1Tensor> faceCenter(faceManager->size());
-
-//  rArray1d * gdz = faceManager.GetFieldDataPointer<realT>("gdz");
-//  if (m_applyGravity) (*gdz) = 0.0;
+  R1Tensor const & gravityVector = getGravityVector();
 
   Array2dT<localIndex> const & elemRegionList     = faceManager->elementRegionList();
   Array2dT<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
   Array2dT<localIndex> const & elemList           = faceManager->elementList();
   r1_array const & X = nodeManager->referencePosition();
 
-  array< array< array< R1Tensor > > > elemCenter;
+  auto elemCenter = elemManager->ConstructViewAccessor< r1_array >( CellBlock::
+                                                                    viewKeyStruct::
+                                                                    elementCenterString );
+  auto elemsToNodes = elemManager->
+                      ConstructViewAccessor<FixedOneToManyRelation>( CellBlockSubRegion::viewKeyStruct::nodeListString );
+  auto volume       = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::volumeString );
 
-  elemCenter.resize(elemManager->numRegions());
-  for( localIndex regIndex=0 ; regIndex<elemManager->numRegions() ; ++regIndex )
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const k)->void
   {
-    ElementRegion * const elemRegion = elemManager->GetRegion(regIndex);
-    elemCenter[regIndex].resize(elemRegion->numSubRegions());
-    for( localIndex subRegIndex=0 ; subRegIndex<elemRegion->numSubRegions() ; ++subRegIndex )
+    arrayView1d<localIndex> nodeList = elemsToNodes[er][esr][k];
+    array< R1Tensor > Xlocal;
+    Xlocal.resize(nodeList.size());
+    elemCenter[er][esr][k] = 0.0;
+    for( localIndex a=0 ; a<nodeList.size() ; ++a )
     {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegIndex);
-      elemCenter[regIndex][subRegIndex].resize(subRegion->size());
-
-      lArray2d const &elemsToNodes = subRegion->nodeList();
-      real64_array & volume        = subRegion->getReference<real64_array>( viewKeyStruct::volumeString );
-
-      for( localIndex k=0 ; k<subRegion->size() ; ++k )
-      {
-        arrayView1d<localIndex> nodeList = elemsToNodes[k];
-        array< R1Tensor > Xlocal;
-        Xlocal.resize(nodeList.size());
-        elemCenter[regIndex][subRegIndex][k] = 0.0;
-        for( localIndex a=0 ; a<nodeList.size() ; ++a )
-        {
-          Xlocal[a] = X[ nodeList[a] ];
-          elemCenter[regIndex][subRegIndex][k] += Xlocal[a];
-        }
-        elemCenter[regIndex][subRegIndex][k] /= nodeList.size();
-
-        volume[k] = computationalGeometry::HexVolume( X );
-      }
+      Xlocal[a] = X[ nodeList[a] ];
+      elemCenter[er][esr][k] += Xlocal[a];
     }
-  }
+    elemCenter[er][esr][k] /= nodeList.size();
+
+    volume[er][esr][k] = computationalGeometry::HexVolume( X );
+  });
+
 
   // loop over faces
-  real64_array & faceArea = faceManager->getReference<real64_array>("faceArea");
+  r1_array & faceCenter = faceManager->getReference<r1_array>(viewKeyStruct::faceCenterString);
+  real64_array & faceArea = faceManager->getReference<real64_array>(viewKeyStruct::faceAreaString);
   array< array<localIndex> > const & faceToNodes = faceManager->nodeList();
   array<R1Tensor> faceConnectionVector( faceManager->size() );
 
 
-  R1Tensor fCenter, fNormal;
+  R1Tensor fNormal;
   localIndex m, n;
 
   m_faceToElemLOverA.resize( faceManager->size(), 2);
@@ -837,28 +847,30 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
   {
     faceArea[kf] = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf],
                                                               X,
-                                                              fCenter,
+                                                              faceCenter[kf],
                                                               fNormal );
 
-    localIndex numElems = 2;
-
-    for (localIndex k = 0 ; k < numElems ; ++k)
+    constexpr localIndex numElems = 2;
+    for (localIndex ke = 0 ; ke < numElems ; ++ke)
     {
-      if( elemRegionList[kf][k] != -1 )
+      if( elemRegionList[kf][ke] != -1 )
       {
-        R1Tensor la = elemCenter[ elemRegionList[kf][k] ]
-                      [ elemSubRegionList[kf][k] ]
-                      [ elemList[kf][k] ];
-        la -= fCenter;
+        R1Tensor la = elemCenter[ elemRegionList[kf][ke] ]
+                      [ elemSubRegionList[kf][ke] ]
+                      [ elemList[kf][ke] ];
+        la -= faceCenter[kf];
 
-        m_faceToElemLOverA( kf, k) = ( fabs(Dot(la, fNormal)) / faceArea[kf] );
+        m_faceToElemLOverA( kf, ke) = ( fabs(Dot(la, fNormal)) / faceArea[kf] );
 
-        //        if (m_applyGravity)
-        //        {
-        //          R1Tensor dz(la);
-        //          if (ele == 1) dz *= -1.0;
-        //          (*gdz)[index] += Dot(dz, m_gravityVector);
-        //        }
+        if (m_gravityFlag)
+        {
+          R1Tensor dz(la);
+          if (ke == 1)
+          {
+            dz *= -1.0;
+          }
+          m_gravityForce[kf] += Dot(dz, getGravityVector());
+        }
       }
     }
   }

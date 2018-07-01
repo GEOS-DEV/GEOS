@@ -41,8 +41,18 @@ public:
 
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
+  struct viewKeyStruct
+  {
+      constexpr static auto gravityVectorString = "gravityVector";
+  } viewKeys;
+
+  R1Tensor const & gravityVector() const { return m_gravityVector; }
+  R1Tensor       & gravityVector()       { return m_gravityVector; }
+
 private:
   PhysicsSolverManager() = delete;
+
+  R1Tensor m_gravityVector;
 
 };
 

@@ -79,10 +79,10 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
-
   struct viewKeyStruct
   {
     constexpr static auto verboseLevelString = "verboseLevel";
+    constexpr static auto gravityVectorString = "gravityVector";
 
   } viewKeys;
 
@@ -90,10 +90,13 @@ public:
   {
   } groupKeys;
 
-
+  R1Tensor const & getGravityVector() const { return m_gravityVector; }
+  R1Tensor       & getGravityVector()       { return m_gravityVector; }
+  R1Tensor const * globalGravityVector() const;
   integer verboseLevel() const { return m_verboseLevel; }
 private:
   integer m_verboseLevel = 0;
+  R1Tensor m_gravityVector;
 
 };
 
