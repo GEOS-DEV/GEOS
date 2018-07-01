@@ -231,16 +231,18 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto trilinosIndexString = "trilinosIndex_SinglePhaseFlow_TPFA";
-    constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
-    constexpr static auto volumeString = "volume";
-    constexpr static auto deltaVolumeString = "deltaVolume";
-    constexpr static auto porosityString = "porosity";
     constexpr static auto deltaPorosityString = "deltaPorosity";
-    constexpr static auto permeabilityString = "permeablity";
+    constexpr static auto deltaVolumeString = "deltaVolume";
     constexpr static auto faceAreaString = "faceArea";
     constexpr static auto faceCenterString = "faceCenter";
+    constexpr static auto fluidPressureString = "fluidPressure";
+    constexpr static auto gravityFlagString = "gravityFlag";
+    constexpr static auto gravityForceString = "gravityForce";
+    constexpr static auto permeabilityString = "permeablity";
+    constexpr static auto porosityString = "porosity";
+    constexpr static auto trilinosIndexString = "trilinosIndex_SinglePhaseFlow_TPFA";
+    constexpr static auto volumeString = "volume";
 
     dataRepository::ViewKey trilinosIndex = { trilinosIndexString };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
@@ -283,6 +285,11 @@ private:
 
   /// temp array that holds the list of aces that connect two elements.
   localIndex_array m_faceConnectors;
+
+  /// flag to determine whether or not to apply gravity
+  integer m_gravityFlag;
+
+  array< real64 > m_gravityForce;
 
 
 };

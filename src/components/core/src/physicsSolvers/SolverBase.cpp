@@ -26,9 +26,16 @@ using namespace dataRepository;
 SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
   ManagedGroup( name, parent ),
-  m_verboseLevel(0)
+  m_verboseLevel(0),
+  m_gravityVector( R1Tensor(0.0) )
 {
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
+
+  if( this->globalGravityVector() != nullptr )
+  {
+    m_gravityVector=*globalGravityVector();
+  }
 }
 
 SolverBase::~SolverBase()
@@ -110,6 +117,20 @@ void SolverBase::CreateChild( string const & childKey, string const & childName 
     std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
     this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
   }
+}
+
+
+R1Tensor const * SolverBase::globalGravityVector() const
+{
+  R1Tensor const * rval = nullptr;
+  if( getParent()->getName() == "Solvers" )
+  {
+    rval = &(getParent()->
+             group_cast<SolverBase const *>()->
+             getGravityVector());
+  }
+
+  return rval;
 }
 
 
