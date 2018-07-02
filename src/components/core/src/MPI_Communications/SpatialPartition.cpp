@@ -16,6 +16,8 @@
 
 #include "SpatialPartition.hpp"
 
+#include "codingUtilities/Utilities.hpp"
+
 //#include "Common/intrinsic_typedefs.h"
 #include <cmath>
 
@@ -1117,10 +1119,11 @@ void SpatialPartition::AddNeighbors(const unsigned int idim,
     }
     if (!me)
     {
-      m_neighbors.push_back(NeighborCommunication());
+      m_neighbors.push_back(NeighborCommunicator());
       int rank;
       MPI_Cart_rank(cartcomm, ncoords, &rank);
-      m_neighbors.back().Initialize( rank, this->m_rank, this->m_size );
+      m_neighbors.back().SetNeighborRank( rank );
+//      m_neighbors.back().Initialize( rank, this->m_rank, this->m_size );
 
 //      array<int> nbrcoords(nsdof);
 //      for(unsigned int i =0; i < nsdof; ++i) nbrcoords[i] = ncoords[i];
@@ -1159,8 +1162,10 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
   gSet::iterator itNeighbor = neighborList.begin();
   for ( ; itNeighbor != neighborList.end() ; itNeighbor++)
   {
-    m_neighbors.push_back(NeighborCommunication());
-    m_neighbors.back().Initialize( integer_conversion<int>(*itNeighbor), this->m_rank, this->m_size );
+    m_neighbors.push_back(NeighborCommunicator());
+    m_neighbors.back().SetNeighborRank( integer_conversion<int>(*itNeighbor) );
+
+//    m_neighbors.back().Initialize( integer_conversion<int>(*itNeighbor), this->m_rank, this->m_size );
   }
 }
 
