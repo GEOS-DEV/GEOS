@@ -179,15 +179,15 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
             GEOS_ASSERT( !( bc->GetFieldName().empty() && constitutivePath[2].empty() ),
                          "fieldName not specified in either fieldName entry or constitutivePath");
 
-            if( !objectPath[2].empty() )
+            if( !constitutivePath[2].empty() )
             {
-              fieldName = objectPath[2];
+              fieldName = constitutivePath[2];
             }
           }
           else
           {
             GEOS_ASSERT( !bc->GetFieldName().empty(),
-                         "fieldName not specified in either fieldName entry or objectPath" );
+                         "fieldName not specified in either fieldName entry or constitutivePath" );
           }
 
           lSet targetSet;

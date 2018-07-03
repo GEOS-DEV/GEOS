@@ -167,6 +167,9 @@ public:
    * @param numGlobalRows the number of global rows in the problem
    * @param localIndices unused TODO delete
    * @param offset the DOF offset for this solver in the case of a non-block system
+   *
+   * This function sets the number of global rows, and sets the dof numbers for
+   * this solver. dof numbers are referred to trilinosIndices currently.
    */
   void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                      localIndex & numLocalRows,
@@ -210,7 +213,7 @@ public:
   void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                             real64 const scalingFactor,
                             localIndex const dofOffset,
-                            dataRepository::ManagedGroup * const objectManager );
+                            DomainPartition * const domain );
 
   /**
    * @brief This function generates various geometric information for later use.
@@ -231,6 +234,7 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
     constexpr static auto deltaPorosityString = "deltaPorosity";
     constexpr static auto deltaVolumeString = "deltaVolume";
@@ -290,6 +294,8 @@ private:
   integer m_gravityFlag;
 
   array< real64 > m_gravityForce;
+
+  array< array< array<real64> > > m_dRho_dP;
 
 
 };
