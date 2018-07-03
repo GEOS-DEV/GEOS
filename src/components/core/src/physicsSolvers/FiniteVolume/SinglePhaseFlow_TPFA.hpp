@@ -1,13 +1,20 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
-
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistrubute it and/or modify it under
+ * the terms of the GNU Lesser General Public Liscense (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 /**
  * @file SinglePhaseFlow_TPFA.hpp
@@ -287,7 +294,7 @@ private:
   /// the number of degrees of freedom per element. should be removed.
   constexpr static int m_dim = 1;
 
-  /// temp array that holds the list of aces that connect two elements.
+  /// temp array that holds the list of faces that connect two elements.
   localIndex_array m_faceConnectors;
 
   /// flag to determine whether or not to apply gravity

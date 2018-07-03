@@ -1,8 +1,19 @@
 /*
- * HypoElasticLinear.hpp
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
- *  Created on: Aug 4, 2016
- *      Author: rrsettgast
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistrubute it and/or modify it under
+ * the terms of the GNU Lesser General Public Liscense (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
 #ifndef LINEAREOS_HPP_
@@ -85,11 +96,22 @@ public:
 
 private:
 
+  /// scalar bulk modulus parameter
   real64 m_bulkModulus;
+
+  /// reference pressure parameter for EOS relation
   real64 m_referencePressure;
+
+  /// reference density parameter for EOS relation
   real64 m_referenceDensity;
+
+  /// fluid viscosity parameter
   real64 m_fluidViscosity;
+
+  /// fluid pressure state variable
   array<real64> m_fluidPressure;
+
+  /// fluid density state variable
   array<real64> m_fluidDensity;
 };
 

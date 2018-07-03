@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SolverBase.cpp
- *
- *  Created on: Dec 2, 2014
- *      Author: rrsettgast
- */
-
 #include "SolverBase.hpp"
 
 
