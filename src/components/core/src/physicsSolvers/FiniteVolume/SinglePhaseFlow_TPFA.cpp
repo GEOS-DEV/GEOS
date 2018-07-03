@@ -1,13 +1,20 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
-
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistrubute it and/or modify it under
+ * the terms of the GNU Lesser General Public Liscense (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 /**
  * @file SinglePhaseFlow_TPFA.cpp
@@ -281,6 +288,7 @@ void SinglePhaseFlow_TPFA::TimeStep( real64 const& time_n,
                                      const int cycleNumber,
                                      ManagedGroup * domain )
 {
+  // currently the only method is implcit time integration
   this->TimeStepImplicit( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
 }
 
@@ -338,12 +346,11 @@ void SinglePhaseFlow_TPFA::TimeStepImplicitSetup( real64 const& time_n,
   auto
   dRho = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
 
-  //auto dVolume = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaVolumeString);
-  //auto dPorosity = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaPorosityString);
   auto
   constitutiveMap = elemManager->
                     ConstructViewAccessor< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString,                                                                                                          string() );
 
+  //***** loop over all elements and initialize the dRho_dP array *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
                                 localIndex const k)->void
@@ -379,10 +386,12 @@ void SinglePhaseFlow_TPFA::TimeStepImplicitComplete( real64 const & time_n,
   dP = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
 
   auto
-  dFluidDensity = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
+  dFluidDensity =
+  elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
 
 
-  ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * const
+  constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   constitutive::ViewAccessor< array<real64> >
   rho = constitutiveManager->GetStateData< array<real64> >("fluidDensity");
@@ -390,6 +399,7 @@ void SinglePhaseFlow_TPFA::TimeStepImplicitComplete( real64 const & time_n,
   auto constitutiveMap = elemManager->
                          ConstructViewAccessor< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString,                                                                                                          string() );
 
+  //***** Loop over all elements and update the pressure and density *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
                                 localIndex const k)->void
@@ -507,8 +517,7 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
 
   ElementRegionManager::ElementViewAccessor< integer_array >
   ghostRank = elementRegionManager->
-              ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString,
-                                                    string() );
+              ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   int numMpiProcesses;
   MPI_Comm_size( MPI_COMM_WORLD, &numMpiProcesses );
@@ -516,10 +525,10 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
   int thisMpiProcess = 0;
   MPI_Comm_rank( MPI_COMM_WORLD, &thisMpiProcess );
 
-  // communicate the number of local rows to each process
   localIndex numLocalRowsToSend = numLocalRows;
   array<localIndex> gather(numMpiProcesses);
 
+  // communicate the number of local rows to each process
   m_linearSolverWrapper.m_epetraComm.GatherAll( &numLocalRowsToSend,
                                                 &gather.front(),
                                                 1 );
@@ -666,8 +675,7 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
   integer_array elementLocalDofIndex;
   elementLocalDofIndex.resize(2);
 
-  localIndex numFaceConnectors = 0;
-  m_faceConnectors.resize(faceManager->size());
+  //**** loop over all faces. Rill in sparsity for all pairs of DOF/elem that are connected by face
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
   {
     if( ghostRank[elementRegionList[kf][0]][elementSubRegionList[kf][0]][elementIndexList[kf][0]] < 0 )
@@ -680,8 +688,6 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
                                        elementLocalDofIndex.data(),
                                        2,
                                        elementLocalDofIndex.data());
-        m_faceConnectors[numFaceConnectors] = kf;
-        ++numFaceConnectors;
       }
   }
 
@@ -711,9 +717,9 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
   Array2dT<localIndex> const & faceToElemList           = faceManager->elementList();
 
 
-  Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
+  Epetra_FECrsMatrix * const dRdP = blockSystem->GetMatrix( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
                                                               EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const solution = blockSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
 
 
@@ -755,7 +761,7 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
   //***** Loop over all elements and assemble the change in volume/density terms *****
   Epetra_IntSerialDenseVector elemDOF(1);
   Epetra_SerialDenseVector localElemResidual(1);
-  Epetra_SerialDenseMatrix elemLocal_dRdP(1, 1);
+  Epetra_SerialDenseMatrix localElem_dRdP(1, 1);
 
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
@@ -777,20 +783,20 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
                          - porosity_n[er][esr][k] * rho[matIndex1][matIndex2] * volume[er][esr][k] ;
 
 
-    real64 dPorositydP = 0.0; // this shoud be non-zero
+    real64 dPorositydP = 0.0; // this should be non-zero
     real64 dVdP = 0.0; // is this always zero, even in a coupled problem?
 
     // Derivative of residual wrt to pressure in the cell
-    elemLocal_dRdP(0, 0) = ( dPorositydP * (dRho[er][esr][k] + rho[matIndex1][matIndex2])
+    localElem_dRdP(0, 0) = ( dPorositydP * (dRho[er][esr][k] + rho[matIndex1][matIndex2])
                                          * (volume[er][esr][k] + dVolume[er][esr][k] ) )
                          + ( m_dRho_dP[er][esr][k] * (dPorosity[er][esr][k] + porosity_n[er][esr][k])
                                                  * (volume[er][esr][k] + dVolume[er][esr][k] ) )
                          + ( dVdP * (dPorosity[er][esr][k] + porosity_n[er][esr][k])
                                   * (dRho[er][esr][k] + rho[matIndex1][matIndex2]) );
 
-    // add contribution to matrix and rhs
-    rhs->SumIntoGlobalValues(elemDOF, localElemResidual);
-    matrix->SumIntoGlobalValues(elemDOF, elemLocal_dRdP);
+    // add contribution to global residual and dRdP
+    residual->SumIntoGlobalValues(elemDOF, localElemResidual);
+    dRdP->SumIntoGlobalValues(elemDOF, localElem_dRdP);
 
   });
 
@@ -798,13 +804,14 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 
   Epetra_IntSerialDenseVector faceDOF(2);
   Epetra_SerialDenseVector localFaceResidual(2);
-  Epetra_SerialDenseMatrix faceLocal_dRdP(2, 2);
+  Epetra_SerialDenseMatrix localFace_dRdP(2, 2);
 
   //***** Now loop over all faces/connectors to calculate the flux contributions *****
-  for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
+  for( auto const kf : m_faceConnectors )
+  //for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
   {
     // only process non-ghost faces/connectors
-    if( faceGhostRank[kf] < 0 )
+    //if( faceGhostRank[kf] < 0 )
     {
       // get the maps to the element indices
       localIndex er1 = faceToElemRegionList[kf][0];
@@ -815,7 +822,7 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
       localIndex ei2 = faceToElemList[kf][1];
 
       // make sure that the face actually has two elements that it connects.
-      if( er1 >= 0 && er2 >= 0 )
+      //if( er1 >= 0 && er2 >= 0 )
       {
 
         faceDOF[0] = trilinosIndex[er1][esr1][ei1];
@@ -832,15 +839,13 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
         real64 const rho1 = rho[consitutiveModelIndex1][consitutiveModelArrayIndex1];
         real64 const rho2 = rho[consitutiveModelIndex2][consitutiveModelArrayIndex2];
 
+        //***** calculation of flux *****
         real64 const face_weight = m_faceToElemLOverA[kf][0] / ( m_faceToElemLOverA[kf][0]
                                                                + m_faceToElemLOverA[kf][1] );
 
         real64 const face_trans = 1.0 / ( m_faceToElemLOverA[kf][0] / permeability[er1][esr1][ei1]
                                         + m_faceToElemLOverA[kf][1] / permeability[er2][esr2][ei2] );
 
-
-
-        //***** flux terms *****
         real64 const rhoBar = face_weight * rho1 + (1.0 - face_weight) * rho2;
 
         real64 dRhoBardP1 =         face_weight * m_dRho_dP[er1][esr1][ei1];
@@ -873,21 +878,19 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
 
         real64 const dR2dP2 = -dR1dP2;
 
-        faceLocal_dRdP(0, 0) = dR1dP1;
-        faceLocal_dRdP(1, 1) = dR2dP2;
-        faceLocal_dRdP(0, 1) = dR1dP2;
-        faceLocal_dRdP(1, 0) = dR2dP1;
+        localFace_dRdP(0, 0) = dR1dP1;
+        localFace_dRdP(1, 1) = dR2dP2;
+        localFace_dRdP(0, 1) = dR1dP2;
+        localFace_dRdP(1, 0) = dR2dP1;
 
-        matrix->SumIntoGlobalValues(faceDOF, faceLocal_dRdP);
-
-        rhs->SumIntoGlobalValues(faceDOF, localFaceResidual);
+        dRdP->SumIntoGlobalValues(faceDOF, localFace_dRdP);
+        residual->SumIntoGlobalValues(faceDOF, localFaceResidual);
       }
     }
   }
 
-
-  matrix->GlobalAssemble(true);
-  rhs->GlobalAssemble();
+  dRdP->GlobalAssemble(true);
+  residual->GlobalAssemble();
 
   return 0;
 }
@@ -917,39 +920,40 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
   dP = elementRegionManager->
        ConstructViewAccessor<real64_array>( viewKeyStruct::deltaFluidPressureString );
 
-  ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ConstitutiveManager * const constitutiveManager =
+      domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   auto
   constitutiveMap = elementRegionManager->
-                    ConstructViewAccessor< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString,                                                                                                          string() );
+                    ConstructViewAccessor< std::pair< Array2dT<localIndex>,
+                                                      Array2dT<localIndex> > >( CellBlockSubRegion::
+                                                                                viewKeyStruct::
+                                                                                constitutiveMapString );
 
   auto
   dRho = elementRegionManager->
          ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
 
-  int count=0;
-  for( localIndex er=0 ; er<trilinosIndex.size() ; ++er )
+  // loop over all elements to update incremental pressure
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const k)->void
   {
-    for( localIndex esr=0 ; esr<trilinosIndex[er].size() ; ++esr )
-    {
-      for( localIndex k=0 ; k<trilinosIndex[er][esr].get().size() ; ++k )
-      {
+    localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+    localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
 
-        localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
-        localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
+    // extract solution and apply to dP
+    int const lid = rowMap->LID(integer_conversion<int>(trilinosIndex[er][esr][k]));
+    dP[er][esr][k] += local_solution[lid];
 
-        int const lid = rowMap->LID(integer_conversion<int>(trilinosIndex[er][esr][k]));
-        dP[er][esr][k] += local_solution[lid];
+    // update dRho though EOS call
+    ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
+    EOS->EquationOfStateDensityUpdate( dP[er][esr][k],
+                                       matIndex2,
+                                       dRho[er][esr][k],
+                                       m_dRho_dP[er][esr][k] );
 
-        ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
-        EOS->EquationOfStateDensityUpdate( dP[er][esr][k],
-                                           matIndex2,
-                                           dRho[er][esr][k],
-                                           m_dRho_dP[er][esr][k] );
-
-      }
-    }
-  }
+  });
 }
 
 
@@ -975,6 +979,12 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
                       ConstructViewAccessor<FixedOneToManyRelation>( CellBlockSubRegion::viewKeyStruct::nodeListString );
   auto volume       = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::volumeString );
 
+  integer_array const &
+  faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
+                                                           viewKeyStruct::
+                                                           ghostRankString);
+
+  // Loop over all the elements and calculate element centers, and element volumes
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
                                 localIndex const k)->void
@@ -994,7 +1004,6 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
   });
 
 
-  // loop over faces
   r1_array & faceCenter = faceManager->getReference<r1_array>(viewKeyStruct::faceCenterString);
   real64_array & faceArea = faceManager->getReference<real64_array>(viewKeyStruct::faceAreaString);
   array< array<localIndex> > const & faceToNodes = faceManager->nodeList();
@@ -1002,12 +1011,14 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
 
 
   R1Tensor fNormal;
-  localIndex m, n;
 
   m_gravityForce.resize(faceManager->size());
   m_gravityForce = 0.0;
-
   m_faceToElemLOverA.resize( faceManager->size(), 2);
+
+  // loop over faces and calculate faceArea, faceNormal and faceCenter
+  localIndex numFaceConnectors = 0;
+  m_faceConnectors.resize(faceManager->size());
   for(localIndex kf = 0 ; kf < faceManager->size() ; ++kf)
   {
     faceArea[kf] = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf],
@@ -1021,8 +1032,8 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
       if( elemRegionList[kf][ke] != -1 )
       {
         R1Tensor la = elemCenter[ elemRegionList[kf][ke] ]
-                      [ elemSubRegionList[kf][ke] ]
-                      [ elemList[kf][ke] ];
+                                [ elemSubRegionList[kf][ke] ]
+                                [ elemList[kf][ke] ];
         la -= faceCenter[kf];
 
         m_faceToElemLOverA( kf, ke) = ( fabs(Dot(la, fNormal)) / faceArea[kf] );
@@ -1038,7 +1049,13 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
         }
       }
     }
+    if( faceGhostRank[kf]<0 && elemRegionList[kf][0] != -1 && elemRegionList[kf][1] != -1)
+    {
+      m_faceConnectors[numFaceConnectors] = kf;
+      ++numFaceConnectors;
+    }
   }
+  m_faceConnectors.resize(numFaceConnectors);
 
   // temporary storage for m_dRho_dP on each element
   m_dRho_dP.resize(elemManager->numRegions());

@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ConstitutiveBase.hpp
- *
- *  Created on: Jul 28, 2016
- *      Author: rrsettgast
+/**
+ * @file ConstitutiveBase.hpp
  */
 
 #ifndef CONSTITUTIVEBASE_HPP_

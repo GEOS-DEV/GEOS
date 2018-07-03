@@ -35,7 +35,7 @@
   <Events>
     <Application name="1"
                  beginTime="0.0" 
-                 endTime="2000.0" 
+                 endTime="5000.0" 
                  dt="10.0"
                  solvers="SinglePhaseFlow_TPFA" />
   </Events>
@@ -91,7 +91,7 @@
                objectPath="ElementRegion/Region2/cb1"
                fieldName="permeablity"
                dataType="real64" 
-               scale="1.0e-16"/>
+               scale="2.0e-16"/>
 
     <Dirichlet name="porosity"
                initialCondition="1"  

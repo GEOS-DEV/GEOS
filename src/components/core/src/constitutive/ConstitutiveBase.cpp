@@ -15,13 +15,11 @@
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-
-/*
- * ConstitutiveBase.cpp
- *
- *  Created on: Jul 28, 2016
- *      Author: rrsettgast
+/**
+ * @file ConstitutiveBase.cpp
  */
+
+
 
 #include "ConstitutiveBase.hpp"
 
