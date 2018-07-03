@@ -98,6 +98,20 @@ void LinearEOS::FillDocumentationNode()
                                        1,
                                        0 );
 
+  parameterDocNode->AllocateChildNode( viewKeys.fluidViscosity.Key(),
+                                       viewKeys.fluidViscosity.Key(),
+                                       -1,
+                                       "real64",
+                                       "real64",
+                                       "fluidViscosity",
+                                       "fluidViscosity",
+                                       "0.001",
+                                       "",
+                                       1,
+                                       1,
+                                       0 );
+
+
   ManagedGroup * stateData     = this->GetGroup( groupKeys().StateData.Key() );
   DocumentationNode * const stateDocNode = stateData->getDocumentationNode();
   stateDocNode->setSchemaType("Node");
@@ -242,11 +256,14 @@ R2SymTensor LinearEOS::StateUpdatePoint( R2SymTensor const & D,
 
 void LinearEOS::EquationOfStatePressureUpdate( real64 const & dRho,
                                                localIndex const i,
-                                               real64 & P,
+                                               real64 & dP,
                                                real64 & dPdRho )
 {
-  m_fluidDensity[i] += dRho;
-//  m_fluidPressure[i] =
+  dP = m_bulkModulus * log( ( m_fluidDensity[i] + dRho ) / m_fluidDensity[i] );
+//  m_fluidDensity[i] += dRho;
+//  m_fluidPressure[i] = m_bulkModulus * log( m_fluidDensity[i] / m_referenceDensity );
+  dPdRho = m_bulkModulus / m_fluidDensity[i];
+
 }
 
 void LinearEOS::EquationOfStateDensityUpdate( real64 const & dP,
@@ -254,13 +271,13 @@ void LinearEOS::EquationOfStateDensityUpdate( real64 const & dP,
                                               real64 & dRho,
                                               real64 & dRho_dP )
 {
-  m_fluidPressure[i] += dP;
 
   //dRho = m_fluidDensity[i] * ( exp(dP / m_bulkModulus) - 1) ;
   // use taylor expansion to avoid loss of precision
   dRho = m_fluidDensity[i] * ( dP / m_bulkModulus) ;//* ( 1 + 0.5 * dP / m_bulkModulus );
 
-  m_fluidDensity[i] = m_referenceDensity * exp( ( m_fluidPressure[i] - m_referencePressure ) / m_bulkModulus );
+//  m_fluidPressure[i] += dP;
+//  m_fluidDensity[i] = m_referenceDensity * exp( ( m_fluidPressure[i] - m_referencePressure ) / m_bulkModulus );
   dRho_dP = m_fluidDensity[i] / m_bulkModulus;
 }
 

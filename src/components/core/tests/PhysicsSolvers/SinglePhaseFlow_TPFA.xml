@@ -35,7 +35,7 @@
   <Events>
     <Application name="1"
                  beginTime="0.0" 
-                 endTime="1000.0" 
+                 endTime="2000.0" 
                  dt="10.0"
                  solvers="SinglePhaseFlow_TPFA" />
   </Events>
@@ -74,7 +74,8 @@
       <LinearEOS name="water">
         <ParameterData referenceDensity="1000"
                        BulkModulus="2.0e9"
-                       referencePressure="0.0"/>
+                       referencePressure="0.0"
+                       fluidViscosity="0.001"/>
       </LinearEOS>
   </Constitutive>
 
@@ -98,6 +99,14 @@
                objectPath="ElementRegion/Region2/cb1/porosity"
                dataType="real64" 
                scale="0.05"/>
+
+    <Dirichlet name="fluidDensity"
+               initialCondition="1"  
+               setNames="all"
+               objectPath="ElementRegion/Region2/cb1"
+               constitutivePath="water/StateData/fluidDensity"
+               dataType="real64" 
+               scale="1000.0"/>
   
     <Dirichlet name="sourceTerm" fieldName="fluidPressure" dataType="Scalar" scale="1000.0" setNames="source"/>
     <Dirichlet name="sinkTerm"   fieldName="fluidPressure" dataType="Scalar" scale="0.0"    setNames="sink"/>
