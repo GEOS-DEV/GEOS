@@ -934,7 +934,7 @@ public:
   }
 
   template< typename TLHS >
-  inline static TLHS value( TLHS & lhs, integer const )
+  inline static TLHS value( TLHS const & lhs, integer const )
   {
     return lhs;
   }
