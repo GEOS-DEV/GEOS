@@ -378,9 +378,9 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     const std::string meshName("volume_mesh");
     //set the nodal coordinate data structure
     realT* coords[3];
-    dvector xcoords(numNodes);
-    dvector ycoords(numNodes);
-    dvector zcoords(numNodes);
+    array<real64> xcoords(numNodes);
+    array<real64> ycoords(numNodes);
+    array<real64> zcoords(numNodes);
     for (localIndex a = 0 ; a < numNodes ; ++a)
     {
       R1Tensor nodePosition;
@@ -404,9 +404,9 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     array<localIndex*> meshConnectivity(numElementRegions);
     array<int*> isGhostElement(numElementRegions);
     array<globalIndex*> globalElementNumbers(numElementRegions);
-    ivector shapecnt(numElementRegions);
-    ivector shapetype(numElementRegions);
-    ivector shapesize(numElementRegions);
+    array<integer> shapecnt(numElementRegions);
+    array<integer> shapetype(numElementRegions);
+    array<integer> shapesize(numElementRegions);
 
     array<FixedOneToManyRelation> elementToNodeMap;
     elementToNodeMap.resize( numElementRegions );

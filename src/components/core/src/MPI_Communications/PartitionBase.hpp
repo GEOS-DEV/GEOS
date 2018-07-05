@@ -27,7 +27,7 @@
 
 #include "common/DataTypes.hpp"
 #include <mpi.h>
-#include "NeighborCommunication.hpp"
+#include "NeighborCommunicator.hpp"
 
 
 class oBinStream;
@@ -74,27 +74,27 @@ public:
 
 //  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ) = 0;
 
-  virtual void AssignGlobalIndices( DomainPartition * domain );
+  //virtual void AssignGlobalIndices( DomainPartition * domain );
 
-  virtual void FindMatchedBoundaryIndices( string const & key,
-                                           const ObjectManagerBase& object );
+//  virtual void FindMatchedBoundaryIndices( string const & key,
+//                                           const ObjectManagerBase& object );
 
 
-  virtual void SetUpNeighborLists( DomainPartition * domain,
-                                   const bool contactActive );
+//  virtual void SetUpNeighborLists( DomainPartition * domain,
+//                                   const bool contactActive );
 
   void SetRankOfNeighborNeighbors();
 
 //  virtual void ResetNeighborLists( PhysicalDomainT& domain,
 //                                   const int elementGhostingDepth );
 
-  virtual void ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects );
+//  virtual void ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects );
 
   template< typename T >
   void SendReceive( const array<array<T> >& sendArray, array<array<T> >& recvArray );
 
-  void SynchronizeFields( const std::map<std::string, array<string> >& fieldNames,
-                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
+//  void SynchronizeFields( const std::map<std::string, array<string> >& fieldNames,
+//                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
   void SetOwnedByRank( const std::map< std::string, globalIndex_array>& localBoundaryGlobalIndices,
                        std::map<std::string, std::map< globalIndex, int > >& boundaryOwnership);
@@ -104,11 +104,11 @@ public:
   localIndex_array GetFaceSendIndices();
 
   virtual void SetContactGhostRange( const double bufferSize ) = 0;
-
-  void SetBufferSizes( const std::map<string, array<string> >& fieldNames,
-                       const CommRegistry::commID commID  );
-
-  int NumberOfNeighbors( ) {return integer_conversion<int>(m_neighbors.size());}
+//
+//  void SetBufferSizes( const std::map<string, array<string> >& fieldNames,
+//                       const CommRegistry::commID commID  );
+//
+//  int NumberOfNeighbors( ) {return integer_conversion<int>(m_neighbors.size());}
 
   int m_size;
   int m_sizeMetis;
@@ -128,8 +128,8 @@ public:
 protected:
   PartitionBase();
   PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton );
-
-  array<NeighborCommunication> m_neighbors;
+//
+  array<NeighborCommunicator> m_neighbors;
 
   array<MPI_Request> m_mpiRequest;
   array<MPI_Status> m_mpiStatus;
@@ -158,7 +158,7 @@ public:
   int m_ghostDepth;
 
 private:
-  virtual void AssignGlobalIndices( ObjectDataStructureBaseT& object, const ObjectDataStructureBaseT& compositionObject );
+//  virtual void AssignGlobalIndices( ObjectDataStructureBaseT& object, const ObjectDataStructureBaseT& compositionObject );
 
   void CommunicateRequiredObjectIndices();
 
