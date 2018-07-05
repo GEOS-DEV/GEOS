@@ -61,7 +61,7 @@ void SystemSolverParameters::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->setName("SystemSolverParamters");
+  docNode->setName("SystemSolverParameters");
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Parameters for linear/non-linear system solver");
 
@@ -119,21 +119,6 @@ void SystemSolverParameters::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys.useNewtonSolve.Key(),
-                              viewKeys.useNewtonSolve.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "verbosity level",
-                              "verbosity level",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-
   docNode->AllocateChildNode( viewKeys.ilut_drop.Key(),
                               viewKeys.ilut_drop.Key(),
                               -1,
@@ -159,6 +144,47 @@ void SystemSolverParameters::FillDocumentationNode()
                               0,
                               1,
                               0 );
+
+
+  docNode->AllocateChildNode( viewKeys.useNewtonSolve.Key(),
+                              viewKeys.useNewtonSolve.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "verbosity level",
+                              "verbosity level",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.newtonTol.Key(),
+                              viewKeys.newtonTol.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "verbosity level",
+                              "verbosity level",
+                              "1.0e-6",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeys.maxIterNewton.Key(),
+                              viewKeys.maxIterNewton.Key(),
+                              -1,
+                              "integer",
+                              "integer",
+                              "verbosity level",
+                              "verbosity level",
+                              "5",
+                              "",
+                              0,
+                              1,
+                              0 );
+
 //  real64 m_krylovTol;          // Solver convergence criteria
 //  integer  m_numKrylovIter;
 //  integer  m_kspace;             // Number of krylov vectors before GMRES

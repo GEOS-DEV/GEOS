@@ -24,8 +24,8 @@
 #define SINGLE_PHASE_FLOW_TPFA_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "systemSolverInterface/LinearSolverWrapper.hpp"
 
+class Epetra_FECrsGraph;
 
 namespace geosx
 {
@@ -116,17 +116,6 @@ public:
                             integer const cycleNumber,
                             DomainPartition& domain );
 
-  /**
-   * @brief function to perform implicit time integration
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param cycleNumber the current cycle number of the simulation
-   * @param domain the domain partition
-   */
-  real64 TimeStepImplicit( real64 const & time_n,
-                           real64 const & dt,
-                           integer const cycleNumber,
-                           DomainPartition * const domain );
 
   /**
    * @brief function to perform setup for implicit timestep
@@ -134,9 +123,9 @@ public:
    * @param dt the desired timestep
    * @param domain the domain partition
    */
-  void TimeStepImplicitSetup( real64 const& time_n,
+  void ImplicitStepSetup( real64 const& time_n,
                               real64 const& dt,
-                              DomainPartition * const domain );
+                              DomainPartition * const domain ) override;
 
   /**
    * @brief function to perform cleanup for implicit timestep
@@ -144,9 +133,9 @@ public:
    * @param dt the desired timestep
    * @param domain the domain partition
    */
-  void TimeStepImplicitComplete( real64 const & time,
+  void ImplicitStepComplete( real64 const & time,
                                  real64 const & dt,
-                                 DomainPartition * const domain );
+                                 DomainPartition * const domain ) override;
 
   /**
    * @brief This function sets the local and global rows, and calls functions to build linear system
@@ -184,18 +173,11 @@ public:
                                      localIndex_array& localIndices,
                                      localIndex offset );
 
-  /**
-   * @brief function to assemble the linear system matrix and rhs
-   * @param domain the domain partition
-   * @param blockSystem the entire block system
-   * @param time the time at the beginning of the step
-   * @param dt the desired timestep
-   * @return
-   */
+
   real64 Assemble ( DomainPartition * const domain,
                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
                     real64 const time,
-                    real64 const dt );
+                    real64 const dt ) override;
 
 
   /**
@@ -220,7 +202,7 @@ public:
   void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                             real64 const scalingFactor,
                             localIndex const dofOffset,
-                            DomainPartition * const domain );
+                            DomainPartition * const domain ) override;
 
   /**
    * @brief This function generates various geometric information for later use.
@@ -264,24 +246,9 @@ public:
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
-    dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
   } groupKeys;
 
 
-  /// This is a wrapper for the linear solver package
-  systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
-
-  /// this is a block structured linear system object used to hold the system
-  systemSolverInterface::EpetraBlockSystem m_linearSystem;
-
-  /**
-   * accessor for the system solver parameters.
-   * @return
-   */
-  SystemSolverParameters * getSystemSolverParameters()
-  {
-    return this->GetGroup<SystemSolverParameters>(groupKeys.systemSolverParameters);
-  }
 
 private:
   /// the currently selected time integration option
