@@ -135,10 +135,4 @@ R1Tensor const * SolverBase::globalGravityVector() const
 }
 
 
-//void SolverBase::Initialize( dataRepository::ManagedGroup& /*domain*/ )
-//{
-//  *(this->getData<real64>(keys::courant)) =
-// std::numeric_limits<real64>::max();
-//}
-
 } /* namespace ANST */
