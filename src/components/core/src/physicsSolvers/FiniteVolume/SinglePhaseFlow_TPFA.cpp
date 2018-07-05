@@ -659,38 +659,48 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
   ElementRegionManager::ElementViewAccessor<localIndex_array const>
   trilinosIndex = elementRegionManager->
-                  ConstructViewAccessor<localIndex_array>( viewKeys.trilinosIndex.Key(),
-                                                           string() );
+                  ConstructViewAccessor<localIndex_array>( viewKeys.trilinosIndex.Key() );
 
   ElementRegionManager::ElementViewAccessor< integer_array const >
-  ghostRank = elementRegionManager->
-              ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString,
-                                                    string() );
+  elemGhostRank = elementRegionManager->
+              ConstructViewAccessor<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
 
   FaceManager const * const faceManager = meshLevel->getFaceManager();
   Array2dT<localIndex> const & elementRegionList = faceManager->elementRegionList();
   Array2dT<localIndex> const & elementSubRegionList = faceManager->elementSubRegionList();
   Array2dT<localIndex> const & elementIndexList = faceManager->elementList();
+  integer_array const & faceGhostRank = faceManager->GhostRank();
   integer_array elementLocalDofIndex;
   elementLocalDofIndex.resize(2);
 
-  //**** loop over all faces. Rill in sparsity for all pairs of DOF/elem that are connected by face
-  for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
+  //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
+  for( auto const kf : m_faceConnectors )
   {
-    if( ghostRank[elementRegionList[kf][0]][elementSubRegionList[kf][0]][elementIndexList[kf][0]] < 0 )
-      if( elementRegionList[kf][0] >= 0 && elementRegionList[kf][1] >= 0 )
-      {
-        elementLocalDofIndex[0] = trilinosIndex[elementRegionList[kf][0]][elementSubRegionList[kf][0]][elementIndexList[kf][0]];
-        elementLocalDofIndex[1] = trilinosIndex[elementRegionList[kf][1]][elementSubRegionList[kf][1]][elementIndexList[kf][1]];
+    elementLocalDofIndex[0] = trilinosIndex[elementRegionList[kf][0]][elementSubRegionList[kf][0]][elementIndexList[kf][0]];
+    elementLocalDofIndex[1] = trilinosIndex[elementRegionList[kf][1]][elementSubRegionList[kf][1]][elementIndexList[kf][1]];
 
-        sparsity->InsertGlobalIndices( 2,
-                                       elementLocalDofIndex.data(),
-                                       2,
-                                       elementLocalDofIndex.data());
-      }
+    sparsity->InsertGlobalIndices( 2,
+                                   elementLocalDofIndex.data(),
+                                   2,
+                                   elementLocalDofIndex.data());
   }
 
+  // loop over all elements and add all locals just in case the above connector loop missed some
+  forAllElemsInMesh( meshLevel, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const k)->void
+  {
+    if( elemGhostRank[er][esr][k] < 0 )
+    {
+      elementLocalDofIndex[0] = trilinosIndex[er][esr][k];
+
+      sparsity->InsertGlobalIndices( 1,
+                                     elementLocalDofIndex.data(),
+                                     1,
+                                     elementLocalDofIndex.data());
+    }
+  });
 
 }
 
@@ -746,6 +756,11 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
   auto
   dRho = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
 
+  auto
+  elemGhostRank = elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::
+                                                                     viewKeyStruct::
+                                                                     ghostRankString );
+
 
   auto volume = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::volumeString);
   auto porosity_n = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::porosityString);
@@ -767,37 +782,42 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
                                 localIndex const esr,
                                 localIndex const k)->void
   {
-    // matIndex1 is the index of the material contained in the element
-    localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+    if( elemGhostRank[er][esr][k]<0 )
+    {
+      // matIndex1 is the index of the material contained in the element
+      localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
 
-    // matIndex2 is the index of the point within material specified in matIndex1
-    localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
+      // matIndex2 is the index of the point within material specified in matIndex1
+      localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
 
-    elemDOF(0) = trilinosIndex[er][esr][k];
+      elemDOF(0) = trilinosIndex[er][esr][k];
 
+      // under the assumption that pore volume change = volume change
+      dPorosity[er][esr][k] = ( dVolume[er][esr][k] * ( 1.0 - porosity_n[er][esr][k]) )
+                              /( volume[er][esr][k] + dVolume[er][esr][k] );
 
-    // Residual contribution is mass conservation in the cell
-    localElemResidual(0) = ( (dPorosity[er][esr][k] + porosity_n[er][esr][k])
-                           * (dRho[er][esr][k] + rho[matIndex1][matIndex2])
-                           * (volume[er][esr][k] + dVolume[er][esr][k] ) )
-                         - porosity_n[er][esr][k] * rho[matIndex1][matIndex2] * volume[er][esr][k] ;
+      // Residual contribution is mass conservation in the cell
+      localElemResidual(0) = ( (dPorosity[er][esr][k] + porosity_n[er][esr][k])
+                             * (dRho[er][esr][k] + rho[matIndex1][matIndex2])
+                             * (volume[er][esr][k] + dVolume[er][esr][k] ) )
+                           - porosity_n[er][esr][k] * rho[matIndex1][matIndex2] * volume[er][esr][k] ;
 
+      real64 dVdP = 0.0; // is this always zero, even in a coupled problem?
+      real64 dPorositydP =  Vtn * ( 1.0 - porosity_n[er][esr][k] )
+                                  / ( ( volume[er][esr][k] + dVolume[er][esr][k] )
+                                    * ( volume[er][esr][k] + dVolume[er][esr][k] ) );
+      // Derivative of residual wrt to pressure in the cell
+      localElem_dRdP(0, 0) = ( dPorositydP * (dRho[er][esr][k] + rho[matIndex1][matIndex2])
+                                           * (volume[er][esr][k] + dVolume[er][esr][k] ) )
+                           + ( m_dRho_dP[er][esr][k] * (dPorosity[er][esr][k] + porosity_n[er][esr][k])
+                                                   * (volume[er][esr][k] + dVolume[er][esr][k] ) )
+                           + ( dVdP * (dPorosity[er][esr][k] + porosity_n[er][esr][k])
+                                    * (dRho[er][esr][k] + rho[matIndex1][matIndex2]) );
 
-    real64 dPorositydP = 0.0; // this should be non-zero
-    real64 dVdP = 0.0; // is this always zero, even in a coupled problem?
-
-    // Derivative of residual wrt to pressure in the cell
-    localElem_dRdP(0, 0) = ( dPorositydP * (dRho[er][esr][k] + rho[matIndex1][matIndex2])
-                                         * (volume[er][esr][k] + dVolume[er][esr][k] ) )
-                         + ( m_dRho_dP[er][esr][k] * (dPorosity[er][esr][k] + porosity_n[er][esr][k])
-                                                 * (volume[er][esr][k] + dVolume[er][esr][k] ) )
-                         + ( dVdP * (dPorosity[er][esr][k] + porosity_n[er][esr][k])
-                                  * (dRho[er][esr][k] + rho[matIndex1][matIndex2]) );
-
-    // add contribution to global residual and dRdP
-    residual->SumIntoGlobalValues(elemDOF, localElemResidual);
-    dRdP->SumIntoGlobalValues(elemDOF, localElem_dRdP);
-
+      // add contribution to global residual and dRdP
+      residual->SumIntoGlobalValues(elemDOF, localElemResidual);
+      dRdP->SumIntoGlobalValues(elemDOF, localElem_dRdP);
+    }
   });
 
 
@@ -1000,7 +1020,7 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
     }
     elemCenter[er][esr][k] /= nodeList.size();
 
-    volume[er][esr][k] = computationalGeometry::HexVolume( X );
+    volume[er][esr][k] = computationalGeometry::HexVolume( Xlocal );
   });
 
 
