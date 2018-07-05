@@ -549,7 +549,7 @@ void SiloFile::WriteMeshObject(const std::string& meshName,
 
     DBClearOptlist(optlist);
 
-    ivector nodelist(lnodelist);
+    array<integer> nodelist(lnodelist);
     globalIndex_array globalZoneNumber(lnodelist);
 
     int count = 0;
@@ -683,7 +683,7 @@ void SiloFile::WritePolygonMeshObject(const std::string& meshName,
 
     DBClearOptlist(optlist);
 
-    ivector nodelist(lnodelist);
+    array<integer> nodelist(lnodelist);
     globalIndex_array globalZoneNumber(lnodelist);
 
     int elemCount = 0;
@@ -1212,65 +1212,65 @@ void SiloFile::TestPolyhedralCells()
 //  DBClose(dbfile);
 }
 
-void SiloFile::XFEMMesh( dvector xcoords,
-                         dvector ycoords,
-                         dvector zcoords,
-                         std::vector<int> nodelist,
-                         int lnodelist,
-                         std::vector<int> shapesize,
-                         std::vector<int> shapecounts,
-                         std::vector<int> shapetype,
-                         int nshapetypes,
-                         int nnodes,
-                         int nzones,
-                         int ndims,
-                         const int cycleNumber,
-                         const realT problemTime)
-{
-
-  DBoptlist* optlist = DBMakeOptlist(4);
-  DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-  DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
-
-  realT* coords[3];
-
-  coords[0] = xcoords.data();
-  coords[1] = ycoords.data();
-  coords[2] = zcoords.data();
-
-//  DBfile *dbfile = nullptr;
-/* Open the Silo file */
-//  dbfile = DBCreate("basic2.silo", DB_CLOBBER, DB_LOCAL, "Comment about the
-// data", DB_HDF5);
-
-  /* Write an unstructured mesh. */
-  DBPutUcdmesh(m_dbFilePtr, "xfem_mesh", 3, nullptr, (float**)coords, nnodes, nzones,
-               "xfem_mesh_zonelist", nullptr, DB_DOUBLE, optlist);
-
-//  /* Write out connectivity information. */
-//  DBPutZonelist(m_dbFilePtr, "xfem_zonelist", nzones, ndims, &nodelist[0],
-// lnodelist,
-//                1, &shapesize[0], &shapecounts[0], nshapetypes);
-
-  // Write out connectivity information.
-  DBPutZonelist2(m_dbFilePtr, "xfem_mesh_zonelist", nzones, 3, lnodelist > 0 ? &nodelist[0] : nullptr,
-                 lnodelist, 0, 0, 0, &shapetype[0], &shapesize[0], &shapecounts[0], nshapetypes, optlist);
-
-  DBClearOptlist(optlist);
-
-  const int rank = 0;
-  if (rank == 0)
-  {
-    DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-    DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
-
-    WriteMultiXXXX(DB_UCDMESH, DBPutMultimesh, 0, "xfem_mesh", cycleNumber, "/", optlist);
-  }
-
-  DBFreeOptlist(optlist);
-  /* Close the Silo file. */
-//  DBClose(dbfile);
-}
+//void SiloFile::XFEMMesh( dvector xcoords,
+//                         dvector ycoords,
+//                         dvector zcoords,
+//                         std::vector<int> nodelist,
+//                         int lnodelist,
+//                         std::vector<int> shapesize,
+//                         std::vector<int> shapecounts,
+//                         std::vector<int> shapetype,
+//                         int nshapetypes,
+//                         int nnodes,
+//                         int nzones,
+//                         int ndims,
+//                         const int cycleNumber,
+//                         const realT problemTime)
+//{
+//
+//  DBoptlist* optlist = DBMakeOptlist(4);
+//  DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
+//  DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
+//
+//  realT* coords[3];
+//
+//  coords[0] = xcoords.data();
+//  coords[1] = ycoords.data();
+//  coords[2] = zcoords.data();
+//
+////  DBfile *dbfile = nullptr;
+///* Open the Silo file */
+////  dbfile = DBCreate("basic2.silo", DB_CLOBBER, DB_LOCAL, "Comment about the
+//// data", DB_HDF5);
+//
+//  /* Write an unstructured mesh. */
+//  DBPutUcdmesh(m_dbFilePtr, "xfem_mesh", 3, nullptr, (float**)coords, nnodes, nzones,
+//               "xfem_mesh_zonelist", nullptr, DB_DOUBLE, optlist);
+//
+////  /* Write out connectivity information. */
+////  DBPutZonelist(m_dbFilePtr, "xfem_zonelist", nzones, ndims, &nodelist[0],
+//// lnodelist,
+////                1, &shapesize[0], &shapecounts[0], nshapetypes);
+//
+//  // Write out connectivity information.
+//  DBPutZonelist2(m_dbFilePtr, "xfem_mesh_zonelist", nzones, 3, lnodelist > 0 ? &nodelist[0] : nullptr,
+//                 lnodelist, 0, 0, 0, &shapetype[0], &shapesize[0], &shapecounts[0], nshapetypes, optlist);
+//
+//  DBClearOptlist(optlist);
+//
+//  const int rank = 0;
+//  if (rank == 0)
+//  {
+//    DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
+//    DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
+//
+//    WriteMultiXXXX(DB_UCDMESH, DBPutMultimesh, 0, "xfem_mesh", cycleNumber, "/", optlist);
+//  }
+//
+//  DBFreeOptlist(optlist);
+//  /* Close the Silo file. */
+////  DBClose(dbfile);
+//}
 
 
 /**
@@ -1523,11 +1523,11 @@ void SiloFile::WriteRegionSpecifications( const ElementRegionManager * elementMa
 
   std::string name = "Regions";
   int nmat = constitutiveManager->GetSubGroups().size();
-  ivector matnos(nmat);
+  array<integer> matnos(nmat);
   int ndims = 1;
   int dims = elementManager->getNumberOfElements();
   // ivector matlist(dims * ndims);
-  ivector matlist(dims * nmat);
+  array<integer> matlist(dims * nmat);
 
   //  char** materialNames = new char*[nmat+1];
   std::vector<char*> materialNames(nmat + 1);
