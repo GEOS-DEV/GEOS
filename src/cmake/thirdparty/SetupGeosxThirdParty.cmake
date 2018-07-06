@@ -216,7 +216,16 @@ endif()
 if( ENABLE_CALIPER )
 message( INFO ": setting up caliper" )
 
-set(CALIPER_DIR ${GEOSX_TPL_DIR}/caliper)
+if( CALIPER_DIR )
+    message( INFO "Found system caliper" )
+    message("Using system CALIPER found at ${CALIPER_DIR}")
+    set(CALIPER_FOUND TRUE)    
+else()
+    message(INFO ": Using CALIPER from thirdPartyLibs")
+    set(CALIPER_DIR ${GEOSX_TPL_DIR}/caliper)
+    set(CALIPER_FOUND TRUE)
+endif()
+
 find_path( CALIPER_INCLUDE_DIRS caliper/Caliper.h
            PATHS  ${CALIPER_DIR}/include
            NO_DEFAULT_PATH
@@ -226,9 +235,10 @@ find_path( CALIPER_INCLUDE_DIRS caliper/Caliper.h
            NO_CMAKE_SYSTEM_PATH)
 
 set( caliper_lib_list caliper caliper-reader caliper-common  gotcha )
-
+                       
+message(INFO "looking for libs in ${CALIPER_DIR}")
 blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES
-                    REQUIRED_NAMES ${caliper_lib_list}
+                    NAMES ${caliper_lib_list}
                     PATHS ${CALIPER_DIR}/lib ${CALIPER_DIR}/lib64
                    )
 
