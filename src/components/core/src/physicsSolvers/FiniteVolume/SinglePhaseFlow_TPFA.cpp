@@ -931,25 +931,40 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
   dRho = elementRegionManager->
          ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
 
+  auto
+  elemGhostRank = elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::
+                                                                     viewKeyStruct::
+                                                                     ghostRankString );
+
   // loop over all elements to update incremental pressure
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
                                 localIndex const k)->void
   {
-    localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
-    localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
+    if( elemGhostRank[er][esr][k]<0 )
+    {
+      localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+      localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
 
-    // extract solution and apply to dP
-    int const lid = rowMap->LID(integer_conversion<int>(trilinosIndex[er][esr][k]));
-    dP[er][esr][k] += local_solution[lid];
+      // extract solution and apply to dP
+      int const lid = rowMap->LID(integer_conversion<int>(trilinosIndex[er][esr][k]));
+      dP[er][esr][k] += local_solution[lid];
+    }
+  });
 
+
+  // TODO Sync dP
+
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const k)->void
+  {
     // update dRho though EOS call
     ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
     EOS->EquationOfStateDensityUpdate( dP[er][esr][k],
                                        matIndex2,
                                        dRho[er][esr][k],
                                        m_dRho_dP[er][esr][k] );
-
   });
 }
 
