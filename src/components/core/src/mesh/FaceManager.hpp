@@ -144,11 +144,6 @@ private:
 
   OrderedVariableOneToManyRelation m_nodeList;
   OrderedVariableOneToManyRelation m_edgeList;
-
-//  Array2dT<localIndex> m_toElementRegionList ;
-//  Array2dT<localIndex> m_toElementSubRegionList ;
-//  FixedOneToManyRelation m_toElementList ;
-
   FixedToManyElementRelation m_toElements;
 
   FaceManager() = delete;

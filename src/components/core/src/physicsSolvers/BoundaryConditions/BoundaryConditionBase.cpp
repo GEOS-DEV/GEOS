@@ -24,7 +24,18 @@ using namespace dataRepository;
 
 BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup * parent ):
   ManagedGroup(name,parent)
-{}
+{
+  RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, 0 );
+  RegisterViewWrapper( viewKeyStruct::constitutivePathString, &m_constitutivePath, 0 );
+  RegisterViewWrapper( viewKeyStruct::objectPathString, &m_objectPath, 0 );
+  RegisterViewWrapper( viewKeyStruct::fieldNameString, &m_fieldName, 0 );
+  RegisterViewWrapper( viewKeyStruct::componentString, &m_component, 0 );
+  RegisterViewWrapper( viewKeyStruct::directionString, &m_direction, 0 );
+  RegisterViewWrapper( viewKeyStruct::functionNameString, &m_functionName, 0 );
+  RegisterViewWrapper( viewKeyStruct::bcApplicationTableNameString, &m_bcApplicationFunctionName, 0 );
+  RegisterViewWrapper( viewKeyStruct::scaleString, &m_scale, 0 );
+  RegisterViewWrapper( viewKeyStruct::initialConditionString, &m_initialCondition, 0 );
+}
 
 
 BoundaryConditionBase::~BoundaryConditionBase()
@@ -40,8 +51,8 @@ void BoundaryConditionBase::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->AllocateChildNode( keys::initialCondition,
-                              keys::initialCondition,
+  docNode->AllocateChildNode( viewKeyStruct::initialConditionString,
+                              viewKeyStruct::initialConditionString,
                               -1,
                               "integer",
                               "integer",
@@ -53,8 +64,8 @@ void BoundaryConditionBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::setNames,
-                              keys::setNames,
+  docNode->AllocateChildNode( viewKeyStruct::setNamesString,
+                              viewKeyStruct::setNamesString,
                               -1,
                               "string_array",
                               "string_array",
@@ -67,8 +78,8 @@ void BoundaryConditionBase::FillDocumentationNode()
                               0 );
 
 
-  docNode->AllocateChildNode( keys::elementRegionName,
-                              keys::elementRegionName,
+  docNode->AllocateChildNode( viewKeyStruct::constitutivePathString,
+                              viewKeyStruct::constitutivePathString,
                               -1,
                               "string",
                               "string",
@@ -80,8 +91,34 @@ void BoundaryConditionBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::fieldName,
-                              keys::fieldName,
+  docNode->AllocateChildNode( viewKeyStruct::objectPathString,
+                              viewKeyStruct::objectPathString,
+                              -1,
+                              "string",
+                              "string",
+                              "Name of field that boundary condition is applied to.",
+                              "",
+                              "",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeyStruct::fieldNameString,
+                              viewKeyStruct::fieldNameString,
+                              -1,
+                              "string",
+                              "string",
+                              "Name of field that boundary condition is applied to.",
+                              "",
+                              "",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeyStruct::dataTypeString,
+                              viewKeyStruct::dataTypeString,
                               -1,
                               "string",
                               "string",
@@ -93,21 +130,8 @@ void BoundaryConditionBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::dataType,
-                              keys::dataType,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of field that boundary condition is applied to.",
-                              "",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::component,
-                              keys::component,
+  docNode->AllocateChildNode( viewKeyStruct::componentString,
+                              viewKeyStruct::componentString,
                               -1,
                               "integer",
                               "integer",
@@ -119,8 +143,8 @@ void BoundaryConditionBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::direction,
-                              keys::direction,
+  docNode->AllocateChildNode( viewKeyStruct::directionString,
+                              viewKeyStruct::directionString,
                               -1,
                               "R1Tensor",
                               "R1Tensor",
@@ -132,8 +156,8 @@ void BoundaryConditionBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::functionName,
-                              keys::functionName,
+  docNode->AllocateChildNode( viewKeyStruct::functionNameString,
+                              viewKeyStruct::functionNameString,
                               -1,
                               "string",
                               "string",
@@ -145,8 +169,8 @@ void BoundaryConditionBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::bcApplicationTableName,
-                              keys::bcApplicationTableName,
+  docNode->AllocateChildNode( viewKeyStruct::bcApplicationTableNameString,
+                              viewKeyStruct::bcApplicationTableNameString,
                               -1,
                               "string",
                               "string",
@@ -158,8 +182,8 @@ void BoundaryConditionBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( keys::scale,
-                              keys::scale,
+  docNode->AllocateChildNode( viewKeyStruct::scaleString,
+                              viewKeyStruct::scaleString,
                               -1,
                               "real64",
                               "real64",
@@ -174,15 +198,6 @@ void BoundaryConditionBase::FillDocumentationNode()
 
 void BoundaryConditionBase::ReadXML_PostProcess()
 {
-  m_setNames = this->getReference<string_array>( keys::setNames );
-  m_elementRegionName = this->getReference<string>( keys::elementRegionName );
-  m_fieldName = this->getReference<string>( keys::fieldName );
-  m_component = this->getReference<integer>( keys::component );
-  m_direction = this->getReference<R1Tensor>( keys::direction );
-  m_functionName          = this->getReference<string>( keys::functionName );
-  m_bcApplicationFunctionName = this->getReference<string>( keys::bcApplicationTableName );
-  m_scale                  = this->getReference<real64>( keys::scale );
-  m_initialCondition = this->getReference<integer>(keys::initialCondition);
 }
 
 //real64 BoundaryConditionBase::GetValue( realT time ) const

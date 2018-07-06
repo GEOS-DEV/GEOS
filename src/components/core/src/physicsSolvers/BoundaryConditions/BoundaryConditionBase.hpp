@@ -32,23 +32,6 @@ namespace geosx
 {
 class Function;
 
-namespace dataRepository
-{
-namespace keys
-{
-string const setNames = "setNames";
-string const elementRegionName = "elementRegionName";
-string const fieldName = "fieldName";
-string const dataType = "dataType";
-string const component("component");
-string const direction("direction");
-string const bcApplicationTableName("bcApplicationTableName");
-string const scale("scale");
-string const functionName("functionName");
-string const initialCondition("initialCondition");
-
-}
-}
 
 class BoundaryConditionBase : public dataRepository::ManagedGroup
 {
@@ -99,6 +82,16 @@ public:
                                                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                     systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const;
 
+  template< int OPERATION, typename LAMBDA >
+  void
+  ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
+                                               real64 const time,
+                                               localIndex_array const & dofMap,
+                                               integer const & dofDim,
+                                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                               systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                               LAMBDA && lambda ) const;
+
   template< int OPERATION >
   inline void ApplyBounaryConditionDefaultMethodPoint( integer const dof,
                                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
@@ -107,14 +100,44 @@ public:
                                                        real64 const & bcValue,
                                                        real64 const fieldValue ) const;
 
+
+
+
+  struct viewKeyStruct
+  {
+    constexpr static auto setNamesString = "setNames";
+    constexpr static auto constitutivePathString = "constitutivePath";
+    constexpr static auto objectPathString = "objectPath";
+    constexpr static auto fieldNameString = "fieldName";
+    constexpr static auto dataTypeString = "dataType";
+    constexpr static auto componentString = "component";
+    constexpr static auto directionString = "direction";
+    constexpr static auto bcApplicationTableNameString = "bcApplicationTableName";
+    constexpr static auto scaleString = "scale";
+    constexpr static auto functionNameString = "functionName";
+    constexpr static auto initialConditionString = "initialCondition";
+
+  } viewKeys;
+
+  struct groupKeyStruct
+  {
+  } groupKeys;
+
+
+
   string const & GetFunctionName() const
   {
     return m_functionName;
   }
 
-  virtual const string& GetElementRegion() const
+  virtual const string& GetConstitutivePath() const
   {
-    return m_elementRegionName;
+    return m_constitutivePath;
+  }
+
+  virtual const string& GetObjectPath() const
+  {
+    return m_objectPath;
   }
 
   virtual const string& GetFieldName() const
@@ -152,11 +175,12 @@ public:
     return m_initialCondition;
   }
 
-protected:
+private:
 
   string_array m_setNames; // sets the boundary condition is applied to
 
-  string m_elementRegionName;
+  string m_constitutivePath;
+  string m_objectPath;
 
   string m_fieldName;    // the name of the field the boundary condition is
                          // applied to or a description of the boundary
@@ -189,7 +213,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
 {
 
   integer const component = GetComponent();
-  string const functionName = getData<string>(dataRepository::keys::functionName);
+  string const functionName = getData<string>(viewKeyStruct::functionNameString);
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
@@ -277,6 +301,9 @@ inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( i
 }
 
 
+
+
+
 template< int OPERATION >
 void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
                                                                          real64 const time,
@@ -288,7 +315,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
                                                                          systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const
 {
   integer const component = GetComponent();
-  string const functionName = getData<string>(dataRepository::keys::functionName);
+  string const functionName = getData<string>(viewKeyStruct::functionNameString);
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
@@ -393,6 +420,115 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
       }
     });
 }
+
+
+
+
+template< int OPERATION, typename LAMBDA >
+void
+BoundaryConditionBase::
+ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
+                                             real64 const time,
+                                             localIndex_array const & dofMap,
+                                             integer const & dofDim,
+                                             systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                             systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                             LAMBDA && lambda ) const
+{
+  integer const component = GetComponent();
+  string const functionName = getData<string>(viewKeyStruct::functionNameString);
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+
+  integer const numBlocks = blockSystem->numBlocks();
+  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
+
+  Epetra_IntSerialDenseVector  node_dof( integer_conversion<int>( set.size() ) );
+  Epetra_SerialDenseVector     node_rhs( integer_conversion<int>( set.size() ) );
+
+  if( functionName.empty() )
+  {
+
+    integer counter=0;
+    for( auto a : set )
+    {
+      node_dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
+      this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
+                                                                blockSystem,
+                                                                blockID,
+                                                                node_rhs(counter),
+                                                                m_scale,
+                                                                lambda(a) );
+      ++counter;
+    }
+    if( OPERATION==0 )
+    {
+      rhs->ReplaceGlobalValues(node_dof, node_rhs);
+    }
+    else if( OPERATION==1 )
+    {
+      rhs->SumIntoGlobalValues(node_dof, node_rhs);
+    }
+  }
+  else
+  {
+    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+    if( function!=nullptr)
+    {
+      if( function->isFunctionOfTime()==2 )
+      {
+        real64 value = m_scale * function->Evaluate( &time );
+        integer counter=0;
+        for( auto a : set )
+        {
+          node_dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
+          this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
+                                                                    blockSystem,
+                                                                    blockID,
+                                                                    node_rhs(counter),
+                                                                    value,
+                                                                    lambda(a) );
+          ++counter;
+        }
+        if( OPERATION==0 )
+        {
+          rhs->ReplaceGlobalValues(node_dof, node_rhs);
+        }
+        else if( OPERATION==1 )
+        {
+          rhs->SumIntoGlobalValues(node_dof, node_rhs);
+        }
+      }
+      else
+      {
+        real64_array result;
+        result.resize( integer_conversion<localIndex>(set.size()));
+//        function->Evaluate( dataGroup, time, set, result );
+        integer counter=0;
+        for( auto a : set )
+        {
+          node_dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
+          this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
+                                                                    blockSystem,
+                                                                    blockID,
+                                                                    node_rhs(counter),
+                                                                    result[counter],
+                                                                    lambda(a) );
+          ++counter;
+        }
+        if( OPERATION==0 )
+        {
+          rhs->ReplaceGlobalValues(node_dof, node_rhs);
+        }
+        else if( OPERATION==1 )
+        {
+          rhs->SumIntoGlobalValues(node_dof, node_rhs);
+        }
+
+      }
+    }
+  }
+}
+
 
 
 }

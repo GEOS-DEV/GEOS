@@ -128,6 +128,12 @@ public:
 
   EpetraBlockSystem();
 
+  EpetraBlockSystem( EpetraBlockSystem const & ) = delete;
+  EpetraBlockSystem( EpetraBlockSystem && ) = delete;
+  EpetraBlockSystem& operator=( EpetraBlockSystem const & ) = delete;
+  EpetraBlockSystem& operator=( EpetraBlockSystem && ) = delete;
+
+
   ~EpetraBlockSystem();
 
 

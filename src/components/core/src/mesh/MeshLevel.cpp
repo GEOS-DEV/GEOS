@@ -188,11 +188,11 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {
-      elementAdjacencyList[kReg][kSubReg]->clear();
-      elementAdjacencyList[kReg][kSubReg]->resize( integer_conversion<localIndex>(elementAdjacencySet[kReg][kSubReg].size()) );
+      elementAdjacencyList[kReg][kSubReg].get().clear();
+      elementAdjacencyList[kReg][kSubReg].get().resize( integer_conversion<localIndex>(elementAdjacencySet[kReg][kSubReg].size()) );
       std::copy( elementAdjacencySet[kReg][kSubReg].begin(),
                  elementAdjacencySet[kReg][kSubReg].end(),
-                 elementAdjacencyList[kReg][kSubReg]->begin() );
+                 elementAdjacencyList[kReg][kSubReg].get().begin() );
 
     }
   }

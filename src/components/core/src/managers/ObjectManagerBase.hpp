@@ -348,11 +348,11 @@ public:
   virtual groupKeyStruct const & groupKeys() const { return m_ObjectManagerBaseGroupKeys; }
 
 
-  dataRepository::view_rtype<integer_array> GhostRank()
-  { return this->getData<integer_array>(m_ObjectManagerBaseViewKeys.ghostRank); }
+  integer_array & GhostRank()
+  { return this->m_ghostRank; }
 
-  dataRepository::view_rtype_const<integer_array> GhostRank() const
-  { return this->getData<integer_array>(m_ObjectManagerBaseViewKeys.ghostRank); }
+  integer_array const & GhostRank() const
+  { return this->m_ghostRank; }
 
 
 

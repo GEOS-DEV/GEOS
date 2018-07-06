@@ -400,6 +400,16 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
+void ManagedGroup::InitializeFinal( ManagedGroup * const rootGroup)
+{
+  InitializeFinalLeaf(rootGroup);
+  for( auto&& subGroup : m_subGroups )
+  {
+    subGroup.second->InitializeFinal(rootGroup);
+  }
+}
+
+
 localIndex ManagedGroup::PackSize( array<string> const & wrapperNames,
                             localIndex_array const & packList,
                             integer const recursive ) const
