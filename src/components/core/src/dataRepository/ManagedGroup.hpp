@@ -472,6 +472,12 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
+  virtual void Execute(real64 const & time_n,
+                       real64 const & dt,
+                       int const cycleNumber,
+                       dataRepository::ManagedGroup * domain ) {}
+
+  virtual real64 GetTimestepRequest(real64 const time) {return 1e6;}
 
   virtual localIndex PackSize( array<string> const & wrapperNames,
                         integer const recursive ) const;

@@ -44,10 +44,10 @@ public:
 
   virtual void FillDocumentationNode() override;
 
-  virtual void Execute(real64 const time,
-                       real64 const dt,  
-                       integer const cycle,
-                       dataRepository::ManagedGroup * domain ) override;
+  virtual void Execute( real64 const & time_n,
+                        real64 const & dt,
+                        int const cycleNumber,
+                        dataRepository::ManagedGroup * domain ) override;
 
   
   struct viewKeyStruct

@@ -28,7 +28,7 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
-#include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 
 namespace geosx
@@ -57,12 +57,12 @@ void RestartOutput::FillDocumentationNode()
 
 }
 
-void RestartOutput::Execute(real64 const time,
-                            real64 const dt, 
-                            integer const cycle,
+void RestartOutput::Execute(real64 const& time_n,
+                            real64 const& dt,
+                            const int cycleNumber,
                             ManagedGroup * domain)
 {
-  // DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
+  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
   
   // #ifdef USE_ATK
   //   char fileName[200] = {0};
@@ -86,11 +86,11 @@ void RestartOutput::Execute(real64 const time,
     char fileName[200] = {0};
     sprintf(fileName, "%s_%s_%09d", problemName.data(), "restart", cycleNumber);
 
-    this->prepareToWrite();
+    domainPartition->getParent()->prepareToWrite();
     m_functionManager->prepareToWrite();
     BoundaryConditionManager::get()->prepareToWrite();
     SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
-    this->finishWriting();
+    domainPartition->getParent()->finishWriting();
     m_functionManager->finishWriting();
     BoundaryConditionManager::get()->finishWriting();
   #endif
