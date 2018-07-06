@@ -75,6 +75,10 @@ public:
     return catalog;
   }
 
+  real64_array EvaluateStats( dataRepository::ManagedGroup const * const group,
+                              real64 const time,
+                              lSet const & set) const;
+
 protected:
   template< typename LEAF >
   void EvaluateT( dataRepository::ManagedGroup const * const group,

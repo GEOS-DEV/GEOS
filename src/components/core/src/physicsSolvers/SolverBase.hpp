@@ -86,7 +86,10 @@ public:
                          dataRepository::ManagedGroup * domain );
 
 
-
+  virtual void Execute( real64 const & time_n,
+                        real64 const & dt,
+                        int const cycleNumber,
+                        dataRepository::ManagedGroup * domain ) override;
 
 
   /**

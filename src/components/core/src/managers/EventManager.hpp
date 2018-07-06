@@ -27,6 +27,7 @@
 #define SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
+#include "managers/Events/EventBase.hpp"
 
 
 namespace geosx
@@ -45,27 +46,27 @@ public:
   EventManager( std::string const & name,
                 ManagedGroup * const parent );
 
-  virtual ~EventManager() override;
+  virtual ~EventManager();
 
   virtual void FillDocumentationNode() override;
 
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
-  void CheckEventTiming();
+  void Run(dataRepository::ManagedGroup * domain);
 
-};
+  struct viewKeyStruct
+  {
+    dataRepository::ViewKey time = { "time" };
+    dataRepository::ViewKey dt = { "dt" };
+    dataRepository::ViewKey cycle = { "cycle" };
+    dataRepository::ViewKey maxTime = { "maxTime" };
+    dataRepository::ViewKey maxCycle = { "maxCycle" };
+    dataRepository::ViewKey verbosity = { "verbosity" };
+  } viewKeys;
 
-class SolverApplication : public dataRepository::ManagedGroup
-{
-public:
-  SolverApplication( std::string const & name,
-                     ManagedGroup * const parent );
+  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
+  static CatalogInterface::CatalogType& GetCatalog();
 
-  virtual ~SolverApplication() override;
-
-  static string CatalogName() { return "EventManager"; }
-
-  virtual void FillDocumentationNode() override;
 };
 
 } /* namespace geosx */

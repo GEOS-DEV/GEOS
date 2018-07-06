@@ -172,7 +172,10 @@ void TableFunction::InitializeFunction()
     if (coordinates.size() == tableSize)
     {
       m_coordinates.push_back(coordinates);
-      m_values.insert(std::end(m_values), std::begin(tmpValues), std::end(tmpValues));
+      for (localIndex ii=0; ii<tmpValues.size(); ii++)
+      {
+        m_values.push_back(tmpValues[ii]);
+      }
       m_size.push_back(tableSize);
     }
   }
