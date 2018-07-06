@@ -114,6 +114,7 @@ public:
     static constexpr auto edgeListString               = "edgeList";
     static constexpr auto numFacesPerElementString     = "numFacesPerElement";
     static constexpr auto faceListString               = "faceList";
+    static constexpr auto elementCenterString = "elementCenter";
 
     dataRepository::ViewKey numNodesPerElement = { numNodesPerElementString };
     dataRepository::ViewKey nodeList           = { nodeListString };
@@ -121,6 +122,7 @@ public:
     dataRepository::ViewKey edgeList           = { edgeListString };
     dataRepository::ViewKey numFacesPerElement = { numFacesPerElementString };
     dataRepository::ViewKey faceList           = { faceListString };
+    dataRepository::ViewKey elementCenter      = { elementCenterString };
   } m_CellBlockViewKeys;
 
 //  class groupKeyStruct
@@ -163,6 +165,8 @@ private:
   FixedOneToManyRelation  m_toNodesRelation;
   FixedOneToManyRelation  m_toEdgesRelation;
   FixedOneToManyRelation  m_toFacesRelation;
+
+  array< R1Tensor > m_elementCenter;
 
 
   CellBlock& operator=(const CellBlock& rhs);

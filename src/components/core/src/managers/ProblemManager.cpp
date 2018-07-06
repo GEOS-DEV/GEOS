@@ -728,7 +728,7 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
   meshManager->GenerateMeshes(domain);
 
   // Once the mesh is generated, fill and register other fields
-  this->SetOtherDocumentationNodes(this);
+//  this->SetOtherDocumentationNodes(this);
   this->RegisterDocumentationNodes();
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
@@ -747,6 +747,10 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
+
+  this->SetOtherDocumentationNodes(this);
+  this->RegisterDocumentationNodes();
+
   ObjectManagerBase::InitializePostSubGroups(nullptr);
 
   DomainPartition * domain  = getDomainPartition();

@@ -36,8 +36,11 @@ using namespace cxx_utilities;
 
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
                                             ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
-{}
+  ManagedGroup( name, parent),
+  m_gravityVector( R1Tensor(0.0) )
+{
+  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
+}
 
 PhysicsSolverManager::~PhysicsSolverManager()
 {}
@@ -50,6 +53,18 @@ void PhysicsSolverManager::FillDocumentationNode()
   docNode->setSchemaType("UniqueNode");
   docNode->setShortDescription("Solver manager");
 
+  docNode->AllocateChildNode( viewKeyStruct::gravityVectorString,
+                              viewKeyStruct::gravityVectorString,
+                              -1,
+                              "R1Tensor",
+                              "R1Tensor",
+                              "Number of Nodes Per Element",
+                              "Number of Nodes Per Element",
+                              "",
+                              "",
+                              0,
+                              1,
+                              0);
 }
 
 

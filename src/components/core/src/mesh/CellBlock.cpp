@@ -49,6 +49,7 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   RegisterViewWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
   RegisterViewWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
   RegisterViewWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
+  RegisterViewWrapper(viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
 
 
   m_toNodesRelation.resize(0,8);
@@ -418,7 +419,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManager, const bool useReferencePos) const
 {
 
-  view_rtype_const<r1_array> X = nodeManager.referencePosition();
+  r1_array const & X = nodeManager.referencePosition();
 //  view_rtype_const<r1_array> u = nodeManager.totalDisplacement();
   arrayView1d<localIndex const> nodelist = m_toNodesRelation[k];
   R1Tensor elementCenter(0.0);
