@@ -87,7 +87,7 @@ public:
 
   virtual void InitializeFinalLeaf( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void TimeStep( real64 const& time_n,
+  virtual void SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
                          dataRepository::ManagedGroup * domain ) override;
@@ -174,11 +174,13 @@ public:
                                      localIndex offset );
 
 
-  real64 Assemble ( DomainPartition * const domain,
-                    systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                    real64 const time,
-                    real64 const dt ) override;
+  virtual real64 AssembleSystem( DomainPartition * const domain,
+                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                 real64 const time,
+                                 real64 const dt ) override;
 
+  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            SystemSolverParameters const * const params ) override;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's

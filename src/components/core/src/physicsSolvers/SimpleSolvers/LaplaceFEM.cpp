@@ -208,7 +208,7 @@ void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 
 }
 
-void LaplaceFEM::TimeStep( real64 const& time_n,
+void LaplaceFEM::SolverStep( real64 const& time_n,
                                              real64 const& dt,
                                              const int cycleNumber,
                                              ManagedGroup * domain )
@@ -294,7 +294,7 @@ real64 LaplaceFEM::TimeStepImplicit( real64 const & time_n,
       Epetra_FEVector * solution = m_linearSystem.GetSolutionVector( EpetraBlockSystem::BlockIDs::displacementBlock );
       solution->Scale(0.0);
 
-      Assemble( domain, &m_linearSystem, time_n+dt, dt );
+      AssembleSystem( domain, &m_linearSystem, time_n+dt, dt );
 
 //      matrix->Print(std::cout);
 //      rhs->Print(std::cout);
@@ -516,7 +516,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
 
 
 
-real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
+real64 LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
                                                 EpetraBlockSystem * const blockSystem,
                                                 real64 const time_n,
                                                 real64 const dt )
