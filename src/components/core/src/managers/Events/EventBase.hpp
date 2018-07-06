@@ -54,10 +54,10 @@ public:
                                            integer const cycle,
                                            dataRepository::ManagedGroup * domain);
 
-  virtual void Execute(real64 const time,
-                       real64 const dt,  
-                       integer const cycle,
-                       dataRepository::ManagedGroup * domain ) override;
+  virtual void Execute( real64 const & time_n,
+                        real64 const & dt,
+                        int const cycleNumber,
+                        dataRepository::ManagedGroup * domain ) override;
 
   void Step(real64 const time,
             real64 const dt,  

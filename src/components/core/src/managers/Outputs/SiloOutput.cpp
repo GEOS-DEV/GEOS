@@ -28,7 +28,7 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
-#include "PhysicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 
 namespace geosx
@@ -82,9 +82,9 @@ void SiloOutput::FillDocumentationNode()
                               0 );
 }
 
-void SiloOutput::Execute(real64 const time,
-                         real64 const dt, 
-                         integer const cycle,
+void SiloOutput::Execute(real64 const& time_n,
+                         real64 const& dt,
+                         const int cycleNumber,
                          ManagedGroup * domain)
 {
   //   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
@@ -105,7 +105,7 @@ void SiloOutput::Execute(real64 const time,
   //   silo.ClearEmptiesFromMultiObjects(cycle);
   // silo.Finish();
   
-  DomainPartition * domain  = getDomainPartition();
+  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
   SiloFile silo;
 
   integer rank;
@@ -115,7 +115,7 @@ void SiloOutput::Execute(real64 const time,
 
   silo.Initialize(PMPIO_WRITE);
   silo.WaitForBaton(rank, cycleNumber, false );
-  domain->WriteSilo(silo,cycleNumber,problemTime,0);
+  domainPartition->WriteSilo(silo,cycleNumber,time_n,0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);
   silo.Finish();

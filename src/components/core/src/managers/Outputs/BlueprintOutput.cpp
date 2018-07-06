@@ -55,9 +55,9 @@ void BlueprintOutput::FillDocumentationNode()
   docNode->setShortDescription("Outputs Blueprint format files");
 }
 
-void BlueprintOutput::Execute(real64 const time,
-                              real64 const dt, 
-                              integer const cycle,
+void BlueprintOutput::Execute(real64 const& time_n,
+                              real64 const& dt,
+                              const int cycleNumber,
                               ManagedGroup * domain)
 {
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
@@ -67,7 +67,7 @@ void BlueprintOutput::Execute(real64 const time,
                      *meshLevel->getElemManager(),
                      "bp_plot", MPI_COMM_WORLD);
   
-  bpWriter.write(cycle);
+  bpWriter.write(cycleNumber);
 }
 
 

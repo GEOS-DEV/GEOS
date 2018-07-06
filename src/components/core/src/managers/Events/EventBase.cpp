@@ -207,7 +207,7 @@ void EventBase::CheckEvents(real64 const time,
   // Check event status
   if (time < beginTime)
   {
-    m_eventForecast = (beginTime - time) / dt;
+    m_eventForecast = int((beginTime - time) / dt);
   }
   else if (time >= endTime)
   {
@@ -246,9 +246,9 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 }
 
 
-void EventBase::Execute(real64 const time,
-                        real64 const dt, 
-                        integer const cycle,
+void EventBase::Execute(real64 const& time_n,
+                        real64 const& dt,
+                        const int cycleNumber,
                         ManagedGroup * domain)
 {
   real64& lastTime = *(this->getData<real64>(viewKeys.lastTime));
@@ -259,27 +259,27 @@ void EventBase::Execute(real64 const time,
 
   if (allowSuperstep > 0)
   {
-    real64 actualDt = dt + time - lastTime;
-    Step(lastTime, actualDt, cycle, domain);     // Should we use the lastTime or time here?
+    real64 actualDt = dt + time_n - lastTime;
+    Step(lastTime, actualDt, cycleNumber, domain);     // Should we use the lastTime or time here?
   }
   else if (allowSubstep > 0)
   {
     real64 actualDt = dt / substepFactor;
-    real64 actualTime = time;
+    real64 actualTime = time_n;
 
     for (integer ii=0; ii<substepFactor; ii++)
     {
-      Step(actualTime, actualDt, cycle, domain);
+      Step(actualTime, actualDt, cycleNumber, domain);
       actualTime += actualDt;
     }
   }
   else
   {
-    Step(time, dt, cycle, domain);
+    Step(time_n, dt, cycleNumber, domain);
   }
 
-  lastTime = time;
-  lastCycle = cycle;
+  lastTime = time_n;
+  lastCycle = cycleNumber;
 }
 
 
