@@ -85,7 +85,8 @@ void OutputBase::FillDocumentationNode()
 
 void OutputBase::Initialize( ManagedGroup * const group )
 {
-  SetupDirectoryStructure();
+  // This command doesn't seem to work anymore
+  // SetupDirectoryStructure();
 }
 
 
