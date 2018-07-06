@@ -125,6 +125,18 @@ void SolverBase::TimeStep( real64 const& time_n,
 }
 
 
+void SolverBase::Execute( real64 const& time_n,
+                          real64 const& dt,
+                          const int cycleNumber,
+                          ManagedGroup * domain )
+{
+  if ( dt > 0 )
+  {
+    TimeStep(time_n, dt, cycleNumber, domain);
+  }
+}
+
+
 real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
