@@ -51,7 +51,7 @@ public:
   virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
 
 
-  virtual void TimeStep( real64 const& time_n,
+  virtual void SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
                          dataRepository::ManagedGroup * domain ) override;

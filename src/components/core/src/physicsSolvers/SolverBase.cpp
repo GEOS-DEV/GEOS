@@ -31,10 +31,10 @@ using namespace dataRepository;
 SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
   ManagedGroup( name, parent ),
-  m_verboseLevel(0),
-  m_gravityVector( R1Tensor(0.0) ),
   m_linearSolverWrapper(nullptr),
-  m_linearSystem(nullptr)
+  m_linearSystem(nullptr),
+  m_verboseLevel(0),
+  m_gravityVector( R1Tensor(0.0) )
 {
   // register group with repository. Have Repository own object.
   this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
@@ -117,7 +117,7 @@ void SolverBase::FillDocumentationNode()
 
 
 
-void SolverBase::TimeStep( real64 const& time_n,
+void SolverBase::SolverStep( real64 const& time_n,
                            real64 const& dt,
                            const int cycleNumber,
                            ManagedGroup * domain )
@@ -135,49 +135,12 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   // call setup for physics solver. Pre step allocations etc.
   ImplicitStepSetup( time_n, dt, domain );
 
-  // extract the system out of the block system interface.
-  Epetra_FECrsMatrix * const
-  matrix = m_linearSystem->GetMatrix( systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock,
-                                     systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-
-  Epetra_FEVector * const
-  rhs = m_linearSystem->GetResidualVector( systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-
-  Epetra_FEVector * const
-  solution = m_linearSystem->GetSolutionVector( systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-
-  // zero out the system
-  matrix->Scale(0.0);
-  rhs->Scale(0.0);
-  solution->Scale(0.0);
-
   // call assemble to fill the matrix and the rhs
-  Assemble( domain, m_linearSystem, time_n+dt, dt );
-
-  if( verboseLevel() >= 2 )
-  {
-    matrix->Print(std::cout);
-    rhs->Print(std::cout);
-  }
-
-  // scale rhs to correspond to a Newton type scheme.
-  rhs->Scale(-1.0);
-
-  if( verboseLevel() >= 1 )
-  {
-    std::cout<<"Solving system"<<std::endl;
-  }
-
+  AssembleSystem( domain, m_linearSystem, time_n+dt, dt );
 
   // call the default linear solver on the system
-  this->m_linearSolverWrapper->SolveSingleBlockSystem( m_linearSystem,
-                                                       getSystemSolverParameters(),
-                                                       systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-
-  if( verboseLevel() >= 2 )
-  {
-    solution->Print(std::cout);
-  }
+  SolveSystem( m_linearSystem,
+               getSystemSolverParameters() );
 
   // apply the system solution to the fields/variables
   ApplySystemSolution( m_linearSystem, 1.0, 0, domain );
@@ -194,78 +157,87 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                            integer const cycleNumber,
                                            DomainPartition * const domain )
 {
-  real64 dt_return = dt;
+  real64 stepDt = dt;
 
   // call setup for physics solver. Pre step allocations etc.
-  ImplicitStepSetup( time_n, dt, domain );
-
-  // extract the system out of the block system interface.
-  Epetra_FECrsMatrix * const
-  matrix = m_linearSystem->GetMatrix( systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock,
-                                     systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-
-  Epetra_FEVector * const
-  rhs = m_linearSystem->GetResidualVector( systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-
-  Epetra_FEVector * const
-  solution = m_linearSystem->GetSolutionVector( systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  ImplicitStepSetup( time_n, stepDt, domain );
 
   SystemSolverParameters const * const solverParams = getSystemSolverParameters();
   real64 const newtonTol = solverParams->newtonTol();
   integer const maxNewtonIter = solverParams->maxIterNewton();
+  integer const maxNumberDtCuts = 2;
+  integer const maxNumberLineSearchCuts = 5;
 
-  for( int k=0 ; k<maxNewtonIter ; ++k )
+  integer isConverged = 0;
+  for( int dtAttempt = 0 ; dtAttempt<maxNumberDtCuts ; ++dtAttempt )
   {
-    // zero out the system
-    matrix->Scale(0.0);
-    rhs->Scale(0.0);
-    solution->Scale(0.0);
-
-    // call assemble to fill the matrix and the rhs
-    real64 residual = Assemble( domain, m_linearSystem, time_n+dt, dt );
-
-
-    if( verboseLevel() >= 2 )
+    real64 lastResidual = 1e99;
+    for( int k=0 ; k<maxNewtonIter ; ++k )
     {
-      matrix->Print(std::cout);
-      rhs->Print(std::cout);
+
+      // call assemble to fill the matrix and the rhs
+      real64 residualNorm = AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+
+
+      if( residualNorm < newtonTol )
+      {
+        isConverged = 1;
+        break;
+      }
+
+      // do line search in case residual has increased
+      if( residualNorm > lastResidual )
+      {
+        real64 scaleFactor = -1.0;
+        for( int lineSearchIteration=0 ; lineSearchIteration<maxNumberLineSearchCuts ; ++lineSearchIteration )
+        {
+          scaleFactor *= 0.5;
+          ApplySystemSolution( m_linearSystem, scaleFactor, 0, domain );
+          residualNorm = AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+          if( residualNorm < lastResidual )
+          {
+            break;
+          }
+        }
+      }
+
+      // call the default linear solver on the system
+      SolveSystem( m_linearSystem,
+                   getSystemSolverParameters() );
+
+      // apply the system solution to the fields/variables
+      ApplySystemSolution( m_linearSystem, 1.0, 0, domain );
+
+      lastResidual = residualNorm;
     }
-
-    if( residual < newtonTol )
+    if( isConverged )
     {
+      // final step for completion of timestep. typically secondary variable updates and cleanup.
+      ImplicitStepComplete( time_n, stepDt,  domain );
       break;
     }
-
-    // scale rhs to correspond to a Newton type scheme.
-    rhs->Scale(-1.0);
-
-    if( verboseLevel() >= 1 )
+    else
     {
-      std::cout<<"Solving system"<<std::endl;
+      // cut timestep and reset state
+      stepDt *= 0.5;
+      ResetStateToBeginningOfStep( domain );
     }
-
-
-    // call the default linear solver on the system
-    this->m_linearSolverWrapper->SolveSingleBlockSystem( m_linearSystem,
-                                                         getSystemSolverParameters(),
-                                                         systemSolverInterface::EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-
-    if( verboseLevel() >= 2 )
-    {
-      solution->Print(std::cout);
-    }
-
-    // apply the system solution to the fields/variables
-    ApplySystemSolution( m_linearSystem, 1.0, 0, domain );
   }
 
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, dt,  domain );
 
   // return the achieved timestep
-  return dt_return;
+  return stepDt;
 }
 
+
+real64 SolverBase::ExplicitStep( real64 const & time_n,
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition * const domain )
+{
+  GEOS_ERROR( "SolverBase::ExplicitStep called!. Should be overridden.");
+  return 0;
+}
 
 void SolverBase::ImplicitStepSetup( real64 const& time_n,
                         real64 const& dt,
@@ -274,7 +246,7 @@ void SolverBase::ImplicitStepSetup( real64 const& time_n,
   GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden.");
 }
 
-real64 SolverBase::Assemble( DomainPartition * const domain,
+real64 SolverBase::AssembleSystem( DomainPartition * const domain,
                              systemSolverInterface::EpetraBlockSystem * const blockSystem,
                              real64 const time,
                              real64 const dt )
@@ -283,14 +255,10 @@ real64 SolverBase::Assemble( DomainPartition * const domain,
   return 0;
 }
 
-void SolverBase::AllocateTempVars()
+void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                              SystemSolverParameters const * const params )
 {
-  GEOS_ERROR( "SolverBase::AllocateTempVars called!. Should be overridden.");
-}
-
-void SolverBase::DeallocateTempVars()
-{
-  GEOS_ERROR( "SolverBase::DeallocateTempVars called!. Should be overridden.");
+  GEOS_ERROR( "SolverBase::SolveSystem called!. Should be overridden.");
 }
 
 void SolverBase::ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
@@ -299,6 +267,11 @@ void SolverBase::ApplySystemSolution( systemSolverInterface::EpetraBlockSystem c
                           DomainPartition * const  )
 {
   GEOS_ERROR( "SolverBase::ApplySystemSolution called!. Should be overridden.");
+}
+
+void SolverBase::ResetStateToBeginningOfStep( DomainPartition * const  )
+{
+  GEOS_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden.");
 }
 
 void SolverBase::ImplicitStepComplete( real64 const & time,

@@ -283,7 +283,7 @@ void SinglePhaseFlow_TPFA::InitializeFinalLeaf( ManagedGroup * const problemMana
   MakeGeometryParameters( domain );
 }
 
-void SinglePhaseFlow_TPFA::TimeStep( real64 const& time_n,
+void SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
                                      real64 const& dt,
                                      const int cycleNumber,
                                      ManagedGroup * domain )
@@ -394,22 +394,6 @@ void SinglePhaseFlow_TPFA::ImplicitStepSetup( real64 const& time_n,
 
   // setup dof numbers and linear system
   SetupSystem( domain, m_linearSystem );
-
-  // extract the system out of the block system interface.
-  Epetra_FECrsMatrix * const
-  matrix = m_linearSystem->GetMatrix( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
-                                     EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-
-  Epetra_FEVector * const
-  rhs = m_linearSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-
-  Epetra_FEVector * const
-  solution = m_linearSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-
-  // zero out the system
-  matrix->Scale(0.0);
-  rhs->Scale(0.0);
-  solution->Scale(0.0);
 }
 
 void SinglePhaseFlow_TPFA::ImplicitStepComplete( real64 const & time_n,
@@ -456,7 +440,7 @@ void SinglePhaseFlow_TPFA::ImplicitStepComplete( real64 const & time_n,
     rho[matIndex1][matIndex2] += dFluidDensity[er][esr][k];
 
     if( verboseLevel() >= 1 )
-    std::cout<<"pressure["<<er<<"]["<<esr<<"][k] = "<<pressure[er][esr][k]<<std::endl;
+    std::cout<<"pressure["<<er<<"]["<<esr<<"]["<<k<<"] = "<<pressure[er][esr][k]<<std::endl;
   });
 
 }
@@ -668,7 +652,7 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
 
 
 
-real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
+real64 SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
                                         EpetraBlockSystem * const blockSystem,
                                         real64 const time_n,
                                         real64 const dt )
@@ -692,7 +676,9 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
   Epetra_FECrsMatrix * const dRdP = blockSystem->GetMatrix( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
                                                               EpetraBlockSystem::BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-  Epetra_FEVector * const solution = blockSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+
+  dRdP->Scale(0.0);
+  residual->Scale(0.0);
 
 
   constitutive::ViewAccessor<real64> fluidBulkModulus = constitutiveManager->GetParameterData< real64 >("BulkModulus");
@@ -875,6 +861,16 @@ real64 SinglePhaseFlow_TPFA::Assemble ( DomainPartition * const  domain,
                              time_n + dt,
                              *m_linearSystem );
 
+
+  if( verboseLevel() >= 2 )
+  {
+    dRdP->Print(std::cout);
+    residual->Print(std::cout);
+  }
+
+
+
+
   real64 localResidual = 0.0;
 //  residual->Norm2(&scalarResidual);
 
@@ -932,9 +928,9 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
          ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
 
   auto
-  elemGhostRank = elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::
-                                                                     viewKeyStruct::
-                                                                     ghostRankString );
+  elemGhostRank = elementRegionManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::
+                                                                              viewKeyStruct::
+                                                                              ghostRankString );
 
   // loop over all elements to update incremental pressure
   forAllElemsInMesh( mesh, [&]( localIndex const er,
@@ -943,9 +939,6 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
   {
     if( elemGhostRank[er][esr][k]<0 )
     {
-      localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
-      localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
-
       // extract solution and apply to dP
       int const lid = rowMap->LID(integer_conversion<int>(trilinosIndex[er][esr][k]));
       dP[er][esr][k] += local_solution[lid];
@@ -959,6 +952,8 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
                                 localIndex const esr,
                                 localIndex const k)->void
   {
+    localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+    localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
     // update dRho though EOS call
     ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
     EOS->EquationOfStateDensityUpdate( dP[er][esr][k],
@@ -1080,6 +1075,29 @@ void SinglePhaseFlow_TPFA::MakeGeometryParameters( DomainPartition * const  doma
       CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
       m_dRho_dP[er][esr].resize(cellBlockSubRegion->size());
     }
+  }
+
+}
+
+void SinglePhaseFlow_TPFA::SolveSystem( EpetraBlockSystem * const blockSystem,
+                                        SystemSolverParameters const * const params )
+{
+  Epetra_FEVector * const
+  solution = m_linearSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+
+  Epetra_FEVector * const
+  residual = blockSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  residual->Scale(-1.0);
+
+  solution->Scale(0.0);
+
+  m_linearSolverWrapper->SolveSingleBlockSystem( blockSystem,
+                                                 params,
+                                                 EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+
+  if( verboseLevel() >= 2 )
+  {
+    solution->Print(std::cout);
   }
 
 }

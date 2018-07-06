@@ -80,25 +80,23 @@ public:
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 
-  virtual void TimeStep( real64 const & time_n,
+  virtual void SolverStep( real64 const & time_n,
                          real64 const & dt,
                          int const cycleNumber,
                          dataRepository::ManagedGroup * domain );
 
 
-
-
-
   /**
-   * @brief function to perform setup for implicit timestep
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
    */
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
-                                  DomainPartition * const domain );
+  /**@{*/
 
+  virtual real64 ExplicitStep( real64 const & time_n,
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition * const domain );
 
   virtual real64 NonlinearImplicitStep( real64 const & time_n,
                                         real64 const & dt,
@@ -111,6 +109,16 @@ public:
                                     DomainPartition * const domain );
 
   /**
+   * @brief function to perform setup for implicit timestep
+   * @param time_n the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param domain the domain partition
+   */
+  virtual void ImplicitStepSetup( real64 const& time_n,
+                                  real64 const& dt,
+                                  DomainPartition * const domain );
+
+  /**
    * @brief function to assemble the linear system matrix and rhs
    * @param domain the domain partition
    * @param blockSystem the entire block system
@@ -118,19 +126,21 @@ public:
    * @param dt the desired timestep
    * @return the residual for convergence evaluation
    */
-  virtual real64 Assemble ( DomainPartition * const domain,
-                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            real64 const time,
-                            real64 const dt );
+  virtual real64 AssembleSystem( DomainPartition * const domain,
+                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                 real64 const time,
+                                 real64 const dt );
 
-  virtual void AllocateTempVars();
+  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            SystemSolverParameters const * const params );
 
-  virtual void DeallocateTempVars();
 
   virtual void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                                     real64 const scalingFactor,
                                     localIndex const dofOffset,
                                     DomainPartition * const nodeManager );
+
+  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain );
 
   /**
    * @brief function to perform cleanup for implicit timestep
@@ -142,7 +152,7 @@ public:
                                      real64 const & dt,
                                      DomainPartition * const domain );
 
-
+  /**@}*/
 
 
   virtual void FillDocumentationNode() override;
