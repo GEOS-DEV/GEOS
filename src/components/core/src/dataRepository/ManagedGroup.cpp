@@ -375,9 +375,7 @@ void ManagedGroup::InitializationOrder( string_array & order )
 void ManagedGroup::Initialize( ManagedGroup * const group )
 {
   static localIndex indent = 0;
-//  std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on
-// "<<this->getName()<<" of type
-// "<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
+ std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on"<<this->getName()<<" of type"<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
 
   InitializePreSubGroups(group);
 
