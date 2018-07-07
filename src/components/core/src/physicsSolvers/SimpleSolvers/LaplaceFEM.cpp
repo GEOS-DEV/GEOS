@@ -208,7 +208,7 @@ void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 
 }
 
-void LaplaceFEM::TimeStep( real64 const& time_n,
+void LaplaceFEM::SolverStep( real64 const& time_n,
                                              real64 const& dt,
                                              const int cycleNumber,
                                              ManagedGroup * domain )
@@ -294,7 +294,7 @@ real64 LaplaceFEM::TimeStepImplicit( real64 const & time_n,
       Epetra_FEVector * solution = m_linearSystem.GetSolutionVector( EpetraBlockSystem::BlockIDs::displacementBlock );
       solution->Scale(0.0);
 
-      Assemble( domain, &m_linearSystem, time_n+dt, dt );
+      AssembleSystem( domain, &m_linearSystem, time_n+dt, dt );
 
 //      matrix->Print(std::cout);
 //      rhs->Print(std::cout);
@@ -328,7 +328,7 @@ real64 LaplaceFEM::TimeStepImplicit( real64 const & time_n,
 
       solution->Print(std::cout);
 
-      ApplySystemSolution( &m_linearSystem, 1.0, 0, nodeManager );
+      ApplySystemSolution( &m_linearSystem, 1.0, domain );
 
   TimeStepImplicitComplete( time_n, dt,  domain );
 #endif
@@ -516,7 +516,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
 
 
 
-real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
+real64 LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
                                                 EpetraBlockSystem * const blockSystem,
                                                 real64 const time_n,
                                                 real64 const dt )
@@ -620,9 +620,9 @@ real64 LaplaceFEM::Assemble ( DomainPartition * const  domain,
 
 void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
                                       real64 const scalingFactor,
-                                      localIndex const dofOffset,
-                                      dataRepository::ManagedGroup * const nodeManager )
+                                      DomainPartition * const domain )
 {
+  NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( EpetraBlockSystem::BlockIDs::displacementBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::displacementBlock );
   localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.trilinosIndex);

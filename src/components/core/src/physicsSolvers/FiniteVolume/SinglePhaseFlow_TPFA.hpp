@@ -85,9 +85,9 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
 
-  virtual void InitializeFinalLeaf( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void TimeStep( real64 const& time_n,
+  virtual void SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
                          dataRepository::ManagedGroup * domain ) override;
@@ -104,49 +104,33 @@ public:
                          integer const cycleNumber,
                          DomainPartition * domain );
 
-  /**
-   * @brief function to perform quasi-static timestep
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param cycleNumber the current cycle number of the simulation
-   * @param domain the domain partition
-   */
-  void TimeStepQuasiStatic( real64 const& time_n,
-                            real64 const& dt,
-                            integer const cycleNumber,
-                            DomainPartition& domain );
+  void SetupSystem ( DomainPartition * const domain,
+                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
-
-  /**
-   * @brief function to perform setup for implicit timestep
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   */
-  void ImplicitStepSetup( real64 const& time_n,
+  virtual void ImplicitStepSetup( real64 const& time_n,
                               real64 const& dt,
                               DomainPartition * const domain ) override;
 
-  /**
-   * @brief function to perform cleanup for implicit timestep
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   */
-  void ImplicitStepComplete( real64 const & time,
+
+  virtual real64 AssembleSystem( DomainPartition * const domain,
+                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                 real64 const time,
+                                 real64 const dt ) override;
+
+  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            SystemSolverParameters const * const params ) override;
+
+  virtual void
+  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                       real64 const scalingFactor,
+                       DomainPartition * const domain ) override;
+
+  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+
+  virtual  void ImplicitStepComplete( real64 const & time,
                                  real64 const & dt,
                                  DomainPartition * const domain ) override;
 
-  /**
-   * @brief This function sets the local and global rows, and calls functions to build linear system
-   *        objects.
-   * @param domain the domain partition
-   * @param blockSystem
-   *
-   *
-   */
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief set the sparsity pattern for the linear system
@@ -174,11 +158,6 @@ public:
                                      localIndex offset );
 
 
-  real64 Assemble ( DomainPartition * const domain,
-                    systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                    real64 const time,
-                    real64 const dt ) override;
-
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -192,17 +171,6 @@ public:
                                   real64 const time,
                                   systemSolverInterface::EpetraBlockSystem & blockSystem);
 
-  /**
-   * @brief Function to apply the solution vector back onto the data fields
-   * @param blockSystem the entire block system
-   * @param scalingFactor factor to scale the solution prior to application
-   * @param dofOffset the offset to the DOF indices
-   * @param objectManager the object manager that holds the fields we wish to apply the solution to
-   */
-  void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                            real64 const scalingFactor,
-                            localIndex const dofOffset,
-                            DomainPartition * const domain ) override;
 
   /**
    * @enum an enum to lay out the time integration options.

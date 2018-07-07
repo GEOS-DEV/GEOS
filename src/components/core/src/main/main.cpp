@@ -103,7 +103,7 @@ int main( int argc, char *argv[] )
 
   problemManager.Initialize( &problemManager );
 
-  problemManager.InitializeFinal( &problemManager );
+  problemManager.FinalInitializationRecursive( &problemManager );
 
   GEOS_MARK_END("Initialization");
 
