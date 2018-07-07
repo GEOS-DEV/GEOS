@@ -31,10 +31,10 @@ using namespace dataRepository;
 SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
   ManagedGroup( name, parent ),
-  m_verboseLevel(0),
-  m_gravityVector( R1Tensor(0.0) ),
   m_linearSolverWrapper(nullptr),
-  m_linearSystem(nullptr)
+  m_linearSystem(nullptr),
+  m_verboseLevel(0),
+  m_gravityVector( R1Tensor(0.0) )
 {
   // register group with repository. Have Repository own object.
   this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );

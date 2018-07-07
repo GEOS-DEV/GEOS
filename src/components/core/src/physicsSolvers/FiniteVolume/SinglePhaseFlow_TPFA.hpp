@@ -205,13 +205,6 @@ public:
                             DomainPartition * const domain ) override;
 
   /**
-   * @brief This function generates various geometric information for later use.
-   * @param domain the domain parition
-   */
-  void MakeGeometryParameters( DomainPartition * const  domain );
-
-
-  /**
    * @enum an enum to lay out the time integration options.
    */
   enum class timeIntegrationOption
@@ -231,13 +224,14 @@ public:
     constexpr static auto faceCenterString = "faceCenter";
     constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto gravityFlagString = "gravityFlag";
-    constexpr static auto gravityForceString = "gravityForce";
+    constexpr static auto gravityDepthString = "gravityDepth";
     constexpr static auto permeabilityString = "permeablity";
     constexpr static auto porosityString = "porosity";
-    constexpr static auto trilinosIndexString = "trilinosIndex_SinglePhaseFlow_TPFA";
+    constexpr static auto cellLocalIndexString = "cellLocalIndex";
     constexpr static auto volumeString = "volume";
+    constexpr static auto transmissibilityString = "transmissibility";
 
-    dataRepository::ViewKey trilinosIndex = { trilinosIndexString };
+    dataRepository::ViewKey cellLocalIndex = { cellLocalIndexString };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
@@ -251,25 +245,33 @@ public:
 
 
 private:
+
+  /**
+   * @brief This function generates various discretization information for later use.
+   * @param domain the domain parition
+   */
+  void PrecomputeData(DomainPartition *const domain);
+
+  /**
+   * @brief This function allocates additional storage (e.g. for derivatives)
+   * @param domain the domain partition
+   */
+  void AllocateAuxStorage(DomainPartition *const domain);
+
   /// the currently selected time integration option
   timeIntegrationOption m_timeIntegrationOption;
 
-  /// temp variable containing distance between the face and element centers divided by the area of
-  /// the face
-  Array2dT<real64> m_faceToElemLOverA;
-
   /// the number of degrees of freedom per element. should be removed.
-  constexpr static int m_dim = 1;
+  constexpr static int m_numDof = 1;
 
   /// temp array that holds the list of faces that connect two elements.
   localIndex_array m_faceConnectors;
 
   /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
+  bool m_gravityFlag;
 
-  array< real64 > m_gravityForce;
-
-  array< array< array<real64> > > m_dRho_dP;
+  /// temp storage for derivatives of density w.r.t. pressure
+  array<array<array<real64>>> m_dDens_dPres;
 
 
 };
