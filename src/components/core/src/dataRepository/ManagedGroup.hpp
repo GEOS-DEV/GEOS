@@ -309,8 +309,8 @@ public:
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
 
-  virtual void InitializeFinal( ManagedGroup * const group );
-  virtual void InitializeFinalLeaf( ManagedGroup * const group ){}
+  virtual void FinalInitializationRecursive( ManagedGroup * const group );
+  virtual void FinalInitialization( ManagedGroup * const group ){}
 
 
   template< typename T, typename TBASE=T >
