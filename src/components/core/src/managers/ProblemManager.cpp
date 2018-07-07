@@ -835,7 +835,7 @@ void ProblemManager::RunSimulation()
       for ( auto jj=0; jj<solverList.size(); ++jj)
       {
         SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
-        currentSolver->TimeStep( time, dt, cycle, domain );
+        currentSolver->SolverStep( time, dt, cycle, domain );
         nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
       }
 
