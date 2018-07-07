@@ -400,12 +400,12 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
-void ManagedGroup::InitializeFinal( ManagedGroup * const rootGroup)
+void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
 {
-  InitializeFinalLeaf(rootGroup);
+  FinalInitialization(rootGroup);
   for( auto&& subGroup : m_subGroups )
   {
-    subGroup.second->InitializeFinal(rootGroup);
+    subGroup.second->FinalInitializationRecursive(rootGroup);
   }
 }
 

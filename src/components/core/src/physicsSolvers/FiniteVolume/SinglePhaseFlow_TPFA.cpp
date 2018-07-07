@@ -275,7 +275,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
 //
 //}
 
-void SinglePhaseFlow_TPFA::InitializeFinalLeaf( ManagedGroup * const problemManager )
+void SinglePhaseFlow_TPFA::FinalInitialization( ManagedGroup * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
 
@@ -891,7 +891,6 @@ real64 SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
 
 void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
                                                 real64 const scalingFactor,
-                                                localIndex const dofOffset,
                                                 DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -941,12 +940,17 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
     {
       // extract solution and apply to dP
       int const lid = rowMap->LID(integer_conversion<int>(trilinosIndex[er][esr][k]));
-      dP[er][esr][k] += local_solution[lid];
+      dP[er][esr][k] += scalingFactor * local_solution[lid];
     }
   });
 
 
-  // TODO Sync dP
+  // TODO Sync dP once element field syncing is reimplmented.
+  //std::map<string, array<string> > fieldNames;
+  //fieldNames["element"].push_back(viewKeyStruct::deltaFluidPressureString);
+  //CommunicationTools::SynchronizeFields(fieldNames,
+  //                            mesh,
+  //                            domain->getReference< array<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
@@ -1099,6 +1103,30 @@ void SinglePhaseFlow_TPFA::SolveSystem( EpetraBlockSystem * const blockSystem,
   {
     solution->Print(std::cout);
   }
+
+}
+
+void SinglePhaseFlow_TPFA::ResetStateToBeginningOfStep( DomainPartition * const domain )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
+
+  ElementRegionManager::ElementViewAccessor<real64_array>
+  dP = elementRegionManager->
+       ConstructViewAccessor<real64_array>( viewKeyStruct::deltaFluidPressureString );
+
+  ElementRegionManager::ElementViewAccessor<real64_array>
+  dRho = elementRegionManager->
+         ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
+
+
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const k)->void
+  {
+    dP[er][esr][k] = 0.0;
+    dRho[er][esr][k] = 0.0;
+  });
 
 }
 

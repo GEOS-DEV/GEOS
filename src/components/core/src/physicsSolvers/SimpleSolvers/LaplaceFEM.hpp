@@ -138,8 +138,7 @@ public:
 
   void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                             real64 const scalingFactor,
-                            localIndex const dofOffset,
-                            dataRepository::ManagedGroup * const nodeManager );
+                            DomainPartition * const domain ) override;
 
 
 

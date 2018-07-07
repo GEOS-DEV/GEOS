@@ -21,7 +21,6 @@
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
-#include "systemSolverInterface/SystemSolverParameters.hpp"
 
 namespace geosx
 {
@@ -34,10 +33,11 @@ SolverBase::SolverBase( std::string const & name,
   m_linearSolverWrapper(nullptr),
   m_linearSystem(nullptr),
   m_verboseLevel(0),
-  m_gravityVector( R1Tensor(0.0) )
+  m_gravityVector( R1Tensor(0.0) ),
+  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this )
 {
   // register group with repository. Have Repository own object.
-  this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
+  this->RegisterGroup( groupKeyStruct::systemSolverParametersString, &m_systemSolverParameters, 0 );
 
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
@@ -130,8 +130,6 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        integer const cycleNumber,
                                        DomainPartition * const domain )
 {
-  real64 dt_return = dt;
-
   // call setup for physics solver. Pre step allocations etc.
   ImplicitStepSetup( time_n, dt, domain );
 
@@ -143,13 +141,13 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                getSystemSolverParameters() );
 
   // apply the system solution to the fields/variables
-  ApplySystemSolution( m_linearSystem, 1.0, 0, domain );
+  ApplySystemSolution( m_linearSystem, 1.0, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt,  domain );
 
   // return the achieved timestep
-  return dt_return;
+  return dt;
 }
 
 real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
@@ -157,6 +155,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                            integer const cycleNumber,
                                            DomainPartition * const domain )
 {
+  // dt may be cut during the course of this step, so we are keeping a local
+  // value to track the achieved dt for this step.
   real64 stepDt = dt;
 
   // call setup for physics solver. Pre step allocations etc.
@@ -168,9 +168,15 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   integer const maxNumberDtCuts = 2;
   integer const maxNumberLineSearchCuts = 5;
 
+  // a flag to denote whether we have converged
   integer isConverged = 0;
+
+  // outer loop attempts to apply full timestep, and managed the cutting of the timestep if
+  // required.
   for( int dtAttempt = 0 ; dtAttempt<maxNumberDtCuts ; ++dtAttempt )
   {
+    // main Newton loop
+    // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
     for( int k=0 ; k<maxNewtonIter ; ++k )
     {
@@ -178,26 +184,51 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // call assemble to fill the matrix and the rhs
       real64 residualNorm = AssembleSystem( domain, m_linearSystem, time_n, stepDt );
 
-
+      // if the residual norm is less than the Newton tolerance we denote that we have
+      // converged and break from the Newton loop immediately.
       if( residualNorm < newtonTol )
       {
         isConverged = 1;
         break;
       }
 
+
       // do line search in case residual has increased
       if( residualNorm > lastResidual )
       {
+
+        // flag to determine if we should solve the system and apply the solution. If the line
+        // search fails we just bail.
+        int lineSearchSuccess = 0;
+
+        // scale factor is value applied to the previous solution. In this case we want to
+        // subtract a portion of the previous solution.
         real64 scaleFactor = -1.0;
+
+        // main loop for the line search.
         for( int lineSearchIteration=0 ; lineSearchIteration<maxNumberLineSearchCuts ; ++lineSearchIteration )
         {
+          // cut the scale factor by half. This means that the scale factors will
+          // have values of -0.5, -0.25, -0.125, ...
           scaleFactor *= 0.5;
-          ApplySystemSolution( m_linearSystem, scaleFactor, 0, domain );
+          ApplySystemSolution( m_linearSystem, scaleFactor, domain );
+
+          // re-assemble system and re-evaluate residual norm
           residualNorm = AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+
+          // if the residual norm is less than the last residual, we can proceed to the
+          // solution step
           if( residualNorm < lastResidual )
           {
+            lineSearchSuccess = 1;
             break;
           }
+        }
+
+        // if line search failed, then break out of the main Newton loop. Timestep will be cut.
+        if( !lineSearchSuccess )
+        {
+          break;
         }
       }
 
@@ -206,7 +237,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                    getSystemSolverParameters() );
 
       // apply the system solution to the fields/variables
-      ApplySystemSolution( m_linearSystem, 1.0, 0, domain );
+      ApplySystemSolution( m_linearSystem, 1.0, domain );
 
       lastResidual = residualNorm;
     }
@@ -218,7 +249,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      // cut timestep and reset state
+      // cut timestep and reset state to beginning of step, and restart the Newton loop.
       stepDt *= 0.5;
       ResetStateToBeginningOfStep( domain );
     }
@@ -263,7 +294,6 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 
 void SolverBase::ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                           real64 const scalingFactor,
-                          localIndex const dofOffset,
                           DomainPartition * const  )
 {
   GEOS_ERROR( "SolverBase::ApplySystemSolution called!. Should be overridden.");
