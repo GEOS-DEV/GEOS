@@ -93,8 +93,8 @@
                setNames="all"
                objectPath="ElementRegion/Region2/cb1"
                fieldName="permeablity"
-               dataType="real64" 
-               scale="2.0e-16"/>
+               dataType="R1Tensor"
+               scale="2.0e-16, 2.0e-16, 2.0e-16"/>
 
     <Dirichlet name="porosity"
                initialCondition="1"  
