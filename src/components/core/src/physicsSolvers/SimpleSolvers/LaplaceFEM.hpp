@@ -67,7 +67,7 @@ public:
 
   virtual void ReadXML_PostProcess() override final;
 
-  virtual void TimeStep( real64 const& time_n,
+  virtual void SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
                          dataRepository::ManagedGroup * domain ) override;
@@ -111,7 +111,7 @@ public:
                               ML_Epetra::MultiLevelPreconditioner* MLPrec );
 
 
-  real64 Assemble ( DomainPartition * const domain,
+  real64 AssembleSystem ( DomainPartition * const domain,
                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
                     real64 const time,
                     real64 const dt );
@@ -138,8 +138,7 @@ public:
 
   void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                             real64 const scalingFactor,
-                            localIndex const dofOffset,
-                            dataRepository::ManagedGroup * const nodeManager );
+                            DomainPartition * const domain ) override;
 
 
 
