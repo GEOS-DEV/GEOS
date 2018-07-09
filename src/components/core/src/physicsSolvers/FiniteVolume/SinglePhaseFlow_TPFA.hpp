@@ -101,7 +101,8 @@ public:
 
   virtual void ImplicitStepSetup( real64 const& time_n,
                               real64 const& dt,
-                              DomainPartition * const domain ) override;
+                              DomainPartition * const domain,
+                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
 
   virtual void AssembleSystem( DomainPartition * const domain,
@@ -172,7 +173,7 @@ public:
    */
   void ApplyDirichletBC_implicit( ManagedGroup * object,
                                   real64 const time,
-                                  systemSolverInterface::EpetraBlockSystem & blockSystem);
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
 
   /**

@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SolverBase.hpp
- *
- *  Created on: Dec 2, 2014
- *      Author: rrsettgast
- */
-
 #ifndef SOLVERBASE_HPP_
 #define SOLVERBASE_HPP_
 
@@ -123,7 +116,8 @@ public:
   virtual real64 NonlinearImplicitStep( real64 const & time_n,
                                         real64 const & dt,
                                         integer const cycleNumber,
-                                        DomainPartition * const domain );
+                                        DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief Function for a linear implicit integration step
@@ -142,7 +136,8 @@ public:
   virtual real64 LinearImplicitStep(real64 const & time_n,
                                     real64 const & dt,
                                     integer const cycleNumber,
-                                    DomainPartition * const domain );
+                                    DomainPartition * const domain,
+                                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief function to perform setup for implicit timestep
@@ -158,7 +153,8 @@ public:
    */
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
-                                  DomainPartition * const domain );
+                                  DomainPartition * const domain,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
   /**
    * @brief function to assemble the linear system matrix and rhs
@@ -287,7 +283,7 @@ public:
   FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
 
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+//  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
@@ -309,15 +305,20 @@ public:
   } groupKeys;
 
 
-  /**
-   * accessor for the system solver parameters.
-   * @return
-   */
 
   R1Tensor const & getGravityVector() const { return m_gravityVector; }
   R1Tensor       & getGravityVector()       { return m_gravityVector; }
   R1Tensor const * globalGravityVector() const;
+
+  systemSolverInterface::EpetraBlockSystem * getLinearSystemRepository();
+  systemSolverInterface::EpetraBlockSystem const * getLinearSystemRepository() const;
+
   integer verboseLevel() const { return m_verboseLevel; }
+
+  /**
+   * accessor for the system solver parameters.
+   * @return
+   */
 
   SystemSolverParameters * getSystemSolverParameters()
   {
@@ -336,8 +337,6 @@ protected:
   /// This is a wrapper for the linear solver package
   systemSolverInterface::LinearSolverWrapper * m_linearSolverWrapper;
 
-  /// this is a block structured linear system object used to hold the system
-  systemSolverInterface::EpetraBlockSystem * m_linearSystem;
 
 private:
   integer m_verboseLevel = 0;

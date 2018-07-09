@@ -59,7 +59,8 @@ SinglePhaseFlow_TPFA::SinglePhaseFlow_TPFA( const std::string& name,
 {
 
   // set the blockID for the block system interface
-  m_linearSystem->SetBlockID( EpetraBlockSystem::BlockIDs::fluidPressureBlock, this->getName() );
+  getLinearSystemRepository()->
+  SetBlockID( EpetraBlockSystem::BlockIDs::fluidPressureBlock, this->getName() );
 
   // register data members with the repository
   this->RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, 0 );
@@ -278,7 +279,11 @@ void SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
                                      ManagedGroup * domain )
 {
   // currently the only method is implcit time integration
-  this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
+  this->NonlinearImplicitStep( time_n,
+                               dt,
+                               cycleNumber,
+                               domain->group_cast<DomainPartition*>(),
+                               getLinearSystemRepository() );
 }
 
 
@@ -288,7 +293,7 @@ void SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
  */
 void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
                                                       real64 const time,
-                                                      EpetraBlockSystem & blockSystem )
+                                                      EpetraBlockSystem * const blockSystem )
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
   ElementRegionManager * elemManager = object->group_cast<ElementRegionManager *>();
@@ -329,7 +334,7 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
                                                           time,
                                                           blockLocalDofNumber[er][esr].get(),
                                                           1,
-                                                          m_linearSystem,
+                                                          blockSystem,
                                                           EpetraBlockSystem::BlockIDs::fluidPressureBlock,
                                                           [&](localIndex const a)->real64
         {
@@ -341,9 +346,11 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
 }
 
 
-void SinglePhaseFlow_TPFA::ImplicitStepSetup( real64 const& time_n,
-                                                  real64 const& dt,
-                                                  DomainPartition * const domain )
+void SinglePhaseFlow_TPFA::
+ImplicitStepSetup( real64 const& time_n,
+                   real64 const& dt,
+                   DomainPartition * const domain,
+                   systemSolverInterface::EpetraBlockSystem * const blockSystem)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -382,7 +389,7 @@ void SinglePhaseFlow_TPFA::ImplicitStepSetup( real64 const& time_n,
 
 
   // setup dof numbers and linear system
-  SetupSystem( domain, m_linearSystem );
+  SetupSystem( domain, blockSystem );
 }
 
 void SinglePhaseFlow_TPFA::ImplicitStepComplete( real64 const & time_n,
@@ -861,7 +868,7 @@ void SinglePhaseFlow_TPFA::ApplyBoundaryConditions( DomainPartition * const doma
   // apply pressure boundary conditions.
   ApplyDirichletBC_implicit( elemManager,
                              time_n + dt,
-                             *m_linearSystem );
+                             getLinearSystemRepository() );
 
 }
 
@@ -1090,7 +1097,7 @@ void SinglePhaseFlow_TPFA::SolveSystem( EpetraBlockSystem * const blockSystem,
                                         SystemSolverParameters const * const params )
 {
   Epetra_FEVector * const
-  solution = m_linearSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  solution = blockSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
 
   Epetra_FEVector * const
   residual = blockSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );

@@ -17,6 +17,7 @@
  */
 
 #include "SolverBase.hpp"
+#include "PhysicsSolverManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
@@ -31,7 +32,6 @@ SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
   ManagedGroup( name, parent ),
   m_linearSolverWrapper(nullptr),
-  m_linearSystem(nullptr),
   m_verboseLevel(0),
   m_gravityVector( R1Tensor(0.0) ),
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
@@ -50,15 +50,12 @@ SolverBase::SolverBase( std::string const & name,
   }
 
   m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
-  m_linearSystem = new systemSolverInterface::EpetraBlockSystem();
-
 
 }
 
 SolverBase::~SolverBase()
 {
   delete m_linearSolverWrapper;
-  delete m_linearSystem;
 }
 
 SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
@@ -160,23 +157,24 @@ void SolverBase::SolverStep( real64 const& time_n,
 real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
-                                       DomainPartition * const domain )
+                                       DomainPartition * const domain,
+                                       systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
   // call setup for physics solver. Pre step allocations etc.
-  ImplicitStepSetup( time_n, dt, domain );
+  ImplicitStepSetup( time_n, dt, domain, blockSystem );
 
   // call assemble to fill the matrix and the rhs
-  AssembleSystem( domain, m_linearSystem, time_n+dt, dt );
+  AssembleSystem( domain, blockSystem, time_n+dt, dt );
 
   // call the default linear solver on the system
-  SolveSystem( m_linearSystem,
+  SolveSystem( blockSystem,
                getSystemSolverParameters() );
 
   // apply the system solution to the fields/variables
-  ApplySystemSolution( m_linearSystem, 1.0, domain );
+  ApplySystemSolution( blockSystem, 1.0, domain );
 
   // apply boundary conditions to system
-  ApplyBoundaryConditions( domain, m_linearSystem, time_n, dt );
+  ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt,  domain );
@@ -188,14 +186,15 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
 real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                            real64 const & dt,
                                            integer const cycleNumber,
-                                           DomainPartition * const domain )
+                                           DomainPartition * const domain,
+                                           systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
   // dt may be cut during the course of this step, so we are keeping a local
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
 
   // call setup for physics solver. Pre step allocations etc.
-  ImplicitStepSetup( time_n, stepDt, domain );
+  ImplicitStepSetup( time_n, stepDt, domain, blockSystem );
 
   SystemSolverParameters const * const solverParams = getSystemSolverParameters();
   real64 const newtonTol = solverParams->newtonTol();
@@ -217,13 +216,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     {
 
       // call assemble to fill the matrix and the rhs
-      AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+      AssembleSystem( domain, blockSystem, time_n, stepDt );
 
       // apply boundary conditions to system
-      ApplyBoundaryConditions( domain, m_linearSystem, time_n, dt );
+      ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
 
       // get residual norm
-      real64 residualNorm = CalculateResidualNorm( m_linearSystem );
+      real64 residualNorm = CalculateResidualNorm( blockSystem );
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
@@ -252,16 +251,16 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           // cut the scale factor by half. This means that the scale factors will
           // have values of -0.5, -0.25, -0.125, ...
           scaleFactor *= 0.5;
-          ApplySystemSolution( m_linearSystem, scaleFactor, domain );
+          ApplySystemSolution( blockSystem, scaleFactor, domain );
 
           // re-assemble system
-          AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+          AssembleSystem( domain, blockSystem, time_n, stepDt );
 
           // apply boundary conditions to system
-          ApplyBoundaryConditions( domain, m_linearSystem, time_n, dt );
+          ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
 
           // get residual norm
-          residualNorm = CalculateResidualNorm( m_linearSystem );
+          residualNorm = CalculateResidualNorm( blockSystem );
 
           // if the residual norm is less than the last residual, we can proceed to the
           // solution step
@@ -280,11 +279,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // call the default linear solver on the system
-      SolveSystem( m_linearSystem,
+      SolveSystem( blockSystem,
                    getSystemSolverParameters() );
 
       // apply the system solution to the fields/variables
-      ApplySystemSolution( m_linearSystem, 1.0, domain );
+      ApplySystemSolution( blockSystem, 1.0, domain );
 
       lastResidual = residualNorm;
     }
@@ -325,7 +324,8 @@ real64 SolverBase::ExplicitStep( real64 const & time_n,
 
 void SolverBase::ImplicitStepSetup( real64 const& time_n,
                         real64 const& dt,
-                        DomainPartition * const domain )
+                        DomainPartition * const domain,
+                        systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
   GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden.");
 }
@@ -383,14 +383,14 @@ void SolverBase::ImplicitStepComplete( real64 const & time,
 
 
 
-void SolverBase::CreateChild( string const & childKey, string const & childName )
-{
-  if( CatalogInterface::hasKeyName(childKey) )
-  {
-    std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
-    this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
-  }
-}
+//void SolverBase::CreateChild( string const & childKey, string const & childName )
+//{
+//  if( CatalogInterface::hasKeyName(childKey) )
+//  {
+//    std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
+//    this->RegisterGroup( childName, CatalogInterface::Factory( childKey, childName, this ) );
+//  }
+//}
 
 
 R1Tensor const * SolverBase::globalGravityVector() const
@@ -398,13 +398,27 @@ R1Tensor const * SolverBase::globalGravityVector() const
   R1Tensor const * rval = nullptr;
   if( getParent()->getName() == "Solvers" )
   {
-    rval = &(getParent()->
-             group_cast<SolverBase const *>()->
-             getGravityVector());
+    rval = &(getParent()->getReference<R1Tensor>( viewKeyStruct::gravityVectorString ));
   }
 
   return rval;
 }
 
+
+systemSolverInterface::EpetraBlockSystem const * SolverBase::getLinearSystemRepository() const
+{
+  return &( getParent()->
+            getReference<systemSolverInterface::EpetraBlockSystem>( PhysicsSolverManager::
+                                                                    viewKeyStruct::
+                                                                    blockSystemRepositoryString ) );
+}
+
+systemSolverInterface::EpetraBlockSystem * SolverBase::getLinearSystemRepository()
+{
+  return &( getParent()->
+            getReference<systemSolverInterface::EpetraBlockSystem>( PhysicsSolverManager::
+                                                                    viewKeyStruct::
+                                                                    blockSystemRepositoryString ) );
+}
 
 } /* namespace ANST */
