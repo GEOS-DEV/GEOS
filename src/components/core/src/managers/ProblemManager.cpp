@@ -874,7 +874,7 @@ void ProblemManager::WriteSilo( integer const cycleNumber,
 
   silo.Initialize(PMPIO_WRITE);
   silo.WaitForBaton(rank, cycleNumber, false );
-  domain->WriteSilo(silo,cycleNumber,problemTime,0);
+  silo.WriteDomainPartition( *domain, cycleNumber,problemTime,0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);
   silo.Finish();
