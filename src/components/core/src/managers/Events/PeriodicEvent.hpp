@@ -16,12 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * PeriodicEvent.hpp
- *
- *  Created on: Jan 26, 2018
- *      Author: sherman
- */
+/** An event type for periodic events (using either time or cycle as a basis). */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_PERIODICEVENT_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_PERIODICEVENT_HPP_

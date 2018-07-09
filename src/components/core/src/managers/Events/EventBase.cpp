@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * EventBase.cpp
- *
- *  Created on: Jan 26, 2018
- *      Author: sherman
- */
-
 #include "EventBase.hpp"
 
 namespace geosx
@@ -30,21 +23,36 @@ namespace geosx
 
 using namespace dataRepository;
 
+/*
+ * Constructor.
+ */
 EventBase::EventBase( const std::string& name,
                       ManagedGroup * const parent ):
   ManagedGroup(name, parent),
   m_target(nullptr)
 {}
 
+
+/*
+ * Destructor.
+ */
 EventBase::~EventBase()
 {}
 
+
+/*
+ * Catalog interface
+ */
 EventBase::CatalogInterface::CatalogType& EventBase::GetCatalog()
 {
   static EventBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
+
+/*
+ * Common documentation.
+ */
 void EventBase::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
@@ -173,6 +181,15 @@ void EventBase::FillDocumentationNode()
 }
 
 
+/*
+ * An event may have an arbitrary number of sub-events defined as children in the input xml.
+ * e.g.: <Events>
+ *         <PeriodicEvent name="base_event" ...>
+ *           <PeriodicEvent name="sub_event" .../>
+ *           ...
+ *         </PeriodicEvent>
+ *       </Events>
+ */
 void EventBase::CreateChild( string const & childKey, string const & childName )
 {
   std::cout << "Adding Event: " << childKey << ", " << childName << std::endl;
@@ -181,6 +198,12 @@ void EventBase::CreateChild( string const & childKey, string const & childName )
 }
 
 
+/*
+ * The target object for an event may be specified via the keyword "target" in the input xml.
+ * This string is empty by default and uses GetGroupByPath() method in ManagedGroup, which returns
+ * a pointer to the target using a unix-style path as an input (both absolute and relative paths work).
+ * This involves a lot of string parsing, so we do it once during initialization.
+ */
 void EventBase::GetTargetReferences()
 {
   string eventTarget = this->getReference<string>(viewKeys.eventTarget);
@@ -195,7 +218,12 @@ void EventBase::GetTargetReferences()
   });
 }
 
-
+/*
+ * Events are triggered based upon their forecast values, which are defined
+ * as the expected number of code cycles before they are executed.  This method
+ * will call EstimateEventTiming (defined in each subclass) on this event and
+ * its children.
+ */
 void EventBase::CheckEvents(real64 const time,
                             real64 const dt, 
                             integer const cycle,
@@ -207,11 +235,18 @@ void EventBase::CheckEvents(real64 const time,
   // Check event status
   if (time < beginTime)
   {
-    m_eventForecast = int((beginTime - time) / dt);
+    if (dt <= 0)
+    {
+      m_eventForecast = std::numeric_limits<integer>::max();
+    }
+    else
+    {
+      m_eventForecast = int((beginTime - time) / dt);
+    }
   }
   else if (time >= endTime)
   {
-    m_eventForecast = 1e6;
+    m_eventForecast = std::numeric_limits<integer>::max();
   }
   else
   {
@@ -226,6 +261,10 @@ void EventBase::CheckEvents(real64 const time,
 }
 
 
+/*
+ * If the event forecast is equal to 1, then signal the targets to prepare for execution
+ * during the next cycle.
+ */
 void EventBase::SignalToPrepareForExecution(real64 const time,
                                         real64 const dt, 
                                         integer const cycle,
@@ -246,6 +285,14 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 }
 
 
+
+/*
+ * If the event forecast is equal to 0, then call the step function on its target and/or children.
+ * There are three types of time-steps that are allowed:
+ *   - Regular steps (default).  This will call execute the solver with the dt specified by this event's parent.
+ *   - Superstep (allowSuperstep = 1).  The dt for the step will be set to (dt + time_n - lastTime)
+ *   - Substep (allowSubstep = 1, substepFactor >= 1).  This will repeatedly step with timestep=dt/substepFactor
+ */
 void EventBase::Execute(real64 const& time_n,
                         real64 const& dt,
                         const int cycleNumber,
@@ -283,6 +330,9 @@ void EventBase::Execute(real64 const& time_n,
 }
 
 
+/*
+ * This method will call the execute method on the target and/or children if present.
+ */
 void EventBase::Step(real64 const time,
                      real64 const dt,  
                      integer const cycle,
@@ -303,10 +353,14 @@ void EventBase::Step(real64 const time,
 }
 
 
+
+/*
+ * This method will collect time-step size requests from its targets and/or children.
+ */
 real64 EventBase::GetTimestepRequest(real64 const time)
 {
-  real64 nextDt = 1e6;
-  real64 requestedDt = 1e6;
+  real64 nextDt = std::numeric_limits<integer>::max();
+  real64 requestedDt = std::numeric_limits<integer>::max();
   real64 const forceDt = this->getReference<real64>(viewKeys.forceDt);
   integer const allowSubstep = this->getReference<integer>(viewKeys.allowSubstep);
   integer const substepFactor = this->getReference<integer>(viewKeys.substepFactor);
