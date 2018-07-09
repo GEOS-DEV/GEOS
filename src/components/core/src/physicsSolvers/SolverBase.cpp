@@ -34,13 +34,15 @@ SolverBase::SolverBase( std::string const & name,
   m_linearSystem(nullptr),
   m_verboseLevel(0),
   m_gravityVector( R1Tensor(0.0) ),
-  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this )
+  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
+  m_blockLocalDofNumber()
 {
   // register group with repository. Have Repository own object.
   this->RegisterGroup( groupKeyStruct::systemSolverParametersString, &m_systemSolverParameters, 0 );
 
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::blockLocalDofNumberString, &m_blockLocalDofNumber, 0 );
 
   if( this->globalGravityVector() != nullptr )
   {
@@ -49,6 +51,8 @@ SolverBase::SolverBase( std::string const & name,
 
   m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
   m_linearSystem = new systemSolverInterface::EpetraBlockSystem();
+
+
 }
 
 SolverBase::~SolverBase()
@@ -112,9 +116,37 @@ void SolverBase::FillDocumentationNode()
                               1,
                               0 );
 
-
 }
 
+void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
+{
+  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
+
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
+
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+    elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
+      {
+        cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
+
+        docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
+                                    viewKeyStruct::blockLocalDofNumberString,
+                                    -1,
+                                    "localIndex_array",
+                                    "localIndex_array",
+                                    "verbosity level",
+                                    "verbosity level",
+                                    "0",
+                                    "",
+                                    0,
+                                    0,
+                                    0 );
+      });
+  }
+}
 
 
 void SolverBase::SolverStep( real64 const& time_n,
@@ -142,6 +174,9 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
 
   // apply the system solution to the fields/variables
   ApplySystemSolution( m_linearSystem, 1.0, domain );
+
+  // apply boundary conditions to system
+  ApplyBoundaryConditions( domain, m_linearSystem, time_n, dt );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt,  domain );
@@ -182,7 +217,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     {
 
       // call assemble to fill the matrix and the rhs
-      real64 residualNorm = AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+      AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+
+      // apply boundary conditions to system
+      ApplyBoundaryConditions( domain, m_linearSystem, time_n, dt );
+
+      // get residual norm
+      real64 residualNorm = CalculateResidualNorm( m_linearSystem );
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
@@ -213,8 +254,14 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           scaleFactor *= 0.5;
           ApplySystemSolution( m_linearSystem, scaleFactor, domain );
 
-          // re-assemble system and re-evaluate residual norm
-          residualNorm = AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+          // re-assemble system
+          AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+
+          // apply boundary conditions to system
+          ApplyBoundaryConditions( domain, m_linearSystem, time_n, dt );
+
+          // get residual norm
+          residualNorm = CalculateResidualNorm( m_linearSystem );
 
           // if the residual norm is less than the last residual, we can proceed to the
           // solution step
@@ -243,8 +290,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     }
     if( isConverged )
     {
-      // final step for completion of timestep. typically secondary variable updates and cleanup.
-      ImplicitStepComplete( time_n, stepDt,  domain );
+      // break out of outer loop
       break;
     }
     else
@@ -255,6 +301,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     }
   }
 
+  if( !isConverged )
+  {
+    std::cout<<"Convergence not achieved.";
+  }
+
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  ImplicitStepComplete( time_n, stepDt,  domain );
 
   // return the achieved timestep
   return stepDt;
@@ -277,12 +330,28 @@ void SolverBase::ImplicitStepSetup( real64 const& time_n,
   GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden.");
 }
 
-real64 SolverBase::AssembleSystem( DomainPartition * const domain,
-                             systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                             real64 const time,
-                             real64 const dt )
+void SolverBase::AssembleSystem( DomainPartition * const domain,
+                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                 real64 const time,
+                                 real64 const dt )
 {
   GEOS_ERROR( "SolverBase::Assemble called!. Should be overridden.");
+}
+
+
+void SolverBase::ApplyBoundaryConditions( DomainPartition * const domain,
+                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                          real64 const time,
+                                          real64 const dt )
+{
+  GEOS_ERROR( "SolverBase::SolveSystem called!. Should be overridden.");
+}
+
+real64
+SolverBase::
+CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem )
+{
+  GEOS_ERROR( "SolverBase::CalculateResidualNorm called!. Should be overridden.");
   return 0;
 }
 
@@ -335,11 +404,6 @@ R1Tensor const * SolverBase::globalGravityVector() const
   }
 
   return rval;
-}
-
-SystemSolverParameters * SolverBase::getSystemSolverParameters()
-{
-  return this->GetGroup<SystemSolverParameters>(groupKeys.systemSolverParameters);
 }
 
 

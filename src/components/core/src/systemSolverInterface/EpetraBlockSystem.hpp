@@ -283,9 +283,22 @@ public:
     }
     return m_rhs[ index ].get();
   }
+  Epetra_FEVector const * GetResidualVector( int const index ) const
+  {
+    if( m_blockID[index]==BlockIDs::invalidBlock )
+    {
+      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n");
+    }
+    return m_rhs[ index ].get();
+  }
   Epetra_FEVector * GetResidualVector( const BlockIDs dofID )
   {
     int index = m_blockIndex[dofID];
+    return GetResidualVector(index);
+  }
+  Epetra_FEVector const * GetResidualVector( const BlockIDs dofID ) const
+  {
+    int index = m_blockIndex.at(dofID);
     return GetResidualVector(index);
   }
 
