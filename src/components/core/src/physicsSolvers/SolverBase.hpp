@@ -177,10 +177,36 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual real64 AssembleSystem( DomainPartition * const domain,
-                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                 real64 const time,
-                                 real64 const dt );
+  virtual void AssembleSystem( DomainPartition * const domain,
+                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               real64 const time,
+                               real64 const dt );
+
+  /**
+   * @brief apply boundary condition to system
+   * @param domain the domain partition
+   * @param blockSystem the entire block system
+   * @param time the time at the beginning of the step
+   * @param dt the desired timestep
+   *
+   * This function applies all boundary conditions to the linear system. This is essentially a
+   * completion of the system assembly, but is separated for use in coupled solvers.
+   */
+  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        real64 const time,
+                                        real64 const dt );
+
+  /**
+   * @brief calculate the norm of the global system residual
+   * @param blockSystem the entire block system
+   * @return norm of the residual
+   *
+   * This function returns the norm of global residual vector, which is suitable for comparison with
+   * a tolerance.
+   */
+  virtual real64
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem );
 
   /**
    * @brief function to apply a linear system solver to the assembled system.
@@ -257,6 +283,10 @@ public:
 
   virtual void FillDocumentationNode() override;
 
+  virtual void
+  FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
+
+
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
@@ -266,6 +296,9 @@ public:
   {
     constexpr static auto verboseLevelString = "verboseLevel";
     constexpr static auto gravityVectorString = "gravityVector";
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber";
+
+    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
 
   } viewKeys;
 
@@ -280,12 +313,24 @@ public:
    * accessor for the system solver parameters.
    * @return
    */
-  SystemSolverParameters * getSystemSolverParameters();
 
   R1Tensor const & getGravityVector() const { return m_gravityVector; }
   R1Tensor       & getGravityVector()       { return m_gravityVector; }
   R1Tensor const * globalGravityVector() const;
   integer verboseLevel() const { return m_verboseLevel; }
+
+  SystemSolverParameters * getSystemSolverParameters()
+  {
+    return &m_systemSolverParameters;
+  }
+
+  SystemSolverParameters const * getSystemSolverParameters() const
+  {
+    return &m_systemSolverParameters;
+  }
+
+  localIndex_array & blockLocalDofNumber() { return m_blockLocalDofNumber; }
+  localIndex_array const & blockLocalDofNumber() const { return m_blockLocalDofNumber; }
 
 protected:
   /// This is a wrapper for the linear solver package
@@ -297,8 +342,9 @@ protected:
 private:
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
-
   SystemSolverParameters m_systemSolverParameters;
+
+  localIndex_array m_blockLocalDofNumber;
 
 
 };

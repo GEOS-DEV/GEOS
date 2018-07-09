@@ -111,10 +111,10 @@ public:
                               ML_Epetra::MultiLevelPreconditioner* MLPrec );
 
 
-  real64 AssembleSystem ( DomainPartition * const domain,
+  void AssembleSystem ( DomainPartition * const domain,
                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
                     real64 const time,
-                    real64 const dt );
+                    real64 const dt ) override;
 
   realT CalculateElementResidualAndDerivative( real64 const density,
                                                FiniteElementBase const * const fe,

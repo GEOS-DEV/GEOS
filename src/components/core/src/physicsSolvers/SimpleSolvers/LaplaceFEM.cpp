@@ -516,7 +516,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
 
 
 
-real64 LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
+void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
                                                 EpetraBlockSystem * const blockSystem,
                                                 real64 const time_n,
                                                 real64 const dt )
@@ -614,7 +614,6 @@ real64 LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   matrix->GlobalAssemble(true);
   rhs->GlobalAssemble();
 
-  return 0;
 }
 
 

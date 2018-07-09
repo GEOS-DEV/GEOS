@@ -105,6 +105,7 @@ void SinglePhaseFlow_TPFA::FillDocumentationNode(  )
 
 void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
 {
+  SolverBase::FillOtherDocumentationNodes( rootGroup );
   DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
@@ -149,18 +150,6 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
     elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
       {
         cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
-        docNode->AllocateChildNode( viewKeys.trilinosIndex.Key(),
-                                    viewKeys.trilinosIndex.Key(),
-                                    -1,
-                                    "localIndex_array",
-                                    "localIndex_array",
-                                    "",
-                                    "",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
 
         docNode->AllocateChildNode( viewKeyStruct::deltaFluidPressureString,
                                     viewKeyStruct::deltaFluidPressureString,
@@ -305,8 +294,8 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
   ElementRegionManager * elemManager = object->group_cast<ElementRegionManager *>();
 
   ElementRegionManager::ElementViewAccessor<localIndex_array>
-  trilinosIndex = elemManager->
-                  ConstructViewAccessor<localIndex_array>( viewKeyStruct::trilinosIndexString );
+  blockLocalDofNumber = elemManager->
+                  ConstructViewAccessor<localIndex_array>( viewKeyStruct::blockLocalDofNumberString );
 
   ElementRegionManager::ElementViewAccessor<real64_array>
   pressure_n = elemManager->
@@ -338,7 +327,7 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
       // call the application of the boundray condition to alter the matrix and rhs
       bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
                                                           time,
-                                                          trilinosIndex[er][esr].get(),
+                                                          blockLocalDofNumber[er][esr].get(),
                                                           1,
                                                           m_linearSystem,
                                                           EpetraBlockSystem::BlockIDs::fluidPressureBlock,
@@ -457,8 +446,8 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
 
   ElementRegionManager * const elementRegionManager = meshLevel->getElemManager();
   ElementRegionManager::ElementViewAccessor<localIndex_array>
-  trilinosIndex = elementRegionManager->
-                  ConstructViewAccessor<localIndex_array>( viewKeys.trilinosIndex.Key(),
+  blockLocalDofNumber = elementRegionManager->
+                  ConstructViewAccessor<localIndex_array>( viewKeys.blockLocalDofNumber.Key(),
                                                            string() );
 
   ElementRegionManager::ElementViewAccessor< integer_array >
@@ -497,7 +486,7 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
   {
     for( localIndex esr=0 ; esr<ghostRank[er].size() ; ++esr )
     {
-      trilinosIndex[er][esr] = -1;
+      blockLocalDofNumber[er][esr] = -1;
     }
   }
 
@@ -509,12 +498,12 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
   {
     if( ghostRank[er][esr][k] < 0 )
     {
-      trilinosIndex[er][esr][k] = firstLocalRow+localCount+offset;
+      blockLocalDofNumber[er][esr][k] = firstLocalRow+localCount+offset;
       ++localCount;
     }
     else
     {
-      trilinosIndex[er][esr][k] = -1;
+      blockLocalDofNumber[er][esr][k] = -1;
     }
   });
 
@@ -550,14 +539,15 @@ void SinglePhaseFlow_TPFA :: SetupSystem ( DomainPartition * const domain,
                                 displacementIndices,
                                 0 );
 
-  std::map<string, array<string> > fieldNames;
-  fieldNames["node"].push_back(viewKeys.trilinosIndex.Key());
-
-  CommunicationTools::
-  SynchronizeFields(fieldNames,
-                    mesh,
-                    domain->getReference< array<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-
+  //TODO element sync doesn't work yet
+//  std::map<string, array<string> > fieldNames;
+//  fieldNames["element"].push_back(viewKeys.blockLocalDofNumber.Key());
+//
+//  CommunicationTools::
+//  SynchronizeFields(fieldNames,
+//                    mesh,
+//                    domain->getReference< array<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+//
 
   // construct row map, and set a pointer to the row map
   Epetra_Map * const
@@ -604,8 +594,8 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
   ElementRegionManager::ElementViewAccessor<localIndex_array const>
-  trilinosIndex = elementRegionManager->
-                  ConstructViewAccessor<localIndex_array>( viewKeys.trilinosIndex.Key() );
+  blockLocalDofNumber = elementRegionManager->
+                  ConstructViewAccessor<localIndex_array>( viewKeys.blockLocalDofNumber.Key() );
 
   ElementRegionManager::ElementViewAccessor< integer_array const >
   elemGhostRank = elementRegionManager->
@@ -623,8 +613,8 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
   for( auto const kf : m_faceConnectors )
   {
-    elementLocalDofIndex[0] = trilinosIndex[elementRegionList[kf][0]][elementSubRegionList[kf][0]][elementIndexList[kf][0]];
-    elementLocalDofIndex[1] = trilinosIndex[elementRegionList[kf][1]][elementSubRegionList[kf][1]][elementIndexList[kf][1]];
+    elementLocalDofIndex[0] = blockLocalDofNumber[elementRegionList[kf][0]][elementSubRegionList[kf][0]][elementIndexList[kf][0]];
+    elementLocalDofIndex[1] = blockLocalDofNumber[elementRegionList[kf][1]][elementSubRegionList[kf][1]][elementIndexList[kf][1]];
 
     sparsity->InsertGlobalIndices( 2,
                                    elementLocalDofIndex.data(),
@@ -639,7 +629,7 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
   {
     if( elemGhostRank[er][esr][k] < 0 )
     {
-      elementLocalDofIndex[0] = trilinosIndex[er][esr][k];
+      elementLocalDofIndex[0] = blockLocalDofNumber[er][esr][k];
 
       sparsity->InsertGlobalIndices( 1,
                                      elementLocalDofIndex.data(),
@@ -652,10 +642,10 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
 
 
 
-real64 SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
-                                        EpetraBlockSystem * const blockSystem,
-                                        real64 const time_n,
-                                        real64 const dt )
+void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
+                                            EpetraBlockSystem * const blockSystem,
+                                            real64 const time_n,
+                                            real64 const dt )
 {
   //***** extract data required for assembly of system *****
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -698,8 +688,8 @@ real64 SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
                   ConstructViewAccessor<real64_array>( viewKeyStruct::fluidPressureString );
 
 
-  auto trilinosIndex = elemManager->
-                       ConstructViewAccessor<localIndex_array>( viewKeyStruct::trilinosIndexString );
+  auto blockLocalDofNumber = elemManager->
+                       ConstructViewAccessor<localIndex_array>( viewKeyStruct::blockLocalDofNumberString );
 
   auto
   dRho = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
@@ -726,7 +716,6 @@ real64 SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
   Epetra_SerialDenseVector localElemResidual(1);
   Epetra_SerialDenseMatrix localElem_dRdP(1, 1);
 
-  localIndex numLocalDOF = 0;
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
                                 localIndex const k)->void
@@ -739,7 +728,7 @@ real64 SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
       // matIndex2 is the index of the point within material specified in matIndex1
       localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
 
-      elemDOF(0) = trilinosIndex[er][esr][k];
+      elemDOF(0) = blockLocalDofNumber[er][esr][k];
 
       // under the assumption that pore volume change = volume change
       dPorosity[er][esr][k] = ( dVolume[er][esr][k] * ( 1.0 - porosity_n[er][esr][k]) )
@@ -766,7 +755,6 @@ real64 SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
       // add contribution to global residual and dRdP
       residual->SumIntoGlobalValues(elemDOF, localElemResidual);
       dRdP->SumIntoGlobalValues(elemDOF, localElem_dRdP);
-      ++numLocalDOF;
     }
   });
 
@@ -788,8 +776,8 @@ real64 SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
       localIndex ei2 = faceToElemList[kf][1];
 
 
-      faceDOF[0] = trilinosIndex[er1][esr1][ei1];
-      faceDOF[1] = trilinosIndex[er2][esr2][ei2];
+      faceDOF[0] = blockLocalDofNumber[er1][esr1][ei1];
+      faceDOF[1] = blockLocalDofNumber[er2][esr2][ei2];
 
       // get the constitutive indices
       localIndex const consitutiveModelIndex1      = constitutiveMap[er1][esr1].get().first[ei1][0];
@@ -853,31 +841,45 @@ real64 SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
   dRdP->GlobalAssemble(true);
   residual->GlobalAssemble();
 
-
-
-
-  // apply pressure boundary conditions.
-  ApplyDirichletBC_implicit( elemManager,
-                             time_n + dt,
-                             *m_linearSystem );
-
-
   if( verboseLevel() >= 2 )
   {
     dRdP->Print(std::cout);
     residual->Print(std::cout);
   }
 
+}
 
+void SinglePhaseFlow_TPFA::ApplyBoundaryConditions( DomainPartition * const domain,
+                                                    systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                                    real64 const time_n,
+                                                    real64 const dt )
+{
 
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  // apply pressure boundary conditions.
+  ApplyDirichletBC_implicit( elemManager,
+                             time_n + dt,
+                             *m_linearSystem );
+
+}
+
+real64
+SinglePhaseFlow_TPFA::
+CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem )
+{
+
+  Epetra_FEVector const * const
+  residual = blockSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
 
   real64 localResidual = 0.0;
 //  residual->Norm2(&scalarResidual);
 
   real64 * residualData = nullptr;
-  int dummy;
-  residual->ExtractView(&residualData,&dummy);
-  for( localIndex i=0 ; i<numLocalDOF ; ++i )
+  int length;
+  residual->ExtractView(&residualData,&length);
+  for( localIndex i=0 ; i<length ; ++i )
   {
     localResidual += residualData[i]*residualData[i];
   }
@@ -886,6 +888,7 @@ real64 SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
 
 
   return sqrt(globalResidualNorm);
+
 }
 
 
@@ -905,8 +908,8 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor<localIndex_array>
-  trilinosIndex = elementRegionManager->
-                  ConstructViewAccessor<localIndex_array>( viewKeys.trilinosIndex.Key() );
+  blockLocalDofNumber = elementRegionManager->
+                  ConstructViewAccessor<localIndex_array>( viewKeys.blockLocalDofNumber.Key() );
 
   ElementRegionManager::ElementViewAccessor<real64_array>
   dP = elementRegionManager->
@@ -939,7 +942,7 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
     if( elemGhostRank[er][esr][k]<0 )
     {
       // extract solution and apply to dP
-      int const lid = rowMap->LID(integer_conversion<int>(trilinosIndex[er][esr][k]));
+      int const lid = rowMap->LID(integer_conversion<int>(blockLocalDofNumber[er][esr][k]));
       dP[er][esr][k] += scalingFactor * local_solution[lid];
     }
   });

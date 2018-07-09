@@ -11,7 +11,8 @@
                           timeIntegrationOption="SteadyState"
                           verboseLevel="3">
                           <SystemSolverParameters name="SystemSolverParameters"
-                                                   newtonTol="1.0e-8"
+                                                  krylovTol="1.0e-10"
+                                                   newtonTol="1.0e-10"
                                                    maxIterNewton="6"/>
     </SinglePhaseFlow_TPFA>
   </Solvers>
@@ -20,10 +21,10 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 10"
+                  xCoords="0, 11"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="10"
+                  nx="11"
                   ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>
@@ -31,7 +32,7 @@
 
   <Geometry>
     <Box name="source" type="0" xMin="-1.00, -1.00, -1.00" xMax="1.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 8.99, -0.99, -0.99" xMax="10.1, 1.10, 1.10"/>
+    <Box name="sink"   type="0" xMin=" 9.99, -0.99, -0.99" xMax="11.1, 1.10, 1.10"/>
   </Geometry>
 
 
@@ -94,7 +95,7 @@
                objectPath="ElementRegion/Region2/cb1"
                fieldName="permeablity"
                dataType="real64" 
-               scale="2.0e-16"/>
+               scale="1.0e-15"/>
 
     <Dirichlet name="porosity"
                initialCondition="1"  
