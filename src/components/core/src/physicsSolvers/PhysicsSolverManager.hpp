@@ -16,17 +16,11 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * PhysicsSolverManager.hpp
- *
- *  Created on: Sep 7, 2016
- *      Author: rrsettgast
- */
-
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
+#include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 namespace pugi
 {
@@ -52,15 +46,25 @@ public:
   struct viewKeyStruct
   {
       constexpr static auto gravityVectorString = "gravityVector";
+      constexpr static auto blockSystemRepositoryString = "blockSystemRepository";
   } viewKeys;
+
+  struct groupKeyStruct
+  {
+  } groupKeys;
 
   R1Tensor const & gravityVector() const { return m_gravityVector; }
   R1Tensor       & gravityVector()       { return m_gravityVector; }
+
+
 
 private:
   PhysicsSolverManager() = delete;
 
   R1Tensor m_gravityVector;
+
+  /// this is a block structured linear system object used to hold the system
+  systemSolverInterface::EpetraBlockSystem m_blockSystemRepository;
 
 };
 
