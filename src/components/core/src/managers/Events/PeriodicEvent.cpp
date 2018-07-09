@@ -16,12 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * PeriodicEvent.cpp
- *
- *  Created on: Jan 26, 2018
- *      Author: sherman
- */
+
 
 #include "PeriodicEvent.hpp"
 #include "DocumentationNode.hpp"
@@ -32,15 +27,27 @@ namespace geosx
 
 using namespace dataRepository;
 
+
+/*
+ * Constructor.
+ */
 PeriodicEvent::PeriodicEvent( const std::string& name,
                               ManagedGroup * const parent ):
   EventBase(name,parent),
   m_functionTarget(nullptr)
 {}
 
+
+/*
+ * Destructor.
+ */
 PeriodicEvent::~PeriodicEvent()
 {}
 
+
+/*
+ * Documentation.
+ */
 void PeriodicEvent::FillDocumentationNode()
 {
   EventBase::FillDocumentationNode();
@@ -158,6 +165,15 @@ void PeriodicEvent::FillDocumentationNode()
 
 
 
+/*
+ * Estimate the expected number of cycles until an event is expected to trigger.
+ * The event frequency can be specified in terms of:
+ *   - time (timeFrequency > 0, units = seconds)
+ *   - or cycle (cycleFrequency >= 0, units = cycles)
+ *
+ * In addition, there is an optional function input that will be called if the
+ * the nominal forecast (based on timing) is zero.
+ */
 void PeriodicEvent::EstimateEventTiming(real64 const time,
                                         real64 const dt, 
                                         integer const cycle,
@@ -199,6 +215,22 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
 }
 
 
+/*
+ * If the event forecast is zero, and an optional function (f) is specified, then
+ * this method will be called to see if the event should be triggered or ignored.
+ * For example, this could be used to periodically check the condition of the mesh,
+ * and trigger a cleanup if necessary.
+ *
+ * If functionInputObject is not specified:
+ *   - The argument to the function will be the current time
+ *   - The event will be executed if f(t) >= eventThreshold
+ *
+ * If functionInputObject is specified:
+ *   - The function will be called on the object, with the arguments given by functionInputSetname
+ *   - The function manager will return a set of statistics
+ *   - functionStatOption selects the statistic to compare against the eventThreshold (0 = min, 1 = average, 2 = max)
+ *   - The event will be executed if f(object, arguments)[stat] >= eventThreshold
+ */
 void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
                                                    real64 const dt, 
                                                    integer const cycle,
@@ -255,7 +287,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
   }
   else
   {
-    SetForecast(1e6);
+    SetForecast(std::numeric_limits<integer>::max());
   }
 }
 

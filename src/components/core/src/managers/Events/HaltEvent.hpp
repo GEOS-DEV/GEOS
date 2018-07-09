@@ -16,12 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * HaltEvent.hpp
- *
- *  Created on: Jan 26, 2018
- *      Author: sherman
- */
+/** An event type that is designed to look at the external clock.
+*   This is useful for managing wall time limitations. */
+
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_HALTEVENT_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_HALTEVENT_HPP_

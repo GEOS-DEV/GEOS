@@ -34,14 +34,26 @@ namespace geosx
 using namespace dataRepository;
 using namespace cxx_utilities;
 
+
+/*
+ * Constructor.
+ */
 EventManager::EventManager( std::string const & name,
                             ManagedGroup * const parent ):
   ManagedGroup( name, parent)
 {}
 
+
+/*
+ * Destructor.
+ */
 EventManager::~EventManager()
 {}
 
+
+/*
+ * Documentation.
+ */
 void EventManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
@@ -131,6 +143,10 @@ void EventManager::FillDocumentationNode()
 }
 
 
+
+/*
+ * A method to add child events
+ */
 void EventManager::CreateChild( string const & childKey, string const & childName )
 {
   std::cout << "Adding Event: " << childKey << ", " << childName << std::endl;
@@ -139,6 +155,14 @@ void EventManager::CreateChild( string const & childKey, string const & childNam
 }
 
 
+/*
+ * The main execution loop for the code.  During each cycle, it will:
+ *   - Calculate the event forecast (number of cycles until its expected execution)
+ *   - Signal an event to prepare (forecast == 1)
+ *   - Execute an event (forecast == 0)
+ *   - Determine dt for the next cycle
+ *   - Advance time, cycle, etc.
+ */
 void EventManager::Run(dataRepository::ManagedGroup * domain)
 {
   real64& time = *(this->getData<real64>(viewKeys.time));

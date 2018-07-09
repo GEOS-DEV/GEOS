@@ -16,12 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * EventManager.hpp
- *
- *  Created on: Oct 5, 2016
- *      Author: sherman
- */
+/** A class for managing code events */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
