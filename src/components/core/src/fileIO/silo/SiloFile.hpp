@@ -17,13 +17,11 @@
  */
 
 /**
- * @file SiloFile.h
- * @author settgast1
- * @date Jan 24, 2011
+ * @file SiloFile.hpp
  */
 
-#ifndef SILOFILE_H_
-#define SILOFILE_H_
+#ifndef SILOFILE_HPP_
+#define SILOFILE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "silo.h"
@@ -57,6 +55,8 @@ typedef struct _PMPIO_baton_t PMPIO_baton_t;
 namespace geosx
 {
 
+class DomainPartition;
+class MeshLevel;
 class ElementRegionManager;
 namespace constitutive
 {
@@ -140,26 +140,15 @@ public:
                               const realT problemTime,
                               const int lnodelist);
 
-  /**
-   * @brief Write out a single discrete element mesh object
-   * @author Scott Johnson
-   */
-  void WriteDiscreteElementMeshObject(const std::string& meshName,
-                                      const localIndex nnodes,
-                                      realT* coords[3],
-                                      const globalIndex* globalNodeNum,
-                                      const int nDiscreteElements,
-                                      const int nfaces,
-                                      int* nodecnts,
-                                      const int sumnodecnts,
-                                      int* nodelist,
-                                      int* facecnts,
-                                      const int sumfacecnts,
-                                      int* facelist,
-                                      const globalIndex* const * const globalElementNum,
-                                      const int* ghostFlag,
-                                      const int cycleNumber,
-                                      const realT problemTime);
+  void WriteDomainPartition( DomainPartition const & domain,
+                             const int cycleNum,
+                             const realT problemTime,
+                             const bool isRestart );
+
+  void WriteMeshLevel( MeshLevel const * const meshLevel,
+                       const int cycleNum,
+                       const realT problemTime,
+                       const bool isRestart );
 
   void TestPolyhedralCells();
   void XFEMMesh(std::vector<double> xcoords,
@@ -177,10 +166,6 @@ public:
                 const int cycleNumber,
                 const realT problemTime);
 
-  /**
-   * @brief Write out a single ellipsoidal discrete element mesh object
-   * @author Scott Johnson
-   */
   void WriteDiscreteElementCSGObject(const std::string& meshName,
                                      const array<R1Tensor>& x,
                                      const array<R1Tensor>& r,

@@ -18,8 +18,6 @@
 
 /**
  * @file SiloFile.cpp
- * @author settgast1
- * @date Jan 24, 2011
  */
 
 #include <iostream>
@@ -28,6 +26,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include "managers/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 
 
 #pragma GCC diagnostic push
@@ -1033,353 +1033,6 @@ void SiloFile::WriteArbitratryPolyhedralMeshObject( const std::string& meshName,
 #endif
 
 
-
-/**
- * @brief Brief
- * @author Scott Johnson
- *
- * This writes an arbitrary polyhedral mesh consisting of the external
- * faces that define the discrete elements (DE's)
- *
- * @param meshName Name of the DE mesh
- * @param nnodes Total number of unique surface nodes comprising the DE's
- * @param coords Pointers to the x-y-z coordinate arrays of the nodes (size
- * nnodes)
- * @param globalNodeNum Global indices of the nodes (size nnodes)
- * @param nDiscreteElements Total number of unique discrete elements
- * @param nfaces Total number of unique faces
- * @param nodecnts Number of nodes per face (size nfaces)
- * @param sumnodecnts Sum of nodecnts for all i
- * @param nodelist List of node ids associated with faces (size sumnodects)
- * @param facecnts Number of faces per DE (nDiscreteElements)
- * @param sumfacecnts Sum of facecnts for all i
- * @param facelist List of face ids associated with DE (size sumfacecnts)
- * @param globalElementNum Global indices of the DE's (size nregion)
- * @param ghostFlag Flag to indicate which are ghosts (unused)
- * @param cycleNumber Number of cycle
- * @param problemTime Current simulation time
- */
-void SiloFile::WriteDiscreteElementMeshObject(const std::string& meshName,
-                                              const localIndex nnodes,
-                                              realT* coords[3],
-                                              const globalIndex* globalNodeNum,
-                                              const int nDiscreteElements,
-                                              const int nfaces,
-                                              int* nodecnts,
-                                              const int sumnodecnts,
-                                              int* nodelist,
-                                              int* facecnts,
-                                              const int sumfacecnts,
-                                              int* facelist,
-                                              const globalIndex* const * const globalElementNum,
-                                              const int*,
-                                              const int cycleNumber,
-                                              const realT problemTime)
-{
-//  TestWriteDiscreteElementMeshObject();
-//  return;
-
-  //----create option list (done)
-  DBoptlist* optlist = DBMakeOptlist(5);//allocate option list with 4 options
-  char temp[] = "de_zonelist";
-
-  //----create unstructured mesh (done)
-  {
-    {
-//      DBAddOption(optlist, DBOPT_NODENUM, const_cast<globalIndex*>
-// (globalNodeNum));//map local to global node index
-      DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));//cycle
-                                                                         // number
-                                                                         // in
-                                                                         // the
-                                                                         // problem
-      DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));//problem
-                                                                           // time
-                                                                           // value
-//      if (type_name<globalIndex>::name() == type_name<long
-// long>::name())//flag that the array for NODENUM is long long
-//        DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
-
-      DBAddOption(optlist, DBOPT_PHZONELIST, temp);//cycle number in the problem
-
-    }
-
-    //write a UCD mesh to the Silo file
-    //UCD = unstructured cell data ... used to define any unstructured mesh
-    DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), 3, nullptr, (float**) coords, nnodes, nDiscreteElements,
-                 nullptr, nullptr, DB_DOUBLE, optlist);
-    DBClearOptlist(optlist);
-  }
-
-  //----create arbitrary polyhedral zone list
-  {
-    /*
-       //get nodelist and globalZoneNumber
-       ivector globalZoneNumber(nnodes);
-       {
-       int elemCount = 0;
-       for (int i = 0; i < numRegions; ++i)
-       {
-        for (int j = 0; j < shapecnt[i] * shapesize[i]; ++j)
-        {
-          nodelist[count++] = meshConnectivity[i][j];
-        }
-
-        for (int j = 0; j < shapecnt[i]; ++j)
-        {
-          globalZoneNumber[elemCount++] = globalElementNum[i][j];
-        }
-       }
-       }
-     */
-
-    //create option list
-    /*
-       DBAddOption(optlist, DBOPT_ZONENUM, const_cast<globalIndex*>
-          (globalZoneNumber.data()));
-       if (type_name<globalIndex>::name() == type_name<long long>::name())
-       DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
-     */
-    {
-      //define all faces in the DE's as external faces
-      char* extface = new char[nfaces];
-      for(int i=0 ; i < nfaces ; i++)
-        extface[i] = '1';
-
-      DBPutPHZonelist(m_dbFilePtr, temp, nfaces, nodecnts, sumnodecnts, nodelist, extface, nDiscreteElements,
-                      facecnts, sumfacecnts, facelist, 0, 0, nDiscreteElements-1, optlist);
-      delete[] extface;
-    }
-    DBClearOptlist( optlist);
-  }
-
-  //----write multimesh object
-  {
-    int rank = 0;
-  #if USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  #endif
-    if (rank == 0)
-    {
-      DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-      DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
-      WriteMultiXXXX(DB_UCDMESH, DBPutMultimesh, 0, meshName.c_str(), cycleNumber, "/", optlist);
-    }
-  }
-
-  //---free the option list
-  DBFreeOptlist(optlist);
-}
-
-void SiloFile::TestPolyhedralCells()
-{
-//  DBfile *dbfile = nullptr;
-//  /* Open the Silo file */
-//  dbfile = DBCreate("basic.silo", DB_CLOBBER, DB_LOCAL, "Comment about the
-// data", DB_HDF5);
-  /* Node coordinates */
-  float x[] = {0., 0., 1., 1., 0., 1., 0., 0.5, 0., 0.5, 0.,  1., 1., 1.};
-  float y[] = {0., 2., 0., 2., 0., 0., 1., 1.5, 1.5,0.5, 0.5, 1., 1.5, 0.5};
-  float *coords[] = {x, y};
-  /* Connectivity */
-  int nodelist[] = {
-    2,9,8,
-    /* tri zone 1 */
-    3,14,10,
-    /* quad zone 1 */
-    1,3,10,11,
-    /* tri zone 2 */
-    8,13,4,2
-    /* quad zone 2 */
-  };
-  int lnodelist = sizeof(nodelist) / sizeof(int);
-  /* shape type 1 has 3 nodes (tri), shape type 2 is quad */
-  int shapesize[] = {3, 4};
-  /* We have 2 tris and 2 quads */
-  int shapecounts[] = {2, 2};
-  int nshapetypes = 2;
-  int nnodes = 14;
-  int nzones = 4;
-  int ndims = 2;
-  /* Write out connectivity information. */
-  DBPutZonelist(m_dbFilePtr, "xfem_zonelist_hc", nzones, ndims, nodelist, lnodelist,
-                1, shapesize, shapecounts, nshapetypes);
-  /* Write an unstructured mesh. */
-  DBPutUcdmesh(m_dbFilePtr, "xfem_mesh_hard_coded", ndims, nullptr, coords, nnodes, nzones,
-               "xfem_zonelist_hc", nullptr, DB_FLOAT, nullptr);
-
-  /* Close the Silo file. */
-//  DBClose(dbfile);
-}
-
-//void SiloFile::XFEMMesh( dvector xcoords,
-//                         dvector ycoords,
-//                         dvector zcoords,
-//                         std::vector<int> nodelist,
-//                         int lnodelist,
-//                         std::vector<int> shapesize,
-//                         std::vector<int> shapecounts,
-//                         std::vector<int> shapetype,
-//                         int nshapetypes,
-//                         int nnodes,
-//                         int nzones,
-//                         int ndims,
-//                         const int cycleNumber,
-//                         const realT problemTime)
-//{
-//
-//  DBoptlist* optlist = DBMakeOptlist(4);
-//  DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-//  DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
-//
-//  realT* coords[3];
-//
-//  coords[0] = xcoords.data();
-//  coords[1] = ycoords.data();
-//  coords[2] = zcoords.data();
-//
-////  DBfile *dbfile = nullptr;
-///* Open the Silo file */
-////  dbfile = DBCreate("basic2.silo", DB_CLOBBER, DB_LOCAL, "Comment about the
-//// data", DB_HDF5);
-//
-//  /* Write an unstructured mesh. */
-//  DBPutUcdmesh(m_dbFilePtr, "xfem_mesh", 3, nullptr, (float**)coords, nnodes, nzones,
-//               "xfem_mesh_zonelist", nullptr, DB_DOUBLE, optlist);
-//
-////  /* Write out connectivity information. */
-////  DBPutZonelist(m_dbFilePtr, "xfem_zonelist", nzones, ndims, &nodelist[0],
-//// lnodelist,
-////                1, &shapesize[0], &shapecounts[0], nshapetypes);
-//
-//  // Write out connectivity information.
-//  DBPutZonelist2(m_dbFilePtr, "xfem_mesh_zonelist", nzones, 3, lnodelist > 0 ? &nodelist[0] : nullptr,
-//                 lnodelist, 0, 0, 0, &shapetype[0], &shapesize[0], &shapecounts[0], nshapetypes, optlist);
-//
-//  DBClearOptlist(optlist);
-//
-//  const int rank = 0;
-//  if (rank == 0)
-//  {
-//    DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-//    DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*> (&problemTime));
-//
-//    WriteMultiXXXX(DB_UCDMESH, DBPutMultimesh, 0, "xfem_mesh", cycleNumber, "/", optlist);
-//  }
-//
-//  DBFreeOptlist(optlist);
-//  /* Close the Silo file. */
-////  DBClose(dbfile);
-//}
-
-
-/**
- * @brief Brief
- * @author Scott Johnson
- *
- * This writes an CSG  consisting of the external
- * faces that define the discrete elements (DE's)
- *
- * @param meshName Name of the ellipsoidal DE definition
- * @param[in] x Centroid of the ellipsoid
- * @param[in] r Principal radii of the ellipsoid
- * @param[in] R Rotation tensor transform for the ellipsoid
- * @param[in] cycleNumber Number of cycle
- * @param[in] problemTime Current simulation time
- */
-/*
-   void SiloFile::WriteDiscreteElementCSGObject( const std::string& meshName,
-                                              const array<R1Tensor>& x,
-                                              const array<R1Tensor>& r,
-                                              const array<R2Tensor>& R,
-                                              const int cycleNumber,
-                                              const realT problemTime)
-   {
-
- #if 1
-   char temp[] = "ede_zonelist";
-
-   //----create option list (done)
-   {
-    DBoptlist* optlist = DBMakeOptlist(2);//allocate option list with 4 options
-    {
-      DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));//cycle
-         number in the problem
-      DBAddOption(optlist, DBOPT_DTIME, const_cast<realT*>
-         (&problemTime));//problem time value
-    }
-   //    int typeflags[1] = {DBCSG_ELLIPSOID_PRRR};
-   //    double coeffs[] = {x(0), x(1), x(2), r(0), r(1), r(2)};
-    int typeflags[1] = {DBCSG_SPHERE_PR};
-    double coeffs[] = {x(0), x(1), x(2), r(0)};
-    double extents[] = {x(0)-r(0), x(1)-r(1), x(2)-r(2), x(0)+r(0), x(1)+r(1),
-       x(2)+r(2)};
-
-    DBPutCsgmesh(m_dbFilePtr, meshName.c_str(), nsdof, 1, typeflags, nullptr,
-                 coeffs, 4, DB_DOUBLE, extents, temp, optlist);
-    DBClearOptlist(optlist);
-    DBFreeOptlist(optlist);
-   }
-
-   {
-    int typeflags[] = {DBCSG_INNER};
-    int nregs = 1;
-    int leftids[] = {0};
-    int rightids[] = {-1};
-    int nzones = 1;
-    int zonelist = 0;
-    double xforms[9] = {R(0,0), R(0,1), R(0,2), R(1,0), R(1,1), R(1,2), R(2,0),
-       R(2,1), R(2,2)};
-    DBPutCSGZonelist(m_dbFilePtr, temp, nregs, typeflags, leftids,
-                     rightids, nullptr, 0, DB_INT, nzones, &zonelist, nullptr);
-   }
-
- #else
-    {
-        int typeflags[] =
-        {
-            DBCSG_SPHERE_PR
-        };
-
-        float coeffs[] =
-        {
-            0.0, 0.0, 0.0, 5.0                // point-radius form of sphere
-        };
-
-        int nbounds = sizeof(typeflags) / sizeof(typeflags[0]);
-        int lcoeffs = sizeof(coeffs) / sizeof(coeffs[0]);
-
-        double extents[] = {-5.0, -5.0, -5.0, 5.0, 5.0, 5.0};
-
-        DBPutCsgmesh(m_dbFilePtr, meshName.c_str(), 3, nbounds, typeflags,
-            nullptr, coeffs, lcoeffs, DB_FLOAT, extents, "csgzl", nullptr);
-    }
-
-    // build and output the csg zonelist
-    {
-        int typeflags[] =
-        {
-            DBCSG_INNER
-        };
-        int leftids[] =  { 0};
-        int rightids[] = {-1};
-        int zonelist[] = {0};
-
-        int nregs = sizeof(typeflags) / sizeof(typeflags[0]);
-        int nzones = sizeof(zonelist) / sizeof(zonelist[0]);
-
-        char *zonenames[] = {"ring housing"};
-
-        DBoptlist *optlist = DBMakeOptlist(1);
-        DBAddOption(optlist, DBOPT_ZONENAMES, zonenames);
-
-        DBPutCSGZonelist(m_dbFilePtr, "csgzl", nregs, typeflags, leftids,
-           rightids,
-                         nullptr, 0, DB_INT, nzones, zonelist, optlist);
-    }
-
- #endif
-   }*/
 
 void SiloFile::WritePointMesh( const std::string& meshName,
                                const localIndex numPoints,
@@ -2928,6 +2581,198 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
 }
 
 
+void SiloFile::WriteDomainPartition( DomainPartition const & domain,
+                                     const int cycleNum,
+                                     const realT problemTime,
+                                     const bool isRestart )
+{
+
+  MeshLevel const * const mesh = domain.getMeshBody(0)->getMeshLevel(0);
+
+  WriteMeshLevel( mesh, cycleNum, problemTime, isRestart );
+
+
+//  WriteCommonPlanes( siloFile, cycleNum, problemTime, isRestart, writeCP );
+
+//  WriteCartesianGrid( siloFile, cycleNum, problemTime, isRestart, writeCG );
+//  m_wellboreManager.WriteWellboreSilo( siloFile, cycleNum, problemTime,
+// isRestart );
+
+  if( isRestart )
+  {
+//    siloFile.DBWriteWrapper("m_globalDomainNumber",m_globalDomainNumber);
+  }
+
+}
+
+void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
+                               const int cycleNum,
+                               const realT problemTime,
+                               const bool isRestart )
+{
+  int rank = 0;
+#if USE_MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+
+  //--------------WRITE FE DATA-----------------
+//  if (m_feElementManager->m_numElems > 0)
+  {
+
+    NodeManager const * const nodeManager = meshLevel->getNodeManager();
+    localIndex const numNodes = nodeManager->size();
+
+    r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::referencePositionString);
+
+    bool writeArbitraryPolygon(false);
+    const std::string meshName("MeshLevel");
+
+    //set the nodal coordinate data structure
+    realT* coords[3];
+    array<real64> xcoords(numNodes);
+    array<real64> ycoords(numNodes);
+    array<real64> zcoords(numNodes);
+    for (localIndex a = 0 ; a < numNodes ; ++a)
+    {
+      R1Tensor nodePosition;
+      nodePosition = referencePosition[a];
+
+      xcoords[a] = nodePosition(0);
+      ycoords[a] = nodePosition(1);
+      zcoords[a] = nodePosition(2);
+    }
+
+    coords[0] = xcoords.data();
+    coords[1] = ycoords.data();
+    coords[2] = zcoords.data();
+
+    ElementRegionManager const * const elementManager = meshLevel->getElemManager();
+    const localIndex numElementRegions = elementManager->GetGroup(keys::elementRegions)->GetSubGroups().size();
+    array<localIndex*> meshConnectivity(numElementRegions);
+    array<int*> isGhostElement(numElementRegions);
+    array<globalIndex*> globalElementNumbers(numElementRegions);
+    array<integer> shapecnt(numElementRegions);
+    array<integer> shapetype(numElementRegions);
+    array<integer> shapesize(numElementRegions);
+
+    array<FixedOneToManyRelation> elementToNodeMap;
+    elementToNodeMap.resize( numElementRegions );
+
+    int count = 0;
+//    elementManager->forCellBlocks([&]( CellBlockSubRegion const * cellBlock ) -> void
+    ManagedGroup const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegions);
+
+    for( auto const & region : elementRegions->GetSubGroups() )
+    {
+      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+      for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+      {
+        CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+
+    {
+        lArray2d const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+
+        // The following line seems to be redundant. It's actual function is to
+        // size this temp array.(pfu)
+        elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
+
+        for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
+        {
+          arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
+
+          const integer_array nodeOrdering = SiloNodeOrdering();
+          integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
+          for (localIndex a = 0 ; a < numNodesPerElement ; ++a)
+          {
+            elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
+          }
+        }
+
+
+        meshConnectivity[count] = elementToNodeMap[count].data();
+
+//      isGhostElement[count] =
+// (cellBlock->GetFieldData<FieldInfo::ghostRank>()).data();
+
+//      globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
+        shapecnt[count] = static_cast<int>(cellBlock->size());
+
+//      if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D8") )
+//      {
+        shapetype[count] = DB_ZONETYPE_HEX;
+//      }
+//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D6") )
+//      {
+//        shapetype[count] = DB_ZONETYPE_HEX;
+//        writeArbitraryPolygon = true;
+//      }
+//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D4") )
+//      {
+//        shapetype[count] = DB_ZONETYPE_TET;
+//      }
+//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
+// !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
+//      {
+//        shapetype[count] = DB_ZONETYPE_QUAD;
+//      }
+//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "STRI") ||
+// !elementRegion.m_elementGeometryID.compare(0, 4, "TRSH") ||
+// !elementRegion.m_elementGeometryID.compare(0, 4, "CPE3"))
+//      {
+//        shapetype[count] = DB_ZONETYPE_TRIANGLE;
+//      }
+//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE2") )
+//      {
+//        shapetype[count] = DB_ZONETYPE_TRIANGLE;
+//      }
+//      else
+//      {
+//        GEOS_ERROR("PhysicalDomainT::WriteFiniteElementMesh: Do not recognize
+// geometry type " + elementRegion.m_elementGeometryID + " \n");
+//      }
+
+        shapesize[count] = integer_conversion<int>(elemsToNodes.size(1));
+        count++;
+      }
+      }
+    }
+
+    WriteMeshObject(meshName,
+                    numNodes,
+                    coords,
+                    nullptr,
+                    integer_conversion<int>(numElementRegions),
+                    shapecnt.data(),
+                    meshConnectivity.data(),
+                    nullptr /*globalElementNumbers.data()*/,
+                    isGhostElement.data(),
+                    shapetype.data(),
+                    shapesize.data(),
+                    cycleNum, problemTime);
+
+
+    // write node fields in silo mesh, and all restart data as unassociated
+    // variables.
+
+
+
+    WriteManagedGroupSilo( nodeManager,
+                           "NodalFields",
+                           meshName,
+                           DB_NODECENT,
+                           cycleNum,
+                           problemTime,
+                           isRestart,
+                           localIndex_array());
+
+
+
+//    m_feElementManager->WriteSilo( siloFile, meshName, cycleNum, problemTime,
+// isRestart );
+
+
+  }//end FE write
+}
 
 }
 #pragma GCC diagnostic pop
