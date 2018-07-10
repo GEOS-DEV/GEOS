@@ -200,7 +200,7 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
     {
       // How do we want to handle rounding?
       real64 forecast = (timeFrequency - (time - lastTime)) / dt;
-      SetForecast((int)forecast);
+      SetForecast(static_cast<integer>(forecast));
     }
   }
   else

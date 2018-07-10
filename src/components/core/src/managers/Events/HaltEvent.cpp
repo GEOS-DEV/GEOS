@@ -95,7 +95,8 @@ void HaltEvent::EstimateEventTiming(real64 const time,
   // Update values
   m_realDt = currentTime - m_lastTime;
   m_lastTime = currentTime;
-  SetForecast((maxRuntime - (currentTime - m_startTime)) / m_realDt);
+  integer forecast = static_cast<integer>((maxRuntime - (currentTime - m_startTime)) / m_realDt);
+  SetForecast(forecast);
 
   if (this->GetForecast() <= 0)
   {
