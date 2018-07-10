@@ -89,7 +89,7 @@ public:
   void Finish();
 
   /// Wait for the Baton when doing PMPIO
-  void WaitForBaton( const int domainNumber, const int cycleNum, const bool isRestart );
+  void WaitForBatonWrite( const int domainNumber, const int cycleNum, const bool isRestart );
 
   void WaitForBaton( const int domainNumber, const std::string& restartFileName );
 
@@ -104,7 +104,7 @@ public:
 
     if (rank == 0)
     {
-      DBMkDir(m_dbFilePtr, rootdir.c_str());
+      DBMkDir(m_dbBaseFilePtr, rootdir.c_str());
     }
     DBMkDir(m_dbFilePtr, subdir.c_str());
   }
@@ -326,81 +326,6 @@ public:
                       const std::string& multiRoot, const DBoptlist* optlist = nullptr);
 
 
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const TYPE& data );
-
-  void DBWriteWrapper( const std::string& name, const string_array& data );
-
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const array<TYPE>& data );
-
-
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const set<TYPE>& data );
-
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const Array2dT<TYPE>& data );
-
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const array<array<TYPE> >& data );
-
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const array<Array2dT<TYPE> >& data );
-
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const array<array<array<TYPE> > >& data );
-
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const array<set<TYPE> >& data );
-
-  template< typename T1, typename T2 >
-  void DBWriteWrapper( const std::string& name, const std::map< T1, T2 >& datamap );
-
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& subdir, const std::map< std::string, TYPE>& member );
-
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& subdir, const std::map< std::string, InterObjectRelation<TYPE> >& member );
-
-  template<typename TYPE>
-  void DBWriteWrapper( const std::string& name, const TYPE* const data, const int size );
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& name, TYPE& data ) const;
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& name, array<TYPE>& data ) const;
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& name, set<TYPE>& data ) const;
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& name, Array2dT<TYPE>& data ) const;
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& name, array<array<TYPE> >& data ) const;
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& name, array<Array2dT<TYPE> >& data ) const;
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& name, array<array<array<TYPE> > >& data ) const;
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& name, array<set<TYPE> >& data ) const;
-
-  template< typename T1, typename T2 >
-  void DBReadWrapper( const std::string& name, std::map< T1, T2 >& datamap ) const;
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& subdir, std::map< std::string, TYPE>& member ) const;
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& subdir, std::map< std::string, InterObjectRelation<TYPE> >& member ) const;
-
-  template<typename TYPE>
-  void DBReadWrapper( const std::string& name, TYPE* const data, const int size ) const;
-
   /// dummy function to get rid of compiler warnings about unused functions from PMPIO's use of static function
   /// definitions in the header. This should go away as we fully utilize PMPIO.
   void StopSiloCompilerWarnings();
@@ -411,6 +336,9 @@ public:
 
   /// pointer to the DBfile that this class is working on
   DBfile* m_dbFilePtr;
+
+  /// pointer to the Master DBfile
+  DBfile* m_dbBaseFilePtr;
 
   /// total number of "parallel" files to write out
   int m_numGroups;
@@ -426,7 +354,7 @@ public:
 
   std::string m_restartFileRoot;
 
-  std::string m_slaveDirectory = "plotFiles";
+  std::string m_subDirectory = "SiloDataFiles";
 
   std::string m_fileName;
 
@@ -855,8 +783,8 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   char tempBuffer[1024];
   char currentDirectory[256];
 
-  DBGetDir(m_dbFilePtr, currentDirectory);
-  DBSetDir(m_dbFilePtr, multiRoot.c_str());
+  DBGetDir(m_dbBaseFilePtr, currentDirectory);
+  DBSetDir(m_dbBaseFilePtr, multiRoot.c_str());
 
 
   std::string multiRootString(multiRoot);
@@ -869,58 +797,31 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   {
     int groupRank = PMPIO_GroupRank(m_baton, i);
 
-    if (groupRank == 0)
-    {
 
-      sprintf(tempBuffer, "/domain_%04d%s/%s", i, multiRootString.c_str(), name.c_str());
-      //      sprintf(tempBuffer, "%s_%04d:/domain_%04d%s/%s",
-      // m_fileRoot.c_str(),
-      //              cycleNumber, i, multiRoot.c_str(), name.c_str() );
+    sprintf( tempBuffer,
+             "%s%s%s.%03d:/domain_%05d%s/%s",
+             m_subDirectory.c_str(),
+             "/",
+             m_baseFileName.c_str(),
+             groupRank,
+             i,
+             multiRootString.c_str(),
+             name.c_str());
 
-    }
-    else
-    {
-      if (m_slaveDirectory.empty())
-      {
-        sprintf(tempBuffer, "%s.%03d:/domain_%04d%s/%s", m_baseFileName.c_str(),
-                groupRank, i, multiRootString.c_str(), name.c_str());
-      }
-      else
-      {
-        sprintf(tempBuffer, "%s%s%s.%03d:/domain_%04d%s/%s", m_slaveDirectory.c_str(), "/", m_baseFileName.c_str(),
-                groupRank, i, multiRootString.c_str(), name.c_str());
-
-      }
-
-    }
     vBlockNames[i] = tempBuffer;
     BlockNames[i] = const_cast<char*>( vBlockNames[i].c_str() );
     blockTypes[i] = type;
   }
 
   std::string multiName = name;
-  DBPutMultiCB(m_dbFilePtr, multiName.c_str(), size, BlockNames.data(), blockTypes.data(),
+  DBPutMultiCB(m_dbBaseFilePtr, multiName.c_str(), size, BlockNames.data(), blockTypes.data(),
                const_cast<DBoptlist*> (optlist));
 
-  DBSetDir(m_dbFilePtr, currentDirectory);
+  DBSetDir(m_dbBaseFilePtr, currentDirectory);
 
 }
 
 
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const array<TYPE>& data )
-{
-  if( !data.empty() )
-  {
-    int dims[2];
-    dims[0] = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
-    dims[1] = data.size();
-
-    DBWrite( m_dbFilePtr, name.c_str(), const_cast<TYPE*>(data.data()), dims,
-             2, SiloFileUtilities::DB_TYPE<TYPE>() );
-  }
-
-}
 
 
 }

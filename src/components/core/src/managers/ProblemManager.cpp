@@ -873,7 +873,7 @@ void ProblemManager::WriteSilo( integer const cycleNumber,
 //  std::cout<<"rank = "<<rank<<std::endl;
 
   silo.Initialize(PMPIO_WRITE);
-  silo.WaitForBaton(rank, cycleNumber, false );
+  silo.WaitForBatonWrite(rank, cycleNumber, false );
   silo.WriteDomainPartition( *domain, cycleNumber,problemTime,0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);

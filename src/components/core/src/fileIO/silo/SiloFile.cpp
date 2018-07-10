@@ -311,6 +311,7 @@ using namespace dataRepository;
 /// Default Constructor
 SiloFile::SiloFile():
   m_dbFilePtr(nullptr),
+  m_dbBaseFilePtr(nullptr),
   m_numGroups(1),
   m_baton(nullptr),
   m_driver(DB_HDF5),
@@ -369,7 +370,9 @@ void SiloFile::Finish()
  * @param fileName
  * @param nsName
  */
-void SiloFile::WaitForBaton( const int domainNumber, const int cycleNum, const bool isRestart )
+void SiloFile::WaitForBatonWrite( const int domainNumber,
+                                  const int cycleNum,
+                                  const bool isRestart )
 {
 
   int rank = 0;
@@ -384,44 +387,28 @@ void SiloFile::WaitForBaton( const int domainNumber, const int cycleNum, const b
   if( isRestart )
   {
 
-    sprintf(baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum);
-    if (groupRank == 0)
-    {
-      sprintf(fileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum);
-    }
-    else
-    {
-      if (m_slaveDirectory.empty())
-      {
-        sprintf(fileName, "%s_%06d.%03d", m_restartFileRoot.c_str(), cycleNum, groupRank);
-      }
-      else
-      {
-        sprintf(fileName, "%s%s%s_%06d.%03d", m_slaveDirectory.c_str(), "/", m_restartFileRoot.c_str(), cycleNum, groupRank);
-      }
-    }
-
+    sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum);
+    sprintf( fileName, "%s%s%s_%06d.%03d",
+             m_subDirectory.c_str(), "/", m_restartFileRoot.c_str(), cycleNum, groupRank);
   }
   else
   {
     sprintf(baseFileName, "%s_%06d", m_fileRoot.c_str(), cycleNum);
-    if (groupRank == 0)
-      sprintf(fileName, "%s_%06d", m_fileRoot.c_str(), cycleNum);
-    else if (m_slaveDirectory.empty())
-    {
-      sprintf(fileName, "%s_%06d.%03d", m_fileRoot.c_str(), cycleNum, groupRank);
-    }
-    else
-    {
-      sprintf(fileName, "%s%s%s_%06d.%03d", m_slaveDirectory.c_str(), "/", m_fileRoot.c_str(), cycleNum, groupRank);
-    }
+    sprintf(fileName, "%s%s%s_%06d.%03d",
+            m_subDirectory.c_str(), "/", m_fileRoot.c_str(), cycleNum, groupRank);
   }
-  sprintf(dirName, "domain_%04d", domainNumber);
+  sprintf(dirName, "domain_%05d", domainNumber);
 
   m_dbFilePtr = static_cast<DBfile *>( PMPIO_WaitForBaton(m_baton, fileName, dirName) );
 
   m_fileName = fileName;
   m_baseFileName = baseFileName;
+
+  if( rank==0 )
+  {
+    m_dbBaseFilePtr = DBCreate( m_baseFileName.c_str(), DB_CLOBBER, DB_LOCAL, nullptr, DB_HDF5 );
+//    m_dbBaseFilePtr = DBOpen( m_baseFileName.c_str(), DB_HDF5, DB_APPEND );
+  }
 }
 
 
@@ -443,18 +430,18 @@ void SiloFile::WaitForBaton( const int domainNumber, const std::string& restartF
     sprintf(fileName, "%s", restartFileName.c_str());
   else
   {
-    if (m_slaveDirectory.empty())
+    if (m_subDirectory.empty())
     {
       sprintf(fileName, "%s.%03d", restartFileName.c_str(), groupRank);
     }
     else
     {
-      sprintf(fileName, "%s%s%s.%03d", m_slaveDirectory.c_str(), "/", restartFileName.c_str(), groupRank);
+      sprintf(fileName, "%s%s%s.%03d", m_subDirectory.c_str(), "/", restartFileName.c_str(), groupRank);
     }
 
   }
 
-  sprintf(dirName, "domain_%04d", domainNumber);
+  sprintf(dirName, "domain_%05d", domainNumber);
 
   m_dbFilePtr = (DBfile *) PMPIO_WaitForBaton(m_baton, fileName, dirName);
 
@@ -467,6 +454,15 @@ void SiloFile::WaitForBaton( const int domainNumber, const std::string& restartF
 void SiloFile::HandOffBaton()
 {
   PMPIO_HandOffBaton(m_baton, m_dbFilePtr);
+
+  int rank = 0;
+#if USE_MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+if( rank==0 )
+  {
+    DBClose(m_dbBaseFilePtr);
+  }
 }
 
 /**
@@ -1262,36 +1258,23 @@ void SiloFile::WriteRegionSpecifications( ElementRegionManager const * const ele
     char tempBuffer[1024];
     char currentDirectory[256];
 
-    DBGetDir(m_dbFilePtr, currentDirectory);
-    DBSetDir(m_dbFilePtr, "/");
+    DBGetDir(m_dbBaseFilePtr, currentDirectory);
+    DBSetDir(m_dbBaseFilePtr, "/");
 
     for (int i = 0 ; i < size ; ++i)
     {
       int groupRank = PMPIO_GroupRank(m_baton, i);
 
-      if (groupRank == 0)
-      {
-        /* this mesh block is in the file 'root' owns */
-        sprintf(tempBuffer, "/domain_%04d/%s", i, name.c_str());
+      /* this mesh block is another file */
+      sprintf( tempBuffer,
+               "%s%s%s.%03d:/domain_%05d/%s",
+               m_subDirectory.c_str(),
+               "/",
+               m_baseFileName.c_str(),
+               groupRank,
+               i,
+               name.c_str() );
 
-      }
-      else
-      {
-        /* this mesh block is another file */
-        if (m_slaveDirectory.empty())
-        {
-          sprintf(tempBuffer, "%s.%03d:/domain_%04d/%s",
-                  m_baseFileName.c_str(),
-                  groupRank, i, name.c_str());
-        }
-        else
-        {
-          sprintf(tempBuffer, "%s%s%s.%03d:/domain_%04d/%s", m_slaveDirectory.c_str(), "/",
-                  m_baseFileName.c_str(),
-                  groupRank, i, name.c_str());
-        }
-
-      }
       vBlockNames[i] = tempBuffer;
       BlockNames[i] = const_cast<char*>( vBlockNames[i].c_str() );
     }
@@ -1304,13 +1287,13 @@ void SiloFile::WriteRegionSpecifications( ElementRegionManager const * const ele
       DBAddOption(optlist, DBOPT_NMATNOS, const_cast<int*>(&nmat) );
       DBAddOption(optlist, DBOPT_MATNOS, matnos.data() );
 
-      DBPutMultimat(m_dbFilePtr, name.c_str(), size, BlockNames.data(),
+      DBPutMultimat(m_dbBaseFilePtr, name.c_str(), size, BlockNames.data(),
                     const_cast<DBoptlist*> (optlist));
       DBFreeOptlist(optlist);
 
     }
 
-    DBSetDir(m_dbFilePtr, currentDirectory);
+    DBSetDir(m_dbBaseFilePtr, currentDirectory);
 
   }
 
@@ -1497,844 +1480,6 @@ void SiloFile::ClearEmptiesFromMultiObjects(const int cycleNum)
   m_emptyMeshes.clear();
 
 }
-
-
-
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const TYPE& data )
-{
-  int dims = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
-  TYPE temp = data;
-  DBWrite( m_dbFilePtr, name.c_str(), &temp, &dims, 1, SiloFileUtilities::DB_TYPE<TYPE>() );
-}
-template void SiloFile::DBWriteWrapper( const std::string&, const int& );
-template void SiloFile::DBWriteWrapper( const std::string&, const unsigned int& );
-template void SiloFile::DBWriteWrapper( const std::string&, const double& );
-//template void SiloFile::DBWriteWrapper( const std::string&, const localIndex&
-// );
-template void SiloFile::DBWriteWrapper( const std::string&, const globalIndex& );
-template void SiloFile::DBWriteWrapper( const std::string&, const R1Tensor& );
-template<>
-void SiloFile::DBWriteWrapper( const std::string& name, const std::string& data )
-{
-  int dims = data.size();
-  std::string temp = data;
-  DBWrite( m_dbFilePtr, name.c_str(), const_cast<char*>(temp.data()), &dims, 1, DB_CHAR );
-}
-
-
-void SiloFile::DBWriteWrapper( const std::string& name, const array<std::string>& data )
-{
-
-  if( !data.empty() )
-  {
-    std::string temp;
-
-    for( array<std::string>::const_iterator i=data.begin() ; i!=data.end() ; ++i )
-    {
-      temp += *i + ' ';
-
-    }
-
-    int dims = temp.size();
-    DBWrite( m_dbFilePtr, name.c_str(), const_cast<char*>(temp.data()), &dims, 1, DB_CHAR );
-  }
-}
-
-
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const set<TYPE>& data )
-{
-  if( !data.empty() )
-  {
-    array<TYPE> dataArray;
-    dataArray.resize( integer_conversion<localIndex>(data.size()) );
-    std::copy( data.begin(), data.end(), dataArray.begin() );
-    DBWriteWrapper(name,dataArray);
-  }
-}
-template void SiloFile::DBWriteWrapper( const std::string&, const lSet& );
-//template void SiloFile::DBWriteWrapper( const std::string&, const iSet& );
-
-
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const Array2dT<TYPE>& data )
-{
-  if( !data.empty() )
-  {
-    int dims[3];
-    dims[0] = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
-    dims[1] = static_cast<int>(data.size(1));
-    dims[2] = static_cast<int>(data.size(0));
-
-    DBWrite( m_dbFilePtr, name.c_str(), const_cast<TYPE*>(data.data()), dims,
-             3, SiloFileUtilities::DB_TYPE<TYPE>() );
-  }
-}
-template void SiloFile::DBWriteWrapper( const std::string&, const Array2dT<real64>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const Array2dT<R1Tensor>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const Array2dT<R2Tensor>& );
-
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const array<array<TYPE> >& data )
-{
-
-  const std::string sizeName = name+"_sizes";
-  const std::string dataName = name+"_data";
-
-
-  array<typename array<TYPE>::size_type> dataSizes;
-  array<TYPE> dataSerial;
-
-  for( typename array<array<TYPE> >::const_iterator i=data.begin() ; i!=data.end() ; ++i )
-  {
-    dataSizes.push_back(i->size());
-    dataSerial.insert( dataSerial.end(), i->begin(), i->end() );
-  }
-
-  if( !(dataSerial.empty()) )
-  {
-    DBWriteWrapper( sizeName, dataSizes );
-    DBWriteWrapper( dataName, dataSerial );
-  }
-
-}
-template void SiloFile::DBWriteWrapper( const std::string&, const array<array<realT> >& );
-template void SiloFile::DBWriteWrapper( const std::string&, const array<array<R2Tensor> >& );
-template void SiloFile::DBWriteWrapper( const std::string&, const array<array<int> >& );
-
-
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const array<Array2dT<TYPE> >& data )
-{
-
-  const std::string sizeName0 = name+"_sizes0";
-  const std::string sizeName1 = name+"_sizes1";
-  const std::string dataName = name+"_data";
-
-
-  array<typename array<Array2dT<TYPE> >::size_type> dataSizes0;
-  array<typename Array2dT<TYPE>::size_type> dataSizes1;
-  array<TYPE> dataSerial;
-
-  for( typename array<Array2dT<TYPE> >::const_iterator i=data.begin() ; i!=data.end() ; ++i )
-  {
-    dataSizes0.push_back(i->size(0));
-    dataSizes1.push_back(i->size(1));
-    dataSerial.insert( dataSerial.end(), i->begin(), i->end() );
-  }
-
-  if( !(dataSerial.empty()) )
-  {
-    DBWriteWrapper( sizeName0, dataSizes0 );
-    DBWriteWrapper( sizeName1, dataSizes1 );
-    DBWriteWrapper( dataName, dataSerial );
-  }
-
-}
-template void SiloFile::DBWriteWrapper( const std::string&, const array<Array2dT<R1Tensor> >& );
-
-
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const array<array<array<TYPE> > >& data )
-{
-  const std::string sizeName0 = name+"_sizes0";
-  const std::string sizeName1 = name+"_sizes1";
-  const std::string dataName = name+"_data";
-
-
-  array<typename array<array<TYPE> >::size_type> dataSizes0;
-  array<typename array<TYPE>::size_type> dataSizes1;
-  array<TYPE> dataSerial;
-
-  for( typename array<array<array<TYPE> > >::const_iterator i=data.begin() ; i!=data.end() ; ++i )
-  {
-    dataSizes0.push_back(i->size());
-
-    for( typename array<array<TYPE> >::const_iterator j=i->begin() ; j!=i->end() ; ++j )
-    {
-      dataSizes1.push_back(j->size());
-      dataSerial.insert( dataSerial.end(), j->begin(), j->end() );
-    }
-  }
-
-  if( !(dataSerial.empty()) )
-  {
-    DBWriteWrapper( sizeName0, dataSizes0 );
-    DBWriteWrapper( sizeName1, dataSizes1 );
-    DBWriteWrapper( dataName, dataSerial );
-  }
-
-}
-template void SiloFile::DBWriteWrapper( const std::string& name, const array<array<array<R1Tensor> > >& data );
-
-
-
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const array<set<TYPE> >& data )
-{
-  const std::string sizeName = name+"_sizes";
-  const std::string dataName = name+"_data";
-
-
-  array<typename array<TYPE>::size_type> dataSizes;
-  array<TYPE> dataSerial;
-
-  for( typename array<set<TYPE> >::const_iterator i=data.begin() ; i!=data.end() ; ++i )
-  {
-    dataSizes.push_back(i->size());
-    dataSerial.insert( dataSerial.end(), i->begin(), i->end() );
-  }
-  if( !(dataSerial.empty()) )
-  {
-    DBWriteWrapper( sizeName, dataSizes );
-    DBWriteWrapper( dataName, dataSerial );
-  }
-}
-
-template< typename T1, typename T2 >
-void SiloFile::DBWriteWrapper( const std::string& name, const std::map< T1, T2 >& datamap )
-{
-  if( !(datamap.empty()) )
-  {
-    const std::string keyName = name+"_keyval";
-    const std::string mapName = name+"_mapval";
-
-    array<T1> keyArray;
-    keyArray.reserve(datamap.size());
-
-    array<T2> mapArray;
-    mapArray.reserve(datamap.size());
-
-
-    for( typename std::map< T1, T2 >::const_iterator i=datamap.begin() ; i!=datamap.end() ; ++i )
-    {
-      keyArray.push_back(i->first);
-      mapArray.push_back(i->second);
-    }
-
-    DBWriteWrapper( keyName, keyArray);
-    DBWriteWrapper( mapName, mapArray);
-  }
-}
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< globalIndex, localIndex >& );
-
-
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& subdir, const std::map< std::string, TYPE>& member )
-{
-
-  DBMkDir( m_dbFilePtr, subdir.c_str() );
-  DBSetDir( m_dbFilePtr, subdir.c_str() );
-
-  array<string> memberNames;
-
-
-  // iterate over all entries in the member map
-  for( typename std::map< std::string, TYPE >::const_iterator i = member.begin() ; i!=member.end() ; ++i )
-  {
-    // the field name is the key to the map
-    const std::string fieldName = i->first;
-
-    memberNames.push_back( fieldName );
-
-    // check to see if the field should be written
-//    std::map<std::string, FieldBase*>::const_iterator fieldAttributes =
-// FieldInfo::AttributesByName.find(fieldName);
-
-    bool writeField = true;
-//    if( fieldAttributes == FieldInfo::AttributesByName.end() )
-//    {
-//      writeField = true;
-//    }
-//    else if( fieldAttributes->second->m_WriteToRestart )
-//    {
-//      writeField = true;
-//    }
-
-    if( writeField )
-    {
-      // the field data is mapped value
-      const TYPE& fieldData = i->second;
-
-      DBWriteWrapper( fieldName, fieldData );
-    }
-  }
-
-  DBWriteWrapper( "memberNames", memberNames );
-
-  DBSetDir( m_dbFilePtr, ".." );
-
-}
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<int> >& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<long int> >& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<long long int> >& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, lArray2d>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<localIndex_array> >& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, lSet>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, array<string> >& );
-
-
-
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& subdir, const std::map< std::string, InterObjectRelation<TYPE> >& member )
-{
-  DBMkDir( m_dbFilePtr, subdir.c_str() );
-  DBSetDir( m_dbFilePtr, subdir.c_str() );
-
-  // iterate over all entries in the member map
-  for( typename std::map< std::string, InterObjectRelation<TYPE> >::const_iterator i = member.begin() ; i!=member.end() ; ++i )
-  {
-    // the field name is the key to the map
-    const std::string fieldName = i->first;
-
-    // the field data is mapped value
-    const TYPE& fieldData = i->second;
-
-    DBWriteWrapper( fieldName, fieldData );
-  }
-
-  DBSetDir( m_dbFilePtr, ".." );
-
-}
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, OneToOneRelation>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, FixedOneToManyRelation>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, OrderedVariableOneToManyRelation>& );
-template void SiloFile::DBWriteWrapper( const std::string&, const std::map< std::string, UnorderedVariableOneToManyRelation>& );
-
-
-
-template<typename TYPE>
-void SiloFile::DBWriteWrapper( const std::string& name, const TYPE* const data, const int size )
-{
-  if( size!=0 )
-  {
-    int dims[2];
-    dims[0] = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
-    dims[1] = size;
-
-    DBWrite( m_dbFilePtr, name.c_str(), const_cast<TYPE*>(data), dims,
-             2, SiloFileUtilities::DB_TYPE<TYPE>() );
-  }
-}
-template void SiloFile::DBWriteWrapper( const std::string&, const int* const, const int );
-
-
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, TYPE& data ) const
-{
-  if( DBInqVarExists( m_dbFilePtr, name.c_str() ) )
-  {
-
-    if( SiloFileUtilities::DB_TYPE<TYPE>() != DBGetVarType( m_dbFilePtr, name.c_str() ) )
-    {
-      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
-    }
-    if( sizeof(TYPE) != DBGetVarByteLength( m_dbFilePtr, name.c_str() ) )
-    {
-      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
-    }
-
-    DBReadVar( m_dbFilePtr, name.c_str(), &data );
-  }
-  else
-  {
-    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in
-    // silo file" );
-  }
-}
-template void SiloFile::DBReadWrapper( const std::string&, int& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, unsigned int& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, double& ) const;
-//template void SiloFile::DBReadWrapper( const std::string&, localIndex& )
-// const;
-template void SiloFile::DBReadWrapper( const std::string&, globalIndex& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, R1Tensor& ) const;
-template<>
-void SiloFile::DBReadWrapper( const std::string& name, std::string& data ) const
-{
-  if( DBInqVarExists( m_dbFilePtr, name.c_str() ) )
-  {
-
-    if( DB_CHAR != DBGetVarType( m_dbFilePtr, name.c_str() ) )
-    {
-      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
-    }
-
-    data.resize( DBGetVarByteLength( m_dbFilePtr, name.c_str() ) );
-    DBReadVar( m_dbFilePtr, name.c_str(), const_cast<char*>( data.data() ) );
-  }
-  else
-  {
-    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in
-    // silo file" );
-  }
-}
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, array<TYPE>& data ) const
-{
-
-
-  if( DBInqVarExists( m_dbFilePtr, name.c_str() ) )
-  {
-    if( SiloFileUtilities::DB_TYPE<TYPE>() != DBGetVarType( m_dbFilePtr, name.c_str() ) )
-    {
-      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
-    }
-
-    if( 1 )
-    {
-      int dims[2];
-      DBGetVarDims( m_dbFilePtr, name.c_str(), 2, dims );
-
-      data.resize( dims[1] );
-    }
-    else if( static_cast<int>(sizeof(TYPE)*data.size()) != DBGetVarByteLength( m_dbFilePtr, name.c_str() ) )
-    {
-      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
-    }
-
-    DBReadVar( m_dbFilePtr, name.c_str(), data.data() );
-  }
-  else
-  {
-    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in
-    // silo file" );
-  }
-}
-template void SiloFile::DBReadWrapper( const std::string&, array<int>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, array<long int>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, array<long long int>& ) const;
-//template void SiloFile::DBReadWrapper( const std::string&, integer_array& )
-// const;
-template void SiloFile::DBReadWrapper( const std::string&, array<real64>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, array<R1Tensor>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, array<R2Tensor>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, array<R2SymTensor>& ) const;
-
-template<>
-void SiloFile::DBReadWrapper( const std::string& name, array<std::string>& data ) const
-{
-
-  if( DBInqVarExists( m_dbFilePtr, name.c_str() ) )
-  {
-
-    array<char> temp( DBGetVarByteLength( m_dbFilePtr, name.c_str() ) );
-
-    DBReadVar( m_dbFilePtr, name.c_str(), temp.data() );
-
-    std::string tmpStr;
-    for( array<char>::const_iterator i=temp.begin() ; i!=temp.end() ; ++i )
-    {
-      if( *i != ' ')
-      {
-        tmpStr.push_back(*i);
-      }
-      else
-      {
-        data.push_back(tmpStr);
-        tmpStr.clear();
-      }
-    }
-
-  }
-  else
-  {
-    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in
-    // silo file" );
-  }
-}
-
-
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, set<TYPE>& data ) const
-{
-
-  if( DBInqVarExists( m_dbFilePtr, name.c_str() ) )
-  {
-    array<TYPE> dataArray;
-
-    int dims[2];
-    DBGetVarDims( m_dbFilePtr, name.c_str(), 2, dims );
-    dataArray.resize( dims[1] );
-
-    DBReadWrapper(name,dataArray);
-
-    data.clear();
-    data.insert( dataArray.begin(), dataArray.end() );
-  }
-
-}
-template void SiloFile::DBReadWrapper( const std::string&, lSet& ) const;
-//template void SiloFile::DBReadWrapper( const std::string&, iSet& ) const;
-
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, Array2dT<TYPE>& data ) const
-{
-
-  if( DBInqVarExists( m_dbFilePtr, name.c_str() ) )
-  {
-    if( SiloFileUtilities::DB_TYPE<TYPE>() != DBGetVarType( m_dbFilePtr, name.c_str() ) )
-    {
-      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
-    }
-    if( static_cast<int>(sizeof(TYPE)*data.size()) != DBGetVarByteLength( m_dbFilePtr, name.c_str() ) )
-    {
-      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
-    }
-
-    int dims[3];
-    DBGetVarDims( m_dbFilePtr, name.c_str(), 3, dims);
-    if( dims[0] != SiloFileUtilities::GetNumberOfVariablesInField<TYPE>() ||
-        dims[1] != integer_conversion<int>(data.size(1)) ||
-        dims[2] != integer_conversion<int>(data.size(0)) )
-    {
-      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" dimensions are incorrect" );
-    }
-
-    DBReadVar( m_dbFilePtr, name.c_str(), data.data() );
-  }
-  else
-  {
-    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in
-    // silo file" );
-  }
-}
-template void SiloFile::DBReadWrapper( const std::string& name, Array2dT<real64>& data ) const;
-template void SiloFile::DBReadWrapper( const std::string& name, Array2dT<R1Tensor>& data ) const;
-template void SiloFile::DBReadWrapper( const std::string& name, Array2dT<R2Tensor>& data ) const;
-
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, array<array<TYPE> >& data ) const
-{
-
-  const std::string sizeName = name+"_sizes";
-  const std::string dataName = name+"_data";
-
-
-  array<typename array<TYPE>::size_type> dataSizes(data.size());
-
-  DBReadWrapper( sizeName, dataSizes );
-
-  typename array<TYPE>::size_type serialSize = 0;
-  for( integer i=0 ; i<data.size() ; ++i )
-  {
-    data[i].resize( dataSizes[i]);
-    serialSize += dataSizes[i];
-  }
-
-  if( serialSize > 0 )
-  {
-    array<TYPE> dataSerial;
-    dataSerial.resize(serialSize);
-    DBReadWrapper( dataName, dataSerial );
-
-    typename array<TYPE>::const_iterator idataSerial = dataSerial.begin();
-
-    for( integer i=0 ; i<data.size() ; ++i )
-    {
-      for( integer j=0 ; j<data[i].size() ; ++j, ++idataSerial )
-      {
-        data[i][j] = *idataSerial;
-      }
-    }
-  }
-
-}
-template void SiloFile::DBReadWrapper( const std::string&, array<array<int> >& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, array<array<realT> >& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, array<array<R2Tensor> >& ) const;
-
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, array<Array2dT<TYPE> >& data ) const
-{
-  const std::string sizeName0 = name+"_sizes0";
-  const std::string sizeName1 = name+"_sizes1";
-  const std::string dataName = name+"_data";
-
-
-  array<typename array<Array2dT<TYPE> >::size_type> dataSizes0(data.size());
-  array<typename Array2dT<TYPE>::size_type> dataSizes1(data.size());
-
-  DBReadWrapper( sizeName0, dataSizes0 );
-  DBReadWrapper( sizeName1, dataSizes1 );
-
-
-  typename array<TYPE>::size_type serialSize = 0;
-  for( integer i=0 ; i<data.size() ; ++i )
-  {
-    data[i].resize(dataSizes0[i],dataSizes1[i]);
-    serialSize += dataSizes0[i] * dataSizes1[i];
-  }
-
-  if( serialSize > 0 )
-  {
-    array<TYPE> dataSerial(serialSize);
-    DBReadWrapper( dataName, dataSerial );
-
-    typename array<TYPE>::const_iterator idataSerial = dataSerial.begin();
-
-    for( integer i=0 ; i< static_cast<integer>(data.size()) ; ++i )
-    {
-      for( integer j=0 ; j< static_cast<integer>(data[i].size(0)) ; ++j )
-      {
-        for( integer k=0 ; k< static_cast<integer>(data[i].size(1)); ++k )
-        {
-          data[i][j][k] = *idataSerial;
-          ++idataSerial;
-        }
-      }
-
-
-    }
-  }
-}
-template void SiloFile::DBReadWrapper( const std::string&, array<Array2dT<R1Tensor> >& ) const;
-
-
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, array<array<array<TYPE> > >& data ) const
-{
-  const std::string sizeName0 = name+"_sizes0";
-  const std::string sizeName1 = name+"_sizes1";
-  const std::string dataName = name+"_data";
-
-
-  array<typename array<array<TYPE> >::size_type> dataSizes0(data.size());
-  array<typename array<TYPE>::size_type> dataSizes1;
-
-  DBReadWrapper( sizeName0, dataSizes0 );
-
-  typename array<TYPE>::size_type sizeSize1 = 0;
-  for( integer i=0 ; i<data.size() ; ++i )
-  {
-    data[i].resize( dataSizes0[i]);
-    sizeSize1 += dataSizes0[i];
-  }
-
-  dataSizes1.resize( sizeSize1 );
-  DBReadWrapper( sizeName1, dataSizes1 );
-
-  typename array<TYPE>::size_type serialSize = 0;
-  typename array<TYPE>::size_type size1count = 0;
-  for( integer i=0 ; i<data.size() ; ++i )
-  {
-    for( integer j=0 ; j<data[i].size() ; ++j )
-    {
-      data[i][j].resize( dataSizes1[size1count]);
-      serialSize += dataSizes1[size1count];
-      ++size1count;
-    }
-  }
-
-  if( serialSize > 0 )
-  {
-    array<TYPE> dataSerial(serialSize);
-    DBReadWrapper( dataName, dataSerial );
-
-    typename array<TYPE>::const_iterator idataSerial = dataSerial.begin();
-
-    for( integer i=0 ; i<data.size() ; ++i )
-    {
-      for( integer j=0 ; j<data[i].size() ; ++j )
-      {
-        for( integer k=0 ; k<data[i][j].size() ; ++k, ++idataSerial )
-        {
-          data[i][j][k] = *idataSerial;
-        }
-      }
-    }
-  }
-}
-template void SiloFile::DBReadWrapper( const std::string& name, array<array<array<R1Tensor> > >& data ) const;
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, array<set<TYPE> >& data ) const
-{
-
-  array<array<TYPE> > vdata(data.size());
-
-  DBReadWrapper( name, vdata );
-
-  for( integer i=0 ; i<data.size() ; ++i )
-  {
-    data[i].clear();
-    data[i].insert( vdata[i].begin(), vdata[i].end() );
-  }
-}
-
-template< typename T1, typename T2 >
-void SiloFile::DBReadWrapper( const std::string& name, std::map< T1, T2 >& datamap ) const
-{
-  const std::string keyName = name+"_keyval";
-  const std::string mapName = name+"_mapval";
-
-  if( DBInqVarExists( m_dbFilePtr, keyName.c_str() ) )
-  {
-
-    unsigned int size = DBGetVarLength ( m_dbFilePtr, keyName.c_str() );
-
-    array<T1> keyArray;
-    keyArray.resize(size);
-
-    array<T2> mapArray;
-    mapArray.resize(size);
-
-
-    DBReadWrapper( keyName, keyArray);
-    DBReadWrapper( mapName, mapArray);
-
-    datamap.clear();
-
-
-    for( unsigned int i=0 ; i<size ; ++i  )
-    {
-      datamap[keyArray[i]] = mapArray[i];
-    }
-
-  }
-}
-template void SiloFile::DBReadWrapper( const std::string&, std::map< globalIndex, localIndex >& ) const;
-
-
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& subdir, std::map< std::string, TYPE>& member ) const
-{
-
-  DBSetDir( m_dbFilePtr, subdir.c_str() );
-
-  array<string> memberNames;
-
-  DBReadWrapper( "memberNames", memberNames );
-
-  for( array<string>::const_iterator i=memberNames.begin() ; i!=memberNames.end() ; ++i )
-  {
-    const std::string fieldName = *i;
-    // check to see if the field should be written
-//    std::map<std::string, FieldBase*>::const_iterator fieldAttributes =
-// FieldInfo::AttributesByName.find(fieldName);
-
-    bool writeField = true;
-//    if( fieldAttributes == FieldInfo::AttributesByName.end() )
-//    {
-//      writeField = true;
-//    }
-//    else if( fieldAttributes->second->m_WriteToRestart )
-//    {
-//      writeField = true;
-//    }
-
-    if( writeField )
-    {
-      // the field data is mapped value
-      TYPE& fieldData = member[fieldName];
-
-      DBReadWrapper( fieldName, fieldData );
-    }
-  }
-
-  /*
-     // iterate over all entries in the member map
-     for( typename std::map< std::string, TYPE >::iterator i = member.begin() ;
-        i!=member.end() ; ++i )
-     {
-     // the field name is the key to the map
-     const std::string fieldName = i->first;
-
-     // check to see if the field should be written
-     std::map<std::string, FieldBase*>::const_iterator fieldAttributes =
-        FieldInfo::AttributesByName.find(fieldName);
-
-     bool writeField = false;
-     if( fieldAttributes == FieldInfo::AttributesByName.end() )
-     {
-      writeField = true;
-     }
-     else if( fieldAttributes->second->m_WriteToRestart )
-     {
-      writeField = true;
-     }
-
-     if( writeField )
-     {
-      // the field data is mapped value
-      TYPE& fieldData = i->second;
-
-      DBReadWrapper( fieldName, fieldData );
-     }
-     }
-   */
-
-  DBSetDir( m_dbFilePtr, ".." );
-
-}
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<integer> >& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<long int> >& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<long long int> >& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, lArray2d>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<localIndex_array> >& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, lSet>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, array<string> >& ) const;
-
-
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& subdir, std::map< std::string, InterObjectRelation<TYPE> >& member ) const
-{
-  DBSetDir( m_dbFilePtr, subdir.c_str() );
-
-  // iterate over all entries in the member map
-  for( typename std::map< std::string, InterObjectRelation<TYPE> >::iterator i = member.begin() ; i!=member.end() ; ++i )
-  {
-    // the field name is the key to the map
-    const std::string fieldName = i->first;
-
-    // the field data is mapped value
-    TYPE& fieldData = i->second;
-
-    DBReadWrapper( fieldName, fieldData );
-  }
-
-  DBSetDir( m_dbFilePtr, ".." );
-
-}
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, OneToOneRelation>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, FixedOneToManyRelation>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, OrderedVariableOneToManyRelation>& ) const;
-template void SiloFile::DBReadWrapper( const std::string&, std::map< std::string, UnorderedVariableOneToManyRelation>& ) const;
-
-
-template<typename TYPE>
-void SiloFile::DBReadWrapper( const std::string& name, TYPE* const data, const int size ) const
-{
-  if( DBInqVarExists( m_dbFilePtr, name.c_str() ) )
-  {
-    if( SiloFileUtilities::DB_TYPE<TYPE>() != DBGetVarType( m_dbFilePtr, name.c_str() ) )
-    {
-      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect type" );
-    }
-    if( static_cast<int>(sizeof(TYPE)*size) != DBGetVarByteLength( m_dbFilePtr, name.c_str() ) )
-    {
-      GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" is incorrect size" );
-    }
-
-    DBReadVar( m_dbFilePtr, name.c_str(), data );
-  }
-  else
-  {
-    //GEOS_ERROR("SiloFile::DBReadWrapper: variable "+ name +" does not exist in
-    // silo file" );
-  }
-}
-template void SiloFile::DBReadWrapper( const std::string&, int* const, const int ) const;
 
 
 
