@@ -749,6 +749,9 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
 
+  SiloFile siloFile;
+  siloFile.MakeSiloDirectories();
+
   this->SetOtherDocumentationNodes(this);
   this->RegisterDocumentationNodes();
 
