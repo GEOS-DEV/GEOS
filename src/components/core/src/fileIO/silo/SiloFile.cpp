@@ -1425,6 +1425,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(const int cycleNum)
         DBPutMultivar(siloFile, varName.c_str(), multiVar->nvars,
                       const_cast<char**> (newvarnames.data()), multiVar->vartypes, optlist);
         DBFreeOptlist(optlist);
+        DBFreeMultivar(multiVar);
       }
     }
 
@@ -1472,6 +1473,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(const int cycleNum)
         DBPutMultimesh( siloFile, varName.c_str(), multiMesh->nblocks,
                         const_cast<char**> (newmeshnames.data()), multiMesh->meshtypes, optlist);
         DBFreeOptlist(optlist);
+        DBFreeMultimesh(multiMesh);
       }
     }
     DBClose(siloFile);
