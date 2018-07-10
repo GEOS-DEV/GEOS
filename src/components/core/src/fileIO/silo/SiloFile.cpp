@@ -173,7 +173,7 @@ template void SetVariableNames<int> (string const & fieldName, array<string>& va
 template void SetVariableNames<unsigned long> (string const & fieldName, array<string>& varnamestring,
                                                char* varnames[]);
 template void SetVariableNames<real64> (string const & fieldName, array<string>& varnamestring,
-                                       char* varnames[]);
+                                        char* varnames[]);
 template void SetVariableNames<long long unsigned int> (string const & fieldName, array<string>& varnamestring,
                                                         char* varnames[]);
 
@@ -422,8 +422,8 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
     sprintf(baseFileName, "%s%s%s_%06d", m_siloDirectory.c_str(), "/",m_plotFileRoot.c_str(), cycleNum);
     sprintf(fileName,
             "%s%s%s_%06d.%03d", m_siloDataDirectory.c_str(), "/", m_plotFileRoot.c_str(),
-                                cycleNum,
-                                groupRank);
+            cycleNum,
+            groupRank);
   }
   sprintf(dirName, "domain_%05d", domainNumber);
 
@@ -487,7 +487,7 @@ void SiloFile::HandOffBaton()
 #if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-if( rank==0 )
+  if( rank==0 )
   {
     DBClose(m_dbBaseFilePtr);
   }
@@ -974,8 +974,8 @@ void SiloFile::WriteArbitratryPolyhedralMeshObject( string const & meshName,
                                                                          // the
                                                                          // problem
       DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));//problem
-                                                                           // time
-                                                                           // value
+                                                                            // time
+                                                                            // value
 //      if (type_name<globalIndex>::name() == type_name<long
 // long>::name())//flag that the array for NODENUM is long long
 //        DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
@@ -1201,8 +1201,8 @@ void SiloFile::WriteRegionSpecifications( ElementRegionManager const * const ele
   auto const
   constitutiveMap = elementManager->
                     ConstructViewAccessor<
-                    std::pair< Array2dT<localIndex>,Array2dT<localIndex> >
-                    >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString );
+    std::pair< Array2dT<localIndex>,Array2dT<localIndex> >
+    >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString );
 
   string name = "Regions";
   int const nmat = constitutiveManager->GetSubGroups().size();
@@ -1596,7 +1596,7 @@ template void** SiloFile::GetDataVar<long long int>( string const &, string cons
 // string&, const array<int>::size_type , const int, const int, const
 // real64, string const & ) const;
 template void** SiloFile::GetDataVar<real64>( string const &, string const &, const array<real64>::size_type, const int, const int, const real64,
-                                             string const & ) const;
+                                              string const & ) const;
 template void** SiloFile::GetDataVar<R1Tensor>( string const &, string const &, const array<R1Tensor>::size_type, const int, const int, const real64,
                                                 string const & ) const;
 template void** SiloFile::GetDataVar<R2Tensor>( string const &, string const &, const array<R2Tensor>::size_type, const int, const int, const real64,
@@ -1913,57 +1913,52 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
 
-
-
-
-
-
     {
-    ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+      ElementRegionManager const * const elemManager = meshLevel->getElemManager();
 
 
-    this->WriteRegionSpecifications( elemManager,
-                                     constitutiveManager,
-                                     meshName,
-                                     cycleNum,
-                                     problemTime );
+      this->WriteRegionSpecifications( elemManager,
+                                       constitutiveManager,
+                                       meshName,
+                                       cycleNum,
+                                       problemTime );
 
-    for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-    {
-      ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-      for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+      for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
       {
-        CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+        for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+        {
+          CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
+          MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-        string regionName = elemRegion->getName() + "_" + subRegion->getName();
+          string regionName = elemRegion->getName() + "_" + subRegion->getName();
 
-        WriteManagedGroupSilo( subRegion,
-                               regionName,
+          WriteManagedGroupSilo( subRegion,
+                                 regionName,
+                                 meshName,
+                                 DB_ZONECENT,
+                                 cycleNum,
+                                 problemTime,
+                                 isRestart,
+                                 "none",
+                                 localIndex_array());
+        }
+      }
+      for( localIndex matIndex=0 ; matIndex<constitutiveManager->GetSubGroups().size() ; ++matIndex )
+      {
+        ConstitutiveBase const * const
+        constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex);
+
+        WriteManagedGroupSilo( constitutiveModel->GetStateData(),
+                               constitutiveModel->getName(),
                                meshName,
                                DB_ZONECENT,
                                cycleNum,
                                problemTime,
                                isRestart,
-                               "none",
+                               constitutiveModel->getName(),
                                localIndex_array());
       }
-    }
-    for( localIndex matIndex=0 ; matIndex<constitutiveManager->GetSubGroups().size() ; ++matIndex )
-    {
-      ConstitutiveBase const * const
-      constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex);
-
-      WriteManagedGroupSilo( constitutiveModel->GetStateData(),
-                             constitutiveModel->getName(),
-                             meshName,
-                             DB_ZONECENT,
-                             cycleNum,
-                             problemTime,
-                             isRestart,
-                             constitutiveModel->getName(),
-                             localIndex_array());
-    }
 
     }
 //    m_feElementManager->WriteSilo( siloFile, meshName, cycleNum, problemTime,

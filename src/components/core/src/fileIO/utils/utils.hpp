@@ -26,18 +26,19 @@
 #include <vector>
 #include <regex>
 
-namespace geosx 
+namespace geosx
 {
 
 /* Taken from http://www.martinbroadhurst.com/list-the-files-in-a-directory-in-c.html */
 inline void readDirectory(const std::string& name, std::vector<std::string>& v)
 {
-    DIR* dirp = opendir(name.c_str());
-    struct dirent * dp;
-    while ((dp = readdir(dirp)) != nullptr) {
-        v.push_back(dp->d_name);
-    }
-    closedir(dirp);
+  DIR* dirp = opendir(name.c_str());
+  struct dirent * dp;
+  while ((dp = readdir(dirp)) != nullptr)
+  {
+    v.push_back(dp->d_name);
+  }
+  closedir(dirp);
 }
 
 
