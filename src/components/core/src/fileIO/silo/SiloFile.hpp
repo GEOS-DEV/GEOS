@@ -827,6 +827,5 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 
 
 
-
 }
 #endif /* SILOFILE_H_ */
