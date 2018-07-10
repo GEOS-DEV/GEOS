@@ -146,6 +146,7 @@ public:
                              const bool isRestart );
 
   void WriteMeshLevel( MeshLevel const * const meshLevel,
+                       constitutive::ConstitutiveManager const * const constitutiveManager,
                        const int cycleNum,
                        const realT problemTime,
                        const bool isRestart );
@@ -216,11 +217,11 @@ public:
 
 //  void TestWriteDiscreteElementMeshObject();
 
-  void WriteRegionSpecifications(const ElementRegionManager*  elementManager,
-                                 constitutive::ConstitutiveManager const * constitutiveManager,
-                                 const std::string& meshName,
-                                 const int cycleNumber,
-                                 const realT problemTime);
+  void WriteRegionSpecifications( ElementRegionManager const * const elementManager,
+                                  constitutive::ConstitutiveManager const * const constitutiveManager,
+                                  const std::string& meshName,
+                                  const int cycleNumber,
+                                  const realT problemTime);
 
 
   void WriteManagedGroupSilo( dataRepository::ManagedGroup const * group,
@@ -230,18 +231,9 @@ public:
                               const int cycleNum,
                               const realT problemTime,
                               const bool isRestart,
+                              string const & regionName,
                               const localIndex_array& mask );
 
-
-
-  void WriteManagedGroupSilo( dataRepository::ManagedGroup const * group,
-                              const std::string& meshname,
-                              const int centering,
-                              const int cycleNum,
-                              const realT problemTime,
-                              const bool isRestart,
-                              const std::string& multiRoot,
-                              const localIndex_array& mask );
 
   /// writes out fields in a data member map
   template< typename OUTPUTTYPE >
