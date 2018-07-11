@@ -347,10 +347,10 @@ void SiloFile::MakeSiloDirectories()
       mkdir(m_siloDirectory.c_str(),nMode);
     }
 
-    if( !( stat(m_siloDataDirectory.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode) ) )
+    if( !( stat( (m_siloDirectory +"/"+ m_siloDataSubDirectory).c_str(), &sb) == 0 && S_ISDIR(sb.st_mode) ) )
     {
       mode_t nMode = 0733;
-      mkdir(m_siloDataDirectory.c_str(),nMode);
+      mkdir((m_siloDirectory +"/"+ m_siloDataSubDirectory).c_str(),nMode);
     }
   }
 }
@@ -415,26 +415,31 @@ void SiloFile::WaitForBatonWrite( int const domainNumber,
 
     sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum);
     sprintf( fileName, "%s%s%s_%06d.%03d",
-             m_siloDataDirectory.c_str(), "/", m_restartFileRoot.c_str(), cycleNum, groupRank);
+             m_siloDataSubDirectory.c_str(), "/", m_restartFileRoot.c_str(), cycleNum, groupRank);
   }
   else
   {
-    sprintf(baseFileName, "%s%s%s_%06d", m_siloDirectory.c_str(), "/",m_plotFileRoot.c_str(), cycleNum);
+    sprintf(baseFileName, "%s_%06d",
+            m_plotFileRoot.c_str(),
+            cycleNum);
+
     sprintf(fileName,
-            "%s%s%s_%06d.%03d", m_siloDataDirectory.c_str(), "/", m_plotFileRoot.c_str(),
+            "%s_%06d.%03d",
+            m_plotFileRoot.c_str(),
             cycleNum,
             groupRank);
   }
   sprintf(dirName, "domain_%05d", domainNumber);
 
-  m_dbFilePtr = static_cast<DBfile *>( PMPIO_WaitForBaton(m_baton, fileName, dirName) );
+  string dataFilePathAndName = m_siloDirectory + "/" + m_siloDataSubDirectory + "/" + fileName;
+  m_dbFilePtr = static_cast<DBfile *>( PMPIO_WaitForBaton(m_baton, dataFilePathAndName.c_str(), dirName) );
 
   m_fileName = fileName;
   m_baseFileName = baseFileName;
 
   if( rank==0 )
   {
-    m_dbBaseFilePtr = DBCreate( m_baseFileName.c_str(), DB_CLOBBER, DB_LOCAL, nullptr, DB_HDF5 );
+    m_dbBaseFilePtr = DBCreate( (m_siloDirectory + "/"+ m_baseFileName).c_str(), DB_CLOBBER, DB_LOCAL, nullptr, DB_HDF5 );
 //    m_dbBaseFilePtr = DBOpen( m_baseFileName.c_str(), DB_HDF5, DB_APPEND );
   }
 }
@@ -1296,7 +1301,7 @@ void SiloFile::WriteRegionSpecifications( ElementRegionManager const * const ele
       /* this mesh block is another file */
       sprintf( tempBuffer,
                "%s%s%s.%03d:/domain_%05d/%s",
-               m_siloDataDirectory.c_str(),
+               m_siloDataSubDirectory.c_str(),
                "/",
                m_baseFileName.c_str(),
                groupRank,
@@ -1408,7 +1413,8 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   if (rank == 0)
   {
-    DBfile *siloFile = DBOpen(m_baseFileName.c_str(), DB_UNKNOWN, DB_APPEND);
+    string baseFilePathAndName = m_siloDirectory + "/" + m_baseFileName;
+    DBfile *siloFile = DBOpen(baseFilePathAndName.c_str(), DB_UNKNOWN, DB_APPEND);
     string empty("EMPTY");
 
     for (array<string>::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
@@ -1689,7 +1695,8 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
                                       int const cycleNum,
                                       real64 const problemTime,
                                       bool const isRestart,
-                                      string const & regionName,
+                                      string const & materialName,
+                                      array<localIndex> const & zoneToMatMap,
                                       const localIndex_array& mask )
 {
 
@@ -1716,7 +1723,8 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
                                    problemTime,
                                    isRestart,
                                    rootDirectory,
-                                   regionName,
+                                   materialName,
+                                   zoneToMatMap,
                                    mask);
 
 
@@ -1909,11 +1917,25 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                            problemTime,
                            isRestart,
                            "none",
+                           localIndex_array(),
                            localIndex_array());
 
 
 
     {
+      array<array<localIndex> > materialOrder;
+      array<localIndex> materialOrderCounter;
+      materialOrder.resize( constitutiveManager->GetSubGroups().size() );
+      materialOrderCounter.resize( constitutiveManager->GetSubGroups().size() );
+      for( localIndex matIndex=0 ; matIndex<constitutiveManager->GetSubGroups().size() ; ++matIndex )
+      {
+        ConstitutiveBase const * const
+        constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex);
+
+        materialOrder[matIndex].resize( constitutiveModel->size() );
+        materialOrder[matIndex] = -1;
+        materialOrderCounter[matIndex] = 0;
+      }
       ElementRegionManager const * const elemManager = meshLevel->getElemManager();
 
 
@@ -1929,7 +1951,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
         {
           CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
-          MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
           string regionName = elemRegion->getName() + "_" + subRegion->getName();
 
@@ -1941,7 +1962,18 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                  problemTime,
                                  isRestart,
                                  "none",
+                                 localIndex_array(),
                                  localIndex_array());
+
+          auto const & constitutiveMap =
+              subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+          for( localIndex k=0 ; k<subRegion->size() ; ++k )
+          {
+            localIndex const matTypeIndex = constitutiveMap.first[k][0];
+            localIndex const matArrayIndex = constitutiveMap.second[k][0];
+            materialOrder[matTypeIndex][materialOrderCounter[matTypeIndex]] = matArrayIndex ;
+            ++materialOrderCounter[matTypeIndex];
+          }
         }
       }
       for( localIndex matIndex=0 ; matIndex<constitutiveManager->GetSubGroups().size() ; ++matIndex )
@@ -1957,6 +1989,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                problemTime,
                                isRestart,
                                constitutiveModel->getName(),
+                               materialOrder[matIndex],
                                localIndex_array());
       }
 
