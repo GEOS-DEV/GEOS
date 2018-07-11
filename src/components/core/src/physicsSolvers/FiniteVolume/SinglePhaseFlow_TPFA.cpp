@@ -134,7 +134,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                   faceManager->getName(),
                                   1,
                                   0,
-                                  0 );
+                                  1 );
 
       docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
                                   viewKeyStruct::faceCenterString,
@@ -147,7 +147,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                   faceManager->getName(),
                                   1,
                                   0,
-                                  0 );
+                                  1 );
     }
 
 
@@ -157,7 +157,6 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
     elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
       {
         cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
-
         docNode->AllocateChildNode( viewKeyStruct::deltaFluidPressureString,
                                     viewKeyStruct::deltaFluidPressureString,
                                     -1,
@@ -169,7 +168,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::deltaFluidDensityString,
                                     viewKeyStruct::deltaFluidDensityString,
@@ -182,7 +181,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::fluidPressureString,
                                     viewKeyStruct::fluidPressureString,
@@ -208,7 +207,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::deltaVolumeString,
                                     viewKeyStruct::deltaVolumeString,
@@ -221,7 +220,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::porosityString,
                                     viewKeyStruct::porosityString,
@@ -234,7 +233,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    1 );
         docNode->AllocateChildNode( viewKeyStruct::deltaPorosityString,
                                     viewKeyStruct::deltaPorosityString,
                                     -1,
@@ -246,7 +245,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::permeabilityString,
                                     viewKeyStruct::permeabilityString,
@@ -259,7 +258,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    1 );
 
               docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
                                           viewKeyStruct::blockLocalDofNumberString,
