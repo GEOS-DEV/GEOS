@@ -104,7 +104,7 @@ public:
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    if (rank == 0)
+    if( rank == 0 )
     {
       DBMkDir(m_dbBaseFilePtr, rootdir.c_str());
     }
@@ -513,22 +513,26 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
     if( typeID==typeid(real64_array) )
     {
       auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<real64_array> const & >( *wrapper );
-      this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
+      this->WriteDataField<real64>(meshname.c_str(), fieldName,
+                                   viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
     }
     if( typeID==typeid(r1_array) )
     {
       auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper );
-      this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
+      this->WriteDataField<real64>(meshname.c_str(), fieldName,
+                                   viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
     }
     if( typeID==typeid(integer_array) )
     {
       auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper );
-      this->WriteDataField<integer>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
+      this->WriteDataField<integer>(meshname.c_str(), fieldName,
+                                    viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
     }
     if( typeID==typeid(localIndex_array) )
     {
       auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<localIndex_array> const & >( *wrapper );
-      this->WriteDataField<localIndex>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
+      this->WriteDataField<localIndex>(meshname.c_str(), fieldName,
+                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
     }
 
   }
@@ -588,7 +592,7 @@ void SiloFile::WriteDataField( string const & meshName,
   array<string> varnamestring(nvars);
   std::vector<std::vector<OUTTYPE> > castedField(nvars);
 
-  if (materialName != "none")
+  if( materialName != "none" )
   {
     regionpnames[0] = const_cast<char*> (materialName.c_str());
     regionpnames[1] = nullptr;
@@ -603,11 +607,11 @@ void SiloFile::WriteDataField( string const & meshName,
       }
     }
 
-    for (localIndex i = 0 ; i < nvars ; ++i)
+    for( localIndex i = 0 ; i < nvars ; ++i )
     {
       castedField[i].resize(nels);
       vars[i] = static_cast<void*> (&(castedField[i][0]));
-      for (int k = 0 ; k < nels ; ++k)
+      for( int k = 0 ; k < nels ; ++k )
       {
         castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[zoneToMatMap[k]], i);
       }
@@ -616,11 +620,11 @@ void SiloFile::WriteDataField( string const & meshName,
   }
   else
   {
-    for (int i = 0 ; i < nvars ; ++i)
+    for( int i = 0 ; i < nvars ; ++i )
     {
       castedField[i].resize(nels);
       vars[i] = static_cast<void*> (&(castedField[i][0]));
-      for (int k = 0 ; k < nels ; ++k)
+      for( int k = 0 ; k < nels ; ++k )
       {
         castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[k], i);
       }
@@ -631,7 +635,7 @@ void SiloFile::WriteDataField( string const & meshName,
   // if the number of elements is zero, then record the path to the var. This
   // will be used later to delete the entry
   // from the multivar.
-  if (nels == 0)
+  if( nels == 0 )
   {
     char pwd[256];
     DBGetDir(m_dbFilePtr, pwd);
@@ -661,9 +665,9 @@ void SiloFile::WriteDataField( string const & meshName,
       err = DBPutQuadvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, varnames.data(), reinterpret_cast<float**>(vars.data()),
                           m_quadMeshDims,m_quadMeshNDims,nullptr, 0,  SiloFileUtilities::DB_TYPE<OUTTYPE>(),centering, optlist);
     }
-    if(err < 0)
+    if( err < 0 )
     {
-      if(err < -1)
+      if( err < -1 )
       {
         GEOS_ERROR("unhandled case in SiloFile::WriteDataField A\n");
       }
@@ -679,7 +683,7 @@ void SiloFile::WriteDataField( string const & meshName,
 #if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-  if (rank == 0)
+  if( rank == 0 )
   {
     int tensorRank = SiloFileUtilities::GetTensorRank<TYPE>();
     DBAddOption(optlist, DBOPT_TENSOR_RANK, const_cast<int*> (&tensorRank));
@@ -744,7 +748,7 @@ void SiloFile::ReadFieldMapFromSilo( std::map< string, array<TYPE> >& member,
           // write the data field
           ReadDataField<INPUTTYPE>( dataToRead, meshname.c_str(), fieldName, centering, cycleNum, problemTime, regionName );
 
-          for( localIndex_array::size_type i = 0 ; i < mask.size() ; ++i)
+          for( localIndex_array::size_type i = 0 ; i < mask.size() ; ++i )
           {
             fieldData[mask[i]] = dataToRead[i];
           }
@@ -776,7 +780,7 @@ void SiloFile::ReadDataField( array<TYPE>& field,
     TYPE temp;
     INPUTTYPE* ptemp = SiloFileUtilities::DataPtr<TYPE,INPUTTYPE>( temp );
 
-    for( int i=0 ; i<SiloFileUtilities::GetNumberOfVariablesInField<TYPE>() ; ++i  )
+    for( int i=0 ; i<SiloFileUtilities::GetNumberOfVariablesInField<TYPE>() ; ++i )
     {
       ptemp[i] = var[i][a];
     }
@@ -826,7 +830,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
     multiRootString.clear();
   }
 
-  for (int i = 0 ; i < size ; ++i)
+  for( int i = 0 ; i < size ; ++i )
   {
     int groupRank = PMPIO_GroupRank(m_baton, i);
 
