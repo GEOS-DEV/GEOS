@@ -49,11 +49,11 @@
     <BasisFunctions> 
         <LagrangeBasis3 name="linearBasis"  degree = "1"  />
     </BasisFunctions>
-    
+
     <QuadratureRules>
-        <GaussQuadrature3 name="gaussian"   degree="2"  />    
+        <GaussQuadrature3 name="gaussian"   degree="2"  />
     </QuadratureRules>
-    
+
     <FiniteElements>
         <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
@@ -88,13 +88,32 @@
   </InitialConditions>
 
   <BoundaryConditions>
-    <Dirichlet name="perm"
+    <Dirichlet name="permx"
+               component="0"
                initialCondition="1"  
                setNames="all"
                objectPath="ElementRegion/Region2/cb1"
-               fieldName="permeablity"
+               fieldName="permeability"
                dataType="R1Tensor"
-               scale="2.0e-16, 2.0e-16, 2.0e-16"/>
+               scale="2.0e-16"/>
+
+    <Dirichlet name="permy"
+               component="1"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegion/Region2/cb1"
+               fieldName="permeability"
+               dataType="R1Tensor"
+               scale="2.0e-16"/>
+
+    <Dirichlet name="permz"
+               component="2"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegion/Region2/cb1"
+               fieldName="permeability"
+               dataType="R1Tensor"
+               scale="2.0e-16"/>
 
     <Dirichlet name="porosity"
                initialCondition="1"  
