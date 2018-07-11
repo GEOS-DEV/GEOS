@@ -162,7 +162,7 @@ void SetVariableNames(string const & fieldName, array<string>& varnamestring, ch
 {
   varnamestring.resize(GetNumberOfVariablesInField<TYPE> ());
   int count = 0;
-  for (array<string>::iterator i = varnamestring.begin() ; i != varnamestring.end() ; ++i)
+  for( array<string>::iterator i = varnamestring.begin() ; i != varnamestring.end() ; ++i )
   {
     *i = fieldName;
     varnames[count++] =  const_cast<char*>((*i).c_str());
@@ -291,13 +291,13 @@ template<> int GetTensorRank<string> ()
 void SetCenteringSubdir(int const centering, string& subdir)
 {
 
-  if (centering == DB_NODECENT)
+  if( centering == DB_NODECENT )
     subdir = "node_fields";
-  else if (centering == DB_ZONECENT)
+  else if( centering == DB_ZONECENT )
     subdir = "zone_fields";
-  else if (centering == DB_FACECENT)
+  else if( centering == DB_FACECENT )
     subdir = "face_fields";
-  else if (centering == DB_EDGECENT)
+  else if( centering == DB_EDGECENT )
     subdir = "edge_fields";
 }
 }
@@ -459,11 +459,11 @@ void SiloFile::WaitForBaton( int const domainNumber, string const & restartFileN
 
 
   sprintf(baseFileName, "%s", restartFileName.c_str());
-  if (groupRank == 0)
+  if( groupRank == 0 )
     sprintf(fileName, "%s", restartFileName.c_str());
   else
   {
-    if (m_siloDirectory.empty())
+    if( m_siloDirectory.empty())
     {
       sprintf(fileName, "%s.%03d", restartFileName.c_str(), groupRank);
     }
@@ -544,7 +544,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
 
   int numTotZones = 0;
   int lnodelist = 0;
-  for (int i = 0 ; i < numRegions ; ++i)
+  for( int i = 0 ; i < numRegions ; ++i )
   {
     numTotZones += shapecnt[i];
     //  if shapesize <= 0, that signals that we are using arbitrary polygons.
@@ -555,7 +555,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
   }
 
 
-  if (numTotZones == 0)
+  if( numTotZones == 0 )
   {
     char pwd[256];
     DBGetDir(m_dbFilePtr, pwd);
@@ -583,34 +583,34 @@ void SiloFile::WriteMeshObject(string const & meshName,
 
     int count = 0;
     int elemCount = 0;
-    for (int i = 0 ; i < numRegions ; ++i)
+    for( int i = 0 ; i < numRegions ; ++i )
     {
       int n;
       if( shapesize[i] > 0 )
         n = shapecnt[i] * shapesize[i];
       else
         n = -shapesize[i];
-      for (int j = 0 ; j < n ; ++j)
+      for( int j = 0 ; j < n ; ++j )
       {
         nodelist[count++] = meshConnectivity[i][j];
       }
 
       if( globalElementNum != nullptr )
       {
-        for (int j = 0 ; j < shapecnt[i] ; ++j)
+        for( int j = 0 ; j < shapecnt[i] ; ++j )
         {
           globalZoneNumber[elemCount++] = globalElementNum[i][j];
         }
         // write zonelist
         //      DBAddOption(optlist, DBOPT_ZONENUM, const_cast<globalIndex*>
         // (globalZoneNumber.data()));
-        if ( std::is_same<globalIndex,long long>::value )
+        if( std::is_same<globalIndex,long long>::value )
           DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
       }
     }
 
     integer_array shapesize2(numRegions);
-    for (int i = 0 ; i < numRegions ; ++i)
+    for( int i = 0 ; i < numRegions ; ++i )
     {
       if( shapesize[i] < 0 )
       {
@@ -651,7 +651,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
 #if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-  if (rank == 0)
+  if( rank == 0 )
   {
     DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
     DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
@@ -693,7 +693,7 @@ void SiloFile::WritePolygonMeshObject(string const & meshName,
   DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
 
   int numTotZones = shapecnt[0];
-  if (numTotZones == 0)
+  if( numTotZones == 0 )
   {
     char pwd[256];
     DBGetDir(m_dbFilePtr, pwd);
@@ -716,7 +716,7 @@ void SiloFile::WritePolygonMeshObject(string const & meshName,
     globalIndex_array globalZoneNumber(lnodelist);
 
     int elemCount = 0;
-    for (int j = 0 ; j < lnodelist ; ++j)
+    for( int j = 0 ; j < lnodelist ; ++j )
     {
       nodelist[j] = meshConnectivity[0][j];
     }
@@ -724,7 +724,7 @@ void SiloFile::WritePolygonMeshObject(string const & meshName,
     {
       if( globalElementNum != nullptr )
       {
-        for (int j = 0 ; j < shapecnt[0] ; ++j)
+        for( int j = 0 ; j < shapecnt[0] ; ++j )
         {
           globalZoneNumber[elemCount++] = globalElementNum[0][j];
         }
@@ -768,7 +768,7 @@ void SiloFile::WritePolygonMeshObject(string const & meshName,
 #if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-  if (rank == 0)
+  if( rank == 0 )
   {
     DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
     DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
@@ -819,7 +819,7 @@ int SiloFile::WriteQuadMeshObject(string const & meshName,
 
   int ret = DBPutQuadmesh(m_dbFilePtr, meshName.c_str(), nullptr,(float**) coords, m_quadMeshDims, 3,
                           datatype, DB_NONCOLLINEAR, optlist);
-  if(ret == -1)
+  if( ret == -1 )
     return ret;
 
   DBClearOptlist(optlist);
@@ -831,7 +831,7 @@ int SiloFile::WriteQuadMeshObject(string const & meshName,
   #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
-    if (rank == 0)
+    if( rank == 0 )
     {
       DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
       DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
@@ -858,8 +858,8 @@ void SiloFile::WriteBeamMesh(string const & meshName,
   {
     nodelist.reserve(2*node1.size());
     localIndex_array::const_iterator it2 = node2.begin();
-    for (localIndex_array::const_iterator it = node1.begin() ;
-         it != node1.end() ; ++it, ++it2)
+    for( localIndex_array::const_iterator it = node1.begin() ;
+         it != node1.end() ; ++it, ++it2 )
     {
       nodelist.push_back(static_cast<int>(*it));
       nodelist.push_back(static_cast<int>(*it2));
@@ -881,8 +881,8 @@ void SiloFile::WriteBeamMesh(string const & meshName,
   integer_array nodelist;
   {
     nodelist.reserve(2*connectivity.size());
-    for (std::map<int,int>::const_iterator it = connectivity.begin() ;
-         it != connectivity.end() ; ++it)
+    for( std::map<int,int>::const_iterator it = connectivity.begin() ;
+         it != connectivity.end() ; ++it )
     {
       nodelist.push_back(it->first);
       nodelist.push_back(it->second);
@@ -935,7 +935,7 @@ void SiloFile::WriteBeamMesh(string const & meshName,
   #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
-    if (rank == 0)
+    if( rank == 0 )
     {
       DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
       DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
@@ -1029,7 +1029,7 @@ void SiloFile::WriteArbitratryPolyhedralMeshObject( string const & meshName,
     {
       //define all faces in the DE's as external faces
       char* extface = new char[nfaces];
-      for(int i=0 ; i < nfaces ; i++)
+      for( int i=0 ; i < nfaces ; i++ )
         extface[i] = '1';
 
       DBPutPHZonelist(m_dbFilePtr, "dezonelist", nfaces, nodecnts, sumnodecnts, nodelist, extface, nDiscreteElements,
@@ -1045,7 +1045,7 @@ void SiloFile::WriteArbitratryPolyhedralMeshObject( string const & meshName,
   #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
-    if (rank == 0)
+    if( rank == 0 )
     {
       DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
       DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
@@ -1082,7 +1082,7 @@ void SiloFile::WritePointMesh( string const & meshName,
   #if USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   #endif
-    if (rank == 0)
+    if( rank == 0 )
     {
       WriteMultiXXXX(DB_POINTMESH, DBPutMultimesh, 0, meshName.c_str(), cycleNumber, "/", optlist);
     }
@@ -1216,7 +1216,7 @@ void SiloFile::WriteRegionSpecifications( ElementRegionManager const * const ele
   array<char const*> materialNames(nmat+1);
   materialNames.back() = nullptr;
 
-  for( int matIndex=0 ; matIndex<nmat ; ++matIndex)
+  for( int matIndex=0 ; matIndex<nmat ; ++matIndex )
   {
     matnos[matIndex] = matIndex;
     materialNameStrings[matIndex] = constitutiveManager->GetGroup(matIndex)->getName();
@@ -1237,7 +1237,7 @@ void SiloFile::WriteRegionSpecifications( ElementRegionManager const * const ele
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
-      for (localIndex k = 0 ; k < subRegion->size() ; ++k)
+      for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         // matIndex1 is the index of the material contained in the element
         localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
@@ -1278,7 +1278,7 @@ void SiloFile::WriteRegionSpecifications( ElementRegionManager const * const ele
 #if USE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-  if (rank == 0)
+  if( rank == 0 )
   {
 
     int size = 1;
@@ -1294,7 +1294,7 @@ void SiloFile::WriteRegionSpecifications( ElementRegionManager const * const ele
     DBGetDir(m_dbBaseFilePtr, currentDirectory);
     DBSetDir(m_dbBaseFilePtr, "/");
 
-    for (int i = 0 ; i < size ; ++i)
+    for( int i = 0 ; i < size ; ++i )
     {
       int groupRank = PMPIO_GroupRank(m_baton, i);
 
@@ -1369,7 +1369,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   int sizeOfReceiveBuffer = 0;
   displs[0] = 0;
-  for ( int i=1 ; i<size ; ++i)
+  for( int i=1 ; i<size ; ++i )
   {
     displs[i] = displs[i-1]+rcounts[i-1];
     sizeOfReceiveBuffer += rcounts[i];
@@ -1385,7 +1385,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   int sizeOfReceiveBufferMesh = 0;
   displs[0] = 0;
-  for ( int i=1 ; i<size ; ++i)
+  for( int i=1 ; i<size ; ++i )
   {
     displs[i] = displs[i-1]+rcounts[i-1];
     sizeOfReceiveBufferMesh += rcounts[i];
@@ -1411,14 +1411,14 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
          std::back_inserter< array<string> >(m_emptyMeshes));
   }
 
-  if (rank == 0)
+  if( rank == 0 )
   {
     string baseFilePathAndName = m_siloDirectory + "/" + m_baseFileName;
     DBfile *siloFile = DBOpen(baseFilePathAndName.c_str(), DB_UNKNOWN, DB_APPEND);
     string empty("EMPTY");
 
-    for (array<string>::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
-         != m_emptyVariables.end() ; ++emptyObject)
+    for( array<string>::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
+         != m_emptyVariables.end() ; ++emptyObject )
     {
       size_t pathBegin = emptyObject->find_first_of('/', 1);
       size_t pathEnd = emptyObject->find_last_of('/');
@@ -1434,11 +1434,11 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
       {
         array<const char*> newvarnames(multiVar->nvars);
 
-        for (int i = 0 ; i < multiVar->nvars ; ++i)
+        for( int i = 0 ; i < multiVar->nvars ; ++i )
         {
 
           string path(multiVar->varnames[i]);
-          if (path.find(domainString) != string::npos)
+          if( path.find(domainString) != string::npos )
           {
             newvarnames(i) = empty.c_str();
           }
@@ -1464,8 +1464,8 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     }
 
 
-    for (array<string>::iterator emptyObject = m_emptyMeshes.begin() ; emptyObject
-         != m_emptyMeshes.end() ; ++emptyObject)
+    for( array<string>::iterator emptyObject = m_emptyMeshes.begin() ; emptyObject
+         != m_emptyMeshes.end() ; ++emptyObject )
     {
       size_t pathBegin = emptyObject->find_first_of('/', 1);
       size_t pathEnd = emptyObject->find_last_of('/');
@@ -1486,11 +1486,11 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
       {
         array<const char*> newmeshnames(multiMesh->nblocks);
 
-        for (int i = 0 ; i < multiMesh->nblocks ; ++i)
+        for( int i = 0 ; i < multiMesh->nblocks ; ++i )
         {
 
           string path(multiMesh->meshnames[i]);
-          if (path.find(domainString) != string::npos)
+          if( path.find(domainString) != string::npos )
           {
             newmeshnames(i) = empty.c_str();
           }
@@ -1788,7 +1788,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     array<real64> xcoords(numNodes);
     array<real64> ycoords(numNodes);
     array<real64> zcoords(numNodes);
-    for (localIndex a = 0 ; a < numNodes ; ++a)
+    for( localIndex a = 0 ; a < numNodes ; ++a )
     {
       R1Tensor nodePosition;
       nodePosition = referencePosition[a];
@@ -1830,13 +1830,13 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         // size this temp array.(pfu)
         elementToNodeMap[count].resize(elemsToNodes.size(0),elemsToNodes.size(1));
 
-        for (localIndex k = 0 ; k < cellBlock->size() ; ++k)
+        for( localIndex k = 0 ; k < cellBlock->size() ; ++k )
         {
           arrayView1d<localIndex const> const elemToNodeMap = elemsToNodes[k];
 
           const integer_array nodeOrdering = SiloNodeOrdering();
           integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
-          for (localIndex a = 0 ; a < numNodesPerElement ; ++a)
+          for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
           {
             elementToNodeMap[count](k, a) = elemToNodeMap[nodeOrdering[a]];
           }
@@ -1966,12 +1966,12 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                  localIndex_array());
 
           auto const & constitutiveMap =
-              subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+            subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
           for( localIndex k=0 ; k<subRegion->size() ; ++k )
           {
             localIndex const matTypeIndex = constitutiveMap.first[k][0];
             localIndex const matArrayIndex = constitutiveMap.second[k][0];
-            materialOrder[matTypeIndex][materialOrderCounter[matTypeIndex]] = matArrayIndex ;
+            materialOrder[matTypeIndex][materialOrderCounter[matTypeIndex]] = matArrayIndex;
             ++materialOrderCounter[matTypeIndex];
           }
         }

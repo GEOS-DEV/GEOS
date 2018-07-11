@@ -88,7 +88,7 @@ void Blueprint::write(int cycle) const
   conduit::Node mesh_node;
   conduit::Node info;
   ds.getRoot()->createNativeLayout(mesh_node);
-  if (!conduit::blueprint::verify("mesh", mesh_node[mesh_name], info))
+  if( !conduit::blueprint::verify("mesh", mesh_node[mesh_name], info))
   {
     std::cout << "does not conform to the blueprint:";
     info.print();
@@ -103,7 +103,7 @@ void Blueprint::write(int cycle) const
   conduit::blueprint::mesh::generate_index(mesh_node[mesh_name], mesh_name, 1, index[mesh_name]);
 
   info.reset();
-  if (!conduit::blueprint::mesh::index::verify(index[mesh_name], info))
+  if( !conduit::blueprint::mesh::index::verify(index[mesh_name], info))
   {
     std::cout << "index does not conform to the blueprint:";
     info.print();
@@ -146,17 +146,17 @@ void Blueprint::addNodes(Group* coords, Group* fields) const
   double * z = z_view->allocate()->getData();
   view_rtype_const<r1_array> position = m_node_manager.referencePosition();
 
-  for (localIndex i = 0 ; i < n_nodes ; i++)
+  for( localIndex i = 0 ; i < n_nodes ; i++ )
   {
     x[i] = position[i][0];
     y[i] = position[i][1];
     z[i] = position[i][2];
   }
 
-  for (const std::pair<const std::string, const ViewWrapperBase*>& pair : m_node_manager.wrappers())
+  for( const std::pair<const std::string, const ViewWrapperBase*>& pair : m_node_manager.wrappers())
   {
     const ViewWrapperBase *view = pair.second;
-    if (view->sizedFromParent() == 1 &&
+    if( view->sizedFromParent() == 1 &&
         view->size() > 0 &&
         view->getName() != m_node_manager.viewKeys.referencePosition.Key())
     {
@@ -195,11 +195,11 @@ void Blueprint::addCells(Group* topo, Group* fields) const
   topo->createView("type")->setString("unstructured");
   Group* elements = topo->createGroup("elements");
 
-  for (std::pair<const std::string, int>& value : numberOfNodesOfType)
+  for( std::pair<const std::string, int>& value : numberOfNodesOfType )
   {
     const std::string& elem_type = value.first;
     const localIndex num_nodes = value.second;
-    if (num_nodes > 0)
+    if( num_nodes > 0 )
     {
       Group* elem_group = elements->createGroup(elem_type);
       elem_group->createView("shape")->setString(elem_type);
