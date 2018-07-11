@@ -88,21 +88,10 @@ public:
   virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
 
   virtual void SolverStep( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         dataRepository::ManagedGroup * domain ) override;
+                           real64 const& dt,
+                           integer const cycleNumber,
+                           dataRepository::ManagedGroup * domain ) override;
 
-  /**
-   * @brief function to perform explicit time integration
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param cycleNumber the current cycle number of the simulation
-   * @param domain the domain partition
-   */
-  void TimeStepExplicit( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain );
 
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
@@ -193,7 +182,7 @@ public:
     constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto gravityFlagString = "gravityFlag";
     constexpr static auto gravityDepthString = "gravityDepth";
-    constexpr static auto permeabilityString = "permeablity";
+    constexpr static auto permeabilityString = "permeability";
     constexpr static auto porosityString = "porosity";
     constexpr static auto cellLocalIndexString = "cellLocalIndex";
     constexpr static auto volumeString = "volume";
@@ -210,7 +199,29 @@ public:
   {
   } groupKeys;
 
+  /**
+   * @struct A structure containing a single cell (element) identifier triplet
+   */
+  struct CellDescriptor
+  {
+    localIndex region;
+    localIndex subRegion;
+    localIndex index;
+  };
 
+  /**
+   * @struct A structure describing a single (generally multi-point) FV connection stencil
+   */
+  struct CellConnection
+  {
+    localIndex            faceIndex;               ///< index of the face (just in case)
+    CellDescriptor        connectedCellIndices[2]; ///< identifiers of connected cells
+    array<CellDescriptor> stencilCellIndices;      ///< identifiers of cells in stencil
+    array<real64>         stencilWeights;          ///< stencil weights (e.g. transmissibilities)
+
+    void resize(localIndex const size) { stencilCellIndices.resize(size);
+                                         stencilWeights.resize(size);    }
+  };
 
 private:
 
@@ -229,18 +240,17 @@ private:
   /// the currently selected time integration option
   timeIntegrationOption m_timeIntegrationOption;
 
-  /// the number of degrees of freedom per element. should be removed.
-  constexpr static int m_numDof = 1;
+  /// flag indicating whether FV precompute has been performed
+  bool m_precomputeDone;
 
   /// temp array that holds the list of faces that connect two elements.
-  localIndex_array m_faceConnectors;
+  array<CellConnection> m_faceConnectors;
 
   /// flag to determine whether or not to apply gravity
   bool m_gravityFlag;
 
   /// temp storage for derivatives of density w.r.t. pressure
   array<array<array<real64>>> m_dDens_dPres;
-
 
 };
 
