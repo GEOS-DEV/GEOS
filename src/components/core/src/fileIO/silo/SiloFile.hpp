@@ -504,37 +504,40 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
   for( auto const & wrapperIter : wrappers )
   {
     auto const & wrapper = wrapperIter.second;
-    // the field name is the key to the map
-    string const fieldName = wrapper->getName();
 
-    std::type_info const & typeID = wrapper->get_typeid();
+    if( wrapper->getPlotLevel() < PlotLevel::LEVEL_1 )
+    {
+      // the field name is the key to the map
+      string const fieldName = wrapper->getName();
 
-    // TODO This is wrong. problem with uniqueness
-    if( typeID==typeid(real64_array) )
-    {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<real64_array> const & >( *wrapper );
-      this->WriteDataField<real64>(meshname.c_str(), fieldName,
-                                   viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
-    }
-    if( typeID==typeid(r1_array) )
-    {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper );
-      this->WriteDataField<real64>(meshname.c_str(), fieldName,
-                                   viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
-    }
-    if( typeID==typeid(integer_array) )
-    {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper );
-      this->WriteDataField<integer>(meshname.c_str(), fieldName,
-                                    viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
-    }
-    if( typeID==typeid(localIndex_array) )
-    {
-      auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<localIndex_array> const & >( *wrapper );
-      this->WriteDataField<localIndex>(meshname.c_str(), fieldName,
-                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
-    }
+      std::type_info const & typeID = wrapper->get_typeid();
 
+      // TODO This is wrong. problem with uniqueness
+      if( typeID==typeid(real64_array) )
+      {
+        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<real64_array> const & >( *wrapper );
+        this->WriteDataField<real64>(meshname.c_str(), fieldName,
+                                     viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
+      }
+      if( typeID==typeid(r1_array) )
+      {
+        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper );
+        this->WriteDataField<real64>(meshname.c_str(), fieldName,
+                                     viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
+      }
+      if( typeID==typeid(integer_array) )
+      {
+        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper );
+        this->WriteDataField<integer>(meshname.c_str(), fieldName,
+                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
+      }
+      if( typeID==typeid(localIndex_array) )
+      {
+        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<localIndex_array> const & >( *wrapper );
+        this->WriteDataField<localIndex>(meshname.c_str(), fieldName,
+                                         viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
+      }
+    }
   }
 }
 
