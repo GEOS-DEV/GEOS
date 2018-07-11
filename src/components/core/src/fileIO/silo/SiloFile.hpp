@@ -233,7 +233,8 @@ public:
                               int const cycleNum,
                               real64 const problemTime,
                               bool const isRestart,
-                              string const & regionName,
+                              string const & materialName,
+                              array<localIndex> const & zoneToMatMap,
                               const localIndex_array& mask );
 
 
@@ -246,7 +247,8 @@ public:
                                 real64 const problemTime,
                                 bool const isRestart,
                                 string const & multiRoot,
-                                string const & regionName,
+                                string const & materialName,
+                                array<localIndex> const & zoneToMatMap,
                                 const localIndex_array& mask );
 
   template< typename INPUTTYPE, typename TYPE >
@@ -268,7 +270,7 @@ public:
                        int const cycleNumber,
                        real64 const problemTime,
                        string const & multiRoot,
-                       string const & regionName );
+                       string const & materialName );
 
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
@@ -278,7 +280,8 @@ public:
                        int const cycleNumber,
                        real64 const problemTime,
                        string const & multiRoot,
-                       string const & regionName );
+                       string const & materialName,
+                       array<localIndex> const & zoneToMatMap );
 
   /// Write out a data field
   template< typename INPUTTYPE, typename TYPE>
@@ -358,7 +361,7 @@ public:
 
   string const m_siloDirectory = "siloFiles";
 
-  string const m_siloDataDirectory = "siloFiles/data";
+  string const m_siloDataSubDirectory = "data";
 
   string m_fileName;
 
@@ -492,7 +495,8 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
                                         real64 const problemTime,
                                         bool const isRestart,
                                         string const & multiRoot,
-                                        string const & regionName,
+                                        string const & materialName,
+                                        array<localIndex> const & zoneToMatMap,
                                         const localIndex_array& mask )
 {
 
@@ -509,22 +513,22 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
     if( typeID==typeid(real64_array) )
     {
       auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<real64_array> const & >( *wrapper );
-      this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
+      this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
     }
     if( typeID==typeid(r1_array) )
     {
       auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper );
-      this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
+      this->WriteDataField<real64>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
     }
     if( typeID==typeid(integer_array) )
     {
       auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper );
-      this->WriteDataField<integer>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
+      this->WriteDataField<integer>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
     }
     if( typeID==typeid(localIndex_array) )
     {
       auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<localIndex_array> const & >( *wrapper );
-      this->WriteDataField<localIndex>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, regionName );
+      this->WriteDataField<localIndex>(meshname.c_str(), fieldName, viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot, materialName, zoneToMatMap );
     }
 
   }
@@ -549,7 +553,7 @@ void SiloFile::WriteDataField( string const & meshName,
                                int const cycleNumber,
                                real64 const problemTime,
                                string const & multiRoot,
-                               string const & regionName )
+                               string const & materialName )
 {}
 
 template<typename OUTTYPE, typename TYPE>
@@ -560,10 +564,11 @@ void SiloFile::WriteDataField( string const & meshName,
                                int const cycleNumber,
                                real64 const problemTime,
                                string const & multiRoot,
-                               string const & regionName )
+                               string const & materialName,
+                               array<localIndex> const & zoneToMatMap )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
-  int const nels = field.size();
+  int nels = field.size();
 
   int const meshType = GetMeshType( meshName );
 
@@ -576,12 +581,51 @@ void SiloFile::WriteDataField( string const & meshName,
   { nullptr, nullptr };
 
 
+  array<char*> varnames(nvars);
+  array<void*> vars(nvars);
 
-  if (regionName != "none")
+
+  array<string> varnamestring(nvars);
+  std::vector<std::vector<OUTTYPE> > castedField(nvars);
+
+  if (materialName != "none")
   {
-    regionpnames[0] = const_cast<char*> (regionName.c_str());
+    regionpnames[0] = const_cast<char*> (materialName.c_str());
     regionpnames[1] = nullptr;
     DBAddOption(optlist, DBOPT_REGION_PNAMES, &regionpnames);
+
+    nels=0;
+    for( localIndex i=0 ; i<zoneToMatMap.size() ; ++i )
+    {
+      if( zoneToMatMap[i] > -1 )
+      {
+        ++nels;
+      }
+    }
+
+    for (localIndex i = 0 ; i < nvars ; ++i)
+    {
+      castedField[i].resize(nels);
+      vars[i] = static_cast<void*> (&(castedField[i][0]));
+      for (int k = 0 ; k < nels ; ++k)
+      {
+        castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[zoneToMatMap[k]], i);
+      }
+    }
+
+  }
+  else
+  {
+    for (int i = 0 ; i < nvars ; ++i)
+    {
+      castedField[i].resize(nels);
+      vars[i] = static_cast<void*> (&(castedField[i][0]));
+      for (int k = 0 ; k < nels ; ++k)
+      {
+        castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[k], i);
+      }
+    }
+
   }
 
   // if the number of elements is zero, then record the path to the var. This
@@ -597,24 +641,9 @@ void SiloFile::WriteDataField( string const & meshName,
   }
   else
   {
-    array<char*> varnames(nvars);
-    array<void*> vars(nvars);
-
-
-    array<string> varnamestring(nvars);
-    std::vector<std::vector<OUTTYPE> > castedField(nvars);
 
     SiloFileUtilities::SetVariableNames<TYPE>(fieldName, varnamestring, varnames.data() );
 
-    for (int i = 0 ; i < nvars ; ++i)
-    {
-      castedField[i].resize(nels);
-      vars[i] = static_cast<void*> (&(castedField[i][0]));
-      for (int k = 0 ; k < nels ; ++k)
-      {
-        castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[k], i);
-      }
-    }
 
     int err = -2;
     if( meshType == DB_UCDMESH )
@@ -804,7 +833,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 
     sprintf( tempBuffer,
              "%s%s%s.%03d:/domain_%05d%s/%s",
-             m_siloDirectory.c_str(),
+             m_siloDataSubDirectory.c_str(),
              "/",
              m_baseFileName.c_str(),
              groupRank,
