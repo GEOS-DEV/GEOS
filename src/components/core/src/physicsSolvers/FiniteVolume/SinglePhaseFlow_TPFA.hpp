@@ -87,35 +87,36 @@ public:
 
   virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void SolverStep( real64 const& time_n,
+  virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
                          dataRepository::ManagedGroup * domain ) override;
 
   /**
-   * @brief function to perform explicit time integration
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param cycleNumber the current cycle number of the simulation
-   * @param domain the domain partition
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
    */
-  void TimeStepExplicit( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain );
-
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  /**@{*/
 
   virtual void ImplicitStepSetup( real64 const& time_n,
                               real64 const& dt,
-                              DomainPartition * const domain ) override;
+                              DomainPartition * const domain,
+                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
 
-  virtual real64 AssembleSystem( DomainPartition * const domain,
-                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                 real64 const time,
-                                 real64 const dt ) override;
+  virtual void AssembleSystem( DomainPartition * const domain,
+                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               real64 const time,
+                               real64 const dt ) override;
+
+  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        real64 const time,
+                                        real64 const dt ) override;
+
+  virtual real64
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
 
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
@@ -128,9 +129,12 @@ public:
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
   virtual  void ImplicitStepComplete( real64 const & time,
-                                 real64 const & dt,
-                                 DomainPartition * const domain ) override;
+                                      real64 const & dt,
+                                      DomainPartition * const domain ) override;
+  /**@}*/
 
+  void SetupSystem ( DomainPartition * const domain,
+                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief set the sparsity pattern for the linear system
@@ -169,7 +173,7 @@ public:
    */
   void ApplyDirichletBC_implicit( ManagedGroup * object,
                                   real64 const time,
-                                  systemSolverInterface::EpetraBlockSystem & blockSystem);
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
 
   /**
@@ -191,6 +195,7 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SPTPFA";
     constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
     constexpr static auto deltaPorosityString = "deltaPorosity";
@@ -202,10 +207,9 @@ public:
     constexpr static auto gravityForceString = "gravityForce";
     constexpr static auto permeabilityString = "permeablity";
     constexpr static auto porosityString = "porosity";
-    constexpr static auto trilinosIndexString = "trilinosIndex_SinglePhaseFlow_TPFA";
     constexpr static auto volumeString = "volume";
 
-    dataRepository::ViewKey trilinosIndex = { trilinosIndexString };
+    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
@@ -220,7 +224,7 @@ public:
 
 private:
   /// the currently selected time integration option
-  timeIntegrationOption m_timeIntegrationOption;
+//  timeIntegrationOption m_timeIntegrationOption;
 
   /// temp variable containing distance between the face and element centers divided by the area of
   /// the face
