@@ -93,6 +93,7 @@ using globalIndex = std::int64_t;
 
 using string      = std::string;
 
+constexpr localIndex LOCALINDEX_MAX = std::numeric_limits<localIndex>::max();
 
 
 using real32 = float;

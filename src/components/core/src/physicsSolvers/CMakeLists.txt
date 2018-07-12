@@ -9,7 +9,8 @@ set(physicsSolvers_headers
     BoundaryConditions/BoundaryConditionManager.hpp
     BoundaryConditions/DirichletBoundaryCondition.hpp
     FiniteVolume/SinglePhaseFlow_TPFA.hpp
-    SimpleSolvers/LaplaceFEM.hpp )
+    surfaceGeneration/SurfaceGenerator.hpp )
+
 
 #
 # Specify all sources
@@ -22,6 +23,7 @@ set(physicsSolvers_sources
     BoundaryConditions/DirichletBoundaryCondition.cpp
     FiniteVolume/SinglePhaseFlow_TPFA.cpp
     SimpleSolvers/LaplaceFEM.cpp  )
+    surfaceGeneration/SurfaceGenerator.cpp )
 
 
 blt_add_library( NAME                  physicsSolvers
