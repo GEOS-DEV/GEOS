@@ -224,7 +224,7 @@ public:
 
 private:
   /// the currently selected time integration option
-  timeIntegrationOption m_timeIntegrationOption;
+//  timeIntegrationOption m_timeIntegrationOption;
 
   /// temp variable containing distance between the face and element centers divided by the area of
   /// the face

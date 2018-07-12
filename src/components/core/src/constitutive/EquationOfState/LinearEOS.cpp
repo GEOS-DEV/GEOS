@@ -263,6 +263,7 @@ R2SymTensor LinearEOS::StateUpdatePoint( R2SymTensor const & D,
 //
 //  temp.PlusIdentity(meanStress()[i]);
 //  return temp;
+  return R2SymTensor();
 }
 
 void LinearEOS::EquationOfStatePressureUpdate( real64 const & dRho,

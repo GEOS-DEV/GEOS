@@ -55,7 +55,13 @@ using namespace systemSolverInterface;
 
 SinglePhaseFlow_TPFA::SinglePhaseFlow_TPFA( const std::string& name,
                                             ManagedGroup * const parent ):
-  SolverBase( name, parent )
+  SolverBase( name, parent ),
+//  m_timeIntegrationOption(),
+  m_faceToElemLOverA(),
+  m_faceConnectors(),
+  m_gravityFlag(),
+  m_gravityForce(),
+  m_dRho_dP()
 {
 
   // set the blockID for the block system interface
@@ -292,7 +298,7 @@ real64 SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
                                      ManagedGroup * domain )
 {
   // currently the only method is implcit time integration
-  this->NonlinearImplicitStep( time_n,
+  return this->NonlinearImplicitStep( time_n,
                                dt,
                                cycleNumber,
                                domain->group_cast<DomainPartition*>(),
@@ -633,8 +639,8 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
   for( auto const kf : m_faceConnectors )
   {
-    elementLocalDofIndex[0] = blockLocalDofNumber[elementRegionList[kf][0]][elementSubRegionList[kf][0]][elementIndexList[kf][0]];
-    elementLocalDofIndex[1] = blockLocalDofNumber[elementRegionList[kf][1]][elementSubRegionList[kf][1]][elementIndexList[kf][1]];
+    elementLocalDofIndex[0] = integer_conversion<int>(blockLocalDofNumber[elementRegionList[kf][0]][elementSubRegionList[kf][0]][elementIndexList[kf][0]]);
+    elementLocalDofIndex[1] = integer_conversion<int>(blockLocalDofNumber[elementRegionList[kf][1]][elementSubRegionList[kf][1]][elementIndexList[kf][1]]);
 
     sparsity->InsertGlobalIndices( 2,
                                    elementLocalDofIndex.data(),
@@ -649,7 +655,7 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
   {
     if( elemGhostRank[er][esr][k] < 0 )
     {
-      elementLocalDofIndex[0] = blockLocalDofNumber[er][esr][k];
+      elementLocalDofIndex[0] = integer_conversion<int>(blockLocalDofNumber[er][esr][k]);
 
       sparsity->InsertGlobalIndices( 1,
                                      elementLocalDofIndex.data(),
@@ -732,7 +738,7 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
 
 
   //***** Loop over all elements and assemble the change in volume/density terms *****
-  Epetra_IntSerialDenseVector elemDOF(1);
+  Epetra_LongLongSerialDenseVector elemDOF(1);
   Epetra_SerialDenseVector localElemResidual(1);
   Epetra_SerialDenseMatrix localElem_dRdP(1, 1);
 
@@ -780,7 +786,7 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
 
 
 
-  Epetra_IntSerialDenseVector faceDOF(2);
+  Epetra_LongLongSerialDenseVector faceDOF(2);
   Epetra_SerialDenseVector localFaceResidual(2);
   Epetra_SerialDenseMatrix localFace_dRdP(2, 2);
 
