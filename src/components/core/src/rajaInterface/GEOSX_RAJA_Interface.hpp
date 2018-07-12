@@ -68,4 +68,13 @@ void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && bo
   RAJA::forall<POLICY>(RAJA::ListSegment(indexList, len, RAJA::Unowned), body);
 }
 
+//RAJA wrapper for loops over sets                                                                                                                  
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+void forall_in_set(RAJA::TypedListSegment<localIndex> iList, LAMBDA && body){
+
+  RAJA::forall<POLICY>(iList, body);
+
+}
+
+
 #endif
