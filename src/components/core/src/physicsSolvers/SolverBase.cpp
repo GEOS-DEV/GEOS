@@ -1,22 +1,26 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
-
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
- * SolverBase.cpp
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
- *  Created on: Dec 2, 2014
- *      Author: rrsettgast
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
 #include "SolverBase.hpp"
-
+#include "managers/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
+#include "systemSolverInterface/LinearSolverWrapper.hpp"
+#include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 namespace geosx
 {
@@ -25,11 +29,33 @@ using namespace dataRepository;
 
 SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
-{}
+  ManagedGroup( name, parent ),
+  m_linearSolverWrapper(nullptr),
+  m_linearSystem(nullptr),
+  m_verboseLevel(0),
+  m_gravityVector( R1Tensor(0.0) ),
+  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this )
+{
+  // register group with repository. Have Repository own object.
+  this->RegisterGroup( groupKeyStruct::systemSolverParametersString, &m_systemSolverParameters, 0 );
+
+  this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
+
+  if( this->globalGravityVector() != nullptr )
+  {
+    m_gravityVector=*globalGravityVector();
+  }
+
+  m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
+  m_linearSystem = new systemSolverInterface::EpetraBlockSystem();
+}
 
 SolverBase::~SolverBase()
-{}
+{
+  delete m_linearSolverWrapper;
+  delete m_linearSystem;
+}
 
 SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
 {
@@ -73,18 +99,218 @@ void SolverBase::FillDocumentationNode()
                               1,
                               0 );
 
+  docNode->AllocateChildNode( viewKeyStruct::verboseLevelString,
+                              viewKeyStruct::verboseLevelString,
+                              -1,
+                              "integer",
+                              "integer",
+                              "verbosity level",
+                              "verbosity level",
+                              "0",
+                              "",
+                              0,
+                              1,
+                              0 );
 
 
 }
 
 
 
-void SolverBase::TimeStep( real64 const& time_n,
+void SolverBase::SolverStep( real64 const& time_n,
                            real64 const& dt,
                            const int cycleNumber,
                            ManagedGroup * domain )
 {
 }
+
+
+real64 SolverBase::LinearImplicitStep( real64 const & time_n,
+                                       real64 const & dt,
+                                       integer const cycleNumber,
+                                       DomainPartition * const domain )
+{
+  // call setup for physics solver. Pre step allocations etc.
+  ImplicitStepSetup( time_n, dt, domain );
+
+  // call assemble to fill the matrix and the rhs
+  AssembleSystem( domain, m_linearSystem, time_n+dt, dt );
+
+  // call the default linear solver on the system
+  SolveSystem( m_linearSystem,
+               getSystemSolverParameters() );
+
+  // apply the system solution to the fields/variables
+  ApplySystemSolution( m_linearSystem, 1.0, domain );
+
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  ImplicitStepComplete( time_n, dt,  domain );
+
+  // return the achieved timestep
+  return dt;
+}
+
+real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
+                                           real64 const & dt,
+                                           integer const cycleNumber,
+                                           DomainPartition * const domain )
+{
+  // dt may be cut during the course of this step, so we are keeping a local
+  // value to track the achieved dt for this step.
+  real64 stepDt = dt;
+
+  // call setup for physics solver. Pre step allocations etc.
+  ImplicitStepSetup( time_n, stepDt, domain );
+
+  SystemSolverParameters const * const solverParams = getSystemSolverParameters();
+  real64 const newtonTol = solverParams->newtonTol();
+  integer const maxNewtonIter = solverParams->maxIterNewton();
+  integer const maxNumberDtCuts = 2;
+  integer const maxNumberLineSearchCuts = 5;
+
+  // a flag to denote whether we have converged
+  integer isConverged = 0;
+
+  // outer loop attempts to apply full timestep, and managed the cutting of the timestep if
+  // required.
+  for( int dtAttempt = 0 ; dtAttempt<maxNumberDtCuts ; ++dtAttempt )
+  {
+    // main Newton loop
+    // keep residual from previous iteration in case we need to do a line search
+    real64 lastResidual = 1e99;
+    for( int k=0 ; k<maxNewtonIter ; ++k )
+    {
+
+      // call assemble to fill the matrix and the rhs
+      real64 residualNorm = AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+
+      // if the residual norm is less than the Newton tolerance we denote that we have
+      // converged and break from the Newton loop immediately.
+      if( residualNorm < newtonTol )
+      {
+        isConverged = 1;
+        break;
+      }
+
+
+      // do line search in case residual has increased
+      if( residualNorm > lastResidual )
+      {
+
+        // flag to determine if we should solve the system and apply the solution. If the line
+        // search fails we just bail.
+        int lineSearchSuccess = 0;
+
+        // scale factor is value applied to the previous solution. In this case we want to
+        // subtract a portion of the previous solution.
+        real64 scaleFactor = -1.0;
+
+        // main loop for the line search.
+        for( int lineSearchIteration=0 ; lineSearchIteration<maxNumberLineSearchCuts ; ++lineSearchIteration )
+        {
+          // cut the scale factor by half. This means that the scale factors will
+          // have values of -0.5, -0.25, -0.125, ...
+          scaleFactor *= 0.5;
+          ApplySystemSolution( m_linearSystem, scaleFactor, domain );
+
+          // re-assemble system and re-evaluate residual norm
+          residualNorm = AssembleSystem( domain, m_linearSystem, time_n, stepDt );
+
+          // if the residual norm is less than the last residual, we can proceed to the
+          // solution step
+          if( residualNorm < lastResidual )
+          {
+            lineSearchSuccess = 1;
+            break;
+          }
+        }
+
+        // if line search failed, then break out of the main Newton loop. Timestep will be cut.
+        if( !lineSearchSuccess )
+        {
+          break;
+        }
+      }
+
+      // call the default linear solver on the system
+      SolveSystem( m_linearSystem,
+                   getSystemSolverParameters() );
+
+      // apply the system solution to the fields/variables
+      ApplySystemSolution( m_linearSystem, 1.0, domain );
+
+      lastResidual = residualNorm;
+    }
+    if( isConverged )
+    {
+      // final step for completion of timestep. typically secondary variable updates and cleanup.
+      ImplicitStepComplete( time_n, stepDt,  domain );
+      break;
+    }
+    else
+    {
+      // cut timestep and reset state to beginning of step, and restart the Newton loop.
+      stepDt *= 0.5;
+      ResetStateToBeginningOfStep( domain );
+    }
+  }
+
+
+  // return the achieved timestep
+  return stepDt;
+}
+
+
+real64 SolverBase::ExplicitStep( real64 const & time_n,
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition * const domain )
+{
+  GEOS_ERROR( "SolverBase::ExplicitStep called!. Should be overridden.");
+  return 0;
+}
+
+void SolverBase::ImplicitStepSetup( real64 const& time_n,
+                        real64 const& dt,
+                        DomainPartition * const domain )
+{
+  GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden.");
+}
+
+real64 SolverBase::AssembleSystem( DomainPartition * const domain,
+                             systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                             real64 const time,
+                             real64 const dt )
+{
+  GEOS_ERROR( "SolverBase::Assemble called!. Should be overridden.");
+  return 0;
+}
+
+void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                              SystemSolverParameters const * const params )
+{
+  GEOS_ERROR( "SolverBase::SolveSystem called!. Should be overridden.");
+}
+
+void SolverBase::ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                          real64 const scalingFactor,
+                          DomainPartition * const  )
+{
+  GEOS_ERROR( "SolverBase::ApplySystemSolution called!. Should be overridden.");
+}
+
+void SolverBase::ResetStateToBeginningOfStep( DomainPartition * const  )
+{
+  GEOS_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden.");
+}
+
+void SolverBase::ImplicitStepComplete( real64 const & time,
+                           real64 const & dt,
+                           DomainPartition * const domain )
+{
+  GEOS_ERROR( "SolverBase::ImplicitStepComplete called!. Should be overridden.");
+}
+
 
 
 
@@ -98,10 +324,23 @@ void SolverBase::CreateChild( string const & childKey, string const & childName 
 }
 
 
-//void SolverBase::Initialize( dataRepository::ManagedGroup& /*domain*/ )
-//{
-//  *(this->getData<real64>(keys::courant)) =
-// std::numeric_limits<real64>::max();
-//}
+R1Tensor const * SolverBase::globalGravityVector() const
+{
+  R1Tensor const * rval = nullptr;
+  if( getParent()->getName() == "Solvers" )
+  {
+    rval = &(getParent()->
+             group_cast<SolverBase const *>()->
+             getGravityVector());
+  }
+
+  return rval;
+}
+
+SystemSolverParameters * SolverBase::getSystemSolverParameters()
+{
+  return this->GetGroup<SystemSolverParameters>(groupKeys.systemSolverParameters);
+}
+
 
 } /* namespace ANST */

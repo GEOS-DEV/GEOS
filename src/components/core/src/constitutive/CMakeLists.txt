@@ -5,6 +5,7 @@ set( constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
      LinearElasticIsotropic.hpp
+     EquationOfState/LinearEOS.hpp
    )
 #
 # Specify all sources
@@ -13,6 +14,7 @@ set( constitutive_sources
      ConstitutiveManager.cpp
      ConstitutiveBase.cpp
      LinearElasticIsotropic.cpp
+     EquationOfState/LinearEOS.cpp
    )
 
 

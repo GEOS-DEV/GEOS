@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 #ifndef __GEOS_RAJA_WRAPPER__HPP
 #define __GEOS_RAJA_WRAPPER__HPP
 
@@ -150,6 +158,12 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
+void for_elems_in_subRegion( CellBlockSubRegion const * const subRegion, LAMBDA && body)
+{
+  forall_in_range<POLICY>(0,subRegion->size(), body);
+}
+
+template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems_by_constitutive( MeshLevel const * const mesh,
                                constitutive::ConstitutiveManager * const constitutiveManager,
                                FiniteElementSpaceManager const * const feSpaceManager,
@@ -244,8 +258,41 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     void * constitutiveModelData\
     ) mutable -> void
 
-  
+
+
+
+template<class POLICY=elemPolicy,typename LAMBDA=void>
+void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> void
+      {
+        lambdaBody(er,esr,index);
+      };
+
+      forall_in_range<POLICY>(0, cellBlockSubRegion->size(), ebody);
+    }
+  }
 }
 
 
+}
+
+
+#define FOR_ELEMS_IN_SUBREGION( SUBREGION, INDEX )  \
+    for_elems_in_subRegion( SUBREGION, GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 #endif
+
+#define END_FOR );
+
+
+

@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
  * PhysicsSolverManager.cpp
  *
@@ -28,8 +36,11 @@ using namespace cxx_utilities;
 
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
                                             ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
-{}
+  ManagedGroup( name, parent),
+  m_gravityVector( R1Tensor(0.0) )
+{
+  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
+}
 
 PhysicsSolverManager::~PhysicsSolverManager()
 {}
@@ -42,6 +53,18 @@ void PhysicsSolverManager::FillDocumentationNode()
   docNode->setSchemaType("UniqueNode");
   docNode->setShortDescription("Solver manager");
 
+  docNode->AllocateChildNode( viewKeyStruct::gravityVectorString,
+                              viewKeyStruct::gravityVectorString,
+                              -1,
+                              "R1Tensor",
+                              "R1Tensor",
+                              "Number of Nodes Per Element",
+                              "Number of Nodes Per Element",
+                              "",
+                              "",
+                              0,
+                              1,
+                              0);
 }
 
 

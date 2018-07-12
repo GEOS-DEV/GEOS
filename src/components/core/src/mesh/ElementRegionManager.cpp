@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
  * ElementManagerT.cpp
  *
@@ -195,7 +203,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
       packedSize += bufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
 
-      localIndex_array const & elemList = *(packList[kReg][kSubReg]);
+      localIndex_array const & elemList = packList[kReg][kSubReg];
       if( DOPACK )
       {
         packedSize += subRegion->Pack( buffer, wrapperNames, elemList, 0 );
@@ -242,7 +250,7 @@ ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
 
       /// THIS IS WRONG??
-      localIndex_array & elemList = *(packList[kReg][kSubReg]);
+      localIndex_array & elemList = packList[kReg][kSubReg];
 
       unpackedSize += subRegion->Unpack( buffer, elemList, 0 );
     }
@@ -283,7 +291,7 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
       packedSize += bufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
 
-      localIndex_array const & elemList = *(packList[kReg][kSubReg]);
+      localIndex_array const & elemList = packList[kReg][kSubReg];
       if( DOPACK )
       {
         packedSize += subRegion->PackGlobalMaps( buffer, elemList, 0 );
@@ -329,7 +337,7 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
 
       /// THIS IS WRONG
-      localIndex_array & elemList = *(packList[kReg][kSubReg]);
+      localIndex_array & elemList = packList[kReg][kSubReg];
 
       unpackedSize += subRegion->UnpackGlobalMaps( buffer, elemList, 0 );
     }
@@ -373,7 +381,7 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
       CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
       packedSize += bufferOps::Pack<DOPACK>( buffer, subRegion->getName() );
 
-      localIndex_array const & elemList = *(packList[kReg][kSubReg]);
+      localIndex_array const & elemList = packList[kReg][kSubReg];
       if( DOPACK )
       {
         packedSize += subRegion->PackUpDownMaps( buffer, elemList );
@@ -425,7 +433,7 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
       CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(subRegionName);
 
       /// THIS IS WRONG
-      localIndex_array & elemList = *(packList[kReg][kSubReg]);
+      localIndex_array const & elemList = packList[kReg][kSubReg];
 
       unpackedSize += subRegion->UnpackUpDownMaps( buffer, elemList );
     }

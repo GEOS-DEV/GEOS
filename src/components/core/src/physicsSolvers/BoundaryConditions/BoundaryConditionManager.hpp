@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
  * BoundaryConditionManager.hpp
  *
@@ -68,6 +76,34 @@ public:
                                std::string const & fieldName,
                                real64 const time,
                                ARGS & ... args );
+
+
+  template< typename LAMBDA >
+  void ApplyBoundaryCondition( real64 const time,
+                               dataRepository::ManagedGroup * object,
+                               string const & fieldName,
+                               LAMBDA && lambda )
+  {
+    dataRepository::ManagedGroup const * sets = object->GetGroup(dataRepository::keys::sets);
+
+    // iterate over all boundary conditions.
+    forSubGroups<BoundaryConditionBase>([&](BoundaryConditionBase * bc) -> void
+    {
+      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
+      {
+        string_array setNames = bc->GetSetNames();
+        for( auto & setName : setNames )
+        {
+          dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+          if( setWrapper != nullptr )
+          {
+            lSet const & set = setWrapper->reference();
+            lambda( bc, set );
+          }
+        }
+      }
+    });
+  }
 };
 
 

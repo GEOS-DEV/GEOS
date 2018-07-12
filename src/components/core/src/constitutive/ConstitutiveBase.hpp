@@ -1,18 +1,23 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
-
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
- * ConstitutiveBase.hpp
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
- *  Created on: Jul 28, 2016
- *      Author: rrsettgast
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+/**
+ * @file ConstitutiveBase.hpp
  */
 
 #ifndef CONSTITUTIVEBASE_HPP_
@@ -72,6 +77,16 @@ public:
                                         localIndex const i,
                                         integer const systemAssembleFlag ) = 0;
 
+  virtual void EquationOfStatePressureUpdate( real64 const & dRho,
+                                              localIndex const i,
+                                              real64 & P,
+                                              real64 & dPdRho ) = 0;
+
+  virtual void EquationOfStateDensityUpdate( real64 const & dP,
+                                             localIndex const i,
+                                             real64 & dRho,
+                                             real64 & dRho_dP ){}
+
 
   virtual void FillDocumentationNode() override = 0;
 
@@ -106,6 +121,9 @@ public:
   ManagedGroup * GetStateData()             { return this->GetGroup(m_ConstitutiveBaseGroupKeys.StateData); }
   ManagedGroup const * GetStateData() const { return this->GetGroup(m_ConstitutiveBaseGroupKeys.StateData); }
 
+protected:
+  ManagedGroup m_parameterData;
+  ManagedGroup m_stateData;
 };
 
 

@@ -1,3 +1,21 @@
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
 /**
  * @file ReferenceWrapper.hpp
  * This file contains the class definition of ReferenceWrapper.
@@ -89,6 +107,23 @@ public:
   }
 
   /**
+   * @tparam T_RHS type of the rhs
+   * @brief assignment operator calls m_ref->operator=() to allow for any type on the rhs
+   *        if m_ref->operator=() has a valid overload for T_RHS
+   * @tparam U dummy template parameter to enable SFINAE stuff
+   * @param rhs value to be copied
+   * @return *this
+   */
+  template< typename T_RHS, typename U=T >
+  inline
+  typename std::enable_if< !std::is_const<U>::value,ReferenceWrapper &>::type
+  operator=( T_RHS const & rhs )
+  {
+    *m_ref = rhs;
+    return *this;
+  }
+
+  /**
    * @brief move assignment operator sets the value that m_ref refers to to the value of the rhs
    * @param rhs the rhs value to be moved
    * @return
@@ -117,11 +152,20 @@ public:
 
   /**
    * @brief accessor function to set the address that m_ref points to
-   * @param source object that wrapper will refer to
+   * @param source reference to object that wrapper will refer to
    */
   inline void set( T & source)
   {
     m_ref = &source;
+  }
+
+  /**
+   * @brief accessor function to set the address that m_ref points to
+   * @param source pointer to object that wrapper will refer to
+   */
+  inline void set( T * source)
+  {
+    m_ref = source;
   }
 
   /**

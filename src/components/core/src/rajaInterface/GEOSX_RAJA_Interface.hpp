@@ -16,13 +16,13 @@
 #include "RAJA/index/RangeSegment.hpp"
 
 #if defined(RAJA_ENABLE_CUDA)
-typedef RAJA::cuda_exec elemPolicy;
-typedef RAJA::cuda_exec onePointPolicy;
+typedef RAJA::cuda_exec<256> elemPolicy;
+typedef RAJA::cuda_exec<256> onePointPolicy;
 
-typedef RAJA::cuda_exec memSetPolicy;
-typedef RAJA::cuda_exec computeForcePolicy;
+typedef RAJA::cuda_exec<256> memSetPolicy;
+typedef RAJA::cuda_exec<256> computeForcePolicy;
 
-typedef RAJA::cuda_exec quadraturePolicy;
+typedef RAJA::cuda_exec<256> quadraturePolicy;
 typedef RAJA::atomic::cuda_atomic atomicPolicy;
 
 #elif defined(RAJA_ENABLE_OPENMP)
@@ -46,7 +46,7 @@ typedef RAJA::atomic::loop_atomic atomicPolicy;
 #endif
 
 #if defined(RAJA_ENABLE_CUDA)
-#define GEOSX_LAMBDA RAJA_DEVICE [=]
+#define GEOSX_LAMBDA [=] RAJA_DEVICE
 #else
 #define GEOSX_LAMBDA [=]
 #endif

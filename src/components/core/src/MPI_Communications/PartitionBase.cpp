@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /**
  * @file PartitionBase.cpp
  * @author settgast1
@@ -69,10 +77,10 @@ void PartitionBase::SetDomain( DomainPartition * domain )
   DomainPartition** temp = const_cast<DomainPartition**>(&m_domain);
   *temp = domain;
 
-  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
-  {
-//    neighbor->SetDomain( domain );
-  }
+//  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  {
+////    neighbor->SetDomain( domain );
+//  }
 }
 
 ///**
@@ -89,9 +97,9 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //  SetUpNeighborLists( domain, 0, elementGhostingDepth );
 //}
 
-
-void PartitionBase::AssignGlobalIndices( DomainPartition * domain )
-{
+//
+//void PartitionBase::AssignGlobalIndices( DomainPartition * domain )
+//{
 //
 //  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ;
 // neighbor!=m_neighbors.end() ; ++neighbor )
@@ -310,7 +318,7 @@ void PartitionBase::AssignGlobalIndices( DomainPartition * domain )
 // GlobalIndexManager::Index(this->m_rank,a);
 //  }
 //#endif
-}
+//}
 
 /**
  *
@@ -318,8 +326,8 @@ void PartitionBase::AssignGlobalIndices( DomainPartition * domain )
  * @param compositionObject
  * assign global indices for
  */
-void PartitionBase::AssignGlobalIndices( ObjectDataStructureBaseT& object, const ObjectDataStructureBaseT& compositionObject )
-{
+//void PartitionBase::AssignGlobalIndices( ObjectDataStructureBaseT& object, const ObjectDataStructureBaseT& compositionObject )
+//{
 //
 //  // set the global indices as if they were all local to this process
 //  for( localIndex a=0 ; a<object.DataLengths() ; ++a )
@@ -565,62 +573,62 @@ void PartitionBase::AssignGlobalIndices( ObjectDataStructureBaseT& object, const
 //  }
 
 }
-
-
-template< typename T >
-void PartitionBase::SendReceive( const array<array<T> >& sendArray, array<array<T> >& recvArray )
-{
-
-  if( sendArray.size() != m_neighbors.size() || recvArray.size() != m_neighbors.size() )
-  {
-#ifdef USE_ATK
-    SLIC_ERROR("PartitionBase::SendRecieve: size of arrays do not equal number of neighbors");
-#endif
-  }
-
-
-  array<MPI_Request> mpiSendRequest(m_neighbors.size());
-  array<MPI_Request> mpiRecvRequest(m_neighbors.size());
-  array<MPI_Status>  mpiSendStatus(m_neighbors.size());
-  array<MPI_Status>  mpiRecvStatus(m_neighbors.size());
-
-
-  array<typename array<T>::size_type> recvSize(m_neighbors.size());
-
-  for( localIndex i=0 ; i<m_neighbors.size() ; ++i )
-  {
-    NeighborCommunication& neighbor = m_neighbors[i];
-    typename array<T>::size_type sendSize = sendArray[i].size();
-
-    neighbor.SendReceive( &sendSize, 1, mpiSendRequest[i],
-                          &(recvSize[i]), 1, mpiRecvRequest[i] );
-
-  }
-
-  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()),
-               mpiSendRequest.data(),
-               mpiSendStatus.data() );
-  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()),
-               mpiRecvRequest.data(),
-               mpiRecvStatus.data() );
-
-  for( localIndex i=0 ; i<m_neighbors.size() ; ++i )
-  {
-    NeighborCommunication& neighbor = m_neighbors[i];
-    recvArray[i].resize( recvSize[i] );
-
-    neighbor.SendReceive( sendArray[i].data(), sendArray[i].size(), mpiSendRequest[i],
-                          recvArray[i].data(), recvArray[i].size(), mpiRecvRequest[i] );
-
-  }
-  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()),
-               mpiSendRequest.data(),
-               mpiSendStatus.data() );
-  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()),
-               mpiRecvRequest.data(),
-               mpiRecvStatus.data() );
-
-}
+//
+//
+//template< typename T >
+//void PartitionBase::SendReceive( const array<array<T> >& sendArray, array<array<T> >& recvArray )
+//{
+//
+//  if( sendArray.size() != m_neighbors.size() || recvArray.size() != m_neighbors.size() )
+//  {
+//#ifdef USE_ATK
+//    SLIC_ERROR("PartitionBase::SendRecieve: size of arrays do not equal number of neighbors");
+//#endif
+//  }
+//
+//
+//  array<MPI_Request> mpiSendRequest(m_neighbors.size());
+//  array<MPI_Request> mpiRecvRequest(m_neighbors.size());
+//  array<MPI_Status>  mpiSendStatus(m_neighbors.size());
+//  array<MPI_Status>  mpiRecvStatus(m_neighbors.size());
+//
+//
+//  array<typename array<T>::size_type> recvSize(m_neighbors.size());
+//
+//  for( localIndex i=0 ; i<m_neighbors.size() ; ++i )
+//  {
+//    NeighborCommunication& neighbor = m_neighbors[i];
+//    typename array<T>::size_type sendSize = sendArray[i].size();
+//
+//    neighbor.SendReceive( &sendSize, 1, mpiSendRequest[i],
+//                          &(recvSize[i]), 1, mpiRecvRequest[i] );
+//
+//  }
+//
+//  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()),
+//               mpiSendRequest.data(),
+//               mpiSendStatus.data() );
+//  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()),
+//               mpiRecvRequest.data(),
+//               mpiRecvStatus.data() );
+//
+//  for( localIndex i=0 ; i<m_neighbors.size() ; ++i )
+//  {
+//    NeighborCommunication& neighbor = m_neighbors[i];
+//    recvArray[i].resize( recvSize[i] );
+//
+//    neighbor.SendReceive( sendArray[i].data(), sendArray[i].size(), mpiSendRequest[i],
+//                          recvArray[i].data(), recvArray[i].size(), mpiRecvRequest[i] );
+//
+//  }
+//  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()),
+//               mpiSendRequest.data(),
+//               mpiSendStatus.data() );
+//  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()),
+//               mpiRecvRequest.data(),
+//               mpiRecvStatus.data() );
+//
+//}
 
 
 
@@ -630,313 +638,313 @@ void PartitionBase::SendReceive( const array<array<T> >& sendArray, array<array<
  * @param[in] contactActive Flag whether contact is used
  * @param[in] elementGhostingDepth Depth
  */
-void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
-                                        const bool contactActive )
-{
-  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
-  {
-    neighbor->Clear();
-  }
-
-  //------------------------------------------
-  //(2) Collect FEM objects that are owned by other processes. This is know from
-  // the global indices.
-
-//
-//
-//  FindMatchedBoundaryIndices( keys::nodeManager,
-// domain->GetGroup<ObjectManagerBase>(keys::nodeManager) );
-//  FindMatchedBoundaryIndices( DomainPartition::FiniteElementFaceManager,
-// domain->m_feFaceManager );
-//
-//  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ;
-// neighbor!=m_neighbors.end() ; ++neighbor )
+//void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
+//                                        const bool contactActive )
+//{
+//  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //  {
-//    localIndex_array& matchedBoundaryFaceIndices = stlMapLookup(
-// neighbor->tempNeighborData.matchedIndices,
-// DomainPartition::FiniteElementFaceManager, "Cannot find
-// FiniteElementFaceManager in matchedIndices in
-// PartitionBase::SetupNeighborLists" );
-//    localIndex_array& matchedBoundaryNodeIndices = stlMapLookup(
-// neighbor->tempNeighborData.matchedIndices,
-// DomainPartition::FiniteElementNodeManager, "Cannot find
-// FiniteElementNodeManager in matchedIndices in
-// PartitionBase::SetupNeighborLists" );
-//
-//    // create an array to contain all faces that have a matched face on a
-// neighbor. That means that the face CANNOT
-//    // be an external face.
-//    domain->m_feFaceManager.m_matchedBoundaryFaces.insert(matchedBoundaryFaceIndices.begin(),
-//                                                       matchedBoundaryFaceIndices.end()
-// );
-//
-//    domain->m_feNodeManager.m_matchedBoundaryNodes.insert(matchedBoundaryNodeIndices.begin(),
-//                                                       matchedBoundaryNodeIndices.end()
-// );
-//
-//  }
-//
-//  domain->m_feFaceManager.SetIsExternal();
-//  domain->m_feNodeManager.SetIsExternal( &(domain->m_feFaceManager) );
-//
-//  domain->m_discreteElementSurfaceFaces.m_isExternal = 1;
-//  domain->m_discreteElementSurfaceNodes.m_isExternal = 1;
-//
-//#ifdef SRC_EXTERNAL
-//  domain->m_faultPatchFaces.SetIsExternal();
-//  domain->m_faultPatchNodes.SetIsExternal( &(domain->m_faultPatchFaces) );
-//#endif
-//  //------------------------------------------
-//  //(5) SENDRECV "GHOST" SIZES
-//  //    send the size of the ghost node objects
-//  {
-//    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
-// ; neighbor!=m_neighbors.end() ; ++neighbor )
-//    {
-//      // pack the element to send as ghosts, and find a list of nodes, edges,
-// and faces that must be sent as ghosts.
-//      neighbor->FindGhosts( contactActive, m_ghostDepth );
-//    }
-//
-//    CommunicateRequiredObjectIndices();
-//
-//    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
-// ; neighbor!=m_neighbors.end() ; ++neighbor )
-//    {
-//      neighbor->FindPackGhosts_Step2();
-//    }
-//
-//  }
-//
-//  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ;
-// neighbor!=m_neighbors.end() ; ++neighbor )
-//  {
-//    // pack the element to send as ghosts, and find a list of nodes, edges,
-// and faces that must be sent as ghosts.
-//    neighbor->FindPackGhostsDiscreteElement( contactActive, m_ghostDepth );
-//#ifdef SRC_EXTERNAL
-//    neighbor->FindPackGhostsFaultElement( m_ghostDepth );
-//#endif
-//  }
-//
-//
-//
-//
-//
-//
-//
-//
-//  {
-//    int i_mpireq = 0;
-//    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
-// ; neighbor!=m_neighbors.end() ; ++neighbor )
-//    {
-//      //resize the size arrays
-//      neighbor->tempNeighborData.sendSizes.resize(neighbor->tempNeighborData.objectsToSend.size(),
-// 0);
-//      neighbor->tempNeighborData.receiveSizes.resize(neighbor->tempNeighborData.objectsToSend.size(),
-// 0);
-//
-//      //"objectsToSend" filled in NeighborCommunication::FindPackGhosts
-//      localIndex index = 0;
-//      for(std::map<DomainPartition::ObjectDataStructureKeys,
-// bufvector>::const_iterator it =
-// neighbor->tempNeighborData.objectsToSend.begin();
-//          it != neighbor->tempNeighborData.objectsToSend.end(); ++it, ++index)
-//      {
-//        neighbor->tempNeighborData.sendSizes[index] = it->second.size();
-//      }
-//
-//      //sendrecv the "receiveSizes" and "sendSizes": note that the sizes are
-// calculated the same on all processes (const number of fields)
-//      //  so we don't need to send the sizes
-//      neighbor->SendReceive(
-// reinterpret_cast<char*>(neighbor->tempNeighborData.receiveSizes.data()),
-//                             neighbor->tempNeighborData.receiveSizes.size() *
-// sizeof(bufvector::size_type),
-//                             reinterpret_cast<char*>(neighbor->tempNeighborData.sendSizes.data()),
-//                             neighbor->tempNeighborData.sendSizes.size() *
-// sizeof(bufvector::size_type),
-//                             m_mpiRequest[i_mpireq], m_mpiRequest[i_mpireq+1]
-// );
-//      i_mpireq += 2;
-//    }
-//    MPI_Waitall( m_mpiRequest.size() , m_mpiRequest.data(), m_mpiStatus.data()
-// );
-//
-//    //initialize and resize the "tempNeighborData.objectsToReceive" buffers
-//    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
-// ; neighbor!=m_neighbors.end() ; ++neighbor )
-//    {
-//      localIndex index = 0;
-//      for(std::map<DomainPartition::ObjectDataStructureKeys,
-// bufvector>::const_iterator it =
-// neighbor->tempNeighborData.objectsToSend.begin();
-//          it != neighbor->tempNeighborData.objectsToSend.end(); ++it, ++index)
-//      {
-//        neighbor->tempNeighborData.objectsToReceive[it->first].resize(
-// neighbor->tempNeighborData.receiveSizes[index]);
-//      }
-//    }
-//  }
-//
-//  array<DomainPartition::ObjectDataStructureKeys> objectNames;
-//  NeighborCommunication::SyncNames(objectNames);
-//
-//  //------------------------------------------
-//  // (6) SENDRECV "GHOST" OBJECTS
-//  //     send the the ghost objects
-//  {
-//    DomainPartition::ObjectDataStructureKeys last =
-// DomainPartition::Last_ObjectDataStructureNames_Index;
-//    localIndex index = 0;
-//
-//    std::map<DomainPartition::ObjectDataStructureKeys, localIndex_array>
-// newIndices;
-//    std::map<std::string,localIndex_array> newElementIndices;
-//
-//    // (6a) do the communication
-//    for(array<DomainPartition::ObjectDataStructureKeys>::const_iterator it =
-// objectNames.begin() ; it != objectNames.end(); ++it, ++index)
-//    {
-//      int i_mpireq = 0;
-//      for( VectorT<NeighborCommunication>::iterator
-// neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
-//      {
-//        std::map<DomainPartition::ObjectDataStructureKeys,
-// bufvector>::iterator itmp =
-// neighbor->tempNeighborData.objectsToSend.find(*it);
-//        if(itmp == neighbor->tempNeighborData.objectsToSend.end())
-//#ifdef USE_ATK
-//          SLIC_ERROR("Cannot find name " + toString<int>(*it) + " in
-// objectsToSend");
-//#endif
-//
-//        bufvector& send = itmp->second;
-//        bufvector& recv = neighbor->tempNeighborData.objectsToReceive[*it];
-//
-//        neighbor->SendReceive( reinterpret_cast<char*>(recv.data() ),
-// recv.size(),
-//                               reinterpret_cast<char*>(send.data() ),
-// send.size(),
-//                               m_mpiRequest[i_mpireq],
-// m_mpiRequest[i_mpireq+1] );
-//
-//        i_mpireq += 2;
-//        if(index > 0)
-//        {
-//          //per usual: handle elements as a special case
-//          if(last == DomainPartition::FiniteElementElementManager)
-//            neighbor->UnpackGhostElements( newElementIndices );
-//          else
-//            neighbor->UnpackGhosts(last, newIndices[last]);
-//        }
-//      }
-//
-//      last = *it;
-//
-//      // wait for ghost node objects
-//      MPI_Waitall( m_mpiRequest.size() , m_mpiRequest.data(),
-// m_mpiStatus.data() );
-//    }
-//
-//    // (6b) sweep up the last to be received
-//    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
-// ; neighbor!=m_neighbors.end() ; ++neighbor )
-//    {
-//      //per usual: handle elements as a special case
-//      if(last == DomainPartition::FiniteElementElementManager)
-//        neighbor->UnpackGhostElements( newElementIndices );
-//      else
-//        neighbor->UnpackGhosts(last, newIndices[last]);
-//    }
-//
-//
-//
-//
-//
-//
-//    // (6c) per usual: handle elements as a special case
-//    for( std::map<std::string,localIndex_array>::iterator
-// i=newElementIndices.begin() ; i!=newElementIndices.end() ; ++i )
-//    {
-//      localIndex_array& newElems = i->second;
-//      // sort the entries
-//      std::sort(newElems.begin(),newElems.end());
-//      // now remove the duplicates
-//      localIndex_array::iterator iend =
-// std::unique(newElems.begin(),newElems.end());
-//      newElems.resize( iend - newElems.begin() );
-//    }
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//    // (6d) update maps in the anti-dependency direction
-//    //      must update the "upward" pointing maps, as the unpacking only
-// updated "downward" pointing maps
-//    domain->m_feNodeManager.AddToNodeToElementMap( domain->m_feElementManager,
-// newElementIndices );
-//    domain->m_feFaceManager.AddToFaceToElementMap( domain->m_feElementManager,
-// newElementIndices );
-//
-//    std::map<DomainPartition::ObjectDataStructureKeys,
-// localIndex_array>::iterator iArr;
-//
-//    //Faces
-//    {
-//      iArr = newIndices.find(DomainPartition::FiniteElementFaceManager);
-//      if( iArr != newIndices.end() )
-//      {
-//        localIndex_array& newFaceIndices = iArr->second;
-//        domain->m_feNodeManager.AddToVariableOneToManyFromInverse(
-// "nodeToFaceMap", domain->m_feFaceManager.m_toNodesRelation,  newFaceIndices);
-//        domain->m_feEdgeManager.AddToVariableOneToManyFromInverse(
-// "edgesToFaces", domain->m_feFaceManager.m_toEdgesRelation, newFaceIndices);
-//      }
-//    }
-//
-//    //Edges
-//    {
-//      iArr = newIndices.find(DomainPartition::FiniteElementEdgeManager);
-//      if( iArr != newIndices.end() )
-//      {
-//        localIndex_array& newEdgeIndices = iArr->second;
-//        domain->m_feNodeManager.AddToNodeToEdgeMap( domain->m_feEdgeManager,
-// newEdgeIndices );
-//      }
-//    }
-//
-//
-//    //Discrete Elements
-//    {
-//      iArr = newIndices.find(DomainPartition::DiscreteElementFaceManager);
-//      if(iArr != newIndices.end())
-//      {
-//        localIndex_array& newDEFaceIndices = iArr->second;
-//        domain->m_discreteElementSurfaceNodes.AddToNodeToFaceMap(
-// domain->m_discreteElementSurfaceFaces, newDEFaceIndices);
-//      }
-//    }
+//    neighbor->Clear();
 //  }
 //
 //  //------------------------------------------
-//  // (7) CLEAN UP
-//  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ;
-// neighbor!=m_neighbors.end() ; ++neighbor )
-//  {
-//    neighbor->tempNeighborData.clear();
-//  }
-}
+//  //(2) Collect FEM objects that are owned by other processes. This is know from
+//  // the global indices.
+//
+////
+////
+////  FindMatchedBoundaryIndices( keys::nodeManager,
+//// domain->GetGroup<ObjectManagerBase>(keys::nodeManager) );
+////  FindMatchedBoundaryIndices( DomainPartition::FiniteElementFaceManager,
+//// domain->m_feFaceManager );
+////
+////  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ;
+//// neighbor!=m_neighbors.end() ; ++neighbor )
+////  {
+////    localIndex_array& matchedBoundaryFaceIndices = stlMapLookup(
+//// neighbor->tempNeighborData.matchedIndices,
+//// DomainPartition::FiniteElementFaceManager, "Cannot find
+//// FiniteElementFaceManager in matchedIndices in
+//// PartitionBase::SetupNeighborLists" );
+////    localIndex_array& matchedBoundaryNodeIndices = stlMapLookup(
+//// neighbor->tempNeighborData.matchedIndices,
+//// DomainPartition::FiniteElementNodeManager, "Cannot find
+//// FiniteElementNodeManager in matchedIndices in
+//// PartitionBase::SetupNeighborLists" );
+////
+////    // create an array to contain all faces that have a matched face on a
+//// neighbor. That means that the face CANNOT
+////    // be an external face.
+////    domain->m_feFaceManager.m_matchedBoundaryFaces.insert(matchedBoundaryFaceIndices.begin(),
+////                                                       matchedBoundaryFaceIndices.end()
+//// );
+////
+////    domain->m_feNodeManager.m_matchedBoundaryNodes.insert(matchedBoundaryNodeIndices.begin(),
+////                                                       matchedBoundaryNodeIndices.end()
+//// );
+////
+////  }
+////
+////  domain->m_feFaceManager.SetIsExternal();
+////  domain->m_feNodeManager.SetIsExternal( &(domain->m_feFaceManager) );
+////
+////  domain->m_discreteElementSurfaceFaces.m_isExternal = 1;
+////  domain->m_discreteElementSurfaceNodes.m_isExternal = 1;
+////
+////#ifdef SRC_EXTERNAL
+////  domain->m_faultPatchFaces.SetIsExternal();
+////  domain->m_faultPatchNodes.SetIsExternal( &(domain->m_faultPatchFaces) );
+////#endif
+////  //------------------------------------------
+////  //(5) SENDRECV "GHOST" SIZES
+////  //    send the size of the ghost node objects
+////  {
+////    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
+//// ; neighbor!=m_neighbors.end() ; ++neighbor )
+////    {
+////      // pack the element to send as ghosts, and find a list of nodes, edges,
+//// and faces that must be sent as ghosts.
+////      neighbor->FindGhosts( contactActive, m_ghostDepth );
+////    }
+////
+////    CommunicateRequiredObjectIndices();
+////
+////    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
+//// ; neighbor!=m_neighbors.end() ; ++neighbor )
+////    {
+////      neighbor->FindPackGhosts_Step2();
+////    }
+////
+////  }
+////
+////  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ;
+//// neighbor!=m_neighbors.end() ; ++neighbor )
+////  {
+////    // pack the element to send as ghosts, and find a list of nodes, edges,
+//// and faces that must be sent as ghosts.
+////    neighbor->FindPackGhostsDiscreteElement( contactActive, m_ghostDepth );
+////#ifdef SRC_EXTERNAL
+////    neighbor->FindPackGhostsFaultElement( m_ghostDepth );
+////#endif
+////  }
+////
+////
+////
+////
+////
+////
+////
+////
+////  {
+////    int i_mpireq = 0;
+////    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
+//// ; neighbor!=m_neighbors.end() ; ++neighbor )
+////    {
+////      //resize the size arrays
+////      neighbor->tempNeighborData.sendSizes.resize(neighbor->tempNeighborData.objectsToSend.size(),
+//// 0);
+////      neighbor->tempNeighborData.receiveSizes.resize(neighbor->tempNeighborData.objectsToSend.size(),
+//// 0);
+////
+////      //"objectsToSend" filled in NeighborCommunication::FindPackGhosts
+////      localIndex index = 0;
+////      for(std::map<DomainPartition::ObjectDataStructureKeys,
+//// bufvector>::const_iterator it =
+//// neighbor->tempNeighborData.objectsToSend.begin();
+////          it != neighbor->tempNeighborData.objectsToSend.end(); ++it, ++index)
+////      {
+////        neighbor->tempNeighborData.sendSizes[index] = it->second.size();
+////      }
+////
+////      //sendrecv the "receiveSizes" and "sendSizes": note that the sizes are
+//// calculated the same on all processes (const number of fields)
+////      //  so we don't need to send the sizes
+////      neighbor->SendReceive(
+//// reinterpret_cast<char*>(neighbor->tempNeighborData.receiveSizes.data()),
+////                             neighbor->tempNeighborData.receiveSizes.size() *
+//// sizeof(bufvector::size_type),
+////                             reinterpret_cast<char*>(neighbor->tempNeighborData.sendSizes.data()),
+////                             neighbor->tempNeighborData.sendSizes.size() *
+//// sizeof(bufvector::size_type),
+////                             m_mpiRequest[i_mpireq], m_mpiRequest[i_mpireq+1]
+//// );
+////      i_mpireq += 2;
+////    }
+////    MPI_Waitall( m_mpiRequest.size() , m_mpiRequest.data(), m_mpiStatus.data()
+//// );
+////
+////    //initialize and resize the "tempNeighborData.objectsToReceive" buffers
+////    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
+//// ; neighbor!=m_neighbors.end() ; ++neighbor )
+////    {
+////      localIndex index = 0;
+////      for(std::map<DomainPartition::ObjectDataStructureKeys,
+//// bufvector>::const_iterator it =
+//// neighbor->tempNeighborData.objectsToSend.begin();
+////          it != neighbor->tempNeighborData.objectsToSend.end(); ++it, ++index)
+////      {
+////        neighbor->tempNeighborData.objectsToReceive[it->first].resize(
+//// neighbor->tempNeighborData.receiveSizes[index]);
+////      }
+////    }
+////  }
+////
+////  array<DomainPartition::ObjectDataStructureKeys> objectNames;
+////  NeighborCommunication::SyncNames(objectNames);
+////
+////  //------------------------------------------
+////  // (6) SENDRECV "GHOST" OBJECTS
+////  //     send the the ghost objects
+////  {
+////    DomainPartition::ObjectDataStructureKeys last =
+//// DomainPartition::Last_ObjectDataStructureNames_Index;
+////    localIndex index = 0;
+////
+////    std::map<DomainPartition::ObjectDataStructureKeys, localIndex_array>
+//// newIndices;
+////    std::map<std::string,localIndex_array> newElementIndices;
+////
+////    // (6a) do the communication
+////    for(array<DomainPartition::ObjectDataStructureKeys>::const_iterator it =
+//// objectNames.begin() ; it != objectNames.end(); ++it, ++index)
+////    {
+////      int i_mpireq = 0;
+////      for( VectorT<NeighborCommunication>::iterator
+//// neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+////      {
+////        std::map<DomainPartition::ObjectDataStructureKeys,
+//// bufvector>::iterator itmp =
+//// neighbor->tempNeighborData.objectsToSend.find(*it);
+////        if(itmp == neighbor->tempNeighborData.objectsToSend.end())
+////#ifdef USE_ATK
+////          SLIC_ERROR("Cannot find name " + toString<int>(*it) + " in
+//// objectsToSend");
+////#endif
+////
+////        bufvector& send = itmp->second;
+////        bufvector& recv = neighbor->tempNeighborData.objectsToReceive[*it];
+////
+////        neighbor->SendReceive( reinterpret_cast<char*>(recv.data() ),
+//// recv.size(),
+////                               reinterpret_cast<char*>(send.data() ),
+//// send.size(),
+////                               m_mpiRequest[i_mpireq],
+//// m_mpiRequest[i_mpireq+1] );
+////
+////        i_mpireq += 2;
+////        if(index > 0)
+////        {
+////          //per usual: handle elements as a special case
+////          if(last == DomainPartition::FiniteElementElementManager)
+////            neighbor->UnpackGhostElements( newElementIndices );
+////          else
+////            neighbor->UnpackGhosts(last, newIndices[last]);
+////        }
+////      }
+////
+////      last = *it;
+////
+////      // wait for ghost node objects
+////      MPI_Waitall( m_mpiRequest.size() , m_mpiRequest.data(),
+//// m_mpiStatus.data() );
+////    }
+////
+////    // (6b) sweep up the last to be received
+////    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
+//// ; neighbor!=m_neighbors.end() ; ++neighbor )
+////    {
+////      //per usual: handle elements as a special case
+////      if(last == DomainPartition::FiniteElementElementManager)
+////        neighbor->UnpackGhostElements( newElementIndices );
+////      else
+////        neighbor->UnpackGhosts(last, newIndices[last]);
+////    }
+////
+////
+////
+////
+////
+////
+////    // (6c) per usual: handle elements as a special case
+////    for( std::map<std::string,localIndex_array>::iterator
+//// i=newElementIndices.begin() ; i!=newElementIndices.end() ; ++i )
+////    {
+////      localIndex_array& newElems = i->second;
+////      // sort the entries
+////      std::sort(newElems.begin(),newElems.end());
+////      // now remove the duplicates
+////      localIndex_array::iterator iend =
+//// std::unique(newElems.begin(),newElems.end());
+////      newElems.resize( iend - newElems.begin() );
+////    }
+////
+////
+////
+////
+////
+////
+////
+////
+////
+////
+////
+////
+////
+////    // (6d) update maps in the anti-dependency direction
+////    //      must update the "upward" pointing maps, as the unpacking only
+//// updated "downward" pointing maps
+////    domain->m_feNodeManager.AddToNodeToElementMap( domain->m_feElementManager,
+//// newElementIndices );
+////    domain->m_feFaceManager.AddToFaceToElementMap( domain->m_feElementManager,
+//// newElementIndices );
+////
+////    std::map<DomainPartition::ObjectDataStructureKeys,
+//// localIndex_array>::iterator iArr;
+////
+////    //Faces
+////    {
+////      iArr = newIndices.find(DomainPartition::FiniteElementFaceManager);
+////      if( iArr != newIndices.end() )
+////      {
+////        localIndex_array& newFaceIndices = iArr->second;
+////        domain->m_feNodeManager.AddToVariableOneToManyFromInverse(
+//// "nodeToFaceMap", domain->m_feFaceManager.m_toNodesRelation,  newFaceIndices);
+////        domain->m_feEdgeManager.AddToVariableOneToManyFromInverse(
+//// "edgesToFaces", domain->m_feFaceManager.m_toEdgesRelation, newFaceIndices);
+////      }
+////    }
+////
+////    //Edges
+////    {
+////      iArr = newIndices.find(DomainPartition::FiniteElementEdgeManager);
+////      if( iArr != newIndices.end() )
+////      {
+////        localIndex_array& newEdgeIndices = iArr->second;
+////        domain->m_feNodeManager.AddToNodeToEdgeMap( domain->m_feEdgeManager,
+//// newEdgeIndices );
+////      }
+////    }
+////
+////
+////    //Discrete Elements
+////    {
+////      iArr = newIndices.find(DomainPartition::DiscreteElementFaceManager);
+////      if(iArr != newIndices.end())
+////      {
+////        localIndex_array& newDEFaceIndices = iArr->second;
+////        domain->m_discreteElementSurfaceNodes.AddToNodeToFaceMap(
+//// domain->m_discreteElementSurfaceFaces, newDEFaceIndices);
+////      }
+////    }
+////  }
+////
+////  //------------------------------------------
+////  // (7) CLEAN UP
+////  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ;
+//// neighbor!=m_neighbors.end() ; ++neighbor )
+////  {
+////    neighbor->tempNeighborData.clear();
+////  }
+//}
 
 
 /**
@@ -944,8 +952,8 @@ void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
  *
  * function to inform partitions of what they need to send to their neighbors
  */
-void PartitionBase::CommunicateRequiredObjectIndices()
-{
+//void PartitionBase::CommunicateRequiredObjectIndices()
+//{
 
 //
 //  const DomainPartition::ObjectDataStructureKeys keys[3] = {
@@ -1192,7 +1200,7 @@ void PartitionBase::CommunicateRequiredObjectIndices()
 //  }
 
 
-}
+//}
 
 
 /*
@@ -1200,9 +1208,9 @@ void PartitionBase::CommunicateRequiredObjectIndices()
  *
  *
  */
-void PartitionBase::FindMatchedBoundaryIndices( string const & key,
-                                                const ObjectManagerBase& object )
-{
+//void PartitionBase::FindMatchedBoundaryIndices( string const & key,
+//                                                const ObjectManagerBase& object )
+//{
 //
 //  gArray1d boundaryObjectGlobalIndices;
 //  object.ConstructListOfBoundaryObjects( boundaryObjectGlobalIndices );
@@ -1305,7 +1313,7 @@ void PartitionBase::FindMatchedBoundaryIndices( string const & key,
 // mpiSendStatus.data() );
 //
 //  }
-}
+//}
 
 
 
@@ -1911,8 +1919,8 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 }
 
 #elif METHOD == 1
-void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects )
-{
+//void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects )
+//{
 //
 //  const bool pack=true;
 //  const realT t0=MPI_Wtime();
@@ -2415,7 +2423,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //
 //
 
-}
+//}
 
 #elif 0
 /**
@@ -2855,30 +2863,30 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
  * @param fieldNames
  * @param commID
  */
-void PartitionBase::SetBufferSizes( const std::map<string, array<string> >& fieldNames,
-                                    const CommRegistry::commID commID  )
-{
-  // get buffer sizes, and send/receive sizes
-  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
-  {
-
-    neighbor->GetPackedBufferSize( fieldNames,
-                                   commID );
-
-    neighbor->SendReceiveSizes(commID);
-  }
-
-  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
-  {
-    neighbor->MPI_Wait_RecvSizeRequest(commID);
-    neighbor->MPI_Wait_SendSizeRequest(commID);
-  }
-}
-
-void PartitionBase::SynchronizeFields( const std::map<string, array<string> >& fieldNames,
-                                       const CommRegistry::commID commID  )
-{
+//void PartitionBase::SetBufferSizes( const std::map<string, array<string> >& fieldNames,
+//                                    const CommRegistry::commID commID  )
+//{
+//  // get buffer sizes, and send/receive sizes
+//  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  {
 //
+//    neighbor->GetPackedBufferSize( fieldNames,
+//                                   commID );
+//
+//    neighbor->SendReceiveSizes(commID);
+//  }
+//
+//  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  {
+//    neighbor->MPI_Wait_RecvSizeRequest(commID);
+//    neighbor->MPI_Wait_SendSizeRequest(commID);
+//  }
+//}
+//
+//void PartitionBase::SynchronizeFields( const std::map<string, array<string> >& fieldNames,
+//                                       const CommRegistry::commID commID  )
+//{
+////
 //  if(m_hasLocalGhosts){
 //    // synchronize local ghosts prior to external communication
 //    std::map<DomainPartition::ObjectDataStructureKeys,
@@ -2936,64 +2944,64 @@ void PartitionBase::SynchronizeFields( const std::map<string, array<string> >& f
 //
 //  SetBufferSizes(fieldNames, commID);
 //
-
-
-#if 0
-  // send and receive buffers
-  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
-  {
-    neighbor->PackBuffer( fieldNames, commID  );
-    neighbor->SendReceiveBuffers( commID);
-    neighbor->m_unpacked = false;
-  }
-
-  // unpack buffers
-  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
-  {
-    neighbor->MPI_Wait_RecvBufferRequest(commID);
-    //neighbor->UnpackBuffer( fieldNames );
-  }
-
-  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
-  {
-    neighbor->MPI_Wait_SendBufferRequest(commID);
-  }
-#else
-
-  array<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
-  array<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
-  array<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
-  array<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
-
-  // send and receive buffers
-  for( int neighborIndex=0 ; neighborIndex<m_neighbors.size() ; ++neighborIndex )
-  {
-    NeighborCommunication& neighbor = m_neighbors[neighborIndex];
-    neighbor.PackBuffer( fieldNames, commID  );
-    neighbor.SendReceiveBuffers( commID, mpiSendBufferRequest[neighborIndex], mpiRecvBufferRequest[neighborIndex] );
-
-  }
-
-
-  // unpack the buffers
-  for( int count=0 ; count<m_neighbors.size() ; ++count )
-  {
-    int neighborIndex;
-    MPI_Waitany( integer_conversion<int>(mpiRecvBufferRequest.size()),
-                 mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data() );
-
-    NeighborCommunication& neighbor = this->m_neighbors[neighborIndex];
-    neighbor.UnpackBuffer( fieldNames );
-  }
-
-  MPI_Waitall( integer_conversion<int>(mpiSendBufferRequest.size()),
-               mpiSendBufferRequest.data(), mpiSendBufferStatus.data() );
-
-
-#endif
-
-}
-
+//
+//
+//#if 0
+//  // send and receive buffers
+//  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  {
+//    neighbor->PackBuffer( fieldNames, commID  );
+//    neighbor->SendReceiveBuffers( commID);
+//    neighbor->m_unpacked = false;
+//  }
+//
+//  // unpack buffers
+//  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  {
+//    neighbor->MPI_Wait_RecvBufferRequest(commID);
+//    //neighbor->UnpackBuffer( fieldNames );
+//  }
+//
+//  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  {
+//    neighbor->MPI_Wait_SendBufferRequest(commID);
+//  }
+//#else
+//
+//  array<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
+//  array<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
+//  array<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
+//  array<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
+//
+//  // send and receive buffers
+//  for( int neighborIndex=0 ; neighborIndex<m_neighbors.size() ; ++neighborIndex )
+//  {
+//    NeighborCommunication& neighbor = m_neighbors[neighborIndex];
+//    neighbor.PackBuffer( fieldNames, commID  );
+//    neighbor.SendReceiveBuffers( commID, mpiSendBufferRequest[neighborIndex], mpiRecvBufferRequest[neighborIndex] );
+//
+//  }
+//
+//
+//  // unpack the buffers
+//  for( int count=0 ; count<m_neighbors.size() ; ++count )
+//  {
+//    int neighborIndex;
+//    MPI_Waitany( integer_conversion<int>(mpiRecvBufferRequest.size()),
+//                 mpiRecvBufferRequest.data(), &neighborIndex, mpiRecvBufferStatus.data() );
+//
+//    NeighborCommunication& neighbor = this->m_neighbors[neighborIndex];
+//    neighbor.UnpackBuffer( fieldNames );
+//  }
+//
+//  MPI_Waitall( integer_conversion<int>(mpiSendBufferRequest.size()),
+//               mpiSendBufferRequest.data(), mpiSendBufferStatus.data() );
+//
+//
+//#endif
+//
+//}
+//
 
 /**
  *
@@ -3001,8 +3009,8 @@ void PartitionBase::SynchronizeFields( const std::map<string, array<string> >& f
  * the object's ghost rank.
  *
  */
-void PartitionBase::SetGhostArrays( DomainPartition * domain )
-{
+//void PartitionBase::SetGhostArrays( DomainPartition * domain )
+//{
   //(1) initialize ghost arrays
 //  std::map<DomainPartition::ObjectDataStructureKeys,
 // array<Field<FieldInfo::ghostRank>::Type>*> ghostRank;
@@ -3117,52 +3125,52 @@ void PartitionBase::SetGhostArrays( DomainPartition * domain )
 //      }
 //    }
 //  }
-}
-
-void PartitionBase::SetRankOfNeighborNeighbors()
-{
-  array<integer> ranks;
-  array<array<integer> > neighborRanks(m_neighbors.size());
-
-  for( array<NeighborCommunication>::const_iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
-  {
-    ranks.push_back( neighbor->NeighborRank() );
-  }
-
-  array<integer>::size_type sendSize = ranks.size();
-  array<array<integer>::size_type> recvSize(m_neighbors.size());
-  array<MPI_Request> mpiSendRequest(m_neighbors.size());
-  array<MPI_Request> mpiRecvRequest(m_neighbors.size());
-  array<MPI_Status>  mpiSendStatus(m_neighbors.size());
-  array<MPI_Status>  mpiRecvStatus(m_neighbors.size());
-
-  for( int i=0 ; i<m_neighbors.size() ; ++i )
-  {
-    NeighborCommunication& neighbor = m_neighbors[i];
-    neighbor.SendReceive( &sendSize, 1, mpiSendRequest[i],
-                          &(recvSize[i]), 1, mpiRecvRequest[i] );
-  }
-  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()), mpiSendRequest.data(), mpiSendStatus.data() );
-  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()), mpiRecvRequest.data(), mpiRecvStatus.data() );
-
-  for( int i=0 ; i<m_neighbors.size() ; ++i )
-  {
-    NeighborCommunication& neighbor = m_neighbors[i];
-    neighborRanks[i].resize( recvSize[i] );
-
-    neighbor.SendReceive( ranks.data(), integer_conversion<int>(ranks.size()), mpiSendRequest[i],
-                          neighborRanks[i].data(), integer_conversion<int>(neighborRanks[i].size()), mpiRecvRequest[i] );
-  }
-  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()), mpiSendRequest.data(), mpiSendStatus.data() );
-  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()), mpiRecvRequest.data(), mpiRecvStatus.data() );
-
-  for( int i=0 ; i<m_neighbors.size() ; ++i )
-  {
-    NeighborCommunication& neighbor = m_neighbors[i];
-    neighbor.SetRankOfNeighborNeighbors( neighborRanks[i] );
-  }
-
-}
+//}
+//
+//void PartitionBase::SetRankOfNeighborNeighbors()
+//{
+//  array<integer> ranks;
+//  array<array<integer> > neighborRanks(m_neighbors.size());
+//
+//  for( array<NeighborCommunication>::const_iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  {
+//    ranks.push_back( neighbor->NeighborRank() );
+//  }
+//
+//  array<integer>::size_type sendSize = ranks.size();
+//  array<array<integer>::size_type> recvSize(m_neighbors.size());
+//  array<MPI_Request> mpiSendRequest(m_neighbors.size());
+//  array<MPI_Request> mpiRecvRequest(m_neighbors.size());
+//  array<MPI_Status>  mpiSendStatus(m_neighbors.size());
+//  array<MPI_Status>  mpiRecvStatus(m_neighbors.size());
+//
+//  for( int i=0 ; i<m_neighbors.size() ; ++i )
+//  {
+//    NeighborCommunication& neighbor = m_neighbors[i];
+//    neighbor.SendReceive( &sendSize, 1, mpiSendRequest[i],
+//                          &(recvSize[i]), 1, mpiRecvRequest[i] );
+//  }
+//  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()), mpiSendRequest.data(), mpiSendStatus.data() );
+//  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()), mpiRecvRequest.data(), mpiRecvStatus.data() );
+//
+//  for( int i=0 ; i<m_neighbors.size() ; ++i )
+//  {
+//    NeighborCommunication& neighbor = m_neighbors[i];
+//    neighborRanks[i].resize( recvSize[i] );
+//
+//    neighbor.SendReceive( ranks.data(), integer_conversion<int>(ranks.size()), mpiSendRequest[i],
+//                          neighborRanks[i].data(), integer_conversion<int>(neighborRanks[i].size()), mpiRecvRequest[i] );
+//  }
+//  MPI_Waitall( integer_conversion<int>(mpiSendRequest.size()), mpiSendRequest.data(), mpiSendStatus.data() );
+//  MPI_Waitall( integer_conversion<int>(mpiRecvRequest.size()), mpiRecvRequest.data(), mpiRecvStatus.data() );
+//
+//  for( int i=0 ; i<m_neighbors.size() ; ++i )
+//  {
+//    NeighborCommunication& neighbor = m_neighbors[i];
+//    neighbor.SetRankOfNeighborNeighbors( neighborRanks[i] );
+//  }
+//
+//}
 
 //void PartitionBase::WriteSilo( SiloFile& siloFile )
 //{
@@ -3242,144 +3250,144 @@ void PartitionBase::SetRankOfNeighborNeighbors()
 //
 //}
 
-//Delete the neighbors that do not communicate
-void PartitionBase::DeleteExcessNeighbors()
-{
-  for( array<NeighborCommunication>::iterator neighbor = m_neighbors.end()-1 ; neighbor!=m_neighbors.begin()-1 ; --neighbor )
-  {
-//    std::cout << m_rank << ":" << neighbor-> ReturnNeighborRank() << ": " <<
-// neighbor->ReturnNeighborRcvSndSize() << std::endl;
-    if (neighbor->ReturnNeighborRcvSndSize() == 0)
-    {
-      neighbor->Clear();
-      //m_partition.m_neighbors.erase(neighbor);
-      m_neighbors.erase(neighbor);
-    }
-  }
-//  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.end()-1 ;
-// neighbor!=m_neighbors.begin()-1 ; --neighbor )
+////Delete the neighbors that do not communicate
+//void PartitionBase::DeleteExcessNeighbors()
+//{
+//  for( array<NeighborCommunication>::iterator neighbor = m_neighbors.end()-1 ; neighbor!=m_neighbors.begin()-1 ; --neighbor )
+//  {
+////    std::cout << m_rank << ":" << neighbor-> ReturnNeighborRank() << ": " <<
+//// neighbor->ReturnNeighborRcvSndSize() << std::endl;
+//    if (neighbor->ReturnNeighborRcvSndSize() == 0)
 //    {
-//      std::cout << m_rank << ":" << neighbor-> ReturnNeighborRank() << ": " <<
-// neighbor->ReturnNeighborRcvSndSize() << std::endl;
+//      neighbor->Clear();
+//      //m_partition.m_neighbors.erase(neighbor);
+//      m_neighbors.erase(neighbor);
 //    }
-}
-
-void PartitionBase::GraphBasedColoring()
-//Use the so-called greedy coloring method for metis-based partitions
-{
-  //First collect the partition graph to rank 0
-
-  if (m_rank == 0)
-    std::cout<<"Coloring partitions ... ";
-  array<integer> localNeighborList(1);
-  localNeighborList = 0;
-  for( array<NeighborCommunication>::iterator neighbor = m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
-  {
-    localNeighborList.push_back(neighbor->NeighborRank());
-  }
-  // localNeighborList.insert(localNeighborList.begin(),
-  // localNeighborList.size());
-  localNeighborList[0] = integer_conversion<int>(localNeighborList.size()) - 1;
-
-  int localNumNeighbors = integer_conversion<int>(localNeighborList.size());
-  int maxLocalNumNeighbors = 0;
-  MPI_Allreduce(&localNumNeighbors, &maxLocalNumNeighbors, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
-  array<integer> allNeighborList;
-  allNeighborList.resize(maxLocalNumNeighbors * m_size);
-
-  for (localIndex i = 0 ; i < maxLocalNumNeighbors - localNeighborList.size() ; ++i)
-  {
-    localNeighborList.push_back(-1);
-  }
-
-  MPI_Gather( localNeighborList.data(), maxLocalNumNeighbors, MPI_INT, allNeighborList.data(), maxLocalNumNeighbors, MPI_INT, 0, MPI_COMM_WORLD);
-
-  array<integer> colorByRank(m_size);
-
-  if (m_rank == 0)
-  {
-    array<array<integer> > listNeighbors;
-    listNeighbors.resize(m_size);
-
-    int count = 0;
-    int COUNT = 0;
-    localIndex myrank = -1;
-    for (array<integer>::const_iterator it = allNeighborList.begin() ; it != allNeighborList.end() ; ++it)
-    {
-      if (COUNT == 0)
-      {
-        count = *it;
-        COUNT = maxLocalNumNeighbors;
-        myrank++;
-      }
-      else if (COUNT > 0 && count > 0 && *it >= 0)
-      {
-        listNeighbors[myrank].push_back(*it);
-        count--;
-      }
-      COUNT--;
-    }
-    // Now we loop through and assign colors
-
-    colorByRank = -1;
-    array<integer> countColor(m_size);
-    m_numColors = -1;
-
-    for (localIndex rank = 0 ; rank < listNeighbors.size() ; ++rank)
-    {
-      countColor = 0;
-      for (localIndex i = 0 ; i < listNeighbors[rank].size() ; ++i)
-      {
-        if (colorByRank[listNeighbors[rank][i]] >= 0)
-          countColor[colorByRank[listNeighbors[rank][i]]]++;
-      }
-
-      array<integer>::const_iterator it = countColor.begin();
-      colorByRank[rank] = 0;
-      while (*it > 0)
-      {
-        ++it;
-        ++colorByRank[rank];
-      }
-
-      m_numColors = std::max(m_numColors, colorByRank[rank]);
-    }
-
-    m_numColors++;
-    std::cout<< "Done. " << m_numColors << " colors was used." << std::endl;
-    std::cout<< "Rank: color - list of neighbors" << std::endl;
-    for (localIndex rank = 0 ; rank < listNeighbors.size() ; ++rank)
-    {
-      std::cout<< rank << ": " << colorByRank[rank] << " - ";
-      for (array<integer>::const_iterator it = listNeighbors[rank].begin() ; it != listNeighbors[rank].end() ; ++it)
-      {
-        std::cout << *it << " ,";
-      }
-      std::cout << std::endl;
-    }
-
-
-    //Sanity check
-    for (localIndex rank = 0 ; rank < listNeighbors.size() ; ++rank)
-    {
-      countColor = 0;
-      for (localIndex i = 0 ; i < listNeighbors[rank].size() ; ++i)
-      {
-        if (colorByRank[listNeighbors[rank][i]] ==  colorByRank[rank])
-        {
-#ifdef USE_ATK
-          SLIC_ERROR("ERROR: Two neighbors were assigned the same color.");
-#endif
-        }
-      }
-    }
-
-  }
-
-  MPI_Bcast(colorByRank.data(), m_size, MPI_INT, 0, MPI_COMM_WORLD);
-  m_color = colorByRank[m_rank];
-
-  MPI_Bcast(&m_numColors, 1, MPI_INT, 0, MPI_COMM_WORLD);
-}
-}
+//  }
+////  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.end()-1 ;
+//// neighbor!=m_neighbors.begin()-1 ; --neighbor )
+////    {
+////      std::cout << m_rank << ":" << neighbor-> ReturnNeighborRank() << ": " <<
+//// neighbor->ReturnNeighborRcvSndSize() << std::endl;
+////    }
+//}
+//
+//void PartitionBase::GraphBasedColoring()
+////Use the so-called greedy coloring method for metis-based partitions
+//{
+//  //First collect the partition graph to rank 0
+//
+//  if (m_rank == 0)
+//    std::cout<<"Coloring partitions ... ";
+//  array<integer> localNeighborList(1);
+//  localNeighborList = 0;
+//  for( array<NeighborCommunication>::iterator neighbor = m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  {
+//    localNeighborList.push_back(neighbor->NeighborRank());
+//  }
+//  // localNeighborList.insert(localNeighborList.begin(),
+//  // localNeighborList.size());
+//  localNeighborList[0] = integer_conversion<int>(localNeighborList.size()) - 1;
+//
+//  int localNumNeighbors = integer_conversion<int>(localNeighborList.size());
+//  int maxLocalNumNeighbors = 0;
+//  MPI_Allreduce(&localNumNeighbors, &maxLocalNumNeighbors, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+//
+//  array<integer> allNeighborList;
+//  allNeighborList.resize(maxLocalNumNeighbors * m_size);
+//
+//  for (localIndex i = 0 ; i < maxLocalNumNeighbors - localNeighborList.size() ; ++i)
+//  {
+//    localNeighborList.push_back(-1);
+//  }
+//
+//  MPI_Gather( localNeighborList.data(), maxLocalNumNeighbors, MPI_INT, allNeighborList.data(), maxLocalNumNeighbors, MPI_INT, 0, MPI_COMM_WORLD);
+//
+//  array<integer> colorByRank(m_size);
+//
+//  if (m_rank == 0)
+//  {
+//    array<array<integer> > listNeighbors;
+//    listNeighbors.resize(m_size);
+//
+//    int count = 0;
+//    int COUNT = 0;
+//    localIndex myrank = -1;
+//    for (array<integer>::const_iterator it = allNeighborList.begin() ; it != allNeighborList.end() ; ++it)
+//    {
+//      if (COUNT == 0)
+//      {
+//        count = *it;
+//        COUNT = maxLocalNumNeighbors;
+//        myrank++;
+//      }
+//      else if (COUNT > 0 && count > 0 && *it >= 0)
+//      {
+//        listNeighbors[myrank].push_back(*it);
+//        count--;
+//      }
+//      COUNT--;
+//    }
+//    // Now we loop through and assign colors
+//
+//    colorByRank = -1;
+//    array<integer> countColor(m_size);
+//    m_numColors = -1;
+//
+//    for (localIndex rank = 0 ; rank < listNeighbors.size() ; ++rank)
+//    {
+//      countColor = 0;
+//      for (localIndex i = 0 ; i < listNeighbors[rank].size() ; ++i)
+//      {
+//        if (colorByRank[listNeighbors[rank][i]] >= 0)
+//          countColor[colorByRank[listNeighbors[rank][i]]]++;
+//      }
+//
+//      array<integer>::const_iterator it = countColor.begin();
+//      colorByRank[rank] = 0;
+//      while (*it > 0)
+//      {
+//        ++it;
+//        ++colorByRank[rank];
+//      }
+//
+//      m_numColors = std::max(m_numColors, colorByRank[rank]);
+//    }
+//
+//    m_numColors++;
+//    std::cout<< "Done. " << m_numColors << " colors was used." << std::endl;
+//    std::cout<< "Rank: color - list of neighbors" << std::endl;
+//    for (localIndex rank = 0 ; rank < listNeighbors.size() ; ++rank)
+//    {
+//      std::cout<< rank << ": " << colorByRank[rank] << " - ";
+//      for (array<integer>::const_iterator it = listNeighbors[rank].begin() ; it != listNeighbors[rank].end() ; ++it)
+//      {
+//        std::cout << *it << " ,";
+//      }
+//      std::cout << std::endl;
+//    }
+//
+//
+//    //Sanity check
+//    for (localIndex rank = 0 ; rank < listNeighbors.size() ; ++rank)
+//    {
+//      countColor = 0;
+//      for (localIndex i = 0 ; i < listNeighbors[rank].size() ; ++i)
+//      {
+//        if (colorByRank[listNeighbors[rank][i]] ==  colorByRank[rank])
+//        {
+//#ifdef USE_ATK
+//          SLIC_ERROR("ERROR: Two neighbors were assigned the same color.");
+//#endif
+//        }
+//      }
+//    }
+//
+//  }
+//
+//  MPI_Bcast(colorByRank.data(), m_size, MPI_INT, 0, MPI_COMM_WORLD);
+//  m_color = colorByRank[m_rank];
+//
+//  MPI_Bcast(&m_numColors, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//}
+//}

@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
  * DomainPartition.cpp
  *
@@ -370,9 +378,9 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     const std::string meshName("volume_mesh");
     //set the nodal coordinate data structure
     realT* coords[3];
-    dvector xcoords(numNodes);
-    dvector ycoords(numNodes);
-    dvector zcoords(numNodes);
+    array<real64> xcoords(numNodes);
+    array<real64> ycoords(numNodes);
+    array<real64> zcoords(numNodes);
     for (localIndex a = 0 ; a < numNodes ; ++a)
     {
       R1Tensor nodePosition;
@@ -396,9 +404,9 @@ void DomainPartition::WriteFiniteElementMesh( SiloFile& siloFile,
     array<localIndex*> meshConnectivity(numElementRegions);
     array<int*> isGhostElement(numElementRegions);
     array<globalIndex*> globalElementNumbers(numElementRegions);
-    ivector shapecnt(numElementRegions);
-    ivector shapetype(numElementRegions);
-    ivector shapesize(numElementRegions);
+    array<integer> shapecnt(numElementRegions);
+    array<integer> shapetype(numElementRegions);
+    array<integer> shapesize(numElementRegions);
 
     array<FixedOneToManyRelation> elementToNodeMap;
     elementToNodeMap.resize( numElementRegions );
