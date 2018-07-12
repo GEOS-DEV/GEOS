@@ -29,6 +29,8 @@
 #include "common/DataTypes.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/SystemSolverParameters.hpp"
+#include "systemSolverInterface/LinearSolverWrapper.hpp"
+
 
 
 namespace geosx
@@ -40,6 +42,7 @@ namespace systemSolverInterface
 {
 class EpetraBlockSystem;
 class LinearSolverWrapper;
+enum class BlockIDs;
 }
 class SystemSolverParameters;
 
@@ -74,10 +77,6 @@ public:
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 
-  virtual void SolverStep( real64 const & time_n,
-                         real64 const & dt,
-                         int const cycleNumber,
-                         dataRepository::ManagedGroup * domain );
 
 
   /**
@@ -86,6 +85,25 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
+
+
+
+
+  /**
+   * @brief entry function to perform a solver step
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @return return the timestep that was achieved during the step.
+   *
+   * This function is the entry point to perform a solver step. The choice of time integration
+   * method is determined in this function, and the appropriate step function is called.
+   */
+  virtual real64 SolverStep( real64 const & time_n,
+                         real64 const & dt,
+                         int const cycleNumber,
+                         dataRepository::ManagedGroup * domain );
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -277,6 +295,12 @@ public:
   /**@}*/
 
 
+  void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                    SystemSolverParameters const * const params,
+                    systemSolverInterface::BlockIDs const blockID );
+
+
+
   virtual void FillDocumentationNode() override;
 
   virtual void
@@ -292,9 +316,6 @@ public:
   {
     constexpr static auto verboseLevelString = "verboseLevel";
     constexpr static auto gravityVectorString = "gravityVector";
-    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber";
-
-    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
 
   } viewKeys;
 
@@ -330,12 +351,12 @@ public:
     return &m_systemSolverParameters;
   }
 
-  localIndex_array & blockLocalDofNumber() { return m_blockLocalDofNumber; }
-  localIndex_array const & blockLocalDofNumber() const { return m_blockLocalDofNumber; }
+//  localIndex_array & blockLocalDofNumber() { return m_blockLocalDofNumber; }
+//  localIndex_array const & blockLocalDofNumber() const { return m_blockLocalDofNumber; }
 
 protected:
   /// This is a wrapper for the linear solver package
-  systemSolverInterface::LinearSolverWrapper * m_linearSolverWrapper;
+  systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
 
 
 private:
@@ -343,7 +364,7 @@ private:
   R1Tensor m_gravityVector;
   SystemSolverParameters m_systemSolverParameters;
 
-  localIndex_array m_blockLocalDofNumber;
+//  localIndex_array m_blockLocalDofNumber;
 
 
 };

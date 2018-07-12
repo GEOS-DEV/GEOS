@@ -87,7 +87,7 @@ public:
 
   virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void SolverStep( real64 const& time_n,
+  virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
                          dataRepository::ManagedGroup * domain ) override;
@@ -195,6 +195,7 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SPTPFA";
     constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
     constexpr static auto deltaPorosityString = "deltaPorosity";
@@ -208,6 +209,7 @@ public:
     constexpr static auto porosityString = "porosity";
     constexpr static auto volumeString = "volume";
 
+    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };

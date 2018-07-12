@@ -97,7 +97,7 @@ LinearSolverWrapper::~LinearSolverWrapper()
 
 void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const blockSystem,
                                                   SystemSolverParameters const * const params,
-                                                  EpetraBlockSystem::BlockIDs const blockID)
+                                                  BlockIDs const blockID)
 {
 
   // initial guess for solver

@@ -60,7 +60,7 @@ SinglePhaseFlow_TPFA::SinglePhaseFlow_TPFA( const std::string& name,
 
   // set the blockID for the block system interface
   getLinearSystemRepository()->
-  SetBlockID( EpetraBlockSystem::BlockIDs::fluidPressureBlock, this->getName() );
+  SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
 
   // register data members with the repository
   this->RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, 0 );
@@ -255,6 +255,19 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     0,
                                     0 );
 
+              docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
+                                          viewKeyStruct::blockLocalDofNumberString,
+                                          -1,
+                                          "localIndex_array",
+                                          "localIndex_array",
+                                          "verbosity level",
+                                          "verbosity level",
+                                          "0",
+                                          "",
+                                          0,
+                                          0,
+                                          0 );
+
       });
   }
 }
@@ -273,7 +286,7 @@ void SinglePhaseFlow_TPFA::FinalInitialization( ManagedGroup * const problemMana
   MakeGeometryParameters( domain );
 }
 
-void SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
+real64 SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
                                      real64 const& dt,
                                      const int cycleNumber,
                                      ManagedGroup * domain )
@@ -335,7 +348,7 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
                                                           blockLocalDofNumber[er][esr].get(),
                                                           1,
                                                           blockSystem,
-                                                          EpetraBlockSystem::BlockIDs::fluidPressureBlock,
+                                                          BlockIDs::fluidPressureBlock,
                                                           [&](localIndex const a)->real64
         {
         return pressure_n[er][esr][a] + dP[er][esr][a];
@@ -471,7 +484,7 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
   array<localIndex> gather(numMpiProcesses);
 
   // communicate the number of local rows to each process
-  m_linearSolverWrapper->m_epetraComm.GatherAll( &numLocalRowsToSend,
+  m_linearSolverWrapper.m_epetraComm.GatherAll( &numLocalRowsToSend,
                                                 &gather.front(),
                                                 1 );
 
@@ -559,16 +572,16 @@ void SinglePhaseFlow_TPFA :: SetupSystem ( DomainPartition * const domain,
   // construct row map, and set a pointer to the row map
   Epetra_Map * const
   rowMap = blockSystem->
-           SetRowMap( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
+           SetRowMap( BlockIDs::fluidPressureBlock,
                       std::make_unique<Epetra_Map>( static_cast<int>(m_dim*numGlobalRows),
                                                     static_cast<int>(m_dim*numLocalRows),
                                                     0,
-                                                    m_linearSolverWrapper->m_epetraComm ) );
+                                                    m_linearSolverWrapper.m_epetraComm ) );
 
   // construct sparisty matrix, set a pointer to the sparsity pattern matrix
   Epetra_FECrsGraph * const
-  sparsity = blockSystem->SetSparsity( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
-                                       EpetraBlockSystem::BlockIDs::fluidPressureBlock,
+  sparsity = blockSystem->SetSparsity( BlockIDs::fluidPressureBlock,
+                                       BlockIDs::fluidPressureBlock,
                                        std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
 
 
@@ -581,16 +594,16 @@ void SinglePhaseFlow_TPFA :: SetupSystem ( DomainPartition * const domain,
   sparsity->OptimizeStorage();
 
   // construct system matrix
-  blockSystem->SetMatrix( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
-                          EpetraBlockSystem::BlockIDs::fluidPressureBlock,
+  blockSystem->SetMatrix( BlockIDs::fluidPressureBlock,
+                          BlockIDs::fluidPressureBlock,
                           std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity) );
 
   // construct solution vector
-  blockSystem->SetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
+  blockSystem->SetSolutionVector( BlockIDs::fluidPressureBlock,
                                   std::make_unique<Epetra_FEVector>(*rowMap) );
 
   // construct residual vector
-  blockSystem->SetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
+  blockSystem->SetResidualVector( BlockIDs::fluidPressureBlock,
                                   std::make_unique<Epetra_FEVector>(*rowMap) );
 
 }
@@ -670,9 +683,9 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
   Array2dT<localIndex> const & faceToElemList           = faceManager->elementList();
 
 
-  Epetra_FECrsMatrix * const dRdP = blockSystem->GetMatrix( EpetraBlockSystem::BlockIDs::fluidPressureBlock,
-                                                              EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  Epetra_FECrsMatrix * const dRdP = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
+                                                              BlockIDs::fluidPressureBlock );
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
   dRdP->Scale(0.0);
   residual->Scale(0.0);
@@ -878,7 +891,7 @@ CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const bl
 {
 
   Epetra_FEVector const * const
-  residual = blockSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
   real64 localResidual = 0.0;
 //  residual->Norm2(&scalarResidual);
@@ -905,8 +918,8 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
-  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
+  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
 
   int dummy;
   double* local_solution = nullptr;
@@ -1097,17 +1110,17 @@ void SinglePhaseFlow_TPFA::SolveSystem( EpetraBlockSystem * const blockSystem,
                                         SystemSolverParameters const * const params )
 {
   Epetra_FEVector * const
-  solution = blockSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
 
   Epetra_FEVector * const
-  residual = blockSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+  residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
   residual->Scale(-1.0);
 
   solution->Scale(0.0);
 
-  m_linearSolverWrapper->SolveSingleBlockSystem( blockSystem,
+  m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
                                                  params,
-                                                 EpetraBlockSystem::BlockIDs::fluidPressureBlock );
+                                                 BlockIDs::fluidPressureBlock );
 
   if( verboseLevel() >= 2 )
   {
