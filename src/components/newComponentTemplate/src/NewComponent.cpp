@@ -54,11 +54,13 @@ void NewComponent::ReadXML_PostProcess( )
 
 
 
-void NewComponent::SolverStep( real64 const & /*time_n*/,
+real64 NewComponent::SolverStep( real64 const & /*time_n*/,
                real64 const & /*dt*/,
                integer const /*cycleNumber*/,
                dataRepository::ManagedGroup * /*domain*/ )
-{}
+{
+  return 0;
+}
 
 REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string const &, dataRepository::ManagedGroup * const )
 
