@@ -20,7 +20,6 @@
 #include "PhysicsSolverManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 namespace geosx
@@ -31,31 +30,31 @@ using namespace dataRepository;
 SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
   ManagedGroup( name, parent ),
-  m_linearSolverWrapper(nullptr),
+  m_linearSolverWrapper(),
   m_verboseLevel(0),
   m_gravityVector( R1Tensor(0.0) ),
-  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
-  m_blockLocalDofNumber()
+  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this )//,
+//  m_blockLocalDofNumber()
 {
   // register group with repository. Have Repository own object.
   this->RegisterGroup( groupKeyStruct::systemSolverParametersString, &m_systemSolverParameters, 0 );
 
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
-  this->RegisterViewWrapper( viewKeyStruct::blockLocalDofNumberString, &m_blockLocalDofNumber, 0 );
+//  this->RegisterViewWrapper( viewKeyStruct::blockLocalDofNumberString, &m_blockLocalDofNumber, 0 );
 
   if( this->globalGravityVector() != nullptr )
   {
     m_gravityVector=*globalGravityVector();
   }
 
-  m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
+//  m_linearSolverWrapper = new systemSolverInterface::LinearSolverWrapper();
 
 }
 
 SolverBase::~SolverBase()
 {
-  delete m_linearSolverWrapper;
+//  delete m_linearSolverWrapper;
 }
 
 SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
@@ -117,40 +116,40 @@ void SolverBase::FillDocumentationNode()
 
 void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
 {
-  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
-
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
-  {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
-
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
-
-    elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
-      {
-        cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
-
-        docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
-                                    viewKeyStruct::blockLocalDofNumberString,
-                                    -1,
-                                    "localIndex_array",
-                                    "localIndex_array",
-                                    "verbosity level",
-                                    "verbosity level",
-                                    "0",
-                                    "",
-                                    0,
-                                    0,
-                                    0 );
-      });
-  }
+//  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
+//  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+//  {
+//    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
+//
+//    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+//
+//    elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
+//      {
+//        cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
+//
+//        docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
+//                                    viewKeyStruct::blockLocalDofNumberString,
+//                                    -1,
+//                                    "localIndex_array",
+//                                    "localIndex_array",
+//                                    "verbosity level",
+//                                    "verbosity level",
+//                                    "0",
+//                                    "",
+//                                    0,
+//                                    0,
+//                                    0 );
+//      });
+//  }
 }
 
 
-void SolverBase::SolverStep( real64 const& time_n,
+real64 SolverBase::SolverStep( real64 const& time_n,
                            real64 const& dt,
                            const int cycleNumber,
                            ManagedGroup * domain )
 {
+  return 0;
 }
 
 
@@ -166,15 +165,15 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   // call assemble to fill the matrix and the rhs
   AssembleSystem( domain, blockSystem, time_n+dt, dt );
 
+  // apply boundary conditions to system
+  ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+
   // call the default linear solver on the system
   SolveSystem( blockSystem,
                getSystemSolverParameters() );
 
   // apply the system solution to the fields/variables
   ApplySystemSolution( blockSystem, 1.0, domain );
-
-  // apply boundary conditions to system
-  ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt,  domain );
@@ -381,7 +380,29 @@ void SolverBase::ImplicitStepComplete( real64 const & time,
 }
 
 
+void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                              SystemSolverParameters const * const params,
+                              systemSolverInterface::BlockIDs const blockID )
+{
+  Epetra_FEVector * const
+  solution = blockSystem->GetSolutionVector( blockID );
 
+  Epetra_FEVector * const
+  residual = blockSystem->GetResidualVector( blockID );
+  residual->Scale(-1.0);
+
+  solution->Scale(0.0);
+
+  m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
+                                                 params,
+                                                 blockID );
+
+  if( verboseLevel() >= 2 )
+  {
+    solution->Print(std::cout);
+  }
+
+}
 
 //void SolverBase::CreateChild( string const & childKey, string const & childName )
 //{

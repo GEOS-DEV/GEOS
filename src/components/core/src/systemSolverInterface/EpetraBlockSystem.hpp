@@ -47,6 +47,15 @@ namespace geosx
 namespace systemSolverInterface
 {
 
+enum class BlockIDs
+{
+  dummyScalarBlock,
+  displacementBlock,
+  fluidPressureBlock,
+  temperatureBlock,
+  invalidBlock
+};
+
 static double ClearRow ( Epetra_FECrsMatrix * matrix,
                          int const row,
                          const double factor )
@@ -92,14 +101,6 @@ class EpetraBlockSystem
 public:
   constexpr static int MAX_NUM_BLOCKS = 3;
   constexpr static int invalidIndex=-1;
-  enum class BlockIDs
-  {
-    dummyScalarBlock,
-    displacementBlock,
-    fluidPressureBlock,
-    temperatureBlock,
-    invalidBlock
-  };
 
   string BlockIDString( BlockIDs const id ) const
   {

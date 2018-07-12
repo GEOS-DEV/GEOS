@@ -69,8 +69,10 @@ LaplaceFEM::LaplaceFEM( const std::string& name,
                                                             ManagedGroup * const parent ):
   SolverBase( name, parent )
 {
-  this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
-  m_linearSystem.SetBlockID( EpetraBlockSystem::BlockIDs::displacementBlock, this->getName() );
+//  this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
+  getLinearSystemRepository()->
+    SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
+
 }
 
 
@@ -128,33 +130,6 @@ void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
     NodeManager * const nodes = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0)->getNodeManager();
     cxx_utilities::DocumentationNode * const docNode = nodes->getDocumentationNode();
 
-
-    docNode->AllocateChildNode( viewKeys.trilinosIndex.Key(),
-                                viewKeys.trilinosIndex.Key(),
-                                -1,
-                                "localIndex_array",
-                                "localIndex_array",
-                                "",
-                                "",
-                                "",
-                                keys::nodeManager,
-                                1,
-                                0,
-                                0 );
-
-    docNode->AllocateChildNode( viewKeys.ghostRank.Key(),
-                                viewKeys.ghostRank.Key(),
-                                -1,
-                                "integer_array",
-                                "integer_array",
-                                "",
-                                "",
-                                "",
-                                keys::nodeManager,
-                                1,
-                                0,
-                                0 );
-
     docNode->AllocateChildNode( "Temperature",
                                 "Temperature",
                                 -1,
@@ -167,6 +142,20 @@ void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
                                 1,
                                 0,
                                 0 );
+
+    docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
+                                viewKeyStruct::blockLocalDofNumberString,
+                                -1,
+                                "localIndex_array",
+                                "localIndex_array",
+                                "dof",
+                                "dof",
+                                "-1",
+                                keys::nodeManager,
+                                1,
+                                0,
+                                0 );
+
   }
 }
 
@@ -193,148 +182,56 @@ void LaplaceFEM::ReadXML_PostProcess()
   }
 }
 
-//void LaplaceFEM::BuildDataStructure( ManagedGroup * const domain )
-//{
-//  SolverBase::BuildDataStructure( domain );
-//
-//  // Test auto-registration:
-//  RegisterDocumentationNodes();
-//
-//}
-
-
 void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
 
 }
 
-void LaplaceFEM::SolverStep( real64 const& time_n,
+
+
+real64 LaplaceFEM::SolverStep( real64 const& time_n,
                                              real64 const& dt,
                                              const int cycleNumber,
                                              ManagedGroup * domain )
 {
-
+  real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
   {
-    TimeStepExplicit( time_n, dt, cycleNumber, ManagedGroup::group_cast<DomainPartition*>(domain) );
+    dtReturn = ExplicitStep( time_n, dt, cycleNumber, ManagedGroup::group_cast<DomainPartition*>(domain) );
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitTransient ||
            m_timeIntegrationOption == timeIntegrationOption::SteadyState )
   {
-    this->TimeStepImplicit( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
+    dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>(), getLinearSystemRepository() );
   }
+  return dtReturn;
 }
 
-void LaplaceFEM::TimeStepExplicit( real64 const& time_n,
+real64 LaplaceFEM::ExplicitStep( real64 const& time_n,
                                                      real64 const& dt,
                                                      const int cycleNumber,
                                                      DomainPartition * const domain )
 {
-
-
+return dt;
 }
 
 
-void LaplaceFEM::ApplyDirichletBC_implicit( ManagedGroup * object,
-                                            BoundaryConditionBase const * const bc,
-                                            lSet const & set,
-                                            real64 const time_n,
-                                            EpetraBlockSystem & blockSystem )
+
+
+void LaplaceFEM::ImplicitStepSetup( real64 const& time_n,
+                                    real64 const& dt,
+                                    DomainPartition * const domain,
+                                    systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
-  bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
-                                                      time_n,
-                                                      object,
-                                                      "Temperature",
-                                                      viewKeys.trilinosIndex.Key(),
-                                                      1,
-                                                      &blockSystem,
-                                                      EpetraBlockSystem::BlockIDs::displacementBlock );
+  SetupSystem( domain, blockSystem );
 }
 
-
-void LaplaceFEM::TimeStepImplicitSetup( real64 const& time_n,
-                                                          real64 const& dt,
-                                                          DomainPartition * const domain )
-{
-}
-
-void LaplaceFEM::TimeStepImplicitComplete( real64 const & time_n,
+void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
                                                              real64 const & dt,
                                                              DomainPartition * const domain)
 {
 }
 
-
-real64 LaplaceFEM::TimeStepImplicit( real64 const & time_n,
-                                                       real64 const & dt,
-                                                       integer const cycleNumber,
-                                                       DomainPartition * const domain )
-{
-  real64 dt_return = dt;
-////  view_rtype<r1_array> uhat  =
-// domain.m_feNodeManager.getData<r1_array>(keys::IncrementalDisplacement);
-
-#if 1
-  TimeStepImplicitSetup( time_n, dt, domain );
-
-
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-
-      SetupSystem( domain, &m_linearSystem );
-
-      Epetra_FECrsMatrix * matrix = m_linearSystem.GetMatrix( EpetraBlockSystem::BlockIDs::displacementBlock,
-                                                              EpetraBlockSystem::BlockIDs::displacementBlock );
-      matrix->Scale(0.0);
-
-      Epetra_FEVector * rhs = m_linearSystem.GetResidualVector( EpetraBlockSystem::BlockIDs::displacementBlock );
-      rhs->Scale(0.0);
-
-      Epetra_FEVector * solution = m_linearSystem.GetSolutionVector( EpetraBlockSystem::BlockIDs::displacementBlock );
-      solution->Scale(0.0);
-
-      AssembleSystem( domain, &m_linearSystem, time_n+dt, dt );
-
-//      matrix->Print(std::cout);
-//      rhs->Print(std::cout);
-
-      MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-      ManagedGroup * const nodeManager = mesh->getNodeManager();
-
-      BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-
-      bcManager->ApplyBoundaryCondition( this,
-                                         &LaplaceFEM::ApplyDirichletBC_implicit,
-                                         nodeManager,
-                                         "Temperature",
-                                         time_n + dt,
-                                         m_linearSystem );
-
-      matrix->Print(std::cout);
-      rhs->Print(std::cout);
-
-      rhs->Scale(-1.0);
-
-      if(verbose)
-        std::cout<<"Solving system"<<std::endl;
-
-
-
-
-      this->m_linearSolverWrapper.SolveSingleBlockSystem( &m_linearSystem,
-                                                          getSystemSolverParameters(),
-                                                          systemSolverInterface::EpetraBlockSystem::BlockIDs::displacementBlock );
-
-      solution->Print(std::cout);
-
-      ApplySystemSolution( &m_linearSystem, 1.0, domain );
-
-  TimeStepImplicitComplete( time_n, dt,  domain );
-#endif
-
-  return dt_return;
-}
 
 
 void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
@@ -374,8 +271,8 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
 
   // create trilinos dof indexing
 
-  localIndex_array& trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.trilinosIndex);
-  integer_array const & is_ghost       = nodeManager->getReference<integer_array>(viewKeys.ghostRank);
+  localIndex_array& trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
+  integer_array const & is_ghost       = nodeManager->getReference<integer_array>(NodeManager::viewKeyStruct::ghostRankString);
 
 
   trilinos_index = -1;
@@ -420,7 +317,7 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
                                 0 );
 
   std::map<string, array<string> > fieldNames;
-  fieldNames["node"].push_back("trilinosIndex_LaplaceFEM");
+  fieldNames["node"].push_back("blockLocalDofNumber_LaplaceFEM");
 
   CommunicationTools::SynchronizeFields(fieldNames,
                               mesh,
@@ -435,14 +332,14 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
                                        0,
                                        m_linearSolverWrapper.m_epetraComm );
 
-  Epetra_Map * const rowMap = blockSystem->SetRowMap( EpetraBlockSystem::BlockIDs::displacementBlock,
+  Epetra_Map * const rowMap = blockSystem->SetRowMap( BlockIDs::dummyScalarBlock,
                                                       std::make_unique<Epetra_Map>( static_cast<int>(dim*n_global_rows),
                                                                                     static_cast<int>(dim*n_local_rows),
                                                                                     0,
                                                                                     m_linearSolverWrapper.m_epetraComm ) );
 
-  Epetra_FECrsGraph * const sparsity = blockSystem->SetSparsity( EpetraBlockSystem::BlockIDs::displacementBlock,
-                                                                 EpetraBlockSystem::BlockIDs::displacementBlock,
+  Epetra_FECrsGraph * const sparsity = blockSystem->SetSparsity( BlockIDs::dummyScalarBlock,
+                                                                 BlockIDs::dummyScalarBlock,
                                                                  std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
 
 
@@ -452,14 +349,14 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
   sparsity->GlobalAssemble();
   sparsity->OptimizeStorage();
 
-  blockSystem->SetMatrix( EpetraBlockSystem::BlockIDs::displacementBlock,
-                          EpetraBlockSystem::BlockIDs::displacementBlock,
+  blockSystem->SetMatrix( BlockIDs::dummyScalarBlock,
+                          BlockIDs::dummyScalarBlock,
                           std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity) );
 
-  blockSystem->SetSolutionVector( EpetraBlockSystem::BlockIDs::displacementBlock,
+  blockSystem->SetSolutionVector( BlockIDs::dummyScalarBlock,
                                   std::make_unique<Epetra_FEVector>(*rowMap) );
 
-  blockSystem->SetResidualVector( EpetraBlockSystem::BlockIDs::displacementBlock,
+  blockSystem->SetResidualVector( BlockIDs::dummyScalarBlock,
                                   std::make_unique<Epetra_FEVector>(*rowMap) );
 
 }
@@ -470,7 +367,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup const * const nodeManager = mesh->getNodeManager();
 
-  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.trilinosIndex);
+  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
@@ -529,12 +426,12 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 
 
-  Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( EpetraBlockSystem::BlockIDs::displacementBlock,
-                                                              EpetraBlockSystem::BlockIDs::displacementBlock );
-  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( EpetraBlockSystem::BlockIDs::displacementBlock );
-  Epetra_FEVector * const solution = blockSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::displacementBlock );
+  Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::dummyScalarBlock,
+                                                              BlockIDs::dummyScalarBlock );
+  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::dummyScalarBlock );
+  Epetra_FEVector * const solution = blockSystem->GetSolutionVector( BlockIDs::dummyScalarBlock );
 
-  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.trilinosIndex);
+  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
 
   for( auto & region : elemManager->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups() )
   {
@@ -614,6 +511,12 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   matrix->GlobalAssemble(true);
   rhs->GlobalAssemble();
 
+  if( verboseLevel() >= 2 )
+  {
+    matrix->Print(std::cout);
+    rhs->Print(std::cout);
+  }
+
 }
 
 
@@ -622,9 +525,9 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
                                       DomainPartition * const domain )
 {
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
-  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( EpetraBlockSystem::BlockIDs::displacementBlock );
-  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( EpetraBlockSystem::BlockIDs::displacementBlock );
-  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.trilinosIndex);
+  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::dummyScalarBlock );
+  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::dummyScalarBlock );
+  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
 
   string const & fieldName = getReference<string>(viewKeys.fieldVarName);
   real64_array & fieldVar = nodeManager->getReference<real64_array>(string("Temperature"));
@@ -646,6 +549,55 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
 
 
 }
+void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,
+                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                          real64 const time_n,
+                                          real64 const dt )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+
+  bcManager->ApplyBoundaryCondition( this,
+                                     &LaplaceFEM::ApplyDirichletBC_implicit,
+                                     nodeManager,
+                                     "Temperature",
+                                     time_n + dt,
+                                     *blockSystem );
+
+  if( verboseLevel() >= 2 )
+  {
+    Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::dummyScalarBlock,
+                                                                BlockIDs::dummyScalarBlock );
+    Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::dummyScalarBlock );
+    matrix->Print(std::cout);
+    rhs->Print(std::cout);
+  }
+
+}
+
+void LaplaceFEM::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                              SystemSolverParameters const * const params )
+{
+  SolverBase::SolveSystem( blockSystem, params, BlockIDs::dummyScalarBlock );
+}
+
+void LaplaceFEM::ApplyDirichletBC_implicit( ManagedGroup * object,
+                                            BoundaryConditionBase const * const bc,
+                                            lSet const & set,
+                                            real64 const time_n,
+                                            EpetraBlockSystem & blockSystem )
+{
+  bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
+                                                      time_n,
+                                                      object,
+                                                      "Temperature",
+                                                      viewKeys.blockLocalDofNumber.Key(),
+                                                      1,
+                                                      &blockSystem,
+                                                      BlockIDs::dummyScalarBlock );
+}
+
 
 
 REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, ManagedGroup * const )
