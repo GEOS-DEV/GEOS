@@ -296,7 +296,6 @@ void SinglePhaseFlow_TPFA::FinalInitialization( ManagedGroup * const problemMana
 
   // obtain gravity flag from the input
   m_gravityFlag = static_cast<bool>(this->getReference<integer>(viewKeyStruct::gravityFlagString));
-  std::cout << "GRAVITY FLAG = " << m_gravityFlag << std::endl;
 
   // Allocate additional storage for derivatives
   AllocateAuxStorage(domain);
