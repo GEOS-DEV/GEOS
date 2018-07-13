@@ -87,24 +87,36 @@ public:
 
   virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void SolverStep( real64 const& time_n,
-                           real64 const& dt,
-                           integer const cycleNumber,
-                           dataRepository::ManagedGroup * domain ) override;
+  virtual real64 SolverStep( real64 const& time_n,
+                             real64 const& dt,
+                             integer const cycleNumber,
+                             dataRepository::ManagedGroup * domain ) override;
 
-
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  /**
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
+   */
+  /**@{*/
 
   virtual void ImplicitStepSetup( real64 const& time_n,
                               real64 const& dt,
-                              DomainPartition * const domain ) override;
+                              DomainPartition * const domain,
+                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
 
-  virtual real64 AssembleSystem( DomainPartition * const domain,
-                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                 real64 const time,
-                                 real64 const dt ) override;
+  virtual void AssembleSystem( DomainPartition * const domain,
+                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               real64 const time,
+                               real64 const dt ) override;
+
+  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        real64 const time,
+                                        real64 const dt ) override;
+
+  virtual real64
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
 
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
@@ -117,9 +129,12 @@ public:
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
   virtual  void ImplicitStepComplete( real64 const & time,
-                                 real64 const & dt,
-                                 DomainPartition * const domain ) override;
+                                      real64 const & dt,
+                                      DomainPartition * const domain ) override;
+  /**@}*/
 
+  void SetupSystem ( DomainPartition * const domain,
+                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief set the sparsity pattern for the linear system
@@ -158,7 +173,7 @@ public:
    */
   void ApplyDirichletBC_implicit( ManagedGroup * object,
                                   real64 const time,
-                                  systemSolverInterface::EpetraBlockSystem & blockSystem);
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
 
   /**
@@ -173,6 +188,7 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SPTPFA";
     constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
     constexpr static auto deltaPorosityString = "deltaPorosity";
@@ -184,11 +200,10 @@ public:
     constexpr static auto gravityDepthString = "gravityDepth";
     constexpr static auto permeabilityString = "permeability";
     constexpr static auto porosityString = "porosity";
-    constexpr static auto cellLocalIndexString = "cellLocalIndex";
     constexpr static auto volumeString = "volume";
     constexpr static auto transmissibilityString = "transmissibility";
 
-    dataRepository::ViewKey cellLocalIndex = { cellLocalIndexString };
+    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
@@ -236,9 +251,6 @@ private:
    * @param domain the domain partition
    */
   void AllocateAuxStorage(DomainPartition *const domain);
-
-  /// the currently selected time integration option
-  timeIntegrationOption m_timeIntegrationOption;
 
   /// flag indicating whether FV precompute has been performed
   bool m_precomputeDone;
