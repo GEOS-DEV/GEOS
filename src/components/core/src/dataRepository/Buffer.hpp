@@ -15,6 +15,7 @@
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
 #include <vector>
 #include <cstdlib>
 #include <string>
@@ -32,7 +33,6 @@ class BasisBase;
 class QuadratureBase;
 class SimpleGeometricObjectBase;
 class PartitionBase;
-class NeighborCommunicator;
 
 namespace dataRepository
 {
