@@ -42,7 +42,7 @@ public:
 
   void SolveSingleBlockSystem( EpetraBlockSystem * const system,
                                SystemSolverParameters const * const params,
-                               EpetraBlockSystem::BlockIDs const blockID );
+                               BlockIDs const blockID );
 
 #if USE_MPI
   Epetra_MpiComm m_epetraComm;

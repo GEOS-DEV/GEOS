@@ -80,7 +80,7 @@ public:
                                                     string const & dofMapName,
                                                     integer const & dofDim,
                                                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                    systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const;
+                                                    systemSolverInterface::BlockIDs const blockID ) const;
 
   template< int OPERATION, typename LAMBDA >
   void
@@ -89,13 +89,13 @@ public:
                                                localIndex_array const & dofMap,
                                                integer const & dofDim,
                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                               systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                               systemSolverInterface::BlockIDs const blockID,
                                                LAMBDA && lambda ) const;
 
   template< int OPERATION >
   inline void ApplyBounaryConditionDefaultMethodPoint( integer const dof,
                                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                       systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                                       systemSolverInterface::BlockIDs const blockID,
                                                        real64 & rhs,
                                                        real64 const & bcValue,
                                                        real64 const fieldValue ) const;
@@ -267,7 +267,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
 template<>
 inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( integer const dof,
                                                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                                               systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                                                               systemSolverInterface::BlockIDs const blockID,
                                                                                real64 & rhs,
                                                                                real64 const & bcValue,
                                                                                real64 const fieldValue ) const
@@ -289,7 +289,7 @@ inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( i
 template<>
 inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( integer const dof,
                                                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                                               systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                                                               systemSolverInterface::BlockIDs const blockID,
                                                                                real64 & rhs,
                                                                                real64 const & bcValue,
                                                                                real64 const fieldValue ) const
@@ -312,7 +312,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
                                                                          string const & dofMapName,
                                                                          integer const & dofDim,
                                                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                                         systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const
+                                                                         systemSolverInterface::BlockIDs const blockID ) const
 {
   integer const component = GetComponent();
   string const functionName = getData<string>(viewKeyStruct::functionNameString);
@@ -432,7 +432,7 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
                                              localIndex_array const & dofMap,
                                              integer const & dofDim,
                                              systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                             systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                             systemSolverInterface::BlockIDs const blockID,
                                              LAMBDA && lambda ) const
 {
   integer const component = GetComponent();
