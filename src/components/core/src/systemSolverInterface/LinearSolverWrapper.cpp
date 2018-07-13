@@ -192,9 +192,9 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
     {
       solver.SetAztecOption(AZ_precond,AZ_dom_decomp);
       solver.SetAztecOption(AZ_subdomain_solve,AZ_ilut);
+      solver.SetAztecOption(AZ_output,0);
       solver.SetAztecParam(AZ_ilut_fill,params->ilut_fill());
       solver.SetAztecParam(AZ_drop,params->ilut_drop());
-      solver.SetAztecParam(AZ_output,0);
     }
 
 //    std::cout<<params->numKrylovIter()<<std::endl;
