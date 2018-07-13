@@ -9,7 +9,8 @@
   
     <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
                           timeIntegrationOption="SteadyState"
-                          verboseLevel="3">
+                          verboseLevel="0"
+                          gravityFlag="1">
                           <SystemSolverParameters name="SystemSolverParameters"
                                                    newtonTol="1.0e-8"
                                                    maxIterNewton="6"/>

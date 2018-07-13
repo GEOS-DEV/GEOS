@@ -58,12 +58,8 @@ SinglePhaseFlow_TPFA::SinglePhaseFlow_TPFA( const std::string& name,
   SolverBase(name, parent),
   m_precomputeDone(false)
 {
-
   // set the blockID for the block system interface
   m_linearSystem->SetBlockID( EpetraBlockSystem::BlockIDs::fluidPressureBlock, this->getName() );
-
-  // register data members with the repository
-  this->RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, 0 );
 }
 
 
@@ -90,18 +86,18 @@ void SinglePhaseFlow_TPFA::FillDocumentationNode(  )
                               1,
                               0 );
 
-//  docNode->AllocateChildNode( viewKeyStruct::gravityFlagString,
-//                              viewKeyStruct::gravityFlagString,
-//                              -1,
-//                              "integer",
-//                              "integer",
-//                              "Flag that enables/disables gravity",
-//                              "Flag that enables/disables gravity",
-//                              "0",
-//                              "",
-//                              0,
-//                              1,
-//                              0 );
+  docNode->AllocateChildNode( viewKeyStruct::gravityFlagString,
+                              viewKeyStruct::gravityFlagString,
+                              -1,
+                              "integer",
+                              "integer",
+                              "Flag that enables/disables gravity",
+                              "Flag that enables/disables gravity",
+                              "1",
+                              "",
+                              1,
+                              1,
+                              0 );
 }
 
 void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
@@ -286,7 +282,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     "Precomputed (gravity dot depth)",
                                     "",
                                     elemManager->getName(),
-                                    1,
+                                    0,
                                     0,
                                     0 );
 
@@ -297,6 +293,10 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
 void SinglePhaseFlow_TPFA::FinalInitialization( ManagedGroup * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
+
+  // obtain gravity flag from the input
+  m_gravityFlag = static_cast<bool>(this->getReference<integer>(viewKeyStruct::gravityFlagString));
+  std::cout << "GRAVITY FLAG = " << m_gravityFlag << std::endl;
 
   // Allocate additional storage for derivatives
   AllocateAuxStorage(domain);
