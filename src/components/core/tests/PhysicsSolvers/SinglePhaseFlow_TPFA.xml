@@ -10,6 +10,7 @@
                           verboseLevel="0"
                           gravityFlag="1">
       <SystemSolverParameters name="SystemSolverParameters"
+                              krylovTol="1.0e-10"
                               newtonTol="1.0e-8"
                               maxIterNewton="10"/>
     </SinglePhaseFlow_TPFA>
