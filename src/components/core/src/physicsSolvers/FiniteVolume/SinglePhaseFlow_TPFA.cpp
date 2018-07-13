@@ -741,7 +741,9 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
                                                                      viewKeyStruct::
                                                                      ghostRankString );
 
-  auto blockLocalDofNumber = elemManager->ConstructViewAccessor<localIndex_array>(viewKeyStruct::blockLocalDofNumberString);
+  auto blockLocalDofNumber = elemManager->
+                             ConstructViewAccessor<localIndex_array>(viewKeyStruct::
+                                                                     blockLocalDofNumberString);
 
   auto pressure_n = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidPressureString);
   auto dP         = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
@@ -943,7 +945,18 @@ void SinglePhaseFlow_TPFA::ApplyBoundaryConditions( DomainPartition * const doma
   // apply pressure boundary conditions.
   ApplyDirichletBC_implicit( elemManager,
                              time_n + dt,
-                             getLinearSystemRepository() );
+                             blockSystem );
+
+
+  if( verboseLevel() >= 2 )
+  {
+    Epetra_FECrsMatrix * const dRdP = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
+                                                              BlockIDs::fluidPressureBlock );
+    Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
+
+    dRdP->Print(std::cout);
+    residual->Print(std::cout);
+  }
 
 }
 
