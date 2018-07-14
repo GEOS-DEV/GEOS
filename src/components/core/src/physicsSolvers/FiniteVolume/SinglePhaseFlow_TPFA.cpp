@@ -757,7 +757,7 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
   const real64_array & trans = faceManager->getReference<real64_array>(viewKeyStruct::transmissibilityString);
 
   //***** Loop over all elements and assemble the change in volume/density terms *****
-  Epetra_LongLongSerialDenseVector elemDOF(1);
+  Epetra_IntSerialDenseVector elemDOF(1);
   Epetra_SerialDenseVector localElemResidual(1);
   Epetra_SerialDenseMatrix localElem_dRdP(1, 1);
 
@@ -806,8 +806,8 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
 
 
   constexpr localIndex numElems = 2;
-  Epetra_LongLongSerialDenseVector eqnRowIndices(numElems);
-  Epetra_LongLongSerialDenseVector dofColIndices;
+  Epetra_IntSerialDenseVector eqnRowIndices(numElems);
+  Epetra_IntSerialDenseVector dofColIndices;
   Epetra_SerialDenseVector localFlux(numElems);
   Epetra_SerialDenseMatrix localFluxJacobian;
 
