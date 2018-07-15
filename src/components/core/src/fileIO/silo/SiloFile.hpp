@@ -35,21 +35,9 @@
 #include "pmpio.h"
 #include "common/Logger.hpp"
 
-/////////////////////////////////////////////////
-
-
 #include "mesh/InterObjectRelation.hpp"
 
-
-
-/// typedef my callback function for use with WriteMultiXXXX. This function is
-// essentially a placeholder
-/// for DB,PutMultimesh, DBPutMultivar, etc.
 typedef struct _PMPIO_baton_t PMPIO_baton_t;
-//typedef int (*DBPutMultimeshType)(DBfile *, char DB_CONSTARR1, int, char
-// DB_CONSTARR2, int DB_CONSTARR1, DBoptlist const *);
-//typedef int (*DBPutMultivarType)(DBfile *, const char *, int, char **, int *,
-// DBoptlist *);
 
 
 namespace geosx
@@ -66,10 +54,8 @@ class ConstitutiveManager;
 // *********************************************************************************************************************
 // *********************************************************************************************************************
 /**
- * @author settgast
  * This class serves as a wrapper to isolate the code from the specifics of SILO
- * output/input. Its members contain all
- * the necessary information for reading/writing a group of SILO files.
+ * output/input. Its members contain all the necessary information for reading/writing a group of SILO files.
  */
 class SiloFile
 {
@@ -82,23 +68,51 @@ public:
   /// Destructor
   virtual ~SiloFile();
 
+  /**
+   * @brief function to setup directories where silo files will be written
+   */
   void MakeSiloDirectories();
 
-  /// Initializes the silo library
+  /**
+   * @brief Initializes silo for input/output
+   * @param readwrite input/output specifier
+   */
   void Initialize( const PMPIO_iomode_t readwrite );
 
-  /// finishes up the silo library usage
+  /**
+   * @brief finishes/closes up the silo interface
+   */
   void Finish();
 
-  /// Wait for the Baton when doing PMPIO
+  /**
+   * @brief Wait for the Baton when writing using PMPIO
+   * @param domainNumber domain partition number
+   * @param cycleNum  cycle number of simulation
+   * @param isRestart whether or not we are writing a restart file
+   *
+   * This function requests the write baton from silo PMPIO. The involves determining
+   * the file names, and opening the file for write.
+   */
   void WaitForBatonWrite( int const domainNumber, int const cycleNum, bool const isRestart );
 
+  /**
+   * @brief Wait for the Baton when reading using PMPIO
+   * @param domainNumber domain partition number
+   * @param restartFileName base of the restart file to open
+   */
   void WaitForBaton( int const domainNumber, string const & restartFileName );
 
-  /// Hand off the Baton when doing PMPIO
+  /**
+   * @brief Hand off the Baton when done writing to file
+   */
   void HandOffBaton();
 
 
+  /**
+   * @brief Make a subdirectory within the silo file.
+   * @param subdir the new directory name
+   * @param rootdir the root directory path
+   */
   void MakeSubDirectory( string const & subdir, string const & rootdir )
   {
     int rank = 0;
@@ -111,77 +125,88 @@ public:
     DBMkDir(m_dbFilePtr, subdir.c_str());
   }
 
-  /// Write out a single mesh object
+  /**
+   * @brief Write out a single silo mesh object
+   * @param meshName name of the mesh in the silo db
+   * @param nnodes number of nodes
+   * @param coords array[3] of pointers to x, y, and z.
+   * @param globalNodeNum array to the global node numbers. This might be redundant as there is a field for this.
+   * @param numShapes number of element zone type (i.e. number of zone types with different topology)
+   * @param shapecnt pointer to array that contains the number of zones per shape type
+   * @param meshConnectivity pointer to array that contains the zone to element map for each  zone type
+   * @param globalElementNum pointer to array of global zone numbers for each shape type
+   * @param
+   * @param shapetype pointer to array containing the shape types
+   * @param shapesize pointer to array containing the number of nodes in each zone in the shape types
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   *
+   * This function takes in the the required data to call a silo::DBPutUcdMesh() and a
+   * DBPutZonelist2, and calls those functions to create a silo mesh object. In addition
+   * the MultiVar is written in the root file.
+   */
   void WriteMeshObject(string const & meshName,
                        const localIndex nnodes,
                        real64* coords[3],
                        const globalIndex*,
-                       int const numRegions,
+                       int const numShapes,
                        int const * shapecnt,
                        const localIndex* const * const meshConnectivity,
                        const globalIndex* const * const globalElementNum,
-                       int const * const * const,
                        int const * const shapetype,
                        int const * const shapesize,
                        int const cycleNumber,
                        real64 const problemTime);
 
-  /// Write out a polygon mesh object
-  void WritePolygonMeshObject(string const & meshName,
-                              const localIndex nnodes,
-                              real64* coords[3],
-                              const globalIndex*,
-                              int const numRegions,
-                              int const * shapecnt,
-                              const localIndex* const * const meshConnectivity,
-                              const globalIndex* const * const globalElementNum,
-                              int const * const * const,
-                              int const * const shapetype,
-                              int const * const shapesize,
-                              int const cycleNumber,
-                              real64 const problemTime,
-                              int const lnodelist);
-
+/**
+ * @brief write a domain parititon out to silo file
+ * @param domain the domain partition to write
+ * @param cycleNum the current cycle number
+ * @param problemTime the current problem time
+ * @param isRestart whether or not we want to write restart only data
+ */
   void WriteDomainPartition( DomainPartition const & domain,
                              int const cycleNum,
                              real64 const problemTime,
                              bool const isRestart );
 
+  /**
+   * @brief write a mesh level out to the silo file
+   * @param meshLevel the meshLevel to write out
+   * @param constitutiveManager the constitutive manager object that holds the constitutive data
+   * @param cycleNum the current cycle number
+   * @param problemTime the current problem time
+   * @param isRestart whether or not we want to write restart only data
+   */
   void WriteMeshLevel( MeshLevel const * const meshLevel,
                        constitutive::ConstitutiveManager const * const constitutiveManager,
                        int const cycleNum,
                        real64 const problemTime,
                        bool const isRestart );
 
-  void TestPolyhedralCells();
-  void XFEMMesh(std::vector<double> xcoords,
-                std::vector<double> ycoords,
-                std::vector<double> zcoords,
-                std::vector<int> nodelist,
-                int lnodelist,
-                std::vector<int> shapesize,
-                std::vector<int> shapecounts,
-                std::vector<int> shapetype,
-                int nshapetypes,
-                int nnodes,
-                int nzones,
-                int ndims,
-                int const cycleNumber,
-                real64 const problemTime);
-
-  void WriteDiscreteElementCSGObject(string const & meshName,
-                                     const array<R1Tensor>& x,
-                                     const array<R1Tensor>& r,
-                                     const array<R2Tensor>& R,
-                                     int const cycleNumber,
-                                     real64 const problemTime);
-
+  /**
+   * @param meshName name of the mesh to write
+   * @param numPoints number of points to write
+   * @param coords array[3] of pointers to x, y, and z.
+   * @param cycleNumber current cycle number
+   * @param problemTime current problem time
+   */
   void WritePointMesh( string const & meshName,
                        const localIndex numPoints,
                        real64* coords[3],
                        int const cycleNumber,
                        real64 const problemTime );
 
+  /**
+   * @brief write a beam mesh to silo file
+   * @param meshName name of the mesh to write
+   * @param nnodes number of nodes
+   * @param coords array[3] of pointers to x, y, and z.
+   * @param node1 array of the first node for each element
+   * @param node2 array of the second node for each element
+   * @param cycleNumber current cycle number
+   * @param problemTime current problem time
+   */
   void WriteBeamMesh(string const & meshName,
                      const localIndex nnodes,
                      real64* coords[3],
@@ -190,13 +215,15 @@ public:
                      int const cycleNumber,
                      real64 const problemTime);
 
-  void WriteBeamMesh(string const & meshName,
-                     const localIndex nnodes,
-                     real64* coords[3],
-                     const std::map<int, int>& connectivity,
-                     int const cycleNumber,
-                     real64 const problemTime);
-
+  /**
+   *
+   * @param meshName name of the mesh to write
+   * @param nnodes number of nodes
+   * @param coords array[3] of pointers to x, y, and z.
+   * @param nodelist nodal connectivity array
+   * @param cycleNumber current cycle number
+   * @param problemTime current problem time
+   */
   void WriteBeamMesh(string const & meshName,
                      const localIndex nnodes,
                      real64* coords[3],
@@ -204,28 +231,35 @@ public:
                      int const cycleNumber,
                      real64 const problemTime);
 
+
   /**
-   * @brief Write out a single "quad" (i.e. hex) mesh object, and record the
-   * mesh dimensions for subsequent write data field calls.
-   * @author walsh24
+   *
+   * @param elementManager the element region manager
+   * @param constitutiveManager the constitutive manager
+   * @param meshName the name of the mesh that this write applies to
+   * @param cycleNumber current cycle number
+   * @param problemTime current problem time
    */
-  int  WriteQuadMeshObject(string const & meshName,
-                           const localIndex nX,
-                           const localIndex nY,
-                           const localIndex nZ,
-                           real64* coords[3],
-                           int const cycleNumber,
-                           real64 const problemTime);
-
-//  void TestWriteDiscreteElementMeshObject();
-
-  void WriteRegionSpecifications( ElementRegionManager const * const elementManager,
-                                  constitutive::ConstitutiveManager const * const constitutiveManager,
-                                  string const & meshName,
-                                  int const cycleNumber,
-                                  real64 const problemTime);
+  void WriteMaterialMaps( ElementRegionManager const * const elementManager,
+                          constitutive::ConstitutiveManager const * const constitutiveManager,
+                          string const & meshName,
+                          int const cycleNumber,
+                          real64 const problemTime);
 
 
+  /**
+   *
+   * @param group the group that holds the data to be written to the silo file
+   * @param siloDirName the name of the silo directory to put this data into (i.e. nodalFields, elemFields)
+   * @param meshname the name of the mesh attach this write to
+   * @param centering the centering of the data (e.g. DB_ZONECENT)
+   * @param cycleNumber current cycle number
+   * @param problemTime current problem time
+   * @param isRestart write restart only data
+   * @param materialName if writing material data, the name of the material
+   * @param zoneToMatMap if writing material, the map from each element to material point index
+   * @param mask indices to write out to the silo file
+   */
   void WriteManagedGroupSilo( dataRepository::ManagedGroup const * group,
                               string const & siloDirName,
                               string const & meshname,
@@ -238,7 +272,20 @@ public:
                               const localIndex_array& mask );
 
 
-  /// writes out fields in a data member map
+  /**
+   * Writes the contents of a group of ViewWrapper objects
+   * @tparam the output varaible type
+   * @param meshname the name of the mesh attach this write to
+   * @param wrappers a group of wrappers
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNum the current cycle number
+   * @param problemTime the current problem time
+   * @param isRestart write restart only data
+   * @param multiRoot location to write the multivar entries
+   * @param materialName if writing material data, the name of the material
+   * @param zoneToMatMap if writing material, the map from each element to material point index
+   * @param mask indices to write out to the silo file
+   */
   template< typename OUTPUTTYPE >
   void WriteViewWrappersToSilo( string const & meshname,
                                 const dataRepository::ManagedGroup::viewWrapperMap & wrappers,
@@ -251,27 +298,18 @@ public:
                                 array<localIndex> const & zoneToMatMap,
                                 const localIndex_array& mask );
 
-  template< typename INPUTTYPE, typename TYPE >
-  void ReadFieldMapFromSilo( std::map< string, array<TYPE> >& member,
-                             string const & meshname,
-                             int const centering,
-                             int const cycleNum,
-                             real64 const problemTime,
-                             bool const isRestart,
-                             string const & regionName,
-                             const localIndex_array& mask ) const;
-
-  /// Write out a data field
-  template<typename OUTTYPE, typename TYPE>
-  void WriteDataField( string const & meshName,
-                       string const & fieldName,
-                       const TYPE& field,
-                       int const centering,
-                       int const cycleNumber,
-                       real64 const problemTime,
-                       string const & multiRoot,
-                       string const & materialName );
-
+  /**
+   *
+   * @param meshname the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param field field data
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNum the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   * @param materialName if writing material data, the name of the material
+   * @param zoneToMatMap if writing material, the map from each element to material point index
+   */
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
@@ -283,16 +321,12 @@ public:
                        string const & materialName,
                        array<localIndex> const & zoneToMatMap );
 
-  /// Write out a data field
-  template< typename INPUTTYPE, typename TYPE>
-  void ReadDataField( array<TYPE>& field,
-                      string const & meshName,
-                      string const & fieldName,
-                      int const centering,
-                      int const cycleNumber,
-                      real64 const problemTime,
-                      string const & regionName ) const;
 
+  /**
+   * find the silo mesh type that we are attempting to reference
+   * @param meshName the name of the mesh object we are attaching data to
+   * @return integer that results from a call to DBInqMeshtype()
+   */
   int GetMeshType( string const & meshName ) const
   {
     int meshType = -1;
@@ -315,29 +349,33 @@ public:
     return meshType;
   }
 
-  template <typename TYPE>
-  void** GetDataVar( string const & fieldName,
-                     string const & meshName,
-                     const typename array<TYPE>::size_type nels,
-                     int const centering,
-                     int const cycleNumber,
-                     real64 const problemTime,
-                     string const & ) const;
-
-  /// Write out a multi-mesh object
+  /**
+   * write out a multi mesh or multivar object assocaited with a mesh or var object.
+   * @param type the object type (DB_UCDVAR, ...)
+   * @param DBPutMultiCB a callback function for the placement of the multi object. ( DBPutMultivar, DBPutMultimesh...)
+   * @param centering the centering of the data (DB_NODECENT, DB_ZONECENT, ...)
+   * @param name the name of the multivar
+   * @param cycleNumber the current cycle number
+   * @param multiRoot the location in the silo file to put hte multiXXXX
+   * @param optlist the option list assocaited with the multiXXXX
+   */
   template< typename CBF >
   void WriteMultiXXXX(const DBObjectType type, CBF DBPutMultiCB,
                       int const centering, string const name, int const cycleNumber,
                       string const & multiRoot, const DBoptlist* optlist = nullptr);
 
 
-  /// dummy function to get rid of compiler warnings about unused functions from PMPIO's use of static function
-  /// definitions in the header. This should go away as we fully utilize PMPIO.
-  void StopSiloCompilerWarnings();
-
+  /**
+   * fucntion to clear any empty multi-objects
+   * @param cycleNum
+   *
+   * When we write our multimesh and multivar objects, we do it assuming that there is a non-empty multimesh
+   * or multivar object on each domain. This is incorrect, so we must modify the rootfile to remove empty references
+   * to the multivar or multimesh objects and replace their path with "EMPTY"
+   */
   void ClearEmptiesFromMultiObjects(int const cycleNum);
 
-  //private:
+private:
 
   /// pointer to the DBfile that this class is working on
   DBfile* m_dbFilePtr;
@@ -352,7 +390,7 @@ public:
   PMPIO_baton_t *m_baton;
 
   /// which database to use. DB_PDB or DB_HDF5
-  int m_driver;
+  int const m_driver;
 
   /// root of the filename that we will be reading/writing
   string m_plotFileRoot;
@@ -367,53 +405,57 @@ public:
 
   string m_baseFileName;
 
-  bool m_markGhosts;
-
   array<string> m_emptyMeshes;
   array<string> m_emptyVariables;
 
+  /**
+   *
+   * @return returns the ordering of nodes for a silo zone type.
+   */
   integer_array SiloNodeOrdering();
-
-
-private:
-  int m_quadMeshDims[3];
-  int m_quadMeshNDims;
 
 };
 
-// *********************************************************************************************************************
-// *********************************************************************************************************************
 /**
  * Namespace to hold some utilities needed by the functions in SiloFile.
  */
 namespace SiloFileUtilities
 {
 /**
- * @author settgast
  * @tparam OUTTYPE the type of data to write out (int,float,real64)
  * @return the integer identifier associated with the enum DBdatatype defined in
  * the silo.h file.
  *
  * This templated function is a "specialization only" definition. There is no
- * general
- * definition, only specializations for predetermined data types.
+ * general definition, only specializations for predetermined data types.
  */
 template<typename OUTTYPE>
 int DB_TYPE();
 
 /**
- * @author settgast
  * @tparam TYPE the data type in question
  * @return the number of "variables" in a data field. For instance, 1 for a int,
  * float or real64.
+ * 1 for a scalar
  * 3 for a R1Tensor...etc.
  */
 template<typename TYPE>
 int GetNumberOfVariablesInField();
 
+/**
+ * @tparam TYPE the data type in question
+ * @return the silo DB_VARTYPE specifier that describes the rank of the variable.
+ */
 template<typename TYPE>
 int GetTensorRank();
 
+/**
+ * @tparam OUTTYPE the type to cast to
+ * @tparam TYPE the type to cast from
+ * @param field the value to cast
+ * @param i the component of the varaible to cast, assuming there is dimensionaliy to the variable
+ * @return the casted value
+ */
 template<typename OUTTYPE, typename TYPE>
 OUTTYPE CastField(const TYPE& field, int const i = 0);     // avoids compiler
                                                            // warning
@@ -421,68 +463,23 @@ OUTTYPE CastField(const TYPE& field, int const i = 0);     // avoids compiler
 template<typename OUTTYPE, typename TYPE>
 OUTTYPE CastField(const TYPE& field, int const i)
 {
-  return static_cast<OUTTYPE>(field.Data()[i]);
+  return field.Data()[i];
 //    return field;
 }
 
-template<> inline int CastField<int, int> (const int& field, int const )
-{
-  return field;
-}
-
-
-//  template<> inline int CastField<int, localIndex> (const localIndex& field,
-// int const )
-//  {
-//    return static_cast<int>(field);
-//  }
-
-//  template<> inline localIndex CastField<localIndex, localIndex> (const
-// localIndex& field, int const )
-//  {
-//    return field;
-//  }
-
-
-template<> inline globalIndex CastField<globalIndex, globalIndex> (const globalIndex& field, int const )
-{
-  return field;
-}
-
-template<> inline int CastField<int, long long unsigned int > (const long long unsigned int& field, int const )
-{
-  return static_cast<int>(field);
-}
-
-
-template<> inline real64 CastField<real64, real64> (const real64& field, int const )
-{
-  return field;
-}
-template<> inline float CastField<float, real64> (const real64& field, int const )
-{
-  return static_cast<float> (field);
-}
-
-
-template< typename TYPE, typename PTR_TYPE> inline PTR_TYPE* DataPtr( TYPE& data)
-{
-  return static_cast<PTR_TYPE*>(&data);
-}
-
-template<> inline real64* DataPtr( R1Tensor& data)        {    return data.begin();  }
-template<> inline real64* DataPtr( R2Tensor& data)        {    return data.begin();  }
-template<> inline real64* DataPtr( R2SymTensor& data)  {    return data.begin();  }
-
-
-
+/**
+ * @tparam the type of the field
+ * @param fieldName the name of the field
+ * @param varnamestring an array of strings that hold the generated names
+ * @param varnames a pointer to each of the strings that hold the generated names
+ *
+ * This function sets variable names for a field. In some cases, this will just fill varnamestring with
+ * the input variable, and in other cases such as in the case of a tensor, the names will have a suffix
+ * with the component of the tensor.
+ */
 template<typename TYPE>
-void SetVariableNames(string const & fieldName, array<string>& varnamestring, char* varnames[]);
+void SetVariableNames(string const & fieldName, array<string>& varnamestring, char const* varnames[]);
 
-template<typename OBJECT_TYPE>
-int FieldCentering();
-
-void SetCenteringSubdir(int const centering, string& subdir);
 
 }
 
@@ -551,18 +548,6 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
  * @param cycleNumber
  * @param problemTime
  */
-
-template<typename OUTTYPE, typename TYPE>
-void SiloFile::WriteDataField( string const & meshName,
-                               string const & fieldName,
-                               const TYPE& field,
-                               int const centering,
-                               int const cycleNumber,
-                               real64 const problemTime,
-                               string const & multiRoot,
-                               string const & materialName )
-{}
-
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
@@ -588,7 +573,7 @@ void SiloFile::WriteDataField( string const & meshName,
   { nullptr, nullptr };
 
 
-  array<char*> varnames(nvars);
+  array<char const*> varnames(nvars);
   array<void*> vars(nvars);
 
 
@@ -663,11 +648,6 @@ void SiloFile::WriteDataField( string const & meshName,
       err = DBPutPointvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, reinterpret_cast<float**>(vars.data()),
                            nels, SiloFileUtilities::DB_TYPE<OUTTYPE>(), optlist);
     }
-    else if( meshType == DB_QUADCURV )
-    {
-      err = DBPutQuadvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, varnames.data(), reinterpret_cast<float**>(vars.data()),
-                          m_quadMeshDims,m_quadMeshNDims,nullptr, 0,  SiloFileUtilities::DB_TYPE<OUTTYPE>(),centering, optlist);
-    }
     if( err < 0 )
     {
       if( err < -1 )
@@ -720,77 +700,6 @@ void SiloFile::WriteDataField( string const & meshName,
 
 }
 
-template< typename INPUTTYPE, typename TYPE >
-void SiloFile::ReadFieldMapFromSilo( std::map< string, array<TYPE> >& member,
-                                     string const & meshname,
-                                     int const centering,
-                                     int const cycleNum,
-                                     real64 const problemTime,
-                                     bool const isRestart,
-                                     string const & regionName,
-                                     const localIndex_array& mask ) const
-{
-  // iterate over all entries in the member map
-  for( typename std::map< string, array<TYPE> >::iterator iter = member.begin() ; iter!=member.end() ; ++iter )
-  {
-    // the field name is the key to the map
-    string const fieldName = iter->first;
-
-    // check to see if the field should have been written
-    if( FieldInfo::AttributesByName.find(fieldName) != FieldInfo::AttributesByName.end() )
-    {
-      if( (  isRestart && FieldInfo::AttributesByName[fieldName]->m_WriteToRestart) ||
-          ( !isRestart && FieldInfo::AttributesByName[fieldName]->m_WriteToPlot ) )
-      {
-        // the field data is mapped value
-        array<TYPE> & fieldData = iter->second;
-
-        if( !(mask.empty()) && !isRestart )
-        {
-          array<TYPE> dataToRead( mask.size() );
-          // write the data field
-          ReadDataField<INPUTTYPE>( dataToRead, meshname.c_str(), fieldName, centering, cycleNum, problemTime, regionName );
-
-          for( localIndex_array::size_type i = 0 ; i < mask.size() ; ++i )
-          {
-            fieldData[mask[i]] = dataToRead[i];
-          }
-
-        }
-        else
-        {
-          ReadDataField<INPUTTYPE>( fieldData, meshname.c_str(), fieldName, centering, cycleNum, problemTime, regionName );
-        }
-      }
-    }
-  }
-}
-
-template< typename INPUTTYPE, typename TYPE>
-void SiloFile::ReadDataField( array<TYPE>& field,
-                              string const & meshName,
-                              string const & fieldName,
-                              int const centering,
-                              int const cycleNumber,
-                              real64 const problemTime,
-                              string const & regionName ) const
-{
-
-  INPUTTYPE** var = static_cast<INPUTTYPE**>( GetDataVar<TYPE>( fieldName, meshName, field.size(), centering, cycleNumber, problemTime, regionName ) );
-
-  for( typename array<TYPE>::size_type a=0 ; a<field.size() ; ++a )
-  {
-    TYPE temp;
-    INPUTTYPE* ptemp = SiloFileUtilities::DataPtr<TYPE,INPUTTYPE>( temp );
-
-    for( int i=0 ; i<SiloFileUtilities::GetNumberOfVariablesInField<TYPE>() ; ++i )
-    {
-      ptemp[i] = var[i][a];
-    }
-    field[a] = temp;
-  }
-
-}
 
 /**
  *

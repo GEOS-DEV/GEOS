@@ -158,30 +158,31 @@ template<> int GetNumberOfVariablesInField<string> ()
 }
 
 template<typename TYPE>
-void SetVariableNames(string const & fieldName, array<string>& varnamestring, char* varnames[])
+void SetVariableNames(string const & fieldName, array<string>& varnamestring, char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<TYPE> ());
-  int count = 0;
-  for( array<string>::iterator i = varnamestring.begin() ; i != varnamestring.end() ; ++i )
-  {
-    *i = fieldName;
-    varnames[count++] =  const_cast<char*>((*i).c_str());
-  }
+  varnamestring[0] = fieldName;
+  varnames[0] = varnamestring[0].c_str();
 }
-template void SetVariableNames<int> (string const & fieldName, array<string>& varnamestring,
-                                     char* varnames[]);
-template void SetVariableNames<unsigned long> (string const & fieldName, array<string>& varnamestring,
-                                               char* varnames[]);
-template void SetVariableNames<real64> (string const & fieldName, array<string>& varnamestring,
-                                        char* varnames[]);
-template void SetVariableNames<long long unsigned int> (string const & fieldName, array<string>& varnamestring,
-                                                        char* varnames[]);
+template void SetVariableNames<int> ( string const & fieldName,
+                                      array<string>& varnamestring,
+                                      char const* varnames[]);
+template void SetVariableNames<unsigned long>( string const & fieldName,
+                                               array<string>& varnamestring,
+                                               char const* varnames[]);
+template void SetVariableNames<real64>( string const & fieldName,
+                                        array<string>& varnamestring,
+                                        char const* varnames[]);
+template void SetVariableNames<long long unsigned int>( string const & fieldName,
+                                                        array<string>& varnamestring,
+                                                        char const* varnames[]);
 
 
 
 template<>
-void SetVariableNames<R1Tensor> (string const & fieldName, array<string>& varnamestring,
-                                 char* varnames[])
+void SetVariableNames<R1Tensor> ( string const & fieldName,
+                                  array<string>& varnamestring,
+                                  char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R1Tensor> ());
   varnamestring[0] = fieldName + "_1";
@@ -193,8 +194,9 @@ void SetVariableNames<R1Tensor> (string const & fieldName, array<string>& varnam
 }
 
 template<>
-void SetVariableNames<R2Tensor> (string const & fieldName, array<string>& varnamestring,
-                                 char* varnames[])
+void SetVariableNames<R2Tensor> ( string const & fieldName,
+                                  array<string>& varnamestring,
+                                  char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
   varnamestring[0] = fieldName + "_11";
@@ -218,8 +220,9 @@ void SetVariableNames<R2Tensor> (string const & fieldName, array<string>& varnam
 }
 
 template<>
-void SetVariableNames<R2SymTensor> (string const & fieldName, array<string>& varnamestring,
-                                    char* varnames[])
+void SetVariableNames<R2SymTensor> ( string const & fieldName,
+                                     array<string>& varnamestring,
+                                     char const * varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
   varnamestring[0] = fieldName + "_11";
@@ -236,10 +239,6 @@ void SetVariableNames<R2SymTensor> (string const & fieldName, array<string>& var
   varnames[5] = const_cast<char*>( varnamestring[5].c_str() );
 }
 
-template<> int FieldCentering<NodeManager> ()
-{
-  return DB_NODECENT;
-}
 
 template<> int GetTensorRank<int> ()
 {
@@ -287,19 +286,46 @@ template<> int GetTensorRank<string> ()
 }
 
 
-
-void SetCenteringSubdir(int const centering, string& subdir)
+template<> inline int CastField<int, int> (const int& field, int const )
 {
-
-  if( centering == DB_NODECENT )
-    subdir = "node_fields";
-  else if( centering == DB_ZONECENT )
-    subdir = "zone_fields";
-  else if( centering == DB_FACECENT )
-    subdir = "face_fields";
-  else if( centering == DB_EDGECENT )
-    subdir = "edge_fields";
+  return field;
 }
+
+
+//  template<> inline int CastField<int, localIndex> (const localIndex& field,
+// int const )
+//  {
+//    return static_cast<int>(field);
+//  }
+
+//  template<> inline localIndex CastField<localIndex, localIndex> (const
+// localIndex& field, int const )
+//  {
+//    return field;
+//  }
+
+
+template<> inline globalIndex CastField<globalIndex, globalIndex> (const globalIndex& field, int const )
+{
+  return field;
+}
+
+template<> inline int CastField<int, long long unsigned int > (const long long unsigned int& field, int const )
+{
+  return integer_conversion<int>(field);
+}
+
+
+template<> inline real64 CastField<real64, real64> (const real64& field, int const )
+{
+  return field;
+}
+template<> inline float CastField<float, real64> (const real64& field, int const )
+{
+  return field;
+}
+
+
 }
 
 
@@ -318,8 +344,7 @@ SiloFile::SiloFile():
   m_plotFileRoot("plot"),
   m_restartFileRoot("restart"),
   m_fileName(),
-  m_baseFileName(),
-  m_markGhosts(0)
+  m_baseFileName()
 {}
 
 // *********************************************************************************************************************
@@ -365,9 +390,16 @@ void SiloFile::Initialize( const PMPIO_iomode_t readwrite )
   m_numGroups = 2;
 
   MPI_Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_driver, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_WORLD);
   // Initialize PMPIO, pass a pointer to the driver type as the user data.
-  m_baton = PMPIO_Init(m_numGroups, readwrite, MPI_COMM_WORLD, 1, PMPIO_DefaultCreate, PMPIO_DefaultOpen, PMPIO_DefaultClose, &m_driver);
+  m_baton = PMPIO_Init( m_numGroups,
+                        readwrite,
+                        MPI_COMM_WORLD,
+                        1,
+                        PMPIO_DefaultCreate,
+                        PMPIO_DefaultOpen,
+                        PMPIO_DefaultClose,
+                        const_cast<int*>(&m_driver));
 #else
   m_numGroups = 1;
   // Initialize PMPIO, pass a pointer to the driver type as the user data.
@@ -384,7 +416,6 @@ void SiloFile::Initialize( const PMPIO_iomode_t readwrite )
  */
 void SiloFile::Finish()
 {
-  m_baseFileName.clear();
   PMPIO_Finish(m_baton);
 }
 
@@ -517,12 +548,11 @@ void SiloFile::HandOffBaton()
 void SiloFile::WriteMeshObject(string const & meshName,
                                const localIndex nnodes,
                                real64* coords[3],
-                               const globalIndex*,
-                               int const numRegions,
+                               globalIndex const * const globalNodeNum,
+                               int const numShapes,
                                int const * shapecnt,
                                const localIndex* const * const meshConnectivity,
-                               const globalIndex* const * const globalElementNum,
-                               int const * const * const,
+                               globalIndex const * const * const globalElementNum,
                                int const * const shapetype,
                                int const * const shapesize,
                                int const cycleNumber,
@@ -530,21 +560,26 @@ void SiloFile::WriteMeshObject(string const & meshName,
 {
 
   const DBdatatype datatype = DB_DOUBLE;
-
-
-//  DBfacelist* facelist;
-//  string facelistName;
-//  facelistName = meshName + "_facelist";
+  int const one = 1;
 
   DBoptlist* optlist = DBMakeOptlist(4);
-//  DBAddOption(optlist, DBOPT_NODENUM, const_cast<globalIndex*>
-// (globalNodeNum));
+  if( globalNodeNum!=nullptr )
+  {
+    if( std::is_same<globalIndex,int>::value || std::is_same<globalIndex,long long>::value )
+    {
+      DBAddOption(optlist, DBOPT_NODENUM, const_cast<globalIndex*>(globalNodeNum));
+      if( std::is_same<globalIndex,long long>::value )
+      {
+        DBAddOption( optlist, DBOPT_LLONGNZNUM, const_cast<int*>(&one) );
+      }
+    }
+  }
   DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
   DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
 
   int numTotZones = 0;
   int lnodelist = 0;
-  for( int i = 0 ; i < numRegions ; ++i )
+  for( int i = 0 ; i < numShapes ; ++i )
   {
     numTotZones += shapecnt[i];
     //  if shapesize <= 0, that signals that we are using arbitrary polygons.
@@ -569,10 +604,6 @@ void SiloFile::WriteMeshObject(string const & meshName,
     string zonelistName;
     zonelistName = meshName + "_zonelist";
 
-//  if (type_name<globalIndex>::name() == type_name<long long>::name())
-//    DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
-
-
     DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), 3, nullptr, (float**) coords, nnodes, numTotZones,
                  zonelistName.c_str(), nullptr, datatype, optlist);
 
@@ -583,7 +614,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
 
     int count = 0;
     int elemCount = 0;
-    for( int i = 0 ; i < numRegions ; ++i )
+    for( int i = 0 ; i < numShapes ; ++i )
     {
       int n;
       if( shapesize[i] > 0 )
@@ -594,23 +625,30 @@ void SiloFile::WriteMeshObject(string const & meshName,
       {
         nodelist[count++] = meshConnectivity[i][j];
       }
+    }
 
-      if( globalElementNum != nullptr )
+    if( globalElementNum != nullptr )
+    {
+      for( int i = 0 ; i < numShapes ; ++i )
       {
-        for( int j = 0 ; j < shapecnt[i] ; ++j )
+        if( std::is_same<globalIndex,int>::value || std::is_same<globalIndex,long long>::value )
         {
-          globalZoneNumber[elemCount++] = globalElementNum[i][j];
+          for( int j = 0 ; j < shapecnt[i] ; ++j )
+          {
+            globalZoneNumber[elemCount++] = globalElementNum[i][j];
+          }
+          // write zonelist
+          DBAddOption(optlist, DBOPT_ZONENUM, const_cast<globalIndex*>(globalZoneNumber.data()));
+          if( std::is_same<globalIndex,long long>::value )
+          {
+            DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
+          }
         }
-        // write zonelist
-        //      DBAddOption(optlist, DBOPT_ZONENUM, const_cast<globalIndex*>
-        // (globalZoneNumber.data()));
-        if( std::is_same<globalIndex,long long>::value )
-          DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
       }
     }
 
-    integer_array shapesize2(numRegions);
-    for( int i = 0 ; i < numRegions ; ++i )
+    integer_array shapesize2(numShapes);
+    for( int i = 0 ; i < numShapes ; ++i )
     {
       if( shapesize[i] < 0 )
       {
@@ -624,26 +662,10 @@ void SiloFile::WriteMeshObject(string const & meshName,
 
     DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
                     hi_offset, const_cast<int*>(shapetype), const_cast<int*>(shapesize2.data()),
-                    const_cast<int*>(shapecnt), numRegions,
+                    const_cast<int*>(shapecnt), numShapes,
                     optlist);
 
     DBClearOptlist(optlist);
-
-    /*
-       facelist = DBCalcExternalFacelist2(nodelist.data(), lnodelist,
-                                         0, hi_offset,
-                                         0, (int*) shapetype,
-                                         (int*) shapesize2.data(), (int*)
-                                            shapecnt, numRegions,
-                                         nullptr, 0) ;
-
-       DBPutFacelist(m_dbFilePtr, facelistName.c_str(), facelist->nfaces,
-          facelist->ndims,
-                              facelist->nodelist, facelist->lnodelist,
-                              facelist->origin, facelist->zoneno,
-                              facelist->shapesize, facelist->shapecnt,
-                              1, nullptr, nullptr, 0);
-     */
   }
 
   // write multimesh object
@@ -662,188 +684,6 @@ void SiloFile::WriteMeshObject(string const & meshName,
   DBFreeOptlist(optlist);
 }
 
-// Arbitrary polygon. Have to deal with this separately
-void SiloFile::WritePolygonMeshObject(string const & meshName,
-                                      const localIndex nnodes,
-                                      real64* coords[3],
-                                      const globalIndex*,
-                                      int const numRegions,
-                                      int const * shapecnt,
-                                      const localIndex* const * const meshConnectivity,
-                                      const globalIndex* const * const globalElementNum,
-                                      int const * const * const,
-                                      int const * const shapetype,
-                                      int const * const shapesize,
-                                      int const cycleNumber,
-                                      real64 const problemTime,
-                                      int const lnodelist)
-{
-
-  const DBdatatype datatype = DB_DOUBLE;
-
-
-//  DBfacelist* facelist;
-//  string facelistName;
-//  facelistName = meshName + "_facelist";
-
-  DBoptlist* optlist = DBMakeOptlist(4);
-//  DBAddOption(optlist, DBOPT_NODENUM, const_cast<globalIndex*>
-// (globalNodeNum));
-  DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-  DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-
-  int numTotZones = shapecnt[0];
-  if( numTotZones == 0 )
-  {
-    char pwd[256];
-    DBGetDir(m_dbFilePtr, pwd);
-    string emptyObject = pwd;
-    emptyObject += "/" + meshName;
-    m_emptyMeshes.push_back(emptyObject);
-  }
-  else
-  {
-    string zonelistName;
-    zonelistName = meshName + "_zonelist";
-
-
-    DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), 3, nullptr, (float**) coords, nnodes, numTotZones,
-                 zonelistName.c_str(), nullptr, datatype, optlist);
-
-    DBClearOptlist(optlist);
-
-    array<integer> nodelist(lnodelist);
-    globalIndex_array globalZoneNumber(lnodelist);
-
-    int elemCount = 0;
-    for( int j = 0 ; j < lnodelist ; ++j )
-    {
-      nodelist[j] = meshConnectivity[0][j];
-    }
-
-    {
-      if( globalElementNum != nullptr )
-      {
-        for( int j = 0 ; j < shapecnt[0] ; ++j )
-        {
-          globalZoneNumber[elemCount++] = globalElementNum[0][j];
-        }
-        // write zonelist
-        //      DBAddOption(optlist, DBOPT_ZONENUM, const_cast<globalIndex*>
-        // (globalZoneNumber.data()));
-        if( std::is_same<globalIndex,long long>::value )
-          DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
-      }
-    }
-
-
-
-    int hi_offset = 0;
-
-    DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
-                    hi_offset, const_cast<int*>(shapetype), const_cast<int*>(shapesize), const_cast<int*>(shapecnt), numRegions,
-                    optlist);
-
-    DBClearOptlist(optlist);
-
-    /*
-       facelist = DBCalcExternalFacelist2(nodelist.data(), lnodelist,
-                                         0, hi_offset,
-                                         0, (int*) shapetype,
-                                         (int*) shapesize2.data(), (int*)
-                                            shapecnt, numRegions,
-                                         nullptr, 0) ;
-
-       DBPutFacelist(m_dbFilePtr, facelistName.c_str(), facelist->nfaces,
-          facelist->ndims,
-                              facelist->nodelist, facelist->lnodelist,
-                              facelist->origin, facelist->zoneno,
-                              facelist->shapesize, facelist->shapecnt,
-                              1, nullptr, nullptr, 0);
-     */
-  }
-
-  // write multimesh object
-  int rank = 0;
-#if USE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-  if( rank == 0 )
-  {
-    DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-    DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-
-    WriteMultiXXXX(DB_UCDMESH, DBPutMultimesh, 0, meshName, cycleNumber, "/", optlist);
-  }
-
-  DBFreeOptlist(optlist);
-}
-
-
-/**
- * @author walsh24
- *
- * @param meshName
- * @param nX
- * @param nY
- * @param nZ
- * @param coords
- * @param cycleNumber
- * @param problemTime
- */
-int SiloFile::WriteQuadMeshObject(string const & meshName,
-                                  const localIndex nX,
-                                  const localIndex nY,
-                                  const localIndex nZ,
-                                  real64* coords[3],
-                                  int const cycleNumber,
-                                  real64 const problemTime)
-{
-  const DBdatatype datatype = DB_DOUBLE;
-
-  DBoptlist* optlist = DBMakeOptlist(4);
-//  DBAddOption(optlist, DBOPT_NODENUM, const_cast<globalIndex*>
-// (globalNodeNum));
-  DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-  DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-
-//  real64 *coord[3];
-
-  // record quad mesh dims - ugly but required to later write data to quad mesh
-  // data file
-  m_quadMeshDims[0] = nX;
-  m_quadMeshDims[1] = nY;
-  m_quadMeshDims[2] = nZ;
-  m_quadMeshNDims = 3;
-
-
-  int ret = DBPutQuadmesh(m_dbFilePtr, meshName.c_str(), nullptr,(float**) coords, m_quadMeshDims, 3,
-                          datatype, DB_NONCOLLINEAR, optlist);
-  if( ret == -1 )
-    return ret;
-
-  DBClearOptlist(optlist);
-
-
-  //----write multimesh object
-  {
-    int rank = 0;
-  #if USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  #endif
-    if( rank == 0 )
-    {
-      DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-      DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-      WriteMultiXXXX(DB_QUADMESH, DBPutMultimesh, 0, meshName.c_str(), cycleNumber, "/", optlist);
-    }
-  }
-
-  //---free the option list
-  DBFreeOptlist(optlist);
-
-  return ret;
-}
 
 void SiloFile::WriteBeamMesh(string const & meshName,
                              const localIndex nnodes,
@@ -863,29 +703,6 @@ void SiloFile::WriteBeamMesh(string const & meshName,
     {
       nodelist.push_back(static_cast<int>(*it));
       nodelist.push_back(static_cast<int>(*it2));
-    }
-  }
-
-  WriteBeamMesh( meshName, nnodes, coords, nodelist, cycleNumber, problemTime);
-}
-
-
-void SiloFile::WriteBeamMesh(string const & meshName,
-                             const localIndex nnodes,
-                             real64* coords[3],
-                             const std::map<int, int>& connectivity,
-                             int const cycleNumber,
-                             real64 const problemTime)
-{
-  // Connectivity.
-  integer_array nodelist;
-  {
-    nodelist.reserve(2*connectivity.size());
-    for( std::map<int,int>::const_iterator it = connectivity.begin() ;
-         it != connectivity.end() ; ++it )
-    {
-      nodelist.push_back(it->first);
-      nodelist.push_back(it->second);
     }
   }
 
@@ -947,120 +764,6 @@ void SiloFile::WriteBeamMesh(string const & meshName,
   DBFreeOptlist(optlist);
 }
 
-#if 0
-void SiloFile::WriteArbitratryPolyhedralMeshObject( string const & meshName,
-                                                    const localIndex nnodes,
-                                                    real64* coords[3],
-                                                    const globalIndex* globalNodeNum,
-                                                    int const nDiscreteElements,
-                                                    int const nfaces,
-                                                    int* nodecnts,
-                                                    int const sumnodecnts,
-                                                    int* nodelist,
-                                                    int* facecnts,
-                                                    int const sumfacecnts,
-                                                    int* facelist,
-                                                    const globalIndex* const * const globalElementNum,
-                                                    int const * ghostFlag,
-                                                    int const cycleNumber,
-                                                    real64 const problemTime)
-{
-  //----create option list (done)
-  DBoptlist* optlist = DBMakeOptlist(5);//allocate option list with 4 options
-
-  //----create unstructured mesh (done)
-  {
-    {
-//      DBAddOption(optlist, DBOPT_NODENUM, const_cast<globalIndex*>
-// (globalNodeNum));//map local to global node index
-      DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));//cycle
-                                                                         // number
-                                                                         // in
-                                                                         // the
-                                                                         // problem
-      DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));//problem
-                                                                            // time
-                                                                            // value
-//      if (type_name<globalIndex>::name() == type_name<long
-// long>::name())//flag that the array for NODENUM is long long
-//        DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
-
-      char temp[] = "dezonelist";
-      DBAddOption(optlist, DBOPT_PHZONELIST, temp);//cycle number in the problem
-
-    }
-
-    //write a UCD mesh to the Silo file
-    //UCD = unstructured cell data ... used to define any unstructured mesh
-    DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), nsdof, nullptr, (float**) coords, nnodes, nDiscreteElements,
-                 nullptr, nullptr, DB_DOUBLE, optlist);
-    DBClearOptlist(optlist);
-  }
-
-  //----create arbitrary polyhedral zone list
-  {
-    /*
-       //get nodelist and globalZoneNumber
-       ivector globalZoneNumber(nnodes);
-       {
-       int elemCount = 0;
-       for (int i = 0; i < numRegions; ++i)
-       {
-        for (int j = 0; j < shapecnt[i] * shapesize[i]; ++j)
-        {
-          nodelist[count++] = meshConnectivity[i][j];
-        }
-
-        for (int j = 0; j < shapecnt[i]; ++j)
-        {
-          globalZoneNumber[elemCount++] = globalElementNum[i][j];
-        }
-       }
-       }
-     */
-
-    //create option list
-    /*
-       DBAddOption(optlist, DBOPT_ZONENUM, const_cast<globalIndex*>
-          (globalZoneNumber.data()));
-       if (type_name<globalIndex>::name() == type_name<long long>::name())
-       DBAddOption(optlist, DBOPT_LLONGNZNUM, const_cast<int*> (&one));
-     */
-    {
-      //define all faces in the DE's as external faces
-      char* extface = new char[nfaces];
-      for( int i=0 ; i < nfaces ; i++ )
-        extface[i] = '1';
-
-      DBPutPHZonelist(m_dbFilePtr, "dezonelist", nfaces, nodecnts, sumnodecnts, nodelist, extface, nDiscreteElements,
-                      facecnts, sumfacecnts, facelist, 0, 0, nDiscreteElements-1, optlist);
-      delete[] extface;
-    }
-    DBClearOptlist( optlist);
-  }
-
-  //----write multimesh object
-  {
-    int rank = 0;
-  #if USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  #endif
-    if( rank == 0 )
-    {
-      DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-      DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-      WriteMultiXXXX(DB_UCDMESH, DBPutMultimesh, 0, "demesh", cycleNumber, "/", optlist);
-    }
-  }
-
-  //---free the option list
-  DBFreeOptlist(optlist);
-}
-
-
-
-#endif
-
 
 
 void SiloFile::WritePointMesh( string const & meshName,
@@ -1090,105 +793,6 @@ void SiloFile::WritePointMesh( string const & meshName,
 
 }
 
-//void SiloFile::TestWriteDiscreteElementMeshObject()
-//{
-//  //----create option list (done)
-//  DBoptlist* optlist = DBMakeOptlist(5);//allocate option list with 4 options
-//  const char temp[] = "de_zonelist";
-//
-//  // define the problem
-//  string const meshName = "de_mesh";
-//  const localIndex nnodes = 4;
-//  real64 coords[nsdof][4];
-//  const globalIndex globalNodeNum[] = {1,2,3,4};
-//  int const nDiscreteElements = 1;
-//  int const nfaces = 4;
-//  int const nodecnts[] = {3,3,3,3};
-//  int const sumnodecnts = 12;
-//  int const nodelist[] = {0,2,3,1,3,2,0,1,2,1,0,3};
-//  int const facecnts[] = {4};
-//  int const sumfacecnts = 4;
-//  int const facelist[] = {0,1,2,3};
-//  int const cycleNumber = 0;
-//  real64 const problemTime = 0.;
-//  {
-//    coords[0][0] = -0.5;
-//    coords[1][0] = -0.5;
-//    coords[2][0] = -0.5;
-//    coords[0][1] = 0.5;
-//    coords[1][1] = -0.5;
-//    coords[2][1] = -0.5;
-//    coords[0][2] = 0;
-//    coords[1][2] = -0.5;
-//    coords[2][2] = 0.5;
-//    coords[0][3] = 0;
-//    coords[1][3] = 0;
-//    coords[2][3] = 0.5;
-//  }
-//
-//  //----create unstructured mesh (done)
-//  {
-//    {
-//      DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*>
-// (&cycleNumber));//cycle number in the problem
-//      DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*>
-// (&problemTime));//problem time value
-//      DBAddOption(optlist, DBOPT_PHZONELIST, temp);//cycle number in the
-// problem
-//
-//    }
-//
-//    //write a UCD mesh to the Silo file
-//    //UCD = unstructured cell data ... used to define any unstructured mesh
-//    DBPutUcdmesh(m_dbFilePtr, meshName.c_str(), nsdof, nullptr, (float**) coords,
-// nnodes, nDiscreteElements,
-//                 nullptr, nullptr, DB_DOUBLE, optlist);
-//    DBClearOptlist(optlist);
-//  }
-//
-//  //----create arbitrary polyhedral zone list
-//  {
-//    {
-//      //define all faces in the DE's as external faces
-//      char* extface = new char[nfaces];
-//      for(int i=0; i < nfaces; i++)
-//        extface[i] = '1';
-//
-//      DBPutPHZonelist(m_dbFilePtr, temp, nfaces, nodecnts, sumnodecnts,
-// nodelist, extface, nDiscreteElements,
-//                      facecnts, sumfacecnts, facelist, 0, 0,
-// nDiscreteElements-1, optlist);
-//      delete[] extface;
-//    }
-//    DBClearOptlist( optlist);
-//  }
-//
-//  //----write multimesh object
-//  {
-//    int rank = 0;
-//  #if USE_MPI
-//    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-//  #endif
-//    if (rank == 0)
-//    {
-//      DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-//      DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-//      WriteMultiXXXX(DB_UCDMESH, DBPutMultimesh, 0, meshName.c_str(),
-// cycleNumber, "/", optlist);
-//    }
-//  }
-//
-//  //---free the option list
-//  DBFreeOptlist(optlist);
-//}
-
-
-
-void SiloFile::StopSiloCompilerWarnings()
-{
-  PMPIO_RankInGroup(m_baton, 0);
-
-}
 
 /**
  *
@@ -1196,7 +800,7 @@ void SiloFile::StopSiloCompilerWarnings()
  * @param cycleNumber
  * @param problemTime
  */
-void SiloFile::WriteRegionSpecifications( ElementRegionManager const * const elementManager,
+void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementManager,
                                           ConstitutiveManager const * const constitutiveManager,
                                           string const & meshName,
                                           int const cycleNumber,
@@ -1519,97 +1123,6 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
 
 
-template <typename TYPE>
-void** SiloFile::GetDataVar( string const & fieldName,
-                             string const & meshName,
-                             const typename array<TYPE>::size_type nels,
-                             int const centering,
-                             int const cycleNumber,
-                             real64 const problemTime,
-                             string const & ) const
-{
-
-  int const nvars = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
-
-  void** rval = nullptr;
-
-  int const meshType = GetMeshType( meshName );
-
-
-  if( meshType == DB_UCDMESH )
-  {
-    const DBucdvar* const ucdVar = DBGetUcdvar( m_dbFilePtr, fieldName.data() );
-
-    if( meshName.compare( ucdVar->meshname ) )
-    {
-      GEOS_ERROR("SiloFile::GetDataVar: meshname is not consistent for " + meshName + ":" + fieldName );
-    }
-    if( (int)nels != ucdVar->nels )
-    {
-      GEOS_ERROR("SiloFile::GetDataVar: size is not consistent for " + meshName + ":" + fieldName);
-    }
-    if( centering != ucdVar->centering )
-    {
-      GEOS_ERROR("SiloFile::GetDataVar: centering is not consistent for " + meshName + ":" + fieldName);
-    }
-    if( cycleNumber != ucdVar->cycle )
-    {
-      GEOS_ERROR("SiloFile::GetDataVar: cycleNumber is not consistent for " + meshName + ":" + fieldName);
-    }
-    if( !isEqual(problemTime,ucdVar->dtime) )
-    {
-      GEOS_ERROR("SiloFile::GetDataVar: problemTime is not consistent for " + meshName + ":" + fieldName);
-    }
-    if( nvars != ucdVar->nvals )
-    {
-      GEOS_ERROR("SiloFile::GetDataVar: size is not consistent for " + meshName + ":" + fieldName);
-    }
-    if( SiloFileUtilities::DB_TYPE<TYPE>() != ucdVar->datatype )
-    {
-      GEOS_ERROR("SiloFile::GetDataVar: datatype is not consistent for " + meshName + ":" + fieldName);
-    }
-
-    rval = ucdVar->vals;
-  }
-  else if( meshType == DB_POINTMESH )
-  {
-    const DBmeshvar* const meshVar = DBGetPointvar( m_dbFilePtr, fieldName.data() );
-    rval = meshVar->vals;
-
-  }
-  else if( meshType == DB_QUADCURV )
-  {
-    const DBquadvar* const quadVar = DBGetQuadvar( m_dbFilePtr, fieldName.data() );
-    rval = quadVar->vals;
-
-  }
-  else
-  {
-    GEOS_ERROR("SiloFile::GetDataVar: invalid meshtype");
-  }
-
-
-  return rval;
-}
-template void** SiloFile::GetDataVar<int>( string const &, string const &, const array<int>::size_type, const int, const int, const real64,
-                                           string const & ) const;
-template void** SiloFile::GetDataVar<long int>( string const &, string const &, const array<long int>::size_type, const int, const int, const real64,
-                                                string const & ) const;
-template void** SiloFile::GetDataVar<long long int>( string const &, string const &, const array<long long int>::size_type, const int, const int,
-                                                     const real64, string const & ) const;
-
-//template void** SiloFile::GetDataVar<int>( string const &, const
-// string&, const array<int>::size_type , const int, const int, const
-// real64, string const & ) const;
-template void** SiloFile::GetDataVar<real64>( string const &, string const &, const array<real64>::size_type, const int, const int, const real64,
-                                              string const & ) const;
-template void** SiloFile::GetDataVar<R1Tensor>( string const &, string const &, const array<R1Tensor>::size_type, const int, const int, const real64,
-                                                string const & ) const;
-template void** SiloFile::GetDataVar<R2Tensor>( string const &, string const &, const array<R2Tensor>::size_type, const int, const int, const real64,
-                                                string const & ) const;
-template void** SiloFile::GetDataVar<R2SymTensor>( string const &, string const &, const array<R2SymTensor>::size_type, const int, const int,
-                                                   const real64, string const & ) const;
-
 
 
 integer_array SiloFile::SiloNodeOrdering()
@@ -1746,13 +1259,6 @@ void SiloFile::WriteDomainPartition( DomainPartition const & domain,
 
   WriteMeshLevel( mesh, constitutiveManager, cycleNum, problemTime, isRestart );
 
-
-//  WriteCommonPlanes( siloFile, cycleNum, problemTime, isRestart, writeCP );
-
-//  WriteCartesianGrid( siloFile, cycleNum, problemTime, isRestart, writeCG );
-//  m_wellboreManager.WriteWellboreSilo( siloFile, cycleNum, problemTime,
-// isRestart );
-
   if( isRestart )
   {
 //    siloFile.DBWriteWrapper("m_globalDomainNumber",m_globalDomainNumber);
@@ -1805,7 +1311,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     ElementRegionManager const * const elementManager = meshLevel->getElemManager();
     const localIndex numElementRegions = elementManager->GetGroup(keys::elementRegions)->GetSubGroups().size();
     array<localIndex*> meshConnectivity(numElementRegions);
-    array<int*> isGhostElement(numElementRegions);
     array<globalIndex*> globalElementNumbers(numElementRegions);
     array<integer> shapecnt(numElementRegions);
     array<integer> shapetype(numElementRegions);
@@ -1815,14 +1320,16 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     elementToNodeMap.resize( numElementRegions );
 
     int count = 0;
+
     ManagedGroup const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegions);
 
-    for( auto const & region : elementRegions->GetSubGroups() )
+    for( localIndex er=0 ; er<elementManager->numCellBlocks() ; ++er )
     {
-      ManagedGroup const * cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
-      for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
+      ElementRegion const * const region = elementManager->GetRegion(er);
+
+      for( localIndex esr=0 ; esr<region->numSubRegions() ; ++esr )
       {
-        CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+        CellBlockSubRegion const * cellBlock = region->GetSubRegion(esr);
 
         lArray2d const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<lArray2d>(keys::nodeList);
 
@@ -1845,10 +1352,8 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
         meshConnectivity[count] = elementToNodeMap[count].data();
 
-//      isGhostElement[count] =
-// (cellBlock->GetFieldData<FieldInfo::ghostRank>()).data();
 
-//      globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
+//        globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
         shapecnt[count] = static_cast<int>(cellBlock->size());
 
 //      if ( !elementRegion.m_elementGeometryID.compare(0, 4, "C3D8") )
@@ -1898,7 +1403,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                     shapecnt.data(),
                     meshConnectivity.data(),
                     nullptr /*globalElementNumbers.data()*/,
-                    isGhostElement.data(),
                     shapetype.data(),
                     shapesize.data(),
                     cycleNum, problemTime);
@@ -1906,9 +1410,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     // write node fields in silo mesh, and all restart data as unassociated
     // variables.
-
-
-
     WriteManagedGroupSilo( nodeManager,
                            "NodalFields",
                            meshName,
@@ -1939,7 +1440,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       ElementRegionManager const * const elemManager = meshLevel->getElemManager();
 
 
-      this->WriteRegionSpecifications( elemManager,
+      this->WriteMaterialMaps( elemManager,
                                        constitutiveManager,
                                        meshName,
                                        cycleNum,
