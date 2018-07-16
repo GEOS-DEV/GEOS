@@ -130,6 +130,18 @@ public:
   }
 #endif
 
+  PlotLevel getPlotLevel() const {return m_plotLevel;}
+
+  void setPlotLevel( PlotLevel const flag )
+  {
+    m_plotLevel = flag;
+  }
+
+  void setPlotLevel( int const flag )
+  {
+    m_plotLevel = IntToPlotLevel(flag);
+  }
+
   string const & getName() const
   {
     return m_name;
@@ -141,6 +153,7 @@ private:
   ManagedGroup* m_parent;
   int m_sizedFromParent;
   RestartFlags m_restart_flags;
+  PlotLevel m_plotLevel;
 #ifdef USE_ATK
   axom::sidre::View* m_sidreView;
 #endif

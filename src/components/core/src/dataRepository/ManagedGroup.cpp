@@ -204,8 +204,10 @@ void ManagedGroup::RegisterDocumentationNodes()
 
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                           typeID );
+
       view->setSizedFromParent( subNode.second.m_managedByParent);
       view->setRestartFlags( subNode.second.getRestartFlags() );
+      view->setPlotLevel( subNode.second.getVerbosity() );
       subNode.second.m_isRegistered = 1;
 
       string defVal = subNode.second.getDefault();
