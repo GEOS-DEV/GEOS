@@ -43,7 +43,8 @@ ViewWrapperBase::ViewWrapperBase( std::string const & name,
   m_name(name),
   m_parent(parent),
   m_sizedFromParent(1),
-  m_restart_flags(RestartFlags::WRITE_AND_READ)
+  m_restart_flags(RestartFlags::WRITE_AND_READ),
+  m_plotLevel(PlotLevel::LEVEL_3)
 #ifdef USE_ATK
   ,m_sidreView(nullptr)
 #endif

@@ -33,7 +33,7 @@ class Group;
 }
 }
 
-namespace geosx 
+namespace geosx
 {
 
 
@@ -44,8 +44,8 @@ class ElementRegionManager;
 class Blueprint
 {
 public:
-  Blueprint( const NodeManager& node_manager, const ElementRegionManager& elem_reg_manager, 
-             const std::string& output_path, MPI_Comm comm, 
+  Blueprint( const NodeManager& node_manager, const ElementRegionManager& elem_reg_manager,
+             const std::string& output_path, MPI_Comm comm,
              const std::string& coord_name="coords", const std::string& topo_name="mesh");
 
   ~Blueprint()
