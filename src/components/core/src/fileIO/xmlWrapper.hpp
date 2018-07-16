@@ -78,14 +78,14 @@ void xmlWrapper::as_type( std::vector<T> & target, std::string inputValue, std::
 
   T value;
 
-  while(ss.peek() == ',' || ss.peek() == ' ')
+  while( ss.peek() == ',' || ss.peek() == ' ' )
   {
     ss.ignore();
   }
   while( !((ss>>value).fail()) )
   {
     target.push_back( value );
-    while(ss.peek() == ',' || ss.peek() == ' ')
+    while( ss.peek() == ',' || ss.peek() == ' ' )
     {
       ss.ignore();
     }
