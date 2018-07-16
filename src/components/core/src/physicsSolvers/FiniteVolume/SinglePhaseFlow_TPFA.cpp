@@ -579,7 +579,7 @@ void SinglePhaseFlow_TPFA :: SetupSystem ( DomainPartition * const domain,
   Epetra_Map * const
   rowMap = blockSystem->
            SetRowMap( BlockIDs::fluidPressureBlock,
-                      std::make_unique<Epetra_Map>( static_cast<int>(m_dim*numGlobalRows),
+                      std::make_unique<Epetra_Map>( static_cast<long long>(m_dim*numGlobalRows),
                                                     static_cast<int>(m_dim*numLocalRows),
                                                     0,
                                                     m_linearSolverWrapper.m_epetraComm ) );
