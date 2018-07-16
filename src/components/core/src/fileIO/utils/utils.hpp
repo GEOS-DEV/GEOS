@@ -26,25 +26,26 @@
 #include <vector>
 #include <regex>
 
-namespace geosx 
+namespace geosx
 {
 
 /* Taken from http://www.martinbroadhurst.com/list-the-files-in-a-directory-in-c.html */
 inline void readDirectory(const std::string& name, std::vector<std::string>& v)
 {
-    DIR* dirp = opendir(name.c_str());
-    struct dirent * dp;
-    while ((dp = readdir(dirp)) != nullptr) {
-        v.push_back(dp->d_name);
-    }
-    closedir(dirp);
+  DIR* dirp = opendir(name.c_str());
+  struct dirent * dp;
+  while((dp = readdir(dirp)) != nullptr )
+  {
+    v.push_back(dp->d_name);
+  }
+  closedir(dirp);
 }
 
 
 inline void getAbsolutePath(const std::string & path, std::string & absolute_path )
 {
   char abs_file_path[PATH_MAX + 1];
-  if (realpath(path.data(), abs_file_path))
+  if( realpath(path.data(), abs_file_path))
   {
     absolute_path = abs_file_path;
   }
@@ -59,13 +60,13 @@ inline void getAbsolutePath(const std::string & path, std::string & absolute_pat
 inline void splitPath(const std::string& path, std::string& dirname, std::string& basename)
 {
   size_t pos = path.find_last_of('/');
-  if (pos == string::npos)
+  if( pos == string::npos )
   {
     dirname = std::string(".");
     basename = path;
   }
 
-  if (pos == 0)
+  if( pos == 0 )
   {
     dirname = std::string("/");
     basename = path.substr(1);

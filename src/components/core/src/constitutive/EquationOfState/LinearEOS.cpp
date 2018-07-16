@@ -44,7 +44,11 @@ LinearEOS::LinearEOS( std::string const & name, ManagedGroup * const parent ):
   m_parameterData.RegisterViewWrapper( viewKeys.referenceDensity.Key(), &m_referenceDensity, 0 );
   m_parameterData.RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, 0 );
   m_parameterData.RegisterViewWrapper( viewKeys.fluidViscosity.Key(), &m_fluidViscosity, 0 );
-  m_stateData.RegisterViewWrapper( viewKeys.fluidDensity.Key(), &m_fluidDensity, 0 );
+
+  m_stateData.RegisterViewWrapper( viewKeys.fluidDensity.Key(),
+                                   &m_fluidDensity,
+                                   0 )->setPlotLevel(PlotLevel::LEVEL_0);
+
   m_stateData.RegisterViewWrapper( viewKeys.fluidPressure.Key(), &m_fluidPressure, 0 );
 }
 

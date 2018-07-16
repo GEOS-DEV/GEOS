@@ -31,6 +31,70 @@ enum class RestartFlags : unsigned char
   WRITE_AND_READ
 };
 
+enum class PlotLevel : int
+{
+  LEVEL_0,
+  LEVEL_1,
+  LEVEL_2,
+  LEVEL_3,
+  INVALID
+};
+
+inline PlotLevel IntToPlotLevel( int const val )
+{
+  PlotLevel rval = PlotLevel::INVALID;
+  switch( val )
+  {
+    case 0:
+    {
+      rval = PlotLevel::LEVEL_0;
+      break;
+    }
+    case 1:
+    {
+      rval = PlotLevel::LEVEL_1;
+      break;
+    }
+    case 2:
+    {
+      rval = PlotLevel::LEVEL_2;
+      break;
+    }
+    case 3:
+    {
+      rval = PlotLevel::LEVEL_3;
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
+  return rval;
+}
+inline bool operator<( PlotLevel const left, PlotLevel const right)
+{
+  return static_cast<int>(left) < static_cast<int>(right);
+}
+
+inline bool operator>( PlotLevel const left, PlotLevel const right)
+{
+  return static_cast<int>(left) > static_cast<int>(right);
+}
+
+inline bool operator==( PlotLevel const left, PlotLevel const right)
+{
+  return static_cast<int>(left) == static_cast<int>(right);
+}
+
+inline bool operator!=( PlotLevel const left, PlotLevel const right)
+{
+  return static_cast<int>(left) != static_cast<int>(right);
+}
+
+
+
+
 }   /* namespace dataRepository */
 }   /* namespace geosx */
 
