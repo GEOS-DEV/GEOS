@@ -610,11 +610,18 @@ void SiloFile::WriteDataField( string const & meshName,
   {
     for( int i = 0 ; i < nvars ; ++i )
     {
-      castedField[i].resize(nels);
-      vars[i] = static_cast<void*> (&(castedField[i][0]));
-      for( int k = 0 ; k < nels ; ++k )
+      if( std::is_same<OUTTYPE,TYPE>::value )
       {
-        castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[k], i);
+        vars[i] = const_cast<void*>(static_cast<void const*> (&(field[0])+i));
+      }
+      else
+      {
+        castedField[i].resize(nels);
+        vars[i] = static_cast<void*> (&(castedField[i][0]));
+        for( int k = 0 ; k < nels ; ++k )
+        {
+          castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[k], i);
+        }
       }
     }
 
@@ -701,15 +708,6 @@ void SiloFile::WriteDataField( string const & meshName,
 }
 
 
-/**
- *
- * @param type
- * @param DBPutMultiCB
- * @param centering
- * @param name
- * @param cycleNumber
- * @param optlist
- */
 template< typename CBF >
 void SiloFile::WriteMultiXXXX( const DBObjectType type,
                                CBF DBPutMultiCB,
