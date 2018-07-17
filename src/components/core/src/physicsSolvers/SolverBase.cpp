@@ -30,7 +30,7 @@ using namespace dataRepository;
 
 SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
-  ManagedGroup( name, parent ),
+  ExecutableGroup( name, parent ),
   m_verboseLevel(0),
   m_gravityVector( R1Tensor(0.0) ),
   m_linearSolverWrapper(nullptr),

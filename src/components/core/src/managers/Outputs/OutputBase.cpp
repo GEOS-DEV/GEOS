@@ -35,7 +35,7 @@ using namespace cxx_utilities;
 
 OutputBase::OutputBase( std::string const & name,
                         ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
+  ExecutableGroup( name, parent)
 {
 }
 

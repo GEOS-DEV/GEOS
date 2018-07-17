@@ -27,12 +27,13 @@
 #define SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/ExecutableGroup.hpp"
 
 
 namespace geosx
 {
 
-class OutputBase : public dataRepository::ManagedGroup
+class OutputBase : public ExecutableGroup
 {
 public:
   explicit OutputBase( std::string const & name,

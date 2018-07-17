@@ -22,12 +22,13 @@
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/ExecutableGroup.hpp"
 
 
 namespace geosx
 {
 
-class EventBase : public dataRepository::ManagedGroup
+class EventBase : public ExecutableGroup
 {
 public:
   explicit EventBase( std::string const & name,
@@ -82,7 +83,7 @@ public:
 
   virtual real64 GetTimestepRequest(real64 const time) override;
 
-  dataRepository::ManagedGroup * m_target;
+  ExecutableGroup * m_target;
 
   struct viewKeyStruct
   {

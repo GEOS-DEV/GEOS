@@ -33,6 +33,7 @@
 
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
+#include "../dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/MeshBody.hpp"
 
@@ -59,7 +60,7 @@ string const maxDt   = "maxDt";
 }
 }
 
-class SolverBase : public dataRepository::ManagedGroup
+class SolverBase : public ExecutableGroup
 {
 public:
 
