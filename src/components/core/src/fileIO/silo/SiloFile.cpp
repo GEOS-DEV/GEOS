@@ -286,45 +286,6 @@ template<> int GetTensorRank<string> ()
 }
 
 
-template<> inline int CastField<int, int> (const int& field, int const )
-{
-  return field;
-}
-
-
-//  template<> inline int CastField<int, localIndex> (const localIndex& field,
-// int const )
-//  {
-//    return static_cast<int>(field);
-//  }
-
-//  template<> inline localIndex CastField<localIndex, localIndex> (const
-// localIndex& field, int const )
-//  {
-//    return field;
-//  }
-
-
-template<> inline globalIndex CastField<globalIndex, globalIndex> (const globalIndex& field, int const )
-{
-  return field;
-}
-
-template<> inline int CastField<int, long long unsigned int > (const long long unsigned int& field, int const )
-{
-  return integer_conversion<int>(field);
-}
-
-
-template<> inline real64 CastField<real64, real64> (const real64& field, int const )
-{
-  return field;
-}
-template<> inline float CastField<float, real64> (const real64& field, int const )
-{
-  return field;
-}
-
 
 }
 
