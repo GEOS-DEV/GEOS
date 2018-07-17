@@ -223,6 +223,12 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm(blockSystem, domain);
 
+      if (m_verboseLevel >= 1)
+      {
+        std::cout << "Attempt: " << dtAttempt + 1 << ", Newton: " << k + 1
+                  << ", R = " << residualNorm << std::endl;
+      }
+
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
       if( residualNorm < newtonTol )
@@ -260,6 +266,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
           // get residual norm
           residualNorm = CalculateResidualNorm(blockSystem, domain);
+
+          if (m_verboseLevel >= 1)
+          {
+            std::cout << "Attempt: " << dtAttempt + 1 << ", Newton: " << k + 1
+                      << ", Line search: " << lineSearchIteration + 1
+                      << ", R = " << residualNorm << std::endl;
+          }
 
           // if the residual norm is less than the last residual, we can proceed to the
           // solution step
