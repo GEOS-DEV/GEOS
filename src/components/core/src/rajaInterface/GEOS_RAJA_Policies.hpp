@@ -35,9 +35,10 @@ typedef RAJA::seq_exec quadraturePolicy;
 
 #ifdef USE_OPENMP
 typedef RAJA::atomic::omp_atomic atomicPolicy;
+typedef RAJA::omp_reduce_ordered reducePolicy; // added by Sergey
 #else
 typedef RAJA::atomic::loop_atomic atomicPolicy;
-
+typedef RAJA::seq_reduce reducePolicy;         // added by Sergey
 #endif
 
 #endif

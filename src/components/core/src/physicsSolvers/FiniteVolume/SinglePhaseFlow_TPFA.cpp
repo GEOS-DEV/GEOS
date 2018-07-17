@@ -997,32 +997,21 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blo
   double* localResidual = nullptr;
   residual->ExtractView(&localResidual, &localSizeInt);
 
-  // create a copy of residual scaled by cell pore volume
-  // XXX: I don't think we are allowed to sum residual norm directly in this mesh loop?
-  // XXX: Needs to be a 'reduce' policy RAJA loop but idk how to use them
-  localIndex localSize = integer_conversion<localIndex>(localSizeInt);
-  array<real64> normalizedResidual(localSize);
-
-  forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                localIndex const esr,
-                                localIndex const k)->void
+  // compute the norm of local residual scaled by cell pore volume
+  real64 localResidualNorm = sumOverElemsInMesh(mesh, [&] (localIndex const er,
+                                                           localIndex const esr,
+                                                           localIndex const k) -> real64
   {
     if (elemGhostRank[er][esr][k] < 0)
     {
-      int const lidInt = rowMap->LID(integer_conversion<int>(blockLocalDofNumber[er][esr][k]));
-      localIndex const lid = integer_conversion<localIndex>(lidInt);
-      normalizedResidual[lid] = localResidual[lidInt] / (refPoro[er][esr][k] * volume[er][esr][k]);
+      int const lid = rowMap->LID(integer_conversion<int>(blockLocalDofNumber[er][esr][k]));
+      real64 const val = localResidual[lid] / (refPoro[er][esr][k] * volume[er][esr][k]);
+      return val * val;
     }
+    return 0.0;
   });
 
-  // compute the norm of local scaled residual
-  real64 localResidualNorm = 0.0;
-  for (localIndex i = 0; i < localSize ; ++i)
-  {
-    localResidualNorm += normalizedResidual[i] * normalizedResidual[i];
-  }
-
-  //
+  // compute global residual norm
   realT globalResidualNorm;
   MPI_Allreduce(&localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
