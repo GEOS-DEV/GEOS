@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -655,7 +655,7 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const lSet& indices,
 
   for( lSet::const_iterator ke=indices.begin() ; ke!=indices.end() ; ++ke )
   {
-    for( unsigned int a=0 ; a<m_toNodesRelation.size(1) ; ++a )
+    for( localIndex a=0 ; a<m_toNodesRelation.size(1) ; ++a )
     {
       const globalIndex gnode = m_toNodesRelation(*ke,a);
       const localIndex lnode = stlMapLookup( nodeGlobalToLocal, gnode );

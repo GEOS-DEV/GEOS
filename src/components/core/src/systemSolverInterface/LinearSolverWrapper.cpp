@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -97,7 +97,7 @@ LinearSolverWrapper::~LinearSolverWrapper()
 
 void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const blockSystem,
                                                   SystemSolverParameters const * const params,
-                                                  EpetraBlockSystem::BlockIDs const blockID)
+                                                  BlockIDs const blockID)
 {
 
   // initial guess for solver
@@ -192,9 +192,9 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
     {
       solver.SetAztecOption(AZ_precond,AZ_dom_decomp);
       solver.SetAztecOption(AZ_subdomain_solve,AZ_ilut);
+      solver.SetAztecOption(AZ_output,0);
       solver.SetAztecParam(AZ_ilut_fill,params->ilut_fill());
       solver.SetAztecParam(AZ_drop,params->ilut_drop());
-      solver.SetAztecParam(AZ_output,0);
     }
 
 //    std::cout<<params->numKrylovIter()<<std::endl;

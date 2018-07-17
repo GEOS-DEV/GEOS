@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -37,9 +37,11 @@ using namespace cxx_utilities;
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
                                             ManagedGroup * const parent ):
   ManagedGroup( name, parent),
-  m_gravityVector( R1Tensor(0.0) )
+  m_gravityVector( R1Tensor(0.0) ),
+  m_blockSystemRepository()
 {
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::blockSystemRepositoryString, &m_blockSystemRepository, 0 );
 }
 
 PhysicsSolverManager::~PhysicsSolverManager()
@@ -70,9 +72,12 @@ void PhysicsSolverManager::FillDocumentationNode()
 
 void PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Adding Solver: " << childKey << ", " << childName << std::endl;
-  std::unique_ptr<SolverBase> solver = SolverBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<SolverBase>( childName, std::move(solver) );
+  if( SolverBase::CatalogInterface::hasKeyName(childKey) )
+  {
+    std::cout << "Adding Solver of type " << childKey << ", named " << childName << std::endl;
+    this->RegisterGroup( childName,
+                         SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
+  }
 }
 
 

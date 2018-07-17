@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -34,6 +34,7 @@
 
 
 #include "DomainPartition.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "finiteElement/FiniteElementManager.hpp"
@@ -82,8 +83,7 @@ ProblemManager::ProblemManager( const std::string& name,
   RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
   RegisterGroup<MeshManager>(groupKeys.meshManager);
   RegisterGroup<OutputManager>(groupKeys.outputManager);
-  // m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
-  m_physicsSolverManager = RegisterGroup<SolverBase>(groupKeys.physicsSolverManager);
+  m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
 
   // The function manager is handled separately
   m_functionManager = NewFunctionManager::Instance();
@@ -750,6 +750,9 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
 
+  SiloFile siloFile;
+  siloFile.MakeSiloDirectories();
+
   this->SetOtherDocumentationNodes(this);
   this->RegisterDocumentationNodes();
 
@@ -839,7 +842,7 @@ void ProblemManager::RunSimulation()
       for ( auto jj=0; jj<solverList.size(); ++jj)
       {
         SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
-        currentSolver->TimeStep( time, dt, cycle, domain );
+        currentSolver->SolverStep( time, dt, cycle, domain );
         nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
       }
 

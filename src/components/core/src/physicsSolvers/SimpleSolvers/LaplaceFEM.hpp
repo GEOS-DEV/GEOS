@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -67,33 +67,67 @@ public:
 
   virtual void ReadXML_PostProcess() override final;
 
-  virtual void TimeStep( real64 const& time_n,
+  /**
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
+   */
+  /**@{*/
+
+  virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
                          dataRepository::ManagedGroup * domain ) override;
 
-  void TimeStepExplicit( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain );
+  virtual real64 ExplicitStep( real64 const & time_n,
+                                 real64 const & dt,
+                                 integer const cycleNumber,
+                                 DomainPartition * const domain ) override;
+
+  virtual void ImplicitStepSetup( real64 const& time_n,
+                              real64 const& dt,
+                              DomainPartition * const domain,
+                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+
+
+  virtual void AssembleSystem( DomainPartition * const domain,
+                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               real64 const time,
+                               real64 const dt ) override;
+
+  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        real64 const time,
+                                        real64 const dt ) override;
+
+//  virtual real64
+//  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
+
+  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            SystemSolverParameters const * const params ) override;
+
+  virtual void
+  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                       real64 const scalingFactor,
+                       DomainPartition * const domain ) override;
+
+  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override {}
+
+  virtual  void ImplicitStepComplete( real64 const & time,
+                                      real64 const & dt,
+                                      DomainPartition * const domain ) override;
+  /**@}*/
+
 
   void TimeStepQuasiStatic( real64 const& time_n,
                             real64 const& dt,
                             integer const cycleNumber,
                             DomainPartition& domain );
 
-  real64 TimeStepImplicit( real64 const & time_n,
-                           real64 const & dt,
-                           integer const cycleNumber,
-                           DomainPartition * const domain );
-
-  void TimeStepImplicitSetup( real64 const& time_n,
-                              real64 const& dt,
-                              DomainPartition * const domain );
-
-  void TimeStepImplicitComplete( real64 const & time,
-                                 real64 const & dt,
-                                 DomainPartition * const domain );
+//  real64 TimeStepImplicit( real64 const & time_n,
+//                           real64 const & dt,
+//                           integer const cycleNumber,
+//                           DomainPartition * const domain );
 
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
@@ -110,11 +144,6 @@ public:
   void SetupMLPreconditioner( DomainPartition const & domain,
                               ML_Epetra::MultiLevelPreconditioner* MLPrec );
 
-
-  real64 Assemble ( DomainPartition * const domain,
-                    systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                    real64 const time,
-                    real64 const dt );
 
   realT CalculateElementResidualAndDerivative( real64 const density,
                                                FiniteElementBase const * const fe,
@@ -136,12 +165,6 @@ public:
                                   real64 const time_n,
                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
 
-  void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                            real64 const scalingFactor,
-                            localIndex const dofOffset,
-                            dataRepository::ManagedGroup * const nodeManager );
-
-
 
 
   enum class timeIntegrationOption
@@ -151,22 +174,26 @@ public:
     ExplicitTransient
   };
 
-  struct viewKeyStruct
+  struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
-    dataRepository::ViewKey trilinosIndex = { "trilinosIndex_LaplaceFEM" };
-    dataRepository::ViewKey ghostRank = { "ghostRank" };
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_Laplace";
+
+    //    dataRepository::ViewKey trilinosIndex = { "trilinosIndex_LaplaceFEM" };
+//    dataRepository::ViewKey ghostRank = { "ghostRank" };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
+
+    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
+
   } viewKeys;
 
-  struct groupKeyStruct
-  {
-    dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
-  } groupKeys;
+//  struct groupKeyStruct
+//  {
+//  } groupKeys;
 
 
-  systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
-  systemSolverInterface::EpetraBlockSystem m_linearSystem;
+//  systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
+//  systemSolverInterface::EpetraBlockSystem m_linearSystem;
 
   SystemSolverParameters * getSystemSolverParameters() {return this->GetGroup<SystemSolverParameters>(groupKeys.systemSolverParameters); }
 

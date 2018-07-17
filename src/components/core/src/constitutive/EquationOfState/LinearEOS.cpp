@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -44,7 +44,11 @@ LinearEOS::LinearEOS( std::string const & name, ManagedGroup * const parent ):
   m_parameterData.RegisterViewWrapper( viewKeys.referenceDensity.Key(), &m_referenceDensity, 0 );
   m_parameterData.RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, 0 );
   m_parameterData.RegisterViewWrapper( viewKeys.fluidViscosity.Key(), &m_fluidViscosity, 0 );
-  m_stateData.RegisterViewWrapper( viewKeys.fluidDensity.Key(), &m_fluidDensity, 0 );
+
+  m_stateData.RegisterViewWrapper( viewKeys.fluidDensity.Key(),
+                                   &m_fluidDensity,
+                                   0 )->setPlotLevel(PlotLevel::LEVEL_0);
+
   m_stateData.RegisterViewWrapper( viewKeys.fluidPressure.Key(), &m_fluidPressure, 0 );
 }
 
@@ -263,6 +267,7 @@ R2SymTensor LinearEOS::StateUpdatePoint( R2SymTensor const & D,
 //
 //  temp.PlusIdentity(meanStress()[i]);
 //  return temp;
+  return R2SymTensor();
 }
 
 void LinearEOS::EquationOfStatePressureUpdate( real64 const & dRho,
