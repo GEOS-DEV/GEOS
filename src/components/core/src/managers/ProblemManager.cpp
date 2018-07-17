@@ -749,6 +749,9 @@ void ProblemManager::InitializePreSubGroups( ManagedGroup * const group )
 void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 {
 
+  SiloFile siloFile;
+  siloFile.MakeSiloDirectories();
+
   this->SetOtherDocumentationNodes(this);
   this->RegisterDocumentationNodes();
 
@@ -873,8 +876,8 @@ void ProblemManager::WriteSilo( integer const cycleNumber,
 //  std::cout<<"rank = "<<rank<<std::endl;
 
   silo.Initialize(PMPIO_WRITE);
-  silo.WaitForBaton(rank, cycleNumber, false );
-  domain->WriteSilo(silo,cycleNumber,problemTime,0);
+  silo.WaitForBatonWrite(rank, cycleNumber, false );
+  silo.WriteDomainPartition( *domain, cycleNumber,problemTime,0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);
   silo.Finish();
