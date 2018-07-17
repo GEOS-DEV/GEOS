@@ -109,6 +109,10 @@ integer FunctionBase::isFunctionOfTime() const
 }
 
 
+/*
+* This will apply a function to an object, then return an array containing
+* the min, average, and max of the results.
+*/
 real64_array FunctionBase::EvaluateStats( dataRepository::ManagedGroup const * const group,
                                           real64 const time,
                                           lSet const & set) const
