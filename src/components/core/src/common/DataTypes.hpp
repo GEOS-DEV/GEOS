@@ -89,7 +89,7 @@ namespace geosx
 using size_t      = std::size_t;
 using integer     = std::int32_t;
 using localIndex  = std::int_fast32_t;
-using globalIndex = std::int64_t;
+using globalIndex = long long int;//std::int64_t;
 
 using string      = std::string;
 
