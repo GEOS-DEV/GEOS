@@ -28,7 +28,7 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 
-/*
+/**
  * Constructor.
  */
 EventManager::EventManager( std::string const & name,
@@ -37,14 +37,14 @@ EventManager::EventManager( std::string const & name,
 {}
 
 
-/*
+/**
  * Destructor.
  */
 EventManager::~EventManager()
 {}
 
 
-/*
+/**
  * Documentation.
  */
 void EventManager::FillDocumentationNode()
@@ -137,7 +137,7 @@ void EventManager::FillDocumentationNode()
 
 
 
-/*
+/**
  * A method to add child events
  */
 void EventManager::CreateChild( string const & childKey, string const & childName )
@@ -148,7 +148,7 @@ void EventManager::CreateChild( string const & childKey, string const & childNam
 }
 
 
-/*
+/**
  * The main execution loop for the code.  During each cycle, it will:
  *   - Calculate the event forecast (number of cycles until its expected execution)
  *   - Signal an event to prepare (forecast == 1)

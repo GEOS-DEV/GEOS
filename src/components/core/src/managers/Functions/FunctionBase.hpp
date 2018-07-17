@@ -16,12 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FunctionBase.hpp
- *
- *  Created on: July 6, 2017
- *      Author: sherman
- */
+/** An object for interfacing with arbitrary N-dimensional functions. */
 
 #ifndef FUNCTIONBASE_HPP_
 #define FUNCTIONBASE_HPP_

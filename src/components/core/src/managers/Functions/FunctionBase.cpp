@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FunctionBase.cpp
- *
- *  Created on: July 6, 2017
- *      Author: sherman
- */
-
 #include "FunctionBase.hpp"
 #include "common/DataTypes.hpp"
 
