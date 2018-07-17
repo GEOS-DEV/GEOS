@@ -262,6 +262,10 @@ public:
     return group_cast<T const *>(m_subGroups[key]);
   }
 
+  /*
+   * This will grab the pointer to an object in the data structure
+   * given a unix-style path (including absolute, relative paths)
+   */
   template< typename T = ManagedGroup >
   T const * GetGroupByPath( string const & path ) const
   {

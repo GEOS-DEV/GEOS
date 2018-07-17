@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * EventManager.cpp
- *
- *  Created on: Oct 5, 2016
- *      Author: sherman
- */
-
 #include "EventManager.hpp"
 #include "managers/Events/EventBase.hpp"
 
