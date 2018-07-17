@@ -128,7 +128,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                   faceManager->getName(),
                                   1,
                                   0,
-                                  0 );
+                                  1 );
 
       docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
                                   viewKeyStruct::faceCenterString,
@@ -141,7 +141,8 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                   faceManager->getName(),
                                   1,
                                   0,
-                                  0 );
+                                  1 );
+
       docNode->AllocateChildNode( viewKeyStruct::transmissibilityString,
                                   viewKeyStruct::transmissibilityString,
                                   -1,
@@ -153,7 +154,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                   faceManager->getName(),
                                   1,
                                   0,
-                                  0 );
+                                  1 );
     }
 
 
@@ -188,7 +189,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     0,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::fluidDensityString,
                                     viewKeyStruct::fluidDensityString,
@@ -214,7 +215,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     0,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::fluidViscosityString,
                                     viewKeyStruct::fluidViscosityString,
@@ -240,7 +241,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     0,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::porosityString,
                                     viewKeyStruct::porosityString,
@@ -266,7 +267,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     0,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::referencePorosityString,
                                     viewKeyStruct::referencePorosityString,
@@ -279,7 +280,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     0,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::permeabilityString,
                                     viewKeyStruct::permeabilityString,
@@ -292,7 +293,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::volumeString,
                                     viewKeyStruct::volumeString,
@@ -305,7 +306,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::gravityDepthString,
                                     viewKeyStruct::gravityDepthString,
@@ -318,13 +319,13 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     elemManager->getName(),
                                     0,
                                     0,
-                                    0 );
+                                    1 );
 
         docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
                                     viewKeyStruct::blockLocalDofNumberString,
                                     -1,
-                                    "localIndex_array",
-                                    "localIndex_array",
+                                    "globalIndex_array",
+                                    "globalIndex_array",
                                     "DOF index",
                                     "DOF index",
                                     "0",
@@ -377,9 +378,9 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
   ElementRegionManager * elemManager = object->group_cast<ElementRegionManager *>();
 
-  ElementRegionManager::ElementViewAccessor<localIndex_array>
+  ElementRegionManager::ElementViewAccessor<globalIndex_array>
   blockLocalDofNumber = elemManager->
-                  ConstructViewAccessor<localIndex_array>( viewKeyStruct::blockLocalDofNumberString );
+                  ConstructViewAccessor<globalIndex_array>( viewKeyStruct::blockLocalDofNumberString );
 
   ElementRegionManager::ElementViewAccessor<real64_array>
   pres = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::fluidPressureString );
@@ -528,9 +529,10 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
 {
 
   ElementRegionManager * const elementRegionManager = meshLevel->getElemManager();
-  ElementRegionManager::ElementViewAccessor<localIndex_array>
+  ElementRegionManager::ElementViewAccessor<globalIndex_array>
   blockLocalDofNumber = elementRegionManager->
-                        ConstructViewAccessor<localIndex_array>( viewKeys.blockLocalDofNumber.Key(), string() );
+                  ConstructViewAccessor<globalIndex_array>( viewKeys.blockLocalDofNumber.Key(),
+                                                            string() );
 
   ElementRegionManager::ElementViewAccessor< integer_array >
   ghostRank = elementRegionManager->
@@ -635,7 +637,7 @@ void SinglePhaseFlow_TPFA::SetupSystem ( DomainPartition * const domain,
   Epetra_Map * const
   rowMap = blockSystem->
            SetRowMap( BlockIDs::fluidPressureBlock,
-                      std::make_unique<Epetra_Map>( static_cast<int>(numGlobalRows),
+                      std::make_unique<Epetra_Map>( static_cast<long long>(numGlobalRows),
                                                     static_cast<int>(numLocalRows),
                                                     0,
                                                     m_linearSolverWrapper.m_epetraComm ) );
@@ -675,9 +677,9 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
 {
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
-  ElementRegionManager::ElementViewAccessor<localIndex_array const>
+  ElementRegionManager::ElementViewAccessor<globalIndex_array const>
   blockLocalDofNumber = elementRegionManager->
-                  ConstructViewAccessor<localIndex_array>( viewKeys.blockLocalDofNumber.Key() );
+                  ConstructViewAccessor<globalIndex_array>( viewKeys.blockLocalDofNumber.Key() );
 
   ElementRegionManager::ElementViewAccessor< integer_array const >
   elemGhostRank = elementRegionManager->
@@ -690,8 +692,8 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
   Array2dT<localIndex> const & elementIndexList = faceManager->elementList();
   integer_array const & faceGhostRank = faceManager->GhostRank();
 
-  integer_array elementLocalDofIndexRow;
-  integer_array elementLocalDofIndexCol;
+  globalIndex_array elementLocalDofIndexRow;
+  globalIndex_array elementLocalDofIndexCol;
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
   for (auto const & conn : m_faceConnectors)
@@ -773,8 +775,8 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
                                                                      ghostRankString );
 
   auto blockLocalDofNumber = elemManager->
-                             ConstructViewAccessor<localIndex_array>(viewKeyStruct::
-                                                                     blockLocalDofNumberString);
+                             ConstructViewAccessor<globalIndex_array>(viewKeyStruct::
+                                                                      blockLocalDofNumberString);
 
   auto pres      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidPressureString);
   auto dPres     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
@@ -790,9 +792,9 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
   auto trans     = faceManager->getReference<real64_array>(viewKeyStruct::transmissibilityString);
 
   //***** Loop over all elements and assemble the change in volume/density terms *****
-  Epetra_IntSerialDenseVector elemDOF(1);
-  Epetra_SerialDenseVector localElemResidual(1);
-  Epetra_SerialDenseMatrix localElem_dRdP(1, 1);
+  globalIndex elemDOF;
+  real64 localAccum;
+  real64 localAccumJacobian;
 
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
@@ -800,32 +802,32 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
   {
     if( elemGhostRank[er][esr][k]<0 )
     {
-      elemDOF(0) = blockLocalDofNumber[er][esr][k];
+      elemDOF = blockLocalDofNumber[er][esr][k];
 
       real64 const dens_new = dens[er][esr][k] + dDens[er][esr][k];
       real64 const poro_new = poro[er][esr][k] + dPoro[er][esr][k];
       real64 const vol      = volume[er][esr][k];
 
       // Residual contribution is mass conservation in the cell
-      localElemResidual(0) = poro_new         * dens_new         * vol
-                           - poro[er][esr][k] * dens[er][esr][k] * vol;
+      localAccum = poro_new         * dens_new         * vol
+                 - poro[er][esr][k] * dens[er][esr][k] * vol;
 
       // Derivative of residual wrt to pressure in the cell
-      localElem_dRdP(0, 0) = (m_dPoro_dPres[er][esr][k] * dens_new * vol)
-                           + (m_dDens_dPres[er][esr][k] * poro_new * vol);
+      localAccumJacobian = (m_dPoro_dPres[er][esr][k] * dens_new * vol)
+                         + (m_dDens_dPres[er][esr][k] * poro_new * vol);
 
       // add contribution to global residual and dRdP
-      residual->SumIntoGlobalValues(elemDOF, localElemResidual);
-      jacobian->SumIntoGlobalValues(elemDOF, localElem_dRdP);
+      residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);
+      jacobian->SumIntoGlobalValues(1, &elemDOF, 1, &elemDOF, &localAccumJacobian);
     }
   });
 
 
   constexpr localIndex numElems = 2;
-  Epetra_IntSerialDenseVector eqnRowIndices(numElems);
-  Epetra_IntSerialDenseVector dofColIndices;
-  Epetra_SerialDenseVector localFlux(numElems);
-  Epetra_SerialDenseMatrix localFluxJacobian;
+  globalIndex eqnRowIndices[numElems];
+  globalIndex_array dofColIndices;
+  real64 localFlux[numElems];
+  Array2dT<real64> localFluxJacobian;
 
   // temporary working arrays
   real64 densWeight[numElems] = { 0.5, 0.5 };
@@ -845,8 +847,8 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
     dDensMean_dP = 0.0;
 
     // resize local matrices and vectors
-    dofColIndices.Resize(integer_conversion<int>(stencilSize));
-    localFluxJacobian.Shape(numElems, integer_conversion<int>(stencilSize));
+    dofColIndices.resize(stencilSize);
+    localFluxJacobian.resize(numElems, stencilSize);
 
     // get the column indices of participating DOFs
     for (localIndex ke = 0; ke < stencilSize; ++ke)
@@ -914,22 +916,18 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
     //***** end flux terms *****
 
     // populate local flux vector and derivatives
-    localFlux(0) =  flux;
-    localFlux(1) = -flux;
+    localFlux[0] =  dt * flux;
+    localFlux[1] = -localFlux[0];
 
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
-      localFluxJacobian(0, integer_conversion<int>(ke)) =  dFlux_dP[ke];
-      localFluxJacobian(1, integer_conversion<int>(ke)) = -dFlux_dP[ke];
+      localFluxJacobian[0][ke] =   dt * dFlux_dP[ke];
+      localFluxJacobian[1][ke] = - dt * dFlux_dP[ke];
     }
 
-    // Multiply by dt
-    localFlux.Scale(dt);
-    localFluxJacobian.Scale(dt);
-
     // Add to global residual/jacobian
-    jacobian->SumIntoGlobalValues(eqnRowIndices, localFluxJacobian);
-    residual->SumIntoGlobalValues(eqnRowIndices, localFlux);
+    jacobian->SumIntoGlobalValues(2, eqnRowIndices, 2, dofColIndices.data(), localFluxJacobian.data());
+    residual->SumIntoGlobalValues(2, eqnRowIndices, localFlux);
   }
 
   jacobian->GlobalAssemble(true);
@@ -987,7 +985,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blo
                                                                           ghostRankString );
 
   auto blockLocalDofNumber = elemManager->
-      ConstructViewAccessor<localIndex_array>(viewKeyStruct::blockLocalDofNumberString);
+      ConstructViewAccessor<globalIndex_array>(viewKeyStruct::blockLocalDofNumberString);
 
   auto refPoro = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::referencePorosityString);
   auto volume  = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::volumeString);
@@ -1034,9 +1032,9 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
 
-  ElementRegionManager::ElementViewAccessor<localIndex_array>
+  ElementRegionManager::ElementViewAccessor<globalIndex_array>
   blockLocalDofNumber = elementRegionManager->
-                        ConstructViewAccessor<localIndex_array>( viewKeys.blockLocalDofNumber.Key() );
+                        ConstructViewAccessor<globalIndex_array>( viewKeys.blockLocalDofNumber.Key() );
 
   auto pres  = elementRegionManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidPressureString);
   auto dPres = elementRegionManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
