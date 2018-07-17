@@ -17,6 +17,7 @@
  */
 
 #include "EventBase.hpp"
+#include <cstring>
 
 namespace geosx
 {
@@ -28,7 +29,7 @@ using namespace dataRepository;
  */
 EventBase::EventBase( const std::string& name,
                       ManagedGroup * const parent ):
-  ManagedGroup(name, parent),
+  ExecutableGroup(name, parent),
   m_target(nullptr)
 {}
 
@@ -209,7 +210,16 @@ void EventBase::GetTargetReferences()
   string eventTarget = this->getReference<string>(viewKeys.eventTarget);
   if (!eventTarget.empty())
   {
-    m_target = this->GetGroupByPath(eventTarget);
+    ManagedGroup * tmp = this->GetGroupByPath(eventTarget);
+    std::cout << "Type of target = " << cxx_utilities::demangle(tmp->get_typeid().name()) << std::endl;
+    if (dynamic_cast<ExecutableGroup *>(tmp) != nullptr)
+    {
+      m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
+    }
+    else
+    {
+      throw std::invalid_argument("The target of an event must be executable!");
+    }    
   }
 
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
