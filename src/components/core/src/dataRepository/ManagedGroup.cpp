@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -204,8 +204,10 @@ void ManagedGroup::RegisterDocumentationNodes()
 
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                           typeID );
+
       view->setSizedFromParent( subNode.second.m_managedByParent);
       view->setRestartFlags( subNode.second.getRestartFlags() );
+      view->setPlotLevel( subNode.second.getVerbosity() );
       subNode.second.m_isRegistered = 1;
 
       string defVal = subNode.second.getDefault();
@@ -398,12 +400,12 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
-void ManagedGroup::InitializeFinal( ManagedGroup * const rootGroup)
+void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
 {
-  InitializeFinalLeaf(rootGroup);
+  FinalInitialization(rootGroup);
   for( auto&& subGroup : m_subGroups )
   {
-    subGroup.second->InitializeFinal(rootGroup);
+    subGroup.second->FinalInitializationRecursive(rootGroup);
   }
 }
 

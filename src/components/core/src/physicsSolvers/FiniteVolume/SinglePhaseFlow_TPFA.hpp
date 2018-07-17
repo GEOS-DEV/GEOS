@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -85,66 +85,54 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
 
-  virtual void InitializeFinalLeaf( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void TimeStep( real64 const& time_n,
+  virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
                          dataRepository::ManagedGroup * domain ) override;
 
   /**
-   * @brief function to perform explicit time integration
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param cycleNumber the current cycle number of the simulation
-   * @param domain the domain partition
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
    */
-  void TimeStepExplicit( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain );
+  /**@{*/
 
-  /**
-   * @brief function to perform quasi-static timestep
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param cycleNumber the current cycle number of the simulation
-   * @param domain the domain partition
-   */
-  void TimeStepQuasiStatic( real64 const& time_n,
-                            real64 const& dt,
-                            integer const cycleNumber,
-                            DomainPartition& domain );
-
-
-  /**
-   * @brief function to perform setup for implicit timestep
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   */
-  void ImplicitStepSetup( real64 const& time_n,
+  virtual void ImplicitStepSetup( real64 const& time_n,
                               real64 const& dt,
-                              DomainPartition * const domain ) override;
+                              DomainPartition * const domain,
+                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
-  /**
-   * @brief function to perform cleanup for implicit timestep
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   */
-  void ImplicitStepComplete( real64 const & time,
-                                 real64 const & dt,
-                                 DomainPartition * const domain ) override;
 
-  /**
-   * @brief This function sets the local and global rows, and calls functions to build linear system
-   *        objects.
-   * @param domain the domain partition
-   * @param blockSystem
-   *
-   *
-   */
+  virtual void AssembleSystem( DomainPartition * const domain,
+                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               real64 const time,
+                               real64 const dt ) override;
+
+  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        real64 const time,
+                                        real64 const dt ) override;
+
+  virtual real64
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
+
+  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            SystemSolverParameters const * const params ) override;
+
+  virtual void
+  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                       real64 const scalingFactor,
+                       DomainPartition * const domain ) override;
+
+  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+
+  virtual  void ImplicitStepComplete( real64 const & time,
+                                      real64 const & dt,
+                                      DomainPartition * const domain ) override;
+  /**@}*/
+
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
@@ -174,11 +162,6 @@ public:
                                      localIndex offset );
 
 
-  real64 Assemble ( DomainPartition * const domain,
-                    systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                    real64 const time,
-                    real64 const dt ) override;
-
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -190,19 +173,8 @@ public:
    */
   void ApplyDirichletBC_implicit( ManagedGroup * object,
                                   real64 const time,
-                                  systemSolverInterface::EpetraBlockSystem & blockSystem);
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
-  /**
-   * @brief Function to apply the solution vector back onto the data fields
-   * @param blockSystem the entire block system
-   * @param scalingFactor factor to scale the solution prior to application
-   * @param dofOffset the offset to the DOF indices
-   * @param objectManager the object manager that holds the fields we wish to apply the solution to
-   */
-  void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                            real64 const scalingFactor,
-                            localIndex const dofOffset,
-                            DomainPartition * const domain ) override;
 
   /**
    * @brief This function generates various geometric information for later use.
@@ -223,6 +195,7 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SPTPFA";
     constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
     constexpr static auto deltaPorosityString = "deltaPorosity";
@@ -234,10 +207,9 @@ public:
     constexpr static auto gravityForceString = "gravityForce";
     constexpr static auto permeabilityString = "permeablity";
     constexpr static auto porosityString = "porosity";
-    constexpr static auto trilinosIndexString = "trilinosIndex_SinglePhaseFlow_TPFA";
     constexpr static auto volumeString = "volume";
 
-    dataRepository::ViewKey trilinosIndex = { trilinosIndexString };
+    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
@@ -252,7 +224,7 @@ public:
 
 private:
   /// the currently selected time integration option
-  timeIntegrationOption m_timeIntegrationOption;
+//  timeIntegrationOption m_timeIntegrationOption;
 
   /// temp variable containing distance between the face and element centers divided by the area of
   /// the face

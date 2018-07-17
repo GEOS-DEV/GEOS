@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -43,7 +43,8 @@ ViewWrapperBase::ViewWrapperBase( std::string const & name,
   m_name(name),
   m_parent(parent),
   m_sizedFromParent(1),
-  m_restart_flags(RestartFlags::WRITE_AND_READ)
+  m_restart_flags(RestartFlags::WRITE_AND_READ),
+  m_plotLevel(PlotLevel::LEVEL_3)
 #ifdef USE_ATK
   ,m_sidreView(nullptr)
 #endif

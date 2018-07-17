@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -46,6 +46,15 @@ namespace geosx
 {
 namespace systemSolverInterface
 {
+
+enum class BlockIDs
+{
+  dummyScalarBlock,
+  displacementBlock,
+  fluidPressureBlock,
+  temperatureBlock,
+  invalidBlock
+};
 
 static double ClearRow ( Epetra_FECrsMatrix * matrix,
                          int const row,
@@ -92,14 +101,6 @@ class EpetraBlockSystem
 public:
   constexpr static int MAX_NUM_BLOCKS = 3;
   constexpr static int invalidIndex=-1;
-  enum class BlockIDs
-  {
-    dummyScalarBlock,
-    displacementBlock,
-    fluidPressureBlock,
-    temperatureBlock,
-    invalidBlock
-  };
 
   string BlockIDString( BlockIDs const id ) const
   {
@@ -283,9 +284,22 @@ public:
     }
     return m_rhs[ index ].get();
   }
+  Epetra_FEVector const * GetResidualVector( int const index ) const
+  {
+    if( m_blockID[index]==BlockIDs::invalidBlock )
+    {
+      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n");
+    }
+    return m_rhs[ index ].get();
+  }
   Epetra_FEVector * GetResidualVector( const BlockIDs dofID )
   {
     int index = m_blockIndex[dofID];
+    return GetResidualVector(index);
+  }
+  Epetra_FEVector const * GetResidualVector( const BlockIDs dofID ) const
+  {
+    int index = m_blockIndex.at(dofID);
     return GetResidualVector(index);
   }
 

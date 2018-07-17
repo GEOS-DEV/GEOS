@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -80,22 +80,22 @@ public:
                                                     string const & dofMapName,
                                                     integer const & dofDim,
                                                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                    systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const;
+                                                    systemSolverInterface::BlockIDs const blockID ) const;
 
   template< int OPERATION, typename LAMBDA >
   void
   ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
                                                real64 const time,
-                                               localIndex_array const & dofMap,
+                                               globalIndex_array const & dofMap,
                                                integer const & dofDim,
                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                               systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                               systemSolverInterface::BlockIDs const blockID,
                                                LAMBDA && lambda ) const;
 
   template< int OPERATION >
   inline void ApplyBounaryConditionDefaultMethodPoint( integer const dof,
                                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                       systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                                       systemSolverInterface::BlockIDs const blockID,
                                                        real64 & rhs,
                                                        real64 const & bcValue,
                                                        real64 const fieldValue ) const;
@@ -267,7 +267,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
 template<>
 inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( integer const dof,
                                                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                                               systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                                                               systemSolverInterface::BlockIDs const blockID,
                                                                                real64 & rhs,
                                                                                real64 const & bcValue,
                                                                                real64 const fieldValue ) const
@@ -289,7 +289,7 @@ inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( i
 template<>
 inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( integer const dof,
                                                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                                               systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                                                               systemSolverInterface::BlockIDs const blockID,
                                                                                real64 & rhs,
                                                                                real64 const & bcValue,
                                                                                real64 const fieldValue ) const
@@ -312,7 +312,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
                                                                          string const & dofMapName,
                                                                          integer const & dofDim,
                                                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                                         systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID ) const
+                                                                         systemSolverInterface::BlockIDs const blockID ) const
 {
   integer const component = GetComponent();
   string const functionName = getData<string>(viewKeyStruct::functionNameString);
@@ -429,10 +429,10 @@ void
 BoundaryConditionBase::
 ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
                                              real64 const time,
-                                             localIndex_array const & dofMap,
+                                             globalIndex_array const & dofMap,
                                              integer const & dofDim,
                                              systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                             systemSolverInterface::EpetraBlockSystem::BlockIDs const blockID,
+                                             systemSolverInterface::BlockIDs const blockID,
                                              LAMBDA && lambda ) const
 {
   integer const component = GetComponent();
@@ -442,8 +442,8 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
   integer const numBlocks = blockSystem->numBlocks();
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
 
-  Epetra_IntSerialDenseVector  node_dof( integer_conversion<int>( set.size() ) );
-  Epetra_SerialDenseVector     node_rhs( integer_conversion<int>( set.size() ) );
+  globalIndex_array  node_dof( set.size() );
+  real64_array     node_rhs( set.size() );
 
   if( functionName.empty() )
   {
@@ -451,7 +451,7 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
     integer counter=0;
     for( auto a : set )
     {
-      node_dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
+      node_dof(counter) = dofDim*dofMap[a]+component;
       this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
                                                                 blockSystem,
                                                                 blockID,
@@ -462,11 +462,11 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
     }
     if( OPERATION==0 )
     {
-      rhs->ReplaceGlobalValues(node_dof, node_rhs);
+      rhs->ReplaceGlobalValues( 1, node_dof.data(), node_rhs.data() );
     }
     else if( OPERATION==1 )
     {
-      rhs->SumIntoGlobalValues(node_dof, node_rhs);
+      rhs->SumIntoGlobalValues( 1, node_dof.data(), node_rhs.data() );
     }
   }
   else
@@ -491,11 +491,11 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
         }
         if( OPERATION==0 )
         {
-          rhs->ReplaceGlobalValues(node_dof, node_rhs);
+          rhs->ReplaceGlobalValues( 1, node_dof.data(), node_rhs.data() );
         }
         else if( OPERATION==1 )
         {
-          rhs->SumIntoGlobalValues(node_dof, node_rhs);
+          rhs->SumIntoGlobalValues( 1, node_dof.data(), node_rhs.data() );
         }
       }
       else
@@ -517,11 +517,11 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
         }
         if( OPERATION==0 )
         {
-          rhs->ReplaceGlobalValues(node_dof, node_rhs);
+          rhs->ReplaceGlobalValues( 1, node_dof.data(), node_rhs.data() );
         }
         else if( OPERATION==1 )
         {
-          rhs->SumIntoGlobalValues(node_dof, node_rhs);
+          rhs->SumIntoGlobalValues( 1, node_dof.data(), node_rhs.data() );
         }
 
       }
