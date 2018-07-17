@@ -655,7 +655,7 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const lSet& indices,
 
   for( lSet::const_iterator ke=indices.begin() ; ke!=indices.end() ; ++ke )
   {
-    for( unsigned int a=0 ; a<m_toNodesRelation.size(1) ; ++a )
+    for( localIndex a=0 ; a<m_toNodesRelation.size(1) ; ++a )
     {
       const globalIndex gnode = m_toNodesRelation(*ke,a);
       const localIndex lnode = stlMapLookup( nodeGlobalToLocal, gnode );

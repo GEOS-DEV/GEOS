@@ -86,7 +86,7 @@ public:
   void
   ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
                                                real64 const time,
-                                               localIndex_array const & dofMap,
+                                               globalIndex_array const & dofMap,
                                                integer const & dofDim,
                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                systemSolverInterface::BlockIDs const blockID,
@@ -429,7 +429,7 @@ void
 BoundaryConditionBase::
 ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
                                              real64 const time,
-                                             localIndex_array const & dofMap,
+                                             globalIndex_array const & dofMap,
                                              integer const & dofDim,
                                              systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                              systemSolverInterface::BlockIDs const blockID,
@@ -442,8 +442,8 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
   integer const numBlocks = blockSystem->numBlocks();
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
 
-  Epetra_IntSerialDenseVector  node_dof( integer_conversion<int>( set.size() ) );
-  Epetra_SerialDenseVector     node_rhs( integer_conversion<int>( set.size() ) );
+  globalIndex_array  node_dof( set.size() );
+  real64_array     node_rhs( set.size() );
 
   if( functionName.empty() )
   {
@@ -451,7 +451,7 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
     integer counter=0;
     for( auto a : set )
     {
-      node_dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
+      node_dof(counter) = dofDim*dofMap[a]+component;
       this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
                                                                 blockSystem,
                                                                 blockID,
@@ -462,11 +462,11 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
     }
     if( OPERATION==0 )
     {
-      rhs->ReplaceGlobalValues(node_dof, node_rhs);
+      rhs->ReplaceGlobalValues( 1, node_dof.data(), node_rhs.data() );
     }
     else if( OPERATION==1 )
     {
-      rhs->SumIntoGlobalValues(node_dof, node_rhs);
+      rhs->SumIntoGlobalValues( 1, node_dof.data(), node_rhs.data() );
     }
   }
   else
@@ -491,11 +491,11 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
         }
         if( OPERATION==0 )
         {
-          rhs->ReplaceGlobalValues(node_dof, node_rhs);
+          rhs->ReplaceGlobalValues( 1, node_dof.data(), node_rhs.data() );
         }
         else if( OPERATION==1 )
         {
-          rhs->SumIntoGlobalValues(node_dof, node_rhs);
+          rhs->SumIntoGlobalValues( 1, node_dof.data(), node_rhs.data() );
         }
       }
       else
@@ -517,11 +517,11 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
         }
         if( OPERATION==0 )
         {
-          rhs->ReplaceGlobalValues(node_dof, node_rhs);
+          rhs->ReplaceGlobalValues( 1, node_dof.data(), node_rhs.data() );
         }
         else if( OPERATION==1 )
         {
-          rhs->SumIntoGlobalValues(node_dof, node_rhs);
+          rhs->SumIntoGlobalValues( 1, node_dof.data(), node_rhs.data() );
         }
 
       }
