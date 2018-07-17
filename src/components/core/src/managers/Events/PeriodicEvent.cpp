@@ -28,7 +28,7 @@ namespace geosx
 using namespace dataRepository;
 
 
-/*
+/**
  * Constructor.
  */
 PeriodicEvent::PeriodicEvent( const std::string& name,
@@ -38,14 +38,14 @@ PeriodicEvent::PeriodicEvent( const std::string& name,
 {}
 
 
-/*
+/**
  * Destructor.
  */
 PeriodicEvent::~PeriodicEvent()
 {}
 
 
-/*
+/**
  * Documentation.
  */
 void PeriodicEvent::FillDocumentationNode()
@@ -165,7 +165,7 @@ void PeriodicEvent::FillDocumentationNode()
 
 
 
-/*
+/**
  * Estimate the expected number of cycles until an event is expected to trigger.
  * The event frequency can be specified in terms of:
  *   - time (timeFrequency > 0, units = seconds)
@@ -215,7 +215,7 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
 }
 
 
-/*
+/**
  * If the event forecast is zero, and an optional function (f) is specified, then
  * this method will be called to see if the event should be triggered or ignored.
  * For example, this could be used to periodically check the condition of the mesh,
@@ -292,7 +292,9 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
 }
 
 
-
+/**
+* Grab the next time-step.  If requested, then limit the requested dt to exactly match the time frequency
+*/
 real64 PeriodicEvent::GetTimestepRequest(real64 const time)
 {
   real64 const timeFrequency = this->getReference<real64>(viewKeys.timeFrequency);
