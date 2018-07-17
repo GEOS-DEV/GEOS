@@ -7,12 +7,12 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
-                          verboseLevel="0"
+                          verboseLevel="1"
                           gravityFlag="1">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
-                              newtonTol="1.0e-8"
-                              maxIterNewton="10"/>
+                              newtonTol="1.0e-6"
+                              maxIterNewton="8"/>
     </SinglePhaseFlow_TPFA>
   </Solvers>
   
@@ -63,10 +63,12 @@
 
   <Constitutive>
       <LinearEOS name="water">
-        <ParameterData referenceDensity="1000"
-                       BulkModulus="2.0e9"
-                       referencePressure="0.0"
-                       fluidViscosity="0.001"/>
+        <ParameterData referencePressure="0.0"
+                       referenceDensity="1000"
+                       fluidBulkModulus="2.0e9"
+                       referenceViscosity="0.001"
+                       fluidViscosibility="0.0"
+                       solidBulkModulus="1.0e9"/>
       </LinearEOS>
   </Constitutive>
 
@@ -102,23 +104,22 @@
                dataType="R1Tensor"
                scale="2.0e-16"/>
 
-    <Dirichlet name="porosity"
-               initialCondition="1"  
+    <Dirichlet name="referencePorosity"
+               initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/porosity"
-               dataType="real64" 
+               objectPath="ElementRegion/Region2/cb1/referencePorosity"
+               dataType="real64"
                scale="0.05"/>
 
-    <Dirichlet name="fluidDensity"
-               initialCondition="1"  
+    <Dirichlet name="initialPressure"
+               initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
-               constitutivePath="water/StateData/fluidDensity"
-               dataType="real64" 
-               scale="1000.0"/>
+               objectPath="ElementRegion/Region2/cb1/fluidPressure"
+               dataType="real64"
+               scale="5e6"/>
   
-    <Dirichlet name="sourceTerm" fieldName="fluidPressure" dataType="Scalar" scale="1000.0" setNames="source"/>
-    <Dirichlet name="sinkTerm"   fieldName="fluidPressure" dataType="Scalar" scale="0.0"    setNames="sink"/>
+    <Dirichlet name="sourceTerm" fieldName="fluidPressure" dataType="Scalar" scale="1e7" setNames="source"/>
+    <Dirichlet name="sinkTerm"   fieldName="fluidPressure" dataType="Scalar" scale="0.0" setNames="sink"/>
   </BoundaryConditions>
 
   <Functions>

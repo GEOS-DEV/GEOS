@@ -214,13 +214,15 @@ public:
   /**
    * @brief calculate the norm of the global system residual
    * @param blockSystem the entire block system
+   * @param domain the domain partition
    * @return norm of the residual
    *
    * This function returns the norm of global residual vector, which is suitable for comparison with
    * a tolerance.
    */
   virtual real64
-  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem );
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                         DomainPartition * const domain );
 
   /**
    * @brief function to apply a linear system solver to the assembled system.
