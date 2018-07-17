@@ -116,7 +116,8 @@ public:
                                         real64 const dt ) override;
 
   virtual real64
-  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
+  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                        DomainPartition *const domain) override;
 
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
@@ -189,25 +190,32 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SPTPFA";
-    constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
+
+    constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
+
+    constexpr static auto fluidDensityString = "fluidDensity";
+    constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
+
+    constexpr static auto fluidViscosityString = "fluidViscosity";
+    constexpr static auto deltaFluidViscosityString = "deltaFluidViscosity";
+
+    constexpr static auto porosityString = "porosity";
     constexpr static auto deltaPorosityString = "deltaPorosity";
-    constexpr static auto deltaVolumeString = "deltaVolume";
+    constexpr static auto referencePorosityString = "referencePorosity";
+
     constexpr static auto faceAreaString = "faceArea";
     constexpr static auto faceCenterString = "faceCenter";
-    constexpr static auto fluidPressureString = "fluidPressure";
+
     constexpr static auto gravityFlagString = "gravityFlag";
     constexpr static auto gravityDepthString = "gravityDepth";
-    constexpr static auto permeabilityString = "permeability";
-    constexpr static auto porosityString = "porosity";
+
     constexpr static auto volumeString = "volume";
+    constexpr static auto permeabilityString = "permeability";
     constexpr static auto transmissibilityString = "transmissibility";
 
     dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
-    dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName = { "fieldName" };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
-    dataRepository::ViewKey permeability = { permeabilityString };
   } viewKeys;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -263,6 +271,12 @@ private:
 
   /// temp storage for derivatives of density w.r.t. pressure
   array<array<array<real64>>> m_dDens_dPres;
+
+  /// temp storage for derivatives of porosity w.r.t. pressure
+  array<array<array<real64>>> m_dPoro_dPres;
+
+  /// temp storage for derivatives of porosity w.r.t. pressure
+  array<array<array<real64>>> m_dVisc_dPres;
 
 };
 

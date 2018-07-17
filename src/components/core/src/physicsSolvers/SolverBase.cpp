@@ -221,7 +221,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
 
       // get residual norm
-      real64 residualNorm = CalculateResidualNorm( blockSystem );
+      real64 residualNorm = CalculateResidualNorm(blockSystem, domain);
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
@@ -259,7 +259,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
 
           // get residual norm
-          residualNorm = CalculateResidualNorm( blockSystem );
+          residualNorm = CalculateResidualNorm(blockSystem, domain);
 
           // if the residual norm is less than the last residual, we can proceed to the
           // solution step
@@ -348,7 +348,8 @@ void SolverBase::ApplyBoundaryConditions( DomainPartition * const domain,
 
 real64
 SolverBase::
-CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem )
+CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                       DomainPartition * const domain )
 {
   GEOS_ERROR( "SolverBase::CalculateResidualNorm called!. Should be overridden.");
   return 0;
@@ -361,8 +362,8 @@ void SolverBase::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 }
 
 void SolverBase::ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                          real64 const scalingFactor,
-                          DomainPartition * const  )
+                                      real64 const scalingFactor,
+                                      DomainPartition * const  )
 {
   GEOS_ERROR( "SolverBase::ApplySystemSolution called!. Should be overridden.");
 }
