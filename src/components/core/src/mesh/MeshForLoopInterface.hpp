@@ -46,7 +46,7 @@ void forall_in_range( localIndex const begin, const localIndex end, LAMBDA && bo
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void forall_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
-  RAJA::TypedListSegment<localIndex> listSeg(indexList, len);
+  RAJA::TypedListSegment<localIndex> listSeg(indexList, len, RAJA::Unowned);
   RAJA::forall<POLICY>( listSeg , [=] (localIndex index) mutable -> void
   {
     body(index);
@@ -299,7 +299,7 @@ template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY
 NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
   RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-  RAJA::TypedListSegment<localIndex> listSeg(indexList, len);
+  RAJA::TypedListSegment<localIndex> listSeg(indexList, len, RAJA::Unowned);
   RAJA::forall<EXEC_POLICY>( listSeg , [=] (localIndex index) mutable -> void
   {
     sum += body(index);
