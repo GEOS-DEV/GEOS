@@ -31,3 +31,4 @@ foreach(test ${gtest_geosx_tests})
 endforeach()
 
 add_subdirectory(xmlTests)
+add_subdirectory(PhysicsSolvers)
