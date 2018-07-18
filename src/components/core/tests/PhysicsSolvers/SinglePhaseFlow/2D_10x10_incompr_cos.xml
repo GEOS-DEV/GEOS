@@ -7,7 +7,7 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
-                          verboseLevel="0"
+                          verboseLevel="1"
                           gravityFlag="1">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
@@ -19,28 +19,28 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 100"
-                  yCoords="0, 100"
+                  xCoords="0, 10"
+                  yCoords="0, 10"
                   zCoords="0, 1"
-                  nx="100"
-                  ny="100"
+                  nx="10"
+                  ny="10"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
 
   <Geometry>
-    <Box name="left"   type="0" xMin="-0.01, -0.01, -0.01" xMax="   1.01, 100.01, 1.01"/>
-    <Box name="right"  type="0" xMin="98.99, -0.01, -0.01" xMax=" 100.01, 100.01, 1.01"/>
-    <Box name="bottom" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 100.01,   1.01, 1.01"/>
-    <Box name="top"    type="0" xMin="-0.01, 98.99, -0.01" xMax=" 100.01, 101.01, 1.01"/>
+    <Box name="left"   type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 10.01, 1.01"/>
+    <Box name="right"  type="0" xMin=" 8.99, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="bottom" type="0" xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.01, 1.01"/>
+    <Box name="top"    type="0" xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
   </Geometry>
 
 
   <Events>
     <Application name="1"
                  beginTime="0.0" 
-                 endTime="20.0"
-                 dt="10.0"
+                 endTime="1"
+                 dt="1.0"
                  solvers="SinglePhaseFlow_TPFA" />
   </Events>
 
@@ -118,20 +118,22 @@
                setNames="all"
                objectPath="ElementRegion/Region2/cb1/fluidPressure"
                dataType="real64"
-               scale="0"/>
+               scale="0.0"/>
 
-    <Dirichlet name="leftPressure"   fieldName="fluidPressure" dataType="Scalar" functionName="boundaryPressure" scale="1.0" setNames="left"/>
-    <Dirichlet name="rightPressure"  fieldName="fluidPressure" dataType="Scalar" functionName="boundaryPressure" scale="1.0" setNames="left"/>
-    <Dirichlet name="bottomPressure" fieldName="fluidPressure" dataType="Scalar" functionName="boundaryPressure" scale="1.0" setNames="left"/>
-    <Dirichlet name="topPressure"    fieldName="fluidPressure" dataType="Scalar" functionName="boundaryPressure" scale="1.0" setNames="left"/>
+    <Dirichlet name="boundaryPressure"
+               fieldName="fluidPressure"
+               dataType="Scalar"
+               functionName="boundaryPressureFunc"
+               scale="1.0e7"
+               setNames="left right bottom top"/>
   </BoundaryConditions>
 
   <Functions>
-    <SymbolicFunction name="boundaryPressure"
-                      inputVarNames="ReferencePosition"
+    <SymbolicFunction name="boundaryPressureFunc"
+                      inputVarNames="elementCenter"
                       inputVarTypes=""
                       variableNames="x y z"
-                      expression="cos(2*PI*x/100)*cos(2*PI*y/100)"/>
+                      expression="cos(2*PI*x/10)*cos(2*PI*y/10)"/>
   </Functions>
 
   <Partition>
