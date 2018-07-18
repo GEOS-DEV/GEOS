@@ -87,35 +87,16 @@ void SiloOutput::Execute(real64 const& time_n,
                          const int cycleNumber,
                          ManagedGroup * domain)
 {
-  //   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
-  
-  //   string const plotFileRoot = this->getReference<string>(viewKeys.plotFileRoot);
-  //   SiloFile silo;
-
-  //   integer rank;
-  //   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  //   MPI_Barrier( MPI_COMM_WORLD );
-  // //  std::cout<<"rank = "<<rank<<std::endl;
-
-  //   silo.SetFileRoot(plotFileRoot);
-  //   silo.Initialize(PMPIO_WRITE);
-  //   silo.WaitForBaton(rank, cycle, false );
-  //   domainPartition->WriteSilo(silo, cycle, time, 0);
-  //   silo.HandOffBaton();
-  //   silo.ClearEmptiesFromMultiObjects(cycle);
-  // silo.Finish();
-  
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
   SiloFile silo;
 
   integer rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Barrier( MPI_COMM_WORLD );
-//  std::cout<<"rank = "<<rank<<std::endl;
 
   silo.Initialize(PMPIO_WRITE);
-  silo.WaitForBaton(rank, cycleNumber, false );
-  domainPartition->WriteSilo(silo,cycleNumber,time_n,0);
+  silo.WaitForBatonWrite(rank, cycleNumber, false );
+  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n, 0);
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects(cycleNumber);
   silo.Finish();
