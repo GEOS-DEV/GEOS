@@ -541,7 +541,7 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
   {
     auto const & wrapper = wrapperIter.second;
 
-    if( wrapper->getPlotLevel() < PlotLevel::LEVEL_1 )
+    if( wrapper->getPlotLevel() < dataRepository::PlotLevel::LEVEL_1 )
     {
       // the field name is the key to the map
       string const fieldName = wrapper->getName();

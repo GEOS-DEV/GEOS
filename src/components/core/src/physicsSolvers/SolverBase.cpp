@@ -160,7 +160,7 @@ void SolverBase::Execute( real64 const& time_n,
 {
   if ( dt > 0 )
   {
-    TimeStep(time_n, dt, cycleNumber, domain);
+    SolverStep(time_n, dt, cycleNumber, domain);
   }
 }
 

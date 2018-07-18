@@ -81,8 +81,7 @@ void RestartOutput::Execute(real64 const& time_n,
   // #endif
 
   #ifdef USE_ATK
-    ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-    ViewWrapper<std::string>::rtype problemName = commandLine->getData<std::string>(viewKeys.problemName);
+    ViewWrapper<std::string>::rtype problemName = this->getName();
     char fileName[200] = {0};
     sprintf(fileName, "%s_%s_%09d", problemName.data(), "restart", cycleNumber);
 
