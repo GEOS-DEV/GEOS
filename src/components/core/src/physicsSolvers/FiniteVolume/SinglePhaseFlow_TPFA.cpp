@@ -411,6 +411,7 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
       // call the application of the boundray condition to alter the matrix and rhs
       bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
                                                           time,
+                                                          subRegion,
                                                           blockLocalDofNumber[er][esr].get(),
                                                           1,
                                                           blockSystem,
