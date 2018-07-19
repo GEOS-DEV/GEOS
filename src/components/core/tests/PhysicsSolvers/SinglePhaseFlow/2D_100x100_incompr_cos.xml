@@ -7,7 +7,7 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
-                          verboseLevel="1"
+                          verboseLevel="0"
                           gravityFlag="1">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
@@ -19,8 +19,8 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 100"
-                  yCoords="0, 100"
+                  xCoords="0, 10"
+                  yCoords="0, 10"
                   zCoords="0, 1"
                   nx="100"
                   ny="100"
@@ -29,10 +29,10 @@
   </Mesh>
 
   <Geometry>
-    <Box name="left"   type="0" xMin="-0.01, -0.01, -0.01" xMax="   1.01, 100.01, 1.01"/>
-    <Box name="right"  type="0" xMin="98.99, -0.01, -0.01" xMax=" 100.01, 100.01, 1.01"/>
-    <Box name="bottom" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 100.01,   1.01, 1.01"/>
-    <Box name="top"    type="0" xMin="-0.01, 98.99, -0.01" xMax=" 100.01, 100.01, 1.01"/>
+    <Box name="left"   type="0" xMin="-0.01, -0.01, -0.01" xMax=" 0.11, 10.01, 1.01"/>
+    <Box name="right"  type="0" xMin=" 9.89, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="bottom" type="0" xMin="-0.01, -0.01, -0.01" xMax="10.01,  0.11, 1.01"/>
+    <Box name="top"    type="0" xMin="-0.01,  9.89, -0.01" xMax="10.01, 10.01, 1.01"/>
   </Geometry>
 
 
@@ -134,7 +134,7 @@
                       inputVarNames="elementCenter"
                       inputVarTypes=""
                       variableNames="x y z"
-                      expression="cos(2*PI*x/100)*cos(2*PI*y/100)"/>
+                      expression="cos(2*PI*x/10)*cos(2*PI*y/10)"/>
   </Functions>
 
   <Partition>

@@ -7,7 +7,7 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
-                          verboseLevel="1"
+                          verboseLevel="0"
                           gravityFlag="1">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
