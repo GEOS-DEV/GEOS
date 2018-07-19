@@ -28,6 +28,10 @@
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
+#include "managers/DomainPartition.hpp"
+#include "mesh/MeshForLoopInterface.hpp"
+#include "physicsSolvers/FiniteVolume/SinglePhaseFlow_TPFA.hpp"
+#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 #ifdef USE_OPENMP
 #include <omp.h>
@@ -45,36 +49,132 @@ int global_argc;
 char** global_argv;
 }
 
-int main(int argc, char** argv)
+template <typename LAMBDA>
+real64 computeErrorNorm(DomainPartition const *domain, std::string const &solutionFieldName,
+                        R1Tensor const h, LAMBDA &&solutionFunc)
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>(global_argc)];
-  for( int i=0 ; i<argc ; ++i )
+  ElementRegionManager::ElementViewAccessor<real64_array const>
+  solutionField = elemManager->ConstructViewAccessor<real64_array>(solutionFieldName);
+
+  ElementRegionManager::ElementViewAccessor<r1_array const>
+  center = elemManager->ConstructViewAccessor<r1_array>(CellBlock::viewKeyStruct::elementCenterString);
+
+  // compute local error norm
+  real64 localErrorNorm = sumOverElemsInMesh(mesh, [&] (localIndex const er,
+                                                        localIndex const esr,
+                                                        localIndex const k) -> real64
   {
-    global_argv[i] = argv[i];
-    std::cout<<argv[i]<<std::endl;
+    real64 const val = solutionField[er][esr][k] - solutionFunc(center[er][esr][k]);
+    return val * val * h[0] * h[1] * h[2]; // TODO how to compute error norm correctly?
+  });
+
+  // compute global error norm
+  real64 globalErrorNorm;
+  MPI_Allreduce(&localErrorNorm, &globalErrorNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  globalErrorNorm = sqrt(globalErrorNorm);
+
+  return globalErrorNorm;
+}
+
+// extracts the function used in boundary conditions, assuming it's unique
+std::pair<FunctionBase const *, real64>
+getBoundaryFunctionAndScale(std::string const &fieldName)
+{
+  real64 scale = 1.0;
+  BoundaryConditionBase const * bcFound = nullptr;
+  BoundaryConditionManager const * bcMgr = BoundaryConditionManager::get();
+  for (auto & subGroup : bcMgr->GetSubGroups())
+  {
+    BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
+
+    if (bc->initialCondition())
+      continue;
+
+    if (bc->getData<std::string>(BoundaryConditionBase::viewKeyStruct::fieldNameString) == fieldName)
+    {
+      bcFound = bc;
+      scale = *bc->getData<real64>(BoundaryConditionBase::viewKeyStruct::scaleString);
+      break;
+    }
   }
 
-  return RUN_ALL_TESTS();
+  if (bcFound == nullptr)
+    return { nullptr, scale };
+
+  std::string funcName = bcFound->getData<std::string>(BoundaryConditionBase::viewKeyStruct::functionNameString);
+  if (funcName.empty())
+    return { nullptr, scale };
+
+  FunctionBase const * fnFound = nullptr;
+  NewFunctionManager const * fnMgr = NewFunctionManager::Instance();
+  for (auto & subGroup : fnMgr->GetSubGroups())
+  {
+    FunctionBase const * fn = subGroup.second->group_cast<FunctionBase const *>();
+
+    if (fn->getName() == funcName)
+    {
+      fnFound = fn;
+      break;
+    }
+  }
+
+  return { fnFound, scale };
+}
+
+void runProblem(ProblemManager & problemManager, int argc, char** argv)
+{
+  problemManager.SetDocumentationNodes();
+  problemManager.RegisterDocumentationNodes();
+
+  problemManager.InitializePythonInterpreter();
+  problemManager.ParseCommandLineInput(argc, argv);
+  problemManager.ParseInputFile();
+
+  problemManager.Initialize(&problemManager);
+  problemManager.FinalInitializationRecursive(&problemManager);
+  problemManager.ApplyInitialConditions();
+
+  std::cout << std::endl << "Running simulation:" << std::endl;
+  problemManager.RunSimulation();
+  std::cout << "Done!" << std::endl;
+
+  problemManager.ClosePythonInterpreter();
 }
 
 TEST(singlePhaseFlow,analyticalTest)
 {
+  ProblemManager problemManager("ProblemManager", nullptr);
+  runProblem(problemManager, global_argc, global_argv);
+
+  auto const pair = getBoundaryFunctionAndScale(SinglePhaseFlow_TPFA::viewKeyStruct::fluidPressureString);
+  FunctionBase const * fn = pair.first;
+  real64 const scale = pair.second;
+
+  R1Tensor h(0.1, 0.1, 1.0); // TODO how to get h from input?
+
+  real64 const err = computeErrorNorm(problemManager.getDomainPartition(),
+                                      SinglePhaseFlow_TPFA::viewKeyStruct::fluidPressureString,
+                                      h,
+                                      [&] (R1Tensor const & pt) -> real64
+                                      {
+                                        return scale * fn->Evaluate(pt.Data());
+                                      });
+
+  std::cout << "Computed error norm: " << err << std::endl;
+  EXPECT_TRUE(err < 1.0); // TODO what is an appropriate error bound/estimate for FV?
+}
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+
 #ifdef USE_MPI
   int rank;
-  MPI_Init(&global_argc,&global_argv);
+  MPI_Init(&argc,&argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-
-  std::cout<<"starting main"<<std::endl;
-
-#ifdef USE_OPENMP
-  {
-    int noThreads = omp_get_max_threads();
-    std::cout<<"No of threads: "<<noThreads<<std::endl;
-  }
 #endif
 
 #ifdef USE_ATK
@@ -93,23 +193,17 @@ TEST(singlePhaseFlow,analyticalTest)
 
   cxx_utilities::setSignalHandling(cxx_utilities::handler1);
 
-  ProblemManager problemManager( "ProblemManager", nullptr );
-  problemManager.SetDocumentationNodes();
-  problemManager.RegisterDocumentationNodes();  
+  global_argc = argc;
+  global_argv = new char*[static_cast<unsigned int>(global_argc)];
+  for( int i=0 ; i<argc ; ++i )
+  {
+    global_argv[i] = argv[i];
+    std::cout<<argv[i]<<std::endl;
+  }
 
-  problemManager.InitializePythonInterpreter();
-  problemManager.ParseCommandLineInput( global_argc, global_argv );
-  problemManager.ParseInputFile();
+  int const result = RUN_ALL_TESTS();
 
-  problemManager.Initialize( &problemManager );
-  problemManager.FinalInitializationRecursive( &problemManager );
-  problemManager.ApplyInitialConditions();
-
-  std::cout << std::endl << "Running simulation:" << std::endl;
-  problemManager.RunSimulation();
-  std::cout << "Done!";
-
-  problemManager.ClosePythonInterpreter();
+  delete[] global_argv;
 
 #ifdef USE_ATK
   slic::finalize();
@@ -119,6 +213,5 @@ TEST(singlePhaseFlow,analyticalTest)
   MPI_Finalize();
 #endif
 
-  // TODO: check solution vs analytical
-  EXPECT_TRUE(true);
+  return result;
 }
