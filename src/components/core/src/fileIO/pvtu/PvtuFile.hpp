@@ -54,9 +54,8 @@ class PvtuFile {
     private:
         /*!
          * @brief check if the XML file contains the right nodes
-         * @return the number of children
          */
-        int check_parent_xml_file_consistency() const;
+        void check_parent_xml_file_consistency() const;
     private:
         /// This is the parent XML document
         pugi::xml_document vtup_doc_;

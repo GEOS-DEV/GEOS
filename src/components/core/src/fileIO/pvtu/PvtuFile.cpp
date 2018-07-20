@@ -41,7 +41,7 @@ void PvtuFile::save( std::string const &fileName) {
 
 
 //PRIVATE METHODS
-int PvtuFile::check_parent_xml_file_consistency() const {
+void PvtuFile::check_parent_xml_file_consistency() const {
 
     // VTKFile is the main node of the vtupfile
     auto const vtk_file =vtup_doc_.child("VTKFile");
@@ -125,6 +125,5 @@ int PvtuFile::check_parent_xml_file_consistency() const {
         geos_abort("Can't find any DataArray which contains the property "+
                 str_partition_ + " in PCellData");
     }
-    return 0;
 }
 }
