@@ -88,9 +88,9 @@ public:
   virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         dataRepository::ManagedGroup * domain ) override;
+                             real64 const& dt,
+                             integer const cycleNumber,
+                             dataRepository::ManagedGroup * domain ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -116,7 +116,8 @@ public:
                                         real64 const dt ) override;
 
   virtual real64
-  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
+  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                        DomainPartition *const domain) override;
 
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
@@ -177,13 +178,6 @@ public:
 
 
   /**
-   * @brief This function generates various geometric information for later use.
-   * @param domain the domain parition
-   */
-  void MakeGeometryParameters( DomainPartition * const  domain );
-
-
-  /**
    * @enum an enum to lay out the time integration options.
    */
   enum class timeIntegrationOption
@@ -196,53 +190,93 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SPTPFA";
-    constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
+
+    constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
+
+    constexpr static auto fluidDensityString = "fluidDensity";
+    constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
+
+    constexpr static auto fluidViscosityString = "fluidViscosity";
+    constexpr static auto deltaFluidViscosityString = "deltaFluidViscosity";
+
+    constexpr static auto porosityString = "porosity";
     constexpr static auto deltaPorosityString = "deltaPorosity";
-    constexpr static auto deltaVolumeString = "deltaVolume";
+    constexpr static auto referencePorosityString = "referencePorosity";
+
     constexpr static auto faceAreaString = "faceArea";
     constexpr static auto faceCenterString = "faceCenter";
-    constexpr static auto fluidPressureString = "fluidPressure";
+
     constexpr static auto gravityFlagString = "gravityFlag";
-    constexpr static auto gravityForceString = "gravityForce";
-    constexpr static auto permeabilityString = "permeablity";
-    constexpr static auto porosityString = "porosity";
+    constexpr static auto gravityDepthString = "gravityDepth";
+
     constexpr static auto volumeString = "volume";
+    constexpr static auto permeabilityString = "permeability";
+    constexpr static auto transmissibilityString = "transmissibility";
 
     dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
-    dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName = { "fieldName" };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
-    dataRepository::ViewKey permeability = { permeabilityString };
   } viewKeys;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
   } groupKeys;
 
+  /**
+   * @struct A structure containing a single cell (element) identifier triplet
+   */
+  struct CellDescriptor
+  {
+    localIndex region;
+    localIndex subRegion;
+    localIndex index;
+  };
 
+  /**
+   * @struct A structure describing a single (generally multi-point) FV connection stencil
+   */
+  struct CellConnection
+  {
+    localIndex            faceIndex;               ///< index of the face (just in case)
+    CellDescriptor        connectedCellIndices[2]; ///< identifiers of connected cells
+    array<CellDescriptor> stencilCellIndices;      ///< identifiers of cells in stencil
+    array<real64>         stencilWeights;          ///< stencil weights (e.g. transmissibilities)
+
+    void resize(localIndex const size) { stencilCellIndices.resize(size);
+                                         stencilWeights.resize(size);    }
+  };
 
 private:
-  /// the currently selected time integration option
-//  timeIntegrationOption m_timeIntegrationOption;
 
-  /// temp variable containing distance between the face and element centers divided by the area of
-  /// the face
-  Array2dT<real64> m_faceToElemLOverA;
+  /**
+   * @brief This function generates various discretization information for later use.
+   * @param domain the domain parition
+   */
+  void PrecomputeData(DomainPartition *const domain);
 
-  /// the number of degrees of freedom per element. should be removed.
-  constexpr static int m_dim = 1;
+  /**
+   * @brief This function allocates additional storage (e.g. for derivatives)
+   * @param domain the domain partition
+   */
+  void AllocateAuxStorage(DomainPartition *const domain);
+
+  /// flag indicating whether FV precompute has been performed
+  bool m_precomputeDone;
 
   /// temp array that holds the list of faces that connect two elements.
-  localIndex_array m_faceConnectors;
+  array<CellConnection> m_faceConnectors;
 
   /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
+  bool m_gravityFlag;
 
-  array< real64 > m_gravityForce;
+  /// temp storage for derivatives of density w.r.t. pressure
+  array<array<array<real64>>> m_dDens_dPres;
 
-  array< array< array<real64> > > m_dRho_dP;
+  /// temp storage for derivatives of porosity w.r.t. pressure
+  array<array<array<real64>>> m_dPoro_dPres;
 
+  /// temp storage for derivatives of porosity w.r.t. pressure
+  array<array<array<real64>>> m_dVisc_dPres;
 
 };
 

@@ -43,11 +43,10 @@ void forall_in_range( localIndex const begin, const localIndex end, LAMBDA && bo
   } );
 }
 
-
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void forall_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
-  RAJA::TypedListSegment<localIndex> listSeg(indexList, len);
+  RAJA::TypedListSegment<localIndex> listSeg(indexList, len, RAJA::Unowned);
   RAJA::forall<POLICY>( listSeg , [=] (localIndex index) mutable -> void
   {
     body(index);
@@ -282,6 +281,56 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
       forall_in_range<POLICY>(0, cellBlockSubRegion->size(), ebody);
     }
   }
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
+  RAJA::RangeSegment seg(begin, end);
+  RAJA::forall<EXEC_POLICY>( seg , [=] (localIndex index) mutable -> void
+  {
+    sum += body(index);
+  } );
+  return sum.get();
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
+{
+  RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
+  RAJA::TypedListSegment<localIndex> listSeg(indexList, len, RAJA::Unowned);
+  RAJA::forall<EXEC_POLICY>( listSeg , [=] (localIndex index) mutable -> void
+  {
+    sum += body(index);
+  } );
+  return sum.get();
+}
+
+template<class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+  real64 sum = 0.0;
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
+
+      sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
+    }
+  }
+
+  return sum;
 }
 
 
