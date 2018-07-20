@@ -59,14 +59,20 @@ class PvtuFile {
     protected:
         /*!
          * @brief check if the XML file contains the right nodes
+         * @param[in] pvtu_doc the XML document
          */
         virtual void check_xml_file_consistency(pugi::xml_document const & pvtu_doc) const;
 
     private:
         /*!
-         * @brief retrieve the number of partitions
+         * @brief retrieve the list of the vtu files
+         * @param[in] pvtu_doc the XML document
+         * @param[in,out] vtu_files vector containing the name of the vtu files (one
+         * for each partition)
          */
-        int nb_partitions(pugi::xml_document const & pvtu_doc) const;
+        void vtu_files_list(
+                pugi::xml_document const & pvtu_doc,
+                std::vector < std::string > & vtu_files ) const;
     protected:
         /*
         /// This is the parent XML document
@@ -86,6 +92,8 @@ class PvtuFile {
         std::string const str_region_ { "region" };
 
         std::vector< VtuFile > vtu_files_;
+
+        std::vector< std::string > vtu_file_names_;
 };
 
 /*!

@@ -39,29 +39,75 @@ void PvtuFile::load( std::string const &filename) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-    std::cout << rank << std::endl;
+    int nb_partition_per_core = 0;
+    //int nb_total_partitions = 0;
+    int remainder = 0;
+    std::vector < std::string > children_files;
 
-    // Only one node has to load the pvtu file
-    if ( rank == 0 ) {
-        // XML file parsing using pugixml tool
-        pugi::xml_document pvtu_doc;
-        pvtu_doc.load_file(filename.c_str());
-        
+
+
+    // XML file parsing using pugixml tool
+    pugi::xml_document pvtu_doc;
+    pvtu_doc.load_file(filename.c_str());
+
+    if( rank == 0) {
         check_xml_file_consistency(pvtu_doc);
+    }
+    vtu_files_list(pvtu_doc,children_files);
+    // Retrieve the number of partitions
+    int const nb_total_partitions = children_files.size();
 
-        // Retrieve the number of partitions
-        int const nb_total_partitions = nb_partitions(pvtu_doc);
-        if(nb_total_partitions > size) {
-            std::cout << "WARNING : the number of partitions which will be loaded " 
-                << "is greater that the number of processes on which GEOSX is running. "
-                << "Some processes will hold more than one partition !" << std::endl;
+    // Next part of this method is dedicated to the optimization of file loading
+    //
+    // IF nb_partitions > nb_mpi_process : Each process will load 
+    // nb_partition / nb_mpi_process. Processes with a rank < nb_partition % nb_mpi_process
+    // will load an additional partition
+    //
+    // IF nb_partitions < nb_mpi_process : the first nb_partitions process will
+    // load ONE partition.
+    if(nb_total_partitions > size) {
+        if ( rank == 0 ) {
+            std::cout << "WARNING : the number of partitions ("
+                << nb_total_partitions <<") which will be loaded " 
+                << "is greater that the number of processes on which GEOSX is running ("
+                << size
+                << "). Some processes will hold more than one partition !" << std::endl;
+        }
+        nb_partition_per_core = nb_total_partitions / size;
+        remainder = nb_total_partitions % size;
+    } else {
+        nb_partition_per_core = 1;
+        remainder = 0;
+    }
+    if( rank < remainder ) {
+        vtu_file_names_.resize(nb_partition_per_core+1);
+        vtu_files_.resize(nb_partition_per_core+1);
+        for(int p_index = 0; p_index < nb_partition_per_core +1; ++p_index) {
+            vtu_file_names_[p_index] =
+                children_files[rank*(nb_partition_per_core+1) + p_index];
+        }
+    } else if( rank < nb_total_partitions) {
+        vtu_file_names_.resize(nb_partition_per_core);
+        vtu_files_.resize(nb_partition_per_core);
+        for(int p_index = 0; p_index < nb_partition_per_core; ++p_index) {
+            vtu_file_names_[p_index] =
+                children_files[rank*(nb_partition_per_core) + p_index+remainder];
         }
     }
-
 }
 
 void PvtuFile::save( std::string const &fileName) {
-    geos_abort(" pvtu file save is not implemented yet");
+    geos_abort("pvtu file save is not implemented yet");
+}
+
+void VtuFile::load( std::string const &fileName) {
+}
+
+void VtuFile::save( std::string const &fileName) {
+    geos_abort("vtu file save is not implemented yet");
+}
+
+void VtuFile::check_xml_file_consistency(pugi::xml_document const & pvtu_doc) const{
 }
 
 
@@ -181,14 +227,15 @@ void PvtuFile::check_xml_file_consistency(pugi::xml_document const & pvtu_doc) c
         }
     }
 }
-    int PvtuFile::nb_partitions(pugi::xml_document const & pvtu_doc) const {
+    void PvtuFile::vtu_files_list(
+            pugi::xml_document const & pvtu_doc,
+            std::vector < std::string > & vtu_files ) const{
         int nb_partitions = 0;
         for(auto child : pvtu_doc.child("VTKFile").child("PUnstructuredGrid").children()) {
             if( child.name() == static_cast< std::string > ("Piece") )
             {
-                nb_partitions++;
+                vtu_files.emplace_back(child.attribute("Source").as_string());
             }
         }
-        return nb_partitions;
     }
 }
