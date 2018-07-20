@@ -49,9 +49,39 @@ int global_argc;
 char** global_argv;
 }
 
+// compute approximate discrete L2 norm of vector with element center values returned by a lambda
 template <typename LAMBDA>
-real64 computeErrorNorm(DomainPartition const *domain, std::string const &solutionFieldName,
-                        R1Tensor const h, LAMBDA &&solutionFunc)
+real64 computeL2Norm(DomainPartition const *domain,
+                     LAMBDA &&lambda)
+{
+  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  ElementRegionManager::ElementViewAccessor<real64_array const>
+  volume = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow_TPFA::viewKeyStruct::volumeString);
+
+  // compute local norm
+  real64 localNorm = sumOverElemsInMesh(mesh, [&] (localIndex const er,
+                                                   localIndex const esr,
+                                                   localIndex const k) -> real64
+  {
+    real64 const val = lambda(er, esr, k);
+    return val * val * volume[er][esr][k]; // TODO how to compute error norm correctly?
+  });
+
+  // compute global norm
+  real64 globalNorm;
+  MPI_Allreduce(&localNorm, &globalNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+  return sqrt(globalNorm);
+}
+
+
+// compute relative discrete L2 norm of the solution error
+template <typename LAMBDA>
+real64 computeErrorNorm(DomainPartition const *domain,
+                        std::string const &solutionFieldName,
+                        LAMBDA &&solutionFunc)
 {
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -62,66 +92,61 @@ real64 computeErrorNorm(DomainPartition const *domain, std::string const &soluti
   ElementRegionManager::ElementViewAccessor<r1_array const>
   center = elemManager->ConstructViewAccessor<r1_array>(CellBlock::viewKeyStruct::elementCenterString);
 
-  // compute local error norm
-  real64 localErrorNorm = sumOverElemsInMesh(mesh, [&] (localIndex const er,
-                                                        localIndex const esr,
-                                                        localIndex const k) -> real64
+  real64 const errorNorm = computeL2Norm(domain, [&] (localIndex const er,
+                                                      localIndex const esr,
+                                                      localIndex const k) -> real64
   {
-    real64 const val = solutionField[er][esr][k] - solutionFunc(center[er][esr][k]);
-    return val * val * h[0] * h[1] * h[2]; // TODO how to compute error norm correctly?
+    return solutionField[er][esr][k] - solutionFunc(center[er][esr][k]);
   });
 
-  // compute global error norm
-  real64 globalErrorNorm;
-  MPI_Allreduce(&localErrorNorm, &globalErrorNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  globalErrorNorm = sqrt(globalErrorNorm);
+  real64 const solutionNorm = computeL2Norm(domain, [&] (localIndex const er,
+                                                         localIndex const esr,
+                                                         localIndex const k) -> real64
+  {
+    return solutionField[er][esr][k];
+  });
 
-  return globalErrorNorm;
+  return errorNorm / solutionNorm;
 }
 
-// extracts the function used in boundary conditions, assuming it's unique
-std::pair<FunctionBase const *, real64>
-getBoundaryFunctionAndScale(std::string const &fieldName)
+// extracts the solution function if one is defined in the input
+FunctionBase const * getSolutionFunction()
+{
+  FunctionBase const * fnFound = nullptr;
+  NewFunctionManager const * fnMgr = NewFunctionManager::Instance();
+  for (auto & subGroup : fnMgr->GetSubGroups())
+  {
+    auto fn = subGroup.second->group_cast<FunctionBase const *>();
+
+    if (fn->getName() == "solutionFunction")
+    {
+      fnFound = fn;
+      break;
+    }
+  }
+  return fnFound;
+}
+
+// extracts the boundary condition scale, assuming it's unique
+real64 getBoundaryConditionScale(std::string const &fieldName)
 {
   real64 scale = 1.0;
-  BoundaryConditionBase const * bcFound = nullptr;
   BoundaryConditionManager const * bcMgr = BoundaryConditionManager::get();
   for (auto & subGroup : bcMgr->GetSubGroups())
   {
-    BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
+    auto bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
 
     if (bc->initialCondition())
       continue;
 
     if (bc->getData<std::string>(BoundaryConditionBase::viewKeyStruct::fieldNameString) == fieldName)
     {
-      bcFound = bc;
       scale = *bc->getData<real64>(BoundaryConditionBase::viewKeyStruct::scaleString);
       break;
     }
   }
 
-  if (bcFound == nullptr)
-    return { nullptr, scale };
-
-  std::string funcName = bcFound->getData<std::string>(BoundaryConditionBase::viewKeyStruct::functionNameString);
-  if (funcName.empty())
-    return { nullptr, scale };
-
-  FunctionBase const * fnFound = nullptr;
-  NewFunctionManager const * fnMgr = NewFunctionManager::Instance();
-  for (auto & subGroup : fnMgr->GetSubGroups())
-  {
-    FunctionBase const * fn = subGroup.second->group_cast<FunctionBase const *>();
-
-    if (fn->getName() == funcName)
-    {
-      fnFound = fn;
-      break;
-    }
-  }
-
-  return { fnFound, scale };
+  return scale;
 }
 
 void runProblem(ProblemManager & problemManager, int argc, char** argv)
@@ -149,22 +174,19 @@ TEST(singlePhaseFlow,analyticalTest)
   ProblemManager problemManager("ProblemManager", nullptr);
   runProblem(problemManager, global_argc, global_argv);
 
-  auto const pair = getBoundaryFunctionAndScale(SinglePhaseFlow_TPFA::viewKeyStruct::fluidPressureString);
-  FunctionBase const * fn = pair.first;
-  real64 const scale = pair.second;
-
-  R1Tensor h(0.1, 0.1, 1.0); // TODO how to get h from input?
+  real64 const scale = getBoundaryConditionScale(SinglePhaseFlow_TPFA::viewKeyStruct::fluidPressureString);
+  FunctionBase const * fn = getSolutionFunction();
+  ASSERT_TRUE(fn != nullptr);
 
   real64 const err = computeErrorNorm(problemManager.getDomainPartition(),
                                       SinglePhaseFlow_TPFA::viewKeyStruct::fluidPressureString,
-                                      h,
-                                      [&] (R1Tensor const & pt) -> real64
+                                      [&](R1Tensor const &pt) -> real64
                                       {
                                         return scale * fn->Evaluate(pt.Data());
                                       });
 
   std::cout << "Computed error norm: " << err << std::endl;
-  EXPECT_TRUE(err < 1.0); // TODO what is an appropriate error bound/estimate for FV?
+  EXPECT_LT(err, 1e-6); // TODO what is an appropriate error bound/estimate for FV?
 }
 
 int main(int argc, char** argv)
