@@ -75,18 +75,28 @@ public:
   virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
                                         R2Tensor const & Rot,
                                         localIndex const i,
-                                        integer const systemAssembleFlag ) = 0;
+                                        integer const systemAssembleFlag ) { return R2SymTensor(); }
 
-  virtual void EquationOfStatePressureUpdate( real64 const & dRho,
-                                              localIndex const i,
-                                              real64 & P,
-                                              real64 & dPdRho ) = 0;
+  virtual void FluidPressureUpdate(real64 const &dens,
+                                   localIndex const i,
+                                   real64 &pres,
+                                   real64 &dPres_dDens) {}
 
-  virtual void EquationOfStateDensityUpdate( real64 const & dP,
-                                             localIndex const i,
-                                             real64 & dRho,
-                                             real64 & dRho_dP ){}
+  virtual void FluidDensityUpdate(real64 const &pres,
+                                  localIndex const i,
+                                  real64 &dens,
+                                  real64 &dDens_dPres) {}
 
+  virtual void FluidViscosityUpdate(real64 const &pres,
+                                    localIndex const i,
+                                    real64 &visc,
+                                    real64 &dVisc_dPres) {}
+
+  virtual void SimplePorosityUpdate(real64 const &pres,
+                                    real64 const &poro_ref,
+                                    localIndex const i,
+                                    real64 &poro,
+                                    real64 &dPoro_dPres) {}
 
   virtual void FillDocumentationNode() override = 0;
 
