@@ -24,19 +24,40 @@
 #include "common/Logger.hpp"
 #include <iostream>
 #include <string.h>
+
+#if USE_MPI
+#include <mpi.h>
+#endif
+
 namespace geosx{
 
 // PUBLIC METHODS
 void PvtuFile::load( std::string const &filename) {
+    int size = 0;
+    int rank = 0;
+#if USE_MPI
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+    std::cout << rank << std::endl;
 
-    // XML file parsing using pugixml tool
-    pvtu_doc_.load_file(filename.c_str());
+    // Only one node has to load the pvtu file
+    if ( rank == 0 ) {
+        // XML file parsing using pugixml tool
+        pugi::xml_document pvtu_doc;
+        pvtu_doc.load_file(filename.c_str());
+        
+        check_xml_file_consistency(pvtu_doc);
 
-    // Retrieve the number of partitions
-    int const nb_total_partitions = nb_partitions();
-    std::cout << "There are " << nb_total_partitions << " partitions" << std::endl;
+        // Retrieve the number of partitions
+        int const nb_total_partitions = nb_partitions(pvtu_doc);
+        if(nb_total_partitions > size) {
+            std::cout << "WARNING : the number of partitions which will be loaded " 
+                << "is greater that the number of processes on which GEOSX is running. "
+                << "Some processes will hold more than one partition !" << std::endl;
+        }
+    }
 
-    check_parent_xml_file_consistency();
 }
 
 void PvtuFile::save( std::string const &fileName) {
@@ -45,10 +66,10 @@ void PvtuFile::save( std::string const &fileName) {
 
 
 //PRIVATE METHODS
-void PvtuFile::check_parent_xml_file_consistency() const {
+void PvtuFile::check_xml_file_consistency(pugi::xml_document const & pvtu_doc) const {
 
     // VTKFile is the main node of the pvtufile
-    auto const vtk_file =pvtu_doc_.child("VTKFile");
+    auto const vtk_file =pvtu_doc.child("VTKFile");
     if( vtk_file.empty() ) {
         geos_abort("Main node VTKFile not found or empty in the parent file");
     }
@@ -160,9 +181,9 @@ void PvtuFile::check_parent_xml_file_consistency() const {
         }
     }
 }
-    int PvtuFile::nb_partitions() const {
+    int PvtuFile::nb_partitions(pugi::xml_document const & pvtu_doc) const {
         int nb_partitions = 0;
-        for(auto child : pvtu_doc_.child("VTKFile").child("PUnstructuredGrid").children()) {
+        for(auto child : pvtu_doc.child("VTKFile").child("PUnstructuredGrid").children()) {
             if( child.name() == static_cast< std::string > ("Piece") )
             {
                 nb_partitions++;

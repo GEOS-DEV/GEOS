@@ -24,6 +24,7 @@
 #define VTUPFILE_HPP_
 
 #include "pugixml.hpp"
+#include <vector>
 
 /*!
  * @brief this class stands for the I/O of pvtu file
@@ -34,36 +35,43 @@
  * @todo the export.
  */
 namespace geosx{
+class VtuFile;
 class PvtuFile {
     public:
         PvtuFile() {
+        }
+
+        virtual ~PvtuFile(){
         }
 
         /*!
          * @brief load a .pvtu file
          * @param[in] filename the name of the XML pvtu file to be loaded
          */
-        void load( std::string const & filename);
+        virtual void load( std::string const & filename);
 
         /*!
          * @brief save a .pvtu file
          * @param[in] filename the name of the XML pvtu file to be saved
          */
-        void save( std::string const & filename);
+        virtual void save( std::string const & filename);
 
-    private:
+    protected:
         /*!
          * @brief check if the XML file contains the right nodes
          */
-        void check_parent_xml_file_consistency() const;
+        virtual void check_xml_file_consistency(pugi::xml_document const & pvtu_doc) const;
 
-        /*!
-         * @briref retrieve the number of partitions
-         */
-        int nb_partitions() const;
     private:
+        /*!
+         * @brief retrieve the number of partitions
+         */
+        int nb_partitions(pugi::xml_document const & pvtu_doc) const;
+    protected:
+        /*
         /// This is the parent XML document
         pugi::xml_document pvtu_doc_;
+        */
 
         /// Name of the Vertices/Elements attribute on which
         /// the original index is stored
@@ -76,6 +84,38 @@ class PvtuFile {
         /// Name of the Elements attribute on which
         /// the partition index is stored
         std::string const str_region_ { "region" };
+
+        std::vector< VtuFile > vtu_files_;
+};
+
+/*!
+ * @brief this class stands for the I/O of vtu file
+ * @details vtu(p) files is an extension fully supported by the VTK/Paraview
+ * framework. Details can be found here : www.vtk.org/VTK/img/file-formats.pdf
+ * @todo the export.
+ */
+class VtuFile : public PvtuFile{
+    public:
+        VtuFile() {
+        }
+
+        /*!
+         * @brief load a .vtu file
+         * @param[in] filename the name of the XML pvtu file to be loaded
+         */
+        void load( std::string const & filename) final;
+
+        /*!
+         * @brief save a .vtu file
+         * @param[in] filename the name of the XML vtu file to be saved
+         */
+        void save( std::string const & filename) final;
+
+    private:
+        /*!
+         * @brief check if the XML file contains the right nodes
+         */
+        void check_xml_file_consistency(pugi::xml_document const & pvtu_doc) const final;
 };
 }
 #endif /*PvtuFile.hpp*/

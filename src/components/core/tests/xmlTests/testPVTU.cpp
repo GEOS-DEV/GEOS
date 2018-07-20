@@ -23,6 +23,9 @@
 #endif
 
 #include "gtest/gtest.h"
+#if USE_MPI
+#include <mpi.h>
+#endif
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -55,6 +58,12 @@ int main(int argc, char** argv)
 
 TEST(testPVTU,testPVTU)
 {
+#if USE_MPI
+    MPI_Init(0, nullptr);
+#endif
     PvtuFile vtup_file;
     vtup_file.load("/home/amazuyer/dev/geosx/GEOSXDATA/data/4layers/4layers.pvtu");
+#if USE_MPI
+    MPI_Finalize();
+#endif
 }
