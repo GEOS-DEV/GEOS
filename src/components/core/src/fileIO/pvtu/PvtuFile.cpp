@@ -30,21 +30,25 @@ namespace geosx{
 void PvtuFile::load( std::string const &filename) {
 
     // XML file parsing using pugixml tool
-    vtup_doc_.load_file(filename.c_str());
+    pvtu_doc_.load_file(filename.c_str());
+
+    // Retrieve the number of partitions
+    int const nb_total_partitions = nb_partitions();
+    std::cout << "There are " << nb_total_partitions << " partitions" << std::endl;
 
     check_parent_xml_file_consistency();
 }
 
 void PvtuFile::save( std::string const &fileName) {
-    geos_abort(" vtup file save is not implemented yet");
+    geos_abort(" pvtu file save is not implemented yet");
 }
 
 
 //PRIVATE METHODS
 void PvtuFile::check_parent_xml_file_consistency() const {
 
-    // VTKFile is the main node of the vtupfile
-    auto const vtk_file =vtup_doc_.child("VTKFile");
+    // VTKFile is the main node of the pvtufile
+    auto const vtk_file =pvtu_doc_.child("VTKFile");
     if( vtk_file.empty() ) {
         geos_abort("Main node VTKFile not found or empty in the parent file");
     }
@@ -125,5 +129,45 @@ void PvtuFile::check_parent_xml_file_consistency() const {
         geos_abort("Can't find any DataArray which contains the property "+
                 str_partition_ + " in PCellData");
     }
+
+    bool ppoint_has_a_pdata_array = false;
+    bool ppoint_has_a_pdata_array_with_points = false;
+    for(auto ppoint_child : pugrid.child("PPoints").children() ) {
+        if( ppoint_child.name() == static_cast< std::string >("PDataArray") ) {
+            ppoint_has_a_pdata_array = true;
+            if( ppoint_child.attribute("Name").as_string() ==
+                    static_cast< std::string >("Points")) {
+                ppoint_has_a_pdata_array_with_points = true;
+                if (ppoint_child.attribute("NumberOfComponents").as_uint() != 3 ) {
+                    geos_abort("GEOSX supports only 3D meshes");
+                }
+                break;
+            }
+        }
+    }
+    if( !ppoint_has_a_pdata_array ) {
+        geos_abort("No PDataArray found in PPoints.");
+    }
+    if( !ppoint_has_a_pdata_array_with_points ) {
+        geos_abort("No PDataArray named \"Points\" found");
+    }
+
+    for( auto pugrid_child : pugrid.children() ) {
+        if(pugrid_child.name() == static_cast< std::string >("Piece")) {
+            if( pugrid_child.attribute("Source").empty() ) {
+                geos_abort("Piece nodes has to have an attribute Source not empty.");
+            }
+        }
+    }
 }
+    int PvtuFile::nb_partitions() const {
+        int nb_partitions = 0;
+        for(auto child : pvtu_doc_.child("VTKFile").child("PUnstructuredGrid").children()) {
+            if( child.name() == static_cast< std::string > ("Piece") )
+            {
+                nb_partitions++;
+            }
+        }
+        return nb_partitions;
+    }
 }

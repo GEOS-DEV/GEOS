@@ -26,10 +26,10 @@
 #include "pugixml.hpp"
 
 /*!
- * @brief this class stands for the I/O of vtup file
+ * @brief this class stands for the I/O of pvtu file
  * @details vtu(p) files is an extension fully supported by the VTK/Paraview
  * framework. Details can be found here : www.vtk.org/VTK/img/file-formats.pdf
- * A vtup file is named here as the "parent" file. This file make reference
+ * A pvtu file is named here as the "parent" file. This file make reference
  * to several "child" files (.vtu). Each one contains a part of the mesh.
  * @todo the export.
  */
@@ -40,14 +40,14 @@ class PvtuFile {
         }
 
         /*!
-         * @brief load a .vtup file
-         * @param[in] filename the name of the XML vtup file to be loaded
+         * @brief load a .pvtu file
+         * @param[in] filename the name of the XML pvtu file to be loaded
          */
         void load( std::string const & filename);
 
         /*!
-         * @brief save a .vtup file
-         * @param[in] filename the name of the XML vtup file to be saved
+         * @brief save a .pvtu file
+         * @param[in] filename the name of the XML pvtu file to be saved
          */
         void save( std::string const & filename);
 
@@ -56,9 +56,14 @@ class PvtuFile {
          * @brief check if the XML file contains the right nodes
          */
         void check_parent_xml_file_consistency() const;
+
+        /*!
+         * @briref retrieve the number of partitions
+         */
+        int nb_partitions() const;
     private:
         /// This is the parent XML document
-        pugi::xml_document vtup_doc_;
+        pugi::xml_document pvtu_doc_;
 
         /// Name of the Vertices/Elements attribute on which
         /// the original index is stored

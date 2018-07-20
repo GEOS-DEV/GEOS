@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 }
 
 
-TEST(testVTUP,testVTUP)
+TEST(testPVTU,testPVTU)
 {
     PvtuFile vtup_file;
     vtup_file.load("/home/amazuyer/dev/geosx/GEOSXDATA/data/4layers/4layers.pvtu");
