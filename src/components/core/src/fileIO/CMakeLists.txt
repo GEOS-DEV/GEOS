@@ -5,7 +5,7 @@
 set(fileIO_headers
   xmlWrapper.hpp
   silo/SiloFile.hpp
-  vtup/VtupFile.hpp
+  pvtu/PvtuFile.hpp
   blueprint/Blueprint.hpp
   schema/SchemaUtilities.hpp
   utils/utils.hpp )
@@ -16,7 +16,7 @@ set(fileIO_headers
 set(fileIO_sources
   xmlWrapper.cpp
   silo/SiloFile.cpp
-  vtup/VtupFile.cpp
+  pvtu/PvtuFile.cpp
   schema/SchemaUtilities.cpp
   blueprint/Blueprint.cpp )
 

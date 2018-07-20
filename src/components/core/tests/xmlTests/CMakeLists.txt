@@ -4,7 +4,7 @@
 
 set(gtest_geosx_tests
    testXML.cpp
-   testVTUP.cpp
+   testPVTU.cpp
    )
 
 #

@@ -17,7 +17,7 @@
  */
 
 /**
- * @file VtupFile.hpp
+ * @file PvtuFile.hpp
  */
 
 #ifndef VTUPFILE_HPP_
@@ -34,9 +34,9 @@
  * @todo the export.
  */
 namespace geosx{
-class VtupFile {
+class PvtuFile {
     public:
-        VtupFile() {
+        PvtuFile() {
         }
 
         /*!
@@ -74,4 +74,4 @@ class VtupFile {
         std::string const str_region_ { "region" };
 };
 }
-#endif /*VtupFile.hpp*/
+#endif /*PvtuFile.hpp*/

@@ -29,7 +29,7 @@
 #define __null nullptr
 #endif
 
-#include "fileIO/vtup/VtupFile.hpp"
+#include "fileIO/pvtu/PvtuFile.hpp"
 using namespace geosx;
 namespace
 {
@@ -55,6 +55,6 @@ int main(int argc, char** argv)
 
 TEST(testVTUP,testVTUP)
 {
-    VtupFile vtup_file;
+    PvtuFile vtup_file;
     vtup_file.load("/home/amazuyer/dev/geosx/GEOSXDATA/data/4layers/4layers.pvtu");
 }

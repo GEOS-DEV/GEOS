@@ -17,31 +17,31 @@
  */
 
 /**
- * @file VtupFile.cpp
+ * @file PvtuFile.cpp
  */
 
-#include "VtupFile.hpp"
+#include "PvtuFile.hpp"
 #include "common/Logger.hpp"
 #include <iostream>
 #include <string.h>
 namespace geosx{
 
 // PUBLIC METHODS
-void VtupFile::load( std::string const &filename) {
+void PvtuFile::load( std::string const &filename) {
 
     // XML file parsing using pugixml tool
-    pugi::xml_parse_result result = vtup_doc_.load_file(filename.c_str());
+    vtup_doc_.load_file(filename.c_str());
 
     check_parent_xml_file_consistency();
 }
 
-void VtupFile::save( std::string const &fileName) {
+void PvtuFile::save( std::string const &fileName) {
     geos_abort(" vtup file save is not implemented yet");
 }
 
 
 //PRIVATE METHODS
-int VtupFile::check_parent_xml_file_consistency() const {
+int PvtuFile::check_parent_xml_file_consistency() const {
 
     // VTKFile is the main node of the vtupfile
     auto const vtk_file =vtup_doc_.child("VTKFile");
