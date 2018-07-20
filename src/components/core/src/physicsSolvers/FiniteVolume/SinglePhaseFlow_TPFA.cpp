@@ -513,11 +513,6 @@ void SinglePhaseFlow_TPFA::ImplicitStepComplete( real64 const & time_n,
     dens[er][esr][k] += dDens[er][esr][k];
     visc[er][esr][k] += dVisc[er][esr][k];
     poro[er][esr][k] += dPoro[er][esr][k];
-
-    if (verboseLevel() >= 1)
-    {
-      std::cout << "pressure[" << er << "][" << esr << "][" << k << "] = " << pres[er][esr][k] << std::endl;
-    }
   });
 
 }

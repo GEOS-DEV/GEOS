@@ -13,8 +13,8 @@ blt_add_executable(NAME ${exec_name}
                    )
 
 set(gtest_geosx_inputs
-    2D_10x10_incompr_cos.xml
-    2D_100x100_incompr_cos.xml
+    2D_10x10_incompr_linear.xml
+    2D_100x100_incompr_linear.xml
     )
 
 foreach(input ${gtest_geosx_inputs})
