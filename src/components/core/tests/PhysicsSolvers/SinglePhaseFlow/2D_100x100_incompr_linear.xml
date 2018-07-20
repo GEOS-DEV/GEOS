@@ -67,10 +67,10 @@
       <LinearEOS name="water">
         <ParameterData referencePressure="0.0"
                        referenceDensity="1000"
-                       fluidBulkModulus="1.0e20"
+                       fluidBulkModulus="1.0e32"
                        referenceViscosity="0.001"
                        fluidViscosibility="0.0"
-                       solidBulkModulus="1.0e20"/>
+                       solidBulkModulus="1.0e32"/>
       </LinearEOS>
   </Constitutive>
 
