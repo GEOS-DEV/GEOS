@@ -62,7 +62,7 @@ TEST(testPVTU,testPVTU)
     MPI_Init(0, nullptr);
 #endif
     PvtuFile vtup_file;
-    vtup_file.load("/home/amazuyer/dev/geosx/GEOSXDATA/data/4layers/4layers.pvtu");
+    vtup_file.load("4layers.pvtu");
 #if USE_MPI
     MPI_Finalize();
 #endif

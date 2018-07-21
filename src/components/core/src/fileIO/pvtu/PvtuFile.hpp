@@ -60,10 +60,21 @@ class PvtuFile {
         /*!
          * @brief check if the XML file contains the right nodes
          * @param[in] pvtu_doc the XML document
+         * @param[in] filename name of the file being loaded
+         * @param[in] prefix will be "P" for the parent file
          */
-        virtual void check_xml_file_consistency(pugi::xml_document const & pvtu_doc) const;
+        virtual void check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
+                std::string const & filename,
+                std::string const & prefix = "") const;
 
     private:
+        /*!
+         * @brief Specific check for parent file
+         * @param[in] pvtu_doc the XML document
+         * @param[in] filename name of the file being loaded
+         */
+         void check_xml_parent_file_consistency(pugi::xml_document const & pvtu_doc,
+                std::string const & filename) const;
         /*!
          * @brief retrieve the list of the vtu files
          * @param[in] pvtu_doc the XML document
@@ -122,8 +133,18 @@ class VtuFile : public PvtuFile{
     private:
         /*!
          * @brief check if the XML file contains the right nodes
+        void check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
+                std::string const & filename,
+                std::string const & prefix = "") const final;
          */
-        void check_xml_file_consistency(pugi::xml_document const & pvtu_doc) const final;
+
+        /*!
+         * @brief Specific check for child files
+         * @param[in] pvtu_doc the XML document
+         * @param[in] filename name of the file being loaded
+         */
+         void check_xml_child_file_consistency(pugi::xml_document const & pvtu_doc,
+                std::string const & filename) const;
 };
 }
 #endif /*PvtuFile.hpp*/
