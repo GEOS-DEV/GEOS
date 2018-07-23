@@ -41,7 +41,7 @@ class LinearEOS : public ConstitutiveBase
 public:
   LinearEOS( std::string const & name, ManagedGroup * const parent );
 
-  virtual ~LinearEOS();
+  virtual ~LinearEOS() override;
 
   static std::string CatalogName() { return dataRepository::keys::linearEOS; }
 

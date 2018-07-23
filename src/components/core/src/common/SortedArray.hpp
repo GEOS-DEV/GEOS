@@ -86,7 +86,7 @@ public:
 
 
   size_type size() const
-  { return m_data.size(); }
+  { return static_cast<size_type>(m_data.size()); }
 
 
   void resize(size_type new_size)

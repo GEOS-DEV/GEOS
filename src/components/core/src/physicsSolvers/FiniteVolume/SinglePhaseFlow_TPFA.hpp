@@ -72,7 +72,7 @@ public:
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseFlow_TPFA() = default;
+  virtual ~SinglePhaseFlow_TPFA() override = default;
 
   /**
    * @brief name of the node manager in the object catalog
