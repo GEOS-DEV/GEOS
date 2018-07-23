@@ -836,7 +836,9 @@ void ProblemManager::RunSimulation()
     {
       std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
 //      bpWriter.write( cycle );
+#if !defined(NO_OUTPUT_ON_CORI)
       WriteSilo( cycle, time );
+#endif
       real64 nextDt = std::numeric_limits<real64>::max();
 
       for ( auto jj=0; jj<solverList.size(); ++jj)
@@ -854,7 +856,9 @@ void ProblemManager::RunSimulation()
     }
 
 //    bpWriter.write(cycle);
+#if !defined(NO_OUTPUT_ON_CORI)
     WriteSilo(cycle, time);
+#endif
 //    WriteRestart(cycle);
 
   }
