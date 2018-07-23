@@ -110,9 +110,6 @@ void VtuFile::load( std::string const &filename) {
     pugi::xml_document pvtu_doc;
     pvtu_doc.load_file(filename.c_str());
     check_xml_child_file_consistency(pvtu_doc,filename);
-    std::cout << "is ok ?? " << std::endl;
-    std::cout << filename << std::endl;
-        
 }
 
 void VtuFile::save( std::string const &filename) {
@@ -127,7 +124,6 @@ void PvtuFile::check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
 
     // VTKFile is the main node of the pvtufile
     auto const vtk_file =pvtu_doc.child("VTKFile");
-    std::cout << "coucou" << std::endl;
     if( vtk_file.empty() ) {
         geos_abort("Main node VTKFile not found in " + filename);
     }
@@ -280,5 +276,56 @@ void PvtuFile::vtu_files_list(
 void VtuFile::check_xml_child_file_consistency(pugi::xml_document const & pvtu_doc,
         std::string const & filename) const {
     check_xml_file_consistency( pvtu_doc, filename);
+
+    pugi::xml_node piece_node =
+        pvtu_doc.child("VTKFile").child("UnstructuredGrid").child("Piece");
+    if( piece_node.attribute("NumberOfPoints").empty() ) {
+        geos_abort("Attribute \"NumberOfPoints\" of Node \"Piece\" is missing or empty in "
+                + filename);
+    }
+
+    if( piece_node.attribute("NumberOfCells").empty() ) {
+        geos_abort("Attribute \"NumberOfCells\" of Node \"Piece\" is missing or empty in "
+                + filename);
+    }
+
+    pugi::xml_node cell_node = piece_node.child("Cells");
+    std::string const mandatory_attributes[3] =
+    {"Name","type","format"};
+    bool cells_have_connectivity = false;
+    bool cells_have_type = false;
+    bool cells_have_offset = false;
+    for( auto cell_att : cell_node.children() ) {
+        if( cell_att.name() == static_cast< std::string >("DataArray")) {
+            for( auto mandatory_attribute : mandatory_attributes ){
+                auto const attribute =
+                    cell_att.attribute( mandatory_attribute.c_str());
+                if( attribute.empty() ) {
+                    geos_abort("Mandatory attribute " + mandatory_attribute +
+                        " does not exist in a DataArray of in "
+                        + filename);
+                }
+            }
+            if( cell_att.attribute("Name").value() ==
+                    static_cast<std::string>("connectivity")) {
+                cells_have_connectivity = true;
+            }
+            if( cell_att.attribute("Name").value() == static_cast< std::string >("offsets")) {
+                cells_have_offset = true;
+            }
+            if( cell_att.attribute("Name").value() == static_cast< std::string > ("types")) {
+                cells_have_type = true;
+            }
+        }
+    }
+    if (!cells_have_connectivity) {
+        geos_abort("No property \"connectivity\" found in \"Cells\" node of " + filename);
+    }
+    if (!cells_have_type) {
+        geos_abort("No property \"types\" found in \"Cells\" node of " + filename);
+    }
+    if (!cells_have_offset) {
+        geos_abort("No property \"offsets\" found in \"Cells\" node of " + filename);
+    }
 }
 }
