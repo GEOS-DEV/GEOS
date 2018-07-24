@@ -144,6 +144,15 @@ public:
   FixedOneToManyRelation       & nodeList()       { return m_toNodesRelation; }
   FixedOneToManyRelation const & nodeList() const { return m_toNodesRelation; }
 
+  localIndex & nodeList( localIndex const edgeIndex, localIndex const nodeIndex )
+  {
+    return m_toNodesRelation(edgeIndex, nodeIndex);
+  }
+  localIndex nodeList( localIndex const edgeIndex, localIndex const nodeIndex ) const
+  {
+    return m_toNodesRelation(edgeIndex, nodeIndex);
+  }
+
   UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 

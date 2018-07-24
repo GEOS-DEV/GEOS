@@ -680,5 +680,61 @@ void ObjectManagerBase::SetReceiveLists(  )
 
 }
 
+integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
+                                        int const rank,
+                                        localIndex & newIndex )
+{
+
+  // if the object index has a zero sized childIndices entry, then this object can be split into two
+  // new objects
+
+  // the new indices are tacked on to the end of the arrays
+  newIndex = size() ;
+  this->resize( newIndex + 1 );
+
+  // copy the fields
+  CopyObject( indexToSplit, newIndex );
+
+  localIndex_array * const parentIndex = this->getPointer<localIndex_array>( "parentIndex" );
+  if( parentIndex != nullptr )
+  {
+    (*parentIndex)[newIndex] = indexToSplit;
+  }
+
+  array< localIndex_array > * const childIndices = this->getPointer< array< localIndex_array > >( "childIndices" );
+  if( childIndices != nullptr )
+  {
+    (*childIndices)[indexToSplit].push_back( newIndex );
+  }
+
+  const int parentRank = m_ghostRank[indexToSplit];
+
+  m_localToGlobalMap[newIndex] = GLOBALINDEX_MAX;
+
+  m_isExternal[indexToSplit] = 1;
+  m_isExternal[newIndex]     = 1;
+
+  return 1;
+
+}
+
+void ObjectManagerBase::CopyObject( const localIndex source, const localIndex destination )
+{
+  for( auto & wrapper : wrappers() )
+  {
+    wrapper.second->copy( source, destination );
+  }
+
+  for( localIndex i=0 ; i<m_sets.wrappers().size() ; ++i )
+  {
+    lSet& set = this->getReference<lSet>(i);
+    if( set.count(source) > 0 )
+    {
+      set.insert(destination);
+    }
+  }
+}
+
+
 
 } /* namespace geosx */

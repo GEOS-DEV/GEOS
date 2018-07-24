@@ -472,13 +472,12 @@ template<> inline int CastField<int, int> (const int& field, int const )
 }
 
 
-template<> inline long int CastField<long int, long int> (const localIndex& field, int const )
+template<> inline long int CastField<long int, long int> (const long int& field, int const )
 {
   return field;
 }
 
-template<> inline int CastField<int, long int> (const
-localIndex& field, int const )
+template<> inline int CastField<int, long int> (const long int& field, int const )
 {
   return integer_conversion<int>(field);
 }

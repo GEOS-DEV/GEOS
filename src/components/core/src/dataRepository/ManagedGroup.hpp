@@ -585,6 +585,30 @@ public:
   T & getReference( viewWrapperMap::KeyIndex & keyIndex )
   { return getWrapper<T>(keyIndex)->reference(); }
 
+  template< typename T >
+  T const * getPointer( indexType const index ) const
+  { return &(getWrapper<T>(index)->reference()); }
+
+  template< typename T >
+  T * getPointer( indexType const index )
+  { return &(getWrapper<T>(index)->reference()); }
+
+  template< typename T >
+  T const * getPointer( std::string const & name ) const
+  { return &(getWrapper<T>(name)->reference()); }
+
+  template< typename T >
+  T * getPointer( std::string const & name )
+  { return &(getWrapper<T>(name)->reference()); }
+
+  template< typename T >
+  T const * getPointer( viewWrapperMap::KeyIndex const & keyIndex ) const
+  { return &(getWrapper<T>(keyIndex)->reference()); }
+
+  template< typename T >
+  T * getPointer( viewWrapperMap::KeyIndex & keyIndex )
+  { return &(getWrapper<T>(keyIndex)->reference()); }
+
 
   bool hasGroup( std::string const & name ) const
   {
