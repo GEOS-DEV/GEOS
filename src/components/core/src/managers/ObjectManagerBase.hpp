@@ -304,6 +304,13 @@ public:
 
   localIndex GetNumberOfLocalIndices() const;
 
+  integer SplitObject( localIndex const indexToSplit,
+                       int const rank,
+                       localIndex & newIndex );
+
+  void CopyObject( localIndex const source, localIndex const destination );
+
+
 
   //**********************************************************************************************************************
 
@@ -348,13 +355,21 @@ public:
   virtual groupKeyStruct const & groupKeys() const { return m_ObjectManagerBaseGroupKeys; }
 
 
+
+  ManagedGroup * sets()             {return &m_sets;}
+  ManagedGroup const * sets() const {return &m_sets;}
+
+  integer_array & isExternal()
+  { return this->m_isExternal; }
+
+  integer_array const & isExternal() const
+  { return this->m_isExternal; }
+
   integer_array & GhostRank()
   { return this->m_ghostRank; }
 
   integer_array const & GhostRank() const
   { return this->m_ghostRank; }
-
-
 
   ManagedGroup m_sets;
 

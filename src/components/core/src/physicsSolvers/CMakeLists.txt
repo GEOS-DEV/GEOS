@@ -22,7 +22,7 @@ set(physicsSolvers_sources
     BoundaryConditions/BoundaryConditionManager.cpp
     BoundaryConditions/DirichletBoundaryCondition.cpp
     FiniteVolume/SinglePhaseFlow_TPFA.cpp
-    SimpleSolvers/LaplaceFEM.cpp  )
+    SimpleSolvers/LaplaceFEM.cpp
     surfaceGeneration/SurfaceGenerator.cpp )
 
 
