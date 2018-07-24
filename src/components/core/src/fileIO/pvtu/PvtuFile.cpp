@@ -327,5 +327,158 @@ void VtuFile::check_xml_child_file_consistency(pugi::xml_document const & pvtu_d
     if (!cells_have_offset) {
         geos_abort("No property \"offsets\" found in \"Cells\" node of " + filename);
     }
-}
+}   
+
+    ////////////////
+    /// MESH PART //
+    ////////////////
+
+    globalIndex MeshPart::nb_vertices() const {
+        return nb_vertices_;
+    }
+
+    globalIndex MeshPart::nb_cells() const {
+        return nb_cells_;
+    }
+
+    globalIndex MeshPart::nb_polygons() const {
+        return nb_polygons_;
+    }
+
+    localIndex MeshPart::nb_vertices_in_cell( const globalIndex cell_index ) {
+        assert(cell_index < nb_cells_);
+        return cells_ptr_[cell_index+1] - cells_ptr_[cell_index-1];
+    }
+
+    localIndex MeshPart::nb_vertices_in_polygon( const globalIndex polygon_index ) {
+        assert(polygon_index < nb_polygons_);
+        return polygons_ptr_[polygon_index+1] - polygons_ptr_[polygon_index-1];
+    }
+
+    globalIndex MeshPart::cell_vertex_index(globalIndex const cell_index,
+            localIndex const local_corner_index) const {
+        assert(local_corner_index < nb_vertices_in_cell(cell_index));
+        return cells_connectivity_[cells_ptr_[cell_index] + local_corner_index];
+    }
+
+    globalIndex MeshPart::polygon_vertex_index(globalIndex const polygon_index,
+            localIndex const local_corner_index) const {
+        assert(local_corner_index < nb_vertices_in_polygon(polygon_index));
+        return polygons_connectivity_[polygons_ptr_[polygon_index] + local_corner_index];
+    }
+
+    std::vector<real64> MeshPart::vertex(globalIndex const vertex_index) const {
+        assert(vertex_index < nb_vertices_);
+        std::vector<real64> vertex(vertices_.begin()+3*vertex_index,
+                vertices_.begin() + 3*vertex_index+3);
+        return vertex;
+    }
+
+    globalIndex MeshPart::surface(globalIndex const polygon_index) const {
+        assert(polygon_index < nb_polygons_);
+        return surfaces_indexes_[polygon_index];
+    }
+
+    globalIndex MeshPart::region(globalIndex const cell_index) const {
+        assert(cell_index < nb_cells_);
+        return regions_indexes_[cell_index];
+    }
+
+    globalIndex MeshPart::global_vertex_index(globalIndex const vertex_index) const {
+        assert(vertex_index < nb_vertices);
+        return original_vertices_indexes_[vertex_index];
+    }
+
+    globalIndex MeshPart::global_polygon_index(globalIndex const polygon_index) const {
+        assert(polygon_index<nb_polygons_);
+        return original_polygons_indexes_[polygon_index];
+    }
+
+    globalIndex MeshPart::global_cell_index(globalIndex const cell_index) const {
+        assert(cell_index < nb_cells_);
+        return original_cells_indexes_[cell_index];
+    }
+
+    void MeshPart::set_nb_vertices(globalIndex const nb_vertices) {
+        nb_vertices_ = nb_vertices;
+        vertices_.resize( nb_vertices);
+        original_vertices_indexes_.resize( nb_vertices );
+    }
+
+/*
+    void MeshPart::set_nb_polygons(globalIndex const nb_triangles, globalIndex cosn) {
+        nb_polygons_= nb_polygons;
+        polygons_ptr_.resize( nb_polygons_ + 1);
+        surfaces_indexes_.resize( nb_polygons_);
+        surfaces_indexes_.resize( nb_polygons_);
+    }
+    */
+
+    void MeshPart::reserve_nb_cells_and_polygons(globalIndex const nb_elements) {
+        cells_ptr_.reserve( nb_elements +1);
+        polygons_ptr_.reserve( nb_elements +1);
+        cells_connectivity_.reserve( 8 * nb_elements ); // maximum 8 corners (for an hex)
+        polygons_connectivity_.reserve( 4 * nb_elements ); // maximum 4 corners (for a quad)
+        surfaces_indexes_.reserve( nb_elements);
+        regions_indexes_.reserve( nb_elements);
+        original_polygons_indexes_.reserve( nb_elements);
+        original_cells_indexes_.reserve( nb_elements);
+    }
+    
+    globalIndex MeshPart::add_cell( std::vector<globalIndex> connectivity ) {
+        cells_ptr_.push_back( connectivity.size() + cells_ptr_[cells_ptr_.size()-1]);
+        nb_cells_++;
+        regions_indexes_.resize(nb_cells_);
+        original_cells_indexes_.resize(nb_cells_);
+        for( localIndex co = 0 ; co < static_cast<localIndex>(connectivity.size()); ++co ) {
+            cells_connectivity_.push_back(connectivity[co]);
+        }
+        return nb_cells_-1;
+    }
+
+    globalIndex MeshPart::add_polygon( std::vector<globalIndex> connectivity ) {
+        polygons_ptr_.push_back( connectivity.size() + polygons_ptr_[polygons_ptr_.size()-1]);
+        nb_polygons_++;
+        surfaces_indexes_.resize(nb_polygons_);
+        original_polygons_indexes_.resize( nb_polygons_);
+        for( localIndex co = 0 ; co < static_cast<localIndex>(connectivity.size()); ++co ) {
+            polygons_connectivity_.push_back(connectivity[co]);
+        }
+        return nb_polygons_-1;
+    }
+
+    void MeshPart::set_cell_region( globalIndex const cell_index,
+            globalIndex const region_index) {
+        assert( cell_index < regions_indexes_.size() );
+        regions_indexes_[cell_index]  = region_index;
+    }
+
+    void MeshPart::set_polygon_surface( globalIndex const polygon_index,
+            globalIndex const surface_index) {
+        assert( polygon_index < surfaces_indexes_.size() );
+        surfaces_indexes_[polygon_index]  = surface_index;
+    }
+
+    void MeshPart::set_cell_original_index(globalIndex const cell_index_in_part_mesh,
+                globalIndex const cell_index_in_full_mesh) {
+        assert( cell_index < original_cells_indexes_.size() );
+        original_cells_indexes_[cell_index_in_part_mesh] = cell_index_in_full_mesh;
+    }
+
+    void MeshPart::set_polygon_original_index(globalIndex const polygon_index_in_part_mesh,
+                globalIndex const polygon_index_in_full_mesh) {
+        assert( polygon_index < original_polygons_indexes_.size() );
+        original_polygons_indexes_[polygon_index_in_part_mesh] = polygon_index_in_full_mesh;
+    }   
+
+    void MeshPart::finish() {
+        regions_indexes_.shrink_to_fit();
+        surfaces_indexes_.shrink_to_fit();
+        cells_ptr_.shrink_to_fit();
+        polygons_ptr_.shrink_to_fit();
+        cells_connectivity_.shrink_to_fit();
+        polygons_connectivity_.shrink_to_fit();
+        original_cells_indexes_.shrink_to_fit();
+        original_polygons_indexes_.shrink_to_fit();
+    }
 }
