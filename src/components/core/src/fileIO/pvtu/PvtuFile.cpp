@@ -330,6 +330,26 @@ void VtuFile::check_xml_child_file_consistency(pugi::xml_document const & pvtu_d
     }
 }   
 
+template<typename T, typename Lambda>
+void VtuFile::split_node_text_string( std::string const & in,
+        std::vector< T >& out,
+        Lambda && string_convertor) const {
+    std::stringstream stringStream(in);
+    std::string line;
+    while(std::getline(stringStream, line))
+    {
+        std::size_t prev = 0, pos;
+        while ((pos = line.find_first_of(" ", prev)) != std::string::npos)
+        {
+            if (pos > prev)
+                out.push_back(string_convertor(line.substr(prev, pos-prev)));
+            prev = pos+1;
+        }
+        if (prev < line.length())
+            out.push_back(string_convertor(line.substr(prev, std::string::npos)));
+    }
+}
+
 void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     pugi::xml_node piece_node =
         pvtu_doc.child("VTKFile").child("UnstructuredGrid").child("Piece");
@@ -340,70 +360,117 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     globalIndex nb_elements = piece_node.attribute("NumberOfCells").as_llong();
     mesh_part_.reserve_nb_cells_and_polygons( nb_elements );
 
+    /// Parse vertices
     pugi::xml_node vertices_array =
         piece_node.child("Points").find_child_by_attribute("DataArray","Name","Points");
     assert(!vertices_array.empty()) ;
+    std::vector< real64 > all_vertices;
+    all_vertices.reserve( nb_vertices*3 );
+    split_node_text_string(vertices_array.text().as_string(), all_vertices, 
+            [](std::string str)-> double {return std::stod(str);});
+    assert(all_vertices.size() / 3 == nb_vertices);
 
-    /// Parse vertices
-    std::stringstream vertices_stream(vertices_array.text().as_string());
-    globalIndex vertex_index = 0;
-    for (std::string vertex_string; std::getline(vertices_stream, vertex_string, '\n'); ) {
-        if(!vertex_string.empty()) {
-            std::vector< real64 > vertex(3);
-            std::stringstream vertex_stream(vertex_string);
-            localIndex coor = 0;
-            for (std::string coor_string; std::getline(vertex_stream, coor_string, ' '); ) {
-                vertex[coor++] =  std::stod(coor_string);
-            }
-            mesh_part_.set_vertex(vertex_index++,vertex);
+    /// Parse vertices original index
+    pugi::xml_node vertices_original_indexes_array = 
+        piece_node.child("PointData").find_child_by_attribute(
+                "DataArray","Name","original_index");
+    assert(!vertices_original_indexes_array.empty());
+    std::vector< globalIndex > all_vertices_original_indexes;
+    all_vertices_original_indexes.reserve( nb_vertices );
+    split_node_text_string(vertices_original_indexes_array.text().as_string(),
+            all_vertices_original_indexes,
+            [](std::string str)-> globalIndex {return std::stoll(str);});
+    assert( nb_vertices == all_original_indexes.size() );
+
+    /// Fill the vertices in the mesh
+    for(globalIndex vertex_index  = 0 ; vertex_index < nb_vertices; ++vertex_index) {
+        std::vector< real64 > vertex(3);
+        for(localIndex coor = 0 ; coor < 3 ; ++coor) {
+            vertex[coor] = all_vertices[3*vertex_index+coor];
         }
+        mesh_part_.set_vertex_original_index(vertex_index,
+                all_vertices_original_indexes[vertex_index]);
+        mesh_part_.set_vertex(vertex_index, vertex);
     }
 
     /// Parse elements types
-    std::vector< localIndex> cell_types(nb_elements);
-    pugi::xml_node cell_types_array =
+    pugi::xml_node elements_types_array =
         piece_node.child("Cells").find_child_by_attribute("DataArray","Name","types");
-    assert(!cell_types_array.empty());
-    std::stringstream cell_types_stream(cell_types_array.text().as_string());
-    globalIndex element_index = 0;
-    for (std::string cell_type_string;
-            std::getline(cell_types_stream, cell_type_string, '\n'); ) {
-        if(!cell_type_string.empty()) {
-            cell_types[element_index++] = std::stoi(cell_type_string);
-        }
-    }
+    assert(!elements_types_array.empty());
+    std::vector< localIndex > all_elements_types;
+    all_elements_types.reserve(nb_elements);
+    split_node_text_string( elements_types_array.text().as_string(), all_elements_types,
+            [](std::string str)-> localIndex {return std::stoi(str);});
+    assert(all_elements_types.size() == nb_elements);
+
+    /// Parse elements regions
+    pugi::xml_node elements_regions_array =
+        piece_node.child("CellData").find_child_by_attribute("DataArray","Name","region");
+    assert(!elements_regions_array.empty());
+    std::vector< globalIndex > all_elements_regions;
+    all_elements_regions.reserve(nb_elements);
+    split_node_text_string( elements_regions_array.text().as_string(), all_elements_regions,
+            [](std::string str)-> localIndex {return std::stoi(str);});
+    assert(all_elements_regions.size() == nb_elements);
+    
+    /// Parse elements original_index
+    pugi::xml_node elements_original_indexes_array =
+        piece_node.child("CellData").find_child_by_attribute("DataArray","Name",
+                "original_index");
+    assert(!elements_original_indexes_array.empty());
+    std::vector< globalIndex > all_elements_original_indexes;
+    all_elements_original_indexes.reserve(nb_elements);
+    split_node_text_string( elements_original_indexes_array.text().as_string(),
+            all_elements_original_indexes,
+            [](std::string str)-> localIndex {return std::stoi(str);});
+    assert(all_elements_original_indexes.size() == nb_elements);
+
+    /// Parse elements offsets
+    std::vector< globalIndex> elements_offsets(nb_elements);
+    pugi::xml_node elements_offsets_array =
+        piece_node.child("Cells").find_child_by_attribute("DataArray","Name","offsets");
+    assert(!elements_offsets_array.empty());
+    std::vector< globalIndex > all_elements_offsets(1,0); // convenient to have 0 as first offset
+    all_elements_offsets.reserve(nb_elements);
+    split_node_text_string( elements_offsets_array.text().as_string(), all_elements_offsets,
+            [](std::string str)-> globalIndex {return std::stoll(str);});
+    assert(all_elements_offsets.size() == nb_elements+1);
 
     /// Parce cells connectivities
     pugi::xml_node elements_connectivity_array =
         piece_node.child("Cells").find_child_by_attribute("DataArray","Name","connectivity");
     assert(!elements_connectivity_array.empty());
-    std::stringstream elements_connectivities_stream(
-            elements_connectivity_array.text().as_string());
-    element_index = 0;
-    for (std::string element_connectivity_string;
-            std::getline(elements_connectivities_stream,
-                element_connectivity_string, '\n'); ) {
-        std::stringstream connectivity_stream(element_connectivity_string);
-        std::vector<globalIndex> connectivity;
-        if(!element_connectivity_string.empty()) {
-            for (std::string vertex_index_string;
-                    std::getline(connectivity_stream, vertex_index_string, ' '); ) {
-                connectivity.emplace_back(std::stoi(vertex_index_string));
-            }
-            if( cell_types[element_index] == 10 ||
-                    cell_types[element_index] == 14 ||
-                    cell_types[element_index] ==12 ||
-                    cell_types[element_index] == 13 ) {
-                mesh_part_.add_cell(connectivity);
-            }
-            else if( cell_types[element_index] == 5 ||
-                    cell_types[element_index] == 9) {
-                mesh_part_.add_polygon(connectivity);
-            }
-            element_index++;
+    std::vector< globalIndex > all_elements_connectivities;
+    all_elements_connectivities.reserve(8 * nb_elements);
+    split_node_text_string(elements_connectivity_array.text().as_string(),
+            all_elements_connectivities,
+            [](std::string str)-> localIndex {return std::stoi(str);});
+    for( globalIndex element_index = 0 ; element_index < nb_elements; ++element_index) {
+        localIndex nb_vertices_in_cell = all_elements_offsets[element_index+1] -
+            all_elements_offsets[element_index];
+        std::vector< globalIndex > connectivity(nb_vertices_in_cell);
+        for(localIndex co = 0 ; co < nb_vertices_in_cell ; co++) {
+            connectivity[co] =
+                all_elements_connectivities[all_elements_offsets[element_index]+co];
+        }
+        if( all_elements_types[element_index] == 10 ||
+                all_elements_types[element_index] == 14 ||
+                all_elements_types[element_index] ==12 ||
+                all_elements_types[element_index] == 13 ) {
+            mesh_part_.add_cell(connectivity);
+            mesh_part_.set_cell_region(element_index, all_elements_regions[element_index]);
+            mesh_part_.set_cell_original_index(element_index,
+                    all_elements_original_indexes[element_index]);
+        }
+        else if( all_elements_types[element_index] == 5 ||
+                all_elements_types[element_index] == 9) {
+            mesh_part_.add_polygon(connectivity);
+            mesh_part_.set_polygon_surface(element_index,
+                    all_elements_regions[element_index]);
+            mesh_part_.set_polygon_original_index(element_index,
+                    all_elements_original_indexes[element_index]);
         }
     }
-
 }
 
     ////////////////
@@ -483,6 +550,12 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
         for( localIndex coor = 0 ; coor < 3 ; coor ++ ) {
             vertices_[3*vertex_index+coor] = vertex[coor];
         }
+    }
+
+    void MeshPart::set_vertex_original_index( globalIndex const vertex_index,
+            globalIndex const original_index) {
+        assert(vertex_index < nb_vertices_);
+        original_vertices_indexes_[vertex_index] = original_index;
     }
 
     void MeshPart::set_nb_vertices(globalIndex const nb_vertices) {

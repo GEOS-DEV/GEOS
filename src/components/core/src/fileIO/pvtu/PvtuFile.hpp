@@ -214,7 +214,20 @@ class MeshPart {
          */
         void set_nb_vertices(globalIndex const nb_vertices); 
 
+        /*!
+         * @brief Set vertex coordinates
+         * @param[in] vertex_index the index of the vertex
+         * @param[in] vertex a vector containing the three coordinates
+         */
         void set_vertex(globalIndex const vertex_index,std::vector< real64 > const & vertex);
+
+        /*!
+         * @brief set the original index of a vertex
+         * @param[in] vertex_index the index of the vertex
+         * @param[in] original_index the index of the vertex in the full mesh
+         */
+        void set_vertex_original_index(globalIndex const vertex_index,
+                globalIndex const original_index);
 
         /*!
          * @brief Reserve the number of cells and polygons
@@ -399,9 +412,9 @@ class VtuFile : public PvtuFile{
     private:
         /*!
          * @brief check if the XML file contains the right nodes
-        void check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
-                std::string const & filename,
-                std::string const & prefix = "") const final;
+         void check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
+         std::string const & filename,
+         std::string const & prefix = "") const final;
          */
 
         /*!
@@ -409,14 +422,25 @@ class VtuFile : public PvtuFile{
          * @param[in] pvtu_doc the XML document
          * @param[in] filename name of the file being loaded
          */
-         void check_xml_child_file_consistency(pugi::xml_document const & pvtu_doc,
+        void check_xml_child_file_consistency(pugi::xml_document const & pvtu_doc,
                 std::string const & filename) const;
 
-         /*!
-          * @brief load the mesh part form the XML document
-          * @param[in] pvtu_doc the XML document
-          */
-         void load_mesh_part(pugi::xml_document const & pvtu_doc);
+        /*!
+         * @brief load the mesh part form the XML document
+         * @param[in] pvtu_doc the XML document
+         */
+        void load_mesh_part(pugi::xml_document const & pvtu_doc);
+
+        /*!
+         * @brief split a "big" string contained in a DataArray node of a vtu file
+         * @details memory should be reserved for the vector of string
+         * @param[in] in the string to be splitter
+         * @param[in,out] out the vector of string
+         */
+        template<typename T, typename Lambda>
+            void split_node_text_string( std::string const & in,
+                    std::vector< T >& out,
+                    Lambda && string_convertor) const;
     private:
          MeshPart mesh_part_;
 };
