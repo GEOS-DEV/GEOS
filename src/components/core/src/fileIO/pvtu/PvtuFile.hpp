@@ -37,6 +37,7 @@
  */
 namespace geosx{
 class VtuFile;
+
 class PvtuFile {
     public:
         PvtuFile() {
@@ -107,47 +108,6 @@ class PvtuFile {
 
         std::vector< std::string > vtu_file_names_;
 };
-
-/*!
- * @brief this class stands for the I/O of vtu file
- * @details vtu(p) files is an extension fully supported by the VTK/Paraview
- * framework. Details can be found here : www.vtk.org/VTK/img/file-formats.pdf
- * @todo the export.
- */
-class VtuFile : public PvtuFile{
-    public:
-        VtuFile() {
-        }
-
-        /*!
-         * @brief load a .vtu file
-         * @param[in] filename the name of the XML pvtu file to be loaded
-         */
-        void load( std::string const & filename) final;
-
-        /*!
-         * @brief save a .vtu file
-         * @param[in] filename the name of the XML vtu file to be saved
-         */
-        void save( std::string const & filename) final;
-
-    private:
-        /*!
-         * @brief check if the XML file contains the right nodes
-        void check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
-                std::string const & filename,
-                std::string const & prefix = "") const final;
-         */
-
-        /*!
-         * @brief Specific check for child files
-         * @param[in] pvtu_doc the XML document
-         * @param[in] filename name of the file being loaded
-         */
-         void check_xml_child_file_consistency(pugi::xml_document const & pvtu_doc,
-                std::string const & filename) const;
-};
-
 
 /*!
  * @brief This class may be temporary and stock a mesh with vertices, polygons (triangles
@@ -253,6 +213,8 @@ class MeshPart {
          * @param[in] nb_vertices the number of vertices
          */
         void set_nb_vertices(globalIndex const nb_vertices); 
+
+        void set_vertex(globalIndex const vertex_index,std::vector< real64 > const & vertex);
 
         /*!
          * @brief Reserve the number of cells and polygons
@@ -411,5 +373,54 @@ class MeshPart {
         /// Contains the region indexes on which the cells belong (size : nb_cells)
         std::vector< globalIndex > regions_indexes_;
 };
+/*!
+ * @brief this class stands for the I/O of vtu file
+ * @details vtu(p) files is an extension fully supported by the VTK/Paraview
+ * framework. Details can be found here : www.vtk.org/VTK/img/file-formats.pdf
+ * @todo the export.
+ */
+class VtuFile : public PvtuFile{
+    public:
+        VtuFile() {
+        }
+
+        /*!
+         * @brief load a .vtu file
+         * @param[in] filename the name of the XML pvtu file to be loaded
+         */
+        void load( std::string const & filename) final;
+
+        /*!
+         * @brief save a .vtu file
+         * @param[in] filename the name of the XML vtu file to be saved
+         */
+        void save( std::string const & filename) final;
+
+    private:
+        /*!
+         * @brief check if the XML file contains the right nodes
+        void check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
+                std::string const & filename,
+                std::string const & prefix = "") const final;
+         */
+
+        /*!
+         * @brief Specific check for child files
+         * @param[in] pvtu_doc the XML document
+         * @param[in] filename name of the file being loaded
+         */
+         void check_xml_child_file_consistency(pugi::xml_document const & pvtu_doc,
+                std::string const & filename) const;
+
+         /*!
+          * @brief load the mesh part form the XML document
+          * @param[in] pvtu_doc the XML document
+          */
+         void load_mesh_part(pugi::xml_document const & pvtu_doc);
+    private:
+         MeshPart mesh_part_;
+};
+
+
 }
 #endif /*PvtuFile.hpp*/
