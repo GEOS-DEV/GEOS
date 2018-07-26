@@ -3,7 +3,7 @@
 ##################################
 
 ##################################
-# using default intel compiler
+# uses default intel compiler
 ##################################
 
 
@@ -23,8 +23,7 @@
 set(CMAKE_CXX_COMPILER "/opt/cray/pe/craype/2.5.12/bin/CC" CACHE PATH "")
 set(CMAKE_C_COMPILER "/opt/cray/pe/craype/2.5.12/bin/cc" CACHE PATH "")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopenmp -g -std=c++14 -xMIC-AVX512 -DNO_OUTPUT_ON_CORI" CACHE STRING "")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopenmp -std=c++14 -g" CACHE STRING "")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopenmp -std=c++14 -xMIC-AVX512 -DNO_OUTPUT_ON_CORI" CACHE STRING "")
 
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MPI ON CACHE BOOL "" FORCE)
@@ -103,12 +102,6 @@ set(TPL_CXX_STANDARD "-std=c++14" CACHE PATH "" FORCE)
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl  /opt/cray/pe/lib64/libsci_cray.so.5" CACHE PATH "" FORCE)
 
-#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl /usr/lib64/libm.so /opt/cray/pe/lib64/libml_intel.so.mpi31.12" CACHE PATH "" FORCE)
-#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl /usr/lib64/libm.so " CACHE PATH "" FORCE)
-
-#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl /opt/cray/pe/lib64/libml_intel.so.mpi31.12" CACHE PATH "" FORCE)
-#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl /usr/lib64/libm.so" CACHE PATH "" FORCE)
-
 #set(CORI_BUILD  CACHE PATH "" FORCE)
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)
@@ -116,7 +109,3 @@ set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
 set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
 set(CALIPER_INSTALL   ""          CACHE PATH "" FORCE)
 set(RAJA_ENABLE_TESTS "OFF"       CACHE PATH "" FORCE)
-
-#We don't have permission to write to disk... 
-#add_compile_options(-D NO_OUTPUT_ON_CORI )
-#add_compile_options(NO_OUTPUT_ON_CORI)
