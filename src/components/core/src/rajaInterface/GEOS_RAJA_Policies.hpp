@@ -33,12 +33,14 @@ typedef RAJA::loop_exec computeForcePolicy;
 
 typedef RAJA::seq_exec quadraturePolicy;
 
+typedef RAJA::loop_exec stencilPolicy;
+
 #ifdef USE_OPENMP
 typedef RAJA::atomic::omp_atomic atomicPolicy;
-typedef RAJA::omp_reduce_ordered reducePolicy; // added by Sergey
+typedef RAJA::omp_reduce_ordered reducePolicy;
 #else
 typedef RAJA::atomic::loop_atomic atomicPolicy;
-typedef RAJA::seq_reduce reducePolicy;         // added by Sergey
+typedef RAJA::seq_reduce reducePolicy;
 #endif
 
 #endif

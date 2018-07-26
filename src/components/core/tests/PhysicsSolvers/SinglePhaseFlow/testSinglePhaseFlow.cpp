@@ -58,7 +58,7 @@ real64 computeL2Norm(DomainPartition const *domain,
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor<real64_array const>
-  volume = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow_TPFA::viewKeyStruct::volumeString);
+  volume = elemManager->ConstructViewAccessor<real64_array>(CellBlock::viewKeyStruct::elementVolumeString);
 
   // compute local norm
   real64 localNorm = sumOverElemsInMesh(mesh, [&] (localIndex const er,

@@ -189,7 +189,7 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SPTPFA";
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow";
 
     constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
@@ -204,15 +204,12 @@ public:
     constexpr static auto deltaPorosityString = "deltaPorosity";
     constexpr static auto referencePorosityString = "referencePorosity";
 
-    constexpr static auto faceAreaString = "faceArea";
-    constexpr static auto faceCenterString = "faceCenter";
-
     constexpr static auto gravityFlagString = "gravityFlag";
     constexpr static auto gravityDepthString = "gravityDepth";
 
-    constexpr static auto volumeString = "volume";
     constexpr static auto permeabilityString = "permeability";
-    constexpr static auto transmissibilityString = "transmissibility";
+
+    constexpr static auto discretizationString = "discretization";
 
     dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
@@ -221,30 +218,6 @@ public:
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
   } groupKeys;
-
-  /**
-   * @struct A structure containing a single cell (element) identifier triplet
-   */
-  struct CellDescriptor
-  {
-    localIndex region;
-    localIndex subRegion;
-    localIndex index;
-  };
-
-  /**
-   * @struct A structure describing a single (generally multi-point) FV connection stencil
-   */
-  struct CellConnection
-  {
-    localIndex            faceIndex;               ///< index of the face (just in case)
-    CellDescriptor        connectedCellIndices[2]; ///< identifiers of connected cells
-    array<CellDescriptor> stencilCellIndices;      ///< identifiers of cells in stencil
-    array<real64>         stencilWeights;          ///< stencil weights (e.g. transmissibilities)
-
-    void resize(localIndex const size) { stencilCellIndices.resize(size);
-                                         stencilWeights.resize(size);    }
-  };
 
 private:
 
@@ -263,11 +236,11 @@ private:
   /// flag indicating whether FV precompute has been performed
   bool m_precomputeDone;
 
-  /// temp array that holds the list of faces that connect two elements.
-  array<CellConnection> m_faceConnectors;
-
   /// flag to determine whether or not to apply gravity
-  bool m_gravityFlag;
+  integer m_gravityFlag;
+
+  /// name of the FV discretization object in the data repository
+  std::string m_discretizationName;
 
   /// temp storage for derivatives of density w.r.t. pressure
   array<array<array<real64>>> m_dDens_dPres;

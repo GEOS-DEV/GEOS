@@ -8,7 +8,8 @@
   
     <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
                           verboseLevel="0"
-                          gravityFlag="1">
+                          gravityFlag="1"
+                          discretization="singlePhaseTPFA">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -55,6 +56,13 @@
     <FiniteElements>
       <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"
+                                 fieldName="permeability"
+                                 cellLocation="center"
+                                 faceLocation="center"/>
+    </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
