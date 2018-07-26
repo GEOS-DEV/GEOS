@@ -37,7 +37,7 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
-#include "finiteElement/FiniteElementManager.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
@@ -422,7 +422,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   ManagedGroup * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  FiniteElementManager const * numericalMethodManager = domain->getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 
 

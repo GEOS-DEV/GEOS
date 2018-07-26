@@ -37,7 +37,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-#include "finiteElement/FiniteElementManager.hpp"
+#include "NumericalMethodsManager.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -78,7 +78,7 @@ ProblemManager::ProblemManager( const std::string& name,
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
   // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
-  RegisterGroup<FiniteElementManager>(groupKeys.numericalMethodsManager);
+  RegisterGroup<NumericalMethodsManager>(groupKeys.numericalMethodsManager);
   RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
   RegisterGroup<MeshManager>(groupKeys.meshManager);
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
