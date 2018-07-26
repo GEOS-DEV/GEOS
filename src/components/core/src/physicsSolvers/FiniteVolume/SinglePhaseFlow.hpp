@@ -40,9 +40,9 @@ class DomainPartition;
 /**
  * @class SinglePhaseFlow_TPFA
  *
- * class to perform a single phase, two-point flux approximation finite volume solve.
+ * class to perform a single phase finite volume solve.
  */
-class SinglePhaseFlow_TPFA : public SolverBase
+class SinglePhaseFlow : public SolverBase
 {
 public:
   /**
@@ -50,35 +50,35 @@ public:
    * @param name the name of this instantiation of NodeManager in the repository
    * @param parent the parent group of this instantiation of NodeManager
    */
-  SinglePhaseFlow_TPFA( const std::string& name,
+  SinglePhaseFlow( const std::string& name,
                         ManagedGroup * const parent );
 
 
   /// deleted default constructor
-  SinglePhaseFlow_TPFA() = delete;
+  SinglePhaseFlow() = delete;
 
   /// deleted copy constructor
-  SinglePhaseFlow_TPFA( SinglePhaseFlow_TPFA const & ) = delete;
+  SinglePhaseFlow( SinglePhaseFlow const & ) = delete;
 
   /// default move constructor
-  SinglePhaseFlow_TPFA( SinglePhaseFlow_TPFA && ) = default;
+  SinglePhaseFlow( SinglePhaseFlow && ) = default;
 
   /// deleted assignment operator
-  SinglePhaseFlow_TPFA & operator=( SinglePhaseFlow_TPFA const & ) = delete;
+  SinglePhaseFlow & operator=( SinglePhaseFlow const & ) = delete;
 
   /// deleted move operator
-  SinglePhaseFlow_TPFA & operator=( SinglePhaseFlow_TPFA && ) = delete;
+  SinglePhaseFlow & operator=( SinglePhaseFlow && ) = delete;
 
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseFlow_TPFA() = default;
+  virtual ~SinglePhaseFlow() = default;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "SinglePhaseFlow_TPFA"; }
+  static string CatalogName() { return "SinglePhaseFlow"; }
 
 
   virtual void FillDocumentationNode() override final;

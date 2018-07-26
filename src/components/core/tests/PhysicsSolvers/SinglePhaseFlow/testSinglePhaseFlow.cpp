@@ -30,7 +30,7 @@
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "physicsSolvers/FiniteVolume/SinglePhaseFlow_TPFA.hpp"
+#include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
 #include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 #ifdef USE_OPENMP
@@ -174,12 +174,12 @@ TEST(singlePhaseFlow,analyticalTest)
   ProblemManager problemManager("ProblemManager", nullptr);
   runProblem(problemManager, global_argc, global_argv);
 
-  real64 const scale = getBoundaryConditionScale(SinglePhaseFlow_TPFA::viewKeyStruct::fluidPressureString);
+  real64 const scale = getBoundaryConditionScale(SinglePhaseFlow::viewKeyStruct::fluidPressureString);
   FunctionBase const * fn = getSolutionFunction();
   ASSERT_TRUE(fn != nullptr);
 
   real64 const err = computeErrorNorm(problemManager.getDomainPartition(),
-                                      SinglePhaseFlow_TPFA::viewKeyStruct::fluidPressureString,
+                                      SinglePhaseFlow::viewKeyStruct::fluidPressureString,
                                       [&](R1Tensor const &pt) -> real64
                                       {
                                         return scale * fn->Evaluate(pt.Data());
