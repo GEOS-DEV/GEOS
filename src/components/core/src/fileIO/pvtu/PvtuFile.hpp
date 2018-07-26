@@ -240,60 +240,6 @@ class MeshPart {
         void reserve_nb_cells_and_polygons(globalIndex const nb_elements);
 
         /*!
-         * @brief Set the number of cells to resize the vector before filling it
-         * @param[in] nb_cells the number of cells
-         */
-        //void set_nb_cells(globalIndex const nb_cells );
-
-        /*!
-         * @brief Set the number of polygons to resize the vector before filling it
-         * @param[in] nb_polygons the number of polygons
-         */
-        //void set_nb_polygons(globalIndex const nb_polygons );
-
-        /*!
-         * @brief set the offset in the cells_ptr_vector
-         * @details basically, the offset is the number of corners of the
-         * cell_index cell index within the part mesh.
-         */
-        /*
-        void set_cell_ptr_offset(globalIndex const cell_index, globalIndex const offset) ;
-        */
-
-        /*!
-         * @brief set the offset in the polygons_ptr_vector
-         * @details basically, the offset is the number of corners of the
-         * polygon_index polygon index within the part mesh
-         */
-        /*
-        void set_polygon_ptr_offset(globalIndex const polygon_index, globalIndex const offset) ;
-        */
-
-        /*!
-         * @brief Set the connectivity of a cell
-         * @param[in] cell_index the index of the cell
-         * @param[in] local_corner_index the index of the vertex within the cell
-         * @param[in] vertex_index the index of the vertex within the mesh part
-         */
-        /*
-        void set_cell_corner( globalIndex const cell_index,
-                localIndex const local_corner_index,
-                globalIndex const vertex_index);
-                */
-
-        /*!
-         * @brief Set the connectivity of a polygon
-         * @param[in] polygon_index the index of the polygon on this mesh part
-         * @param[in] local_corner_index the index of the vertex within the polygon
-         * @param[in] vertex_index the index of the vertex within the mesh part
-         */
-        /*
-        void set_polygon_corner(globalIndex const polygon_index,
-                localIndex const local_corner_index,
-                globalIndex const vertex_index);
-                */
-
-        /*!
          * @brief add a cell to the mesh
          * @param[in] connectivity vector containing the indexes of the vertices
          * which compose the cell

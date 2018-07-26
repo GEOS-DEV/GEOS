@@ -471,6 +471,8 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
                     all_elements_original_indexes[element_index]);
         }
     }
+
+    mesh_part_.finish();
 }
 
     ////////////////
@@ -563,15 +565,6 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
         vertices_.resize( nb_vertices*3);
         original_vertices_indexes_.resize( nb_vertices );
     }
-
-/*
-    void MeshPart::set_nb_polygons(globalIndex const nb_triangles, globalIndex cosn) {
-        nb_polygons_= nb_polygons;
-        polygons_ptr_.resize( nb_polygons_ + 1);
-        surfaces_indexes_.resize( nb_polygons_);
-        surfaces_indexes_.resize( nb_polygons_);
-    }
-    */
 
     void MeshPart::reserve_nb_cells_and_polygons(globalIndex const nb_elements) {
         cells_ptr_.reserve( nb_elements +1);
