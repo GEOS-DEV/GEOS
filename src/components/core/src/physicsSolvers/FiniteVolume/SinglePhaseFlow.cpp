@@ -20,7 +20,7 @@
  * @file SinglePhaseFlow_TPFA.cpp
  */
 
-#include "SinglePhaseFlow_TPFA.hpp"
+#include "SinglePhaseFlow.hpp"
 
 #include <vector>
 #include <cmath>
@@ -52,7 +52,7 @@ using namespace constitutive;
 using namespace systemSolverInterface;
 
 
-SinglePhaseFlow_TPFA::SinglePhaseFlow_TPFA( const std::string& name,
+SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
                                             ManagedGroup * const parent ):
   SolverBase(name, parent),
   m_precomputeDone(false),
@@ -70,7 +70,7 @@ SinglePhaseFlow_TPFA::SinglePhaseFlow_TPFA( const std::string& name,
 }
 
 
-void SinglePhaseFlow_TPFA::FillDocumentationNode(  )
+void SinglePhaseFlow::FillDocumentationNode(  )
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   SolverBase::FillDocumentationNode();
@@ -120,7 +120,7 @@ void SinglePhaseFlow_TPFA::FillDocumentationNode(  )
                               0 );
 }
 
-void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
+void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
 {
   SolverBase::FillOtherDocumentationNodes( rootGroup );
   DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
@@ -294,7 +294,7 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
   }
 }
 
-void SinglePhaseFlow_TPFA::FinalInitialization( ManagedGroup * const problemManager )
+void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
 
@@ -305,7 +305,7 @@ void SinglePhaseFlow_TPFA::FinalInitialization( ManagedGroup * const problemMana
   AllocateAuxStorage(domain);
 }
 
-real64 SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
+real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
                                          real64 const& dt,
                                          const int cycleNumber,
                                          ManagedGroup * domain )
@@ -339,7 +339,7 @@ real64 SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
  * This function currently applies Dirichlet boundary conditions on the elements/zones as they
  * hold the DOF. Futher work will need to be done to apply a Dirichlet bc to the connectors (faces)
  */
-void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
+void SinglePhaseFlow::ApplyDirichletBC_implicit( ManagedGroup * object,
                                                       real64 const time,
                                                       EpetraBlockSystem * const blockSystem )
 {
@@ -394,7 +394,7 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
 }
 
 
-void SinglePhaseFlow_TPFA::
+void SinglePhaseFlow::
 ImplicitStepSetup( real64 const& time_n,
                    real64 const& dt,
                    DomainPartition * const domain,
@@ -451,7 +451,7 @@ ImplicitStepSetup( real64 const& time_n,
   SetupSystem( domain, blockSystem );
 }
 
-void SinglePhaseFlow_TPFA::ImplicitStepComplete( real64 const & time_n,
+void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
                                                      real64 const & dt,
                                                      DomainPartition * const domain)
 {
@@ -485,7 +485,7 @@ void SinglePhaseFlow_TPFA::ImplicitStepComplete( real64 const & time_n,
 
 }
 
-void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
+void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                          localIndex & numLocalRows,
                                                          localIndex & numGlobalRows,
                                                          localIndex_array& localIndices,
@@ -559,7 +559,7 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
 }
 
 
-void SinglePhaseFlow_TPFA::SetupSystem ( DomainPartition * const domain,
+void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
                                          EpetraBlockSystem * const blockSystem )
 {
   // assume that there is only a single MeshLevel for now
@@ -636,7 +636,7 @@ void SinglePhaseFlow_TPFA::SetupSystem ( DomainPartition * const domain,
 
 }
 
-void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const domain,
+void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
                                                Epetra_FECrsGraph * const sparsity )
 {
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -711,7 +711,7 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
 
 
 
-void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
+void SinglePhaseFlow::AssembleSystem ( DomainPartition * const  domain,
                                             EpetraBlockSystem * const blockSystem,
                                             real64 const time_n,
                                             real64 const dt )
@@ -899,7 +899,7 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
 
 }
 
-void SinglePhaseFlow_TPFA::ApplyBoundaryConditions( DomainPartition * const domain,
+void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
                                                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                     real64 const time_n,
                                                     real64 const dt )
@@ -927,7 +927,7 @@ void SinglePhaseFlow_TPFA::ApplyBoundaryConditions( DomainPartition * const doma
 }
 
 real64
-SinglePhaseFlow_TPFA::
+SinglePhaseFlow::
 CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                       DomainPartition * const domain)
 {
@@ -975,7 +975,7 @@ CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const * const blo
 }
 
 
-void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
+void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
                                                 real64 const scalingFactor,
                                                 DomainPartition * const domain )
 {
@@ -1067,7 +1067,7 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
 }
 
 
-void SinglePhaseFlow_TPFA::PrecomputeData(DomainPartition *const domain)
+void SinglePhaseFlow::PrecomputeData(DomainPartition *const domain)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -1089,7 +1089,7 @@ void SinglePhaseFlow_TPFA::PrecomputeData(DomainPartition *const domain)
   });
 }
 
-void SinglePhaseFlow_TPFA::AllocateAuxStorage(DomainPartition *const domain)
+void SinglePhaseFlow::AllocateAuxStorage(DomainPartition *const domain)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -1114,7 +1114,7 @@ void SinglePhaseFlow_TPFA::AllocateAuxStorage(DomainPartition *const domain)
   }
 }
 
-void SinglePhaseFlow_TPFA::SolveSystem( EpetraBlockSystem * const blockSystem,
+void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
                                         SystemSolverParameters const * const params )
 {
   Epetra_FEVector * const
@@ -1137,7 +1137,7 @@ void SinglePhaseFlow_TPFA::SolveSystem( EpetraBlockSystem * const blockSystem,
 
 }
 
-void SinglePhaseFlow_TPFA::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
@@ -1161,5 +1161,5 @@ void SinglePhaseFlow_TPFA::ResetStateToBeginningOfStep( DomainPartition * const 
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlow_TPFA, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlow, std::string const &, ManagedGroup * const )
 } /* namespace ANST */

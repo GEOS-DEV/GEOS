@@ -6,7 +6,7 @@
   <Solvers
     gravityVector="0.0,0.0,-9.81">
   
-    <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
+    <SinglePhaseFlow name="SinglePhaseFlow"
                           verboseLevel="0"
                           gravityFlag="1"
                           discretization="singlePhaseTPFA">
@@ -14,7 +14,7 @@
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
-    </SinglePhaseFlow_TPFA>
+    </SinglePhaseFlow>
   </Solvers>
   
   <Mesh>
@@ -42,7 +42,7 @@
                  beginTime="0.0" 
                  endTime="1"
                  dt="1.0"
-                 solvers="SinglePhaseFlow_TPFA" />
+                 solvers="SinglePhaseFlow" />
   </Events>
 
 
