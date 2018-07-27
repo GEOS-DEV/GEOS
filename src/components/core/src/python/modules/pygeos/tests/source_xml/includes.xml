@@ -50,7 +50,9 @@
   </Tables>
 
 
-  <Output writePlot="1" writeRestart="0" restart_interval="1e6" plot_interval="0.1" plotfile_root="plot" writeFEMFaces="1" writeFEMEdges="1"/>
+  <Outputs>
+    <Silo name="siloOutput" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+  </Outputs>
 
 
 	<Nodesets>
