@@ -368,7 +368,7 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     all_vertices.reserve( nb_vertices*3 );
     split_node_text_string(vertices_array.text().as_string(), all_vertices, 
             [](std::string str)-> double {return std::stod(str);});
-    assert(all_vertices.size() / 3 == static_cast< globalIndex> (nb_vertices));
+    assert(static_cast< globalIndex> (all_vertices.size()) / 3 == nb_vertices);
 
     /// Parse vertices original index
     pugi::xml_node vertices_original_indexes_array = 
@@ -401,7 +401,7 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     all_elements_types.reserve(nb_elements);
     split_node_text_string( elements_types_array.text().as_string(), all_elements_types,
             [](std::string str)-> localIndex {return std::stoi(str);});
-    assert(static_cast< globalIndex> (all_elements_types.size() == nb_elements));
+    assert(static_cast< globalIndex> (all_elements_types.size()) == nb_elements);
 
     /// Parse elements regions
     pugi::xml_node elements_regions_array =
@@ -423,7 +423,7 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     split_node_text_string( elements_original_indexes_array.text().as_string(),
             all_elements_original_indexes,
             [](std::string str)-> localIndex {return std::stoi(str);});
-    assert(static_cast< all_elements_original_indexes.size() > == nb_elements);
+    assert(static_cast< globalIndex> (all_elements_original_indexes.size()) == nb_elements);
 
     /// Parse elements offsets
     std::vector< globalIndex> elements_offsets(nb_elements);
@@ -434,7 +434,7 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     all_elements_offsets.reserve(nb_elements);
     split_node_text_string( elements_offsets_array.text().as_string(), all_elements_offsets,
             [](std::string str)-> globalIndex {return std::stoll(str);});
-    assert(all_elements_offsets.size() == nb_elements+1);
+    assert(static_cast<globalIndex >(all_elements_offsets.size()) == nb_elements+1);
 
     /// Parce cells connectivities
     pugi::xml_node elements_connectivity_array =
@@ -607,19 +607,21 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
 
     void MeshPart::set_polygon_surface( globalIndex const polygon_index,
             globalIndex const surface_index) {
-        assert( polygon_index < static_cast< global_argv> (surfaces_indexes_.size() ) );
+        assert( polygon_index < static_cast< globalIndex> (surfaces_indexes_.size() ) );
         surfaces_indexes_[polygon_index]  = surface_index;
     }
 
     void MeshPart::set_cell_original_index(globalIndex const cell_index_in_part_mesh,
                 globalIndex const cell_index_in_full_mesh) {
-        assert( cell_index_in_part_mesh < original_cells_indexes_.size() );
+        assert( cell_index_in_part_mesh < static_cast< globalIndex>
+                (original_cells_indexes_.size() ) );
         original_cells_indexes_[cell_index_in_part_mesh] = cell_index_in_full_mesh;
     }
 
     void MeshPart::set_polygon_original_index(globalIndex const polygon_index_in_part_mesh,
                 globalIndex const polygon_index_in_full_mesh) {
-        assert( polygon_index_in_part_mesh < original_polygons_indexes_.size() );
+        assert( polygon_index_in_part_mesh <
+                static_cast< globalIndex> (original_polygons_indexes_.size() ) );
         original_polygons_indexes_[polygon_index_in_part_mesh] = polygon_index_in_full_mesh;
     }   
 
