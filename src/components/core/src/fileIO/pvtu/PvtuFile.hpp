@@ -133,14 +133,14 @@ class MeshPart {
          * @param[in] polygon_index the polygon index within the mesh part
          * @return the number of vertices within the polygon
          */
-        localIndex nb_vertices_in_polygon(globalIndex const polygon_index);
+        localIndex nb_vertices_in_polygon(globalIndex const polygon_index) const;
 
         /*!
          * @brief return the number of vertices in a cell
          * @param[in] cell_index the cell index within the mesh part
          * @return the number of vertices within the cell
          */
-        localIndex nb_vertices_in_cell(globalIndex const cell_index);
+        localIndex nb_vertices_in_cell(globalIndex const cell_index) const;
 
         /*!
          * @brief return the index of a cell corner

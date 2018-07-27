@@ -368,7 +368,7 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     all_vertices.reserve( nb_vertices*3 );
     split_node_text_string(vertices_array.text().as_string(), all_vertices, 
             [](std::string str)-> double {return std::stod(str);});
-    assert(all_vertices.size() / 3 == nb_vertices);
+    assert(all_vertices.size() / 3 == static_cast< globalIndex> (nb_vertices));
 
     /// Parse vertices original index
     pugi::xml_node vertices_original_indexes_array = 
@@ -380,7 +380,7 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     split_node_text_string(vertices_original_indexes_array.text().as_string(),
             all_vertices_original_indexes,
             [](std::string str)-> globalIndex {return std::stoll(str);});
-    assert( nb_vertices == all_original_indexes.size() );
+    assert( nb_vertices == static_cast< globalIndex> (all_vertices_original_indexes.size() ));
 
     /// Fill the vertices in the mesh
     for(globalIndex vertex_index  = 0 ; vertex_index < nb_vertices; ++vertex_index) {
@@ -401,7 +401,7 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     all_elements_types.reserve(nb_elements);
     split_node_text_string( elements_types_array.text().as_string(), all_elements_types,
             [](std::string str)-> localIndex {return std::stoi(str);});
-    assert(all_elements_types.size() == nb_elements);
+    assert(static_cast< globalIndex> (all_elements_types.size() == nb_elements));
 
     /// Parse elements regions
     pugi::xml_node elements_regions_array =
@@ -411,7 +411,7 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     all_elements_regions.reserve(nb_elements);
     split_node_text_string( elements_regions_array.text().as_string(), all_elements_regions,
             [](std::string str)-> localIndex {return std::stoi(str);});
-    assert(all_elements_regions.size() == nb_elements);
+    assert(static_cast< globalIndex> (all_elements_regions.size()) == nb_elements);
     
     /// Parse elements original_index
     pugi::xml_node elements_original_indexes_array =
@@ -423,7 +423,7 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     split_node_text_string( elements_original_indexes_array.text().as_string(),
             all_elements_original_indexes,
             [](std::string str)-> localIndex {return std::stoi(str);});
-    assert(all_elements_original_indexes.size() == nb_elements);
+    assert(static_cast< all_elements_original_indexes.size() > == nb_elements);
 
     /// Parse elements offsets
     std::vector< globalIndex> elements_offsets(nb_elements);
@@ -491,12 +491,12 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
         return nb_polygons_;
     }
 
-    localIndex MeshPart::nb_vertices_in_cell( const globalIndex cell_index ) {
+    localIndex MeshPart::nb_vertices_in_cell( const globalIndex cell_index ) const {
         assert(cell_index < nb_cells_);
         return cells_ptr_[cell_index+1] - cells_ptr_[cell_index-1];
     }
 
-    localIndex MeshPart::nb_vertices_in_polygon( const globalIndex polygon_index ) {
+    localIndex MeshPart::nb_vertices_in_polygon( const globalIndex polygon_index ) const {
         assert(polygon_index < nb_polygons_);
         return polygons_ptr_[polygon_index+1] - polygons_ptr_[polygon_index-1];
     }
@@ -531,7 +531,7 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
     }
 
     globalIndex MeshPart::global_vertex_index(globalIndex const vertex_index) const {
-        assert(vertex_index < nb_vertices);
+        assert(vertex_index < nb_vertices_);
         return original_vertices_indexes_[vertex_index];
     }
 
@@ -601,25 +601,25 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
 
     void MeshPart::set_cell_region( globalIndex const cell_index,
             globalIndex const region_index) {
-        assert( cell_index < regions_indexes_.size() );
+        assert( cell_index < static_cast< globalIndex> (regions_indexes_.size()) );
         regions_indexes_[cell_index]  = region_index;
     }
 
     void MeshPart::set_polygon_surface( globalIndex const polygon_index,
             globalIndex const surface_index) {
-        assert( polygon_index < surfaces_indexes_.size() );
+        assert( polygon_index < static_cast< global_argv> (surfaces_indexes_.size() ) );
         surfaces_indexes_[polygon_index]  = surface_index;
     }
 
     void MeshPart::set_cell_original_index(globalIndex const cell_index_in_part_mesh,
                 globalIndex const cell_index_in_full_mesh) {
-        assert( cell_index < original_cells_indexes_.size() );
+        assert( cell_index_in_part_mesh < original_cells_indexes_.size() );
         original_cells_indexes_[cell_index_in_part_mesh] = cell_index_in_full_mesh;
     }
 
     void MeshPart::set_polygon_original_index(globalIndex const polygon_index_in_part_mesh,
                 globalIndex const polygon_index_in_full_mesh) {
-        assert( polygon_index < original_polygons_indexes_.size() );
+        assert( polygon_index_in_part_mesh < original_polygons_indexes_.size() );
         original_polygons_indexes_[polygon_index_in_part_mesh] = polygon_index_in_full_mesh;
     }   
 
