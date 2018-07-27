@@ -86,6 +86,7 @@ public:
   void
   ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
                                                real64 const time,
+                                               dataRepository::ManagedGroup * dataGroup,
                                                globalIndex_array const & dofMap,
                                                integer const & dofDim,
                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
@@ -429,6 +430,7 @@ void
 BoundaryConditionBase::
 ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
                                              real64 const time,
+                                             dataRepository::ManagedGroup * dataGroup,
                                              globalIndex_array const & dofMap,
                                              integer const & dofDim,
                                              systemSolverInterface::EpetraBlockSystem * const blockSystem,
@@ -462,11 +464,11 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
     }
     if( OPERATION==0 )
     {
-      rhs->ReplaceGlobalValues( 1, node_dof.data(), node_rhs.data() );
+      rhs->ReplaceGlobalValues( node_dof.size(), node_dof.data(), node_rhs.data() );
     }
     else if( OPERATION==1 )
     {
-      rhs->SumIntoGlobalValues( 1, node_dof.data(), node_rhs.data() );
+      rhs->SumIntoGlobalValues( node_dof.size(), node_dof.data(), node_rhs.data() );
     }
   }
   else
@@ -491,18 +493,18 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
         }
         if( OPERATION==0 )
         {
-          rhs->ReplaceGlobalValues( 1, node_dof.data(), node_rhs.data() );
+          rhs->ReplaceGlobalValues( node_dof.size(), node_dof.data(), node_rhs.data() );
         }
         else if( OPERATION==1 )
         {
-          rhs->SumIntoGlobalValues( 1, node_dof.data(), node_rhs.data() );
+          rhs->SumIntoGlobalValues( node_dof.size(), node_dof.data(), node_rhs.data() );
         }
       }
       else
       {
         real64_array result;
         result.resize( integer_conversion<localIndex>(set.size()));
-//        function->Evaluate( dataGroup, time, set, result );
+        function->Evaluate( dataGroup, time, set, result );
         integer counter=0;
         for( auto a : set )
         {
@@ -511,17 +513,17 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
                                                                     blockSystem,
                                                                     blockID,
                                                                     node_rhs(counter),
-                                                                    result[counter],
+                                                                    m_scale*result[counter],
                                                                     lambda(a) );
           ++counter;
         }
         if( OPERATION==0 )
         {
-          rhs->ReplaceGlobalValues( 1, node_dof.data(), node_rhs.data() );
+          rhs->ReplaceGlobalValues( node_dof.size(), node_dof.data(), node_rhs.data() );
         }
         else if( OPERATION==1 )
         {
-          rhs->SumIntoGlobalValues( 1, node_dof.data(), node_rhs.data() );
+          rhs->SumIntoGlobalValues( node_dof.size(), node_dof.data(), node_rhs.data() );
         }
 
       }
