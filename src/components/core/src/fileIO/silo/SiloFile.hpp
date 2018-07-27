@@ -472,28 +472,25 @@ template<> inline int CastField<int, int> (const int& field, int const )
 }
 
 
-template<> inline long int CastField<long int, long int> (const localIndex& field, int const )
+template<> inline long int CastField<long int, long int> (const long int& field, int const )
 {
   return field;
 }
 
-template<> inline int CastField<int, long int> (const
-localIndex& field, int const )
+template<> inline int CastField<int, long int> (const long int& field, int const )
 {
   return integer_conversion<int>(field);
 }
 
-
-template<> inline globalIndex CastField<globalIndex, globalIndex> (const globalIndex& field, int const )
+template<> inline long long int CastField<long long int, long long int> (const long long int& field, int const )
 {
   return field;
 }
 
-template<> inline int CastField<int, long long unsigned int > (const long long unsigned int& field, int const )
+template<> inline int CastField<int, long long int> (const long long int& field, int const )
 {
   return integer_conversion<int>(field);
 }
-
 
 template<> inline real64 CastField<real64, real64> (const real64& field, int const )
 {
@@ -501,7 +498,7 @@ template<> inline real64 CastField<real64, real64> (const real64& field, int con
 }
 template<> inline float CastField<float, real64> (const real64& field, int const )
 {
-  return field;
+  return static_cast<float>(field);
 }
 
 

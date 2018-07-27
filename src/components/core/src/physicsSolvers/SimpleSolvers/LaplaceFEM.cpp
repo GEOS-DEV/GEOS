@@ -48,7 +48,6 @@
 
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
-#define verbose 1
 
 
 namespace geosx

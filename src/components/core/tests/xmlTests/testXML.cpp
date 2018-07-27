@@ -53,6 +53,12 @@ int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
 
+#ifdef USE_MPI
+  int rank;
+  MPI_Init(&argc,&argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+
   global_argc = argc;
   global_argv = new char*[static_cast<unsigned int>(global_argc)];
   for( int i=0 ; i<argc ; ++i )
@@ -61,7 +67,13 @@ int main(int argc, char** argv)
     std::cout<<argv[i]<<std::endl;
   }
 
-  return RUN_ALL_TESTS();
+  int const result = RUN_ALL_TESTS();
+
+#ifdef USE_MPI
+  MPI_Finalize();
+#endif
+
+  return result;
 }
 
 
