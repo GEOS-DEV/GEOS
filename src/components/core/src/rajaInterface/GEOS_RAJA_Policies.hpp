@@ -40,7 +40,7 @@ typedef RAJA::atomic::omp_atomic atomicPolicy;
 typedef RAJA::omp_reduce_ordered reducePolicy;
 #else
 typedef RAJA::atomic::loop_atomic atomicPolicy;
-typedef RAJA::seq_reduce reducePolicy;
+typedef RAJA::loop_reduce reducePolicy;
 #endif
 
 #endif
