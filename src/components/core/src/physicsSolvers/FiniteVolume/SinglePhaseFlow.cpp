@@ -801,7 +801,7 @@ void SinglePhaseFlow::AssembleSystem ( DomainPartition * const  domain,
   real64 mobility[numElems], dMobility_dP[numElems];
   real64_array dDensMean_dP, dFlux_dP;
 
-  stencilCollection.forAll([&] (StencilCollection::Accessor stencil) -> void
+  stencilCollection.forAll([&] (auto stencil) -> void
   {
     const localIndex stencilSize = stencil.size();
 
