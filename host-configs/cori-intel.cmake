@@ -66,8 +66,8 @@ set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "Enables uncrusitfy")
 
 # We need to use our own chai until chai build issues get resolved
 #
-set(CHAI_DIR "~/global/homes/v/vargas45/Git-Repos/CHAI/build/install" CACHE PATH "" FORCE )
-set(CHAI_INCLUDE_DIRS "~/global/homes/v/vargas45/Git-Repos/CHAI/build/install" CACHE PATH "" FORCE )
+set(CHAI_DIR "/global/homes/v/vargas45/Git-Repos/CHAI/build/install" CACHE PATH "" FORCE )
+set(CHAI_INCLUDE_DIRS "/global/homes/v/vargas45/Git-Repos/CHAI/build/install" CACHE PATH "" FORCE )
 set(CHAI_LIBRARY "/global/homes/v/vargas45/Git-Repos/CHAI/build/install/lib/libchai.a" CACHE PATH "" FORCE)
 
 #set(HDF5_DIR "/opt/cray/pe/modulefiles/cray-hdf5-parallel/1.10.0.3" CACHE PATH "" FORCE)
