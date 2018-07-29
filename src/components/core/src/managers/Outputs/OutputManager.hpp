@@ -44,7 +44,7 @@ public:
   OutputManager( std::string const & name,
                  ManagedGroup * const parent );
 
-  virtual ~OutputManager();
+  virtual ~OutputManager() override;
 
   virtual void FillDocumentationNode() override;
 

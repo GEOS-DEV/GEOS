@@ -34,7 +34,7 @@ public:
   HaltEvent(const std::string& name,
                 ManagedGroup * const parent);
   
-  virtual ~HaltEvent();
+  virtual ~HaltEvent() override;
 
   static string CatalogName() { return "HaltEvent"; }
 

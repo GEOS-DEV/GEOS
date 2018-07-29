@@ -34,7 +34,7 @@ public:
   explicit EventBase( std::string const & name,
                        ManagedGroup * const parent );
 
-  virtual ~EventBase();
+  virtual ~EventBase() override;
 
   static string CatalogName() { return "EventBase"; }
 
