@@ -38,7 +38,7 @@ public:
   RestartOutput( std::string const & name,
               ManagedGroup * const parent );
 
-  virtual ~RestartOutput();
+  virtual ~RestartOutput() override;
 
   static string CatalogName() { return "Restart"; }
 

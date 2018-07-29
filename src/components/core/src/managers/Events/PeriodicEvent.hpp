@@ -32,7 +32,7 @@ public:
   PeriodicEvent(const std::string& name,
                 ManagedGroup * const parent);
   
-  virtual ~PeriodicEvent();
+  virtual ~PeriodicEvent() override;
 
   static string CatalogName() { return "PeriodicEvent"; }
 

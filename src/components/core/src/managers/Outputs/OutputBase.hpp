@@ -39,7 +39,7 @@ public:
   explicit OutputBase( std::string const & name,
                        ManagedGroup * const parent );
 
-  virtual ~OutputBase();
+  virtual ~OutputBase() override;
 
   static string CatalogName() { return "OutputBase"; }
 

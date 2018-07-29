@@ -38,7 +38,7 @@ public:
   SiloOutput( std::string const & name,
               ManagedGroup * const parent );
 
-  virtual ~SiloOutput();
+  virtual ~SiloOutput() override;
 
   static string CatalogName() { return "Silo"; }
 
