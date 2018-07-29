@@ -38,7 +38,7 @@ public:
   BlueprintOutput( std::string const & name,
               ManagedGroup * const parent );
 
-  virtual ~BlueprintOutput();
+  virtual ~BlueprintOutput() override;
 
   static string CatalogName() { return "Blueprint"; }
 

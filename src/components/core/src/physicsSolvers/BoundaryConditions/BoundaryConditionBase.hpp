@@ -94,7 +94,7 @@ public:
                                                LAMBDA && lambda ) const;
 
   template< int OPERATION >
-  inline void ApplyBounaryConditionDefaultMethodPoint( integer const dof,
+  inline void ApplyBounaryConditionDefaultMethodPoint( globalIndex const dof,
                                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                        systemSolverInterface::BlockIDs const blockID,
                                                        real64 & rhs,
@@ -266,7 +266,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
 
 
 template<>
-inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( integer const dof,
+inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( globalIndex const dof,
                                                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                                                systemSolverInterface::BlockIDs const blockID,
                                                                                real64 & rhs,
@@ -288,7 +288,7 @@ inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( i
 
 
 template<>
-inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( integer const dof,
+inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( globalIndex const dof,
                                                                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                                                systemSolverInterface::BlockIDs const blockID,
                                                                                real64 & rhs,
