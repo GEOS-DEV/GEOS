@@ -57,7 +57,7 @@ enum class BlockIDs
 };
 
 static double ClearRow ( Epetra_FECrsMatrix * matrix,
-                         int const row,
+                         globalIndex const row,
                          const double factor )
 {
   long long int rowTmp = static_cast<long long int>(row);
@@ -372,7 +372,7 @@ public:
   }
 
   double ClearSystemRow ( int const blockRow,
-                          int const rowIndex,
+                          globalIndex const rowIndex,
                           const double factor )
   {
     double LARGE = 0;
@@ -391,7 +391,7 @@ public:
   }
 
   double ClearSystemRow ( const BlockIDs rowDofID,
-                          int const rowIndex,
+                          globalIndex const rowIndex,
                           const double factor )
   {
     int rowBlockIndex = m_blockIndex[rowDofID];
