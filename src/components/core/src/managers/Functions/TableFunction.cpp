@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * TableFunction.cpp
- *
- *  Created on: June 16, 2017
- *      Author: sherman
+/**
+ * @file TableFunction.cpp
  */
 
 #include "TableFunction.hpp"
@@ -61,9 +58,7 @@ TableFunction::TableFunction( const std::string& name,
 {}
 
 TableFunction::~TableFunction()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 
 void TableFunction::FillDocumentationNode()
@@ -154,8 +149,6 @@ void TableFunction::FillDocumentationNode()
                               0 );
 }
 
-void TableFunction::BuildDataStructure( ManagedGroup * const domain )
-{}
 
 void TableFunction::InitializeFunction()
 {

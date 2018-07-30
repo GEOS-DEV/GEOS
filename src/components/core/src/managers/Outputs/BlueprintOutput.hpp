@@ -29,18 +29,28 @@
 namespace geosx
 {
 
+/**
+ * @class BlueprintOutput
+ *
+ * A class for creating blueprint-based outputs
+ */
 class BlueprintOutput : public OutputBase
 {
 public:
+  /// Main constructor
   BlueprintOutput( std::string const & name,
               ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~BlueprintOutput() override;
 
+  /// Catalog name interface
   static string CatalogName() { return "Blueprint"; }
 
+  /// Documentation assignment
   virtual void FillDocumentationNode() override;
 
+  /// This method will be called by the event manager if triggered
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
                         int const cycleNumber,

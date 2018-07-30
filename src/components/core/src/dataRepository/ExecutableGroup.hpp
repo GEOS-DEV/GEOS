@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+ * @file ExecutableGroup.hpp
+ */
+
 #ifndef EXECUTABLEGROUP_HPP_
 #define EXECUTABLEGROUP_HPP_
 
@@ -29,6 +33,12 @@
 namespace geosx
 {
 
+/**
+ * @class ExecutableGroup
+ *
+ * Objects that are executable and/or able to request changes dt
+ * should be derived from this type.
+ */
 class ExecutableGroup : public dataRepository::ManagedGroup
 {
 public:
@@ -36,7 +46,8 @@ public:
   using dataRepository::ManagedGroup::ManagedGroup;
 
   /*
-   * If the start criteria are satisfied, then the event manager will call this method
+   * If the start criteria are satisfied, then the event manager
+   * will call this method
    */
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
@@ -44,7 +55,8 @@ public:
                         dataRepository::ManagedGroup * domain ) = 0;
 
   /*
-   * This supplies the timestep request for each executable target to the event manager
+   * This supplies the timestep request for each executable
+   * target to the event manager
    */
   virtual real64 GetTimestepRequest(real64 const time) {return std::numeric_limits<integer>::max();}
 };

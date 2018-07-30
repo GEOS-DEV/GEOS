@@ -29,14 +29,22 @@
 namespace geosx
 {
 
+/**
+ * @class OutputBase
+ *
+ * A base class for output types
+ */
 class OutputBase : public ExecutableGroup
 {
 public:
+  /// Main constructor
   explicit OutputBase( std::string const & name,
                        ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~OutputBase() override;
 
+  /// Catalog name interface
   static string CatalogName() { return "OutputBase"; }
 
   OutputBase() = default;
@@ -44,13 +52,17 @@ public:
   OutputBase( OutputBase &&) = default;
   OutputBase& operator=( OutputBase const & ) = default;
   OutputBase& operator=( OutputBase&& ) = default;
-    
+
+  /// Documentation assignment
   virtual void FillDocumentationNode() override;
 
+  /// Output initialization
   virtual void Initialize( ManagedGroup * const group ) override;
 
+  /// Method for setting up output directories
   virtual void SetupDirectoryStructure();
 
+  /// Catalog interface
   using CatalogInterface = cxx_utilities::CatalogInterface< OutputBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 

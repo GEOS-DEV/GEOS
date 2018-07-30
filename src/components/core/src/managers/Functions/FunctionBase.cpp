@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+ * @file FunctionBase.cpp
+ */
+
 #include "FunctionBase.hpp"
 #include "common/DataTypes.hpp"
 
@@ -31,10 +35,9 @@ FunctionBase::FunctionBase( const std::string& name,
   ManagedGroup( name, parent )
 {}
 
+
 FunctionBase::~FunctionBase()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 
 void FunctionBase::FillDocumentationNode()
@@ -102,10 +105,6 @@ integer FunctionBase::isFunctionOfTime() const
 }
 
 
-/*
-* This will apply a function to an object, then return an array containing
-* the min, average, and max of the results.
-*/
 real64_array FunctionBase::EvaluateStats( dataRepository::ManagedGroup const * const group,
                                           real64 const time,
                                           lSet const & set) const
@@ -129,8 +128,5 @@ real64_array FunctionBase::EvaluateStats( dataRepository::ManagedGroup const * c
   return result;
 }
 
-
-//REGISTER_CATALOG_ENTRY( FunctionBase, FunctionBase, std::string const &,
-// ManagedGroup * const )
 
 } /* namespace ANST */

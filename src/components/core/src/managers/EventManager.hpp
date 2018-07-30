@@ -16,7 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/** A class for managing code events */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
@@ -35,18 +34,35 @@ string const Events("Events");
 }
 }
 
+/**
+ * @class EventManager
+ *
+ * A class for managing code events.
+ */
 class EventManager : public dataRepository::ManagedGroup
 {
 public:
+  /// Main constructor
   EventManager( std::string const & name,
                 ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~EventManager() override;
 
+  /// Documentation assignment
   virtual void FillDocumentationNode() override;
 
+  /// A method to add child events
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
+  /**
+   * The main execution loop for the code.  During each cycle, it will:
+   *   - Calculate the event forecast (number of cycles until its expected execution)
+   *   - Signal an event to prepare (forecast == 1)
+   *   - Execute an event (forecast == 0)
+   *   - Determine dt for the next cycle
+   *   - Advance time, cycle, etc.
+   */
   void Run(dataRepository::ManagedGroup * domain);
 
   struct viewKeyStruct
@@ -59,6 +75,7 @@ public:
     dataRepository::ViewKey verbosity = { "verbosity" };
   } viewKeys;
 
+  /// Catalog interface
   using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 

@@ -29,18 +29,28 @@
 namespace geosx
 {
 
+/**
+ * @class SiloOutput
+ *
+ * A class for creating silo-based outputs
+ */
 class SiloOutput : public OutputBase
 {
 public:
+  /// Main constructor
   SiloOutput( std::string const & name,
               ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~SiloOutput() override;
 
+  /// Catalog name interface
   static string CatalogName() { return "Silo"; }
 
+  /// Documentation assignment
   virtual void FillDocumentationNode() override;
 
+  /// This method will be called by the event manager if triggered
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
                         int const cycleNumber,
