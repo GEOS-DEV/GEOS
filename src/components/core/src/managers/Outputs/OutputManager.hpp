@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * OutputManager.hpp
- *
- *  Created on: Jan 26, 2016
- *      Author: sherman
+/**
+ * @file OutputManager.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_OUTPUTMANAGER_HPP_

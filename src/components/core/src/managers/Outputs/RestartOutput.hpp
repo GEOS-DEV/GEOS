@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * RestartOutput.hpp
- *
- *  Created on: Jan 31, 2018
- *      Author: sherman
+/**
+ * @file RestartOutput.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_RESTARTOUTPUT_HPP_

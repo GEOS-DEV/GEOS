@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * BlueprintOutput.hpp
- *
- *  Created on: Jan 31, 2018
- *      Author: sherman
+/**
+ * @file BlueprintOutput.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_BLUEPRINTOUTPUT_HPP_

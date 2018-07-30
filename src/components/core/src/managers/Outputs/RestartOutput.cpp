@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * RestartOutput.cpp
- *
- *  Created on: Jan 31, 2018
- *      Author: sherman
+/**
+ * @file RestartOutput.cpp
  */
 
 #include "RestartOutput.hpp"

@@ -16,7 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-
+ /**
+  * @file PeriodicEvent.cpp
+  */
 
 #include "PeriodicEvent.hpp"
 #include "DocumentationNode.hpp"
