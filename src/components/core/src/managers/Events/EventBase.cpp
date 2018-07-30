@@ -117,7 +117,7 @@ void EventBase::FillDocumentationNode()
                               "0",
                               "",
                               0,
-                              1,
+                              0,
                               0 );
 
   docNode->AllocateChildNode( viewKeys.lastCycle.Key(),
@@ -130,7 +130,7 @@ void EventBase::FillDocumentationNode()
                               "0",
                               "",
                               0,
-                              1,
+                              0,
                               0 );
 
   docNode->AllocateChildNode( viewKeys.allowSuperstep.Key(),
