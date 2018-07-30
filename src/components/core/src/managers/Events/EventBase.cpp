@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+ * @file EventBase.cpp
+ */
+
 #include "EventBase.hpp"
 #include <cstring>
 

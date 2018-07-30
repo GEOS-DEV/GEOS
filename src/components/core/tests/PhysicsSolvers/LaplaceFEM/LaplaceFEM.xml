@@ -112,7 +112,4 @@
     <Box name="sink"   type="0" xMin=" 0.999,  -0.999,  -0.999" xMax="1.10, 1.10, 1.10"/>
   </Geometry>
 
-
-  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
-
 </Problem>

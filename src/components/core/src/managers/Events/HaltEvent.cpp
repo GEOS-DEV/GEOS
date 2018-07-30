@@ -20,6 +20,10 @@
 #include "DocumentationNode.hpp"
 #include <sys/time.h>
 
+/**
+ * @file HaltEvent.cpp
+ */
+
 namespace geosx
 {
 
