@@ -196,13 +196,12 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
   {
     if (dt <= 0)
     {
-      SetForecast(1e9);
+      SetForecast(std::numeric_limits<integer>::max());
     } 
     else
     {
-      // How do we want to handle rounding?
       real64 forecast = (timeFrequency - (time - lastTime)) / dt;
-      SetForecast(static_cast<integer>(forecast));
+      SetForecast(static_cast<integer>(std::min(forecast, 1e9)));
     }
   }
   else

@@ -174,7 +174,8 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   });
 
   // Run problem
-  while(((maxTime < 0) || (time < maxTime)) && ((maxCycle < 0) || (cycle < maxCycle)) && (exitFlag == 0))
+  real64 epsilon = std::numeric_limits<real64>::epsilon();
+  while(((maxTime < 0) || (maxTime - time > epsilon)) && ((maxCycle < 0) || (cycle < maxCycle)) && (exitFlag == 0))
   {
     real64 nextDt = 1e6;
     std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
@@ -197,7 +198,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       real64 requestedDt = 1e6;
       if (eventForecast <= 1)
       {
-        requestedDt = subEvent->GetTimestepRequest(time);
+        requestedDt = subEvent->GetTimestepRequest(time + dt);
       }
       nextDt = std::min(requestedDt, nextDt);
 
