@@ -20,6 +20,10 @@
 #include "DocumentationNode.hpp"
 #include <sys/time.h>
 
+/**
+ * @file HaltEvent.cpp
+ */
+
 namespace geosx
 {
 
@@ -34,7 +38,7 @@ HaltEvent::HaltEvent( const std::string& name,
   EventBase(name,parent)
 {
   timeval tim;
-  gettimeofday(&tim, NULL);
+  gettimeofday(&tim, nullptr);
   m_startTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
   m_lastTime = m_startTime;  
 }
@@ -89,7 +93,7 @@ void HaltEvent::EstimateEventTiming(real64 const time,
   
   // Check run time
   timeval tim;
-  gettimeofday(&tim, NULL);
+  gettimeofday(&tim, nullptr);
   real64 currentTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   // Update values

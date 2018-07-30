@@ -16,13 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * OutputBase.hpp
- *
- *  Created on: Jan 31, 2018
- *      Author: sherman
+/**
+ * @file OutputBase.hpp
  */
-
 #ifndef SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
 
@@ -39,7 +35,7 @@ public:
   explicit OutputBase( std::string const & name,
                        ManagedGroup * const parent );
 
-  virtual ~OutputBase();
+  virtual ~OutputBase() override;
 
   static string CatalogName() { return "OutputBase"; }
 

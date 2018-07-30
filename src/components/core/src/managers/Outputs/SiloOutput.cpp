@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SiloOutput.cpp
- *
- *  Created on: Jan 26, 2018
- *      Author: sherman
+/**
+ * @file SiloOutput.cpp
  */
 
 #include "SiloOutput.hpp"
@@ -55,31 +52,31 @@ void SiloOutput::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Outputs SILO format files");
 
-  docNode->AllocateChildNode( viewKeys.plotFileRoot.Key(),
-                              viewKeys.plotFileRoot.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "root name of the plot file",
-                              "root name of the plot file",
-                              "plot",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.writeFEMFaces.Key(),
-                              viewKeys.writeFEMFaces.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "flag to write FEM faces",
-                              "flag to write FEM faces",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
+//  docNode->AllocateChildNode( viewKeys.plotFileRoot.Key(),
+//                              viewKeys.plotFileRoot.Key(),
+//                              -1,
+//                              "string",
+//                              "string",
+//                              "root name of the plot file",
+//                              "root name of the plot file",
+//                              "plot",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
+//
+//  docNode->AllocateChildNode( viewKeys.writeFEMFaces.Key(),
+//                              viewKeys.writeFEMFaces.Key(),
+//                              -1,
+//                              "integer",
+//                              "integer",
+//                              "flag to write FEM faces",
+//                              "flag to write FEM faces",
+//                              "0",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
 }
 
 void SiloOutput::Execute(real64 const& time_n,

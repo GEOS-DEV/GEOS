@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * OutputManager.cpp
- *
- *  Created on: Jan 26, 2016
- *      Author: sherman
+/**
+ * @file OutputManager.cpp
  */
 
 #include "OutputManager.hpp"
