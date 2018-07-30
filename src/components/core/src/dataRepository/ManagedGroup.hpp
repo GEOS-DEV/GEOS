@@ -263,8 +263,8 @@ public:
   }
 
   /**
-   * This will grab the pointer to an object in the data structure
-   * given a unix-style path (including absolute, relative paths)
+   * @brief This will grab the pointer to an object in the data structure
+   * @param path a unix-style string (absolute, relative paths valid)
    */
   template< typename T = ManagedGroup >
   T const * GetGroupByPath( string const & path ) const

@@ -18,8 +18,6 @@
 
 /**
  * @file HaltEvent.hpp
- * An event type that is designed to look at the external clock.
- * This is useful for managing wall time limitations.
  */
 
 
@@ -31,23 +29,38 @@
 namespace geosx
 {
 
+/**
+ * @class HaltEvent
+ * An event type that is designed to look at the external clock.
+ * This is useful for managing wall time limitations.
+ */
 class HaltEvent : public EventBase
 {
 public:
+  /// Constructor
   HaltEvent(const std::string& name,
                 ManagedGroup * const parent);
   
+  /// Destructor
   virtual ~HaltEvent() override;
 
+  // Catalog name interface
   static string CatalogName() { return "HaltEvent"; }
 
+  /// Documentation assignment
   virtual void FillDocumentationNode() override;
   
+  /**
+   * This event is designed to look at the external clock. Currently,
+   * if the event is triggered it will set a flag, which will
+   * instruct the code to exit.  This is useful for managing walltime
+   */
   virtual void EstimateEventTiming(real64 const time,
                                    real64 const dt, 
                                    integer const cycle,
                                    dataRepository::ManagedGroup * domain) override;
 
+  /// Timing values
   real64 m_startTime = 0.0;
   real64 m_lastTime = 0.0;
   real64 m_realDt = 1.0;

@@ -30,9 +30,6 @@ namespace geosx
 using namespace dataRepository;
 
 
-/**
- * Constructor.
- */
 HaltEvent::HaltEvent( const std::string& name,
                       ManagedGroup * const parent ):
   EventBase(name,parent)
@@ -44,16 +41,10 @@ HaltEvent::HaltEvent( const std::string& name,
 }
 
 
-/**
- * Destructor.
- */
 HaltEvent::~HaltEvent()
 {}
 
 
-/**
- * Documentation.
- */
 void HaltEvent::FillDocumentationNode()
 {
   EventBase::FillDocumentationNode();
@@ -79,11 +70,6 @@ void HaltEvent::FillDocumentationNode()
 }
 
 
-/**
- * This event is designed to look at the external clock. Currently,
- * if the event is triggered it will set a flag, which will
- * instruct the code to exit.  This is useful for managing walltime
- */
 void HaltEvent::EstimateEventTiming(real64 const time,
                                      real64 const dt, 
                                      integer const cycle,

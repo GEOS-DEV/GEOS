@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * OutputBase.cpp
- *
- *  Created on: Jan 31, 2018
- *      Author: sherman
+/**
+ * @file OutputBase.cpp
  */
 
 #include "OutputBase.hpp"

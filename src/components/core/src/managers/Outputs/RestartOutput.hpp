@@ -29,18 +29,29 @@
 namespace geosx
 {
 
+/**
+ * @class RestartOutput
+ *
+ * A class for creating restart-based outputs
+ * Note: this class is redundant, and is expected to be retired
+ */
 class RestartOutput : public OutputBase
 {
 public:
+  /// Main constructor
   RestartOutput( std::string const & name,
               ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~RestartOutput() override;
 
+  /// Catalog name interface
   static string CatalogName() { return "Restart"; }
 
+  /// Documentation assignment
   virtual void FillDocumentationNode() override;
 
+  /// This method will be called by the event manager if triggered
   virtual void Execute( real64 const & time_n,
                         real64 const & dt,
                         int const cycleNumber,

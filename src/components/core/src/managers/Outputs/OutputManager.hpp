@@ -35,16 +35,25 @@ namespace keys
 }
 }
 
+/**
+ * @class OutputManager
+ *
+ * An class for managing output types
+ */
 class OutputManager : public dataRepository::ManagedGroup
 {
 public:
+  /// Main constructor
   OutputManager( std::string const & name,
                  ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~OutputManager() override;
 
+  /// Documentation assignment
   virtual void FillDocumentationNode() override;
 
+  /// Catalog name interface
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   struct viewKeyStruct
