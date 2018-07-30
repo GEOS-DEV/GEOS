@@ -16,13 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * BlueprintOutput.cpp
- *
- *  Created on: Jan 31, 2018
- *      Author: sherman
+/**
+ * @file BlueprintOutput.cpp
  */
-
 #include "BlueprintOutput.hpp"
 #include "DocumentationNode.hpp"
 #include "mesh/MeshLevel.hpp"

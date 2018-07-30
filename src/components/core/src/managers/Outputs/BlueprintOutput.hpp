@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * BlueprintOutput.hpp
- *
- *  Created on: Jan 31, 2018
- *      Author: sherman
+/**
+ * @file BlueprintOutput.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_BLUEPRINTOUTPUT_HPP_
@@ -38,7 +35,7 @@ public:
   BlueprintOutput( std::string const & name,
               ManagedGroup * const parent );
 
-  virtual ~BlueprintOutput();
+  virtual ~BlueprintOutput() override;
 
   static string CatalogName() { return "Blueprint"; }
 

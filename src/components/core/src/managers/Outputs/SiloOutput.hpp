@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SiloOutput.hpp
- *
- *  Created on: Jan 26, 2018
- *      Author: sherman
+/**
+ * @file SiloOutput.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_SILOOUTPUT_HPP_
@@ -38,7 +35,7 @@ public:
   SiloOutput( std::string const & name,
               ManagedGroup * const parent );
 
-  virtual ~SiloOutput();
+  virtual ~SiloOutput() override;
 
   static string CatalogName() { return "Silo"; }
 

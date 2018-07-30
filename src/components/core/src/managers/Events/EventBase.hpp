@@ -16,7 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/** A base class for managing code event targets (solver applications, etc.) */
+/**
+ * @file EventBase.hpp
+ * A base class for managing code event targets (solver applications, etc.)
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_
@@ -34,7 +37,7 @@ public:
   explicit EventBase( std::string const & name,
                        ManagedGroup * const parent );
 
-  virtual ~EventBase();
+  virtual ~EventBase() override;
 
   static string CatalogName() { return "EventBase"; }
 

@@ -16,8 +16,11 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/** An event type that is designed to look at the external clock.
-*   This is useful for managing wall time limitations. */
+/**
+ * @file HaltEvent.hpp
+ * An event type that is designed to look at the external clock.
+ * This is useful for managing wall time limitations.
+ */
 
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_HALTEVENT_HPP_
@@ -34,7 +37,7 @@ public:
   HaltEvent(const std::string& name,
                 ManagedGroup * const parent);
   
-  virtual ~HaltEvent();
+  virtual ~HaltEvent() override;
 
   static string CatalogName() { return "HaltEvent"; }
 

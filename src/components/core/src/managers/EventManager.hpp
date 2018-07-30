@@ -41,7 +41,7 @@ public:
   EventManager( std::string const & name,
                 ManagedGroup * const parent );
 
-  virtual ~EventManager();
+  virtual ~EventManager() override;
 
   virtual void FillDocumentationNode() override;
 
