@@ -92,17 +92,34 @@
         regionNames="Region" 
         trianglePattern="0" />
 
-  <SolverApplications>
-    <Application begintime="0.0" endtime="$:initTime" dt="0.25" name="1" >
-      <Apply solver="implag3" toregions="Region"/>
-      <Apply solver="ppsolve" toregions="Region"/>
-    </Application>
 
-    <Application begintime="$:initTime" endtime="1e9" name="2">
-      <Apply solver="hf1" toregions="Region"/>
-      <Apply solver="ms" toregions="Region"/>
-    </Application>
-  </SolverApplications>
+  <Events maxTime="1e4">
+    <!-- This event group is applied during initialization.
+         Note: if an event is triggered, then it's children
+         are tested/evaluated. -->
+    <PeriodicEvent name="init_solvers"
+                   forceDt="0.25"
+                   beginTime="0"
+                   endTime="$:initTime" >
+      <PeriodicEvent name="solver_a" target="/Solvers/implag3"/>
+      <PeriodicEvent name="solver_b" target="/Solvers/ppsolve"/>
+    </PeriodicEvent>
+
+    <!-- This event group is applied after initialization -->
+    <PeriodicEvent name="main_solvers"
+                   beginTime="$:initTime"
+                   endTime="1e4">
+      <PeriodicEvent name="solver_a" target="/Solvers/hf1"/>
+      <PeriodicEvent name="solver_b" target="/Solvers/ms"/>
+    </PeriodicEvent>
+
+    <!-- This output event occurs every 20 s -->
+    <PeriodicEvent name="outputs"
+                   timeFrequency="20.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
+
 
   <ElementRegions>
     <ElementRegion elementtype="poly" name="Region">
@@ -228,10 +245,12 @@
     <!-- <SpatialPartition xpar="4" ypar="2" zpar="2"/> -->
   </Partition>
 
-  <!-- <Output parallel_silo="32" plot_interval="5.0" plotfile_root="plot" restart_interval="1e6" slave_directory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="1" maxWallTime="{60*60*15.925}" fieldsToPlot="Pressure Aperture Mass massRate FaceArea ghostRank flowFaceType isExternal birthTime DFN_Index sigma_x sigma_y sigma_z sigma_xy sigma_xz sigma_yz Microseismic_Magnitude Microseismic_Mxx Microseismic_Myy Microseismic_Mzz Microseismic_Mxy Microseismic_Mxz Microseismic_Myz"/> -->
-
-  <Output parallel_silo="32" plot_interval="20.0" plotfile_root="plot" restart_interval="1e6" slave_directory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="1" maxWallTime="{60*60*15.925}" fieldsToPlot="Pressure Aperture Mass massRate FaceArea ghostRank flowFaceType isExternal birthTime DFN_Index sigma_x sigma_y sigma_z sigma_xy sigma_xz sigma_yz Microseismic_Magnitude Microseismic_Mxx Microseismic_Myy Microseismic_Mzz Microseismic_Mxy Microseismic_Mxz Microseismic_Myz"/>
   
+  <Outputs>
+    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+  </Outputs>
+
+
   <Nodesets>
     <Nodeset name="perf" type="0" xmin="{$:initDepth - 0.21*$:coreSize*$:dxdy/$:baseRes} -0.1 {-0.21*$:coreSize/$:baseRes}" xmax="{$:initDepth + 0.21*$:coreSize*$:dxdy/$:baseRes} 0.1 {0.21*$:coreSize/$:baseRes}"/>
     <Nodeset name="source" type="0" xmin="{$:initDepth - 0.11*$:coreSize*$:dxdy/$:baseRes} -0.1 {-0.11*$:coreSize/$:baseRes}" xmax="{$:initDepth + 0.11*$:coreSize*$:dxdy/$:baseRes} 0.1 {0.11*$:coreSize/$:baseRes}"/>

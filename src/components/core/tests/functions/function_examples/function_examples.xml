@@ -38,6 +38,13 @@
   </SolverApplications>
 
 
+  <Events maxTime="1.0">
+    <PeriodicEvent name="solverApplications"
+                   forceDt="0.25"
+                   target="/Solvers/symmath" />
+  </Events>
+
+
   <NumericalMethods>
 
     <BasisFunctions> 

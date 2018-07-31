@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FunctionBase.hpp
- *
- *  Created on: July 6, 2017
- *      Author: sherman
+/**
+ * @file FunctionBase.hpp
  */
 
 #ifndef FUNCTIONBASE_HPP_
@@ -41,30 +38,52 @@ string const inputVarTypes("inputVarTypes");
 }
 }
 
+/**
+ * @class FunctionBase
+ *
+ * An object for interfacing with arbitrary N-dimensional functions.
+ */
 class FunctionBase : public dataRepository::ManagedGroup
 {
 public:
+  /// Main constructor
   FunctionBase( const std::string& name,
                 dataRepository::ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~FunctionBase() override;
 
+  /// Documentation assignment
   virtual void FillDocumentationNode() override;
 
+  /// Catalog name interface
   static string CatalogName() { return "FunctionBase"; }
 
+  /// After reading the xml, call the function initialization
   virtual void ReadXML_PostProcess() override { InitializeFunction(); }
 
+  /// Function initialization
   virtual void InitializeFunction(){}
 
+  /// Test to see if the function is a 1D function of time
   integer isFunctionOfTime() const;
 
+  /**
+   * @brief Method to evaluate a function on a target object
+   * @param group a pointer to the object holding the function arguments
+   * @param time current time
+   * @param set the subset of nodes to apply the function to
+   * @param result an array to hold the results of the function
+   */
   virtual void Evaluate( dataRepository::ManagedGroup const * const group,
                          real64 const time,
                          lSet const & set,
                          real64_array & result ) const = 0;
 
-
+  /**
+   * @brief Method to evaluate a function
+   * @param input a scalar input
+   */
   virtual real64 Evaluate( real64 const * const input ) const = 0;
 
   // Setup catalog
@@ -75,6 +94,17 @@ public:
     return catalog;
   }
 
+  /*
+   * @brief This generates statistics by applying a function to an object
+   * @param group a pointer to the object holding the function arguments
+   * @param time current time
+   * @param set the subset of nodes to apply the function to
+   * @return An array holding the min, average, max values of the results
+   */
+  real64_array EvaluateStats( dataRepository::ManagedGroup const * const group,
+                              real64 const time,
+                              lSet const & set) const;
+
 protected:
   template< typename LEAF >
   void EvaluateT( dataRepository::ManagedGroup const * const group,
@@ -84,7 +114,7 @@ protected:
 
 };
 
-
+/// Method to apply an function with an arbitrary type of output
 template< typename LEAF >
 void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
                               real64 const time,

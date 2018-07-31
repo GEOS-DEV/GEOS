@@ -29,7 +29,7 @@ using namespace dataRepository;
 
 SolverBase::SolverBase( std::string const & name,
                         ManagedGroup * const parent ):
-  ManagedGroup( name, parent ),
+  ExecutableGroup( name, parent ),
   m_linearSolverWrapper(),
   m_verboseLevel(0),
   m_gravityVector( R1Tensor(0.0) ),
@@ -150,6 +150,18 @@ real64 SolverBase::SolverStep( real64 const& time_n,
                            ManagedGroup * domain )
 {
   return 0;
+}
+
+
+void SolverBase::Execute( real64 const& time_n,
+                          real64 const& dt,
+                          const int cycleNumber,
+                          ManagedGroup * domain )
+{
+  if ( dt > 0 )
+  {
+    SolverStep(time_n, dt, cycleNumber, domain);
+  }
 }
 
 

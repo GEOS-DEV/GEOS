@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SymbolicFunction.cpp
- *
- *  Created on: July 6, 2017
- *      Author: sherman
+/**
+ * @file SymbolicFunction.cpp
  */
 
 #include "SymbolicFunction.hpp"
@@ -50,10 +47,9 @@ SymbolicFunction::SymbolicFunction( const std::string& name,
   parserExpression()
 {}
 
+
 SymbolicFunction::~SymbolicFunction()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 
 void SymbolicFunction::FillDocumentationNode()
@@ -93,8 +89,6 @@ void SymbolicFunction::FillDocumentationNode()
 
 }
 
-void SymbolicFunction::BuildDataStructure( ManagedGroup * const domain )
-{}
 
 void SymbolicFunction::InitializeFunction()
 {
