@@ -1,4 +1,5 @@
 
+from numpy import array, loadtxt
 
 
 def writeGEOSTable(spatial, properties):
@@ -7,7 +8,7 @@ def writeGEOSTable(spatial, properties):
   for ii in range(0, len(spatial)):
     with open('%s.txt' % spatial_names[ii], 'w') as f:
       for p in spatial[ii]:
-        f.write('%s\n' %(p))
+        f.write('%s\n' % (p))
 
   # Open property files
   for k in properties.keys():
@@ -19,7 +20,8 @@ def writeGEOSTable(spatial, properties):
       # Table
       values = array(properties[k]).reshape(-1, order='F')
       for v in values:
-        f.write('%1.3e\n' %(v))
+        f.write('%1.3e\n' % (v))
+
 
 def readGEOSTable(sfiles, pfiles):
   # Open spatial files

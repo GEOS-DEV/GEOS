@@ -26,6 +26,7 @@
 
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
+#include "../dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/SystemSolverParameters.hpp"
@@ -56,7 +57,7 @@ string const maxDt   = "maxDt";
 }
 }
 
-class SolverBase : public dataRepository::ManagedGroup
+class SolverBase : public ExecutableGroup
 {
 public:
 
@@ -80,14 +81,19 @@ public:
 
 
   /**
+   * This method is called when it's host event is triggered
+   */
+  virtual void Execute( real64 const & time_n,
+                        real64 const & dt,
+                        int const cycleNumber,
+                        dataRepository::ManagedGroup * domain ) override;
+
+  /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-
-
-
 
   /**
    * @brief entry function to perform a solver step

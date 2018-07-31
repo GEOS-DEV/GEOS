@@ -41,6 +41,7 @@
 #include "meshUtilities/MeshManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "managers/Outputs/OutputManager.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "fileIO/blueprint/Blueprint.hpp"
 #include "fileIO/utils/utils.hpp"
@@ -81,8 +82,8 @@ ProblemManager::ProblemManager( const std::string& name,
   RegisterGroup<FiniteElementManager>(groupKeys.numericalMethodsManager);
   RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
   RegisterGroup<MeshManager>(groupKeys.meshManager);
+  RegisterGroup<OutputManager>(groupKeys.outputManager);
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
-  //m_physicsSolverManager = RegisterGroup<SolverBase>(groupKeys.physicsSolverManager);
 
   // The function manager is handled separately
   m_functionManager = NewFunctionManager::Instance();
@@ -792,7 +793,9 @@ void ProblemManager::RunSimulation()
 // cali::Annotation("RunSimulation").begin();
 #endif
   DomainPartition * domain  = getDomainPartition();
+  m_eventManager->Run(domain);
 
+  /*
   real64 dt = 0.0;
 
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
@@ -855,6 +858,7 @@ void ProblemManager::RunSimulation()
 //    WriteRestart(cycle);
 
   }
+  */
 
 
 
@@ -862,25 +866,6 @@ void ProblemManager::RunSimulation()
 #ifdef USE_CALIPER
 //  runSimulationAnnotation.end();
 #endif
-}
-
-void ProblemManager::WriteSilo( integer const cycleNumber,
-                                real64 const problemTime )
-{
-  DomainPartition * domain  = getDomainPartition();
-  SiloFile silo;
-
-  integer rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Barrier( MPI_COMM_WORLD );
-//  std::cout<<"rank = "<<rank<<std::endl;
-
-  silo.Initialize(PMPIO_WRITE);
-  silo.WaitForBatonWrite(rank, cycleNumber, false );
-  silo.WriteDomainPartition( *domain, cycleNumber,problemTime,0);
-  silo.HandOffBaton();
-  silo.ClearEmptiesFromMultiObjects(cycleNumber);
-  silo.Finish();
 }
 
 
@@ -907,24 +892,6 @@ void ProblemManager::ApplyInitialConditions()
 
   boundaryConditionManager->ApplyInitialConditions( domain );
 
-}
-
-void ProblemManager::WriteRestart( integer const cycleNumber )
-{
-#ifdef USE_ATK
-  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-  ViewWrapper<std::string>::rtype problemName = commandLine->getData<std::string>(viewKeys.problemName);
-  char fileName[200] = {0};
-  sprintf(fileName, "%s_%s_%09d", problemName.data(), "restart", cycleNumber);
-
-  this->prepareToWrite();
-  m_functionManager->prepareToWrite();
-  BoundaryConditionManager::get()->prepareToWrite();
-  SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
-  this->finishWriting();
-  m_functionManager->finishWriting();
-  BoundaryConditionManager::get()->finishWriting();
-#endif
 }
 
 void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )

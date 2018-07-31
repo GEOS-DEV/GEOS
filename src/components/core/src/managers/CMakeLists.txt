@@ -5,6 +5,14 @@
 set(managers_headers
     DomainPartition.hpp
     EventManager.hpp
+    Events/EventBase.hpp
+    Events/PeriodicEvent.hpp
+    Events/HaltEvent.hpp
+    Outputs/OutputManager.hpp
+    Outputs/OutputBase.hpp
+    Outputs/SiloOutput.hpp
+    Outputs/RestartOutput.hpp
+    Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -20,6 +28,14 @@ set(managers_headers
 set(managers_sources
   	DomainPartition.cpp
     EventManager.cpp
+    Events/EventBase.cpp
+    Events/PeriodicEvent.cpp
+    Events/HaltEvent.cpp
+    Outputs/OutputManager.cpp
+    Outputs/OutputBase.cpp
+    Outputs/SiloOutput.cpp
+    Outputs/RestartOutput.cpp
+    Outputs/BlueprintOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
