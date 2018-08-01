@@ -14,7 +14,6 @@ set( finiteVolume_sources
      FiniteVolumeManager.cpp
      FluxApproximationBase.cpp
      TwoPointFluxApproximation.cpp
-     StencilCollection.cpp
    )
 
 blt_add_library( NAME                  finiteVolume

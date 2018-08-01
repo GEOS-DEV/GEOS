@@ -319,7 +319,7 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
       GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
     FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
-    StencilCollection const & stencilCollection = fluxApprox->getStencil();
+    FluxApproximationBase::StencilType const & stencilCollection = fluxApprox->getStencil();
 
     // TODO HACK, should be a separate init stage
     const_cast<FluxApproximationBase *>(fluxApprox)->compute(domain->group_cast<DomainPartition *>());
@@ -373,20 +373,20 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( ManagedGroup * object,
                                          subRegion,
                                          viewKeyStruct::fluidPressureString,
                                          [&]( BoundaryConditionBase const * const bc,
-                                             lSet const & set ) -> void
-        {
+                                              lSet const & set ) -> void
+      {
 
-      // call the application of the boundray condition to alter the matrix and rhs
-      bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
-                                                          time,
-                                                          subRegion,
-                                                          blockLocalDofNumber[er][esr].get(),
-                                                          1,
-                                                          blockSystem,
-                                                          BlockIDs::fluidPressureBlock,
-                                                          [&](localIndex const a)->real64
+        // call the application of the boundray condition to alter the matrix and rhs
+        bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
+                                                            time,
+                                                            subRegion,
+                                                            blockLocalDofNumber[er][esr].get(),
+                                                            1,
+                                                            blockSystem,
+                                                            BlockIDs::fluidPressureBlock,
+                                                            [&] (localIndex const a) -> real64
         {
-        return pres[er][esr][a] + dPres[er][esr][a];
+          return pres[er][esr][a] + dPres[er][esr][a];
         });
       });
     }
@@ -656,33 +656,26 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
     GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
-  StencilCollection const & stencilCollection = fluxApprox->getStencil();
+  FluxApproximationBase::StencilType const & stencilCollection = fluxApprox->getStencil();
 
   globalIndex_array elementLocalDofIndexRow;
   globalIndex_array elementLocalDofIndexCol;
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
   constexpr localIndex numElems = 2;
-  stencilCollection.forAll([&] (StencilCollection::Accessor stencil) -> void
+  stencilCollection.forAll([&] (auto stencil) -> void
   {
     elementLocalDofIndexRow.resize(numElems);
-    stencil.forConnected([&] (localIndex er,
-                              localIndex esr,
-                              localIndex ei,
-                              localIndex i) -> void
+    stencil.forConnected([&] (auto const cell, localIndex const i) -> void
     {
-      elementLocalDofIndexRow[i] = blockLocalDofNumber[er][esr][ei];
+      elementLocalDofIndexRow[i] = blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
     });
 
     localIndex const stencilSize = stencil.size();
     elementLocalDofIndexCol.resize(stencilSize);
-    stencil.forAll([&] (localIndex er,
-                        localIndex esr,
-                        localIndex ei,
-                        real64 w,
-                        localIndex i) -> void
+    stencil.forAll([&] (auto const cell, real64 w, localIndex const i) -> void
     {
-      elementLocalDofIndexCol[i] = blockLocalDofNumber[er][esr][ei];
+      elementLocalDofIndexCol[i] = blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
     });
 
     sparsity->InsertGlobalIndices(integer_conversion<int>(numElems),
@@ -728,7 +721,7 @@ void SinglePhaseFlow::AssembleSystem ( DomainPartition * const  domain,
     GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
-  StencilCollection const & stencilCollection = fluxApprox->getStencil();
+  FluxApproximationBase::StencilType const & stencilCollection = fluxApprox->getStencil();
 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock,
                                                                BlockIDs::fluidPressureBlock);
@@ -818,11 +811,12 @@ void SinglePhaseFlow::AssembleSystem ( DomainPartition * const  domain,
 
     // calculate quantities on primary connected cells
     real64 densMean = 0.0;
-    stencil.forConnected([&] (localIndex er,
-                              localIndex esr,
-                              localIndex ei,
-                              localIndex i) -> void
+    stencil.forConnected([&] (auto cell, localIndex i) -> void
     {
+      localIndex const er  = cell.region;
+      localIndex const esr = cell.subRegion;
+      localIndex const ei  = cell.index;
+
       eqnRowIndices[i] = blockLocalDofNumber[er][esr][ei];
 
       // density
@@ -846,12 +840,12 @@ void SinglePhaseFlow::AssembleSystem ( DomainPartition * const  domain,
 
     // compute potential difference MPFA-style
     real64 potDif = 0.0;
-    stencil.forAll([&] (localIndex er,
-                        localIndex esr,
-                        localIndex ei,
-                        real64 w,
-                        localIndex i) -> void
+    stencil.forAll([&] (auto cell, auto w, localIndex i) -> void
     {
+      localIndex const er  = cell.region;
+      localIndex const esr = cell.subRegion;
+      localIndex const ei  = cell.index;
+
       dofColIndices[i] = blockLocalDofNumber[er][esr][ei];
 
       real64 const gravD    = gravDepth[er][esr][ei];

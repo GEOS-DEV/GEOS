@@ -30,7 +30,7 @@ using namespace dataRepository;
 
 FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *const parent)
   : ManagedGroup(name, parent),
-    m_stencil()
+    m_stencilCellToCell()
 {
 
 }

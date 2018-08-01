@@ -32,6 +32,16 @@ namespace geosx
 {
 
 /**
+ * @struct A structure containing a single cell (element) identifier triplet
+ */
+struct CellDescriptor
+{
+  localIndex region;
+  localIndex subRegion;
+  localIndex index;
+};
+
+/**
  * @class FluxApproximationBase
  *
  * Base class for various flux approximation classes.
@@ -44,6 +54,8 @@ public:
   using CatalogInterface = cxx_utilities::CatalogInterface<FluxApproximationBase, string const &, ManagedGroup * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
+  using StencilType = StencilCollection<CellDescriptor, real64>;
+
   void FillDocumentationNode() override;
 
   FluxApproximationBase() = delete;
@@ -53,7 +65,7 @@ public:
   void ReadXML_PostProcess() override;
 
   /// provides access to the stencil collection
-  StencilCollection const & getStencil() const { return m_stencil; }
+  StencilType const & getStencil() const { return m_stencilCellToCell; }
 
   /// actual computation of the stencil, to be overridden by implementations
   virtual void compute(DomainPartition * domain) = 0;
@@ -65,7 +77,7 @@ public:
 
 protected:
 
-  StencilCollection m_stencil;
+  StencilType m_stencilCellToCell;
 
   /// name of the coefficient field
   string m_fieldName;

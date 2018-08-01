@@ -41,33 +41,50 @@ namespace geosx
  * - optimize for contiguous memory layout
  * - group by by stencil size and/or element region for efficient execution
  */
+template <typename IndexType, typename WeightType>
 class StencilCollection
 {
 public:
 
-  explicit StencilCollection() : m_faceConnectors() {}
+  // provide aliases for template type parameters
+  using index_type = IndexType;
+  using weight_type = WeightType;
 
-  /**
- * @struct A structure containing a single cell (element) identifier triplet
- */
-  struct CellDescriptor
-  {
-    localIndex region;
-    localIndex subRegion;
-    localIndex index;
-  };
+  explicit StencilCollection();
+
+  explicit StencilCollection(localIndex numConn, localIndex avgStencilSize);
+
+  /// return the size of the stencil collection (i.e. number of connections)
+  localIndex numConnections() const;
+
+  /// resize the collection
+  void reserve(localIndex numConn, localIndex avgStencilSize);
+
+  /// add data for one connection
+  void add(IndexType const cells[2],
+           array<IndexType> const & stencilCells,
+           array<WeightType> const & stencilWeights);
+
+  /// called after adding connections is done to compress the dataa and release unused memory
+  void compress();
+
+  /// evaluate a user function on each connection
+  template <typename POLICY=stencilPolicy, typename LAMBDA=void>
+  void forAll(LAMBDA && lambda) const;
+
+private:
 
   /**
    * @struct A structure describing a single (generally multi-point) FV connection stencil
    */
-  struct CellConnection
+  struct Connection
   {
-    CellDescriptor        connectedCellIndices[2]; ///< identifiers of connected cells
-    array<CellDescriptor> stencilCellIndices;      ///< identifiers of cells in stencil
-    array<real64>         stencilWeights;          ///< stencil weights (e.g. transmissibilities)
+    IndexType         connectedPointIndices[2]; ///< identifiers of connected points
+    array<IndexType>  stencilPointIndices;      ///< identifiers of points in stencil
+    array<WeightType> stencilWeights;           ///< stencil weights (e.g. transmissibilities)
 
-    void resize(localIndex const size) { stencilCellIndices.resize(size);
-                                         stencilWeights.resize(size);    }
+    void resize(localIndex const size) { stencilPointIndices.resize(size);
+      stencilWeights.resize(size);    }
   };
 
   /**
@@ -75,75 +92,99 @@ public:
    * Hides implementation details of stencil representation
    * (e.g. array of structs vs struct of arrays vs CSR-like storage)
    */
-  class Accessor
+  class Accessor;
+
+  /// array that holds the list of CellConnection objects.
+  array<Connection> m_connectionList;
+
+};
+
+// *** implementation ***
+
+template <typename IndexType, typename WeightType>
+class StencilCollection<IndexType, WeightType>::Accessor
+{
+public:
+
+  Accessor(StencilCollection<IndexType, WeightType> const & stencil, localIndex index)
+    : m_conn(stencil.m_connectionList[index]) {}
+
+  /// return the stencil size
+  localIndex size() const { return m_conn.stencilPointIndices.size(); }
+
+  /// apply a user-defined function on the two connected cells only
+  template <typename LAMBDA>
+  void forConnected(LAMBDA && lambda) const
   {
-  public:
+    for (localIndex i = 0; i < 2; ++i)
+      lambda(m_conn.connectedPointIndices[i], i);
+  }
 
-    /// return the stencil size
-    localIndex size() const { return m_conn.stencilCellIndices.size(); }
-
-    /// apply a user-defined function on the two connected cells only
-    template <typename LAMBDA>
-    void forConnected(LAMBDA && lambda) const
-    {
-      for (localIndex i = 0; i < 2; ++i)
-        lambda(m_conn.connectedCellIndices[i].region,
-               m_conn.connectedCellIndices[i].subRegion,
-               m_conn.connectedCellIndices[i].index,
-               i);
-    }
-
-    /// apply a user-defined function on the stencil
-    template <typename LAMBDA>
-    void forAll(LAMBDA && lambda) const
-    {
-      for (localIndex i = 0; i < size(); ++i)
-        lambda(m_conn.stencilCellIndices[i].region,
-               m_conn.stencilCellIndices[i].subRegion,
-               m_conn.stencilCellIndices[i].index,
-               m_conn.stencilWeights[i], i);
-    }
-
-  private:
-
-    friend class StencilCollection;
-
-    Accessor(StencilCollection const & stencil, localIndex index)
-      : m_conn(stencil.m_faceConnectors[index]) {}
-
-    CellConnection const & m_conn;
-
-  };
-
-  /// return the size of the stencil collection (i.e. number of connections)
-  localIndex numConnections() const { return m_faceConnectors.size(); }
-
-  /// resize the collection
-  void resize(localIndex newsize) { m_faceConnectors.resize(newsize); }
-
-  // TODO: this interface smells, it's temporary
-  /// set data for one connection
-  void set(localIndex index, CellDescriptor connCells[2], array<CellDescriptor> cells, array<real64> weights);
-
-  /// evaluate a user function on each connection (the function receives a StencilAccessor object)
-  template <typename POLICY=stencilPolicy, typename LAMBDA=void>
+  /// apply a user-defined function on the stencil
+  template <typename LAMBDA>
   void forAll(LAMBDA && lambda) const
   {
-    RAJA::RangeSegment seg(0, numConnections());
-    RAJA::forall<POLICY>(seg, [&] (localIndex index) -> void
-    {
-      lambda(Accessor(*this, index));
-    });
+    for (localIndex i = 0; i < size(); ++i)
+      lambda(m_conn.stencilPointIndices[i], m_conn.stencilWeights[i], i);
   }
 
 private:
 
-  friend class StencilView;
-
-  /// array that holds the list of CellConnection objects.
-  array<CellConnection> m_faceConnectors;
+  StencilCollection<IndexType, WeightType>::Connection const & m_conn;
 
 };
+
+template<typename IndexType, typename WeightType>
+StencilCollection<IndexType, WeightType>::StencilCollection()
+  : StencilCollection(0, 0)
+{
+
+}
+
+template<typename IndexType, typename WeightType>
+StencilCollection<IndexType, WeightType>::StencilCollection(localIndex numConn, localIndex avgStencilSize)
+  : m_connectionList()
+{
+  reserve(numConn, avgStencilSize);
+}
+
+template<typename IndexType, typename WeightType>
+localIndex StencilCollection<IndexType, WeightType>::numConnections() const
+{
+  return m_connectionList.size();
+}
+
+template<typename IndexType, typename WeightType>
+void StencilCollection<IndexType, WeightType>::reserve(localIndex numConn, localIndex avgStencilSize)
+{
+  m_connectionList.reserve(numConn);
+}
+
+template<typename IndexType, typename WeightType>
+template<typename POLICY, typename LAMBDA>
+void StencilCollection<IndexType, WeightType>::forAll(LAMBDA &&lambda) const
+{
+  RAJA::RangeSegment seg(0, numConnections());
+  RAJA::forall<POLICY>(seg, [=] (localIndex index) -> void
+  {
+    lambda(Accessor(*this, index));
+  });
+}
+
+template<typename IndexType, typename WeightType>
+void StencilCollection<IndexType, WeightType>::add(IndexType const cells[2],
+                                                   const array <IndexType> & stencilCells,
+                                                   const array <WeightType> & stencilWeights)
+{
+  Connection conn = { { cells[0], cells[1] }, stencilCells, stencilWeights };
+  m_connectionList.push_back(conn);
+}
+
+template<typename IndexType, typename WeightType>
+void StencilCollection<IndexType, WeightType>::compress()
+{
+  // nothing for the moment
+}
 
 }
 
