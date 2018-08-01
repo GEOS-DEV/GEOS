@@ -20,8 +20,8 @@
 #set(SERIAL_CXX_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icpc" CACHE PATH "")
 #set(SERIAL_C_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icc" CACHE PATH "")
 
-set(CMAKE_CXX_COMPILER "/opt/cray/pe/craype/2.5.12/bin/CC" CACHE PATH "")
-set(CMAKE_C_COMPILER "/opt/cray/pe/craype/2.5.12/bin/cc" CACHE PATH "")
+set(CMAKE_CXX_COMPILER "/opt/cray/pe/craype/2.5.14/bin/CC" CACHE PATH "")
+set(CMAKE_C_COMPILER "/opt/cray/pe/craype/2.5.14/bin/cc" CACHE PATH "")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopenmp -std=c++14 -xMIC-AVX512" CACHE STRING "")
 
@@ -37,8 +37,8 @@ set(ENABLE_MPI ON CACHE BOOL "" FORCE)
 #set(MPI_Fortran_COMPILER "${MPI_HOME}/bin/mpifort" CACHE PATH "")
 
 
-set(MPI_CXX_COMPILER "/opt/cray/pe/craype/2.5.12/bin/CC" CACHE PATH "")
-set(MPI_C_COMPILER "/opt/cray/pe/craype/2.5.12/bin/cc" CACHE PATH "")
+set(MPI_CXX_COMPILER "/opt/cray/pe/craype/2.5.14/bin/CC" CACHE PATH "")
+set(MPI_C_COMPILER "/opt/cray/pe/craype/2.5.14/bin/cc" CACHE PATH "")
 
 #set(MPI_C_COMPILER       "${MPI_HOME}/bin/mpicc"   CACHE PATH "")
 #set(MPI_CXX_COMPILER     "${MPI_HOME}/bin/mpicxx"  CACHE PATH "")
@@ -70,17 +70,7 @@ set(CHAI_DIR "/global/homes/v/vargas45/Git-Repos/CHAI/build/install" CACHE PATH 
 set(CHAI_INCLUDE_DIRS "/global/homes/v/vargas45/Git-Repos/CHAI/build/install" CACHE PATH "" FORCE )
 set(CHAI_LIBRARY "/global/homes/v/vargas45/Git-Repos/CHAI/build/install/lib/libchai.a" CACHE PATH "" FORCE)
 
-#set(HDF5_DIR "/opt/cray/pe/modulefiles/cray-hdf5-parallel/1.10.0.3" CACHE PATH "" FORCE)
-#set(HDF5_DIR "/opt/cray/pe/modulefiles/cray-hdf5/1.8.14" CACHE PATH "" FORCE)
-#set(HDF5_DIR "/usr/common/software/modulefiles/hdf5-parallel/1.10.1" CACHE PATH "" FORCE)
- 
-#set(HDF5_DIR "/global/homes/v/vargas45/Git-Repos/axom/uberenv_libs/spack/opt/spack/linux-x86_64/gcc-7.1.0/hdf5-1.8.16-bptv6mmuhama7dgqbc2zfrye7sk5nirs" CACHE PATH "" FORCE)
-
-
-set(HDF5_DIR "/opt/cray/pe/hdf5-parallel/1.10.1.1/INTEL/16.0" CACHE PATH "" FORCE)
-set(HDF5_INCLUDE "/opt/cray/pe/hdf5-parallel/1.10.1.1/INTEL/16.0/include" CACHE PATH "" FORCE)
-set(HDF5_LIBRARIES "/opt/cray/pe/hdf5-parallel/1.10.1.1/INTEL/16.0/lib" CACHE PATH "" FORCE)
-
+set(HDF5_DIR "/opt/cray/pe/hdf5/1.10.2.0/cray/8.6" CACHE PATH "" FORCE)
 
 #set(TRILINOS_DIR "~/opt/cray/pe/modulefiles/cray-trilinos/12.10.1.1" CACHE PATH "" FORCE)
 #set(TRILINOS_DIR "/opt/cray/pe/trilinos/12.10.1.1" CACHE PATH "" FORCE)
