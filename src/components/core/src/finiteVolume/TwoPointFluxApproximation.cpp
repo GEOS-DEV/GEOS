@@ -72,12 +72,11 @@ void TwoPointFluxApproximation::compute(DomainPartition * domain)
   R2Tensor coefTensor, coefTensorTemp;
   real64 faceArea, faceWeight, faceWeightInv;
 
-  array<StencilCollection::CellDescriptor> stencilCells(numElems);
+  array<CellDescriptor> stencilCells(numElems);
   array<real64> stencilWeights(numElems);
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
-  localIndex numFaceConnectors = 0;
-  m_stencil.resize(faceManager->size());
+  m_stencilCellToCell.reserve(faceManager->size(), 2);
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
     faceArea = computationalGeometry::Centroid_3DPolygon(faceToNodes[kf], X, faceCenter, faceNormal);
@@ -138,11 +137,10 @@ void TwoPointFluxApproximation::compute(DomainPartition * domain)
         stencilCells[ke] = { elemRegionList[kf][ke], elemSubRegionList[kf][ke], elemList[kf][ke] };
         stencilWeights[ke] = faceWeight * (ke == 0 ? 1 : -1);
       }
-      m_stencil.set(numFaceConnectors, stencilCells.data(), stencilCells, stencilWeights);
-      ++numFaceConnectors;
+      m_stencilCellToCell.add(stencilCells.data(), stencilCells, stencilWeights);
     }
   }
-  m_stencil.resize(numFaceConnectors);
+  m_stencilCellToCell.compress();
 }
 
 REGISTER_CATALOG_ENTRY(FluxApproximationBase, TwoPointFluxApproximation, std::string const &, ManagedGroup * const)
