@@ -1,5 +1,15 @@
 ##################################
 # cori - KNL build
+#
+#Must set the following env variables
+# 
+#export CRAYPE_LINK_TYPE=dynamic
+#export HDF5_USE_FILE_LOCKING=FALSE
+#export XTPE_LINK_TYPE=dynamic
+#
+#And requires CMAKE 3.9 or higher
+#export PATH=/global/homes/v/vargas45/Git-Repos/myCMAKE/cmake-3.10.3/bin:$PATH
+#
 ##################################
 
 ##################################
@@ -17,39 +27,21 @@
 
 
 # c compiler used by spack
-#set(SERIAL_CXX_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icpc" CACHE PATH "")
-#set(SERIAL_C_COMPILER "/opt/intel/compilers_and_libraries_2018.0.128/linux/bin/intel64/icc" CACHE PATH "")
-
-set(CMAKE_CXX_COMPILER "/opt/cray/pe/craype/2.5.14/bin/CC" CACHE PATH "")
-set(CMAKE_C_COMPILER "/opt/cray/pe/craype/2.5.14/bin/cc" CACHE PATH "")
+set(CMAKE_CXX_COMPILER "CC" CACHE PATH "")
+set(CMAKE_C_COMPILER "cc" CACHE PATH "")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopenmp -std=c++14 -xMIC-AVX512" CACHE STRING "")
 
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MPI ON CACHE BOOL "" FORCE)
 
-#set(MPI_HOME             "/usr/tce/packages/mvapich2/mvapich2-2.2-gcc-7.1.0" CACHE PATH "")
-#set(MPI_HOME             "/opt/intel/compilers_and_libraries_2018.0.128/linux/mpi/intel64" CACHE PATH "")
-
-#set(MPI_C_COMPILER       "${MPI_HOME}/bin/mpiicc"   CACHE PATH "")
-#set(MPI_CXX_COMPILER     "${MPI_HOME}/bin/mpiicpc"  CACHE PATH "")
-
-#set(MPI_Fortran_COMPILER "${MPI_HOME}/bin/mpifort" CACHE PATH "")
-
-
-set(MPI_CXX_COMPILER "/opt/cray/pe/craype/2.5.14/bin/CC" CACHE PATH "")
-set(MPI_C_COMPILER "/opt/cray/pe/craype/2.5.14/bin/cc" CACHE PATH "")
-
-#set(MPI_C_COMPILER       "${MPI_HOME}/bin/mpicc"   CACHE PATH "")
-#set(MPI_CXX_COMPILER     "${MPI_HOME}/bin/mpicxx"  CACHE PATH "")
-#set(MPI_Fortran_COMPILER "${MPI_HOME}/bin/mpifort" CACHE PATH "")
+set(MPI_CXX_COMPILER "${CC}" CACHE PATH "")
+set(MPI_C_COMPILER "${cc}" CACHE PATH "")
 
 set(MPIEXEC              "/usr/bin/srun" CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 
 set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
-#set( GEOSX_TPL_ROOT_DIR "~/Git-Repos/geosx/thirdPartyLibs/" CACHE PATH "" )
-
 
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
 set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
@@ -58,23 +50,8 @@ set(ENABLE_MATHPRESSO ON CACHE BOOL  "Enables mathpresso Plugin")
 
 set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "Enables uncrusitfy")
 
-#######################################
-# RAJA/CHAI SETUP
-#######################################
-#set(RAJA_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/raja/" CACHE PATH "" FORCE )
-#set(CHAI_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/chai/" CACHE PATH "" FORCE )
-
-# We need to use our own chai until chai build issues get resolved
-#
-#set(CHAI_DIR "/global/homes/v/vargas45/Git-Repos/CHAI/build/install" CACHE PATH "" FORCE )
-#set(CHAI_INCLUDE_DIRS "/global/homes/v/vargas45/Git-Repos/CHAI/build/install" CACHE PATH "" FORCE )
-#set(CHAI_LIBRARY "/global/homes/v/vargas45/Git-Repos/CHAI/build/install/lib/libchai.a" CACHE PATH "" FORCE)
-
 set(HDF5_DIR "/opt/cray/pe/hdf5/1.10.2.0/cray/8.6" CACHE PATH "" FORCE)
 
-#set(TRILINOS_DIR "~/opt/cray/pe/modulefiles/cray-trilinos/12.10.1.1" CACHE PATH "" FORCE)
-#set(TRILINOS_DIR "/opt/cray/pe/trilinos/12.10.1.1" CACHE PATH "" FORCE)
-#set(TRILINOS_DIR "/opt/cray/pe/trilinos/12.10.1.1/GNU/5.1/x86_64" CACHE PATH "" FORCE)
 
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
