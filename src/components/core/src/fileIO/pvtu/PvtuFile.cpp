@@ -20,10 +20,13 @@
  * @file PvtuFile.cpp
  */
 
-#include "PvtuFile.hpp"
-#include "common/Logger.hpp"
 #include <iostream>
 #include <string.h>
+
+#include "PvtuFile.hpp"
+
+#include "common/Logger.hpp"
+#include "mesh/MeshBody.hpp"
 
 #if USE_MPI
 #include <mpi.h>
@@ -33,15 +36,15 @@ namespace geosx{
 
 // PUBLIC METHODS
 void PvtuFile::load( std::string const &filename) {
-    int size = 0;
-    int rank = 0;
+    int mpiSize = 0;
+    int mpiRank = 0;
 #if USE_MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 #endif
-    int nb_partition_per_core = 0;
+    int numFilesPerRank = 0;
     //int nb_total_partitions = 0;
-    int remainder = 0;
+    int remainderFiles = 0;
     std::vector < std::string > children_files;
 
 
@@ -50,12 +53,12 @@ void PvtuFile::load( std::string const &filename) {
     pugi::xml_document pvtu_doc;
     pvtu_doc.load_file(filename.c_str());
 
-    if( rank == 0) {
+    if( mpiRank == 0) {
         check_xml_parent_file_consistency(pvtu_doc,filename);
     }
     vtu_files_list(pvtu_doc,children_files);
     // Retrieve the number of partitions
-    int const nb_total_partitions = children_files.size();
+    int const numFiles = children_files.size();
 
     // Next part of this method is dedicated to the optimization of file loading
     //
@@ -65,36 +68,36 @@ void PvtuFile::load( std::string const &filename) {
     //
     // IF nb_partitions < nb_mpi_process : the first nb_partitions process will
     // load ONE partition.
-    if(nb_total_partitions > size) {
-        if ( rank == 0 ) {
+    if(numFiles > mpiSize) {
+        if ( mpiRank == 0 ) {
             std::cout << "WARNING : the number of partitions ("
-                << nb_total_partitions <<") which will be loaded " 
+                << numFiles <<") which will be loaded " 
                 << "is greater that the number of processes on which GEOSX is running ("
-                << size
+                << mpiSize
                 << "). Some processes will hold more than one partition !" << std::endl;
         }
-        nb_partition_per_core = nb_total_partitions / size;
-        remainder = nb_total_partitions % size;
+        numFilesPerRank = numFiles / mpiSize;
+        remainderFiles = numFiles % mpiSize;
     } else {
-        nb_partition_per_core = 1;
-        remainder = 0;
+        numFilesPerRank = 1;
+        remainderFiles = 0;
     }
-    if( rank < remainder ) {
-        vtu_file_names_.resize(nb_partition_per_core+1);
-        vtu_files_.resize(nb_partition_per_core+1);
-        for(int p_index = 0; p_index < nb_partition_per_core +1; ++p_index) {
+    if( mpiRank < remainderFiles ) {
+        vtu_file_names_.resize(numFilesPerRank+1);
+        vtu_files_.resize(numFilesPerRank+1);
+        for(int p_index = 0; p_index < numFilesPerRank +1; ++p_index) {
             vtu_file_names_[p_index] =
-                children_files[rank*(nb_partition_per_core+1) + p_index];
+                children_files[mpiRank*(numFilesPerRank+1) + p_index];
         }
-    } else if( rank < nb_total_partitions) {
-        vtu_file_names_.resize(nb_partition_per_core);
-        vtu_files_.resize(nb_partition_per_core);
-        for(int p_index = 0; p_index < nb_partition_per_core; ++p_index) {
+    } else if( mpiRank < numFiles) {
+        vtu_file_names_.resize(numFilesPerRank);
+        vtu_files_.resize(numFilesPerRank);
+        for(int p_index = 0; p_index < numFilesPerRank; ++p_index) {
             vtu_file_names_[p_index] =
-                children_files[rank*(nb_partition_per_core) + p_index+remainder];
+                children_files[mpiRank*(numFilesPerRank) + p_index+remainderFiles];
         }
     }
-    if( rank < nb_total_partitions ) {
+    if( mpiRank < numFiles ) {
         for(int p_index = 0; p_index < 
                 static_cast< int >(vtu_file_names_.size()); ++p_index) {
             vtu_files_[p_index].load(vtu_file_names_[p_index]);
@@ -474,6 +477,44 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
 
     mesh_part_.finish();
 }
+
+void VtuFile::TransferMeshPartToGEOSMesh( MeshLevel * const meshLevel )
+{
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  ElementRegionManager * const elemRegMananger = meshLevel->getElemManager();
+
+  arrayView1d<R1Tensor> X = nodeManager->referencePosition();
+
+  nodeManager->resize(mesh_part_.nb_vertices());
+
+  real64 const * const vertexData = mesh_part_.vertices_.data();
+
+  for( localIndex a=0 ; a<mesh_part_.nb_vertices() ; ++a )
+  {
+    real64 * const tensorData = X[a].Data();
+    tensorData[0] = vertexData[3*a];
+    tensorData[1] = vertexData[3*a+1];
+    tensorData[2] = vertexData[3*a+2];
+  }
+
+  string regionName; // = mesh_part.regionName();
+  CellBlockSubRegion * const cellBlock = elemRegMananger->GetRegion( regionName )->GetSubRegion(0);
+  lArray2d & cellToVertex = cellBlock->nodeList();
+  cellToVertex.resize( 0, mesh_part_.nb_vertices_in_cell(0) );
+  cellBlock->resize( mesh_part_.nb_cells() );
+
+  for( localIndex k=0 ; k<mesh_part_.nb_cells() ; ++k )
+  {
+    for( localIndex a=0 ; a<mesh_part_.nb_vertices_in_cell(0) ; ++a )
+    {
+      cellToVertex[k][a] = mesh_part_.cell_vertex_index(k,a);
+    }
+  }
+
+
+
+}
+
 
     ////////////////
     /// MESH PART //

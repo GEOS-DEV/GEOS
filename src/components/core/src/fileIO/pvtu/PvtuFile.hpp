@@ -37,6 +37,7 @@
  */
 namespace geosx{
 class VtuFile;
+class MeshLevel;
 
 class PvtuFile {
     public:
@@ -291,7 +292,7 @@ class MeshPart {
          * @brief Shrink the vector to size
          */
         void finish();
-    private:
+//    private:
         /// Number of vertices
         globalIndex nb_vertices_{0};
 
@@ -354,6 +355,8 @@ class VtuFile : public PvtuFile{
          * @param[in] filename the name of the XML vtu file to be saved
          */
         void save( std::string const & filename) final;
+
+        void TransferMeshPartToGEOSMesh( MeshLevel * const meshLevel );
 
     private:
         /*!
