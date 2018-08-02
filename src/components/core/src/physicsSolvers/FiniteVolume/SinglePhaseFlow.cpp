@@ -319,7 +319,7 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
       GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
     FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
-    FluxApproximationBase::StencilType const & stencilCollection = fluxApprox->getStencil();
+    FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
 
     // TODO HACK, should be a separate init stage
     const_cast<FluxApproximationBase *>(fluxApprox)->compute(domain->group_cast<DomainPartition *>());
@@ -332,65 +332,6 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
                                       cycleNumber,
                                       domain->group_cast<DomainPartition*>(),
                                       getLinearSystemRepository() );
-}
-
-
-/**
- * This function currently applies Dirichlet boundary conditions on the elements/zones as they
- * hold the DOF. Futher work will need to be done to apply a Dirichlet bc to the connectors (faces)
- */
-void SinglePhaseFlow::ApplyDirichletBC_implicit( ManagedGroup * object,
-                                                      real64 const time,
-                                                      EpetraBlockSystem * const blockSystem )
-{
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-  ElementRegionManager * elemManager = object->group_cast<ElementRegionManager *>();
-
-  ElementRegionManager::ElementViewAccessor<globalIndex_array>
-  blockLocalDofNumber = elemManager->
-                  ConstructViewAccessor<globalIndex_array>( viewKeyStruct::blockLocalDofNumberString );
-
-  ElementRegionManager::ElementViewAccessor<real64_array>
-  pres = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::fluidPressureString );
-
-  ElementRegionManager::ElementViewAccessor<real64_array>
-  dPres = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
-
-
-  // loop through cell block sub-regions
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-  {
-    ElementRegion * const elemRegion = elemManager->GetRegion(er);
-    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr)
-    {
-      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(esr);
-
-
-
-      // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
-      // if the boundary condition should be applied to this subregion
-      bcManager->ApplyBoundaryCondition( time,
-                                         subRegion,
-                                         viewKeyStruct::fluidPressureString,
-                                         [&]( BoundaryConditionBase const * const bc,
-                                              lSet const & set ) -> void
-      {
-
-        // call the application of the boundray condition to alter the matrix and rhs
-        bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
-                                                            time,
-                                                            subRegion,
-                                                            blockLocalDofNumber[er][esr].get(),
-                                                            1,
-                                                            blockSystem,
-                                                            BlockIDs::fluidPressureBlock,
-                                                            [&] (localIndex const a) -> real64
-        {
-          return pres[er][esr][a] + dPres[er][esr][a];
-        });
-      });
-    }
-  }
 }
 
 
@@ -450,6 +391,7 @@ ImplicitStepSetup( real64 const& time_n,
   // setup dof numbers and linear system
   SetupSystem( domain, blockSystem );
 }
+
 
 void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
                                                      real64 const & dt,
@@ -558,7 +500,6 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
   GEOS_ASSERT(localCount == numLocalRows, "Number of DOF assigned does not match numLocalRows" );
 }
 
-
 void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
                                          EpetraBlockSystem * const blockSystem )
 {
@@ -636,6 +577,7 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
 
 }
 
+
 void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
                                                Epetra_FECrsGraph * const sparsity )
 {
@@ -656,7 +598,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
     GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
-  FluxApproximationBase::StencilType const & stencilCollection = fluxApprox->getStencil();
+  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
 
   globalIndex_array elementLocalDofIndexRow;
   globalIndex_array elementLocalDofIndexCol;
@@ -702,17 +644,15 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
 
 }
 
-
-
-void SinglePhaseFlow::AssembleSystem ( DomainPartition * const  domain,
-                                            EpetraBlockSystem * const blockSystem,
-                                            real64 const time_n,
-                                            real64 const dt )
+void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
+                                     EpetraBlockSystem * const blockSystem,
+                                     real64 const time_n,
+                                     real64 const dt)
 {
   //***** extract data required for assembly of system *****
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-  ElementRegionManager * const elemManager         = mesh->getElemManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
 
   NumericalMethodsManager const * numericalMethodManager = domain->
     getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -721,7 +661,7 @@ void SinglePhaseFlow::AssembleSystem ( DomainPartition * const  domain,
     GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
-  FluxApproximationBase::StencilType const & stencilCollection = fluxApprox->getStencil();
+  FluxApproximationBase::CellStencil const & stencilCollection = fluxApprox->getStencil();
 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock,
                                                                BlockIDs::fluidPressureBlock);
@@ -893,6 +833,8 @@ void SinglePhaseFlow::AssembleSystem ( DomainPartition * const  domain,
 
 }
 
+
+
 void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
                                                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                     real64 const time_n,
@@ -903,12 +845,10 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   // apply pressure boundary conditions.
-  ApplyDirichletBC_implicit( elemManager,
-                             time_n + dt,
-                             blockSystem );
+  ApplyDirichletBC_implicit(elemManager, time_n + dt, blockSystem);
+  ApplyFaceDirichletBC_implicit(domain, time_n + dt, blockSystem);
 
-
-  if( verboseLevel() >= 2 )
+  if (verboseLevel() >= 2)
   {
     Epetra_FECrsMatrix * const dRdP = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
                                                               BlockIDs::fluidPressureBlock );
@@ -919,6 +859,105 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
   }
 
 }
+
+/**
+ * This function currently applies Dirichlet boundary conditions on the elements/zones as they
+ * hold the DOF. Futher work will need to be done to apply a Dirichlet bc to the connectors (faces)
+ */
+void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
+                                                 real64 const time,
+                                                 EpetraBlockSystem * const blockSystem )
+{
+  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  ElementRegionManager::ElementViewAccessor<globalIndex_array>
+    blockLocalDofNumber = elemManager->
+    ConstructViewAccessor<globalIndex_array>( viewKeyStruct::blockLocalDofNumberString );
+
+  ElementRegionManager::ElementViewAccessor<real64_array>
+    pres = elemManager->ConstructViewAccessor<real64_array>( viewKeyStruct::fluidPressureString );
+
+  ElementRegionManager::ElementViewAccessor<real64_array>
+    dPres = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
+
+
+  // loop through cell block sub-regions
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr)
+    {
+      CellBlockSubRegion * const subRegion = elemRegion->GetSubRegion(esr);
+
+
+
+      // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
+      // if the boundary condition should be applied to this subregion
+      bcManager->ApplyBoundaryCondition( time,
+                                         subRegion,
+                                         viewKeyStruct::fluidPressureString,
+                                         [&]( BoundaryConditionBase const * const bc,
+                                              lSet const & set ) -> void
+      {
+        // call the application of the boundray condition to alter the matrix and rhs
+        bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
+                                                            time,
+                                                            subRegion,
+                                                            blockLocalDofNumber[er][esr].get(),
+                                                            1,
+                                                            blockSystem,
+                                                            BlockIDs::fluidPressureBlock,
+                                                            [&] (localIndex const a) -> real64
+        {
+          return pres[er][esr][a] + dPres[er][esr][a];
+        });
+      });
+    }
+  }
+}
+
+void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition const * domain, real64 const time,
+                                                    systemSolverInterface::EpetraBlockSystem * const blockSystem)
+{
+  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
+  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  FaceManager const * const faceManager = mesh->getFaceManager();
+
+  NumericalMethodsManager const * const numericalMethodManager = domain->
+    getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+
+  FiniteVolumeManager const * const fvManager = numericalMethodManager->
+    GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
+
+  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
+
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock,
+                                                               BlockIDs::fluidPressureBlock);
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector(BlockIDs::fluidPressureBlock);
+
+  auto
+    elemGhostRank = elemManager->ConstructViewAccessor<integer_array>( ObjectManagerBase::
+                                                                       viewKeyStruct::
+                                                                       ghostRankString );
+
+  auto blockLocalDofNumber = elemManager->
+    ConstructViewAccessor<globalIndex_array>(viewKeyStruct::
+                                             blockLocalDofNumberString);
+
+  auto pres      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidPressureString);
+  auto dPres     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
+  auto dens      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
+  auto dDens     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
+  auto visc      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidViscosityString);
+  auto dVisc     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidViscosityString);
+  auto gravDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::gravityDepthString);
+
+
+}
+
 
 real64
 SinglePhaseFlow::
@@ -1059,7 +1098,6 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
     dPoro[er][esr][k] = new_value - poro[er][esr][k];
   });
 }
-
 
 void SinglePhaseFlow::PrecomputeData(DomainPartition *const domain)
 {
