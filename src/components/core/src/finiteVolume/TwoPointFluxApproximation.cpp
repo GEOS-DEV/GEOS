@@ -36,7 +36,26 @@ TwoPointFluxApproximation::TwoPointFluxApproximation(std::string const &name,
 
 }
 
-void TwoPointFluxApproximation::compute(DomainPartition * domain)
+void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
+{
+  result = 0.0;
+  R1Tensor axis;
+  R2SymTensor temp;
+
+  // assemble full tensor from eigen-decomposition
+  for (unsigned icoord = 0; icoord < 3; ++icoord)
+  {
+    // assume principal axis aligned with global coordinate system
+    axis = 0.0; axis(icoord) = 1.0;
+
+    // XXX: is there a more elegant way to do this?
+    temp.dyadic_aa(axis);
+    temp *= values(icoord);
+    result += temp;
+  }
+}
+
+void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, CellStencil & stencil)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
@@ -52,13 +71,7 @@ void TwoPointFluxApproximation::compute(DomainPartition * domain)
                                                                    viewKeyStruct::
                                                                    elementCenterString);
 
-  // TODO treat scalar/vector/tensor inputs
-  auto coefficient = elemManager->ConstructViewAccessor<r1_array>(m_fieldName);
-
-  auto elemsToNodes = elemManager->ConstructViewAccessor<FixedOneToManyRelation>(CellBlockSubRegion::
-                                                                                 viewKeyStruct::
-                                                                                 nodeListString );
-
+  auto coefficient = elemManager->ConstructViewAccessor<r1_array>(m_coeffName);
 
   integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
                                                                                  viewKeyStruct::
@@ -69,16 +82,19 @@ void TwoPointFluxApproximation::compute(DomainPartition * domain)
   constexpr localIndex numElems = 2;
 
   R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
-  R2Tensor coefTensor, coefTensorTemp;
+  R2SymTensor coefTensor;
   real64 faceArea, faceWeight, faceWeightInv;
 
   array<CellDescriptor> stencilCells(numElems);
   array<real64> stencilWeights(numElems);
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
-  m_stencilCellToCell.reserve(faceManager->size(), 2);
+  stencil.reserve(faceManager->size(), 2);
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
+    if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
+      continue;
+
     faceArea = computationalGeometry::Centroid_3DPolygon(faceToNodes[kf], X, faceCenter, faceNormal);
 
     faceWeightInv = 0.0;
@@ -88,9 +104,9 @@ void TwoPointFluxApproximation::compute(DomainPartition * domain)
     {
       if (elemRegionList[kf][ke] != -1)
       {
-        const localIndex er  = elemRegionList[kf][ke];
-        const localIndex esr = elemSubRegionList[kf][ke];
-        const localIndex ei  = elemList[kf][ke];
+        localIndex const er  = elemRegionList[kf][ke];
+        localIndex const esr = elemSubRegionList[kf][ke];
+        localIndex const ei  = elemList[kf][ke];
 
         cellToFaceVec = faceCenter;
         cellToFaceVec -= elemCenter[er][esr][ei];
@@ -101,20 +117,7 @@ void TwoPointFluxApproximation::compute(DomainPartition * domain)
         real64 const c2fDistance = cellToFaceVec.Normalize();
 
         // assemble full coefficient tensor from principal axis/components
-        R1Tensor & coefValues = coefficient[er][esr][ei];
-        coefTensor = 0.0;
-
-        // XXX: unroll loop manually?
-        for (unsigned icoord = 0; icoord < 3; ++icoord)
-        {
-          // in future principal axis may be specified in input
-          R1Tensor axis(0.0); axis(icoord) = 1.0;
-
-          // XXX: is there a more elegant way to do this?
-          coefTensorTemp.dyadic_aa(axis);
-          coefTensorTemp *= coefValues(icoord);
-          coefTensor += coefTensorTemp;
-        }
+        makeFullTensor(coefficient[er][esr][ei], coefTensor);
 
         faceConormal.AijBj(coefTensor, faceNormal);
         real64 const ht = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
@@ -130,18 +133,97 @@ void TwoPointFluxApproximation::compute(DomainPartition * domain)
     if (Dot(cellToFaceVec, faceNormal) < 0)
       faceWeight *= -1;
 
-    if (faceGhostRank[kf] < 0 && elemRegionList[kf][0] != -1 && elemRegionList[kf][1] != -1)
+    for (localIndex ke = 0; ke < numElems; ++ke)
     {
-      for (localIndex ke = 0; ke < numElems; ++ke)
+      stencilCells[ke] = { elemRegionList[kf][ke], elemSubRegionList[kf][ke], elemList[kf][ke] };
+      stencilWeights[ke] = faceWeight * (ke == 0 ? 1 : -1);
+    }
+    stencil.add(stencilCells.data(), stencilCells, stencilWeights);
+  }
+  stencil.compress();
+}
+
+void TwoPointFluxApproximation::computeBoundaryStencil(DomainPartition * domain, lSet const & faceSet,
+                                                       FluxApproximationBase::BoundaryStencil & stencil)
+{
+  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  Array2dT<localIndex> const & elemRegionList     = faceManager->elementRegionList();
+  Array2dT<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
+  Array2dT<localIndex> const & elemList           = faceManager->elementList();
+  r1_array const & X = nodeManager->referencePosition();
+
+  auto elemCenter = elemManager->ConstructViewAccessor< r1_array >(CellBlock::
+                                                                   viewKeyStruct::
+                                                                   elementCenterString);
+
+  auto coefficient = elemManager->ConstructViewAccessor<r1_array>(m_coeffName);
+
+  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
+                                                                                 viewKeyStruct::
+                                                                                 ghostRankString);
+
+  array<array<localIndex>> const & faceToNodes = faceManager->nodeList();
+
+  constexpr localIndex numElems = 2;
+
+  R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
+  R2SymTensor coefTensor;
+  real64 faceArea, faceWeight;
+
+  array<PointDescriptor> stencilPoints(numElems);
+  array<real64> stencilWeights(numElems);
+
+  // loop over faces and calculate faceArea, faceNormal and faceCenter
+  stencil.reserve(faceSet.size(), 2);
+  for (localIndex kf : faceSet)
+  {
+    if (faceGhostRank[kf] >= 0)
+      continue;
+
+    faceArea = computationalGeometry::Centroid_3DPolygon(faceToNodes[kf], X, faceCenter, faceNormal);
+
+    for (localIndex ke = 0; ke < numElems; ++ke)
+    {
+      if (elemRegionList[kf][ke] != -1)
       {
-        stencilCells[ke] = { elemRegionList[kf][ke], elemSubRegionList[kf][ke], elemList[kf][ke] };
-        stencilWeights[ke] = faceWeight * (ke == 0 ? 1 : -1);
+        localIndex const er  = elemRegionList[kf][ke];
+        localIndex const esr = elemSubRegionList[kf][ke];
+        localIndex const ei  = elemList[kf][ke];
+
+        cellToFaceVec = faceCenter;
+        cellToFaceVec -= elemCenter[er][esr][ei];
+
+        real64 const c2fDistance = cellToFaceVec.Normalize();
+
+        // assemble full coefficient tensor from principal axis/components
+        makeFullTensor(coefficient[er][esr][ei], coefTensor);
+
+        faceConormal.AijBj(coefTensor, faceNormal);
+        faceWeight = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
+
+        // ensure consistent normal orientation
+        if (Dot(cellToFaceVec, faceNormal) < 0)
+          faceWeight *= -1;
+
+        stencilPoints[0].tag = PointDescriptor::Tag::CELL;
+        stencilPoints[0].cellIndex = { er, esr, ei };
+        stencilWeights[0] = faceWeight;
+
+        stencilPoints[1].tag = PointDescriptor::Tag::FACE;
+        stencilPoints[1].faceIndex = kf;
+        stencilWeights[1] = -faceWeight;
+
+        stencil.add(stencilPoints.data(), stencilPoints, stencilWeights);
       }
-      m_stencilCellToCell.add(stencilCells.data(), stencilCells, stencilWeights);
     }
   }
-  m_stencilCellToCell.compress();
+  stencil.compress();
 }
+
 
 REGISTER_CATALOG_ENTRY(FluxApproximationBase, TwoPointFluxApproximation, std::string const &, ManagedGroup * const)
 

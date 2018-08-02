@@ -24,9 +24,9 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
-#include <dataRepository/ManagedGroup.hpp>
-#include <finiteVolume/StencilCollection.hpp>
-#include <managers/DomainPartition.hpp>
+#include "dataRepository/ManagedGroup.hpp"
+#include "finiteVolume/StencilCollection.hpp"
+#include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -42,19 +42,47 @@ struct CellDescriptor
 };
 
 /**
+ * @struct A structure describing an arbitrary point participating in a stencil
+ *
+ * Nodal and face center points are identified by local mesh index.
+ * Cell center points are identified by a triplet <region,subregion,index>.
+ *
+ * The sad reality is, a boundary flux MPFA stencil may be comprised of a mix of
+ * cell and face centroids, so we have to discriminate between them at runtime
+ */
+struct PointDescriptor
+{
+  enum class Tag { CELL, FACE, NODE };
+
+  Tag tag;
+
+  union
+  {
+    localIndex nodeIndex;
+    localIndex faceIndex;
+    CellDescriptor cellIndex;
+  };
+};
+
+/**
  * @class FluxApproximationBase
  *
  * Base class for various flux approximation classes.
- * Stores the stencil, construction is implemented in derived classes
+ * Stores the main and boundary stencils, construction is implemented in derived classes.
+ * Main stencil is the one for cell-to-cell fluxes.
+ * Boundary stencils are for Dirichlet boundary conditions
  */
 class FluxApproximationBase : public dataRepository::ManagedGroup
 {
 public:
 
+  // necessary declarations for factory instantiation of derived classes
   using CatalogInterface = cxx_utilities::CatalogInterface<FluxApproximationBase, string const &, ManagedGroup * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
-  using StencilType = StencilCollection<CellDescriptor, real64>;
+  // typedefs for stored stencil types
+  using CellStencil     = StencilCollection<CellDescriptor, real64>;
+  using BoundaryStencil = StencilCollection<PointDescriptor, real64>;
 
   void FillDocumentationNode() override;
 
@@ -62,25 +90,45 @@ public:
 
   FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
 
-  void ReadXML_PostProcess() override;
+  /// provides const access to the cell stencil collection
+  CellStencil const & getStencil() const;
 
-  /// provides access to the stencil collection
-  StencilType const & getStencil() const { return m_stencilCellToCell; }
+  /// provides access to the cell stencil collection
+  CellStencil & getStencil();
 
-  /// actual computation of the stencil, to be overridden by implementations
-  virtual void compute(DomainPartition * domain) = 0;
+  /// return a boundary stencil by face set name
+  BoundaryStencil const & getBoundaryStencil(string const & setName) const;
+
+  /// return a boundary stencil by face set name
+  BoundaryStencil & getBoundaryStencil(string const & setName);
+
+  /// triggers computation of the stencil, implemented in derived classes
+  void compute(DomainPartition * domain);
 
   struct viewKeyStruct
   {
-    static constexpr auto fieldNameString = "fieldName";
+    static constexpr auto fieldNameString       = "fieldName";
+    static constexpr auto coeffNameString       = "coefficientName";
+    static constexpr auto cellLocationString    = "cellLocation";
+    static constexpr auto cellStencilString     = "cellStencil";
   };
 
 protected:
 
-  StencilType m_stencilCellToCell;
+  /// actual computation of the cell-to-cell stencil, to be overridden by implementations
+  virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) = 0;
+
+  /// actual computation of the boundary stencil, to be overridden by implementations
+  virtual void computeBoundaryStencil(DomainPartition * domain, lSet const & faceSet, BoundaryStencil & stencil) = 0;
+
+  /// name of the primary solution field
+  string m_fieldName;
 
   /// name of the coefficient field
-  string m_fieldName;
+  string m_coeffName;
+
+  /// cell variable collocation point option
+  string m_cellLocation;
 
 };
 

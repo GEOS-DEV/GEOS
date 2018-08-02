@@ -167,15 +167,22 @@ public:
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param object the target ObjectManager for the application of the BC.
-   * @param bc the
-   * @param set the set
-   * @param time_n the time at the beginning of the step
+   * @param time current time
    * @param blockSystem the entire block system
    */
   void ApplyDirichletBC_implicit( ManagedGroup * object,
                                   real64 const time,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
+  /**
+   * @brief Function to perform the application of Dirichlet BCs on faces
+   * @param domain the domain
+   * @param time current time
+   * @param blockSystem the entire block system
+   */
+  void ApplyFaceDirichletBC_implicit(DomainPartition const * domain,
+                                     real64 const time,
+                                     systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
   /**
    * @enum an enum to lay out the time integration options.

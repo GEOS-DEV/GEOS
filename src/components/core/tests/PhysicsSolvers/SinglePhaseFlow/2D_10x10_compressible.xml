@@ -59,7 +59,8 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
-                                 fieldName="permeability"
+                                 fieldName="fluidPressure"
+                                 coefficientName="permeability"
                                  cellLocation="center"
                                  faceLocation="center"/>
     </FiniteVolume>
