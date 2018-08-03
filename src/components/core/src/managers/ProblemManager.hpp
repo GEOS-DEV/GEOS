@@ -189,7 +189,15 @@ public:
     dataRepository::GroupKey outputManager = { "Outputs" };
   } groupKeys;
 
+  PhysicsSolverManager & GetPhysicsSolverManager()
+  {
+    return *m_physicsSolverManager;
+  }
 
+  PhysicsSolverManager const & GetPhysicsSolverManager() const
+  {
+    return *m_physicsSolverManager;
+  }
 
 private:
   PhysicsSolverManager * m_physicsSolverManager;

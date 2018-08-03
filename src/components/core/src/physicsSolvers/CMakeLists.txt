@@ -8,6 +8,7 @@ set(physicsSolvers_headers
     BoundaryConditions/BoundaryConditionBase.hpp
     BoundaryConditions/BoundaryConditionManager.hpp
     BoundaryConditions/DirichletBoundaryCondition.hpp
+    CoupledSolvers/PoroelasticSolver.hpp
     FiniteVolume/SinglePhaseFlow_TPFA.hpp
     SimpleSolvers/LaplaceFEM.hpp )
 
@@ -20,6 +21,7 @@ set(physicsSolvers_sources
     BoundaryConditions/BoundaryConditionBase.cpp
     BoundaryConditions/BoundaryConditionManager.cpp
     BoundaryConditions/DirichletBoundaryCondition.cpp
+    CoupledSolvers/PoroelasticSolver.cpp
     FiniteVolume/SinglePhaseFlow_TPFA.cpp
     SimpleSolvers/LaplaceFEM.cpp  )
 
