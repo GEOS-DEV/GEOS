@@ -170,7 +170,7 @@ public:
    * @param time current time
    * @param blockSystem the entire block system
    */
-  void ApplyDirichletBC_implicit( ManagedGroup * object,
+  void ApplyDirichletBC_implicit( DomainPartition * object,
                                   real64 const time,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
@@ -180,7 +180,7 @@ public:
    * @param time current time
    * @param blockSystem the entire block system
    */
-  void ApplyFaceDirichletBC_implicit(DomainPartition const * domain,
+  void ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                      real64 const time,
                                      systemSolverInterface::EpetraBlockSystem * const blockSystem);
 

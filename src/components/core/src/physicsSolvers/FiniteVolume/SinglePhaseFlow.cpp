@@ -835,17 +835,17 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
 
 
-void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
-                                                    systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                    real64 const time_n,
-                                                    real64 const dt )
+void SinglePhaseFlow::ApplyBoundaryConditions(DomainPartition * const domain,
+                                              systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                              real64 const time_n,
+                                              real64 const dt)
 {
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   // apply pressure boundary conditions.
-  ApplyDirichletBC_implicit(elemManager, time_n + dt, blockSystem);
+  ApplyDirichletBC_implicit(domain, time_n + dt, blockSystem);
   ApplyFaceDirichletBC_implicit(domain, time_n + dt, blockSystem);
 
   if (verboseLevel() >= 2)
@@ -869,8 +869,8 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                                  EpetraBlockSystem * const blockSystem )
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor<globalIndex_array>
     blockLocalDofNumber = elemManager->
@@ -918,18 +918,18 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
   }
 }
 
-void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition const * domain, real64 const time,
+void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain, real64 const time,
                                                     systemSolverInterface::EpetraBlockSystem * const blockSystem)
 {
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  FaceManager * const faceManager = mesh->getFaceManager();
 
-  NumericalMethodsManager const * const numericalMethodManager = domain->
+  NumericalMethodsManager * const numericalMethodManager = domain->
     getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
-  FiniteVolumeManager const * const fvManager = numericalMethodManager->
+  FiniteVolumeManager * const fvManager = numericalMethodManager->
     GetGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
