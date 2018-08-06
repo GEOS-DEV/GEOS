@@ -537,33 +537,22 @@ public:
   view_rtype<T> getData( viewWrapperMap::KeyIndex const & keyIndex )
   { return getWrapper<T>( keyIndex )->data(); }
 
-//  /**
-//   *
-//   * @param keyIndex
-//   * @return
-//   * @note BREAKS const correctness for keyIndex
-//   */
-//  template< typename T >
-//  view_rtype_const<T> getData( viewWrapperMap::KeyIndex const & keyIndex )
-// const
-//  { return getWrapper<T>( const_cast<viewWrapperMap::KeyIndex & >(keyIndex)
-// )->data(); }
-//
-//  /**
-//   *
-//   * @param keyIndex
-//   * @return
-//   * @note BREAKS const correctness for keyIndex
-//   */
-//  template< typename T >
-//  view_rtype<T> getData( viewWrapperMap::KeyIndex const & keyIndex )
-//  { return getWrapper<T>( const_cast<viewWrapperMap::KeyIndex & >(keyIndex)
-// )->data(); }
 
+
+  template< typename T, typename LOOKUP_TYPE >
+  T const & getReferenceT( LOOKUP_TYPE const & lookup ) const
+  {
+    ViewWrapper<T> const * wrapper = getWrapper<T>(lookup);
+    if( wrapper == nullptr )
+    {
+      GEOS_ERROR( "ManagedGroup::getReferenceT(): call to getWrapper results in nullptr" );
+    }
+    return wrapper->reference();
+  }
 
   template< typename T >
   T const & getReference( indexType const index ) const
-  { return getWrapper<T>(index)->reference(); }
+  { return getReferenceT<T>(index); }
 
   template< typename T >
   T& getReference( indexType const index )
@@ -571,43 +560,60 @@ public:
 
   template< typename T >
   T const & getReference( std::string const & name ) const
-  { return getWrapper<T>(name)->reference(); }
+  { return getReferenceT<T>(name); }
 
   template< typename T >
   T & getReference( std::string const & name )
-  { return getWrapper<T>(name)->reference(); }
+  { return const_cast<T&>( const_cast<const ManagedGroup*>(this)->getReference<T>( name ) ); }
 
   template< typename T >
   T const & getReference( viewWrapperMap::KeyIndex const & keyIndex ) const
-  { return getWrapper<T>(keyIndex)->reference(); }
+  { return getReferenceT<T>( keyIndex ); }
 
   template< typename T >
   T & getReference( viewWrapperMap::KeyIndex & keyIndex )
-  { return getWrapper<T>(keyIndex)->reference(); }
+  { return const_cast<T&>( const_cast<const ManagedGroup*>(this)->getReference<T>( keyIndex ) ); }
+
+
+
+
+  template< typename T, typename LOOKUP_TYPE >
+  T const * getPointerT( LOOKUP_TYPE const & lookup ) const
+  {
+    T const * rval = nullptr;
+    ViewWrapper<T> const * wrapper = getWrapper<T>(lookup);
+    if( wrapper != nullptr )
+    {
+      rval = wrapper->getPointer();
+    }
+    return rval;
+  }
 
   template< typename T >
   T const * getPointer( indexType const index ) const
-  { return &(getWrapper<T>(index)->reference()); }
+  { return getPointerT<T>(index); }
 
   template< typename T >
   T * getPointer( indexType const index )
-  { return &(getWrapper<T>(index)->reference()); }
+  { return const_cast<T *>( const_cast<ManagedGroup const *>(this)->getPointer<T>(index)); }
+
 
   template< typename T >
   T const * getPointer( std::string const & name ) const
-  { return &(getWrapper<T>(name)->reference()); }
+  { return getPointerT<T>(name); }
 
   template< typename T >
   T * getPointer( std::string const & name )
-  { return &(getWrapper<T>(name)->reference()); }
+  { return const_cast<T *>( const_cast<ManagedGroup const *>(this)->getPointer<T>(name)); }
+
 
   template< typename T >
-  T const * getPointer( viewWrapperMap::KeyIndex const & keyIndex ) const
-  { return &(getWrapper<T>(keyIndex)->reference()); }
+  T const * getPointer( viewWrapperMap::KeyIndex & keyIndex ) const
+  { return const_cast<T const *>( const_cast<ManagedGroup const *>(this)->getPointer<T>(keyIndex)); }
 
   template< typename T >
   T * getPointer( viewWrapperMap::KeyIndex & keyIndex )
-  { return &(getWrapper<T>(keyIndex)->reference()); }
+  { return const_cast<T *>( const_cast<ManagedGroup const *>(this)->getPointer<T>(keyIndex)); }
 
 
   bool hasGroup( std::string const & name ) const
