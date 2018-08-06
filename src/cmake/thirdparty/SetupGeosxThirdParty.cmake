@@ -216,7 +216,7 @@ endif()
 if( ENABLE_CALIPER )
 message( INFO ": setting up caliper" )
 
-if( CALIPER_DIR )
+if( EXISTS ${CALIPER_DIR} )
     message( INFO "Found system caliper" )
     message("Using system CALIPER found at ${CALIPER_DIR}")
     set(CALIPER_FOUND TRUE)    
