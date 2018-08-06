@@ -29,11 +29,16 @@
 	      skewAngle="0"
 	      />
 	      
-	<SolverApplications>
-    <Application name="1" begintime="0.0" endtime="4.0" dt="0.002">
-			<Apply solver="solver1" toregions="Region" />
-		</Application>
-	</SolverApplications>
+  <Events maxTime="4.0">
+    <PeriodicEvent name="solverApplications"
+                   forceDt="0.002"
+                   target="/Solvers/solver1" />
+
+    <PeriodicEvent name="outputs"
+                   timeFrequency="1.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
 
 </Problem>
 

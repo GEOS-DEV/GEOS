@@ -1,6 +1,5 @@
 
 import re
-from numpy import *
 from . import DictRegexHandler, regexConfig
 
 
@@ -12,13 +11,13 @@ class UnitManager():
   def __call__(self, unitStruct):
     if (not bool(self.units)):
       self.buildUnits()
-    
+
     # Replace all instances of units in the string with their dict equivalents
     symbolicUnits = re.sub(regexConfig.units_b, self.unitMatcher, unitStruct[1])
-    
+
     # Strip out any stray alpha characters and evaluate
     symbolicUnits_sanitized = re.sub(regexConfig.sanitize, '', symbolicUnits).strip()
-    value = float(unitStruct[0])*eval(symbolicUnits_sanitized, {'__builtins__':None})
+    value = float(unitStruct[0])*eval(symbolicUnits_sanitized, {'__builtins__': None})
     return str(value)
 
   def regexHandler(self, match):
@@ -39,7 +38,7 @@ class UnitManager():
                 'micro': {'value': 1e-6, 'alt': 'mu'},
                 'nano':  {'value': 1e-9, 'alt': 'n'}}
 
-    # Base units
+    # Base units:
     unit_defs = {'gram':   {'value': 1e-3,               'alt': ['g', 'grams'],         'usePrefix': True},
                  'meter':  {'value': 1.0,                'alt': ['m', 'meters'],        'usePrefix': True},
                  'second': {'value': 1.0,                'alt': ['s', 'seconds'],       'usePrefix': True},
@@ -50,9 +49,9 @@ class UnitManager():
                  'pascal': {'value': 1.0,                'alt': ['Pa'],                 'usePrefix': True},
                  'newton': {'value': 1.0,                'alt': ['N'],                  'usePrefix': True},
                  'joule':  {'value': 1.0,                'alt': ['J'],                  'usePrefix': True},
-                 'watt':   {'value': 1.0,                'alt': ['W'],                  'usePrefix': True}} 
+                 'watt':   {'value': 1.0,                'alt': ['W'],                  'usePrefix': True}}
 
-    # Imperial units:   
+    # Imperial units:
     imp_defs = {'pound':      {'value': 0.453592,       'alt': ['lb', 'pounds', 'lbs'], 'usePrefix': True},
                 'poundforce': {'value': 0.453592*9.81,  'alt': ['lbf'],                 'usePrefix': True},
                 'stone':      {'value': 6.35029,        'alt': ['st'],                  'usePrefix': True},
@@ -67,7 +66,7 @@ class UnitManager():
                 'psi':        {'value': 6894.76,        'alt': [],                      'usePrefix': True},
                 'psf':        {'value': 1853.184,       'alt': [],                      'usePrefix': True}}
 
-    # Other units: 
+    # Other units:
     other_defs = {'dyne':       {'value': 1.0e-5,    'alt': ['dynes'],              'usePrefix': True},
                   'bar':        {'value': 1.0e5,     'alt': ['bars'],               'usePrefix': True},
                   'atmosphere': {'value': 101325.0,  'alt': ['atm', 'atmospheres'], 'usePrefix': True},
@@ -93,17 +92,20 @@ class UnitManager():
       if (unit_defs[u]['usePrefix']):
         for p in prefixes.keys():
           tmp.append(p+u)
-          self.units[p+u] = prefixes[p]['value']*unit_defs[u]['value'] 
+          self.units[p+u] = prefixes[p]['value']*unit_defs[u]['value']
       else:
         tmp.append(u)
         self.units[u] = unit_defs[u]['value']
 
     # Test to make sure that there are no overlapping unit definitions
     from collections import Counter
-    duplicates = [k for k,v in Counter(tmp).items() if v>1]
+    duplicates = [k for k, v in Counter(tmp).items() if v > 1]
     if (duplicates):
-      print duplicates
+      print(duplicates)
       raise Exception('Error: There are overlapping unit definitions in the UnitManager')
 
     self.unitMatcher.target = self.units
     # print('Done!')
+
+
+unitManager = UnitManager()

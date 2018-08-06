@@ -60,10 +60,6 @@
     <BoundaryCondition object="Face" fieldname="ProppantVolumeFraction" setnames="source" scale="1e-9" timetable="ttable2"/>
 	</BoundaryConditions>
 	
-  
-  
-
-  <Output writePlot="1" writeRestart="0" restart_interval="1e6" plot_interval="0.1" plotfile_root="plot" writeFEMFaces="1" writeFEMEdges="1"/>
 
 </Problem>
 

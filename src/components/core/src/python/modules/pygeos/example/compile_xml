@@ -1,0 +1,15 @@
+#!/usr/gapps/GEOS/python/anaconda2/bin/python
+import os
+import sys
+import pygeos
+
+# Note: This script will compile an input xml file into one that can be run by GEOS.
+#       Usage:  compile_xml input.xml output.xml
+
+if (len(sys.argv) == 3):
+  newFile = pygeos.preprocessGEOSXML(sys.argv[1], schema='/usr/gapps/GEOS/schema/gpac_new.xsd')
+  pygeos.format_xml_file(newFile, sys.argv[2])
+  os.system('rm %s' % (newFile))
+
+else:
+  print('Usage: preprocess_xml inputFile outputFile')

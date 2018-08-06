@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -72,7 +72,7 @@ public:
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseFlow_TPFA() = default;
+  virtual ~SinglePhaseFlow_TPFA() override = default;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -85,66 +85,55 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
 
-  virtual void InitializeFinalLeaf( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
 
-  virtual void TimeStep( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         dataRepository::ManagedGroup * domain ) override;
-
-  /**
-   * @brief function to perform explicit time integration
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param cycleNumber the current cycle number of the simulation
-   * @param domain the domain partition
-   */
-  void TimeStepExplicit( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain );
+  virtual real64 SolverStep( real64 const& time_n,
+                             real64 const& dt,
+                             integer const cycleNumber,
+                             DomainPartition * domain ) override;
 
   /**
-   * @brief function to perform quasi-static timestep
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param cycleNumber the current cycle number of the simulation
-   * @param domain the domain partition
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
    */
-  void TimeStepQuasiStatic( real64 const& time_n,
-                            real64 const& dt,
-                            integer const cycleNumber,
-                            DomainPartition& domain );
+  /**@{*/
 
-
-  /**
-   * @brief function to perform setup for implicit timestep
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   */
-  void ImplicitStepSetup( real64 const& time_n,
+  virtual void ImplicitStepSetup( real64 const& time_n,
                               real64 const& dt,
-                              DomainPartition * const domain ) override;
+                              DomainPartition * const domain,
+                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
-  /**
-   * @brief function to perform cleanup for implicit timestep
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   */
-  void ImplicitStepComplete( real64 const & time,
-                                 real64 const & dt,
-                                 DomainPartition * const domain ) override;
 
-  /**
-   * @brief This function sets the local and global rows, and calls functions to build linear system
-   *        objects.
-   * @param domain the domain partition
-   * @param blockSystem
-   *
-   *
-   */
+  virtual void AssembleSystem( DomainPartition * const domain,
+                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               real64 const time,
+                               real64 const dt ) override;
+
+  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        real64 const time,
+                                        real64 const dt ) override;
+
+  virtual real64
+  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                        DomainPartition *const domain) override;
+
+  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            SystemSolverParameters const * const params ) override;
+
+  virtual void
+  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                       real64 const scalingFactor,
+                       DomainPartition * const domain ) override;
+
+  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+
+  virtual  void ImplicitStepComplete( real64 const & time,
+                                      real64 const & dt,
+                                      DomainPartition * const domain ) override;
+  /**@}*/
+
   void SetupSystem ( DomainPartition * const domain,
                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
@@ -174,11 +163,6 @@ public:
                                      localIndex offset );
 
 
-  real64 Assemble ( DomainPartition * const domain,
-                    systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                    real64 const time,
-                    real64 const dt ) override;
-
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -190,25 +174,7 @@ public:
    */
   void ApplyDirichletBC_implicit( ManagedGroup * object,
                                   real64 const time,
-                                  systemSolverInterface::EpetraBlockSystem & blockSystem);
-
-  /**
-   * @brief Function to apply the solution vector back onto the data fields
-   * @param blockSystem the entire block system
-   * @param scalingFactor factor to scale the solution prior to application
-   * @param dofOffset the offset to the DOF indices
-   * @param objectManager the object manager that holds the fields we wish to apply the solution to
-   */
-  void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                            real64 const scalingFactor,
-                            localIndex const dofOffset,
-                            DomainPartition * const domain ) override;
-
-  /**
-   * @brief This function generates various geometric information for later use.
-   * @param domain the domain parition
-   */
-  void MakeGeometryParameters( DomainPartition * const  domain );
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
 
   /**
@@ -223,54 +189,94 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SPTPFA";
+
+    constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
+
+    constexpr static auto fluidDensityString = "fluidDensity";
+    constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
+
+    constexpr static auto fluidViscosityString = "fluidViscosity";
+    constexpr static auto deltaFluidViscosityString = "deltaFluidViscosity";
+
+    constexpr static auto porosityString = "porosity";
     constexpr static auto deltaPorosityString = "deltaPorosity";
-    constexpr static auto deltaVolumeString = "deltaVolume";
+    constexpr static auto referencePorosityString = "referencePorosity";
+
     constexpr static auto faceAreaString = "faceArea";
     constexpr static auto faceCenterString = "faceCenter";
-    constexpr static auto fluidPressureString = "fluidPressure";
-    constexpr static auto gravityFlagString = "gravityFlag";
-    constexpr static auto gravityForceString = "gravityForce";
-    constexpr static auto permeabilityString = "permeablity";
-    constexpr static auto porosityString = "porosity";
-    constexpr static auto trilinosIndexString = "trilinosIndex_SinglePhaseFlow_TPFA";
-    constexpr static auto volumeString = "volume";
 
-    dataRepository::ViewKey trilinosIndex = { trilinosIndexString };
-    dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName = { "fieldName" };
+    constexpr static auto gravityFlagString = "gravityFlag";
+    constexpr static auto gravityDepthString = "gravityDepth";
+
+    constexpr static auto volumeString = "volume";
+    constexpr static auto permeabilityString = "permeability";
+    constexpr static auto transmissibilityString = "transmissibility";
+
+    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
-    dataRepository::ViewKey permeability = { permeabilityString };
   } viewKeys;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {
   } groupKeys;
 
+  /**
+   * @struct A structure containing a single cell (element) identifier triplet
+   */
+  struct CellDescriptor
+  {
+    localIndex region;
+    localIndex subRegion;
+    localIndex index;
+  };
 
+  /**
+   * @struct A structure describing a single (generally multi-point) FV connection stencil
+   */
+  struct CellConnection
+  {
+    localIndex            faceIndex;               ///< index of the face (just in case)
+    CellDescriptor        connectedCellIndices[2]; ///< identifiers of connected cells
+    array<CellDescriptor> stencilCellIndices;      ///< identifiers of cells in stencil
+    array<real64>         stencilWeights;          ///< stencil weights (e.g. transmissibilities)
+
+    void resize(localIndex const size) { stencilCellIndices.resize(size);
+                                         stencilWeights.resize(size);    }
+  };
 
 private:
-  /// the currently selected time integration option
-  timeIntegrationOption m_timeIntegrationOption;
 
-  /// temp variable containing distance between the face and element centers divided by the area of
-  /// the face
-  Array2dT<real64> m_faceToElemLOverA;
+  /**
+   * @brief This function generates various discretization information for later use.
+   * @param domain the domain parition
+   */
+  void PrecomputeData(DomainPartition *const domain);
 
-  /// the number of degrees of freedom per element. should be removed.
-  constexpr static int m_dim = 1;
+  /**
+   * @brief This function allocates additional storage (e.g. for derivatives)
+   * @param domain the domain partition
+   */
+  void AllocateAuxStorage(DomainPartition *const domain);
+
+  /// flag indicating whether FV precompute has been performed
+  bool m_precomputeDone;
 
   /// temp array that holds the list of faces that connect two elements.
-  localIndex_array m_faceConnectors;
+  array<CellConnection> m_faceConnectors;
 
   /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
+  bool m_gravityFlag;
 
-  array< real64 > m_gravityForce;
+  /// temp storage for derivatives of density w.r.t. pressure
+  array<array<array<real64>>> m_dDens_dPres;
 
-  array< array< array<real64> > > m_dRho_dP;
+  /// temp storage for derivatives of porosity w.r.t. pressure
+  array<array<array<real64>>> m_dPoro_dPres;
 
+  /// temp storage for derivatives of porosity w.r.t. pressure
+  array<array<array<real64>>> m_dVisc_dPres;
 
 };
 

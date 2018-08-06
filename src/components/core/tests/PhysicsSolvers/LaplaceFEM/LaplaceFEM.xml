@@ -7,7 +7,8 @@
   <Solvers>
     <LaplaceFEM name="laplace"
                 timeIntegrationOption="SteadyState"
-                fieldName="Temperature">
+                fieldName="Temperature"
+                verboseLevel="3">
     </LaplaceFEM>
   </Solvers>
 
@@ -25,12 +26,20 @@
   </Mesh>
 
 
-  <Events>
-    <Application name="1"
-                 beginTime="0.0" 
-                 endTime="1.0" 
-                 dt="1.0"
-                 solvers="laplace" />
+  <Events maxTime="1.0">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1.0"
+                   target="/Solvers/laplace" />
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   timeFrequency="1.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
   </Events>
 
 
@@ -93,15 +102,14 @@
   </Partition>
 
  
-  <Output parallelThreads="32" plotInterval="20.0" plotFileRoot="plot" restartInterval="1e6" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="1" maxWallTime="{60*60*15.925}"/>
+  <Outputs>
+    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+  </Outputs>
   
 
   <Geometry>
     <Box name="source" type="0" xMin="-1.000, -1.000, -1.000" xMax="0.01, 1.01, 1.01"/>
     <Box name="sink"   type="0" xMin=" 0.999,  -0.999,  -0.999" xMax="1.10, 1.10, 1.10"/>
   </Geometry>
-
-
-  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
 
 </Problem>

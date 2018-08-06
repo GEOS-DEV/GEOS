@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -35,8 +35,6 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   m_sets(keys::sets,this),
   m_localToGlobalMap(),
   m_globalToLocalMap()
-//  m_localToGlobalMap( RegisterViewWrapper< globalIndex_array >("localToGlobal")->reference() ),
-//  m_globalToLocalMap( RegisterViewWrapper< map<globalIndex,localIndex> >("globalToLocal")->reference() )
 {
 
   RegisterViewWrapper(viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false );
@@ -44,7 +42,9 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
 
   RegisterGroup( keys::sets, &m_sets, false );
   RegisterViewWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
-  RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false );
+  RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->
+    setPlotLevel(PlotLevel::LEVEL_0);
+
   this->RegisterGroup(m_ObjectManagerBaseGroupKeys.neighborData);
 }
 //ObjectManagerBase::ObjectManagerBase( std::string const & name,
@@ -103,7 +103,7 @@ void ObjectManagerBase::FillDocumentationNode()
                               "",
                               1,
                               0,
-                              0 );
+                              2 );
 
 //  docNode->AllocateChildNode( viewKeys.globalToLocalMap.Key(),
 //                              viewKeys.globalToLocalMap.Key(),

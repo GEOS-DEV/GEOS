@@ -10,17 +10,14 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SymbolicFunction.cpp
- *
- *  Created on: July 6, 2017
- *      Author: sherman
+/**
+ * @file SymbolicFunction.cpp
  */
 
 #include "SymbolicFunction.hpp"
@@ -50,10 +47,9 @@ SymbolicFunction::SymbolicFunction( const std::string& name,
   parserExpression()
 {}
 
+
 SymbolicFunction::~SymbolicFunction()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 
 void SymbolicFunction::FillDocumentationNode()
@@ -93,8 +89,6 @@ void SymbolicFunction::FillDocumentationNode()
 
 }
 
-void SymbolicFunction::BuildDataStructure( ManagedGroup * const domain )
-{}
 
 void SymbolicFunction::InitializeFunction()
 {
