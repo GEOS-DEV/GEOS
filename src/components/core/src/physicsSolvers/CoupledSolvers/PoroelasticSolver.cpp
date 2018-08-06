@@ -57,6 +57,40 @@ void PoroelasticSolver::FillDocumentationNode()
                               0 );
 }
 
+void PoroelasticSolver::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup )
+{
+  SolverBase::FillOtherDocumentationNodes( rootGroup );
+  DomainPartition * domain  = rootGroup->GetGroup<DomainPartition>(keys::domain);
+
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>(mesh.second)->getMeshLevel(0);
+
+    {
+
+
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+    elemManager->forCellBlocks( [&]( CellBlockSubRegion * const cellBlock ) -> void
+      {
+        cxx_utilities::DocumentationNode * const docNode = cellBlock->getDocumentationNode();
+
+        docNode->AllocateChildNode( viewKeyStruct::effectiveStressString,
+                                    viewKeyStruct::effectiveStressString,
+                                    -1,
+                                    "r2Sym_array",
+                                    "r2Sym_array",
+                                    "Effective Stress",
+                                    "Effective Stress",
+                                    "",
+                                    elemManager->getName(),
+                                    1,
+                                    0,
+                                    0 );
+      });
+    }
+  }
+}
 
 PoroelasticSolver::~PoroelasticSolver()
 {
@@ -89,7 +123,6 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
 
   fluidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
   solidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-//  fluidSolver->TimeStepPrepare(domain);
   int iter = 0;
   bool balanced = false;
   while (iter < solverParams.maxIterNewton() )
