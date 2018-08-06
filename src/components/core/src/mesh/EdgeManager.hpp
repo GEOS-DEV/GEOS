@@ -61,7 +61,7 @@ public:
 //  void Initialize() {}
 
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = nullptr);
-  void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = nullptr);
+  void SetIsExternal( FaceManager const * const faceManager );
   void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
                                                          array<globalIndex_array>& objectToCompositionObject );
 

@@ -500,7 +500,7 @@ template<> inline real64 CastField<real64, real64> (const real64& field, int con
 }
 template<> inline float CastField<float, real64> (const real64& field, int const )
 {
-  return field;
+  return static_cast<float>(field);
 }
 
 

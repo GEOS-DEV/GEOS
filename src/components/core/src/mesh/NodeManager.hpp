@@ -157,14 +157,17 @@ public:
   UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
-  array<lSet>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  array<lSet> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  OrderedVariableToManyElementRelation & toElementRelation() {return m_toElements;}
+  OrderedVariableToManyElementRelation const & toElementRelation() const {return m_toElements;}
 
-  array<lSet>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  array<lSet> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  array<localIndex_array>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array<localIndex_array> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  array<lSet>        & elementList()       { return m_toElements.m_toElementIndex; }
-  array<lSet>  const & elementList() const { return m_toElements.m_toElementIndex; }
+  array<localIndex_array>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array<localIndex_array> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+
+  array<localIndex_array>        & elementList()       { return m_toElements.m_toElementIndex; }
+  array<localIndex_array>  const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
 protected:
@@ -189,7 +192,7 @@ private:
 //  OrderedVariableOneToManyRelation m_toElementList ;
 
 
-  UnorderedVariableToManyElementRelation m_toElements;
+  OrderedVariableToManyElementRelation m_toElements;
 
 };
 // *********************************************************************************************************************

@@ -642,7 +642,7 @@ public:
     static typename std::enable_if<has_alias_isArray<U>::value, void>::type
     copy( T * const data , localIndex const sourceIndex, localIndex const destIndex )
     {
-      data[destIndex] = data[sourceIndex];
+      (*data)[destIndex] = (*data)[sourceIndex];
     }
 
     template< class U=T >
@@ -804,6 +804,12 @@ public:
 
   T const & reference() const
   { return *m_data; }
+
+  T * getPointer()
+  { return m_data; }
+
+  T const * getPointer() const
+  { return m_data; }
 
   /// Case for if m_data has a member function called "data()"
   template<class U = T>

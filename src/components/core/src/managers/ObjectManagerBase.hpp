@@ -318,7 +318,9 @@ public:
   {
 
     static constexpr auto adjacencyListString = "adjacencyList";
+    static constexpr auto childIndexString = "childIndex";
     static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
+    static constexpr auto externalSetString = "externalSet";
     static constexpr auto ghostRankString = "ghostRank";
     static constexpr auto ghostsToSendString = "ghostsToSend";
     static constexpr auto ghostsToReceiveString = "ghostsToReceive";
@@ -326,9 +328,12 @@ public:
     static constexpr auto isExternalString = "isExternal";
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
     static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
+    static constexpr auto parentIndexString = "parentIndex";
 
     dataRepository::ViewKey adjacencyList = { adjacencyListString };
+    dataRepository::ViewKey childIndex = { childIndexString };
     dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
+    dataRepository::ViewKey externalSet = { externalSetString };
     dataRepository::ViewKey ghostRank = { ghostRankString };
     dataRepository::ViewKey ghostsToSend = { ghostsToSendString };
     dataRepository::ViewKey ghostsToReceive = { ghostsToReceiveString };
@@ -336,6 +341,7 @@ public:
     dataRepository::ViewKey isExternal = { isExternalString };
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
     dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
+    dataRepository::ViewKey parentIndex = { parentIndexString };
   } m_ObjectManagerBaseViewKeys;
 
 
@@ -359,6 +365,12 @@ public:
   ManagedGroup * sets()             {return &m_sets;}
   ManagedGroup const * sets() const {return &m_sets;}
 
+  lSet & externalSet()
+  {return m_sets.getReference<lSet>(m_ObjectManagerBaseViewKeys.externalSet);}
+
+  lSet const & externalSet() const
+  {return m_sets.getReference<lSet>(m_ObjectManagerBaseViewKeys.externalSet);}
+
   integer_array & isExternal()
   { return this->m_isExternal; }
 
@@ -377,6 +389,7 @@ public:
   map<globalIndex,localIndex>  m_globalToLocalMap;
   integer_array m_isExternal;
   integer_array m_ghostRank;
+
 //  localIndex_array m_ghostToSend;
  // localIndex_array m_ghostToReceive;
 
