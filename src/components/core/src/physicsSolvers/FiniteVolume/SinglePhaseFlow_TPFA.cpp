@@ -352,7 +352,7 @@ void SinglePhaseFlow_TPFA::FinalInitialization( ManagedGroup * const problemMana
 real64 SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
                                          real64 const& dt,
                                          const int cycleNumber,
-                                         ManagedGroup * domain )
+                                         DomainPartition * domain )
 {
   // Call function to fill geometry parameters for use forming system
   // Can't call this in FinalInitialization() as field data has not been loaded there yet
