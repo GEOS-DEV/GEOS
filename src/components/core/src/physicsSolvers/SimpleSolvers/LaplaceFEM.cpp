@@ -191,7 +191,7 @@ void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 real64 LaplaceFEM::SolverStep( real64 const& time_n,
                                              real64 const& dt,
                                              const int cycleNumber,
-                                             ManagedGroup * domain )
+                                             DomainPartition * domain )
 {
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )

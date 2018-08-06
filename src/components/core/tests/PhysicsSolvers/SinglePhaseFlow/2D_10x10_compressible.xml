@@ -35,14 +35,21 @@
   </Geometry>
 
 
-  <Events>
-    <Application name="1"
-                 beginTime="0.0" 
-                 endTime="5000.0"
-                 dt="20.0"
-                 solvers="SinglePhaseFlow" />
-  </Events>
+  <Events maxTime="5000.0">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent name="solverApplications"
+                   forceDt="20.0"
+                   target="/Solvers/SinglePhaseFlow_TPFA" />
 
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   timeFrequency="100.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
 
   <NumericalMethods>
     <BasisFunctions>
@@ -139,15 +146,9 @@
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
   </Partition>
 
-  <Output parallelThreads="32"
-          plotInterval="20.0"
-          plotFileRoot="plot"
-          restartInterval="1e6"
-          slaveDirectory="sub"
-          writeFEMEdges="0"
-          writeFEMFaces="1"
-          writePlot="1"
-          writeRestart="1"
-          maxWallTime="{60*60*15.925}"/>
+  <Outputs>
+      <Silo name="siloOutput"/>
+  </Outputs>
+
 
 </Problem>

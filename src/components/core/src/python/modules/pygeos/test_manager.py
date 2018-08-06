@@ -2,7 +2,7 @@ import unittest
 import re
 import os
 import filecmp
-from . import PreprocessGEOSXML, DictRegexHandler, UnitManager, symbolicMathRegexHandler, regexConfig
+from . import preprocessGEOSXML, DictRegexHandler, unitManager, symbolicMathRegexHandler, regexConfig
 from . import __file__ as modPath
 
 
@@ -10,17 +10,13 @@ class TestUnitManager(unittest.TestCase):
 
   def setUp(self):
     self.tol = 1e-6
-    self.unitManager = UnitManager()
-
-  def tearDown(self):
-    del self.unitManager
 
   def test_unit_dict(self):
-    self.unitManager.buildUnits()
-    self.assertTrue(bool(self.unitManager.units))
+    unitManager.buildUnits()
+    self.assertTrue(bool(unitManager.units))
 
   def checkUnits(self, unitStruct, expectedValue):
-    val = float(self.unitManager(unitStruct))
+    val = float(unitManager(unitStruct))
     self.assertTrue(abs(val - expectedValue) < self.tol)
 
   # Scale value tests
@@ -95,14 +91,13 @@ class TestUnitManager(unittest.TestCase):
   @unittest.expectedFailure
   def test_compound_j(self):
     self.checkUnits(['1.0', 'km^2'], 1.0e6)
-  
+
   # Etc unit tests
   def test_etcUnits_a(self):
     self.checkUnits(['1.0', 'bbl/day'], 0.000001840130728333)
 
   def test_etcUnits_b(self):
     self.checkUnits(['1.0', 'cP'], 0.001)
-
 
 
 class TestParameterRegex(unittest.TestCase):
@@ -146,18 +141,13 @@ class TestParameterRegex(unittest.TestCase):
     self.evaluateRegex('$foo$*1.234/$bar$', '4.56e7*1.234/4.56e7')
 
 
-
 class TestUnitsRegex(unittest.TestCase):
 
   def setUp(self):
     self.tol = 1e-6
-    self.unitManager = UnitManager()
-
-  def tearDown(self):
-    del self.unitManager
 
   def evaluateRegex(self, unitInput, expectedValue):
-    result = re.sub(regexConfig.units, self.unitManager.regexHandler, unitInput)
+    result = re.sub(regexConfig.units, unitManager.regexHandler, unitInput)
     self.assertEqual(result, expectedValue)
 
   def test_units_regex_a(self):
@@ -230,7 +220,6 @@ class TestSymbolicRegex(unittest.TestCase):
     self.evaluateRegex('{sqrt(4.0)}', '2.0')
 
 
-
 class TestXMLProcessor(unittest.TestCase):
   def setUp(self):
     self.modPath = os.path.dirname(os.path.abspath(modPath))
@@ -240,17 +229,21 @@ class TestXMLProcessor(unittest.TestCase):
     os.remove(source)
 
   def test_basic_xml(self):
-    tmp = PreprocessGEOSXML(self.modPath + '/tests/source_xml/basic.xml', verbose=0)
-    self.diff_xml(tmp, self.modPath + '/tests/target_xml/target_basic.xml')
-    
+    tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/basic.xml', verbose=0)
+    self.diff_xml(tmp, self.modPath + '/tests/target_xml/raw_basic.xml')
+
   def test_includes_xml(self):
-    tmp = PreprocessGEOSXML(self.modPath + '/tests/source_xml/includes.xml', verbose=0)
-    self.diff_xml(tmp, self.modPath + '/tests/target_xml/target_includes.xml')
+    tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/includes.xml', verbose=0)
+    self.diff_xml(tmp, self.modPath + '/tests/target_xml/raw_includes.xml')
 
   def test_symbolic_xml(self):
-    tmp = PreprocessGEOSXML(self.modPath + '/tests/source_xml/symbolic.xml', verbose=0)
-    self.diff_xml(tmp, self.modPath + '/tests/target_xml/target_symbolic.xml')
+    tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/symbolic.xml', verbose=0)
+    self.diff_xml(tmp, self.modPath + '/tests/target_xml/raw_symbolic.xml')
 
+  def test_formatting_xml(self):
+    tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/symbolic.xml', verbose=0)
+    format_xml_file(tmp)
+    self.diff_xml(tmp, self.modPath + '/tests/target_xml/target_symbolic.xml')
 
 
 def runUnitTests():
