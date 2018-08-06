@@ -789,7 +789,7 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
   auto poro      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::porosityString);
   auto dPoro     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaPorosityString);
   auto volume    = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::volumeString);
-  auto dVolume   = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaVolumeString);
+  auto dVol      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaVolumeString);
   auto gravDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::gravityDepthString);
 
   auto trans     = faceManager->getReference<real64_array>(viewKeyStruct::transmissibilityString);
@@ -812,7 +812,6 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
       real64 const vol_new  = volume[er][esr][k] + dVol[er][esr][k];
 
       // Residual contribution is mass conservation in the cell
-
 #if 0
       localAccum = poro_new         * dens_new         * vol_new
                  - poro[er][esr][k] * dens[er][esr][k] * volume[er][esr][k];
@@ -823,8 +822,8 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
 #endif
 
       // Derivative of residual wrt to pressure in the cell
-      localAccumJacobian = (m_dPoro_dPres[er][esr][k] * dens_new * vol)
-                         + (m_dDens_dPres[er][esr][k] * poro_new * vol);
+      localAccumJacobian = (m_dPoro_dPres[er][esr][k] * dens_new * volume[er][esr][k])
+                         + (m_dDens_dPres[er][esr][k] * poro_new * volume[er][esr][k]);
 
       // add contribution to global residual and dRdP
       residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);

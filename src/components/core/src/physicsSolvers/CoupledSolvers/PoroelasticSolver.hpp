@@ -26,6 +26,8 @@ public:
 
   virtual void FillDocumentationNode() override final;
 
+  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override final;
+
   virtual real64 SolverStep( real64 const & time_n,
                          real64 const & dt,
                          int const cycleNumber,
@@ -91,6 +93,8 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    constexpr static auto effectiveStressString = "effectiveStress";
+
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto fluidSolverNameString = "fluidSolverName";
   } viewKeys;
