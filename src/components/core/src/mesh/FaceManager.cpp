@@ -134,12 +134,12 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
+        FixedOneToManyRelation & elemsToFaces = subRegion->faceList();
         // kelf = k'th element local face index
         for( localIndex kelf=0 ; kelf<subRegion->numFacesPerElement() ; ++kelf )
         {
           // get the nodes associated with the local face
           subRegion->GetFaceNodes( ke, kelf, tempNodeList );
-          FixedOneToManyRelation & elemsToFaces = subRegion->faceList();
 
           //Special treatment for the triangle faces of prisms.
           if (tempNodeList[tempNodeList.size()-1] == std::numeric_limits<localIndex>::max())
@@ -385,20 +385,21 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 
 }
 
-//
-//void FaceManager::SetIsExternal()
-//{
-//  integer_array const & isDomainBoundary = this->GetFieldData<FieldInfo::isDomainBoundary>();
-//  m_isExternal = 0;
-//  for( localIndex k=0 ; k<m_numFaces ; ++k )
-//  {
-//    if( isDomainBoundary[k]==1 && ( m_matchedBoundaryFaces.find(k)==m_matchedBoundaryFaces.end() ) )
-//    {
-//      m_isExternal[k] = 1;
-//      m_externalFaces.insert(k);
-//    }
-//  }
-//}
+
+void FaceManager::SetIsExternal()
+{
+  integer_array const &
+  isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
+
+  m_isExternal = 0;
+  for( localIndex k=0 ; k<size() ; ++k )
+  {
+    if( isDomainBoundary[k]==1 )
+    {
+      m_isExternal[k] = 1;
+    }
+  }
+}
 
 //void
 //FaceManager::

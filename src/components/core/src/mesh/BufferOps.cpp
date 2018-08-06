@@ -31,7 +31,7 @@ namespace bufferOps
 
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
-                 UnorderedVariableToManyElementRelation const & var,
+                 OrderedVariableToManyElementRelation const & var,
                  array<localIndex> const & packList,
                  ElementRegionManager const * const elementRegionManager )
 {
@@ -62,17 +62,17 @@ localIndex Pack( char*& buffer,
   return sizeOfPackedChars;
 }
 template localIndex Pack<true>( char*&,
-                                UnorderedVariableToManyElementRelation const &,
+                                OrderedVariableToManyElementRelation const &,
                                 array<localIndex> const &,
                                 ElementRegionManager const * const );
 template localIndex Pack<false>( char*&,
-                                 UnorderedVariableToManyElementRelation const &,
+                                 OrderedVariableToManyElementRelation const &,
                                  array<localIndex> const &,
                                  ElementRegionManager const * const );
 
 
 localIndex Unpack( char const * & buffer,
-                   UnorderedVariableToManyElementRelation & var,
+                   OrderedVariableToManyElementRelation & var,
                    array<localIndex> const & packList,
                    ElementRegionManager const * const elementRegionManager )
 {

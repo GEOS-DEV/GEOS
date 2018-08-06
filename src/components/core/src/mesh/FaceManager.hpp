@@ -86,6 +86,8 @@ public:
 
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
 
+  void SetIsExternal();
+
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
   virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;

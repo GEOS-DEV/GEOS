@@ -165,7 +165,7 @@ void LinearElasticIsotropic::FillDocumentationNode()
                                    "r2Sym_array",
                                    "Stress",
                                    "Stress",
-                                   "0",
+                                   "0,0,0,0,0,0",
                                    "",
                                    1,
                                    0,

@@ -381,21 +381,18 @@ bool EdgeManager::hasNode( const localIndex edgeID, const localIndex nodeID ) co
 //  return(val);
 //}
 
-void EdgeManager::SetIsExternal( const ObjectDataStructureBaseT * const referenceObject )
+void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
 {
-  // make sure that the reference object is a faceManger object
-  //referenceObject->CheckObjectType( ObjectDataStructureBaseT::FaceManager );
-
-  // cast the referenceObject into a faceManager
-  const FaceManager* const faceManager = static_cast<const FaceManager *>( referenceObject);
-
   // get the "isExternal" field from the faceManager->..This should have been
   // set already!
-  array<integer> const & isExternalFace = referenceObject->getReference<array<integer> >( ObjectManagerBase::viewKeyStruct::isExternalString );
+  array<integer> const & isExternalFace = faceManager->getReference<array<integer> >( ObjectManagerBase::viewKeyStruct::isExternalString );
   array<integer>& isExternal = this->getReference< array<integer> >( viewKeyStruct::isExternalString );
+
+  array<localIndex_array> const & facesToEdges = faceManager->edgeList();
 
   // get the "isExternal" field from for *this, and set it to zero
   isExternal = 0;
+
 
   // loop through all faces
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
@@ -403,12 +400,12 @@ void EdgeManager::SetIsExternal( const ObjectDataStructureBaseT * const referenc
     // check to see if the face is on a domain boundary
     if( isExternalFace[kf] == 1 )
     {
-      localIndex_array const & faceToEdges = faceManager->edgeList()(kf);
+      localIndex_array const & faceToEdges = facesToEdges[kf];
 
       // loop over all nodes connected to face, and set isNodeDomainBoundary
-      for( localIndex_array::const_iterator a=faceToEdges.begin() ; a!=faceToEdges.end() ; ++a )
+      for( auto a : faceToEdges )
       {
-        isExternal(*a) = 1;
+        isExternal(a) = 1;
       }
     }
   }

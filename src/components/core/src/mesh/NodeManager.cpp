@@ -197,7 +197,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
     localIndex const numNodes = edgeToNodes[ke].size();
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-      m_toEdgesRelation[a].insert(ke);
+      m_toEdgesRelation[edgeToNodes[ke][a]].insert(ke);
     }
   }
   m_toEdgesRelation.SetRelatedObject( edgeManager );
@@ -213,7 +213,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
     localIndex const numNodes = faceToNodes[ke].size();
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-      m_toFacesRelation[a].insert(ke);
+      m_toFacesRelation[faceToNodes[ke][a]].insert(ke);
     }
   }
   m_toFacesRelation.SetRelatedObject( faceManager );
@@ -224,9 +224,9 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
-  array<lSet> & toElementRegionList = elementRegionList();
-  array<lSet> & toElementSubRegionList = elementSubRegionList();
-  array<lSet> & toElementList = elementList();
+  array<localIndex_array> & toElementRegionList = elementRegionList();
+  array<localIndex_array> & toElementSubRegionList = elementSubRegionList();
+  array<localIndex_array> & toElementList = elementList();
 
   for( localIndex a=0 ; a<size() ; ++a )
   {
@@ -251,9 +251,9 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
         for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
         {
           localIndex nodeIndex = nodeList[a];
-          toElementRegionList[nodeIndex].insert( kReg );
-          toElementSubRegionList[nodeIndex].insert( kSubReg );
-          toElementList[nodeIndex].insert( ke );
+          toElementRegionList[nodeIndex].push_back( kReg );
+          toElementSubRegionList[nodeIndex].push_back( kSubReg );
+          toElementList[nodeIndex].push_back( ke );
         }
       }
     }

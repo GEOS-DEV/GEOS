@@ -47,7 +47,12 @@ public:
 
   static string CatalogName() { return "SurfaceGenerator"; }
 
-  void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup );
+  virtual void FillDocumentationNode() override;
+
+  virtual void
+  FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
+
+  virtual void FinalInitialization( ManagedGroup * const problemManager ) override final;
 
 
   /**
@@ -99,7 +104,6 @@ public:
   int SeparationDriver( NodeManager& nodeManager,
                         EdgeManager& edgeManager,
                         FaceManager& faceManager,
-                        ExternalFaceManager& externalFaceManager,
                         ElementRegionManager& elementManager,
                         SpatialPartition& partition,
                         const bool prefrac,
@@ -169,7 +173,6 @@ private:
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
                     ElementRegionManager & elemManager,
-                    ExternalFaceManager & externalFaceManager,
                     array<lSet>& nodesToRupturedFaces,
                     array<lSet>& edgesToRupturedFaces,
                     ElementRegionManager & elementManager,
@@ -194,7 +197,6 @@ private:
                         NodeManager & nodeManager,
                         EdgeManager & edgeManager,
                         FaceManager & faceManager,
-                        ExternalFaceManager & externalFaceManager,
                         ElementRegionManager & elementManager,
                         ModifiedObjectLists& modifiedObjects,
                         array<lSet>& nodesToRupturedFaces,
@@ -244,18 +246,16 @@ bool SetElemLocations( const int side,
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto nodeParentIndexString = "nodeParentIndex";
-    constexpr static auto edgeParentIndexString = "edgeParentIndex";
-    constexpr static auto faceParentIndexString = "faceParentIndex";
-
-    dataRepository::ViewKey nodeParentIndex = { nodeParentIndexString };
-    dataRepository::ViewKey edgeParentIndex = { edgeParentIndexString };
-    dataRepository::ViewKey faceParentIndex = { faceParentIndexString };
+    constexpr static auto parentIndexString = ObjectManagerBase::viewKeyStruct::parentIndexString;
+    constexpr static auto childIndexString = ObjectManagerBase::viewKeyStruct::childIndexString;
+    constexpr static auto ruptureStateString = "ruptureState";
+    constexpr static auto failCriterionString = "failCriterion";
+    constexpr static auto degreeFromCrackString = "degreeFromCrack";
 
   } viewKeys;
 
 
-  integer m_failCriterion;
+  integer m_failCriterion=1;
   localIndex_set m_separableFaceSet;
 };
 

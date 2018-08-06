@@ -8,7 +8,8 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SurfaceGenerator name="SurfaceGen"
-                          verboseLevel="3">
+                      failCriterion="1"
+                      verboseLevel="3">
     </SurfaceGenerator>
   </Solvers>
 
@@ -33,7 +34,7 @@
   <Events>
     <Application name="1"
                  beginTime="0.0" 
-                 endTime="2" 
+                 endTime="3" 
                  dt="1"
                  solvers="SurfaceGen" />
   </Events>
@@ -55,7 +56,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="granite" />
   </ElementRegions>
 
   <Constitutive>
@@ -72,13 +73,16 @@
   </InitialConditions>
 
   <BoundaryConditions>
-    <Dirichlet name="perm"
-               initialCondition="1"  
-               setNames="all"
-               objectPath="FaceManager"
+    <Dirichlet name="frac"
+               initialCondition="1"
+               setNames="fracPlane"
+               objectPath="faceManager"
                fieldName="ruptureState"
                dataType="integer" 
                scale="1"/>
+  
+    <Dirichlet name="bot" component="1" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="-0.1" setNames="yneg"/>
+    <Dirichlet name="top" component="1" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="0.1" setNames="ypos"/>
   
   </BoundaryConditions>
 
