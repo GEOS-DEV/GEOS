@@ -48,6 +48,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   RegisterViewWrapper<integer>( viewKeys.useNewtonSolve );
   RegisterViewWrapper<real64>( viewKeys.newtonTol );
   RegisterViewWrapper<integer>( viewKeys.maxIterNewton );
+  RegisterViewWrapper<integer>( viewKeys.numNewtonIterations );
 }
 
 SystemSolverParameters::~SystemSolverParameters()

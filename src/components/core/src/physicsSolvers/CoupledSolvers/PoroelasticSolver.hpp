@@ -29,7 +29,7 @@ public:
   virtual real64 SolverStep( real64 const & time_n,
                          real64 const & dt,
                          int const cycleNumber,
-                         dataRepository::ManagedGroup * domain ) override;
+                         DomainPartition * domain ) override;
 
 //  virtual real64 ExplicitStep( real64 const & time_n,
 //                               real64 const & dt,

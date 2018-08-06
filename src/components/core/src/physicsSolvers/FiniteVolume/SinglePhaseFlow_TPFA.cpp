@@ -352,11 +352,13 @@ void SinglePhaseFlow_TPFA::FinalInitialization( ManagedGroup * const problemMana
 real64 SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
                                          real64 const& dt,
                                          const int cycleNumber,
-                                         ManagedGroup * domain )
+                                         DomainPartition * domain )
 {
   // Call function to fill geometry parameters for use forming system
   // Can't call this in FinalInitialization() as field data has not been loaded there yet
   PrecomputeData(ManagedGroup::group_cast<DomainPartition *>(domain));
+
+  ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
 
   // currently the only method is implcit time integration
   return this->NonlinearImplicitStep( time_n,
@@ -364,6 +366,10 @@ real64 SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
                                       cycleNumber,
                                       domain->group_cast<DomainPartition*>(),
                                       getLinearSystemRepository() );
+
+  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  ImplicitStepComplete( time_n, dt, domain );
+
 }
 
 
@@ -783,6 +789,7 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
   auto poro      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::porosityString);
   auto dPoro     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaPorosityString);
   auto volume    = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::volumeString);
+  auto dVolume   = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaVolumeString);
   auto gravDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::gravityDepthString);
 
   auto trans     = faceManager->getReference<real64_array>(viewKeyStruct::transmissibilityString);
@@ -802,11 +809,18 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
 
       real64 const dens_new = dens[er][esr][k] + dDens[er][esr][k];
       real64 const poro_new = poro[er][esr][k] + dPoro[er][esr][k];
-      real64 const vol      = volume[er][esr][k];
+      real64 const vol_new  = volume[er][esr][k] + dVol[er][esr][k];
 
       // Residual contribution is mass conservation in the cell
-      localAccum = poro_new         * dens_new         * vol
-                 - poro[er][esr][k] * dens[er][esr][k] * vol;
+
+#if 0
+      localAccum = poro_new         * dens_new         * vol_new
+                 - poro[er][esr][k] * dens[er][esr][k] * volume[er][esr][k];
+#else
+      localAccum = dens[er][esr][k] * dVol[er][esr][k] * poro_new
+                 + dens[er][esr][k] * dPoro[er][esr][k] * volume[er][esr][k]
+                 + dDens[er][esr][k] * poro_new * vol_new ;
+#endif
 
       // Derivative of residual wrt to pressure in the cell
       localAccumJacobian = (m_dPoro_dPres[er][esr][k] * dens_new * vol)
