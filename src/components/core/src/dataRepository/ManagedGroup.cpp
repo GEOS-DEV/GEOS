@@ -227,6 +227,25 @@ void ManagedGroup::RegisterDocumentationNodes()
           cxx_utilities::equateStlVector(data,values);
         });
       }
+      else if( defVal != "NONE" && defVal != "" )
+      {
+        rtTypes::ApplyTypeLambda2( typeID,
+                                   [&]( auto a, auto b ) -> void
+        {
+
+          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
+          std::vector<decltype(b)> values;
+          stringutilities::StringToType( values, defVal );
+          localIndex const size = multidimensionalArray::integer_conversion<localIndex>(values.size());
+          if( size != 1 )
+          {
+            GEOS_ERROR("Expect size of default value to be a scalar");
+          }
+          decltype(a) & data = dataView.reference();
+          data = values[0];
+        });
+
+      }
     }
   }
 
