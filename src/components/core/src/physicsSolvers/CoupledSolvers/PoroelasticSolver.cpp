@@ -67,7 +67,7 @@ PoroelasticSolver::~PoroelasticSolver()
 real64 PoroelasticSolver::SolverStep( real64 const & time_n,
                                       real64 const & dt,
                                       int const cycleNumber,
-                                      dataRepository::ManagedGroup * domain )
+                                      DomainPartition * domain )
 {
   return SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
 
@@ -87,22 +87,35 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
 
   SystemSolverParameters & solverParams = *(this->getSystemSolverParameters());
 
+  fluidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+  solidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
 //  fluidSolver->TimeStepPrepare(domain);
-//  int iter = 0;
-//  bool balanced = false;
-//  while (iter < solverParams.maxIterNewton() )
-//  {
-//    balanced = fluidSolver -> CoupledTimeStep(time, dt, cycleNumber, domain, namesOfSolverRegions, partition, fractunator);
-//
-//    if (balanced && iter > 0)
-//    {
-//      break;
-//    }
-//
-//    solidSolver -> TimeStep(time, dt, cycleNumber, domain, namesOfSolverRegions, partition, fractunator);
-//    fluidSolver -> UpdateDeformation(domain);
-//    iter++;
-//  }
+  int iter = 0;
+  bool balanced = false;
+  while (iter < solverParams.maxIterNewton() )
+  {
+    fluidSolver.NonlinearImplicitStep( time_n,
+                                       dt,
+                                       cycleNumber,
+                                       domain,
+                                       getLinearSystemRepository() );
+    balanced = fluidSolver.getSystemSolverParameters()->numNewtonIterations();
+    if (balanced && iter > 0)
+    {
+      break;
+    }
+
+    solidSolver.NonlinearImplicitStep( time_n,
+                                       dt,
+                                       cycleNumber,
+                                       domain,
+                                       getLinearSystemRepository() );
+
+    //fluidSolver.UpdateDeformation(domain);
+    ++iter;
+  }
+  fluidSolver.ImplicitStepComplete( time_n, dt, domain );
+  solidSolver.ImplicitStepComplete( time_n, dt, domain );
 //  if (partition.m_rank == 0) std::cout << ". Finished in " << iter << " iterations." << std::endl;
   return dt;
 }

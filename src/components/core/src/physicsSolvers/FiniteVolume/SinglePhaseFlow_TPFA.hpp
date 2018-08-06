@@ -90,7 +90,7 @@ public:
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
                              integer const cycleNumber,
-                             dataRepository::ManagedGroup * domain ) override;
+                             DomainPartition * domain ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -211,6 +211,8 @@ public:
     constexpr static auto gravityDepthString = "gravityDepth";
 
     constexpr static auto volumeString = "volume";
+    constexpr static auto deltaVolumeString = "volume";
+
     constexpr static auto permeabilityString = "permeability";
     constexpr static auto transmissibilityString = "transmissibility";
 

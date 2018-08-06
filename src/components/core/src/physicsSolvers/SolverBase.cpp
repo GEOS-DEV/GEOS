@@ -147,7 +147,7 @@ void SolverBase::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
 real64 SolverBase::SolverStep( real64 const& time_n,
                            real64 const& dt,
                            const int cycleNumber,
-                           ManagedGroup * domain )
+                           DomainPartition * domain )
 {
   return 0;
 }
@@ -160,7 +160,7 @@ void SolverBase::Execute( real64 const& time_n,
 {
   if ( dt > 0 )
   {
-    SolverStep(time_n, dt, cycleNumber, domain);
+    SolverStep(time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
   }
 }
 
@@ -204,10 +204,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
 
-  // call setup for physics solver. Pre step allocations etc.
-  ImplicitStepSetup( time_n, stepDt, domain, blockSystem );
-
-  SystemSolverParameters const * const solverParams = getSystemSolverParameters();
+  SystemSolverParameters * const solverParams = getSystemSolverParameters();
   real64 const newtonTol = solverParams->newtonTol();
   integer const maxNewtonIter = solverParams->maxIterNewton();
   integer const maxNumberDtCuts = 2;
@@ -223,7 +220,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     // main Newton loop
     // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
-    for( int k=0 ; k<maxNewtonIter ; ++k )
+    integer & k = solverParams->numNewtonIterations();
+    for( k=0 ; k<maxNewtonIter ; ++k )
     {
 
       // call assemble to fill the matrix and the rhs
@@ -328,9 +326,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   {
     std::cout<<"Convergence not achieved.";
   }
-
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, stepDt,  domain );
 
   // return the achieved timestep
   return stepDt;
