@@ -1,13 +1,44 @@
 from lxml import etree as ElementTree
-from lxml.etree import XMLSyntaxError 
+from lxml.etree import XMLSyntaxError
 import re
-import sys
 import os
-from numpy import *
-from . import UnitManager, DictRegexHandler, symbolicMathRegexHandler, regexConfig
+from . import unitManager, parameterHandler, symbolicMathRegexHandler, regexConfig
 
 
-def MergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
+def mergeXMLNodes(existingNode, targetNode, level):
+  # Copy attributes
+  for tk in targetNode.attrib.keys():
+    existingNode.set(tk, targetNode.get(tk))
+
+  # Copy target children into the xml structure
+  currentTag = ''
+  matchingSubNodes = []
+
+  for target in targetNode.getchildren():
+    insertCurrentLevel = True
+
+    if (currentTag != target.tag):
+      currentTag = target.tag
+      matchingSubNodes = existingNode.findall(target.tag)
+
+    if (matchingSubNodes):
+      targetName = target.get('name')
+
+      if (level == 0):
+        insertCurrentLevel = False
+        mergeXMLNodes(matchingSubNodes[0], target, level + 1)
+
+      elif (targetName and (currentTag not in ['Nodeset'])):
+        for match in matchingSubNodes:
+          if (match.get('name') == targetName):
+            insertCurrentLevel = False
+            mergeXMLNodes(match, target, level + 1)
+
+    if (insertCurrentLevel):
+      existingNode.insert(-1, target)
+
+
+def mergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
   # Expand the input path
   pwd = os.getcwd()
   includePath, fname = os.path.split(os.path.abspath(os.path.expanduser(fname)))
@@ -30,23 +61,47 @@ def MergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
     includeRoot = includeTree.getroot()
   except XMLSyntaxError as err:
     print('\nCould not load included file: %s' % (fname))
-    print err.msg
+    print(err.msg)
     raise Exception('\nCheck included file!')
 
   # Recursively add the includes:
   for includeNode in includeRoot.findall('Included'):
     for f in includeNode.findall('File'):
-      MergeIncludedXMLFiles(root, f.get('name'), includeCount)
+      mergeIncludedXMLFiles(root, f.get('name'), includeCount)
 
   # Merge the results into the xml tree
-  for topLevelNode in list(includeRoot):
-    rootMatchingNodes = root.findall(topLevelNode.tag)
-    if (rootMatchingNodes):
-      for secondLevelNode in list(topLevelNode):
-        rootMatchingNodes[0].insert(-1, secondLevelNode)
-    else:
-      root.insert(-1, topLevelNode)
+  mergeXMLNodes(root, includeRoot, 0)
   os.chdir(pwd)
+
+
+def applyRegexToNode(node):
+  for k in node.attrib.keys():
+    value = node.get(k)
+
+    # Parameter format:  $Parameter or $:Parameter
+    ii = 0
+    while ('$' in value):
+      value = re.sub(regexConfig.parameters, parameterHandler, value)
+      ii += 1
+      if (ii > 100):
+        raise Exception('Reached maximum parameter expands (Node=%s, value=%s)' % (node.tag, value))
+
+    # Unit format:       9.81[m**2/s] or 1.0 [bbl/day]
+    if ('[' in value):
+      value = re.sub(regexConfig.units, unitManager.regexHandler, value)
+
+    # Symbolic format:   {1 + 2.34e5*2 * ...}
+    ii = 0
+    while ('{' in value):
+      value = re.sub(regexConfig.symbolic, symbolicMathRegexHandler, value)
+      ii += 1
+      if (ii > 100):
+        raise Exception('Reached maximum symbolic expands (Node=%s, value=%s)' % (node.tag, value))
+
+    node.set(k, value)
+
+  for subNode in node.getchildren():
+    applyRegexToNode(subNode)
 
 
 def generateRandomName(prefix='', suffix='.xml'):
@@ -57,8 +112,8 @@ def generateRandomName(prefix='', suffix='.xml'):
   return '%s%s%s' % (prefix, md5(str(time())+str(getpid())).hexdigest(), suffix)
 
 
-def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/components/core/src/schema/gpac_new.xsd', verbose=1):
-  
+def preprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/components/core/src/schema/gpac_new.xsd', verbose=1):
+
   if (verbose > 0):
     print('\nReading input xml parameters and parsing symbolic math...')
 
@@ -74,69 +129,49 @@ def PreprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/component
     root = tree.getroot()
   except XMLSyntaxError as err:
     print('\nCould not load input file: %s' % (inputFile))
-    print err.msg
+    print(err.msg)
     raise Exception('\nCheck input file!')
 
+  # Add the included files to the xml structure
   includeCount = 0
   for includeNode in root.findall('Included'):
     for f in includeNode.findall('File'):
-      MergeIncludedXMLFiles(root, f.get('name'), includeCount)
+      mergeIncludedXMLFiles(root, f.get('name'), includeCount)
   os.chdir(pwd)
 
-  # Build the parameter map, convert function
+  # Build the parameter map
   Pmap = {}
   for parameters in root.findall('Parameters'):
     for p in parameters.findall('Parameter'):
       Pmap[p.get('name')] = p.get('value')
-  tmp_fname_a = generateRandomName(prefix='int_')
-  tree.write(tmp_fname_a, pretty_print=True)
-  parameterHandler = DictRegexHandler()
   parameterHandler.target = Pmap
 
-  # Parse the raw xml file:  
-  tmp_fname_b = generateRandomName(prefix='prep_')
-  unitManager = UnitManager()
-  with open(tmp_fname_a, 'r') as ifile, open(tmp_fname_b, 'w') as ofile:
-    for line in ifile:
-      # Fill in any paramters (format:  $Parameter or $:Parameter)
-      if ('$' in line):
-        line = re.sub(regexConfig.parameters, parameterHandler, line)
-
-      # Parse any units (format: 9.81[m**2/s] or 1.0 [bbl/day])
-      if ('[' in line):
-        line = re.sub(regexConfig.units, unitManager.regexHandler, line)
-
-      # Evaluate symbolic math (format: {1 + 2.34e5*2 * ...})
-      if ('{' in line):
-        line = re.sub(regexConfig.symbolic, symbolicMathRegexHandler, line)
-      
-      ofile.write(line)
+  # Apply regexes and write the new file
+  applyRegexToNode(root)
+  recordName = generateRandomName(prefix='prep_')
+  tree.write(recordName, pretty_print=True)
 
   # Check for un-matched special characters
-  os.remove(tmp_fname_a)
-  with open(tmp_fname_b, 'r') as ofile:
+  with open(recordName, 'r') as ofile:
     for line in ofile:
       if any([sc in line for sc in ['$', '[', ']', '{', '}']]):
         raise Exception('Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!' % (line))
 
   if (verbose > 0):
-    print('Preprocessed xml file stored in %s\n' % (tmp_fname_b))
+    print('Preprocessed xml file stored in %s' % (recordName))
 
-    # Validate against the schema 
+    # Validate against the schema
     print('Validating the xml against the schema...')
     try:
-      ofile = ElementTree.parse(tmp_fname_b) 
-      sfile = ElementTree.XMLSchema(ElementTree.parse(schema))
+      ofile = ElementTree.parse(recordName)
+      sfile = ElementTree.XMLSchema(ElementTree.parse(os.path.expanduser(schema)))
       sfile.assertValid(ofile)
+      print('Done!')
     except ElementTree.DocumentInvalid as err:
       print('\nWarning: input XML contains potentially invalid input parameters:')
       print('-'*20+'\n')
-      print sfile.error_log
+      print(sfile.error_log)
       print('\n'+'-'*20)
       print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
 
-  return tmp_fname_b
-
-if (__name__ == "__main__"):
-  ifile = sys.argv[1]
-  PreprocessGEOSXML(ifile)
+  return recordName

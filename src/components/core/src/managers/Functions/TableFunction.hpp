@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * TableFunction.hpp
- *
- *  Created on: July 6, 2017
- *      Author: sherman
+/**
+ * @file TableFunction.hpp
  */
 
 #ifndef TABLEFUNCTION_HPP_
@@ -31,30 +28,56 @@
 namespace geosx
 {
 
-
+/**
+ * @class TableFunction
+ *
+ * An interface for a dense table-based function
+ */
 class TableFunction : public FunctionBase
 {
 public:
+  /// Main constructor
   TableFunction( const std::string& name,
                  dataRepository::ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~TableFunction() override;
-  static string CatalogName() { return "TableFunction"; }
-  virtual void FillDocumentationNode() override final;
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override final;
 
+  /// Catalog name interface
+  static string CatalogName() { return "TableFunction"; }
+
+  /// Documentation assignment
+  virtual void FillDocumentationNode() override final;
+  
+  /// Initialize the function
   virtual void InitializeFunction() override;
 
+  /**
+   * @brief Method to evaluate a function on a target object
+   * @param group a pointer to the object holding the function arguments
+   * @param time current time
+   * @param set the subset of nodes to apply the function to
+   * @param result an array to hold the results of the function
+   */
   virtual void Evaluate( dataRepository::ManagedGroup const * const group,
                          real64 const time,
                          lSet const & sets,
                          real64_array & result ) const override final;
 
+  /**
+   * @brief Method to evaluate a function
+   * @param input a scalar input
+   */
   virtual real64 Evaluate( real64 const * const input) const override final;
 
 private:
+  /// An array of table axes
   array<real64_array> m_coordinates;
+
+  /// Table values (in fortran order)
   real64_array m_values;
+
+  /// Table size indicators
   static localIndex constexpr m_maxDimensions = 4;
   localIndex m_dimensions;
   localIndex_array m_size;

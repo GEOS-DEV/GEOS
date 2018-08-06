@@ -308,7 +308,7 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
                                          real64 const& dt,
                                          const int cycleNumber,
-                                         ManagedGroup * domain )
+                                         DomainPartition * domain )
 {
   if (!m_precomputeDone)
   {
