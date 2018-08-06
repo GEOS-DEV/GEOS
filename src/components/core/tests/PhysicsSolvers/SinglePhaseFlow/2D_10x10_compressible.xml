@@ -1,0 +1,145 @@
+<?xml version="1.0" ?>
+<!--# # -->
+
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+
+  <Solvers
+    gravityVector="0.0,0.0,-9.81">
+  
+    <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
+                          verboseLevel="0"
+                          gravityFlag="1">
+      <SystemSolverParameters name="SystemSolverParameters"
+                              krylovTol="1.0e-10"
+                              newtonTol="1.0e-6"
+                              maxIterNewton="8"/>
+    </SinglePhaseFlow_TPFA>
+  </Solvers>
+  
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="C3D8" 
+                  xCoords="0, 10"
+                  yCoords="0, 10"
+                  zCoords="0, 1"
+                  nx="10"
+                  ny="10"
+                  nz="1"
+                  cellBlockNames="cb1"/>
+  </Mesh>
+
+  <Geometry>
+    <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01,  1.01, 1.01"/>
+    <Box name="sink"   type="0" xMin=" 8.99,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
+  </Geometry>
+
+
+  <Events maxTime="5000.0">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent name="solverApplications"
+                   forceDt="20.0"
+                   target="/Solvers/SinglePhaseFlow_TPFA" />
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   timeFrequency="100.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
+
+  <NumericalMethods>
+    <BasisFunctions>
+      <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+    </BasisFunctions>
+
+    <QuadratureRules>
+      <GaussQuadrature3 name="gaussian"   degree="2"  />
+    </QuadratureRules>
+
+    <FiniteElements>
+      <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="water" />
+  </ElementRegions>
+
+  <Constitutive>
+      <LinearEOS name="water">
+        <ParameterData referencePressure="0.0"
+                       referenceDensity="1000"
+                       fluidBulkModulus="2.0e9"
+                       referenceViscosity="0.001"
+                       fluidViscosibility="0.0"
+                       solidBulkModulus="1.0e9"/>
+      </LinearEOS>
+  </Constitutive>
+
+  <InitialConditions>
+    
+  </InitialConditions>
+
+  <BoundaryConditions>
+    <Dirichlet name="permx"
+               component="0"
+               initialCondition="1"  
+               setNames="all"
+               objectPath="ElementRegion/Region2/cb1"
+               fieldName="permeability"
+               dataType="R1Tensor"
+               scale="2.0e-16"/>
+
+    <Dirichlet name="permy"
+               component="1"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegion/Region2/cb1"
+               fieldName="permeability"
+               dataType="R1Tensor"
+               scale="2.0e-16"/>
+
+    <Dirichlet name="permz"
+               component="2"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegion/Region2/cb1"
+               fieldName="permeability"
+               dataType="R1Tensor"
+               scale="2.0e-16"/>
+
+    <Dirichlet name="referencePorosity"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegion/Region2/cb1/referencePorosity"
+               dataType="real64"
+               scale="0.05"/>
+
+    <Dirichlet name="initialPressure"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegion/Region2/cb1/fluidPressure"
+               dataType="real64"
+               scale="5e6"/>
+  
+    <Dirichlet name="sourceTerm" fieldName="fluidPressure" dataType="Scalar" scale="1e7" setNames="source"/>
+    <Dirichlet name="sinkTerm"   fieldName="fluidPressure" dataType="Scalar" scale="0.0" setNames="sink"/>
+  </BoundaryConditions>
+
+  <Functions>
+
+  </Functions>
+
+  <Partition>
+    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
+  </Partition>
+
+  <Outputs>
+      <Silo name="siloOutput"/>
+  </Outputs>
+
+
+</Problem>

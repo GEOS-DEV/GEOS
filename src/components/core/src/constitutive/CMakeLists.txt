@@ -4,6 +4,8 @@
 set( constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
+     ExponentialRelation.hpp
+     ExponentialRelation_impl.hpp
      LinearElasticIsotropic.hpp
      EquationOfState/LinearEOS.hpp
    )

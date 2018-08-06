@@ -10,17 +10,14 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SymbolicFunction.hpp
- *
- *  Created on: July 6, 2017
- *      Author: sherman
+/**
+ * @file SymbolicFunction.hpp
  */
 
 #ifndef SYMBOLICFUNCTION_HPP_
@@ -32,20 +29,37 @@
 namespace geosx
 {
 
-
+/**
+ * @class SymbolicFunction
+ *
+ * An interface for an arbitrary symbolic function
+ */
 class SymbolicFunction : public FunctionBase
 {
 public:
+  /// Main constructor
   SymbolicFunction( const std::string& name,
                     dataRepository::ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~SymbolicFunction() override;
-  static string CatalogName() { return "SymbolicFunction"; }
-  virtual void FillDocumentationNode() override;
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
 
+  /// Catalog name interface
+  static string CatalogName() { return "SymbolicFunction"; }
+
+  /// Documentation assignment
+  virtual void FillDocumentationNode() override;
+  
+  /// Function initialization
   virtual void InitializeFunction() override;
 
+  /**
+   * @brief Method to evaluate a function on a target object
+   * @param group a pointer to the object holding the function arguments
+   * @param time current time
+   * @param set the subset of nodes to apply the function to
+   * @param result an array to hold the results of the function
+   */
   inline void Evaluate( dataRepository::ManagedGroup const * const group,
                         real64 const time,
                         lSet const & set,
@@ -54,13 +68,17 @@ public:
     FunctionBase::EvaluateT<SymbolicFunction>( group, time, set, result );
   }
 
-
+  /**
+   * @brief Method to evaluate a function
+   * @param input a scalar input
+   */
   inline real64 Evaluate( real64 const * const input ) const override final
   {
     return parserExpression.evaluate( reinterpret_cast<void*>( const_cast<real64*>(input) ) );
   }
 
 private:
+  /// Symbolic math driver objects
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
 };

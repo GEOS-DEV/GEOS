@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -262,6 +262,60 @@ public:
     return group_cast<T const *>(m_subGroups[key]);
   }
 
+  /**
+   * @brief This will grab the pointer to an object in the data structure
+   * @param path a unix-style string (absolute, relative paths valid)
+   */
+  template< typename T = ManagedGroup >
+  T const * GetGroupByPath( string const & path ) const
+  {
+    size_t directoryMarker = path.find("/");
+
+    if (directoryMarker == std::string::npos)
+    {
+      // Target should be a child of this group
+      return m_subGroups[path];
+    }
+    else
+    {
+      // Split the path
+      string const child = path.substr(0, directoryMarker);
+      string const subPath = path.substr(directoryMarker+1, path.size());
+
+      if (directoryMarker == 0)            // From root
+      {
+        if (this->getParent() == nullptr)  // At root
+        {
+          return this->GetGroupByPath(subPath);
+        }
+        else                               // Not at root
+        {
+          return this->getParent()->GetGroupByPath(path);
+        }
+      }
+      else if (child[0] == '.')
+      {
+        if (child[1] == '.')               // '../' = Reverse path
+        {
+          return this->getParent()->GetGroupByPath(subPath); 
+        }
+        else                               // './' = This path
+        {
+          return this->GetGroupByPath(subPath);
+        }
+      }
+      else
+      {
+        return m_subGroups[child]->GetGroupByPath(subPath);
+      }
+    }
+  }
+  
+  template< typename T = ManagedGroup >
+  T * GetGroupByPath( string const & path )
+  {
+    return const_cast<T *>(const_cast< ManagedGroup const * >(this)->GetGroupByPath(path));
+  }
 
   subGroupMap & GetSubGroups()
   {
@@ -309,8 +363,8 @@ public:
 
   virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
 
-  virtual void InitializeFinal( ManagedGroup * const group );
-  virtual void InitializeFinalLeaf( ManagedGroup * const group ){}
+  virtual void FinalInitializationRecursive( ManagedGroup * const group );
+  virtual void FinalInitialization( ManagedGroup * const group ){}
 
 
   template< typename T, typename TBASE=T >
@@ -383,7 +437,6 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
-
   virtual localIndex PackSize( array<string> const & wrapperNames,
                         integer const recursive ) const;
 

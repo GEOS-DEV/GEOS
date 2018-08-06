@@ -75,8 +75,8 @@ Again, the config-build sets up cmake for you.
 
 .. code-block:: sh
 
-   cd geosx/GEOSX
-   python scripts/config-build.py -hc host-configs/your-platform.cmake   
+   cd ../../GEOSX
+   python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
    cd build-your-platform-release
    make -j4
 

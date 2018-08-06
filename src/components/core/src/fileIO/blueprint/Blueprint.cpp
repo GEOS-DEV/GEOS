@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -42,10 +42,11 @@
 
 using namespace axom::sidre;
 
-namespace geosx {
+namespace geosx
+{
 
-const std::unordered_map<int, const std::string> Blueprint::numNodesToElemName = 
-{ 
+const std::unordered_map<int, const std::string> Blueprint::numNodesToElemName =
+{
   {1, "point"},
   {2, "line"},
   {3, "triangle"},
@@ -55,7 +56,7 @@ const std::unordered_map<int, const std::string> Blueprint::numNodesToElemName =
 
 
 
-Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManager& elem_reg_manager, 
+Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManager& elem_reg_manager,
                       const std::string& output_path, MPI_Comm comm, const std::string& coord_name,
                       const std::string& topo_name):
 #ifdef USE_ATK
@@ -66,8 +67,7 @@ Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManage
   m_output_path(output_path),
   m_coord_name(coord_name),
   m_topo_name(topo_name)
-{
-}
+{}
 
 
 
@@ -75,7 +75,7 @@ void Blueprint::write(int cycle) const
 {
 #ifdef USE_ATK
   const string mesh_name = "bp_mesh";
-  
+
   DataStore ds;
   Group* root = ds.getRoot()->createGroup(mesh_name);
   Group* coords = root->createGroup("coordsets/" + m_coord_name);
@@ -88,7 +88,7 @@ void Blueprint::write(int cycle) const
   conduit::Node mesh_node;
   conduit::Node info;
   ds.getRoot()->createNativeLayout(mesh_node);
-  if (!conduit::blueprint::verify("mesh", mesh_node[mesh_name], info))
+  if( !conduit::blueprint::verify("mesh", mesh_node[mesh_name], info))
   {
     std::cout << "does not conform to the blueprint:";
     info.print();
@@ -103,7 +103,7 @@ void Blueprint::write(int cycle) const
   conduit::blueprint::mesh::generate_index(mesh_node[mesh_name], mesh_name, 1, index[mesh_name]);
 
   info.reset();
-  if (!conduit::blueprint::mesh::index::verify(index[mesh_name], info))
+  if( !conduit::blueprint::mesh::index::verify(index[mesh_name], info))
   {
     std::cout << "index does not conform to the blueprint:";
     info.print();
@@ -118,7 +118,7 @@ void Blueprint::write(int cycle) const
 
   root_node["protocol/name"] = "conduit_hdf5";
   root_node["protocol/version"] = "0.1";
-        
+
   root_node["number_of_files"] = 1;
   root_node["number_of_trees"] = 1;
   root_node["file_pattern"] = output_path;
@@ -146,19 +146,19 @@ void Blueprint::addNodes(Group* coords, Group* fields) const
   double * z = z_view->allocate()->getData();
   view_rtype_const<r1_array> position = m_node_manager.referencePosition();
 
-  for (localIndex i = 0; i < n_nodes; i++)
+  for( localIndex i = 0 ; i < n_nodes ; i++ )
   {
     x[i] = position[i][0];
     y[i] = position[i][1];
     z[i] = position[i][2];
   }
 
-  for (const std::pair<const std::string, const ViewWrapperBase*>& pair : m_node_manager.wrappers())
+  for( const std::pair<const std::string, const ViewWrapperBase*>& pair : m_node_manager.wrappers())
   {
     const ViewWrapperBase *view = pair.second;
-    if (view->sizedFromParent() == 1 &&
+    if( view->sizedFromParent() == 1 &&
         view->size() > 0 &&
-        view->getName() != m_node_manager.viewKeys.referencePosition.Key()) 
+        view->getName() != m_node_manager.viewKeys.referencePosition.Key())
     {
       Group* curField = fields->createGroup(view->getName());
       curField->createView("association")->setString("vertex");
@@ -175,7 +175,7 @@ void Blueprint::addNodes(Group* coords, Group* fields) const
 void Blueprint::addCells(Group* topo, Group* fields) const
 {
 #ifdef USE_ATK
-  std::unordered_map<std::string, int> numberOfNodesOfType = 
+  std::unordered_map<std::string, int> numberOfNodesOfType =
   {
     { "point", 0 },
     { "line", 0 },
@@ -183,23 +183,23 @@ void Blueprint::addCells(Group* topo, Group* fields) const
     { "hex", 0 }
   };
 
-  m_elem_reg_manager.forCellBlocks([this, &numberOfNodesOfType](const CellBlock* cell_block) 
-  {
-    const std::string& elem_name = this->numNodesToElemName.at(cell_block->numNodesPerElement());
-    numberOfNodesOfType[elem_name] += cell_block->m_toNodesRelation.size();
-  });
+  m_elem_reg_manager.forCellBlocks([this, &numberOfNodesOfType](const CellBlock* cell_block)
+    {
+      const std::string& elem_name = this->numNodesToElemName.at(cell_block->numNodesPerElement());
+      numberOfNodesOfType[elem_name] += cell_block->m_toNodesRelation.size();
+    });
 
-  std::unordered_map<std::string, std::pair<localIndex*, localIndex>> elementsToNodes;
+  std::unordered_map<std::string, std::pair<localIndex*, localIndex> > elementsToNodes;
 
   topo->createView("coordset")->setString(m_coord_name);
   topo->createView("type")->setString("unstructured");
   Group* elements = topo->createGroup("elements");
 
-  for (std::pair<const std::string, int>& value : numberOfNodesOfType)
+  for( std::pair<const std::string, int>& value : numberOfNodesOfType )
   {
     const std::string& elem_type = value.first;
     const localIndex num_nodes = value.second;
-    if (num_nodes > 0)
+    if( num_nodes > 0 )
     {
       Group* elem_group = elements->createGroup(elem_type);
       elem_group->createView("shape")->setString(elem_type);
@@ -209,17 +209,17 @@ void Blueprint::addCells(Group* topo, Group* fields) const
     }
   }
 
-  m_elem_reg_manager.forCellBlocks([this, &elementsToNodes](const CellBlock* cell_block) 
-  {
-    const std::string& elem_name = this->numNodesToElemName.at(cell_block->numNodesPerElement());
-    std::pair<localIndex*, localIndex>& pair = elementsToNodes[elem_name];
-    localIndex* to = pair.first + pair.second;
-    localIndex const * const from = cell_block->m_toNodesRelation.data();
-    const localIndex num_nodes = cell_block->m_toNodesRelation.size();
-    const localIndex byte_size = num_nodes * sizeof(localIndex);
-    std::memcpy(to, from, byte_size);
-    pair.second += num_nodes;
-  });
+  m_elem_reg_manager.forCellBlocks([this, &elementsToNodes](const CellBlock* cell_block)
+    {
+      const std::string& elem_name = this->numNodesToElemName.at(cell_block->numNodesPerElement());
+      std::pair<localIndex*, localIndex>& pair = elementsToNodes[elem_name];
+      localIndex* to = pair.first + pair.second;
+      localIndex const * const from = cell_block->m_toNodesRelation.data();
+      const localIndex num_nodes = cell_block->m_toNodesRelation.size();
+      const localIndex byte_size = num_nodes * sizeof(localIndex);
+      std::memcpy(to, from, byte_size);
+      pair.second += num_nodes;
+    });
 #endif /* USE_ATK */
 }
 
