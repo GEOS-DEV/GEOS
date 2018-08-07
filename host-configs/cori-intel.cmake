@@ -52,13 +52,15 @@ set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "Enables uncrusitfy")
 
 set(HDF5_DIR "/opt/cray/pe/hdf5/1.10.2.0/cray/8.6" CACHE PATH "" FORCE)
 
+set(ENABLE_PAPI "ON" CACHE PATH "" FORCE)
+set(PAPI_PREFIX "/opt/cray/pe/papi/5.5.1.4" CACHE PATH "" FORCE)
 
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
 
 option( RAJA_ENABLE_TBB "" OFF)
 
-option( ENABLE_CALIPER "Enables CALIPER" OFF )
+option( ENABLE_CALIPER "Enables CALIPER" On )
 
 option( ENABLE_CHAI "Enables CHAI" ON )
 option( ENABLE_RAJA "Enables RAJA" ON )
