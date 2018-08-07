@@ -25,10 +25,6 @@
 
 #include "ProblemManager.hpp"
 
-#ifdef USE_CALIPER
-//#include "caliper/Annotation.h"
-#endif
-
 #include <stdexcept>
 #include <vector>
 
@@ -788,16 +784,18 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 
 void ProblemManager::RunSimulation()
 {
-#ifdef USE_CALIPER
-//  cali::Annotation runSimulationAnnotation =
-// cali::Annotation("RunSimulation").begin();
-#endif
-  DomainPartition * domain  = getDomainPartition();
-  m_eventManager->Run(domain);
 
-#ifdef USE_CALIPER
-//  runSimulationAnnotation.end();
-#endif
+  
+  GEOS_MARK_FUNCTION;
+
+  GEOS_MARK_BEGIN("Get domain partition");
+  DomainPartition * domain  = getDomainPartition();
+  GEOS_MARK_END("Get domain partition");
+
+  GEOS_CXX_MARK_BEGIN(EventManager);
+  m_eventManager->Run(domain);
+  GEOS_CXX_MARK_END(EventManager);
+  
 }
 
 
