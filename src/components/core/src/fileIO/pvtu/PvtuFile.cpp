@@ -35,7 +35,7 @@
 namespace geosx{
 
 // PUBLIC METHODS
-void PvtuFile::load( std::string const &filename) {
+void PvtuFile::Load( string const &filename) {
     int mpiSize = 0;
     int mpiRank = 0;
 #if USE_MPI
@@ -45,7 +45,7 @@ void PvtuFile::load( std::string const &filename) {
     int numFilesPerRank = 0;
     //int nb_total_partitions = 0;
     int remainderFiles = 0;
-    std::vector < std::string > children_files;
+    std::vector < string > children_files;
 
 
 
@@ -54,19 +54,19 @@ void PvtuFile::load( std::string const &filename) {
     pvtu_doc.load_file(filename.c_str());
 
     if( mpiRank == 0) {
-        check_xml_parent_file_consistency(pvtu_doc,filename);
+        CheckXmlParentFileConsistency(pvtu_doc,filename);
     }
-    vtu_files_list(pvtu_doc,children_files);
+    VtuFilesList(pvtu_doc,children_files);
     // Retrieve the number of partitions
     int const numFiles = children_files.size();
 
     // Next part of this method is dedicated to the optimization of file loading
     //
-    // IF nb_partitions > nb_mpi_process : Each process will load 
-    // nb_partitions / nb_mpi_process. Processes with a rank < nb_partitions % nb_mpi_process
+    // IF numPartitions > nb_mpi_process : Each process will load 
+    // numPartitions / nb_mpi_process. Processes with a rank < numPartitions % nb_mpi_process
     // will load an additional partition
     //
-    // IF nb_partitions < nb_mpi_process : the first nb_partitions process will
+    // IF numPartitions < nb_mpi_process : the first numPartitions process will
     // load ONE partition.
     if(numFiles > mpiSize) {
         if ( mpiRank == 0 ) {
@@ -83,59 +83,59 @@ void PvtuFile::load( std::string const &filename) {
         remainderFiles = 0;
     }
     if( mpiRank < remainderFiles ) {
-        vtu_file_names_.resize(numFilesPerRank+1);
-        vtu_files_.resize(numFilesPerRank+1);
+        m_vtuFileNames.resize(numFilesPerRank+1);
+        m_vtuFiles.resize(numFilesPerRank+1);
         for(int p_index = 0; p_index < numFilesPerRank +1; ++p_index) {
-            vtu_file_names_[p_index] =
+            m_vtuFileNames[p_index] =
                 children_files[mpiRank*(numFilesPerRank+1) + p_index];
         }
     } else if( mpiRank < numFiles) {
-        vtu_file_names_.resize(numFilesPerRank);
-        vtu_files_.resize(numFilesPerRank);
+        m_vtuFileNames.resize(numFilesPerRank);
+        m_vtuFiles.resize(numFilesPerRank);
         for(int p_index = 0; p_index < numFilesPerRank; ++p_index) {
-            vtu_file_names_[p_index] =
+            m_vtuFileNames[p_index] =
                 children_files[mpiRank*(numFilesPerRank) + p_index+remainderFiles];
         }
     }
     if( mpiRank < numFiles ) {
         for(int p_index = 0; p_index < 
-                static_cast< int >(vtu_file_names_.size()); ++p_index) {
-            vtu_files_[p_index].load(vtu_file_names_[p_index]);
+                static_cast< int >(m_vtuFileNames.size()); ++p_index) {
+            m_vtuFiles[p_index].Load(m_vtuFileNames[p_index]);
         }
     }
 }
 
-void PvtuFile::save( std::string const &filename) {
-    geos_abort("pvtu file save is not implemented yet");
+void PvtuFile::Save( string const &filename) {
+    GEOS_ERROR("pvtu file save is not implemented yet");
 }
 
-void VtuFile::load( std::string const &filename) {
+void VtuFile::Load( string const &filename) {
     pugi::xml_document pvtu_doc;
     pvtu_doc.load_file(filename.c_str());
-    check_xml_child_file_consistency(pvtu_doc,filename);
-    load_mesh_part(pvtu_doc);
+    CheckXmlChildFileConsistency(pvtu_doc,filename);
+    LoadMeshPart(pvtu_doc);
 }
 
-void VtuFile::save( std::string const &filename) {
-    geos_abort("vtu file save is not implemented yet");
+void VtuFile::Save( string const &filename) {
+    GEOS_ERROR("vtu file save is not implemented yet");
 }
 
 
 //PRIVATE METHODS
-void PvtuFile::check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
-        std::string const & filename,
-        std::string const & prefix) const {
+void PvtuFile::CheckXmlFileConsistency(pugi::xml_document const & pvtu_doc,
+        string const & filename,
+        string const & prefix) const {
 
     // VTKFile is the main node of the pvtufile
     auto const vtk_file =pvtu_doc.child("VTKFile");
     if( vtk_file.empty() ) {
-        geos_abort("Main node VTKFile not found in " + filename);
+        GEOS_ERROR("Main node VTKFile not found in " + filename);
     }
 
-    std::string ugrid_name = prefix +"UnstructuredGrid";
+    string ugrid_name = prefix +"UnstructuredGrid";
     auto const ugrid = vtk_file.child(ugrid_name.c_str());
     if( ugrid.empty() ) {
-        geos_abort("Node " + prefix + "UnstructuredGrid not found or empty in " +
+        GEOS_ERROR("Node " + prefix + "UnstructuredGrid not found or empty in " +
                 filename);
     }
     pugi::xml_node main_node;
@@ -144,256 +144,256 @@ void PvtuFile::check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
     } else {
         main_node = ugrid.child("Piece");
         if (main_node.empty()) {
-            geos_abort("Piece node is missing in " + filename);
+            GEOS_ERROR("Piece node is missing in " + filename);
         }
     }
 
-    std::string const point_data_name = prefix + "PointData";
-    std::string const cell_data_name = prefix + "CellData";
-    std::string const points_name = prefix + "Points";
-    std::string const main_node_child_names[3] = {point_data_name,
+    string const point_data_name = prefix + "PointData";
+    string const cell_data_name = prefix + "CellData";
+    string const points_name = prefix + "Points";
+    string const main_node_child_names[3] = {point_data_name,
         cell_data_name,points_name};
-    for( auto main_node_child_name : main_node_child_names ) {
+    for( auto const & main_node_child_name : main_node_child_names ) {
         auto const main_node_child = main_node.child(main_node_child_name.c_str());
         if(main_node_child.empty()) {
-            geos_abort("Node " +main_node_child_name +
+            GEOS_ERROR("Node " +main_node_child_name +
                 " not found or empty in " + filename);
         };
     }
 
     bool points_have_original_index_property = false;
-    std::string const mandatory_attributes[3] =
+    string const mandatory_attributes[3] =
     {"Name","type","format"};
-    for( auto pdata_property : main_node.child(point_data_name.c_str()).children() ) {
-        if( pdata_property.name() == static_cast< std::string >("DataArray")) {
+    for( auto const & pdata_property : main_node.child(point_data_name.c_str()).children() ) {
+        if( pdata_property.name() == static_cast< string >("DataArray")) {
             for( auto mandatory_attribute : mandatory_attributes ){
                 auto const attribute =
                     pdata_property.attribute( mandatory_attribute.c_str());
                 if( attribute.empty() ) {
-                    geos_abort("Mandatory attribute " + mandatory_attribute +
+                    GEOS_ERROR("Mandatory attribute " + mandatory_attribute +
                         " does not exist in a DataArray of " + prefix + "PointData");
                 }
             }
-            if( pdata_property.attribute("Name").value() == str_original_index_) {
+            if( pdata_property.attribute("Name").value() == m_strOriginalIndex) {
                 points_have_original_index_property = true;
             }
         }
     }
     if (!points_have_original_index_property) {
-        geos_abort("Can't find any DataArray which contains the property " +
-            str_original_index_ + " in " + prefix + "PointData in " + filename);
+        GEOS_ERROR("Can't find any DataArray which contains the property " +
+            m_strOriginalIndex + " in " + prefix + "PointData in " + filename);
     }
 
     bool cells_have_original_index_property = false;
     bool cells_have_partition_property = false;
     bool cells_have_region_property = false;
-    for( auto pdata_property : main_node.child(cell_data_name.c_str()).children() ) {
-        if( pdata_property.name() == static_cast< std::string >("DataArray")) {
+    for( auto const & pdata_property : main_node.child(cell_data_name.c_str()).children() ) {
+        if( pdata_property.name() == static_cast< string >("DataArray")) {
             for( auto mandatory_attribute : mandatory_attributes ){
                 auto const attribute =
                     pdata_property.attribute( mandatory_attribute.c_str());
                 if( attribute.empty() ) {
-                    geos_abort("Mandatory attribute " + mandatory_attribute +
+                    GEOS_ERROR("Mandatory attribute " + mandatory_attribute +
                         " does not exist in a DataArray of " + prefix + "CellData in "
                         + filename);
                 }
             }
-            if( pdata_property.attribute("Name").value() == str_original_index_) {
+            if( pdata_property.attribute("Name").value() == m_strOriginalIndex) {
                 cells_have_original_index_property = true;
             }
-            if( pdata_property.attribute("Name").value() == str_partition_) {
+            if( pdata_property.attribute("Name").value() == m_strPartition) {
                 cells_have_partition_property = true;
             }
-            if( pdata_property.attribute("Name").value() == str_region_) {
+            if( pdata_property.attribute("Name").value() == m_strRegion) {
                 cells_have_region_property = true;
             }
         }
     }
     if (!cells_have_original_index_property) {
-        geos_abort("Can't find any DataArray which contains the property "+
-                str_original_index_ + " in " + prefix + "CellData in "+filename);
+        GEOS_ERROR("Can't find any DataArray which contains the property "+
+                m_strOriginalIndex + " in " + prefix + "CellData in "+filename);
     }
     if (!cells_have_region_property) {
-        geos_abort("Can't find any DataArray which contains the property "+
-                str_region_ + " in "+ prefix + "CellData in " + filename);
+        GEOS_ERROR("Can't find any DataArray which contains the property "+
+                m_strRegion + " in "+ prefix + "CellData in " + filename);
     }
     if (!cells_have_partition_property) {
-        geos_abort("Can't find any DataArray which contains the property "+
-                str_partition_ + " in " + prefix + "CellData in " + filename);
+        GEOS_ERROR("Can't find any DataArray which contains the property "+
+                m_strPartition + " in " + prefix + "CellData in " + filename);
     }
 
     bool point_has_a_pdata_array = false;
     bool point_has_a_pdata_array_with_points = false;
-    std::string const data_array_name = prefix + "DataArray";
-    for(auto point_child : main_node.child(points_name.c_str()).children() ) {
+    string const data_array_name = prefix + "DataArray";
+    for(auto const & point_child : main_node.child(points_name.c_str()).children() ) {
         if( point_child.name() == data_array_name ) {
             point_has_a_pdata_array = true;
             if( point_child.attribute("Name").as_string() ==
-                    static_cast< std::string >("Points")) {
+                    static_cast< string >("Points")) {
                 point_has_a_pdata_array_with_points = true;
                 if (point_child.attribute("NumberOfComponents").as_uint() != 3 ) {
-                    geos_abort("GEOSX supports only 3D meshes");
+                    GEOS_ERROR("GEOSX supports only 3D meshes");
                 }
                 break;
             }
         }
     }
     if( !point_has_a_pdata_array ) {
-        geos_abort("No " + prefix +"DataArray found in " + prefix + "Points in " + filename);
+        GEOS_ERROR("No " + prefix +"DataArray found in " + prefix + "Points in " + filename);
     }
     if( !point_has_a_pdata_array_with_points ) {
-        geos_abort("No " + prefix +"DataArray named \"Points\" found in " + filename);
+        GEOS_ERROR("No " + prefix +"DataArray named \"Points\" found in " + filename);
     }
 
 }
-void PvtuFile::check_xml_parent_file_consistency(pugi::xml_document const & pvtu_doc,
-        std::string const & filename) const {
+void PvtuFile::CheckXmlParentFileConsistency(pugi::xml_document const & pvtu_doc,
+        string const & filename) const {
 
-        check_xml_file_consistency( pvtu_doc, filename, "P");
+        CheckXmlFileConsistency( pvtu_doc, filename, "P");
 
         bool has_a_piece = false;
-        for( auto ugrid_child :
+        for( auto const & ugrid_child :
                 pvtu_doc.child("VTKFile").child("PUnstructuredGrid").children() ) {
-            if(ugrid_child.name() == static_cast< std::string >("Piece")) {
+            if(ugrid_child.name() == static_cast< string >("Piece")) {
                 has_a_piece = true;
                 if( ugrid_child.attribute("Source").empty() ) {
-                    geos_abort("Piece nodes has to have an attribute Source not empty.");
+                    GEOS_ERROR("Piece nodes has to have an attribute Source not empty.");
                 }
             }
         }
         if( !has_a_piece ) {
-            geos_abort("No Piece not found in " + filename );
+            GEOS_ERROR("No Piece not found in " + filename );
         }
 }
-void PvtuFile::vtu_files_list(
+void PvtuFile::VtuFilesList(
         pugi::xml_document const & pvtu_doc,
-        std::vector < std::string > & vtu_files ) const{
-    int nb_partitions = 0;
-    for(auto child : pvtu_doc.child("VTKFile").child("PUnstructuredGrid").children()) {
-        if( child.name() == static_cast< std::string > ("Piece") )
+        std::vector < string > & vtu_files ) const{
+    int numPartitions = 0;
+    for(auto const & child : pvtu_doc.child("VTKFile").child("PUnstructuredGrid").children()) {
+        if( child.name() == static_cast< string > ("Piece") )
         {
             vtu_files.emplace_back(child.attribute("Source").as_string());
         }
     }
 }
 
-void VtuFile::check_xml_child_file_consistency(pugi::xml_document const & pvtu_doc,
-        std::string const & filename) const {
-    check_xml_file_consistency( pvtu_doc, filename);
+void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & pvtu_doc,
+        string const & filename) const {
+    CheckXmlFileConsistency( pvtu_doc, filename);
 
     pugi::xml_node piece_node =
         pvtu_doc.child("VTKFile").child("UnstructuredGrid").child("Piece");
     if( piece_node.attribute("NumberOfPoints").empty() ) {
-        geos_abort("Attribute \"NumberOfPoints\" of Node \"Piece\" is missing or empty in "
+        GEOS_ERROR("Attribute \"NumberOfPoints\" of Node \"Piece\" is missing or empty in "
                 + filename);
     }
 
     if( piece_node.attribute("NumberOfCells").empty() ) {
-        geos_abort("Attribute \"NumberOfCells\" of Node \"Piece\" is missing or empty in "
+        GEOS_ERROR("Attribute \"NumberOfCells\" of Node \"Piece\" is missing or empty in "
                 + filename);
     }
 
     pugi::xml_node cell_node = piece_node.child("Cells");
-    std::string const mandatory_attributes[3] =
+    string const mandatory_attributes[3] =
     {"Name","type","format"};
     bool cells_have_connectivity = false;
     bool cells_have_type = false;
     bool cells_have_offset = false;
     for( auto cell_att : cell_node.children() ) {
-        if( cell_att.name() == static_cast< std::string >("DataArray")) {
+        if( cell_att.name() == static_cast< string >("DataArray")) {
             for( auto mandatory_attribute : mandatory_attributes ){
                 auto const attribute =
                     cell_att.attribute( mandatory_attribute.c_str());
                 if( attribute.empty() ) {
-                    geos_abort("Mandatory attribute " + mandatory_attribute +
+                    GEOS_ERROR("Mandatory attribute " + mandatory_attribute +
                         " does not exist in a DataArray of in "
                         + filename);
                 }
             }
             if( cell_att.attribute("Name").value() ==
-                    static_cast<std::string>("connectivity")) {
+                    static_cast<string>("connectivity")) {
                 cells_have_connectivity = true;
             }
-            if( cell_att.attribute("Name").value() == static_cast< std::string >("offsets")) {
+            if( cell_att.attribute("Name").value() == static_cast< string >("offsets")) {
                 cells_have_offset = true;
             }
-            if( cell_att.attribute("Name").value() == static_cast< std::string > ("types")) {
+            if( cell_att.attribute("Name").value() == static_cast< string > ("types")) {
                 cells_have_type = true;
             }
         }
     }
     if (!cells_have_connectivity) {
-        geos_abort("No property \"connectivity\" found in \"Cells\" node of " + filename);
+        GEOS_ERROR("No property \"connectivity\" found in \"Cells\" node of " + filename);
     }
     if (!cells_have_type) {
-        geos_abort("No property \"types\" found in \"Cells\" node of " + filename);
+        GEOS_ERROR("No property \"types\" found in \"Cells\" node of " + filename);
     }
     if (!cells_have_offset) {
-        geos_abort("No property \"offsets\" found in \"Cells\" node of " + filename);
+        GEOS_ERROR("No property \"offsets\" found in \"Cells\" node of " + filename);
     }
 }   
 
 template<typename T, typename Lambda>
-void VtuFile::split_node_text_string( std::string const & in,
+void VtuFile::SplitNodeTextString( string const & in,
         std::vector< T >& out,
         Lambda && string_convertor) const {
     std::stringstream stringStream(in);
-    std::string line;
+    string line;
     while(std::getline(stringStream, line))
     {
         std::size_t prev = 0, pos;
-        while ((pos = line.find_first_of(" ", prev)) != std::string::npos)
+        while ((pos = line.find_first_of(" ", prev)) != string::npos)
         {
             if (pos > prev)
                 out.push_back(string_convertor(line.substr(prev, pos-prev)));
             prev = pos+1;
         }
         if (prev < line.length())
-            out.push_back(string_convertor(line.substr(prev, std::string::npos)));
+            out.push_back(string_convertor(line.substr(prev, string::npos)));
     }
 }
 
-void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
+void VtuFile::LoadMeshPart(pugi::xml_document const & pvtu_doc){
     pugi::xml_node piece_node =
         pvtu_doc.child("VTKFile").child("UnstructuredGrid").child("Piece");
 
-    globalIndex nb_vertices = piece_node.attribute("NumberOfPoints").as_llong();
-    mesh_part_.set_nb_vertices( nb_vertices );
+    globalIndex numVertices = piece_node.attribute("NumberOfPoints").as_llong();
+    m_meshPart.SetNumVertices( numVertices );
 
-    globalIndex nb_elements = piece_node.attribute("NumberOfCells").as_llong();
-    mesh_part_.reserve_nb_cells_and_polygons( nb_elements );
+    globalIndex numElements = piece_node.attribute("NumberOfCells").as_llong();
+    m_meshPart.ReserveNumCellAndPolygons( numElements );
 
     /// Parse vertices
-    pugi::xml_node vertices_array =
+    pugi::xml_node m_verticesarray =
         piece_node.child("Points").find_child_by_attribute("DataArray","Name","Points");
-    assert(!vertices_array.empty()) ;
+    assert(!m_verticesarray.empty()) ;
     std::vector< real64 > all_vertices;
-    all_vertices.reserve( nb_vertices*3 );
-    split_node_text_string(vertices_array.text().as_string(), all_vertices, 
-            [](std::string str)-> double {return std::stod(str);});
-    assert(static_cast< globalIndex> (all_vertices.size()) / 3 == nb_vertices);
+    all_vertices.reserve( numVertices*3 );
+    SplitNodeTextString(m_verticesarray.text().as_string(), all_vertices, 
+            [](string str)-> double {return std::stod(str);});
+    assert(static_cast< globalIndex> (all_vertices.size()) / 3 == numVertices);
 
     /// Parse vertices original index
-    pugi::xml_node vertices_original_indexes_array = 
+    pugi::xml_node m_verticesoriginal_indexes_array = 
         piece_node.child("PointData").find_child_by_attribute(
                 "DataArray","Name","original_index");
-    assert(!vertices_original_indexes_array.empty());
-    std::vector< globalIndex > all_vertices_original_indexes;
-    all_vertices_original_indexes.reserve( nb_vertices );
-    split_node_text_string(vertices_original_indexes_array.text().as_string(),
-            all_vertices_original_indexes,
-            [](std::string str)-> globalIndex {return std::stoll(str);});
-    assert( nb_vertices == static_cast< globalIndex> (all_vertices_original_indexes.size() ));
+    assert(!m_verticesoriginal_indexes_array.empty());
+    std::vector< globalIndex > all_m_verticesoriginal_indexes;
+    all_m_verticesoriginal_indexes.reserve( numVertices );
+    SplitNodeTextString(m_verticesoriginal_indexes_array.text().as_string(),
+            all_m_verticesoriginal_indexes,
+            [](string str)-> globalIndex {return std::stoll(str);});
+    assert( numVertices == static_cast< globalIndex> (all_m_verticesoriginal_indexes.size() ));
 
     /// Fill the vertices in the mesh
-    for(globalIndex vertex_index  = 0 ; vertex_index < nb_vertices; ++vertex_index) {
+    for(globalIndex vertexIndex  = 0 ; vertexIndex < numVertices; ++vertexIndex) {
         std::vector< real64 > vertex(3);
         for(localIndex coor = 0 ; coor < 3 ; ++coor) {
-            vertex[coor] = all_vertices[3*vertex_index+coor];
+            vertex[coor] = all_vertices[3*vertexIndex+coor];
         }
-        mesh_part_.set_vertex_original_index(vertex_index,
-                all_vertices_original_indexes[vertex_index]);
-        mesh_part_.set_vertex(vertex_index, vertex);
+        m_meshPart.SetVertexOriginalIndex(vertexIndex,
+                all_m_verticesoriginal_indexes[vertexIndex]);
+        m_meshPart.SetVertex(vertexIndex, vertex);
     }
 
     /// Parse elements types
@@ -401,20 +401,20 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
         piece_node.child("Cells").find_child_by_attribute("DataArray","Name","types");
     assert(!elements_types_array.empty());
     std::vector< localIndex > all_elements_types;
-    all_elements_types.reserve(nb_elements);
-    split_node_text_string( elements_types_array.text().as_string(), all_elements_types,
-            [](std::string str)-> localIndex {return std::stoi(str);});
-    assert(static_cast< globalIndex> (all_elements_types.size()) == nb_elements);
+    all_elements_types.reserve(numElements);
+    SplitNodeTextString( elements_types_array.text().as_string(), all_elements_types,
+            [](string str)-> localIndex {return std::stoi(str);});
+    assert(static_cast< globalIndex> (all_elements_types.size()) == numElements);
 
     /// Parse elements regions
     pugi::xml_node elements_regions_array =
         piece_node.child("CellData").find_child_by_attribute("DataArray","Name","region");
     assert(!elements_regions_array.empty());
     std::vector< globalIndex > all_elements_regions;
-    all_elements_regions.reserve(nb_elements);
-    split_node_text_string( elements_regions_array.text().as_string(), all_elements_regions,
-            [](std::string str)-> localIndex {return std::stoi(str);});
-    assert(static_cast< globalIndex> (all_elements_regions.size()) == nb_elements);
+    all_elements_regions.reserve(numElements);
+    SplitNodeTextString( elements_regions_array.text().as_string(), all_elements_regions,
+            [](string str)-> localIndex {return std::stoi(str);});
+    assert(static_cast< globalIndex> (all_elements_regions.size()) == numElements);
     
     /// Parse elements original_index
     pugi::xml_node elements_original_indexes_array =
@@ -422,60 +422,60 @@ void VtuFile::load_mesh_part(pugi::xml_document const & pvtu_doc){
                 "original_index");
     assert(!elements_original_indexes_array.empty());
     std::vector< globalIndex > all_elements_original_indexes;
-    all_elements_original_indexes.reserve(nb_elements);
-    split_node_text_string( elements_original_indexes_array.text().as_string(),
+    all_elements_original_indexes.reserve(numElements);
+    SplitNodeTextString( elements_original_indexes_array.text().as_string(),
             all_elements_original_indexes,
-            [](std::string str)-> localIndex {return std::stoi(str);});
-    assert(static_cast< globalIndex> (all_elements_original_indexes.size()) == nb_elements);
+            [](string str)-> localIndex {return std::stoi(str);});
+    assert(static_cast< globalIndex> (all_elements_original_indexes.size()) == numElements);
 
     /// Parse elements offsets
-    std::vector< globalIndex> elements_offsets(nb_elements);
+    std::vector< globalIndex> elements_offsets(numElements);
     pugi::xml_node elements_offsets_array =
         piece_node.child("Cells").find_child_by_attribute("DataArray","Name","offsets");
     assert(!elements_offsets_array.empty());
     std::vector< globalIndex > all_elements_offsets(1,0); // convenient to have 0 as first offset
-    all_elements_offsets.reserve(nb_elements);
-    split_node_text_string( elements_offsets_array.text().as_string(), all_elements_offsets,
-            [](std::string str)-> globalIndex {return std::stoll(str);});
-    assert(static_cast<globalIndex >(all_elements_offsets.size()) == nb_elements+1);
+    all_elements_offsets.reserve(numElements);
+    SplitNodeTextString( elements_offsets_array.text().as_string(), all_elements_offsets,
+            [](string str)-> globalIndex {return std::stoll(str);});
+    assert(static_cast<globalIndex >(all_elements_offsets.size()) == numElements+1);
 
     /// Parce cells connectivities
     pugi::xml_node elements_connectivity_array =
         piece_node.child("Cells").find_child_by_attribute("DataArray","Name","connectivity");
     assert(!elements_connectivity_array.empty());
     std::vector< globalIndex > all_elements_connectivities;
-    all_elements_connectivities.reserve(8 * nb_elements);
-    split_node_text_string(elements_connectivity_array.text().as_string(),
+    all_elements_connectivities.reserve(8 * numElements);
+    SplitNodeTextString(elements_connectivity_array.text().as_string(),
             all_elements_connectivities,
-            [](std::string str)-> localIndex {return std::stoi(str);});
-    for( globalIndex element_index = 0 ; element_index < nb_elements; ++element_index) {
-        localIndex nb_vertices_in_cell = all_elements_offsets[element_index+1] -
-            all_elements_offsets[element_index];
-        std::vector< globalIndex > connectivity(nb_vertices_in_cell);
-        for(localIndex co = 0 ; co < nb_vertices_in_cell ; co++) {
+            [](string str)-> localIndex {return std::stoi(str);});
+    for( globalIndex elementIndex = 0 ; elementIndex < numElements; ++elementIndex) {
+        localIndex numVerticesInCell = all_elements_offsets[elementIndex+1] -
+            all_elements_offsets[elementIndex];
+        std::vector< globalIndex > connectivity(numVerticesInCell);
+        for(localIndex co = 0 ; co < numVerticesInCell ; co++) {
             connectivity[co] =
-                all_elements_connectivities[all_elements_offsets[element_index]+co];
+                all_elements_connectivities[all_elements_offsets[elementIndex]+co];
         }
-        if( all_elements_types[element_index] == 10 ||
-                all_elements_types[element_index] == 14 ||
-                all_elements_types[element_index] ==12 ||
-                all_elements_types[element_index] == 13 ) {
-            mesh_part_.add_cell(connectivity);
-            mesh_part_.set_cell_region(element_index, all_elements_regions[element_index]);
-            mesh_part_.set_cell_original_index(element_index,
-                    all_elements_original_indexes[element_index]);
+        if( all_elements_types[elementIndex] == 10 ||
+                all_elements_types[elementIndex] == 14 ||
+                all_elements_types[elementIndex] ==12 ||
+                all_elements_types[elementIndex] == 13 ) {
+            m_meshPart.AddCell(connectivity);
+            m_meshPart.SetCellRegion(elementIndex, all_elements_regions[elementIndex]);
+            m_meshPart.SetCellOriginalIndex(elementIndex,
+                    all_elements_original_indexes[elementIndex]);
         }
-        else if( all_elements_types[element_index] == 5 ||
-                all_elements_types[element_index] == 9) {
-            mesh_part_.add_polygon(connectivity);
-            mesh_part_.set_polygon_surface(element_index,
-                    all_elements_regions[element_index]);
-            mesh_part_.set_polygon_original_index(element_index,
-                    all_elements_original_indexes[element_index]);
+        else if( all_elements_types[elementIndex] == 5 ||
+                all_elements_types[elementIndex] == 9) {
+            m_meshPart.AddPolygon(connectivity);
+            m_meshPart.SetPolygonSurface(elementIndex,
+                    all_elements_regions[elementIndex]);
+            m_meshPart.SetPolygonOriginalIndex(elementIndex,
+                    all_elements_original_indexes[elementIndex]);
         }
     }
 
-    mesh_part_.finish();
+    m_meshPart.Finish();
 }
 
 void VtuFile::TransferMeshPartToGEOSMesh( MeshLevel * const meshLevel )
@@ -485,11 +485,11 @@ void VtuFile::TransferMeshPartToGEOSMesh( MeshLevel * const meshLevel )
 
   arrayView1d<R1Tensor> X = nodeManager->referencePosition();
 
-  nodeManager->resize(mesh_part_.nb_vertices());
+  nodeManager->resize(m_meshPart.NumVertices());
 
-  real64 const * const vertexData = mesh_part_.vertices_.data();
+  real64 const * const vertexData = m_meshPart.m_vertices.data();
 
-  for( localIndex a=0 ; a<mesh_part_.nb_vertices() ; ++a )
+  for( localIndex a=0 ; a<m_meshPart.NumVertices() ; ++a )
   {
     real64 * const tensorData = X[a].Data();
     tensorData[0] = vertexData[3*a];
@@ -500,14 +500,14 @@ void VtuFile::TransferMeshPartToGEOSMesh( MeshLevel * const meshLevel )
   string regionName; // = mesh_part.regionName();
   CellBlockSubRegion * const cellBlock = elemRegMananger->GetRegion( regionName )->GetSubRegion(0);
   lArray2d & cellToVertex = cellBlock->nodeList();
-  cellToVertex.resize( 0, mesh_part_.nb_vertices_in_cell(0) );
-  cellBlock->resize( mesh_part_.nb_cells() );
+  cellToVertex.resize( 0, m_meshPart.NumVerticesInCell(0) );
+  cellBlock->resize( m_meshPart.NumCells() );
 
-  for( localIndex k=0 ; k<mesh_part_.nb_cells() ; ++k )
+  for( localIndex k=0 ; k<m_meshPart.NumCells() ; ++k )
   {
-    for( localIndex a=0 ; a<mesh_part_.nb_vertices_in_cell(0) ; ++a )
+    for( localIndex a=0 ; a<m_meshPart.NumVerticesInCell(0) ; ++a )
     {
-      cellToVertex[k][a] = mesh_part_.cell_vertex_index(k,a);
+      cellToVertex[k][a] = m_meshPart.CellVertexIndex(k,a);
     }
   }
 
@@ -520,160 +520,160 @@ void VtuFile::TransferMeshPartToGEOSMesh( MeshLevel * const meshLevel )
     /// MESH PART //
     ////////////////
 
-    globalIndex MeshPart::nb_vertices() const {
-        return nb_vertices_;
+    globalIndex MeshPart::NumVertices() const {
+        return m_numVertices;
     }
 
-    globalIndex MeshPart::nb_cells() const {
-        return nb_cells_;
+    globalIndex MeshPart::NumCells() const {
+        return m_numCells;
     }
 
-    globalIndex MeshPart::nb_polygons() const {
-        return nb_polygons_;
+    globalIndex MeshPart::NumPolygons() const {
+        return m_numPolygons;
     }
 
-    localIndex MeshPart::nb_vertices_in_cell( const globalIndex cell_index ) const {
-        assert(cell_index < nb_cells_);
-        return cells_ptr_[cell_index+1] - cells_ptr_[cell_index-1];
+    localIndex MeshPart::NumVerticesInCell( const globalIndex cellIndex ) const {
+        assert(cellIndex < m_numCells);
+        return m_cellsPtr[cellIndex+1] - m_cellsPtr[cellIndex-1];
     }
 
-    localIndex MeshPart::nb_vertices_in_polygon( const globalIndex polygon_index ) const {
-        assert(polygon_index < nb_polygons_);
-        return polygons_ptr_[polygon_index+1] - polygons_ptr_[polygon_index-1];
+    localIndex MeshPart::NumVerticesInPolygon( const globalIndex polygonIndex ) const {
+        assert(polygonIndex < m_numPolygons);
+        return m_polygonsPtr[polygonIndex+1] - m_polygonsPtr[polygonIndex-1];
     }
 
-    globalIndex MeshPart::cell_vertex_index(globalIndex const cell_index,
+    globalIndex MeshPart::CellVertexIndex(globalIndex const cellIndex,
             localIndex const local_corner_index) const {
-        assert(local_corner_index < nb_vertices_in_cell(cell_index));
-        return cells_connectivity_[cells_ptr_[cell_index] + local_corner_index];
+        assert(local_corner_index < NumVerticesInCell(cellIndex));
+        return m_cellsConnectivity[m_cellsPtr[cellIndex] + local_corner_index];
     }
 
-    globalIndex MeshPart::polygon_vertex_index(globalIndex const polygon_index,
+    globalIndex MeshPart::PolygonVertexIndex(globalIndex const polygonIndex,
             localIndex const local_corner_index) const {
-        assert(local_corner_index < nb_vertices_in_polygon(polygon_index));
-        return polygons_connectivity_[polygons_ptr_[polygon_index] + local_corner_index];
+        assert(local_corner_index < NumVerticesInPolygon(polygonIndex));
+        return m_polygonsConnectivity[m_polygonsPtr[polygonIndex] + local_corner_index];
     }
 
-    std::vector<real64> MeshPart::vertex(globalIndex const vertex_index) const {
-        assert(vertex_index < nb_vertices_);
-        std::vector<real64> vertex(vertices_.begin()+3*vertex_index,
-                vertices_.begin() + 3*vertex_index+3);
+    std::vector<real64> MeshPart::Vertex(globalIndex const vertexIndex) const {
+        assert(vertexIndex < m_numVertices);
+        std::vector<real64> vertex(m_vertices.begin()+3*vertexIndex,
+                m_vertices.begin() + 3*vertexIndex+3);
         return vertex;
     }
 
-    globalIndex MeshPart::surface(globalIndex const polygon_index) const {
-        assert(polygon_index < nb_polygons_);
-        return surfaces_indexes_[polygon_index];
+    globalIndex MeshPart::Surface(globalIndex const polygonIndex) const {
+        assert(polygonIndex < m_numPolygons);
+        return m_surfaceIndexes[polygonIndex];
     }
 
-    globalIndex MeshPart::region(globalIndex const cell_index) const {
-        assert(cell_index < nb_cells_);
-        return regions_indexes_[cell_index];
+    globalIndex MeshPart::Region(globalIndex const cellIndex) const {
+        assert(cellIndex < m_numCells);
+        return m_regionIndexes[cellIndex];
     }
 
-    globalIndex MeshPart::global_vertex_index(globalIndex const vertex_index) const {
-        assert(vertex_index < nb_vertices_);
-        return original_vertices_indexes_[vertex_index];
+    globalIndex MeshPart::GlobalVertexIndex(globalIndex const vertexIndex) const {
+        assert(vertexIndex < m_numVertices);
+        return m_originalVertexIndexes[vertexIndex];
     }
 
-    globalIndex MeshPart::global_polygon_index(globalIndex const polygon_index) const {
-        assert(polygon_index<nb_polygons_);
-        return original_polygons_indexes_[polygon_index];
+    globalIndex MeshPart::GlobalPolygonIndex(globalIndex const polygonIndex) const {
+        assert(polygonIndex<m_numPolygons);
+        return m_originalPolygonIndexes[polygonIndex];
     }
 
-    globalIndex MeshPart::global_cell_index(globalIndex const cell_index) const {
-        assert(cell_index < nb_cells_);
-        return original_cells_indexes_[cell_index];
+    globalIndex MeshPart::GlobalCellIndex(globalIndex const cellIndex) const {
+        assert(cellIndex < m_numCells);
+        return m_originalCellIndexes[cellIndex];
     }
 
-    void MeshPart::set_vertex(globalIndex const vertex_index,
+    void MeshPart::SetVertex(globalIndex const vertexIndex,
             std::vector< real64 > const& vertex) {
         assert(vertex.size() == 3); 
-        assert(vertex_index < nb_vertices_);
+        assert(vertexIndex < m_numVertices);
         for( localIndex coor = 0 ; coor < 3 ; coor ++ ) {
-            vertices_[3*vertex_index+coor] = vertex[coor];
+            m_vertices[3*vertexIndex+coor] = vertex[coor];
         }
     }
 
-    void MeshPart::set_vertex_original_index( globalIndex const vertex_index,
+    void MeshPart::SetVertexOriginalIndex( globalIndex const vertexIndex,
             globalIndex const original_index) {
-        assert(vertex_index < nb_vertices_);
-        original_vertices_indexes_[vertex_index] = original_index;
+        assert(vertexIndex < m_numVertices);
+        m_originalVertexIndexes[vertexIndex] = original_index;
     }
 
-    void MeshPart::set_nb_vertices(globalIndex const nb_vertices) {
-        nb_vertices_ = nb_vertices;
-        vertices_.resize( nb_vertices*3);
-        original_vertices_indexes_.resize( nb_vertices );
+    void MeshPart::SetNumVertices(globalIndex const numVertices) {
+        m_numVertices = numVertices;
+        m_vertices.resize( numVertices*3);
+        m_originalVertexIndexes.resize( numVertices );
     }
 
-    void MeshPart::reserve_nb_cells_and_polygons(globalIndex const nb_elements) {
-        cells_ptr_.reserve( nb_elements +1);
-        polygons_ptr_.reserve( nb_elements +1);
-        cells_connectivity_.reserve( 8 * nb_elements ); // maximum 8 corners (for an hex)
-        polygons_connectivity_.reserve( 4 * nb_elements ); // maximum 4 corners (for a quad)
-        surfaces_indexes_.reserve( nb_elements);
-        regions_indexes_.reserve( nb_elements);
-        original_polygons_indexes_.reserve( nb_elements);
-        original_cells_indexes_.reserve( nb_elements);
+    void MeshPart::ReserveNumCellAndPolygons(globalIndex const numElements) {
+        m_cellsPtr.reserve( numElements +1);
+        m_polygonsPtr.reserve( numElements +1);
+        m_cellsConnectivity.reserve( 8 * numElements ); // maximum 8 corners (for an hex)
+        m_polygonsConnectivity.reserve( 4 * numElements ); // maximum 4 corners (for a quad)
+        m_surfaceIndexes.reserve( numElements);
+        m_regionIndexes.reserve( numElements);
+        m_originalPolygonIndexes.reserve( numElements);
+        m_originalCellIndexes.reserve( numElements);
     }
     
-    globalIndex MeshPart::add_cell( std::vector<globalIndex> connectivity ) {
-        cells_ptr_.push_back( connectivity.size() + cells_ptr_[cells_ptr_.size()-1]);
-        nb_cells_++;
-        regions_indexes_.resize(nb_cells_);
-        original_cells_indexes_.resize(nb_cells_);
+    globalIndex MeshPart::AddCell( std::vector<globalIndex> connectivity ) {
+        m_cellsPtr.push_back( connectivity.size() + m_cellsPtr[m_cellsPtr.size()-1]);
+        m_numCells++;
+        m_regionIndexes.resize(m_numCells);
+        m_originalCellIndexes.resize(m_numCells);
         for( localIndex co = 0 ; co < static_cast<localIndex>(connectivity.size()); ++co ) {
-            cells_connectivity_.push_back(connectivity[co]);
+            m_cellsConnectivity.push_back(connectivity[co]);
         }
-        return nb_cells_-1;
+        return m_numCells-1;
     }
 
-    globalIndex MeshPart::add_polygon( std::vector<globalIndex> connectivity ) {
-        polygons_ptr_.push_back( connectivity.size() + polygons_ptr_[polygons_ptr_.size()-1]);
-        nb_polygons_++;
-        surfaces_indexes_.resize(nb_polygons_);
-        original_polygons_indexes_.resize( nb_polygons_);
+    globalIndex MeshPart::AddPolygon( std::vector<globalIndex> connectivity ) {
+        m_polygonsPtr.push_back( connectivity.size() + m_polygonsPtr[m_polygonsPtr.size()-1]);
+        m_numPolygons++;
+        m_surfaceIndexes.resize(m_numPolygons);
+        m_originalPolygonIndexes.resize( m_numPolygons);
         for( localIndex co = 0 ; co < static_cast<localIndex>(connectivity.size()); ++co ) {
-            polygons_connectivity_.push_back(connectivity[co]);
+            m_polygonsConnectivity.push_back(connectivity[co]);
         }
-        return nb_polygons_-1;
+        return m_numPolygons-1;
     }
 
-    void MeshPart::set_cell_region( globalIndex const cell_index,
+    void MeshPart::SetCellRegion( globalIndex const cellIndex,
             globalIndex const region_index) {
-        assert( cell_index < static_cast< globalIndex> (regions_indexes_.size()) );
-        regions_indexes_[cell_index]  = region_index;
+        assert( cellIndex < static_cast< globalIndex> (m_regionIndexes.size()) );
+        m_regionIndexes[cellIndex]  = region_index;
     }
 
-    void MeshPart::set_polygon_surface( globalIndex const polygon_index,
+    void MeshPart::SetPolygonSurface( globalIndex const polygonIndex,
             globalIndex const surface_index) {
-        assert( polygon_index < static_cast< globalIndex> (surfaces_indexes_.size() ) );
-        surfaces_indexes_[polygon_index]  = surface_index;
+        assert( polygonIndex < static_cast< globalIndex> (m_surfaceIndexes.size() ) );
+        m_surfaceIndexes[polygonIndex]  = surface_index;
     }
 
-    void MeshPart::set_cell_original_index(globalIndex const cell_index_in_part_mesh,
-                globalIndex const cell_index_in_full_mesh) {
-        assert( cell_index_in_part_mesh < static_cast< globalIndex>
-                (original_cells_indexes_.size() ) );
-        original_cells_indexes_[cell_index_in_part_mesh] = cell_index_in_full_mesh;
+    void MeshPart::SetCellOriginalIndex(globalIndex const cellIndexInPartMesh,
+                globalIndex const cellIndexInFullMesh) {
+        assert( cellIndexInPartMesh < static_cast< globalIndex>
+                (m_originalCellIndexes.size() ) );
+        m_originalCellIndexes[cellIndexInPartMesh] = cellIndexInFullMesh;
     }
 
-    void MeshPart::set_polygon_original_index(globalIndex const polygon_index_in_part_mesh,
-                globalIndex const polygon_index_in_full_mesh) {
-        assert( polygon_index_in_part_mesh <
-                static_cast< globalIndex> (original_polygons_indexes_.size() ) );
-        original_polygons_indexes_[polygon_index_in_part_mesh] = polygon_index_in_full_mesh;
+    void MeshPart::SetPolygonOriginalIndex(globalIndex const polygonIndexInPartMesh,
+                globalIndex const polygonIndexInFullMesh) {
+        assert( polygonIndexInPartMesh <
+                static_cast< globalIndex> (m_originalPolygonIndexes.size() ) );
+        m_originalPolygonIndexes[polygonIndexInPartMesh] = polygonIndexInFullMesh;
     }   
 
-    void MeshPart::finish() {
-        regions_indexes_.shrink_to_fit();
-        surfaces_indexes_.shrink_to_fit();
-        cells_ptr_.shrink_to_fit();
-        polygons_ptr_.shrink_to_fit();
-        cells_connectivity_.shrink_to_fit();
-        polygons_connectivity_.shrink_to_fit();
-        original_cells_indexes_.shrink_to_fit();
-        original_polygons_indexes_.shrink_to_fit();
+    void MeshPart::Finish() {
+        m_regionIndexes.shrink_to_fit();
+        m_surfaceIndexes.shrink_to_fit();
+        m_cellsPtr.shrink_to_fit();
+        m_polygonsPtr.shrink_to_fit();
+        m_cellsConnectivity.shrink_to_fit();
+        m_polygonsConnectivity.shrink_to_fit();
+        m_originalCellIndexes.shrink_to_fit();
+        m_originalPolygonIndexes.shrink_to_fit();
     }
 }

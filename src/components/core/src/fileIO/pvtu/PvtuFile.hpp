@@ -49,65 +49,65 @@ class PvtuFile {
 
         /*!
          * @brief load a .pvtu file
-         * @param[in] filename the name of the XML pvtu file to be loaded
+         * @param[in] fileName the name of the XML pvtu file to be loaded
          */
-        virtual void load( std::string const & filename);
+        virtual void Load( string const & fileName);
 
         /*!
          * @brief save a .pvtu file
-         * @param[in] filename the name of the XML pvtu file to be saved
+         * @param[in] fileName the name of the XML pvtu file to be saved
          */
-        virtual void save( std::string const & filename);
+        virtual void Save( string const & fileName);
 
     protected:
         /*!
          * @brief check if the XML file contains the right nodes
-         * @param[in] pvtu_doc the XML document
-         * @param[in] filename name of the file being loaded
+         * @param[in] pvtuDoc the XML document
+         * @param[in] fileName name of the file being loaded
          * @param[in] prefix will be "P" for the parent file
          */
-        virtual void check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
-                std::string const & filename,
-                std::string const & prefix = "") const;
+        virtual void CheckXmlFileConsistency(pugi::xml_document const & pvtuDoc,
+                string const & fileName,
+                string const & prefix = "") const;
 
     private:
         /*!
          * @brief Specific check for parent file
-         * @param[in] pvtu_doc the XML document
-         * @param[in] filename name of the file being loaded
+         * @param[in] pvtuDoc the XML document
+         * @param[in] fileName name of the file being loaded
          */
-         void check_xml_parent_file_consistency(pugi::xml_document const & pvtu_doc,
-                std::string const & filename) const;
+         void CheckXmlParentFileConsistency(pugi::xml_document const & pvtuDoc,
+                string const & fileName) const;
         /*!
          * @brief retrieve the list of the vtu files
-         * @param[in] pvtu_doc the XML document
-         * @param[in,out] vtu_files vector containing the name of the vtu files (one
+         * @param[in] pvtuDoc the XML document
+         * @param[in,out] vtuFiles vector containing the name of the vtu files (one
          * for each partition)
          */
-        void vtu_files_list(
-                pugi::xml_document const & pvtu_doc,
-                std::vector < std::string > & vtu_files ) const;
+        void VtuFilesList(
+                pugi::xml_document const & pvtuDoc,
+                std::vector < string > & vtuFiles ) const;
     protected:
         /*
         /// This is the parent XML document
-        pugi::xml_document pvtu_doc_;
+        pugi::xml_document pvtuDoc_;
         */
 
         /// Name of the Vertices/Elements attribute on which
         /// the original index is stored
-        std::string const str_original_index_ { "original_index" };
+        string const m_strOriginalIndex { "original_index" };
 
         /// Name of the Elements attribute on which
         /// the partition index is stored
-        std::string const str_partition_ { "partition" };
+        string const m_strPartition { "partition" };
 
         /// Name of the Elements attribute on which
         /// the partition index is stored
-        std::string const str_region_ { "region" };
+        string const m_strRegion { "region" };
 
-        std::vector< VtuFile > vtu_files_;
+        std::vector< VtuFile > m_vtuFiles;
 
-        std::vector< std::string > vtu_file_names_;
+        std::vector< string > m_vtuFileNames;
 };
 
 /*!
@@ -123,85 +123,85 @@ class MeshPart {
         /// MESH ACCESSORS ///
         //////////////////////
 
-        globalIndex nb_vertices() const;
+        globalIndex NumVertices() const;
 
-        globalIndex nb_cells() const;
+        globalIndex NumCells() const;
 
-        globalIndex nb_polygons() const;
+        globalIndex NumPolygons() const;
 
         /*!
          * @brief return the number of vertices in a polygon
-         * @param[in] polygon_index the polygon index within the mesh part
+         * @param[in] polygonIndex the polygon index within the mesh part
          * @return the number of vertices within the polygon
          */
-        localIndex nb_vertices_in_polygon(globalIndex const polygon_index) const;
+        localIndex NumVerticesInPolygon(globalIndex const polygonIndex) const;
 
         /*!
          * @brief return the number of vertices in a cell
-         * @param[in] cell_index the cell index within the mesh part
+         * @param[in] cellIndex the cell index within the mesh part
          * @return the number of vertices within the cell
          */
-        localIndex nb_vertices_in_cell(globalIndex const cell_index) const;
+        localIndex NumVerticesInCell(globalIndex const cellIndex) const;
 
         /*!
          * @brief return the index of a cell corner
-         * @param[in] cell_index the cell index on this mesh part
-         * @param[in] local_corner_index the index of the corner within the cell
+         * @param[in] cellIndex the cell index on this mesh part
+         * @param[in] localCornerIndex the index of the corner within the cell
          * @return the index of the vertex
          */
-        globalIndex cell_vertex_index(globalIndex const cell_index,
-                localIndex const local_corner_index) const;
+        globalIndex CellVertexIndex(globalIndex const cellIndex,
+                localIndex const localCornerIndex) const;
 
         /*!
          * @brief return the index of a polygon corner
-         * @param[in] polygon_index the polygon index on this mesh part
-         * @param[in] local_corner_index the index of the corner within the polygon
+         * @param[in] polygonIndex the polygon index on this mesh part
+         * @param[in] localCornerIndex the index of the corner within the polygon
          * @return the index of the veertex
          */
-        globalIndex polygon_vertex_index(globalIndex const polygon_index,
-                localIndex const local_corner_index) const;
+        globalIndex PolygonVertexIndex(globalIndex const polygonIndex,
+                localIndex const localCornerIndex) const;
 
         /*!
          * @brief returns the vertex coordinate
-         * @param[in] vertex_index vertex index on this mesh part
+         * @param[in] vertexIndex vertex index on this mesh part
          * @return a pointer to the first coordinate (X)
          */
-        std::vector< real64 > vertex(globalIndex const vertex_index) const;
+        std::vector< real64 > Vertex(globalIndex const vertexIndex) const;
 
         /*!
          * @brief return the surface of a polygon
-         * @param[in] polygon_index polygon index on this mesh part
+         * @param[in] polygonIndex polygon index on this mesh part
          * @return the surface on which the polygon belongs
          */
-        globalIndex surface(globalIndex const polygon_index) const;
+        globalIndex Surface(globalIndex const polygonIndex) const;
 
         /*!
          * @brief return the region of a cell
-         * @param[in] cell_index cell index
+         * @param[in] cellIndex cell index
          * @return the cell on which the region belongs
          */
-        globalIndex region(globalIndex const cell_index) const;
+        globalIndex Region(globalIndex const cellIndex) const;
 
         /*!
          * @brief return the global index of a vertex in the full mesh
-         * @param[in] vertex_index the vertex index on this mesh part
+         * @param[in] vertexIndex the vertex index on this mesh part
          * @return the global index in the full mesh
          */
-        globalIndex global_vertex_index(globalIndex const vertex_index) const;
+        globalIndex GlobalVertexIndex(globalIndex const vertexIndex) const;
 
         /*!
          * @brief return the global index of a cell in the full mesh
-         * @param[in] cell_index the cell index on this mesh part
+         * @param[in] cellIndex the cell index on this mesh part
          * @return the cell index in the full mesh
          */
-        globalIndex global_cell_index(globalIndex const cell_index) const;
+        globalIndex GlobalCellIndex(globalIndex const cellIndex) const;
 
         /*!
          * @brief return the global index of a polygon in the full mesh
-         * @param[in] polygon_index the polygon index on this mesh part
+         * @param[in] polygonIndex the polygon index on this mesh part
          * @return the polygon index in the full mesh
          */
-        globalIndex global_polygon_index(globalIndex const polygon_index) const;
+        globalIndex GlobalPolygonIndex(globalIndex const polygonIndex) const;
 
         /////////////////////
         /// MESH BUILDERS ///
@@ -210,25 +210,25 @@ class MeshPart {
         /*!
          * @brief Set the number of vertices to resize the vector before filling it
          * @details Because we work in 3D, the size of the vector containing the
-         * vertices will be 3* nb_vertices
-         * @param[in] nb_vertices the number of vertices
+         * vertices will be 3* numVertices
+         * @param[in] numVertices the number of vertices
          */
-        void set_nb_vertices(globalIndex const nb_vertices); 
+        void SetNumVertices(globalIndex const numVertices); 
 
         /*!
          * @brief Set vertex coordinates
-         * @param[in] vertex_index the index of the vertex
+         * @param[in] vertexIndex the index of the vertex
          * @param[in] vertex a vector containing the three coordinates
          */
-        void set_vertex(globalIndex const vertex_index,std::vector< real64 > const & vertex);
+        void SetVertex(globalIndex const vertexIndex,std::vector< real64 > const & vertex);
 
         /*!
          * @brief set the original index of a vertex
-         * @param[in] vertex_index the index of the vertex
-         * @param[in] original_index the index of the vertex in the full mesh
+         * @param[in] vertexIndex the index of the vertex
+         * @param[in] originalIndex the index of the vertex in the full mesh
          */
-        void set_vertex_original_index(globalIndex const vertex_index,
-                globalIndex const original_index);
+        void SetVertexOriginalIndex(globalIndex const vertexIndex,
+                globalIndex const originalIndex);
 
         /*!
          * @brief Reserve the number of cells and polygons
@@ -238,7 +238,7 @@ class MeshPart {
          * of cells and polygons corresponding to the total number of elements in the
          * mesh part. The connectivity vectors are also reserved.
          */
-        void reserve_nb_cells_and_polygons(globalIndex const nb_elements);
+        void ReserveNumCellAndPolygons(globalIndex const numElements);
 
         /*!
          * @brief add a cell to the mesh
@@ -246,7 +246,7 @@ class MeshPart {
          * which compose the cell
          * @return the index of the cell
          */
-        globalIndex add_cell( std::vector<globalIndex> connectivity );
+        globalIndex AddCell( std::vector<globalIndex> connectivity );
 
         /*!
          * @brief add a polygon to the mesh
@@ -254,84 +254,84 @@ class MeshPart {
          * which compose the polygon
          * @return the index of the polygon
          */
-        globalIndex add_polygon( std::vector<globalIndex> connectivity );
+        globalIndex AddPolygon( std::vector<globalIndex> connectivity );
 
         /*! 
          * @brief Set the surface index of a polygon
-         * @param[in] polygon_index the index of the polygon within the mesh part
-         * @param[in] surface_index the surface index (common to the full mesh)
+         * @param[in] polygonIndex the index of the polygon within the mesh part
+         * @param[in] surfaceIndex the surface index (common to the full mesh)
          */
-        void set_polygon_surface( globalIndex const polygon_index,
-                globalIndex const surface_index);
+        void SetPolygonSurface( globalIndex const polygonIndex,
+                globalIndex const surfaceIndex);
 
         /*! 
          * @brief Set the region index of a cell
-         * @param[in] cell_index the index of the polygon within the mesh part
-         * @param[in] region_index the region index (common to the full mesh)
+         * @param[in] cellIndex the index of the polygon within the mesh part
+         * @param[in] regionIndex the region index (common to the full mesh)
          */
-        void set_cell_region( globalIndex const cell_index,
-                globalIndex const region_index);
+        void SetCellRegion( globalIndex const cellIndex,
+                globalIndex const regionIndex);
 
         /*!
          * @brief Set the original index, i.e. the index of a cell in the full mesh
-         * @param[in] cell_index_in_part_mesh the cell index within the part mesh
-         * @param[in] cell_index_in_full_mesh the cell index within the full mesh
+         * @param[in] cellIndexInPartMesh the cell index within the part mesh
+         * @param[in] cellIndexInFullMesh the cell index within the full mesh
          */
-        void set_cell_original_index(globalIndex const cell_index_in_part_mesh,
-                globalIndex const cell_index_in_full_mesh);
+        void SetCellOriginalIndex(globalIndex const cellIndexInPartMesh,
+                globalIndex const cellIndexInFullMesh);
 
         /*!
          * @brief Set the original index, i.e. the index of a polygon in the full mesh
-         * @param[in] polygon_index_in_part_mesh the polygon index within the part mesh
-         * @param[in] polygon_index_in_full_mesh the polygon index within the full mesh
+         * @param[in] polygonIndexInPartMesh the polygon index within the part mesh
+         * @param[in] polygonIndexInFullMesh the polygon index within the full mesh
          */
-        void set_polygon_original_index(globalIndex const polygon_index_in_part_mesh,
-                globalIndex const polygon_index_in_full_mesh);
+        void SetPolygonOriginalIndex(globalIndex const polygonIndexInPartMesh,
+                globalIndex const polygonIndexInFullMesh);
 
         /*!
          * @brief Shrink the vector to size
          */
-        void finish();
+        void Finish();
 //    private:
         /// Number of vertices
-        globalIndex nb_vertices_{0};
+        globalIndex m_numVertices{0};
 
         /// Number of cells
-        globalIndex  nb_cells_{0};
+        globalIndex m_numCells{0};
 
         /// Number of polygons
-        globalIndex nb_polygons_{0};
+        globalIndex m_numPolygons{0};
 
         /// Contains the 3D coordinates of the vertices
-        std::vector< real64> vertices_;
+        array< real64> m_vertices;
         
         /// Contains the cells connectivity
-        std::vector< globalIndex > cells_connectivity_;
+        std::vector< globalIndex > m_cellsConnectivity;
         
         /// Contains the polygons connectivity
-        std::vector< globalIndex > polygons_connectivity_;
+        std::vector< globalIndex > m_polygonsConnectivity;
 
-        /// Size : nb_cells +1. Contains the first indexes to look at in cells_connectivity_
-        std::vector< globalIndex > cells_ptr_{1,0};
+        /// Size : numCells +1. Contains the first indexes to look at in cells_connectivity_
+        std::vector< globalIndex > m_cellsPtr{1,0};
         
-        /// Size : nb_polygons +1. Contains the first indexes to look at in
+        /// Size : numPolygons +1. Contains the first indexes to look at in
         /// polygons_connectivity
-        std::vector< globalIndex > polygons_ptr_{1,0};
+        std::vector< globalIndex > m_polygonsPtr{1,0};
 
         /// Contains the original indexes of the vertices in the full mesh
-        std::vector< globalIndex > original_vertices_indexes_;
+        std::vector< globalIndex > m_originalVertexIndexes;
         
         /// Contains the original indexes of the polygons in the full mesh
-        std::vector< globalIndex > original_polygons_indexes_;
+        std::vector< globalIndex > m_originalPolygonIndexes;
         
         /// Contains the original indexes of the cells in the full mesh
-        std::vector< globalIndex > original_cells_indexes_;
+        std::vector< globalIndex > m_originalCellIndexes;
 
-        /// Contains the surface indexes on which the polygons belong (size : nb_polygons)
-        std::vector< globalIndex > surfaces_indexes_;
+        /// Contains the surface indexes on which the polygons belong (size : numPolygons)
+        std::vector< globalIndex > m_surfaceIndexes;
 
-        /// Contains the region indexes on which the cells belong (size : nb_cells)
-        std::vector< globalIndex > regions_indexes_;
+        /// Contains the region indexes on which the cells belong (size : numCells)
+        std::vector< globalIndex > m_regionIndexes;
 };
 /*!
  * @brief this class stands for the I/O of vtu file
@@ -346,39 +346,39 @@ class VtuFile : public PvtuFile{
 
         /*!
          * @brief load a .vtu file
-         * @param[in] filename the name of the XML pvtu file to be loaded
+         * @param[in] fileName the name of the XML pvtu file to be loaded
          */
-        void load( std::string const & filename) final;
+        void Load( string const & fileName) final;
 
         /*!
          * @brief save a .vtu file
-         * @param[in] filename the name of the XML vtu file to be saved
+         * @param[in] fileName the name of the XML vtu file to be saved
          */
-        void save( std::string const & filename) final;
+        void Save( string const & fileName) final;
 
         void TransferMeshPartToGEOSMesh( MeshLevel * const meshLevel );
 
     private:
         /*!
          * @brief check if the XML file contains the right nodes
-         void check_xml_file_consistency(pugi::xml_document const & pvtu_doc,
-         std::string const & filename,
-         std::string const & prefix = "") const final;
+         void check_xml_file_consistency(pugi::xml_document const & pvtuDoc,
+         string const & fileName,
+         string const & prefix = "") const final;
          */
 
         /*!
          * @brief Specific check for child files
-         * @param[in] pvtu_doc the XML document
-         * @param[in] filename name of the file being loaded
+         * @param[in] pvtuDoc the XML document
+         * @param[in] fileName name of the file being loaded
          */
-        void check_xml_child_file_consistency(pugi::xml_document const & pvtu_doc,
-                std::string const & filename) const;
+        void CheckXmlChildFileConsistency(pugi::xml_document const & pvtuDoc,
+                string const & fileName) const;
 
         /*!
          * @brief load the mesh part form the XML document
-         * @param[in] pvtu_doc the XML document
+         * @param[in] pvtuDoc the XML document
          */
-        void load_mesh_part(pugi::xml_document const & pvtu_doc);
+        void LoadMeshPart(pugi::xml_document const & pvtuDoc);
 
         /*!
          * @brief split a "big" string contained in a DataArray node of a vtu file
@@ -387,11 +387,11 @@ class VtuFile : public PvtuFile{
          * @param[in,out] out the vector of string
          */
         template<typename T, typename Lambda>
-            void split_node_text_string( std::string const & in,
+            void SplitNodeTextString( string const & in,
                     std::vector< T >& out,
-                    Lambda && string_convertor) const;
+                    Lambda && stringConvertor) const;
     private:
-         MeshPart mesh_part_;
+         MeshPart m_meshPart;
 };
 
 

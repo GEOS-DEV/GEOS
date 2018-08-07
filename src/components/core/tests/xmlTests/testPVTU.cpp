@@ -61,8 +61,8 @@ TEST(testPVTU,testPVTU)
 #if USE_MPI
     MPI_Init(0, nullptr);
 #endif
-    PvtuFile vtup_file;
-    vtup_file.load("4layers.pvtu");
+    PvtuFile vtupFile;
+    vtupFile.Load("4layers.pvtu");
 #if USE_MPI
     MPI_Finalize();
 #endif
