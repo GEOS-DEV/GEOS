@@ -25,9 +25,6 @@ set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 set( GEOSX_TPL_ROOT_DIR "/usr/gapps/GEOS/geosx/thirdPartyLibs/" CACHE PATH "" )
 set(SPHINX_EXECUTABLE "/usr/bin/sphinx-build" CACHE PATH "" FORCE)
 
-set(UNCRUSTIFY_EXECUTABLE "/usr/gapps/GEOS/geosx/thirdPartyLibs/install-toss_3_x86_64_ib-gcc@7.1.0-release/uncrustify/bin/uncrustify" CACHE PATH "" FORCE )
-
-
 
 #######################################
 # RAJA/CHAI SETUP
@@ -37,7 +34,7 @@ set(UNCRUSTIFY_EXECUTABLE "/usr/gapps/GEOS/geosx/thirdPartyLibs/install-toss_3_x
 
 option( RAJA_ENABLE_TBB "" OFF)
 
-option( ENABLE_CALIPER "Enables CALIPER" OFF )
+option( ENABLE_CALIPER "Enables CALIPER" ON )
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
