@@ -6,9 +6,9 @@
 #define SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSINTERFACE_HPP_
 
 #include "Epetra_Map.h"
-#include "Epetra_FECrsGraph.h"
-#include "Epetra_FECrsMatrix.h"
-#include "Epetra_FEVector.h"
+#include "Epetra_CrsGraph.h"
+#include "EpetraSparseMatrix.hpp"
+#include "EpetraVector.hpp"
 
 namespace geosx
 {
@@ -20,9 +20,9 @@ public:
 
   // your wrappers go here instead of the naked epetra types
   using ParallelMap = Epetra_Map;
-  using ParallelGraph = Epetra_FECrsGraph;
-  using ParallelMatrix = Epetra_FECrsMatrix;
-  using ParallelVector = Epetra_FEVector;
+  using ParallelGraph = Epetra_CrsGraph;
+  using ParallelMatrix = EpetraSparseMatrix;
+  using ParallelVector = EpetraVector;
 
 
   TrilinosInterface() = default;
