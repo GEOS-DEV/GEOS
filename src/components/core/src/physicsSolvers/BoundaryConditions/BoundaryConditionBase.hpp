@@ -72,6 +72,13 @@ public:
                                            dataRepository::ManagedGroup * dataGroup,
                                            string const & fieldname ) const;
 
+  // calls user-provided lambda to apply computed boundary value
+  template<typename LAMBDA>
+  void ApplyBoundaryCondition(lSet const & set,
+                              real64 const time,
+                              dataRepository::ManagedGroup * dataGroup,
+                              LAMBDA && lambda);
+
   template< int OPERATION >
   void ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
                                                     real64 const time,
@@ -81,6 +88,7 @@ public:
                                                     integer const & dofDim,
                                                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                     systemSolverInterface::BlockIDs const blockID ) const;
+
 
   template< int OPERATION, typename LAMBDA >
   void
@@ -100,8 +108,6 @@ public:
                                                        real64 & rhs,
                                                        real64 const & bcValue,
                                                        real64 const fieldValue ) const;
-
-
 
 
   struct viewKeyStruct
@@ -531,6 +537,53 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
   }
 }
 
+template<typename LAMBDA>
+void BoundaryConditionBase::ApplyBoundaryCondition(lSet const & set,
+                                                   real64 const time,
+                                                   dataRepository::ManagedGroup * dataGroup,
+                                                   LAMBDA && lambda)
+{
+  integer const component = GetComponent();
+  string const functionName = getData<string>(viewKeyStruct::functionNameString);
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+
+  if (functionName.empty())
+  {
+    real64 const value = m_scale;
+    for (auto a : set)
+    {
+      lambda(dataGroup, a, value);
+    }
+  }
+  else
+  {
+    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+    if (function!=nullptr)
+    {
+      if (function->isFunctionOfTime() == 2)
+      {
+        real64 const value = m_scale * function->Evaluate( &time );
+        for (auto a : set)
+        {
+          lambda(dataGroup, a, value);
+        }
+      }
+      else
+      {
+        real64_array result;
+        result.resize(integer_conversion<localIndex>(set.size()));
+        function->Evaluate(dataGroup, time, set, result);
+        integer counter = 0;
+        for (auto a : set)
+        {
+          real64 const value = m_scale * result[counter];
+          lambda(dataGroup, a, value);
+          ++counter;
+        }
+      }
+    }
+  }
+}
 
 
 }

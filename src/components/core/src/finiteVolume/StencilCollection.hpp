@@ -44,6 +44,14 @@ namespace geosx
 template <typename IndexType, typename WeightType>
 class StencilCollection
 {
+private:
+  /**
+   * @struct A wrapper of a single connection stencil
+   * Hides implementation details of stencil representation
+   * (e.g. array of structs vs struct of arrays vs CSR-like storage)
+   */
+  class Accessor;
+
 public:
 
   // provide aliases for template type parameters
@@ -72,6 +80,8 @@ public:
   template <typename POLICY=stencilPolicy, typename LAMBDA=void>
   void forAll(LAMBDA && lambda) const;
 
+  Accessor operator[](localIndex iconn) const;
+
 private:
 
   /**
@@ -86,13 +96,6 @@ private:
     void resize(localIndex const size) { stencilPointIndices.resize(size);
       stencilWeights.resize(size);    }
   };
-
-  /**
-   * @struct A wrapper of a single connection stencil
-   * Hides implementation details of stencil representation
-   * (e.g. array of structs vs struct of arrays vs CSR-like storage)
-   */
-  class Accessor;
 
   /// array that holds the list of CellConnection objects.
   array<Connection> m_connectionList;
@@ -184,6 +187,13 @@ template<typename IndexType, typename WeightType>
 void StencilCollection<IndexType, WeightType>::compress()
 {
   // nothing for the moment
+}
+
+template<typename IndexType, typename WeightType>
+typename StencilCollection<IndexType, WeightType>::Accessor
+StencilCollection<IndexType, WeightType>::operator[](localIndex iconn) const
+{
+  return Accessor(m_connectionList[iconn]);
 }
 
 }
