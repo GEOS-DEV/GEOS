@@ -955,7 +955,29 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain, re
   auto dVisc     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidViscosityString);
   auto gravDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::gravityDepthString);
 
+  dataRepository::ManagedGroup const * sets = faceManager->GetGroup(dataRepository::keys::sets);
 
+  bcManager->ApplyBoundaryCondition(time,
+                                    viewKeyStruct::fluidPressureString,
+                                    [&] (BoundaryConditionBase * bc,
+                                        string const & setName) -> void
+  {
+    auto const & stencil = fluxApprox->getBoundaryStencil(setName);
+    ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+
+    if (setWrapper == nullptr)
+      return;
+
+    bc->ApplyBoundaryCondition(setWrapper->reference(),
+                               time,
+                               faceManager,
+                               [&] (ManagedGroup * dataGroup,
+                                    localIndex kf,
+                                    real64 value) -> void
+    {
+      // TODO
+    });
+  });
 }
 
 
