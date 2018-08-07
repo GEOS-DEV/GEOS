@@ -47,8 +47,6 @@
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
-
 
 namespace geosx
 {
@@ -180,15 +178,6 @@ void LaplaceFEM::ReadXML_PostProcess()
     GEOS_ERROR("invalid time integration option");
   }
 }
-
-//void LaplaceFEM::BuildDataStructure( ManagedGroup * const domain )
-//{
-//  SolverBase::BuildDataStructure( domain );
-//
-//  // Test auto-registration:
-//  RegisterDocumentationNodes();
-//
-//}
 
 
 void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )

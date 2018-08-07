@@ -138,6 +138,36 @@ public:
    * @{
    */
 
+
+
+  /**
+   * @brief const accessor to the node->edge relation
+   * @return const reference to relation
+   */
+  UnorderedVariableOneToManyRelation const & edgeList() const
+  { return m_toEdgesRelation; }
+
+  /**
+   * @brief accessor to the node->edge relation
+   * @return reference to relation
+   */
+  UnorderedVariableOneToManyRelation & edgeList()
+  { return m_toEdgesRelation; }
+
+  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+
+  array<lSet>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array<lSet> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+
+  array<lSet>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array<lSet> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+
+
+  array<lSet>        & elementList()       { return m_toElements.m_toElementIndex; }
+  array<lSet>  const & elementList() const { return m_toElements.m_toElementIndex; }
+
+
   /**
    * @brief const accessor to the reference position array
    * @return const reference to reference position
@@ -151,27 +181,6 @@ public:
    */
   array<R1Tensor> & referencePosition()
   { return m_referencePosition; }
-
-
-  array<lSet>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  array<lSet> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
-
-  array<lSet>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  array<lSet> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
-
-
-  array<lSet>        & elementList()       { return m_toElements.m_toElementIndex; }
-  array<lSet>  const & elementList() const { return m_toElements.m_toElementIndex; }
-
-  /**
-   * @brief const accessor to the node->edge relation
-   * @return const reference to relation
-   */
-  UnorderedVariableOneToManyRelation const & edgeList() const
-  { return m_toEdgesRelation; }
-
-  UnorderedVariableOneToManyRelation & edgeList()
-  { return m_toEdgesRelation; }
 
 protected:
 
