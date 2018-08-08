@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NodeManagerT.cpp
- *
- *  Created on: Sep 13, 2010
- *      Author: settgast1
+/**
+ * @file NodeManager.hpp
  */
 
 #include "NodeManager.hpp"
@@ -56,18 +53,6 @@ NodeManager::NodeManager( std::string const & name,
   this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
 
   this->RegisterViewWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false );
-
-//  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
-//                             &m_toElementRegionList,
-//                             false );
-//
-//  this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
-//                             &m_toElementSubRegionList,
-//                             false );
-//
-//  this->RegisterViewWrapper( viewKeyStruct::elementListString,
-//                             &m_toElementList,
-//                             false );
 
   this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
                              &(elementRegionList()),
@@ -133,44 +118,6 @@ void NodeManager::FillDocumentationNode()
   docNode->setSchemaType( "Node" );
   docNode->setShortDescription( "a node manager" );
 
-//  docNode->AllocateChildNode( keys::elementRegionMap,
-//                              keys::elementRegionMap,
-//                              -1,
-//                              "integer_array",
-//                              "integer_array",
-//                              "map to element region",
-//                              "map to element region",
-//                              "",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-//
-//  docNode->AllocateChildNode( keys::elementSubRegionMap,
-//                              keys::elementSubRegionMap,
-//                              -1,
-//                              "integer_array",
-//                              "integer_array",
-//                              "map to element sub regions",
-//                              "map to element sub regions",
-//                              "",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
-//
-//  docNode->AllocateChildNode( keys::elementMap,
-//                              keys::elementMap,
-//                              -1,
-//                              "localIndex_array",
-//                              "localIndex_array",
-//                              "map to element in a subregion",
-//                              "map to element in a subregion",
-//                              "",
-//                              "",
-//                              1,
-//                              0,
-//                              0 );
 
   docNode->AllocateChildNode( keys::referencePositionString,
                               keys::referencePositionString,
@@ -186,23 +133,40 @@ void NodeManager::FillDocumentationNode()
                               1 );
 }
 
-
+//**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 {
 
+  /// flow of function:
+  /// <ol>
+  /// <li> Extract edgeToNode map from the edge manager
   FixedOneToManyRelation const & edgeToNodes = edgeManager->nodeList();
+
+  /// <li> Get number of edges
   localIndex const numEdges = edgeManager->size();
+
+  /// <li> Loop over all edges
+  /// <ol>
   for( localIndex ke=0 ; ke<numEdges ; ++ke )
   {
     localIndex const numNodes = edgeToNodes[ke].size();
+    /// <li> Loop over all nodes for each edge
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
+      /// <ul>
+      /// <li> Set the nodeToEdge relation using the current node and edge indices
       m_toEdgesRelation[a].insert(ke);
+      /// </ul>
     }
   }
+  /// </ol>
+
+  /// <li> Set the related object pointer in the edge manager
   m_toEdgesRelation.SetRelatedObject( edgeManager );
+  /// </ol>
 }
 
+//**************************************************************************************************
 void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 {
 
@@ -220,8 +184,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 }
 
 
-
-
+//**************************************************************************************************
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
   array<lSet> & toElementRegionList = elementRegionList();
@@ -262,7 +225,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   this->m_toElements.setElementRegionManager( elementRegionManager );
 }
 
-
+//**************************************************************************************************
 void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList(exclusionList);
@@ -273,19 +236,21 @@ void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) co
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementListString));
 }
 
-
+//**************************************************************************************************
 localIndex NodeManager::PackUpDownMapsSize( localIndex_array const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate<false>( junk, packList );
 }
 
+//**************************************************************************************************
 localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
                              localIndex_array const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
+//**************************************************************************************************
 template< bool DOPACK >
 localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                localIndex_array const & packList ) const
@@ -314,7 +279,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   return packedSize;
 }
 
-
+//**************************************************************************************************
 localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                localIndex_array const & packList )
 {
