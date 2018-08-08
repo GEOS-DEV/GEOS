@@ -109,7 +109,7 @@ public:
   virtual real64 SolverStep( real64 const & time_n,
                          real64 const & dt,
                          int const cycleNumber,
-                         dataRepository::ManagedGroup * domain );
+                         DomainPartition * domain );
 
   /**
    * @brief Entry function for an explicit time integration step

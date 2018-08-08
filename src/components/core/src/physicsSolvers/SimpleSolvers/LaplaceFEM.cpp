@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NewtonianMechanics.cpp
+/**
+ * @file LaplaceFEM.cpp
  *
- *  Created on: Dec 4, 2014
- *      Author: rrsettgast
  */
 
 #include "LaplaceFEM.hpp"
@@ -137,7 +135,7 @@ void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
                                 "",
                                 "",
                                 "",
-                                keys::nodeManager,
+                                nodes->getName(),
                                 1,
                                 0,
                                 0 );
@@ -150,7 +148,7 @@ void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
                                 "dof",
                                 "dof",
                                 "-1",
-                                keys::nodeManager,
+                                nodes->getName(),
                                 1,
                                 0,
                                 0 );
@@ -181,6 +179,7 @@ void LaplaceFEM::ReadXML_PostProcess()
   }
 }
 
+
 void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
 
@@ -191,7 +190,7 @@ void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 real64 LaplaceFEM::SolverStep( real64 const& time_n,
                                              real64 const& dt,
                                              const int cycleNumber,
-                                             ManagedGroup * domain )
+                                             DomainPartition * domain )
 {
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
@@ -213,9 +212,6 @@ real64 LaplaceFEM::ExplicitStep( real64 const& time_n,
 {
 return dt;
 }
-
-
-
 
 void LaplaceFEM::ImplicitStepSetup( real64 const& time_n,
                                     real64 const& dt,

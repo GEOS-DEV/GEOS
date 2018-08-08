@@ -77,7 +77,7 @@ public:
   virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
-                         dataRepository::ManagedGroup * domain ) override;
+                         DomainPartition * domain ) override;
 
   virtual real64 ExplicitStep( real64 const & time_n,
                                  real64 const & dt,
@@ -178,8 +178,6 @@ public:
   {
     constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_Laplace";
 
-    //    dataRepository::ViewKey trilinosIndex = { "trilinosIndex_LaplaceFEM" };
-//    dataRepository::ViewKey ghostRank = { "ghostRank" };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
 
@@ -191,9 +189,6 @@ public:
 //  {
 //  } groupKeys;
 
-
-//  systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
-//  systemSolverInterface::EpetraBlockSystem m_linearSystem;
 
   SystemSolverParameters * getSystemSolverParameters() {return this->GetGroup<SystemSolverParameters>(groupKeys.systemSolverParameters); }
 
