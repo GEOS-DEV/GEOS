@@ -29,6 +29,8 @@
 namespace geosx
 {
 
+using namespace dataRepository;
+
 NeighborCommunicator::NeighborCommunicator():
   m_neighborRank(-1),
   m_sendBufferSize(),

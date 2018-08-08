@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ElementManagerT.cpp
+/**
+ * @file CellBlock.cpp
  *
- *  Created on: Sep 14, 2010
- *      Author: settgast1
  */
 
 #include "CellBlock.hpp"
@@ -50,7 +48,6 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   RegisterViewWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
   RegisterViewWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
   RegisterViewWrapper(viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
-
 
   m_toNodesRelation.resize(0,8);
   m_toEdgesRelation.resize(0,12);
