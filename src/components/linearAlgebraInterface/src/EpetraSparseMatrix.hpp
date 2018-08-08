@@ -1,8 +1,5 @@
-/*
- * EpetraSparseMatrix.h
- *
- *  Created on: Jul 20, 2018
- *      Author: Matthias
+/**
+ * @file EpetraSparseMatrix.hpp
  */
 
 #ifndef EPETRASPARSEMATRIX_HPP_
@@ -45,7 +42,6 @@ public:
   virtual ~EpetraSparseMatrix() = default;
   //@}
 
-
   //! @name Create/Finalize/Reinitialize Methods
   //@{
   /**
@@ -56,9 +52,9 @@ public:
    * \param nMaxEntriesPerRow Maximum number of entries per row.
    *
    */
-  void create(const MPI_Comm    comm,
-              const globalIndex m_nRowGlobal,
-              const integer     nMaxEntriesPerRow);
+  void create( const MPI_Comm comm,
+               const globalIndex m_nRowGlobal,
+               const integer nMaxEntriesPerRow );
 
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
@@ -68,10 +64,10 @@ public:
    * \param m_nColGlobal Global number of columns.
    * \param nMaxEntriesPerRow Maximum number of entries per row.
    */
-  void create(const MPI_Comm    comm,
-              const globalIndex m_nRowGlobal,
-              const globalIndex m_nColGlobal,
-              const integer     nMaxEntriesPerRow = 0);
+  void create( const MPI_Comm comm,
+               const globalIndex m_nRowGlobal,
+               const globalIndex m_nColGlobal,
+               const integer nMaxEntriesPerRow = 0 );
 
   /**
    * @brief Create a square matrix from number of unknowns.
@@ -80,9 +76,9 @@ public:
    * \param m_nRowGlobal Global number of unknowns.
    * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
    */
-  void create(const MPI_Comm             comm,
-              const int                  m_nRowGlobal,
-              const std::vector<integer> nMaxEntriesPerRow);
+  void create( const MPI_Comm comm,
+               const int m_nRowGlobal,
+               const std::vector<integer> nMaxEntriesPerRow );
 
   /**
    * @brief Create a square matrix from number of unknowns.
@@ -92,10 +88,10 @@ public:
    * \param m_nColGlobal Global number of columns.
    * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
    */
-  void create(const MPI_Comm             comm,
-              const globalIndex          m_nRowGlobal,
-              const globalIndex 		 m_nColGlobal,
-              const std::vector<integer> nMaxEntriesPerRow);
+  void create( const MPI_Comm comm,
+               const globalIndex m_nRowGlobal,
+               const globalIndex m_nColGlobal,
+               const std::vector<integer> nMaxEntriesPerRow );
 
   /**
    * @brief Create a square matrix from Epetra_Map.
@@ -108,8 +104,8 @@ public:
    * \param nMaxEntriesPerRow Maximum number of entries per row.
    *
    */
-  void create(const Epetra_Map &input_map,
-              const integer     nMaxEntriesPerRow);
+  void create( const Epetra_Map &input_map,
+               const integer nMaxEntriesPerRow );
 
   /**
    * @brief Create a rectangular matrix from two existing Epetra_Map, row and column maps.
@@ -118,16 +114,16 @@ public:
    * \param col_map Epetra_Map for columns.
    * \param nMaxEntriesPerRow Maximum number of entries per row.
    */
-  void create(const Epetra_Map &row_map,
-              const Epetra_Map &col_map,
-              const integer     nMaxEntriesPerRow = 0);
+  void create( const Epetra_Map &row_map,
+               const Epetra_Map &col_map,
+               const integer nMaxEntriesPerRow = 0 );
 
   /**
    * @brief Create a matrix from an existing Epetra_FECrsMatrix.
    *
    * \param Epetra_CrsMatrix existing matrix.
    */
-  void create(Epetra_CrsMatrix &matrix);
+  void create( Epetra_CrsMatrix &matrix );
 
   /**
    * @brief Reinitialize the matrix.
@@ -153,8 +149,6 @@ public:
   void close();
   //@}
 
-
-
   //! @name Insertion/Replace/SumInto Methods
   //@{
   /**
@@ -169,10 +163,10 @@ public:
    * \param values Values to add to prescribed locations.
    * \param cols Global column indices in which to add the values.
    */
-  void add(const globalIndex  iRow,
-           const integer      nCols,
-           const real64      *values,
-           const globalIndex *cols);
+  void add( const globalIndex iRow,
+            const integer nCols,
+            const real64 *values,
+            const globalIndex *cols );
 
   /**
    * @brief Add to one element.
@@ -184,9 +178,9 @@ public:
    * \param value Value to add to prescribed locations.
    *
    */
-  void add(const globalIndex    iRow,
-           const globalIndex    iCol,
-           const real64 value);
+  void add( const globalIndex iRow,
+            const globalIndex iCol,
+            const real64 value );
 
   /**
    * @brief Set row of elements.
@@ -201,10 +195,10 @@ public:
    * \param cols Global column indices in which to set the values.
    *
    */
-  void set(const globalIndex     iRow,
-           const integer         nCols,
-           const real64         *values,
-           const globalIndex    *cols);
+  void set( const globalIndex iRow,
+            const integer nCols,
+            const real64 *values,
+            const globalIndex *cols );
 
   /**
    * @brief Set one element.
@@ -216,9 +210,9 @@ public:
    * \param value Value to set at prescribed locations.
    *
    */
-  void set(const globalIndex    iRow,
-           const globalIndex    iCol,
-           const real64 value);
+  void set( const globalIndex iRow,
+            const globalIndex iCol,
+            const real64 value );
 
   //@}
 
@@ -227,8 +221,8 @@ public:
   /**
    * @brief Matrix/Vector multiplication.
    */
-  void apply(      EpetraVector &dst,
-             const EpetraVector &src);
+  void apply( EpetraVector &dst,
+              const EpetraVector &src );
   //@}
 
   //! @name Accessors Methods
@@ -237,56 +231,55 @@ public:
    * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
    * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
    */
-  void getRow(int                  GlobalRow,
-              int                 &NumEntries,
-              std::vector<real64> &vecValues,
-              std::vector<int>    &vecIndices);
-
+  void getRow( int GlobalRow,
+               int &NumEntries,
+               std::vector<real64> &vecValues,
+               std::vector<int> &vecIndices );
 
   /**
    * @brief Returns the number of global rows.
    */
-  globalIndex globalRows();
+  globalIndex globalRows() const;
 
   /**
    * @brief Returns the number of global columns.
    */
-  globalIndex globalCols();
+  globalIndex globalCols() const;
 
   /**
    * @brief Returns the number of unique columns (can be used to check if matrix is square).
    */
-  globalIndex uniqueCols();
+  globalIndex uniqueCols() const;
 
   /**
    * @brief Returns the number of local rows.
    */
-  int myRows();
+  int myRows() const;
 
   /**
    * @brief Returns the number of local columns.
    */
-  int myCols();
+  int myCols() const;
 
   /**
    * @brief Returns the row map.
    */
-  const Epetra_Map RowMap();
+  Epetra_Map const & RowMap() const;
 
   /**
    * @brief Returns the (usually overlapping) column map.
    */
-  const Epetra_Map ColMap();
+  Epetra_Map const & ColMap() const;
 
   /**
    * @brief Returns the (1-to-1) domain column map.
    */
-  const Epetra_Map DomainMap();
+  Epetra_Map const & DomainMap() const;
 
   /**
    * @brief Returns true is the matrix has been assembled, false if not.
    */
-  bool isAssembled();
+  bool isAssembled() const;
   //@}
 
   //! @name I/O Methods
@@ -294,16 +287,15 @@ public:
   /**
    * @brief Print the matrix in Trilinos format to the terminal.
    */
-  void print();
+  void print() const;
   //@}
-
 
 private:
 
   /**
    * @brief Boolean value, true if the matrix had been finalized, false if not.
    */
-  bool assembled=false;
+  bool assembled = false;
 
   /**
    * @brief Pointer to the underlying Epetra_CrsMatrix.
@@ -312,6 +304,6 @@ private:
 
 };
 
-}  // namespace geosx
+} // namespace geosx
 
 #endif /* EpetraSPARSEMATRIX_HPP_ */

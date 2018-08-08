@@ -1,8 +1,5 @@
-/*
- * EpetraVector.cpp
- *
- *  Created on: Jul 24, 2018
- *      Author: Matthias
+/**
+ * @file EpetraVector.cpp
  */
 
 #include "EpetraVector.hpp"

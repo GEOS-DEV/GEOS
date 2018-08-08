@@ -1,8 +1,5 @@
-/*
- * TrilinosSparseMatrix.cpp
- *
- *  Created on: Jul 20, 2018
- *      Author: Matthias
+/**
+ * @file TrilinosSparseMatrix.cpp
  */
 
 
@@ -172,61 +169,61 @@ void EpetraSparseMatrix::getRow(int 				 GlobalRow,
 // -----------------------------------------------------------------------------------
 
 // Accessor for the number of global rows
-const globalIndex EpetraSparseMatrix::globalRows()
+globalIndex EpetraSparseMatrix::globalRows() const
 {
   return matrix->RowMap().NumGlobalElements64();
 }
 
 // Accessor for the number of global columns
-const globalIndex EpetraSparseMatrix::globalCols()
+globalIndex EpetraSparseMatrix::globalCols() const
 {
   return matrix->ColMap().NumGlobalElements64();
 }
 
 // Accessor for the number of global columns
-const globalIndex EpetraSparseMatrix::uniqueCols()
+globalIndex EpetraSparseMatrix::uniqueCols() const
 {
   return matrix->DomainMap().NumGlobalElements64();
 }
 
 // Accessor for the number of global rows
-const Epetra_Map EpetraSparseMatrix::RowMap()
+Epetra_Map const & EpetraSparseMatrix::RowMap() const
 {
   return matrix->RowMap();
 }
 
 // Accessor for the number of global columns
-const Epetra_Map EpetraSparseMatrix::ColMap()
+Epetra_Map const & EpetraSparseMatrix::ColMap() const
 {
   return matrix->ColMap();
 }
 
 // Accessor for the number of global columns
-const Epetra_Map EpetraSparseMatrix::DomainMap()
+Epetra_Map const & EpetraSparseMatrix::DomainMap() const
 {
   return matrix->DomainMap();
 }
 
 // Accessor for the number of local rows
-const int EpetraSparseMatrix::myRows()
+int EpetraSparseMatrix::myRows() const
 {
   return matrix->NumMyRows();
 }
 
 // Accessor for the number of local columns
-const int EpetraSparseMatrix::myCols()
+int EpetraSparseMatrix::myCols() const
 {
   return matrix->NumMyCols();
 }
 
 // Wrapper to print the trilinos output of the matrix
-const void EpetraSparseMatrix::print()
+void EpetraSparseMatrix::print() const
 {
   std::cout << *matrix << std::endl;
 }
 
 // Boolean indicator. True = matrix assembled and ready to be used.
-const bool EpetraSparseMatrix::isAssembled()
+bool EpetraSparseMatrix::isAssembled() const
 {
   return assembled;
 }
