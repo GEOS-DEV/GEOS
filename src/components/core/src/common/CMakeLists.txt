@@ -18,7 +18,7 @@ set(common_sources
 set( dependencyList cxx-utilities mpi )
 
 if( ATK_FOUND )
-  set( dependencyList ${dependencyList} slic sidre )
+  set( dependencyList ${dependencyList} slic )
 endif()
 
 #set( dependencyList2 mpi )
