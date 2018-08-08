@@ -186,6 +186,11 @@ public:
     return *m_ref;
   }
 
+  inline bool isValid() const
+  {
+    return m_ref;
+  }
+
   /**
    * @brief a pass thru square bracket operator which calls underlying T::operator[]
    * @tparam U dummy type to allow for SFINAE evaluation of availability of T::operator[]
