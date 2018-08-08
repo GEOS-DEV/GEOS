@@ -1,8 +1,5 @@
-/*
- * EpetraVector.hpp
- *
- *  Created on: Jul 24, 2018
- *      Author: Matthias
+/**
+ * @file EpetraVector.hpp
  */
 
 #ifndef EPETRAVECTOR_HPP_

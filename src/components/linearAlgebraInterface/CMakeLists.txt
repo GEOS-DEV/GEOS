@@ -6,15 +6,19 @@
 # Specify all headers
 #
 set( linearAlgebraInterface_headers
+     src/EpetraSparseMatrix.hpp
+     src/EpetraVector.hpp
      src/TrilinosInterface.hpp )
 
 #
 # Specify all sources
 #
 set( linearAlgebraInterface_sources
+     src/EpetraSparseMatrix.cpp
+     src/EpetraVector.cpp
      src/TrilinosInterface.cpp)
 
-set( dependencyList  trilinos)
+set( dependencyList  trilinos hypre mpi)
 
 blt_add_library( NAME                  linearAlgebraInterface
                  SOURCES               ${linearAlgebraInterface_sources}
