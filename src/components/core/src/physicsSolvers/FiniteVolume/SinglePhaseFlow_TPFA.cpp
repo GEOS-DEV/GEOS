@@ -334,44 +334,6 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     0,
                                     0 );
 
-        docNode->AllocateChildNode( viewKeyStruct::effectiveStressString,
-                                    viewKeyStruct::effectiveStressString,
-                                    -1,
-                                    "r2Sym_array",
-                                    "r2Sym_array",
-                                    "Effective Stress",
-                                    "Effective Stress",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
-
-        docNode->AllocateChildNode( viewKeyStruct::deltaEffectiveStressString,
-                                    viewKeyStruct::deltaEffectiveStressString,
-                                    -1,
-                                    "r2Sym_array",
-                                    "r2Sym_array",
-                                    "Change in Effective Stress",
-                                    "Change in Effective Stress",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
-
-        docNode->AllocateChildNode( viewKeyStruct::deltaVolumetricStrainString,
-                                    viewKeyStruct::deltaVolumetricStrainString,
-                                    -1,
-                                    "r2Sym_array",
-                                    "r2Sym_array",
-                                    "Change in Volumetric Strain",
-                                    "Change in Volumetric Strain",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
 
       });
   }
@@ -558,26 +520,6 @@ void SinglePhaseFlow_TPFA::ImplicitStepComplete( real64 const & time_n,
     dens[er][esr][k] += dDens[er][esr][k];
     visc[er][esr][k] += dVisc[er][esr][k];
     poro[er][esr][k] += dPoro[er][esr][k];
-  });
-}
-
-void SinglePhaseFlow_TPFA::UpdateDeformationForCoupling( DomainPartition * const domain )
-{
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-  ConstitutiveManager * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-
-  auto effectiveStress = elemManager->ConstructViewAccessor<r2Sym_array>(viewKeyStruct::effectiveStressString);
-  auto dEffStresss = elemManager->ConstructViewAccessor<r2Sym_array>(viewKeyStruct::deltaEffectiveStressString);
-
-  //***** loop over all elements and initialize the derivative arrays *****
-  forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                localIndex const esr,
-                                localIndex const k)->void
-  {
-    dEffStresss[er][esr][k] = 0;
   });
 }
 
