@@ -148,9 +148,9 @@ void Blueprint::addNodes( Group* coords, Group* fields ) const
   z_view->setExternalDataPtr( const_cast< R1Tensor* >( position.data() ) );
   z_view->apply( axom::sidre::TypeID::DOUBLE_ID, n_nodes, 2, 3 );
 
-  for ( const std::pair< const std::string, const ViewWrapperBase* >& pair : m_node_manager.wrappers() )
+  for ( const std::pair< const std::string, const dataRepository::ViewWrapperBase* >& pair : m_node_manager.wrappers() )
   {
-    const ViewWrapperBase* view = pair.second;
+    const dataRepository::ViewWrapperBase* view = pair.second;
     // if ( view->sizedFromParent() == 1 &&
     //      view->size() > 0 &&
     //      view->shouldRegisterDataPtr() &&

@@ -51,9 +51,9 @@
 
 # first Check for ATK_DIR
 
-if(ATK_DIR)
+if( EXISTS ${ATK_DIR})
 
-    set(ATK_CMAKE "${ATK_DIR}/lib/cmake" CACHE PATH "")
+    set(ATK_CMAKE ${ATK_DIR}/lib/cmake)
 
     if(NOT EXISTS ${ATK_CMAKE}/axom_utils-targets.cmake)
         MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_CMAKE}/axom_utils-targets.cmake)")
