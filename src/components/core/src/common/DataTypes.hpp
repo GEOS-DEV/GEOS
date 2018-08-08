@@ -130,7 +130,7 @@ using realT    = double;
 template< typename T >
 using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
 
-template< typename T, int NDIM >
+template< typename T, int NDIM=1 >
 using array_view = multidimensionalArray::ArrayView<T,NDIM,localIndex>;
 
 template< typename T >

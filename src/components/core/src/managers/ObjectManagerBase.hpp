@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ObjectManagerBase.hpp
- *
- *  Created on: Sep 15, 2016
- *      Author: settgast1
+/**
+ * @file ObjectManagerBase.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
@@ -41,7 +38,11 @@ string const sets("Sets");
 }
 
 
-
+/**
+ * @class ObjectManagerBase
+ * @brief The ObjectManagerBase is the base object of all object managers in the mesh data hierachy.
+ *
+ */
 class ObjectManagerBase : public dataRepository::ManagedGroup
 {
 public:
@@ -307,6 +308,11 @@ public:
 
   //**********************************************************************************************************************
 
+  /**
+   * @brief struct to serve as a container for variable strings and keys
+   * @struct viewKeyStruct
+   *
+   */
   struct viewKeyStruct
   {
 
@@ -332,6 +338,11 @@ public:
   } m_ObjectManagerBaseViewKeys;
 
 
+  /**
+   * @brief struct to serve as a container for group strings and keys
+   * @struct viewKeyStruct
+   *
+   */
   struct groupKeyStruct
   {
     static constexpr auto setsString = "sets";
