@@ -361,44 +361,42 @@ set( thirdPartyLibs ${thirdPartyLibs} pugixml )
 ################################
 # TRILINOS
 ################################
-#if( ENABLE_TRILINOS )
+if( ENABLE_TRILINOS )
 
+  if(EXISTS ${TRILINOS_DIR})
+  
+  else()
+      message( INFO ": setting up TRILINOS" )
+      set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
+  endif()
+  
+  include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+  
+  
+  blt_register_library( NAME trilinos
+                        INCLUDES ${Trilinos_INCLUDE_DIRS} 
+                        LIBRARIES ${Trilinos_LIBRARIES}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
 
-if(EXISTS ${TRILINOS_DIR})
-
-else()
-    message( INFO ": setting up TRILINOS" )
-    set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
 endif()
-
-include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
-
-
-blt_register_library( NAME trilinos
-    		      INCLUDES ${Trilinos_INCLUDE_DIRS} 
-                      LIBRARIES ${Trilinos_LIBRARIES}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
-		      set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
-
-#endif()
 
 ################################
 # HYPRE
 ################################
-#if( ENABLE_HYPRE )
+if( ENABLE_HYPRE )
 message( INFO ": setting up HYPRE" )
 
 set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre)
-include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
 
 blt_register_library( NAME hypre
-                      INCLUDES ${Trilinos_INCLUDE_DIRS} 
-                      LIBRARIES ${Trilinos_LIBRARIES}
+                      INCLUDES ${HYPRE_DIR}/include 
+                      LIBRARIES ${HYPRE_DIR}/lib/libHYPRE.a
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
-set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
+set( thirdPartyLibs ${thirdPartyLibs} hypre )  
 
-#endif()
+endif()
 
 
 

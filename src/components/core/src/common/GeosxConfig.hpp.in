@@ -16,6 +16,9 @@
 #cmakedefine USE_MATHPRESSO
 #cmakedefine USE_PYTHON
 #cmakedefine USE_RAJA
+#cmakedefine USE_TRILINOS
+#cmakedefine USE_HYPRE
+
 
 #cmakedefine USE_CONTAINERARRAY_RETURN_PTR
 
