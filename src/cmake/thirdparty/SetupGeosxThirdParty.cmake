@@ -13,7 +13,6 @@ if( NOT GEOSX_TPL_DIR )
     get_filename_component( TEMP_DIR "${CMAKE_INSTALL_PREFIX}" NAME)
     string(REGEX REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
     set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR2}" )
-    #set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/install-darwin-gcc7-release")
 endif()
 message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
@@ -62,17 +61,11 @@ if (EXISTS ${ATK_DIR})
                         LIBRARIES  sidre
                         TREAT_INCLUDES_AS_SYSTEM ON )
 
-  # blt_register_library( NAME spio
-  #                       INCLUDES ${ATK_INCLUDE_DIRS} 
-  #                       LIBRARIES  spio
-  #                       TREAT_INCLUDES_AS_SYSTEM ON)
-
   blt_register_library( NAME slic
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  slic
                         TREAT_INCLUDES_AS_SYSTEM ON)
                         
-  # set( thirdPartyLibs ${thirdPartyLibs} sidre spio slic )
   set( thirdPartyLibs ${thirdPartyLibs} sidre slic )
 else()
   message( "Not using axom" )
