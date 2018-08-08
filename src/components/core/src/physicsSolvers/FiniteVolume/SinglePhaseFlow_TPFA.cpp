@@ -386,6 +386,10 @@ void SinglePhaseFlow_TPFA::FinalInitialization( ManagedGroup * const problemMana
 
   // Allocate additional storage for derivatives
   AllocateAuxStorage(domain);
+
+  // Call function to fill geometry parameters for use forming system
+  PrecomputeData( domain );
+
 }
 
 real64 SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
@@ -393,9 +397,6 @@ real64 SinglePhaseFlow_TPFA::SolverStep( real64 const& time_n,
                                          const int cycleNumber,
                                          DomainPartition * domain )
 {
-  // Call function to fill geometry parameters for use forming system
-  // Can't call this in FinalInitialization() as field data has not been loaded there yet
-  PrecomputeData(ManagedGroup::group_cast<DomainPartition *>(domain));
 
   ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
 

@@ -17,14 +17,12 @@
  */
 
 /**
- * @file NodeManagerT.h
- * @author Randolph Settgast
- * @date created on Sep 13, 2010
+ * @file NodeManager.hpp
  */
 
 
-#ifndef NODEMANAGERT_H_
-#define NODEMANAGERT_H_
+#ifndef MESH_NODEMANAGER_HPP_
+#define MESH_NODEMANAGER_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
 #include <string.h>
@@ -44,21 +42,10 @@ class FaceManager;
 class EdgeManager;
 class ElementRegionManager;
 
-namespace dataRepository
-{
-namespace keys
-{
-std::string const nodeManager    = "NodeManager";
-std::string const elementRegionMap("elementRegionMap");
-std::string const elementSubRegionMap("elementSubRegionMap");
-std::string const elementMap("elementMap");
 
-}
-}
-
-using namespace dataRepository;
 /**
- * @author Randolph Settgast
+ * @class NodeManager
+ * @brief The NodeManager class provides an interface to ObjectManagerBase in order to manage node data.
  *
  * The NodeManagerT class manages the node data using the
  * ObjectDataStructureBaseT as a data manager.
@@ -69,17 +56,30 @@ class NodeManager : public ObjectManagerBase
 {
 public:
 
-
-  /// default constructor
+  /**
+   * @brief main constructor for NodeManager Objects
+   * @param name the name of this instantiation of NodeManager in the repository
+   * @param parent the parent group of this instantiation of NodeManager
+   */
   NodeManager( std::string const & name,
-               ManagedGroup * const parent );
+               dataRepository::ManagedGroup * const parent );
 
-
-
-  /// default destructor
+  /**
+   *  @brief default destructor
+   */
   ~NodeManager() override;
 
-  static string CatalogName() { return dataRepository::keys::nodeManager; }
+  /**
+   * @brief name of the node manager in the object catalog
+   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   */
+  static string CatalogName()
+  { return "NodeManager"; }
+
+  /**
+   * @brief virtual access to CatalogName()
+   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   */
   const string getCatalogName() const override final
   { return NodeManager::CatalogName(); }
 
@@ -105,23 +105,6 @@ public:
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                 localIndex_array const & packList ) override;
 
-public:
-
-
-  /** @name Maps
-   * The Maps
-   */
-  ///@{
-
-
-//  UnorderedVariableOneToManyRelation&  m_nodeToFaceMap;
-//  UnorderedVariableOneToManyRelation&  m_nodeToEdgeMap;
-
-//  UnorderedVariableOneToManyRelation& m_toCrackSurfacesRelation;
-
-  ///@}
-
-
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto referencePositionString     = "ReferencePosition";
@@ -143,16 +126,33 @@ public:
   } viewKeys;
 
 
+  /**
+   * @struct
+   */
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
-  r1_array const & referencePosition() const { return m_referencePosition; }
-  r1_array &       referencePosition()       { return m_referencePosition; }
-//  view_rtype_const<r1_array> totalDisplacement() const { return this->getData<r1_array>(viewKeys.totalDisplacement); }
-//  view_rtype<r1_array>       totalDisplacement()       { return this->getData<r1_array>(viewKeys.totalDisplacement); }
 
-  UnorderedVariableOneToManyRelation       & edgeList()       { return m_toEdgesRelation; }
-  UnorderedVariableOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
+  /**
+   * \defgroup accessors for NodeManager fixed data
+   * @{
+   */
+
+
+
+  /**
+   * @brief const accessor to the node->edge relation
+   * @return const reference to relation
+   */
+  UnorderedVariableOneToManyRelation const & edgeList() const
+  { return m_toEdgesRelation; }
+
+  /**
+   * @brief accessor to the node->edge relation
+   * @return reference to relation
+   */
+  UnorderedVariableOneToManyRelation & edgeList()
+  { return m_toEdgesRelation; }
 
   UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
@@ -163,43 +163,63 @@ public:
   array<lSet>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
   array<lSet> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
+
   array<lSet>        & elementList()       { return m_toElements.m_toElementIndex; }
   array<lSet>  const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
+  /**
+   * @brief const accessor to the reference position array
+   * @return const reference to reference position
+   */
+  array<R1Tensor> const & referencePosition() const
+  { return m_referencePosition; }
+
+  /**
+   * @brief accessor to the reference position array
+   * @return reference to reference position
+   */
+  array<R1Tensor> & referencePosition()
+  { return m_referencePosition; }
+
 protected:
 
 private:
+  /**
+   * @brief function to pack the upward and downward pointing maps.
+   * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
+   *                packed and the function returns the size of the packing that would have occured if set to TRUE.
+   * @param buffer the buffer to pack data into
+   * @param packList the indices of nodes that should be packed.
+   * @return size of data packed in terms of number of chars
+   */
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                             localIndex_array const & packList ) const;
+                                    localIndex_array const & packList ) const;
 
+   /// reference position of the nodes
+  array<R1Tensor> m_referencePosition;
 
-  /// copy constructor
-  NodeManager() = delete;
-  NodeManager( const NodeManager& init ) = delete;
-  NodeManager& operator=( const NodeManager&) = delete;
-
-  r1_array m_referencePosition;
+  /// nodeToEdge relation
   UnorderedVariableOneToManyRelation m_toEdgesRelation;
+
+  /// nodeToFace relation
   UnorderedVariableOneToManyRelation m_toFacesRelation;
 
-//  array<localIndex_array> m_toElementRegionList ;
-//  array<localIndex_array> m_toElementSubRegionList ;
-//  OrderedVariableOneToManyRelation m_toElementList ;
-
-
+  /// nodeToElement relation
   UnorderedVariableToManyElementRelation m_toElements;
 
+  /// deleted constructor
+  NodeManager() = delete;
+
+  /// deleted copy constructor
+  NodeManager( const NodeManager& init ) = delete;
+
+  /// deleted assignement operator
+  NodeManager& operator=( const NodeManager&) = delete;
+
 };
-// *********************************************************************************************************************
-// *********************************************************************************************************************
-
-
-// *********************************************************************************************************************
-
-
 }
 
 
-#endif /* NODEMANAGERT_H_ */
+#endif // MESH_NODEMANAGER_HPP_
