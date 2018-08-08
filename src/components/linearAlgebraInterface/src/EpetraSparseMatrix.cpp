@@ -117,7 +117,108 @@ void EpetraSparseMatrix::add(const globalIndex  iRow,
                              const real64      *values,
                              const globalIndex *cols)
 {
+#if 1
   matrix->SumIntoGlobalValues(iRow,nCols,values,cols);
+#else
+//  template<typename int_type>
+//  int Epetra_CrsMatrix::TSumIntoGlobalValues(int_type Row,
+//              int NumEntries,
+//              const double * srcValues,
+//              const int_type *Indices)
+//  {
+    int j;
+    int ierr = 0;
+    int Loc = 0;
+
+
+    int locRow = Graph_.LRID(Row); // Normalize row range
+
+    if (locRow < 0 || locRow >= NumMyRows_) {
+      EPETRA_CHK_ERR(-1); // Not in Row range
+    }
+
+    if (StaticGraph() && !Graph_.HaveColMap()) {
+      EPETRA_CHK_ERR(-1);
+    }
+
+    double * RowValues = Values(locRow);
+
+    if (!StaticGraph()) {
+      for (j=0; j<NumEntries; j++) {
+        int_type Index = Indices[j];
+        if (Graph_.FindGlobalIndexLoc(locRow,Index,j,Loc))
+//  #ifdef EPETRA_HAVE_OMP
+//  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
+//  #pragma omp atomic
+//  #endif
+//  #endif
+//          RowValues[Loc] += srcValues[j];
+          RAJA::atomic::atomicAdd<ATOMIC_POL2>(& RowValues [Loc], srcValues[j]);
+        else
+          ierr = 2; // Value Excluded
+      }
+    }
+    else {
+      const Epetra_BlockMap& colmap = Graph_.ColMap();
+      int NumColIndices = Graph_.NumMyIndices(locRow);
+      const int* ColIndices = Graph_.Indices(locRow);
+
+      if (Graph_.Sorted()) {
+        int insertPoint;
+        for (j=0; j<NumEntries; j++) {
+          int Index = colmap.LID(Indices[j]);
+
+          // Check whether the next added element is the subsequent element in
+          // the graph indices, then we can skip the binary search
+          if (Loc < NumColIndices && Index == ColIndices[Loc])
+//  #ifdef EPETRA_HAVE_OMP
+//  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
+//  #pragma omp atomic
+//  #endif
+//  #endif
+//            RowValues[Loc] += srcValues[j];
+            RAJA::atomic::atomicAdd<ATOMIC_POL2>(& RowValues [Loc], srcValues[j]);
+          else {
+            Loc = Epetra_Util_binary_search(Index, ColIndices, NumColIndices, insertPoint);
+            if (Loc > -1)
+//  #ifdef EPETRA_HAVE_OMP
+//  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
+//  #pragma omp atomic
+//  #endif
+//  #endif
+//              RowValues[Loc] += srcValues[j];
+            RAJA::atomic::atomicAdd<ATOMIC_POL2>(& RowValues [Loc], srcValues[j]);
+            else
+              ierr = 2; // Value Excluded
+          }
+          ++Loc;
+        }
+      }
+      else
+        for (j=0; j<NumEntries; j++) {
+          int Index = colmap.LID(Indices[j]);
+          if (Graph_.FindMyIndexLoc(NumColIndices,ColIndices,Index,j,Loc))
+//  #ifdef EPETRA_HAVE_OMP
+//  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
+//  #pragma omp atomic
+//  #endif
+//  #endif
+//            RowValues[Loc] += srcValues[j];
+          RAJA::atomic::atomicAdd<ATOMIC_POL2>(& RowValues [Loc], srcValues[j]);
+          else
+            ierr = 2; // Value Excluded
+        }
+    }
+
+    NormOne_ = -1.0; // Reset Norm so it will be recomputed.
+    NormInf_ = -1.0; // Reset Norm so it will be recomputed.
+    NormFrob_ = -1.0;
+
+    EPETRA_CHK_ERR(ierr);
+
+    return(0);
+//  }
+#endif
 }
 
 // Set single value at row iRow and column iCol
