@@ -176,7 +176,6 @@ public:
                                   real64 const time,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
-
   /**
    * @enum an enum to lay out the time integration options.
    */
@@ -247,6 +246,9 @@ public:
     void resize(localIndex const size) { stencilCellIndices.resize(size);
                                          stencilWeights.resize(size);    }
   };
+
+  array<array<array<real64>>> const & dPorosity_dPressure() const { return m_dPoro_dPres; }
+  array<array<array<real64>>> & dPorosity_dPressure() { return m_dPoro_dPres; }
 
 private:
 

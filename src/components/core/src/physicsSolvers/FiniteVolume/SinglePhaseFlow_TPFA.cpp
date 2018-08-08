@@ -334,6 +334,45 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
                                     0,
                                     0 );
 
+        docNode->AllocateChildNode( viewKeyStruct::effectiveStressString,
+                                    viewKeyStruct::effectiveStressString,
+                                    -1,
+                                    "r2Sym_array",
+                                    "r2Sym_array",
+                                    "Effective Stress",
+                                    "Effective Stress",
+                                    "",
+                                    elemManager->getName(),
+                                    1,
+                                    0,
+                                    0 );
+
+        docNode->AllocateChildNode( viewKeyStruct::deltaEffectiveStressString,
+                                    viewKeyStruct::deltaEffectiveStressString,
+                                    -1,
+                                    "r2Sym_array",
+                                    "r2Sym_array",
+                                    "Change in Effective Stress",
+                                    "Change in Effective Stress",
+                                    "",
+                                    elemManager->getName(),
+                                    1,
+                                    0,
+                                    0 );
+
+        docNode->AllocateChildNode( viewKeyStruct::deltaVolumetricStrainString,
+                                    viewKeyStruct::deltaVolumetricStrainString,
+                                    -1,
+                                    "r2Sym_array",
+                                    "r2Sym_array",
+                                    "Change in Volumetric Strain",
+                                    "Change in Volumetric Strain",
+                                    "",
+                                    elemManager->getName(),
+                                    1,
+                                    0,
+                                    0 );
+
       });
   }
 }
@@ -459,7 +498,7 @@ ImplicitStepSetup( real64 const& time_n,
 
   auto
   constitutiveMap = elemManager->
-                    ConstructViewAccessor< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString,                                                                                                          string() );
+                    ConstructViewAccessor< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString, string() );
 
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
@@ -483,7 +522,6 @@ ImplicitStepSetup( real64 const& time_n,
     EOS->FluidViscosityUpdate(pressure, matIndex2, visc[er][esr][k], m_dVisc_dPres[er][esr][k]);
     EOS->SimplePorosityUpdate(pressure, refPoro[er][esr][k], matIndex2, poro[er][esr][k], m_dPoro_dPres[er][esr][k]);
   });
-
 
   // setup dof numbers and linear system
   SetupSystem( domain, blockSystem );
@@ -520,7 +558,26 @@ void SinglePhaseFlow_TPFA::ImplicitStepComplete( real64 const & time_n,
     visc[er][esr][k] += dVisc[er][esr][k];
     poro[er][esr][k] += dPoro[er][esr][k];
   });
+}
 
+void SinglePhaseFlow_TPFA::UpdateDeformationForCoupling( DomainPartition * const domain )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  ConstitutiveManager * const
+  constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+
+  auto effectiveStress = elemManager->ConstructViewAccessor<r2Sym_array>(viewKeyStruct::effectiveStressString);
+  auto dEffStresss = elemManager->ConstructViewAccessor<r2Sym_array>(viewKeyStruct::deltaEffectiveStressString);
+
+  //***** loop over all elements and initialize the derivative arrays *****
+  forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                localIndex const esr,
+                                localIndex const k)->void
+  {
+    dEffStresss[er][esr][k] = 0;
+  });
 }
 
 void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
@@ -822,8 +879,8 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
 #endif
 
       // Derivative of residual wrt to pressure in the cell
-      localAccumJacobian = (m_dPoro_dPres[er][esr][k] * dens_new * volume[er][esr][k])
-                         + (m_dDens_dPres[er][esr][k] * poro_new * volume[er][esr][k]);
+      localAccumJacobian = m_dPoro_dPres[er][esr][k] * dens_new * vol_new
+                         + m_dDens_dPres[er][esr][k] * poro_new * vol_new;
 
       // add contribution to global residual and dRdP
       residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);

@@ -7,14 +7,13 @@
     gravityVector="0.0,0.0,-9.81">
 
     <Poroelastic name="poroSolve" 
-                 timeIntegrationOption="QuasiStatic"
-                 verboseLevel="1"
                  solidSolverName="lagsolve"
                  fluidSolverName="SinglePhaseFlow_TPFA"
+                 couplingType="FixedStress"
+                 BiotCoe="1"
+                 verboseLevel="1"
                                   >
       <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-10"
-                              newtonTol="1.0e-3"
                               maxIterNewton="40"
                               verbosityFlag="2"/>
     </Poroelastic>
@@ -64,7 +63,7 @@
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
                    forceDt="20.0"
-                   target="/Solvers/SinglePhaseFlow_TPFA" />
+                   target="/Solvers/Poroelastic" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
@@ -162,7 +161,9 @@
   </BoundaryConditions>
 
   <Functions>
-
+    <!--  TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
+    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
 
   <Partition>
@@ -170,7 +171,8 @@
   </Partition>
 
   <Outputs>
-      <Silo name="siloOutput"/>
+    <Silo name="siloOutput"/>
+    <!-- Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/ >-->
   </Outputs>
 
 </Problem>
