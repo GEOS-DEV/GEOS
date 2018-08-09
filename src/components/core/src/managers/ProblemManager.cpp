@@ -49,6 +49,8 @@
 
 #include "mesh/MeshBody.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
+//##include "TimingMacros.hpp"
+#include "common/TimingMacros.hpp"
 // #include "managers/MeshLevel.hpp"
 namespace geosx
 {
@@ -792,9 +794,9 @@ void ProblemManager::RunSimulation()
   DomainPartition * domain  = getDomainPartition();
   GEOS_MARK_END("Get domain partition");
 
-  GEOS_CXX_MARK_BEGIN(EventManager);
+  GEOS_MARK_BEGIN("Event Manager");
   m_eventManager->Run(domain);
-  GEOS_CXX_MARK_END(EventManager);
+  GEOS_MARK_END("Event Manager");
   
 }
 
