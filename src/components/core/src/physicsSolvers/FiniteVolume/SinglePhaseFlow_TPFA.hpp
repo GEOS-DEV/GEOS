@@ -158,7 +158,7 @@ public:
    */
   void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                      localIndex & numLocalRows,
-                                     localIndex & numGlobalRows,
+                                     globalIndex & numGlobalRows,
                                      localIndex_array& localIndices,
                                      localIndex offset );
 
