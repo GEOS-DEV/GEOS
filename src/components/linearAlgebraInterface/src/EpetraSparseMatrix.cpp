@@ -303,6 +303,12 @@ void EpetraSparseMatrix::getRow( int GlobalRow,
 // --------------------------------- Accessors ---------------------------------------
 // -----------------------------------------------------------------------------------
 
+// Accessor for the pointer to the matrix
+Epetra_CrsMatrix * EpetraSparseMatrix::getPointer() const
+{
+  return matrix.get();
+}
+
 // Accessor for the number of global rows
 globalIndex EpetraSparseMatrix::globalRows() const
 {

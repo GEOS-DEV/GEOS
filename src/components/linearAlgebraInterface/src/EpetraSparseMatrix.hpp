@@ -277,6 +277,11 @@ public:
                std::vector<int> &vecIndices );
 
   /**
+   * @brief Returns a pointer to the underlying matrix.
+   */
+  Epetra_CrsMatrix* getPointer() const;
+
+  /**
    * @brief Returns the number of global rows.
    */
   globalIndex globalRows() const;
