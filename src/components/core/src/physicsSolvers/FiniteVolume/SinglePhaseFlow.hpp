@@ -171,7 +171,7 @@ public:
    * @param blockSystem the entire block system
    */
   void ApplyDirichletBC_implicit( DomainPartition * object,
-                                  real64 const time,
+                                  real64 const time, real64 const dt,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
   /**
@@ -181,7 +181,7 @@ public:
    * @param blockSystem the entire block system
    */
   void ApplyFaceDirichletBC_implicit(DomainPartition * domain,
-                                     real64 const time,
+                                     real64 const time, real64 const dt,
                                      systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
   /**

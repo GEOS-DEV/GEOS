@@ -108,6 +108,7 @@ public:
     static constexpr auto elementRegionListString     = "elemRegionList";
     static constexpr auto elementSubRegionListString  = "elemSubRegionList";
     static constexpr auto elementListString           = "elemList";
+    static constexpr auto faceCenterString            = "faceCenter";
 
     dataRepository::ViewKey nodeList              = { nodeListString };
     dataRepository::ViewKey edgeList              = { edgeListString };
@@ -145,6 +146,8 @@ private:
   OrderedVariableOneToManyRelation m_nodeList;
   OrderedVariableOneToManyRelation m_edgeList;
   FixedToManyElementRelation m_toElements;
+
+  array< R1Tensor > m_faceCenter;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;

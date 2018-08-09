@@ -33,6 +33,8 @@ using namespace dataRepository;
 FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *const parent)
   : ManagedGroup(name, parent)
 {
+  m_boundarySetData = this->RegisterGroup(groupKeyStruct::boundarySetDataString);
+
   this->RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false);
   this->RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false);
   this->RegisterViewWrapper(viewKeyStruct::cellLocationString, &m_cellLocation, false);
@@ -102,7 +104,34 @@ void FluxApproximationBase::compute(DomainPartition * domain)
 
   bcManager->forSubGroups<BoundaryConditionBase>([&] (BoundaryConditionBase * bc) -> void
   {
-    if (bc->initialCondition() || bc->GetFieldName() != m_fieldName)
+    if (bc->initialCondition())
+      return;
+
+    string_array const objectPath = stringutilities::Tokenize(bc->GetObjectPath(), "/");
+
+    if (objectPath.size() < 1 || objectPath[0] != MeshLevel::groupStructKeys::faceManagerString)
+      return;
+
+    // TODO this validation should really be in BoundaryConditionBase::ReadXML_Postprocess
+    string fieldName = bc->GetFieldName();
+    if (objectPath.size() > 1)
+    {
+      GEOS_ASSERT(fieldName.empty() || objectPath[1].empty(),
+                  "field name specified in both fieldName (" << fieldName
+                                                             << ") and objectPath (" << objectPath[1] << ")");
+
+      GEOS_ASSERT(!(bc->GetFieldName().empty() && objectPath[3].empty()),
+                  "field name not specified in either fieldName or objectPath");
+
+      if (!objectPath[1].empty())
+        fieldName = objectPath[1];
+    }
+    else
+    {
+      GEOS_ASSERT(!fieldName.empty(), "field name not specified in either fieldName or objectPath");
+    }
+
+    if (fieldName != m_fieldName)
       return;
 
     string_array setNames = bc->GetSetNames();
@@ -112,8 +141,8 @@ void FluxApproximationBase::compute(DomainPartition * domain)
       if (setWrapper != nullptr)
       {
         lSet const & set = setWrapper->reference();
-        ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>(setName);
-        computeBoundaryStencil(domain, set, stencil->reference());
+        BoundaryStencil & stencil = this->RegisterViewWrapper<BoundaryStencil>(setName)->reference();
+        computeBoundaryStencil(domain, set, stencil);
       }
     }
   });
@@ -141,6 +170,11 @@ FluxApproximationBase::BoundaryStencil &
 FluxApproximationBase::getBoundaryStencil(string const & setName)
 {
   return this->getReference<BoundaryStencil>(setName);
+}
+
+bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
+{
+  return this->hasView(setName);
 }
 
 }

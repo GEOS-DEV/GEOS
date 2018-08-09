@@ -74,6 +74,7 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
+  FaceManager * const faceManager = mesh->getFaceManager();
 
   r1_array const & X = nodeManager->referencePosition();
 
@@ -114,6 +115,14 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
     elemVolume[er][esr][k] = computationalGeometry::HexVolume(Xlocal);
   });
 
+  r1_array & faceCenter = faceManager->getReference<r1_array>(FaceManager::viewKeyStruct::faceCenterString);
+  array<array<localIndex>> const & faceToNodes = faceManager->nodeList();
+
+  R1Tensor normal;
+  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  {
+    computationalGeometry::Centroid_3DPolygon(faceToNodes[kf], X, faceCenter[kf], normal);
+  }
 }
 
 } // namespace geosx

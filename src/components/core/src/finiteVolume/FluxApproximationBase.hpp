@@ -102,6 +102,13 @@ public:
   /// return a boundary stencil by face set name
   BoundaryStencil & getBoundaryStencil(string const & setName);
 
+  /// check if a stencil exists
+  bool hasBoundaryStencil(string const & setName) const;
+
+  /// call a user-provided function for each boundary stencil
+  template<typename LAMBDA>
+  void forBoundaryStencils(LAMBDA && lambda) const;
+
   /// triggers computation of the stencil, implemented in derived classes
   void compute(DomainPartition * domain);
 
@@ -113,6 +120,11 @@ public:
     static constexpr auto cellStencilString     = "cellStencil";
   };
 
+  struct groupKeyStruct
+  {
+    static constexpr auto boundarySetDataString = "BoundarySetData";
+  };
+
 protected:
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
@@ -120,6 +132,9 @@ protected:
 
   /// actual computation of the boundary stencil, to be overridden by implementations
   virtual void computeBoundaryStencil(DomainPartition * domain, lSet const & faceSet, BoundaryStencil & stencil) = 0;
+
+  /// pointer to boundary set manager
+  dataRepository::ManagedGroup * m_boundarySetData;
 
   /// name of the primary solution field
   string m_fieldName;
@@ -132,6 +147,16 @@ protected:
 
 };
 
+template<typename LAMBDA>
+void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
+{
+  this->forViewWrappersByType<BoundaryStencil>([&] (auto const & vw) -> void
+  {
+    if (vw.getName() != viewKeyStruct::cellStencilString)
+      lambda(vw.reference());
+  });
 }
+
+} // namespace geosx
 
 #endif //SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
