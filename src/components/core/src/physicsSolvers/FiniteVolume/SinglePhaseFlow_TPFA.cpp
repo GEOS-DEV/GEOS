@@ -499,7 +499,7 @@ void SinglePhaseFlow_TPFA::ImplicitStepComplete( real64 const & time_n,
 
 void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                          localIndex & numLocalRows,
-                                                         localIndex & numGlobalRows,
+                                                         globalIndex & numGlobalRows,
                                                          localIndex_array& localIndices,
                                                          localIndex offset )
 {
@@ -581,7 +581,7 @@ void SinglePhaseFlow_TPFA::SetupSystem ( DomainPartition * const domain,
   // for this solver, the dof are on the cell center, and the row corrosponds to an element
   localIndex numGhostRows  = 0;
   localIndex numLocalRows  = 0;
-  localIndex numGlobalRows = 0;
+  globalIndex numGlobalRows = 0;
 
   // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
   elementRegionManager->forCellBlocks( [&]( CellBlockSubRegion * const subRegion )
@@ -613,8 +613,8 @@ void SinglePhaseFlow_TPFA::SetupSystem ( DomainPartition * const domain,
   Epetra_Map * const
   rowMap = blockSystem->
            SetRowMap( BlockIDs::fluidPressureBlock,
-                      std::make_unique<Epetra_Map>( static_cast<long long>(numGlobalRows),
-                                                    static_cast<int>(numLocalRows),
+                      std::make_unique<Epetra_Map>( numGlobalRows,
+                                                    numLocalRows,
                                                     0,
                                                     m_linearSolverWrapper.m_epetraComm ) );
 
@@ -684,7 +684,7 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
                                                        [conn.connectedCellIndices[ke].index    ];
     }
 
-    const localIndex stencilSize = conn.stencilCellIndices.size();
+    const int stencilSize = integer_conversion<int>(conn.stencilCellIndices.size());
     elementLocalDofIndexCol.resize(stencilSize);
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
