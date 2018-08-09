@@ -5,13 +5,13 @@
 #ifndef EPETRASPARSEMATRIX_HPP_
 #define EPETRASPARSEMATRIX_HPP_
 
-#include <memory>
 #include "EpetraVector.hpp"
 #include <Epetra_Comm.h>
 #include <Epetra_MpiComm.h>
 #include <Epetra_Map.h>
 #include <Epetra_CrsGraph.h>
 #include <Epetra_CrsMatrix.h>
+#include <EpetraExt_MatrixMatrix.h>
 #include "common/DataTypes.hpp"
 
 namespace geosx
@@ -52,9 +52,9 @@ public:
    * \param nMaxEntriesPerRow Maximum number of entries per row.
    *
    */
-  void create( const MPI_Comm comm,
-               const globalIndex m_nRowGlobal,
-               const integer nMaxEntriesPerRow );
+  void create( MPI_Comm const comm,
+               globalIndex const m_nRowGlobal,
+               integer const nMaxEntriesPerRow );
 
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
@@ -64,10 +64,10 @@ public:
    * \param m_nColGlobal Global number of columns.
    * \param nMaxEntriesPerRow Maximum number of entries per row.
    */
-  void create( const MPI_Comm comm,
-               const globalIndex m_nRowGlobal,
-               const globalIndex m_nColGlobal,
-               const integer nMaxEntriesPerRow = 0 );
+  void create( MPI_Comm const comm,
+               globalIndex const m_nRowGlobal,
+               globalIndex const m_nColGlobal,
+               integer const nMaxEntriesPerRow = 0 );
 
   /**
    * @brief Create a square matrix from number of unknowns.
@@ -76,9 +76,9 @@ public:
    * \param m_nRowGlobal Global number of unknowns.
    * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
    */
-  void create( const MPI_Comm comm,
-               const int m_nRowGlobal,
-               const std::vector<integer> nMaxEntriesPerRow );
+  void create( MPI_Comm const comm,
+               integer const m_nRowGlobal,
+               std::vector<integer> const nMaxEntriesPerRow );
 
   /**
    * @brief Create a square matrix from number of unknowns.
@@ -88,10 +88,10 @@ public:
    * \param m_nColGlobal Global number of columns.
    * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
    */
-  void create( const MPI_Comm comm,
-               const globalIndex m_nRowGlobal,
-               const globalIndex m_nColGlobal,
-               const std::vector<integer> nMaxEntriesPerRow );
+  void create( MPI_Comm const comm,
+               globalIndex const m_nRowGlobal,
+               globalIndex const m_nColGlobal,
+               std::vector<integer> const nMaxEntriesPerRow );
 
   /**
    * @brief Create a square matrix from Epetra_Map.
@@ -104,8 +104,8 @@ public:
    * \param nMaxEntriesPerRow Maximum number of entries per row.
    *
    */
-  void create( const Epetra_Map &input_map,
-               const integer nMaxEntriesPerRow );
+  void create( Epetra_Map const &input_map,
+               integer const nMaxEntriesPerRow );
 
   /**
    * @brief Create a rectangular matrix from two existing Epetra_Map, row and column maps.
@@ -114,9 +114,9 @@ public:
    * \param col_map Epetra_Map for columns.
    * \param nMaxEntriesPerRow Maximum number of entries per row.
    */
-  void create( const Epetra_Map &row_map,
-               const Epetra_Map &col_map,
-               const integer nMaxEntriesPerRow = 0 );
+  void create( Epetra_Map const &row_map,
+               Epetra_Map const &col_map,
+               integer const nMaxEntriesPerRow = 0 );
 
   /**
    * @brief Create a matrix from an existing Epetra_FECrsMatrix.
@@ -163,10 +163,10 @@ public:
    * \param values Values to add to prescribed locations.
    * \param cols Global column indices in which to add the values.
    */
-  void add( const globalIndex iRow,
-            const integer nCols,
-            const real64 *values,
-            const globalIndex *cols );
+  void add( globalIndex const iRow,
+            integer const nCols,
+            real64 const *values,
+            globalIndex const *cols );
 
   /**
    * @brief Add to one element.
@@ -178,9 +178,9 @@ public:
    * \param value Value to add to prescribed locations.
    *
    */
-  void add( const globalIndex iRow,
-            const globalIndex iCol,
-            const real64 value );
+  void add( globalIndex const iRow,
+            globalIndex const iCol,
+            real64 const value );
 
   /**
    * @brief Set row of elements.
@@ -195,10 +195,10 @@ public:
    * \param cols Global column indices in which to set the values.
    *
    */
-  void set( const globalIndex iRow,
-            const integer nCols,
-            const real64 *values,
-            const globalIndex *cols );
+  void set( globalIndex const iRow,
+            integer const nCols,
+            real64 const *values,
+            globalIndex const *cols );
 
   /**
    * @brief Set one element.
@@ -210,9 +210,26 @@ public:
    * \param value Value to set at prescribed locations.
    *
    */
-  void set( const globalIndex iRow,
-            const globalIndex iCol,
-            const real64 value );
+  void set( globalIndex const iRow,
+            globalIndex const iCol,
+            real64 const value );
+
+  /**
+   * @brief Insert to row of elements.
+   *
+   * Inserts the values <tt>values</tt> to row <tt>iRow</tt>, at locations specified
+   * by <tt>cols</tt>. <tt>nCols</tt> is the number of entries (columns) in the row, and the
+   * size of both <tt>values</tt> and <tt>cols</tt>.
+   *
+   * \param iRow Global row index.
+   * \param nCols Number of columns to modify.
+   * \param values Values to add to prescribed locations.
+   * \param cols Global column indices in which to add the values.
+   */
+  void insert( globalIndex const iRow,
+               integer const nCols,
+               real64 const *values,
+               globalIndex const *cols );
 
   //@}
 
@@ -221,8 +238,31 @@ public:
   /**
    * @brief Matrix/Vector multiplication.
    */
-  void apply( EpetraVector &dst,
-              const EpetraVector &src );
+  void multiply( EpetraVector const &src,
+                 EpetraVector &dst );
+
+  /**
+   * @brief Compute residual r = Ax - b.
+   */
+  void residual( EpetraVector const &x,
+                 EpetraVector const &b,
+                 EpetraVector &res );
+
+  /**
+   * @brief Multiply all elements by scalingFactor.
+   */
+  void scale( real64 scalingFactor );
+
+  /**
+   * @brief Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
+   */
+  void leftScale( EpetraVector const &vec );
+
+  /**
+   * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vec.
+   */
+  void rightScale( EpetraVector const &vec );
+
   //@}
 
   //! @name Accessors Methods

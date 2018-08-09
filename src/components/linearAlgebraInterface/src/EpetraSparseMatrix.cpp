@@ -12,8 +12,7 @@ namespace geosx
 // -----------------------------------------------------------------------------------
 // Create an empty matrix
 EpetraSparseMatrix::EpetraSparseMatrix()
-{
-}
+{}
 
 // -----------------------------------------------------------------------------------
 // ------------------------------ Create/Finalize ------------------------------------
@@ -21,76 +20,75 @@ EpetraSparseMatrix::EpetraSparseMatrix()
 // Allocate matrix (prepare to be filled with data).
 
 // Create a matrix from number of elements
-void EpetraSparseMatrix::create(const MPI_Comm    comm,
-                                const globalIndex in_m_nRowGlobal,
-                                const integer     nMaxEntriesPerRow)
+void EpetraSparseMatrix::create( MPI_Comm const comm,
+                                 globalIndex const in_m_nRowGlobal,
+                                 integer const     nMaxEntriesPerRow )
 {
-  Epetra_Map map = Epetra_Map(in_m_nRowGlobal,0,Epetra_MpiComm(comm));
-  matrix = std::unique_ptr<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy, map, nMaxEntriesPerRow, false));
+  Epetra_Map map = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, map, nMaxEntriesPerRow, false ));
 }
 
 // Create a matrix from number of elements
-void EpetraSparseMatrix::create(const MPI_Comm    comm,
-                                const globalIndex in_m_nRowGlobal,
-                                const globalIndex in_m_nColGlobal,
-                                const integer nMaxEntriesPerRow)
+void EpetraSparseMatrix::create( MPI_Comm const comm,
+                                 globalIndex const in_m_nRowGlobal,
+                                 globalIndex const in_m_nColGlobal,
+                                 integer const nMaxEntriesPerRow )
 {
-  Epetra_Map rowMap = Epetra_Map(in_m_nRowGlobal,0,Epetra_MpiComm(comm));
-  Epetra_Map colMap = Epetra_Map(in_m_nColGlobal,0,Epetra_MpiComm(comm));
-  matrix = std::unique_ptr<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy, rowMap, colMap, nMaxEntriesPerRow, false));
+  Epetra_Map rowMap = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
+  Epetra_Map colMap = Epetra_Map( in_m_nColGlobal, 0, Epetra_MpiComm( comm ));
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, rowMap, colMap, nMaxEntriesPerRow, false ));
 }
 
 // Create a matrix from number of elements
-void EpetraSparseMatrix::create(const MPI_Comm             comm,
-                                const integer              in_m_nRowGlobal,
-                                const std::vector<integer> nMaxEntriesPerRow)
+void EpetraSparseMatrix::create( MPI_Comm const comm,
+                                 integer const in_m_nRowGlobal,
+                                 std::vector<integer> const nMaxEntriesPerRow )
 {
-  Epetra_Map map = Epetra_Map(in_m_nRowGlobal,0,Epetra_MpiComm(comm));
-  matrix = std::unique_ptr<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy, map, (int *)const_cast<int *>(&(nMaxEntriesPerRow[0])), false));
+  Epetra_Map map = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, map, (int *)const_cast<int *>(&(nMaxEntriesPerRow[0])), false ));
 }
 
 // Create a matrix from number of elements
-void EpetraSparseMatrix::create(const MPI_Comm             comm,
-                                const globalIndex          in_m_nRowGlobal,
-                                const globalIndex          in_m_nColGlobal,
-                                const std::vector<integer> nMaxEntriesPerRow)
+void EpetraSparseMatrix::create( MPI_Comm const comm,
+                                 globalIndex const in_m_nRowGlobal,
+                                 globalIndex const in_m_nColGlobal,
+                                 std::vector<integer> const nMaxEntriesPerRow )
 {
-  Epetra_Map rowMap = Epetra_Map(in_m_nRowGlobal,0,Epetra_MpiComm(comm));
-  Epetra_Map colMap = Epetra_Map(in_m_nColGlobal,0,Epetra_MpiComm(comm));
-  matrix = std::unique_ptr<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy, rowMap, colMap, (int *)const_cast<int *>(&(nMaxEntriesPerRow[0])), false));
+  Epetra_Map rowMap = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
+  Epetra_Map colMap = Epetra_Map( in_m_nColGlobal, 0, Epetra_MpiComm( comm ));
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, rowMap, colMap, (int *)const_cast<int *>(&(nMaxEntriesPerRow[0])), false ));
 }
 
 // Create a matrix from Epetra_Map
-void EpetraSparseMatrix::create(const Epetra_Map &input_map,
-                                const integer     nMaxEntriesPerRow)
+void EpetraSparseMatrix::create( Epetra_Map const &input_map,
+                                 integer const nMaxEntriesPerRow )
 {
-  matrix = std::unique_ptr<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy, input_map, nMaxEntriesPerRow, false));
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, input_map, nMaxEntriesPerRow, false ));
 }
 
 // Create a matrix from two Epetra_Maps
-void EpetraSparseMatrix::create(const Epetra_Map &input_row_map,
-                                const Epetra_Map &input_col_map,
-                                const integer         nMaxEntriesPerRow)
+void EpetraSparseMatrix::create( Epetra_Map const &input_row_map,
+                                 Epetra_Map const &input_col_map,
+                                 integer const nMaxEntriesPerRow )
 {
-  matrix = std::unique_ptr<Epetra_CrsMatrix>(new Epetra_CrsMatrix(Copy, input_row_map, input_col_map, nMaxEntriesPerRow, false));
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, input_row_map, input_col_map, nMaxEntriesPerRow, false ));
 }
 
 // Create a matrix from an Epetra_CrsMatrix.
-void EpetraSparseMatrix::create(Epetra_CrsMatrix &in_matrix)
+void EpetraSparseMatrix::create( Epetra_CrsMatrix &in_matrix )
 {
-  matrix = std::unique_ptr<Epetra_CrsMatrix>(&in_matrix);
+  matrix = std::unique_ptr<Epetra_CrsMatrix>( &in_matrix );
 }
 
 // Reinitialize. Keeps the map and graph but sets all values to 0.
 void EpetraSparseMatrix::zero()
 {
-  matrix->PutScalar(0);
+  matrix->PutScalar( 0 );
 }
 
 // Empty open function (implemented fo HYPRE compatibility).
 void EpetraSparseMatrix::open()
-{
-}
+{}
 
 // Assemble the matrix when filled
 void EpetraSparseMatrix::close()
@@ -104,19 +102,20 @@ void EpetraSparseMatrix::close()
 // -----------------------------------------------------------------------------------
 
 // Add single value at row iRow and column iCol
-void EpetraSparseMatrix::add(const globalIndex    iRow,
-                             const globalIndex    iCol,
-                             const real64 value)
+void EpetraSparseMatrix::add( globalIndex const iRow,
+                              globalIndex const iCol,
+                              real64 const value )
 {
-  matrix->SumIntoGlobalValues(iRow,1,&value,&iCol);
+  matrix->SumIntoGlobalValues( iRow, 1, &value, &iCol );
 }
 
 // Add values at row iRow and columns cols (size nCols)
-void EpetraSparseMatrix::add(const globalIndex  iRow,
-                             const integer      nCols,
-                             const real64      *values,
-                             const globalIndex *cols)
+void EpetraSparseMatrix::add( globalIndex const iRow,
+                              integer const nCols,
+                              real64 const *values,
+                              globalIndex const *cols )
 {
+
 #if 1
   matrix->SumIntoGlobalValues(iRow,nCols,values,cols);
 #else
@@ -222,46 +221,81 @@ void EpetraSparseMatrix::add(const globalIndex  iRow,
 }
 
 // Set single value at row iRow and column iCol
-void EpetraSparseMatrix::set(const globalIndex    iRow,
-                             const globalIndex    iCol,
-                             const real64         value)
+void EpetraSparseMatrix::set( globalIndex const iRow,
+                              globalIndex const iCol,
+                              real64 const value )
 {
-  matrix->ReplaceGlobalValues(iRow,1,&value,&iCol);
+  matrix->ReplaceGlobalValues( iRow, 1, &value, &iCol );
 }
 
 // Set values at row iRow and columns cols (size nCols)
-void EpetraSparseMatrix::set(const globalIndex     iRow,
-                             const integer         nCols,
-                             const real64         *values,
-                             const globalIndex    *cols)
+void EpetraSparseMatrix::set( globalIndex const iRow,
+                              integer const nCols,
+                              real64 const *values,
+                              globalIndex const *cols )
 {
-  matrix->ReplaceGlobalValues(iRow,nCols,values,cols);
+  matrix->ReplaceGlobalValues( iRow, nCols, values, cols );
+}
+
+// Set values at row iRow and columns cols (size nCols)
+void EpetraSparseMatrix::insert( globalIndex const iRow,
+                                 integer const nCols,
+                                 real64 const *values,
+                                 globalIndex const *cols )
+{
+  matrix->InsertGlobalValues( iRow, nCols, values, cols );
 }
 
 // -----------------------------------------------------------------------------------
 // ------------------------------ Linear Algebra -------------------------------------
 // -----------------------------------------------------------------------------------
 
-// Apply operator. Matrix/vector multiplication with src. Result sent to dst.
-void EpetraSparseMatrix::apply(      EpetraVector &dst,
-                               const EpetraVector &src)
+// Matrix/vector multiplication with src. Result sent to dst.
+void EpetraSparseMatrix::multiply( EpetraVector const &src,
+                                   EpetraVector &dst )
 {
-  matrix->Multiply(false,*src.getPointer(),*dst.getPointer());
+  matrix->Multiply( false, *src.getPointer(), *dst.getPointer());
 }
 
+// Compute res = b - Ax (residual form).
+void EpetraSparseMatrix::residual( EpetraVector const &x,
+                                   EpetraVector const &b,
+                                   EpetraVector &res )
+{
+  matrix->Multiply( false, *x.getPointer(), *res.getPointer());
+  res.update(-1.0,b,1.0);
+}
 
-void EpetraSparseMatrix::getRow(int 				 GlobalRow,
-                                int 				&NumEntries,
-                                std::vector<real64> &vecValues,
-                                std::vector<int>    &vecIndices)
+// Multiply all elements by scalingFactor.
+void EpetraSparseMatrix::scale( real64 scalingFactor )
+{
+  matrix->Scale(scalingFactor);
+}
+
+// Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
+void EpetraSparseMatrix::leftScale( EpetraVector const &vec )
+{
+  matrix->LeftScale(*vec.getPointer());
+}
+
+// Post-multiplies (right) with diagonal matrix consisting of the values in vec.
+void EpetraSparseMatrix::rightScale( EpetraVector const &vec )
+{
+  matrix->RightScale(*vec.getPointer());
+}
+
+void EpetraSparseMatrix::getRow( int GlobalRow,
+                                 int &NumEntries,
+                                 std::vector<real64> &vecValues,
+                                 std::vector<int>    &vecIndices )
 {
   real64* Values;
   int* Indices;
-  matrix->ExtractGlobalRowView(GlobalRow, NumEntries, Values, Indices);
-  if (matrix->MyGRID(GlobalRow))
+  matrix->ExtractGlobalRowView( GlobalRow, NumEntries, Values, Indices );
+  if( matrix->MyGRID( GlobalRow ))
   {
-    vecIndices.assign(Indices,Indices+NumEntries);
-    vecValues.assign(Values,Values+NumEntries);
+    vecIndices.assign( Indices, Indices+NumEntries );
+    vecValues.assign( Values, Values+NumEntries );
   }
 }
 
@@ -320,7 +354,7 @@ int EpetraSparseMatrix::myCols() const
 // Wrapper to print the trilinos output of the matrix
 void EpetraSparseMatrix::print() const
 {
-  std::cout << *matrix << std::endl;
+  std::cout << *matrix.get() << std::endl;
 }
 
 // Boolean indicator. True = matrix assembled and ready to be used.

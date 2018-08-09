@@ -46,25 +46,47 @@ public:
    *
    * Create a vector from an Epetra_Map and an array of values.
    */
-  void create(const Epetra_Map &map,
-      real64     *values);
+  void create( const Epetra_Map &map,
+               real64     *values );
 
   /**
    * @brief Construct vector from array.
    *
    * Create a vector from an Epetra_Map and an array of values.
    */
-  void create(const globalIndex  size,
-                    real64      *values);
+  void create( const globalIndex  size,
+               real64      *values );
 
   /**
    * @brief Construct vector from std::vector.
    *
    * Create a vector from an std vector.
    */
-  void create(std::vector<real64> &vec);
+  void create( std::vector<real64> &vec );
   //@}
 
+  //! @name Linear Algebra Methods
+  //@{
+
+  /**
+   * @brief Multiply all elements by scalingFactor.
+   */
+  void scale( real64 const scalingFactor );
+
+  /**
+   * @brief Dot product with the vector vec.
+   */
+  void dot( EpetraVector const &vec,
+            real64 *dst);
+
+  /**
+   * @brief Update (name to be changed) vector as this = alpha*vec + beta*this.
+   */
+  void update( real64 const alpha,
+               EpetraVector const &vec,
+               real64 const beta);
+
+  //@}
 
   //! @name Accessor Methods
   //@{
@@ -72,12 +94,12 @@ public:
   /**
    * @brief Returns the global of the vector.
    */
-  globalIndex globalSize();
+  globalIndex globalSize() const;
 
   /**
    * @brief Returns the local of the vector.
    */
-  localIndex localSize();
+  localIndex localSize() const;
 
   /**
    * @brief Returns a const pointer to the underlying Epetra_Vector.
@@ -97,13 +119,13 @@ public:
   /**
    * @brief Print the vector in Trilinos format to the terminal.
    */
-  void print();
+  void print() const;
 
   //@}
 
 protected:
-  // Pointer to underlying Epetra_Vector type.
-  Epetra_Vector *vector;
+  // Unique pointer to underlying Epetra_Vector type.
+  std::unique_ptr<Epetra_Vector> vector = nullptr;
 };
 
 }

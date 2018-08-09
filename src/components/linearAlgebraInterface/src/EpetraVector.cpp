@@ -9,57 +9,78 @@ namespace geosx
 // Create an empty vector
 EpetraVector::EpetraVector()
 {
-  Epetra_Map map = Epetra_Map(0,0,Epetra_MpiComm(MPI_COMM_WORLD));
-  vector = new Epetra_Vector(View, map, 0);
 }
 
 // Create a vector from array
-void EpetraVector::create(const globalIndex size, double *V)
+void EpetraVector::create( const globalIndex size, double *V )
 {
-  Epetra_Map map = Epetra_Map(size,0,Epetra_MpiComm(MPI_COMM_WORLD));
-  vector = new Epetra_Vector(View,map,V);
+  Epetra_Map map = Epetra_Map( size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
+  vector = std::unique_ptr<Epetra_Vector>(new Epetra_Vector( View, map, V ));
 }
 
 // Create a vector from array
-void EpetraVector::create(const Epetra_Map& Map, double *V)
+void EpetraVector::create( const Epetra_Map& Map, double *V )
 {
-  Epetra_Map map = Epetra_Map(Map);
-  vector = new Epetra_Vector(View,map,V);
+  Epetra_Map map = Epetra_Map( Map );
+  vector = std::unique_ptr<Epetra_Vector>(new Epetra_Vector( View, map, V ));
 }
 
 // Create a vector from vector
-void EpetraVector::create(std::vector<double> &vec)
+void EpetraVector::create( std::vector<double> &vec )
 {
   globalIndex m_size = vec.size();
-  Epetra_Map map = Epetra_Map(m_size,0,Epetra_MpiComm(MPI_COMM_WORLD));
-  vector = new Epetra_Vector(View, map, vec.data());
+  Epetra_Map map = Epetra_Map( m_size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
+  vector = std::unique_ptr<Epetra_Vector>(new Epetra_Vector( View, map, vec.data()));
 }
 
-
-globalIndex EpetraVector::globalSize()
+// Multiply all elements by scalingFactor.
+void EpetraVector::scale( real64 const scalingFactor )
 {
-  return vector->GlobalLength64();
+  vector.get()->Scale(scalingFactor);
 }
-
-localIndex EpetraVector::localSize()
+// Dot product with the vector vec.
+void EpetraVector::dot( EpetraVector const &vec,
+                        real64 *dst)
 {
-  return vector->MyLength();
+  vector.get()->Dot(*vec.getPointer(),dst);
 }
-
-void EpetraVector::print()
+// Multiply all elements by scalingFactor.
+void EpetraVector::update( real64 const alpha,
+                           EpetraVector const &vec,
+                           real64 const beta)
 {
-  std::cout << *vector << std::endl;
+  vector.get()->Update(alpha,*vec.getPointer(),beta);
 }
 
+// Return the global size of the vector (total number of elements).
+globalIndex EpetraVector::globalSize() const
+{
+  return vector.get()->GlobalLength64();
+}
+
+// Return the local size of the vector (total number of local elements).
+localIndex EpetraVector::localSize() const
+{
+  return vector.get()->MyLength();
+}
+
+// Print vector to the terminal in Trilinos format.
+void EpetraVector::print() const
+{
+  std::cout << *vector.get() << std::endl;
+}
+
+// Accessors
+// Get const pointer
 const Epetra_Vector* EpetraVector::getPointer() const
 {
-  return vector;
+  return vector.get();
 }
 
+// Get non-const pointer
 Epetra_Vector* EpetraVector::getPointer()
 {
-  return vector;
+  return vector.get();
 }
 
 }
-
