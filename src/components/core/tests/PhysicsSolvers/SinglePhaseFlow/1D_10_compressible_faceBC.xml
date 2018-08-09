@@ -30,8 +30,8 @@
   </Mesh>
 
   <Geometry>
-    <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   type="0" xMin=" 8.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
+    <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 1.01, 1.01"/>
+    <Box name="sink"   type="0" xMin=" 9.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
   </Geometry>
 
 
@@ -133,14 +133,16 @@
                objectPath="ElementRegion/Region2/cb1/fluidPressure"
                dataType="real64"
                scale="5e6"/>
-  
+
     <Dirichlet name="sourceTerm"
+               objectPath="faceManager"
                fieldName="fluidPressure"
                dataType="Scalar"
                scale="1e7"
                setNames="source"/>
 
     <Dirichlet name="sinkTerm"
+               objectPath="faceManager"
                fieldName="fluidPressure"
                dataType="Scalar"
                scale="0.0"

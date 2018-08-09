@@ -550,9 +550,11 @@ void BoundaryConditionBase::ApplyBoundaryCondition(lSet const & set,
   if (functionName.empty())
   {
     real64 const value = m_scale;
+    integer counter = 0;
     for (auto a : set)
     {
-      lambda(dataGroup, a, value);
+      lambda(dataGroup, a, counter, value);
+      ++counter;
     }
   }
   else
@@ -562,10 +564,12 @@ void BoundaryConditionBase::ApplyBoundaryCondition(lSet const & set,
     {
       if (function->isFunctionOfTime() == 2)
       {
-        real64 const value = m_scale * function->Evaluate( &time );
+        real64 const value = m_scale * function->Evaluate(&time);
+        integer counter = 0;
         for (auto a : set)
         {
-          lambda(dataGroup, a, value);
+          lambda(dataGroup, a, counter, value);
+          ++counter;
         }
       }
       else
@@ -577,7 +581,7 @@ void BoundaryConditionBase::ApplyBoundaryCondition(lSet const & set,
         for (auto a : set)
         {
           real64 const value = m_scale * result[counter];
-          lambda(dataGroup, a, value);
+          lambda(dataGroup, a, counter, value);
           ++counter;
         }
       }

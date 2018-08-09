@@ -31,7 +31,7 @@ namespace geosx
 {
 
 /**
- * @class FluxStencil
+ * @class StencilCollection
  *
  * Class representing a spatial discretization stencil.
  * The idea is to hide implementation (i.e. memory layout) behind a lambda-based interface
@@ -46,7 +46,9 @@ class StencilCollection
 {
 private:
   /**
-   * @struct A wrapper of a single connection stencil
+   * @struct Accessor
+   *
+   * A wrapper of a single connection stencil
    * Hides implementation details of stencil representation
    * (e.g. array of structs vs struct of arrays vs CSR-like storage)
    */
@@ -73,7 +75,7 @@ public:
            array<IndexType> const & stencilCells,
            array<WeightType> const & stencilWeights);
 
-  /// called after adding connections is done to compress the dataa and release unused memory
+  /// called after adding connections is done to compress the data and release unused memory
   void compress();
 
   /// evaluate a user function on each connection
@@ -168,7 +170,7 @@ template<typename POLICY, typename LAMBDA>
 void StencilCollection<IndexType, WeightType>::forAll(LAMBDA &&lambda) const
 {
   RAJA::RangeSegment seg(0, numConnections());
-  RAJA::forall<POLICY>(seg, [=] (localIndex index) -> void
+  RAJA::forall<POLICY>(seg, [=] (localIndex index) mutable -> void
   {
     lambda(Accessor(*this, index));
   });
@@ -193,7 +195,7 @@ template<typename IndexType, typename WeightType>
 typename StencilCollection<IndexType, WeightType>::Accessor
 StencilCollection<IndexType, WeightType>::operator[](localIndex iconn) const
 {
-  return Accessor(m_connectionList[iconn]);
+  return Accessor(*this, iconn);
 }
 
 }
