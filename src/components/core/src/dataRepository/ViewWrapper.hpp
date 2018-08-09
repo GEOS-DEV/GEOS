@@ -927,6 +927,15 @@ public:
     return d_size / sizeof(T);
   }
 
+
+  virtual bool shouldRegisterDataPtr() const override
+  {
+    std::type_index type_index = std::type_index(elementTypeID());
+    axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
+    return sidre_type_id != axom::sidre::TypeID::NO_TYPE_ID;
+  }
+
+
   
   void registerDataPtr(axom::sidre::View * view) const override
   {
