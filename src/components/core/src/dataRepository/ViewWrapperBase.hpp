@@ -90,6 +90,7 @@ public:
 
   virtual size_t sizeOfType() const = 0;
 
+  virtual bool shouldRegisterDataPtr() const = 0;
   virtual void registerDataPtr(axom::sidre::View * view=nullptr) const = 0; 
   virtual void registerToWrite(axom::sidre::View * view=nullptr) const = 0;
   virtual void finishWriting(axom::sidre::View * view=nullptr) const = 0;

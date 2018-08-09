@@ -19,6 +19,7 @@
 #ifndef FILEIO_BLUEPRINT_BLUEPRINT_HPP
 #define FILEIO_BLUEPRINT_BLUEPRINT_HPP
 
+#include "common/DataTypes.hpp"
 
 #include <unordered_map>
 #include <string>
@@ -59,7 +60,7 @@ private:
   void addCells(axom::sidre::Group* topo, axom::sidre::Group* fields) const;
 
 
-  const static std::unordered_map<int, const std::string> numNodesToElemName;
+  const static std::unordered_map<localIndex, const std::string> numNodesToElemName;
 
 #ifdef USE_ATK
   const NodeManager& m_node_manager;
