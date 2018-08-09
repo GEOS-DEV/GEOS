@@ -137,7 +137,7 @@ public:
 
   void SetNumRowsAndTrilinosIndices( ManagedGroup * const domain,
                                      localIndex & numLocalRows,
-                                     localIndex & numGlobalRows,
+                                     globalIndex & numGlobalRows,
                                      localIndex_array& localIndices,
                                      localIndex offset );
 
