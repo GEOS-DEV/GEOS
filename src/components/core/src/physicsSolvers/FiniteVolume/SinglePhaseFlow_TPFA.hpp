@@ -203,9 +203,6 @@ public:
     constexpr static auto deltaPorosityString = "deltaPorosity";
     constexpr static auto referencePorosityString = "referencePorosity";
 
-    constexpr static auto faceAreaString = "faceArea";
-    constexpr static auto faceCenterString = "faceCenter";
-
     constexpr static auto gravityFlagString = "gravityFlag";
     constexpr static auto gravityDepthString = "gravityDepth";
 

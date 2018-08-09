@@ -95,7 +95,31 @@ void FaceManager::FillDocumentationNode()
 //                              0,
 //                              0 );
 
+  docNode->AllocateChildNode( viewKeyStruct::faceAreaString,
+                              viewKeyStruct::faceAreaString,
+                              -1,
+                              "real64_array",
+                              "real64_array",
+                              "Face surface area",
+                              "Face surface area",
+                              "",
+                              this->getName(),
+                              1,
+                              0,
+                              1 );
 
+  docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
+                              viewKeyStruct::faceCenterString,
+                              -1,
+                              "r1_array",
+                              "r1_array",
+                              "Face centroid coordinates",
+                              "Face centroid coordinates",
+                              "",
+                              this->getName(),
+                              1,
+                              0,
+                              1 );
 
 }
 

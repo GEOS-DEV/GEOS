@@ -212,7 +212,7 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const& time_n,
 
 void PoroelasticSolver::ReadXML_PostProcess()
 {
-  string ctOption = this->getReference<string>(viewKeys.couplingTypeOptionString);
+  string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionString);
 
   if( ctOption == "FixedStress" )
   {

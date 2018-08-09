@@ -176,6 +176,9 @@ public:
     return m_initialCondition;
   }
 
+  real64 GetScale() const
+  { return m_scale; }
+
 private:
 
   string_array m_setNames; // sets the boundary condition is applied to
@@ -329,7 +332,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
   Epetra_SerialDenseVector     node_rhs( integer_conversion<int>( set.size() ) );
 
 
-  dataRepository::view_rtype_const<localIndex_array> dofMap = dataGroup->getData<localIndex_array>(dofMapName);
+  dataRepository::view_rtype_const<globalIndex_array> dofMap = dataGroup->getData<globalIndex_array>(dofMapName);
 
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex), [&]( auto type ) -> void

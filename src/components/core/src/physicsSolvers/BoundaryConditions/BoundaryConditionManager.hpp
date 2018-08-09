@@ -80,7 +80,7 @@ public:
 
   template< typename LAMBDA >
   void ApplyBoundaryCondition( real64 const time,
-                               dataRepository::ManagedGroup * object,
+                               dataRepository::ManagedGroup const * const object,
                                string const & fieldName,
                                LAMBDA && lambda )
   {

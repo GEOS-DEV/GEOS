@@ -117,32 +117,6 @@ void SinglePhaseFlow_TPFA::FillOtherDocumentationNodes( dataRepository::ManagedG
       FaceManager * const faceManager = meshLevel->getFaceManager();
       cxx_utilities::DocumentationNode * const docNode = faceManager->getDocumentationNode();
 
-      docNode->AllocateChildNode( viewKeyStruct::faceAreaString,
-                                  viewKeyStruct::faceAreaString,
-                                  -1,
-                                  "real64_array",
-                                  "real64_array",
-                                  "Face surface area",
-                                  "Face surface area",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  1 );
-
-      docNode->AllocateChildNode( viewKeyStruct::faceCenterString,
-                                  viewKeyStruct::faceCenterString,
-                                  -1,
-                                  "r1_array",
-                                  "r1_array",
-                                  "Face centroid coordinates",
-                                  "Face centroid coordinates",
-                                  "",
-                                  faceManager->getName(),
-                                  1,
-                                  0,
-                                  1 );
-
       docNode->AllocateChildNode( viewKeyStruct::transmissibilityString,
                                   viewKeyStruct::transmissibilityString,
                                   -1,
@@ -416,7 +390,7 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
                                              lSet const & set ) -> void
         {
 
-      // call the application of the boundray condition to alter the matrix and rhs
+      // call the application of the boundary condition to alter the matrix and rhs
       bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
                                                           time,
                                                           subRegion,
@@ -1175,8 +1149,8 @@ void SinglePhaseFlow_TPFA::PrecomputeData(DomainPartition *const domain)
   });
 
 
-  r1_array & faceCenter    = faceManager->getReference<r1_array>(viewKeyStruct::faceCenterString);
-  real64_array & faceArea  = faceManager->getReference<real64_array>(viewKeyStruct::faceAreaString);
+  r1_array & faceCenter    = faceManager->getReference<r1_array>(FaceManager::viewKeyStruct::faceCenterString);
+  real64_array & faceArea  = faceManager->getReference<real64_array>(FaceManager::viewKeyStruct::faceAreaString);
   real64_array & faceTrans = faceManager->getReference<real64_array>(viewKeyStruct::transmissibilityString);
   array<array<localIndex>> const & faceToNodes = faceManager->nodeList();
 
