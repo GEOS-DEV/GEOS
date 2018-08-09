@@ -47,7 +47,6 @@
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 
-
 namespace geosx
 {
 
@@ -143,8 +142,8 @@ void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
     docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
                                 viewKeyStruct::blockLocalDofNumberString,
                                 -1,
-                                "localIndex_array",
-                                "localIndex_array",
+                                "globalIndex_array",
+                                "globalIndex_array",
                                 "dof",
                                 "dof",
                                 "-1",
@@ -231,7 +230,7 @@ void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
 
 void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
                                                localIndex & numLocalRows,
-                                               localIndex & numGlobalRows,
+                                               globalIndex & numGlobalRows,
                                                localIndex_array& localIndices,
                                                localIndex offset )
 {
@@ -266,7 +265,7 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
 
   // create trilinos dof indexing
 
-  localIndex_array& trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
   integer_array const & is_ghost       = nodeManager->getReference<integer_array>(NodeManager::viewKeyStruct::ghostRankString);
 
 
@@ -302,7 +301,7 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
   localIndex dim = 1;//domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension;
   localIndex n_ghost_rows  = nodeManager->GetNumberOfGhosts();
   localIndex n_local_rows  = nodeManager->size()-n_ghost_rows;
-  localIndex n_global_rows = 0;
+  globalIndex n_global_rows = 0;
 
   localIndex_array displacementIndices;
   SetNumRowsAndTrilinosIndices( nodeManager,
@@ -322,21 +321,17 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
 
   // create epetra map
 
-  Epetra_Map * junk =  new Epetra_Map( static_cast<int>(dim*n_global_rows),
-                                       static_cast<int>(dim*n_local_rows),
-                                       0,
-                                       m_linearSolverWrapper.m_epetraComm );
+  Epetra_Map * const
+  rowMap = blockSystem->SetRowMap( BlockIDs::dummyScalarBlock,
+                                   std::make_unique<Epetra_Map>( dim*n_global_rows,
+                                                                 dim*n_local_rows,
+                                                                 0,
+                                                                 m_linearSolverWrapper.m_epetraComm ) );
 
-  Epetra_Map * const rowMap = blockSystem->SetRowMap( BlockIDs::dummyScalarBlock,
-                                                      std::make_unique<Epetra_Map>( static_cast<int>(dim*n_global_rows),
-                                                                                    static_cast<int>(dim*n_local_rows),
-                                                                                    0,
-                                                                                    m_linearSolverWrapper.m_epetraComm ) );
-
-  Epetra_FECrsGraph * const sparsity = blockSystem->SetSparsity( BlockIDs::dummyScalarBlock,
-                                                                 BlockIDs::dummyScalarBlock,
-                                                                 std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
-
+  Epetra_FECrsGraph * const
+  sparsity = blockSystem->SetSparsity( BlockIDs::dummyScalarBlock,
+                                       BlockIDs::dummyScalarBlock,
+                                       std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
 
 
   SetSparsityPattern( domain, sparsity );
@@ -357,12 +352,12 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
 }
 
 void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
-                                                       Epetra_FECrsGraph * const sparsity )
+                                     Epetra_FECrsGraph * const sparsity )
 {
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup const * const nodeManager = mesh->getNodeManager();
 
-  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
@@ -377,7 +372,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
         lArray2d const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<lArray2d>(keys::nodeList);
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
-        integer_array elementLocalDofIndex (numNodesPerElement);
+        globalIndex_array elementLocalDofIndex (numNodesPerElement);
 
         array<integer> const & elemGhostRank = cellBlock->m_ghostRank;
 
@@ -391,7 +386,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
             {
               for(localIndex i=0 ; i<numNodesPerElement ; ++i)
               {
-                elementLocalDofIndex[i] = integer_conversion<int>(trilinos_index[localNodeIndices[i]]);
+                elementLocalDofIndex[i] = trilinos_index[localNodeIndices[i]];
               }
 
               sparsity->InsertGlobalIndices(integer_conversion<int>(elementLocalDofIndex.size()),
@@ -426,7 +421,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::dummyScalarBlock );
   Epetra_FEVector * const solution = blockSystem->GetSolutionVector( BlockIDs::dummyScalarBlock );
 
-  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
 
   for( auto & region : elemManager->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups() )
   {
@@ -445,7 +440,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
       lArray2d const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
       const integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
 
-      Epetra_IntSerialDenseVector  element_index   (numNodesPerElement);
+      Epetra_LongLongSerialDenseVector  element_index   (numNodesPerElement);
       Epetra_SerialDenseVector     element_rhs     (numNodesPerElement);
       Epetra_SerialDenseMatrix     element_matrix  (numNodesPerElement,
                                                     numNodesPerElement);
@@ -522,7 +517,7 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::dummyScalarBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::dummyScalarBlock );
-  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
 
   string const & fieldName = getReference<string>(viewKeys.fieldVarName);
   real64_array & fieldVar = nodeManager->getReference<real64_array>(string("Temperature"));
