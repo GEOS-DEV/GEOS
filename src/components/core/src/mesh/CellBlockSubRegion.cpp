@@ -39,7 +39,7 @@ CellBlockSubRegion::CellBlockSubRegion( string const & name, ManagedGroup * cons
 
   RegisterViewWrapper( viewKeyStruct::constitutiveMapString, &m_constitutiveMapView, 0);
 
-  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
+  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0);
 
 
 

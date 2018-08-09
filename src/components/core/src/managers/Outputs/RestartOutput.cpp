@@ -25,6 +25,7 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/ProblemManager.hpp"
 #include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 
@@ -77,19 +78,19 @@ void RestartOutput::Execute(real64 const& time_n,
   //   bcManager->finishWriting();
   // #endif
 
-  #ifdef USE_ATK
-    ViewWrapper<std::string>::rtype problemName = this->getName();
-    char fileName[200] = {0};
-    sprintf(fileName, "%s_%s_%09d", problemName.data(), "restart", cycleNumber);
+#ifdef USE_ATK
+  string const problemName = this->getName();
+  char fileName[200] = {0};
+  sprintf(fileName, "%s_%s_%09d", problemName.data(), "restart", cycleNumber);
 
-    domainPartition->getParent()->prepareToWrite();
-    m_functionManager->prepareToWrite();
-    BoundaryConditionManager::get()->prepareToWrite();
-    SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
-    domainPartition->getParent()->finishWriting();
-    m_functionManager->finishWriting();
-    BoundaryConditionManager::get()->finishWriting();
-  #endif
+  domainPartition->getParent()->prepareToWrite();
+  NewFunctionManager::Instance()->prepareToWrite();
+  BoundaryConditionManager::get()->prepareToWrite();
+  SidreWrapper::writeTree( 1, fileName, "sidre_hdf5", MPI_COMM_WORLD );
+  domainPartition->getParent()->finishWriting();
+  NewFunctionManager::Instance()->finishWriting();
+  BoundaryConditionManager::get()->finishWriting();
+#endif
 }
 
 

@@ -417,7 +417,6 @@ R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManage
 {
 
   r1_array const & X = nodeManager.referencePosition();
-//  view_rtype_const<r1_array> u = nodeManager.totalDisplacement();
   arrayView1d<localIndex const> nodelist = m_toNodesRelation[k];
   R1Tensor elementCenter(0.0);
   for ( localIndex a = 0 ; a < numNodesPerElement() ; ++a)

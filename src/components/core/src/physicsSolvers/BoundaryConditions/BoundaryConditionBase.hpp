@@ -276,12 +276,12 @@ inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( g
 
   if( true )//node_is_ghost[*nd] < 0 )
   {
-    real64 LARGE = blockSystem->ClearSystemRow( blockID, dof, 1.0 );
+    real64 LARGE = blockSystem->ClearSystemRow( blockID, static_cast< int >( dof ), 1.0 );
     rhs = -LARGE*( bcValue - fieldValue );
   }
   else
   {
-    blockSystem->ClearSystemRow( blockID, dof, 0.0 );
+    blockSystem->ClearSystemRow( blockID, static_cast< int >( dof ), 0.0 );
     rhs = 0.0;
   }
 }
