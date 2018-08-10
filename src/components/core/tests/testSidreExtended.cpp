@@ -126,10 +126,10 @@ void checkArray2dView(const ViewWrapper<Array2dT<T>> * view, int sfp, const Arra
 
 template<typename T> 
 ViewWrapper<set<T>> * createSetView(ManagedGroup * parent, const string & name,
-                                    int sfp, const set<T> & data)
+                                    localIndex sfp, const set<T> & data)
 {
   ViewWrapper<set<T>> * view = parent->RegisterViewWrapper<set<T>>(name);
-  view->setSizedFromParent(sfp);
+  view->setSizedFromParent(int(sfp));
 
   /* Resize the array */
   localIndex expected_size = data.size() * sizeof(T);
@@ -152,7 +152,7 @@ ViewWrapper<set<T>> * createSetView(ManagedGroup * parent, const string & name,
 
 
 template<typename T> 
-void checkSetView(const ViewWrapper<set<T>> * view, int sfp, const set<T> & data) 
+void checkSetView(const ViewWrapper<set<T>> * view, localIndex sfp, const set<T> & data) 
 {
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->size(), data.size());
@@ -200,7 +200,7 @@ ViewWrapper<string_array> * createStringArrayView(ManagedGroup * parent, const s
   ViewWrapper<string_array> * view = parent->RegisterViewWrapper<string_array>(name);
   view->setSizedFromParent(sfp);
 
-  uint expected_size = arr.size() * sizeof(string);
+  unsigned long expected_size = arr.size() * sizeof(string);
   view->resize(arr.size());
 
   EXPECT_EQ(static_cast<uint>(view->size()), arr.size());
@@ -322,8 +322,8 @@ TEST(testSidreExtended, testSidreExtended) {
   int view_real641_sfp = sfp++;
   int view_real641_size = 1000;
   real64_array view_real641_data(view_real641_size);
-  for (real64 i = 0; i < view_real641_size; i++) {
-    view_real641_data[i] = i * i / (i + 5);
+  for (int i = 0; i < view_real641_size; i++) {
+    view_real641_data[i] = i * i / (i + 5.0);
   }
   createArrayView(real64_group, view_real641_name, view_real641_sfp, 
                   view_real641_data);
@@ -333,8 +333,8 @@ TEST(testSidreExtended, testSidreExtended) {
   int view_real642_sfp = sfp++;
   int view_real642_size = 1000;
   real64_array view_real642_data(view_real642_size);
-  for (real64 i = 0; i < view_real642_size; i++) {
-    view_real642_data[i] = i * i / (5 + 5 * i + i * i);
+  for (int i = 0; i < view_real642_size; i++) {
+    view_real642_data[i] = i * i / (5.0 + 5.0 * i + i * i);
   }
   createArrayView(real64_group, view_real642_name, view_real642_sfp, 
                   view_real642_data);
@@ -358,8 +358,8 @@ TEST(testSidreExtended, testSidreExtended) {
   int view_real32_sfp = sfp++;
   int view_real32_size = 782;
   real32_array view_real32_data(view_real32_size);
-  for (real32 i = 0; i < view_real32_size; i++) {
-    view_real32_data[i] = (i * i - 100 * i + 3) / (i + 3);
+  for (int i = 0; i < view_real32_size; i++) {
+    view_real32_data[i] = (i * i - 100.0f * i + 3.0f) / (i + 3.0f);
   }
   createArrayView(mixed_group, view_real32_name, view_real32_sfp, 
                   view_real32_data);

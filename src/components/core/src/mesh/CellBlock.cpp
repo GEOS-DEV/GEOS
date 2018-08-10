@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ElementManagerT.cpp
+/**
+ * @file CellBlock.cpp
  *
- *  Created on: Sep 14, 2010
- *      Author: settgast1
  */
 
 #include "CellBlock.hpp"
@@ -53,7 +51,6 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   RegisterViewWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
   RegisterViewWrapper(viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
   RegisterViewWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
-
 
   m_toNodesRelation.resize(0,8);
   m_toEdgesRelation.resize(0,12);
@@ -423,7 +420,6 @@ R1Tensor CellBlock::GetElementCenter(localIndex k, const NodeManager& nodeManage
 {
 
   r1_array const & X = nodeManager.referencePosition();
-//  view_rtype_const<r1_array> u = nodeManager.totalDisplacement();
   arrayView1d<localIndex const> nodelist = m_toNodesRelation[k];
   R1Tensor elementCenter(0.0);
   for ( localIndex a = 0 ; a < numNodesPerElement() ; ++a)
