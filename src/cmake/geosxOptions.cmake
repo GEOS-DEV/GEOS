@@ -57,8 +57,6 @@ endif()
 
 
 
-set(ATK_CMAKE "${ATK_DIR}/lib/cmake" CACHE PATH "")
-
 set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
 
 #set(SPHINX_EXECUTABLE "sphinx-build" CACHE PATH "")

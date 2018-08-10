@@ -137,7 +137,7 @@ public:
 
   void SetNumRowsAndTrilinosIndices( ManagedGroup * const domain,
                                      localIndex & numLocalRows,
-                                     localIndex & numGlobalRows,
+                                     globalIndex & numGlobalRows,
                                      localIndex_array& localIndices,
                                      localIndex offset );
 
@@ -178,8 +178,6 @@ public:
   {
     constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_Laplace";
 
-    //    dataRepository::ViewKey trilinosIndex = { "trilinosIndex_LaplaceFEM" };
-//    dataRepository::ViewKey ghostRank = { "ghostRank" };
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
 
@@ -191,9 +189,6 @@ public:
 //  {
 //  } groupKeys;
 
-
-//  systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
-//  systemSolverInterface::EpetraBlockSystem m_linearSystem;
 
   SystemSolverParameters * getSystemSolverParameters() {return this->GetGroup<SystemSolverParameters>(groupKeys.systemSolverParameters); }
 
