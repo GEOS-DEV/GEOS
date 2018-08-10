@@ -38,7 +38,9 @@ FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *c
   this->RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false);
   this->RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false);
   this->RegisterViewWrapper(viewKeyStruct::cellLocationString, &m_cellLocation, false);
-  this->RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString);
+
+  ViewWrapper<CellStencil> * stencil = this->RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString);
+  stencil->setRestartFlags(RestartFlags::NO_WRITE);
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
@@ -141,8 +143,9 @@ void FluxApproximationBase::compute(DomainPartition * domain)
       if (setWrapper != nullptr)
       {
         lSet const & set = setWrapper->reference();
-        BoundaryStencil & stencil = this->RegisterViewWrapper<BoundaryStencil>(setName)->reference();
-        computeBoundaryStencil(domain, set, stencil);
+        ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>(setName);
+        stencil->setRestartFlags(RestartFlags::NO_WRITE);
+        computeBoundaryStencil(domain, set, stencil->reference());
       }
     }
   });
