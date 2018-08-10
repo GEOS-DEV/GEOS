@@ -49,6 +49,7 @@
 
 #include "mesh/MeshBody.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
+#include "common/TimingMacros.hpp"
 // #include "managers/MeshLevel.hpp"
 namespace geosx
 {
