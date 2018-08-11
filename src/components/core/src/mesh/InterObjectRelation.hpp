@@ -116,8 +116,8 @@ typedef InterObjectRelation<array<set<localIndex>> > UnorderedVariableOneToManyR
 
 typedef InterObjectRelation<array<array<localIndex_array> > > OrderedVariableOneToManyToManyRelation;
 
-typedef InterObjectRelation<array< pArray1d > > OrderedVariableOneToManyPairRelation;
-typedef InterObjectRelation<array< pSet > > UnorderedVariableOneToManyPairRelation;
+//typedef InterObjectRelation<array< pArray1d > > OrderedVariableOneToManyPairRelation;
+//typedef InterObjectRelation<array< pSet > > UnorderedVariableOneToManyPairRelation;
 }
 
 

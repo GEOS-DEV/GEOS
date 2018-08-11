@@ -203,8 +203,8 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 //***** BEGIN LEGACY TYPEDEFS *****
 
-typedef array<std::pair<int,localIndex> > pArray1d;
-typedef set<std::pair<int,localIndex> > pSet;
+//typedef array<std::pair<int,localIndex> > pArray1d;
+//typedef set<std::pair<int,localIndex> > pSet;
 
 
 using r1_array = array<R1Tensor>;
