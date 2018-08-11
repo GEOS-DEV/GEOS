@@ -54,6 +54,8 @@ public:
 
   virtual ~ConstitutiveBase() override;
 
+  virtual std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
+                                                          ManagedGroup * const parent ) const = 0;
 
   virtual void SetParamStatePointers( void *& ) = 0;
 
@@ -102,13 +104,16 @@ public:
 
   virtual void resize( localIndex ) override;
 
-  void SetVariableParameters();
-
   virtual void GetStiffness( realT c[6][6]) const = 0;
 
 
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
+
+  virtual string GetCatalogName() = 0;
+
+  virtual void AllocateMaterialData( dataRepository::ManagedGroup * const parent,
+                                     localIndex const numConstitutivePointsPerParentIndex  );
 
   struct viewKeyStruct
   {} m_ConstitutiveBaseViewKeys;
@@ -134,6 +139,15 @@ public:
 protected:
   ManagedGroup m_parameterData;
   ManagedGroup m_stateData;
+
+private:
+  ManagedGroup * m_constitutiveDataGroup = nullptr;
+
+  ConstitutiveBase( ConstitutiveBase const & ) = delete;
+  ConstitutiveBase( ConstitutiveBase && ) = delete;
+  ConstitutiveBase const & operator=( ConstitutiveBase const & ) = delete;
+  ConstitutiveBase const & operator=( ConstitutiveBase && ) = delete;
+
 };
 
 

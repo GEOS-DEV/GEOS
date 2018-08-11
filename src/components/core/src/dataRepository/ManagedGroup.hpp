@@ -100,16 +100,18 @@ public:
 //                         ManagedGroup * const parent,
 //                         cxx_utilities::DocumentationNode * docNode );
 
+
+  /**
+   * @brief move constructor
+   * @param source source ManagedGroup
+   */
+  ManagedGroup( ManagedGroup&& source );
+
   /**
    *
    */
   virtual ~ManagedGroup();
 
-  /**
-   *
-   * @param source source WrapperCollection
-   */
-  ManagedGroup( ManagedGroup&& source );
 
 
   ManagedGroup() = delete;

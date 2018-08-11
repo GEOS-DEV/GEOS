@@ -64,13 +64,45 @@ static inline void UpdateStatePoint( R2SymTensor const & D,
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
   ConstitutiveBase(name, parent )
 {
-  // TODO Auto-generated constructor stub
+  this->RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_bulkModulus0, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_shearModulus0, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 );
+
+  this->RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 );
 
 }
 
 LinearElasticIsotropic::~LinearElasticIsotropic()
 {
-  // TODO Auto-generated destructor stub
+}
+
+
+std::unique_ptr<ConstitutiveBase>
+LinearElasticIsotropic::DeliverClone( string const & name,
+                                      ManagedGroup * const parent ) const
+{
+  std::unique_ptr<LinearElasticIsotropic>
+  newConstitutiveRelation = std::make_unique<LinearElasticIsotropic>(name,parent);
+
+  newConstitutiveRelation->m_bulkModulus0 = m_bulkModulus0;
+  newConstitutiveRelation->m_shearModulus0 = m_shearModulus0;
+  newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
+  newConstitutiveRelation->m_shearModulus = m_shearModulus;
+  newConstitutiveRelation->m_meanStress = m_meanStress;
+  newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
+
+  std::unique_ptr<ConstitutiveBase> rval = std::move(newConstitutiveRelation);
+
+  return rval;
+}
+
+void LinearElasticIsotropic::AllocateMaterialData( dataRepository::ManagedGroup * const parent,
+                                                   localIndex const numConstitutivePointsPerParentIndex  )
+{
+  ConstitutiveBase::AllocateMaterialData( parent, numConstitutivePointsPerParentIndex );
+
 }
 
 void LinearElasticIsotropic::FillDocumentationNode()

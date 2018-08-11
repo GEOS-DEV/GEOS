@@ -50,6 +50,12 @@ ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()
   return catalog;
 }
 
+void ConstitutiveBase::AllocateMaterialData( dataRepository::ManagedGroup * const parent,
+                                             localIndex const )
+{
+  m_constitutiveDataGroup = parent;
+}
+
 void ConstitutiveBase::resize( localIndex newsize )
 {
   ManagedGroup::resize(newsize);
@@ -57,13 +63,6 @@ void ConstitutiveBase::resize( localIndex newsize )
   GetStateData()->resize(newsize);
 }
 
-void ConstitutiveBase::SetVariableParameters()
-{
-  for( auto & viewBase : GetParameterData()->wrappers() )
-  {
-    viewBase.second->setSizedFromParent(1);
-  }
-}
 
 
 }

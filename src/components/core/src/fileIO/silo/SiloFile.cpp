@@ -771,8 +771,7 @@ void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementMana
   auto const
   constitutiveMap = elementManager->
                     ConstructViewAccessor<
-    std::pair< Array2dT<localIndex>,Array2dT<localIndex> >
-    >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString );
+    std::pair< Array2dT<localIndex>,Array2dT<localIndex> >>( CellBlockSubRegion::viewKeyStruct::constitutiveMapString );
 
   string name = "Regions";
   int const nmat = constitutiveManager->GetSubGroups().size();
