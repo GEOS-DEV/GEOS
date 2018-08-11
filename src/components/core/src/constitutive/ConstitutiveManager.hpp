@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ConstitutiveManager.hpp
- *
- *  Created on: Aug 4, 2016
- *      Author: rrsettgast
+/**
+ * @file ConstitutiveManager.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
@@ -38,24 +35,38 @@ namespace constitutive
 template< typename VIEWTYPE >
 using ViewAccessor = array < ReferenceWrapper< VIEWTYPE > > ;
 
-
+/**
+ * @class ConstitutiveManager
+ * @brief Class to manage the allocation and access to constitutive relations
+ */
 class ConstitutiveManager : public dataRepository::ManagedGroup
 {
 public:
   ConstitutiveManager() = delete;
 
-  ConstitutiveManager( std::string const & name,
+  ConstitutiveManager( string const & name,
                        ManagedGroup * const parent );
 
   void FillDocumentationNode() override final;
   virtual void CreateChild( string const & childKey, string const & childName ) override final;
 
+  void HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
+                                 dataRepository::ManagedGroup * const parent,
+                                 localIndex const numConstitutivePointsPerParentIndex ) const;
+
   ~ConstitutiveManager() override;
 
-//  using constitutiveMaps = std::pair< array<ManagedGroup const *> ,
-// map<string,integer> > ;
-//  constitutiveMaps & GetMaps( integer const reinit ) const;
+  template< typename T = ConstitutiveBase >
+  T const * GetConstitituveRelation( string const & constitutiveRelationInstanceName ) const
+  {
+    return this->GetGroup<T>(constitutiveRelationInstanceName);
+  }
 
+  template< typename T = ConstitutiveBase >
+  T * GetConstitituveRelation( string const & constitutiveRelationInstanceName )
+  {
+    return this->GetGroup<T>(constitutiveRelationInstanceName);
+  }
 
   template< typename T >
   ViewAccessor< T > GetParameterData( string const & name );
@@ -68,6 +79,11 @@ public:
 
   template< typename T >
   ViewAccessor< T const > GetStateData( string const & name ) const;
+
+  struct groupKeyStruct
+  {
+    static constexpr auto constitutiveModelsString = "ConstitutiveModels";
+  } m_ConstitutiveManagerGroupKeys;
 
 
 };

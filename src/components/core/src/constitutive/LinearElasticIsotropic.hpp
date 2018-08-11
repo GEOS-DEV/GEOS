@@ -47,7 +47,14 @@ public:
 
   virtual ~LinearElasticIsotropic() override;
 
+  virtual std::unique_ptr<ConstitutiveBase>
+  DeliverClone( string const & name, ManagedGroup * const parent ) const override;
+
+  virtual void AllocateMaterialData( dataRepository::ManagedGroup * const parent,
+                                     localIndex const numConstitutivePointsPerParentIndex ) override;
+
   static std::string CatalogName() { return dataRepository::keys::linearElasticIsotropic; }
+  virtual string GetCatalogName() override { return CatalogName(); }
 
 
   virtual void SetParamStatePointers( void *& ) override final;
@@ -73,14 +80,23 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
+    static constexpr auto bulkModulus0String  = "BulkModulus0";
+    static constexpr auto shearModulus0String = "ShearModulus0";
+    static constexpr auto bulkModulusString  = "BulkModulus";
+    static constexpr auto shearModulusString = "ShearModulus";
+
+    static constexpr auto deviatorStressString = "DeviatorStress";
+    static constexpr auto meanStressString = "MeanStress";
+
+
     dataRepository::ViewKey youngsModulus = { "YoungsModulus" };
-    dataRepository::ViewKey bulkModulus = { "BulkModulus" };
-    dataRepository::ViewKey shearModulus = { "ShearModulus" };
+    dataRepository::ViewKey bulkModulus = { bulkModulusString };
+    dataRepository::ViewKey shearModulus = { shearModulusString };
     dataRepository::ViewKey poissonRatio = { "PoissonRatio" };
     dataRepository::ViewKey density = { "Density" };
 
-    dataRepository::ViewKey deviatorStress = { "DeviatorStress" };
-    dataRepository::ViewKey meanStress = { "MeanStress" };
+    dataRepository::ViewKey deviatorStress = { deviatorStressString };
+    dataRepository::ViewKey meanStress = { meanStressString };
   } m_linearElasticIsotropicViewKeys;
 
   struct groupKeyStruct : public ConstitutiveBase::groupKeyStruct
@@ -125,7 +141,12 @@ public:
   } m_dataPointers;
 
 private:
-
+  real64 m_bulkModulus0;
+  real64 m_shearModulus0;
+  real64_array m_bulkModulus;
+  real64_array m_shearModulus;
+  real64_array m_meanStress;
+  r2Sym_array m_deviatorStress;
 
 };
 

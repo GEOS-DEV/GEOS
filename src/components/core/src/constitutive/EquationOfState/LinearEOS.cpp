@@ -56,6 +56,38 @@ LinearEOS::~LinearEOS()
   // TODO Auto-generated destructor stub
 }
 
+std::unique_ptr<ConstitutiveBase>
+LinearEOS::DeliverClone( string const & name,
+                         ManagedGroup * const parent ) const
+{
+  std::unique_ptr<LinearEOS> newConstitutiveRelation = std::make_unique<LinearEOS>(name,parent);
+  newConstitutiveRelation->m_fluidBulkModulus   = this->m_fluidBulkModulus;
+  newConstitutiveRelation->m_solidBulkModulus   = this->m_solidBulkModulus;
+  newConstitutiveRelation->m_fluidViscosibility = this->m_fluidViscosibility;
+  newConstitutiveRelation->m_referencePressure  = this->m_referencePressure;
+  newConstitutiveRelation->m_referenceDensity   = this->m_referenceDensity;
+  newConstitutiveRelation->m_referenceViscosity = this->m_referenceViscosity;
+
+  newConstitutiveRelation->m_densityRelation   = this->m_densityRelation;
+  newConstitutiveRelation->m_viscosityRelation = this->m_viscosityRelation;
+  newConstitutiveRelation->m_porosityRelation  = this->m_porosityRelation;
+
+  std::unique_ptr<ConstitutiveBase> rval = std::move(newConstitutiveRelation);
+
+  return rval;
+}
+
+void LinearEOS::AllocateMaterialData( dataRepository::ManagedGroup * const parent,
+                                      localIndex const numConstitutivePointsPerParentIndex  )
+{
+  ConstitutiveBase::AllocateMaterialData( parent, numConstitutivePointsPerParentIndex );
+
+  parent->RegisterViewWrapper( this->getName()+ "_" + string(viewKeyStruct::densityString), &m_density, 0 );
+
+  m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_density = this->m_referenceDensity;
+}
+
 void LinearEOS::FillDocumentationNode()
 {
 

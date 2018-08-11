@@ -34,7 +34,7 @@ namespace constitutive
 {
 
 
-ConstitutiveManager::ConstitutiveManager( std::string const & name,
+ConstitutiveManager::ConstitutiveManager( string const & name,
                                           ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {}
@@ -53,6 +53,31 @@ void ConstitutiveManager::CreateChild( string const & childKey, string const & c
 {
   std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( childKey, childName, this );
   ConstitutiveBase * newMaterial = this->RegisterGroup<ConstitutiveBase>( childName, std::move(material) );
+}
+
+void ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
+                                                    dataRepository::ManagedGroup * const parent,
+                                                    localIndex const numConstitutivePointsPerParentIndex  ) const
+{
+  ConstitutiveBase const * const
+  constitutiveRelation = GetConstitituveRelation(constitutiveRelationInstanceName);
+
+  std::unique_ptr<ConstitutiveBase>
+  material = constitutiveRelation->DeliverClone( constitutiveRelationInstanceName, parent );
+
+  material->AllocateMaterialData( parent,
+                                  numConstitutivePointsPerParentIndex );
+
+  dataRepository::ManagedGroup * constitutiveGroup = parent->GetGroup(groupKeyStruct::constitutiveModelsString);
+  if( constitutiveGroup == nullptr )
+  {
+    constitutiveGroup = parent->RegisterGroup( groupKeyStruct::constitutiveModelsString );
+  }
+
+  constitutiveGroup->RegisterGroup<ConstitutiveBase>( constitutiveRelationInstanceName,
+                                                      std::move(material) );
+
+
 }
 
 //ConstitutiveManager::constitutiveMaps & ConstitutiveManager::GetMaps( integer

@@ -151,7 +151,11 @@ using unordered_map = std::unordered_map<TKEY,TVAL>;
 
 //***** END LEGACY TYPEDEFS *****
 
+template< typename T >
+using array3d = multidimensionalArray::ManagedArray<T,3,localIndex>;
 
+template< typename T >
+using arrayView3d = multidimensionalArray::ArrayView<T,3,localIndex>;
 
 using integer_array        = array<integer>;
 using integer_const_array  = array<integer const>;

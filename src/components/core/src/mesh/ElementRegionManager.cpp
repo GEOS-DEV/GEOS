@@ -23,12 +23,14 @@
  *      Author: settgast1
  */
 
+#include <map>
+#include <vector>
+
 #include "ElementRegion.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
 //#include "legacy/IO/BinStream.h"
-#include <map>
-#include <vector>
+#include "constitutive/ConstitutiveManager.hpp"
 //#include "legacy/Constitutive/Material/MaterialFactory.h"
 //#include "legacy/ArrayT/ArrayT.h"
 
@@ -154,7 +156,8 @@ void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problem
 //      }
     });
 
-  ManagedGroup * constitutiveManager = domain->GetGroup(keys::ConstitutiveManager);
+  constitutive::ConstitutiveManager *
+  constitutiveManager = domain->GetGroup<constitutive::ConstitutiveManager>(keys::ConstitutiveManager);
   for( auto & material : constitutiveManager->GetSubGroups() )
   {
     string name = material.first;
@@ -163,6 +166,12 @@ void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problem
       material.second->resize(constitutiveSizes.at(name));
     }
   }
+
+  this->forElementRegions( [&]( ElementRegion * elemRegion )->void
+  {
+    elemRegion->HangConstitutiveRelations( problemManager );
+  });
+
 }
 
 int ElementRegionManager::PackSize( array<string> const & wrapperNames,

@@ -177,6 +177,37 @@ public:
     }
   }
 
+  template< typename LAMBDA >
+  void forCellBlocksComplete( LAMBDA lambda )
+  {
+    for( localIndex er=0 ; er<this->numRegions() ; ++er )
+    {
+      ElementRegion * elementRegion = this->GetRegion(er);
+
+      for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
+      {
+        CellBlockSubRegion * cellBlock = elementRegion->GetSubRegion(esr);
+        lambda( er, esr, elementRegion, cellBlock );
+      }
+    }
+  }
+
+  template< typename LAMBDA >
+  void forCellBlocksComplete( LAMBDA lambda ) const
+  {
+    for( localIndex er=0 ; er<this->numRegions() ; ++er )
+    {
+      ElementRegion const * elementRegion = this->GetRegion(er);
+
+      for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
+      {
+        CellBlockSubRegion const * cellBlock = elementRegion->GetSubRegion(esr);
+        lambda( er, esr, elementRegion, cellBlock );
+      }
+    }
+  }
+
+
   template< typename VIEWTYPE >
   ElementViewAccessor<VIEWTYPE> ConstructViewAccessor( string const & name,
                                                        string const & neighborName = string() );

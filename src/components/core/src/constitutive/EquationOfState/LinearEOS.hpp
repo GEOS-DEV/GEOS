@@ -43,8 +43,16 @@ public:
 
   virtual ~LinearEOS() override;
 
+  std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
+                                                  ManagedGroup * const parent ) const override;
+
+  virtual void AllocateMaterialData( dataRepository::ManagedGroup * const parent,
+                                     localIndex const numConstitutivePointsPerParentIndex ) override;
+
+
   static std::string CatalogName() { return dataRepository::keys::linearEOS; }
 
+  virtual string GetCatalogName() override { return CatalogName(); }
 
   virtual void SetParamStatePointers( void *& ) override final {}
 
@@ -84,8 +92,11 @@ public:
 
   void GetStiffness( realT c[6][6]) const override;
 
-  struct ViewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
+    static constexpr auto densityString  = "density";
+
+
     dataRepository::ViewKey fluidBulkModulus   = { "fluidBulkModulus"   };
     dataRepository::ViewKey solidBulkModulus   = { "solidBulkModulus"   };
     dataRepository::ViewKey fluidViscosibility = { "fluidViscosibility" };
@@ -94,6 +105,9 @@ public:
     dataRepository::ViewKey referenceDensity   = { "referenceDensity"   };
     dataRepository::ViewKey referenceViscosity = { "referenceViscosity" };
   } viewKeys;
+
+  Array2dT<real64> const & density() const { return m_density; }
+  Array2dT<real64>       & density()       { return m_density; }
 
 
 private:
@@ -115,6 +129,8 @@ private:
 
   /// reference viscosity parameter for EOS relation
   real64 m_referenceViscosity;
+
+  Array2dT<real64> m_density;
 
   ExponentialRelation<localIndex, real64> m_densityRelation;
   ExponentialRelation<localIndex, real64> m_viscosityRelation;
