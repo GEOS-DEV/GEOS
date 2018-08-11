@@ -1030,7 +1030,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 // );
 //
 //    // add all required indices into the "requiredObjects" set.
-//    gSet requiredObjects;
+//    set<globalIndex> requiredObjects;
 //    for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin()
 // ; neighbor!=m_neighbors.end() ; ++neighbor )
 //    {
@@ -1041,7 +1041,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //    }
 //
 //    std::map<globalIndex,int> requiredObjectFlag;
-//    for( gSet::const_iterator gi=requiredObjects.begin() ;
+//    for( set<globalIndex>::const_iterator gi=requiredObjects.begin() ;
 // gi!=requiredObjects.end() ; ++gi )
 //    {
 //      requiredObjectFlag[*gi] = 0;
@@ -1052,7 +1052,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 // ; neighbor!=m_neighbors.end() ; ++neighbor )
 //    {
 //      neighbor->tempNeighborData.objectGlobalIndicesToSend[keys[i]].clear();
-//      for( gSet::const_iterator gi=requiredObjects.begin() ;
+//      for( set<globalIndex>::const_iterator gi=requiredObjects.begin() ;
 // gi!=requiredObjects.end() ; ++gi )
 //      {
 //        if( GlobalIndexManager::OwningRank(*gi) == neighbor->NeighborRank() )
@@ -1065,7 +1065,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //
 //    {
 //      int throwFlag = 0;
-//      gSet failList;
+//      set<globalIndex> failList;
 //      for( std::map<globalIndex,int>::const_iterator
 // iter=requiredObjectFlag.begin() ; iter!=requiredObjectFlag.end() ; ++iter )
 //      {
@@ -1098,7 +1098,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //        st<< "Error in PartitionBase::CommunicateRequiredObjectIndices()\n
 // required "<<objectType<<"/s ";
 //        st<<"on rank "<< this->m_rank << " is not owned by a neighbor.\n";
-//        for( gSet::const_iterator failed=failList.begin() ;
+//        for( set<globalIndex>::const_iterator failed=failList.begin() ;
 // failed!=failList.end() ; ++failed )
 //        {
 //          st<< *failed <<"\n";
