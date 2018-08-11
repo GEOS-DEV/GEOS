@@ -157,29 +157,29 @@ public:
   UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
-  array<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  array<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  array1d<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array1d<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  array<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  array<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  array1d<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array1d<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
 
-  array<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
-  array<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
+  array1d<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
+  array1d<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
   /**
    * @brief const accessor to the reference position array
    * @return const reference to reference position
    */
-  array<R1Tensor> const & referencePosition() const
+  array1d<R1Tensor> const & referencePosition() const
   { return m_referencePosition; }
 
   /**
    * @brief accessor to the reference position array
    * @return reference to reference position
    */
-  array<R1Tensor> & referencePosition()
+  array1d<R1Tensor> & referencePosition()
   { return m_referencePosition; }
 
 protected:
@@ -198,7 +198,7 @@ private:
                                     localIndex_array const & packList ) const;
 
    /// reference position of the nodes
-  array<R1Tensor> m_referencePosition;
+  array1d<R1Tensor> m_referencePosition;
 
   /// nodeToEdge relation
   UnorderedVariableOneToManyRelation m_toEdgesRelation;

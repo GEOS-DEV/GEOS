@@ -53,8 +53,8 @@ void Integrate( const R2SymTensor& fieldvar,
 
 //
 //  void Interp(const R1Tensor &globalCoord,
-//	      const array<R1Tensor> &nodeCoords,
-//              const array<real64> &nodeValues,
+//	      const array1d<R1Tensor> &nodeCoords,
+//              const array1d<real64> &nodeValues,
 //              BasisBase *basis,
 //	      const unsigned int &ndofs,
 //	      const unsigned int &ndim,
@@ -82,11 +82,11 @@ void Integrate( const R2SymTensor& fieldvar,
 //  // Calcuate dN/dX at a specific position
 //
 //  void InterpdNdX(const R1Tensor &globalCoord,
-//		  const array<R1Tensor> &nodeCoords,
+//		  const array1d<R1Tensor> &nodeCoords,
 //		  BasisBase *basis,
 //		  const unsigned int &ndofs,
 //                  const unsigned int &ndim,
-//		  array<R1Tensor> &result)
+//		  array1d<R1Tensor> &result)
 //  {
 //
 //    assert(nodeCoords.size() == ndofs);
@@ -126,7 +126,7 @@ void Integrate( const R2SymTensor& fieldvar,
 //
 //
 //  void FindLocalCoord(const R1Tensor &globalCoord,
-//		      const array<R1Tensor> &nodeCoords,
+//		      const array1d<R1Tensor> &nodeCoords,
 //		      BasisBase *basis,
 //		      const unsigned int &ndofs,
 //		      const unsigned int &ndim,
@@ -134,14 +134,14 @@ void Integrate( const R2SymTensor& fieldvar,
 //  {
 //
 //    assert(nodeCoords.size() == ndofs);
-//    array<real64> resid(ndim);
+//    array1d<real64> resid(ndim);
 //    rArray2d A(ndim, ndim);
-//    array<real64> x(ndim);
+//    array1d<real64> x(ndim);
 //
 //    localCoord = 0.0;
 //
-//    array<real64> values(ndofs);
-//    array<R1Tensor>  gradients(ndofs);
+//    array1d<real64> values(ndofs);
+//    array1d<R1Tensor>  gradients(ndofs);
 //
 //    realT nrTol = 1.0e-6;
 //    int iterMax = 4;

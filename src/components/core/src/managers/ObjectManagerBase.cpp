@@ -58,7 +58,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
 //
 //
 //  this->RegisterGroup<ManagedGroup>("Sets");
-//  this->RegisterViewWrapper< array<integer> >("isExternal");
+//  this->RegisterViewWrapper< array1d<integer> >("isExternal");
 //}
 
 
@@ -169,7 +169,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
 }
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
-                                                   const array<localIndex_array>& map,
+                                                   const array1d<localIndex_array>& map,
                                                    const std::string& newSetName )
 {
 
@@ -197,7 +197,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
 
 void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& objectList ) const
 {
-  const array<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
+  const array1d<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -209,7 +209,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& o
 
 void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array& objectList ) const
 {
-  const array<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
+  const array1d<integer>& isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
   for( localIndex k=0 ; k<size() ; ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -235,7 +235,7 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 
 
-localIndex ObjectManagerBase::PackSize( array<string> const & wrapperNames,
+localIndex ObjectManagerBase::PackSize( array1d<string> const & wrapperNames,
                             localIndex_array const & packList,
                             integer const recursive ) const
 {
@@ -253,7 +253,7 @@ localIndex ObjectManagerBase::PackSize( array<string> const & wrapperNames,
 
 
 localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
-                             array<string> const & wrapperNames,
+                             array1d<string> const & wrapperNames,
                              localIndex_array const & packList,
                              integer const recursive ) const
 {
@@ -269,7 +269,7 @@ localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
 
 template< bool DOPACK >
 localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
-                                    array<string> const & wrapperNames,
+                                    array1d<string> const & wrapperNames,
                                     localIndex_array const & packList,
                                     integer const recursive ) const
 {
@@ -287,7 +287,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
 
 
-  array<string> wrapperNamesForPacking;
+  array1d<string> wrapperNamesForPacking;
   if( wrapperNames.size()==0 )
   {
     set<localIndex> exclusionList;
@@ -351,8 +351,8 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-//template int ObjectManagerBase::PackPrivate<true>( buffer_unit_type * & ,array<string> const & , localIndex_array const &, integer const ) const;
-//template int ObjectManagerBase::PackPrivate<false>( buffer_unit_type * & ,array<string> const & , localIndex_array const &, integer const ) const;
+//template int ObjectManagerBase::PackPrivate<true>( buffer_unit_type * & ,array1d<string> const & , localIndex_array const &, integer const ) const;
+//template int ObjectManagerBase::PackPrivate<false>( buffer_unit_type * & ,array1d<string> const & , localIndex_array const &, integer const ) const;
 
 
 

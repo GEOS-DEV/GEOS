@@ -542,7 +542,7 @@ void SinglePhaseFlow_TPFA::SetNumRowsAndTrilinosIndices( MeshLevel * const meshL
   MPI_Comm_rank( MPI_COMM_WORLD, &thisMpiProcess );
 
   localIndex numLocalRowsToSend = numLocalRows;
-  array<localIndex> gather(numMpiProcesses);
+  array1d<localIndex> gather(numMpiProcesses);
 
   // communicate the number of local rows to each process
   m_linearSolverWrapper.m_epetraComm.GatherAll( &numLocalRowsToSend,
@@ -621,13 +621,13 @@ void SinglePhaseFlow_TPFA::SetupSystem ( DomainPartition * const domain,
                                 0 );
 
   //TODO element sync doesn't work yet
-//  std::map<string, array<string> > fieldNames;
+//  std::map<string, array1d<string> > fieldNames;
 //  fieldNames["element"].push_back(viewKeys.blockLocalDofNumber.Key());
 //
 //  CommunicationTools::
 //  SynchronizeFields(fieldNames,
 //                    mesh,
-//                    domain->getReference< array<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+//                    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 //
 
   // construct row map, and set a pointer to the row map
@@ -1076,11 +1076,11 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
 
 
   // TODO Sync dP once element field syncing is reimplemented.
-  //std::map<string, array<string> > fieldNames;
+  //std::map<string, array1d<string> > fieldNames;
   //fieldNames["element"].push_back(viewKeyStruct::deltaFluidPressureString);
   //CommunicationTools::SynchronizeFields(fieldNames,
   //                            mesh,
-  //                            domain->getReference< array<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  //                            domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
@@ -1144,7 +1144,7 @@ void SinglePhaseFlow_TPFA::PrecomputeData(DomainPartition *const domain)
                                 localIndex const k )->void
   {
     arrayView1d<localIndex> nodeList = elemsToNodes[er][esr][k];
-    array< R1Tensor > Xlocal;
+    array1d< R1Tensor > Xlocal;
     Xlocal.resize(nodeList.size());
 
     R1Tensor & center = elemCenter[er][esr][k];
@@ -1166,7 +1166,7 @@ void SinglePhaseFlow_TPFA::PrecomputeData(DomainPartition *const domain)
   r1_array & faceCenter    = faceManager->getReference<r1_array>(viewKeyStruct::faceCenterString);
   real64_array & faceArea  = faceManager->getReference<real64_array>(viewKeyStruct::faceAreaString);
   real64_array & faceTrans = faceManager->getReference<real64_array>(viewKeyStruct::transmissibilityString);
-  array<array<localIndex>> const & faceToNodes = faceManager->nodeList();
+  array1d<array1d<localIndex>> const & faceToNodes = faceManager->nodeList();
 
 
   R1Tensor faceNormal, faceConormal, cellToFaceVec;

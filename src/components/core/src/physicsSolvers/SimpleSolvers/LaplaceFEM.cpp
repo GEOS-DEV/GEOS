@@ -310,12 +310,12 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
                                 displacementIndices,
                                 0 );
 
-  std::map<string, array<string> > fieldNames;
+  std::map<string, array1d<string> > fieldNames;
   fieldNames["node"].push_back("blockLocalDofNumber_LaplaceFEM");
 
   CommunicationTools::SynchronizeFields(fieldNames,
                               mesh,
-                              domain->getReference< array<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                              domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
 
 
@@ -374,7 +374,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
 
         globalIndex_array elementLocalDofIndex (numNodesPerElement);
 
-        array<integer> const & elemGhostRank = cellBlock->m_ghostRank;
+        array1d<integer> const & elemGhostRank = cellBlock->m_ghostRank;
 
         for( localIndex k=0 ; k<numElems ; ++k )
         {
@@ -445,7 +445,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
       Epetra_SerialDenseMatrix     element_matrix  (numNodesPerElement,
                                                     numNodesPerElement);
 
-      array<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
+      array1d<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
       const int n_q_points = feSpace->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements

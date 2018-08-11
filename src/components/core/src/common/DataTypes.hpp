@@ -97,7 +97,7 @@ using string      = std::string;
 
 using real32 = float;
 using real64 = double;
-using real   = double;
+//using real   = double;
 
 template< typename T >
 using ptr = T*;
@@ -125,7 +125,7 @@ using buffer_type = std::vector<buffer_unit_type>;
 //***** BEGIN ARRAY TYPEDEFS *****
 
 template< typename T >
-using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
+using array1d = multidimensionalArray::ManagedArray<T,1,localIndex>;
 
 template< typename T, int NDIM=1 >
 using array_view = multidimensionalArray::ArrayView<T,NDIM,localIndex>;
@@ -161,25 +161,25 @@ using unordered_map = std::unordered_map<TKEY,TVAL>;
 
 
 
-using integer_array        = array<integer>;
-using integer_const_array  = array<integer const>;
+using integer_array        = array1d<integer>;
+using integer_const_array  = array1d<integer const>;
 
-using real32_array        = array<real32>;
-using real32_const_array  = array<real32 const>;
+using real32_array        = array1d<real32>;
+using real32_const_array  = array1d<real32 const>;
 
-using real64_array        = array<real64>;
-using real64_const_array  = array<real64 const>;
+using real64_array        = array1d<real64>;
+using real64_const_array  = array1d<real64 const>;
 
-using string_array        = array<string>;
-using string_const_array  = array<string const>;
+using string_array        = array1d<string>;
+using string_const_array  = array1d<string const>;
 
-using localIndex_array        = array<localIndex>;
-using localIndex_const_array  = array<localIndex const>;
+using localIndex_array        = array1d<localIndex>;
+using localIndex_const_array  = array1d<localIndex const>;
 
-using globalIndex_array        = array<globalIndex>;
-using globalIndex_const_array  = array<globalIndex const>;
+using globalIndex_array        = array1d<globalIndex>;
+using globalIndex_const_array  = array1d<globalIndex const>;
 
-using mpiBuffer = array<char>;
+using mpiBuffer = array1d<char>;
 
 using integer_set        = set<integer>;
 using integer_const_set  = set<integer const>;
@@ -203,13 +203,9 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 //***** BEGIN LEGACY TYPEDEFS *****
 
-//typedef array<std::pair<int,localIndex> > pArray1d;
-//typedef set<std::pair<int,localIndex> > pSet;
-
-
-using r1_array = array<R1Tensor>;
-using r2_array = array<R2Tensor>;
-using r2Sym_array = array<R2SymTensor>;
+using r1_array = array1d<R1Tensor>;
+using r2_array = array1d<R2Tensor>;
+using r2Sym_array = array1d<R2SymTensor>;
 
 //using mapPair = std::pair<integer, localIndex>;
 using mapPair_array = std::pair<localIndex_array, localIndex_array>;

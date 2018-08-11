@@ -196,7 +196,7 @@ public:
    *   pack(a[N-1])
    */
   template <typename T>
-  static localIndex packed_size(const array<T> & arr)
+  static localIndex packed_size(const array1d<T> & arr)
   {
     localIndex byte_size = 2 * sizeof(localIndex);
     for (const T & elem : arr)
@@ -209,7 +209,7 @@ public:
 
 
   template <typename T>
-  static void * pack(const array<T> & arr, localIndex & byte_size, void * buffer=nullptr)
+  static void * pack(const array1d<T> & arr, localIndex & byte_size, void * buffer=nullptr)
   {
     byte_size = packed_size(arr);
     localIndex * buff = reinterpret_cast<localIndex *>(buffer);
@@ -235,7 +235,7 @@ public:
 
 
   template <typename T>
-  static localIndex unpack(array<T> & arr, const void * buffer, localIndex byte_size=-1)
+  static localIndex unpack(array1d<T> & arr, const void * buffer, localIndex byte_size=-1)
   {
     const localIndex * buff = reinterpret_cast<const localIndex *>(buffer);
     localIndex bytes_recorded = buff[0];

@@ -29,10 +29,10 @@ namespace dataRepository {
 
 #ifdef USE_ATK
 template<typename T> 
-ViewWrapper<array<T>> * createArrayView(ManagedGroup * parent, const string & name,
-                                        int sfp, const array<T> & data)
+ViewWrapper<array1d<T>> * createArrayView(ManagedGroup * parent, const string & name,
+                                        int sfp, const array1d<T> & data)
 {
-  ViewWrapper<array<T>> * view = parent->RegisterViewWrapper<array<T>>(name);
+  ViewWrapper<array1d<T>> * view = parent->RegisterViewWrapper<array1d<T>>(name);
   view->setSizedFromParent(sfp);
 
   /* Resize the array */
@@ -57,7 +57,7 @@ ViewWrapper<array<T>> * createArrayView(ManagedGroup * parent, const string & na
 
 
 template<typename T> 
-void checkArrayView(const ViewWrapper<array<T>> * view, int sfp, const array<T> & data) 
+void checkArrayView(const ViewWrapper<array1d<T>> * view, int sfp, const array1d<T> & data) 
 {
   EXPECT_EQ(view->sizedFromParent(), sfp);
   EXPECT_EQ(view->size(), data.size());

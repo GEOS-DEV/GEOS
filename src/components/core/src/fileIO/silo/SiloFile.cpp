@@ -158,30 +158,30 @@ template<> int GetNumberOfVariablesInField<string> ()
 }
 
 template<typename TYPE>
-void SetVariableNames(string const & fieldName, array<string>& varnamestring, char const* varnames[])
+void SetVariableNames(string const & fieldName, array1d<string>& varnamestring, char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<TYPE> ());
   varnamestring[0] = fieldName;
   varnames[0] = varnamestring[0].c_str();
 }
 template void SetVariableNames<int> ( string const & fieldName,
-                                      array<string>& varnamestring,
+                                      array1d<string>& varnamestring,
                                       char const* varnames[]);
 template void SetVariableNames<unsigned long>( string const & fieldName,
-                                               array<string>& varnamestring,
+                                               array1d<string>& varnamestring,
                                                char const* varnames[]);
 template void SetVariableNames<real64>( string const & fieldName,
-                                        array<string>& varnamestring,
+                                        array1d<string>& varnamestring,
                                         char const* varnames[]);
 template void SetVariableNames<long long unsigned int>( string const & fieldName,
-                                                        array<string>& varnamestring,
+                                                        array1d<string>& varnamestring,
                                                         char const* varnames[]);
 
 
 
 template<>
 void SetVariableNames<R1Tensor> ( string const & fieldName,
-                                  array<string>& varnamestring,
+                                  array1d<string>& varnamestring,
                                   char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R1Tensor> ());
@@ -195,7 +195,7 @@ void SetVariableNames<R1Tensor> ( string const & fieldName,
 
 template<>
 void SetVariableNames<R2Tensor> ( string const & fieldName,
-                                  array<string>& varnamestring,
+                                  array1d<string>& varnamestring,
                                   char const* varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
@@ -221,7 +221,7 @@ void SetVariableNames<R2Tensor> ( string const & fieldName,
 
 template<>
 void SetVariableNames<R2SymTensor> ( string const & fieldName,
-                                     array<string>& varnamestring,
+                                     array1d<string>& varnamestring,
                                      char const * varnames[])
 {
   varnamestring.resize(GetNumberOfVariablesInField<R2Tensor> ());
@@ -570,7 +570,7 @@ void SiloFile::WriteMeshObject(string const & meshName,
 
     DBClearOptlist(optlist);
 
-    array<integer> nodelist(lnodelist);
+    array1d<integer> nodelist(lnodelist);
     globalIndex_array globalZoneNumber(lnodelist);
 
     int count = 0;
@@ -776,9 +776,9 @@ void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementMana
 
   string name = "Regions";
   int const nmat = constitutiveManager->GetSubGroups().size();
-  array<int> matnos(nmat);
+  array1d<int> matnos(nmat);
   std::vector<string> materialNameStrings(nmat);
-  array<char const*> materialNames(nmat+1);
+  array1d<char const*> materialNames(nmat+1);
   materialNames.back() = nullptr;
 
   for( int matIndex=0 ; matIndex<nmat ; ++matIndex )
@@ -791,7 +791,7 @@ void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementMana
   int ndims = 1;
   int dims = elementManager->getNumberOfElements();
 
-  array<integer> matlist(dims * nmat);
+  array1d<integer> matlist(dims * nmat);
 
 
   int elemCount = 0;
@@ -851,7 +851,7 @@ void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementMana
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-    array<string> vBlockNames(size);
+    array1d<string> vBlockNames(size);
     std::vector<char*> BlockNames(size);
     char tempBuffer[1024];
     char currentDirectory[256];
@@ -911,13 +911,13 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   if( rank != 0 )
   {
-    for( array<string>::const_iterator emptyObject=m_emptyVariables.begin() ;
+    for( array1d<string>::const_iterator emptyObject=m_emptyVariables.begin() ;
          emptyObject!=m_emptyVariables.end() ; ++emptyObject )
     {
       sendbufferVars += *emptyObject + ' ';
     }
 
-    for( array<string>::const_iterator emptyObject=m_emptyMeshes.begin() ;
+    for( array1d<string>::const_iterator emptyObject=m_emptyMeshes.begin() ;
          emptyObject!=m_emptyMeshes.end() ; ++emptyObject )
     {
       sendbufferMesh += *emptyObject + ' ';
@@ -968,12 +968,12 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     std::istringstream iss(receiveBufferVars);
     copy(std::istream_iterator<string>(iss),
          std::istream_iterator<string>(),
-         std::back_inserter< array<string> >(m_emptyVariables));
+         std::back_inserter< array1d<string> >(m_emptyVariables));
 
     std::istringstream issm(receiveBufferMesh);
     copy(std::istream_iterator<string>(issm),
          std::istream_iterator<string>(),
-         std::back_inserter< array<string> >(m_emptyMeshes));
+         std::back_inserter< array1d<string> >(m_emptyMeshes));
   }
 
   if( rank == 0 )
@@ -982,7 +982,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     DBfile *siloFile = DBOpen(baseFilePathAndName.c_str(), DB_UNKNOWN, DB_APPEND);
     string empty("EMPTY");
 
-    for( array<string>::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
+    for( array1d<string>::iterator emptyObject = m_emptyVariables.begin() ; emptyObject
          != m_emptyVariables.end() ; ++emptyObject )
     {
       size_t pathBegin = emptyObject->find_first_of('/', 1);
@@ -997,7 +997,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
       if( multiVar != nullptr )
       {
-        array<const char*> newvarnames(multiVar->nvars);
+        array1d<const char*> newvarnames(multiVar->nvars);
 
         for( int i = 0 ; i < multiVar->nvars ; ++i )
         {
@@ -1029,7 +1029,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
     }
 
 
-    for( array<string>::iterator emptyObject = m_emptyMeshes.begin() ; emptyObject
+    for( array1d<string>::iterator emptyObject = m_emptyMeshes.begin() ; emptyObject
          != m_emptyMeshes.end() ; ++emptyObject )
     {
       size_t pathBegin = emptyObject->find_first_of('/', 1);
@@ -1049,7 +1049,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
       if( multiMesh != nullptr )
       {
-        array<const char*> newmeshnames(multiMesh->nblocks);
+        array1d<const char*> newmeshnames(multiMesh->nblocks);
 
         for( int i = 0 ; i < multiMesh->nblocks ; ++i )
         {
@@ -1170,7 +1170,7 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
                                       real64 const problemTime,
                                       bool const isRestart,
                                       string const & materialName,
-                                      array<localIndex> const & zoneToMatMap,
+                                      array1d<localIndex> const & zoneToMatMap,
                                       const localIndex_array& mask )
 {
 
@@ -1252,9 +1252,9 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     //set the nodal coordinate data structure
     real64* coords[3];
-    array<real64> xcoords(numNodes);
-    array<real64> ycoords(numNodes);
-    array<real64> zcoords(numNodes);
+    array1d<real64> xcoords(numNodes);
+    array1d<real64> ycoords(numNodes);
+    array1d<real64> zcoords(numNodes);
     for( localIndex a = 0 ; a < numNodes ; ++a )
     {
       R1Tensor nodePosition;
@@ -1271,13 +1271,13 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     ElementRegionManager const * const elementManager = meshLevel->getElemManager();
     const localIndex numElementRegions = elementManager->GetGroup(keys::elementRegions)->GetSubGroups().size();
-    array<localIndex*> meshConnectivity(numElementRegions);
-    array<globalIndex*> globalElementNumbers(numElementRegions);
-    array<integer> shapecnt(numElementRegions);
-    array<integer> shapetype(numElementRegions);
-    array<integer> shapesize(numElementRegions);
+    array1d<localIndex*> meshConnectivity(numElementRegions);
+    array1d<globalIndex*> globalElementNumbers(numElementRegions);
+    array1d<integer> shapecnt(numElementRegions);
+    array1d<integer> shapetype(numElementRegions);
+    array1d<integer> shapesize(numElementRegions);
 
-    array<FixedOneToManyRelation> elementToNodeMap;
+    array1d<FixedOneToManyRelation> elementToNodeMap;
     elementToNodeMap.resize( numElementRegions );
 
     int count = 0;
@@ -1385,8 +1385,8 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
     {
-      array<array<localIndex> > materialOrder;
-      array<localIndex> materialOrderCounter;
+      array1d<array1d<localIndex> > materialOrder;
+      array1d<localIndex> materialOrderCounter;
       materialOrder.resize( constitutiveManager->GetSubGroups().size() );
       materialOrderCounter.resize( constitutiveManager->GetSubGroups().size() );
       for( localIndex matIndex=0 ; matIndex<constitutiveManager->GetSubGroups().size() ; ++matIndex )

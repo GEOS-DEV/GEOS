@@ -77,7 +77,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
   DomainPartition** temp = const_cast<DomainPartition**>(&m_domain);
   *temp = domain;
 
-//  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  for( array1d<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //  {
 ////    neighbor->SetDomain( domain );
 //  }
@@ -240,7 +240,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //  //(4)
 //
 //  //(5) Now do the rest of the objects
-//  array<DomainPartition::ObjectDataStructureKeys> objectNames;
+//  array1d<DomainPartition::ObjectDataStructureKeys> objectNames;
 //  NeighborCommunication::SyncNames(objectNames);
 //
 //  for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ;
@@ -339,7 +339,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //  // get the relation to the composition object used that will be used to
 // identify the main object. For example,
 //  // a face can be identified by its nodes.
-//  array<gArray1d> objectToCompositionObject;
+//  array1d<gArray1d> objectToCompositionObject;
 //  object.ExtractMapFromObjectForAssignGlobalObjectNumbers( compositionObject,
 // objectToCompositionObject );
 //  gArray1d objectToCompositionObjectBuffer;
@@ -352,9 +352,9 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //  // array being the remaining composition object global indices, and the
 // second being the global index of the object
 //  // itself.
-//  std::map<globalIndex, array<std::pair<gArray1d,localIndex> > >
+//  std::map<globalIndex, array1d<std::pair<gArray1d,localIndex> > >
 // indexByFirstCompositionIndex;
-//  for( array<gArray1d>::const_iterator a=objectToCompositionObject.begin() ;
+//  for( array1d<gArray1d>::const_iterator a=objectToCompositionObject.begin() ;
 // a!=objectToCompositionObject.end() ; ++a )
 //  {
 //    // global index of the object
@@ -379,7 +379,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //
 //
 //  // put the map into a buffer
-//  for( array<gArray1d>::const_iterator a=objectToCompositionObject.begin() ;
+//  for( array1d<gArray1d>::const_iterator a=objectToCompositionObject.begin() ;
 // a!=objectToCompositionObject.end() ; ++a )
 //  {
 //    objectToCompositionObjectBuffer.push_back( a->size() );
@@ -447,7 +447,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 // lowest composition index, and a value containing
 //  // an array containing the std::pairs of the remaining composition indices,
 // and the globalIndex of the object.
-//  array< std::map<globalIndex, array<std::pair<gArray1d,globalIndex> > > >
+//  array1d< std::map<globalIndex, array1d<std::pair<gArray1d,globalIndex> > > >
 // neighborCompositionObjects( this->m_neighbors.size() );
 //
 //  {
@@ -505,9 +505,9 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //      // now we are going to need to do a pretty tricky loop. Set iterators to
 // the beginning of each indexByFirstCompositionIndex,
 //      // and neighborCompositionObjects[neighborNum].
-//      std::map<globalIndex, array<std::pair<gArray1d,localIndex> >
+//      std::map<globalIndex, array1d<std::pair<gArray1d,localIndex> >
 // >::const_iterator iter_local = indexByFirstCompositionIndex.begin();
-//      std::map<globalIndex, array<std::pair<gArray1d,globalIndex> >
+//      std::map<globalIndex, array1d<std::pair<gArray1d,globalIndex> >
 // >::const_iterator iter_neighbor =
 //  neighborCompositionObjects[neighborNum].begin();
 //
@@ -522,13 +522,13 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //        {
 //          // first we loop over all local composition arrays (objects with the
 // matched key)
-//          for( array<std::pair<gArray1d,localIndex> >::const_iterator
+//          for( array1d<std::pair<gArray1d,localIndex> >::const_iterator
 // iter_local2 = iter_local->second.begin() ;
 //              iter_local2 != iter_local->second.end() ; ++iter_local2 )
 //          {
 //            // and loop over all of the neighbor composition arrays (objects
 // with the matched key)
-//            for( array<std::pair<gArray1d,globalIndex> >::const_iterator
+//            for( array1d<std::pair<gArray1d,globalIndex> >::const_iterator
 // iter_neighbor2 = iter_neighbor->second.begin() ;
 //                iter_neighbor2 != iter_neighbor->second.end() ;
 // ++iter_neighbor2 )
@@ -576,7 +576,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //
 //
 //template< typename T >
-//void PartitionBase::SendReceive( const array<array<T> >& sendArray, array<array<T> >& recvArray )
+//void PartitionBase::SendReceive( const array1d<array1d<T> >& sendArray, array1d<array1d<T> >& recvArray )
 //{
 //
 //  if( sendArray.size() != m_neighbors.size() || recvArray.size() != m_neighbors.size() )
@@ -587,18 +587,18 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //  }
 //
 //
-//  array<MPI_Request> mpiSendRequest(m_neighbors.size());
-//  array<MPI_Request> mpiRecvRequest(m_neighbors.size());
-//  array<MPI_Status>  mpiSendStatus(m_neighbors.size());
-//  array<MPI_Status>  mpiRecvStatus(m_neighbors.size());
+//  array1d<MPI_Request> mpiSendRequest(m_neighbors.size());
+//  array1d<MPI_Request> mpiRecvRequest(m_neighbors.size());
+//  array1d<MPI_Status>  mpiSendStatus(m_neighbors.size());
+//  array1d<MPI_Status>  mpiRecvStatus(m_neighbors.size());
 //
 //
-//  array<typename array<T>::size_type> recvSize(m_neighbors.size());
+//  array1d<typename array1d<T>::size_type> recvSize(m_neighbors.size());
 //
 //  for( localIndex i=0 ; i<m_neighbors.size() ; ++i )
 //  {
 //    NeighborCommunication& neighbor = m_neighbors[i];
-//    typename array<T>::size_type sendSize = sendArray[i].size();
+//    typename array1d<T>::size_type sendSize = sendArray[i].size();
 //
 //    neighbor.SendReceive( &sendSize, 1, mpiSendRequest[i],
 //                          &(recvSize[i]), 1, mpiRecvRequest[i] );
@@ -641,7 +641,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //void PartitionBase::SetUpNeighborLists( DomainPartition * domain,
 //                                        const bool contactActive )
 //{
-//  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  for( array1d<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //  {
 //    neighbor->Clear();
 //  }
@@ -788,7 +788,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 ////    }
 ////  }
 ////
-////  array<DomainPartition::ObjectDataStructureKeys> objectNames;
+////  array1d<DomainPartition::ObjectDataStructureKeys> objectNames;
 ////  NeighborCommunication::SyncNames(objectNames);
 ////
 ////  //------------------------------------------
@@ -804,7 +804,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 ////    std::map<std::string,localIndex_array> newElementIndices;
 ////
 ////    // (6a) do the communication
-////    for(array<DomainPartition::ObjectDataStructureKeys>::const_iterator it =
+////    for(array1d<DomainPartition::ObjectDataStructureKeys>::const_iterator it =
 //// objectNames.begin() ; it != objectNames.end(); ++it, ++index)
 ////    {
 ////      int i_mpireq = 0;
@@ -1328,15 +1328,15 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   // number to the neighbor
 
 
-  array<MPI_Request> mpiSendSizeRequest( m_neighbors.size() );
-  array<MPI_Request> mpiRecvSizeRequest( m_neighbors.size() );
-  array<MPI_Status>  mpiSendSizeStatus( m_neighbors.size() );
-  array<MPI_Status>  mpiRecvSizeStatus( m_neighbors.size() );
+  array1d<MPI_Request> mpiSendSizeRequest( m_neighbors.size() );
+  array1d<MPI_Request> mpiRecvSizeRequest( m_neighbors.size() );
+  array1d<MPI_Status>  mpiSendSizeStatus( m_neighbors.size() );
+  array1d<MPI_Status>  mpiRecvSizeStatus( m_neighbors.size() );
 
-  array<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
-  array<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
-  array<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
-  array<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
+  array1d<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
+  array1d<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
+  array1d<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
+  array1d<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
 
 
 
@@ -1610,22 +1610,22 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 
   // buffers and MPI objects for sending data about new/modified objects back to
   // the partition that owns them.
-  array<bufvector> send_buffer0( m_neighbors.size() );
-  array<bufvector::size_type> sendSize0( m_neighbors.size() );
+  array1d<bufvector> send_buffer0( m_neighbors.size() );
+  array1d<bufvector::size_type> sendSize0( m_neighbors.size() );
 
-  array<bufvector> recv_buffer0( m_neighbors.size() );
-  array<bufvector::size_type> recvSize0( m_neighbors.size() );
+  array1d<bufvector> recv_buffer0( m_neighbors.size() );
+  array1d<bufvector::size_type> recvSize0( m_neighbors.size() );
 
-  array<MPI_Request> mpiSendSizeRequest0( m_neighbors.size() );
-  array<MPI_Request> mpiRecvSizeRequest0( m_neighbors.size() );
-  array<MPI_Status>  mpiSendSizeStatus0( m_neighbors.size() );
-  array<MPI_Status>  mpiRecvSizeStatus0( m_neighbors.size() );
+  array1d<MPI_Request> mpiSendSizeRequest0( m_neighbors.size() );
+  array1d<MPI_Request> mpiRecvSizeRequest0( m_neighbors.size() );
+  array1d<MPI_Status>  mpiSendSizeStatus0( m_neighbors.size() );
+  array1d<MPI_Status>  mpiRecvSizeStatus0( m_neighbors.size() );
 
 
-  array<MPI_Request> mpiSendBufferRequest0( m_neighbors.size() );
-  array<MPI_Request> mpiRecvBufferRequest0( m_neighbors.size() );
-  array<MPI_Status>  mpiSendBufferStatus0( m_neighbors.size() );
-  array<MPI_Status>  mpiRecvBufferStatus0( m_neighbors.size() );
+  array1d<MPI_Request> mpiSendBufferRequest0( m_neighbors.size() );
+  array1d<MPI_Request> mpiRecvBufferRequest0( m_neighbors.size() );
+  array1d<MPI_Status>  mpiSendBufferStatus0( m_neighbors.size() );
+  array1d<MPI_Status>  mpiRecvBufferStatus0( m_neighbors.size() );
 
   for( unsigned int neighborIndex=0 ; neighborIndex<m_neighbors.size() ; ++neighborIndex )
   {
@@ -1766,22 +1766,22 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 
    // buffers and MPI objects for sending data from new/modified local objects
       to the neighbors.
-   array<bufvector> send_buffer1( m_neighbors.size() );
-   array<bufvector::size_type> sendSize1( m_neighbors.size() );
+   array1d<bufvector> send_buffer1( m_neighbors.size() );
+   array1d<bufvector::size_type> sendSize1( m_neighbors.size() );
 
-   array<bufvector> recv_buffer1( m_neighbors.size() );
-   array<bufvector::size_type> recvSize1( m_neighbors.size() );
+   array1d<bufvector> recv_buffer1( m_neighbors.size() );
+   array1d<bufvector::size_type> recvSize1( m_neighbors.size() );
 
-   array<MPI_Request> mpiSendSizeRequest1( m_neighbors.size() );
-   array<MPI_Request> mpiRecvSizeRequest1( m_neighbors.size() );
-   array<MPI_Status>  mpiSendSizeStatus1( m_neighbors.size() );
-   array<MPI_Status>  mpiRecvSizeStatus1( m_neighbors.size() );
+   array1d<MPI_Request> mpiSendSizeRequest1( m_neighbors.size() );
+   array1d<MPI_Request> mpiRecvSizeRequest1( m_neighbors.size() );
+   array1d<MPI_Status>  mpiSendSizeStatus1( m_neighbors.size() );
+   array1d<MPI_Status>  mpiRecvSizeStatus1( m_neighbors.size() );
 
 
-   array<MPI_Request> mpiSendBufferRequest1( m_neighbors.size() );
-   array<MPI_Request> mpiRecvBufferRequest1( m_neighbors.size() );
-   array<MPI_Status>  mpiSendBufferStatus1( m_neighbors.size() );
-   array<MPI_Status>  mpiRecvBufferStatus1( m_neighbors.size() );
+   array1d<MPI_Request> mpiSendBufferRequest1( m_neighbors.size() );
+   array1d<MPI_Request> mpiRecvBufferRequest1( m_neighbors.size() );
+   array1d<MPI_Status>  mpiSendBufferStatus1( m_neighbors.size() );
+   array1d<MPI_Status>  mpiRecvBufferStatus1( m_neighbors.size() );
 
 
 
@@ -1929,20 +1929,20 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //  // count the number of new objects that are owned by a neighbor, and send
 // that number to the neighbor
 //
-//  array<MPI_Request> mpiSendGlobalRequest( m_neighbors.size() );
-//  array<MPI_Request> mpiRecvGlobalRequest( m_neighbors.size() );
-//  array<MPI_Status>  mpiSendGlobalStatus( m_neighbors.size() );
-//  array<MPI_Status>  mpiRecvGlobalStatus( m_neighbors.size() );
+//  array1d<MPI_Request> mpiSendGlobalRequest( m_neighbors.size() );
+//  array1d<MPI_Request> mpiRecvGlobalRequest( m_neighbors.size() );
+//  array1d<MPI_Status>  mpiSendGlobalStatus( m_neighbors.size() );
+//  array1d<MPI_Status>  mpiRecvGlobalStatus( m_neighbors.size() );
 //
-//  array<MPI_Request> mpiSendSizeRequest( m_neighbors.size() );
-//  array<MPI_Request> mpiRecvSizeRequest( m_neighbors.size() );
-//  array<MPI_Status>  mpiSendSizeStatus( m_neighbors.size() );
-//  array<MPI_Status>  mpiRecvSizeStatus( m_neighbors.size() );
+//  array1d<MPI_Request> mpiSendSizeRequest( m_neighbors.size() );
+//  array1d<MPI_Request> mpiRecvSizeRequest( m_neighbors.size() );
+//  array1d<MPI_Status>  mpiSendSizeStatus( m_neighbors.size() );
+//  array1d<MPI_Status>  mpiRecvSizeStatus( m_neighbors.size() );
 //
-//  array<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
-//  array<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
-//  array<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
-//  array<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
+//  array1d<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
+//  array1d<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
+//  array1d<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
+//  array1d<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
 //
 //
 //
@@ -1968,10 +1968,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //  // global index to the requesting neighbor.
 //  const realT t1=MPI_Wtime();
 //
-//  array<MPI_Request> mpiSendNewGlobalRequest( m_neighbors.size() );
-//  array<MPI_Request> mpiRecvNewGlobalRequest( m_neighbors.size() );
-//  array<MPI_Status>  mpiSendNewGlobalStatus( m_neighbors.size() );
-//  array<MPI_Status>  mpiRecvNewGlobalStatus( m_neighbors.size() );
+//  array1d<MPI_Request> mpiSendNewGlobalRequest( m_neighbors.size() );
+//  array1d<MPI_Request> mpiRecvNewGlobalRequest( m_neighbors.size() );
+//  array1d<MPI_Status>  mpiSendNewGlobalStatus( m_neighbors.size() );
+//  array1d<MPI_Status>  mpiRecvNewGlobalStatus( m_neighbors.size() );
 //
 //  set<localIndex> newNodeGlobals;
 //  set<localIndex> newEdgeGlobals;
@@ -2453,15 +2453,15 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   // partition that are ghosts on the neighbor partition, or are owned on the
   // neighbor but a ghost on this partition.
 
-  array<MPI_Request> mpiSendSizeRequest( m_neighbors.size() );
-  array<MPI_Request> mpiRecvSizeRequest( m_neighbors.size() );
-  array<MPI_Status>  mpiSendSizeStatus( m_neighbors.size() );
-  array<MPI_Status>  mpiRecvSizeStatus( m_neighbors.size() );
+  array1d<MPI_Request> mpiSendSizeRequest( m_neighbors.size() );
+  array1d<MPI_Request> mpiRecvSizeRequest( m_neighbors.size() );
+  array1d<MPI_Status>  mpiSendSizeStatus( m_neighbors.size() );
+  array1d<MPI_Status>  mpiRecvSizeStatus( m_neighbors.size() );
 
-  array<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
-  array<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
-  array<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
-  array<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
+  array1d<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
+  array1d<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
+  array1d<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
+  array1d<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
 
 
 
@@ -2639,15 +2639,15 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects )
 {
 
-  array<MPI_Request> mpiSendSizeRequest( m_neighbors.size() );
-  array<MPI_Request> mpiRecvSizeRequest( m_neighbors.size() );
-  array<MPI_Status>  mpiSendSizeStatus( m_neighbors.size() );
-  array<MPI_Status>  mpiRecvSizeStatus( m_neighbors.size() );
+  array1d<MPI_Request> mpiSendSizeRequest( m_neighbors.size() );
+  array1d<MPI_Request> mpiRecvSizeRequest( m_neighbors.size() );
+  array1d<MPI_Status>  mpiSendSizeStatus( m_neighbors.size() );
+  array1d<MPI_Status>  mpiRecvSizeStatus( m_neighbors.size() );
 
-  array<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
-  array<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
-  array<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
-  array<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
+  array1d<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
+  array1d<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
+  array1d<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
+  array1d<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
 
 
 
@@ -2660,7 +2660,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor, ++neighborNum )
     {
       neighbor->ResizeSendBuffer(0);
-      array<bufvector::size_type> sendSizeArray;
+      array1d<bufvector::size_type> sendSizeArray;
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementNodeManager, modifiedObjects.newNodes,  modifiedObjects.modifiedNodes, true );
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementEdgeManager, modifiedObjects.newEdges,  modifiedObjects.modifiedEdges, true );
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementFaceManager, modifiedObjects.newFaces,  modifiedObjects.modifiedFaces, true );
@@ -2768,7 +2768,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     for( VectorT<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor, ++neighborNum )
     {
       neighbor->ResizeSendBuffer(0);
-      array<bufvector::size_type> sendSizeArray;
+      array1d<bufvector::size_type> sendSizeArray;
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementNodeManager, localNewNodes,  localModifiedNodes, false );
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementEdgeManager, localNewEdges,  localModifiedEdges, false );
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementFaceManager, localNewFaces,  localModifiedFaces, false );
@@ -2863,11 +2863,11 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
  * @param fieldNames
  * @param commID
  */
-//void PartitionBase::SetBufferSizes( const std::map<string, array<string> >& fieldNames,
+//void PartitionBase::SetBufferSizes( const std::map<string, array1d<string> >& fieldNames,
 //                                    const CommRegistry::commID commID  )
 //{
 //  // get buffer sizes, and send/receive sizes
-//  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  for( array1d<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //  {
 //
 //    neighbor->GetPackedBufferSize( fieldNames,
@@ -2876,23 +2876,23 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //    neighbor->SendReceiveSizes(commID);
 //  }
 //
-//  for( array<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  for( array1d<NeighborCommunication>::iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //  {
 //    neighbor->MPI_Wait_RecvSizeRequest(commID);
 //    neighbor->MPI_Wait_SendSizeRequest(commID);
 //  }
 //}
 //
-//void PartitionBase::SynchronizeFields( const std::map<string, array<string> >& fieldNames,
+//void PartitionBase::SynchronizeFields( const std::map<string, array1d<string> >& fieldNames,
 //                                       const CommRegistry::commID commID  )
 //{
 ////
 //  if(m_hasLocalGhosts){
 //    // synchronize local ghosts prior to external communication
 //    std::map<DomainPartition::ObjectDataStructureKeys,
-// array<string>>::const_iterator it  = fieldNames.begin();
+// array1d<string>>::const_iterator it  = fieldNames.begin();
 //    std::map<DomainPartition::ObjectDataStructureKeys,
-// array<string>>::const_iterator iend  = fieldNames.end();
+// array1d<string>>::const_iterator iend  = fieldNames.end();
 //    for(;it!=iend;++it){
 //
 //      if(it->first == DomainPartition::FiniteElementElementManager)
@@ -2911,7 +2911,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //          const localIndex_array& target =
 // m_elementRegionsLocalGhosts[regionName];
 //
-//          for( array<string>::size_type i =0; i < it->second.size(); ++i){
+//          for( array1d<string>::size_type i =0; i < it->second.size(); ++i){
 //            const std::string& fieldName = it->second[i];
 //            FieldType fieldType = elementRegion.GetFieldType(fieldName);
 //
@@ -2929,7 +2929,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //        const localIndex_array& source = m_localGhostSources[it->first];
 //        const localIndex_array& target = m_localGhosts[it->first];
 //
-//        for( array<string>::size_type i =0; i < it->second.size(); ++i){
+//        for( array1d<string>::size_type i =0; i < it->second.size(); ++i){
 //          const std::string& fieldName = it->second[i];
 //          FieldType fieldType = object.GetFieldType(fieldName);
 //
@@ -2968,10 +2968,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //  }
 //#else
 //
-//  array<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
-//  array<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
-//  array<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
-//  array<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
+//  array1d<MPI_Request> mpiSendBufferRequest( m_neighbors.size() );
+//  array1d<MPI_Request> mpiRecvBufferRequest( m_neighbors.size() );
+//  array1d<MPI_Status>  mpiSendBufferStatus( m_neighbors.size() );
+//  array1d<MPI_Status>  mpiRecvBufferStatus( m_neighbors.size() );
 //
 //  // send and receive buffers
 //  for( int neighborIndex=0 ; neighborIndex<m_neighbors.size() ; ++neighborIndex )
@@ -3013,10 +3013,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //{
   //(1) initialize ghost arrays
 //  std::map<DomainPartition::ObjectDataStructureKeys,
-// array<Field<FieldInfo::ghostRank>::Type>*> ghostRank;
+// array1d<Field<FieldInfo::ghostRank>::Type>*> ghostRank;
 //  {
 //    const localIndex n = NeighborCommunication::NumberOfSyncNames();
-//    array<DomainPartition::ObjectDataStructureKeys> objectNames;
+//    array1d<DomainPartition::ObjectDataStructureKeys> objectNames;
 //    NeighborCommunication::SyncNames(objectNames);
 //
 //    for(localIndex i = 0; i < n; ++i)
@@ -3037,7 +3037,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 // ++iregion )
 //        {
 //          ElementRegionT& elemRegion = iregion->second;
-//          array<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr =
+//          array1d<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr =
 // elemRegion.GetFieldData<FieldInfo::ghostRank>();
 //          ghostRankCurr = INT_MIN;
 //        }
@@ -3047,7 +3047,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //
 //  //(2) set values in individual arrays
 //  std::map<DomainPartition::ObjectDataStructureKeys,
-// array<Field<FieldInfo::ghostRank>::Type>*>::iterator it;
+// array1d<Field<FieldInfo::ghostRank>::Type>*>::iterator it;
 //  for(it = ghostRank.begin(); it != ghostRank.end(); ++it)
 //  {
 //    if(it->first != DomainPartition::FiniteElementElementManager)
@@ -3056,7 +3056,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 // neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //      {
 //        const int neighborRank = neighbor->NeighborRank();
-//        array<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr =
+//        array1d<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr =
 // *ghostRank[it->first];
 //
 //        const localIndex_array& receiveLocalIndices =
@@ -3093,7 +3093,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //        {
 //          const std::string& elemRegionName = iregion->first;
 //          ElementRegionT& elemRegion = iregion->second;
-//          array<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr =
+//          array1d<Field<FieldInfo::ghostRank>::Type>& ghostRankCurr =
 // elemRegion.GetFieldData<FieldInfo::ghostRank>();
 //
 //
@@ -3129,20 +3129,20 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //
 //void PartitionBase::SetRankOfNeighborNeighbors()
 //{
-//  array<integer> ranks;
-//  array<array<integer> > neighborRanks(m_neighbors.size());
+//  array1d<integer> ranks;
+//  array1d<array1d<integer> > neighborRanks(m_neighbors.size());
 //
-//  for( array<NeighborCommunication>::const_iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  for( array1d<NeighborCommunication>::const_iterator neighbor=m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //  {
 //    ranks.push_back( neighbor->NeighborRank() );
 //  }
 //
-//  array<integer>::size_type sendSize = ranks.size();
-//  array<array<integer>::size_type> recvSize(m_neighbors.size());
-//  array<MPI_Request> mpiSendRequest(m_neighbors.size());
-//  array<MPI_Request> mpiRecvRequest(m_neighbors.size());
-//  array<MPI_Status>  mpiSendStatus(m_neighbors.size());
-//  array<MPI_Status>  mpiRecvStatus(m_neighbors.size());
+//  array1d<integer>::size_type sendSize = ranks.size();
+//  array1d<array1d<integer>::size_type> recvSize(m_neighbors.size());
+//  array1d<MPI_Request> mpiSendRequest(m_neighbors.size());
+//  array1d<MPI_Request> mpiRecvRequest(m_neighbors.size());
+//  array1d<MPI_Status>  mpiSendStatus(m_neighbors.size());
+//  array1d<MPI_Status>  mpiRecvStatus(m_neighbors.size());
 //
 //  for( int i=0 ; i<m_neighbors.size() ; ++i )
 //  {
@@ -3253,7 +3253,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 ////Delete the neighbors that do not communicate
 //void PartitionBase::DeleteExcessNeighbors()
 //{
-//  for( array<NeighborCommunication>::iterator neighbor = m_neighbors.end()-1 ; neighbor!=m_neighbors.begin()-1 ; --neighbor )
+//  for( array1d<NeighborCommunication>::iterator neighbor = m_neighbors.end()-1 ; neighbor!=m_neighbors.begin()-1 ; --neighbor )
 //  {
 ////    std::cout << m_rank << ":" << neighbor-> ReturnNeighborRank() << ": " <<
 //// neighbor->ReturnNeighborRcvSndSize() << std::endl;
@@ -3279,9 +3279,9 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //
 //  if (m_rank == 0)
 //    std::cout<<"Coloring partitions ... ";
-//  array<integer> localNeighborList(1);
+//  array1d<integer> localNeighborList(1);
 //  localNeighborList = 0;
-//  for( array<NeighborCommunication>::iterator neighbor = m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
+//  for( array1d<NeighborCommunication>::iterator neighbor = m_neighbors.begin() ; neighbor!=m_neighbors.end() ; ++neighbor )
 //  {
 //    localNeighborList.push_back(neighbor->NeighborRank());
 //  }
@@ -3293,7 +3293,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //  int maxLocalNumNeighbors = 0;
 //  MPI_Allreduce(&localNumNeighbors, &maxLocalNumNeighbors, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 //
-//  array<integer> allNeighborList;
+//  array1d<integer> allNeighborList;
 //  allNeighborList.resize(maxLocalNumNeighbors * m_size);
 //
 //  for (localIndex i = 0 ; i < maxLocalNumNeighbors - localNeighborList.size() ; ++i)
@@ -3303,17 +3303,17 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //
 //  MPI_Gather( localNeighborList.data(), maxLocalNumNeighbors, MPI_INT, allNeighborList.data(), maxLocalNumNeighbors, MPI_INT, 0, MPI_COMM_WORLD);
 //
-//  array<integer> colorByRank(m_size);
+//  array1d<integer> colorByRank(m_size);
 //
 //  if (m_rank == 0)
 //  {
-//    array<array<integer> > listNeighbors;
+//    array1d<array1d<integer> > listNeighbors;
 //    listNeighbors.resize(m_size);
 //
 //    int count = 0;
 //    int COUNT = 0;
 //    localIndex myrank = -1;
-//    for (array<integer>::const_iterator it = allNeighborList.begin() ; it != allNeighborList.end() ; ++it)
+//    for (array1d<integer>::const_iterator it = allNeighborList.begin() ; it != allNeighborList.end() ; ++it)
 //    {
 //      if (COUNT == 0)
 //      {
@@ -3331,7 +3331,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //    // Now we loop through and assign colors
 //
 //    colorByRank = -1;
-//    array<integer> countColor(m_size);
+//    array1d<integer> countColor(m_size);
 //    m_numColors = -1;
 //
 //    for (localIndex rank = 0 ; rank < listNeighbors.size() ; ++rank)
@@ -3343,7 +3343,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //          countColor[colorByRank[listNeighbors[rank][i]]]++;
 //      }
 //
-//      array<integer>::const_iterator it = countColor.begin();
+//      array1d<integer>::const_iterator it = countColor.begin();
 //      colorByRank[rank] = 0;
 //      while (*it > 0)
 //      {
@@ -3360,7 +3360,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //    for (localIndex rank = 0 ; rank < listNeighbors.size() ; ++rank)
 //    {
 //      std::cout<< rank << ": " << colorByRank[rank] << " - ";
-//      for (array<integer>::const_iterator it = listNeighbors[rank].begin() ; it != listNeighbors[rank].end() ; ++it)
+//      for (array1d<integer>::const_iterator it = listNeighbors[rank].begin() ; it != listNeighbors[rank].end() ; ++it)
 //      {
 //        std::cout << *it << " ,";
 //      }
