@@ -59,7 +59,7 @@ public:
 
   void MaterialPassThru( string const & matName,
                          string const & setName,
-                         lSet & materialSet,
+                         set<localIndex> & materialSet,
                          ManagedGroup * material );
 
 

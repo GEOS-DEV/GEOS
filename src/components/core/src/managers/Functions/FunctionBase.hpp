@@ -77,7 +77,7 @@ public:
    */
   virtual void Evaluate( dataRepository::ManagedGroup const * const group,
                          real64 const time,
-                         lSet const & set,
+                         set<localIndex> const & set,
                          real64_array & result ) const = 0;
 
   /**
@@ -103,13 +103,13 @@ public:
    */
   real64_array EvaluateStats( dataRepository::ManagedGroup const * const group,
                               real64 const time,
-                              lSet const & set) const;
+                              set<localIndex> const & set) const;
 
 protected:
   template< typename LEAF >
   void EvaluateT( dataRepository::ManagedGroup const * const group,
                   real64 const time,
-                  lSet const & set,
+                  set<localIndex> const & set,
                   real64_array & result ) const;
 
 };
@@ -118,7 +118,7 @@ protected:
 template< typename LEAF >
 void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
                               real64 const time,
-                              lSet const & set,
+                              set<localIndex> const & set,
                               real64_array & result ) const
 {
   real64 const * input_ptrs[4];

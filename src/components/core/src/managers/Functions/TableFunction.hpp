@@ -61,7 +61,7 @@ public:
    */
   virtual void Evaluate( dataRepository::ManagedGroup const * const group,
                          real64 const time,
-                         lSet const & sets,
+                         set<localIndex> const & sets,
                          real64_array & result ) const override final;
 
   /**

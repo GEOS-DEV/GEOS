@@ -1179,7 +1179,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //  {
 //    for( int i=0 ; i<3 ; ++i )
 //    {
-//      lSet& indicesToSend =
+//      set<localIndex>& indicesToSend =
 // neighbor->tempNeighborData.objectLocalIndicesToSend[keys[i]];
 //      const gArray1d& indicesToAdd =
 // neighbor->tempNeighborData.objectGlobalIndicesToRecieve[keys[i]];
@@ -1368,10 +1368,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 
     // pack the new/modified elements that are owned by the neighbor.
     neighbor.PackTopologyModifications( DomainPartition::FiniteElementElementManager, std::map< std::string,
-                                                                                                lSet >(),  modifiedObjects.modifiedElements, true,  true );
+                                                                                                set<localIndex> >(),  modifiedObjects.modifiedElements, true,  true );
     // pack the new/modified elements that are owned by this process
     neighbor.PackTopologyModifications( DomainPartition::FiniteElementElementManager, std::map< std::string,
-                                                                                                lSet >(),  modifiedObjects.modifiedElements, true,  false );
+                                                                                                set<localIndex> >(),  modifiedObjects.modifiedElements, true,  false );
 
     neighbor.SendReceiveBufferSizes(CommRegistry::genericComm01, mpiSendSizeRequest[neighborIndex], mpiRecvSizeRequest[neighborIndex] );
   }
@@ -1389,12 +1389,12 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   }
 
 
-  lSet allNewAndModifiedLocalNodes;
+  set<localIndex> allNewAndModifiedLocalNodes;
 
-  lSet allNewNodes, allModifiedNodes;
-  lSet allNewEdges, allModifiedEdges;
-  lSet allNewFaces, allModifiedFaces;
-  std::map< std::string, lSet> allModifiedElements;
+  set<localIndex> allNewNodes, allModifiedNodes;
+  set<localIndex> allNewEdges, allModifiedEdges;
+  set<localIndex> allNewFaces, allModifiedFaces;
+  std::map< std::string, set<localIndex>> allModifiedElements;
   // unpack the buffers
   for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
   {
@@ -1467,7 +1467,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 
     neighbor.PackTopologyModifications( DomainPartition::FiniteElementEdgeManager, allNewEdges,  allModifiedEdges, false, false );
     neighbor.PackTopologyModifications( DomainPartition::FiniteElementFaceManager, allNewFaces,  allModifiedFaces, false, false );
-    neighbor.PackTopologyModifications( DomainPartition::FiniteElementElementManager, std::map< std::string, lSet >(),  allModifiedElements, false, false );
+    neighbor.PackTopologyModifications( DomainPartition::FiniteElementElementManager, std::map< std::string, set<localIndex> >(),  allModifiedElements, false, false );
 
     neighbor.SendReceiveBufferSizes(CommRegistry::genericComm01, mpiSendSizeRequest[neighborIndex], mpiRecvSizeRequest[neighborIndex] );
   }
@@ -1540,7 +1540,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   MPI_Waitall( mpiSendSizeRequest.size(), mpiSendSizeRequest.data(), mpiSendSizeStatus.data() );
 
 
-  lSet allReceivedNodes;
+  set<localIndex> allReceivedNodes;
   allReceivedNodes.insert( allNewNodes.begin(), allNewNodes.end() );
   allReceivedNodes.insert( allModifiedNodes.begin(), allModifiedNodes.end() );
 
@@ -1551,13 +1551,13 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
                                                            m_domain->m_feFaceManager.m_globalToLocalMap );
 
 
-  lSet allReceivedEdges;
+  set<localIndex> allReceivedEdges;
   allReceivedEdges.insert( allNewEdges.begin(), allNewEdges.end() );
   allReceivedEdges.insert( allModifiedEdges.begin(), allModifiedEdges.end() );
 
   m_domain->m_feEdgeManager.ConnectivityFromGlobalToLocal( allReceivedEdges, m_domain->m_feNodeManager.m_globalToLocalMap );
 
-  lSet allReceivedFaces;
+  set<localIndex> allReceivedFaces;
   allReceivedFaces.insert( allNewFaces.begin(), allNewFaces.end() );
   allReceivedFaces.insert( allModifiedFaces.begin(), allModifiedFaces.end() );
 
@@ -1595,16 +1595,16 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 
 
 
-  lSet newLocalNodes( modifiedObjects.newNodes );
-  lSet modifiedLocalNodes( modifiedObjects.modifiedNodes );
+  set<localIndex> newLocalNodes( modifiedObjects.newNodes );
+  set<localIndex> modifiedLocalNodes( modifiedObjects.modifiedNodes );
 
-  lSet newLocalEdges( modifiedObjects.newEdges );
-  lSet modifiedLocalEdges( modifiedObjects.modifiedEdges );
+  set<localIndex> newLocalEdges( modifiedObjects.newEdges );
+  set<localIndex> modifiedLocalEdges( modifiedObjects.modifiedEdges );
 
-  lSet newLocalFaces( modifiedObjects.newFaces );
-  lSet modifiedLocalFaces( modifiedObjects.modifiedFaces );
+  set<localIndex> newLocalFaces( modifiedObjects.newFaces );
+  set<localIndex> modifiedLocalFaces( modifiedObjects.modifiedFaces );
 
-  std::map< std::string, lSet> modifiedLocalElements(modifiedObjects.modifiedElements);
+  std::map< std::string, set<localIndex>> modifiedLocalElements(modifiedObjects.modifiedElements);
 
 
 
@@ -1670,28 +1670,28 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 
 
 
-  lSet newLocalNodesFromNeighbor;
-  lSet modifiedLocalNodesFromNeighbor;
+  set<localIndex> newLocalNodesFromNeighbor;
+  set<localIndex> modifiedLocalNodesFromNeighbor;
 
-  lSet newLocalEdgesFromNeighbor;
-  lSet modifiedLocalEdgesFromNeighbor;
+  set<localIndex> newLocalEdgesFromNeighbor;
+  set<localIndex> modifiedLocalEdgesFromNeighbor;
 
-  lSet newLocalFacesFromNeighbor;
-  lSet modifiedLocalFacesFromNeighbor;
+  set<localIndex> newLocalFacesFromNeighbor;
+  set<localIndex> modifiedLocalFacesFromNeighbor;
 
-  std::map< std::string, lSet> modifiedLocalElementsFromNeighbor;
+  std::map< std::string, set<localIndex>> modifiedLocalElementsFromNeighbor;
 
 
-  lSet newGhostNodesFromNeighbor;
-  lSet modifiedGhostNodesFromNeighbor;
+  set<localIndex> newGhostNodesFromNeighbor;
+  set<localIndex> modifiedGhostNodesFromNeighbor;
 
-  lSet newGhostEdgesFromNeighbor;
-  lSet modifiedGhostEdgesFromNeighbor;
+  set<localIndex> newGhostEdgesFromNeighbor;
+  set<localIndex> modifiedGhostEdgesFromNeighbor;
 
-  lSet newGhostFacesFromNeighbor;
-  lSet modifiedGhostFacesFromNeighbor;
+  set<localIndex> newGhostFacesFromNeighbor;
+  set<localIndex> modifiedGhostFacesFromNeighbor;
 
-  std::map< std::string, lSet> modifiedGhostElementsFromNeighbor;
+  std::map< std::string, set<localIndex>> modifiedGhostElementsFromNeighbor;
 
 
   MPI_Waitall( mpiRecvBufferRequest0.size(), mpiRecvBufferRequest0.data(), mpiRecvBufferStatus0.data() );
@@ -1872,7 +1872,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
    }
  */
 
-  lSet allReceivedEdges;
+  set<localIndex> allReceivedEdges;
   allReceivedEdges.insert( newLocalEdgesFromNeighbor.begin(), newLocalEdgesFromNeighbor.end() );
   allReceivedEdges.insert( newGhostEdgesFromNeighbor.begin(), newGhostEdgesFromNeighbor.end() );
   allReceivedEdges.insert( modifiedLocalEdgesFromNeighbor.begin(), modifiedLocalEdgesFromNeighbor.end() );
@@ -1880,7 +1880,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 
   m_domain->m_feEdgeManager.ConnectivityFromGlobalToLocal( allReceivedEdges, m_domain->m_feNodeManager.m_globalToLocalMap );
 
-  lSet allReceivedFaces;
+  set<localIndex> allReceivedFaces;
   allReceivedFaces.insert( newLocalFacesFromNeighbor.begin(), newLocalFacesFromNeighbor.end() );
   allReceivedFaces.insert( newGhostFacesFromNeighbor.begin(), newGhostFacesFromNeighbor.end() );
   allReceivedFaces.insert( modifiedLocalFacesFromNeighbor.begin(), modifiedLocalFacesFromNeighbor.end() );
@@ -1891,7 +1891,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
                                                            m_domain->m_feEdgeManager.m_globalToLocalMap );
 
 
-  std::map< std::string, lSet> allReceivedElements;
+  std::map< std::string, set<localIndex>> allReceivedElements;
   allReceivedElements.insert( modifiedLocalElementsFromNeighbor.begin(), modifiedLocalElementsFromNeighbor.end() );
   allReceivedElements.insert( modifiedGhostElementsFromNeighbor.begin(), modifiedGhostElementsFromNeighbor.end() );
 
@@ -1903,10 +1903,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 
   m_domain->m_feNodeManager.ModifyNodeToEdgeMapFromSplit( m_domain->m_feEdgeManager,
                                                           allReceivedEdges,
-                                                          lSet() );
+                                                          set<localIndex>() );
 
   m_domain->m_feFaceManager.ModifyToFaceMapsFromSplit( allReceivedFaces,
-                                                       lSet(),
+                                                       set<localIndex>(),
                                                        m_domain->m_feNodeManager,
                                                        m_domain->m_feEdgeManager );
 
@@ -1973,9 +1973,9 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //  array<MPI_Status>  mpiSendNewGlobalStatus( m_neighbors.size() );
 //  array<MPI_Status>  mpiRecvNewGlobalStatus( m_neighbors.size() );
 //
-//  lSet newNodeGlobals;
-//  lSet newEdgeGlobals;
-//  lSet newFaceGlobals;
+//  set<localIndex> newNodeGlobals;
+//  set<localIndex> newEdgeGlobals;
+//  set<localIndex> newFaceGlobals;
 //  for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
 //  {
 //    int neighborIndex;
@@ -2078,11 +2078,11 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //
 //    // pack the new/modified elements that are owned by the neighbor.
 //    neighbor.PackTopologyModifications(
-// DomainPartition::FiniteElementElementManager, std::map< std::string, lSet
+// DomainPartition::FiniteElementElementManager, std::map< std::string, set<localIndex>
 // >(),  modifiedObjects.modifiedElements, true,  true );
 //    // pack the new/modified elements that are owned by this process
 //    neighbor.PackTopologyModifications(
-// DomainPartition::FiniteElementElementManager, std::map< std::string, lSet
+// DomainPartition::FiniteElementElementManager, std::map< std::string, set<localIndex>
 // >(),  modifiedObjects.modifiedElements, true,  false );
 //    }
 //    neighbor.SendReceiveBufferSizes(CommRegistry::genericComm01,
@@ -2107,12 +2107,12 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //
 //
 //
-//  lSet allNewAndModifiedLocalNodes;
+//  set<localIndex> allNewAndModifiedLocalNodes;
 //
-//  lSet allNewNodes, allModifiedNodes;
-//  lSet allNewEdges, allModifiedEdges;
-//  lSet allNewFaces, allModifiedFaces;
-//  std::map< std::string, lSet> allModifiedElements;
+//  set<localIndex> allNewNodes, allModifiedNodes;
+//  set<localIndex> allNewEdges, allModifiedEdges;
+//  set<localIndex> allNewFaces, allModifiedFaces;
+//  std::map< std::string, set<localIndex>> allModifiedElements;
 //  // unpack the buffers
 //  for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
 //  {
@@ -2233,7 +2233,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 // DomainPartition::FiniteElementFaceManager, allNewFaces,  allModifiedFaces,
 // false, false );
 //    neighbor.PackTopologyModifications(
-// DomainPartition::FiniteElementElementManager, std::map< std::string, lSet
+// DomainPartition::FiniteElementElementManager, std::map< std::string, set<localIndex>
 // >(),  allModifiedElements, false, false );
 //    }
 //    neighbor.SendReceiveBufferSizes(CommRegistry::genericComm01,
@@ -2338,7 +2338,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //
 //
 //
-//  lSet allReceivedNodes;
+//  set<localIndex> allReceivedNodes;
 //  allReceivedNodes.insert( allNewNodes.begin(), allNewNodes.end() );
 //  allReceivedNodes.insert( allModifiedNodes.begin(), allModifiedNodes.end() );
 //
@@ -2352,7 +2352,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 // );
 //
 //
-//  lSet allReceivedEdges;
+//  set<localIndex> allReceivedEdges;
 //  allReceivedEdges.insert( allNewEdges.begin(), allNewEdges.end() );
 //  allReceivedEdges.insert( allModifiedEdges.begin(), allModifiedEdges.end() );
 //
@@ -2361,7 +2361,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //                                                           m_domain->m_feFaceManager.m_globalToLocalMap
 // );
 //
-//  lSet allReceivedFaces;
+//  set<localIndex> allReceivedFaces;
 //  allReceivedFaces.insert( allNewFaces.begin(), allNewFaces.end() );
 //  allReceivedFaces.insert( allModifiedFaces.begin(), allModifiedFaces.end() );
 //
@@ -2487,9 +2487,9 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     neighbor.PackTopologyModifications( DomainPartition::FiniteElementFaceManager, modifiedObjects.newFaces,  modifiedObjects.modifiedFaces, true );
     neighbor.PackTopologyModifications( DomainPartition::FiniteElementFaceManager, modifiedObjects.newFaces,  modifiedObjects.modifiedFaces, false );
 
-    neighbor.PackTopologyModifications( DomainPartition::FiniteElementElementManager, std::map< std::string, lSet >(),  modifiedObjects.modifiedElements,
+    neighbor.PackTopologyModifications( DomainPartition::FiniteElementElementManager, std::map< std::string, set<localIndex> >(),  modifiedObjects.modifiedElements,
                                         true );
-    neighbor.PackTopologyModifications( DomainPartition::FiniteElementElementManager, std::map< std::string, lSet >(),  modifiedObjects.modifiedElements,
+    neighbor.PackTopologyModifications( DomainPartition::FiniteElementElementManager, std::map< std::string, set<localIndex> >(),  modifiedObjects.modifiedElements,
                                         false );
 
     neighbor.SendReceiveBufferSizes(CommRegistry::genericComm01, mpiSendSizeRequest[count], mpiRecvSizeRequest[count] );
@@ -2585,7 +2585,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
     neighbor.PackTopologyModifications( DomainPartition::FiniteElementNodeManager, allNewLocalNodes,  allModifiedLocalNodes, false );
     neighbor.PackTopologyModifications( DomainPartition::FiniteElementEdgeManager, allNewLocalEdges,  allModifiedLocalEdges, false );
     neighbor.PackTopologyModifications( DomainPartition::FiniteElementFaceManager, allNewLocalFaces,  allModifiedLocalFaces, false );
-    neighbor.PackTopologyModifications( DomainPartition::FiniteElementElementManager, std::map< std::string, lSet >(),  modifiedObjects.modifiedElements,
+    neighbor.PackTopologyModifications( DomainPartition::FiniteElementElementManager, std::map< std::string, set<localIndex> >(),  modifiedObjects.modifiedElements,
                                         false );
 
 
@@ -2664,7 +2664,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementNodeManager, modifiedObjects.newNodes,  modifiedObjects.modifiedNodes, true );
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementEdgeManager, modifiedObjects.newEdges,  modifiedObjects.modifiedEdges, true );
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementFaceManager, modifiedObjects.newFaces,  modifiedObjects.modifiedFaces, true );
-      neighbor->PackTopologyModifications( DomainPartition::FiniteElementElementManager, lSet(),  modifiedObjects.modifiedElements, true );
+      neighbor->PackTopologyModifications( DomainPartition::FiniteElementElementManager, set<localIndex>(),  modifiedObjects.modifiedElements, true );
 
       neighbor->SendReceiveBufferSizes(CommRegistry::genericComm01, mpiSendSizeRequest[neighborNum], mpiRecvSizeRequest[neighborNum] );
     }
@@ -2684,10 +2684,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   }
 
 
-  lSet localNewNodes, localModifiedNodes;
-  lSet localNewEdges, localModifiedEdges;
-  lSet localNewFaces, localModifiedFaces;
-  std::map< std::string, lSet> localModifiedElements;
+  set<localIndex> localNewNodes, localModifiedNodes;
+  set<localIndex> localNewEdges, localModifiedEdges;
+  set<localIndex> localNewFaces, localModifiedFaces;
+  std::map< std::string, set<localIndex>> localModifiedElements;
 
   // unpack the buffers
   for( unsigned int count=0 ; count<m_neighbors.size() ; ++count )
@@ -2755,7 +2755,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   localModifiedFaces.insert( modifiedObjects.modifiedFaces.begin(), modifiedObjects.modifiedFaces.end() );
 
 
-  for( std::map< std::string, lSet>::const_iterator i=modifiedObjects.modifiedElements.begin() ; i!=modifiedObjects.modifiedElements.end() ; ++i )
+  for( std::map< std::string, set<localIndex>>::const_iterator i=modifiedObjects.modifiedElements.begin() ; i!=modifiedObjects.modifiedElements.end() ; ++i )
   {
     localModifiedElements[i->first].insert( i->second.begin(), i->second.end() );
   }
@@ -2772,7 +2772,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementNodeManager, localNewNodes,  localModifiedNodes, false );
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementEdgeManager, localNewEdges,  localModifiedEdges, false );
       neighbor->PackTopologyModifications( DomainPartition::FiniteElementFaceManager, localNewFaces,  localModifiedFaces, false );
-      neighbor->PackTopologyModifications( DomainPartition::FiniteElementElementManager, lSet(),  localModifiedElements, false );
+      neighbor->PackTopologyModifications( DomainPartition::FiniteElementElementManager, set<localIndex>(),  localModifiedElements, false );
 
       neighbor->SendReceiveBufferSizes(CommRegistry::genericComm01, mpiSendSizeRequest[neighborNum], mpiRecvSizeRequest[neighborNum] );
     }
@@ -2792,10 +2792,10 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
   }
 
 
-  lSet ghostNewNodes, ghostModifiedNodes;
-  lSet ghostNewEdges, ghostModifiedEdges;
-  lSet ghostNewFaces, ghostModifiedFaces;
-  std::map< std::string, lSet> ghostModifiedElements;
+  set<localIndex> ghostNewNodes, ghostModifiedNodes;
+  set<localIndex> ghostNewEdges, ghostModifiedEdges;
+  set<localIndex> ghostNewFaces, ghostModifiedFaces;
+  std::map< std::string, set<localIndex>> ghostModifiedElements;
 
 
   // unpack the buffers

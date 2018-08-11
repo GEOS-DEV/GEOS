@@ -713,7 +713,7 @@ localIndex Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
-          array< lSet > const & var,
+          array< set<localIndex> > const & var,
           localIndex_array const & indices,
           globalIndex_array const & localToGlobalMap,
           globalIndex_array const & relatedObjectLocalToGlobalMap )
@@ -733,7 +733,7 @@ localIndex Pack( char*& buffer,
 
 inline
 localIndex Unpack( char const *& buffer,
-            array< lSet > & var,
+            array< set<localIndex> > & var,
             localIndex_array const & indices,
             map<globalIndex,localIndex> const & globalToLocalMap,
             map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )

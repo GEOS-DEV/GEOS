@@ -173,7 +173,7 @@ void SimpleBoundaryCondition::ReadXML( TICPP::HierarchicalDataNode* BCNode)
 }
 
 realT SimpleBoundaryCondition::GetValue(const ObjectDataStructureBaseT& object,
-                                        const lSet::const_iterator& si,
+                                        const set<localIndex>::const_iterator& si,
                                         realT time )
 {
 
@@ -292,7 +292,7 @@ void BoundaryConditionFunction::ReadXML( TICPP::HierarchicalDataNode* hdn)
 }
 
 realT BoundaryConditionFunction::GetValue(const ObjectDataStructureBaseT& object,
-                                          const lSet::const_iterator& si,
+                                          const set<localIndex>::const_iterator& si,
                                           realT time )
 {
 
@@ -564,7 +564,7 @@ TractionBoundaryCondition::TractionBoundaryCondition( TICPP::HierarchicalDataNod
 // traction directly in the solver.
 // This allows the traction bc to be developed separately from the individual
 // solvers
-R1Tensor TractionBoundaryCondition::GetTractionOnFace(PhysicalDomainT& domain, const lSet::const_iterator& fc,  realT& time){
+R1Tensor TractionBoundaryCondition::GetTractionOnFace(PhysicalDomainT& domain, const set<localIndex>::const_iterator& fc,  realT& time){
   realT value = this->GetValue(domain.m_feFaceManager,fc,time);
 
   R1Tensor traction;
@@ -683,7 +683,7 @@ void TractionBoundaryConditionFunction::ReadXML( TICPP::HierarchicalDataNode* hd
 
 
 
-R1Tensor TractionBoundaryConditionFunction::GetTractionOnFace(PhysicalDomainT& domain, const lSet::const_iterator& fc,  realT& time){
+R1Tensor TractionBoundaryConditionFunction::GetTractionOnFace(PhysicalDomainT& domain, const set<localIndex>::const_iterator& fc,  realT& time){
 
   R1Tensor traction;
   if( this->IsNormalTraction() )
@@ -772,7 +772,7 @@ HydraulicPressureBoundaryCondition::HydraulicPressureBoundaryCondition( TICPP::H
 // traction directly in the solver.
 // This allows the traction bc to be developed separately from the individual
 // solvers
-R1Tensor HydraulicPressureBoundaryCondition::GetTractionOnFace(PhysicalDomainT& domain, const lSet::const_iterator& fc,  realT& time){
+R1Tensor HydraulicPressureBoundaryCondition::GetTractionOnFace(PhysicalDomainT& domain, const set<localIndex>::const_iterator& fc,  realT& time){
 
 
   R1Tensor traction = domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, *fc );
@@ -812,7 +812,7 @@ UniformPressureBoundaryCondition::UniformPressureBoundaryCondition( TICPP::Hiera
 // This allows the traction bc to be developed separately from the individual
 // solvers
 R1Tensor UniformPressureBoundaryCondition::GetTractionOnFace(PhysicalDomainT& domain,
-                                                             const lSet::const_iterator& fc,
+                                                             const set<localIndex>::const_iterator& fc,
                                                              realT& time)
 {
 
@@ -949,7 +949,7 @@ void NonPenetratingBoundaryCondition::RegisterFields(PhysicalDomainT& domain )
   domain.m_feFaceManager.AddKeylessDataField<R1Tensor>("FaceCenter");
 }
 realT NonPenetratingBoundaryCondition::GetValue(const ObjectDataStructureBaseT& object,
-                                                const lSet::const_iterator& si,
+                                                const set<localIndex>::const_iterator& si,
                                                 realT time )
 {
 
@@ -966,22 +966,22 @@ void NonPenetratingBoundaryCondition::UpdateNearestNeighborMaps(PhysicalDomainT&
 
   //nodes
   {
-    std::map< std::string, lSet >::const_iterator setMapA = domain.m_feNodeManager.m_Sets.find( m_setNames[0] );
-    std::map< std::string, lSet >::const_iterator setMapB = domain.m_feNodeManager.m_Sets.find( m_setNames[1] );
+    std::map< std::string, set<localIndex> >::const_iterator setMapA = domain.m_feNodeManager.m_Sets.find( m_setNames[0] );
+    std::map< std::string, set<localIndex> >::const_iterator setMapB = domain.m_feNodeManager.m_Sets.find( m_setNames[1] );
 
     if( setMapA != domain.m_feNodeManager.m_Sets.end() &&  setMapB != domain.m_feNodeManager.m_Sets.end() )
     {
 
-      const lSet& setA = setMapA->second;
-      const lSet& setB = setMapB->second;
+      const set<localIndex>& setA = setMapA->second;
+      const set<localIndex>& setB = setMapB->second;
 
       // fixme - brute force search for nearest neighbors.
-      for( lSet::const_iterator ndA=setA.begin() ; ndA!=setA.end() ; ++ndA )
+      for( set<localIndex>::const_iterator ndA=setA.begin() ; ndA!=setA.end() ; ++ndA )
       {
         realT minSqrdDist = std::numeric_limits<realT>::max();
         localIndex nbr = 0;
         R1Tensor posA =  u[*ndA] + X[*ndA];
-        for( lSet::const_iterator ndB=setB.begin() ; ndB!=setB.end() ; ++ndB )
+        for( set<localIndex>::const_iterator ndB=setB.begin() ; ndB!=setB.end() ; ++ndB )
         {
           R1Tensor l =  u[*ndB] + X[*ndB] - posA;
 
@@ -1020,32 +1020,32 @@ void NonPenetratingBoundaryCondition::UpdateNearestNeighborMaps(PhysicalDomainT&
 
   //faces
   {
-    std::map< std::string, lSet >::const_iterator setMapA = domain.m_feFaceManager.m_Sets.find( m_setNames[0] );
-    std::map< std::string, lSet >::const_iterator setMapB = domain.m_feFaceManager.m_Sets.find( m_setNames[1] );
+    std::map< std::string, set<localIndex> >::const_iterator setMapA = domain.m_feFaceManager.m_Sets.find( m_setNames[0] );
+    std::map< std::string, set<localIndex> >::const_iterator setMapB = domain.m_feFaceManager.m_Sets.find( m_setNames[1] );
 
     if( setMapA != domain.m_feFaceManager.m_Sets.end() &&  setMapB != domain.m_feFaceManager.m_Sets.end() )
     {
 
-      const lSet& setA = setMapA->second;
-      const lSet& setB = setMapB->second;
+      const set<localIndex>& setA = setMapA->second;
+      const set<localIndex>& setB = setMapB->second;
 
       // update face centers
-      for( lSet::const_iterator fcA=setA.begin() ; fcA!=setA.end() ; ++fcA )
+      for( set<localIndex>::const_iterator fcA=setA.begin() ; fcA!=setA.end() ; ++fcA )
       {
         domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager,*fcA, faceCenter(*fcA));
       }
-      for( lSet::const_iterator fcB=setB.begin() ; fcB!=setB.end() ; ++fcB )
+      for( set<localIndex>::const_iterator fcB=setB.begin() ; fcB!=setB.end() ; ++fcB )
       {
         domain.m_feFaceManager.FaceCenter(domain.m_feNodeManager,*fcB, faceCenter(*fcB));
       }
 
       // brute force search for nearest neighbors.
-      for( lSet::const_iterator fcA=setA.begin() ; fcA!=setA.end() ; ++fcA )
+      for( set<localIndex>::const_iterator fcA=setA.begin() ; fcA!=setA.end() ; ++fcA )
       {
         realT minSqrdDist = std::numeric_limits<realT>::max();
         localIndex nbr = 0;
         R1Tensor posA =  faceCenter(*fcA);
-        for( lSet::const_iterator fcB=setB.begin() ; fcB!=setB.end() ; ++fcB )
+        for( set<localIndex>::const_iterator fcB=setB.begin() ; fcB!=setB.end() ; ++fcB )
         {
           R1Tensor l =  faceCenter(*fcB) - posA;
 
@@ -1108,7 +1108,7 @@ void SinglePartitionPeriodicBoundaryCondition::RegisterFields(PhysicalDomainT& d
   domain.m_feEdgeManager.AddKeylessDataField<R1Tensor>("EdgeCenter");
 }
 realT SinglePartitionPeriodicBoundaryCondition::GetValue(const ObjectDataStructureBaseT& object,
-                                                         const lSet::const_iterator& si,
+                                                         const set<localIndex>::const_iterator& si,
                                                          realT time )
 {
 
@@ -1135,10 +1135,10 @@ void SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps(PhysicalDomainT& 
     for(int a =0 ; a < 2 ; ++a)
     {
 
-      std::map< std::string, lSet >::const_iterator setMap = domain.m_feNodeManager.m_Sets.find( m_setNames[a] );
+      std::map< std::string, set<localIndex> >::const_iterator setMap = domain.m_feNodeManager.m_Sets.find( m_setNames[a] );
       if( setMap != domain.m_feNodeManager.m_Sets.end() )
       {
-        const lSet& set = setMap->second;
+        const set<localIndex>& set = setMap->second;
         sortedIndexes[a].assign(set.begin(),set.end() );
         std::sort(sortedIndexes[a].begin(),sortedIndexes[a].end(),planarSorterNodes);
       }
@@ -1168,13 +1168,13 @@ void SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps(PhysicalDomainT& 
     for(int a =0 ; a < 2 ; ++a)
     {
 
-      std::map< std::string, lSet >::const_iterator setMap = domain.m_feFaceManager.m_Sets.find( m_setNames[a] );
+      std::map< std::string, set<localIndex> >::const_iterator setMap = domain.m_feFaceManager.m_Sets.find( m_setNames[a] );
       if( setMap != domain.m_feFaceManager.m_Sets.end() )
       {
-        const lSet& set = setMap->second;
+        const set<localIndex>& set = setMap->second;
 
         // update face centers
-        for( lSet::const_iterator kf=set.begin() ; kf!=set.end() ; ++kf )
+        for( set<localIndex>::const_iterator kf=set.begin() ; kf!=set.end() ; ++kf )
           domain.m_feFaceManager.FaceCenter( domain.m_feNodeManager, *kf, faceCenters[*kf]);
 
 
@@ -1207,13 +1207,13 @@ void SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps(PhysicalDomainT& 
     for(int a =0 ; a < 2 ; ++a)
     {
 
-      std::map< std::string, lSet >::const_iterator setMap = domain.m_feEdgeManager.m_Sets.find( m_setNames[a] );
+      std::map< std::string, set<localIndex> >::const_iterator setMap = domain.m_feEdgeManager.m_Sets.find( m_setNames[a] );
       if( setMap != domain.m_feEdgeManager.m_Sets.end() )
       {
-        const lSet& set = setMap->second;
+        const set<localIndex>& set = setMap->second;
 
         // update edge centers
-        for( lSet::const_iterator ke=set.begin() ; ke!=set.end() ; ++ke )
+        for( set<localIndex>::const_iterator ke=set.begin() ; ke!=set.end() ; ++ke )
           domain.m_feEdgeManager.EdgeCenter( domain.m_feNodeManager, *ke, edgeCenters[*ke]);
 
         sortedIndexes[a].assign(set.begin(),set.end() );
@@ -1298,7 +1298,7 @@ void SwitchBoundaryConditions::ReadXML( TICPP::HierarchicalDataNode* hdn)
 
 
 realT SwitchBoundaryConditions::GetValue(const ObjectDataStructureBaseT& object,
-                                         const lSet::const_iterator& si,realT time){
+                                         const set<localIndex>::const_iterator& si,realT time){
   unsigned indx = (*m_function)(time);
   if(indx >= m_children.size())
     indx = m_default_index;

@@ -280,13 +280,13 @@ public:
 
   /// builds a new set on this object given another objects set and the map
   // between them
-  void ConstructSetFromSetAndMap( const lSet& inputSet,
+  void ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
                                   const lArray2d& map,
                                   const std::string& newSetName );
 
   /// builds a new set on this object given another objects set and the map
   // between them
-  void ConstructSetFromSetAndMap( const lSet& inputSet,
+  void ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
                                   const array<localIndex_array>& map,
                                   const std::string& newSetName );
 

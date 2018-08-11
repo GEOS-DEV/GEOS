@@ -187,9 +187,9 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 //**************************************************************************************************
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
-  array<lSet> & toElementRegionList = elementRegionList();
-  array<lSet> & toElementSubRegionList = elementSubRegionList();
-  array<lSet> & toElementList = elementList();
+  array<set<localIndex>> & toElementRegionList = elementRegionList();
+  array<set<localIndex>> & toElementSubRegionList = elementSubRegionList();
+  array<set<localIndex>> & toElementList = elementList();
 
   for( localIndex a=0 ; a<size() ; ++a )
   {

@@ -157,15 +157,15 @@ public:
   UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
-  array<lSet>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  array<lSet> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  array<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  array<lSet>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  array<lSet> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  array<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
 
-  array<lSet>        & elementList()       { return m_toElements.m_toElementIndex; }
-  array<lSet>  const & elementList() const { return m_toElements.m_toElementIndex; }
+  array<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
+  array<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
   /**

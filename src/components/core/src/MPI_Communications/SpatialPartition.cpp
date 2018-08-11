@@ -203,7 +203,7 @@ int SpatialPartition::GetColor()
 //       ///////////////////////////
 //
 //       array<string>& setnames = m_periodicSets[i].m_setNames;
-//       lSet* theSets[2];
+//       set<localIndex>* theSets[2];
 //       theSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //       theSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
 //
@@ -230,12 +230,12 @@ int SpatialPartition::GetColor()
 // setnames[0] + " and " + setnames[1] + " present on same partition\n");
 //#endif
 //         }
-//         lSet& mySet =  *(theSets[mySetId]);
+//         set<localIndex>& mySet =  *(theSets[mySetId]);
 //
 //         // gather local and global ids
 //         std::vector<std::pair<localIndex, localIndex>  > myLocalAndGlobalIds;
 //
-//         for( lSet::iterator itr=mySet.begin() ; itr!=mySet.end() ; ++itr )
+//         for( set<localIndex>::iterator itr=mySet.begin() ; itr!=mySet.end() ; ++itr )
 //         {
 //           localIndex globalId = nodeGlobalIds[*itr];
 //           myLocalAndGlobalIds.push_back(std::pair<localIndex , localIndex>(
@@ -310,7 +310,7 @@ int SpatialPartition::GetColor()
 // setLocalAndGlobalIds(2);
 //           for(int a =0; a<2; ++a){
 //             // Gather local/global ids
-//             for( lSet::iterator itr=theSets[a]->begin() ;
+//             for( set<localIndex>::iterator itr=theSets[a]->begin() ;
 // itr!=theSets[a]->end() ; ++itr )
 //             {
 //               localIndex globalId = nodeGlobalIds[*itr];
@@ -408,13 +408,13 @@ int SpatialPartition::GetColor()
 //    if(m_Partitions[dimension]==1){
 //
 //      array<string>& setnames = m_periodicSets[ps].m_setNames;
-//      lSet* theNodeSets[2];
+//      set<localIndex>* theNodeSets[2];
 //      theNodeSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //      theNodeSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
-//      lSet* theFaceSets[2];
+//      set<localIndex>* theFaceSets[2];
 //      theFaceSets[0] = &(domain.m_feFaceManager.m_Sets[setnames[0]]);
 //      theFaceSets[1] = &(domain.m_feFaceManager.m_Sets[setnames[1]]);
-//      lSet* theEdgeSets[2];
+//      set<localIndex>* theEdgeSets[2];
 //      theEdgeSets[0] = &(domain.m_feEdgeManager.m_Sets[setnames[0]]);
 //      theEdgeSets[1] = &(domain.m_feEdgeManager.m_Sets[setnames[1]]);
 //
@@ -447,8 +447,8 @@ int SpatialPartition::GetColor()
 //
 //      // point global to local map to min boundary nodes
 //      {
-//        lSet::iterator itr = theNodeSets[minBoundarySetIndx]->begin();
-//        lSet::iterator iend = theNodeSets[minBoundarySetIndx]->end();
+//        set<localIndex>::iterator itr = theNodeSets[minBoundarySetIndx]->begin();
+//        set<localIndex>::iterator iend = theNodeSets[minBoundarySetIndx]->end();
 //        for( ; itr != iend ; ++itr ){
 //          globalIndex g = nodeLocalToGlobalMap[*itr];
 //          nodeGlobalToLocalMap[g] = *itr;
@@ -462,19 +462,19 @@ int SpatialPartition::GetColor()
 // index
 //      // requires nodeLocalToGlobalMap to be set
 //      {
-//        std::map<lSet,localIndex> nodeToFaceGlobalMap;
+//        std::map<set<localIndex>,localIndex> nodeToFaceGlobalMap;
 //
 //        theFaceSets[0] = &(domain.m_feFaceManager.m_Sets[setnames[0]]);
 //        theFaceSets[1] = &(domain.m_feFaceManager.m_Sets[setnames[1]]);
 //
 //
-//        for( lSet::iterator itr = theFaceSets[0]->begin(); itr !=
+//        for( set<localIndex>::iterator itr = theFaceSets[0]->begin(); itr !=
 // theFaceSets[0]->end(); ++itr){
 //          localIndex faceLocal = *itr;
 //          lArray1d& faceNodes =
 // domain.m_feFaceManager.m_toNodesRelation[faceLocal];
 //
-//          lSet gnodes;
+//          set<localIndex> gnodes;
 //          for(unsigned ii = 0; ii < faceNodes.size(); ++ii){
 //            gnodes.insert(nodeLocalToGlobalMap[faceNodes[ii]]);
 //          }
@@ -483,13 +483,13 @@ int SpatialPartition::GetColor()
 //          faceGlobalToLocalMap[gf] = faceLocal;
 //        }
 //
-//        for( lSet::iterator itr = theFaceSets[1]->begin(); itr !=
+//        for( set<localIndex>::iterator itr = theFaceSets[1]->begin(); itr !=
 // theFaceSets[1]->end(); ++itr){
 //          localIndex faceLocal = *itr;
 //          lArray1d& faceNodes =
 // domain.m_feFaceManager.m_toNodesRelation[faceLocal];
 //
-//          lSet gnodes;
+//          set<localIndex> gnodes;
 //          for(unsigned ii = 0; ii < faceNodes.size(); ++ii){
 //            gnodes.insert(nodeLocalToGlobalMap[faceNodes[ii]]);
 //          }
@@ -502,17 +502,17 @@ int SpatialPartition::GetColor()
 // index
 //      // requires nodeLocalToGlobalMap to be set
 //      {
-//        std::map<lSet,localIndex> nodeToEdgeGlobalMap;
+//        std::map<set<localIndex>,localIndex> nodeToEdgeGlobalMap;
 //
 //        theEdgeSets[0] = &(domain.m_feEdgeManager.m_Sets[setnames[0]]);
 //        theEdgeSets[1] = &(domain.m_feEdgeManager.m_Sets[setnames[1]]);
 //
-//        for( lSet::iterator itr = theEdgeSets[0]->begin(); itr !=
+//        for( set<localIndex>::iterator itr = theEdgeSets[0]->begin(); itr !=
 // theEdgeSets[0]->end(); ++itr){
 //          localIndex edgeLocal = *itr;
 //          lArray2d& edgeNodes = domain.m_feEdgeManager.m_toNodesRelation;
 //
-//          lSet gnodes;
+//          set<localIndex> gnodes;
 //          for(unsigned ii = 0; ii < 2; ++ii){
 //            gnodes.insert(nodeLocalToGlobalMap[ edgeNodes(edgeLocal,ii) ]);
 //          }
@@ -523,12 +523,12 @@ int SpatialPartition::GetColor()
 //        }
 //
 //
-//        for( lSet::iterator itr = theEdgeSets[1]->begin(); itr !=
+//        for( set<localIndex>::iterator itr = theEdgeSets[1]->begin(); itr !=
 // theEdgeSets[1]->end(); ++itr){
 //          localIndex edgeLocal = *itr;
 //          lArray2d& edgeNodes = domain.m_feEdgeManager.m_toNodesRelation;
 //
-//          lSet gnodes;
+//          set<localIndex> gnodes;
 //          for(unsigned ii = 0; ii < 2; ++ii){
 //            gnodes.insert(nodeLocalToGlobalMap[ edgeNodes(edgeLocal,ii) ]);
 //          }
@@ -541,8 +541,8 @@ int SpatialPartition::GetColor()
 //
 //      // point global to local map to min boundary faces
 //      {
-//        lSet::iterator itr = theFaceSets[minBoundarySetIndx]->begin();
-//        lSet::iterator iend = theFaceSets[minBoundarySetIndx]->end();
+//        set<localIndex>::iterator itr = theFaceSets[minBoundarySetIndx]->begin();
+//        set<localIndex>::iterator iend = theFaceSets[minBoundarySetIndx]->end();
 //        for( ; itr != iend ; ++itr ){
 //          globalIndex g = faceLocalToGlobalMap[*itr];
 //          faceGlobalToLocalMap[g] = *itr;
@@ -551,8 +551,8 @@ int SpatialPartition::GetColor()
 //
 //      // point global to local map to min boundary edges
 //      {
-//        lSet::iterator itr = theEdgeSets[minBoundarySetIndx]->begin();
-//        lSet::iterator iend = theEdgeSets[minBoundarySetIndx]->end();
+//        set<localIndex>::iterator itr = theEdgeSets[minBoundarySetIndx]->begin();
+//        set<localIndex>::iterator iend = theEdgeSets[minBoundarySetIndx]->end();
 //        for( ; itr != iend ; ++itr ){
 //          globalIndex g = edgeLocalToGlobalMap[*itr];
 //          edgeGlobalToLocalMap[g] = *itr;
@@ -601,13 +601,13 @@ int SpatialPartition::GetColor()
 //      realT gridLength = m_gridSize[dimension];
 //
 //      array<string>& setnames = m_periodicSets[ps].m_setNames;
-//      lSet* theNodeSets[2];
+//      set<localIndex>* theNodeSets[2];
 //      theNodeSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 //      theNodeSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
-//      lSet* theFaceSets[2];
+//      set<localIndex>* theFaceSets[2];
 //      theFaceSets[0] = &(domain.m_feFaceManager.m_Sets[setnames[0]]);
 //      theFaceSets[1] = &(domain.m_feFaceManager.m_Sets[setnames[1]]);
-//      lSet* theEdgeSets[2];
+//      set<localIndex>* theEdgeSets[2];
 //      theEdgeSets[0] = &(domain.m_feEdgeManager.m_Sets[setnames[0]]);
 //      theEdgeSets[1] = &(domain.m_feEdgeManager.m_Sets[setnames[1]]);
 //
@@ -644,7 +644,7 @@ int SpatialPartition::GetColor()
 //        lArray1d& setNodes =
 // selfCommunication[a].tempNeighborData.matchedIndices[PhysicalDomainT::FiniteElementNodeManager];
 //        // gather boundary nodes and point global to local map to the same set
-//        for( lSet::iterator itr=theNodeSets[a]->begin() ;
+//        for( set<localIndex>::iterator itr=theNodeSets[a]->begin() ;
 // itr!=theNodeSets[a]->end() ; ++itr )
 //        {
 //          globalIndex g = nodeLocalToGlobalMap[*itr];
@@ -652,13 +652,13 @@ int SpatialPartition::GetColor()
 //
 //          setNodes.push_back(*itr );
 //        }
-//        for( lSet::iterator itr=theFaceSets[a]->begin() ;
+//        for( set<localIndex>::iterator itr=theFaceSets[a]->begin() ;
 // itr!=theFaceSets[a]->end() ; ++itr )
 //        {
 //          globalIndex g = faceLocalToGlobalMap[*itr];
 //          faceGlobalToLocalMap[g] = *itr;
 //        }
-//        for( lSet::iterator itr=theEdgeSets[a]->begin() ;
+//        for( set<localIndex>::iterator itr=theEdgeSets[a]->begin() ;
 // itr!=theEdgeSets[a]->end() ; ++itr )
 //        {
 //          globalIndex g = edgeLocalToGlobalMap[*itr];
@@ -684,19 +684,19 @@ int SpatialPartition::GetColor()
 //
 //        // change global to local map to point to receiving set
 //        int nota = 1-a;
-//        for( lSet::iterator itr=theNodeSets[nota]->begin() ;
+//        for( set<localIndex>::iterator itr=theNodeSets[nota]->begin() ;
 // itr!=theNodeSets[nota]->end() ; ++itr )
 //        {
 //          globalIndex g = nodeLocalToGlobalMap[*itr];
 //          nodeGlobalToLocalMap[g] = *itr;
 //        }
-//        for( lSet::iterator itr=theFaceSets[nota]->begin() ;
+//        for( set<localIndex>::iterator itr=theFaceSets[nota]->begin() ;
 // itr!=theFaceSets[nota]->end() ; ++itr )
 //        {
 //          globalIndex g = faceLocalToGlobalMap[*itr];
 //          faceGlobalToLocalMap[g] = *itr;
 //        }
-//        for( lSet::iterator itr=theEdgeSets[nota]->begin() ;
+//        for( set<localIndex>::iterator itr=theEdgeSets[nota]->begin() ;
 // itr!=theEdgeSets[nota]->end() ; ++itr )
 //        {
 //          globalIndex g = edgeLocalToGlobalMap[*itr];
@@ -1045,7 +1045,7 @@ int SpatialPartition::GetColor()
 //    {
 //
 ////      svector& setnames = m_periodicSets[i].m_setNames;
-////      lSet* theSets[2];
+////      set<localIndex>* theSets[2];
 ////      theSets[0] = &(domain.m_feNodeManager.m_Sets[setnames[0]]);
 ////      theSets[1] = &(domain.m_feNodeManager.m_Sets[setnames[1]]);
 //

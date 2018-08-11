@@ -406,7 +406,7 @@ void SinglePhaseFlow_TPFA::ApplyDirichletBC_implicit( ManagedGroup * object,
                                          subRegion,
                                          viewKeyStruct::fluidPressureString,
                                          [&]( BoundaryConditionBase const * const bc,
-                                             lSet const & set ) -> void
+                                             set<localIndex> const & set ) -> void
         {
 
       // call the application of the boundray condition to alter the matrix and rhs

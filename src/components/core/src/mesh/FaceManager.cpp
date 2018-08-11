@@ -262,8 +262,8 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   for( auto const & setWrapper : nodeSets )
   {
     std::string const & setName = setWrapper.second->getName();
-    const lSet& set = nodeManager->GetGroup(keys::sets)->getReference<lSet>( setName );
-    this->ConstructSetFromSetAndMap( set, faceToNodes, setName );
+    const set<localIndex>& targetSet = nodeManager->GetGroup(keys::sets)->getReference<set<localIndex>>( setName );
+    this->ConstructSetFromSetAndMap( targetSet, faceToNodes, setName );
   }
 
 

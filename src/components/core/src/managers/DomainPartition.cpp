@@ -134,11 +134,11 @@ void DomainPartition::GenerateSets(  )
     string name = viewWrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
     nodeInSet[name] = 0;
-    ViewWrapper<lSet> const * const setPtr = nodeSets->getWrapper<lSet>(name);
+    ViewWrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
     if( setPtr!=nullptr )
     {
       setNames.push_back(name);
-      lSet const & set = setPtr->reference();
+      set<localIndex> const & set = setPtr->reference();
       for( auto const a : set )
       {
         nodeInSet[name][a] = 1;
@@ -165,7 +165,7 @@ void DomainPartition::GenerateSets(  )
       for( auto & setName : setNames )
       {
 
-        lSet & set = elementSets->RegisterViewWrapper<lSet>(setName)->reference();
+        set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
           arrayView1d<localIndex const> const nodelist = elemsToNodes[k];
@@ -179,7 +179,7 @@ void DomainPartition::GenerateSets(  )
           }
           if( count == elemsToNodes.size(1) )
           {
-            set.insert(k);
+            targetSet.insert(k);
           }
         }
       }

@@ -68,7 +68,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   // they are keyed the edges lowest node.
   std::map< localIndex, array<std::pair<localIndex, localIndex> > > edgesByLowestNode;
 
-  lSet singleNodeEdges;
+  set<localIndex> singleNodeEdges;
 
   // For 2D problems, there is a one-to-one relationship between nodes and
   // edges.
@@ -217,8 +217,8 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 
 
   // fill edgesToNodes array by using data in the for single node edges
-//  lSet::size_type edgeIndex = numMultiNodeEdges;
-//  for( lSet::const_iterator i=singleNodeEdges.begin() ;
+//  set<localIndex>::size_type edgeIndex = numMultiNodeEdges;
+//  for( set<localIndex>::const_iterator i=singleNodeEdges.begin() ;
 // i!=singleNodeEdges.end() ; ++i )
 //  {
 //    const localIndex& nodeIndex = *i;
@@ -236,8 +236,8 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   for( auto const & setWrapper : nodeSets )
   {
     const string& setname = setWrapper.second->getName();
-    const lSet& set = ( dataRepository::ViewWrapper<lSet>::cast( *setWrapper.second ) ).reference();
-    this->ConstructSetFromSetAndMap( set, m_toNodesRelation, setname );
+    const set<localIndex>& targetSet = ( dataRepository::ViewWrapper<set<localIndex>>::cast( *setWrapper.second ) ).reference();
+    this->ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setname );
   }
 
 }
@@ -372,7 +372,7 @@ bool EdgeManager::hasNode( const localIndex edgeID, const localIndex nodeID ) co
 //  if (nodeA == nodeB)
 //    return (val);
 //
-//  for( lSet::const_iterator iedge=nodeManager->m_nodeToEdgeMap[nodeA].begin() ;
+//  for( set<localIndex>::const_iterator iedge=nodeManager->m_nodeToEdgeMap[nodeA].begin() ;
 //       iedge!=nodeManager->m_nodeToEdgeMap[nodeA].end() ; ++iedge )
 //  {
 //    if (hasNode(*iedge, nodeB))
@@ -419,7 +419,7 @@ void EdgeManager::SetIsExternal( const ObjectDataStructureBaseT * const referenc
 void EdgeManager::SplitEdge( const localIndex indexToSplit,
                              const localIndex parentNodeIndex,
                              const localIndex childNodeIndex[2],
-                             array<lSet>& nodesToEdges )
+                             array<set<localIndex>>& nodesToEdges )
 {
 
   localIndex newEdgeIndex[2];
@@ -520,12 +520,12 @@ unsigned int EdgeManager::PackEdges( const T_indices& sendedges,
   }
 
 
-  const array<lSet>* const edgesToFlowFaces = GetUnorderedVariableOneToManyMapPointer("edgeToFlowFaces");
+  const array<set<localIndex>>* const edgesToFlowFaces = GetUnorderedVariableOneToManyMapPointer("edgeToFlowFaces");
   if( edgesToFlowFaces != NULL )
   {
     for( typename T_indices::const_iterator edgeIndex=sendedges.begin() ; edgeIndex!=sendedges.end() ; ++edgeIndex )
     {
-      const lSet& edgeToFlowFaces = (*edgesToFlowFaces)[*edgeIndex];
+      const set<localIndex>& edgeToFlowFaces = (*edgesToFlowFaces)[*edgeIndex];
 //      std::cout<<"pack edgeIndex, size =
 // "<<this->m_localToGlobalMap(*edgeIndex)<<", "<<edgeToFlowFaces.size()<<" ";
 
@@ -546,7 +546,7 @@ unsigned int EdgeManager::PackEdges( const T_indices& sendedges,
 
   return sizeOfPacked;
 }
-template unsigned int EdgeManager::PackEdges( const lSet&, const NodeManager&, const FaceManager&, bufvector&, const bool, const bool, const bool,
+template unsigned int EdgeManager::PackEdges( const set<localIndex>&, const NodeManager&, const FaceManager&, bufvector&, const bool, const bool, const bool,
                                               const bool ) const;
 template unsigned int EdgeManager::PackEdges( const localIndex_array&, const NodeManager&, const FaceManager&, bufvector&, const bool, const bool, const bool,
                                               const bool ) const;
@@ -603,13 +603,13 @@ unsigned int EdgeManager::UnpackEdges( const char*& buffer,
   }
 
 
-  array<lSet>* const edgesToFlowFaces = GetUnorderedVariableOneToManyMapPointer("edgeToFlowFaces");
+  array<set<localIndex>>* const edgesToFlowFaces = GetUnorderedVariableOneToManyMapPointer("edgeToFlowFaces");
   if( edgesToFlowFaces != NULL )
   {
     for( localIndex_array::iterator edgeIndex=edgeReceiveLocalIndices.begin() ; edgeIndex!=edgeReceiveLocalIndices.end() ; ++edgeIndex )
     {
-      lSet newEdgeToFlowFaces;
-      lSet& edgeToFlowFaces = (*edgesToFlowFaces)[*edgeIndex];
+      set<localIndex> newEdgeToFlowFaces;
+      set<localIndex>& edgeToFlowFaces = (*edgesToFlowFaces)[*edgeIndex];
 
 
       if( unpackConnectivityToLocal )
@@ -625,7 +625,7 @@ unsigned int EdgeManager::UnpackEdges( const char*& buffer,
         sizeOfUnpacked += bufvector::Unpack( buffer, newEdgeToFlowFaces );
 
         gSet globals;
-        for( lSet::iterator i=edgeToFlowFaces.begin() ; i!=edgeToFlowFaces.end() ; ++i )
+        for( set<localIndex>::iterator i=edgeToFlowFaces.begin() ; i!=edgeToFlowFaces.end() ; ++i )
         {
           globalIndex gi = faceManager->m_localToGlobalMap[*i];
           globals.insert(gi);
@@ -647,13 +647,13 @@ unsigned int EdgeManager::UnpackEdges( const char*& buffer,
 
 
 
-void EdgeManager::ConnectivityFromGlobalToLocal( const lSet& indices,
+void EdgeManager::ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
                                                  const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
                                                  const std::map<globalIndex,localIndex>& faceGlobalToLocal )
 {
 
 
-  for( lSet::const_iterator ke=indices.begin() ; ke!=indices.end() ; ++ke )
+  for( set<localIndex>::const_iterator ke=indices.begin() ; ke!=indices.end() ; ++ke )
   {
     for( localIndex a=0 ; a<m_toNodesRelation.size(1) ; ++a )
     {
@@ -663,15 +663,15 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const lSet& indices,
     }
   }
 
-//  array<lSet>* const edgesToFlowFaces =
+//  array<set<localIndex>>* const edgesToFlowFaces =
 // GetUnorderedVariableOneToManyMapPointer("edgeToFlowFaces");
 //  if( edgesToFlowFaces != NULL )
 //  {
-//    for( lSet::const_iterator ke=indices.begin() ; ke!=indices.end() ; ++ke )
+//    for( set<localIndex>::const_iterator ke=indices.begin() ; ke!=indices.end() ; ++ke )
 //    {
-//      lSet& edgeToFlowFaces = (*edgesToFlowFaces)[*ke];
-//      lSet newSet;
-//      for( lSet::iterator faceIndex=edgeToFlowFaces.begin() ;
+//      set<localIndex>& edgeToFlowFaces = (*edgesToFlowFaces)[*ke];
+//      set<localIndex> newSet;
+//      for( set<localIndex>::iterator faceIndex=edgeToFlowFaces.begin() ;
 // faceIndex!=edgeToFlowFaces.end() ; ++faceIndex )
 //      {
 //
@@ -697,20 +697,20 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const lSet& indices,
 // We will keep it here for a while and delete it later.
 //void EdgeManager::UpdateEdgeExternalityFromSplit( const FaceManager&
 // faceManager,
-//                                                 const lSet& newEdgeIndices,
-//                                                 const lSet&
+//                                                 const set<localIndex>& newEdgeIndices,
+//                                                 const set<localIndex>&
 // modifiedEdgeIndices )
 //{
-//  lSet allEdges;
+//  set<localIndex> allEdges;
 //  allEdges.insert( newEdgeIndices.begin(), newEdgeIndices.end() );
 //  allEdges.insert( modifiedEdgeIndices.begin(), modifiedEdgeIndices.end() );
 //
 //
-//  for( lSet::const_iterator edgeIndex=allEdges.begin() ;
+//  for( set<localIndex>::const_iterator edgeIndex=allEdges.begin() ;
 // edgeIndex!=allEdges.end() ; ++edgeIndex )
 //  {
 //
-//    for( lSet::const_iterator iface=m_toFacesRelation[*edgeIndex].begin() ;
+//    for( set<localIndex>::const_iterator iface=m_toFacesRelation[*edgeIndex].begin() ;
 //        iface!=m_toFacesRelation[*edgeIndex].end() ; ++iface )
 //    {
 //      if (faceManager->m_isExternal[*iface] == 1)
