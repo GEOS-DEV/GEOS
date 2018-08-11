@@ -79,7 +79,7 @@ void BoundaryConditionBase::ReadXML(TICPP::HierarchicalDataNode* hdn){
 
   m_fieldName = hdn->GetAttributeStringOrDefault("fieldname","");
   {
-    array<string> tempSetName;
+    array1d<string> tempSetName;
     tempSetName = hdn->GetStringVector("setname");
     if (!tempSetName.empty())
       throw GPException("ERROR!!! setname is not supported anymore in boundary condition.  Use setnames instead.");
@@ -181,7 +181,7 @@ realT SimpleBoundaryCondition::GetValue(const ObjectDataStructureBaseT& object,
   {
     if (!(m_timeTableName.empty()))
     {
-      array<real64> t(1);
+      array1d<real64> t(1);
       t[0] = time;
       const realT tableval = TableManager::Instance().LookupTable<1>(m_timeTableName, t);
       m_value = m_scale * tableval;
@@ -241,17 +241,17 @@ void BoundaryConditionFunction::ReadXML( TICPP::HierarchicalDataNode* hdn)
   if( varTypesStr.empty() )
   {
     // assume all variables are scalars by default
-    m_variableTypes = array<FieldType>(m_variableNames.size(),FieldInfo::realField);
+    m_variableTypes = array1d<FieldType>(m_variableNames.size(),FieldInfo::realField);
   }
   else
   {
-    array<string> vTypesVect = Tokenize(varTypesStr," ");
+    array1d<string> vTypesVect = Tokenize(varTypesStr," ");
     m_variableTypes.resize(vTypesVect.size());
 
     if(m_variableTypes.size() != m_variableNames.size())
       throw GPException("Error InitialConditionFunction: Number of variable types not equal to number of variables.");
 
-    for( array<string>::size_type i=0 ; i < vTypesVect.size() ; ++i )
+    for( array1d<string>::size_type i=0 ; i < vTypesVect.size() ; ++i )
       m_variableTypes[i] = fromString<FieldType>(vTypesVect[i]);
 
   }
@@ -422,16 +422,16 @@ void MultiVarDirichletBoundaryCondition::ReadXML(TICPP::HierarchicalDataNode* hd
   }
 }
 
-void MultiVarDirichletBoundaryCondition::CheckVars(const array<string> &varName)
+void MultiVarDirichletBoundaryCondition::CheckVars(const array1d<string> &varName)
 {
   if(!m_isClamped)
   {
-    array<string> tmp;
-    for(array<string>::const_iterator it = varName.begin() ; it != varName.end() ; ++it)
+    array1d<string> tmp;
+    for(array1d<string>::const_iterator it = varName.begin() ; it != varName.end() ; ++it)
     {
       bool notFound = true;
-      array<string>::const_iterator itt = m_tables.begin();
-      for(array<string>::const_iterator itm = m_varName.begin() ; itm != m_varName.end() ; ++itm, ++itt)
+      array1d<string>::const_iterator itt = m_tables.begin();
+      for(array1d<string>::const_iterator itm = m_varName.begin() ; itm != m_varName.end() ; ++itm, ++itt)
       {
         if(streq(*it, *itm))
         {
@@ -450,15 +450,15 @@ void MultiVarDirichletBoundaryCondition::CheckVars(const array<string> &varName)
   }
 }
 
-const array<real64>& MultiVarDirichletBoundaryCondition::GetValues(realT time)
+const array1d<real64>& MultiVarDirichletBoundaryCondition::GetValues(realT time)
 {
   if(!m_isClamped && !isEqual(m_time,time) )
   {
     m_value.resize(m_tables.size());
 
-    array<real64> t(1, time);
-    array<real64>::iterator itv = m_value.begin();
-    for(array<string>::const_iterator it = m_tables.begin() ; it != m_tables.end() ; ++it, ++itv)
+    array1d<real64> t(1, time);
+    array1d<real64>::iterator itv = m_value.begin();
+    for(array1d<string>::const_iterator it = m_tables.begin() ; it != m_tables.end() ; ++it, ++itv)
       *itv = TableManager::Instance().LookupTable<1>(*it, t);
     m_time = time;
   }
@@ -494,14 +494,14 @@ void MultiVarSrcFluxBoundaryCondition::ReadXML(TICPP::HierarchicalDataNode* hdn)
 }
 
 
-void MultiVarSrcFluxBoundaryCondition::CheckVars(const array<string> &varName)
+void MultiVarSrcFluxBoundaryCondition::CheckVars(const array1d<string> &varName)
 {
-  array<string> tmp;
-  for(array<string>::const_iterator it = varName.begin() ; it != varName.end() ; ++it)
+  array1d<string> tmp;
+  for(array1d<string>::const_iterator it = varName.begin() ; it != varName.end() ; ++it)
   {
     bool notFound = true;
-    array<string>::const_iterator itt = m_tables.begin();
-    for(array<string>::const_iterator itm = m_varName.begin() ; itm != m_varName.end() ; ++itm, ++itt)
+    array1d<string>::const_iterator itt = m_tables.begin();
+    for(array1d<string>::const_iterator itm = m_varName.begin() ; itm != m_varName.end() ; ++itm, ++itt)
     {
       if(streq(*it, *itm))
       {
@@ -519,13 +519,13 @@ void MultiVarSrcFluxBoundaryCondition::CheckVars(const array<string> &varName)
   m_value.resize(tmp.size());
 }
 
-const array<real64>& MultiVarSrcFluxBoundaryCondition::GetValues(realT time)
+const array1d<real64>& MultiVarSrcFluxBoundaryCondition::GetValues(realT time)
 {
   if(!isEqual(m_time,time) )
   {
-    array<real64> t(1, time);
-    array<real64>::iterator itv = m_value.begin();
-    for(array<string>::const_iterator it = m_tables.begin() ; it != m_tables.end() ; ++it, ++itv)
+    array1d<real64> t(1, time);
+    array1d<real64>::iterator itv = m_value.begin();
+    for(array1d<string>::const_iterator it = m_tables.begin() ; it != m_tables.end() ; ++it, ++itv)
       *itv = TableManager::Instance().LookupTable<1>(*it, t);
     m_time = time;
   }
@@ -631,17 +631,17 @@ void TractionBoundaryConditionFunction::ReadXML( TICPP::HierarchicalDataNode* hd
   if( varTypesStr.empty() )
   {
     // assume all variables are scalars by default
-    m_variableTypes = array<FieldType>(m_variableNames.size(),FieldInfo::realField);
+    m_variableTypes = array1d<FieldType>(m_variableNames.size(),FieldInfo::realField);
   }
   else
   {
-    array<string> vTypesVect = Tokenize(varTypesStr," ");
+    array1d<string> vTypesVect = Tokenize(varTypesStr," ");
     m_variableTypes.resize(vTypesVect.size());
 
     if(m_variableTypes.size() != m_variableNames.size())
       throw GPException("Error TractionBoundaryConditionFunction: Number of variable types not equal to number of variables.");
 
-    for( array<string>::size_type i=0 ; i < vTypesVect.size() ; ++i )
+    for( array1d<string>::size_type i=0 ; i < vTypesVect.size() ; ++i )
       m_variableTypes[i] = fromString<FieldType>(vTypesVect[i]);
 
   }
@@ -776,7 +776,7 @@ R1Tensor HydraulicPressureBoundaryCondition::GetTractionOnFace(PhysicalDomainT& 
 
 
   R1Tensor traction = domain.m_feFaceManager.FaceNormal( domain.m_feNodeManager, *fc );
-  array<real64>& facePressures = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure> ();
+  array1d<real64>& facePressures = domain.m_feFaceManager.GetFieldData<FieldInfo::pressure> ();
 
   traction *= -facePressures[*fc];
   return traction;
@@ -824,7 +824,7 @@ R1Tensor UniformPressureBoundaryCondition::GetTractionOnFace(PhysicalDomainT& do
     if (parentNodeIndex == LOCALINDEX_MAX)
       parentNodeIndex = *fc;
 
-    array<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
+    array1d<integer>& flowFaceType = domain.m_feFaceManager.GetFieldData<int>("flowFaceType");
     if (flowFaceType[parentNodeIndex] == 1)
     { // is flow face
 
@@ -833,15 +833,15 @@ R1Tensor UniformPressureBoundaryCondition::GetTractionOnFace(PhysicalDomainT& do
       traction *= -value;
 
       /*
-         array<real64>& facePressures =
+         array1d<real64>& facePressures =
             domain.m_feFaceManager.GetFieldData<FieldInfo::pressure> ();
          facePressures[*fc] = value;
 
-         const array<real64>& fluidVolume  =
+         const array1d<real64>& fluidVolume  =
             domain.m_feFaceManager.GetFieldData<FieldInfo::volume>();
-         array<real64>& faceFluidMass =
+         array1d<real64>& faceFluidMass =
             domain.m_feFaceManager.GetFieldData<FieldInfo::mass>();
-         array<real64>& faceFluidDensity =
+         array1d<real64>& faceFluidDensity =
             domain.m_feFaceManager.GetFieldData<FieldInfo::density>();
        */
 
@@ -959,10 +959,10 @@ realT NonPenetratingBoundaryCondition::GetValue(const ObjectDataStructureBaseT& 
 
 void NonPenetratingBoundaryCondition::UpdateNearestNeighborMaps(PhysicalDomainT& domain ){
 
-  const array<R1Tensor>& u = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement> ();
-  const array<R1Tensor>& X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition> ();
+  const array1d<R1Tensor>& u = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement> ();
+  const array1d<R1Tensor>& X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition> ();
 
-  array<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>("FaceCenter");
+  array1d<R1Tensor>& faceCenter = domain.m_feFaceManager.GetFieldData<R1Tensor>("FaceCenter");
 
   //nodes
   {
@@ -1119,9 +1119,9 @@ realT SinglePartitionPeriodicBoundaryCondition::GetValue(const ObjectDataStructu
 
 void SinglePartitionPeriodicBoundaryCondition::SetNeighborMaps(PhysicalDomainT& domain ){
 
-  const array<R1Tensor>& refPositions = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition> ();
-  array<R1Tensor>& faceCenters = domain.m_feFaceManager.GetFieldData<R1Tensor>("FaceCenter");
-  array<R1Tensor>& edgeCenters = domain.m_feEdgeManager.GetFieldData<R1Tensor>("EdgeCenter");
+  const array1d<R1Tensor>& refPositions = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition> ();
+  array1d<R1Tensor>& faceCenters = domain.m_feFaceManager.GetFieldData<R1Tensor>("FaceCenter");
+  array1d<R1Tensor>& edgeCenters = domain.m_feEdgeManager.GetFieldData<R1Tensor>("EdgeCenter");
 
   PlanarSorter planarSorterNodes(refPositions,m_dimension);
   PlanarSorter planarSorterFaces(faceCenters,m_dimension);

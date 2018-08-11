@@ -52,7 +52,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
                                       dataRepository::ManagedGroup * nodeManager )
 {
 
-  array<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
+  array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
   ManagedGroup * sets = nodeManager->GetGroup(keys::sets);
 
   for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
@@ -98,7 +98,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //
 ////  std::map< std::string, set<localIndex> >& nodeSets = nodeManager->m_Sets;
 //  std::map< std::string, set<localIndex> >& faceSets = faceManager->m_Sets;
-////  array<R1Tensor>& X = *(nodeManager->m_refposition);
+////  array1d<R1Tensor>& X = *(nodeManager->m_refposition);
 //
 //  //We calculate face centers here. This is cheaper than calculating it when
 // we loop through faces.
@@ -107,9 +107,9 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 // true, true );
 //  faceManager->AddKeylessDataField( FieldInfo::R1TensorField, "FaceNormal",
 // true, true );
-//  array<R1Tensor>& faceCenter = faceManager->GetFieldData<R1Tensor>(
+//  array1d<R1Tensor>& faceCenter = faceManager->GetFieldData<R1Tensor>(
 // "FaceCenter" );
-//  array<R1Tensor>& faceNormal = faceManager->GetFieldData<R1Tensor>(
+//  array1d<R1Tensor>& faceNormal = faceManager->GetFieldData<R1Tensor>(
 // "FaceNormal" );
 //
 //  for( localIndex kf=0 ; kf<faceManager->DataLengths() ; ++kf )

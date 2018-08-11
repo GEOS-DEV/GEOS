@@ -44,7 +44,7 @@ DomainPartition::DomainPartition( std::string const & name,
 {
 
 
-  this->RegisterViewWrapper< array<NeighborCommunicator> >(viewKeys.neighbors);
+  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors);
   MPI_Comm_dup( MPI_COMM_WORLD, &m_mpiComm );
   this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
@@ -192,7 +192,7 @@ void DomainPartition::SetupCommunications()
 {
   PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
   SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
-  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
+  array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
   //get communicator, rank, and coordinates
   MPI_Comm cartcomm;
@@ -249,7 +249,7 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
 {
   PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
   SpatialPartition & partition = dynamic_cast<SpatialPartition &>(partition1);
-  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
+  array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
   if (idim == nsdof)
   {

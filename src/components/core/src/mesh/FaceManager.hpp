@@ -70,9 +70,9 @@ public:
                     localIndex const & ke,
                     localIndex const & kelf,
                     localIndex & numFaces,
-                    array<localIndex_array>& facesByLowestNode,
+                    array1d<localIndex_array>& facesByLowestNode,
                     localIndex_array& tempNodeList,
-                    array<localIndex_array>& tempFaceToNodeMap,
+                    array1d<localIndex_array>& tempFaceToNodeMap,
                     CellBlockSubRegion & elementRegion );
 
 
@@ -100,7 +100,7 @@ public:
 
   virtual void
   ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
-                                                   array<globalIndex_array>& faceToNodes ) override final;
+                                                   array1d<globalIndex_array>& faceToNodes ) override final;
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto nodeListString              = "nodeList";

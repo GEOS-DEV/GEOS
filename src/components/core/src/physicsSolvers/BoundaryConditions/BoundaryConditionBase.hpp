@@ -58,13 +58,13 @@ public:
 //  template< typename T >
 //  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
 //                                           real64 const time,
-//                                           array<R1Tensor> const & X,
-//                                           array<T> & field );
+//                                           array1d<R1Tensor> const & X,
+//                                           array1d<T> & field );
 
 //  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
 //                                           real64 const time,
-//                                           array<R1Tensor> const & X,
-//                                           array<R1Tensor> & field );
+//                                           array1d<R1Tensor> const & X,
+//                                           array1d<R1Tensor> & field );
 
   template< typename OPERATION >
   void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,

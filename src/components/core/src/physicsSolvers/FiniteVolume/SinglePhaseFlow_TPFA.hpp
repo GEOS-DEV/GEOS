@@ -239,8 +239,8 @@ public:
   {
     localIndex            faceIndex;               ///< index of the face (just in case)
     CellDescriptor        connectedCellIndices[2]; ///< identifiers of connected cells
-    array<CellDescriptor> stencilCellIndices;      ///< identifiers of cells in stencil
-    array<real64>         stencilWeights;          ///< stencil weights (e.g. transmissibilities)
+    array1d<CellDescriptor> stencilCellIndices;      ///< identifiers of cells in stencil
+    array1d<real64>         stencilWeights;          ///< stencil weights (e.g. transmissibilities)
 
     void resize(localIndex const size) { stencilCellIndices.resize(size);
                                          stencilWeights.resize(size);    }
@@ -264,19 +264,19 @@ private:
   bool m_precomputeDone;
 
   /// temp array that holds the list of faces that connect two elements.
-  array<CellConnection> m_faceConnectors;
+  array1d<CellConnection> m_faceConnectors;
 
   /// flag to determine whether or not to apply gravity
   bool m_gravityFlag;
 
   /// temp storage for derivatives of density w.r.t. pressure
-  array<array<array<real64>>> m_dDens_dPres;
+  array1d<array1d<array1d<real64>>> m_dDens_dPres;
 
   /// temp storage for derivatives of porosity w.r.t. pressure
-  array<array<array<real64>>> m_dPoro_dPres;
+  array1d<array1d<array1d<real64>>> m_dPoro_dPres;
 
   /// temp storage for derivatives of porosity w.r.t. pressure
-  array<array<array<real64>>> m_dVisc_dPres;
+  array1d<array1d<array1d<real64>>> m_dVisc_dPres;
 
 };
 

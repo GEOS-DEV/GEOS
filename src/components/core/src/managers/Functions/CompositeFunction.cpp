@@ -147,7 +147,7 @@ void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const gro
 {
   // Evaluate each of the subFunctions independently and place the results into
   // a temporary field
-  array<real64_array> subFunctionResults;
+  array1d<real64_array> subFunctionResults;
   for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
   {
     real64_array tmp(result.size());

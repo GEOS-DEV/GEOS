@@ -72,7 +72,7 @@ public:
 
 private:
   /// An array of table axes
-  array<real64_array> m_coordinates;
+  array1d<real64_array> m_coordinates;
 
   /// Table values (in fortran order)
   real64_array m_values;

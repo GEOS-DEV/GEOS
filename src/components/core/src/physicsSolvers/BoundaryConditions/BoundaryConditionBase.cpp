@@ -206,7 +206,7 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //  real64 rval = m_scale;
 //  if (!(m_functionName.empty()))
 //  {
-//    array<real64> t(1);
+//    array1d<real64> t(1);
 //    t[0] = time;
 //    real64 const tableval =
 // TableManager::Instance().LookupTable<1>(m_functionName, t);
@@ -223,9 +223,9 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 // set,
 //                                                                real64 const
 // time,
-//                                                                array<R1Tensor>
+//                                                                array1d<R1Tensor>
 // const & X,
-//                                                                array<R1Tensor>
+//                                                                array1d<R1Tensor>
 // & field )
 //{
 //

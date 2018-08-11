@@ -38,7 +38,7 @@ namespace geosx
 //class PlanarSorter {
 //
 //public:
-//	PlanarSorter(const array<R1Tensor>& refPos, int dim) :
+//	PlanarSorter(const array1d<R1Tensor>& refPos, int dim) :
 //			dimension(dim), refPositions(refPos) {
 //	}
 //	;
@@ -95,7 +95,7 @@ namespace geosx
 //
 //private:
 //	int dimension;
-//	const array<R1Tensor>& refPositions;
+//	const array1d<R1Tensor>& refPositions;
 //};
 
 class SpatialPartition : public PartitionBase
@@ -167,11 +167,11 @@ public:
 
   int GetColor();
 
-  const array<integer>& GetPartitions() const {
+  const array1d<integer>& GetPartitions() const {
     return m_Partitions;
   }
 
-  const array<integer>& GetCoords() const {
+  const array1d<integer>& GetCoords() const {
     return m_coords;
   }
 
@@ -190,9 +190,9 @@ public:
   }
 
 public:
-  array<int> m_Partitions; // number of partitions
-  array<int> m_Periodic; // 1 = periodic
-  array<int> m_coords; // ijk partition indexes
+  array1d<int> m_Partitions; // number of partitions
+  array1d<int> m_Periodic; // 1 = periodic
+  array1d<int> m_coords; // ijk partition indexes
 
   R1Tensor m_min; // Minimum extent of partition dimensions (excluding ghost
                   // objects)
@@ -201,7 +201,7 @@ public:
 
   R1Tensor m_xBoundingBoxMin, m_xBoundingBoxMax;
 
-  array<real64> m_PartitionLocations[3]; // locations of partition boundaries
+  array1d<real64> m_PartitionLocations[3]; // locations of partition boundaries
 
   R1Tensor m_blockSize; // Length of partition dimensions (excluding ghost
                         // objects)
@@ -215,7 +215,7 @@ public:
 
 //	struct PeriodicSet {
 //		int m_dimension;
-//		array<string> m_setNames;
+//		array1d<string> m_setNames;
 //		void ReadXML(TICPP::HierarchicalDataNode& hdn) {
 //			m_dimension = hdn.GetAttributeValue<int>("dimension");
 //			m_setNames = hdn.GetStringVector("setnames");
@@ -226,7 +226,7 @@ public:
   void AddNeighbors(const unsigned int idim, MPI_Comm& cartcomm,
                     int* ncoords);
 
-//	std::map<array<int>, unsigned int> neighborCommPtrIndx;
+//	std::map<array1d<int>, unsigned int> neighborCommPtrIndx;
 
 //	virtual void WriteSiloDerived(SiloFile& siloFile);
 //
