@@ -140,13 +140,13 @@ void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
 }
 
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
+void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
                                                    const lArray2d& map,
                                                    const std::string& newSetName )
 {
 
   ManagedGroup * sets = GetGroup(std::string("Sets"));
-  lSet& newset = sets->RegisterViewWrapper<lSet>(newSetName)->reference();
+  set<localIndex>& newset = sets->RegisterViewWrapper<set<localIndex>>(newSetName)->reference();
   newset.clear();
 
   localIndex mapSize = map.size(1);
@@ -168,13 +168,13 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
   }
 }
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( const lSet& inputSet,
+void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
                                                    const array<localIndex_array>& map,
                                                    const std::string& newSetName )
 {
 
   ManagedGroup * sets = GetGroup(std::string("Sets"));
-  lSet& newset = sets->RegisterViewWrapper<lSet>(newSetName)->reference();
+  set<localIndex>& newset = sets->RegisterViewWrapper<set<localIndex>>(newSetName)->reference();
   newset.clear();
 
   for( localIndex ka=0 ; ka<size() ; ++ka )

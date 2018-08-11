@@ -219,7 +219,7 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //  return rval;
 //}
 //
-//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const &
+//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> const &
 // set,
 //                                                                real64 const
 // time,
@@ -254,7 +254,7 @@ void BoundaryConditionBase::ReadXML_PostProcess()
 //  }
 //}
 //
-//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const &
+//void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> const &
 // set,
 //                                                                real64 const
 // time,

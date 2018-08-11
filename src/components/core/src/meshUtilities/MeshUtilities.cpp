@@ -62,7 +62,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //    {
 //      SimpleGeometricObjectBase const & object = wrapper->reference();
 //      string name = wrapper->getName();
-//      lSet & set = sets->RegisterViewWrapper<lSet>(name)->reference();
+//      set<localIndex> & set = sets->RegisterViewWrapper<set<localIndex>>(name)->reference();
 //      for (localIndex a=0 ; a<X.size() ; ++a)
 //      {
 //        if (object.IsCoordInObject(X[a]))
@@ -75,12 +75,12 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
         if (object!=nullptr)
         {
           string name = object->getName();
-          lSet & set = sets->RegisterViewWrapper<lSet>(name)->reference();
+          set<localIndex> & targetSet = sets->RegisterViewWrapper< set<localIndex> >(name)->reference();
           for (localIndex a=0 ; a<X.size() ; ++a)
           {
             if (object->IsCoordInObject(X[a]))
             {
-              set.insert(a);
+              targetSet.insert(a);
             }
           }
         }
@@ -96,8 +96,8 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 // nodeManager )
 //{
 //
-////  std::map< std::string, lSet >& nodeSets = nodeManager->m_Sets;
-//  std::map< std::string, lSet >& faceSets = faceManager->m_Sets;
+////  std::map< std::string, set<localIndex> >& nodeSets = nodeManager->m_Sets;
+//  std::map< std::string, set<localIndex> >& faceSets = faceManager->m_Sets;
 ////  array<R1Tensor>& X = *(nodeManager->m_refposition);
 //
 //  //We calculate face centers here. This is cheaper than calculating it when
@@ -131,8 +131,8 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //      */
 //
 //      std::string name = hdnNode->GetAttributeString("name");
-////      lSet& currentNodeset = nodeSets[name];
-//      lSet& currentFaceset = faceSets[name];
+////      set<localIndex>& currentNodeset = nodeSets[name];
+//      set<localIndex>& currentFaceset = faceSets[name];
 //
 //      SimpleGeometricObjectBase* object;
 //
@@ -251,10 +251,10 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
 //        ElementRegionT& elemRegion = elementRegionIter->second;
 //        localIndex numEle = elemRegion.DataLengths();
 //
-//        std::map< std::string, lSet >& sets = elemRegion.m_Sets;
+//        std::map< std::string, set<localIndex> >& sets = elemRegion.m_Sets;
 //
 //        std::string name = hdnNode->GetAttributeString("name");
-//        lSet& set = sets[name];
+//        set<localIndex>& set = sets[name];
 //
 //        for (localIndex iElm=0 ; iElm<numEle ; ++iElm)
 //        {

@@ -62,7 +62,7 @@ public:
    */
   inline void Evaluate( dataRepository::ManagedGroup const * const group,
                         real64 const time,
-                        lSet const & set,
+                        set<localIndex> const & set,
                         real64_array & result ) const override final
   {
     FunctionBase::EvaluateT<SymbolicFunction>( group, time, set, result );

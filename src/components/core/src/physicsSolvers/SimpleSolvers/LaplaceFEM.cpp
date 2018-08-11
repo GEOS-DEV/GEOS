@@ -574,7 +574,7 @@ void LaplaceFEM::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 
 void LaplaceFEM::ApplyDirichletBC_implicit( ManagedGroup * object,
                                             BoundaryConditionBase const * const bc,
-                                            lSet const & set,
+                                            set<localIndex> const & set,
                                             real64 const time_n,
                                             EpetraBlockSystem & blockSystem )
 {

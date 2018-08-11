@@ -102,7 +102,7 @@ void ToElementRelation<BASETYPE>::resize( DIMS... newdims )
 //typedef ToElementRelation<localIndex_array> OneToOneRelation;
 typedef ToElementRelation<lArray2d> FixedToManyElementRelation;
 typedef ToElementRelation<array<localIndex_array> > OrderedVariableToManyElementRelation;
-typedef ToElementRelation<array<lSet> > UnorderedVariableToManyElementRelation;
+typedef ToElementRelation<array<set<localIndex>> > UnorderedVariableToManyElementRelation;
 
 } /* namespace geosx */
 
