@@ -32,7 +32,7 @@
 #define __null nullptr
 #endif
 
-#include "fileIO/pvtu/PvtuFile.hpp"
+#include "fileIO/vtm/VtmFile.hpp"
 using namespace geosx;
 namespace
 {
@@ -56,13 +56,13 @@ int main(int argc, char** argv)
 }
 
 
-TEST(testPVTU,testPVTU)
+TEST(testVTM,testVTM)
 {
 #if USE_MPI
     MPI_Init(0, nullptr);
 #endif
-    PvtuFile vtupFile;
-    vtupFile.Load("4layers.pvtu");
+    VtmFile vtmFile;
+    vtmFile.Load("out.vtm");
 #if USE_MPI
     MPI_Finalize();
 #endif

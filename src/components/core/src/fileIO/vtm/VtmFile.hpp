@@ -28,34 +28,39 @@
 #include <vector>
 
 /*!
- * @brief this class stands for the I/O of pvtu file
- * @details vtu(p) files is an extension fully supported by the VTK/Paraview
+ * @brief this class stands for the I/O of vtm file
+ * @details vtm files is an extension fully supported by the VTK/Paraview
  * framework. Details can be found here : www.vtk.org/VTK/img/file-formats.pdf
- * A pvtu file is named here as the "parent" file. This file make reference
+ * A vtm file is named here as the "parent" file. This file make reference
  * to several "child" files (.vtu). Each one contains a part of the mesh.
- * @todo the export.
  */
 namespace geosx{
 class VtuFile;
 class MeshLevel;
 
-class PvtuFile {
+class Rank {
     public:
-        PvtuFile() {
+    private:
+        std::vector< string > vtuFileNames;
+        std::vector< string > blockNames;
+};
+class VtmFile {
+    public:
+        VtmFile() {
         }
 
-        virtual ~PvtuFile(){
+        virtual ~VtmFile(){
         }
 
         /*!
-         * @brief load a .pvtu file
-         * @param[in] fileName the name of the XML pvtu file to be loaded
+         * @brief load a .vtm file
+         * @param[in] fileName the name of the XML vtm file to be loaded
          */
         virtual void Load( string const & fileName);
 
         /*!
          * @brief save a .pvtu file
-         * @param[in] fileName the name of the XML pvtu file to be saved
+         * @param[in] fileName the name of the XML vtm file to be saved
          */
         virtual void Save( string const & fileName);
 
@@ -66,18 +71,10 @@ class PvtuFile {
          * @param[in] fileName name of the file being loaded
          * @param[in] prefix will be "P" for the parent file
          */
-        virtual void CheckXmlFileConsistency(pugi::xml_document const & pvtuDoc,
-                string const & fileName,
-                string const & prefix = "") const;
+         void CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
+                string const & fileName ) const;
 
     private:
-        /*!
-         * @brief Specific check for parent file
-         * @param[in] pvtuDoc the XML document
-         * @param[in] fileName name of the file being loaded
-         */
-         void CheckXmlParentFileConsistency(pugi::xml_document const & pvtuDoc,
-                string const & fileName) const;
         /*!
          * @brief retrieve the list of the vtu files
          * @param[in] pvtuDoc the XML document
@@ -85,29 +82,11 @@ class PvtuFile {
          * for each partition)
          */
         void VtuFilesList(
-                pugi::xml_document const & pvtuDoc,
-                std::vector < string > & vtuFiles ) const;
-    protected:
-        /*
-        /// This is the parent XML document
-        pugi::xml_document pvtuDoc_;
-        */
-
-        /// Name of the Vertices/Elements attribute on which
-        /// the original index is stored
-        string const m_strOriginalIndex { "original_index" };
-
-        /// Name of the Elements attribute on which
-        /// the partition index is stored
-        string const m_strPartition { "partition" };
-
-        /// Name of the Elements attribute on which
-        /// the partition index is stored
-        string const m_strRegion { "region" };
-
-        std::vector< VtuFile > m_vtuFiles;
-
-        std::vector< string > m_vtuFileNames;
+                pugi::xml_document const & vtmDoc,
+                std::vector < std::vector < string > > & vtmFiles ,
+                std::vector < std::vector < string > > & blockNames) const;
+    private:
+        std::vector< Rank > m_ranks;
 };
 
 /*!
@@ -339,7 +318,7 @@ class MeshPart {
  * framework. Details can be found here : www.vtk.org/VTK/img/file-formats.pdf
  * @todo the export.
  */
-class VtuFile : public PvtuFile{
+class VtuFile {
     public:
         VtuFile() {
         }
@@ -348,13 +327,13 @@ class VtuFile : public PvtuFile{
          * @brief load a .vtu file
          * @param[in] fileName the name of the XML pvtu file to be loaded
          */
-        void Load( string const & fileName) final;
+        void Load( string const & fileName);
 
         /*!
          * @brief save a .vtu file
          * @param[in] fileName the name of the XML vtu file to be saved
          */
-        void Save( string const & fileName) final;
+        void Save( string const & fileName);
 
         void TransferMeshPartToGEOSMesh( MeshLevel * const meshLevel );
 

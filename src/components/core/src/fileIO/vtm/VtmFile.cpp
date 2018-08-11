@@ -23,7 +23,7 @@
 #include <iostream>
 #include <string.h>
 
-#include "PvtuFile.hpp"
+#include "VtmFile.hpp"
 
 #include "common/Logger.hpp"
 #include "mesh/MeshBody.hpp"
@@ -35,7 +35,7 @@
 namespace geosx{
 
 // PUBLIC METHODS
-void PvtuFile::Load( string const &filename) {
+void VtmFile::Load( string const &filename) {
     int mpiSize = 0;
     int mpiRank = 0;
 #if USE_MPI
@@ -45,7 +45,8 @@ void PvtuFile::Load( string const &filename) {
     int numFilesPerRank = 0;
     //int nb_total_partitions = 0;
     int remainderFiles = 0;
-    std::vector < string > children_files;
+    std::vector < std::vector < string > > blockFiles;
+    std::vector < std::vector < string > > blockNames;
 
 
 
@@ -54,11 +55,12 @@ void PvtuFile::Load( string const &filename) {
     pvtu_doc.load_file(filename.c_str());
 
     if( mpiRank == 0) {
-        CheckXmlParentFileConsistency(pvtu_doc,filename);
+        CheckXmlFileConsistency(pvtu_doc,filename);
     }
-    VtuFilesList(pvtu_doc,children_files);
+    VtuFilesList(pvtu_doc,blockFiles,blockNames);
     // Retrieve the number of partitions
-    int const numFiles = children_files.size();
+    globalIndex const numFiles = blockFiles.size();
+    std::cout << numFiles << std::endl;
 
     // Next part of this method is dedicated to the optimization of file loading
     //
@@ -87,26 +89,26 @@ void PvtuFile::Load( string const &filename) {
         m_vtuFiles.resize(numFilesPerRank+1);
         for(int p_index = 0; p_index < numFilesPerRank +1; ++p_index) {
             m_vtuFileNames[p_index] =
-                children_files[mpiRank*(numFilesPerRank+1) + p_index];
+                blockFiles[mpiRank*(numFilesPerRank+1) + p_index];
         }
     } else if( mpiRank < numFiles) {
         m_vtuFileNames.resize(numFilesPerRank);
         m_vtuFiles.resize(numFilesPerRank);
         for(int p_index = 0; p_index < numFilesPerRank; ++p_index) {
             m_vtuFileNames[p_index] =
-                children_files[mpiRank*(numFilesPerRank) + p_index+remainderFiles];
+                blockFiles[mpiRank*(numFilesPerRank) + p_index+remainderFiles];
         }
     }
     if( mpiRank < numFiles ) {
         for(int p_index = 0; p_index < 
                 static_cast< int >(m_vtuFileNames.size()); ++p_index) {
-            m_vtuFiles[p_index].Load(m_vtuFileNames[p_index]);
+            //m_vtuFiles[p_index].Load(m_vtuFileNames[p_index]);
         }
     }
 }
 
-void PvtuFile::Save( string const &filename) {
-    GEOS_ERROR("pvtu file save is not implemented yet");
+void VtmFile::Save( string const &filename) {
+    GEOS_ERROR("vtm file save is not implemented yet");
 }
 
 void VtuFile::Load( string const &filename) {
@@ -122,16 +124,63 @@ void VtuFile::Save( string const &filename) {
 
 
 //PRIVATE METHODS
-void PvtuFile::CheckXmlFileConsistency(pugi::xml_document const & pvtu_doc,
-        string const & filename,
-        string const & prefix) const {
+void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & pvtu_doc,
+        string const & filename) const {
 
     // VTKFile is the main node of the pvtufile
-    auto const vtk_file =pvtu_doc.child("VTKFile");
-    if( vtk_file.empty() ) {
+    auto const vtkFileNode =pvtu_doc.child("VTKFile");
+    if( vtkFileNode.empty() ) {
         GEOS_ERROR("Main node VTKFile not found in " + filename);
     }
 
+    if( vtkFileNode.attribute("type").as_string() !=
+            static_cast< string >("vtkMultiBlockDataSet")) {
+        GEOS_ERROR("VTKFile is not a vtkMultiBlockDataSet" + filename);
+    }
+
+    auto const vtkMultiBlockDataSetNode =  vtkFileNode.child("vtkMultiBlockDataSet");
+    if( vtkMultiBlockDataSetNode.empty() ) {
+        GEOS_ERROR("vtkMultiBlockDataSet node is not present in " + filename);
+    }
+
+    globalIndex countNbRank=0;
+    for( auto const & rank : vtkMultiBlockDataSetNode.children()) {
+        if( rank.name() == static_cast< string >("Block")) {
+            countNbRank++;
+            localIndex countNbBlock =0;
+            for( auto const & block : rank.children()) {
+                if( block.name() == static_cast< string >("DataSet")) {
+                    countNbBlock++;
+                }
+                if( block.attribute("file").empty() ) {
+                    GEOS_ERROR(
+                            "DataSet "
+                            + static_cast< string >(rank.attribute("name").as_string())
+                            + " of block "
+                            +static_cast< string >(rank.attribute("name").as_string()) +
+                            " does not contain a \"file\" attribute");
+                }
+                if( block.attribute("name").empty() ) {
+                    GEOS_ERROR(
+                            "DataSet "
+                            + static_cast< string >(rank.attribute("name").as_string())
+                            + " of block "
+                            +static_cast< string >(rank.attribute("name").as_string()) +
+                            " does not contain a \"name\" attribute");
+                }
+            }
+            if( countNbBlock == 0 ) {
+                GEOS_ERROR(static_cast< string >(rank.attribute("name").as_string()) +
+                        " does not contain any DataSet");
+            }
+        }
+    }
+    if( countNbRank == 0 ) {
+        GEOS_ERROR("There is no block defined in " + filename);
+    }
+
+}
+    /*
     string ugrid_name = prefix +"UnstructuredGrid";
     auto const ugrid = vtk_file.child(ugrid_name.c_str());
     if( ugrid.empty() ) {
@@ -264,22 +313,33 @@ void PvtuFile::CheckXmlParentFileConsistency(pugi::xml_document const & pvtu_doc
         if( !has_a_piece ) {
             GEOS_ERROR("No Piece not found in " + filename );
         }
-}
-void PvtuFile::VtuFilesList(
+        */
+void VtmFile::VtuFilesList(
         pugi::xml_document const & pvtu_doc,
-        std::vector < string > & vtu_files ) const{
-    int numPartitions = 0;
-    for(auto const & child : pvtu_doc.child("VTKFile").child("PUnstructuredGrid").children()) {
-        if( child.name() == static_cast< string > ("Piece") )
+        std::vector < std::vector < string > > & vtuFiles,
+        std::vector < std::vector < string > > & blockNames) const{
+    auto const vtkFileNode =pvtu_doc.child("VTKFile");
+    auto const vtkMultiBlockDataSetNode =  vtkFileNode.child("vtkMultiBlockDataSet");
+    
+    for(auto const & rank : vtkMultiBlockDataSetNode.children()) {
+        if( rank.name() == static_cast< string > ("Block") )
         {
-            vtu_files.emplace_back(child.attribute("Source").as_string());
+            std::vector< string > blockFileListForRank;
+            std::vector< string > blockNamesForRank;
+            for( auto const & block : rank.children() ) {
+                if( block.name() == static_cast< string > ("DataSet")) {
+                    blockFileListForRank.emplace_back( block.attribute("file").as_string() );
+                }
+            }
+            vtuFiles.emplace_back(blockFileListForRank);
+            blockNames.emplace_back(blockNamesForRank);
         }
     }
 }
 
 void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & pvtu_doc,
         string const & filename) const {
-    CheckXmlFileConsistency( pvtu_doc, filename);
+    //CheckXmlFileConsistency( pvtu_doc, filename);
 
     pugi::xml_node piece_node =
         pvtu_doc.child("VTKFile").child("UnstructuredGrid").child("Piece");
