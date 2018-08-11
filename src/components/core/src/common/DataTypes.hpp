@@ -122,10 +122,7 @@ using real64_const_ptr  = c_ptr<real64>;
 using buffer_unit_type = char;
 using buffer_type = std::vector<buffer_unit_type>;
 
-//***** BEGIN LEGACY TYPEDEFS *****
-
-using realT    = double;
-
+//***** BEGIN ARRAY TYPEDEFS *****
 
 template< typename T >
 using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
@@ -133,11 +130,24 @@ using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
 template< typename T, int NDIM=1 >
 using array_view = multidimensionalArray::ArrayView<T,NDIM,localIndex>;
 
-template< typename T >
-using arrayView1d = multidimensionalArray::arrayView1d<T,localIndex>;
 
-//template< typename T >
-//using arrayView1d_const = multidimensionalArray::arrayView1d<T const,localIndex>;
+template< typename T >
+using arrayView1d = multidimensionalArray::ArrayView<T,1,localIndex>;
+
+
+
+template< typename T >
+using array2d = multidimensionalArray::ManagedArray<T,2,localIndex>;
+
+template< typename T >
+using arrayView2d = multidimensionalArray::ArrayView<T,2,localIndex>;
+
+template< typename T >
+using array3d = multidimensionalArray::ManagedArray<T,3,localIndex>;
+
+template< typename T >
+using arrayView3d = multidimensionalArray::ArrayView<T,3,localIndex>;
+
 
 template< typename T >
 using set = SortedArray<T>;
@@ -148,8 +158,6 @@ using map = std::map<TKEY,TVAL>;
 template< typename TKEY, typename TVAL >
 using unordered_map = std::unordered_map<TKEY,TVAL>;
 
-
-//***** END LEGACY TYPEDEFS *****
 
 
 
@@ -200,8 +208,6 @@ typedef set<globalIndex> gSet;
 
 typedef int FieldKey;
 
-template< typename T >
-using Array2dT = multidimensionalArray::ManagedArray<T,2,localIndex>;
 
 typedef multidimensionalArray::ManagedArray<localIndex,2,localIndex> lArray2d;
 typedef array<std::pair<int,localIndex> > pArray1d;

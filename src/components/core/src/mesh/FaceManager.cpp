@@ -110,9 +110,9 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   localIndex numFaces = 0;
   array<localIndex_array> facesByLowestNode;
 
-  Array2dT<localIndex> & elemRegionList = this->elementRegionList();
-  Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
-  Array2dT<localIndex> & elemList = this->elementList();
+  array2d<localIndex> & elemRegionList = this->elementRegionList();
+  array2d<localIndex> & elemSubRegionList = this->elementSubRegionList();
+  array2d<localIndex> & elemList = this->elementList();
 
   m_toElements.setElementRegionManager( elementManager );
 
@@ -354,9 +354,9 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   integer_array & faceDomainBoundaryIndicator = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
   faceDomainBoundaryIndicator = 0;
 
-  Array2dT<localIndex> const & elemRegionList = this->elementRegionList();
-  Array2dT<localIndex> const & elemSubRegionList = this->elementSubRegionList();
-  Array2dT<localIndex> const & elemList = this->elementList();
+  array2d<localIndex> const & elemRegionList = this->elementRegionList();
+  array2d<localIndex> const & elemSubRegionList = this->elementSubRegionList();
+  array2d<localIndex> const & elemList = this->elementList();
 
   for( localIndex kf=0 ; kf<size() ; ++kf )
   {
@@ -430,9 +430,9 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 void FaceManager::SortAllFaceNodes( NodeManager const & nodeManager,
                                     ElementRegionManager const & elemManager )
 {
-  Array2dT<localIndex> & elemRegionList = this->elementRegionList();
-  Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
-  Array2dT<localIndex> & elemList = this->elementList();
+  array2d<localIndex> & elemRegionList = this->elementRegionList();
+  array2d<localIndex> & elemSubRegionList = this->elementSubRegionList();
+  array2d<localIndex> & elemList = this->elementList();
 
   for(localIndex kf =0 ; kf < size() ; ++kf )
   {

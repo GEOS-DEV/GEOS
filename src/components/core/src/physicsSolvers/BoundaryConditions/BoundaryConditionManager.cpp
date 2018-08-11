@@ -216,7 +216,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
             if( specifiedSubRegion==nullptr || specifiedSubRegion == subRegion)
             {
-              auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+              auto const & constitutiveMap = subRegion->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
               ManagedGroup const * sets = subRegion->GetGroup(keys::sets);
 
               for( auto & setName : setNames )

@@ -771,7 +771,7 @@ void SiloFile::WriteMaterialMaps( ElementRegionManager const * const elementMana
   auto const
   constitutiveMap = elementManager->
                     ConstructViewAccessor<
-    std::pair< Array2dT<localIndex>,Array2dT<localIndex> >
+    std::pair< array2d<localIndex>,array2d<localIndex> >
     >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString );
 
   string name = "Regions";
@@ -1428,7 +1428,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                  localIndex_array());
 
           auto const & constitutiveMap =
-            subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+            subRegion->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
           for( localIndex k=0 ; k<subRegion->size() ; ++k )
           {
             localIndex const matTypeIndex = constitutiveMap.first[k][0];

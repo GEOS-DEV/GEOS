@@ -435,7 +435,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
 
       multidimensionalArray::ManagedArray< R1Tensor, 3 > & dNdX = cellBlockSubRegion->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
 
-      Array2dT<real64> const & detJ            = cellBlockSubRegion->getReference< Array2dT<real64> >(keys::detJ);
+      array2d<real64> const & detJ            = cellBlockSubRegion->getReference< array2d<real64> >(keys::detJ);
 
       lArray2d const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
       const integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));

@@ -94,7 +94,7 @@ public:
 
 
   map< string, localIndex_array > m_constitutiveGrouping;
-  std::pair< Array2dT< localIndex >, Array2dT< localIndex > > m_constitutiveMapView;
+  std::pair< array2d< localIndex >, array2d< localIndex > > m_constitutiveMapView;
   multidimensionalArray::ManagedArray< R1Tensor, 3 > m_dNdX;
 
 private:

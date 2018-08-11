@@ -125,14 +125,14 @@ public:
   OrderedVariableOneToManyRelation       & edgeList()       { return m_edgeList; }
   OrderedVariableOneToManyRelation const & edgeList() const { return m_edgeList; }
 
-  Array2dT<localIndex>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  Array2dT<localIndex> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  array2d<localIndex>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array2d<localIndex> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  Array2dT<localIndex>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  Array2dT<localIndex> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  array2d<localIndex>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array2d<localIndex> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
-  Array2dT<localIndex>       & elementList()       { return m_toElements.m_toElementIndex; }
-  Array2dT<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
+  array2d<localIndex>       & elementList()       { return m_toElements.m_toElementIndex; }
+  array2d<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
 private:
