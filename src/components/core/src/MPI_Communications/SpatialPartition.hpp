@@ -108,7 +108,7 @@ public:
 
   void InitializePostSubGroups( dataRepository::ManagedGroup * const );
   virtual void InitializeMetis();
-  void AddNeighborsMetis(gSet& neighborList);
+  void AddNeighborsMetis(set<globalIndex>& neighborList);
   virtual bool IsCoordInPartition(const realT& coord, const int dir);
   virtual bool IsCoordInPartition(const R1Tensor& elemCenter);
   virtual bool IsCoordInPartition(const R1Tensor& elemCenter,

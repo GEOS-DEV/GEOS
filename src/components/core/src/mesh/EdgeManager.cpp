@@ -624,7 +624,7 @@ unsigned int EdgeManager::UnpackEdges( const char*& buffer,
 // "<<this->m_localToGlobalMap(*edgeIndex)<<", ";
         sizeOfUnpacked += bufvector::Unpack( buffer, newEdgeToFlowFaces );
 
-        gSet globals;
+        set<globalIndex> globals;
         for( set<localIndex>::iterator i=edgeToFlowFaces.begin() ; i!=edgeToFlowFaces.end() ; ++i )
         {
           globalIndex gi = faceManager->m_localToGlobalMap[*i];

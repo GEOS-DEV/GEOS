@@ -204,7 +204,7 @@ using globalIndex_const_set  = set<globalIndex const>;
 //***** BEGIN LEGACY TYPEDEFS *****
 
 //typedef set<localIndex> set<localIndex>;
-typedef set<globalIndex> gSet;
+//typedef set<globalIndex> set<globalIndex>;
 
 typedef int FieldKey;
 
