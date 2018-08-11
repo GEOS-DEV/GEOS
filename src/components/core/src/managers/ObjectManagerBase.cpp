@@ -141,7 +141,7 @@ void ObjectManagerBase::InitializePostSubGroups( ManagedGroup * const )
 
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
-                                                   const lArray2d& map,
+                                                   const array2d<localIndex>& map,
                                                    const std::string& newSetName )
 {
 

@@ -369,7 +369,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
       {
         CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(subRegionIndex);
         localIndex const numElems = cellBlock->size();
-        lArray2d const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
         globalIndex_array elementLocalDofIndex (numNodesPerElement);
@@ -437,7 +437,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
 
       array2d<real64> const & detJ            = cellBlockSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      lArray2d const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
+      array2d<localIndex> const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
       const integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
 
       Epetra_LongLongSerialDenseVector  element_index   (numNodesPerElement);

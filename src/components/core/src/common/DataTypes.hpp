@@ -203,13 +203,6 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 //***** BEGIN LEGACY TYPEDEFS *****
 
-//typedef set<localIndex> set<localIndex>;
-//typedef set<globalIndex> set<globalIndex>;
-
-typedef int FieldKey;
-
-
-typedef multidimensionalArray::ManagedArray<localIndex,2,localIndex> lArray2d;
 typedef array<std::pair<int,localIndex> > pArray1d;
 typedef set<std::pair<int,localIndex> > pSet;
 
@@ -223,6 +216,7 @@ using mapPair_array = std::pair<localIndex_array, localIndex_array>;
 
 
 constexpr static auto GLOBALINDEX_MAX = std::numeric_limits<globalIndex>::max();
+constexpr static auto LOCALINDEX_MAX = std::numeric_limits<localIndex>::max();
 
 //***** END LEGACY TYPEDEFS *****
 

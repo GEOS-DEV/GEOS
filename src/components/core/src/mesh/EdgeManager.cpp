@@ -737,7 +737,7 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalObjectNumbers( const Object
     {
       globalIndex_array temp;
 
-      for( lArray2d::size_type a=0 ; a<m_toNodesRelation.size(1) ; ++a )
+      for( array2d<localIndex>::size_type a=0 ; a<m_toNodesRelation.size(1) ; ++a )
       {
         const localIndex lnode = m_toNodesRelation(kf,a);
         const globalIndex gnode = compositionObjectManager.m_localToGlobalMap(lnode);

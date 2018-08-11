@@ -158,7 +158,7 @@ void DomainPartition::GenerateSets(  )
     for( auto & subRegionIter : elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups() )
     {
       CellBlockSubRegion * subRegion = subRegionIter.second->group_cast<CellBlockSubRegion *>();
-      lArray2d const & elemsToNodes = subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+      array2d<localIndex> const & elemsToNodes = subRegion->getWrapper<FixedOneToManyRelation>(subRegion->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
       dataRepository::ManagedGroup * elementSets = subRegion->GetGroup(dataRepository::keys::sets);
       std::map< string, integer_array > numNodesInSet;
 
