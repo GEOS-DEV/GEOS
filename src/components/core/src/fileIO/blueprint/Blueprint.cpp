@@ -179,7 +179,7 @@ void Blueprint::addCells( Group* topo, Group* fields ) const
 
   const ElementRegion* elem_region = m_elem_reg_manager.GetRegion(0);
   const CellBlockSubRegion* cell_block = elem_region->GetSubRegion(0);
-  const lArray2d& connectivity = cell_block->nodeList().Base();
+  const array2d<localIndex>& connectivity = cell_block->nodeList().Base();
   const localIndex n_cells = connectivity.size(0);
   const localIndex n_nodes_per_cell = connectivity.size(1);
   const std::string& elem_name = this->numNodesToElemName.at( n_nodes_per_cell );

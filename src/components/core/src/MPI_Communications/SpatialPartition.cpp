@@ -510,7 +510,7 @@ int SpatialPartition::GetColor()
 //        for( set<localIndex>::iterator itr = theEdgeSets[0]->begin(); itr !=
 // theEdgeSets[0]->end(); ++itr){
 //          localIndex edgeLocal = *itr;
-//          lArray2d& edgeNodes = domain.m_feEdgeManager.m_toNodesRelation;
+//          array2d<localIndex>& edgeNodes = domain.m_feEdgeManager.m_toNodesRelation;
 //
 //          set<localIndex> gnodes;
 //          for(unsigned ii = 0; ii < 2; ++ii){
@@ -526,7 +526,7 @@ int SpatialPartition::GetColor()
 //        for( set<localIndex>::iterator itr = theEdgeSets[1]->begin(); itr !=
 // theEdgeSets[1]->end(); ++itr){
 //          localIndex edgeLocal = *itr;
-//          lArray2d& edgeNodes = domain.m_feEdgeManager.m_toNodesRelation;
+//          array2d<localIndex>& edgeNodes = domain.m_feEdgeManager.m_toNodesRelation;
 //
 //          set<localIndex> gnodes;
 //          for(unsigned ii = 0; ii < 2; ++ii){
@@ -804,7 +804,7 @@ int SpatialPartition::GetColor()
 //            m_domain->m_feEdgeManager.CopyObjectWithExcludedSets( oldEdge, ke,
 // setnames );
 //
-//            lArray2d& edgesToNodes =
+//            array2d<localIndex>& edgesToNodes =
 // m_domain->m_feEdgeManager.m_toNodesRelation;
 //            for(unsigned jj = 0; jj < 2;++jj){
 //              edgesToNodes(ke,jj) = newNodeMap[ edgesToNodes(oldEdge,jj) ];
@@ -857,8 +857,8 @@ int SpatialPartition::GetColor()
 //          //std::cout << "elems sizes "<< firstIndex << " " << newSize << " "
 // << elementRegion.m_numElems << std::endl;
 //
-//          lArray2d& elemToNodeMap = elementRegion.m_toNodesRelation;
-//          lArray2d& elemToFaceMap = elementRegion.m_toFacesRelation;
+//          array2d<localIndex>& elemToNodeMap = elementRegion.m_toNodesRelation;
+//          array2d<localIndex>& elemToFaceMap = elementRegion.m_toFacesRelation;
 //
 //          gArray1d& elemLocalToGlobalMap = elementRegion.m_localToGlobalMap;
 //

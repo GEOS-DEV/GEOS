@@ -129,9 +129,9 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
       {
         CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
 
-        lArray2d const & elemsToNodes = subRegion->nodeList();
-        lArray2d const & elemsToFaces = subRegion->faceList();
-        lArray2d const & elemsToEdges = subRegion->edgeList();
+        array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
+        array2d<localIndex> const & elemsToFaces = subRegion->faceList();
+        array2d<localIndex> const & elemsToEdges = subRegion->edgeList();
         for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
         {
           arrayView1d<localIndex const> const nodeList = elemsToNodes[elementIndex];

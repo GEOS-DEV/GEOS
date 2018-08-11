@@ -1292,7 +1292,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       {
         CellBlockSubRegion const * cellBlock = region->GetSubRegion(esr);
 
-        lArray2d const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
 
         // The following line seems to be redundant. It's actual function is to
         // size this temp array.(pfu)

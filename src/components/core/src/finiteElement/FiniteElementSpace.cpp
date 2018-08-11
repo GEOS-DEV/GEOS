@@ -123,7 +123,7 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
 {
   auto & dNdX            = cellBlock->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
   auto & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
-  FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();// getData<lArray2d>(keys::nodeList);
+  FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();// getData<array2d<localIndex>>(keys::nodeList);
 
   array<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
 
