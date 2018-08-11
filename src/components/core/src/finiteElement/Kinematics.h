@@ -83,7 +83,7 @@ inline void CalculateGradient( R2Tensor& Gradient,
 void CalculatePhantomGradient( R2TensorT<3>& Gradient,
                                const int* bConnectivity,
                                const array<R1TensorT<3> >& disp,
-                               const Array2dT<R1TensorT<3> >& dNdX );
+                               const array2d<R1TensorT<3> >& dNdX );
 
 
 //*****************************************************************************

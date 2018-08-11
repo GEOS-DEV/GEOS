@@ -454,7 +454,7 @@ ImplicitStepSetup( real64 const& time_n,
 
   auto
   constitutiveMap = elemManager->
-                    ConstructViewAccessor< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString,                                                                                                          string() );
+                    ConstructViewAccessor< std::pair< array2d<localIndex>,array2d<localIndex> > >( CellBlockSubRegion::viewKeyStruct::constitutiveMapString,                                                                                                          string() );
 
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
@@ -684,9 +684,9 @@ void SinglePhaseFlow_TPFA::SetSparsityPattern( DomainPartition const * const dom
 
 
   FaceManager const * const faceManager = meshLevel->getFaceManager();
-  Array2dT<localIndex> const & elementRegionList = faceManager->elementRegionList();
-  Array2dT<localIndex> const & elementSubRegionList = faceManager->elementSubRegionList();
-  Array2dT<localIndex> const & elementIndexList = faceManager->elementList();
+  array2d<localIndex> const & elementRegionList = faceManager->elementRegionList();
+  array2d<localIndex> const & elementSubRegionList = faceManager->elementSubRegionList();
+  array2d<localIndex> const & elementIndexList = faceManager->elementList();
   integer_array const & faceGhostRank = faceManager->GhostRank();
 
   globalIndex_array elementLocalDofIndexRow;
@@ -755,9 +755,9 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
 
   integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::viewKeyStruct::ghostRankString);
 
-  Array2dT<localIndex> const & faceToElemRegionList     = faceManager->elementRegionList();
-  Array2dT<localIndex> const & faceToElemSubRegionList  = faceManager->elementSubRegionList();
-  Array2dT<localIndex> const & faceToElemList           = faceManager->elementList();
+  array2d<localIndex> const & faceToElemRegionList     = faceManager->elementRegionList();
+  array2d<localIndex> const & faceToElemSubRegionList  = faceManager->elementSubRegionList();
+  array2d<localIndex> const & faceToElemList           = faceManager->elementList();
 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix(BlockIDs::fluidPressureBlock,
                                                                BlockIDs::fluidPressureBlock);
@@ -824,7 +824,7 @@ void SinglePhaseFlow_TPFA::AssembleSystem ( DomainPartition * const  domain,
   globalIndex eqnRowIndices[numElems];
   globalIndex_array dofColIndices;
   real64 localFlux[numElems];
-  Array2dT<real64> localFluxJacobian;
+  array2d<real64> localFluxJacobian;
 
   // temporary working arrays
   real64 densWeight[numElems] = { 0.5, 0.5 };
@@ -1051,8 +1051,8 @@ void SinglePhaseFlow_TPFA::ApplySystemSolution( EpetraBlockSystem const * const 
 
   auto
   constitutiveMap = elementRegionManager->
-                    ConstructViewAccessor< std::pair< Array2dT<localIndex>,
-                                                      Array2dT<localIndex> > >( CellBlockSubRegion::
+                    ConstructViewAccessor< std::pair< array2d<localIndex>,
+                                                      array2d<localIndex> > >( CellBlockSubRegion::
                                                                                 viewKeyStruct::
                                                                                 constitutiveMapString );
 
@@ -1118,9 +1118,9 @@ void SinglePhaseFlow_TPFA::PrecomputeData(DomainPartition *const domain)
 
   R1Tensor const & gravityVector = getGravityVector();
 
-  Array2dT<localIndex> const & elemRegionList     = faceManager->elementRegionList();
-  Array2dT<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
-  Array2dT<localIndex> const & elemList           = faceManager->elementList();
+  array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
+  array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
+  array2d<localIndex> const & elemList           = faceManager->elementList();
   r1_array const & X = nodeManager->referencePosition();
 
   auto elemCenter = elemManager->ConstructViewAccessor< r1_array >( CellBlock::

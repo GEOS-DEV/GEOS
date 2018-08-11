@@ -760,7 +760,7 @@ localIndex Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
-          Array2dT<localIndex> const & var,
+          array2d<localIndex> const & var,
           localIndex_array const & indices,
           globalIndex_array const & localToGlobalMap )
 {
@@ -780,7 +780,7 @@ localIndex Pack( char*& buffer,
 
 inline
 localIndex Unpack( char const *& buffer,
-            Array2dT<localIndex> & var,
+            array2d<localIndex> & var,
             localIndex_array const & indices,
             map<globalIndex,localIndex> const & globalToLocalMap )
 {
@@ -808,7 +808,7 @@ localIndex Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex Pack( char*& buffer,
-          Array2dT<localIndex> const & var,
+          array2d<localIndex> const & var,
           localIndex_array const & indices,
           globalIndex_array const & localToGlobalMap,
           globalIndex_array const & relatedObjectLocalToGlobalMap )
@@ -829,7 +829,7 @@ localIndex Pack( char*& buffer,
 
 inline
 localIndex Unpack( char const *& buffer,
-            Array2dT<localIndex> & var,
+            array2d<localIndex> & var,
             localIndex_array const & indices,
             map<globalIndex,localIndex> const & globalToLocalMap,
             map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
