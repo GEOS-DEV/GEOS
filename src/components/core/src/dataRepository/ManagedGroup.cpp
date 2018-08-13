@@ -178,6 +178,18 @@ ViewWrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, r
       } );
 }
 
+ViewWrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
+                                                     ViewWrapperBase * const wrapper )
+{
+  m_wrappers.insert( name,
+                     wrapper,
+                     true );
+
+  return nullptr;
+
+}
+
+
 void ManagedGroup::resize( indexType const newsize )
 {
   for( auto&& i : this->wrappers() )
