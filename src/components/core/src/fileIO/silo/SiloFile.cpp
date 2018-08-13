@@ -1442,7 +1442,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         ConstitutiveBase const * const
         constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex);
 
-        WriteManagedGroupSilo( constitutiveModel->GetStateData(),
+        WriteManagedGroupSilo( constitutiveModel,
                                constitutiveModel->getName(),
                                meshName,
                                DB_ZONECENT,

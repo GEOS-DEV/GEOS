@@ -65,8 +65,8 @@ void ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveR
   std::unique_ptr<ConstitutiveBase>
   material = constitutiveRelation->DeliverClone( constitutiveRelationInstanceName, parent );
 
-  material->AllocateMaterialData( parent,
-                                  numConstitutivePointsPerParentIndex );
+  material->AllocateConstitutiveData( parent,
+                                      numConstitutivePointsPerParentIndex );
 
   dataRepository::ManagedGroup * constitutiveGroup = parent->GetGroup(groupKeyStruct::constitutiveModelsString);
   if( constitutiveGroup == nullptr )
@@ -79,28 +79,6 @@ void ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveR
 
 
 }
-
-//ConstitutiveManager::constitutiveMaps & ConstitutiveManager::GetMaps( integer
-// const reinit ) const
-//{
-//  static constitutiveMaps rval;
-//  auto & map0 = rval.first;
-//  auto & map1 = rval.second;
-//
-//  if( reinit==1 )
-//  {
-//    map0.clear();
-//    map1.clear();
-//    for( auto const & material : this->GetSubGroups() )
-//    {
-//      map0.push_back( &(*material.second) );
-//      map1.insert({material.first,map0.size()-1});
-//    }
-//  }
-//
-//  return rval;
-//}
-
 
 }
 

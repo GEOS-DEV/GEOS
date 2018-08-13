@@ -50,7 +50,7 @@ public:
   virtual std::unique_ptr<ConstitutiveBase>
   DeliverClone( string const & name, ManagedGroup * const parent ) const override;
 
-  virtual void AllocateMaterialData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                      localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static std::string CatalogName() { return dataRepository::keys::linearElasticIsotropic; }
@@ -69,6 +69,7 @@ public:
   R2SymTensor  StateUpdatePoint( R2SymTensor const & D,
                                  R2Tensor const & Rot,
                                  localIndex const i,
+                                 localIndex const q,
                                  integer const systemAssembleFlag ) override;
 
 
@@ -93,7 +94,7 @@ public:
     dataRepository::ViewKey bulkModulus = { bulkModulusString };
     dataRepository::ViewKey shearModulus = { shearModulusString };
     dataRepository::ViewKey poissonRatio = { "PoissonRatio" };
-    dataRepository::ViewKey density = { "Density" };
+    dataRepository::ViewKey density = { "density" };
 
     dataRepository::ViewKey deviatorStress = { deviatorStressString };
     dataRepository::ViewKey meanStress = { meanStressString };
@@ -110,27 +111,21 @@ public:
   virtual groupKeyStruct const & groupKeys() const override{ return m_linearElasticIsotropicGroupKeys; }
 
 
+  real64 &       density()       { return this->getReference<real64>(m_linearElasticIsotropicViewKeys.density); }
+  real64 const & density() const { return this->getReference<real64>(m_linearElasticIsotropicViewKeys.density); }
 
-  dataRepository::view_rtype<real64>       youngsModulus()       { return GetParameterData()->getData<real64>(viewKeys().youngsModulus); }
-  dataRepository::view_rtype_const<real64> youngsModulus() const { return GetParameterData()->getData<real64>(viewKeys().youngsModulus); }
 
-  dataRepository::view_rtype<real64>       bulkModulus()       { return GetParameterData()->getData<real64>(viewKeys().bulkModulus); }
-  dataRepository::view_rtype_const<real64> bulkModulus() const { return GetParameterData()->getData<real64>(viewKeys().bulkModulus); }
+  real64 &       bulkModulus()       { return m_bulkModulus0; }
+  real64 const & bulkModulus() const { return m_bulkModulus0; }
 
-  dataRepository::view_rtype<real64>       shearModulus()       { return GetParameterData()->getData<real64>(viewKeys().shearModulus); }
-  dataRepository::view_rtype_const<real64> shearModulus() const { return GetParameterData()->getData<real64>(viewKeys().shearModulus); }
+  real64 &       shearModulus()       { return m_shearModulus0; }
+  real64 const & shearModulus() const { return m_shearModulus0; }
 
-  dataRepository::view_rtype<real64>       poissonRatio()       { return GetParameterData()->getData<real64>(viewKeys().poissonRatio); }
-  dataRepository::view_rtype_const<real64> poissonRatio() const { return GetParameterData()->getData<real64>(viewKeys().poissonRatio); }
+  Array2dT<R2SymTensor> &       deviatorStress()       { return m_deviatorStress; }
+  Array2dT<R2SymTensor> const & deviatorStress() const { return m_deviatorStress; }
 
-  dataRepository::view_rtype<real64>       density()       { return GetParameterData()->getData<real64>(viewKeys().density); }
-  dataRepository::view_rtype_const<real64> density() const { return GetParameterData()->getData<real64>(viewKeys().density); }
-
-  dataRepository::view_rtype<r2Sym_array>       deviatorStress()       { return GetStateData()->getData<r2Sym_array>(viewKeys().deviatorStress); }
-  dataRepository::view_rtype_const<r2Sym_array> deviatorStress() const { return GetStateData()->getData<r2Sym_array>(viewKeys().deviatorStress); }
-
-  dataRepository::view_rtype<real64_array>       meanStress()       { return GetStateData()->getData<real64_array>(viewKeys().meanStress); }
-  dataRepository::view_rtype_const<real64_array> meanStress() const { return GetStateData()->getData<real64_array>(viewKeys().meanStress); }
+  Array2dT<real64> &       meanStress()       { return m_meanStress; }
+  Array2dT<real64> const & meanStress() const { return m_meanStress; }
 
   struct dataPointers
   {
@@ -143,10 +138,10 @@ public:
 private:
   real64 m_bulkModulus0;
   real64 m_shearModulus0;
-  real64_array m_bulkModulus;
-  real64_array m_shearModulus;
-  real64_array m_meanStress;
-  r2Sym_array m_deviatorStress;
+  Array2dT<real64> m_bulkModulus;
+  Array2dT<real64> m_shearModulus;
+  Array2dT<real64> m_meanStress;
+  Array2dT<R2SymTensor> m_deviatorStress;
 
 };
 
