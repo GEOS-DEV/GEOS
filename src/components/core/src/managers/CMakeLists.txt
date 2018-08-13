@@ -20,7 +20,10 @@ set(managers_headers
     Functions/NewFunctionManager.hpp
     ObjectManagerBase.hpp
     ProblemManager.hpp
-    NumericalMethodsManager.hpp)
+    NumericalMethodsManager.hpp
+    BoundaryConditions/BoundaryConditionBase.hpp
+    BoundaryConditions/BoundaryConditionManager.hpp
+    BoundaryConditions/DirichletBoundaryCondition.hpp)
 
 
 #
@@ -44,7 +47,10 @@ set(managers_sources
     Functions/NewFunctionManager.cpp
     ObjectManagerBase.cpp
     ProblemManager.cpp
-    NumericalMethodsManager.cpp)
+    NumericalMethodsManager.cpp
+    BoundaryConditions/BoundaryConditionBase.cpp
+    BoundaryConditions/BoundaryConditionManager.cpp
+    BoundaryConditions/DirichletBoundaryCondition.cpp)
 
 #set( dependencyList dataRepository fileIO  )
 #set( dependencyList2 optionparser mathpresso RAJA trilinos )

@@ -17,7 +17,7 @@
  */
 
 /**
- * @file SinglePhaseFlow_TPFA.cpp
+ * @file SinglePhaseFlow.cpp
  */
 
 #include "SinglePhaseFlow.hpp"
@@ -25,6 +25,7 @@
 #include <vector>
 #include <cmath>
 
+#include "ArrayView.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -32,15 +33,14 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
-#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
-#include "ArrayView.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code

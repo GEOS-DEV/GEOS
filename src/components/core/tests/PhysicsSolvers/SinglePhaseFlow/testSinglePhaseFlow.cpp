@@ -31,7 +31,7 @@
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
-#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 #ifdef USE_OPENMP
 #include <omp.h>

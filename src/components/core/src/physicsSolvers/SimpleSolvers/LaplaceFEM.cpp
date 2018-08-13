@@ -40,7 +40,7 @@
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
 //#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
-#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 

@@ -23,7 +23,7 @@
 
 #include "FluxApproximationBase.hpp"
 
-#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 namespace geosx
 {
