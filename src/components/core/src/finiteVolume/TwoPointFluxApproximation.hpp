@@ -43,7 +43,7 @@ protected:
 
   void computeMainStencil(DomainPartition * domain, CellStencil & stencil) override;
 
-  void computeBoundaryStencil(DomainPartition * domain, lSet const & faceSet, BoundaryStencil & stencil) override;
+  void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) override;
 
 };
 

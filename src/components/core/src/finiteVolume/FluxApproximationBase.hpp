@@ -131,7 +131,7 @@ protected:
   virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) = 0;
 
   /// actual computation of the boundary stencil, to be overridden by implementations
-  virtual void computeBoundaryStencil(DomainPartition * domain, lSet const & faceSet, BoundaryStencil & stencil) = 0;
+  virtual void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) = 0;
 
   /// pointer to boundary set manager
   dataRepository::ManagedGroup * m_boundarySetData;

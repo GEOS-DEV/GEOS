@@ -98,7 +98,7 @@ template< typename T >
 inline void SetValue( const lSet& set,
                       ObjectDataStructureBaseT& object,
                       BoundaryConditionBase* bc,
-                      array<T>& fieldData,
+                      array1d<T>& fieldData,
                       realT time );
 
 template< typename T >
@@ -136,7 +136,7 @@ template< typename T >
 inline void SetValue( const lSet& set,
                       ObjectDataStructureBaseT& object,
                       BoundaryConditionBase* bc,
-                      array<T>& fieldData,
+                      array1d<T>& fieldData,
                       realT time )
 {
   T replace;
@@ -158,7 +158,7 @@ template<>
 inline void SetValue<realT>( const lSet& set,
                              ObjectDataStructureBaseT& object,
                              BoundaryConditionBase* bc,
-                             array<realT>& fieldData,
+                             array1d<realT>& fieldData,
                              realT time )
 {
   for( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a )
@@ -177,10 +177,10 @@ void ApplyDirichletBoundaryCondition( ObjectDataStructureBaseT& object,
 
 //    const TableManager& tableManager = TableManager::Instance();
 
-  array<T>& fieldData = object.GetFieldData<T>(fieldName);
+  array1d<T>& fieldData = object.GetFieldData<T>(fieldName);
 
   // iterate over all boundary conditions.
-  for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
+  for( array1d<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
   {
     // check to see if the requested field has a boundary condition applied to
     // it.
@@ -293,7 +293,7 @@ void ApplyBoundaryCondition(Solver* solverPtr,
 
 
   // iterate over all boundary conditions.
-  for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
+  for( array1d<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
   {
 
     // check if field has the boundary condition applied to it.
@@ -346,7 +346,7 @@ void ApplyBoundaryCondition(Solver* solverPtr,
 
 
   // iterate over all boundary conditions.
-  for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
+  for( array1d<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
   {
 
     // check if field has the boundary condition applied to it.
@@ -400,7 +400,7 @@ void ApplyBoundaryCondition(Solver* solverPtr,
 
 
   // iterate over all boundary conditions.
-  for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
+  for( array1d<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
   {
 
     // check if field has the boundary condition applied to it.
@@ -470,7 +470,7 @@ void ApplyMultiSetBoundaryCondition(Solver* solverPtr,
                                     const std::string& fieldName, realT time ){
 
   // iterate over all boundary conditions.
-  for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
+  for( array1d<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
   {
 
     // check if field has the boundary condition applied to it.
@@ -506,7 +506,7 @@ void ApplyBoundaryCondition(BCFunctionPtr boundaryConditionFunctionPtr,
 
 
   // iterate over all boundary conditions.
-  for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
+  for( array1d<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
   {
 
     // check if field has the boundary condition applied to it.
@@ -587,7 +587,7 @@ void ApplyBoundaryCondition(Solver* solverPtr,
 
 
   // iterate over all boundary conditions.
-  for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
+  for( array1d<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
   {
 
     // check if field has the boundary condition applied to it.
@@ -646,13 +646,13 @@ void ApplyBoundaryCondition(Solver* solverPtr,
 
 void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
                                                 FaceManagerT& faceManager,
-                                                array<lSet>& KinematicConstraintNodes,
+                                                array1d<lSet>& KinematicConstraintNodes,
                                                 const realT tiedNodeTolerance );
 
 
 void ApplyKinematicConstraintBoundaryCondition( FaceManagerT& faceManager,
                                                 NodeManager& nodeManager,
-                                                array<lSet>& KinematicConstraintNodes,
+                                                array1d<lSet>& KinematicConstraintNodes,
                                                 const realT tiedNodeNormalRuptureStress,
                                                 const realT tiedNodeShearRuptureStress  );
 

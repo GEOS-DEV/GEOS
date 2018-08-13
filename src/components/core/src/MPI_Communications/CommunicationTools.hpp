@@ -45,10 +45,10 @@ public:
 
   static void AssignGlobalIndices( ObjectManagerBase & object,
                                    ObjectManagerBase const & compositionObject,
-                                   array<NeighborCommunicator> & neighbors );
+                                   array1d<NeighborCommunicator> & neighbors );
 
   static void FindGhosts( MeshLevel * const meshLevel,
-                          array<NeighborCommunicator> & neighbors );
+                          array1d<NeighborCommunicator> & neighbors );
 
   static int MPI_Size( MPI_Comm const & comm );
   static int MPI_Rank( MPI_Comm const & comm );
@@ -58,11 +58,11 @@ public:
   static void releaseCommID( int & ID );
 
   static void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                            array<NeighborCommunicator> & allNeighbors );
+                                            array1d<NeighborCommunicator> & allNeighbors );
 
-  static void SynchronizeFields( const std::map<string, array<string> >& fieldNames,
+  static void SynchronizeFields( const std::map<string, array1d<string> >& fieldNames,
                                  MeshLevel * const mesh,
-                                 array<NeighborCommunicator> & allNeighbors );
+                                 array1d<NeighborCommunicator> & allNeighbors );
 
 };
 
