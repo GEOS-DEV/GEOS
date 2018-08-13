@@ -159,8 +159,8 @@ void IncrementalRotation( const R2TensorT<3>& A,
 
 void CalculatePhantomGradient( R2TensorT<3>& Gradient,
                                const int* bConnectivity,
-                               const array<R1TensorT<3> >& disp,
-                               const Array2dT<R1TensorT<3> >& dNdX )
+                               const array1d<R1TensorT<3> >& disp,
+                               const array2d<R1TensorT<3> >& dNdX )
 
 {
   Gradient = 0.0;

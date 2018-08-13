@@ -56,24 +56,31 @@ public:
 
 
 //  template< typename T >
-//  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+//  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
 //                                           real64 const time,
-//                                           array<R1Tensor> const & X,
-//                                           array<T> & field );
+//                                           array1d<R1Tensor> const & X,
+//                                           array1d<T> & field );
 
-//  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+//  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
 //                                           real64 const time,
-//                                           array<R1Tensor> const & X,
-//                                           array<R1Tensor> & field );
+//                                           array1d<R1Tensor> const & X,
+//                                           array1d<R1Tensor> & field );
 
   template< typename OPERATION >
-  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
                                            real64 const time,
                                            dataRepository::ManagedGroup * dataGroup,
                                            string const & fieldname ) const;
 
+  // calls user-provided lambda to apply computed boundary value
+  template<typename LAMBDA>
+  void ApplyBoundaryCondition(set<localIndex> const & set,
+                              real64 const time,
+                              dataRepository::ManagedGroup * dataGroup,
+                              LAMBDA && lambda);
+
   template< int OPERATION >
-  void ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
+  void ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
                                                     real64 const time,
                                                     dataRepository::ManagedGroup * dataGroup,
                                                     string const & fieldName,
@@ -82,9 +89,10 @@ public:
                                                     systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                     systemSolverInterface::BlockIDs const blockID ) const;
 
+
   template< int OPERATION, typename LAMBDA >
   void
-  ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
+  ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
                                                real64 const time,
                                                dataRepository::ManagedGroup * dataGroup,
                                                globalIndex_array const & dofMap,
@@ -100,8 +108,6 @@ public:
                                                        real64 & rhs,
                                                        real64 const & bcValue,
                                                        real64 const fieldValue ) const;
-
-
 
 
   struct viewKeyStruct
@@ -207,7 +213,7 @@ private:
 
 
 template< typename OPERATION >
-void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
+void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
                                                                 real64 const time,
                                                                 ManagedGroup * dataGroup,
                                                                 string const & fieldName ) const
@@ -306,7 +312,7 @@ inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( g
 
 
 template< int OPERATION >
-void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
+void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
                                                                          real64 const time,
                                                                          dataRepository::ManagedGroup * dataGroup,
                                                                          string const & fieldName,
@@ -428,7 +434,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
 template< int OPERATION, typename LAMBDA >
 void
 BoundaryConditionBase::
-ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
+ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
                                              real64 const time,
                                              dataRepository::ManagedGroup * dataGroup,
                                              globalIndex_array const & dofMap,
@@ -531,6 +537,57 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
   }
 }
 
+template<typename LAMBDA>
+void BoundaryConditionBase::ApplyBoundaryCondition(set<localIndex> const & set,
+                                                   real64 const time,
+                                                   dataRepository::ManagedGroup * dataGroup,
+                                                   LAMBDA && lambda)
+{
+  integer const component = GetComponent();
+  string const functionName = getData<string>(viewKeyStruct::functionNameString);
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+
+  if (functionName.empty())
+  {
+    real64 const value = m_scale;
+    integer counter = 0;
+    for (auto a : set)
+    {
+      lambda(dataGroup, a, counter, value);
+      ++counter;
+    }
+  }
+  else
+  {
+    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+    if (function!=nullptr)
+    {
+      if (function->isFunctionOfTime() == 2)
+      {
+        real64 const value = m_scale * function->Evaluate(&time);
+        integer counter = 0;
+        for (auto a : set)
+        {
+          lambda(dataGroup, a, counter, value);
+          ++counter;
+        }
+      }
+      else
+      {
+        real64_array result;
+        result.resize(integer_conversion<localIndex>(set.size()));
+        function->Evaluate(dataGroup, time, set, result);
+        integer counter = 0;
+        for (auto a : set)
+        {
+          real64 const value = m_scale * result[counter];
+          lambda(dataGroup, a, counter, value);
+          ++counter;
+        }
+      }
+    }
+  }
+}
 
 
 }

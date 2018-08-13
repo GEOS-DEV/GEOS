@@ -39,7 +39,9 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   m_numFacesPerElement(),
   m_toNodesRelation(),
   m_toEdgesRelation(),
-  m_toFacesRelation()
+  m_toFacesRelation(),
+  m_elementCenter(),
+  m_elementVolume()
 {
   RegisterViewWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
   RegisterViewWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
@@ -48,6 +50,7 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   RegisterViewWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
   RegisterViewWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
   RegisterViewWrapper(viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
+  RegisterViewWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
 
   m_toNodesRelation.resize(0,8);
   m_toEdgesRelation.resize(0,12);

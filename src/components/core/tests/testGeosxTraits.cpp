@@ -107,7 +107,7 @@ TEST(testGeosxTraits,test_is_noncontainer_type_packable)
   EXPECT_TRUE( is_noncontainer_type_packable<double>::value );
   EXPECT_FALSE( is_noncontainer_type_packable<void>::value );
   EXPECT_TRUE( is_noncontainer_type_packable<R1Tensor>::value );
-  EXPECT_FALSE( is_noncontainer_type_packable< array<double> >::value );
+  EXPECT_FALSE( is_noncontainer_type_packable< array1d<double> >::value );
   EXPECT_FALSE( is_noncontainer_type_packable< set<double> >::value );
   using mapType = map<string,int>;
   EXPECT_FALSE( is_noncontainer_type_packable< mapType >::value );

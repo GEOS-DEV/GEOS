@@ -121,11 +121,11 @@ public:
   real64 &       shearModulus()       { return m_shearModulus0; }
   real64 const & shearModulus() const { return m_shearModulus0; }
 
-  Array2dT<R2SymTensor> &       deviatorStress()       { return m_deviatorStress; }
-  Array2dT<R2SymTensor> const & deviatorStress() const { return m_deviatorStress; }
+  array2d<R2SymTensor> &       deviatorStress()       { return m_deviatorStress; }
+  array2d<R2SymTensor> const & deviatorStress() const { return m_deviatorStress; }
 
-  Array2dT<real64> &       meanStress()       { return m_meanStress; }
-  Array2dT<real64> const & meanStress() const { return m_meanStress; }
+  array2d<real64> &       meanStress()       { return m_meanStress; }
+  array2d<real64> const & meanStress() const { return m_meanStress; }
 
   struct dataPointers
   {
@@ -138,10 +138,10 @@ public:
 private:
   real64 m_bulkModulus0;
   real64 m_shearModulus0;
-  Array2dT<real64> m_bulkModulus;
-  Array2dT<real64> m_shearModulus;
-  Array2dT<real64> m_meanStress;
-  Array2dT<R2SymTensor> m_deviatorStress;
+  array2d<real64> m_bulkModulus;
+  array2d<real64> m_shearModulus;
+  array2d<real64> m_meanStress;
+  array2d<R2SymTensor> m_deviatorStress;
 
 };
 

@@ -314,7 +314,7 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 
   for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
   {
-    real volumeStrain = ( D11[i] + D22[i] + D33[i] );
+    real64 volumeStrain = ( D11[i] + D22[i] + D33[i] );
     mean_stress[i] += volumeStrain * K[i];
 
     S11[i] += ( D11[i] - volumeStrain/3.0 ) * 2.0 * G[i];
@@ -340,7 +340,7 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 
     for( localIndex i=0 ; i<numberOfMaterialPoints ; ++i )
     {
-      real Stiffness[6][6] = {
+      real64 Stiffness[6][6] = {
         { K[i]+4.0/3.0*G[i], K[i]-2.0/3.0*G[i], K[i]-2.0/3.0*G[i], 0,               0,        0 },
         { K[i]-2.0/3.0*G[i], K[i]+4.0/3.0*G[i], K[i]-2.0/3.0*G[i], 0,               0,        0 },
         { K[i]-2.0/3.0*G[i], K[i]-2.0/3.0*G[i], K[i]+4.0/3.0*G[i], 0,               0,        0 },

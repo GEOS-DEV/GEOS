@@ -99,12 +99,12 @@ private:
 
 
   int m_dim;
-  array<real64> m_vertices[3];
+  array1d<real64> m_vertices[3];
   integer_array m_nElems[3];
-  array<real64> m_nElemScaling[3];
-  array<real64> m_nElemBias[3];
+  array1d<real64> m_nElemScaling[3];
+  array1d<real64> m_nElemBias[3];
 
-  array<string> m_regionNames;
+  array1d<string> m_regionNames;
 
   realT m_min[3]; // Minimum extent of mesh dimensions
   realT m_max[3]; // Maximum extent of mesh dimensions
@@ -129,9 +129,9 @@ private:
 
 
 
-  array<string> m_elementType;
+  array1d<string> m_elementType;
 
-  array<integer> m_numElePerBox;
+  array1d<integer> m_numElePerBox;
 
   int m_trianglePattern;   // In pattern 0, half nodes have 4 edges and the
                            // other half have 8; for Pattern 1, every node has

@@ -95,7 +95,7 @@ public:
 
   virtual ~ElementRegion() override;
 
-//  Array2dT<integer> & m_toNodesRelation;
+//  array2d<integer> & m_toNodesRelation;
 
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;
@@ -192,7 +192,7 @@ public:
 
 private:
   ElementRegion& operator=(const ElementRegion& rhs);
-  array<string> m_materialList;
+  array1d<string> m_materialList;
 //  string & m_elementType;
 
 };
