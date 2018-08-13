@@ -362,6 +362,60 @@ public:
     }
   }
 
+  template< typename T = ViewWrapperBase, typename LAMBDA >
+  void forViewWrappers( LAMBDA lambda )
+  {
+    for( auto& wrapperIter : m_wrappers )
+    {
+#ifdef USE_DYNAMIC_CASTING
+      T & wrapper = dynamic_cast<T &>( *wrapperIter.second );
+#else
+      T & wrapper = static_cast<T &>( *wrapperIter.second );
+#endif
+      lambda( wrapper );
+    }
+  }
+
+  template< typename T = ViewWrapperBase, typename LAMBDA >
+  void forViewWrappers( LAMBDA lambda ) const
+  {
+    for( auto const & wrapperIter : m_wrappers )
+    {
+#ifdef USE_DYNAMIC_CASTING
+      T const & wrapper = dynamic_cast<T const &>( *wrapperIter.second );
+#else
+      T const & wrapper = static_cast<T const &>( *wrapperIter.second );
+#endif
+      lambda( wrapper );
+    }
+  }
+
+  template< typename Wrapped, typename LAMBDA >
+  void forViewWrappersByType(LAMBDA lambda)
+  {
+    for( auto & wrapperIter : m_wrappers )
+    {
+      if ( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      {
+        auto & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
+        lambda(wrapper);
+      }
+    }
+  }
+
+  template< typename Wrapped, typename LAMBDA >
+  void forViewWrappersByType(LAMBDA lambda) const
+  {
+    for( auto const & wrapperIter : m_wrappers )
+    {
+      if( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      {
+        auto const & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
+        lambda(wrapper);
+      }
+    }
+  }
+
   virtual void Initialize( ManagedGroup * const group );
 
   virtual void InitializationOrder( string_array & order );
@@ -453,19 +507,19 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
-  virtual localIndex PackSize( array<string> const & wrapperNames,
+  virtual localIndex PackSize( array1d<string> const & wrapperNames,
                         integer const recursive ) const;
 
-  virtual localIndex PackSize( array<string> const & wrapperNames,
+  virtual localIndex PackSize( array1d<string> const & wrapperNames,
                         localIndex_array const & packList,
                         integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    array<string> const & wrapperNames,
+                    array1d<string> const & wrapperNames,
                     integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    array<string> const & wrapperNames,
+                    array1d<string> const & wrapperNames,
                     localIndex_array const & packList,
                     integer const recursive ) const;
 

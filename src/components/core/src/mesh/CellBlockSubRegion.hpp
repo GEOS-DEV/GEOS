@@ -59,7 +59,7 @@ public:
 
   void MaterialPassThru( string const & matName,
                          string const & setName,
-                         lSet & materialSet,
+                         set<localIndex> & materialSet,
                          ManagedGroup * material );
 
 
@@ -107,13 +107,11 @@ public:
 
   map< string, localIndex_array > m_constitutiveGrouping;
 
-
   array3d< real64 > m_constitutivePointVolumeFraction;
 
-
-  std::pair< Array2dT< localIndex >, Array2dT< localIndex > > m_constitutiveMapView;
-
   // TODO this needs to be stored by the FiniteElementManager!!
+  std::pair< array2d< localIndex >, array2d< localIndex > > m_constitutiveMapView;
+
   multidimensionalArray::ManagedArray< R1Tensor, 3 > m_dNdX;
 
   dataRepository::ManagedGroup const * GetConstitutiveModels() const

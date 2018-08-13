@@ -54,7 +54,7 @@ class ElementRegionManager : public ObjectManagerBase
 public:
 
   template< typename VIEWTYPE >
-  using ElementViewAccessor = array < array< ReferenceWrapper< VIEWTYPE > > > ;
+  using ElementViewAccessor = array1d< array1d< ReferenceWrapper< VIEWTYPE > > > ;
 
   /**
    * @name Static Factory Catalog Functions
@@ -228,11 +228,11 @@ public:
 
 
 
-  int PackSize( array<string> const & wrapperNames,
+  int PackSize( array1d<string> const & wrapperNames,
                 ElementViewAccessor<localIndex_array> const & packList ) const;
 
   int Pack( buffer_unit_type * & buffer,
-            array<string> const & wrapperNames,
+            array1d<string> const & wrapperNames,
             ElementViewAccessor<localIndex_array> const & packList ) const;
 
   using ObjectManagerBase::Unpack;
@@ -265,7 +265,7 @@ public:
 private:
   template< bool DOPACK >
   int PackPrivate( buffer_unit_type * & buffer,
-                   array<string> const & wrapperNames,
+                   array1d<string> const & wrapperNames,
                    ElementViewAccessor<localIndex_array> const & viewAccessor ) const;
 
   template< bool DOPACK >

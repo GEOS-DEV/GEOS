@@ -1136,7 +1136,7 @@ public:
 
   void unregisterDataPtr(axom::sidre::View* view = nullptr) const
   {
-#ifdef ATK_FOUND
+#ifdef USE_ATK
     view = (view != nullptr) ? view : getSidreView();
     view->setExternalDataPtr(AXOM_NULLPTR);
 #endif

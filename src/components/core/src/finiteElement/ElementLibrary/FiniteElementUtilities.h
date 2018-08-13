@@ -42,8 +42,8 @@ void Integrate( const R2SymTensor& fieldvar,
 
 
 //  void Interp(const R1Tensor &globalCoord,
-//	      const array<R1Tensor> &nodeCoords,
-//              const array<real64> &nodeValues,
+//	      const array1d<R1Tensor> &nodeCoords,
+//              const array1d<real64> &nodeValues,
 //              BasisBase *basis,
 //	      const unsigned int &ndofs,
 //	      const unsigned int &ndim,
@@ -51,15 +51,15 @@ void Integrate( const R2SymTensor& fieldvar,
 //
 //
 //  void InterpdNdX(const R1Tensor &globalCoord,
-//		  const array<R1Tensor> &nodeCoords,
+//		  const array1d<R1Tensor> &nodeCoords,
 //		  BasisBase *basis,
 //		  const unsigned int &ndofs,
 //                  const unsigned int &ndim,
-//		  array<R1Tensor> &result);
+//		  array1d<R1Tensor> &result);
 //
 //
 //  void FindLocalCoord(const R1Tensor &globalCoord,
-//		      const array<R1Tensor> &nodeCoords,
+//		      const array1d<R1Tensor> &nodeCoords,
 //		      BasisBase *basis,
 //		      const unsigned int &ndofs,
 //		      const unsigned int &ndim,

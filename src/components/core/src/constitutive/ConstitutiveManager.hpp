@@ -37,7 +37,7 @@ namespace constitutive
  * multidimensional array like interface via the operator[].
  */
 template< typename VIEWTYPE >
-using ViewAccessor = array < ReferenceWrapper< VIEWTYPE > > ;
+using ViewAccessor = array1d < ReferenceWrapper< VIEWTYPE > > ;
 
 /**
  * @class ConstitutiveManager
@@ -58,7 +58,7 @@ public:
                                  dataRepository::ManagedGroup * const parent,
                                  localIndex const numConstitutivePointsPerParentIndex ) const;
 
-  ~ConstitutiveManager() override;
+  ~ConstitutiveManager();
 
   template< typename T = ConstitutiveBase >
   T const * GetConstitituveRelation( string const & constitutiveRelationInstanceName ) const

@@ -42,11 +42,11 @@ public:
   virtual ~IOUtilities();
 
   template< typename T >
-  static void parse_file( array<T> & target, std::string filename, char delimiter );
+  static void parse_file( array1d<T> & target, std::string filename, char delimiter );
 };
 
 template< typename T >
-void IOUtilities::parse_file( array<T> & target, std::string filename, char delimiter )
+void IOUtilities::parse_file( array1d<T> & target, std::string filename, char delimiter )
 {
   std::ifstream inputStream(filename.c_str());
   std::string lineString;

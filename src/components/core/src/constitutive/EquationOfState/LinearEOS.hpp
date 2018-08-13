@@ -107,11 +107,11 @@ public:
     dataRepository::ViewKey referenceViscosity = { "referenceViscosity" };
   } viewKeys;
 
-  Array2dT<real64> const & density() const { return m_density; }
-  Array2dT<real64>       & density()       { return m_density; }
+  array2d<real64> const & density() const { return m_density; }
+  array2d<real64>       & density()       { return m_density; }
 
-  Array2dT<real64> const & dPressure_dDensity() const { return m_dPressure_dDensity; }
-  Array2dT<real64>       & dPressure_dDensity()       { return m_dPressure_dDensity; }
+  array2d<real64> const & dPressure_dDensity() const { return m_dPressure_dDensity; }
+  array2d<real64>       & dPressure_dDensity()       { return m_dPressure_dDensity; }
 
 
 private:
@@ -134,8 +134,8 @@ private:
   /// reference viscosity parameter for EOS relation
   real64 m_referenceViscosity;
 
-  Array2dT<real64> m_density;
-  Array2dT<real64> m_dPressure_dDensity;
+  array2d<real64> m_density;
+  array2d<real64> m_dPressure_dDensity;
 
   ExponentialRelation<localIndex, real64> m_densityRelation;
   ExponentialRelation<localIndex, real64> m_viscosityRelation;

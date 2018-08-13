@@ -43,7 +43,7 @@ if [[ "$DO_BUILD" == "yes" ]] ; then
 #    if [[ ${CMAKE_EXTRA_FLAGS} == *COVERAGE* ]] ; then
 #      or_die make -j 1
 #    else
-      or_die make -j 1 VERBOSE=1
+      or_die make -j 2 VERBOSE=1
 #    fi
 #    if [[ "${DO_TEST}" == "yes" ]] ; then
 #      or_die ctest -V

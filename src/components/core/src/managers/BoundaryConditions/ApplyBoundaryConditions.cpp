@@ -34,7 +34,7 @@ void ApplyRigidWallBoundaryCondition( ObjectDataStructureBaseT& object, const re
   {
 
     // iterate over all boundary conditions.
-    for( array<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
+    for( array1d<BoundaryConditionBase*>::const_iterator bcItr=object.m_bcData.begin() ; bcItr!=object.m_bcData.end() ; ++bcItr )
     {
       // check if the requested field has a wall boundary condition applied to
       // it.
@@ -42,9 +42,9 @@ void ApplyRigidWallBoundaryCondition( ObjectDataStructureBaseT& object, const re
                                                                                                 // (*bcItr);
       if( bc )
       {
-        array<R1Tensor>& v = object.GetFieldData<FieldInfo::velocity> ();
-        const array<R1Tensor>& u = object.GetFieldData<FieldInfo::displacement> ();
-        const array<R1Tensor>& X = object.GetFieldData<FieldInfo::referencePosition> ();
+        array1d<R1Tensor>& v = object.GetFieldData<FieldInfo::velocity> ();
+        const array1d<R1Tensor>& u = object.GetFieldData<FieldInfo::displacement> ();
+        const array1d<R1Tensor>& X = object.GetFieldData<FieldInfo::referencePosition> ();
 
         R1Tensor x;
         R1Tensor vn;
@@ -52,17 +52,17 @@ void ApplyRigidWallBoundaryCondition( ObjectDataStructureBaseT& object, const re
         const R1Tensor& b = bc->m_position;
         const R1Tensor& n = bc->GetDirection(0.0);   // fixme need time
 
-        for(array<string>::size_type i =0 ; i < bc->m_setNames.size() ; ++i)
+        for(array1d<string>::size_type i =0 ; i < bc->m_setNames.size() ; ++i)
         {
           std::string setName = bc->m_setNames[i];
 
-          std::map< std::string, lSet >::const_iterator setMap = object.m_Sets.find( setName );
+          std::map< std::string, set<localIndex> >::const_iterator setMap = object.m_Sets.find( setName );
           if( setMap != object.m_Sets.end() )
           {
 
-            const lSet& set = setMap->second;
+            const set<localIndex>& set = setMap->second;
 
-            for ( lSet::const_iterator a=set.begin() ; a!=set.end() ; ++a )
+            for ( set<localIndex>::const_iterator a=set.begin() ; a!=set.end() ; ++a )
             {
               // get the projected position of the node at the end of the
               // timestep
@@ -103,7 +103,7 @@ void ApplyTractionBoundaryCondition( PhysicalDomainT& domain, realT time)
   NodeManager& nodeManager = domain.m_feNodeManager;
 
   // iterate over all boundary conditions.
-  for( array<BoundaryConditionBase*>::const_iterator bcItr=faceManager.m_bcData.begin() ; bcItr!=faceManager.m_bcData.end() ; ++bcItr )
+  for( array1d<BoundaryConditionBase*>::const_iterator bcItr=faceManager.m_bcData.begin() ; bcItr!=faceManager.m_bcData.end() ; ++bcItr )
   {
 
     // check if the requested field has a boundary condition applied to it.
@@ -112,22 +112,22 @@ void ApplyTractionBoundaryCondition( PhysicalDomainT& domain, realT time)
     if( bc )
     {
 
-      array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force> ();
+      array1d<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force> ();
 
       //  const R1Tensor& n = bc->GetDirection(time); //oldway
 
 
-      for(array<string>::size_type i =0 ; i < bc->m_setNames.size() ; ++i)
+      for(array1d<string>::size_type i =0 ; i < bc->m_setNames.size() ; ++i)
       {
         int findSet = 1;
 
         std::string setName = bc->m_setNames[i];
-        std::map< std::string, lSet >::const_iterator setMap = faceManager.m_Sets.find( setName );
+        std::map< std::string, set<localIndex> >::const_iterator setMap = faceManager.m_Sets.find( setName );
         if( setMap != faceManager.m_Sets.end() )
         {
-          const lSet& set = setMap->second;
+          const set<localIndex>& set = setMap->second;
 
-          for ( lSet::const_iterator k=set.begin() ; k!=set.end() ; ++k )
+          for ( set<localIndex>::const_iterator k=set.begin() ; k!=set.end() ; ++k )
           {
             if (domain.m_feFaceManager.m_toElementsRelation[*k].size()>0)
             {
@@ -192,15 +192,15 @@ void ApplyTractionBoundaryCondition( PhysicalDomainT& domain, realT time)
  */
 void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
                                                 FaceManagerT& faceManager,
-                                                array<lSet>& KinematicConstraintNodes,
+                                                array1d<set<localIndex>>& KinematicConstraintNodes,
                                                 const realT tiedNodeTolerance )
 {
 
-  array<R1Tensor>& X = nodeManager.GetFieldData<FieldInfo::referencePosition>();
-  const array<integer>& isExternal = nodeManager.m_isExternal;
+  array1d<R1Tensor>& X = nodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const array1d<integer>& isExternal = nodeManager.m_isExternal;
 
   nodeManager.AddKeylessDataField<int>("KCBC",true,true);
-  array<integer>& nodeKCBC = nodeManager.GetFieldData<int>("KCBC");
+  array1d<integer>& nodeKCBC = nodeManager.GetFieldData<int>("KCBC");
   nodeKCBC = 0;
 
   //***** first we will set up spatial bins to store nodes
@@ -210,7 +210,7 @@ void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
   int numBinZ = 2;
 
   // set spatial min/max and range of the problem.
-  for( array<R1Tensor>::const_iterator iterX=X.begin() ; iterX!=X.end() ; ++iterX )
+  for( array1d<R1Tensor>::const_iterator iterX=X.begin() ; iterX!=X.end() ; ++iterX )
   {
     xmin.SetMin(*iterX);
     xmax.SetMax(*iterX);
@@ -219,7 +219,7 @@ void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
   range -= xmin;
 
 
-  array<lSet> allBins(numBinX*numBinY*numBinZ);
+  array1d<set<localIndex>> allBins(numBinX*numBinY*numBinZ);
 
   // fill the effing bins with node indexes that belong in that bin
   for( int i=0 ; i<numBinX ; ++i )
@@ -266,13 +266,13 @@ void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
   // should be something a little more logical
   const realT tol = Dot(range,range) * tiedNodeTolerance * tiedNodeTolerance;
   R1Tensor diff;
-  lSet alreadyTied;
+  set<localIndex> alreadyTied;
 
   // loop over each bin.
-  for( array<lSet>::const_iterator ibin=allBins.begin() ; ibin!=allBins.end() ; ++ibin )
+  for( array1d<set<localIndex>>::const_iterator ibin=allBins.begin() ; ibin!=allBins.end() ; ++ibin )
   {
     // loop over each node in the bin, from beginning to end.
-    for( lSet::const_iterator a=ibin->begin() ; a!=ibin->end() ; ++a )
+    for( set<localIndex>::const_iterator a=ibin->begin() ; a!=ibin->end() ; ++a )
     {
       // check to see if the node has already been tied. you will see how this
       // is possible in a second.
@@ -280,10 +280,10 @@ void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
       {
         // hold a set of nodes that stores all indices that have been tied
         // together.
-        lSet tiedNodes;
+        set<localIndex> tiedNodes;
 
         // now we set a new iterator "b" to the next bin node iterator "a"
-        lSet::const_iterator b = a; ++b;
+        set<localIndex>::const_iterator b = a; ++b;
 
         // now we loop over all the remaining nodes in the ibin.
         for( ; b!=ibin->end() ; ++b )
@@ -335,16 +335,16 @@ void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
 
   // set the number of nodes with kinematic constrain boundary conditions for
   // each face.
-  array<integer>& numBCNodesInFace = faceManager.GetFieldData<int>("numKCBCnodesInFace");
-  const array<integer>& isExternalFace = faceManager.m_isExternal;
+  array1d<integer>& numBCNodesInFace = faceManager.GetFieldData<int>("numKCBCnodesInFace");
+  const array1d<integer>& isExternalFace = faceManager.m_isExternal;
   numBCNodesInFace = 0;
 
-  for( array<lSet>::iterator iterGroup=KinematicConstraintNodes.begin() ;
+  for( array1d<set<localIndex>>::iterator iterGroup=KinematicConstraintNodes.begin() ;
        iterGroup!=KinematicConstraintNodes.end() ; ++iterGroup )
   {
-    for( lSet::const_iterator a=iterGroup->begin() ; a!=iterGroup->end() ; ++a )
+    for( set<localIndex>::const_iterator a=iterGroup->begin() ; a!=iterGroup->end() ; ++a )
     {
-      for( lSet::const_iterator kf=nodeManager.m_nodeToFaceMap[*a].begin() ;
+      for( set<localIndex>::const_iterator kf=nodeManager.m_nodeToFaceMap[*a].begin() ;
            kf!=nodeManager.m_nodeToFaceMap[*a].end() ; ++kf )
       {
         if( isExternalFace[*kf] )
@@ -368,21 +368,21 @@ void BuildKinematicConstraintBoundaryCondition( NodeManager& nodeManager,
  */
 void ApplyKinematicConstraintBoundaryCondition( FaceManagerT& faceManager,
                                                 NodeManager& nodeManager,
-                                                array<lSet>& KinematicConstraintNodes,
+                                                array1d<set<localIndex>>& KinematicConstraintNodes,
                                                 const realT tiedNodeNormalRuptureStress,
                                                 const realT tiedNodeShearRuptureStress )
 {
 
-  const array<real64>& mass = nodeManager.GetFieldData<FieldInfo::mass>();
-  array<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
-  array<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
-  const array<integer>& isExternalFace = faceManager.m_isExternal;
-  array<integer>& numKCBCnodesInFace = faceManager.GetFieldData<int>("numKCBCnodesInFace");
+  const array1d<real64>& mass = nodeManager.GetFieldData<FieldInfo::mass>();
+  array1d<R1Tensor>& force = nodeManager.GetFieldData<FieldInfo::force>();
+  array1d<R1Tensor>& velocity = nodeManager.GetFieldData<FieldInfo::velocity>();
+  const array1d<integer>& isExternalFace = faceManager.m_isExternal;
+  array1d<integer>& numKCBCnodesInFace = faceManager.GetFieldData<int>("numKCBCnodesInFace");
 
-  array<integer>& nodeKCBC = nodeManager.GetFieldData<int>("KCBC");
+  array1d<integer>& nodeKCBC = nodeManager.GetFieldData<int>("KCBC");
 
   // loop over all groups of tied nodes
-  for( array<lSet>::iterator iterGroup=KinematicConstraintNodes.begin() ;
+  for( array1d<set<localIndex>>::iterator iterGroup=KinematicConstraintNodes.begin() ;
        iterGroup!=KinematicConstraintNodes.end() ; ++iterGroup )
   {
 
@@ -392,10 +392,10 @@ void ApplyKinematicConstraintBoundaryCondition( FaceManagerT& faceManager,
     R1Tensor sumMomentum(0.0);
 
     // set to hold list of broken nodes
-    lSet brokenNodes;
+    set<localIndex> brokenNodes;
 
     // loop over all nodes in the group of tied nodes
-    for( lSet::const_iterator a=iterGroup->begin() ; a!=iterGroup->end() ; ++a )
+    for( set<localIndex>::const_iterator a=iterGroup->begin() ; a!=iterGroup->end() ; ++a )
     {
       // flag to see if the node should be broken based on topology. it is set
       // to true by default, and changed to
@@ -406,7 +406,7 @@ void ApplyKinematicConstraintBoundaryCondition( FaceManagerT& faceManager,
       R1Tensor normalish;
 
       // loop over all faces connected to this node
-      for( lSet::const_iterator faceIndex=nodeManager.m_nodeToFaceMap[*a].begin() ;
+      for( set<localIndex>::const_iterator faceIndex=nodeManager.m_nodeToFaceMap[*a].begin() ;
            faceIndex!=nodeManager.m_nodeToFaceMap[*a].end() ; ++faceIndex )
       {
         // of course, we only care about external faces
@@ -468,10 +468,10 @@ void ApplyKinematicConstraintBoundaryCondition( FaceManagerT& faceManager,
 
 
     // erase the nodes that are broken from the group
-    for( lSet::const_iterator b=brokenNodes.begin() ; b!=brokenNodes.end() ; ++b )
+    for( set<localIndex>::const_iterator b=brokenNodes.begin() ; b!=brokenNodes.end() ; ++b )
     {
 
-      for( lSet::const_iterator faceIndex=nodeManager.m_nodeToFaceMap[*b].begin() ;
+      for( set<localIndex>::const_iterator faceIndex=nodeManager.m_nodeToFaceMap[*b].begin() ;
            faceIndex!=nodeManager.m_nodeToFaceMap[*b].end() ; ++faceIndex )
       {
         if( isExternalFace[*faceIndex] )
@@ -496,7 +496,7 @@ void ApplyKinematicConstraintBoundaryCondition( FaceManagerT& faceManager,
       // now set each node in the group to value consistent with kinematic
       // constrain... All nodes will have same velocity,
       // and acceleration.
-      for( lSet::const_iterator a=iterGroup->begin() ; a!=iterGroup->end() ; ++a )
+      for( set<localIndex>::const_iterator a=iterGroup->begin() ; a!=iterGroup->end() ; ++a )
       {
         velocity[*a] = sumMomentum;
         force[*a]  = sumForce;
@@ -507,17 +507,17 @@ void ApplyKinematicConstraintBoundaryCondition( FaceManagerT& faceManager,
 
 
   // now delete tied groups with less than 2 nodes in the group.
-  for( array<lSet>::size_type k=0 ; k<KinematicConstraintNodes.size() ; ++k )
+  for( array1d<set<localIndex>>::size_type k=0 ; k<KinematicConstraintNodes.size() ; ++k )
   {
-    lSet& group = KinematicConstraintNodes[k];
-    array<lSet>::iterator iterGroup = KinematicConstraintNodes.begin() + k;
+    set<localIndex>& group = KinematicConstraintNodes[k];
+    array1d<set<localIndex>>::iterator iterGroup = KinematicConstraintNodes.begin() + k;
 
     if( group.size() < 2 )
     {
 
-      for( lSet::const_iterator a=iterGroup->begin() ; a!=iterGroup->end() ; ++a )
+      for( set<localIndex>::const_iterator a=iterGroup->begin() ; a!=iterGroup->end() ; ++a )
       {
-        for( lSet::const_iterator faceIndex=nodeManager.m_nodeToFaceMap[*a].begin() ;
+        for( set<localIndex>::const_iterator faceIndex=nodeManager.m_nodeToFaceMap[*a].begin() ;
              faceIndex!=nodeManager.m_nodeToFaceMap[*a].end() ; ++faceIndex )
         {
           if( isExternalFace[*faceIndex] )

@@ -150,10 +150,10 @@ public:
                                                const multidimensionalArray::ArrayView<R1Tensor, 2, localIndex> dNdX,
                                                const realT* const detJ,
                                                R2SymTensor const * const refStress,
-                                               array<R1Tensor> const & u,
-                                               array<R1Tensor> const & uhat,
-                                               array<R1Tensor> const & uhattilde,
-                                               array<R1Tensor> const & vtilde,
+                                               array1d<R1Tensor> const & u,
+                                               array1d<R1Tensor> const & uhat,
+                                               array1d<R1Tensor> const & uhattilde,
+                                               array1d<R1Tensor> const & vtilde,
                                                realT const dt,
                                                Epetra_SerialDenseMatrix& dRdU,
                                                Epetra_SerialDenseVector& R,
@@ -161,7 +161,7 @@ public:
 
   void ApplyDirichletBC_implicit( ManagedGroup * object,
                                   BoundaryConditionBase const * const bc,
-                                  lSet const & set,
+                                  set<localIndex> const & set,
                                   real64 const time_n,
                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
 

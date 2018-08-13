@@ -91,9 +91,9 @@ public:
 //  virtual void ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects );
 
   template< typename T >
-  void SendReceive( const array<array<T> >& sendArray, array<array<T> >& recvArray );
+  void SendReceive( const array1d<array1d<T> >& sendArray, array1d<array1d<T> >& recvArray );
 
-//  void SynchronizeFields( const std::map<std::string, array<string> >& fieldNames,
+//  void SynchronizeFields( const std::map<std::string, array1d<string> >& fieldNames,
 //                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
   void SetOwnedByRank( const std::map< std::string, globalIndex_array>& localBoundaryGlobalIndices,
@@ -105,7 +105,7 @@ public:
 
   virtual void SetContactGhostRange( const double bufferSize ) = 0;
 //
-//  void SetBufferSizes( const std::map<string, array<string> >& fieldNames,
+//  void SetBufferSizes( const std::map<string, array1d<string> >& fieldNames,
 //                       const CommRegistry::commID commID  );
 //
 //  int NumberOfNeighbors( ) {return integer_conversion<int>(m_neighbors.size());}
@@ -129,10 +129,10 @@ protected:
   PartitionBase();
   PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton );
 //
-  array<NeighborCommunicator> m_neighbors;
+  array1d<NeighborCommunicator> m_neighbors;
 
-  array<MPI_Request> m_mpiRequest;
-  array<MPI_Status> m_mpiStatus;
+  array1d<MPI_Request> m_mpiRequest;
+  array1d<MPI_Status> m_mpiStatus;
 
   R1Tensor m_contactGhostMin;
   R1Tensor m_contactGhostMax;
