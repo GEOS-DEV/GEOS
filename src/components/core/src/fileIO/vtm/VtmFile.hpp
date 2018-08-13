@@ -35,67 +35,15 @@
  * to several "child" files (.vtu). Each one contains a part of the mesh.
  */
 namespace geosx{
-class VtuFile;
 class MeshLevel;
-
-class Rank {
-    public:
-    private:
-        std::vector< string > vtuFileNames;
-        std::vector< string > blockNames;
-};
-class VtmFile {
-    public:
-        VtmFile() {
-        }
-
-        virtual ~VtmFile(){
-        }
-
-        /*!
-         * @brief load a .vtm file
-         * @param[in] fileName the name of the XML vtm file to be loaded
-         */
-        virtual void Load( string const & fileName);
-
-        /*!
-         * @brief save a .pvtu file
-         * @param[in] fileName the name of the XML vtm file to be saved
-         */
-        virtual void Save( string const & fileName);
-
-    protected:
-        /*!
-         * @brief check if the XML file contains the right nodes
-         * @param[in] pvtuDoc the XML document
-         * @param[in] fileName name of the file being loaded
-         * @param[in] prefix will be "P" for the parent file
-         */
-         void CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
-                string const & fileName ) const;
-
-    private:
-        /*!
-         * @brief retrieve the list of the vtu files
-         * @param[in] pvtuDoc the XML document
-         * @param[in,out] vtuFiles vector containing the name of the vtu files (one
-         * for each partition)
-         */
-        void VtuFilesList(
-                pugi::xml_document const & vtmDoc,
-                std::vector < std::vector < string > > & vtmFiles ,
-                std::vector < std::vector < string > > & blockNames) const;
-    private:
-        std::vector< Rank > m_ranks;
-};
 
 /*!
  * @brief This class may be temporary and stock a mesh with vertices, polygons (triangles
  * and quads) and cells (pyramids,  prisms, tetraedra, hexaedra)
  */
-class MeshPart {
+class DumbMesh {
     public:
-        MeshPart() {
+        DumbMesh() {
         }
 
         //////////////////////
@@ -148,27 +96,6 @@ class MeshPart {
         std::vector< real64 > Vertex(globalIndex const vertexIndex) const;
 
         /*!
-         * @brief return the surface of a polygon
-         * @param[in] polygonIndex polygon index on this mesh part
-         * @return the surface on which the polygon belongs
-         */
-        globalIndex Surface(globalIndex const polygonIndex) const;
-
-        /*!
-         * @brief return the region of a cell
-         * @param[in] cellIndex cell index
-         * @return the cell on which the region belongs
-         */
-        globalIndex Region(globalIndex const cellIndex) const;
-
-        /*!
-         * @brief return the global index of a vertex in the full mesh
-         * @param[in] vertexIndex the vertex index on this mesh part
-         * @return the global index in the full mesh
-         */
-        globalIndex GlobalVertexIndex(globalIndex const vertexIndex) const;
-
-        /*!
          * @brief return the global index of a cell in the full mesh
          * @param[in] cellIndex the cell index on this mesh part
          * @return the cell index in the full mesh
@@ -202,14 +129,6 @@ class MeshPart {
         void SetVertex(globalIndex const vertexIndex,std::vector< real64 > const & vertex);
 
         /*!
-         * @brief set the original index of a vertex
-         * @param[in] vertexIndex the index of the vertex
-         * @param[in] originalIndex the index of the vertex in the full mesh
-         */
-        void SetVertexOriginalIndex(globalIndex const vertexIndex,
-                globalIndex const originalIndex);
-
-        /*!
          * @brief Reserve the number of cells and polygons
          * @details In pvtu/vtu file format, polygons and cells are stored as "Elements"
          * As a consequence, we do not know a priori the number of polygons and the
@@ -234,22 +153,6 @@ class MeshPart {
          * @return the index of the polygon
          */
         globalIndex AddPolygon( std::vector<globalIndex> connectivity );
-
-        /*! 
-         * @brief Set the surface index of a polygon
-         * @param[in] polygonIndex the index of the polygon within the mesh part
-         * @param[in] surfaceIndex the surface index (common to the full mesh)
-         */
-        void SetPolygonSurface( globalIndex const polygonIndex,
-                globalIndex const surfaceIndex);
-
-        /*! 
-         * @brief Set the region index of a cell
-         * @param[in] cellIndex the index of the polygon within the mesh part
-         * @param[in] regionIndex the region index (common to the full mesh)
-         */
-        void SetCellRegion( globalIndex const cellIndex,
-                globalIndex const regionIndex);
 
         /*!
          * @brief Set the original index, i.e. the index of a cell in the full mesh
@@ -296,22 +199,14 @@ class MeshPart {
         /// Size : numPolygons +1. Contains the first indexes to look at in
         /// polygons_connectivity
         std::vector< globalIndex > m_polygonsPtr{1,0};
-
-        /// Contains the original indexes of the vertices in the full mesh
-        std::vector< globalIndex > m_originalVertexIndexes;
         
         /// Contains the original indexes of the polygons in the full mesh
-        std::vector< globalIndex > m_originalPolygonIndexes;
+        std::vector< globalIndex > m_globalPolygonIndexes;
         
         /// Contains the original indexes of the cells in the full mesh
-        std::vector< globalIndex > m_originalCellIndexes;
-
-        /// Contains the surface indexes on which the polygons belong (size : numPolygons)
-        std::vector< globalIndex > m_surfaceIndexes;
-
-        /// Contains the region indexes on which the cells belong (size : numCells)
-        std::vector< globalIndex > m_regionIndexes;
+        std::vector< globalIndex > m_globalCellIndexes;
 };
+
 /*!
  * @brief this class stands for the I/O of vtu file
  * @details vtu(p) files is an extension fully supported by the VTK/Paraview
@@ -327,7 +222,7 @@ class VtuFile {
          * @brief load a .vtu file
          * @param[in] fileName the name of the XML pvtu file to be loaded
          */
-        void Load( string const & fileName);
+        void Load( string const & fileName, DumbMesh & mesh);
 
         /*!
          * @brief save a .vtu file
@@ -335,7 +230,7 @@ class VtuFile {
          */
         void Save( string const & fileName);
 
-        void TransferMeshPartToGEOSMesh( MeshLevel * const meshLevel );
+        void TransferDumbMeshToGEOSMesh( MeshLevel * const meshLevel );
 
     private:
         /*!
@@ -357,7 +252,7 @@ class VtuFile {
          * @brief load the mesh part form the XML document
          * @param[in] pvtuDoc the XML document
          */
-        void LoadMeshPart(pugi::xml_document const & pvtuDoc);
+        void LoadMesh(pugi::xml_document const & pvtuDoc, DumbMesh& mesh);
 
         /*!
          * @brief split a "big" string contained in a DataArray node of a vtu file
@@ -369,10 +264,64 @@ class VtuFile {
             void SplitNodeTextString( string const & in,
                     std::vector< T >& out,
                     Lambda && stringConvertor) const;
-    private:
-         MeshPart m_meshPart;
 };
 
+class MeshBlock {
+    public:
+        MeshBlock( string fileName,
+                string blockName);
+        void Load();
+    private:
+        string m_vtuFileName;
+        string m_blockName;
+        VtuFile m_vtuFile;
+        DumbMesh m_mesh;
+};
+
+class RankBlock {
+    public:
+        void AddMeshBlock( const MeshBlock& block);
+        void Load();
+    private:
+        std::vector< MeshBlock > m_block;
+};
+class VtmFile {
+    public:
+        VtmFile() {
+        }
+
+        ~VtmFile(){
+        }
+
+        /*!
+         * @brief load a .vtm file
+         * @param[in] fileName the name of the XML vtm file to be loaded
+         */
+         void Load( string const & fileName);
+
+         void FromVtmToGEOS();
+
+    protected:
+        /*!
+         * @brief check if the XML file contains the right nodes
+         * @param[in] pvtuDoc the XML document
+         * @param[in] fileName name of the file being loaded
+         * @param[in] prefix will be "P" for the parent file
+         */
+         void CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
+                string const & fileName ) const;
+
+    private:
+        /*!
+         * @brief retrieve the list of the vtu files, organized per ranks and per blocks
+         * @param[in] vtmDoc the XML document
+         */
+        void SetRanksAndBlocks(
+                pugi::xml_document const & vtmDoc,
+                std::vector< RankBlock >& rankBlocks);
+    private:
+        std::vector< RankBlock > m_rankBlocks;
+};
 
 }
 #endif /*PvtuFile.hpp*/
