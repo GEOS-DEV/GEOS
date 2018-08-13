@@ -5,10 +5,7 @@
 set(physicsSolvers_headers
     PhysicsSolverManager.hpp
     SolverBase.hpp
-    BoundaryConditions/BoundaryConditionBase.hpp
-    BoundaryConditions/BoundaryConditionManager.hpp
-    BoundaryConditions/DirichletBoundaryCondition.hpp
-    FiniteVolume/SinglePhaseFlow_TPFA.hpp
+    FiniteVolume/SinglePhaseFlow.hpp
     SimpleSolvers/LaplaceFEM.hpp )
 
 #
@@ -17,10 +14,7 @@ set(physicsSolvers_headers
 set(physicsSolvers_sources
     PhysicsSolverManager.cpp
     SolverBase.cpp
-    BoundaryConditions/BoundaryConditionBase.cpp
-    BoundaryConditions/BoundaryConditionManager.cpp
-    BoundaryConditions/DirichletBoundaryCondition.cpp
-    FiniteVolume/SinglePhaseFlow_TPFA.cpp
+    FiniteVolume/SinglePhaseFlow.cpp
     SimpleSolvers/LaplaceFEM.cpp  )
 
 

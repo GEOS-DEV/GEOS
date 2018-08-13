@@ -114,7 +114,8 @@ public:
     static constexpr auto edgeListString               = "edgeList";
     static constexpr auto numFacesPerElementString     = "numFacesPerElement";
     static constexpr auto faceListString               = "faceList";
-    static constexpr auto elementCenterString = "elementCenter";
+    static constexpr auto elementCenterString          = "elementCenter";
+    static constexpr auto elementVolumeString          = "elementVolume";
 
     dataRepository::ViewKey numNodesPerElement = { numNodesPerElementString };
     dataRepository::ViewKey nodeList           = { nodeListString };
@@ -167,6 +168,7 @@ private:
   FixedOneToManyRelation  m_toFacesRelation;
 
   array< R1Tensor > m_elementCenter;
+  array< real64 > m_elementVolume;
 
 
   CellBlock& operator=(const CellBlock& rhs);

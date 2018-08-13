@@ -27,7 +27,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
-#include "FiniteElementManager.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "basis/BasisBase.hpp"
 #include "quadrature/QuadratureBase.hpp"
 #include "ElementLibrary/FiniteElement.h"
