@@ -10,8 +10,8 @@
 #And requires CMAKE 3.9 or higher
 #export PATH=/global/homes/v/vargas45/Git-Repos/myCMAKE/cmake-3.10.3/bin:$PATH
 #
-module load papi
-export CALI_SERVICES_ENABLE=event:recorder:timestamp:trace:papi
+#module load papi
+#export CALI_SERVICES_ENABLE=event:recorder:timestamp:trace:papi
 #export CALI_CONFIG_PROFILE=serial-trace
 #
 #export CALI_TIMER_SNAPSHOT_DURATION=1
@@ -39,7 +39,7 @@ set(MPI_C_COMPILER "${cc}" CACHE PATH "")
 set(MPIEXEC              "/usr/bin/srun" CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 
-set( GEOSX_TPL_ROOT_DIR "/global/homes/v/vargas45/Git-Repos/CORI_GEOSX/thirdPartyLibs/" CACHE PATH "" )
+set( GEOSX_TPL_ROOT_DIR "/global/common/software/m2851/thirdPartyLibs/" CACHE PATH "" )
 
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
 set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
