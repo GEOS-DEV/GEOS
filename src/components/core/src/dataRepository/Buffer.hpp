@@ -197,7 +197,7 @@ public:
    *   pack(a[N-1])
    */
   template <typename T>
-  static localIndex packed_size(const array<T> & arr)
+  static localIndex packed_size(const array1d<T> & arr)
   {
     localIndex byte_size = 2 * sizeof(localIndex);
     for (const T & elem : arr)
@@ -210,7 +210,7 @@ public:
 
 
   template <typename T>
-  static void * pack(const array<T> & arr, localIndex & byte_size, void * buffer=nullptr)
+  static void * pack(const array1d<T> & arr, localIndex & byte_size, void * buffer=nullptr)
   {
     byte_size = packed_size(arr);
     localIndex * buff = reinterpret_cast<localIndex *>(buffer);
@@ -236,7 +236,7 @@ public:
 
 
   template <typename T>
-  static localIndex unpack(array<T> & arr, const void * buffer, localIndex byte_size=-1)
+  static localIndex unpack(array1d<T> & arr, const void * buffer, localIndex byte_size=-1)
   {
     const localIndex * buff = reinterpret_cast<const localIndex *>(buffer);
     localIndex bytes_recorded = buff[0];
@@ -361,7 +361,7 @@ public:
    */
   template <typename T>
   static typename std::enable_if<!has_alias_value_type<T>::value, localIndex>::type
-  packed_size(const Array2dT<T> & arr)
+  packed_size(const array2d<T> & arr)
   {
     localIndex byte_size = 2 * sizeof(localIndex);
     byte_size += arr.size() * sizeof(T);
@@ -371,7 +371,7 @@ public:
 
   template <typename T>
   static typename std::enable_if<!has_alias_value_type<T>::value, void *>::type
-  pack(const Array2dT<T> & arr, localIndex & byte_size, void * buffer=nullptr)
+  pack(const array2d<T> & arr, localIndex & byte_size, void * buffer=nullptr)
   {
     byte_size = packed_size(arr);
     localIndex * buff = reinterpret_cast<localIndex *>(buffer);
@@ -390,7 +390,7 @@ public:
 
   template <typename T>
   static typename std::enable_if<!has_alias_value_type<T>::value, localIndex>::type
-  unpack(Array2dT<T> & arr, const void * buffer, localIndex byte_size=-1)
+  unpack(array2d<T> & arr, const void * buffer, localIndex byte_size=-1)
   {
     const localIndex * buff = reinterpret_cast<const localIndex *>(buffer);
     const localIndex dim0 = buff[0];

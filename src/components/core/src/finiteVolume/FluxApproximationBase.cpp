@@ -139,13 +139,15 @@ void FluxApproximationBase::compute(DomainPartition * domain)
     string_array setNames = bc->GetSetNames();
     for (auto & setName : setNames)
     {
-      dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+      dataRepository::ViewWrapper< set<localIndex> > const * const
+      setWrapper = sets->getWrapper< set<localIndex> >(setName);
+
       if (setWrapper != nullptr)
       {
-        lSet const & set = setWrapper->reference();
+        set<localIndex> const & lset = setWrapper->reference();
         ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>(setName);
         stencil->setRestartFlags(RestartFlags::NO_WRITE);
-        computeBoundaryStencil(domain, set, stencil->reference());
+        computeBoundaryStencil(domain, lset, stencil->reference());
       }
     }
   });

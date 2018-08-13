@@ -97,7 +97,7 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
                                 localIndex const k )->void
   {
     arrayView1d<localIndex> nodeList = elemsToNodes[er][esr][k];
-    array< R1Tensor > Xlocal;
+    array1d< R1Tensor > Xlocal;
     Xlocal.resize(nodeList.size());
 
     R1Tensor & center = elemCenter[er][esr][k];
@@ -116,7 +116,7 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
   });
 
   r1_array & faceCenter = faceManager->getReference<r1_array>(FaceManager::viewKeyStruct::faceCenterString);
-  array<array<localIndex>> const & faceToNodes = faceManager->nodeList();
+  array1d<array1d<localIndex>> const & faceToNodes = faceManager->nodeList();
 
   R1Tensor normal;
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)

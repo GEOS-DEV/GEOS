@@ -267,12 +267,12 @@ namespace bufferOps
 //
 //  template< bool DO_PACKING >
 //  int Pack( char*& buffer,
-//            array< localIndex_array > const & var,
+//            array1d< localIndex_array > const & var,
 //            localIndex_array const & indices,
 //            globalIndex_array const & localToGlobalMap );
 //
 //  int Unpack( char const *& buffer,
-//              array< localIndex_array > & var,
+//              array1d< localIndex_array > & var,
 //              localIndex_array const & indices,
 //              map<globalIndex,localIndex> const & globalToLocalMap,
 //              map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap );

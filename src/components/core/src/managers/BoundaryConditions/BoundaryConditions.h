@@ -177,7 +177,7 @@ public:
                                                         // condition is applied
                                                         // to: eg. face, node,
                                                         // edge.
-  array<string> m_setNames; // sets the boundary condition is applied to
+  array1d<string> m_setNames; // sets the boundary condition is applied to
   std::string m_regionName;
 
   bool m_isConstantInSpace;
@@ -271,8 +271,8 @@ private:
 
 
   std::vector<FieldTypeMultiPtr> m_fieldPtrs;
-  array<FieldType> m_variableTypes;
-  array<string> m_variableNames;
+  array1d<FieldType> m_variableTypes;
+  array1d<string> m_variableNames;
   std::vector<realT> m_x;    // function input vector
 
   Function* m_function;
@@ -337,8 +337,8 @@ private:
   // components)
 
   std::vector<FieldTypeMultiPtr> m_fieldPtrs;
-  array<FieldType> m_variableTypes;
-  array<string> m_variableNames;
+  array1d<FieldType> m_variableTypes;
+  array1d<string> m_variableNames;
   std::vector<realT> m_x;    // function input vector
   realT m_scale;
   realT m_offset;
@@ -424,11 +424,11 @@ public:
     return BoundaryConditionName();
   }
 
-  array<string> m_varName;
+  array1d<string> m_varName;
 protected:
 
   //realT m_time; // last time bc value was calculated
-  array<real64> m_value;
+  array1d<real64> m_value;
 
 
 };
@@ -461,9 +461,9 @@ public:
     return 0.0;
   }
 
-  const array<real64>& GetValues(realT time);
+  const array1d<real64>& GetValues(realT time);
 
-  void CheckVars(const array<string> &nvarName);
+  void CheckVars(const array1d<string> &nvarName);
 
   bool isClamped() const
   {
@@ -473,7 +473,7 @@ public:
 protected:
 
   bool m_isClamped;
-  array<string> m_tables;
+  array1d<string> m_tables;
 
 };
 
@@ -506,14 +506,14 @@ public:
   }
 
 
-  const array<real64>& GetValues(realT time);
+  const array1d<real64>& GetValues(realT time);
 
-  array<real64> &allocFac()
+  array1d<real64> &allocFac()
   {
     return m_allocFac;
   }
 
-  const array<real64> &allocFac() const
+  const array1d<real64> &allocFac() const
   {
     return m_allocFac;
   }
@@ -523,13 +523,13 @@ public:
     return m_allocedByWeight;
   }
 
-  void CheckVars(const array<string> &varNames);
+  void CheckVars(const array1d<string> &varNames);
 
 protected:
 
   bool m_allocedByWeight;
-  array<real64> m_allocFac;
-  array<string> m_tables;
+  array1d<real64> m_allocFac;
+  array1d<string> m_tables;
 
 };
 

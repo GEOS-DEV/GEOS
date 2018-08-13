@@ -62,9 +62,9 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
   FaceManager * const faceManager = mesh->getFaceManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  Array2dT<localIndex> const & elemRegionList     = faceManager->elementRegionList();
-  Array2dT<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
-  Array2dT<localIndex> const & elemList           = faceManager->elementList();
+  array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
+  array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
+  array2d<localIndex> const & elemList           = faceManager->elementList();
   r1_array const & X = nodeManager->referencePosition();
 
   auto elemCenter = elemManager->ConstructViewAccessor< r1_array >(CellBlock::
@@ -77,7 +77,7 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
                                                                                  viewKeyStruct::
                                                                                  ghostRankString);
 
-  array<array<localIndex>> const & faceToNodes = faceManager->nodeList();
+  array1d<array1d<localIndex>> const & faceToNodes = faceManager->nodeList();
 
   constexpr localIndex numElems = 2;
 
@@ -85,8 +85,8 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
   R2SymTensor coefTensor;
   real64 faceArea, faceWeight, faceWeightInv;
 
-  array<CellDescriptor> stencilCells(numElems);
-  array<real64> stencilWeights(numElems);
+  array1d<CellDescriptor> stencilCells(numElems);
+  array1d<real64> stencilWeights(numElems);
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   stencil.reserve(faceManager->size(), 2);
@@ -143,7 +143,7 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
   stencil.compress();
 }
 
-void TwoPointFluxApproximation::computeBoundaryStencil(DomainPartition * domain, lSet const & faceSet,
+void TwoPointFluxApproximation::computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet,
                                                        FluxApproximationBase::BoundaryStencil & stencil)
 {
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -151,9 +151,9 @@ void TwoPointFluxApproximation::computeBoundaryStencil(DomainPartition * domain,
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  Array2dT<localIndex> const & elemRegionList     = faceManager->elementRegionList();
-  Array2dT<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
-  Array2dT<localIndex> const & elemList           = faceManager->elementList();
+  array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
+  array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
+  array2d<localIndex> const & elemList           = faceManager->elementList();
   r1_array const & X = nodeManager->referencePosition();
 
   auto elemCenter = elemManager->ConstructViewAccessor< r1_array >(CellBlock::
@@ -166,7 +166,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil(DomainPartition * domain,
                                                                                  viewKeyStruct::
                                                                                  ghostRankString);
 
-  array<array<localIndex>> const & faceToNodes = faceManager->nodeList();
+  array1d<array1d<localIndex>> const & faceToNodes = faceManager->nodeList();
 
   constexpr localIndex numElems = 2;
 
@@ -174,8 +174,8 @@ void TwoPointFluxApproximation::computeBoundaryStencil(DomainPartition * domain,
   R2SymTensor coefTensor;
   real64 faceArea, faceWeight;
 
-  array<PointDescriptor> stencilPoints(numElems);
-  array<real64> stencilWeights(numElems);
+  array1d<PointDescriptor> stencilPoints(numElems);
+  array1d<real64> stencilWeights(numElems);
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   stencil.reserve(faceSet.size(), 2);

@@ -72,8 +72,8 @@ public:
 
   /// add data for one connection
   void add(IndexType const cells[2],
-           array<IndexType> const & stencilCells,
-           array<WeightType> const & stencilWeights);
+           array1d<IndexType> const & stencilCells,
+           array1d<WeightType> const & stencilWeights);
 
   /// called after adding connections is done to compress the data and release unused memory
   void compress();
@@ -92,15 +92,15 @@ private:
   struct Connection
   {
     IndexType         connectedPointIndices[2]; ///< identifiers of connected points
-    array<IndexType>  stencilPointIndices;      ///< identifiers of points in stencil
-    array<WeightType> stencilWeights;           ///< stencil weights (e.g. transmissibilities)
+    array1d<IndexType>  stencilPointIndices;      ///< identifiers of points in stencil
+    array1d<WeightType> stencilWeights;           ///< stencil weights (e.g. transmissibilities)
 
     void resize(localIndex const size) { stencilPointIndices.resize(size);
       stencilWeights.resize(size);    }
   };
 
   /// array that holds the list of CellConnection objects.
-  array<Connection> m_connectionList;
+  array1d<Connection> m_connectionList;
 
 };
 
@@ -178,8 +178,8 @@ void StencilCollection<IndexType, WeightType>::forAll(LAMBDA &&lambda) const
 
 template<typename IndexType, typename WeightType>
 void StencilCollection<IndexType, WeightType>::add(IndexType const cells[2],
-                                                   const array <IndexType> & stencilCells,
-                                                   const array <WeightType> & stencilWeights)
+                                                   const array1d<IndexType> & stencilCells,
+                                                   const array1d<WeightType> & stencilWeights)
 {
   Connection conn = { { cells[0], cells[1] }, stencilCells, stencilWeights };
   m_connectionList.push_back(conn);
