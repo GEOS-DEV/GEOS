@@ -39,6 +39,16 @@ enum class ExponentApproximationType
   Quadratic
 };
 
+template< ExponentApproximationType EAT >
+struct ExponentApproximationTypeWrapper
+{
+  static constexpr ExponentApproximationType value = EAT;
+};
+
+template< typename LAMBDA >
+static auto ExponentApproximationTypeSwitchBlock( ExponentApproximationType const eat,
+                                                  LAMBDA&& lambda );
+
 /**
  * @class ExponentialRelation
  *
