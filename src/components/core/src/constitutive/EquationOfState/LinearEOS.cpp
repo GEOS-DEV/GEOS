@@ -43,12 +43,12 @@ LinearEOS::LinearEOS( std::string const & name, ManagedGroup * const parent ):
   m_viscosityRelation(ExponentApproximationType::Linear),
   m_porosityRelation(ExponentApproximationType::Linear)
 {
-  m_parameterData.RegisterViewWrapper( viewKeys.fluidBulkModulus.Key(), &m_fluidBulkModulus, 0 );
-  m_parameterData.RegisterViewWrapper( viewKeys.solidBulkModulus.Key(), &m_solidBulkModulus, 0 );
-  m_parameterData.RegisterViewWrapper( viewKeys.fluidViscosibility.Key(), &m_fluidViscosibility, 0 );
-  m_parameterData.RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, 0 );
-  m_parameterData.RegisterViewWrapper( viewKeys.referenceDensity.Key(), &m_referenceDensity, 0 );
-  m_parameterData.RegisterViewWrapper( viewKeys.referenceViscosity.Key(), &m_referenceViscosity, 0 );
+  RegisterViewWrapper( viewKeys.fluidBulkModulus.Key(), &m_fluidBulkModulus, 0 );
+  RegisterViewWrapper( viewKeys.solidBulkModulus.Key(), &m_solidBulkModulus, 0 );
+  RegisterViewWrapper( viewKeys.fluidViscosibility.Key(), &m_fluidViscosibility, 0 );
+  RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, 0 );
+  RegisterViewWrapper( viewKeys.referenceDensity.Key(), &m_referenceDensity, 0 );
+  RegisterViewWrapper( viewKeys.referenceViscosity.Key(), &m_referenceViscosity, 0 );
 }
 
 LinearEOS::~LinearEOS()
@@ -77,14 +77,15 @@ LinearEOS::DeliverClone( string const & name,
   return rval;
 }
 
-void LinearEOS::AllocateMaterialData( dataRepository::ManagedGroup * const parent,
+void LinearEOS::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                       localIndex const numConstitutivePointsPerParentIndex  )
 {
-  ConstitutiveBase::AllocateMaterialData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  parent->RegisterViewWrapper( this->getName()+ "_" + string(viewKeyStruct::densityString), &m_density, 0 );
-
+  this->resize( parent->size() );
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dPressure_dDensity.resize( parent->size(), numConstitutivePointsPerParentIndex );
+
   m_density = this->m_referenceDensity;
 }
 
@@ -97,12 +98,10 @@ void LinearEOS::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Slightly compressible single phase fluid equation of state");
 
-  ManagedGroup * parameterData = this->GetGroup( groupKeys().ParameterData.Key() );
-  DocumentationNode * const parameterDocNode = parameterData->getDocumentationNode();
-  parameterDocNode->setSchemaType("Node");
-  parameterDocNode->setShortDescription("Parameters for slightly compressible single phase fluid equation of state");
+  docNode->setSchemaType("Node");
+  docNode->setShortDescription("Parameters for slightly compressible single phase fluid equation of state");
 
-  parameterDocNode->AllocateChildNode( viewKeys.fluidBulkModulus.Key(),
+  docNode->AllocateChildNode( viewKeys.fluidBulkModulus.Key(),
                                        viewKeys.fluidBulkModulus.Key(),
                                        -1,
                                        "real64",
@@ -115,7 +114,7 @@ void LinearEOS::FillDocumentationNode()
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( viewKeys.solidBulkModulus.Key(),
+  docNode->AllocateChildNode( viewKeys.solidBulkModulus.Key(),
                                        viewKeys.solidBulkModulus.Key(),
                                        -1,
                                        "real64",
@@ -128,7 +127,7 @@ void LinearEOS::FillDocumentationNode()
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( viewKeys.fluidViscosibility.Key(),
+  docNode->AllocateChildNode( viewKeys.fluidViscosibility.Key(),
                                        viewKeys.fluidViscosibility.Key(),
                                        -1,
                                        "real64",
@@ -141,7 +140,7 @@ void LinearEOS::FillDocumentationNode()
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( viewKeys.referencePressure.Key(),
+  docNode->AllocateChildNode( viewKeys.referencePressure.Key(),
                                        viewKeys.referencePressure.Key(),
                                        -1,
                                        "real64",
@@ -154,7 +153,7 @@ void LinearEOS::FillDocumentationNode()
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( viewKeys.referenceDensity.Key(),
+  docNode->AllocateChildNode( viewKeys.referenceDensity.Key(),
                                        viewKeys.referenceDensity.Key(),
                                        -1,
                                        "real64",
@@ -167,7 +166,7 @@ void LinearEOS::FillDocumentationNode()
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( viewKeys.referenceViscosity.Key(),
+  docNode->AllocateChildNode( viewKeys.referenceViscosity.Key(),
                                        viewKeys.referenceViscosity.Key(),
                                        -1,
                                        "real64",
@@ -180,11 +179,6 @@ void LinearEOS::FillDocumentationNode()
                                        1,
                                        0 );
 
-
-  ManagedGroup * stateData = this->GetGroup( groupKeys().StateData.Key() );
-  DocumentationNode * const stateDocNode = stateData->getDocumentationNode();
-  stateDocNode->setSchemaType("Node");
-  stateDocNode->setShortDescription("State for slightly compressible single phase fluid equation of state");
 }
 
 void LinearEOS::ReadXML_PostProcess()

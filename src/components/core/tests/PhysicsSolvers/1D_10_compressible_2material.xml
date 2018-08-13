@@ -73,23 +73,21 @@
   </ElementRegions>
 
   <Constitutive>
-      <LinearEOS name="water">
-        <ParameterData referencePressure="0.0"
-                       referenceDensity="1000"
-                       fluidBulkModulus="2.0e9"
-                       referenceViscosity="0.001"
-                       solidBulkModulus="20.0e9"
-                       />
-      </LinearEOS>
+      <LinearEOS name="water"
+                 referencePressure="0.0"
+                 referenceDensity="1000"
+                 fluidBulkModulus="2.0e9"
+                 referenceViscosity="0.001"
+                 solidBulkModulus="20.0e9"
+                 />
       
-      <LinearEOS name="gel">
-        <ParameterData referencePressure="0.0"
-                       referenceDensity="1001"
-                       fluidBulkModulus="2.1e9"
-                       referenceViscosity="0.01"
-                       solidBulkModulus="20.0e9"
-                       />
-      </LinearEOS>
+      <LinearEOS name="gel"
+                 referencePressure="0.0"
+                 referenceDensity="1001"
+                 fluidBulkModulus="2.1e9"
+                 referenceViscosity="0.01"
+                 solidBulkModulus="20.0e9"
+                 />
       
   </Constitutive>
 

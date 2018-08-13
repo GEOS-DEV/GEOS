@@ -46,7 +46,7 @@ public:
   std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
                                                   ManagedGroup * const parent ) const override;
 
-  virtual void AllocateMaterialData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                      localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
@@ -95,6 +95,7 @@ public:
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto densityString  = "density";
+    static constexpr auto dP_drhoString  = "dPressure_dDensity";
 
 
     dataRepository::ViewKey fluidBulkModulus   = { "fluidBulkModulus"   };
@@ -108,6 +109,9 @@ public:
 
   Array2dT<real64> const & density() const { return m_density; }
   Array2dT<real64>       & density()       { return m_density; }
+
+  Array2dT<real64> const & dPressure_dDensity() const { return m_dPressure_dDensity; }
+  Array2dT<real64>       & dPressure_dDensity()       { return m_dPressure_dDensity; }
 
 
 private:
@@ -131,6 +135,7 @@ private:
   real64 m_referenceViscosity;
 
   Array2dT<real64> m_density;
+  Array2dT<real64> m_dPressure_dDensity;
 
   ExponentialRelation<localIndex, real64> m_densityRelation;
   ExponentialRelation<localIndex, real64> m_viscosityRelation;

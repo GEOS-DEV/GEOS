@@ -31,12 +31,8 @@ namespace constitutive
 
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     ManagedGroup * const parent ):
-  ManagedGroup(name,parent),
-  m_parameterData(groupKeys().ParameterData.Key(),this),
-  m_stateData(groupKeys().StateData.Key(),this)
+  ManagedGroup(name,parent)
 {
-  RegisterGroup(groupKeys().ParameterData.Key(), &m_parameterData, 0 );
-  RegisterGroup(groupKeys().StateData.Key(), &m_stateData, 0);
 }
 
 ConstitutiveBase::~ConstitutiveBase()
@@ -50,17 +46,33 @@ ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()
   return catalog;
 }
 
-void ConstitutiveBase::AllocateMaterialData( dataRepository::ManagedGroup * const parent,
-                                             localIndex const )
+void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+                                                 localIndex const )
 {
   m_constitutiveDataGroup = parent;
+
+  for( auto & group : this->GetSubGroups() )
+  {
+    for( auto & wrapper : group.second->wrappers() )
+    {
+      string const wrapperName = wrapper.first;
+      std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
+      parent->RegisterViewWrapper( this->getName()+ "_" + wrapperName, newWrapper.release() );
+    }
+  }
+
+  for( auto & wrapper : this->wrappers() )
+  {
+    string const wrapperName = wrapper.first;
+    std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
+    parent->RegisterViewWrapper( this->getName()+ "_" + wrapperName, newWrapper.release() );
+  }
+
 }
 
 void ConstitutiveBase::resize( localIndex newsize )
 {
   ManagedGroup::resize(newsize);
-  GetParameterData()->resize(newsize);
-  GetStateData()->resize(newsize);
 }
 
 

@@ -98,11 +98,19 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   return rval;
 }
 
-void LinearElasticIsotropic::AllocateMaterialData( dataRepository::ManagedGroup * const parent,
-                                                   localIndex const numConstitutivePointsPerParentIndex  )
+void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+                                                       localIndex const numConstitutivePointsPerParentIndex  )
 {
-  ConstitutiveBase::AllocateMaterialData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
+  this->resize( parent->size() );
+  m_bulkModulus( parent->size(), numConstitutivePointsPerParentIndex );
+  m_shearModulus( parent->size(), numConstitutivePointsPerParentIndex );
+  m_meanStress( parent->size(), numConstitutivePointsPerParentIndex );
+  m_deviatorStress( parent->size(), numConstitutivePointsPerParentIndex );
+
+  m_bulkModulus = this->m_bulkModulus0;
+  m_shearModulus = this->m_shearModulus0;
 }
 
 void LinearElasticIsotropic::FillDocumentationNode()
@@ -114,12 +122,7 @@ void LinearElasticIsotropic::FillDocumentationNode()
   docNode->setSchemaType("Node");
   docNode->setShortDescription("Linear Elastic Isotropic Constitutive Relation");
 
-  ManagedGroup * parameterData = this->GetGroup( groupKeys().ParameterData.Key() );
-  DocumentationNode * const parameterDocNode = parameterData->getDocumentationNode();
-  parameterDocNode->setSchemaType("Node");
-  parameterDocNode->setShortDescription("Parameters for Linear Elastic Isotropic Constitutive Relation");
-
-  parameterDocNode->AllocateChildNode( viewKeys().youngsModulus.Key(),
+  docNode->AllocateChildNode( viewKeys().youngsModulus.Key(),
                                        viewKeys().youngsModulus.Key(),
                                        -1,
                                        "real64",
@@ -132,7 +135,7 @@ void LinearElasticIsotropic::FillDocumentationNode()
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( viewKeys().bulkModulus.Key(),
+  docNode->AllocateChildNode( viewKeys().bulkModulus.Key(),
                                        viewKeys().bulkModulus.Key(),
                                        -1,
                                        "real64",
@@ -145,7 +148,7 @@ void LinearElasticIsotropic::FillDocumentationNode()
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( viewKeys().shearModulus.Key(),
+  docNode->AllocateChildNode( viewKeys().shearModulus.Key(),
                                        viewKeys().shearModulus.Key(),
                                        -1,
                                        "real64",
@@ -158,7 +161,7 @@ void LinearElasticIsotropic::FillDocumentationNode()
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( viewKeys().poissonRatio.Key(),
+  docNode->AllocateChildNode( viewKeys().poissonRatio.Key(),
                                        viewKeys().poissonRatio.Key(),
                                        -1,
                                        "real64",
@@ -171,7 +174,7 @@ void LinearElasticIsotropic::FillDocumentationNode()
                                        1,
                                        0 );
 
-  parameterDocNode->AllocateChildNode( viewKeys().density.Key(),
+  docNode->AllocateChildNode( viewKeys().density.Key(),
                                        viewKeys().density.Key(),
                                        -1,
                                        "real64",
@@ -185,12 +188,7 @@ void LinearElasticIsotropic::FillDocumentationNode()
                                        0 );
 
 
-  ManagedGroup * stateData     = this->GetGroup( groupKeys().StateData.Key() );
-  DocumentationNode * const stateDocNode = stateData->getDocumentationNode();
-  stateDocNode->setSchemaType("Node");
-  stateDocNode->setShortDescription("State for Linear Elastic Isotropic Constitutive Relation");
-
-  stateDocNode->AllocateChildNode( viewKeys().deviatorStress.Key(),
+  docNode->AllocateChildNode( viewKeys().deviatorStress.Key(),
                                    viewKeys().deviatorStress.Key(),
                                    -1,
                                    "r2Sym_array",
@@ -203,7 +201,7 @@ void LinearElasticIsotropic::FillDocumentationNode()
                                    0,
                                    0 );
 
-  stateDocNode->AllocateChildNode( viewKeys().meanStress.Key(),
+  docNode->AllocateChildNode( viewKeys().meanStress.Key(),
                                    viewKeys().meanStress.Key(),
                                    -1,
                                    "real64_array",
@@ -219,11 +217,10 @@ void LinearElasticIsotropic::FillDocumentationNode()
 
 void LinearElasticIsotropic::ReadXML_PostProcess()
 {
-  ManagedGroup * parameterData = this->GetParameterData();
-  real64 & nu = *( poissonRatio() );
-  real64 & E  = *( parameterData->getData<real64>(viewKeys().youngsModulus) );
-  real64 & K  = *( parameterData->getData<real64>(viewKeys().bulkModulus) );
-  real64 & G  = *( parameterData->getData<real64>(viewKeys().shearModulus) );
+  real64 & nu = *( getData<real64>(viewKeys().poissonRatio) );
+  real64 & E  = *( getData<real64>(viewKeys().youngsModulus) );
+  real64 & K  = *( getData<real64>(viewKeys().bulkModulus) );
+  real64 & G  = *( getData<real64>(viewKeys().shearModulus) );
 
   int numConstantsSpecified = 0;
   if( nu >= 0.0 )
@@ -275,10 +272,10 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
 void LinearElasticIsotropic::SetParamStatePointers( void *& data )
 {
 
-  this->m_dataPointers.m_bulkModulus = this->bulkModulus();
-  this->m_dataPointers.m_shearModulus = this->shearModulus();
-  this->m_dataPointers.m_meanStress = this->meanStress();
-  this->m_dataPointers.m_deviatorStress = this->deviatorStress();
+  this->m_dataPointers.m_bulkModulus = &m_bulkModulus0;
+  this->m_dataPointers.m_shearModulus = &m_shearModulus0;
+  this->m_dataPointers.m_meanStress = m_meanStress.data();
+  this->m_dataPointers.m_deviatorStress = m_deviatorStress.data();
 
   data = reinterpret_cast<void*>(&m_dataPointers);
 }
@@ -370,28 +367,29 @@ void LinearElasticIsotropic::StateUpdate( dataRepository::ManagedGroup const * c
 R2SymTensor LinearElasticIsotropic::StateUpdatePoint( R2SymTensor const & D,
                                                       R2Tensor const & Rot,
                                                       localIndex const i,
+                                                      localIndex const q,
                                                       integer const systemAssembleFlag )
 {
   real64 volumeStrain = D.Trace();
-  meanStress()[i] += volumeStrain * bulkModulus()[0];
+  m_meanStress[i][q] += volumeStrain * m_bulkModulus0;
 
   R2SymTensor temp = D;
   temp.PlusIdentity(-volumeStrain / 3.0);
-  temp *= 2.0 * shearModulus()[0];
-  deviatorStress()[i] += temp;
+  temp *= 2.0 * m_shearModulus0;
+  m_deviatorStress[i][q] += temp;
 
 
-  temp.QijAjkQlk(deviatorStress()[i],Rot);
-  deviatorStress()[i] = temp;
+  temp.QijAjkQlk(m_deviatorStress[i][q],Rot);
+  m_deviatorStress[i][q] = temp;
 
-  temp.PlusIdentity(meanStress()[i]);
+  temp.PlusIdentity(m_meanStress[i][q]);
   return temp;
 }
 
 void LinearElasticIsotropic::GetStiffness( realT c[6][6]) const
 {
-  real64 G = *shearModulus();
-  real64 Lame = *bulkModulus() - 2.0/3.0 * G;
+  real64 G = m_shearModulus0;
+  real64 Lame = m_bulkModulus0 - 2.0/3.0 * G;
   c[0][0] = Lame + 2 * G;
   c[0][1] = Lame;
   c[0][2] = Lame;

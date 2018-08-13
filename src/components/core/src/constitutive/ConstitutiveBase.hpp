@@ -57,6 +57,7 @@ public:
   virtual std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
                                                           ManagedGroup * const parent ) const = 0;
 
+
   virtual void SetParamStatePointers( void *& ) = 0;
 
 
@@ -77,6 +78,7 @@ public:
   virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
                                         R2Tensor const & Rot,
                                         localIndex const i,
+                                        localIndex const q,
                                         integer const systemAssembleFlag ) { return R2SymTensor(); }
 
   virtual void FluidPressureUpdate(real64 const &dens,
@@ -112,7 +114,7 @@ public:
 
   virtual string GetCatalogName() = 0;
 
-  virtual void AllocateMaterialData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                      localIndex const numConstitutivePointsPerParentIndex  );
 
   struct viewKeyStruct
@@ -120,8 +122,6 @@ public:
 
   struct groupKeyStruct
   {
-    dataRepository::GroupKey StateData      = { "StateData" };
-    dataRepository::GroupKey ParameterData  = { "ParameterData" };
   } m_ConstitutiveBaseGroupKeys;
 
   virtual viewKeyStruct       & viewKeys()        { return m_ConstitutiveBaseViewKeys; }
@@ -130,15 +130,7 @@ public:
   virtual groupKeyStruct       & groupKeys()       { return m_ConstitutiveBaseGroupKeys; }
   virtual groupKeyStruct const & groupKeys() const { return m_ConstitutiveBaseGroupKeys; }
 
-  ManagedGroup * GetParameterData()             { return this->GetGroup(m_ConstitutiveBaseGroupKeys.ParameterData); }
-  ManagedGroup const * GetParameterData() const { return this->GetGroup(m_ConstitutiveBaseGroupKeys.ParameterData); }
-
-  ManagedGroup * GetStateData()             { return this->GetGroup(m_ConstitutiveBaseGroupKeys.StateData); }
-  ManagedGroup const * GetStateData() const { return this->GetGroup(m_ConstitutiveBaseGroupKeys.StateData); }
-
 protected:
-  ManagedGroup m_parameterData;
-  ManagedGroup m_stateData;
 
 private:
   ManagedGroup * m_constitutiveDataGroup = nullptr;
