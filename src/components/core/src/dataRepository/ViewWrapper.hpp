@@ -175,6 +175,16 @@ public:
     return std::make_unique<ViewWrapper<T> >( name, parent, std::move(newObject));
   }
 
+  virtual std::unique_ptr<ViewWrapperBase> clone( string const & name,
+                                                  ManagedGroup * const parent ) override
+  {
+    std::unique_ptr<ViewWrapperBase>
+    clonedWrapper = std::make_unique<ViewWrapper<T> >( name, parent, this->m_data, false );
+
+    return clonedWrapper;
+  }
+
+
 
   /**
    * Virtual function to return the typeid of T. Not so sure this does what we

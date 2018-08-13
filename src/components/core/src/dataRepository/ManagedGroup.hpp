@@ -75,8 +75,7 @@ using indexType = localIndex;
  * @author Randolph R. Settgast
  *
  * class that encapsulates and manages a collection of DataObjects. Can be
- * considered a "node" in a
- * hierarchy of managers that represent physical groupings of data.
+ * considered a "node" in a hierarchy of managers that represent physical groupings of data/
  *
  */
 class ManagedGroup
@@ -329,6 +328,12 @@ public:
     return m_subGroups;
   }
 
+  /**
+   * @brief return the number of sub groups in this ManagedGroup
+   * @return number of sub groups in this ManagedGroup
+   */
+  localIndex numSubGroups() const { return m_subGroups.size(); }
+
   template< typename T = ManagedGroup, typename LAMBDA >
   void forSubGroups( LAMBDA lambda )
   {
@@ -390,6 +395,15 @@ public:
   ViewWrapper<T> * RegisterViewWrapper( std::string const & name,
                                         T * newObject,
                                         bool takeOwnership );
+
+  /**
+   * @brief Register a ViewWrapper into this ManagedGroup
+   * @param name the key name to use for this new wrapper
+   * @param wrapper a pointer to the new wrapper
+   * @return a ViewWrapperBase pointer that holds the address of the new wrapper
+   */
+  ViewWrapperBase * RegisterViewWrapper( string const & name,
+                                         ViewWrapperBase * const wrapper );
 
 //  template< typename T >
 //  void RegisterViewWrapperRecursive( string const & name );
