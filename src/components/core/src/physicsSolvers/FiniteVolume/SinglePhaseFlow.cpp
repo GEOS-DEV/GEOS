@@ -40,6 +40,7 @@
 #include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
+#include "ArrayView.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -50,6 +51,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 using namespace systemSolverInterface;
+using namespace multidimensionalArray;
 
 
 SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
@@ -1070,10 +1072,10 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   auto gravDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::gravityDepthString);
 
   // use ReferenceWrapper to make capture by value easy in lambdas
-  ReferenceWrapper<real64_array> presFace = faceManager->getReference<real64_array>(viewKeyStruct::fluidPressureString);
-  ReferenceWrapper<real64_array> densFace = faceManager->getReference<real64_array>(viewKeyStruct::fluidDensityString);
-  ReferenceWrapper<real64_array> viscFace = faceManager->getReference<real64_array>(viewKeyStruct::fluidViscosityString);
-  ReferenceWrapper<real64_array> gravDepthFace = faceManager->getReference<real64_array>(viewKeyStruct::gravityDepthString);
+  ArrayView<real64, 1, localIndex> presFace = faceManager->getReference<real64_array>(viewKeyStruct::fluidPressureString);
+  ArrayView<real64, 1, localIndex> densFace = faceManager->getReference<real64_array>(viewKeyStruct::fluidDensityString);
+  ArrayView<real64, 1, localIndex> viscFace = faceManager->getReference<real64_array>(viewKeyStruct::fluidViscosityString);
+  ArrayView<real64, 1, localIndex> gravDepthFace = faceManager->getReference<real64_array>(viewKeyStruct::gravityDepthString);
 
   auto
   constitutiveMap = elemManager->
