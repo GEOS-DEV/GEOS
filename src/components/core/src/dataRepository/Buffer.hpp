@@ -42,6 +42,7 @@ class QuadratureBase;
 class SimpleGeometricObjectBase;
 class PartitionBase;
 class NeighborCommunicator;
+template <typename IndexType, typename WeightType> class StencilCollection;
 
 namespace systemSolverInterface
 {
@@ -651,7 +652,28 @@ public:
                                  std::is_same<T, systemSolverInterface::EpetraBlockSystem>::value, localIndex>::type
   unpack(T & data, const void * buffer, localIndex byte_size=-1)
   { 
-    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!"); 
+    GEOS_ERROR("You shouldn't be unpacking a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!");
+    return 0;
+  }
+
+  template <typename IndexType, typename WeightType>
+  static localIndex packed_size(const StencilCollection<IndexType, WeightType> & data)
+  {
+    GEOS_ERROR("You shouldn't be packing a StencilCollection!");
+    return 0;
+  }
+
+  template <typename IndexType, typename WeightType>
+  static void * pack(const StencilCollection<IndexType, WeightType> & data, localIndex & byte_size, void * buffer=nullptr)
+  {
+    GEOS_ERROR("You shouldn't be packing a StencilCollection!");
+    return 0;
+  }
+
+  template <typename IndexType, typename WeightType>
+  static localIndex unpack(StencilCollection<IndexType, WeightType> & data, const void * buffer, localIndex byte_size=-1)
+  {
+    GEOS_ERROR("You shouldn't be unpacking a StencilCollection!");
     return 0;
   }
 
