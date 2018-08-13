@@ -7,12 +7,12 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                          verboseLevel="1"
+                          verboseLevel="0"
                           gravityFlag="1"
                           discretization="singlePhaseTPFA">
       <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-12"
-                              newtonTol="1.0e-8"
+                              krylovTol="1.0e-10"
+                              newtonTol="1.0e-6"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
   </Solvers>
@@ -21,19 +21,17 @@
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
                   xCoords="0, 10"
-                  yCoords="0, 10"
+                  yCoords="0, 1"
                   zCoords="0, 1"
                   nx="10"
-                  ny="10"
+                  ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
 
   <Geometry>
-    <Box name="left"   type="0" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 10.01, 1.01"/>
-    <Box name="right"  type="0" xMin=" 8.99, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="bottom" type="0" xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.01, 1.01"/>
-    <Box name="top"    type="0" xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="source" type="0" xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 1.01, 1.01"/>
+    <Box name="sink"   type="0" xMin=" 9.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
   </Geometry>
 
 
@@ -42,7 +40,7 @@
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
                    forceDt="20.0"
-                   target="/Solvers/SinglePhaseFlow_TPFA" />
+                   target="/Solvers/SinglePhaseFlow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
@@ -52,7 +50,6 @@
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
   </Events>
-
 
   <NumericalMethods>
     <BasisFunctions>
@@ -84,10 +81,10 @@
       <LinearEOS name="water">
         <ParameterData referencePressure="0.0"
                        referenceDensity="1000"
-                       fluidBulkModulus="1.0e32"
+                       fluidBulkModulus="2.0e9"
                        referenceViscosity="0.001"
                        fluidViscosibility="0.0"
-                       solidBulkModulus="1.0e32"/>
+                       solidBulkModulus="1.0e9"/>
       </LinearEOS>
   </Constitutive>
 
@@ -135,22 +132,26 @@
                setNames="all"
                objectPath="ElementRegion/Region2/cb1/fluidPressure"
                dataType="real64"
-               scale="0.0"/>
+               scale="5e6"/>
 
-    <Dirichlet name="boundaryPressure"
+    <Dirichlet name="sourceTerm"
+               objectPath="faceManager"
                fieldName="fluidPressure"
                dataType="Scalar"
-               functionName="solutionFunction"
-               scale="1.0e7"
-               setNames="left right"/>
+               scale="1e7"
+               setNames="source"/>
+
+    <Dirichlet name="sinkTerm"
+               objectPath="faceManager"
+               fieldName="fluidPressure"
+               dataType="Scalar"
+               scale="0.0"
+               setNames="sink"/>
+
   </BoundaryConditions>
 
   <Functions>
-    <SymbolicFunction name="solutionFunction"
-                      inputVarNames="elementCenter"
-                      inputVarTypes=""
-                      variableNames="x y z"
-                      expression="(10-x)/10"/>
+
   </Functions>
 
   <Partition>

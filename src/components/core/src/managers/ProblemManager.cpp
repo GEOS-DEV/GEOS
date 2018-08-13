@@ -37,7 +37,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-#include "finiteElement/FiniteElementManager.hpp"
+#include "NumericalMethodsManager.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -45,7 +45,7 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "fileIO/blueprint/Blueprint.hpp"
 #include "fileIO/utils/utils.hpp"
-#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/SidreWrapper.hpp"
@@ -79,7 +79,7 @@ ProblemManager::ProblemManager( const std::string& name,
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
   // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
-  RegisterGroup<FiniteElementManager>(groupKeys.numericalMethodsManager);
+  RegisterGroup<NumericalMethodsManager>(groupKeys.numericalMethodsManager);
   RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
   RegisterGroup<MeshManager>(groupKeys.meshManager);
   RegisterGroup<OutputManager>(groupKeys.outputManager);

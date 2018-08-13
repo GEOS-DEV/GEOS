@@ -104,6 +104,25 @@ public:
       }
     });
   }
+
+  template< typename LAMBDA >
+  void ApplyBoundaryCondition( real64 const time,
+                               string const & fieldName,
+                               LAMBDA && lambda )
+  {
+    // iterate over all boundary conditions.
+    forSubGroups<BoundaryConditionBase>([&](BoundaryConditionBase * bc) -> void
+    {
+      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
+      {
+        string_array setNames = bc->GetSetNames();
+        for( auto & setName : setNames )
+        {
+          lambda( bc, setName );
+        }
+      }
+    });
+  }
 };
 
 

@@ -30,8 +30,8 @@
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "physicsSolvers/FiniteVolume/SinglePhaseFlow_TPFA.hpp"
-#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
+#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 #ifdef USE_OPENMP
 #include <omp.h>
@@ -58,7 +58,7 @@ real64 computeL2Norm(DomainPartition const *domain,
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor<real64_array const>
-  volume = elemManager->ConstructViewAccessor<real64_array>(SinglePhaseFlow_TPFA::viewKeyStruct::volumeString);
+  volume = elemManager->ConstructViewAccessor<real64_array>(CellBlock::viewKeyStruct::elementVolumeString);
 
   // compute local norm
   real64 localNorm = sumOverElemsInMesh(mesh, [&] (localIndex const er,
@@ -174,12 +174,12 @@ TEST(singlePhaseFlow,analyticalTest)
   ProblemManager problemManager("ProblemManager", nullptr);
   runProblem(problemManager, global_argc, global_argv);
 
-  real64 const scale = getBoundaryConditionScale(SinglePhaseFlow_TPFA::viewKeyStruct::fluidPressureString);
+  real64 const scale = getBoundaryConditionScale(SinglePhaseFlow::viewKeyStruct::fluidPressureString);
   FunctionBase const * fn = getSolutionFunction();
   ASSERT_TRUE(fn != nullptr);
 
   real64 const err = computeErrorNorm(problemManager.getDomainPartition(),
-                                      SinglePhaseFlow_TPFA::viewKeyStruct::fluidPressureString,
+                                      SinglePhaseFlow::viewKeyStruct::fluidPressureString,
                                       [&](R1Tensor const &pt) -> real64
                                       {
                                         return scale * fn->Evaluate(pt.Data());
