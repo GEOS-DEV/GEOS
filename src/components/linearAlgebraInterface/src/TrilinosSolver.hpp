@@ -11,6 +11,7 @@
 #include "EpetraSparseMatrix.hpp"
 #include "EpetraVector.hpp"
 #include <AztecOO.h>
+#include <Amesos.h>
 
 namespace geosx
 {
@@ -40,10 +41,19 @@ public:
               EpetraVector &rhs,
               EpetraVector &sol,
               integer max_iter,
-              real64 newton_tol);
+              real64 newton_tol );
+
+  /**
+   * @brief Solve system using a direct solver.
+   *
+   * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
+   */
+  void dsolve( EpetraSparseMatrix &Mat,
+               EpetraVector &rhs,
+               EpetraVector &sol );
 
 protected:
-  AztecOO solver;
+  Epetra_LinearProblem problem;
 };
 
 }

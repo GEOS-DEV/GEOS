@@ -117,7 +117,7 @@ void EpetraSparseMatrix::add( globalIndex const iRow,
 {
 
 #if 1
-  matrix->SumIntoGlobalValues(iRow,nCols,values,cols);
+  matrix->SumIntoGlobalValues( iRow, nCols, values, cols );
 #else
 //  template<typename int_type>
 //  int Epetra_CrsMatrix::TSumIntoGlobalValues(int_type Row,
@@ -125,97 +125,106 @@ void EpetraSparseMatrix::add( globalIndex const iRow,
 //              const double * srcValues,
 //              const int_type *Indices)
 //  {
-    int j;
-    int ierr = 0;
-    int Loc = 0;
+  int j;
+  int ierr = 0;
+  int Loc = 0;
 
 
-    int locRow = Graph_.LRID(Row); // Normalize row range
+  int locRow = Graph_.LRID( Row ); // Normalize row range
 
-    if (locRow < 0 || locRow >= NumMyRows_) {
-      EPETRA_CHK_ERR(-1); // Not in Row range
-    }
+  if( locRow < 0 || locRow >= NumMyRows_ )
+  {
+    EPETRA_CHK_ERR( -1 ); // Not in Row range
+  }
 
-    if (StaticGraph() && !Graph_.HaveColMap()) {
-      EPETRA_CHK_ERR(-1);
-    }
+  if( StaticGraph() && !Graph_.HaveColMap())
+  {
+    EPETRA_CHK_ERR( -1 );
+  }
 
-    double * RowValues = Values(locRow);
+  double * RowValues = Values( locRow );
 
-    if (!StaticGraph()) {
-      for (j=0; j<NumEntries; j++) {
-        int_type Index = Indices[j];
-        if (Graph_.FindGlobalIndexLoc(locRow,Index,j,Loc))
+  if( !StaticGraph())
+  {
+    for( j=0 ; j<NumEntries ; j++ )
+    {
+      int_type Index = Indices[j];
+      if( Graph_.FindGlobalIndexLoc( locRow, Index, j, Loc ))
 //  #ifdef EPETRA_HAVE_OMP
 //  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
 //  #pragma omp atomic
 //  #endif
 //  #endif
 //          RowValues[Loc] += srcValues[j];
-          RAJA::atomic::atomicAdd<ATOMIC_POL2>(& RowValues [Loc], srcValues[j]);
-        else
-          ierr = 2; // Value Excluded
-      }
+        RAJA::atomic::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
+      else
+        ierr = 2;   // Value Excluded
     }
-    else {
-      const Epetra_BlockMap& colmap = Graph_.ColMap();
-      int NumColIndices = Graph_.NumMyIndices(locRow);
-      const int* ColIndices = Graph_.Indices(locRow);
+  }
+  else
+  {
+    const Epetra_BlockMap& colmap = Graph_.ColMap();
+    int NumColIndices = Graph_.NumMyIndices( locRow );
+    const int* ColIndices = Graph_.Indices( locRow );
 
-      if (Graph_.Sorted()) {
-        int insertPoint;
-        for (j=0; j<NumEntries; j++) {
-          int Index = colmap.LID(Indices[j]);
+    if( Graph_.Sorted())
+    {
+      int insertPoint;
+      for( j=0 ; j<NumEntries ; j++ )
+      {
+        int Index = colmap.LID( Indices[j] );
 
-          // Check whether the next added element is the subsequent element in
-          // the graph indices, then we can skip the binary search
-          if (Loc < NumColIndices && Index == ColIndices[Loc])
+        // Check whether the next added element is the subsequent element in
+        // the graph indices, then we can skip the binary search
+        if( Loc < NumColIndices && Index == ColIndices[Loc] )
 //  #ifdef EPETRA_HAVE_OMP
 //  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
 //  #pragma omp atomic
 //  #endif
 //  #endif
 //            RowValues[Loc] += srcValues[j];
-            RAJA::atomic::atomicAdd<ATOMIC_POL2>(& RowValues [Loc], srcValues[j]);
-          else {
-            Loc = Epetra_Util_binary_search(Index, ColIndices, NumColIndices, insertPoint);
-            if (Loc > -1)
+          RAJA::atomic::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
+        else
+        {
+          Loc = Epetra_Util_binary_search( Index, ColIndices, NumColIndices, insertPoint );
+          if( Loc > -1 )
 //  #ifdef EPETRA_HAVE_OMP
 //  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
 //  #pragma omp atomic
 //  #endif
 //  #endif
 //              RowValues[Loc] += srcValues[j];
-            RAJA::atomic::atomicAdd<ATOMIC_POL2>(& RowValues [Loc], srcValues[j]);
-            else
-              ierr = 2; // Value Excluded
-          }
-          ++Loc;
+            RAJA::atomic::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
+          else
+            ierr = 2;   // Value Excluded
         }
+        ++Loc;
       }
-      else
-        for (j=0; j<NumEntries; j++) {
-          int Index = colmap.LID(Indices[j]);
-          if (Graph_.FindMyIndexLoc(NumColIndices,ColIndices,Index,j,Loc))
+    }
+    else
+      for( j=0 ; j<NumEntries ; j++ )
+      {
+        int Index = colmap.LID( Indices[j] );
+        if( Graph_.FindMyIndexLoc( NumColIndices, ColIndices, Index, j, Loc ))
 //  #ifdef EPETRA_HAVE_OMP
 //  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
 //  #pragma omp atomic
 //  #endif
 //  #endif
 //            RowValues[Loc] += srcValues[j];
-          RAJA::atomic::atomicAdd<ATOMIC_POL2>(& RowValues [Loc], srcValues[j]);
-          else
-            ierr = 2; // Value Excluded
-        }
-    }
+          RAJA::atomic::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
+        else
+          ierr = 2;   // Value Excluded
+      }
+  }
 
-    NormOne_ = -1.0; // Reset Norm so it will be recomputed.
-    NormInf_ = -1.0; // Reset Norm so it will be recomputed.
-    NormFrob_ = -1.0;
+  NormOne_ = -1.0;   // Reset Norm so it will be recomputed.
+  NormInf_ = -1.0;   // Reset Norm so it will be recomputed.
+  NormFrob_ = -1.0;
 
-    EPETRA_CHK_ERR(ierr);
+  EPETRA_CHK_ERR( ierr );
 
-    return(0);
+  return(0);
 //  }
 #endif
 }
@@ -263,25 +272,25 @@ void EpetraSparseMatrix::residual( EpetraVector const &x,
                                    EpetraVector &res )
 {
   matrix->Multiply( false, *x.getPointer(), *res.getPointer());
-  res.update(-1.0,b,1.0);
+  res.update( -1.0, b, 1.0 );
 }
 
 // Multiply all elements by scalingFactor.
 void EpetraSparseMatrix::scale( real64 scalingFactor )
 {
-  matrix->Scale(scalingFactor);
+  matrix->Scale( scalingFactor );
 }
 
 // Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
 void EpetraSparseMatrix::leftScale( EpetraVector const &vec )
 {
-  matrix->LeftScale(*vec.getPointer());
+  matrix->LeftScale( *vec.getPointer());
 }
 
 // Post-multiplies (right) with diagonal matrix consisting of the values in vec.
 void EpetraSparseMatrix::rightScale( EpetraVector const &vec )
 {
-  matrix->RightScale(*vec.getPointer());
+  matrix->RightScale( *vec.getPointer());
 }
 
 void EpetraSparseMatrix::getRow( int GlobalRow,
@@ -361,6 +370,24 @@ int EpetraSparseMatrix::myCols() const
 void EpetraSparseMatrix::print() const
 {
   std::cout << *matrix.get() << std::endl;
+}
+
+// Returns the infinity norm of the matrix.
+real64 EpetraSparseMatrix::NormInf() const
+{
+  return matrix->NormInf();
+}
+
+// Returns the one norm of the matrix.
+real64 EpetraSparseMatrix::NormOne() const
+{
+  return matrix->NormOne();
+}
+
+// Returns the Frobenius norm of the matrix.
+real64 EpetraSparseMatrix::NormFrobenius() const
+{
+  return matrix->NormFrobenius();
 }
 
 // Boolean indicator. True = matrix assembled and ready to be used.

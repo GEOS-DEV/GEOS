@@ -322,6 +322,21 @@ public:
   Epetra_Map const & DomainMap() const;
 
   /**
+   * @brief Returns the infinity norm of the matrix.
+   */
+  real64 NormInf() const;
+
+  /**
+   * @brief Returns the one norm of the matrix.
+   */
+  real64 NormOne() const;
+
+  /**
+   * @brief Returns the Frobenius norm of the matrix.
+   */
+  real64 NormFrobenius() const;
+
+  /**
    * @brief Returns true is the matrix has been assembled, false if not.
    */
   bool isAssembled() const;
