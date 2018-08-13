@@ -54,6 +54,8 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
                              &(elementList()),
                              false );
 
+  this->RegisterViewWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
+
   m_toElements.resize(0,2);
 
   //0-based; note that the following field is ALSO 0

@@ -17,43 +17,44 @@
  */
 
 /*
- * FiniteElementManager.cpp
+ * NumericalMethodsManager.cpp
  *
  *  Created on: Apr 18, 2017
  *      Author: rrsettgast
  */
 
-#include "FiniteElementManager.hpp"
-#include "basis/BasisFunctionManager.hpp"
-#include "quadrature/QuadratureRuleManager.hpp"
-#include "FiniteElementSpaceManager.hpp"
-
+#include "NumericalMethodsManager.hpp"
+#include "finiteElement/basis/BasisFunctionManager.hpp"
+#include "finiteElement/quadrature/QuadratureRuleManager.hpp"
+#include "finiteElement/FiniteElementSpaceManager.hpp"
+#include "finiteVolume/FiniteVolumeManager.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-FiniteElementManager::FiniteElementManager( string const & name, ManagedGroup * const parent ):
+NumericalMethodsManager::NumericalMethodsManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup(name,parent)
 {
   this->RegisterGroup<BasisFunctionManager>(keys::basisFunctions);
   this->RegisterGroup<QuadratureRuleManager>(keys::quadratureRules);
   this->RegisterGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
+  this->RegisterGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 }
 
-FiniteElementManager::~FiniteElementManager()
+NumericalMethodsManager::~NumericalMethodsManager()
 {
   // TODO Auto-generated destructor stub
 }
 
-void FiniteElementManager::FillDocumentationNode()
+void NumericalMethodsManager::FillDocumentationNode()
 {
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   docNode->setName("NumericalMethods");
   docNode->setSchemaType("Node");
 }
 
-void FiniteElementManager::CreateChild( string const & childKey, string const & childName )
+void NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
 {
 }
 
