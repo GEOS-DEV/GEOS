@@ -45,7 +45,7 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "fileIO/blueprint/Blueprint.hpp"
 #include "fileIO/utils/utils.hpp"
-#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/SidreWrapper.hpp"

@@ -19,7 +19,7 @@ set( finiteVolume_sources
 blt_add_library( NAME                  finiteVolume
                  SOURCES               ${finiteVolume_sources}
                  HEADERS               ${finiteVolume_headers}
-                 DEPENDS_ON            dataRepository codingUtilities physicsSolvers
+                 DEPENDS_ON            dataRepository codingUtilities managers
                )
                
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src )
