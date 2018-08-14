@@ -50,7 +50,6 @@ void RankBlock::AddMeshBlock( const MeshBlock& block) {
 }
 
 void RankBlock::Load() {
-    std::cout << "BLOOOOOCK" << std::endl;
     for( auto& block : m_block) {
         block.Load();
     }
@@ -321,6 +320,13 @@ void VtuFile::SplitNodeTextString( string const & in,
     }
 }
 
+template < typename Enum >
+auto to_underlying_type( Enum e ) ->
+typename std::underlying_type< Enum >::type
+{
+    return static_cast< typename std::underlying_type< Enum >::type >( e );
+}
+
 void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     pugi::xml_node pieceNode =
         vtmDoc.child("VTKFile").child("UnstructuredGrid").child("Piece");
@@ -329,7 +335,6 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     mesh.SetNumVertices( numVertices );
 
     globalIndex numElements = pieceNode.attribute("NumberOfCells").as_llong();
-    mesh.ReserveNumCellAndPolygons( numElements );
 
     /// Parse vertices
     pugi::xml_node m_verticesarray =
@@ -340,18 +345,6 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     SplitNodeTextString(m_verticesarray.text().as_string(), allVertices, 
             [](string str)-> double {return std::stod(str);});
     assert(static_cast< globalIndex> (allVertices.size()) / 3 == numVertices);
-
-    /// Parse vertices original index
-    pugi::xml_node verticesOriginalIndexesArray = 
-        pieceNode.child("PointData").find_child_by_attribute(
-                "DataArray","Name","globalIndex");
-    assert(!verticesOriginalIndexesArray.empty());
-    std::vector< globalIndex > allVerticesOriginalIndexes;
-    allVerticesOriginalIndexes.reserve( numVertices );
-    SplitNodeTextString(verticesOriginalIndexesArray.text().as_string(),
-            allVerticesOriginalIndexes,
-            [](string str)-> globalIndex {return std::stoll(str);});
-    assert( numVertices == static_cast< globalIndex> (allVerticesOriginalIndexes.size() ));
 
     /// Fill the vertices in the mesh
     for(globalIndex vertexIndex  = 0 ; vertexIndex < numVertices; ++vertexIndex) {
@@ -371,21 +364,36 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     SplitNodeTextString( elementsTypesArray.text().as_string(), allElementsTypes,
             [](string str)-> localIndex {return std::stoi(str);});
     assert(static_cast< globalIndex> (allElementsTypes.size()) == numElements);
+    globalIndex numTetra = 0;
+    globalIndex numHex = 0;
+    globalIndex numPrism = 0;
+    globalIndex numPyr = 0;
+    globalIndex numTri = 0;
+    globalIndex numQuad = 0;
+    for( auto elementType : allElementsTypes ) {
+        if( elementType == 10 ) {
+            numTetra++;
+        } else if(elementType == 12) {
+            numHex++;
+        } else if(elementType == 13) {
+            numPrism++;
+        } else if(elementType == 14) {
+            numPyr++;
+        } else if(elementType == 5) {
+            numTri++;
+        } else if(elementType == 9) {
+            numQuad++;
+        } else {
+            GEOS_ERROR("Element type " + std::to_string(elementType) + " not supported");
+        }
+    }
 
-    /// Parse elements regions
-    pugi::xml_node elements_regions_array =
-        pieceNode.child("CellData").find_child_by_attribute("DataArray","Name","region");
-    assert(!elements_regions_array.empty());
-    std::vector< globalIndex > all_elements_regions;
-    all_elements_regions.reserve(numElements);
-    SplitNodeTextString( elements_regions_array.text().as_string(), all_elements_regions,
-            [](string str)-> localIndex {return std::stoi(str);});
-    assert(static_cast< globalIndex> (all_elements_regions.size()) == numElements);
-    
-    /// Parse elements original_index
+    mesh.SetNumCellAndPolygons(numTetra,numHex,numPrism,numPyr,numTri,numQuad);
+
+    /// Parse elements globalIndex
     pugi::xml_node elements_original_indexes_array =
         pieceNode.child("CellData").find_child_by_attribute("DataArray","Name",
-                "original_index");
+                "globalIndex");
     assert(!elements_original_indexes_array.empty());
     std::vector< globalIndex > allElementsOriginalIndexes;
     allElementsOriginalIndexes.reserve(numElements);
@@ -405,7 +413,7 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
             [](string str)-> globalIndex {return std::stoll(str);});
     assert(static_cast<globalIndex >(allElementsOffsets.size()) == numElements+1);
 
-    /// Parce cells connectivities
+    /// Parse cells connectivities
     pugi::xml_node elementsConnectivityArray =
         pieceNode.child("Cells").find_child_by_attribute("DataArray","Name","connectivity");
     assert(!elementsConnectivityArray.empty());
@@ -444,19 +452,231 @@ void VtuFile::LoadMesh(pugi::xml_document const & vtmDoc, DumbMesh& mesh){
     mesh.Finish();
 }
 
-void VtuFile::TransferDumbMeshToGEOSMesh( MeshLevel * const meshLevel )
+
+
+    ////////////////
+    /// MESH PART //
+    ////////////////
+
+globalIndex DumbMesh::NumVertices() const {
+    return m_numVertices;
+}
+
+globalIndex DumbMesh::NumCells() const {
+    return m_numCells;
+}
+
+globalIndex DumbMesh::NumPolygons() const {
+    return m_numPolygons;
+}
+
+globalIndex DumbMesh::NumTetra() const {
+    return m_numTetra;
+}
+
+globalIndex DumbMesh::NumHex() const {
+    return m_numHex;
+}
+
+globalIndex DumbMesh::NumPrism() const {
+    return m_numPrism;
+}
+
+globalIndex DumbMesh::NumPyr() const {
+    return m_numPyr;
+}
+
+globalIndex DumbMesh::NumTri() const {
+    return m_numTri;
+}
+
+globalIndex DumbMesh::NumQuad() const {
+    return m_numQuad;
+}
+
+globalIndex DumbMesh::TetIndexToCellIndex(globalIndex const tetIndex) {
+    assert(tetIndex < m_numTetra);
+    return m_tetIndexToCellIndex[tetIndex];
+}
+
+globalIndex DumbMesh::HexIndexToCellIndex(globalIndex const hexIndex) {
+    assert(hexIndex < m_numHex);
+    return m_hexIndexToCellIndex[hexIndex];
+}
+
+globalIndex DumbMesh::PrismIndexToCellIndex(globalIndex const prismIndex) {
+    assert(prismIndex < m_numPrism);
+    return m_prismIndexToCellIndex[prismIndex];
+}
+
+globalIndex DumbMesh::PyrIndexToCellIndex(globalIndex const pyrIndex) {
+    assert(pyrIndex < m_numPyr);
+    return m_pyrIndexToCellIndex[pyrIndex];
+}
+
+globalIndex DumbMesh::TriIndexToPolygonIndex(globalIndex const triIndex) {
+    assert(triIndex < m_numTri);
+    return m_triIndexToPolygonIndex[triIndex];
+}
+
+globalIndex DumbMesh::QuadIndexToPolygonIndex(globalIndex const quadIndex) {
+    assert(quadIndex < m_numQuad);
+    return m_pyrIndexToCellIndex[quadIndex];
+}
+
+localIndex DumbMesh::NumVerticesInCell(globalIndex const cellIndex ) const {
+    assert(cellIndex < m_numCells);
+    return m_cellsPtr[cellIndex+1] - m_cellsPtr[cellIndex-1];
+}
+
+localIndex DumbMesh::NumVerticesInPolygon(globalIndex const polygonIndex ) const {
+    assert(polygonIndex < m_numPolygons);
+    return m_polygonsPtr[polygonIndex+1] - m_polygonsPtr[polygonIndex-1];
+}
+
+globalIndex DumbMesh::CellVertexIndex(globalIndex const cellIndex,
+        localIndex const local_corner_index) const {
+    assert(local_corner_index < NumVerticesInCell(cellIndex));
+    return m_cellsConnectivity[m_cellsPtr[cellIndex] + local_corner_index];
+}
+
+globalIndex DumbMesh::PolygonVertexIndex(globalIndex const polygonIndex,
+        localIndex const local_corner_index) const {
+    assert(local_corner_index < NumVerticesInPolygon(polygonIndex));
+    return m_polygonsConnectivity[m_polygonsPtr[polygonIndex] + local_corner_index];
+}
+
+std::vector<real64> DumbMesh::Vertex(globalIndex const vertexIndex) const {
+    assert(vertexIndex < m_numVertices);
+    std::vector<real64> vertex(m_vertices.begin()+3*vertexIndex,
+            m_vertices.begin() + 3*vertexIndex+3);
+    return vertex;
+}
+
+globalIndex DumbMesh::GlobalPolygonIndex(globalIndex const polygonIndex) const {
+    assert(polygonIndex<m_numPolygons);
+    return m_globalPolygonIndexes[polygonIndex];
+}
+
+globalIndex DumbMesh::GlobalCellIndex(globalIndex const cellIndex) const {
+    assert(cellIndex < m_numCells);
+    return m_globalCellIndexes[cellIndex];
+}
+
+void DumbMesh::SetVertex(globalIndex const vertexIndex,
+        std::vector< real64 > const& vertex) {
+    assert(vertex.size() == 3); 
+    assert(vertexIndex < m_numVertices);
+    for( localIndex coor = 0 ; coor < 3 ; coor ++ ) {
+        m_vertices[3*vertexIndex+coor] = vertex[coor];
+    }
+}
+
+void DumbMesh::SetNumVertices(globalIndex const numVertices) {
+    m_numVertices = numVertices;
+    m_vertices.resize( numVertices*3);
+}
+
+void DumbMesh::SetNumCellAndPolygons(globalIndex numTetra,
+                                       globalIndex numHex,
+                                       globalIndex numPrism,
+                                       globalIndex numPyr,
+                                       globalIndex numTri,
+                                       globalIndex numQuad) {
+    m_numTetra = numTetra;
+    m_numHex = numHex;
+    m_numPrism = numPrism;
+    m_numPyr = numPyr;
+    m_numTri = numTri;
+    m_numQuad = numQuad;
+    m_numCells = numTetra + numHex + numPrism + numPyr;
+    m_numPolygons = numTri + numQuad;
+    m_cellsPtr.reserve(m_numCells+1);
+    m_polygonsPtr.reserve( m_numPolygons +1);
+    m_cellsConnectivity.reserve( 4*numTetra + 8* numHex + 6*numPrism + 5*numPyr );
+    m_polygonsConnectivity.reserve( 3*numTri + 4*numQuad );
+    m_globalPolygonIndexes.resize( m_numPolygons);
+    m_globalCellIndexes.resize( m_numCells);
+    m_tetIndexToCellIndex.reserve(m_numTetra);
+    m_hexIndexToCellIndex.reserve(m_numHex);
+    m_prismIndexToCellIndex.reserve(m_numPrism);
+    m_pyrIndexToCellIndex.reserve(m_numPyr);
+    m_triIndexToPolygonIndex.reserve(m_numTri);
+    m_quadIndexToPolygonIndex.reserve(m_numQuad);
+}
+
+void DumbMesh::AddCell( std::vector<globalIndex> const & connectivity ) {
+    m_cellsPtr.push_back( connectivity.size() + m_cellsPtr[m_cellsPtr.size()-1]);
+    globalIndex numVerticesInCell = static_cast<localIndex>(connectivity.size());
+    for( localIndex co = 0 ; co < numVerticesInCell; ++co ) {
+        m_cellsConnectivity.push_back(connectivity[co]);
+    }
+
+    if( connectivity.size() == 4 ) {
+        m_tetIndexToCellIndex.push_back(m_cellsPtr.size()-2);
+    } else if (connectivity.size() == 8) {
+        m_prismIndexToCellIndex.emplace_back(m_cellsPtr.size()-2);
+    } else if (connectivity.size() == 6) {
+        m_prismIndexToCellIndex.emplace_back(m_cellsPtr.size()-2);
+    } else if (connectivity.size() == 5 ) {
+        m_pyrIndexToCellIndex.emplace_back(m_cellsPtr.size()-2);
+    }
+}
+
+void DumbMesh::AddPolygon( std::vector<globalIndex> const & connectivity ) {
+    m_polygonsPtr.push_back( connectivity.size() + m_polygonsPtr[m_polygonsPtr.size()-1]);
+    for( localIndex co = 0 ; co < static_cast<localIndex>(connectivity.size()); ++co ) {
+        m_polygonsConnectivity.push_back(connectivity[co]);
+    }
+
+    if( connectivity.size() == 3 ) {
+        m_triIndexToPolygonIndex.push_back(m_polygonsPtr.size()-2);
+    } else if (connectivity.size() == 4) {
+        m_quadIndexToPolygonIndex.emplace_back(m_polygonsPtr.size()-2);
+    } 
+}
+
+void DumbMesh::SetCellOriginalIndex(globalIndex const cellIndexInPartMesh,
+        globalIndex const cellIndexInFullMesh) {
+    assert( cellIndexInPartMesh < static_cast< globalIndex>
+            (m_globalCellIndexes.size() ) );
+    m_globalCellIndexes[cellIndexInPartMesh] = cellIndexInFullMesh;
+}
+
+void DumbMesh::SetPolygonOriginalIndex(globalIndex const polygonIndexInPartMesh,
+        globalIndex const polygonIndexInFullMesh) {
+    assert( polygonIndexInPartMesh <
+            static_cast< globalIndex> (m_globalPolygonIndexes.size() ) );
+    m_globalPolygonIndexes[polygonIndexInPartMesh] = polygonIndexInFullMesh;
+}   
+
+void DumbMesh::SetName(string const & name) {
+    m_name = name;
+}
+
+void DumbMesh::Finish() {
+    assert(static_cast<globalIndex>(m_cellsPtr.size()) == m_numCells +1);
+    assert(static_cast<globalIndex>(m_polygonsPtr.size()) == m_numPolygons +1);
+    assert(static_cast<globalIndex>(m_tetIndexToCellIndex.size()) == m_numTetra);
+    assert(static_cast<globalIndex>(m_hexIndexToCellIndex.size()) == m_numHex);
+    assert(static_cast<globalIndex>(m_prismIndexToCellIndex.size()) == m_numPrism);
+    assert(static_cast<globalIndex>(m_pyrIndexToCellIndex.size()) == m_numPyr);
+    assert(static_cast<globalIndex>(m_triIndexToPolygonIndex.size()) == m_numTri);
+    assert(static_cast<globalIndex>(m_quadIndexToPolygonIndex.size()) == m_numQuad);
+}
+
+void DumbMesh::TransferDumbMeshToGEOSMesh( MeshLevel * const meshLevel )
 {
-    /*
   NodeManager * const nodeManager = meshLevel->getNodeManager();
   ElementRegionManager * const elemRegMananger = meshLevel->getElemManager();
 
   arrayView1d<R1Tensor> X = nodeManager->referencePosition();
 
-  nodeManager->resize(m_meshPart.NumVertices());
+  nodeManager->resize(NumVertices());
 
-  real64 const * const vertexData = m_meshPart.m_vertices.data();
+  real64 const * const vertexData = m_vertices.data();
 
-  for( localIndex a=0 ; a<m_meshPart.NumVertices() ; ++a )
+  for( localIndex a=0 ; a< NumVertices() ; ++a )
   {
     real64 * const tensorData = X[a].Data();
     tensorData[0] = vertexData[3*a];
@@ -464,144 +684,19 @@ void VtuFile::TransferDumbMeshToGEOSMesh( MeshLevel * const meshLevel )
     tensorData[2] = vertexData[3*a+2];
   }
 
-  string regionName; // = mesh_part.regionName();
-  CellBlockSubRegion * const cellBlock = elemRegMananger->GetRegion( regionName )->GetSubRegion(0);
+  CellBlockSubRegion * const cellBlock = elemRegMananger->GetRegion( m_name )->GetSubRegion(0);
   lArray2d & cellToVertex = cellBlock->nodeList();
-  cellToVertex.resize( 0, m_meshPart.NumVerticesInCell(0) );
-  cellBlock->resize( m_meshPart.NumCells() );
+  cellToVertex.resize( 0, NumVerticesInCell(0) );
+  cellBlock->resize( NumCells() );
 
-  for( localIndex k=0 ; k<m_meshPart.NumCells() ; ++k )
+  for( localIndex k=0 ; k<NumCells() ; ++k )
   {
-    for( localIndex a=0 ; a<m_meshPart.NumVerticesInCell(0) ; ++a )
+    for( localIndex a=0 ; a<NumVerticesInCell(0) ; ++a )
     {
-      cellToVertex[k][a] = m_meshPart.CellVertexIndex(k,a);
+      cellToVertex[k][a] = CellVertexIndex(k,a);
     }
   }
-  */
-
-
 
 }
 
-
-    ////////////////
-    /// MESH PART //
-    ////////////////
-
-    globalIndex DumbMesh::NumVertices() const {
-        return m_numVertices;
-    }
-
-    globalIndex DumbMesh::NumCells() const {
-        return m_numCells;
-    }
-
-    globalIndex DumbMesh::NumPolygons() const {
-        return m_numPolygons;
-    }
-
-    localIndex DumbMesh::NumVerticesInCell( const globalIndex cellIndex ) const {
-        assert(cellIndex < m_numCells);
-        return m_cellsPtr[cellIndex+1] - m_cellsPtr[cellIndex-1];
-    }
-
-    localIndex DumbMesh::NumVerticesInPolygon( const globalIndex polygonIndex ) const {
-        assert(polygonIndex < m_numPolygons);
-        return m_polygonsPtr[polygonIndex+1] - m_polygonsPtr[polygonIndex-1];
-    }
-
-    globalIndex DumbMesh::CellVertexIndex(globalIndex const cellIndex,
-            localIndex const local_corner_index) const {
-        assert(local_corner_index < NumVerticesInCell(cellIndex));
-        return m_cellsConnectivity[m_cellsPtr[cellIndex] + local_corner_index];
-    }
-
-    globalIndex DumbMesh::PolygonVertexIndex(globalIndex const polygonIndex,
-            localIndex const local_corner_index) const {
-        assert(local_corner_index < NumVerticesInPolygon(polygonIndex));
-        return m_polygonsConnectivity[m_polygonsPtr[polygonIndex] + local_corner_index];
-    }
-
-    std::vector<real64> DumbMesh::Vertex(globalIndex const vertexIndex) const {
-        assert(vertexIndex < m_numVertices);
-        std::vector<real64> vertex(m_vertices.begin()+3*vertexIndex,
-                m_vertices.begin() + 3*vertexIndex+3);
-        return vertex;
-    }
-
-    globalIndex DumbMesh::GlobalPolygonIndex(globalIndex const polygonIndex) const {
-        assert(polygonIndex<m_numPolygons);
-        return m_globalPolygonIndexes[polygonIndex];
-    }
-
-    globalIndex DumbMesh::GlobalCellIndex(globalIndex const cellIndex) const {
-        assert(cellIndex < m_numCells);
-        return m_globalCellIndexes[cellIndex];
-    }
-
-    void DumbMesh::SetVertex(globalIndex const vertexIndex,
-            std::vector< real64 > const& vertex) {
-        assert(vertex.size() == 3); 
-        assert(vertexIndex < m_numVertices);
-        for( localIndex coor = 0 ; coor < 3 ; coor ++ ) {
-            m_vertices[3*vertexIndex+coor] = vertex[coor];
-        }
-    }
-
-    void DumbMesh::SetNumVertices(globalIndex const numVertices) {
-        m_numVertices = numVertices;
-        m_vertices.resize( numVertices*3);
-    }
-
-    void DumbMesh::ReserveNumCellAndPolygons(globalIndex const numElements) {
-        m_cellsPtr.reserve( numElements +1);
-        m_polygonsPtr.reserve( numElements +1);
-        m_cellsConnectivity.reserve( 8 * numElements ); // maximum 8 corners (for an hex)
-        m_polygonsConnectivity.reserve( 4 * numElements ); // maximum 4 corners (for a quad)
-        m_globalPolygonIndexes.reserve( numElements);
-        m_globalCellIndexes.reserve( numElements);
-    }
-    
-    globalIndex DumbMesh::AddCell( std::vector<globalIndex> connectivity ) {
-        m_cellsPtr.push_back( connectivity.size() + m_cellsPtr[m_cellsPtr.size()-1]);
-        m_numCells++;
-        m_globalCellIndexes.resize(m_numCells);
-        for( localIndex co = 0 ; co < static_cast<localIndex>(connectivity.size()); ++co ) {
-            m_cellsConnectivity.push_back(connectivity[co]);
-        }
-        return m_numCells-1;
-    }
-
-    globalIndex DumbMesh::AddPolygon( std::vector<globalIndex> connectivity ) {
-        m_polygonsPtr.push_back( connectivity.size() + m_polygonsPtr[m_polygonsPtr.size()-1]);
-        m_numPolygons++;
-        m_globalPolygonIndexes.resize( m_numPolygons);
-        for( localIndex co = 0 ; co < static_cast<localIndex>(connectivity.size()); ++co ) {
-            m_polygonsConnectivity.push_back(connectivity[co]);
-        }
-        return m_numPolygons-1;
-    }
-
-    void DumbMesh::SetCellOriginalIndex(globalIndex const cellIndexInPartMesh,
-                globalIndex const cellIndexInFullMesh) {
-        assert( cellIndexInPartMesh < static_cast< globalIndex>
-                (m_originalCellIndexes.size() ) );
-        m_globalCellIndexes[cellIndexInPartMesh] = cellIndexInFullMesh;
-    }
-
-    void DumbMesh::SetPolygonOriginalIndex(globalIndex const polygonIndexInPartMesh,
-                globalIndex const polygonIndexInFullMesh) {
-        assert( polygonIndexInPartMesh <
-                static_cast< globalIndex> (m_originalPolygonIndexes.size() ) );
-        m_globalPolygonIndexes[polygonIndexInPartMesh] = polygonIndexInFullMesh;
-    }   
-
-    void DumbMesh::Finish() {
-        m_cellsPtr.shrink_to_fit();
-        m_polygonsPtr.shrink_to_fit();
-        m_cellsConnectivity.shrink_to_fit();
-        m_polygonsConnectivity.shrink_to_fit();
-        m_globalCellIndexes.shrink_to_fit();
-        m_globalPolygonIndexes.shrink_to_fit();
-    }
 }
