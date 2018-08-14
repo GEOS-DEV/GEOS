@@ -47,7 +47,7 @@ public:
                                                   ManagedGroup * const parent ) const override;
 
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                     localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
   static std::string CatalogName() { return dataRepository::keys::linearEOS; }
@@ -63,34 +63,34 @@ public:
 
   virtual UpdateFunctionPointer GetStateUpdateFunctionPointer() override final;
 
-  virtual void FluidPressureUpdate(real64 const &dens,
+  virtual void FluidPressureUpdate( real64 const &dens,
+                                    localIndex const i,
+                                    real64 &pres,
+                                    real64 &dPres_dDens ) override final;
+
+  virtual void FluidDensityUpdate( real64 const &pres,
                                    localIndex const i,
-                                   real64 &pres,
-                                   real64 &dPres_dDens) override final;
+                                   real64 &dens,
+                                   real64 &dDens_dPres ) override final;
 
-  virtual void FluidDensityUpdate(real64 const &pres,
-                                  localIndex const i,
-                                  real64 &dens,
-                                  real64 &dDens_dPres) override final;
+  virtual void FluidViscosityUpdate( real64 const &pres,
+                                     localIndex const i,
+                                     real64 &visc,
+                                     real64 &dVisc_dPres ) override final;
 
-  virtual void FluidViscosityUpdate(real64 const &pres,
-                                    localIndex const i,
-                                    real64 &visc,
-                                    real64 &dVisc_dPres) override final;
-
-  virtual void SimplePorosityUpdate(real64 const &pres,
-                                    real64 const &poro_ref,
-                                    localIndex const i,
-                                    real64 &poro,
-                                    real64 &dPoro_dPres) override final;
+  virtual void SimplePorosityUpdate( real64 const &pres,
+                                     real64 const &poro_ref,
+                                     localIndex const i,
+                                     real64 &poro,
+                                     real64 &dPoro_dPres ) override final;
 
   virtual void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 
-  virtual void FinalInitialization(ManagedGroup * const parent) override final;
+  virtual void FinalInitialization( ManagedGroup * const parent ) override final;
 
-  void GetStiffness( realT c[6][6]) const override;
+  void GetStiffness( realT c[6][6] ) const override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {

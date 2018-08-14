@@ -31,17 +31,14 @@ static inline void UpdateStatePoint( R2SymTensor const & D,
                                      localIndex const i,
                                      void * dataPtrs,
                                      integer const systemAssembleFlag )
-{
-
-
-}
+{}
 
 
 LinearEOS::LinearEOS( std::string const & name, ManagedGroup * const parent ):
-  ConstitutiveBase(name, parent ),
-  m_densityRelation(ExponentApproximationType::Linear),
-  m_viscosityRelation(ExponentApproximationType::Linear),
-  m_porosityRelation(ExponentApproximationType::Linear)
+  ConstitutiveBase( name, parent ),
+  m_densityRelation( ExponentApproximationType::Linear ),
+  m_viscosityRelation( ExponentApproximationType::Linear ),
+  m_porosityRelation( ExponentApproximationType::Linear )
 {
   RegisterViewWrapper( viewKeys.fluidBulkModulus.Key(), &m_fluidBulkModulus, 0 );
   RegisterViewWrapper( viewKeys.solidBulkModulus.Key(), &m_solidBulkModulus, 0 );
@@ -60,7 +57,7 @@ std::unique_ptr<ConstitutiveBase>
 LinearEOS::DeliverClone( string const & name,
                          ManagedGroup * const parent ) const
 {
-  std::unique_ptr<LinearEOS> newConstitutiveRelation = std::make_unique<LinearEOS>(name,parent);
+  std::unique_ptr<LinearEOS> newConstitutiveRelation = std::make_unique<LinearEOS>( name, parent );
   newConstitutiveRelation->m_fluidBulkModulus   = this->m_fluidBulkModulus;
   newConstitutiveRelation->m_solidBulkModulus   = this->m_solidBulkModulus;
   newConstitutiveRelation->m_fluidViscosibility = this->m_fluidViscosibility;
@@ -72,13 +69,13 @@ LinearEOS::DeliverClone( string const & name,
   newConstitutiveRelation->m_viscosityRelation = this->m_viscosityRelation;
   newConstitutiveRelation->m_porosityRelation  = this->m_porosityRelation;
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move(newConstitutiveRelation);
+  std::unique_ptr<ConstitutiveBase> rval = std::move( newConstitutiveRelation );
 
   return rval;
 }
 
 void LinearEOS::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                      localIndex const numConstitutivePointsPerParentIndex  )
+                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
@@ -94,90 +91,90 @@ void LinearEOS::FillDocumentationNode()
 
   DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Slightly compressible single phase fluid equation of state");
+  docNode->setName( this->CatalogName());
+  docNode->setSchemaType( "Node" );
+  docNode->setShortDescription( "Slightly compressible single phase fluid equation of state" );
 
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Parameters for slightly compressible single phase fluid equation of state");
+  docNode->setSchemaType( "Node" );
+  docNode->setShortDescription( "Parameters for slightly compressible single phase fluid equation of state" );
 
   docNode->AllocateChildNode( viewKeys.fluidBulkModulus.Key(),
-                                       viewKeys.fluidBulkModulus.Key(),
-                                       -1,
-                                       "real64",
-                                       "real64",
-                                       "Fluid Bulk Modulus",
-                                       "Fluid Bulk Modulus",
-                                       "-1",
-                                       "",
-                                       1,
-                                       1,
-                                       0 );
+                              viewKeys.fluidBulkModulus.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Fluid Bulk Modulus",
+                              "Fluid Bulk Modulus",
+                              "-1",
+                              "",
+                              1,
+                              1,
+                              0 );
 
   docNode->AllocateChildNode( viewKeys.solidBulkModulus.Key(),
-                                       viewKeys.solidBulkModulus.Key(),
-                                       -1,
-                                       "real64",
-                                       "real64",
-                                       "Solid Bulk Modulus",
-                                       "Solid Bulk Modulus",
-                                       "-1",
-                                       "",
-                                       1,
-                                       1,
-                                       0 );
+                              viewKeys.solidBulkModulus.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Solid Bulk Modulus",
+                              "Solid Bulk Modulus",
+                              "-1",
+                              "",
+                              1,
+                              1,
+                              0 );
 
   docNode->AllocateChildNode( viewKeys.fluidViscosibility.Key(),
-                                       viewKeys.fluidViscosibility.Key(),
-                                       -1,
-                                       "real64",
-                                       "real64",
-                                       "Fluid viscosity exponential coefficient",
-                                       "Fluid viscosity exponential coefficient",
-                                       "0",
-                                       "",
-                                       1,
-                                       1,
-                                       0 );
+                              viewKeys.fluidViscosibility.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Fluid viscosity exponential coefficient",
+                              "Fluid viscosity exponential coefficient",
+                              "0",
+                              "",
+                              1,
+                              1,
+                              0 );
 
   docNode->AllocateChildNode( viewKeys.referencePressure.Key(),
-                                       viewKeys.referencePressure.Key(),
-                                       -1,
-                                       "real64",
-                                       "real64",
-                                       "Reference pressure",
-                                       "Reference pressure",
-                                       "0",
-                                       "",
-                                       1,
-                                       1,
-                                       0 );
+                              viewKeys.referencePressure.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Reference pressure",
+                              "Reference pressure",
+                              "0",
+                              "",
+                              1,
+                              1,
+                              0 );
 
   docNode->AllocateChildNode( viewKeys.referenceDensity.Key(),
-                                       viewKeys.referenceDensity.Key(),
-                                       -1,
-                                       "real64",
-                                       "real64",
-                                       "Reference fluid density",
-                                       "Reference fluid density",
-                                       "1000",
-                                       "",
-                                       1,
-                                       1,
-                                       0 );
+                              viewKeys.referenceDensity.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Reference fluid density",
+                              "Reference fluid density",
+                              "1000",
+                              "",
+                              1,
+                              1,
+                              0 );
 
   docNode->AllocateChildNode( viewKeys.referenceViscosity.Key(),
-                                       viewKeys.referenceViscosity.Key(),
-                                       -1,
-                                       "real64",
-                                       "real64",
-                                       "Reference fluid viscosity",
-                                       "Reference fluid viscosity",
-                                       "0.001",
-                                       "",
-                                       1,
-                                       1,
-                                       0 );
+                              viewKeys.referenceViscosity.Key(),
+                              -1,
+                              "real64",
+                              "real64",
+                              "Reference fluid viscosity",
+                              "Reference fluid viscosity",
+                              "0.001",
+                              "",
+                              1,
+                              1,
+                              0 );
 
 }
 
@@ -185,32 +182,32 @@ void LinearEOS::ReadXML_PostProcess()
 {
   if( m_fluidBulkModulus <= 0.0 )
   {
-    string const message = "An invalid value of fluid bulk modulus ("+std::to_string(m_fluidBulkModulus)+") is specified";
-    GEOS_ERROR(message);
+    string const message = "An invalid value of fluid bulk modulus ("+std::to_string( m_fluidBulkModulus )+") is specified";
+    GEOS_ERROR( message );
   }
 
   if( m_solidBulkModulus <= 0.0 )
   {
-    string const message = "An invalid value of solid bulk modulus ("+std::to_string(m_solidBulkModulus)+") is specified";
-    GEOS_ERROR(message);
+    string const message = "An invalid value of solid bulk modulus ("+std::to_string( m_solidBulkModulus )+") is specified";
+    GEOS_ERROR( message );
   }
 
   if( m_fluidViscosibility < 0.0 )
   {
-    string const message = "An invalid value of fluid viscosibility ("+std::to_string(m_fluidViscosibility)+") is specified";
-    GEOS_ERROR(message);
+    string const message = "An invalid value of fluid viscosibility ("+std::to_string( m_fluidViscosibility )+") is specified";
+    GEOS_ERROR( message );
   }
 
   if( m_referenceDensity <= 0.0 )
   {
-     string const message = "An invalid value of reference density ("+std::to_string(m_referenceDensity)+") is specified";
-     GEOS_ERROR(message);
+    string const message = "An invalid value of reference density ("+std::to_string( m_referenceDensity )+") is specified";
+    GEOS_ERROR( message );
   }
 
   if( m_referenceViscosity <= 0.0 )
   {
-    string const message = "An invalid value of reference viscosity ("+std::to_string(m_referenceViscosity)+") is specified";
-    GEOS_ERROR(message);
+    string const message = "An invalid value of reference viscosity ("+std::to_string( m_referenceViscosity )+") is specified";
+    GEOS_ERROR( message );
   }
 }
 
@@ -220,42 +217,42 @@ LinearEOS::GetStateUpdateFunctionPointer()
   return UpdateStatePoint;
 }
 
-void LinearEOS::FluidPressureUpdate(real64 const &dens,
+void LinearEOS::FluidPressureUpdate( real64 const &dens,
+                                     localIndex const i,
+                                     real64 &pres,
+                                     real64 &dPres_dDens )
+{
+  m_densityRelation.Inverse( dens, pres, dPres_dDens );
+}
+
+void LinearEOS::FluidDensityUpdate( real64 const &pres,
                                     localIndex const i,
-                                    real64 &pres,
-                                    real64 &dPres_dDens)
+                                    real64 &dens,
+                                    real64 &dDens_dPres )
 {
-  m_densityRelation.Inverse(dens, pres, dPres_dDens);
+  m_densityRelation.Compute( pres, dens, dDens_dPres );
 }
 
-void LinearEOS::FluidDensityUpdate(real64 const &pres,
-                                   localIndex const i,
-                                   real64 &dens,
-                                   real64 &dDens_dPres)
+void LinearEOS::FluidViscosityUpdate( real64 const &pres, localIndex const i, real64 &visc, real64 &dVisc_dPres )
 {
-  m_densityRelation.Compute(pres, dens, dDens_dPres);
+  m_viscosityRelation.Compute( pres, visc, dVisc_dPres );
 }
 
-void LinearEOS::FluidViscosityUpdate(real64 const &pres, localIndex const i, real64 &visc, real64 &dVisc_dPres)
+void LinearEOS::SimplePorosityUpdate( real64 const &pres, real64 const &poro_ref, localIndex const i, real64 &poro, real64 &dPoro_dPres )
 {
-  m_viscosityRelation.Compute(pres, visc, dVisc_dPres);
-}
-
-void LinearEOS::SimplePorosityUpdate(real64 const &pres, real64 const &poro_ref, localIndex const i, real64 &poro, real64 &dPoro_dPres)
-{
-  m_porosityRelation.Compute(pres, poro, dPoro_dPres);
+  m_porosityRelation.Compute( pres, poro, dPoro_dPres );
   poro *= poro_ref;
   dPoro_dPres *= poro_ref;
 }
 
-void LinearEOS::FinalInitialization(ManagedGroup *const parent)
+void LinearEOS::FinalInitialization( ManagedGroup *const parent )
 {
-  m_densityRelation.SetCoefficients(m_referencePressure, m_referenceDensity, 1.0 / m_fluidBulkModulus);
-  m_viscosityRelation.SetCoefficients(m_referencePressure, m_referenceViscosity, m_fluidViscosibility);
-  m_porosityRelation.SetCoefficients(m_referencePressure, 1.0, 1.0 / m_solidBulkModulus);
+  m_densityRelation.SetCoefficients( m_referencePressure, m_referenceDensity, 1.0 / m_fluidBulkModulus );
+  m_viscosityRelation.SetCoefficients( m_referencePressure, m_referenceViscosity, m_fluidViscosibility );
+  m_porosityRelation.SetCoefficients( m_referencePressure, 1.0, 1.0 / m_solidBulkModulus );
 }
 
-void LinearEOS::GetStiffness( realT c[6][6]) const
+void LinearEOS::GetStiffness( realT c[6][6] ) const
 {
   c[0][0] = m_fluidBulkModulus;
   c[0][1] = 0.0;

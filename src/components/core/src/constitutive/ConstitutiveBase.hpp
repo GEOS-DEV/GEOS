@@ -35,8 +35,8 @@ namespace dataRepository
 {
 namespace keys
 {
-string const stateData("StateData");
-string const parameterData("ParameterData");
+string const stateData( "StateData" );
+string const parameterData( "ParameterData" );
 }
 }
 
@@ -50,7 +50,7 @@ public:
 
 
   ConstitutiveBase( std::string const & name,
-                    ManagedGroup * const parent  );
+                    ManagedGroup * const parent );
 
   virtual ~ConstitutiveBase() override;
 
@@ -62,10 +62,10 @@ public:
 
 
   typedef void (*UpdateFunctionPointer)( R2SymTensor const & D,
-                                        R2Tensor const & Rot,
-                                        localIndex const i,
-                                        void * dataPtrs,
-                                        integer const systemAssembleFlag);
+                                         R2Tensor const & Rot,
+                                         localIndex const i,
+                                         void * dataPtrs,
+                                         integer const systemAssembleFlag );
 
   virtual UpdateFunctionPointer GetStateUpdateFunctionPointer( ) = 0;
 
@@ -81,32 +81,32 @@ public:
                                         localIndex const q,
                                         integer const systemAssembleFlag ) { return R2SymTensor(); }
 
-  virtual void FluidPressureUpdate(real64 const &dens,
+  virtual void FluidPressureUpdate( real64 const &dens,
+                                    localIndex const i,
+                                    real64 &pres,
+                                    real64 &dPres_dDens ) {}
+
+  virtual void FluidDensityUpdate( real64 const &pres,
                                    localIndex const i,
-                                   real64 &pres,
-                                   real64 &dPres_dDens) {}
+                                   real64 &dens,
+                                   real64 &dDens_dPres ) {}
 
-  virtual void FluidDensityUpdate(real64 const &pres,
-                                  localIndex const i,
-                                  real64 &dens,
-                                  real64 &dDens_dPres) {}
+  virtual void FluidViscosityUpdate( real64 const &pres,
+                                     localIndex const i,
+                                     real64 &visc,
+                                     real64 &dVisc_dPres ) {}
 
-  virtual void FluidViscosityUpdate(real64 const &pres,
-                                    localIndex const i,
-                                    real64 &visc,
-                                    real64 &dVisc_dPres) {}
-
-  virtual void SimplePorosityUpdate(real64 const &pres,
-                                    real64 const &poro_ref,
-                                    localIndex const i,
-                                    real64 &poro,
-                                    real64 &dPoro_dPres) {}
+  virtual void SimplePorosityUpdate( real64 const &pres,
+                                     real64 const &poro_ref,
+                                     localIndex const i,
+                                     real64 &poro,
+                                     real64 &dPoro_dPres ) {}
 
   virtual void FillDocumentationNode() override = 0;
 
   virtual void resize( localIndex ) override;
 
-  virtual void GetStiffness( realT c[6][6]) const = 0;
+  virtual void GetStiffness( realT c[6][6] ) const = 0;
 
 
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
@@ -115,14 +115,13 @@ public:
   virtual string GetCatalogName() = 0;
 
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                     localIndex const numConstitutivePointsPerParentIndex  );
+                                         localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
   {} m_ConstitutiveBaseViewKeys;
 
   struct groupKeyStruct
-  {
-  } m_ConstitutiveBaseGroupKeys;
+  {} m_ConstitutiveBaseGroupKeys;
 
   virtual viewKeyStruct       & viewKeys()        { return m_ConstitutiveBaseViewKeys; }
   virtual viewKeyStruct const & viewKeys() const  { return m_ConstitutiveBaseViewKeys; }

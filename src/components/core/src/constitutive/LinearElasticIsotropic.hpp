@@ -51,7 +51,7 @@ public:
   DeliverClone( string const & name, ManagedGroup * const parent ) const override;
 
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                     localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static std::string CatalogName() { return dataRepository::keys::linearElasticIsotropic; }
   virtual string GetCatalogName() override { return CatalogName(); }
@@ -77,7 +77,7 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-  void GetStiffness( realT c[6][6]) const override;
+  void GetStiffness( realT c[6][6] ) const override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -101,18 +101,17 @@ public:
   } m_linearElasticIsotropicViewKeys;
 
   struct groupKeyStruct : public ConstitutiveBase::groupKeyStruct
-  {
-  } m_linearElasticIsotropicGroupKeys;
+  {} m_linearElasticIsotropicGroupKeys;
 
   virtual viewKeyStruct       & viewKeys()       override { return m_linearElasticIsotropicViewKeys; }
   virtual viewKeyStruct const & viewKeys() const override { return m_linearElasticIsotropicViewKeys; }
 
   virtual groupKeyStruct       & groupKeys()      override { return m_linearElasticIsotropicGroupKeys; }
-  virtual groupKeyStruct const & groupKeys() const override{ return m_linearElasticIsotropicGroupKeys; }
+  virtual groupKeyStruct const & groupKeys() const override { return m_linearElasticIsotropicGroupKeys; }
 
 
-  real64 &       density()       { return this->getReference<real64>(m_linearElasticIsotropicViewKeys.density); }
-  real64 const & density() const { return this->getReference<real64>(m_linearElasticIsotropicViewKeys.density); }
+  real64 &       density()       { return this->getReference<real64>( m_linearElasticIsotropicViewKeys.density ); }
+  real64 const & density() const { return this->getReference<real64>( m_linearElasticIsotropicViewKeys.density ); }
 
 
   real64 &       bulkModulus()       { return m_bulkModulus0; }

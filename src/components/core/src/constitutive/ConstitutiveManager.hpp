@@ -37,7 +37,7 @@ namespace constitutive
  * multidimensional array like interface via the operator[].
  */
 template< typename VIEWTYPE >
-using ViewAccessor = array1d < ReferenceWrapper< VIEWTYPE > > ;
+using ViewAccessor = array1d < ReferenceWrapper< VIEWTYPE > >;
 
 /**
  * @class ConstitutiveManager
@@ -63,13 +63,13 @@ public:
   template< typename T = ConstitutiveBase >
   T const * GetConstitituveRelation( string const & constitutiveRelationInstanceName ) const
   {
-    return this->GetGroup<T>(constitutiveRelationInstanceName);
+    return this->GetGroup<T>( constitutiveRelationInstanceName );
   }
 
   template< typename T = ConstitutiveBase >
   T * GetConstitituveRelation( string const & constitutiveRelationInstanceName )
   {
-    return this->GetGroup<T>(constitutiveRelationInstanceName);
+    return this->GetGroup<T>( constitutiveRelationInstanceName );
   }
 
 
@@ -81,7 +81,7 @@ public:
   template< typename T >
   ViewAccessor< T const >
   GetConstitutiveData( string const & name,
-                       dataRepository::ManagedGroup const * const relationGroup) const;
+                       dataRepository::ManagedGroup const * const relationGroup ) const;
 
 
   struct groupKeyStruct
@@ -104,14 +104,14 @@ ConstitutiveManager::GetConstitutiveData( string const & name,
   rval.resize( relationGroup->numSubGroups() );
   for( localIndex a=0 ; a<this->GetSubGroups().size() ; ++a )
   {
-    ConstitutiveBase const * const material = relationGroup->GetGroup<ConstitutiveBase>(a);
-    if( material->hasView(name) )
+    ConstitutiveBase const * const material = relationGroup->GetGroup<ConstitutiveBase>( a );
+    if( material->hasView( name ) )
     {
-      rval[a].set(material->getReference<T>(name));
+      rval[a].set( material->getReference<T>( name ));
     }
     else
     {
-      rval[a].set(nullptr);
+      rval[a].set( nullptr );
     }
   }
   return rval;
