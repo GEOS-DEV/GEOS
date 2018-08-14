@@ -56,6 +56,9 @@ public:
   template< typename VIEWTYPE >
   using ElementViewAccessor = array1d< array1d< ReferenceWrapper< VIEWTYPE > > > ;
 
+  template< typename VIEWTYPE >
+  using MaterialViewAccessor = array1d< array1d< array1d < ReferenceWrapper< VIEWTYPE > > > > ;
+
   /**
    * @name Static Factory Catalog Functions
    */
@@ -217,6 +220,14 @@ public:
                                                              string const & neighborName = string() ) const;
 
 
+  template< typename VIEWTYPE >
+  MaterialViewAccessor<VIEWTYPE const>
+  ConstructMaterialViewAccessor( string const & name ) const;
+
+  template< typename VIEWTYPE >
+  MaterialViewAccessor<VIEWTYPE>
+  ConstructMaterialViewAccessor( string const & name );
+
   using ManagedGroup::PackSize;
   using ManagedGroup::Pack;
   using ObjectManagerBase::PackGlobalMapsSize;
@@ -347,6 +358,50 @@ ConstructViewAccessor( string const & viewName,
   }
   return viewAccessor;
 }
+
+
+
+
+template< typename VIEWTYPE >
+ElementRegionManager::MaterialViewAccessor<VIEWTYPE const>
+ElementRegionManager::
+ConstructMaterialViewAccessor( string const & viewName ) const
+{
+  MaterialViewAccessor<VIEWTYPE const> accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0 ; kReg<numRegions() ; ++kReg  )
+  {
+    ElementRegion const * const elemRegion = GetRegion(kReg);
+    accessor[kReg].resize( elemRegion->numSubRegions() );
+
+    array1d<string> const & materialList = elemRegion->getMaterialList();
+
+    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    {
+      CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(kSubReg);
+      dataRepository::ManagedGroup const * const
+      constitutiveGroup = subRegion->GetConstitutiveModels();
+
+      for( localIndex matIndex=0 ; matIndex<constitutiveGroup->size() ; ++matIndex )
+      {
+        accessor[kReg][kSubReg][matIndex].set(constitutiveGroup->getReference<VIEWTYPE>(viewName));
+      }
+    }
+  }
+  return accessor;
+}
+
+template< typename VIEWTYPE >
+ElementRegionManager::MaterialViewAccessor<VIEWTYPE>
+ElementRegionManager::
+ConstructMaterialViewAccessor( string const & viewName )
+{
+  return
+  const_cast< ElementRegionManager::
+              MaterialViewAccessor<VIEWTYPE> >( const_cast<ElementRegionManager const*>(this)->
+                                                ConstructMaterialViewAccessor<VIEWTYPE>(viewName) );
+}
+
 
 
 }
