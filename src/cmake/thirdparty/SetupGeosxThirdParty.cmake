@@ -391,9 +391,33 @@ message( INFO ": setting up HYPRE" )
 
 set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre)
 
+find_path( HYPRE_INCLUDE_DIRS hypre/HYPRE.h
+           PATHS  ${HYPRE_DIR}/include
+           NO_DEFAULT_PATH
+           NO_CMAKE_ENVIRONMENT_PATH
+           NO_CMAKE_PATH
+           NO_SYSTEM_ENVIRONMENT_PATH
+           NO_CMAKE_SYSTEM_PATH)
+
+find_library( HYPRE_LIBRARY NAMES hypre
+              PATHS ${HYPRE_DIR}/lib
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(HYPRE  DEFAULT_MSG
+                                  HYPRE_INCLUDE_DIRS
+                                  HYPRE_LIBRARY )
+if (NOT HYPRE_FOUND)
+    message(FATAL_ERROR ": HYPRE not found in ${HYPRE_DIR}. Maybe you need to build it")
+endif()
+
 blt_register_library( NAME hypre
-                      INCLUDES ${HYPRE_DIR}/include 
-                      LIBRARIES ${HYPRE_DIR}/lib/libHYPRE.a
+                      INCLUDES ${HYPRE_INCLUDE_DIRS} 
+                      INCLUDES ${HYPRE_LIBRARY}
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
 set( thirdPartyLibs ${thirdPartyLibs} hypre )  
