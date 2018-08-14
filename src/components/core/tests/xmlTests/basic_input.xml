@@ -23,13 +23,15 @@
   </Mesh>
 
 
-  <SolverApplications>
-    <Application name="1"
-                 beginTime="0.0" 
-                 endTime="1.0e-3" 
-                 dt="1.0e-5"
-                 solvers="lagsolve" />
-  </SolverApplications>
+  <Events maxTime="1.0e-3">
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1.0e-3"
+                   target="/Solvers/lagsolve" />
+
+    <PeriodicEvent name="outputs"
+                   cycleFrequency="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
 
 
   <NumericalMethods>
@@ -93,8 +95,9 @@
   </Partition>
 
  
-  <Output parallelThreads="32" plotInterval="20.0" plotFileRoot="plot" restartInterval="1e6" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="1" maxWallTime="{60*60*15.925}"/>
-  
+  <Outputs>
+    <Silo name="siloOutput" parallelThreads="1" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+  </Outputs>
 
   <Nodesets>
     <Box name="perf" type="0" xMin="0, 0, 0" xMax="1, 1, 1"/>

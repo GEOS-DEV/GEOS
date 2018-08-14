@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 #ifndef DATAREPOSITORY_BUFFERHPP
 #define DATAREPOSITORY_BUFFERHPP
 
@@ -16,6 +24,7 @@
 #include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
+#include "ManagedArray.hpp"
 #include <vector>
 #include <cstdlib>
 #include <string>
@@ -33,6 +42,13 @@ class BasisBase;
 class QuadratureBase;
 class SimpleGeometricObjectBase;
 class PartitionBase;
+class NeighborCommunicator;
+template <typename IndexType, typename WeightType> class StencilCollection;
+
+namespace systemSolverInterface
+{
+class EpetraBlockSystem;
+}
 
 namespace dataRepository
 {
@@ -573,16 +589,42 @@ public:
     return 0;
   }
 
+  template <typename T, int NDIM, typename INDEX_TYPE>
+  static localIndex packed_size(const multidimensionalArray::ManagedArray<T, NDIM, INDEX_TYPE> & arr)
+  {
+    GEOS_ERROR("You shouldn't be packing a ManagedArray!"); 
+    return 0;
+  }
+
+
+  template <typename T, int NDIM, typename INDEX_TYPE>
+  static void * pack(const multidimensionalArray::ManagedArray<T, NDIM, INDEX_TYPE> & arr, localIndex & byte_size, void * buffer=nullptr)
+  { 
+    GEOS_ERROR("You shouldn't be packing a ManagedArray!"); 
+    byte_size = 0;
+    return nullptr;
+  }
+
+
+  template <typename T, int NDIM, typename INDEX_TYPE>
+  static localIndex unpack(const multidimensionalArray::ManagedArray<T, NDIM, INDEX_TYPE> & arr, const void * buffer, localIndex byte_size=-1)
+  { 
+    GEOS_ERROR("You shouldn't be unpacking a ManagedArray!");
+    return 0;
+  }
+
+
 
   template <typename T>
   static typename std::enable_if<std::is_same<T, BasisBase>::value ||
                                  std::is_same<T, QuadratureBase>::value ||
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
-                                 std::is_same<T, NeighborCommunicator>::value , localIndex>::type
+                                 std::is_same<T, NeighborCommunicator>::value ||
+                                 std::is_same<T, systemSolverInterface::EpetraBlockSystem>::value, localIndex>::type
   packed_size(const T & data)
   {
-    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, or PartitionBase!"); 
+    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!"); 
     return 0;
   }
 
@@ -592,10 +634,11 @@ public:
                                  std::is_same<T, QuadratureBase>::value ||
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
-                                 std::is_same<T, NeighborCommunicator>::value , void *>::type
+                                 std::is_same<T, NeighborCommunicator>::value ||
+                                 std::is_same<T, systemSolverInterface::EpetraBlockSystem>::value, void *>::type
   pack(const T & data, localIndex & byte_size, void * buffer=nullptr)
   {
-    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, or PartitionBase!"); 
+    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!"); 
     byte_size = 0;
     return nullptr;
   }
@@ -606,10 +649,32 @@ public:
                                  std::is_same<T, QuadratureBase>::value ||
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
-                                 std::is_same<T, NeighborCommunicator>::value , localIndex>::type
+                                 std::is_same<T, NeighborCommunicator>::value ||
+                                 std::is_same<T, systemSolverInterface::EpetraBlockSystem>::value, localIndex>::type
   unpack(T & data, const void * buffer, localIndex byte_size=-1)
   { 
-    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, or PartitionBase!"); 
+    GEOS_ERROR("You shouldn't be unpacking a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!");
+    return 0;
+  }
+
+  template <typename IndexType, typename WeightType>
+  static localIndex packed_size(const StencilCollection<IndexType, WeightType> & data)
+  {
+    GEOS_ERROR("You shouldn't be packing a StencilCollection!");
+    return 0;
+  }
+
+  template <typename IndexType, typename WeightType>
+  static void * pack(const StencilCollection<IndexType, WeightType> & data, localIndex & byte_size, void * buffer=nullptr)
+  {
+    GEOS_ERROR("You shouldn't be packing a StencilCollection!");
+    return 0;
+  }
+
+  template <typename IndexType, typename WeightType>
+  static localIndex unpack(StencilCollection<IndexType, WeightType> & data, const void * buffer, localIndex byte_size=-1)
+  {
+    GEOS_ERROR("You shouldn't be unpacking a StencilCollection!");
     return 0;
   }
 

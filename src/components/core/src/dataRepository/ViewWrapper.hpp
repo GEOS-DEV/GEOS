@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /**
  * @file ViewWrapper.hpp
  *
@@ -20,7 +28,6 @@
 
 #include "ViewWrapperBase.hpp"
 
-#include "CommBufferOps.hpp"
 #include "KeyNames.hpp"
 #include "common/integer_conversion.hpp"
 #include "common/DataTypes.hpp"
@@ -30,6 +37,7 @@
 
 #include "Macros.hpp"
 #include "Buffer.hpp"
+#include "BufferOps.hpp"
 #include "RestartFlags.hpp"
 
 #include "codingUtilities/GeosxTraits.hpp"
@@ -194,6 +202,17 @@ public:
     return static_cast< ViewWrapper<T>& >(base);
   }
 
+  static ViewWrapper<T> const & cast( ViewWrapperBase const & base )
+  {
+    if( base.get_typeid() != typeid(T) )
+    {
+#ifdef USE_ATK
+      GEOS_ERROR("invalid cast attempt");
+#endif
+    }
+    return static_cast< ViewWrapper<T> const & >(base);
+  }
+
 //  template< bool DO_PACKING >
 //  struct pack_wrapper
 //  {
@@ -311,8 +330,8 @@ public:
   {
     localIndex packedSize = 0;
 
-    packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
-    packedSize += CommBufferOps::Pack<true>( buffer, *m_data);
+    packedSize += bufferOps::Pack<true>( buffer, this->getName() );
+    packedSize += bufferOps::Pack<true>( buffer, *m_data);
 
     return packedSize;
   }
@@ -321,10 +340,10 @@ public:
   {
     localIndex packedSize = 0;
 
-    static_if( CommBufferOps::is_packable_by_index<T>::value )
+    static_if( bufferOps::is_packable_by_index<T>::value )
     {
-      packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
-      packedSize += CommBufferOps::Pack<true>( buffer, *m_data, packList);
+      packedSize += bufferOps::Pack<true>( buffer, this->getName() );
+      packedSize += bufferOps::Pack<true>( buffer, *m_data, packList);
     });
     return packedSize;
   }
@@ -334,8 +353,8 @@ public:
     char * buffer = nullptr;
     localIndex packedSize = 0;
 
-    packedSize += CommBufferOps::Pack<false>( buffer, this->getName() );
-    packedSize += CommBufferOps::Pack<false>( buffer, *m_data);
+    packedSize += bufferOps::Pack<false>( buffer, this->getName() );
+    packedSize += bufferOps::Pack<false>( buffer, *m_data);
 
     return packedSize;
   }
@@ -346,10 +365,10 @@ public:
     char * buffer = nullptr;
     localIndex packedSize = 0;
 
-    static_if( CommBufferOps::is_packable_by_index<T>::value )
+    static_if( bufferOps::is_packable_by_index<T>::value )
     {
-      packedSize += CommBufferOps::Pack<false>( buffer, this->getName() );
-      packedSize += CommBufferOps::Pack<false>( buffer, *m_data, packList);
+      packedSize += bufferOps::Pack<false>( buffer, this->getName() );
+      packedSize += bufferOps::Pack<false>( buffer, *m_data, packList);
     });
 
     return packedSize;
@@ -359,20 +378,20 @@ public:
   {
     localIndex unpackedSize = 0;
     string name;
-    unpackedSize += CommBufferOps::Unpack( buffer, name );
+    unpackedSize += bufferOps::Unpack( buffer, name );
     GEOS_ASSERT( name == this->getName(),"buffer unpack leads to viewWrapper names that don't match" )
-    unpackedSize += CommBufferOps::Unpack( buffer, *m_data );
+    unpackedSize += bufferOps::Unpack( buffer, *m_data );
     return unpackedSize;
   }
   virtual localIndex Unpack( char const *& buffer, localIndex_array const & unpackIndices ) override final
   {
     localIndex unpackedSize = 0;
-    static_if( CommBufferOps::is_packable_by_index<T>::value )
+    static_if( bufferOps::is_packable_by_index<T>::value )
     {
       string name;
-      unpackedSize += CommBufferOps::Unpack( buffer, name );
+      unpackedSize += bufferOps::Unpack( buffer, name );
       GEOS_ASSERT( name == this->getName(),"buffer unpack leads to viewWrapper names that don't match" )
-      unpackedSize += CommBufferOps::Unpack( buffer, *m_data, unpackIndices );
+      unpackedSize += bufferOps::Unpack( buffer, *m_data, unpackIndices );
     });
     return unpackedSize;
   }
@@ -908,6 +927,15 @@ public:
     return d_size / sizeof(T);
   }
 
+
+  virtual bool shouldRegisterDataPtr() const override
+  {
+    std::type_index type_index = std::type_index(elementTypeID());
+    axom::sidre::TypeID sidre_type_id = rtTypes::toSidreType(type_index);
+    return sidre_type_id != axom::sidre::TypeID::NO_TYPE_ID;
+  }
+
+
   
   void registerDataPtr(axom::sidre::View * view) const override
   {
@@ -1098,7 +1126,7 @@ public:
 
   void unregisterDataPtr(axom::sidre::View* view = nullptr) const
   {
-#ifdef ATK_FOUND
+#ifdef USE_ATK
     view = (view != nullptr) ? view : getSidreView();
     view->setExternalDataPtr(AXOM_NULLPTR);
 #endif

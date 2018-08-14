@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
  * Copyright (c) 2015, Lawrence Livermore National Security, LLC.
  * Produced at the Lawrence Livermore National Laboratory.
@@ -45,6 +53,12 @@ int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
 
+#ifdef USE_MPI
+  int rank;
+  MPI_Init(&argc,&argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+
   global_argc = argc;
   global_argv = new char*[static_cast<unsigned int>(global_argc)];
   for( int i=0 ; i<argc ; ++i )
@@ -53,7 +67,13 @@ int main(int argc, char** argv)
     std::cout<<argv[i]<<std::endl;
   }
 
-  return RUN_ALL_TESTS();
+  int const result = RUN_ALL_TESTS();
+
+#ifdef USE_MPI
+  MPI_Finalize();
+#endif
+
+  return result;
 }
 
 

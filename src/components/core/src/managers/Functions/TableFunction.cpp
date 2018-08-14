@@ -1,18 +1,23 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
-
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
- * TableFunction.cpp
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
- *  Created on: June 16, 2017
- *      Author: sherman
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+/**
+ * @file TableFunction.cpp
  */
 
 #include "TableFunction.hpp"
@@ -53,9 +58,7 @@ TableFunction::TableFunction( const std::string& name,
 {}
 
 TableFunction::~TableFunction()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 
 void TableFunction::FillDocumentationNode()
@@ -146,8 +149,6 @@ void TableFunction::FillDocumentationNode()
                               0 );
 }
 
-void TableFunction::BuildDataStructure( ManagedGroup * const domain )
-{}
 
 void TableFunction::InitializeFunction()
 {
@@ -164,7 +165,10 @@ void TableFunction::InitializeFunction()
     if (coordinates.size() == tableSize)
     {
       m_coordinates.push_back(coordinates);
-      m_values.insert(std::end(m_values), std::begin(tmpValues), std::end(tmpValues));
+      for (localIndex ii=0; ii<tmpValues.size(); ii++)
+      {
+        m_values.push_back(tmpValues[ii]);
+      }
       m_size.push_back(tableSize);
     }
   }

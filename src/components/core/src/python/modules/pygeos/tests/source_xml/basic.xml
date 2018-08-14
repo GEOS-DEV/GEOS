@@ -82,6 +82,17 @@
 		</Application>
 	</SolverApplications>
 
+  <Events maxTime="4.0">
+    <PeriodicEvent name="solverApplications"
+                   forceDt="0.002"
+                   target="/Solvers/solver1" />
+
+    <PeriodicEvent name="outputs"
+                   timeFrequency="0.1"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
+
   <ElementRegions>
   	<ElementRegion name="Region" elementtype="poly" >
           <LinearElasticMaterial ShearModulus="4.16667e9" Density="200000" BulkModulus="5.5556e9" />
@@ -108,9 +119,9 @@
              value="0.0, 0.0, 1.0, 1.0" />
   </Tables>
 
-
-  <Output writePlot="1" writeRestart="0" restart_interval="1e6" plot_interval="0.1" plotfile_root="plot" writeFEMFaces="1" writeFEMEdges="1"/>
-
+  <Outputs>
+    <Silo name="siloOutput" plotFileRoot="plot" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+  </Outputs>
 
 	<Nodesets>
     <Nodeset name="all" type="0" xmin="-1e6 -1e6 -1e6" xmax="1e6 1e6 1e6" />

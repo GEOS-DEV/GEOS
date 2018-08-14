@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
  * EpetraBlockSystem.hpp
  *
@@ -39,8 +47,17 @@ namespace geosx
 namespace systemSolverInterface
 {
 
+enum class BlockIDs
+{
+  dummyScalarBlock,
+  displacementBlock,
+  fluidPressureBlock,
+  temperatureBlock,
+  invalidBlock
+};
+
 static double ClearRow ( Epetra_FECrsMatrix * matrix,
-                         int const row,
+                         globalIndex const row,
                          const double factor )
 {
   long long int rowTmp = static_cast<long long int>(row);
@@ -84,14 +101,6 @@ class EpetraBlockSystem
 public:
   constexpr static int MAX_NUM_BLOCKS = 3;
   constexpr static int invalidIndex=-1;
-  enum class BlockIDs
-  {
-    dummyScalarBlock,
-    displacementBlock,
-    fluidPressureBlock,
-    temperatureBlock,
-    invalidBlock
-  };
 
   string BlockIDString( BlockIDs const id ) const
   {
@@ -119,6 +128,12 @@ public:
 
 
   EpetraBlockSystem();
+
+  EpetraBlockSystem( EpetraBlockSystem const & ) = delete;
+  EpetraBlockSystem( EpetraBlockSystem && ) = delete;
+  EpetraBlockSystem& operator=( EpetraBlockSystem const & ) = delete;
+  EpetraBlockSystem& operator=( EpetraBlockSystem && ) = delete;
+
 
   ~EpetraBlockSystem();
 
@@ -269,9 +284,22 @@ public:
     }
     return m_rhs[ index ].get();
   }
+  Epetra_FEVector const * GetResidualVector( int const index ) const
+  {
+    if( m_blockID[index]==BlockIDs::invalidBlock )
+    {
+      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n");
+    }
+    return m_rhs[ index ].get();
+  }
   Epetra_FEVector * GetResidualVector( const BlockIDs dofID )
   {
     int index = m_blockIndex[dofID];
+    return GetResidualVector(index);
+  }
+  Epetra_FEVector const * GetResidualVector( const BlockIDs dofID ) const
+  {
+    int index = m_blockIndex.at(dofID);
     return GetResidualVector(index);
   }
 
@@ -344,7 +372,7 @@ public:
   }
 
   double ClearSystemRow ( int const blockRow,
-                          int const rowIndex,
+                          globalIndex const rowIndex,
                           const double factor )
   {
     double LARGE = 0;
@@ -363,7 +391,7 @@ public:
   }
 
   double ClearSystemRow ( const BlockIDs rowDofID,
-                          int const rowIndex,
+                          globalIndex const rowIndex,
                           const double factor )
   {
     int rowBlockIndex = m_blockIndex[rowDofID];

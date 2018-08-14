@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /**
  * @file EdgeManagerT.h
  * @author settgast1
@@ -17,6 +25,7 @@
 #ifndef EDGEMANAGERT_H_
 #define EDGEMANAGERT_H_
 
+#include "InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
 
 
@@ -29,9 +38,25 @@ class CellBlockManager;
 class EdgeManager : public ObjectManagerBase
 {
 public:
+
+  /**
+    * @name Static Factory Catalog Functions
+    */
+   ///@{
+
+   static const string CatalogName()
+   { return "EdgeManager"; }
+
+   virtual const string getCatalogName() const override final
+   { return EdgeManager::CatalogName(); }
+
+
+   ///@}
+
+
   EdgeManager( std::string const & name,
                ManagedGroup * const parent );
-  ~EdgeManager();
+  ~EdgeManager() override;
 
 //  void Initialize() {}
 
@@ -41,7 +66,7 @@ public:
                                                          array<globalIndex_array>& objectToCompositionObject );
 
 
-  void BuildEdges( const FaceManager * const faceManager, const NodeManager * const nodeManager );
+  void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
   template< typename T_indices >
   unsigned int PackEdges( const T_indices& sendedges,
@@ -76,7 +101,7 @@ public:
 // vector)const;
 //  realT EdgeLength(const NodeManager& nodeManager, localIndex edge) const;
 
-  void AddToEdgeToFaceMap( const FaceManager& faceManager,
+  void AddToEdgeToFaceMap( const FaceManager * faceManager,
                            const localIndex_array& newFaceIndices );
 
   void SplitEdge( const localIndex indexToSplit,
@@ -89,11 +114,43 @@ public:
 //  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
 // nodeB, const NodeManager& nodeManager);
 
-  void SetLayersFromDomainBoundary(const NodeManager& nodeManager);
+//  void SetLayersFromDomainBoundary(const NodeManager * const nodeManager);
 
 
 //  FixedOneToManyRelation& m_toNodesRelation;
 //  UnorderedVariableOneToManyRelation& m_toFacesRelation;
+
+  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
+  {
+    static constexpr auto nodeListString              = "nodeList";
+    static constexpr auto faceListString              = "faceList";
+    static constexpr auto elementRegionListString     = "elemRegionList";
+    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
+    static constexpr auto elementListString           = "elemList";
+
+    dataRepository::ViewKey nodesList             = { nodeListString };
+    dataRepository::ViewKey faceList              = { faceListString };
+    dataRepository::ViewKey elementRegionList     = { elementRegionListString };
+    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
+    dataRepository::ViewKey elementList           = { elementListString };
+
+  } viewKeys;
+
+
+  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
+  {} groupKeys;
+
+
+  FixedOneToManyRelation       & nodeList()       { return m_toNodesRelation; }
+  FixedOneToManyRelation const & nodeList() const { return m_toNodesRelation; }
+
+  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+
+
+private:
+  FixedOneToManyRelation m_toNodesRelation;
+  UnorderedVariableOneToManyRelation m_toFacesRelation;
 
 };
 }

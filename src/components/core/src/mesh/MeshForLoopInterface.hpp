@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 #ifndef __GEOS_RAJA_WRAPPER__HPP
 #define __GEOS_RAJA_WRAPPER__HPP
 
@@ -35,11 +43,10 @@ void forall_in_range( localIndex const begin, const localIndex end, LAMBDA && bo
   } );
 }
 
-
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void forall_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
-  RAJA::TypedListSegment<localIndex> listSeg(indexList, len);
+  RAJA::TypedListSegment<localIndex> listSeg(indexList, len, RAJA::Unowned);
   RAJA::forall<POLICY>( listSeg , [=] (localIndex index) mutable -> void
   {
     body(index);
@@ -116,11 +123,11 @@ template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
     for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
@@ -135,11 +142,11 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
   
   for( auto const & region : elementRegions->GetSubGroups() )
     {
-    ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
@@ -150,29 +157,36 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 }
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
+void for_elems_in_subRegion( CellBlockSubRegion const * const subRegion, LAMBDA && body)
+{
+  forall_in_range<POLICY>(0,subRegion->size(), body);
+}
+
+template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems_by_constitutive( MeshLevel const * const mesh,
                                constitutive::ConstitutiveManager * const constitutiveManager,
                                FiniteElementSpaceManager const * const feSpaceManager,
                                LAMBDA && body )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
 
 
   for( auto const & regionPair : elementRegions->GetSubGroups() )
   {
-    ManagedGroup const * const elementRegion = regionPair.second;
-    auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+    dataRepository::ManagedGroup const * const elementRegion = regionPair.second;
+    auto const & numMethodName = elementRegion->getData<string>(dataRepository::keys::numericalMethod);
     FiniteElementSpace const * const feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
-    ManagedGroup const * const cellBlockSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+
       //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
-       multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
+      multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(dataRepository::keys::dNdX);
       
-      array_view<real64,2> const & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ).View();
+      array_view<real64,2> const & detJ            = cellBlock->getReference< Array2dT<real64> >(dataRepository::keys::detJ).View();
 
       auto const & constitutiveMap = cellBlock->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
 //      RAJA::View< localIndex const, RAJA::Layout<2> > constitutiveMapView( reinterpret_cast<localIndex const*>(constitutiveMap.second.data()),
@@ -244,8 +258,91 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
     void * constitutiveModelData\
     ) mutable -> void
 
-  
+
+
+
+template<class POLICY=elemPolicy,typename LAMBDA=void>
+void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> void
+      {
+        lambdaBody(er,esr,index);
+      };
+
+      forall_in_range<POLICY>(0, cellBlockSubRegion->size(), ebody);
+    }
+  }
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
+  RAJA::RangeSegment seg(begin, end);
+  RAJA::forall<EXEC_POLICY>( seg , [=] (localIndex index) mutable -> void
+  {
+    sum += body(index);
+  } );
+  return sum.get();
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
+{
+  RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
+  RAJA::TypedListSegment<localIndex> listSeg(indexList, len, RAJA::Unowned);
+  RAJA::forall<EXEC_POLICY>( listSeg , [=] (localIndex index) mutable -> void
+  {
+    sum += body(index);
+  } );
+  return sum.get();
+}
+
+template<class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+  real64 sum = 0.0;
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
+
+      sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
+    }
+  }
+
+  return sum;
 }
 
 
+}
+
+
+#define FOR_ELEMS_IN_SUBREGION( SUBREGION, INDEX )  \
+    for_elems_in_subRegion( SUBREGION, GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 #endif
+
+#define END_FOR );
+
+
+
