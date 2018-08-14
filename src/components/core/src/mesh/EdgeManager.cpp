@@ -723,34 +723,6 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const lSet& indices,
 //}
 
 
-void EdgeManager::ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-                                                                    array<globalIndex_array>& objectToCompositionObject )
-{
-//  compositionObjectManager.CheckObjectType(
-// ObjectDataStructureBaseT::NodeManager );
-
-  array<integer>& isDomainBoundary = this->getReference< array<integer> >(viewKeyStruct::domainBoundaryIndicatorString);
-
-  for( localIndex kf=0 ; kf<size() ; ++kf )
-  {
-    if( isDomainBoundary(kf) != 0 )
-    {
-      globalIndex_array temp;
-
-      for( lArray2d::size_type a=0 ; a<m_toNodesRelation.size(1) ; ++a )
-      {
-        const localIndex lnode = m_toNodesRelation(kf,a);
-        const globalIndex gnode = compositionObjectManager.m_localToGlobalMap(lnode);
-        temp.push_back( gnode );
-      }
-      std::sort( temp.begin(), temp.end() );
-      temp.insert( temp.begin(), this->m_localToGlobalMap[kf], this->m_localToGlobalMap[kf] );
-      objectToCompositionObject.push_back(temp);
-    }
-  }
-}
-
-
 void EdgeManager::AddToEdgeToFaceMap( const FaceManager * faceManager,
                                       const localIndex_array& newFaceIndices )
 {
