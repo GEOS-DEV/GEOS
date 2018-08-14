@@ -31,9 +31,8 @@ namespace constitutive
 
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
-{
-}
+  ManagedGroup( name, parent )
+{}
 
 ConstitutiveBase::~ConstitutiveBase()
 {}
@@ -72,7 +71,7 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * 
 
 void ConstitutiveBase::resize( localIndex newsize )
 {
-  ManagedGroup::resize(newsize);
+  ManagedGroup::resize( newsize );
 }
 
 
