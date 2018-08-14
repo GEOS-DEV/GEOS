@@ -43,6 +43,11 @@ MeshBlock::MeshBlock( string fileName,
 
 void MeshBlock::Load() {
     m_vtuFile.Load(m_vtuFileName,m_mesh);    
+    m_mesh.SetName(m_blockName);
+}
+
+DumbMesh const & MeshBlock::mesh() const {
+    return m_mesh;
 }
 
 void RankBlock::AddMeshBlock( const MeshBlock& block) {
@@ -115,6 +120,12 @@ void VtmFile::Load( string const &filename) {
                 static_cast< int >(m_rankBlocks.size()); ++p_index) {
             m_rankBlocks[p_index].Load();
         }
+    }
+}
+
+void VtmFile::FromVtmToGEOS(MeshLevel * const meshLevel) {
+    for( const auto & rankBlock : m_rankBlocks ) {
+        rankBlock.TransferRankBlockToGEOSMesh(meshLevel);
     }
 }
 
@@ -546,11 +557,11 @@ globalIndex DumbMesh::PolygonVertexIndex(globalIndex const polygonIndex,
     return m_polygonsConnectivity[m_polygonsPtr[polygonIndex] + local_corner_index];
 }
 
-std::vector<real64> DumbMesh::Vertex(globalIndex const vertexIndex) const {
+real64 const * DumbMesh::Vertex(globalIndex const vertexIndex) const {
     assert(vertexIndex < m_numVertices);
     std::vector<real64> vertex(m_vertices.begin()+3*vertexIndex,
             m_vertices.begin() + 3*vertexIndex+3);
-    return vertex;
+    return &(m_vertices[3*vertexIndex]);
 }
 
 globalIndex DumbMesh::GlobalPolygonIndex(globalIndex const polygonIndex) const {
@@ -665,38 +676,45 @@ void DumbMesh::Finish() {
     assert(static_cast<globalIndex>(m_quadIndexToPolygonIndex.size()) == m_numQuad);
 }
 
-void DumbMesh::TransferDumbMeshToGEOSMesh( MeshLevel * const meshLevel )
+string const & DumbMesh::Name() const {
+    return m_name;
+}
+
+void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 {
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
-  ElementRegionManager * const elemRegMananger = meshLevel->getElemManager();
+  for (auto& meshBlock : m_block) {
+      const auto & mesh = meshBlock.mesh();
+      if( mesh.NumPolygons() == 0 ) {
+          NodeManager * const nodeManager = meshLevel->getNodeManager();
+          ElementRegionManager * const elemRegMananger = meshLevel->getElemManager();
 
-  arrayView1d<R1Tensor> X = nodeManager->referencePosition();
+          arrayView1d<R1Tensor> X = nodeManager->referencePosition();
 
-  nodeManager->resize(NumVertices());
+          nodeManager->resize(mesh.NumVertices());
 
-  real64 const * const vertexData = m_vertices.data();
+          for( globalIndex a=0 ; a< mesh.NumVertices() ; ++a )
+          {
+              real64 * const tensorData = X[a].Data();
+              tensorData[0] = mesh.Vertex(a)[0];
+              tensorData[0] = mesh.Vertex(a)[1];
+              tensorData[0] = mesh.Vertex(a)[2];
+          }
 
-  for( localIndex a=0 ; a< NumVertices() ; ++a )
-  {
-    real64 * const tensorData = X[a].Data();
-    tensorData[0] = vertexData[3*a];
-    tensorData[1] = vertexData[3*a+1];
-    tensorData[2] = vertexData[3*a+2];
+          CellBlockSubRegion * const cellBlock =
+              elemRegMananger->GetRegion( mesh.Name() )->GetSubRegion(0);
+          lArray2d & cellToVertex = cellBlock->nodeList();
+          cellToVertex.resize( 0, mesh.NumVerticesInCell(0) );
+          cellBlock->resize( mesh.NumCells() );
+
+          for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
+          {
+              for( localIndex a=0 ; a< mesh.NumVerticesInCell(k) ; ++a )
+              {
+                  cellToVertex[k][a] = mesh.CellVertexIndex(k,a);
+              }
+          }
+      }
   }
-
-  CellBlockSubRegion * const cellBlock = elemRegMananger->GetRegion( m_name )->GetSubRegion(0);
-  lArray2d & cellToVertex = cellBlock->nodeList();
-  cellToVertex.resize( 0, NumVerticesInCell(0) );
-  cellBlock->resize( NumCells() );
-
-  for( localIndex k=0 ; k<NumCells() ; ++k )
-  {
-    for( localIndex a=0 ; a<NumVerticesInCell(0) ; ++a )
-    {
-      cellToVertex[k][a] = CellVertexIndex(k,a);
-    }
-  }
-
 }
 
 }

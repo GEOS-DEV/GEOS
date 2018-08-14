@@ -168,7 +168,7 @@ class DumbMesh {
          * @param[in] vertexIndex vertex index on this mesh part
          * @return a pointer to the first coordinate (X)
          */
-        std::vector< real64 > Vertex(globalIndex const vertexIndex) const;
+        real64 const * Vertex(globalIndex const vertexIndex) const;
 
         /*!
          * @brief return the global index of a cell in the full mesh
@@ -183,6 +183,8 @@ class DumbMesh {
          * @return the polygon index in the full mesh
          */
         globalIndex GlobalPolygonIndex(globalIndex const polygonIndex) const;
+
+        string const & Name() const;
 
         /////////////////////
         /// MESH BUILDERS ///
@@ -249,7 +251,6 @@ class DumbMesh {
 
         void Finish();
 
-        void TransferDumbMeshToGEOSMesh( MeshLevel * const meshLevel );
     private:
         /// Number of vertices
         globalIndex m_numVertices{0};
@@ -369,6 +370,7 @@ class VtuFile {
          */
         void LoadMesh(pugi::xml_document const & pvtuDoc, DumbMesh& mesh);
 
+
         /*!
          * @brief split a "big" string contained in a DataArray node of a vtu file
          * @details memory should be reserved for the vector of string
@@ -386,6 +388,7 @@ class MeshBlock {
         MeshBlock( string fileName,
                 string blockName);
         void Load();
+        DumbMesh const & mesh() const;
     private:
         string m_vtuFileName;
         string m_blockName;
@@ -397,6 +400,7 @@ class RankBlock {
     public:
         void AddMeshBlock( const MeshBlock& block);
         void Load();
+        void TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const;
     private:
         std::vector< MeshBlock > m_block;
 };
@@ -414,7 +418,7 @@ class VtmFile {
          */
          void Load( string const & fileName);
 
-         void FromVtmToGEOS();
+         void FromVtmToGEOS(MeshLevel * const meshLevel);
 
     protected:
         /*!
