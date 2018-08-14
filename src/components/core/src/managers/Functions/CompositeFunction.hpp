@@ -1,18 +1,23 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
-
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
- * CompositeFunction.hpp
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
- *  Created on: August 18, 2017
- *      Author: sherman
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+/**
+ * @file CompositeFunction.hpp
  */
 
 #ifndef COMPOSITEFUNCTION_HPP_
@@ -24,25 +29,46 @@
 namespace geosx
 {
 
-
+/**
+ * @class CompositeFunction
+ *
+ * An interface for combinined functions
+ */
 class CompositeFunction : public FunctionBase
 {
 public:
+  /// Main constructor
   CompositeFunction( const std::string& name,
                      dataRepository::ManagedGroup * const parent );
 
+  /// Destructor
   virtual ~CompositeFunction() override;
-  static string CatalogName() { return "CompositeFunction"; }
-  virtual void FillDocumentationNode() override;
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
 
+  /// Catalog name interface
+  static string CatalogName() { return "CompositeFunction"; }
+  
+  /// Documentation assignment
+  virtual void FillDocumentationNode() override;
+  
+  /// Function initialization
   virtual void InitializeFunction() override;
 
+  /**
+   * @brief Method to evaluate a function on a target object
+   * @param group a pointer to the object holding the function arguments
+   * @param time current time
+   * @param set the subset of nodes to apply the function to
+   * @param result an array to hold the results of the function
+   */
   virtual void Evaluate( dataRepository::ManagedGroup const * const group,
                          real64 const time,
                          lSet const & sets,
                          real64_array & result ) const override final;
 
+  /**
+   * @brief Method to evaluate a function
+   * @param input a scalar input
+   */
   virtual real64 Evaluate( real64 const * const input) const override final;
 
 private:

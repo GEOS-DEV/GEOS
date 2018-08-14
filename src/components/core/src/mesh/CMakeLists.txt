@@ -3,15 +3,19 @@
 # Specify all headers
 #
 set(mesh_headers
+    BufferOps.hpp
     CellBlockManager.hpp
     CellBlock.hpp
     CellBlockSubRegion.hpp
-    FaceManager.hpp
-    NodeManager.hpp
+    EdgeManager.hpp
     ElementRegion.hpp
     ElementRegionManager.hpp
+    FaceManager.hpp
+    InterObjectRelation.hpp
     MeshBody.hpp
-    MeshLevel.hpp    
+    MeshLevel.hpp
+    NodeManager.hpp
+    ToElementRelation.hpp
   )
 
 
@@ -19,15 +23,18 @@ set(mesh_headers
 # Specify all sources
 #
 set(mesh_sources
+    BufferOps.cpp
     CellBlockManager.cpp
     CellBlock.cpp
     CellBlockSubRegion.cpp
-    FaceManager.cpp
-    NodeManager.cpp
+    EdgeManager.cpp
     ElementRegion.cpp
     ElementRegionManager.cpp
+    FaceManager.cpp
     MeshBody.cpp
     MeshLevel.cpp    
+    NodeManager.cpp
+    ToElementRelation.cpp
    )
 
 blt_add_library( NAME                  mesh

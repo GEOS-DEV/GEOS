@@ -1,18 +1,23 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
-
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
- * ObjectManagerBase.hpp
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
- *  Created on: Sep 15, 2016
- *      Author: settgast1
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+/**
+ * @file ObjectManagerBase.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
@@ -33,7 +38,11 @@ string const sets("Sets");
 }
 
 
-
+/**
+ * @class ObjectManagerBase
+ * @brief The ObjectManagerBase is the base object of all object managers in the mesh data hierachy.
+ *
+ */
 class ObjectManagerBase : public dataRepository::ManagedGroup
 {
 public:
@@ -299,6 +308,11 @@ public:
 
   //**********************************************************************************************************************
 
+  /**
+   * @brief struct to serve as a container for variable strings and keys
+   * @struct viewKeyStruct
+   *
+   */
   struct viewKeyStruct
   {
 
@@ -324,6 +338,11 @@ public:
   } m_ObjectManagerBaseViewKeys;
 
 
+  /**
+   * @brief struct to serve as a container for group strings and keys
+   * @struct viewKeyStruct
+   *
+   */
   struct groupKeyStruct
   {
     static constexpr auto setsString = "sets";
@@ -340,11 +359,11 @@ public:
   virtual groupKeyStruct const & groupKeys() const { return m_ObjectManagerBaseGroupKeys; }
 
 
-  dataRepository::view_rtype<integer_array> GhostRank()
-  { return this->getData<integer_array>(m_ObjectManagerBaseViewKeys.ghostRank); }
+  integer_array & GhostRank()
+  { return this->m_ghostRank; }
 
-  dataRepository::view_rtype_const<integer_array> GhostRank() const
-  { return this->getData<integer_array>(m_ObjectManagerBaseViewKeys.ghostRank); }
+  integer_array const & GhostRank() const
+  { return this->m_ghostRank; }
 
 
 

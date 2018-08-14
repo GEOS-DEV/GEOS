@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /**
  * @file FaceManager.cpp
  * @author settgast1
@@ -16,6 +24,7 @@
 #include "FaceManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "NodeManager.hpp"
+#include "BufferOps.hpp"
 
 namespace geosx
 {
@@ -29,12 +38,26 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
   ObjectManagerBase("FaceManager",parent)
 {
 
-  this->RegisterViewWrapper(viewKeys.nodeList.Key(), &m_nodeList, false );
+  this->RegisterViewWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
+  this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
 //  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
-  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementRegionList.Key())->reference().resize(0,2);
-  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementSubRegionList.Key())->reference().resize(0,2);
-  this->RegisterViewWrapper< Array2dT<localIndex> >(viewKeys.elementList.Key())->reference().resize(0,2);
+  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
+                             &(elementRegionList()),
+                             false );
+
+  this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
+                             &(elementSubRegionList()),
+                             false );
+
+  this->RegisterViewWrapper( viewKeyStruct::elementListString,
+                             &(elementList()),
+                             false );
+
+  this->RegisterViewWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
+
+  m_toElements.resize(0,2);
+
   //0-based; note that the following field is ALSO 0
   //for faces that are not external faces, so check isExternal before using
 //  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
@@ -93,6 +116,8 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   Array2dT<localIndex> & elemSubRegionList = this->elementSubRegionList();
   Array2dT<localIndex> & elemList = this->elementList();
 
+  m_toElements.setElementRegionManager( elementManager );
+
   elemRegionList.resize( 4*nodeManager->size() );
   elemSubRegionList.resize( 4*nodeManager->size() );
   elemList.resize( 4*nodeManager->size() );
@@ -116,6 +141,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
         {
           // get the nodes associated with the local face
           subRegion->GetFaceNodes( ke, kelf, tempNodeList );
+          FixedOneToManyRelation & elemsToFaces = subRegion->faceList();
 
           //Special treatment for the triangle faces of prisms.
           if (tempNodeList[tempNodeList.size()-1] == std::numeric_limits<localIndex>::max())
@@ -197,7 +223,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
                     // add the face to the elementToFaceMap for the element
                     // region.
-                    subRegion->m_toFacesRelation(ke,kelf) = *existingFaceIndex;
+                    elemsToFaces(ke,kelf) = *existingFaceIndex;
 
                     // now remove the entry from the face that we were checking
                     // against from the facesByLowestNode list...
@@ -283,13 +309,13 @@ void FaceManager::AddNewFace( localIndex const & kReg,
                               array<localIndex_array>& facesByLowestNode,
                               localIndex_array& tempNodeList,
                               array<localIndex_array>& tempFaceToNodeMap,
-                              CellBlockSubRegion const & elementRegion )
+                              CellBlockSubRegion & elementRegion )
 {
   // and add the face to facesByLowestNode[]
   facesByLowestNode[tempNodeList[0]].push_back(numFaces);
 
   // add the face to the elementToFaceMap
-  elementRegion.m_toFacesRelation(ke,kelf) = numFaces;
+  elementRegion.faceList()(ke,kelf) = numFaces;
 
   // add the nodes to the faceToNodeMap
   tempFaceToNodeMap.push_back(tempNodeList);
@@ -299,20 +325,21 @@ void FaceManager::AddNewFace( localIndex const & kReg,
 //  tempFaceToElemEntry.push_back( std::pair<ElementRegionT*, localIndex>(
 // const_cast<ElementRegionT*>(&elementRegion), ke) );
 //  m_toElementsRelation.push_back(tempFaceToElemEntry);
+  auto & toElementRegionList = elementRegionList();
+  auto & toElementSubRegionList = elementSubRegionList();
+  auto & toElementList = elementList();
 
-
-
-  if( elementRegionList()[numFaces][0] == -1 )
+  if( toElementRegionList[numFaces][0] == -1 )
   {
-    elementRegionList()[numFaces][0]    = kReg;
-    elementSubRegionList()[numFaces][0] = kSubReg;
-    elementList()[numFaces][0]          = ke;
+    toElementRegionList[numFaces][0]    = kReg;
+    toElementSubRegionList[numFaces][0] = kSubReg;
+    toElementList[numFaces][0]          = ke;
   }
   else
   {
-    elementRegionList()[numFaces][1]    = kReg;
-    elementSubRegionList()[numFaces][1] = kSubReg;
-    elementList()[numFaces][1]          = ke;
+    toElementRegionList[numFaces][1]    = kReg;
+    toElementSubRegionList[numFaces][1] = kSubReg;
+    toElementList[numFaces][1]          = ke;
   }
 
   // now increment numFaces to reflect the number of faces rather than the index
@@ -429,7 +456,7 @@ void FaceManager::SortFaceNodes( NodeManager const & nodeManager,
   const localIndex firstNodeIndex = faceNodes[0];
   const localIndex numFaceNodes = faceNodes.size();
 
-  view_rtype_const<r1_array> const & X = nodeManager.referencePosition();
+  r1_array const & X = nodeManager.referencePosition();
 
   // get face center (average vertex location) and store node coordinates
   array<R1Tensor> faceCoords(numFaceNodes);
@@ -617,12 +644,26 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 {
   localIndex packedSize = 0;
 
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
-  packedSize += CommBufferOps::Pack<DOPACK>( buffer,
-                                           m_nodeList,
-                                           packList,
-                                           this->m_localToGlobalMap,
-                                           m_nodeList.RelatedObjectLocalToGlobal() );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                             m_nodeList,
+                                             packList,
+                                             this->m_localToGlobalMap,
+                                             m_nodeList.RelatedObjectLocalToGlobal() );
+
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                             m_edgeList,
+                                             packList,
+                                             this->m_localToGlobalMap,
+                                             m_edgeList.RelatedObjectLocalToGlobal() );
+
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                         this->m_toElements,
+                                         packList,
+                                         m_toElements.getElementRegionManager() );
+
 
   return packedSize;
 }
@@ -635,14 +676,36 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   localIndex unPackedSize = 0;
 
   string nodeListString;
-  unPackedSize += CommBufferOps::Unpack( buffer, nodeListString );
+  unPackedSize += bufferOps::Unpack( buffer, nodeListString );
   GEOS_ASSERT( nodeListString==viewKeyStruct::nodeListString, "")
 
-  unPackedSize += CommBufferOps::Unpack( buffer,
+  unPackedSize += bufferOps::Unpack( buffer,
                                          m_nodeList,
                                          packList,
                                          this->m_globalToLocalMap,
                                          m_nodeList.RelatedObjectGlobalToLocal() );
+
+  string edgeListString;
+  unPackedSize += bufferOps::Unpack( buffer, edgeListString );
+  GEOS_ASSERT( edgeListString==viewKeyStruct::edgeListString, "")
+
+  unPackedSize += bufferOps::Unpack( buffer,
+                                         m_edgeList,
+                                         packList,
+                                         this->m_globalToLocalMap,
+                                         m_edgeList.RelatedObjectGlobalToLocal() );
+
+
+  string elementListString;
+  unPackedSize += bufferOps::Unpack( buffer, elementListString );
+  GEOS_ASSERT( elementListString==viewKeyStruct::elementListString, "")
+
+  unPackedSize += bufferOps::Unpack( buffer,
+                                     m_toElements,
+                                     packList,
+                                     m_toElements.getElementRegionManager() );
+
+
 
   return unPackedSize;
 }

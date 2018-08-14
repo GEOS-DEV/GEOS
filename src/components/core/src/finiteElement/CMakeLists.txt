@@ -1,9 +1,8 @@
 #
 # Specify all headers
 #
-set( finiteElement_sources
+set( finiteElement_headers
      FiniteElementSpace.hpp
-     FiniteElementManager.hpp
      ElementLibrary/FiniteElement.h
      ElementLibrary/FiniteElementBase.h
      Kinematics.h
@@ -21,7 +20,6 @@ set( finiteElement_sources
 #
 set( finiteElement_sources
      FiniteElementSpace.cpp
-     FiniteElementManager.cpp
      ElementLibrary/FiniteElement.cpp
      ElementLibrary/FiniteElementBase.cpp
      Kinematics.cpp
@@ -41,5 +39,5 @@ blt_add_library( NAME                  finiteElement
                  DEPENDS_ON            dataRepository codingUtilities
                )
                
-target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
-geosx_add_code_checks(PREFIX finiteElement )
+target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src )
+geosx_add_code_checks( PREFIX finiteElement )

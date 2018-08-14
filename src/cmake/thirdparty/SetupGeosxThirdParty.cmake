@@ -6,12 +6,26 @@ message("\nProcessing SetupGeosxThirdParty.cmake")
 ####################################
 include(ExternalProject)
 
+
+message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
+if( NOT GEOSX_TPL_DIR )
+    message("GEOSX_TPL_ROOT_DIR=${GEOSX_TPL_ROOT_DIR}")
+    get_filename_component( TEMP_DIR "${CMAKE_INSTALL_PREFIX}" NAME)
+    string(REGEX REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
+    set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR2}" )
+endif()
+message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
+
+set(ATK_DIR "${GEOSX_TPL_DIR}/axom" CACHE PATH "")
+set(CONDUIT_DIR "${GEOSX_TPL_DIR}/conduit" CACHE PATH "")
+
 set( thirdPartyLibs "")
+
 
 ################################
 # Conduit
 ################################
-if (CONDUIT_DIR)
+if (EXISTS ${CONDUIT_DIR})
   message( "CONDUIT_DIR = ${CONDUIT_DIR}" )
   include(cmake/thirdparty/FindConduit.cmake)
   blt_register_library( NAME conduit
@@ -30,14 +44,16 @@ if (CONDUIT_DIR)
                         TREAT_INCLUDES_AS_SYSTEM ON )
                         
   set( thirdPartyLibs ${thirdPartyLibs} conduit conduit_blueprint conduit_relay )
-  
+
+else()
+  message( "Not using conduit" )
 endif()
 
 
 ################################
 # AXOM
 ################################
-if (ATK_DIR)
+if (EXISTS ${ATK_DIR})
   message( "ATK_DIR = ${ATK_DIR}" )
   include(cmake/thirdparty/FindATK.cmake)
   blt_register_library( NAME sidre
@@ -45,29 +61,15 @@ if (ATK_DIR)
                         LIBRARIES  sidre
                         TREAT_INCLUDES_AS_SYSTEM ON )
 
-  blt_register_library( NAME spio
-                        INCLUDES ${ATK_INCLUDE_DIRS} 
-                        LIBRARIES  spio
-                        TREAT_INCLUDES_AS_SYSTEM ON)
-
   blt_register_library( NAME slic
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  slic
                         TREAT_INCLUDES_AS_SYSTEM ON)
                         
-  set( thirdPartyLibs ${thirdPartyLibs} sidre spio slic )  
+  set( thirdPartyLibs ${thirdPartyLibs} sidre slic )
+else()
+  message( "Not using axom" )
 endif()
-
-
-message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
-if( NOT GEOSX_TPL_DIR )
-    message("GEOSX_TPL_ROOT_DIR=${GEOSX_TPL_ROOT_DIR}")
-    get_filename_component( TEMP_DIR "${CMAKE_INSTALL_PREFIX}" NAME)
-    string(REGEX REPLACE "debug" "release" TEMP_DIR2 ${TEMP_DIR})
-    set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/${TEMP_DIR2}" )
-    #set( GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/install-darwin-gcc7-release")
-endif()
-message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
 
 set(UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" FORCE )
@@ -87,7 +89,7 @@ if (HDF5_DIR)
   include(cmake/thirdparty/FindHDF5.cmake)
   blt_register_library(NAME hdf5
                        INCLUDES ${HDF5_INCLUDE_DIRS}
-                       LIBRARIES ${HDF5_LIBRARIES} 
+                       LIBRARIES ${HDF5_LIBRARIES} dl
                        TREAT_INCLUDES_AS_SYSTEM ON )
                        
   set( thirdPartyLibs ${thirdPartyLibs} hdf5 )
@@ -147,6 +149,7 @@ set( thirdPartyLibs ${thirdPartyLibs} raja )
 ################################
 if( EXISTS ${CHAI_DIR})
     message("Using system CHAI found at ${CHAI_DIR}")
+    set(CHAI_FOUND TRUE)
 else()
     message(INFO ": Using CHAI from thirdPartyLibs")
     set(CHAI_DIR ${GEOSX_TPL_DIR}/chai)
@@ -156,6 +159,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
 if (NOT CHAI_FOUND)
     message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
 endif()    
+
 blt_register_library( NAME chai
                       INCLUDES ${CHAI_INCLUDE_DIRS}
                       LIBRARIES ${CHAI_LIBRARY}
@@ -402,9 +406,9 @@ set( thirdPartyLibs ${thirdPartyLibs} trilinos )
 
 
 
-if (UNCRUSTIFY_EXECUTABLE)
-  include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
-endif()
+#if (UNCRUSTIFY_EXECUTABLE)
+#  include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
+#endif()
 message("UNCRUSTIFY_FOUND = ${UNCRUSTIFY_FOUND}")
 if(UNCRUSTIFY_FOUND)
     # targets for verifying formatting

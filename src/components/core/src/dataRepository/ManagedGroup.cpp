@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
  * DataObjectManager.cpp
  *
@@ -196,8 +204,10 @@ void ManagedGroup::RegisterDocumentationNodes()
 
       ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
                                                           typeID );
+
       view->setSizedFromParent( subNode.second.m_managedByParent);
       view->setRestartFlags( subNode.second.getRestartFlags() );
+      view->setPlotLevel( subNode.second.getVerbosity() );
       subNode.second.m_isRegistered = 1;
 
       string defVal = subNode.second.getDefault();
@@ -367,9 +377,7 @@ void ManagedGroup::InitializationOrder( string_array & order )
 void ManagedGroup::Initialize( ManagedGroup * const group )
 {
   static localIndex indent = 0;
-//  std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on
-// "<<this->getName()<<" of type
-// "<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
+ // std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on"<<this->getName()<<" of type"<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
 
   InitializePreSubGroups(group);
 
@@ -392,20 +400,30 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   InitializePostSubGroups(group);
 }
 
+void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
+{
+  FinalInitialization(rootGroup);
+  for( auto&& subGroup : m_subGroups )
+  {
+    subGroup.second->FinalInitializationRecursive(rootGroup);
+  }
+}
+
+
 localIndex ManagedGroup::PackSize( array<string> const & wrapperNames,
                             localIndex_array const & packList,
                             integer const recursive ) const
 {
   localIndex packedSize = 0;
-  packedSize += CommBufferOps::PackSize(this->getName());
+  packedSize += bufferOps::PackSize(this->getName());
 
-  packedSize += CommBufferOps::PackSize( string("Wrappers"));
+  packedSize += bufferOps::PackSize( string("Wrappers"));
   if( wrapperNames.size()==0 )
   {
-    packedSize += CommBufferOps::PackSize( static_cast<int>(m_wrappers.size()) );
+    packedSize += bufferOps::PackSize( static_cast<int>(m_wrappers.size()) );
     for( auto const & wrapperPair : this->m_wrappers )
     {
-      packedSize += CommBufferOps::PackSize( wrapperPair.first );
+      packedSize += bufferOps::PackSize( wrapperPair.first );
       if( packList.empty() )
       {
         packedSize += wrapperPair.second->PackSize();
@@ -418,11 +436,11 @@ localIndex ManagedGroup::PackSize( array<string> const & wrapperNames,
   }
   else
   {
-    packedSize += CommBufferOps::PackSize( static_cast<int>(wrapperNames.size()) );
+    packedSize += bufferOps::PackSize( static_cast<int>(wrapperNames.size()) );
     for( auto const & wrapperName : wrapperNames )
     {
       ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-      packedSize += CommBufferOps::PackSize( wrapperName );
+      packedSize += bufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
         packedSize += wrapper->PackSize();
@@ -435,11 +453,11 @@ localIndex ManagedGroup::PackSize( array<string> const & wrapperNames,
   }
   if( recursive > 0 )
   {
-    packedSize += CommBufferOps::PackSize( string("SubGroups"));
-    packedSize += CommBufferOps::PackSize( m_subGroups.size() );
+    packedSize += bufferOps::PackSize( string("SubGroups"));
+    packedSize += bufferOps::PackSize( m_subGroups.size() );
     for( auto const & keyGroupPair : this->m_subGroups )
     {
-      packedSize += CommBufferOps::PackSize( keyGroupPair.first );
+      packedSize += bufferOps::PackSize( keyGroupPair.first );
       packedSize += keyGroupPair.second->PackSize( wrapperNames, packList, recursive );
     }
   }
@@ -462,15 +480,15 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
                                integer const recursive ) const
 {
   localIndex packedSize = 0;
-  packedSize += CommBufferOps::Pack<true>( buffer, this->getName() );
+  packedSize += bufferOps::Pack<true>( buffer, this->getName() );
 
-  packedSize += CommBufferOps::Pack<true>( buffer, string("Wrappers") );
+  packedSize += bufferOps::Pack<true>( buffer, string("Wrappers") );
   if( wrapperNames.size()==0 )
   {
-    packedSize += CommBufferOps::Pack<true>( buffer, m_wrappers.size() );
+    packedSize += bufferOps::Pack<true>( buffer, m_wrappers.size() );
     for( auto const & wrapperPair : this->m_wrappers )
     {
-      packedSize += CommBufferOps::Pack<true>( buffer, wrapperPair.first );
+      packedSize += bufferOps::Pack<true>( buffer, wrapperPair.first );
       if( packList.empty() )
       {
         packedSize += wrapperPair.second->Pack( buffer );
@@ -483,11 +501,11 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
   }
   else
   {
-    packedSize += CommBufferOps::Pack<true>( buffer, wrapperNames.size() );
+    packedSize += bufferOps::Pack<true>( buffer, wrapperNames.size() );
     for( auto const & wrapperName : wrapperNames )
     {
       ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-      packedSize += CommBufferOps::Pack<true>( buffer, wrapperName );
+      packedSize += bufferOps::Pack<true>( buffer, wrapperName );
       if( packList.empty() )
       {
         packedSize += wrapper->Pack( buffer );
@@ -502,11 +520,11 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
 
   if( recursive > 0 )
   {
-    packedSize += CommBufferOps::Pack<true>( buffer, string("SubGroups") );
-    packedSize += CommBufferOps::Pack<true>( buffer, m_subGroups.size() );
+    packedSize += bufferOps::Pack<true>( buffer, string("SubGroups") );
+    packedSize += bufferOps::Pack<true>( buffer, m_subGroups.size() );
     for( auto const & keyGroupPair : this->m_subGroups )
     {
-      packedSize += CommBufferOps::Pack<true>( buffer, keyGroupPair.first );
+      packedSize += bufferOps::Pack<true>( buffer, keyGroupPair.first );
       packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
     }
   }
@@ -528,19 +546,19 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
 {
   localIndex unpackedSize = 0;
   string groupName;
-  unpackedSize += CommBufferOps::Unpack( buffer, groupName );
+  unpackedSize += bufferOps::Unpack( buffer, groupName );
   GEOS_ASSERT( groupName==this->getName(), "ManagedGroup::Unpack(): group names do not match")
 
   string wrappersLabel;
-  unpackedSize += CommBufferOps::Unpack( buffer, wrappersLabel);
+  unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
   GEOS_ASSERT( wrappersLabel=="Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect")
 
   localIndex numWrappers;
-  unpackedSize += CommBufferOps::Unpack( buffer, numWrappers);
+  unpackedSize += bufferOps::Unpack( buffer, numWrappers);
   for( localIndex a=0 ; a<numWrappers ; ++a )
   {
     string wrapperName;
-    unpackedSize += CommBufferOps::Unpack( buffer, wrapperName );
+    unpackedSize += bufferOps::Unpack( buffer, wrapperName );
     ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
     wrapper->Unpack(buffer,packList);
   }
@@ -549,17 +567,17 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
   if( recursive > 0 )
   {
     string subGroups;
-    unpackedSize += CommBufferOps::Unpack( buffer, subGroups );
+    unpackedSize += bufferOps::Unpack( buffer, subGroups );
     GEOS_ASSERT( subGroups=="SubGroups", "ManagedGroup::Unpack(): group names do not match")
 
     decltype( m_subGroups.size()) numSubGroups;
-    unpackedSize += CommBufferOps::Unpack( buffer, numSubGroups );
+    unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
     GEOS_ASSERT( numSubGroups==m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups")
 
     for( auto const & index : this->m_subGroups )
     {
       string subGroupName;
-      unpackedSize += CommBufferOps::Unpack( buffer, subGroupName );
+      unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive);
     }
   }

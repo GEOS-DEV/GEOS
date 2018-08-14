@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /**
  * @file ElementManagerT.h
  * @author Randolph Settgast
@@ -18,9 +26,6 @@
 #define ELEMENTOBJECTT_H_
 
 #include "managers/ObjectManagerBase.hpp"
-#include "legacy/ObjectManagers/EnergyT.h"
-//#include "common/InterObjectRelation.hpp"
-//#include "legacy/ArrayT/bufvector.h"
 #include "FaceManager.hpp"
 
 
@@ -105,13 +110,20 @@ public:
 
     static constexpr auto numNodesPerElementString     = "numNodesPerElement";
     static constexpr auto nodeListString               = "nodeList";
+    static constexpr auto numEdgesPerElementString     = "numEdgesPerElement";
+    static constexpr auto edgeListString               = "edgeList";
     static constexpr auto numFacesPerElementString     = "numFacesPerElement";
     static constexpr auto faceListString               = "faceList";
+    static constexpr auto elementCenterString          = "elementCenter";
+    static constexpr auto elementVolumeString          = "elementVolume";
 
     dataRepository::ViewKey numNodesPerElement = { numNodesPerElementString };
     dataRepository::ViewKey nodeList           = { nodeListString };
+    dataRepository::ViewKey numEdgesPerElement = { numEdgesPerElementString };
+    dataRepository::ViewKey edgeList           = { edgeListString };
     dataRepository::ViewKey numFacesPerElement = { numFacesPerElementString };
     dataRepository::ViewKey faceList           = { faceListString };
+    dataRepository::ViewKey elementCenter      = { elementCenterString };
   } m_CellBlockViewKeys;
 
 //  class groupKeyStruct
@@ -130,15 +142,34 @@ public:
 
   localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
   localIndex       & numNodesPerElement()       { return m_numNodesPerElement; }
+  localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
+  localIndex       & numEdgesPerElement()       { return m_numEdgesPerElement; }
   localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
   localIndex       & numFacesPerElement()       { return m_numFacesPerElement; }
 
+  FixedOneToManyRelation & nodeList()                    { return m_toNodesRelation; }
+  FixedOneToManyRelation const & nodeList() const        { return m_toNodesRelation; }
+
+  FixedOneToManyRelation       & edgeList()       { return m_toEdgesRelation; }
+  FixedOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
+
+  FixedOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+
+
 //protected:
 
-  FixedOneToManyRelation  m_toNodesRelation;
-  FixedOneToManyRelation  m_toFacesRelation;
+private:
   localIndex m_numNodesPerElement;
+  localIndex m_numEdgesPerElement;
   localIndex m_numFacesPerElement;
+  FixedOneToManyRelation  m_toNodesRelation;
+  FixedOneToManyRelation  m_toEdgesRelation;
+  FixedOneToManyRelation  m_toFacesRelation;
+
+  array< R1Tensor > m_elementCenter;
+  array< real64 > m_elementVolume;
+
 
   CellBlock& operator=(const CellBlock& rhs);
 //  string & m_elementType;

@@ -12,11 +12,9 @@ wget -q --no-check-certificate http://releases.llvm.org/5.0.2/${llvmtar}${tarext
 sudo apt-get --assume-yes install openmpi-bin libopenmpi-dev
 git clone https://github.com/GEOSX/thirdPartyLibs.git
 cd thirdPartyLibs
-git submodule init
-git submodule update
+git submodule update --init --recursive
 python scripts/config-build.py -hc host-configs/default.cmake -bt Release
 cd build-default-release
-make hdf5
 make
 cd ..
 git submodule deinit .

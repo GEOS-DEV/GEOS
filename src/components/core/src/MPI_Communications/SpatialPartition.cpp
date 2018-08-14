@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /**
  * @file SpatialPartition.cpp
  * @author settgast1
@@ -15,6 +23,8 @@
  */
 
 #include "SpatialPartition.hpp"
+
+#include "codingUtilities/Utilities.hpp"
 
 //#include "Common/intrinsic_typedefs.h"
 #include <cmath>
@@ -1117,10 +1127,11 @@ void SpatialPartition::AddNeighbors(const unsigned int idim,
     }
     if (!me)
     {
-      m_neighbors.push_back(NeighborCommunication());
+      m_neighbors.push_back(NeighborCommunicator());
       int rank;
       MPI_Cart_rank(cartcomm, ncoords, &rank);
-      m_neighbors.back().Initialize( rank, this->m_rank, this->m_size );
+      m_neighbors.back().SetNeighborRank( rank );
+//      m_neighbors.back().Initialize( rank, this->m_rank, this->m_size );
 
 //      array<int> nbrcoords(nsdof);
 //      for(unsigned int i =0; i < nsdof; ++i) nbrcoords[i] = ncoords[i];
@@ -1159,8 +1170,10 @@ void SpatialPartition::AddNeighborsMetis(gSet& neighborList)
   gSet::iterator itNeighbor = neighborList.begin();
   for ( ; itNeighbor != neighborList.end() ; itNeighbor++)
   {
-    m_neighbors.push_back(NeighborCommunication());
-    m_neighbors.back().Initialize( integer_conversion<int>(*itNeighbor), this->m_rank, this->m_size );
+    m_neighbors.push_back(NeighborCommunicator());
+    m_neighbors.back().SetNeighborRank( integer_conversion<int>(*itNeighbor) );
+
+//    m_neighbors.back().Initialize( integer_conversion<int>(*itNeighbor), this->m_rank, this->m_size );
   }
 }
 

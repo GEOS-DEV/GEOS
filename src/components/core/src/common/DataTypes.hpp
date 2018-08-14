@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
  * DataTypes.hpp
  *
@@ -81,7 +89,7 @@ namespace geosx
 using size_t      = std::size_t;
 using integer     = std::int32_t;
 using localIndex  = std::int_fast32_t;
-using globalIndex = std::int64_t;
+using globalIndex = long long int;//std::int64_t;
 
 using string      = std::string;
 
@@ -122,7 +130,7 @@ using realT    = double;
 template< typename T >
 using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
 
-template< typename T, int NDIM >
+template< typename T, int NDIM=1 >
 using array_view = multidimensionalArray::ArrayView<T,NDIM,localIndex>;
 
 template< typename T >
@@ -926,7 +934,7 @@ public:
   }
 
   template< typename TLHS >
-  inline static TLHS value( TLHS & lhs, integer const )
+  inline static TLHS value( TLHS const & lhs, integer const )
   {
     return lhs;
   }

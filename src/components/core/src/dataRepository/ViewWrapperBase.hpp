@@ -1,13 +1,21 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 /*
  * DataObjectBase.hpp
  *
@@ -82,6 +90,7 @@ public:
 
   virtual size_t sizeOfType() const = 0;
 
+  virtual bool shouldRegisterDataPtr() const = 0;
   virtual void registerDataPtr(axom::sidre::View * view=nullptr) const = 0; 
   virtual void registerToWrite(axom::sidre::View * view=nullptr) const = 0;
   virtual void finishWriting(axom::sidre::View * view=nullptr) const = 0;
@@ -122,6 +131,18 @@ public:
   }
 #endif
 
+  PlotLevel getPlotLevel() const {return m_plotLevel;}
+
+  void setPlotLevel( PlotLevel const flag )
+  {
+    m_plotLevel = flag;
+  }
+
+  void setPlotLevel( int const flag )
+  {
+    m_plotLevel = IntToPlotLevel(flag);
+  }
+
   string const & getName() const
   {
     return m_name;
@@ -133,6 +154,7 @@ private:
   ManagedGroup* m_parent;
   int m_sizedFromParent;
   RestartFlags m_restart_flags;
+  PlotLevel m_plotLevel;
 #ifdef USE_ATK
   axom::sidre::View* m_sidreView;
 #endif

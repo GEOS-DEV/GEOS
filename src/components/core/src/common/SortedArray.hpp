@@ -1,27 +1,36 @@
-// Copyright (c) 2018, Lawrence Livermore National Security, LLC. Produced at
-// the Lawrence Livermore National Laboratory. LLNL-CODE-746361. All Rights
-// reserved. See file COPYRIGHT for details.
-//
-// This file is part of the GEOSX Simulation Framework.
+/*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
-//
-// GEOSX is free software; you can redistribute it and/or modify it under the
-// terms of the GNU Lesser General Public License (as published by the Free
-// Software Foundation) version 2.1 dated February 1999.
 #ifndef SRC_COMMON_SORTEDARRAY
 #define SRC_COMMON_SORTEDARRAY
 
 #include <vector>             /* for std::vector */
 #include <algorithm>          /* for std::binary_search, std::lower_bound */
+//#include <stdint.h>
 
-template< typename T >
+template< typename T, typename INDEX_TYPE=std::int_fast32_t >
 class SortedArray
 {
 
 public:
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
-  using size_type = typename std::vector<T>::size_type;
+  using size_type = INDEX_TYPE;
   using value_type = typename std::vector<T>::value_type;
   using pointer = typename std::vector<T>::pointer;
   using const_pointer = typename std::vector<T>::const_pointer;
@@ -77,7 +86,7 @@ public:
 
 
   size_type size() const
-  { return m_data.size(); }
+  { return static_cast<size_type>(m_data.size()); }
 
 
   void resize(size_type new_size)

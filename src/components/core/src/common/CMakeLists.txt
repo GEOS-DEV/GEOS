@@ -5,7 +5,6 @@
 set(common_headers
     integer_conversion.hpp
     DataTypes.hpp
-  	InterObjectRelation.hpp
     Logger.hpp
     SortedArray.hpp )
 
