@@ -127,28 +127,6 @@ FunctionBase const * getSolutionFunction()
   return fnFound;
 }
 
-// extracts the boundary condition scale, assuming it's unique
-real64 getBoundaryConditionScale(std::string const &fieldName)
-{
-  real64 scale = 1.0;
-  BoundaryConditionManager const * bcMgr = BoundaryConditionManager::get();
-  for (auto & subGroup : bcMgr->GetSubGroups())
-  {
-    auto bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
-
-    if (bc->initialCondition())
-      continue;
-
-    if (bc->getData<std::string>(BoundaryConditionBase::viewKeyStruct::fieldNameString) == fieldName)
-    {
-      scale = *bc->getData<real64>(BoundaryConditionBase::viewKeyStruct::scaleString);
-      break;
-    }
-  }
-
-  return scale;
-}
-
 void runProblem(ProblemManager & problemManager, int argc, char** argv)
 {
   problemManager.SetDocumentationNodes();
@@ -174,7 +152,6 @@ TEST(singlePhaseFlow,analyticalTest)
   ProblemManager problemManager("ProblemManager", nullptr);
   runProblem(problemManager, global_argc, global_argv);
 
-  real64 const scale = getBoundaryConditionScale(SinglePhaseFlow::viewKeyStruct::fluidPressureString);
   FunctionBase const * fn = getSolutionFunction();
   ASSERT_TRUE(fn != nullptr);
 
@@ -182,7 +159,7 @@ TEST(singlePhaseFlow,analyticalTest)
                                       SinglePhaseFlow::viewKeyStruct::fluidPressureString,
                                       [&](R1Tensor const &pt) -> real64
                                       {
-                                        return scale * fn->Evaluate(pt.Data());
+                                        return fn->Evaluate(pt.Data());
                                       });
 
   std::cout << "Computed error norm: " << err << std::endl;
