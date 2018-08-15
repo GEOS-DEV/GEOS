@@ -6,14 +6,15 @@
   <Solvers
     gravityVector="0.0,0.0,-9.81">
   
-    <SinglePhaseFlow_TPFA name="SinglePhaseFlow_TPFA"
+    <SinglePhaseFlow name="SinglePhaseFlow"
                           verboseLevel="0"
-                          gravityFlag="1">
+                          gravityFlag="1"
+                          discretization="singlePhaseTPFA">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
-    </SinglePhaseFlow_TPFA>
+    </SinglePhaseFlow>
   </Solvers>
   
   <Mesh>
@@ -39,7 +40,7 @@
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
                    forceDt="20.0"
-                   target="/Solvers/SinglePhaseFlow_TPFA" />
+                   target="/Solvers/SinglePhaseFlow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
@@ -62,6 +63,14 @@
     <FiniteElements>
       <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
+    
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"
+                                 fieldName="fluidPressure"
+                                 coefficientName="permeability"
+                                 cellLocation="center"
+                                 faceLocation="center"/>
+    </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>

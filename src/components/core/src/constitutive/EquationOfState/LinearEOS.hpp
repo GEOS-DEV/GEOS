@@ -73,6 +73,10 @@ public:
                                    real64 &dens,
                                    real64 &dDens_dPres ) override final;
 
+  virtual void DensityUpdate( real64 const &pres,
+                              localIndex const k,
+                              localIndex const q ) override final;
+
   virtual void FluidViscosityUpdate( real64 const &pres,
                                      localIndex const i,
                                      real64 &visc,
@@ -95,7 +99,7 @@ public:
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto densityString  = "density";
-    static constexpr auto dP_drhoString  = "dPressure_dDensity";
+    static constexpr auto dP_dRhoString  = "dPressure_dDensity";
 
 
     dataRepository::ViewKey fluidBulkModulus   = { "fluidBulkModulus"   };
@@ -143,6 +147,12 @@ private:
 };
 
 
+inline void LinearEOS::DensityUpdate( real64 const &pres,
+                                      localIndex const k,
+                                      localIndex const q )
+{
+  m_densityRelation.Compute( pres, m_density[k][q], m_dPressure_dDensity[k][q] );
+}
 
 }
 

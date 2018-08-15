@@ -46,6 +46,10 @@ LinearEOS::LinearEOS( std::string const & name, ManagedGroup * const parent ):
   RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, 0 );
   RegisterViewWrapper( viewKeys.referenceDensity.Key(), &m_referenceDensity, 0 );
   RegisterViewWrapper( viewKeys.referenceViscosity.Key(), &m_referenceViscosity, 0 );
+
+  RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 );
+  RegisterViewWrapper( viewKeyStruct::dP_dRhoString, &m_dPressure_dDensity, 0 );
+
 }
 
 LinearEOS::~LinearEOS()
@@ -232,6 +236,7 @@ void LinearEOS::FluidDensityUpdate( real64 const &pres,
 {
   m_densityRelation.Compute( pres, dens, dDens_dPres );
 }
+
 
 void LinearEOS::FluidViscosityUpdate( real64 const &pres, localIndex const i, real64 &visc, real64 &dVisc_dPres )
 {

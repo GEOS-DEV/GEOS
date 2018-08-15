@@ -251,7 +251,7 @@ private:
   std::string m_discretizationName;
 
   /// temp storage for derivatives of density w.r.t. pressure
-  array1d<array1d<array1d<real64>>> m_dDens_dPres;
+//  array1d<array1d<array1d<real64>>> m_dDens_dPres;
 
   /// temp storage for derivatives of porosity w.r.t. pressure
   array1d<array1d<array1d<real64>>> m_dPoro_dPres;

@@ -59,7 +59,7 @@ SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
   SolverBase(name, parent),
   m_precomputeDone(false),
   m_gravityFlag(1),
-  m_dDens_dPres(),
+//  m_dDens_dPres(),
   m_dPoro_dPres(),
   m_dVisc_dPres()
 {
@@ -162,18 +162,18 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                     0,
                                     1 );
 
-        docNode->AllocateChildNode( viewKeyStruct::fluidDensityString,
-                                    viewKeyStruct::fluidDensityString,
-                                    -1,
-                                    "real64_array",
-                                    "real64_array",
-                                    "Fluid density",
-                                    "Fluid density",
-                                    "",
-                                    elemManager->getName(),
-                                    1,
-                                    0,
-                                    0 );
+//        docNode->AllocateChildNode( viewKeyStruct::fluidDensityString,
+//                                    viewKeyStruct::fluidDensityString,
+//                                    -1,
+//                                    "real64_array",
+//                                    "real64_array",
+//                                    "Fluid density",
+//                                    "Fluid density",
+//                                    "",
+//                                    elemManager->getName(),
+//                                    1,
+//                                    0,
+//                                    0 );
 
         docNode->AllocateChildNode( viewKeyStruct::deltaFluidDensityString,
                                     viewKeyStruct::deltaFluidDensityString,
@@ -415,8 +415,14 @@ ImplicitStepSetup( real64 const& time_n,
   auto pres = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidPressureString);
   auto dPres = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
 
-  auto dens = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
+  dens = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( "density" );
+
+//  auto dens = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
   auto dDens = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
+
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
+  dRho_dP = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( "dPressure_dDensity" );
 
   auto visc = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidViscosityString);
   auto dVisc = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidViscosityString);
@@ -425,13 +431,17 @@ ImplicitStepSetup( real64 const& time_n,
   auto dPoro = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaPorosityString);
   auto refPoro = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::referencePorosityString);
 
-  auto
-  constitutiveMap = elemManager->
-                    ConstructViewAccessor< std::pair< array2d<localIndex>,
-                                           array2d<localIndex> > >( CellBlockSubRegion::
-                                                                    viewKeyStruct::
-                                                                    constitutiveMapString,
-                                                                    string() );
+
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>();
+
+//  auto
+//  constitutiveMap = elemManager->
+//                    ConstructViewAccessor< std::pair< array2d<localIndex>,
+//                                           array2d<localIndex> > >( CellBlockSubRegion::
+//                                                                    viewKeyStruct::
+//                                                                    constitutiveMapString,
+//                                                                    string() );
 
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
@@ -444,15 +454,21 @@ ImplicitStepSetup( real64 const& time_n,
     dPoro[er][esr][k] = 0.0;
 
     // initialize dDens_dPres
-    localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
-    localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
-    ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
+//    localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+//    localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
+//    ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
 
     real64 const pressure = pres[er][esr][k] + dPres[er][esr][k];
 
-    EOS->FluidDensityUpdate(pressure, matIndex2, dens[er][esr][k], m_dDens_dPres[er][esr][k]);
-    EOS->FluidViscosityUpdate(pressure, matIndex2, visc[er][esr][k], m_dVisc_dPres[er][esr][k]);
-    EOS->SimplePorosityUpdate(pressure, refPoro[er][esr][k], matIndex2, poro[er][esr][k], m_dPoro_dPres[er][esr][k]);
+//    EOS->FluidDensityUpdate(pressure, matIndex2, dens[er][esr][k], m_dDens_dPres[er][esr][k]);
+//    EOS->FluidViscosityUpdate(pressure, matIndex2, visc[er][esr][k], m_dVisc_dPres[er][esr][k]);
+//    EOS->SimplePorosityUpdate(pressure, refPoro[er][esr][k], matIndex2, poro[er][esr][k], m_dPoro_dPres[er][esr][k]);
+
+//    constitutiveRelations[er][esr][0]->DensityUpdate(pressure, k, 0 );
+    constitutiveRelations[er][esr][0]->FluidDensityUpdate(pressure, 0, dens[er][esr][0][k][0], dRho_dP[er][esr][0][k][0]);
+    constitutiveRelations[er][esr][0]->FluidViscosityUpdate(pressure, 0, visc[er][esr][k], m_dVisc_dPres[er][esr][k]);
+    constitutiveRelations[er][esr][0]->SimplePorosityUpdate(pressure, refPoro[er][esr][k], 0, poro[er][esr][k], m_dPoro_dPres[er][esr][k]);
+
   });
 
 
@@ -472,7 +488,9 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
   auto pres = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidPressureString);
   auto dPres = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
 
-  auto dens = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
+  dens = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( "density" );
+//  auto dens = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
   auto dDens = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
 
   auto visc = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidViscosityString);
@@ -488,7 +506,7 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
   {
     // update the fluid pressure and density.
     pres[er][esr][k] += dPres[er][esr][k];
-    dens[er][esr][k] += dDens[er][esr][k];
+    dens[er][esr][0][k][0] += dDens[er][esr][k];
     visc[er][esr][k] += dVisc[er][esr][k];
     poro[er][esr][k] += dPoro[er][esr][k];
   });
@@ -782,7 +800,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
   auto pres      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidPressureString);
   auto dPres     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
-  auto dens      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
+//  auto dens      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
   auto dDens     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
   auto visc      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidViscosityString);
   auto dVisc     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidViscosityString);
@@ -791,6 +809,12 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
   auto gravDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::gravityDepthString);
 
   auto volume    = elemManager->ConstructViewAccessor<real64_array>(CellBlock::viewKeyStruct::elementVolumeString);
+
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
+  dens = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( "density" );
+
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
+  dRho_dP = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( "dPressure_dDensity" );
 
   //***** Loop over all elements and assemble the change in volume/density terms *****
   forAllElemsInMesh(mesh, [=] (localIndex const er,
@@ -801,17 +825,17 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
     {
       globalIndex const elemDOF = blockLocalDofNumber[er][esr][k];
 
-      real64 const densNew = dens[er][esr][k] + dDens[er][esr][k];
+      real64 const densNew = dens[er][esr][0][k][0] + dDens[er][esr][k];
       real64 const poroNew = poro[er][esr][k] + dPoro[er][esr][k];
       real64 const vol     = volume[er][esr][k];
 
       // Residual contribution is mass conservation in the cell
       real64 const localAccum = poroNew          * densNew          * vol
-                              - poro[er][esr][k] * dens[er][esr][k] * vol;
+                              - poro[er][esr][k] * dens[er][esr][0][k][0] * vol;
 
       // Derivative of residual wrt to pressure in the cell
       real64 const localAccumJacobian = (m_dPoro_dPres[er][esr][k] * densNew * vol)
-                                      + (m_dDens_dPres[er][esr][k] * poroNew * vol);
+                                      + (dRho_dP[er][esr][0][k][0] * poroNew * vol);
 
       // add contribution to global residual and dRdP
       residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);
@@ -859,8 +883,8 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
       eqnRowIndices[i] = blockLocalDofNumber[er][esr][ei];
 
       // density
-      real64 const density   = dens[er][esr][ei];
-      real64 const dDens_dP  = m_dDens_dPres[er][esr][ei];
+      real64 const density   = dens[er][esr][0][ei][0];
+      real64 const dDens_dP  = dRho_dP[er][esr][0][ei][0];
 
       // viscosity
       real64 const viscosity = visc[er][esr][ei];
@@ -1067,7 +1091,10 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   auto pres      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidPressureString);
   auto dPres     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
-  auto dens      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
+//  auto dens      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
+  dens = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( "density" );
+
   auto dDens     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
   auto visc      = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidViscosityString);
   auto dVisc     = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidViscosityString);
@@ -1085,6 +1112,9 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                                                                                 viewKeyStruct::
                                                                                                 constitutiveMapString,
                                                                                                 string());
+
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
+  dRho_dP = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( "dPressure_dDensity" );
 
   dataRepository::ManagedGroup const * sets = faceManager->GetGroup(dataRepository::keys::sets);
 
@@ -1131,6 +1161,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   real64 mobility[numElems], dMobility_dP[numElems];
   real64_array dDensMean_dP, dFlux_dP;
 
+
   bcManager->ApplyBoundaryCondition(time + dt,
                                     viewKeyStruct::fluidPressureString,
                                     [&] (BoundaryConditionBase * bc,
@@ -1174,8 +1205,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
             eqnRowIndex = blockLocalDofNumber[er][esr][ei];
 
-            density   = dens[er][esr][ei];
-            dDens_dP  = m_dDens_dPres[er][esr][ei];
+            density   = dens[er][esr][0][ei][0];
+            dDens_dP  = dRho_dP[er][esr][0][ei][0];
 
             viscosity = visc[er][esr][ei];
             dVisc_dP  = m_dVisc_dPres[er][esr][ei];
@@ -1359,8 +1390,13 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
   auto pres  = elementRegionManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidPressureString);
   auto dPres = elementRegionManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidPressureString);
 
-  auto dens  = elementRegionManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
+  dens = elementRegionManager->ConstructMaterialViewAccessor< array2d<real64> >( "density" );
+//  auto dens  = elementRegionManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidDensityString);
   auto dDens = elementRegionManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidDensityString);
+
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
+  dRho_dP = elementRegionManager->ConstructMaterialViewAccessor< array2d<real64> >( "dPressure_dDensity" );
 
   auto visc  = elementRegionManager->ConstructViewAccessor<real64_array>(viewKeyStruct::fluidViscosityString);
   auto dVisc = elementRegionManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaFluidViscosityString);
@@ -1405,25 +1441,29 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
   //                            mesh,
   //                            domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elementRegionManager->ConstructConstitutiveAccessor<ConstitutiveBase>();
+
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
                                 localIndex const k)->void
   {
-    localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
-    localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
-    ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
+//    localIndex const matIndex1 = constitutiveMap[er][esr].get().first[k][0];
+//    localIndex const matIndex2 = constitutiveMap[er][esr].get().second[k][0];
+//    ConstitutiveBase * const EOS = constitutiveManager->GetGroup<ConstitutiveBase>(matIndex1);
 
     // update dDens and derivatives
     real64 const new_pres = pres[er][esr][k] + dPres[er][esr][k];
     real64 new_value;
 
-    EOS->FluidDensityUpdate(new_pres, matIndex2, new_value, m_dDens_dPres[er][esr][k]);
-    dDens[er][esr][k] = new_value - dens[er][esr][k];
+    constitutiveRelations[er][esr][0]->FluidDensityUpdate(new_pres, 0, new_value, dRho_dP[er][esr][0][k][0]);
+//    constitutiveRelations[er][esr][0]->DensityUpdate( new_pres, k, 0 );
+    dDens[er][esr][k] = new_value - dens[er][esr][0][k][0];
 
-    EOS->FluidViscosityUpdate(new_pres, matIndex2, new_value, m_dVisc_dPres[er][esr][k]);
+    constitutiveRelations[er][esr][0]->FluidViscosityUpdate(new_pres, 0, new_value, m_dVisc_dPres[er][esr][k]);
     dVisc[er][esr][k] = new_value - visc[er][esr][k];
 
-    EOS->SimplePorosityUpdate(new_pres, refPoro[er][esr][k], matIndex2, new_value, m_dVisc_dPres[er][esr][k]);
+    constitutiveRelations[er][esr][0]->SimplePorosityUpdate(new_pres, refPoro[er][esr][k], 0, new_value, m_dVisc_dPres[er][esr][k]);
     dPoro[er][esr][k] = new_value - poro[er][esr][k];
   });
 }
@@ -1466,19 +1506,19 @@ void SinglePhaseFlow::AllocateAuxStorage(DomainPartition *const domain)
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   // temporary storage for m_dRho_dP on each element
-  m_dDens_dPres.resize(elemManager->numRegions());
+//  m_dDens_dPres.resize(elemManager->numRegions());
   m_dPoro_dPres.resize(elemManager->numRegions());
   m_dVisc_dPres.resize(elemManager->numRegions());
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    m_dDens_dPres[er].resize(elemRegion->numSubRegions());
+//    m_dDens_dPres[er].resize(elemRegion->numSubRegions());
     m_dPoro_dPres[er].resize(elemRegion->numSubRegions());
     m_dVisc_dPres[er].resize(elemRegion->numSubRegions());
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
-      m_dDens_dPres[er][esr].resize(cellBlockSubRegion->size());
+//      m_dDens_dPres[er][esr].resize(cellBlockSubRegion->size());
       m_dPoro_dPres[er][esr].resize(cellBlockSubRegion->size());
       m_dVisc_dPres[er][esr].resize(cellBlockSubRegion->size());
     }
