@@ -258,14 +258,8 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> 
           integer count=0;
           for( auto a : set )
           {
-            real64_array result(static_cast<localIndex>(set.size()));
-            function->Evaluate( dataGroup, time, set, result );
-            integer count=0;
-            for( auto a : set )
-            {
-              OPERATION::f( field[a], component, (m_scale*result[count]) );
-              ++count;
-            }
+            OPERATION::f( field[a], component, (m_scale*result[count]) );
+            ++count;
           }
         }
       }

@@ -620,11 +620,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   // TODO This needs to be rewritten for dimensions lower than 3.
-<<<<<<< HEAD
   string_array::const_iterator iterRegion = m_regionNames.begin();
-=======
-  array1d<string>::const_iterator iterRegion = m_regionNames.begin();
->>>>>>> develop
   for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
   {
     for( int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
@@ -769,13 +765,8 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
   {
     integer_array numElements;
-<<<<<<< HEAD
     string_array elementRegionNames;
     string_array elementTypes;
-=======
-    array1d<string> elementRegionNames;
-    array1d<string> elementTypes;
->>>>>>> develop
     std::map<std::string, localIndex> localElemIndexInRegion;
 
     for( std::map<std::string, int>::iterator iterNumElemsInRegion = numElemsInRegions.begin() ;
