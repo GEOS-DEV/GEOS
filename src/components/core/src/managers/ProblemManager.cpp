@@ -25,10 +25,6 @@
 
 #include "ProblemManager.hpp"
 
-#ifdef USE_CALIPER
-//#include "caliper/Annotation.h"
-#endif
-
 #include <stdexcept>
 #include <vector>
 
@@ -53,6 +49,7 @@
 
 #include "mesh/MeshBody.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
+#include "common/TimingMacros.hpp"
 // #include "managers/MeshLevel.hpp"
 namespace geosx
 {
@@ -788,84 +785,17 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 
 void ProblemManager::RunSimulation()
 {
-#ifdef USE_CALIPER
-//  cali::Annotation runSimulationAnnotation =
-// cali::Annotation("RunSimulation").begin();
-#endif
-  DomainPartition * domain  = getDomainPartition();
-  m_eventManager->Run(domain);
-//=======
-//
-//  real64 dt = 0.0;
-//
-//  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
-//  ViewWrapper<std::string>::rtype problemName = commandLine->getData<std::string>(viewKeys.problemName);
-//
-//
-//  const MeshLevel * meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
-//  Blueprint bpWriter(*meshLevel->getNodeManager(),
-//                     *meshLevel->getElemManager(),
-//                     problemName + "_bp",
-//                     MPI_COMM_WORLD);
-//
-////  cxx_utilities::DocumentationNode * const eventDocNode =
-//// m_eventManager->getDocumentationNode();
-////  for( auto const & subEventDocNode : eventDocNode->m_child )
-////  {
-////    if (strcmp(subEventDocNode.second.getDataType().c_str(), "ManagedGroup")
-//// == 0)
-//
-//  for( auto& application : this->m_eventManager->GetSubGroups() )
-//  {
-//
-//    ManagedGroup& currentApplication = *(application.second);
-//
-//    string_array const & solverList = currentApplication.getReference<string_array>(keys::solvers);
-//    real64& appDt = *(currentApplication.getData<real64>(keys::dt));
-//    real64& time = *(currentApplication.getData<real64>(keys::time));
-//    real64& endTime = *(currentApplication.getData<real64>(keys::endTime));
-//    integer& cycle = *(currentApplication.getData<integer>(keys::cycle));
-//
-//    integer lockDt = (appDt > 0.0);
-//    if (lockDt)
-//    {
-//      dt = appDt;
-//    }
-//
-//    while( time < endTime )
-//    {
-//      std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
-//      bpWriter.write( cycle );
-//      // WriteSilo( cycle, time );
-//      real64 nextDt = std::numeric_limits<real64>::max();
-//
-//      for ( auto jj=0; jj<solverList.size(); ++jj)
-//      {
-//        SolverBase * currentSolver = this->m_physicsSolverManager->GetGroup<SolverBase>( solverList[jj] );
-//        currentSolver->SolverStep( time, dt, cycle, domain );
-//        nextDt = std::min(nextDt, *(currentSolver->getData<real64>(keys::maxDt)));
-//      }
-//
-//      // Update time, cycle, timestep
-//      time += dt;
-//      cycle++;
-//      dt = (lockDt)? dt : nextDt;
-//      dt = (endTime - time < dt)? endTime-time : dt;
-//    }
-//
-//    bpWriter.write( cycle );
-//    // WriteSilo( cycle, time );
-////    WriteRestart(cycle);
-//
-//  }
-//
-//
-//
-//>>>>>>> Got axom working and producing visualizable blueprint files.
 
-#ifdef USE_CALIPER
-//  runSimulationAnnotation.end();
-#endif
+  GEOS_MARK_FUNCTION;
+
+  GEOS_MARK_BEGIN("Get domain partition");
+  DomainPartition * domain  = getDomainPartition();
+  GEOS_MARK_END("Get domain partition");
+
+  GEOS_MARK_BEGIN("Event Manager");
+  m_eventManager->Run(domain);
+  GEOS_MARK_END("Event Manager");
+
 }
 
 
