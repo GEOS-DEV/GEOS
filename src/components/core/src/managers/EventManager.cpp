@@ -97,7 +97,7 @@ void EventManager::FillDocumentationNode()
                               "real64",
                               "simulation maxTime",
                               "simulation maxTime",
-                              "1e9",
+                              "-1",
                               "",
                               0,
                               1,
@@ -145,10 +145,21 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   real64& dt = *(this->getData<real64>(viewKeys.dt));
   integer& cycle = *(this->getData<integer>(viewKeys.cycle));
   
-  real64 const maxTime = this->getReference<real64>(viewKeys.maxTime);
-  integer const maxCycle = this->getReference<integer>(viewKeys.maxCycle);
+  real64 maxTime = this->getReference<real64>(viewKeys.maxTime);
+  integer maxCycle = this->getReference<integer>(viewKeys.maxCycle);
   integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
   integer exitFlag = 0;
+
+
+  // If maxTime, maxCycle are default, set them to their max values
+  if (maxTime < 0)
+  {
+    maxTime = std::numeric_limits<real64>::max();
+  }
+  if (maxCycle < 0)
+  {
+    maxCycle = std::numeric_limits<integer>::max();
+  }
 
   // Setup event targets
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
@@ -157,8 +168,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   });
 
   // Run problem
-  real64 epsilon = std::numeric_limits<real64>::epsilon();
-  while(((maxTime < 0) || (maxTime - time > epsilon)) && ((maxCycle < 0) || (cycle < maxCycle)) && (exitFlag == 0))
+  while((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0))
   {
     real64 nextDt = 1e6;
     std::cout << "Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle << std::endl;
@@ -181,7 +191,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       real64 requestedDt = 1e6;
       if (eventForecast <= 1)
       {
-        requestedDt = subEvent->GetTimestepRequest(time + dt);
+        requestedDt = subEvent->GetTimestepRequest(time);
       }
       nextDt = std::min(requestedDt, nextDt);
 
@@ -197,8 +207,17 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     time += dt;
     ++cycle;
     dt = nextDt;
-    dt = (maxTime - time < dt) ? (maxTime - time) : dt;
+    dt = (time + dt > maxTime) ? (maxTime - time) : dt;
   }
+
+
+  // Cleanup
+  std::cout << "Cleaning up events" << std::endl;
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->Cleanup(time, cycle, domain);     
+  });
+
 }
 
 } /* namespace geosx */
