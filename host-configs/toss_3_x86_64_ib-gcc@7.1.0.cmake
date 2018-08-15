@@ -35,7 +35,7 @@ set(DOXYGEN_EXECUTABLE "/usr/bin/doxygen" CACHE PATH "" FORCE )
 
 option( RAJA_ENABLE_TBB "" OFF)
 
-option( ENABLE_CALIPER "Enables CALIPER" OFF )
+option( ENABLE_CALIPER "Enables CALIPER" ON )
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
