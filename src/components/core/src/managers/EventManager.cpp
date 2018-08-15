@@ -191,7 +191,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       real64 requestedDt = 1e6;
       if (eventForecast <= 1)
       {
-        requestedDt = subEvent->GetTimestepRequest(time);
+        requestedDt = subEvent->GetTimestepRequest(time + dt);
       }
       nextDt = std::min(requestedDt, nextDt);
 
