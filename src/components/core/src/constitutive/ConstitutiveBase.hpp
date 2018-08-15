@@ -91,6 +91,11 @@ public:
                                    real64 &dens,
                                    real64 &dDens_dPres ) {}
 
+  virtual void DensityUpdate( real64 const &pres,
+                              localIndex const k,
+                              localIndex const q ) {}
+
+
   virtual void FluidViscosityUpdate( real64 const &pres,
                                      localIndex const i,
                                      real64 &visc,
