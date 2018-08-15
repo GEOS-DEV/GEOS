@@ -23,17 +23,17 @@
                   xCoords="0, 10"
                   yCoords="0, 10"
                   zCoords="0, 1"
-                  nx="100"
-                  ny="100"
+                  nx="10"
+                  ny="10"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
 
   <Geometry>
-    <Box name="left"   type="0" xMin="-0.01, -0.01, -0.01" xMax=" 0.11, 10.01, 1.01"/>
-    <Box name="right"  type="0" xMin=" 9.89, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="bottom" type="0" xMin="-0.01, -0.01, -0.01" xMax="10.01,  0.11, 1.01"/>
-    <Box name="top"    type="0" xMin="-0.01,  9.89, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="left"   type="0" xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 10.01, 1.01"/>
+    <Box name="right"  type="0" xMin=" 9.99, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="bottom" type="0" xMin="-0.01, -0.01, -0.01" xMax="10.01,  0.01, 1.01"/>
+    <Box name="top"    type="0" xMin="-0.01,  9.99, -0.01" xMax="10.01, 10.01, 1.01"/>
   </Geometry>
 
 
@@ -69,6 +69,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="fluidPressure"
+                                 boundaryFieldName="faceFluidPressure"
                                  coefficientName="permeability"
                                  cellLocation="center"
                                  faceLocation="center"/>
@@ -137,17 +138,17 @@
                scale="0.0"/>
 
     <Dirichlet name="boundaryPressure"
-               fieldName="fluidPressure"
+               objectPath="faceManager"
+               fieldName="faceFluidPressure"
                dataType="Scalar"
                functionName="boundaryPressureFunc"
                scale="1.0e7"
                setNames="left right bottom top"/>
-
   </BoundaryConditions>
 
   <Functions>
     <SymbolicFunction name="boundaryPressureFunc"
-                      inputVarNames="elementCenter"
+                      inputVarNames="faceCenter"
                       inputVarTypes=""
                       variableNames="x y z"
                       expression="cos(2*PI*x/10)*cos(2*PI*y/10)"/>
@@ -160,5 +161,6 @@
   <Outputs>
       <Silo name="siloOutput"/>
   </Outputs>
+
 
 </Problem>
