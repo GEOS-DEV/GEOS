@@ -167,8 +167,8 @@ private:
   FixedOneToManyRelation  m_toEdgesRelation;
   FixedOneToManyRelation  m_toFacesRelation;
 
-  array< R1Tensor > m_elementCenter;
-  array< real64 > m_elementVolume;
+  array1d< R1Tensor > m_elementCenter;
+  array1d< real64 > m_elementVolume;
 
 
   CellBlock& operator=(const CellBlock& rhs);

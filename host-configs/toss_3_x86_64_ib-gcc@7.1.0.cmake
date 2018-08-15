@@ -36,7 +36,7 @@ set(CHAI_DIR "/g/g14/corbett5/geosx/chai/install-gcc-7-1-0" CACHE PATH "" FORCE 
 
 option( RAJA_ENABLE_TBB "" OFF)
 
-option( ENABLE_CALIPER "Enables CALIPER" OFF )
+option( ENABLE_CALIPER "Enables CALIPER" ON )
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
