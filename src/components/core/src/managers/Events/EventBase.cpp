@@ -251,7 +251,7 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 {
   if (m_target != nullptr)
   {
-    // Do something
+    m_target->SignalToPrepareForExecution(time, dt, cycle, domain);
   }
 
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
@@ -358,6 +358,23 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 
   return nextDt;
 }
+
+
+void EventBase::Cleanup(real64 const& time_n,
+                        const int cycleNumber,
+                        ManagedGroup * domain)
+{
+  if (m_target != nullptr)
+  {
+    m_target->Cleanup(time_n, cycleNumber, domain);
+  }
+
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->Cleanup(time_n, cycleNumber, domain);
+  });
+}
+
 
 
 } /* namespace geosx */

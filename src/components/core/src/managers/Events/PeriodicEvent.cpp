@@ -261,6 +261,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
 
 real64 PeriodicEvent::GetTimestepRequest(real64 const time)
 {
+  real64 const lastTime = this->getReference<real64>(EventBase::viewKeys.lastTime);
   real64 const timeFrequency = this->getReference<real64>(viewKeys.timeFrequency);
   integer const targetExactTimestep = this->getReference<integer>(viewKeys.targetExactTimestep);
   
@@ -268,8 +269,8 @@ real64 PeriodicEvent::GetTimestepRequest(real64 const time)
 
   if ((timeFrequency > 0) && (targetExactTimestep > 0))
   {
-    real64 nextTargetTimestep = timeFrequency - fmod(time, timeFrequency);
-    requestedDt = (requestedDt > nextTargetTimestep) ? nextTargetTimestep : requestedDt;
+    real64 nextTargetTimestep = lastTime + timeFrequency - time;
+    requestedDt = (nextTargetTimestep < requestedDt) ? nextTargetTimestep : requestedDt;
   }
 
   return requestedDt;
