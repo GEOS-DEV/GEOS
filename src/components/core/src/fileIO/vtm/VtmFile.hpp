@@ -280,7 +280,7 @@ class DumbMesh {
         globalIndex m_numPolygons{0};
 
         /// Contains the 3D coordinates of the vertices
-        array< real64> m_vertices;
+        real64_array m_vertices;
         
         /// Contains the cells connectivity
         std::vector< globalIndex > m_cellsConnectivity;

@@ -559,8 +559,6 @@ globalIndex DumbMesh::PolygonVertexIndex(globalIndex const polygonIndex,
 
 real64 const * DumbMesh::Vertex(globalIndex const vertexIndex) const {
     assert(vertexIndex < m_numVertices);
-    std::vector<real64> vertex(m_vertices.begin()+3*vertexIndex,
-            m_vertices.begin() + 3*vertexIndex+3);
     return &(m_vertices[3*vertexIndex]);
 }
 
