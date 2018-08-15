@@ -36,8 +36,8 @@ FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *c
   m_boundarySetData = this->RegisterGroup(groupKeyStruct::boundarySetDataString);
 
   this->RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false);
+  this->RegisterViewWrapper(viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName, false);
   this->RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false);
-  this->RegisterViewWrapper(viewKeyStruct::cellLocationString, &m_cellLocation, false);
 
   ViewWrapper<CellStencil> * stencil = this->RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString);
   stencil->setRestartFlags(RestartFlags::NO_WRITE);
@@ -67,6 +67,19 @@ void FluxApproximationBase::FillDocumentationNode()
                              1,
                              0 );
 
+  docNode->AllocateChildNode(viewKeyStruct::boundaryFieldNameString,
+                             viewKeyStruct::boundaryFieldNameString,
+                             -1,
+                             "string",
+                             "string",
+                             "Name of boundary (face) field",
+                             "Name of boundary (face) field",
+                             "",
+                             "",
+                             0,
+                             1,
+                             0 );
+
   docNode->AllocateChildNode(viewKeyStruct::coeffNameString,
                              viewKeyStruct::coeffNameString,
                              -1,
@@ -75,19 +88,6 @@ void FluxApproximationBase::FillDocumentationNode()
                              "Name of coefficient field",
                              "Name of coefficient field",
                              "REQUIRED",
-                             "",
-                             0,
-                             1,
-                             0 );
-
-  docNode->AllocateChildNode(viewKeyStruct::cellLocationString,
-                             viewKeyStruct::cellLocationString,
-                             -1,
-                             "string",
-                             "string",
-                             "Option for cell collocation points",
-                             "Option for cell collocation points",
-                             CellBlock::viewKeyStruct::elementCenterString,
                              "",
                              0,
                              1,
@@ -133,7 +133,7 @@ void FluxApproximationBase::compute(DomainPartition * domain)
       GEOS_ASSERT(!fieldName.empty(), "field name not specified in either fieldName or objectPath");
     }
 
-    if (fieldName != m_fieldName)
+    if (fieldName != m_boundaryFieldName)
       return;
 
     string_array setNames = bc->GetSetNames();
