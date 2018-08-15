@@ -694,8 +694,8 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
           {
               real64 * const tensorData = X[a].Data();
               tensorData[0] = mesh.Vertex(a)[0];
-              tensorData[0] = mesh.Vertex(a)[1];
-              tensorData[0] = mesh.Vertex(a)[2];
+              tensorData[1] = mesh.Vertex(a)[1];
+              tensorData[2] = mesh.Vertex(a)[2];
           }
 
           CellBlockSubRegion * const cellBlock =
