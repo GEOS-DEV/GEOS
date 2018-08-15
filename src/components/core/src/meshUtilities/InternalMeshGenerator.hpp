@@ -127,13 +127,7 @@ private:
 //  realT m_commonRatioMin[3];
 //  realT m_commonRatioMax[3];
 
-
-
-<<<<<<< HEAD
   string_array m_elementType;
-=======
-  array1d<string> m_elementType;
->>>>>>> develop
 
   array1d<integer> m_numElePerBox;
 
