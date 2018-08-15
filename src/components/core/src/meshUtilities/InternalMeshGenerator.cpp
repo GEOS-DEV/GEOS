@@ -273,7 +273,7 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {
   //  lvector numElements;
   //
-  //  for( string_array::size_type r=0 ; r<m_regionNames.size() ; ++r )
+  //  for( array1d<string>::size_type r=0 ; r<m_regionNames.size() ; ++r )
   //  {
   //    numElements.push_back( 0 );
   //  }
@@ -527,7 +527,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   // find elemCenters for even uniform element sizes
-  array<array<real64> > elemCenterCoords( 3 );
+  array1d<array1d<real64> > elemCenterCoords( 3 );
   for( int i = 0 ; i < 3 ; ++i )
   {
     m_numElemsTotal[i] = 0;
@@ -537,7 +537,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
     }
 
     elemCenterCoords[i].resize( m_numElemsTotal[i] );
-    array<real64> elemCenterCoordsLocal( m_numElemsTotal[i] );
+    array1d<real64> elemCenterCoordsLocal( m_numElemsTotal[i] );
     for( int k = 0 ; k < m_numElemsTotal[i] ; ++k )
     {
       elemCenterCoordsLocal[k] = m_min[i] + ( m_max[i] - m_min[i] ) * ( k + 0.5 ) / m_numElemsTotal[i];
@@ -620,7 +620,11 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   // TODO This needs to be rewritten for dimensions lower than 3.
+<<<<<<< HEAD
   string_array::const_iterator iterRegion = m_regionNames.begin();
+=======
+  array1d<string>::const_iterator iterRegion = m_regionNames.begin();
+>>>>>>> develop
   for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
   {
     for( int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
@@ -765,8 +769,13 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
   {
     integer_array numElements;
+<<<<<<< HEAD
     string_array elementRegionNames;
     string_array elementTypes;
+=======
+    array1d<string> elementRegionNames;
+    array1d<string> elementTypes;
+>>>>>>> develop
     std::map<std::string, localIndex> localElemIndexInRegion;
 
     for( std::map<std::string, int>::iterator iterNumElemsInRegion = numElemsInRegions.begin() ;

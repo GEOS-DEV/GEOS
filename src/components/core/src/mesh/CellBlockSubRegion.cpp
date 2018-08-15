@@ -154,7 +154,7 @@ void CellBlockSubRegion::CopyFromCellBlock( CellBlock const * source )
 
 void CellBlockSubRegion::MaterialPassThru( string const & matName,
                                            string const & setName,
-                                           lSet & materialSet,
+                                           set<localIndex> & materialSet,
                                            ManagedGroup * material )
 {}
 

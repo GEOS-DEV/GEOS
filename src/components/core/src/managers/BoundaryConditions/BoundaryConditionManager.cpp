@@ -78,10 +78,10 @@ void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGr
         string_array setNames = bc->GetSetNames();
         for( auto & setName : setNames )
         {
-          dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+          dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = sets->getWrapper<set<localIndex>>(setName);
           if( setWrapper != nullptr )
           {
-            lSet const & set = setWrapper->reference();
+            set<localIndex> const & set = setWrapper->reference();
             bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>(set,time, object, fieldName);
           }
         }
@@ -154,10 +154,10 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
               string_array setNames = bc->GetSetNames();
               for( auto & setName : setNames )
               {
-                dataRepository::ViewWrapper<lSet> const * const setWrapper = setGroup->getWrapper<lSet>(setName);
+                dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = setGroup->getWrapper<set<localIndex>>(setName);
                 if( setWrapper != nullptr )
                 {
-                  lSet const & set = setWrapper->reference();
+                  set<localIndex> const & set = setWrapper->reference();
                   bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( set, 0.0, targetGroup, fieldName );
                 }
               }
@@ -198,7 +198,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
                          "fieldName not specified in either fieldName entry or constitutivePath" );
           }
 
-          lSet targetSet;
+          set<localIndex> targetSet;
 
 
           NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -216,15 +216,15 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
             if( specifiedSubRegion==nullptr || specifiedSubRegion == subRegion)
             {
-              auto const & constitutiveMap = subRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+              auto const & constitutiveMap = subRegion->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
               ManagedGroup const * sets = subRegion->GetGroup(keys::sets);
 
               for( auto & setName : setNames )
               {
-                dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+                dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = sets->getWrapper<set<localIndex>>(setName);
                 if( setWrapper != nullptr )
                 {
-                  lSet const & set = setWrapper->reference();
+                  set<localIndex> const & set = setWrapper->reference();
                   localIndex materialIndex = constitutiveIndexLookup.at(materialName);
                   for( auto const & k : set )
                   {
@@ -276,10 +276,10 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
         string_array setNames = bc->GetSetNames();
         for( auto & setName : setNames )
         {
-          dataRepository::ViewWrapper<lSet> const * const setWrapper = setGroup->getWrapper<lSet>(setName);
+          dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = setGroup->getWrapper<set<localIndex>>(setName);
           if( setWrapper != nullptr )
           {
-            lSet const & set = setWrapper->reference();
+            set<localIndex> const & set = setWrapper->reference();
             bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( set, 0.0, targetGroup, fieldName );
           }
         }

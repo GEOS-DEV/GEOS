@@ -29,7 +29,9 @@ set(CHAI_DIR "/g/g14/corbett5/geosx/chai/install-clang-4-0-0" CACHE PATH "" FORC
 
 option( RAJA_ENABLE_TBB "" OFF)
 
-option( ENABLE_CALIPER "Enables CALIPER" OFF )
+option( ENABLE_CALIPER "Enables CALIPER" On )
+set(ENABLE_PAPI "ON" CACHE PATH "" FORCE)
+set(PAPI_PREFIX "/usr/tce/packages/papi/papi-5.4.3" CACHE PATH "" FORCE)
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)

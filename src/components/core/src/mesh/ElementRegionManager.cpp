@@ -165,7 +165,7 @@ void ElementRegionManager::InitializePostSubGroups( ManagedGroup * const problem
   }
 }
 
-int ElementRegionManager::PackSize( array<string> const & wrapperNames,
+int ElementRegionManager::PackSize( array1d<string> const & wrapperNames,
               ElementViewAccessor<localIndex_array> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
@@ -173,7 +173,7 @@ int ElementRegionManager::PackSize( array<string> const & wrapperNames,
 }
 
 int ElementRegionManager::Pack( buffer_unit_type * & buffer,
-          array<string> const & wrapperNames,
+          array1d<string> const & wrapperNames,
           ElementViewAccessor<localIndex_array> const & packList ) const
 {
   return PackPrivate<true>( buffer, wrapperNames, packList );
@@ -182,7 +182,7 @@ int ElementRegionManager::Pack( buffer_unit_type * & buffer,
 template< bool DOPACK >
 int
 ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
-                                   array<string> const & wrapperNames,
+                                   array1d<string> const & wrapperNames,
                                    ElementViewAccessor<localIndex_array> const & packList ) const
 {
   int packedSize = 0;
@@ -218,10 +218,10 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
   return packedSize;
 }
 //template int ElementRegionManager::PackPrivate<true>( buffer_unit_type * &,
-//                                                      array<string> const &,
+//                                                      array1d<string> const &,
 //                                                      ElementViewAccessor<localIndex_array> const & ) const;
 //template int ElementRegionManager::PackPrivate<false>( buffer_unit_type * &,
-//                                                      array<string> const &,
+//                                                      array1d<string> const &,
 //                                                      ElementViewAccessor<localIndex_array> const & ) const;
 
 int

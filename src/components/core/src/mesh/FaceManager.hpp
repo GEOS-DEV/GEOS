@@ -70,9 +70,9 @@ public:
                     localIndex const & ke,
                     localIndex const & kelf,
                     localIndex & numFaces,
-                    array<localIndex_array>& facesByLowestNode,
+                    array1d<localIndex_array>& facesByLowestNode,
                     localIndex_array& tempNodeList,
-                    array<localIndex_array>& tempFaceToNodeMap,
+                    array1d<localIndex_array>& tempFaceToNodeMap,
                     CellBlockSubRegion & elementRegion );
 
 
@@ -100,7 +100,7 @@ public:
 
   virtual void
   ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager,
-                                                   array<globalIndex_array>& faceToNodes ) override final;
+                                                   array1d<globalIndex_array>& faceToNodes ) override final;
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto nodeListString              = "nodeList";
@@ -126,14 +126,14 @@ public:
   OrderedVariableOneToManyRelation       & edgeList()       { return m_edgeList; }
   OrderedVariableOneToManyRelation const & edgeList() const { return m_edgeList; }
 
-  Array2dT<localIndex>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  Array2dT<localIndex> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  array2d<localIndex>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array2d<localIndex> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  Array2dT<localIndex>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  Array2dT<localIndex> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  array2d<localIndex>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array2d<localIndex> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
-  Array2dT<localIndex>       & elementList()       { return m_toElements.m_toElementIndex; }
-  Array2dT<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
+  array2d<localIndex>       & elementList()       { return m_toElements.m_toElementIndex; }
+  array2d<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
 private:
@@ -147,7 +147,7 @@ private:
   OrderedVariableOneToManyRelation m_edgeList;
   FixedToManyElementRelation m_toElements;
 
-  array< R1Tensor > m_faceCenter;
+  array1d< R1Tensor > m_faceCenter;
 
   FaceManager() = delete;
   FaceManager( FaceManager const &) = delete;

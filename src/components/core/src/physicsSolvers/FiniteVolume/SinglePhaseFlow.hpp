@@ -200,6 +200,7 @@ public:
 
     constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
+    constexpr static auto faceFluidPressureString = "faceFluidPressure";
 
     constexpr static auto fluidDensityString = "fluidDensity";
     constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
@@ -226,6 +227,7 @@ public:
   {
   } groupKeys;
 
+
 private:
 
   /**
@@ -250,13 +252,13 @@ private:
   std::string m_discretizationName;
 
   /// temp storage for derivatives of density w.r.t. pressure
-  array<array<array<real64>>> m_dDens_dPres;
+  array1d<array1d<array1d<real64>>> m_dDens_dPres;
 
   /// temp storage for derivatives of porosity w.r.t. pressure
-  array<array<array<real64>>> m_dPoro_dPres;
+  array1d<array1d<array1d<real64>>> m_dPoro_dPres;
 
   /// temp storage for derivatives of porosity w.r.t. pressure
-  array<array<array<real64>>> m_dVisc_dPres;
+  array1d<array1d<array1d<real64>>> m_dVisc_dPres;
 
 };
 

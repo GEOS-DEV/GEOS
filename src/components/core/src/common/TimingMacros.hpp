@@ -33,6 +33,7 @@
 
 #else
 
+#define GEOS_MARK_FUNCTION
 #define GEOS_CXX_MARK_LOOP_BEGIN(loop, loopName)
 #define GEOS_CXX_MARK_LOOP_END(loop)
 #define GEOS_MARK_BEGIN(name)

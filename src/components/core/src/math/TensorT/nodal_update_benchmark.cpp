@@ -52,9 +52,9 @@ void function2( R1TensorT<3>* __restrict__ const Disp,
                 const int num_nodes,
                 const int num_steps );
 
-void function3( array<R1TensorT<3> >& Disp,
-                array<R1TensorT<3> >& Vel,
-                array<R1TensorT<3> >&  Acc,
+void function3( array1d<R1TensorT<3> >& Disp,
+                array1d<R1TensorT<3> >& Vel,
+                array1d<R1TensorT<3> >&  Acc,
                 R1TensorT<3>* __restrict__ Tot,
                 realT* __restrict__ const dt,
                 const int num_nodes,
@@ -80,9 +80,9 @@ int main(int argc, char* argv[] )
   R1TensorT<3>* const Acc = new R1TensorT<3>[num_nodes];
   R1TensorT<3> Tot;
 
-  array< R1TensorT<3> > Disp2(num_nodes);
-  array< R1TensorT<3> > Vel2(num_nodes);
-  array< R1TensorT<3> > Acc2(num_nodes);
+  array1d< R1TensorT<3> > Disp2(num_nodes);
+  array1d< R1TensorT<3> > Vel2(num_nodes);
+  array1d< R1TensorT<3> > Acc2(num_nodes);
 //  std::cout<<"sizeof( R1TensorT<3> ) = "<<sizeof( R1TensorT<3> )<<std::endl;
 /*
    void* junk;
@@ -294,9 +294,9 @@ void function2( R1TensorT<3>* __restrict__ const Disp,
 
 
 inline
-void function3( array<R1TensorT<3> >& Disp,
-                array<R1TensorT<3> >&  Vel,
-                array<R1TensorT<3> >&  Acc,
+void function3( array1d<R1TensorT<3> >& Disp,
+                array1d<R1TensorT<3> >&  Vel,
+                array1d<R1TensorT<3> >&  Acc,
                 R1TensorT<3>* __restrict__ Tot,
                 realT* __restrict__ const dt,
                 const int num_nodes,

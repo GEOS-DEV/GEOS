@@ -42,7 +42,7 @@ using namespace constitutive;
 
 ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent ):
   ObjectManagerBase( name, parent )  //,
-//    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<integer>
+//    m_toNodesRelation(this->RegisterViewWrapper< array2d<integer>
 // >(keys::nodeList).reference())
 {
 //  m_toNodesRelation.resize2(0,8);
@@ -179,7 +179,7 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
   ManagedGroup * cellBlockSubRegions = this->GetGroup(keys::cellBlockSubRegions);
   for( auto & cellSubBlock : cellBlockSubRegions->GetSubGroups() )
   {
-    auto & cellToConstitutiveMap = cellSubBlock.second->getReference< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+    auto & cellToConstitutiveMap = cellSubBlock.second->getReference< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
     auto & constitutiveGrouping = cellSubBlock.second->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
 //    constitutiveGrouping.resize( constitutiveMapPair.second.size() );
 //    constitutiveGrouping["mix"];

@@ -268,7 +268,7 @@ public:
                               real64 const problemTime,
                               bool const isRestart,
                               string const & materialName,
-                              array<localIndex> const & zoneToMatMap,
+                              array1d<localIndex> const & zoneToMatMap,
                               const localIndex_array& mask );
 
 
@@ -295,7 +295,7 @@ public:
                                 bool const isRestart,
                                 string const & multiRoot,
                                 string const & materialName,
-                                array<localIndex> const & zoneToMatMap,
+                                array1d<localIndex> const & zoneToMatMap,
                                 const localIndex_array& mask );
 
   /**
@@ -313,13 +313,13 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array<TYPE>& field,
+                       const array1d<TYPE>& field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
                        string const & multiRoot,
                        string const & materialName,
-                       array<localIndex> const & zoneToMatMap );
+                       array1d<localIndex> const & zoneToMatMap );
 
 
   /**
@@ -405,8 +405,8 @@ private:
 
   string m_baseFileName;
 
-  array<string> m_emptyMeshes;
-  array<string> m_emptyVariables;
+  array1d<string> m_emptyMeshes;
+  array1d<string> m_emptyVariables;
 
   /**
    *
@@ -514,7 +514,7 @@ template<> inline float CastField<float, real64> (const real64& field, int const
  * with the component of the tensor.
  */
 template<typename TYPE>
-void SetVariableNames(string const & fieldName, array<string>& varnamestring, char const* varnames[]);
+void SetVariableNames(string const & fieldName, array1d<string>& varnamestring, char const* varnames[]);
 
 
 }
@@ -529,7 +529,7 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
                                         bool const isRestart,
                                         string const & multiRoot,
                                         string const & materialName,
-                                        array<localIndex> const & zoneToMatMap,
+                                        array1d<localIndex> const & zoneToMatMap,
                                         const localIndex_array& mask )
 {
 
@@ -587,13 +587,13 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const array<TYPE>& field,
+                               const array1d<TYPE>& field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
                                string const & multiRoot,
                                string const & materialName,
-                               array<localIndex> const & zoneToMatMap )
+                               array1d<localIndex> const & zoneToMatMap )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
   int nels = field.size();
@@ -609,11 +609,11 @@ void SiloFile::WriteDataField( string const & meshName,
   { nullptr, nullptr };
 
 
-  array<char const*> varnames(nvars);
-  array<void*> vars(nvars);
+  array1d<char const*> varnames(nvars);
+  array1d<void*> vars(nvars);
 
 
-  array<string> varnamestring(nvars);
+  array1d<string> varnamestring(nvars);
   std::vector<std::vector<OUTTYPE> > castedField(nvars);
 
   if( materialName != "none" )
@@ -760,7 +760,7 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-  array<string> vBlockNames(size);
+  array1d<string> vBlockNames(size);
   std::vector<char*> BlockNames(size);
   std::vector<int> blockTypes(size);
   char tempBuffer[1024];

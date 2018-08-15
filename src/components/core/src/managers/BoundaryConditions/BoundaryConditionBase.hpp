@@ -56,31 +56,31 @@ public:
 
 
 //  template< typename T >
-//  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+//  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
 //                                           real64 const time,
-//                                           array<R1Tensor> const & X,
-//                                           array<T> & field );
+//                                           array1d<R1Tensor> const & X,
+//                                           array1d<T> & field );
 
-//  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+//  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
 //                                           real64 const time,
-//                                           array<R1Tensor> const & X,
-//                                           array<R1Tensor> & field );
+//                                           array1d<R1Tensor> const & X,
+//                                           array1d<R1Tensor> & field );
 
   template< typename OPERATION >
-  void ApplyBounaryConditionDefaultMethod( lSet const & set,
+  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
                                            real64 const time,
                                            dataRepository::ManagedGroup * dataGroup,
                                            string const & fieldname ) const;
 
   // calls user-provided lambda to apply computed boundary value
   template<typename LAMBDA>
-  void ApplyBoundaryCondition(lSet const & set,
+  void ApplyBoundaryCondition(set<localIndex> const & set,
                               real64 const time,
                               dataRepository::ManagedGroup * dataGroup,
                               LAMBDA && lambda);
 
   template< int OPERATION >
-  void ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
+  void ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
                                                     real64 const time,
                                                     dataRepository::ManagedGroup * dataGroup,
                                                     string const & fieldName,
@@ -92,7 +92,7 @@ public:
 
   template< int OPERATION, typename LAMBDA >
   void
-  ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
+  ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
                                                real64 const time,
                                                dataRepository::ManagedGroup * dataGroup,
                                                globalIndex_array const & dofMap,
@@ -213,7 +213,7 @@ private:
 
 
 template< typename OPERATION >
-void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set,
+void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
                                                                 real64 const time,
                                                                 ManagedGroup * dataGroup,
                                                                 string const & fieldName ) const
@@ -258,8 +258,14 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( lSet const & set
           integer count=0;
           for( auto a : set )
           {
-            OPERATION::f( field[a], component, (result[count]) );
-            ++count;
+            real64_array result(static_cast<localIndex>(set.size()));
+            function->Evaluate( dataGroup, time, set, result );
+            integer count=0;
+            for( auto a : set )
+            {
+              OPERATION::f( field[a], component, (m_scale*result[count]) );
+              ++count;
+            }
           }
         }
       }
@@ -310,7 +316,7 @@ inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( g
 
 
 template< int OPERATION >
-void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
+void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
                                                                          real64 const time,
                                                                          dataRepository::ManagedGroup * dataGroup,
                                                                          string const & fieldName,
@@ -432,7 +438,7 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( lSet co
 template< int OPERATION, typename LAMBDA >
 void
 BoundaryConditionBase::
-ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
+ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
                                              real64 const time,
                                              dataRepository::ManagedGroup * dataGroup,
                                              globalIndex_array const & dofMap,
@@ -536,7 +542,7 @@ ApplyDirichletBounaryConditionDefaultMethod( lSet const & set,
 }
 
 template<typename LAMBDA>
-void BoundaryConditionBase::ApplyBoundaryCondition(lSet const & set,
+void BoundaryConditionBase::ApplyBoundaryCondition(set<localIndex> const & set,
                                                    real64 const time,
                                                    dataRepository::ManagedGroup * dataGroup,
                                                    LAMBDA && lambda)

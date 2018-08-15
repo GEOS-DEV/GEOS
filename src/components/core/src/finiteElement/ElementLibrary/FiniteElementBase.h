@@ -43,32 +43,32 @@ public:
 
 
 
-  virtual void reinit( const array<R1TensorT<3> > &mapped_support_points) = 0;
+  virtual void reinit( const array1d<R1TensorT<3> > &mapped_support_points) = 0;
 
 
-//  virtual void zero_energy_mode_control( const array<R1Tensor>& dNdx,
+//  virtual void zero_energy_mode_control( const array1d<R1Tensor>& dNdx,
 //                                         const realT& volume,
-//                                         const array<R1Tensor>& x,
-//                                         const array<R1Tensor>& vel,
+//                                         const array1d<R1Tensor>& x,
+//                                         const array1d<R1Tensor>& vel,
 //                                         const realT& dampcoef,
 //                                         const realT& stiffcoef,
 //                                         const realT& rho,
 //                                         const realT& modulus,
 //                                         const realT& dt,
-//                                         array<R1Tensor>& Qstiffness,
-//                                         array<R1Tensor>& force ) {}
+//                                         array1d<R1Tensor>& Qstiffness,
+//                                         array1d<R1Tensor>& force ) {}
 
-  virtual void zero_energy_mode_control( const array<R1Tensor>&,
+  virtual void zero_energy_mode_control( const array1d<R1Tensor>&,
                                          const realT&,
-                                         const array<R1Tensor>&,
-                                         const array<R1Tensor>&,
-                                         const realT&,
-                                         const realT&,
+                                         const array1d<R1Tensor>&,
+                                         const array1d<R1Tensor>&,
                                          const realT&,
                                          const realT&,
                                          const realT&,
-                                         array<R1Tensor>&,
-                                         array<R1Tensor>&  ) {}
+                                         const realT&,
+                                         const realT&,
+                                         array1d<R1Tensor>&,
+                                         array1d<R1Tensor>&  ) {}
 
 
   double value(const int shape_index,
@@ -109,7 +109,7 @@ public:
   std::string m_type;
 
 protected:
-  array<integer> m_nodeOrdering;
+  array1d<integer> m_nodeOrdering;
   int n_q_points;
   int n_dofs;
   int m_zero_energy_modes;

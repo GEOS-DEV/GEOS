@@ -114,10 +114,10 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr auto fieldNameString       = "fieldName";
-    static constexpr auto coeffNameString       = "coefficientName";
-    static constexpr auto cellLocationString    = "cellLocation";
-    static constexpr auto cellStencilString     = "cellStencil";
+    static constexpr auto fieldNameString         = "fieldName";
+    static constexpr auto boundaryFieldNameString = "boundaryFieldName";
+    static constexpr auto coeffNameString         = "coefficientName";
+    static constexpr auto cellStencilString       = "cellStencil";
   };
 
   struct groupKeyStruct
@@ -131,7 +131,7 @@ protected:
   virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) = 0;
 
   /// actual computation of the boundary stencil, to be overridden by implementations
-  virtual void computeBoundaryStencil(DomainPartition * domain, lSet const & faceSet, BoundaryStencil & stencil) = 0;
+  virtual void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) = 0;
 
   /// pointer to boundary set manager
   dataRepository::ManagedGroup * m_boundarySetData;
@@ -139,11 +139,11 @@ protected:
   /// name of the primary solution field
   string m_fieldName;
 
+  /// name of the boundary field (used to filter boundary conditions)
+  string m_boundaryFieldName;
+
   /// name of the coefficient field
   string m_coeffName;
-
-  /// cell variable collocation point option
-  string m_cellLocation;
 
 };
 
