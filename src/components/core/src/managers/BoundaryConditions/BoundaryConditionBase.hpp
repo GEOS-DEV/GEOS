@@ -260,7 +260,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> 
             integer count=0;
             for( auto a : set )
             {
-              OPERATION::f( field[a], component, (result[count]) );
+              OPERATION::f( field[a], component, (m_scale*result[count]) );
               ++count;
             }
           }
