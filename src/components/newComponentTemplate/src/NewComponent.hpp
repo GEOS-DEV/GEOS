@@ -51,10 +51,10 @@ public:
   virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
 
 
-  virtual void SolverStep( real64 const& time_n,
+  virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
-                         dataRepository::ManagedGroup * domain ) override;
+                         DomainPartition * domain ) override;
 
 private:
   NewComponent() = delete;

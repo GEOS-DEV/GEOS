@@ -18,7 +18,10 @@
 
 #ifndef LINEAREOS_HPP_
 #define LINEAREOS_HPP_
+
 #include "constitutive/ConstitutiveBase.hpp"
+
+#include "constitutive/ExponentialRelation.hpp"
 
 namespace geosx
 {
@@ -38,66 +41,71 @@ class LinearEOS : public ConstitutiveBase
 public:
   LinearEOS( std::string const & name, ManagedGroup * const parent );
 
-  virtual ~LinearEOS();
+  virtual ~LinearEOS() override;
 
   static std::string CatalogName() { return dataRepository::keys::linearEOS; }
 
 
-  virtual void SetParamStatePointers( void *& ) override final;
+  virtual void SetParamStatePointers( void *& ) override final {}
 
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
                             dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const override;
+                            integer const systemAssembleFlag ) const override final {}
 
   virtual UpdateFunctionPointer GetStateUpdateFunctionPointer() override final;
 
-  R2SymTensor  StateUpdatePoint( R2SymTensor const & D,
-                                 R2Tensor const & Rot,
-                                 localIndex const i,
-                                 integer const systemAssembleFlag ) override;
+  virtual void FluidPressureUpdate(real64 const &dens,
+                                   localIndex const i,
+                                   real64 &pres,
+                                   real64 &dPres_dDens) override final;
 
-  void EquationOfStatePressureUpdate( real64 const & dRho,
-                         localIndex const i,
-                         real64 & P,
-                         real64 & dPdRho ) override;
+  virtual void FluidDensityUpdate(real64 const &pres,
+                                  localIndex const i,
+                                  real64 &dens,
+                                  real64 &dDens_dPres) override final;
 
-  void EquationOfStateDensityUpdate( real64 const & dP,
-                                     localIndex const i,
-                                     real64 & dRho,
-                                     real64 & dRho_dP ) override;
+  virtual void FluidViscosityUpdate(real64 const &pres,
+                                    localIndex const i,
+                                    real64 &visc,
+                                    real64 &dVisc_dPres) override final;
+
+  virtual void SimplePorosityUpdate(real64 const &pres,
+                                    real64 const &poro_ref,
+                                    localIndex const i,
+                                    real64 &poro,
+                                    real64 &dPoro_dPres) override final;
 
   virtual void FillDocumentationNode() override;
 
   virtual void ReadXML_PostProcess() override;
 
+  virtual void FinalInitialization(ManagedGroup * const parent) override final;
+
   void GetStiffness( realT c[6][6]) const override;
 
   struct ViewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    dataRepository::ViewKey bulkModulus = { "BulkModulus" };
-    dataRepository::ViewKey referenceDensity = { "referenceDensity" };
-    dataRepository::ViewKey referencePressure = { "referencePressure" };
-    dataRepository::ViewKey fluidViscosity = { "fluidViscosity" };
+    dataRepository::ViewKey fluidBulkModulus   = { "fluidBulkModulus"   };
+    dataRepository::ViewKey solidBulkModulus   = { "solidBulkModulus"   };
+    dataRepository::ViewKey fluidViscosibility = { "fluidViscosibility" };
 
-    dataRepository::ViewKey fluidPressure = { "fluidPressure" };
-    dataRepository::ViewKey fluidDensity = { "fluidDensity" };
+    dataRepository::ViewKey referencePressure  = { "referencePressure"  };
+    dataRepository::ViewKey referenceDensity   = { "referenceDensity"   };
+    dataRepository::ViewKey referenceViscosity = { "referenceViscosity" };
   } viewKeys;
-
-
-
-
-  dataRepository::view_rtype<real64>       bulkModulus()       { return GetParameterData()->getData<real64>(viewKeys.bulkModulus); }
-  dataRepository::view_rtype_const<real64> bulkModulus() const { return GetParameterData()->getData<real64>(viewKeys.bulkModulus); }
-
-  dataRepository::view_rtype<real64>       density()       { return GetParameterData()->getData<real64>(viewKeys.referenceDensity); }
-  dataRepository::view_rtype_const<real64> density() const { return GetParameterData()->getData<real64>(viewKeys.referenceDensity); }
 
 
 private:
 
-  /// scalar bulk modulus parameter
-  real64 m_bulkModulus;
+  /// scalar fluid bulk modulus parameter
+  real64 m_fluidBulkModulus;
+
+  /// scalar fluid bulk modulus parameter
+  real64 m_solidBulkModulus;
+
+  /// scalar fluid viscosity exponential coefficient
+  real64 m_fluidViscosibility;
 
   /// reference pressure parameter for EOS relation
   real64 m_referencePressure;
@@ -105,14 +113,12 @@ private:
   /// reference density parameter for EOS relation
   real64 m_referenceDensity;
 
-  /// fluid viscosity parameter
-  real64 m_fluidViscosity;
+  /// reference viscosity parameter for EOS relation
+  real64 m_referenceViscosity;
 
-  /// fluid pressure state variable
-  array<real64> m_fluidPressure;
-
-  /// fluid density state variable
-  array<real64> m_fluidDensity;
+  ExponentialRelation<localIndex, real64> m_densityRelation;
+  ExponentialRelation<localIndex, real64> m_viscosityRelation;
+  ExponentialRelation<localIndex, real64> m_porosityRelation;
 };
 
 

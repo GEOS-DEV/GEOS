@@ -262,6 +262,60 @@ public:
     return group_cast<T const *>(m_subGroups[key]);
   }
 
+  /**
+   * @brief This will grab the pointer to an object in the data structure
+   * @param path a unix-style string (absolute, relative paths valid)
+   */
+  template< typename T = ManagedGroup >
+  T const * GetGroupByPath( string const & path ) const
+  {
+    size_t directoryMarker = path.find("/");
+
+    if (directoryMarker == std::string::npos)
+    {
+      // Target should be a child of this group
+      return m_subGroups[path];
+    }
+    else
+    {
+      // Split the path
+      string const child = path.substr(0, directoryMarker);
+      string const subPath = path.substr(directoryMarker+1, path.size());
+
+      if (directoryMarker == 0)            // From root
+      {
+        if (this->getParent() == nullptr)  // At root
+        {
+          return this->GetGroupByPath(subPath);
+        }
+        else                               // Not at root
+        {
+          return this->getParent()->GetGroupByPath(path);
+        }
+      }
+      else if (child[0] == '.')
+      {
+        if (child[1] == '.')               // '../' = Reverse path
+        {
+          return this->getParent()->GetGroupByPath(subPath); 
+        }
+        else                               // './' = This path
+        {
+          return this->GetGroupByPath(subPath);
+        }
+      }
+      else
+      {
+        return m_subGroups[child]->GetGroupByPath(subPath);
+      }
+    }
+  }
+  
+  template< typename T = ManagedGroup >
+  T * GetGroupByPath( string const & path )
+  {
+    return const_cast<T *>(const_cast< ManagedGroup const * >(this)->GetGroupByPath(path));
+  }
 
   subGroupMap & GetSubGroups()
   {
@@ -298,6 +352,60 @@ public:
       T const * subGroup = static_cast<T const *>( subGroupIter.second );
 #endif
       lambda( subGroup );
+    }
+  }
+
+  template< typename T = ViewWrapperBase, typename LAMBDA >
+  void forViewWrappers( LAMBDA lambda )
+  {
+    for( auto& wrapperIter : m_wrappers )
+    {
+#ifdef USE_DYNAMIC_CASTING
+      T & wrapper = dynamic_cast<T &>( *wrapperIter.second );
+#else
+      T & wrapper = static_cast<T &>( *wrapperIter.second );
+#endif
+      lambda( wrapper );
+    }
+  }
+
+  template< typename T = ViewWrapperBase, typename LAMBDA >
+  void forViewWrappers( LAMBDA lambda ) const
+  {
+    for( auto const & wrapperIter : m_wrappers )
+    {
+#ifdef USE_DYNAMIC_CASTING
+      T const & wrapper = dynamic_cast<T const &>( *wrapperIter.second );
+#else
+      T const & wrapper = static_cast<T const &>( *wrapperIter.second );
+#endif
+      lambda( wrapper );
+    }
+  }
+
+  template< typename Wrapped, typename LAMBDA >
+  void forViewWrappersByType(LAMBDA lambda)
+  {
+    for( auto & wrapperIter : m_wrappers )
+    {
+      if ( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      {
+        auto & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
+        lambda(wrapper);
+      }
+    }
+  }
+
+  template< typename Wrapped, typename LAMBDA >
+  void forViewWrappersByType(LAMBDA lambda) const
+  {
+    for( auto const & wrapperIter : m_wrappers )
+    {
+      if( wrapperIter.second->get_typeid() == typeid(Wrapped) )
+      {
+        auto const & wrapper = ViewWrapper<Wrapped>::cast(*wrapperIter.second);
+        lambda(wrapper);
+      }
     }
   }
 
@@ -383,20 +491,19 @@ public:
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );
   
-
-  virtual localIndex PackSize( array<string> const & wrapperNames,
+  virtual localIndex PackSize( array1d<string> const & wrapperNames,
                         integer const recursive ) const;
 
-  virtual localIndex PackSize( array<string> const & wrapperNames,
+  virtual localIndex PackSize( array1d<string> const & wrapperNames,
                         localIndex_array const & packList,
                         integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    array<string> const & wrapperNames,
+                    array1d<string> const & wrapperNames,
                     integer const recursive ) const;
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    array<string> const & wrapperNames,
+                    array1d<string> const & wrapperNames,
                     localIndex_array const & packList,
                     integer const recursive ) const;
 

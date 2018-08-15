@@ -32,22 +32,22 @@ static void CalculateShapeFunctionDerivative( const realT y[8],
                                               realT b[8] );
 
 
-static void CalculateFBHourGlassModes( const array<R1Tensor>& xpos,
-                                       const array<R1Tensor>& dNdx,
+static void CalculateFBHourGlassModes( const array1d<R1Tensor>& xpos,
+                                       const array1d<R1Tensor>& dNdx,
                                        realT gamma[4][8] );
 
 static void
-CalcFBHourForce( const array<R1Tensor>& vel,
+CalcFBHourForce( const array1d<R1Tensor>& vel,
                  const realT gamma[4][8],
                  const realT& dampcoef,
                  const realT& stiffcoef,
                  const realT& rho,
                  const realT& modulus,
                  const realT& volume,
-                 const array<R1Tensor>& dNdx,
+                 const array1d<R1Tensor>& dNdx,
                  const realT& dt,
-                 array<R1Tensor>& Qstiffness,
-                 array<R1Tensor>& hgforce);
+                 array1d<R1Tensor>& Qstiffness,
+                 array1d<R1Tensor>& hgforce);
 
 
 UniformStrainHexahedron::UniformStrainHexahedron():
@@ -163,17 +163,17 @@ void UniformStrainHexahedron::reinit(const std::vector<R1TensorT<3> > &mapped_su
 
 }
 
-void UniformStrainHexahedron::zero_energy_mode_control( const array<R1Tensor>& dNdx,
+void UniformStrainHexahedron::zero_energy_mode_control( const array1d<R1Tensor>& dNdx,
                                                         const realT& volume,
-                                                        const array<R1Tensor>& x,
-                                                        const array<R1Tensor>& vel,
+                                                        const array1d<R1Tensor>& x,
+                                                        const array1d<R1Tensor>& vel,
                                                         const realT& dampcoef,
                                                         const realT& stiffcoef,
                                                         const realT& rho,
                                                         const realT& modulus,
                                                         const realT& dt,
-                                                        array<R1Tensor>& Qstiffness,
-                                                        array<R1Tensor>& force )
+                                                        array1d<R1Tensor>& Qstiffness,
+                                                        array1d<R1Tensor>& force )
 {
   realT gamma[4][8];
 
@@ -268,8 +268,8 @@ void CalculateShapeFunctionDerivative( const realT y[8],
 }
 
 #define WRITEOUT 0
-void CalculateFBHourGlassModes( const array<R1Tensor>& xpos,
-                                const array<R1Tensor>& dNdx,
+void CalculateFBHourGlassModes( const array1d<R1Tensor>& xpos,
+                                const array1d<R1Tensor>& dNdx,
                                 realT gamma[4][8] )
 {
 
@@ -322,17 +322,17 @@ void CalculateFBHourGlassModes( const array<R1Tensor>& xpos,
 
 
 void
-CalcFBHourForce( const array<R1Tensor>& vel,
+CalcFBHourForce( const array1d<R1Tensor>& vel,
                  const realT gamma[4][8],
                  const realT& dampcoef,
                  const realT& stiffcoef,
                  const realT& rho,
                  const realT& modulus,
                  const realT& volume,
-                 const array<R1Tensor>& dNdx,
+                 const array1d<R1Tensor>& dNdx,
                  const realT& dt,
-                 array<R1Tensor>& Qstiffness,
-                 array<R1Tensor>& hgforce )
+                 array1d<R1Tensor>& Qstiffness,
+                 array1d<R1Tensor>& hgforce )
 {
 
 

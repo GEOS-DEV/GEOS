@@ -103,11 +103,12 @@ int main( int argc, char *argv[] )
 
   problemManager.Initialize( &problemManager );
 
-  problemManager.FinalInitializationRecursive( &problemManager );
 
   GEOS_MARK_END("Initialization");
 
   problemManager.ApplyInitialConditions();
+
+  problemManager.FinalInitializationRecursive( &problemManager );
 
   if (restart) {
     problemManager.ReadRestartOverwrite( restartFileName );

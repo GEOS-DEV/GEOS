@@ -40,7 +40,6 @@
 #include "optionparser.h"
 
 #include "ObjectManagerBase.hpp"
-#include "physicsSolvers/SolverBase.hpp"
 #include "EventManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
@@ -49,6 +48,7 @@
 namespace geosx
 {
 
+class PhysicsSolverManager;
 namespace dataRepository
 {
 namespace keys
@@ -186,13 +186,14 @@ public:
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };
     dataRepository::GroupKey meshManager = { "Mesh" };
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };
+    dataRepository::GroupKey outputManager = { "Outputs" };
   } groupKeys;
 
 
 
 private:
-  // PhysicsSolverManager * m_physicsSolverManager;
-  SolverBase * m_physicsSolverManager;
+  PhysicsSolverManager * m_physicsSolverManager;
+  //SolverBase * m_physicsSolverManager;
   EventManager * m_eventManager;
   NewFunctionManager * m_functionManager;
 };

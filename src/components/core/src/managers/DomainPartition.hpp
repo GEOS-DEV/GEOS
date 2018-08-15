@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * DomainPartition.hpp
- *
- *  Created on: Jul 28, 2016
- *      Author: rrsettgast
+/**
+ * @file DomainPartition.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
@@ -72,7 +69,7 @@ public:
   ///@{
 
 //  void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-//                                            array< array<localIndex> > & matchedPartitionBoundaryObjects );
+//                                            array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects );
 
   void SetMpiComm( MPI_Comm comm )
   {
@@ -90,11 +87,6 @@ public:
                     int* ncoords);
   ///@}
 
-  // THIS STUFF NEEDS TO GO SOMEWHERE ELSE
-  void WriteSilo( SiloFile& siloFile,
-                  const int cycleNum,
-                  const realT problemTime,
-                  const bool isRestart );
 
   void ReadSilo( const SiloFile& siloFile,
                  const int cycleNum,

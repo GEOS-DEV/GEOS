@@ -90,6 +90,7 @@ public:
 
   virtual size_t sizeOfType() const = 0;
 
+  virtual bool shouldRegisterDataPtr() const = 0;
   virtual void registerDataPtr(axom::sidre::View * view=nullptr) const = 0; 
   virtual void registerToWrite(axom::sidre::View * view=nullptr) const = 0;
   virtual void finishWriting(axom::sidre::View * view=nullptr) const = 0;
@@ -130,6 +131,18 @@ public:
   }
 #endif
 
+  PlotLevel getPlotLevel() const {return m_plotLevel;}
+
+  void setPlotLevel( PlotLevel const flag )
+  {
+    m_plotLevel = flag;
+  }
+
+  void setPlotLevel( int const flag )
+  {
+    m_plotLevel = IntToPlotLevel(flag);
+  }
+
   string const & getName() const
   {
     return m_name;
@@ -141,6 +154,7 @@ private:
   ManagedGroup* m_parent;
   int m_sizedFromParent;
   RestartFlags m_restart_flags;
+  PlotLevel m_plotLevel;
 #ifdef USE_ATK
   axom::sidre::View* m_sidreView;
 #endif

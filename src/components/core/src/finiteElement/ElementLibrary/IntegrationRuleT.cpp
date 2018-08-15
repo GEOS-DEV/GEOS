@@ -36,8 +36,8 @@ IntegrationRuleT::~IntegrationRuleT()
 }
 
 
-void IntegrationRuleT::CalculateShapeFunctionDerivatives( const array<R1Tensor>& X,
-                                                          array<R1Tensor>& dNdX,
+void IntegrationRuleT::CalculateShapeFunctionDerivatives( const array1d<R1Tensor>& X,
+                                                          array1d<R1Tensor>& dNdX,
                                                           realT& detJ )
 {
   const realT x[8] = { X(0)(0),

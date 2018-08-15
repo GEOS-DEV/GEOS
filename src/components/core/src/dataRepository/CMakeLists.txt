@@ -7,6 +7,7 @@ set(dataRepository_headers
     BufferOps_inline.hpp
     KeyIndexT.hpp
     ManagedGroup.hpp
+    ExecutableGroup.hpp
     MappedVector.hpp
     ReferenceWrapper.hpp
     SidreWrapper.hpp

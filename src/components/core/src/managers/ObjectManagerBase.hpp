@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ObjectManagerBase.hpp
- *
- *  Created on: Sep 15, 2016
- *      Author: settgast1
+/**
+ * @file ObjectManagerBase.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
@@ -41,7 +38,11 @@ string const sets("Sets");
 }
 
 
-
+/**
+ * @class ObjectManagerBase
+ * @brief The ObjectManagerBase is the base object of all object managers in the mesh data hierachy.
+ *
+ */
 class ObjectManagerBase : public dataRepository::ManagedGroup
 {
 public:
@@ -74,13 +75,13 @@ public:
   using dataRepository::ManagedGroup::PackSize;
   using dataRepository::ManagedGroup::Pack;
 
-  virtual localIndex PackSize( array<string> const & wrapperNames,
+  virtual localIndex PackSize( array1d<string> const & wrapperNames,
                         localIndex_array const & packList,
                         integer const recursive ) const override;
 
 
   virtual localIndex Pack( buffer_unit_type * & buffer,
-                    array<string> const & wrapperNames,
+                    array1d<string> const & wrapperNames,
                     localIndex_array const & packList,
                     integer const recursive )  const override;
 
@@ -126,7 +127,7 @@ public:
 private:
   template< bool DOPACK >
   localIndex PackPrivate( buffer_unit_type * & buffer,
-                   array<string> const & wrapperNames,
+                   array1d<string> const & wrapperNames,
                    localIndex_array const & packList,
                    integer const recursive ) const;
 
@@ -192,33 +193,33 @@ public:
 
   /// returns reference to specified field
   template< FieldKey FIELDKEY>
-  typename dataRepository::ViewWrapper< array< typename Field<FIELDKEY>::Type > >::rtype GetFieldData( )
+  typename dataRepository::ViewWrapper< array1d< typename Field<FIELDKEY>::Type > >::rtype GetFieldData( )
   {
-    return const_cast<typename dataRepository::ViewWrapper< array< typename Field<FIELDKEY>::Type > >::rtype>( static_cast<const ObjectManagerBase&>(*this).
+    return const_cast<typename dataRepository::ViewWrapper< array1d< typename Field<FIELDKEY>::Type > >::rtype>( static_cast<const ObjectManagerBase&>(*this).
                                                                                                                GetFieldData<FIELDKEY>());
   }
 
 
   /// returns const reference to specified field
   template< FieldKey FIELDKEY>
-  typename dataRepository::ViewWrapper< array< typename Field<FIELDKEY>::Type > >::rtype_const GetFieldData( ) const
+  typename dataRepository::ViewWrapper< array1d< typename Field<FIELDKEY>::Type > >::rtype_const GetFieldData( ) const
   {
-    return this->getData< array< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
+    return this->getData< array1d< typename Field<FIELDKEY>::Type > >( string(Field<FIELDKEY>::Name()) );
   }
 
 
   /// returns reference to specified field
   template< typename TYPE >
-  typename dataRepository::ViewWrapper< array< TYPE > >::rtype GetFieldData( const std::string& fieldName )
+  typename dataRepository::ViewWrapper< array1d< TYPE > >::rtype GetFieldData( const std::string& fieldName )
   {
-    return const_cast<typename dataRepository::ViewWrapper<array<TYPE> >::rtype>( static_cast<const ObjectManagerBase&>(*this).GetFieldData<TYPE>(fieldName));
+    return const_cast<typename dataRepository::ViewWrapper<array1d<TYPE> >::rtype>( static_cast<const ObjectManagerBase&>(*this).GetFieldData<TYPE>(fieldName));
   }
 
   /// returns const reference to specified field
   template< typename TYPE >
-  typename dataRepository::ViewWrapper< array< TYPE > >::rtype_const GetFieldData( const std::string& name ) const
+  typename dataRepository::ViewWrapper< array1d< TYPE > >::rtype_const GetFieldData( const std::string& name ) const
   {
-    return this->getData< array<TYPE> >( name );
+    return this->getData< array1d<TYPE> >( name );
   }
 
 
@@ -279,14 +280,14 @@ public:
 
   /// builds a new set on this object given another objects set and the map
   // between them
-  void ConstructSetFromSetAndMap( const lSet& inputSet,
-                                  const lArray2d& map,
+  void ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
+                                  const array2d<localIndex>& map,
                                   const std::string& newSetName );
 
   /// builds a new set on this object given another objects set and the map
   // between them
-  void ConstructSetFromSetAndMap( const lSet& inputSet,
-                                  const array<localIndex_array>& map,
+  void ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
+                                  const array1d<localIndex_array>& map,
                                   const std::string& newSetName );
 
   void ConstructGlobalToLocalMap();
@@ -295,7 +296,7 @@ public:
   void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
 
   virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & ,
-                                                                array<globalIndex_array>&  )
+                                                                array1d<globalIndex_array>&  )
   {
 
   }
@@ -307,6 +308,11 @@ public:
 
   //**********************************************************************************************************************
 
+  /**
+   * @brief struct to serve as a container for variable strings and keys
+   * @struct viewKeyStruct
+   *
+   */
   struct viewKeyStruct
   {
 
@@ -332,6 +338,11 @@ public:
   } m_ObjectManagerBaseViewKeys;
 
 
+  /**
+   * @brief struct to serve as a container for group strings and keys
+   * @struct viewKeyStruct
+   *
+   */
   struct groupKeyStruct
   {
     static constexpr auto setsString = "sets";

@@ -75,7 +75,7 @@ void xmlWrapper::ReadAttributeAsType( dataRepository::ManagedGroup & group,
       }
       else
       {
-        if( defVal == "REQUIRED")
+        if( defVal == "REQUIRED" )
         {
           string message = "variable " + subDocNode.getName() + " is required in " + targetNode.path();
 #ifdef USE_ATK
@@ -114,14 +114,14 @@ R1Tensor xmlWrapper::as_type( xmlNode const & node, std::string const name, R1Te
       std::string csvstr = inputValue;
       std::istringstream ss( csvstr );
 
-      while(ss.peek() == ',' || ss.peek() == ' ')
+      while( ss.peek() == ',' || ss.peek() == ' ' )
       {
         ss.ignore();
       }
       for( int i=0 ; i<3 ; ++i )
       {
         ss>>rval[i];
-        while(ss.peek() == ',' || ss.peek() == ' ')
+        while( ss.peek() == ',' || ss.peek() == ' ' )
         {
           ss.ignore();
         }

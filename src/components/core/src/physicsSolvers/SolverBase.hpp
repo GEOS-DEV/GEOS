@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SolverBase.hpp
- *
- *  Created on: Dec 2, 2014
- *      Author: rrsettgast
- */
-
 #ifndef SOLVERBASE_HPP_
 #define SOLVERBASE_HPP_
 
@@ -33,9 +26,12 @@
 
 #include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "../dataRepository/ManagedGroup.hpp"
+#include "../dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/SystemSolverParameters.hpp"
+#include "systemSolverInterface/LinearSolverWrapper.hpp"
+
 
 
 namespace geosx
@@ -47,6 +43,7 @@ namespace systemSolverInterface
 {
 class EpetraBlockSystem;
 class LinearSolverWrapper;
+enum class BlockIDs;
 }
 class SystemSolverParameters;
 
@@ -60,7 +57,7 @@ string const maxDt   = "maxDt";
 }
 }
 
-class SolverBase : public dataRepository::ManagedGroup
+class SolverBase : public ExecutableGroup
 {
 public:
 
@@ -81,11 +78,15 @@ public:
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 
-  virtual void SolverStep( real64 const & time_n,
-                         real64 const & dt,
-                         int const cycleNumber,
-                         dataRepository::ManagedGroup * domain );
 
+
+  /**
+   * This method is called when it's host event is triggered
+   */
+  virtual void Execute( real64 const & time_n,
+                        real64 const & dt,
+                        int const cycleNumber,
+                        dataRepository::ManagedGroup * domain ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -93,6 +94,22 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
+
+  /**
+   * @brief entry function to perform a solver step
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @return return the timestep that was achieved during the step.
+   *
+   * This function is the entry point to perform a solver step. The choice of time integration
+   * method is determined in this function, and the appropriate step function is called.
+   */
+  virtual real64 SolverStep( real64 const & time_n,
+                         real64 const & dt,
+                         int const cycleNumber,
+                         DomainPartition * domain );
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -123,7 +140,8 @@ public:
   virtual real64 NonlinearImplicitStep( real64 const & time_n,
                                         real64 const & dt,
                                         integer const cycleNumber,
-                                        DomainPartition * const domain );
+                                        DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief Function for a linear implicit integration step
@@ -142,7 +160,8 @@ public:
   virtual real64 LinearImplicitStep(real64 const & time_n,
                                     real64 const & dt,
                                     integer const cycleNumber,
-                                    DomainPartition * const domain );
+                                    DomainPartition * const domain,
+                                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief function to perform setup for implicit timestep
@@ -158,7 +177,8 @@ public:
    */
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
-                                  DomainPartition * const domain );
+                                  DomainPartition * const domain,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
   /**
    * @brief function to assemble the linear system matrix and rhs
@@ -177,10 +197,38 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual real64 AssembleSystem( DomainPartition * const domain,
-                                 systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                 real64 const time,
-                                 real64 const dt );
+  virtual void AssembleSystem( DomainPartition * const domain,
+                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               real64 const time,
+                               real64 const dt );
+
+  /**
+   * @brief apply boundary condition to system
+   * @param domain the domain partition
+   * @param blockSystem the entire block system
+   * @param time the time at the beginning of the step
+   * @param dt the desired timestep
+   *
+   * This function applies all boundary conditions to the linear system. This is essentially a
+   * completion of the system assembly, but is separated for use in coupled solvers.
+   */
+  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        real64 const time,
+                                        real64 const dt );
+
+  /**
+   * @brief calculate the norm of the global system residual
+   * @param blockSystem the entire block system
+   * @param domain the domain partition
+   * @return norm of the residual
+   *
+   * This function returns the norm of global residual vector, which is suitable for comparison with
+   * a tolerance.
+   */
+  virtual real64
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                         DomainPartition * const domain );
 
   /**
    * @brief function to apply a linear system solver to the assembled system.
@@ -255,9 +303,19 @@ public:
   /**@}*/
 
 
+  void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                    SystemSolverParameters const * const params,
+                    systemSolverInterface::BlockIDs const blockID );
+
+
+
   virtual void FillDocumentationNode() override;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  virtual void
+  FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
+
+
+//  virtual void CreateChild( string const & childKey, string const & childName ) override;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
@@ -276,29 +334,45 @@ public:
   } groupKeys;
 
 
-  /**
-   * accessor for the system solver parameters.
-   * @return
-   */
-  SystemSolverParameters * getSystemSolverParameters();
 
   R1Tensor const & getGravityVector() const { return m_gravityVector; }
   R1Tensor       & getGravityVector()       { return m_gravityVector; }
   R1Tensor const * globalGravityVector() const;
+
+  systemSolverInterface::EpetraBlockSystem * getLinearSystemRepository();
+  systemSolverInterface::EpetraBlockSystem const * getLinearSystemRepository() const;
+
   integer verboseLevel() const { return m_verboseLevel; }
+
+  /**
+   * accessor for the system solver parameters.
+   * @return
+   */
+
+  SystemSolverParameters * getSystemSolverParameters()
+  {
+    return &m_systemSolverParameters;
+  }
+
+  SystemSolverParameters const * getSystemSolverParameters() const
+  {
+    return &m_systemSolverParameters;
+  }
+
+//  localIndex_array & blockLocalDofNumber() { return m_blockLocalDofNumber; }
+//  localIndex_array const & blockLocalDofNumber() const { return m_blockLocalDofNumber; }
 
 protected:
   /// This is a wrapper for the linear solver package
-  systemSolverInterface::LinearSolverWrapper * m_linearSolverWrapper;
+  systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
 
-  /// this is a block structured linear system object used to hold the system
-  systemSolverInterface::EpetraBlockSystem * m_linearSystem;
 
 private:
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
-
   SystemSolverParameters m_systemSolverParameters;
+
+//  localIndex_array m_blockLocalDofNumber;
 
 
 };

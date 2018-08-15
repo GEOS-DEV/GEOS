@@ -19,6 +19,7 @@
 #ifndef FILEIO_BLUEPRINT_BLUEPRINT_HPP
 #define FILEIO_BLUEPRINT_BLUEPRINT_HPP
 
+#include "common/DataTypes.hpp"
 
 #include <unordered_map>
 #include <string>
@@ -33,7 +34,7 @@ class Group;
 }
 }
 
-namespace geosx 
+namespace geosx
 {
 
 
@@ -44,8 +45,8 @@ class ElementRegionManager;
 class Blueprint
 {
 public:
-  Blueprint( const NodeManager& node_manager, const ElementRegionManager& elem_reg_manager, 
-             const std::string& output_path, MPI_Comm comm, 
+  Blueprint( const NodeManager& node_manager, const ElementRegionManager& elem_reg_manager,
+             const std::string& output_path, MPI_Comm comm,
              const std::string& coord_name="coords", const std::string& topo_name="mesh");
 
   ~Blueprint()
@@ -59,7 +60,7 @@ private:
   void addCells(axom::sidre::Group* topo, axom::sidre::Group* fields) const;
 
 
-  const static std::unordered_map<int, const std::string> numNodesToElemName;
+  const static std::unordered_map<localIndex, const std::string> numNodesToElemName;
 
 #ifdef USE_ATK
   const NodeManager& m_node_manager;

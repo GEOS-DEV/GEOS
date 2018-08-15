@@ -61,7 +61,7 @@ public:
   virtual ~FiniteElement(){}
 
 
-  virtual void reinit(const array<R1TensorT<3> > &mapped_support_points);
+  virtual void reinit(const array1d<R1TensorT<3> > &mapped_support_points);
 
 
 
@@ -122,7 +122,7 @@ FiniteElement<dim> :: FiniteElement(BasisBase const &basis,
  */
 
 template <int dim>
-void FiniteElement<dim> :: reinit(const array<R1TensorT<3> > &mapped_support_points)
+void FiniteElement<dim> :: reinit(const array1d<R1TensorT<3> > &mapped_support_points)
 {
   assert(mapped_support_points.size() == n_dofs);
 

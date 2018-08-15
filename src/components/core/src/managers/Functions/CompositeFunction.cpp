@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * CompositeFunction.cpp
- *
- *  Created on: August 17, 2017
- *      Author: sherman
+/**
+ * @file CompositeFunction.cpp
  */
 
 #include "NewFunctionManager.hpp"
@@ -54,10 +51,9 @@ CompositeFunction::CompositeFunction( const std::string& name,
   m_subFunctions()
 {}
 
+
 CompositeFunction::~CompositeFunction()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 
 void CompositeFunction::FillDocumentationNode()
@@ -113,8 +109,6 @@ void CompositeFunction::FillDocumentationNode()
 
 }
 
-void CompositeFunction::BuildDataStructure( ManagedGroup * const domain )
-{}
 
 void CompositeFunction::InitializeFunction()
 {
@@ -148,12 +142,12 @@ void CompositeFunction::InitializeFunction()
 
 void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const group,
                                   real64 const time,
-                                  lSet const & set,
+                                  set<localIndex> const & set,
                                   real64_array & result ) const
 {
   // Evaluate each of the subFunctions independently and place the results into
   // a temporary field
-  array<real64_array> subFunctionResults;
+  array1d<real64_array> subFunctionResults;
   for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
   {
     real64_array tmp(result.size());
