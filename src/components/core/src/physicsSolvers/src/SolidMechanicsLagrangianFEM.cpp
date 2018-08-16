@@ -17,9 +17,9 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
-#include "SolidMechanicsLagrangianFEM_kernels.hpp"
-#include "SolidMechanicsLagrangianFEM-MiniApp/Layout.hpp"
-#include "SolidMechanicsLagrangianFEM-MiniApp/Constitutive_Update.hpp"
+#include "SolidMechanicsLagrangianFEMKernels_impl.hpp"
+#include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/Layout.hpp"
+#include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/ConstitutiveUpdate_impl.hpp"
 
 #include <vector>
 #include <math.h>
@@ -542,7 +542,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 #endif
   
   GEOS_MARK_END(initialization);  
-  
+
   GEOS_MARK_BEGIN(BC1);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
   bcManager->ApplyBoundaryCondition( nodes, keys::Acceleration, time_n);
@@ -552,44 +552,44 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   GEOS_CXX_MARK_LOOP_BEGIN(onepointloop,onepointloop1);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
-  Integration::OnePoint( acc, vel, dt/2, numNodes );  
+  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt/2, numNodes );
 #else
-  Integration::OnePoint( acc_x, acc_y, acc_z,
-                         vel, dt/2, numNodes );
+  SolidMechanicsLagrangianFEMKernels::OnePoint( acc_x, acc_y, acc_z,
+                                                vel, dt/2, numNodes );
 #endif  
   GEOS_CXX_MARK_LOOP_END(onepointloop);
 
 
-GEOS_MARK_BEGIN(BC2);
+  GEOS_MARK_BEGIN(BC2);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
-bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt/2);
+  bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt/2);
 #endif  
-GEOS_MARK_END(BC2);
+  GEOS_MARK_END(BC2);
 
 
   //                     dydx, dy,   y, dx, length
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   GEOS_CXX_MARK_LOOP_BEGIN(onepointloop2,onepointloop2);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
-  Integration::OnePoint( vel, uhat, u, dt, numNodes );
+  SolidMechanicsLagrangianFEMKernels::OnePoint( vel, uhat, u, dt, numNodes );
 #else
-  Integration::OnePoint(vel,uhat_x,uhat_y,uhat_z,                        
-                        u_x, u_y, u_z, dt, numNodes );
+  SolidMechanicsLagrangianFEMKernels::OnePoint(vel,uhat_x,uhat_y,uhat_z,
+                                               u_x, u_y, u_z, dt, numNodes );
 #endif  
   GEOS_CXX_MARK_LOOP_END(onepointloop2);
 
 
-GEOS_MARK_BEGIN(BC3);
+  GEOS_MARK_BEGIN(BC3);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)  
-bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_explicit,
-                                   nodes, keys::TotalDisplacement, time_n + dt, dt, u, uhat, vel );
+  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_explicit,
+                                     nodes, keys::TotalDisplacement, time_n + dt, dt, u, uhat, vel );
 #endif  
- GEOS_MARK_END(BC3);
+  GEOS_MARK_END(BC3);
 
   //Set memory to zero
   GEOS_CXX_MARK_LOOP_BEGIN(memset,memset);
-  FORALL_NODES( a, 0, numNodes)
-  {
+  
+  forall_in_range(0, numNodes, GEOSX_LAMBDA (localIndex a){
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)
     acc[a] = 0;
 #else
@@ -756,6 +756,7 @@ bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDis
           //
           
           //Setup pointers
+          const real64 *Xptr = static_cast<const real64 *>(X[0].Data());
           geosxData imeanStress   = static_cast<real64*>(&meanStress[0]); //Symmetric tensors
           geosxData idevStress    = static_cast<real64*>(&devStress[0](0,0));
           localIndex const *  iconstitutiveMap = reinterpret_cast<localIndex const*>(constitutiveMap.second.data());
@@ -767,6 +768,17 @@ bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDis
                                            geosxData meanStress2, real64 shearModulus2, real64 bulkModulus2, localIndex NoElem);
           externConstitutiveUpdate = UpdateStatePoint;
 
+#if defined(COMPUTE_SHAPE_FUN)
+          static bool computeP = true;
+          static P_Wrapper P;
+          if(computeP)
+            {
+              generateP(P, 8, 8);
+              computeP = false;
+            }
+#endif
+          
+
 #if defined(ARRAY_OF_OBJECTS_LAYOUT)
 
           //Setup pointers
@@ -775,15 +787,20 @@ bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDis
           geosxData iu = static_cast<real64*>(u[0].Data());
           geosxData idNdX = static_cast<real64*>(&dNdX[0][0][0][0]); 
           
-
           //Calculation is done in a monolithic kernel
-#if !defined(THREE_KERNEL_UPDATE)
-
-
+#if !defined(THREE_KERNEL_UPDATE) && !defined(COMPUTE_SHAPE_FUN)
+          
+          
           SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel<elemPolicy>(elementList.size(),elementList_raja, dt,
                                                                                elemsToNodes.data(), iu, iuhat, idNdX,
                                                                                iconstitutiveMap, idevStress, imeanStress,
                                                                                shearModulus, bulkModulus, detJ.data(), iacc, externConstitutiveUpdate);
+#elif !defined(THREE_KERNEL_UPDATE) && defined(COMPUTE_SHAPE_FUN)
+          
+          SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel_Shape<elemPolicy>(elementList.size(),elementList_raja, dt,
+                                                                                     elemsToNodes.data(), iu, iuhat, Xptr, P, 
+                                                                                     iconstitutiveMap, idevStress, imeanStress,
+                                                                                     shearModulus, bulkModulus, detJ.data(), iacc, externConstitutiveUpdate);
           //Calculation is split across three kernels
 #elif defined(THREE_KERNEL_UPDATE)
 
@@ -816,31 +833,42 @@ bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDis
           
           static bool copy = true;
           if(copy){
+
+            //Generate shape function derivatives
+            //const real64 *Xptr = static_cast<const real64 *>(X[0].Data());
+            make_dNdX(dNdX_x, dNdX_y, dNdX_z,
+                      Xptr, elemsToNodes.data(),elementList.size(), inumNodesPerElement, inumQuadraturePoints);
+
+            //Verify correctness
             for(localIndex k = 0; k < elementList.size(); ++k){
               for(localIndex a = 0; a < inumNodesPerElement; ++a){
-                for(localIndex q = 0; q < inumQuadraturePoints; ++q){
-                  
-                  localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);                 
-                  dNdX_x[id]= dNdX[k][a][q][0];
-                  dNdX_y[id] = dNdX[k][a][q][1];
-                  dNdX_z[id] = dNdX[k][a][q][2];  
+                for(localIndex q = 0; q < inumQuadraturePoints; ++q){                  
+                  localIndex id = q + inumQuadraturePoints*(a + inumNodesPerElement*k);
+                  assert( std::abs( dNdX_x[id] - dNdX[k][a][q][0]) < 1e-12);
+                  assert( std::abs( dNdX_y[id] - dNdX[k][a][q][1]) < 1e-12);
+                  assert( std::abs( dNdX_z[id] - dNdX[k][a][q][2]) < 1e-12);
                 }
               }             
-            }           
+            }
+            std::cout<<"Successful copy !"<<std::endl;
             copy = false;
           }
          
-#if !defined(THREE_KERNEL_UPDATE)          
+#if !defined(THREE_KERNEL_UPDATE) && !defined(COMPUTE_SHAPE_FUN)
 
           //Carry out computation in a monolithic kernel
           SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel<elemPolicy>(elementList.size(), elementList_raja, dt,elemsToNodes.data(),
                                                                                u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
                                                                                iconstitutiveMap, idevStress, imeanStress, shearModulus,
                                                                                bulkModulus, detJ.data(), acc_x, acc_y, acc_z, externConstitutiveUpdate);
-
-#else
-
+#elif !defined(THREE_KERNEL_UPDATE) && defined(COMPUTE_SHAPE_FUN)
           
+          SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel_Shape<elemPolicy>(elementList.size(), elementList_raja, dt,elemsToNodes.data(),
+                                                                                     u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, Xptr, P,
+                                                                                     iconstitutiveMap, idevStress, imeanStress, shearModulus,
+                                                                                     bulkModulus, detJ.data(), acc_x, acc_y, acc_z, externConstitutiveUpdate);
+          
+#elif defined(THREE_KERNEL_UPDATE)
           //Kinematic step
           SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_KinematicKernel<elemPolicy>(elementList.size(),elementList_raja, dt, elemsToNodes.data(), u_x,u_y,u_z,
                                                                                         uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
@@ -883,8 +911,7 @@ bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDis
 
   //Compute Force : Point-wise computations
   GEOS_CXX_MARK_LOOP_BEGIN(computeForce,computeForce);
-  FORALL_NODES(a, 0, numNodes)
-  {
+  forall_in_range(0, numNodes, GEOSX_LAMBDA (localIndex a){
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)    
     acc[a] /=mass[a];
 #else    
@@ -896,25 +923,22 @@ bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDis
   GEOS_CXX_MARK_LOOP_END(computeForce);
 
 
-//Integration::OnePoint( acc, vel, dt/2, numNodes );
+  //Integration::OnePoint( acc, vel, dt/2, numNodes );
   GEOS_CXX_MARK_LOOP_BEGIN(onepointloop3,onepointloop3);
-  FORALL_NODES(a, 0, numNodes)
-  {
-#if !defined(OBJECT_OF_ARRAYS_LAYOUT)
-    vel[a].plus_cA((0.5*dt),acc[a]);
-#else
-    vel[a][0] += 0.5*dt*acc_x[a];
-    vel[a][1] += 0.5*dt*acc_y[a];
-    vel[a][2] += 0.5*dt*acc_z[a];
-#endif    
-  });
+#if !defined(OBJECT_OF_ARRAYS_LAYOUT)      
+  SolidMechanicsLagrangianFEMKernels::OnePoint(acc, vel, (dt/2), numNodes);
+#else  
+  SolidMechanicsLagrangianFEMKernels::OnePoint(acc_x, acc_y, acc_z, vel, (dt/2), numNodes);
+#endif  
   GEOS_CXX_MARK_LOOP_END(onepointloop3);
 
-  GEOS_MARK_BEGIN(BC4);
+
+GEOS_MARK_BEGIN(BC4);
 #if !defined(OBJECT_OF_ARRAYS_LAYOUT)
-  bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt);
+bcManager->ApplyBoundaryCondition( nodes, keys::Velocity, time_n + dt);
 #endif
-  GEOS_MARK_END(BC4);
+GEOS_MARK_END(BC4);
+
 
 (void) cycleNumber;
 
@@ -1473,7 +1497,6 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
       elementRegion->forCellBlocks([&](CellBlockSubRegion * cellBlock)
       {
-
         multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
         array2d<real64> const & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
 

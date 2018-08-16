@@ -28,6 +28,9 @@
 #include "common/TimingMacros.hpp"
 
 #include "mesh/MeshForLoopInterface.hpp"
+//#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+//#include "src/rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "../../mesh/MeshForLoopInterface.hpp"
 
 
 struct stabledt
@@ -242,8 +245,8 @@ void OnePoint( T const & dydx,
 #endif
 {
 
-  FORALL_NODES(a, 0, length)
-  {
+  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a){
+      
     dy[a][0] = dydx[a][0] * dx;
     dy[a][1] = dydx[a][1] * dx;
     dy[a][2] = dydx[a][2] * dx;
@@ -251,6 +254,7 @@ void OnePoint( T const & dydx,
     y[a][0] += dy[a][0];
     y[a][1] += dy[a][1];
     y[a][2] += dy[a][2];
+    
   });
 
 }
@@ -263,8 +267,8 @@ void OnePoint (U dydx,
                localIndex const length)
 {
   
-  FORALL_NODES(a, 0, length)
-  {
+  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
+      
     dy_1[a] = dydx[a][0] * dx;
     dy_2[a] = dydx[a][1] * dx;
     dy_3[a] = dydx[a][2] * dx;
@@ -292,10 +296,11 @@ void OnePoint( T const &  dydx,
 #endif
 {
 
-  FORALL_NODES(a, 0, length)
-  {
+  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
+      
     y[a].plus_cA( dx, dydx[a] );
-  });
+    
+    });
 
 }
 
@@ -308,9 +313,8 @@ void OnePoint( T const dydx_0,
                real64 const dx,
                localIndex const length )
 {
-
-  FORALL_NODES(a, 0, length)
-  {
+  
+  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
     //y[a].plus_cA( dx, dydx[a] );
     y[a][0] += dx*dydx_0[a];
     y[a][1] += dx*dydx_1[a];
