@@ -25,8 +25,8 @@
 #include "PoroelasticSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "../FiniteVolume/SinglePhaseFlow_TPFA.hpp"
-#include "finiteElement/FiniteElementManager.hpp"
+#include "../FiniteVolume/SinglePhaseFlow.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -261,15 +261,15 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   SolverBase &
   solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
 
-  SinglePhaseFlow_TPFA &
-  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow_TPFA*>());
+  SinglePhaseFlow &
+  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
 
-  FiniteElementManager const * const
-  numericalMethodManager = domain->getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  NumericalMethodsManager const * const
+  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   FiniteElementSpaceManager const * const
   feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
@@ -289,23 +289,23 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   auto dEffStresss = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaEffectiveStressString);
   auto dVolumetricStrain = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaVolumetricStrainString);
 
-  auto dPres = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow_TPFA::
+  auto dPres = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
                                                                  viewKeyStruct::
                                                                  deltaFluidPressureString);
 
-  auto poro = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow_TPFA::
+  auto poro = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
                                                                 viewKeyStruct::
                                                                 porosityString);
 
-  auto dPoro = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow_TPFA::
+  auto dPoro = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
                                                                  viewKeyStruct::
                                                                  deltaPorosityString);
 
-  auto volume    = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow_TPFA::
+  auto volume    = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
                                                                      viewKeyStruct::
                                                                      volumeString);
 
-  auto dVol      = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow_TPFA::
+  auto dVol      = elemManager->ConstructViewAccessor<real64_array>( SinglePhaseFlow::
                                                                      viewKeyStruct::
                                                                      deltaVolumeString);
 
@@ -316,7 +316,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   bulkModulus = constitutiveManager->GetParameterData<real64>(string("BulkModulus"));
 
 
-  array<array<array<real64>>> & dPoro_dPres = fluidSolver.dPorosity_dPressure();
+  array1d<array1d<array1d<real64>>> & dPoro_dPres = fluidSolver.dPorosity_dPressure();
   // TODO
   //   dVolumetricStrain[er][esr][k] += dUhatdX.trace() / numQuadraturePoints;
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -336,7 +336,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
       localIndex const numNodesPerElement = elemsToNodes[er][esr].get().size(1);
       r1_array uhat_local( numNodesPerElement );
       auto const &
-      constitutiveMap = cellBlockSubRegion->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(cellBlockSubRegion->viewKeys().constitutiveMap);
+      constitutiveMap = cellBlockSubRegion->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(cellBlockSubRegion->viewKeys().constitutiveMap);
 
       for( localIndex ei=0 ; ei<cellBlockSubRegion->size() ; ++ei )
       {
@@ -377,8 +377,8 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
   SolverBase &
   solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
 
-  SinglePhaseFlow_TPFA &
-  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow_TPFA*>());
+  SinglePhaseFlow &
+  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
 
   fluidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
   solidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );

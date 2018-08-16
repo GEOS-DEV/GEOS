@@ -35,18 +35,17 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
-#include "finiteElement/FiniteElementManager.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
 //#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
-#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
-
 
 namespace geosx
 {
@@ -311,12 +310,12 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
                                 displacementIndices,
                                 0 );
 
-  std::map<string, array<string> > fieldNames;
+  std::map<string, array1d<string> > fieldNames;
   fieldNames["node"].push_back("blockLocalDofNumber_LaplaceFEM");
 
   CommunicationTools::SynchronizeFields(fieldNames,
                               mesh,
-                              domain->getReference< array<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                              domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
 
 
@@ -370,12 +369,12 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
       {
         CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(subRegionIndex);
         localIndex const numElems = cellBlock->size();
-        lArray2d const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
         globalIndex_array elementLocalDofIndex (numNodesPerElement);
 
-        array<integer> const & elemGhostRank = cellBlock->m_ghostRank;
+        array1d<integer> const & elemGhostRank = cellBlock->m_ghostRank;
 
         for( localIndex k=0 ; k<numElems ; ++k )
         {
@@ -413,7 +412,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   ManagedGroup * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  FiniteElementManager const * numericalMethodManager = domain->getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 
 
@@ -436,9 +435,9 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
 
       multidimensionalArray::ManagedArray< R1Tensor, 3 > & dNdX = cellBlockSubRegion->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
 
-      Array2dT<real64> const & detJ            = cellBlockSubRegion->getReference< Array2dT<real64> >(keys::detJ);
+      array2d<real64> const & detJ            = cellBlockSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      lArray2d const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
+      array2d<localIndex> const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
       const integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
 
       Epetra_LongLongSerialDenseVector  element_index   (numNodesPerElement);
@@ -446,7 +445,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
       Epetra_SerialDenseMatrix     element_matrix  (numNodesPerElement,
                                                     numNodesPerElement);
 
-      array<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
+      array1d<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
       const int n_q_points = feSpace->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements
@@ -575,7 +574,7 @@ void LaplaceFEM::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 
 void LaplaceFEM::ApplyDirichletBC_implicit( ManagedGroup * object,
                                             BoundaryConditionBase const * const bc,
-                                            lSet const & set,
+                                            set<localIndex> const & set,
                                             real64 const time_n,
                                             EpetraBlockSystem & blockSystem )
 {

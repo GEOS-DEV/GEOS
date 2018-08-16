@@ -19,7 +19,7 @@
 #ifndef __GEOS_RAJA_WRAPPER__HPP
 #define __GEOS_RAJA_WRAPPER__HPP
 
-#include "rajaInterface/GEOS_RAJA_Policies.hpp"
+#include "../rajaInterface/GEOS_RAJA_Policies.hpp"
 
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -33,6 +33,7 @@
 
 namespace geosx{
 
+/*
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void forall_in_range( localIndex const begin, const localIndex end, LAMBDA && body)
 {
@@ -52,6 +53,8 @@ void forall_in_set(localIndex const * const indexList, const localIndex len, LAM
     body(index);
   } );
 }
+
+*/
 
 //================
 //Hevy Computation
@@ -186,16 +189,16 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
       //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
       multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(dataRepository::keys::dNdX);
       
-      array_view<real64,2> const & detJ            = cellBlock->getReference< Array2dT<real64> >(dataRepository::keys::detJ).View();
+      array_view<real64,2> const & detJ            = cellBlock->getReference< array2d<real64> >(dataRepository::keys::detJ).View();
 
-      auto const & constitutiveMap = cellBlock->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+      auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
 //      RAJA::View< localIndex const, RAJA::Layout<2> > constitutiveMapView( reinterpret_cast<localIndex const*>(constitutiveMap.second.data()),
 //                                                                           constitutiveMap.second.size(0),
 //                                                                           constitutiveMap.second.size(1) );
       array_view<localIndex,2> constitutiveMapView = constitutiveMap.second.View();
 
       auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
-      array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<lArray2d>(keys::nodeList);
+      array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<array2d<localIndex>>(keys::nodeList);
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
