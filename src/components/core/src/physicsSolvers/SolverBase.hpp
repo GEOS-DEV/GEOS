@@ -64,15 +64,16 @@ public:
   explicit SolverBase( std::string const & name,
                        ManagedGroup * const parent );
 
+  SolverBase( SolverBase &&) = default;
+
   virtual ~SolverBase() override;
 
-  static string CatalogName() { return "SolverBase"; }
+  SolverBase() = delete;
+  SolverBase( SolverBase const & ) = delete;
+  SolverBase& operator=( SolverBase const & ) = delete;
+  SolverBase& operator=( SolverBase&& ) = delete;
 
-  SolverBase() = default;
-  SolverBase( SolverBase const & ) = default;
-  SolverBase( SolverBase &&) = default;
-  SolverBase& operator=( SolverBase const & ) = default;
-  SolverBase& operator=( SolverBase&& ) = default;
+  static string CatalogName() { return "SolverBase"; }
 
 
 //  virtual void Registration( dataRepository::WrapperCollection& domain );

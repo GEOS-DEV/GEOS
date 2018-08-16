@@ -20,8 +20,8 @@
  * @file SinglePhaseFlow_TPFA.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
+#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
@@ -29,6 +29,7 @@ class Epetra_FECrsGraph;
 
 namespace geosx
 {
+
 namespace dataRepository
 {
 class ManagedGroup;
@@ -38,48 +39,47 @@ class FiniteElementBase;
 class DomainPartition;
 
 /**
- * @class SinglePhaseFlow
+ * @class CompositionalMultiphaseFlow
  *
- * class to perform a single phase finite volume solve.
+ * A compositional multiphase solver
  */
-class SinglePhaseFlow : public SolverBase
+class CompositionalMultiphaseFlow : public SolverBase
 {
 public:
+
   /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  SinglePhaseFlow( const std::string& name,
-                   ManagedGroup * const parent );
-
+  CompositionalMultiphaseFlow( const std::string& name,
+                               ManagedGroup * const parent );
 
   /// deleted default constructor
-  SinglePhaseFlow() = delete;
+  CompositionalMultiphaseFlow() = delete;
 
   /// deleted copy constructor
-  SinglePhaseFlow( SinglePhaseFlow const & ) = delete;
+  CompositionalMultiphaseFlow( CompositionalMultiphaseFlow const & ) = delete;
 
   /// default move constructor
-  SinglePhaseFlow( SinglePhaseFlow && ) = default;
+  CompositionalMultiphaseFlow( CompositionalMultiphaseFlow && ) = default;
 
   /// deleted assignment operator
-  SinglePhaseFlow & operator=( SinglePhaseFlow const & ) = delete;
+  CompositionalMultiphaseFlow & operator=( CompositionalMultiphaseFlow const & ) = delete;
 
   /// deleted move operator
-  SinglePhaseFlow & operator=( SinglePhaseFlow && ) = delete;
+  CompositionalMultiphaseFlow & operator=( CompositionalMultiphaseFlow && ) = delete;
 
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseFlow() override = default;
+  virtual ~CompositionalMultiphaseFlow() override = default;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "SinglePhaseFlow"; }
-
+  static string CatalogName() { return "CompositionalMultiphaseFlow"; }
 
   virtual void FillDocumentationNode() override final;
 
@@ -100,9 +100,9 @@ public:
   /**@{*/
 
   virtual void ImplicitStepSetup( real64 const& time_n,
-                              real64 const& dt,
-                              DomainPartition * const domain,
-                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+                                  real64 const& dt,
+                                  DomainPartition * const domain,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
 
   virtual void AssembleSystem( DomainPartition * const domain,
@@ -132,21 +132,10 @@ public:
   virtual  void ImplicitStepComplete( real64 const & time,
                                       real64 const & dt,
                                       DomainPartition * const domain ) override;
-  /**@}*/
-
-  /**
-   * @enum an enum to lay out the time integration options.
-   */
-  enum class timeIntegrationOption
-  {
-    SteadyState,      //!< SteadyState
-    ImplicitTransient,//!< ImplicitTransient
-    ExplicitTransient //!< ExplicitTransient
-  };
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow";
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_CompositionalMultiphaseFlow";
 
     constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
@@ -170,6 +159,7 @@ public:
     constexpr static auto discretizationString = "discretization";
 
     dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
+    dataRepository::ViewKey functionalSpace = { "functionalSpace" };
   } viewKeys;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -250,18 +240,9 @@ private:
   /// name of the FV discretization object in the data repository
   std::string m_discretizationName;
 
-  /// temp storage for derivatives of density w.r.t. pressure
-  array1d<array1d<array1d<real64>>> m_dDens_dPres;
-
-  /// temp storage for derivatives of porosity w.r.t. pressure
-  array1d<array1d<array1d<real64>>> m_dPoro_dPres;
-
-  /// temp storage for derivatives of porosity w.r.t. pressure
-  array1d<array1d<array1d<real64>>> m_dVisc_dPres;
-
 };
 
+} // namespace geosx
 
-} /* namespace geosx */
 
-#endif //SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
+#endif //SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_

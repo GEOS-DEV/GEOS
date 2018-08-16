@@ -53,6 +53,7 @@ enum class BlockIDs
   displacementBlock,
   fluidPressureBlock,
   temperatureBlock,
+  compositionalBlock,
   invalidBlock
 };
 

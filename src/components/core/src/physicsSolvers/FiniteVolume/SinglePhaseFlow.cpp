@@ -22,9 +22,6 @@
 
 #include "SinglePhaseFlow.hpp"
 
-#include <vector>
-#include <cmath>
-
 #include "ArrayView.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
@@ -80,20 +77,6 @@ void SinglePhaseFlow::FillDocumentationNode(  )
   docNode->setName(this->CatalogName());
   docNode->setSchemaType("Node");
   docNode->setShortDescription("An example single phase flow solver");
-
-
-  docNode->AllocateChildNode( viewKeys.functionalSpace.Key(),
-                              viewKeys.functionalSpace.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "name of field variable",
-                              "name of field variable",
-                              "Pressure",
-                              "",
-                              0,
-                              1,
-                              0 );
 
   docNode->AllocateChildNode( viewKeyStruct::gravityFlagString,
                               viewKeyStruct::gravityFlagString,
@@ -1529,4 +1512,4 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
 
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlow, std::string const &, ManagedGroup * const )
-} /* namespace ANST */
+} /* namespace geosx */
