@@ -39,7 +39,7 @@ namespace geosx
  * arrays that hold pointers at the last level, but allows for reference-like usage. For instance,
  * consider a collection of object that you would like to refer to thought an array of pointers.
  *
- * array< ReferenceWrapper< array< double > > > arr;
+ * array1d< ReferenceWrapper< array1d< double > > > arr;
  *
  * where the array::operator[] exists. The ReferenceWrapper allows
  *

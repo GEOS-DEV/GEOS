@@ -61,7 +61,7 @@ public:
    */
   virtual void Evaluate( dataRepository::ManagedGroup const * const group,
                          real64 const time,
-                         lSet const & sets,
+                         set<localIndex> const & sets,
                          real64_array & result ) const override final;
 
   /**
@@ -72,7 +72,7 @@ public:
 
 private:
   /// An array of table axes
-  array<real64_array> m_coordinates;
+  array1d<real64_array> m_coordinates;
 
   /// Table values (in fortran order)
   real64_array m_values;

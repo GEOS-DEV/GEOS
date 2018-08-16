@@ -27,7 +27,7 @@
 #include "CellBlockManager.hpp"
 #include "CellBlockSubRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "finiteElement/FiniteElementManager.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"
@@ -42,7 +42,7 @@ using namespace constitutive;
 
 ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent ):
   ObjectManagerBase( name, parent )  //,
-//    m_toNodesRelation(this->RegisterViewWrapper< Array2dT<integer>
+//    m_toNodesRelation(this->RegisterViewWrapper< array2d<integer>
 // >(keys::nodeList).reference())
 {
 //  m_toNodesRelation.resize2(0,8);
@@ -169,7 +169,7 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
 
 
   auto const & numMethodName = this->getData<string>(keys::numericalMethod);
-  FiniteElementManager const * numericalMethodManager = problemManager->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  NumericalMethodsManager const * numericalMethodManager = problemManager->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
   FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
   auto const & quadratureName = feSpace->getData<string>(keys::quadrature);
@@ -179,7 +179,7 @@ void ElementRegion::SetConstitutiveMap( ManagedGroup const * problemManager,
   ManagedGroup * cellBlockSubRegions = this->GetGroup(keys::cellBlockSubRegions);
   for( auto & cellSubBlock : cellBlockSubRegions->GetSubGroups() )
   {
-    auto & cellToConstitutiveMap = cellSubBlock.second->getReference< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+    auto & cellToConstitutiveMap = cellSubBlock.second->getReference< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
     auto & constitutiveGrouping = cellSubBlock.second->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
 //    constitutiveGrouping.resize( constitutiveMapPair.second.size() );
 //    constitutiveGrouping["mix"];
@@ -225,7 +225,7 @@ void ElementRegion::InitializePreSubGroups( ManagedGroup * const problemManager 
   }
 
   auto const & numMethodName = this->getData<string>(keys::numericalMethod); 
-  FiniteElementManager const * numericalMethodManager = problemManager->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  NumericalMethodsManager const * numericalMethodManager = problemManager->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
   FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 

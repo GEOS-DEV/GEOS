@@ -19,7 +19,11 @@ set(managers_headers
     Functions/CompositeFunction.hpp
     Functions/NewFunctionManager.hpp
     ObjectManagerBase.hpp
-    ProblemManager.hpp )
+    ProblemManager.hpp
+    NumericalMethodsManager.hpp
+    BoundaryConditions/BoundaryConditionBase.hpp
+    BoundaryConditions/BoundaryConditionManager.hpp
+    BoundaryConditions/DirichletBoundaryCondition.hpp)
 
 
 #
@@ -42,7 +46,11 @@ set(managers_sources
     Functions/CompositeFunction.cpp
     Functions/NewFunctionManager.cpp
     ObjectManagerBase.cpp
-    ProblemManager.cpp )
+    ProblemManager.cpp
+    NumericalMethodsManager.cpp
+    BoundaryConditions/BoundaryConditionBase.cpp
+    BoundaryConditions/BoundaryConditionManager.cpp
+    BoundaryConditions/DirichletBoundaryCondition.cpp)
 
 #set( dependencyList dataRepository fileIO  )
 #set( dependencyList2 optionparser mathpresso RAJA trilinos )
@@ -59,6 +67,6 @@ blt_add_library( NAME                  managers
 #                 SHARED FALSE
                )
                
-target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src )
 
-geosx_add_code_checks(PREFIX managers )
+geosx_add_code_checks( PREFIX managers )

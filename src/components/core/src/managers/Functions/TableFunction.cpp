@@ -214,7 +214,7 @@ void TableFunction::InitializeFunction()
 
 void TableFunction::Evaluate( dataRepository::ManagedGroup const * const group,
                               real64 const time,
-                              lSet const & set,
+                              set<localIndex> const & set,
                               real64_array & result ) const
 {
   FunctionBase::EvaluateT<TableFunction>( group, time, set, result );

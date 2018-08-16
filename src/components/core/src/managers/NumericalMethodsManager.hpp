@@ -17,17 +17,17 @@
  */
 
 /*
- * FiniteElementManager.hpp
+ * NumericalMethodsManager.hpp
  *
  *  Created on: Apr 18, 2017
  *      Author: rrsettgast
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTMANAGER_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_NUMERICALMETHODSMANAGER_HPP_
+#define SRC_COMPONENTS_CORE_SRC_MANAGERS_NUMERICALMETHODSMANAGER_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "FiniteElementSpace.hpp"
+#include "finiteElement/FiniteElementSpace.hpp"
 
 namespace geosx
 {
@@ -35,20 +35,21 @@ namespace dataRepository
 {
 namespace keys
 {
-string const finiteElementManager = "NumericalMethods";
+string const numericalMethodsManager = "NumericalMethods";
 string const basisFunctions = "BasisFunctions";
 string const quadratureRules = "QuadratureRules";
 string const finiteElementSpaces = "FiniteElements";
+string const finiteVolumeManager = "FiniteVolume";
 }
 }
 
 
-class FiniteElementManager : public dataRepository::ManagedGroup
+class NumericalMethodsManager : public dataRepository::ManagedGroup
 {
 public:
-  FiniteElementManager() = delete;
-  FiniteElementManager(string const & name, ManagedGroup * const parent);
-  virtual ~FiniteElementManager() override;
+  NumericalMethodsManager() = delete;
+  NumericalMethodsManager(string const & name, ManagedGroup * const parent);
+  virtual ~NumericalMethodsManager() override;
 
   virtual void FillDocumentationNode() override;
   virtual void CreateChild( string const & childKey, string const & childName ) override;
@@ -58,4 +59,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTMANAGER_HPP_ */
+#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_NUMERICALMETHODSMANAGER_HPP_ */

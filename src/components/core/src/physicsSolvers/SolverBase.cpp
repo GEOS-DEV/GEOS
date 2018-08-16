@@ -228,14 +228,14 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       AssembleSystem( domain, blockSystem, time_n, stepDt );
 
       // apply boundary conditions to system
-      ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+      ApplyBoundaryConditions( domain, blockSystem, time_n, stepDt );
 
       // get residual norm
       real64 residualNorm = CalculateResidualNorm(blockSystem, domain);
 
       if (m_verboseLevel >= 1)
       {
-        std::cout << "Attempt: " << dtAttempt + 1 << ", Newton: " << k + 1
+        std::cout << "Attempt: " << dtAttempt  << ", Newton: " << k
                   << ", R = " << residualNorm << std::endl;
       }
 
@@ -272,7 +272,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           AssembleSystem( domain, blockSystem, time_n, stepDt );
 
           // apply boundary conditions to system
-          ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+          ApplyBoundaryConditions( domain, blockSystem, time_n, stepDt );
 
           // get residual norm
           residualNorm = CalculateResidualNorm(blockSystem, domain);

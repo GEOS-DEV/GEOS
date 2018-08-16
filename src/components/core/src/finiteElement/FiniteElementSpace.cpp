@@ -27,7 +27,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
-#include "FiniteElementManager.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "basis/BasisBase.hpp"
 #include "quadrature/QuadratureBase.hpp"
 #include "ElementLibrary/FiniteElement.h"
@@ -104,13 +104,13 @@ void FiniteElementSpace::ApplySpaceToTargetCells( dataRepository::ManagedGroup *
   multidimensionalArray::ManagedArray< R1Tensor, 3 > &  dNdX = dNdXView->reference();
   dNdX.resize( cellBlock->size(), m_quadrature->size(), m_finiteElement->dofs_per_element() );
 
-  auto & constitutiveMapView = *(cellBlock->getWrapper< std::pair< Array2dT< localIndex >, Array2dT< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString));
+  auto & constitutiveMapView = *(cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString));
   constitutiveMapView.setSizedFromParent(1);
   auto & constitutiveMap = constitutiveMapView.reference();
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
   constitutiveMap.second.resize(cellBlock->size(), m_quadrature->size() );
 
-  auto & detJView = *(cellBlock->RegisterViewWrapper< Array2dT< real64 > >(keys::detJ));
+  auto & detJView = *(cellBlock->RegisterViewWrapper< array2d< real64 > >(keys::detJ));
   detJView.setSizedFromParent(1);
   auto & detJ = detJView.reference();
   detJ.resize(cellBlock->size(), m_quadrature->size() );
@@ -122,10 +122,10 @@ void FiniteElementSpace::CalculateShapeFunctionGradients( r1_array const &  X,
                                                           dataRepository::ManagedGroup * const cellBlock ) const
 {
   auto & dNdX            = cellBlock->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
-  auto & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ);
-  FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();// getData<lArray2d>(keys::nodeList);
+  auto & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
+  FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();// getData<array2d<localIndex>>(keys::nodeList);
 
-  array<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
+  array1d<R1Tensor> X_elemLocal( m_finiteElement->dofs_per_element() );
 
 
   for (localIndex k = 0 ; k < cellBlock->size() ; ++k)

@@ -40,9 +40,9 @@ class DomainPartition;
 /**
  * @class SinglePhaseFlow_TPFA
  *
- * class to perform a single phase, two-point flux approximation finite volume solve.
+ * class to perform a single phase finite volume solve.
  */
-class SinglePhaseFlow_TPFA : public SolverBase
+class SinglePhaseFlow : public SolverBase
 {
 public:
   /**
@@ -50,35 +50,35 @@ public:
    * @param name the name of this instantiation of NodeManager in the repository
    * @param parent the parent group of this instantiation of NodeManager
    */
-  SinglePhaseFlow_TPFA( const std::string& name,
+  SinglePhaseFlow( const std::string& name,
                         ManagedGroup * const parent );
 
 
   /// deleted default constructor
-  SinglePhaseFlow_TPFA() = delete;
+  SinglePhaseFlow() = delete;
 
   /// deleted copy constructor
-  SinglePhaseFlow_TPFA( SinglePhaseFlow_TPFA const & ) = delete;
+  SinglePhaseFlow( SinglePhaseFlow const & ) = delete;
 
   /// default move constructor
-  SinglePhaseFlow_TPFA( SinglePhaseFlow_TPFA && ) = default;
+  SinglePhaseFlow( SinglePhaseFlow && ) = default;
 
   /// deleted assignment operator
-  SinglePhaseFlow_TPFA & operator=( SinglePhaseFlow_TPFA const & ) = delete;
+  SinglePhaseFlow & operator=( SinglePhaseFlow const & ) = delete;
 
   /// deleted move operator
-  SinglePhaseFlow_TPFA & operator=( SinglePhaseFlow_TPFA && ) = delete;
+  SinglePhaseFlow & operator=( SinglePhaseFlow && ) = delete;
 
   /**
    * @brief default destructor
    */
-  virtual ~SinglePhaseFlow_TPFA() override = default;
+  virtual ~SinglePhaseFlow() override = default;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "SinglePhaseFlow_TPFA"; }
+  static string CatalogName() { return "SinglePhaseFlow"; }
 
 
   virtual void FillDocumentationNode() override final;
@@ -167,14 +167,22 @@ public:
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param object the target ObjectManager for the application of the BC.
-   * @param bc the
-   * @param set the set
-   * @param time_n the time at the beginning of the step
+   * @param time current time
    * @param blockSystem the entire block system
    */
-  void ApplyDirichletBC_implicit( ManagedGroup * object,
-                                  real64 const time,
+  void ApplyDirichletBC_implicit( DomainPartition * object,
+                                  real64 const time, real64 const dt,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem);
+
+  /**
+   * @brief Function to perform the application of Dirichlet BCs on faces
+   * @param domain the domain
+   * @param time current time
+   * @param blockSystem the entire block system
+   */
+  void ApplyFaceDirichletBC_implicit(DomainPartition * domain,
+                                     real64 const time, real64 const dt,
+                                     systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
   /**
    * @enum an enum to lay out the time integration options.
@@ -188,10 +196,11 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SPTPFA";
+    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow";
 
     constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
+    constexpr static auto faceFluidPressureString = "faceFluidPressure";
 
     constexpr static auto fluidDensityString = "fluidDensity";
     constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
@@ -207,10 +216,11 @@ public:
     constexpr static auto gravityDepthString = "gravityDepth";
 
     constexpr static auto volumeString = "volume";
-    constexpr static auto deltaVolumeString = "volume";
+    constexpr static auto deltaVolumeString = "deltaVolume";
 
     constexpr static auto permeabilityString = "permeability";
-    constexpr static auto transmissibilityString = "transmissibility";
+
+    constexpr static auto discretizationString = "discretization";
 
     dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
@@ -220,32 +230,9 @@ public:
   {
   } groupKeys;
 
-  /**
-   * @struct A structure containing a single cell (element) identifier triplet
-   */
-  struct CellDescriptor
-  {
-    localIndex region;
-    localIndex subRegion;
-    localIndex index;
-  };
 
-  /**
-   * @struct A structure describing a single (generally multi-point) FV connection stencil
-   */
-  struct CellConnection
-  {
-    localIndex            faceIndex;               ///< index of the face (just in case)
-    CellDescriptor        connectedCellIndices[2]; ///< identifiers of connected cells
-    array<CellDescriptor> stencilCellIndices;      ///< identifiers of cells in stencil
-    array<real64>         stencilWeights;          ///< stencil weights (e.g. transmissibilities)
-
-    void resize(localIndex const size) { stencilCellIndices.resize(size);
-                                         stencilWeights.resize(size);    }
-  };
-
-  array<array<array<real64>>> const & dPorosity_dPressure() const { return m_dPoro_dPres; }
-  array<array<array<real64>>> & dPorosity_dPressure() { return m_dPoro_dPres; }
+  array1d<array1d<array1d<real64>>> const & dPorosity_dPressure() const { return m_dPoro_dPres; }
+  array1d<array1d<array1d<real64>>> & dPorosity_dPressure() { return m_dPoro_dPres; }
 
 private:
 
@@ -264,20 +251,20 @@ private:
   /// flag indicating whether FV precompute has been performed
   bool m_precomputeDone;
 
-  /// temp array that holds the list of faces that connect two elements.
-  array<CellConnection> m_faceConnectors;
-
   /// flag to determine whether or not to apply gravity
-  bool m_gravityFlag;
+  integer m_gravityFlag;
+
+  /// name of the FV discretization object in the data repository
+  std::string m_discretizationName;
 
   /// temp storage for derivatives of density w.r.t. pressure
-  array<array<array<real64>>> m_dDens_dPres;
+  array1d<array1d<array1d<real64>>> m_dDens_dPres;
 
   /// temp storage for derivatives of porosity w.r.t. pressure
-  array<array<array<real64>>> m_dPoro_dPres;
+  array1d<array1d<array1d<real64>>> m_dPoro_dPres;
 
   /// temp storage for derivatives of porosity w.r.t. pressure
-  array<array<array<real64>>> m_dVisc_dPres;
+  array1d<array1d<array1d<real64>>> m_dVisc_dPres;
 
 };
 
