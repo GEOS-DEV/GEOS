@@ -298,8 +298,8 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
       FaceManager * const faceManager = meshLevel->getFaceManager();
       cxx_utilities::DocumentationNode * const docNode = faceManager->getDocumentationNode();
 
-      docNode->AllocateChildNode( viewKeyStruct::fluidPressureString,
-                                  viewKeyStruct::fluidPressureString,
+      docNode->AllocateChildNode( viewKeyStruct::faceFluidPressureString,
+                                  viewKeyStruct::faceFluidPressureString,
                                   -1,
                                   "real64_array",
                                   "real64_array",
@@ -1027,10 +1027,6 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                          [&]( BoundaryConditionBase const * const bc,
                                               set<localIndex> const & lset ) -> void
       {
-        // TODO temp safeguard to separate cell/face BC
-        if (!bc->GetObjectPath().empty())
-          return;
-
         // call the application of the boundary condition to alter the matrix and rhs
         bc->ApplyDirichletBounaryConditionDefaultMethod<0>( lset,
                                                             time + dt,
@@ -1101,7 +1097,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   auto gravDepth = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::gravityDepthString);
 
   // use ReferenceWrapper to make capture by value easy in lambdas
-  ArrayView<real64, 1, localIndex> presFace = faceManager->getReference<real64_array>(viewKeyStruct::fluidPressureString);
+  ArrayView<real64, 1, localIndex> presFace = faceManager->getReference<real64_array>(viewKeyStruct::faceFluidPressureString);
   ArrayView<real64, 1, localIndex> densFace = faceManager->getReference<real64_array>(viewKeyStruct::fluidDensityString);
   ArrayView<real64, 1, localIndex> viscFace = faceManager->getReference<real64_array>(viewKeyStruct::fluidViscosityString);
   ArrayView<real64, 1, localIndex> gravDepthFace = faceManager->getReference<real64_array>(viewKeyStruct::gravityDepthString);
@@ -1119,12 +1115,12 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   dataRepository::ManagedGroup const * sets = faceManager->GetGroup(dataRepository::keys::sets);
 
   // first, evaluate BC to get primary field values (pressure)
-  bcManager->ApplyBoundaryCondition(faceManager, viewKeyStruct::fluidPressureString, time + dt);
+  bcManager->ApplyBoundaryCondition(faceManager, viewKeyStruct::faceFluidPressureString, time + dt);
 
   // call constitutive models to get dependent quantities needed for flux (density, viscosity)
   bcManager->ApplyBoundaryCondition(time + dt,
                                     faceManager,
-                                    viewKeyStruct::fluidPressureString,
+                                    viewKeyStruct::faceFluidPressureString,
                                     [&] (BoundaryConditionBase const * bc,
                                         set<localIndex> const & lset) -> void
   {
@@ -1163,7 +1159,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
 
   bcManager->ApplyBoundaryCondition(time + dt,
-                                    viewKeyStruct::fluidPressureString,
+                                    viewKeyStruct::faceFluidPressureString,
                                     [&] (BoundaryConditionBase * bc,
                                          string const & setName) -> void
   {
@@ -1287,7 +1283,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       // compute the final flux and derivatives
       real64 const flux = mobility[k_up] * potDif;
       for (localIndex ke = 0; ke < stencilSize; ++ke)
-       dFlux_dP[ke] *= mobility[k_up];
+        dFlux_dP[ke] *= mobility[k_up];
       dFlux_dP[k_up] += dMobility_dP[k_up] * potDif;
 
       //***** end flux terms *****
