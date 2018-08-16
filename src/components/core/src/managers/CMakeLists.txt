@@ -5,13 +5,25 @@
 set(managers_headers
     DomainPartition.hpp
     EventManager.hpp
+    Events/EventBase.hpp
+    Events/PeriodicEvent.hpp
+    Events/HaltEvent.hpp
+    Outputs/OutputManager.hpp
+    Outputs/OutputBase.hpp
+    Outputs/SiloOutput.hpp
+    Outputs/RestartOutput.hpp
+    Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
     Functions/CompositeFunction.hpp
     Functions/NewFunctionManager.hpp
     ObjectManagerBase.hpp
-    ProblemManager.hpp )
+    ProblemManager.hpp
+    NumericalMethodsManager.hpp
+    BoundaryConditions/BoundaryConditionBase.hpp
+    BoundaryConditions/BoundaryConditionManager.hpp
+    BoundaryConditions/DirichletBoundaryCondition.hpp)
 
 
 #
@@ -20,13 +32,25 @@ set(managers_headers
 set(managers_sources
   	DomainPartition.cpp
     EventManager.cpp
+    Events/EventBase.cpp
+    Events/PeriodicEvent.cpp
+    Events/HaltEvent.cpp
+    Outputs/OutputManager.cpp
+    Outputs/OutputBase.cpp
+    Outputs/SiloOutput.cpp
+    Outputs/RestartOutput.cpp
+    Outputs/BlueprintOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
     Functions/CompositeFunction.cpp
     Functions/NewFunctionManager.cpp
     ObjectManagerBase.cpp
-    ProblemManager.cpp )
+    ProblemManager.cpp
+    NumericalMethodsManager.cpp
+    BoundaryConditions/BoundaryConditionBase.cpp
+    BoundaryConditions/BoundaryConditionManager.cpp
+    BoundaryConditions/DirichletBoundaryCondition.cpp)
 
 #set( dependencyList dataRepository fileIO  )
 #set( dependencyList2 optionparser mathpresso RAJA trilinos )
@@ -43,6 +67,6 @@ blt_add_library( NAME                  managers
 #                 SHARED FALSE
                )
                
-target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src)
+target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/components/core/src )
 
-geosx_add_code_checks(PREFIX managers )
+geosx_add_code_checks( PREFIX managers )

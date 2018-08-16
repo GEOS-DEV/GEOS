@@ -16,55 +16,46 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * DataTypes.hpp
- *
- *  Created on: Jun 16, 2016
- *      Author: rrsettgast
+/**
+ * @file DataTypes.hpp
+ * This file contains various aliases and functions that provide operations regarding the
+ * use of the data types.
  */
 
 #ifndef DATATYPES_HPP
 #define DATATYPES_HPP
 
 #include <cassert>
+#include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <map>
+#include <memory>
 #include <string>
 #include <typeindex>
 #include <typeinfo>
-#include <map>
 #include <unordered_map>
 #include <vector>
-#include <cmath>
 
 #include "common/GeosxConfig.hpp"
 #include "common/Logger.hpp"
-
-#ifdef USE_ATK
-#include "sidre/SidreTypes.hpp"
-#endif
-
 #include "common/SortedArray.hpp"
-
 #include "Macros.hpp"
-
 #include "ManagedArray.hpp"
-
-//#include "legacy/ArrayT/ArrayT.h"
 #include "math/TensorT/TensorT.h"
 
 #ifdef USE_ATK
 #include "sidre/SidreTypes.hpp"
 #endif
 
-//#ifndef USE_CONTAINERARRAY_RETURN_PTR
-//#define USE_CONTAINERARRAY_RETURN_PTR
-//#endif
-
-#include <iostream>
-#include <memory>
 
 #ifdef __INTEL_COMPILER
+/**
+ * @brief this function is standard, but is missing on the intel compiler
+ * @tparam T the type that the unique_ptr will wrap
+ * @param args variadic args to the constructor of T
+ * @return a std::unique_ptr<T> whose constructor was called with args...
+ */
 namespace std
 {
   template<typename T, typename... Args>
@@ -77,6 +68,9 @@ namespace std
 #endif
 
 
+/**
+ * top level geosx namespace contains all code that is specific to GEOSX
+ */
 namespace geosx
 {
 
@@ -86,58 +80,62 @@ namespace geosx
 //using uint32 = std::uint32_t;
 //using uint64 = std::uint64_t;
 
+/// alias for std::size_t
 using size_t      = std::size_t;
 using integer     = std::int32_t;
 using localIndex  = std::int_fast32_t;
 using globalIndex = long long int;//std::int64_t;
-
 using string      = std::string;
-
-
-
 using real32 = float;
 using real64 = double;
-using real   = double;
+//using real   = double;
+
 
 template< typename T >
 using ptr = T*;
 
 template< typename T >
-using c_ptr = T const *;
+using const_ptr = T const *;
 
 
 using integer_ptr        = ptr<integer>;
-using integer_const_ptr  = c_ptr<integer>;
+using integer_const_ptr  = const_ptr<integer>;
 
 using localIndex_ptr         = ptr<localIndex>;
-using localIndex_const_ptr   = c_ptr<localIndex>;
+using localIndex_const_ptr   = const_ptr<localIndex>;
 
 using real32_ptr        = ptr<real32>;
-using real32_const_ptr  = c_ptr<real32>;
+using real32_const_ptr  = const_ptr<real32>;
 
 using real64_ptr        = ptr<real64>;
-using real64_const_ptr  = c_ptr<real64>;
+using real64_const_ptr  = const_ptr<real64>;
 
 
 using buffer_unit_type = char;
 using buffer_type = std::vector<buffer_unit_type>;
 
-//***** BEGIN LEGACY TYPEDEFS *****
+//***** BEGIN ARRAY TYPEDEFS *****
 
-using realT    = double;
-
-
-template< typename T >
-using array = multidimensionalArray::ManagedArray<T,1,localIndex>;
-
-template< typename T, int NDIM >
+template< typename T, int NDIM=1 >
 using array_view = multidimensionalArray::ArrayView<T,NDIM,localIndex>;
 
 template< typename T >
-using arrayView1d = multidimensionalArray::arrayView1d<T,localIndex>;
+using array1d = multidimensionalArray::ManagedArray<T,1,localIndex>;
 
-//template< typename T >
-//using arrayView1d_const = multidimensionalArray::arrayView1d<T const,localIndex>;
+template< typename T >
+using arrayView1d = multidimensionalArray::ArrayView<T,1,localIndex>;
+
+template< typename T >
+using array2d = multidimensionalArray::ManagedArray<T,2,localIndex>;
+
+template< typename T >
+using arrayView2d = multidimensionalArray::ArrayView<T,2,localIndex>;
+
+template< typename T >
+using array3d = multidimensionalArray::ManagedArray<T,3,localIndex>;
+
+template< typename T >
+using arrayView3d = multidimensionalArray::ArrayView<T,3,localIndex>;
 
 template< typename T >
 using set = SortedArray<T>;
@@ -148,30 +146,25 @@ using map = std::map<TKEY,TVAL>;
 template< typename TKEY, typename TVAL >
 using unordered_map = std::unordered_map<TKEY,TVAL>;
 
+using integer_array        = array1d<integer>;
+using integer_const_array  = array1d<integer const>;
 
-//***** END LEGACY TYPEDEFS *****
+using real32_array        = array1d<real32>;
+using real32_const_array  = array1d<real32 const>;
 
+using real64_array        = array1d<real64>;
+using real64_const_array  = array1d<real64 const>;
 
+using string_array        = array1d<string>;
+using string_const_array  = array1d<string const>;
 
-using integer_array        = array<integer>;
-using integer_const_array  = array<integer const>;
+using localIndex_array        = array1d<localIndex>;
+using localIndex_const_array  = array1d<localIndex const>;
 
-using real32_array        = array<real32>;
-using real32_const_array  = array<real32 const>;
+using globalIndex_array        = array1d<globalIndex>;
+using globalIndex_const_array  = array1d<globalIndex const>;
 
-using real64_array        = array<real64>;
-using real64_const_array  = array<real64 const>;
-
-using string_array        = array<string>;
-using string_const_array  = array<string const>;
-
-using localIndex_array        = array<localIndex>;
-using localIndex_const_array  = array<localIndex const>;
-
-using globalIndex_array        = array<globalIndex>;
-using globalIndex_const_array  = array<globalIndex const>;
-
-using mpiBuffer = array<char>;
+using mpiBuffer = array1d<char>;
 
 using integer_set        = set<integer>;
 using integer_const_set  = set<integer const>;
@@ -195,35 +188,32 @@ using globalIndex_const_set  = set<globalIndex const>;
 
 //***** BEGIN LEGACY TYPEDEFS *****
 
-typedef set<localIndex> lSet;
-typedef set<globalIndex> gSet;
-
-typedef int FieldKey;
-
-template< typename T >
-using Array2dT = multidimensionalArray::ManagedArray<T,2,localIndex>;
-
-typedef multidimensionalArray::ManagedArray<localIndex,2,localIndex> lArray2d;
-typedef array<std::pair<int,localIndex> > pArray1d;
-typedef set<std::pair<int,localIndex> > pSet;
-
-
-using r1_array = array<R1Tensor>;
-using r2_array = array<R2Tensor>;
-using r2Sym_array = array<R2SymTensor>;
+using r1_array = array1d<R1Tensor>;
+using r2_array = array1d<R2Tensor>;
+using r2Sym_array = array1d<R2SymTensor>;
 
 //using mapPair = std::pair<integer, localIndex>;
 using mapPair_array = std::pair<localIndex_array, localIndex_array>;
 
 
 constexpr static auto GLOBALINDEX_MAX = std::numeric_limits<globalIndex>::max();
+constexpr static auto LOCALINDEX_MAX = std::numeric_limits<localIndex>::max();
 
 //***** END LEGACY TYPEDEFS *****
 
+/**
+ * @class rtTypes
+ * class to manage the type selection of types at runtime
+ */
 class rtTypes
 {
 public:
 
+  /**
+   * @brief function to return a typename as a string
+   * @param key the std::type_index of the type
+   * @return a hard coded string taht is related to the std::type_index
+   */
   static std::string typeNames( std::type_index const key )
   {
     const std::unordered_map<std::type_index, std::string> type_names =
@@ -251,31 +241,39 @@ public:
   }
 
 
-
+  /**
+   * @enum TypeIDs
+   * @brief a set of enums for each geosx defined data type
+   */
   enum class TypeIDs
   {
-    integer_id,
-    localIndex_id,
-    globalIndex_id,
-    real32_id,
-    real64_id,
-    r1Tensor_id,
-    r2Tensor_id,
-    r2SymTensor_id,
-    integer_array_id,
-    localIndex_array_id,
-    globalIndex_array_id,
-    real32_array_id,
-    real64_array_id,
-    r1_array_id,
-    r2_array_id,
-    r2Sym_array_id,
-    string_id,
-    string_array_id,
-    mapPair_array_id,
-    none_id
+    integer_id,          //!< integer_id
+    localIndex_id,       //!< localIndex_id
+    globalIndex_id,      //!< globalIndex_id
+    real32_id,           //!< real32_id
+    real64_id,           //!< real64_id
+    r1Tensor_id,         //!< r1Tensor_id
+    r2Tensor_id,         //!< r2Tensor_id
+    r2SymTensor_id,      //!< r2SymTensor_id
+    integer_array_id,    //!< integer_array_id
+    localIndex_array_id, //!< localIndex_array_id
+    globalIndex_array_id,//!< globalIndex_array_id
+    real32_array_id,     //!< real32_array_id
+    real64_array_id,     //!< real64_array_id
+    r1_array_id,         //!< r1_array_id
+    r2_array_id,         //!< r2_array_id
+    r2Sym_array_id,      //!< r2Sym_array_id
+    string_id,           //!< string_id
+    string_array_id,     //!< string_array_id
+    mapPair_array_id,    //!< mapPair_array_id
+    none_id              //!< none_id
   };
 
+  /**
+   * @brief function to return a TypeID value given a name
+   * @param name the string of the type
+   * @return a TypeIDs value corresponding to the input string
+   */
   static TypeIDs typeID( string const & name )
   {
     const std::unordered_map<string,TypeIDs> type_names =
@@ -304,6 +302,11 @@ public:
     return type_names.at(name);
   }
 
+  /**
+   * @brief function to return a TypeID enum given a std::type_index
+   * @param typeIndex the type_index we would to get the TypeID for
+   * @return the TypeID associated with the typeIndex
+   */
   static TypeIDs typeID( std::type_index typeIndex )
   {
     const std::unordered_map<std::type_index,TypeIDs> type_names =
@@ -429,7 +432,14 @@ public:
   };
 
 
-
+  /**
+   * @brief this function provides a switchyard for the intrinsic supported GEOSX types which calls a generic lambda
+   *        that takes in a single argument which may be used to infer type.
+   * @tparam LAMBDA the template arg that represents the lambda function
+   * @param type the TypeIDs we would like to pass to the lambda function
+   * @param lambda the lambda function to call
+   * @return the return type of lambda
+   */
   template< typename LAMBDA >
   static auto ApplyIntrinsicTypeLambda1( const TypeIDs type,
                                          LAMBDA lambda )
@@ -496,6 +506,14 @@ public:
 
 
 
+  /**
+   * @brief this function provides a switchyard for the intrinsic supported GEOSX array types which calls a generic
+   *        lambda that takes in a single argument which may be used to infer type.
+   * @tparam LAMBDA the template arg that represents the lambda function
+   * @param type the TypeIDs we would like to pass to the lambda function
+   * @param lambda the lambda function to call
+   * @return the return type of lambda
+   */
   template< typename LAMBDA >
   static auto ApplyArrayTypeLambda1( const TypeIDs type,
                                      LAMBDA lambda )
@@ -553,6 +571,14 @@ public:
 
 
 
+  /**
+   * @brief this function provides a switchyard for the intrinsic supported GEOSX array types which calls a generic
+   *        lambda that takes in a two arguments argument which may be used to infer array type and underlying type.
+   * @tparam LAMBDA the template arg that represents the lambda function
+   * @param type the TypeIDs we would like to pass to the lambda function
+   * @param lambda the lambda function to call
+   * @return the return type of lambda
+   */
   template< typename LAMBDA >
   static auto ApplyArrayTypeLambda2( const TypeIDs type,
                                      LAMBDA lambda )
@@ -608,6 +634,14 @@ public:
     }
   }
 
+  /**
+   * @brief this function provides a switchyard for the supported GEOSX types which calls a generic lambda
+   *        that takes in a single argument which may be used to infer type.
+   * @tparam LAMBDA the template arg that represents the lambda function
+   * @param type the TypeIDs we would like to pass to the lambda function
+   * @param lambda the lambda function to call
+   * @return the return type of lambda
+   */
   template< typename LAMBDA >
   static auto ApplyTypeLambda1( const TypeIDs type,
                                 LAMBDA lambda )
@@ -709,6 +743,14 @@ public:
   }
 
 
+  /**
+   * @brief this function provides a switchyard for the intrinsic supported GEOSX types which calls a generic
+   *        lambda that takes in a two arguments argument which may be used to infer array type and underlying type.
+   * @tparam LAMBDA the template arg that represents the lambda function
+   * @param type the TypeIDs we would like to pass to the lambda function
+   * @param lambda the lambda function to call
+   * @return the return type of lambda
+   */
   template< typename LAMBDA >
   static auto ApplyTypeLambda2( const TypeIDs type,
                                 LAMBDA lambda )
@@ -810,7 +852,14 @@ public:
   }
 
 
-
+  /**
+   * @brief this function provides a switchyard for the supported GEOSX types which calls a generic
+   *        lambda that takes in a two arguments argument which may be used to infer array type and underlying type.
+   * @tparam LAMBDA the template arg that represents the lambda function
+   * @param type the TypeIDs we would like to pass to the lambda function
+   * @param lambda the lambda function to call
+   * @return the return type of lambda
+   */
   template< typename LAMBDA >
   static auto ApplyIntrinsicTypeLambda2( const TypeIDs type,
                                          LAMBDA lambda )
@@ -885,13 +934,13 @@ public:
     }
   }
 
-
-
+  // TODO depricate
   inline static void equate( R1Tensor & lhs, integer const component, real64 const & rhs )
   {
     lhs[component] = rhs;
   }
 
+  // TODO depricate
   template< typename TLHS, typename TRHS >
   inline static void equate( TLHS & lhs,
                              integer const,//component,
@@ -901,6 +950,7 @@ public:
   }
 
 
+  // TODO depricate
   inline static void add( R1Tensor & lhs,
                           integer const component,
                           real64 const & rhs )
@@ -908,6 +958,7 @@ public:
     lhs[component] += rhs;
   }
 
+  // TODO depricate
   template< typename TLHS, typename TRHS >
   inline static void add( TLHS & lhs,
                           integer const,// component,
@@ -918,21 +969,25 @@ public:
 
 
 
+  // TODO depricate
   inline static real64 value( R1Tensor & lhs, integer const component )
   {
     return lhs[component];
   }
 
+  // TODO depricate
   inline static real64 value( R2Tensor & lhs, integer const component )
   {
     return lhs.Data()[component];
   }
 
+  // TODO depricate
   inline static real64 value( R2SymTensor & lhs, integer const component )
   {
     return lhs.Data()[component];
   }
 
+  // TODO depricate
   template< typename TLHS >
   inline static TLHS value( TLHS const & lhs, integer const )
   {
@@ -940,6 +995,7 @@ public:
   }
 
 
+  // TODO depricate
   struct equateValue
   {
     inline static void f( R1Tensor & lhs, integer const component, real64 const & rhs )
@@ -961,6 +1017,7 @@ public:
 
   };
 
+  // TODO depricate
   struct addValue
   {
     inline static void f( R1Tensor & lhs, integer const component, real64 const & rhs )
@@ -989,6 +1046,7 @@ public:
   };
 
 
+  // TODO depricate
   enum class operationType
   {
     add,

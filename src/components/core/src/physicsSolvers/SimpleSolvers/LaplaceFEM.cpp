@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NewtonianMechanics.cpp
+/**
+ * @file LaplaceFEM.cpp
  *
- *  Created on: Dec 4, 2014
- *      Author: rrsettgast
  */
 
 #include "LaplaceFEM.hpp"
@@ -37,19 +35,17 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
-#include "finiteElement/FiniteElementManager.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/FiniteElementSpaceManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
 //#include "finiteElement/ElementLibrary/FiniteElementUtilities.h"
-#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
-#define verbose 1
-
 
 namespace geosx
 {
@@ -138,7 +134,7 @@ void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
                                 "",
                                 "",
                                 "",
-                                keys::nodeManager,
+                                nodes->getName(),
                                 1,
                                 0,
                                 0 );
@@ -146,12 +142,12 @@ void LaplaceFEM::FillOtherDocumentationNodes( dataRepository::ManagedGroup * con
     docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
                                 viewKeyStruct::blockLocalDofNumberString,
                                 -1,
-                                "localIndex_array",
-                                "localIndex_array",
+                                "globalIndex_array",
+                                "globalIndex_array",
                                 "dof",
                                 "dof",
                                 "-1",
-                                keys::nodeManager,
+                                nodes->getName(),
                                 1,
                                 0,
                                 0 );
@@ -182,6 +178,7 @@ void LaplaceFEM::ReadXML_PostProcess()
   }
 }
 
+
 void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
 
@@ -192,7 +189,7 @@ void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
 real64 LaplaceFEM::SolverStep( real64 const& time_n,
                                              real64 const& dt,
                                              const int cycleNumber,
-                                             ManagedGroup * domain )
+                                             DomainPartition * domain )
 {
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
@@ -215,9 +212,6 @@ real64 LaplaceFEM::ExplicitStep( real64 const& time_n,
 return dt;
 }
 
-
-
-
 void LaplaceFEM::ImplicitStepSetup( real64 const& time_n,
                                     real64 const& dt,
                                     DomainPartition * const domain,
@@ -236,7 +230,7 @@ void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
 
 void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
                                                localIndex & numLocalRows,
-                                               localIndex & numGlobalRows,
+                                               globalIndex & numGlobalRows,
                                                localIndex_array& localIndices,
                                                localIndex offset )
 {
@@ -271,7 +265,7 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
 
   // create trilinos dof indexing
 
-  localIndex_array& trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
   integer_array const & is_ghost       = nodeManager->getReference<integer_array>(NodeManager::viewKeyStruct::ghostRankString);
 
 
@@ -307,7 +301,7 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
   localIndex dim = 1;//domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension;
   localIndex n_ghost_rows  = nodeManager->GetNumberOfGhosts();
   localIndex n_local_rows  = nodeManager->size()-n_ghost_rows;
-  localIndex n_global_rows = 0;
+  globalIndex n_global_rows = 0;
 
   localIndex_array displacementIndices;
   SetNumRowsAndTrilinosIndices( nodeManager,
@@ -316,32 +310,28 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
                                 displacementIndices,
                                 0 );
 
-  std::map<string, array<string> > fieldNames;
+  std::map<string, array1d<string> > fieldNames;
   fieldNames["node"].push_back("blockLocalDofNumber_LaplaceFEM");
 
   CommunicationTools::SynchronizeFields(fieldNames,
                               mesh,
-                              domain->getReference< array<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+                              domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
 
 
   // create epetra map
 
-  Epetra_Map * junk =  new Epetra_Map( static_cast<int>(dim*n_global_rows),
-                                       static_cast<int>(dim*n_local_rows),
-                                       0,
-                                       m_linearSolverWrapper.m_epetraComm );
+  Epetra_Map * const
+  rowMap = blockSystem->SetRowMap( BlockIDs::dummyScalarBlock,
+                                   std::make_unique<Epetra_Map>( dim*n_global_rows,
+                                                                 dim*n_local_rows,
+                                                                 0,
+                                                                 m_linearSolverWrapper.m_epetraComm ) );
 
-  Epetra_Map * const rowMap = blockSystem->SetRowMap( BlockIDs::dummyScalarBlock,
-                                                      std::make_unique<Epetra_Map>( static_cast<int>(dim*n_global_rows),
-                                                                                    static_cast<int>(dim*n_local_rows),
-                                                                                    0,
-                                                                                    m_linearSolverWrapper.m_epetraComm ) );
-
-  Epetra_FECrsGraph * const sparsity = blockSystem->SetSparsity( BlockIDs::dummyScalarBlock,
-                                                                 BlockIDs::dummyScalarBlock,
-                                                                 std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
-
+  Epetra_FECrsGraph * const
+  sparsity = blockSystem->SetSparsity( BlockIDs::dummyScalarBlock,
+                                       BlockIDs::dummyScalarBlock,
+                                       std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
 
 
   SetSparsityPattern( domain, sparsity );
@@ -362,12 +352,12 @@ void LaplaceFEM :: SetupSystem ( DomainPartition * const domain,
 }
 
 void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
-                                                       Epetra_FECrsGraph * const sparsity )
+                                     Epetra_FECrsGraph * const sparsity )
 {
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup const * const nodeManager = mesh->getNodeManager();
 
-  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
@@ -379,12 +369,12 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
       {
         CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(subRegionIndex);
         localIndex const numElems = cellBlock->size();
-        lArray2d const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<lArray2d>(keys::nodeList);
+        array2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
         localIndex const numNodesPerElement = elemsToNodes.size(1);
 
-        integer_array elementLocalDofIndex (numNodesPerElement);
+        globalIndex_array elementLocalDofIndex (numNodesPerElement);
 
-        array<integer> const & elemGhostRank = cellBlock->m_ghostRank;
+        array1d<integer> const & elemGhostRank = cellBlock->m_ghostRank;
 
         for( localIndex k=0 ; k<numElems ; ++k )
         {
@@ -396,7 +386,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
             {
               for(localIndex i=0 ; i<numNodesPerElement ; ++i)
               {
-                elementLocalDofIndex[i] = integer_conversion<int>(trilinos_index[localNodeIndices[i]]);
+                elementLocalDofIndex[i] = trilinos_index[localNodeIndices[i]];
               }
 
               sparsity->InsertGlobalIndices(integer_conversion<int>(elementLocalDofIndex.size()),
@@ -422,7 +412,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   ManagedGroup * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  FiniteElementManager const * numericalMethodManager = domain->getParent()->GetGroup<FiniteElementManager>(keys::finiteElementManager);
+  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 
 
@@ -431,7 +421,7 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::dummyScalarBlock );
   Epetra_FEVector * const solution = blockSystem->GetSolutionVector( BlockIDs::dummyScalarBlock );
 
-  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
 
   for( auto & region : elemManager->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups() )
   {
@@ -445,17 +435,17 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
 
       multidimensionalArray::ManagedArray< R1Tensor, 3 > & dNdX = cellBlockSubRegion->getReference< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
 
-      Array2dT<real64> const & detJ            = cellBlockSubRegion->getReference< Array2dT<real64> >(keys::detJ);
+      array2d<real64> const & detJ            = cellBlockSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      lArray2d const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
+      array2d<localIndex> const & elemsToNodes = cellBlockSubRegion->getWrapper<FixedOneToManyRelation>(cellBlockSubRegion->viewKeys().nodeList)->reference();
       const integer numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
 
-      Epetra_IntSerialDenseVector  element_index   (numNodesPerElement);
+      Epetra_LongLongSerialDenseVector  element_index   (numNodesPerElement);
       Epetra_SerialDenseVector     element_rhs     (numNodesPerElement);
       Epetra_SerialDenseMatrix     element_matrix  (numNodesPerElement,
                                                     numNodesPerElement);
 
-      array<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
+      array1d<integer> const & elemGhostRank = cellBlockSubRegion->m_ghostRank;
       const int n_q_points = feSpace->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements
@@ -527,7 +517,7 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::dummyScalarBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::dummyScalarBlock );
-  localIndex_array const & trilinos_index = nodeManager->getReference<localIndex_array>(viewKeys.blockLocalDofNumber);
+  globalIndex_array const & trilinos_index = nodeManager->getReference<globalIndex_array>(viewKeys.blockLocalDofNumber);
 
   string const & fieldName = getReference<string>(viewKeys.fieldVarName);
   real64_array & fieldVar = nodeManager->getReference<real64_array>(string("Temperature"));
@@ -584,7 +574,7 @@ void LaplaceFEM::SolveSystem( systemSolverInterface::EpetraBlockSystem * const b
 
 void LaplaceFEM::ApplyDirichletBC_implicit( ManagedGroup * object,
                                             BoundaryConditionBase const * const bc,
-                                            lSet const & set,
+                                            set<localIndex> const & set,
                                             real64 const time_n,
                                             EpetraBlockSystem & blockSystem )
 {

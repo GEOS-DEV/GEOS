@@ -19,7 +19,7 @@
 #ifndef __GEOS_RAJA_WRAPPER__HPP
 #define __GEOS_RAJA_WRAPPER__HPP
 
-#include "rajaInterface/GEOS_RAJA_Policies.hpp"
+#include "../rajaInterface/GEOS_RAJA_Policies.hpp"
 
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -33,6 +33,7 @@
 
 namespace geosx{
 
+/*
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void forall_in_range( localIndex const begin, const localIndex end, LAMBDA && body)
 {
@@ -43,16 +44,17 @@ void forall_in_range( localIndex const begin, const localIndex end, LAMBDA && bo
   } );
 }
 
-
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void forall_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
-  RAJA::TypedListSegment<localIndex> listSeg(indexList, len);
+  RAJA::TypedListSegment<localIndex> listSeg(indexList, len, RAJA::Unowned);
   RAJA::forall<POLICY>( listSeg , [=] (localIndex index) mutable -> void
   {
     body(index);
   } );
 }
+
+*/
 
 //================
 //Hevy Computation
@@ -124,11 +126,11 @@ template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
     for( auto const & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
@@ -143,11 +145,11 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
   
   for( auto const & region : elementRegions->GetSubGroups() )
     {
-    ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = region.second->GetGroup(dataRepository::keys::cellBlockSubRegions);
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * const cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
@@ -170,32 +172,33 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
                                LAMBDA && body )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
 
 
   for( auto const & regionPair : elementRegions->GetSubGroups() )
   {
-    ManagedGroup const * const elementRegion = regionPair.second;
-    auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
+    dataRepository::ManagedGroup const * const elementRegion = regionPair.second;
+    auto const & numMethodName = elementRegion->getData<string>(dataRepository::keys::numericalMethod);
     FiniteElementSpace const * const feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
-    ManagedGroup const * const cellBlockSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
+    dataRepository::ManagedGroup const * const cellBlockSubRegions = elementRegion->GetGroup(dataRepository::keys::cellBlockSubRegions);
     for( auto & iterCellBlocks : cellBlockSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * cellBlock = cellBlockSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
-      //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
-       multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
-      
-      array_view<real64,2> const & detJ            = cellBlock->getReference< Array2dT<real64> >(keys::detJ).View();
 
-      auto const & constitutiveMap = cellBlock->getReference< std::pair< Array2dT<localIndex>,Array2dT<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+      //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
+      multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(dataRepository::keys::dNdX);
+      
+      array_view<real64,2> const & detJ            = cellBlock->getReference< array2d<real64> >(dataRepository::keys::detJ).View();
+
+      auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
 //      RAJA::View< localIndex const, RAJA::Layout<2> > constitutiveMapView( reinterpret_cast<localIndex const*>(constitutiveMap.second.data()),
 //                                                                           constitutiveMap.second.size(0),
 //                                                                           constitutiveMap.second.size(1) );
       array_view<localIndex,2> constitutiveMapView = constitutiveMap.second.View();
 
       auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
-      array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<lArray2d>(keys::nodeList);
+      array_view<localIndex,2> const elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference().View();// getData<array2d<localIndex>>(keys::nodeList);
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -282,6 +285,56 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
       forall_in_range<POLICY>(0, cellBlockSubRegion->size(), ebody);
     }
   }
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
+  RAJA::RangeSegment seg(begin, end);
+  RAJA::forall<EXEC_POLICY>( seg , [=] (localIndex index) mutable -> void
+  {
+    sum += body(index);
+  } );
+  return sum.get();
+}
+
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
+{
+  RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
+  RAJA::TypedListSegment<localIndex> listSeg(indexList, len, RAJA::Unowned);
+  RAJA::forall<EXEC_POLICY>( listSeg , [=] (localIndex index) mutable -> void
+  {
+    sum += body(index);
+  } );
+  return sum.get();
+}
+
+template<class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+  real64 sum = 0.0;
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
+
+      sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, cellBlockSubRegion->size(), ebody);
+    }
+  }
+
+  return sum;
 }
 
 

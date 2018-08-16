@@ -57,7 +57,7 @@ void NewComponent::ReadXML_PostProcess( )
 real64 NewComponent::SolverStep( real64 const & /*time_n*/,
                real64 const & /*dt*/,
                integer const /*cycleNumber*/,
-               dataRepository::ManagedGroup * /*domain*/ )
+               DomainPartition * /*domain*/ )
 {
   return 0;
 }

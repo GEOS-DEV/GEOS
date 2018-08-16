@@ -93,7 +93,7 @@ public:
 
   virtual ~ElementRegion() override;
 
-//  Array2dT<integer> & m_toNodesRelation;
+//  array2d<integer> & m_toNodesRelation;
 
 
   virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;

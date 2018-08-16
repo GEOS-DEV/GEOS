@@ -100,7 +100,7 @@ void CommunicationTools::releaseCommID( int & ID )
 
 void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               ObjectManagerBase const & compositionObject,
-                                              array<NeighborCommunicator> & neighbors )
+                                              array1d<NeighborCommunicator> & neighbors )
 {
 
   integer_array & ghostRank = object.getReference<integer_array>(object.m_ObjectManagerBaseViewKeys.ghostRank);
@@ -134,16 +134,16 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   // get the relation to the composition object used that will be used to identify the main object. For example,
   // a face can be identified by its nodes.
-  array<globalIndex_array> objectToCompositionObject;
+  array1d<globalIndex_array> objectToCompositionObject;
   object.ExtractMapFromObjectForAssignGlobalIndexNumbers( compositionObject, objectToCompositionObject );
 
   // now arrange the data from objectToCompositionObject into a map "indexByFirstCompositionIndex", such that the key
   // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with the
   // array being the remaining composition object global indices, and the second being the global index of the object
   // itself.
-  map<globalIndex, array<std::pair<globalIndex_array, localIndex> > > indexByFirstCompositionIndex;
+  map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > > indexByFirstCompositionIndex;
 
-//  for( array<globalIndex_array>::const_iterator a = objectToCompositionObject.begin() ;
+//  for( array1d<globalIndex_array>::const_iterator a = objectToCompositionObject.begin() ;
 //      a != objectToCompositionObject.end() ;
 //      ++a )
 
@@ -212,7 +212,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   // object to receive the neighbor data
   // this baby is and Array (for each neighbor) of maps, with the key of lowest composition index, and a value containing
   // an array containing the std::pairs of the remaining composition indices, and the globalIndex of the object.
-  array<map<globalIndex, array<std::pair<globalIndex_array, globalIndex> > > >
+  array1d<map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > > >
   neighborCompositionObjects( neighbors.size() );
 
   {
@@ -261,9 +261,9 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     {
       // Set iterators to the beginning of each indexByFirstCompositionIndex,
       // and neighborCompositionObjects[neighborNum].
-      map<globalIndex, array<std::pair<globalIndex_array, localIndex> > >::const_iterator
+      map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > >::const_iterator
       iter_local = indexByFirstCompositionIndex.begin();
-      map<globalIndex, array<std::pair<globalIndex_array, globalIndex> > >::const_iterator
+      map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > >::const_iterator
       iter_neighbor = neighborCompositionObjects[neighborIndex].begin();
 
       // now we continue the while loop as long as both of our iterators are in range.
@@ -274,12 +274,12 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
         if( iter_local->first == iter_neighbor->first )
         {
           // first we loop over all local composition arrays (objects with the matched key)
-          for( array<std::pair<globalIndex_array, localIndex> >::const_iterator
+          for( array1d<std::pair<globalIndex_array, localIndex> >::const_iterator
                iter_local2 = iter_local->second.begin() ;
                iter_local2 != iter_local->second.end() ; ++iter_local2 )
           {
             // and loop over all of the neighbor composition arrays (objects with the matched key)
-            for( array<std::pair<globalIndex_array, globalIndex> >::const_iterator
+            for( array1d<std::pair<globalIndex_array, globalIndex> >::const_iterator
             iter_neighbor2 = iter_neighbor->second.begin() ;
                 iter_neighbor2 != iter_neighbor->second.end() ;
                 ++iter_neighbor2 )
@@ -329,22 +329,22 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 void
 CommunicationTools::
 FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                     array<NeighborCommunicator> & allNeighbors )//,
-                                     //array< array<localIndex> > & matchedPartitionBoundaryObjects )
+                                     array1d<NeighborCommunicator> & allNeighbors )//,
+                                     //array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects )
 {
   integer_array const & ghostRank = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.ghostRank );
   integer_array & domainBoundaryIndicator = group->getReference<integer_array>(group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
   globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( group->m_ObjectManagerBaseViewKeys.localToGlobalMap );
 
-  array<globalIndex> globalPartitionBoundaryObjectsIndices;
+  array1d<globalIndex> globalPartitionBoundaryObjectsIndices;
   group->ConstructGlobalListOfBoundaryObjects(globalPartitionBoundaryObjectsIndices);
 
 
-//  array<NeighborCommunicator> & allNeighbors = this->getReference< array<NeighborCommunicator> >( viewKeys.neighbors );
+//  array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
   // send the size of the partitionBoundaryObjects to neighbors
   {
-    array< array<globalIndex> > neighborPartitionBoundaryObjects( allNeighbors.size() );
+    array1d< array1d<globalIndex> > neighborPartitionBoundaryObjects( allNeighbors.size() );
 //    matchedPartitionBoundaryObjects.resize( allNeighbors.size() );
 
     int commID = reserveCommID();
@@ -396,7 +396,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 
 
 void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
-                                     array<NeighborCommunicator> & neighbors )
+                                     array1d<NeighborCommunicator> & neighbors )
 {
   int commID = CommunicationTools::reserveCommID();
 
@@ -424,9 +424,9 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
 
 
 
-void CommunicationTools::SynchronizeFields( const std::map<string, array<string> >& fieldNames,
+void CommunicationTools::SynchronizeFields( const std::map<string, array1d<string> >& fieldNames,
                                             MeshLevel * const mesh,
-                                            array<NeighborCommunicator> & neighbors )
+                                            array1d<NeighborCommunicator> & neighbors )
 {
 
   int commID = CommunicationTools::reserveCommID();
