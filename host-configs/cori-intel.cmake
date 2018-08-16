@@ -10,21 +10,19 @@
 #And requires CMAKE 3.9 or higher
 #export PATH=/global/homes/v/vargas45/Git-Repos/myCMAKE/cmake-3.10.3/bin:$PATH
 #
+#module load papi
+#export CALI_SERVICES_ENABLE=event:recorder:timestamp:trace:papi
+#export CALI_CONFIG_PROFILE=serial-trace
+#
+#export CALI_TIMER_SNAPSHOT_DURATION=1
+#export CALI_TIMER_OFFSET=1
+#export CALI_TIMER_TIMESTAMP=1
+#export CALI_TIMER_INCLUSIVE_DURATION=1
 ##################################
 
 ##################################
 # uses default intel compiler
 ##################################
-
-
-#set(CONFIG_NAME "quartz-toss_3_x86_64_ib-gcc@7.1.0_noAXOM" CACHE PATH "") 
-
-#set(TPL_DIR "/usr/gapps/GEOS/geosx/2017_10_04_13_56_50" CACHE PATH "" )
-#include("${TPL_DIR}/${CONFIG_NAME}.cmake")
-#
-#set(ATK_DIR "/usr/gapps/GEOS/geosx/axom/toss_3_x86_64_ib-gcc@7.1.0-release" CACHE PATH "")
-#set(ATK_CMAKE "${ATK_DIR}/lib/cmake" CACHE PATH "")
-
 
 # c compiler used by spack
 set(CMAKE_CXX_COMPILER "CC" CACHE PATH "")
@@ -41,7 +39,7 @@ set(MPI_C_COMPILER "${cc}" CACHE PATH "")
 set(MPIEXEC              "/usr/bin/srun" CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 
-set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
+set( GEOSX_TPL_ROOT_DIR "/global/common/software/m2851/thirdPartyLibs/" CACHE PATH "" )
 
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
 set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
@@ -52,13 +50,14 @@ set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "Enables uncrusitfy")
 
 set(HDF5_DIR "/opt/cray/pe/hdf5/1.10.2.0/cray/8.6" CACHE PATH "" FORCE)
 
-
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 option( BUILD_LOCAL_RAJA "Use the local mirrored RAJA" OFF )
 
 option( RAJA_ENABLE_TBB "" OFF)
 
-option( ENABLE_CALIPER "Enables CALIPER" OFF )
+option( ENABLE_CALIPER "Enables CALIPER" On )
+set(ENABLE_PAPI "ON" CACHE PATH "" FORCE)
+set(PAPI_PREFIX "/opt/cray/pe/papi/5.5.1.4" CACHE PATH "" FORCE)
 
 option( ENABLE_CHAI "Enables CHAI" ON )
 option( ENABLE_RAJA "Enables RAJA" ON )

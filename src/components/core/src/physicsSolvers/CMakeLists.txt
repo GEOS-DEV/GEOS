@@ -7,7 +7,8 @@ set(physicsSolvers_headers
     SolverBase.hpp
     SimpleSolvers/LaplaceFEM.hpp
     FiniteVolume/SinglePhaseFlow.hpp
-    FiniteVolume/CompositionalMultiphaseFlow.hpp)
+    FiniteVolume/CompositionalMultiphaseFlow.hpp
+    src/SolidMechanicsLagrangianFEM.hpp)
 
 #
 # Specify all sources
@@ -17,7 +18,8 @@ set(physicsSolvers_sources
     SolverBase.cpp
     SimpleSolvers/LaplaceFEM.cpp
     FiniteVolume/SinglePhaseFlow.cpp
-    FiniteVolume/CompositionalMultiphaseFlow.cpp)
+    FiniteVolume/CompositionalMultiphaseFlow.cpp
+    src/SolidMechanicsLagrangianFEM.cpp)
 
 
 blt_add_library( NAME                  physicsSolvers
