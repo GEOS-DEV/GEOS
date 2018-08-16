@@ -409,7 +409,7 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
   NodeManager * const nodes = mesh->getNodeManager();
 
 
-  ElementRegionManager * elementRegions = mesh->getElemManager();
+  ElementRegionManager * elementRegionManager = mesh->getElemManager();
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 //  ConstitutiveManager::constitutiveMaps const & constitutiveMaps =
 // constitutiveManager->GetMaps(0);
@@ -417,16 +417,15 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
   ViewWrapper<real64_array>::rtype mass = nodes->getData<real64_array>(keys::Mass);
 //  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
 
+//  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
+//  rho = elementRegionManager->ConstructMaterialViewAccessorarray2d<real64>("density");
 
-  // TODO This is wrong. needs to be down in the element loop
-  constitutive::ViewAccessor< real64 >
-  rho = constitutiveManager->GetParameterData<real64>(string("Density"));
-
-  elementRegions->forCellBlocks([&]( CellBlockSubRegion * cellBlock ) -> void
+  elementRegionManager->forCellBlocks([&]( CellBlockSubRegion * cellBlock ) -> void
     {
       auto const & detJ            = cellBlock->RegisterViewWrapper< array2d<real64> >(keys::detJ)->reference();
       auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(cellBlock->viewKeys().constitutiveMap);
       FixedOneToManyRelation const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
+      array2d<real64> & rho = cellBlock->getReference< array2d<real64> >( string("density"));
 
       for( localIndex k=0 ; k < cellBlock->size() ; ++k )
       {
@@ -434,7 +433,7 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
         arrayView1d<real64 const> detJq = detJ[k];
         for( localIndex q=0 ; q<constitutiveMap.second.size(1) ; ++q )
         {
-          mass[nodeList[q]] += rho[ constitutiveMap.first(k,q) ] * detJq[q];
+          mass[nodeList[q]] += rho[k][q] * detJq[q];
         }
       }
     });
@@ -973,20 +972,30 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_explicit( ManagedGroup * 
 }
 
 
-void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( ManagedGroup * object,
-                                                                 BoundaryConditionBase const * const bc,
-                                                                 set<localIndex> const & set,
-                                                                 real64 const time_n,
+void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const time,
+                                                                 DomainPartition & domain,
                                                                  EpetraBlockSystem & blockSystem )
 {
-  bc->ApplyDirichletBounaryConditionDefaultMethod<0>( set,
-                                                      time_n,
-                                                      object,
-                                                      keys::TotalDisplacement,
-                                                      viewKeys.trilinosIndex.Key(),
-                                                      3,
-                                                      &blockSystem,
-                                                      BlockIDs::displacementBlock );
+
+  BoundaryConditionManager const * const bcManager = BoundaryConditionManager::get();
+
+  bcManager->ApplyBoundaryCondition2( time,
+                                     &domain,
+                                     keys::TotalDisplacement,
+                                     [&]( BoundaryConditionBase const * const bc,
+                                         set<localIndex> const & targetSet,
+                                         ManagedGroup * const targetGroup,
+                                         string const fieldName )->void
+  {
+    bc->ApplyDirichletBounaryConditionDefaultMethod<0>( targetSet,
+                                                        time,
+                                                        targetGroup,
+                                                        fieldName,
+                                                        viewKeys.trilinosIndex.Key(),
+                                                        3,
+                                                        &blockSystem,
+                                                        BlockIDs::displacementBlock );
+  });
 }
 
 void SolidMechanics_LagrangianFEM::ForceBC( ManagedGroup * const object,
@@ -1485,9 +1494,6 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   static array1d< R1Tensor > vtilde_local(8);
   static array1d< R1Tensor > uhattilde_local(8);
 
-  constitutive::ViewAccessor< real64 >
-  rho = constitutiveManager->GetParameterData<real64>(string("Density"));
-
 
   // begin region loop
   elemManager->forElementRegions([&](ElementRegion * elementRegion)
@@ -1540,10 +1546,10 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
           localIndex_array const & elementList = constitutiveGroup.second;
 
           ConstitutiveBase * constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>( constitutiveName );
-          ManagedGroup const * const constitutiveParameters = constitutiveModel->GetParameterData();
-          ManagedGroup const * const constitutiveState      = constitutiveModel->GetStateData();
+//          ManagedGroup const * const constitutiveParameters = constitutiveModel->GetParameterData();
+//          ManagedGroup const * const constitutiveState      = constitutiveModel->GetStateData();
 
-          view_rtype_const<real64> density = constitutiveParameters->getData<real64>( string("Density") );
+          real64 const density = constitutiveModel->getReference<real64>("density");
 
           real64 stiffness[6][6];
           constitutiveModel->GetStiffness( stiffness );
@@ -1603,7 +1609,7 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 // nullptr : &((*refStress)[element]);
 
 
-              real64 maxElemForce = CalculateElementResidualAndDerivative( *density,
+              real64 maxElemForce = CalculateElementResidualAndDerivative( density,
                                                                            feSpace->m_finiteElement,
                                                                            dNdX[k],
                                                                            detJ[k],
@@ -1663,8 +1669,9 @@ ApplyBoundaryConditions( DomainPartition * const domain,
   bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
                                      nodeManager, keys::Force, time_n + dt, *blockSystem );
 
-  bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit,
-                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
+  ApplyDisplacementBC_implicit( time_n + dt, *domain, *blockSystem );
+//  bcManager->ApplyBoundaryCondition( this, &,
+//                                     nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
 
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,

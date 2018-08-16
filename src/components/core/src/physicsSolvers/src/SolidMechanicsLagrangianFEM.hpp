@@ -28,9 +28,7 @@
 #include "common/TimingMacros.hpp"
 
 #include "mesh/MeshForLoopInterface.hpp"
-//#include "rajaInterface/GEOS_RAJA_Interface.hpp"
-//#include "src/rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "../../mesh/MeshForLoopInterface.hpp"
+//#include "rajaInterface/GEOSX_RAJA_Interface.hpp"
 
 
 struct stabledt
@@ -173,11 +171,9 @@ public:
                                      dataRepository::view_rtype<r1_array> & uhat,
                                      dataRepository::view_rtype<r1_array> & vel);
 
-  void ApplyDisplacementBC_implicit( ManagedGroup * object,
-                                     BoundaryConditionBase const * const bc,
-                                     set<localIndex> const & set,
-                                     real64 const time_n,
-                                     systemSolverInterface::EpetraBlockSystem & blockSystem );
+  void ApplyDisplacementBC_implicit( real64 const time,
+                                     DomainPartition & domain,
+                                     systemSolverInterface::EpetraBlockSystem & blockSystem  );
 
   void ForceBC( dataRepository::ManagedGroup * const object,
                 BoundaryConditionBase const* const bc,
