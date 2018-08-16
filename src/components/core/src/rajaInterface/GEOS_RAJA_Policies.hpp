@@ -89,9 +89,25 @@ RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, 
 }
 
 //RAJA wrapper for list segments
-template<class POLICY=elemPolicy, typename LAMBDA=void>
+template<typename POLICY=elemPolicy, typename LAMBDA=void>
 RAJA_INLINE void forall_in_set(RAJA::TypedListSegment<localIndex> iList, LAMBDA && body){
   RAJA::forall<POLICY>(iList, body);
 }
+/*
+template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
+  RAJA::forall<EXEC_POLICY>(begin, end, body);
+  return 
+  RAJA::RangeSegment seg(begin, end);  
+  RAJA::forall<EXEC_POLICY>( seg , [=] (localIndex index) mutable -> void
+  {
+    sum += body(index);
+  } );
+  return sum.get();
+}
+*/
+
 
 #endif
