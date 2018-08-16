@@ -41,6 +41,7 @@
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 
 
@@ -407,6 +408,7 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   NodeManager * const nodes = mesh->getNodeManager();
+  FaceManager * const faceManager = mesh->getFaceManager();
 
 
   ElementRegionManager * elementRegions = mesh->getElemManager();
@@ -446,6 +448,25 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
     totalMass += mass[a];
   }
   std::cout<<"totalMass = "<<totalMass<<std::endl;
+
+
+  real64_array & faceArea  = faceManager->getReference<real64_array>(FaceManager::
+                                                                     viewKeyStruct::
+                                                                     faceAreaString);
+  array1d<array1d<localIndex>> const & facesToNodes = faceManager->nodeList();
+  r1_array const & X = nodes->referencePosition();
+
+
+  R1Tensor faceNormal, faceCenter;
+
+  // loop over faces and calculate faceArea, faceNormal and faceCenter
+  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  {
+    faceArea[kf] = computationalGeometry::Centroid_3DPolygon(facesToNodes[kf],
+                                                             X,
+                                                             faceCenter,
+                                                             faceNormal);
+  }
 }
 
 real64 SolidMechanics_LagrangianFEM::SolverStep( real64 const& time_n,
@@ -1005,88 +1026,97 @@ void SolidMechanics_LagrangianFEM::ForceBC( ManagedGroup * const object,
                                                       BlockIDs::displacementBlock );
 }
 
-void SolidMechanics_LagrangianFEM::TractionBC( ManagedGroup * const object,
-                                               BoundaryConditionBase const * const bc,
-                                               set<localIndex> const & set,
-                                               real64 time,
-                                               systemSolverInterface::EpetraBlockSystem & blockSystem )
+
+void SolidMechanics_LagrangianFEM::ApplyTractionBC( FaceManager const * const faceManager,
+                                                    NodeManager const * const nodeManager,
+                                                    real64 const time,
+                                                    systemSolverInterface::EpetraBlockSystem & blockSystem )
 {
-//  string const functionName =
-// bc->getData<string>(dataRepository::keys::functionName);
-//  NewFunctionManager * functionManager = NewFunctionManager::Instance();
-//
-//  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( blockID );
-//
-//  Epetra_IntSerialDenseVector  node_dof(set.size());
-//  Epetra_SerialDenseVector     node_rhs(set.size());
-//
-//  dataRepository::view_rtype_const<integer_array> dofMap =
-// object->getData<integer_array>(dofMapName);
-//
-//
-//  if( functionName.empty() )
-//  {
-//
-//    integer counter=0;
-//    for( auto a : set )
-//    {
-//      node_dof(counter) = dim*dofMap[a]+component;
-//      this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>(
-// node_dof(counter),
-//                                                                blockSystem,
-//                                                                blockID,
-//                                                                node_rhs(counter),
-//                                                                m_scale,
-//                                                                rtTypes::value(field[a],component));
-//      ++counter;
-//    }
-//    rhs->SumIntoGlobalValues(node_dof, node_rhs);
-//  }
-//  else
-//  {
-//    FunctionBase const * const function  =
-// functionManager->GetGroup<FunctionBase>(functionName);
-//    if( function!=nullptr)
-//    {
-//      if( function->isFunctionOfTime()==2 )
-//      {
-//        real64 value = m_scale * function->Evaluate( &time );
-//        integer counter=0;
-//        for( auto a : set )
-//        {
-//          node_dof(counter) = dim*dofMap[a]+component;
-//          this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>(
-// node_dof(counter),
-//                                                                    blockSystem,
-//                                                                   blockID,
-//                                                                   node_rhs(counter),
-//                                                                   value,
-//                                                                   rtTypes::value(field[a],component));
-//            ++counter;
-//          }
-//            rhs->SumIntoGlobalValues(node_dof, node_rhs);
-//        }
-//        else
-//        {
-//          real64_array result(set.size());
-//          function->Evaluate( dataGroup, time, set, result );
-//          integer counter=0;
-//          for( auto a : set )
-//          {
-//            node_dof(counter) = dim*dofMap[a]+component;
-//            this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>(
-// node_dof(counter),
-//                                                     blockSystem,
-//                                                     blockID,
-//                                                     node_rhs(counter),
-//                                                     result[counter],
-//                                                     rtTypes::value(field[a],component));
-//            ++counter;
-//          }
-//          rhs->SumIntoGlobalValues(node_dof, node_rhs);
-//        }
-//      }
-//    }
+  BoundaryConditionManager * const bcManager = BoundaryConditionManager::get();
+  NewFunctionManager * const functionManager = NewFunctionManager::Instance();
+
+  real64_array const & faceArea  = faceManager->getReference<real64_array>("faceArea");
+  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+
+  globalIndex_array const &
+  blockLocalDofNumber = nodeManager->getReference<globalIndex_array>(viewKeys.trilinosIndex);
+
+  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( BlockIDs::displacementBlock );
+
+
+
+  bcManager->ApplyBoundaryCondition( time,
+                                     nodeManager,
+                                     string("Traction"),
+                                     [&]( BoundaryConditionBase const * const bc,
+                                          set<localIndex> const & faceSet ) -> void
+  {
+    string const functionName = bc->getData<string>( BoundaryConditionBase::viewKeyStruct::functionNameString);
+
+    globalIndex_array nodeDOF;
+    real64_array nodeRHS;
+    integer const component = bc->GetComponent();
+
+    if( functionName.empty() )
+    {
+      integer counter=0;
+      for( auto kf : faceSet )
+      {
+        localIndex const numNodes = facesToNodes[kf].size();
+        nodeDOF.resize( numNodes );
+        nodeRHS.resize( numNodes );
+        for( localIndex a=0 ; a<numNodes ; ++a )
+        {
+          nodeDOF[a] = 3*blockLocalDofNumber[facesToNodes[kf][a]]+component;
+          nodeRHS[a] = bc->GetScale() * faceArea[kf] / numNodes;
+        }
+        rhs->SumIntoGlobalValues( integer_conversion<int>(numNodes), nodeDOF.data(), nodeRHS.data() );
+      }
+    }
+    else
+    {
+      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+      GEOS_ASSERT( function!=nullptr, "SolidMechanicsLagrangianFEM::ApplyTractionBC() application function not found");
+
+        if( function->isFunctionOfTime()==2 )
+        {
+          real64 value = bc->GetScale() * function->Evaluate( &time );
+          for( auto kf : faceSet )
+          {
+            localIndex const numNodes = facesToNodes[kf].size();
+            nodeDOF.resize( numNodes );
+            nodeRHS.resize( numNodes );
+            for( localIndex a=0 ; a<numNodes ; ++a )
+            {
+              nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
+              nodeRHS[a] = value;
+            }
+            rhs->SumIntoGlobalValues( integer_conversion<int>(nodeDOF.size()), nodeDOF.data(), nodeRHS.data() );
+          }
+        }
+        else
+        {
+          real64_array result;
+          result.resize( faceSet.size() );
+          function->Evaluate( faceManager, time, faceSet, result );
+
+          integer counter=0;
+          for( auto kf : faceSet )
+          {
+            localIndex const numNodes = facesToNodes[kf].size();
+            nodeDOF.resize( numNodes );
+            nodeRHS.resize( numNodes );
+            for( localIndex a=0 ; a<numNodes ; ++a )
+            {
+              nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
+              nodeRHS[a] = result[a];
+            }
+            rhs->SumIntoGlobalValues( integer_conversion<int>(nodeDOF.size()), nodeDOF.data(), nodeRHS.data() );
+          }
+      }
+    }
+  });
+
 }
 
 void
@@ -1430,6 +1460,9 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
   FiniteElementSpaceManager const * feSpaceManager = numericalMethodManager->GetGroup<FiniteElementSpaceManager>(keys::finiteElementSpaces);
 
+  auto fluidPressure = elemManager->ConstructViewAccessor<real64_array>("fluidPressure");
+
+
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
                                                               BlockIDs::displacementBlock );
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
@@ -1490,13 +1523,16 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 
 
   // begin region loop
-  elemManager->forElementRegions([&](ElementRegion * elementRegion)
-    {
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elementRegion = elemManager->GetRegion(er);
       auto const & numMethodName = elementRegion->getData<string>(keys::numericalMethod);
       FiniteElementSpace const * feSpace = feSpaceManager->GetGroup<FiniteElementSpace>(numMethodName);
 
-      elementRegion->forCellBlocks([&](CellBlockSubRegion * cellBlock)
+      for( localIndex esr=0 ; esr<elementRegion->numSubRegions() ; ++esr )
       {
+        CellBlockSubRegion const * const cellBlock = elementRegion->GetSubRegion(esr);
+
         multidimensionalArray::ManagedArray<R1Tensor, 3> const & dNdX = cellBlock->getReference< multidimensionalArray::ManagedArray<R1Tensor, 3> >(keys::dNdX);
         array2d<real64> const & detJ            = cellBlock->getReference< array2d<real64> >(keys::detJ);
 
@@ -1598,16 +1634,19 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
 //            const localIndex paramIndex =
 // elemRegion.m_mat->NumParameterIndex0() > 1 ? element : 0 ;
 //
-//            constitutiveModel->GetGroup(keys::parameterData)->getgroup
-//            R2SymTensor const * const referenceStress = refStress==nullptr ?
-// nullptr : &((*refStress)[element]);
+              R2SymTensor referenceStress;
+              if( fluidPressure[er][esr].isValid() )
+              {
+                referenceStress.PlusIdentity( fluidPressure[er][esr][k] );
+              }
+
 
 
               real64 maxElemForce = CalculateElementResidualAndDerivative( *density,
                                                                            feSpace->m_finiteElement,
                                                                            dNdX[k],
                                                                            detJ[k],
-                                                                           nullptr,
+                                                                           &referenceStress,
                                                                            u_local,
                                                                            uhat_local,
                                                                            uhattilde_local,
@@ -1630,8 +1669,8 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
             }
           }
         }
-      });
-    });
+      }
+    }
 
 
   // Global assemble
@@ -1657,7 +1696,8 @@ ApplyBoundaryConditions( DomainPartition * const domain,
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  FaceManager * const faceManager = mesh->getFaceManager();
+  NodeManager * const nodeManager = mesh->getNodeManager();
 
   BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
   bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
@@ -1666,10 +1706,15 @@ ApplyBoundaryConditions( DomainPartition * const domain,
   bcManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit,
                                      nodeManager, keys::TotalDisplacement, time_n + dt, *blockSystem );
 
+  ApplyTractionBC( faceManager,
+                   nodeManager,
+                   time_n+dt,
+                   *blockSystem );
 
-  Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
-                                                              BlockIDs::displacementBlock );
-  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
+
+  Epetra_FECrsMatrix const * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
+                                                                    BlockIDs::displacementBlock );
+  Epetra_FEVector const * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
 
   if( verboseLevel() >= 2 )
   {

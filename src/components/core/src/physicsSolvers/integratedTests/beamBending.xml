@@ -104,7 +104,8 @@
     <Dirichlet name="xnegconstraint" component="0" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="0.0" setNames="xneg"/>
     <Dirichlet name="yconstraint"    component="1" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="0.0" setNames="xneg"/>
     <Dirichlet name="zconstraint"    component="2" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
-    <Dirichlet name="xposconstraint" component="1" fieldName="Force" dataType="Vector" object="Node" scale="1.0e6" setNames="xpos"/>
+    <!--Dirichlet name="xposconstraint" component="1" fieldName="Force" dataType="Vector" object="Node" scale="1.0e6" setNames="xpos"/-->
+    <Dirichlet name="xposconstraint" component="1" fieldName="Traction" dataType="Vector" object="Face" scale="1.0e5" setNames="xpos"/>
   </BoundaryConditions>
 
 
