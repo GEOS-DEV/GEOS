@@ -33,7 +33,7 @@
 #include <algorithm>
 #include "RAJA/RAJA.hpp"
 #include "RAJA/util/defines.hpp"
-#include "rajaInterface/GEOSX_RAJA_Interface.hpp"
+#include "rajaInterface/GEOS_RAJA_Policies.hpp"
 
 
 #ifdef USE_ATK

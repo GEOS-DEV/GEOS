@@ -4,7 +4,7 @@
 #
 set(geosx_headers
   ${geosx_headers}
-  rajaInterface/GEOSX_RAJA_Interface.hpp
+  rajaInterface/GEOS_RAJA_POLICIES.hpp
     PARENT_SCOPE )
 
 #
