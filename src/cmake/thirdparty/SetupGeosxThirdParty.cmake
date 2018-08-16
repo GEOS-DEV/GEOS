@@ -391,7 +391,7 @@ message( INFO ": setting up HYPRE" )
 
 set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre)
 
-find_path( HYPRE_INCLUDE_DIRS hypre/HYPRE.h
+find_path( HYPRE_INCLUDE_DIRS HYPRE.h
            PATHS  ${HYPRE_DIR}/include
            NO_DEFAULT_PATH
            NO_CMAKE_ENVIRONMENT_PATH
