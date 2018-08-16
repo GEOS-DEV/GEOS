@@ -1,0 +1,134 @@
+<?xml version="1.0" ?>
+<!--# # -->
+
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+
+  
+  <Solvers>
+    <SolidMechanics_LagrangianFEM name="lagsolve" 
+                                  courant="0.25"/>
+  </Solvers>
+
+  
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="C3D8" 
+                  xCoords="0, 2"
+                  yCoords="0, 1"
+                  zCoords="0, 1"
+                  nx="2"
+                  ny="1"
+                  nz="1"
+                  cellBlockNames="cb1"/>
+  </Mesh>
+
+
+  <Events>
+    <Application name="1"
+                 beginTime="0.0" 
+                 endTime="1.0e-4" 
+                 dt="1.0e-5"
+                 solvers="lagsolve" />
+  </Events>
+
+  <Events maxTime="1.0e-4">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1.0e-5"
+                   target="/Solvers/laplace" />
+
+    <!-- This event is applied every 1.0-4s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   timeFrequency="1.0e-4"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+  </Events>
+
+
+  <NumericalMethods>
+
+    <BasisFunctions>
+        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+    </BasisFunctions>
+    
+    <QuadratureRules>
+        <GaussQuadrature3 name="gaussian"   degree="2"  />    
+    </QuadratureRules>
+    
+    <FiniteElements>
+        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" />
+  </ElementRegions>
+
+  <Constitutive>
+      <LinearElasticIsotropic name="granite">
+        <ParameterData Density="2700"
+                       BulkModulus="5.5556e9"
+                       ShearModulus="4.16667e9"/>
+      </LinearElasticIsotropic>
+      <LinearElasticIsotropic name="shale">
+        <ParameterData Density="2700"
+                       BulkModulus="5.5556e9"
+                       ShearModulus="4.16667e9"/>
+      </LinearElasticIsotropic>
+      <LinearElasticIsotropic name="water">
+        <ParameterData Density="1000"
+                              BulkModulus="2.0e9"
+                              ShearModulus="0.0"/>
+      </LinearElasticIsotropic>
+  </Constitutive>
+
+
+  <InitialConditions>
+    
+  </InitialConditions>
+
+  <BoundaryConditions>
+    <Dirichlet name="source"  
+               initialCondition="1"  
+               elementRegionName="Region2" 
+               setNames="source"
+               fieldName="ConstitutiveManager/shale/StateData/MeanStress"
+               dataType="real64" 
+               scale="-1.0e6"
+               function="spaceFunction"/>
+
+    <!--Dirichlet name="v0"          component="0" fieldName="Velocity"          dataType="Vector" functionName="timeFunction" object="Node" scale="1.0" setNames="xneg"/-->
+    <Dirichlet name="xconstraint" component="0" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="xneg xpos"/>
+    <Dirichlet name="yconstraint" component="1" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="yneg ypos"/>
+    <Dirichlet name="zconstraint" component="2" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
+  </BoundaryConditions>
+
+
+  <Functions>
+    <TableFunction     name="timeFunction"         inputVarNames="time"  inputVarTypes="" coordinates="0.0 1.0e-6 2.0e-6 1.0e9" values="0.0 1.0 1.0 1.0" />
+    <SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" inputVarTypes=""  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
+    <!--CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
+  </Functions>
+
+  <Partition>
+    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
+  </Partition>
+
+ 
+  <Outputs>
+    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+  </Outputs>
+  
+
+  <Geometry>
+    <Box name="source" type="0" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
+  </Geometry>
+
+
+  <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/>
+
+</Problem>

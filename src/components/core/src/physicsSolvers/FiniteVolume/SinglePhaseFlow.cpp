@@ -673,17 +673,17 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
   constexpr localIndex numElems = 2;
-  stencilCollection.forAll([&] (auto stencil) -> void
+  stencilCollection.forAll([&] (StencilCollection<CellDescriptor, real64>::Accessor stencil) -> void
   {
     elementLocalDofIndexRow.resize(numElems);
-    stencil.forConnected([&] (auto const & cell, localIndex const i) -> void
+    stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
     {
       elementLocalDofIndexRow[i] = blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
     });
 
     localIndex const stencilSize = stencil.size();
     elementLocalDofIndexCol.resize(stencilSize);
-    stencil.forAll([&] (auto const & cell, real64 w, localIndex const i) -> void
+    stencil.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i) -> void
     {
       elementLocalDofIndexCol[i] = blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
     });
@@ -711,12 +711,12 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   });
 
   // add additional connectivity resulting from boundary stencils
-  fluxApprox->forBoundaryStencils([&] (auto const & boundaryStencilCollection) -> void
+  fluxApprox->forBoundaryStencils([&] (FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection) -> void
   {
-    boundaryStencilCollection.forAll([=] (auto stencil) mutable -> void
+    boundaryStencilCollection.forAll([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
     {
       elementLocalDofIndexRow.resize(1);
-      stencil.forConnected([&] (auto const & point, localIndex const i) -> void
+      stencil.forConnected([&] (PointDescriptor const & point, localIndex const i) -> void
       {
         if (point.tag == PointDescriptor::Tag::CELL)
         {
@@ -728,7 +728,7 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
       localIndex const stencilSize = stencil.size();
       elementLocalDofIndexCol.resize(stencilSize);
       integer counter = 0;
-      stencil.forAll([&] (auto const & point, real64 w, localIndex i) -> void
+      stencil.forAll([&] (PointDescriptor const & point, real64 w, localIndex i) -> void
       {
         if (point.tag == PointDescriptor::Tag::CELL)
         {
@@ -832,7 +832,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
   real64 dMobility_dP[numElems] = { 0.0, 0.0 };
   real64_array dDensMean_dP, dFlux_dP;
 
-  stencilCollection.forAll([=] (auto stencil) mutable -> void
+  stencilCollection.forAll([=] (StencilCollection<CellDescriptor, real64>::Accessor stencil) mutable -> void
   {
     localIndex const stencilSize = stencil.size();
 
@@ -879,7 +879,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
 
     // compute potential difference MPFA-style
     real64 potDif = 0.0;
-    stencil.forAll([&] (auto cell, auto w, localIndex i) -> void
+    stencil.forAll([&] (CellDescriptor cell, real64 w, localIndex i) -> void
     {
       localIndex const er  = cell.region;
       localIndex const esr = cell.subRegion;
@@ -1135,9 +1135,9 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
     if (!sets->hasView(setName) || !fluxApprox->hasBoundaryStencil(setName))
       return;
 
-    auto const & stencilCollection = fluxApprox->getBoundaryStencil(setName);
+    FluxApproximationBase::BoundaryStencil const & stencilCollection = fluxApprox->getBoundaryStencil(setName);
 
-    stencilCollection.forAll([=] (auto stencil) mutable -> void
+    stencilCollection.forAll([=] (StencilCollection<PointDescriptor, real64>::Accessor stencil) mutable -> void
     {
       localIndex const stencilSize = stencil.size();
 
@@ -1156,7 +1156,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       real64 densMean = 0.0;
       globalIndex eqnRowIndex = -1;
       localIndex cell_order;
-      stencil.forConnected([&] (auto const & point, localIndex i) -> void
+      stencil.forConnected([&] (PointDescriptor const & point, localIndex i) -> void
       {
         real64 density = 0, dDens_dP = 0;
         real64 viscosity = 0, dVisc_dP = 0;
@@ -1209,7 +1209,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       // compute potential difference MPFA-style
       real64 potDif = 0.0;
       dofColIndices = -1;
-      stencil.forAll([&] (auto point, auto w, localIndex i) -> void
+      stencil.forAll([&] (PointDescriptor point, real64 w, localIndex i) -> void
       {
         real64 pressure = 0.0, gravD = 0.0;
         switch (point.tag)
