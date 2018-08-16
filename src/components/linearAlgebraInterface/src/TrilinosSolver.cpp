@@ -30,7 +30,7 @@ namespace geosx
                               integer max_iter,
                               real64 newton_tol )
   {
-    problem(Mat,sol,rhs);
+    Epetra_LinearProblem problem(Mat.getPointer(),sol.getPointer(),rhs.getPointer());
     AztecOO solver(problem);
     solver.SetAztecOption(AZ_solver,AZ_gmres);
     solver.SetAztecOption(AZ_precond,AZ_dom_decomp);
@@ -49,9 +49,10 @@ namespace geosx
                               EpetraVector &sol,
                               EpetraVector &rhs )
   {
-    problem(Mat,sol,rhs);
+    Epetra_LinearProblem problem(Mat.getPointer(),sol.getPointer(),rhs.getPointer());
     Amesos_BaseSolver* solver;
     Amesos Factory;
+
     std::string solverName = "Klu";
 
     solver = Factory.Create(solverName,problem);
