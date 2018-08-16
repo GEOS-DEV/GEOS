@@ -700,7 +700,7 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 
           CellBlockSubRegion * const cellBlock =
               elemRegMananger->GetRegion( mesh.Name() )->GetSubRegion(0);
-          lArray2d & cellToVertex = cellBlock->nodeList();
+          auto & cellToVertex = cellBlock->nodeList();
           cellToVertex.resize( 0, mesh.NumVerticesInCell(0) );
           cellBlock->resize( mesh.NumCells() );
 
