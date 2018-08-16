@@ -44,7 +44,12 @@ namespace geosx
 template <typename IndexType, typename WeightType>
 class StencilCollection
 {
-private:
+public:
+
+  // provide aliases for template type parameters
+  using index_type = IndexType;
+  using weight_type = WeightType;
+
   /**
    * @struct Accessor
    *
@@ -53,12 +58,6 @@ private:
    * (e.g. array of structs vs struct of arrays vs CSR-like storage)
    */
   class Accessor;
-
-public:
-
-  // provide aliases for template type parameters
-  using index_type = IndexType;
-  using weight_type = WeightType;
 
   explicit StencilCollection();
 
