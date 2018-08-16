@@ -20,7 +20,7 @@ set( linearAlgebraInterface_sources
      src/TrilinosSolver.cpp
      src/TrilinosInterface.cpp)
 
-set( dependencyList cxx-utilities trilinos hypre mpi)
+set( dependencyList common trilinos hypre mpi)
 
 blt_add_library( NAME                  linearAlgebraInterface
                  SOURCES               ${linearAlgebraInterface_sources}
