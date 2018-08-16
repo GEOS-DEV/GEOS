@@ -33,9 +33,7 @@
 //#include "managers/TableManager.hpp"
 //#include "SimpleGeometricObjects.hpp"
 
-#ifdef USE_ATK
-#include "slic/slic.hpp"
-#endif
+#include "common/Logger.hpp"
 
 #include "MPI_Communications/PartitionBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
@@ -340,12 +338,12 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
   m_numElePerBox.resize(m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if (static_cast<long>(m_elementType.size()) != m_numElePerBox.size())
+  if (integer_conversion<long>(m_elementType.size()) != m_numElePerBox.size())
   {
     if (m_elementType.size() == 1)
     {
       m_elementType.resize(m_numElePerBox.size());
-      std::fill(m_elementType.begin(), m_elementType.end(), m_elementType[0]);
+      m_elementType = m_elementType[0];
     }
     else
     {
@@ -356,7 +354,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
   }
 
 
-  for (localIndex i = 0 ; i < static_cast<localIndex>( m_elementType.size() ) ; ++i)
+  for (localIndex i = 0 ; i < integer_conversion<localIndex>( m_elementType.size() ) ; ++i)
   {
     if (m_elementType[i] == "C3D8")
     {
@@ -388,23 +386,21 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
 //    ExpandMultipleTokens(m_regionNames);
   {
-    int numBlocks = 1;
+    localIndex numBlocks = 1;
     for( int i=0 ; i<m_dim ; ++i )
     {
       numBlocks *= m_nElems[i].size();
     }
-    if( numBlocks != static_cast<int>(m_regionNames.size()) )
+    if( numBlocks != m_regionNames.size() )
     {
       if (m_regionNames.size() == 1)
       {
         m_regionNames.resize(numBlocks);
-        std::fill(m_regionNames.begin(), m_regionNames.end(), m_regionNames[0]);
+        m_regionNames = m_regionNames[0];
       }
       else
       {
-#ifdef USE_ATK
-        SLIC_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
-#endif
+        GEOS_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
       }
     }
   }
