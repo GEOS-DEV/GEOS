@@ -68,25 +68,29 @@ typedef RAJA::seq_reduce reducePolicy;
 
 using localIndex = RAJA::Index_type;
 
-//RAJA wrapper of loops over ranges
+//
+template<typename POLICY=atomicPolicy, typename T>
+RAJA_INLINE void atomicAdd(T *acc, T value){  
+  RAJA::atomic::atomicAdd<POLICY>(acc, value);
+}
+
+//RAJA wrapper for loops over ranges
 template<class POLICY=elemPolicy, typename LAMBDA=void>
-void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body){
+RAJA_INLINE void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body){
 
   RAJA::forall<POLICY>(RAJA::RangeSegment(begin, end), body);  
 }
 
 //RAJA wrapper for loops over sets
-//A RAJA list segment won't own the data
 template<typename T, class POLICY=elemPolicy, typename LAMBDA=void>
-void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body){
+RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body){
 
   RAJA::forall<POLICY>(RAJA::ListSegment(indexList, len, RAJA::Unowned), body);
 }
 
-
 //RAJA wrapper for list segments
 template<class POLICY=elemPolicy, typename LAMBDA=void>
-void forall_in_set(RAJA::TypedListSegment<localIndex> iList, LAMBDA && body){
+RAJA_INLINE void forall_in_set(RAJA::TypedListSegment<localIndex> iList, LAMBDA && body){
   RAJA::forall<POLICY>(iList, body);
 }
 
