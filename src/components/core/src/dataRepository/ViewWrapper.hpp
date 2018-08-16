@@ -205,9 +205,7 @@ public:
   {
     if( base.get_typeid() != typeid(T) )
     {
-#ifdef USE_ATK
       GEOS_ERROR("invalid cast attempt");
-#endif
     }
     return static_cast< ViewWrapper<T>& >(base);
   }
@@ -216,9 +214,7 @@ public:
   {
     if( base.get_typeid() != typeid(T) )
     {
-#ifdef USE_ATK
       GEOS_ERROR("invalid cast attempt");
-#endif
     }
     return static_cast< ViewWrapper<T> const & >(base);
   }

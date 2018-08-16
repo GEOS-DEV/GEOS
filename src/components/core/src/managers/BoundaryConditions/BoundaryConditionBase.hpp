@@ -22,6 +22,7 @@
 #define BOUNDARYCONDITIONBASE_H
 
 #include "common/DataTypes.hpp"
+#include "codingUtilities/GeosxTraits.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 //#include "managers/TableManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
@@ -182,6 +183,54 @@ public:
     return m_initialCondition;
   }
 
+  template< typename T >
+  typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array1d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value ) const
+  {
+    field[index] = static_cast<T>(value);
+  }
+
+  template< typename T >
+  typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array1d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value ) const
+  {
+    field[index].Data()[component] = value;
+  }
+
+
+  template< typename T >
+  typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array2d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value ) const
+  {
+    for( localIndex a=0 ; a<field.size(1) ; ++a )
+    {
+      field[index][a] = static_cast<T>(value);
+    }
+  }
+
+  template< typename T >
+  typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array2d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value ) const
+  {
+    for( localIndex a=0 ; a<field.size(1) ; ++a )
+    {
+      field[index][a] = value;
+    }
+  }
+
+
 private:
 
   string_array m_setNames; // sets the boundary condition is applied to
@@ -212,6 +261,8 @@ private:
 };
 
 
+
+
 template< typename OPERATION >
 void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
                                                                 real64 const time,
@@ -229,15 +280,13 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto type, auto baseType ) -> void
     {
       using fieldType = decltype(type);
-      dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
-      dataRepository::view_rtype<fieldType> field = view.data();
+      dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast(*vw);
+      fieldType & field = view.reference();
       if( functionName.empty() )
       {
         for( auto a : set )
         {
-          OPERATION::f( field[a], component, (m_scale) );
-//        OPERATION::f( field[a], component,
-// static_cast<decltype(baseType)>(m_scale) );
+          ApplyBcValue( field, a, component, m_scale );
         }
       }
       else
@@ -250,7 +299,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> 
             real64 value = m_scale * function->Evaluate( &time );
             for( auto a : set )
             {
-              OPERATION::f( field[a], component, (value) );
+              ApplyBcValue( field, a, component, value );
             }
           }
           else
@@ -260,7 +309,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> 
             integer count=0;
             for( auto a : set )
             {
-              OPERATION::f( field[a], component, (result[count]) );
+              ApplyBcValue( field, a, component, result[count] );
               ++count;
             }
           }

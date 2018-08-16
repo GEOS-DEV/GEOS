@@ -92,9 +92,17 @@ void BoundaryConditionManager::ApplyBoundaryCondition( dataRepository::ManagedGr
 void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) const
 {
 
-//  forSubGroups<BoundaryConditionBase>( [&] ( BoundaryConditionBase const * bc
-// )-> void
-//  {
+#if 1
+  ApplyBoundaryCondition2( 0.0, domain, "any",
+                          [&]( BoundaryConditionBase const * const bc,
+                               set<localIndex> const & targetSet,
+                               ManagedGroup * const targetGroup,
+                               string const fieldName )
+  {
+    bc->ApplyBounaryConditionDefaultMethod<rtTypes::equateValue>( targetSet, 0.0, targetGroup, fieldName );
+  });
+#else
+
   for( auto & subGroup : this->GetSubGroups() )
   {
     BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
@@ -287,6 +295,7 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
 
     }
   }
+#endif
 }
 
 } /* namespace geosx */
