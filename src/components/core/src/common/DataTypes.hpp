@@ -46,9 +46,9 @@
 
 #include "common/SortedArray.hpp"
 
-#include "../../cxx-utilities/src/src/Macros.hpp"
+#include "Macros.hpp"
 
-#include "../../cxx-utilities/src/src/ManagedArray.hpp"
+#include "ManagedArray.hpp"
 
 //#include "legacy/ArrayT/ArrayT.h"
 #include "math/TensorT/TensorT.h"
