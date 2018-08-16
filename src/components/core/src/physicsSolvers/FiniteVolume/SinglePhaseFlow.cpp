@@ -1125,7 +1125,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   bcManager->ApplyBoundaryCondition(time + dt,
                                     faceManager,
                                     viewKeyStruct::fluidPressureString,
-                                    [&] (BoundaryConditionBase * bc,
+                                    [&] (BoundaryConditionBase const * bc,
                                         set<localIndex> const & lset) -> void
   {
     for (auto kf : lset)

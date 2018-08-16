@@ -103,10 +103,10 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
-  m_bulkModulus( parent->size(), numConstitutivePointsPerParentIndex );
-  m_shearModulus( parent->size(), numConstitutivePointsPerParentIndex );
-  m_meanStress( parent->size(), numConstitutivePointsPerParentIndex );
-  m_deviatorStress( parent->size(), numConstitutivePointsPerParentIndex );
+  m_bulkModulus.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_shearModulus.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_meanStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_deviatorStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
 
   m_bulkModulus = this->m_bulkModulus0;
   m_shearModulus = this->m_shearModulus0;
@@ -134,8 +134,8 @@ void LinearElasticIsotropic::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys().bulkModulus.Key(),
-                              viewKeys().bulkModulus.Key(),
+  docNode->AllocateChildNode( viewKeyStruct::bulkModulus0String,
+                              viewKeyStruct::bulkModulus0String,
                               -1,
                               "real64",
                               "real64",
@@ -147,8 +147,8 @@ void LinearElasticIsotropic::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys().shearModulus.Key(),
-                              viewKeys().shearModulus.Key(),
+  docNode->AllocateChildNode( viewKeyStruct::shearModulus0String,
+                              viewKeyStruct::shearModulus0String,
                               -1,
                               "real64",
                               "real64",
@@ -187,39 +187,15 @@ void LinearElasticIsotropic::FillDocumentationNode()
                               0 );
 
 
-  docNode->AllocateChildNode( viewKeys().deviatorStress.Key(),
-                              viewKeys().deviatorStress.Key(),
-                              -1,
-                              "r2Sym_array",
-                              "r2Sym_array",
-                              "Stress",
-                              "Stress",
-                              "0",
-                              "",
-                              1,
-                              0,
-                              0 );
 
-  docNode->AllocateChildNode( viewKeys().meanStress.Key(),
-                              viewKeys().meanStress.Key(),
-                              -1,
-                              "real64_array",
-                              "real64_array",
-                              "Stress",
-                              "Stress",
-                              "0",
-                              "",
-                              1,
-                              0,
-                              0 );
 }
 
 void LinearElasticIsotropic::ReadXML_PostProcess()
 {
   real64 & nu = *( getData<real64>( viewKeys().poissonRatio ) );
   real64 & E  = *( getData<real64>( viewKeys().youngsModulus ) );
-  real64 & K  = *( getData<real64>( viewKeys().bulkModulus ) );
-  real64 & G  = *( getData<real64>( viewKeys().shearModulus ) );
+  real64 & K  = m_bulkModulus0;
+  real64 & G  = m_shearModulus0;
 
   int numConstantsSpecified = 0;
   if( nu >= 0.0 )
