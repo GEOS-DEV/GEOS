@@ -44,7 +44,7 @@ typedef RAJA::omp_parallel_for_exec quadraturePolicy;
 typedef RAJA::atomic::omp_atomic atomicPolicy;
 
 typedef RAJA::loop_exec stencilPolicy;
-typedef RAJA::loop_reduce reducePolicy;
+typedef RAJA::omp_reduce_ordered reducePolicy;
 
 #else
 typedef RAJA::loop_exec elemPolicy;
@@ -57,7 +57,7 @@ typedef RAJA::seq_exec quadraturePolicy;
 typedef RAJA::atomic::seq_atomic atomicPolicy;
 
 typedef RAJA::loop_exec stencilPolicy;
-typedef RAJA::omp_reduce_ordered reducePolicy;
+typedef RAJA::seq_reduce reducePolicy;
 #endif
 
 #if defined(RAJA_ENABLE_CUDA)
