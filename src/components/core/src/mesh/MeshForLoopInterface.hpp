@@ -19,7 +19,7 @@
 #ifndef __GEOS_RAJA_WRAPPER__HPP
 #define __GEOS_RAJA_WRAPPER__HPP
 
-#include "rajaInterface/GEOSX_RAJA_Interface.hpp"
+#include "../rajaInterface/GEOS_RAJA_Policies.hpp"
 
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -33,6 +33,7 @@
 
 namespace geosx{
 
+/*
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void forall_in_range( localIndex const begin, const localIndex end, LAMBDA && body)
 {
@@ -52,6 +53,8 @@ void forall_in_set(localIndex const * const indexList, const localIndex len, LAM
     body(index);
   } );
 }
+
+*/
 
 //================
 //Hevy Computation
