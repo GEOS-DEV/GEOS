@@ -51,6 +51,24 @@ void EpetraVector::update( real64 const alpha,
   vector.get()->Update( alpha, *vec.getPointer(), beta );
 }
 
+// 1-norm of the vector.
+void EpetraVector::norm1(real64 &dst) const
+{
+  vector.get()->Norm1(&dst);
+}
+
+// 2-norm of the vector.
+void EpetraVector::norm2(real64 &dst) const
+{
+  vector.get()->Norm2(&dst);
+}
+
+// Inf-norm of the vector.
+void EpetraVector::normInf(real64 &dst) const
+{
+  vector.get()->NormInf(&dst);
+}
+
 // Return the global size of the vector (total number of elements).
 globalIndex EpetraVector::globalSize() const
 {
