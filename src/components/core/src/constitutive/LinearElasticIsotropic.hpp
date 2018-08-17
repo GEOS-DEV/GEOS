@@ -82,8 +82,10 @@ public:
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto bulkModulus0String  = "BulkModulus0";
-    static constexpr auto shearModulus0String = "ShearModulus0";
     static constexpr auto bulkModulusString  = "BulkModulus";
+    static constexpr auto density0String  = "density0";
+    static constexpr auto densityString  = "density";
+    static constexpr auto shearModulus0String = "ShearModulus0";
     static constexpr auto shearModulusString = "ShearModulus";
 
     static constexpr auto deviatorStressString = "DeviatorStress";
@@ -137,6 +139,8 @@ public:
 private:
   real64 m_bulkModulus0;
   real64 m_shearModulus0;
+  real64 m_density0;
+  array2d<real64> m_density;
   array2d<real64> m_bulkModulus;
   array2d<real64> m_shearModulus;
   array2d<real64> m_meanStress;

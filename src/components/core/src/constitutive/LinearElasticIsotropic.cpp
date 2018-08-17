@@ -66,8 +66,11 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
 {
   this->RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_bulkModulus0, 0 );
   this->RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::density0String, &m_density0, 0 );
+  this->RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 );
   this->RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_shearModulus0, 0 );
   this->RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 );
+
 
   this->RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 );
   this->RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 );
@@ -86,9 +89,12 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation = std::make_unique<LinearElasticIsotropic>( name, parent );
 
   newConstitutiveRelation->m_bulkModulus0 = m_bulkModulus0;
-  newConstitutiveRelation->m_shearModulus0 = m_shearModulus0;
   newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
+  newConstitutiveRelation->m_density0 = m_density0;
+  newConstitutiveRelation->m_density = m_density;
+  newConstitutiveRelation->m_shearModulus0 = m_shearModulus0;
   newConstitutiveRelation->m_shearModulus = m_shearModulus;
+
   newConstitutiveRelation->m_meanStress = m_meanStress;
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
 
@@ -104,12 +110,15 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
 
   this->resize( parent->size() );
   m_bulkModulus.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_shearModulus.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_meanStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_deviatorStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_meanStress.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_shearModulus.resize( parent->size(), numConstitutivePointsPerParentIndex );
 
-  m_bulkModulus = this->m_bulkModulus0;
-  m_shearModulus = this->m_shearModulus0;
+  m_bulkModulus = m_bulkModulus0;
+  m_density = m_density0;
+  m_shearModulus = m_shearModulus0;
+
 }
 
 void LinearElasticIsotropic::FillDocumentationNode()
@@ -173,14 +182,14 @@ void LinearElasticIsotropic::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeys().density.Key(),
-                              viewKeys().density.Key(),
+  docNode->AllocateChildNode( viewKeyStruct::density0String,
+                              viewKeyStruct::density0String,
                               -1,
                               "real64",
                               "real64",
                               "density",
                               "density",
-                              "-1",
+                              "Required",
                               "",
                               1,
                               1,
@@ -225,9 +234,7 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
     else if( !( K >= 0.0 && G >= 0.0 ) )
     {
       string const message = "A specific pair of elastic constants is required. Either (K,G) or (E,nu)";
-#ifdef USE_ATK
-      SLIC_ERROR( message );
-#endif
+      GEOS_ERROR( message );
     }
     else
     {
@@ -238,9 +245,7 @@ void LinearElasticIsotropic::ReadXML_PostProcess()
   else
   {
     string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2 constants!";
-#ifdef USE_ATK
-    SLIC_ERROR( message );
-#endif
+    GEOS_ERROR( message );
   }
 }
 
