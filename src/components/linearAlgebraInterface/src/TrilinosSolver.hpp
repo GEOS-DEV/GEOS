@@ -10,7 +10,6 @@
 
 #include "EpetraSparseMatrix.hpp"
 #include "EpetraVector.hpp"
-#include <Epetra_LinearProblem.h>
 #include <AztecOO.h>
 #include <Amesos.h>
 

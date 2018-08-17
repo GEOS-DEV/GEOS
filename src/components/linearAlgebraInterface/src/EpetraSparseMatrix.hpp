@@ -69,29 +69,29 @@ public:
                globalIndex const m_nColGlobal,
                integer const nMaxEntriesPerRow = 0 );
 
-  /**
-   * @brief Create a square matrix from number of unknowns.
-   *
-   * \param comm MPI communicator.
-   * \param m_nRowGlobal Global number of unknowns.
-   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
-   */
-  void create( MPI_Comm const comm,
-               integer const m_nRowGlobal,
-               std::vector<integer> const nMaxEntriesPerRow );
-
-  /**
-   * @brief Create a square matrix from number of unknowns.
-   *
-   * \param comm MPI communicator.
-   * \param m_nRowGlobal Global number of rows.
-   * \param m_nColGlobal Global number of columns.
-   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
-   */
-  void create( MPI_Comm const comm,
-               globalIndex const m_nRowGlobal,
-               globalIndex const m_nColGlobal,
-               std::vector<integer> const nMaxEntriesPerRow );
+//  /**
+//   * @brief Create a square matrix from number of unknowns.
+//   *
+//   * \param comm MPI communicator.
+//   * \param m_nRowGlobal Global number of unknowns.
+//   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
+//   */
+//  void create( MPI_Comm const comm,
+//               integer const m_nRowGlobal,
+//               std::vector<integer> const nMaxEntriesPerRow );
+//
+//  /**
+//   * @brief Create a square matrix from number of unknowns.
+//   *
+//   * \param comm MPI communicator.
+//   * \param m_nRowGlobal Global number of rows.
+//   * \param m_nColGlobal Global number of columns.
+//   * \param nMaxEntriesPerRow Vector of maximum number of entries per row.
+//   */
+//  void create( MPI_Comm const comm,
+//               globalIndex const m_nRowGlobal,
+//               globalIndex const m_nColGlobal,
+//               std::vector<integer> const nMaxEntriesPerRow );
 
   /**
    * @brief Create a square matrix from Epetra_Map.
@@ -249,6 +249,16 @@ public:
                  EpetraVector &res );
 
   /**
+   * @brief Compute gaxpy b = alpha*A*x + beta*b.
+   */
+  void gaxpy( real64 alpha,
+              EpetraVector const &x,
+              real64 beta,
+              EpetraVector const &b,
+              EpetraVector &res,
+              bool useTranspose=false);
+
+  /**
    * @brief Multiply all elements by scalingFactor.
    */
   void scale( real64 scalingFactor );
@@ -263,6 +273,13 @@ public:
    */
   void rightScale( EpetraVector const &vec );
 
+  /**
+   * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vecRight
+   * and pre-multiplies (left) with diagonal matrix consisting of the values in vec.
+   */
+  void leftRightScale( EpetraVector const &vecLeft,
+                       EpetraVector const &vecRight);
+
   //@}
 
   //! @name Accessors Methods
@@ -275,6 +292,15 @@ public:
                int &NumEntries,
                std::vector<real64> &vecValues,
                std::vector<int> &vecIndices );
+
+  /**
+   * @brief Returns the row <tt>localRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
+   * , the values are sent to <tt>vecValues</tt> and the column indices in <tt>vecIndices</tt>.
+   */
+  void getLocalRow( localIndex myRow,
+                    int &NumEntries,
+                    std::vector<real64> &vecValues,
+                    std::vector<localIndex> &vecIndices );
 
   /**
    * @brief Returns a pointer to the underlying matrix.
@@ -324,17 +350,17 @@ public:
   /**
    * @brief Returns the infinity norm of the matrix.
    */
-  real64 NormInf() const;
+  real64 normInf() const;
 
   /**
    * @brief Returns the one norm of the matrix.
    */
-  real64 NormOne() const;
+  real64 norm1() const;
 
   /**
    * @brief Returns the Frobenius norm of the matrix.
    */
-  real64 NormFrobenius() const;
+  real64 normFrobenius() const;
 
   /**
    * @brief Returns true is the matrix has been assembled, false if not.

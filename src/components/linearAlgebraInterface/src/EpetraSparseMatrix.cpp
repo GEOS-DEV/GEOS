@@ -39,25 +39,25 @@ void EpetraSparseMatrix::create( MPI_Comm const comm,
   matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, rowMap, colMap, nMaxEntriesPerRow, false ));
 }
 
-// Create a matrix from number of elements
-void EpetraSparseMatrix::create( MPI_Comm const comm,
-                                 integer const in_m_nRowGlobal,
-                                 std::vector<integer> const nMaxEntriesPerRow )
-{
-  Epetra_Map map = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
-  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, map, (int *)const_cast<int *>(&(nMaxEntriesPerRow[0])), false ));
-}
-
-// Create a matrix from number of elements
-void EpetraSparseMatrix::create( MPI_Comm const comm,
-                                 globalIndex const in_m_nRowGlobal,
-                                 globalIndex const in_m_nColGlobal,
-                                 std::vector<integer> const nMaxEntriesPerRow )
-{
-  Epetra_Map rowMap = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
-  Epetra_Map colMap = Epetra_Map( in_m_nColGlobal, 0, Epetra_MpiComm( comm ));
-  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, rowMap, colMap, (int *)const_cast<int *>(&(nMaxEntriesPerRow[0])), false ));
-}
+//// Create a matrix from number of elements
+//void EpetraSparseMatrix::create( MPI_Comm const comm,
+//                                 integer const in_m_nRowGlobal,
+//                                 std::vector<integer> const nMaxEntriesPerRow )
+//{
+//  Epetra_Map map = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
+//  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, map, (int *)const_cast<int *>(&(nMaxEntriesPerRow[0])), false ));
+//}
+//
+//// Create a matrix from number of elements
+//void EpetraSparseMatrix::create( MPI_Comm const comm,
+//                                 globalIndex const in_m_nRowGlobal,
+//                                 globalIndex const in_m_nColGlobal,
+//                                 std::vector<integer> const nMaxEntriesPerRow )
+//{
+//  Epetra_Map rowMap = Epetra_Map( in_m_nRowGlobal, 0, Epetra_MpiComm( comm ));
+//  Epetra_Map colMap = Epetra_Map( in_m_nColGlobal, 0, Epetra_MpiComm( comm ));
+//  matrix = std::unique_ptr<Epetra_CrsMatrix>( new Epetra_CrsMatrix( Copy, rowMap, colMap, (int *)const_cast<int *>(&(nMaxEntriesPerRow[0])), false ));
+//}
 
 // Create a matrix from Epetra_Map
 void EpetraSparseMatrix::create( Epetra_Map const &input_map,
@@ -275,6 +275,18 @@ void EpetraSparseMatrix::residual( EpetraVector const &x,
   res.update( -1.0, b, 1.0 );
 }
 
+// Compute gaxpy r = alpha*A*x + beta*b.
+void EpetraSparseMatrix::gaxpy( real64 alpha,
+                                EpetraVector const &x,
+                                real64 beta,
+                                EpetraVector const &b,
+                                EpetraVector &res,
+                                bool useTranspose)
+{
+  matrix->Multiply( useTranspose, *x.getPointer(), *res.getPointer());
+  res.update(alpha,b,beta);
+}
+
 // Multiply all elements by scalingFactor.
 void EpetraSparseMatrix::scale( real64 scalingFactor )
 {
@@ -293,6 +305,15 @@ void EpetraSparseMatrix::rightScale( EpetraVector const &vec )
   matrix->RightScale( *vec.getPointer());
 }
 
+// Pre-multiplies (left) with diagonal matrix consisting of the values in vecLeft and
+// Post-multiplies (right) with diagonal matrix consisting of the values in vecRight.
+void EpetraSparseMatrix::leftRightScale( EpetraVector const &vecLeft,
+                                         EpetraVector const &vecRight )
+{
+  matrix->RightScale(*vecRight.getPointer());
+  matrix->LeftScale(*vecLeft.getPointer());
+}
+
 void EpetraSparseMatrix::getRow( int GlobalRow,
                                  int &NumEntries,
                                  std::vector<real64> &vecValues,
@@ -306,6 +327,18 @@ void EpetraSparseMatrix::getRow( int GlobalRow,
     vecIndices.assign( Indices, Indices+NumEntries );
     vecValues.assign( Values, Values+NumEntries );
   }
+}
+
+void EpetraSparseMatrix::getLocalRow( localIndex GlobalRow,
+                                      integer &NumEntries,
+                                      std::vector<real64> &vecValues,
+                                      std::vector<localIndex>    &vecIndices )
+{
+  real64* Values;
+  localIndex* Indices;
+  matrix->ExtractMyRowView( GlobalRow, NumEntries, Values, Indices );
+  vecIndices.assign( Indices, Indices+NumEntries );
+  vecValues.assign( Values, Values+NumEntries );
 }
 
 // -----------------------------------------------------------------------------------
@@ -373,19 +406,19 @@ void EpetraSparseMatrix::print() const
 }
 
 // Returns the infinity norm of the matrix.
-real64 EpetraSparseMatrix::NormInf() const
+real64 EpetraSparseMatrix::normInf() const
 {
   return matrix->NormInf();
 }
 
 // Returns the one norm of the matrix.
-real64 EpetraSparseMatrix::NormOne() const
+real64 EpetraSparseMatrix::norm1() const
 {
   return matrix->NormOne();
 }
 
 // Returns the Frobenius norm of the matrix.
-real64 EpetraSparseMatrix::NormFrobenius() const
+real64 EpetraSparseMatrix::normFrobenius() const
 {
   return matrix->NormFrobenius();
 }

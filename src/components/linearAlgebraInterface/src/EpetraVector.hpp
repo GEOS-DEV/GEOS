@@ -86,6 +86,21 @@ public:
                EpetraVector const &vec,
                real64 const beta );
 
+  /**
+   * @brief 1-norm of the vector.
+   */
+  void norm1( real64 &result ) const;
+
+  /**
+   * @brief 2-norm of the vector.
+   */
+  void norm2( real64 &result ) const;
+
+  /**
+   * @brief Infinity-norm of the vector.
+   */
+  void normInf( real64 &result ) const;
+
   //@}
 
   //! @name Accessor Methods
