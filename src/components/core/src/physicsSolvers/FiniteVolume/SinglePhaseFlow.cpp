@@ -1158,8 +1158,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       localIndex cell_order;
       stencil.forConnected([&] (PointDescriptor const & point, localIndex i) -> void
       {
-        real64 density, dDens_dP;
-        real64 viscosity, dVisc_dP;
+        real64 density = 0, dDens_dP = 0;
+        real64 viscosity = 0, dVisc_dP = 0;
         switch (point.tag)
         {
           case PointDescriptor::Tag::CELL:
