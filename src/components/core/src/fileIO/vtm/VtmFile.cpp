@@ -624,7 +624,7 @@ void DumbMesh::AddCell( std::vector<globalIndex> const & connectivity ) {
     if( connectivity.size() == 4 ) {
         m_tetIndexToCellIndex.push_back(m_cellsPtr.size()-2);
     } else if (connectivity.size() == 8) {
-        m_prismIndexToCellIndex.emplace_back(m_cellsPtr.size()-2);
+        m_hexIndexToCellIndex.emplace_back(m_cellsPtr.size()-2);
     } else if (connectivity.size() == 6) {
         m_prismIndexToCellIndex.emplace_back(m_cellsPtr.size()-2);
     } else if (connectivity.size() == 5 ) {
@@ -667,6 +667,8 @@ void DumbMesh::Finish() {
     assert(static_cast<globalIndex>(m_cellsPtr.size()) == m_numCells +1);
     assert(static_cast<globalIndex>(m_polygonsPtr.size()) == m_numPolygons +1);
     assert(static_cast<globalIndex>(m_tetIndexToCellIndex.size()) == m_numTetra);
+    std::cout << "m_numHex " << m_numHex << std::endl;
+    std::cout << "m_hexIndexToCellIndex.size()) " << m_hexIndexToCellIndex.size() <<std::endl;
     assert(static_cast<globalIndex>(m_hexIndexToCellIndex.size()) == m_numHex);
     assert(static_cast<globalIndex>(m_prismIndexToCellIndex.size()) == m_numPrism);
     assert(static_cast<globalIndex>(m_pyrIndexToCellIndex.size()) == m_numPyr);
@@ -686,9 +688,11 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
           NodeManager * const nodeManager = meshLevel->getNodeManager();
           ElementRegionManager * const elemRegMananger = meshLevel->getElemManager();
 
-          arrayView1d<R1Tensor> X = nodeManager->referencePosition();
 
           nodeManager->resize(mesh.NumVertices());
+          arrayView1d<R1Tensor> X = nodeManager->referencePosition();
+          std::cout << "node Manager pointer : " << nodeManager << std::endl;
+          std::cout << "X pointer : " << X[0].Data() << std::endl;
 
           for( globalIndex a=0 ; a< mesh.NumVertices() ; ++a )
           {
@@ -700,6 +704,7 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 
           CellBlockSubRegion * const cellBlock =
               elemRegMananger->GetRegion( mesh.Name() )->GetSubRegion(0);
+
           auto & cellToVertex = cellBlock->nodeList();
           cellToVertex.resize( 0, mesh.NumVerticesInCell(0) );
           cellBlock->resize( mesh.NumCells() );
