@@ -337,19 +337,15 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
   }
 }
 
-void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
+void SinglePhaseFlow::FinalInitialization( ManagedGroup * const rootGroup )
 {
-  DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
+  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
 
   // Precompute solver-specific constant data (e.g. gravity-depth)
   PrecomputeData(domain);
 
   // Allocate additional storage for derivatives
   AllocateAuxStorage(domain);
-
-  // Call function to fill geometry parameters for use forming system
-  PrecomputeData( domain );
-
 }
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
@@ -842,11 +838,11 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
       eqnRowIndices[i] = blockLocalDofNumber[er][esr][ei];
 
       // density
-      real64 const density   = dens[er][esr][ei];
+      real64 const density   = dens[er][esr][ei] + dDens[er][esr][ei];
       real64 const dDens_dP  = m_dDens_dPres[er][esr][ei];
 
       // viscosity
-      real64 const viscosity = visc[er][esr][ei];
+      real64 const viscosity = visc[er][esr][ei] + dVisc[er][esr][ei];
       real64 const dVisc_dP  = m_dVisc_dPres[er][esr][ei];
 
       // mobility
@@ -1153,10 +1149,10 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
             eqnRowIndex = blockLocalDofNumber[er][esr][ei];
 
-            density   = dens[er][esr][ei];
+            density   = dens[er][esr][ei] + dDens[er][esr][ei];
             dDens_dP  = m_dDens_dPres[er][esr][ei];
 
-            viscosity = visc[er][esr][ei];
+            viscosity = visc[er][esr][ei] + dVisc[er][esr][ei];
             dVisc_dP  = m_dVisc_dPres[er][esr][ei];
 
             cell_order = i; // mark position of the cell in connection for sign consistency later

@@ -83,9 +83,9 @@ public:
 
   virtual void FillDocumentationNode() override final;
 
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
+  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override final;
 
-  virtual void FinalInitialization( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void FinalInitialization( dataRepository::ManagedGroup * const rootGroup ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
@@ -137,18 +137,41 @@ public:
   {
     constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_CompositionalMultiphaseFlow";
 
+    /* primary variables */
+
     constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
-    constexpr static auto faceFluidPressureString = "faceFluidPressure";
 
-    constexpr static auto fluidDensityString = "fluidDensity";
-    constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
+    constexpr static auto componentMassDensityString = "componentMassDensity";
+    constexpr static auto deltaComponentMasslDensityString = "deltaComponentMassDensity";
 
-    constexpr static auto fluidViscosityString = "fluidViscosity";
-    constexpr static auto deltaFluidViscosityString = "deltaFluidViscosity";
+    constexpr static auto totalMassDensityString = "totalMassDensity";
+    constexpr static auto deltaTotalMassDensityString = "deltaTotalMassDensity";
+
+    /* dependent variables */
+
+    constexpr static auto componentMoleFractionString = "componentMoleFraction";
+
+    constexpr static auto phaseComponentMassFractionString = "phaseComponentMassFraction";
+    constexpr static auto deltaPhaseComponentMassFractionString = "deltaPhaseComponentMassFraction";
+
+    constexpr static auto phaseVolumeFractionString = "phaseVolumeFraction";
+    constexpr static auto deltaPhaseVolumeFractionString = "deltaPhaseVolumeFraction";
+
+    constexpr static auto phaseMassDensityString = "phaseMassDensityString";
+    constexpr static auto deltaPhaseMassDensityString = "deltaPhaseMassDensityString";
+
+    constexpr static auto phaseViscosityString = "phaseViscosity";
+    constexpr static auto deltaPhaseViscosityString = "deltaPhaseViscosity";
+
+    constexpr static auto phaseRelativePermeabilityString = "phaseRelativePermeability";
+    constexpr static auto deltaPhaseRelativePermeabilityString = "deltaPhaseRelativePermeability";
 
     constexpr static auto porosityString = "porosity";
     constexpr static auto deltaPorosityString = "deltaPorosity";
+
+    /* other data */
+
     constexpr static auto referencePorosityString = "referencePorosity";
 
     constexpr static auto gravityFlagString = "gravityFlag";
