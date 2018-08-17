@@ -1220,7 +1220,7 @@ void OnePoint(T const dydx, U & y,
   forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
     y[a][0] += dx*dydx[a][0];
     y[a][1] += dx*dydx[a][1];
-    y[a][2] += dx*dydx[a][1];
+    y[a][2] += dx*dydx[a][2];
   });
   
 }

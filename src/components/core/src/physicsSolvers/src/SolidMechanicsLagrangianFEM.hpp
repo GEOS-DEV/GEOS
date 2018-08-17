@@ -162,15 +162,6 @@ public:
                                                Epetra_SerialDenseVector& R,
                                                real64 c[6][6] );
 
-  void ApplyDisplacementBC_explicit( dataRepository::ManagedGroup * object,
-                                     BoundaryConditionBase const * const bc,
-                                     set<localIndex> const & set,
-                                     real64 const time,
-                                     real64 const dt,
-                                     dataRepository::view_rtype<r1_array> & u,
-                                     dataRepository::view_rtype<r1_array> & uhat,
-                                     dataRepository::view_rtype<r1_array> & vel);
-
   void ApplyDisplacementBC_implicit( real64 const time,
                                      DomainPartition & domain,
                                      systemSolverInterface::EpetraBlockSystem & blockSystem  );

@@ -51,223 +51,113 @@ public:
 
   virtual void CreateChild( string const & childKey, string const & childName ) override;
 
+
+  void ApplyBoundaryConditionToField( real64 const time,
+                               dataRepository::ManagedGroup * domain,
+                               string const & fieldPath,
+                               string const & fieldName ) const
+  {
+    ApplyBoundaryConditionToField( time, domain, fieldPath, fieldName,
+                                            []( BoundaryConditionBase const * const,
+                                                set<localIndex> const &){} );
+  }
+
+  template< typename LAMBDA >
+  void ApplyBoundaryConditionToField( real64 const time,
+                                               dataRepository::ManagedGroup * domain,
+                                               string const & fieldPath,
+                                               string const & fieldName,
+                                               LAMBDA && lambda) const;
+
   void ApplyInitialConditions( dataRepository::ManagedGroup * domain ) const;
 
-  void ApplyBoundaryCondition( dataRepository::ManagedGroup * object,
-                               std::string const & fieldName,
-                               real64 const time );
 
-//  template< typename ... ARGS>
-//  void ApplyBoundaryCondition( dataRepository::ManagedGroup & object,
-//                               std::string const & fieldName,
-//                               real64 const time,
-//                               ARGS & ... args );
-
-  template< typename BCFunctionPtr, typename... ARGS>
-  void ApplyBoundaryCondition( BCFunctionPtr boundaryConditionFunctionPtr,
-                               dataRepository::ManagedGroup * object,
-                               std::string const & fieldName,
-                               real64 const time,
-                               ARGS & ... args );
-
-  template< typename Solver, typename BCFunctionPtr, typename... ARGS>
-  void ApplyBoundaryCondition( Solver* solverPtr,
-                               BCFunctionPtr boundaryConditionFunctionPtr,
-                               dataRepository::ManagedGroup * object,
-                               std::string const & fieldName,
-                               real64 const time,
-                               ARGS & ... args );
 
 
   template< typename LAMBDA >
   void ApplyBoundaryCondition( real64 const time,
-                               dataRepository::ManagedGroup * object,
-                               string const & fieldName,
-                               LAMBDA && lambda )
-  {
-    dataRepository::ManagedGroup const * sets = object->GetGroup(dataRepository::keys::sets);
-
-    // iterate over all boundary conditions.
-    forSubGroups<BoundaryConditionBase>([&](BoundaryConditionBase * bc) -> void
-    {
-      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
-      {
-        string_array setNames = bc->GetSetNames();
-        for( auto & setName : setNames )
-        {
-          dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = sets->getWrapper<set<localIndex>>(setName);
-          if( setWrapper != nullptr )
-          {
-            set<localIndex> const & set = setWrapper->reference();
-            lambda( bc, set );
-          }
-        }
-      }
-    });
-  }
-
-  template< typename LAMBDA >
-  void ApplyBoundaryCondition2( real64 const time,
                                dataRepository::ManagedGroup * domain,
+                               string const & fieldPath,
                                string const & fieldName,
                                LAMBDA && lambda ) const
   {
     for( auto & subGroup : this->GetSubGroups() )
     {
       BoundaryConditionBase const * bc = subGroup.second->group_cast<BoundaryConditionBase const *>();
-      string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/");
-      localIndex const targetPathLength = targetPath.size();
-      string const targetName = bc->GetFieldName();
+      int const isInitialCondition = bc->initialCondition();
 
-      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( targetName==fieldName || fieldName=="any") )
+      if( ( isInitialCondition && fieldPath=="") || ( bc->GetObjectPath() == fieldPath ) )
       {
+        string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/");
+        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
+        localIndex const targetPathLength = targetPath.size();
+        string const targetName = bc->GetFieldName();
+        std::cout<<"targetName = "<<targetName<<std::endl;
 
-
-        MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
-                                      getMeshBody(0)->getMeshLevel(0);
-
-        dataRepository::ManagedGroup * targetGroup = meshLevel;
-
-        string processedPath;
-        for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
+        if( ( isInitialCondition && fieldName=="" ) ||
+            ( time >= bc->GetStartTime() && time < bc->GetEndTime() && targetName==fieldName ) )
         {
-          targetGroup = targetGroup->GetGroup(targetPath[pathLevel]);
-          processedPath += "/" + targetPath[pathLevel];
-          GEOS_ASSERT( targetGroup != nullptr,
-                     "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found")
-        }
 
-        dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup(dataRepository::keys::sets);
-        string_array setNames = bc->GetSetNames();
-        for( auto & setName : setNames )
-        {
-          dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = setGroup->getWrapper<set<localIndex>>(setName);
-          if( setWrapper != nullptr )
+          MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
+                                        getMeshBody(0)->getMeshLevel(0);
+
+          dataRepository::ManagedGroup * targetGroup = meshLevel;
+
+          string processedPath;
+          for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
-            set<localIndex> const & targetSet = setWrapper->reference();
-            lambda( bc, targetSet, targetGroup, targetName );
+            std::cout<<targetPath[pathLevel]<<std::endl;
+
+            targetGroup = targetGroup->GetGroup(targetPath[pathLevel]);
+            processedPath += "/" + targetPath[pathLevel];
+            std::cout<<"processedPath="<<processedPath<<std::endl;
+
+            GEOS_ASSERT( targetGroup != nullptr,
+                       "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found")
+          }
+
+          dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup(dataRepository::keys::sets);
+          string_array setNames = bc->GetSetNames();
+          for( auto & setName : setNames )
+          {
+            dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = setGroup->getWrapper<set<localIndex>>(setName);
+            if( setWrapper != nullptr )
+            {
+              set<localIndex> const & targetSet = setWrapper->reference();
+              lambda( bc, setName, targetSet, targetGroup, targetName );
+            }
           }
         }
       }
     }
   }
-
-
-  template< typename LAMBDA >
-  void ApplyBoundaryCondition( real64 const time,
-                               string const & fieldName,
-                               LAMBDA && lambda )
-  {
-    // iterate over all boundary conditions.
-    forSubGroups<BoundaryConditionBase>([&](BoundaryConditionBase * bc) -> void
-    {
-      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
-      {
-        string_array setNames = bc->GetSetNames();
-        for( auto & setName : setNames )
-        {
-          lambda( bc, setName );
-        }
-      }
-    });
-  }
 };
 
-
-
-//
-//template< typename ... ARGS>
-//void BoundaryConditionManager::ApplyBoundaryCondition(
-// dataRepository::ManagedGroup * object,
-//                                                       std::string const &
-// fieldName,
-//                                                       real64 const time,
-//                                                       ARGS & ... args )
-//{
-//  dataRepository::ManagedGroup const * sets =
-// object->GetGroup(dataRepository::keys::sets);
-//
-//  // iterate over all boundary conditions.
-//  forSubGroups<BoundaryConditionBase>([&](BoundaryConditionBase * bc) -> void
-//  {
-//    if( time >= bc->GetStartTime() && time < bc->GetEndTime() && (
-// bc->GetFieldName()==fieldName) )
-//    {
-//      string_array setNames = bc->GetSetNames();
-//      for( auto & setName : setNames )
-//      {
-//        dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper =
-// sets->getWrapperPtr<set<localIndex>>(setName);
-//        if( setWrapper != nullptr )
-//        {
-//          set<localIndex> const & set = setWrapper->reference();
-//          bc->ApplyBounaryConditionDefaultMethod(set,time,args...);
-//        }
-//      }
-//    }
-//  });
-//}
-//
-
-template< typename BCFunctionPtr, typename... ARGS>
-void BoundaryConditionManager::ApplyBoundaryCondition( BCFunctionPtr boundaryConditionFunctionPtr,
-                                                       dataRepository::ManagedGroup * object,
-                                                       std::string const & fieldName,
-                                                       real64 const time,
-                                                       ARGS & ... args )
+template< typename LAMBDA >
+void
+BoundaryConditionManager::
+ApplyBoundaryConditionToField( real64 const time,
+                                        dataRepository::ManagedGroup * domain,
+                                        string const & fieldPath,
+                                        string const & fieldName,
+                                        LAMBDA && lambda ) const
 {
-  dataRepository::ManagedGroup const * sets = object->GetGroup(dataRepository::keys::sets);
+  BoundaryConditionBase const * bcBase = nullptr;
+  set<localIndex> const * targetSetCopy = nullptr;
+  ApplyBoundaryCondition( time, domain, fieldPath, fieldName,
+                          [&]( BoundaryConditionBase const * const bc,
+                               string const &,
+                               set<localIndex> const & targetSet,
+                               ManagedGroup * const targetGroup,
+                               string const & targetField )
+  {
+    bc->ApplyBoundaryConditionToField<BcEqual>( targetSet, time, targetGroup, targetField );
+    bcBase = bc;
+    targetSetCopy = &targetSet;
+  });
 
-  // iterate over all boundary conditions.
-  forSubGroups<BoundaryConditionBase>([&](BoundaryConditionBase * bc) -> void
-    {
-      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
-      {
-        string_array setNames = bc->GetSetNames();
-        for( auto & setName : setNames )
-        {
-          dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = sets->getWrapper<set<localIndex>>(setName);
-          if( setWrapper != nullptr )
-          {
-            set<localIndex> const & set = setWrapper->reference();
-            (*boundaryConditionFunctionPtr)( bc, set, time, args... );
-          }
-        }
-      }
-    });
+  lambda( bcBase, *targetSetCopy );
 }
-
-
-
-template< typename Solver, typename BCFunctionPtr, typename... ARGS>
-void BoundaryConditionManager::ApplyBoundaryCondition( Solver* solverPtr,
-                                                       BCFunctionPtr boundaryConditionFunctionPtr,
-                                                       dataRepository::ManagedGroup * object,
-                                                       std::string const & fieldName,
-                                                       real64 const time,
-                                                       ARGS & ... args )
-{
-  dataRepository::ManagedGroup const * sets = object->GetGroup(dataRepository::keys::sets);
-
-  // iterate over all boundary conditions.
-  forSubGroups<BoundaryConditionBase>([&](BoundaryConditionBase const * bc) -> void
-    {
-      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
-      {
-        string_array setNames = bc->GetSetNames();
-        for( auto & setName : setNames )
-        {
-          dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = sets->getWrapper<set<localIndex>>(setName);
-          if( setWrapper != nullptr )
-          {
-            set<localIndex> const & set = setWrapper->reference();
-            (solverPtr->*boundaryConditionFunctionPtr)(object, bc, set, time, args...);
-          }
-        }
-      }
-    });
-}
-
 
 
 } /* namespace geosx */

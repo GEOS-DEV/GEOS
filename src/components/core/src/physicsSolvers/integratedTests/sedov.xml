@@ -34,8 +34,8 @@
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="5e-4"
-                   targetExactTimestep="1"
+                   timeFrequency="1e-6"
+                   targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
   </Events>
 
@@ -62,17 +62,17 @@
 
   <Constitutive>
       <LinearElasticIsotropic name="granite"
-                              Density="2700"
+                              density0="2700"
                               BulkModulus0="5.5556e9"
                               ShearModulus0="4.16667e9"/>
 
       <LinearElasticIsotropic name="shale"
-                              Density="2700"
+                              density0="2700"
                               BulkModulus0="5.5556e9"
                               ShearModulus0="4.16667e9"/>
 
       <LinearElasticIsotropic name="water"
-                              Density="1000"
+                              density0="1000"
                               BulkModulus0="2.0e9"
                               ShearModulus0="0.0"/>
   </Constitutive>
@@ -92,19 +92,39 @@
                scale="-1.0e6"
                function="spaceFunction"/>
                
-    <Dirichlet name="xpos"  
+    <!--Dirichlet name="xpos"  
                initialCondition="1"  
                setNames="xpos"
                objectPath="nodeManager"
                fieldName="Velocity"
                dataType="r1Tensor" 
                component="1"
-               scale="1.0"/>
+               scale="1.0"/-->
 
-    <!--Dirichlet name="v0"          component="0" fieldName="Velocity"          dataType="Vector" functionName="timeFunction" object="Node" scale="1.0" setNames="xneg"/-->
-    <Dirichlet name="xconstraint" component="0" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="xneg"/>
-    <Dirichlet name="yconstraint" component="1" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="yneg"/>
-    <Dirichlet name="zconstraint" component="2" fieldName="Velocity" dataType="Vector" object="Node" scale="0.0" setNames="zneg"/>
+    <Dirichlet name="xconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               dataType="Vector"
+               component="0"  
+               scale="0.0" 
+               setNames="xneg"/>
+               
+    <Dirichlet name="yconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               dataType="Vector"
+               component="1"  
+               scale="0.0" 
+               setNames="yneg"/>
+               
+    <Dirichlet name="zconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               dataType="Vector"
+               component="2"  
+               scale="0.0" 
+               setNames="zneg"/>
+
   </BoundaryConditions>
 
 
