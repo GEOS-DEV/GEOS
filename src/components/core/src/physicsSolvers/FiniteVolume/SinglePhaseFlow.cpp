@@ -1022,10 +1022,14 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
       // call the BoundaryConditionManager::ApplyBoundaryCondition function that will check to see
       // if the boundary condition should be applied to this subregion
       bcManager->ApplyBoundaryCondition( time + dt,
-                                         subRegion,
+                                         domain,
+                                         "",
                                          viewKeyStruct::fluidPressureString,
                                          [&]( BoundaryConditionBase const * const bc,
-                                              set<localIndex> const & lset ) -> void
+                                              string const &,
+                                              set<localIndex> const & lset,
+                                              ManagedGroup *,
+                                              string const & ) -> void
       {
         // call the application of the boundary condition to alter the matrix and rhs
         bc->ApplyDirichletBounaryConditionDefaultMethod<0>( lset,
@@ -1115,16 +1119,33 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   dataRepository::ManagedGroup const * sets = faceManager->GetGroup(dataRepository::keys::sets);
 
   // first, evaluate BC to get primary field values (pressure)
-  bcManager->ApplyBoundaryCondition(faceManager, viewKeyStruct::faceFluidPressureString, time + dt);
+//  bcManager->ApplyBoundaryCondition(faceManager, viewKeyStruct::faceFluidPressureString, time + dt);
+  bcManager->ApplyBoundaryCondition( time + dt,
+                                     domain,
+                                     "faceManager",
+                                     viewKeyStruct::faceFluidPressureString,
+                                     [&]( BoundaryConditionBase const * const bc,
+                                          string const &,
+                                          set<localIndex> const & targetSet,
+                                          ManagedGroup * const targetGroup,
+                                          string const fieldName )->void
+  {
+    bc->ApplyBoundaryConditionToField<BcEqual>(targetSet,time + dt, targetGroup, fieldName);
+  });
+
 
   // call constitutive models to get dependent quantities needed for flux (density, viscosity)
   bcManager->ApplyBoundaryCondition(time + dt,
-                                    faceManager,
+                                    domain,
+                                    "faceManager",
                                     viewKeyStruct::faceFluidPressureString,
-                                    [&] (BoundaryConditionBase const * bc,
-                                        set<localIndex> const & lset) -> void
+                                    [&] ( BoundaryConditionBase const * bc,
+                                          string const &,
+                                          set<localIndex> const & targetSet,
+                                          ManagedGroup * const,
+                                          string const & ) -> void
   {
-    for (auto kf : lset)
+    for (auto kf : targetSet)
     {
       if (faceGhostRank[kf] >= 0)
         continue;
@@ -1159,9 +1180,14 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
 
   bcManager->ApplyBoundaryCondition(time + dt,
+                                    domain,
+                                    "faceManager",
                                     viewKeyStruct::faceFluidPressureString,
-                                    [&] (BoundaryConditionBase * bc,
-                                         string const & setName) -> void
+                                    [&]( BoundaryConditionBase const * bc,
+                                         string const & setName,
+                                         set<localIndex> const &,
+                                         ManagedGroup * const,
+                                         string const & ) -> void
   {
     if (!sets->hasView(setName) || !fluxApprox->hasBoundaryStencil(setName))
       return;

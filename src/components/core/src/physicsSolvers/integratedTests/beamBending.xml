@@ -65,25 +65,18 @@
 
   <ElementRegions>
     <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" />
+    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" materialList="shale" />
   </ElementRegions>
 
   <Constitutive>
-      <LinearElasticIsotropic name="granite">
-        <ParameterData Density="2700"
-                       BulkModulus="5.5556e9"
-                       ShearModulus="4.16667e9"/>
-      </LinearElasticIsotropic>
-      <LinearElasticIsotropic name="shale">
-        <ParameterData Density="2700"
-                       BulkModulus="5.5556e9"
-                       ShearModulus="4.16667e9"/>
-      </LinearElasticIsotropic>
-      <LinearElasticIsotropic name="water">
-        <ParameterData Density="1000"
-                              BulkModulus="2.0e9"
-                              ShearModulus="0.0"/>
-      </LinearElasticIsotropic>
+      <LinearElasticIsotropic name="granite"
+                              Density="2700"
+                              BulkModulus0="5.5556e9"
+                              ShearModulus0="4.16667e9"/>
+      <LinearElasticIsotropic name="shale"
+                              Density="2700"
+                              BulkModulus0="5.5556e9"
+                              ShearModulus0="4.16667e9"/>
   </Constitutive>
 
 
@@ -101,10 +94,37 @@
                scale="-1.0e6"
                function="spaceFunction"/-->
 
-    <Dirichlet name="xnegconstraint" component="0" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="0.0" setNames="xneg"/>
-    <Dirichlet name="yconstraint"    component="1" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="0.0" setNames="xneg"/>
-    <Dirichlet name="zconstraint"    component="2" fieldName="TotalDisplacement" dataType="Vector" object="Node" scale="0.0" setNames="zneg zpos"/>
-    <Dirichlet name="xposconstraint" component="1" fieldName="Force" dataType="Vector" object="Node" scale="1.0e6" setNames="xpos"/>
+    <Dirichlet name="xnegconstraint" 
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               dataType="Vector" 
+               component="0" 
+               scale="0.0" 
+               setNames="xneg"/>
+
+    <Dirichlet name="yconstraint"    
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               dataType="Vector" 
+               component="1" 
+               scale="0.0" 
+               setNames="xneg"/>
+               
+    <Dirichlet name="zconstraint"    
+               objectPath="nodeManager" 
+               fieldName="TotalDisplacement" 
+               dataType="Vector" 
+               component="2" 
+               scale="0.0" 
+               setNames="zneg zpos"/>
+               
+    <Dirichlet name="xposconstraint" 
+               objectPath="nodeManager" 
+               fieldName="Force" 
+               dataType="Vector" 
+               component="1" 
+               scale="1.0e6" 
+               setNames="xpos"/>
   </BoundaryConditions>
 
 

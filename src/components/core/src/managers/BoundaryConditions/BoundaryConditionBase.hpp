@@ -34,9 +34,116 @@ namespace geosx
 class Function;
 
 
+struct BcEqual
+{
+  template< typename T >
+  static typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array1d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    field[index] = static_cast<T>(value);
+  }
+
+  template< typename T >
+  static typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array1d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    field[index].Data()[component] = value;
+  }
+
+
+  template< typename T >
+  static typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array2d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    for( localIndex a=0 ; a<field.size(1) ; ++a )
+    {
+      field[index][a] = static_cast<T>(value);
+    }
+  }
+
+
+
+  template< typename T >
+  static typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array2d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    for( localIndex a=0 ; a<field.size(1) ; ++a )
+    {
+      field[index][a] = value;
+    }
+  }
+
+};
+
+
+struct BcAdd
+{
+  template< typename T >
+  static typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array1d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    field[index] += static_cast<T>(value);
+  }
+
+  template< typename T >
+  static typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array1d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    field[index].Data()[component] += value;
+  }
+
+
+  template< typename T >
+  static typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array2d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    for( localIndex a=0 ; a<field.size(1) ; ++a )
+    {
+      field[index][a] += static_cast<T>(value);
+    }
+  }
+
+
+  template< typename T >
+  static typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  ApplyBcValue( array2d<T> & field,
+                localIndex const index,
+                int const component,
+                real64 const & value )
+  {
+    for( localIndex a=0 ; a<field.size(1) ; ++a )
+    {
+      field[index][a] += value;
+    }
+  }
+
+};
+
 class BoundaryConditionBase : public dataRepository::ManagedGroup
 {
 public:
+
 
   using CatalogInterface = cxx_utilities::CatalogInterface< BoundaryConditionBase, string const &, dataRepository::ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
@@ -51,24 +158,8 @@ public:
 
   void ReadXML_PostProcess() override final;
 
-
-
-//  real64 GetValue( realT time ) const;
-
-
-//  template< typename T >
-//  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
-//                                           real64 const time,
-//                                           array1d<R1Tensor> const & X,
-//                                           array1d<T> & field );
-
-//  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
-//                                           real64 const time,
-//                                           array1d<R1Tensor> const & X,
-//                                           array1d<R1Tensor> & field );
-
-  template< typename OPERATION >
-  void ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
+  template< typename BC_OP >
+  void ApplyBoundaryConditionToField( set<localIndex> const & set,
                                            real64 const time,
                                            dataRepository::ManagedGroup * dataGroup,
                                            string const & fieldname ) const;
@@ -183,52 +274,8 @@ public:
     return m_initialCondition;
   }
 
-  template< typename T >
-  typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array1d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value ) const
-  {
-    field[index] = static_cast<T>(value);
-  }
-
-  template< typename T >
-  typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array1d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value ) const
-  {
-    field[index].Data()[component] = value;
-  }
 
 
-  template< typename T >
-  typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array2d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value ) const
-  {
-    for( localIndex a=0 ; a<field.size(1) ; ++a )
-    {
-      field[index][a] = static_cast<T>(value);
-    }
-  }
-
-  template< typename T >
-  typename std::enable_if< traits::is_tensorT<T>::value, void>::type
-  ApplyBcValue( array2d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value ) const
-  {
-    for( localIndex a=0 ; a<field.size(1) ; ++a )
-    {
-      field[index][a] = value;
-    }
-  }
 
 
 private:
@@ -263,8 +310,8 @@ private:
 
 
 
-template< typename OPERATION >
-void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> const & set,
+template< typename BC_OP >
+void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const & set,
                                                                 real64 const time,
                                                                 ManagedGroup * dataGroup,
                                                                 string const & fieldName ) const
@@ -286,7 +333,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> 
       {
         for( auto a : set )
         {
-          ApplyBcValue( field, a, component, m_scale );
+          BC_OP::ApplyBcValue( field, a, component, m_scale );
         }
       }
       else
@@ -299,7 +346,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> 
             real64 value = m_scale * function->Evaluate( &time );
             for( auto a : set )
             {
-              ApplyBcValue( field, a, component, value );
+              BC_OP::ApplyBcValue( field, a, component, value );
             }
           }
           else
@@ -309,7 +356,7 @@ void BoundaryConditionBase::ApplyBounaryConditionDefaultMethod( set<localIndex> 
             integer count=0;
             for( auto a : set )
             {
-              ApplyBcValue( field, a, component, m_scale*result[count] );
+              BC_OP::ApplyBcValue( field, a, component, m_scale*result[count] );
               ++count;
             }
           }
