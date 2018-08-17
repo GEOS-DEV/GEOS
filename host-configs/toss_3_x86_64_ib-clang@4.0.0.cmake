@@ -38,4 +38,4 @@ set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
 set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
 
 set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)
-set(RAJA_ENABLE_OPENMP "ON"        CACHE PATH "" FORCE)
+set(RAJA_ENABLE_OPENMP "ON"       CACHE PATH "" FORCE)
