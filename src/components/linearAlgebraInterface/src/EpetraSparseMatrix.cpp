@@ -369,6 +369,18 @@ globalIndex EpetraSparseMatrix::uniqueCols() const
   return matrix->DomainMap().NumGlobalElements64();
 }
 
+// Accessor for the index of the first global row
+globalIndex EpetraSparseMatrix::ilower() const
+{
+  return matrix->RowMap().MyGlobalElements64()[0];
+}
+
+// Accessor for the index of the last global row
+globalIndex EpetraSparseMatrix::iupper() const
+{
+  return matrix->RowMap().MyGlobalElements64()[0] + matrix->RowMap().NumMyElements();
+}
+
 // Accessor for the number of global rows
 Epetra_Map const & EpetraSparseMatrix::RowMap() const
 {

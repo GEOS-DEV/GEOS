@@ -323,6 +323,16 @@ public:
   globalIndex uniqueCols() const;
 
   /**
+   * @brief Returns the index of the first global row owned by that processor.
+   */
+  globalIndex ilower() const;
+
+  /**
+   * @brief Returns the index of the last global row owned by that processor.
+   */
+  globalIndex iupper() const;
+
+  /**
    * @brief Returns the number of local rows.
    */
   int myRows() const;

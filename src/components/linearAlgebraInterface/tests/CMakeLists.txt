@@ -3,10 +3,7 @@
 #
 
 set( linearAlgebraInterface_tests
-     testEpetraMatrixConstruction.cpp
-     testEpetraLAOperations.cpp
-     testAztecOOSolver.cpp
-     testAmesosSolver.cpp )
+     testEpetraLAOperations.cpp )
 
 #
 # Add gtest C++ based tests

@@ -14,7 +14,6 @@
 namespace geosx
 {
 
-
 class TrilinosInterface
 {
 public:
@@ -27,7 +26,6 @@ public:
   using ParallelMatrix = EpetraSparseMatrix;
   using ParallelVector = EpetraVector;
 
-  // AztecOO/Amesos wrapper
   using Solver = TrilinosSolver;
 
   TrilinosInterface() = default;
