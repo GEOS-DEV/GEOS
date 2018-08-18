@@ -85,6 +85,34 @@ struct BcEqual
     }
   }
 
+  static void ApplyBcValue( globalIndex const dof,
+                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            systemSolverInterface::BlockIDs const blockID,
+                            real64 & rhs,
+                            real64 const & bcValue,
+                            real64 const fieldValue )
+  {
+
+    if( true )//node_is_ghost[*nd] < 0 )
+    {
+      real64 LARGE = blockSystem->ClearSystemRow( blockID, static_cast< int >( dof ), 1.0 );
+      rhs = -LARGE*( bcValue - fieldValue );
+    }
+    else
+    {
+      blockSystem->ClearSystemRow( blockID, static_cast< int >( dof ), 0.0 );
+      rhs = 0.0;
+    }
+  }
+
+
+  static inline void ReplaceGlobalValues( Epetra_FEVector * const rhs,
+                                          int const num,
+                                          globalIndex * const dof,
+                                          real64 * const values )
+  {
+    rhs->ReplaceGlobalValues( num, dof, values );
+  }
 };
 
 
@@ -138,6 +166,28 @@ struct BcAdd
     }
   }
 
+  static void ApplyBcValue( globalIndex const dof,
+                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            systemSolverInterface::BlockIDs const blockID,
+                            real64 & rhs,
+                            real64 const & bcValue,
+                            real64 const fieldValue )
+  {
+    if( true )//node_is_ghost[*nd] < 0 )
+    {
+      rhs += bcValue;
+    }
+  }
+
+  static inline void ReplaceGlobalValues( Epetra_FEVector * const rhs,
+                                          int const num,
+                                          globalIndex * const dof,
+                                          real64 * const values )
+  {
+    rhs->SumIntoGlobalValues( num, dof, values );
+  }
+
+
 };
 
 class BoundaryConditionBase : public dataRepository::ManagedGroup
@@ -171,8 +221,8 @@ public:
                               dataRepository::ManagedGroup * dataGroup,
                               LAMBDA && lambda);
 
-  template< int OPERATION >
-  void ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
+  template< typename BC_OP >
+  void ApplyBoundaryConditionToSystem( set<localIndex> const & set,
                                                     real64 const time,
                                                     dataRepository::ManagedGroup * dataGroup,
                                                     string const & fieldName,
@@ -182,9 +232,9 @@ public:
                                                     systemSolverInterface::BlockIDs const blockID ) const;
 
 
-  template< int OPERATION, typename LAMBDA >
+  template< typename BC_OP, typename LAMBDA >
   void
-  ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
+  ApplyBoundaryConditionToSystem( set<localIndex> const & set,
                                                real64 const time,
                                                dataRepository::ManagedGroup * dataGroup,
                                                globalIndex_array const & dofMap,
@@ -193,13 +243,13 @@ public:
                                                systemSolverInterface::BlockIDs const blockID,
                                                LAMBDA && lambda ) const;
 
-  template< int OPERATION >
-  inline void ApplyBounaryConditionDefaultMethodPoint( globalIndex const dof,
-                                                       systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                       systemSolverInterface::BlockIDs const blockID,
-                                                       real64 & rhs,
-                                                       real64 const & bcValue,
-                                                       real64 const fieldValue ) const;
+//  template< int OPERATION >
+//  inline void ApplyBounaryConditionDefaultMethodPoint( globalIndex const dof,
+//                                                       systemSolverInterface::EpetraBlockSystem * const blockSystem,
+//                                                       systemSolverInterface::BlockIDs const blockID,
+//                                                       real64 & rhs,
+//                                                       real64 const & bcValue,
+//                                                       real64 const fieldValue ) const;
 
 
   struct viewKeyStruct
@@ -367,48 +417,13 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
 
 
 
-template<>
-inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<0>( globalIndex const dof,
-                                                                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                                               systemSolverInterface::BlockIDs const blockID,
-                                                                               real64 & rhs,
-                                                                               real64 const & bcValue,
-                                                                               real64 const fieldValue ) const
-{
-
-  if( true )//node_is_ghost[*nd] < 0 )
-  {
-    real64 LARGE = blockSystem->ClearSystemRow( blockID, static_cast< int >( dof ), 1.0 );
-    rhs = -LARGE*( bcValue - fieldValue );
-  }
-  else
-  {
-    blockSystem->ClearSystemRow( blockID, static_cast< int >( dof ), 0.0 );
-    rhs = 0.0;
-  }
-}
-
-
-template<>
-inline void BoundaryConditionBase::ApplyBounaryConditionDefaultMethodPoint<1>( globalIndex const dof,
-                                                                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                                               systemSolverInterface::BlockIDs const blockID,
-                                                                               real64 & rhs,
-                                                                               real64 const & bcValue,
-                                                                               real64 const fieldValue ) const
-{
-  if( true )//node_is_ghost[*nd] < 0 )
-  {
-    rhs += bcValue;
-  }
-}
 
 
 
 
 
-template< int OPERATION >
-void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
+template< typename BC_OP >
+void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> const & set,
                                                                          real64 const time,
                                                                          dataRepository::ManagedGroup * dataGroup,
                                                                          string const & fieldName,
@@ -427,8 +442,8 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( set<loc
   integer const numBlocks = blockSystem->numBlocks();
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
 
-  Epetra_LongLongSerialDenseVector  node_dof( integer_conversion<int>( set.size() ) );
-  Epetra_SerialDenseVector     node_rhs( integer_conversion<int>( set.size() ) );
+  array1d<globalIndex>  dof( set.size() );
+  array1d<real64>       rhsContribution( set.size() );
 
 
   dataRepository::view_rtype_const<globalIndex_array> dofMap = dataGroup->getData<globalIndex_array>(dofMapName);
@@ -445,23 +460,17 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( set<loc
         integer counter=0;
         for( auto a : set )
         {
-          node_dof(counter) = dofDim*dofMap[a]+component;
-          this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
-                                                                    blockSystem,
-                                                                    blockID,
-                                                                    node_rhs(counter),
-                                                                    m_scale,
-                                                                    static_cast<real64>(rtTypes::value(field[a],component)));
+          dof(counter) = dofDim*dofMap[a]+component;
+          BC_OP::ApplyBcValue( dof(counter),
+                               blockSystem,
+                               blockID,
+                               rhsContribution(counter),
+                               m_scale,
+                               static_cast<real64>(rtTypes::value(field[a],component)));
           ++counter;
         }
-        if( OPERATION==0 )
-        {
-          rhs->ReplaceGlobalValues(node_dof, node_rhs);
-        }
-        else if( OPERATION==1 )
-        {
-          rhs->SumIntoGlobalValues(node_dof, node_rhs);
-        }
+
+        BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
       }
       else
       {
@@ -474,23 +483,16 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( set<loc
             integer counter=0;
             for( auto a : set )
             {
-              node_dof(counter) = dofDim*dofMap[a]+component;
-              this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
-                                                                        blockSystem,
-                                                                        blockID,
-                                                                        node_rhs(counter),
-                                                                        value,
-                                                                        rtTypes::value(field[a],component));
+              dof(counter) = dofDim*dofMap[a]+component;
+              BC_OP::ApplyBcValue( dof(counter),
+                                   blockSystem,
+                                   blockID,
+                                   rhsContribution(counter),
+                                   value,
+                                   rtTypes::value(field[a],component));
               ++counter;
             }
-            if( OPERATION==0 )
-            {
-              rhs->ReplaceGlobalValues(node_dof, node_rhs);
-            }
-            else if( OPERATION==1 )
-            {
-              rhs->SumIntoGlobalValues(node_dof, node_rhs);
-            }
+            BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
           }
           else
           {
@@ -500,24 +502,16 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( set<loc
             integer counter=0;
             for( auto a : set )
             {
-              node_dof(counter) = dofDim*dofMap[a]+component;
-              this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
-                                                                        blockSystem,
-                                                                        blockID,
-                                                                        node_rhs(counter),
-                                                                        result[counter],
-                                                                        rtTypes::value(field[a],component));
+              dof(counter) = dofDim*dofMap[a]+component;
+              BC_OP::ApplyBcValue( dof(counter),
+                                   blockSystem,
+                                   blockID,
+                                   rhsContribution(counter),
+                                   result[counter],
+                                   rtTypes::value(field[a],component));
               ++counter;
             }
-            if( OPERATION==0 )
-            {
-              rhs->ReplaceGlobalValues(node_dof, node_rhs);
-            }
-            else if( OPERATION==1 )
-            {
-              rhs->SumIntoGlobalValues(node_dof, node_rhs);
-            }
-
+            BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
           }
         }
       }
@@ -527,10 +521,10 @@ void BoundaryConditionBase::ApplyDirichletBounaryConditionDefaultMethod( set<loc
 
 
 
-template< int OPERATION, typename LAMBDA >
+template< typename BC_OP, typename LAMBDA >
 void
 BoundaryConditionBase::
-ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
+ApplyBoundaryConditionToSystem( set<localIndex> const & set,
                                              real64 const time,
                                              dataRepository::ManagedGroup * dataGroup,
                                              globalIndex_array const & dofMap,
@@ -546,8 +540,8 @@ ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
   integer const numBlocks = blockSystem->numBlocks();
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
 
-  globalIndex_array  node_dof( set.size() );
-  real64_array     node_rhs( set.size() );
+  globalIndex_array  dof( set.size() );
+  real64_array     rhsContribution( set.size() );
 
   if( functionName.empty() )
   {
@@ -555,23 +549,16 @@ ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
     integer counter=0;
     for( auto a : set )
     {
-      node_dof(counter) = dofDim*dofMap[a]+component;
-      this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
+      dof(counter) = dofDim*dofMap[a]+component;
+      BC_OP::ApplyBcValue( dof(counter),
                                                                 blockSystem,
                                                                 blockID,
-                                                                node_rhs(counter),
+                                                                rhsContribution(counter),
                                                                 m_scale,
                                                                 lambda(a) );
       ++counter;
     }
-    if( OPERATION==0 )
-    {
-      rhs->ReplaceGlobalValues( integer_conversion<int>(node_dof.size()), node_dof.data(), node_rhs.data() );
-    }
-    else if( OPERATION==1 )
-    {
-      rhs->SumIntoGlobalValues( integer_conversion<int>(node_dof.size()), node_dof.data(), node_rhs.data() );
-    }
+    BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
   }
   else
   {
@@ -584,23 +571,16 @@ ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
         integer counter=0;
         for( auto a : set )
         {
-          node_dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
-          this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
+          dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
+          BC_OP::ApplyBcValue( dof(counter),
                                                                     blockSystem,
                                                                     blockID,
-                                                                    node_rhs(counter),
+                                                                    rhsContribution(counter),
                                                                     value,
                                                                     lambda(a) );
           ++counter;
         }
-        if( OPERATION==0 )
-        {
-          rhs->ReplaceGlobalValues( integer_conversion<int>(node_dof.size()), node_dof.data(), node_rhs.data() );
-        }
-        else if( OPERATION==1 )
-        {
-          rhs->SumIntoGlobalValues( integer_conversion<int>(node_dof.size()), node_dof.data(), node_rhs.data() );
-        }
+        BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
       }
       else
       {
@@ -610,24 +590,16 @@ ApplyDirichletBounaryConditionDefaultMethod( set<localIndex> const & set,
         integer counter=0;
         for( auto a : set )
         {
-          node_dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
-          this->ApplyBounaryConditionDefaultMethodPoint<OPERATION>( node_dof(counter),
-                                                                    blockSystem,
-                                                                    blockID,
-                                                                    node_rhs(counter),
-                                                                    m_scale*result[counter],
-                                                                    lambda(a) );
+          dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
+          BC_OP::ApplyBcValue( dof(counter),
+                               blockSystem,
+                               blockID,
+                               rhsContribution(counter),
+                               m_scale*result[counter],
+                               lambda(a) );
           ++counter;
         }
-        if( OPERATION==0 )
-        {
-          rhs->ReplaceGlobalValues( integer_conversion<int>(node_dof.size()), node_dof.data(), node_rhs.data() );
-        }
-        else if( OPERATION==1 )
-        {
-          rhs->SumIntoGlobalValues( integer_conversion<int>(node_dof.size()), node_dof.data(), node_rhs.data() );
-        }
-
+        BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
       }
     }
   }

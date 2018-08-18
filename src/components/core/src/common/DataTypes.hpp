@@ -1097,13 +1097,6 @@ public:
     return lhs;
   }
 
-  // TODO depricate
-  enum class operationType
-  {
-    add,
-    multiply,
-    equate
-  };
 };
 
 }
