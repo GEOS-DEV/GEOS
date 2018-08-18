@@ -23,7 +23,7 @@ namespace geosx
 using namespace dataRepository;
 
 BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup * parent ):
-  ManagedGroup(name,parent)
+  ManagedGroup( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, 0 );
   RegisterViewWrapper( viewKeyStruct::constitutivePathString, &m_constitutivePath, 0 );
@@ -197,10 +197,7 @@ void BoundaryConditionBase::FillDocumentationNode()
 }
 
 void BoundaryConditionBase::ReadXML_PostProcess()
-{
-}
-
-
+{}
 
 
 
