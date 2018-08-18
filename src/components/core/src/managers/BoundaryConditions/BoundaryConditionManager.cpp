@@ -41,14 +41,13 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 BoundaryConditionManager::BoundaryConditionManager( string const & name, ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
-{
-}
+  ManagedGroup( name, parent )
+{}
 
 
 BoundaryConditionManager * BoundaryConditionManager::get()
 {
-  static BoundaryConditionManager bcman("bcMan",nullptr);
+  static BoundaryConditionManager bcman( "bcMan", nullptr );
   return &bcman;
 }
 
@@ -61,9 +60,8 @@ BoundaryConditionManager::~BoundaryConditionManager()
 void BoundaryConditionManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<BoundaryConditionBase> bc = BoundaryConditionBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup(childName, std::move(bc) );
+  this->RegisterGroup( childName, std::move( bc ) );
 }
-
 
 
 
@@ -76,9 +74,9 @@ void BoundaryConditionManager::ApplyInitialConditions( ManagedGroup * domain ) c
                                set<localIndex> const & targetSet,
                                ManagedGroup * const targetGroup,
                                string const fieldName )
-  {
-    bc->ApplyBoundaryConditionToField<BcEqual>( targetSet, 0.0, targetGroup, fieldName );
-  });
+    {
+      bc->ApplyBoundaryConditionToField<BcEqual>( targetSet, 0.0, targetGroup, fieldName );
+    } );
 }
 
 } /* namespace geosx */

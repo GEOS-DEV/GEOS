@@ -64,7 +64,7 @@ struct BcEqual
                 int const component,
                 real64 const & value )
   {
-    for( localIndex a=0 ; a<field.size(1) ; ++a )
+    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
       field[index][a] = static_cast<T>(value);
     }
@@ -79,7 +79,7 @@ struct BcEqual
                 int const component,
                 real64 const & value )
   {
-    for( localIndex a=0 ; a<field.size(1) ; ++a )
+    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
       field[index][a] = value;
     }
@@ -146,7 +146,7 @@ struct BcAdd
                 int const component,
                 real64 const & value )
   {
-    for( localIndex a=0 ; a<field.size(1) ; ++a )
+    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
       field[index][a] += static_cast<T>(value);
     }
@@ -160,7 +160,7 @@ struct BcAdd
                 int const component,
                 real64 const & value )
   {
-    for( localIndex a=0 ; a<field.size(1) ; ++a )
+    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
       field[index][a] += value;
     }
@@ -210,38 +210,38 @@ public:
 
   template< typename BC_OP >
   void ApplyBoundaryConditionToField( set<localIndex> const & set,
-                                           real64 const time,
-                                           dataRepository::ManagedGroup * dataGroup,
-                                           string const & fieldname ) const;
+                                      real64 const time,
+                                      dataRepository::ManagedGroup * dataGroup,
+                                      string const & fieldname ) const;
 
   // calls user-provided lambda to apply computed boundary value
   template<typename LAMBDA>
-  void ApplyBoundaryCondition(set<localIndex> const & set,
-                              real64 const time,
-                              dataRepository::ManagedGroup * dataGroup,
-                              LAMBDA && lambda);
+  void ApplyBoundaryCondition( set<localIndex> const & set,
+                               real64 const time,
+                               dataRepository::ManagedGroup * dataGroup,
+                               LAMBDA && lambda );
 
   template< typename BC_OP >
   void ApplyBoundaryConditionToSystem( set<localIndex> const & set,
-                                                    real64 const time,
-                                                    dataRepository::ManagedGroup * dataGroup,
-                                                    string const & fieldName,
-                                                    string const & dofMapName,
-                                                    integer const & dofDim,
-                                                    systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                    systemSolverInterface::BlockIDs const blockID ) const;
+                                       real64 const time,
+                                       dataRepository::ManagedGroup * dataGroup,
+                                       string const & fieldName,
+                                       string const & dofMapName,
+                                       integer const & dofDim,
+                                       systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                       systemSolverInterface::BlockIDs const blockID ) const;
 
 
   template< typename BC_OP, typename LAMBDA >
   void
   ApplyBoundaryConditionToSystem( set<localIndex> const & set,
-                                               real64 const time,
-                                               dataRepository::ManagedGroup * dataGroup,
-                                               globalIndex_array const & dofMap,
-                                               integer const & dofDim,
-                                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                               systemSolverInterface::BlockIDs const blockID,
-                                               LAMBDA && lambda ) const;
+                                  real64 const time,
+                                  dataRepository::ManagedGroup * dataGroup,
+                                  globalIndex_array const & dofMap,
+                                  integer const & dofDim,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                  systemSolverInterface::BlockIDs const blockID,
+                                  LAMBDA && lambda ) const;
 
 //  template< int OPERATION >
 //  inline void ApplyBounaryConditionDefaultMethodPoint( globalIndex const dof,
@@ -269,8 +269,7 @@ public:
   } viewKeys;
 
   struct groupKeyStruct
-  {
-  } groupKeys;
+  {} groupKeys;
 
 
 
@@ -299,7 +298,7 @@ public:
     return m_component;
   }
 
-  virtual const R1Tensor& GetDirection(realT time)
+  virtual const R1Tensor& GetDirection( realT time )
   {
     return m_direction;
   }
@@ -323,8 +322,6 @@ public:
   {
     return m_initialCondition;
   }
-
-
 
 
 
@@ -359,25 +356,24 @@ private:
 
 
 
-
 template< typename BC_OP >
 void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const & set,
-                                                                real64 const time,
-                                                                ManagedGroup * dataGroup,
-                                                                string const & fieldName ) const
+                                                           real64 const time,
+                                                           ManagedGroup * dataGroup,
+                                                           string const & fieldName ) const
 {
 
   integer const component = GetComponent();
-  string const functionName = getData<string>(viewKeyStruct::functionNameString);
+  string const functionName = getData<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index(vw->get_typeid());
+  std::type_index typeIndex = std::type_index( vw->get_typeid());
 
-  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto type, auto baseType ) -> void
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ), [&]( auto type, auto baseType ) -> void
     {
       using fieldType = decltype(type);
-      dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast(*vw);
+      dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
       fieldType & field = view.reference();
       if( functionName.empty() )
       {
@@ -388,8 +384,8 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
       }
       else
       {
-        FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
-        if( function!=nullptr)
+        FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+        if( function!=nullptr )
         {
           if( function->isFunctionOfTime()==2 )
           {
@@ -401,7 +397,7 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
           }
           else
           {
-            real64_array result(static_cast<localIndex>(set.size()));
+            real64_array result( static_cast<localIndex>(set.size()));
             function->Evaluate( dataGroup, time, set, result );
             integer count=0;
             for( auto a : set )
@@ -412,32 +408,27 @@ void BoundaryConditionBase::ApplyBoundaryConditionToField( set<localIndex> const
           }
         }
       }
-    });
+    } );
 }
-
-
-
-
-
 
 
 
 template< typename BC_OP >
 void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> const & set,
-                                                                         real64 const time,
-                                                                         dataRepository::ManagedGroup * dataGroup,
-                                                                         string const & fieldName,
-                                                                         string const & dofMapName,
-                                                                         integer const & dofDim,
-                                                                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                                         systemSolverInterface::BlockIDs const blockID ) const
+                                                            real64 const time,
+                                                            dataRepository::ManagedGroup * dataGroup,
+                                                            string const & fieldName,
+                                                            string const & dofMapName,
+                                                            integer const & dofDim,
+                                                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                                            systemSolverInterface::BlockIDs const blockID ) const
 {
   integer const component = GetComponent();
-  string const functionName = getData<string>(viewKeyStruct::functionNameString);
+  string const functionName = getData<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index(vw->get_typeid());
+  std::type_index typeIndex = std::type_index( vw->get_typeid());
 
   integer const numBlocks = blockSystem->numBlocks();
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
@@ -446,10 +437,10 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
   array1d<real64>       rhsContribution( set.size() );
 
 
-  dataRepository::view_rtype_const<globalIndex_array> dofMap = dataGroup->getData<globalIndex_array>(dofMapName);
+  dataRepository::view_rtype_const<globalIndex_array> dofMap = dataGroup->getData<globalIndex_array>( dofMapName );
 
 
-  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID(typeIndex), [&]( auto type ) -> void
+  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type ) -> void
     {
       using fieldType = decltype(type);
       dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
@@ -460,13 +451,13 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
         integer counter=0;
         for( auto a : set )
         {
-          dof(counter) = dofDim*dofMap[a]+component;
-          BC_OP::ApplyBcValue( dof(counter),
+          dof( counter ) = dofDim*dofMap[a]+component;
+          BC_OP::ApplyBcValue( dof( counter ),
                                blockSystem,
                                blockID,
-                               rhsContribution(counter),
+                               rhsContribution( counter ),
                                m_scale,
-                               static_cast<real64>(rtTypes::value(field[a],component)));
+                               static_cast<real64>(rtTypes::value( field[a], component )));
           ++counter;
         }
 
@@ -474,8 +465,8 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
       }
       else
       {
-        FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
-        if( function!=nullptr)
+        FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+        if( function!=nullptr )
         {
           if( function->isFunctionOfTime()==2 )
           {
@@ -483,13 +474,13 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
             integer counter=0;
             for( auto a : set )
             {
-              dof(counter) = dofDim*dofMap[a]+component;
-              BC_OP::ApplyBcValue( dof(counter),
+              dof( counter ) = dofDim*dofMap[a]+component;
+              BC_OP::ApplyBcValue( dof( counter ),
                                    blockSystem,
                                    blockID,
-                                   rhsContribution(counter),
+                                   rhsContribution( counter ),
                                    value,
-                                   rtTypes::value(field[a],component));
+                                   rtTypes::value( field[a], component ));
               ++counter;
             }
             BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
@@ -497,27 +488,26 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
           else
           {
             real64_array result;
-            result.resize( integer_conversion<localIndex>(set.size()));
+            result.resize( integer_conversion<localIndex>( set.size()));
             function->Evaluate( dataGroup, time, set, result );
             integer counter=0;
             for( auto a : set )
             {
-              dof(counter) = dofDim*dofMap[a]+component;
-              BC_OP::ApplyBcValue( dof(counter),
+              dof( counter ) = dofDim*dofMap[a]+component;
+              BC_OP::ApplyBcValue( dof( counter ),
                                    blockSystem,
                                    blockID,
-                                   rhsContribution(counter),
+                                   rhsContribution( counter ),
                                    result[counter],
-                                   rtTypes::value(field[a],component));
+                                   rtTypes::value( field[a], component ));
               ++counter;
             }
             BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
           }
         }
       }
-    });
+    } );
 }
-
 
 
 
@@ -525,16 +515,16 @@ template< typename BC_OP, typename LAMBDA >
 void
 BoundaryConditionBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & set,
-                                             real64 const time,
-                                             dataRepository::ManagedGroup * dataGroup,
-                                             globalIndex_array const & dofMap,
-                                             integer const & dofDim,
-                                             systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                             systemSolverInterface::BlockIDs const blockID,
-                                             LAMBDA && lambda ) const
+                                real64 const time,
+                                dataRepository::ManagedGroup * dataGroup,
+                                globalIndex_array const & dofMap,
+                                integer const & dofDim,
+                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                systemSolverInterface::BlockIDs const blockID,
+                                LAMBDA && lambda ) const
 {
   integer const component = GetComponent();
-  string const functionName = getData<string>(viewKeyStruct::functionNameString);
+  string const functionName = getData<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   integer const numBlocks = blockSystem->numBlocks();
@@ -549,21 +539,21 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & set,
     integer counter=0;
     for( auto a : set )
     {
-      dof(counter) = dofDim*dofMap[a]+component;
-      BC_OP::ApplyBcValue( dof(counter),
-                                                                blockSystem,
-                                                                blockID,
-                                                                rhsContribution(counter),
-                                                                m_scale,
-                                                                lambda(a) );
+      dof( counter ) = dofDim*dofMap[a]+component;
+      BC_OP::ApplyBcValue( dof( counter ),
+                           blockSystem,
+                           blockID,
+                           rhsContribution( counter ),
+                           m_scale,
+                           lambda( a ) );
       ++counter;
     }
     BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
   }
   else
   {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
-    if( function!=nullptr)
+    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+    if( function!=nullptr )
     {
       if( function->isFunctionOfTime()==2 )
       {
@@ -571,13 +561,13 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & set,
         integer counter=0;
         for( auto a : set )
         {
-          dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
-          BC_OP::ApplyBcValue( dof(counter),
-                                                                    blockSystem,
-                                                                    blockID,
-                                                                    rhsContribution(counter),
-                                                                    value,
-                                                                    lambda(a) );
+          dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+          BC_OP::ApplyBcValue( dof( counter ),
+                               blockSystem,
+                               blockID,
+                               rhsContribution( counter ),
+                               value,
+                               lambda( a ) );
           ++counter;
         }
         BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
@@ -585,18 +575,18 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & set,
       else
       {
         real64_array result;
-        result.resize( integer_conversion<localIndex>(set.size()));
+        result.resize( integer_conversion<localIndex>( set.size()));
         function->Evaluate( dataGroup, time, set, result );
         integer counter=0;
         for( auto a : set )
         {
-          dof(counter) = dofDim*integer_conversion<int>(dofMap[a])+component;
-          BC_OP::ApplyBcValue( dof(counter),
+          dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+          BC_OP::ApplyBcValue( dof( counter ),
                                blockSystem,
                                blockID,
-                               rhsContribution(counter),
+                               rhsContribution( counter ),
                                m_scale*result[counter],
-                               lambda(a) );
+                               lambda( a ) );
           ++counter;
         }
         BC_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
@@ -606,50 +596,50 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & set,
 }
 
 template<typename LAMBDA>
-void BoundaryConditionBase::ApplyBoundaryCondition(set<localIndex> const & set,
-                                                   real64 const time,
-                                                   dataRepository::ManagedGroup * dataGroup,
-                                                   LAMBDA && lambda)
+void BoundaryConditionBase::ApplyBoundaryCondition( set<localIndex> const & set,
+                                                    real64 const time,
+                                                    dataRepository::ManagedGroup * dataGroup,
+                                                    LAMBDA && lambda )
 {
   integer const component = GetComponent();
-  string const functionName = getData<string>(viewKeyStruct::functionNameString);
+  string const functionName = getData<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
-  if (functionName.empty())
+  if( functionName.empty())
   {
     real64 const value = m_scale;
     integer counter = 0;
-    for (auto a : set)
+    for( auto a : set )
     {
-      lambda(dataGroup, a, counter, value);
+      lambda( dataGroup, a, counter, value );
       ++counter;
     }
   }
   else
   {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
-    if (function!=nullptr)
+    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+    if( function!=nullptr )
     {
-      if (function->isFunctionOfTime() == 2)
+      if( function->isFunctionOfTime() == 2 )
       {
-        real64 const value = m_scale * function->Evaluate(&time);
+        real64 const value = m_scale * function->Evaluate( &time );
         integer counter = 0;
-        for (auto a : set)
+        for( auto a : set )
         {
-          lambda(dataGroup, a, counter, value);
+          lambda( dataGroup, a, counter, value );
           ++counter;
         }
       }
       else
       {
         real64_array result;
-        result.resize(integer_conversion<localIndex>(set.size()));
-        function->Evaluate(dataGroup, time, set, result);
+        result.resize( integer_conversion<localIndex>( set.size()));
+        function->Evaluate( dataGroup, time, set, result );
         integer counter = 0;
-        for (auto a : set)
+        for( auto a : set )
         {
           real64 const value = m_scale * result[counter];
-          lambda(dataGroup, a, counter, value);
+          lambda( dataGroup, a, counter, value );
           ++counter;
         }
       }
