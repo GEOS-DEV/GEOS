@@ -1004,32 +1004,17 @@ void SolidMechanics_LagrangianFEM::ApplyDisplacementBC_implicit( real64 const ti
                                           ManagedGroup * const targetGroup,
                                           string const fieldName )->void
     {
-    bc->ApplyDirichletBounaryConditionDefaultMethod<0>( targetSet,
-                                                        time,
-                                                        targetGroup,
-                                                        fieldName,
-                                                        viewKeys.trilinosIndex.Key(),
-                                                        3,
-                                                        &blockSystem,
-                                                        BlockIDs::displacementBlock );
+    bc->ApplyBoundaryConditionToSystem<BcEqual>( targetSet,
+                                                 time,
+                                                 targetGroup,
+                                                 fieldName,
+                                                 viewKeys.trilinosIndex.Key(),
+                                                 3,
+                                                 &blockSystem,
+                                                 BlockIDs::displacementBlock );
   });
 }
 
-//void SolidMechanics_LagrangianFEM::ForceBC( ManagedGroup * const object,
-//                                            BoundaryConditionBase const * const bc,
-//                                            set<localIndex> const & set,
-//                                            real64 time,
-//                                            systemSolverInterface::EpetraBlockSystem & blockSystem )
-//{
-//  bc->ApplyDirichletBounaryConditionDefaultMethod<1>( set,
-//                                                      time,
-//                                                      object,
-//                                                      keys::TotalDisplacement,
-//                                                      viewKeys.trilinosIndex.Key(),
-//                                                      3,
-//                                                      &blockSystem,
-//                                                      BlockIDs::displacementBlock );
-//}
 
 void SolidMechanics_LagrangianFEM::TractionBC( ManagedGroup * const object,
                                                BoundaryConditionBase const * const bc,
@@ -1696,14 +1681,14 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                                           ManagedGroup * const targetGroup,
                                           string const fieldName )->void
   {
-    bc->ApplyDirichletBounaryConditionDefaultMethod<1>( targetSet,
-                                                        time_n+dt,
-                                                        targetGroup,
-                                                        keys::TotalDisplacement, // TODO fix use of dummy name for
-                                                        viewKeys.trilinosIndex.Key(),
-                                                        3,
-                                                        blockSystem,
-                                                        BlockIDs::displacementBlock );
+    bc->ApplyBoundaryConditionToSystem<BcAdd>( targetSet,
+                                               time_n+dt,
+                                               targetGroup,
+                                               keys::TotalDisplacement, // TODO fix use of dummy name for
+                                               viewKeys.trilinosIndex.Key(),
+                                               3,
+                                               blockSystem,
+                                               BlockIDs::displacementBlock );
   });
 
   ApplyDisplacementBC_implicit( time_n + dt, *domain, *blockSystem );

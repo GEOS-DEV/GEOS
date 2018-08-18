@@ -1032,7 +1032,7 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
                                               string const & ) -> void
       {
         // call the application of the boundary condition to alter the matrix and rhs
-        bc->ApplyDirichletBounaryConditionDefaultMethod<0>( lset,
+        bc->ApplyBoundaryConditionToSystem<BcEqual>( lset,
                                                             time + dt,
                                                             subRegion,
                                                             blockLocalDofNumber[er][esr].get(),

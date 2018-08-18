@@ -584,7 +584,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                          ManagedGroup * const targetGroup,
                                          string const fieldName )->void
   {
-    bc->ApplyDirichletBounaryConditionDefaultMethod<0>( targetSet,
+    bc->ApplyBoundaryConditionToSystem<BcEqual>( targetSet,
                                                         time,
                                                         targetGroup,
                                                         "Temperature",

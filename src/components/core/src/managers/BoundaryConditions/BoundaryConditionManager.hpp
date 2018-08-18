@@ -58,7 +58,7 @@ public:
                                string const & fieldName ) const
   {
     ApplyBoundaryConditionToField( time, domain, fieldPath, fieldName,
-                                            []( BoundaryConditionBase const * const,
+                                            [&]( BoundaryConditionBase const * const,
                                                 set<localIndex> const &){} );
   }
 
@@ -152,11 +152,10 @@ ApplyBoundaryConditionToField( real64 const time,
                                string const & targetField )
   {
     bc->ApplyBoundaryConditionToField<BcEqual>( targetSet, time, targetGroup, targetField );
-    bcBase = bc;
-    targetSetCopy = &targetSet;
+    lambda( bc, targetSet );
   });
 
-  lambda( bcBase, *targetSetCopy );
+
 }
 
 
