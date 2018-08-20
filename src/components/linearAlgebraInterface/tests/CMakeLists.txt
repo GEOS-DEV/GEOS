@@ -18,6 +18,7 @@ foreach(test ${linearAlgebraInterface_tests})
 	                    DEPENDS_ON ${geosx_core_libs} gtest linearAlgebraInterface )
 
   blt_add_test( NAME ${test_name}
-                COMMAND ${test_name} )
+                COMMAND ${test_name}
+                NUM_MPI_TASKS 4 )
 
 endforeach()

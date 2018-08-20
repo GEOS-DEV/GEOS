@@ -26,7 +26,7 @@ public:
   using ParallelMatrix = EpetraSparseMatrix;
   using ParallelVector = EpetraVector;
 
-  using Solver = TrilinosSolver;
+  using LinearSolver = TrilinosSolver;
 
   TrilinosInterface() = default;
   ~TrilinosInterface() = default;
