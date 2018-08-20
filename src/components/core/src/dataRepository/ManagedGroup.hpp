@@ -495,14 +495,28 @@ public:
 
   virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode );
 
+  /**
+   * This function provides a mechanism by which to post process any values that were read into the
+   * xml file prior to initialization.
+   */
   virtual void ReadXML_PostProcess() {}
 
   virtual void BuildDataStructure( dataRepository::ManagedGroup * const rootGroup );
 
   void SetDocumentationNodes();
 
+  /**
+   * Function to generate documentation nodes for each variable in this object. The documentation
+   * nodes are then used to register variables and read xml input into variables.
+   */
   virtual void FillDocumentationNode();
 
+
+  /**
+   * @param rootGroup The group for which to register new documentation node to.
+   * Function to generate documentation nodes for each variable in this an object. The documentation
+   * nodes are then used to register variables and read xml input into variables.
+   */
   void SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup);
 
   virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group );

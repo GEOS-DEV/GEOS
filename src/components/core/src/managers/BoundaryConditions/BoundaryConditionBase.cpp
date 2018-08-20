@@ -26,7 +26,6 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
   ManagedGroup( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::setNamesString, &m_setNames, 0 );
-  RegisterViewWrapper( viewKeyStruct::constitutivePathString, &m_constitutivePath, 0 );
   RegisterViewWrapper( viewKeyStruct::objectPathString, &m_objectPath, 0 );
   RegisterViewWrapper( viewKeyStruct::fieldNameString, &m_fieldName, 0 );
   RegisterViewWrapper( viewKeyStruct::componentString, &m_component, 0 );
@@ -41,7 +40,8 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
 BoundaryConditionBase::~BoundaryConditionBase()
 {}
 
-BoundaryConditionBase::CatalogInterface::CatalogType& BoundaryConditionBase::GetCatalog()
+BoundaryConditionBase::CatalogInterface::CatalogType&
+BoundaryConditionBase::GetCatalog()
 {
   static BoundaryConditionBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -72,20 +72,6 @@ void BoundaryConditionBase::FillDocumentationNode()
                               "Name of sets that boundary condition is applied to.",
                               "",
                               "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-  docNode->AllocateChildNode( viewKeyStruct::constitutivePathString,
-                              viewKeyStruct::constitutivePathString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of field that boundary condition is applied to.",
-                              "",
-                              "",
                               "",
                               0,
                               1,
