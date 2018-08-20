@@ -488,7 +488,7 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
 }
 
 
-void NeighborCommunicator::PackBufferForSync( std::map<string, array<string> > const & fieldNames,
+void NeighborCommunicator::PackBufferForSync( std::map<string, array1d<string> > const & fieldNames,
                                               MeshLevel * const mesh,
                                               int const commID )
 {

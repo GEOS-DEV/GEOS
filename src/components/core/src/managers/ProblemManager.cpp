@@ -25,10 +25,6 @@
 
 #include "ProblemManager.hpp"
 
-#ifdef USE_CALIPER
-//#include "caliper/Annotation.h"
-#endif
-
 #include <stdexcept>
 #include <vector>
 
@@ -37,7 +33,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-#include "finiteElement/FiniteElementManager.hpp"
+#include "NumericalMethodsManager.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -45,7 +41,7 @@
 #include "fileIO/silo/SiloFile.hpp"
 #include "fileIO/blueprint/Blueprint.hpp"
 #include "fileIO/utils/utils.hpp"
-#include "physicsSolvers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/SidreWrapper.hpp"
@@ -53,6 +49,7 @@
 
 #include "mesh/MeshBody.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
+#include "common/TimingMacros.hpp"
 // #include "managers/MeshLevel.hpp"
 namespace geosx
 {
@@ -79,7 +76,7 @@ ProblemManager::ProblemManager( const std::string& name,
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
   // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
-  RegisterGroup<FiniteElementManager>(groupKeys.numericalMethodsManager);
+  RegisterGroup<NumericalMethodsManager>(groupKeys.numericalMethodsManager);
   RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
   RegisterGroup<MeshManager>(groupKeys.meshManager);
   RegisterGroup<OutputManager>(groupKeys.outputManager);
@@ -788,16 +785,17 @@ void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
 
 void ProblemManager::RunSimulation()
 {
-#ifdef USE_CALIPER
-//  cali::Annotation runSimulationAnnotation =
-// cali::Annotation("RunSimulation").begin();
-#endif
-  DomainPartition * domain  = getDomainPartition();
-  m_eventManager->Run(domain);
 
-#ifdef USE_CALIPER
-//  runSimulationAnnotation.end();
-#endif
+  GEOS_MARK_FUNCTION;
+
+  GEOS_MARK_BEGIN("Get domain partition");
+  DomainPartition * domain  = getDomainPartition();
+  GEOS_MARK_END("Get domain partition");
+
+  GEOS_MARK_BEGIN("Event Manager");
+  m_eventManager->Run(domain);
+  GEOS_MARK_END("Event Manager");
+
 }
 
 

@@ -36,6 +36,35 @@ namespace geosx
 namespace constitutive
 {
 
+
+template< typename LAMBDA >
+static auto ExponentApproximationTypeSwitchBlock( ExponentApproximationType const eat,
+                                                  LAMBDA&& lambda )
+{
+  switch (eat)
+  {
+    case ExponentApproximationType::Full:
+    {
+      return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Full>() );
+    }
+    case ExponentApproximationType::Quadratic:
+    {
+      return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Quadratic>() );
+    }
+
+    case ExponentApproximationType::Linear:
+    {
+      return lambda( ExponentApproximationTypeWrapper<ExponentApproximationType::Linear>() );
+    }
+    default:
+    {
+      GEOS_ERROR("ExponentApproximationTypeSwitchBlock() ExponentApproximationType is invalid!")
+    }
+
+  }
+}
+
+
 template<typename IndexType, typename RealType>
 ExponentialRelation<IndexType, RealType>::ExponentialRelation()
 : ExponentialRelation(ExponentApproximationType::Full)
@@ -189,153 +218,67 @@ void forall_compute(I first, I last, Lambda lambda)
 template<typename IndexType, typename RealType>
 void ExponentialRelation<IndexType, RealType>::Compute(const RealType & x, RealType & y)
 {
-  switch (m_approximationType)
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
   {
-    case ExponentApproximationType::Full:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Full>::
-        Compute(m_x0, m_y0, m_alpha, x, y);
-      break;
-
-    case ExponentApproximationType::Quadratic:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Quadratic>::
-        Compute(m_x0, m_y0, m_alpha, x, y);
-      break;
-
-    case ExponentApproximationType::Linear:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Linear>::
-        Compute(m_x0, m_y0, m_alpha, x, y);
-      break;
-  }
+    detail::ExponentialCompute<RealType, eat>::Compute(m_x0, m_y0, m_alpha, x, y);
+  });
 }
 
 template<typename IndexType, typename RealType>
 void ExponentialRelation<IndexType, RealType>::Inverse(const RealType & y, RealType & x)
 {
-  switch (m_approximationType)
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
   {
-    case ExponentApproximationType::Full:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Full>::
-          Inverse(m_x0, m_y0, m_alpha, y, x);
-      break;
-
-    case ExponentApproximationType::Quadratic:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Quadratic>::
-          Inverse(m_x0, m_y0, m_alpha, y, x);
-      break;
-
-    case ExponentApproximationType::Linear:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Linear>::
-          Inverse(m_x0, m_y0, m_alpha, y, x);
-      break;
-  }
+    detail::ExponentialCompute<RealType, eat>::Inverse(m_x0, m_y0, m_alpha, y, x);
+  });
 }
 
 template<typename IndexType, typename RealType>
 template<typename Policy>
 void ExponentialRelation<IndexType, RealType>::BatchCompute(IndexType size, ConstPtrType x_ptr, PtrType y_ptr)
 {
-  switch (m_approximationType)
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
   {
-    case ExponentApproximationType::Full:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Full>::
-          Compute(m_x0, m_y0, m_alpha, x_ptr[i], y_ptr[i]);
-      });
-      break;
-
-    case ExponentApproximationType::Quadratic:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Quadratic>::
-          Compute(m_x0, m_y0, m_alpha, x_ptr[i], y_ptr[i]);
-      });
-      break;
-
-    case ExponentApproximationType::Linear:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Linear>::
-          Compute(m_x0, m_y0, m_alpha, x_ptr[i], y_ptr[i]);
-      });
-      break;
-  }
+    detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
+    {
+      detail::ExponentialCompute<RealType, decltype(eat)::value >::
+        Compute(m_x0, m_y0, m_alpha, x_ptr[i], y_ptr[i]);
+    });
+  });
 }
 
 template<typename IndexType, typename RealType>
 template<typename Policy>
 void ExponentialRelation<IndexType, RealType>::BatchInverse(IndexType size, ConstPtrType y_ptr, PtrType x_ptr)
 {
-  switch (m_approximationType)
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
   {
-    case ExponentApproximationType::Full:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Full>::
+    detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
+    {
+      detail::ExponentialCompute<RealType, decltype(eat)::value >::
           Inverse(m_x0, m_y0, m_alpha, y_ptr[i], x_ptr[i]);
-      });
-      break;
-
-    case ExponentApproximationType::Quadratic:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Quadratic>::
-          Inverse(m_x0, m_y0, m_alpha, y_ptr[i], x_ptr[i]);
-      });
-      break;
-
-    case ExponentApproximationType::Linear:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Linear>::
-          Inverse(m_x0, m_y0, m_alpha, y_ptr[i], x_ptr[i]);
-      });
-      break;
-  }
+    });
+  });
 }
 
 template<typename IndexType, typename RealType>
 void ExponentialRelation<IndexType, RealType>::Compute(const RealType & x, RealType & y, RealType & dy_dx)
 {
-  switch (m_approximationType)
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
   {
-    case ExponentApproximationType::Full:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Full>::
-        Compute2(m_x0, m_y0, m_alpha, x, y, dy_dx);
-      break;
-
-    case ExponentApproximationType::Quadratic:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Quadratic>::
-        Compute2(m_x0, m_y0, m_alpha, x, y, dy_dx);
-      break;
-
-    case ExponentApproximationType::Linear:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Linear>::
-        Compute2(m_x0, m_y0, m_alpha, x, y, dy_dx);
-      break;
-  }
+    detail::ExponentialCompute<RealType, decltype(eat)::value >::
+      Compute2( m_x0, m_y0, m_alpha, x, y, dy_dx );
+  });
 }
 
 template<typename IndexType, typename RealType>
 void ExponentialRelation<IndexType, RealType>::Inverse(const RealType & y, RealType & x, RealType & dx_dy)
 {
-  switch (m_approximationType)
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
   {
-    case ExponentApproximationType::Full:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Full>::
+    detail::ExponentialCompute<RealType, decltype(eat)::value >::
         Inverse2(m_x0, m_y0, m_alpha, y, x, dx_dy);
-      break;
-
-    case ExponentApproximationType::Quadratic:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Quadratic>::
-        Inverse2(m_x0, m_y0, m_alpha, y, x, dx_dy);
-      break;
-
-    case ExponentApproximationType::Linear:
-      detail::ExponentialCompute<RealType, ExponentApproximationType::Linear>::
-        Inverse2(m_x0, m_y0, m_alpha, y, x, dx_dy);
-      break;
-  }
+  });
 }
 
 template<typename IndexType, typename RealType>
@@ -343,32 +286,14 @@ template<typename Policy>
 void ExponentialRelation<IndexType, RealType>::BatchCompute(IndexType size, ConstPtrType x_ptr,
                                                             PtrType y_ptr, PtrType dy_dx_ptr)
 {
-  switch (m_approximationType)
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
   {
-    case ExponentApproximationType::Full:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Full>::
+    detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
+    {
+      detail::ExponentialCompute<RealType, decltype(eat)::value >::
           Compute2(m_x0, m_y0, m_alpha, x_ptr[i], y_ptr[i], dy_dx_ptr[i]);
-      });
-      break;
-
-    case ExponentApproximationType::Quadratic:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Quadratic>::
-          Compute2(m_x0, m_y0, m_alpha, x_ptr[i], y_ptr[i], dy_dx_ptr[i]);
-      });
-      break;
-
-    case ExponentApproximationType::Linear:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Linear>::
-          Compute2(m_x0, m_y0, m_alpha, x_ptr[i], y_ptr[i], dy_dx_ptr[i]);
-      });
-      break;
-  }
+    });
+  });
 }
 
 template<typename IndexType, typename RealType>
@@ -376,32 +301,14 @@ template<typename Policy>
 void ExponentialRelation<IndexType, RealType>::BatchInverse(IndexType size, ConstPtrType y_ptr,
                                                             PtrType x_ptr, PtrType dx_dy_ptr)
 {
-  switch (m_approximationType)
+  ExponentApproximationTypeSwitchBlock( m_approximationType, [&]( auto const eat ) -> void
   {
-    case ExponentApproximationType::Full:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Full>::
-        Inverse2(m_x0, m_y0, m_alpha, y_ptr[i], x_ptr[i], dx_dy_ptr[i]);
-      });
-      break;
-
-    case ExponentApproximationType::Quadratic:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Quadratic>::
-        Inverse2(m_x0, m_y0, m_alpha, y_ptr[i], x_ptr[i], dx_dy_ptr[i]);
-      });
-      break;
-
-    case ExponentApproximationType::Linear:
-      detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
-      {
-        detail::ExponentialCompute<RealType, ExponentApproximationType::Linear>::
-        Inverse2(m_x0, m_y0, m_alpha, y_ptr[i], x_ptr[i], dx_dy_ptr[i]);
-      });
-      break;
-  }
+    detail::forall_compute<Policy>(0, size, [&] (IndexType i) -> void
+    {
+      detail::ExponentialCompute<RealType, decltype(eat)::value >::
+          Inverse2(m_x0, m_y0, m_alpha, y_ptr[i], x_ptr[i], dx_dy_ptr[i]);
+    });
+  });
 }
 
 } // namespace constitutive

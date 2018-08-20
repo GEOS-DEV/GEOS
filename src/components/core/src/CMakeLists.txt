@@ -7,6 +7,7 @@ set( subdirs
      dataRepository
      fileIO
      finiteElement
+     finiteVolume
      math
      mesh
      managers

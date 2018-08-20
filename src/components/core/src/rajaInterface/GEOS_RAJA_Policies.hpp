@@ -23,8 +23,30 @@
 #include "RAJA/util/defines.hpp"
 #include "RAJA/index/RangeSegment.hpp"
 
-#define localdim 3
+#if defined(RAJA_ENABLE_CUDA)
+typedef RAJA::cuda_exec<256> elemPolicy;
+typedef RAJA::cuda_exec<256> onePointPolicy;
 
+typedef RAJA::cuda_exec<256> memSetPolicy;
+typedef RAJA::cuda_exec<256> computeForcePolicy;
+
+typedef RAJA::cuda_exec<256> quadraturePolicy;
+typedef RAJA::atomic::cuda_atomic atomicPolicy;
+
+#elif defined(RAJA_ENABLE_OPENMP)
+typedef RAJA::omp_parallel_for_exec elemPolicy;
+typedef RAJA::omp_parallel_for_exec onePointPolicy;
+
+typedef RAJA::omp_parallel_for_exec memSetPolicy;
+typedef RAJA::omp_parallel_for_exec computeForcePolicy;
+
+typedef RAJA::omp_parallel_for_exec quadraturePolicy;
+typedef RAJA::atomic::omp_atomic atomicPolicy;
+
+typedef RAJA::loop_exec stencilPolicy;
+typedef RAJA::omp_reduce_ordered reducePolicy;
+
+#else
 typedef RAJA::loop_exec elemPolicy;
 typedef RAJA::loop_exec onePointPolicy;
 
@@ -32,13 +54,40 @@ typedef RAJA::loop_exec memSetPolicy;
 typedef RAJA::loop_exec computeForcePolicy;
 
 typedef RAJA::seq_exec quadraturePolicy;
+typedef RAJA::atomic::seq_atomic atomicPolicy;
 
-#ifdef USE_OPENMP
-typedef RAJA::atomic::omp_atomic atomicPolicy;
-typedef RAJA::omp_reduce_ordered reducePolicy; // added by Sergey
-#else
-typedef RAJA::atomic::loop_atomic atomicPolicy;
-typedef RAJA::seq_reduce reducePolicy;         // added by Sergey
+typedef RAJA::loop_exec stencilPolicy;
+typedef RAJA::seq_reduce reducePolicy;
 #endif
+
+#if defined(RAJA_ENABLE_CUDA)
+#define GEOSX_LAMBDA [=] RAJA_DEVICE
+#else
+#define GEOSX_LAMBDA [=]
+#endif
+
+using localIndex = RAJA::Index_type;
+
+//RAJA wrapper of loops over ranges
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body){
+
+  RAJA::forall<POLICY>(RAJA::RangeSegment(begin, end), body);  
+}
+
+//RAJA wrapper for loops over sets
+//A RAJA list segment won't own the data
+template<typename T, class POLICY=elemPolicy, typename LAMBDA=void>
+void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body){
+
+  RAJA::forall<POLICY>(RAJA::ListSegment(indexList, len, RAJA::Unowned), body);
+}
+
+
+//RAJA wrapper for list segments
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+void forall_in_set(RAJA::TypedListSegment<localIndex> iList, LAMBDA && body){
+  RAJA::forall<POLICY>(iList, body);
+}
 
 #endif

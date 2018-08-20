@@ -1,0 +1,103 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb}
+
+%SetFonts
+\usepackage{subfig}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{algorithmicx}
+%\usepackage{algorithmic}
+\usepackage{comment}
+\usepackage{amsmath}
+%SetFonts
+
+\newcommand{\td}[2]{\frac{\diff #1}{\diff #2}}
+\newcommand{\pd}[2]{\frac{{\partial}#1}{{\partial}#2}}
+\newcommand{\pdp}[3]{\frac{{\partial^{#3}}#1}{{\partial}#2^{#3}}}
+\newcommand{\pdd}[2]{\frac{\partial^2#1}{\partial#2^2}}
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\mbb}[1]{\mathbb{#1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\nor}[1]{\left\| #1 \right\|}
+\newcommand{\snor}[1]{\left| #1 \right|}
+\newcommand{\LRp}[1]{\left( #1 \right)}
+\newcommand{\LRs}[1]{\left[ #1 \right]}
+\newcommand{\LRa}[1]{\left\langle #1 \right\rangle}
+\newcommand{\LRb}[1]{\left| #1 \right|}
+\newcommand{\LRc}[1]{\left\{ #1 \right\}}
+\newcommand{\LRlim}[1]{\left.{ #1 }\right|}
+
+\title{Brief Article}
+\author{The Author}
+%\date{}							% Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+%\section{}
+%\subsection{}
+
+\begin{algorithm}
+\begin{algorithmic}[1]
+\Procedure{Time Stepping Method}{}
+\State Solve for the max flux over the time step and attain the end of step fluid mass $m^{n}$ and end of step 
+pressure $p^{n}$, 
+\begin{itemize}
+\item $m^{n+1} = m^{n} + k^{n} \rho^{n} \left( \nabla p^{n} \right) \Delta t$
+\end{itemize}
+
+\State Update the velocity to the mid-step 
+\begin{itemize}
+\item $\mathbf{v}^{n+\frac{1}{2}} = \mathbf{v}^{n} + \mathbf{a}^{n} \frac{\Delta t}{2}$
+\end{itemize}
+
+\State Update the displacement to the end of the step
+\begin{itemize}
+\item $\mathbf{x}^{n+1} = \mathbf{x}^{n} + \mathbf{v}^{n+\frac{1}{2}} \Delta t$
+\end{itemize}
+
+\State Calculate deformation input to constitutive model and update material state to $Q^{n+1}$
+
+\State Solve for the acceleration $t^{n+1} \left( a_i^{n+1} \right)$. Note that this includes the fluid 
+pressure $p^{n+1}$ applied as a boundary condition
+
+\State Update the velocity to the end of step 
+
+\begin{itemize}
+\item $\mathbf{v}^{n+1} = \mathbf{v}^{n+\frac{1}{2}} + \mathbf{a}^{n+1} \frac{\Delta t}{2} $ 
+\end{itemize}
+
+
+\EndProcedure
+\end{algorithmic}
+\caption{Calculate deformation input to constitutive model and update material state to $Q^{n}$}
+\end{algorithm}
+
+\begin{algorithm}
+\begin{algorithmic}[1]
+\Procedure{Calculate deformation input to constitutive model and update material state to $Q^{n}$}{}
+\For{Each Element}
+\State Gather nodal nodal degrees of freedom for total/inc displacement
+\For{Each quadrature point}
+\State Calculate gradient for total/inc displacement (mult-mult operations)
+\State Calculate gradient for the force (local operations with $3 \times 3$ matrices)
+\State Incremental kinematic step
+\State Constitutive update step
+\State Accumulate quadrature sum
+\EndFor
+\State Scatter nodal degrees of freedom to force vector
+\EndFor
+\EndProcedure
+\end{algorithmic}
+\caption{Calculate deformation input to constitutive model and update material state to $Q^{n}$}
+\end{algorithm}
+
+
+
+
+\end{document}  

@@ -52,8 +52,8 @@ SidreWrapper::~SidreWrapper()
 #ifdef USE_ATK
 DataStore& SidreWrapper::dataStore()
 {
-  static DataStore datastore;
-  return datastore;
+  static DataStore * datastore = new DataStore();
+  return *datastore;
 }
 #endif
 

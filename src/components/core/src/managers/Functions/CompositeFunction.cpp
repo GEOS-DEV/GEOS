@@ -114,9 +114,9 @@ void CompositeFunction::InitializeFunction()
 {
   // Register variables
   string_array const & variables = getReference<string_array>(keys::variableNames);
-  for (int ii=0 ; ii<variables.size() ; ++ii)
+  for (localIndex ii=0 ; ii<variables.size() ; ++ii)
   {
-    parserContext.addVariable(variables[ii].c_str(), ii * sizeof(double));
+    parserContext.addVariable(variables[ii].c_str(), static_cast<int>(ii * sizeof(double)));
   }
 
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
@@ -142,12 +142,12 @@ void CompositeFunction::InitializeFunction()
 
 void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const group,
                                   real64 const time,
-                                  lSet const & set,
+                                  set<localIndex> const & set,
                                   real64_array & result ) const
 {
   // Evaluate each of the subFunctions independently and place the results into
   // a temporary field
-  array<real64_array> subFunctionResults;
+  array1d<real64_array> subFunctionResults;
   for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
   {
     real64_array tmp(result.size());

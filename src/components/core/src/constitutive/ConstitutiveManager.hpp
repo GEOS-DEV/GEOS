@@ -36,7 +36,7 @@ namespace constitutive
 {
 
 template< typename VIEWTYPE >
-using ViewAccessor = array < ReferenceWrapper< VIEWTYPE > > ;
+using ViewAccessor = array1d < ReferenceWrapper< VIEWTYPE > > ;
 
 
 class ConstitutiveManager : public dataRepository::ManagedGroup
@@ -52,7 +52,7 @@ public:
 
   ~ConstitutiveManager() override;
 
-//  using constitutiveMaps = std::pair< array<ManagedGroup const *> ,
+//  using constitutiveMaps = std::pair< array1d<ManagedGroup const *> ,
 // map<string,integer> > ;
 //  constitutiveMaps & GetMaps( integer const reinit ) const;
 
