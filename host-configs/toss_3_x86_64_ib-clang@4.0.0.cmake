@@ -2,14 +2,8 @@
 
 set(CONFIG_NAME "quartz-toss_3_x86_64_ib-clang@4.0.0" CACHE PATH "") 
 
-#set(TPL_DIR "/usr/gapps/GEOS/geosx/2017_10_04_13_56_50" CACHE PATH "" )
-#include("${TPL_DIR}/${CONFIG_NAME}.cmake")
-
-#set(ATK_DIR "/usr/gapps/GEOS/geosx/axom/toss_3_x86_64_ib-clang\@4.0.0-release" CACHE PATH "")
-
 set(CMAKE_C_COMPILER "/usr/tce/packages/clang/clang-4.0.0/bin/clang" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "/usr/tce/packages/clang/clang-4.0.0/bin/clang++" CACHE PATH "")
-
 
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MPI ON CACHE BOOL "" FORCE)
@@ -35,11 +29,13 @@ set(SPHINX_EXECUTABLE "/usr/bin/sphinx-build" CACHE PATH "" FORCE)
 
 option( RAJA_ENABLE_TBB "" OFF)
 
-option( ENABLE_CALIPER "Enables CALIPER" OFF )
+option( ENABLE_CALIPER "Enables CALIPER" On )
+set(ENABLE_PAPI "ON" CACHE PATH "" FORCE)
+set(PAPI_PREFIX "/usr/tce/packages/papi/papi-5.4.3" CACHE PATH "" FORCE)
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
 set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
 
 set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)
-set(RAJA_ENABLE_OPENMP "ON"        CACHE PATH "" FORCE)
+set(RAJA_ENABLE_OPENMP "ON"       CACHE PATH "" FORCE)

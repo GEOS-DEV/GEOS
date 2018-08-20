@@ -228,22 +228,22 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
     }
 
     // Get the set
-    lSet set;
+    set<localIndex> mySet;
     if (functionInputSetname.empty())
     {
       for(localIndex ii=0; ii<m_functionTarget->size(); ++ii)
       {
-        set.insert(ii);
+        mySet.insert(ii);
       }
     }
     else
     {
       dataRepository::ManagedGroup const * sets = m_functionTarget->GetGroup(viewKeys.functionSetNames);
-      set = sets->getReference<lSet>(functionInputSetname);
+      mySet = sets->getReference< set<localIndex> >(functionInputSetname);
     }
 
     // Find the function (min, average, max)
-    real64_array stats = function->EvaluateStats(m_functionTarget, time, set);
+    real64_array stats = function->EvaluateStats(m_functionTarget, time, mySet);
     result = stats[functionStatOption];
   }
   

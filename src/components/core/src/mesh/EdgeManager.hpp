@@ -62,9 +62,6 @@ public:
 
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = nullptr);
   void SetIsExternal( const ObjectDataStructureBaseT* const referenceObject = nullptr);
-  void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-                                                         array<globalIndex_array>& objectToCompositionObject );
-
 
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
@@ -87,13 +84,13 @@ public:
                             const bool unpackMaps,
                             const bool unpackSets  );
 
-  void ConnectivityFromGlobalToLocal( const lSet& indices,
+  void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
                                       const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
                                       const std::map<globalIndex,localIndex>& faceGlobalToLocal );
 
 //  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
-//                                     const lSet& newEdgeIndices,
-//                                     const lSet& modifiedEdgeIndices );
+//                                     const set<localIndex>& newEdgeIndices,
+//                                     const set<localIndex>& modifiedEdgeIndices );
 
 //  void EdgeCenter(const NodeManager& nodeManager, localIndex edge, R1Tensor&
 // center)const;
@@ -107,7 +104,7 @@ public:
   void SplitEdge( const localIndex indexToSplit,
                   const localIndex parentNodeIndex,
                   const localIndex childNodeIndex[2],
-                  array<lSet>& nodesToEdges );
+                  array1d<set<localIndex>>& nodesToEdges );
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
 

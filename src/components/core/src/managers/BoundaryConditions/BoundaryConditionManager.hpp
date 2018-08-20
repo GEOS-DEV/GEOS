@@ -94,12 +94,31 @@ public:
         string_array setNames = bc->GetSetNames();
         for( auto & setName : setNames )
         {
-          dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+          dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = sets->getWrapper<set<localIndex>>(setName);
           if( setWrapper != nullptr )
           {
-            lSet const & set = setWrapper->reference();
+            set<localIndex> const & set = setWrapper->reference();
             lambda( bc, set );
           }
+        }
+      }
+    });
+  }
+
+  template< typename LAMBDA >
+  void ApplyBoundaryCondition( real64 const time,
+                               string const & fieldName,
+                               LAMBDA && lambda )
+  {
+    // iterate over all boundary conditions.
+    forSubGroups<BoundaryConditionBase>([&](BoundaryConditionBase * bc) -> void
+    {
+      if( time >= bc->GetStartTime() && time < bc->GetEndTime() && ( bc->GetFieldName()==fieldName) )
+      {
+        string_array setNames = bc->GetSetNames();
+        for( auto & setName : setNames )
+        {
+          lambda( bc, setName );
         }
       }
     });
@@ -129,11 +148,11 @@ public:
 //      string_array setNames = bc->GetSetNames();
 //      for( auto & setName : setNames )
 //      {
-//        dataRepository::ViewWrapper<lSet> const * const setWrapper =
-// sets->getWrapperPtr<lSet>(setName);
+//        dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper =
+// sets->getWrapperPtr<set<localIndex>>(setName);
 //        if( setWrapper != nullptr )
 //        {
-//          lSet const & set = setWrapper->reference();
+//          set<localIndex> const & set = setWrapper->reference();
 //          bc->ApplyBounaryConditionDefaultMethod(set,time,args...);
 //        }
 //      }
@@ -159,10 +178,10 @@ void BoundaryConditionManager::ApplyBoundaryCondition( BCFunctionPtr boundaryCon
         string_array setNames = bc->GetSetNames();
         for( auto & setName : setNames )
         {
-          dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+          dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = sets->getWrapper<set<localIndex>>(setName);
           if( setWrapper != nullptr )
           {
-            lSet const & set = setWrapper->reference();
+            set<localIndex> const & set = setWrapper->reference();
             (*boundaryConditionFunctionPtr)( bc, set, time, args... );
           }
         }
@@ -190,10 +209,10 @@ void BoundaryConditionManager::ApplyBoundaryCondition( Solver* solverPtr,
         string_array setNames = bc->GetSetNames();
         for( auto & setName : setNames )
         {
-          dataRepository::ViewWrapper<lSet> const * const setWrapper = sets->getWrapper<lSet>(setName);
+          dataRepository::ViewWrapper<set<localIndex>> const * const setWrapper = sets->getWrapper<set<localIndex>>(setName);
           if( setWrapper != nullptr )
           {
-            lSet const & set = setWrapper->reference();
+            set<localIndex> const & set = setWrapper->reference();
             (solverPtr->*boundaryConditionFunctionPtr)(object, bc, set, time, args...);
           }
         }

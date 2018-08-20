@@ -29,12 +29,11 @@
 
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
+#include <algorithm>
 //#include "managers/TableManager.hpp"
 //#include "SimpleGeometricObjects.hpp"
 
-#ifdef USE_ATK
-#include "slic/slic.hpp"
-#endif
+#include "common/Logger.hpp"
 
 #include "MPI_Communications/PartitionBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
@@ -272,7 +271,7 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 {
   //  lvector numElements;
   //
-  //  for( array<string>::size_type r=0 ; r<m_regionNames.size() ; ++r )
+  //  for( array1d<string>::size_type r=0 ; r<m_regionNames.size() ; ++r )
   //  {
   //    numElements.push_back( 0 );
   //  }
@@ -339,7 +338,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
   m_numElePerBox.resize(m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if (m_elementType.size() != m_numElePerBox.size())
+  if (integer_conversion<long>(m_elementType.size()) != m_numElePerBox.size())
   {
     if (m_elementType.size() == 1)
     {
@@ -355,7 +354,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
   }
 
 
-  for (localIndex i = 0 ; i < static_cast<localIndex>( m_elementType.size() ) ; ++i)
+  for (localIndex i = 0 ; i < integer_conversion<localIndex>( m_elementType.size() ) ; ++i)
   {
     if (m_elementType[i] == "C3D8")
     {
@@ -387,7 +386,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
 
 //    ExpandMultipleTokens(m_regionNames);
   {
-    int numBlocks = 1;
+    localIndex numBlocks = 1;
     for( int i=0 ; i<m_dim ; ++i )
     {
       numBlocks *= m_nElems[i].size();
@@ -401,9 +400,7 @@ void InternalMeshGenerator::ReadXML_PostProcess()
       }
       else
       {
-#ifdef USE_ATK
-        SLIC_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
-#endif
+        GEOS_ERROR("Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()");
       }
     }
   }
@@ -526,7 +523,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   // find elemCenters for even uniform element sizes
-  array<array<real64> > elemCenterCoords( 3 );
+  array1d<array1d<real64> > elemCenterCoords( 3 );
   for( int i = 0 ; i < 3 ; ++i )
   {
     m_numElemsTotal[i] = 0;
@@ -536,7 +533,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
     }
 
     elemCenterCoords[i].resize( m_numElemsTotal[i] );
-    array<real64> elemCenterCoordsLocal( m_numElemsTotal[i] );
+    array1d<real64> elemCenterCoordsLocal( m_numElemsTotal[i] );
     for( int k = 0 ; k < m_numElemsTotal[i] ; ++k )
     {
       elemCenterCoordsLocal[k] = m_min[i] + ( m_max[i] - m_min[i] ) * ( k + 0.5 ) / m_numElemsTotal[i];
@@ -619,7 +616,7 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
   }
 
   // TODO This needs to be rewritten for dimensions lower than 3.
-  array<string>::const_iterator iterRegion = m_regionNames.begin();
+  string_array::const_iterator iterRegion = m_regionNames.begin();
   for( int iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
   {
     for( int jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
@@ -764,8 +761,8 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
   {
     integer_array numElements;
-    array<string> elementRegionNames;
-    array<string> elementTypes;
+    string_array elementRegionNames;
+    string_array elementTypes;
     std::map<std::string, localIndex> localElemIndexInRegion;
 
     for( std::map<std::string, int>::iterator iterNumElemsInRegion = numElemsInRegions.begin() ;

@@ -20,7 +20,7 @@ set(fileIO_sources
 
 set( dependencyList common silo hdf5 mpi pugixml RAJA )
 if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit )
+  set( dependencyList ${dependencyList} conduit conduit_relay conduit_blueprint )
 endif()
 
 blt_add_library( NAME                  fileIO

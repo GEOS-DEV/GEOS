@@ -23,6 +23,8 @@
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
+#include "ManagedArray.hpp"
 #include <vector>
 #include <cstdlib>
 #include <string>
@@ -41,6 +43,12 @@ class QuadratureBase;
 class SimpleGeometricObjectBase;
 class PartitionBase;
 class NeighborCommunicator;
+template <typename IndexType, typename WeightType> class StencilCollection;
+
+namespace systemSolverInterface
+{
+class EpetraBlockSystem;
+}
 
 namespace dataRepository
 {
@@ -190,7 +198,7 @@ public:
    *   pack(a[N-1])
    */
   template <typename T>
-  static localIndex packed_size(const array<T> & arr)
+  static localIndex packed_size(const array1d<T> & arr)
   {
     localIndex byte_size = 2 * sizeof(localIndex);
     for (const T & elem : arr)
@@ -203,7 +211,7 @@ public:
 
 
   template <typename T>
-  static void * pack(const array<T> & arr, localIndex & byte_size, void * buffer=nullptr)
+  static void * pack(const array1d<T> & arr, localIndex & byte_size, void * buffer=nullptr)
   {
     byte_size = packed_size(arr);
     localIndex * buff = reinterpret_cast<localIndex *>(buffer);
@@ -229,7 +237,7 @@ public:
 
 
   template <typename T>
-  static localIndex unpack(array<T> & arr, const void * buffer, localIndex byte_size=-1)
+  static localIndex unpack(array1d<T> & arr, const void * buffer, localIndex byte_size=-1)
   {
     const localIndex * buff = reinterpret_cast<const localIndex *>(buffer);
     localIndex bytes_recorded = buff[0];
@@ -354,7 +362,7 @@ public:
    */
   template <typename T>
   static typename std::enable_if<!has_alias_value_type<T>::value, localIndex>::type
-  packed_size(const Array2dT<T> & arr)
+  packed_size(const array2d<T> & arr)
   {
     localIndex byte_size = 2 * sizeof(localIndex);
     byte_size += arr.size() * sizeof(T);
@@ -364,7 +372,7 @@ public:
 
   template <typename T>
   static typename std::enable_if<!has_alias_value_type<T>::value, void *>::type
-  pack(const Array2dT<T> & arr, localIndex & byte_size, void * buffer=nullptr)
+  pack(const array2d<T> & arr, localIndex & byte_size, void * buffer=nullptr)
   {
     byte_size = packed_size(arr);
     localIndex * buff = reinterpret_cast<localIndex *>(buffer);
@@ -383,7 +391,7 @@ public:
 
   template <typename T>
   static typename std::enable_if<!has_alias_value_type<T>::value, localIndex>::type
-  unpack(Array2dT<T> & arr, const void * buffer, localIndex byte_size=-1)
+  unpack(array2d<T> & arr, const void * buffer, localIndex byte_size=-1)
   {
     const localIndex * buff = reinterpret_cast<const localIndex *>(buffer);
     const localIndex dim0 = buff[0];
@@ -581,16 +589,42 @@ public:
     return 0;
   }
 
+  template <typename T, int NDIM, typename INDEX_TYPE>
+  static localIndex packed_size(const multidimensionalArray::ManagedArray<T, NDIM, INDEX_TYPE> & arr)
+  {
+    GEOS_ERROR("You shouldn't be packing a ManagedArray!"); 
+    return 0;
+  }
+
+
+  template <typename T, int NDIM, typename INDEX_TYPE>
+  static void * pack(const multidimensionalArray::ManagedArray<T, NDIM, INDEX_TYPE> & arr, localIndex & byte_size, void * buffer=nullptr)
+  { 
+    GEOS_ERROR("You shouldn't be packing a ManagedArray!"); 
+    byte_size = 0;
+    return nullptr;
+  }
+
+
+  template <typename T, int NDIM, typename INDEX_TYPE>
+  static localIndex unpack(const multidimensionalArray::ManagedArray<T, NDIM, INDEX_TYPE> & arr, const void * buffer, localIndex byte_size=-1)
+  { 
+    GEOS_ERROR("You shouldn't be unpacking a ManagedArray!");
+    return 0;
+  }
+
+
 
   template <typename T>
   static typename std::enable_if<std::is_same<T, BasisBase>::value ||
                                  std::is_same<T, QuadratureBase>::value ||
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
-                                 std::is_same<T, NeighborCommunicator>::value , localIndex>::type
+                                 std::is_same<T, NeighborCommunicator>::value ||
+                                 std::is_same<T, systemSolverInterface::EpetraBlockSystem>::value, localIndex>::type
   packed_size(const T & data)
   {
-    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, or PartitionBase!"); 
+    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!"); 
     return 0;
   }
 
@@ -600,10 +634,11 @@ public:
                                  std::is_same<T, QuadratureBase>::value ||
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
-                                 std::is_same<T, NeighborCommunicator>::value , void *>::type
+                                 std::is_same<T, NeighborCommunicator>::value ||
+                                 std::is_same<T, systemSolverInterface::EpetraBlockSystem>::value, void *>::type
   pack(const T & data, localIndex & byte_size, void * buffer=nullptr)
   {
-    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, or PartitionBase!"); 
+    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!"); 
     byte_size = 0;
     return nullptr;
   }
@@ -614,10 +649,32 @@ public:
                                  std::is_same<T, QuadratureBase>::value ||
                                  std::is_same<T, SimpleGeometricObjectBase>::value ||
                                  std::is_same<T, PartitionBase>::value ||
-                                 std::is_same<T, NeighborCommunicator>::value , localIndex>::type
+                                 std::is_same<T, NeighborCommunicator>::value ||
+                                 std::is_same<T, systemSolverInterface::EpetraBlockSystem>::value, localIndex>::type
   unpack(T & data, const void * buffer, localIndex byte_size=-1)
   { 
-    GEOS_ERROR("You shouldn't be packing a BasisBase, QuadratureBase, SimpleGeometricObjectBase, or PartitionBase!"); 
+    GEOS_ERROR("You shouldn't be unpacking a BasisBase, QuadratureBase, SimpleGeometricObjectBase, PartitionBase, or EpetraBlockSystem!");
+    return 0;
+  }
+
+  template <typename IndexType, typename WeightType>
+  static localIndex packed_size(const StencilCollection<IndexType, WeightType> & data)
+  {
+    GEOS_ERROR("You shouldn't be packing a StencilCollection!");
+    return 0;
+  }
+
+  template <typename IndexType, typename WeightType>
+  static void * pack(const StencilCollection<IndexType, WeightType> & data, localIndex & byte_size, void * buffer=nullptr)
+  {
+    GEOS_ERROR("You shouldn't be packing a StencilCollection!");
+    return 0;
+  }
+
+  template <typename IndexType, typename WeightType>
+  static localIndex unpack(StencilCollection<IndexType, WeightType> & data, const void * buffer, localIndex byte_size=-1)
+  {
+    GEOS_ERROR("You shouldn't be unpacking a StencilCollection!");
     return 0;
   }
 

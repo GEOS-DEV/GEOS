@@ -107,7 +107,7 @@ integer FunctionBase::isFunctionOfTime() const
 
 real64_array FunctionBase::EvaluateStats( dataRepository::ManagedGroup const * const group,
                                           real64 const time,
-                                          lSet const & set) const
+                                          set<localIndex> const & set) const
 {
   localIndex N = set.size();
   real64_array sub(N);
