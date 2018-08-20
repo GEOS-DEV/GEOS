@@ -68,6 +68,12 @@ typedef RAJA::seq_reduce reducePolicy;
 
 using localIndex = RAJA::Index_type;
 
+namespace geosx
+{  
+
+namespace raja
+{
+  
 //
 template<typename POLICY=atomicPolicy, typename T>
 RAJA_INLINE void atomicAdd(T *acc, T value){  
@@ -88,21 +94,7 @@ RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, 
   RAJA::forall<POLICY>(RAJA::ListSegment(indexList, len, RAJA::Unowned), body);
 }
 
-/*
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
-{
-  RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-  RAJA::forall<EXEC_POLICY>(begin, end, body);
-  return 
-  RAJA::RangeSegment seg(begin, end);  
-  RAJA::forall<EXEC_POLICY>( seg , [=] (localIndex index) mutable -> void
-  {
-    sum += body(index);
-  } );
-  return sum.get();
 }
-*/
-
-
+}
+  
 #endif

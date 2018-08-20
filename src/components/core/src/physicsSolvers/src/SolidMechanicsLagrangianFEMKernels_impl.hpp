@@ -104,7 +104,7 @@ void ObjectOfArraysKernel(Index_type noElem, geosxIndex elemList, real64 dt,
 {
 
 
-  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
       
       real64 uhat_local_x[inumNodesPerElement];
       real64 uhat_local_y[inumNodesPerElement];
@@ -265,7 +265,7 @@ void ObjectOfArraysKernel_Shape(Index_type noElem, geosxIndex elemList, real64 d
                                 Index_type nx=2, Index_type ny=2, Index_type nz=2)
 {
 
-  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
 
       real64 uhat_local_x[inumNodesPerElement];
       real64 uhat_local_y[inumNodesPerElement];
@@ -436,7 +436,7 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, geosxIndex elemLi
 {
 
 
-  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
       
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
@@ -589,7 +589,7 @@ RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, geosxIndex elemList, re
                                       Index_type nx=2, Index_type ny=2, Index_type nz=2)
 {
 
-  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
 
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
@@ -737,7 +737,7 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, geosxIndex el
                                                 Index_type nx=2, Index_type ny=2, Index_type nz=3)
 {
 
-  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
        
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
@@ -864,7 +864,7 @@ RAJA_INLINE void ConstitutiveUpdateKernel(Index_type noElem, geosxIndex elemList
 {
 
 
-  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
       
       for(Index_type q=0; q < inumQuadraturePoints; ++q){      
 
@@ -952,7 +952,7 @@ RAJA_INLINE void ArrayOfObjects_IntegrationKernel(Index_type noElem, geosxIndex 
                                                   Index_type nx=2, Index_type ny=2, Index_type nz=2)
 {
   
-  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
        
 #if defined(STRUCTURED_GRID)
        Index_type nodeList[inumNodesPerElement];       
@@ -1016,7 +1016,7 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, geosxIndex el
 {
 
 
-  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
        
        real64 uhat_local_x[inumNodesPerElement];
        real64 uhat_local_y[inumNodesPerElement];
@@ -1159,7 +1159,7 @@ RAJA_INLINE void ObjectOfArrays_IntegrationKernel(Index_type noElem, geosxIndex 
                                                   
 {
 
-  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
 
 #if defined(STRUCTURED_GRID)
        Index_type nodeList[inumNodesPerElement];       
@@ -1217,7 +1217,7 @@ void OnePoint(T const dydx, U & y,
               real64 const dx,
               localIndex const length){
   
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
+  geosx::forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
     y[a][0] += dx*dydx[a][0];
     y[a][1] += dx*dydx[a][1];
     y[a][2] += dx*dydx[a][1];
@@ -1235,7 +1235,7 @@ void OnePoint( T const dydx_0,
                real64 const dx,
                localIndex const length )
 {  
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
+  geosx::forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
     y[a][0] += dx*dydx_0[a];
     y[a][1] += dx*dydx_1[a];
     y[a][2] += dx*dydx_2[a];
@@ -1249,7 +1249,7 @@ template<typename T, typename U>
 void OnePoint(U dydx, T dy, T y,
               real64 const dx, localIndex const length){
 
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
+  geosx::forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
       
       dy[a][0] = dydx[a][0] * dx;
       dy[a][1] = dydx[a][1] * dx;
@@ -1267,7 +1267,7 @@ void OnePoint(U dydx,
               T y_1, T y_2, T y_3,
               real64 const dx, localIndex const length){
 
-  forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
+  geosx::forall_in_range(0, length, GEOSX_LAMBDA (localIndex a) {
       
     dy_1[a] = dydx[a][0] * dx;
     dy_2[a] = dydx[a][1] * dx;

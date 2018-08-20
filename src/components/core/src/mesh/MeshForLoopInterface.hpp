@@ -30,6 +30,8 @@
 
 namespace geosx{
 
+using namespace raja;
+  
 //================
 //Heavy Computation
 //================
