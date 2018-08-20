@@ -33,9 +33,15 @@
 #include "common/DataTypes.hpp"
 
 using namespace geosx;
+using solverInterface = TrilinosInterface;
 
-TEST(testEpetraLAOperations,testLaplaceOperator)
+template< typename SI >
+void testLaplaceOperator()
 {
+
+  using ParallelMatrix = typename SI::ParallelMatrix;
+  using ParallelVector = typename SI::ParallelVector;
+  using LinearSolver = typename SI::LinearSolver;
 
   MPI_Init(nullptr,nullptr);
 
@@ -46,11 +52,10 @@ TEST(testEpetraLAOperations,testLaplaceOperator)
   MPI_Comm comm = MPI_COMM_WORLD;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  globalIndex n = 100;
+  globalIndex n = 500;
   globalIndex N = n*n;
 
-  // Lets try the same using classes and constructors. Empty:
-  EpetraSparseMatrix testMatrix;
+  ParallelMatrix testMatrix;
   testMatrix.create(comm,N,5);
 
   // Allocate arrays to fill dummy 2D Laplace (cartesian) matrix
@@ -107,43 +112,45 @@ TEST(testEpetraLAOperations,testLaplaceOperator)
   testMatrix.getLocalRow(1,numValRow1,vecValuesRow1,vecIndicesRow1);
   testMatrix.getLocalRow(static_cast<localIndex>(n),numValRown,vecValuesRown,vecIndicesRown);
 
-  // Check number of values per row
-  EXPECT_TRUE( numValRow0 == 3 );
-  EXPECT_TRUE( numValRow1 == 4 );
-  EXPECT_TRUE( numValRown == 5 );
+  if (rank == 0)
+      {
+    // Check number of values per row
+    EXPECT_TRUE( numValRow0 == 3 );
+    EXPECT_TRUE( numValRow1 == 4 );
+    EXPECT_TRUE( numValRown == 5 );
 
-  // Check actual values TODO modify with better double check
-  //  EXPECT_TRUE( vecValuesRow0[0] == 4 );
-  //  EXPECT_TRUE( vecValuesRow0[1] == -1 );
-  //  EXPECT_TRUE( vecValuesRow0[2] == -1 );
-  //
-  //  EXPECT_TRUE( vecValuesRow1[0] == -1 );
-  //  EXPECT_TRUE( vecValuesRow1[1] == 4 );
-  //  EXPECT_TRUE( vecValuesRow1[2] == -1 );
-  //  EXPECT_TRUE( vecValuesRow1[3] == -1 );
-  //
-  //  EXPECT_TRUE( vecValuesRown[0] == -1 );
-  //  EXPECT_TRUE( vecValuesRown[1] == -1 );
-  //  EXPECT_TRUE( vecValuesRown[2] == 4 );
-  //  EXPECT_TRUE( vecValuesRown[3] == -1 );
-  //  EXPECT_TRUE( vecValuesRown[4] == -1 );
+    // Check actual values TODO modify with better double check
+    //  EXPECT_TRUE( vecValuesRow0[0] == 4 );
+    //  EXPECT_TRUE( vecValuesRow0[1] == -1 );
+    //  EXPECT_TRUE( vecValuesRow0[2] == -1 );
+    //
+    //  EXPECT_TRUE( vecValuesRow1[0] == -1 );
+    //  EXPECT_TRUE( vecValuesRow1[1] == 4 );
+    //  EXPECT_TRUE( vecValuesRow1[2] == -1 );
+    //  EXPECT_TRUE( vecValuesRow1[3] == -1 );
+    //
+    //  EXPECT_TRUE( vecValuesRown[0] == -1 );
+    //  EXPECT_TRUE( vecValuesRown[1] == -1 );
+    //  EXPECT_TRUE( vecValuesRown[2] == 4 );
+    //  EXPECT_TRUE( vecValuesRown[3] == -1 );
+    //  EXPECT_TRUE( vecValuesRown[4] == -1 );
 
-  // Check column indices
-  EXPECT_TRUE( vecIndicesRow0[0] == 0 );
-  EXPECT_TRUE( vecIndicesRow0[1] == 1 );
-  EXPECT_TRUE( vecIndicesRow0[2] == n );
+    // Check column indices
+    EXPECT_TRUE( vecIndicesRow0[0] == 0 );
+    EXPECT_TRUE( vecIndicesRow0[1] == 1 );
+    EXPECT_TRUE( vecIndicesRow0[2] == n );
 
-  EXPECT_TRUE( vecIndicesRow1[0] == 0 );
-  EXPECT_TRUE( vecIndicesRow1[1] == 1 );
-  EXPECT_TRUE( vecIndicesRow1[2] == 2 );
-  EXPECT_TRUE( vecIndicesRow1[3] == n+1 );
+    EXPECT_TRUE( vecIndicesRow1[0] == 0 );
+    EXPECT_TRUE( vecIndicesRow1[1] == 1 );
+    EXPECT_TRUE( vecIndicesRow1[2] == 2 );
+    EXPECT_TRUE( vecIndicesRow1[3] == n+1 );
 
-  EXPECT_TRUE( vecIndicesRown[0] == 0 );
-  EXPECT_TRUE( vecIndicesRown[1] == n-1 );
-  EXPECT_TRUE( vecIndicesRown[2] == n );
-  EXPECT_TRUE( vecIndicesRown[3] == n+1 );
-  EXPECT_TRUE( vecIndicesRown[4] == 2*n );
-
+    EXPECT_TRUE( vecIndicesRown[0] == 0 );
+    EXPECT_TRUE( vecIndicesRown[1] == n-1 );
+    EXPECT_TRUE( vecIndicesRown[2] == n );
+    EXPECT_TRUE( vecIndicesRown[3] == n+1 );
+    EXPECT_TRUE( vecIndicesRown[4] == 2*n );
+      }
   // Fill standard vectors
   std::vector<real64> ones, zer1, zer2, zer3, zer4;
   for (int j = 0; j < N; j++)
@@ -156,7 +163,7 @@ TEST(testEpetraLAOperations,testLaplaceOperator)
   }
 
   // Define vectors
-  EpetraVector x, b, r, solIterative, solDirect;
+  ParallelVector x, b, r, solIterative, solDirect;
   // Right hand side for multiplication (b)
   b.create(zer1);
   // Vector of ones for multiplication (x)
@@ -192,7 +199,7 @@ TEST(testEpetraLAOperations,testLaplaceOperator)
   EXPECT_TRUE( normRes == 0 );
 
   // Test solvers
-  TrilinosSolver solver = TrilinosSolver();
+  LinearSolver solver = LinearSolver();
 
   // AztecOO iterative solver
   solver.solve(testMatrix,solIterative,b,500,1e-7);
@@ -210,8 +217,14 @@ TEST(testEpetraLAOperations,testLaplaceOperator)
   solDirect.normInf(normDirectSol);
   EXPECT_TRUE( std::fabs(normDirectSol - 1) <= 1e-8 );
 
-
   MPI_Finalize();
+
+}
+
+TEST(testEpetraLAOperations,testLaplaceOperator)
+{
+
+  testLaplaceOperator<TrilinosInterface>();
 
 }
 
