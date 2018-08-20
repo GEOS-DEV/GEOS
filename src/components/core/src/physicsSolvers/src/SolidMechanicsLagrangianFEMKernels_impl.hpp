@@ -23,7 +23,7 @@
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/Layout.hpp"
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/ShapeFun_impl.hpp"
 #include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/ConstitutiveUpdate_impl.hpp"
-#include "../../core/src/rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "../../../src/rajaInterface/GEOS_RAJA_Interface.hpp"
 
 /*
   Collection of Solid Mechanics Kernels
@@ -89,7 +89,7 @@ using namespace SolidMechanicsLagrangianFEMKernels;
 ///
 template<typename Pol>
 RAJA_INLINE
-void ObjectOfArraysKernel(Index_type noElem, RAJA::TypedListSegment<Index_type> elemList, real64 dt,
+void ObjectOfArraysKernel(Index_type noElem, geosxIndex elemList, real64 dt,
                           const Index_type * elemsToNodes, geosxData iu_x,
                           geosxData iu_y, geosxData iu_z,
                           geosxData iuhat_x,
@@ -104,7 +104,7 @@ void ObjectOfArraysKernel(Index_type noElem, RAJA::TypedListSegment<Index_type> 
 {
 
 
-  forall_in_set<Pol>(elemList, GEOSX_LAMBDA (Index_type k) {
+  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
       
       real64 uhat_local_x[inumNodesPerElement];
       real64 uhat_local_y[inumNodesPerElement];
@@ -253,7 +253,7 @@ void ObjectOfArraysKernel(Index_type noElem, RAJA::TypedListSegment<Index_type> 
 ///
 template<typename Pol>
 RAJA_INLINE
-void ObjectOfArraysKernel_Shape(Index_type noElem, RAJA::TypedListSegment<Index_type> elemList, real64 dt,
+void ObjectOfArraysKernel_Shape(Index_type noElem, geosxIndex elemList, real64 dt,
                                 const Index_type * elemsToNodes, geosxData iu_x,
                                 geosxData iu_y, geosxData iu_z,
                                 geosxData iuhat_x,
@@ -265,7 +265,7 @@ void ObjectOfArraysKernel_Shape(Index_type noElem, RAJA::TypedListSegment<Index_
                                 Index_type nx=2, Index_type ny=2, Index_type nz=2)
 {
 
-  forall_in_set<Pol>(elemList, GEOSX_LAMBDA (Index_type k) {
+  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
 
       real64 uhat_local_x[inumNodesPerElement];
       real64 uhat_local_y[inumNodesPerElement];
@@ -426,7 +426,7 @@ void ObjectOfArraysKernel_Shape(Index_type noElem, RAJA::TypedListSegment<Index_
 // Computes shape function derivatives on the fly.
 ///
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, RAJA::TypedListSegment<Index_type> elemList, real64 dt,
+RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, geosxIndex elemList, real64 dt,
                                             const Index_type * elemsToNodes, geosxData iu,
                                             geosxData iuhat, const real64 * X, P_Wrapper P,
                                             Index_type const * iconstitutiveMap, geosxData idevStressData,
@@ -436,7 +436,7 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, RAJA::TypedListSe
 {
 
 
-  forall_in_set<Pol>(elemList, GEOSX_LAMBDA (Index_type k) {
+  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
       
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
@@ -580,17 +580,17 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, RAJA::TypedListSe
 ///All computations are done in a monolithic kernel.
 ///      
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, RAJA::TypedListSegment<Index_type> elemList, real64 dt,
-                                      const Index_type * elemsToNodes, geosxData iu,
+RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, geosxIndex elemList, real64 dt,
+                                      const Index_type * const elemsToNodes, geosxData iu,
                                       geosxData iuhat, geosxData idNdX,
                                       Index_type const * iconstitutiveMap, geosxData idevStressData,
                                       geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
                                       const real64 * idetJ, geosxData iacc, constUpdate updateState_ptr,
                                       Index_type nx=2, Index_type ny=2, Index_type nz=2)
 {
-  
-  forall_in_set<Pol>(elemList, GEOSX_LAMBDA (Index_type k) {
-      
+
+  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
        real64 f_local[local_dim*inumNodesPerElement] = {0};
@@ -713,10 +713,10 @@ RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, RAJA::TypedListSegment<
           Integrate(f_local, idetJ(k,q), detF, Finv, TotalStress, idNdX, k, q, noElem); 
         }//end of quadrature
 
-      AddLocalToGlobal<atomicPol>(nodeList, f_local, iacc);      
+      AddLocalToGlobal<atomicPol>(nodeList, f_local, iacc);
       
      });
-   
+
 }
 
 
@@ -727,7 +727,7 @@ RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, RAJA::TypedListSegment<
 ///is taken here. 
 ///            
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, RAJA::TypedListSegment<Index_type> elemList, real64 dt,
+RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, geosxIndex elemList, real64 dt,
                                                 const Index_type * elemsToNodes,
                                                 geosxData iu, geosxData iuhat, geosxData idNdX,                          
                                                 Index_type const * iconstitutiveMap, geosxData idevStressData,
@@ -737,7 +737,7 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, RAJA::TypedLi
                                                 Index_type nx=2, Index_type ny=2, Index_type nz=3)
 {
 
-  forall_in_set<Pol>(elemList, GEOSX_LAMBDA (Index_type k) {
+  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
        
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
@@ -857,14 +857,14 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, RAJA::TypedLi
 ///Constitutive update. This would normally be a function pointer in a monolithic kernel.
 ///
 template<typename Pol>
-RAJA_INLINE void ConstitutiveUpdateKernel(Index_type noElem, RAJA::TypedListSegment<Index_type> elemList,
+RAJA_INLINE void ConstitutiveUpdateKernel(Index_type noElem, geosxIndex elemList,
                                           geosxData Dadt_ptr, geosxData Rot_ptr, Index_type const * iconstitutiveMap,
                                           geosxData idevStressData, geosxData imeanStress, real64 shearModulus, real64 bulkModulus)
                           
 {
 
 
-  forall_in_set<Pol>(elemList, GEOSX_LAMBDA (Index_type k) {
+  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
       
       for(Index_type q=0; q < inumQuadraturePoints; ++q){      
 
@@ -942,7 +942,7 @@ RAJA_INLINE void ConstitutiveUpdateKernel(Index_type noElem, RAJA::TypedListSegm
 ///stored in a array of objects format.
 ///
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjects_IntegrationKernel(Index_type noElem, RAJA::TypedListSegment<Index_type> elemList, real64 dt,
+RAJA_INLINE void ArrayOfObjects_IntegrationKernel(Index_type noElem, geosxIndex elemList, real64 dt,
                                                   const Index_type * elemsToNodes,
                                                   geosxData iu, geosxData iuhat, geosxData idNdX,
                                                   Index_type const * iconstitutiveMap, geosxData idevStressData,
@@ -952,7 +952,7 @@ RAJA_INLINE void ArrayOfObjects_IntegrationKernel(Index_type noElem, RAJA::Typed
                                                   Index_type nx=2, Index_type ny=2, Index_type nz=2)
 {
   
-  forall_in_set<Pol>(elemList, GEOSX_LAMBDA (Index_type k) {
+  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
        
 #if defined(STRUCTURED_GRID)
        Index_type nodeList[inumNodesPerElement];       
@@ -1001,7 +1001,7 @@ RAJA_INLINE void ArrayOfObjects_IntegrationKernel(Index_type noElem, RAJA::Typed
 ///derivivatives stored in an array of objects format. This kernel only performs the kinematic step.
 ///            
 template<typename Pol>
-RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, RAJA::TypedListSegment<Index_type> elemList, real64 dt,
+RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, geosxIndex elemList, real64 dt,
                                                 const Index_type * elemsToNodes,
                                                 geosxData iu_x, geosxData iu_y, geosxData iu_z,
                                                 geosxData iuhat_x, geosxData iuhat_y, geosxData iuhat_z,
@@ -1016,7 +1016,7 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, RAJA::TypedLi
 {
 
 
-  forall_in_set<Pol>(elemList, GEOSX_LAMBDA (Index_type k) {
+  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
        
        real64 uhat_local_x[inumNodesPerElement];
        real64 uhat_local_y[inumNodesPerElement];
@@ -1146,7 +1146,7 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, RAJA::TypedLi
 ///derivivatives stored in an objects of arrays format. This kernel only performs the kinematic step.
 ///
 template<typename Pol>
-RAJA_INLINE void ObjectOfArrays_IntegrationKernel(Index_type noElem, RAJA::TypedListSegment<Index_type> elemList, real64 dt,
+RAJA_INLINE void ObjectOfArrays_IntegrationKernel(Index_type noElem, geosxIndex elemList, real64 dt,
                                                   const Index_type * elemsToNodes,                          
                                                   geosxData iu_x, geosxData iu_y, geosxData iu_z,
                                                   geosxData iuhat_x, geosxData iuhat_y, geosxData iuhat_z,
@@ -1159,7 +1159,7 @@ RAJA_INLINE void ObjectOfArrays_IntegrationKernel(Index_type noElem, RAJA::Typed
                                                   
 {
 
-  forall_in_set<Pol>(elemList, GEOSX_LAMBDA (Index_type k) {
+  forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
 
 #if defined(STRUCTURED_GRID)
        Index_type nodeList[inumNodesPerElement];       

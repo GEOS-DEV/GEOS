@@ -32,7 +32,7 @@
 using RAJA::Index_type;
 using real64 = double;
 using geosxData   = double* const RAJA_RESTRICT;
-using geosxIndex = RAJA::Index_type * const;
+using geosxIndex = const RAJA::Index_type * const RAJA_RESTRICT;
 
 //#define STRUCTURED_GRID
 
