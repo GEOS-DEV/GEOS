@@ -253,7 +253,6 @@ template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY
 NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
 {
   RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-  RAJA::RangeSegment seg(begin, end);
   
   forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
   {      
