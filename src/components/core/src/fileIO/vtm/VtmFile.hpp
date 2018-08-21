@@ -389,6 +389,7 @@ class MeshBlock {
                 string blockName);
         void Load();
         DumbMesh const & mesh() const;
+        bool IsARegionBlock() const;
     private:
         string m_vtuFileName;
         string m_blockName;
@@ -401,6 +402,8 @@ class RankBlock {
         void AddMeshBlock( const MeshBlock& block);
         void Load();
         void TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const;
+        localIndex NumMeshBlocks() const;
+        MeshBlock const & GetMeshBlock(localIndex const meshBlockIndex) const;
     private:
         std::vector< MeshBlock > m_block;
 };
@@ -419,6 +422,9 @@ class VtmFile {
          void Load( string const & fileName);
 
          void FromVtmToGEOS(MeshLevel * const meshLevel);
+
+         RankBlock const & GetRankBlock(localIndex const rankBlockIndex) const;
+         localIndex NumRankBlocks() const;
 
     protected:
         /*!

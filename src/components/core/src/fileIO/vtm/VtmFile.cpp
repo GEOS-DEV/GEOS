@@ -41,6 +41,10 @@ MeshBlock::MeshBlock( string fileName,
 {
 }
 
+bool MeshBlock::IsARegionBlock() const  {
+    return m_mesh.NumCells() > 0;
+}
+
 void MeshBlock::Load() {
     m_vtuFile.Load(m_vtuFileName,m_mesh);    
     m_mesh.SetName(m_blockName);
@@ -59,8 +63,23 @@ void RankBlock::Load() {
         block.Load();
     }
 }
-
+localIndex RankBlock::NumMeshBlocks() const {
+    return static_cast< localIndex > (m_block.size());
+}
+MeshBlock const & RankBlock::GetMeshBlock(localIndex const meshBlockIndex) const {
+    assert( meshBlockIndex < static_cast< localIndex > (m_block.size()));
+    return m_block[ meshBlockIndex ];
+}
 // PUBLIC METHODS
+
+RankBlock const & VtmFile::GetRankBlock(localIndex const rankBlockIndex) const {
+    assert( rankBlockIndex < static_cast< localIndex > (m_rankBlocks.size()));
+    return m_rankBlocks[rankBlockIndex];
+}
+
+localIndex VtmFile::NumRankBlocks() const{
+    return static_cast< localIndex >(m_rankBlocks.size());
+}
 void VtmFile::Load( string const &filename) {
     int mpiSize = 0;
     int mpiRank = 0;
@@ -537,12 +556,12 @@ globalIndex DumbMesh::QuadIndexToPolygonIndex(globalIndex const quadIndex) {
 
 localIndex DumbMesh::NumVerticesInCell(globalIndex const cellIndex ) const {
     assert(cellIndex < m_numCells);
-    return m_cellsPtr[cellIndex+1] - m_cellsPtr[cellIndex-1];
+    return m_cellsPtr[cellIndex+1] - m_cellsPtr[cellIndex];
 }
 
 localIndex DumbMesh::NumVerticesInPolygon(globalIndex const polygonIndex ) const {
     assert(polygonIndex < m_numPolygons);
-    return m_polygonsPtr[polygonIndex+1] - m_polygonsPtr[polygonIndex-1];
+    return m_polygonsPtr[polygonIndex+1] - m_polygonsPtr[polygonIndex];
 }
 
 globalIndex DumbMesh::CellVertexIndex(globalIndex const cellIndex,
@@ -702,12 +721,26 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
               tensorData[2] = mesh.Vertex(a)[2];
           }
 
-          CellBlockSubRegion * const cellBlock =
-              elemRegMananger->GetRegion( mesh.Name() )->GetSubRegion(0);
 
-          auto & cellToVertex = cellBlock->nodeList();
-          cellToVertex.resize( 0, mesh.NumVerticesInCell(0) );
-          cellBlock->resize( mesh.NumCells() );
+          for( int i = 0 ; i < elemRegMananger->GetRegions().size() ; i++) {
+              std::cout<< "REGION DBUT : " << i << std::endl;
+              std::cout << elemRegMananger->GetRegion(i)->getName() << std::endl;;
+              std::cout<< "REGION FIN : " << i << std::endl;
+          }
+          CellBlockSubRegion * const subRegion = elemRegMananger->GetRegion( "Region2" )->RegisterGroup<CellBlockSubRegion>("cb1");
+          CellBlockSubRegion * const cellBlock =
+              elemRegMananger->GetRegion( "Region2" )->GetSubRegion("HEX");
+          std::cout << "HA" << std::endl;
+          for(int i = 0 ; i < elemRegMananger->GetRegion( "Region2" )->GetSubRegions().size();i++){
+              std::cout << "SUBREGION : " << i << std::endl;
+          }
+          std::cout << "BE" << std::endl;
+
+          std::cout << "cellBlock pointer : " << cellBlock << std::endl;
+
+          subRegion->resize( mesh.NumCells() );
+          auto & cellToVertex = subRegion->nodeList();
+          cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
 
           for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
           {
