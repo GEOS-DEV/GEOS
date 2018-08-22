@@ -403,7 +403,13 @@ ConstructMaterialViewAccessor( string const & viewName,
         constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
         if( constitutiveRelation != nullptr )
         {
-          accessor[kReg][kSubReg][matIndex].set(constitutiveRelation->getReference<VIEWTYPE>(viewName));
+          dataRepository::ViewWrapper<VIEWTYPE> * const
+          wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
+
+          if( wrapper != nullptr )
+          {
+            accessor[kReg][kSubReg][matIndex].set(wrapper->reference() );
+          }
         }
       }
     }
@@ -449,7 +455,13 @@ ConstructMaterialViewAccessor( string const & viewName,
         constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
         if( constitutiveRelation != nullptr )
         {
-          accessor[kReg][kSubReg][matIndex].set(constitutiveRelation->getReference<VIEWTYPE>(viewName));
+          dataRepository::ViewWrapper<VIEWTYPE> * const
+          wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
+
+          if( wrapper != nullptr )
+          {
+            accessor[kReg][kSubReg][matIndex].set(constitutiveRelation->getReference<VIEWTYPE>(viewName));
+          }
         }
       }
     }
