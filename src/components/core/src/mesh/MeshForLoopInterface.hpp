@@ -19,7 +19,7 @@
 #ifndef __GEOS_RAJA_WRAPPER__HPP
 #define __GEOS_RAJA_WRAPPER__HPP
 
-#include "../rajaInterface/GEOS_RAJA_Policies.hpp"
+#include "../rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -28,36 +28,12 @@
 #include "finiteElement/FiniteElementSpace.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
 
-
-#define GEOSX_LAMBDA [=]
-
 namespace geosx{
 
-/*
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void forall_in_range( localIndex const begin, const localIndex end, LAMBDA && body)
-{
-  RAJA::RangeSegment seg(begin, end);
-  RAJA::forall<POLICY>( seg , [=] (localIndex index) mutable -> void
-  {
-    body(index);
-  } );
-}
-
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void forall_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
-{
-  RAJA::TypedListSegment<localIndex> listSeg(indexList, len, RAJA::Unowned);
-  RAJA::forall<POLICY>( listSeg , [=] (localIndex index) mutable -> void
-  {
-    body(index);
-  } );
-}
-
-*/
-
+using namespace raja;
+  
 //================
-//Hevy Computation
+//Heavy Computation
 //================
 #define FORALL( INDEX, begin, end )  \
   forall_in_range<RAJA::omp_parallel_for_exec>(begin, end,   \
@@ -79,15 +55,6 @@ void forall_in_set(localIndex const * const indexList, const localIndex len, LAM
   GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 
   
-//Randy's code
-//template<class POLICY=elemPolicy,typename LAMBDA=void>
-//void forall_in_range( dataRepository::ManagedGroup const * const group, LAMBDA && body)
-//{
-//FORALL(a, 0, group->size()){
-//body(a);
-//});
-//}
-
 //-------------
 //Here we want to unpack data and 
 //use one of the templated loops above
@@ -117,10 +84,6 @@ void for_faces( MeshLevel const * const mesh, const localIndex *setList, localIn
   forall_in_set<POLICY> (setList, listLen, body);
 }
 
-//How to unpack these?
-//template<class POLICY=elemPolicy,typename LAMBDA=void>
-//void for_edges( MeshLevel const * const mesh, LAMBDA && body);
- 
 
 template<class POLICY=elemPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
@@ -287,27 +250,31 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
   }
 }
 
+
 template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
 NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
 {
   RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-  RAJA::RangeSegment seg(begin, end);
-  RAJA::forall<EXEC_POLICY>( seg , [=] (localIndex index) mutable -> void
-  {
-    sum += body(index);
-  } );
+  
+  forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
+  {      
+      sum += body(index);
+  });
+
+  
   return sum.get();
 }
+
 
 template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
 NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
 {
   RAJA::ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-  RAJA::TypedListSegment<localIndex> listSeg(indexList, len, RAJA::Unowned);
-  RAJA::forall<EXEC_POLICY>( listSeg , [=] (localIndex index) mutable -> void
-  {
-    sum += body(index);
-  } );
+  forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
+   {
+     sum += body(index);
+   });
+  
   return sum.get();
 }
 
