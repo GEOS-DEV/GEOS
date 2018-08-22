@@ -374,6 +374,9 @@ public:
    *             application of the boundary condition.
    * @param[in] dataGroup the ManagedGroup that contains the field to apply the boundary condition to.
    * @param[in] fieldname the name of the field to apply the boundary condition to.
+   *
+   * This function applies the boundary condition to a field variable. This function is typically
+   * called from within the lambda to a call to BoundaryConditionManager::ApplyBoundaryCondition().
    */
   template< typename BC_OP >
   void ApplyBoundaryConditionToField( set<localIndex> const & targetSet,
@@ -382,12 +385,32 @@ public:
                                       string const & fieldname ) const;
 
   // calls user-provided lambda to apply computed boundary value
-  template<typename LAMBDA>
-  void ApplyBoundaryCondition( set<localIndex> const & targetSet,
-                               real64 const time,
-                               dataRepository::ManagedGroup * dataGroup,
-                               LAMBDA && lambda );
+//  template<typename LAMBDA>
+//  void ApplyBoundaryCondition( set<localIndex> const & targetSet,
+//                               real64 const time,
+//                               dataRepository::ManagedGroup * dataGroup,
+//                               LAMBDA && lambda );
 
+  /**
+   * @brief Function to apply a boundary condition to a system of equations
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the boundary condition.
+   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] fieldName The name of the field to apply the boundary condition to.
+   * @param[in] dofMapName The name of the map from the local index of the primary field to the
+   *                       global degree of freedom number.
+   * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
+   *                   this will be 1 for a pressure degree of freedom, and 3 for a displacement
+   *                   degree of freedom.
+   * @param[in] blockSystem A pointer to a blockSystem object.
+   * @param[in] blockID The blockID in the linear system where the global rows of the global degrees
+   *                    of freedom are stored.
+   *
+   * This function applies the boundary condition to a linear system of equations. This function is
+   * typically called from within the lambda to a call to
+   * BoundaryConditionManager::ApplyBoundaryCondition().
+   */
   template< typename BC_OP >
   void ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                        real64 const time,
@@ -399,6 +422,30 @@ public:
                                        systemSolverInterface::BlockIDs const blockID ) const;
 
 
+  /**
+   * @brief Function to apply a boundary condition to a system of equations
+   * @tparam BC_OP A wrapper struct to define how the boundary condition operates on the variables.
+   *               Either \ref BcEqual or \ref BcAdd.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the boundary condition.
+   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dofMapName The name of the map from the local index of the primary field to the
+   *                       global degree of freedom number.
+   * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
+   *                   this will be 1 for a pressure degree of freedom, and 3 for a displacement
+   *                   degree of freedom.
+   * @param[in] blockSystem A pointer to a blockSystem object.
+   * @param[in] blockID The blockID in the linear system where the global rows of the global degrees
+   *                    of freedom are stored.
+   * @param[in] lambda A lambda function which defines how the value that is passed into the functions
+   *                provided by the BC_OP templated type.
+   *
+   * This function applies the boundary condition to a linear system of equations. This function is
+   * typically called from within the lambda to a call to
+   * BoundaryConditionManager::ApplyBoundaryCondition().
+   */
   template< typename BC_OP, typename LAMBDA >
   void
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
@@ -423,6 +470,9 @@ public:
     constexpr static auto scaleString = "scale";
     constexpr static auto functionNameString = "functionName";
     constexpr static auto initialConditionString = "initialCondition";
+    constexpr static auto beginTimeString = "beginTime";
+    constexpr static auto endTimeString = "endTime";
+
 
   } viewKeys;
 
@@ -461,12 +511,12 @@ public:
 
   real64 GetStartTime() const
   {
-    return -1;
+    return m_beginTime;
   }
 
   real64 GetEndTime() const
   {
-    return 1.0e9;
+    return m_endTime;
   }
 
   string_array const & GetSetNames() const
@@ -508,11 +558,17 @@ private:
   /// The name of the function used to generate values for application.
   string m_functionName;
 
-  /// the name of a function used to turn on and off the boundary condition.
-  string m_bcApplicationFunctionName;
-
   /// The scale factor to use on the value of the boundary condition.
   real64 m_scale;
+
+  /// Time after which the bc is allowed to be applied
+  real64 m_beginTime;
+
+  /// Time after which the bc will no longer be applied.
+  real64 m_endTime;
+
+  /// the name of a function used to turn on and off the boundary condition.
+  string m_bcApplicationFunctionName;
 
 
 };
@@ -586,12 +642,39 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
                                                             systemSolverInterface::EpetraBlockSystem * const blockSystem,
                                                             systemSolverInterface::BlockIDs const blockID ) const
 {
+
+#if 1
+  dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( vw->get_typeid());
+  globalIndex_array const & dofMap = dataGroup->getReference<globalIndex_array>( dofMapName );
+  integer const component = GetComponent();
+
+  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type ) -> void
+    {
+      using fieldType = decltype(type);
+      dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
+      dataRepository::view_rtype<fieldType> field = view.data();
+
+      ApplyBoundaryConditionToSystem<BC_OP>( targetSet,
+                                             time,
+                                             dataGroup,
+                                             dofMap,
+                                             dofDim,
+                                             blockSystem,
+                                             blockID,
+                                             [&]( localIndex const a )->real64
+      {
+        return static_cast<real64>(rtTypes::value( field[a], component ));
+      });
+    });
+#else
+  dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( vw->get_typeid());
+
   integer const component = GetComponent();
   string const functionName = getData<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
-  dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( vw->get_typeid());
 
   integer const numBlocks = blockSystem->numBlocks();
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
@@ -670,6 +753,7 @@ void BoundaryConditionBase::ApplyBoundaryConditionToSystem( set<localIndex> cons
         }
       }
     } );
+#endif
 }
 
 
@@ -758,57 +842,57 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   }
 }
 
-template<typename LAMBDA>
-void BoundaryConditionBase::ApplyBoundaryCondition( set<localIndex> const & targetSet,
-                                                    real64 const time,
-                                                    dataRepository::ManagedGroup * dataGroup,
-                                                    LAMBDA && lambda )
-{
-  integer const component = GetComponent();
-  string const functionName = getData<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
-
-  if( functionName.empty())
-  {
-    real64 const value = m_scale;
-    integer counter = 0;
-    for( auto a : targetSet )
-    {
-      lambda( dataGroup, a, counter, value );
-      ++counter;
-    }
-  }
-  else
-  {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
-    if( function!=nullptr )
-    {
-      if( function->isFunctionOfTime() == 2 )
-      {
-        real64 const value = m_scale * function->Evaluate( &time );
-        integer counter = 0;
-        for( auto a : targetSet )
-        {
-          lambda( dataGroup, a, counter, value );
-          ++counter;
-        }
-      }
-      else
-      {
-        real64_array result;
-        result.resize( integer_conversion<localIndex>( targetSet.size()));
-        function->Evaluate( dataGroup, time, targetSet, result );
-        integer counter = 0;
-        for( auto a : targetSet )
-        {
-          real64 const value = m_scale * result[counter];
-          lambda( dataGroup, a, counter, value );
-          ++counter;
-        }
-      }
-    }
-  }
-}
+//template<typename LAMBDA>
+//void BoundaryConditionBase::ApplyBoundaryCondition( set<localIndex> const & targetSet,
+//                                                    real64 const time,
+//                                                    dataRepository::ManagedGroup * dataGroup,
+//                                                    LAMBDA && lambda )
+//{
+//  integer const component = GetComponent();
+//  string const functionName = getData<string>( viewKeyStruct::functionNameString );
+//  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+//
+//  if( functionName.empty())
+//  {
+//    real64 const value = m_scale;
+//    integer counter = 0;
+//    for( auto a : targetSet )
+//    {
+//      lambda( dataGroup, a, counter, value );
+//      ++counter;
+//    }
+//  }
+//  else
+//  {
+//    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+//    if( function!=nullptr )
+//    {
+//      if( function->isFunctionOfTime() == 2 )
+//      {
+//        real64 const value = m_scale * function->Evaluate( &time );
+//        integer counter = 0;
+//        for( auto a : targetSet )
+//        {
+//          lambda( dataGroup, a, counter, value );
+//          ++counter;
+//        }
+//      }
+//      else
+//      {
+//        real64_array result;
+//        result.resize( integer_conversion<localIndex>( targetSet.size()));
+//        function->Evaluate( dataGroup, time, targetSet, result );
+//        integer counter = 0;
+//        for( auto a : targetSet )
+//        {
+//          real64 const value = m_scale * result[counter];
+//          lambda( dataGroup, a, counter, value );
+//          ++counter;
+//        }
+//      }
+//    }
+//  }
+//}
 
 
 }
