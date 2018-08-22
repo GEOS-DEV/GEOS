@@ -7,9 +7,11 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                          verboseLevel="0"
-                          gravityFlag="1"
-                          discretization="singlePhaseTPFA">
+                     verboseLevel="0"
+                     gravityFlag="1"
+                     discretization="singlePhaseTPFA"
+                     fluidName="water"
+                     solidName="rock">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -66,10 +68,8 @@
     
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
-                                 fieldName="fluidPressure"
-                                 coefficientName="permeability"
-                                 cellLocation="center"
-                                 faceLocation="center"/>
+                                 fieldName="pressure"
+                                 coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -82,22 +82,16 @@
   </ElementRegions>
 
   <Constitutive>
-      <CompressibleSinglePhaseFluid name="water"
-                 referencePressure="0.0"
-                 referenceDensity="1000"
-                 compressibility="2.0e9"
-                 referenceViscosity="0.001"
-                 solidBulkModulus="20.0e9"
-                 />
-      
-      <CompressibleSinglePhaseFluid name="gel"
-                 referencePressure="0.0"
-                 referenceDensity="1001"
-                 compressibility="2.1e9"
-                 referenceViscosity="0.01"
-                 solidBulkModulus="20.0e9"
-                 />
-      
+    <CompressibleSinglePhaseFluid name="water"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="5e-10"
+                                  referenceViscosity="0.001"
+                                  viscosibility="0.0"/>
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
   </Constitutive>
 
   <InitialConditions>
@@ -107,9 +101,9 @@
   <BoundaryConditions>
     <Dirichlet name="permx"
                component="0"
-               initialCondition="1"  
+               initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -118,7 +112,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -127,7 +121,7 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -135,19 +129,32 @@
     <Dirichlet name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/referencePorosity"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="referencePorosity"
                dataType="real64"
                scale="0.05"/>
 
     <Dirichlet name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/fluidPressure"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="pressure"
                dataType="real64"
                scale="5e6"/>
-  
-    <Dirichlet name="sourceTerm" fieldName="fluidPressure" dataType="Scalar" scale="1e7" setNames="source"/>
-    <Dirichlet name="sinkTerm"   fieldName="fluidPressure" dataType="Scalar" scale="0.0" setNames="sink"/>
+
+    <Dirichlet name="sourceTerm"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="pressure"
+               dataType="Scalar"
+               scale="1e7"
+               setNames="source"/>
+
+    <Dirichlet name="sinkTerm"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="pressure"
+               dataType="Scalar"
+               scale="0.0"
+               setNames="sink"/>
   </BoundaryConditions>
 
   <Functions>
