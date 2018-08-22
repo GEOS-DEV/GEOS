@@ -34,6 +34,8 @@ BoundaryConditionBase::BoundaryConditionBase( string const & name, ManagedGroup 
   RegisterViewWrapper( viewKeyStruct::bcApplicationTableNameString, &m_bcApplicationFunctionName, 0 );
   RegisterViewWrapper( viewKeyStruct::scaleString, &m_scale, 0 );
   RegisterViewWrapper( viewKeyStruct::initialConditionString, &m_initialCondition, 0 );
+  RegisterViewWrapper( viewKeyStruct::beginTimeString, &m_beginTime, 0 );
+  RegisterViewWrapper( viewKeyStruct::endTimeString, &m_endTime, 0 );
 }
 
 
@@ -176,6 +178,33 @@ void BoundaryConditionBase::FillDocumentationNode()
                               "Component of field (if tensor) to apply boundary condition to",
                               "",
                               "-1",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+
+  docNode->AllocateChildNode( viewKeyStruct::beginTimeString,
+                              viewKeyStruct::beginTimeString,
+                              -1,
+                              "real64",
+                              "real64",
+                              "time at which BC will start being applied",
+                              "",
+                              "-1.0e99",
+                              "",
+                              0,
+                              1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeyStruct::endTimeString,
+                              viewKeyStruct::endTimeString,
+                              -1,
+                              "real64",
+                              "real64",
+                              "time at which bc will stop being applied",
+                              "",
+                              "1.0e99",
                               "",
                               0,
                               1,

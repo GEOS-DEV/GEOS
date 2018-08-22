@@ -55,9 +55,10 @@ void ConstitutiveManager::CreateChild( string const & childKey, string const & c
   ConstitutiveBase * newMaterial = this->RegisterGroup<ConstitutiveBase>( childName, std::move( material ) );
 }
 
-void ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
-                                                    dataRepository::ManagedGroup * const parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex ) const
+ConstitutiveBase *
+ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
+                                               dataRepository::ManagedGroup * const parent,
+                                               localIndex const numConstitutivePointsPerParentIndex ) const
 {
   ConstitutiveBase const * const
   constitutiveRelation = GetConstitituveRelation( constitutiveRelationInstanceName );
@@ -74,8 +75,8 @@ void ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveR
     constitutiveGroup = parent->RegisterGroup( groupKeyStruct::constitutiveModelsString );
   }
 
-  constitutiveGroup->RegisterGroup<ConstitutiveBase>( constitutiveRelationInstanceName,
-                                                      std::move( material ) );
+  return constitutiveGroup->RegisterGroup<ConstitutiveBase>( constitutiveRelationInstanceName,
+                                                             std::move( material ) );
 
 
 }
