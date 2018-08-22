@@ -28,7 +28,7 @@
 #include "common/TimingMacros.hpp"
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "common/DataTypes.hpp"
+#include <common/DataTypes.hpp>
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NumericalMethodsManager.hpp"
@@ -42,7 +42,7 @@
 
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
-
+#include "../../rajaInterface/GEOS_RAJA_Interface.hpp"
 
 //#define verbose 0 //Need to move this somewhere else
 
@@ -636,7 +636,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
           ConstitutiveBase * constitutiveModel = constitutiveManager->GetGroup<ConstitutiveBase>( constitutiveName );
 
-          RAJA::TypedListSegment<localIndex> elementList_raja(elementList.data(),elementList.size());
+          //RAJA::TypedListSegment<localIndex> elementList_raja(elementList.data(),elementList.size());          
 
           localIndex const numQuadraturePoints = feSpace->m_finiteElement->n_quadrature_points();
           void * constitutiveModelData;
@@ -664,10 +664,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
           //
           GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 #if !defined(EXTERNAL_KERNELS)         
-          RAJA::forall<elemPolicy>
-            (elementList_raja, [=] (int32_t k)
-          {
-              
+          geosx::forall_in_set<elemPolicy>(elementList.data(), elementList.size(), GEOSX_LAMBDA ( globalIndex k) {
               r1_array uhat_local( numNodesPerElement );
               r1_array u_local( numNodesPerElement );
               r1_array f_local( numNodesPerElement );
@@ -764,7 +761,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
           //Setup pointer for the external constitutive update
           void (*externConstitutiveUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
-                                           localIndex m, localIndex q, localIndex k, geosxData devStressData2,
+                                           localIndex m, localIndex q, globalIndex k, geosxData devStressData2,
                                            geosxData meanStress2, real64 shearModulus2, real64 bulkModulus2, localIndex NoElem);
           externConstitutiveUpdate = UpdateStatePoint;
 
@@ -791,13 +788,13 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 #if !defined(THREE_KERNEL_UPDATE) && !defined(COMPUTE_SHAPE_FUN)
           
           
-          SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel<elemPolicy>(elementList.size(),elementList_raja, dt,
+          SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel<elemPolicy>(elementList.size(),elementList.data(), dt,
                                                                                elemsToNodes.data(), iu, iuhat, idNdX,
                                                                                iconstitutiveMap, idevStress, imeanStress,
                                                                                shearModulus, bulkModulus, detJ.data(), iacc, externConstitutiveUpdate);
 #elif !defined(THREE_KERNEL_UPDATE) && defined(COMPUTE_SHAPE_FUN)
           
-          SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel_Shape<elemPolicy>(elementList.size(),elementList_raja, dt,
+          SolidMechanicsLagrangianFEMKernels::ArrayOfObjectsKernel_Shape<elemPolicy>(elementList.size(),elementList, dt,
                                                                                      elemsToNodes.data(), iu, iuhat, Xptr, P, 
                                                                                      iconstitutiveMap, idevStress, imeanStress,
                                                                                      shearModulus, bulkModulus, detJ.data(), iacc, externConstitutiveUpdate);
@@ -805,15 +802,15 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 #elif defined(THREE_KERNEL_UPDATE)
 
           //Kinematic step
-          SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_KinematicKernel<elemPolicy>(elementList.size(),elementList_raja, dt, elemsToNodes.data(), iu, iuhat, idNdX,
+          SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_KinematicKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), iu, iuhat, idNdX,
                                                                                         iconstitutiveMap, idevStress, imeanStress,
                                                                                         shearModulus, bulkModulus, detJ.data(), iacc, Dadt, Rot, detF, inverseF);
           //Constitutive step
-          SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<elemPolicy>(elementList.size(), elementList_raja, Dadt, Rot, iconstitutiveMap, idevStress,
+          SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<elemPolicy>(elementList.size(), elementList, Dadt, Rot, iconstitutiveMap, idevStress,
                                                                                   imeanStress, shearModulus, bulkModulus);
 
           //Integration step
-          SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_IntegrationKernel<elemPolicy>(elementList.size(),elementList_raja, dt, elemsToNodes.data(), iu, iuhat, idNdX,
+          SolidMechanicsLagrangianFEMKernels::ArrayOfObjects_IntegrationKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), iu, iuhat, idNdX,
                                                                                           iconstitutiveMap, idevStress, imeanStress,
                                                                                           shearModulus, bulkModulus, detJ.data(), iacc, Dadt, Rot, detF, inverseF);
 #else
@@ -857,31 +854,31 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 #if !defined(THREE_KERNEL_UPDATE) && !defined(COMPUTE_SHAPE_FUN)
 
           //Carry out computation in a monolithic kernel
-          SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel<elemPolicy>(elementList.size(), elementList_raja, dt,elemsToNodes.data(),
+          SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel<elemPolicy>(elementList.size(), elementList, dt,elemsToNodes.data(),
                                                                                u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
                                                                                iconstitutiveMap, idevStress, imeanStress, shearModulus,
                                                                                bulkModulus, detJ.data(), acc_x, acc_y, acc_z, externConstitutiveUpdate);
 #elif !defined(THREE_KERNEL_UPDATE) && defined(COMPUTE_SHAPE_FUN)
           
-          SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel_Shape<elemPolicy>(elementList.size(), elementList_raja, dt,elemsToNodes.data(),
+          SolidMechanicsLagrangianFEMKernels::ObjectOfArraysKernel_Shape<elemPolicy>(elementList.size(), elementList, dt,elemsToNodes.data(),
                                                                                      u_x, u_y, u_z, uhat_x, uhat_y, uhat_z, Xptr, P,
                                                                                      iconstitutiveMap, idevStress, imeanStress, shearModulus,
                                                                                      bulkModulus, detJ.data(), acc_x, acc_y, acc_z, externConstitutiveUpdate);
           
 #elif defined(THREE_KERNEL_UPDATE)
           //Kinematic step
-          SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_KinematicKernel<elemPolicy>(elementList.size(),elementList_raja, dt, elemsToNodes.data(), u_x,u_y,u_z,
+          SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_KinematicKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), u_x,u_y,u_z,
                                                                                         uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
                                                                                         iconstitutiveMap, idevStress, imeanStress,
                                                                                         shearModulus, bulkModulus, detJ.data(), 
                                                                                         acc_x, acc_y, acc_z,
                                                                                         Dadt, Rot, detF, inverseF);
           //Constitutive step
-          SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<elemPolicy>(elementList.size(), elementList_raja, Dadt, Rot, iconstitutiveMap, idevStress,
+          SolidMechanicsLagrangianFEMKernels::ConstitutiveUpdateKernel<elemPolicy>(elementList.size(), elementList, Dadt, Rot, iconstitutiveMap, idevStress,
                                                                                   imeanStress, shearModulus, bulkModulus);
 
           //Integration step
-          SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_IntegrationKernel<elemPolicy>(elementList.size(),elementList_raja, dt, elemsToNodes.data(), u_x,u_y,u_z,
+          SolidMechanicsLagrangianFEMKernels::ObjectOfArrays_IntegrationKernel<elemPolicy>(elementList.size(),elementList, dt, elemsToNodes.data(), u_x,u_y,u_z,
                                                                                           uhat_x, uhat_y, uhat_z, dNdX_x, dNdX_y, dNdX_z,
                                                                                           iconstitutiveMap, idevStress, imeanStress,
                                                                                           shearModulus, bulkModulus, detJ.data(), 
@@ -1549,14 +1546,14 @@ void SolidMechanics_LagrangianFEM::AssembleSystem ( DomainPartition * const  dom
           constitutiveModel->GetStiffness( stiffness );
           //Create a RAJA list segment
 //          RAJA::TypedListSegment<integer>
-// elementList_raja(elementList.data(),elementList.size());
+// elementList(elementList.data(),elementList.size());
           //std::cout<<"No of Elements: "<<elementList.size()<<std::endl;
 
 
           GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 
           // begin element loop, skipping ghost elements
-//        RAJA::forall<elemPolicy> (elementList_raja, [=] (integer_t k)
+//        RAJA::forall<elemPolicy> (elementList, [=] (integer_t k)
           for( auto k : elementList )
           {
             //      const array1d<integer>& elem_is_physical =
