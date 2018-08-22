@@ -70,11 +70,11 @@
 
   <Constitutive>
       <LinearElasticIsotropic name="granite"
-                              Density="2700"
+                              density0="2700"
                               BulkModulus0="5.5556e9"
                               ShearModulus0="4.16667e9"/>
       <LinearElasticIsotropic name="shale"
-                              Density="2700"
+                              density0="2700"
                               BulkModulus0="5.5556e9"
                               ShearModulus0="4.16667e9"/>
   </Constitutive>

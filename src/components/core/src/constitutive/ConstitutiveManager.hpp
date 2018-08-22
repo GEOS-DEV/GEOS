@@ -54,9 +54,10 @@ public:
   void FillDocumentationNode() override final;
   virtual void CreateChild( string const & childKey, string const & childName ) override final;
 
-  void HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
-                                 dataRepository::ManagedGroup * const parent,
-                                 localIndex const numConstitutivePointsPerParentIndex ) const;
+  ConstitutiveBase *
+  HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
+                            dataRepository::ManagedGroup * const parent,
+                            localIndex const numConstitutivePointsPerParentIndex ) const;
 
   ~ConstitutiveManager();
 
@@ -72,6 +73,17 @@ public:
     return this->GetGroup<T>( constitutiveRelationInstanceName );
   }
 
+  template< typename T = ConstitutiveBase >
+  T const * GetConstitituveRelation( localIndex const index ) const
+  {
+    return this->GetGroup<T>( index );
+  }
+
+  template< typename T = ConstitutiveBase >
+  T * GetConstitituveRelation( localIndex const index )
+  {
+    return this->GetGroup<T>( index );
+  }
 
   template< typename T >
   ViewAccessor< T >
