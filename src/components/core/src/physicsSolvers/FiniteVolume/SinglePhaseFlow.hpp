@@ -184,43 +184,35 @@ public:
                                      real64 const time, real64 const dt,
                                      systemSolverInterface::EpetraBlockSystem * const blockSystem);
 
-  /**
-   * @enum an enum to lay out the time integration options.
-   */
-  enum class timeIntegrationOption
-  {
-    SteadyState,      //!< SteadyState
-    ImplicitTransient,//!< ImplicitTransient
-    ExplicitTransient //!< ExplicitTransient
-  };
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    // dof numbering
     constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow";
 
-    constexpr static auto fluidPressureString = "fluidPressure";
-    constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
-    constexpr static auto faceFluidPressureString = "faceFluidPressure";
+    // primary solution field
+    constexpr static auto pressureString = "pressure";
+    constexpr static auto deltaPressureString = "deltaPressure";
+    constexpr static auto facePressureString = "facePressure";
 
-    constexpr static auto fluidDensityString = "fluidDensity";
-    constexpr static auto deltaFluidDensityString = "deltaFluidDensity";
-
-    constexpr static auto fluidViscosityString = "fluidViscosity";
-    constexpr static auto deltaFluidViscosityString = "deltaFluidViscosity";
-
+    // these are used to store last converged time step values
+    constexpr static auto densityString = "density";
+    constexpr static auto viscosityString = "viscosity";
     constexpr static auto porosityString = "porosity";
-    constexpr static auto deltaPorosityString = "deltaPorosity";
-    constexpr static auto referencePorosityString = "referencePorosity";
 
+    // input data
+    constexpr static auto referencePorosityString = "referencePorosity";
+    constexpr static auto permeabilityString = "permeability";
+
+    // gravity term precomputed values
     constexpr static auto gravityFlagString = "gravityFlag";
     constexpr static auto gravityDepthString = "gravityDepth";
 
-    constexpr static auto permeabilityString = "permeability";
-
+    // misc inputs
     constexpr static auto discretizationString = "discretization";
+    constexpr static auto fluidNameString = "fluidName";
+    constexpr static auto solidNameString = "solidName";
 
-    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
-    dataRepository::ViewKey functionalSpace = { "functionalSpace" };
   } viewKeys;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -236,12 +228,6 @@ private:
    */
   void PrecomputeData(DomainPartition *const domain);
 
-  /**
-   * @brief This function allocates additional storage (e.g. for derivatives)
-   * @param domain the domain partition
-   */
-  void AllocateAuxStorage(DomainPartition *const domain);
-
   /// flag indicating whether FV precompute has been performed
   bool m_precomputeDone;
 
@@ -249,16 +235,13 @@ private:
   integer m_gravityFlag;
 
   /// name of the FV discretization object in the data repository
-  std::string m_discretizationName;
+  string m_discretizationName;
 
-  /// temp storage for derivatives of density w.r.t. pressure
-//  array1d<array1d<array1d<real64>>> m_dDens_dPres;
+  /// name of the fluid constitutive model
+  string m_fluidName;
 
-  /// temp storage for derivatives of porosity w.r.t. pressure
-  array1d<array1d<array1d<real64>>> m_dPoro_dPres;
-
-  /// temp storage for derivatives of porosity w.r.t. pressure
-  array1d<array1d<array1d<real64>>> m_dVisc_dPres;
+  /// name of the solid constitutive model
+  string m_solidName;
 
 };
 
