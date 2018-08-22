@@ -7,10 +7,12 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                          verboseLevel="3"
-                          gravityFlag="1"
-                          discretization="singlePhaseTPFA"
-                          fluidName="water">
+                     verboseLevel="0"
+                     gravityFlag="1"
+                     discretization="singlePhaseTPFA"
+                     fluidName="water"
+                     solidName="rock">
+
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -67,10 +69,8 @@
     
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
-                                 fieldName="fluidPressure"
-                                 coefficientName="permeability"
-                                 cellLocation="center"
-                                 faceLocation="center"/>
+                                 fieldName="pressure"
+                                 coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -83,22 +83,16 @@
   </ElementRegions>
 
   <Constitutive>
-      <LinearEOS name="water"
-                 referencePressure="0.0"
-                 referenceDensity="1000"
-                 fluidBulkModulus="2.0e9"
-                 referenceViscosity="0.001"
-                 solidBulkModulus="20.0e9"
-                 />
-      
-      <LinearEOS name="gel"
-                 referencePressure="0.0"
-                 referenceDensity="1001"
-                 fluidBulkModulus="2.1e9"
-                 referenceViscosity="0.01"
-                 solidBulkModulus="20.0e9"
-                 />
-      
+    <CompressibleSinglePhaseFluid name="water"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="5e-10"
+                                  referenceViscosity="0.001"
+                                  viscosibility="0.0"/>
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
   </Constitutive>
 
   <InitialConditions>
@@ -108,7 +102,7 @@
   <BoundaryConditions>
     <Dirichlet name="permx"
                component="0"
-               initialCondition="1"  
+               initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
@@ -145,9 +139,10 @@
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="fluidPressure"
+               fieldName="pressure"
                dataType="real64"
                scale="5e6"/>
+
   
     <Dirichlet name="sourceTerm" 
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"

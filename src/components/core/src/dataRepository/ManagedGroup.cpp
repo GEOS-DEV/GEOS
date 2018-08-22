@@ -362,16 +362,17 @@ void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
   }
 }
 
-void ManagedGroup::PrintDataHierarchy()
+void ManagedGroup::PrintDataHierarchy(integer indent)
 {
   for( auto& view : this->wrappers() )
   {
-    std::cout<<view.second->getName()<<", "<<view.second->get_typeid().name()<<std::endl;
+    std::cout<<string(indent, '\t')<<view.second->getName()<<", "<<view.second->get_typeid().name()<<std::endl;
   }
 
   for( auto& group : this->m_subGroups )
   {
-    group.second->PrintDataHierarchy();
+    std::cout<<string(indent, '\t')<<group.first<<':'<<std::endl;
+    group.second->PrintDataHierarchy(indent + 1);
   }
 }
 

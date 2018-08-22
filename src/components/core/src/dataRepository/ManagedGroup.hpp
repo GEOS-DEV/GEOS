@@ -485,7 +485,7 @@ public:
   ///
 
 
-  void PrintDataHierarchy();
+  void PrintDataHierarchy(integer indent = 0);
 
   virtual void AddChildren( xmlWrapper::xmlNode const & targetNode );
 
