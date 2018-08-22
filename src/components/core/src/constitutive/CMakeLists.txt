@@ -7,7 +7,8 @@ set( constitutive_headers
      ExponentialRelation.hpp
      ExponentialRelation_impl.hpp
      LinearElasticIsotropic.hpp
-     EquationOfState/LinearEOS.hpp
+     Fluid/CompressibleSinglePhaseFluid.hpp
+     Solid/PoreVolumeCompressibleSolid.hpp
    )
 #
 # Specify all sources
@@ -16,7 +17,8 @@ set( constitutive_sources
      ConstitutiveManager.cpp
      ConstitutiveBase.cpp
      LinearElasticIsotropic.cpp
-     EquationOfState/LinearEOS.cpp
+     Fluid/CompressibleSinglePhaseFluid.cpp
+     Solid/PoreVolumeCompressibleSolid.cpp
    )
 
 

@@ -48,6 +48,15 @@ class ConstitutiveBase : public dataRepository::ManagedGroup
 {
 public:
 
+  /**
+   * Single point of reference for generated constitutive field naming convention
+   *
+   * @param prefix name prefix (e.g. constitutive model name)
+   * @param name actual field name
+   * @return prefixed field name that is used to access data
+   */
+  inline static string makeFieldName(string const & prefix, string const & name) { return prefix + "_" + name; }
+
 
   ConstitutiveBase( std::string const & name,
                     ManagedGroup * const parent );
@@ -58,7 +67,7 @@ public:
                                                           ManagedGroup * const parent ) const = 0;
 
 
-  virtual void SetParamStatePointers( void *& ) = 0;
+  virtual void SetParamStatePointers( void *& ) {};
 
 
   typedef void (*UpdateFunctionPointer)( R2SymTensor const & D,
@@ -67,7 +76,7 @@ public:
                                          void * dataPtrs,
                                          integer const systemAssembleFlag );
 
-  virtual UpdateFunctionPointer GetStateUpdateFunctionPointer( ) = 0;
+  virtual UpdateFunctionPointer GetStateUpdateFunctionPointer( ) { assert(false); return nullptr; };
 
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
@@ -81,37 +90,31 @@ public:
                                         localIndex const q,
                                         integer const systemAssembleFlag ) { return R2SymTensor(); }
 
-  virtual void FluidPressureUpdate( real64 const &dens,
+  virtual void FluidDensityCompute( real64 const & pres,
                                     localIndex const i,
-                                    real64 &pres,
-                                    real64 &dPres_dDens ) {}
+                                    real64 & dens,
+                                    real64 & dDens_dPres ) {}
 
-  virtual void FluidDensityUpdate( real64 const &pres,
-                                   localIndex const i,
-                                   real64 &dens,
-                                   real64 &dDens_dPres ) {}
-
-  virtual void DensityUpdate( real64 const &pres,
-                              localIndex const k,
-                              localIndex const q ) {}
+  virtual void FluidViscosityCompute( real64 const & pres,
+                                      localIndex const i,
+                                      real64 & visc,
+                                      real64 & dVisc_dPres ) {}
 
 
-  virtual void FluidViscosityUpdate( real64 const &pres,
-                                     localIndex const i,
-                                     real64 &visc,
-                                     real64 &dVisc_dPres ) {}
+  virtual void PoreVolumeMultiplierCompute( real64 const & pres,
+                                            localIndex const i,
+                                            real64 & poro,
+                                            real64 & dPVMult_dPres ) {}
 
-  virtual void SimplePorosityUpdate( real64 const &pres,
-                                     real64 const &poro_ref,
-                                     localIndex const i,
-                                     real64 &poro,
-                                     real64 &dPoro_dPres ) {}
+  virtual void PressureUpdatePoint( real64 const & pres,
+                                    localIndex const k,
+                                    localIndex const q ) {}
 
   virtual void FillDocumentationNode() override = 0;
 
   virtual void resize( localIndex ) override;
 
-  virtual void GetStiffness( realT c[6][6] ) const = 0;
+  virtual void GetStiffness( realT c[6][6] ) const {};
 
 
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
@@ -123,7 +126,18 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
-  {} m_ConstitutiveBaseViewKeys;
+  {
+    static constexpr auto densityString  = "density";
+    static constexpr auto dDens_dPresString  = "dPressure_dDensity";
+
+    static constexpr auto viscosityString  = "density";
+    static constexpr auto dVisc_dPresString  = "dPressure_dDensity";
+
+    static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
+    static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
+
+
+  } m_ConstitutiveBaseViewKeys;
 
   struct groupKeyStruct
   {} m_ConstitutiveBaseGroupKeys;
