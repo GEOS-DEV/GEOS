@@ -176,7 +176,7 @@ public:
       int const isInitialCondition = bc->initialCondition();
 
       if( ( isInitialCondition && fieldPath=="" ) ||
-          ( bc->GetObjectPath().find(fieldPath) != string::npos ) )
+          ( !isInitialCondition && bc->GetObjectPath().find(fieldPath) != string::npos ) )
       {
         string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/" );
 //        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
@@ -185,8 +185,9 @@ public:
 //        std::cout<<"targetName = "<<targetName<<std::endl;
 
         if( ( isInitialCondition && fieldName=="" ) ||
-            ( time >= bc->GetStartTime() && time < bc->GetEndTime() && targetName==fieldName ) )
+            ( !isInitialCondition && time >= bc->GetStartTime() && time < bc->GetEndTime() && targetName==fieldName ) )
         {
+//          std::cout<<bc->getName()<<std::endl;
 
           MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
                                         getMeshBody( 0 )->getMeshLevel( 0 );
