@@ -78,15 +78,22 @@ RAJA_INLINE void atomicAdd(T *acc, T value){
   RAJA::atomic::atomicAdd<POLICY>(acc, value);
 }
 
-//RAJA wrapper for loops over ranges
+//RAJA wrapper for loops over ranges - local index
 template<class POLICY=elemPolicy, typename LAMBDA=void>
 RAJA_INLINE void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body){
 
-  RAJA::forall<POLICY>(RAJA::RangeSegment(begin, end), body);  
+  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<localIndex>(begin, end), body);
+}
+
+//RAJA wrapper for loops over ranges - local index
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+RAJA_INLINE void forall_in_range(const globalIndex begin, const globalIndex end, LAMBDA && body){
+
+  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<globalIndex>(begin, end), body);
 }
 
 //RAJA wrapper for loops over sets
-template<class POLICY=elemPolicy, typename LAMBDA=void, typename T>
+template<class POLICY=elemPolicy, typename T, typename LAMBDA=void>
 RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body){
 
   RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), body);
