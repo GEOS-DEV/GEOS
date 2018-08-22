@@ -89,7 +89,7 @@ RAJA_INLINE void forall_in_range(const localIndex begin, const localIndex end, L
 template<class POLICY=elemPolicy, typename LAMBDA=void, typename T>
 RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body){
 
-  RAJA::forall<POLICY>(RAJA::ListSegment(indexList, len, RAJA::Unowned), body);
+  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), body);
 }
 
 }
