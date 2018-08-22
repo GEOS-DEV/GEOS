@@ -33,7 +33,7 @@
 #include <algorithm>
 #include "RAJA/RAJA.hpp"
 #include "RAJA/util/defines.hpp"
-#include "rajaInterface/GEOS_RAJA_Policies.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
 #ifdef USE_ATK
@@ -361,7 +361,7 @@ inline void AddLocalToGlobal( const localIndex* __restrict__ const globalToLocal
 {
   for( typename array1d<T>::size_type a=0 ; a<N ; ++a )
   {
-    RAJA::atomic::atomicAdd<atomicPol>(&globalField[globalToLocalRelation[a]],localField[a]);
+    geosx::raja::atomicAdd<atomicPol>(&globalField[globalToLocalRelation[a]],localField[a]);
   }
 }
 
@@ -378,7 +378,7 @@ inline void AddLocalToGlobal( const localIndex * __restrict__ const globalToLoca
     real64 const * __restrict__ const lData = localField[a].Data();
     for( localIndex i=0 ; i<3 ; ++i )
     {
-      RAJA::atomic::atomicAdd<atomicPol>( &gData[i], lData[i] );
+      geosx::raja::atomicAdd<atomicPol>( &gData[i], lData[i] );
     }
   }
 }
@@ -397,8 +397,8 @@ inline void AddLocalToGlobal<R1Tensor,RAJA::atomic::omp_atomic>( const localInde
       double * const lhs = globalField[ globalToLocalRelation[a] ].Data();
       double const * const rhs = localField[a].Data();
       for( int i=0; i<3; ++i )
-        {
-          RAJA::atomic::atomicAdd<RAJA::atomic::omp_atomic>(&lhs[i],rhs[i]);
+        {          
+          geosx::raja::atomicAdd<RAJA::atomic::omp_atomic>(&lhs[i],rhs[i]);
         }
     }
 }

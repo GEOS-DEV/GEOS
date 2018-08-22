@@ -25,7 +25,7 @@
 #define SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXSTENCIL_HPP_
 
 #include <common/DataTypes.hpp>
-#include <rajaInterface/GEOS_RAJA_Policies.hpp>
+#include <rajaInterface/GEOS_RAJA_Interface.hpp>
 
 namespace geosx
 {
