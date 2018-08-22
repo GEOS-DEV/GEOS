@@ -36,6 +36,9 @@ TwoPointFluxApproximation::TwoPointFluxApproximation(std::string const &name,
 
 }
 
+namespace
+{
+
 void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
 {
   result = 0.0;
@@ -46,13 +49,16 @@ void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
   for (unsigned icoord = 0; icoord < 3; ++icoord)
   {
     // assume principal axis aligned with global coordinate system
-    axis = 0.0; axis(icoord) = 1.0;
+    axis = 0.0;
+    axis(icoord) = 1.0;
 
     // XXX: is there a more elegant way to do this?
     temp.dyadic_aa(axis);
     temp *= values(icoord);
     result += temp;
   }
+}
+
 }
 
 void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, CellStencil & stencil)
@@ -98,7 +104,6 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
     faceArea = computationalGeometry::Centroid_3DPolygon(faceToNodes[kf], X, faceCenter, faceNormal);
 
     faceWeightInv = 0.0;
-    localIndex numActual = 0;
 
     for (localIndex ke = 0; ke < numElems; ++ke)
     {
@@ -123,11 +128,10 @@ void TwoPointFluxApproximation::computeMainStencil(DomainPartition * domain, Cel
         real64 const ht = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
 
         faceWeightInv += 1.0 / ht; // XXX: safeguard against div by zero?
-        ++numActual;
       }
     }
 
-    faceWeight = 1.0 * numActual / faceWeightInv; // XXX: safeguard against div by zero?
+    faceWeight = 1.0 / faceWeightInv; // XXX: safeguard against div by zero?
 
     // ensure consistent normal orientation
     if (Dot(cellToFaceVec, faceNormal) < 0)
