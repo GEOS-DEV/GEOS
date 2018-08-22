@@ -53,6 +53,8 @@ class ElementRegionManager : public ObjectManagerBase
 {
 public:
 
+  constexpr static int maxNumNodesPerElem = 8;
+
   template< typename VIEWTYPE >
   using ElementViewAccessor = array1d< array1d< ReferenceWrapper< VIEWTYPE > > > ;
 

@@ -97,8 +97,7 @@ void FiniteVolumeManager::precomputeFiniteVolumeData(DomainPartition * const dom
                                 localIndex const k )->void
   {
     arrayView1d<localIndex> nodeList = elemsToNodes[er][esr][k];
-    array1d< R1Tensor > Xlocal;
-    Xlocal.resize(nodeList.size());
+    R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
 
     R1Tensor & center = elemCenter[er][esr][k];
     center = 0.0;
