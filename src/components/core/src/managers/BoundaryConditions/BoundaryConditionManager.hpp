@@ -179,10 +179,10 @@ public:
           ( bc->GetObjectPath().find(fieldPath) != string::npos ) )
       {
         string_array const targetPath = stringutilities::Tokenize( bc->GetObjectPath(), "/" );
-        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
+//        std::cout<<"objectPath = "<<bc->GetObjectPath()<<std::endl;
         localIndex const targetPathLength = targetPath.size();
         string const targetName = bc->GetFieldName();
-        std::cout<<"targetName = "<<targetName<<std::endl;
+//        std::cout<<"targetName = "<<targetName<<std::endl;
 
         if( ( isInitialCondition && fieldName=="" ) ||
             ( time >= bc->GetStartTime() && time < bc->GetEndTime() && targetName==fieldName ) )
@@ -196,11 +196,11 @@ public:
           string processedPath;
           for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
-            std::cout<<targetPath[pathLevel]<<std::endl;
+//            std::cout<<targetPath[pathLevel]<<std::endl;
 
             targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
             processedPath += "/" + targetPath[pathLevel];
-            std::cout<<"processedPath="<<processedPath<<std::endl;
+//            std::cout<<"processedPath="<<processedPath<<std::endl;
 
             GEOS_ASSERT( targetGroup != nullptr,
                          "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" )
