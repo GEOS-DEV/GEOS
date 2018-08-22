@@ -213,6 +213,9 @@ public:
     constexpr static auto fluidNameString = "fluidName";
     constexpr static auto solidNameString = "solidName";
 
+    constexpr static auto fluidIndexString = "fluidIndex";
+    constexpr static auto solidIndexString = "solidIndex";
+
   } viewKeys;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
