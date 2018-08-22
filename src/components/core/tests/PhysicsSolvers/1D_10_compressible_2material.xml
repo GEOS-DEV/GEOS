@@ -9,7 +9,8 @@
     <SinglePhaseFlow name="SinglePhaseFlow"
                           verboseLevel="0"
                           gravityFlag="1"
-                          discretization="singlePhaseTPFA">
+                          discretization="singlePhaseTPFA"
+                          fluidName="water">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -109,7 +110,7 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -118,7 +119,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -127,7 +128,7 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
                fieldName="permeability"
                dataType="R1Tensor"
                scale="2.0e-16"/>
@@ -135,14 +136,16 @@
     <Dirichlet name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/referencePorosity"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="referencePorosity"
                dataType="real64"
                scale="0.05"/>
 
     <Dirichlet name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegion/Region2/cb1/fluidPressure"
+               objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
+               fieldName="fluidPressure"
                dataType="real64"
                scale="5e6"/>
   

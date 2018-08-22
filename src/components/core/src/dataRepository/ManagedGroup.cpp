@@ -181,12 +181,9 @@ ViewWrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, r
 ViewWrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
                                                      ViewWrapperBase * const wrapper )
 {
-  m_wrappers.insert( name,
-                     wrapper,
-                     true );
-
-  return nullptr;
-
+  return m_wrappers.insert( name,
+                            wrapper,
+                            true );
 }
 
 

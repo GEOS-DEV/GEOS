@@ -779,6 +779,12 @@ public:
     return m_parent;
   }
 
+  localIndex getIndexInParent() const
+  {
+    return m_parent->GetSubGroups().getIndex( this->m_name );
+  }
+
+
   viewWrapperMap const & wrappers() const
   {
     return m_wrappers;

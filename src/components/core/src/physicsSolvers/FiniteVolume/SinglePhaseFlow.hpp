@@ -219,6 +219,9 @@ public:
 
     constexpr static auto discretizationString = "discretization";
 
+    constexpr static auto fluidNameString = "fluidName";
+    constexpr static auto fluidIndexString = "fluidIndex";
+
     dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
     dataRepository::ViewKey functionalSpace = { "functionalSpace" };
   } viewKeys;
@@ -259,6 +262,10 @@ private:
 
   /// temp storage for derivatives of porosity w.r.t. pressure
   array1d<array1d<array1d<real64>>> m_dVisc_dPres;
+
+  string m_fluidMaterialName;
+
+  localIndex m_fluidIndex;
 
 };
 

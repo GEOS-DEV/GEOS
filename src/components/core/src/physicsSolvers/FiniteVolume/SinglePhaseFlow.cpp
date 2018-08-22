@@ -69,6 +69,8 @@ SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
 
   this->RegisterViewWrapper(viewKeyStruct::gravityFlagString, &m_gravityFlag, false);
   this->RegisterViewWrapper(viewKeyStruct::discretizationString, &m_discretizationName, false);
+  this->RegisterViewWrapper(viewKeyStruct::fluidNameString, &m_fluidMaterialName, false);
+  this->RegisterViewWrapper(viewKeyStruct::fluidIndexString, &m_fluidIndex, false);
 }
 
 
@@ -104,7 +106,7 @@ void SinglePhaseFlow::FillDocumentationNode(  )
                               "Flag that enables/disables gravity",
                               "1",
                               "",
-                              1,
+                              0,
                               1,
                               0 );
 
@@ -115,9 +117,22 @@ void SinglePhaseFlow::FillDocumentationNode(  )
                               "string",
                               "Name of the finite volume discretization to use",
                               "Name of the finite volume discretization to use",
+                              "Required",
                               "",
-                              "",
+                              0,
                               1,
+                              0 );
+
+  docNode->AllocateChildNode( viewKeyStruct::fluidNameString,
+                              viewKeyStruct::fluidNameString,
+                              -1,
+                              "string",
+                              "string",
+                              "Name of the fluid",
+                              "Name of the fluid",
+                              "Required",
+                              "",
+                              0,
                               1,
                               0 );
 }
@@ -367,6 +382,10 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
   // Call function to fill geometry parameters for use forming system
   PrecomputeData( domain );
 
+  ConstitutiveManager * const cm = domain->getConstitutiveManager();
+
+  this->m_fluidIndex = cm->GetConstitituveRelation( this->m_fluidMaterialName)->getIndexInParent();
+
 }
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
@@ -467,9 +486,20 @@ ImplicitStepSetup( real64 const& time_n,
 //    EOS->SimplePorosityUpdate(pressure, refPoro[er][esr][k], matIndex2, poro[er][esr][k], m_dPoro_dPres[er][esr][k]);
 
 //    constitutiveRelations[er][esr][0]->DensityUpdate(pressure, k, 0 );
-    constitutiveRelations[er][esr][0]->FluidDensityUpdate(pressure, 0, dens[er][esr][0][k][0], dRho_dP[er][esr][0][k][0]);
-    constitutiveRelations[er][esr][0]->FluidViscosityUpdate(pressure, 0, visc[er][esr][k], m_dVisc_dPres[er][esr][k]);
-    constitutiveRelations[er][esr][0]->SimplePorosityUpdate(pressure, refPoro[er][esr][k], 0, poro[er][esr][k], m_dPoro_dPres[er][esr][k]);
+    constitutiveRelations[er][esr][m_fluidIndex]->FluidDensityUpdate( pressure,
+                                                                      0,
+                                                                      dens[er][esr][m_fluidIndex][k][0],
+                                                                      dRho_dP[er][esr][m_fluidIndex][k][0]);
+
+    constitutiveRelations[er][esr][m_fluidIndex]->FluidViscosityUpdate(pressure,
+                                                                       0,
+                                                                       visc[er][esr][k],
+                                                                       m_dVisc_dPres[er][esr][k]);
+
+    constitutiveRelations[er][esr][m_fluidIndex]->SimplePorosityUpdate(pressure, refPoro[er][esr][k],
+                                                                       0,
+                                                                       poro[er][esr][k],
+                                                                       m_dPoro_dPres[er][esr][k]);
 
   });
 
@@ -512,7 +542,7 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
   {
     // update the fluid pressure and density.
     pres[er][esr][k] += dPres[er][esr][k];
-    dens[er][esr][0][k][0] += dDens[er][esr][k];
+    dens[er][esr][m_fluidIndex][k][0] += dDens[er][esr][k];
     visc[er][esr][k] += dVisc[er][esr][k];
     poro[er][esr][k] += dPoro[er][esr][k];
   });
@@ -836,17 +866,17 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
     {
       globalIndex const elemDOF = blockLocalDofNumber[er][esr][k];
 
-      real64 const densNew = dens[er][esr][0][k][0] + dDens[er][esr][k];
+      real64 const densNew = dens[er][esr][m_fluidIndex][k][0] + dDens[er][esr][k];
       real64 const poroNew = poro[er][esr][k] + dPoro[er][esr][k];
       real64 const vol     = volume[er][esr][k];
 
       // Residual contribution is mass conservation in the cell
       real64 const localAccum = poroNew          * densNew          * vol
-                              - poro[er][esr][k] * dens[er][esr][0][k][0] * vol;
+                              - poro[er][esr][k] * dens[er][esr][m_fluidIndex][k][0] * vol;
 
       // Derivative of residual wrt to pressure in the cell
       real64 const localAccumJacobian = (m_dPoro_dPres[er][esr][k] * densNew * vol)
-                                      + (dRho_dP[er][esr][0][k][0] * poroNew * vol);
+                                      + (dRho_dP[er][esr][m_fluidIndex][k][0] * poroNew * vol);
 
       // add contribution to global residual and dRdP
       residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);
@@ -894,8 +924,8 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
       eqnRowIndices[i] = blockLocalDofNumber[er][esr][ei];
 
       // density
-      real64 const density   = dens[er][esr][0][ei][0];
-      real64 const dDens_dP  = dRho_dP[er][esr][0][ei][0];
+      real64 const density   = dens[er][esr][m_fluidIndex][ei][0];
+      real64 const dDens_dP  = dRho_dP[er][esr][m_fluidIndex][ei][0];
 
       // viscosity
       real64 const viscosity = visc[er][esr][ei];
@@ -1035,7 +1065,7 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
       // if the boundary condition should be applied to this subregion
       bcManager->ApplyBoundaryCondition( time + dt,
                                          domain,
-                                         "",
+                                         "ElementRegions",
                                          viewKeyStruct::fluidPressureString,
                                          [&]( BoundaryConditionBase const * const bc,
                                               string const &,
@@ -1241,8 +1271,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
             eqnRowIndex = blockLocalDofNumber[er][esr][ei];
 
-            density   = dens[er][esr][0][ei][0];
-            dDens_dP  = dRho_dP[er][esr][0][ei][0];
+            density   = dens[er][esr][m_fluidIndex][ei][0];
+            dDens_dP  = dRho_dP[er][esr][m_fluidIndex][ei][0];
 
             viscosity = visc[er][esr][ei];
             dVisc_dP  = m_dVisc_dPres[er][esr][ei];
@@ -1495,9 +1525,9 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
     real64 const new_pres = pres[er][esr][k] + dPres[er][esr][k];
     real64 new_value;
 
-    constitutiveRelations[er][esr][0]->FluidDensityUpdate(new_pres, 0, new_value, dRho_dP[er][esr][0][k][0]);
+    constitutiveRelations[er][esr][0]->FluidDensityUpdate(new_pres, 0, new_value, dRho_dP[er][esr][m_fluidIndex][k][0]);
 //    constitutiveRelations[er][esr][0]->DensityUpdate( new_pres, k, 0 );
-    dDens[er][esr][k] = new_value - dens[er][esr][0][k][0];
+    dDens[er][esr][k] = new_value - dens[er][esr][m_fluidIndex][k][0];
 
     constitutiveRelations[er][esr][0]->FluidViscosityUpdate(new_pres, 0, new_value, m_dVisc_dPres[er][esr][k]);
     dVisc[er][esr][k] = new_value - visc[er][esr][k];
