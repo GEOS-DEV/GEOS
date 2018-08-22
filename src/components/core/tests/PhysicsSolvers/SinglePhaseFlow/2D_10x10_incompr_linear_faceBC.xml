@@ -82,14 +82,14 @@
   </ElementRegions>
 
   <Constitutive>
-      <LinearEOS name="water">
+      <CompressibleSinglePhaseFluid name="water">
         <ParameterData referencePressure="0.0"
                        referenceDensity="1000"
-                       fluidBulkModulus="1.0e32"
+                       compressibility="1.0e32"
                        referenceViscosity="0.001"
-                       fluidViscosibility="0.0"
+                       viscosibility="0.0"
                        solidBulkModulus="1.0e32"/>
-      </LinearEOS>
+      </CompressibleSinglePhaseFluid>
   </Constitutive>
 
   <InitialConditions>
