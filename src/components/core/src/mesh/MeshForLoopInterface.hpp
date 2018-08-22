@@ -227,7 +227,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
 
 
 
-template<class POLICY=RAJA::loop_exec,typename LAMBDA=void>
+template<class POLICY=elemPolicy,typename LAMBDA=void>
 void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 {
 

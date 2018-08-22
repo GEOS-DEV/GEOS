@@ -89,22 +89,22 @@ using namespace SolidMechanicsLagrangianFEMKernels;
 ///
 template<typename Pol>
 RAJA_INLINE
-void ObjectOfArraysKernel(Index_type noElem, geosxIndex elemList, real64 dt,
-                          const Index_type * elemsToNodes, geosxData iu_x,
+void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
+                          const localIndex * elemsToNodes, geosxData iu_x,
                           geosxData iu_y, geosxData iu_z,
                           geosxData iuhat_x,
                           geosxData iuhat_y, geosxData iuhat_z,
                           geosxData idNdX_x,
                           geosxData idNdX_y,geosxData idNdX_z,
-                          Index_type const * iconstitutiveMap, geosxData idevStressData,
+                          localIndex const * iconstitutiveMap, geosxData idevStressData,
                           geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
                           const real64 * idetJ, geosxData iacc_x,
                           geosxData iacc_y, geosxData iacc_z, constUpdate updateState_ptr, 
-                          Index_type nx=2, Index_type ny=2, Index_type nz=2)
+                          localIndex nx=2, localIndex ny=2, localIndex nz=2)
 {
 
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
       
       real64 uhat_local_x[inumNodesPerElement];
       real64 uhat_local_y[inumNodesPerElement];
@@ -120,10 +120,10 @@ void ObjectOfArraysKernel(Index_type noElem, geosxIndex elemList, real64 dt,
 
 
 #if defined(STRUCTURED_GRID)
-       Index_type nodeList[inumNodesPerElement];       
+       localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
-       const Index_type *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
+       const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
 #endif       
       
        //Copy Global To Local
@@ -133,7 +133,7 @@ void ObjectOfArraysKernel(Index_type noElem, geosxIndex elemList, real64 dt,
                      iu_x, iu_y, iu_z, iuhat_x, iuhat_y, iuhat_z);
               
       //Compute Quadrature
-      for(Index_type q=0; q<inumQuadraturePoints; ++q)
+      for(localIndex q=0; q<inumQuadraturePoints; ++q)
         {
 
 
@@ -155,32 +155,32 @@ void ObjectOfArraysKernel(Index_type noElem, geosxIndex elemList, real64 dt,
             real64 dvdX[local_dim][local_dim];
 
             
-            for(Index_type ty=0; ty<local_dim; ++ty){
-              for(Index_type tx=0; tx<local_dim; ++tx){
+            for(localIndex ty=0; ty<local_dim; ++ty){
+              for(localIndex tx=0; tx<local_dim; ++tx){
                 dvdX[ty][tx] = dUhatdX[ty][tx]*(1.0/dt);
               }
             }
             
             //calculate du/dX
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] = dUhatdX[row][col];
               }
             }
             
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                       F[row][col] *= 0.5;
               }
             }
             
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] += dUdX[row][col];
               }
             }
             
-            for(Index_type tx=0; tx<local_dim; ++tx){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               F[tx][tx] += 1.0;
             }
 
@@ -192,8 +192,8 @@ void ObjectOfArraysKernel(Index_type noElem, geosxIndex elemList, real64 dt,
           }
 
           //Calculate gradient (end of step)
-          for(Index_type ty=0; ty<local_dim; ++ty){
-            for(Index_type tx=0; tx<local_dim; ++tx){
+          for(localIndex ty=0; ty<local_dim; ++ty){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               F[ty][tx] = dUhatdX[ty][tx] + dUdX[ty][tx];
             }
           }
@@ -211,7 +211,7 @@ void ObjectOfArraysKernel(Index_type noElem, geosxIndex elemList, real64 dt,
           //-------------------------------------------
           
           //-------------[Constitutive update]-------------
-          Index_type m = iconstitutiveMap(k,q);          
+          localIndex m = iconstitutiveMap(k,q);          
           //UpdateStatePoint(Dadt,Rot,m, q,k, idevStressData, imeanStress,ishearModulus, ibulkModulus, noElem);
           updateState_ptr(Dadt,Rot,m, q,k, idevStressData, imeanStress, ishearModulus, ibulkModulus, noElem);
           //-------------------------------------------          
@@ -229,7 +229,7 @@ void ObjectOfArraysKernel(Index_type noElem, geosxIndex elemList, real64 dt,
           TotalStress[0][2] = TotalStress[2][0];
           TotalStress[1][2] = TotalStress[2][1];
 
-          for(Index_type i=0; i<local_dim; ++i)
+          for(localIndex i=0; i<local_dim; ++i)
             {
               TotalStress[i][i] += imeanStress[m];
             }
@@ -253,19 +253,19 @@ void ObjectOfArraysKernel(Index_type noElem, geosxIndex elemList, real64 dt,
 ///
 template<typename Pol>
 RAJA_INLINE
-void ObjectOfArraysKernel_Shape(Index_type noElem, geosxIndex elemList, real64 dt,
-                                const Index_type * elemsToNodes, geosxData iu_x,
+void ObjectOfArraysKernel_Shape(localIndex noElem, geosxIndex elemList, real64 dt,
+                                const localIndex * elemsToNodes, geosxData iu_x,
                                 geosxData iu_y, geosxData iu_z,
                                 geosxData iuhat_x,
                                 geosxData iuhat_y, geosxData iuhat_z, const real64 * X, P_Wrapper P,
-                                Index_type const * iconstitutiveMap, geosxData idevStressData,
+                                localIndex const * iconstitutiveMap, geosxData idevStressData,
                                 geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
                                 const real64 * idetJ, geosxData iacc_x,
                                 geosxData iacc_y, geosxData iacc_z, constUpdate updateState_ptr, 
-                                Index_type nx=2, Index_type ny=2, Index_type nz=2)
+                                localIndex nx=2, localIndex ny=2, localIndex nz=2)
 {
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
 
       real64 uhat_local_x[inumNodesPerElement];
       real64 uhat_local_y[inumNodesPerElement];
@@ -281,10 +281,10 @@ void ObjectOfArraysKernel_Shape(Index_type noElem, geosxIndex elemList, real64 d
 
       //Copy element to node list
 #if defined(STRUCTURED_GRID)
-       Index_type nodeList[inumNodesPerElement];       
+       localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
-       const Index_type *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
+       const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
 #endif       
        //Copy Global To Local
        GlobalToLocal(nodeList, k, 
@@ -307,7 +307,7 @@ void ObjectOfArraysKernel_Shape(Index_type noElem, geosxIndex elemList, real64 d
 #endif
        
       //Compute Quadrature
-      for(Index_type q=0; q<inumQuadraturePoints; ++q)
+      for(localIndex q=0; q<inumQuadraturePoints; ++q)
         {
 
 
@@ -329,32 +329,32 @@ void ObjectOfArraysKernel_Shape(Index_type noElem, geosxIndex elemList, real64 d
             real64 dvdX[local_dim][local_dim];
 
             
-            for(Index_type ty=0; ty<local_dim; ++ty){
-              for(Index_type tx=0; tx<local_dim; ++tx){
+            for(localIndex ty=0; ty<local_dim; ++ty){
+              for(localIndex tx=0; tx<local_dim; ++tx){
                 dvdX[ty][tx] = dUhatdX[ty][tx]*(1.0/dt);
               }
             }
             
             //calculate du/dX
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] = dUhatdX[row][col];
               }
             }
             
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                       F[row][col] *= 0.5;
               }
             }
             
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] += dUdX[row][col];
               }
             }
             
-            for(Index_type tx=0; tx<local_dim; ++tx){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               F[tx][tx] += 1.0;
             }
 
@@ -366,8 +366,8 @@ void ObjectOfArraysKernel_Shape(Index_type noElem, geosxIndex elemList, real64 d
           }
 
           //Calculate gradient (end of step)
-          for(Index_type ty=0; ty<local_dim; ++ty){
-            for(Index_type tx=0; tx<local_dim; ++tx){
+          for(localIndex ty=0; ty<local_dim; ++ty){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               F[ty][tx] = dUhatdX[ty][tx] + dUdX[ty][tx];
             }
           }
@@ -385,7 +385,7 @@ void ObjectOfArraysKernel_Shape(Index_type noElem, geosxIndex elemList, real64 d
           //-------------------------------------------
           
           //-------------[Constitutive update]-------------
-          Index_type m = iconstitutiveMap(k,q);          
+          localIndex m = iconstitutiveMap(k,q);          
           //UpdateStatePoint(Dadt,Rot,m, q,k, idevStressData, imeanStress,ishearModulus, ibulkModulus, noElem);
           updateState_ptr(Dadt,Rot,m, q,k, idevStressData, imeanStress, ishearModulus, ibulkModulus, noElem);
           //-------------------------------------------          
@@ -403,7 +403,7 @@ void ObjectOfArraysKernel_Shape(Index_type noElem, geosxIndex elemList, real64 d
           TotalStress[0][2] = TotalStress[2][0];
           TotalStress[1][2] = TotalStress[2][1];
 
-          for(Index_type i=0; i<local_dim; ++i)
+          for(localIndex i=0; i<local_dim; ++i)
             {
               TotalStress[i][i] += imeanStress[m];
             }
@@ -426,17 +426,17 @@ void ObjectOfArraysKernel_Shape(Index_type noElem, geosxIndex elemList, real64 d
 // Computes shape function derivatives on the fly.
 ///
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, geosxIndex elemList, real64 dt,
-                                            const Index_type * elemsToNodes, geosxData iu,
+RAJA_INLINE void ArrayOfObjectsKernel_Shape(localIndex noElem, geosxIndex elemList, real64 dt,
+                                            const localIndex * elemsToNodes, geosxData iu,
                                             geosxData iuhat, const real64 * X, P_Wrapper P,
-                                            Index_type const * iconstitutiveMap, geosxData idevStressData,
+                                            localIndex const * iconstitutiveMap, geosxData idevStressData,
                                             geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
                                             const real64 * idetJ, geosxData iacc, constUpdate updateState_ptr,
-                                            Index_type nx=2, Index_type ny=2, Index_type nz=2)
+                                            localIndex nx=2, localIndex ny=2, localIndex nz=2)
 {
 
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
       
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
@@ -444,10 +444,10 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, geosxIndex elemLi
 
        //Copy element to node list       
 #if defined(STRUCTURED_GRID)
-       Index_type nodeList[inumNodesPerElement];       
+       localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
-       const Index_type *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
+       const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
 #endif       
        
        //Copy Global to Local
@@ -465,7 +465,7 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, geosxIndex elemLi
 #endif       
                                           
       //Compute Quadrature
-      for(Index_type q=0; q<inumQuadraturePoints; ++q)
+      for(localIndex q=0; q<inumQuadraturePoints; ++q)
         {
           real64 dUdX[local_dim][local_dim] = {{0.0}};          
           real64 dUhatdX[local_dim][local_dim] = {{0.0}};
@@ -482,32 +482,32 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, geosxIndex elemLi
           {            
             real64 dvdX[local_dim][local_dim];
             
-            for(Index_type ty=0; ty<local_dim; ++ty){
-              for(Index_type tx=0; tx<local_dim; ++tx){
+            for(localIndex ty=0; ty<local_dim; ++ty){
+              for(localIndex tx=0; tx<local_dim; ++tx){
                 dvdX[ty][tx] = dUhatdX[ty][tx]*(1.0/dt);
               }
             }
             
             //calculate du/dX
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] = dUhatdX[row][col];
               }
             }
             
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                       F[row][col] *= 0.5;
               }
             }
             
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] += dUdX[row][col];
               }
             }
             
-            for(Index_type tx=0; tx<local_dim; ++tx){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               F[tx][tx] += 1.0;
             }
             
@@ -518,8 +518,8 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, geosxIndex elemLi
           }
 
           //Calculate gradient (end of step)
-          for(Index_type ty=0; ty<local_dim; ++ty){
-            for(Index_type tx=0; tx<local_dim; ++tx){
+          for(localIndex ty=0; ty<local_dim; ++ty){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               F[ty][tx] = dUhatdX[ty][tx] + dUdX[ty][tx];
             }
           }
@@ -539,7 +539,7 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, geosxIndex elemLi
           
 
           //-------------[Constitutive update]-------------
-          Index_type m = iconstitutiveMap(k,q);
+          localIndex m = iconstitutiveMap(k,q);
           //UpdateStatePoint(Dadt,Rot,m, q,k, idevStressData,
           //imeanStress,ishearModulus, ibulkModulus,noElem);
           
@@ -560,7 +560,7 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, geosxIndex elemLi
           TotalStress[0][2] = TotalStress[2][0];
           TotalStress[1][2] = TotalStress[2][1];
 
-          for(Index_type i=0; i<local_dim; ++i)
+          for(localIndex i=0; i<local_dim; ++i)
             {
               TotalStress[i][i] += imeanStress[m];
             }
@@ -580,26 +580,26 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(Index_type noElem, geosxIndex elemLi
 ///All computations are done in a monolithic kernel.
 ///      
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, geosxIndex elemList, real64 dt,
-                                      const Index_type * const elemsToNodes, geosxData iu,
+RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, real64 dt,
+                                      const localIndex * const elemsToNodes, geosxData iu,
                                       geosxData iuhat, geosxData idNdX,
-                                      Index_type const * iconstitutiveMap, geosxData idevStressData,
+                                      localIndex const * iconstitutiveMap, geosxData idevStressData,
                                       geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
                                       const real64 * idetJ, geosxData iacc, constUpdate updateState_ptr,
-                                      Index_type nx=2, Index_type ny=2, Index_type nz=2)
+                                      localIndex nx=2, localIndex ny=2, localIndex nz=2)
 {
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
 
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
        real64 f_local[local_dim*inumNodesPerElement] = {0};
 
 #if defined(STRUCTURED_GRID)
-       Index_type nodeList[inumNodesPerElement];       
+       localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
-       const Index_type *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
+       const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
 #endif       
 
        //Copy Global to Local
@@ -607,7 +607,7 @@ RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, geosxIndex elemList, re
                      u_local,  uhat_local, iu, iuhat);              
                                           
       //Compute Quadrature
-      for(Index_type q=0; q<inumQuadraturePoints; ++q)
+      for(localIndex q=0; q<inumQuadraturePoints; ++q)
 
         {
 
@@ -627,32 +627,32 @@ RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, geosxIndex elemList, re
           {            
             real64 dvdX[local_dim][local_dim];
             
-            for(Index_type ty=0; ty<local_dim; ++ty){
-              for(Index_type tx=0; tx<local_dim; ++tx){
+            for(localIndex ty=0; ty<local_dim; ++ty){
+              for(localIndex tx=0; tx<local_dim; ++tx){
                 dvdX[ty][tx] = dUhatdX[ty][tx]*(1.0/dt);
               }
             }
             
             //calculate du/dX
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] = dUhatdX[row][col];
               }
             }
             
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                       F[row][col] *= 0.5;
               }
             }
             
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] += dUdX[row][col];
               }
             }
             
-            for(Index_type tx=0; tx<local_dim; ++tx){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               F[tx][tx] += 1.0;
             }
             
@@ -663,8 +663,8 @@ RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, geosxIndex elemList, re
           }
 
           //Calculate gradient (end of step)
-          for(Index_type ty=0; ty<local_dim; ++ty){
-            for(Index_type tx=0; tx<local_dim; ++tx){
+          for(localIndex ty=0; ty<local_dim; ++ty){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               F[ty][tx] = dUhatdX[ty][tx] + dUdX[ty][tx];
             }
           }
@@ -684,7 +684,7 @@ RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, geosxIndex elemList, re
           
 
           //-------------[Constitutive update]-------------
-          Index_type m = iconstitutiveMap(k,q);
+          localIndex m = iconstitutiveMap(k,q);
           //UpdateStatePoint(Dadt,Rot,m, q,k, idevStressData,
           //imeanStress,ishearModulus, ibulkModulus,noElem);
           
@@ -705,7 +705,7 @@ RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, geosxIndex elemList, re
           TotalStress[0][2] = TotalStress[2][0];
           TotalStress[1][2] = TotalStress[2][1];
 
-          for(Index_type i=0; i<local_dim; ++i)
+          for(localIndex i=0; i<local_dim; ++i)
             {
               TotalStress[i][i] += imeanStress[m];
             }
@@ -727,26 +727,26 @@ RAJA_INLINE void ArrayOfObjectsKernel(Index_type noElem, geosxIndex elemList, re
 ///is taken here. 
 ///            
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, geosxIndex elemList, real64 dt,
-                                                const Index_type * elemsToNodes,
+RAJA_INLINE void ArrayOfObjects_KinematicKernel(localIndex noElem, geosxIndex elemList, real64 dt,
+                                                const localIndex * elemsToNodes,
                                                 geosxData iu, geosxData iuhat, geosxData idNdX,                          
-                                                Index_type const * iconstitutiveMap, geosxData idevStressData,
+                                                localIndex const * iconstitutiveMap, geosxData idevStressData,
                                                 geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
                                                 const real64 * idetJ, geosxData iacc, geosxData Dadt_ptr, geosxData Rot_ptr,
                                                 geosxData detF_ptr, geosxData Finv_ptr,
-                                                Index_type nx=2, Index_type ny=2, Index_type nz=3)
+                                                localIndex nx=2, localIndex ny=2, localIndex nz=3)
 {
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
        
        real64 uhat_local[local_dim*inumNodesPerElement];
        real64 u_local[local_dim*inumNodesPerElement];
 
 #if defined(STRUCTURED_GRID)
-       Index_type nodeList[inumNodesPerElement];       
+       localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
-       const Index_type *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
+       const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
 #endif       
        
        //Copy Global to Local
@@ -754,13 +754,13 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, geosxIndex el
                      u_local,  uhat_local, iu, iuhat);        
       
       //Compute Quadrature
-      for(Index_type q=0; q<inumQuadraturePoints; ++q)
+      for(localIndex q=0; q<inumQuadraturePoints; ++q)
         {
           real64 dUhatdX[local_dim][local_dim];
           real64 dUdX[local_dim][local_dim];
 
-          for(Index_type ty=0; ty<local_dim; ++ty){
-            for(Index_type tx=0; tx<local_dim; ++tx){
+          for(localIndex ty=0; ty<local_dim; ++ty){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               dUhatdX[ty][tx] = 0.0;
               dUdX[ty][tx] = 0.0;
             }
@@ -780,32 +780,32 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, geosxIndex el
             real64 dvdX[local_dim][local_dim];
 
             
-            for(Index_type ty=0; ty<local_dim; ++ty){
-              for(Index_type tx=0; tx<local_dim; ++tx){
+            for(localIndex ty=0; ty<local_dim; ++ty){
+              for(localIndex tx=0; tx<local_dim; ++tx){
                 dvdX[ty][tx] = dUhatdX[ty][tx]*(1.0/dt);
               }
             }
             
             //calculate du/dX
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] = dUhatdX[row][col];
               }
             }
             
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] *= 0.5;
               }
             }
             
-            for(Index_type row=0; row<local_dim; ++row){
-              for(Index_type col=0; col<local_dim; ++col){
+            for(localIndex row=0; row<local_dim; ++row){
+              for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] += dUdX[row][col];
               }
             }
             
-            for(Index_type tx=0; tx<local_dim; ++tx){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               F[tx][tx] += 1.0;
             }
             
@@ -816,8 +816,8 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, geosxIndex el
           }
 
           //Calculate gradient (end of step)
-          for(Index_type ty=0; ty<local_dim; ++ty){
-            for(Index_type tx=0; tx<local_dim; ++tx){
+          for(localIndex ty=0; ty<local_dim; ++ty){
+            for(localIndex tx=0; tx<local_dim; ++tx){
               F[ty][tx] = dUhatdX[ty][tx] + dUdX[ty][tx];
             }
           }
@@ -837,8 +837,8 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, geosxIndex el
 
           //Write out data to global memory
           detF_ptr(k,q) = detF;
-          for(Index_type r = 0; r < local_dim; ++r){
-            for(Index_type c = 0; c < local_dim; ++c){
+          for(localIndex r = 0; r < local_dim; ++r){
+            for(localIndex c = 0; c < local_dim; ++c){
                 Dadt_ptr(k,q,r,c) = Dadt[r][c];
                 Rot_ptr(k,q,r,c) = Rot[r][c];
                 Finv_ptr(k,q,r,c) = Finv[r][c];
@@ -857,35 +857,35 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(Index_type noElem, geosxIndex el
 ///Constitutive update. This would normally be a function pointer in a monolithic kernel.
 ///
 template<typename Pol>
-RAJA_INLINE void ConstitutiveUpdateKernel(Index_type noElem, geosxIndex elemList,
-                                          geosxData Dadt_ptr, geosxData Rot_ptr, Index_type const * iconstitutiveMap,
+RAJA_INLINE void ConstitutiveUpdateKernel(localIndex noElem, geosxIndex elemList,
+                                          geosxData Dadt_ptr, geosxData Rot_ptr, localIndex const * iconstitutiveMap,
                                           geosxData idevStressData, geosxData imeanStress, real64 shearModulus, real64 bulkModulus)
                           
 {
 
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
       
-      for(Index_type q=0; q < inumQuadraturePoints; ++q){      
+      for(localIndex q=0; q < inumQuadraturePoints; ++q){      
 
-        Index_type m = iconstitutiveMap(k,q);
+        localIndex m = iconstitutiveMap(k,q);
           
         real64 volumeStrain = Dadt_ptr(k,q,0,0) + Dadt_ptr(k,q,1,1) + Dadt_ptr(k,q,2,2);
         imeanStress[m] += volumeStrain * bulkModulus;
         
         real64 temp[local_dim][local_dim];
-        for(Index_type i=0; i<3; ++i)
+        for(localIndex i=0; i<3; ++i)
           {
-            for(Index_type j=0; j<3; ++j)
+            for(localIndex j=0; j<3; ++j)
               {
                 temp[i][j] = Dadt_ptr(k,q,i,j);
             }
             temp[i][i] -= volumeStrain / 3.0;
           }
         
-        for(Index_type ty=0; ty<3; ++ty)
+        for(localIndex ty=0; ty<3; ++ty)
           {
-            for(Index_type tx=0; tx<3; ++tx)
+            for(localIndex tx=0; tx<3; ++tx)
               {
                 temp[ty][tx] *= 2.0 * shearModulus;
               }
@@ -912,8 +912,8 @@ RAJA_INLINE void ConstitutiveUpdateKernel(Index_type noElem, geosxIndex elemList
 
         //Make a local copy
         real64 Rot[local_dim][local_dim];
-        for(Index_type r=0; r<local_dim; ++r){
-          for(Index_type c=0; c<local_dim; ++c){
+        for(localIndex r=0; r<local_dim; ++r){
+          for(localIndex c=0; c<local_dim; ++c){
             Rot[r][c] = Rot_ptr(k,q,r,c); 
           }
         }
@@ -942,30 +942,30 @@ RAJA_INLINE void ConstitutiveUpdateKernel(Index_type noElem, geosxIndex elemList
 ///stored in a array of objects format.
 ///
 template<typename Pol>
-RAJA_INLINE void ArrayOfObjects_IntegrationKernel(Index_type noElem, geosxIndex elemList, real64 dt,
-                                                  const Index_type * elemsToNodes,
+RAJA_INLINE void ArrayOfObjects_IntegrationKernel(localIndex noElem, geosxIndex elemList, real64 dt,
+                                                  const localIndex * elemsToNodes,
                                                   geosxData iu, geosxData iuhat, geosxData idNdX,
-                                                  Index_type const * iconstitutiveMap, geosxData idevStressData,
+                                                  localIndex const * iconstitutiveMap, geosxData idevStressData,
                                                   geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
                                                   const real64 * idetJ, geosxData iacc, geosxData Dadt_ptr, geosxData Rot_ptr,
                                                   geosxData detF_ptr, geosxData Finv_ptr,
-                                                  Index_type nx=2, Index_type ny=2, Index_type nz=2)
+                                                  localIndex nx=2, localIndex ny=2, localIndex nz=2)
 {
   
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
        
 #if defined(STRUCTURED_GRID)
-       Index_type nodeList[inumNodesPerElement];       
+       localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
-       const Index_type *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
+       const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
 #endif       
        
        real64 f_local[local_dim*inumNodesPerElement] = {0};
        
-       for(Index_type q=0; q < inumQuadraturePoints; ++q){
+       for(localIndex q=0; q < inumQuadraturePoints; ++q){
   
-         Index_type m = iconstitutiveMap(k,q);
+         localIndex m = iconstitutiveMap(k,q);
          real64 TotalStress[local_dim][local_dim];
   
          TotalStress[0][0] = idevStressData(k,q,0);
@@ -979,7 +979,7 @@ RAJA_INLINE void ArrayOfObjects_IntegrationKernel(Index_type noElem, geosxIndex 
          TotalStress[0][2] = TotalStress[2][0];
          TotalStress[1][2] = TotalStress[2][1];
          
-          for(Index_type i=0; i<local_dim; ++i)
+          for(localIndex i=0; i<local_dim; ++i)
             {
               TotalStress[i][i] += imeanStress[m];
             }
@@ -1001,22 +1001,22 @@ RAJA_INLINE void ArrayOfObjects_IntegrationKernel(Index_type noElem, geosxIndex 
 ///derivivatives stored in an array of objects format. This kernel only performs the kinematic step.
 ///            
 template<typename Pol>
-RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, geosxIndex elemList, real64 dt,
-                                                const Index_type * elemsToNodes,
+RAJA_INLINE void ObjectOfArrays_KinematicKernel(localIndex noElem, geosxIndex elemList, real64 dt,
+                                                const localIndex * elemsToNodes,
                                                 geosxData iu_x, geosxData iu_y, geosxData iu_z,
                                                 geosxData iuhat_x, geosxData iuhat_y, geosxData iuhat_z,
                                                 geosxData idNdX_x, geosxData idNdX_y, geosxData idNdX_z,
-                                                Index_type const * iconstitutiveMap, geosxData idevStressData,
+                                                localIndex const * iconstitutiveMap, geosxData idevStressData,
                                                 geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
                                                 const real64 * idetJ,
                                                 geosxData iacc_x, geosxData iacc_y, geosxData iacc_z,
                                                 geosxData Dadt_ptr, geosxData Rot_ptr,
                                                 geosxData detF_ptr, geosxData Finv_ptr,
-                                                Index_type nx = 2, Index_type ny = 2, Index_type nz=2)
+                                                localIndex nx = 2, localIndex ny = 2, localIndex nz=2)
 {
 
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
        
        real64 uhat_local_x[inumNodesPerElement];
        real64 uhat_local_y[inumNodesPerElement];
@@ -1027,10 +1027,10 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, geosxIndex el
        real64 u_local_z[inumNodesPerElement];
 
 #if defined(STRUCTURED_GRID)
-       Index_type nodeList[inumNodesPerElement];       
+       localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
-       const Index_type *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
+       const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
 #endif       
 
        //Copy array
@@ -1040,14 +1040,14 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, geosxIndex el
                      iu_x, iu_y, iu_z, iuhat_x, iuhat_y, iuhat_z);
        
        //Compute Quadrature
-       for(Index_type q=0; q<inumQuadraturePoints; ++q)
+       for(localIndex q=0; q<inumQuadraturePoints; ++q)
          {           
            
            real64 dUhatdX[local_dim][local_dim];
            real64 dUdX[local_dim][local_dim];
            
-           for(Index_type ty=0; ty<local_dim; ++ty){
-             for(Index_type tx=0; tx<local_dim; ++tx){
+           for(localIndex ty=0; ty<local_dim; ++ty){
+             for(localIndex tx=0; tx<local_dim; ++tx){
                dUhatdX[ty][tx] = 0.0;
                dUdX[ty][tx] = 0.0;
              }
@@ -1068,32 +1068,32 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, geosxIndex el
              real64 dvdX[local_dim][local_dim];
              
              
-             for(Index_type ty=0; ty<local_dim; ++ty){
-               for(Index_type tx=0; tx<local_dim; ++tx){
+             for(localIndex ty=0; ty<local_dim; ++ty){
+               for(localIndex tx=0; tx<local_dim; ++tx){
                  dvdX[ty][tx] = dUhatdX[ty][tx]*(1.0/dt);
                }
              }
              
              //calculate du/dX
-             for(Index_type row=0; row<local_dim; ++row){
-               for(Index_type col=0; col<local_dim; ++col){
+             for(localIndex row=0; row<local_dim; ++row){
+               for(localIndex col=0; col<local_dim; ++col){
                 F[row][col] = dUhatdX[row][col];
                }
              }
              
-             for(Index_type row=0; row<local_dim; ++row){
-               for(Index_type col=0; col<local_dim; ++col){
+             for(localIndex row=0; row<local_dim; ++row){
+               for(localIndex col=0; col<local_dim; ++col){
                  F[row][col] *= 0.5;
                }
              }
              
-             for(Index_type row=0; row<local_dim; ++row){
-               for(Index_type col=0; col<local_dim; ++col){
+             for(localIndex row=0; row<local_dim; ++row){
+               for(localIndex col=0; col<local_dim; ++col){
                  F[row][col] += dUdX[row][col];
                }
              }
              
-             for(Index_type tx=0; tx<local_dim; ++tx){
+             for(localIndex tx=0; tx<local_dim; ++tx){
                F[tx][tx] += 1.0;
              }
              
@@ -1105,8 +1105,8 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, geosxIndex el
            }
            
            //Calculate gradient (end of step)
-           for(Index_type ty=0; ty<local_dim; ++ty){
-             for(Index_type tx=0; tx<local_dim; ++tx){
+           for(localIndex ty=0; ty<local_dim; ++ty){
+             for(localIndex tx=0; tx<local_dim; ++tx){
                F[ty][tx] = dUhatdX[ty][tx] + dUdX[ty][tx];
              }
            }
@@ -1125,8 +1125,8 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, geosxIndex el
 
            //Write out intermediate data
            detF_ptr(k,q) = detF;
-           for(Index_type r = 0; r < local_dim; ++r){
-             for(Index_type c = 0; c < local_dim; ++c){
+           for(localIndex r = 0; r < local_dim; ++r){
+             for(localIndex c = 0; c < local_dim; ++c){
                Dadt_ptr(k,q,r,c) = Dadt[r][c];
                Rot_ptr(k,q,r,c) = Rot[r][c];
                Finv_ptr(k,q,r,c) = Finv[r][c];
@@ -1146,35 +1146,35 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(Index_type noElem, geosxIndex el
 ///derivivatives stored in an objects of arrays format. This kernel only performs the kinematic step.
 ///
 template<typename Pol>
-RAJA_INLINE void ObjectOfArrays_IntegrationKernel(Index_type noElem, geosxIndex elemList, real64 dt,
-                                                  const Index_type * elemsToNodes,                          
+RAJA_INLINE void ObjectOfArrays_IntegrationKernel(localIndex noElem, geosxIndex elemList, real64 dt,
+                                                  const localIndex * elemsToNodes,                          
                                                   geosxData iu_x, geosxData iu_y, geosxData iu_z,
                                                   geosxData iuhat_x, geosxData iuhat_y, geosxData iuhat_z,
                                                   geosxData idNdX_x, geosxData idNdX_y, geosxData idNdX_z,
-                                                  Index_type const * iconstitutiveMap, geosxData idevStressData,
+                                                  localIndex const * iconstitutiveMap, geosxData idevStressData,
                                                   geosxData imeanStress, real64 ishearModulus, real64 ibulkModulus,
                                                   const real64 * idetJ, geosxData iacc_x, geosxData iacc_y, geosxData iacc_z,
                                                   geosxData Dadt_ptr, geosxData Rot_ptr,geosxData detF_ptr, geosxData Finv_ptr,
-                                                  Index_type nx=2, Index_type ny=2, Index_type nz=2)
+                                                  localIndex nx=2, localIndex ny=2, localIndex nz=2)
                                                   
 {
 
-  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (Index_type k) {
+  geosx::forall_in_set<Pol>(elemList, noElem, GEOSX_LAMBDA (globalIndex k) {
 
 #if defined(STRUCTURED_GRID)
-       Index_type nodeList[inumNodesPerElement];       
+       localIndex nodeList[inumNodesPerElement];       
        structuredElemToNodes(nodeList,k,nx,ny,nz);
 #else
-       const Index_type *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
+       const localIndex *nodeList = (&elemsToNodes[inumNodesPerElement*k]);
 #endif       
        
        real64 f_local_x[inumNodesPerElement] = {0};
        real64 f_local_y[inumNodesPerElement] = {0};
        real64 f_local_z[inumNodesPerElement] = {0};
        
-       for(Index_type q=0; q < inumQuadraturePoints; ++q){
+       for(localIndex q=0; q < inumQuadraturePoints; ++q){
 
-         Index_type m = iconstitutiveMap(k,q);
+         localIndex m = iconstitutiveMap(k,q);
          real64 TotalStress[local_dim][local_dim];
          
          TotalStress[0][0] = idevStressData(k,q,0);
@@ -1188,7 +1188,7 @@ RAJA_INLINE void ObjectOfArrays_IntegrationKernel(Index_type noElem, geosxIndex 
          TotalStress[0][2] = TotalStress[2][0];
          TotalStress[1][2] = TotalStress[2][1];
          
-          for(Index_type i=0; i<local_dim; ++i)
+          for(localIndex i=0; i<local_dim; ++i)
             {
               TotalStress[i][i] += imeanStress[m];
             }

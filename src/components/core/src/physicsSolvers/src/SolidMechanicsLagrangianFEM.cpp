@@ -28,7 +28,7 @@
 #include "common/TimingMacros.hpp"
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "common/DataTypes.hpp"
+#include <common/DataTypes.hpp>
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NumericalMethodsManager.hpp"
@@ -42,7 +42,7 @@
 
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
-
+#include "../../rajaInterface/GEOS_RAJA_Interface.hpp"
 
 //#define verbose 0 //Need to move this somewhere else
 
@@ -664,11 +664,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
           //
           GEOS_CXX_MARK_LOOP_BEGIN(elemLoop,elemLoop);
 #if !defined(EXTERNAL_KERNELS)         
-          RAJA::forall<elemPolicy>
-            (elementList, [=] (int32_t k)
-          {
-            forall_in_set(elementList.data(), elementList.size(), GEOSX_LAMDBA {
-              
+          geosx::forall_in_set<elemPolicy>(elementList.data(), elementList.size(), GEOSX_LAMBDA ( globalIndex k) {
               r1_array uhat_local( numNodesPerElement );
               r1_array u_local( numNodesPerElement );
               r1_array f_local( numNodesPerElement );
@@ -765,7 +761,7 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
 
           //Setup pointer for the external constitutive update
           void (*externConstitutiveUpdate)(real64 D[local_dim][local_dim], real64 Rot[local_dim][local_dim],
-                                           localIndex m, localIndex q, localIndex k, geosxData devStressData2,
+                                           localIndex m, localIndex q, globalIndex k, geosxData devStressData2,
                                            geosxData meanStress2, real64 shearModulus2, real64 bulkModulus2, localIndex NoElem);
           externConstitutiveUpdate = UpdateStatePoint;
 

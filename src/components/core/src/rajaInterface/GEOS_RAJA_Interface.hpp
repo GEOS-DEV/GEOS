@@ -66,8 +66,6 @@ typedef RAJA::seq_reduce reducePolicy;
 #define GEOSX_LAMBDA [=]
 #endif
 
-using localIndex = RAJA::Index_type;
-
 namespace geosx
 {  
 
