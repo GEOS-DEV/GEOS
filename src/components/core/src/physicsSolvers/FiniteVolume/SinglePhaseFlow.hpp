@@ -243,6 +243,12 @@ private:
   /// name of the solid constitutive model
   string m_solidName;
 
+  /// index of the fluid constitutive model
+  localIndex m_fluidIndex;
+
+  /// index of the solid constitutive model
+  localIndex m_solidIndex;
+
 };
 
 

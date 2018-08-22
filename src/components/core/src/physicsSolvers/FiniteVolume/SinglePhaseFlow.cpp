@@ -66,6 +66,12 @@ SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
 
   this->RegisterViewWrapper(viewKeyStruct::gravityFlagString, &m_gravityFlag, false);
   this->RegisterViewWrapper(viewKeyStruct::discretizationString, &m_discretizationName, false);
+
+  this->RegisterViewWrapper(viewKeyStruct::fluidNameString, &m_fluidName, false);
+  this->RegisterViewWrapper(viewKeyStruct::fluidIndexString, &m_fluidIndex, false);
+
+  this->RegisterViewWrapper(viewKeyStruct::solidNameString, &m_solidName, false);
+  this->RegisterViewWrapper(viewKeyStruct::solidIndexString, &m_solidIndex, false);
 }
 
 
@@ -74,7 +80,7 @@ void SinglePhaseFlow::FillDocumentationNode(  )
   cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
   SolverBase::FillDocumentationNode();
 
-  docNode->setName(this->CatalogName());
+  docNode->setName(CatalogName());
   docNode->setSchemaType("Node");
   docNode->setShortDescription("An example single phase flow solver");
 
@@ -87,7 +93,7 @@ void SinglePhaseFlow::FillDocumentationNode(  )
                               "Flag that enables/disables gravity",
                               "1",
                               "",
-                              1,
+                              0,
                               1,
                               0 );
 
@@ -318,6 +324,10 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
   // Precompute solver-specific constant data (e.g. gravity-depth)
   PrecomputeData(domain);
 
+  ConstitutiveManager * const cm = domain->getConstitutiveManager();
+
+  m_fluidIndex = cm->GetConstitituveRelation( this->m_fluidName)->getIndexInParent();
+  m_solidIndex = cm->GetConstitituveRelation( this->m_solidName)->getIndexInParent();
 }
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
@@ -359,10 +369,8 @@ ImplicitStepSetup( real64 const& time_n,
                                 localIndex const ei)->void
   {
     dPres[er][esr][ei] = 0.0;
-
-    // TODO how to get material index 0 and 1 from constitutive model names?
-    constitutiveRelations[er][esr][0]->PressureUpdatePoint(pres[er][esr][ei], ei, 0); // fluid
-    constitutiveRelations[er][esr][1]->PressureUpdatePoint(pres[er][esr][ei], ei, 0); // solid
+    constitutiveRelations[er][esr][m_fluidIndex]->PressureUpdatePoint(pres[er][esr][ei], ei, 0); // fluid
+    constitutiveRelations[er][esr][m_solidIndex]->PressureUpdatePoint(pres[er][esr][ei], ei, 0); // solid
 
   });
 
@@ -408,8 +416,8 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
                                 localIndex const ei)->void
   {
     pres[er][esr][ei] += dPres[er][esr][ei];
-    densOld[er][esr][ei] = dens[er][esr][0][ei][0];
-    poroOld[er][esr][ei] = poroRef[er][esr][ei] * pvmult[er][esr][0][ei][0];
+    densOld[er][esr][ei] = dens[er][esr][m_fluidIndex][ei][0];
+    poroOld[er][esr][ei] = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
   });
 }
 
@@ -742,8 +750,8 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
     {
       globalIndex const elemDOF = blockLocalDofNumber[er][esr][ei];
 
-      real64 const densNew = dens[er][esr][0][ei][0];
-      real64 const poroNew = poroRef[er][esr][ei] * pvmult[er][esr][1][ei][0];
+      real64 const densNew = dens[er][esr][m_fluidIndex][ei][0];
+      real64 const poroNew = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
       real64 const vol     = volume[er][esr][ei];
 
       // Residual contribution is mass conservation in the cell
@@ -751,8 +759,8 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
                               - poroOld[er][esr][ei] * densOld[er][esr][ei] * vol;
 
       // Derivative of residual wrt to pressure in the cell
-      real64 const localAccumJacobian = (dPVMult_dPres[er][esr][1][ei][0] * poroRef[er][esr][ei] * densNew * vol)
-                                      + (dDens_dPres[er][esr][0][ei][0]                          * poroNew * vol);
+      real64 const localAccumJacobian = (dPVMult_dPres[er][esr][m_solidIndex][ei][0] * poroRef[er][esr][ei] * densNew * vol)
+                                      + (dDens_dPres[er][esr][m_fluidIndex][ei][0]                          * poroNew * vol);
 
       // add contribution to global residual and dRdP
       residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);
@@ -800,12 +808,12 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
       eqnRowIndices[i] = blockLocalDofNumber[er][esr][ei];
 
       // density
-      real64 const density   = dens[er][esr][0][ei][0];
-      real64 const dDens_dP  = dDens_dPres[er][esr][0][ei][0];
+      real64 const density   = dens[er][esr][m_fluidIndex][ei][0];
+      real64 const dDens_dP  = dDens_dPres[er][esr][m_fluidIndex][ei][0];
 
       // viscosity
-      real64 const viscosity = visc[er][esr][0][ei][0];
-      real64 const dVisc_dP  = dVisc_dPres[er][esr][0][ei][0];
+      real64 const viscosity = visc[er][esr][m_fluidIndex][ei][0];
+      real64 const dVisc_dP  = dVisc_dPres[er][esr][m_fluidIndex][ei][0];
 
       // mobility
       mobility[i]  = density / viscosity;
@@ -941,7 +949,7 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
       // if the boundary condition should be applied to this subregion
       bcManager->ApplyBoundaryCondition( time + dt,
                                          domain,
-                                         "",
+                                         "ElementRegions",
                                          viewKeyStruct::pressureString,
                                          [&]( BoundaryConditionBase const * const bc,
                                               string const &,
@@ -1081,8 +1089,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       localIndex const ei  = elemList[kf][ke];
 
       real64 dummy; // don't need derivatives on faces
-      constitutiveRelations[er][esr][0]->FluidDensityCompute(presFace[kf], ei, densFace[kf], dummy);
-      constitutiveRelations[er][esr][0]->FluidViscosityCompute(presFace[kf], ei, viscFace[kf], dummy);
+      constitutiveRelations[er][esr][m_fluidIndex]->FluidDensityCompute(presFace[kf], ei, densFace[kf], dummy);
+      constitutiveRelations[er][esr][m_fluidIndex]->FluidViscosityCompute(presFace[kf], ei, viscFace[kf], dummy);
     }
   });
 
@@ -1146,11 +1154,11 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
             eqnRowIndex = blockLocalDofNumber[er][esr][ei];
 
-            density   = dens[er][esr][0][ei][0];
-            dDens_dP  = dDens_dPres[er][esr][0][ei][0];
+            density   = dens[er][esr][m_fluidIndex][ei][0];
+            dDens_dP  = dDens_dPres[er][esr][m_fluidIndex][ei][0];
 
-            viscosity = visc[er][esr][0][ei][0];
-            dVisc_dP  = dVisc_dPres[er][esr][0][ei][0];
+            viscosity = visc[er][esr][m_fluidIndex][ei][0];
+            dVisc_dP  = dVisc_dPres[er][esr][m_fluidIndex][ei][0];
 
             cell_order = i; // mark position of the cell in connection for sign consistency later
             break;
@@ -1367,10 +1375,8 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
                                 localIndex const ei)->void
   {
     real64 const new_pres = pres[er][esr][ei] + dPres[er][esr][ei];
-
-    // TODO how to get material index 0 and 1 from constitutive model names?
-    constitutiveRelations[er][esr][0]->PressureUpdatePoint( new_pres, ei, 0 ); // fluid
-    constitutiveRelations[er][esr][1]->PressureUpdatePoint( new_pres, ei, 0 ); // solid
+    constitutiveRelations[er][esr][m_fluidIndex]->PressureUpdatePoint( new_pres, ei, 0 );
+    constitutiveRelations[er][esr][m_solidIndex]->PressureUpdatePoint( new_pres, ei, 0 );
   });
 }
 
@@ -1448,10 +1454,8 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
                                 localIndex const ei )->void
   {
     dPres[er][esr][ei] = 0.0;
-
-    // TODO how to get material index 0 and 1 from constitutive model names?
-    constitutiveRelations[er][esr][0]->PressureUpdatePoint( pres[er][esr][ei], ei, 0 ); // fluid
-    constitutiveRelations[er][esr][1]->PressureUpdatePoint( pres[er][esr][ei], ei, 0 ); // solid
+    constitutiveRelations[er][esr][m_fluidIndex]->PressureUpdatePoint( pres[er][esr][ei], ei, 0 );
+    constitutiveRelations[er][esr][m_solidIndex]->PressureUpdatePoint( pres[er][esr][ei], ei, 0 );
   });
 
 }
