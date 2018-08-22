@@ -418,7 +418,8 @@ void SolidMechanics_LagrangianFEM::FinalInitialization( ManagedGroup * const pro
 //  ViewWrapper<real64_array>::rtype K = elems.getData<real64_array>(keys::K);
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> >
-  rho = elementRegionManager->ConstructMaterialViewAccessor< array2d<real64> >("density");
+  rho = elementRegionManager->ConstructMaterialViewAccessor< array2d<real64> >("density",
+                                                                               constitutiveManager);
 
   for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
   {
@@ -632,10 +633,12 @@ real64 SolidMechanics_LagrangianFEM::ExplicitStep( real64 const& time_n,
   GEOS_CXX_MARK_LOOP_END(memset);
 
   ElementRegionManager::MaterialViewAccessor< array2d<real64> >
-  meanStress = elemManager->ConstructMaterialViewAccessor< array2d<real64> >("MeanStress");
+  meanStress = elemManager->ConstructMaterialViewAccessor< array2d<real64> >("MeanStress",
+                                                                             constitutiveManager);
 
   ElementRegionManager::MaterialViewAccessor< array2d<R2SymTensor> >
-  devStress = elemManager->ConstructMaterialViewAccessor< array2d<R2SymTensor> >("DeviatorStress");
+  devStress = elemManager->ConstructMaterialViewAccessor< array2d<R2SymTensor> >("DeviatorStress",
+                                                                                 constitutiveManager);
 
 
   //Step 5. Calculate deformation input to constitutive model and update state to
