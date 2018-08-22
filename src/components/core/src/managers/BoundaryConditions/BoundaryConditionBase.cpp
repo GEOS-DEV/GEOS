@@ -105,18 +105,18 @@ void BoundaryConditionBase::FillDocumentationNode()
                               1,
                               0 );
 
-  docNode->AllocateChildNode( viewKeyStruct::dataTypeString,
-                              viewKeyStruct::dataTypeString,
-                              -1,
-                              "string",
-                              "string",
-                              "Name of field that boundary condition is applied to.",
-                              "",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
+//  docNode->AllocateChildNode( viewKeyStruct::dataTypeString,
+//                              viewKeyStruct::dataTypeString,
+//                              -1,
+//                              "string",
+//                              "string",
+//                              "Name of field that boundary condition is applied to.",
+//                              "",
+//                              "REQUIRED",
+//                              "",
+//                              0,
+//                              1,
+//                              0 );
 
   docNode->AllocateChildNode( viewKeyStruct::componentString,
                               viewKeyStruct::componentString,
