@@ -49,7 +49,7 @@
 #endif
 
 
-#ifdef __INTEL_COMPILER
+#if 0//def __INTEL_COMPILER
 /**
  * @brief this function is standard, but is missing on the intel compiler
  * @tparam T the type that the unique_ptr will wrap
