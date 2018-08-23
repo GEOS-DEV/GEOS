@@ -12,6 +12,8 @@
 #include "EpetraVector.hpp"
 #include <AztecOO.h>
 #include <Amesos.h>
+#include "ml_MultiLevelPreconditioner.h"
+#include "ml_epetra_utils.h"
 
 namespace geosx
 {
@@ -38,6 +40,17 @@ public:
    * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
    */
   void solve( EpetraSparseMatrix &Mat,
+              EpetraVector &rhs,
+              EpetraVector &sol,
+              integer max_iter,
+              real64 newton_tol );
+
+  /**
+   * @brief Solve system using the ml preconditioner.
+   *
+   * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
+   */
+  void ml_solve( EpetraSparseMatrix &Mat,
               EpetraVector &rhs,
               EpetraVector &sol,
               integer max_iter,

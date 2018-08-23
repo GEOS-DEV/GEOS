@@ -49,10 +49,11 @@ void testLaplaceOperator()
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+  // Set the MPI communicator
   MPI_Comm comm = MPI_COMM_WORLD;
 
   // Create Dummy Laplace matrix (5 points stencil)
-  globalIndex n = 500;
+  globalIndex n = 400;
   globalIndex N = n*n;
 
   ParallelMatrix testMatrix;
@@ -152,25 +153,27 @@ void testLaplaceOperator()
     EXPECT_TRUE( vecIndicesRown[4] == 2*n );
       }
   // Fill standard vectors
-  std::vector<real64> ones, zer1, zer2, zer3, zer4;
+  std::vector<real64> ones, zer1, zer2, zer3, zer4, zer5;
   for (int j = 0; j < N; j++)
   {
     zer1.push_back(0);
     zer2.push_back(0);
     zer3.push_back(0);
     zer4.push_back(0);
+    zer5.push_back(0);
     ones.push_back(1);
   }
 
   // Define vectors
-  ParallelVector x, b, r, solIterative, solDirect;
+  ParallelVector x, b, r, solIterative, solIterativeML, solDirect;
   // Right hand side for multiplication (b)
   b.create(zer1);
   // Vector of ones for multiplication (x)
   x.create(ones);
   // Vector of zeros for iterative and direct solutions
   solIterative.create(zer3);
-  solDirect.create(zer4);
+  solIterativeML.create(zer4);
+  solDirect.create(zer5);
   // Residual vector
   r.create(zer2);
 
@@ -202,13 +205,20 @@ void testLaplaceOperator()
   LinearSolver solver = LinearSolver();
 
   // AztecOO iterative solver
-  solver.solve(testMatrix,solIterative,b,500,1e-7);
+  solver.solve(testMatrix,solIterative,b,500,1e-8);
   real64 normIterativeSol;
   solIterative.normInf(normIterativeSol);
+  std::cout << "Norm is: " << normIterativeSol << std::endl;
   EXPECT_TRUE( std::fabs(normIterativeSol - 1) <= 1e-5 );
 
   real64 norm2ItSol, norm2InitGuess = 0;
   solIterative.norm2(norm2ItSol);
+
+  solver.ml_solve(testMatrix,solIterativeML,b,500,1e-7);
+
+  real64 normIterativeSolML;
+  solIterativeML.normInf(normIterativeSolML);
+  EXPECT_TRUE( std::fabs(normIterativeSolML - 1) <= 1e-5 );
 
   // Amesos (Klu) direct solver
   solver.dsolve(testMatrix,solDirect,b);
