@@ -41,6 +41,31 @@ namespace geosx
   }
 
   /**
+   * @brief Solve system using an ML preconditioner.
+   *
+   * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
+   */
+  void TrilinosSolver::ml_solve( EpetraSparseMatrix &Mat,
+                              EpetraVector &sol,
+                              EpetraVector &rhs,
+                              integer max_iter,
+                              real64 newton_tol )
+  {
+    Epetra_LinearProblem problem(Mat.getPointer(),sol.getPointer(),rhs.getPointer());
+    AztecOO solver(problem);
+
+    std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec;
+
+    Teuchos::ParameterList MLList;
+    ML_Epetra::SetDefaults("SA",MLList);
+
+    MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>(*Mat.getPointer(),MLList);
+
+    solver.SetPrecOperator(MLPrec.get());
+    solver.Iterate(max_iter,newton_tol);
+  }
+
+  /**
    * @brief Solve system using a direct solver.
    *
    * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
