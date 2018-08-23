@@ -33,7 +33,6 @@
 #include "common/DataTypes.hpp"
 
 using namespace geosx;
-using solverInterface = TrilinosInterface;
 
 template< typename SI >
 void testLaplaceOperator()
@@ -186,20 +185,20 @@ void testLaplaceOperator()
   // test norms
   real64 norm1;
   x.norm1(norm1);
-  EXPECT_TRUE( norm1 == N );
+  EXPECT_TRUE( std::fabs(norm1 - N) <= 1e-6 );
 
   real64 norm2;
   x.norm2(norm2);
-  EXPECT_TRUE( norm2 == n );
+  EXPECT_TRUE( std::fabs(norm2 - n) <= 1e-6 );
 
   real64 norminf;
   x.normInf(norminf);
-  EXPECT_TRUE( norminf == 1 );
+  EXPECT_TRUE( std::fabs(norminf - 1) <= 1e-6 );
 
   testMatrix.residual(x,b,r);
   real64 normRes;
   r.normInf(normRes);
-  EXPECT_TRUE( normRes == 0 );
+  EXPECT_TRUE( std::fabs(normRes) <= 1e-6 );
 
   // Test solvers
   LinearSolver solver = LinearSolver();
@@ -208,13 +207,12 @@ void testLaplaceOperator()
   solver.solve(testMatrix,solIterative,b,500,1e-8);
   real64 normIterativeSol;
   solIterative.normInf(normIterativeSol);
-  std::cout << "Norm is: " << normIterativeSol << std::endl;
   EXPECT_TRUE( std::fabs(normIterativeSol - 1) <= 1e-5 );
 
   real64 norm2ItSol, norm2InitGuess = 0;
   solIterative.norm2(norm2ItSol);
 
-  solver.ml_solve(testMatrix,solIterativeML,b,500,1e-7);
+  solver.ml_solve(testMatrix,solIterativeML,b,500,1e-8);
 
   real64 normIterativeSolML;
   solIterativeML.normInf(normIterativeSolML);
