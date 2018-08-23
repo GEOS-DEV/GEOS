@@ -231,9 +231,6 @@ private:
    */
   void PrecomputeData(DomainPartition *const domain);
 
-  /// flag indicating whether FV precompute has been performed
-  bool m_precomputeDone;
-
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;
 

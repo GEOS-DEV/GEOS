@@ -88,8 +88,8 @@ public:
 
   virtual void ReadXML_PostProcess() override;
 
-  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
-                           map<string,localIndex> & counts );
+//  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
+//                           map<string,localIndex> & counts );
 
   void HangConstitutiveRelations( ManagedGroup const * problemManager );
 
