@@ -237,7 +237,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       if (m_verboseLevel >= 1)
       {
-        std::cout << "Attempt: " << dtAttempt + 1 << ", Newton: " << k + 1
+        std::cout << "Attempt: " << dtAttempt  << ", Newton: " << k
                   << ", R = " << residualNorm << std::endl;
       }
 
