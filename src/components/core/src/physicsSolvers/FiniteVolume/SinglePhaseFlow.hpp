@@ -200,6 +200,7 @@ public:
 
     constexpr static auto fluidPressureString = "fluidPressure";
     constexpr static auto deltaFluidPressureString = "deltaFluidPressure";
+    constexpr static auto faceFluidPressureString = "faceFluidPressure";
 
     constexpr static auto fluidDensityString = "fluidDensity";
     constexpr static auto deltaFluidDensityString = "deltaFluidDensity";

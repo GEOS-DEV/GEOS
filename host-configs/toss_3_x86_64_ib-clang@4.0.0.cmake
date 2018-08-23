@@ -29,11 +29,13 @@ set(SPHINX_EXECUTABLE "/usr/bin/sphinx-build" CACHE PATH "" FORCE)
 
 option( RAJA_ENABLE_TBB "" OFF)
 
-option( ENABLE_CALIPER "Enables CALIPER" OFF )
+option( ENABLE_CALIPER "Enables CALIPER" On )
+set(ENABLE_PAPI "ON" CACHE PATH "" FORCE)
+set(PAPI_PREFIX "/usr/tce/packages/papi/papi-5.4.3" CACHE PATH "" FORCE)
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
 set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
 
 set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)
-set(RAJA_ENABLE_OPENMP "ON"        CACHE PATH "" FORCE)
+set(RAJA_ENABLE_OPENMP "ON"       CACHE PATH "" FORCE)

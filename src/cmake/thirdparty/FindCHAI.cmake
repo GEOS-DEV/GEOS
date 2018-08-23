@@ -13,8 +13,8 @@ if(NOT CHAI_DIR)
 endif()
 
 #find includes
-find_path( CHAI_INCLUDE_DIRS ManagedArray.hpp
-           PATHS  ${CHAI_DIR}/include/chai
+find_path( CHAI_INCLUDE_DIRS chai/ManagedArray.hpp
+           PATHS  ${CHAI_DIR}/include
            NO_DEFAULT_PATH
            NO_CMAKE_ENVIRONMENT_PATH
            NO_CMAKE_PATH
@@ -31,6 +31,10 @@ find_library( CHAI_LIBRARY NAMES chai libchai
 
 
 include(FindPackageHandleStandardArgs)
+
+include("${CHAI_DIR}/share/umpire/cmake/umpire-targets.cmake")
+include("${CHAI_DIR}/share/chai/cmake/chai-targets.cmake")
+
 # handle the QUIETLY and REQUIRED arguments and set CHAI_FOUND to TRUE
 # if all listed variables are TRUE
 set(CHAI_FOUND TRUE)

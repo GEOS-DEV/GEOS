@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 #include "SFINAE_Macros.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
 #include "ManagedArray.hpp"
 #include <vector>
 #include <cstdlib>
