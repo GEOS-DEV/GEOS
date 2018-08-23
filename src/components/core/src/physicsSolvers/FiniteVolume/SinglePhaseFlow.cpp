@@ -325,8 +325,10 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
 
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
-  m_fluidIndex = cm->GetConstitituveRelation( this->m_fluidName )->getIndexInParent();
+  ConstitutiveBase * const fluidRelation = cm->GetConstitituveRelation( this->m_fluidName );
+  m_fluidIndex = fluidRelation->getIndexInParent();
   m_solidIndex = cm->GetConstitituveRelation( this->m_solidName )->getIndexInParent();
+
 }
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
@@ -363,6 +365,21 @@ ImplicitStepSetup( real64 const& time_n,
   constitutiveRelations = elemManager->
                           ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
+  auto densOld = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::densityString);
+
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> >
+    pvmult = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
+                                                                            constitutiveManager );
+
+  auto poroOld = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::porosityString);
+  auto poroRef = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::referencePorosityString);
+
+  ElementRegionManager::MaterialViewAccessor< array2d<real64> > const
+  dens = elemManager->ConstructMaterialViewAccessor< array2d<real64> >( ConstitutiveBase::
+                                                                        viewKeyStruct::
+                                                                        densityString,
+                                                                        constitutiveManager);
+
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
                                 localIndex const esr,
@@ -372,8 +389,10 @@ ImplicitStepSetup( real64 const& time_n,
     constitutiveRelations[er][esr][m_fluidIndex]->PressureUpdatePoint(pres[er][esr][ei], ei, 0); // fluid
     constitutiveRelations[er][esr][m_solidIndex]->PressureUpdatePoint(pres[er][esr][ei], ei, 0); // solid
 
-  });
+    densOld[er][esr][ei] = dens[er][esr][m_fluidIndex][ei][0];
+    poroOld[er][esr][ei] = poroRef[er][esr][ei] * pvmult[er][esr][m_solidIndex][ei][0];
 
+  });
 
   // setup dof numbers and linear system
   SetupSystem( domain, blockSystem );
