@@ -11,25 +11,25 @@ EpetraVector::EpetraVector()
 {}
 
 // Create a vector from array
-void EpetraVector::create( const globalIndex size, double *V )
+void EpetraVector::create( globalIndex const size, double *V )
 {
   Epetra_Map map = Epetra_Map( size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
-  vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
+  vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ) );
 }
 
 // Create a vector from array
-void EpetraVector::create( const Epetra_Map& Map, double *V )
+void EpetraVector::create( Epetra_Map const &Map, double *V )
 {
   Epetra_Map map = Epetra_Map( Map );
-  vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ));
+  vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, V ) );
 }
 
-// Create a vector from vector
+// Create a vector from std vector
 void EpetraVector::create( std::vector<double> &vec )
 {
   globalIndex m_size = vec.size();
   Epetra_Map map = Epetra_Map( m_size, 0, Epetra_MpiComm( MPI_COMM_WORLD ));
-  vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, vec.data()));
+  vector = std::unique_ptr<Epetra_Vector>( new Epetra_Vector( View, map, vec.data()) );
 }
 
 // Multiply all elements by scalingFactor.
@@ -52,21 +52,21 @@ void EpetraVector::update( real64 const alpha,
 }
 
 // 1-norm of the vector.
-void EpetraVector::norm1(real64 &dst) const
+void EpetraVector::norm1( real64 &dst ) const
 {
-  vector.get()->Norm1(&dst);
+  vector.get()->Norm1( &dst );
 }
 
 // 2-norm of the vector.
-void EpetraVector::norm2(real64 &dst) const
+void EpetraVector::norm2( real64 &dst ) const
 {
-  vector.get()->Norm2(&dst);
+  vector.get()->Norm2( &dst );
 }
 
 // Inf-norm of the vector.
-void EpetraVector::normInf(real64 &dst) const
+void EpetraVector::normInf( real64 &dst ) const
 {
-  vector.get()->NormInf(&dst);
+  vector.get()->NormInf( &dst );
 }
 
 // Return the global size of the vector (total number of elements).

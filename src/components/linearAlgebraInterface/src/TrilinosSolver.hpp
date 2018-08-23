@@ -25,9 +25,14 @@ public:
   /**
    * @brief Empty solver constructor.
    *
-   * Create an empty (distributed) vector.
    */
   TrilinosSolver();
+
+  /**
+   * @brief Copy constructor.
+   *
+   */
+  TrilinosSolver(const TrilinosSolver &Solver);
 
   /**
    * @brief Virtual destructor.
@@ -43,7 +48,8 @@ public:
               EpetraVector &rhs,
               EpetraVector &sol,
               integer max_iter,
-              real64 newton_tol );
+              real64 newton_tol,
+              std::unique_ptr<Epetra_Operator> Prec = nullptr );
 
   /**
    * @brief Solve system using the ml preconditioner.
@@ -51,10 +57,11 @@ public:
    * Solve Ax=b with A an EpetraSparseMatrix, x and b EpetraVector.
    */
   void ml_solve( EpetraSparseMatrix &Mat,
-              EpetraVector &rhs,
-              EpetraVector &sol,
-              integer max_iter,
-              real64 newton_tol );
+                 EpetraVector &rhs,
+                 EpetraVector &sol,
+                 integer max_iter,
+                 real64 newton_tol,
+                 std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec = nullptr );
 
   /**
    * @brief Solve system using a direct solver.
