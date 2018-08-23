@@ -146,12 +146,12 @@
   
     <Dirichlet name="sourceTerm" 
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="fluidPressure" 
+               fieldName="pressure" 
                scale="1e7" 
                setNames="source"/>
     <Dirichlet name="sinkTerm"  
                objectPath="ElementRegions/elementRegions/Region2/cellBlockSubRegions/cb1"
-               fieldName="fluidPressure" 
+               fieldName="pressure" 
                scale="0.0" 
                setNames="sink"/>
   </BoundaryConditions>

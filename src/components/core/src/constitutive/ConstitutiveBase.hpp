@@ -130,8 +130,8 @@ public:
     static constexpr auto densityString  = "density";
     static constexpr auto dDens_dPresString  = "dPressure_dDensity";
 
-    static constexpr auto viscosityString  = "density";
-    static constexpr auto dVisc_dPresString  = "dPressure_dDensity";
+    static constexpr auto viscosityString  = "viscosity";
+    static constexpr auto dVisc_dPresString  = "dViscosity_dDensity";
 
     static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
     static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
