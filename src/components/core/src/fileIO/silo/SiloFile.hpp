@@ -240,13 +240,18 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void WriteMaterialMaps( ElementRegionManager const * const elementManager,
+  void WriteMaterialMapsCompactStorage( ElementRegionManager const * const elementManager,
                           constitutive::ConstitutiveManager const * const constitutiveManager,
                           string const & meshName,
                           int const cycleNumber,
                           real64 const problemTime);
 
 
+  void WriteMaterialMapsFullStorage( ElementRegionManager const * const elementManager,
+                          constitutive::ConstitutiveManager const * const constitutiveManager,
+                          string const & meshName,
+                          int const cycleNumber,
+                          real64 const problemTime);
   /**
    *
    * @param group the group that holds the data to be written to the silo file
@@ -622,27 +627,27 @@ void SiloFile::WriteDataField( string const & meshName,
     regionpnames[1] = nullptr;
     DBAddOption(optlist, DBOPT_REGION_PNAMES, &regionpnames);
 
-    nels=0;
-    for( localIndex i=0 ; i<zoneToMatMap.size() ; ++i )
-    {
-      if( zoneToMatMap[i] > -1 )
-      {
-        ++nels;
-      }
-    }
-
-    for( localIndex i = 0 ; i < nvars ; ++i )
-    {
-      castedField[i].resize(nels);
-      vars[i] = static_cast<void*> (&(castedField[i][0]));
-      for( int k = 0 ; k < nels ; ++k )
-      {
-        castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[zoneToMatMap[k]], i);
-      }
-    }
+//    nels=0;
+//    for( localIndex i=0 ; i<zoneToMatMap.size() ; ++i )
+//    {
+//      if( zoneToMatMap[i] > -1 )
+//      {
+//        ++nels;
+//      }
+//    }
+//
+//    for( localIndex i = 0 ; i < nvars ; ++i )
+//    {
+//      castedField[i].resize(nels);
+//      vars[i] = static_cast<void*> (&(castedField[i][0]));
+//      for( int k = 0 ; k < nels ; ++k )
+//      {
+//        castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[zoneToMatMap[k]], i);
+//      }
+//    }
 
   }
-  else
+//  else
   {
     for( int i = 0 ; i < nvars ; ++i )
     {
@@ -683,13 +688,29 @@ void SiloFile::WriteDataField( string const & meshName,
     int err = -2;
     if( meshType == DB_UCDMESH )
     {
-      err = DBPutUcdvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, varnames.data(), reinterpret_cast<float**>(vars.data()),
-                         nels, nullptr, 0, SiloFileUtilities::DB_TYPE<OUTTYPE>(), centering, optlist);
+      err = DBPutUcdvar( m_dbFilePtr,
+                         fieldName.c_str(),
+                         meshName.c_str(),
+                         nvars,
+                         varnames.data(),
+                         reinterpret_cast<float**>(vars.data()),
+                         nels,
+                         nullptr,
+                         0,
+                         SiloFileUtilities::DB_TYPE<OUTTYPE>(),
+                         centering,
+                         optlist);
     }
     else if( meshType == DB_POINTMESH )
     {
-      err = DBPutPointvar( m_dbFilePtr, fieldName.c_str(), meshName.c_str(), nvars, reinterpret_cast<float**>(vars.data()),
-                           nels, SiloFileUtilities::DB_TYPE<OUTTYPE>(), optlist);
+      err = DBPutPointvar( m_dbFilePtr,
+                           fieldName.c_str(),
+                           meshName.c_str(),
+                           nvars,
+                           reinterpret_cast<float**>(vars.data()),
+                           nels,
+                           SiloFileUtilities::DB_TYPE<OUTTYPE>(),
+                           optlist);
     }
     if( err < 0 )
     {

@@ -57,7 +57,6 @@ using namespace multidimensionalArray;
 SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
                                             ManagedGroup * const parent ):
   SolverBase(name, parent),
-  m_precomputeDone(false),
   m_gravityFlag(1)
 {
   // set the blockID for the block system interface
@@ -326,8 +325,8 @@ void SinglePhaseFlow::FinalInitialization( ManagedGroup * const problemManager )
 
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
-  m_fluidIndex = cm->GetConstitituveRelation( this->m_fluidName)->getIndexInParent();
-  m_solidIndex = cm->GetConstitituveRelation( this->m_solidName)->getIndexInParent();
+  m_fluidIndex = cm->GetConstitituveRelation( this->m_fluidName )->getIndexInParent();
+  m_solidIndex = cm->GetConstitituveRelation( this->m_solidName )->getIndexInParent();
 }
 
 real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
@@ -361,7 +360,8 @@ ImplicitStepSetup( real64 const& time_n,
   auto dPres = elemManager->ConstructViewAccessor<real64_array>(viewKeyStruct::deltaPressureString);
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
-  constitutiveRelations = elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  constitutiveRelations = elemManager->
+                          ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   //***** loop over all elements and initialize the derivative arrays *****
   forAllElemsInMesh( mesh, [&]( localIndex const er,
@@ -742,9 +742,18 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
                                                                                  constitutiveManager);
 
   //***** Loop over all elements and assemble the change in volume/density terms *****
-  forAllElemsInMesh(mesh, [=] (localIndex const er,
-                               localIndex const esr,
-                               localIndex const ei) -> void
+//  forAllElemsInMesh(mesh, [=] (localIndex const er,
+//                               localIndex const esr,
+//                               localIndex const ei) -> void
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      CellBlockSubRegion const * const cellBlockSubRegion = elemRegion->GetSubRegion(esr);
+
+      for( localIndex ei=0 ; ei<cellBlockSubRegion->size() ; ++ei )
   {
     if (elemGhostRank[er][esr][ei]<0)
     {
@@ -766,7 +775,7 @@ void SinglePhaseFlow::AssembleSystem(DomainPartition * const  domain,
       residual->SumIntoGlobalValues(1, &elemDOF, &localAccum);
       jacobian->SumIntoGlobalValues(1, &elemDOF, 1, &elemDOF, &localAccumJacobian);
     }
-  });
+  }}}//);
 
 
   constexpr localIndex numElems = 2;

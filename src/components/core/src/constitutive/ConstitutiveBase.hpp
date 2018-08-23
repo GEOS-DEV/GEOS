@@ -67,7 +67,7 @@ public:
                                                           ManagedGroup * const parent ) const = 0;
 
 
-  virtual void SetParamStatePointers( void *& ) {};
+  virtual void SetParamStatePointers( void *& ) {}
 
 
   typedef void (*UpdateFunctionPointer)( R2SymTensor const & D,
@@ -76,7 +76,7 @@ public:
                                          void * dataPtrs,
                                          integer const systemAssembleFlag );
 
-  virtual UpdateFunctionPointer GetStateUpdateFunctionPointer( ) { assert(false); return nullptr; };
+  virtual UpdateFunctionPointer GetStateUpdateFunctionPointer( ) { assert(false); return nullptr; }
 
   virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
                             dataRepository::ManagedGroup const * const parameters,
@@ -114,7 +114,7 @@ public:
 
   virtual void resize( localIndex ) override;
 
-  virtual void GetStiffness( realT c[6][6] ) const {};
+  virtual void GetStiffness( realT c[6][6] ) const {}
 
 
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
