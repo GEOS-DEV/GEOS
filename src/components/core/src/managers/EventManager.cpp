@@ -131,6 +131,23 @@ void EventManager::FillDocumentationNode()
 }
 
 
+void EventManager::ReadXML_PostProcess()
+{
+  real64 maxTime = this->getReference<real64>(viewKeys.maxTime);
+  integer maxCycle = this->getReference<integer>(viewKeys.maxCycle);
+
+  // If maxTime, maxCycle are default, set them to their max values
+  if (maxTime < 0)
+  {
+    maxTime = std::numeric_limits<real64>::max();
+  }
+  if (maxCycle < 0)
+  {
+    maxCycle = std::numeric_limits<integer>::max();
+  }
+}
+
+
 void EventManager::CreateChild( string const & childKey, string const & childName )
 {
   std::cout << "Adding Event: " << childKey << ", " << childName << std::endl;
@@ -144,22 +161,10 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   real64& time = *(this->getData<real64>(viewKeys.time));
   real64& dt = *(this->getData<real64>(viewKeys.dt));
   integer& cycle = *(this->getData<integer>(viewKeys.cycle));
-  
-  real64 maxTime = this->getReference<real64>(viewKeys.maxTime);
-  integer maxCycle = this->getReference<integer>(viewKeys.maxCycle);
+  real64 const maxTime = this->getReference<real64>(viewKeys.maxTime);
+  integer const maxCycle = this->getReference<integer>(viewKeys.maxCycle);
   integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
   integer exitFlag = 0;
-
-
-  // If maxTime, maxCycle are default, set them to their max values
-  if (maxTime < 0)
-  {
-    maxTime = std::numeric_limits<real64>::max();
-  }
-  if (maxCycle < 0)
-  {
-    maxCycle = std::numeric_limits<integer>::max();
-  }
 
   // Setup event targets
   this->forSubGroups<EventBase>([]( EventBase * subEvent ) -> void
