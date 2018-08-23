@@ -18,6 +18,10 @@ set( linearAlgebraInterface_sources
 
 set( dependencyList common trilinos hypre mpi)
 
+if( CONDUIT_FOUND )
+  set( dependencyList ${dependencyList} conduit )
+endif()
+
 blt_add_library( NAME                  linearAlgebraInterface
                  SOURCES               ${linearAlgebraInterface_sources}
                  HEADERS               ${linearAlgebraInterface_headers}
