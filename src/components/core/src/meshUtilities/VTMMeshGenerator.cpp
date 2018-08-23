@@ -117,10 +117,7 @@ void VTMMeshGenerator::GenerateElementRegions( DomainPartition& domain )
 void VTMMeshGenerator::ReadXML_PostProcess()
 {
   m_fileName = this->getReference<string>(keys::filePath);
-  std::cout << "Load m_fileName : " << m_fileName << std::endl;
   m_vtmFile.Load(m_fileName);
-  std::cout << "VTM loaded ! " << m_fileName << std::endl;
-
 }
 
 
@@ -136,78 +133,65 @@ void VTMMeshGenerator::CreateChild( string const & childKey, string const & chil
 
 void VTMMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
 {
-  /// Basic mesh registration
-  ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
-  MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
-  NodeManager * nodeManager = meshLevel0->getNodeManager();
-  ElementRegionManager * elementManager = meshLevel0->getElemManager();
-  ElementRegion * elementRegions = elementManager->GetRegion("elementRegions");
+    /// Basic mesh registration
+    ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
+    MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
+    MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
+    NodeManager * nodeManager = meshLevel0->getNodeManager();
+    CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
 
-  /// Region registrations
-  for( localIndex rankBlockIndex = 0 ; rankBlockIndex < m_vtmFile.NumRankBlocks(); rankBlockIndex++) {
-      const auto & rankBlock = m_vtmFile.GetRankBlock(rankBlockIndex); 
-      for( localIndex meshBlockIndex = 0 ; meshBlockIndex < rankBlock.NumMeshBlocks(); meshBlockIndex++) {
-          const auto & meshBlock = rankBlock.GetMeshBlock(meshBlockIndex);
-          if( meshBlock.IsARegionBlock() ) {
-              const auto & mesh = meshBlock.mesh();
-              /// Write nodes
-              nodeManager->resize(mesh.NumVertices());
-              arrayView1d<R1Tensor> X = nodeManager->referencePosition();
-              /// Region registration
-              ElementRegion * const elemRegion = elementManager->RegisterGroup<ElementRegion>(
-                      mesh.Name());
-              for( globalIndex a=0 ; a< mesh.NumVertices() ; ++a )
-              {
-                  real64 * const tensorData = X[a].Data();
-                  tensorData[0] = mesh.Vertex(a)[0];
-                  tensorData[1] = mesh.Vertex(a)[1];
-                  tensorData[2] = mesh.Vertex(a)[2];
-              }
-              /// Cell blocks registrations
-              if( mesh.NumHex() > 0) {
-                  CellBlockSubRegion * const subRegion = elemRegion->RegisterGroup<CellBlockSubRegion>("HEX");
-                  auto & cellToVertex = subRegion->nodeList();
-                  cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+    /// Region registrations
+    for( localIndex rankBlockIndex = 0 ; rankBlockIndex < m_vtmFile.NumRankBlocks(); rankBlockIndex++) {
+        const auto & rankBlock = m_vtmFile.GetRankBlock(rankBlockIndex); 
+        for( localIndex meshBlockIndex = 0 ; meshBlockIndex < rankBlock.NumMeshBlocks(); meshBlockIndex++) {
+            const auto & meshBlock = rankBlock.GetMeshBlock(meshBlockIndex);
+            if( meshBlock.IsARegionBlock() ) {
+                const auto & mesh = meshBlock.mesh();
+                /// Write nodes
+                nodeManager->resize(mesh.NumVertices());
+                arrayView1d<R1Tensor> X = nodeManager->referencePosition();
+                for( globalIndex a=0 ; a< mesh.NumVertices() ; ++a )
+                {
+                    real64 * const tensorData = X[a].Data();
+                    tensorData[0] = mesh.Vertex(a)[0];
+                    tensorData[1] = mesh.Vertex(a)[1];
+                    tensorData[2] = mesh.Vertex(a)[2];
+                }
+                /// Cell blocks registrations
+                if( mesh.NumHex() > 0) {
+                    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("HEX");
+                    auto & cellToVertex = cellBlock->nodeList();
+                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
 
-                  for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
-                  {
-                      for( localIndex a=0 ; a< mesh.NumVerticesInCell(k) ; ++a )
-                      {
-                          cellToVertex[k][a] = mesh.CellVertexIndex(k,a);
-                      }
-                  }
-              }
-              if( mesh.NumTetra() > 0) {
-                  CellBlockSubRegion * const subRegion = elemRegion->RegisterGroup<CellBlockSubRegion>("TETRA");
-                  auto & cellToVertex = subRegion->nodeList();
-                  cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
+                    for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
+                    {
+                        for( localIndex a=0 ; a< mesh.NumVerticesInCell(k) ; ++a )
+                        {
+                            cellToVertex[k][a] = mesh.CellVertexIndex(k,a);
+                        }
+                    }
+                }
+                if( mesh.NumTetra() > 0) {
+                    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("TETRA");
+                    auto & cellToVertex = cellBlock->nodeList();
+                    cellToVertex.resize(mesh.NumCells(),  mesh.NumVerticesInCell(0) );
 
-                  for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
-                  {
-                      for( localIndex a=0 ; a< mesh.NumVerticesInCell(k) ; ++a )
-                      {
-                          cellToVertex[k][a] = mesh.CellVertexIndex(k,a);
-                      }
-                  }
-              }
-              if( mesh.NumPrism() > 0) {
-                  CellBlockSubRegion * const subRegion = elemRegion->RegisterGroup<CellBlockSubRegion>("PRISM");
-              }
-              if( mesh.NumPyr() > 0) {
-                  CellBlockSubRegion * const subRegion = elemRegion->RegisterGroup<CellBlockSubRegion>("PYR");
-              }
-              
-          }
-      }
-  }
-  std::cout<< "============================="<< std::endl;
-  std::cout << elementManager->GetGroup(0)->getName() << std::endl;
-  std::cout << elementManager->GetGroup(1)->getName() << std::endl;
-  std::cout << elementManager->GetGroup(2)->getName() << std::endl;
-  std::cout << elementManager->GetGroup(3)->getName() << std::endl;
-  std::cout<< "============================="<< std::endl;
-  std::cout << "Mesh Generated !" << std::endl;
+                    for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
+                    {
+                        for( localIndex a=0 ; a< mesh.NumVerticesInCell(k) ; ++a )
+                        {
+                            cellToVertex[k][a] = mesh.CellVertexIndex(k,a);
+                        }
+                    }
+                }
+                if( mesh.NumPrism() > 0) {
+                }
+                if( mesh.NumPyr() > 0) {
+                }
+
+            }
+        }
+    }
 }
 
 void VTMMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
