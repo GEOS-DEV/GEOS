@@ -6,6 +6,7 @@ set(CONFIG_NAME "quartz-toss_3_x86_64_ib-gcc@7.1.0" CACHE PATH "")
 #include("${TPL_DIR}/${CONFIG_NAME}.cmake")
 
 #set(ATK_DIR "/usr/gapps/GEOS/geosx/axom/toss_3_x86_64_ib-gcc@7.1.0-release" CACHE PATH "")
+set(TRIBOL_WORLD_DIR "/usr/workspace/wsrzc/benliu/git/ale3dalt3/build-toss3_intel18.0.2-debug/bin/tribollibs" CACHE PATH "")
 
 set(CMAKE_C_COMPILER "/usr/tce/packages/intel/intel-18.0.2/bin/icc" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "/usr/tce/packages/intel/intel-18.0.2/bin/icpc" CACHE PATH "")
