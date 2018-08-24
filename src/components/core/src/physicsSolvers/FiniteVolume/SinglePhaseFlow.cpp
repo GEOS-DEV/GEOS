@@ -187,7 +187,7 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    3 );
 
         docNode->AllocateChildNode( viewKeyStruct::porosityString,
                                     viewKeyStruct::porosityString,
@@ -239,7 +239,7 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    1 );
+                                    3 );
 
         docNode->AllocateChildNode( viewKeyStruct::blockLocalDofNumberString,
                                     viewKeyStruct::blockLocalDofNumberString,
@@ -252,7 +252,7 @@ void SinglePhaseFlow::FillOtherDocumentationNodes( dataRepository::ManagedGroup 
                                     elemManager->getName(),
                                     1,
                                     0,
-                                    0 );
+                                    3 );
 
       });
 

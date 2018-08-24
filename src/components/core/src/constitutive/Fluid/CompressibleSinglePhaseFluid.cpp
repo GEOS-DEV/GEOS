@@ -39,7 +39,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
   RegisterViewWrapper( viewKeys.referenceDensity.Key(), &m_referenceDensity, 0 );
   RegisterViewWrapper( viewKeys.referenceViscosity.Key(), &m_referenceViscosity, 0 );
 
-  RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 );
+  RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 )->setPlotLevel(PlotLevel::LEVEL_0);
   RegisterViewWrapper( viewKeyStruct::dDens_dPresString, &m_dDensity_dPressure, 0 );
 
   RegisterViewWrapper( viewKeyStruct::viscosityString, &m_viscosity, 0 );

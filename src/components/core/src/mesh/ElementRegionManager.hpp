@@ -403,7 +403,7 @@ ConstructMaterialViewAccessor( string const & viewName,
         constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
         if( constitutiveRelation != nullptr )
         {
-          dataRepository::ViewWrapper<VIEWTYPE> * const
+          dataRepository::ViewWrapper<VIEWTYPE> const * const
           wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
 
           if( wrapper != nullptr )
